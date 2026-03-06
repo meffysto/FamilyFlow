@@ -24,6 +24,7 @@ import {
   parseTaskFile,
   parseMénage,
   parseCourses,
+  parseMeals,
   parseRDV,
   mergeProfiles,
   parseGamification,
@@ -31,7 +32,7 @@ import {
   serializeGamification,
 } from '../lib/parser';
 import { processActiveRewards } from '../lib/gamification';
-import { Task, RDV, CourseItem, Profile, GamificationData, NotificationPreferences } from '../lib/types';
+import { Task, RDV, CourseItem, MealItem, Profile, GamificationData, NotificationPreferences } from '../lib/types';
 import {
   parseNotificationPrefs,
   serializeNotificationPrefs,
@@ -48,6 +49,7 @@ export interface VaultState {
   tasks: Task[];          // all tasks from all tâches récurrentes files
   menageTasks: Task[];    // today's ménage tasks
   courses: CourseItem[];  // shopping list
+  meals: MealItem[];      // weekly meal plan
   rdvs: RDV[];            // upcoming appointments
   profiles: Profile[];    // family profiles with gamification data
   activeProfile: Profile | null;  // currently selected profile
@@ -58,6 +60,7 @@ export interface VaultState {
   setVaultPath: (path: string) => Promise<void>;
   setActiveProfile: (profileId: string) => Promise<void>;
   saveNotifPrefs: (prefs: NotificationPreferences) => Promise<void>;
+  updateMeal: (day: string, mealType: string, text: string) => Promise<void>;
 }
 
 // Static task files (non-enfant)
@@ -70,6 +73,39 @@ const COURSES_FILE = '02 - Maison/Liste de courses.md';
 const RDV_DIR = '04 - Rendez-vous';
 const FAMILLE_FILE = 'famille.md';
 const GAMI_FILE = 'gamification.md';
+const MEALS_FILE = '02 - Maison/Repas de la semaine.md';
+const MEALS_TEMPLATE = `# Repas de la semaine
+
+## Lundi
+- Déjeuner:
+- Dîner:
+
+## Mardi
+- Déjeuner:
+- Dîner:
+
+## Mercredi
+- Déjeuner:
+- Dîner:
+
+## Jeudi
+- Déjeuner:
+- Dîner:
+
+## Vendredi
+- Déjeuner:
+- Dîner:
+
+## Samedi
+- Petit-déj:
+- Déjeuner:
+- Dîner:
+
+## Dimanche
+- Petit-déj:
+- Déjeuner:
+- Dîner:
+`;
 const NOTIF_FILE = 'notifications.md';
 
 export function useVault(): VaultState {
@@ -79,6 +115,7 @@ export function useVault(): VaultState {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [menageTasks, setMenageTasks] = useState<Task[]>([]);
   const [courses, setCourses] = useState<CourseItem[]>([]);
+  const [meals, setMeals] = useState<MealItem[]>([]);
   const [rdvs, setRdvs] = useState<RDV[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
@@ -192,6 +229,19 @@ export function useVault(): VaultState {
         setCourses([]);
       }
 
+      // Load meals (auto-create template if missing)
+      try {
+        if (!(await vault.exists(MEALS_FILE))) {
+          const template = MEALS_TEMPLATE;
+          await vault.writeFile(MEALS_FILE, template);
+        }
+        const mealsContent = await vault.readFile(MEALS_FILE);
+        setMeals(parseMeals(mealsContent, MEALS_FILE));
+      } catch (e) {
+        debugErrors.push(`meals: ${e}`);
+        setMeals([]);
+      }
+
       // Load RDVs from directory
       try {
         const rdvFiles = await vault.listDir(RDV_DIR);
@@ -265,6 +315,33 @@ export function useVault(): VaultState {
     await vaultRef.current.writeFile(NOTIF_FILE, serializeNotificationPrefs(prefs));
   }, []);
 
+  const updateMeal = useCallback(async (day: string, mealType: string, text: string) => {
+    if (!vaultRef.current) return;
+    try {
+      const content = await vaultRef.current.readFile(MEALS_FILE);
+      const lines = content.split('\n');
+      let currentDay: string | null = null;
+
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].startsWith('## ')) {
+          currentDay = lines[i].replace('## ', '').trim();
+        }
+        if (currentDay === day) {
+          const match = lines[i].match(/^-\s+(.+?):\s*(.*)$/);
+          if (match && match[1].trim() === mealType) {
+            lines[i] = `- ${mealType}: ${text}`;
+            break;
+          }
+        }
+      }
+
+      await vaultRef.current.writeFile(MEALS_FILE, lines.join('\n'));
+      setMeals(parseMeals(lines.join('\n'), MEALS_FILE));
+    } catch (e) {
+      throw new Error(`updateMeal: ${e}`);
+    }
+  }, []);
+
   // Resolve active profile from ID → Profile object
   const activeProfile = profiles.find((p) => p.id === activeProfileId) ?? null;
 
@@ -275,6 +352,7 @@ export function useVault(): VaultState {
     tasks,
     menageTasks,
     courses,
+    meals,
     rdvs,
     profiles,
     activeProfile,
@@ -285,5 +363,6 @@ export function useVault(): VaultState {
     setVaultPath,
     setActiveProfile,
     saveNotifPrefs,
+    updateMeal,
   };
 }

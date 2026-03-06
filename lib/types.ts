@@ -111,6 +111,15 @@ export interface CourseItem {
   lineIndex: number;
 }
 
+export interface MealItem {
+  id: string;           // "lundi:déjeuner"
+  day: string;          // "Lundi"
+  mealType: string;     // "Petit-déj" | "Déjeuner" | "Dîner"
+  text: string;         // "Pâtes carbonara" (empty string if not planned)
+  lineIndex: number;    // 0-based line in file
+  sourceFile: string;
+}
+
 export interface StockItem {
   produit: string;
   detail?: string;

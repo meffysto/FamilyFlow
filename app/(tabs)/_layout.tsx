@@ -59,6 +59,13 @@ export default function TabsLayout() {
           }}
         />
         <Tabs.Screen
+          name="meals"
+          options={{
+            title: 'Repas',
+            tabBarIcon: ({ focused }) => <TabIcon emoji="🍽️" focused={focused} />,
+          }}
+        />
+        <Tabs.Screen
           name="loot"
           options={{
             title: 'Loot',

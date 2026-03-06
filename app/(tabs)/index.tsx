@@ -46,6 +46,7 @@ export default function DashboardScreen() {
     vaultPath,
     menageTasks,
     courses,
+    meals,
     rdvs,
     profiles,
     activeProfile,
@@ -127,6 +128,13 @@ export default function DashboardScreen() {
 
   const pendingMenage = menageTasks.filter((t) => !t.completed);
 
+  // Today's meals
+  const todayDayName = (() => {
+    const name = format(new Date(), 'EEEE', { locale: fr });
+    return name.charAt(0).toUpperCase() + name.slice(1);
+  })();
+  const todayMeals = meals.filter((m) => m.day === todayDayName && m.text.length > 0);
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* Header */}
@@ -185,6 +193,29 @@ export default function DashboardScreen() {
           >
             {overdueTasks.slice(0, 3).map((task) => (
               <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} showSource />
+            ))}
+          </DashboardCard>
+        )}
+
+        {/* Repas du jour */}
+        {todayMeals.length > 0 && (
+          <DashboardCard
+            title="Repas du jour"
+            icon="🍽️"
+            count={todayMeals.length}
+            color="#EC4899"
+            onPressMore={() => router.push('/(tabs)/meals')}
+          >
+            {todayMeals.map((meal) => (
+              <View key={meal.id} style={styles.mealRow}>
+                <Text style={styles.mealEmoji}>
+                  {meal.mealType === 'Petit-déj' ? '🥐' : meal.mealType === 'Déjeuner' ? '🍽️' : '🌙'}
+                </Text>
+                <View style={styles.mealInfo}>
+                  <Text style={styles.mealType}>{meal.mealType}</Text>
+                  <Text style={styles.mealText}>{meal.text}</Text>
+                </View>
+              </View>
             ))}
           </DashboardCard>
         )}
@@ -497,6 +528,32 @@ const styles = StyleSheet.create({
   },
   quickNotifEmoji: { fontSize: 16 },
   quickNotifLabel: { fontSize: 13, fontWeight: '600', color: '#15803D' },
+  mealRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 6,
+  },
+  mealEmoji: {
+    fontSize: 20,
+    width: 28,
+    textAlign: 'center',
+  },
+  mealInfo: {
+    flex: 1,
+    gap: 1,
+  },
+  mealType: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#9CA3AF',
+    textTransform: 'uppercase',
+  },
+  mealText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#111827',
+  },
   bottomPad: {
     height: 20,
   },

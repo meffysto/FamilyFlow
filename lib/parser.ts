@@ -17,6 +17,7 @@ import {
   Task,
   RDV,
   CourseItem,
+  MealItem,
   Profile,
   GamificationData,
   GamificationEntry,
@@ -197,6 +198,79 @@ export function parseCourses(content: string, relativePath: string): CourseItem[
   }
 
   return items;
+}
+
+// ─── Repas de la semaine ────────────────────────────────────────────────────
+
+const MEAL_LINE_REGEX = /^-\s+(.+?):\s*(.*)$/;
+const DAYS_ORDER = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+
+/**
+ * Parse Repas de la semaine.md
+ *
+ * Format:
+ * ```
+ * ## Lundi
+ * - Déjeuner: Pâtes carbonara
+ * - Dîner: Soupe de légumes
+ * ```
+ */
+export function parseMeals(content: string, sourceFile: string): MealItem[] {
+  const lines = content.split('\n');
+  const meals: MealItem[] = [];
+  let currentDay: string | null = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.startsWith('## ')) {
+      const day = line.replace('## ', '').trim();
+      if (DAYS_ORDER.includes(day)) {
+        currentDay = day;
+      } else {
+        currentDay = null;
+      }
+    } else if (currentDay) {
+      const match = line.match(MEAL_LINE_REGEX);
+      if (match) {
+        const mealType = match[1].trim();
+        const text = match[2].trim();
+        meals.push({
+          id: `${currentDay.toLowerCase()}:${mealType.toLowerCase()}`,
+          day: currentDay,
+          mealType,
+          text,
+          lineIndex: i,
+          sourceFile,
+        });
+      }
+    }
+  }
+
+  return meals;
+}
+
+/**
+ * Serialize meals back to Markdown.
+ * Preserves the full file structure with frontmatter.
+ */
+export function serializeMeals(meals: MealItem[]): string {
+  const byDay: Record<string, MealItem[]> = {};
+  for (const meal of meals) {
+    if (!byDay[meal.day]) byDay[meal.day] = [];
+    byDay[meal.day].push(meal);
+  }
+
+  const sections = DAYS_ORDER
+    .filter((day) => byDay[day])
+    .map((day) => {
+      const dayMeals = byDay[day]
+        .map((m) => `- ${m.mealType}: ${m.text}`)
+        .join('\n');
+      return `## ${day}\n${dayMeals}`;
+    })
+    .join('\n\n');
+
+  return `# Repas de la semaine\n\n${sections}\n`;
 }
 
 // ─── famille.md ─────────────────────────────────────────────────────────────

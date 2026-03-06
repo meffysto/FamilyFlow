@@ -290,6 +290,7 @@ export class VaultManager {
     await this._writeIfMissing('02 - Maison/Tâches récurrentes.md', this._maisonTasksContent(today));
     await this._writeIfMissing('02 - Maison/Liste de courses.md', this._coursesContent());
     await this._writeIfMissing('02 - Maison/Ménage hebdo.md', this._menageContent());
+    await this._writeIfMissing('02 - Maison/Repas de la semaine.md', this._mealsContent());
 
     // --- 03 - Journal (dirs only, per child) ---
     if (children.length > 0) {
@@ -336,6 +337,41 @@ export class VaultManager {
 
   private _menageContent(): string {
     return `---\ntags:\n  - maison\n  - menage\n---\n> ← [[00 - Dashboard/Dashboard|Dashboard]]\n\n# Ménage hebdomadaire\n\n## Lundi — Cuisine\n- [ ] Nettoyer la cuisine\n- [ ] Lave vaisselle\n- [ ] Changer les serviettes\n\n## Mardi — Salle de bain\n- [ ] Nettoyer lavabo & miroir\n- [ ] Nettoyer les toilettes\n- [ ] Sortir les poubelles\n\n## Mercredi — Cuisine\n- [ ] Nettoyer les plans de travail\n- [ ] Nettoyer l'évier\n- [ ] Lave vaisselle\n\n## Jeudi — Chambres\n- [ ] Changer les draps\n- [ ] Aspirer les chambres\n- [ ] Ranger\n\n## Vendredi — Sols & Courses\n- [ ] Aspirer le salon\n- [ ] Passer la serpillière\n- [ ] Faire les courses\n\n## Samedi — Sols\n- [ ] Aspirer tout le rez-de-chaussée\n- [ ] Passer la serpillière\n- [ ] Nettoyer les vitres (si nécessaire)\n\n## Dimanche — Repos / rattrapage\n- [ ] Rattraper les tâches en retard\n- [ ] Préparer la semaine\n`;
+  }
+
+  private _mealsContent(): string {
+    return `# Repas de la semaine
+
+## Lundi
+- Déjeuner:
+- Dîner:
+
+## Mardi
+- Déjeuner:
+- Dîner:
+
+## Mercredi
+- Déjeuner:
+- Dîner:
+
+## Jeudi
+- Déjeuner:
+- Dîner:
+
+## Vendredi
+- Déjeuner:
+- Dîner:
+
+## Samedi
+- Petit-déj:
+- Déjeuner:
+- Dîner:
+
+## Dimanche
+- Petit-déj:
+- Déjeuner:
+- Dîner:
+`;
   }
 
   /** Validate that vaultPath points to a real directory */
