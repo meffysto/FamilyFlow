@@ -1,0 +1,119 @@
+/**
+ * rewards.ts — Loot box reward pool definitions
+ *
+ * Five rarities (Fortnite-inspired) with weighted drop rates:
+ *
+ * | Rareté      | Enfant | Ado   | Adulte |
+ * |-------------|--------|-------|--------|
+ * | Commun      | 50%    | 52%   | 55%    |
+ * | Rare        | 30%    | 29%   | 28%    |
+ * | Épique      | 14%    | 13%   | 12%    |
+ * | Légendaire  | 5%     | 5%    | 4%     |
+ * | Mythique    | 1%     | 1%    | 1%     |
+ *
+ * Pity system: after 10 boxes without épique+, next is guaranteed épique minimum.
+ */
+
+import { RewardDefinition, LootRarity, Profile } from '../lib/types';
+
+// ─── Reward Pool ──────────────────────────────────────────────────────────────
+
+export const REWARDS: Record<LootRarity, RewardDefinition[]> = {
+  commun: [
+    { emoji: '⭐', reward: '+5 points bonus', bonusPoints: 5, rewardType: 'points' },
+    { emoji: '🌟', reward: '+8 points bonus', bonusPoints: 8, rewardType: 'points' },
+    { emoji: '🍪', reward: 'Un cookie/goûter au choix', bonusPoints: 0, requiresParent: true, rewardType: 'reward' },
+    { emoji: '📱', reward: '+15 min d\'écran', bonusPoints: 0, requiresParent: true, rewardType: 'reward' },
+    { emoji: '🎵', reward: 'Choisir la musique du repas', bonusPoints: 0, rewardType: 'reward' },
+    { emoji: '🛋️', reward: 'Choisir sa place dans le canapé', bonusPoints: 0, rewardType: 'reward' },
+    { emoji: '🎨', reward: 'Choisir l\'activité du soir', bonusPoints: 0, requiresParent: true, rewardType: 'reward' },
+    { emoji: '🐻', reward: 'Badge Ourson', bonusPoints: 0, rewardType: 'badge' },
+    { emoji: '🌈', reward: 'Badge Arc-en-ciel', bonusPoints: 0, rewardType: 'badge' },
+    { emoji: '🦋', reward: 'Badge Papillon', bonusPoints: 0, rewardType: 'badge' },
+    { emoji: '🍀', reward: 'Badge Trèfle Chanceux', bonusPoints: 0, rewardType: 'badge' },
+    { emoji: '🎈', reward: 'Badge Ballon Festif', bonusPoints: 0, rewardType: 'badge' },
+  ],
+  rare: [
+    { emoji: '💫', reward: '+15 points bonus', bonusPoints: 15, rewardType: 'points' },
+    { emoji: '🍕', reward: 'Choisir le dîner ce soir !', bonusPoints: 0, requiresParent: true, rewardType: 'reward' },
+    { emoji: '🎬', reward: 'Choisir le film de la soirée', bonusPoints: 0, rewardType: 'reward' },
+    { emoji: '📱', reward: '+30 min d\'écran', bonusPoints: 0, requiresParent: true, rewardType: 'reward' },
+    { emoji: '🧹', reward: 'Échange une tâche avec quelqu\'un', bonusPoints: 0, rewardType: 'reward' },
+    { emoji: '🎮', reward: '+1h de jeux vidéo', bonusPoints: 0, requiresParent: true, rewardType: 'reward' },
+    { emoji: '🦄', reward: 'Badge Licorne Rare', bonusPoints: 0, rewardType: 'badge' },
+    { emoji: '🐉', reward: 'Badge Dragon', bonusPoints: 0, rewardType: 'badge' },
+    { emoji: '🚀', reward: 'Badge Fusée', bonusPoints: 0, rewardType: 'badge' },
+    { emoji: '🏆', reward: 'Badge Trophée d\'Or', bonusPoints: 5, rewardType: 'badge' },
+  ],
+  épique: [
+    { emoji: '💎', reward: '+30 points bonus', bonusPoints: 30, rewardType: 'points' },
+    { emoji: '🍦', reward: 'Sortie glace/dessert !', bonusPoints: 0, requiresParent: true, rewardType: 'reward' },
+    { emoji: '🎮', reward: 'Soirée jeux vidéo illimitée', bonusPoints: 0, requiresParent: true, rewardType: 'reward' },
+    { emoji: '😴', reward: 'Coucher tardif : +30 min ce soir', bonusPoints: 0, requiresParent: true, rewardType: 'reward' },
+    { emoji: '🧹', reward: 'Skip une tâche demain (au choix)', bonusPoints: 0, rewardType: 'skip' },
+    { emoji: '⚡', reward: 'Multiplicateur ×2 (5 tâches)', bonusPoints: 0, multiplier: 2, multiplierTasks: 5, rewardType: 'multiplier' },
+    { emoji: '👑', reward: 'Badge Couronne Royale', bonusPoints: 10, rewardType: 'badge' },
+    { emoji: '🌠', reward: 'Badge Étoile Filante', bonusPoints: 15, rewardType: 'badge' },
+  ],
+  légendaire: [
+    { emoji: '⚡⚡', reward: 'Multiplicateur ×3 (10 tâches) !', bonusPoints: 0, multiplier: 3, multiplierTasks: 10, rewardType: 'multiplier' },
+    { emoji: '🎉', reward: 'Sortie spéciale en famille !', bonusPoints: 50, requiresParent: true, rewardType: 'reward' },
+    { emoji: '🎂', reward: 'Petit-déjeuner au lit ce week-end', bonusPoints: 0, requiresParent: true, rewardType: 'reward' },
+    { emoji: '🧹✨', reward: 'Skip TOUTES les tâches demain', bonusPoints: 0, rewardType: 'skip_all' },
+    { emoji: '🌈✨', reward: '+20 pts pour TOUTE la famille', bonusPoints: 20, rewardType: 'family_bonus' },
+  ],
+  mythique: [
+    { emoji: '🏖️', reward: '2 JOURS SANS TÂCHES !', bonusPoints: 100, rewardType: 'vacation' },
+    { emoji: '👑💎', reward: 'Roi/Reine de la semaine — choisis le menu !', bonusPoints: 0, rewardType: 'crown' },
+    { emoji: '⚡⚡⚡', reward: 'Multiplicateur ×5 (20 tâches) !!', bonusPoints: 0, multiplier: 5, multiplierTasks: 20, rewardType: 'multiplier' },
+    { emoji: '🎁🎁', reward: 'Double loot box instantanée !', bonusPoints: 0, rewardType: 'double_loot' },
+  ],
+};
+
+// ─── Drop Rates ───────────────────────────────────────────────────────────────
+
+export const DROP_RATES: Record<Profile['role'], Record<LootRarity, number>> = {
+  enfant: { commun: 0.50, rare: 0.30, épique: 0.14, légendaire: 0.05, mythique: 0.01 },
+  ado:    { commun: 0.52, rare: 0.29, épique: 0.13, légendaire: 0.05, mythique: 0.01 },
+  adulte: { commun: 0.55, rare: 0.28, épique: 0.12, légendaire: 0.04, mythique: 0.01 },
+};
+
+// ─── Thresholds & Constants ───────────────────────────────────────────────────
+
+export const LOOT_THRESHOLD: Record<Profile['role'], number> = {
+  enfant: 50,
+  ado: 75,
+  adulte: 100,
+};
+
+export const POINTS_PER_TASK = 10;
+export const STREAK_BONUS = 5;
+
+/** Pity system: guaranteed épique+ after this many boxes without one */
+export const PITY_THRESHOLD = 10;
+
+// ─── Display ──────────────────────────────────────────────────────────────────
+
+export const RARITY_COLORS: Record<LootRarity, string> = {
+  commun: '#9CA3AF',
+  rare: '#3B82F6',
+  épique: '#8B5CF6',
+  légendaire: '#F59E0B',
+  mythique: '#EF4444',
+};
+
+export const RARITY_LABELS: Record<LootRarity, string> = {
+  commun: 'Commun',
+  rare: 'Rare',
+  épique: 'Épique',
+  légendaire: 'Légendaire',
+  mythique: 'MYTHIQUE',
+};
+
+export const RARITY_EMOJIS: Record<LootRarity, string> = {
+  commun: '🩶',
+  rare: '💙',
+  épique: '💜',
+  légendaire: '🧡',
+  mythique: '❤️',
+};

@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "Family Vault",
+    "slug": "family-vault",
+    "version": "1.0.0",
+    "scheme": "family-vault",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#7C3AED"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.familyvault.app",
+      "infoPlist": {
+        "NSDocumentsFolderUsageDescription": "Family Vault a besoin d'accéder à vos documents pour lire et modifier votre vault Obsidian.",
+        "NSFileProviderPresenceUsageDescription": "Family Vault utilise iCloud pour synchroniser votre vault Obsidian.",
+        "UIFileSharingEnabled": true,
+        "LSSupportsOpeningDocumentsInPlace": true
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#7C3AED",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.MANAGE_EXTERNAL_STORAGE"
+      ],
+      "package": "com.familyvault.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-file-system",
+        {
+          "iCloudContainerEnvironment": "Production"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "privacyUrl": "https://meffysto.github.io/FamilyFlow/privacy.html"
+    }
+  }
+}
