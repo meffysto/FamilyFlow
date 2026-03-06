@@ -18,6 +18,8 @@
       "infoPlist": {
         "NSDocumentsFolderUsageDescription": "Family Vault a besoin d'accéder à vos documents pour lire et modifier votre vault Obsidian.",
         "NSFileProviderPresenceUsageDescription": "Family Vault utilise iCloud pour synchroniser votre vault Obsidian.",
+        "NSCameraUsageDescription": "Family Vault utilise la caméra pour prendre la photo du jour.",
+        "NSPhotoLibraryUsageDescription": "Family Vault accède à vos photos pour la photo du jour.",
         "UIFileSharingEnabled": true,
         "LSSupportsOpeningDocumentsInPlace": true
       }
@@ -32,7 +34,8 @@
       "permissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.MANAGE_EXTERNAL_STORAGE"
+        "android.permission.MANAGE_EXTERNAL_STORAGE",
+        "android.permission.CAMERA"
       ],
       "package": "com.familyvault.app"
     },
@@ -46,6 +49,13 @@
         "expo-file-system",
         {
           "iCloudContainerEnvironment": "Production"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Family Vault accède à vos photos pour la photo du jour.",
+          "cameraPermission": "Family Vault utilise la caméra pour prendre la photo du jour."
         }
       ]
     ],

@@ -54,6 +54,7 @@ export default function DashboardScreen() {
     notifPrefs,
     vault,
     tasks,
+    photoDates,
     refresh,
   } = useVault();
 
@@ -135,6 +136,13 @@ export default function DashboardScreen() {
   })();
   const todayMeals = meals.filter((m) => m.day === todayDayName && m.text.length > 0);
 
+  // Photo du jour status per enfant
+  const enfants = profiles.filter((p) => p.role === 'enfant');
+  const photoStatus = enfants.map((e) => ({
+    ...e,
+    hasPhoto: (photoDates[e.id] ?? []).includes(todayStr),
+  }));
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* Header */}
@@ -215,6 +223,26 @@ export default function DashboardScreen() {
                   <Text style={styles.mealType}>{meal.mealType}</Text>
                   <Text style={styles.mealText}>{meal.text}</Text>
                 </View>
+              </View>
+            ))}
+          </DashboardCard>
+        )}
+
+        {/* Photo du jour */}
+        {enfants.length > 0 && (
+          <DashboardCard
+            title="Photo du jour"
+            icon="📸"
+            color="#06B6D4"
+            onPressMore={() => router.push('/(tabs)/photos')}
+          >
+            {photoStatus.map((e) => (
+              <View key={e.id} style={styles.photoStatusRow}>
+                <Text style={styles.photoStatusEmoji}>{e.avatar}</Text>
+                <Text style={styles.photoStatusName}>{e.name}</Text>
+                <Text style={styles.photoStatusIcon}>
+                  {e.hasPhoto ? '✅' : '📷'}
+                </Text>
               </View>
             ))}
           </DashboardCard>
@@ -553,6 +581,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: '#111827',
+  },
+  photoStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 6,
+  },
+  photoStatusEmoji: {
+    fontSize: 20,
+  },
+  photoStatusName: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  photoStatusIcon: {
+    fontSize: 16,
   },
   bottomPad: {
     height: 20,

@@ -118,6 +118,34 @@ export class VaultManager {
     return results;
   }
 
+  /** Copy a file (e.g. image) into the vault */
+  async copyFileToVault(sourceUri: string, relativePath: string): Promise<void> {
+    const parts = relativePath.split('/');
+    if (parts.length > 1) {
+      const dir = parts.slice(0, -1).join('/');
+      await this.ensureDir(dir);
+    }
+    const destUri = this.uri(relativePath);
+    await FileSystem.copyAsync({ from: sourceUri, to: destUri });
+  }
+
+  /** List dates (YYYY-MM-DD) that have photos for a given child */
+  async listPhotoDates(enfantName: string): Promise<string[]> {
+    const dir = `07 - Photos/${enfantName}`;
+    const files = await this.listDir(dir);
+    const dates = files
+      .filter((f) => f.endsWith('.jpg'))
+      .map((f) => f.replace('.jpg', ''))
+      .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
+      .sort();
+    return dates;
+  }
+
+  /** Get the file URI for a child's photo on a given date */
+  getPhotoUri(enfantName: string, date: string): string {
+    return this.uri(`07 - Photos/${enfantName}/${date}.jpg`);
+  }
+
   /**
    * Toggle a task checkbox on a specific line.
    * - Sets `- [x]` and appends `✅ YYYY-MM-DD` on complete
@@ -301,6 +329,13 @@ export class VaultManager {
 
     // --- 04 - Rendez-vous ---
     await this.ensureDir('04 - Rendez-vous');
+
+    // --- 07 - Photos (per child) ---
+    if (children.length > 0) {
+      for (const child of children) {
+        await this.ensureDir(`07 - Photos/${child.name}`);
+      }
+    }
   }
 
   /** Write file only if it doesn't exist yet */

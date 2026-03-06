@@ -120,6 +120,13 @@ export interface MealItem {
   sourceFile: string;
 }
 
+export interface PhotoEntry {
+  date: string;       // "2026-03-06"
+  enfantId: string;   // "maxence"
+  enfantName: string; // "Maxence"
+  uri: string;        // file:///vault/07 - Photos/Maxence/2026-03-06.jpg
+}
+
 export interface StockItem {
   produit: string;
   detail?: string;

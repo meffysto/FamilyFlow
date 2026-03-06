@@ -66,6 +66,13 @@ export default function TabsLayout() {
           }}
         />
         <Tabs.Screen
+          name="photos"
+          options={{
+            title: 'Photos',
+            tabBarIcon: ({ focused }) => <TabIcon emoji="📸" focused={focused} />,
+          }}
+        />
+        <Tabs.Screen
           name="loot"
           options={{
             title: 'Loot',

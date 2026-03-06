@@ -61,6 +61,9 @@ export interface VaultState {
   setActiveProfile: (profileId: string) => Promise<void>;
   saveNotifPrefs: (prefs: NotificationPreferences) => Promise<void>;
   updateMeal: (day: string, mealType: string, text: string) => Promise<void>;
+  photoDates: Record<string, string[]>;  // enfantId → dates with photos
+  addPhoto: (enfantName: string, date: string, imageUri: string) => Promise<void>;
+  getPhotoUri: (enfantName: string, date: string) => string | null;
 }
 
 // Static task files (non-enfant)
@@ -106,6 +109,7 @@ const MEALS_TEMPLATE = `# Repas de la semaine
 - Déjeuner:
 - Dîner:
 `;
+const PHOTOS_DIR = '07 - Photos';
 const NOTIF_FILE = 'notifications.md';
 
 export function useVault(): VaultState {
@@ -121,6 +125,7 @@ export function useVault(): VaultState {
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
   const [gamiData, setGamiData] = useState<GamificationData | null>(null);
   const [notifPrefs, setNotifPrefs] = useState<NotificationPreferences>(getDefaultNotificationPrefs());
+  const [photoDates, setPhotoDates] = useState<Record<string, string[]>>({});
   const vaultRef = useRef<VaultManager | null>(null);
 
   // Load vault path + active profile from SecureStore on mount
@@ -264,6 +269,24 @@ export function useVault(): VaultState {
         setRdvs([]);
       }
 
+      // Load photo dates per child
+      try {
+        const photoMap: Record<string, string[]> = {};
+        for (const name of enfantNames) {
+          try {
+            const dates = await vault.listPhotoDates(name);
+            const id = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+            photoMap[id] = dates;
+          } catch {
+            // dir may not exist yet
+          }
+        }
+        setPhotoDates(photoMap);
+      } catch (e) {
+        debugErrors.push(`photos: ${e}`);
+        setPhotoDates({});
+      }
+
       // Load notification preferences
       try {
         if (await vault.exists(NOTIF_FILE)) {
@@ -342,6 +365,24 @@ export function useVault(): VaultState {
     }
   }, []);
 
+  const addPhoto = useCallback(async (enfantName: string, date: string, imageUri: string) => {
+    if (!vaultRef.current) return;
+    const relativePath = `${PHOTOS_DIR}/${enfantName}/${date}.jpg`;
+    await vaultRef.current.copyFileToVault(imageUri, relativePath);
+    // Update local state
+    const id = enfantName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+    setPhotoDates((prev) => {
+      const existing = prev[id] ?? [];
+      if (existing.includes(date)) return prev;
+      return { ...prev, [id]: [...existing, date].sort() };
+    });
+  }, []);
+
+  const getPhotoUri = useCallback((enfantName: string, date: string): string | null => {
+    if (!vaultRef.current) return null;
+    return vaultRef.current.getPhotoUri(enfantName, date);
+  }, []);
+
   // Resolve active profile from ID → Profile object
   const activeProfile = profiles.find((p) => p.id === activeProfileId) ?? null;
 
@@ -364,5 +405,8 @@ export function useVault(): VaultState {
     setActiveProfile,
     saveNotifPrefs,
     updateMeal,
+    photoDates,
+    addPhoto,
+    getPhotoUri,
   };
 }
