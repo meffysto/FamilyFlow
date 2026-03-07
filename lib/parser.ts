@@ -167,6 +167,41 @@ export function parseRDV(relativePath: string, content: string): RDV | null {
   };
 }
 
+/**
+ * Serialize an RDV to markdown with frontmatter
+ */
+export function serializeRDV(rdv: Omit<RDV, 'sourceFile' | 'title'>): string {
+  const lines = [
+    '---',
+    `date_rdv: ${rdv.date_rdv}`,
+    `heure: "${rdv.heure}"`,
+    `type_rdv: ${rdv.type_rdv}`,
+    `enfant: ${rdv.enfant}`,
+    `médecin: ${rdv.médecin}`,
+    `lieu: ${rdv.lieu}`,
+    `statut: ${rdv.statut}`,
+    'tags:',
+    '  - rdv',
+    '---',
+    '',
+    `# Rendez-vous — ${rdv.date_rdv} ${rdv.type_rdv} ${rdv.enfant}`,
+    '',
+    '## Notes',
+    '',
+    '> ',
+    '',
+  ];
+  return lines.join('\n');
+}
+
+/**
+ * Generate a filename for an RDV
+ */
+export function rdvFileName(rdv: { date_rdv: string; type_rdv: string; enfant: string }): string {
+  const enfantClean = rdv.enfant.replace(/\s+/g, '-');
+  return `${rdv.date_rdv} ${rdv.type_rdv} ${enfantClean}.md`;
+}
+
 // ─── Courses ────────────────────────────────────────────────────────────────
 
 /**

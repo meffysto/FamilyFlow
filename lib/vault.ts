@@ -68,6 +68,12 @@ export class VaultManager {
     });
   }
 
+  /** Delete a file from the vault */
+  async deleteFile(relativePath: string): Promise<void> {
+    const uri = this.uri(relativePath);
+    await FileSystem.deleteAsync(uri, { idempotent: true });
+  }
+
   /** Check if a file or directory exists */
   async exists(relativePath: string): Promise<boolean> {
     const uri = this.uri(relativePath);

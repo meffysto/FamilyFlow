@@ -22,6 +22,7 @@ import {
   Alert,
   ActionSheetIOS,
   Platform,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -34,12 +35,13 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../../components/DashboardCard';
 import { TaskCard } from '../../components/TaskCard';
 import { FamilyLeaderboard } from '../../components/FamilyLeaderboard';
+import { RDVEditor } from '../../components/RDVEditor';
 import { buildLeaderboard, processActiveRewards } from '../../lib/gamification';
 import {
   dispatchNotification,
   buildManualContext,
 } from '../../lib/notifications';
-import { Task } from '../../lib/types';
+import { Task, RDV } from '../../lib/types';
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -62,6 +64,9 @@ export default function DashboardScreen() {
     photoDates,
     addPhoto,
     updateStockQuantity,
+    addRDV,
+    updateRDV,
+    deleteRDV,
     refresh,
   } = useVault();
 
@@ -71,6 +76,8 @@ export default function DashboardScreen() {
   const { completeTask } = useGamification({ vault, notifPrefs });
 
   const [refreshing, setRefreshing] = useState(false);
+  const [rdvEditorVisible, setRdvEditorVisible] = useState(false);
+  const [editingRDV, setEditingRDV] = useState<RDV | undefined>(undefined);
 
   const today = format(new Date(), 'EEEE dd MMMM yyyy', { locale: fr });
   const todayStr = format(new Date(), 'yyyy-MM-dd');
@@ -345,21 +352,40 @@ export default function DashboardScreen() {
         )}
 
         {/* RDVs */}
-        {upcomingRdvs.length > 0 && (
-          <DashboardCard title="Prochains RDV" icon="📅" count={upcomingRdvs.length} color="#8B5CF6">
-            {upcomingRdvs.map((rdv) => (
-              <View key={rdv.sourceFile} style={styles.rdvRow}>
-                <Text style={styles.rdvDate}>
-                  {rdv.date_rdv} {rdv.heure ? `à ${rdv.heure}` : ''}
-                </Text>
-                <Text style={styles.rdvTitle}>
-                  {rdv.type_rdv} — {rdv.enfant}
-                </Text>
-                {rdv.médecin && <Text style={styles.rdvMeta}>{rdv.médecin}</Text>}
-              </View>
-            ))}
-          </DashboardCard>
-        )}
+        <DashboardCard title="Prochains RDV" icon="📅" count={upcomingRdvs.length || undefined} color="#8B5CF6">
+          {upcomingRdvs.map((rdv) => (
+            <TouchableOpacity
+              key={rdv.sourceFile}
+              style={styles.rdvRow}
+              onPress={() => {
+                setEditingRDV(rdv);
+                setRdvEditorVisible(true);
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.rdvDate}>
+                {rdv.date_rdv} {rdv.heure ? `à ${rdv.heure}` : ''}
+              </Text>
+              <Text style={styles.rdvTitle}>
+                {rdv.type_rdv} — {rdv.enfant}
+              </Text>
+              {rdv.médecin && <Text style={styles.rdvMeta}>{rdv.médecin}</Text>}
+            </TouchableOpacity>
+          ))}
+          {upcomingRdvs.length === 0 && (
+            <Text style={styles.rdvEmpty}>Aucun RDV dans les 7 prochains jours</Text>
+          )}
+          <TouchableOpacity
+            style={[styles.rdvAddBtn, { backgroundColor: tint, borderColor: primary }]}
+            onPress={() => {
+              setEditingRDV(undefined);
+              setRdvEditorVisible(true);
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.rdvAddBtnText, { color: primary }]}>+ Nouveau RDV</Text>
+          </TouchableOpacity>
+        </DashboardCard>
 
         {/* Active rewards */}
         {activeRewards.length > 0 && (
@@ -471,6 +497,32 @@ export default function DashboardScreen() {
 
         <View style={styles.bottomPad} />
       </ScrollView>
+      {/* RDV Editor Modal */}
+      <Modal visible={rdvEditorVisible} animationType="slide" presentationStyle="pageSheet">
+        <RDVEditor
+          rdv={editingRDV}
+          onSave={async (data) => {
+            if (editingRDV) {
+              await updateRDV(editingRDV.sourceFile, data);
+            } else {
+              await addRDV(data);
+            }
+          }}
+          onDelete={
+            editingRDV
+              ? () => {
+                  deleteRDV(editingRDV.sourceFile);
+                  setRdvEditorVisible(false);
+                  setEditingRDV(undefined);
+                }
+              : undefined
+          }
+          onClose={() => {
+            setRdvEditorVisible(false);
+            setEditingRDV(undefined);
+          }}
+        />
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -549,6 +601,23 @@ const styles = StyleSheet.create({
   rdvMeta: {
     fontSize: 12,
     color: '#6B7280',
+  },
+  rdvEmpty: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    fontStyle: 'italic',
+    paddingVertical: 8,
+  },
+  rdvAddBtn: {
+    marginTop: 8,
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    borderWidth: 1.5,
+  },
+  rdvAddBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   stockRow: {
     flexDirection: 'row',

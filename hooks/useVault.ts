@@ -27,6 +27,8 @@ import {
   parseMeals,
   parseRDV,
   parseStock,
+  serializeRDV,
+  rdvFileName,
   mergeProfiles,
   parseGamification,
   parseFamille,
@@ -68,6 +70,9 @@ export interface VaultState {
   getPhotoUri: (enfantName: string, date: string) => string | null;
   updateProfileTheme: (profileId: string, theme: ProfileTheme) => Promise<void>;
   updateStockQuantity: (lineIndex: number, newQuantity: number) => Promise<void>;
+  addRDV: (rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
+  updateRDV: (sourceFile: string, rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
+  deleteRDV: (sourceFile: string) => Promise<void>;
   addCourseItem: (text: string, section?: string) => Promise<void>;
   removeCourseItem: (lineIndex: number) => Promise<void>;
 }
@@ -474,6 +479,37 @@ export function useVault(): VaultState {
     }
   }, []);
 
+  const addRDV = useCallback(async (rdv: Omit<RDV, 'sourceFile' | 'title'>) => {
+    if (!vaultRef.current) return;
+    const fileName = rdvFileName(rdv);
+    const relPath = `${RDV_DIR}/${fileName}`;
+    const content = serializeRDV(rdv);
+    await vaultRef.current.writeFile(relPath, content);
+    await loadVaultData(vaultRef.current);
+  }, [loadVaultData]);
+
+  const updateRDV = useCallback(async (sourceFile: string, rdv: Omit<RDV, 'sourceFile' | 'title'>) => {
+    if (!vaultRef.current) return;
+    // Write updated content to existing file
+    const content = serializeRDV(rdv);
+    await vaultRef.current.writeFile(sourceFile, content);
+    // If the date/type/enfant changed, the filename should change too
+    const newFileName = rdvFileName(rdv);
+    const newPath = `${RDV_DIR}/${newFileName}`;
+    if (newPath !== sourceFile) {
+      // Write to new path and delete old file
+      await vaultRef.current.writeFile(newPath, content);
+      await vaultRef.current.deleteFile(sourceFile);
+    }
+    await loadVaultData(vaultRef.current);
+  }, [loadVaultData]);
+
+  const deleteRDV = useCallback(async (sourceFile: string) => {
+    if (!vaultRef.current) return;
+    await vaultRef.current.deleteFile(sourceFile);
+    await loadVaultData(vaultRef.current);
+  }, [loadVaultData]);
+
   const addCourseItem = useCallback(async (text: string, section?: string) => {
     if (!vaultRef.current) return;
     await vaultRef.current.appendTask(COURSES_FILE, section ?? null, text);
@@ -523,6 +559,9 @@ export function useVault(): VaultState {
     getPhotoUri,
     updateProfileTheme,
     updateStockQuantity,
+    addRDV,
+    updateRDV,
+    deleteRDV,
     addCourseItem,
     removeCourseItem,
   };
