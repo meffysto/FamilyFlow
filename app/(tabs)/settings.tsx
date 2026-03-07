@@ -28,12 +28,13 @@ import { NotificationSettings } from '../../components/NotificationSettings';
 import { testTelegram } from '../../lib/telegram';
 import { serializeGamification } from '../../lib/parser';
 import { RARITY_LABELS } from '../../constants/rewards';
+import { THEME_LIST, getTheme } from '../../constants/themes';
 
 const TELEGRAM_TOKEN_KEY = 'telegram_token';
 const TELEGRAM_CHAT_KEY = 'telegram_chat_id';
 
 export default function SettingsScreen() {
-  const { vaultPath, profiles, activeProfile, vault, setVaultPath, setActiveProfile, refresh, gamiData, notifPrefs, saveNotifPrefs } = useVault();
+  const { vaultPath, profiles, activeProfile, vault, setVaultPath, setActiveProfile, refresh, gamiData, notifPrefs, saveNotifPrefs, updateProfileTheme } = useVault();
 
   const [showVaultPicker, setShowVaultPicker] = useState(false);
   const [telegramToken, setTelegramToken] = useState('');
@@ -242,20 +243,51 @@ export default function SettingsScreen() {
             {profiles.length === 0 ? (
               <Text style={styles.emptyText}>Aucun profil trouvé dans famille.md</Text>
             ) : (
-              profiles.map((profile) => (
-                <View key={profile.id} style={styles.profileRow}>
-                  <Text style={styles.profileAvatar}>{profile.avatar}</Text>
-                  <View style={styles.profileInfo}>
-                    <Text style={styles.profileName}>{profile.name}</Text>
-                    <Text style={styles.profileMeta}>
-                      {profile.role} · Niv. {profile.level} · {profile.points} pts
-                    </Text>
+              profiles.map((profile) => {
+                const currentTheme = getTheme(profile.theme);
+                return (
+                  <View key={profile.id} style={styles.profileBlock}>
+                    <View style={styles.profileRow}>
+                      <Text style={styles.profileAvatar}>{profile.avatar}</Text>
+                      <View style={styles.profileInfo}>
+                        <Text style={styles.profileName}>{profile.name}</Text>
+                        <Text style={styles.profileMeta}>
+                          {profile.role} · Niv. {profile.level} · {profile.points} pts
+                        </Text>
+                      </View>
+                      {profile.lootBoxesAvailable > 0 && (
+                        <Text style={styles.profileLoot}>🎁 ×{profile.lootBoxesAvailable}</Text>
+                      )}
+                    </View>
+                    {/* Theme picker */}
+                    <View style={styles.themeRow}>
+                      <Text style={styles.themeLabel}>Thème :</Text>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.themeScroll}>
+                        <View style={styles.themeGrid}>
+                          {THEME_LIST.map((t) => {
+                            const isActive = currentTheme.id === t.id;
+                            return (
+                              <TouchableOpacity
+                                key={t.id}
+                                style={[
+                                  styles.themeBtn,
+                                  { backgroundColor: t.secondary, borderColor: t.primary },
+                                  isActive && styles.themeBtnActive,
+                                  isActive && { borderColor: t.primary },
+                                ]}
+                                onPress={() => updateProfileTheme(profile.id, t.id)}
+                                activeOpacity={0.7}
+                              >
+                                <Text style={styles.themeBtnEmoji}>{t.emoji}</Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </View>
+                      </ScrollView>
+                    </View>
                   </View>
-                  {profile.lootBoxesAvailable > 0 && (
-                    <Text style={styles.profileLoot}>🎁 ×{profile.lootBoxesAvailable}</Text>
-                  )}
-                </View>
-              ))
+                );
+              })
             )}
             <Text style={styles.profileHint}>
               Éditez famille.md dans votre vault pour modifier les profils.
@@ -578,19 +610,59 @@ const styles = StyleSheet.create({
   switchAvatar: { fontSize: 22, marginBottom: 2 },
   switchName: { fontSize: 12, fontWeight: '600', color: '#6B7280' },
   switchNameActive: { color: '#7C3AED' },
+  profileBlock: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+    paddingBottom: 10,
+    marginBottom: 4,
+  },
   profileRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
   },
   profileAvatar: { fontSize: 28 },
   profileInfo: { flex: 1 },
   profileName: { fontSize: 15, fontWeight: '700', color: '#111827' },
   profileMeta: { fontSize: 12, color: '#6B7280' },
   profileLoot: { fontSize: 14, fontWeight: '700', color: '#F59E0B' },
+  themeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 4,
+    marginLeft: 38, // align with profile info (avatar 28 + gap 10)
+  },
+  themeLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#9CA3AF',
+  },
+  themeScroll: {
+    flex: 1,
+  },
+  themeGrid: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  themeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
+    opacity: 0.6,
+  },
+  themeBtnActive: {
+    opacity: 1,
+    borderWidth: 2,
+  },
+  themeBtnEmoji: {
+    fontSize: 16,
+  },
   profileHint: {
     fontSize: 12,
     color: '#9CA3AF',

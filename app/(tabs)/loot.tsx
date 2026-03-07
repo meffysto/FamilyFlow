@@ -333,6 +333,7 @@ export default function LootScreen() {
           profileName={selectedProfile.name}
           profileAvatar={selectedProfile.avatar}
           lootCount={selectedProfile.lootBoxesAvailable}
+          profileTheme={selectedProfile.theme}
           onOpen={handleDoOpen}
           onClose={() => {
             setLootOpenerVisible(false);

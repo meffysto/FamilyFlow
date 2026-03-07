@@ -233,7 +233,7 @@ export class VaultManager {
           (p) =>
             `### ${p.id}\nname: ${p.name}\nrole: ${p.role}\navatar: ${p.avatar}${
               p.birthdate ? `\nbirthdate: ${p.birthdate}` : ''
-            }`
+            }${p.theme ? `\ntheme: ${p.theme}` : ''}`
         )
         .join('\n\n');
 

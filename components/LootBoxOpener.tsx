@@ -21,8 +21,9 @@ import {
   Easing,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { LootBox } from '../lib/types';
+import { LootBox, ProfileTheme } from '../lib/types';
 import { RARITY_COLORS, RARITY_LABELS, RARITY_EMOJIS } from '../constants/rewards';
+import { getTheme } from '../constants/themes';
 
 // react-native-confetti-cannon
 let ConfettiCannon: any = null;
@@ -37,6 +38,7 @@ interface LootBoxOpenerProps {
   profileName: string;
   profileAvatar: string;
   lootCount: number;
+  profileTheme?: ProfileTheme;
   onOpen: () => Promise<LootBox | null>;
   onClose: () => void;
 }
@@ -48,9 +50,11 @@ export function LootBoxOpener({
   profileName,
   profileAvatar,
   lootCount,
+  profileTheme,
   onOpen,
   onClose,
 }: LootBoxOpenerProps) {
+  const theme = getTheme(profileTheme);
   const [phase, setPhase] = useState<Phase>('idle');
   const [result, setResult] = useState<LootBox | null>(null);
   const spinAnim = useRef(new Animated.Value(0)).current;
@@ -175,12 +179,13 @@ export function LootBoxOpener({
   const rarityColor = result ? RARITY_COLORS[result.rarity] : '#7C3AED';
   const rarityEmoji = result ? RARITY_EMOJIS[result.rarity] : '';
 
-  // Background color shifts for high rarity
+  // Background color shifts for high rarity — base tinted by theme
+  const defaultBg = theme.id === 'default' ? '#1F1035' : theme.secondary;
   const bgColor = result?.rarity === 'mythique'
     ? '#2D0A0A'
     : result?.rarity === 'légendaire'
     ? '#1F1500'
-    : '#1F1035';
+    : defaultBg;
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={handleClose}>
@@ -207,7 +212,7 @@ export function LootBoxOpener({
               origin={{ x: -10, y: 0 }}
               autoStart={false}
               fadeOut
-              colors={isMythique ? ['#EF4444', '#FFD700', '#FF6B6B', '#FFFFFF', '#FFA500'] : undefined}
+              colors={isMythique ? ['#EF4444', '#FFD700', '#FF6B6B', '#FFFFFF', '#FFA500'] : theme.confettiColors}
             />
             {isMythique && (
               <ConfettiCannon
@@ -235,11 +240,15 @@ export function LootBoxOpener({
         <View style={styles.content}>
           {phase === 'idle' && (
             <>
-              <Text style={styles.title}>Loot Box</Text>
-              <Text style={styles.subtitle}>{lootCount} disponible{lootCount > 1 ? 's' : ''}</Text>
+              <Text style={styles.title}>{theme.packLabel}</Text>
+              <Text style={[styles.subtitle, theme.id !== 'default' && { color: theme.primary }]}>
+                {lootCount} disponible{lootCount > 1 ? 's' : ''}
+              </Text>
               <TouchableOpacity onPress={handleOpen} style={styles.chestButton} activeOpacity={0.8}>
-                <Text style={styles.chestEmoji}>🎁</Text>
-                <Text style={styles.openText}>Appuyer pour ouvrir !</Text>
+                <Text style={styles.chestEmoji}>{theme.packEmoji}</Text>
+                <Text style={[styles.openText, theme.id !== 'default' && { color: theme.primary }]}>
+                  Appuyer pour ouvrir !
+                </Text>
               </TouchableOpacity>
             </>
           )}
@@ -258,7 +267,7 @@ export function LootBoxOpener({
                   },
                 ]}
               >
-                🎁
+                {theme.packOpenEmoji}
               </Animated.Text>
               <Text style={styles.spinText}>Ouverture en cours...</Text>
             </View>
@@ -376,7 +385,7 @@ export function LootBoxOpener({
                 </View>
               )}
 
-              <TouchableOpacity style={[styles.closeRewardBtn, result.rarity === 'mythique' && { backgroundColor: '#EF4444' }]} onPress={handleClose}>
+              <TouchableOpacity style={[styles.closeRewardBtn, { backgroundColor: result.rarity === 'mythique' ? '#EF4444' : theme.primary }]} onPress={handleClose}>
                 <Text style={styles.closeRewardText}>
                   {result.rarity === 'mythique' ? '🔥 Incroyable ! Fermer' : 'Super ! Fermer'}
                 </Text>

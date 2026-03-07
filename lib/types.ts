@@ -3,6 +3,8 @@
 // All data lives in plain Markdown files (.md)
 // ─────────────────────────────────────────────
 
+export type { ProfileTheme } from '../constants/themes';
+
 export interface Task {
   id: string;
   text: string;
@@ -53,6 +55,7 @@ export interface Profile {
   role: 'enfant' | 'ado' | 'adulte';
   avatar: string;           // single emoji
   birthdate?: string;       // YYYY-MM-DD
+  theme?: import('../constants/themes').ProfileTheme;  // visual theme
   points: number;
   level: number;
   streak: number;

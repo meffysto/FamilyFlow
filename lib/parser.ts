@@ -25,6 +25,7 @@ import {
   RewardType,
   JournalEntry,
 } from './types';
+import { VALID_THEMES, type ProfileTheme } from '../constants/themes';
 
 // ─── Task parsing ───────────────────────────────────────────────────────────
 
@@ -294,12 +295,16 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'level' 
 
   const flush = () => {
     if (currentId && currentProps.name && currentProps.role) {
+      const theme = currentProps.theme && VALID_THEMES.has(currentProps.theme)
+        ? (currentProps.theme as ProfileTheme)
+        : undefined;
       profiles.push({
         id: currentId,
         name: currentProps.name,
         role: currentProps.role as Profile['role'],
         avatar: currentProps.avatar ?? '👤',
         birthdate: currentProps.birthdate,
+        theme,
       });
     }
   };

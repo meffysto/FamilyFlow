@@ -92,6 +92,21 @@ export default function PhotosScreen() {
     const dateStr = format(date, 'yyyy-MM-dd');
 
     const launchPicker = async (useCamera: boolean) => {
+      // Request permissions first
+      if (useCamera) {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission requise', 'L\'accès à la caméra est nécessaire pour prendre une photo.');
+          return;
+        }
+      } else {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission requise', 'L\'accès à la galerie est nécessaire pour choisir une photo.');
+          return;
+        }
+      }
+
       const options: ImagePicker.ImagePickerOptions = {
         mediaTypes: ['images'],
         quality: 0.8,

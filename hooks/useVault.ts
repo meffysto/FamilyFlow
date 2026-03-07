@@ -32,7 +32,7 @@ import {
   serializeGamification,
 } from '../lib/parser';
 import { processActiveRewards } from '../lib/gamification';
-import { Task, RDV, CourseItem, MealItem, Profile, GamificationData, NotificationPreferences } from '../lib/types';
+import { Task, RDV, CourseItem, MealItem, Profile, GamificationData, NotificationPreferences, ProfileTheme } from '../lib/types';
 import {
   parseNotificationPrefs,
   serializeNotificationPrefs,
@@ -64,6 +64,7 @@ export interface VaultState {
   photoDates: Record<string, string[]>;  // enfantId → dates with photos
   addPhoto: (enfantName: string, date: string, imageUri: string) => Promise<void>;
   getPhotoUri: (enfantName: string, date: string) => string | null;
+  updateProfileTheme: (profileId: string, theme: ProfileTheme) => Promise<void>;
 }
 
 // Static task files (non-enfant)
@@ -383,6 +384,46 @@ export function useVault(): VaultState {
     return vaultRef.current.getPhotoUri(enfantName, date);
   }, []);
 
+  const updateProfileTheme = useCallback(async (profileId: string, theme: ProfileTheme) => {
+    if (!vaultRef.current) return;
+    try {
+      const content = await vaultRef.current.readFile(FAMILLE_FILE);
+      const lines = content.split('\n');
+      let inSection = false;
+      let themeLineIdx = -1;
+      let lastPropIdx = -1;
+
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].startsWith('### ')) {
+          if (inSection) break; // hit next section, stop
+          if (lines[i].replace('### ', '').trim() === profileId) {
+            inSection = true;
+          }
+        } else if (inSection && lines[i].includes(': ')) {
+          lastPropIdx = i;
+          if (lines[i].trim().startsWith('theme:')) {
+            themeLineIdx = i;
+          }
+        }
+      }
+
+      if (themeLineIdx >= 0) {
+        lines[themeLineIdx] = `theme: ${theme}`;
+      } else if (lastPropIdx >= 0) {
+        lines.splice(lastPropIdx + 1, 0, `theme: ${theme}`);
+      }
+
+      await vaultRef.current.writeFile(FAMILLE_FILE, lines.join('\n'));
+
+      // Update local profile state
+      setProfiles((prev) =>
+        prev.map((p) => (p.id === profileId ? { ...p, theme } : p))
+      );
+    } catch (e) {
+      throw new Error(`updateProfileTheme: ${e}`);
+    }
+  }, []);
+
   // Resolve active profile from ID → Profile object
   const activeProfile = profiles.find((p) => p.id === activeProfileId) ?? null;
 
@@ -408,5 +449,6 @@ export function useVault(): VaultState {
     photoDates,
     addPhoto,
     getPhotoUri,
+    updateProfileTheme,
   };
 }
