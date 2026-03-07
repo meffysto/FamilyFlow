@@ -25,7 +25,6 @@ import {
   Modal,
   TextInput,
 } from 'react-native';
-import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -399,27 +398,18 @@ export default function DashboardScreen() {
         return (
           <DashboardCard key="courses" title="Courses" icon="🛒" count={topCourses.length || undefined} color="#F59E0B" onPressMore={() => router.push({ pathname: '/(tabs)/tasks', params: { filter: 'courses' } })}>
             {topCourses.map((item) => (
-              <ReanimatedSwipeable
-                key={item.id}
-                renderRightActions={(_p, _d, swipeable) => (
-                  <TouchableOpacity
-                    style={styles.courseSwipeAction}
-                    onPress={() => { swipeable.close(); toggleCourseItem(item, true); }}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.courseSwipeEmoji}>✅</Text>
-                    <Text style={styles.courseSwipeLabel}>Coché</Text>
-                  </TouchableOpacity>
-                )}
-                rightThreshold={60}
-                friction={2}
-                overshootRight={false}
-              >
-                <View style={styles.courseRow}>
-                  <Text style={styles.courseBullet}>•</Text>
-                  <Text style={styles.courseText}>{item.text}</Text>
-                </View>
-              </ReanimatedSwipeable>
+              <View key={item.id} style={styles.courseRow}>
+                <Text style={styles.courseBullet}>•</Text>
+                <Text style={styles.courseText}>{item.text}</Text>
+                <TouchableOpacity
+                  style={styles.courseCheckBtn}
+                  onPress={() => toggleCourseItem(item, true)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  activeOpacity={0.6}
+                >
+                  <Text style={styles.courseCheckBtnText}>✓</Text>
+                </TouchableOpacity>
+              </View>
             ))}
             {topCourses.length === 0 && (
               <Text style={styles.courseEmpty}>Liste vide — ajoutez un article ci-dessous</Text>
@@ -883,17 +873,22 @@ const styles = StyleSheet.create({
     minWidth: 26,
     textAlign: 'center',
   },
-  courseSwipeAction: {
-    backgroundColor: '#10B981',
-    justifyContent: 'center',
+  courseCheckBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
     alignItems: 'center',
-    width: 72,
-    borderRadius: 8,
-    marginVertical: 1,
-    gap: 2,
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
   },
-  courseSwipeEmoji: { fontSize: 20 },
-  courseSwipeLabel: { fontSize: 11, fontWeight: '700', color: '#FFFFFF' },
+  courseCheckBtnText: {
+    fontSize: 15,
+    color: '#10B981',
+    fontWeight: '800',
+    lineHeight: 18,
+  },
   courseEmpty: {
     fontSize: 13,
     color: '#9CA3AF',
