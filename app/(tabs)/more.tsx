@@ -42,7 +42,7 @@ export default function MoreScreen() {
     const lowStock = stock.filter((s) => s.quantite <= s.seuil).length;
 
     const lootBoxes = gamiData?.profiles
-      ? Object.values(gamiData.profiles).reduce((sum, p) => sum + (p.lootBoxes ?? 0), 0)
+      ? gamiData.profiles.reduce((sum, p) => sum + (p.lootBoxesAvailable ?? 0), 0)
       : 0;
 
     return [

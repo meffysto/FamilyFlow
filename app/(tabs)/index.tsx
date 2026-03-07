@@ -561,6 +561,13 @@ export default function DashboardScreen() {
           </DashboardCard>
         )}
 
+        {/* Debug RDV — TEMPORAIRE */}
+        {error && (
+          <View style={{ backgroundColor: '#FEF3C7', padding: 12, borderRadius: 12, margin: 16 }}>
+            <Text style={{ fontSize: 11, fontFamily: 'monospace', color: '#92400E' }}>{error}</Text>
+          </View>
+        )}
+
         <View style={styles.bottomPad} />
       </ScrollView>
       {/* RDV Editor Modal */}

@@ -296,24 +296,36 @@ export function useVault(): VaultState {
       try {
         await vault.ensureDir(RDV_DIR);
         const loadedRdvs: RDV[] = [];
+        const rdvDebug: string[] = [];
 
         // Helper: load all .md files from a directory as RDVs
         const loadRdvsFromDir = async (dir: string) => {
+          let files: string[] = [];
           try {
-            const files = await vault.listDir(dir);
-            for (const file of files) {
-              if (!file.endsWith('.md')) continue;
-              const relPath = `${dir}/${file}`;
-              try {
-                const content = await vault.readFile(relPath);
-                const rdv = parseRDV(relPath, content);
-                if (rdv && rdv.statut !== 'annulé') loadedRdvs.push(rdv);
-              } catch {
-                // skip individual rdv
+            files = await vault.listDir(dir);
+          } catch (e) {
+            rdvDebug.push(`listDir(${dir}) ERROR: ${e}`);
+            return;
+          }
+          rdvDebug.push(`listDir(${dir}): [${files.join(', ')}]`);
+
+          for (const file of files) {
+            if (!file.endsWith('.md')) continue;
+            const relPath = `${dir}/${file}`;
+            try {
+              const content = await vault.readFile(relPath);
+              const rdv = parseRDV(relPath, content);
+              if (!rdv) {
+                rdvDebug.push(`parseRDV(${file}) → null`);
+              } else if (rdv.statut === 'annulé') {
+                rdvDebug.push(`parseRDV(${file}) → annulé, skip`);
+              } else {
+                rdvDebug.push(`parseRDV(${file}) → OK: ${rdv.date_rdv} ${rdv.type_rdv}`);
+                loadedRdvs.push(rdv);
               }
+            } catch (e) {
+              rdvDebug.push(`readFile(${file}) ERROR: ${e}`);
             }
-          } catch {
-            // directory may not exist
           }
         };
 
@@ -321,6 +333,11 @@ export function useVault(): VaultState {
         await loadRdvsFromDir(RDV_DIR);
         // Archived RDVs (past, moved by maintenance.py)
         await loadRdvsFromDir(RDV_ARCHIVES_DIR);
+
+        // Surface debug info if RDVs were expected but not found
+        if (rdvDebug.length > 0) {
+          debugErrors.push(`[RDV debug]\n${rdvDebug.join('\n')}`);
+        }
 
         loadedRdvs.sort((a, b) => a.date_rdv.localeCompare(b.date_rdv));
         setRdvs(loadedRdvs);
