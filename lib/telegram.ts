@@ -11,7 +11,6 @@
  * - Score/leaderboard
  */
 
-import * as FileSystem from 'expo-file-system';
 import { Profile, LootBox, Memory } from './types';
 import { formatDateForDisplay } from './parser';
 
@@ -113,8 +112,9 @@ export function formatDailySummaryMessage(
 // ─── Photo sending ──────────────────────────────────────────────────────────
 
 /**
- * Send a single photo to Telegram via multipart/form-data.
- * Uses expo-file-system to read the local file.
+ * Send a single photo to Telegram.
+ * Uses React Native's FormData with { uri, type, name } — the standard
+ * pattern for file uploads in RN/Expo Go (no native modules needed).
  */
 export async function sendTelegramPhoto(
   token: string,
@@ -123,30 +123,30 @@ export async function sendTelegramPhoto(
   caption?: string
 ): Promise<boolean> {
   try {
-    // Normalize URI — ensure it starts with file://
-    let fileUri = photoUri;
+    // Normalize URI — decode %20 back to spaces, ensure file:// prefix
+    let fileUri = decodeURIComponent(photoUri);
     if (!fileUri.startsWith('file://')) {
       fileUri = `file://${fileUri}`;
     }
 
-    // Use FileSystem.uploadAsync for reliable multipart file upload
-    const params: Record<string, string> = { chat_id: chatId };
+    // React Native FormData accepts { uri, type, name } objects as file references
+    const formData = new FormData();
+    formData.append('chat_id', chatId);
+    formData.append('photo', {
+      uri: fileUri,
+      type: 'image/jpeg',
+      name: 'photo.jpg',
+    } as any);
     if (caption) {
-      params.caption = caption;
-      params.parse_mode = 'HTML';
+      formData.append('caption', caption);
+      formData.append('parse_mode', 'HTML');
     }
 
-    const result = await FileSystem.uploadAsync(
-      `${TELEGRAM_API}/bot${token}/sendPhoto`,
-      fileUri,
-      {
-        httpMethod: 'POST',
-        uploadType: FileSystem.FileSystemUploadType.MULTIPART,
-        fieldName: 'photo',
-        parameters: params,
-      }
-    );
-    return result.status >= 200 && result.status < 300;
+    const res = await fetch(`${TELEGRAM_API}/bot${token}/sendPhoto`, {
+      method: 'POST',
+      body: formData,
+    });
+    return res.ok;
   } catch {
     return false;
   }
