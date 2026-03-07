@@ -466,14 +466,13 @@ export default function DashboardScreen() {
               count={lowCount > 0 ? lowCount : undefined}
               color={lowCount > 0 ? '#EF4444' : '#10B981'}
             >
-              {stock.map((item) => {
+              {stock.filter((s) => s.quantite <= s.seuil + 1).map((item) => {
                 const isLow = item.quantite <= item.seuil;
-                const isWarn = !isLow && item.quantite <= item.seuil + 1;
-                const statusColor = isLow ? '#EF4444' : isWarn ? '#F59E0B' : '#10B981';
+                const statusColor = isLow ? '#EF4444' : '#F59E0B';
                 return (
                   <View key={`${item.section}-${item.produit}`} style={styles.stockRow}>
                     <Text style={styles.stockAlertIcon}>
-                      {isLow ? '🔴' : isWarn ? '🟡' : '🟢'}
+                      {isLow ? '🔴' : '🟡'}
                     </Text>
                     <View style={styles.stockInfo}>
                       <Text style={styles.stockName}>
@@ -557,13 +556,6 @@ export default function DashboardScreen() {
           >
             <FamilyLeaderboard profiles={leaderboard} compact />
           </DashboardCard>
-        )}
-
-        {/* Debug RDV — TEMPORAIRE */}
-        {error && (
-          <View style={{ backgroundColor: '#FEF3C7', padding: 12, borderRadius: 12, margin: 16 }}>
-            <Text style={{ fontSize: 11, fontFamily: 'monospace', color: '#92400E' }}>{error}</Text>
-          </View>
         )}
 
         <View style={styles.bottomPad} />
@@ -775,13 +767,6 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     fontFamily: 'monospace',
     lineHeight: 16,
-  },
-  debugError: {
-    fontSize: 11,
-    color: '#EF4444',
-    fontFamily: 'monospace',
-    lineHeight: 16,
-    marginTop: 6,
   },
   activeRewardRow: {
     flexDirection: 'row',
