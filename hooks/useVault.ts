@@ -74,7 +74,7 @@ export interface VaultState {
   addRDV: (rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
   updateRDV: (sourceFile: string, rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
   deleteRDV: (sourceFile: string) => Promise<void>;
-  addTask: (text: string, targetFile: string, dueDate?: string) => Promise<void>;
+  addTask: (text: string, targetFile: string, dueDate?: string, recurrence?: string) => Promise<void>;
   deleteTask: (sourceFile: string, lineIndex: number) => Promise<void>;
   addCourseItem: (text: string, section?: string) => Promise<void>;
   removeCourseItem: (lineIndex: number) => Promise<void>;
@@ -563,9 +563,10 @@ export function useVault(): VaultState {
     await loadVaultData(vaultRef.current);
   }, [loadVaultData]);
 
-  const addTask = useCallback(async (text: string, targetFile: string, dueDate?: string) => {
+  const addTask = useCallback(async (text: string, targetFile: string, dueDate?: string, recurrence?: string) => {
     if (!vaultRef.current) return;
     let taskText = text;
+    if (recurrence) taskText += ` 🔁 ${recurrence}`;
     if (dueDate) taskText += ` 📅 ${dueDate}`;
     await vaultRef.current.appendTask(targetFile, null, taskText);
     await loadVaultData(vaultRef.current);

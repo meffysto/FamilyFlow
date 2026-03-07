@@ -93,6 +93,7 @@ export default function TasksScreen() {
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [newTaskText, setNewTaskText] = useState('');
   const [newTaskDueDate, setNewTaskDueDate] = useState('');
+  const [newTaskRecurrence, setNewTaskRecurrence] = useState('');
   const [newTaskTarget, setNewTaskTarget] = useState(targetFiles[0]?.value ?? '');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -155,16 +156,17 @@ export default function TasksScreen() {
     }
     setIsSaving(true);
     try {
-      await addTask(newTaskText.trim(), newTaskTarget, newTaskDueDate || undefined);
+      await addTask(newTaskText.trim(), newTaskTarget, newTaskDueDate || undefined, newTaskRecurrence || undefined);
       setNewTaskText('');
       setNewTaskDueDate('');
+      setNewTaskRecurrence('');
       setAddModalVisible(false);
     } catch (e) {
       Alert.alert('Erreur', String(e));
     } finally {
       setIsSaving(false);
     }
-  }, [newTaskText, newTaskDueDate, newTaskTarget, addTask]);
+  }, [newTaskText, newTaskDueDate, newTaskRecurrence, newTaskTarget, addTask]);
 
   const handleDeleteTask = useCallback(async (task: Task) => {
     Alert.alert(
@@ -391,6 +393,33 @@ export default function TasksScreen() {
               placeholderTextColor="#9CA3AF"
               keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default'}
             />
+
+            <Text style={styles.modalLabel}>🔁 Récurrence (optionnel)</Text>
+            <View style={styles.targetRow}>
+              {[
+                { label: 'Aucune', value: '' },
+                { label: 'Chaque jour', value: 'every day' },
+                { label: 'Chaque semaine', value: 'every week' },
+                { label: 'Chaque mois', value: 'every month' },
+              ].map((opt) => (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[
+                    styles.targetChip,
+                    newTaskRecurrence === opt.value && { backgroundColor: tint, borderColor: primary },
+                  ]}
+                  onPress={() => setNewTaskRecurrence(opt.value)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[
+                    styles.targetChipText,
+                    newTaskRecurrence === opt.value && { color: primary, fontWeight: '700' },
+                  ]}>
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
 
             <Text style={styles.modalLabel}>📁 Fichier cible</Text>
             <View style={styles.targetRow}>
