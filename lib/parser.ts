@@ -134,16 +134,87 @@ export function parseMénage(content: string, relativePath: string): Task[] {
 
 // ─── Frontmatter ────────────────────────────────────────────────────────────
 
+/**
+ * Manual YAML frontmatter parser — fallback for React Native
+ * where gray-matter/js-yaml can fail on accented keys (médecin)
+ * or quoted values.
+ */
+function manualParseFrontmatter(content: string): { data: Record<string, string>; content: string } {
+  const trimmed = content.trim();
+  if (!trimmed.startsWith('---')) return { data: {}, content };
+
+  const secondDash = trimmed.indexOf('---', 3);
+  if (secondDash === -1) return { data: {}, content };
+
+  const yamlBlock = trimmed.slice(3, secondDash).trim();
+  const body = trimmed.slice(secondDash + 3).trim();
+  const data: Record<string, string> = {};
+
+  for (const line of yamlBlock.split('\n')) {
+    const raw = line.trim();
+    // Skip empty lines, comments, array items (  - value), section headers
+    if (!raw || raw.startsWith('#') || raw.startsWith('- ') || raw.startsWith('-\t')) continue;
+
+    const colonIdx = raw.indexOf(':');
+    if (colonIdx === -1) continue;
+
+    const key = raw.slice(0, colonIdx).trim();
+    let value = raw.slice(colonIdx + 1).trim();
+
+    // Strip surrounding quotes
+    if ((value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+
+    if (key && value) {
+      data[key] = value;
+    }
+  }
+
+  return { data, content: body };
+}
+
 export function parseFrontmatter(content: string): { data: Record<string, string>; content: string } {
+  // Try gray-matter first
   try {
     const parsed = matter(content);
-    return {
-      data: parsed.data as Record<string, string>,
-      content: parsed.content,
-    };
+    const data = parsed.data as Record<string, string>;
+    // Verify it actually parsed something — if data is empty but content has frontmatter, fallback
+    if (data && Object.keys(data).length > 0) {
+      return { data, content: parsed.content };
+    }
   } catch {
-    return { data: {}, content };
+    // gray-matter failed, fall through to manual parser
   }
+
+  // Fallback: manual parser (handles accented keys, React Native edge cases)
+  return manualParseFrontmatter(content);
+}
+
+/**
+ * Check if an RDV is upcoming (in the future or today but not yet past its time).
+ * Compares date AND time for today's RDVs.
+ */
+export function isRdvUpcoming(rdv: { date_rdv: string; heure?: string; statut: string }): boolean {
+  if (rdv.statut !== 'planifié') return false;
+
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+  if (rdv.date_rdv > todayStr) return true;   // future day → upcoming
+  if (rdv.date_rdv < todayStr) return false;   // past day → not upcoming
+
+  // Same day → check time
+  if (!rdv.heure) return true; // no time set → consider still upcoming today
+
+  const [h, m] = rdv.heure.split(':').map(Number);
+  if (isNaN(h)) return true;
+
+  const rdvMinutes = h * 60 + (m || 0);
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+  return rdvMinutes > nowMinutes;
 }
 
 // ─── RDV ────────────────────────────────────────────────────────────────────

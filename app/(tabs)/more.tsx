@@ -17,7 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useVault } from '../../hooks/useVault';
 import { useThemeColors } from '../../contexts/ThemeContext';
-import { format } from 'date-fns';
+import { isRdvUpcoming } from '../../lib/parser';
 
 interface GridItem {
   emoji: string;
@@ -32,12 +32,8 @@ export default function MoreScreen() {
   const { rdvs, stock, gamiData } = useVault();
   const { primary } = useThemeColors();
 
-  const todayStr = format(new Date(), 'yyyy-MM-dd');
-
   const items: GridItem[] = useMemo(() => {
-    const upcomingRdvs = rdvs.filter(
-      (r) => r.statut === 'planifié' && r.date_rdv >= todayStr
-    ).length;
+    const upcomingRdvs = rdvs.filter((r) => isRdvUpcoming(r)).length;
 
     const lowStock = stock.filter((s) => s.quantite <= s.seuil).length;
 
@@ -80,7 +76,7 @@ export default function MoreScreen() {
         color: '#6B7280',
       },
     ];
-  }, [rdvs, stock, gamiData, todayStr]);
+  }, [rdvs, stock, gamiData]);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>

@@ -19,7 +19,7 @@ import { format } from 'date-fns';
 import { useVault } from '../../hooks/useVault';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { RDVEditor } from '../../components/RDVEditor';
-import { formatDateForDisplay } from '../../lib/parser';
+import { formatDateForDisplay, isRdvUpcoming } from '../../lib/parser';
 import { RDV } from '../../lib/types';
 
 const TYPE_EMOJI: Record<string, string> = {
@@ -42,14 +42,14 @@ export default function RDVScreen() {
   const todayStr = format(new Date(), 'yyyy-MM-dd');
 
   const upcoming = useMemo(
-    () => rdvs.filter((r) => r.statut === 'planifié' && r.date_rdv >= todayStr),
-    [rdvs, todayStr]
+    () => rdvs.filter((r) => isRdvUpcoming(r)),
+    [rdvs]
   );
 
   const past = useMemo(
-    () => rdvs.filter((r) => r.date_rdv < todayStr || r.statut !== 'planifié')
+    () => rdvs.filter((r) => !isRdvUpcoming(r))
       .sort((a, b) => b.date_rdv.localeCompare(a.date_rdv)), // most recent first
-    [rdvs, todayStr]
+    [rdvs]
   );
 
   const openCreate = () => {

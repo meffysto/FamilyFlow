@@ -42,7 +42,7 @@ import {
   buildManualContext,
 } from '../../lib/notifications';
 import { Task, RDV } from '../../lib/types';
-import { formatDateForDisplay } from '../../lib/parser';
+import { formatDateForDisplay, isRdvUpcoming } from '../../lib/parser';
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -209,10 +209,8 @@ export default function DashboardScreen() {
     (t) => !t.completed && t.dueDate && t.dueDate < todayStr
   );
 
-  // RDVs: upcoming (planifié + future) or all if toggle is on
-  const upcomingRdvs = rdvs.filter(
-    (r) => r.statut === 'planifié' && r.date_rdv >= todayStr
-  );
+  // RDVs: upcoming (planifié + future, time-aware for today)
+  const upcomingRdvs = rdvs.filter((r) => isRdvUpcoming(r));
   // pastRdvs/displayedRdvs removed — full RDV view is now in /(tabs)/rdv
 
   // Top courses
