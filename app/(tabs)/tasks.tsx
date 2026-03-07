@@ -116,7 +116,7 @@ export default function TasksScreen() {
           try {
             const { lootAwarded, pointsGained } = await completeTask(activeProfile, task.text);
             if (lootAwarded) {
-              Alert.alert('🎁 Loot Box !', `+${pointsGained} pts ! Tu as gagné une loot box ! Va dans l'onglet Loot pour l'ouvrir.`);
+              Alert.alert('🎁 Récompense !', `+${pointsGained} pts ! Tu as gagné une récompense ! Va dans Menu > Récompenses pour l'ouvrir.`);
             } else {
               Alert.alert('✅ +' + pointsGained + ' pts !', `Bravo ${activeProfile.name} !`, [{ text: 'Super !' }]);
             }
@@ -156,7 +156,7 @@ export default function TasksScreen() {
       return;
     }
     if (newTaskDueDate && !/^\d{4}-\d{2}-\d{2}$/.test(newTaskDueDate)) {
-      Alert.alert('Format invalide', 'La date doit être au format AAAA-MM-JJ.');
+      Alert.alert('Date incorrecte', 'Veuillez entrer la date au format année-mois-jour.\nExemple : 2026-03-15 pour le 15 mars 2026.');
       return;
     }
     setIsSaving(true);
@@ -323,6 +323,13 @@ export default function TasksScreen() {
         </ScrollView>
       </View>
 
+      {/* Long-press hint */}
+      {sections.length > 0 && (
+        <View style={styles.deleteTip}>
+          <Text style={styles.deleteTipText}>💡 Appui long sur une tâche pour la supprimer</Text>
+        </View>
+      )}
+
       {/* Task list */}
       <SectionList
         sections={sections}
@@ -389,17 +396,17 @@ export default function TasksScreen() {
               multiline
             />
 
-            <Text style={styles.modalLabel}>📅 Date due (optionnel)</Text>
+            <Text style={styles.modalLabel}>📅 Date d'échéance (optionnel)</Text>
             <TextInput
               style={styles.modalInput}
               value={newTaskDueDate}
               onChangeText={setNewTaskDueDate}
-              placeholder="2026-03-15"
+              placeholder="Format : 2026-03-15 (année-mois-jour)"
               placeholderTextColor="#9CA3AF"
               keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default'}
             />
 
-            <Text style={styles.modalLabel}>🔁 Récurrence (optionnel)</Text>
+            <Text style={styles.modalLabel}>🔁 Se répète (optionnel)</Text>
             <View style={styles.targetRow}>
               {[
                 { label: 'Aucune', value: '' },
@@ -426,7 +433,7 @@ export default function TasksScreen() {
               ))}
             </View>
 
-            <Text style={styles.modalLabel}>📁 Fichier cible</Text>
+            <Text style={styles.modalLabel}>📁 Enregistrer pour</Text>
             <View style={styles.targetRow}>
               {targetFiles.map((t) => (
                 <TouchableOpacity
@@ -538,6 +545,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#6B7280',
+  },
+  deleteTip: {
+    backgroundColor: '#FFFBEB',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#FDE68A',
+  },
+  deleteTipText: {
+    fontSize: 12,
+    color: '#92400E',
+    fontWeight: '500',
   },
   listContent: {
     padding: 16,

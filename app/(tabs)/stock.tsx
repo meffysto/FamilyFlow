@@ -118,8 +118,9 @@ export default function StockScreen() {
                       {item.detail ? <Text style={styles.itemDetail}> · {item.detail}</Text> : null}
                     </Text>
                     <Text style={styles.itemMeta}>
-                      {getStatusEmoji(item)} {item.quantite} restant{item.quantite > 1 ? 's' : ''} (seuil: {item.seuil})
+                      {getStatusEmoji(item)} {item.quantite} restant{item.quantite > 1 ? 's' : ''} · seuil {item.seuil}
                     </Text>
+                    <Text style={styles.itemEditHint}>Appuyer pour modifier</Text>
                   </View>
                   <View style={styles.itemActions}>
                     {isLow && (
@@ -132,8 +133,10 @@ export default function StockScreen() {
                     )}
                     <View style={styles.qtyRow}>
                       <TouchableOpacity
-                        style={styles.qtyBtn}
-                        onPress={() => updateStockQuantity(item.lineIndex, item.quantite - 1)}
+                        style={[styles.qtyBtn, item.quantite <= 0 && styles.qtyBtnDisabled]}
+                        onPress={() => updateStockQuantity(item.lineIndex, Math.max(0, item.quantite - 1))}
+                        disabled={item.quantite <= 0}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       >
                         <Text style={styles.qtyBtnText}>−</Text>
                       </TouchableOpacity>
@@ -143,6 +146,7 @@ export default function StockScreen() {
                       <TouchableOpacity
                         style={styles.qtyBtn}
                         onPress={() => updateStockQuantity(item.lineIndex, item.quantite + 1)}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       >
                         <Text style={styles.qtyBtnText}>+</Text>
                       </TouchableOpacity>
@@ -258,6 +262,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6B7280',
   },
+  itemEditHint: {
+    fontSize: 10,
+    color: '#D1D5DB',
+    marginTop: 1,
+  },
   itemActions: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -278,15 +287,18 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   qtyBtn: {
-    width: 30,
-    height: 30,
+    width: 36,
+    height: 36,
     borderRadius: 8,
     backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  qtyBtnDisabled: {
+    opacity: 0.3,
+  },
   qtyBtnText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
     color: '#374151',
   },

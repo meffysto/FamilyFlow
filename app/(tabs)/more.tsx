@@ -64,7 +64,7 @@ export default function MoreScreen() {
       },
       {
         emoji: '🎁',
-        label: 'Loot Boxes',
+        label: 'Récompenses',
         route: '/(tabs)/loot',
         badge: lootBoxes || undefined,
         color: '#EC4899',

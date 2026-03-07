@@ -346,7 +346,7 @@ export class VaultManager {
         );
       }
       await this._writeIfMissing(
-        '01 - Enfants/Commun/Stock bébé.md',
+        '01 - Enfants/Commun/Stock & fournitures.md',
         this._stockContent()
       );
     }
@@ -366,6 +366,16 @@ export class VaultManager {
 
     // --- 04 - Rendez-vous ---
     await this.ensureDir('04 - Rendez-vous');
+
+    // --- 06 - Mémoires (Jalons per child) ---
+    if (children.length > 0) {
+      for (const child of children) {
+        await this._writeIfMissing(
+          `06 - Mémoires/${child.name}/Jalons.md`,
+          this._jalonsContent(child.name)
+        );
+      }
+    }
 
     // --- 07 - Photos (per child) ---
     if (children.length > 0) {
@@ -396,7 +406,7 @@ export class VaultManager {
   }
 
   private _stockContent(): string {
-    return `---\ntags:\n  - stock\n---\n> ← [[00 - Dashboard/Dashboard|Dashboard]]\n\n# Stock bébé\n\n## Couches\n- Taille actuelle : \n- Stock restant : \n\n## Lait\n- Marque : \n- Stock restant : \n\n## Produits de soin\n- Liniment : \n- Sérum physiologique : \n- Crème : \n`;
+    return `---\ntags:\n  - stock\n  - enfants\ncssclasses:\n  - stock\n---\n> ← [[00 - Dashboard/Dashboard|Dashboard]]\n\n# Stock & fournitures — Enfants\n\n## Couches\n\n| Produit | Détail | Paquets restants | Seuil | Qté/achat |\n| ------- | ------ | ---------------- | ----- | --------- |\n| Couches | T4     | 3                | 1     | 3         |\n\n## Alimentation\n\n| Produit          | Détail | Paquets restants | Seuil | Qté/achat |\n| ---------------- | ------ | ---------------- | ----- | --------- |\n| Lait infantile   |        | 2                | 1     | 2         |\n\n## Hygiène & soins\n\n| Produit             | Détail | Paquets restants | Seuil | Qté/achat |\n| ------------------- | ------ | ---------------- | ----- | --------- |\n| Lingettes           |        | 2                | 2     | 1         |\n| Sérum physiologique |        | 2                | 1     | 1         |\n`;
   }
 
   private _maisonTasksContent(today: string): string {
@@ -444,6 +454,11 @@ export class VaultManager {
 - Déjeuner:
 - Dîner:
 `;
+  }
+
+  private _jalonsContent(childName: string): string {
+    const slug = childName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+    return `---\ntags:\n  - memoires\n  - ${slug}\n---\n> ← [[00 - Dashboard/Dashboard|Dashboard]]\n\n# Jalons — ${childName}\n\n## 🌟 Premières fois\n\n\n## 💛 Moments forts\n\n`;
   }
 
   /** Validate that vaultPath points to a real directory */

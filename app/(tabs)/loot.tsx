@@ -67,7 +67,7 @@ export default function LootScreen() {
       await refresh();
       return box;
     } catch (e) {
-      Alert.alert('Erreur', String(e));
+      Alert.alert('Oups !', 'Impossible d\'ouvrir la récompense. Réessayez dans un moment.');
       return null;
     }
   }, [selectedProfile, gamiData, openLootBox, refresh]);
@@ -100,7 +100,7 @@ export default function LootScreen() {
         {/* Header */}
         <View style={[styles.header, { backgroundColor: primary }]}>
           <View style={styles.headerTop}>
-            <Text style={styles.title}>🎁 Loot & Récompenses</Text>
+            <Text style={styles.title}>🎁 Récompenses</Text>
             <TouchableOpacity
               style={styles.dropRatesBtn}
               onPress={() => setShowDropRates(true)}
@@ -109,12 +109,12 @@ export default function LootScreen() {
               <Text style={styles.dropRatesBtnText}>📊</Text>
             </TouchableOpacity>
           </View>
-          <Text style={styles.subtitle}>Complète des tâches pour gagner des loot boxes !</Text>
+          <Text style={styles.subtitle}>Complète des tâches pour gagner des récompenses !</Text>
         </View>
 
         {/* Loot box cards per profile */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Tes loot boxes</Text>
+          <Text style={styles.sectionTitle}>Tes récompenses à ouvrir</Text>
           {profiles.map((profile) => (
             <View key={profile.id} style={styles.lootCard}>
               <View style={styles.lootCardLeft}>
@@ -233,7 +233,7 @@ export default function LootScreen() {
                           {RARITY_LABELS[rarity as keyof typeof RARITY_LABELS]}
                         </Text>
                       ) : (
-                        <Text style={styles.historyPts}>{entry.action}</Text>
+                        <Text style={styles.historyPts}>{entry.action} pts</Text>
                       )}
                     </View>
                   </View>
@@ -252,7 +252,7 @@ export default function LootScreen() {
           <ScrollView contentContainerStyle={styles.drContent}>
             {/* Header */}
             <View style={styles.drHeader}>
-              <Text style={styles.drTitle}>📊 Drop Rates & Récompenses</Text>
+              <Text style={styles.drTitle}>📊 Probabilités & Récompenses</Text>
               <TouchableOpacity onPress={() => setShowDropRates(false)}>
                 <Text style={styles.drCloseBtn}>✕</Text>
               </TouchableOpacity>
@@ -260,7 +260,7 @@ export default function LootScreen() {
 
             {/* Drop rates table */}
             <View style={styles.drCard}>
-              <Text style={styles.drSectionTitle}>Probabilités par rôle</Text>
+              <Text style={styles.drSectionTitle}>Chances d'obtenir chaque rareté</Text>
               {/* Table header */}
               <View style={styles.drTableRow}>
                 <Text style={[styles.drTableCell, styles.drTableHeader, { flex: 2 }]}>Rareté</Text>
@@ -286,9 +286,9 @@ export default function LootScreen() {
 
             {/* Pity system */}
             <View style={[styles.drPityBox, { backgroundColor: tint }]}>
-              <Text style={[styles.drPityTitle, { color: primary }]}>🎯 Pity System</Text>
+              <Text style={[styles.drPityTitle, { color: primary }]}>🎯 Garantie</Text>
               <Text style={styles.drPityText}>
-                Après {PITY_THRESHOLD} loot boxes sans obtenir Épique ou mieux, la prochaine est <Text style={{ fontWeight: '800' }}>garantie Épique minimum</Text>.
+                Après {PITY_THRESHOLD} récompenses sans obtenir Épique ou mieux, la suivante est <Text style={{ fontWeight: '800' }}>garantie Épique minimum</Text>.
               </Text>
             </View>
 

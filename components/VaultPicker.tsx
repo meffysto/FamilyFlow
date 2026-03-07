@@ -21,6 +21,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as DocumentPicker from 'expo-document-picker';
 import { VaultManager } from '../lib/vault';
 import { useThemeColors } from '../contexts/ThemeContext';
+import { SetupWizard } from './SetupWizard';
 
 interface VaultPickerProps {
   currentPath?: string | null;
@@ -34,6 +35,7 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [showWizard, setShowWizard] = useState(false);
   const [syncProgress, setSyncProgress] = useState('');
   const COFFRE_DEFAULT = '/Users/USER/Documents/coffre';
   const MAC_SERVER = 'http://YOUR_MAC_IP:8765';
@@ -175,9 +177,37 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
     }
   };
 
+  // Show wizard instead of picker when creating a new vault
+  if (showWizard) {
+    return (
+      <SetupWizard
+        onComplete={(newPath) => {
+          setShowWizard(false);
+          onPathSelected(newPath);
+        }}
+        onCancel={() => setShowWizard(false)}
+      />
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Chemin du vault Obsidian</Text>
+      {/* Create new vault button */}
+      <TouchableOpacity
+        style={[styles.createBtn, { backgroundColor: primary }]}
+        onPress={() => setShowWizard(true)}
+      >
+        <Text style={styles.createBtnText}>✨ Créer un nouveau vault</Text>
+        <Text style={styles.createBtnSub}>Pas besoin d'Obsidian — tout est créé automatiquement</Text>
+      </TouchableOpacity>
+
+      <View style={styles.separator}>
+        <View style={styles.separatorLine} />
+        <Text style={styles.separatorText}>ou connecter un vault existant</Text>
+        <View style={styles.separatorLine} />
+      </View>
+
+      <Text style={styles.label}>Chemin du vault</Text>
 
       <TextInput
         style={[styles.input, error ? styles.inputError : null]}
@@ -261,6 +291,36 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
 const styles = StyleSheet.create({
   container: {
     gap: 12,
+  },
+  createBtn: {
+    borderRadius: 12,
+    padding: 16,
+    gap: 4,
+    alignItems: 'center',
+  },
+  createBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  createBtnSub: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
+  },
+  separator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginVertical: 4,
+  },
+  separatorLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#D1D5DB',
+  },
+  separatorText: {
+    fontSize: 12,
+    color: '#9CA3AF',
   },
   label: {
     fontSize: 14,

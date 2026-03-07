@@ -44,7 +44,7 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Dashboard',
+            title: "Aujourd'hui",
             tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" focused={focused} />,
           }}
         />
@@ -72,8 +72,8 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="more"
           options={{
-            title: 'Plus',
-            tabBarIcon: ({ focused }) => <TabIcon emoji="☰" focused={focused} />,
+            title: 'Menu',
+            tabBarIcon: ({ focused }) => <TabIcon emoji="🗂️" focused={focused} />,
           }}
         />
         {/* ── Hidden screens (accessible via router.push) ── */}

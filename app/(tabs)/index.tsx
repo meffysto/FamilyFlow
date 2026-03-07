@@ -29,6 +29,7 @@ import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import * as SecureStore from 'expo-secure-store';
 import { useVault } from '../../hooks/useVault';
 import { useGamification } from '../../hooks/useGamification';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -41,6 +42,7 @@ import {
   dispatchNotification,
   buildManualContext,
 } from '../../lib/notifications';
+import { buildWeeklyRecapText, sendWeeklyRecap } from '../../lib/telegram';
 import { Task, RDV } from '../../lib/types';
 import { formatDateForDisplay, isRdvUpcoming } from '../../lib/parser';
 
@@ -64,6 +66,8 @@ export default function DashboardScreen() {
     tasks,
     photoDates,
     addPhoto,
+    getPhotoUri,
+    memories,
     updateStockQuantity,
     toggleTask,
     addRDV,
@@ -80,6 +84,7 @@ export default function DashboardScreen() {
   const { completeTask } = useGamification({ vault, notifPrefs });
 
   const [refreshing, setRefreshing] = useState(false);
+  const [isSendingRecap, setIsSendingRecap] = useState(false);
   const [rdvEditorVisible, setRdvEditorVisible] = useState(false);
   const [editingRDV, setEditingRDV] = useState<RDV | undefined>(undefined);
   // showPastRdvs removed — full RDV view is now in /(tabs)/rdv
@@ -94,6 +99,52 @@ export default function DashboardScreen() {
     setRefreshing(false);
   }, [refresh]);
 
+  const handleSendRecap = useCallback(async () => {
+    const token = await SecureStore.getItemAsync('telegram_token');
+    const gpChatId = await SecureStore.getItemAsync('telegram_gp_chat_id');
+    if (!token || !gpChatId) {
+      Alert.alert('Configuration manquante', 'Le partage avec les grands-parents n\'est pas encore configuré. Rendez-vous dans Menu > Réglages.');
+      return;
+    }
+    const enfantNames = profiles.filter((p) => p.role === 'enfant').map((p) => p.name);
+    const confirmed = await new Promise<boolean>((resolve) => {
+      Alert.alert(
+        'Envoyer le récap ?',
+        `Un résumé de la semaine avec les photos des enfants va être envoyé aux grands-parents.`,
+        [
+          { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
+          { text: 'Envoyer', onPress: () => resolve(true) },
+        ]
+      );
+    });
+    if (!confirmed) return;
+
+    setIsSendingRecap(true);
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const weekAgoStr = `${weekAgo.getFullYear()}-${String(weekAgo.getMonth() + 1).padStart(2, '0')}-${String(weekAgo.getDate()).padStart(2, '0')}`;
+    const weekMemories = memories.filter((m) => m.date >= weekAgoStr);
+    const weekPhotoUris: string[] = [];
+    for (const name of enfantNames) {
+      const id = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+      const dates = photoDates[id] ?? [];
+      for (const d of dates) {
+        if (d >= weekAgoStr) {
+          const uri = getPhotoUri(name, d);
+          if (uri) weekPhotoUris.push(uri);
+        }
+      }
+    }
+    const recapText = buildWeeklyRecapText({ memories: weekMemories, photoCount: weekPhotoUris.length, enfantNames });
+    try {
+      const ok = await sendWeeklyRecap(token.trim(), gpChatId.trim(), recapText, weekPhotoUris);
+      Alert.alert(ok ? '✅ Recap envoyé !' : '❌ Échec', ok ? `${weekMemories.length} souvenir(s) + ${weekPhotoUris.length} photo(s)` : "Erreur lors de l'envoi.");
+    } catch (e) {
+      Alert.alert('Erreur', String(e));
+    }
+    setIsSendingRecap(false);
+  }, [memories, photoDates, profiles, getPhotoUri]);
+
   const handleTaskToggle = useCallback(
     async (task: Task, completed: boolean) => {
       try {
@@ -104,7 +155,7 @@ export default function DashboardScreen() {
           try {
             const { lootAwarded, pointsGained } = await completeTask(activeProfile, task.text);
             if (lootAwarded) {
-              Alert.alert('🎁 Loot Box !', `+${pointsGained} points ! Tu as gagné une loot box !`);
+              Alert.alert('🎁 Récompense !', `+${pointsGained} points ! Tu as gagné une récompense ! Va dans Menu > Récompenses pour l'ouvrir.`);
             }
           } catch {
             // Gamification error — non-critical
@@ -133,7 +184,7 @@ export default function DashboardScreen() {
       if (ok) {
         Alert.alert('Envoyé !', 'Notification envoyée sur Telegram.');
       } else {
-        Alert.alert('Erreur', 'Impossible d\'envoyer. Vérifiez la configuration Telegram.');
+        Alert.alert('Envoi impossible', 'Vérifiez votre connexion internet ou la configuration dans les réglages.');
       }
     },
     [activeProfile, notifPrefs]
@@ -147,8 +198,8 @@ export default function DashboardScreen() {
             const perm = await ImagePicker.requestCameraPermissionsAsync();
             if (perm.status !== 'granted') {
               Alert.alert(
-                'Permission requise',
-                `L'accès à la caméra est nécessaire.\nStatut: ${perm.status}\n\nAllez dans Réglages > Expo Go > Appareil photo.`
+                'Accès refusé',
+                `L'application n'a pas accès à votre appareil photo.\n\nAllez dans Réglages > Expo Go > Appareil photo pour l'autoriser.`
               );
               return;
             }
@@ -156,8 +207,8 @@ export default function DashboardScreen() {
             const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (perm.status !== 'granted') {
               Alert.alert(
-                'Permission requise',
-                `L'accès à la galerie est nécessaire.\nStatut: ${perm.status}\n\nAllez dans Réglages > Expo Go > Photos.`
+                'Accès refusé',
+                `L'application n'a pas accès à vos photos.\n\nAllez dans Réglages > Expo Go > Photos pour l'autoriser.`
               );
               return;
             }
@@ -178,7 +229,7 @@ export default function DashboardScreen() {
           await addPhoto(enfantName, todayStr, result.assets[0].uri);
         } catch (e: any) {
           const msg = e?.message || String(e);
-          Alert.alert('Erreur photo', `${useCamera ? 'Caméra' : 'Galerie'} — ${enfantName}\n\n${msg}`);
+          Alert.alert('Erreur', `Impossible d'ajouter la photo pour ${enfantName}. Réessayez.`);
         }
       };
 
@@ -236,17 +287,29 @@ export default function DashboardScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: primary }]}>
-        <View>
-          <Text style={styles.greeting}>Bonjour 👋</Text>
+        <View style={styles.headerLeft}>
+          <Text style={styles.greeting}>Bonjour{activeProfile ? ` ${activeProfile.name}` : ''} 👋</Text>
           <Text style={styles.dateText}>{today}</Text>
         </View>
-        <TouchableOpacity
-          onPress={onRefresh}
-          style={styles.refreshBtn}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Text style={styles.refreshIcon}>{isLoading ? '⏳' : '🔄'}</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            onPress={handleSendRecap}
+            style={styles.headerBtn}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            disabled={isSendingRecap}
+          >
+            <Text style={styles.headerBtnIcon}>{isSendingRecap ? '⏳' : '📤'}</Text>
+            <Text style={styles.headerBtnLabel}>Récap GP</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={onRefresh}
+            style={styles.headerBtn}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text style={styles.headerBtnIcon}>{isLoading ? '⏳' : '🔄'}</Text>
+            <Text style={styles.headerBtnLabel}>Actualiser</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -259,8 +322,20 @@ export default function DashboardScreen() {
       >
         {/* Welcome card when no vault configured */}
         {!isLoading && !vaultPath && (
-          <DashboardCard title="Bienvenue" icon="👋" color={primary}>
-            <Text style={styles.debugText}>Aucun vault configuré. Allez dans Réglages pour connecter votre coffre Obsidian.</Text>
+          <DashboardCard title="Bienvenue !" icon="👋" color={primary}>
+            <Text style={styles.welcomeText}>
+              L'application n'est pas encore configurée.
+            </Text>
+            <Text style={styles.welcomeSubText}>
+              Appuyez sur le bouton ci-dessous pour accéder aux réglages et connecter votre espace familial.
+            </Text>
+            <TouchableOpacity
+              style={[styles.welcomeBtn, { backgroundColor: primary }]}
+              onPress={() => router.push('/(tabs)/settings')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.welcomeBtnText}>⚙️  Ouvrir les réglages</Text>
+            </TouchableOpacity>
           </DashboardCard>
         )}
 
@@ -339,7 +414,12 @@ export default function DashboardScreen() {
                 activeOpacity={0.7}
               >
                 <Text style={styles.photoStatusEmoji}>{e.avatar}</Text>
-                <Text style={styles.photoStatusName}>{e.name}</Text>
+                <View style={styles.photoStatusInfo}>
+                  <Text style={styles.photoStatusName}>{e.name}</Text>
+                  {!e.hasPhoto && (
+                    <Text style={styles.photoStatusHint}>Appuyer pour ajouter une photo</Text>
+                  )}
+                </View>
                 <Text style={styles.photoStatusIcon}>
                   {e.hasPhoto ? '✅' : '📷'}
                 </Text>
@@ -494,14 +574,17 @@ export default function DashboardScreen() {
                             Alert.alert('Ajouté !', `${itemName} ajouté aux courses`);
                           }}
                           activeOpacity={0.6}
+                          hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
                         >
                           <Text style={styles.stockCartBtnText}>🛒</Text>
                         </TouchableOpacity>
                       )}
                       <TouchableOpacity
-                        style={styles.stockBtn}
-                        onPress={() => updateStockQuantity(item.lineIndex, item.quantite - 1)}
+                        style={[styles.stockBtn, item.quantite <= 0 && styles.stockBtnDisabled]}
+                        onPress={() => updateStockQuantity(item.lineIndex, Math.max(0, item.quantite - 1))}
                         activeOpacity={0.6}
+                        disabled={item.quantite <= 0}
+                        hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
                       >
                         <Text style={styles.stockBtnText}>−</Text>
                       </TouchableOpacity>
@@ -510,6 +593,7 @@ export default function DashboardScreen() {
                         style={styles.stockBtn}
                         onPress={() => updateStockQuantity(item.lineIndex, item.quantite + 1)}
                         activeOpacity={0.6}
+                        hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
                       >
                         <Text style={styles.stockBtnText}>+</Text>
                       </TouchableOpacity>
@@ -601,28 +685,43 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  headerLeft: {
+    flex: 1,
   },
   greeting: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#C4B5FD',
     fontWeight: '500',
   },
   dateText: {
-    fontSize: 17,
+    fontSize: 15,
     color: '#FFFFFF',
     fontWeight: '700',
     textTransform: 'capitalize',
   },
-  refreshBtn: {
-    width: 40,
-    height: 40,
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  headerBtn: {
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    gap: 1,
   },
-  refreshIcon: {
-    fontSize: 22,
+  headerBtnIcon: {
+    fontSize: 18,
+  },
+  headerBtnLabel: {
+    fontSize: 9,
+    color: '#C4B5FD',
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
   scroll: {
     flex: 1,
@@ -728,14 +827,17 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   stockBtn: {
-    width: 30,
-    height: 30,
+    width: 36,
+    height: 36,
     borderRadius: 8,
     backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#E5E7EB',
+  },
+  stockBtnDisabled: {
+    opacity: 0.3,
   },
   stockBtnText: {
     fontSize: 18,
@@ -762,11 +864,28 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#EF4444',
   },
-  debugText: {
-    fontSize: 11,
+  welcomeText: {
+    fontSize: 15,
+    color: '#374151',
+    lineHeight: 22,
+    marginBottom: 6,
+  },
+  welcomeSubText: {
+    fontSize: 13,
     color: '#6B7280',
-    fontFamily: 'monospace',
-    lineHeight: 16,
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  welcomeBtn: {
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  welcomeBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   activeRewardRow: {
     flexDirection: 'row',
@@ -845,11 +964,18 @@ const styles = StyleSheet.create({
   photoStatusEmoji: {
     fontSize: 20,
   },
-  photoStatusName: {
+  photoStatusInfo: {
     flex: 1,
+    gap: 1,
+  },
+  photoStatusName: {
     fontSize: 14,
     fontWeight: '600',
     color: '#111827',
+  },
+  photoStatusHint: {
+    fontSize: 11,
+    color: '#9CA3AF',
   },
   photoStatusIcon: {
     fontSize: 16,

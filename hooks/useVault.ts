@@ -412,6 +412,18 @@ export function useVault(): VaultState {
 
   const setVaultPath = useCallback(async (path: string) => {
     await SecureStore.setItemAsync(VAULT_PATH_KEY, path);
+    // Reset all state before loading new vault to avoid stale data
+    setProfiles([]);
+    setGamiData(null);
+    setTasks([]);
+    setMenageTasks([]);
+    setCourses([]);
+    setStock([]);
+    setStockSections([]);
+    setMeals([]);
+    setRdvs([]);
+    setPhotoDates({});
+    setMemories([]);
     setVaultPathState(path);
     const vault = new VaultManager(path);
     vaultRef.current = vault;

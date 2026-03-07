@@ -298,7 +298,7 @@ export default function JournalScreen() {
         );
 
         if (sectionIdx === -1) {
-          Alert.alert('Section introuvable', `Section contenant "${sectionKey}" non trouvée.`);
+          Alert.alert('Oups !', `Impossible d'ajouter cette entrée. Le journal du jour semble incomplet. Essayez de le supprimer et de le recréer.`);
           return;
         }
 
@@ -669,7 +669,7 @@ export default function JournalScreen() {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>
               {meta.emoji}{' '}
-              {modal.mode === 'edit' ? `Modifier — ${meta.label}` : `Ajouter — ${meta.label}`}
+              {modal.mode === 'edit' ? `Modifier ${meta.label}` : `Ajouter ${meta.label}`}
             </Text>
 
             {fieldConfigs.map((field) => (
