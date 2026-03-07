@@ -25,6 +25,7 @@ import { fr } from 'date-fns/locale';
 import { useVault } from '../../hooks/useVault';
 import { todayJournalPath, generateJournalTemplate } from '../../lib/parser';
 import { Profile } from '../../lib/types';
+import { useThemeColors } from '../../contexts/ThemeContext';
 
 interface QuickAddModal {
   type: 'Biberon' | 'Couche' | 'Sieste';
@@ -33,6 +34,7 @@ interface QuickAddModal {
 
 export default function JournalScreen() {
   const { vault, profiles } = useVault();
+  const { primary, tint } = useThemeColors();
 
   // Build enfant list dynamically from profiles
   const enfants = useMemo(
@@ -167,7 +169,7 @@ export default function JournalScreen() {
           <ScrollView horizontal showsHorizontalScrollIndicator>
             <View>
               {/* Header */}
-              <View style={[styles.tableRow, styles.tableHeaderRow]}>
+              <View style={[styles.tableRow, { backgroundColor: tint }]}>
                 {cols.map((col, ci) => (
                   <Text key={ci} style={styles.tableHeader}>
                     {col}
@@ -214,11 +216,11 @@ export default function JournalScreen() {
         {enfants.map((enfant) => (
           <TouchableOpacity
             key={enfant.id}
-            style={[styles.tab, selectedEnfant?.id === enfant.id && styles.tabActive]}
+            style={[styles.tab, selectedEnfant?.id === enfant.id && { borderBottomColor: primary }]}
             onPress={() => setSelectedEnfantId(enfant.id)}
           >
             <Text style={styles.tabEmoji}>{enfant.avatar}</Text>
-            <Text style={[styles.tabText, selectedEnfant?.id === enfant.id && styles.tabTextActive]}>
+            <Text style={[styles.tabText, selectedEnfant?.id === enfant.id && { color: primary }]}>
               {enfant.name}
             </Text>
           </TouchableOpacity>
@@ -231,18 +233,18 @@ export default function JournalScreen() {
           {(['Biberon', 'Couche', 'Sieste'] as const).map((type) => (
             <TouchableOpacity
               key={type}
-              style={styles.quickBtn}
+              style={[styles.quickBtn, { backgroundColor: tint }]}
               onPress={() => openQuickAdd(type)}
             >
               <Text style={styles.quickBtnEmoji}>
                 {type === 'Biberon' ? '🍼' : type === 'Couche' ? '🚼' : '😴'}
               </Text>
-              <Text style={styles.quickBtnText}>+ {type}</Text>
+              <Text style={[styles.quickBtnText, { color: primary }]}>+ {type}</Text>
             </TouchableOpacity>
           ))}
-          <TouchableOpacity style={styles.quickBtn} onPress={loadJournal}>
+          <TouchableOpacity style={[styles.quickBtn, { backgroundColor: tint }]} onPress={loadJournal}>
             <Text style={styles.quickBtnEmoji}>🔄</Text>
-            <Text style={styles.quickBtnText}>Rafraîchir</Text>
+            <Text style={[styles.quickBtnText, { color: primary }]}>Rafraîchir</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -259,7 +261,7 @@ export default function JournalScreen() {
               l'alimentation, les couches et le sommeil.
             </Text>
             <TouchableOpacity
-              style={[styles.createBtn, isCreating && styles.createBtnDisabled]}
+              style={[styles.createBtn, { backgroundColor: primary }, isCreating && styles.createBtnDisabled]}
               onPress={createJournal}
               disabled={isCreating}
             >
@@ -322,7 +324,7 @@ export default function JournalScreen() {
               >
                 <Text style={styles.modalCancelText}>Annuler</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.modalConfirm} onPress={confirmQuickAdd}>
+              <TouchableOpacity style={[styles.modalConfirm, { backgroundColor: primary }]} onPress={confirmQuickAdd}>
                 <Text style={styles.modalConfirmText}>Ajouter</Text>
               </TouchableOpacity>
             </View>
@@ -362,10 +364,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
-  tabActive: { borderBottomColor: '#7C3AED' },
   tabEmoji: { fontSize: 18 },
   tabText: { fontSize: 14, fontWeight: '600', color: '#9CA3AF' },
-  tabTextActive: { color: '#7C3AED' },
   quickAddRow: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
@@ -378,13 +378,12 @@ const styles = StyleSheet.create({
   quickBtn: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: '#EDE9FE',
     borderRadius: 10,
     paddingVertical: 8,
     gap: 2,
   },
   quickBtnEmoji: { fontSize: 18 },
-  quickBtnText: { fontSize: 11, fontWeight: '600', color: '#7C3AED' },
+  quickBtnText: { fontSize: 11, fontWeight: '600' },
   scroll: { flex: 1 },
   content: { padding: 16, paddingBottom: 40 },
   createContainer: {
@@ -407,7 +406,6 @@ const styles = StyleSheet.create({
     maxWidth: 300,
   },
   createBtn: {
-    backgroundColor: '#7C3AED',
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 14,
@@ -440,7 +438,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
   },
-  tableHeaderRow: { backgroundColor: '#EDE9FE' },
   tableRowAlt: { backgroundColor: '#FAFAFA' },
   tableHeader: {
     width: COL_WIDTH,
@@ -493,7 +490,6 @@ const styles = StyleSheet.create({
     flex: 2,
     padding: 14,
     borderRadius: 10,
-    backgroundColor: '#7C3AED',
     alignItems: 'center',
   },
   modalConfirmText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },

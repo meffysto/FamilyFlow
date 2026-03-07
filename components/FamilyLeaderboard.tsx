@@ -5,6 +5,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Profile } from '../lib/types';
+import { useThemeColors } from '../contexts/ThemeContext';
 import { levelProgress } from '../lib/gamification';
 import { LOOT_THRESHOLD } from '../constants/rewards';
 
@@ -16,6 +17,7 @@ interface FamilyLeaderboardProps {
 const MEDALS = ['🥇', '🥈', '🥉'];
 
 export function FamilyLeaderboard({ profiles, compact = false }: FamilyLeaderboardProps) {
+  const { primary, tint } = useThemeColors();
   if (profiles.length === 0) {
     return (
       <Text style={styles.empty}>Aucun profil configuré</Text>
@@ -38,7 +40,7 @@ export function FamilyLeaderboard({ profiles, compact = false }: FamilyLeaderboa
             <View style={styles.info}>
               <View style={styles.nameRow}>
                 <Text style={styles.name}>{profile.name}</Text>
-                <Text style={styles.level}>Niv. {profile.level}</Text>
+                <Text style={[styles.level, { color: primary, backgroundColor: tint }]}>Niv. {profile.level}</Text>
                 {profile.streak > 1 && (
                   <Text style={styles.streak}>🔥 {profile.streak}j</Text>
                 )}
@@ -53,7 +55,7 @@ export function FamilyLeaderboard({ profiles, compact = false }: FamilyLeaderboa
                   <View style={styles.barRow}>
                     <Text style={styles.barLabel}>XP</Text>
                     <View style={styles.barTrack}>
-                      <View style={[styles.barFill, styles.xpFill, { width: `${Math.round(progress * 100)}%` as any }]} />
+                      <View style={[styles.barFill, { backgroundColor: primary, width: `${Math.round(progress * 100)}%` as any }]} />
                     </View>
                     <Text style={styles.barValue}>{profile.points} pts</Text>
                   </View>
@@ -120,9 +122,7 @@ const styles = StyleSheet.create({
   },
   level: {
     fontSize: 12,
-    color: '#7C3AED',
     fontWeight: '600',
-    backgroundColor: '#EDE9FE',
     paddingHorizontal: 6,
     paddingVertical: 1,
     borderRadius: 4,
@@ -162,9 +162,7 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 3,
   },
-  xpFill: {
-    backgroundColor: '#7C3AED',
-  },
+  // xpFill color moved to inline style (dynamic theme)
   lootFill: {
     backgroundColor: '#F59E0B',
   },

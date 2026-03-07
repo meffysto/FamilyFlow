@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Task } from '../lib/types';
+import { useThemeColors } from '../contexts/ThemeContext';
 
 interface TaskCardProps {
   task: Task;
@@ -46,6 +47,7 @@ export const TaskCard = React.memo(function TaskCard({
   onToggle,
   showSource = false,
 }: TaskCardProps) {
+  const { primary, tint } = useThemeColors();
   const handleToggle = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onToggle(task, !task.completed);
@@ -65,7 +67,7 @@ export const TaskCard = React.memo(function TaskCard({
         accessibilityRole="checkbox"
         accessibilityState={{ checked: task.completed }}
       >
-        <View style={[styles.checkboxInner, task.completed && styles.checkboxChecked]}>
+        <View style={[styles.checkboxInner, task.completed && { backgroundColor: primary, borderColor: primary }]}>
           {task.completed && <Text style={styles.checkmark}>✓</Text>}
         </View>
       </TouchableOpacity>
@@ -89,8 +91,8 @@ export const TaskCard = React.memo(function TaskCard({
             </View>
           )}
           {task.section && !showSource && (
-            <View style={styles.sectionBadge}>
-              <Text style={styles.sectionLabel}>{task.section}</Text>
+            <View style={[styles.sectionBadge, { backgroundColor: tint }]}>
+              <Text style={[styles.sectionLabel, { color: primary }]}>{task.section}</Text>
             </View>
           )}
           {task.dueDate && !task.completed && (
@@ -163,10 +165,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
   },
-  checkboxChecked: {
-    backgroundColor: '#7C3AED',
-    borderColor: '#7C3AED',
-  },
+  // checkboxChecked colors moved to inline styles (dynamic theme)
   checkmark: {
     color: '#FFFFFF',
     fontSize: 13,
@@ -203,7 +202,6 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   sectionBadge: {
-    backgroundColor: '#EDE9FE',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
@@ -215,7 +213,6 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: 12,
-    color: '#7C3AED',
     fontWeight: '600',
   },
   dueDate: {

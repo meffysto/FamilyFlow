@@ -19,6 +19,7 @@ import {
   Modal,
 } from 'react-native';
 import { NotificationConfig, NotificationPreferences, Profile } from '../lib/types';
+import { useThemeColors } from '../contexts/ThemeContext';
 import { createCustomNotification } from '../lib/notifications';
 import { NotificationEditor } from './NotificationEditor';
 
@@ -30,6 +31,7 @@ interface Props {
 }
 
 export function NotificationSettings({ prefs, activeProfile, onSave, onClose }: Props) {
+  const { primary, tint } = useThemeColors();
   const [editingNotif, setEditingNotif] = useState<NotificationConfig | null>(null);
   const [showNewCustom, setShowNewCustom] = useState(false);
   const [newLabel, setNewLabel] = useState('');
@@ -143,7 +145,7 @@ export function NotificationSettings({ prefs, activeProfile, onSave, onClose }: 
             <Switch
               value={notif.enabled}
               onValueChange={(val) => handleToggle(notif.id, val)}
-              trackColor={{ true: '#7C3AED', false: '#D1D5DB' }}
+              trackColor={{ true: primary, false: '#D1D5DB' }}
               thumbColor="#FFFFFF"
             />
           </TouchableOpacity>
@@ -166,7 +168,7 @@ export function NotificationSettings({ prefs, activeProfile, onSave, onClose }: 
               <Switch
                 value={notif.enabled}
                 onValueChange={(val) => handleToggle(notif.id, val)}
-                trackColor={{ true: '#7C3AED', false: '#D1D5DB' }}
+                trackColor={{ true: primary, false: '#D1D5DB' }}
                 thumbColor="#FFFFFF"
               />
             </TouchableOpacity>
@@ -180,10 +182,10 @@ export function NotificationSettings({ prefs, activeProfile, onSave, onClose }: 
 
       {/* Add custom button */}
       <TouchableOpacity
-        style={styles.addBtn}
+        style={[styles.addBtn, { backgroundColor: tint, borderColor: primary }]}
         onPress={() => setShowNewCustom(true)}
       >
-        <Text style={styles.addBtnText}>+ Ajouter une notification</Text>
+        <Text style={[styles.addBtnText, { color: primary }]}>+ Ajouter une notification</Text>
       </TouchableOpacity>
 
       {/* New custom modal */}
@@ -226,7 +228,7 @@ export function NotificationSettings({ prefs, activeProfile, onSave, onClose }: 
                 <Text style={styles.modalCancelText}>Annuler</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.modalCreateBtn}
+                style={[styles.modalCreateBtn, { backgroundColor: primary }]}
                 onPress={handleCreateCustom}
               >
                 <Text style={styles.modalCreateText}>Créer</Text>
@@ -292,18 +294,15 @@ const styles = StyleSheet.create({
   },
   emptyText: { fontSize: 14, color: '#9CA3AF' },
   addBtn: {
-    backgroundColor: '#EDE9FE',
     borderRadius: 12,
     padding: 14,
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#7C3AED',
     borderStyle: 'dashed',
   },
   addBtnText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#7C3AED',
   },
   // New custom modal
   modalOverlay: {
@@ -346,7 +345,6 @@ const styles = StyleSheet.create({
     flex: 2,
     padding: 12,
     borderRadius: 10,
-    backgroundColor: '#7C3AED',
     alignItems: 'center',
   },
   modalCreateText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },

@@ -112,6 +112,7 @@ export interface CourseItem {
   text: string;
   completed: boolean;
   lineIndex: number;
+  section?: string;     // section header (e.g. "🥩 Frais")
 }
 
 export interface MealItem {
@@ -136,6 +137,7 @@ export interface StockItem {
   quantite: number;
   seuil: number;
   qteAchat?: number;
+  section?: string;   // e.g. "Couches", "Hygiène & soins"
 }
 
 export type LootRarity = 'commun' | 'rare' | 'épique' | 'légendaire' | 'mythique';

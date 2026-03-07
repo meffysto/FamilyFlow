@@ -23,6 +23,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { NotificationConfig, Profile } from '../lib/types';
+import { useThemeColors } from '../contexts/ThemeContext';
 import { renderTemplate, dispatchNotification, buildManualContext } from '../lib/notifications';
 
 interface Props {
@@ -34,6 +35,7 @@ interface Props {
 }
 
 export function NotificationEditor({ config, activeProfile, onSave, onDelete, onClose }: Props) {
+  const { primary, tint } = useThemeColors();
   const [enabled, setEnabled] = useState(config.enabled);
   const [template, setTemplate] = useState(config.template);
   const [label, setLabel] = useState(config.label);
@@ -133,7 +135,7 @@ export function NotificationEditor({ config, activeProfile, onSave, onDelete, on
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onClose}>
-          <Text style={styles.backBtn}>← Retour</Text>
+          <Text style={[styles.backBtn, { color: primary }]}>← Retour</Text>
         </TouchableOpacity>
         <Text style={styles.title}>{config.emoji} {config.label}</Text>
       </View>
@@ -144,7 +146,7 @@ export function NotificationEditor({ config, activeProfile, onSave, onDelete, on
         <Switch
           value={enabled}
           onValueChange={setEnabled}
-          trackColor={{ true: '#7C3AED', false: '#D1D5DB' }}
+          trackColor={{ true: primary, false: '#D1D5DB' }}
           thumbColor="#FFFFFF"
         />
       </View>
@@ -193,10 +195,10 @@ export function NotificationEditor({ config, activeProfile, onSave, onDelete, on
         {config.availableVariables.map((v) => (
           <TouchableOpacity
             key={v.key}
-            style={styles.varChip}
+            style={[styles.varChip, { backgroundColor: tint }]}
             onPress={() => handleInsertVariable(v.key)}
           >
-            <Text style={styles.varKey}>{`{{${v.key}}}`}</Text>
+            <Text style={[styles.varKey, { color: primary }]}>{`{{${v.key}}}`}</Text>
             <Text style={styles.varLabel}>{v.label}</Text>
           </TouchableOpacity>
         ))}
@@ -215,7 +217,7 @@ export function NotificationEditor({ config, activeProfile, onSave, onDelete, on
             <Text style={styles.resetBtnText}>Réinitialiser</Text>
           </TouchableOpacity>
         )}
-        <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
+        <TouchableOpacity style={[styles.saveBtn, { backgroundColor: primary }]} onPress={handleSave}>
           <Text style={styles.saveBtnText}>Sauvegarder</Text>
         </TouchableOpacity>
       </View>
@@ -247,7 +249,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
   content: { padding: 20, paddingBottom: 40, gap: 16 },
   header: { gap: 8 },
-  backBtn: { fontSize: 15, color: '#7C3AED', fontWeight: '600' },
+  backBtn: { fontSize: 15, fontWeight: '600' },
   title: { fontSize: 20, fontWeight: '800', color: '#111827' },
   toggleRow: {
     flexDirection: 'row',
@@ -293,13 +295,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   varChip: {
-    backgroundColor: '#EDE9FE',
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 6,
     gap: 2,
   },
-  varKey: { fontSize: 11, fontWeight: '700', color: '#7C3AED', fontFamily: 'Menlo' },
+  varKey: { fontSize: 11, fontWeight: '700', fontFamily: 'Menlo' },
   varLabel: { fontSize: 10, color: '#6B7280' },
   previewBox: {
     backgroundColor: '#F3F4F6',
@@ -330,7 +331,6 @@ const styles = StyleSheet.create({
     flex: 2,
     padding: 14,
     borderRadius: 12,
-    backgroundColor: '#7C3AED',
     alignItems: 'center',
   },
   saveBtnText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },

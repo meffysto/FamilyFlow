@@ -1,10 +1,12 @@
 /**
- * (tabs)/_layout.tsx — Tab bar configuration + profile picker modal
+ * (tabs)/_layout.tsx — Tab bar configuration + profile picker modal + ThemeProvider
  */
 
 import { Tabs } from 'expo-router';
 import { View, Text, Modal, StyleSheet, TouchableOpacity } from 'react-native';
 import { useVault } from '../../hooks/useVault';
+import { getTheme } from '../../constants/themes';
+import { ThemeProvider } from '../../contexts/ThemeContext';
 
 function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
   return <Text style={{ fontSize: focused ? 24 : 20, opacity: focused ? 1 : 0.6 }}>{emoji}</Text>;
@@ -12,12 +14,13 @@ function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
 
 export default function TabsLayout() {
   const { profiles, activeProfile, setActiveProfile } = useVault();
+  const theme = getTheme(activeProfile?.theme);
 
   // Show profile picker when profiles are loaded but none is selected
   const showPicker = profiles.length > 0 && !activeProfile;
 
   return (
-    <>
+    <ThemeProvider themeId={activeProfile?.theme}>
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -28,7 +31,7 @@ export default function TabsLayout() {
             paddingBottom: 4,
             height: 60,
           },
-          tabBarActiveTintColor: '#7C3AED',
+          tabBarActiveTintColor: theme.primary,
           tabBarInactiveTintColor: '#9CA3AF',
           tabBarLabelStyle: {
             fontSize: 11,
@@ -114,7 +117,7 @@ export default function TabsLayout() {
           </View>
         </View>
       </Modal>
-    </>
+    </ThemeProvider>
   );
 }
 

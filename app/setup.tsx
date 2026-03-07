@@ -26,6 +26,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { VaultPicker } from '../components/VaultPicker';
 import { useVault } from '../hooks/useVault';
 import { VaultManager } from '../lib/vault';
+import { useThemeColors } from '../contexts/ThemeContext';
 
 const PARENT_AVATARS = ['👨', '👩', '👨‍💻', '👩‍💻', '🧔', '👱‍♀️', '🧑', '👤'];
 const CHILD_AVATARS = ['👶', '🧒', '👦', '👧', '🍼', '🐣', '🎒', '👼'];
@@ -45,6 +46,7 @@ interface ChildData {
 export default function SetupScreen() {
   const router = useRouter();
   const { setVaultPath } = useVault();
+  const { primary, tint } = useThemeColors();
 
   const [step, setStep] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
@@ -156,7 +158,7 @@ export default function SetupScreen() {
         return (
           <View style={s.stepContent}>
             <Text style={s.logo}>🏠</Text>
-            <Text style={s.appName}>Family Vault</Text>
+            <Text style={[s.appName, { color: primary }]}>Family Vault</Text>
             <Text style={s.tagline}>Votre famille, organisée ensemble</Text>
 
             <View style={s.features}>
@@ -188,10 +190,10 @@ export default function SetupScreen() {
               {[1, 2].map((n) => (
                 <TouchableOpacity
                   key={n}
-                  style={[s.countBtn, parentCount === n && s.countBtnActive]}
+                  style={[s.countBtn, parentCount === n && { backgroundColor: tint, borderColor: primary }]}
                   onPress={() => updateParentCount(n)}
                 >
-                  <Text style={[s.countBtnText, parentCount === n && s.countBtnTextActive]}>
+                  <Text style={[s.countBtnText, parentCount === n && { color: primary }]}>
                     {n} parent{n > 1 ? 's' : ''}
                   </Text>
                 </TouchableOpacity>
@@ -214,7 +216,7 @@ export default function SetupScreen() {
                   {PARENT_AVATARS.map((emoji) => (
                     <TouchableOpacity
                       key={emoji}
-                      style={[s.avatarBtn, parent.avatar === emoji && s.avatarBtnActive]}
+                      style={[s.avatarBtn, parent.avatar === emoji && { backgroundColor: tint, borderColor: primary }]}
                       onPress={() => updateParent(i, 'avatar', emoji)}
                     >
                       <Text style={s.avatarEmoji}>{emoji}</Text>
@@ -236,10 +238,10 @@ export default function SetupScreen() {
               {[0, 1, 2, 3, 4].map((n) => (
                 <TouchableOpacity
                   key={n}
-                  style={[s.countBtn, childCount === n && s.countBtnActive]}
+                  style={[s.countBtn, childCount === n && { backgroundColor: tint, borderColor: primary }]}
                   onPress={() => updateChildCount(n)}
                 >
-                  <Text style={[s.countBtnText, childCount === n && s.countBtnTextActive]}>
+                  <Text style={[s.countBtnText, childCount === n && { color: primary }]}>
                     {n}
                   </Text>
                 </TouchableOpacity>
@@ -274,7 +276,7 @@ export default function SetupScreen() {
                   {CHILD_AVATARS.map((emoji) => (
                     <TouchableOpacity
                       key={emoji}
-                      style={[s.avatarBtn, child.avatar === emoji && s.avatarBtnActive]}
+                      style={[s.avatarBtn, child.avatar === emoji && { backgroundColor: tint, borderColor: primary }]}
                       onPress={() => updateChild(i, 'avatar', emoji)}
                     >
                       <Text style={s.avatarEmoji}>{emoji}</Text>
@@ -349,7 +351,7 @@ export default function SetupScreen() {
               <Text style={s.recapPath}>{vaultPath}</Text>
             </View>
 
-            <View style={s.createInfo}>
+            <View style={[s.createInfo, { backgroundColor: tint }]}>
               <Text style={s.createInfoTitle}>Fichiers qui seront créés :</Text>
               <Text style={s.createInfoText}>
                 📋 Tâches récurrentes par enfant{'\n'}
@@ -376,7 +378,7 @@ export default function SetupScreen() {
         {/* Progress bar */}
         <View style={s.progressContainer}>
           <View style={s.progressBar}>
-            <View style={[s.progressFill, { width: `${(step / TOTAL_STEPS) * 100}%` }]} />
+            <View style={[s.progressFill, { width: `${(step / TOTAL_STEPS) * 100}%`, backgroundColor: primary }]} />
           </View>
           <Text style={s.progressText}>Étape {step}/{TOTAL_STEPS}</Text>
         </View>
@@ -403,7 +405,7 @@ export default function SetupScreen() {
 
           {step < TOTAL_STEPS ? (
             <TouchableOpacity
-              style={[s.navNext, !canGoNext() && s.navDisabled]}
+              style={[s.navNext, { backgroundColor: primary }, !canGoNext() && s.navDisabled]}
               onPress={goNext}
               disabled={!canGoNext()}
             >
@@ -413,7 +415,7 @@ export default function SetupScreen() {
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
-              style={[s.navCreate, isCreating && s.navDisabled]}
+              style={[s.navCreate, { backgroundColor: primary }, isCreating && s.navDisabled]}
               onPress={handleCreate}
               disabled={isCreating}
             >
@@ -454,7 +456,6 @@ const s = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#7C3AED',
     borderRadius: 3,
   },
   progressText: { fontSize: 12, color: '#9CA3AF', fontWeight: '600' },
@@ -464,7 +465,7 @@ const s = StyleSheet.create({
 
   // Step 1 — Welcome
   logo: { fontSize: 64, textAlign: 'center' },
-  appName: { fontSize: 32, fontWeight: '800', color: '#7C3AED', textAlign: 'center' },
+  appName: { fontSize: 32, fontWeight: '800', textAlign: 'center' },
   tagline: { fontSize: 16, color: '#6B7280', textAlign: 'center', marginBottom: 8 },
   features: { gap: 10 },
   feature: {
@@ -501,9 +502,7 @@ const s = StyleSheet.create({
     minWidth: 54,
     alignItems: 'center',
   },
-  countBtnActive: { backgroundColor: '#EDE9FE', borderColor: '#7C3AED' },
   countBtnText: { fontSize: 15, fontWeight: '600', color: '#6B7280' },
-  countBtnTextActive: { color: '#7C3AED' },
 
   // Profile form
   profileForm: {
@@ -544,7 +543,6 @@ const s = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  avatarBtnActive: { backgroundColor: '#EDE9FE', borderColor: '#7C3AED' },
   avatarEmoji: { fontSize: 24 },
 
   // No child hint
@@ -577,7 +575,6 @@ const s = StyleSheet.create({
 
   // Create info
   createInfo: {
-    backgroundColor: '#EDE9FE',
     borderRadius: 12,
     padding: 16,
     gap: 6,
@@ -600,14 +597,12 @@ const s = StyleSheet.create({
   navBack: { paddingVertical: 12, paddingHorizontal: 16 },
   navBackText: { fontSize: 15, fontWeight: '600', color: '#6B7280' },
   navNext: {
-    backgroundColor: '#7C3AED',
     paddingVertical: 14,
     paddingHorizontal: 28,
     borderRadius: 14,
   },
   navNextText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
   navCreate: {
-    backgroundColor: '#7C3AED',
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 14,

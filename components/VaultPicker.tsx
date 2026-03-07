@@ -20,6 +20,7 @@ import {
 import * as FileSystem from 'expo-file-system/legacy';
 import * as DocumentPicker from 'expo-document-picker';
 import { VaultManager } from '../lib/vault';
+import { useThemeColors } from '../contexts/ThemeContext';
 
 interface VaultPickerProps {
   currentPath?: string | null;
@@ -28,6 +29,7 @@ interface VaultPickerProps {
 }
 
 export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPickerProps) {
+  const { primary, tint } = useThemeColors();
   const [path, setPath] = useState(currentPath ?? '');
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -194,17 +196,17 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
 
       {/* Sync from Mac — download vault via HTTP */}
       <TouchableOpacity
-        style={styles.syncBtn}
+        style={[styles.syncBtn, { backgroundColor: tint }]}
         onPress={syncFromMac}
         disabled={!!syncProgress}
       >
-        <Text style={styles.syncBtnText}>💻 Sync depuis le Mac</Text>
+        <Text style={[styles.syncBtnText, { color: primary }]}>💻 Sync depuis le Mac</Text>
         <Text style={styles.syncBtnSub}>Télécharge le vault via Wi-Fi</Text>
       </TouchableOpacity>
 
       {!!syncProgress && (
         <View style={styles.progressBox}>
-          <ActivityIndicator size="small" color="#7C3AED" />
+          <ActivityIndicator size="small" color={primary} />
           <Text style={styles.progressText}>{syncProgress}</Text>
         </View>
       )}
@@ -218,10 +220,10 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
       {/* Quick fill for coffre — Mac */}
       {Platform.OS !== 'ios' && (
         <TouchableOpacity
-          style={styles.quickFillBtn}
+          style={[styles.quickFillBtn, { backgroundColor: tint }]}
           onPress={() => { setPath(COFFRE_DEFAULT); setError(null); }}
         >
-          <Text style={styles.quickFillText}>📁 Utiliser le vault coffre</Text>
+          <Text style={[styles.quickFillText, { color: primary }]}>📁 Utiliser le vault coffre</Text>
           <Text style={styles.quickFillSub}>{COFFRE_DEFAULT}</Text>
         </TouchableOpacity>
       )}
@@ -241,7 +243,7 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
         )}
 
         <TouchableOpacity
-          style={[styles.confirmBtn, isValidating && styles.confirmBtnDisabled]}
+          style={[styles.confirmBtn, { backgroundColor: primary }, isValidating && styles.confirmBtnDisabled]}
           onPress={() => validate(path)}
           disabled={isValidating}
         >
@@ -285,7 +287,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   syncBtn: {
-    backgroundColor: '#EDE9FE',
     borderRadius: 10,
     padding: 14,
     gap: 2,
@@ -293,7 +294,6 @@ const styles = StyleSheet.create({
   syncBtnText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#7C3AED',
   },
   syncBtnSub: {
     fontSize: 11,
@@ -328,7 +328,6 @@ const styles = StyleSheet.create({
     color: '#3B82F6',
   },
   quickFillBtn: {
-    backgroundColor: '#EDE9FE',
     borderRadius: 10,
     padding: 12,
     gap: 2,
@@ -336,7 +335,6 @@ const styles = StyleSheet.create({
   quickFillText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#7C3AED',
   },
   quickFillSub: {
     fontSize: 11,
@@ -392,7 +390,6 @@ const styles = StyleSheet.create({
     flex: 2,
     padding: 14,
     borderRadius: 10,
-    backgroundColor: '#7C3AED',
     alignItems: 'center',
   },
   confirmBtnDisabled: {

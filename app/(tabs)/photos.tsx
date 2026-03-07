@@ -36,6 +36,7 @@ import {
 } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useVault } from '../../hooks/useVault';
+import { useThemeColors } from '../../contexts/ThemeContext';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CALENDAR_PADDING = 16;
@@ -46,6 +47,7 @@ const WEEKDAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
 export default function PhotosScreen() {
   const { profiles, photoDates, addPhoto, getPhotoUri, refresh, isLoading } = useVault();
+  const { primary, tint } = useThemeColors();
   const [refreshing, setRefreshing] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedEnfantIdx, setSelectedEnfantIdx] = useState(0);
@@ -189,12 +191,19 @@ export default function PhotosScreen() {
           {enfants.map((e, idx) => (
             <TouchableOpacity
               key={e.id}
-              style={[styles.tab, idx === selectedEnfantIdx && styles.tabActive]}
+              style={[
+                styles.tab,
+                idx === selectedEnfantIdx && styles.tabActive,
+                idx === selectedEnfantIdx && { backgroundColor: tint },
+              ]}
               onPress={() => setSelectedEnfantIdx(idx)}
               activeOpacity={0.7}
             >
               <Text style={styles.tabEmoji}>{e.avatar}</Text>
-              <Text style={[styles.tabLabel, idx === selectedEnfantIdx && styles.tabLabelActive]}>
+              <Text style={[
+                styles.tabLabel,
+                idx === selectedEnfantIdx && { color: primary },
+              ]}>
                 {e.name}
               </Text>
             </TouchableOpacity>
@@ -207,7 +216,7 @@ export default function PhotosScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#7C3AED" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
         }
       >
         {/* Month navigation */}
@@ -216,14 +225,14 @@ export default function PhotosScreen() {
             style={styles.monthArrow}
             onPress={() => setCurrentMonth((m) => subMonths(m, 1))}
           >
-            <Text style={styles.monthArrowText}>‹</Text>
+            <Text style={[styles.monthArrowText, { color: primary }]}>‹</Text>
           </TouchableOpacity>
           <Text style={styles.monthLabel}>{monthLabelCapitalized}</Text>
           <TouchableOpacity
             style={styles.monthArrow}
             onPress={() => setCurrentMonth((m) => addMonths(m, 1))}
           >
-            <Text style={styles.monthArrowText}>›</Text>
+            <Text style={[styles.monthArrowText, { color: primary }]}>›</Text>
           </TouchableOpacity>
         </View>
 
@@ -260,6 +269,7 @@ export default function PhotosScreen() {
                 style={[
                   styles.dayCell,
                   today && styles.dayCellToday,
+                  today && { borderColor: primary },
                   future && styles.dayCellFuture,
                 ]}
                 onPress={() => onDayPress(date)}
@@ -276,7 +286,7 @@ export default function PhotosScreen() {
                 <Text
                   style={[
                     styles.dayNum,
-                    today && styles.dayNumToday,
+                    today && { color: primary, fontWeight: '800' },
                     future && styles.dayNumFuture,
                     hasPhoto && styles.dayNumWithPhoto,
                   ]}
@@ -292,7 +302,7 @@ export default function PhotosScreen() {
       {/* Floating add button */}
       {selectedEnfant && (
         <TouchableOpacity
-          style={styles.fab}
+          style={[styles.fab, { backgroundColor: primary, shadowColor: primary }]}
           onPress={() => pickPhoto(new Date())}
           activeOpacity={0.8}
         >
@@ -388,7 +398,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
   },
   tabActive: {
-    backgroundColor: '#EDE9FE',
+    // Colors applied inline via dynamic theme
   },
   tabEmoji: {
     fontSize: 16,
@@ -397,9 +407,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#6B7280',
-  },
-  tabLabelActive: {
-    color: '#7C3AED',
   },
   scroll: {
     flex: 1,
@@ -431,7 +438,6 @@ const styles = StyleSheet.create({
   monthArrowText: {
     fontSize: 24,
     fontWeight: '300',
-    color: '#7C3AED',
   },
   monthLabel: {
     fontSize: 18,
@@ -470,7 +476,6 @@ const styles = StyleSheet.create({
   },
   dayCellToday: {
     borderWidth: 2,
-    borderColor: '#7C3AED',
   },
   dayCellFuture: {
     backgroundColor: '#F9FAFB',
@@ -484,10 +489,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#374151',
-  },
-  dayNumToday: {
-    color: '#7C3AED',
-    fontWeight: '800',
   },
   dayNumFuture: {
     color: '#D1D5DB',
@@ -507,10 +508,8 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#7C3AED',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#7C3AED',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

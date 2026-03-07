@@ -24,6 +24,7 @@ import {
   ActiveReward,
   RewardType,
   JournalEntry,
+  StockItem,
 } from './types';
 import { VALID_THEMES, type ProfileTheme } from '../constants/themes';
 
@@ -182,9 +183,17 @@ export function parseRDV(relativePath: string, content: string): RDV | null {
 export function parseCourses(content: string, relativePath: string): CourseItem[] {
   const lines = content.split('\n');
   const items: CourseItem[] = [];
+  let currentSection: string | undefined;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
+
+    // Track section headers (## 🥩 Frais, etc.)
+    if (line.startsWith('## ')) {
+      currentSection = line.slice(3).trim();
+      continue;
+    }
+
     const match = line.match(/^(\s*)-\s+\[([ xX])\]\s+(.+)$/);
     if (!match) continue;
     const text = match[3].trim();
@@ -195,6 +204,7 @@ export function parseCourses(content: string, relativePath: string): CourseItem[
       text,
       completed: match[2].toLowerCase() === 'x',
       lineIndex: i,
+      section: currentSection,
     });
   }
 
@@ -556,4 +566,66 @@ tags:
 | ----- | ---------- | ---- | ----- |
 |       | | | |
 `;
+}
+
+// ─── Stock ──────────────────────────────────────────────────────────────────
+
+/**
+ * Parse Stock & fournitures.md
+ *
+ * Reads markdown tables with columns:
+ * | Produit | Détail/Taille | Paquets restants | Seuil | Qté/achat |
+ *
+ * Skips "Matériel" section (no numeric quantity) and "À racheter" section.
+ */
+const STOCK_SKIP_SECTIONS = new Set(['Matériel', 'À racheter bientôt']);
+
+export function parseStock(content: string): StockItem[] {
+  const lines = content.split('\n');
+  const items: StockItem[] = [];
+  let currentSection: string | undefined;
+  let skipSection = false;
+
+  for (const line of lines) {
+    // Track section headers
+    if (line.startsWith('## ')) {
+      currentSection = line.slice(3).trim();
+      skipSection = STOCK_SKIP_SECTIONS.has(currentSection);
+      continue;
+    }
+
+    if (skipSection) continue;
+
+    // Match table rows: | col1 | col2 | col3 | col4 | col5 |
+    if (!line.startsWith('|')) continue;
+
+    const cells = line.split('|').map((c) => c.trim()).filter((c) => c.length > 0);
+    if (cells.length < 4) continue;
+
+    // Skip header and separator rows
+    if (cells[0] === 'Produit' || cells[0].startsWith('---')) continue;
+
+    const produit = cells[0].trim();
+    if (!produit) continue;
+
+    const detail = cells[1]?.trim() || undefined;
+    const quantite = parseInt(cells[2], 10);
+    const seuil = parseInt(cells[3], 10);
+
+    // Skip rows where quantite or seuil is not a number
+    if (isNaN(quantite) || isNaN(seuil)) continue;
+
+    const qteAchat = cells[4] ? parseInt(cells[4], 10) : undefined;
+
+    items.push({
+      produit,
+      detail: detail || undefined,
+      quantite,
+      seuil,
+      qteAchat: isNaN(qteAchat as number) ? undefined : qteAchat,
+      section: currentSection,
+    });
+  }
+
+  return items;
 }

@@ -26,13 +26,14 @@ import {
   parseCourses,
   parseMeals,
   parseRDV,
+  parseStock,
   mergeProfiles,
   parseGamification,
   parseFamille,
   serializeGamification,
 } from '../lib/parser';
 import { processActiveRewards } from '../lib/gamification';
-import { Task, RDV, CourseItem, MealItem, Profile, GamificationData, NotificationPreferences, ProfileTheme } from '../lib/types';
+import { Task, RDV, CourseItem, MealItem, StockItem, Profile, GamificationData, NotificationPreferences, ProfileTheme } from '../lib/types';
 import {
   parseNotificationPrefs,
   serializeNotificationPrefs,
@@ -49,6 +50,7 @@ export interface VaultState {
   tasks: Task[];          // all tasks from all tâches récurrentes files
   menageTasks: Task[];    // today's ménage tasks
   courses: CourseItem[];  // shopping list
+  stock: StockItem[];     // baby stock levels
   meals: MealItem[];      // weekly meal plan
   rdvs: RDV[];            // upcoming appointments
   profiles: Profile[];    // family profiles with gamification data
@@ -65,6 +67,8 @@ export interface VaultState {
   addPhoto: (enfantName: string, date: string, imageUri: string) => Promise<void>;
   getPhotoUri: (enfantName: string, date: string) => string | null;
   updateProfileTheme: (profileId: string, theme: ProfileTheme) => Promise<void>;
+  addCourseItem: (text: string, section?: string) => Promise<void>;
+  removeCourseItem: (lineIndex: number) => Promise<void>;
 }
 
 // Static task files (non-enfant)
@@ -110,6 +114,7 @@ const MEALS_TEMPLATE = `# Repas de la semaine
 - Déjeuner:
 - Dîner:
 `;
+const STOCK_FILE = '01 - Enfants/Commun/Stock & fournitures.md';
 const PHOTOS_DIR = '07 - Photos';
 const NOTIF_FILE = 'notifications.md';
 
@@ -120,6 +125,7 @@ export function useVault(): VaultState {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [menageTasks, setMenageTasks] = useState<Task[]>([]);
   const [courses, setCourses] = useState<CourseItem[]>([]);
+  const [stock, setStock] = useState<StockItem[]>([]);
   const [meals, setMeals] = useState<MealItem[]>([]);
   const [rdvs, setRdvs] = useState<RDV[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -233,6 +239,15 @@ export function useVault(): VaultState {
       } catch (e) {
         debugErrors.push(`courses: ${e}`);
         setCourses([]);
+      }
+
+      // Load stock
+      try {
+        const stockContent = await vault.readFile(STOCK_FILE);
+        setStock(parseStock(stockContent));
+      } catch (e) {
+        debugErrors.push(`stock: ${e}`);
+        setStock([]);
       }
 
       // Load meals (auto-create template if missing)
@@ -424,6 +439,27 @@ export function useVault(): VaultState {
     }
   }, []);
 
+  const addCourseItem = useCallback(async (text: string, section?: string) => {
+    if (!vaultRef.current) return;
+    await vaultRef.current.appendTask(COURSES_FILE, section ?? null, text);
+    await loadVaultData(vaultRef.current);
+  }, [loadVaultData]);
+
+  const removeCourseItem = useCallback(async (lineIndex: number) => {
+    if (!vaultRef.current) return;
+    try {
+      const content = await vaultRef.current.readFile(COURSES_FILE);
+      const lines = content.split('\n');
+      if (lineIndex >= 0 && lineIndex < lines.length) {
+        lines.splice(lineIndex, 1);
+        await vaultRef.current.writeFile(COURSES_FILE, lines.join('\n'));
+        await loadVaultData(vaultRef.current);
+      }
+    } catch (e) {
+      throw new Error(`removeCourseItem: ${e}`);
+    }
+  }, [loadVaultData]);
+
   // Resolve active profile from ID → Profile object
   const activeProfile = profiles.find((p) => p.id === activeProfileId) ?? null;
 
@@ -434,6 +470,7 @@ export function useVault(): VaultState {
     tasks,
     menageTasks,
     courses,
+    stock,
     meals,
     rdvs,
     profiles,
@@ -450,5 +487,7 @@ export function useVault(): VaultState {
     addPhoto,
     getPhotoUri,
     updateProfileTheme,
+    addCourseItem,
+    removeCourseItem,
   };
 }

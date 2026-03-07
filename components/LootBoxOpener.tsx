@@ -24,6 +24,7 @@ import * as Haptics from 'expo-haptics';
 import { LootBox, ProfileTheme } from '../lib/types';
 import { RARITY_COLORS, RARITY_LABELS, RARITY_EMOJIS } from '../constants/rewards';
 import { getTheme } from '../constants/themes';
+import { useThemeColors } from '../contexts/ThemeContext';
 
 // react-native-confetti-cannon
 let ConfettiCannon: any = null;
@@ -54,6 +55,7 @@ export function LootBoxOpener({
   onOpen,
   onClose,
 }: LootBoxOpenerProps) {
+  const { primary } = useThemeColors();
   const theme = getTheme(profileTheme);
   const [phase, setPhase] = useState<Phase>('idle');
   const [result, setResult] = useState<LootBox | null>(null);
@@ -176,7 +178,7 @@ export function LootBoxOpener({
     outputRange: ['0deg', '90deg', '180deg', '270deg', '360deg'],
   });
 
-  const rarityColor = result ? RARITY_COLORS[result.rarity] : '#7C3AED';
+  const rarityColor = result ? RARITY_COLORS[result.rarity] : primary;
   const rarityEmoji = result ? RARITY_EMOJIS[result.rarity] : '';
 
   // Background color shifts for high rarity — base tinted by theme
@@ -542,7 +544,6 @@ const styles = StyleSheet.create({
   },
   closeRewardBtn: {
     marginTop: 24,
-    backgroundColor: '#7C3AED',
     paddingHorizontal: 32,
     paddingVertical: 14,
     borderRadius: 24,

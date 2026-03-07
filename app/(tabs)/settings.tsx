@@ -29,12 +29,14 @@ import { testTelegram } from '../../lib/telegram';
 import { serializeGamification } from '../../lib/parser';
 import { RARITY_LABELS } from '../../constants/rewards';
 import { THEME_LIST, getTheme } from '../../constants/themes';
+import { useThemeColors } from '../../contexts/ThemeContext';
 
 const TELEGRAM_TOKEN_KEY = 'telegram_token';
 const TELEGRAM_CHAT_KEY = 'telegram_chat_id';
 
 export default function SettingsScreen() {
   const { vaultPath, profiles, activeProfile, vault, setVaultPath, setActiveProfile, refresh, gamiData, notifPrefs, saveNotifPrefs, updateProfileTheme } = useVault();
+  const { primary, tint, setThemeId } = useThemeColors();
 
   const [showVaultPicker, setShowVaultPicker] = useState(false);
   const [telegramToken, setTelegramToken] = useState('');
@@ -128,10 +130,10 @@ export default function SettingsScreen() {
               {vaultPath ?? 'Non configuré'}
             </Text>
             <TouchableOpacity
-              style={styles.changeBtn}
+              style={[styles.changeBtn, { backgroundColor: tint }]}
               onPress={() => setShowVaultPicker(true)}
             >
-              <Text style={styles.changeBtnText}>Changer le vault</Text>
+              <Text style={[styles.changeBtnText, { color: primary }]}>Changer le vault</Text>
             </TouchableOpacity>
 
             <View style={styles.obsidianHint}>
@@ -159,20 +161,20 @@ export default function SettingsScreen() {
             ) : null}
             <View style={styles.btnRow}>
               <TouchableOpacity
-                style={styles.secondaryBtn}
+                style={[styles.secondaryBtn, { borderColor: primary }]}
                 onPress={() => setShowTelegramSetup(true)}
               >
-                <Text style={styles.secondaryBtnText}>Configurer</Text>
+                <Text style={[styles.secondaryBtnText, { color: primary }]}>Configurer</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.secondaryBtn, isTesting && styles.btnDisabled]}
+                style={[styles.secondaryBtn, { borderColor: primary }, isTesting && styles.btnDisabled]}
                 onPress={handleTestTelegram}
                 disabled={isTesting}
               >
                 {isTesting ? (
-                  <ActivityIndicator size="small" color="#7C3AED" />
+                  <ActivityIndicator size="small" color={primary} />
                 ) : (
-                  <Text style={styles.secondaryBtnText}>Tester</Text>
+                  <Text style={[styles.secondaryBtnText, { color: primary }]}>Tester</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -190,10 +192,10 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <TouchableOpacity
-              style={styles.changeBtn}
+              style={[styles.changeBtn, { backgroundColor: tint }]}
               onPress={() => setShowNotifSettings(true)}
             >
-              <Text style={styles.changeBtnText}>Configurer les notifications</Text>
+              <Text style={[styles.changeBtnText, { color: primary }]}>Configurer les notifications</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -221,14 +223,14 @@ export default function SettingsScreen() {
                   key={p.id}
                   style={[
                     styles.switchBtn,
-                    activeProfile?.id === p.id && styles.switchBtnActive,
+                    activeProfile?.id === p.id && { backgroundColor: tint, borderColor: primary },
                   ]}
                   onPress={() => setActiveProfile(p.id)}
                 >
                   <Text style={styles.switchAvatar}>{p.avatar}</Text>
                   <Text style={[
                     styles.switchName,
-                    activeProfile?.id === p.id && styles.switchNameActive,
+                    activeProfile?.id === p.id && { color: primary },
                   ]}>{p.name}</Text>
                 </TouchableOpacity>
               ))}
@@ -259,7 +261,8 @@ export default function SettingsScreen() {
                         <Text style={styles.profileLoot}>🎁 ×{profile.lootBoxesAvailable}</Text>
                       )}
                     </View>
-                    {/* Theme picker */}
+                    {/* Theme picker — only for active profile */}
+                    {activeProfile?.id === profile.id && (
                     <View style={styles.themeRow}>
                       <Text style={styles.themeLabel}>Thème :</Text>
                       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.themeScroll}>
@@ -275,7 +278,7 @@ export default function SettingsScreen() {
                                   isActive && styles.themeBtnActive,
                                   isActive && { borderColor: t.primary },
                                 ]}
-                                onPress={() => updateProfileTheme(profile.id, t.id)}
+                                onPress={() => { updateProfileTheme(profile.id, t.id); setThemeId(t.id); }}
                                 activeOpacity={0.7}
                               >
                                 <Text style={styles.themeBtnEmoji}>{t.emoji}</Text>
@@ -285,6 +288,7 @@ export default function SettingsScreen() {
                         </View>
                       </ScrollView>
                     </View>
+                    )}
                   </View>
                 );
               })
@@ -384,11 +388,11 @@ export default function SettingsScreen() {
           </View>
           <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalContent}>
             {/* Step 1 — Create bot */}
-            <View style={styles.setupStep}>
+            <View style={[styles.setupStep, { borderLeftColor: primary }]}>
               <Text style={styles.setupStepTitle}>🤖 Étape 1 — Créer le bot</Text>
               <Text style={styles.setupStepText}>
                 1. Ouvrez Telegram et cherchez <Text style={styles.setupBold}>@BotFather</Text>{'\n'}
-                2. Envoyez <Text style={styles.setupCode}>/newbot</Text>{'\n'}
+                2. Envoyez <Text style={[styles.setupCode, { color: primary }]}>/newbot</Text>{'\n'}
                 3. Choisissez un nom (ex: "Family Vault"){'\n'}
                 4. Choisissez un username (ex: FamilyVaultBot){'\n'}
                 5. BotFather vous donne un <Text style={styles.setupBold}>token</Text> — copiez-le ci-dessous
@@ -407,7 +411,7 @@ export default function SettingsScreen() {
             />
 
             {/* Step 2 — Chat ID */}
-            <View style={styles.setupStep}>
+            <View style={[styles.setupStep, { borderLeftColor: primary }]}>
               <Text style={styles.setupStepTitle}>🔑 Étape 2 — Trouver votre Chat ID</Text>
               <Text style={styles.setupStepText}>
                 1. Sur Telegram, ouvrez la conversation avec votre bot{'\n'}
@@ -418,7 +422,7 @@ export default function SettingsScreen() {
                 https://api.telegram.org/bot{'<'}VOTRE_TOKEN{'>'}/getUpdates
               </Text>
               <Text style={styles.setupStepText}>
-                {'\n'}4. Dans le JSON, cherchez <Text style={styles.setupCode}>"chat":{'{'}  "id": 123456789</Text>{'\n'}
+                {'\n'}4. Dans le JSON, cherchez <Text style={[styles.setupCode, { color: primary }]}>"chat":{'{'}  "id": 123456789</Text>{'\n'}
                 5. Ce nombre est votre <Text style={styles.setupBold}>Chat ID</Text> — copiez-le ci-dessous
               </Text>
             </View>
@@ -441,18 +445,18 @@ export default function SettingsScreen() {
 
             <View style={styles.btnRow}>
               <TouchableOpacity
-                style={[styles.secondaryBtn, isTesting && styles.btnDisabled]}
+                style={[styles.secondaryBtn, { borderColor: primary }, isTesting && styles.btnDisabled]}
                 onPress={handleTestTelegram}
                 disabled={isTesting}
               >
                 {isTesting ? (
-                  <ActivityIndicator size="small" color="#7C3AED" />
+                  <ActivityIndicator size="small" color={primary} />
                 ) : (
-                  <Text style={styles.secondaryBtnText}>Tester</Text>
+                  <Text style={[styles.secondaryBtnText, { color: primary }]}>Tester</Text>
                 )}
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.primaryBtn, isSavingTelegram && styles.btnDisabled]}
+                style={[styles.primaryBtn, { backgroundColor: primary }, isSavingTelegram && styles.btnDisabled]}
                 onPress={handleSaveTelegram}
                 disabled={isSavingTelegram}
               >
@@ -525,7 +529,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   changeBtn: {
-    backgroundColor: '#EDE9FE',
     padding: 10,
     borderRadius: 10,
     alignItems: 'center',
@@ -533,7 +536,6 @@ const styles = StyleSheet.create({
   changeBtnText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#7C3AED',
   },
   obsidianHint: {
     backgroundColor: '#F0FDF4',
@@ -559,19 +561,16 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: '#7C3AED',
     alignItems: 'center',
   },
   secondaryBtnText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#7C3AED',
   },
   primaryBtn: {
     flex: 2,
     padding: 12,
     borderRadius: 10,
-    backgroundColor: '#7C3AED',
     alignItems: 'center',
   },
   primaryBtnText: {
@@ -603,13 +602,8 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
     minWidth: 72,
   },
-  switchBtnActive: {
-    backgroundColor: '#EDE9FE',
-    borderColor: '#7C3AED',
-  },
   switchAvatar: { fontSize: 22, marginBottom: 2 },
   switchName: { fontSize: 12, fontWeight: '600', color: '#6B7280' },
-  switchNameActive: { color: '#7C3AED' },
   profileBlock: {
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
@@ -722,7 +716,6 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 10,
     borderLeftWidth: 3,
-    borderLeftColor: '#7C3AED',
   },
   setupStepTitle: {
     fontSize: 15,
@@ -745,7 +738,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     borderRadius: 3,
     fontSize: 13,
-    color: '#7C3AED',
   },
   setupCodeBlock: {
     fontFamily: 'Courier',

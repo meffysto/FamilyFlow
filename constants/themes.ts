@@ -4,7 +4,7 @@
  * Each family member can pick a visual theme that changes:
  * - Loot box pack appearance (emoji, label, colors)
  * - Confetti colors during loot opening
- * - Accent color on the loot screen
+ * - Accent colors across the entire app (via ThemeContext)
  */
 
 export type ProfileTheme =
@@ -22,7 +22,8 @@ export interface ThemeConfig {
   label: string;
   emoji: string;
   primary: string;         // main accent color
-  secondary: string;       // light background
+  tint: string;            // light background for badges, chips (always light)
+  secondary: string;       // complementary color for loot packs (can be dark)
   packEmoji: string;       // booster pack closed
   packOpenEmoji: string;   // booster pack opening
   packLabel: string;       // "Booster Turbo", etc.
@@ -35,6 +36,7 @@ export const THEMES: Record<ProfileTheme, ThemeConfig> = {
     label: 'Voitures',
     emoji: '🏎️',
     primary: '#DC2626',
+    tint: '#FEE2E2',
     secondary: '#1F2937',
     packEmoji: '🏎️',
     packOpenEmoji: '🏁',
@@ -46,6 +48,7 @@ export const THEMES: Record<ProfileTheme, ThemeConfig> = {
     label: 'Nature',
     emoji: '🌿',
     primary: '#059669',
+    tint: '#D1FAE5',
     secondary: '#D1FAE5',
     packEmoji: '🌿',
     packOpenEmoji: '🌸',
@@ -57,6 +60,7 @@ export const THEMES: Record<ProfileTheme, ThemeConfig> = {
     label: 'Pompier',
     emoji: '🚒',
     primary: '#EA580C',
+    tint: '#FEF3C7',
     secondary: '#FEF3C7',
     packEmoji: '🚒',
     packOpenEmoji: '🔥',
@@ -68,6 +72,7 @@ export const THEMES: Record<ProfileTheme, ThemeConfig> = {
     label: 'Licorne',
     emoji: '🦄',
     primary: '#EC4899',
+    tint: '#FCE7F3',
     secondary: '#FCE7F3',
     packEmoji: '🦄',
     packOpenEmoji: '✨',
@@ -79,6 +84,7 @@ export const THEMES: Record<ProfileTheme, ThemeConfig> = {
     label: 'Espace',
     emoji: '🚀',
     primary: '#2563EB',
+    tint: '#DBEAFE',
     secondary: '#1E3A5F',
     packEmoji: '🚀',
     packOpenEmoji: '🌟',
@@ -90,6 +96,7 @@ export const THEMES: Record<ProfileTheme, ThemeConfig> = {
     label: 'Pirates',
     emoji: '🏴‍☠️',
     primary: '#78350F',
+    tint: '#FDE68A',
     secondary: '#FDE68A',
     packEmoji: '🏴‍☠️',
     packOpenEmoji: '💰',
@@ -101,6 +108,7 @@ export const THEMES: Record<ProfileTheme, ThemeConfig> = {
     label: 'Dinosaures',
     emoji: '🦕',
     primary: '#16A34A',
+    tint: '#DCFCE7',
     secondary: '#DCFCE7',
     packEmoji: '🦕',
     packOpenEmoji: '🦖',
@@ -112,6 +120,7 @@ export const THEMES: Record<ProfileTheme, ThemeConfig> = {
     label: 'Classique',
     emoji: '🎁',
     primary: '#7C3AED',
+    tint: '#EDE9FE',
     secondary: '#EDE9FE',
     packEmoji: '🎁',
     packOpenEmoji: '✨',

@@ -21,6 +21,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useVault } from '../../hooks/useVault';
 import { useGamification } from '../../hooks/useGamification';
+import { useThemeColors } from '../../contexts/ThemeContext';
 import { TaskCard } from '../../components/TaskCard';
 import {
   dispatchNotificationAsync,
@@ -59,8 +60,9 @@ interface TaskSection {
 }
 
 export default function TasksScreen() {
-  const { tasks, courses, vault, profiles, activeProfile, notifPrefs, refresh, isLoading } = useVault();
+  const { tasks, menageTasks, courses, vault, profiles, activeProfile, notifPrefs, refresh, isLoading } = useVault();
   const { completeTask } = useGamification({ vault, notifPrefs });
+  const { primary, tint } = useThemeColors();
 
   const filters = useMemo(() => buildFilters(profiles), [profiles]);
   const [filter, setFilter] = useState('tous');
@@ -139,6 +141,7 @@ export default function TasksScreen() {
     } else {
       result = [
         ...tasks,
+        ...menageTasks,
         ...(filter === 'tous' ? coursesTasks : []),
       ];
     }
@@ -172,7 +175,7 @@ export default function TasksScreen() {
     }
 
     return result;
-  }, [tasks, coursesTasks, filter, search]);
+  }, [tasks, menageTasks, coursesTasks, filter, search]);
 
   // Group by source file
   const sections: TaskSection[] = useMemo(() => {
@@ -224,11 +227,18 @@ export default function TasksScreen() {
           {filters.map((f) => (
             <TouchableOpacity
               key={f.id}
-              style={[styles.chip, filter === f.id && styles.chipActive]}
+              style={[
+                styles.chip,
+                filter === f.id && styles.chipActive,
+                filter === f.id && { backgroundColor: tint, borderColor: primary },
+              ]}
               onPress={() => setFilter(f.id)}
             >
               <Text style={styles.chipEmoji}>{f.emoji}</Text>
-              <Text style={[styles.chipText, filter === f.id && styles.chipTextActive]}>
+              <Text style={[
+                styles.chipText,
+                filter === f.id && { color: primary },
+              ]}>
                 {f.label}
               </Text>
             </TouchableOpacity>
@@ -252,7 +262,7 @@ export default function TasksScreen() {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#7C3AED" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
         }
         ListEmptyComponent={
           <View style={styles.empty}>
@@ -341,8 +351,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   chipActive: {
-    backgroundColor: '#EDE9FE',
-    borderColor: '#7C3AED',
+    // Colors applied inline via dynamic theme
   },
   chipEmoji: {
     fontSize: 16,
@@ -351,9 +360,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#6B7280',
-  },
-  chipTextActive: {
-    color: '#7C3AED',
   },
   listContent: {
     padding: 16,

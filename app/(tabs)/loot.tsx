@@ -34,10 +34,12 @@ import {
   PITY_THRESHOLD,
 } from '../../constants/rewards';
 import { Profile, LootBox, LootRarity } from '../../lib/types';
+import { useThemeColors } from '../../contexts/ThemeContext';
 
 export default function LootScreen() {
   const { profiles, gamiData, notifPrefs, vault, refresh, isLoading } = useVault();
   const { openLootBox, isProcessing } = useGamification({ vault, notifPrefs });
+  const { primary, tint } = useThemeColors();
 
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [lootOpenerVisible, setLootOpenerVisible] = useState(false);
@@ -92,11 +94,11 @@ export default function LootScreen() {
         style={styles.scroll}
         contentContainerStyle={styles.content}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#7C3AED" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
         }
       >
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: primary }]}>
           <View style={styles.headerTop}>
             <Text style={styles.title}>🎁 Loot & Récompenses</Text>
             <TouchableOpacity
@@ -119,13 +121,13 @@ export default function LootScreen() {
                 <Text style={styles.lootCardAvatar}>{profile.avatar}</Text>
                 <View>
                   <Text style={styles.lootCardName}>{profile.name}</Text>
-                  <Text style={styles.lootCardLevel}>Niveau {profile.level}</Text>
+                  <Text style={[styles.lootCardLevel, { color: primary }]}>Niveau {profile.level}</Text>
                 </View>
               </View>
 
               {profile.lootBoxesAvailable > 0 ? (
                 <TouchableOpacity
-                  style={styles.openBtn}
+                  style={[styles.openBtn, { backgroundColor: primary }]}
                   onPress={() => handleOpenLoot(profile)}
                   disabled={isProcessing}
                 >
@@ -283,8 +285,8 @@ export default function LootScreen() {
             </View>
 
             {/* Pity system */}
-            <View style={styles.drPityBox}>
-              <Text style={styles.drPityTitle}>🎯 Pity System</Text>
+            <View style={[styles.drPityBox, { backgroundColor: tint }]}>
+              <Text style={[styles.drPityTitle, { color: primary }]}>🎯 Pity System</Text>
               <Text style={styles.drPityText}>
                 Après {PITY_THRESHOLD} loot boxes sans obtenir Épique ou mieux, la prochaine est <Text style={{ fontWeight: '800' }}>garantie Épique minimum</Text>.
               </Text>
@@ -317,7 +319,7 @@ export default function LootScreen() {
             ))}
 
             {/* Close button */}
-            <TouchableOpacity style={styles.drCloseButton} onPress={() => setShowDropRates(false)}>
+            <TouchableOpacity style={[styles.drCloseButton, { backgroundColor: primary }]} onPress={() => setShowDropRates(false)}>
               <Text style={styles.drCloseButtonText}>Fermer</Text>
             </TouchableOpacity>
 
@@ -350,7 +352,6 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { padding: 16 },
   header: {
-    backgroundColor: '#7C3AED',
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
@@ -410,11 +411,10 @@ const styles = StyleSheet.create({
   },
   lootCardAvatar: { fontSize: 32 },
   lootCardName: { fontSize: 16, fontWeight: '700', color: '#111827' },
-  lootCardLevel: { fontSize: 12, color: '#7C3AED', fontWeight: '600' },
+  lootCardLevel: { fontSize: 12, fontWeight: '600' },
   openBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#7C3AED',
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 12,
@@ -532,14 +532,13 @@ const styles = StyleSheet.create({
   },
   drRarityLabel: { fontSize: 13, fontWeight: '700' },
   drPityBox: {
-    backgroundColor: '#EDE9FE',
     borderRadius: 14,
     padding: 16,
     borderWidth: 1.5,
     borderColor: '#C4B5FD',
     gap: 6,
   },
-  drPityTitle: { fontSize: 15, fontWeight: '800', color: '#7C3AED' },
+  drPityTitle: { fontSize: 15, fontWeight: '800' },
   drPityText: { fontSize: 13, color: '#374151', lineHeight: 18 },
   drRarityHeader: {
     flexDirection: 'row',
@@ -569,7 +568,6 @@ const styles = StyleSheet.create({
   drRewardPts: { fontSize: 12, fontWeight: '700', color: '#059669' },
   drParentTag: { fontSize: 14 },
   drCloseButton: {
-    backgroundColor: '#7C3AED',
     borderRadius: 14,
     padding: 16,
     alignItems: 'center',

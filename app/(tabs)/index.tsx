@@ -7,7 +7,7 @@
  * - Overdue tasks
  * - Top 5 shopping items
  * - Upcoming RDVs (7 days)
- * - Loot box progress per profile
+ * - Baby stock alerts
  * - Mini leaderboard
  */
 
@@ -20,13 +20,17 @@ import {
   TouchableOpacity,
   RefreshControl,
   Alert,
+  ActionSheetIOS,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useVault } from '../../hooks/useVault';
 import { useGamification } from '../../hooks/useGamification';
+import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../../components/DashboardCard';
 import { TaskCard } from '../../components/TaskCard';
 import { FamilyLeaderboard } from '../../components/FamilyLeaderboard';
@@ -35,17 +39,18 @@ import {
   dispatchNotification,
   buildManualContext,
 } from '../../lib/notifications';
-import { LOOT_THRESHOLD, RARITY_COLORS } from '../../constants/rewards';
-import { Task } from '../../lib/types';
+import { Task, StockItem } from '../../lib/types';
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const { primary, tint } = useThemeColors();
   const {
     isLoading,
     error,
     vaultPath,
     menageTasks,
     courses,
+    stock,
     meals,
     rdvs,
     profiles,
@@ -55,6 +60,7 @@ export default function DashboardScreen() {
     vault,
     tasks,
     photoDates,
+    addPhoto,
     refresh,
   } = useVault();
 
@@ -114,6 +120,66 @@ export default function DashboardScreen() {
     [activeProfile, notifPrefs]
   );
 
+  const pickPhotoForEnfant = useCallback(
+    async (enfantName: string) => {
+      const launchPicker = async (useCamera: boolean) => {
+        if (useCamera) {
+          const { status } = await ImagePicker.requestCameraPermissionsAsync();
+          if (status !== 'granted') {
+            Alert.alert('Permission requise', "L'accès à la caméra est nécessaire.");
+            return;
+          }
+        } else {
+          const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+          if (status !== 'granted') {
+            Alert.alert('Permission requise', "L'accès à la galerie est nécessaire.");
+            return;
+          }
+        }
+
+        const options: ImagePicker.ImagePickerOptions = {
+          mediaTypes: ['images'],
+          quality: 0.8,
+          allowsEditing: true,
+          aspect: [1, 1] as [number, number],
+        };
+
+        const result = useCamera
+          ? await ImagePicker.launchCameraAsync(options)
+          : await ImagePicker.launchImageLibraryAsync(options);
+
+        if (!result.canceled && result.assets?.[0]) {
+          try {
+            await addPhoto(enfantName, todayStr, result.assets[0].uri);
+            await refresh();
+          } catch (e) {
+            Alert.alert('Erreur', String(e));
+          }
+        }
+      };
+
+      if (Platform.OS === 'ios') {
+        ActionSheetIOS.showActionSheetWithOptions(
+          {
+            options: ['Annuler', '📷 Appareil photo', '🖼 Galerie'],
+            cancelButtonIndex: 0,
+          },
+          async (buttonIndex) => {
+            if (buttonIndex === 1) await launchPicker(true);
+            if (buttonIndex === 2) await launchPicker(false);
+          }
+        );
+      } else {
+        Alert.alert('Photo du jour', 'Choisir une source', [
+          { text: 'Annuler', style: 'cancel' },
+          { text: '📷 Appareil photo', onPress: () => launchPicker(true) },
+          { text: '🖼 Galerie', onPress: () => launchPicker(false) },
+        ]);
+      }
+    },
+    [addPhoto, todayStr, refresh]
+  );
+
   // Overdue tasks
   const overdueTasks = tasks.filter(
     (t) => !t.completed && t.dueDate && t.dueDate < todayStr
@@ -146,7 +212,7 @@ export default function DashboardScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: primary }]}>
         <View>
           <Text style={styles.greeting}>Bonjour 👋</Text>
           <Text style={styles.dateText}>{today}</Text>
@@ -165,12 +231,12 @@ export default function DashboardScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#7C3AED" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
         }
       >
         {/* Welcome card when no vault configured */}
         {!isLoading && !vaultPath && (
-          <DashboardCard title="Bienvenue" icon="👋" color="#7C3AED">
+          <DashboardCard title="Bienvenue" icon="👋" color={primary}>
             <Text style={styles.debugText}>Aucun vault configuré. Allez dans Réglages pour connecter votre coffre Obsidian.</Text>
           </DashboardCard>
         )}
@@ -237,13 +303,24 @@ export default function DashboardScreen() {
             onPressMore={() => router.push('/(tabs)/photos')}
           >
             {photoStatus.map((e) => (
-              <View key={e.id} style={styles.photoStatusRow}>
+              <TouchableOpacity
+                key={e.id}
+                style={styles.photoStatusRow}
+                onPress={() => {
+                  if (!e.hasPhoto) {
+                    pickPhotoForEnfant(e.name);
+                  } else {
+                    router.push('/(tabs)/photos');
+                  }
+                }}
+                activeOpacity={0.7}
+              >
                 <Text style={styles.photoStatusEmoji}>{e.avatar}</Text>
                 <Text style={styles.photoStatusName}>{e.name}</Text>
                 <Text style={styles.photoStatusIcon}>
                   {e.hasPhoto ? '✅' : '📷'}
                 </Text>
-              </View>
+              </TouchableOpacity>
             ))}
           </DashboardCard>
         )}
@@ -310,41 +387,48 @@ export default function DashboardScreen() {
           </DashboardCard>
         )}
 
-        {/* Loot box progress */}
-        {profiles.length > 0 && (
-          <DashboardCard title="Progression Loot" icon="🎁" color="#F59E0B">
-            {profiles.map((profile) => {
-              const threshold = LOOT_THRESHOLD[profile.role];
-              const current = profile.points % threshold;
-              const progress = current / threshold;
-              return (
-                <View key={profile.id} style={styles.lootProgressRow}>
-                  <Text style={styles.lootAvatar}>{profile.avatar}</Text>
-                  <View style={styles.lootInfo}>
-                    <View style={styles.lootNameRow}>
-                      <Text style={styles.lootName}>{profile.name}</Text>
-                      {profile.lootBoxesAvailable > 0 && (
-                        <TouchableOpacity onPress={() => router.push('/(tabs)/loot')}>
-                          <Text style={styles.lootReady}>
-                            🎁 ×{profile.lootBoxesAvailable} OUVRIR →
-                          </Text>
-                        </TouchableOpacity>
-                      )}
+        {/* Stock bébé */}
+        {stock.length > 0 && (() => {
+          const lowStock = stock.filter((s) => s.quantite <= s.seuil);
+          const warnStock = stock.filter((s) => s.quantite > s.seuil && s.quantite <= s.seuil + 1);
+          return (
+            <DashboardCard
+              title="Stock bébé"
+              icon="📦"
+              count={lowStock.length + warnStock.length}
+              color={lowStock.length > 0 ? '#EF4444' : warnStock.length > 0 ? '#F59E0B' : '#10B981'}
+            >
+              {lowStock.length === 0 && warnStock.length === 0 ? (
+                <Text style={styles.stockOk}>✅ Tous les stocks sont OK</Text>
+              ) : (
+                <>
+                  {lowStock.map((item) => (
+                    <View key={`${item.section}-${item.produit}`} style={styles.stockRow}>
+                      <Text style={styles.stockAlertIcon}>🔴</Text>
+                      <View style={styles.stockInfo}>
+                        <Text style={styles.stockName}>{item.produit}{item.detail ? ` (${item.detail})` : ''}</Text>
+                        <Text style={[styles.stockMeta, { color: '#EF4444' }]}>
+                          {item.quantite} restant{item.quantite > 1 ? 's' : ''} (seuil: {item.seuil})
+                        </Text>
+                      </View>
                     </View>
-                    <View style={styles.progressTrack}>
-                      <View
-                        style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` as any }]}
-                      />
+                  ))}
+                  {warnStock.map((item) => (
+                    <View key={`${item.section}-${item.produit}`} style={styles.stockRow}>
+                      <Text style={styles.stockAlertIcon}>🟡</Text>
+                      <View style={styles.stockInfo}>
+                        <Text style={styles.stockName}>{item.produit}{item.detail ? ` (${item.detail})` : ''}</Text>
+                        <Text style={[styles.stockMeta, { color: '#F59E0B' }]}>
+                          {item.quantite} restant{item.quantite > 1 ? 's' : ''} (seuil: {item.seuil})
+                        </Text>
+                      </View>
                     </View>
-                    <Text style={styles.lootProgressText}>
-                      {current}/{threshold} pts
-                    </Text>
-                  </View>
-                </View>
-              );
-            })}
-          </DashboardCard>
-        )}
+                  ))}
+                </>
+              )}
+            </DashboardCard>
+          );
+        })()}
 
         {/* Custom notification quick-send */}
         {customNotifs.length > 0 && (
@@ -369,7 +453,7 @@ export default function DashboardScreen() {
           <DashboardCard
             title="Classement"
             icon="🏆"
-            color="#7C3AED"
+            color={primary}
             onPressMore={() => router.push('/(tabs)/loot')}
           >
             <FamilyLeaderboard profiles={leaderboard} compact />
@@ -393,7 +477,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#7C3AED',
   },
   greeting: {
     fontSize: 14,
@@ -458,48 +541,35 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6B7280',
   },
-  lootProgressRow: {
+  stockOk: {
+    fontSize: 14,
+    color: '#10B981',
+    fontWeight: '600',
+    paddingVertical: 4,
+  },
+  stockRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingVertical: 4,
+    paddingVertical: 6,
   },
-  lootAvatar: {
-    fontSize: 28,
+  stockAlertIcon: {
+    fontSize: 16,
+    width: 24,
+    textAlign: 'center',
   },
-  lootInfo: {
+  stockInfo: {
     flex: 1,
-    gap: 4,
+    gap: 2,
   },
-  lootNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  lootName: {
+  stockName: {
     fontSize: 14,
     fontWeight: '600',
     color: '#111827',
   },
-  lootReady: {
+  stockMeta: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#F59E0B',
-  },
-  progressTrack: {
-    height: 8,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#F59E0B',
-    borderRadius: 4,
-  },
-  lootProgressText: {
-    fontSize: 11,
-    color: '#9CA3AF',
   },
   debugText: {
     fontSize: 11,
