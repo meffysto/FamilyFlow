@@ -730,3 +730,26 @@ export function parseStock(content: string): StockItem[] {
 
   return items;
 }
+
+/**
+ * Serialize a stock item as a markdown table row.
+ */
+export function serializeStockRow(item: Omit<StockItem, 'lineIndex'>): string {
+  return `| ${item.produit} | ${item.detail ?? ''} | ${item.quantite} | ${item.seuil} | ${item.qteAchat ?? ''} |`;
+}
+
+/**
+ * Extract available section names from the stock file (excluding skipped sections).
+ */
+export function parseStockSections(content: string): string[] {
+  const sections: string[] = [];
+  for (const line of content.split('\n')) {
+    if (line.startsWith('## ')) {
+      const name = line.slice(3).trim();
+      if (!STOCK_SKIP_SECTIONS.has(name)) {
+        sections.push(name);
+      }
+    }
+  }
+  return sections;
+}

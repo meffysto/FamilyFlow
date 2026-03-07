@@ -27,6 +27,8 @@ import {
   parseMeals,
   parseRDV,
   parseStock,
+  serializeStockRow,
+  parseStockSections,
   serializeRDV,
   rdvFileName,
   mergeProfiles,
@@ -73,6 +75,10 @@ export interface VaultState {
   updateProfileTheme: (profileId: string, theme: ProfileTheme) => Promise<void>;
   updateProfile: (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string }) => Promise<void>;
   updateStockQuantity: (lineIndex: number, newQuantity: number) => Promise<void>;
+  addStockItem: (item: Omit<StockItem, 'lineIndex'>) => Promise<void>;
+  deleteStockItem: (lineIndex: number) => Promise<void>;
+  updateStockItem: (lineIndex: number, updates: Partial<StockItem>) => Promise<void>;
+  stockSections: string[];
   toggleTask: (task: Task, completed: boolean) => Promise<void>;
   addRDV: (rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
   updateRDV: (sourceFile: string, rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
@@ -146,6 +152,7 @@ export function useVault(): VaultState {
   const [gamiData, setGamiData] = useState<GamificationData | null>(null);
   const [notifPrefs, setNotifPrefs] = useState<NotificationPreferences>(getDefaultNotificationPrefs());
   const [photoDates, setPhotoDates] = useState<Record<string, string[]>>({});
+  const [stockSections, setStockSections] = useState<string[]>([]);
   const vaultRef = useRef<VaultManager | null>(null);
   const busyRef = useRef(false); // Guard against AppState race condition
 
@@ -264,9 +271,11 @@ export function useVault(): VaultState {
       try {
         const stockContent = await vault.readFile(STOCK_FILE);
         setStock(parseStock(stockContent));
+        setStockSections(parseStockSections(stockContent));
       } catch (e) {
         debugErrors.push(`stock: ${e}`);
         setStock([]);
+        setStockSections([]);
       }
 
       // Load meals (auto-create template if missing)
@@ -556,6 +565,91 @@ export function useVault(): VaultState {
     }
   }, []);
 
+  const addStockItem = useCallback(async (item: Omit<StockItem, 'lineIndex'>) => {
+    if (!vaultRef.current) return;
+    try {
+      const content = await vaultRef.current.readFile(STOCK_FILE);
+      const lines = content.split('\n');
+      const newRow = serializeStockRow(item);
+
+      // Find insertion point: last table row in the target section
+      let insertIdx = -1;
+      let inSection = false;
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].startsWith('## ')) {
+          if (inSection) break; // hit next section
+          if (lines[i].slice(3).trim() === item.section) inSection = true;
+        }
+        if (inSection && lines[i].startsWith('|') && !lines[i].includes('---')) {
+          insertIdx = i;
+        }
+      }
+
+      if (insertIdx === -1) {
+        // Section not found or empty — append at end
+        lines.push(newRow);
+      } else {
+        lines.splice(insertIdx + 1, 0, newRow);
+      }
+
+      await vaultRef.current.writeFile(STOCK_FILE, lines.join('\n'));
+      // Full reload to recalculate lineIndex values
+      await loadVaultData(vaultRef.current);
+    } catch (e) {
+      throw new Error(`addStockItem: ${e}`);
+    }
+  }, [loadVaultData]);
+
+  const deleteStockItem = useCallback(async (lineIndex: number) => {
+    if (!vaultRef.current) return;
+    try {
+      const content = await vaultRef.current.readFile(STOCK_FILE);
+      const lines = content.split('\n');
+      if (lineIndex >= 0 && lineIndex < lines.length) {
+        lines.splice(lineIndex, 1);
+        await vaultRef.current.writeFile(STOCK_FILE, lines.join('\n'));
+        await loadVaultData(vaultRef.current);
+      }
+    } catch (e) {
+      throw new Error(`deleteStockItem: ${e}`);
+    }
+  }, [loadVaultData]);
+
+  const updateStockItem = useCallback(async (lineIndex: number, updates: Partial<StockItem>) => {
+    if (!vaultRef.current) return;
+    try {
+      const content = await vaultRef.current.readFile(STOCK_FILE);
+      const lines = content.split('\n');
+      if (lineIndex < 0 || lineIndex >= lines.length) return;
+
+      // Read current values from the existing line
+      const cells = lines[lineIndex].split('|').map(c => c.trim()).filter(c => c.length > 0);
+      if (cells.length < 4) return;
+
+      const current: Omit<StockItem, 'lineIndex'> = {
+        produit: cells[0],
+        detail: cells[1] || undefined,
+        quantite: parseInt(cells[2], 10) || 0,
+        seuil: parseInt(cells[3], 10) || 0,
+        qteAchat: cells[4] ? parseInt(cells[4], 10) || undefined : undefined,
+      };
+
+      // Apply updates
+      const updated = { ...current, ...updates };
+      lines[lineIndex] = serializeStockRow(updated);
+      await vaultRef.current.writeFile(STOCK_FILE, lines.join('\n'));
+
+      // Optimistic update (lineIndex unchanged)
+      setStock(prev => prev.map(s =>
+        s.lineIndex === lineIndex
+          ? { ...s, ...updates }
+          : s
+      ));
+    } catch (e) {
+      throw new Error(`updateStockItem: ${e}`);
+    }
+  }, []);
+
   /**
    * Toggle task + optimistic state update.
    * Writes to file AND immediately updates tasks/menageTasks state
@@ -712,6 +806,10 @@ export function useVault(): VaultState {
     updateProfileTheme,
     updateProfile,
     updateStockQuantity,
+    addStockItem,
+    deleteStockItem,
+    updateStockItem,
+    stockSections,
     toggleTask,
     addRDV,
     updateRDV,

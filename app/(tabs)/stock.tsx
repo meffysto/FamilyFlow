@@ -1,0 +1,316 @@
+/**
+ * stock.tsx — Dedicated stock management screen
+ *
+ * Full CRUD for baby stock items: view by section, +/- quantity,
+ * add new products, edit thresholds, delete items.
+ */
+
+import { useMemo, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Modal,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useVault } from '../../hooks/useVault';
+import { useThemeColors } from '../../contexts/ThemeContext';
+import { StockEditor } from '../../components/StockEditor';
+import { StockItem } from '../../lib/types';
+
+export default function StockScreen() {
+  const {
+    stock,
+    stockSections,
+    updateStockQuantity,
+    addStockItem,
+    deleteStockItem,
+    updateStockItem,
+    addCourseItem,
+  } = useVault();
+  const { primary, tint } = useThemeColors();
+
+  const [editorVisible, setEditorVisible] = useState(false);
+  const [editingItem, setEditingItem] = useState<StockItem | undefined>(undefined);
+
+  // Group items by section
+  const grouped = useMemo(() => {
+    const map: Record<string, StockItem[]> = {};
+    for (const item of stock) {
+      const sec = item.section ?? 'Autre';
+      if (!map[sec]) map[sec] = [];
+      map[sec].push(item);
+    }
+    return map;
+  }, [stock]);
+
+  const lowStockCount = stock.filter((s) => s.quantite <= s.seuil).length;
+
+  const openCreate = () => {
+    setEditingItem(undefined);
+    setEditorVisible(true);
+  };
+
+  const openEdit = (item: StockItem) => {
+    setEditingItem(item);
+    setEditorVisible(true);
+  };
+
+  const handleAddToCourses = (item: StockItem) => {
+    const qty = item.qteAchat ? ` x${item.qteAchat}` : '';
+    const detail = item.detail ? ` (${item.detail})` : '';
+    addCourseItem(`- [ ] ${item.produit}${detail}${qty}`);
+    Alert.alert('Ajouté aux courses', `${item.produit} ajouté à la liste de courses.`);
+  };
+
+  const getStatusColor = (item: StockItem) => {
+    if (item.quantite <= item.seuil) return '#EF4444';
+    if (item.quantite <= item.seuil + 1) return '#F59E0B';
+    return '#10B981';
+  };
+
+  const getStatusEmoji = (item: StockItem) => {
+    if (item.quantite <= item.seuil) return '🔴';
+    if (item.quantite <= item.seuil + 1) return '🟡';
+    return '🟢';
+  };
+
+  return (
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.title}>📦 Stock bébé</Text>
+          {lowStockCount > 0 && (
+            <Text style={styles.subtitle}>
+              ⚠️ {lowStockCount} produit{lowStockCount > 1 ? 's' : ''} en stock bas
+            </Text>
+          )}
+        </View>
+        <TouchableOpacity
+          style={[styles.addBtn, { backgroundColor: tint, borderColor: primary }]}
+          onPress={openCreate}
+        >
+          <Text style={[styles.addBtnText, { color: primary }]}>+ Ajouter</Text>
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+        {Object.entries(grouped).map(([sectionName, items]) => (
+          <View key={sectionName} style={styles.section}>
+            <Text style={styles.sectionTitle}>{sectionName}</Text>
+            {items.map((item) => {
+              const statusColor = getStatusColor(item);
+              const isLow = item.quantite <= item.seuil;
+              return (
+                <TouchableOpacity
+                  key={item.lineIndex}
+                  style={styles.itemCard}
+                  onPress={() => openEdit(item)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+                  <View style={styles.itemInfo}>
+                    <Text style={styles.itemName}>
+                      {item.produit}
+                      {item.detail ? <Text style={styles.itemDetail}> · {item.detail}</Text> : null}
+                    </Text>
+                    <Text style={styles.itemMeta}>
+                      {getStatusEmoji(item)} {item.quantite} restant{item.quantite > 1 ? 's' : ''} (seuil: {item.seuil})
+                    </Text>
+                  </View>
+                  <View style={styles.itemActions}>
+                    {isLow && (
+                      <TouchableOpacity
+                        style={styles.courseBtn}
+                        onPress={() => handleAddToCourses(item)}
+                      >
+                        <Text style={styles.courseBtnText}>🛒</Text>
+                      </TouchableOpacity>
+                    )}
+                    <View style={styles.qtyRow}>
+                      <TouchableOpacity
+                        style={styles.qtyBtn}
+                        onPress={() => updateStockQuantity(item.lineIndex, item.quantite - 1)}
+                      >
+                        <Text style={styles.qtyBtnText}>−</Text>
+                      </TouchableOpacity>
+                      <Text style={[styles.qtyValue, isLow && { color: '#EF4444' }]}>
+                        {item.quantite}
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.qtyBtn}
+                        onPress={() => updateStockQuantity(item.lineIndex, item.quantite + 1)}
+                      >
+                        <Text style={styles.qtyBtnText}>+</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        ))}
+
+        {stock.length === 0 && (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyText}>Aucun produit en stock</Text>
+            <Text style={styles.emptyHint}>Appuie sur "+ Ajouter" pour commencer</Text>
+          </View>
+        )}
+      </ScrollView>
+
+      {/* Stock Editor Modal */}
+      <Modal visible={editorVisible} animationType="slide" presentationStyle="pageSheet">
+        <StockEditor
+          item={editingItem}
+          sections={stockSections}
+          onSave={async (data) => {
+            if (editingItem) {
+              await updateStockItem(editingItem.lineIndex, data);
+            } else {
+              await addStockItem(data);
+            }
+          }}
+          onDelete={
+            editingItem
+              ? () => {
+                  deleteStockItem(editingItem.lineIndex);
+                  setEditorVisible(false);
+                  setEditingItem(undefined);
+                }
+              : undefined
+          }
+          onClose={() => {
+            setEditorVisible(false);
+            setEditingItem(undefined);
+          }}
+        />
+      </Modal>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: '#F9FAFB' },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  title: { fontSize: 22, fontWeight: '800', color: '#111827' },
+  subtitle: { fontSize: 12, color: '#EF4444', fontWeight: '600', marginTop: 2 },
+  addBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1.5,
+  },
+  addBtnText: { fontSize: 14, fontWeight: '700' },
+  scroll: { flex: 1 },
+  content: { padding: 16, gap: 20, paddingBottom: 40 },
+  section: { gap: 8 },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#374151',
+    marginBottom: 2,
+  },
+  itemCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+    gap: 10,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  itemInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  itemName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  itemDetail: {
+    fontWeight: '400',
+    color: '#6B7280',
+  },
+  itemMeta: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  itemActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  courseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#FEF3C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  courseBtnText: { fontSize: 16 },
+  qtyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  qtyBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qtyBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#374151',
+  },
+  qtyValue: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#111827',
+    minWidth: 24,
+    textAlign: 'center',
+  },
+  emptyCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 32,
+    alignItems: 'center',
+    gap: 8,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#9CA3AF',
+    fontWeight: '600',
+  },
+  emptyHint: {
+    fontSize: 13,
+    color: '#D1D5DB',
+  },
+});

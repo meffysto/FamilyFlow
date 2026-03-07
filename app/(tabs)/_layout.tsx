@@ -40,6 +40,7 @@ export default function TabsLayout() {
           },
         }}
       >
+        {/* ── 5 visible tabs ── */}
         <Tabs.Screen
           name="index"
           options={{
@@ -62,13 +63,6 @@ export default function TabsLayout() {
           }}
         />
         <Tabs.Screen
-          name="meals"
-          options={{
-            title: 'Repas',
-            tabBarIcon: ({ focused }) => <TabIcon emoji="🍽️" focused={focused} />,
-          }}
-        />
-        <Tabs.Screen
           name="photos"
           options={{
             title: 'Photos',
@@ -76,19 +70,18 @@ export default function TabsLayout() {
           }}
         />
         <Tabs.Screen
-          name="loot"
+          name="more"
           options={{
-            title: 'Loot',
-            tabBarIcon: ({ focused }) => <TabIcon emoji="🎁" focused={focused} />,
+            title: 'Plus',
+            tabBarIcon: ({ focused }) => <TabIcon emoji="☰" focused={focused} />,
           }}
         />
-        <Tabs.Screen
-          name="settings"
-          options={{
-            title: 'Réglages',
-            tabBarIcon: ({ focused }) => <TabIcon emoji="⚙️" focused={focused} />,
-          }}
-        />
+        {/* ── Hidden screens (accessible via router.push) ── */}
+        <Tabs.Screen name="meals" options={{ href: null }} />
+        <Tabs.Screen name="loot" options={{ href: null }} />
+        <Tabs.Screen name="settings" options={{ href: null }} />
+        <Tabs.Screen name="rdv" options={{ href: null }} />
+        <Tabs.Screen name="stock" options={{ href: null }} />
       </Tabs>
 
       {/* Profile picker modal — shown on first launch */}

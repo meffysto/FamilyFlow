@@ -82,7 +82,7 @@ export default function DashboardScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [rdvEditorVisible, setRdvEditorVisible] = useState(false);
   const [editingRDV, setEditingRDV] = useState<RDV | undefined>(undefined);
-  const [showPastRdvs, setShowPastRdvs] = useState(false);
+  // showPastRdvs removed — full RDV view is now in /(tabs)/rdv
 
   const today = format(new Date(), 'EEEE dd MMMM yyyy', { locale: fr });
   const todayStr = format(new Date(), 'yyyy-MM-dd');
@@ -213,10 +213,7 @@ export default function DashboardScreen() {
   const upcomingRdvs = rdvs.filter(
     (r) => r.statut === 'planifié' && r.date_rdv >= todayStr
   );
-  const pastRdvs = rdvs.filter(
-    (r) => r.date_rdv < todayStr || r.statut !== 'planifié'
-  );
-  const displayedRdvs = showPastRdvs ? [...upcomingRdvs, ...pastRdvs] : upcomingRdvs;
+  // pastRdvs/displayedRdvs removed — full RDV view is now in /(tabs)/rdv
 
   // Top courses
   const topCourses = courses.filter((c) => !c.completed).slice(0, 5);
@@ -392,53 +389,46 @@ export default function DashboardScreen() {
 
         {/* RDVs */}
         <DashboardCard title="Rendez-vous" icon="📅" count={upcomingRdvs.length || undefined} color="#8B5CF6">
-          {displayedRdvs.map((rdv) => {
-            const isPast = rdv.date_rdv < todayStr || rdv.statut !== 'planifié';
-            return (
-              <TouchableOpacity
-                key={rdv.sourceFile}
-                style={[styles.rdvRow, isPast && styles.rdvRowPast]}
-                onPress={() => {
-                  setEditingRDV(rdv);
-                  setRdvEditorVisible(true);
-                }}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.rdvDate, isPast && styles.rdvDatePast]}>
-                  {formatDateForDisplay(rdv.date_rdv)} {rdv.heure ? `à ${rdv.heure}` : ''}
-                  {isPast && rdv.statut !== 'planifié' ? ` · ${rdv.statut}` : ''}
-                </Text>
-                <Text style={[styles.rdvTitle, isPast && styles.rdvTitlePast]}>
-                  {rdv.type_rdv} — {rdv.enfant}
-                </Text>
-                {rdv.médecin && <Text style={styles.rdvMeta}>{rdv.médecin}</Text>}
-              </TouchableOpacity>
-            );
-          })}
-          {upcomingRdvs.length === 0 && !showPastRdvs && (
-            <Text style={styles.rdvEmpty}>Aucun RDV à venir</Text>
-          )}
-          {pastRdvs.length > 0 && (
+          {upcomingRdvs.slice(0, 3).map((rdv) => (
             <TouchableOpacity
-              style={styles.rdvTogglePast}
-              onPress={() => setShowPastRdvs(!showPastRdvs)}
+              key={rdv.sourceFile}
+              style={styles.rdvRow}
+              onPress={() => {
+                setEditingRDV(rdv);
+                setRdvEditorVisible(true);
+              }}
               activeOpacity={0.7}
             >
-              <Text style={styles.rdvTogglePastText}>
-                {showPastRdvs ? '🔼 Masquer les passés' : `🔽 Voir les passés (${pastRdvs.length})`}
+              <Text style={styles.rdvDate}>
+                {formatDateForDisplay(rdv.date_rdv)} {rdv.heure ? `à ${rdv.heure}` : ''}
               </Text>
+              <Text style={styles.rdvTitle}>
+                {rdv.type_rdv} — {rdv.enfant}
+              </Text>
+              {rdv.médecin && <Text style={styles.rdvMeta}>{rdv.médecin}</Text>}
             </TouchableOpacity>
+          ))}
+          {upcomingRdvs.length === 0 && (
+            <Text style={styles.rdvEmpty}>Aucun RDV à venir</Text>
           )}
-          <TouchableOpacity
-            style={[styles.rdvAddBtn, { backgroundColor: tint, borderColor: primary }]}
-            onPress={() => {
-              setEditingRDV(undefined);
-              setRdvEditorVisible(true);
-            }}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.rdvAddBtnText, { color: primary }]}>+ Nouveau RDV</Text>
-          </TouchableOpacity>
+          <View style={styles.cardActions}>
+            <TouchableOpacity
+              style={[styles.rdvAddBtn, { backgroundColor: tint, borderColor: primary }]}
+              onPress={() => {
+                setEditingRDV(undefined);
+                setRdvEditorVisible(true);
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.rdvAddBtnText, { color: primary }]}>+ Nouveau</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push('/(tabs)/rdv')}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.seeAllText, { color: primary }]}>Voir tout →</Text>
+            </TouchableOpacity>
+          </View>
         </DashboardCard>
 
         {/* Active rewards */}
@@ -530,6 +520,13 @@ export default function DashboardScreen() {
                   </View>
                 );
               })}
+              <TouchableOpacity
+                style={styles.seeAllLink}
+                onPress={() => router.push('/(tabs)/stock')}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.seeAllText, { color: primary }]}>Gérer le stock →</Text>
+              </TouchableOpacity>
             </DashboardCard>
           );
         })()}
@@ -672,25 +669,6 @@ const styles = StyleSheet.create({
   rdvMeta: {
     fontSize: 12,
     color: '#6B7280',
-  },
-  rdvRowPast: {
-    opacity: 0.5,
-    borderLeftColor: '#D1D5DB',
-  },
-  rdvDatePast: {
-    color: '#9CA3AF',
-  },
-  rdvTitlePast: {
-    color: '#9CA3AF',
-  },
-  rdvTogglePast: {
-    paddingVertical: 8,
-    alignItems: 'center',
-  },
-  rdvTogglePastText: {
-    fontSize: 13,
-    color: '#8B5CF6',
-    fontWeight: '600',
   },
   rdvEmpty: {
     fontSize: 13,
@@ -888,5 +866,20 @@ const styles = StyleSheet.create({
   },
   bottomPad: {
     height: 20,
+  },
+  cardActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  seeAllLink: {
+    alignSelf: 'flex-end',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  seeAllText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
 });
