@@ -8,7 +8,7 @@
  * - App info
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import {
   Alert,
   Modal,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
@@ -45,6 +46,8 @@ export default function SettingsScreen() {
   const [isSavingTelegram, setIsSavingTelegram] = useState(false);
   const [showTelegramSetup, setShowTelegramSetup] = useState(false);
   const [showNotifSettings, setShowNotifSettings] = useState(false);
+  const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
+  const themeDropdownAnim = useRef(new Animated.Value(0)).current;
 
   // Load telegram settings on mount
   useState(() => {
@@ -79,6 +82,16 @@ export default function SettingsScreen() {
       Alert.alert('❌ Échec', 'Impossible d\'envoyer le message. Vérifiez le token et le chat ID.');
     }
   }, [telegramToken, telegramChatId]);
+
+  const toggleThemeDropdown = useCallback(() => {
+    const toValue = themeDropdownOpen ? 0 : 1;
+    setThemeDropdownOpen(!themeDropdownOpen);
+    Animated.timing(themeDropdownAnim, {
+      toValue,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+  }, [themeDropdownOpen, themeDropdownAnim]);
 
   const handleResetGamification = useCallback(() => {
     Alert.alert(
@@ -261,32 +274,58 @@ export default function SettingsScreen() {
                         <Text style={styles.profileLoot}>🎁 ×{profile.lootBoxesAvailable}</Text>
                       )}
                     </View>
-                    {/* Theme picker — only for active profile */}
+                    {/* Theme picker dropdown — only for active profile */}
                     {activeProfile?.id === profile.id && (
-                    <View style={styles.themeRow}>
-                      <Text style={styles.themeLabel}>Thème :</Text>
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.themeScroll}>
-                        <View style={styles.themeGrid}>
+                    <View style={styles.themeSection}>
+                      <TouchableOpacity
+                        style={[styles.themeDropdownBtn, { borderColor: primary }]}
+                        onPress={toggleThemeDropdown}
+                        activeOpacity={0.7}
+                      >
+                        <View style={styles.themeDropdownLeft}>
+                          <View style={[styles.themePreviewDot, { backgroundColor: currentTheme.primary }]} />
+                          <Text style={styles.themeDropdownLabel}>
+                            {currentTheme.emoji} {currentTheme.label}
+                          </Text>
+                        </View>
+                        <Text style={[styles.themeDropdownArrow, { color: primary }]}>
+                          {themeDropdownOpen ? '▲' : '▼'}
+                        </Text>
+                      </TouchableOpacity>
+                      {themeDropdownOpen && (
+                        <Animated.View style={[styles.themeDropdownList, {
+                          opacity: themeDropdownAnim,
+                        }]}>
                           {THEME_LIST.map((t) => {
                             const isActive = currentTheme.id === t.id;
                             return (
                               <TouchableOpacity
                                 key={t.id}
                                 style={[
-                                  styles.themeBtn,
-                                  { backgroundColor: t.secondary, borderColor: t.primary },
-                                  isActive && styles.themeBtnActive,
-                                  isActive && { borderColor: t.primary },
+                                  styles.themeDropdownItem,
+                                  isActive && { backgroundColor: tint },
                                 ]}
-                                onPress={() => { updateProfileTheme(profile.id, t.id); setThemeId(t.id); }}
+                                onPress={() => {
+                                  updateProfileTheme(profile.id, t.id);
+                                  setThemeId(t.id);
+                                  toggleThemeDropdown();
+                                }}
                                 activeOpacity={0.7}
                               >
-                                <Text style={styles.themeBtnEmoji}>{t.emoji}</Text>
+                                <View style={[styles.themePreviewDot, { backgroundColor: t.primary }]} />
+                                <Text style={styles.themeDropdownItemEmoji}>{t.emoji}</Text>
+                                <Text style={[
+                                  styles.themeDropdownItemLabel,
+                                  isActive && { color: primary, fontWeight: '700' },
+                                ]}>
+                                  {t.label}
+                                </Text>
+                                {isActive && <Text style={[styles.themeCheckmark, { color: primary }]}>✓</Text>}
                               </TouchableOpacity>
                             );
                           })}
-                        </View>
-                      </ScrollView>
+                        </Animated.View>
+                      )}
                     </View>
                     )}
                   </View>
@@ -621,41 +660,75 @@ const styles = StyleSheet.create({
   profileName: { fontSize: 15, fontWeight: '700', color: '#111827' },
   profileMeta: { fontSize: 12, color: '#6B7280' },
   profileLoot: { fontSize: 14, fontWeight: '700', color: '#F59E0B' },
-  themeRow: {
+  themeSection: {
+    marginTop: 6,
+    marginLeft: 38,
+  },
+  themeDropdownBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginTop: 4,
-    marginLeft: 38, // align with profile info (avatar 28 + gap 10)
+    justifyContent: 'space-between',
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1.5,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
-  themeLabel: {
-    fontSize: 12,
+  themeDropdownLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  themePreviewDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+  },
+  themeDropdownLabel: {
+    fontSize: 14,
     fontWeight: '600',
-    color: '#9CA3AF',
+    color: '#374151',
   },
-  themeScroll: {
+  themeDropdownArrow: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  themeDropdownList: {
+    marginTop: 6,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  themeDropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  themeDropdownItemEmoji: {
+    fontSize: 18,
+    width: 26,
+    textAlign: 'center',
+  },
+  themeDropdownItemLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
     flex: 1,
   },
-  themeGrid: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  themeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-    opacity: 0.6,
-  },
-  themeBtnActive: {
-    opacity: 1,
-    borderWidth: 2,
-  },
-  themeBtnEmoji: {
+  themeCheckmark: {
     fontSize: 16,
+    fontWeight: '800',
   },
   profileHint: {
     fontSize: 12,
