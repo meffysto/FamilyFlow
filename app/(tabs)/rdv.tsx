@@ -5,7 +5,7 @@
  * Reuses the existing RDVEditor component for create/edit.
  */
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,8 @@ import {
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import * as Haptics from 'expo-haptics';
 import { format } from 'date-fns';
 import { useVault } from '../../hooks/useVault';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -62,11 +64,83 @@ export default function RDVScreen() {
     setEditorVisible(true);
   };
 
+  const handleUpdateStatut = useCallback(
+    async (rdv: RDV, statut: RDV['statut']) => {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await updateRDV(rdv.sourceFile, {
+        date_rdv: rdv.date_rdv,
+        heure: rdv.heure,
+        type_rdv: rdv.type_rdv,
+        enfant: rdv.enfant,
+        médecin: rdv.médecin,
+        lieu: rdv.lieu,
+        statut,
+        questions: rdv.questions,
+        reponses: rdv.reponses,
+      });
+    },
+    [updateRDV]
+  );
+
+  /** Actions disponibles selon le statut actuel */
+  const getStatutActions = (rdv: RDV): { label: string; emoji: string; statut: RDV['statut']; color: string }[] => {
+    switch (rdv.statut) {
+      case 'planifié':
+        return [
+          { label: 'Fait', emoji: '✅', statut: 'fait', color: '#10B981' },
+          { label: 'Annulé', emoji: '❌', statut: 'annulé', color: '#EF4444' },
+        ];
+      case 'fait':
+        return [
+          { label: 'Planifié', emoji: '📅', statut: 'planifié', color: '#8B5CF6' },
+          { label: 'Annulé', emoji: '❌', statut: 'annulé', color: '#EF4444' },
+        ];
+      case 'annulé':
+        return [
+          { label: 'Planifié', emoji: '📅', statut: 'planifié', color: '#8B5CF6' },
+          { label: 'Fait', emoji: '✅', statut: 'fait', color: '#10B981' },
+        ];
+    }
+  };
+
   const renderRDV = (rdv: RDV, isPast: boolean) => {
     const emoji = TYPE_EMOJI[rdv.type_rdv] ?? '📋';
+    const hasQuestions = rdv.questions && rdv.questions.length > 0;
+    const hasReponses = !!rdv.reponses?.trim();
+    const actions = getStatutActions(rdv);
+
+    const renderRightActions = (
+      _progress: any,
+      _drag: any,
+      swipeable: { close: () => void }
+    ) => (
+      <View style={styles.swipeActions}>
+        {actions.map((action) => (
+          <TouchableOpacity
+            key={action.statut}
+            style={[styles.swipeAction, { backgroundColor: action.color }]}
+            onPress={() => {
+              swipeable.close();
+              handleUpdateStatut(rdv, action.statut);
+            }}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.swipeActionEmoji}>{action.emoji}</Text>
+            <Text style={styles.swipeActionLabel}>{action.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+
     return (
-      <TouchableOpacity
+      <ReanimatedSwipeable
         key={rdv.sourceFile}
+        renderRightActions={renderRightActions}
+        rightThreshold={60}
+        friction={2}
+        overshootRight={false}
+      >
+      <TouchableOpacity
         style={[styles.rdvCard, isPast && styles.rdvCardPast]}
         onPress={() => openEdit(rdv)}
         activeOpacity={0.7}
@@ -99,8 +173,31 @@ export default function RDVScreen() {
               📍 {rdv.lieu}
             </Text>
           ) : null}
+
+          {/* Questions à poser */}
+          {hasQuestions && (
+            <View style={styles.questionsBlock}>
+              <Text style={styles.questionsTitle}>❓ Questions à poser</Text>
+              {rdv.questions!.map((q, i) => (
+                <Text key={i} style={styles.questionItem} numberOfLines={2}>
+                  • {q}
+                </Text>
+              ))}
+            </View>
+          )}
+
+          {/* Réponses du médecin */}
+          {hasReponses && (
+            <View style={styles.reponsesBlock}>
+              <Text style={styles.reponsesTitle}>💬 Réponses du médecin</Text>
+              <Text style={styles.reponsesText} numberOfLines={4}>
+                {rdv.reponses}
+              </Text>
+            </View>
+          )}
         </View>
       </TouchableOpacity>
+      </ReanimatedSwipeable>
     );
   };
 
@@ -146,7 +243,15 @@ export default function RDVScreen() {
       </ScrollView>
 
       {/* RDV Editor Modal */}
-      <Modal visible={editorVisible} animationType="slide" presentationStyle="pageSheet">
+      <Modal
+        visible={editorVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => {
+          setEditorVisible(false);
+          setEditingRDV(undefined);
+        }}
+      >
         <RDVEditor
           rdv={editingRDV}
           onSave={async (data) => {
@@ -272,5 +377,73 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 14,
     color: '#9CA3AF',
+  },
+  swipeActions: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    marginBottom: 12,
+    borderRadius: 14,
+    overflow: 'hidden',
+    gap: 2,
+  },
+  swipeAction: {
+    width: 76,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 12,
+  },
+  swipeActionEmoji: {
+    fontSize: 22,
+  },
+  swipeActionLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  questionsBlock: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    gap: 4,
+  },
+  questionsTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#6B7280',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginBottom: 2,
+  },
+  questionItem: {
+    fontSize: 14,
+    color: '#374151',
+    lineHeight: 20,
+  },
+  reponsesBlock: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    gap: 4,
+    backgroundColor: '#F0FDF4',
+    borderRadius: 8,
+    padding: 10,
+    marginLeft: -4,
+    marginRight: -4,
+  },
+  reponsesTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#15803D',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginBottom: 2,
+  },
+  reponsesText: {
+    fontSize: 14,
+    color: '#374151',
+    lineHeight: 20,
   },
 });

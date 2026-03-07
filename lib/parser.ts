@@ -283,8 +283,40 @@ export function parseDateInput(input: string): string | null {
   return null;
 }
 
+/** Extract raw text content of a `## Section` from a markdown body. */
+function extractBodySection(body: string, sectionTitle: string): string {
+  const lines = body.split('\n');
+  let inSection = false;
+  const result: string[] = [];
+
+  for (const line of lines) {
+    if (line.startsWith('## ')) {
+      if (inSection) break;
+      if (line.slice(3).trim() === sectionTitle) {
+        inSection = true;
+        continue;
+      }
+    } else if (inSection) {
+      result.push(line);
+    }
+  }
+
+  return result.join('\n').trim();
+}
+
+/** Parse bullet list items from a body section. */
+function parseBulletSection(body: string, sectionTitle: string): string[] | undefined {
+  const raw = extractBodySection(body, sectionTitle);
+  if (!raw) return undefined;
+  const items = raw
+    .split('\n')
+    .map((line) => line.replace(/^[-*]\s+/, '').trim())
+    .filter((q) => q.length > 0);
+  return items.length > 0 ? items : undefined;
+}
+
 export function parseRDV(relativePath: string, content: string): RDV | null {
-  const { data } = parseFrontmatter(content);
+  const { data, content: body } = parseFrontmatter(content);
   if (!data.date_rdv) return null;
 
   const fileName = relativePath.split('/').pop()?.replace('.md', '') ?? '';
@@ -299,6 +331,8 @@ export function parseRDV(relativePath: string, content: string): RDV | null {
     lieu: String(data.lieu ?? ''),
     statut: (data.statut as RDV['statut']) ?? 'planifié',
     sourceFile: relativePath,
+    questions: parseBulletSection(body, 'Questions à poser'),
+    reponses: extractBodySection(body, 'Réponses du médecin') || undefined,
   };
 }
 
@@ -323,11 +357,23 @@ export function serializeRDV(rdv: Omit<RDV, 'sourceFile' | 'title'>): string {
     '',
     `# Rendez-vous — ${displayDate} ${rdv.type_rdv} ${rdv.enfant}`,
     '',
-    '## Notes',
-    '',
-    '> ',
+    '## Questions à poser',
     '',
   ];
+
+  const validQuestions = (rdv.questions ?? []).filter((q) => q.trim().length > 0);
+  for (const q of validQuestions) {
+    lines.push(`- ${q}`);
+  }
+
+  lines.push('');
+  lines.push('## Réponses du médecin');
+  lines.push('');
+  if (rdv.reponses?.trim()) {
+    lines.push(rdv.reponses.trim());
+    lines.push('');
+  }
+
   return lines.join('\n');
 }
 

@@ -9,7 +9,7 @@ import { getTheme } from '../../constants/themes';
 import { ThemeProvider } from '../../contexts/ThemeContext';
 
 function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
-  return <Text style={{ fontSize: focused ? 24 : 20, opacity: focused ? 1 : 0.6 }}>{emoji}</Text>;
+  return <Text style={{ fontSize: focused ? 26 : 22, opacity: focused ? 1 : 0.6 }}>{emoji}</Text>;
 }
 
 export default function TabsLayout() {
@@ -28,13 +28,13 @@ export default function TabsLayout() {
             backgroundColor: '#FFFFFF',
             borderTopColor: '#E5E7EB',
             borderTopWidth: 1,
-            paddingBottom: 4,
-            height: 60,
+            paddingBottom: 6,
+            height: 70,
           },
           tabBarActiveTintColor: theme.primary,
-          tabBarInactiveTintColor: '#9CA3AF',
+          tabBarInactiveTintColor: '#6B7280',
           tabBarLabelStyle: {
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: '600',
             marginBottom: 2,
           },

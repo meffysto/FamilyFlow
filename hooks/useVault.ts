@@ -88,6 +88,7 @@ export interface VaultState {
   addTask: (text: string, targetFile: string, dueDate?: string, recurrence?: string) => Promise<void>;
   deleteTask: (sourceFile: string, lineIndex: number) => Promise<void>;
   addCourseItem: (text: string, section?: string) => Promise<void>;
+  toggleCourseItem: (item: CourseItem, completed: boolean) => Promise<void>;
   removeCourseItem: (lineIndex: number) => Promise<void>;
   clearCompletedCourses: () => Promise<void>;
   memories: Memory[];
@@ -817,6 +818,12 @@ export function useVault(): VaultState {
     await loadVaultData(vaultRef.current);
   }, [loadVaultData]);
 
+  const toggleCourseItem = useCallback(async (item: CourseItem, completed: boolean) => {
+    if (!vaultRef.current) return;
+    await vaultRef.current.toggleTask(COURSES_FILE, item.lineIndex, completed);
+    setCourses((prev) => prev.map((c) => (c.id === item.id ? { ...c, completed } : c)));
+  }, []);
+
   const removeCourseItem = useCallback(async (lineIndex: number) => {
     if (!vaultRef.current) return;
     try {
@@ -922,6 +929,7 @@ export function useVault(): VaultState {
     addTask,
     deleteTask,
     addCourseItem,
+    toggleCourseItem,
     removeCourseItem,
     clearCompletedCourses,
     memories,

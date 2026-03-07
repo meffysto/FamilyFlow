@@ -11,7 +11,7 @@
  * - Mini leaderboard
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -23,7 +23,9 @@ import {
   ActionSheetIOS,
   Platform,
   Modal,
+  TextInput,
 } from 'react-native';
+import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -45,6 +47,22 @@ import {
 import { buildWeeklyRecapText, sendWeeklyRecap } from '../../lib/telegram';
 import { Task, RDV } from '../../lib/types';
 import { formatDateForDisplay, isRdvUpcoming } from '../../lib/parser';
+import { DashboardPrefsModal, SectionPref } from '../../components/DashboardPrefsModal';
+
+const PREFS_KEY = 'dashboard_prefs_v1';
+
+const DEFAULT_SECTIONS: SectionPref[] = [
+  { id: 'menage',     label: 'Ménage du jour',         emoji: '🧹', visible: true },
+  { id: 'overdue',    label: 'En retard',               emoji: '⚠️', visible: true },
+  { id: 'meals',      label: 'Repas du jour',           emoji: '🍽️', visible: true },
+  { id: 'photos',     label: 'Photo du jour',           emoji: '📸', visible: true },
+  { id: 'courses',    label: 'Courses',                 emoji: '🛒', visible: true },
+  { id: 'rdvs',       label: 'Rendez-vous',             emoji: '📅', visible: true },
+  { id: 'rewards',    label: 'Récompenses actives',     emoji: '🏆', visible: true },
+  { id: 'stock',      label: 'Stock bébé',              emoji: '📦', visible: true },
+  { id: 'quicknotifs',label: 'Notifications rapides',   emoji: '📤', visible: true },
+  { id: 'leaderboard',label: 'Classement',              emoji: '🥇', visible: true },
+];
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -74,6 +92,7 @@ export default function DashboardScreen() {
     updateRDV,
     deleteRDV,
     addCourseItem,
+    toggleCourseItem,
     clearCompletedCourses,
     refresh,
   } = useVault();
@@ -87,6 +106,37 @@ export default function DashboardScreen() {
   const [isSendingRecap, setIsSendingRecap] = useState(false);
   const [rdvEditorVisible, setRdvEditorVisible] = useState(false);
   const [editingRDV, setEditingRDV] = useState<RDV | undefined>(undefined);
+  const [sectionPrefs, setSectionPrefs] = useState<SectionPref[]>(DEFAULT_SECTIONS);
+  const [prefsModalVisible, setPrefsModalVisible] = useState(false);
+  const [newCourseText, setNewCourseText] = useState('');
+
+  // Load persisted section prefs on mount
+  useEffect(() => {
+    SecureStore.getItemAsync(PREFS_KEY).then((raw) => {
+      if (!raw) return;
+      try {
+        const saved: SectionPref[] = JSON.parse(raw);
+        // Re-order saved sections, then append any new ones from DEFAULT
+        const orderedIds = saved.map((s) => s.id);
+        const merged: SectionPref[] = [
+          ...orderedIds
+            .map((id) => {
+              const def = DEFAULT_SECTIONS.find((s) => s.id === id);
+              const sv = saved.find((s) => s.id === id);
+              return def ? { ...def, visible: sv?.visible ?? true } : null;
+            })
+            .filter(Boolean) as SectionPref[],
+          ...DEFAULT_SECTIONS.filter((s) => !orderedIds.includes(s.id)),
+        ];
+        setSectionPrefs(merged);
+      } catch {}
+    });
+  }, []);
+
+  const saveSectionPrefs = useCallback(async (prefs: SectionPref[]) => {
+    setSectionPrefs(prefs);
+    await SecureStore.setItemAsync(PREFS_KEY, JSON.stringify(prefs));
+  }, []);
   // showPastRdvs removed — full RDV view is now in /(tabs)/rdv
 
   const today = format(new Date(), 'EEEE dd MMMM yyyy', { locale: fr });
@@ -283,6 +333,258 @@ export default function DashboardScreen() {
     hasPhoto: (photoDates[e.id] ?? []).includes(todayStr),
   }));
 
+  const renderSection = (id: string): React.ReactNode => {
+    switch (id) {
+      case 'menage':
+        if (pendingMenage.length === 0) return null;
+        return (
+          <DashboardCard key="menage" title="Ménage du jour" icon="🧹" count={pendingMenage.length} color="#10B981" onPressMore={() => router.push('/(tabs)/tasks')}>
+            {pendingMenage.slice(0, 4).map((task) => (
+              <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} />
+            ))}
+          </DashboardCard>
+        );
+
+      case 'overdue':
+        if (overdueTasks.length === 0) return null;
+        return (
+          <DashboardCard key="overdue" title="En retard" icon="⚠️" count={overdueTasks.length} color="#EF4444" onPressMore={() => router.push('/(tabs)/tasks')}>
+            {overdueTasks.slice(0, 3).map((task) => (
+              <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} showSource />
+            ))}
+          </DashboardCard>
+        );
+
+      case 'meals':
+        if (todayMeals.length === 0) return null;
+        return (
+          <DashboardCard key="meals" title="Repas du jour" icon="🍽️" count={todayMeals.length} color="#EC4899" onPressMore={() => router.push('/(tabs)/meals')}>
+            {todayMeals.map((meal) => (
+              <View key={meal.id} style={styles.mealRow}>
+                <Text style={styles.mealEmoji}>
+                  {meal.mealType === 'Petit-déj' ? '🥐' : meal.mealType === 'Déjeuner' ? '🍽️' : '🌙'}
+                </Text>
+                <View style={styles.mealInfo}>
+                  <Text style={styles.mealType}>{meal.mealType}</Text>
+                  <Text style={styles.mealText}>{meal.text}</Text>
+                </View>
+              </View>
+            ))}
+          </DashboardCard>
+        );
+
+      case 'photos':
+        if (enfants.length === 0) return null;
+        return (
+          <DashboardCard key="photos" title="Photo du jour" icon="📸" color="#06B6D4" onPressMore={() => router.push('/(tabs)/photos')}>
+            {photoStatus.map((e) => (
+              <TouchableOpacity
+                key={e.id}
+                style={styles.photoStatusRow}
+                onPress={() => { if (!e.hasPhoto) { pickPhotoForEnfant(e.name); } else { router.push('/(tabs)/photos'); } }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.photoStatusEmoji}>{e.avatar}</Text>
+                <View style={styles.photoStatusInfo}>
+                  <Text style={styles.photoStatusName}>{e.name}</Text>
+                  {!e.hasPhoto && <Text style={styles.photoStatusHint}>Appuyer pour ajouter une photo</Text>}
+                </View>
+                <Text style={styles.photoStatusIcon}>{e.hasPhoto ? '✅' : '📷'}</Text>
+              </TouchableOpacity>
+            ))}
+          </DashboardCard>
+        );
+
+      case 'courses':
+        return (
+          <DashboardCard key="courses" title="Courses" icon="🛒" count={topCourses.length || undefined} color="#F59E0B" onPressMore={() => router.push({ pathname: '/(tabs)/tasks', params: { filter: 'courses' } })}>
+            {topCourses.map((item) => (
+              <ReanimatedSwipeable
+                key={item.id}
+                renderRightActions={(_p, _d, swipeable) => (
+                  <TouchableOpacity
+                    style={styles.courseSwipeAction}
+                    onPress={() => { swipeable.close(); toggleCourseItem(item, true); }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.courseSwipeEmoji}>✅</Text>
+                    <Text style={styles.courseSwipeLabel}>Coché</Text>
+                  </TouchableOpacity>
+                )}
+                rightThreshold={60}
+                friction={2}
+                overshootRight={false}
+              >
+                <View style={styles.courseRow}>
+                  <Text style={styles.courseBullet}>•</Text>
+                  <Text style={styles.courseText}>{item.text}</Text>
+                </View>
+              </ReanimatedSwipeable>
+            ))}
+            {topCourses.length === 0 && (
+              <Text style={styles.courseEmpty}>Liste vide — ajoutez un article ci-dessous</Text>
+            )}
+            {/* Champ d'ajout rapide */}
+            <View style={styles.courseAddRow}>
+              <TextInput
+                style={styles.courseAddInput}
+                value={newCourseText}
+                onChangeText={setNewCourseText}
+                placeholder="Ajouter un article…"
+                placeholderTextColor="#9CA3AF"
+                returnKeyType="done"
+                onSubmitEditing={async () => {
+                  const text = newCourseText.trim();
+                  if (!text) return;
+                  setNewCourseText('');
+                  await addCourseItem(text);
+                }}
+              />
+              <TouchableOpacity
+                style={[styles.courseAddBtn, { backgroundColor: '#F59E0B' }]}
+                onPress={async () => {
+                  const text = newCourseText.trim();
+                  if (!text) return;
+                  setNewCourseText('');
+                  await addCourseItem(text);
+                }}
+                activeOpacity={0.7}
+                disabled={!newCourseText.trim()}
+              >
+                <Text style={styles.courseAddBtnText}>+</Text>
+              </TouchableOpacity>
+            </View>
+            {courses.some((c) => c.completed) && (
+              <TouchableOpacity
+                style={styles.clearCoursesBtn}
+                onPress={() => {
+                  const count = courses.filter((c) => c.completed).length;
+                  Alert.alert('Vider les cochés', `Supprimer ${count} article${count > 1 ? 's' : ''} coché${count > 1 ? 's' : ''} ?`, [
+                    { text: 'Annuler', style: 'cancel' },
+                    { text: 'Supprimer', style: 'destructive', onPress: clearCompletedCourses },
+                  ]);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.clearCoursesBtnText}>🗑 Vider les cochés</Text>
+              </TouchableOpacity>
+            )}
+          </DashboardCard>
+        );
+
+      case 'rdvs':
+        return (
+          <DashboardCard key="rdvs" title="Rendez-vous" icon="📅" count={upcomingRdvs.length || undefined} color="#8B5CF6">
+            {upcomingRdvs.slice(0, 3).map((rdv) => (
+              <TouchableOpacity key={rdv.sourceFile} style={styles.rdvRow} onPress={() => { setEditingRDV(rdv); setRdvEditorVisible(true); }} activeOpacity={0.7}>
+                <Text style={styles.rdvDate}>{formatDateForDisplay(rdv.date_rdv)} {rdv.heure ? `à ${rdv.heure}` : ''}</Text>
+                <Text style={styles.rdvTitle}>{rdv.type_rdv} — {rdv.enfant}</Text>
+                {rdv.médecin && <Text style={styles.rdvMeta}>{rdv.médecin}</Text>}
+              </TouchableOpacity>
+            ))}
+            {upcomingRdvs.length === 0 && <Text style={styles.rdvEmpty}>Aucun RDV à venir</Text>}
+            <View style={styles.cardActions}>
+              <TouchableOpacity style={[styles.rdvAddBtn, { backgroundColor: tint, borderColor: primary }]} onPress={() => { setEditingRDV(undefined); setRdvEditorVisible(true); }} activeOpacity={0.7}>
+                <Text style={[styles.rdvAddBtnText, { color: primary }]}>+ Nouveau</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/rdv')} activeOpacity={0.7}>
+                <Text style={[styles.seeAllText, { color: primary }]}>Voir tout →</Text>
+              </TouchableOpacity>
+            </View>
+          </DashboardCard>
+        );
+
+      case 'rewards':
+        if (activeRewards.length === 0) return null;
+        return (
+          <DashboardCard key="rewards" title="Récompenses actives" icon="🏆" color="#EF4444">
+            {activeRewards.map((reward) => {
+              const ownerProfile = profiles.find((p) => p.id === reward.profileId);
+              const typeColor = reward.type === 'vacation' || reward.type === 'crown' || reward.type === 'multiplier' ? '#EF4444' : '#F59E0B';
+              return (
+                <View key={reward.id} style={styles.activeRewardRow}>
+                  <Text style={styles.activeRewardEmoji}>{reward.emoji}</Text>
+                  <View style={styles.activeRewardInfo}>
+                    <Text style={styles.activeRewardLabel}>{ownerProfile?.avatar ?? '👤'} {ownerProfile?.name ?? reward.profileId} — {reward.label}</Text>
+                    <Text style={[styles.activeRewardMeta, { color: typeColor }]}>
+                      {reward.remainingDays !== undefined && `${reward.remainingDays}j restant${reward.remainingDays > 1 ? 's' : ''}`}
+                      {reward.remainingTasks !== undefined && `${reward.remainingTasks} tâche${reward.remainingTasks > 1 ? 's' : ''} restante${reward.remainingTasks > 1 ? 's' : ''}`}
+                      {reward.expiresAt && !reward.remainingDays && !reward.remainingTasks && `expire ${reward.expiresAt}`}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
+          </DashboardCard>
+        );
+
+      case 'stock': {
+        if (stock.length === 0) return null;
+        const lowCount = stock.filter((s) => s.quantite <= s.seuil).length;
+        return (
+          <DashboardCard key="stock" title="Stock bébé" icon="📦" count={lowCount > 0 ? lowCount : undefined} color={lowCount > 0 ? '#EF4444' : '#10B981'}>
+            {stock.filter((s) => s.quantite <= s.seuil + 1).map((item) => {
+              const isLow = item.quantite <= item.seuil;
+              const statusColor = isLow ? '#EF4444' : '#F59E0B';
+              return (
+                <View key={`${item.section}-${item.produit}`} style={styles.stockRow}>
+                  <Text style={styles.stockAlertIcon}>{isLow ? '🔴' : '🟡'}</Text>
+                  <View style={styles.stockInfo}>
+                    <Text style={styles.stockName}>{item.produit}{item.detail ? ` (${item.detail})` : ''}</Text>
+                    <Text style={[styles.stockMeta, { color: statusColor }]}>{item.quantite} restant{item.quantite > 1 ? 's' : ''} (seuil: {item.seuil})</Text>
+                  </View>
+                  <View style={styles.stockBtnGroup}>
+                    {isLow && (
+                      <TouchableOpacity style={styles.stockCartBtn} onPress={async () => { const n = item.detail ? `${item.produit} (${item.detail})` : item.produit; await addCourseItem(n, 'Produits bébé'); Alert.alert('Ajouté !', `${n} ajouté aux courses`); }} activeOpacity={0.6} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
+                        <Text style={styles.stockCartBtnText}>🛒</Text>
+                      </TouchableOpacity>
+                    )}
+                    <TouchableOpacity style={[styles.stockBtn, item.quantite <= 0 && styles.stockBtnDisabled]} onPress={() => updateStockQuantity(item.lineIndex, Math.max(0, item.quantite - 1))} activeOpacity={0.6} disabled={item.quantite <= 0} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
+                      <Text style={styles.stockBtnText}>−</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.stockQty}>{item.quantite}</Text>
+                    <TouchableOpacity style={styles.stockBtn} onPress={() => updateStockQuantity(item.lineIndex, item.quantite + 1)} activeOpacity={0.6} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
+                      <Text style={styles.stockBtnText}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            })}
+            <TouchableOpacity style={styles.seeAllLink} onPress={() => router.push('/(tabs)/stock')} activeOpacity={0.7}>
+              <Text style={[styles.seeAllText, { color: primary }]}>Gérer le stock →</Text>
+            </TouchableOpacity>
+          </DashboardCard>
+        );
+      }
+
+      case 'quicknotifs':
+        if (customNotifs.length === 0) return null;
+        return (
+          <DashboardCard key="quicknotifs" title="Notifications rapides" icon="📤" color="#10B981">
+            <View style={styles.quickNotifGrid}>
+              {customNotifs.map((notif) => (
+                <TouchableOpacity key={notif.id} style={styles.quickNotifBtn} onPress={() => handleSendCustomNotif(notif.id)}>
+                  <Text style={styles.quickNotifEmoji}>{notif.emoji}</Text>
+                  <Text style={styles.quickNotifLabel}>{notif.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </DashboardCard>
+        );
+
+      case 'leaderboard':
+        if (leaderboard.length === 0) return null;
+        return (
+          <DashboardCard key="leaderboard" title="Classement" icon="🏆" color={primary} onPressMore={() => router.push('/(tabs)/loot')}>
+            <FamilyLeaderboard profiles={leaderboard} compact />
+          </DashboardCard>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* Header */}
@@ -308,6 +610,14 @@ export default function DashboardScreen() {
           >
             <Text style={styles.headerBtnIcon}>{isLoading ? '⏳' : '🔄'}</Text>
             <Text style={styles.headerBtnLabel}>Actualiser</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setPrefsModalVisible(true)}
+            style={styles.headerBtn}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text style={styles.headerBtnIcon}>⚙️</Text>
+            <Text style={styles.headerBtnLabel}>Sections</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -339,313 +649,34 @@ export default function DashboardScreen() {
           </DashboardCard>
         )}
 
-        {/* Ménage du jour */}
-        {pendingMenage.length > 0 && (
-          <DashboardCard
-            title="Ménage du jour"
-            icon="🧹"
-            count={pendingMenage.length}
-            color="#10B981"
-            onPressMore={() => router.push('/(tabs)/tasks')}
-          >
-            {pendingMenage.slice(0, 4).map((task) => (
-              <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} />
-            ))}
-          </DashboardCard>
-        )}
-
-        {/* Overdue */}
-        {overdueTasks.length > 0 && (
-          <DashboardCard
-            title="En retard"
-            icon="⚠️"
-            count={overdueTasks.length}
-            color="#EF4444"
-            onPressMore={() => router.push('/(tabs)/tasks')}
-          >
-            {overdueTasks.slice(0, 3).map((task) => (
-              <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} showSource />
-            ))}
-          </DashboardCard>
-        )}
-
-        {/* Repas du jour */}
-        {todayMeals.length > 0 && (
-          <DashboardCard
-            title="Repas du jour"
-            icon="🍽️"
-            count={todayMeals.length}
-            color="#EC4899"
-            onPressMore={() => router.push('/(tabs)/meals')}
-          >
-            {todayMeals.map((meal) => (
-              <View key={meal.id} style={styles.mealRow}>
-                <Text style={styles.mealEmoji}>
-                  {meal.mealType === 'Petit-déj' ? '🥐' : meal.mealType === 'Déjeuner' ? '🍽️' : '🌙'}
-                </Text>
-                <View style={styles.mealInfo}>
-                  <Text style={styles.mealType}>{meal.mealType}</Text>
-                  <Text style={styles.mealText}>{meal.text}</Text>
-                </View>
-              </View>
-            ))}
-          </DashboardCard>
-        )}
-
-        {/* Photo du jour */}
-        {enfants.length > 0 && (
-          <DashboardCard
-            title="Photo du jour"
-            icon="📸"
-            color="#06B6D4"
-            onPressMore={() => router.push('/(tabs)/photos')}
-          >
-            {photoStatus.map((e) => (
-              <TouchableOpacity
-                key={e.id}
-                style={styles.photoStatusRow}
-                onPress={() => {
-                  if (!e.hasPhoto) {
-                    pickPhotoForEnfant(e.name);
-                  } else {
-                    router.push('/(tabs)/photos');
-                  }
-                }}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.photoStatusEmoji}>{e.avatar}</Text>
-                <View style={styles.photoStatusInfo}>
-                  <Text style={styles.photoStatusName}>{e.name}</Text>
-                  {!e.hasPhoto && (
-                    <Text style={styles.photoStatusHint}>Appuyer pour ajouter une photo</Text>
-                  )}
-                </View>
-                <Text style={styles.photoStatusIcon}>
-                  {e.hasPhoto ? '✅' : '📷'}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </DashboardCard>
-        )}
-
-        {/* Courses */}
-        {topCourses.length > 0 && (
-          <DashboardCard
-            title="Courses"
-            icon="🛒"
-            count={topCourses.length}
-            color="#F59E0B"
-            onPressMore={() => router.push('/(tabs)/tasks')}
-          >
-            {topCourses.map((item) => (
-              <View key={item.id} style={styles.courseRow}>
-                <Text style={styles.courseBullet}>•</Text>
-                <Text style={styles.courseText}>{item.text}</Text>
-              </View>
-            ))}
-            {courses.some((c) => c.completed) && (
-              <TouchableOpacity
-                style={styles.clearCoursesBtn}
-                onPress={() => {
-                  const count = courses.filter((c) => c.completed).length;
-                  Alert.alert(
-                    'Vider les cochés',
-                    `Supprimer ${count} article${count > 1 ? 's' : ''} coché${count > 1 ? 's' : ''} ?`,
-                    [
-                      { text: 'Annuler', style: 'cancel' },
-                      { text: 'Supprimer', style: 'destructive', onPress: clearCompletedCourses },
-                    ]
-                  );
-                }}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.clearCoursesBtnText}>🗑 Vider les cochés</Text>
-              </TouchableOpacity>
-            )}
-          </DashboardCard>
-        )}
-
-        {/* RDVs */}
-        <DashboardCard title="Rendez-vous" icon="📅" count={upcomingRdvs.length || undefined} color="#8B5CF6">
-          {upcomingRdvs.slice(0, 3).map((rdv) => (
-            <TouchableOpacity
-              key={rdv.sourceFile}
-              style={styles.rdvRow}
-              onPress={() => {
-                setEditingRDV(rdv);
-                setRdvEditorVisible(true);
-              }}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.rdvDate}>
-                {formatDateForDisplay(rdv.date_rdv)} {rdv.heure ? `à ${rdv.heure}` : ''}
-              </Text>
-              <Text style={styles.rdvTitle}>
-                {rdv.type_rdv} — {rdv.enfant}
-              </Text>
-              {rdv.médecin && <Text style={styles.rdvMeta}>{rdv.médecin}</Text>}
-            </TouchableOpacity>
-          ))}
-          {upcomingRdvs.length === 0 && (
-            <Text style={styles.rdvEmpty}>Aucun RDV à venir</Text>
-          )}
-          <View style={styles.cardActions}>
-            <TouchableOpacity
-              style={[styles.rdvAddBtn, { backgroundColor: tint, borderColor: primary }]}
-              onPress={() => {
-                setEditingRDV(undefined);
-                setRdvEditorVisible(true);
-              }}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.rdvAddBtnText, { color: primary }]}>+ Nouveau</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => router.push('/(tabs)/rdv')}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.seeAllText, { color: primary }]}>Voir tout →</Text>
-            </TouchableOpacity>
-          </View>
-        </DashboardCard>
-
-        {/* Active rewards */}
-        {activeRewards.length > 0 && (
-          <DashboardCard title="Récompenses actives" icon="🏆" color="#EF4444">
-            {activeRewards.map((reward) => {
-              const ownerProfile = profiles.find((p) => p.id === reward.profileId);
-              const typeColor = reward.type === 'vacation' || reward.type === 'crown' || reward.type === 'multiplier'
-                ? '#EF4444'
-                : '#F59E0B';
-              return (
-                <View key={reward.id} style={styles.activeRewardRow}>
-                  <Text style={styles.activeRewardEmoji}>{reward.emoji}</Text>
-                  <View style={styles.activeRewardInfo}>
-                    <Text style={styles.activeRewardLabel}>
-                      {ownerProfile?.avatar ?? '👤'} {ownerProfile?.name ?? reward.profileId} — {reward.label}
-                    </Text>
-                    <Text style={[styles.activeRewardMeta, { color: typeColor }]}>
-                      {reward.remainingDays !== undefined && `${reward.remainingDays}j restant${reward.remainingDays > 1 ? 's' : ''}`}
-                      {reward.remainingTasks !== undefined && `${reward.remainingTasks} tâche${reward.remainingTasks > 1 ? 's' : ''} restante${reward.remainingTasks > 1 ? 's' : ''}`}
-                      {reward.expiresAt && !reward.remainingDays && !reward.remainingTasks && `expire ${reward.expiresAt}`}
-                    </Text>
-                  </View>
-                </View>
-              );
-            })}
-          </DashboardCard>
-        )}
-
-        {/* Stock bébé */}
-        {stock.length > 0 && (() => {
-          const lowCount = stock.filter((s) => s.quantite <= s.seuil).length;
-          return (
-            <DashboardCard
-              title="Stock bébé"
-              icon="📦"
-              count={lowCount > 0 ? lowCount : undefined}
-              color={lowCount > 0 ? '#EF4444' : '#10B981'}
-            >
-              {stock.filter((s) => s.quantite <= s.seuil + 1).map((item) => {
-                const isLow = item.quantite <= item.seuil;
-                const statusColor = isLow ? '#EF4444' : '#F59E0B';
-                return (
-                  <View key={`${item.section}-${item.produit}`} style={styles.stockRow}>
-                    <Text style={styles.stockAlertIcon}>
-                      {isLow ? '🔴' : '🟡'}
-                    </Text>
-                    <View style={styles.stockInfo}>
-                      <Text style={styles.stockName}>
-                        {item.produit}{item.detail ? ` (${item.detail})` : ''}
-                      </Text>
-                      <Text style={[styles.stockMeta, { color: statusColor }]}>
-                        {item.quantite} restant{item.quantite > 1 ? 's' : ''} (seuil: {item.seuil})
-                      </Text>
-                    </View>
-                    <View style={styles.stockBtnGroup}>
-                      {isLow && (
-                        <TouchableOpacity
-                          style={styles.stockCartBtn}
-                          onPress={async () => {
-                            const itemName = item.detail
-                              ? `${item.produit} (${item.detail})`
-                              : item.produit;
-                            await addCourseItem(itemName, 'Produits bébé');
-                            Alert.alert('Ajouté !', `${itemName} ajouté aux courses`);
-                          }}
-                          activeOpacity={0.6}
-                          hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-                        >
-                          <Text style={styles.stockCartBtnText}>🛒</Text>
-                        </TouchableOpacity>
-                      )}
-                      <TouchableOpacity
-                        style={[styles.stockBtn, item.quantite <= 0 && styles.stockBtnDisabled]}
-                        onPress={() => updateStockQuantity(item.lineIndex, Math.max(0, item.quantite - 1))}
-                        activeOpacity={0.6}
-                        disabled={item.quantite <= 0}
-                        hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-                      >
-                        <Text style={styles.stockBtnText}>−</Text>
-                      </TouchableOpacity>
-                      <Text style={styles.stockQty}>{item.quantite}</Text>
-                      <TouchableOpacity
-                        style={styles.stockBtn}
-                        onPress={() => updateStockQuantity(item.lineIndex, item.quantite + 1)}
-                        activeOpacity={0.6}
-                        hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-                      >
-                        <Text style={styles.stockBtnText}>+</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                );
-              })}
-              <TouchableOpacity
-                style={styles.seeAllLink}
-                onPress={() => router.push('/(tabs)/stock')}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.seeAllText, { color: primary }]}>Gérer le stock →</Text>
-              </TouchableOpacity>
-            </DashboardCard>
-          );
-        })()}
-
-        {/* Custom notification quick-send */}
-        {customNotifs.length > 0 && (
-          <DashboardCard title="Notifications rapides" icon="📤" color="#10B981">
-            <View style={styles.quickNotifGrid}>
-              {customNotifs.map((notif) => (
-                <TouchableOpacity
-                  key={notif.id}
-                  style={styles.quickNotifBtn}
-                  onPress={() => handleSendCustomNotif(notif.id)}
-                >
-                  <Text style={styles.quickNotifEmoji}>{notif.emoji}</Text>
-                  <Text style={styles.quickNotifLabel}>{notif.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </DashboardCard>
-        )}
-
-        {/* Leaderboard */}
-        {leaderboard.length > 0 && (
-          <DashboardCard
-            title="Classement"
-            icon="🏆"
-            color={primary}
-            onPressMore={() => router.push('/(tabs)/loot')}
-          >
-            <FamilyLeaderboard profiles={leaderboard} compact />
-          </DashboardCard>
-        )}
+        {sectionPrefs.map((s) => s.visible ? renderSection(s.id) : null)}
 
         <View style={styles.bottomPad} />
       </ScrollView>
+      {/* Dashboard prefs modal */}
+      <Modal
+        visible={prefsModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setPrefsModalVisible(false)}
+      >
+        <DashboardPrefsModal
+          sections={sectionPrefs}
+          onSave={saveSectionPrefs}
+          onClose={() => setPrefsModalVisible(false)}
+        />
+      </Modal>
+
       {/* RDV Editor Modal */}
-      <Modal visible={rdvEditorVisible} animationType="slide" presentationStyle="pageSheet">
+      <Modal
+        visible={rdvEditorVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => {
+          setRdvEditorVisible(false);
+          setEditingRDV(undefined);
+        }}
+      >
         <RDVEditor
           rdv={editingRDV}
           onSave={async (data) => {
@@ -692,12 +723,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   greeting: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#C4B5FD',
     fontWeight: '500',
   },
   dateText: {
-    fontSize: 15,
+    fontSize: 16,
     color: '#FFFFFF',
     fontWeight: '700',
     textTransform: 'capitalize',
@@ -715,10 +746,10 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   headerBtnIcon: {
-    fontSize: 18,
+    fontSize: 22,
   },
   headerBtnLabel: {
-    fontSize: 9,
+    fontSize: 11,
     color: '#C4B5FD',
     fontWeight: '600',
     letterSpacing: 0.2,
@@ -741,7 +772,7 @@ const styles = StyleSheet.create({
     color: '#F59E0B',
   },
   courseText: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#374151',
     flex: 1,
   },
@@ -753,34 +784,34 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   rdvDate: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#8B5CF6',
     fontWeight: '600',
   },
   rdvTitle: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
     color: '#111827',
   },
   rdvMeta: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#6B7280',
   },
   rdvEmpty: {
-    fontSize: 13,
-    color: '#9CA3AF',
+    fontSize: 14,
+    color: '#6B7280',
     fontStyle: 'italic',
     paddingVertical: 8,
   },
   rdvAddBtn: {
     marginTop: 8,
-    paddingVertical: 10,
+    paddingVertical: 13,
     borderRadius: 10,
     alignItems: 'center',
     borderWidth: 1.5,
   },
   rdvAddBtnText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
   },
   stockRow: {
@@ -799,12 +830,12 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   stockName: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     color: '#111827',
   },
   stockMeta: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
   },
   stockCartBtn: {
@@ -827,9 +858,9 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   stockBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
+    width: 40,
+    height: 40,
+    borderRadius: 10,
     backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
@@ -840,17 +871,67 @@ const styles = StyleSheet.create({
     opacity: 0.3,
   },
   stockBtnText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     color: '#374151',
-    lineHeight: 20,
+    lineHeight: 22,
   },
   stockQty: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '800',
     color: '#111827',
-    minWidth: 24,
+    minWidth: 26,
     textAlign: 'center',
+  },
+  courseSwipeAction: {
+    backgroundColor: '#10B981',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 72,
+    borderRadius: 8,
+    marginVertical: 1,
+    gap: 2,
+  },
+  courseSwipeEmoji: { fontSize: 20 },
+  courseSwipeLabel: { fontSize: 11, fontWeight: '700', color: '#FFFFFF' },
+  courseEmpty: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    fontStyle: 'italic',
+    paddingVertical: 4,
+  },
+  courseAddRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    paddingTop: 10,
+  },
+  courseAddInput: {
+    flex: 1,
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    fontSize: 14,
+    color: '#111827',
+    backgroundColor: '#F9FAFB',
+  },
+  courseAddBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  courseAddBtnText: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    lineHeight: 26,
   },
   clearCoursesBtn: {
     marginTop: 8,
@@ -860,20 +941,20 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   clearCoursesBtnText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     color: '#EF4444',
   },
   welcomeText: {
-    fontSize: 15,
+    fontSize: 16,
     color: '#374151',
-    lineHeight: 22,
+    lineHeight: 24,
     marginBottom: 6,
   },
   welcomeSubText: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#6B7280',
-    lineHeight: 20,
+    lineHeight: 22,
     marginBottom: 16,
   },
   welcomeBtn: {
@@ -903,12 +984,12 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   activeRewardLabel: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     color: '#111827',
   },
   activeRewardMeta: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
   },
   quickNotifGrid: {
@@ -919,16 +1000,16 @@ const styles = StyleSheet.create({
   quickNotifBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     backgroundColor: '#F0FDF4',
     borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
     borderWidth: 1,
     borderColor: '#BBF7D0',
   },
-  quickNotifEmoji: { fontSize: 16 },
-  quickNotifLabel: { fontSize: 13, fontWeight: '600', color: '#15803D' },
+  quickNotifEmoji: { fontSize: 18 },
+  quickNotifLabel: { fontSize: 14, fontWeight: '600', color: '#15803D' },
   mealRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -945,13 +1026,13 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   mealType: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
-    color: '#9CA3AF',
+    color: '#6B7280',
     textTransform: 'uppercase',
   },
   mealText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
     color: '#111827',
   },
@@ -969,16 +1050,16 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   photoStatusName: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     color: '#111827',
   },
   photoStatusHint: {
-    fontSize: 11,
-    color: '#9CA3AF',
+    fontSize: 13,
+    color: '#6B7280',
   },
   photoStatusIcon: {
-    fontSize: 16,
+    fontSize: 20,
   },
   bottomPad: {
     height: 20,
@@ -995,7 +1076,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   seeAllText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
   },
 });

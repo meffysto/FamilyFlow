@@ -29,6 +29,8 @@ export interface RDV {
   lieu: string;
   statut: 'planifié' | 'fait' | 'annulé';
   sourceFile: string;
+  questions?: string[];     // Questions à poser au médecin
+  reponses?: string;        // Réponses / notes post-consultation
 }
 
 export interface JournalEntry {

@@ -6,7 +6,7 @@
  * Toggle task completion → updates vault file + awards points
  */
 
-import { useCallback, useState, useMemo, useRef } from 'react';
+import { useCallback, useState, useMemo, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocalSearchParams } from 'expo-router';
 import { useVault } from '../../hooks/useVault';
 import { useGamification } from '../../hooks/useGamification';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -83,9 +84,15 @@ export default function TasksScreen() {
   const { completeTask } = useGamification({ vault, notifPrefs });
   const { primary, tint } = useThemeColors();
 
+  const { filter: filterParam } = useLocalSearchParams<{ filter?: string }>();
   const filters = useMemo(() => buildFilters(profiles), [profiles]);
   const targetFiles = useMemo(() => buildTargetFiles(profiles), [profiles]);
   const [filter, setFilter] = useState('tous');
+
+  // Apply filter param when navigating from dashboard
+  useEffect(() => {
+    if (filterParam) setFilter(filterParam);
+  }, [filterParam]);
   const [search, setSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 

@@ -49,7 +49,19 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
   const [enfant, setEnfant] = useState(rdv?.enfant ?? 'Maxence');
   const [médecin, setMédecin] = useState(rdv?.médecin ?? '');
   const [lieu, setLieu] = useState(rdv?.lieu ?? '');
+  const [questions, setQuestions] = useState<string[]>(rdv?.questions ?? []);
+  const [reponses, setReponses] = useState(rdv?.reponses ?? '');
   const [isSaving, setIsSaving] = useState(false);
+
+  const addQuestion = () => setQuestions((prev) => [...prev, '']);
+
+  const updateQuestion = (index: number, text: string) => {
+    setQuestions((prev) => prev.map((q, i) => (i === index ? text : q)));
+  };
+
+  const removeQuestion = (index: number) => {
+    setQuestions((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleSave = async () => {
     if (!dateRdv) {
@@ -73,6 +85,8 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
         médecin,
         lieu,
         statut: rdv?.statut ?? 'planifié',
+        questions: questions.filter((q) => q.trim().length > 0),
+        reponses: reponses.trim() || undefined,
       });
       onClose();
     } catch (e) {
@@ -96,6 +110,8 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
 
   return (
     <SafeAreaView style={styles.safe}>
+      {/* Drag handle — indicates swipe-down-to-dismiss */}
+      <View style={styles.dragHandle} />
       <View style={styles.header}>
         <TouchableOpacity onPress={onClose}>
           <Text style={styles.headerClose}>✕</Text>
@@ -200,6 +216,57 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
           multiline
         />
 
+        {/* Questions à poser */}
+        <View style={styles.sectionDivider} />
+        <Text style={styles.sectionLabel}>❓ Questions à poser au médecin</Text>
+        <Text style={styles.sectionHint}>
+          Notez vos questions avant le rendez-vous pour ne rien oublier.
+        </Text>
+
+        {questions.map((q, index) => (
+          <View key={index} style={styles.questionRow}>
+            <TextInput
+              style={[styles.input, styles.questionInput]}
+              value={q}
+              onChangeText={(text) => updateQuestion(index, text)}
+              placeholder={`Question ${index + 1}…`}
+              placeholderTextColor="#9CA3AF"
+              multiline
+            />
+            <TouchableOpacity
+              style={styles.questionRemoveBtn}
+              onPress={() => removeQuestion(index)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={styles.questionRemoveBtnText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+
+        <TouchableOpacity
+          style={[styles.addQuestionBtn, { borderColor: primary }]}
+          onPress={addQuestion}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.addQuestionBtnText, { color: primary }]}>+ Ajouter une question</Text>
+        </TouchableOpacity>
+
+        {/* Réponses / Notes post-consultation */}
+        <View style={styles.sectionDivider} />
+        <Text style={styles.sectionLabel}>💬 Réponses du médecin</Text>
+        <Text style={styles.sectionHint}>
+          Notez les réponses et recommandations du médecin après la consultation.
+        </Text>
+        <TextInput
+          style={[styles.input, styles.reponsesInput]}
+          value={reponses}
+          onChangeText={setReponses}
+          placeholder="Réponses, prescriptions, prochaine étape…"
+          placeholderTextColor="#9CA3AF"
+          multiline
+          textAlignVertical="top"
+        />
+
         {/* Delete button (edit mode only) */}
         {isEditing && onDelete && (
           <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
@@ -213,6 +280,15 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#FFFFFF' },
+  dragHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#D1D5DB',
+    alignSelf: 'center',
+    marginTop: 8,
+    marginBottom: 4,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -271,5 +347,59 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#EF4444',
+  },
+  sectionDivider: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  sectionLabel: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#374151',
+  },
+  sectionHint: {
+    fontSize: 13,
+    color: '#6B7280',
+    lineHeight: 18,
+    marginTop: -8,
+  },
+  questionRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  questionInput: {
+    flex: 1,
+  },
+  questionRemoveBtn: {
+    marginTop: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#FEF2F2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  questionRemoveBtnText: {
+    fontSize: 14,
+    color: '#EF4444',
+    fontWeight: '700',
+  },
+  addQuestionBtn: {
+    paddingVertical: 13,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+  },
+  addQuestionBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  reponsesInput: {
+    minHeight: 110,
+    paddingTop: 14,
   },
 });

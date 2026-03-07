@@ -146,14 +146,14 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
+    padding: 14,
+    marginBottom: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
     shadowRadius: 3,
     elevation: 2,
-    gap: 12,
+    gap: 14,
   },
   completedCard: {
     backgroundColor: '#F9FAFB',
@@ -163,9 +163,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   checkboxInner: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
+    width: 26,
+    height: 26,
+    borderRadius: 7,
     borderWidth: 2,
     borderColor: '#D1D5DB',
     alignItems: 'center',
@@ -175,18 +175,18 @@ const styles = StyleSheet.create({
   // checkboxChecked colors moved to inline styles (dynamic theme)
   checkmark: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '700',
   },
   content: {
     flex: 1,
-    gap: 4,
+    gap: 5,
   },
   taskText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500',
     color: '#111827',
-    lineHeight: 20,
+    lineHeight: 22,
   },
   completedText: {
     textDecorationLine: 'line-through',
@@ -214,16 +214,16 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   sourceLabel: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#6B7280',
     fontWeight: '600',
   },
   sectionLabel: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
   },
   dueDate: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#6B7280',
     fontWeight: '500',
   },
@@ -250,14 +250,14 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   tagText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
   },
   mentionTag: {
     backgroundColor: '#FEF3C7',
   },
   mentionText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
     color: '#D97706',
   },
