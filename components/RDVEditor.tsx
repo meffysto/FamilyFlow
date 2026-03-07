@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { RDV } from '../lib/types';
+import { formatDateForDisplay, parseDateInput } from '../lib/parser';
 
 const TYPE_OPTIONS = [
   { label: '👨‍⚕️ Pédiatre', value: 'pédiatre' },
@@ -26,7 +27,7 @@ const TYPE_OPTIONS = [
   { label: '📋 Autre', value: 'autre' },
 ];
 
-const ENFANT_OPTIONS = ['Maxence', 'Enfant 2'];
+const ENFANT_OPTIONS = ['Maxence', 'Enfant2'];
 
 interface RDVEditorProps {
   rdv?: RDV; // if provided, we're editing
@@ -39,7 +40,10 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
   const { primary, tint } = useThemeColors();
   const isEditing = !!rdv;
 
-  const [dateRdv, setDateRdv] = useState(rdv?.date_rdv ?? '');
+  // Display in DD/MM/YYYY, store internally as YYYY-MM-DD
+  const [dateRdv, setDateRdv] = useState(
+    rdv?.date_rdv ? formatDateForDisplay(rdv.date_rdv) : ''
+  );
   const [heure, setHeure] = useState(rdv?.heure ?? '');
   const [typeRdv, setTypeRdv] = useState(rdv?.type_rdv ?? 'pédiatre');
   const [enfant, setEnfant] = useState(rdv?.enfant ?? 'Maxence');
@@ -52,16 +56,17 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
       Alert.alert('Champ requis', 'La date est obligatoire.');
       return;
     }
-    // Validate date format
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateRdv)) {
-      Alert.alert('Format invalide', 'La date doit être au format AAAA-MM-JJ.');
+    // Parse DD/MM/YYYY (or YYYY-MM-DD) to YYYY-MM-DD
+    const parsedDate = parseDateInput(dateRdv);
+    if (!parsedDate) {
+      Alert.alert('Format invalide', 'La date doit être au format JJ/MM/AAAA (ex: 06/03/2026).');
       return;
     }
 
     setIsSaving(true);
     try {
       await onSave({
-        date_rdv: dateRdv,
+        date_rdv: parsedDate,
         heure,
         type_rdv: typeRdv,
         enfant,
@@ -112,7 +117,7 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
           style={styles.input}
           value={dateRdv}
           onChangeText={setDateRdv}
-          placeholder="2026-03-15"
+          placeholder="06/03/2026"
           placeholderTextColor="#9CA3AF"
           keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default'}
         />

@@ -90,42 +90,61 @@ export default function PhotosScreen() {
   }, [photoDates, selectedEnfant]);
 
   const pickPhoto = async (date: Date) => {
-    if (!selectedEnfant) return;
+    if (!selectedEnfant) {
+      Alert.alert('Erreur', 'Aucun enfant sélectionné.');
+      return;
+    }
     const dateStr = format(date, 'yyyy-MM-dd');
+    // Capture name in local var to avoid stale closure
+    const enfantName = selectedEnfant.name;
 
     const launchPicker = async (useCamera: boolean) => {
-      // Request permissions first
-      if (useCamera) {
-        const { status } = await ImagePicker.requestCameraPermissionsAsync();
-        if (status !== 'granted') {
-          Alert.alert('Permission requise', 'L\'accès à la caméra est nécessaire pour prendre une photo.');
+      try {
+        // Request permissions first
+        if (useCamera) {
+          const perm = await ImagePicker.requestCameraPermissionsAsync();
+          if (perm.status !== 'granted') {
+            Alert.alert(
+              'Permission requise',
+              `L'accès à la caméra est nécessaire.\nStatut: ${perm.status}\n\nAllez dans Réglages > Expo Go > Appareil photo pour autoriser.`
+            );
+            return;
+          }
+        } else {
+          const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+          if (perm.status !== 'granted') {
+            Alert.alert(
+              'Permission requise',
+              `L'accès à la galerie est nécessaire.\nStatut: ${perm.status}\n\nAllez dans Réglages > Expo Go > Photos pour autoriser.`
+            );
+            return;
+          }
+        }
+
+        const options: ImagePicker.ImagePickerOptions = {
+          mediaTypes: ['images'],
+          quality: 0.7,
+          allowsEditing: false,
+        };
+
+        const result = useCamera
+          ? await ImagePicker.launchCameraAsync(options)
+          : await ImagePicker.launchImageLibraryAsync(options);
+
+        if (result.canceled) {
+          // User cancelled — normal, no alert needed
           return;
         }
-      } else {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-          Alert.alert('Permission requise', 'L\'accès à la galerie est nécessaire pour choisir une photo.');
+
+        if (!result.assets?.[0]?.uri) {
+          Alert.alert('Erreur', 'Aucune image reçue du picker.');
           return;
         }
-      }
 
-      const options: ImagePicker.ImagePickerOptions = {
-        mediaTypes: ['images'],
-        quality: 0.8,
-        allowsEditing: true,
-        aspect: [1, 1] as [number, number],
-      };
-
-      const result = useCamera
-        ? await ImagePicker.launchCameraAsync(options)
-        : await ImagePicker.launchImageLibraryAsync(options);
-
-      if (!result.canceled && result.assets?.[0]) {
-        try {
-          await addPhoto(selectedEnfant.name, dateStr, result.assets[0].uri);
-        } catch (e) {
-          Alert.alert('Erreur', String(e));
-        }
+        await addPhoto(enfantName, dateStr, result.assets[0].uri);
+      } catch (e: any) {
+        const msg = e?.message || String(e);
+        Alert.alert('Erreur photo', `${useCamera ? 'Caméra' : 'Galerie'} — ${enfantName}\n\n${msg}`);
       }
     };
 
@@ -135,13 +154,12 @@ export default function PhotosScreen() {
           options: ['Annuler', '📷 Appareil photo', '🖼 Galerie'],
           cancelButtonIndex: 0,
         },
-        async (buttonIndex) => {
-          if (buttonIndex === 1) await launchPicker(true);
-          if (buttonIndex === 2) await launchPicker(false);
+        (buttonIndex) => {
+          if (buttonIndex === 1) launchPicker(true);
+          if (buttonIndex === 2) launchPicker(false);
         }
       );
     } else {
-      // Android fallback
       Alert.alert(
         'Photo du jour',
         'Choisir une source',
@@ -339,8 +357,10 @@ export default function PhotosScreen() {
               <TouchableOpacity
                 style={styles.modalRetake}
                 onPress={() => {
+                  const dateToRetake = new Date(viewingPhoto.date + 'T00:00:00');
                   setViewingPhoto(null);
-                  pickPhoto(new Date(viewingPhoto.date));
+                  // Delay picker launch to let modal fully dismiss first
+                  setTimeout(() => pickPhoto(dateToRetake), 600);
                 }}
               >
                 <Text style={styles.modalRetakeText}>📷 Reprendre</Text>

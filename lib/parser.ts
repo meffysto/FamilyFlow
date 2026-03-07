@@ -33,14 +33,14 @@ import { VALID_THEMES, type ProfileTheme } from '../constants/themes';
 const TASK_REGEX = /^(\s*)-\s+\[([ xX])\]\s+(.+)$/;
 const DUE_DATE_REGEX = /📅\s*(\d{4}-\d{2}-\d{2})/;
 const COMPLETED_DATE_REGEX = /✅\s*(\d{4}-\d{2}-\d{2})/;
-const RECURRENCE_REGEX = /🔁\s*(every\s+\S+(?:\s+\S+)?)/;
+const RECURRENCE_REGEX = /🔁\s*(every\s+(?:\d+\s+)?(?:day|week|month)s?)/;
 const TAG_REGEX = /#([a-zA-ZÀ-ÿ0-9_-]+)/g;
 const MENTION_REGEX = /@([a-zA-ZÀ-ÿ0-9_-]+)/g;
 
 function stripEmoji(text: string): string {
   return text
     .replace(/📅\s*\d{4}-\d{2}-\d{2}/g, '')
-    .replace(/🔁\s*every\s+\S+(?:\s+\S+)?/g, '')
+    .replace(/🔁\s*every\s+(?:\d+\s+)?(?:day|week|month)s?/g, '')
     .replace(/✅\s*\d{4}-\d{2}-\d{2}/g, '')
     .replace(/\s{2,}/g, ' ')
     .trim();
@@ -148,6 +148,68 @@ export function parseFrontmatter(content: string): { data: Record<string, string
 
 // ─── RDV ────────────────────────────────────────────────────────────────────
 
+/**
+ * Normalize a date value to YYYY-MM-DD string.
+ * Handles: Date objects (from gray-matter YAML auto-parsing),
+ *          DD/MM/YYYY strings, YYYY-MM-DD strings.
+ */
+function normalizeDateRdv(value: unknown): string {
+  if (!value) return '';
+
+  // If gray-matter parsed it as a Date object
+  if (value instanceof Date) {
+    const y = value.getFullYear();
+    const m = String(value.getMonth() + 1).padStart(2, '0');
+    const d = String(value.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  const s = String(value).trim();
+
+  // Already YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+
+  // DD/MM/YYYY or DD-MM-YYYY
+  const m = s.match(/^(\d{2})[/-](\d{2})[/-](\d{4})$/);
+  if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+
+  return s;
+}
+
+/**
+ * Format a YYYY-MM-DD date to DD/MM/YYYY for display.
+ */
+export function formatDateForDisplay(dateStr: string): string {
+  if (!dateStr) return '';
+  const m = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  return dateStr;
+}
+
+/**
+ * Parse a DD/MM/YYYY input to YYYY-MM-DD for storage.
+ * Returns null if the format is invalid.
+ */
+export function parseDateInput(input: string): string | null {
+  const trimmed = input.trim();
+
+  // DD/MM/YYYY or DD-MM-YYYY
+  let m = trimmed.match(/^(\d{2})[/-](\d{2})[/-](\d{4})$/);
+  if (m) {
+    const [, day, month, year] = m;
+    const d = parseInt(day, 10);
+    const mo = parseInt(month, 10);
+    if (d < 1 || d > 31 || mo < 1 || mo > 12) return null;
+    return `${year}-${month}-${day}`;
+  }
+
+  // Also accept YYYY-MM-DD for convenience
+  m = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return trimmed;
+
+  return null;
+}
+
 export function parseRDV(relativePath: string, content: string): RDV | null {
   const { data } = parseFrontmatter(content);
   if (!data.date_rdv) return null;
@@ -156,7 +218,7 @@ export function parseRDV(relativePath: string, content: string): RDV | null {
 
   return {
     title: fileName,
-    date_rdv: String(data.date_rdv ?? ''),
+    date_rdv: normalizeDateRdv(data.date_rdv),
     heure: String(data.heure ?? ''),
     type_rdv: String(data.type_rdv ?? ''),
     enfant: String(data.enfant ?? ''),
@@ -168,12 +230,14 @@ export function parseRDV(relativePath: string, content: string): RDV | null {
 }
 
 /**
- * Serialize an RDV to markdown with frontmatter
+ * Serialize an RDV to markdown with frontmatter.
+ * date_rdv is quoted to prevent gray-matter from parsing it as a Date.
  */
 export function serializeRDV(rdv: Omit<RDV, 'sourceFile' | 'title'>): string {
+  const displayDate = formatDateForDisplay(rdv.date_rdv);
   const lines = [
     '---',
-    `date_rdv: ${rdv.date_rdv}`,
+    `date_rdv: "${rdv.date_rdv}"`,
     `heure: "${rdv.heure}"`,
     `type_rdv: ${rdv.type_rdv}`,
     `enfant: ${rdv.enfant}`,
@@ -184,7 +248,7 @@ export function serializeRDV(rdv: Omit<RDV, 'sourceFile' | 'title'>): string {
     '  - rdv',
     '---',
     '',
-    `# Rendez-vous — ${rdv.date_rdv} ${rdv.type_rdv} ${rdv.enfant}`,
+    `# Rendez-vous — ${displayDate} ${rdv.type_rdv} ${rdv.enfant}`,
     '',
     '## Notes',
     '',

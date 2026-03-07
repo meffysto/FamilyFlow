@@ -152,11 +152,10 @@ export function parseJournalStats(content: string): JournalStats {
     // Skip non-table rows
     if (!trimmed.startsWith('|') || trimmed.includes('---')) continue;
 
-    // Parse table cells
-    const cells = trimmed
-      .split('|')
-      .map((c) => c.trim())
-      .filter((c) => c.length > 0);
+    // Parse table cells — keep empty cells to preserve column positions
+    const rawCells = trimmed.split('|');
+    // Remove first and last empty entries from leading/trailing |
+    const cells = rawCells.slice(1, rawCells.length - 1).map((c) => c.trim());
 
     if (cells.length < 2) continue;
 

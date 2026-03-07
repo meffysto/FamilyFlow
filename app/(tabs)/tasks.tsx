@@ -79,7 +79,7 @@ function buildTargetFiles(profiles: Profile[]) {
 }
 
 export default function TasksScreen() {
-  const { tasks, menageTasks, courses, vault, profiles, activeProfile, notifPrefs, addTask, deleteTask, refresh, isLoading } = useVault();
+  const { tasks, menageTasks, courses, vault, profiles, activeProfile, notifPrefs, toggleTask, addTask, deleteTask, refresh, isLoading } = useVault();
   const { completeTask } = useGamification({ vault, notifPrefs });
   const { primary, tint } = useThemeColors();
 
@@ -108,15 +108,20 @@ export default function TasksScreen() {
 
   const handleTaskToggle = useCallback(
     async (task: Task, completed: boolean) => {
-      if (!vault) return;
       try {
-        await vault.toggleTask(task.sourceFile, task.lineIndex, completed);
+        // Optimistic toggle — updates state immediately
+        await toggleTask(task, completed);
+
         if (completed && activeProfile) {
-          const { lootAwarded, pointsGained } = await completeTask(activeProfile, task.text);
-          if (lootAwarded) {
-            Alert.alert('🎁 Loot Box !', `+${pointsGained} pts ! Tu as gagné une loot box ! Va dans l'onglet Loot pour l'ouvrir.`);
-          } else {
-            Alert.alert('✅ +' + pointsGained + ' pts !', `Bravo ${activeProfile.name} !`, [{ text: 'Super !' }]);
+          try {
+            const { lootAwarded, pointsGained } = await completeTask(activeProfile, task.text);
+            if (lootAwarded) {
+              Alert.alert('🎁 Loot Box !', `+${pointsGained} pts ! Tu as gagné une loot box ! Va dans l'onglet Loot pour l'ouvrir.`);
+            } else {
+              Alert.alert('✅ +' + pointsGained + ' pts !', `Bravo ${activeProfile.name} !`, [{ text: 'Super !' }]);
+            }
+          } catch {
+            // Gamification error — non-critical
           }
 
           // Check if all tasks are now done → send "journée terminée" notification
@@ -137,12 +142,12 @@ export default function TasksScreen() {
             }
           }
         }
-        await refresh();
       } catch (e) {
         Alert.alert('Erreur', String(e));
+        await refresh();
       }
     },
-    [vault, activeProfile, profiles, tasks, courses, completeTask, refresh, notifPrefs]
+    [toggleTask, activeProfile, profiles, tasks, courses, completeTask, refresh, notifPrefs]
   );
 
   const handleAddTask = useCallback(async () => {

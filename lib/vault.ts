@@ -134,6 +134,12 @@ export class VaultManager {
     }
     const destUri = this.uri(relativePath);
     await FileSystem.copyAsync({ from: sourceUri, to: destUri });
+
+    // Verify the copy succeeded
+    const info = await FileSystem.getInfoAsync(destUri);
+    if (!info.exists) {
+      throw new Error(`Copie échouée.\nSource: ${sourceUri}\nDest: ${destUri}`);
+    }
   }
 
   /** List dates (YYYY-MM-DD) that have photos for a given child */
@@ -148,9 +154,11 @@ export class VaultManager {
     return dates;
   }
 
-  /** Get the file URI for a child's photo on a given date */
+  /** Get the file URI for a child's photo on a given date (encoded for Image component) */
   getPhotoUri(enfantName: string, date: string): string {
-    return this.uri(`07 - Photos/${enfantName}/${date}.jpg`);
+    const raw = this.uri(`07 - Photos/${enfantName}/${date}.jpg`);
+    // Encode spaces for React Native Image component (file:// URIs need %20)
+    return raw.replace(/ /g, '%20');
   }
 
   /**
@@ -177,7 +185,7 @@ export class VaultManager {
 
     if (completed) {
       // Check if this is a recurring task
-      const recurrenceMatch = line.match(/🔁\s*(every\s+\S+(?:\s+\S+)?)/);
+      const recurrenceMatch = line.match(/🔁\s*(every\s+(?:\d+\s+)?(?:day|week|month)s?)/);
       const dueDateMatch = line.match(/📅\s*(\d{4}-\d{2}-\d{2})/);
 
       if (recurrenceMatch && dueDateMatch) {

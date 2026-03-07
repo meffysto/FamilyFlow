@@ -42,6 +42,7 @@ import {
   buildManualContext,
 } from '../../lib/notifications';
 import { Task, RDV } from '../../lib/types';
+import { formatDateForDisplay } from '../../lib/parser';
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -64,6 +65,7 @@ export default function DashboardScreen() {
     photoDates,
     addPhoto,
     updateStockQuantity,
+    toggleTask,
     addRDV,
     updateRDV,
     deleteRDV,
@@ -94,21 +96,27 @@ export default function DashboardScreen() {
 
   const handleTaskToggle = useCallback(
     async (task: Task, completed: boolean) => {
-      if (!vault) return;
       try {
-        await vault.toggleTask(task.sourceFile, task.lineIndex, completed);
+        // Optimistic toggle — updates state immediately, file write in background
+        await toggleTask(task, completed);
+        // Gamification (non-critical)
         if (completed && activeProfile) {
-          const { lootAwarded, pointsGained } = await completeTask(activeProfile, task.text);
-          if (lootAwarded) {
-            Alert.alert('🎁 Loot Box !', `+${pointsGained} points ! Tu as gagné une loot box !`);
+          try {
+            const { lootAwarded, pointsGained } = await completeTask(activeProfile, task.text);
+            if (lootAwarded) {
+              Alert.alert('🎁 Loot Box !', `+${pointsGained} points ! Tu as gagné une loot box !`);
+            }
+          } catch {
+            // Gamification error — non-critical
           }
         }
-        await refresh();
       } catch (e) {
         Alert.alert('Erreur', `Impossible de modifier la tâche : ${e}`);
+        // Refresh to revert optimistic update on error
+        await refresh();
       }
     },
-    [vault, activeProfile, completeTask, refresh]
+    [toggleTask, activeProfile, completeTask, refresh]
   );
 
   const leaderboard = buildLeaderboard(profiles);
@@ -134,38 +142,43 @@ export default function DashboardScreen() {
   const pickPhotoForEnfant = useCallback(
     async (enfantName: string) => {
       const launchPicker = async (useCamera: boolean) => {
-        if (useCamera) {
-          const { status } = await ImagePicker.requestCameraPermissionsAsync();
-          if (status !== 'granted') {
-            Alert.alert('Permission requise', "L'accès à la caméra est nécessaire.");
-            return;
+        try {
+          if (useCamera) {
+            const perm = await ImagePicker.requestCameraPermissionsAsync();
+            if (perm.status !== 'granted') {
+              Alert.alert(
+                'Permission requise',
+                `L'accès à la caméra est nécessaire.\nStatut: ${perm.status}\n\nAllez dans Réglages > Expo Go > Appareil photo.`
+              );
+              return;
+            }
+          } else {
+            const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (perm.status !== 'granted') {
+              Alert.alert(
+                'Permission requise',
+                `L'accès à la galerie est nécessaire.\nStatut: ${perm.status}\n\nAllez dans Réglages > Expo Go > Photos.`
+              );
+              return;
+            }
           }
-        } else {
-          const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-          if (status !== 'granted') {
-            Alert.alert('Permission requise', "L'accès à la galerie est nécessaire.");
-            return;
-          }
-        }
 
-        const options: ImagePicker.ImagePickerOptions = {
-          mediaTypes: ['images'],
-          quality: 0.8,
-          allowsEditing: true,
-          aspect: [1, 1] as [number, number],
-        };
+          const options: ImagePicker.ImagePickerOptions = {
+            mediaTypes: ['images'],
+            quality: 0.7,
+            allowsEditing: false,
+          };
 
-        const result = useCamera
-          ? await ImagePicker.launchCameraAsync(options)
-          : await ImagePicker.launchImageLibraryAsync(options);
+          const result = useCamera
+            ? await ImagePicker.launchCameraAsync(options)
+            : await ImagePicker.launchImageLibraryAsync(options);
 
-        if (!result.canceled && result.assets?.[0]) {
-          try {
-            await addPhoto(enfantName, todayStr, result.assets[0].uri);
-            await refresh();
-          } catch (e) {
-            Alert.alert('Erreur', String(e));
-          }
+          if (result.canceled || !result.assets?.[0]?.uri) return;
+
+          await addPhoto(enfantName, todayStr, result.assets[0].uri);
+        } catch (e: any) {
+          const msg = e?.message || String(e);
+          Alert.alert('Erreur photo', `${useCamera ? 'Caméra' : 'Galerie'} — ${enfantName}\n\n${msg}`);
         }
       };
 
@@ -175,9 +188,9 @@ export default function DashboardScreen() {
             options: ['Annuler', '📷 Appareil photo', '🖼 Galerie'],
             cancelButtonIndex: 0,
           },
-          async (buttonIndex) => {
-            if (buttonIndex === 1) await launchPicker(true);
-            if (buttonIndex === 2) await launchPicker(false);
+          (buttonIndex) => {
+            if (buttonIndex === 1) launchPicker(true);
+            if (buttonIndex === 2) launchPicker(false);
           }
         );
       } else {
@@ -188,7 +201,7 @@ export default function DashboardScreen() {
         ]);
       }
     },
-    [addPhoto, todayStr, refresh]
+    [addPhoto, todayStr]
   );
 
   // Overdue tasks
@@ -392,7 +405,7 @@ export default function DashboardScreen() {
                 activeOpacity={0.7}
               >
                 <Text style={[styles.rdvDate, isPast && styles.rdvDatePast]}>
-                  {rdv.date_rdv} {rdv.heure ? `à ${rdv.heure}` : ''}
+                  {formatDateForDisplay(rdv.date_rdv)} {rdv.heure ? `à ${rdv.heure}` : ''}
                   {isPast && rdv.statut !== 'planifié' ? ` · ${rdv.statut}` : ''}
                 </Text>
                 <Text style={[styles.rdvTitle, isPast && styles.rdvTitlePast]}>
@@ -563,6 +576,8 @@ export default function DashboardScreen() {
             } else {
               await addRDV(data);
             }
+            // addRDV/updateRDV handle optimistic state update internally
+            // No extra refresh() — it would race and overwrite the optimistic update
           }}
           onDelete={
             editingRDV

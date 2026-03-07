@@ -37,7 +37,7 @@ function getTagColor(tag: string): string {
 
 function getSourceLabel(sourceFile: string): string {
   if (sourceFile.includes('Maxence')) return '👶 Maxence';
-  if (sourceFile.includes('Enfant 2')) return '🍼 Enfant 2';
+  if (sourceFile.includes('Enfant2')) return '🍼 Enfant2';
   if (sourceFile.includes('Maison')) return '🏠 Maison';
   if (sourceFile.includes('courses')) return '🛒 Courses';
   return '📋 Tâches';

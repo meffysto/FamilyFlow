@@ -42,6 +42,7 @@ import {
   getDefaultNotificationPrefs,
 } from '../lib/notifications';
 import { scheduleRDVAlerts } from '../lib/scheduled-notifications';
+import { nextOccurrence } from '../lib/recurrence';
 
 export const VAULT_PATH_KEY = 'vault_path';
 export const ACTIVE_PROFILE_KEY = 'active_profile_id';
@@ -72,6 +73,7 @@ export interface VaultState {
   updateProfileTheme: (profileId: string, theme: ProfileTheme) => Promise<void>;
   updateProfile: (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string }) => Promise<void>;
   updateStockQuantity: (lineIndex: number, newQuantity: number) => Promise<void>;
+  toggleTask: (task: Task, completed: boolean) => Promise<void>;
   addRDV: (rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
   updateRDV: (sourceFile: string, rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
   deleteRDV: (sourceFile: string) => Promise<void>;
@@ -145,6 +147,7 @@ export function useVault(): VaultState {
   const [notifPrefs, setNotifPrefs] = useState<NotificationPreferences>(getDefaultNotificationPrefs());
   const [photoDates, setPhotoDates] = useState<Record<string, string[]>>({});
   const vaultRef = useRef<VaultManager | null>(null);
+  const busyRef = useRef(false); // Guard against AppState race condition
 
   // Load vault path + active profile from SecureStore on mount
   useEffect(() => {
@@ -168,11 +171,16 @@ export function useVault(): VaultState {
     })();
   }, []);
 
-  // Refresh on foreground
+  // Refresh on foreground (with delay to avoid race with image picker)
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state: AppStateStatus) => {
       if (state === 'active' && vaultRef.current) {
-        loadVaultData(vaultRef.current);
+        // Delay reload to let pending operations (addPhoto etc.) finish first
+        setTimeout(() => {
+          if (!busyRef.current && vaultRef.current) {
+            loadVaultData(vaultRef.current);
+          }
+        }, 1000);
       }
     });
     return () => sub.remove();
@@ -395,17 +403,29 @@ export function useVault(): VaultState {
   }, []);
 
   const addPhoto = useCallback(async (enfantName: string, date: string, imageUri: string) => {
-    if (!vaultRef.current) return;
-    const relativePath = `${PHOTOS_DIR}/${enfantName}/${date}.jpg`;
-    await vaultRef.current.copyFileToVault(imageUri, relativePath);
-    // Update local state
-    const id = enfantName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
-    setPhotoDates((prev) => {
-      const existing = prev[id] ?? [];
-      if (existing.includes(date)) return prev;
-      return { ...prev, [id]: [...existing, date].sort() };
-    });
-  }, []);
+    if (!vaultRef.current) throw new Error('Vault non initialisé');
+    busyRef.current = true; // Block AppState reload while saving
+    try {
+      const relativePath = `${PHOTOS_DIR}/${enfantName}/${date}.jpg`;
+      // copyFileToVault verifies the copy succeeded internally
+      await vaultRef.current.copyFileToVault(imageUri, relativePath);
+
+      // Update local state optimistically
+      const id = enfantName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+      setPhotoDates((prev) => {
+        const existing = prev[id] ?? [];
+        if (existing.includes(date)) return prev;
+        return { ...prev, [id]: [...existing, date].sort() };
+      });
+
+      // Full reload to ensure consistency (file is already on disk)
+      if (vaultRef.current) {
+        await loadVaultData(vaultRef.current);
+      }
+    } finally {
+      busyRef.current = false;
+    }
+  }, [loadVaultData]);
 
   const getPhotoUri = useCallback((enfantName: string, date: string): string | null => {
     if (!vaultRef.current) return null;
@@ -536,35 +556,80 @@ export function useVault(): VaultState {
     }
   }, []);
 
+  /**
+   * Toggle task + optimistic state update.
+   * Writes to file AND immediately updates tasks/menageTasks state
+   * without waiting for a full vault reload (avoids iOS file timing issues).
+   */
+  const toggleTask = useCallback(async (task: Task, completed: boolean) => {
+    if (!vaultRef.current) return;
+
+    // 1. Write to file
+    await vaultRef.current.toggleTask(task.sourceFile, task.lineIndex, completed);
+
+    // 2. Optimistic state update — immediately reflect the change in UI
+    const updateTask = (t: Task): Task => {
+      if (t.id !== task.id) return t;
+      if (completed && t.recurrence && t.dueDate) {
+        // Recurring task: advance date, keep unchecked
+        const newDate = nextOccurrence(t.dueDate, t.recurrence);
+        return { ...t, dueDate: newDate, completed: false };
+      }
+      return { ...t, completed };
+    };
+
+    setTasks(prev => prev.map(updateTask));
+    setMenageTasks(prev => prev.map(updateTask));
+
+    // 3. Background refresh to fully sync (non-blocking)
+    loadVaultData(vaultRef.current).catch(() => {});
+  }, [loadVaultData]);
+
   const addRDV = useCallback(async (rdv: Omit<RDV, 'sourceFile' | 'title'>) => {
     if (!vaultRef.current) return;
     const fileName = rdvFileName(rdv);
     const relPath = `${RDV_DIR}/${fileName}`;
     const content = serializeRDV(rdv);
     await vaultRef.current.writeFile(relPath, content);
-    await loadVaultData(vaultRef.current);
+
+    // Optimistic state update — add RDV to state immediately
+    const newRDV: RDV = {
+      ...rdv,
+      title: fileName.replace('.md', ''),
+      sourceFile: relPath,
+    };
+    setRdvs(prev => [...prev, newRDV].sort((a, b) => a.date_rdv.localeCompare(b.date_rdv)));
+
+    // Background refresh to fully sync
+    loadVaultData(vaultRef.current).catch(() => {});
   }, [loadVaultData]);
 
   const updateRDV = useCallback(async (sourceFile: string, rdv: Omit<RDV, 'sourceFile' | 'title'>) => {
     if (!vaultRef.current) return;
-    // Write updated content to existing file
     const content = serializeRDV(rdv);
     await vaultRef.current.writeFile(sourceFile, content);
-    // If the date/type/enfant changed, the filename should change too
     const newFileName = rdvFileName(rdv);
     const newPath = `${RDV_DIR}/${newFileName}`;
     if (newPath !== sourceFile) {
-      // Write to new path and delete old file
       await vaultRef.current.writeFile(newPath, content);
       await vaultRef.current.deleteFile(sourceFile);
     }
-    await loadVaultData(vaultRef.current);
+
+    // Optimistic state update
+    setRdvs(prev => prev.map(r => {
+      if (r.sourceFile !== sourceFile) return r;
+      return { ...rdv, title: newFileName.replace('.md', ''), sourceFile: newPath };
+    }).sort((a, b) => a.date_rdv.localeCompare(b.date_rdv)));
+
+    loadVaultData(vaultRef.current).catch(() => {});
   }, [loadVaultData]);
 
   const deleteRDV = useCallback(async (sourceFile: string) => {
     if (!vaultRef.current) return;
     await vaultRef.current.deleteFile(sourceFile);
-    await loadVaultData(vaultRef.current);
+    // Optimistic: remove from state immediately
+    setRdvs(prev => prev.filter(r => r.sourceFile !== sourceFile));
+    loadVaultData(vaultRef.current).catch(() => {});
   }, [loadVaultData]);
 
   const addTask = useCallback(async (text: string, targetFile: string, dueDate?: string, recurrence?: string) => {
@@ -650,6 +715,7 @@ export function useVault(): VaultState {
     updateProfileTheme,
     updateProfile,
     updateStockQuantity,
+    toggleTask,
     addRDV,
     updateRDV,
     deleteRDV,
