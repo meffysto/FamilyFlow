@@ -31,13 +31,15 @@ import {
   parseStockSections,
   serializeRDV,
   rdvFileName,
+  parseJalons,
+  insertJalonInContent,
   mergeProfiles,
   parseGamification,
   parseFamille,
   serializeGamification,
 } from '../lib/parser';
 import { processActiveRewards } from '../lib/gamification';
-import { Task, RDV, CourseItem, MealItem, StockItem, Profile, GamificationData, NotificationPreferences, ProfileTheme } from '../lib/types';
+import { Task, RDV, CourseItem, MealItem, StockItem, Profile, GamificationData, NotificationPreferences, ProfileTheme, Memory } from '../lib/types';
 import {
   parseNotificationPrefs,
   serializeNotificationPrefs,
@@ -88,6 +90,8 @@ export interface VaultState {
   addCourseItem: (text: string, section?: string) => Promise<void>;
   removeCourseItem: (lineIndex: number) => Promise<void>;
   clearCompletedCourses: () => Promise<void>;
+  memories: Memory[];
+  addMemory: (enfant: string, memory: Omit<Memory, 'enfant' | 'enfantId'>) => Promise<void>;
 }
 
 // Static task files (non-enfant)
@@ -136,6 +140,7 @@ const MEALS_TEMPLATE = `# Repas de la semaine
 `;
 const STOCK_FILE = '01 - Enfants/Commun/Stock & fournitures.md';
 const PHOTOS_DIR = '07 - Photos';
+const MEMOIRES_DIR = '06 - Mémoires';
 const NOTIF_FILE = 'notifications.md';
 
 export function useVault(): VaultState {
@@ -154,6 +159,7 @@ export function useVault(): VaultState {
   const [notifPrefs, setNotifPrefs] = useState<NotificationPreferences>(getDefaultNotificationPrefs());
   const [photoDates, setPhotoDates] = useState<Record<string, string[]>>({});
   const [stockSections, setStockSections] = useState<string[]>([]);
+  const [memories, setMemories] = useState<Memory[]>([]);
   const vaultRef = useRef<VaultManager | null>(null);
   const busyRef = useRef(false); // Guard against AppState race condition
 
@@ -350,6 +356,28 @@ export function useVault(): VaultState {
       } catch (e) {
         debugErrors.push(`photos: ${e}`);
         setPhotoDates({});
+      }
+
+      // Load souvenirs/jalons per child
+      try {
+        const allMemories: Memory[] = [];
+        for (const name of enfantNames) {
+          const id = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+          const jalonsPath = `${MEMOIRES_DIR}/${name}/Jalons.md`;
+          try {
+            if (await vault.exists(jalonsPath)) {
+              const content = await vault.readFile(jalonsPath);
+              allMemories.push(...parseJalons(name, id, content));
+            }
+          } catch {
+            // file may not exist
+          }
+        }
+        // Sort by date descending (most recent first)
+        allMemories.sort((a, b) => b.date.localeCompare(a.date));
+        setMemories(allMemories);
+      } catch {
+        setMemories([]);
       }
 
       // Load notification preferences
@@ -805,6 +833,43 @@ export function useVault(): VaultState {
     }
   }, [loadVaultData]);
 
+  const addMemory = useCallback(async (enfant: string, memory: Omit<Memory, 'enfant' | 'enfantId'>) => {
+    if (!vaultRef.current) return;
+    const jalonsPath = `${MEMOIRES_DIR}/${enfant}/Jalons.md`;
+    const vault = vaultRef.current;
+
+    // Ensure directory and file exist
+    await vault.ensureDir(`${MEMOIRES_DIR}/${enfant}`);
+    let content: string;
+    try {
+      content = await vault.readFile(jalonsPath);
+    } catch {
+      // Create default Jalons.md
+      content = [
+        '---',
+        `enfant: ${enfant}`,
+        'tags:',
+        '  - jalons',
+        '---',
+        '',
+        `# Jalons & Mémoires — ${enfant}`,
+        '',
+        '## 🌟 Premières fois',
+        '',
+        '## 💛 Moments forts',
+        '',
+      ].join('\n');
+    }
+
+    const updated = insertJalonInContent(content, memory);
+    await vault.writeFile(jalonsPath, updated);
+
+    // Optimistic update
+    const enfantId = enfant.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+    const newMemory: Memory = { ...memory, enfant, enfantId };
+    setMemories(prev => [newMemory, ...prev].sort((a, b) => b.date.localeCompare(a.date)));
+  }, []);
+
   // Resolve active profile from ID → Profile object
   const activeProfile = profiles.find((p) => p.id === activeProfileId) ?? null;
 
@@ -847,5 +912,7 @@ export function useVault(): VaultState {
     addCourseItem,
     removeCourseItem,
     clearCompletedCourses,
+    memories,
+    addMemory,
   };
 }

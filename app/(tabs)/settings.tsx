@@ -27,7 +27,7 @@ import * as SecureStore from 'expo-secure-store';
 import { useVault, VAULT_PATH_KEY } from '../../hooks/useVault';
 import { VaultPicker } from '../../components/VaultPicker';
 import { NotificationSettings } from '../../components/NotificationSettings';
-import { testTelegram } from '../../lib/telegram';
+import { testTelegram, sendTelegram, buildWeeklyRecapText, sendWeeklyRecap } from '../../lib/telegram';
 import { serializeGamification } from '../../lib/parser';
 import { RARITY_LABELS } from '../../constants/rewards';
 import { THEME_LIST, getTheme } from '../../constants/themes';
@@ -42,9 +42,10 @@ import {
 
 const TELEGRAM_TOKEN_KEY = 'telegram_token';
 const TELEGRAM_CHAT_KEY = 'telegram_chat_id';
+const TELEGRAM_GP_CHAT_KEY = 'telegram_gp_chat_id';
 
 export default function SettingsScreen() {
-  const { vaultPath, profiles, activeProfile, vault, setVaultPath, setActiveProfile, refresh, gamiData, notifPrefs, saveNotifPrefs, updateProfileTheme, updateProfile } = useVault();
+  const { vaultPath, profiles, activeProfile, vault, setVaultPath, setActiveProfile, refresh, gamiData, notifPrefs, saveNotifPrefs, updateProfileTheme, updateProfile, memories, photoDates, getPhotoUri } = useVault();
   const { primary, tint, setThemeId } = useThemeColors();
 
   const [showVaultPicker, setShowVaultPicker] = useState(false);
@@ -53,6 +54,8 @@ export default function SettingsScreen() {
   const [isTesting, setIsTesting] = useState(false);
   const [isSavingTelegram, setIsSavingTelegram] = useState(false);
   const [showTelegramSetup, setShowTelegramSetup] = useState(false);
+  const [gpChatId, setGpChatId] = useState('');
+  const [isSendingRecap, setIsSendingRecap] = useState(false);
   const [showNotifSettings, setShowNotifSettings] = useState(false);
   const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
   const themeDropdownAnim = useRef(new Animated.Value(0)).current;
@@ -82,8 +85,74 @@ export default function SettingsScreen() {
       const chatId = await SecureStore.getItemAsync(TELEGRAM_CHAT_KEY);
       if (token) setTelegramToken(token);
       if (chatId) setTelegramChatId(chatId);
+      const gpId = await SecureStore.getItemAsync(TELEGRAM_GP_CHAT_KEY);
+      if (gpId) setGpChatId(gpId);
     })();
   });
+
+  const handleSaveGpChatId = useCallback(async () => {
+    await SecureStore.setItemAsync(TELEGRAM_GP_CHAT_KEY, gpChatId.trim());
+    Alert.alert('✅ Sauvegardé', 'Chat ID grands-parents enregistré.');
+  }, [gpChatId]);
+
+  const handleTestGp = useCallback(async () => {
+    if (!telegramToken || !gpChatId) {
+      Alert.alert('Config manquante', 'Configurez le bot Telegram et le chat ID grands-parents.');
+      return;
+    }
+    const ok = await sendTelegram(
+      telegramToken.trim(),
+      gpChatId.trim(),
+      '✅ <b>Family Vault</b> — Connexion grands-parents réussie ! Vous recevrez les recaps ici. 👴👵'
+    );
+    Alert.alert(ok ? '✅ Envoyé !' : '❌ Échec', ok ? 'Message test reçu chez les grands-parents.' : 'Vérifiez le chat ID.');
+  }, [telegramToken, gpChatId]);
+
+  const handleSendRecap = useCallback(async () => {
+    if (!telegramToken || !gpChatId) {
+      Alert.alert('Config manquante', 'Configurez le bot Telegram et le chat ID grands-parents.');
+      return;
+    }
+    setIsSendingRecap(true);
+
+    // Get memories and photos from last 7 days
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const weekAgoStr = `${weekAgo.getFullYear()}-${String(weekAgo.getMonth() + 1).padStart(2, '0')}-${String(weekAgo.getDate()).padStart(2, '0')}`;
+
+    const weekMemories = memories.filter((m) => m.date >= weekAgoStr);
+
+    // Collect photo URIs from last 7 days
+    const weekPhotoUris: string[] = [];
+    const enfantNames = profiles.filter((p) => p.role === 'enfant').map((p) => p.name);
+    for (const name of enfantNames) {
+      const id = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+      const dates = photoDates[id] ?? [];
+      for (const d of dates) {
+        if (d >= weekAgoStr) {
+          const uri = getPhotoUri(name, d);
+          if (uri) weekPhotoUris.push(uri);
+        }
+      }
+    }
+
+    const recapText = buildWeeklyRecapText({
+      memories: weekMemories,
+      photoCount: weekPhotoUris.length,
+      enfantNames,
+    });
+
+    try {
+      const ok = await sendWeeklyRecap(telegramToken.trim(), gpChatId.trim(), recapText, weekPhotoUris);
+      Alert.alert(
+        ok ? '✅ Recap envoyé !' : '❌ Échec',
+        ok ? `${weekMemories.length} souvenir(s) + ${weekPhotoUris.length} photo(s) envoyé(s).` : 'Erreur lors de l\'envoi.'
+      );
+    } catch (e) {
+      Alert.alert('Erreur', String(e));
+    }
+    setIsSendingRecap(false);
+  }, [telegramToken, gpChatId, memories, photoDates, profiles, getPhotoUri]);
 
   const handleSaveTelegram = useCallback(async () => {
     setIsSavingTelegram(true);
@@ -249,6 +318,51 @@ export default function SettingsScreen() {
                 )}
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+
+        {/* Grands-parents */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>👴 Grands-parents</Text>
+          <View style={styles.card}>
+            <Text style={styles.notifHint}>
+              Envoyez un recap hebdo avec photos et souvenirs aux grands-parents via Telegram.
+              Utilisez le même bot, mais un chat ID différent.
+            </Text>
+            <Text style={styles.inputLabel}>Chat ID grands-parents</Text>
+            <TextInput
+              style={styles.gpInput}
+              value={gpChatId}
+              onChangeText={setGpChatId}
+              placeholder="Ex: -100123456789"
+              placeholderTextColor="#9CA3AF"
+              keyboardType="numbers-and-punctuation"
+            />
+            <View style={styles.btnRow}>
+              <TouchableOpacity
+                style={[styles.secondaryBtn, { borderColor: primary }]}
+                onPress={handleSaveGpChatId}
+              >
+                <Text style={[styles.secondaryBtnText, { color: primary }]}>Sauver</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.secondaryBtn, { borderColor: primary }]}
+                onPress={handleTestGp}
+              >
+                <Text style={[styles.secondaryBtnText, { color: primary }]}>Tester</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity
+              style={[styles.recapBtn, { backgroundColor: tint }, isSendingRecap && styles.btnDisabled]}
+              onPress={handleSendRecap}
+              disabled={isSendingRecap}
+            >
+              {isSendingRecap ? (
+                <ActivityIndicator size="small" color={primary} />
+              ) : (
+                <Text style={[styles.recapBtnText, { color: primary }]}>📤 Envoyer le recap de la semaine</Text>
+              )}
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -1059,5 +1173,24 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 15,
     color: '#111827',
+  },
+  gpInput: {
+    borderWidth: 1.5,
+    borderColor: '#D1D5DB',
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 15,
+    color: '#111827',
+    marginBottom: 12,
+  },
+  recapBtn: {
+    marginTop: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  recapBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

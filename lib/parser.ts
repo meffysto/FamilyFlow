@@ -25,6 +25,8 @@ import {
   RewardType,
   JournalEntry,
   StockItem,
+  Memory,
+  MemoryType,
 } from './types';
 import { VALID_THEMES, type ProfileTheme } from '../constants/themes';
 
@@ -823,4 +825,116 @@ export function parseStockSections(content: string): string[] {
     }
   }
   return sections;
+}
+
+// ─── Souvenirs / Jalons ─────────────────────────────────────────────────────
+
+const JALON_HEADER_REGEX = /^### (\d{4}-\d{2}-\d{2}) — (.+)$/;
+const JALON_DESC_REGEX = /^\*(.+)\*$/;
+
+const SECTION_TO_TYPE: Record<string, MemoryType> = {
+  '🌟 Premières fois': 'premières-fois',
+  '💛 Moments forts': 'moment-fort',
+};
+
+const TYPE_TO_SECTION: Record<MemoryType, string> = {
+  'premières-fois': '🌟 Premières fois',
+  'moment-fort': '💛 Moments forts',
+};
+
+/**
+ * Parse a Jalons.md file into Memory entries.
+ */
+export function parseJalons(enfant: string, enfantId: string, content: string): Memory[] {
+  const memories: Memory[] = [];
+  const lines = content.split('\n');
+  let currentType: MemoryType = 'moment-fort';
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Detect section change
+    if (line.startsWith('## ')) {
+      const sectionName = line.slice(3).trim();
+      if (SECTION_TO_TYPE[sectionName]) {
+        currentType = SECTION_TO_TYPE[sectionName];
+      }
+      continue;
+    }
+
+    // Match entry header: ### YYYY-MM-DD — Titre
+    const headerMatch = line.match(JALON_HEADER_REGEX);
+    if (!headerMatch) continue;
+
+    const date = headerMatch[1];
+    const title = headerMatch[2].trim();
+
+    // Look for description on next non-empty line
+    let description = '';
+    for (let j = i + 1; j < lines.length && j <= i + 3; j++) {
+      const nextLine = lines[j].trim();
+      if (!nextLine) continue;
+      if (nextLine === '---') break;
+      const descMatch = nextLine.match(JALON_DESC_REGEX);
+      if (descMatch) {
+        description = descMatch[1].trim();
+      }
+      break;
+    }
+
+    memories.push({ date, title, description, type: currentType, enfant, enfantId });
+  }
+
+  return memories;
+}
+
+/**
+ * Serialize a memory entry to the Jalons.md markdown format.
+ */
+export function serializeJalonEntry(memory: Omit<Memory, 'enfant' | 'enfantId'>): string {
+  const lines = [`### ${memory.date} — ${memory.title}`];
+  if (memory.description) {
+    lines.push(`*${memory.description}*`);
+  }
+  lines.push('');
+  lines.push('---');
+  return lines.join('\n');
+}
+
+/**
+ * Insert a new jalon entry into the correct section of a Jalons.md file.
+ * Returns the updated content string.
+ */
+export function insertJalonInContent(
+  content: string,
+  memory: Omit<Memory, 'enfant' | 'enfantId'>
+): string {
+  const sectionTitle = TYPE_TO_SECTION[memory.type];
+  const entry = serializeJalonEntry(memory);
+  const lines = content.split('\n');
+
+  // Find the section header
+  let sectionIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim() === `## ${sectionTitle}`) {
+      sectionIdx = i;
+      break;
+    }
+  }
+
+  if (sectionIdx === -1) {
+    // Section doesn't exist — append it at the end
+    lines.push('', `## ${sectionTitle}`, '', entry, '');
+    return lines.join('\n');
+  }
+
+  // Skip empty lines after section header, then insert
+  let insertIdx = sectionIdx + 1;
+  while (insertIdx < lines.length && lines[insertIdx].trim() === '') {
+    insertIdx++;
+  }
+
+  // Insert entry + blank line
+  lines.splice(insertIdx, 0, entry, '');
+  return lines.join('\n');
 }

@@ -1,9 +1,9 @@
 /**
- * photos.tsx — Photo du jour calendar screen
+ * photos.tsx — Photo du jour calendar + Souvenirs timeline
  *
- * Monthly calendar grid with photo thumbnails per child.
- * Tap empty day → camera/gallery picker. Tap photo → fullscreen view.
- * One photo per child per day, stored as YYYY-MM-DD.jpg in vault.
+ * Two tabs:
+ * - 📸 Photos: Monthly calendar grid with photo thumbnails per child.
+ * - 🌟 Souvenirs: Timeline of premières fois & moments forts.
  */
 
 import { useCallback, useMemo, useState } from 'react';
@@ -37,6 +37,8 @@ import {
 import { fr } from 'date-fns/locale';
 import { useVault } from '../../hooks/useVault';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { MemoryEditor } from '../../components/MemoryEditor';
+import { formatDateForDisplay } from '../../lib/parser';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CALENDAR_PADDING = 16;
@@ -45,13 +47,17 @@ const CELL_SIZE = Math.floor((SCREEN_WIDTH - CALENDAR_PADDING * 2 - DAY_GAP * 6)
 
 const WEEKDAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
+type TabMode = 'photos' | 'souvenirs';
+
 export default function PhotosScreen() {
-  const { profiles, photoDates, addPhoto, getPhotoUri, refresh, isLoading } = useVault();
+  const { profiles, photoDates, addPhoto, getPhotoUri, refresh, isLoading, memories, addMemory } = useVault();
   const { primary, tint } = useThemeColors();
   const [refreshing, setRefreshing] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedEnfantIdx, setSelectedEnfantIdx] = useState(0);
   const [viewingPhoto, setViewingPhoto] = useState<{ uri: string; date: string } | null>(null);
+  const [activeTab, setActiveTab] = useState<TabMode>('photos');
+  const [memoryEditorVisible, setMemoryEditorVisible] = useState(false);
 
   const enfants = useMemo(
     () => profiles.filter((p) => p.role === 'enfant'),
@@ -72,13 +78,10 @@ export default function PhotosScreen() {
     const end = endOfMonth(currentMonth);
     const days = eachDayOfInterval({ start, end });
 
-    // getDay returns 0=Sunday, we want 0=Monday
     let startDow = getDay(start) - 1;
     if (startDow < 0) startDow = 6;
 
-    // Padding days before first day
     const padding: null[] = Array(startDow).fill(null);
-
     return { padding, days };
   }, [currentMonth]);
 
@@ -89,34 +92,32 @@ export default function PhotosScreen() {
     return new Set(dates);
   }, [photoDates, selectedEnfant]);
 
+  // Filtered memories by selected enfant
+  const filteredMemories = useMemo(() => {
+    if (!selectedEnfant) return memories;
+    return memories.filter((m) => m.enfantId === selectedEnfant.id);
+  }, [memories, selectedEnfant]);
+
   const pickPhoto = async (date: Date) => {
     if (!selectedEnfant) {
       Alert.alert('Erreur', 'Aucun enfant sélectionné.');
       return;
     }
     const dateStr = format(date, 'yyyy-MM-dd');
-    // Capture name in local var to avoid stale closure
     const enfantName = selectedEnfant.name;
 
     const launchPicker = async (useCamera: boolean) => {
       try {
-        // Request permissions first
         if (useCamera) {
           const perm = await ImagePicker.requestCameraPermissionsAsync();
           if (perm.status !== 'granted') {
-            Alert.alert(
-              'Permission requise',
-              `L'accès à la caméra est nécessaire.\nStatut: ${perm.status}\n\nAllez dans Réglages > Expo Go > Appareil photo pour autoriser.`
-            );
+            Alert.alert('Permission requise', `L'accès à la caméra est nécessaire.`);
             return;
           }
         } else {
           const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
           if (perm.status !== 'granted') {
-            Alert.alert(
-              'Permission requise',
-              `L'accès à la galerie est nécessaire.\nStatut: ${perm.status}\n\nAllez dans Réglages > Expo Go > Photos pour autoriser.`
-            );
+            Alert.alert('Permission requise', `L'accès à la galerie est nécessaire.`);
             return;
           }
         }
@@ -131,20 +132,11 @@ export default function PhotosScreen() {
           ? await ImagePicker.launchCameraAsync(options)
           : await ImagePicker.launchImageLibraryAsync(options);
 
-        if (result.canceled) {
-          // User cancelled — normal, no alert needed
-          return;
-        }
-
-        if (!result.assets?.[0]?.uri) {
-          Alert.alert('Erreur', 'Aucune image reçue du picker.');
-          return;
-        }
+        if (result.canceled || !result.assets?.[0]?.uri) return;
 
         await addPhoto(enfantName, dateStr, result.assets[0].uri);
       } catch (e: any) {
-        const msg = e?.message || String(e);
-        Alert.alert('Erreur photo', `${useCamera ? 'Caméra' : 'Galerie'} — ${enfantName}\n\n${msg}`);
+        Alert.alert('Erreur photo', `${useCamera ? 'Caméra' : 'Galerie'} — ${enfantName}\n\n${e?.message || String(e)}`);
       }
     };
 
@@ -176,9 +168,7 @@ export default function PhotosScreen() {
     if (!selectedEnfant) return;
     const dateStr = format(date, 'yyyy-MM-dd');
     const uri = getPhotoUri(selectedEnfant.name, dateStr);
-    if (uri) {
-      setViewingPhoto({ uri, date: dateStr });
-    }
+    if (uri) setViewingPhoto({ uri, date: dateStr });
   };
 
   const onDayPress = (date: Date) => {
@@ -192,15 +182,41 @@ export default function PhotosScreen() {
 
   const monthLabel = format(currentMonth, 'MMMM yyyy', { locale: fr });
   const monthLabelCapitalized = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
-
   const photoCount = selectedEnfant ? (photoDates[selectedEnfant.id] ?? []).length : 0;
+
+  const TYPE_EMOJI = { 'premières-fois': '🌟', 'moment-fort': '💛' };
+  const TYPE_LABEL = { 'premières-fois': 'Première fois', 'moment-fort': 'Moment fort' };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>📸 Photos</Text>
-        <Text style={styles.stats}>{photoCount} photos</Text>
+        <Text style={styles.title}>
+          {activeTab === 'photos' ? '📸 Photos' : '🌟 Souvenirs'}
+        </Text>
+        <Text style={styles.stats}>
+          {activeTab === 'photos' ? `${photoCount} photos` : `${filteredMemories.length} souvenirs`}
+        </Text>
+      </View>
+
+      {/* Mode tabs */}
+      <View style={styles.modeTabBar}>
+        <TouchableOpacity
+          style={[styles.modeTab, activeTab === 'photos' && { backgroundColor: tint }]}
+          onPress={() => setActiveTab('photos')}
+        >
+          <Text style={[styles.modeTabText, activeTab === 'photos' && { color: primary, fontWeight: '700' }]}>
+            📸 Photos
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.modeTab, activeTab === 'souvenirs' && { backgroundColor: tint }]}
+          onPress={() => setActiveTab('souvenirs')}
+        >
+          <Text style={[styles.modeTabText, activeTab === 'souvenirs' && { color: primary, fontWeight: '700' }]}>
+            🌟 Souvenirs
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* Enfant selector tabs */}
@@ -218,10 +234,7 @@ export default function PhotosScreen() {
               activeOpacity={0.7}
             >
               <Text style={styles.tabEmoji}>{e.avatar}</Text>
-              <Text style={[
-                styles.tabLabel,
-                idx === selectedEnfantIdx && { color: primary },
-              ]}>
+              <Text style={[styles.tabLabel, idx === selectedEnfantIdx && { color: primary }]}>
                 {e.name}
               </Text>
             </TouchableOpacity>
@@ -229,103 +242,163 @@ export default function PhotosScreen() {
         </View>
       )}
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
-        }
-      >
-        {/* Month navigation */}
-        <View style={styles.monthNav}>
-          <TouchableOpacity
-            style={styles.monthArrow}
-            onPress={() => setCurrentMonth((m) => subMonths(m, 1))}
+      {activeTab === 'photos' ? (
+        /* ─── PHOTOS VIEW ─── */
+        <>
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
+            }
           >
-            <Text style={[styles.monthArrowText, { color: primary }]}>‹</Text>
-          </TouchableOpacity>
-          <Text style={styles.monthLabel}>{monthLabelCapitalized}</Text>
-          <TouchableOpacity
-            style={styles.monthArrow}
-            onPress={() => setCurrentMonth((m) => addMonths(m, 1))}
-          >
-            <Text style={[styles.monthArrowText, { color: primary }]}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Weekday headers */}
-        <View style={styles.weekdayRow}>
-          {WEEKDAY_LABELS.map((label, i) => (
-            <View key={i} style={styles.weekdayCell}>
-              <Text style={styles.weekdayText}>{label}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Calendar grid */}
-        <View style={styles.calendarGrid}>
-          {/* Empty padding cells */}
-          {calendarDays.padding.map((_, i) => (
-            <View key={`pad-${i}`} style={styles.dayCell} />
-          ))}
-
-          {/* Actual days */}
-          {calendarDays.days.map((date) => {
-            const dateStr = format(date, 'yyyy-MM-dd');
-            const hasPhoto = photoSet.has(dateStr);
-            const today = isToday(date);
-            const future = isFuture(date);
-            const dayNum = date.getDate();
-            const photoUri = hasPhoto && selectedEnfant
-              ? getPhotoUri(selectedEnfant.name, dateStr)
-              : null;
-
-            return (
+            {/* Month navigation */}
+            <View style={styles.monthNav}>
               <TouchableOpacity
-                key={dateStr}
-                style={[
-                  styles.dayCell,
-                  today && styles.dayCellToday,
-                  today && { borderColor: primary },
-                  future && styles.dayCellFuture,
-                ]}
-                onPress={() => onDayPress(date)}
-                disabled={future}
-                activeOpacity={0.7}
+                style={styles.monthArrow}
+                onPress={() => setCurrentMonth((m) => subMonths(m, 1))}
               >
-                {hasPhoto && photoUri ? (
-                  <Image
-                    source={{ uri: photoUri }}
-                    style={styles.dayPhoto}
-                    resizeMode="cover"
-                  />
-                ) : null}
-                <Text
-                  style={[
-                    styles.dayNum,
-                    today && { color: primary, fontWeight: '800' },
-                    future && styles.dayNumFuture,
-                    hasPhoto && styles.dayNumWithPhoto,
-                  ]}
-                >
-                  {dayNum}
-                </Text>
+                <Text style={[styles.monthArrowText, { color: primary }]}>‹</Text>
               </TouchableOpacity>
-            );
-          })}
-        </View>
-      </ScrollView>
+              <Text style={styles.monthLabel}>{monthLabelCapitalized}</Text>
+              <TouchableOpacity
+                style={styles.monthArrow}
+                onPress={() => setCurrentMonth((m) => addMonths(m, 1))}
+              >
+                <Text style={[styles.monthArrowText, { color: primary }]}>›</Text>
+              </TouchableOpacity>
+            </View>
 
-      {/* Floating add button */}
-      {selectedEnfant && (
-        <TouchableOpacity
-          style={[styles.fab, { backgroundColor: primary, shadowColor: primary }]}
-          onPress={() => pickPhoto(new Date())}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.fabText}>📷</Text>
-        </TouchableOpacity>
+            {/* Weekday headers */}
+            <View style={styles.weekdayRow}>
+              {WEEKDAY_LABELS.map((label, i) => (
+                <View key={i} style={styles.weekdayCell}>
+                  <Text style={styles.weekdayText}>{label}</Text>
+                </View>
+              ))}
+            </View>
+
+            {/* Calendar grid */}
+            <View style={styles.calendarGrid}>
+              {calendarDays.padding.map((_, i) => (
+                <View key={`pad-${i}`} style={styles.dayCell} />
+              ))}
+
+              {calendarDays.days.map((date) => {
+                const dateStr = format(date, 'yyyy-MM-dd');
+                const hasPhoto = photoSet.has(dateStr);
+                const today = isToday(date);
+                const future = isFuture(date);
+                const dayNum = date.getDate();
+                const photoUri = hasPhoto && selectedEnfant
+                  ? getPhotoUri(selectedEnfant.name, dateStr)
+                  : null;
+
+                return (
+                  <TouchableOpacity
+                    key={dateStr}
+                    style={[
+                      styles.dayCell,
+                      today && styles.dayCellToday,
+                      today && { borderColor: primary },
+                      future && styles.dayCellFuture,
+                    ]}
+                    onPress={() => onDayPress(date)}
+                    disabled={future}
+                    activeOpacity={0.7}
+                  >
+                    {hasPhoto && photoUri ? (
+                      <Image source={{ uri: photoUri }} style={styles.dayPhoto} resizeMode="cover" />
+                    ) : null}
+                    <Text style={[
+                      styles.dayNum,
+                      today && { color: primary, fontWeight: '800' },
+                      future && styles.dayNumFuture,
+                      hasPhoto && styles.dayNumWithPhoto,
+                    ]}>
+                      {dayNum}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </ScrollView>
+
+          {/* FAB — Add photo */}
+          {selectedEnfant && (
+            <TouchableOpacity
+              style={[styles.fab, { backgroundColor: primary, shadowColor: primary }]}
+              onPress={() => pickPhoto(new Date())}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.fabText}>📷</Text>
+            </TouchableOpacity>
+          )}
+        </>
+      ) : (
+        /* ─── SOUVENIRS VIEW ─── */
+        <>
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.souvenirContent}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
+            }
+          >
+            {filteredMemories.length === 0 ? (
+              <View style={styles.emptyCard}>
+                <Text style={styles.emptyEmoji}>🌟</Text>
+                <Text style={styles.emptyText}>Aucun souvenir enregistré</Text>
+                <Text style={styles.emptyHint}>
+                  Ajoute les premières fois et moments forts de tes enfants !
+                </Text>
+              </View>
+            ) : (
+              filteredMemories.map((mem, idx) => (
+                <View key={`${mem.date}-${mem.title}-${idx}`} style={styles.memoryCard}>
+                  <View style={styles.memoryLeft}>
+                    <Text style={styles.memoryEmoji}>{TYPE_EMOJI[mem.type]}</Text>
+                    <View style={[styles.memoryLine, { backgroundColor: mem.type === 'premières-fois' ? '#F59E0B' : '#EC4899' }]} />
+                  </View>
+                  <View style={styles.memoryRight}>
+                    <View style={styles.memoryHeader}>
+                      <Text style={styles.memoryDate}>{formatDateForDisplay(mem.date)}</Text>
+                      <View style={[
+                        styles.memoryBadge,
+                        { backgroundColor: mem.type === 'premières-fois' ? '#FEF3C7' : '#FCE7F3' },
+                      ]}>
+                        <Text style={[
+                          styles.memoryBadgeText,
+                          { color: mem.type === 'premières-fois' ? '#92400E' : '#9D174D' },
+                        ]}>
+                          {TYPE_LABEL[mem.type]}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.memoryTitle}>{mem.title}</Text>
+                    {mem.description ? (
+                      <Text style={styles.memoryDesc}>{mem.description}</Text>
+                    ) : null}
+                    {enfants.length > 1 && (
+                      <Text style={styles.memoryEnfant}>{mem.enfant}</Text>
+                    )}
+                  </View>
+                </View>
+              ))
+            )}
+          </ScrollView>
+
+          {/* FAB — Add souvenir */}
+          <TouchableOpacity
+            style={[styles.fab, { backgroundColor: primary, shadowColor: primary }]}
+            onPress={() => setMemoryEditorVisible(true)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.fabText}>+</Text>
+          </TouchableOpacity>
+        </>
       )}
 
       {/* Fullscreen photo modal */}
@@ -336,30 +409,20 @@ export default function PhotosScreen() {
         onRequestClose={() => setViewingPhoto(null)}
       >
         <View style={styles.modalOverlay}>
-          <TouchableOpacity
-            style={styles.modalClose}
-            onPress={() => setViewingPhoto(null)}
-          >
+          <TouchableOpacity style={styles.modalClose} onPress={() => setViewingPhoto(null)}>
             <Text style={styles.modalCloseText}>✕</Text>
           </TouchableOpacity>
-
           {viewingPhoto && (
             <>
-              <Image
-                source={{ uri: viewingPhoto.uri }}
-                style={styles.modalImage}
-                resizeMode="contain"
-              />
+              <Image source={{ uri: viewingPhoto.uri }} style={styles.modalImage} resizeMode="contain" />
               <Text style={styles.modalDate}>
                 {format(new Date(viewingPhoto.date), 'EEEE d MMMM yyyy', { locale: fr })}
               </Text>
-
               <TouchableOpacity
                 style={styles.modalRetake}
                 onPress={() => {
                   const dateToRetake = new Date(viewingPhoto.date + 'T00:00:00');
                   setViewingPhoto(null);
-                  // Delay picker launch to let modal fully dismiss first
                   setTimeout(() => pickPhoto(dateToRetake), 600);
                 }}
               >
@@ -369,34 +432,56 @@ export default function PhotosScreen() {
           )}
         </View>
       </Modal>
+
+      {/* Memory Editor Modal */}
+      <Modal visible={memoryEditorVisible} animationType="slide" presentationStyle="pageSheet">
+        <MemoryEditor
+          enfants={enfants.map((e) => ({ id: e.id, name: e.name }))}
+          onSave={async (enfantName, mem) => {
+            await addMemory(enfantName, mem);
+          }}
+          onClose={() => setMemoryEditorVisible(false)}
+        />
+      </Modal>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: '#F3F4F6',
-  },
+  safe: { flex: 1, backgroundColor: '#F3F4F6' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 14,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
-  title: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#111827',
+  title: { fontSize: 20, fontWeight: '800', color: '#111827' },
+  stats: { fontSize: 13, color: '#6B7280', fontWeight: '500' },
+  // Mode tabs (Photos / Souvenirs)
+  modeTabBar: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    gap: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
   },
-  stats: {
-    fontSize: 13,
+  modeTab: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+  },
+  modeTabText: {
+    fontSize: 14,
+    fontWeight: '600',
     color: '#6B7280',
-    fontWeight: '500',
   },
   // Enfant tabs
   tabBar: {
@@ -417,24 +502,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#F3F4F6',
   },
-  tabActive: {
-    // Colors applied inline via dynamic theme
-  },
-  tabEmoji: {
-    fontSize: 16,
-  },
-  tabLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#6B7280',
-  },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: CALENDAR_PADDING,
-    paddingBottom: 100,
-  },
+  tabActive: {},
+  tabEmoji: { fontSize: 16 },
+  tabLabel: { fontSize: 13, fontWeight: '600', color: '#6B7280' },
+  scroll: { flex: 1 },
+  scrollContent: { padding: CALENDAR_PADDING, paddingBottom: 100 },
+  souvenirContent: { padding: 16, paddingBottom: 100, gap: 12 },
   // Month navigation
   monthNav: {
     flexDirection: 'row',
@@ -443,147 +516,141 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   monthArrow: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 40, height: 40, borderRadius: 20,
     backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
+    justifyContent: 'center', alignItems: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05, shadowRadius: 3, elevation: 1,
   },
-  monthArrowText: {
-    fontSize: 24,
-    fontWeight: '300',
-  },
-  monthLabel: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
-  },
+  monthArrowText: { fontSize: 24, fontWeight: '300' },
+  monthLabel: { fontSize: 18, fontWeight: '700', color: '#111827' },
   // Weekday headers
-  weekdayRow: {
-    flexDirection: 'row',
-    gap: DAY_GAP,
-    marginBottom: 8,
-  },
-  weekdayCell: {
-    width: CELL_SIZE,
-    alignItems: 'center',
-  },
-  weekdayText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#9CA3AF',
-  },
+  weekdayRow: { flexDirection: 'row', gap: DAY_GAP, marginBottom: 8 },
+  weekdayCell: { width: CELL_SIZE, alignItems: 'center' },
+  weekdayText: { fontSize: 12, fontWeight: '600', color: '#9CA3AF' },
   // Calendar grid
-  calendarGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: DAY_GAP,
-  },
+  calendarGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: DAY_GAP },
   dayCell: {
-    width: CELL_SIZE,
-    height: CELL_SIZE,
-    borderRadius: 10,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
+    width: CELL_SIZE, height: CELL_SIZE, borderRadius: 10,
+    backgroundColor: '#FFFFFF', justifyContent: 'center',
+    alignItems: 'center', overflow: 'hidden',
   },
-  dayCellToday: {
-    borderWidth: 2,
-  },
-  dayCellFuture: {
-    backgroundColor: '#F9FAFB',
-    opacity: 0.5,
-  },
-  dayPhoto: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 10,
-  },
-  dayNum: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#374151',
-  },
-  dayNumFuture: {
-    color: '#D1D5DB',
-  },
+  dayCellToday: { borderWidth: 2 },
+  dayCellFuture: { backgroundColor: '#F9FAFB', opacity: 0.5 },
+  dayPhoto: { ...StyleSheet.absoluteFillObject, borderRadius: 10 },
+  dayNum: { fontSize: 13, fontWeight: '600', color: '#374151' },
+  dayNumFuture: { color: '#D1D5DB' },
   dayNumWithPhoto: {
-    color: '#FFFFFF',
-    fontWeight: '800',
+    color: '#FFFFFF', fontWeight: '800',
     textShadowColor: 'rgba(0,0,0,0.6)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3,
   },
   // FAB
   fab: {
-    position: 'absolute',
-    bottom: 24,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
+    position: 'absolute', bottom: 24, right: 20,
+    width: 56, height: 56, borderRadius: 28,
+    justifyContent: 'center', alignItems: 'center',
+    shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3,
+    shadowRadius: 8, elevation: 8,
+  },
+  fabText: { fontSize: 24, color: '#FFFFFF', fontWeight: '700' },
+  // Memory timeline
+  memoryCard: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  memoryLeft: {
     alignItems: 'center',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    width: 32,
   },
-  fabText: {
-    fontSize: 24,
-  },
-  // Fullscreen modal
-  modalOverlay: {
+  memoryEmoji: { fontSize: 20 },
+  memoryLine: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.9)',
-    justifyContent: 'center',
+    width: 2,
+    marginTop: 4,
+    borderRadius: 1,
+    opacity: 0.3,
+  },
+  memoryRight: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 14,
+    gap: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  memoryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  modalClose: {
-    position: 'absolute',
-    top: 60,
-    right: 20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10,
+  memoryDate: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6B7280',
   },
-  modalCloseText: {
-    fontSize: 18,
-    color: '#FFFFFF',
+  memoryBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  memoryBadgeText: {
+    fontSize: 10,
     fontWeight: '700',
   },
-  modalImage: {
-    width: SCREEN_WIDTH - 32,
-    height: SCREEN_WIDTH - 32,
+  memoryTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  memoryDesc: {
+    fontSize: 13,
+    color: '#6B7280',
+    fontStyle: 'italic',
+  },
+  memoryEnfant: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    marginTop: 2,
+  },
+  // Empty state
+  emptyCard: {
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
+    padding: 40,
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 20,
+  },
+  emptyEmoji: { fontSize: 40 },
+  emptyText: { fontSize: 16, fontWeight: '600', color: '#9CA3AF' },
+  emptyHint: { fontSize: 13, color: '#D1D5DB', textAlign: 'center' },
+  // Fullscreen modal
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.9)',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  modalClose: {
+    position: 'absolute', top: 60, right: 20,
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center', alignItems: 'center', zIndex: 10,
+  },
+  modalCloseText: { fontSize: 18, color: '#FFFFFF', fontWeight: '700' },
+  modalImage: {
+    width: SCREEN_WIDTH - 32, height: SCREEN_WIDTH - 32, borderRadius: 16,
   },
   modalDate: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '600',
-    marginTop: 20,
-    textTransform: 'capitalize',
+    fontSize: 16, color: '#FFFFFF', fontWeight: '600',
+    marginTop: 20, textTransform: 'capitalize',
   },
   modalRetake: {
-    marginTop: 20,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    marginTop: 20, paddingHorizontal: 24, paddingVertical: 12,
+    borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.15)',
   },
-  modalRetakeText: {
-    fontSize: 15,
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
+  modalRetakeText: { fontSize: 15, color: '#FFFFFF', fontWeight: '600' },
 });

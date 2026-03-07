@@ -11,7 +11,9 @@
  * - Score/leaderboard
  */
 
-import { Profile, LootBox } from './types';
+import * as FileSystem from 'expo-file-system';
+import { Profile, LootBox, Memory } from './types';
+import { formatDateForDisplay } from './parser';
 
 const TELEGRAM_API = 'https://api.telegram.org';
 
@@ -106,4 +108,127 @@ export function formatDailySummaryMessage(
     `✅ ${completedCount} tâche(s) terminée(s)\n` +
     `⏳ ${pendingCount} tâche(s) restante(s)\n\n` +
     (top ? `🏆 Leader du jour : ${top.avatar} <b>${top.name}</b> (${top.points} pts)` : '');
+}
+
+// ─── Photo sending ──────────────────────────────────────────────────────────
+
+/**
+ * Send a single photo to Telegram via multipart/form-data.
+ * Uses expo-file-system to read the local file.
+ */
+export async function sendTelegramPhoto(
+  token: string,
+  chatId: string,
+  photoUri: string,
+  caption?: string
+): Promise<boolean> {
+  try {
+    // Read file as base64
+    const base64 = await FileSystem.readAsStringAsync(photoUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    const boundary = `----FormBoundary${Date.now()}`;
+    const fileName = photoUri.split('/').pop() ?? 'photo.jpg';
+
+    // Build multipart body manually
+    let body = '';
+    body += `--${boundary}\r\n`;
+    body += `Content-Disposition: form-data; name="chat_id"\r\n\r\n${chatId}\r\n`;
+
+    if (caption) {
+      body += `--${boundary}\r\n`;
+      body += `Content-Disposition: form-data; name="caption"\r\n\r\n${caption}\r\n`;
+      body += `--${boundary}\r\n`;
+      body += `Content-Disposition: form-data; name="parse_mode"\r\n\r\nHTML\r\n`;
+    }
+
+    body += `--${boundary}\r\n`;
+    body += `Content-Disposition: form-data; name="photo"; filename="${fileName}"\r\n`;
+    body += `Content-Type: image/jpeg\r\n`;
+    body += `Content-Transfer-Encoding: base64\r\n\r\n`;
+    body += base64 + '\r\n';
+    body += `--${boundary}--\r\n`;
+
+    const res = await fetch(`${TELEGRAM_API}/bot${token}/sendPhoto`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': `multipart/form-data; boundary=${boundary}`,
+      },
+      body,
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+// ─── Weekly Recap ───────────────────────────────────────────────────────────
+
+/**
+ * Build the weekly recap text message for grandparents.
+ */
+export function buildWeeklyRecapText(data: {
+  memories: Memory[];
+  photoCount: number;
+  enfantNames: string[];
+}): string {
+  const lines: string[] = ['📬 <b>Recap de la semaine</b>\n'];
+
+  // Premières fois
+  const firsts = data.memories.filter((m) => m.type === 'premières-fois');
+  if (firsts.length > 0) {
+    lines.push('🌟 <b>Premières fois</b>');
+    for (const m of firsts) {
+      lines.push(`  • <b>${m.title}</b> — ${m.enfant} (${formatDateForDisplay(m.date)})`);
+      if (m.description) lines.push(`    <i>${m.description}</i>`);
+    }
+    lines.push('');
+  }
+
+  // Moments forts
+  const moments = data.memories.filter((m) => m.type === 'moment-fort');
+  if (moments.length > 0) {
+    lines.push('💛 <b>Moments forts</b>');
+    for (const m of moments) {
+      lines.push(`  • <b>${m.title}</b> — ${m.enfant} (${formatDateForDisplay(m.date)})`);
+      if (m.description) lines.push(`    <i>${m.description}</i>`);
+    }
+    lines.push('');
+  }
+
+  // Photo count
+  if (data.photoCount > 0) {
+    lines.push(`📸 <b>${data.photoCount} photo${data.photoCount > 1 ? 's' : ''}</b> cette semaine`);
+  }
+
+  if (data.memories.length === 0 && data.photoCount === 0) {
+    lines.push('Pas de nouveaux souvenirs cette semaine — mais tout va bien ! 😊');
+  }
+
+  return lines.join('\n');
+}
+
+/**
+ * Send the full weekly recap to grandparents.
+ * 1. Sends the text message
+ * 2. Sends photos one by one (max 10)
+ */
+export async function sendWeeklyRecap(
+  token: string,
+  chatId: string,
+  text: string,
+  photoUris: string[]
+): Promise<boolean> {
+  // Send text message first
+  const textOk = await sendTelegram(token, chatId, text);
+  if (!textOk) return false;
+
+  // Send photos (max 10)
+  const photosToSend = photoUris.slice(0, 10);
+  for (const uri of photosToSend) {
+    await sendTelegramPhoto(token, chatId, uri);
+  }
+
+  return true;
 }

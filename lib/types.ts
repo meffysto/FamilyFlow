@@ -131,6 +131,17 @@ export interface PhotoEntry {
   uri: string;        // file:///vault/07 - Photos/Maxence/2026-03-06.jpg
 }
 
+export type MemoryType = 'premières-fois' | 'moment-fort';
+
+export interface Memory {
+  date: string;          // "2026-03-07"
+  title: string;         // "Premier sourire"
+  description: string;   // "Grand sourire ce matin"
+  type: MemoryType;
+  enfant: string;        // "Maxence"
+  enfantId: string;      // "maxence"
+}
+
 export interface StockItem {
   produit: string;
   detail?: string;
