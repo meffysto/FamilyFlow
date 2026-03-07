@@ -51,7 +51,7 @@ type TabMode = 'photos' | 'souvenirs';
 
 export default function PhotosScreen() {
   const { profiles, photoDates, addPhoto, getPhotoUri, refresh, isLoading, memories, addMemory } = useVault();
-  const { primary, tint } = useThemeColors();
+  const { primary, tint, colors } = useThemeColors();
   const [refreshing, setRefreshing] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedEnfantIdx, setSelectedEnfantIdx] = useState(0);
@@ -72,7 +72,6 @@ export default function PhotosScreen() {
     setRefreshing(false);
   }, [refresh]);
 
-  // Calendar days for current month
   const calendarDays = useMemo(() => {
     const start = startOfMonth(currentMonth);
     const end = endOfMonth(currentMonth);
@@ -85,14 +84,12 @@ export default function PhotosScreen() {
     return { padding, days };
   }, [currentMonth]);
 
-  // Photo dates set for quick lookup
   const photoSet = useMemo(() => {
     if (!selectedEnfant) return new Set<string>();
     const dates = photoDates[selectedEnfant.id] ?? [];
     return new Set(dates);
   }, [photoDates, selectedEnfant]);
 
-  // Filtered memories by selected enfant
   const filteredMemories = useMemo(() => {
     if (!selectedEnfant) return memories;
     return memories.filter((m) => m.enfantId === selectedEnfant.id);
@@ -142,25 +139,18 @@ export default function PhotosScreen() {
 
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options: ['Annuler', '📷 Appareil photo', '🖼 Galerie'],
-          cancelButtonIndex: 0,
-        },
+        { options: ['Annuler', '📷 Appareil photo', '🖼 Galerie'], cancelButtonIndex: 0 },
         (buttonIndex) => {
           if (buttonIndex === 1) launchPicker(true);
           if (buttonIndex === 2) launchPicker(false);
         }
       );
     } else {
-      Alert.alert(
-        'Photo du jour',
-        'Choisir une source',
-        [
-          { text: 'Annuler', style: 'cancel' },
-          { text: '📷 Appareil photo', onPress: () => launchPicker(true) },
-          { text: '🖼 Galerie', onPress: () => launchPicker(false) },
-        ]
-      );
+      Alert.alert('Photo du jour', 'Choisir une source', [
+        { text: 'Annuler', style: 'cancel' },
+        { text: '📷 Appareil photo', onPress: () => launchPicker(true) },
+        { text: '🖼 Galerie', onPress: () => launchPicker(false) },
+      ]);
     }
   };
 
@@ -188,53 +178,52 @@ export default function PhotosScreen() {
   const TYPE_LABEL = { 'premières-fois': 'Première fois', 'moment-fort': 'Moment fort' };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <Text style={[styles.title, { color: colors.text }]}>
           {activeTab === 'photos' ? '📸 Photos' : '🌟 Souvenirs'}
         </Text>
-        <Text style={styles.stats}>
+        <Text style={[styles.stats, { color: colors.textMuted }]}>
           {activeTab === 'photos' ? `${photoCount} photos` : `${filteredMemories.length} souvenirs`}
         </Text>
       </View>
 
       {/* Mode tabs */}
-      <View style={styles.modeTabBar}>
+      <View style={[styles.modeTabBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity
-          style={[styles.modeTab, activeTab === 'photos' && { backgroundColor: tint }]}
+          style={[styles.modeTab, { backgroundColor: colors.cardAlt }, activeTab === 'photos' && { backgroundColor: tint }]}
           onPress={() => setActiveTab('photos')}
         >
-          <Text style={[styles.modeTabText, activeTab === 'photos' && { color: primary, fontWeight: '700' }]}>
+          <Text style={[styles.modeTabText, { color: colors.textMuted }, activeTab === 'photos' && { color: primary, fontWeight: '700' }]}>
             📸 Photos
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.modeTab, activeTab === 'souvenirs' && { backgroundColor: tint }]}
+          style={[styles.modeTab, { backgroundColor: colors.cardAlt }, activeTab === 'souvenirs' && { backgroundColor: tint }]}
           onPress={() => setActiveTab('souvenirs')}
         >
-          <Text style={[styles.modeTabText, activeTab === 'souvenirs' && { color: primary, fontWeight: '700' }]}>
+          <Text style={[styles.modeTabText, { color: colors.textMuted }, activeTab === 'souvenirs' && { color: primary, fontWeight: '700' }]}>
             🌟 Souvenirs
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Enfant selector tabs */}
+      {/* Enfant selector */}
       {enfants.length > 1 && (
-        <View style={styles.tabBar}>
+        <View style={[styles.tabBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
           {enfants.map((e, idx) => (
             <TouchableOpacity
               key={e.id}
               style={[
                 styles.tab,
-                idx === selectedEnfantIdx && styles.tabActive,
+                { backgroundColor: colors.cardAlt },
                 idx === selectedEnfantIdx && { backgroundColor: tint },
               ]}
               onPress={() => setSelectedEnfantIdx(idx)}
               activeOpacity={0.7}
             >
               <Text style={styles.tabEmoji}>{e.avatar}</Text>
-              <Text style={[styles.tabLabel, idx === selectedEnfantIdx && { color: primary }]}>
+              <Text style={[styles.tabLabel, { color: colors.textMuted }, idx === selectedEnfantIdx && { color: primary }]}>
                 {e.name}
               </Text>
             </TouchableOpacity>
@@ -243,7 +232,6 @@ export default function PhotosScreen() {
       )}
 
       {activeTab === 'photos' ? (
-        /* ─── PHOTOS VIEW ─── */
         <>
           <ScrollView
             style={styles.scroll}
@@ -256,14 +244,14 @@ export default function PhotosScreen() {
             {/* Month navigation */}
             <View style={styles.monthNav}>
               <TouchableOpacity
-                style={styles.monthArrow}
+                style={[styles.monthArrow, { backgroundColor: colors.card }]}
                 onPress={() => setCurrentMonth((m) => subMonths(m, 1))}
               >
                 <Text style={[styles.monthArrowText, { color: primary }]}>‹</Text>
               </TouchableOpacity>
-              <Text style={styles.monthLabel}>{monthLabelCapitalized}</Text>
+              <Text style={[styles.monthLabel, { color: colors.text }]}>{monthLabelCapitalized}</Text>
               <TouchableOpacity
-                style={styles.monthArrow}
+                style={[styles.monthArrow, { backgroundColor: colors.card }]}
                 onPress={() => setCurrentMonth((m) => addMonths(m, 1))}
               >
                 <Text style={[styles.monthArrowText, { color: primary }]}>›</Text>
@@ -274,7 +262,7 @@ export default function PhotosScreen() {
             <View style={styles.weekdayRow}>
               {WEEKDAY_LABELS.map((label, i) => (
                 <View key={i} style={styles.weekdayCell}>
-                  <Text style={styles.weekdayText}>{label}</Text>
+                  <Text style={[styles.weekdayText, { color: colors.textFaint }]}>{label}</Text>
                 </View>
               ))}
             </View>
@@ -300,9 +288,10 @@ export default function PhotosScreen() {
                     key={dateStr}
                     style={[
                       styles.dayCell,
+                      { backgroundColor: colors.card },
                       today && styles.dayCellToday,
                       today && { borderColor: primary },
-                      future && styles.dayCellFuture,
+                      future && { backgroundColor: colors.cardAlt, opacity: 0.5 },
                     ]}
                     onPress={() => onDayPress(date)}
                     disabled={future}
@@ -313,8 +302,9 @@ export default function PhotosScreen() {
                     ) : null}
                     <Text style={[
                       styles.dayNum,
+                      { color: colors.textSub },
                       today && { color: primary, fontWeight: '800' },
-                      future && styles.dayNumFuture,
+                      future && { color: colors.textFaint },
                       hasPhoto && styles.dayNumWithPhoto,
                     ]}>
                       {dayNum}
@@ -325,7 +315,6 @@ export default function PhotosScreen() {
             </View>
           </ScrollView>
 
-          {/* FAB — Add photo */}
           {selectedEnfant && (
             <TouchableOpacity
               style={[styles.fab, { backgroundColor: primary, shadowColor: primary }]}
@@ -337,7 +326,6 @@ export default function PhotosScreen() {
           )}
         </>
       ) : (
-        /* ─── SOUVENIRS VIEW ─── */
         <>
           <ScrollView
             style={styles.scroll}
@@ -348,10 +336,10 @@ export default function PhotosScreen() {
             }
           >
             {filteredMemories.length === 0 ? (
-              <View style={styles.emptyCard}>
+              <View style={[styles.emptyCard, { backgroundColor: colors.card }]}>
                 <Text style={styles.emptyEmoji}>🌟</Text>
-                <Text style={styles.emptyText}>Aucun souvenir enregistré</Text>
-                <Text style={styles.emptyHint}>
+                <Text style={[styles.emptyText, { color: colors.textFaint }]}>Aucun souvenir enregistré</Text>
+                <Text style={[styles.emptyHint, { color: colors.textFaint }]}>
                   Ajoute les premières fois et moments forts de tes enfants !
                 </Text>
               </View>
@@ -362,9 +350,9 @@ export default function PhotosScreen() {
                     <Text style={styles.memoryEmoji}>{TYPE_EMOJI[mem.type]}</Text>
                     <View style={[styles.memoryLine, { backgroundColor: mem.type === 'premières-fois' ? '#F59E0B' : '#EC4899' }]} />
                   </View>
-                  <View style={styles.memoryRight}>
+                  <View style={[styles.memoryRight, { backgroundColor: colors.card }]}>
                     <View style={styles.memoryHeader}>
-                      <Text style={styles.memoryDate}>{formatDateForDisplay(mem.date)}</Text>
+                      <Text style={[styles.memoryDate, { color: colors.textMuted }]}>{formatDateForDisplay(mem.date)}</Text>
                       <View style={[
                         styles.memoryBadge,
                         { backgroundColor: mem.type === 'premières-fois' ? '#FEF3C7' : '#FCE7F3' },
@@ -377,12 +365,12 @@ export default function PhotosScreen() {
                         </Text>
                       </View>
                     </View>
-                    <Text style={styles.memoryTitle}>{mem.title}</Text>
+                    <Text style={[styles.memoryTitle, { color: colors.text }]}>{mem.title}</Text>
                     {mem.description ? (
-                      <Text style={styles.memoryDesc}>{mem.description}</Text>
+                      <Text style={[styles.memoryDesc, { color: colors.textMuted }]}>{mem.description}</Text>
                     ) : null}
                     {enfants.length > 1 && (
-                      <Text style={styles.memoryEnfant}>{mem.enfant}</Text>
+                      <Text style={[styles.memoryEnfant, { color: colors.textFaint }]}>{mem.enfant}</Text>
                     )}
                   </View>
                 </View>
@@ -390,7 +378,6 @@ export default function PhotosScreen() {
             )}
           </ScrollView>
 
-          {/* FAB — Add souvenir */}
           <TouchableOpacity
             style={[styles.fab, { backgroundColor: primary, shadowColor: primary }]}
             onPress={() => setMemoryEditorVisible(true)}
@@ -448,50 +435,37 @@ export default function PhotosScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F3F4F6' },
+  safe: { flex: 1 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 14,
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
   },
-  title: { fontSize: 20, fontWeight: '800', color: '#111827' },
-  stats: { fontSize: 13, color: '#6B7280', fontWeight: '500' },
-  // Mode tabs (Photos / Souvenirs)
+  title: { fontSize: 20, fontWeight: '800' },
+  stats: { fontSize: 13, fontWeight: '500' },
   modeTabBar: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
     paddingVertical: 8,
     gap: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
   },
   modeTab: {
     flex: 1,
     alignItems: 'center',
     paddingVertical: 8,
     borderRadius: 12,
-    backgroundColor: '#F3F4F6',
   },
-  modeTabText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6B7280',
-  },
-  // Enfant tabs
+  modeTabText: { fontSize: 14, fontWeight: '600' },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
     paddingBottom: 12,
     gap: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
   },
   tab: {
     flexDirection: 'row',
@@ -500,15 +474,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#F3F4F6',
   },
-  tabActive: {},
   tabEmoji: { fontSize: 16 },
-  tabLabel: { fontSize: 13, fontWeight: '600', color: '#6B7280' },
+  tabLabel: { fontSize: 13, fontWeight: '600' },
   scroll: { flex: 1 },
   scrollContent: { padding: CALENDAR_PADDING, paddingBottom: 100 },
   souvenirContent: { padding: 16, paddingBottom: 100, gap: 12 },
-  // Month navigation
   monthNav: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -517,35 +488,28 @@ const styles = StyleSheet.create({
   },
   monthArrow: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: '#FFFFFF',
     justifyContent: 'center', alignItems: 'center',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05, shadowRadius: 3, elevation: 1,
   },
   monthArrowText: { fontSize: 24, fontWeight: '300' },
-  monthLabel: { fontSize: 18, fontWeight: '700', color: '#111827' },
-  // Weekday headers
+  monthLabel: { fontSize: 18, fontWeight: '700' },
   weekdayRow: { flexDirection: 'row', gap: DAY_GAP, marginBottom: 8 },
   weekdayCell: { width: CELL_SIZE, alignItems: 'center' },
-  weekdayText: { fontSize: 12, fontWeight: '600', color: '#9CA3AF' },
-  // Calendar grid
+  weekdayText: { fontSize: 12, fontWeight: '600' },
   calendarGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: DAY_GAP },
   dayCell: {
     width: CELL_SIZE, height: CELL_SIZE, borderRadius: 10,
-    backgroundColor: '#FFFFFF', justifyContent: 'center',
-    alignItems: 'center', overflow: 'hidden',
+    justifyContent: 'center', alignItems: 'center', overflow: 'hidden',
   },
   dayCellToday: { borderWidth: 2 },
-  dayCellFuture: { backgroundColor: '#F9FAFB', opacity: 0.5 },
   dayPhoto: { ...StyleSheet.absoluteFillObject, borderRadius: 10 },
-  dayNum: { fontSize: 13, fontWeight: '600', color: '#374151' },
-  dayNumFuture: { color: '#D1D5DB' },
+  dayNum: { fontSize: 13, fontWeight: '600' },
   dayNumWithPhoto: {
     color: '#FFFFFF', fontWeight: '800',
     textShadowColor: 'rgba(0,0,0,0.6)',
     textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3,
   },
-  // FAB
   fab: {
     position: 'absolute', bottom: 24, right: 20,
     width: 56, height: 56, borderRadius: 28,
@@ -554,86 +518,27 @@ const styles = StyleSheet.create({
     shadowRadius: 8, elevation: 8,
   },
   fabText: { fontSize: 24, color: '#FFFFFF', fontWeight: '700' },
-  // Memory timeline
-  memoryCard: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  memoryLeft: {
-    alignItems: 'center',
-    width: 32,
-  },
+  memoryCard: { flexDirection: 'row', gap: 12 },
+  memoryLeft: { alignItems: 'center', width: 32 },
   memoryEmoji: { fontSize: 20 },
-  memoryLine: {
-    flex: 1,
-    width: 2,
-    marginTop: 4,
-    borderRadius: 1,
-    opacity: 0.3,
-  },
+  memoryLine: { flex: 1, width: 2, marginTop: 4, borderRadius: 1, opacity: 0.3 },
   memoryRight: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 14,
-    gap: 4,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    flex: 1, borderRadius: 14, padding: 14, gap: 4,
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
-  memoryHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  memoryDate: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#6B7280',
-  },
-  memoryBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  memoryBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  memoryTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  memoryDesc: {
-    fontSize: 13,
-    color: '#6B7280',
-    fontStyle: 'italic',
-  },
-  memoryEnfant: {
-    fontSize: 11,
-    color: '#9CA3AF',
-    marginTop: 2,
-  },
-  // Empty state
-  emptyCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 40,
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 20,
-  },
+  memoryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  memoryDate: { fontSize: 12, fontWeight: '600' },
+  memoryBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
+  memoryBadgeText: { fontSize: 10, fontWeight: '700' },
+  memoryTitle: { fontSize: 15, fontWeight: '700' },
+  memoryDesc: { fontSize: 13, fontStyle: 'italic' },
+  memoryEnfant: { fontSize: 11, marginTop: 2 },
+  emptyCard: { borderRadius: 16, padding: 40, alignItems: 'center', gap: 8, marginTop: 20 },
   emptyEmoji: { fontSize: 40 },
-  emptyText: { fontSize: 16, fontWeight: '600', color: '#9CA3AF' },
-  emptyHint: { fontSize: 13, color: '#D1D5DB', textAlign: 'center' },
-  // Fullscreen modal
-  modalOverlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.9)',
-    justifyContent: 'center', alignItems: 'center',
-  },
+  emptyText: { fontSize: 16, fontWeight: '600' },
+  emptyHint: { fontSize: 13, textAlign: 'center' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center' },
   modalClose: {
     position: 'absolute', top: 60, right: 20,
     width: 40, height: 40, borderRadius: 20,
@@ -641,13 +546,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', zIndex: 10,
   },
   modalCloseText: { fontSize: 18, color: '#FFFFFF', fontWeight: '700' },
-  modalImage: {
-    width: SCREEN_WIDTH - 32, height: SCREEN_WIDTH - 32, borderRadius: 16,
-  },
-  modalDate: {
-    fontSize: 16, color: '#FFFFFF', fontWeight: '600',
-    marginTop: 20, textTransform: 'capitalize',
-  },
+  modalImage: { width: SCREEN_WIDTH - 32, height: SCREEN_WIDTH - 32, borderRadius: 16 },
+  modalDate: { fontSize: 16, color: '#FFFFFF', fontWeight: '600', marginTop: 20, textTransform: 'capitalize' },
   modalRetake: {
     marginTop: 20, paddingHorizontal: 24, paddingVertical: 12,
     borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.15)',

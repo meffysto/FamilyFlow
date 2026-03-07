@@ -255,18 +255,18 @@ export default function SettingsScreen() {
   }, [editingProfile, editName, editAvatar, editBirthdate, updateProfile]);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-        <Text style={styles.screenTitle}>⚙️ Réglages</Text>
+        <Text style={[styles.screenTitle, { color: colors.text }]}>⚙️ Réglages</Text>
 
         {/* Vault path */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Vault Obsidian</Text>
-          <View style={styles.card}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Vault Obsidian</Text>
+          <View style={[styles.card, { backgroundColor: colors.card }]}>
             <View style={styles.row}>
-              <Text style={styles.rowLabel}>📁 Chemin</Text>
+              <Text style={[styles.rowLabel, { color: colors.textSub }]}>📁 Chemin</Text>
             </View>
-            <Text style={styles.pathText} numberOfLines={3}>
+            <Text style={[styles.pathText, { color: colors.textSub }]} numberOfLines={3}>
               {vaultPath ?? 'Non configuré'}
             </Text>
             <TouchableOpacity
@@ -286,16 +286,16 @@ export default function SettingsScreen() {
 
         {/* Telegram */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Telegram</Text>
-          <View style={styles.card}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Telegram</Text>
+          <View style={[styles.card, { backgroundColor: colors.card }]}>
             <View style={styles.row}>
-              <Text style={styles.rowLabel}>📱 Bot Telegram</Text>
+              <Text style={[styles.rowLabel, { color: colors.textSub }]}>📱 Bot Telegram</Text>
               <Text style={styles.rowStatus}>
                 {telegramToken ? '🟢 Configuré' : '🔴 Non configuré'}
               </Text>
             </View>
             {telegramToken ? (
-              <Text style={styles.tokenHint}>
+              <Text style={[styles.tokenHint, { color: colors.textMuted }]}>
                 Token : {telegramToken.slice(0, 10)}...
               </Text>
             ) : null}
@@ -323,8 +323,8 @@ export default function SettingsScreen() {
 
         {/* Grands-parents */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>👴 Grands-parents</Text>
-          <View style={styles.card}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>👴 Grands-parents</Text>
+          <View style={[styles.card, { backgroundColor: colors.card }]}>
             <Text style={styles.notifHint}>
               Envoyez un recap hebdo avec photos et souvenirs aux grands-parents via Telegram.
               Utilisez le même bot, mais un chat ID différent.
@@ -368,10 +368,10 @@ export default function SettingsScreen() {
 
         {/* Notifications */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notifications</Text>
-          <View style={styles.card}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Notifications</Text>
+          <View style={[styles.card, { backgroundColor: colors.card }]}>
             <View style={styles.row}>
-              <Text style={styles.rowLabel}>🔔 Notifications Telegram</Text>
+              <Text style={[styles.rowLabel, { color: colors.textSub }]}>🔔 Notifications Telegram</Text>
               <Text style={styles.rowStatus}>
                 {notifPrefs.notifications.filter((n) => n.enabled).length}/{notifPrefs.notifications.length} actives
               </Text>
@@ -388,8 +388,8 @@ export default function SettingsScreen() {
         {/* Local Notifications (Reminders) */}
         {localNotifConfig && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Rappels locaux</Text>
-            <View style={styles.card}>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Rappels locaux</Text>
+            <View style={[styles.card, { backgroundColor: colors.card }]}>
               <Text style={styles.notifHint}>
                 Notifications iOS qui rappellent d'ouvrir l'app. Fonctionnent même quand l'app est fermée.
               </Text>
@@ -438,8 +438,8 @@ export default function SettingsScreen() {
 
         {/* Apparence */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Apparence</Text>
-          <View style={styles.card}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Apparence</Text>
+          <View style={[styles.card, { backgroundColor: colors.card }]}>
             <Text style={styles.settingLabel}>🌙 Mode sombre</Text>
             <View style={styles.darkModeRow}>
               {([
@@ -469,14 +469,14 @@ export default function SettingsScreen() {
 
         {/* Active profile */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Mon profil</Text>
-          <View style={styles.card}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Mon profil</Text>
+          <View style={[styles.card, { backgroundColor: colors.card }]}>
             {activeProfile ? (
               <View style={styles.activeProfileRow}>
                 <Text style={styles.activeAvatar}>{activeProfile.avatar}</Text>
                 <View style={styles.profileInfo}>
-                  <Text style={styles.profileName}>{activeProfile.name}</Text>
-                  <Text style={styles.profileMeta}>
+                  <Text style={[styles.profileName, { color: colors.text }]}>{activeProfile.name}</Text>
+                  <Text style={[styles.profileMeta, { color: colors.textMuted }]}>
                     {activeProfile.role === 'adulte' ? '👤 Adulte' : '👶 Enfant'} · Niv. {activeProfile.level} · {activeProfile.points} pts
                   </Text>
                 </View>
@@ -507,8 +507,8 @@ export default function SettingsScreen() {
 
         {/* Family profiles */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Profils famille</Text>
-          <View style={styles.card}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Profils famille</Text>
+          <View style={[styles.card, { backgroundColor: colors.card }]}>
             {profiles.length === 0 ? (
               <Text style={styles.emptyText}>Aucun profil trouvé dans famille.md</Text>
             ) : (
@@ -523,8 +523,8 @@ export default function SettingsScreen() {
                     >
                       <Text style={styles.profileAvatar}>{profile.avatar}</Text>
                       <View style={styles.profileInfo}>
-                        <Text style={styles.profileName}>{profile.name}</Text>
-                        <Text style={styles.profileMeta}>
+                        <Text style={[styles.profileName, { color: colors.text }]}>{profile.name}</Text>
+                        <Text style={[styles.profileMeta, { color: colors.textMuted }]}>
                           {profile.role} · Niv. {profile.level} · {profile.points} pts
                           {profile.birthdate ? ` · 🎂 ${profile.birthdate}` : ''}
                         </Text>
@@ -600,9 +600,9 @@ export default function SettingsScreen() {
 
         {/* Gamification reset */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Gamification</Text>
-          <View style={styles.card}>
-            <Text style={styles.rowLabel}>Statistiques globales</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Gamification</Text>
+          <View style={[styles.card, { backgroundColor: colors.card }]}>
+            <Text style={[styles.rowLabel, { color: colors.textSub }]}>Statistiques globales</Text>
             {gamiData && (
               <View style={styles.gamiStats}>
                 <Text style={styles.statText}>

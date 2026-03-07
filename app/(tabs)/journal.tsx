@@ -43,7 +43,7 @@ interface JournalModal {
   visible: boolean;
   type: EntryType;
   mode: 'add' | 'edit';
-  lineIndex?: number; // line index in the file content (for edit/delete)
+  lineIndex?: number;
   fields: Record<string, string>;
 }
 
@@ -100,7 +100,6 @@ function buildRowFromFields(type: EntryType, fields: Record<string, string>, aut
     case 'Sieste': {
       const debut = fields.debut?.trim() || h;
       const fin = fields.fin?.trim() || '';
-      // Auto-calculate duration if start + end provided but no manual duration
       let duree = fields.duree?.trim() || '';
       if (!duree && debut && fin) {
         duree = calculerDuree(debut, fin) || '';
@@ -127,38 +126,18 @@ function sectionNameForType(type: EntryType): string {
   }
 }
 
-/** Parse a table row back into field values for editing */
 function parseRowToFields(type: EntryType, row: string): Record<string, string> {
-  // Table row: | cell1 | cell2 | ... |
   const cells = row.split('|').filter(Boolean).map((c) => c.trim());
 
   switch (type) {
     case 'Biberon':
-      return {
-        heure: cells[0] || '',
-        ml: (cells[2] || '').replace(/\s*ml\s*/i, ''),
-        notes: cells[3] || '',
-      };
+      return { heure: cells[0] || '', ml: (cells[2] || '').replace(/\s*ml\s*/i, ''), notes: cells[3] || '' };
     case 'Couche':
-      return {
-        heure: cells[0] || '',
-        type: cells[1] || '',
-        notes: cells[2] || '',
-      };
+      return { heure: cells[0] || '', type: cells[1] || '', notes: cells[2] || '' };
     case 'Sieste':
-      return {
-        debut: cells[0] || '',
-        fin: cells[1] || '',
-        duree: cells[2] || '',
-        notes: cells[3] || '',
-      };
+      return { debut: cells[0] || '', fin: cells[1] || '', duree: cells[2] || '', notes: cells[3] || '' };
     case 'Médicament':
-      return {
-        heure: cells[0] || '',
-        medicament: cells[1] || '',
-        dose: cells[2] || '',
-        notes: cells[3] || '',
-      };
+      return { heure: cells[0] || '', medicament: cells[1] || '', dose: cells[2] || '', notes: cells[3] || '' };
     case 'Observation':
       return { text: row.replace(/^\d+\.\s*/, '').trim() };
     default:
@@ -166,7 +145,6 @@ function parseRowToFields(type: EntryType, row: string): Record<string, string> 
   }
 }
 
-/** Determine entry type from section heading */
 function typeFromHeading(heading: string): EntryType | null {
   const h = heading.toLowerCase();
   if (h.includes('alimentation')) return 'Biberon';
@@ -181,7 +159,7 @@ function typeFromHeading(heading: string): EntryType | null {
 
 export default function JournalScreen() {
   const { vault, profiles } = useVault();
-  const { primary, tint } = useThemeColors();
+  const { primary, tint, colors } = useThemeColors();
 
   const enfants = useMemo(
     () => profiles.filter((p) => p.role === 'enfant'),
@@ -197,7 +175,6 @@ export default function JournalScreen() {
   const [journalExists, setJournalExists] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
-  // Modal state
   const [modal, setModal] = useState<JournalModal>({
     visible: false,
     type: 'Biberon',
@@ -207,8 +184,6 @@ export default function JournalScreen() {
 
   const today = format(new Date(), 'EEEE dd MMMM yyyy', { locale: fr });
   const todayPath = selectedEnfantName ? todayJournalPath(selectedEnfantName) : '';
-
-  // ─── Load journal ────────────────────────────────────────────────────────
 
   const loadJournal = useCallback(async () => {
     if (!vault || !todayPath) return;
@@ -227,9 +202,7 @@ export default function JournalScreen() {
     }
   }, [vault, todayPath]);
 
-  useEffect(() => {
-    loadJournal();
-  }, [loadJournal]);
+  useEffect(() => { loadJournal(); }, [loadJournal]);
 
   const createJournal = useCallback(async () => {
     if (!vault || !selectedEnfantName || !todayPath) return;
@@ -245,8 +218,6 @@ export default function JournalScreen() {
       setIsCreating(false);
     }
   }, [vault, selectedEnfantName, todayPath]);
-
-  // ─── Quick add / edit / delete ───────────────────────────────────────────
 
   const openAddModal = (type: EntryType) => {
     const defaultFields: Record<string, string> = {};
@@ -276,12 +247,9 @@ export default function JournalScreen() {
       const lines = content.split('\n');
 
       if (modal.mode === 'edit' && modal.lineIndex !== undefined) {
-        // ─── Edit existing line ──────────────────────────────────────
         if (modal.type === 'Observation') {
-          // Find the observation line number and replace it
           const text = modal.fields.text?.trim();
           if (text) {
-            // Preserve the numbering prefix
             const existingLine = lines[modal.lineIndex];
             const numMatch = existingLine.match(/^(\d+)\.\s*/);
             lines[modal.lineIndex] = numMatch ? `${numMatch[1]}. ${text}` : text;
@@ -291,36 +259,28 @@ export default function JournalScreen() {
           lines[modal.lineIndex] = newRow;
         }
       } else {
-        // ─── Add new entry ───────────────────────────────────────────
         const sectionKey = sectionNameForType(modal.type);
         const sectionIdx = lines.findIndex(
           (l) => l.startsWith('## ') && l.includes(sectionKey)
         );
 
         if (sectionIdx === -1) {
-          Alert.alert('Oups !', `Impossible d'ajouter cette entrée. Le journal du jour semble incomplet. Essayez de le supprimer et de le recréer.`);
+          Alert.alert('Oups !', `Impossible d'ajouter cette entrée. Le journal du jour semble incomplet.`);
           return;
         }
 
         if (modal.type === 'Observation') {
-          // Find the last numbered item in the section
           let insertAt = sectionIdx + 1;
           let lastNum = 0;
           for (let i = sectionIdx + 1; i < lines.length; i++) {
             if (lines[i].startsWith('## ') || lines[i].startsWith('### ')) break;
             const numMatch = lines[i].match(/^(\d+)\./);
-            if (numMatch) {
-              lastNum = parseInt(numMatch[1], 10);
-              insertAt = i + 1;
-            }
+            if (numMatch) { lastNum = parseInt(numMatch[1], 10); insertAt = i + 1; }
           }
           const text = modal.fields.text?.trim();
-          if (text) {
-            lines.splice(insertAt, 0, `${lastNum + 1}. ${text}`);
-          }
+          if (text) lines.splice(insertAt, 0, `${lastNum + 1}. ${text}`);
         } else {
           const newRow = buildRowFromFields(modal.type, modal.fields, now);
-          // Find last table row in section
           let insertAt = sectionIdx + 1;
           for (let i = sectionIdx + 1; i < lines.length; i++) {
             if (lines[i].startsWith('## ') || lines[i].startsWith('### ')) break;
@@ -355,9 +315,8 @@ export default function JournalScreen() {
               const content = await vault.readFile(todayPath);
               const lines = content.split('\n');
               lines.splice(modal.lineIndex!, 1);
-              const newContent = lines.join('\n');
-              await vault.writeFile(todayPath, newContent);
-              setJournalContent(newContent);
+              await vault.writeFile(todayPath, lines.join('\n'));
+              setJournalContent(lines.join('\n'));
             } catch (e) {
               Alert.alert('Erreur', String(e));
             }
@@ -366,8 +325,6 @@ export default function JournalScreen() {
       ]
     );
   };
-
-  // ─── Stats ───────────────────────────────────────────────────────────────
 
   const journalStats = useMemo(
     () => (journalContent ? parseJournalStats(journalContent) : null),
@@ -381,13 +338,10 @@ export default function JournalScreen() {
       journalStats.couches > 0 ||
       journalStats.siestes.length > 0);
 
-  // ─── Render sections ─────────────────────────────────────────────────────
-
   const renderSections = (content: string) => {
     if (!content) return null;
     const allLines = content.split('\n');
 
-    // Find all ## sections
     const sectionStarts: { heading: string; startIdx: number }[] = [];
     for (let i = 0; i < allLines.length; i++) {
       if (allLines[i].startsWith('## ')) {
@@ -402,24 +356,20 @@ export default function JournalScreen() {
 
       if (!entryType) return null;
 
-      // ─── Observation section (numbered list) ───────────────────────
       if (entryType === 'Observation') {
         const observations: { text: string; lineIdx: number }[] = [];
         for (let i = 0; i < sectionLines.length; i++) {
           const line = sectionLines[i];
           const numMatch = line.match(/^(\d+)\.\s*(.*)/);
           if (numMatch && numMatch[2].trim()) {
-            observations.push({
-              text: numMatch[2].trim(),
-              lineIdx: sec.startIdx + 1 + i,
-            });
+            observations.push({ text: numMatch[2].trim(), lineIdx: sec.startIdx + 1 + i });
           }
         }
 
         return (
-          <View key={si} style={styles.tableSection}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.tableSectionTitle}>{sec.heading}</Text>
+          <View key={si} style={[styles.tableSection, { backgroundColor: colors.card }]}>
+            <View style={[styles.sectionHeader, { backgroundColor: colors.cardAlt, borderBottomColor: colors.border }]}>
+              <Text style={[styles.tableSectionTitle, { color: colors.text }]}>{sec.heading}</Text>
               <TouchableOpacity
                 style={[styles.sectionAddBtn, { backgroundColor: tint }]}
                 onPress={() => openAddModal('Observation')}
@@ -431,39 +381,36 @@ export default function JournalScreen() {
               observations.map((obs, oi) => (
                 <TouchableOpacity
                   key={oi}
-                  style={[styles.obsRow, oi % 2 === 1 && styles.tableRowAlt]}
+                  style={[styles.obsRow, { borderBottomColor: colors.borderLight }, oi % 2 === 1 && { backgroundColor: colors.cardAlt }]}
                   onPress={() => openEditModal('Observation', obs.lineIdx, allLines[obs.lineIdx])}
                   activeOpacity={0.6}
                 >
                   <Text style={styles.obsNumber}>{oi + 1}.</Text>
-                  <Text style={styles.obsText}>{obs.text}</Text>
+                  <Text style={[styles.obsText, { color: colors.textSub }]}>{obs.text}</Text>
                   <Text style={styles.editHint}>✏️</Text>
                 </TouchableOpacity>
               ))
             ) : (
               <View style={styles.emptySection}>
-                <Text style={styles.emptySectionText}>Aucune observation</Text>
+                <Text style={[styles.emptySectionText, { color: colors.textFaint }]}>Aucune observation</Text>
               </View>
             )}
           </View>
         );
       }
 
-      // ─── Table sections (Alimentation, Couches, Sommeil, Médicaments) ─
       const tableLines = sectionLines.filter((l) => l.trim().startsWith('|'));
       if (tableLines.length === 0) return null;
 
       const [header, _separator, ...rows] = tableLines;
       const cols = header.split('|').filter(Boolean).map((c) => c.trim());
 
-      // Map each row back to its absolute line index
       let tableLineIndices: number[] = [];
       for (let i = 0; i < sectionLines.length; i++) {
         if (sectionLines[i].trim().startsWith('|')) {
           tableLineIndices.push(sec.startIdx + 1 + i);
         }
       }
-      // Skip header + separator (first 2 table lines)
       const dataLineIndices = tableLineIndices.slice(2);
 
       const dataRows = rows
@@ -476,9 +423,9 @@ export default function JournalScreen() {
         .filter((r) => r.hasContent);
 
       return (
-        <View key={si} style={styles.tableSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.tableSectionTitle}>{sec.heading}</Text>
+        <View key={si} style={[styles.tableSection, { backgroundColor: colors.card }]}>
+          <View style={[styles.sectionHeader, { backgroundColor: colors.cardAlt, borderBottomColor: colors.border }]}>
+            <Text style={[styles.tableSectionTitle, { color: colors.text }]}>{sec.heading}</Text>
             <TouchableOpacity
               style={[styles.sectionAddBtn, { backgroundColor: tint }]}
               onPress={() => openAddModal(entryType)}
@@ -488,29 +435,31 @@ export default function JournalScreen() {
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View>
-              {/* Header */}
-              <View style={[styles.tableRow, { backgroundColor: tint }]}>
+              <View style={[styles.tableRow, { backgroundColor: tint, borderBottomColor: colors.border }]}>
                 {cols.map((col, ci) => (
-                  <Text key={ci} style={styles.tableHeader}>{col}</Text>
+                  <Text key={ci} style={[styles.tableHeader, { color: primary }]}>{col}</Text>
                 ))}
               </View>
-              {/* Data rows — tap to edit */}
               {dataRows.map((row, ri) => (
                 <TouchableOpacity
                   key={ri}
-                  style={[styles.tableRow, ri % 2 === 1 && styles.tableRowAlt]}
+                  style={[
+                    styles.tableRow,
+                    { borderBottomColor: colors.borderLight },
+                    ri % 2 === 1 && { backgroundColor: colors.cardAlt },
+                  ]}
                   onPress={() => openEditModal(entryType, row.lineIdx, row.raw)}
                   activeOpacity={0.6}
                 >
                   {row.cells.map((cell, ci) => (
-                    <Text key={ci} style={styles.tableCell}>{cell}</Text>
+                    <Text key={ci} style={[styles.tableCell, { color: colors.textSub }]}>{cell}</Text>
                   ))}
                   <Text style={styles.editHintCell}>✏️</Text>
                 </TouchableOpacity>
               ))}
               {dataRows.length === 0 && (
                 <View style={styles.emptySection}>
-                  <Text style={styles.emptySectionText}>Aucune entrée</Text>
+                  <Text style={[styles.emptySectionText, { color: colors.textFaint }]}>Aucune entrée</Text>
                 </View>
               )}
             </View>
@@ -520,21 +469,17 @@ export default function JournalScreen() {
     });
   };
 
-  // ─── Render ──────────────────────────────────────────────────────────────
-
   const meta = ENTRY_META[modal.type];
   const fieldConfigs = FIELD_CONFIGS[modal.type];
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>📖 Journal bébé</Text>
-        <Text style={styles.dateText}>{today}</Text>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <Text style={[styles.title, { color: colors.text }]}>📖 Journal bébé</Text>
+        <Text style={[styles.dateText, { color: colors.textMuted }]}>{today}</Text>
       </View>
 
-      {/* Enfant selector */}
-      <View style={styles.tabs}>
+      <View style={[styles.tabs, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         {enfants.map((enfant) => (
           <TouchableOpacity
             key={enfant.id}
@@ -542,16 +487,15 @@ export default function JournalScreen() {
             onPress={() => setSelectedEnfantId(enfant.id)}
           >
             <Text style={styles.tabEmoji}>{enfant.avatar}</Text>
-            <Text style={[styles.tabText, selectedEnfant?.id === enfant.id && { color: primary }]}>
+            <Text style={[styles.tabText, { color: colors.textFaint }, selectedEnfant?.id === enfant.id && { color: primary }]}>
               {enfant.name}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      {/* Quick add buttons — 2 rows */}
       {journalExists && (
-        <View style={styles.quickAddContainer}>
+        <View style={[styles.quickAddContainer, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
           <View style={styles.quickAddRow}>
             {(['Biberon', 'Couche', 'Sieste'] as const).map((type) => (
               <TouchableOpacity
@@ -587,10 +531,10 @@ export default function JournalScreen() {
         {!journalExists ? (
           <View style={styles.createContainer}>
             <Text style={styles.createEmoji}>{selectedEnfant?.avatar ?? '👶'}</Text>
-            <Text style={styles.createTitle}>
+            <Text style={[styles.createTitle, { color: colors.textSub }]}>
               Pas encore de journal pour {selectedEnfantName} aujourd'hui
             </Text>
-            <Text style={styles.createSubtitle}>
+            <Text style={[styles.createSubtitle, { color: colors.textMuted }]}>
               Créez le journal du {format(new Date(), 'dd/MM/yyyy')} pour commencer à suivre
               l'alimentation, les couches et le sommeil.
             </Text>
@@ -606,40 +550,39 @@ export default function JournalScreen() {
           </View>
         ) : journalContent ? (
           <View style={styles.journalContent}>
-            {/* Live stats banner */}
             {hasStats && journalStats && (
-              <View style={styles.statsBanner}>
-                <Text style={styles.statsBannerTitle}>📊 Résumé du jour</Text>
+              <View style={[styles.statsBanner, { backgroundColor: colors.card }]}>
+                <Text style={[styles.statsBannerTitle, { color: colors.text }]}>📊 Résumé du jour</Text>
                 <View style={styles.statsGrid}>
                   {journalStats.biberons > 0 && (
-                    <View style={styles.statItem}>
+                    <View style={[styles.statItem, { backgroundColor: colors.cardAlt }]}>
                       <Text style={styles.statEmoji}>🍼</Text>
-                      <Text style={styles.statValue}>{journalStats.biberons}</Text>
-                      <Text style={styles.statLabel}>
+                      <Text style={[styles.statValue, { color: colors.text }]}>{journalStats.biberons}</Text>
+                      <Text style={[styles.statLabel, { color: colors.textMuted }]}>
                         biberon{journalStats.biberons > 1 ? 's' : ''}
                         {journalStats.totalMl > 0 ? ` (${journalStats.totalMl} ml)` : ''}
                       </Text>
                     </View>
                   )}
                   {journalStats.tetees > 0 && (
-                    <View style={styles.statItem}>
+                    <View style={[styles.statItem, { backgroundColor: colors.cardAlt }]}>
                       <Text style={styles.statEmoji}>🤱</Text>
-                      <Text style={styles.statValue}>{journalStats.tetees}</Text>
-                      <Text style={styles.statLabel}>tétée{journalStats.tetees > 1 ? 's' : ''}</Text>
+                      <Text style={[styles.statValue, { color: colors.text }]}>{journalStats.tetees}</Text>
+                      <Text style={[styles.statLabel, { color: colors.textMuted }]}>tétée{journalStats.tetees > 1 ? 's' : ''}</Text>
                     </View>
                   )}
                   {journalStats.couches > 0 && (
-                    <View style={styles.statItem}>
+                    <View style={[styles.statItem, { backgroundColor: colors.cardAlt }]}>
                       <Text style={styles.statEmoji}>🚼</Text>
-                      <Text style={styles.statValue}>{journalStats.couches}</Text>
-                      <Text style={styles.statLabel}>couche{journalStats.couches > 1 ? 's' : ''}</Text>
+                      <Text style={[styles.statValue, { color: colors.text }]}>{journalStats.couches}</Text>
+                      <Text style={[styles.statLabel, { color: colors.textMuted }]}>couche{journalStats.couches > 1 ? 's' : ''}</Text>
                     </View>
                   )}
                   {journalStats.sommeilTotal && (
-                    <View style={styles.statItem}>
+                    <View style={[styles.statItem, { backgroundColor: colors.cardAlt }]}>
                       <Text style={styles.statEmoji}>😴</Text>
-                      <Text style={styles.statValue}>{journalStats.sommeilTotal}</Text>
-                      <Text style={styles.statLabel}>
+                      <Text style={[styles.statValue, { color: colors.text }]}>{journalStats.sommeilTotal}</Text>
+                      <Text style={[styles.statLabel, { color: colors.textMuted }]}>
                         {journalStats.sommeilNuit ? `🌙 ${journalStats.sommeilNuit}` : ''}
                         {journalStats.sommeilNuit && journalStats.sommeilJour ? ' · ' : ''}
                         {journalStats.sommeilJour ? `☀️ ${journalStats.sommeilJour}` : ''}
@@ -654,7 +597,6 @@ export default function JournalScreen() {
         ) : null}
       </ScrollView>
 
-      {/* Unified Add/Edit Modal */}
       <Modal
         visible={modal.visible}
         transparent
@@ -666,19 +608,19 @@ export default function JournalScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
           <TouchableOpacity style={styles.modalDismiss} activeOpacity={1} onPress={closeModal} />
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
               {meta.emoji}{' '}
               {modal.mode === 'edit' ? `Modifier ${meta.label}` : `Ajouter ${meta.label}`}
             </Text>
 
             {fieldConfigs.map((field) => (
               <View key={field.key} style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>{field.label}</Text>
+                <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>{field.label}</Text>
                 <TextInput
-                  style={styles.modalInput}
+                  style={[styles.modalInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
                   placeholder={field.placeholder}
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.textFaint}
                   value={modal.fields[field.key] || ''}
                   onChangeText={(v) => updateField(field.key, v)}
                   keyboardType={field.keyboard === 'numeric' ? 'numeric' : 'default'}
@@ -699,8 +641,8 @@ export default function JournalScreen() {
                   <Text style={styles.modalDeleteText}>🗑</Text>
                 </TouchableOpacity>
               )}
-              <TouchableOpacity style={styles.modalCancel} onPress={closeModal}>
-                <Text style={styles.modalCancelText}>Annuler</Text>
+              <TouchableOpacity style={[styles.modalCancel, { borderColor: colors.border }]} onPress={closeModal}>
+                <Text style={[styles.modalCancelText, { color: colors.textMuted }]}>Annuler</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalConfirm, { backgroundColor: primary }]}
@@ -723,21 +665,17 @@ export default function JournalScreen() {
 const COL_WIDTH = 110;
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F3F4F6' },
+  safe: { flex: 1 },
   header: {
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
   },
-  title: { fontSize: 20, fontWeight: '800', color: '#111827' },
-  dateText: { fontSize: 13, color: '#6B7280', marginTop: 2, textTransform: 'capitalize' },
+  title: { fontSize: 20, fontWeight: '800' },
+  dateText: { fontSize: 13, marginTop: 2, textTransform: 'capitalize' },
   tabs: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
   },
   tab: {
     flex: 1,
@@ -750,13 +688,10 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   tabEmoji: { fontSize: 18 },
-  tabText: { fontSize: 14, fontWeight: '600', color: '#9CA3AF' },
+  tabText: { fontSize: 14, fontWeight: '600' },
 
-  // Quick add
   quickAddContainer: {
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
     paddingVertical: 6,
     gap: 4,
   },
@@ -778,101 +713,96 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { padding: 16, paddingBottom: 40 },
 
-  // Create journal
   createContainer: { alignItems: 'center', paddingVertical: 48, gap: 16 },
   createEmoji: { fontSize: 64 },
-  createTitle: { fontSize: 18, fontWeight: '700', color: '#374151', textAlign: 'center' },
-  createSubtitle: {
-    fontSize: 14, color: '#6B7280', textAlign: 'center', lineHeight: 20, maxWidth: 300,
-  },
+  createTitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
+  createSubtitle: { fontSize: 14, textAlign: 'center', lineHeight: 20, maxWidth: 300 },
   createBtn: { paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14, marginTop: 8 },
-  createBtnDisabled: { backgroundColor: '#A78BFA' },
+  createBtnDisabled: { opacity: 0.6 },
   createBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
 
   journalContent: { gap: 16 },
 
-  // Stats
   statsBanner: {
-    backgroundColor: '#FFFFFF', borderRadius: 12, padding: 14,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
-    borderLeftWidth: 3, borderLeftColor: '#8B5CF6',
+    borderRadius: 12,
+    padding: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    borderLeftWidth: 3,
+    borderLeftColor: '#8B5CF6',
   },
-  statsBannerTitle: { fontSize: 14, fontWeight: '700', color: '#111827', marginBottom: 10 },
+  statsBannerTitle: { fontSize: 14, fontWeight: '700', marginBottom: 10 },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   statItem: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: '#F9FAFB', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8,
+    paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8,
   },
   statEmoji: { fontSize: 16 },
-  statValue: { fontSize: 15, fontWeight: '800', color: '#111827' },
-  statLabel: { fontSize: 12, color: '#6B7280', fontWeight: '500' },
+  statValue: { fontSize: 15, fontWeight: '800' },
+  statLabel: { fontSize: 12, fontWeight: '500' },
 
-  // Table sections
   tableSection: {
-    backgroundColor: '#FFFFFF', borderRadius: 12, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   sectionHeader: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: '#F9FAFB', borderBottomWidth: 1, borderBottomColor: '#E5E7EB',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
     paddingRight: 8,
   },
-  tableSectionTitle: {
-    fontSize: 15, fontWeight: '700', color: '#111827', padding: 12,
-  },
-  sectionAddBtn: {
-    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8,
-  },
+  tableSectionTitle: { fontSize: 15, fontWeight: '700', padding: 12 },
+  sectionAddBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
   sectionAddText: { fontSize: 12, fontWeight: '700' },
-  tableRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
-  tableRowAlt: { backgroundColor: '#FAFAFA' },
-  tableHeader: {
-    width: COL_WIDTH, padding: 8, fontSize: 12, fontWeight: '700', color: '#5B21B6',
-  },
-  tableCell: { width: COL_WIDTH, padding: 8, fontSize: 13, color: '#374151' },
+  tableRow: { flexDirection: 'row', borderBottomWidth: 1 },
+  tableHeader: { width: COL_WIDTH, padding: 8, fontSize: 12, fontWeight: '700' },
+  tableCell: { width: COL_WIDTH, padding: 8, fontSize: 13 },
   editHintCell: { padding: 8, fontSize: 12, opacity: 0.3 },
 
-  // Observations
   obsRow: {
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10,
-    borderBottomWidth: 1, borderBottomColor: '#F3F4F6', gap: 8,
+    borderBottomWidth: 1, gap: 8,
   },
   obsNumber: { fontSize: 14, fontWeight: '700', color: '#8B5CF6', width: 24 },
-  obsText: { flex: 1, fontSize: 14, color: '#374151', lineHeight: 20 },
+  obsText: { flex: 1, fontSize: 14, lineHeight: 20 },
   editHint: { fontSize: 12, opacity: 0.3 },
 
   emptySection: { padding: 16, alignItems: 'center' },
-  emptySectionText: { fontSize: 13, color: '#9CA3AF', fontStyle: 'italic' },
+  emptySectionText: { fontSize: 13, fontStyle: 'italic' },
 
-  // Modal
-  modalOverlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end',
-  },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalDismiss: { flex: 1 },
   modalContent: {
-    backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    borderTopLeftRadius: 20, borderTopRightRadius: 20,
     padding: 24, gap: 12,
   },
-  modalTitle: { fontSize: 18, fontWeight: '800', color: '#111827' },
+  modalTitle: { fontSize: 18, fontWeight: '800' },
   fieldGroup: { gap: 4 },
-  fieldLabel: { fontSize: 13, fontWeight: '600', color: '#6B7280' },
+  fieldLabel: { fontSize: 13, fontWeight: '600' },
   modalInput: {
-    borderWidth: 1.5, borderColor: '#D1D5DB', borderRadius: 10,
-    padding: 12, fontSize: 15, color: '#111827',
+    borderWidth: 1.5, borderRadius: 10,
+    padding: 12, fontSize: 15,
   },
   modalActions: { flexDirection: 'row', gap: 10, marginTop: 4 },
   modalDelete: {
-    padding: 14, borderRadius: 10, backgroundColor: '#FEE2E2', alignItems: 'center',
-    justifyContent: 'center', width: 48,
+    padding: 14, borderRadius: 10, backgroundColor: '#FEE2E2',
+    alignItems: 'center', justifyContent: 'center', width: 48,
   },
   modalDeleteText: { fontSize: 18 },
   modalCancel: {
     flex: 1, padding: 14, borderRadius: 10,
-    borderWidth: 1.5, borderColor: '#D1D5DB', alignItems: 'center',
+    borderWidth: 1.5, alignItems: 'center',
   },
-  modalCancelText: { fontSize: 15, fontWeight: '600', color: '#6B7280' },
+  modalCancelText: { fontSize: 15, fontWeight: '600' },
   modalConfirm: { flex: 2, padding: 14, borderRadius: 10, alignItems: 'center' },
   modalConfirmText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
 });
