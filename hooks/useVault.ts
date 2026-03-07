@@ -581,9 +581,9 @@ export function useVault(): VaultState {
     setTasks(prev => prev.map(updateTask));
     setMenageTasks(prev => prev.map(updateTask));
 
-    // 3. Background refresh to fully sync (non-blocking)
-    loadVaultData(vaultRef.current).catch(() => {});
-  }, [loadVaultData]);
+    // No background loadVaultData — optimistic state is authoritative.
+    // Next foreground event will fully sync.
+  }, []);
 
   const addRDV = useCallback(async (rdv: Omit<RDV, 'sourceFile' | 'title'>) => {
     if (!vaultRef.current) return;
@@ -600,9 +600,9 @@ export function useVault(): VaultState {
     };
     setRdvs(prev => [...prev, newRDV].sort((a, b) => a.date_rdv.localeCompare(b.date_rdv)));
 
-    // Background refresh to fully sync
-    loadVaultData(vaultRef.current).catch(() => {});
-  }, [loadVaultData]);
+    // Schedule alerts for the new RDV (fire-and-forget)
+    scheduleRDVAlerts([newRDV]).catch(() => {});
+  }, []);
 
   const updateRDV = useCallback(async (sourceFile: string, rdv: Omit<RDV, 'sourceFile' | 'title'>) => {
     if (!vaultRef.current) return;
@@ -620,17 +620,14 @@ export function useVault(): VaultState {
       if (r.sourceFile !== sourceFile) return r;
       return { ...rdv, title: newFileName.replace('.md', ''), sourceFile: newPath };
     }).sort((a, b) => a.date_rdv.localeCompare(b.date_rdv)));
-
-    loadVaultData(vaultRef.current).catch(() => {});
-  }, [loadVaultData]);
+  }, []);
 
   const deleteRDV = useCallback(async (sourceFile: string) => {
     if (!vaultRef.current) return;
     await vaultRef.current.deleteFile(sourceFile);
     // Optimistic: remove from state immediately
     setRdvs(prev => prev.filter(r => r.sourceFile !== sourceFile));
-    loadVaultData(vaultRef.current).catch(() => {});
-  }, [loadVaultData]);
+  }, []);
 
   const addTask = useCallback(async (text: string, targetFile: string, dueDate?: string, recurrence?: string) => {
     if (!vaultRef.current) return;
