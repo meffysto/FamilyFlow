@@ -199,9 +199,65 @@ export function buildWeeklyRecapText(data: {
 }
 
 /**
+ * Send a group of photos as an album via sendMediaGroup.
+ * Telegram accepts max 10 photos per group.
+ * Uses RN FormData with { uri, type, name } for each file.
+ */
+async function sendTelegramMediaGroup(
+  token: string,
+  chatId: string,
+  photoUris: string[],
+  caption?: string
+): Promise<boolean> {
+  if (photoUris.length === 0) return true;
+  const batch = photoUris.slice(0, 10);
+
+  try {
+    const formData = new FormData();
+    formData.append('chat_id', chatId);
+
+    // Build media JSON array — each item references an attached file by field name
+    const media = batch.map((_, i) => {
+      const item: Record<string, string> = {
+        type: 'photo',
+        media: `attach://photo${i}`,
+      };
+      // Caption on first photo only
+      if (i === 0 && caption) {
+        item.caption = caption;
+        item.parse_mode = 'HTML';
+      }
+      return item;
+    });
+    formData.append('media', JSON.stringify(media));
+
+    // Attach each photo file
+    for (let i = 0; i < batch.length; i++) {
+      let fileUri = decodeURIComponent(batch[i]);
+      if (!fileUri.startsWith('file://')) {
+        fileUri = `file://${fileUri}`;
+      }
+      formData.append(`photo${i}`, {
+        uri: fileUri,
+        type: 'image/jpeg',
+        name: `photo${i}.jpg`,
+      } as any);
+    }
+
+    const res = await fetch(`${TELEGRAM_API}/bot${token}/sendMediaGroup`, {
+      method: 'POST',
+      body: formData,
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Send the full weekly recap to grandparents.
  * 1. Sends the text message
- * 2. Sends photos one by one (max 10)
+ * 2. Sends photos grouped as albums (max 10 per album)
  */
 export async function sendWeeklyRecap(
   token: string,
@@ -213,10 +269,10 @@ export async function sendWeeklyRecap(
   const textOk = await sendTelegram(token, chatId, text);
   if (!textOk) return false;
 
-  // Send photos (max 10)
-  const photosToSend = photoUris.slice(0, 10);
-  for (const uri of photosToSend) {
-    await sendTelegramPhoto(token, chatId, uri);
+  // Send photos in groups of 10
+  for (let i = 0; i < photoUris.length; i += 10) {
+    const batch = photoUris.slice(i, i + 10);
+    await sendTelegramMediaGroup(token, chatId, batch);
   }
 
   return true;
