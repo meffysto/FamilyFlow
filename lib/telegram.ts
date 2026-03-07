@@ -123,41 +123,30 @@ export async function sendTelegramPhoto(
   caption?: string
 ): Promise<boolean> {
   try {
-    // Read file as base64
-    const base64 = await FileSystem.readAsStringAsync(photoUri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-
-    const boundary = `----FormBoundary${Date.now()}`;
-    const fileName = photoUri.split('/').pop() ?? 'photo.jpg';
-
-    // Build multipart body manually
-    let body = '';
-    body += `--${boundary}\r\n`;
-    body += `Content-Disposition: form-data; name="chat_id"\r\n\r\n${chatId}\r\n`;
-
-    if (caption) {
-      body += `--${boundary}\r\n`;
-      body += `Content-Disposition: form-data; name="caption"\r\n\r\n${caption}\r\n`;
-      body += `--${boundary}\r\n`;
-      body += `Content-Disposition: form-data; name="parse_mode"\r\n\r\nHTML\r\n`;
+    // Normalize URI — ensure it starts with file://
+    let fileUri = photoUri;
+    if (!fileUri.startsWith('file://')) {
+      fileUri = `file://${fileUri}`;
     }
 
-    body += `--${boundary}\r\n`;
-    body += `Content-Disposition: form-data; name="photo"; filename="${fileName}"\r\n`;
-    body += `Content-Type: image/jpeg\r\n`;
-    body += `Content-Transfer-Encoding: base64\r\n\r\n`;
-    body += base64 + '\r\n';
-    body += `--${boundary}--\r\n`;
+    // Use FileSystem.uploadAsync for reliable multipart file upload
+    const params: Record<string, string> = { chat_id: chatId };
+    if (caption) {
+      params.caption = caption;
+      params.parse_mode = 'HTML';
+    }
 
-    const res = await fetch(`${TELEGRAM_API}/bot${token}/sendPhoto`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': `multipart/form-data; boundary=${boundary}`,
-      },
-      body,
-    });
-    return res.ok;
+    const result = await FileSystem.uploadAsync(
+      `${TELEGRAM_API}/bot${token}/sendPhoto`,
+      fileUri,
+      {
+        httpMethod: 'POST',
+        uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+        fieldName: 'photo',
+        parameters: params,
+      }
+    );
+    return result.status >= 200 && result.status < 300;
   } catch {
     return false;
   }
