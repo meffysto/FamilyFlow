@@ -98,6 +98,7 @@ const STATIC_TASK_FILES = [
 const MENAGE_FILE = '02 - Maison/Ménage hebdo.md';
 const COURSES_FILE = '02 - Maison/Liste de courses.md';
 const RDV_DIR = '04 - Rendez-vous';
+const RDV_ARCHIVES_DIR = 'Archives/Rendez-vous';
 const FAMILLE_FILE = 'famille.md';
 const GAMI_FILE = 'gamification.md';
 const MEALS_FILE = '02 - Maison/Repas de la semaine.md';
@@ -291,21 +292,36 @@ export function useVault(): VaultState {
         setMeals([]);
       }
 
-      // Load RDVs from directory
+      // Load RDVs from active directory + archives
       try {
-        const rdvFiles = await vault.listDir(RDV_DIR);
+        await vault.ensureDir(RDV_DIR);
         const loadedRdvs: RDV[] = [];
-        for (const file of rdvFiles) {
-          if (!file.endsWith('.md')) continue;
-          const relPath = `${RDV_DIR}/${file}`;
+
+        // Helper: load all .md files from a directory as RDVs
+        const loadRdvsFromDir = async (dir: string) => {
           try {
-            const content = await vault.readFile(relPath);
-            const rdv = parseRDV(relPath, content);
-            if (rdv && rdv.statut !== 'annulé') loadedRdvs.push(rdv);
+            const files = await vault.listDir(dir);
+            for (const file of files) {
+              if (!file.endsWith('.md')) continue;
+              const relPath = `${dir}/${file}`;
+              try {
+                const content = await vault.readFile(relPath);
+                const rdv = parseRDV(relPath, content);
+                if (rdv && rdv.statut !== 'annulé') loadedRdvs.push(rdv);
+              } catch {
+                // skip individual rdv
+              }
+            }
           } catch {
-            // skip individual rdv
+            // directory may not exist
           }
-        }
+        };
+
+        // Active RDVs
+        await loadRdvsFromDir(RDV_DIR);
+        // Archived RDVs (past, moved by maintenance.py)
+        await loadRdvsFromDir(RDV_ARCHIVES_DIR);
+
         loadedRdvs.sort((a, b) => a.date_rdv.localeCompare(b.date_rdv));
         setRdvs(loadedRdvs);
         // Schedule RDV notification alerts (fire-and-forget)
@@ -684,7 +700,16 @@ export function useVault(): VaultState {
     const fileName = rdvFileName(rdv);
     const relPath = `${RDV_DIR}/${fileName}`;
     const content = serializeRDV(rdv);
+
+    // Ensure directory exists, write file, verify
+    await vaultRef.current.ensureDir(RDV_DIR);
     await vaultRef.current.writeFile(relPath, content);
+
+    // Verify the file was actually written
+    const exists = await vaultRef.current.exists(relPath);
+    if (!exists) {
+      throw new Error(`Échec écriture RDV: le fichier n'existe pas après écriture.\nPath: ${relPath}`);
+    }
 
     // Optimistic state update — add RDV to state immediately
     const newRDV: RDV = {
