@@ -586,7 +586,8 @@ export function parseStock(content: string): StockItem[] {
   let currentSection: string | undefined;
   let skipSection = false;
 
-  for (const line of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
     // Track section headers
     if (line.startsWith('## ')) {
       currentSection = line.slice(3).trim();
@@ -624,6 +625,7 @@ export function parseStock(content: string): StockItem[] {
       seuil,
       qteAchat: isNaN(qteAchat as number) ? undefined : qteAchat,
       section: currentSection,
+      lineIndex: i,
     });
   }
 

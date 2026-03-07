@@ -67,6 +67,7 @@ export interface VaultState {
   addPhoto: (enfantName: string, date: string, imageUri: string) => Promise<void>;
   getPhotoUri: (enfantName: string, date: string) => string | null;
   updateProfileTheme: (profileId: string, theme: ProfileTheme) => Promise<void>;
+  updateStockQuantity: (lineIndex: number, newQuantity: number) => Promise<void>;
   addCourseItem: (text: string, section?: string) => Promise<void>;
   removeCourseItem: (lineIndex: number) => Promise<void>;
 }
@@ -439,6 +440,40 @@ export function useVault(): VaultState {
     }
   }, []);
 
+  const updateStockQuantity = useCallback(async (lineIndex: number, newQuantity: number) => {
+    if (!vaultRef.current) return;
+    try {
+      const content = await vaultRef.current.readFile(STOCK_FILE);
+      const lines = content.split('\n');
+      if (lineIndex < 0 || lineIndex >= lines.length) return;
+
+      const line = lines[lineIndex];
+      // Table row: | Produit | Detail | Quantité | Seuil | QteAchat |
+      // split('|') → ['', ' Produit ', ' Detail ', ' Quantité ', ' Seuil ', ' QteAchat ', '']
+      // Column index 3 (0-based) is always the quantity
+      const cells = line.split('|');
+      if (cells.length >= 5) {
+        const qty = Math.max(0, newQuantity);
+        // Preserve padding by replacing just the number
+        cells[3] = cells[3].replace(/\d+/, String(qty));
+        if (!/\d/.test(cells[3])) {
+          // Cell had no number (was empty/dash) — set it directly
+          cells[3] = ` ${qty} `;
+        }
+      }
+
+      lines[lineIndex] = cells.join('|');
+      await vaultRef.current.writeFile(STOCK_FILE, lines.join('\n'));
+
+      // Update local state immediately
+      setStock((prev) =>
+        prev.map((s) => s.lineIndex === lineIndex ? { ...s, quantite: Math.max(0, newQuantity) } : s)
+      );
+    } catch (e) {
+      throw new Error(`updateStockQuantity: ${e}`);
+    }
+  }, []);
+
   const addCourseItem = useCallback(async (text: string, section?: string) => {
     if (!vaultRef.current) return;
     await vaultRef.current.appendTask(COURSES_FILE, section ?? null, text);
@@ -487,6 +522,7 @@ export function useVault(): VaultState {
     addPhoto,
     getPhotoUri,
     updateProfileTheme,
+    updateStockQuantity,
     addCourseItem,
     removeCourseItem,
   };

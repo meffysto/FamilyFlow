@@ -39,7 +39,7 @@ import {
   dispatchNotification,
   buildManualContext,
 } from '../../lib/notifications';
-import { Task, StockItem } from '../../lib/types';
+import { Task } from '../../lib/types';
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -61,6 +61,7 @@ export default function DashboardScreen() {
     tasks,
     photoDates,
     addPhoto,
+    updateStockQuantity,
     refresh,
   } = useVault();
 
@@ -389,43 +390,51 @@ export default function DashboardScreen() {
 
         {/* Stock bébé */}
         {stock.length > 0 && (() => {
-          const lowStock = stock.filter((s) => s.quantite <= s.seuil);
-          const warnStock = stock.filter((s) => s.quantite > s.seuil && s.quantite <= s.seuil + 1);
+          const lowCount = stock.filter((s) => s.quantite <= s.seuil).length;
           return (
             <DashboardCard
               title="Stock bébé"
               icon="📦"
-              count={lowStock.length + warnStock.length}
-              color={lowStock.length > 0 ? '#EF4444' : warnStock.length > 0 ? '#F59E0B' : '#10B981'}
+              count={lowCount > 0 ? lowCount : undefined}
+              color={lowCount > 0 ? '#EF4444' : '#10B981'}
             >
-              {lowStock.length === 0 && warnStock.length === 0 ? (
-                <Text style={styles.stockOk}>✅ Tous les stocks sont OK</Text>
-              ) : (
-                <>
-                  {lowStock.map((item) => (
-                    <View key={`${item.section}-${item.produit}`} style={styles.stockRow}>
-                      <Text style={styles.stockAlertIcon}>🔴</Text>
-                      <View style={styles.stockInfo}>
-                        <Text style={styles.stockName}>{item.produit}{item.detail ? ` (${item.detail})` : ''}</Text>
-                        <Text style={[styles.stockMeta, { color: '#EF4444' }]}>
-                          {item.quantite} restant{item.quantite > 1 ? 's' : ''} (seuil: {item.seuil})
-                        </Text>
-                      </View>
+              {stock.map((item) => {
+                const isLow = item.quantite <= item.seuil;
+                const isWarn = !isLow && item.quantite <= item.seuil + 1;
+                const statusColor = isLow ? '#EF4444' : isWarn ? '#F59E0B' : '#10B981';
+                return (
+                  <View key={`${item.section}-${item.produit}`} style={styles.stockRow}>
+                    <Text style={styles.stockAlertIcon}>
+                      {isLow ? '🔴' : isWarn ? '🟡' : '🟢'}
+                    </Text>
+                    <View style={styles.stockInfo}>
+                      <Text style={styles.stockName}>
+                        {item.produit}{item.detail ? ` (${item.detail})` : ''}
+                      </Text>
+                      <Text style={[styles.stockMeta, { color: statusColor }]}>
+                        {item.quantite} restant{item.quantite > 1 ? 's' : ''} (seuil: {item.seuil})
+                      </Text>
                     </View>
-                  ))}
-                  {warnStock.map((item) => (
-                    <View key={`${item.section}-${item.produit}`} style={styles.stockRow}>
-                      <Text style={styles.stockAlertIcon}>🟡</Text>
-                      <View style={styles.stockInfo}>
-                        <Text style={styles.stockName}>{item.produit}{item.detail ? ` (${item.detail})` : ''}</Text>
-                        <Text style={[styles.stockMeta, { color: '#F59E0B' }]}>
-                          {item.quantite} restant{item.quantite > 1 ? 's' : ''} (seuil: {item.seuil})
-                        </Text>
-                      </View>
+                    <View style={styles.stockBtnGroup}>
+                      <TouchableOpacity
+                        style={styles.stockBtn}
+                        onPress={() => updateStockQuantity(item.lineIndex, item.quantite - 1)}
+                        activeOpacity={0.6}
+                      >
+                        <Text style={styles.stockBtnText}>−</Text>
+                      </TouchableOpacity>
+                      <Text style={styles.stockQty}>{item.quantite}</Text>
+                      <TouchableOpacity
+                        style={styles.stockBtn}
+                        onPress={() => updateStockQuantity(item.lineIndex, item.quantite + 1)}
+                        activeOpacity={0.6}
+                      >
+                        <Text style={styles.stockBtnText}>+</Text>
+                      </TouchableOpacity>
                     </View>
-                  ))}
-                </>
-              )}
+                  </View>
+                );
+              })}
             </DashboardCard>
           );
         })()}
@@ -541,12 +550,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6B7280',
   },
-  stockOk: {
-    fontSize: 14,
-    color: '#10B981',
-    fontWeight: '600',
-    paddingVertical: 4,
-  },
   stockRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -554,22 +557,50 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   stockAlertIcon: {
-    fontSize: 16,
-    width: 24,
+    fontSize: 14,
+    width: 20,
     textAlign: 'center',
   },
   stockInfo: {
     flex: 1,
-    gap: 2,
+    gap: 1,
   },
   stockName: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#111827',
   },
   stockMeta: {
-    fontSize: 12,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  stockBtnGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  stockBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  stockBtnText: {
+    fontSize: 18,
     fontWeight: '700',
+    color: '#374151',
+    lineHeight: 20,
+  },
+  stockQty: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#111827',
+    minWidth: 24,
+    textAlign: 'center',
   },
   debugText: {
     fontSize: 11,
