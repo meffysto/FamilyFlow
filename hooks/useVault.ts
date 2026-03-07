@@ -69,6 +69,7 @@ export interface VaultState {
   addPhoto: (enfantName: string, date: string, imageUri: string) => Promise<void>;
   getPhotoUri: (enfantName: string, date: string) => string | null;
   updateProfileTheme: (profileId: string, theme: ProfileTheme) => Promise<void>;
+  updateProfile: (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string }) => Promise<void>;
   updateStockQuantity: (lineIndex: number, newQuantity: number) => Promise<void>;
   addRDV: (rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
   updateRDV: (sourceFile: string, rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
@@ -447,6 +448,56 @@ export function useVault(): VaultState {
     }
   }, []);
 
+  const updateProfile = useCallback(async (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string }) => {
+    if (!vaultRef.current) return;
+    try {
+      const content = await vaultRef.current.readFile(FAMILLE_FILE);
+      const lines = content.split('\n');
+      let inSection = false;
+      let sectionStart = -1;
+      let sectionEnd = lines.length;
+
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].startsWith('### ')) {
+          if (inSection) { sectionEnd = i; break; }
+          if (lines[i].replace('### ', '').trim() === profileId) {
+            inSection = true;
+            sectionStart = i;
+          }
+        }
+      }
+
+      if (sectionStart === -1) return;
+
+      // Update each field in the section
+      for (const [key, value] of Object.entries(updates)) {
+        if (value === undefined) continue;
+        let found = false;
+        for (let i = sectionStart + 1; i < sectionEnd; i++) {
+          if (lines[i].trim().startsWith(`${key}:`)) {
+            lines[i] = `${key}: ${value}`;
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          // Insert after the last property line in the section
+          let lastProp = sectionStart;
+          for (let i = sectionStart + 1; i < sectionEnd; i++) {
+            if (lines[i].includes(': ')) lastProp = i;
+          }
+          lines.splice(lastProp + 1, 0, `${key}: ${value}`);
+          sectionEnd++;
+        }
+      }
+
+      await vaultRef.current.writeFile(FAMILLE_FILE, lines.join('\n'));
+      await loadVaultData(vaultRef.current);
+    } catch (e) {
+      throw new Error(`updateProfile: ${e}`);
+    }
+  }, [loadVaultData]);
+
   const updateStockQuantity = useCallback(async (lineIndex: number, newQuantity: number) => {
     if (!vaultRef.current) return;
     try {
@@ -579,6 +630,7 @@ export function useVault(): VaultState {
     addPhoto,
     getPhotoUri,
     updateProfileTheme,
+    updateProfile,
     updateStockQuantity,
     addRDV,
     updateRDV,

@@ -20,6 +20,7 @@ import {
   Modal,
   ActivityIndicator,
   Animated,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
@@ -36,7 +37,7 @@ const TELEGRAM_TOKEN_KEY = 'telegram_token';
 const TELEGRAM_CHAT_KEY = 'telegram_chat_id';
 
 export default function SettingsScreen() {
-  const { vaultPath, profiles, activeProfile, vault, setVaultPath, setActiveProfile, refresh, gamiData, notifPrefs, saveNotifPrefs, updateProfileTheme } = useVault();
+  const { vaultPath, profiles, activeProfile, vault, setVaultPath, setActiveProfile, refresh, gamiData, notifPrefs, saveNotifPrefs, updateProfileTheme, updateProfile } = useVault();
   const { primary, tint, setThemeId } = useThemeColors();
 
   const [showVaultPicker, setShowVaultPicker] = useState(false);
@@ -48,6 +49,13 @@ export default function SettingsScreen() {
   const [showNotifSettings, setShowNotifSettings] = useState(false);
   const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
   const themeDropdownAnim = useRef(new Animated.Value(0)).current;
+
+  // Profile editor state
+  const [editingProfile, setEditingProfile] = useState<typeof profiles[0] | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editAvatar, setEditAvatar] = useState('');
+  const [editBirthdate, setEditBirthdate] = useState('');
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   // Load telegram settings on mount
   useState(() => {
@@ -126,6 +134,38 @@ export default function SettingsScreen() {
       ]
     );
   }, [vault, gamiData, refresh]);
+
+  const openProfileEditor = useCallback((profile: typeof profiles[0]) => {
+    setEditingProfile(profile);
+    setEditName(profile.name);
+    setEditAvatar(profile.avatar);
+    setEditBirthdate(profile.birthdate ?? '');
+  }, []);
+
+  const handleSaveProfile = useCallback(async () => {
+    if (!editingProfile) return;
+    if (!editName.trim()) {
+      Alert.alert('Champ requis', 'Le nom est obligatoire.');
+      return;
+    }
+    if (editBirthdate && !/^\d{4}-\d{2}-\d{2}$/.test(editBirthdate)) {
+      Alert.alert('Format invalide', 'La date doit être au format AAAA-MM-JJ.');
+      return;
+    }
+    setIsSavingProfile(true);
+    try {
+      await updateProfile(editingProfile.id, {
+        name: editName.trim(),
+        avatar: editAvatar.trim() || '👤',
+        birthdate: editBirthdate || undefined,
+      });
+      setEditingProfile(null);
+    } catch (e) {
+      Alert.alert('Erreur', String(e));
+    } finally {
+      setIsSavingProfile(false);
+    }
+  }, [editingProfile, editName, editAvatar, editBirthdate, updateProfile]);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -262,18 +302,24 @@ export default function SettingsScreen() {
                 const currentTheme = getTheme(profile.theme);
                 return (
                   <View key={profile.id} style={styles.profileBlock}>
-                    <View style={styles.profileRow}>
+                    <TouchableOpacity
+                      style={styles.profileRow}
+                      onPress={() => openProfileEditor(profile)}
+                      activeOpacity={0.7}
+                    >
                       <Text style={styles.profileAvatar}>{profile.avatar}</Text>
                       <View style={styles.profileInfo}>
                         <Text style={styles.profileName}>{profile.name}</Text>
                         <Text style={styles.profileMeta}>
                           {profile.role} · Niv. {profile.level} · {profile.points} pts
+                          {profile.birthdate ? ` · 🎂 ${profile.birthdate}` : ''}
                         </Text>
                       </View>
                       {profile.lootBoxesAvailable > 0 && (
                         <Text style={styles.profileLoot}>🎁 ×{profile.lootBoxesAvailable}</Text>
                       )}
-                    </View>
+                      <Text style={styles.profileEditIcon}>✏️</Text>
+                    </TouchableOpacity>
                     {/* Theme picker dropdown — only for active profile */}
                     {activeProfile?.id === profile.id && (
                     <View style={styles.themeSection}>
@@ -333,7 +379,7 @@ export default function SettingsScreen() {
               })
             )}
             <Text style={styles.profileHint}>
-              Éditez famille.md dans votre vault pour modifier les profils.
+              Tapez sur un profil pour modifier le nom, l'avatar ou la date de naissance.
             </Text>
           </View>
         </View>
@@ -408,6 +454,63 @@ export default function SettingsScreen() {
             onSave={saveNotifPrefs}
             onClose={() => setShowNotifSettings(false)}
           />
+        </SafeAreaView>
+      </Modal>
+
+      {/* Profile Editor Modal */}
+      <Modal
+        visible={!!editingProfile}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setEditingProfile(null)}
+      >
+        <SafeAreaView style={styles.modalSafe}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setEditingProfile(null)}>
+              <Text style={styles.modalClose}>✕</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Modifier le profil</Text>
+            <TouchableOpacity onPress={handleSaveProfile} disabled={isSavingProfile}>
+              <Text style={[styles.profileSaveBtn, { color: primary }]}>
+                {isSavingProfile ? '...' : 'Enregistrer'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalContent}>
+            <Text style={styles.inputLabel}>👤 Nom</Text>
+            <TextInput
+              style={styles.input}
+              value={editName}
+              onChangeText={setEditName}
+              placeholder="Papa"
+              placeholderTextColor="#9CA3AF"
+              autoFocus
+            />
+
+            <Text style={styles.inputLabel}>😀 Avatar (emoji)</Text>
+            <TextInput
+              style={[styles.input, styles.avatarInput]}
+              value={editAvatar}
+              onChangeText={(text) => {
+                // Keep only the last character/emoji entered
+                const chars = [...text];
+                setEditAvatar(chars.length > 0 ? chars[chars.length - 1] : '');
+              }}
+              placeholder="👤"
+              placeholderTextColor="#9CA3AF"
+            />
+            <Text style={styles.avatarPreview}>{editAvatar || '👤'}</Text>
+
+            <Text style={styles.inputLabel}>🎂 Date de naissance (optionnel)</Text>
+            <TextInput
+              style={styles.input}
+              value={editBirthdate}
+              onChangeText={setEditBirthdate}
+              placeholder="1990-01-15"
+              placeholderTextColor="#9CA3AF"
+              keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default'}
+            />
+          </ScrollView>
         </SafeAreaView>
       </Modal>
 
@@ -729,6 +832,25 @@ const styles = StyleSheet.create({
   themeCheckmark: {
     fontSize: 16,
     fontWeight: '800',
+  },
+  profileEditIcon: {
+    fontSize: 14,
+    marginLeft: 4,
+  },
+  profileSaveBtn: {
+    fontSize: 15,
+    fontWeight: '700',
+    padding: 4,
+  },
+  avatarInput: {
+    fontSize: 32,
+    textAlign: 'center',
+    paddingVertical: 8,
+  },
+  avatarPreview: {
+    fontSize: 48,
+    textAlign: 'center',
+    marginVertical: 4,
   },
   profileHint: {
     fontSize: 12,

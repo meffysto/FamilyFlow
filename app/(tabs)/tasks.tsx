@@ -64,6 +64,7 @@ interface TaskSection {
 // Target files for adding tasks
 const TARGET_FILES = [
   { label: '🏠 Maison', value: '02 - Maison/Tâches récurrentes.md' },
+  { label: '🧹 Ménage', value: '02 - Maison/Ménage hebdo.md' },
 ];
 
 function buildTargetFiles(profiles: Profile[]) {
