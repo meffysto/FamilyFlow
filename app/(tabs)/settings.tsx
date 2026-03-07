@@ -46,7 +46,7 @@ const TELEGRAM_GP_CHAT_KEY = 'telegram_gp_chat_id';
 
 export default function SettingsScreen() {
   const { vaultPath, profiles, activeProfile, vault, setVaultPath, setActiveProfile, refresh, gamiData, notifPrefs, saveNotifPrefs, updateProfileTheme, updateProfile, memories, photoDates, getPhotoUri } = useVault();
-  const { primary, tint, setThemeId } = useThemeColors();
+  const { primary, tint, setThemeId, colors, darkModePreference, setDarkModePreference } = useThemeColors();
 
   const [showVaultPicker, setShowVaultPicker] = useState(false);
   const [telegramToken, setTelegramToken] = useState('');
@@ -435,6 +435,37 @@ export default function SettingsScreen() {
             </View>
           </View>
         )}
+
+        {/* Apparence */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Apparence</Text>
+          <View style={styles.card}>
+            <Text style={styles.settingLabel}>🌙 Mode sombre</Text>
+            <View style={styles.darkModeRow}>
+              {([
+                { value: 'auto',  label: 'Auto',  emoji: '⚙️' },
+                { value: 'light', label: 'Clair',  emoji: '☀️' },
+                { value: 'dark',  label: 'Sombre', emoji: '🌙' },
+              ] as const).map((opt) => (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[
+                    styles.darkModeChip,
+                    darkModePreference === opt.value && { backgroundColor: tint, borderColor: primary },
+                  ]}
+                  onPress={() => setDarkModePreference(opt.value)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.darkModeChipEmoji}>{opt.emoji}</Text>
+                  <Text style={[
+                    styles.darkModeChipText,
+                    darkModePreference === opt.value && { color: primary, fontWeight: '700' },
+                  ]}>{opt.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </View>
 
         {/* Active profile */}
         <View style={styles.section}>
@@ -1192,5 +1223,35 @@ const styles = StyleSheet.create({
   recapBtnText: {
     fontSize: 14,
     fontWeight: '700',
+  },
+  settingLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#374151',
+    marginBottom: 10,
+  },
+  darkModeRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  darkModeChip: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+  },
+  darkModeChipEmoji: {
+    fontSize: 16,
+  },
+  darkModeChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6B7280',
   },
 });

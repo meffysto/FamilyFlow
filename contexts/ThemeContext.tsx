@@ -1,27 +1,36 @@
 /**
- * ThemeContext.tsx — Global theme colors based on active profile
+ * ThemeContext.tsx — Global theme: accent colors + dark/light mode
  *
- * Provides { primary, tint, setThemeId } to the entire app via React Context.
- * All screens/components call useThemeColors() instead of hardcoding #7C3AED.
- *
- * The ThemeProvider manages its own internal state. The initial value comes
- * from the parent layout prop, but any child (e.g. settings) can call
- * setThemeId() for instant UI updates without waiting for vault reload.
+ * Provides { primary, tint, setThemeId, colors, isDark, darkModePreference, setDarkModePreference }
+ * to the entire app via React Context.
  */
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useColorScheme } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 import { getTheme } from '../constants/themes';
+import { LightColors, DarkColors, AppColors } from '../constants/colors';
+
+const DARK_MODE_KEY = 'dark_mode_preference';
 
 export interface ThemeColors {
-  primary: string;  // main accent (buttons, active states, headers)
-  tint: string;     // light background (badges, chips, subtle highlights)
-  setThemeId: (id: string) => void;  // instant theme switch
+  primary: string;
+  tint: string;
+  setThemeId: (id: string) => void;
+  colors: AppColors;
+  isDark: boolean;
+  darkModePreference: 'auto' | 'light' | 'dark';
+  setDarkModePreference: (pref: 'auto' | 'light' | 'dark') => void;
 }
 
 const DEFAULT_COLORS: ThemeColors = {
   primary: '#7C3AED',
   tint: '#EDE9FE',
   setThemeId: () => {},
+  colors: LightColors,
+  isDark: false,
+  darkModePreference: 'auto',
+  setDarkModePreference: () => {},
 };
 
 const ThemeContext = createContext<ThemeColors>(DEFAULT_COLORS);
@@ -33,17 +42,49 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({ themeId: initialThemeId, children }: ThemeProviderProps) {
   const [themeId, setThemeId] = useState(initialThemeId);
+  const systemScheme = useColorScheme();
+  const [darkModePreference, setDarkModePref] = useState<'auto' | 'light' | 'dark'>('auto');
 
-  // Sync with prop when it changes (e.g. profile switch, vault reload)
+  // Load persisted dark mode preference
+  useEffect(() => {
+    SecureStore.getItemAsync(DARK_MODE_KEY).then((val) => {
+      if (val === 'light' || val === 'dark' || val === 'auto') {
+        setDarkModePref(val);
+      }
+    });
+  }, []);
+
+  // Sync themeId with prop when it changes (profile switch, vault reload)
   useEffect(() => {
     setThemeId(initialThemeId);
   }, [initialThemeId]);
 
+  const setDarkModePreference = useCallback(async (pref: 'auto' | 'light' | 'dark') => {
+    setDarkModePref(pref);
+    await SecureStore.setItemAsync(DARK_MODE_KEY, pref);
+  }, []);
+
   const theme = getTheme(themeId);
 
+  const isDark = useMemo(() => {
+    if (darkModePreference === 'dark') return true;
+    if (darkModePreference === 'light') return false;
+    return systemScheme === 'dark';
+  }, [darkModePreference, systemScheme]);
+
+  const colors: AppColors = isDark ? DarkColors : LightColors;
+
   const value = useMemo<ThemeColors>(
-    () => ({ primary: theme.primary, tint: theme.tint, setThemeId }),
-    [theme.primary, theme.tint],
+    () => ({
+      primary: theme.primary,
+      tint: theme.tint,
+      setThemeId,
+      colors,
+      isDark,
+      darkModePreference,
+      setDarkModePreference,
+    }),
+    [theme.primary, theme.tint, colors, isDark, darkModePreference, setDarkModePreference],
   );
 
   return (

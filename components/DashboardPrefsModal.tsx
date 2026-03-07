@@ -28,7 +28,7 @@ interface Props {
 }
 
 export function DashboardPrefsModal({ sections: initialSections, onSave, onClose }: Props) {
-  const { primary, tint } = useThemeColors();
+  const { primary, tint, colors } = useThemeColors();
   const [sections, setSections] = useState<SectionPref[]>(initialSections);
 
   const toggleVisible = (id: string) => {
@@ -56,13 +56,13 @@ export function DashboardPrefsModal({ sections: initialSections, onSave, onClose
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.dragHandle} />
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
+      <View style={[styles.dragHandle, { backgroundColor: colors.separator }]} />
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Text style={styles.headerClose}>✕</Text>
+          <Text style={[styles.headerClose, { color: colors.textFaint }]}>✕</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Personnaliser</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Personnaliser</Text>
         <TouchableOpacity
           onPress={() => { onSave(sections); onClose(); }}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -71,7 +71,7 @@ export function DashboardPrefsModal({ sections: initialSections, onSave, onClose
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.hint}>
+      <Text style={[styles.hint, { color: colors.textMuted, borderBottomColor: colors.borderLight }]}>
         Affichez ou masquez des sections, et changez leur ordre d'apparition sur le dashboard.
       </Text>
 
@@ -79,34 +79,42 @@ export function DashboardPrefsModal({ sections: initialSections, onSave, onClose
         {sections.map((section, index) => (
           <View
             key={section.id}
-            style={[styles.row, !section.visible && styles.rowHidden]}
+            style={[
+              styles.row,
+              { backgroundColor: colors.card, borderColor: colors.borderLight },
+              !section.visible && styles.rowHidden,
+            ]}
           >
             <Text style={styles.rowEmoji}>{section.emoji}</Text>
-            <Text style={[styles.rowLabel, !section.visible && styles.rowLabelHidden]}>
+            <Text style={[
+              styles.rowLabel,
+              { color: colors.text },
+              !section.visible && { color: colors.textFaint },
+            ]}>
               {section.label}
             </Text>
             <View style={styles.rowActions}>
               <TouchableOpacity
-                style={[styles.arrowBtn, index === 0 && styles.arrowBtnDisabled]}
+                style={[styles.arrowBtn, { backgroundColor: colors.cardAlt }, index === 0 && styles.arrowBtnDisabled]}
                 onPress={() => moveUp(index)}
                 disabled={index === 0}
                 hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
               >
-                <Text style={styles.arrowText}>▲</Text>
+                <Text style={[styles.arrowText, { color: colors.textSub }]}>▲</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.arrowBtn, index === sections.length - 1 && styles.arrowBtnDisabled]}
+                style={[styles.arrowBtn, { backgroundColor: colors.cardAlt }, index === sections.length - 1 && styles.arrowBtnDisabled]}
                 onPress={() => moveDown(index)}
                 disabled={index === sections.length - 1}
                 hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
               >
-                <Text style={styles.arrowText}>▼</Text>
+                <Text style={[styles.arrowText, { color: colors.textSub }]}>▼</Text>
               </TouchableOpacity>
               <Switch
                 value={section.visible}
                 onValueChange={() => toggleVisible(section.id)}
-                trackColor={{ false: '#E5E7EB', true: tint }}
-                thumbColor={section.visible ? primary : '#9CA3AF'}
+                trackColor={{ false: colors.switchOff, true: tint }}
+                thumbColor={section.visible ? primary : colors.textFaint}
               />
             </View>
           </View>
@@ -117,12 +125,11 @@ export function DashboardPrefsModal({ sections: initialSections, onSave, onClose
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FFFFFF' },
+  safe: { flex: 1 },
   dragHandle: {
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#D1D5DB',
     alignSelf: 'center',
     marginTop: 8,
     marginBottom: 4,
@@ -134,26 +141,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
   },
-  headerClose: { fontSize: 20, color: '#9CA3AF', padding: 4 },
-  headerTitle: { fontSize: 17, fontWeight: '800', color: '#111827' },
+  headerClose: { fontSize: 20, padding: 4 },
+  headerTitle: { fontSize: 17, fontWeight: '800' },
   headerSave: { fontSize: 15, fontWeight: '700', padding: 4 },
   hint: {
     fontSize: 13,
-    color: '#6B7280',
     paddingHorizontal: 20,
     paddingVertical: 14,
     lineHeight: 19,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
   },
   scroll: { flex: 1 },
   content: { padding: 16, gap: 10, paddingBottom: 40 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     paddingVertical: 14,
     paddingHorizontal: 16,
@@ -164,7 +167,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
   },
   rowHidden: {
     opacity: 0.4,
@@ -178,10 +180,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     fontWeight: '600',
-    color: '#111827',
-  },
-  rowLabelHidden: {
-    color: '#9CA3AF',
   },
   rowActions: {
     flexDirection: 'row',
@@ -192,7 +190,6 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 8,
-    backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -201,7 +198,6 @@ const styles = StyleSheet.create({
   },
   arrowText: {
     fontSize: 11,
-    color: '#374151',
     fontWeight: '700',
   },
 });

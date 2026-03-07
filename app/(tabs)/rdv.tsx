@@ -35,13 +35,11 @@ const TYPE_EMOJI: Record<string, string> = {
 
 export default function RDVScreen() {
   const { rdvs, addRDV, updateRDV, deleteRDV } = useVault();
-  const { primary, tint } = useThemeColors();
+  const { primary, tint, colors } = useThemeColors();
 
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingRDV, setEditingRDV] = useState<RDV | undefined>(undefined);
   const [showPast, setShowPast] = useState(false);
-
-  const todayStr = format(new Date(), 'yyyy-MM-dd');
 
   const upcoming = useMemo(
     () => rdvs.filter((r) => isRdvUpcoming(r)),
@@ -141,14 +139,14 @@ export default function RDVScreen() {
         overshootRight={false}
       >
       <TouchableOpacity
-        style={[styles.rdvCard, isPast && styles.rdvCardPast]}
+        style={[styles.rdvCard, { backgroundColor: colors.card }, isPast && styles.rdvCardPast]}
         onPress={() => openEdit(rdv)}
         activeOpacity={0.7}
       >
-        <View style={[styles.rdvBorder, { backgroundColor: isPast ? '#D1D5DB' : primary }]} />
+        <View style={[styles.rdvBorder, { backgroundColor: isPast ? colors.separator : primary }]} />
         <View style={styles.rdvContent}>
           <View style={styles.rdvTopRow}>
-            <Text style={[styles.rdvDate, isPast && styles.textPast]}>
+            <Text style={[styles.rdvDate, { color: colors.text }, isPast && { color: colors.textMuted }]}>
               {formatDateForDisplay(rdv.date_rdv)}
               {rdv.heure ? ` à ${rdv.heure}` : ''}
             </Text>
@@ -160,26 +158,26 @@ export default function RDVScreen() {
               </View>
             )}
           </View>
-          <Text style={[styles.rdvType, isPast && styles.textPast]}>
+          <Text style={[styles.rdvType, { color: colors.textSub }, isPast && { color: colors.textMuted }]}>
             {emoji} {rdv.type_rdv} — {rdv.enfant}
           </Text>
           {rdv.médecin ? (
-            <Text style={[styles.rdvDetail, isPast && styles.textPast]}>
+            <Text style={[styles.rdvDetail, { color: colors.textMuted }, isPast && { color: colors.textFaint }]}>
               👨‍⚕️ {rdv.médecin}
             </Text>
           ) : null}
           {rdv.lieu ? (
-            <Text style={[styles.rdvDetail, isPast && styles.textPast]}>
+            <Text style={[styles.rdvDetail, { color: colors.textMuted }, isPast && { color: colors.textFaint }]}>
               📍 {rdv.lieu}
             </Text>
           ) : null}
 
           {/* Questions à poser */}
           {hasQuestions && (
-            <View style={styles.questionsBlock}>
-              <Text style={styles.questionsTitle}>❓ Questions à poser</Text>
+            <View style={[styles.questionsBlock, { borderTopColor: colors.borderLight }]}>
+              <Text style={[styles.questionsTitle, { color: colors.textMuted }]}>❓ Questions à poser</Text>
               {rdv.questions!.map((q, i) => (
-                <Text key={i} style={styles.questionItem} numberOfLines={2}>
+                <Text key={i} style={[styles.questionItem, { color: colors.textSub }]} numberOfLines={2}>
                   • {q}
                 </Text>
               ))}
@@ -190,7 +188,7 @@ export default function RDVScreen() {
           {hasReponses && (
             <View style={styles.reponsesBlock}>
               <Text style={styles.reponsesTitle}>💬 Réponses du médecin</Text>
-              <Text style={styles.reponsesText} numberOfLines={4}>
+              <Text style={[styles.reponsesText, { color: colors.textSub }]} numberOfLines={4}>
                 {rdv.reponses}
               </Text>
             </View>
@@ -202,9 +200,9 @@ export default function RDVScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.title}>📅 Rendez-vous</Text>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <Text style={[styles.title, { color: colors.text }]}>📅 Rendez-vous</Text>
         <TouchableOpacity
           style={[styles.addBtn, { backgroundColor: tint, borderColor: primary }]}
           onPress={openCreate}
@@ -215,12 +213,12 @@ export default function RDVScreen() {
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {/* Upcoming */}
-        <Text style={styles.sectionTitle}>
+        <Text style={[styles.sectionTitle, { color: colors.textSub }]}>
           À venir ({upcoming.length})
         </Text>
         {upcoming.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyText}>Aucun rendez-vous à venir</Text>
+          <View style={[styles.emptyCard, { backgroundColor: colors.card }]}>
+            <Text style={[styles.emptyText, { color: colors.textFaint }]}>Aucun rendez-vous à venir</Text>
           </View>
         ) : (
           upcoming.map((r) => renderRDV(r, false))
@@ -233,7 +231,7 @@ export default function RDVScreen() {
               style={styles.togglePast}
               onPress={() => setShowPast(!showPast)}
             >
-              <Text style={styles.togglePastText}>
+              <Text style={[styles.togglePastText, { color: colors.textMuted }]}>
                 {showPast ? '🔼 Masquer les passés' : `🔽 Passés (${past.length})`}
               </Text>
             </TouchableOpacity>
@@ -281,18 +279,16 @@ export default function RDVScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F9FAFB' },
+  safe: { flex: 1 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
   },
-  title: { fontSize: 22, fontWeight: '800', color: '#111827' },
+  title: { fontSize: 22, fontWeight: '800' },
   addBtn: {
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -305,13 +301,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#374151',
     marginTop: 4,
     marginBottom: 4,
   },
   rdvCard: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -337,18 +331,14 @@ const styles = StyleSheet.create({
   rdvDate: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#111827',
   },
   rdvType: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#374151',
   },
   rdvDetail: {
     fontSize: 13,
-    color: '#6B7280',
   },
-  textPast: { color: '#9CA3AF' },
   badge: {
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -366,17 +356,14 @@ const styles = StyleSheet.create({
   togglePastText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#6B7280',
   },
   emptyCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     padding: 24,
     alignItems: 'center',
   },
   emptyText: {
     fontSize: 14,
-    color: '#9CA3AF',
   },
   swipeActions: {
     flexDirection: 'row',
@@ -405,20 +392,17 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
     gap: 4,
   },
   questionsTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#6B7280',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
     marginBottom: 2,
   },
   questionItem: {
     fontSize: 14,
-    color: '#374151',
     lineHeight: 20,
   },
   reponsesBlock: {
@@ -443,7 +427,6 @@ const styles = StyleSheet.create({
   },
   reponsesText: {
     fontSize: 14,
-    color: '#374151',
     lineHeight: 20,
   },
 });

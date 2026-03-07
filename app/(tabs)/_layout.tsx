@@ -5,34 +5,36 @@
 import { Tabs } from 'expo-router';
 import { View, Text, Modal, StyleSheet, TouchableOpacity } from 'react-native';
 import { useVault } from '../../hooks/useVault';
-import { getTheme } from '../../constants/themes';
-import { ThemeProvider } from '../../contexts/ThemeContext';
+import { ThemeProvider, useThemeColors } from '../../contexts/ThemeContext';
 
 function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
   return <Text style={{ fontSize: focused ? 26 : 22, opacity: focused ? 1 : 0.6 }}>{emoji}</Text>;
 }
 
-export default function TabsLayout() {
-  const { profiles, activeProfile, setActiveProfile } = useVault();
-  const theme = getTheme(activeProfile?.theme);
+interface ThemedTabsContentProps {
+  profiles: ReturnType<typeof useVault>['profiles'];
+  activeProfile: ReturnType<typeof useVault>['activeProfile'];
+  setActiveProfile: ReturnType<typeof useVault>['setActiveProfile'];
+}
 
-  // Show profile picker when profiles are loaded but none is selected
+function ThemedTabsContent({ profiles, activeProfile, setActiveProfile }: ThemedTabsContentProps) {
+  const { primary, colors } = useThemeColors();
   const showPicker = profiles.length > 0 && !activeProfile;
 
   return (
-    <ThemeProvider themeId={activeProfile?.theme}>
+    <>
       <Tabs
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
-            backgroundColor: '#FFFFFF',
-            borderTopColor: '#E5E7EB',
+            backgroundColor: colors.tabBar,
+            borderTopColor: colors.tabBarBorder,
             borderTopWidth: 1,
             paddingBottom: 6,
             height: 70,
           },
-          tabBarActiveTintColor: theme.primary,
-          tabBarInactiveTintColor: '#6B7280',
+          tabBarActiveTintColor: primary,
+          tabBarInactiveTintColor: colors.tabBarOff,
           tabBarLabelStyle: {
             fontSize: 12,
             fontWeight: '600',
@@ -87,21 +89,21 @@ export default function TabsLayout() {
       {/* Profile picker modal — shown on first launch */}
       <Modal visible={showPicker} animationType="fade" transparent>
         <View style={pickerStyles.overlay}>
-          <View style={pickerStyles.card}>
-            <Text style={pickerStyles.title}>👋 Qui es-tu ?</Text>
-            <Text style={pickerStyles.subtitle}>Choisis ton profil pour commencer</Text>
+          <View style={[pickerStyles.card, { backgroundColor: colors.card }]}>
+            <Text style={[pickerStyles.title, { color: colors.text }]}>👋 Qui es-tu ?</Text>
+            <Text style={[pickerStyles.subtitle, { color: colors.textMuted }]}>Choisis ton profil pour commencer</Text>
 
             <View style={pickerStyles.grid}>
               {profiles.map((p) => (
                 <TouchableOpacity
                   key={p.id}
-                  style={pickerStyles.profileBtn}
+                  style={[pickerStyles.profileBtn, { backgroundColor: colors.cardAlt }]}
                   onPress={() => setActiveProfile(p.id)}
                   activeOpacity={0.7}
                 >
                   <Text style={pickerStyles.avatar}>{p.avatar}</Text>
-                  <Text style={pickerStyles.name}>{p.name}</Text>
-                  <Text style={pickerStyles.role}>
+                  <Text style={[pickerStyles.name, { color: colors.text }]}>{p.name}</Text>
+                  <Text style={[pickerStyles.role, { color: colors.textFaint }]}>
                     {p.role === 'adulte' ? '👤 Adulte' : '👶 Enfant'}
                   </Text>
                 </TouchableOpacity>
@@ -110,6 +112,20 @@ export default function TabsLayout() {
           </View>
         </View>
       </Modal>
+    </>
+  );
+}
+
+export default function TabsLayout() {
+  const { profiles, activeProfile, setActiveProfile } = useVault();
+
+  return (
+    <ThemeProvider themeId={activeProfile?.theme}>
+      <ThemedTabsContent
+        profiles={profiles}
+        activeProfile={activeProfile}
+        setActiveProfile={setActiveProfile}
+      />
     </ThemeProvider>
   );
 }
@@ -123,7 +139,6 @@ const pickerStyles = StyleSheet.create({
     padding: 24,
   },
   card: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 24,
     padding: 28,
     width: '100%',
@@ -138,12 +153,10 @@ const pickerStyles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#111827',
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 15,
-    color: '#6B7280',
     marginBottom: 24,
   },
   grid: {
@@ -154,7 +167,6 @@ const pickerStyles = StyleSheet.create({
   },
   profileBtn: {
     alignItems: 'center',
-    backgroundColor: '#F3F4F6',
     borderRadius: 16,
     padding: 16,
     width: 140,
@@ -168,11 +180,9 @@ const pickerStyles = StyleSheet.create({
   name: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#111827',
   },
   role: {
     fontSize: 12,
-    color: '#9CA3AF',
     marginTop: 2,
   },
 });

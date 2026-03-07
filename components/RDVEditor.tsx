@@ -37,7 +37,7 @@ interface RDVEditorProps {
 }
 
 export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
-  const { primary, tint } = useThemeColors();
+  const { primary, tint, colors } = useThemeColors();
   const isEditing = !!rdv;
 
   // Display in DD/MM/YYYY, store internally as YYYY-MM-DD
@@ -108,15 +108,18 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
     );
   };
 
+  const inputStyle = [styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }];
+  const chipStyle = [styles.chip, { backgroundColor: colors.cardAlt }];
+
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.card }]}>
       {/* Drag handle — indicates swipe-down-to-dismiss */}
-      <View style={styles.dragHandle} />
-      <View style={styles.header}>
+      <View style={[styles.dragHandle, { backgroundColor: colors.separator }]} />
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={onClose}>
-          <Text style={styles.headerClose}>✕</Text>
+          <Text style={[styles.headerClose, { color: colors.textFaint }]}>✕</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
           {isEditing ? 'Modifier le RDV' : 'Nouveau RDV'}
         </Text>
         <TouchableOpacity onPress={handleSave} disabled={isSaving}>
@@ -128,35 +131,35 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {/* Date */}
-        <Text style={styles.label}>📅 Date *</Text>
+        <Text style={[styles.label, { color: colors.textSub }]}>📅 Date *</Text>
         <TextInput
-          style={styles.input}
+          style={inputStyle}
           value={dateRdv}
           onChangeText={setDateRdv}
           placeholder="06/03/2026"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.textFaint}
           keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default'}
         />
 
         {/* Heure */}
-        <Text style={styles.label}>🕐 Heure</Text>
+        <Text style={[styles.label, { color: colors.textSub }]}>🕐 Heure</Text>
         <TextInput
-          style={styles.input}
+          style={inputStyle}
           value={heure}
           onChangeText={setHeure}
           placeholder="14:30"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.textFaint}
           keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default'}
         />
 
         {/* Type */}
-        <Text style={styles.label}>Type de RDV</Text>
+        <Text style={[styles.label, { color: colors.textSub }]}>Type de RDV</Text>
         <View style={styles.chipRow}>
           {TYPE_OPTIONS.map((opt) => (
             <TouchableOpacity
               key={opt.value}
               style={[
-                styles.chip,
+                chipStyle,
                 typeRdv === opt.value && { backgroundColor: tint, borderColor: primary },
               ]}
               onPress={() => setTypeRdv(opt.value)}
@@ -164,6 +167,7 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
             >
               <Text style={[
                 styles.chipText,
+                { color: colors.textMuted },
                 typeRdv === opt.value && { color: primary, fontWeight: '700' },
               ]}>
                 {opt.label}
@@ -173,13 +177,13 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
         </View>
 
         {/* Enfant */}
-        <Text style={styles.label}>👶 Enfant</Text>
+        <Text style={[styles.label, { color: colors.textSub }]}>👶 Enfant</Text>
         <View style={styles.chipRow}>
           {ENFANT_OPTIONS.map((name) => (
             <TouchableOpacity
               key={name}
               style={[
-                styles.chip,
+                chipStyle,
                 enfant === name && { backgroundColor: tint, borderColor: primary },
               ]}
               onPress={() => setEnfant(name)}
@@ -187,6 +191,7 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
             >
               <Text style={[
                 styles.chipText,
+                { color: colors.textMuted },
                 enfant === name && { color: primary, fontWeight: '700' },
               ]}>
                 {name}
@@ -196,41 +201,41 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
         </View>
 
         {/* Médecin */}
-        <Text style={styles.label}>👨‍⚕️ Médecin</Text>
+        <Text style={[styles.label, { color: colors.textSub }]}>👨‍⚕️ Médecin</Text>
         <TextInput
-          style={styles.input}
+          style={inputStyle}
           value={médecin}
           onChangeText={setMédecin}
           placeholder="Dr. Martin"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.textFaint}
         />
 
         {/* Lieu */}
-        <Text style={styles.label}>📍 Lieu</Text>
+        <Text style={[styles.label, { color: colors.textSub }]}>📍 Lieu</Text>
         <TextInput
-          style={styles.input}
+          style={inputStyle}
           value={lieu}
           onChangeText={setLieu}
           placeholder="Cabinet pédiatrie, 12 rue..."
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.textFaint}
           multiline
         />
 
         {/* Questions à poser */}
-        <View style={styles.sectionDivider} />
-        <Text style={styles.sectionLabel}>❓ Questions à poser au médecin</Text>
-        <Text style={styles.sectionHint}>
+        <View style={[styles.sectionDivider, { backgroundColor: colors.border }]} />
+        <Text style={[styles.sectionLabel, { color: colors.textSub }]}>❓ Questions à poser au médecin</Text>
+        <Text style={[styles.sectionHint, { color: colors.textMuted }]}>
           Notez vos questions avant le rendez-vous pour ne rien oublier.
         </Text>
 
         {questions.map((q, index) => (
           <View key={index} style={styles.questionRow}>
             <TextInput
-              style={[styles.input, styles.questionInput]}
+              style={[inputStyle, styles.questionInput]}
               value={q}
               onChangeText={(text) => updateQuestion(index, text)}
               placeholder={`Question ${index + 1}…`}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textFaint}
               multiline
             />
             <TouchableOpacity
@@ -252,17 +257,17 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
         </TouchableOpacity>
 
         {/* Réponses / Notes post-consultation */}
-        <View style={styles.sectionDivider} />
-        <Text style={styles.sectionLabel}>💬 Réponses du médecin</Text>
-        <Text style={styles.sectionHint}>
+        <View style={[styles.sectionDivider, { backgroundColor: colors.border }]} />
+        <Text style={[styles.sectionLabel, { color: colors.textSub }]}>💬 Réponses du médecin</Text>
+        <Text style={[styles.sectionHint, { color: colors.textMuted }]}>
           Notez les réponses et recommandations du médecin après la consultation.
         </Text>
         <TextInput
-          style={[styles.input, styles.reponsesInput]}
+          style={[inputStyle, styles.reponsesInput]}
           value={reponses}
           onChangeText={setReponses}
           placeholder="Réponses, prescriptions, prochaine étape…"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.textFaint}
           multiline
           textAlignVertical="top"
         />
@@ -279,12 +284,11 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FFFFFF' },
+  safe: { flex: 1 },
   dragHandle: {
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#D1D5DB',
     alignSelf: 'center',
     marginTop: 8,
     marginBottom: 4,
@@ -295,26 +299,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
   },
-  headerClose: { fontSize: 20, color: '#9CA3AF', padding: 4 },
-  headerTitle: { fontSize: 17, fontWeight: '800', color: '#111827' },
+  headerClose: { fontSize: 20, padding: 4 },
+  headerTitle: { fontSize: 17, fontWeight: '800' },
   headerSave: { fontSize: 15, fontWeight: '700', padding: 4 },
   scroll: { flex: 1 },
   content: { padding: 20, gap: 16, paddingBottom: 40 },
   label: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#374151',
   },
   input: {
     borderWidth: 1.5,
-    borderColor: '#D1D5DB',
     borderRadius: 12,
     padding: 14,
     fontSize: 15,
-    color: '#111827',
-    backgroundColor: '#F9FAFB',
   },
   chipRow: {
     flexDirection: 'row',
@@ -325,14 +324,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 12,
-    backgroundColor: '#F3F4F6',
     borderWidth: 1.5,
     borderColor: 'transparent',
   },
   chipText: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#6B7280',
   },
   deleteBtn: {
     backgroundColor: '#FEF2F2',
@@ -350,18 +347,15 @@ const styles = StyleSheet.create({
   },
   sectionDivider: {
     height: 1,
-    backgroundColor: '#E5E7EB',
     marginTop: 4,
     marginBottom: 4,
   },
   sectionLabel: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#374151',
   },
   sectionHint: {
     fontSize: 13,
-    color: '#6B7280',
     lineHeight: 18,
     marginTop: -8,
   },

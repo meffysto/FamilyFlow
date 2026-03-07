@@ -4,6 +4,7 @@
 
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import { useThemeColors } from '../contexts/ThemeContext';
 
 interface DashboardCardProps {
   title: string;
@@ -24,12 +25,13 @@ export function DashboardCard({
   children,
   style,
 }: DashboardCardProps) {
+  const { colors } = useThemeColors();
   return (
-    <View style={[styles.card, style]}>
+    <View style={[styles.card, { backgroundColor: colors.card }, style]}>
       <View style={styles.header}>
         <View style={styles.titleRow}>
           {icon && <Text style={styles.icon}>{icon}</Text>}
-          <Text style={styles.title}>{title}</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
           {count !== undefined && (
             <View style={[styles.badge, { backgroundColor: color }]}>
               <Text style={styles.badgeText}>{count}</Text>
@@ -49,7 +51,6 @@ export function DashboardCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 18,
     marginBottom: 14,
@@ -76,7 +77,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#111827',
   },
   badge: {
     borderRadius: 10,

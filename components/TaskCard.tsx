@@ -49,7 +49,7 @@ export const TaskCard = React.memo(function TaskCard({
   onLongPress,
   showSource = false,
 }: TaskCardProps) {
-  const { primary, tint } = useThemeColors();
+  const { primary, tint, colors } = useThemeColors();
   const handleToggle = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onToggle(task, !task.completed);
@@ -62,7 +62,11 @@ export const TaskCard = React.memo(function TaskCard({
 
   return (
     <TouchableOpacity
-      style={[styles.card, task.completed && styles.completedCard]}
+      style={[
+        styles.card,
+        { backgroundColor: colors.card },
+        task.completed && { backgroundColor: colors.cardAlt, opacity: 0.7 },
+      ]}
       onLongPress={onLongPress}
       activeOpacity={onLongPress ? 0.7 : 1}
       delayLongPress={500}
@@ -74,7 +78,11 @@ export const TaskCard = React.memo(function TaskCard({
         accessibilityRole="checkbox"
         accessibilityState={{ checked: task.completed }}
       >
-        <View style={[styles.checkboxInner, task.completed && { backgroundColor: primary, borderColor: primary }]}>
+        <View style={[
+          styles.checkboxInner,
+          { borderColor: colors.separator, backgroundColor: colors.card },
+          task.completed && { backgroundColor: primary, borderColor: primary },
+        ]}>
           {task.completed && <Text style={styles.checkmark}>✓</Text>}
         </View>
       </TouchableOpacity>
@@ -83,6 +91,7 @@ export const TaskCard = React.memo(function TaskCard({
         <Text
           style={[
             styles.taskText,
+            { color: colors.text },
             task.completed && styles.completedText,
             isOverdue && styles.overdueText,
           ]}
@@ -93,8 +102,8 @@ export const TaskCard = React.memo(function TaskCard({
 
         <View style={styles.meta}>
           {showSource && (
-            <View style={styles.badge}>
-              <Text style={styles.sourceLabel}>{getSourceLabel(task.sourceFile)}</Text>
+            <View style={[styles.badge, { backgroundColor: colors.cardAlt }]}>
+              <Text style={[styles.sourceLabel, { color: colors.textMuted }]}>{getSourceLabel(task.sourceFile)}</Text>
             </View>
           )}
           {task.section && !showSource && (
@@ -103,14 +112,14 @@ export const TaskCard = React.memo(function TaskCard({
             </View>
           )}
           {task.dueDate && !task.completed && (
-            <View style={[styles.badge, isOverdue && styles.overdueBadgeContainer]}>
-              <Text style={[styles.dueDate, isOverdue && styles.overdueBadge]}>
+            <View style={[styles.badge, { backgroundColor: colors.cardAlt }, isOverdue && styles.overdueBadgeContainer]}>
+              <Text style={[styles.dueDate, { color: colors.textMuted }, isOverdue && styles.overdueBadge]}>
                 📅 {task.dueDate}
               </Text>
             </View>
           )}
           {task.recurrence && (
-            <View style={styles.badge}>
+            <View style={[styles.badge, { backgroundColor: colors.cardAlt }]}>
               <Text style={styles.recurrenceBadge}>🔁</Text>
             </View>
           )}
@@ -144,7 +153,6 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 14,
     marginBottom: 10,
@@ -155,10 +163,6 @@ const styles = StyleSheet.create({
     elevation: 2,
     gap: 14,
   },
-  completedCard: {
-    backgroundColor: '#F9FAFB',
-    opacity: 0.7,
-  },
   checkbox: {
     marginTop: 2,
   },
@@ -167,12 +171,9 @@ const styles = StyleSheet.create({
     height: 26,
     borderRadius: 7,
     borderWidth: 2,
-    borderColor: '#D1D5DB',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
   },
-  // checkboxChecked colors moved to inline styles (dynamic theme)
   checkmark: {
     color: '#FFFFFF',
     fontSize: 15,
@@ -185,7 +186,6 @@ const styles = StyleSheet.create({
   taskText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#111827',
     lineHeight: 22,
   },
   completedText: {
@@ -203,7 +203,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   badge: {
-    backgroundColor: '#F3F4F6',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
@@ -215,7 +214,6 @@ const styles = StyleSheet.create({
   },
   sourceLabel: {
     fontSize: 13,
-    color: '#6B7280',
     fontWeight: '600',
   },
   sectionLabel: {
@@ -224,7 +222,6 @@ const styles = StyleSheet.create({
   },
   dueDate: {
     fontSize: 13,
-    color: '#6B7280',
     fontWeight: '500',
   },
   overdueBadgeContainer: {

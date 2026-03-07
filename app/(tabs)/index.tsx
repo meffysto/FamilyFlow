@@ -65,7 +65,7 @@ const DEFAULT_SECTIONS: SectionPref[] = [
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const { primary, tint } = useThemeColors();
+  const { primary, tint, colors } = useThemeColors();
   const {
     isLoading,
     error,
@@ -364,8 +364,8 @@ export default function DashboardScreen() {
                   {meal.mealType === 'Petit-déj' ? '🥐' : meal.mealType === 'Déjeuner' ? '🍽️' : '🌙'}
                 </Text>
                 <View style={styles.mealInfo}>
-                  <Text style={styles.mealType}>{meal.mealType}</Text>
-                  <Text style={styles.mealText}>{meal.text}</Text>
+                  <Text style={[styles.mealType, { color: colors.textMuted }]}>{meal.mealType}</Text>
+                  <Text style={[styles.mealText, { color: colors.text }]}>{meal.text}</Text>
                 </View>
               </View>
             ))}
@@ -385,8 +385,8 @@ export default function DashboardScreen() {
               >
                 <Text style={styles.photoStatusEmoji}>{e.avatar}</Text>
                 <View style={styles.photoStatusInfo}>
-                  <Text style={styles.photoStatusName}>{e.name}</Text>
-                  {!e.hasPhoto && <Text style={styles.photoStatusHint}>Appuyer pour ajouter une photo</Text>}
+                  <Text style={[styles.photoStatusName, { color: colors.text }]}>{e.name}</Text>
+                  {!e.hasPhoto && <Text style={[styles.photoStatusHint, { color: colors.textMuted }]}>Appuyer pour ajouter une photo</Text>}
                 </View>
                 <Text style={styles.photoStatusIcon}>{e.hasPhoto ? '✅' : '📷'}</Text>
               </TouchableOpacity>
@@ -400,7 +400,7 @@ export default function DashboardScreen() {
             {topCourses.map((item) => (
               <View key={item.id} style={styles.courseRow}>
                 <Text style={styles.courseBullet}>•</Text>
-                <Text style={styles.courseText}>{item.text}</Text>
+                <Text style={[styles.courseText, { color: colors.textSub }]}>{item.text}</Text>
                 <TouchableOpacity
                   style={styles.courseCheckBtn}
                   onPress={() => toggleCourseItem(item, true)}
@@ -412,12 +412,12 @@ export default function DashboardScreen() {
               </View>
             ))}
             {topCourses.length === 0 && (
-              <Text style={styles.courseEmpty}>Liste vide — ajoutez un article ci-dessous</Text>
+              <Text style={[styles.courseEmpty, { color: colors.textFaint }]}>Liste vide — ajoutez un article ci-dessous</Text>
             )}
             {/* Champ d'ajout rapide */}
-            <View style={styles.courseAddRow}>
+            <View style={[styles.courseAddRow, { borderTopColor: colors.borderLight }]}>
               <TextInput
-                style={styles.courseAddInput}
+                style={[styles.courseAddInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
                 value={newCourseText}
                 onChangeText={setNewCourseText}
                 placeholder="Ajouter un article…"
@@ -468,8 +468,8 @@ export default function DashboardScreen() {
             {upcomingRdvs.slice(0, 3).map((rdv) => (
               <TouchableOpacity key={rdv.sourceFile} style={styles.rdvRow} onPress={() => { setEditingRDV(rdv); setRdvEditorVisible(true); }} activeOpacity={0.7}>
                 <Text style={styles.rdvDate}>{formatDateForDisplay(rdv.date_rdv)} {rdv.heure ? `à ${rdv.heure}` : ''}</Text>
-                <Text style={styles.rdvTitle}>{rdv.type_rdv} — {rdv.enfant}</Text>
-                {rdv.médecin && <Text style={styles.rdvMeta}>{rdv.médecin}</Text>}
+                <Text style={[styles.rdvTitle, { color: colors.text }]}>{rdv.type_rdv} — {rdv.enfant}</Text>
+                {rdv.médecin && <Text style={[styles.rdvMeta, { color: colors.textMuted }]}>{rdv.médecin}</Text>}
               </TouchableOpacity>
             ))}
             {upcomingRdvs.length === 0 && <Text style={styles.rdvEmpty}>Aucun RDV à venir</Text>}
@@ -495,7 +495,7 @@ export default function DashboardScreen() {
                 <View key={reward.id} style={styles.activeRewardRow}>
                   <Text style={styles.activeRewardEmoji}>{reward.emoji}</Text>
                   <View style={styles.activeRewardInfo}>
-                    <Text style={styles.activeRewardLabel}>{ownerProfile?.avatar ?? '👤'} {ownerProfile?.name ?? reward.profileId} — {reward.label}</Text>
+                    <Text style={[styles.activeRewardLabel, { color: colors.text }]}>{ownerProfile?.avatar ?? '👤'} {ownerProfile?.name ?? reward.profileId} — {reward.label}</Text>
                     <Text style={[styles.activeRewardMeta, { color: typeColor }]}>
                       {reward.remainingDays !== undefined && `${reward.remainingDays}j restant${reward.remainingDays > 1 ? 's' : ''}`}
                       {reward.remainingTasks !== undefined && `${reward.remainingTasks} tâche${reward.remainingTasks > 1 ? 's' : ''} restante${reward.remainingTasks > 1 ? 's' : ''}`}
@@ -520,7 +520,7 @@ export default function DashboardScreen() {
                 <View key={`${item.section}-${item.produit}`} style={styles.stockRow}>
                   <Text style={styles.stockAlertIcon}>{isLow ? '🔴' : '🟡'}</Text>
                   <View style={styles.stockInfo}>
-                    <Text style={styles.stockName}>{item.produit}{item.detail ? ` (${item.detail})` : ''}</Text>
+                    <Text style={[styles.stockName, { color: colors.text }]}>{item.produit}{item.detail ? ` (${item.detail})` : ''}</Text>
                     <Text style={[styles.stockMeta, { color: statusColor }]}>{item.quantite} restant{item.quantite > 1 ? 's' : ''} (seuil: {item.seuil})</Text>
                   </View>
                   <View style={styles.stockBtnGroup}>
@@ -529,12 +529,12 @@ export default function DashboardScreen() {
                         <Text style={styles.stockCartBtnText}>🛒</Text>
                       </TouchableOpacity>
                     )}
-                    <TouchableOpacity style={[styles.stockBtn, item.quantite <= 0 && styles.stockBtnDisabled]} onPress={() => updateStockQuantity(item.lineIndex, Math.max(0, item.quantite - 1))} activeOpacity={0.6} disabled={item.quantite <= 0} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
-                      <Text style={styles.stockBtnText}>−</Text>
+                    <TouchableOpacity style={[styles.stockBtn, { backgroundColor: colors.cardAlt, borderColor: colors.border }, item.quantite <= 0 && styles.stockBtnDisabled]} onPress={() => updateStockQuantity(item.lineIndex, Math.max(0, item.quantite - 1))} activeOpacity={0.6} disabled={item.quantite <= 0} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
+                      <Text style={[styles.stockBtnText, { color: colors.textSub }]}>−</Text>
                     </TouchableOpacity>
-                    <Text style={styles.stockQty}>{item.quantite}</Text>
-                    <TouchableOpacity style={styles.stockBtn} onPress={() => updateStockQuantity(item.lineIndex, item.quantite + 1)} activeOpacity={0.6} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
-                      <Text style={styles.stockBtnText}>+</Text>
+                    <Text style={[styles.stockQty, { color: colors.text }]}>{item.quantite}</Text>
+                    <TouchableOpacity style={[styles.stockBtn, { backgroundColor: colors.cardAlt, borderColor: colors.border }]} onPress={() => updateStockQuantity(item.lineIndex, item.quantite + 1)} activeOpacity={0.6} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
+                      <Text style={[styles.stockBtnText, { color: colors.textSub }]}>+</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -576,7 +576,7 @@ export default function DashboardScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: primary }]}>
         <View style={styles.headerLeft}>
@@ -700,7 +700,6 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
   },
   header: {
     flexDirection: 'row',
@@ -969,7 +968,7 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: 'rgba(0,0,0,0.06)',
   },
   activeRewardEmoji: {
     fontSize: 28,

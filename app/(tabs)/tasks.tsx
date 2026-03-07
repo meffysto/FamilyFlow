@@ -82,7 +82,7 @@ function buildTargetFiles(profiles: Profile[]) {
 export default function TasksScreen() {
   const { tasks, menageTasks, courses, vault, profiles, activeProfile, notifPrefs, toggleTask, addTask, deleteTask, refresh, isLoading } = useVault();
   const { completeTask } = useGamification({ vault, notifPrefs });
-  const { primary, tint } = useThemeColors();
+  const { primary, tint, colors } = useThemeColors();
 
   const { filter: filterParam } = useLocalSearchParams<{ filter?: string }>();
   const filters = useMemo(() => buildFilters(profiles), [profiles]);
@@ -280,21 +280,21 @@ export default function TasksScreen() {
   const totalCount = [...tasks, ...coursesTasks].length;
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>📋 Tâches</Text>
-        <Text style={styles.stats}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <Text style={[styles.title, { color: colors.text }]}>📋 Tâches</Text>
+        <Text style={[styles.stats, { color: colors.textMuted }]}>
           {completedCount}/{totalCount} terminées
         </Text>
       </View>
 
       {/* Search */}
-      <View style={styles.searchContainer}>
+      <View style={[styles.searchContainer, { backgroundColor: colors.card }]}>
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { backgroundColor: colors.inputBg, color: colors.text }]}
           placeholder="Rechercher..."
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.textFaint}
           value={search}
           onChangeText={setSearch}
           clearButtonMode="while-editing"
@@ -302,7 +302,7 @@ export default function TasksScreen() {
       </View>
 
       {/* Filter chips */}
-      <View style={styles.filterWrapper}>
+      <View style={[styles.filterWrapper, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -313,7 +313,7 @@ export default function TasksScreen() {
               key={f.id}
               style={[
                 styles.chip,
-                filter === f.id && styles.chipActive,
+                { backgroundColor: colors.cardAlt },
                 filter === f.id && { backgroundColor: tint, borderColor: primary },
               ]}
               onPress={() => setFilter(f.id)}
@@ -321,6 +321,7 @@ export default function TasksScreen() {
               <Text style={styles.chipEmoji}>{f.emoji}</Text>
               <Text style={[
                 styles.chipText,
+                { color: colors.textMuted },
                 filter === f.id && { color: primary },
               ]}>
                 {f.label}
@@ -346,8 +347,8 @@ export default function TasksScreen() {
         )}
         renderSectionHeader={({ section }) => (
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{section.title}</Text>
-            <Text style={styles.sectionCount}>{section.data.length}</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{section.title}</Text>
+            <Text style={[styles.sectionCount, { color: colors.textFaint }]}>{section.data.length}</Text>
           </View>
         )}
         contentContainerStyle={styles.listContent}
@@ -358,7 +359,7 @@ export default function TasksScreen() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={styles.emptyEmoji}>✅</Text>
-            <Text style={styles.emptyText}>Aucune tâche dans cette catégorie !</Text>
+            <Text style={[styles.emptyText, { color: colors.textFaint }]}>Aucune tâche dans cette catégorie !</Text>
           </View>
         }
         stickySectionHeadersEnabled={false}
@@ -378,12 +379,12 @@ export default function TasksScreen() {
 
       {/* Add Task Modal */}
       <Modal visible={addModalVisible} animationType="slide" presentationStyle="pageSheet">
-        <SafeAreaView style={styles.modalSafe}>
-          <View style={styles.modalHeader}>
+        <SafeAreaView style={[styles.modalSafe, { backgroundColor: colors.card }]}>
+          <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
             <TouchableOpacity onPress={() => setAddModalVisible(false)}>
-              <Text style={styles.modalClose}>✕</Text>
+              <Text style={[styles.modalClose, { color: colors.textFaint }]}>✕</Text>
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>Nouvelle tâche</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Nouvelle tâche</Text>
             <TouchableOpacity onPress={handleAddTask} disabled={isSaving}>
               <Text style={[styles.modalSave, { color: primary }]}>
                 {isSaving ? '...' : 'Ajouter'}
@@ -392,28 +393,28 @@ export default function TasksScreen() {
           </View>
 
           <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalContent}>
-            <Text style={styles.modalLabel}>📝 Tâche *</Text>
+            <Text style={[styles.modalLabel, { color: colors.textSub }]}>📝 Tâche *</Text>
             <TextInput
-              style={styles.modalInput}
+              style={[styles.modalInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
               value={newTaskText}
               onChangeText={setNewTaskText}
               placeholder="Ex: Acheter cadeau anniversaire"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textFaint}
               autoFocus
               multiline
             />
 
-            <Text style={styles.modalLabel}>📅 Date d'échéance (optionnel)</Text>
+            <Text style={[styles.modalLabel, { color: colors.textSub }]}>📅 Date d'échéance (optionnel)</Text>
             <TextInput
-              style={styles.modalInput}
+              style={[styles.modalInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
               value={newTaskDueDate}
               onChangeText={setNewTaskDueDate}
               placeholder="Format : 2026-03-15 (année-mois-jour)"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textFaint}
               keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default'}
             />
 
-            <Text style={styles.modalLabel}>🔁 Se répète (optionnel)</Text>
+            <Text style={[styles.modalLabel, { color: colors.textSub }]}>🔁 Se répète (optionnel)</Text>
             <View style={styles.targetRow}>
               {[
                 { label: 'Aucune', value: '' },
@@ -425,6 +426,7 @@ export default function TasksScreen() {
                   key={opt.value}
                   style={[
                     styles.targetChip,
+                    { backgroundColor: colors.cardAlt },
                     newTaskRecurrence === opt.value && { backgroundColor: tint, borderColor: primary },
                   ]}
                   onPress={() => setNewTaskRecurrence(opt.value)}
@@ -432,6 +434,7 @@ export default function TasksScreen() {
                 >
                   <Text style={[
                     styles.targetChipText,
+                    { color: colors.textMuted },
                     newTaskRecurrence === opt.value && { color: primary, fontWeight: '700' },
                   ]}>
                     {opt.label}
@@ -440,13 +443,14 @@ export default function TasksScreen() {
               ))}
             </View>
 
-            <Text style={styles.modalLabel}>📁 Enregistrer pour</Text>
+            <Text style={[styles.modalLabel, { color: colors.textSub }]}>📁 Enregistrer pour</Text>
             <View style={styles.targetRow}>
               {targetFiles.map((t) => (
                 <TouchableOpacity
                   key={t.value}
                   style={[
                     styles.targetChip,
+                    { backgroundColor: colors.cardAlt },
                     newTaskTarget === t.value && { backgroundColor: tint, borderColor: primary },
                   ]}
                   onPress={() => setNewTaskTarget(t.value)}
@@ -454,6 +458,7 @@ export default function TasksScreen() {
                 >
                   <Text style={[
                     styles.targetChipText,
+                    { color: colors.textMuted },
                     newTaskTarget === t.value && { color: primary, fontWeight: '700' },
                   ]}>
                     {t.label}
@@ -483,7 +488,6 @@ function getFileLabel(sourceFile: string): string {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
   },
   header: {
     flexDirection: 'row',
@@ -491,36 +495,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
   },
   title: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#111827',
   },
   stats: {
     fontSize: 13,
-    color: '#6B7280',
     fontWeight: '500',
   },
   searchContainer: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#FFFFFF',
   },
   searchInput: {
-    backgroundColor: '#F3F4F6',
     borderRadius: 10,
     padding: 10,
     fontSize: 15,
-    color: '#111827',
   },
   filterWrapper: {
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
     height: 56,
   },
   filterContainer: {
@@ -538,12 +533,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#F3F4F6',
     borderWidth: 1.5,
     borderColor: 'transparent',
-  },
-  chipActive: {
-    // Colors applied inline via dynamic theme
   },
   chipEmoji: {
     fontSize: 16,
@@ -551,7 +542,6 @@ const styles = StyleSheet.create({
   chipText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6B7280',
   },
   deleteTip: {
     backgroundColor: '#FFFBEB',
@@ -580,13 +570,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#6B7280',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   sectionCount: {
     fontSize: 12,
-    color: '#9CA3AF',
     fontWeight: '600',
   },
   empty: {
@@ -599,7 +587,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#9CA3AF',
     textAlign: 'center',
   },
   fab: {
@@ -623,33 +610,28 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     lineHeight: 30,
   },
-  modalSafe: { flex: 1, backgroundColor: '#FFFFFF' },
+  modalSafe: { flex: 1 },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
   },
-  modalClose: { fontSize: 20, color: '#9CA3AF', padding: 4 },
-  modalTitle: { fontSize: 17, fontWeight: '800', color: '#111827' },
+  modalClose: { fontSize: 20, padding: 4 },
+  modalTitle: { fontSize: 17, fontWeight: '800' },
   modalSave: { fontSize: 15, fontWeight: '700', padding: 4 },
   modalScroll: { flex: 1 },
   modalContent: { padding: 20, gap: 16, paddingBottom: 40 },
   modalLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#374151',
   },
   modalInput: {
     borderWidth: 1.5,
-    borderColor: '#D1D5DB',
     borderRadius: 12,
     padding: 14,
     fontSize: 15,
-    color: '#111827',
-    backgroundColor: '#F9FAFB',
   },
   targetRow: {
     flexDirection: 'row',
@@ -660,13 +642,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 12,
-    backgroundColor: '#F3F4F6',
     borderWidth: 1.5,
     borderColor: 'transparent',
   },
   targetChipText: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#6B7280',
   },
 });

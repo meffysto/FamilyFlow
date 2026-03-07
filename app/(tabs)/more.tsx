@@ -30,7 +30,7 @@ interface GridItem {
 export default function MoreScreen() {
   const router = useRouter();
   const { rdvs, stock, gamiData } = useVault();
-  const { primary } = useThemeColors();
+  const { colors } = useThemeColors();
 
   const items: GridItem[] = useMemo(() => {
     const upcomingRdvs = rdvs.filter((r) => isRdvUpcoming(r)).length;
@@ -79,9 +79,9 @@ export default function MoreScreen() {
   }, [rdvs, stock, gamiData]);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Plus</Text>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <Text style={[styles.title, { color: colors.text }]}>Plus</Text>
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
@@ -89,14 +89,14 @@ export default function MoreScreen() {
           {items.map((item) => (
             <TouchableOpacity
               key={item.route}
-              style={styles.card}
+              style={[styles.card, { backgroundColor: colors.card }]}
               onPress={() => router.push(item.route as any)}
               activeOpacity={0.7}
             >
-              <View style={[styles.iconCircle, { backgroundColor: item.color + '15' }]}>
+              <View style={[styles.iconCircle, { backgroundColor: item.color + '20' }]}>
                 <Text style={styles.emoji}>{item.emoji}</Text>
               </View>
-              <Text style={styles.cardLabel}>{item.label}</Text>
+              <Text style={[styles.cardLabel, { color: colors.textSub }]}>{item.label}</Text>
               {item.badge ? (
                 <View style={[styles.badgeContainer, { backgroundColor: item.color }]}>
                   <Text style={styles.badgeText}>{item.badge}</Text>
@@ -111,15 +111,13 @@ export default function MoreScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F9FAFB' },
+  safe: { flex: 1 },
   header: {
     paddingHorizontal: 20,
     paddingVertical: 14,
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
   },
-  title: { fontSize: 22, fontWeight: '800', color: '#111827' },
+  title: { fontSize: 22, fontWeight: '800' },
   scroll: { flex: 1 },
   content: { padding: 16, paddingBottom: 40 },
   grid: {
@@ -129,7 +127,6 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '47%',
-    backgroundColor: '#FFFFFF',
     borderRadius: 18,
     padding: 20,
     alignItems: 'center',
@@ -152,7 +149,6 @@ const styles = StyleSheet.create({
   cardLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#374151',
   },
   badgeContainer: {
     position: 'absolute',
