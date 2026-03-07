@@ -17,6 +17,8 @@ import {
   Alert,
   TextInput,
   SectionList,
+  Modal,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useVault } from '../../hooks/useVault';
@@ -59,15 +61,39 @@ interface TaskSection {
   data: Task[];
 }
 
+// Target files for adding tasks
+const TARGET_FILES = [
+  { label: '🏠 Maison', value: '02 - Maison/Tâches récurrentes.md' },
+];
+
+function buildTargetFiles(profiles: Profile[]) {
+  const enfants = profiles.filter((p) => p.role === 'enfant');
+  return [
+    ...enfants.map((p) => ({
+      label: `${p.avatar} ${p.name}`,
+      value: `01 - Enfants/${p.name}/Tâches récurrentes.md`,
+    })),
+    ...TARGET_FILES,
+  ];
+}
+
 export default function TasksScreen() {
-  const { tasks, menageTasks, courses, vault, profiles, activeProfile, notifPrefs, refresh, isLoading } = useVault();
+  const { tasks, menageTasks, courses, vault, profiles, activeProfile, notifPrefs, addTask, deleteTask, refresh, isLoading } = useVault();
   const { completeTask } = useGamification({ vault, notifPrefs });
   const { primary, tint } = useThemeColors();
 
   const filters = useMemo(() => buildFilters(profiles), [profiles]);
+  const targetFiles = useMemo(() => buildTargetFiles(profiles), [profiles]);
   const [filter, setFilter] = useState('tous');
   const [search, setSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+
+  // Add task modal
+  const [addModalVisible, setAddModalVisible] = useState(false);
+  const [newTaskText, setNewTaskText] = useState('');
+  const [newTaskDueDate, setNewTaskDueDate] = useState('');
+  const [newTaskTarget, setNewTaskTarget] = useState(targetFiles[0]?.value ?? '');
+  const [isSaving, setIsSaving] = useState(false);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -116,6 +142,49 @@ export default function TasksScreen() {
     },
     [vault, activeProfile, profiles, tasks, courses, completeTask, refresh, notifPrefs]
   );
+
+  const handleAddTask = useCallback(async () => {
+    if (!newTaskText.trim()) {
+      Alert.alert('Champ requis', 'Le texte de la tâche est obligatoire.');
+      return;
+    }
+    if (newTaskDueDate && !/^\d{4}-\d{2}-\d{2}$/.test(newTaskDueDate)) {
+      Alert.alert('Format invalide', 'La date doit être au format AAAA-MM-JJ.');
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await addTask(newTaskText.trim(), newTaskTarget, newTaskDueDate || undefined);
+      setNewTaskText('');
+      setNewTaskDueDate('');
+      setAddModalVisible(false);
+    } catch (e) {
+      Alert.alert('Erreur', String(e));
+    } finally {
+      setIsSaving(false);
+    }
+  }, [newTaskText, newTaskDueDate, newTaskTarget, addTask]);
+
+  const handleDeleteTask = useCallback(async (task: Task) => {
+    Alert.alert(
+      '🗑️ Supprimer la tâche',
+      `Supprimer « ${task.text} » ?`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteTask(task.sourceFile, task.lineIndex);
+            } catch (e) {
+              Alert.alert('Erreur', String(e));
+            }
+          },
+        },
+      ]
+    );
+  }, [deleteTask]);
 
   // Convert courses to Task-like objects for display
   const coursesTasks: Task[] = useMemo(
@@ -251,7 +320,7 @@ export default function TasksScreen() {
         sections={sections}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <TaskCard task={item} onToggle={handleTaskToggle} />
+          <TaskCard task={item} onToggle={handleTaskToggle} onLongPress={() => handleDeleteTask(item)} />
         )}
         renderSectionHeader={({ section }) => (
           <View style={styles.sectionHeader}>
@@ -272,6 +341,80 @@ export default function TasksScreen() {
         }
         stickySectionHeadersEnabled={false}
       />
+
+      {/* FAB */}
+      <TouchableOpacity
+        style={[styles.fab, { backgroundColor: primary }]}
+        onPress={() => {
+          setNewTaskTarget(targetFiles[0]?.value ?? '');
+          setAddModalVisible(true);
+        }}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.fabText}>+</Text>
+      </TouchableOpacity>
+
+      {/* Add Task Modal */}
+      <Modal visible={addModalVisible} animationType="slide" presentationStyle="pageSheet">
+        <SafeAreaView style={styles.modalSafe}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setAddModalVisible(false)}>
+              <Text style={styles.modalClose}>✕</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Nouvelle tâche</Text>
+            <TouchableOpacity onPress={handleAddTask} disabled={isSaving}>
+              <Text style={[styles.modalSave, { color: primary }]}>
+                {isSaving ? '...' : 'Ajouter'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalContent}>
+            <Text style={styles.modalLabel}>📝 Tâche *</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={newTaskText}
+              onChangeText={setNewTaskText}
+              placeholder="Ex: Acheter cadeau anniversaire"
+              placeholderTextColor="#9CA3AF"
+              autoFocus
+              multiline
+            />
+
+            <Text style={styles.modalLabel}>📅 Date due (optionnel)</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={newTaskDueDate}
+              onChangeText={setNewTaskDueDate}
+              placeholder="2026-03-15"
+              placeholderTextColor="#9CA3AF"
+              keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default'}
+            />
+
+            <Text style={styles.modalLabel}>📁 Fichier cible</Text>
+            <View style={styles.targetRow}>
+              {targetFiles.map((t) => (
+                <TouchableOpacity
+                  key={t.value}
+                  style={[
+                    styles.targetChip,
+                    newTaskTarget === t.value && { backgroundColor: tint, borderColor: primary },
+                  ]}
+                  onPress={() => setNewTaskTarget(t.value)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[
+                    styles.targetChipText,
+                    newTaskTarget === t.value && { color: primary, fontWeight: '700' },
+                  ]}>
+                    {t.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -397,5 +540,72 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#9CA3AF',
     textAlign: 'center',
+  },
+  fab: {
+    position: 'absolute',
+    right: 20,
+    bottom: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  fabText: {
+    fontSize: 28,
+    color: '#FFFFFF',
+    fontWeight: '700',
+    lineHeight: 30,
+  },
+  modalSafe: { flex: 1, backgroundColor: '#FFFFFF' },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  modalClose: { fontSize: 20, color: '#9CA3AF', padding: 4 },
+  modalTitle: { fontSize: 17, fontWeight: '800', color: '#111827' },
+  modalSave: { fontSize: 15, fontWeight: '700', padding: 4 },
+  modalScroll: { flex: 1 },
+  modalContent: { padding: 20, gap: 16, paddingBottom: 40 },
+  modalLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#374151',
+  },
+  modalInput: {
+    borderWidth: 1.5,
+    borderColor: '#D1D5DB',
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 15,
+    color: '#111827',
+    backgroundColor: '#F9FAFB',
+  },
+  targetRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  targetChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+  },
+  targetChipText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#6B7280',
   },
 });

@@ -18,6 +18,7 @@ import { useThemeColors } from '../contexts/ThemeContext';
 interface TaskCardProps {
   task: Task;
   onToggle: (task: Task, completed: boolean) => void;
+  onLongPress?: () => void;
   showSource?: boolean;
 }
 
@@ -45,6 +46,7 @@ function getSourceLabel(sourceFile: string): string {
 export const TaskCard = React.memo(function TaskCard({
   task,
   onToggle,
+  onLongPress,
   showSource = false,
 }: TaskCardProps) {
   const { primary, tint } = useThemeColors();
@@ -59,7 +61,12 @@ export const TaskCard = React.memo(function TaskCard({
     task.dueDate < new Date().toISOString().slice(0, 10);
 
   return (
-    <View style={[styles.card, task.completed && styles.completedCard]}>
+    <TouchableOpacity
+      style={[styles.card, task.completed && styles.completedCard]}
+      onLongPress={onLongPress}
+      activeOpacity={onLongPress ? 0.7 : 1}
+      delayLongPress={500}
+    >
       <TouchableOpacity
         style={styles.checkbox}
         onPress={handleToggle}
@@ -129,7 +136,7 @@ export const TaskCard = React.memo(function TaskCard({
           </View>
         )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 });
 
