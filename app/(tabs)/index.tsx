@@ -67,6 +67,8 @@ export default function DashboardScreen() {
     addRDV,
     updateRDV,
     deleteRDV,
+    addCourseItem,
+    clearCompletedCourses,
     refresh,
   } = useVault();
 
@@ -78,6 +80,7 @@ export default function DashboardScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [rdvEditorVisible, setRdvEditorVisible] = useState(false);
   const [editingRDV, setEditingRDV] = useState<RDV | undefined>(undefined);
+  const [showPastRdvs, setShowPastRdvs] = useState(false);
 
   const today = format(new Date(), 'EEEE dd MMMM yyyy', { locale: fr });
   const todayStr = format(new Date(), 'yyyy-MM-dd');
@@ -193,10 +196,14 @@ export default function DashboardScreen() {
     (t) => !t.completed && t.dueDate && t.dueDate < todayStr
   );
 
-  // Upcoming RDVs (7 days)
+  // RDVs: upcoming (planifié + future) or all if toggle is on
   const upcomingRdvs = rdvs.filter(
-    (r) => r.statut === 'planifié' && r.date_rdv >= todayStr && r.date_rdv <= in7Days
+    (r) => r.statut === 'planifié' && r.date_rdv >= todayStr
   );
+  const pastRdvs = rdvs.filter(
+    (r) => r.date_rdv < todayStr || r.statut !== 'planifié'
+  );
+  const displayedRdvs = showPastRdvs ? [...upcomingRdvs, ...pastRdvs] : upcomingRdvs;
 
   // Top courses
   const topCourses = courses.filter((c) => !c.completed).slice(0, 5);
@@ -348,32 +355,66 @@ export default function DashboardScreen() {
                 <Text style={styles.courseText}>{item.text}</Text>
               </View>
             ))}
+            {courses.some((c) => c.completed) && (
+              <TouchableOpacity
+                style={styles.clearCoursesBtn}
+                onPress={() => {
+                  const count = courses.filter((c) => c.completed).length;
+                  Alert.alert(
+                    'Vider les cochés',
+                    `Supprimer ${count} article${count > 1 ? 's' : ''} coché${count > 1 ? 's' : ''} ?`,
+                    [
+                      { text: 'Annuler', style: 'cancel' },
+                      { text: 'Supprimer', style: 'destructive', onPress: clearCompletedCourses },
+                    ]
+                  );
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.clearCoursesBtnText}>🗑 Vider les cochés</Text>
+              </TouchableOpacity>
+            )}
           </DashboardCard>
         )}
 
         {/* RDVs */}
-        <DashboardCard title="Prochains RDV" icon="📅" count={upcomingRdvs.length || undefined} color="#8B5CF6">
-          {upcomingRdvs.map((rdv) => (
+        <DashboardCard title="Rendez-vous" icon="📅" count={upcomingRdvs.length || undefined} color="#8B5CF6">
+          {displayedRdvs.map((rdv) => {
+            const isPast = rdv.date_rdv < todayStr || rdv.statut !== 'planifié';
+            return (
+              <TouchableOpacity
+                key={rdv.sourceFile}
+                style={[styles.rdvRow, isPast && styles.rdvRowPast]}
+                onPress={() => {
+                  setEditingRDV(rdv);
+                  setRdvEditorVisible(true);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.rdvDate, isPast && styles.rdvDatePast]}>
+                  {rdv.date_rdv} {rdv.heure ? `à ${rdv.heure}` : ''}
+                  {isPast && rdv.statut !== 'planifié' ? ` · ${rdv.statut}` : ''}
+                </Text>
+                <Text style={[styles.rdvTitle, isPast && styles.rdvTitlePast]}>
+                  {rdv.type_rdv} — {rdv.enfant}
+                </Text>
+                {rdv.médecin && <Text style={styles.rdvMeta}>{rdv.médecin}</Text>}
+              </TouchableOpacity>
+            );
+          })}
+          {upcomingRdvs.length === 0 && !showPastRdvs && (
+            <Text style={styles.rdvEmpty}>Aucun RDV à venir</Text>
+          )}
+          {pastRdvs.length > 0 && (
             <TouchableOpacity
-              key={rdv.sourceFile}
-              style={styles.rdvRow}
-              onPress={() => {
-                setEditingRDV(rdv);
-                setRdvEditorVisible(true);
-              }}
+              style={styles.rdvTogglePast}
+              onPress={() => setShowPastRdvs(!showPastRdvs)}
               activeOpacity={0.7}
             >
-              <Text style={styles.rdvDate}>
-                {rdv.date_rdv} {rdv.heure ? `à ${rdv.heure}` : ''}
+              <Text style={styles.rdvTogglePastText}>
+                {showPastRdvs ? '🔼 Masquer les passés' : `🔽 Voir les passés (${pastRdvs.length})`}
               </Text>
-              <Text style={styles.rdvTitle}>
-                {rdv.type_rdv} — {rdv.enfant}
-              </Text>
-              {rdv.médecin && <Text style={styles.rdvMeta}>{rdv.médecin}</Text>}
             </TouchableOpacity>
-          ))}
-          {upcomingRdvs.length === 0 && (
-            <Text style={styles.rdvEmpty}>Aucun RDV dans les 7 prochains jours</Text>
           )}
           <TouchableOpacity
             style={[styles.rdvAddBtn, { backgroundColor: tint, borderColor: primary }]}
@@ -442,6 +483,21 @@ export default function DashboardScreen() {
                       </Text>
                     </View>
                     <View style={styles.stockBtnGroup}>
+                      {isLow && (
+                        <TouchableOpacity
+                          style={styles.stockCartBtn}
+                          onPress={async () => {
+                            const itemName = item.detail
+                              ? `${item.produit} (${item.detail})`
+                              : item.produit;
+                            await addCourseItem(itemName, 'Produits bébé');
+                            Alert.alert('Ajouté !', `${itemName} ajouté aux courses`);
+                          }}
+                          activeOpacity={0.6}
+                        >
+                          <Text style={styles.stockCartBtnText}>🛒</Text>
+                        </TouchableOpacity>
+                      )}
                       <TouchableOpacity
                         style={styles.stockBtn}
                         onPress={() => updateStockQuantity(item.lineIndex, item.quantite - 1)}
@@ -602,6 +658,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6B7280',
   },
+  rdvRowPast: {
+    opacity: 0.5,
+    borderLeftColor: '#D1D5DB',
+  },
+  rdvDatePast: {
+    color: '#9CA3AF',
+  },
+  rdvTitlePast: {
+    color: '#9CA3AF',
+  },
+  rdvTogglePast: {
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  rdvTogglePastText: {
+    fontSize: 13,
+    color: '#8B5CF6',
+    fontWeight: '600',
+  },
   rdvEmpty: {
     fontSize: 13,
     color: '#9CA3AF',
@@ -643,6 +718,20 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
   },
+  stockCartBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    backgroundColor: '#FEF3C7',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    marginRight: 4,
+  },
+  stockCartBtnText: {
+    fontSize: 14,
+  },
   stockBtnGroup: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -670,6 +759,18 @@ const styles = StyleSheet.create({
     color: '#111827',
     minWidth: 24,
     textAlign: 'center',
+  },
+  clearCoursesBtn: {
+    marginTop: 8,
+    paddingVertical: 8,
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    borderRadius: 8,
+  },
+  clearCoursesBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#EF4444',
   },
   debugText: {
     fontSize: 11,

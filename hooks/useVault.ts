@@ -41,6 +41,7 @@ import {
   serializeNotificationPrefs,
   getDefaultNotificationPrefs,
 } from '../lib/notifications';
+import { scheduleRDVAlerts } from '../lib/scheduled-notifications';
 
 export const VAULT_PATH_KEY = 'vault_path';
 export const ACTIVE_PROFILE_KEY = 'active_profile_id';
@@ -78,6 +79,7 @@ export interface VaultState {
   deleteTask: (sourceFile: string, lineIndex: number) => Promise<void>;
   addCourseItem: (text: string, section?: string) => Promise<void>;
   removeCourseItem: (lineIndex: number) => Promise<void>;
+  clearCompletedCourses: () => Promise<void>;
 }
 
 // Static task files (non-enfant)
@@ -289,6 +291,8 @@ export function useVault(): VaultState {
         }
         loadedRdvs.sort((a, b) => a.date_rdv.localeCompare(b.date_rdv));
         setRdvs(loadedRdvs);
+        // Schedule RDV notification alerts (fire-and-forget)
+        scheduleRDVAlerts(loadedRdvs).catch(() => {});
       } catch (e) {
         debugErrors.push(`rdv: ${e}`);
         setRdvs([]);
@@ -604,6 +608,19 @@ export function useVault(): VaultState {
     }
   }, [loadVaultData]);
 
+  const clearCompletedCourses = useCallback(async () => {
+    if (!vaultRef.current) return;
+    try {
+      const content = await vaultRef.current.readFile(COURSES_FILE);
+      const lines = content.split('\n');
+      const cleaned = lines.filter((l) => !l.match(/^-\s+\[x\]/i));
+      await vaultRef.current.writeFile(COURSES_FILE, cleaned.join('\n'));
+      await loadVaultData(vaultRef.current);
+    } catch (e) {
+      throw new Error(`clearCompletedCourses: ${e}`);
+    }
+  }, [loadVaultData]);
+
   // Resolve active profile from ID → Profile object
   const activeProfile = profiles.find((p) => p.id === activeProfileId) ?? null;
 
@@ -640,5 +657,6 @@ export function useVault(): VaultState {
     deleteTask,
     addCourseItem,
     removeCourseItem,
+    clearCompletedCourses,
   };
 }

@@ -24,6 +24,7 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import { Profile } from './types';
 import { format } from 'date-fns';
+import { nextOccurrence } from './recurrence';
 
 export class VaultManager {
   vaultPath: string;
@@ -154,8 +155,13 @@ export class VaultManager {
 
   /**
    * Toggle a task checkbox on a specific line.
-   * - Sets `- [x]` and appends `✅ YYYY-MM-DD` on complete
-   * - Sets `- [ ]` and removes `✅ ...` on uncomplete
+   *
+   * Recurring tasks (🔁): Instead of marking [x], advance the due date
+   * to the next occurrence and keep the task as [ ]. This replaces the
+   * batch maintenance script approach.
+   *
+   * Non-recurring tasks: Sets `- [x]` + `✅ YYYY-MM-DD` on complete,
+   * `- [ ]` and removes `✅` on uncomplete.
    */
   async toggleTask(
     relativePath: string,
@@ -170,9 +176,26 @@ export class VaultManager {
     let line = lines[lineIndex];
 
     if (completed) {
-      line = line.replace(/- \[ \]/, '- [x]');
-      if (!line.includes('✅')) {
-        line = line.trimEnd() + ` ✅ ${today}`;
+      // Check if this is a recurring task
+      const recurrenceMatch = line.match(/🔁\s*(every\s+\S+(?:\s+\S+)?)/);
+      const dueDateMatch = line.match(/📅\s*(\d{4}-\d{2}-\d{2})/);
+
+      if (recurrenceMatch && dueDateMatch) {
+        // Recurring task: advance the date, keep unchecked
+        const currentDate = dueDateMatch[1];
+        const recurrence = recurrenceMatch[1];
+        const newDate = nextOccurrence(currentDate, recurrence);
+        line = line.replace(/📅\s*\d{4}-\d{2}-\d{2}/, `📅 ${newDate}`);
+        // Ensure it stays unchecked (in case it was somehow checked)
+        line = line.replace(/- \[x\]/i, '- [ ]');
+        // Remove any completion date
+        line = line.replace(/\s*✅\s*\d{4}-\d{2}-\d{2}/, '');
+      } else {
+        // Non-recurring: mark completed
+        line = line.replace(/- \[ \]/, '- [x]');
+        if (!line.includes('✅')) {
+          line = line.trimEnd() + ` ✅ ${today}`;
+        }
       }
     } else {
       line = line.replace(/- \[x\]/i, '- [ ]');

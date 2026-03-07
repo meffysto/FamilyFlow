@@ -26,6 +26,7 @@ import { useVault } from '../../hooks/useVault';
 import { todayJournalPath, generateJournalTemplate } from '../../lib/parser';
 import { Profile } from '../../lib/types';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { parseJournalStats, JournalStats } from '../../lib/journal-stats';
 
 interface QuickAddModal {
   type: 'Biberon' | 'Couche' | 'Sieste';
@@ -148,6 +149,19 @@ export default function JournalScreen() {
     setQuickAdd((q) => ({ ...q, visible: false }));
     await handleQuickAdd(quickAdd.type, quickInput);
   };
+
+  // Compute live stats from journal content
+  const journalStats = useMemo(
+    () => (journalContent ? parseJournalStats(journalContent) : null),
+    [journalContent]
+  );
+
+  const hasStats =
+    journalStats &&
+    (journalStats.biberons > 0 ||
+      journalStats.tetees > 0 ||
+      journalStats.couches > 0 ||
+      journalStats.siestes.length > 0);
 
   // Render table from markdown content
   const renderTables = (content: string) => {
@@ -272,6 +286,49 @@ export default function JournalScreen() {
           </View>
         ) : journalContent ? (
           <View style={styles.journalContent}>
+            {/* Live stats banner */}
+            {hasStats && journalStats && (
+              <View style={styles.statsBanner}>
+                <Text style={styles.statsBannerTitle}>📊 Résumé du jour</Text>
+                <View style={styles.statsGrid}>
+                  {journalStats.biberons > 0 && (
+                    <View style={styles.statItem}>
+                      <Text style={styles.statEmoji}>🍼</Text>
+                      <Text style={styles.statValue}>{journalStats.biberons}</Text>
+                      <Text style={styles.statLabel}>
+                        biberon{journalStats.biberons > 1 ? 's' : ''}
+                        {journalStats.totalMl > 0 ? ` (${journalStats.totalMl} ml)` : ''}
+                      </Text>
+                    </View>
+                  )}
+                  {journalStats.tetees > 0 && (
+                    <View style={styles.statItem}>
+                      <Text style={styles.statEmoji}>🤱</Text>
+                      <Text style={styles.statValue}>{journalStats.tetees}</Text>
+                      <Text style={styles.statLabel}>tétée{journalStats.tetees > 1 ? 's' : ''}</Text>
+                    </View>
+                  )}
+                  {journalStats.couches > 0 && (
+                    <View style={styles.statItem}>
+                      <Text style={styles.statEmoji}>🚼</Text>
+                      <Text style={styles.statValue}>{journalStats.couches}</Text>
+                      <Text style={styles.statLabel}>couche{journalStats.couches > 1 ? 's' : ''}</Text>
+                    </View>
+                  )}
+                  {journalStats.sommeilTotal && (
+                    <View style={styles.statItem}>
+                      <Text style={styles.statEmoji}>😴</Text>
+                      <Text style={styles.statValue}>{journalStats.sommeilTotal}</Text>
+                      <Text style={styles.statLabel}>
+                        {journalStats.sommeilNuit ? `🌙 ${journalStats.sommeilNuit}` : ''}
+                        {journalStats.sommeilNuit && journalStats.sommeilJour ? ' · ' : ''}
+                        {journalStats.sommeilJour ? `☀️ ${journalStats.sommeilJour}` : ''}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            )}
             {renderTables(journalContent)}
           </View>
         ) : null}
@@ -414,6 +471,41 @@ const styles = StyleSheet.create({
   createBtnDisabled: { backgroundColor: '#A78BFA' },
   createBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
   journalContent: { gap: 16 },
+  statsBanner: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    borderLeftWidth: 3,
+    borderLeftColor: '#8B5CF6',
+  },
+  statsBannerTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 10,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#F9FAFB',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  statEmoji: { fontSize: 16 },
+  statValue: { fontSize: 15, fontWeight: '800', color: '#111827' },
+  statLabel: { fontSize: 12, color: '#6B7280', fontWeight: '500' },
   tableSection: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,

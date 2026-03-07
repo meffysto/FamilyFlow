@@ -13,12 +13,16 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as SecureStore from 'expo-secure-store';
 import { VAULT_PATH_KEY } from '../hooks/useVault';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { configureNotifications } from '../lib/scheduled-notifications';
 
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
   const [hasVault, setHasVault] = useState(false);
 
   useEffect(() => {
+    // Configure notification handler at app startup
+    configureNotifications();
+
     (async () => {
       const stored = await SecureStore.getItemAsync(VAULT_PATH_KEY);
       setHasVault(!!stored);

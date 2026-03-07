@@ -235,6 +235,112 @@ export function buildManualContext(
   };
 }
 
+// ─── Digest builders (morning/evening summaries) ────────────────────────────
+
+import { Task, RDV, StockItem } from './types';
+
+export function buildMorningDigest(data: {
+  tasks: Task[];
+  menageTasks: Task[];
+  rdvs: RDV[];
+  stock: StockItem[];
+}): string {
+  const today = format(new Date(), 'dd/MM/yyyy');
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const lines: string[] = [`☀️ <b>Bonjour ! Résumé du ${today}</b>\n`];
+
+  // Today's tasks
+  const todayTasks = data.tasks.filter(
+    (t) => !t.completed && t.dueDate === todayStr
+  );
+  if (todayTasks.length > 0) {
+    lines.push(`📋 <b>${todayTasks.length} tâche(s) du jour</b>`);
+    todayTasks.slice(0, 5).forEach((t) => lines.push(`  • ${t.text}`));
+    if (todayTasks.length > 5) lines.push(`  ... et ${todayTasks.length - 5} de plus`);
+    lines.push('');
+  }
+
+  // Ménage
+  const pendingMenage = data.menageTasks.filter((t) => !t.completed);
+  if (pendingMenage.length > 0) {
+    lines.push(`🧹 <b>${pendingMenage.length} tâche(s) ménage</b>`);
+    pendingMenage.forEach((t) => lines.push(`  • ${t.text}`));
+    lines.push('');
+  }
+
+  // Overdue
+  const overdue = data.tasks.filter(
+    (t) => !t.completed && t.dueDate && t.dueDate < todayStr
+  );
+  if (overdue.length > 0) {
+    lines.push(`⚠️ <b>${overdue.length} tâche(s) en retard</b>`);
+    overdue.slice(0, 3).forEach((t) => lines.push(`  • ${t.text} (📅 ${t.dueDate})`));
+    lines.push('');
+  }
+
+  // Upcoming RDVs
+  const in7Days = format(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd');
+  const upcoming = data.rdvs.filter(
+    (r) => r.statut === 'planifié' && r.date_rdv >= todayStr && r.date_rdv <= in7Days
+  );
+  if (upcoming.length > 0) {
+    lines.push(`📅 <b>RDV à venir</b>`);
+    upcoming.forEach((r) => {
+      lines.push(`  • ${r.date_rdv} ${r.heure ?? ''} — ${r.type_rdv} ${r.enfant}`);
+    });
+    lines.push('');
+  }
+
+  // Low stock
+  const lowStock = data.stock.filter((s) => s.quantite <= s.seuil);
+  if (lowStock.length > 0) {
+    lines.push(`📦 <b>${lowStock.length} produit(s) en stock bas</b>`);
+    lowStock.forEach((s) => {
+      lines.push(`  • ${s.produit} : ${s.quantite} restant(s)`);
+    });
+  }
+
+  if (lines.length === 1) {
+    lines.push('✨ Rien de spécial aujourd\'hui. Bonne journée !');
+  }
+
+  return lines.join('\n');
+}
+
+export function buildEveningDigest(data: {
+  tasks: Task[];
+  menageTasks: Task[];
+}): string {
+  const today = format(new Date(), 'dd/MM/yyyy');
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const lines: string[] = [`🌙 <b>Bilan du ${today}</b>\n`];
+
+  const completedToday = data.tasks.filter(
+    (t) => t.completed && t.completedDate === todayStr
+  );
+  const pendingToday = data.tasks.filter(
+    (t) => !t.completed && t.dueDate === todayStr
+  );
+
+  lines.push(`✅ ${completedToday.length} tâche(s) terminée(s)`);
+  if (pendingToday.length > 0) {
+    lines.push(`⏳ ${pendingToday.length} restante(s)`);
+  }
+
+  // Tomorrow preview
+  const tomorrowStr = format(new Date(Date.now() + 24 * 60 * 60 * 1000), 'yyyy-MM-dd');
+  const tomorrowTasks = data.tasks.filter(
+    (t) => !t.completed && t.dueDate === tomorrowStr
+  );
+  if (tomorrowTasks.length > 0) {
+    lines.push('');
+    lines.push(`📋 <b>Demain : ${tomorrowTasks.length} tâche(s)</b>`);
+    tomorrowTasks.slice(0, 3).forEach((t) => lines.push(`  • ${t.text}`));
+  }
+
+  return lines.join('\n');
+}
+
 // ─── Dispatch ───────────────────────────────────────────────────────────────
 
 /**

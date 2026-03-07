@@ -32,6 +32,13 @@ import { serializeGamification } from '../../lib/parser';
 import { RARITY_LABELS } from '../../constants/rewards';
 import { THEME_LIST, getTheme } from '../../constants/themes';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import {
+  loadNotifConfig,
+  saveNotifConfig,
+  setupDailyReminders,
+  requestNotificationPermissions,
+  NotifScheduleConfig,
+} from '../../lib/scheduled-notifications';
 
 const TELEGRAM_TOKEN_KEY = 'telegram_token';
 const TELEGRAM_CHAT_KEY = 'telegram_chat_id';
@@ -56,6 +63,17 @@ export default function SettingsScreen() {
   const [editAvatar, setEditAvatar] = useState('');
   const [editBirthdate, setEditBirthdate] = useState('');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  // Local notifications config
+  const [localNotifConfig, setLocalNotifConfig] = useState<NotifScheduleConfig | null>(null);
+
+  // Load local notif config on mount
+  useState(() => {
+    (async () => {
+      const config = await loadNotifConfig();
+      setLocalNotifConfig(config);
+    })();
+  });
 
   // Load telegram settings on mount
   useState(() => {
@@ -252,6 +270,57 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Local Notifications (Reminders) */}
+        {localNotifConfig && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Rappels locaux</Text>
+            <View style={styles.card}>
+              <Text style={styles.notifHint}>
+                Notifications iOS qui rappellent d'ouvrir l'app. Fonctionnent même quand l'app est fermée.
+              </Text>
+              {([
+                { key: 'morningEnabled' as const, label: '☀️ Matin', hourKey: 'morningHour' as const, minuteKey: 'morningMinute' as const },
+                { key: 'middayEnabled' as const, label: '📋 Midi', hourKey: 'middayHour' as const, minuteKey: 'middayMinute' as const },
+                { key: 'eveningEnabled' as const, label: '🌙 Soir', hourKey: 'eveningHour' as const, minuteKey: 'eveningMinute' as const },
+              ]).map(({ key, label, hourKey, minuteKey }) => (
+                <TouchableOpacity
+                  key={key}
+                  style={styles.notifToggleRow}
+                  onPress={async () => {
+                    const updated = { ...localNotifConfig, [key]: !localNotifConfig[key] };
+                    setLocalNotifConfig(updated);
+                    await saveNotifConfig(updated);
+                    const permitted = await requestNotificationPermissions();
+                    if (permitted) await setupDailyReminders(updated);
+                  }}
+                >
+                  <Text style={styles.notifToggleLabel}>{label}</Text>
+                  <Text style={styles.notifToggleTime}>
+                    {String(localNotifConfig[hourKey]).padStart(2, '0')}:{String(localNotifConfig[minuteKey]).padStart(2, '0')}
+                  </Text>
+                  <Text style={styles.notifToggleIcon}>
+                    {localNotifConfig[key] ? '✅' : '⬜'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+              <TouchableOpacity
+                style={styles.notifToggleRow}
+                onPress={async () => {
+                  const updated = { ...localNotifConfig, rdvAlertEnabled: !localNotifConfig.rdvAlertEnabled };
+                  setLocalNotifConfig(updated);
+                  await saveNotifConfig(updated);
+                }}
+              >
+                <Text style={styles.notifToggleLabel}>🏥 Alertes RDV</Text>
+                <Text style={styles.notifToggleTime}>1h avant</Text>
+                <Text style={styles.notifToggleIcon}>
+                  {localNotifConfig.rdvAlertEnabled ? '✅' : '⬜'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         {/* Active profile */}
         <View style={styles.section}>
@@ -859,6 +928,33 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   emptyText: { fontSize: 14, color: '#9CA3AF', textAlign: 'center', padding: 16 },
+  notifHint: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginBottom: 8,
+    lineHeight: 17,
+  },
+  notifToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+  notifToggleLabel: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  notifToggleTime: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginRight: 8,
+  },
+  notifToggleIcon: {
+    fontSize: 16,
+  },
   gamiStats: { gap: 4 },
   statText: { fontSize: 13, color: '#6B7280' },
   dangerBtn: {
