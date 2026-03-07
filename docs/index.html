@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FamilyFlow — L'app famille qui simplifie votre quotidien</title>
+  <meta name="description" content="FamilyFlow organise tâches, rendez-vous médicaux, journaux bébé et courses en une seule app. Fini le chaos, bonjour la sérénité.">
+  <meta property="og:title" content="FamilyFlow — L'app famille qui simplifie votre quotidien">
+  <meta property="og:description" content="Tâches, RDV, journaux bébé, courses — tout au même endroit.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👨‍👩‍👧‍👦</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#EEF2FF',
+              100: '#E0E7FF',
+              200: '#C7D2FE',
+              300: '#A5B4FC',
+              400: '#818CF8',
+              500: '#6366F1',
+              600: '#4F46E5',
+              700: '#4338CA',
+              800: '#3730A3',
+              900: '#312E81',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #EC4899 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-glow {
+      background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+    }
+    .phone-mockup {
+      background: linear-gradient(145deg, #1F2937 0%, #111827 100%);
+      border-radius: 40px;
+      padding: 12px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255,255,255,0.1) inset;
+    }
+    .phone-screen {
+      background: #FFFFFF;
+      border-radius: 30px;
+      overflow: hidden;
+    }
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    }
+    .feature-card {
+      transition: all 0.3s ease;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    .float-animation {
+      animation: float 6s ease-in-out infinite;
+    }
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.6s ease;
+    }
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body class="bg-white text-gray-900 overflow-x-hidden">
+
+  <!-- NAV -->
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-100">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl">👨‍👩‍👧‍👦</span>
+        <span class="font-bold text-lg text-gray-900">FamilyFlow</span>
+      </div>
+      <div class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
+        <a href="#features" class="hover:text-brand-600 transition-colors">Fonctionnalités</a>
+        <a href="#how-it-works" class="hover:text-brand-600 transition-colors">Comment ça marche</a>
+        <a href="#faq" class="hover:text-brand-600 transition-colors">FAQ</a>
+      </div>
+      <a href="https://apps.apple.com" class="bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold py-2 px-5 rounded-full transition-colors">
+        Télécharger
+      </a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero-glow pt-32 pb-16 md:pt-40 md:pb-24 px-4">
+    <div class="max-w-6xl mx-auto flex flex-col items-center text-center gap-8">
+      <!-- Badge -->
+      <div class="inline-flex items-center gap-2 bg-brand-50 text-brand-700 text-sm font-semibold px-4 py-2 rounded-full border border-brand-100">
+        <span>✨</span>
+        <span>L'app famille tout-en-un</span>
+      </div>
+
+      <!-- Headline -->
+      <h1 class="text-5xl md:text-7xl font-extrabold leading-[1.1] max-w-4xl tracking-tight">
+        Votre famille,<br>
+        <span class="gradient-text">parfaitement organisée</span>
+      </h1>
+
+      <!-- Sub -->
+      <p class="text-lg md:text-xl text-gray-500 max-w-2xl leading-relaxed">
+        Tâches, rendez-vous médicaux, journaux bébé, courses et gamification —
+        tout réuni dans une app pensée pour les parents débordés.
+      </p>
+
+      <!-- CTA -->
+      <div class="flex gap-4 flex-col sm:flex-row">
+        <a href="https://apps.apple.com" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3.5 px-8 rounded-full transition-all hover:shadow-lg hover:shadow-brand-600/25 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          App Store
+        </a>
+        <a href="#features" class="border-2 border-gray-200 text-gray-700 hover:border-brand-300 hover:text-brand-600 font-semibold py-3.5 px-8 rounded-full transition-all">
+          Découvrir →
+        </a>
+      </div>
+
+      <!-- Phone mockup -->
+      <div class="mt-8 float-animation">
+        <div class="phone-mockup w-[280px] md:w-[320px]">
+          <div class="phone-screen aspect-[9/19.5] flex flex-col">
+            <!-- Status bar -->
+            <div class="bg-gray-50 px-6 pt-4 pb-2 flex justify-between items-center text-[10px] text-gray-400 font-semibold">
+              <span>9:41</span>
+              <div class="flex gap-1">
+                <span>📶</span>
+                <span>🔋</span>
+              </div>
+            </div>
+            <!-- App header -->
+            <div class="bg-white px-5 py-3 border-b border-gray-100">
+              <p class="text-[11px] text-gray-400 font-medium">Bonjour Gabriel 👋</p>
+              <p class="text-[15px] font-bold text-gray-900 mt-0.5">Tableau de bord</p>
+            </div>
+            <!-- Content -->
+            <div class="flex-1 bg-gray-50 px-4 py-3 space-y-2.5 overflow-hidden">
+              <!-- Streak card -->
+              <div class="bg-gradient-to-r from-brand-500 to-purple-500 rounded-xl p-3 text-white">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-[10px] opacity-80">Série en cours</p>
+                    <p class="text-[18px] font-bold">🔥 12 jours</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-[10px] opacity-80">Points</p>
+                    <p class="text-[14px] font-bold">2 450</p>
+                  </div>
+                </div>
+              </div>
+              <!-- Tasks -->
+              <div class="bg-white rounded-xl p-3 shadow-sm">
+                <p class="text-[11px] font-bold text-gray-900 mb-2">📋 Tâches du jour</p>
+                <div class="space-y-2">
+                  <div class="flex items-center gap-2">
+                    <div class="w-4 h-4 rounded border-2 border-brand-500 bg-brand-500 flex items-center justify-center">
+                      <span class="text-white text-[8px]">✓</span>
+                    </div>
+                    <span class="text-[11px] text-gray-400 line-through">Bain Maxence</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <div class="w-4 h-4 rounded border-2 border-gray-300"></div>
+                    <span class="text-[11px] text-gray-700">Courses Lidl</span>
+                    <span class="text-[8px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded font-medium ml-auto">#courses</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <div class="w-4 h-4 rounded border-2 border-gray-300"></div>
+                    <span class="text-[11px] text-gray-700">RDV pédiatre</span>
+                    <span class="text-[8px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-medium ml-auto">#urgent</span>
+                  </div>
+                </div>
+              </div>
+              <!-- RDV -->
+              <div class="bg-white rounded-xl p-3 shadow-sm">
+                <p class="text-[11px] font-bold text-gray-900 mb-2">🏥 Prochain RDV</p>
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center text-[14px]">👨‍⚕️</div>
+                  <div>
+                    <p class="text-[11px] font-semibold text-gray-900">Pédiatre — Maxence</p>
+                    <p class="text-[10px] text-gray-400">07/03/2026 à 14:30</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Tab bar -->
+            <div class="bg-white border-t border-gray-100 px-4 py-2 flex justify-around">
+              <div class="flex flex-col items-center gap-0.5">
+                <span class="text-[14px]">🏠</span>
+                <span class="text-[8px] font-semibold text-brand-600">Accueil</span>
+              </div>
+              <div class="flex flex-col items-center gap-0.5">
+                <span class="text-[14px]">📋</span>
+                <span class="text-[8px] text-gray-400">Tâches</span>
+              </div>
+              <div class="flex flex-col items-center gap-0.5">
+                <span class="text-[14px]">📓</span>
+                <span class="text-[8px] text-gray-400">Journal</span>
+              </div>
+              <div class="flex flex-col items-center gap-0.5">
+                <span class="text-[14px]">⚙️</span>
+                <span class="text-[8px] text-gray-400">Réglages</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES GRID -->
+  <section id="features" class="py-20 md:py-28 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-16">
+        <p class="text-brand-600 font-semibold text-sm mb-3 uppercase tracking-wide">Fonctionnalités</p>
+        <h2 class="text-4xl md:text-5xl font-extrabold tracking-tight">Tout ce dont votre famille a besoin</h2>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <!-- Feature items -->
+        <div class="feature-card flex flex-col items-center gap-3 p-6 rounded-2xl bg-white border border-gray-100 hover:border-brand-200">
+          <div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center text-2xl">📋</div>
+          <p class="font-semibold text-center text-sm">Tâches<br>récurrentes</p>
+        </div>
+
+        <div class="feature-card flex flex-col items-center gap-3 p-6 rounded-2xl bg-white border border-gray-100 hover:border-brand-200">
+          <div class="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center text-2xl">🏥</div>
+          <p class="font-semibold text-center text-sm">Rendez-vous<br>médicaux</p>
+        </div>
+
+        <div class="feature-card flex flex-col items-center gap-3 p-6 rounded-2xl bg-white border border-gray-100 hover:border-brand-200">
+          <div class="w-14 h-14 bg-pink-50 rounded-2xl flex items-center justify-center text-2xl">📓</div>
+          <p class="font-semibold text-center text-sm">Journal<br>bébé</p>
+        </div>
+
+        <div class="feature-card flex flex-col items-center gap-3 p-6 rounded-2xl bg-white border border-gray-100 hover:border-brand-200">
+          <div class="w-14 h-14 bg-yellow-50 rounded-2xl flex items-center justify-center text-2xl">🛒</div>
+          <p class="font-semibold text-center text-sm">Liste de<br>courses</p>
+        </div>
+
+        <div class="feature-card flex flex-col items-center gap-3 p-6 rounded-2xl bg-white border border-gray-100 hover:border-brand-200">
+          <div class="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center text-2xl">🎮</div>
+          <p class="font-semibold text-center text-sm">Gamification<br>& récompenses</p>
+        </div>
+
+        <div class="feature-card flex flex-col items-center gap-3 p-6 rounded-2xl bg-white border border-gray-100 hover:border-brand-200">
+          <div class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-2xl">🏠</div>
+          <p class="font-semibold text-center text-sm">Ménage<br>hebdo</p>
+        </div>
+
+        <div class="feature-card flex flex-col items-center gap-3 p-6 rounded-2xl bg-white border border-gray-100 hover:border-brand-200">
+          <div class="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center text-2xl">📦</div>
+          <p class="font-semibold text-center text-sm">Gestion<br>des stocks</p>
+        </div>
+
+        <div class="feature-card flex flex-col items-center gap-3 p-6 rounded-2xl bg-white border border-gray-100 hover:border-brand-200">
+          <div class="w-14 h-14 bg-teal-50 rounded-2xl flex items-center justify-center text-2xl">🔔</div>
+          <p class="font-semibold text-center text-sm">Notifications<br>Telegram</p>
+        </div>
+
+        <div class="feature-card flex flex-col items-center gap-3 p-6 rounded-2xl bg-white border border-gray-100 hover:border-brand-200">
+          <div class="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-2xl">🍼</div>
+          <p class="font-semibold text-center text-sm">Suivi<br>biberons</p>
+        </div>
+
+        <div class="feature-card flex flex-col items-center gap-3 p-6 rounded-2xl bg-white border border-gray-100 hover:border-brand-200">
+          <div class="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-2xl">😴</div>
+          <p class="font-semibold text-center text-sm">Suivi<br>sommeil</p>
+        </div>
+
+        <div class="feature-card flex flex-col items-center gap-3 p-6 rounded-2xl bg-white border border-gray-100 hover:border-brand-200">
+          <div class="w-14 h-14 bg-cyan-50 rounded-2xl flex items-center justify-center text-2xl">🔁</div>
+          <p class="font-semibold text-center text-sm">Tâches auto-<br>replanifiées</p>
+        </div>
+
+        <div class="feature-card flex flex-col items-center gap-3 p-6 rounded-2xl bg-white border border-gray-100 hover:border-brand-200">
+          <div class="w-14 h-14 bg-violet-50 rounded-2xl flex items-center justify-center text-2xl">📱</div>
+          <p class="font-semibold text-center text-sm">Sync<br>multi-device</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how-it-works" class="py-20 md:py-28 px-4 bg-gray-50">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-16">
+        <p class="text-brand-600 font-semibold text-sm mb-3 uppercase tracking-wide">Simple & rapide</p>
+        <h2 class="text-4xl md:text-5xl font-extrabold tracking-tight">Comment ça marche</h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
+        <!-- Step 1 -->
+        <div class="flex flex-col items-center text-center gap-5">
+          <div class="w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center text-brand-600 font-bold text-2xl">
+            1
+          </div>
+          <h3 class="text-xl font-bold">Connectez votre vault</h3>
+          <p class="text-gray-500 leading-relaxed">
+            Pointez l'app vers votre dossier Obsidian. Vos fichiers Markdown sont votre base de données — aucun cloud propriétaire.
+          </p>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="flex flex-col items-center text-center gap-5">
+          <div class="w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center text-brand-600 font-bold text-2xl">
+            2
+          </div>
+          <h3 class="text-xl font-bold">Organisez en un tap</h3>
+          <p class="text-gray-500 leading-relaxed">
+            Cochez vos tâches, ajoutez des RDV, remplissez le journal bébé. Tout est sauvegardé instantanément en Markdown.
+          </p>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="flex flex-col items-center text-center gap-5">
+          <div class="w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center text-brand-600 font-bold text-2xl">
+            3
+          </div>
+          <h3 class="text-xl font-bold">Gagnez des points</h3>
+          <p class="text-gray-500 leading-relaxed">
+            Chaque tâche complétée rapporte des points. Débloquez des loot boxes, maintenez votre série, et rendez l'organisation amusante.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BENEFITS CARDS -->
+  <section class="py-20 md:py-28 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-16">
+        <p class="text-brand-600 font-semibold text-sm mb-3 uppercase tracking-wide">Pourquoi FamilyFlow</p>
+        <h2 class="text-4xl md:text-5xl font-extrabold tracking-tight">Conçu pour les vrais parents</h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="feature-card p-8 border border-gray-100 rounded-2xl bg-white">
+          <div class="w-12 h-12 bg-brand-50 rounded-xl flex items-center justify-center text-xl mb-5">🔒</div>
+          <h3 class="font-bold text-lg mb-3">Vos données, chez vous</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">
+            Pas de cloud. Pas de compte. Vos fichiers Markdown restent sur votre appareil. Vous êtes propriétaire de vos données.
+          </p>
+        </div>
+
+        <div class="feature-card p-8 border border-gray-100 rounded-2xl bg-white">
+          <div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center text-xl mb-5">⚡</div>
+          <h3 class="font-bold text-lg mb-3">Réactif, pas batch</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">
+            Chaque action a un effet immédiat. Cochez une tâche récurrente → elle se replanifie automatiquement. Zéro maintenance.
+          </p>
+        </div>
+
+        <div class="feature-card p-8 border border-gray-100 rounded-2xl bg-white">
+          <div class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-xl mb-5">🎮</div>
+          <h3 class="font-bold text-lg mb-3">L'organisation, en jeu</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">
+            Points, séries, loot boxes, récompenses. Transformez les corvées en défi ludique. Les deux parents jouent !
+          </p>
+        </div>
+
+        <div class="feature-card p-8 border border-gray-100 rounded-2xl bg-white">
+          <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-xl mb-5">📱</div>
+          <h3 class="font-bold text-lg mb-3">Obsidian compatible</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">
+            Fonctionne avec votre vault Obsidian existant. Modifiez depuis l'app ou Obsidian — tout reste synchronisé.
+          </p>
+        </div>
+
+        <div class="feature-card p-8 border border-gray-100 rounded-2xl bg-white">
+          <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center text-xl mb-5">🤖</div>
+          <h3 class="font-bold text-lg mb-3">Bot Telegram intégré</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">
+            Recevez vos résumés du jour, ajoutez aux courses par message. Votre assistant famille dans votre poche.
+          </p>
+        </div>
+
+        <div class="feature-card p-8 border border-gray-100 rounded-2xl bg-white">
+          <div class="w-12 h-12 bg-pink-50 rounded-xl flex items-center justify-center text-xl mb-5">👶</div>
+          <h3 class="font-bold text-lg mb-3">Multi-enfants</h3>
+          <p class="text-gray-500 text-sm leading-relaxed">
+            Journal, tâches et RDV séparés par enfant. Gérez la logistique de chaque petit avec des profils dédiés.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPARISON TABLE -->
+  <section class="py-20 md:py-28 px-4 bg-gray-50">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center mb-16">
+        <p class="text-brand-600 font-semibold text-sm mb-3 uppercase tracking-wide">Comparaison</p>
+        <h2 class="text-4xl md:text-5xl font-extrabold tracking-tight">FamilyFlow vs. le reste</h2>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-gray-100">
+              <th class="text-left p-5 font-semibold text-gray-500 w-1/3"></th>
+              <th class="p-5 font-bold text-brand-600 bg-brand-50/50">
+                <span class="text-lg">👨‍👩‍👧‍👦</span><br>FamilyFlow
+              </th>
+              <th class="p-5 font-semibold text-gray-400">Apps génériques</th>
+              <th class="p-5 font-semibold text-gray-400">Carnet papier</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-gray-50">
+              <td class="p-5 font-medium text-gray-700">Données privées</td>
+              <td class="p-5 text-center text-green-500 font-bold bg-brand-50/30">✅ Local</td>
+              <td class="p-5 text-center text-red-400">❌ Cloud</td>
+              <td class="p-5 text-center text-green-500">✅</td>
+            </tr>
+            <tr class="border-b border-gray-50">
+              <td class="p-5 font-medium text-gray-700">Tâches récurrentes auto</td>
+              <td class="p-5 text-center text-green-500 font-bold bg-brand-50/30">✅</td>
+              <td class="p-5 text-center text-yellow-500">⚠️ Partiel</td>
+              <td class="p-5 text-center text-red-400">❌</td>
+            </tr>
+            <tr class="border-b border-gray-50">
+              <td class="p-5 font-medium text-gray-700">Journal bébé intégré</td>
+              <td class="p-5 text-center text-green-500 font-bold bg-brand-50/30">✅</td>
+              <td class="p-5 text-center text-red-400">❌</td>
+              <td class="p-5 text-center text-yellow-500">⚠️</td>
+            </tr>
+            <tr class="border-b border-gray-50">
+              <td class="p-5 font-medium text-gray-700">Gamification</td>
+              <td class="p-5 text-center text-green-500 font-bold bg-brand-50/30">✅</td>
+              <td class="p-5 text-center text-red-400">❌</td>
+              <td class="p-5 text-center text-red-400">❌</td>
+            </tr>
+            <tr class="border-b border-gray-50">
+              <td class="p-5 font-medium text-gray-700">Obsidian compatible</td>
+              <td class="p-5 text-center text-green-500 font-bold bg-brand-50/30">✅</td>
+              <td class="p-5 text-center text-red-400">❌</td>
+              <td class="p-5 text-center text-red-400">❌</td>
+            </tr>
+            <tr>
+              <td class="p-5 font-medium text-gray-700">Bot Telegram</td>
+              <td class="p-5 text-center text-green-500 font-bold bg-brand-50/30">✅</td>
+              <td class="p-5 text-center text-red-400">❌</td>
+              <td class="p-5 text-center text-red-400">❌</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="py-20 md:py-28 px-4">
+    <div class="max-w-3xl mx-auto">
+      <div class="text-center mb-16">
+        <p class="text-brand-600 font-semibold text-sm mb-3 uppercase tracking-wide">FAQ</p>
+        <h2 class="text-4xl md:text-5xl font-extrabold tracking-tight">Questions fréquentes</h2>
+      </div>
+
+      <div class="space-y-0">
+        <details class="group border-b border-gray-200 py-6">
+          <summary class="flex justify-between items-center cursor-pointer list-none font-semibold text-lg text-gray-900 hover:text-brand-600 transition-colors">
+            FamilyFlow est-il gratuit ?
+            <span class="text-gray-400 group-open:rotate-45 transition-transform text-2xl font-light">+</span>
+          </summary>
+          <p class="mt-4 text-gray-500 leading-relaxed">
+            Oui, FamilyFlow est entièrement gratuit et open source. Il n'y a aucun abonnement, aucune limitation, et aucune publicité.
+          </p>
+        </details>
+
+        <details class="group border-b border-gray-200 py-6">
+          <summary class="flex justify-between items-center cursor-pointer list-none font-semibold text-lg text-gray-900 hover:text-brand-600 transition-colors">
+            Ai-je besoin d'Obsidian ?
+            <span class="text-gray-400 group-open:rotate-45 transition-transform text-2xl font-light">+</span>
+          </summary>
+          <p class="mt-4 text-gray-500 leading-relaxed">
+            FamilyFlow utilise un vault Obsidian comme source de données (fichiers Markdown). Vous pouvez utiliser Obsidian en parallèle pour éditer les mêmes fichiers, mais ce n'est pas obligatoire.
+          </p>
+        </details>
+
+        <details class="group border-b border-gray-200 py-6">
+          <summary class="flex justify-between items-center cursor-pointer list-none font-semibold text-lg text-gray-900 hover:text-brand-600 transition-colors">
+            Mes données sont-elles envoyées sur un serveur ?
+            <span class="text-gray-400 group-open:rotate-45 transition-transform text-2xl font-light">+</span>
+          </summary>
+          <p class="mt-4 text-gray-500 leading-relaxed">
+            Non. Toutes vos données restent en local sur votre appareil. FamilyFlow lit et écrit des fichiers Markdown — aucune donnée n'est envoyée à un serveur. La synchronisation entre appareils passe par Obsidian Sync ou Syncthing, que vous contrôlez.
+          </p>
+        </details>
+
+        <details class="group border-b border-gray-200 py-6">
+          <summary class="flex justify-between items-center cursor-pointer list-none font-semibold text-lg text-gray-900 hover:text-brand-600 transition-colors">
+            Sur quels appareils ça fonctionne ?
+            <span class="text-gray-400 group-open:rotate-45 transition-transform text-2xl font-light">+</span>
+          </summary>
+          <p class="mt-4 text-gray-500 leading-relaxed">
+            L'app est disponible sur iOS (iPhone/iPad). Une version Android est prévue. Le vault Markdown peut être édité sur n'importe quel appareil via Obsidian.
+          </p>
+        </details>
+
+        <details class="group border-b border-gray-200 py-6">
+          <summary class="flex justify-between items-center cursor-pointer list-none font-semibold text-lg text-gray-900 hover:text-brand-600 transition-colors">
+            Qu'est-ce que la gamification ?
+            <span class="text-gray-400 group-open:rotate-45 transition-transform text-2xl font-light">+</span>
+          </summary>
+          <p class="mt-4 text-gray-500 leading-relaxed">
+            Chaque tâche complétée vous rapporte des points. Maintenez une série quotidienne pour des bonus. Accumulez des points pour ouvrir des loot boxes avec des récompenses (massage, restau, grasse mat'...). Ça rend les corvées du quotidien plus amusantes !
+          </p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="py-20 md:py-28 px-4 bg-gradient-to-br from-brand-600 via-purple-600 to-pink-500">
+    <div class="max-w-4xl mx-auto flex flex-col items-center text-center gap-8">
+      <h2 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight">
+        Prêt à organiser<br>votre famille ?
+      </h2>
+      <p class="text-lg text-white/80 max-w-xl">
+        Téléchargez FamilyFlow et transformez le chaos quotidien en routine fluide. Gratuit, sans pub, 100% privé.
+      </p>
+      <div class="flex gap-4 flex-col sm:flex-row">
+        <a href="https://apps.apple.com" class="bg-white text-brand-600 hover:bg-gray-100 font-bold py-4 px-10 rounded-full transition-colors flex items-center gap-2 text-lg shadow-lg">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          Télécharger sur l'App Store
+        </a>
+        <a href="https://github.com/meffysto/FamilyFlow" class="border-2 border-white/40 text-white hover:bg-white/10 font-semibold py-4 px-10 rounded-full transition-colors flex items-center gap-2">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="bg-white border-t border-gray-100 py-12 px-4">
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">👨‍👩‍👧‍👦</span>
+        <span class="font-bold text-gray-900">FamilyFlow</span>
+      </div>
+      <div class="flex gap-6 text-sm text-gray-400">
+        <a href="privacy.html" class="hover:text-gray-600 transition-colors">Confidentialité</a>
+        <a href="https://github.com/meffysto/FamilyFlow" class="hover:text-gray-600 transition-colors">GitHub</a>
+      </div>
+      <p class="text-sm text-gray-400">© 2026 FamilyFlow. Open source.</p>
+    </div>
+  </footer>
+
+  <!-- Scroll animation -->
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
