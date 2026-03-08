@@ -107,6 +107,10 @@ export interface VaultState {
   recipes: Recipe[];
   addRecipe: (category: string, data: { title: string; tags?: string[]; servings?: number; prepTime?: string; cookTime?: string; ingredients: { name: string; quantity?: string; unit?: string }[]; steps: string[] }) => Promise<void>;
   deleteRecipe: (sourceFile: string) => Promise<void>;
+  // Recipe favorites per profile
+  toggleFavorite: (profileId: string, recipePath: string) => Promise<void>;
+  isFavorite: (profileId: string, recipePath: string) => boolean;
+  getFavorites: (profileId: string) => string[];
 }
 
 // Static task files (non-enfant)
@@ -239,6 +243,7 @@ export function useVault(): VaultState {
   const [vacationConfig, setVacationConfig] = useState<VacationConfig | null>(null);
   const [vacationTasks, setVacationTasks] = useState<Task[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [recipeFavorites, setRecipeFavorites] = useState<Record<string, string[]>>({});
   const vaultRef = useRef<VaultManager | null>(null);
   const busyRef = useRef(false); // Guard against AppState race condition
 
@@ -1131,6 +1136,48 @@ export function useVault(): VaultState {
     setRecipes(prev => prev.filter(r => r.sourceFile !== sourceFile));
   }, []);
 
+  // ─── Recipe Favorites (per-profile, persisted in SecureStore) ────────────
+
+  const FAVORITES_KEY_PREFIX = 'recipe_favorites_';
+
+  const loadFavorites = useCallback(async (profileId: string): Promise<string[]> => {
+    try {
+      const raw = await SecureStore.getItemAsync(`${FAVORITES_KEY_PREFIX}${profileId}`);
+      if (raw) return JSON.parse(raw) as string[];
+    } catch { /* ignore */ }
+    return [];
+  }, []);
+
+  // Load favorites for all profiles on init
+  useEffect(() => {
+    (async () => {
+      const all: Record<string, string[]> = {};
+      for (const p of profiles) {
+        all[p.id] = await loadFavorites(p.id);
+      }
+      setRecipeFavorites(all);
+    })();
+  }, [profiles, loadFavorites]);
+
+  const toggleFavorite = useCallback(async (profileId: string, recipePath: string) => {
+    setRecipeFavorites(prev => {
+      const current = prev[profileId] ?? [];
+      const exists = current.includes(recipePath);
+      const updated = exists ? current.filter(p => p !== recipePath) : [...current, recipePath];
+      // Persist async (fire-and-forget)
+      SecureStore.setItemAsync(`${FAVORITES_KEY_PREFIX}${profileId}`, JSON.stringify(updated)).catch(() => {});
+      return { ...prev, [profileId]: updated };
+    });
+  }, []);
+
+  const isFavorite = useCallback((profileId: string, recipePath: string): boolean => {
+    return (recipeFavorites[profileId] ?? []).includes(recipePath);
+  }, [recipeFavorites]);
+
+  const getFavorites = useCallback((profileId: string): string[] => {
+    return recipeFavorites[profileId] ?? [];
+  }, [recipeFavorites]);
+
   const refreshGamification = useCallback(async () => {
     if (!vaultRef.current) return;
     try {
@@ -1228,5 +1275,8 @@ export function useVault(): VaultState {
     recipes,
     addRecipe,
     deleteRecipe,
+    toggleFavorite,
+    isFavorite,
+    getFavorites,
   };
 }

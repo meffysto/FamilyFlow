@@ -179,35 +179,46 @@ export default function LootScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>🏆 Classement</Text>
           <View style={[styles.card, { backgroundColor: colors.card }]}>
-            <FamilyLeaderboard profiles={leaderboard} />
+            <FamilyLeaderboard profiles={leaderboard} gamiHistory={gamiData?.history} />
           </View>
         </View>
 
-        {/* Badges collection */}
+        {/* Badges collection — grouped by profile */}
         {badges.length > 0 && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>🏅 Badges gagnés</Text>
-            <View style={[styles.card, { backgroundColor: colors.card }]}>
-              <View style={styles.badgeGrid}>
-                {badges.map((badge, idx) => {
-                  const rarityKey = badge.action.split(':')[1] as keyof typeof RARITY_COLORS;
-                  const borderColor = RARITY_COLORS[rarityKey] ?? colors.textFaint;
-                  const isMythique = rarityKey === 'mythique';
-                  return (
-                    <View
-                      key={idx}
-                      style={[
-                        styles.badge,
-                        { borderColor, backgroundColor: colors.cardAlt },
-                        isMythique && styles.badgeMythique,
-                      ]}
-                    >
-                      <Text style={styles.badgeEmoji}>{badge.note.split(' ')[0]}</Text>
-                    </View>
-                  );
-                })}
-              </View>
-            </View>
+            {profiles.map((profile) => {
+              const profileBadges = badges.filter((b) => b.profileId === profile.id);
+              if (profileBadges.length === 0) return null;
+              return (
+                <View key={profile.id} style={[styles.card, { backgroundColor: colors.card, marginBottom: 10 }]}>
+                  <View style={styles.badgeProfileHeader}>
+                    <Text style={styles.badgeProfileAvatar}>{profile.avatar}</Text>
+                    <Text style={[styles.badgeProfileName, { color: colors.text }]}>{profile.name}</Text>
+                    <Text style={[styles.badgeProfileCount, { color: colors.textFaint }]}>{profileBadges.length} badge{profileBadges.length > 1 ? 's' : ''}</Text>
+                  </View>
+                  <View style={styles.badgeGrid}>
+                    {profileBadges.map((badge, idx) => {
+                      const rarityKey = badge.action.split(':')[1] as keyof typeof RARITY_COLORS;
+                      const borderColor = RARITY_COLORS[rarityKey] ?? colors.textFaint;
+                      const isMythique = rarityKey === 'mythique';
+                      return (
+                        <View
+                          key={idx}
+                          style={[
+                            styles.badge,
+                            { borderColor, backgroundColor: colors.cardAlt },
+                            isMythique && styles.badgeMythique,
+                          ]}
+                        >
+                          <Text style={styles.badgeEmoji}>{badge.note.split(' ')[0]}</Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+              );
+            })}
           </View>
         )}
 
@@ -463,6 +474,15 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   badgeEmoji: { fontSize: 28 },
+  badgeProfileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  badgeProfileAvatar: { fontSize: 24 },
+  badgeProfileName: { fontSize: 15, fontWeight: '700', flex: 1 },
+  badgeProfileCount: { fontSize: 12, fontWeight: '600' },
   // History
   historyRow: {
     flexDirection: 'row',

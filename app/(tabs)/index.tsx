@@ -652,7 +652,7 @@ export default function DashboardScreen() {
         if (leaderboard.length === 0) return null;
         return (
           <DashboardCard key="leaderboard" title="Classement" icon="🏆" color={primary} onPressMore={() => router.push('/(tabs)/loot')}>
-            <FamilyLeaderboard profiles={leaderboard} compact />
+            <FamilyLeaderboard profiles={leaderboard} compact gamiHistory={gamiData?.history} />
           </DashboardCard>
         );
 

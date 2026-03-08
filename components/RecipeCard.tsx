@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View, Text } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../contexts/ThemeContext';
 import type { AppRecipe } from '../lib/cooklang';
 
@@ -7,10 +8,17 @@ interface RecipeCardProps {
   recipe: AppRecipe;
   onPress: () => void;
   onLongPress?: () => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
 }
 
-export default function RecipeCard({ recipe, onPress, onLongPress }: RecipeCardProps) {
+export default function RecipeCard({ recipe, onPress, onLongPress, isFavorite, onToggleFavorite }: RecipeCardProps) {
   const { primary, colors } = useThemeColors();
+
+  const handleToggleFavorite = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onToggleFavorite?.();
+  };
 
   return (
     <TouchableOpacity
@@ -19,7 +27,17 @@ export default function RecipeCard({ recipe, onPress, onLongPress }: RecipeCardP
       onLongPress={onLongPress}
       activeOpacity={0.7}
     >
-      <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
+      {onToggleFavorite && (
+        <TouchableOpacity
+          style={styles.heartBtn}
+          onPress={handleToggleFavorite}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          activeOpacity={0.6}
+        >
+          <Text style={styles.heartText}>{isFavorite ? '❤️' : '🤍'}</Text>
+        </TouchableOpacity>
+      )}
+      <Text style={[styles.title, { color: colors.text }, onToggleFavorite && { paddingRight: 30 }]} numberOfLines={2}>
         {recipe.title}
       </Text>
 
@@ -69,6 +87,19 @@ export default function RecipeCard({ recipe, onPress, onLongPress }: RecipeCardP
 }
 
 const styles = StyleSheet.create({
+  heartBtn: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 1,
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heartText: {
+    fontSize: 18,
+  },
   card: {
     borderRadius: 16,
     padding: 14,

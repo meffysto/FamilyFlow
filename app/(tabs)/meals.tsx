@@ -53,6 +53,8 @@ export default function MealsScreen() {
     courses, vault,
     addCourseItem, removeCourseItem, mergeCourseIngredients,
     recipes, deleteRecipe,
+    activeProfile,
+    toggleFavorite, isFavorite, getFavorites,
     refresh, isLoading,
   } = useVault();
   const { primary, tint, colors } = useThemeColors();
@@ -85,6 +87,7 @@ export default function MealsScreen() {
   const [recipeSearch, setRecipeSearch] = useState('');
   const [recipeCategory, setRecipeCategory] = useState<string | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
   // Import state
   const [showImport, setShowImport] = useState(false);
@@ -295,8 +298,17 @@ export default function MealsScreen() {
     return [...cats].sort((a, b) => a.localeCompare(b, 'fr'));
   }, [recipes]);
 
+  const profileFavorites = useMemo(() => {
+    if (!activeProfile) return [] as string[];
+    return getFavorites(activeProfile.id);
+  }, [activeProfile, getFavorites]);
+
   const filteredRecipes = useMemo(() => {
     let result = recipes;
+    if (showFavoritesOnly && activeProfile) {
+      const favSet = new Set(profileFavorites);
+      result = result.filter((r) => favSet.has(r.sourceFile));
+    }
     if (recipeCategory) {
       result = result.filter((r) => r.category === recipeCategory);
     }
@@ -309,7 +321,7 @@ export default function MealsScreen() {
       );
     }
     return result;
-  }, [recipes, recipeCategory, recipeSearch]);
+  }, [recipes, recipeCategory, recipeSearch, showFavoritesOnly, activeProfile, profileFavorites]);
 
   // Recipe picker filtered list (for meal editing)
   const pickerRecipes = useMemo(() => {
@@ -729,6 +741,25 @@ export default function MealsScreen() {
                   Toutes
                 </Text>
               </TouchableOpacity>
+              {activeProfile && (
+                <TouchableOpacity
+                  style={[
+                    styles.categoryChip,
+                    { backgroundColor: colors.cardAlt },
+                    showFavoritesOnly && { backgroundColor: tint },
+                  ]}
+                  onPress={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[
+                    styles.categoryChipText,
+                    { color: colors.textSub },
+                    showFavoritesOnly && { color: primary, fontWeight: '700' },
+                  ]}>
+                    {`❤️ Favoris${profileFavorites.length > 0 ? ` (${profileFavorites.length})` : ''}`}
+                  </Text>
+                </TouchableOpacity>
+              )}
               {recipeCategories.map((cat) => (
                 <TouchableOpacity
                   key={cat}
@@ -790,6 +821,8 @@ export default function MealsScreen() {
                   recipe={recipe}
                   onPress={() => setSelectedRecipe(recipe)}
                   onLongPress={() => handleDeleteRecipe(recipe)}
+                  isFavorite={activeProfile ? isFavorite(activeProfile.id, recipe.sourceFile) : false}
+                  onToggleFavorite={activeProfile ? () => toggleFavorite(activeProfile.id, recipe.sourceFile) : undefined}
                 />
               ))
             )}
@@ -805,6 +838,8 @@ export default function MealsScreen() {
           recipe={selectedRecipe}
           onClose={() => setSelectedRecipe(null)}
           onAddToShoppingList={handleAddToShoppingList}
+          isFavorite={activeProfile ? isFavorite(activeProfile.id, selectedRecipe.sourceFile) : false}
+          onToggleFavorite={activeProfile ? () => toggleFavorite(activeProfile.id, selectedRecipe.sourceFile) : undefined}
         />
       )}
 

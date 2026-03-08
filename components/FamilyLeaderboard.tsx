@@ -3,21 +3,37 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Profile } from '../lib/types';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { Profile, GamificationEntry } from '../lib/types';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { levelProgress } from '../lib/gamification';
-import { LOOT_THRESHOLD } from '../constants/rewards';
+import { LOOT_THRESHOLD, RARITY_COLORS } from '../constants/rewards';
 
 interface FamilyLeaderboardProps {
   profiles: Profile[];
   compact?: boolean;   // minimal version for dashboard
+  gamiHistory?: GamificationEntry[];  // loot history for badge display
 }
 
 const MEDALS = ['🥇', '🥈', '🥉'];
 
-export function FamilyLeaderboard({ profiles, compact = false }: FamilyLeaderboardProps) {
+export function FamilyLeaderboard({ profiles, compact = false, gamiHistory = [] }: FamilyLeaderboardProps) {
   const { primary, tint, colors } = useThemeColors();
+
+  // Build per-profile badge map (most recent 6)
+  const badgesByProfile = React.useMemo(() => {
+    const map: Record<string, GamificationEntry[]> = {};
+    for (const entry of gamiHistory) {
+      if (!entry.action.startsWith('loot:')) continue;
+      if (!map[entry.profileId]) map[entry.profileId] = [];
+      map[entry.profileId].push(entry);
+    }
+    // Keep only the last 6 per profile (most recent)
+    for (const key of Object.keys(map)) {
+      map[key] = map[key].slice(-6).reverse();
+    }
+    return map;
+  }, [gamiHistory]);
   if (profiles.length === 0) {
     return (
       <Text style={[styles.empty, { color: colors.textFaint }]}>Aucun profil configuré</Text>
@@ -73,6 +89,29 @@ export function FamilyLeaderboard({ profiles, compact = false }: FamilyLeaderboa
 
               {compact && (
                 <Text style={[styles.compactPoints, { color: colors.textMuted }]}>{profile.points} pts</Text>
+              )}
+
+              {/* Badge strip (last earned badges) */}
+              {(badgesByProfile[profile.id]?.length ?? 0) > 0 && (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.badgeStrip} contentContainerStyle={styles.badgeStripContent}>
+                  {badgesByProfile[profile.id]!.map((badge, bIdx) => {
+                    const rarityKey = badge.action.split(':')[1] as keyof typeof RARITY_COLORS;
+                    const borderColor = RARITY_COLORS[rarityKey] ?? colors.textFaint;
+                    const isMythique = rarityKey === 'mythique';
+                    return (
+                      <View
+                        key={bIdx}
+                        style={[
+                          styles.miniBadge,
+                          { borderColor, backgroundColor: colors.bg },
+                          isMythique && { borderWidth: 2, shadowColor: '#EF4444', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.5, shadowRadius: 6, elevation: 4 },
+                        ]}
+                      >
+                        <Text style={styles.miniBadgeEmoji}>{badge.note.split(' ')[0]}</Text>
+                      </View>
+                    );
+                  })}
+                </ScrollView>
               )}
             </View>
           </View>
@@ -174,5 +213,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 14,
     padding: 16,
+  },
+  badgeStrip: {
+    marginTop: 4,
+  },
+  badgeStripContent: {
+    gap: 5,
+  },
+  miniBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  miniBadgeEmoji: {
+    fontSize: 18,
   },
 });

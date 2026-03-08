@@ -8,6 +8,7 @@ import {
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../contexts/ThemeContext';
 import type { AppRecipe, AppIngredient } from '../lib/cooklang';
 import { scaleIngredients, formatIngredient, renderStepText } from '../lib/cooklang';
@@ -16,9 +17,11 @@ interface RecipeViewerProps {
   recipe: AppRecipe;
   onClose: () => void;
   onAddToShoppingList?: (ingredients: AppIngredient[]) => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
 }
 
-export default function RecipeViewer({ recipe, onClose, onAddToShoppingList }: RecipeViewerProps) {
+export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isFavorite, onToggleFavorite }: RecipeViewerProps) {
   const { primary, tint, colors } = useThemeColors();
   const [servings, setServings] = useState(recipe.servings || 1);
   const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set());
@@ -67,7 +70,20 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList }: R
               <Text style={[styles.category, { color: colors.textMuted }]}>{recipe.category}</Text>
             ) : null}
           </View>
-          <View style={styles.closeBtn} />
+          {onToggleFavorite ? (
+            <TouchableOpacity
+              style={styles.closeBtn}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onToggleFavorite();
+              }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
+              <Text style={styles.heartHeaderText}>{isFavorite ? '❤️' : '🤍'}</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.closeBtn} />
+          )}
         </View>
 
         <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent} showsVerticalScrollIndicator={false}>
@@ -225,6 +241,9 @@ const styles = StyleSheet.create({
   closeBtnText: {
     fontSize: 20,
     fontWeight: '600',
+  },
+  heartHeaderText: {
+    fontSize: 22,
   },
   headerCenter: {
     flex: 1,
