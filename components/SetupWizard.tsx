@@ -41,7 +41,7 @@ const PARENT_AVATARS = ['👨', '👩', '👨‍💻', '👩‍💼', '🧑', '�
 const CHILD_AVATARS = ['👶', '🍼', '👧', '👦', '🧒', '🐣', '🌟'];
 
 export function SetupWizard({ onComplete, onCancel }: SetupWizardProps) {
-  const { primary, tint } = useThemeColors();
+  const { primary, tint, colors } = useThemeColors();
   const [step, setStep] = useState(0);
   const [parents, setParents] = useState<PersonInput[]>([{ name: '', avatar: '👨' }]);
   const [children, setChildren] = useState<ChildInput[]>([{ name: '', avatar: '👶', birthdate: '' }]);
@@ -132,7 +132,7 @@ export function SetupWizard({ onComplete, onCancel }: SetupWizardProps) {
     onRemove: (i: number) => void,
     canRemove: boolean
   ) => (
-    <View key={index} style={styles.personRow}>
+    <View key={index} style={[styles.personRow, { backgroundColor: colors.cardAlt }]}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.avatarRow}>
         {avatars.map((emoji) => (
           <TouchableOpacity
@@ -149,11 +149,11 @@ export function SetupWizard({ onComplete, onCancel }: SetupWizardProps) {
       </ScrollView>
       <View style={styles.nameRow}>
         <TextInput
-          style={styles.nameInput}
+          style={[styles.nameInput, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.card }]}
           value={person.name}
           onChangeText={(t) => onUpdate(index, 'name', t)}
           placeholder="Prénom"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.textFaint}
         />
         {canRemove && (
           <TouchableOpacity style={styles.removeBtn} onPress={() => onRemove(index)}>
@@ -165,7 +165,7 @@ export function SetupWizard({ onComplete, onCancel }: SetupWizardProps) {
   );
 
   const renderChildRow = (child: ChildInput, index: number) => (
-    <View key={index} style={styles.personRow}>
+    <View key={index} style={[styles.personRow, { backgroundColor: colors.cardAlt }]}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.avatarRow}>
         {CHILD_AVATARS.map((emoji) => (
           <TouchableOpacity
@@ -182,18 +182,18 @@ export function SetupWizard({ onComplete, onCancel }: SetupWizardProps) {
       </ScrollView>
       <View style={styles.nameRow}>
         <TextInput
-          style={[styles.nameInput, { flex: 1 }]}
+          style={[styles.nameInput, { flex: 1, borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.card }]}
           value={child.name}
           onChangeText={(t) => updateChild(index, 'name', t)}
           placeholder="Prénom"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.textFaint}
         />
         <TextInput
-          style={[styles.nameInput, { flex: 1 }]}
+          style={[styles.nameInput, { flex: 1, borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.card }]}
           value={child.birthdate}
           onChangeText={(t) => updateChild(index, 'birthdate', t)}
           placeholder="JJ/MM/AAAA"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.textFaint}
           keyboardType="numbers-and-punctuation"
         />
         <TouchableOpacity style={styles.removeBtn} onPress={() => removeChild(index)}>
@@ -212,7 +212,7 @@ export function SetupWizard({ onComplete, onCancel }: SetupWizardProps) {
             key={s}
             style={[
               styles.progressDot,
-              s <= step ? { backgroundColor: primary } : { backgroundColor: '#D1D5DB' },
+              s <= step ? { backgroundColor: primary } : { backgroundColor: colors.separator },
             ]}
           />
         ))}
@@ -221,8 +221,8 @@ export function SetupWizard({ onComplete, onCancel }: SetupWizardProps) {
       <ScrollView style={styles.scrollContent} contentContainerStyle={styles.scrollInner}>
         {step === 0 && (
           <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Qui sont les parents ?</Text>
-            <Text style={styles.stepDesc}>Ajoutez les adultes de la famille.</Text>
+            <Text style={[styles.stepTitle, { color: colors.text }]}>Qui sont les parents ?</Text>
+            <Text style={[styles.stepDesc, { color: colors.textMuted }]}>Ajoutez les adultes de la famille.</Text>
             {parents.map((p, i) =>
               renderPersonRow(p, i, PARENT_AVATARS, updateParent, removeParent, parents.length > 1)
             )}
@@ -236,8 +236,8 @@ export function SetupWizard({ onComplete, onCancel }: SetupWizardProps) {
 
         {step === 1 && (
           <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Et les enfants ?</Text>
-            <Text style={styles.stepDesc}>Ajoutez vos enfants. La date de naissance est optionnelle.</Text>
+            <Text style={[styles.stepTitle, { color: colors.text }]}>Et les enfants ?</Text>
+            <Text style={[styles.stepDesc, { color: colors.textMuted }]}>Ajoutez vos enfants. La date de naissance est optionnelle.</Text>
             {children.map((c, i) => renderChildRow(c, i))}
             {children.length < 6 && (
               <TouchableOpacity style={[styles.addBtn, { borderColor: primary }]} onPress={addChild}>
@@ -245,32 +245,32 @@ export function SetupWizard({ onComplete, onCancel }: SetupWizardProps) {
               </TouchableOpacity>
             )}
             {children.length === 0 && (
-              <Text style={styles.noChildHint}>Vous pourrez toujours en ajouter plus tard.</Text>
+              <Text style={[styles.noChildHint, { color: colors.textFaint }]}>Vous pourrez toujours en ajouter plus tard.</Text>
             )}
           </View>
         )}
 
         {step === 2 && (
           <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Votre famille</Text>
-            <Text style={styles.stepDesc}>Vérifiez les informations avant de créer votre espace.</Text>
+            <Text style={[styles.stepTitle, { color: colors.text }]}>Votre famille</Text>
+            <Text style={[styles.stepDesc, { color: colors.textMuted }]}>Vérifiez les informations avant de créer votre espace.</Text>
 
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>Parents</Text>
+            <View style={[styles.summaryCard, { backgroundColor: colors.cardAlt }]}>
+              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Parents</Text>
               {parents.map((p, i) => (
-                <Text key={i} style={styles.summaryItem}>
+                <Text key={i} style={[styles.summaryItem, { color: colors.text }]}>
                   {p.avatar} {p.name}
                 </Text>
               ))}
             </View>
 
             {children.filter((c) => c.name.trim()).length > 0 && (
-              <View style={styles.summaryCard}>
-                <Text style={styles.summaryLabel}>Enfants</Text>
+              <View style={[styles.summaryCard, { backgroundColor: colors.cardAlt }]}>
+                <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Enfants</Text>
                 {children
                   .filter((c) => c.name.trim())
                   .map((c, i) => (
-                    <Text key={i} style={styles.summaryItem}>
+                    <Text key={i} style={[styles.summaryItem, { color: colors.text }]}>
                       {c.avatar} {c.name}
                       {c.birthdate ? ` — ${c.birthdate}` : ''}
                     </Text>
@@ -278,9 +278,9 @@ export function SetupWizard({ onComplete, onCancel }: SetupWizardProps) {
               </View>
             )}
 
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>Ce qui sera créé</Text>
-              <Text style={styles.summaryDetail}>
+            <View style={[styles.summaryCard, { backgroundColor: colors.cardAlt }]}>
+              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Ce qui sera créé</Text>
+              <Text style={[styles.summaryDetail, { color: colors.textSub }]}>
                 Tâches récurrentes, ménage, courses, stock, repas, rendez-vous, photos, souvenirs
               </Text>
             </View>
@@ -289,15 +289,15 @@ export function SetupWizard({ onComplete, onCancel }: SetupWizardProps) {
       </ScrollView>
 
       {/* Navigation buttons */}
-      <View style={styles.navRow}>
+      <View style={[styles.navRow, { borderTopColor: colors.border }]}>
         <TouchableOpacity
-          style={styles.navBtnSecondary}
+          style={[styles.navBtnSecondary, { borderColor: colors.separator }]}
           onPress={() => {
             if (step === 0) onCancel();
             else setStep(step - 1);
           }}
         >
-          <Text style={styles.navBtnSecondaryText}>{step === 0 ? 'Annuler' : 'Retour'}</Text>
+          <Text style={[styles.navBtnSecondaryText, { color: colors.textMuted }]}>{step === 0 ? 'Annuler' : 'Retour'}</Text>
         </TouchableOpacity>
 
         {step < 2 ? (
@@ -357,15 +357,12 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#111827',
   },
   stepDesc: {
     fontSize: 14,
-    color: '#6B7280',
     marginBottom: 4,
   },
   personRow: {
-    backgroundColor: '#F9FAFB',
     borderRadius: 12,
     padding: 12,
     gap: 10,
@@ -394,12 +391,9 @@ const styles = StyleSheet.create({
   nameInput: {
     flex: 1,
     borderWidth: 1.5,
-    borderColor: '#D1D5DB',
     borderRadius: 8,
     padding: 10,
     fontSize: 15,
-    color: '#111827',
-    backgroundColor: '#FFFFFF',
   },
   removeBtn: {
     width: 32,
@@ -427,12 +421,10 @@ const styles = StyleSheet.create({
   },
   noChildHint: {
     fontSize: 13,
-    color: '#9CA3AF',
     textAlign: 'center',
     fontStyle: 'italic',
   },
   summaryCard: {
-    backgroundColor: '#F9FAFB',
     borderRadius: 12,
     padding: 14,
     gap: 6,
@@ -440,17 +432,14 @@ const styles = StyleSheet.create({
   summaryLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#6B7280',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   summaryItem: {
     fontSize: 16,
-    color: '#111827',
   },
   summaryDetail: {
     fontSize: 13,
-    color: '#4B5563',
     lineHeight: 18,
   },
   navRow: {
@@ -459,20 +448,17 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: Platform.OS === 'ios' ? 30 : 16,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
   },
   navBtnSecondary: {
     flex: 1,
     padding: 14,
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: '#D1D5DB',
     alignItems: 'center',
   },
   navBtnSecondaryText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#6B7280',
   },
   navBtnPrimary: {
     flex: 2,

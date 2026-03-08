@@ -31,7 +31,7 @@ interface MemoryEditorProps {
 }
 
 export function MemoryEditor({ memory, enfants, onSave, onClose }: MemoryEditorProps) {
-  const { primary, tint } = useThemeColors();
+  const { primary, tint, bg, card, text, textSub, textMuted, textFaint, border, inputBg } = useThemeColors();
 
   const [type, setType] = useState<MemoryType>(memory?.type ?? 'premières-fois');
   const [title, setTitle] = useState(memory?.title ?? '');
@@ -75,12 +75,12 @@ export function MemoryEditor({ memory, enfants, onSave, onClose }: MemoryEditorP
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: card }]}>
+      <View style={[styles.header, { borderBottomColor: border }]}>
         <TouchableOpacity onPress={onClose}>
-          <Text style={styles.cancel}>Annuler</Text>
+          <Text style={[styles.cancel, { color: textMuted }]}>Annuler</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>
+        <Text style={[styles.headerTitle, { color: text }]}>
           {memory ? 'Modifier' : 'Nouveau souvenir'}
         </Text>
         <TouchableOpacity onPress={handleSave} disabled={isSaving}>
@@ -92,13 +92,14 @@ export function MemoryEditor({ memory, enfants, onSave, onClose }: MemoryEditorP
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {/* Type */}
-        <Text style={styles.label}>Type</Text>
+        <Text style={[styles.label, { color: textSub }]}>Type</Text>
         <View style={styles.chipRow}>
           {TYPE_OPTIONS.map((opt) => (
             <TouchableOpacity
               key={opt.value}
               style={[
                 styles.chip,
+                { borderColor: border, backgroundColor: inputBg },
                 type === opt.value && { backgroundColor: tint, borderColor: primary },
               ]}
               onPress={() => setType(opt.value)}
@@ -106,6 +107,7 @@ export function MemoryEditor({ memory, enfants, onSave, onClose }: MemoryEditorP
               <Text
                 style={[
                   styles.chipText,
+                  { color: textMuted },
                   type === opt.value && { color: primary, fontWeight: '700' },
                 ]}
               >
@@ -118,13 +120,14 @@ export function MemoryEditor({ memory, enfants, onSave, onClose }: MemoryEditorP
         {/* Enfant */}
         {enfants.length > 1 && (
           <>
-            <Text style={styles.label}>Enfant</Text>
+            <Text style={[styles.label, { color: textSub }]}>Enfant</Text>
             <View style={styles.chipRow}>
               {enfants.map((e) => (
                 <TouchableOpacity
                   key={e.id}
                   style={[
                     styles.chip,
+                    { borderColor: border, backgroundColor: inputBg },
                     enfant === e.name && { backgroundColor: tint, borderColor: primary },
                   ]}
                   onPress={() => setEnfant(e.name)}
@@ -132,6 +135,7 @@ export function MemoryEditor({ memory, enfants, onSave, onClose }: MemoryEditorP
                   <Text
                     style={[
                       styles.chipText,
+                      { color: textMuted },
                       enfant === e.name && { color: primary, fontWeight: '700' },
                     ]}
                   >
@@ -144,36 +148,36 @@ export function MemoryEditor({ memory, enfants, onSave, onClose }: MemoryEditorP
         )}
 
         {/* Titre */}
-        <Text style={styles.label}>Titre *</Text>
+        <Text style={[styles.label, { color: textSub }]}>Titre *</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { borderColor: border, color: text, backgroundColor: inputBg }]}
           value={title}
           onChangeText={setTitle}
           placeholder="Premier sourire, Premier pas..."
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={textFaint}
         />
 
         {/* Description */}
-        <Text style={styles.label}>Description</Text>
+        <Text style={[styles.label, { color: textSub }]}>Description</Text>
         <TextInput
-          style={[styles.input, styles.textArea]}
+          style={[styles.input, styles.textArea, { borderColor: border, color: text, backgroundColor: inputBg }]}
           value={description}
           onChangeText={setDescription}
           placeholder="Raconte ce moment..."
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={textFaint}
           multiline
           numberOfLines={3}
           textAlignVertical="top"
         />
 
         {/* Date */}
-        <Text style={styles.label}>Date</Text>
+        <Text style={[styles.label, { color: textSub }]}>Date</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { borderColor: border, color: text, backgroundColor: inputBg }]}
           value={date}
           onChangeText={setDate}
           placeholder="JJ/MM/AAAA"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={textFaint}
           keyboardType="numbers-and-punctuation"
         />
       </ScrollView>
@@ -182,7 +186,7 @@ export function MemoryEditor({ memory, enfants, onSave, onClose }: MemoryEditorP
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FFFFFF' },
+  safe: { flex: 1 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -190,27 +194,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
   },
-  cancel: { fontSize: 15, color: '#6B7280' },
-  headerTitle: { fontSize: 16, fontWeight: '700', color: '#111827' },
+  cancel: { fontSize: 15 },
+  headerTitle: { fontSize: 16, fontWeight: '700' },
   saveBtn: { fontSize: 15, fontWeight: '700' },
   scroll: { flex: 1 },
   content: { padding: 20, gap: 16, paddingBottom: 40 },
   label: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#374151',
     marginBottom: 4,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E5E7EB',
     borderRadius: 12,
     padding: 12,
     fontSize: 15,
-    color: '#111827',
-    backgroundColor: '#F9FAFB',
   },
   textArea: {
     minHeight: 80,
@@ -225,11 +224,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
-    backgroundColor: '#F9FAFB',
   },
   chipText: {
     fontSize: 14,
-    color: '#6B7280',
   },
 });

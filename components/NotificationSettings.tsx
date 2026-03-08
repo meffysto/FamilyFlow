@@ -31,7 +31,7 @@ interface Props {
 }
 
 export function NotificationSettings({ prefs, activeProfile, onSave, onClose }: Props) {
-  const { primary, tint } = useThemeColors();
+  const { primary, tint, colors } = useThemeColors();
   const [editingNotif, setEditingNotif] = useState<NotificationConfig | null>(null);
   const [showNewCustom, setShowNewCustom] = useState(false);
   const [newLabel, setNewLabel] = useState('');
@@ -116,36 +116,36 @@ export function NotificationSettings({ prefs, activeProfile, onSave, onClose }: 
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.bg }]} contentContainerStyle={styles.content}>
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>Notifications</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: colors.text }]}>Notifications</Text>
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>
             {activeCount} active{activeCount > 1 ? 's' : ''} sur {prefs.notifications.length}
           </Text>
         </View>
         <TouchableOpacity onPress={onClose}>
-          <Text style={styles.closeBtn}>✕</Text>
+          <Text style={[styles.closeBtn, { color: colors.textFaint }]}>✕</Text>
         </TouchableOpacity>
       </View>
 
       {/* Built-in notifications */}
-      <Text style={styles.sectionLabel}>NOTIFICATIONS INTEGRÉES</Text>
-      <View style={styles.card}>
+      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>NOTIFICATIONS INTEGRÉES</Text>
+      <View style={[styles.card, { backgroundColor: colors.card }]}>
         {builtins.map((notif, idx) => (
           <TouchableOpacity
             key={notif.id}
-            style={[styles.notifRow, idx < builtins.length - 1 && styles.notifRowBorder]}
+            style={[styles.notifRow, idx < builtins.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.borderLight }]}
             onPress={() => setEditingNotif(notif)}
             activeOpacity={0.7}
           >
             <Text style={styles.notifEmoji}>{notif.emoji}</Text>
-            <Text style={styles.notifLabel}>{notif.label}</Text>
+            <Text style={[styles.notifLabel, { color: colors.textSub }]}>{notif.label}</Text>
             <Switch
               value={notif.enabled}
               onValueChange={(val) => handleToggle(notif.id, val)}
-              trackColor={{ true: primary, false: '#D1D5DB' }}
+              trackColor={{ true: primary, false: colors.switchOff }}
               thumbColor="#FFFFFF"
             />
           </TouchableOpacity>
@@ -153,30 +153,30 @@ export function NotificationSettings({ prefs, activeProfile, onSave, onClose }: 
       </View>
 
       {/* Custom notifications */}
-      <Text style={styles.sectionLabel}>NOTIFICATIONS PERSONNALISÉES</Text>
+      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>NOTIFICATIONS PERSONNALISÉES</Text>
       {customs.length > 0 ? (
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.card }]}>
           {customs.map((notif, idx) => (
             <TouchableOpacity
               key={notif.id}
-              style={[styles.notifRow, idx < customs.length - 1 && styles.notifRowBorder]}
+              style={[styles.notifRow, idx < customs.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.borderLight }]}
               onPress={() => setEditingNotif(notif)}
               activeOpacity={0.7}
             >
               <Text style={styles.notifEmoji}>{notif.emoji}</Text>
-              <Text style={styles.notifLabel}>{notif.label}</Text>
+              <Text style={[styles.notifLabel, { color: colors.textSub }]}>{notif.label}</Text>
               <Switch
                 value={notif.enabled}
                 onValueChange={(val) => handleToggle(notif.id, val)}
-                trackColor={{ true: primary, false: '#D1D5DB' }}
+                trackColor={{ true: primary, false: colors.switchOff }}
                 thumbColor="#FFFFFF"
               />
             </TouchableOpacity>
           ))}
         </View>
       ) : (
-        <View style={styles.emptyCustom}>
-          <Text style={styles.emptyText}>Aucune notification personnalisée</Text>
+        <View style={[styles.emptyCustom, { backgroundColor: colors.card }]}>
+          <Text style={[styles.emptyText, { color: colors.textFaint }]}>Aucune notification personnalisée</Text>
         </View>
       )}
 
@@ -190,14 +190,14 @@ export function NotificationSettings({ prefs, activeProfile, onSave, onClose }: 
 
       {/* New custom modal */}
       <Modal visible={showNewCustom} animationType="fade" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Nouvelle notification</Text>
+        <View style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}>
+          <View style={[styles.modalCard, { backgroundColor: colors.card }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Nouvelle notification</Text>
 
             <View style={styles.modalField}>
-              <Text style={styles.modalLabel}>Emoji</Text>
+              <Text style={[styles.modalLabel, { color: colors.textMuted }]}>Emoji</Text>
               <TextInput
-                style={[styles.modalInput, { width: 70, textAlign: 'center', fontSize: 24 }]}
+                style={[styles.modalInput, { width: 70, textAlign: 'center', fontSize: 24, borderColor: colors.inputBorder, color: colors.text }]}
                 value={newEmoji}
                 onChangeText={setNewEmoji}
                 maxLength={4}
@@ -205,27 +205,27 @@ export function NotificationSettings({ prefs, activeProfile, onSave, onClose }: 
             </View>
 
             <View style={styles.modalField}>
-              <Text style={styles.modalLabel}>Nom</Text>
+              <Text style={[styles.modalLabel, { color: colors.textMuted }]}>Nom</Text>
               <TextInput
-                style={styles.modalInput}
+                style={[styles.modalInput, { borderColor: colors.inputBorder, color: colors.text }]}
                 value={newLabel}
                 onChangeText={setNewLabel}
                 placeholder="Ex: Rappel courses"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.textFaint}
                 autoFocus
               />
             </View>
 
             <View style={styles.modalActions}>
               <TouchableOpacity
-                style={styles.modalCancelBtn}
+                style={[styles.modalCancelBtn, { borderColor: colors.inputBorder }]}
                 onPress={() => {
                   setShowNewCustom(false);
                   setNewLabel('');
                   setNewEmoji('📌');
                 }}
               >
-                <Text style={styles.modalCancelText}>Annuler</Text>
+                <Text style={[styles.modalCancelText, { color: colors.textMuted }]}>Annuler</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalCreateBtn, { backgroundColor: primary }]}
@@ -242,25 +242,23 @@ export function NotificationSettings({ prefs, activeProfile, onSave, onClose }: 
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F3F4F6' },
+  container: { flex: 1 },
   content: { padding: 20, paddingBottom: 40, gap: 16 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
-  title: { fontSize: 22, fontWeight: '800', color: '#111827' },
-  subtitle: { fontSize: 13, color: '#6B7280', marginTop: 2 },
-  closeBtn: { fontSize: 22, color: '#9CA3AF', padding: 4 },
+  title: { fontSize: 22, fontWeight: '800' },
+  subtitle: { fontSize: 13, marginTop: 2 },
+  closeBtn: { fontSize: 22, padding: 4 },
   sectionLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#6B7280',
     letterSpacing: 0.5,
     marginTop: 4,
   },
   card: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -277,22 +275,19 @@ const styles = StyleSheet.create({
   },
   notifRowBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
   },
   notifEmoji: { fontSize: 22 },
   notifLabel: {
     flex: 1,
     fontSize: 15,
     fontWeight: '600',
-    color: '#374151',
   },
   emptyCustom: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
   },
-  emptyText: { fontSize: 14, color: '#9CA3AF' },
+  emptyText: { fontSize: 14 },
   addBtn: {
     borderRadius: 12,
     padding: 14,
@@ -307,29 +302,25 @@ const styles = StyleSheet.create({
   // New custom modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
   },
   modalCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 24,
     width: '100%',
     maxWidth: 360,
     gap: 16,
   },
-  modalTitle: { fontSize: 18, fontWeight: '800', color: '#111827' },
+  modalTitle: { fontSize: 18, fontWeight: '800' },
   modalField: { gap: 6 },
-  modalLabel: { fontSize: 13, fontWeight: '600', color: '#6B7280' },
+  modalLabel: { fontSize: 13, fontWeight: '600' },
   modalInput: {
     borderWidth: 1.5,
-    borderColor: '#D1D5DB',
     borderRadius: 10,
     padding: 12,
     fontSize: 15,
-    color: '#111827',
   },
   modalActions: { flexDirection: 'row', gap: 10, marginTop: 4 },
   modalCancelBtn: {
@@ -337,10 +328,9 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: '#D1D5DB',
     alignItems: 'center',
   },
-  modalCancelText: { fontSize: 14, fontWeight: '600', color: '#6B7280' },
+  modalCancelText: { fontSize: 14, fontWeight: '600' },
   modalCreateBtn: {
     flex: 2,
     padding: 12,

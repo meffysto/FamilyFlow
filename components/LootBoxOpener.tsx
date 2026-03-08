@@ -55,7 +55,7 @@ export function LootBoxOpener({
   onOpen,
   onClose,
 }: LootBoxOpenerProps) {
-  const { primary } = useThemeColors();
+  const { primary, textFaint } = useThemeColors();
   const theme = getTheme(profileTheme);
   const [phase, setPhase] = useState<Phase>('idle');
   const [result, setResult] = useState<LootBox | null>(null);
@@ -235,7 +235,7 @@ export function LootBoxOpener({
             {profileAvatar} {profileName}
           </Text>
           <TouchableOpacity onPress={handleClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-            <Text style={styles.closeBtn}>✕</Text>
+            <Text style={[styles.closeBtn, { color: textFaint }]}>✕</Text>
           </TouchableOpacity>
         </View>
 
@@ -419,7 +419,6 @@ const styles = StyleSheet.create({
   },
   closeBtn: {
     fontSize: 20,
-    color: '#9CA3AF',
     fontWeight: '600',
   },
   content: {

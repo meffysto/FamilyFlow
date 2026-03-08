@@ -35,7 +35,7 @@ interface Props {
 }
 
 export function NotificationEditor({ config, activeProfile, onSave, onDelete, onClose }: Props) {
-  const { primary, tint } = useThemeColors();
+  const { primary, tint, colors } = useThemeColors();
   const [enabled, setEnabled] = useState(config.enabled);
   const [template, setTemplate] = useState(config.template);
   const [label, setLabel] = useState(config.label);
@@ -131,22 +131,22 @@ export function NotificationEditor({ config, activeProfile, onSave, onDelete, on
   }, [config, template, activeProfile]);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.card }]} contentContainerStyle={styles.content}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onClose}>
           <Text style={[styles.backBtn, { color: primary }]}>← Retour</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>{config.emoji} {config.label}</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{config.emoji} {config.label}</Text>
       </View>
 
       {/* Enable toggle */}
-      <View style={styles.toggleRow}>
-        <Text style={styles.toggleLabel}>Activée</Text>
+      <View style={[styles.toggleRow, { backgroundColor: colors.cardAlt }]}>
+        <Text style={[styles.toggleLabel, { color: colors.textSub }]}>Activée</Text>
         <Switch
           value={enabled}
           onValueChange={setEnabled}
-          trackColor={{ true: primary, false: '#D1D5DB' }}
+          trackColor={{ true: primary, false: colors.switchOff }}
           thumbColor="#FFFFFF"
         />
       </View>
@@ -155,42 +155,42 @@ export function NotificationEditor({ config, activeProfile, onSave, onDelete, on
       {config.isCustom && (
         <View style={styles.customFields}>
           <View style={styles.fieldRow}>
-            <Text style={styles.fieldLabel}>Emoji</Text>
+            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>Emoji</Text>
             <TextInput
-              style={[styles.fieldInput, { width: 60, textAlign: 'center' }]}
+              style={[styles.fieldInput, { width: 60, textAlign: 'center', borderColor: colors.inputBorder, color: colors.text }]}
               value={emoji}
               onChangeText={setEmoji}
               maxLength={4}
             />
           </View>
           <View style={styles.fieldRow}>
-            <Text style={styles.fieldLabel}>Nom</Text>
+            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>Nom</Text>
             <TextInput
-              style={[styles.fieldInput, { flex: 1 }]}
+              style={[styles.fieldInput, { flex: 1, borderColor: colors.inputBorder, color: colors.text }]}
               value={label}
               onChangeText={setLabel}
               placeholder="Nom de la notification"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textFaint}
             />
           </View>
         </View>
       )}
 
       {/* Template editor */}
-      <Text style={styles.sectionLabel}>Message</Text>
+      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Message</Text>
       <TextInput
         ref={inputRef}
-        style={styles.templateInput}
+        style={[styles.templateInput, { borderColor: colors.inputBorder, color: colors.text }]}
         value={template}
         onChangeText={setTemplate}
         multiline
         textAlignVertical="top"
         placeholder="Écrivez votre message ici..."
-        placeholderTextColor="#9CA3AF"
+        placeholderTextColor={colors.textFaint}
       />
 
       {/* Variable chips */}
-      <Text style={styles.sectionLabel}>Variables disponibles</Text>
+      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Variables disponibles</Text>
       <View style={styles.variablesGrid}>
         {config.availableVariables.map((v) => (
           <TouchableOpacity
@@ -199,22 +199,22 @@ export function NotificationEditor({ config, activeProfile, onSave, onDelete, on
             onPress={() => handleInsertVariable(v.key)}
           >
             <Text style={[styles.varKey, { color: primary }]}>{`{{${v.key}}}`}</Text>
-            <Text style={styles.varLabel}>{v.label}</Text>
+            <Text style={[styles.varLabel, { color: colors.textMuted }]}>{v.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
       {/* Preview */}
-      <Text style={styles.sectionLabel}>Aperçu</Text>
-      <View style={styles.previewBox}>
-        <Text style={styles.previewText}>{preview}</Text>
+      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Aperçu</Text>
+      <View style={[styles.previewBox, { backgroundColor: colors.bg, borderColor: colors.border }]}>
+        <Text style={[styles.previewText, { color: colors.textSub }]}>{preview}</Text>
       </View>
 
       {/* Actions */}
       <View style={styles.actions}>
         {!config.isCustom && (
-          <TouchableOpacity style={styles.resetBtn} onPress={handleReset}>
-            <Text style={styles.resetBtnText}>Réinitialiser</Text>
+          <TouchableOpacity style={[styles.resetBtn, { borderColor: colors.separator }]} onPress={handleReset}>
+            <Text style={[styles.resetBtnText, { color: colors.textMuted }]}>Réinitialiser</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity style={[styles.saveBtn, { backgroundColor: primary }]} onPress={handleSave}>
@@ -246,45 +246,39 @@ export function NotificationEditor({ config, activeProfile, onSave, onDelete, on
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  container: { flex: 1 },
   content: { padding: 20, paddingBottom: 40, gap: 16 },
   header: { gap: 8 },
   backBtn: { fontSize: 15, fontWeight: '600' },
-  title: { fontSize: 20, fontWeight: '800', color: '#111827' },
+  title: { fontSize: 20, fontWeight: '800' },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F9FAFB',
     padding: 14,
     borderRadius: 12,
   },
-  toggleLabel: { fontSize: 15, fontWeight: '600', color: '#374151' },
+  toggleLabel: { fontSize: 15, fontWeight: '600' },
   customFields: { gap: 10 },
   fieldRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  fieldLabel: { fontSize: 14, fontWeight: '600', color: '#374151', width: 50 },
+  fieldLabel: { fontSize: 14, fontWeight: '600', width: 50 },
   fieldInput: {
     borderWidth: 1.5,
-    borderColor: '#D1D5DB',
     borderRadius: 10,
     padding: 10,
     fontSize: 15,
-    color: '#111827',
   },
   sectionLabel: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#6B7280',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   templateInput: {
     borderWidth: 1.5,
-    borderColor: '#D1D5DB',
     borderRadius: 12,
     padding: 14,
     fontSize: 14,
-    color: '#111827',
     minHeight: 120,
     lineHeight: 20,
     fontFamily: 'Menlo',
@@ -301,17 +295,14 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   varKey: { fontSize: 11, fontWeight: '700', fontFamily: 'Menlo' },
-  varLabel: { fontSize: 10, color: '#6B7280' },
+  varLabel: { fontSize: 10 },
   previewBox: {
-    backgroundColor: '#F3F4F6',
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
   },
   previewText: {
     fontSize: 14,
-    color: '#374151',
     lineHeight: 20,
   },
   actions: {
@@ -323,10 +314,9 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#D1D5DB',
     alignItems: 'center',
   },
-  resetBtnText: { fontSize: 14, fontWeight: '600', color: '#6B7280' },
+  resetBtnText: { fontSize: 14, fontWeight: '600' },
   saveBtn: {
     flex: 2,
     padding: 14,

@@ -92,7 +92,7 @@ export const TaskCard = React.memo(function TaskCard({
           style={[
             styles.taskText,
             { color: colors.text },
-            task.completed && styles.completedText,
+            task.completed && [styles.completedText, { color: colors.textFaint }],
             isOverdue && styles.overdueText,
           ]}
           numberOfLines={2}
@@ -120,7 +120,7 @@ export const TaskCard = React.memo(function TaskCard({
           )}
           {task.recurrence && (
             <View style={[styles.badge, { backgroundColor: colors.cardAlt }]}>
-              <Text style={styles.recurrenceBadge}>🔁</Text>
+              <Text style={[styles.recurrenceBadge, { color: colors.textFaint }]}>🔁</Text>
             </View>
           )}
         </View>
@@ -190,7 +190,6 @@ const styles = StyleSheet.create({
   },
   completedText: {
     textDecorationLine: 'line-through',
-    color: '#9CA3AF',
   },
   overdueText: {
     color: '#EF4444',
@@ -233,7 +232,6 @@ const styles = StyleSheet.create({
   },
   recurrenceBadge: {
     fontSize: 12,
-    color: '#9CA3AF',
   },
   tags: {
     flexDirection: 'row',

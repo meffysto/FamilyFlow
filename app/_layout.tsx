@@ -12,12 +12,13 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as SecureStore from 'expo-secure-store';
 import { VAULT_PATH_KEY } from '../hooks/useVault';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, useColorScheme } from 'react-native';
 import { configureNotifications } from '../lib/scheduled-notifications';
 
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
   const [hasVault, setHasVault] = useState(false);
+  const systemScheme = useColorScheme();
 
   useEffect(() => {
     // Configure notification handler at app startup
@@ -32,7 +33,7 @@ export default function RootLayout() {
 
   if (!isReady) {
     return (
-      <View style={styles.loading}>
+      <View style={[styles.loading, { backgroundColor: systemScheme === 'dark' ? '#0F172A' : '#F9FAFB' }]}>
         <ActivityIndicator size="large" color="#7C3AED" />
       </View>
     );
@@ -55,6 +56,5 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F9FAFB',
   },
 });

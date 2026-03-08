@@ -25,7 +25,7 @@ interface StockEditorProps {
 }
 
 export function StockEditor({ item, sections, onSave, onDelete, onClose }: StockEditorProps) {
-  const { primary, tint } = useThemeColors();
+  const { primary, tint, colors } = useThemeColors();
   const isEditing = !!item;
 
   const [produit, setProduit] = useState(item?.produit ?? '');
@@ -77,12 +77,12 @@ export function StockEditor({ item, sections, onSave, onDelete, onClose }: Stock
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.card }]}>
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={onClose}>
-          <Text style={styles.headerClose}>✕</Text>
+          <Text style={[styles.headerClose, { color: colors.textFaint }]}>✕</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
           {isEditing ? 'Modifier le produit' : 'Nouveau produit'}
         </Text>
         <TouchableOpacity onPress={handleSave} disabled={isSaving}>
@@ -94,33 +94,34 @@ export function StockEditor({ item, sections, onSave, onDelete, onClose }: Stock
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {/* Produit */}
-        <Text style={styles.label}>📦 Produit *</Text>
+        <Text style={[styles.label, { color: colors.textSub }]}>📦 Produit *</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }]}
           value={produit}
           onChangeText={setProduit}
           placeholder="Couches, Lait, Sérum phy..."
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.textFaint}
         />
 
         {/* Détail */}
-        <Text style={styles.label}>📝 Détail / Taille</Text>
+        <Text style={[styles.label, { color: colors.textSub }]}>📝 Détail / Taille</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }]}
           value={detail}
           onChangeText={setDetail}
           placeholder="T5, 400ml, etc."
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.textFaint}
         />
 
         {/* Catégorie */}
-        <Text style={styles.label}>🏷️ Catégorie *</Text>
+        <Text style={[styles.label, { color: colors.textSub }]}>🏷️ Catégorie *</Text>
         <View style={styles.chipRow}>
           {sections.map((s) => (
             <TouchableOpacity
               key={s}
               style={[
                 styles.chip,
+                { backgroundColor: colors.bg },
                 section === s && { backgroundColor: tint, borderColor: primary },
               ]}
               onPress={() => setSection(s)}
@@ -128,6 +129,7 @@ export function StockEditor({ item, sections, onSave, onDelete, onClose }: Stock
             >
               <Text style={[
                 styles.chipText,
+                { color: colors.textMuted },
                 section === s && { color: primary, fontWeight: '700' },
               ]}>
                 {s}
@@ -139,36 +141,36 @@ export function StockEditor({ item, sections, onSave, onDelete, onClose }: Stock
         {/* Numeric fields row */}
         <View style={styles.numRow}>
           <View style={styles.numField}>
-            <Text style={styles.label}>📊 Quantité</Text>
+            <Text style={[styles.label, { color: colors.textSub }]}>📊 Quantité</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }]}
               value={quantite}
               onChangeText={setQuantite}
               keyboardType="number-pad"
               placeholder="0"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textFaint}
             />
           </View>
           <View style={styles.numField}>
-            <Text style={styles.label}>⚠️ Seuil alerte</Text>
+            <Text style={[styles.label, { color: colors.textSub }]}>⚠️ Seuil alerte</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }]}
               value={seuil}
               onChangeText={setSeuil}
               keyboardType="number-pad"
               placeholder="1"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textFaint}
             />
           </View>
           <View style={styles.numField}>
-            <Text style={styles.label}>🛒 Qté/achat</Text>
+            <Text style={[styles.label, { color: colors.textSub }]}>🛒 Qté/achat</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }]}
               value={qteAchat}
               onChangeText={setQteAchat}
               keyboardType="number-pad"
               placeholder="—"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textFaint}
             />
           </View>
         </View>
@@ -185,33 +187,28 @@ export function StockEditor({ item, sections, onSave, onDelete, onClose }: Stock
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FFFFFF' },
+  safe: { flex: 1 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
   },
-  headerClose: { fontSize: 20, color: '#9CA3AF', padding: 4 },
-  headerTitle: { fontSize: 17, fontWeight: '800', color: '#111827' },
+  headerClose: { fontSize: 20, padding: 4 },
+  headerTitle: { fontSize: 17, fontWeight: '800' },
   headerSave: { fontSize: 15, fontWeight: '700', padding: 4 },
   scroll: { flex: 1 },
   content: { padding: 20, gap: 16, paddingBottom: 40 },
   label: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#374151',
   },
   input: {
     borderWidth: 1.5,
-    borderColor: '#D1D5DB',
     borderRadius: 12,
     padding: 14,
     fontSize: 15,
-    color: '#111827',
-    backgroundColor: '#F9FAFB',
   },
   chipRow: {
     flexDirection: 'row',
@@ -222,14 +219,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 12,
-    backgroundColor: '#F3F4F6',
     borderWidth: 1.5,
     borderColor: 'transparent',
   },
   chipText: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#6B7280',
   },
   numRow: {
     flexDirection: 'row',

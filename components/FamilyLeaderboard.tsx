@@ -17,10 +17,10 @@ interface FamilyLeaderboardProps {
 const MEDALS = ['🥇', '🥈', '🥉'];
 
 export function FamilyLeaderboard({ profiles, compact = false }: FamilyLeaderboardProps) {
-  const { primary, tint } = useThemeColors();
+  const { primary, tint, colors } = useThemeColors();
   if (profiles.length === 0) {
     return (
-      <Text style={styles.empty}>Aucun profil configuré</Text>
+      <Text style={[styles.empty, { color: colors.textFaint }]}>Aucun profil configuré</Text>
     );
   }
 
@@ -32,14 +32,14 @@ export function FamilyLeaderboard({ profiles, compact = false }: FamilyLeaderboa
         const lootProgress = (profile.points % threshold) / threshold;
 
         return (
-          <View key={profile.id} style={[styles.row, compact && styles.rowCompact]}>
+          <View key={profile.id} style={[styles.row, { backgroundColor: colors.cardAlt }, compact && styles.rowCompact]}>
             <Text style={styles.medal}>{MEDALS[index] ?? '  '}</Text>
 
             <Text style={styles.avatar}>{profile.avatar}</Text>
 
             <View style={styles.info}>
               <View style={styles.nameRow}>
-                <Text style={styles.name}>{profile.name}</Text>
+                <Text style={[styles.name, { color: colors.text }]}>{profile.name}</Text>
                 <Text style={[styles.level, { color: primary, backgroundColor: tint }]}>Niv. {profile.level}</Text>
                 {profile.streak > 1 && (
                   <Text style={styles.streak}>🔥 {profile.streak}j</Text>
@@ -53,26 +53,26 @@ export function FamilyLeaderboard({ profiles, compact = false }: FamilyLeaderboa
                 <View style={styles.bars}>
                   {/* XP bar */}
                   <View style={styles.barRow}>
-                    <Text style={styles.barLabel}>XP</Text>
-                    <View style={styles.barTrack}>
+                    <Text style={[styles.barLabel, { color: colors.textFaint }]}>XP</Text>
+                    <View style={[styles.barTrack, { backgroundColor: colors.border }]}>
                       <View style={[styles.barFill, { backgroundColor: primary, width: `${Math.round(progress * 100)}%` as any }]} />
                     </View>
-                    <Text style={styles.barValue}>{profile.points} pts</Text>
+                    <Text style={[styles.barValue, { color: colors.textMuted }]}>{profile.points} pts</Text>
                   </View>
 
                   {/* Loot box progress */}
                   <View style={styles.barRow}>
-                    <Text style={styles.barLabel}>🎁</Text>
-                    <View style={styles.barTrack}>
+                    <Text style={[styles.barLabel, { color: colors.textFaint }]}>🎁</Text>
+                    <View style={[styles.barTrack, { backgroundColor: colors.border }]}>
                       <View style={[styles.barFill, styles.lootFill, { width: `${Math.round(lootProgress * 100)}%` as any }]} />
                     </View>
-                    <Text style={styles.barValue}>{profile.points % threshold}/{threshold}</Text>
+                    <Text style={[styles.barValue, { color: colors.textMuted }]}>{profile.points % threshold}/{threshold}</Text>
                   </View>
                 </View>
               )}
 
               {compact && (
-                <Text style={styles.compactPoints}>{profile.points} pts</Text>
+                <Text style={[styles.compactPoints, { color: colors.textMuted }]}>{profile.points} pts</Text>
               )}
             </View>
           </View>
@@ -89,7 +89,6 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
     borderRadius: 12,
     padding: 12,
     gap: 10,
@@ -118,7 +117,6 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#111827',
   },
   level: {
     fontSize: 12,
@@ -147,14 +145,12 @@ const styles = StyleSheet.create({
   },
   barLabel: {
     fontSize: 11,
-    color: '#9CA3AF',
     width: 20,
     textAlign: 'center',
   },
   barTrack: {
     flex: 1,
     height: 6,
-    backgroundColor: '#E5E7EB',
     borderRadius: 3,
     overflow: 'hidden',
   },
@@ -168,16 +164,13 @@ const styles = StyleSheet.create({
   },
   barValue: {
     fontSize: 11,
-    color: '#6B7280',
     width: 60,
     textAlign: 'right',
   },
   compactPoints: {
     fontSize: 12,
-    color: '#6B7280',
   },
   empty: {
-    color: '#9CA3AF',
     textAlign: 'center',
     fontSize: 14,
     padding: 16,

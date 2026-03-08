@@ -30,7 +30,7 @@ interface VaultPickerProps {
 }
 
 export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPickerProps) {
-  const { primary, tint } = useThemeColors();
+  const { primary, tint, colors } = useThemeColors();
   const [path, setPath] = useState(currentPath ?? '');
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -202,19 +202,19 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
       </TouchableOpacity>
 
       <View style={styles.separator}>
-        <View style={styles.separatorLine} />
-        <Text style={styles.separatorText}>ou connecter un vault existant</Text>
-        <View style={styles.separatorLine} />
+        <View style={[styles.separatorLine, { backgroundColor: colors.separator }]} />
+        <Text style={[styles.separatorText, { color: colors.textFaint }]}>ou connecter un vault existant</Text>
+        <View style={[styles.separatorLine, { backgroundColor: colors.separator }]} />
       </View>
 
-      <Text style={styles.label}>Chemin du vault</Text>
+      <Text style={[styles.label, { color: colors.textSub }]}>Chemin du vault</Text>
 
       <TextInput
-        style={[styles.input, error ? styles.inputError : null]}
+        style={[styles.input, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }, error ? styles.inputError : null]}
         value={path}
         onChangeText={(t) => { setPath(t); setError(null); }}
         placeholder="/chemin/vers/mon-vault"
-        placeholderTextColor="#9CA3AF"
+        placeholderTextColor={colors.textFaint}
         autoCapitalize="none"
         autoCorrect={false}
         returnKeyType="done"
@@ -231,13 +231,13 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
         disabled={!!syncProgress}
       >
         <Text style={[styles.syncBtnText, { color: primary }]}>💻 Sync depuis le Mac</Text>
-        <Text style={styles.syncBtnSub}>Télécharge le vault via Wi-Fi</Text>
+        <Text style={[styles.syncBtnSub, { color: colors.textMuted }]}>Télécharge le vault via Wi-Fi</Text>
       </TouchableOpacity>
 
       {!!syncProgress && (
-        <View style={styles.progressBox}>
+        <View style={[styles.progressBox, { backgroundColor: colors.bg }]}>
           <ActivityIndicator size="small" color={primary} />
-          <Text style={styles.progressText}>{syncProgress}</Text>
+          <Text style={[styles.progressText, { color: colors.textSub }]}>{syncProgress}</Text>
         </View>
       )}
 
@@ -254,7 +254,7 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
           onPress={() => { setPath(COFFRE_DEFAULT); setError(null); }}
         >
           <Text style={[styles.quickFillText, { color: primary }]}>📁 Utiliser le vault coffre</Text>
-          <Text style={styles.quickFillSub}>{COFFRE_DEFAULT}</Text>
+          <Text style={[styles.quickFillSub, { color: colors.textMuted }]}>{COFFRE_DEFAULT}</Text>
         </TouchableOpacity>
       )}
 
@@ -267,8 +267,8 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
 
       <View style={styles.actions}>
         {onCancel && (
-          <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
-            <Text style={styles.cancelText}>Annuler</Text>
+          <TouchableOpacity style={[styles.cancelBtn, { borderColor: colors.separator }]} onPress={onCancel}>
+            <Text style={[styles.cancelText, { color: colors.textMuted }]}>Annuler</Text>
           </TouchableOpacity>
         )}
 
@@ -316,27 +316,21 @@ const styles = StyleSheet.create({
   separatorLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#D1D5DB',
   },
   separatorText: {
     fontSize: 12,
-    color: '#9CA3AF',
   },
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
   },
   input: {
     borderWidth: 1.5,
-    borderColor: '#D1D5DB',
     borderRadius: 10,
     padding: 12,
     fontSize: 13,
-    color: '#111827',
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     minHeight: 60,
-    backgroundColor: '#F9FAFB',
   },
   inputError: {
     borderColor: '#EF4444',
@@ -357,19 +351,16 @@ const styles = StyleSheet.create({
   },
   syncBtnSub: {
     fontSize: 11,
-    color: '#8B5CF6',
   },
   progressBox: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#F3F4F6',
     borderRadius: 10,
     padding: 12,
   },
   progressText: {
     fontSize: 12,
-    color: '#4B5563',
     flex: 1,
   },
   pickerBtn: {
@@ -398,7 +389,6 @@ const styles = StyleSheet.create({
   },
   quickFillSub: {
     fontSize: 11,
-    color: '#8B5CF6',
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   safBtn: {
@@ -438,13 +428,11 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: '#D1D5DB',
     alignItems: 'center',
   },
   cancelText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#6B7280',
   },
   confirmBtn: {
     flex: 2,
