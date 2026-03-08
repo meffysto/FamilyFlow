@@ -32,7 +32,7 @@ import { MealItem, CourseItem, Recipe } from '../../lib/types';
 import { formatIngredient, aggregateIngredients, categorizeIngredient, type AppIngredient } from '../../lib/cooklang';
 import RecipeCard from '../../components/RecipeCard';
 import RecipeViewer from '../../components/RecipeViewer';
-import { importRecipeFromUrl, type ImportResult, type ImportedRecipe, type CookImportResult } from '../../lib/recipe-import';
+import { importRecipeFromUrl, parseTextToRecipe, type ImportResult, type ImportedRecipe, type CookImportResult } from '../../lib/recipe-import';
 import { generateCookFile } from '../../lib/cooklang';
 
 const DAYS_ORDER = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
@@ -53,6 +53,7 @@ export default function MealsScreen() {
     courses, vault,
     addCourseItem, removeCourseItem, mergeCourseIngredients,
     recipes, deleteRecipe,
+    scanAllCookFiles, moveCookToRecipes,
     activeProfile,
     toggleFavorite, isFavorite, getFavorites,
     refresh, isLoading,
@@ -65,7 +66,7 @@ export default function MealsScreen() {
 
   // Open on specific tab when navigating from dashboard
   useEffect(() => {
-    if (tabParam === 'courses' || tabParam === 'recettes') setTab(tabParam);
+    if (tabParam === 'repas' || tabParam === 'courses' || tabParam === 'recettes') setTab(tabParam);
   }, [tabParam]);
 
   // Meal edit state
@@ -96,6 +97,18 @@ export default function MealsScreen() {
   const [importStatus, setImportStatus] = useState('');
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [importCategory, setImportCategory] = useState('');
+
+  // Scanner vault state
+  const [showScanner, setShowScanner] = useState(false);
+  const [scanResults, setScanResults] = useState<{ path: string; title: string }[]>([]);
+  const [scanLoading, setScanLoading] = useState(false);
+  const [scanMoveCategory, setScanMoveCategory] = useState('Importées');
+
+  // Texte → recette state
+  const [showTextImport, setShowTextImport] = useState(false);
+  const [textImportValue, setTextImportValue] = useState('');
+  const [textImportResult, setTextImportResult] = useState<ImportResult | null>(null);
+  const [textImportCategory, setTextImportCategory] = useState('Importées');
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -438,6 +451,76 @@ export default function MealsScreen() {
     }
   }, [importResult, importCategory, vault, refresh]);
 
+  // ─── Scanner vault logic ────────────────────────────────────────
+
+  const handleScanVault = useCallback(async () => {
+    setScanLoading(true);
+    try {
+      const results = await scanAllCookFiles();
+      setScanResults(results);
+      if (results.length === 0) {
+        Alert.alert('Aucun résultat', 'Aucun fichier .cook trouvé en dehors du dossier Recettes.');
+      }
+    } catch (e) {
+      Alert.alert('Erreur', String(e));
+    } finally {
+      setScanLoading(false);
+    }
+  }, [scanAllCookFiles]);
+
+  const handleMoveCook = useCallback(async (sourcePath: string, title: string) => {
+    const cat = scanMoveCategory.trim() || 'Importées';
+    try {
+      await moveCookToRecipes(sourcePath, cat);
+      setScanResults(prev => prev.filter(r => r.path !== sourcePath));
+      Alert.alert('Déplacée !', `« ${title} » ajoutée dans ${cat}.`);
+    } catch (e) {
+      Alert.alert('Erreur', String(e));
+    }
+  }, [moveCookToRecipes, scanMoveCategory]);
+
+  // ─── Text import logic ──────────────────────────────────────────
+
+  const handleTextImportParse = useCallback(() => {
+    const text = textImportValue.trim();
+    if (!text) return;
+    try {
+      const result = parseTextToRecipe(text);
+      setTextImportResult(result);
+      if (result.type === 'parsed' && result.data.tags?.[0]) {
+        setTextImportCategory(result.data.tags[0]);
+      }
+    } catch (e) {
+      Alert.alert('Erreur', String(e instanceof Error ? e.message : e));
+    }
+  }, [textImportValue]);
+
+  const handleTextImportSave = useCallback(async () => {
+    if (!textImportResult || textImportResult.type !== 'parsed') return;
+    const cat = textImportCategory.trim() || 'Importées';
+    try {
+      if (!vault) throw new Error('Vault non initialisé');
+      const d = textImportResult.data;
+      const cookContent = generateCookFile({
+        title: d.title, tags: d.tags, servings: d.servings,
+        prepTime: d.prepTime, cookTime: d.cookTime,
+        ingredients: d.ingredients.map(text => ({ name: text })),
+        steps: d.steps,
+      });
+      const fileName = d.title.replace(/[/\\:*?"<>|]/g, '').trim();
+      const relPath = `03 - Cuisine/Recettes/${cat}/${fileName}.cook`;
+      await vault.ensureDir(`03 - Cuisine/Recettes/${cat}`);
+      await vault.writeFile(relPath, cookContent);
+      await refresh();
+      Alert.alert('Importée !', `« ${d.title} » ajoutée dans ${cat}.`);
+      setShowTextImport(false);
+      setTextImportValue('');
+      setTextImportResult(null);
+    } catch (e) {
+      Alert.alert('Erreur', String(e));
+    }
+  }, [textImportResult, textImportCategory, vault, refresh]);
+
   // ─── Header ──────────────────────────────────────────────────────
 
   const headerTitle = tab === 'repas' ? '🍽️ Repas' : tab === 'courses' ? '🛒 Courses' : '📖 Recettes';
@@ -550,45 +633,57 @@ export default function MealsScreen() {
                   dayMeals.map((meal) => {
                     const linkedRecipe = resolveRecipe(meal.recipeRef);
                     return (
-                      <TouchableOpacity
-                        key={meal.id}
-                        style={[styles.mealRow, { borderTopColor: colors.cardAlt }]}
-                        onPress={() => openEdit(meal)}
-                        activeOpacity={0.6}
-                      >
-                        <Text style={styles.mealEmoji}>
-                          {MEAL_EMOJI[meal.mealType] ?? '🍴'}
-                        </Text>
-                        <View style={styles.mealInfo}>
-                          <Text style={[styles.mealType, { color: colors.textMuted }]}>{meal.mealType}</Text>
-                          <Text style={[styles.mealText, { color: colors.text }, !meal.text && styles.mealTextEmpty]} numberOfLines={1}>
-                            {meal.text || 'Pas encore planifié'}
+                      <View key={meal.id} style={{ gap: 0 }}>
+                        <TouchableOpacity
+                          style={[styles.mealRow, { borderTopColor: colors.cardAlt }]}
+                          onPress={() => openEdit(meal)}
+                          activeOpacity={0.6}
+                        >
+                          <Text style={styles.mealEmoji}>
+                            {MEAL_EMOJI[meal.mealType] ?? '🍴'}
                           </Text>
+                          <View style={styles.mealInfo}>
+                            <Text style={[styles.mealType, { color: colors.textMuted }]}>{meal.mealType}</Text>
+                            <Text style={[styles.mealText, { color: colors.text }, !meal.text && styles.mealTextEmpty]} numberOfLines={1}>
+                              {meal.text || 'Pas encore planifié'}
+                            </Text>
+                            {linkedRecipe && (
+                              <View style={styles.mealRecipeMeta}>
+                                {linkedRecipe.prepTime ? (
+                                  <Text style={[styles.mealRecipeMetaText, { color: colors.textMuted }]}>
+                                    ⏱ {linkedRecipe.prepTime}
+                                  </Text>
+                                ) : null}
+                                {linkedRecipe.servings > 0 && (
+                                  <Text style={[styles.mealRecipeMetaText, { color: colors.textMuted }]}>
+                                    👤 {linkedRecipe.servings}
+                                  </Text>
+                                )}
+                                <Text style={[styles.mealRecipeMetaText, { color: colors.textMuted }]}>
+                                  🥕 {linkedRecipe.ingredients.length}
+                                </Text>
+                              </View>
+                            )}
+                          </View>
                           {linkedRecipe && (
-                            <View style={styles.mealRecipeMeta}>
-                              {linkedRecipe.prepTime ? (
-                                <Text style={[styles.mealRecipeMetaText, { color: colors.textMuted }]}>
-                                  ⏱ {linkedRecipe.prepTime}
-                                </Text>
-                              ) : null}
-                              {linkedRecipe.servings > 0 && (
-                                <Text style={[styles.mealRecipeMetaText, { color: colors.textMuted }]}>
-                                  👤 {linkedRecipe.servings}
-                                </Text>
-                              )}
-                              <Text style={[styles.mealRecipeMetaText, { color: colors.textMuted }]}>
-                                🥕 {linkedRecipe.ingredients.length}
-                              </Text>
+                            <View style={[styles.recipeBadge, { backgroundColor: primary + '18' }]}>
+                              <Text style={[styles.recipeBadgeText, { color: primary }]}>📖</Text>
                             </View>
                           )}
-                        </View>
+                          <Text style={styles.editIcon}>✏️</Text>
+                        </TouchableOpacity>
                         {linkedRecipe && (
-                          <View style={[styles.recipeBadge, { backgroundColor: primary + '18' }]}>
-                            <Text style={[styles.recipeBadgeText, { color: primary }]}>📖</Text>
-                          </View>
+                          <TouchableOpacity
+                            style={[styles.viewRecipeBtn, { backgroundColor: tint }]}
+                            onPress={() => setSelectedRecipe(linkedRecipe)}
+                            activeOpacity={0.7}
+                          >
+                            <Text style={[styles.viewRecipeBtnText, { color: primary }]}>
+                              📖 Voir la recette
+                            </Text>
+                          </TouchableOpacity>
                         )}
-                        <Text style={styles.editIcon}>✏️</Text>
-                      </TouchableOpacity>
+                      </View>
                     );
                   })
                 )}
@@ -791,16 +886,36 @@ export default function MealsScreen() {
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
             }
           >
-            {/* Import button */}
-            <TouchableOpacity
-              style={[styles.importBtn, { backgroundColor: tint, borderColor: primary + '30' }]}
-              onPress={() => setShowImport(true)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.importBtnText, { color: primary }]}>
-                🌐 Importer depuis une URL
-              </Text>
-            </TouchableOpacity>
+            {/* Import buttons */}
+            <View style={{ gap: 8 }}>
+              <TouchableOpacity
+                style={[styles.importBtn, { backgroundColor: tint, borderColor: primary + '30' }]}
+                onPress={() => setShowImport(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.importBtnText, { color: primary }]}>
+                  🌐 Importer depuis une URL
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.importBtn, { backgroundColor: tint, borderColor: primary + '30' }]}
+                onPress={() => { setShowTextImport(true); setTextImportValue(''); setTextImportResult(null); }}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.importBtnText, { color: primary }]}>
+                  📋 Coller une recette (texte)
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.importBtn, { backgroundColor: tint, borderColor: primary + '30' }]}
+                onPress={() => { setShowScanner(true); setScanResults([]); }}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.importBtnText, { color: primary }]}>
+                  🔍 Scanner le vault
+                </Text>
+              </TouchableOpacity>
+            </View>
 
             {filteredRecipes.length === 0 ? (
               <View style={styles.emptyState}>
@@ -1125,6 +1240,188 @@ export default function MealsScreen() {
               </View>
             )}
           </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Scanner vault modal */}
+      <Modal
+        visible={showScanner}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowScanner(false)}
+      >
+        <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
+          <View style={[styles.pickerHeader, { backgroundColor: colors.card, borderBottomColor: colors.borderLight }]}>
+            <TouchableOpacity onPress={() => setShowScanner(false)}>
+              <Text style={[styles.pickerClose, { color: colors.textMuted }]}>✕</Text>
+            </TouchableOpacity>
+            <Text style={[styles.pickerHeaderTitle, { color: colors.text }]}>Scanner le vault</Text>
+            <View style={{ width: 28 }} />
+          </View>
+
+          <ScrollView style={styles.scroll} contentContainerStyle={{ padding: 16, gap: 16 }}>
+            <Text style={[{ fontSize: 14, color: colors.textSub, lineHeight: 20 }]}>
+              Recherche des fichiers .cook en dehors du dossier Recettes pour les importer.
+            </Text>
+
+            <TouchableOpacity
+              style={[styles.importFetchBtn, { backgroundColor: primary }, scanLoading && { opacity: 0.6 }]}
+              onPress={handleScanVault}
+              disabled={scanLoading}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.importFetchBtnText}>
+                {scanLoading ? '⏳ Scan en cours…' : '🔍 Lancer le scan'}
+              </Text>
+            </TouchableOpacity>
+
+            {scanResults.length > 0 && (
+              <View style={{ gap: 12 }}>
+                <Text style={[styles.importLabel, { color: colors.text }]}>
+                  {scanResults.length} fichier{scanResults.length > 1 ? 's' : ''} trouvé{scanResults.length > 1 ? 's' : ''}
+                </Text>
+
+                <View style={{ gap: 6 }}>
+                  <Text style={[styles.importLabel, { color: colors.text }]}>Catégorie de destination</Text>
+                  <TextInput
+                    style={[styles.recipeSearchInput, { backgroundColor: colors.cardAlt, color: colors.text, borderColor: colors.borderLight }]}
+                    value={scanMoveCategory}
+                    onChangeText={setScanMoveCategory}
+                    placeholder="Ex: Plats, Desserts…"
+                    placeholderTextColor={colors.textMuted}
+                  />
+                </View>
+
+                {scanResults.map((item) => (
+                  <View
+                    key={item.path}
+                    style={[styles.importPreview, { backgroundColor: colors.card, borderColor: colors.borderLight }]}
+                  >
+                    <Text style={[styles.importPreviewTitle, { color: colors.text }]} numberOfLines={1}>
+                      {item.title}
+                    </Text>
+                    <Text style={[styles.importPreviewMeta, { color: colors.textMuted }]} numberOfLines={1}>
+                      📁 {item.path}
+                    </Text>
+                    <TouchableOpacity
+                      style={[styles.importFetchBtn, { backgroundColor: '#22C55E', marginTop: 8 }]}
+                      onPress={() => handleMoveCook(item.path, item.title)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.importFetchBtnText}>📂 Déplacer dans Recettes</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Text import modal */}
+      <Modal
+        visible={showTextImport}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => { setShowTextImport(false); setTextImportResult(null); }}
+      >
+        <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
+          <View style={[styles.pickerHeader, { backgroundColor: colors.card, borderBottomColor: colors.borderLight }]}>
+            <TouchableOpacity onPress={() => { setShowTextImport(false); setTextImportResult(null); }}>
+              <Text style={[styles.pickerClose, { color: colors.textMuted }]}>✕</Text>
+            </TouchableOpacity>
+            <Text style={[styles.pickerHeaderTitle, { color: colors.text }]}>Coller une recette</Text>
+            <View style={{ width: 28 }} />
+          </View>
+
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1 }}
+          >
+            <ScrollView style={styles.scroll} contentContainerStyle={{ padding: 16, gap: 16 }}>
+              <View style={{ gap: 8 }}>
+                <Text style={[styles.importLabel, { color: colors.text }]}>Texte de la recette</Text>
+                <TextInput
+                  style={[styles.recipeSearchInput, {
+                    backgroundColor: colors.cardAlt, color: colors.text, borderColor: colors.borderLight,
+                    minHeight: 200, textAlignVertical: 'top', paddingTop: 12,
+                  }]}
+                  value={textImportValue}
+                  onChangeText={setTextImportValue}
+                  placeholder={'Collez ici le texte brut de la recette\n(copié depuis un mail, un livre, WhatsApp…)'}
+                  placeholderTextColor={colors.textMuted}
+                  multiline
+                  autoFocus
+                />
+                <TouchableOpacity
+                  style={[styles.importFetchBtn, { backgroundColor: primary }, !textImportValue.trim() && { opacity: 0.5 }]}
+                  onPress={handleTextImportParse}
+                  disabled={!textImportValue.trim()}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.importFetchBtnText}>🔍 Analyser le texte</Text>
+                </TouchableOpacity>
+              </View>
+
+              {textImportResult && textImportResult.type === 'parsed' && (
+                <View style={[styles.importPreview, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
+                  <Text style={[styles.importPreviewTitle, { color: colors.text }]}>
+                    {textImportResult.data.title}
+                  </Text>
+                  <Text style={[styles.importPreviewMeta, { color: colors.textMuted }]}>
+                    {textImportResult.data.servings ? `👤 ${textImportResult.data.servings} pers.` : ''}
+                    {textImportResult.data.prepTime ? `  ⏱ ${textImportResult.data.prepTime}` : ''}
+                    {textImportResult.data.cookTime ? `  🔥 ${textImportResult.data.cookTime}` : ''}
+                  </Text>
+                  <Text style={[styles.importPreviewMeta, { color: colors.textMuted }]}>
+                    🥕 {textImportResult.data.ingredients.length} ingrédient{textImportResult.data.ingredients.length > 1 ? 's' : ''} · {textImportResult.data.steps.length} étape{textImportResult.data.steps.length > 1 ? 's' : ''}
+                  </Text>
+
+                  {/* Ingredients preview */}
+                  {textImportResult.data.ingredients.length > 0 && (
+                    <View style={{ marginTop: 8, gap: 2 }}>
+                      <Text style={[{ fontSize: 13, fontWeight: '600', color: colors.text }]}>Ingrédients :</Text>
+                      {textImportResult.data.ingredients.map((ing, i) => (
+                        <Text key={i} style={[{ fontSize: 13, color: colors.textSub }]}>• {ing}</Text>
+                      ))}
+                    </View>
+                  )}
+
+                  {/* Steps preview */}
+                  {textImportResult.data.steps.length > 0 && (
+                    <View style={{ marginTop: 8, gap: 2 }}>
+                      <Text style={[{ fontSize: 13, fontWeight: '600', color: colors.text }]}>Étapes :</Text>
+                      {textImportResult.data.steps.map((step, i) => (
+                        <Text key={i} style={[{ fontSize: 13, color: colors.textSub }]} numberOfLines={2}>
+                          {i + 1}. {step}
+                        </Text>
+                      ))}
+                    </View>
+                  )}
+
+                  {/* Category */}
+                  <View style={{ marginTop: 12, gap: 6 }}>
+                    <Text style={[styles.importLabel, { color: colors.text }]}>Catégorie</Text>
+                    <TextInput
+                      style={[styles.recipeSearchInput, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.borderLight }]}
+                      value={textImportCategory}
+                      onChangeText={setTextImportCategory}
+                      placeholder="Ex: Plats, Desserts, Entrées…"
+                      placeholderTextColor={colors.textMuted}
+                    />
+                  </View>
+
+                  <TouchableOpacity
+                    style={[styles.importFetchBtn, { backgroundColor: '#22C55E', marginTop: 12 }]}
+                    onPress={handleTextImportSave}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.importFetchBtnText}>✅ Sauvegarder dans le vault</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </ScrollView>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
@@ -1585,6 +1882,20 @@ const styles = StyleSheet.create({
   pickerOptionText: {
     fontSize: 15,
     fontWeight: '500',
+  },
+  // View recipe button on meal row
+  viewRecipeBtn: {
+    marginLeft: 38,
+    marginTop: 2,
+    marginBottom: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  viewRecipeBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   // Import
   importBtn: {

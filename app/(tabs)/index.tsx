@@ -38,6 +38,8 @@ import { DashboardCard } from '../../components/DashboardCard';
 import { TaskCard } from '../../components/TaskCard';
 import { FamilyLeaderboard } from '../../components/FamilyLeaderboard';
 import { RDVEditor } from '../../components/RDVEditor';
+import RecipeViewer from '../../components/RecipeViewer';
+import type { AppRecipe } from '../../lib/cooklang';
 import { buildLeaderboard, processActiveRewards } from '../../lib/gamification';
 import {
   dispatchNotification,
@@ -124,6 +126,7 @@ export default function DashboardScreen() {
   const [sectionPrefs, setSectionPrefs] = useState<SectionPref[]>(DEFAULT_SECTIONS);
   const [prefsModalVisible, setPrefsModalVisible] = useState(false);
   const [newCourseText, setNewCourseText] = useState('');
+  const [dashboardRecipe, setDashboardRecipe] = useState<AppRecipe | null>(null);
 
   // Load persisted section prefs on mount
   useEffect(() => {
@@ -408,18 +411,35 @@ export default function DashboardScreen() {
       case 'meals':
         if (todayMeals.length === 0) return null;
         return (
-          <DashboardCard key="meals" title="Repas du jour" icon="🍽️" count={todayMeals.length} color="#EC4899" onPressMore={() => router.push('/(tabs)/meals')}>
-            {todayMeals.map((meal) => (
-              <View key={meal.id} style={styles.mealRow}>
-                <Text style={styles.mealEmoji}>
-                  {meal.mealType === 'Petit-déj' ? '🥐' : meal.mealType === 'Déjeuner' ? '🍽️' : '🌙'}
-                </Text>
-                <View style={styles.mealInfo}>
-                  <Text style={[styles.mealType, { color: colors.textMuted }]}>{meal.mealType}</Text>
-                  <Text style={[styles.mealText, { color: colors.text }]}>{meal.text}</Text>
-                </View>
-              </View>
-            ))}
+          <DashboardCard key="meals" title="Repas du jour" icon="🍽️" count={todayMeals.length} color="#EC4899" onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'repas' } })}>
+            {todayMeals.map((meal) => {
+              const linkedRecipe = meal.recipeRef ? recipes.find(r => {
+                const ref = r.sourceFile.replace('03 - Cuisine/Recettes/', '').replace('.cook', '');
+                return ref === meal.recipeRef;
+              }) : undefined;
+              return (
+                <TouchableOpacity
+                  key={meal.id}
+                  style={styles.mealRow}
+                  onPress={linkedRecipe
+                    ? () => setDashboardRecipe(linkedRecipe)
+                    : () => router.push({ pathname: '/(tabs)/meals', params: { tab: 'repas' } })
+                  }
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.mealEmoji}>
+                    {meal.mealType === 'Petit-déj' ? '🥐' : meal.mealType === 'Déjeuner' ? '🍽️' : '🌙'}
+                  </Text>
+                  <View style={styles.mealInfo}>
+                    <Text style={[styles.mealType, { color: colors.textMuted }]}>{meal.mealType}</Text>
+                    <Text style={[styles.mealText, { color: colors.text }]}>{meal.text}</Text>
+                  </View>
+                  {linkedRecipe && (
+                    <Text style={{ fontSize: 14, color: primary }}>📖</Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </DashboardCard>
         );
 
@@ -779,6 +799,14 @@ export default function DashboardScreen() {
           }}
         />
       </Modal>
+
+      {/* Recipe viewer from dashboard */}
+      {dashboardRecipe && (
+        <RecipeViewer
+          recipe={dashboardRecipe}
+          onClose={() => setDashboardRecipe(null)}
+        />
+      )}
     </SafeAreaView>
   );
 }

@@ -107,6 +107,10 @@ export interface VaultState {
   recipes: Recipe[];
   addRecipe: (category: string, data: { title: string; tags?: string[]; servings?: number; prepTime?: string; cookTime?: string; ingredients: { name: string; quantity?: string; unit?: string }[]; steps: string[] }) => Promise<void>;
   deleteRecipe: (sourceFile: string) => Promise<void>;
+  /** Scan tout le vault pour des .cook en dehors de 03 - Cuisine/Recettes/ */
+  scanAllCookFiles: () => Promise<{ path: string; title: string }[]>;
+  /** Déplacer un .cook vers le dossier Recettes */
+  moveCookToRecipes: (sourcePath: string, category: string) => Promise<void>;
   // Recipe favorites per profile
   toggleFavorite: (profileId: string, recipePath: string) => Promise<void>;
   isFavorite: (profileId: string, recipePath: string) => boolean;
@@ -1136,6 +1140,52 @@ export function useVault(): VaultState {
     setRecipes(prev => prev.filter(r => r.sourceFile !== sourceFile));
   }, []);
 
+  /** Scanner tout le vault pour des .cook en dehors du dossier Recettes */
+  const scanAllCookFiles = useCallback(async (): Promise<{ path: string; title: string }[]> => {
+    if (!vaultRef.current) return [];
+    const vault = vaultRef.current;
+    // Scanner les dossiers racine du vault
+    const topDirs = await vault.listDir('');
+    const results: { path: string; title: string }[] = [];
+    for (const dir of topDirs) {
+      // Ignorer le dossier Recettes (déjà scanné) et les dossiers cachés
+      if (dir.startsWith('.') || dir === '03 - Cuisine') continue;
+      try {
+        const cookFiles = await vault.listFilesRecursive(dir, '.cook');
+        for (const filePath of cookFiles) {
+          // Extraire le titre du nom de fichier
+          const parts = filePath.split('/');
+          const fileName = parts[parts.length - 1].replace('.cook', '');
+          results.push({ path: filePath, title: fileName });
+        }
+      } catch {
+        // skip unreadable dirs
+      }
+    }
+    // Scanner aussi les .cook à la racine
+    const rootEntries = await vault.listDir('');
+    for (const entry of rootEntries) {
+      if (entry.endsWith('.cook')) {
+        results.push({ path: entry, title: entry.replace('.cook', '') });
+      }
+    }
+    return results;
+  }, []);
+
+  /** Déplacer un .cook vers le dossier Recettes */
+  const moveCookToRecipes = useCallback(async (sourcePath: string, category: string) => {
+    if (!vaultRef.current) return;
+    const vault = vaultRef.current;
+    const content = await vault.readFile(sourcePath);
+    const parts = sourcePath.split('/');
+    const fileName = parts[parts.length - 1];
+    const destPath = `${RECIPES_DIR}/${category}/${fileName}`;
+    await vault.ensureDir(`${RECIPES_DIR}/${category}`);
+    await vault.writeFile(destPath, content);
+    await vault.deleteFile(sourcePath);
+    await loadVaultData(vault);
+  }, [loadVaultData]);
+
   // ─── Recipe Favorites (per-profile, persisted in SecureStore) ────────────
 
   const FAVORITES_KEY_PREFIX = 'recipe_favorites_';
@@ -1275,6 +1325,8 @@ export function useVault(): VaultState {
     recipes,
     addRecipe,
     deleteRecipe,
+    scanAllCookFiles,
+    moveCookToRecipes,
     toggleFavorite,
     isFavorite,
     getFavorites,
