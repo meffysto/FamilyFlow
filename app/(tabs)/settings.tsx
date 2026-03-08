@@ -21,6 +21,7 @@ import {
   ActivityIndicator,
   Animated,
   Platform,
+  Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
@@ -66,6 +67,7 @@ export default function SettingsScreen() {
   const [editName, setEditName] = useState('');
   const [editAvatar, setEditAvatar] = useState('');
   const [editBirthdate, setEditBirthdate] = useState('');
+  const [editPropre, setEditPropre] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   // Vacation mode state
@@ -268,6 +270,7 @@ export default function SettingsScreen() {
     setEditName(profile.name);
     setEditAvatar(profile.avatar);
     setEditBirthdate(profile.birthdate ?? '');
+    setEditPropre(profile.propre ?? false);
   }, []);
 
   const handleSaveProfile = useCallback(async () => {
@@ -286,6 +289,7 @@ export default function SettingsScreen() {
         name: editName.trim(),
         avatar: editAvatar.trim() || '👤',
         birthdate: editBirthdate || undefined,
+        ...(editingProfile.role === 'enfant' ? { propre: editPropre } : {}),
       });
       setEditingProfile(null);
     } catch (e) {
@@ -293,7 +297,7 @@ export default function SettingsScreen() {
     } finally {
       setIsSavingProfile(false);
     }
-  }, [editingProfile, editName, editAvatar, editBirthdate, updateProfile]);
+  }, [editingProfile, editName, editAvatar, editBirthdate, editPropre, updateProfile]);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
@@ -895,6 +899,21 @@ export default function SettingsScreen() {
               placeholderTextColor="#9CA3AF"
               keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default'}
             />
+
+            {editingProfile?.role === 'enfant' && (
+              <View style={styles.propreRow}>
+                <View style={styles.propreLabel}>
+                  <Text style={styles.inputLabel}>🚽 Propre</Text>
+                  <Text style={styles.propreHint}>Masque la section couches du journal</Text>
+                </View>
+                <Switch
+                  value={editPropre}
+                  onValueChange={setEditPropre}
+                  trackColor={{ false: '#D1D5DB', true: primary + '80' }}
+                  thumbColor={editPropre ? primary : '#F3F4F6'}
+                />
+              </View>
+            )}
           </ScrollView>
         </SafeAreaView>
       </Modal>
@@ -1231,6 +1250,21 @@ const styles = StyleSheet.create({
     fontSize: 32,
     textAlign: 'center',
     paddingVertical: 8,
+  },
+  propreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    paddingVertical: 8,
+  },
+  propreLabel: {
+    flex: 1,
+    gap: 2,
+  },
+  propreHint: {
+    fontSize: 12,
+    color: '#9CA3AF',
   },
   avatarPreview: {
     fontSize: 48,

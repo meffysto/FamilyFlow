@@ -555,6 +555,7 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'level' 
         avatar: currentProps.avatar ?? '👤',
         birthdate: currentProps.birthdate,
         ageCategory,
+        propre: currentProps.propre === 'true',
         theme,
       });
     }
@@ -758,9 +759,19 @@ export function todayJournalPath(enfant: string): string {
 }
 
 /** Generate a new journal entry from template */
-export function generateJournalTemplate(enfant: string): string {
+export function generateJournalTemplate(enfant: string, options?: { propre?: boolean }): string {
   const today = format(new Date(), 'yyyy-MM-dd');
   const todayDisplay = format(new Date(), 'dd/MM/yyyy');
+
+  const couchesSection = options?.propre ? '' : `
+## Couches
+| Heure | Type | Notes |
+| ----- | ---- | ----- |
+|       | | |
+|       | | |
+|       | | |
+|       | | |
+`;
 
   return `---
 date: ${today}
@@ -781,15 +792,7 @@ tags:
 |       | Biberon | | |
 |       | Biberon | | |
 |       | Tétée | | |
-
-## Couches
-| Heure | Type | Notes |
-| ----- | ---- | ----- |
-|       | | |
-|       | | |
-|       | | |
-|       | | |
-
+${couchesSection}
 ## Sommeil
 | Début | Fin | Durée | Notes |
 | ----- | --- | ----- | ----- |

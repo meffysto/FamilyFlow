@@ -60,6 +60,7 @@ export interface Profile {
   avatar: string;           // single emoji
   birthdate?: string;       // YYYY-MM-DD or YYYY
   ageCategory?: AgeCategory; // stored at scaffold, used for upgrade detection
+  propre?: boolean;          // potty-trained — hides diaper sections in journal/tasks
   theme?: import('../constants/themes').ProfileTheme;  // visual theme
   points: number;
   level: number;

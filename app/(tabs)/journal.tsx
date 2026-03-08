@@ -221,7 +221,7 @@ export default function JournalScreen() {
     try {
       const template = isViewingAdultTab && activeProfile
         ? generateAdultJournalTemplate(activeProfile.name)
-        : generateJournalTemplate(selectedEnfantName);
+        : generateJournalTemplate(selectedEnfantName, { propre: selectedEnfant?.propre });
       await vault.writeFile(todayPath, template);
       setJournalContent(template);
       setJournalExists(true);

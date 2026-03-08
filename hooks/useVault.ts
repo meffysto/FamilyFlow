@@ -712,7 +712,7 @@ export function useVault(): VaultState {
     }
   }, []);
 
-  const updateProfile = useCallback(async (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string }) => {
+  const updateProfile = useCallback(async (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string; propre?: boolean }) => {
     if (!vaultRef.current) return;
     try {
       const content = await vaultRef.current.readFile(FAMILLE_FILE);
