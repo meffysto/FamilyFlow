@@ -361,7 +361,7 @@ const INGREDIENT_FR: Record<string, string> = {
   hazelnut: 'noisette', hazelnuts: 'noisettes', peanut: 'cacahuète', peanuts: 'cacahuètes',
   // Adjective forms
   'grated nutmeg': 'muscade râpée', 'ground nutmeg': 'muscade moulue',
-  'grated cheese': 'fromage râpé', 'melted butter': 'beurre fondu',
+  'grated cheese': 'fromage râpé',
   'fresh cream': 'crème fraîche', 'whipped cream': 'crème fouettée',
   'chopped parsley': 'persil haché', 'fresh basil': 'basilic frais',
   'minced garlic': 'ail émincé', 'diced onion': 'oignon coupé',

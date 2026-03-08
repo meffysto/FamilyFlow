@@ -603,7 +603,7 @@ export function LootBoxOpener({
   onOpen,
   onClose,
 }: LootBoxOpenerProps) {
-  const { textFaint } = useThemeColors();
+  const { colors: { textFaint } } = useThemeColors();
   const theme = getTheme(profileTheme);
   const [phase, setPhase] = useState<Phase>('idle');
   const [result, setResult] = useState<LootBox | null>(null);

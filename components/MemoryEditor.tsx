@@ -31,7 +31,8 @@ interface MemoryEditorProps {
 }
 
 export function MemoryEditor({ memory, enfants, onSave, onClose }: MemoryEditorProps) {
-  const { primary, tint, bg, card, text, textSub, textMuted, textFaint, border, inputBg } = useThemeColors();
+  const { primary, tint, colors } = useThemeColors();
+  const { bg, card, text, textSub, textMuted, textFaint, border, inputBg } = colors;
 
   const [type, setType] = useState<MemoryType>(memory?.type ?? 'premières-fois');
   const [title, setTitle] = useState(memory?.title ?? '');
