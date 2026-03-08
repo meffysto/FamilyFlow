@@ -54,6 +54,7 @@ export default function MealsScreen() {
     addCourseItem, removeCourseItem, mergeCourseIngredients,
     recipes, deleteRecipe,
     scanAllCookFiles, moveCookToRecipes,
+    profiles,
     activeProfile,
     toggleFavorite, isFavorite, getFavorites,
     refresh, isLoading,
@@ -955,6 +956,7 @@ export default function MealsScreen() {
           onAddToShoppingList={handleAddToShoppingList}
           isFavorite={activeProfile ? isFavorite(activeProfile.id, selectedRecipe.sourceFile) : false}
           onToggleFavorite={activeProfile ? () => toggleFavorite(activeProfile.id, selectedRecipe.sourceFile) : undefined}
+          familySize={profiles.length}
         />
       )}
 

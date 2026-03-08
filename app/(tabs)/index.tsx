@@ -805,6 +805,7 @@ export default function DashboardScreen() {
         <RecipeViewer
           recipe={dashboardRecipe}
           onClose={() => setDashboardRecipe(null)}
+          familySize={profiles.length}
         />
       )}
     </SafeAreaView>

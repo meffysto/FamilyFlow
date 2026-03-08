@@ -19,11 +19,13 @@ interface RecipeViewerProps {
   onAddToShoppingList?: (ingredients: AppIngredient[]) => void;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
+  /** Nombre de personnes dans la famille — utilisé comme portions par défaut */
+  familySize?: number;
 }
 
-export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isFavorite, onToggleFavorite }: RecipeViewerProps) {
+export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isFavorite, onToggleFavorite, familySize }: RecipeViewerProps) {
   const { primary, tint, colors } = useThemeColors();
-  const [servings, setServings] = useState(recipe.servings || 1);
+  const [servings, setServings] = useState(familySize || recipe.servings || 1);
   const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set());
 
   const baseServings = recipe.servings || 1;
