@@ -31,7 +31,10 @@ import { NotificationSettings } from '../../components/NotificationSettings';
 import { testTelegram, sendTelegram, buildWeeklyRecapText, sendWeeklyRecap, buildMonthlyRecapText } from '../../lib/telegram';
 import { serializeGamification } from '../../lib/parser';
 import { RARITY_LABELS } from '../../constants/rewards';
+import { format } from 'date-fns';
 import { THEME_LIST, getTheme } from '../../constants/themes';
+
+const CHILD_AVATARS = ['👶', '🧒', '👦', '👧', '🍼', '🐣', '🎒', '👼'];
 import { useThemeColors } from '../../contexts/ThemeContext';
 import {
   loadNotifConfig,
@@ -46,7 +49,7 @@ const TELEGRAM_CHAT_KEY = 'telegram_chat_id';
 const TELEGRAM_GP_CHAT_KEY = 'telegram_gp_chat_id';
 
 export default function SettingsScreen() {
-  const { vaultPath, profiles, activeProfile, vault, setVaultPath, setActiveProfile, refresh, gamiData, notifPrefs, saveNotifPrefs, updateProfileTheme, updateProfile, memories, photoDates, getPhotoUri, vacationConfig, isVacationActive, activateVacation, deactivateVacation } = useVault();
+  const { vaultPath, profiles, activeProfile, vault, setVaultPath, setActiveProfile, refresh, gamiData, notifPrefs, saveNotifPrefs, updateProfileTheme, updateProfile, memories, photoDates, getPhotoUri, vacationConfig, isVacationActive, activateVacation, deactivateVacation, addChild, convertToBorn } = useVault();
   const { primary, tint, setThemeId, colors, darkModePreference, setDarkModePreference } = useThemeColors();
 
   const [showVaultPicker, setShowVaultPicker] = useState(false);
@@ -69,6 +72,20 @@ export default function SettingsScreen() {
   const [editBirthdate, setEditBirthdate] = useState('');
   const [editPropre, setEditPropre] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  // Add child modal
+  const [showAddChild, setShowAddChild] = useState(false);
+  const [newChildName, setNewChildName] = useState('');
+  const [newChildAvatar, setNewChildAvatar] = useState('👶');
+  const [newChildBirthdate, setNewChildBirthdate] = useState('');
+  const [newChildPropre, setNewChildPropre] = useState(false);
+  const [newChildGrossesse, setNewChildGrossesse] = useState(false);
+  const [newChildDateTerme, setNewChildDateTerme] = useState('');
+  const [isAddingChild, setIsAddingChild] = useState(false);
+
+  // Convert to born modal
+  const [convertingProfile, setConvertingProfile] = useState<string | null>(null);
+  const [bornDate, setBornDate] = useState('');
 
   // Vacation mode state
   const [showVacationForm, setShowVacationForm] = useState(false);
@@ -298,6 +315,53 @@ export default function SettingsScreen() {
       setIsSavingProfile(false);
     }
   }, [editingProfile, editName, editAvatar, editBirthdate, editPropre, updateProfile]);
+
+  const handleAddChild = useCallback(async () => {
+    if (!newChildName.trim()) {
+      Alert.alert('Champ requis', 'Le prénom est obligatoire.');
+      return;
+    }
+    setIsAddingChild(true);
+    try {
+      await addChild({
+        name: newChildName.trim(),
+        avatar: newChildAvatar,
+        birthdate: newChildGrossesse ? '' : newChildBirthdate,
+        propre: newChildPropre,
+        ...(newChildGrossesse ? { statut: 'grossesse' as const, dateTerme: newChildDateTerme } : {}),
+      });
+      setShowAddChild(false);
+      setNewChildName('');
+      setNewChildAvatar('👶');
+      setNewChildBirthdate('');
+      setNewChildPropre(false);
+      setNewChildGrossesse(false);
+      setNewChildDateTerme('');
+    } catch (e) {
+      Alert.alert('Erreur', String(e));
+    } finally {
+      setIsAddingChild(false);
+    }
+  }, [newChildName, newChildAvatar, newChildBirthdate, newChildPropre, newChildGrossesse, newChildDateTerme, addChild]);
+
+  const handleConvertToBorn = useCallback(async () => {
+    if (!convertingProfile || !bornDate) {
+      Alert.alert('Champ requis', 'La date de naissance est obligatoire.');
+      return;
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(bornDate)) {
+      Alert.alert('Format invalide', 'La date doit être au format AAAA-MM-JJ.');
+      return;
+    }
+    try {
+      await convertToBorn(convertingProfile, bornDate);
+      setConvertingProfile(null);
+      setBornDate('');
+      Alert.alert('Bienvenue !', 'Les tâches et jalons ont été mis à jour pour le nouveau bébé.');
+    } catch (e) {
+      Alert.alert('Erreur', String(e));
+    }
+  }, [convertingProfile, bornDate, convertToBorn]);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
@@ -700,10 +764,20 @@ export default function SettingsScreen() {
                       <View style={styles.profileInfo}>
                         <Text style={[styles.profileName, { color: colors.text }]}>{profile.name}</Text>
                         <Text style={[styles.profileMeta, { color: colors.textMuted }]}>
-                          {profile.role} · Niv. {profile.level} · {profile.points} pts
-                          {profile.birthdate ? ` · 🎂 ${profile.birthdate}` : ''}
+                          {profile.statut === 'grossesse' ? '🤰 Grossesse' : profile.role} · Niv. {profile.level} · {profile.points} pts
+                          {profile.statut === 'grossesse' && profile.dateTerme ? ` · Terme: ${profile.dateTerme}` : ''}
+                          {profile.statut !== 'grossesse' && profile.birthdate ? ` · 🎂 ${profile.birthdate}` : ''}
                         </Text>
                       </View>
+                      {profile.statut === 'grossesse' && (
+                        <TouchableOpacity
+                          style={[styles.bornBtn, { backgroundColor: primary }]}
+                          onPress={() => { setConvertingProfile(profile.id); setBornDate(format(new Date(), 'yyyy-MM-dd')); }}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.bornBtnText}>C'est né !</Text>
+                        </TouchableOpacity>
+                      )}
                       {profile.lootBoxesAvailable > 0 && (
                         <Text style={styles.profileLoot}>🎁 ×{profile.lootBoxesAvailable}</Text>
                       )}
@@ -770,6 +844,13 @@ export default function SettingsScreen() {
             <Text style={styles.profileHint}>
               Tapez sur un profil pour modifier le nom, l'avatar ou la date de naissance.
             </Text>
+            <TouchableOpacity
+              style={[styles.addChildBtn, { borderColor: primary }]}
+              onPress={() => setShowAddChild(true)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.addChildBtnText, { color: primary }]}>+ Ajouter un enfant</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -1014,6 +1095,147 @@ export default function SettingsScreen() {
               </TouchableOpacity>
             </View>
           </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Add Child Modal */}
+      <Modal
+        visible={showAddChild}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowAddChild(false)}
+      >
+        <SafeAreaView style={styles.modalSafe}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setShowAddChild(false)}>
+              <Text style={styles.modalClose}>✕</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Ajouter un enfant</Text>
+            <TouchableOpacity onPress={handleAddChild} disabled={isAddingChild}>
+              <Text style={[styles.profileSaveBtn, { color: primary }]}>
+                {isAddingChild ? '...' : 'Ajouter'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalContent}>
+            <Text style={styles.inputLabel}>👤 Prénom</Text>
+            <TextInput
+              style={styles.input}
+              value={newChildName}
+              onChangeText={setNewChildName}
+              placeholder="Prénom"
+              placeholderTextColor="#9CA3AF"
+              autoFocus
+            />
+
+            <Text style={styles.inputLabel}>😀 Avatar</Text>
+            <View style={styles.avatarGrid}>
+              {CHILD_AVATARS.map((emoji) => (
+                <TouchableOpacity
+                  key={emoji}
+                  style={[styles.avatarBtn, newChildAvatar === emoji && { backgroundColor: tint, borderColor: primary }]}
+                  onPress={() => setNewChildAvatar(emoji)}
+                >
+                  <Text style={styles.avatarEmoji}>{emoji}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={styles.propreRow}>
+              <View style={styles.propreLabel}>
+                <Text style={styles.inputLabel}>🤰 Grossesse en cours</Text>
+                <Text style={styles.propreHint}>Active le suivi grossesse au lieu des tâches bébé</Text>
+              </View>
+              <Switch
+                value={newChildGrossesse}
+                onValueChange={(v) => { setNewChildGrossesse(v); if (v) setNewChildPropre(false); }}
+                trackColor={{ false: '#D1D5DB', true: primary + '80' }}
+                thumbColor={newChildGrossesse ? primary : '#F3F4F6'}
+              />
+            </View>
+
+            {newChildGrossesse ? (
+              <>
+                <Text style={styles.inputLabel}>📅 Date terme prévue</Text>
+                <TextInput
+                  style={styles.input}
+                  value={newChildDateTerme}
+                  onChangeText={setNewChildDateTerme}
+                  placeholder="AAAA-MM-JJ"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="number-pad"
+                  maxLength={10}
+                />
+              </>
+            ) : (
+              <>
+                <Text style={styles.inputLabel}>🎂 Année ou date de naissance</Text>
+                <TextInput
+                  style={styles.input}
+                  value={newChildBirthdate}
+                  onChangeText={setNewChildBirthdate}
+                  placeholder="AAAA ou AAAA-MM-JJ"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="number-pad"
+                  maxLength={10}
+                />
+                <Text style={styles.propreHint}>L'année adapte les tâches à l'âge (bébé, enfant, ado)</Text>
+
+                <View style={styles.propreRow}>
+                  <View style={styles.propreLabel}>
+                    <Text style={styles.inputLabel}>🚽 Propre</Text>
+                    <Text style={styles.propreHint}>Masque la section couches du journal</Text>
+                  </View>
+                  <Switch
+                    value={newChildPropre}
+                    onValueChange={setNewChildPropre}
+                    trackColor={{ false: '#D1D5DB', true: primary + '80' }}
+                    thumbColor={newChildPropre ? primary : '#F3F4F6'}
+                  />
+                </View>
+              </>
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Convert to Born Modal */}
+      <Modal
+        visible={!!convertingProfile}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setConvertingProfile(null)}
+      >
+        <SafeAreaView style={styles.modalSafe}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setConvertingProfile(null)}>
+              <Text style={styles.modalClose}>✕</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Bébé est né !</Text>
+            <View />
+          </View>
+          <View style={styles.modalContent}>
+            <Text style={styles.bornEmoji}>🎉</Text>
+            <Text style={styles.inputLabel}>📅 Date de naissance</Text>
+            <TextInput
+              style={styles.input}
+              value={bornDate}
+              onChangeText={setBornDate}
+              placeholder="AAAA-MM-JJ"
+              placeholderTextColor="#9CA3AF"
+              keyboardType="number-pad"
+              maxLength={10}
+              autoFocus
+            />
+            <Text style={styles.propreHint}>Les tâches grossesse seront remplacées par les tâches bébé</Text>
+            <TouchableOpacity
+              style={[styles.primaryBtn, { backgroundColor: primary, marginTop: 20 }]}
+              onPress={handleConvertToBorn}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.primaryBtnText}>Confirmer la naissance</Text>
+            </TouchableOpacity>
+          </View>
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
@@ -1265,6 +1487,46 @@ const styles = StyleSheet.create({
   propreHint: {
     fontSize: 12,
     color: '#9CA3AF',
+  },
+  addChildBtn: {
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  addChildBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  avatarGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+  avatarBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  avatarEmoji: { fontSize: 24 },
+  bornBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginRight: 4,
+  },
+  bornBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  bornEmoji: {
+    fontSize: 64,
+    textAlign: 'center',
+    marginBottom: 16,
   },
   avatarPreview: {
     fontSize: 48,

@@ -395,6 +395,129 @@ export class VaultManager {
     }
   }
 
+  /**
+   * Add a child to an existing vault (post-setup).
+   * Creates profile in famille.md + gamification.md + all child files/dirs.
+   */
+  async addChild(child: { name: string; avatar: string; birthdate: string; propre?: boolean; statut?: 'grossesse'; dateTerme?: string }): Promise<void> {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const id = child.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+    const isGrossesse = child.statut === 'grossesse';
+    const ageCategory = isGrossesse ? undefined : this._getAgeCategory(child.birthdate);
+
+    // 1. Append profile to famille.md
+    const familleContent = await this.readFile('famille.md');
+    const profileSection = `\n### ${id}\nname: ${child.name}\nrole: enfant\navatar: ${child.avatar}${
+      child.birthdate ? `\nbirthdate: ${child.birthdate}` : ''
+    }${ageCategory ? `\nageCategory: ${ageCategory}` : ''
+    }${child.propre ? '\npropre: true' : ''
+    }${isGrossesse ? '\nstatut: grossesse' : ''
+    }${child.dateTerme ? `\ndateTerme: ${child.dateTerme}` : ''}\n`;
+    await this.writeFile('famille.md', familleContent.trimEnd() + '\n' + profileSection);
+
+    // 2. Append to gamification.md
+    const gamiContent = await this.readFile('gamification.md');
+    const gamiSection = `\n## ${child.name}\npoints: 0\nlevel: 1\nstreak: 0\nloot_boxes_available: 0\nmultiplier: 1\nmultiplier_remaining: 0\n`;
+    // Insert before "## Journal des gains" if it exists
+    const journalIdx = gamiContent.indexOf('## Journal des gains');
+    if (journalIdx > 0) {
+      const before = gamiContent.slice(0, journalIdx);
+      const after = gamiContent.slice(journalIdx);
+      await this.writeFile('gamification.md', before.trimEnd() + '\n' + gamiSection + '\n' + after);
+    } else {
+      await this.writeFile('gamification.md', gamiContent.trimEnd() + '\n' + gamiSection);
+    }
+
+    // 3. Create child files
+    const dir = `01 - Enfants/${child.name}`;
+    if (isGrossesse) {
+      await this.writeFile(`${dir}/Tâches récurrentes.md`, this._grossesseTasksContent(child.name, today, child.dateTerme));
+      await this._writeIfMissing(`06 - Mémoires/${child.name}/Jalons.md`, this._grossesseJalonsContent(child.name));
+    } else {
+      await this.writeFile(`${dir}/Tâches récurrentes.md`, this._childTasksContent(child.name, today, child.birthdate));
+      await this._writeIfMissing(`06 - Mémoires/${child.name}/Jalons.md`, this._jalonsContent(child.name, child.birthdate));
+    }
+    await this.ensureDir(`03 - Journal/${child.name}`);
+    await this.ensureDir(`07 - Photos/${child.name}`);
+
+    // 4. Update Dashboard.md — add link
+    try {
+      const dashContent = await this.readFile('00 - Dashboard/Dashboard.md');
+      const newLink = `- [[01 - Enfants/${child.name}/Tâches récurrentes|${child.name} — Tâches]]`;
+      if (!dashContent.includes(child.name)) {
+        const updated = dashContent.replace(
+          /## Maison/,
+          `${newLink}\n\n## Maison`
+        );
+        await this.writeFile('00 - Dashboard/Dashboard.md', updated);
+      }
+    } catch { /* Dashboard.md may not exist */ }
+  }
+
+  /**
+   * Convert a grossesse profile to a born child.
+   * Replaces pregnancy templates with baby templates.
+   */
+  async convertToBorn(profileId: string, birthdate: string): Promise<void> {
+    const today = format(new Date(), 'yyyy-MM-dd');
+
+    // 1. Update famille.md
+    const familleContent = await this.readFile('famille.md');
+    const lines = familleContent.split('\n');
+    let inSection = false;
+    let sectionEnd = lines.length;
+    let sectionStart = -1;
+    let childName = '';
+
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].startsWith('### ')) {
+        if (inSection) { sectionEnd = i; break; }
+        if (lines[i].replace('### ', '').trim() === profileId) {
+          inSection = true;
+          sectionStart = i;
+        }
+      } else if (inSection && lines[i].includes(': ')) {
+        const key = lines[i].slice(0, lines[i].indexOf(':')).trim();
+        const val = lines[i].slice(lines[i].indexOf(':') + 1).trim();
+        if (key === 'name') childName = val;
+      }
+    }
+    if (sectionStart === -1 || !childName) return;
+
+    // Update fields in section
+    let foundBirthdate = false;
+    let foundStatut = false;
+    let foundDateTerme = false;
+    let foundAgeCategory = false;
+    for (let i = sectionStart + 1; i < sectionEnd; i++) {
+      const key = lines[i].slice(0, lines[i].indexOf(':')).trim();
+      if (key === 'birthdate') { lines[i] = `birthdate: ${birthdate}`; foundBirthdate = true; }
+      if (key === 'statut') { lines.splice(i, 1); sectionEnd--; i--; foundStatut = true; }
+      if (key === 'dateTerme') { lines.splice(i, 1); sectionEnd--; i--; foundDateTerme = true; }
+      if (key === 'ageCategory') { lines[i] = `ageCategory: bebe`; foundAgeCategory = true; }
+    }
+    if (!foundBirthdate) {
+      let lastProp = sectionStart;
+      for (let i = sectionStart + 1; i < sectionEnd; i++) { if (lines[i].includes(': ')) lastProp = i; }
+      lines.splice(lastProp + 1, 0, `birthdate: ${birthdate}`);
+      sectionEnd++;
+    }
+    if (!foundAgeCategory) {
+      let lastProp = sectionStart;
+      for (let i = sectionStart + 1; i < sectionEnd; i++) { if (lines[i].includes(': ')) lastProp = i; }
+      lines.splice(lastProp + 1, 0, `ageCategory: bebe`);
+    }
+    await this.writeFile('famille.md', lines.join('\n'));
+
+    // 2. Replace tasks with baby templates
+    const tasksPath = `01 - Enfants/${childName}/Tâches récurrentes.md`;
+    await this.writeFile(tasksPath, this._childTasksContent(childName, today, birthdate));
+
+    // 3. Replace jalons with baby templates
+    const jalonsPath = `06 - Mémoires/${childName}/Jalons.md`;
+    await this.writeFile(jalonsPath, this._jalonsContent(childName, birthdate));
+  }
+
   /** Write file only if it doesn't exist yet */
   private async _writeIfMissing(path: string, content: string): Promise<void> {
     if (!(await this.exists(path))) {
@@ -522,6 +645,16 @@ export class VaultManager {
 - Déjeuner:
 - Dîner:
 `;
+  }
+
+  private _grossesseTasksContent(childName: string, today: string, dateTerme?: string): string {
+    const slug = childName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+    return `---\ntags:\n  - taches\n  - ${slug}\n  - grossesse\n---\n> ← [[00 - Dashboard/Dashboard|Dashboard]]\n\n# Suivi grossesse — ${childName}\n\n## Suivi médical\n- [ ] Prise de sang T1\n- [ ] Échographie T1 (12 SA)\n- [ ] Prise de sang T2\n- [ ] Échographie T2 (22 SA)\n- [ ] Prise de sang T3\n- [ ] Échographie T3 (32 SA)\n- [ ] Visite sage-femme 🔁 every month 📅 ${today}\n- [ ] Monitoring (dernier mois) 🔁 every week 📅 ${today}\n\n## Préparation\n- [ ] Choisir la maternité\n- [ ] S'inscrire à la maternité\n- [ ] Cours de préparation à l'accouchement\n- [ ] Préparer la chambre bébé\n- [ ] Acheter le lit / berceau\n- [ ] Acheter la poussette\n- [ ] Acheter le siège auto\n\n## Administratif\n- [ ] Déclarer la grossesse (CAF + employeur)\n- [ ] Organiser le congé maternité / paternité\n- [ ] Choisir le prénom\n- [ ] Préparer le dossier de naissance\n\n## Valise maternité\n- [ ] Bodies + pyjamas nouveau-né\n- [ ] Bonnet + chaussettes\n- [ ] Doudou\n- [ ] Couches taille 1\n- [ ] Produits de toilette bébé\n- [ ] Tenue de sortie\n- [ ] Documents (carte vitale, mutuelle, groupe sanguin)\n- [ ] Vêtements confortables maman\n`;
+  }
+
+  private _grossesseJalonsContent(childName: string): string {
+    const slug = childName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+    return `---\ntags:\n  - memoires\n  - ${slug}\n  - grossesse\n---\n> ← [[00 - Dashboard/Dashboard|Dashboard]]\n\n# Jalons grossesse — ${childName}\n\n## 🤰 Étapes grossesse\n- Annonce de la grossesse\n- Première échographie\n- Premiers coups ressentis\n- Sexe connu\n- Choix du prénom\n\n## 🎁 Préparatifs\n- Chambre prête\n- Valise prête\n- Siège auto installé\n\n## 💛 Moments forts\n\n`;
   }
 
   private _jalonsContent(childName: string, birthdate?: string): string {

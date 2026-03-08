@@ -115,6 +115,7 @@ export default function DashboardScreen() {
     ageUpgrades,
     applyAgeUpgrade,
     dismissAgeUpgrade,
+    convertToBorn,
   } = useVault();
 
   // Active rewards (filtered for non-expired)
@@ -747,6 +748,33 @@ export default function DashboardScreen() {
             </TouchableOpacity>
           </DashboardCard>
         )}
+
+        {profiles.filter((p) => p.statut === 'grossesse' && p.dateTerme).map((p) => {
+          const daysLeft = Math.ceil((new Date(p.dateTerme!).getTime() - new Date().getTime()) / 86400000);
+          return (
+            <View key={p.id} style={[styles.ageUpgradeBanner, { borderColor: primary }]}>
+              <Text style={[styles.ageUpgradeTitle, { color: colors.text }]}>
+                🤰 {p.name} — {daysLeft > 0 ? `J-${daysLeft}` : daysLeft === 0 ? "C'est pour aujourd'hui !" : `J+${Math.abs(daysLeft)}`}
+              </Text>
+              <Text style={[styles.ageUpgradeDesc, { color: colors.textSub }]}>
+                Terme prévu le {p.dateTerme}
+              </Text>
+              <TouchableOpacity
+                style={[styles.ageUpgradeBtn, { backgroundColor: primary }]}
+                onPress={() => {
+                  Alert.prompt
+                    ? Alert.prompt('Date de naissance', 'AAAA-MM-JJ', (date) => {
+                        if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) convertToBorn(p.id, date);
+                      }, 'plain-text', format(new Date(), 'yyyy-MM-dd'))
+                    : Alert.alert('Bébé est né ?', 'Allez dans Réglages > Profils pour confirmer la naissance.');
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.ageUpgradeBtnText}>C'est né !</Text>
+              </TouchableOpacity>
+            </View>
+          );
+        })}
 
         {ageUpgrades.map((upgrade) => {
           const catLabels: Record<string, string> = { bebe: 'bébé', petit: 'petit enfant', enfant: 'enfant', ado: 'ado' };

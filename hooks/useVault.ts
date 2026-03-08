@@ -130,6 +130,8 @@ export interface VaultState {
   ageUpgrades: AgeUpgrade[];
   applyAgeUpgrade: (upgrade: AgeUpgrade) => Promise<void>;
   dismissAgeUpgrade: (profileId: string) => void;
+  addChild: (child: { name: string; avatar: string; birthdate: string; propre?: boolean; statut?: 'grossesse'; dateTerme?: string }) => Promise<void>;
+  convertToBorn: (profileId: string, birthdate: string) => Promise<void>;
 }
 
 // Static task files (non-enfant)
@@ -1370,6 +1372,18 @@ export function useVault(): VaultState {
     setAgeUpgrades((prev) => prev.filter((u) => u.profileId !== profileId));
   }, []);
 
+  const addChild = useCallback(async (child: { name: string; avatar: string; birthdate: string; propre?: boolean; statut?: 'grossesse'; dateTerme?: string }) => {
+    if (!vaultRef.current) return;
+    await vaultRef.current.addChild(child);
+    await loadVaultData(vaultRef.current);
+  }, [loadVaultData]);
+
+  const convertToBorn = useCallback(async (profileId: string, birthdate: string) => {
+    if (!vaultRef.current) return;
+    await vaultRef.current.convertToBorn(profileId, birthdate);
+    await loadVaultData(vaultRef.current);
+  }, [loadVaultData]);
+
   return {
     vaultPath,
     isLoading,
@@ -1431,5 +1445,7 @@ export function useVault(): VaultState {
     ageUpgrades,
     applyAgeUpgrade,
     dismissAgeUpgrade,
+    addChild,
+    convertToBorn,
   };
 }

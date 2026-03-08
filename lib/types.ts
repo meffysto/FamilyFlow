@@ -61,6 +61,8 @@ export interface Profile {
   birthdate?: string;       // YYYY-MM-DD or YYYY
   ageCategory?: AgeCategory; // stored at scaffold, used for upgrade detection
   propre?: boolean;          // potty-trained — hides diaper sections in journal/tasks
+  statut?: 'grossesse' | 'ne'; // pregnancy mode vs born (absent = born)
+  dateTerme?: string;        // YYYY-MM-DD expected due date (grossesse only)
   theme?: import('../constants/themes').ProfileTheme;  // visual theme
   points: number;
   level: number;

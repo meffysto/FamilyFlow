@@ -548,6 +548,7 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'level' 
       const ageCategory = currentProps.ageCategory && validAgeCategories.has(currentProps.ageCategory)
         ? (currentProps.ageCategory as Profile['ageCategory'])
         : undefined;
+      const statut = currentProps.statut === 'grossesse' ? 'grossesse' as const : undefined;
       profiles.push({
         id: currentId,
         name: currentProps.name,
@@ -556,6 +557,8 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'level' 
         birthdate: currentProps.birthdate,
         ageCategory,
         propre: currentProps.propre === 'true',
+        statut,
+        dateTerme: currentProps.dateTerme,
         theme,
       });
     }
