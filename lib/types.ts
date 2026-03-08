@@ -51,12 +51,15 @@ export interface JournalTableRow {
   notes?: string;
 }
 
+export type AgeCategory = 'bebe' | 'petit' | 'enfant' | 'ado';
+
 export interface Profile {
   id: string;               // snake_case key used in files
   name: string;
   role: 'enfant' | 'ado' | 'adulte';
   avatar: string;           // single emoji
-  birthdate?: string;       // YYYY-MM-DD
+  birthdate?: string;       // YYYY-MM-DD or YYYY
+  ageCategory?: AgeCategory; // stored at scaffold, used for upgrade detection
   theme?: import('../constants/themes').ProfileTheme;  // visual theme
   points: number;
   level: number;
@@ -65,6 +68,13 @@ export interface Profile {
   multiplier: number;       // point multiplier (default 1)
   multiplierRemaining: number; // tasks remaining with multiplier
   pityCounter: number;       // boxes opened without épique+ (pity system)
+}
+
+export interface AgeUpgrade {
+  profileId: string;
+  childName: string;
+  oldCategory: AgeCategory;
+  newCategory: AgeCategory;
 }
 
 export interface LootBox {

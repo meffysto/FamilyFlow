@@ -41,7 +41,7 @@ import {
   formatMealLine,
 } from '../lib/parser';
 import { processActiveRewards } from '../lib/gamification';
-import { Task, RDV, CourseItem, MealItem, StockItem, Profile, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe } from '../lib/types';
+import { Task, RDV, CourseItem, MealItem, StockItem, Profile, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory } from '../lib/types';
 import { parseRecipe, generateCookFile } from '../lib/cooklang';
 import {
   parseNotificationPrefs,
@@ -50,9 +50,21 @@ import {
 } from '../lib/notifications';
 import { scheduleRDVAlerts } from '../lib/scheduled-notifications';
 import { nextOccurrence } from '../lib/recurrence';
+import { format } from 'date-fns';
 
 export const VAULT_PATH_KEY = 'vault_path';
 export const ACTIVE_PROFILE_KEY = 'active_profile_id';
+
+/** Compute age category from birthdate (YYYY or YYYY-MM-DD) */
+function getAgeCategoryFromBirthdate(birthdate: string): AgeCategory {
+  const year = parseInt(birthdate.slice(0, 4), 10);
+  if (isNaN(year)) return 'bebe';
+  const age = new Date().getFullYear() - year;
+  if (age <= 2) return 'bebe';
+  if (age <= 5) return 'petit';
+  if (age <= 11) return 'enfant';
+  return 'ado';
+}
 
 export interface VaultState {
   vaultPath: string | null;
@@ -115,6 +127,9 @@ export interface VaultState {
   toggleFavorite: (profileId: string, recipePath: string) => Promise<void>;
   isFavorite: (profileId: string, recipePath: string) => boolean;
   getFavorites: (profileId: string) => string[];
+  ageUpgrades: AgeUpgrade[];
+  applyAgeUpgrade: (upgrade: AgeUpgrade) => Promise<void>;
+  dismissAgeUpgrade: (profileId: string) => void;
 }
 
 // Static task files (non-enfant)
@@ -248,6 +263,7 @@ export function useVault(): VaultState {
   const [vacationTasks, setVacationTasks] = useState<Task[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [recipeFavorites, setRecipeFavorites] = useState<Record<string, string[]>>({});
+  const [ageUpgrades, setAgeUpgrades] = useState<AgeUpgrade[]>([]);
   const vaultRef = useRef<VaultManager | null>(null);
   const busyRef = useRef(false); // Guard against AppState race condition
 
@@ -319,6 +335,21 @@ export function useVault(): VaultState {
         } else {
           setGamiData(gami);
         }
+        // Detect age category upgrades
+        const upgrades: AgeUpgrade[] = [];
+        for (const p of merged) {
+          if (p.role !== 'enfant' || !p.birthdate) continue;
+          const currentCat = getAgeCategoryFromBirthdate(p.birthdate);
+          if (p.ageCategory && p.ageCategory !== currentCat) {
+            upgrades.push({
+              profileId: p.id,
+              childName: p.name,
+              oldCategory: p.ageCategory,
+              newCategory: currentCat,
+            });
+          }
+        }
+        setAgeUpgrades(upgrades);
       } catch (e) {
         debugErrors.push(`profiles: ${e}`);
         setProfiles([]);
@@ -1279,6 +1310,66 @@ export function useVault(): VaultState {
   // Resolve active profile from ID → Profile object
   const activeProfile = profiles.find((p) => p.id === activeProfileId) ?? null;
 
+  /** Apply age upgrade: regenerate tasks file + update ageCategory in famille.md */
+  const applyAgeUpgrade = useCallback(async (upgrade: AgeUpgrade) => {
+    if (!vaultRef.current) return;
+    const vault = vaultRef.current;
+    const profile = profiles.find((p) => p.id === upgrade.profileId);
+    if (!profile) return;
+
+    // Regenerate tasks file with new age category templates
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const tasksPath = `01 - Enfants/${upgrade.childName}/Tâches récurrentes.md`;
+    const slug = upgrade.childName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+    const catLabels: Record<AgeCategory, string> = { bebe: 'bébé', petit: 'petit', enfant: 'enfant', ado: 'ado' };
+    const taskTemplates: Record<AgeCategory, string> = {
+      bebe: `## Quotidien\n- [ ] Préparer les biberons 🔁 every day 📅 ${today}\n- [ ] Laver biberons / tétines 🔁 every day 📅 ${today}\n- [ ] Vider la poubelle à couches 🔁 every day 📅 ${today}\n- [ ] Nettoyer le tapis à langer 🔁 every day 📅 ${today}\n- [ ] Bain 🔁 every day 📅 ${today}\n- [ ] Vérifier le stock de couches 🔁 every day 📅 ${today}\n- [ ] Vérifier le stock de lait 🔁 every day 📅 ${today}\n\n## Hebdomadaire\n- [ ] Laver le linge bébé 🔁 every week 📅 ${today}\n- [ ] Stériliser les accessoires 🔁 every week 📅 ${today}\n- [ ] Nettoyer le lit / berceau 🔁 every week 📅 ${today}\n\n## Mensuel\n- [ ] Vérifier la taille des vêtements 🔁 every month 📅 ${today}\n- [ ] Trier les vêtements trop petits 🔁 every month 📅 ${today}\n- [ ] Vérifier les produits de soin 🔁 every month 📅 ${today}\n`,
+      petit: `## Quotidien\n- [ ] Brossage de dents matin 🔁 every day 📅 ${today}\n- [ ] Brossage de dents soir 🔁 every day 📅 ${today}\n- [ ] S'habiller tout seul 🔁 every day 📅 ${today}\n- [ ] Ranger les jouets 🔁 every day 📅 ${today}\n- [ ] Bain / douche 🔁 every day 📅 ${today}\n\n## Hebdomadaire\n- [ ] Laver le linge 🔁 every week 📅 ${today}\n- [ ] Nettoyer la chambre 🔁 every week 📅 ${today}\n- [ ] Activité / sortie 🔁 every week 📅 ${today}\n\n## Mensuel\n- [ ] Vérifier la taille des vêtements 🔁 every month 📅 ${today}\n- [ ] Vérifier les chaussures 🔁 every month 📅 ${today}\n- [ ] Trier les jouets 🔁 every month 📅 ${today}\n`,
+      enfant: `## Quotidien\n- [ ] Préparer le cartable 🔁 every day 📅 ${today}\n- [ ] Faire les devoirs 🔁 every day 📅 ${today}\n- [ ] Douche 🔁 every day 📅 ${today}\n- [ ] Ranger la chambre 🔁 every day 📅 ${today}\n\n## Hebdomadaire\n- [ ] Laver le linge 🔁 every week 📅 ${today}\n- [ ] Ranger le bureau 🔁 every week 📅 ${today}\n- [ ] Activité extra-scolaire 🔁 every week 📅 ${today}\n\n## Mensuel\n- [ ] Vérifier les fournitures scolaires 🔁 every month 📅 ${today}\n- [ ] Vérifier les vêtements 🔁 every month 📅 ${today}\n`,
+      ado: `## Quotidien\n- [ ] Ranger la chambre 🔁 every day 📅 ${today}\n- [ ] Mettre le linge sale au panier 🔁 every day 📅 ${today}\n- [ ] Faire les devoirs 🔁 every day 📅 ${today}\n\n## Hebdomadaire\n- [ ] Faire sa lessive 🔁 every week 📅 ${today}\n- [ ] Ménage de la chambre 🔁 every week 📅 ${today}\n- [ ] Aider en cuisine 🔁 every week 📅 ${today}\n\n## Mensuel\n- [ ] Gérer son argent de poche 🔁 every month 📅 ${today}\n- [ ] Vérifier les fournitures scolaires 🔁 every month 📅 ${today}\n`,
+    };
+
+    const header = `---\ntags:\n  - taches\n  - ${slug}\n---\n> ← [[00 - Dashboard/Dashboard|Dashboard]]\n\n# Tâches récurrentes — ${upgrade.childName}\n\n`;
+    await vault.writeFile(tasksPath, header + taskTemplates[upgrade.newCategory]);
+
+    // Update ageCategory in famille.md
+    const familleContent = await vault.readFile(FAMILLE_FILE);
+    const lines = familleContent.split('\n');
+    let inSection = false;
+    let ageCatLineIdx = -1;
+    let lastPropIdx = -1;
+
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].startsWith('### ')) {
+        if (inSection) break;
+        if (lines[i].replace('### ', '').trim() === upgrade.profileId) {
+          inSection = true;
+        }
+      } else if (inSection && lines[i].includes(': ')) {
+        lastPropIdx = i;
+        if (lines[i].trim().startsWith('ageCategory:')) {
+          ageCatLineIdx = i;
+        }
+      }
+    }
+
+    if (ageCatLineIdx >= 0) {
+      lines[ageCatLineIdx] = `ageCategory: ${upgrade.newCategory}`;
+    } else if (lastPropIdx >= 0) {
+      lines.splice(lastPropIdx + 1, 0, `ageCategory: ${upgrade.newCategory}`);
+    }
+    await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
+
+    // Remove this upgrade from the list and reload
+    setAgeUpgrades((prev) => prev.filter((u) => u.profileId !== upgrade.profileId));
+    await loadVaultData(vault);
+  }, [profiles, loadVaultData]);
+
+  /** Dismiss an age upgrade notification without applying */
+  const dismissAgeUpgrade = useCallback((profileId: string) => {
+    setAgeUpgrades((prev) => prev.filter((u) => u.profileId !== profileId));
+  }, []);
+
   return {
     vaultPath,
     isLoading,
@@ -1337,5 +1428,8 @@ export function useVault(): VaultState {
     toggleFavorite,
     isFavorite,
     getFavorites,
+    ageUpgrades,
+    applyAgeUpgrade,
+    dismissAgeUpgrade,
   };
 }

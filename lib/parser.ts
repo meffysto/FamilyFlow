@@ -544,12 +544,17 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'level' 
       const theme = currentProps.theme && VALID_THEMES.has(currentProps.theme)
         ? (currentProps.theme as ProfileTheme)
         : undefined;
+      const validAgeCategories = new Set(['bebe', 'petit', 'enfant', 'ado']);
+      const ageCategory = currentProps.ageCategory && validAgeCategories.has(currentProps.ageCategory)
+        ? (currentProps.ageCategory as Profile['ageCategory'])
+        : undefined;
       profiles.push({
         id: currentId,
         name: currentProps.name,
         role: currentProps.role as Profile['role'],
         avatar: currentProps.avatar ?? '👤',
         birthdate: currentProps.birthdate,
+        ageCategory,
         theme,
       });
     }

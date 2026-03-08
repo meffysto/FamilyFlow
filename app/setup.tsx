@@ -91,7 +91,7 @@ export default function SetupScreen() {
     setChildren(current.slice(0, count));
   };
 
-  /** Auto-format birthdate input as YYYY-MM-DD */
+  /** Auto-format birthdate input as YYYY or YYYY-MM-DD */
   const formatBirthdate = (raw: string): string => {
     // Strip non-digits
     const digits = raw.replace(/\D/g, '').slice(0, 8);
@@ -102,6 +102,8 @@ export default function SetupScreen() {
 
   const isValidBirthdate = (date: string): boolean => {
     if (!date) return true; // optional
+    // Accept YYYY alone (year only) or full YYYY-MM-DD
+    if (/^\d{4}$/.test(date)) return !isNaN(new Date(`${date}-01-01`).getTime());
     return /^\d{4}-\d{2}-\d{2}$/.test(date) && !isNaN(new Date(date).getTime());
   };
 
@@ -264,13 +266,16 @@ export default function SetupScreen() {
                     s.input,
                     child.birthdate && !isValidBirthdate(child.birthdate) && s.inputError,
                   ]}
-                  placeholder="Date de naissance (AAAA-MM-JJ)"
+                  placeholder="Année (AAAA) ou date complète (AAAA-MM-JJ)"
                   placeholderTextColor="#9CA3AF"
                   value={child.birthdate}
                   onChangeText={(v) => updateChild(i, 'birthdate', formatBirthdate(v))}
                   keyboardType="number-pad"
                   maxLength={10}
                 />
+                <Text style={s.birthdateHint}>
+                  L'année permet d'adapter les tâches à l'âge (bébé, enfant, ado)
+                </Text>
                 <Text style={s.formLabel}>Avatar</Text>
                 <View style={s.avatarGrid}>
                   {CHILD_AVATARS.map((emoji) => (
@@ -285,6 +290,14 @@ export default function SetupScreen() {
                 </View>
               </View>
             ))}
+
+            {childCount > 0 && children.some((c) => !c.birthdate) && (
+              <View style={s.ageWarning}>
+                <Text style={s.ageWarningText}>
+                  Sans année de naissance, les tâches « bébé » seront créées par défaut (biberons, couches…)
+                </Text>
+              </View>
+            )}
 
             {childCount === 0 && (
               <View style={s.noChildHint}>
@@ -552,6 +565,13 @@ const s = StyleSheet.create({
     padding: 14,
   },
   noChildText: { fontSize: 14, color: '#15803D', lineHeight: 20, textAlign: 'center' },
+  birthdateHint: { fontSize: 12, color: '#9CA3AF', marginTop: -4, marginLeft: 4 },
+  ageWarning: {
+    backgroundColor: '#FFFBEB',
+    borderRadius: 12,
+    padding: 14,
+  },
+  ageWarningText: { fontSize: 13, color: '#92400E', lineHeight: 18, textAlign: 'center' },
 
   // Step 5 — Recap
   recapCard: {

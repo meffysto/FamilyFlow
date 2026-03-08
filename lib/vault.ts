@@ -275,6 +275,7 @@ export class VaultManager {
           (p) =>
             `### ${p.id}\nname: ${p.name}\nrole: ${p.role}\navatar: ${p.avatar}${
               p.birthdate ? `\nbirthdate: ${p.birthdate}` : ''
+            }${p.ageCategory ? `\nageCategory: ${p.ageCategory}` : ''
             }${p.theme ? `\ntheme: ${p.theme}` : ''}`
         )
         .join('\n\n');
@@ -325,6 +326,7 @@ export class VaultManager {
         role: 'enfant' as const,
         avatar: c.avatar,
         birthdate: c.birthdate,
+        ageCategory: this._getAgeCategory(c.birthdate),
         points: 0,
         level: 1,
         streak: 0,
@@ -341,24 +343,27 @@ export class VaultManager {
     // --- 00 - Dashboard ---
     await this._writeIfMissing('00 - Dashboard/Dashboard.md', this._dashboardContent(children));
 
+    // --- Compute age categories ---
+    const ageCategories = new Set(children.map((c) => this._getAgeCategory(c.birthdate)));
+
     // --- 01 - Enfants (only if children exist) ---
     if (children.length > 0) {
       for (const child of children) {
         const dir = `01 - Enfants/${child.name}`;
         await this._writeIfMissing(
           `${dir}/Tâches récurrentes.md`,
-          this._childTasksContent(child.name, today)
+          this._childTasksContent(child.name, today, child.birthdate)
         );
       }
       await this._writeIfMissing(
         '01 - Enfants/Commun/Stock & fournitures.md',
-        this._stockContent()
+        this._stockContent(ageCategories)
       );
     }
 
     // --- 02 - Maison ---
     await this._writeIfMissing('02 - Maison/Tâches récurrentes.md', this._maisonTasksContent(today));
-    await this._writeIfMissing('02 - Maison/Liste de courses.md', this._coursesContent());
+    await this._writeIfMissing('02 - Maison/Liste de courses.md', this._coursesContent(ageCategories));
     await this._writeIfMissing('02 - Maison/Ménage hebdo.md', this._menageContent());
     await this._writeIfMissing('02 - Maison/Repas de la semaine.md', this._mealsContent());
 
@@ -377,7 +382,7 @@ export class VaultManager {
       for (const child of children) {
         await this._writeIfMissing(
           `06 - Mémoires/${child.name}/Jalons.md`,
-          this._jalonsContent(child.name)
+          this._jalonsContent(child.name, child.birthdate)
         );
       }
     }
@@ -397,6 +402,19 @@ export class VaultManager {
     }
   }
 
+  /** Determine age category from birthdate (YYYY or YYYY-MM-DD) */
+  private _getAgeCategory(birthdate?: string): 'bebe' | 'petit' | 'enfant' | 'ado' {
+    if (!birthdate) return 'bebe';
+    const year = parseInt(birthdate.slice(0, 4), 10);
+    if (isNaN(year)) return 'bebe';
+    const now = new Date();
+    const age = now.getFullYear() - year;
+    if (age <= 2) return 'bebe';
+    if (age <= 5) return 'petit';
+    if (age <= 11) return 'enfant';
+    return 'ado';
+  }
+
   private _dashboardContent(children: Array<{ name: string }>): string {
     const childLinks = children.map(
       (c) => `- [[01 - Enfants/${c.name}/Tâches récurrentes|${c.name} — Tâches]]`
@@ -405,21 +423,66 @@ export class VaultManager {
     return `---\ntags:\n  - dashboard\n---\n# Dashboard Famille\n\n## Enfants\n${childLinks || '*(Pas d\'enfants configurés)*'}\n\n## Maison\n- [[02 - Maison/Ménage hebdo|Ménage hebdo]]\n- [[02 - Maison/Liste de courses|Liste de courses]]\n- [[02 - Maison/Tâches récurrentes|Tâches maison]]\n\n## Rendez-vous\n- [[04 - Rendez-vous|Tous les rendez-vous]]\n`;
   }
 
-  private _childTasksContent(childName: string, today: string): string {
+  private _childTasksContent(childName: string, today: string, birthdate?: string): string {
     const slug = childName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
-    return `---\ntags:\n  - taches\n  - ${slug}\n---\n> ← [[00 - Dashboard/Dashboard|Dashboard]]\n\n# Tâches récurrentes — ${childName}\n\n## Quotidien\n- [ ] Préparer les biberons 🔁 every day 📅 ${today}\n- [ ] Laver biberons / tétines 🔁 every day 📅 ${today}\n- [ ] Vider la poubelle à couches 🔁 every day 📅 ${today}\n- [ ] Nettoyer le tapis à langer 🔁 every day 📅 ${today}\n- [ ] Bain 🔁 every day 📅 ${today}\n- [ ] Vérifier le stock de couches 🔁 every day 📅 ${today}\n- [ ] Vérifier le stock de lait 🔁 every day 📅 ${today}\n\n## Hebdomadaire\n- [ ] Laver le linge bébé 🔁 every week 📅 ${today}\n- [ ] Stériliser les accessoires 🔁 every week 📅 ${today}\n- [ ] Nettoyer le lit / berceau 🔁 every week 📅 ${today}\n\n## Mensuel\n- [ ] Vérifier la taille des vêtements 🔁 every month 📅 ${today}\n- [ ] Trier les vêtements trop petits 🔁 every month 📅 ${today}\n- [ ] Vérifier les produits de soin 🔁 every month 📅 ${today}\n`;
+    const cat = this._getAgeCategory(birthdate);
+    const header = `---\ntags:\n  - taches\n  - ${slug}\n---\n> ← [[00 - Dashboard/Dashboard|Dashboard]]\n\n# Tâches récurrentes — ${childName}\n\n`;
+
+    if (cat === 'bebe') {
+      return header + `## Quotidien\n- [ ] Préparer les biberons 🔁 every day 📅 ${today}\n- [ ] Laver biberons / tétines 🔁 every day 📅 ${today}\n- [ ] Vider la poubelle à couches 🔁 every day 📅 ${today}\n- [ ] Nettoyer le tapis à langer 🔁 every day 📅 ${today}\n- [ ] Bain 🔁 every day 📅 ${today}\n- [ ] Vérifier le stock de couches 🔁 every day 📅 ${today}\n- [ ] Vérifier le stock de lait 🔁 every day 📅 ${today}\n\n## Hebdomadaire\n- [ ] Laver le linge bébé 🔁 every week 📅 ${today}\n- [ ] Stériliser les accessoires 🔁 every week 📅 ${today}\n- [ ] Nettoyer le lit / berceau 🔁 every week 📅 ${today}\n\n## Mensuel\n- [ ] Vérifier la taille des vêtements 🔁 every month 📅 ${today}\n- [ ] Trier les vêtements trop petits 🔁 every month 📅 ${today}\n- [ ] Vérifier les produits de soin 🔁 every month 📅 ${today}\n`;
+    }
+
+    if (cat === 'petit') {
+      return header + `## Quotidien\n- [ ] Brossage de dents matin 🔁 every day 📅 ${today}\n- [ ] Brossage de dents soir 🔁 every day 📅 ${today}\n- [ ] S'habiller tout seul 🔁 every day 📅 ${today}\n- [ ] Ranger les jouets 🔁 every day 📅 ${today}\n- [ ] Bain / douche 🔁 every day 📅 ${today}\n\n## Hebdomadaire\n- [ ] Laver le linge 🔁 every week 📅 ${today}\n- [ ] Nettoyer la chambre 🔁 every week 📅 ${today}\n- [ ] Activité / sortie 🔁 every week 📅 ${today}\n\n## Mensuel\n- [ ] Vérifier la taille des vêtements 🔁 every month 📅 ${today}\n- [ ] Vérifier les chaussures 🔁 every month 📅 ${today}\n- [ ] Trier les jouets 🔁 every month 📅 ${today}\n`;
+    }
+
+    if (cat === 'enfant') {
+      return header + `## Quotidien\n- [ ] Préparer le cartable 🔁 every day 📅 ${today}\n- [ ] Faire les devoirs 🔁 every day 📅 ${today}\n- [ ] Douche 🔁 every day 📅 ${today}\n- [ ] Ranger la chambre 🔁 every day 📅 ${today}\n\n## Hebdomadaire\n- [ ] Laver le linge 🔁 every week 📅 ${today}\n- [ ] Ranger le bureau 🔁 every week 📅 ${today}\n- [ ] Activité extra-scolaire 🔁 every week 📅 ${today}\n\n## Mensuel\n- [ ] Vérifier les fournitures scolaires 🔁 every month 📅 ${today}\n- [ ] Vérifier les vêtements 🔁 every month 📅 ${today}\n`;
+    }
+
+    // ado
+    return header + `## Quotidien\n- [ ] Ranger la chambre 🔁 every day 📅 ${today}\n- [ ] Mettre le linge sale au panier 🔁 every day 📅 ${today}\n- [ ] Faire les devoirs 🔁 every day 📅 ${today}\n\n## Hebdomadaire\n- [ ] Faire sa lessive 🔁 every week 📅 ${today}\n- [ ] Ménage de la chambre 🔁 every week 📅 ${today}\n- [ ] Aider en cuisine 🔁 every week 📅 ${today}\n\n## Mensuel\n- [ ] Gérer son argent de poche 🔁 every month 📅 ${today}\n- [ ] Vérifier les fournitures scolaires 🔁 every month 📅 ${today}\n`;
   }
 
-  private _stockContent(): string {
-    return `---\ntags:\n  - stock\n  - enfants\ncssclasses:\n  - stock\n---\n> ← [[00 - Dashboard/Dashboard|Dashboard]]\n\n# Stock & fournitures — Enfants\n\n## Couches\n\n| Produit | Détail | Paquets restants | Seuil | Qté/achat |\n| ------- | ------ | ---------------- | ----- | --------- |\n| Couches | T4     | 3                | 1     | 3         |\n\n## Alimentation\n\n| Produit          | Détail | Paquets restants | Seuil | Qté/achat |\n| ---------------- | ------ | ---------------- | ----- | --------- |\n| Lait infantile   |        | 2                | 1     | 2         |\n\n## Hygiène & soins\n\n| Produit             | Détail | Paquets restants | Seuil | Qté/achat |\n| ------------------- | ------ | ---------------- | ----- | --------- |\n| Lingettes           |        | 2                | 2     | 1         |\n| Sérum physiologique |        | 2                | 1     | 1         |\n`;
+  private _stockContent(categories: Set<string>): string {
+    const header = `---\ntags:\n  - stock\n  - enfants\ncssclasses:\n  - stock\n---\n> ← [[00 - Dashboard/Dashboard|Dashboard]]\n\n# Stock & fournitures — Enfants\n\n`;
+    const sections: string[] = [];
+
+    if (categories.has('bebe')) {
+      sections.push(`## Couches\n\n| Produit | Détail | Paquets restants | Seuil | Qté/achat |\n| ------- | ------ | ---------------- | ----- | --------- |\n| Couches | T4     | 3                | 1     | 3         |\n\n## Alimentation bébé\n\n| Produit          | Détail | Paquets restants | Seuil | Qté/achat |\n| ---------------- | ------ | ---------------- | ----- | --------- |\n| Lait infantile   |        | 2                | 1     | 2         |`);
+    }
+
+    if (categories.has('bebe') || categories.has('petit')) {
+      sections.push(`## Hygiène & soins\n\n| Produit             | Détail | Paquets restants | Seuil | Qté/achat |\n| ------------------- | ------ | ---------------- | ----- | --------- |\n| Lingettes           |        | 2                | 2     | 1         |\n| Sérum physiologique |        | 2                | 1     | 1         |`);
+    }
+
+    if (categories.has('enfant') || categories.has('ado')) {
+      sections.push(`## Fournitures scolaires\n\n| Produit       | Détail | Qté restante | Seuil | Qté/achat |\n| ------------- | ------ | ------------ | ----- | --------- |\n| Cahiers       |        | 3            | 1     | 3         |\n| Stylos        |        | 5            | 2     | 5         |`);
+    }
+
+    if (sections.length === 0) {
+      sections.push(`## Hygiène\n\n| Produit | Détail | Paquets restants | Seuil | Qté/achat |\n| ------- | ------ | ---------------- | ----- | --------- |\n| Savon   |        | 2                | 1     | 1         |`);
+    }
+
+    return header + sections.join('\n\n') + '\n';
   }
 
   private _maisonTasksContent(today: string): string {
     return `---\ntags:\n  - taches\n  - maison\n---\n> ← [[00 - Dashboard/Dashboard|Dashboard]]\n\n# Tâches récurrentes — Maison\n\n## Tous les 3 jours\n\n## Hebdomadaire\n\n## Mensuel\n`;
   }
 
-  private _coursesContent(): string {
-    return `---\ntags:\n  - maison\n  - courses\n---\n> ← [[00 - Dashboard/Dashboard|Dashboard]]\n\n# Liste de courses\n\n## 🥩 Frais\n- [ ] \n\n## 🥦 Fruits & légumes\n- [ ] \n\n## 👶 Produits bébé\n- [ ] Couches\n- [ ] Lingettes\n\n## 🧴 Hygiène\n- [ ] \n\n## 🏠 Maison\n- [ ] \n\n## 🍞 Épicerie\n- [ ] \n`;
+  private _coursesContent(categories: Set<string>): string {
+    const hasBebe = categories.has('bebe');
+    const hasKids = categories.has('enfant') || categories.has('ado') || categories.has('petit');
+
+    let kidSection = '';
+    if (hasBebe) {
+      kidSection = `\n## 👶 Produits bébé\n- [ ] Couches\n- [ ] Lingettes\n- [ ] Lait infantile\n`;
+    } else if (hasKids) {
+      kidSection = `\n## 🎒 Goûters & fournitures\n- [ ] Goûters\n- [ ] Jus de fruits\n`;
+    }
+
+    return `---\ntags:\n  - maison\n  - courses\n---\n> ← [[00 - Dashboard/Dashboard|Dashboard]]\n\n# Liste de courses\n\n## 🥩 Frais\n- [ ] \n\n## 🥦 Fruits & légumes\n- [ ] ${kidSection}\n## 🧴 Hygiène\n- [ ] \n\n## 🏠 Maison\n- [ ] \n\n## 🍞 Épicerie\n- [ ] \n`;
   }
 
   private _menageContent(): string {
@@ -461,9 +524,22 @@ export class VaultManager {
 `;
   }
 
-  private _jalonsContent(childName: string): string {
+  private _jalonsContent(childName: string, birthdate?: string): string {
     const slug = childName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
-    return `---\ntags:\n  - memoires\n  - ${slug}\n---\n> ← [[00 - Dashboard/Dashboard|Dashboard]]\n\n# Jalons — ${childName}\n\n## 🌟 Premières fois\n\n\n## 💛 Moments forts\n\n`;
+    const cat = this._getAgeCategory(birthdate);
+    const header = `---\ntags:\n  - memoires\n  - ${slug}\n---\n> ← [[00 - Dashboard/Dashboard|Dashboard]]\n\n# Jalons — ${childName}\n\n`;
+
+    if (cat === 'bebe') {
+      return header + `## 🌟 Premières fois\n- Premier sourire\n- Premier mot\n- Premiers pas\n- Première dent\n\n## 💛 Moments forts\n\n`;
+    }
+    if (cat === 'petit') {
+      return header + `## 🌟 Premières fois\n- Première rentrée\n- Vélo sans roulettes\n- Première nuit chez un copain\n\n## 💛 Moments forts\n\n`;
+    }
+    if (cat === 'enfant') {
+      return header + `## 🎯 Étapes\n- Lire tout seul\n- Première sortie scolaire\n- Premier sport / activité\n\n## 💛 Moments forts\n\n`;
+    }
+    // ado
+    return header + `## 🎯 Moments clés\n- Premier téléphone\n- Premier voyage seul\n- Orientation scolaire\n\n## 💛 Moments forts\n\n`;
   }
 
   /** Validate that vaultPath points to a real directory */

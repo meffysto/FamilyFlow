@@ -112,6 +112,9 @@ export default function DashboardScreen() {
     isVacationActive,
     refreshGamification,
     recipes,
+    ageUpgrades,
+    applyAgeUpgrade,
+    dismissAgeUpgrade,
   } = useVault();
 
   // Active rewards (filtered for non-expired)
@@ -745,6 +748,45 @@ export default function DashboardScreen() {
           </DashboardCard>
         )}
 
+        {ageUpgrades.map((upgrade) => {
+          const catLabels: Record<string, string> = { bebe: 'bébé', petit: 'petit enfant', enfant: 'enfant', ado: 'ado' };
+          return (
+            <View key={upgrade.profileId} style={[styles.ageUpgradeBanner, { borderColor: primary }]}>
+              <Text style={[styles.ageUpgradeTitle, { color: colors.text }]}>
+                {upgrade.childName} a grandi !
+              </Text>
+              <Text style={[styles.ageUpgradeDesc, { color: colors.textSub }]}>
+                Profil « {catLabels[upgrade.oldCategory]} » → « {catLabels[upgrade.newCategory]} ». Mettre à jour les tâches ?
+              </Text>
+              <View style={styles.ageUpgradeActions}>
+                <TouchableOpacity
+                  style={[styles.ageUpgradeBtn, { backgroundColor: primary }]}
+                  onPress={() => {
+                    Alert.alert(
+                      'Mettre à jour les tâches ?',
+                      `Les tâches actuelles de ${upgrade.childName} seront remplacées par des tâches adaptées à un profil « ${catLabels[upgrade.newCategory]} ».`,
+                      [
+                        { text: 'Annuler', style: 'cancel' },
+                        { text: 'Mettre à jour', onPress: () => applyAgeUpgrade(upgrade) },
+                      ]
+                    );
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.ageUpgradeBtnText}>Mettre à jour</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.ageUpgradeDismiss}
+                  onPress={() => dismissAgeUpgrade(upgrade.profileId)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.ageUpgradeDismissText, { color: colors.textMuted }]}>Plus tard</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          );
+        })}
+
         {sectionPrefs.map((s) => s.visible ? renderSection(s.id) : null)}
 
         <View style={styles.bottomPad} />
@@ -1198,6 +1240,47 @@ const styles = StyleSheet.create({
   },
   bottomPad: {
     height: 20,
+  },
+  ageUpgradeBanner: {
+    backgroundColor: '#FFFBEB',
+    borderRadius: 14,
+    borderWidth: 2,
+    padding: 16,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    gap: 8,
+  },
+  ageUpgradeTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  ageUpgradeDesc: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  ageUpgradeActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 4,
+  },
+  ageUpgradeBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+  ageUpgradeBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  ageUpgradeDismiss: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  ageUpgradeDismissText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   cardActions: {
     flexDirection: 'row',
