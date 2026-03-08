@@ -7,7 +7,7 @@
  * Recettes: Search, category filters, RecipeCard grid, tap → RecipeViewer.
  */
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -23,6 +23,7 @@ import {
   FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocalSearchParams } from 'expo-router';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useVault } from '../../hooks/useVault';
@@ -56,8 +57,14 @@ export default function MealsScreen() {
   } = useVault();
   const { primary, tint, colors } = useThemeColors();
 
+  const { tab: tabParam } = useLocalSearchParams<{ tab?: string }>();
   const [tab, setTab] = useState<Tab>('repas');
   const [refreshing, setRefreshing] = useState(false);
+
+  // Open on specific tab when navigating from dashboard
+  useEffect(() => {
+    if (tabParam === 'courses' || tabParam === 'recettes') setTab(tabParam);
+  }, [tabParam]);
 
   // Meal edit state
   const [editingMeal, setEditingMeal] = useState<{

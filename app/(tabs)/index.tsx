@@ -447,7 +447,7 @@ export default function DashboardScreen() {
 
       case 'courses':
         return (
-          <DashboardCard key="courses" title="Courses" icon="🛒" count={topCourses.length || undefined} color="#F59E0B" onPressMore={() => router.push({ pathname: '/(tabs)/tasks', params: { filter: 'courses' } })}>
+          <DashboardCard key="courses" title="Courses" icon="🛒" count={topCourses.length || undefined} color="#F59E0B" onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'courses' } })}>
             {topCourses.map((item) => (
               <View key={item.id} style={styles.courseRow}>
                 <Text style={styles.courseBullet}>•</Text>

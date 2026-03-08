@@ -41,7 +41,6 @@ interface FilterDef {
 const STATIC_FILTERS: FilterDef[] = [
   { id: 'tous', label: 'Tous', emoji: '📋' },
   { id: 'maison', label: 'Maison', emoji: '🏠' },
-  { id: 'courses', label: 'Courses', emoji: '🛒' },
   { id: 'terminées', label: 'Terminées', emoji: '✅' },
 ];
 
@@ -82,7 +81,7 @@ function buildTargetFiles(profiles: Profile[]) {
 }
 
 export default function TasksScreen() {
-  const { tasks, menageTasks, courses, vault, profiles, activeProfile, notifPrefs, toggleTask, addTask, deleteTask, refresh, isLoading, vacationTasks, vacationConfig, isVacationActive, refreshGamification } = useVault();
+  const { tasks, menageTasks, vault, profiles, activeProfile, notifPrefs, toggleTask, addTask, deleteTask, refresh, isLoading, vacationTasks, vacationConfig, isVacationActive, refreshGamification } = useVault();
   const { completeTask } = useGamification({ vault, notifPrefs });
   const { primary, tint, colors } = useThemeColors();
 
@@ -144,14 +143,10 @@ export default function TasksScreen() {
 
           // Check if all tasks are now done → send "journée terminée" notification
           if (!allDoneSentRef.current) {
-            const allItems = [
-              ...tasks,
-              ...courses.map((c) => ({ ...c, completed: c.completed })),
-            ];
-            const remaining = allItems.filter((t) => !t.completed && t.id !== task.id).length;
+            const remaining = tasks.filter((t) => !t.completed && t.id !== task.id).length;
             if (remaining === 0) {
               allDoneSentRef.current = true;
-              const totalDone = allItems.filter((t) => t.completed).length + 1;
+              const totalDone = tasks.filter((t) => t.completed).length + 1;
               dispatchNotificationAsync(
                 'all_tasks_done',
                 buildAllTasksDoneContext(totalDone, profiles),
@@ -165,7 +160,7 @@ export default function TasksScreen() {
         await refresh();
       }
     },
-    [toggleTask, activeProfile, profiles, tasks, courses, completeTask, refresh, notifPrefs, refreshGamification]
+    [toggleTask, activeProfile, profiles, tasks, completeTask, refresh, notifPrefs, refreshGamification]
   );
 
   const handleAddTask = useCallback(async () => {
@@ -216,21 +211,6 @@ export default function TasksScreen() {
     );
   }, [deleteTask, activeProfile]);
 
-  // Convert courses to Task-like objects for display
-  const coursesTasks: Task[] = useMemo(
-    () =>
-      courses.map((c) => ({
-        id: c.id,
-        text: c.text,
-        completed: c.completed,
-        tags: ['courses'],
-        mentions: [],
-        sourceFile: '02 - Maison/Liste de courses.md',
-        lineIndex: c.lineIndex,
-      })),
-    [courses]
-  );
-
   // Filter + search
   const allTasks = useMemo(() => {
     let result: Task[] = [];
@@ -243,15 +223,10 @@ export default function TasksScreen() {
         result = result.filter((t) => !t.completed);
       }
     } else {
-      if (filter === 'courses') {
-        result = coursesTasks;
-      } else {
-        result = [
-          ...tasks,
-          ...menageTasks,
-          ...(filter === 'tous' ? coursesTasks : []),
-        ];
-      }
+      result = [
+        ...tasks,
+        ...menageTasks,
+      ];
 
       // Apply filter
       if (filter === 'mes-taches') {
@@ -266,10 +241,7 @@ export default function TasksScreen() {
         result = result.filter((t) => t.sourceFile.includes(enfantName));
       } else if (filter === 'maison') {
         result = result.filter(
-          (t) =>
-            t.sourceFile.includes('Maison') ||
-            t.sourceFile.includes('courses') ||
-            t.sourceFile.includes('Courses')
+          (t) => t.sourceFile.includes('Maison')
         );
       } else if (filter === 'terminées') {
         result = result.filter((t) => t.completed);
@@ -290,7 +262,7 @@ export default function TasksScreen() {
     }
 
     return result;
-  }, [tasks, menageTasks, coursesTasks, vacationTasks, isVacationActive, filter, search]);
+  }, [tasks, menageTasks, vacationTasks, isVacationActive, filter, search]);
 
   // Group by source file
   const sections: TaskSection[] = useMemo(() => {
@@ -309,10 +281,10 @@ export default function TasksScreen() {
 
   const completedCount = isVacationActive
     ? vacationTasks.filter((t) => t.completed).length
-    : [...tasks, ...coursesTasks].filter((t) => t.completed).length;
+    : tasks.filter((t) => t.completed).length;
   const totalCount = isVacationActive
     ? vacationTasks.length
-    : [...tasks, ...coursesTasks].length;
+    : tasks.length;
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
@@ -520,7 +492,6 @@ export default function TasksScreen() {
 function getFileLabel(sourceFile: string): string {
   if (sourceFile.includes('Vacances')) return '☀️ Checklist Vacances';
   if (sourceFile.includes('Ménage')) return '🧹 Ménage hebdo';
-  if (sourceFile.includes('courses') || sourceFile.includes('Courses')) return '🛒 Liste de courses';
   if (sourceFile.includes('Maison')) return '🏠 Maison — Tâches';
   // Extract folder name for enfant tasks (e.g. "01 - Enfants/Maxence/..." → "Maxence")
   const parts = sourceFile.split('/');
