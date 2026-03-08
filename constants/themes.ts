@@ -15,6 +15,7 @@ export type ProfileTheme =
   | 'espace'
   | 'pirates'
   | 'dinosaures'
+  | 'pokemon'
   | 'default';
 
 export interface ThemeConfig {
@@ -114,6 +115,18 @@ export const THEMES: Record<ProfileTheme, ThemeConfig> = {
     packOpenEmoji: '🦖',
     packLabel: 'Pack Jurassique',
     confettiColors: ['#16A34A', '#4ADE80', '#DCFCE7', '#78350F', '#FFFFFF'],
+  },
+  pokemon: {
+    id: 'pokemon',
+    label: 'Pokémon',
+    emoji: '🔴',
+    primary: '#E3350D',
+    tint: '#FEE2E2',
+    secondary: '#1A1A2E',
+    packEmoji: '🔴',
+    packOpenEmoji: '⚡',
+    packLabel: 'Booster Pokémon',
+    confettiColors: ['#E3350D', '#FFFFFF', '#FFD700', '#3B82F6', '#16A34A'],
   },
   default: {
     id: 'default',
