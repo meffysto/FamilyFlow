@@ -40,6 +40,7 @@ import {
   loadNotifConfig,
   saveNotifConfig,
   setupDailyReminders,
+  setupGrossesseWeekly,
   requestNotificationPermissions,
   NotifScheduleConfig,
 } from '../../lib/scheduled-notifications';
@@ -568,6 +569,26 @@ export default function SettingsScreen() {
                   {localNotifConfig.rdvAlertEnabled ? '✅' : '⬜'}
                 </Text>
               </TouchableOpacity>
+              {profiles.some((p) => p.statut === 'grossesse' && p.dateTerme) && (
+                <TouchableOpacity
+                  style={styles.notifToggleRow}
+                  onPress={async () => {
+                    const updated = { ...localNotifConfig, grossesseWeeklyEnabled: !localNotifConfig.grossesseWeeklyEnabled };
+                    setLocalNotifConfig(updated);
+                    await saveNotifConfig(updated);
+                    const permitted = await requestNotificationPermissions();
+                    if (permitted) await setupGrossesseWeekly(updated);
+                  }}
+                >
+                  <Text style={styles.notifToggleLabel}>🤰 Rappel grossesse</Text>
+                  <Text style={styles.notifToggleTime}>
+                    Lundi {String(localNotifConfig.grossesseWeeklyHour).padStart(2, '0')}:{String(localNotifConfig.grossesseWeeklyMinute).padStart(2, '0')}
+                  </Text>
+                  <Text style={styles.notifToggleIcon}>
+                    {localNotifConfig.grossesseWeeklyEnabled ? '✅' : '⬜'}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         )}

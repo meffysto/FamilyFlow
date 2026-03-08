@@ -24,6 +24,10 @@ export interface NotifScheduleConfig {
   eveningMinute: number;  // default 0
   rdvAlertEnabled: boolean;
   rdvAlertMinutes: number; // minutes before RDV, default 60
+  grossesseWeeklyEnabled: boolean;
+  grossesseWeeklyDay: number; // 1=lundi … 7=dimanche (ISO weekday)
+  grossesseWeeklyHour: number;
+  grossesseWeeklyMinute: number;
 }
 
 const DEFAULT_CONFIG: NotifScheduleConfig = {
@@ -38,6 +42,10 @@ const DEFAULT_CONFIG: NotifScheduleConfig = {
   eveningMinute: 0,
   rdvAlertEnabled: true,
   rdvAlertMinutes: 60,
+  grossesseWeeklyEnabled: false,
+  grossesseWeeklyDay: 1, // lundi
+  grossesseWeeklyHour: 9,
+  grossesseWeeklyMinute: 0,
 };
 
 const STORAGE_KEY = 'notif_schedule_config';
@@ -45,6 +53,7 @@ const CATEGORY_MORNING = 'morning-reminder';
 const CATEGORY_MIDDAY = 'midday-reminder';
 const CATEGORY_EVENING = 'evening-reminder';
 const CATEGORY_RDV = 'rdv-alert';
+const CATEGORY_GROSSESSE = 'grossesse-weekly';
 
 // ─── Setup ───────────────────────────────────────────────────────────────────
 
@@ -203,6 +212,30 @@ export async function scheduleRDVAlerts(
   return scheduled;
 }
 
+// ─── Grossesse weekly reminder ───────────────────────────────────────────────
+
+/** Schedule or cancel the weekly pregnancy reminder notification */
+export async function setupGrossesseWeekly(config: NotifScheduleConfig): Promise<void> {
+  await cancelByCategory(CATEGORY_GROSSESSE);
+
+  if (!config.grossesseWeeklyEnabled) return;
+
+  await Notifications.scheduleNotificationAsync({
+    identifier: `${CATEGORY_GROSSESSE}-weekly`,
+    content: {
+      title: '🤰 Suivi grossesse',
+      body: 'Ouvre Family Vault pour envoyer la mise à jour hebdo',
+      sound: true,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+      weekday: config.grossesseWeeklyDay,
+      hour: config.grossesseWeeklyHour,
+      minute: config.grossesseWeeklyMinute,
+    },
+  });
+}
+
 // ─── Master setup ────────────────────────────────────────────────────────────
 
 /**
@@ -221,6 +254,7 @@ export async function setupAllNotifications(rdvs: RDV[]): Promise<{
 
   const config = await loadNotifConfig();
   await setupDailyReminders(config);
+  await setupGrossesseWeekly(config);
   const rdvScheduled = config.rdvAlertEnabled
     ? await scheduleRDVAlerts(rdvs, config.rdvAlertMinutes)
     : 0;
