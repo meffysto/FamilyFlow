@@ -359,6 +359,12 @@ const INGREDIENT_FR: Record<string, string> = {
   // Nuts
   almond: 'amande', almonds: 'amandes', walnut: 'noix', walnuts: 'noix',
   hazelnut: 'noisette', hazelnuts: 'noisettes', peanut: 'cacahuète', peanuts: 'cacahuètes',
+  // Adjective forms
+  'grated nutmeg': 'muscade râpée', 'ground nutmeg': 'muscade moulue',
+  'grated cheese': 'fromage râpé', 'melted butter': 'beurre fondu',
+  'fresh cream': 'crème fraîche', 'whipped cream': 'crème fouettée',
+  'chopped parsley': 'persil haché', 'fresh basil': 'basilic frais',
+  'minced garlic': 'ail émincé', 'diced onion': 'oignon coupé',
 };
 
 /** Normalize unit to French */
@@ -370,7 +376,12 @@ function normalizeUnit(unit: string): string {
 /** Translate ingredient name to French if known */
 function translateIngredient(name: string): string {
   const lower = name.toLowerCase().trim();
-  return INGREDIENT_FR[lower] || name;
+  // Exact match first
+  if (INGREDIENT_FR[lower]) return INGREDIENT_FR[lower];
+  // Try without common EN adjectives (grated, fresh, melted, etc.)
+  const stripped = lower.replace(/^(grated|ground|fresh|melted|chopped|minced|diced|sliced|dried|whole|raw|cooked|frozen|crushed|toasted)\s+/, '');
+  if (stripped !== lower && INGREDIENT_FR[stripped]) return INGREDIENT_FR[stripped];
+  return name;
 }
 
 /** Normalize ingredient name: lowercase, trim, remove accents for comparison */

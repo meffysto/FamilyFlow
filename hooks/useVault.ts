@@ -999,7 +999,12 @@ export function useVault(): VaultState {
           }
         }
 
-        if (foundIdx >= 0 && item.quantity !== null) {
+        if (foundIdx >= 0) {
+          if (item.quantity === null) {
+            // No quantity (e.g. "sel", "poivre") — already exists, skip
+            merged++;
+            continue;
+          }
           // Merge: parse existing qty, add, rewrite line
           const existingLine = lines[foundIdx].replace(/^-\s+\[ \]\s*/, '');
           const existingMatch = existingLine.match(/^(\d+(?:[.,]\d+)?)\s+/);
