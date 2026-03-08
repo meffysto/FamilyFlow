@@ -28,7 +28,7 @@ import * as SecureStore from 'expo-secure-store';
 import { useVault, VAULT_PATH_KEY } from '../../hooks/useVault';
 import { VaultPicker } from '../../components/VaultPicker';
 import { NotificationSettings } from '../../components/NotificationSettings';
-import { testTelegram, sendTelegram, buildWeeklyRecapText, sendWeeklyRecap, buildMonthlyRecapText } from '../../lib/telegram';
+import { testTelegram, sendTelegram, buildWeeklyRecapText, sendWeeklyRecap, buildMonthlyRecapText, buildGrossesseUpdateText } from '../../lib/telegram';
 import { serializeGamification } from '../../lib/parser';
 import { RARITY_LABELS } from '../../constants/rewards';
 import { format } from 'date-fns';
@@ -483,6 +483,22 @@ export default function SettingsScreen() {
                 <Text style={[styles.recapBtnText, { color: primary }]}>📊 Envoyer le bilan du mois</Text>
               )}
             </TouchableOpacity>
+            {profiles.some((p) => p.statut === 'grossesse' && p.dateTerme) && (
+              <TouchableOpacity
+                style={[styles.recapBtn, { backgroundColor: tint }]}
+                onPress={async () => {
+                  const text = buildGrossesseUpdateText(profiles);
+                  if (!text) return;
+                  const chatId = telegramChatId.trim() || (await SecureStore.getItemAsync(TELEGRAM_CHAT_KEY) || '');
+                  const token = telegramToken.trim() || (await SecureStore.getItemAsync(TELEGRAM_TOKEN_KEY) || '');
+                  if (!token || !chatId) { Alert.alert('Config manquante', 'Configurez Telegram d\'abord.'); return; }
+                  const ok = await sendTelegram(token, chatId, text);
+                  Alert.alert(ok ? '✅ Envoyé !' : '❌ Échec', ok ? 'Mise à jour grossesse envoyée.' : "Erreur lors de l'envoi.");
+                }}
+              >
+                <Text style={[styles.recapBtnText, { color: primary }]}>🤰 Envoyer le suivi grossesse</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 

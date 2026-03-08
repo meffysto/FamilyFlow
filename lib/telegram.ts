@@ -109,6 +109,90 @@ export function formatDailySummaryMessage(
     (top ? `🏆 Leader du jour : ${top.avatar} <b>${top.name}</b> (${top.points} pts)` : '');
 }
 
+// ─── Grossesse Weekly Update ────────────────────────────────────────────────
+
+/** Fruit size comparison by week of pregnancy (SA = semaines d'aménorrhée) */
+const FRUIT_BY_WEEK: Record<number, { fruit: string; emoji: string; taille: string }> = {
+  4: { fruit: 'graine de pavot', emoji: '🫘', taille: '1 mm' },
+  5: { fruit: 'grain de sésame', emoji: '🫘', taille: '2 mm' },
+  6: { fruit: 'lentille', emoji: '🫘', taille: '4 mm' },
+  7: { fruit: 'myrtille', emoji: '🫐', taille: '1 cm' },
+  8: { fruit: 'framboise', emoji: '🫐', taille: '1.5 cm' },
+  9: { fruit: 'cerise', emoji: '🍒', taille: '2.5 cm' },
+  10: { fruit: 'fraise', emoji: '🍓', taille: '3 cm' },
+  11: { fruit: 'figue', emoji: '🫒', taille: '4 cm' },
+  12: { fruit: 'citron vert', emoji: '🍋', taille: '5.5 cm' },
+  13: { fruit: 'kiwi', emoji: '🥝', taille: '7 cm' },
+  14: { fruit: 'citron', emoji: '🍋', taille: '8.5 cm' },
+  15: { fruit: 'pomme', emoji: '🍎', taille: '10 cm' },
+  16: { fruit: 'avocat', emoji: '🥑', taille: '11.5 cm' },
+  17: { fruit: 'poire', emoji: '🍐', taille: '13 cm' },
+  18: { fruit: 'poivron', emoji: '🫑', taille: '14 cm' },
+  19: { fruit: 'tomate', emoji: '🍅', taille: '15 cm' },
+  20: { fruit: 'banane', emoji: '🍌', taille: '25 cm' },
+  21: { fruit: 'carotte', emoji: '🥕', taille: '26 cm' },
+  22: { fruit: 'épi de maïs', emoji: '🌽', taille: '27 cm' },
+  23: { fruit: 'mangue', emoji: '🥭', taille: '28 cm' },
+  24: { fruit: 'grenade', emoji: '🫒', taille: '30 cm' },
+  25: { fruit: 'chou-fleur', emoji: '🥦', taille: '34 cm' },
+  26: { fruit: 'laitue', emoji: '🥬', taille: '35 cm' },
+  27: { fruit: 'brocoli', emoji: '🥦', taille: '36 cm' },
+  28: { fruit: 'aubergine', emoji: '🍆', taille: '37 cm' },
+  29: { fruit: 'courge butternut', emoji: '🎃', taille: '38 cm' },
+  30: { fruit: 'concombre', emoji: '🥒', taille: '40 cm' },
+  31: { fruit: 'noix de coco', emoji: '🥥', taille: '41 cm' },
+  32: { fruit: 'chou chinois', emoji: '🥬', taille: '42 cm' },
+  33: { fruit: 'ananas', emoji: '🍍', taille: '43 cm' },
+  34: { fruit: 'melon cantaloup', emoji: '🍈', taille: '45 cm' },
+  35: { fruit: 'melon miel', emoji: '🍈', taille: '46 cm' },
+  36: { fruit: 'papaye', emoji: '🫒', taille: '47 cm' },
+  37: { fruit: 'courge spaghetti', emoji: '🎃', taille: '48 cm' },
+  38: { fruit: 'poireau', emoji: '🥬', taille: '49 cm' },
+  39: { fruit: 'mini pastèque', emoji: '🍉', taille: '50 cm' },
+  40: { fruit: 'pastèque', emoji: '🍉', taille: '51 cm' },
+  41: { fruit: 'citrouille', emoji: '🎃', taille: '52 cm' },
+};
+
+/** Get the closest fruit for a given SA week */
+function getFruitForWeek(sa: number): { fruit: string; emoji: string; taille: string } {
+  if (sa < 4) return FRUIT_BY_WEEK[4];
+  if (sa > 41) return FRUIT_BY_WEEK[41];
+  // Find closest key
+  const keys = Object.keys(FRUIT_BY_WEEK).map(Number).sort((a, b) => a - b);
+  for (let i = keys.length - 1; i >= 0; i--) {
+    if (sa >= keys[i]) return FRUIT_BY_WEEK[keys[i]];
+  }
+  return FRUIT_BY_WEEK[4];
+}
+
+/**
+ * Build the weekly grossesse update text.
+ */
+export function buildGrossesseUpdateText(profiles: Array<{ name: string; dateTerme?: string; statut?: string }>): string {
+  const grossesses = profiles.filter((p) => p.statut === 'grossesse' && p.dateTerme);
+  if (grossesses.length === 0) return '';
+
+  const lines: string[] = ['🤰 <b>Suivi grossesse — mise à jour hebdo</b>\n'];
+
+  for (const p of grossesses) {
+    const terme = new Date(p.dateTerme!);
+    const now = new Date();
+    const daysLeft = Math.ceil((terme.getTime() - now.getTime()) / 86400000);
+    // SA = semaines d'aménorrhée (terme = 41 SA, so current SA = 41 - weeksLeft)
+    const weeksLeft = Math.ceil(daysLeft / 7);
+    const sa = Math.max(4, 41 - weeksLeft);
+    const { fruit, emoji, taille } = getFruitForWeek(sa);
+
+    lines.push(`👶 <b>${p.name}</b>`);
+    lines.push(`📅 Terme prévu : ${p.dateTerme}`);
+    lines.push(`⏳ ${daysLeft > 0 ? `J-${daysLeft} (${weeksLeft} semaines)` : daysLeft === 0 ? "C'est pour aujourd'hui !" : `J+${Math.abs(daysLeft)} — bébé se fait désirer !`}`);
+    lines.push(`📏 Semaine ${sa} SA — environ ${taille}`);
+    lines.push(`${emoji} Bébé a la taille d'${fruit.match(/^[aeiouyéèêë]/i) ? 'un·e ' : 'un·e '}${fruit}\n`);
+  }
+
+  return lines.join('\n');
+}
+
 // ─── Monthly Recap ──────────────────────────────────────────────────────────
 
 export function buildMonthlyRecapText(data: {
