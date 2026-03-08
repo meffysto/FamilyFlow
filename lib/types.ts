@@ -103,6 +103,10 @@ export interface GamificationData {
   activeRewards: ActiveReward[];
 }
 
+// ─── Recipes (Cooklang) ─────────────────────────────────────────────────────
+
+export type { AppRecipe as Recipe, AppIngredient as RecipeIngredient, AppStep as RecipeStep } from './cooklang';
+
 export interface VacationConfig {
   active: boolean;
   startDate: string; // YYYY-MM-DD
