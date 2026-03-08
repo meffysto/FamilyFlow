@@ -13,16 +13,34 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import * as Haptics from 'expo-haptics';
-import { format } from 'date-fns';
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  getDay,
+  addMonths,
+  subMonths,
+  isToday,
+} from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { useVault } from '../../hooks/useVault';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { RDVEditor } from '../../components/RDVEditor';
 import { formatDateForDisplay, isRdvUpcoming } from '../../lib/parser';
 import { RDV } from '../../lib/types';
+
+const CAL_PADDING = 16;
+const DAY_GAP = 4;
+const CELL_SIZE = Math.floor((Dimensions.get('window').width - CAL_PADDING * 2 - DAY_GAP * 6) / 7);
+const WEEKDAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+
+type ViewMode = 'liste' | 'calendrier';
 
 const TYPE_EMOJI: Record<string, string> = {
   pédiatre: '👨‍⚕️',
@@ -40,6 +58,9 @@ export default function RDVScreen() {
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingRDV, setEditingRDV] = useState<RDV | undefined>(undefined);
   const [showPast, setShowPast] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('liste');
+  const [calMonth, setCalMonth] = useState(new Date());
+  const [calDayRdvs, setCalDayRdvs] = useState<{ date: string; rdvs: RDV[] } | null>(null);
 
   const upcoming = useMemo(
     () => rdvs.filter((r) => isRdvUpcoming(r)),
@@ -51,6 +72,24 @@ export default function RDVScreen() {
       .sort((a, b) => b.date_rdv.localeCompare(a.date_rdv)), // most recent first
     [rdvs]
   );
+
+  const calendarDays = useMemo(() => {
+    const start = startOfMonth(calMonth);
+    const end = endOfMonth(calMonth);
+    const days = eachDayOfInterval({ start, end });
+    let startDow = getDay(start) - 1;
+    if (startDow < 0) startDow = 6;
+    return { padding: Array(startDow).fill(null), days };
+  }, [calMonth]);
+
+  const rdvByDate = useMemo(() => {
+    const map: Record<string, RDV[]> = {};
+    for (const r of rdvs) {
+      if (!map[r.date_rdv]) map[r.date_rdv] = [];
+      map[r.date_rdv].push(r);
+    }
+    return map;
+  }, [rdvs]);
 
   const openCreate = () => {
     setEditingRDV(undefined);
@@ -211,6 +250,66 @@ export default function RDVScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* View mode tabs */}
+      <View style={[styles.modeTabs, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        {(['liste', 'calendrier'] as ViewMode[]).map((mode) => (
+          <TouchableOpacity
+            key={mode}
+            style={[styles.modeTab, { backgroundColor: colors.cardAlt }, viewMode === mode && { backgroundColor: tint }]}
+            onPress={() => setViewMode(mode)}
+          >
+            <Text style={[styles.modeTabText, { color: colors.textMuted }, viewMode === mode && { color: primary, fontWeight: '700' }]}>
+              {mode === 'liste' ? '📋 Liste' : '🗓 Calendrier'}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {viewMode === 'calendrier' ? (
+        <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, { paddingBottom: 60 }]}>
+          <View style={styles.monthNav}>
+            <TouchableOpacity style={[styles.monthArrow, { backgroundColor: colors.card }]} onPress={() => setCalMonth((m) => subMonths(m, 1))}>
+              <Text style={[styles.monthArrowText, { color: primary }]}>‹</Text>
+            </TouchableOpacity>
+            <Text style={[styles.monthLabel, { color: colors.text }]}>
+              {(() => { const s = format(calMonth, 'MMMM yyyy', { locale: fr }); return s.charAt(0).toUpperCase() + s.slice(1); })()}
+            </Text>
+            <TouchableOpacity style={[styles.monthArrow, { backgroundColor: colors.card }]} onPress={() => setCalMonth((m) => addMonths(m, 1))}>
+              <Text style={[styles.monthArrowText, { color: primary }]}>›</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.weekdayRow}>
+            {WEEKDAY_LABELS.map((l, i) => (
+              <View key={i} style={styles.weekdayCell}><Text style={[styles.weekdayText, { color: colors.textFaint }]}>{l}</Text></View>
+            ))}
+          </View>
+          <View style={styles.calGrid}>
+            {calendarDays.padding.map((_, i) => <View key={`p${i}`} style={styles.calCell} />)}
+            {calendarDays.days.map((date) => {
+              const dateStr = format(date, 'yyyy-MM-dd');
+              const dayRdvs = rdvByDate[dateStr] ?? [];
+              const today = isToday(date);
+              return (
+                <TouchableOpacity
+                  key={dateStr}
+                  style={[styles.calCell, { backgroundColor: colors.card }, today && { borderWidth: 2, borderColor: primary }]}
+                  onPress={() => dayRdvs.length > 0 && setCalDayRdvs({ date: dateStr, rdvs: dayRdvs })}
+                  activeOpacity={dayRdvs.length > 0 ? 0.7 : 1}
+                >
+                  <Text style={[styles.calDayNum, { color: today ? primary : colors.textSub }, today && { fontWeight: '800' }]}>{date.getDate()}</Text>
+                  {dayRdvs.length > 0 && (
+                    <View style={styles.calDots}>
+                      {dayRdvs.slice(0, 3).map((r, i) => (
+                        <View key={i} style={[styles.calDot, { backgroundColor: r.statut === 'fait' ? '#10B981' : r.statut === 'annulé' ? '#EF4444' : primary }]} />
+                      ))}
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </ScrollView>
+      ) : (
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {/* Upcoming */}
         <Text style={[styles.sectionTitle, { color: colors.textSub }]}>
@@ -239,6 +338,24 @@ export default function RDVScreen() {
           </>
         )}
       </ScrollView>
+      )}
+
+      {/* Day RDVs Modal (calendar tap) */}
+      <Modal visible={calDayRdvs !== null} transparent animationType="slide" onRequestClose={() => setCalDayRdvs(null)}>
+        <TouchableOpacity style={styles.dayModalOverlay} activeOpacity={1} onPress={() => setCalDayRdvs(null)} />
+        <View style={[styles.dayModalContent, { backgroundColor: colors.card }]}>
+          <Text style={[styles.dayModalTitle, { color: colors.text }]}>
+            {calDayRdvs ? formatDateForDisplay(calDayRdvs.date) : ''}
+          </Text>
+          {calDayRdvs?.rdvs.map((r) => (
+            <TouchableOpacity key={r.sourceFile} style={[styles.dayModalRdv, { backgroundColor: colors.cardAlt }]}
+              onPress={() => { setCalDayRdvs(null); openEdit(r); }}>
+              <Text style={[styles.dayModalRdvText, { color: colors.text }]}>{TYPE_EMOJI[r.type_rdv] ?? '📋'} {r.type_rdv} — {r.enfant}</Text>
+              {r.heure ? <Text style={[styles.dayModalRdvTime, { color: colors.textMuted }]}>🕐 {r.heure}</Text> : null}
+            </TouchableOpacity>
+          ))}
+        </View>
+      </Modal>
 
       {/* RDV Editor Modal */}
       <Modal
@@ -388,6 +505,30 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
   },
+  modeTabs: {
+    flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 8,
+    gap: 8, borderBottomWidth: 1,
+  },
+  modeTab: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 12 },
+  modeTabText: { fontSize: 14, fontWeight: '600' },
+  monthNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  monthArrow: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
+  monthArrowText: { fontSize: 24, fontWeight: '300' },
+  monthLabel: { fontSize: 18, fontWeight: '700' },
+  weekdayRow: { flexDirection: 'row', gap: DAY_GAP, marginBottom: 8 },
+  weekdayCell: { width: CELL_SIZE, alignItems: 'center' },
+  weekdayText: { fontSize: 12, fontWeight: '600' },
+  calGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: DAY_GAP },
+  calCell: { width: CELL_SIZE, height: CELL_SIZE, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
+  calDayNum: { fontSize: 13, fontWeight: '600' },
+  calDots: { flexDirection: 'row', gap: 2, marginTop: 2 },
+  calDot: { width: 5, height: 5, borderRadius: 3 },
+  dayModalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' },
+  dayModalContent: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, gap: 10, paddingBottom: 40 },
+  dayModalTitle: { fontSize: 17, fontWeight: '800', marginBottom: 4 },
+  dayModalRdv: { borderRadius: 12, padding: 14, gap: 4 },
+  dayModalRdvText: { fontSize: 15, fontWeight: '600' },
+  dayModalRdvTime: { fontSize: 13 },
   questionsBlock: {
     marginTop: 10,
     paddingTop: 10,

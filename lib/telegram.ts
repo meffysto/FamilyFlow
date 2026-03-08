@@ -11,7 +11,7 @@
  * - Score/leaderboard
  */
 
-import { Profile, LootBox, Memory } from './types';
+import { Profile, LootBox, Memory, RDV } from './types';
 import { formatDateForDisplay } from './parser';
 
 const TELEGRAM_API = 'https://api.telegram.org';
@@ -107,6 +107,62 @@ export function formatDailySummaryMessage(
     `✅ ${completedCount} tâche(s) terminée(s)\n` +
     `⏳ ${pendingCount} tâche(s) restante(s)\n\n` +
     (top ? `🏆 Leader du jour : ${top.avatar} <b>${top.name}</b> (${top.points} pts)` : '');
+}
+
+// ─── Monthly Recap ──────────────────────────────────────────────────────────
+
+export function buildMonthlyRecapText(data: {
+  profiles: Profile[];
+  memories: Memory[];
+  rdvs: RDV[];
+  photoCount: number;
+  completedTasksCount: number;
+  month: string;
+}): string {
+  const lines: string[] = [`📊 <b>Bilan du mois — ${data.month}</b>\n`];
+
+  if (data.profiles.length > 0) {
+    lines.push('🏆 <b>Points du mois</b>');
+    const sorted = [...data.profiles].sort((a, b) => b.points - a.points);
+    const medals = ['🥇', '🥈', '🥉'];
+    for (let i = 0; i < sorted.length; i++) {
+      const p = sorted[i];
+      lines.push(`  ${medals[i] ?? '  '} ${p.avatar} <b>${p.name}</b> — ${p.points} pts · Niv. ${p.level} · 🔥 ${p.streak}j`);
+    }
+    lines.push('');
+  }
+
+  if (data.completedTasksCount > 0) {
+    lines.push(`✅ <b>${data.completedTasksCount} tâche(s)</b> accomplies ce mois`);
+  }
+
+  const doneRdvs = data.rdvs.filter((r) => r.statut === 'fait');
+  if (doneRdvs.length > 0) {
+    lines.push(`📅 <b>${doneRdvs.length} rendez-vous</b> effectué(s)`);
+    for (const rdv of doneRdvs) {
+      lines.push(`  • ${rdv.type_rdv} — ${rdv.enfant} (${formatDateForDisplay(rdv.date_rdv)})`);
+    }
+    lines.push('');
+  }
+
+  if (data.photoCount > 0) {
+    lines.push(`📸 <b>${data.photoCount} photo(s)</b> enregistrée(s)`);
+  }
+
+  if (data.memories.length > 0) {
+    lines.push('');
+    lines.push('🌟 <b>Souvenirs du mois</b>');
+    for (const m of data.memories) {
+      lines.push(`  • <b>${m.title}</b> — ${m.enfant} (${formatDateForDisplay(m.date)})`);
+      if (m.description) lines.push(`    <i>${m.description}</i>`);
+    }
+  }
+
+  if (data.memories.length === 0 && data.photoCount === 0 && data.completedTasksCount === 0) {
+    lines.push('Un mois calme — mais tout va bien ! 😊');
+  }
+
+  return lines.join('\n');
 }
 
 // ─── Photo sending ──────────────────────────────────────────────────────────
@@ -269,10 +325,14 @@ export async function sendWeeklyRecap(
   const textOk = await sendTelegram(token, chatId, text);
   if (!textOk) return false;
 
-  // Send photos in groups of 10
-  for (let i = 0; i < photoUris.length; i += 10) {
-    const batch = photoUris.slice(i, i + 10);
-    await sendTelegramMediaGroup(token, chatId, batch);
+  // Send photos: single photo via sendPhoto, multiple via sendMediaGroup (min 2)
+  if (photoUris.length === 1) {
+    await sendTelegramPhoto(token, chatId, photoUris[0]);
+  } else {
+    for (let i = 0; i < photoUris.length; i += 10) {
+      const batch = photoUris.slice(i, i + 10);
+      await sendTelegramMediaGroup(token, chatId, batch);
+    }
   }
 
   return true;

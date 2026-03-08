@@ -46,15 +46,17 @@ const STATIC_FILTERS: FilterDef[] = [
 ];
 
 /** Build dynamic filters from enfant profiles */
-function buildFilters(profiles: Profile[]): FilterDef[] {
+function buildFilters(profiles: Profile[], activeProfile: Profile | null): FilterDef[] {
   const enfants = profiles.filter((p) => p.role === 'enfant');
   const enfantFilters = enfants.map((p) => ({
     id: `enfant:${p.name}`,
     label: p.name,
     emoji: p.avatar,
   }));
-  // Insert enfant filters after "Tous"
-  return [STATIC_FILTERS[0], ...enfantFilters, ...STATIC_FILTERS.slice(1)];
+  const mesTaches: FilterDef[] = activeProfile
+    ? [{ id: 'mes-taches', label: 'Mes tâches', emoji: activeProfile.avatar }]
+    : [];
+  return [STATIC_FILTERS[0], ...mesTaches, ...enfantFilters, ...STATIC_FILTERS.slice(1)];
 }
 
 interface TaskSection {
@@ -80,12 +82,20 @@ function buildTargetFiles(profiles: Profile[]) {
 }
 
 export default function TasksScreen() {
-  const { tasks, menageTasks, courses, vault, profiles, activeProfile, notifPrefs, toggleTask, addTask, deleteTask, refresh, isLoading } = useVault();
+  const { tasks, menageTasks, courses, vault, profiles, activeProfile, notifPrefs, toggleTask, addTask, deleteTask, refresh, isLoading, vacationTasks, vacationConfig, isVacationActive, refreshGamification } = useVault();
   const { completeTask } = useGamification({ vault, notifPrefs });
   const { primary, tint, colors } = useThemeColors();
 
   const { filter: filterParam } = useLocalSearchParams<{ filter?: string }>();
-  const filters = useMemo(() => buildFilters(profiles), [profiles]);
+  const filters = useMemo(() => {
+    if (isVacationActive) {
+      return [
+        { id: 'tous', label: 'Tous', emoji: '☀️' },
+        { id: 'terminées', label: 'Terminées', emoji: '✅' },
+      ];
+    }
+    return buildFilters(profiles, activeProfile);
+  }, [profiles, activeProfile, isVacationActive]);
   const targetFiles = useMemo(() => buildTargetFiles(profiles), [profiles]);
   const [filter, setFilter] = useState('tous');
 
@@ -122,6 +132,7 @@ export default function TasksScreen() {
         if (completed && activeProfile) {
           try {
             const { lootAwarded, pointsGained } = await completeTask(activeProfile, task.text);
+            await refreshGamification();
             if (lootAwarded) {
               Alert.alert('🎁 Récompense !', `+${pointsGained} pts ! Tu as gagné une récompense ! Va dans Menu > Récompenses pour l'ouvrir.`);
             } else {
@@ -154,7 +165,7 @@ export default function TasksScreen() {
         await refresh();
       }
     },
-    [toggleTask, activeProfile, profiles, tasks, courses, completeTask, refresh, notifPrefs]
+    [toggleTask, activeProfile, profiles, tasks, courses, completeTask, refresh, notifPrefs, refreshGamification]
   );
 
   const handleAddTask = useCallback(async () => {
@@ -181,6 +192,10 @@ export default function TasksScreen() {
   }, [newTaskText, newTaskDueDate, newTaskRecurrence, newTaskTarget, addTask]);
 
   const handleDeleteTask = useCallback(async (task: Task) => {
+    if (activeProfile?.role === 'enfant') {
+      Alert.alert('🔒 Admin requis', 'Seuls les adultes peuvent supprimer des tâches.');
+      return;
+    }
     Alert.alert(
       '🗑️ Supprimer la tâche',
       `Supprimer « ${task.text} » ?`,
@@ -199,7 +214,7 @@ export default function TasksScreen() {
         },
       ]
     );
-  }, [deleteTask]);
+  }, [deleteTask, activeProfile]);
 
   // Convert courses to Task-like objects for display
   const coursesTasks: Task[] = useMemo(
@@ -220,31 +235,47 @@ export default function TasksScreen() {
   const allTasks = useMemo(() => {
     let result: Task[] = [];
 
-    if (filter === 'courses') {
-      result = coursesTasks;
+    if (isVacationActive) {
+      result = [...vacationTasks];
+      if (filter === 'terminées') {
+        result = result.filter((t) => t.completed);
+      } else {
+        result = result.filter((t) => !t.completed);
+      }
     } else {
-      result = [
-        ...tasks,
-        ...menageTasks,
-        ...(filter === 'tous' ? coursesTasks : []),
-      ];
-    }
+      if (filter === 'courses') {
+        result = coursesTasks;
+      } else {
+        result = [
+          ...tasks,
+          ...menageTasks,
+          ...(filter === 'tous' ? coursesTasks : []),
+        ];
+      }
 
-    // Apply filter
-    if (filter.startsWith('enfant:')) {
-      const enfantName = filter.slice('enfant:'.length);
-      result = result.filter((t) => t.sourceFile.includes(enfantName));
-    } else if (filter === 'maison') {
-      result = result.filter(
-        (t) =>
-          t.sourceFile.includes('Maison') ||
-          t.sourceFile.includes('courses') ||
-          t.sourceFile.includes('Courses')
-      );
-    } else if (filter === 'terminées') {
-      result = result.filter((t) => t.completed);
-    } else {
-      result = result.filter((t) => !t.completed);
+      // Apply filter
+      if (filter === 'mes-taches') {
+        if (activeProfile) {
+          const nameNorm = activeProfile.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '');
+          result = result.filter((t) =>
+            t.mentions.some((m) => m.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '') === nameNorm)
+          );
+        }
+      } else if (filter.startsWith('enfant:')) {
+        const enfantName = filter.slice('enfant:'.length);
+        result = result.filter((t) => t.sourceFile.includes(enfantName));
+      } else if (filter === 'maison') {
+        result = result.filter(
+          (t) =>
+            t.sourceFile.includes('Maison') ||
+            t.sourceFile.includes('courses') ||
+            t.sourceFile.includes('Courses')
+        );
+      } else if (filter === 'terminées') {
+        result = result.filter((t) => t.completed);
+      } else {
+        result = result.filter((t) => !t.completed);
+      }
     }
 
     // Search
@@ -259,7 +290,7 @@ export default function TasksScreen() {
     }
 
     return result;
-  }, [tasks, menageTasks, coursesTasks, filter, search]);
+  }, [tasks, menageTasks, coursesTasks, vacationTasks, isVacationActive, filter, search]);
 
   // Group by source file
   const sections: TaskSection[] = useMemo(() => {
@@ -276,18 +307,31 @@ export default function TasksScreen() {
     }));
   }, [allTasks]);
 
-  const completedCount = [...tasks, ...coursesTasks].filter((t) => t.completed).length;
-  const totalCount = [...tasks, ...coursesTasks].length;
+  const completedCount = isVacationActive
+    ? vacationTasks.filter((t) => t.completed).length
+    : [...tasks, ...coursesTasks].filter((t) => t.completed).length;
+  const totalCount = isVacationActive
+    ? vacationTasks.length
+    : [...tasks, ...coursesTasks].length;
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <Text style={[styles.title, { color: colors.text }]}>📋 Tâches</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{isVacationActive ? '☀️ Vacances' : '📋 Tâches'}</Text>
         <Text style={[styles.stats, { color: colors.textMuted }]}>
           {completedCount}/{totalCount} terminées
         </Text>
       </View>
+
+      {/* Vacation banner */}
+      {isVacationActive && vacationConfig && (
+        <View style={styles.vacationBanner}>
+          <Text style={styles.vacationBannerText}>
+            ☀️ Mode Vacances — du {vacationConfig.startDate.split('-').reverse().join('/')} au {vacationConfig.endDate.split('-').reverse().join('/')}
+          </Text>
+        </View>
+      )}
 
       {/* Search */}
       <View style={[styles.searchContainer, { backgroundColor: colors.card }]}>
@@ -369,7 +413,7 @@ export default function TasksScreen() {
       <TouchableOpacity
         style={[styles.fab, { backgroundColor: primary }]}
         onPress={() => {
-          setNewTaskTarget(targetFiles[0]?.value ?? '');
+          setNewTaskTarget(isVacationActive ? '02 - Maison/Vacances.md' : (targetFiles[0]?.value ?? ''));
           setAddModalVisible(true);
         }}
         activeOpacity={0.8}
@@ -474,6 +518,7 @@ export default function TasksScreen() {
 }
 
 function getFileLabel(sourceFile: string): string {
+  if (sourceFile.includes('Vacances')) return '☀️ Checklist Vacances';
   if (sourceFile.includes('Ménage')) return '🧹 Ménage hebdo';
   if (sourceFile.includes('courses') || sourceFile.includes('Courses')) return '🛒 Liste de courses';
   if (sourceFile.includes('Maison')) return '🏠 Maison — Tâches';
@@ -542,6 +587,19 @@ const styles = StyleSheet.create({
   chipText: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  vacationBanner: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#FDE68A',
+  },
+  vacationBannerText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#92400E',
+    textAlign: 'center',
   },
   deleteTip: {
     backgroundColor: '#FFFBEB',

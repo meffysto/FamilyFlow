@@ -103,6 +103,12 @@ export interface GamificationData {
   activeRewards: ActiveReward[];
 }
 
+export interface VacationConfig {
+  active: boolean;
+  startDate: string; // YYYY-MM-DD
+  endDate: string;   // YYYY-MM-DD
+}
+
 export interface VaultConfig {
   vaultPath: string;
   telegramToken?: string;

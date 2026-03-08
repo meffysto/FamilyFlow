@@ -33,13 +33,14 @@ import {
   rdvFileName,
   parseJalons,
   insertJalonInContent,
+  updateJalonInContent,
   mergeProfiles,
   parseGamification,
   parseFamille,
   serializeGamification,
 } from '../lib/parser';
 import { processActiveRewards } from '../lib/gamification';
-import { Task, RDV, CourseItem, MealItem, StockItem, Profile, GamificationData, NotificationPreferences, ProfileTheme, Memory } from '../lib/types';
+import { Task, RDV, CourseItem, MealItem, StockItem, Profile, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig } from '../lib/types';
 import {
   parseNotificationPrefs,
   serializeNotificationPrefs,
@@ -93,6 +94,13 @@ export interface VaultState {
   clearCompletedCourses: () => Promise<void>;
   memories: Memory[];
   addMemory: (enfant: string, memory: Omit<Memory, 'enfant' | 'enfantId'>) => Promise<void>;
+  updateMemory: (oldMemory: Memory, newMemory: Omit<Memory, 'enfant' | 'enfantId'>) => Promise<void>;
+  vacationConfig: VacationConfig | null;
+  vacationTasks: Task[];
+  isVacationActive: boolean;
+  activateVacation: (startDate: string, endDate: string) => Promise<void>;
+  deactivateVacation: () => Promise<void>;
+  refreshGamification: () => Promise<void>;
 }
 
 // Static task files (non-enfant)
@@ -143,6 +151,66 @@ const STOCK_FILE = '01 - Enfants/Commun/Stock & fournitures.md';
 const PHOTOS_DIR = '07 - Photos';
 const MEMOIRES_DIR = '06 - Mémoires';
 const NOTIF_FILE = 'notifications.md';
+const VACATION_FILE = '02 - Maison/Vacances.md';
+const VACATION_STORE_KEY = 'vacation_mode';
+const VACATION_TEMPLATE = `# Checklist Vacances
+
+## Avant le départ
+
+### Documents
+- [ ] Vérifier passeports (dates de validité)
+- [ ] Carte d'identité à jour
+- [ ] Carte européenne d'assurance maladie
+- [ ] Ordonnances médicaments
+- [ ] Confirmation réservation (hôtel / location)
+- [ ] Billets de transport (avion / train)
+- [ ] Assurance voyage
+
+### Santé
+- [ ] Trousse à pharmacie (doliprane, pansements, thermomètre)
+- [ ] Crème solaire
+- [ ] Médicaments habituels
+- [ ] Carnet de santé des enfants
+
+### Valises
+- [ ] Vêtements enfants (prévoir 1 tenue/jour + 2 extras)
+- [ ] Vêtements adultes
+- [ ] Pyjamas
+- [ ] Maillots de bain
+- [ ] Chaussures confortables
+- [ ] Vestes / pulls (soirées fraîches)
+
+### Bébé / Jeunes enfants
+- [ ] Couches en quantité suffisante
+- [ ] Lait / biberons
+- [ ] Petits pots / compotes
+- [ ] Doudou + tétine de rechange
+- [ ] Poussette / porte-bébé
+- [ ] Lit parapluie
+
+### Maison
+- [ ] Couper l'eau (si absence longue)
+- [ ] Baisser le chauffage / clim
+- [ ] Vider le frigo (périssables)
+- [ ] Sortir les poubelles
+- [ ] Arrosage plantes (demander au voisin ?)
+- [ ] Fermer volets et vérifier serrures
+- [ ] Débrancher appareils électriques
+
+### Divers
+- [ ] Charger les appareils (téléphone, tablette, appareil photo)
+- [ ] Télécharger films / jeux pour le trajet
+- [ ] Snacks pour la route
+- [ ] GPS / itinéraire vérifié
+- [ ] Prévenir la nounou / école / crèche
+
+## Retour de vacances
+- [ ] Lancer une machine de linge
+- [ ] Faire les courses de base
+- [ ] Relever le courrier
+- [ ] Remettre le chauffage / clim
+- [ ] Déballer et ranger les valises
+`;
 
 export function useVault(): VaultState {
   const [vaultPath, setVaultPathState] = useState<string | null>(null);
@@ -161,6 +229,8 @@ export function useVault(): VaultState {
   const [photoDates, setPhotoDates] = useState<Record<string, string[]>>({});
   const [stockSections, setStockSections] = useState<string[]>([]);
   const [memories, setMemories] = useState<Memory[]>([]);
+  const [vacationConfig, setVacationConfig] = useState<VacationConfig | null>(null);
+  const [vacationTasks, setVacationTasks] = useState<Task[]>([]);
   const vaultRef = useRef<VaultManager | null>(null);
   const busyRef = useRef(false); // Guard against AppState race condition
 
@@ -394,6 +464,40 @@ export function useVault(): VaultState {
         }
       } catch (e) {
         debugErrors.push(`notifications: ${e}`);
+      }
+
+      // Load vacation mode
+      try {
+        const vacRaw = await SecureStore.getItemAsync(VACATION_STORE_KEY);
+        if (vacRaw) {
+          const config: VacationConfig = JSON.parse(vacRaw);
+          const todayISO = new Date().toISOString().slice(0, 10);
+          // Auto-deactivate if end date has passed
+          if (config.active && config.endDate < todayISO) {
+            const deactivated = { ...config, active: false };
+            await SecureStore.setItemAsync(VACATION_STORE_KEY, JSON.stringify(deactivated));
+            setVacationConfig(deactivated);
+          } else {
+            setVacationConfig(config);
+          }
+        } else {
+          setVacationConfig(null);
+        }
+        // Load vacation tasks if file exists
+        try {
+          if (await vault.exists(VACATION_FILE)) {
+            const vacContent = await vault.readFile(VACATION_FILE);
+            setVacationTasks(parseTaskFile(VACATION_FILE, vacContent));
+          } else {
+            setVacationTasks([]);
+          }
+        } catch {
+          setVacationTasks([]);
+        }
+      } catch (e) {
+        debugErrors.push(`vacation: ${e}`);
+        setVacationConfig(null);
+        setVacationTasks([]);
       }
     } catch (e) {
       debugErrors.push(`global: ${e}`);
@@ -734,6 +838,7 @@ export function useVault(): VaultState {
 
     setTasks(prev => prev.map(updateTask));
     setMenageTasks(prev => prev.map(updateTask));
+    setVacationTasks(prev => prev.map(updateTask));
 
     // No background loadVaultData — optimistic state is authoritative.
     // Next foreground event will fully sync.
@@ -852,6 +957,26 @@ export function useVault(): VaultState {
     }
   }, [loadVaultData]);
 
+  const updateMemory = useCallback(async (oldMemory: Memory, newMemory: Omit<Memory, 'enfant' | 'enfantId'>) => {
+    if (!vaultRef.current) return;
+    const jalonsPath = `${MEMOIRES_DIR}/${oldMemory.enfant}/Jalons.md`;
+    const content = await vaultRef.current.readFile(jalonsPath);
+    const updated = updateJalonInContent(content, oldMemory, newMemory);
+    await vaultRef.current.writeFile(jalonsPath, updated);
+
+    // Optimistic update
+    const updatedMemory: Memory = { ...newMemory, enfant: oldMemory.enfant, enfantId: oldMemory.enfantId };
+    setMemories(prev =>
+      prev
+        .map(m =>
+          m.date === oldMemory.date && m.title === oldMemory.title && m.enfantId === oldMemory.enfantId
+            ? updatedMemory
+            : m
+        )
+        .sort((a, b) => b.date.localeCompare(a.date))
+    );
+  }, []);
+
   const addMemory = useCallback(async (enfant: string, memory: Omit<Memory, 'enfant' | 'enfantId'>) => {
     if (!vaultRef.current) return;
     const jalonsPath = `${MEMOIRES_DIR}/${enfant}/Jalons.md`;
@@ -888,6 +1013,47 @@ export function useVault(): VaultState {
     const newMemory: Memory = { ...memory, enfant, enfantId };
     setMemories(prev => [newMemory, ...prev].sort((a, b) => b.date.localeCompare(a.date)));
   }, []);
+
+  const refreshGamification = useCallback(async () => {
+    if (!vaultRef.current) return;
+    try {
+      const familleContent = await vaultRef.current.readFile(FAMILLE_FILE);
+      const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
+      const merged = mergeProfiles(familleContent, gamiContent);
+      setProfiles(merged);
+      const gami = parseGamification(gamiContent);
+      setGamiData(gami);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const activateVacation = useCallback(async (startDate: string, endDate: string) => {
+    const config: VacationConfig = { active: true, startDate, endDate };
+    await SecureStore.setItemAsync(VACATION_STORE_KEY, JSON.stringify(config));
+    setVacationConfig(config);
+    // Create Vacances.md if it doesn't exist
+    if (vaultRef.current) {
+      const exists = await vaultRef.current.exists(VACATION_FILE);
+      if (!exists) {
+        await vaultRef.current.writeFile(VACATION_FILE, VACATION_TEMPLATE);
+      }
+      // Reload vacation tasks
+      const content = await vaultRef.current.readFile(VACATION_FILE);
+      setVacationTasks(parseTaskFile(VACATION_FILE, content));
+    }
+  }, []);
+
+  const deactivateVacation = useCallback(async () => {
+    if (vacationConfig) {
+      const deactivated = { ...vacationConfig, active: false };
+      await SecureStore.setItemAsync(VACATION_STORE_KEY, JSON.stringify(deactivated));
+      setVacationConfig(deactivated);
+    }
+  }, [vacationConfig]);
+
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const isVacationActive = !!(vacationConfig?.active && vacationConfig.endDate >= todayISO);
 
   // Resolve active profile from ID → Profile object
   const activeProfile = profiles.find((p) => p.id === activeProfileId) ?? null;
@@ -934,5 +1100,12 @@ export function useVault(): VaultState {
     clearCompletedCourses,
     memories,
     addMemory,
+    updateMemory,
+    vacationConfig,
+    vacationTasks,
+    isVacationActive,
+    activateVacation,
+    deactivateVacation,
+    refreshGamification,
   };
 }

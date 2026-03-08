@@ -24,7 +24,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useVault } from '../../hooks/useVault';
-import { todayJournalPath, generateJournalTemplate } from '../../lib/parser';
+import { todayJournalPath, generateJournalTemplate, todayAdultJournalPath, generateAdultJournalTemplate } from '../../lib/parser';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { parseJournalStats, calculerDuree } from '../../lib/journal-stats';
 
@@ -158,19 +158,27 @@ function typeFromHeading(heading: string): EntryType | null {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function JournalScreen() {
-  const { vault, profiles } = useVault();
+  const { vault, profiles, activeProfile } = useVault();
   const { primary, tint, colors } = useThemeColors();
 
   const enfants = useMemo(
     () => profiles.filter((p) => p.role === 'enfant'),
     [profiles]
   );
-  const [selectedEnfantId, setSelectedEnfantId] = useState<string | null>(null);
+
+  const isAdultMode = activeProfile?.role === 'adulte' || activeProfile?.role === 'ado';
+
+  // Tab can be 'adulte' (personal journal) or an enfant ID
+  const [selectedTab, setSelectedTab] = useState<string>(
+    isAdultMode ? 'adulte' : (enfants[0]?.id ?? '')
+  );
+  const isViewingAdultTab = selectedTab === 'adulte';
   const selectedEnfant = useMemo(
-    () => enfants.find((e) => e.id === selectedEnfantId) ?? enfants[0] ?? null,
-    [enfants, selectedEnfantId]
+    () => (isViewingAdultTab ? null : enfants.find((e) => e.id === selectedTab) ?? enfants[0] ?? null),
+    [enfants, selectedTab, isViewingAdultTab]
   );
   const selectedEnfantName = selectedEnfant?.name ?? '';
+
   const [journalContent, setJournalContent] = useState<string | null>(null);
   const [journalExists, setJournalExists] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -183,7 +191,9 @@ export default function JournalScreen() {
   });
 
   const today = format(new Date(), 'EEEE dd MMMM yyyy', { locale: fr });
-  const todayPath = selectedEnfantName ? todayJournalPath(selectedEnfantName) : '';
+  const todayPath = isViewingAdultTab && activeProfile
+    ? todayAdultJournalPath(activeProfile.name)
+    : selectedEnfantName ? todayJournalPath(selectedEnfantName) : '';
 
   const loadJournal = useCallback(async () => {
     if (!vault || !todayPath) return;
@@ -205,10 +215,13 @@ export default function JournalScreen() {
   useEffect(() => { loadJournal(); }, [loadJournal]);
 
   const createJournal = useCallback(async () => {
-    if (!vault || !selectedEnfantName || !todayPath) return;
+    if (!vault || !todayPath) return;
+    if (!isViewingAdultTab && !selectedEnfantName) return;
     setIsCreating(true);
     try {
-      const template = generateJournalTemplate(selectedEnfantName);
+      const template = isViewingAdultTab && activeProfile
+        ? generateAdultJournalTemplate(activeProfile.name)
+        : generateJournalTemplate(selectedEnfantName);
       await vault.writeFile(todayPath, template);
       setJournalContent(template);
       setJournalExists(true);
@@ -475,26 +488,37 @@ export default function JournalScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <Text style={[styles.title, { color: colors.text }]}>📖 Journal bébé</Text>
+        <Text style={[styles.title, { color: colors.text }]}>📖 Journal</Text>
         <Text style={[styles.dateText, { color: colors.textMuted }]}>{today}</Text>
       </View>
 
       <View style={[styles.tabs, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        {isAdultMode && (
+          <TouchableOpacity
+            style={[styles.tab, isViewingAdultTab && { borderBottomColor: primary }]}
+            onPress={() => setSelectedTab('adulte')}
+          >
+            <Text style={styles.tabEmoji}>{activeProfile?.avatar ?? '📖'}</Text>
+            <Text style={[styles.tabText, { color: colors.textFaint }, isViewingAdultTab && { color: primary }]}>
+              Mon journal
+            </Text>
+          </TouchableOpacity>
+        )}
         {enfants.map((enfant) => (
           <TouchableOpacity
             key={enfant.id}
-            style={[styles.tab, selectedEnfant?.id === enfant.id && { borderBottomColor: primary }]}
-            onPress={() => setSelectedEnfantId(enfant.id)}
+            style={[styles.tab, selectedTab === enfant.id && { borderBottomColor: primary }]}
+            onPress={() => setSelectedTab(enfant.id)}
           >
             <Text style={styles.tabEmoji}>{enfant.avatar}</Text>
-            <Text style={[styles.tabText, { color: colors.textFaint }, selectedEnfant?.id === enfant.id && { color: primary }]}>
+            <Text style={[styles.tabText, { color: colors.textFaint }, selectedTab === enfant.id && { color: primary }]}>
               {enfant.name}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      {journalExists && (
+      {journalExists && !isViewingAdultTab && (
         <View style={[styles.quickAddContainer, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
           <View style={styles.quickAddRow}>
             {(['Biberon', 'Couche', 'Sieste'] as const).map((type) => (
@@ -530,13 +554,16 @@ export default function JournalScreen() {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {!journalExists ? (
           <View style={styles.createContainer}>
-            <Text style={styles.createEmoji}>{selectedEnfant?.avatar ?? '👶'}</Text>
+            <Text style={styles.createEmoji}>{isViewingAdultTab ? (activeProfile?.avatar ?? '📖') : (selectedEnfant?.avatar ?? '👶')}</Text>
             <Text style={[styles.createTitle, { color: colors.textSub }]}>
-              Pas encore de journal pour {selectedEnfantName} aujourd'hui
+              {isViewingAdultTab
+                ? `Pas encore de journal pour ${activeProfile?.name}`
+                : `Pas encore de journal pour ${selectedEnfantName} aujourd'hui`}
             </Text>
             <Text style={[styles.createSubtitle, { color: colors.textMuted }]}>
-              Créez le journal du {format(new Date(), 'dd/MM/yyyy')} pour commencer à suivre
-              l'alimentation, les couches et le sommeil.
+              {isViewingAdultTab
+                ? 'Créez votre journal personnel pour noter vos pensées, humeur et objectifs.'
+                : `Créez le journal du ${format(new Date(), 'dd/MM/yyyy')} pour commencer à suivre l'alimentation, les couches et le sommeil.`}
             </Text>
             <TouchableOpacity
               style={[styles.createBtn, { backgroundColor: primary }, isCreating && styles.createBtnDisabled]}
@@ -550,7 +577,7 @@ export default function JournalScreen() {
           </View>
         ) : journalContent ? (
           <View style={styles.journalContent}>
-            {hasStats && journalStats && (
+            {!isViewingAdultTab && hasStats && journalStats && (
               <View style={[styles.statsBanner, { backgroundColor: colors.card }]}>
                 <Text style={[styles.statsBannerTitle, { color: colors.text }]}>📊 Résumé du jour</Text>
                 <View style={styles.statsGrid}>

@@ -948,6 +948,54 @@ export function serializeJalonEntry(memory: Omit<Memory, 'enfant' | 'enfantId'>)
 }
 
 /**
+ * Remove a jalon entry from a Jalons.md content string.
+ * Matches on date + title header. Returns updated content.
+ */
+export function removeJalonFromContent(
+  content: string,
+  memory: Omit<Memory, 'enfant' | 'enfantId'>
+): string {
+  const header = `### ${memory.date} — ${memory.title}`;
+  const lines = content.split('\n');
+
+  let headerIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim() === header) {
+      headerIdx = i;
+      break;
+    }
+  }
+  if (headerIdx === -1) return content;
+
+  // Find end of entry: stop at next ### header, ## section, or EOF
+  let endIdx = headerIdx + 1;
+  while (endIdx < lines.length) {
+    const trimmed = lines[endIdx].trim();
+    if (trimmed.startsWith('### ') || trimmed.startsWith('## ')) break;
+    if (trimmed === '---') { endIdx++; break; }
+    endIdx++;
+  }
+  // Skip one trailing blank line
+  if (endIdx < lines.length && lines[endIdx].trim() === '') endIdx++;
+
+  lines.splice(headerIdx, endIdx - headerIdx);
+  return lines.join('\n');
+}
+
+/**
+ * Update an existing jalon entry in a Jalons.md file.
+ * Removes the old entry and inserts the new one (handles type/section changes).
+ */
+export function updateJalonInContent(
+  content: string,
+  oldMemory: Omit<Memory, 'enfant' | 'enfantId'>,
+  newMemory: Omit<Memory, 'enfant' | 'enfantId'>
+): string {
+  const removed = removeJalonFromContent(content, oldMemory);
+  return insertJalonInContent(removed, newMemory);
+}
+
+/**
  * Insert a new jalon entry into the correct section of a Jalons.md file.
  * Returns the updated content string.
  */
@@ -983,4 +1031,37 @@ export function insertJalonInContent(
   // Insert entry + blank line
   lines.splice(insertIdx, 0, entry, '');
   return lines.join('\n');
+}
+
+// ─── Journal adulte ──────────────────────────────────────────────────────────
+
+/**
+ * Path for the adult/ado journal file (persists across days, unlike baby journal).
+ */
+export function todayAdultJournalPath(prenom: string): string {
+  return `01 - Adultes/${prenom}/Journal.md`;
+}
+
+/**
+ * Generate a new adult/ado journal from template.
+ */
+export function generateAdultJournalTemplate(prenom: string): string {
+  const today = format(new Date(), 'yyyy-MM-dd');
+
+  return `---
+date: ${today}
+profil: ${prenom}
+tags:
+  - journal-adulte
+---
+
+# Journal — ${prenom}
+
+## 📝 Notes du jour
+
+## 😊 Humeur
+
+## 🎯 Objectifs
+- [ ]
+`;
 }

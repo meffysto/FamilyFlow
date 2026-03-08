@@ -82,7 +82,7 @@ export default function StockScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>📦 Stock bébé</Text>
+          <Text style={styles.title}>📦 Stocks & fournitures</Text>
           {lowStockCount > 0 && (
             <Text style={styles.subtitle}>
               ⚠️ {lowStockCount} produit{lowStockCount > 1 ? 's' : ''} en stock bas

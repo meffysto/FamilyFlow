@@ -27,7 +27,7 @@ import * as SecureStore from 'expo-secure-store';
 import { useVault, VAULT_PATH_KEY } from '../../hooks/useVault';
 import { VaultPicker } from '../../components/VaultPicker';
 import { NotificationSettings } from '../../components/NotificationSettings';
-import { testTelegram, sendTelegram, buildWeeklyRecapText, sendWeeklyRecap } from '../../lib/telegram';
+import { testTelegram, sendTelegram, buildWeeklyRecapText, sendWeeklyRecap, buildMonthlyRecapText } from '../../lib/telegram';
 import { serializeGamification } from '../../lib/parser';
 import { RARITY_LABELS } from '../../constants/rewards';
 import { THEME_LIST, getTheme } from '../../constants/themes';
@@ -45,7 +45,7 @@ const TELEGRAM_CHAT_KEY = 'telegram_chat_id';
 const TELEGRAM_GP_CHAT_KEY = 'telegram_gp_chat_id';
 
 export default function SettingsScreen() {
-  const { vaultPath, profiles, activeProfile, vault, setVaultPath, setActiveProfile, refresh, gamiData, notifPrefs, saveNotifPrefs, updateProfileTheme, updateProfile, memories, photoDates, getPhotoUri } = useVault();
+  const { vaultPath, profiles, activeProfile, vault, setVaultPath, setActiveProfile, refresh, gamiData, notifPrefs, saveNotifPrefs, updateProfileTheme, updateProfile, memories, photoDates, getPhotoUri, vacationConfig, isVacationActive, activateVacation, deactivateVacation } = useVault();
   const { primary, tint, setThemeId, colors, darkModePreference, setDarkModePreference } = useThemeColors();
 
   const [showVaultPicker, setShowVaultPicker] = useState(false);
@@ -56,6 +56,7 @@ export default function SettingsScreen() {
   const [showTelegramSetup, setShowTelegramSetup] = useState(false);
   const [gpChatId, setGpChatId] = useState('');
   const [isSendingRecap, setIsSendingRecap] = useState(false);
+  const [isSendingMonthlyRecap, setIsSendingMonthlyRecap] = useState(false);
   const [showNotifSettings, setShowNotifSettings] = useState(false);
   const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
   const themeDropdownAnim = useRef(new Animated.Value(0)).current;
@@ -66,6 +67,11 @@ export default function SettingsScreen() {
   const [editAvatar, setEditAvatar] = useState('');
   const [editBirthdate, setEditBirthdate] = useState('');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  // Vacation mode state
+  const [showVacationForm, setShowVacationForm] = useState(false);
+  const [vacStartDate, setVacStartDate] = useState('');
+  const [vacEndDate, setVacEndDate] = useState('');
 
   // Local notifications config
   const [localNotifConfig, setLocalNotifConfig] = useState<NotifScheduleConfig | null>(null);
@@ -153,6 +159,41 @@ export default function SettingsScreen() {
     }
     setIsSendingRecap(false);
   }, [telegramToken, gpChatId, memories, photoDates, profiles, getPhotoUri]);
+
+  const handleSendMonthlyRecap = useCallback(async () => {
+    const token = await SecureStore.getItemAsync(TELEGRAM_TOKEN_KEY);
+    const gpId = await SecureStore.getItemAsync(TELEGRAM_GP_CHAT_KEY);
+    if (!token || !gpId) {
+      Alert.alert('Config manquante', 'Configurez le bot Telegram et le chat ID grands-parents.');
+      return;
+    }
+    const now = new Date();
+    const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+    const monthLabel = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    const monthMemories = memories.filter((m) => m.date >= monthStart);
+    const enfantNames = profiles.filter((p) => p.role === 'enfant').map((p) => p.name);
+    let photoCount = 0;
+    for (const name of enfantNames) {
+      const id = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+      photoCount += (photoDates[id] ?? []).filter((d) => d >= monthStart).length;
+    }
+    setIsSendingMonthlyRecap(true);
+    const text = buildMonthlyRecapText({
+      profiles,
+      memories: monthMemories,
+      rdvs: [],
+      photoCount,
+      completedTasksCount: 0,
+      month: monthLabel,
+    });
+    try {
+      const ok = await sendTelegram(token.trim(), gpId.trim(), text);
+      Alert.alert(ok ? '✅ Bilan envoyé !' : '❌ Échec', ok ? `Bilan de ${monthLabel} envoyé.` : "Erreur lors de l'envoi.");
+    } catch (e) {
+      Alert.alert('Erreur', String(e));
+    }
+    setIsSendingMonthlyRecap(false);
+  }, [memories, photoDates, profiles]);
 
   const handleSaveTelegram = useCallback(async () => {
     setIsSavingTelegram(true);
@@ -363,6 +404,17 @@ export default function SettingsScreen() {
                 <Text style={[styles.recapBtnText, { color: primary }]}>📤 Envoyer le recap de la semaine</Text>
               )}
             </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.recapBtn, { backgroundColor: tint }, isSendingMonthlyRecap && styles.btnDisabled]}
+              onPress={handleSendMonthlyRecap}
+              disabled={isSendingMonthlyRecap}
+            >
+              {isSendingMonthlyRecap ? (
+                <ActivityIndicator size="small" color={primary} />
+              ) : (
+                <Text style={[styles.recapBtnText, { color: primary }]}>📊 Envoyer le bilan du mois</Text>
+              )}
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -464,6 +516,125 @@ export default function SettingsScreen() {
                 </TouchableOpacity>
               ))}
             </View>
+          </View>
+        </View>
+
+        {/* Mode Vacances */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Mode Vacances</Text>
+          <View style={[styles.card, { backgroundColor: colors.card }]}>
+            {isVacationActive && vacationConfig ? (
+              <>
+                <View style={styles.row}>
+                  <Text style={[styles.rowLabel, { color: colors.textSub }]}>☀️ Vacances en cours</Text>
+                </View>
+                <Text style={[styles.vacationDates, { color: colors.text }]}>
+                  Du {vacationConfig.startDate.split('-').reverse().join('/')} au {vacationConfig.endDate.split('-').reverse().join('/')}
+                </Text>
+                <Text style={[styles.vacationCountdown, { color: primary }]}>
+                  {(() => {
+                    const now = new Date();
+                    const end = new Date(vacationConfig.endDate + 'T23:59:59');
+                    const start = new Date(vacationConfig.startDate + 'T00:00:00');
+                    const todayMs = now.getTime();
+                    if (todayMs < start.getTime()) {
+                      const days = Math.ceil((start.getTime() - todayMs) / 86400000);
+                      return `Départ dans ${days} jour${days > 1 ? 's' : ''}`;
+                    }
+                    const days = Math.ceil((end.getTime() - todayMs) / 86400000);
+                    return `Fin dans ${days} jour${days > 1 ? 's' : ''}`;
+                  })()}
+                </Text>
+                <TouchableOpacity
+                  style={styles.dangerBtn}
+                  onPress={() => {
+                    Alert.alert(
+                      'Désactiver le mode vacances ?',
+                      'Les tâches normales seront restaurées. La checklist vacances sera conservée.',
+                      [
+                        { text: 'Annuler', style: 'cancel' },
+                        { text: 'Désactiver', style: 'destructive', onPress: deactivateVacation },
+                      ]
+                    );
+                  }}
+                >
+                  <Text style={styles.dangerBtnText}>Désactiver le mode vacances</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                {!showVacationForm ? (
+                  <TouchableOpacity
+                    style={[styles.changeBtn, { backgroundColor: tint }]}
+                    onPress={() => {
+                      setShowVacationForm(true);
+                      setVacStartDate('');
+                      setVacEndDate('');
+                    }}
+                  >
+                    <Text style={[styles.changeBtnText, { color: primary }]}>☀️ Activer le mode vacances</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <>
+                    <Text style={[styles.rowLabel, { color: colors.textSub }]}>📅 Date de début</Text>
+                    <TextInput
+                      style={[styles.input, { color: colors.text }]}
+                      value={vacStartDate}
+                      onChangeText={setVacStartDate}
+                      placeholder="10-07-2026"
+                      placeholderTextColor="#9CA3AF"
+                      keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default'}
+                    />
+                    <Text style={[styles.rowLabel, { color: colors.textSub }]}>📅 Date de fin</Text>
+                    <TextInput
+                      style={[styles.input, { color: colors.text }]}
+                      value={vacEndDate}
+                      onChangeText={setVacEndDate}
+                      placeholder="24-07-2026"
+                      placeholderTextColor="#9CA3AF"
+                      keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default'}
+                    />
+                    <View style={styles.btnRow}>
+                      <TouchableOpacity
+                        style={[styles.secondaryBtn, { borderColor: colors.border }]}
+                        onPress={() => setShowVacationForm(false)}
+                      >
+                        <Text style={[styles.secondaryBtnText, { color: colors.textMuted }]}>Annuler</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.primaryBtn, { backgroundColor: primary }]}
+                        onPress={async () => {
+                          const ddmmyyyy = /^\d{2}-\d{2}-\d{4}$/;
+                          if (!ddmmyyyy.test(vacStartDate) || !ddmmyyyy.test(vacEndDate)) {
+                            Alert.alert('Format invalide', 'Les dates doivent être au format JJ-MM-AAAA.');
+                            return;
+                          }
+                          // Convert DD-MM-YYYY → YYYY-MM-DD for storage
+                          const [sd, sm, sy] = vacStartDate.split('-');
+                          const [ed, em, ey] = vacEndDate.split('-');
+                          const startISO = `${sy}-${sm}-${sd}`;
+                          const endISO = `${ey}-${em}-${ed}`;
+                          if (endISO <= startISO) {
+                            Alert.alert('Dates invalides', 'La date de fin doit être après la date de début.');
+                            return;
+                          }
+                          const todayStr = new Date().toISOString().slice(0, 10);
+                          if (endISO < todayStr) {
+                            Alert.alert('Dates invalides', 'La date de fin doit être aujourd\'hui ou plus tard.');
+                            return;
+                          }
+                          await activateVacation(startISO, endISO);
+                          setShowVacationForm(false);
+                          Alert.alert('☀️ Mode vacances activé !', 'Rendez-vous dans l\'onglet Tâches pour voir votre checklist.');
+                        }}
+                      >
+                        <Text style={styles.primaryBtnText}>Activer</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                )}
+              </>
+            )}
           </View>
         </View>
 
@@ -1102,6 +1273,14 @@ const styles = StyleSheet.create({
   },
   gamiStats: { gap: 4 },
   statText: { fontSize: 13, color: '#6B7280' },
+  vacationDates: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  vacationCountdown: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
   dangerBtn: {
     backgroundColor: '#FEF2F2',
     padding: 12,

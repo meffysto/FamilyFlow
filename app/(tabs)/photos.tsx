@@ -50,7 +50,7 @@ const WEEKDAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 type TabMode = 'photos' | 'souvenirs';
 
 export default function PhotosScreen() {
-  const { profiles, photoDates, addPhoto, getPhotoUri, refresh, isLoading, memories, addMemory } = useVault();
+  const { profiles, photoDates, addPhoto, getPhotoUri, refresh, isLoading, memories, addMemory, updateMemory } = useVault();
   const { primary, tint, colors } = useThemeColors();
   const [refreshing, setRefreshing] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -58,6 +58,7 @@ export default function PhotosScreen() {
   const [viewingPhoto, setViewingPhoto] = useState<{ uri: string; date: string } | null>(null);
   const [activeTab, setActiveTab] = useState<TabMode>('photos');
   const [memoryEditorVisible, setMemoryEditorVisible] = useState(false);
+  const [editingMemory, setEditingMemory] = useState<import('../../lib/types').Memory | null>(null);
 
   const enfants = useMemo(
     () => profiles.filter((p) => p.role === 'enfant'),
@@ -353,16 +354,28 @@ export default function PhotosScreen() {
                   <View style={[styles.memoryRight, { backgroundColor: colors.card }]}>
                     <View style={styles.memoryHeader}>
                       <Text style={[styles.memoryDate, { color: colors.textMuted }]}>{formatDateForDisplay(mem.date)}</Text>
-                      <View style={[
-                        styles.memoryBadge,
-                        { backgroundColor: mem.type === 'premières-fois' ? '#FEF3C7' : '#FCE7F3' },
-                      ]}>
-                        <Text style={[
-                          styles.memoryBadgeText,
-                          { color: mem.type === 'premières-fois' ? '#92400E' : '#9D174D' },
+                      <View style={styles.memoryHeaderRight}>
+                        <View style={[
+                          styles.memoryBadge,
+                          { backgroundColor: mem.type === 'premières-fois' ? '#FEF3C7' : '#FCE7F3' },
                         ]}>
-                          {TYPE_LABEL[mem.type]}
-                        </Text>
+                          <Text style={[
+                            styles.memoryBadgeText,
+                            { color: mem.type === 'premières-fois' ? '#92400E' : '#9D174D' },
+                          ]}>
+                            {TYPE_LABEL[mem.type]}
+                          </Text>
+                        </View>
+                        <TouchableOpacity
+                          style={styles.memoryEditBtn}
+                          onPress={() => {
+                            setEditingMemory(mem);
+                            setMemoryEditorVisible(true);
+                          }}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
+                          <Text style={styles.memoryEditBtnText}>✏️</Text>
+                        </TouchableOpacity>
                       </View>
                     </View>
                     <Text style={[styles.memoryTitle, { color: colors.text }]}>{mem.title}</Text>
@@ -380,7 +393,7 @@ export default function PhotosScreen() {
 
           <TouchableOpacity
             style={[styles.fab, { backgroundColor: primary, shadowColor: primary }]}
-            onPress={() => setMemoryEditorVisible(true)}
+            onPress={() => { setEditingMemory(null); setMemoryEditorVisible(true); }}
             activeOpacity={0.8}
           >
             <Text style={styles.fabText}>+</Text>
@@ -423,11 +436,19 @@ export default function PhotosScreen() {
       {/* Memory Editor Modal */}
       <Modal visible={memoryEditorVisible} animationType="slide" presentationStyle="pageSheet">
         <MemoryEditor
+          memory={editingMemory ?? undefined}
           enfants={enfants.map((e) => ({ id: e.id, name: e.name }))}
           onSave={async (enfantName, mem) => {
-            await addMemory(enfantName, mem);
+            if (editingMemory) {
+              await updateMemory(editingMemory, mem);
+            } else {
+              await addMemory(enfantName, mem);
+            }
           }}
-          onClose={() => setMemoryEditorVisible(false)}
+          onClose={() => {
+            setMemoryEditorVisible(false);
+            setEditingMemory(null);
+          }}
         />
       </Modal>
     </SafeAreaView>
@@ -528,6 +549,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
   memoryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  memoryHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  memoryEditBtn: { padding: 2 },
+  memoryEditBtnText: { fontSize: 14 },
   memoryDate: { fontSize: 12, fontWeight: '600' },
   memoryBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
   memoryBadgeText: { fontSize: 10, fontWeight: '700' },

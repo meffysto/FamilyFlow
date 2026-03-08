@@ -51,6 +51,7 @@ import { DashboardPrefsModal, SectionPref } from '../../components/DashboardPref
 const PREFS_KEY = 'dashboard_prefs_v1';
 
 const DEFAULT_SECTIONS: SectionPref[] = [
+  { id: 'vacation',   label: 'Vacances',               emoji: '☀️', visible: true },
   { id: 'menage',     label: 'Ménage du jour',         emoji: '🧹', visible: true },
   { id: 'overdue',    label: 'En retard',               emoji: '⚠️', visible: true },
   { id: 'meals',      label: 'Repas du jour',           emoji: '🍽️', visible: true },
@@ -58,7 +59,7 @@ const DEFAULT_SECTIONS: SectionPref[] = [
   { id: 'courses',    label: 'Courses',                 emoji: '🛒', visible: true },
   { id: 'rdvs',       label: 'Rendez-vous',             emoji: '📅', visible: true },
   { id: 'rewards',    label: 'Récompenses actives',     emoji: '🏆', visible: true },
-  { id: 'stock',      label: 'Stock bébé',              emoji: '📦', visible: true },
+  { id: 'stock',      label: 'Alertes stock',            emoji: '📦', visible: true },
   { id: 'quicknotifs',label: 'Notifications rapides',   emoji: '📤', visible: true },
   { id: 'leaderboard',label: 'Classement',              emoji: '🥇', visible: true },
 ];
@@ -94,6 +95,10 @@ export default function DashboardScreen() {
     toggleCourseItem,
     clearCompletedCourses,
     refresh,
+    vacationTasks,
+    vacationConfig,
+    isVacationActive,
+    refreshGamification,
   } = useVault();
 
   // Active rewards (filtered for non-expired)
@@ -203,6 +208,7 @@ export default function DashboardScreen() {
         if (completed && activeProfile) {
           try {
             const { lootAwarded, pointsGained } = await completeTask(activeProfile, task.text);
+            await refreshGamification();
             if (lootAwarded) {
               Alert.alert('🎁 Récompense !', `+${pointsGained} points ! Tu as gagné une récompense ! Va dans Menu > Récompenses pour l'ouvrir.`);
             }
@@ -216,7 +222,7 @@ export default function DashboardScreen() {
         await refresh();
       }
     },
-    [toggleTask, activeProfile, completeTask, refresh]
+    [toggleTask, activeProfile, completeTask, refresh, refreshGamification]
   );
 
   const leaderboard = buildLeaderboard(profiles);
@@ -334,6 +340,40 @@ export default function DashboardScreen() {
 
   const renderSection = (id: string): React.ReactNode => {
     switch (id) {
+      case 'vacation': {
+        if (!isVacationActive || !vacationConfig) return null;
+        const vacCompleted = vacationTasks.filter((t) => t.completed).length;
+        const vacTotal = vacationTasks.length;
+        const vacIncomplete = vacationTasks.filter((t) => !t.completed).slice(0, 5);
+        const now = new Date();
+        const start = new Date(vacationConfig.startDate + 'T00:00:00');
+        const end = new Date(vacationConfig.endDate + 'T23:59:59');
+        let vacCountdown: string;
+        if (now < start) {
+          const days = Math.ceil((start.getTime() - now.getTime()) / 86400000);
+          vacCountdown = `Départ dans ${days} jour${days > 1 ? 's' : ''}`;
+        } else if (now <= end) {
+          const days = Math.ceil((end.getTime() - now.getTime()) / 86400000);
+          vacCountdown = days > 0 ? `Retour dans ${days} jour${days > 1 ? 's' : ''}` : 'Dernier jour !';
+        } else {
+          vacCountdown = 'Terminé';
+        }
+        const progress = vacTotal > 0 ? vacCompleted / vacTotal : 0;
+        return (
+          <DashboardCard key="vacation" title="Vacances" icon="☀️" color="#F59E0B" onPressMore={() => router.push('/(tabs)/tasks')}>
+            <Text style={[styles.vacCountdown, { color: '#F59E0B' }]}>{vacCountdown}</Text>
+            <View style={styles.vacProgressRow}>
+              <View style={styles.vacProgressBg}>
+                <View style={[styles.vacProgressFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: '#F59E0B' }]} />
+              </View>
+              <Text style={[styles.vacProgressText, { color: colors.textMuted }]}>{vacCompleted}/{vacTotal}</Text>
+            </View>
+            {vacIncomplete.map((task) => (
+              <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} />
+            ))}
+          </DashboardCard>
+        );
+      }
       case 'menage':
         if (pendingMenage.length === 0) return null;
         return (
@@ -1054,6 +1094,32 @@ const styles = StyleSheet.create({
   },
   photoStatusIcon: {
     fontSize: 20,
+  },
+  vacCountdown: {
+    fontSize: 16,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  vacProgressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  vacProgressBg: {
+    flex: 1,
+    height: 8,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  vacProgressFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  vacProgressText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   bottomPad: {
     height: 20,
