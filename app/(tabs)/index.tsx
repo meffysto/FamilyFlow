@@ -61,6 +61,7 @@ const DEFAULT_SECTIONS: SectionPref[] = [
   { id: 'rewards',    label: 'Récompenses actives',     emoji: '🏆', visible: true },
   { id: 'stock',      label: 'Alertes stock',            emoji: '📦', visible: true },
   { id: 'quicknotifs',label: 'Notifications rapides',   emoji: '📤', visible: true },
+  { id: 'recipes',    label: 'Idée recette',             emoji: '📖', visible: true },
   { id: 'leaderboard',label: 'Classement',              emoji: '🥇', visible: true },
 ];
 
@@ -99,6 +100,7 @@ export default function DashboardScreen() {
     vacationConfig,
     isVacationActive,
     refreshGamification,
+    recipes,
   } = useVault();
 
   // Active rewards (filtered for non-expired)
@@ -601,6 +603,39 @@ export default function DashboardScreen() {
             </View>
           </DashboardCard>
         );
+
+      case 'recipes': {
+        if (recipes.length === 0) return null;
+        // Pick a random recipe suggestion based on today's date (stable per day)
+        const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+        const suggestedRecipe = recipes[dayOfYear % recipes.length];
+        return (
+          <DashboardCard key="recipes" title="Idée recette" icon="📖" count={recipes.length} color="#A855F7" onPressMore={() => router.push('/(tabs)/meals')}>
+            <TouchableOpacity
+              style={[styles.recipeSuggestion, { backgroundColor: colors.cardAlt }]}
+              onPress={() => router.push('/(tabs)/meals')}
+              activeOpacity={0.7}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.recipeSuggestionTitle, { color: colors.text }]} numberOfLines={1}>
+                  {suggestedRecipe.title}
+                </Text>
+                <Text style={[styles.recipeSuggestionMeta, { color: colors.textMuted }]} numberOfLines={1}>
+                  {suggestedRecipe.category}
+                  {suggestedRecipe.servings > 0 ? ` · ${suggestedRecipe.servings} pers.` : ''}
+                  {suggestedRecipe.prepTime ? ` · ${suggestedRecipe.prepTime}` : ''}
+                </Text>
+                {suggestedRecipe.ingredients.length > 0 && (
+                  <Text style={[styles.recipeSuggestionMeta, { color: colors.textMuted }]} numberOfLines={1}>
+                    🥕 {suggestedRecipe.ingredients.length} ingrédient{suggestedRecipe.ingredients.length > 1 ? 's' : ''}
+                  </Text>
+                )}
+              </View>
+              <Text style={{ fontSize: 24 }}>🎲</Text>
+            </TouchableOpacity>
+          </DashboardCard>
+        );
+      }
 
       case 'leaderboard':
         if (leaderboard.length === 0) return null;
@@ -1138,5 +1173,20 @@ const styles = StyleSheet.create({
   seeAllText: {
     fontSize: 14,
     fontWeight: '700',
+  },
+  recipeSuggestion: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    gap: 12,
+  },
+  recipeSuggestionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  recipeSuggestionMeta: {
+    fontSize: 12,
+    marginTop: 2,
   },
 });
