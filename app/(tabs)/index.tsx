@@ -47,6 +47,14 @@ import { buildWeeklyRecapText, sendWeeklyRecap } from '../../lib/telegram';
 import { Task, RDV } from '../../lib/types';
 import { formatDateForDisplay, isRdvUpcoming } from '../../lib/parser';
 import { DashboardPrefsModal, SectionPref } from '../../components/DashboardPrefsModal';
+import { categorizeIngredient } from '../../lib/cooklang';
+
+/** Parse "50g beurre" or "50 g de beurre" into name/qty for merge */
+function parseCourseInput(text: string): { name: string; quantity: number | null } {
+  const m = text.match(/^(\d+(?:[.,]\d+)?)\s*(?:g|kg|ml|cl|dl|l|c\.\s*à\s*[sc]\.?|tasse|pincée)?\s*(?:de\s+|d')?(.+)/i);
+  if (m) return { quantity: parseFloat(m[1].replace(',', '.')) || null, name: m[2].trim() };
+  return { name: text.trim(), quantity: null };
+}
 
 const PREFS_KEY = 'dashboard_prefs_v1';
 
@@ -93,6 +101,7 @@ export default function DashboardScreen() {
     updateRDV,
     deleteRDV,
     addCourseItem,
+    mergeCourseIngredients,
     toggleCourseItem,
     clearCompletedCourses,
     refresh,
@@ -469,7 +478,8 @@ export default function DashboardScreen() {
                   const text = newCourseText.trim();
                   if (!text) return;
                   setNewCourseText('');
-                  await addCourseItem(text);
+                  const parsed = parseCourseInput(text);
+                  await mergeCourseIngredients([{ text, name: parsed.name, quantity: parsed.quantity, section: categorizeIngredient(parsed.name) }]);
                 }}
               />
               <TouchableOpacity
@@ -478,7 +488,8 @@ export default function DashboardScreen() {
                   const text = newCourseText.trim();
                   if (!text) return;
                   setNewCourseText('');
-                  await addCourseItem(text);
+                  const parsed = parseCourseInput(text);
+                  await mergeCourseIngredients([{ text, name: parsed.name, quantity: parsed.quantity, section: categorizeIngredient(parsed.name) }]);
                 }}
                 activeOpacity={0.7}
                 disabled={!newCourseText.trim()}
