@@ -31,7 +31,7 @@ import { MealItem, CourseItem, Recipe } from '../../lib/types';
 import { formatIngredient, aggregateIngredients, categorizeIngredient, type AppIngredient } from '../../lib/cooklang';
 import RecipeCard from '../../components/RecipeCard';
 import RecipeViewer from '../../components/RecipeViewer';
-import { importRecipeFromUrl, type ImportedRecipe } from '../../lib/recipe-import';
+import { importRecipeFromUrl, type ImportResult, type ImportedRecipe, type CookImportResult } from '../../lib/recipe-import';
 import { generateCookFile } from '../../lib/cooklang';
 
 const DAYS_ORDER = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
@@ -50,7 +50,7 @@ export default function MealsScreen() {
   const {
     meals, updateMeal,
     courses, vault,
-    addCourseItem, removeCourseItem,
+    addCourseItem, removeCourseItem, mergeCourseIngredients,
     recipes, deleteRecipe,
     refresh, isLoading,
   } = useVault();
@@ -83,7 +83,8 @@ export default function MealsScreen() {
   const [showImport, setShowImport] = useState(false);
   const [importUrl, setImportUrl] = useState('');
   const [importLoading, setImportLoading] = useState(false);
-  const [importPreview, setImportPreview] = useState<ImportedRecipe | null>(null);
+  const [importStatus, setImportStatus] = useState('');
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [importCategory, setImportCategory] = useState('');
 
   const onRefresh = useCallback(async () => {
@@ -187,29 +188,23 @@ export default function MealsScreen() {
     }
 
     const aggregated = aggregateIngredients(allIngredients);
-
-    // Group by category for organized insertion
-    const byCategory = new Map<string, AppIngredient[]>();
-    for (const ing of aggregated) {
-      const cat = categorizeIngredient(ing.name);
-      if (!byCategory.has(cat)) byCategory.set(cat, []);
-      byCategory.get(cat)!.push(ing);
-    }
+    const items = aggregated.map((ing) => ({
+      text: formatIngredient(ing),
+      name: ing.name,
+      quantity: ing.quantity,
+      section: categorizeIngredient(ing.name),
+    }));
 
     try {
-      for (const [section, ings] of byCategory) {
-        for (const ing of ings) {
-          await addCourseItem(formatIngredient(ing), section);
-        }
-      }
-      Alert.alert(
-        'Liste générée',
-        `${aggregated.length} ingrédient(s) ajouté(s) à la liste de courses depuis ${linkedRecipeCount} recette(s).`
-      );
+      const { added, merged } = await mergeCourseIngredients(items);
+      const parts: string[] = [];
+      if (added > 0) parts.push(`${added} ajouté(s)`);
+      if (merged > 0) parts.push(`${merged} cumulé(s)`);
+      Alert.alert('Liste générée', `${parts.join(', ')} depuis ${linkedRecipeCount} recette(s).`);
     } catch (e) {
       Alert.alert('Erreur', String(e));
     }
-  }, [meals, resolveRecipe, addCourseItem, linkedRecipeCount]);
+  }, [meals, resolveRecipe, mergeCourseIngredients, linkedRecipeCount]);
 
   // ─── Courses logic ──────────────────────────────────────────────
 
@@ -321,15 +316,23 @@ export default function MealsScreen() {
 
   const handleAddToShoppingList = useCallback(async (ingredients: AppIngredient[]) => {
     try {
-      for (const ing of ingredients) {
-        await addCourseItem(formatIngredient(ing));
-      }
-      Alert.alert('Ajouté aux courses', `${ingredients.length} ingrédient(s) ajouté(s) à la liste de courses.`);
+      const aggregated = aggregateIngredients(ingredients);
+      const items = aggregated.map((ing) => ({
+        text: formatIngredient(ing),
+        name: ing.name,
+        quantity: ing.quantity,
+        section: categorizeIngredient(ing.name),
+      }));
+      const { added, merged } = await mergeCourseIngredients(items);
+      const parts: string[] = [];
+      if (added > 0) parts.push(`${added} ajouté(s)`);
+      if (merged > 0) parts.push(`${merged} cumulé(s)`);
+      Alert.alert('Ajouté aux courses', `${parts.join(', ')} dans la liste de courses.`);
       setSelectedRecipe(null);
     } catch (e) {
       Alert.alert('Erreur', String(e));
     }
-  }, [addCourseItem]);
+  }, [mergeCourseIngredients]);
 
   const handleDeleteRecipe = useCallback((recipe: Recipe) => {
     Alert.alert(
@@ -358,49 +361,63 @@ export default function MealsScreen() {
     const url = importUrl.trim();
     if (!url) return;
     setImportLoading(true);
+    setImportStatus('');
+    setImportResult(null);
     try {
-      const result = await importRecipeFromUrl(url);
-      setImportPreview(result);
-      // Suggest category from tags or default
-      setImportCategory(result.tags?.[0] || 'Importées');
+      const result = await importRecipeFromUrl(url, setImportStatus);
+      setImportResult(result);
+      if (result.type === 'cook') {
+        setImportCategory(result.data.category || 'Importées');
+      } else {
+        setImportCategory(result.data.tags?.[0] || 'Importées');
+      }
     } catch (e) {
       Alert.alert('Erreur', String(e instanceof Error ? e.message : e));
     } finally {
       setImportLoading(false);
+      setImportStatus('');
     }
   }, [importUrl]);
 
   const handleImportSave = useCallback(async () => {
-    if (!importPreview) return;
+    if (!importResult) return;
     const cat = importCategory.trim() || 'Importées';
-    const cookContent = generateCookFile({
-      title: importPreview.title,
-      tags: importPreview.tags,
-      servings: importPreview.servings,
-      prepTime: importPreview.prepTime,
-      cookTime: importPreview.cookTime,
-      ingredients: importPreview.ingredients.map(text => ({ name: text })),
-      steps: importPreview.steps,
-    });
     try {
-      const { addRecipe } = { addRecipe: async (category: string, data: any) => {
-        // Use vault directly to write
-        if (!vault) throw new Error('Vault non initialisé');
-        const fileName = importPreview.title.replace(/[/\\:*?"<>|]/g, '').trim();
-        const relPath = `03 - Cuisine/Recettes/${category}/${fileName}.cook`;
-        await vault.ensureDir(`03 - Cuisine/Recettes/${category}`);
-        await vault.writeFile(relPath, cookContent);
-        await refresh();
-      }};
-      await addRecipe(cat, {});
-      Alert.alert('Importée !', `« ${importPreview.title} » ajoutée dans ${cat}.`);
+      if (!vault) throw new Error('Vault non initialisé');
+
+      let cookContent: string;
+      let title: string;
+
+      if (importResult.type === 'cook') {
+        // cook.md returned a ready .cook file
+        cookContent = importResult.data.cookContent;
+        title = importResult.data.title;
+      } else {
+        // JSON-LD fallback — generate .cook from parsed data
+        const d = importResult.data;
+        cookContent = generateCookFile({
+          title: d.title, tags: d.tags, servings: d.servings,
+          prepTime: d.prepTime, cookTime: d.cookTime,
+          ingredients: d.ingredients.map(text => ({ name: text })),
+          steps: d.steps,
+        });
+        title = d.title;
+      }
+
+      const fileName = title.replace(/[/\\:*?"<>|]/g, '').trim();
+      const relPath = `03 - Cuisine/Recettes/${cat}/${fileName}.cook`;
+      await vault.ensureDir(`03 - Cuisine/Recettes/${cat}`);
+      await vault.writeFile(relPath, cookContent);
+      await refresh();
+
+      Alert.alert('Importée !', `« ${title} » ajoutée dans ${cat}.`);
       setShowImport(false);
       setImportUrl('');
-      setImportPreview(null);
+      setImportResult(null);
     } catch (e) {
       Alert.alert('Erreur', String(e));
     }
-  }, [importPreview, importCategory, vault, refresh]);
+  }, [importResult, importCategory, vault, refresh]);
 
   // ─── Header ──────────────────────────────────────────────────────
 
@@ -765,6 +782,7 @@ export default function MealsScreen() {
                   key={recipe.id}
                   recipe={recipe}
                   onPress={() => setSelectedRecipe(recipe)}
+                  onLongPress={() => handleDeleteRecipe(recipe)}
                 />
               ))
             )}
@@ -979,11 +997,11 @@ export default function MealsScreen() {
         visible={showImport}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => { setShowImport(false); setImportPreview(null); setImportUrl(''); }}
+        onRequestClose={() => { setShowImport(false); setImportResult(null); setImportUrl(''); }}
       >
         <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
           <View style={[styles.pickerHeader, { backgroundColor: colors.card, borderBottomColor: colors.borderLight }]}>
-            <TouchableOpacity onPress={() => { setShowImport(false); setImportPreview(null); setImportUrl(''); }}>
+            <TouchableOpacity onPress={() => { setShowImport(false); setImportResult(null); setImportUrl(''); }}>
               <Text style={[styles.pickerClose, { color: colors.textMuted }]}>✕</Text>
             </TouchableOpacity>
             <Text style={[styles.pickerHeaderTitle, { color: colors.text }]}>Importer une recette</Text>
@@ -1013,25 +1031,35 @@ export default function MealsScreen() {
                 activeOpacity={0.7}
               >
                 <Text style={styles.importFetchBtnText}>
-                  {importLoading ? '⏳ Chargement…' : '🔍 Extraire la recette'}
+                  {importLoading ? `⏳ ${importStatus || 'Chargement…'}` : '🔍 Extraire la recette'}
                 </Text>
               </TouchableOpacity>
             </View>
 
             {/* Preview */}
-            {importPreview && (
+            {importResult && (
               <View style={[styles.importPreview, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
-                <Text style={[styles.importPreviewTitle, { color: colors.text }]}>{importPreview.title}</Text>
-                {(importPreview.servings || importPreview.prepTime || importPreview.cookTime) && (
-                  <Text style={[styles.importPreviewMeta, { color: colors.textMuted }]}>
-                    {importPreview.servings ? `👤 ${importPreview.servings} pers.` : ''}
-                    {importPreview.prepTime ? `  ⏱ Prep ${importPreview.prepTime}` : ''}
-                    {importPreview.cookTime ? `  🔥 Cuisson ${importPreview.cookTime}` : ''}
-                  </Text>
-                )}
-                <Text style={[styles.importPreviewMeta, { color: colors.textMuted }]}>
-                  🥕 {importPreview.ingredients.length} ingrédient{importPreview.ingredients.length > 1 ? 's' : ''} · {importPreview.steps.length} étape{importPreview.steps.length > 1 ? 's' : ''}
+                <Text style={[styles.importPreviewTitle, { color: colors.text }]}>
+                  {importResult.type === 'cook' ? importResult.data.title : importResult.data.title}
                 </Text>
+                {importResult.type === 'cook' ? (
+                  <Text style={[styles.importPreviewMeta, { color: '#22C55E' }]}>
+                    Fichier .cook prêt (via cook.md)
+                  </Text>
+                ) : (
+                  <>
+                    {(importResult.data.servings || importResult.data.prepTime || importResult.data.cookTime) && (
+                      <Text style={[styles.importPreviewMeta, { color: colors.textMuted }]}>
+                        {importResult.data.servings ? `👤 ${importResult.data.servings} pers.` : ''}
+                        {importResult.data.prepTime ? `  ⏱ Prep ${importResult.data.prepTime}` : ''}
+                        {importResult.data.cookTime ? `  🔥 Cuisson ${importResult.data.cookTime}` : ''}
+                      </Text>
+                    )}
+                    <Text style={[styles.importPreviewMeta, { color: colors.textMuted }]}>
+                      🥕 {importResult.data.ingredients.length} ingrédient{importResult.data.ingredients.length > 1 ? 's' : ''} · {importResult.data.steps.length} étape{importResult.data.steps.length > 1 ? 's' : ''}
+                    </Text>
+                  </>
+                )}
 
                 {/* Category input */}
                 <View style={{ marginTop: 12, gap: 6 }}>

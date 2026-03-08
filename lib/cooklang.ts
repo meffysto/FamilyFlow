@@ -1,12 +1,19 @@
-import { Recipe as CooklangRecipe } from '@cooklang/cooklang-ts';
-import type { Ingredient as CooklangIngredient, Step as CooklangStep, Timer as CooklangTimer } from '@cooklang/cooklang-ts';
+/**
+ * cooklang.ts — Lightweight cooklang parser compatible with Hermes (React Native).
+ *
+ * Replaces @cooklang/cooklang-ts which uses Unicode regex properties (\p{P}, \p{Zs})
+ * not supported by Hermes, causing silent parsing failures at runtime.
+ */
 
-// Our app types
+declare const __DEV__: boolean;
+
+// ─── App types ──────────────────────────────────────────────────────────────
+
 export interface AppRecipe {
   id: string;
   title: string;
   sourceFile: string;
-  category: string;        // folder name (Plats, Desserts, etc.)
+  category: string;
   tags: string[];
   servings: number;
   prepTime: string;
@@ -22,77 +29,384 @@ export interface AppIngredient {
   unit: string;
 }
 
+export interface StepToken {
+  type: 'text' | 'ingredient' | 'cookware' | 'timer';
+  value?: string;
+  name?: string;
+  quantity?: number | null;
+  unit?: string;
+}
+
 export interface AppStep {
   number: number;
-  text: string;              // rendered text with ingredient names inline
+  text: string;
+  tokens: StepToken[];
   ingredients: AppIngredient[];
   timers: { name: string; duration: number; unit: string }[];
 }
 
+// ─── Lightweight Cooklang Parser (Hermes-safe) ──────────────────────────────
+
+interface ParsedToken {
+  type: 'text' | 'ingredient' | 'cookware' | 'timer';
+  value?: string;      // for text
+  name?: string;       // for ingredient/cookware/timer
+  quantity?: string | number;
+  units?: string;
+}
+
+interface ParseResult {
+  metadata: Record<string, string>;
+  ingredients: { name: string; quantity: string | number; units: string }[];
+  cookwares: { name: string }[];
+  steps: ParsedToken[][];
+}
+
+/** Metadata line: >> key: value */
+const RE_METADATA = /^>>\s*(.+?):\s*(.+)/;
+
+/** Comment: -- ... */
+const RE_COMMENT = /--.*/g;
+
+/** Block comment: [- ... -] */
+const RE_BLOCK_COMMENT = /\[-[\s\S]*?-\]/g;
+
+/**
+ * Tokens in a step line. Hermes-safe (no \p{} Unicode properties).
+ * Matches:
+ *   @multi word name{qty%unit}   — multiword ingredient
+ *   @singleword                  — single word ingredient
+ *   #multi word name{qty}        — multiword cookware
+ *   #singleword                  — single word cookware
+ *   ~name{qty%unit}              — timer
+ *
+ * Also handles () as alternative to {} (cook.md format).
+ */
+const RE_TOKEN = /@([^@#~{\n]+?)\{([^}]*)\}|@([^@#~{\s,;.!?()[\]]+)|#([^@#~{\n]+?)\{([^}]*)\}|#([^@#~{\s,;.!?()[\]]+)|~([^{]*?)\{([^}]*)\}/g;
+
+function parseCooklangSource(source: string): ParseResult {
+  const metadata: Record<string, string> = {};
+  const ingredients: ParseResult['ingredients'] = [];
+  const cookwares: ParseResult['cookwares'] = [];
+  const steps: ParsedToken[][] = [];
+
+  // Strip comments
+  let cleaned = source.replace(RE_BLOCK_COMMENT, ' ').replace(RE_COMMENT, '');
+
+  // Normalize () → {} for @ingredients (cook.md format)
+  cleaned = cleaned.replace(/@([^\s@#~({\n][^@#~({\n]*?)\(([^)]*)\)/g, '@$1{$2}');
+
+  // Remove orphan {notes} after ingredient/cookware tokens (cook.md inline notes)
+  cleaned = cleaned.replace(/\}\{[^}]+\}/g, '}');
+
+  const lines = cleaned.split(/\r?\n/);
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    // Metadata
+    const metaMatch = trimmed.match(RE_METADATA);
+    if (metaMatch) {
+      metadata[metaMatch[1].trim()] = metaMatch[2].trim();
+      continue;
+    }
+
+    // Step line — tokenize
+    const step: ParsedToken[] = [];
+    let lastIndex = 0;
+    const tokenRe = new RegExp(RE_TOKEN.source, 'g');
+    let m: RegExpExecArray | null;
+
+    while ((m = tokenRe.exec(trimmed)) !== null) {
+      // Push preceding text
+      if (m.index > lastIndex) {
+        step.push({ type: 'text', value: trimmed.substring(lastIndex, m.index) });
+      }
+
+      if (m[1] !== undefined) {
+        // Multiword ingredient: @name{qty%unit}
+        const { qty, units } = parseQtyUnits(m[2]);
+        const ing = { name: m[1].trim(), quantity: qty, units };
+        ingredients.push(ing);
+        step.push({ type: 'ingredient', name: ing.name, quantity: ing.quantity, units: ing.units });
+      } else if (m[3] !== undefined) {
+        // Single word ingredient: @word
+        const ing = { name: m[3], quantity: 'some' as string | number, units: '' };
+        ingredients.push(ing);
+        step.push({ type: 'ingredient', name: ing.name, quantity: ing.quantity, units: '' });
+      } else if (m[4] !== undefined) {
+        // Multiword cookware: #name{qty}
+        cookwares.push({ name: m[4].trim() });
+        step.push({ type: 'cookware', name: m[4].trim() });
+      } else if (m[6] !== undefined) {
+        // Single word cookware: #word
+        cookwares.push({ name: m[6] });
+        step.push({ type: 'cookware', name: m[6] });
+      } else if (m[7] !== undefined) {
+        // Timer: ~name{qty%unit}
+        const { qty, units } = parseQtyUnits(m[8]);
+        step.push({ type: 'timer', name: m[7].trim(), quantity: qty, units });
+      }
+
+      lastIndex = m.index + m[0].length;
+    }
+
+    // Trailing text
+    if (lastIndex < trimmed.length) {
+      step.push({ type: 'text', value: trimmed.substring(lastIndex) });
+    }
+
+    if (step.length > 0) {
+      steps.push(step);
+    }
+  }
+
+  return { metadata, ingredients, cookwares, steps };
+}
+
+function parseQtyUnits(raw: string): { qty: string | number; units: string } {
+  if (!raw || !raw.trim()) return { qty: 'some', units: '' };
+  const parts = raw.split('%');
+  const qtyStr = parts[0].trim();
+  const units = parts[1]?.trim() || '';
+  // Try numeric
+  const num = parseFloat(qtyStr.replace(',', '.'));
+  const qty = !isNaN(num) ? num : qtyStr || 'some';
+  return { qty, units };
+}
+
+// ─── Strip YAML frontmatter ────────────────────────────────────────────────
+
+function extractFrontmatter(content: string): { metadata: Record<string, string>; body: string } {
+  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+  if (!match) return { metadata: {}, body: content };
+  const metadata: Record<string, string> = {};
+  for (const line of match[1].split('\n')) {
+    const idx = line.indexOf(':');
+    if (idx > 0) {
+      metadata[line.slice(0, idx).trim()] = line.slice(idx + 1).trim();
+    }
+  }
+  return { metadata, body: match[2] };
+}
+
+// ─── Public: parseRecipe ────────────────────────────────────────────────────
+
 /** Parse a .cook file content into an AppRecipe */
 export function parseRecipe(sourceFile: string, content: string): AppRecipe {
-  const recipe = new CooklangRecipe(content);
+  const { metadata: frontmatter, body } = extractFrontmatter(content);
+  const parsed = parseCooklangSource(body);
+
+  // Merge: frontmatter overrides cooklang >> metadata
+  const meta = { ...parsed.metadata, ...frontmatter };
+
+  if (__DEV__) {
+    console.log('[cooklang] parseRecipe:', sourceFile);
+    console.log('[cooklang] ingredients count:', parsed.ingredients.length);
+    console.log('[cooklang] steps count:', parsed.steps.length);
+  }
 
   // Extract title from metadata or filename
   const pathParts = sourceFile.split('/');
   const fileName = pathParts[pathParts.length - 1].replace('.cook', '');
   const category = pathParts.length >= 2 ? pathParts[pathParts.length - 2] : '';
 
-  const title = recipe.metadata.title || fileName;
-  const tags = recipe.metadata.tags
-    ? recipe.metadata.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+  const title = meta.title || fileName;
+  const tags = meta.tags
+    ? meta.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
     : [];
-  const servings = parseInt(recipe.metadata.servings || recipe.metadata.portions || '4', 10) || 4;
-  const prepTime = recipe.metadata['prep time'] || recipe.metadata.prepTime || recipe.metadata.préparation || '';
-  const cookTime = recipe.metadata['cook time'] || recipe.metadata.cookTime || recipe.metadata.cuisson || '';
+  const servings = parseInt(meta.servings || meta.portions || '4', 10) || 4;
+  const prepTime = meta['prep time'] || meta.prepTime || meta['time required'] || '';
+  const cookTime = meta['cook time'] || meta.cookTime || meta.cuisson || '';
 
-  // Map ingredients
-  const ingredients: AppIngredient[] = recipe.ingredients.map((ing: CooklangIngredient) => ({
-    name: ing.name,
+  // Map ingredients — from cooklang inline syntax, or from metadata fallback
+  let ingredients: AppIngredient[] = parsed.ingredients.map((ing) => ({
+    name: translateIngredient(ing.name),
     quantity: typeof ing.quantity === 'number' ? ing.quantity : parseFloat(String(ing.quantity)) || null,
-    unit: ing.units || '',
+    unit: normalizeUnit(ing.units || ''),
   }));
+  // Deduplicate by name (same ingredient in multiple steps)
+  const seen = new Map<string, AppIngredient>();
+  for (const ing of ingredients) {
+    const key = ing.name.toLowerCase().trim();
+    if (!seen.has(key)) seen.set(key, ing);
+  }
+  ingredients = [...seen.values()];
+
+  if (ingredients.length === 0 && meta.ingredients) {
+    ingredients = meta.ingredients
+      .split('|')
+      .map((s: string) => s.trim())
+      .filter(Boolean)
+      .map((s: string) => parseIngredientText(s));
+  }
 
   // Map cookware
-  const cookware = [...new Set(recipe.cookwares.map((c) => c.name))];
+  const cookware = [...new Set(parsed.cookwares.map((c) => c.name))];
 
-  // Map steps
-  const steps: AppStep[] = recipe.steps.map((step: CooklangStep, idx: number) => {
+  // Map steps — store tokens for dynamic re-rendering on scale
+  const steps: AppStep[] = parsed.steps.map((step, idx) => {
     const stepIngredients: AppIngredient[] = [];
     const stepTimers: { name: string; duration: number; unit: string }[] = [];
+    const tokens: StepToken[] = [];
 
     const text = step.map((token) => {
-      if (token.type === 'text') return token.value;
-      if (token.type === 'ingredient') {
-        stepIngredients.push({
-          name: token.name,
-          quantity: typeof token.quantity === 'number' ? token.quantity : parseFloat(String(token.quantity)) || null,
-          unit: token.units || '',
-        });
-        const qty = token.quantity && token.quantity !== 'some' ? `${token.quantity}${token.units ? ' ' + token.units : ''} ` : '';
-        return `${qty}${token.name}`;
+      if (token.type === 'text') {
+        tokens.push({ type: 'text', value: token.value || '' });
+        return token.value || '';
       }
-      if (token.type === 'cookware') return token.name;
+      if (token.type === 'ingredient') {
+        const qty = typeof token.quantity === 'number' ? token.quantity : parseFloat(String(token.quantity)) || null;
+        const unit = normalizeUnit(token.units || '');
+        const name = translateIngredient(token.name || '');
+        stepIngredients.push({ name, quantity: qty, unit });
+        tokens.push({ type: 'ingredient', name, quantity: qty, unit });
+        return renderIngredientToken(token.name || '', qty, unit);
+      }
+      if (token.type === 'cookware') {
+        tokens.push({ type: 'cookware', name: token.name || '' });
+        return token.name || '';
+      }
       if (token.type === 'timer') {
-        const t = token as CooklangTimer;
-        stepTimers.push({
-          name: t.name || '',
-          duration: typeof t.quantity === 'number' ? t.quantity : parseFloat(String(t.quantity)) || 0,
-          unit: t.units || 'minutes',
-        });
-        return `${t.quantity} ${t.units}`;
+        const dur = typeof token.quantity === 'number' ? token.quantity : parseFloat(String(token.quantity)) || 0;
+        const unit = token.units || 'minutes';
+        stepTimers.push({ name: token.name || '', duration: dur, unit });
+        tokens.push({ type: 'timer', name: token.name || '', quantity: dur, unit });
+        return `${token.quantity} ${token.units}`;
       }
       return '';
     }).join('');
 
-    return { number: idx + 1, text, ingredients: stepIngredients, timers: stepTimers };
+    return { number: idx + 1, text, tokens, ingredients: stepIngredients, timers: stepTimers };
   });
 
-  // Generate stable ID from sourceFile
   const id = sourceFile.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
 
   return { id, title, sourceFile, category, tags, servings, prepTime, cookTime, ingredients, steps, cookware };
 }
+
+// ─── Unit normalization (EN → FR) ───────────────────────────────────────────
+
+const UNIT_FR: Record<string, string> = {
+  tbsp: 'c. à s.', tbs: 'c. à s.', tablespoon: 'c. à s.', tablespoons: 'c. à s.',
+  tsp: 'c. à c.', teaspoon: 'c. à c.', teaspoons: 'c. à c.',
+  cup: 'tasse', cups: 'tasses',
+  oz: 'oz', ounce: 'oz', ounces: 'oz',
+  lb: 'lb', pound: 'lb', pounds: 'lb',
+  pinch: 'pincée', clove: 'gousse', cloves: 'gousses',
+  slice: 'tranche', slices: 'tranches',
+  bunch: 'botte', packet: 'paquet', can: 'boîte',
+  piece: 'pièce', pieces: 'pièces',
+  handful: 'poignée', sprig: 'brin', sprigs: 'brins',
+  leaf: 'feuille', leaves: 'feuilles',
+};
+
+/** Common EN → FR ingredient name translations */
+const INGREDIENT_FR: Record<string, string> = {
+  // Dairy
+  butter: 'beurre', 'melted butter': 'beurre fondu', 'unsalted butter': 'beurre doux', 'salted butter': 'beurre salé',
+  milk: 'lait', 'whole milk': 'lait entier', 'skimmed milk': 'lait écrémé', cream: 'crème', 'heavy cream': 'crème épaisse',
+  'whipping cream': 'crème liquide', 'sour cream': 'crème aigre', cheese: 'fromage', 'cream cheese': 'fromage frais',
+  yogurt: 'yaourt', yoghurt: 'yaourt',
+  // Eggs
+  egg: 'oeuf', eggs: 'oeufs', 'egg yolk': 'jaune d\'oeuf', 'egg yolks': 'jaunes d\'oeuf',
+  'egg white': 'blanc d\'oeuf', 'egg whites': 'blancs d\'oeuf', 'whole eggs': 'oeufs entiers',
+  // Flour & baking
+  flour: 'farine', 'all-purpose flour': 'farine', 'bread flour': 'farine de blé', 'cake flour': 'farine pâtissière',
+  sugar: 'sucre', 'white sugar': 'sucre', 'brown sugar': 'sucre roux', 'powdered sugar': 'sucre glace',
+  'icing sugar': 'sucre glace', 'granulated sugar': 'sucre en poudre', 'caster sugar': 'sucre fin',
+  'baking powder': 'levure chimique', 'baking soda': 'bicarbonate', yeast: 'levure',
+  'vanilla extract': 'extrait de vanille', vanilla: 'vanille', 'vanilla sugar': 'sucre vanillé',
+  cocoa: 'cacao', 'cocoa powder': 'cacao en poudre', chocolate: 'chocolat', 'dark chocolate': 'chocolat noir',
+  cornstarch: 'maïzena', 'corn starch': 'maïzena',
+  // Oils & fats
+  oil: 'huile', 'olive oil': 'huile d\'olive', 'vegetable oil': 'huile végétale',
+  'sunflower oil': 'huile de tournesol', 'coconut oil': 'huile de coco',
+  // Salt, pepper, spices
+  salt: 'sel', pepper: 'poivre', 'black pepper': 'poivre noir', 'ground pepper': 'poivre moulu',
+  cinnamon: 'cannelle', nutmeg: 'muscade', cumin: 'cumin', paprika: 'paprika', curry: 'curry',
+  turmeric: 'curcuma', ginger: 'gingembre', thyme: 'thym', rosemary: 'romarin', basil: 'basilic',
+  parsley: 'persil', cilantro: 'coriandre', coriander: 'coriandre', oregano: 'origan',
+  'bay leaf': 'feuille de laurier', 'bay leaves': 'feuilles de laurier', chives: 'ciboulette',
+  // Produce
+  garlic: 'ail', 'garlic clove': 'gousse d\'ail', 'garlic cloves': 'gousses d\'ail',
+  onion: 'oignon', onions: 'oignons', shallot: 'échalote', shallots: 'échalotes',
+  tomato: 'tomate', tomatoes: 'tomates', potato: 'pomme de terre', potatoes: 'pommes de terre',
+  carrot: 'carotte', carrots: 'carottes', celery: 'céleri', leek: 'poireau', leeks: 'poireaux',
+  mushroom: 'champignon', mushrooms: 'champignons', zucchini: 'courgette', eggplant: 'aubergine',
+  spinach: 'épinards', lettuce: 'laitue', cucumber: 'concombre', 'bell pepper': 'poivron',
+  avocado: 'avocat', broccoli: 'brocoli', cabbage: 'chou', 'green beans': 'haricots verts',
+  peas: 'petits pois', corn: 'maïs', turnip: 'navet', radish: 'radis', beet: 'betterave',
+  // Fruit
+  lemon: 'citron', 'lemon juice': 'jus de citron', 'lemon zest': 'zeste de citron',
+  orange: 'orange', 'orange juice': 'jus d\'orange', 'orange zest': 'zeste d\'orange',
+  apple: 'pomme', apples: 'pommes', banana: 'banane', strawberry: 'fraise', strawberries: 'fraises',
+  raspberry: 'framboise', raspberries: 'framboises', blueberry: 'myrtille', blueberries: 'myrtilles',
+  // Protein
+  chicken: 'poulet', 'chicken breast': 'blanc de poulet', beef: 'boeuf', pork: 'porc',
+  lamb: 'agneau', veal: 'veau', turkey: 'dinde', duck: 'canard', bacon: 'lardons',
+  ham: 'jambon', sausage: 'saucisse', 'ground beef': 'boeuf haché', 'ground meat': 'viande hachée',
+  salmon: 'saumon', tuna: 'thon', shrimp: 'crevettes', cod: 'cabillaud', fish: 'poisson',
+  // Pantry
+  rice: 'riz', pasta: 'pâtes', noodles: 'nouilles', bread: 'pain', 'bread crumbs': 'chapelure',
+  honey: 'miel', 'maple syrup': 'sirop d\'érable', jam: 'confiture',
+  'soy sauce': 'sauce soja', vinegar: 'vinaigre', mustard: 'moutarde', ketchup: 'ketchup',
+  'tomato paste': 'concentré de tomate', 'tomato sauce': 'sauce tomate',
+  broth: 'bouillon', stock: 'bouillon', 'chicken broth': 'bouillon de poulet',
+  'coconut milk': 'lait de coco', water: 'eau', wine: 'vin', 'white wine': 'vin blanc', 'red wine': 'vin rouge',
+  rum: 'rhum', beer: 'bière',
+  // Nuts
+  almond: 'amande', almonds: 'amandes', walnut: 'noix', walnuts: 'noix',
+  hazelnut: 'noisette', hazelnuts: 'noisettes', peanut: 'cacahuète', peanuts: 'cacahuètes',
+};
+
+/** Normalize unit to French */
+function normalizeUnit(unit: string): string {
+  if (!unit) return '';
+  return UNIT_FR[unit.toLowerCase()] || unit;
+}
+
+/** Translate ingredient name to French if known */
+function translateIngredient(name: string): string {
+  const lower = name.toLowerCase().trim();
+  return INGREDIENT_FR[lower] || name;
+}
+
+/** Normalize ingredient name: lowercase, trim, remove accents for comparison */
+function normalizeIngredientName(name: string): string {
+  return translateIngredient(name).toLowerCase().trim()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+// ─── Rendering helpers ──────────────────────────────────────────────────────
+
+/** Render a single ingredient token as French text */
+function renderIngredientToken(name: string, qty: number | null, unit: string): string {
+  if (qty !== null && unit) {
+    const startsWithVowel = /^[aeiouyéèêëàâùûîïôh]/i.test(name);
+    const de = startsWithVowel ? "d'" : 'de ';
+    return `${qty} ${unit} ${de}${name}`;
+  }
+  if (qty !== null) return `${qty} ${name}`;
+  return name;
+}
+
+/** Re-render step text with scaled quantities */
+export function renderStepText(tokens: StepToken[], factor: number): string {
+  return tokens.map((t) => {
+    if (t.type === 'text') return t.value || '';
+    if (t.type === 'ingredient') {
+      const scaled = t.quantity != null ? Math.round(t.quantity * factor * 100) / 100 : null;
+      return renderIngredientToken(t.name || '', scaled, t.unit || '');
+    }
+    if (t.type === 'cookware') return t.name || '';
+    if (t.type === 'timer') return `${t.quantity} ${t.unit}`;
+    return '';
+  }).join('');
+}
+
+// ─── Utilities ──────────────────────────────────────────────────────────────
 
 /** Scale ingredient quantities by a factor */
 export function scaleIngredients(ingredients: AppIngredient[], targetServings: number, baseServings: number): AppIngredient[] {
@@ -108,7 +422,7 @@ export function scaleIngredients(ingredients: AppIngredient[], targetServings: n
 export function aggregateIngredients(allIngredients: AppIngredient[]): AppIngredient[] {
   const map = new Map<string, AppIngredient>();
   for (const ing of allIngredients) {
-    const key = `${ing.name.toLowerCase().trim()}|${ing.unit.toLowerCase().trim()}`;
+    const key = `${normalizeIngredientName(ing.name)}|${normalizeUnit(ing.unit).toLowerCase()}`;
     const existing = map.get(key);
     if (existing) {
       map.set(key, {
@@ -158,14 +472,41 @@ export function groupByCategory(ingredients: AppIngredient[]): Record<string, Ap
   return groups;
 }
 
-/** Format ingredient for display: "200 g pates" or "pates" */
+/** Format ingredient for display: "200 g de pâtes" or "3 oeufs" */
 export function formatIngredient(ing: AppIngredient): string {
-  if (ing.quantity !== null && ing.unit) return `${ing.quantity} ${ing.unit} ${ing.name}`;
+  if (ing.quantity !== null && ing.unit) {
+    const startsWithVowel = /^[aeiouyéèêëàâùûîïôh]/i.test(ing.name);
+    const de = startsWithVowel ? "d'" : 'de ';
+    return `${ing.quantity} ${ing.unit} ${de}${ing.name}`;
+  }
   if (ing.quantity !== null) return `${ing.quantity} ${ing.name}`;
   return ing.name;
 }
 
-/** Generate a basic .cook file content from user inputs */
+/** Parse a French ingredient string "400 g de pâtes" into { name, quantity, unit } */
+function parseIngredientText(text: string): AppIngredient {
+  const m = text.match(
+    /^(\d+(?:[.,]\d+)?)\s*(g|kg|ml|cl|dl|l|cs|cc|CS|CC|càs|càc|c\.?\s*à\s*s\.?|c\.?\s*à\s*c\.?|tasse|pincée|sachet|tranche|feuille|brin|gousse|botte|paquet|boîte|pot|verre|tbsp|tsp)?\s*(?:de\s+|d')?(.+)/i,
+  );
+  if (m) {
+    return {
+      name: m[3].trim(),
+      quantity: parseFloat(m[1].replace(',', '.')) || null,
+      unit: (m[2] || '').trim(),
+    };
+  }
+  const m2 = text.match(/^(\d+(?:[.,]\d+)?)\s+(.+)/);
+  if (m2) {
+    return {
+      name: m2[2].trim(),
+      quantity: parseFloat(m2[1].replace(',', '.')) || null,
+      unit: '',
+    };
+  }
+  return { name: text.trim(), quantity: null, unit: '' };
+}
+
+/** Generate a .cook file content from imported recipe data */
 export function generateCookFile(data: {
   title: string;
   tags?: string[];
@@ -177,22 +518,18 @@ export function generateCookFile(data: {
 }): string {
   const lines: string[] = [];
 
-  // Metadata
-  const meta: string[] = [];
-  if (data.title) meta.push(`title: ${data.title}`);
-  if (data.tags && data.tags.length > 0) meta.push(`tags: ${data.tags.join(', ')}`);
-  if (data.servings) meta.push(`servings: ${data.servings}`);
-  if (data.prepTime) meta.push(`prep time: ${data.prepTime}`);
-  if (data.cookTime) meta.push(`cook time: ${data.cookTime}`);
-
-  if (meta.length > 0) {
-    lines.push('---');
-    lines.push(...meta);
-    lines.push('---');
-    lines.push('');
+  // Metadata — cooklang format: >> key: value
+  if (data.title) lines.push(`>> title: ${data.title}`);
+  if (data.tags && data.tags.length > 0) lines.push(`>> tags: ${data.tags.join(', ')}`);
+  if (data.servings) lines.push(`>> servings: ${data.servings}`);
+  if (data.prepTime) lines.push(`>> prep time: ${data.prepTime}`);
+  if (data.cookTime) lines.push(`>> cook time: ${data.cookTime}`);
+  if (data.ingredients.length > 0) {
+    lines.push(`>> ingredients: ${data.ingredients.map(i => i.name).join(' | ')}`);
   }
+  if (lines.length > 0) lines.push('');
 
-  // Steps with inline ingredients
+  // Steps as plain text
   for (const step of data.steps) {
     lines.push(step);
     lines.push('');

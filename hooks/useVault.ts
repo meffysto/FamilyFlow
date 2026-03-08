@@ -91,6 +91,7 @@ export interface VaultState {
   addTask: (text: string, targetFile: string, dueDate?: string, recurrence?: string) => Promise<void>;
   deleteTask: (sourceFile: string, lineIndex: number) => Promise<void>;
   addCourseItem: (text: string, section?: string) => Promise<void>;
+  mergeCourseIngredients: (items: { text: string; name: string; quantity: number | null; section: string }[]) => Promise<{ added: number; merged: number }>;
   toggleCourseItem: (item: CourseItem, completed: boolean) => Promise<void>;
   removeCourseItem: (lineIndex: number) => Promise<void>;
   clearCompletedCourses: () => Promise<void>;
@@ -970,6 +971,73 @@ export function useVault(): VaultState {
     }
   }, [loadVaultData]);
 
+  /** Batch merge ingredients into the shopping list (single file write) */
+  const mergeCourseIngredients = useCallback(async (items: { text: string; name: string; quantity: number | null; section: string }[]): Promise<{ added: number; merged: number }> => {
+    if (!vaultRef.current) return { added: 0, merged: 0 };
+    let added = 0;
+    let merged = 0;
+
+    try {
+      let content = '';
+      try { content = await vaultRef.current.readFile(COURSES_FILE); } catch { /* file may not exist */ }
+      const lines = content.split('\n');
+
+      for (const item of items) {
+        // Normalize ingredient name for matching (accent-insensitive)
+        const nameNorm = item.name.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+        // Find existing unchecked line containing the same ingredient name
+        let foundIdx = -1;
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          if (!line.match(/^-\s+\[ \]/)) continue;
+          const lineText = line.replace(/^-\s+\[ \]\s*/, '');
+          const lineNorm = lineText.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          if (lineNorm.includes(nameNorm)) {
+            foundIdx = i;
+            break;
+          }
+        }
+
+        if (foundIdx >= 0 && item.quantity !== null) {
+          // Merge: parse existing qty, add, rewrite line
+          const existingLine = lines[foundIdx].replace(/^-\s+\[ \]\s*/, '');
+          const existingMatch = existingLine.match(/^(\d+(?:[.,]\d+)?)\s+/);
+          if (existingMatch) {
+            const existingQty = parseFloat(existingMatch[1].replace(',', '.'));
+            const mergedQty = existingQty + item.quantity;
+            const mergedText = existingLine.replace(/^\d+(?:[.,]\d+)?/, String(mergedQty));
+            lines[foundIdx] = `- [ ] ${mergedText}`;
+            merged++;
+            continue;
+          }
+        }
+
+        // Add new item under the right section header
+        const sectionHeader = `## ${item.section}`;
+        let sectionIdx = lines.findIndex((l) => l.trim() === sectionHeader);
+        if (sectionIdx === -1) {
+          lines.push('', sectionHeader);
+          sectionIdx = lines.length - 1;
+        }
+        let insertIdx = sectionIdx + 1;
+        while (insertIdx < lines.length && (lines[insertIdx].startsWith('- ') || lines[insertIdx].trim() === '')) {
+          if (lines[insertIdx].trim() !== '' && !lines[insertIdx].startsWith('- ')) break;
+          insertIdx++;
+        }
+        lines.splice(insertIdx, 0, `- [ ] ${item.text}`);
+        added++;
+      }
+
+      await vaultRef.current.writeFile(COURSES_FILE, lines.join('\n'));
+      await loadVaultData(vaultRef.current);
+    } catch (e) {
+      throw new Error(`mergeCourseIngredients: ${e}`);
+    }
+
+    return { added, merged };
+  }, [loadVaultData]);
+
   const clearCompletedCourses = useCallback(async () => {
     if (!vaultRef.current) return;
     try {
@@ -1139,6 +1207,7 @@ export function useVault(): VaultState {
     addTask,
     deleteTask,
     addCourseItem,
+    mergeCourseIngredients,
     toggleCourseItem,
     removeCourseItem,
     clearCompletedCourses,

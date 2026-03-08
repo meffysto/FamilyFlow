@@ -2,11 +2,23 @@
  * recipe-import.ts — Import recipes from URLs
  *
  * Strategy:
- * 1. Fetch HTML from URL
- * 2. Try JSON-LD (schema.org/Recipe) — structured, reliable
- * 3. Fallback: fetch via defuddle.md API → parse markdown heuristically
+ * 1. cook.md — sends URL, polls for .cook file (best quality, uses LLM)
+ * 2. Direct HTML fetch + JSON-LD extraction (fast, for sites with schema.org)
  */
 
+declare const __DEV__: boolean;
+
+/** Result from cook.md: raw .cook file content */
+export interface CookImportResult {
+  /** Raw .cook file content (frontmatter + cooklang steps) */
+  cookContent: string;
+  /** Title extracted from metadata for preview */
+  title: string;
+  /** Category suggestion from metadata */
+  category?: string;
+}
+
+/** Result from JSON-LD fallback: structured data needing conversion */
 export interface ImportedRecipe {
   title: string;
   servings?: number;
@@ -18,7 +30,117 @@ export interface ImportedRecipe {
   sourceUrl: string;
 }
 
-// ─── JSON-LD extraction ────────────────────────────────────────────────────
+export type ImportResult =
+  | { type: 'cook'; data: CookImportResult }
+  | { type: 'parsed'; data: ImportedRecipe };
+
+// ─── cook.md integration ──────────────────────────────────────────────────
+
+const COOK_MD_TIMEOUT = 90_000; // 90s max
+const COOK_MD_POLL_INTERVAL = 3_000; // poll every 3s
+
+/** Submit URL to cook.md → get cookify UUID from redirect or final page */
+async function submitToCookMd(url: string): Promise<string | null> {
+  try {
+    // RN follows redirects automatically, so we land on /cookifies/{uuid} page
+    const res = await fetch(`https://cook.md/${url}`);
+    // Try to get UUID from the response URL (works if RN exposes it)
+    const resUrl = res.url || '';
+    const urlMatch = resUrl.match(/cookifies\/([a-f0-9-]+)/i);
+    if (urlMatch) return urlMatch[1];
+    // Fallback: extract UUID from the HTML body
+    if (res.ok) {
+      const body = await res.text();
+      const bodyMatch = body.match(/cookifies\/([a-f0-9-]+)/i);
+      if (bodyMatch) return bodyMatch[1];
+    }
+    return null;
+  } catch (e) {
+    if (__DEV__) console.log('[recipe-import] cook.md submit error:', e);
+    return null;
+  }
+}
+
+/** Parse .cook file metadata (frontmatter between --- markers) */
+function parseCookMetadata(content: string): Record<string, string> {
+  const meta: Record<string, string> = {};
+  const match = content.match(/^---\n([\s\S]*?)\n---/);
+  if (!match) return meta;
+  for (const line of match[1].split('\n')) {
+    const idx = line.indexOf(':');
+    if (idx > 0) {
+      const key = line.substring(0, idx).trim().toLowerCase();
+      const value = line.substring(idx + 1).trim();
+      if (key && value) meta[key] = value;
+    }
+  }
+  return meta;
+}
+
+/** Poll cook.md for the .cook file until ready */
+async function pollCookMd(uuid: string): Promise<CookImportResult | null> {
+  const downloadUrl = `https://cook.md/cookifies/${uuid}/download`;
+  const start = Date.now();
+
+  while (Date.now() - start < COOK_MD_TIMEOUT) {
+    try {
+      const res = await fetch(downloadUrl);
+      if (__DEV__) console.log('[recipe-import] poll status:', res.status, 'elapsed:', Math.round((Date.now() - start) / 1000), 's');
+      if (res.status === 404) {
+        await new Promise(r => setTimeout(r, COOK_MD_POLL_INTERVAL));
+        continue;
+      }
+      if (res.ok) {
+        const body = await res.text();
+        if (__DEV__) console.log('[recipe-import] poll body length:', body.length, 'first 100:', body.substring(0, 100));
+        // HTML = not ready yet (error page served as 200)
+        if (body.trimStart().startsWith('<!DOCTYPE') || body.trimStart().startsWith('<html')) {
+          await new Promise(r => setTimeout(r, COOK_MD_POLL_INTERVAL));
+          continue;
+        }
+        // Validate it looks like a .cook file (--- frontmatter or >> metadata)
+        if ((body.includes('---') || body.includes('>>')) && body.length > 50) {
+          const meta = parseCookMetadata(body);
+          return {
+            cookContent: body,
+            title: meta.title || 'Recette importée',
+            category: meta.course || meta.cuisine || undefined,
+          };
+        }
+        if (__DEV__) console.log('[recipe-import] poll: body not recognized as .cook');
+      }
+      // Other error (5xx etc) — keep polling, don't give up immediately
+      await new Promise(r => setTimeout(r, COOK_MD_POLL_INTERVAL));
+    } catch (e) {
+      if (__DEV__) console.log('[recipe-import] poll error:', e);
+      await new Promise(r => setTimeout(r, COOK_MD_POLL_INTERVAL));
+    }
+  }
+
+  if (__DEV__) console.log('[recipe-import] cook.md timeout after', COOK_MD_TIMEOUT / 1000, 's');
+  return null;
+}
+
+/** Import via cook.md: submit URL → poll → download .cook */
+async function importViaCookMd(url: string, onStatus?: (msg: string) => void): Promise<CookImportResult | null> {
+  onStatus?.('Envoi à cook.md…');
+  const uuid = await submitToCookMd(url);
+  if (!uuid) {
+    if (__DEV__) console.log('[recipe-import] cook.md: no UUID from redirect');
+    return null;
+  }
+  if (__DEV__) console.log('[recipe-import] cook.md UUID:', uuid);
+
+  onStatus?.('Conversion en cours…');
+  return pollCookMd(uuid);
+}
+
+// ─── JSON-LD fallback ─────────────────────────────────────────────────────
+
+/** Strip HTML tags from a string */
+function stripHtml(s: string): string {
+  return s.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/\s+/g, ' ').trim();
+}
 
 /** Parse ISO 8601 duration (PT15M, PT1H30M) to human-readable French */
 function parseDuration(iso?: string): string {
@@ -35,55 +157,43 @@ function parseDuration(iso?: string): string {
 
 /** Extract Recipe from JSON-LD blocks in HTML */
 function extractJsonLd(html: string): ImportedRecipe | null {
-  // Find all <script type="application/ld+json"> blocks
   const regex = /<script[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
   let match: RegExpExecArray | null;
-
   while ((match = regex.exec(html)) !== null) {
     try {
       const data = JSON.parse(match[1]);
       const recipe = findRecipeInLd(data);
       if (recipe) return recipe;
-    } catch {
-      // malformed JSON, skip
-    }
+    } catch { /* skip malformed JSON */ }
   }
   return null;
 }
 
-/** Recursively find a Recipe object in JSON-LD (can be nested in @graph) */
+/** Recursively find a Recipe object in JSON-LD */
 function findRecipeInLd(data: any): ImportedRecipe | null {
   if (!data) return null;
-
-  // Direct Recipe object
   if (data['@type'] === 'Recipe' || (Array.isArray(data['@type']) && data['@type'].includes('Recipe'))) {
     return mapLdToRecipe(data);
   }
-
-  // @graph array
   if (data['@graph'] && Array.isArray(data['@graph'])) {
     for (const item of data['@graph']) {
       const found = findRecipeInLd(item);
       if (found) return found;
     }
   }
-
-  // Array of objects
   if (Array.isArray(data)) {
     for (const item of data) {
       const found = findRecipeInLd(item);
       if (found) return found;
     }
   }
-
   return null;
 }
 
-/** Map JSON-LD Recipe to our ImportedRecipe */
+/** Map JSON-LD Recipe to ImportedRecipe */
 function mapLdToRecipe(ld: any): ImportedRecipe {
   const title = ld.name || 'Recette importée';
 
-  // Servings
   let servings: number | undefined;
   if (ld.recipeYield) {
     const yieldStr = Array.isArray(ld.recipeYield) ? ld.recipeYield[0] : ld.recipeYield;
@@ -91,39 +201,36 @@ function mapLdToRecipe(ld: any): ImportedRecipe {
     if (!isNaN(num) && num > 0) servings = num;
   }
 
-  // Ingredients
   const ingredients: string[] = [];
   if (Array.isArray(ld.recipeIngredient)) {
     for (const ing of ld.recipeIngredient) {
-      const text = String(ing).trim();
+      const text = stripHtml(String(ing));
       if (text) ingredients.push(text);
     }
   }
 
-  // Steps
   const steps: string[] = [];
   if (Array.isArray(ld.recipeInstructions)) {
     for (const step of ld.recipeInstructions) {
       if (typeof step === 'string') {
-        const clean = step.trim();
+        const clean = stripHtml(step);
         if (clean) steps.push(clean);
-      } else if (step && step.text) {
-        const clean = String(step.text).trim();
+      } else if (step && (step.text || step.description)) {
+        const clean = stripHtml(String(step.text || step.description));
         if (clean) steps.push(clean);
       } else if (step && step['@type'] === 'HowToSection' && Array.isArray(step.itemListElement)) {
         for (const sub of step.itemListElement) {
-          const text = sub.text || (typeof sub === 'string' ? sub : '');
-          if (text.trim()) steps.push(text.trim());
+          const raw = sub.text || sub.description || (typeof sub === 'string' ? sub : '');
+          const text = stripHtml(String(raw));
+          if (text) steps.push(text);
         }
       }
     }
   } else if (typeof ld.recipeInstructions === 'string') {
-    // Some sites put all instructions as a single string
     const parts = ld.recipeInstructions.split(/\n+/).map((s: string) => s.trim()).filter(Boolean);
     steps.push(...parts);
   }
 
-  // Tags / category
   const tags: string[] = [];
   if (ld.recipeCategory) {
     const cats = Array.isArray(ld.recipeCategory) ? ld.recipeCategory : [ld.recipeCategory];
@@ -135,129 +242,54 @@ function mapLdToRecipe(ld: any): ImportedRecipe {
   }
 
   return {
-    title,
-    servings,
+    title, servings,
     prepTime: parseDuration(ld.prepTime),
     cookTime: parseDuration(ld.cookTime),
-    ingredients,
-    steps,
+    ingredients, steps,
     tags: tags.length > 0 ? tags : undefined,
     sourceUrl: '',
   };
 }
 
-// ─── Defuddle fallback ─────────────────────────────────────────────────────
-
-/** Fetch markdown via defuddle.md API and parse heuristically */
-async function fetchViaDefuddle(url: string): Promise<ImportedRecipe | null> {
-  try {
-    const apiUrl = `https://md.defuddle.com?url=${encodeURIComponent(url)}`;
-    const res = await fetch(apiUrl);
-    if (!res.ok) return null;
-    const md = await res.text();
-    return parseMarkdownRecipe(md, url);
-  } catch {
-    return null;
-  }
-}
-
-/** Heuristic parser for recipe markdown */
-function parseMarkdownRecipe(md: string, sourceUrl: string): ImportedRecipe | null {
-  const lines = md.split('\n');
-  if (lines.length < 5) return null;
-
-  // Title = first H1 or H2
-  let title = 'Recette importée';
-  for (const line of lines) {
-    const hMatch = line.match(/^#{1,2}\s+(.+)/);
-    if (hMatch) {
-      title = hMatch[1].trim();
-      break;
-    }
-  }
-
-  // Find ingredients section (look for header containing "ingrédient" or list after it)
-  const ingredients: string[] = [];
-  const steps: string[] = [];
-  let section: 'unknown' | 'ingredients' | 'steps' = 'unknown';
-
-  for (const line of lines) {
-    const lower = line.toLowerCase();
-
-    // Detect section headers
-    if (/^#{1,4}\s+/.test(line)) {
-      if (/ingr[eé]dient|ingredients/i.test(lower)) {
-        section = 'ingredients';
-        continue;
-      }
-      if (/[eé]tape|instruction|pr[eé]paration|preparation|recette/i.test(lower)) {
-        section = 'steps';
-        continue;
-      }
-      // Other header = reset
-      if (section !== 'unknown') section = 'unknown';
-    }
-
-    // Parse list items
-    const listMatch = line.match(/^[-*]\s+(.+)/);
-    if (listMatch) {
-      const text = listMatch[1].trim();
-      if (section === 'ingredients') {
-        ingredients.push(text);
-      } else if (section === 'steps') {
-        steps.push(text);
-      }
-    }
-
-    // Numbered steps
-    const numMatch = line.match(/^\d+[.)]\s+(.+)/);
-    if (numMatch && section === 'steps') {
-      steps.push(numMatch[1].trim());
-    }
-  }
-
-  if (ingredients.length === 0 && steps.length === 0) return null;
-
-  return {
-    title,
-    ingredients,
-    steps,
-    sourceUrl,
-  };
-}
-
 // ─── Public API ────────────────────────────────────────────────────────────
 
-/** Import a recipe from a URL. Tries JSON-LD first, then defuddle fallback. */
-export async function importRecipeFromUrl(url: string): Promise<ImportedRecipe> {
-  // 1. Fetch HTML directly
-  let recipe: ImportedRecipe | null = null;
+/**
+ * Import a recipe from a URL.
+ * 1. cook.md (best quality — LLM-powered cooklang conversion)
+ * 2. Fallback: direct HTML fetch + JSON-LD
+ */
+export async function importRecipeFromUrl(
+  url: string,
+  onStatus?: (msg: string) => void,
+): Promise<ImportResult> {
+  // 1. Try cook.md (async, may take up to 90s)
+  onStatus?.('Envoi à cook.md…');
+  const cookResult = await importViaCookMd(url, onStatus);
+  if (cookResult) {
+    if (__DEV__) console.log('[recipe-import] cook.md success:', cookResult.title);
+    return { type: 'cook', data: cookResult };
+  }
+
+  // 2. Fallback: direct HTML fetch + JSON-LD
+  onStatus?.('Extraction JSON-LD…');
   try {
-    const res = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; FamilyVault/1.0)',
-        'Accept': 'text/html',
-      },
-    });
+    if (__DEV__) console.log('[recipe-import] Fetching URL directly:', url);
+    const res = await fetch(url);
+    if (__DEV__) console.log('[recipe-import] Direct fetch status:', res.status);
     if (res.ok) {
       const html = await res.text();
-      recipe = extractJsonLd(html);
+      if (__DEV__) console.log('[recipe-import] HTML length:', html.length);
+      const recipe = extractJsonLd(html);
+      if (recipe) {
+        recipe.sourceUrl = url;
+        if (__DEV__) console.log('[recipe-import] JSON-LD success:', recipe.title);
+        return { type: 'parsed', data: recipe };
+      }
+      if (__DEV__) console.log('[recipe-import] No JSON-LD found in page');
     }
-  } catch {
-    // fetch failed, try defuddle
+  } catch (e) {
+    if (__DEV__) console.log('[recipe-import] Direct fetch error:', e);
   }
 
-  if (recipe) {
-    recipe.sourceUrl = url;
-    return recipe;
-  }
-
-  // 2. Fallback: defuddle
-  recipe = await fetchViaDefuddle(url);
-  if (recipe) {
-    recipe.sourceUrl = url;
-    return recipe;
-  }
-
-  throw new Error('Impossible d\'extraire une recette depuis cette URL. Vérifiez le lien.');
+  throw new Error('Impossible d\'extraire la recette. Le site ne contient pas de données structurées (JSON-LD).');
 }

@@ -6,15 +6,17 @@ import type { AppRecipe } from '../lib/cooklang';
 interface RecipeCardProps {
   recipe: AppRecipe;
   onPress: () => void;
+  onLongPress?: () => void;
 }
 
-export default function RecipeCard({ recipe, onPress }: RecipeCardProps) {
+export default function RecipeCard({ recipe, onPress, onLongPress }: RecipeCardProps) {
   const { primary, colors } = useThemeColors();
 
   return (
     <TouchableOpacity
       style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderLight }]}
       onPress={onPress}
+      onLongPress={onLongPress}
       activeOpacity={0.7}
     >
       <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>

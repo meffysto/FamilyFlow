@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../contexts/ThemeContext';
 import type { AppRecipe, AppIngredient } from '../lib/cooklang';
-import { scaleIngredients, formatIngredient } from '../lib/cooklang';
+import { scaleIngredients, formatIngredient, renderStepText } from '../lib/cooklang';
 
 interface RecipeViewerProps {
   recipe: AppRecipe;
@@ -23,9 +23,12 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList }: R
   const [servings, setServings] = useState(recipe.servings || 1);
   const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set());
 
+  const baseServings = recipe.servings || 1;
+  const scaleFactor = baseServings > 0 ? servings / baseServings : 1;
+
   const scaledIngredients = useMemo(
-    () => scaleIngredients(recipe.ingredients, servings, recipe.servings || 1),
-    [recipe.ingredients, servings, recipe.servings],
+    () => scaleIngredients(recipe.ingredients, servings, baseServings),
+    [recipe.ingredients, servings, baseServings],
   );
 
   const toggleIngredient = (index: number) => {
@@ -151,7 +154,9 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList }: R
                     <Text style={[styles.stepNumberText, { color: primary }]}>{i + 1}</Text>
                   </View>
                   <View style={styles.stepContent}>
-                    <Text style={[styles.stepText, { color: colors.text }]}>{step.text}</Text>
+                    <Text style={[styles.stepText, { color: colors.text }]}>
+                      {step.tokens.length > 0 ? renderStepText(step.tokens, scaleFactor) : step.text}
+                    </Text>
                     {step.timers && step.timers.length > 0 && (
                       <View style={styles.timersRow}>
                         {step.timers.map((timer, ti) => (
