@@ -106,7 +106,7 @@ export const TaskCard = React.memo(function TaskCard({
               <Text style={[styles.sourceLabel, { color: colors.textMuted }]}>{getSourceLabel(task.sourceFile)}</Text>
             </View>
           )}
-          {task.section && !showSource && (
+          {task.section && !showSource && !task.recurrence && (
             <View style={[styles.sectionBadge, { backgroundColor: tint }]}>
               <Text style={[styles.sectionLabel, { color: primary }]}>{task.section}</Text>
             </View>
