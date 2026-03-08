@@ -250,6 +250,15 @@ export default function TasksScreen() {
       }
     }
 
+    // Masquer les tâches récurrentes dont la date est dans le futur (déjà validées aujourd'hui)
+    if (filter !== 'terminées') {
+      const today = new Date().toISOString().slice(0, 10);
+      result = result.filter((t) => {
+        if (t.recurrence && t.dueDate && t.dueDate > today) return false;
+        return true;
+      });
+    }
+
     // Search
     if (search.trim()) {
       const q = search.toLowerCase();
