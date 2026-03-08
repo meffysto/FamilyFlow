@@ -120,7 +120,12 @@ export const TaskCard = React.memo(function TaskCard({
           )}
           {task.recurrence && (
             <View style={[styles.badge, { backgroundColor: colors.cardAlt }]}>
-              <Text style={[styles.recurrenceBadge, { color: colors.textFaint }]}>🔁</Text>
+              <Text style={[styles.recurrenceBadge, { color: colors.textFaint }]}>
+                🔁 {/every\s+day/i.test(task.recurrence) ? 'quotidien'
+                    : /every\s+week/i.test(task.recurrence) ? 'hebdo'
+                    : /every\s+month/i.test(task.recurrence) ? 'mensuel'
+                    : task.recurrence}
+              </Text>
             </View>
           )}
         </View>

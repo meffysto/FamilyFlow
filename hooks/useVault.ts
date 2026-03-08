@@ -938,7 +938,14 @@ export function useVault(): VaultState {
     let taskText = text;
     if (recurrence) taskText += ` 🔁 ${recurrence}`;
     if (dueDate) taskText += ` 📅 ${dueDate}`;
-    await vaultRef.current.appendTask(targetFile, null, taskText);
+    // Placer dans la bonne section selon la récurrence
+    let section: string | null = null;
+    if (recurrence) {
+      if (/every\s+day/i.test(recurrence)) section = 'Quotidien';
+      else if (/every\s+week/i.test(recurrence)) section = 'Hebdomadaire';
+      else if (/every\s+month/i.test(recurrence)) section = 'Mensuel';
+    }
+    await vaultRef.current.appendTask(targetFile, section, taskText);
     await loadVaultData(vaultRef.current);
   }, [loadVaultData]);
 
