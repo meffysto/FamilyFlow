@@ -132,6 +132,7 @@ export interface MealItem {
   day: string;          // "Lundi"
   mealType: string;     // "Petit-déj" | "Déjeuner" | "Dîner"
   text: string;         // "Pâtes carbonara" (empty string if not planned)
+  recipeRef?: string;   // relative path inside Recettes/ e.g. "Plats/Pates Carbonara"
   lineIndex: number;    // 0-based line in file
   sourceFile: string;
 }

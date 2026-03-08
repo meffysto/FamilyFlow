@@ -441,8 +441,10 @@ const DAYS_ORDER = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi',
  * ```
  * ## Lundi
  * - Déjeuner: Pâtes carbonara
- * - Dîner: Soupe de légumes
+ * - Dîner: Soupe de légumes [[Plats/Soupe de légumes]]
  * ```
+ *
+ * The optional [[...]] wiki-link references a recipe in 03 - Cuisine/Recettes/.
  */
 export function parseMeals(content: string, sourceFile: string): MealItem[] {
   const lines = content.split('\n');
@@ -462,12 +464,22 @@ export function parseMeals(content: string, sourceFile: string): MealItem[] {
       const match = line.match(MEAL_LINE_REGEX);
       if (match) {
         const mealType = match[1].trim();
-        const text = match[2].trim();
+        let rawText = match[2].trim();
+
+        // Extract optional [[recipe-ref]] wiki-link
+        let recipeRef: string | undefined;
+        const linkMatch = rawText.match(/\[\[(.+?)\]\]/);
+        if (linkMatch) {
+          recipeRef = linkMatch[1];
+          rawText = rawText.replace(/\s*\[\[.+?\]\]/, '').trim();
+        }
+
         meals.push({
           id: `${currentDay.toLowerCase()}:${mealType.toLowerCase()}`,
           day: currentDay,
           mealType,
-          text,
+          text: rawText,
+          recipeRef,
           lineIndex: i,
           sourceFile,
         });
@@ -476,6 +488,12 @@ export function parseMeals(content: string, sourceFile: string): MealItem[] {
   }
 
   return meals;
+}
+
+/** Format a meal line for writing to the markdown file */
+export function formatMealLine(mealType: string, text: string, recipeRef?: string): string {
+  const base = `- ${mealType}: ${text}`;
+  return recipeRef ? `${base} [[${recipeRef}]]` : base;
 }
 
 /**
@@ -493,7 +511,7 @@ export function serializeMeals(meals: MealItem[]): string {
     .filter((day) => byDay[day])
     .map((day) => {
       const dayMeals = byDay[day]
-        .map((m) => `- ${m.mealType}: ${m.text}`)
+        .map((m) => formatMealLine(m.mealType, m.text, m.recipeRef))
         .join('\n');
       return `## ${day}\n${dayMeals}`;
     })

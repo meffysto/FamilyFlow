@@ -106,23 +106,28 @@ export class VaultManager {
     }
   }
 
-  /** List all .md files in a directory recursively */
-  async listMarkdownFiles(relativeDir: string): Promise<string[]> {
+  /** List all files with a given extension in a directory recursively */
+  async listFilesRecursive(relativeDir: string, extension: string = '.md'): Promise<string[]> {
     const entries = await this.listDir(relativeDir);
     const results: string[] = [];
     for (const entry of entries) {
       const entryPath = relativeDir ? `${relativeDir}/${entry}` : entry;
-      if (entry.endsWith('.md')) {
+      if (entry.endsWith(extension)) {
         results.push(entryPath);
       } else if (!entry.startsWith('.')) {
         const info = await FileSystem.getInfoAsync(this.uri(entryPath));
         if ('isDirectory' in info && info.isDirectory) {
-          const sub = await this.listMarkdownFiles(entryPath);
+          const sub = await this.listFilesRecursive(entryPath, extension);
           results.push(...sub);
         }
       }
     }
     return results;
+  }
+
+  /** List all .md files in a directory recursively */
+  async listMarkdownFiles(relativeDir: string): Promise<string[]> {
+    return this.listFilesRecursive(relativeDir, '.md');
   }
 
   /** Copy a file (e.g. image) into the vault */

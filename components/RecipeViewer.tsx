@@ -23,11 +23,9 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList }: R
   const [servings, setServings] = useState(recipe.servings || 1);
   const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set());
 
-  const scaleFactor = recipe.servings > 0 ? servings / recipe.servings : 1;
-
   const scaledIngredients = useMemo(
-    () => scaleIngredients(recipe.ingredients, scaleFactor),
-    [recipe.ingredients, scaleFactor],
+    () => scaleIngredients(recipe.ingredients, servings, recipe.servings || 1),
+    [recipe.ingredients, servings, recipe.servings],
   );
 
   const toggleIngredient = (index: number) => {
@@ -159,7 +157,7 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList }: R
                         {step.timers.map((timer, ti) => (
                           <View key={ti} style={[styles.timerBadge, { backgroundColor: tint + '20' }]}>
                             <Text style={[styles.timerText, { color: tint }]}>
-                              ⏱ {timer.amount} {timer.unit}
+                              ⏱ {timer.duration} {timer.unit}
                             </Text>
                           </View>
                         ))}

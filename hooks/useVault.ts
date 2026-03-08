@@ -38,9 +38,11 @@ import {
   parseGamification,
   parseFamille,
   serializeGamification,
+  formatMealLine,
 } from '../lib/parser';
 import { processActiveRewards } from '../lib/gamification';
-import { Task, RDV, CourseItem, MealItem, StockItem, Profile, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig } from '../lib/types';
+import { Task, RDV, CourseItem, MealItem, StockItem, Profile, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe } from '../lib/types';
+import { parseRecipe, generateCookFile } from '../lib/cooklang';
 import {
   parseNotificationPrefs,
   serializeNotificationPrefs,
@@ -71,7 +73,7 @@ export interface VaultState {
   setVaultPath: (path: string) => Promise<void>;
   setActiveProfile: (profileId: string) => Promise<void>;
   saveNotifPrefs: (prefs: NotificationPreferences) => Promise<void>;
-  updateMeal: (day: string, mealType: string, text: string) => Promise<void>;
+  updateMeal: (day: string, mealType: string, text: string, recipeRef?: string) => Promise<void>;
   photoDates: Record<string, string[]>;  // enfantId → dates with photos
   addPhoto: (enfantName: string, date: string, imageUri: string) => Promise<void>;
   getPhotoUri: (enfantName: string, date: string) => string | null;
@@ -101,6 +103,9 @@ export interface VaultState {
   activateVacation: (startDate: string, endDate: string) => Promise<void>;
   deactivateVacation: () => Promise<void>;
   refreshGamification: () => Promise<void>;
+  recipes: Recipe[];
+  addRecipe: (category: string, data: { title: string; tags?: string[]; servings?: number; prepTime?: string; cookTime?: string; ingredients: { name: string; quantity?: string; unit?: string }[]; steps: string[] }) => Promise<void>;
+  deleteRecipe: (sourceFile: string) => Promise<void>;
 }
 
 // Static task files (non-enfant)
@@ -151,6 +156,7 @@ const STOCK_FILE = '01 - Enfants/Commun/Stock & fournitures.md';
 const PHOTOS_DIR = '07 - Photos';
 const MEMOIRES_DIR = '06 - Mémoires';
 const NOTIF_FILE = 'notifications.md';
+const RECIPES_DIR = '03 - Cuisine/Recettes';
 const VACATION_FILE = '02 - Maison/Vacances.md';
 const VACATION_STORE_KEY = 'vacation_mode';
 const VACATION_TEMPLATE = `# Checklist Vacances
@@ -231,6 +237,7 @@ export function useVault(): VaultState {
   const [memories, setMemories] = useState<Memory[]>([]);
   const [vacationConfig, setVacationConfig] = useState<VacationConfig | null>(null);
   const [vacationTasks, setVacationTasks] = useState<Task[]>([]);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const vaultRef = useRef<VaultManager | null>(null);
   const busyRef = useRef(false); // Guard against AppState race condition
 
@@ -499,6 +506,24 @@ export function useVault(): VaultState {
         setVacationConfig(null);
         setVacationTasks([]);
       }
+
+      // Load recipes (.cook files)
+      try {
+        const cookFiles = await vault.listFilesRecursive(RECIPES_DIR, '.cook');
+        const loaded: Recipe[] = [];
+        for (const relPath of cookFiles) {
+          try {
+            const content = await vault.readFile(relPath);
+            loaded.push(parseRecipe(relPath, content));
+          } catch {
+            // skip unreadable .cook files
+          }
+        }
+        loaded.sort((a, b) => a.title.localeCompare(b.title, 'fr'));
+        setRecipes(loaded);
+      } catch {
+        setRecipes([]);
+      }
     } catch (e) {
       debugErrors.push(`global: ${e}`);
     }
@@ -529,6 +554,7 @@ export function useVault(): VaultState {
     setRdvs([]);
     setPhotoDates({});
     setMemories([]);
+    setRecipes([]);
     setVaultPathState(path);
     const vault = new VaultManager(path);
     vaultRef.current = vault;
@@ -548,7 +574,7 @@ export function useVault(): VaultState {
     await vaultRef.current.writeFile(NOTIF_FILE, serializeNotificationPrefs(prefs));
   }, []);
 
-  const updateMeal = useCallback(async (day: string, mealType: string, text: string) => {
+  const updateMeal = useCallback(async (day: string, mealType: string, text: string, recipeRef?: string) => {
     if (!vaultRef.current) return;
     try {
       const content = await vaultRef.current.readFile(MEALS_FILE);
@@ -562,7 +588,7 @@ export function useVault(): VaultState {
         if (currentDay === day) {
           const match = lines[i].match(/^-\s+(.+?):\s*(.*)$/);
           if (match && match[1].trim() === mealType) {
-            lines[i] = `- ${mealType}: ${text}`;
+            lines[i] = formatMealLine(mealType, text, recipeRef);
             break;
           }
         }
@@ -1014,6 +1040,24 @@ export function useVault(): VaultState {
     setMemories(prev => [newMemory, ...prev].sort((a, b) => b.date.localeCompare(a.date)));
   }, []);
 
+  const addRecipe = useCallback(async (category: string, data: { title: string; tags?: string[]; servings?: number; prepTime?: string; cookTime?: string; ingredients: { name: string; quantity?: string; unit?: string }[]; steps: string[] }) => {
+    if (!vaultRef.current) return;
+    const vault = vaultRef.current;
+    const fileName = data.title.replace(/[/\\:*?"<>|]/g, '').trim();
+    const relPath = `${RECIPES_DIR}/${category}/${fileName}.cook`;
+    await vault.ensureDir(`${RECIPES_DIR}/${category}`);
+    const content = generateCookFile(data);
+    await vault.writeFile(relPath, content);
+    // Reload to get parsed recipe
+    await loadVaultData(vault);
+  }, [loadVaultData]);
+
+  const deleteRecipe = useCallback(async (sourceFile: string) => {
+    if (!vaultRef.current) return;
+    await vaultRef.current.deleteFile(sourceFile);
+    setRecipes(prev => prev.filter(r => r.sourceFile !== sourceFile));
+  }, []);
+
   const refreshGamification = useCallback(async () => {
     if (!vaultRef.current) return;
     try {
@@ -1107,5 +1151,8 @@ export function useVault(): VaultState {
     activateVacation,
     deactivateVacation,
     refreshGamification,
+    recipes,
+    addRecipe,
+    deleteRecipe,
   };
 }
