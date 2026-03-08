@@ -423,7 +423,11 @@ export function parseNotificationPrefs(content: string): NotificationPreferences
     } else if (currentId && line.includes(': ')) {
       const colonIdx = line.indexOf(': ');
       const key = line.slice(0, colonIdx).trim();
-      const value = line.slice(colonIdx + 2).trim();
+      let value = line.slice(colonIdx + 2).trim();
+      // Restore escaped newlines from serialized templates
+      if (key === 'template') {
+        value = value.replace(/\\n/g, '\n');
+      }
       if (key && value !== undefined) {
         currentData[key] = value;
       }
