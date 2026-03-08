@@ -31,6 +31,8 @@ import { MealItem, CourseItem, Recipe } from '../../lib/types';
 import { formatIngredient, aggregateIngredients, categorizeIngredient, type AppIngredient } from '../../lib/cooklang';
 import RecipeCard from '../../components/RecipeCard';
 import RecipeViewer from '../../components/RecipeViewer';
+import { importRecipeFromUrl, type ImportedRecipe } from '../../lib/recipe-import';
+import { generateCookFile } from '../../lib/cooklang';
 
 const DAYS_ORDER = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
@@ -76,6 +78,13 @@ export default function MealsScreen() {
   const [recipeSearch, setRecipeSearch] = useState('');
   const [recipeCategory, setRecipeCategory] = useState<string | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+
+  // Import state
+  const [showImport, setShowImport] = useState(false);
+  const [importUrl, setImportUrl] = useState('');
+  const [importLoading, setImportLoading] = useState(false);
+  const [importPreview, setImportPreview] = useState<ImportedRecipe | null>(null);
+  const [importCategory, setImportCategory] = useState('');
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -342,6 +351,56 @@ export default function MealsScreen() {
       ],
     );
   }, [deleteRecipe]);
+
+  // ─── Import logic ────────────────────────────────────────────────
+
+  const handleImportFetch = useCallback(async () => {
+    const url = importUrl.trim();
+    if (!url) return;
+    setImportLoading(true);
+    try {
+      const result = await importRecipeFromUrl(url);
+      setImportPreview(result);
+      // Suggest category from tags or default
+      setImportCategory(result.tags?.[0] || 'Importées');
+    } catch (e) {
+      Alert.alert('Erreur', String(e instanceof Error ? e.message : e));
+    } finally {
+      setImportLoading(false);
+    }
+  }, [importUrl]);
+
+  const handleImportSave = useCallback(async () => {
+    if (!importPreview) return;
+    const cat = importCategory.trim() || 'Importées';
+    const cookContent = generateCookFile({
+      title: importPreview.title,
+      tags: importPreview.tags,
+      servings: importPreview.servings,
+      prepTime: importPreview.prepTime,
+      cookTime: importPreview.cookTime,
+      ingredients: importPreview.ingredients.map(text => ({ name: text })),
+      steps: importPreview.steps,
+    });
+    try {
+      const { addRecipe } = { addRecipe: async (category: string, data: any) => {
+        // Use vault directly to write
+        if (!vault) throw new Error('Vault non initialisé');
+        const fileName = importPreview.title.replace(/[/\\:*?"<>|]/g, '').trim();
+        const relPath = `03 - Cuisine/Recettes/${category}/${fileName}.cook`;
+        await vault.ensureDir(`03 - Cuisine/Recettes/${category}`);
+        await vault.writeFile(relPath, cookContent);
+        await refresh();
+      }};
+      await addRecipe(cat, {});
+      Alert.alert('Importée !', `« ${importPreview.title} » ajoutée dans ${cat}.`);
+      setShowImport(false);
+      setImportUrl('');
+      setImportPreview(null);
+    } catch (e) {
+      Alert.alert('Erreur', String(e));
+    }
+  }, [importPreview, importCategory, vault, refresh]);
 
   // ─── Header ──────────────────────────────────────────────────────
 
@@ -677,6 +736,17 @@ export default function MealsScreen() {
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
             }
           >
+            {/* Import button */}
+            <TouchableOpacity
+              style={[styles.importBtn, { backgroundColor: tint, borderColor: primary + '30' }]}
+              onPress={() => setShowImport(true)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.importBtnText, { color: primary }]}>
+                🌐 Importer depuis une URL
+              </Text>
+            </TouchableOpacity>
+
             {filteredRecipes.length === 0 ? (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyEmoji}>📖</Text>
@@ -685,7 +755,7 @@ export default function MealsScreen() {
                 </Text>
                 <Text style={[styles.emptyHint, { color: colors.textMuted }]}>
                   {recipes.length === 0
-                    ? 'Ajoutez des fichiers .cook dans\n03 - Cuisine/Recettes/'
+                    ? 'Importez depuis une URL ou ajoutez\ndes fichiers .cook dans le vault'
                     : 'Essayez un autre mot-clé'}
                 </Text>
               </View>
@@ -903,6 +973,89 @@ export default function MealsScreen() {
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
+      </Modal>
+      {/* Import recipe modal */}
+      <Modal
+        visible={showImport}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => { setShowImport(false); setImportPreview(null); setImportUrl(''); }}
+      >
+        <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
+          <View style={[styles.pickerHeader, { backgroundColor: colors.card, borderBottomColor: colors.borderLight }]}>
+            <TouchableOpacity onPress={() => { setShowImport(false); setImportPreview(null); setImportUrl(''); }}>
+              <Text style={[styles.pickerClose, { color: colors.textMuted }]}>✕</Text>
+            </TouchableOpacity>
+            <Text style={[styles.pickerHeaderTitle, { color: colors.text }]}>Importer une recette</Text>
+            <View style={{ width: 28 }} />
+          </View>
+
+          <ScrollView style={styles.scroll} contentContainerStyle={{ padding: 16, gap: 16 }}>
+            {/* URL input */}
+            <View style={{ gap: 8 }}>
+              <Text style={[styles.importLabel, { color: colors.text }]}>URL de la recette</Text>
+              <TextInput
+                style={[styles.recipeSearchInput, { backgroundColor: colors.cardAlt, color: colors.text, borderColor: colors.borderLight }]}
+                value={importUrl}
+                onChangeText={setImportUrl}
+                placeholder="https://marmiton.org/recettes/..."
+                placeholderTextColor={colors.textMuted}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+                returnKeyType="go"
+                onSubmitEditing={handleImportFetch}
+              />
+              <TouchableOpacity
+                style={[styles.importFetchBtn, { backgroundColor: primary }, importLoading && { opacity: 0.6 }]}
+                onPress={handleImportFetch}
+                disabled={importLoading || !importUrl.trim()}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.importFetchBtnText}>
+                  {importLoading ? '⏳ Chargement…' : '🔍 Extraire la recette'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Preview */}
+            {importPreview && (
+              <View style={[styles.importPreview, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
+                <Text style={[styles.importPreviewTitle, { color: colors.text }]}>{importPreview.title}</Text>
+                {(importPreview.servings || importPreview.prepTime || importPreview.cookTime) && (
+                  <Text style={[styles.importPreviewMeta, { color: colors.textMuted }]}>
+                    {importPreview.servings ? `👤 ${importPreview.servings} pers.` : ''}
+                    {importPreview.prepTime ? `  ⏱ Prep ${importPreview.prepTime}` : ''}
+                    {importPreview.cookTime ? `  🔥 Cuisson ${importPreview.cookTime}` : ''}
+                  </Text>
+                )}
+                <Text style={[styles.importPreviewMeta, { color: colors.textMuted }]}>
+                  🥕 {importPreview.ingredients.length} ingrédient{importPreview.ingredients.length > 1 ? 's' : ''} · {importPreview.steps.length} étape{importPreview.steps.length > 1 ? 's' : ''}
+                </Text>
+
+                {/* Category input */}
+                <View style={{ marginTop: 12, gap: 6 }}>
+                  <Text style={[styles.importLabel, { color: colors.text }]}>Catégorie</Text>
+                  <TextInput
+                    style={[styles.recipeSearchInput, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.borderLight }]}
+                    value={importCategory}
+                    onChangeText={setImportCategory}
+                    placeholder="Ex: Plats, Desserts, Entrées…"
+                    placeholderTextColor={colors.textMuted}
+                  />
+                </View>
+
+                <TouchableOpacity
+                  style={[styles.importFetchBtn, { backgroundColor: '#22C55E', marginTop: 12 }]}
+                  onPress={handleImportSave}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.importFetchBtnText}>✅ Sauvegarder dans le vault</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </ScrollView>
+        </SafeAreaView>
       </Modal>
     </SafeAreaView>
   );
@@ -1362,5 +1515,43 @@ const styles = StyleSheet.create({
   pickerOptionText: {
     fontSize: 15,
     fontWeight: '500',
+  },
+  // Import
+  importBtn: {
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  importBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  importLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  importFetchBtn: {
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  importFetchBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  importPreview: {
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: 6,
+  },
+  importPreviewTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  importPreviewMeta: {
+    fontSize: 13,
   },
 });
