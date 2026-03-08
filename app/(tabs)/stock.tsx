@@ -31,7 +31,7 @@ export default function StockScreen() {
     updateStockItem,
     addCourseItem,
   } = useVault();
-  const { primary, tint } = useThemeColors();
+  const { primary, tint, colors } = useThemeColors();
 
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingItem, setEditingItem] = useState<StockItem | undefined>(undefined);
@@ -79,10 +79,10 @@ export default function StockScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <View>
-          <Text style={styles.title}>📦 Stocks & fournitures</Text>
+          <Text style={[styles.title, { color: colors.text }]}>📦 Stocks & fournitures</Text>
           {lowStockCount > 0 && (
             <Text style={styles.subtitle}>
               ⚠️ {lowStockCount} produit{lowStockCount > 1 ? 's' : ''} en stock bas
@@ -100,27 +100,27 @@ export default function StockScreen() {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {Object.entries(grouped).map(([sectionName, items]) => (
           <View key={sectionName} style={styles.section}>
-            <Text style={styles.sectionTitle}>{sectionName}</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textSub }]}>{sectionName}</Text>
             {items.map((item) => {
               const statusColor = getStatusColor(item);
               const isLow = item.quantite <= item.seuil;
               return (
                 <TouchableOpacity
                   key={item.lineIndex}
-                  style={styles.itemCard}
+                  style={[styles.itemCard, { backgroundColor: colors.card }]}
                   onPress={() => openEdit(item)}
                   activeOpacity={0.7}
                 >
                   <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
                   <View style={styles.itemInfo}>
-                    <Text style={styles.itemName}>
+                    <Text style={[styles.itemName, { color: colors.text }]}>
                       {item.produit}
-                      {item.detail ? <Text style={styles.itemDetail}> · {item.detail}</Text> : null}
+                      {item.detail ? <Text style={[styles.itemDetail, { color: colors.textMuted }]}> · {item.detail}</Text> : null}
                     </Text>
-                    <Text style={styles.itemMeta}>
+                    <Text style={[styles.itemMeta, { color: colors.textMuted }]}>
                       {getStatusEmoji(item)} {item.quantite} restant{item.quantite > 1 ? 's' : ''} · seuil {item.seuil}
                     </Text>
-                    <Text style={styles.itemEditHint}>Appuyer pour modifier</Text>
+                    <Text style={[styles.itemEditHint, { color: colors.separator }]}>Appuyer pour modifier</Text>
                   </View>
                   <View style={styles.itemActions}>
                     {isLow && (
@@ -133,22 +133,22 @@ export default function StockScreen() {
                     )}
                     <View style={styles.qtyRow}>
                       <TouchableOpacity
-                        style={[styles.qtyBtn, item.quantite <= 0 && styles.qtyBtnDisabled]}
+                        style={[styles.qtyBtn, { backgroundColor: colors.bg }, item.quantite <= 0 && styles.qtyBtnDisabled]}
                         onPress={() => updateStockQuantity(item.lineIndex, Math.max(0, item.quantite - 1))}
                         disabled={item.quantite <= 0}
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       >
-                        <Text style={styles.qtyBtnText}>−</Text>
+                        <Text style={[styles.qtyBtnText, { color: colors.textSub }]}>−</Text>
                       </TouchableOpacity>
-                      <Text style={[styles.qtyValue, isLow && { color: '#EF4444' }]}>
+                      <Text style={[styles.qtyValue, { color: colors.text }, isLow && { color: '#EF4444' }]}>
                         {item.quantite}
                       </Text>
                       <TouchableOpacity
-                        style={styles.qtyBtn}
+                        style={[styles.qtyBtn, { backgroundColor: colors.bg }]}
                         onPress={() => updateStockQuantity(item.lineIndex, item.quantite + 1)}
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       >
-                        <Text style={styles.qtyBtnText}>+</Text>
+                        <Text style={[styles.qtyBtnText, { color: colors.textSub }]}>+</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -159,9 +159,9 @@ export default function StockScreen() {
         ))}
 
         {stock.length === 0 && (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyText}>Aucun produit en stock</Text>
-            <Text style={styles.emptyHint}>Appuie sur "+ Ajouter" pour commencer</Text>
+          <View style={[styles.emptyCard, { backgroundColor: colors.card }]}>
+            <Text style={[styles.emptyText, { color: colors.textFaint }]}>Aucun produit en stock</Text>
+            <Text style={[styles.emptyHint, { color: colors.separator }]}>Appuie sur "+ Ajouter" pour commencer</Text>
           </View>
         )}
       </ScrollView>
@@ -198,18 +198,16 @@ export default function StockScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F9FAFB' },
+  safe: { flex: 1 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
   },
-  title: { fontSize: 22, fontWeight: '800', color: '#111827' },
+  title: { fontSize: 22, fontWeight: '800' },
   subtitle: { fontSize: 12, color: '#EF4444', fontWeight: '600', marginTop: 2 },
   addBtn: {
     paddingHorizontal: 16,
@@ -224,13 +222,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#374151',
     marginBottom: 2,
   },
   itemCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     padding: 12,
     shadowColor: '#000',
@@ -252,19 +248,15 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#111827',
   },
   itemDetail: {
     fontWeight: '400',
-    color: '#6B7280',
   },
   itemMeta: {
     fontSize: 12,
-    color: '#6B7280',
   },
   itemEditHint: {
     fontSize: 10,
-    color: '#D1D5DB',
     marginTop: 1,
   },
   itemActions: {
@@ -290,7 +282,6 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 8,
-    backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -300,17 +291,14 @@ const styles = StyleSheet.create({
   qtyBtnText: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#374151',
   },
   qtyValue: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#111827',
     minWidth: 24,
     textAlign: 'center',
   },
   emptyCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     padding: 32,
     alignItems: 'center',
@@ -318,11 +306,9 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#9CA3AF',
     fontWeight: '600',
   },
   emptyHint: {
     fontSize: 13,
-    color: '#D1D5DB',
   },
 });

@@ -39,7 +39,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 export default function LootScreen() {
   const { profiles, gamiData, notifPrefs, vault, refresh, isLoading } = useVault();
   const { openLootBox, isProcessing } = useGamification({ vault, notifPrefs });
-  const { primary, tint } = useThemeColors();
+  const { primary, tint, colors } = useThemeColors();
 
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [lootOpenerVisible, setLootOpenerVisible] = useState(false);
@@ -89,7 +89,7 @@ export default function LootScreen() {
     .reverse();
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
@@ -109,18 +109,18 @@ export default function LootScreen() {
               <Text style={styles.dropRatesBtnText}>📊</Text>
             </TouchableOpacity>
           </View>
-          <Text style={styles.subtitle}>Complète des tâches pour gagner des récompenses !</Text>
+          <Text style={[styles.subtitle, { color: tint }]}>Complète des tâches pour gagner des récompenses !</Text>
         </View>
 
         {/* Loot box cards per profile */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Tes récompenses à ouvrir</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Tes récompenses à ouvrir</Text>
           {profiles.map((profile) => (
-            <View key={profile.id} style={styles.lootCard}>
+            <View key={profile.id} style={[styles.lootCard, { backgroundColor: colors.card }]}>
               <View style={styles.lootCardLeft}>
                 <Text style={styles.lootCardAvatar}>{profile.avatar}</Text>
                 <View>
-                  <Text style={styles.lootCardName}>{profile.name}</Text>
+                  <Text style={[styles.lootCardName, { color: colors.text }]}>{profile.name}</Text>
                   <Text style={[styles.lootCardLevel, { color: primary }]}>Niveau {profile.level}</Text>
                 </View>
               </View>
@@ -137,8 +137,8 @@ export default function LootScreen() {
                   </Text>
                 </TouchableOpacity>
               ) : (
-                <View style={styles.noLootBadge}>
-                  <Text style={styles.noLootText}>
+                <View style={[styles.noLootBadge, { backgroundColor: colors.bg }]}>
+                  <Text style={[styles.noLootText, { color: colors.textFaint }]}>
                     {profile.points % (profile.role === 'enfant' ? 50 : 100)}/
                     {profile.role === 'enfant' ? 50 : 100} pts
                   </Text>
@@ -151,18 +151,18 @@ export default function LootScreen() {
         {/* Active rewards */}
         {activeRewards.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🏆 Récompenses actives</Text>
-            <View style={styles.card}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>🏆 Récompenses actives</Text>
+            <View style={[styles.card, { backgroundColor: colors.card }]}>
               {activeRewards.map((reward) => {
                 const ownerProfile = profiles.find((p) => p.id === reward.profileId);
                 return (
-                  <View key={reward.id} style={styles.activeRewardRow}>
+                  <View key={reward.id} style={[styles.activeRewardRow, { borderBottomColor: colors.bg }]}>
                     <Text style={styles.activeRewardEmoji}>{reward.emoji}</Text>
                     <View style={styles.activeRewardInfo}>
-                      <Text style={styles.activeRewardName}>
+                      <Text style={[styles.activeRewardName, { color: colors.textSub }]}>
                         {ownerProfile?.avatar ?? '👤'} {ownerProfile?.name ?? reward.profileId}
                       </Text>
-                      <Text style={styles.activeRewardLabel}>{reward.label}</Text>
+                      <Text style={[styles.activeRewardLabel, { color: colors.text }]}>{reward.label}</Text>
                       <Text style={styles.activeRewardMeta}>
                         {reward.remainingDays !== undefined && `${reward.remainingDays}j restant${reward.remainingDays > 1 ? 's' : ''}`}
                         {reward.remainingTasks !== undefined && `${reward.remainingTasks} tâche${reward.remainingTasks > 1 ? 's' : ''} restante${reward.remainingTasks > 1 ? 's' : ''}`}
@@ -177,8 +177,8 @@ export default function LootScreen() {
 
         {/* Leaderboard */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🏆 Classement</Text>
-          <View style={styles.card}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>🏆 Classement</Text>
+          <View style={[styles.card, { backgroundColor: colors.card }]}>
             <FamilyLeaderboard profiles={leaderboard} />
           </View>
         </View>
@@ -186,19 +186,19 @@ export default function LootScreen() {
         {/* Badges collection */}
         {badges.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🏅 Badges gagnés</Text>
-            <View style={styles.card}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>🏅 Badges gagnés</Text>
+            <View style={[styles.card, { backgroundColor: colors.card }]}>
               <View style={styles.badgeGrid}>
                 {badges.map((badge, idx) => {
                   const rarityKey = badge.action.split(':')[1] as keyof typeof RARITY_COLORS;
-                  const borderColor = RARITY_COLORS[rarityKey] ?? '#9CA3AF';
+                  const borderColor = RARITY_COLORS[rarityKey] ?? colors.textFaint;
                   const isMythique = rarityKey === 'mythique';
                   return (
                     <View
                       key={idx}
                       style={[
                         styles.badge,
-                        { borderColor },
+                        { borderColor, backgroundColor: colors.cardAlt },
                         isMythique && styles.badgeMythique,
                       ]}
                     >
@@ -214,22 +214,22 @@ export default function LootScreen() {
         {/* Recent history */}
         {recentHistory.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>📜 Historique récent</Text>
-            <View style={styles.card}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>📜 Historique récent</Text>
+            <View style={[styles.card, { backgroundColor: colors.card }]}>
               {recentHistory.map((entry, idx) => {
                 const profileObj = profiles.find((p) => p.id === entry.profileId);
                 const isLoot = entry.action.startsWith('loot:');
                 const rarity = isLoot ? entry.action.split(':')[1] : null;
                 return (
-                  <View key={idx} style={styles.historyRow}>
+                  <View key={idx} style={[styles.historyRow, { borderBottomColor: colors.bg }]}>
                     <Text style={styles.historyAvatar}>{profileObj?.avatar ?? '👤'}</Text>
                     <View style={styles.historyInfo}>
-                      <Text style={styles.historyName}>{profileObj?.name ?? entry.profileId}</Text>
-                      <Text style={styles.historyNote}>{entry.note}</Text>
+                      <Text style={[styles.historyName, { color: colors.textSub }]}>{profileObj?.name ?? entry.profileId}</Text>
+                      <Text style={[styles.historyNote, { color: colors.textFaint }]}>{entry.note}</Text>
                     </View>
                     <View style={styles.historyPoints}>
                       {isLoot && rarity ? (
-                        <Text style={[styles.historyRarity, { color: RARITY_COLORS[rarity as keyof typeof RARITY_COLORS] ?? '#9CA3AF' }]}>
+                        <Text style={[styles.historyRarity, { color: RARITY_COLORS[rarity as keyof typeof RARITY_COLORS] ?? colors.textFaint }]}>
                           {RARITY_LABELS[rarity as keyof typeof RARITY_LABELS]}
                         </Text>
                       ) : (
@@ -248,25 +248,25 @@ export default function LootScreen() {
 
       {/* Drop Rates Modal */}
       <Modal visible={showDropRates} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowDropRates(false)}>
-        <SafeAreaView style={styles.drModal}>
+        <SafeAreaView style={[styles.drModal, { backgroundColor: colors.bg }]}>
           <ScrollView contentContainerStyle={styles.drContent}>
             {/* Header */}
             <View style={styles.drHeader}>
-              <Text style={styles.drTitle}>📊 Probabilités & Récompenses</Text>
+              <Text style={[styles.drTitle, { color: colors.text }]}>📊 Probabilités & Récompenses</Text>
               <TouchableOpacity onPress={() => setShowDropRates(false)}>
-                <Text style={styles.drCloseBtn}>✕</Text>
+                <Text style={[styles.drCloseBtn, { color: colors.textFaint }]}>✕</Text>
               </TouchableOpacity>
             </View>
 
             {/* Drop rates table */}
-            <View style={styles.drCard}>
-              <Text style={styles.drSectionTitle}>Chances d'obtenir chaque rareté</Text>
+            <View style={[styles.drCard, { backgroundColor: colors.card }]}>
+              <Text style={[styles.drSectionTitle, { color: colors.textSub }]}>Chances d'obtenir chaque rareté</Text>
               {/* Table header */}
               <View style={styles.drTableRow}>
-                <Text style={[styles.drTableCell, styles.drTableHeader, { flex: 2 }]}>Rareté</Text>
-                <Text style={[styles.drTableCell, styles.drTableHeader]}>Enfant</Text>
-                <Text style={[styles.drTableCell, styles.drTableHeader]}>Ado</Text>
-                <Text style={[styles.drTableCell, styles.drTableHeader]}>Adulte</Text>
+                <Text style={[styles.drTableCell, styles.drTableHeader, { flex: 2, color: colors.textMuted }]}>Rareté</Text>
+                <Text style={[styles.drTableCell, styles.drTableHeader, { color: colors.textMuted }]}>Enfant</Text>
+                <Text style={[styles.drTableCell, styles.drTableHeader, { color: colors.textMuted }]}>Ado</Text>
+                <Text style={[styles.drTableCell, styles.drTableHeader, { color: colors.textMuted }]}>Adulte</Text>
               </View>
               {/* Table rows */}
               {(Object.keys(RARITY_COLORS) as LootRarity[]).map((rarity) => (
@@ -277,36 +277,36 @@ export default function LootScreen() {
                       {RARITY_EMOJIS[rarity]} {RARITY_LABELS[rarity]}
                     </Text>
                   </View>
-                  <Text style={styles.drTableCell}>{Math.round(DROP_RATES.enfant[rarity] * 100)}%</Text>
-                  <Text style={styles.drTableCell}>{Math.round(DROP_RATES.ado[rarity] * 100)}%</Text>
-                  <Text style={styles.drTableCell}>{Math.round(DROP_RATES.adulte[rarity] * 100)}%</Text>
+                  <Text style={[styles.drTableCell, { color: colors.textSub }]}>{Math.round(DROP_RATES.enfant[rarity] * 100)}%</Text>
+                  <Text style={[styles.drTableCell, { color: colors.textSub }]}>{Math.round(DROP_RATES.ado[rarity] * 100)}%</Text>
+                  <Text style={[styles.drTableCell, { color: colors.textSub }]}>{Math.round(DROP_RATES.adulte[rarity] * 100)}%</Text>
                 </View>
               ))}
             </View>
 
             {/* Pity system */}
-            <View style={[styles.drPityBox, { backgroundColor: tint }]}>
+            <View style={[styles.drPityBox, { backgroundColor: tint, borderColor: tint }]}>
               <Text style={[styles.drPityTitle, { color: primary }]}>🎯 Garantie</Text>
-              <Text style={styles.drPityText}>
+              <Text style={[styles.drPityText, { color: colors.textSub }]}>
                 Après {PITY_THRESHOLD} récompenses sans obtenir Épique ou mieux, la suivante est <Text style={{ fontWeight: '800' }}>garantie Épique minimum</Text>.
               </Text>
             </View>
 
             {/* Rewards by rarity */}
             {(Object.keys(REWARDS) as LootRarity[]).map((rarity) => (
-              <View key={rarity} style={styles.drCard}>
+              <View key={rarity} style={[styles.drCard, { backgroundColor: colors.card }]}>
                 <View style={styles.drRarityHeader}>
                   <View style={[styles.drRarityBadge, { backgroundColor: RARITY_COLORS[rarity] }]}>
                     <Text style={styles.drRarityBadgeText}>
                       {RARITY_EMOJIS[rarity]} {RARITY_LABELS[rarity]}
                     </Text>
                   </View>
-                  <Text style={styles.drRewardCount}>{REWARDS[rarity].length} récompenses</Text>
+                  <Text style={[styles.drRewardCount, { color: colors.textFaint }]}>{REWARDS[rarity].length} récompenses</Text>
                 </View>
                 {REWARDS[rarity].map((reward, idx) => (
-                  <View key={idx} style={[styles.drRewardRow, idx < REWARDS[rarity].length - 1 && styles.drRewardRowBorder]}>
+                  <View key={idx} style={[styles.drRewardRow, idx < REWARDS[rarity].length - 1 && styles.drRewardRowBorder, idx < REWARDS[rarity].length - 1 && { borderBottomColor: colors.bg }]}>
                     <Text style={styles.drRewardEmoji}>{reward.emoji}</Text>
-                    <Text style={styles.drRewardName}>{reward.reward}</Text>
+                    <Text style={[styles.drRewardName, { color: colors.textSub }]}>{reward.reward}</Text>
                     {reward.bonusPoints > 0 && (
                       <Text style={styles.drRewardPts}>+{reward.bonusPoints}</Text>
                     )}
@@ -348,7 +348,7 @@ export default function LootScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F3F4F6' },
+  safe: { flex: 1 },
   scroll: { flex: 1 },
   content: { padding: 16 },
   header: {
@@ -372,16 +372,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dropRatesBtnText: { fontSize: 18 },
-  subtitle: { fontSize: 14, color: '#C4B5FD' },
+  subtitle: { fontSize: 14 },
   section: { marginBottom: 16, gap: 8 },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#111827',
     marginBottom: 4,
   },
   card: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
     shadowColor: '#000',
@@ -391,7 +389,6 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   lootCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     padding: 14,
     flexDirection: 'row',
@@ -410,7 +407,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   lootCardAvatar: { fontSize: 32 },
-  lootCardName: { fontSize: 16, fontWeight: '700', color: '#111827' },
+  lootCardName: { fontSize: 16, fontWeight: '700' },
   lootCardLevel: { fontSize: 12, fontWeight: '600' },
   openBtn: {
     flexDirection: 'row',
@@ -423,12 +420,11 @@ const styles = StyleSheet.create({
   openBtnEmoji: { fontSize: 18 },
   openBtnText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
   noLootBadge: {
-    backgroundColor: '#F3F4F6',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
   },
-  noLootText: { fontSize: 12, color: '#9CA3AF', fontWeight: '600' },
+  noLootText: { fontSize: 12, fontWeight: '600' },
   // Active rewards
   activeRewardRow: {
     flexDirection: 'row',
@@ -436,12 +432,11 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
   },
   activeRewardEmoji: { fontSize: 32 },
   activeRewardInfo: { flex: 1, gap: 2 },
-  activeRewardName: { fontSize: 13, fontWeight: '700', color: '#374151' },
-  activeRewardLabel: { fontSize: 14, fontWeight: '600', color: '#111827' },
+  activeRewardName: { fontSize: 13, fontWeight: '700' },
+  activeRewardLabel: { fontSize: 14, fontWeight: '600' },
   activeRewardMeta: { fontSize: 12, fontWeight: '700', color: '#EF4444' },
   // Badges
   badgeGrid: {
@@ -456,7 +451,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F9FAFB',
   },
   badgeMythique: {
     borderWidth: 3,
@@ -475,28 +469,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
     gap: 10,
   },
   historyAvatar: { fontSize: 24 },
   historyInfo: { flex: 1, gap: 1 },
-  historyName: { fontSize: 13, fontWeight: '600', color: '#374151' },
-  historyNote: { fontSize: 12, color: '#9CA3AF' },
+  historyName: { fontSize: 13, fontWeight: '600' },
+  historyNote: { fontSize: 12 },
   historyPoints: { alignItems: 'flex-end' },
   historyPts: { fontSize: 13, fontWeight: '700', color: '#059669' },
   historyRarity: { fontSize: 12, fontWeight: '700' },
   // ─── Drop Rates Modal ─────────────────────────────────────────────────────
-  drModal: { flex: 1, backgroundColor: '#F3F4F6' },
+  drModal: { flex: 1 },
   drContent: { padding: 20, gap: 16 },
   drHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  drTitle: { fontSize: 22, fontWeight: '800', color: '#111827' },
-  drCloseBtn: { fontSize: 22, color: '#9CA3AF', padding: 4 },
+  drTitle: { fontSize: 22, fontWeight: '800' },
+  drCloseBtn: { fontSize: 22, padding: 4 },
   drCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
     gap: 8,
@@ -506,7 +498,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  drSectionTitle: { fontSize: 15, fontWeight: '800', color: '#374151', marginBottom: 4 },
+  drSectionTitle: { fontSize: 15, fontWeight: '800', marginBottom: 4 },
   drTableRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -515,12 +507,10 @@ const styles = StyleSheet.create({
   drTableCell: {
     flex: 1,
     fontSize: 13,
-    color: '#374151',
     textAlign: 'center',
   },
   drTableHeader: {
     fontWeight: '700',
-    color: '#6B7280',
     fontSize: 11,
     textTransform: 'uppercase',
     letterSpacing: 0.3,
@@ -535,11 +525,10 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 16,
     borderWidth: 1.5,
-    borderColor: '#C4B5FD',
     gap: 6,
   },
   drPityTitle: { fontSize: 15, fontWeight: '800' },
-  drPityText: { fontSize: 13, color: '#374151', lineHeight: 18 },
+  drPityText: { fontSize: 13, lineHeight: 18 },
   drRarityHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -552,7 +541,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   drRarityBadgeText: { fontSize: 12, fontWeight: '800', color: '#FFFFFF', textTransform: 'uppercase' },
-  drRewardCount: { fontSize: 11, color: '#9CA3AF', fontWeight: '600' },
+  drRewardCount: { fontSize: 11, fontWeight: '600' },
   drRewardRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -561,10 +550,9 @@ const styles = StyleSheet.create({
   },
   drRewardRowBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
   },
   drRewardEmoji: { fontSize: 20 },
-  drRewardName: { flex: 1, fontSize: 13, color: '#374151' },
+  drRewardName: { flex: 1, fontSize: 13 },
   drRewardPts: { fontSize: 12, fontWeight: '700', color: '#059669' },
   drParentTag: { fontSize: 14 },
   drCloseButton: {
