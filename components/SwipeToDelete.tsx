@@ -147,11 +147,13 @@ function RightAction({
 
 const styles = StyleSheet.create({
   rightAction: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     width: 100,
     borderRadius: 12,
     marginLeft: 8,
+    marginBottom: 10,
   },
   rightActionText: {
     fontSize: 13,
