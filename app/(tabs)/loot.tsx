@@ -15,7 +15,6 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   RefreshControl,
   Modal,
 } from 'react-native';
@@ -35,11 +34,13 @@ import {
 } from '../../constants/rewards';
 import { Profile, LootBox, LootRarity } from '../../lib/types';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { useToast } from '../../contexts/ToastContext';
 
 export default function LootScreen() {
   const { profiles, gamiData, notifPrefs, vault, refresh, isLoading } = useVault();
   const { openLootBox, isProcessing } = useGamification({ vault, notifPrefs });
   const { primary, tint, colors } = useThemeColors();
+  const { showToast } = useToast();
 
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [lootOpenerVisible, setLootOpenerVisible] = useState(false);
@@ -67,7 +68,7 @@ export default function LootScreen() {
       await refresh();
       return box;
     } catch (e) {
-      Alert.alert('Oups !', 'Impossible d\'ouvrir la récompense. Réessayez dans un moment.');
+      showToast('Impossible d\'ouvrir la récompense', 'error');
       return null;
     }
   }, [selectedProfile, gamiData, openLootBox, refresh]);

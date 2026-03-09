@@ -13,11 +13,12 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
-  Alert,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useVault } from '../../hooks/useVault';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { useToast } from '../../contexts/ToastContext';
 import { StockEditor } from '../../components/StockEditor';
 import { StockItem } from '../../lib/types';
 
@@ -32,20 +33,33 @@ export default function StockScreen() {
     addCourseItem,
   } = useVault();
   const { primary, tint, colors } = useThemeColors();
+  const { showToast } = useToast();
 
+  const [search, setSearch] = useState('');
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingItem, setEditingItem] = useState<StockItem | undefined>(undefined);
+
+  // Filter by search
+  const filteredStock = useMemo(() => {
+    if (!search.trim()) return stock;
+    const q = search.toLowerCase();
+    return stock.filter(
+      (item) =>
+        item.produit.toLowerCase().includes(q) ||
+        (item.section ?? '').toLowerCase().includes(q)
+    );
+  }, [stock, search]);
 
   // Group items by section
   const grouped = useMemo(() => {
     const map: Record<string, StockItem[]> = {};
-    for (const item of stock) {
+    for (const item of filteredStock) {
       const sec = item.section ?? 'Autre';
       if (!map[sec]) map[sec] = [];
       map[sec].push(item);
     }
     return map;
-  }, [stock]);
+  }, [filteredStock]);
 
   const lowStockCount = stock.filter((s) => s.quantite <= s.seuil).length;
 
@@ -63,7 +77,7 @@ export default function StockScreen() {
     const qty = item.qteAchat ? ` x${item.qteAchat}` : '';
     const detail = item.detail ? ` (${item.detail})` : '';
     addCourseItem(`- [ ] ${item.produit}${detail}${qty}`);
-    Alert.alert('Ajouté aux courses', `${item.produit} ajouté à la liste de courses.`);
+    showToast(`${item.produit} ajouté aux courses !`);
   };
 
   const getStatusColor = (item: StockItem) => {
@@ -95,6 +109,18 @@ export default function StockScreen() {
         >
           <Text style={[styles.addBtnText, { color: primary }]}>+ Ajouter</Text>
         </TouchableOpacity>
+      </View>
+
+      {/* Search */}
+      <View style={[styles.searchContainer, { backgroundColor: colors.card }]}>
+        <TextInput
+          style={[styles.searchInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
+          placeholder="🔍 Rechercher un produit..."
+          placeholderTextColor={colors.textMuted}
+          value={search}
+          onChangeText={setSearch}
+          clearButtonMode="while-editing"
+        />
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
@@ -158,10 +184,14 @@ export default function StockScreen() {
           </View>
         ))}
 
-        {stock.length === 0 && (
+        {filteredStock.length === 0 && (
           <View style={[styles.emptyCard, { backgroundColor: colors.card }]}>
-            <Text style={[styles.emptyText, { color: colors.textFaint }]}>Aucun produit en stock</Text>
-            <Text style={[styles.emptyHint, { color: colors.separator }]}>Appuie sur "+ Ajouter" pour commencer</Text>
+            <Text style={[styles.emptyText, { color: colors.textFaint }]}>
+              {search.trim() ? 'Aucun résultat' : 'Aucun produit en stock'}
+            </Text>
+            <Text style={[styles.emptyHint, { color: colors.separator }]}>
+              {search.trim() ? 'Essayez un autre terme de recherche' : 'Appuie sur "+ Ajouter" pour commencer'}
+            </Text>
           </View>
         )}
       </ScrollView>
@@ -216,6 +246,17 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   addBtnText: { fontSize: 14, fontWeight: '700' },
+  searchContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  searchInput: {
+    height: 40,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    fontSize: 15,
+    borderWidth: 1,
+  },
   scroll: { flex: 1 },
   content: { padding: 16, gap: 20, paddingBottom: 40 },
   section: { gap: 8 },

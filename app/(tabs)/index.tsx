@@ -11,7 +11,7 @@
  * - Mini leaderboard
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -34,6 +34,7 @@ import * as SecureStore from 'expo-secure-store';
 import { useVault } from '../../hooks/useVault';
 import { useGamification } from '../../hooks/useGamification';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { useToast } from '../../contexts/ToastContext';
 import { DashboardCard } from '../../components/DashboardCard';
 import { TaskCard } from '../../components/TaskCard';
 import { FamilyLeaderboard } from '../../components/FamilyLeaderboard';
@@ -47,6 +48,7 @@ import {
 } from '../../lib/notifications';
 import { buildWeeklyRecapText, sendWeeklyRecap } from '../../lib/telegram';
 import { Task, RDV } from '../../lib/types';
+import { formatAmount, categoryDisplay, totalSpent, totalBudget } from '../../lib/budget';
 import { formatDateForDisplay, isRdvUpcoming } from '../../lib/parser';
 import { DashboardPrefsModal, SectionPref } from '../../components/DashboardPrefsModal';
 import { categorizeIngredient } from '../../lib/cooklang';
@@ -60,24 +62,50 @@ function parseCourseInput(text: string): { name: string; quantity: number | null
 
 const PREFS_KEY = 'dashboard_prefs_v1';
 
-const DEFAULT_SECTIONS: SectionPref[] = [
-  { id: 'vacation',   label: 'Vacances',               emoji: '☀️', visible: true },
-  { id: 'menage',     label: 'Ménage du jour',         emoji: '🧹', visible: true },
-  { id: 'overdue',    label: 'En retard',               emoji: '⚠️', visible: true },
-  { id: 'meals',      label: 'Repas du jour',           emoji: '🍽️', visible: true },
-  { id: 'photos',     label: 'Photo du jour',           emoji: '📸', visible: true },
-  { id: 'courses',    label: 'Courses',                 emoji: '🛒', visible: true },
-  { id: 'rdvs',       label: 'Rendez-vous',             emoji: '📅', visible: true },
-  { id: 'rewards',    label: 'Récompenses actives',     emoji: '🏆', visible: true },
-  { id: 'stock',      label: 'Alertes stock',            emoji: '📦', visible: true },
-  { id: 'quicknotifs',label: 'Notifications rapides',   emoji: '📤', visible: true },
-  { id: 'recipes',    label: 'Idée recette',             emoji: '📖', visible: true },
-  { id: 'leaderboard',label: 'Classement',              emoji: '🥇', visible: true },
+const ALL_SECTIONS: SectionPref[] = [
+  // Essentielles — toujours visibles par défaut
+  { id: 'vacation',   label: 'Vacances',               emoji: '☀️', visible: true,  priority: 'high' },
+  { id: 'overdue',    label: 'En retard',               emoji: '⚠️', visible: true,  priority: 'high' },
+  { id: 'menage',     label: 'Ménage du jour',         emoji: '🧹', visible: true,  priority: 'high' },
+  { id: 'meals',      label: 'Repas du jour',           emoji: '🍽️', visible: true,  priority: 'high' },
+  // Secondaires — visibles par défaut
+  { id: 'courses',    label: 'Courses',                 emoji: '🛒', visible: true,  priority: 'medium' },
+  { id: 'rdvs',       label: 'Rendez-vous',             emoji: '📅', visible: true,  priority: 'medium' },
+  { id: 'photos',     label: 'Photo du jour',           emoji: '📸', visible: true,  priority: 'medium' },
+  { id: 'budget',     label: 'Budget',                   emoji: '💰', visible: true,  priority: 'medium' },
+  // Optionnelles — masquées par défaut pour les nouveaux utilisateurs
+  { id: 'rewards',    label: 'Récompenses actives',     emoji: '🏆', visible: false, priority: 'low' },
+  { id: 'stock',      label: 'Alertes stock',            emoji: '📦', visible: false, priority: 'low' },
+  { id: 'quicknotifs',label: 'Notifications rapides',   emoji: '📤', visible: false, priority: 'low' },
+  { id: 'recipes',    label: 'Idée recette',             emoji: '📖', visible: false, priority: 'low' },
+  { id: 'leaderboard',label: 'Classement',              emoji: '🥇', visible: false, priority: 'low' },
 ];
+
+/** Sections masquées pour les enfants (outils parentaux) */
+const ADULT_ONLY_SECTIONS = new Set(['courses', 'budget', 'stock', 'quicknotifs', 'recipes']);
+
+/** Sections promues en haute priorité pour les enfants */
+const CHILD_PROMOTED: Record<string, { visible: boolean; priority: 'high' | 'medium' | 'low' }> = {
+  rewards:     { visible: true, priority: 'high' },
+  leaderboard: { visible: true, priority: 'high' },
+};
+
+function getDefaultSections(role?: string): SectionPref[] {
+  if (role === 'enfant' || role === 'ado') {
+    return ALL_SECTIONS
+      .filter((s) => !ADULT_ONLY_SECTIONS.has(s.id))
+      .map((s) => CHILD_PROMOTED[s.id] ? { ...s, ...CHILD_PROMOTED[s.id] } : s);
+  }
+  return ALL_SECTIONS;
+}
+
+/** @deprecated alias for backward compatibility with saved prefs */
+const DEFAULT_SECTIONS = ALL_SECTIONS;
 
 export default function DashboardScreen() {
   const router = useRouter();
   const { primary, tint, colors } = useThemeColors();
+  const { showToast } = useToast();
   const {
     isLoading,
     error,
@@ -116,6 +144,8 @@ export default function DashboardScreen() {
     applyAgeUpgrade,
     dismissAgeUpgrade,
     convertToBorn,
+    budgetEntries,
+    budgetConfig,
   } = useVault();
 
   // Active rewards (filtered for non-expired)
@@ -127,33 +157,35 @@ export default function DashboardScreen() {
   const [isSendingRecap, setIsSendingRecap] = useState(false);
   const [rdvEditorVisible, setRdvEditorVisible] = useState(false);
   const [editingRDV, setEditingRDV] = useState<RDV | undefined>(undefined);
-  const [sectionPrefs, setSectionPrefs] = useState<SectionPref[]>(DEFAULT_SECTIONS);
+  const [sectionPrefs, setSectionPrefs] = useState<SectionPref[]>(() => getDefaultSections(activeProfile?.role));
   const [prefsModalVisible, setPrefsModalVisible] = useState(false);
   const [newCourseText, setNewCourseText] = useState('');
   const [dashboardRecipe, setDashboardRecipe] = useState<AppRecipe | null>(null);
 
-  // Load persisted section prefs on mount
+  // Load persisted section prefs on mount (filtered by profile role)
+  const roleDefaults = useMemo(() => getDefaultSections(activeProfile?.role), [activeProfile?.role]);
+
   useEffect(() => {
     SecureStore.getItemAsync(PREFS_KEY).then((raw) => {
-      if (!raw) return;
+      if (!raw) { setSectionPrefs(roleDefaults); return; }
       try {
         const saved: SectionPref[] = JSON.parse(raw);
-        // Re-order saved sections, then append any new ones from DEFAULT
-        const orderedIds = saved.map((s) => s.id);
+        const validIds = new Set(roleDefaults.map((s) => s.id));
+        const orderedIds = saved.map((s) => s.id).filter((id) => validIds.has(id));
         const merged: SectionPref[] = [
           ...orderedIds
             .map((id) => {
-              const def = DEFAULT_SECTIONS.find((s) => s.id === id);
+              const def = roleDefaults.find((s) => s.id === id);
               const sv = saved.find((s) => s.id === id);
               return def ? { ...def, visible: sv?.visible ?? true } : null;
             })
             .filter(Boolean) as SectionPref[],
-          ...DEFAULT_SECTIONS.filter((s) => !orderedIds.includes(s.id)),
+          ...roleDefaults.filter((s) => !orderedIds.includes(s.id)),
         ];
         setSectionPrefs(merged);
-      } catch {}
+      } catch { setSectionPrefs(roleDefaults); }
     });
-  }, []);
+  }, [roleDefaults]);
 
   const saveSectionPrefs = useCallback(async (prefs: SectionPref[]) => {
     setSectionPrefs(prefs);
@@ -210,9 +242,13 @@ export default function DashboardScreen() {
     const recapText = buildWeeklyRecapText({ memories: weekMemories, photoCount: weekPhotoUris.length, enfantNames });
     try {
       const ok = await sendWeeklyRecap(token.trim(), gpChatId.trim(), recapText, weekPhotoUris);
-      Alert.alert(ok ? '✅ Recap envoyé !' : '❌ Échec', ok ? `${weekMemories.length} souvenir(s) + ${weekPhotoUris.length} photo(s)` : "Erreur lors de l'envoi.");
+      if (ok) {
+        showToast(`Récap envoyé ! ${weekMemories.length} souvenir(s) + ${weekPhotoUris.length} photo(s)`);
+      } else {
+        showToast("Erreur lors de l'envoi du récap", 'error');
+      }
     } catch (e) {
-      Alert.alert('Erreur', String(e));
+      showToast(String(e), 'error');
     }
     setIsSendingRecap(false);
   }, [memories, photoDates, profiles, getPhotoUri]);
@@ -228,14 +264,14 @@ export default function DashboardScreen() {
             const { lootAwarded, pointsGained } = await completeTask(activeProfile, task.text);
             await refreshGamification();
             if (lootAwarded) {
-              Alert.alert('🎁 Récompense !', `+${pointsGained} points ! Tu as gagné une récompense ! Va dans Menu > Récompenses pour l'ouvrir.`);
+              showToast(`🎁 Récompense ! +${pointsGained} pts`);
             }
           } catch {
             // Gamification error — non-critical
           }
         }
       } catch (e) {
-        Alert.alert('Erreur', `Impossible de modifier la tâche : ${e}`);
+        showToast(`Impossible de modifier la tâche : ${e}`, 'error');
         // Refresh to revert optimistic update on error
         await refresh();
       }
@@ -255,9 +291,9 @@ export default function DashboardScreen() {
       const context = buildManualContext(activeProfile);
       const ok = await dispatchNotification(notifId, context, notifPrefs);
       if (ok) {
-        Alert.alert('Envoyé !', 'Notification envoyée sur Telegram.');
+        showToast('Notification envoyée sur Telegram !');
       } else {
-        Alert.alert('Envoi impossible', 'Vérifiez votre connexion internet ou la configuration dans les réglages.');
+        showToast('Envoi impossible — vérifiez la configuration', 'error');
       }
     },
     [activeProfile, notifPrefs]
@@ -378,11 +414,11 @@ export default function DashboardScreen() {
         }
         const progress = vacTotal > 0 ? vacCompleted / vacTotal : 0;
         return (
-          <DashboardCard key="vacation" title="Vacances" icon="☀️" color="#F59E0B" onPressMore={() => router.push('/(tabs)/tasks')}>
-            <Text style={[styles.vacCountdown, { color: '#F59E0B' }]}>{vacCountdown}</Text>
+          <DashboardCard key="vacation" title="Vacances" icon="☀️" color={colors.warning} onPressMore={() => router.push('/(tabs)/tasks')}>
+            <Text style={[styles.vacCountdown, { color: colors.warning }]}>{vacCountdown}</Text>
             <View style={styles.vacProgressRow}>
-              <View style={styles.vacProgressBg}>
-                <View style={[styles.vacProgressFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: '#F59E0B' }]} />
+              <View style={[styles.vacProgressBg, { backgroundColor: colors.borderLight }]}>
+                <View style={[styles.vacProgressFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: colors.warning }]} />
               </View>
               <Text style={[styles.vacProgressText, { color: colors.textMuted }]}>{vacCompleted}/{vacTotal}</Text>
             </View>
@@ -395,7 +431,7 @@ export default function DashboardScreen() {
       case 'menage':
         if (pendingMenage.length === 0) return null;
         return (
-          <DashboardCard key="menage" title="Ménage du jour" icon="🧹" count={pendingMenage.length} color="#10B981" onPressMore={() => router.push('/(tabs)/tasks')}>
+          <DashboardCard key="menage" title="Ménage du jour" icon="🧹" count={pendingMenage.length} color={colors.success} onPressMore={() => router.push('/(tabs)/tasks')}>
             {pendingMenage.slice(0, 4).map((task) => (
               <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} />
             ))}
@@ -405,7 +441,7 @@ export default function DashboardScreen() {
       case 'overdue':
         if (overdueTasks.length === 0) return null;
         return (
-          <DashboardCard key="overdue" title="En retard" icon="⚠️" count={overdueTasks.length} color="#EF4444" onPressMore={() => router.push('/(tabs)/tasks')}>
+          <DashboardCard key="overdue" title="En retard" icon="⚠️" count={overdueTasks.length} color={colors.error} onPressMore={() => router.push('/(tabs)/tasks')}>
             {overdueTasks.slice(0, 3).map((task) => (
               <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} showSource />
             ))}
@@ -471,18 +507,18 @@ export default function DashboardScreen() {
 
       case 'courses':
         return (
-          <DashboardCard key="courses" title="Courses" icon="🛒" count={topCourses.length || undefined} color="#F59E0B" onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'courses' } })}>
+          <DashboardCard key="courses" title="Courses" icon="🛒" count={topCourses.length || undefined} color={colors.warning} onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'courses' } })}>
             {topCourses.map((item) => (
               <View key={item.id} style={styles.courseRow}>
-                <Text style={styles.courseBullet}>•</Text>
+                <Text style={[styles.courseBullet, { color: colors.warning }]}>•</Text>
                 <Text style={[styles.courseText, { color: colors.textSub }]}>{item.text}</Text>
                 <TouchableOpacity
-                  style={styles.courseCheckBtn}
+                  style={[styles.courseCheckBtn, { borderColor: colors.separator, backgroundColor: colors.card }]}
                   onPress={() => toggleCourseItem(item, true)}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   activeOpacity={0.6}
                 >
-                  <Text style={styles.courseCheckBtnText}>✓</Text>
+                  <Text style={[styles.courseCheckBtnText, { color: colors.success }]}>✓</Text>
                 </TouchableOpacity>
               </View>
             ))}
@@ -496,7 +532,7 @@ export default function DashboardScreen() {
                 value={newCourseText}
                 onChangeText={setNewCourseText}
                 placeholder="Ajouter un article…"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.textFaint}
                 returnKeyType="done"
                 onSubmitEditing={async () => {
                   const text = newCourseText.trim();
@@ -507,7 +543,7 @@ export default function DashboardScreen() {
                 }}
               />
               <TouchableOpacity
-                style={[styles.courseAddBtn, { backgroundColor: '#F59E0B' }]}
+                style={[styles.courseAddBtn, { backgroundColor: colors.warning }]}
                 onPress={async () => {
                   const text = newCourseText.trim();
                   if (!text) return;
@@ -518,12 +554,12 @@ export default function DashboardScreen() {
                 activeOpacity={0.7}
                 disabled={!newCourseText.trim()}
               >
-                <Text style={styles.courseAddBtnText}>+</Text>
+                <Text style={[styles.courseAddBtnText, { color: colors.onPrimary }]}>+</Text>
               </TouchableOpacity>
             </View>
             {courses.some((c) => c.completed) && (
               <TouchableOpacity
-                style={styles.clearCoursesBtn}
+                style={[styles.clearCoursesBtn, { backgroundColor: colors.errorBg }]}
                 onPress={() => {
                   const count = courses.filter((c) => c.completed).length;
                   Alert.alert('Vider les cochés', `Supprimer ${count} article${count > 1 ? 's' : ''} coché${count > 1 ? 's' : ''} ?`, [
@@ -533,7 +569,7 @@ export default function DashboardScreen() {
                 }}
                 activeOpacity={0.7}
               >
-                <Text style={styles.clearCoursesBtnText}>🗑 Vider les cochés</Text>
+                <Text style={[styles.clearCoursesBtnText, { color: colors.error }]}>🗑 Vider les cochés</Text>
               </TouchableOpacity>
             )}
           </DashboardCard>
@@ -541,15 +577,15 @@ export default function DashboardScreen() {
 
       case 'rdvs':
         return (
-          <DashboardCard key="rdvs" title="Rendez-vous" icon="📅" count={upcomingRdvs.length || undefined} color="#8B5CF6">
+          <DashboardCard key="rdvs" title="Rendez-vous" icon="📅" count={upcomingRdvs.length || undefined} color={colors.info}>
             {upcomingRdvs.slice(0, 3).map((rdv) => (
-              <TouchableOpacity key={rdv.sourceFile} style={styles.rdvRow} onPress={() => { setEditingRDV(rdv); setRdvEditorVisible(true); }} activeOpacity={0.7}>
-                <Text style={styles.rdvDate}>{formatDateForDisplay(rdv.date_rdv)} {rdv.heure ? `à ${rdv.heure}` : ''}</Text>
+              <TouchableOpacity key={rdv.sourceFile} style={[styles.rdvRow, { borderLeftColor: colors.info }]} onPress={() => { setEditingRDV(rdv); setRdvEditorVisible(true); }} activeOpacity={0.7}>
+                <Text style={[styles.rdvDate, { color: colors.info }]}>{formatDateForDisplay(rdv.date_rdv)} {rdv.heure ? `à ${rdv.heure}` : ''}</Text>
                 <Text style={[styles.rdvTitle, { color: colors.text }]}>{rdv.type_rdv} — {rdv.enfant}</Text>
                 {rdv.médecin && <Text style={[styles.rdvMeta, { color: colors.textMuted }]}>{rdv.médecin}</Text>}
               </TouchableOpacity>
             ))}
-            {upcomingRdvs.length === 0 && <Text style={styles.rdvEmpty}>Aucun RDV à venir</Text>}
+            {upcomingRdvs.length === 0 && <Text style={[styles.rdvEmpty, { color: colors.textMuted }]}>Aucun RDV à venir</Text>}
             <View style={styles.cardActions}>
               <TouchableOpacity style={[styles.rdvAddBtn, { backgroundColor: tint, borderColor: primary }]} onPress={() => { setEditingRDV(undefined); setRdvEditorVisible(true); }} activeOpacity={0.7}>
                 <Text style={[styles.rdvAddBtnText, { color: primary }]}>+ Nouveau</Text>
@@ -564,10 +600,10 @@ export default function DashboardScreen() {
       case 'rewards':
         if (activeRewards.length === 0) return null;
         return (
-          <DashboardCard key="rewards" title="Récompenses actives" icon="🏆" color="#EF4444">
+          <DashboardCard key="rewards" title="Récompenses actives" icon="🏆" color={colors.error}>
             {activeRewards.map((reward) => {
               const ownerProfile = profiles.find((p) => p.id === reward.profileId);
-              const typeColor = reward.type === 'vacation' || reward.type === 'crown' || reward.type === 'multiplier' ? '#EF4444' : '#F59E0B';
+              const typeColor = reward.type === 'vacation' || reward.type === 'crown' || reward.type === 'multiplier' ? colors.error : colors.warning;
               return (
                 <View key={reward.id} style={styles.activeRewardRow}>
                   <Text style={styles.activeRewardEmoji}>{reward.emoji}</Text>
@@ -589,10 +625,10 @@ export default function DashboardScreen() {
         if (stock.length === 0) return null;
         const lowCount = stock.filter((s) => s.quantite <= s.seuil).length;
         return (
-          <DashboardCard key="stock" title="Stock bébé" icon="📦" count={lowCount > 0 ? lowCount : undefined} color={lowCount > 0 ? '#EF4444' : '#10B981'}>
+          <DashboardCard key="stock" title="Stock bébé" icon="📦" count={lowCount > 0 ? lowCount : undefined} color={lowCount > 0 ? colors.error : colors.success}>
             {stock.filter((s) => s.quantite <= s.seuil + 1).map((item) => {
               const isLow = item.quantite <= item.seuil;
-              const statusColor = isLow ? '#EF4444' : '#F59E0B';
+              const statusColor = isLow ? colors.error : colors.warning;
               return (
                 <View key={`${item.section}-${item.produit}`} style={styles.stockRow}>
                   <Text style={styles.stockAlertIcon}>{isLow ? '🔴' : '🟡'}</Text>
@@ -602,7 +638,7 @@ export default function DashboardScreen() {
                   </View>
                   <View style={styles.stockBtnGroup}>
                     {isLow && (
-                      <TouchableOpacity style={styles.stockCartBtn} onPress={async () => { const n = item.detail ? `${item.produit} (${item.detail})` : item.produit; await addCourseItem(n, 'Produits bébé'); Alert.alert('Ajouté !', `${n} ajouté aux courses`); }} activeOpacity={0.6} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
+                      <TouchableOpacity style={[styles.stockCartBtn, { backgroundColor: colors.warningBg, borderColor: colors.warning }]} onPress={async () => { const n = item.detail ? `${item.produit} (${item.detail})` : item.produit; await addCourseItem(n, 'Produits bébé'); Alert.alert('Ajouté !', `${n} ajouté aux courses`); }} activeOpacity={0.6} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
                         <Text style={styles.stockCartBtnText}>🛒</Text>
                       </TouchableOpacity>
                     )}
@@ -624,15 +660,52 @@ export default function DashboardScreen() {
         );
       }
 
+      case 'budget': {
+        const budgetSpent = totalSpent(budgetEntries);
+        const budgetTotal = totalBudget(budgetConfig);
+        // Single-pass: build spent-by-category map
+        const spentMap = new Map<string, number>();
+        for (const e of budgetEntries) {
+          spentMap.set(e.category, (spentMap.get(e.category) ?? 0) + e.amount);
+        }
+        const catStats = budgetConfig.categories
+          .map((c) => ({ ...c, spent: spentMap.get(categoryDisplay(c)) ?? 0 }));
+        const overCount = catStats.filter((c) => c.spent > c.limit).length;
+        const topCats = catStats.filter((c) => c.spent > 0).sort((a, b) => b.spent - a.spent).slice(0, 2);
+
+        return (
+          <DashboardCard
+            key="budget"
+            title="Budget du mois"
+            icon="💰"
+            count={overCount > 0 ? overCount : undefined}
+            color={overCount > 0 ? colors.error : colors.success}
+            onPressMore={() => router.push('/(tabs)/budget')}
+          >
+            <Text style={[styles.budgetTotal, { color: budgetSpent > budgetTotal ? colors.error : colors.text }]}>
+              {formatAmount(budgetSpent)} / {formatAmount(budgetTotal)}
+            </Text>
+            {topCats.map((c) => (
+              <View key={c.name} style={styles.budgetCatRow}>
+                <Text style={[styles.budgetCatName, { color: colors.textSub }]}>{c.emoji} {c.name}</Text>
+                <Text style={[styles.budgetCatAmount, { color: c.spent > c.limit ? colors.error : colors.textMuted }]}>
+                  {formatAmount(c.spent)}
+                </Text>
+              </View>
+            ))}
+          </DashboardCard>
+        );
+      }
+
       case 'quicknotifs':
         if (customNotifs.length === 0) return null;
         return (
-          <DashboardCard key="quicknotifs" title="Notifications rapides" icon="📤" color="#10B981">
+          <DashboardCard key="quicknotifs" title="Notifications rapides" icon="📤" color={colors.success}>
             <View style={styles.quickNotifGrid}>
               {customNotifs.map((notif) => (
-                <TouchableOpacity key={notif.id} style={styles.quickNotifBtn} onPress={() => handleSendCustomNotif(notif.id)}>
+                <TouchableOpacity key={notif.id} style={[styles.quickNotifBtn, { backgroundColor: colors.successBg, borderColor: colors.success }]} onPress={() => handleSendCustomNotif(notif.id)}>
                   <Text style={styles.quickNotifEmoji}>{notif.emoji}</Text>
-                  <Text style={styles.quickNotifLabel}>{notif.label}</Text>
+                  <Text style={[styles.quickNotifLabel, { color: colors.successText }]}>{notif.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -645,7 +718,7 @@ export default function DashboardScreen() {
         const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
         const suggestedRecipe = recipes[dayOfYear % recipes.length];
         return (
-          <DashboardCard key="recipes" title="Idée recette" icon="📖" count={recipes.length} color="#A855F7" onPressMore={() => router.push('/(tabs)/meals')}>
+          <DashboardCard key="recipes" title="Idée recette" icon="📖" count={recipes.length} color={colors.info} onPressMore={() => router.push('/(tabs)/meals')}>
             <TouchableOpacity
               style={[styles.recipeSuggestion, { backgroundColor: colors.cardAlt }]}
               onPress={() => router.push('/(tabs)/meals')}
@@ -690,8 +763,8 @@ export default function DashboardScreen() {
       {/* Header */}
       <View style={[styles.header, { backgroundColor: primary }]}>
         <View style={styles.headerLeft}>
-          <Text style={styles.greeting}>Bonjour{activeProfile ? ` ${activeProfile.name}` : ''} 👋</Text>
-          <Text style={styles.dateText}>{today}</Text>
+          <Text style={[styles.greeting, { color: colors.onPrimaryMuted }]}>Bonjour{activeProfile ? ` ${activeProfile.name}` : ''} 👋</Text>
+          <Text style={[styles.dateText, { color: colors.onPrimary }]}>{today}</Text>
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity
@@ -701,7 +774,7 @@ export default function DashboardScreen() {
             disabled={isSendingRecap}
           >
             <Text style={styles.headerBtnIcon}>{isSendingRecap ? '⏳' : '📤'}</Text>
-            <Text style={styles.headerBtnLabel}>Récap GP</Text>
+            <Text style={[styles.headerBtnLabel, { color: colors.onPrimaryMuted }]}>Récap GP</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={onRefresh}
@@ -709,7 +782,7 @@ export default function DashboardScreen() {
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Text style={styles.headerBtnIcon}>{isLoading ? '⏳' : '🔄'}</Text>
-            <Text style={styles.headerBtnLabel}>Actualiser</Text>
+            <Text style={[styles.headerBtnLabel, { color: colors.onPrimaryMuted }]}>Actualiser</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setPrefsModalVisible(true)}
@@ -717,7 +790,7 @@ export default function DashboardScreen() {
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Text style={styles.headerBtnIcon}>⚙️</Text>
-            <Text style={styles.headerBtnLabel}>Sections</Text>
+            <Text style={[styles.headerBtnLabel, { color: colors.onPrimaryMuted }]}>Sections</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -733,10 +806,10 @@ export default function DashboardScreen() {
         {/* Welcome card when no vault configured */}
         {!isLoading && !vaultPath && (
           <DashboardCard title="Bienvenue !" icon="👋" color={primary}>
-            <Text style={styles.welcomeText}>
+            <Text style={[styles.welcomeText, { color: colors.textSub }]}>
               L'application n'est pas encore configurée.
             </Text>
-            <Text style={styles.welcomeSubText}>
+            <Text style={[styles.welcomeSubText, { color: colors.textMuted }]}>
               Appuyez sur le bouton ci-dessous pour accéder aux réglages et connecter votre espace familial.
             </Text>
             <TouchableOpacity
@@ -744,7 +817,7 @@ export default function DashboardScreen() {
               onPress={() => router.push('/(tabs)/settings')}
               activeOpacity={0.8}
             >
-              <Text style={styles.welcomeBtnText}>⚙️  Ouvrir les réglages</Text>
+              <Text style={[styles.welcomeBtnText, { color: colors.onPrimary }]}>⚙️  Ouvrir les réglages</Text>
             </TouchableOpacity>
           </DashboardCard>
         )}
@@ -752,7 +825,7 @@ export default function DashboardScreen() {
         {profiles.filter((p) => p.statut === 'grossesse' && p.dateTerme).map((p) => {
           const daysLeft = Math.ceil((new Date(p.dateTerme!).getTime() - new Date().getTime()) / 86400000);
           return (
-            <View key={p.id} style={[styles.ageUpgradeBanner, { borderColor: primary }]}>
+            <View key={p.id} style={[styles.ageUpgradeBanner, { backgroundColor: colors.warningBg, borderColor: primary }]}>
               <Text style={[styles.ageUpgradeTitle, { color: colors.text }]}>
                 🤰 {p.name} — {daysLeft > 0 ? `J-${daysLeft}` : daysLeft === 0 ? "C'est pour aujourd'hui !" : `J+${Math.abs(daysLeft)}`}
               </Text>
@@ -770,7 +843,7 @@ export default function DashboardScreen() {
                 }}
                 activeOpacity={0.7}
               >
-                <Text style={styles.ageUpgradeBtnText}>C'est né !</Text>
+                <Text style={[styles.ageUpgradeBtnText, { color: colors.onPrimary }]}>C'est né !</Text>
               </TouchableOpacity>
             </View>
           );
@@ -779,7 +852,7 @@ export default function DashboardScreen() {
         {ageUpgrades.map((upgrade) => {
           const catLabels: Record<string, string> = { bebe: 'bébé', petit: 'petit enfant', enfant: 'enfant', ado: 'ado' };
           return (
-            <View key={upgrade.profileId} style={[styles.ageUpgradeBanner, { borderColor: primary }]}>
+            <View key={upgrade.profileId} style={[styles.ageUpgradeBanner, { backgroundColor: colors.warningBg, borderColor: primary }]}>
               <Text style={[styles.ageUpgradeTitle, { color: colors.text }]}>
                 {upgrade.childName} a grandi !
               </Text>
@@ -801,7 +874,7 @@ export default function DashboardScreen() {
                   }}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.ageUpgradeBtnText}>Mettre à jour</Text>
+                  <Text style={[styles.ageUpgradeBtnText, { color: colors.onPrimary }]}>Mettre à jour</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.ageUpgradeDismiss}
@@ -898,12 +971,10 @@ const styles = StyleSheet.create({
   },
   greeting: {
     fontSize: 14,
-    color: '#C4B5FD',
     fontWeight: '500',
   },
   dateText: {
     fontSize: 16,
-    color: '#FFFFFF',
     fontWeight: '700',
     textTransform: 'capitalize',
   },
@@ -924,7 +995,6 @@ const styles = StyleSheet.create({
   },
   headerBtnLabel: {
     fontSize: 11,
-    color: '#C4B5FD',
     fontWeight: '600',
     letterSpacing: 0.2,
   },
@@ -943,37 +1013,30 @@ const styles = StyleSheet.create({
   },
   courseBullet: {
     fontSize: 16,
-    color: '#F59E0B',
   },
   courseText: {
     fontSize: 15,
-    color: '#374151',
     flex: 1,
   },
   rdvRow: {
     paddingVertical: 8,
     borderLeftWidth: 3,
-    borderLeftColor: '#8B5CF6',
     paddingLeft: 10,
     gap: 2,
   },
   rdvDate: {
     fontSize: 13,
-    color: '#8B5CF6',
     fontWeight: '600',
   },
   rdvTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#111827',
   },
   rdvMeta: {
     fontSize: 13,
-    color: '#6B7280',
   },
   rdvEmpty: {
     fontSize: 14,
-    color: '#6B7280',
     fontStyle: 'italic',
     paddingVertical: 8,
   },
@@ -1006,7 +1069,6 @@ const styles = StyleSheet.create({
   stockName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#111827',
   },
   stockMeta: {
     fontSize: 12,
@@ -1016,11 +1078,9 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 8,
-    backgroundColor: '#FEF3C7',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#FDE68A',
     marginRight: 4,
   },
   stockCartBtnText: {
@@ -1035,11 +1095,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
   },
   stockBtnDisabled: {
     opacity: 0.3,
@@ -1047,13 +1105,11 @@ const styles = StyleSheet.create({
   stockBtnText: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#374151',
     lineHeight: 22,
   },
   stockQty: {
     fontSize: 17,
     fontWeight: '800',
-    color: '#111827',
     minWidth: 26,
     textAlign: 'center',
   },
@@ -1062,20 +1118,16 @@ const styles = StyleSheet.create({
     height: 30,
     borderRadius: 15,
     borderWidth: 2,
-    borderColor: '#D1D5DB',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
   },
   courseCheckBtnText: {
     fontSize: 15,
-    color: '#10B981',
     fontWeight: '800',
     lineHeight: 18,
   },
   courseEmpty: {
     fontSize: 13,
-    color: '#9CA3AF',
     fontStyle: 'italic',
     paddingVertical: 4,
   },
@@ -1085,19 +1137,15 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
     paddingTop: 10,
   },
   courseAddInput: {
     flex: 1,
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 9,
     fontSize: 14,
-    color: '#111827',
-    backgroundColor: '#F9FAFB',
   },
   courseAddBtn: {
     width: 38,
@@ -1109,30 +1157,25 @@ const styles = StyleSheet.create({
   courseAddBtnText: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#FFFFFF',
     lineHeight: 26,
   },
   clearCoursesBtn: {
     marginTop: 8,
     paddingVertical: 8,
     alignItems: 'center',
-    backgroundColor: '#FEF2F2',
     borderRadius: 8,
   },
   clearCoursesBtnText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#EF4444',
   },
   welcomeText: {
     fontSize: 16,
-    color: '#374151',
     lineHeight: 24,
     marginBottom: 6,
   },
   welcomeSubText: {
     fontSize: 14,
-    color: '#6B7280',
     lineHeight: 22,
     marginBottom: 16,
   },
@@ -1145,7 +1188,6 @@ const styles = StyleSheet.create({
   welcomeBtnText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#FFFFFF',
   },
   activeRewardRow: {
     flexDirection: 'row',
@@ -1165,7 +1207,6 @@ const styles = StyleSheet.create({
   activeRewardLabel: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#111827',
   },
   activeRewardMeta: {
     fontSize: 13,
@@ -1180,15 +1221,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#F0FDF4',
     borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 13,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
   },
   quickNotifEmoji: { fontSize: 18 },
-  quickNotifLabel: { fontSize: 14, fontWeight: '600', color: '#15803D' },
+  quickNotifLabel: { fontSize: 14, fontWeight: '600' },
   mealRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1207,13 +1246,11 @@ const styles = StyleSheet.create({
   mealType: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#6B7280',
     textTransform: 'uppercase',
   },
   mealText: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#111827',
   },
   photoStatusRow: {
     flexDirection: 'row',
@@ -1231,11 +1268,9 @@ const styles = StyleSheet.create({
   photoStatusName: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#111827',
   },
   photoStatusHint: {
     fontSize: 13,
-    color: '#6B7280',
   },
   photoStatusIcon: {
     fontSize: 20,
@@ -1254,7 +1289,6 @@ const styles = StyleSheet.create({
   vacProgressBg: {
     flex: 1,
     height: 8,
-    backgroundColor: '#F3F4F6',
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -1270,7 +1304,6 @@ const styles = StyleSheet.create({
     height: 20,
   },
   ageUpgradeBanner: {
-    backgroundColor: '#FFFBEB',
     borderRadius: 14,
     borderWidth: 2,
     padding: 16,
@@ -1298,7 +1331,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   ageUpgradeBtnText: {
-    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',
   },
@@ -1339,5 +1371,23 @@ const styles = StyleSheet.create({
   recipeSuggestionMeta: {
     fontSize: 12,
     marginTop: 2,
+  },
+  budgetTotal: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  budgetCatRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 2,
+  },
+  budgetCatName: {
+    fontSize: 14,
+  },
+  budgetCatAmount: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

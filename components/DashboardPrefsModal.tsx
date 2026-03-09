@@ -13,12 +13,15 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../contexts/ThemeContext';
+import { Spacing, Radius } from '../constants/spacing';
+import { FontSize, FontWeight } from '../constants/typography';
 
 export interface SectionPref {
   id: string;
   label: string;
   emoji: string;
   visible: boolean;
+  priority?: 'high' | 'medium' | 'low';
 }
 
 interface Props {
@@ -55,6 +58,49 @@ export function DashboardPrefsModal({ sections: initialSections, onSave, onClose
     });
   };
 
+  const renderRow = (section: SectionPref, index: number) => (
+    <View
+      style={[
+        styles.row,
+        { backgroundColor: colors.card, borderColor: colors.borderLight },
+        !section.visible && styles.rowHidden,
+      ]}
+    >
+      <Text style={styles.rowEmoji}>{section.emoji}</Text>
+      <Text style={[
+        styles.rowLabel,
+        { color: colors.text },
+        !section.visible && { color: colors.textFaint },
+      ]}>
+        {section.label}
+      </Text>
+      <View style={styles.rowActions}>
+        <TouchableOpacity
+          style={[styles.arrowBtn, { backgroundColor: colors.cardAlt }, index === 0 && styles.arrowBtnDisabled]}
+          onPress={() => moveUp(index)}
+          disabled={index === 0}
+          hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+        >
+          <Text style={[styles.arrowText, { color: colors.textSub }]}>▲</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.arrowBtn, { backgroundColor: colors.cardAlt }, index === sections.length - 1 && styles.arrowBtnDisabled]}
+          onPress={() => moveDown(index)}
+          disabled={index === sections.length - 1}
+          hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+        >
+          <Text style={[styles.arrowText, { color: colors.textSub }]}>▼</Text>
+        </TouchableOpacity>
+        <Switch
+          value={section.visible}
+          onValueChange={() => toggleVisible(section.id)}
+          trackColor={{ false: colors.switchOff, true: tint }}
+          thumbColor={section.visible ? primary : colors.textFaint}
+        />
+      </View>
+    </View>
+  );
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
       <View style={[styles.dragHandle, { backgroundColor: colors.separator }]} />
@@ -76,49 +122,27 @@ export function DashboardPrefsModal({ sections: initialSections, onSave, onClose
       </Text>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-        {sections.map((section, index) => (
-          <View
-            key={section.id}
-            style={[
-              styles.row,
-              { backgroundColor: colors.card, borderColor: colors.borderLight },
-              !section.visible && styles.rowHidden,
-            ]}
-          >
-            <Text style={styles.rowEmoji}>{section.emoji}</Text>
-            <Text style={[
-              styles.rowLabel,
-              { color: colors.text },
-              !section.visible && { color: colors.textFaint },
-            ]}>
-              {section.label}
-            </Text>
-            <View style={styles.rowActions}>
-              <TouchableOpacity
-                style={[styles.arrowBtn, { backgroundColor: colors.cardAlt }, index === 0 && styles.arrowBtnDisabled]}
-                onPress={() => moveUp(index)}
-                disabled={index === 0}
-                hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
-              >
-                <Text style={[styles.arrowText, { color: colors.textSub }]}>▲</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.arrowBtn, { backgroundColor: colors.cardAlt }, index === sections.length - 1 && styles.arrowBtnDisabled]}
-                onPress={() => moveDown(index)}
-                disabled={index === sections.length - 1}
-                hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
-              >
-                <Text style={[styles.arrowText, { color: colors.textSub }]}>▼</Text>
-              </TouchableOpacity>
-              <Switch
-                value={section.visible}
-                onValueChange={() => toggleVisible(section.id)}
-                trackColor={{ false: colors.switchOff, true: tint }}
-                thumbColor={section.visible ? primary : colors.textFaint}
-              />
+        {sections.map((section, index) => {
+          // Afficher un header de catégorie si c'est le premier de sa priorité
+          const prevPriority = index > 0 ? (sections[index - 1].priority ?? 'medium') : null;
+          const curPriority = section.priority ?? 'medium';
+          const showHeader = curPriority !== prevPriority;
+          const priorityLabels: Record<string, string> = {
+            high: '⭐ Essentielles',
+            medium: '📌 Secondaires',
+            low: '💤 Optionnelles',
+          };
+          return (
+            <View key={section.id}>
+              {showHeader && (
+                <Text style={[styles.priorityHeader, { color: colors.textMuted }]}>
+                  {priorityLabels[curPriority]}
+                </Text>
+              )}
+              {renderRow(section, index)}
             </View>
-          </View>
-        ))}
+          );
+        })}
       </ScrollView>
     </SafeAreaView>
   );
@@ -131,40 +155,40 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     alignSelf: 'center',
-    marginTop: 8,
-    marginBottom: 4,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.xs,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: Spacing['2xl'],
     paddingVertical: 14,
     borderBottomWidth: 1,
   },
-  headerClose: { fontSize: 20, padding: 4 },
-  headerTitle: { fontSize: 17, fontWeight: '800' },
-  headerSave: { fontSize: 15, fontWeight: '700', padding: 4 },
+  headerClose: { fontSize: FontSize.title, padding: Spacing.xs },
+  headerTitle: { fontSize: FontSize.subtitle, fontWeight: FontWeight.heavy },
+  headerSave: { fontSize: FontSize.body, fontWeight: FontWeight.bold, padding: Spacing.xs },
   hint: {
-    fontSize: 13,
-    paddingHorizontal: 20,
+    fontSize: FontSize.label,
+    paddingHorizontal: Spacing['3xl'],
     paddingVertical: 14,
     lineHeight: 19,
     borderBottomWidth: 1,
   },
   scroll: { flex: 1 },
-  content: { padding: 16, gap: 10, paddingBottom: 40 },
+  content: { padding: Spacing['2xl'], gap: Spacing.lg, paddingBottom: 40 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 14,
     paddingVertical: 14,
-    paddingHorizontal: 16,
-    gap: 12,
+    paddingHorizontal: Spacing['2xl'],
+    gap: Spacing.xl,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
-    shadowRadius: 4,
+    shadowRadius: Spacing.xs,
     elevation: 2,
     borderWidth: 1,
   },
@@ -172,24 +196,24 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   rowEmoji: {
-    fontSize: 22,
+    fontSize: FontSize.titleLg,
     width: 30,
     textAlign: 'center',
   },
   rowLabel: {
     flex: 1,
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
   },
   rowActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: Spacing.sm,
   },
   arrowBtn: {
     width: 32,
     height: 32,
-    borderRadius: 8,
+    borderRadius: Radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -197,7 +221,16 @@ const styles = StyleSheet.create({
     opacity: 0.2,
   },
   arrowText: {
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: FontSize.code,
+    fontWeight: FontWeight.bold,
+  },
+  priorityHeader: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.xs,
+    paddingHorizontal: Spacing.xs,
   },
 });

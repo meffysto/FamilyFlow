@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../contexts/ThemeContext';
+import { useToast } from '../contexts/ToastContext';
 import { StockItem } from '../lib/types';
 
 interface StockEditorProps {
@@ -26,6 +27,7 @@ interface StockEditorProps {
 
 export function StockEditor({ item, sections, onSave, onDelete, onClose }: StockEditorProps) {
   const { primary, tint, colors } = useThemeColors();
+  const { showToast } = useToast();
   const isEditing = !!item;
 
   const [produit, setProduit] = useState(item?.produit ?? '');
@@ -38,11 +40,11 @@ export function StockEditor({ item, sections, onSave, onDelete, onClose }: Stock
 
   const handleSave = async () => {
     if (!produit.trim()) {
-      Alert.alert('Champ requis', 'Le nom du produit est obligatoire.');
+      showToast('Le nom du produit est obligatoire', 'error');
       return;
     }
     if (!section) {
-      Alert.alert('Champ requis', 'Sélectionne une catégorie.');
+      showToast('Sélectionne une catégorie', 'error');
       return;
     }
 
@@ -58,7 +60,7 @@ export function StockEditor({ item, sections, onSave, onDelete, onClose }: Stock
       });
       onClose();
     } catch (e) {
-      Alert.alert('Erreur', String(e));
+      showToast(String(e), 'error');
     } finally {
       setIsSaving(false);
     }

@@ -25,12 +25,15 @@ import { useLocalSearchParams } from 'expo-router';
 import { useVault } from '../../hooks/useVault';
 import { useGamification } from '../../hooks/useGamification';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { useToast } from '../../contexts/ToastContext';
 import { TaskCard } from '../../components/TaskCard';
+import { SwipeToDelete } from '../../components/SwipeToDelete';
 import {
   dispatchNotificationAsync,
   buildAllTasksDoneContext,
 } from '../../lib/notifications';
 import { Task, CourseItem, Profile } from '../../lib/types';
+import { formatDateForDisplay } from '../../lib/parser';
 
 interface FilterDef {
   id: string;
@@ -84,6 +87,7 @@ export default function TasksScreen() {
   const { tasks, menageTasks, vault, profiles, activeProfile, notifPrefs, toggleTask, addTask, deleteTask, refresh, isLoading, vacationTasks, vacationConfig, isVacationActive, refreshGamification } = useVault();
   const { completeTask } = useGamification({ vault, notifPrefs });
   const { primary, tint, colors } = useThemeColors();
+  const { showToast } = useToast();
 
   const { filter: filterParam } = useLocalSearchParams<{ filter?: string }>();
   const filters = useMemo(() => {
@@ -133,9 +137,9 @@ export default function TasksScreen() {
             const { lootAwarded, pointsGained } = await completeTask(activeProfile, task.text);
             await refreshGamification();
             if (lootAwarded) {
-              Alert.alert('🎁 Récompense !', `+${pointsGained} pts ! Tu as gagné une récompense ! Va dans Menu > Récompenses pour l'ouvrir.`);
+              showToast(`🎁 Récompense ! +${pointsGained} pts`);
             } else {
-              Alert.alert('✅ +' + pointsGained + ' pts !', `Bravo ${activeProfile.name} !`, [{ text: 'Super !' }]);
+              showToast(`✅ +${pointsGained} pts !`);
             }
           } catch {
             // Gamification error — non-critical
@@ -156,20 +160,20 @@ export default function TasksScreen() {
           }
         }
       } catch (e) {
-        Alert.alert('Erreur', String(e));
+        showToast(String(e), 'error');
         await refresh();
       }
     },
-    [toggleTask, activeProfile, profiles, tasks, completeTask, refresh, notifPrefs, refreshGamification]
+    [toggleTask, activeProfile, profiles, tasks, completeTask, refresh, notifPrefs, refreshGamification, showToast]
   );
 
   const handleAddTask = useCallback(async () => {
     if (!newTaskText.trim()) {
-      Alert.alert('Champ requis', 'Le texte de la tâche est obligatoire.');
+      showToast('Le texte de la tâche est obligatoire', 'error');
       return;
     }
     if (newTaskDueDate && !/^\d{4}-\d{2}-\d{2}$/.test(newTaskDueDate)) {
-      Alert.alert('Date incorrecte', 'Veuillez entrer la date au format année-mois-jour.\nExemple : 2026-03-15 pour le 15 mars 2026.');
+      showToast('Date incorrecte (format : 2026-03-15)', 'error');
       return;
     }
     setIsSaving(true);
@@ -180,15 +184,15 @@ export default function TasksScreen() {
       setNewTaskRecurrence('');
       setAddModalVisible(false);
     } catch (e) {
-      Alert.alert('Erreur', String(e));
+      showToast(String(e), 'error');
     } finally {
       setIsSaving(false);
     }
-  }, [newTaskText, newTaskDueDate, newTaskRecurrence, newTaskTarget, addTask]);
+  }, [newTaskText, newTaskDueDate, newTaskRecurrence, newTaskTarget, addTask, showToast]);
 
   const handleDeleteTask = useCallback(async (task: Task) => {
     if (activeProfile?.role === 'enfant') {
-      Alert.alert('🔒 Admin requis', 'Seuls les adultes peuvent supprimer des tâches.');
+      showToast('🔒 Seuls les adultes peuvent supprimer des tâches', 'error');
       return;
     }
     Alert.alert(
@@ -307,9 +311,9 @@ export default function TasksScreen() {
 
       {/* Vacation banner */}
       {isVacationActive && vacationConfig && (
-        <View style={styles.vacationBanner}>
-          <Text style={styles.vacationBannerText}>
-            ☀️ Mode Vacances — du {vacationConfig.startDate.split('-').reverse().join('/')} au {vacationConfig.endDate.split('-').reverse().join('/')}
+        <View style={[styles.vacationBanner, { backgroundColor: colors.warningBg, borderBottomColor: colors.warning }]}>
+          <Text style={[styles.vacationBannerText, { color: colors.warningText }]}>
+            ☀️ Mode Vacances — du {formatDateForDisplay(vacationConfig.startDate)} au {formatDateForDisplay(vacationConfig.endDate)}
           </Text>
         </View>
       )}
@@ -356,10 +360,10 @@ export default function TasksScreen() {
         </ScrollView>
       </View>
 
-      {/* Long-press hint */}
+      {/* Swipe hint */}
       {sections.length > 0 && (
-        <View style={styles.deleteTip}>
-          <Text style={styles.deleteTipText}>💡 Appui long sur une tâche pour la supprimer</Text>
+        <View style={[styles.deleteTip, { backgroundColor: colors.warningBg, borderBottomColor: colors.warning }]}>
+          <Text style={[styles.deleteTipText, { color: colors.warningText }]}>💡 Glissez une tâche vers la gauche pour la supprimer</Text>
         </View>
       )}
 
@@ -368,7 +372,12 @@ export default function TasksScreen() {
         sections={sections}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <TaskCard task={item} onToggle={handleTaskToggle} onLongPress={() => handleDeleteTask(item)} />
+          <SwipeToDelete
+            onDelete={() => handleDeleteTask(item)}
+            disabled={item.completed}
+          >
+            <TaskCard task={item} onToggle={handleTaskToggle} />
+          </SwipeToDelete>
         )}
         renderSectionHeader={({ section }) => (
           <View style={styles.sectionHeader}>
@@ -399,7 +408,7 @@ export default function TasksScreen() {
         }}
         activeOpacity={0.8}
       >
-        <Text style={styles.fabText}>+</Text>
+        <Text style={[styles.fabText, { color: colors.onPrimary }]}>+</Text>
       </TouchableOpacity>
 
       {/* Add Task Modal */}
@@ -569,28 +578,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   vacationBanner: {
-    backgroundColor: '#FEF3C7',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#FDE68A',
   },
   vacationBannerText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#92400E',
     textAlign: 'center',
   },
   deleteTip: {
-    backgroundColor: '#FFFBEB',
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderBottomWidth: 1,
-    borderBottomColor: '#FDE68A',
   },
   deleteTipText: {
     fontSize: 12,
-    color: '#92400E',
     fontWeight: '500',
   },
   listContent: {
@@ -644,7 +647,6 @@ const styles = StyleSheet.create({
   },
   fabText: {
     fontSize: 28,
-    color: '#FFFFFF',
     fontWeight: '700',
     lineHeight: 30,
   },

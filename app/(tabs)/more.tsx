@@ -17,7 +17,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useVault } from '../../hooks/useVault';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { Spacing, Radius } from '../../constants/spacing';
+import { FontSize, FontWeight } from '../../constants/typography';
 import { isRdvUpcoming } from '../../lib/parser';
+import { totalSpent, totalBudget } from '../../lib/budget';
 
 interface GridItem {
   emoji: string;
@@ -25,11 +28,12 @@ interface GridItem {
   route: string;
   badge?: number;
   color: string;
+  category: 'quotidien' | 'famille' | 'systeme';
 }
 
 export default function MoreScreen() {
   const router = useRouter();
-  const { rdvs, stock, gamiData } = useVault();
+  const { rdvs, stock, gamiData, budgetEntries, budgetConfig } = useVault();
   const { colors } = useThemeColors();
 
   const items: GridItem[] = useMemo(() => {
@@ -42,41 +46,57 @@ export default function MoreScreen() {
       : 0;
 
     return [
+      // Vie quotidienne
       {
         emoji: '📅',
         label: 'Rendez-vous',
         route: '/(tabs)/rdv',
         badge: upcomingRdvs || undefined,
-        color: '#8B5CF6',
+        color: colors.info,
+        category: 'quotidien' as const,
+      },
+      {
+        emoji: '🍽️',
+        label: 'Repas',
+        route: '/(tabs)/meals',
+        color: colors.success,
+        category: 'quotidien' as const,
       },
       {
         emoji: '📦',
         label: 'Stock bébé',
         route: '/(tabs)/stock',
         badge: lowStock || undefined,
-        color: '#F59E0B',
+        color: colors.warning,
+        category: 'quotidien' as const,
       },
-      {
-        emoji: '🍽️',
-        label: 'Repas',
-        route: '/(tabs)/meals',
-        color: '#10B981',
-      },
+      // Famille
       {
         emoji: '🎁',
         label: 'Récompenses',
         route: '/(tabs)/loot',
         badge: lootBoxes || undefined,
         color: '#EC4899',
+        category: 'famille' as const,
       },
+      {
+        emoji: '💰',
+        label: 'Budget',
+        route: '/(tabs)/budget',
+        badge: totalSpent(budgetEntries) > totalBudget(budgetConfig) ? 1 : undefined,
+        color: '#059669',
+        category: 'famille' as const,
+      },
+      // Système
       {
         emoji: '⚙️',
         label: 'Réglages',
         route: '/(tabs)/settings',
-        color: '#6B7280',
+        color: colors.textMuted,
+        category: 'systeme' as const,
       },
     ];
-  }, [rdvs, stock, gamiData]);
+  }, [rdvs, stock, gamiData, budgetEntries, budgetConfig, colors]);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
@@ -85,26 +105,36 @@ export default function MoreScreen() {
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-        <View style={styles.grid}>
-          {items.map((item) => (
-            <TouchableOpacity
-              key={item.route}
-              style={[styles.card, { backgroundColor: colors.card }]}
-              onPress={() => router.push(item.route as any)}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.iconCircle, { backgroundColor: item.color + '20' }]}>
-                <Text style={styles.emoji}>{item.emoji}</Text>
+        {(['quotidien', 'famille', 'systeme'] as const).map((cat) => {
+          const catItems = items.filter((i) => i.category === cat);
+          if (catItems.length === 0) return null;
+          const catLabels = { quotidien: 'Vie quotidienne', famille: 'Famille', systeme: 'Système' };
+          return (
+            <View key={cat}>
+              <Text style={[styles.sectionHeader, { color: colors.textMuted }]}>{catLabels[cat]}</Text>
+              <View style={styles.grid}>
+                {catItems.map((item) => (
+                  <TouchableOpacity
+                    key={item.route}
+                    style={[styles.card, { backgroundColor: colors.card }]}
+                    onPress={() => router.push(item.route as any)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.iconCircle, { backgroundColor: item.color + '20' }]}>
+                      <Text style={styles.emoji}>{item.emoji}</Text>
+                    </View>
+                    <Text style={[styles.cardLabel, { color: colors.textSub }]}>{item.label}</Text>
+                    {item.badge ? (
+                      <View style={[styles.badgeContainer, { backgroundColor: item.color }]}>
+                        <Text style={[styles.badgeText, { color: colors.onPrimary }]}>{item.badge}</Text>
+                      </View>
+                    ) : null}
+                  </TouchableOpacity>
+                ))}
               </View>
-              <Text style={[styles.cardLabel, { color: colors.textSub }]}>{item.label}</Text>
-              {item.badge ? (
-                <View style={[styles.badgeContainer, { backgroundColor: item.color }]}>
-                  <Text style={styles.badgeText}>{item.badge}</Text>
-                </View>
-              ) : null}
-            </TouchableOpacity>
-          ))}
-        </View>
+            </View>
+          );
+        })}
       </ScrollView>
     </SafeAreaView>
   );
@@ -113,24 +143,33 @@ export default function MoreScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   header: {
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingHorizontal: Spacing['3xl'],
+    paddingVertical: Spacing.xl,
     borderBottomWidth: 1,
   },
-  title: { fontSize: 22, fontWeight: '800' },
+  title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
   scroll: { flex: 1 },
-  content: { padding: 16, paddingBottom: 40 },
+  content: { padding: Spacing['2xl'], paddingBottom: 40 },
+  sectionHeader: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: Spacing.md,
+    marginTop: Spacing.xl,
+    paddingHorizontal: Spacing.xs,
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: Spacing.xl,
   },
   card: {
     width: '47%',
     borderRadius: 18,
-    padding: 20,
+    padding: Spacing['3xl'],
     alignItems: 'center',
-    gap: 10,
+    gap: Spacing.lg,
     shadowColor: '#000',
     shadowOpacity: 0.04,
     shadowRadius: 8,
@@ -141,29 +180,28 @@ const styles = StyleSheet.create({
   iconCircle: {
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emoji: { fontSize: 28 },
+  emoji: { fontSize: FontSize.icon },
   cardLabel: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
   },
   badgeContainer: {
     position: 'absolute',
-    top: 10,
-    right: 10,
+    top: Spacing.lg,
+    right: Spacing.lg,
     minWidth: 22,
     height: 22,
-    borderRadius: 11,
+    borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 6,
+    paddingHorizontal: Spacing.sm,
   },
   badgeText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#FFFFFF',
+    fontSize: FontSize.code,
+    fontWeight: FontWeight.heavy,
   },
 });

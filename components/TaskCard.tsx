@@ -13,7 +13,10 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Task } from '../lib/types';
+import { formatDateForDisplay } from '../lib/parser';
 import { useThemeColors } from '../contexts/ThemeContext';
+import { Spacing, Radius } from '../constants/spacing';
+import { FontSize, FontWeight, LineHeight } from '../constants/typography';
 
 interface TaskCardProps {
   task: Task;
@@ -83,7 +86,7 @@ export const TaskCard = React.memo(function TaskCard({
           { borderColor: colors.separator, backgroundColor: colors.card },
           task.completed && { backgroundColor: primary, borderColor: primary },
         ]}>
-          {task.completed && <Text style={styles.checkmark}>✓</Text>}
+          {task.completed && <Text style={[styles.checkmark, { color: colors.onPrimary }]}>✓</Text>}
         </View>
       </TouchableOpacity>
 
@@ -93,7 +96,7 @@ export const TaskCard = React.memo(function TaskCard({
             styles.taskText,
             { color: colors.text },
             task.completed && [styles.completedText, { color: colors.textFaint }],
-            isOverdue && styles.overdueText,
+            isOverdue && { color: colors.error },
           ]}
           numberOfLines={2}
         >
@@ -112,9 +115,9 @@ export const TaskCard = React.memo(function TaskCard({
             </View>
           )}
           {task.dueDate && !task.completed && (
-            <View style={[styles.badge, { backgroundColor: colors.cardAlt }, isOverdue && styles.overdueBadgeContainer]}>
-              <Text style={[styles.dueDate, { color: colors.textMuted }, isOverdue && styles.overdueBadge]}>
-                📅 {task.dueDate}
+            <View style={[styles.badge, { backgroundColor: colors.cardAlt }, isOverdue && { backgroundColor: colors.errorBg }]}>
+              <Text style={[styles.dueDate, { color: colors.textMuted }, isOverdue && { color: colors.error, fontWeight: '700' as const }]}>
+                📅 {formatDateForDisplay(task.dueDate)}
               </Text>
             </View>
           )}
@@ -143,8 +146,8 @@ export const TaskCard = React.memo(function TaskCard({
               </View>
             ))}
             {task.mentions.map((mention) => (
-              <View key={mention} style={[styles.tag, styles.mentionTag]}>
-                <Text style={styles.mentionText}>@{mention}</Text>
+              <View key={mention} style={[styles.tag, { backgroundColor: colors.tagMention }]}>
+                <Text style={[styles.mentionText, { color: colors.tagMentionText }]}>@{mention}</Text>
               </View>
             ))}
           </View>
@@ -158,18 +161,18 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
+    borderRadius: Radius.lg,
+    padding: Spacing.xl,
+    marginBottom: Spacing.lg,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
     shadowRadius: 3,
     elevation: 2,
-    gap: 14,
+    gap: Spacing.xl,
   },
   checkbox: {
-    marginTop: 2,
+    marginTop: Spacing.xxs,
   },
   checkboxInner: {
     width: 26,
@@ -181,84 +184,73 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
   },
   content: {
     flex: 1,
     gap: 5,
   },
   taskText: {
-    fontSize: 16,
-    fontWeight: '500',
-    lineHeight: 22,
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.medium,
+    lineHeight: LineHeight.body,
   },
   completedText: {
     textDecorationLine: 'line-through',
   },
-  overdueText: {
-    color: '#EF4444',
-  },
+  overdueText: {},
   meta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: Spacing.sm,
     flexWrap: 'wrap',
-    marginTop: 2,
+    marginTop: Spacing.xxs,
   },
   badge: {
-    paddingHorizontal: 8,
+    paddingHorizontal: Spacing.md,
     paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: Radius.sm,
   },
   sectionBadge: {
-    paddingHorizontal: 8,
+    paddingHorizontal: Spacing.md,
     paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: Radius.sm,
   },
   sourceLabel: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.semibold,
   },
   sectionLabel: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.semibold,
   },
   dueDate: {
-    fontSize: 13,
-    fontWeight: '500',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.medium,
   },
-  overdueBadgeContainer: {
-    backgroundColor: '#FEE2E2',
-  },
-  overdueBadge: {
-    color: '#EF4444',
-    fontWeight: '700',
-  },
+  overdueBadgeContainer: {},
+  overdueBadge: {},
   recurrenceBadge: {
-    fontSize: 12,
+    fontSize: FontSize.caption,
   },
   tags: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 4,
-    marginTop: 2,
+    gap: Spacing.xs,
+    marginTop: Spacing.xxs,
   },
   tag: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xxs,
+    borderRadius: Radius.xs,
   },
   tagText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  mentionTag: {
-    backgroundColor: '#FEF3C7',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
   },
   mentionText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#D97706',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
   },
 });

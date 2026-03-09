@@ -13,7 +13,9 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as SecureStore from 'expo-secure-store';
 import { VAULT_PATH_KEY } from '../hooks/useVault';
 import { View, ActivityIndicator, StyleSheet, useColorScheme } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { configureNotifications } from '../lib/scheduled-notifications';
+import { ToastProvider } from '../contexts/ToastContext';
 
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
@@ -40,14 +42,18 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <StatusBar style="auto" />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="setup" />
-        <Stack.Screen name="(tabs)" />
-      </Stack>
-      {!hasVault && <Redirect href="/setup" />}
-    </GestureHandlerRootView>
+    <SafeAreaProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <ToastProvider>
+          <StatusBar style="auto" />
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="setup" />
+            <Stack.Screen name="(tabs)" />
+          </Stack>
+          {!hasVault && <Redirect href="/setup" />}
+        </ToastProvider>
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
   );
 }
 

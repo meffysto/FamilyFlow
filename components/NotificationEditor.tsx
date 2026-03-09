@@ -24,6 +24,7 @@ import {
 } from 'react-native';
 import { NotificationConfig, Profile } from '../lib/types';
 import { useThemeColors } from '../contexts/ThemeContext';
+import { useToast } from '../contexts/ToastContext';
 import { renderTemplate, dispatchNotification, buildManualContext } from '../lib/notifications';
 
 interface Props {
@@ -36,6 +37,7 @@ interface Props {
 
 export function NotificationEditor({ config, activeProfile, onSave, onDelete, onClose }: Props) {
   const { primary, tint, colors } = useThemeColors();
+  const { showToast } = useToast();
   const [enabled, setEnabled] = useState(config.enabled);
   const [template, setTemplate] = useState(config.template);
   const [label, setLabel] = useState(config.label);
@@ -119,12 +121,12 @@ export function NotificationEditor({ config, activeProfile, onSave, onDelete, on
       };
       const ok = await dispatchNotification(config.id, context, prefs);
       if (ok) {
-        Alert.alert('Envoyé !', 'Notification envoyée sur Telegram.');
+        showToast('Notification envoyée sur Telegram !');
       } else {
-        Alert.alert('Erreur', 'Impossible d\'envoyer. Vérifiez la configuration Telegram.');
+        showToast('Impossible d\'envoyer la notification', 'error');
       }
     } catch {
-      Alert.alert('Erreur', 'Échec de l\'envoi.');
+      showToast('Échec de l\'envoi', 'error');
     } finally {
       setIsSending(false);
     }
