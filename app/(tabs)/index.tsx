@@ -84,6 +84,7 @@ const ALL_SECTIONS: SectionPref[] = [
   { id: 'lootProgress', label: 'Progression',            emoji: '🎁', visible: true,  priority: 'medium' },
   { id: 'rewards',    label: 'Récompenses actives',     emoji: '🏆', visible: true,  priority: 'medium' },
   { id: 'defis',      label: 'Défis familiaux',         emoji: '🏅', visible: true,  priority: 'medium' },
+  { id: 'gratitude',  label: 'Gratitude',               emoji: '🙏', visible: true,  priority: 'medium' },
   // Optionnelles — masquées par défaut pour les nouveaux utilisateurs
   { id: 'stock',      label: 'Alertes stock',            emoji: '📦', visible: false, priority: 'low' },
   { id: 'quicknotifs',label: 'Notifications rapides',   emoji: '📤', visible: false, priority: 'low' },
@@ -160,6 +161,7 @@ export default function DashboardScreen() {
     budgetConfig,
     defis,
     checkInDefi,
+    gratitudeDays,
   } = useVault();
 
   // Active rewards (filtered for non-expired)
@@ -461,6 +463,8 @@ export default function DashboardScreen() {
     if (recipes.length > 0) activeSections.add('recipes');
     if (customNotifs.length > 0) activeSections.add('quicknotifs');
     if (defis.some((d) => d.status === 'active')) activeSections.add('defis');
+    const todayGrat = gratitudeDays.find((d) => d.date === todayStr);
+    if (todayGrat && todayGrat.entries.length > 0) activeSections.add('gratitude');
     return smartSortSections(sectionPrefs, {
       hour: new Date().getHours(),
       hasBaby,
@@ -471,7 +475,7 @@ export default function DashboardScreen() {
   }, [smartSort, sectionPrefs, hasBaby, overdueTasks.length, isVacationActive,
     pendingMenage.length, todayMeals.length, topCourses.length, upcomingRdvs.length,
     enfants.length, stock.length, activeRewards.length, leaderboard.length,
-    weeklyStatsData.total, activeProfile, recipes.length, customNotifs.length, defis]);
+    weeklyStatsData.total, activeProfile, recipes.length, customNotifs.length, defis, gratitudeDays, todayStr]);
 
   const renderSection = (id: string): React.ReactNode => {
     switch (id) {
@@ -975,42 +979,42 @@ export default function DashboardScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: primary }]}>
+      <View style={[styles.header, { backgroundColor: colors.bg, borderBottomColor: colors.separator }]}>
         <View style={styles.headerLeft}>
           <Text style={[
             isChildMode ? styles.greetingChild : styles.greeting,
-            { color: colors.onPrimaryMuted },
+            { color: colors.textSub },
           ]}>
             {isChildMode
               ? `Salut ${activeProfile?.name ?? ''} ! 🌟`
               : `Bonjour${activeProfile ? ` ${activeProfile.name}` : ''} 👋`}
           </Text>
-          <Text style={[styles.dateText, { color: colors.onPrimary }]}>{today}</Text>
+          <Text style={[styles.dateText, { color: colors.text }]}>{today}</Text>
         </View>
         <View style={styles.headerActions}>
           {!isChildMode && (
             <TouchableOpacity
               onPress={handleSendRecap}
-              style={styles.headerBtn}
+              style={[styles.headerBtn, { backgroundColor: colors.cardAlt }]}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               disabled={isSendingRecap}
               accessibilityLabel="Envoyer le récap aux grands-parents"
               accessibilityRole="button"
             >
               <Text style={styles.headerBtnIcon}>{isSendingRecap ? '⏳' : '📤'}</Text>
-              <Text style={[styles.headerBtnLabel, { color: colors.onPrimaryMuted }]}>Récap GP</Text>
+              <Text style={[styles.headerBtnLabel, { color: colors.textMuted }]}>Récap GP</Text>
             </TouchableOpacity>
           )}
           {!isChildMode && (
             <TouchableOpacity
               onPress={() => setPrefsModalVisible(true)}
-              style={styles.headerBtn}
+              style={[styles.headerBtn, { backgroundColor: colors.cardAlt }]}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityLabel="Configurer les sections"
               accessibilityRole="button"
             >
               <Text style={styles.headerBtnIcon}>⚙️</Text>
-              <Text style={[styles.headerBtnLabel, { color: colors.onPrimaryMuted }]}>Sections</Text>
+              <Text style={[styles.headerBtnLabel, { color: colors.textMuted }]}>Sections</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -1251,7 +1255,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   headerLeft: {
     flex: 1,
@@ -1273,9 +1278,10 @@ const styles = StyleSheet.create({
   headerBtn: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    gap: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    gap: 2,
+    borderRadius: 12,
   },
   headerBtnIcon: {
     fontSize: 22,
