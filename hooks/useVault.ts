@@ -41,7 +41,14 @@ import {
   formatMealLine,
 } from '../lib/parser';
 import { processActiveRewards } from '../lib/gamification';
-import { Task, RDV, CourseItem, MealItem, StockItem, Profile, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory } from '../lib/types';
+import { Task, RDV, CourseItem, MealItem, StockItem, Profile, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig } from '../lib/types';
+import {
+  parseBudgetConfig,
+  parseBudgetMonth,
+  serializeBudgetMonth,
+  serializeBudgetConfig,
+  DEFAULT_BUDGET_CONFIG,
+} from '../lib/budget';
 import { parseRecipe, generateCookFile } from '../lib/cooklang';
 import {
   parseNotificationPrefs,
@@ -132,6 +139,14 @@ export interface VaultState {
   dismissAgeUpgrade: (profileId: string) => void;
   addChild: (child: { name: string; avatar: string; birthdate: string; propre?: boolean; statut?: 'grossesse'; dateTerme?: string }) => Promise<void>;
   convertToBorn: (profileId: string, birthdate: string) => Promise<void>;
+  budgetEntries: BudgetEntry[];
+  budgetConfig: BudgetConfig;
+  budgetMonth: string;
+  setBudgetMonth: (month: string) => void;
+  addExpense: (date: string, category: string, amount: number, label: string) => Promise<void>;
+  deleteExpense: (lineIndex: number) => Promise<void>;
+  updateBudgetConfig: (config: BudgetConfig) => Promise<void>;
+  loadBudgetData: (month?: string) => Promise<void>;
 }
 
 // Static task files (non-enfant)
@@ -184,6 +199,8 @@ const MEMOIRES_DIR = '06 - Mémoires';
 const NOTIF_FILE = 'notifications.md';
 const RECIPES_DIR = '03 - Cuisine/Recettes';
 const VACATION_FILE = '02 - Maison/Vacances.md';
+const BUDGET_DIR = '05 - Budget';
+const BUDGET_CONFIG_FILE = '05 - Budget/config.md';
 const VACATION_STORE_KEY = 'vacation_mode';
 const VACATION_TEMPLATE = `# Checklist Vacances
 
@@ -244,7 +261,7 @@ const VACATION_TEMPLATE = `# Checklist Vacances
 - [ ] Déballer et ranger les valises
 `;
 
-export function useVault(): VaultState {
+export function useVaultInternal(): VaultState {
   const [vaultPath, setVaultPathState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -266,6 +283,9 @@ export function useVault(): VaultState {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [recipeFavorites, setRecipeFavorites] = useState<Record<string, string[]>>({});
   const [ageUpgrades, setAgeUpgrades] = useState<AgeUpgrade[]>([]);
+  const [budgetEntries, setBudgetEntries] = useState<BudgetEntry[]>([]);
+  const [budgetConfig, setBudgetConfig] = useState<BudgetConfig>(DEFAULT_BUDGET_CONFIG);
+  const [budgetMonth, setBudgetMonth] = useState(() => format(new Date(), 'yyyy-MM'));
   const vaultRef = useRef<VaultManager | null>(null);
   const busyRef = useRef(false); // Guard against AppState race condition
 
@@ -567,6 +587,7 @@ export function useVault(): VaultState {
       } catch {
         setRecipes([]);
       }
+
     } catch (e) {
       debugErrors.push(`global: ${e}`);
     }
@@ -598,6 +619,8 @@ export function useVault(): VaultState {
     setPhotoDates({});
     setMemories([]);
     setRecipes([]);
+    setBudgetEntries([]);
+    setBudgetConfig(DEFAULT_BUDGET_CONFIG);
     setVaultPathState(path);
     const vault = new VaultManager(path);
     vaultRef.current = vault;
@@ -1384,6 +1407,86 @@ export function useVault(): VaultState {
     await loadVaultData(vaultRef.current);
   }, [loadVaultData]);
 
+  // ─── Budget CRUD ────────────────────────────────────────────────────────
+
+  const loadBudgetData = useCallback(async (month?: string) => {
+    if (!vaultRef.current) return;
+    const m = month || budgetMonth;
+    if (month) setBudgetMonth(m);
+
+    try {
+      // Load config (try read, fallback to default + scaffold)
+      try {
+        const configContent = await vaultRef.current.readFile(BUDGET_CONFIG_FILE);
+        setBudgetConfig(parseBudgetConfig(configContent));
+      } catch {
+        await vaultRef.current.ensureDir(BUDGET_DIR);
+        await vaultRef.current.writeFile(BUDGET_CONFIG_FILE, serializeBudgetConfig(DEFAULT_BUDGET_CONFIG));
+        setBudgetConfig(DEFAULT_BUDGET_CONFIG);
+      }
+      // Load month entries (try read, fallback to empty)
+      try {
+        const content = await vaultRef.current.readFile(`${BUDGET_DIR}/${m}.md`);
+        setBudgetEntries(parseBudgetMonth(content));
+      } catch {
+        setBudgetEntries([]);
+      }
+    } catch {
+      setBudgetEntries([]);
+    }
+  }, [budgetMonth]);
+
+  const addExpense = useCallback(async (date: string, category: string, amount: number, label: string) => {
+    if (!vaultRef.current) return;
+    const month = date.slice(0, 7); // YYYY-MM
+    const monthFile = `${BUDGET_DIR}/${month}.md`;
+    await vaultRef.current.ensureDir(BUDGET_DIR);
+
+    let entries: BudgetEntry[] = [];
+    try {
+      const content = await vaultRef.current.readFile(monthFile);
+      entries = parseBudgetMonth(content);
+    } catch {
+      // file doesn't exist yet — start fresh
+    }
+
+    const newEntry: BudgetEntry = { date, category, amount, label, lineIndex: -1 };
+    entries.push(newEntry);
+    const serialized = serializeBudgetMonth(month, entries);
+    await vaultRef.current.writeFile(monthFile, serialized);
+
+    // Update state from serialized content (re-parse for accurate lineIndex)
+    if (month === budgetMonth) {
+      setBudgetEntries(parseBudgetMonth(serialized));
+    }
+  }, [budgetMonth]);
+
+  const deleteExpense = useCallback(async (lineIndex: number) => {
+    if (!vaultRef.current) return;
+    const monthFile = `${BUDGET_DIR}/${budgetMonth}.md`;
+
+    let content: string;
+    try {
+      content = await vaultRef.current.readFile(monthFile);
+    } catch {
+      return; // file doesn't exist
+    }
+    const lines = content.split('\n');
+    if (lineIndex >= 0 && lineIndex < lines.length) {
+      lines.splice(lineIndex, 1);
+      const updated = lines.join('\n');
+      await vaultRef.current.writeFile(monthFile, updated);
+      setBudgetEntries(parseBudgetMonth(updated));
+    }
+  }, [budgetMonth]);
+
+  const updateBudgetConfig = useCallback(async (config: BudgetConfig) => {
+    if (!vaultRef.current) return;
+    await vaultRef.current.ensureDir(BUDGET_DIR);
+    await vaultRef.current.writeFile(BUDGET_CONFIG_FILE, serializeBudgetConfig(config));
+    setBudgetConfig(config);
+  }, []);
+
   return {
     vaultPath,
     isLoading,
@@ -1447,5 +1550,13 @@ export function useVault(): VaultState {
     dismissAgeUpgrade,
     addChild,
     convertToBorn,
+    budgetEntries,
+    budgetConfig,
+    budgetMonth,
+    setBudgetMonth,
+    addExpense,
+    deleteExpense,
+    updateBudgetConfig,
+    loadBudgetData,
   };
 }

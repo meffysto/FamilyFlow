@@ -32,16 +32,26 @@ export const Spacing = {
 } as const;
 
 export const Radius = {
+  /** 2px — minimal (progress bars, dividers) */
+  xxs: 2,
   /** 4px — subtil (badges, tags) */
   xs: 4,
   /** 6px — petit (inputs, chips) */
   sm: 6,
   /** 8px — standard (cards, boutons) */
   md: 8,
+  /** 10px — intermédiaire (boutons actions, inputs larges) */
+  base: 10,
   /** 12px — moyen (modals, cards larges) */
   lg: 12,
+  /** 14px — semi-grand (cartes accentuées) */
+  'lg+': 14,
   /** 16px — grand (bottom sheet, cartes hero) */
   xl: 16,
+  /** 20px — extra (cards proéminentes, FAB actions) */
+  '2xl': 20,
+  /** 24px — hero (modals plein, picker overlay) */
+  '3xl': 24,
   /** 9999px — pill (boutons ronds, avatars) */
   full: 9999,
 } as const;

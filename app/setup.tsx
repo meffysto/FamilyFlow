@@ -24,7 +24,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { VaultPicker } from '../components/VaultPicker';
-import { useVault } from '../hooks/useVault';
+import { useVault } from '../contexts/VaultContext';
 import { VaultManager } from '../lib/vault';
 import { useThemeColors } from '../contexts/ThemeContext';
 

@@ -31,7 +31,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import * as SecureStore from 'expo-secure-store';
-import { useVault } from '../../hooks/useVault';
+import { useVault } from '../../contexts/VaultContext';
 import { useGamification } from '../../hooks/useGamification';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -41,7 +41,8 @@ import { FamilyLeaderboard } from '../../components/FamilyLeaderboard';
 import { RDVEditor } from '../../components/RDVEditor';
 import RecipeViewer from '../../components/RecipeViewer';
 import type { AppRecipe } from '../../lib/cooklang';
-import { buildLeaderboard, processActiveRewards } from '../../lib/gamification';
+import { buildLeaderboard, processActiveRewards, lootProgress, calculateLevel } from '../../lib/gamification';
+import { LOOT_THRESHOLD } from '../../constants/rewards';
 import {
   dispatchNotification,
   buildManualContext,
@@ -73,8 +74,10 @@ const ALL_SECTIONS: SectionPref[] = [
   { id: 'rdvs',       label: 'Rendez-vous',             emoji: '📅', visible: true,  priority: 'medium' },
   { id: 'photos',     label: 'Photo du jour',           emoji: '📸', visible: true,  priority: 'medium' },
   { id: 'budget',     label: 'Budget',                   emoji: '💰', visible: true,  priority: 'medium' },
+  // Gamification — visible par défaut
+  { id: 'lootProgress', label: 'Progression',            emoji: '🎁', visible: true,  priority: 'medium' },
+  { id: 'rewards',    label: 'Récompenses actives',     emoji: '🏆', visible: true,  priority: 'medium' },
   // Optionnelles — masquées par défaut pour les nouveaux utilisateurs
-  { id: 'rewards',    label: 'Récompenses actives',     emoji: '🏆', visible: false, priority: 'low' },
   { id: 'stock',      label: 'Alertes stock',            emoji: '📦', visible: false, priority: 'low' },
   { id: 'quicknotifs',label: 'Notifications rapides',   emoji: '📤', visible: false, priority: 'low' },
   { id: 'recipes',    label: 'Idée recette',             emoji: '📖', visible: false, priority: 'low' },
@@ -596,6 +599,45 @@ export default function DashboardScreen() {
             </View>
           </DashboardCard>
         );
+
+      case 'lootProgress': {
+        if (!activeProfile) return null;
+        const loot = lootProgress(activeProfile);
+        const hasBoxes = (activeProfile.lootBoxesAvailable ?? 0) > 0;
+        const level = calculateLevel(activeProfile.points ?? 0);
+        return (
+          <DashboardCard key="lootProgress" title="Progression" icon="🎁" color={primary}>
+            {/* Barre de progression vers prochaine loot box */}
+            <View style={styles.lootProgressRow}>
+              <Text style={[styles.lootProgressLabel, { color: colors.text }]}>
+                Nv. {level} — {activeProfile.avatar} {activeProfile.name}
+              </Text>
+              <Text style={[styles.lootProgressPts, { color: colors.textMuted }]}>
+                {loot.current}/{loot.threshold} pts
+              </Text>
+            </View>
+            <View style={[styles.lootProgressBar, { backgroundColor: colors.cardAlt }]}>
+              <View style={[styles.lootProgressFill, { width: `${Math.round(loot.progress * 100)}%`, backgroundColor: primary }]} />
+            </View>
+            {hasBoxes && (
+              <TouchableOpacity
+                style={[styles.lootCTA, { backgroundColor: tint, borderColor: primary }]}
+                onPress={() => router.push('/(tabs)/loot')}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.lootCTAText, { color: primary }]}>
+                  🎁 Ouvre ta récompense ! ({activeProfile.lootBoxesAvailable} dispo)
+                </Text>
+              </TouchableOpacity>
+            )}
+            {!hasBoxes && (
+              <Text style={[styles.lootHint, { color: colors.textFaint }]}>
+                Complète des tâches pour gagner une loot box !
+              </Text>
+            )}
+          </DashboardCard>
+        );
+      }
 
       case 'rewards':
         if (activeRewards.length === 0) return null;
@@ -1188,6 +1230,46 @@ const styles = StyleSheet.create({
   welcomeBtnText: {
     fontSize: 15,
     fontWeight: '700',
+  },
+  lootProgressRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  lootProgressLabel: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  lootProgressPts: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  lootProgressBar: {
+    height: 10,
+    borderRadius: 5,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  lootProgressFill: {
+    height: '100%',
+    borderRadius: 5,
+  },
+  lootCTA: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  lootCTAText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  lootHint: {
+    fontSize: 13,
+    textAlign: 'center',
   },
   activeRewardRow: {
     flexDirection: 'row',

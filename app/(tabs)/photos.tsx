@@ -36,7 +36,7 @@ import {
   isFuture,
 } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { useVault } from '../../hooks/useVault';
+import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { MemoryEditor } from '../../components/MemoryEditor';
 import { formatDateForDisplay } from '../../lib/parser';

@@ -15,6 +15,7 @@ import Animated, {
   SharedValue,
   Easing,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
@@ -39,6 +40,7 @@ const TIMING_CONFIG = { duration: 200, easing: Easing.out(Easing.cubic) };
 
 function FABComponent({ actions }: FABProps) {
   const { primary, colors } = useThemeColors();
+  const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
   const progress = useSharedValue(0);
 
@@ -72,7 +74,7 @@ function FABComponent({ actions }: FABProps) {
       </Animated.View>
 
       {/* Container FAB */}
-      <View style={styles.container} pointerEvents="box-none">
+      <View style={[styles.container, { bottom: 70 + Math.max(insets.bottom, 20) }]} pointerEvents="box-none">
         {/* Actions speed-dial */}
         {actions.map((action, index) => (
           <FABActionItem

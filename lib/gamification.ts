@@ -363,6 +363,13 @@ export function levelProgress(points: number): number {
   return (points - levelStart) / (levelEnd - levelStart);
 }
 
+/** Progress (0-1) toward next loot box for a given profile */
+export function lootProgress(profile: Profile): { progress: number; current: number; threshold: number } {
+  const threshold = LOOT_THRESHOLD[profile.role] ?? LOOT_THRESHOLD.adulte;
+  const current = profile.points % threshold;
+  return { progress: current / threshold, current, threshold };
+}
+
 // ─── Streak ─────────────────────────────────────────────────────────────────
 
 /** Calculate streak from history (consecutive days with completed tasks) */

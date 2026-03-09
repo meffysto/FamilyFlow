@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@cooklang/cooklang-ts": "^1.2.7",
+    "@react-native-community/datetimepicker": "^8.4.4",
     "babel-preset-expo": "~54.0.10",
     "date-fns": "^4.1.0",
     "expo": "~54.0.0",

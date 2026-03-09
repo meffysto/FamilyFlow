@@ -23,7 +23,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { useVault } from '../../hooks/useVault';
+import { useVault } from '../../contexts/VaultContext';
 import { todayJournalPath, generateJournalTemplate, todayAdultJournalPath, generateAdultJournalTemplate } from '../../lib/parser';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { parseJournalStats, calculerDuree } from '../../lib/journal-stats';

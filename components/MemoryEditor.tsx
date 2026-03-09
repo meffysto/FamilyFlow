@@ -15,7 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Memory, MemoryType } from '../lib/types';
-import { formatDateForDisplay, parseDateInput } from '../lib/parser';
+import { DateInput } from './ui/DateInput';
 import { format } from 'date-fns';
 
 const TYPE_OPTIONS: { label: string; value: MemoryType }[] = [
@@ -38,7 +38,7 @@ export function MemoryEditor({ memory, enfants, onSave, onClose }: MemoryEditorP
   const [title, setTitle] = useState(memory?.title ?? '');
   const [description, setDescription] = useState(memory?.description ?? '');
   const [date, setDate] = useState(
-    memory?.date ? formatDateForDisplay(memory.date) : format(new Date(), 'dd/MM/yyyy')
+    memory?.date ?? format(new Date(), 'yyyy-MM-dd')
   );
   const [enfant, setEnfant] = useState(memory?.enfant ?? enfants[0]?.name ?? '');
   const [isSaving, setIsSaving] = useState(false);
@@ -53,16 +53,10 @@ export function MemoryEditor({ memory, enfants, onSave, onClose }: MemoryEditorP
       return;
     }
 
-    const parsedDate = parseDateInput(date);
-    if (!parsedDate) {
-      Alert.alert('Date invalide', 'Format attendu : JJ/MM/AAAA');
-      return;
-    }
-
     setIsSaving(true);
     try {
       await onSave(enfant, {
-        date: parsedDate,
+        date,
         title: title.trim(),
         description: description.trim(),
         type,
@@ -173,14 +167,7 @@ export function MemoryEditor({ memory, enfants, onSave, onClose }: MemoryEditorP
 
         {/* Date */}
         <Text style={[styles.label, { color: textSub }]}>Date</Text>
-        <TextInput
-          style={[styles.input, { borderColor: border, color: text, backgroundColor: inputBg }]}
-          value={date}
-          onChangeText={setDate}
-          placeholder="JJ/MM/AAAA"
-          placeholderTextColor={textFaint}
-          keyboardType="numbers-and-punctuation"
-        />
+        <DateInput value={date} onChange={setDate} placeholder="Choisir une date" />
       </ScrollView>
     </SafeAreaView>
   );

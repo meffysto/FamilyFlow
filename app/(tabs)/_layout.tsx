@@ -1,11 +1,12 @@
 /**
- * (tabs)/_layout.tsx — Tab bar configuration + profile picker modal + ThemeProvider
+ * (tabs)/_layout.tsx — Tab bar configuration + profile picker modal
  */
 
+import { useEffect } from 'react';
 import { Tabs, useRouter } from 'expo-router';
 import { View, Text, Modal, StyleSheet, TouchableOpacity } from 'react-native';
-import { useVault } from '../../hooks/useVault';
-import { ThemeProvider, useThemeColors } from '../../contexts/ThemeContext';
+import { useVault } from '../../contexts/VaultContext';
+import { useThemeColors } from '../../contexts/ThemeContext';
 import { FAB, FABAction } from '../../components/FAB';
 
 function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
@@ -157,17 +158,21 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
 
 export default function TabsLayout() {
   const { profiles, activeProfile, setActiveProfile, vacationConfig, isVacationActive } = useVault();
+  const { setThemeId } = useThemeColors();
+
+  // Sync le thème du profil actif avec le ThemeProvider racine
+  useEffect(() => {
+    setThemeId(activeProfile?.theme ?? '');
+  }, [activeProfile?.theme, setThemeId]);
 
   return (
-    <ThemeProvider themeId={activeProfile?.theme}>
-      <ThemedTabsContent
-        profiles={profiles}
-        activeProfile={activeProfile}
-        setActiveProfile={setActiveProfile}
-        vacationConfig={vacationConfig}
-        isVacationActive={isVacationActive}
-      />
-    </ThemeProvider>
+    <ThemedTabsContent
+      profiles={profiles}
+      activeProfile={activeProfile}
+      setActiveProfile={setActiveProfile}
+      vacationConfig={vacationConfig}
+      isVacationActive={isVacationActive}
+    />
   );
 }
 

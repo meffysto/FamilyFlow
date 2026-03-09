@@ -120,6 +120,8 @@ export interface GamificationData {
 
 export type { AppRecipe as Recipe, AppIngredient as RecipeIngredient, AppStep as RecipeStep } from './cooklang';
 
+export type { BudgetEntry, BudgetConfig, BudgetCategory } from './budget';
+
 export interface VacationConfig {
   active: boolean;
   startDate: string; // YYYY-MM-DD

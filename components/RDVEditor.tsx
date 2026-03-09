@@ -19,6 +19,7 @@ import { useToast } from '../contexts/ToastContext';
 import { Chip } from './ui/Chip';
 import { RDV } from '../lib/types';
 import { formatDateForDisplay, parseDateInput } from '../lib/parser';
+import { DateInput } from './ui/DateInput';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
 
@@ -45,10 +46,8 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
   const { showToast } = useToast();
   const isEditing = !!rdv;
 
-  // Display in DD/MM/YYYY, store internally as YYYY-MM-DD
-  const [dateRdv, setDateRdv] = useState(
-    rdv?.date_rdv ? formatDateForDisplay(rdv.date_rdv) : ''
-  );
+  // Stocké en ISO (YYYY-MM-DD), affiché via DateInput natif
+  const [dateRdv, setDateRdv] = useState(rdv?.date_rdv ?? '');
   const [heure, setHeure] = useState(rdv?.heure ?? '');
   const [typeRdv, setTypeRdv] = useState(rdv?.type_rdv ?? 'pédiatre');
   const [enfant, setEnfant] = useState(rdv?.enfant ?? 'Maxence');
@@ -73,17 +72,10 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
       showToast('La date est obligatoire', 'error');
       return;
     }
-    // Parse DD/MM/YYYY (or YYYY-MM-DD) to YYYY-MM-DD
-    const parsedDate = parseDateInput(dateRdv);
-    if (!parsedDate) {
-      showToast('Date invalide (format : JJ/MM/AAAA)', 'error');
-      return;
-    }
-
     setIsSaving(true);
     try {
       await onSave({
-        date_rdv: parsedDate,
+        date_rdv: dateRdv,
         heure,
         type_rdv: typeRdv,
         enfant,
@@ -135,25 +127,11 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {/* Date */}
         <Text style={[styles.label, { color: colors.textSub }]}>📅 Date *</Text>
-        <TextInput
-          style={inputStyle}
-          value={dateRdv}
-          onChangeText={setDateRdv}
-          placeholder="06/03/2026"
-          placeholderTextColor={colors.textFaint}
-          keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default'}
-        />
+        <DateInput value={dateRdv} onChange={setDateRdv} placeholder="Choisir une date" />
 
         {/* Heure */}
         <Text style={[styles.label, { color: colors.textSub }]}>🕐 Heure</Text>
-        <TextInput
-          style={inputStyle}
-          value={heure}
-          onChangeText={setHeure}
-          placeholder="14:30"
-          placeholderTextColor={colors.textFaint}
-          keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default'}
-        />
+        <DateInput value={heure} onChange={setHeure} mode="time" placeholder="Choisir l'heure" />
 
         {/* Type */}
         <Text style={[styles.label, { color: colors.textSub }]}>Type de RDV</Text>

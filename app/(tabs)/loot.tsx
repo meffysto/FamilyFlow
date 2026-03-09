@@ -19,7 +19,7 @@ import {
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useVault } from '../../hooks/useVault';
+import { useVault } from '../../contexts/VaultContext';
 import { useGamification } from '../../hooks/useGamification';
 import { FamilyLeaderboard } from '../../components/FamilyLeaderboard';
 import { LootBoxOpener } from '../../components/LootBoxOpener';

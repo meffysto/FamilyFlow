@@ -11,11 +11,13 @@ import { Redirect, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as SecureStore from 'expo-secure-store';
-import { VAULT_PATH_KEY } from '../hooks/useVault';
+import { VAULT_PATH_KEY } from '../contexts/VaultContext';
+import { VaultProvider } from '../contexts/VaultContext';
 import { View, ActivityIndicator, StyleSheet, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { configureNotifications } from '../lib/scheduled-notifications';
 import { ToastProvider } from '../contexts/ToastContext';
+import { ThemeProvider } from '../contexts/ThemeContext';
 
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
@@ -44,14 +46,18 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <ToastProvider>
-          <StatusBar style="auto" />
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="setup" />
-            <Stack.Screen name="(tabs)" />
-          </Stack>
-          {!hasVault && <Redirect href="/setup" />}
-        </ToastProvider>
+        <VaultProvider>
+          <ThemeProvider>
+            <ToastProvider>
+              <StatusBar style="auto" />
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="setup" />
+                <Stack.Screen name="(tabs)" />
+              </Stack>
+              {!hasVault && <Redirect href="/setup" />}
+            </ToastProvider>
+          </ThemeProvider>
+        </VaultProvider>
       </GestureHandlerRootView>
     </SafeAreaProvider>
   );

@@ -25,7 +25,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
-import { useVault, VAULT_PATH_KEY } from '../../hooks/useVault';
+import { useVault, VAULT_PATH_KEY } from '../../contexts/VaultContext';
 import { VaultPicker } from '../../components/VaultPicker';
 import { NotificationSettings } from '../../components/NotificationSettings';
 import { testTelegram, sendTelegram, buildWeeklyRecapText, sendWeeklyRecap, buildMonthlyRecapText, buildGrossesseUpdateText } from '../../lib/telegram';
@@ -33,6 +33,7 @@ import { serializeGamification, formatDateForDisplay } from '../../lib/parser';
 import { RARITY_LABELS } from '../../constants/rewards';
 import { format } from 'date-fns';
 import { THEME_LIST, getTheme } from '../../constants/themes';
+import { DateInput } from '../../components/ui/DateInput';
 
 const CHILD_AVATARS = ['👶', '🧒', '👦', '👧', '🍼', '🐣', '🎒', '👼'];
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -683,23 +684,9 @@ export default function SettingsScreen() {
                 ) : (
                   <>
                     <Text style={[styles.rowLabel, { color: colors.textSub }]}>📅 Date de début</Text>
-                    <TextInput
-                      style={[styles.input, { borderColor: colors.inputBorder, color: colors.text }]}
-                      value={vacStartDate}
-                      onChangeText={setVacStartDate}
-                      placeholder="10-07-2026"
-                      placeholderTextColor={colors.textFaint}
-                      keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default'}
-                    />
-                    <Text style={[styles.rowLabel, { color: colors.textSub }]}>📅 Date de fin</Text>
-                    <TextInput
-                      style={[styles.input, { borderColor: colors.inputBorder, color: colors.text }]}
-                      value={vacEndDate}
-                      onChangeText={setVacEndDate}
-                      placeholder="24-07-2026"
-                      placeholderTextColor={colors.textFaint}
-                      keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default'}
-                    />
+                    <DateInput value={vacStartDate} onChange={setVacStartDate} placeholder="Date de début" />
+                    <Text style={[styles.rowLabel, { color: colors.textSub, marginTop: 8 }]}>📅 Date de fin</Text>
+                    <DateInput value={vacEndDate} onChange={setVacEndDate} placeholder="Date de fin" />
                     <View style={styles.btnRow}>
                       <TouchableOpacity
                         style={[styles.secondaryBtn, { borderColor: colors.border }]}
@@ -710,16 +697,13 @@ export default function SettingsScreen() {
                       <TouchableOpacity
                         style={[styles.primaryBtn, { backgroundColor: primary }]}
                         onPress={async () => {
-                          const ddmmyyyy = /^\d{2}-\d{2}-\d{4}$/;
-                          if (!ddmmyyyy.test(vacStartDate) || !ddmmyyyy.test(vacEndDate)) {
-                            Alert.alert('Format invalide', 'Les dates doivent être au format JJ-MM-AAAA.');
+                          if (!vacStartDate || !vacEndDate) {
+                            Alert.alert('Champs requis', 'Les deux dates sont obligatoires.');
                             return;
                           }
-                          // Convert DD-MM-YYYY → YYYY-MM-DD for storage
-                          const [sd, sm, sy] = vacStartDate.split('-');
-                          const [ed, em, ey] = vacEndDate.split('-');
-                          const startISO = `${sy}-${sm}-${sd}`;
-                          const endISO = `${ey}-${em}-${ed}`;
+                          // Already in ISO format from DateInput
+                          const startISO = vacStartDate;
+                          const endISO = vacEndDate;
                           if (endISO <= startISO) {
                             Alert.alert('Dates invalides', 'La date de fin doit être après la date de début.');
                             return;
@@ -1014,14 +998,7 @@ export default function SettingsScreen() {
             <Text style={styles.avatarPreview}>{editAvatar || '👤'}</Text>
 
             <Text style={[styles.inputLabel, { color: colors.textSub }]}>🎂 Date de naissance (optionnel)</Text>
-            <TextInput
-              style={[styles.input, { borderColor: colors.inputBorder, color: colors.text }]}
-              value={editBirthdate}
-              onChangeText={setEditBirthdate}
-              placeholder="1990-01-15"
-              placeholderTextColor={colors.textFaint}
-              keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default'}
-            />
+            <DateInput value={editBirthdate} onChange={setEditBirthdate} placeholder="Date de naissance" />
 
             {editingProfile?.role === 'enfant' && (
               <View style={styles.propreRow}>
@@ -1199,28 +1176,12 @@ export default function SettingsScreen() {
             {newChildGrossesse ? (
               <>
                 <Text style={[styles.inputLabel, { color: colors.textSub }]}>📅 Date terme prévue</Text>
-                <TextInput
-                  style={[styles.input, { borderColor: colors.inputBorder, color: colors.text }]}
-                  value={newChildDateTerme}
-                  onChangeText={setNewChildDateTerme}
-                  placeholder="AAAA-MM-JJ"
-                  placeholderTextColor={colors.textFaint}
-                  keyboardType="number-pad"
-                  maxLength={10}
-                />
+                <DateInput value={newChildDateTerme} onChange={setNewChildDateTerme} placeholder="Date terme prévue" />
               </>
             ) : (
               <>
-                <Text style={[styles.inputLabel, { color: colors.textSub }]}>🎂 Année ou date de naissance</Text>
-                <TextInput
-                  style={[styles.input, { borderColor: colors.inputBorder, color: colors.text }]}
-                  value={newChildBirthdate}
-                  onChangeText={setNewChildBirthdate}
-                  placeholder="AAAA ou AAAA-MM-JJ"
-                  placeholderTextColor={colors.textFaint}
-                  keyboardType="number-pad"
-                  maxLength={10}
-                />
+                <Text style={[styles.inputLabel, { color: colors.textSub }]}>🎂 Date de naissance</Text>
+                <DateInput value={newChildBirthdate} onChange={setNewChildBirthdate} placeholder="Date de naissance" />
                 <Text style={[styles.propreHint, { color: colors.textFaint }]}>L'année adapte les tâches à l'âge (bébé, enfant, ado)</Text>
 
                 <View style={styles.propreRow}>
@@ -1259,16 +1220,7 @@ export default function SettingsScreen() {
           <View style={styles.modalContent}>
             <Text style={styles.bornEmoji}>🎉</Text>
             <Text style={[styles.inputLabel, { color: colors.textSub }]}>📅 Date de naissance</Text>
-            <TextInput
-              style={[styles.input, { borderColor: colors.inputBorder, color: colors.text }]}
-              value={bornDate}
-              onChangeText={setBornDate}
-              placeholder="AAAA-MM-JJ"
-              placeholderTextColor={colors.textFaint}
-              keyboardType="number-pad"
-              maxLength={10}
-              autoFocus
-            />
+            <DateInput value={bornDate} onChange={setBornDate} placeholder="Date de naissance" />
             <Text style={[styles.propreHint, { color: colors.textFaint }]}>Les tâches grossesse seront remplacées par les tâches bébé</Text>
             <TouchableOpacity
               style={[styles.primaryBtn, { backgroundColor: primary, marginTop: 20 }]}

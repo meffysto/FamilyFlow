@@ -22,13 +22,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
-import { useVault } from '../../hooks/useVault';
+import { useVault } from '../../contexts/VaultContext';
 import { useGamification } from '../../hooks/useGamification';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { TaskCard } from '../../components/TaskCard';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { Chip } from '../../components/ui/Chip';
+import { DateInput } from '../../components/ui/DateInput';
 import {
   dispatchNotificationAsync,
   buildAllTasksDoneContext,
@@ -434,14 +435,7 @@ export default function TasksScreen() {
             />
 
             <Text style={[styles.modalLabel, { color: colors.textSub }]}>📅 Date d'échéance (optionnel)</Text>
-            <TextInput
-              style={[styles.modalInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
-              value={newTaskDueDate}
-              onChangeText={setNewTaskDueDate}
-              placeholder="Format : 2026-03-15 (année-mois-jour)"
-              placeholderTextColor={colors.textFaint}
-              keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default'}
-            />
+            <DateInput value={newTaskDueDate} onChange={setNewTaskDueDate} placeholder="Choisir une date" />
 
             <Text style={[styles.modalLabel, { color: colors.textSub }]}>🔁 Se répète (optionnel)</Text>
             <View style={styles.targetRow}>

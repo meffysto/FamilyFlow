@@ -32,7 +32,7 @@ import {
   isToday,
 } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { useVault } from '../../hooks/useVault';
+import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Chip } from '../../components/ui/Chip';
 import { RDVEditor } from '../../components/RDVEditor';

@@ -26,7 +26,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { useVault } from '../../hooks/useVault';
+import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { MealItem, CourseItem, Recipe } from '../../lib/types';
 import { formatIngredient, aggregateIngredients, categorizeIngredient, type AppIngredient } from '../../lib/cooklang';

@@ -25,7 +25,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { useVault } from '../../hooks/useVault';
+import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import {
@@ -37,6 +37,7 @@ import {
   formatMonthLabel,
 } from '../../lib/budget';
 import { formatDateForDisplay } from '../../lib/parser';
+import { DateInput } from '../../components/ui/DateInput';
 import type { BudgetCategory, BudgetEntry } from '../../lib/types';
 
 function prevMonth(month: string): string {
@@ -328,13 +329,7 @@ export default function BudgetScreen() {
 
             {/* Date */}
             <Text style={[styles.fieldLabel, { color: colors.textSub }]}>Date</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
-              placeholder="AAAA-MM-JJ"
-              placeholderTextColor={colors.textFaint}
-              value={dateText}
-              onChangeText={setDateText}
-            />
+            <DateInput value={dateText} onChange={setDateText} placeholder="Choisir une date" />
 
             {/* Buttons */}
             <TouchableOpacity

@@ -5,6 +5,9 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
 import { useThemeColors } from '../contexts/ThemeContext';
+import { Spacing, Radius } from '../constants/spacing';
+import { FontSize, FontWeight } from '../constants/typography';
+import { Shadows } from '../constants/shadows';
 
 interface DashboardCardProps {
   title: string;
@@ -20,27 +23,28 @@ export function DashboardCard({
   title,
   icon,
   count,
-  color = '#7C3AED',
+  color,
   onPressMore,
   children,
   style,
 }: DashboardCardProps) {
-  const { colors } = useThemeColors();
+  const { primary, colors } = useThemeColors();
+  const accentColor = color ?? primary;
   return (
-    <View style={[styles.card, { backgroundColor: colors.card }, style]}>
+    <View style={[styles.card, Shadows.md, { backgroundColor: colors.card }, style]}>
       <View style={styles.header}>
         <View style={styles.titleRow}>
           {icon && <Text style={styles.icon}>{icon}</Text>}
           <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
           {count !== undefined && (
-            <View style={[styles.badge, { backgroundColor: color }]}>
+            <View style={[styles.badge, { backgroundColor: accentColor }]}>
               <Text style={[styles.badgeText, { color: colors.onPrimary }]}>{count}</Text>
             </View>
           )}
         </View>
         {onPressMore && (
           <TouchableOpacity onPress={onPressMore} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={[styles.moreLink, { color }]}>Voir tout →</Text>
+            <Text style={[styles.moreLink, { color: accentColor }]}>Voir tout →</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -51,50 +55,44 @@ export function DashboardCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 16,
-    padding: 18,
-    marginBottom: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    borderRadius: Radius.xl,
+    padding: Spacing['2xl'] + 2, // 18px — légèrement plus que 2xl
+    marginBottom: Spacing['lg+' as keyof typeof Spacing] ?? 14,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 14,
+    marginBottom: Spacing.xl + 2, // 14px
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: Spacing.md,
   },
   icon: {
-    fontSize: 20,
+    fontSize: FontSize.subtitle + 3, // 20px
   },
   title: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: FontSize.subtitle,
+    fontWeight: FontWeight.bold,
   },
   badge: {
-    borderRadius: 10,
-    paddingHorizontal: 8,
+    borderRadius: Radius.base,
+    paddingHorizontal: Spacing.md,
     paddingVertical: 3,
     minWidth: 22,
     alignItems: 'center',
   },
   badgeText: {
-    color: '#FFFFFF', // on primary
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.bold,
   },
   moreLink: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
   body: {
-    gap: 6,
+    gap: Spacing.sm,
   },
 });
