@@ -83,7 +83,7 @@ export const TaskCard = React.memo(function TaskCard({
           { borderColor: colors.separator, backgroundColor: colors.card },
           task.completed && { backgroundColor: primary, borderColor: primary },
         ]}>
-          {task.completed && <Text style={styles.checkmark}>✓</Text>}
+          {task.completed && <Text style={[styles.checkmark, { color: colors.onPrimary }]}>✓</Text>}
         </View>
       </TouchableOpacity>
 
@@ -93,7 +93,7 @@ export const TaskCard = React.memo(function TaskCard({
             styles.taskText,
             { color: colors.text },
             task.completed && [styles.completedText, { color: colors.textFaint }],
-            isOverdue && styles.overdueText,
+            isOverdue && { color: colors.error },
           ]}
           numberOfLines={2}
         >
@@ -112,8 +112,8 @@ export const TaskCard = React.memo(function TaskCard({
             </View>
           )}
           {task.dueDate && !task.completed && (
-            <View style={[styles.badge, { backgroundColor: colors.cardAlt }, isOverdue && styles.overdueBadgeContainer]}>
-              <Text style={[styles.dueDate, { color: colors.textMuted }, isOverdue && styles.overdueBadge]}>
+            <View style={[styles.badge, { backgroundColor: colors.cardAlt }, isOverdue && { backgroundColor: colors.errorBg }]}>
+              <Text style={[styles.dueDate, { color: colors.textMuted }, isOverdue && { color: colors.error, fontWeight: '700' as const }]}>
                 📅 {task.dueDate}
               </Text>
             </View>
@@ -143,8 +143,8 @@ export const TaskCard = React.memo(function TaskCard({
               </View>
             ))}
             {task.mentions.map((mention) => (
-              <View key={mention} style={[styles.tag, styles.mentionTag]}>
-                <Text style={styles.mentionText}>@{mention}</Text>
+              <View key={mention} style={[styles.tag, { backgroundColor: colors.tagMention }]}>
+                <Text style={[styles.mentionText, { color: colors.tagMentionText }]}>@{mention}</Text>
               </View>
             ))}
           </View>
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   checkmark: {
-    color: '#FFFFFF',
+    color: '#FFFFFF', // on primary — overridden inline if needed
     fontSize: 15,
     fontWeight: '700',
   },
@@ -196,9 +196,7 @@ const styles = StyleSheet.create({
   completedText: {
     textDecorationLine: 'line-through',
   },
-  overdueText: {
-    color: '#EF4444',
-  },
+  overdueText: {},
   meta: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -228,13 +226,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
   },
-  overdueBadgeContainer: {
-    backgroundColor: '#FEE2E2',
-  },
-  overdueBadge: {
-    color: '#EF4444',
-    fontWeight: '700',
-  },
+  overdueBadgeContainer: {},
+  overdueBadge: {},
   recurrenceBadge: {
     fontSize: 12,
   },
@@ -253,12 +246,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  mentionTag: {
-    backgroundColor: '#FEF3C7',
-  },
   mentionText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#D97706',
   },
 });

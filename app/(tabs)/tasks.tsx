@@ -307,8 +307,8 @@ export default function TasksScreen() {
 
       {/* Vacation banner */}
       {isVacationActive && vacationConfig && (
-        <View style={styles.vacationBanner}>
-          <Text style={styles.vacationBannerText}>
+        <View style={[styles.vacationBanner, { backgroundColor: colors.warningBg, borderBottomColor: colors.warning }]}>
+          <Text style={[styles.vacationBannerText, { color: colors.warningText }]}>
             ☀️ Mode Vacances — du {vacationConfig.startDate.split('-').reverse().join('/')} au {vacationConfig.endDate.split('-').reverse().join('/')}
           </Text>
         </View>
@@ -358,8 +358,8 @@ export default function TasksScreen() {
 
       {/* Long-press hint */}
       {sections.length > 0 && (
-        <View style={styles.deleteTip}>
-          <Text style={styles.deleteTipText}>💡 Appui long sur une tâche pour la supprimer</Text>
+        <View style={[styles.deleteTip, { backgroundColor: colors.warningBg, borderBottomColor: colors.warning }]}>
+          <Text style={[styles.deleteTipText, { color: colors.warningText }]}>💡 Appui long sur une tâche pour la supprimer</Text>
         </View>
       )}
 
@@ -399,7 +399,7 @@ export default function TasksScreen() {
         }}
         activeOpacity={0.8}
       >
-        <Text style={styles.fabText}>+</Text>
+        <Text style={[styles.fabText, { color: colors.onPrimary }]}>+</Text>
       </TouchableOpacity>
 
       {/* Add Task Modal */}
@@ -569,28 +569,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   vacationBanner: {
-    backgroundColor: '#FEF3C7',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#FDE68A',
   },
   vacationBannerText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#92400E',
     textAlign: 'center',
   },
   deleteTip: {
-    backgroundColor: '#FFFBEB',
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderBottomWidth: 1,
-    borderBottomColor: '#FDE68A',
   },
   deleteTipText: {
     fontSize: 12,
-    color: '#92400E',
     fontWeight: '500',
   },
   listContent: {
@@ -644,7 +638,6 @@ const styles = StyleSheet.create({
   },
   fabText: {
     fontSize: 28,
-    color: '#FFFFFF',
     fontWeight: '700',
     lineHeight: 30,
   },
