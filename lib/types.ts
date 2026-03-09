@@ -321,6 +321,20 @@ export interface DefiDayEntry {
   note?: string;
 }
 
+// ─── Gratitude ──────────────────────────────────────────────────────────────
+
+export interface GratitudeEntry {
+  date: string;           // YYYY-MM-DD
+  profileId: string;
+  profileName: string;
+  text: string;
+}
+
+export interface GratitudeDay {
+  date: string;           // YYYY-MM-DD
+  entries: GratitudeEntry[];
+}
+
 export type NotifEvent =
   | 'task_completed'
   | 'loot_box_opened'

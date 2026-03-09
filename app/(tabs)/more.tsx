@@ -114,6 +114,13 @@ export default function MoreScreen() {
         category: 'famille' as const,
       },
       {
+        emoji: '🙏',
+        label: 'Gratitude',
+        route: '/(tabs)/gratitude',
+        color: '#8B5CF6',
+        category: 'famille' as const,
+      },
+      {
         emoji: '💰',
         label: 'Budget',
         route: '/(tabs)/budget',

@@ -144,6 +144,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
         <Tabs.Screen name="health" options={{ href: null }} />
         <Tabs.Screen name="stats" options={{ href: null }} />
         <Tabs.Screen name="defis" options={{ href: null }} />
+        <Tabs.Screen name="gratitude" options={{ href: null }} />
         <Tabs.Screen name="night-mode" options={{ href: null, tabBarStyle: { display: 'none' } }} />
       </Tabs>
 

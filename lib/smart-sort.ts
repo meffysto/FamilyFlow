@@ -90,6 +90,11 @@ function getContextScore(id: string, ctx: SmartSortContext): number {
     case 'defis':
       return hasData ? 20 : -10;
 
+    case 'gratitude':
+      // Le soir (18h+), la gratitude monte — c'est le moment d'écrire
+      if (hasData) return hour >= 18 ? 40 : 15;
+      return hour >= 18 ? 25 : -5;
+
     default:
       return 0;
   }

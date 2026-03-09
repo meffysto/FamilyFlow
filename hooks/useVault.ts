@@ -45,9 +45,12 @@ import {
   formatMealLine,
   parseDefis,
   serializeDefis,
+  GRATITUDE_FILE,
+  parseGratitude,
+  serializeGratitude,
 } from '../lib/parser';
 import { processActiveRewards } from '../lib/gamification';
-import { Task, RDV, CourseItem, MealItem, StockItem, Profile, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, DefiDayEntry } from '../lib/types';
+import { Task, RDV, CourseItem, MealItem, StockItem, Profile, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, DefiDayEntry, GratitudeDay } from '../lib/types';
 import {
   parseBudgetConfig,
   parseBudgetMonth,
@@ -164,6 +167,9 @@ export interface VaultState {
   checkInDefi: (defiId: string, profileId: string, completed: boolean, value?: number, note?: string) => Promise<void>;
   completeDefi: (defiId: string) => Promise<void>;
   deleteDefi: (defiId: string) => Promise<void>;
+  gratitudeDays: GratitudeDay[];
+  addGratitudeEntry: (date: string, profileId: string, profileName: string, text: string) => Promise<void>;
+  deleteGratitudeEntry: (date: string, profileId: string) => Promise<void>;
 }
 
 // Static task files (non-enfant)
@@ -309,6 +315,7 @@ export function useVaultInternal(): VaultState {
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [healthRecords, setHealthRecords] = useState<HealthRecord[]>([]);
   const [defis, setDefis] = useState<Defi[]>([]);
+  const [gratitudeDays, setGratitudeDays] = useState<GratitudeDay[]>([]);
   const vaultRef = useRef<VaultManager | null>(null);
   const busyRef = useRef(false); // Guard against AppState race condition
 
@@ -624,6 +631,14 @@ export function useVaultInternal(): VaultState {
         setDefis(parsed);
       } catch {
         setDefis([]);
+      }
+
+      // Load gratitude
+      try {
+        const gratContent = await vault.readFile(GRATITUDE_FILE);
+        setGratitudeDays(parseGratitude(gratContent));
+      } catch {
+        setGratitudeDays([]);
       }
 
       // Load notification preferences
@@ -1730,6 +1745,60 @@ export function useVaultInternal(): VaultState {
     setDefis(updated);
   }, [defis]);
 
+  // ─── Gratitude CRUD ──────────────────────────────────────────────────────
+
+  const addGratitudeEntry = useCallback(async (date: string, profileId: string, profileName: string, text: string) => {
+    if (!vaultRef.current) return;
+    let days: GratitudeDay[];
+    try {
+      const content = await vaultRef.current.readFile(GRATITUDE_FILE);
+      days = parseGratitude(content);
+    } catch {
+      days = [];
+    }
+
+    // Trouver ou créer le jour
+    let day = days.find((d) => d.date === date);
+    if (!day) {
+      day = { date, entries: [] };
+      days.push(day);
+    }
+
+    // Ajouter/remplacer l'entry du profil
+    day.entries = day.entries.filter((e) => e.profileId !== profileId);
+    day.entries.push({ date, profileId, profileName, text });
+
+    await vaultRef.current.writeFile(GRATITUDE_FILE, serializeGratitude(days));
+    // parseGratitude and serializeGratitude both sort desc — no need to re-sort
+    setGratitudeDays(days);
+  }, []);
+
+  const deleteGratitudeEntry = useCallback(async (date: string, profileId: string) => {
+    if (!vaultRef.current) return;
+    let days: GratitudeDay[];
+    try {
+      const content = await vaultRef.current.readFile(GRATITUDE_FILE);
+      days = parseGratitude(content);
+    } catch {
+      return;
+    }
+
+    const day = days.find((d) => d.date === date);
+    if (!day) return;
+
+    day.entries = day.entries.filter((e) => e.profileId !== profileId);
+    if (day.entries.length === 0) {
+      days = days.filter((d) => d.date !== date);
+    }
+
+    if (days.length > 0) {
+      await vaultRef.current.writeFile(GRATITUDE_FILE, serializeGratitude(days));
+    } else {
+      try { await vaultRef.current.deleteFile(GRATITUDE_FILE); } catch { /* ignore */ }
+    }
+    setGratitudeDays(days);
+  }, []);
+
   return {
     vaultPath,
     isLoading,
@@ -1812,5 +1881,8 @@ export function useVaultInternal(): VaultState {
     checkInDefi,
     completeDefi,
     deleteDefi,
+    gratitudeDays,
+    addGratitudeEntry,
+    deleteGratitudeEntry,
   };
 }

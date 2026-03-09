@@ -31,6 +31,8 @@ import {
   DefiDayEntry,
   DefiType,
   DefiStatus,
+  GratitudeDay,
+  GratitudeEntry,
 } from './types';
 import { VALID_THEMES, type ProfileTheme } from '../constants/themes';
 
@@ -862,6 +864,93 @@ export function serializeDefis(defis: Defi[]): string {
 
   return `---\ntags:\n  - defis\n---\n# Défis familiaux\n\n${sections.join('\n\n')}
 `;
+}
+
+// ─── Gratitude familiale ────────────────────────────────────────────────────
+
+export const GRATITUDE_FILE = '06 - Mémoires/Gratitude familiale.md';
+
+/**
+ * Parse le fichier Gratitude familiale.md en GratitudeDay[].
+ * H2 = date (DD/MM/YYYY), H3 = 🙏 profil, texte libre entre H3.
+ */
+export function parseGratitude(content: string): GratitudeDay[] {
+  const { content: body } = matter(content);
+  const days: GratitudeDay[] = [];
+
+  // Splitter par H2 (date)
+  const dayBlocks = body.split(/^## /m).filter((b) => b.trim());
+
+  for (const block of dayBlocks) {
+    const lines = block.split('\n');
+    const firstLine = lines[0].trim();
+
+    // Extraire date DD/MM/YYYY
+    const dateMatch = firstLine.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    if (!dateMatch) continue;
+    const [, dd, mm, yyyy] = dateMatch;
+    const dateISO = `${yyyy}-${mm}-${dd}`;
+
+    // Splitter par H3 🙏
+    const entries: GratitudeEntry[] = [];
+    const entryBlocks = block.split(/^### 🙏 /m).slice(1);
+
+    for (const entryBlock of entryBlocks) {
+      const entryLines = entryBlock.split('\n');
+      const profileName = entryLines[0].trim();
+      const text = entryLines
+        .slice(1)
+        .map((l) => l.trim())
+        .filter((l) => l && l !== '---')
+        .join('\n')
+        .trim();
+
+      if (!profileName) continue;
+
+      const profileId = profileName
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '-');
+
+      entries.push({ date: dateISO, profileId, profileName, text });
+    }
+
+    days.push({ date: dateISO, entries });
+  }
+
+  // Tri par date desc
+  days.sort((a, b) => b.date.localeCompare(a.date));
+  return days;
+}
+
+/**
+ * Sérialise GratitudeDay[] en Markdown.
+ */
+export function serializeGratitude(days: GratitudeDay[]): string {
+  const sorted = [...days].sort((a, b) => b.date.localeCompare(a.date));
+
+  const parts: string[] = [];
+  parts.push('---\ntags:\n  - gratitude\n---\n');
+  parts.push('# Livre d\'or familial\n');
+
+  for (let i = 0; i < sorted.length; i++) {
+    const day = sorted[i];
+    // YYYY-MM-DD → DD/MM/YYYY
+    const [yyyy, mm, dd] = day.date.split('-');
+    parts.push(`## ${dd}/${mm}/${yyyy}\n`);
+
+    for (const entry of day.entries) {
+      parts.push(`### 🙏 ${entry.profileName}`);
+      parts.push(entry.text + '\n');
+    }
+
+    if (i < sorted.length - 1) {
+      parts.push('---\n');
+    }
+  }
+
+  return parts.join('\n');
 }
 
 // ─── Journal bébé ───────────────────────────────────────────────────────────

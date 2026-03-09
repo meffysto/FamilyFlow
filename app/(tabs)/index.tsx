@@ -43,6 +43,7 @@ import RecipeViewer from '../../components/RecipeViewer';
 import type { AppRecipe } from '../../lib/cooklang';
 import { buildLeaderboard, processActiveRewards, lootProgress, calculateLevel } from '../../lib/gamification';
 import { smartSortSections } from '../../lib/smart-sort';
+import { computeGratitudeStreak } from './gratitude';
 import { LOOT_THRESHOLD, POINTS_PER_TASK } from '../../constants/rewards';
 import {
   dispatchNotification,
@@ -325,6 +326,7 @@ export default function DashboardScreen() {
 
   const leaderboard = buildLeaderboard(profiles);
   const hasBaby = useMemo(() => profiles.some(isBabyProfile), [profiles]);
+  const gratitudeStreak = useMemo(() => computeGratitudeStreak(gratitudeDays, profiles.length), [gratitudeDays, profiles.length]);
 
   // Custom notifications for quick-send buttons
   const customNotifs = notifPrefs.notifications.filter(
@@ -974,19 +976,11 @@ export default function DashboardScreen() {
       case 'gratitude': {
         const todayGrat = gratitudeDays.find((d) => d.date === todayStr);
         const todayCount = todayGrat?.entries.length ?? 0;
-        const totalProfiles = profiles.length;
-        // Calcul streak : jours consécutifs où tous les profils ont contribué
-        let streak = 0;
-        const sortedDays = [...gratitudeDays].sort((a, b) => b.date.localeCompare(a.date));
-        for (const day of sortedDays) {
-          if (day.entries.length >= totalProfiles) streak++;
-          else break;
-        }
         return (
-          <DashboardCard key="gratitude" title="Gratitude" icon="🙏" color="#8B5CF6" onPressMore={() => router.push('/(tabs)/gratitude')}>
+          <DashboardCard key="gratitude" title="Gratitude" icon="🙏" color={colors.info} onPressMore={() => router.push('/(tabs)/gratitude')}>
             <Text style={[styles.defiMeta, { color: colors.textSub }]}>
-              {todayCount}/{totalProfiles} aujourd'hui
-              {streak > 0 ? ` · ${streak}j 🔥` : ''}
+              {todayCount}/{profiles.length} aujourd'hui
+              {gratitudeStreak > 0 ? ` · ${gratitudeStreak}j 🔥` : ''}
             </Text>
           </DashboardCard>
         );
