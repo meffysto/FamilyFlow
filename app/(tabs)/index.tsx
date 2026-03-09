@@ -590,8 +590,9 @@ export default function DashboardScreen() {
         );
 
       case 'rdvs':
+        if (upcomingRdvs.length === 0) return null;
         return (
-          <DashboardCard key="rdvs" title="Rendez-vous" icon="📅" count={upcomingRdvs.length || undefined} color={colors.info}>
+          <DashboardCard key="rdvs" title="Rendez-vous" icon="📅" count={upcomingRdvs.length} color={colors.info}>
             {upcomingRdvs.slice(0, 3).map((rdv) => (
               <TouchableOpacity key={rdv.sourceFile} style={[styles.rdvRow, { borderLeftColor: colors.info }]} onPress={() => { setEditingRDV(rdv); setRdvEditorVisible(true); }} activeOpacity={0.7}>
                 <Text style={[styles.rdvDate, { color: colors.info }]}>{formatDateForDisplay(rdv.date_rdv)} {rdv.heure ? `à ${rdv.heure}` : ''}</Text>
@@ -599,7 +600,6 @@ export default function DashboardScreen() {
                 {rdv.médecin && <Text style={[styles.rdvMeta, { color: colors.textMuted }]}>{rdv.médecin}</Text>}
               </TouchableOpacity>
             ))}
-            {upcomingRdvs.length === 0 && <Text style={[styles.rdvEmpty, { color: colors.textMuted }]}>Aucun RDV à venir</Text>}
             <View style={styles.cardActions}>
               <TouchableOpacity onPress={() => router.push('/(tabs)/rdv')} activeOpacity={0.7}>
                 <Text style={[styles.seeAllText, { color: primary }]}>Voir tout →</Text>
