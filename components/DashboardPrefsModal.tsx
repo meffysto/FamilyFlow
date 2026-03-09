@@ -19,6 +19,7 @@ export interface SectionPref {
   label: string;
   emoji: string;
   visible: boolean;
+  priority?: 'high' | 'medium' | 'low';
 }
 
 interface Props {
@@ -55,6 +56,49 @@ export function DashboardPrefsModal({ sections: initialSections, onSave, onClose
     });
   };
 
+  const renderRow = (section: SectionPref, index: number) => (
+    <View
+      style={[
+        styles.row,
+        { backgroundColor: colors.card, borderColor: colors.borderLight },
+        !section.visible && styles.rowHidden,
+      ]}
+    >
+      <Text style={styles.rowEmoji}>{section.emoji}</Text>
+      <Text style={[
+        styles.rowLabel,
+        { color: colors.text },
+        !section.visible && { color: colors.textFaint },
+      ]}>
+        {section.label}
+      </Text>
+      <View style={styles.rowActions}>
+        <TouchableOpacity
+          style={[styles.arrowBtn, { backgroundColor: colors.cardAlt }, index === 0 && styles.arrowBtnDisabled]}
+          onPress={() => moveUp(index)}
+          disabled={index === 0}
+          hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+        >
+          <Text style={[styles.arrowText, { color: colors.textSub }]}>▲</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.arrowBtn, { backgroundColor: colors.cardAlt }, index === sections.length - 1 && styles.arrowBtnDisabled]}
+          onPress={() => moveDown(index)}
+          disabled={index === sections.length - 1}
+          hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+        >
+          <Text style={[styles.arrowText, { color: colors.textSub }]}>▼</Text>
+        </TouchableOpacity>
+        <Switch
+          value={section.visible}
+          onValueChange={() => toggleVisible(section.id)}
+          trackColor={{ false: colors.switchOff, true: tint }}
+          thumbColor={section.visible ? primary : colors.textFaint}
+        />
+      </View>
+    </View>
+  );
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
       <View style={[styles.dragHandle, { backgroundColor: colors.separator }]} />
@@ -76,49 +120,27 @@ export function DashboardPrefsModal({ sections: initialSections, onSave, onClose
       </Text>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-        {sections.map((section, index) => (
-          <View
-            key={section.id}
-            style={[
-              styles.row,
-              { backgroundColor: colors.card, borderColor: colors.borderLight },
-              !section.visible && styles.rowHidden,
-            ]}
-          >
-            <Text style={styles.rowEmoji}>{section.emoji}</Text>
-            <Text style={[
-              styles.rowLabel,
-              { color: colors.text },
-              !section.visible && { color: colors.textFaint },
-            ]}>
-              {section.label}
-            </Text>
-            <View style={styles.rowActions}>
-              <TouchableOpacity
-                style={[styles.arrowBtn, { backgroundColor: colors.cardAlt }, index === 0 && styles.arrowBtnDisabled]}
-                onPress={() => moveUp(index)}
-                disabled={index === 0}
-                hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
-              >
-                <Text style={[styles.arrowText, { color: colors.textSub }]}>▲</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.arrowBtn, { backgroundColor: colors.cardAlt }, index === sections.length - 1 && styles.arrowBtnDisabled]}
-                onPress={() => moveDown(index)}
-                disabled={index === sections.length - 1}
-                hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
-              >
-                <Text style={[styles.arrowText, { color: colors.textSub }]}>▼</Text>
-              </TouchableOpacity>
-              <Switch
-                value={section.visible}
-                onValueChange={() => toggleVisible(section.id)}
-                trackColor={{ false: colors.switchOff, true: tint }}
-                thumbColor={section.visible ? primary : colors.textFaint}
-              />
+        {sections.map((section, index) => {
+          // Afficher un header de catégorie si c'est le premier de sa priorité
+          const prevPriority = index > 0 ? (sections[index - 1].priority ?? 'medium') : null;
+          const curPriority = section.priority ?? 'medium';
+          const showHeader = curPriority !== prevPriority;
+          const priorityLabels: Record<string, string> = {
+            high: '⭐ Essentielles',
+            medium: '📌 Secondaires',
+            low: '💤 Optionnelles',
+          };
+          return (
+            <View key={section.id}>
+              {showHeader && (
+                <Text style={[styles.priorityHeader, { color: colors.textMuted }]}>
+                  {priorityLabels[curPriority]}
+                </Text>
+              )}
+              {renderRow(section, index)}
             </View>
-          </View>
-        ))}
+          );
+        })}
       </ScrollView>
     </SafeAreaView>
   );
@@ -199,5 +221,14 @@ const styles = StyleSheet.create({
   arrowText: {
     fontSize: 11,
     fontWeight: '700',
+  },
+  priorityHeader: {
+    fontSize: 13,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginTop: 12,
+    marginBottom: 4,
+    paddingHorizontal: 4,
   },
 });

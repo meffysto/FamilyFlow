@@ -62,19 +62,22 @@ function parseCourseInput(text: string): { name: string; quantity: number | null
 const PREFS_KEY = 'dashboard_prefs_v1';
 
 const DEFAULT_SECTIONS: SectionPref[] = [
-  { id: 'vacation',   label: 'Vacances',               emoji: '☀️', visible: true },
-  { id: 'menage',     label: 'Ménage du jour',         emoji: '🧹', visible: true },
-  { id: 'overdue',    label: 'En retard',               emoji: '⚠️', visible: true },
-  { id: 'meals',      label: 'Repas du jour',           emoji: '🍽️', visible: true },
-  { id: 'photos',     label: 'Photo du jour',           emoji: '📸', visible: true },
-  { id: 'courses',    label: 'Courses',                 emoji: '🛒', visible: true },
-  { id: 'rdvs',       label: 'Rendez-vous',             emoji: '📅', visible: true },
-  { id: 'rewards',    label: 'Récompenses actives',     emoji: '🏆', visible: true },
-  { id: 'stock',      label: 'Alertes stock',            emoji: '📦', visible: true },
-  { id: 'quicknotifs',label: 'Notifications rapides',   emoji: '📤', visible: true },
-  { id: 'recipes',    label: 'Idée recette',             emoji: '📖', visible: true },
-  { id: 'budget',     label: 'Budget',                    emoji: '💰', visible: true },
-  { id: 'leaderboard',label: 'Classement',              emoji: '🥇', visible: true },
+  // Essentielles — toujours visibles par défaut
+  { id: 'vacation',   label: 'Vacances',               emoji: '☀️', visible: true,  priority: 'high' },
+  { id: 'overdue',    label: 'En retard',               emoji: '⚠️', visible: true,  priority: 'high' },
+  { id: 'menage',     label: 'Ménage du jour',         emoji: '🧹', visible: true,  priority: 'high' },
+  { id: 'meals',      label: 'Repas du jour',           emoji: '🍽️', visible: true,  priority: 'high' },
+  // Secondaires — visibles par défaut
+  { id: 'courses',    label: 'Courses',                 emoji: '🛒', visible: true,  priority: 'medium' },
+  { id: 'rdvs',       label: 'Rendez-vous',             emoji: '📅', visible: true,  priority: 'medium' },
+  { id: 'photos',     label: 'Photo du jour',           emoji: '📸', visible: true,  priority: 'medium' },
+  { id: 'budget',     label: 'Budget',                   emoji: '💰', visible: true,  priority: 'medium' },
+  // Optionnelles — masquées par défaut pour les nouveaux utilisateurs
+  { id: 'rewards',    label: 'Récompenses actives',     emoji: '🏆', visible: false, priority: 'low' },
+  { id: 'stock',      label: 'Alertes stock',            emoji: '📦', visible: false, priority: 'low' },
+  { id: 'quicknotifs',label: 'Notifications rapides',   emoji: '📤', visible: false, priority: 'low' },
+  { id: 'recipes',    label: 'Idée recette',             emoji: '📖', visible: false, priority: 'low' },
+  { id: 'leaderboard',label: 'Classement',              emoji: '🥇', visible: false, priority: 'low' },
 ];
 
 export default function DashboardScreen() {
