@@ -31,6 +31,7 @@ import { TaskCard } from '../../components/TaskCard';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { Chip } from '../../components/ui/Chip';
 import { DateInput } from '../../components/ui/DateInput';
+import { Spacing } from '../../constants/spacing';
 import { EmptyState } from '../../components/EmptyState';
 import {
   dispatchNotificationAsync,
@@ -412,8 +413,9 @@ export default function TasksScreen() {
       </TouchableOpacity>
 
       {/* Add Task Modal */}
-      <Modal visible={addModalVisible} animationType="slide" presentationStyle="pageSheet">
+      <Modal visible={addModalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setAddModalVisible(false)}>
         <SafeAreaView style={[styles.modalSafe, { backgroundColor: colors.card }]}>
+          <View style={[styles.dragHandle, { backgroundColor: colors.separator }]} />
           <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
             <TouchableOpacity onPress={() => setAddModalVisible(false)}>
               <Text style={[styles.modalClose, { color: colors.textFaint }]}>✕</Text>
@@ -605,6 +607,7 @@ const styles = StyleSheet.create({
     lineHeight: 30,
   },
   modalSafe: { flex: 1 },
+  dragHandle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center', marginTop: Spacing.md, marginBottom: Spacing.xs },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
