@@ -26,13 +26,15 @@ export interface SectionPref {
 
 interface Props {
   sections: SectionPref[];
-  onSave: (sections: SectionPref[]) => void;
+  smartSort: boolean;
+  onSave: (result: { sections: SectionPref[]; smartSort: boolean }) => void;
   onClose: () => void;
 }
 
-export function DashboardPrefsModal({ sections: initialSections, onSave, onClose }: Props) {
+export function DashboardPrefsModal({ sections: initialSections, smartSort: initialSmartSort, onSave, onClose }: Props) {
   const { primary, tint, colors } = useThemeColors();
   const [sections, setSections] = useState<SectionPref[]>(initialSections);
+  const [smartSort, setSmartSort] = useState(initialSmartSort);
 
   const toggleVisible = (id: string) => {
     setSections((prev) =>
@@ -110,7 +112,7 @@ export function DashboardPrefsModal({ sections: initialSections, onSave, onClose
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Personnaliser</Text>
         <TouchableOpacity
-          onPress={() => { onSave(sections); onClose(); }}
+          onPress={() => { onSave({ sections, smartSort }); onClose(); }}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Text style={[styles.headerSave, { color: primary }]}>Enregistrer</Text>
@@ -120,6 +122,29 @@ export function DashboardPrefsModal({ sections: initialSections, onSave, onClose
       <Text style={[styles.hint, { color: colors.textMuted, borderBottomColor: colors.borderLight }]}>
         Affichez ou masquez des sections, et changez leur ordre d'apparition sur le dashboard.
       </Text>
+
+      <View style={[styles.smartSortRow, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
+        <View style={styles.smartSortInfo}>
+          <Text style={[styles.smartSortLabel, { color: colors.text }]}>
+            🪄 Tri intelligent
+          </Text>
+          <Text style={[styles.smartSortDesc, { color: colors.textMuted }]}>
+            Réordonne les cartes selon le contexte (heure, urgences, données disponibles)
+          </Text>
+        </View>
+        <Switch
+          value={smartSort}
+          onValueChange={setSmartSort}
+          trackColor={{ false: colors.switchOff, true: tint }}
+          thumbColor={smartSort ? primary : colors.textFaint}
+        />
+      </View>
+
+      {smartSort && (
+        <Text style={[styles.smartSortNote, { color: colors.textMuted }]}>
+          L'ordre manuel ci-dessous sert de base — le tri intelligent le réajuste selon le contexte.
+        </Text>
+      )}
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {sections.map((section, index) => {
@@ -223,6 +248,36 @@ const styles = StyleSheet.create({
   arrowText: {
     fontSize: FontSize.code,
     fontWeight: FontWeight.bold,
+  },
+  smartSortRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: Spacing['2xl'],
+    marginTop: Spacing.lg,
+    paddingVertical: 14,
+    paddingHorizontal: Spacing['2xl'],
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  smartSortInfo: {
+    flex: 1,
+    marginRight: Spacing.lg,
+  },
+  smartSortLabel: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+  },
+  smartSortDesc: {
+    fontSize: FontSize.label,
+    marginTop: 2,
+    lineHeight: 17,
+  },
+  smartSortNote: {
+    fontSize: FontSize.label,
+    fontStyle: 'italic',
+    marginHorizontal: Spacing['3xl'],
+    marginTop: Spacing.sm,
+    lineHeight: 17,
   },
   priorityHeader: {
     fontSize: FontSize.label,

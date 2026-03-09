@@ -42,6 +42,7 @@ import { RDVEditor } from '../../components/RDVEditor';
 import RecipeViewer from '../../components/RecipeViewer';
 import type { AppRecipe } from '../../lib/cooklang';
 import { buildLeaderboard, processActiveRewards, lootProgress, calculateLevel } from '../../lib/gamification';
+import { smartSortSections } from '../../lib/smart-sort';
 import { LOOT_THRESHOLD, POINTS_PER_TASK } from '../../constants/rewards';
 import {
   dispatchNotification,
@@ -65,6 +66,7 @@ function parseCourseInput(text: string): { name: string; quantity: number | null
 }
 
 const PREFS_KEY = 'dashboard_prefs_v1';
+const SMART_SORT_KEY = 'dashboard_smart_sort';
 
 const ALL_SECTIONS: SectionPref[] = [
   // Essentielles — toujours visibles par défaut
@@ -169,6 +171,7 @@ export default function DashboardScreen() {
   const [prefsModalVisible, setPrefsModalVisible] = useState(false);
   const [newCourseText, setNewCourseText] = useState('');
   const [dashboardRecipe, setDashboardRecipe] = useState<AppRecipe | null>(null);
+  const [smartSort, setSmartSort] = useState(false); // désactivé par défaut (safe pour utilisateurs existants)
 
   // Mode enfant : UX simplifiée (gros boutons, vocab simple)
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
@@ -185,30 +188,41 @@ export default function DashboardScreen() {
   const roleDefaults = useMemo(() => getDefaultSections(activeProfile?.role), [activeProfile?.role]);
 
   useEffect(() => {
-    SecureStore.getItemAsync(PREFS_KEY).then((raw) => {
-      if (!raw) { setSectionPrefs(roleDefaults); return; }
-      try {
-        const saved: SectionPref[] = JSON.parse(raw);
-        const validIds = new Set(roleDefaults.map((s) => s.id));
-        const orderedIds = saved.map((s) => s.id).filter((id) => validIds.has(id));
-        const merged: SectionPref[] = [
-          ...orderedIds
-            .map((id) => {
-              const def = roleDefaults.find((s) => s.id === id);
-              const sv = saved.find((s) => s.id === id);
-              return def ? { ...def, visible: sv?.visible ?? true } : null;
-            })
-            .filter(Boolean) as SectionPref[],
-          ...roleDefaults.filter((s) => !orderedIds.includes(s.id)),
-        ];
-        setSectionPrefs(merged);
-      } catch { setSectionPrefs(roleDefaults); }
+    Promise.all([
+      SecureStore.getItemAsync(PREFS_KEY),
+      SecureStore.getItemAsync(SMART_SORT_KEY),
+    ]).then(([raw, smartSortVal]) => {
+      // Section prefs
+      if (raw) {
+        try {
+          const saved: SectionPref[] = JSON.parse(raw);
+          const validIds = new Set(roleDefaults.map((s) => s.id));
+          const orderedIds = saved.map((s) => s.id).filter((id) => validIds.has(id));
+          const merged: SectionPref[] = [
+            ...orderedIds
+              .map((id) => {
+                const def = roleDefaults.find((s) => s.id === id);
+                const sv = saved.find((s) => s.id === id);
+                return def ? { ...def, visible: sv?.visible ?? true } : null;
+              })
+              .filter(Boolean) as SectionPref[],
+            ...roleDefaults.filter((s) => !orderedIds.includes(s.id)),
+          ];
+          setSectionPrefs(merged);
+        } catch { setSectionPrefs(roleDefaults); }
+      } else {
+        setSectionPrefs(roleDefaults);
+      }
+      // Smart sort toggle
+      if (smartSortVal !== null) setSmartSort(smartSortVal === '1');
     });
   }, [roleDefaults]);
 
-  const saveSectionPrefs = useCallback(async (prefs: SectionPref[]) => {
+  const saveSectionPrefs = useCallback(async ({ sections: prefs, smartSort: newSmartSort }: { sections: SectionPref[]; smartSort: boolean }) => {
     setSectionPrefs(prefs);
+    setSmartSort(newSmartSort);
     await SecureStore.setItemAsync(PREFS_KEY, JSON.stringify(prefs));
+    await SecureStore.setItemAsync(SMART_SORT_KEY, newSmartSort ? '1' : '0');
   }, []);
   // showPastRdvs removed — full RDV view is now in /(tabs)/rdv
 
@@ -425,6 +439,34 @@ export default function DashboardScreen() {
     const total = data.reduce((s, d) => s + d.value, 0);
     return { data, total };
   }, [tasks, menageTasks]);
+
+  // Tri intelligent mémorisé (évite recalcul à chaque render)
+  const sortedSections = useMemo(() => {
+    if (!smartSort) return sectionPrefs;
+    const activeSections = new Set<string>();
+    if (pendingMenage.length > 0) activeSections.add('menage');
+    if (todayMeals.length > 0) activeSections.add('meals');
+    if (topCourses.length > 0) activeSections.add('courses');
+    if (upcomingRdvs.length > 0) activeSections.add('rdvs');
+    if (enfants.length > 0) activeSections.add('photos');
+    if (stock.length > 0) activeSections.add('stock');
+    if (activeRewards.length > 0) activeSections.add('rewards');
+    if (leaderboard.length > 0) activeSections.add('leaderboard');
+    if (weeklyStatsData.total > 0) activeSections.add('weeklyStats');
+    if (activeProfile) activeSections.add('lootProgress');
+    if (recipes.length > 0) activeSections.add('recipes');
+    if (customNotifs.length > 0) activeSections.add('quicknotifs');
+    return smartSortSections(sectionPrefs, {
+      hour: new Date().getHours(),
+      hasBaby,
+      hasOverdue: overdueTasks.length > 0,
+      isVacationActive: !!isVacationActive,
+      activeSections,
+    });
+  }, [smartSort, sectionPrefs, hasBaby, overdueTasks.length, isVacationActive,
+    pendingMenage.length, todayMeals.length, topCourses.length, upcomingRdvs.length,
+    enfants.length, stock.length, activeRewards.length, leaderboard.length,
+    weeklyStatsData.total, activeProfile, recipes.length, customNotifs.length]);
 
   const renderSection = (id: string): React.ReactNode => {
     switch (id) {
@@ -1095,21 +1137,7 @@ export default function DashboardScreen() {
           );
         })}
 
-        {(() => {
-          const hour = new Date().getHours();
-          const isNight = hour >= 20 || hour < 8;
-          if (isNight && hasBaby) {
-            // Mode nuit en premier la nuit
-            const rest = sectionPrefs.filter((s) => s.id !== 'nightMode');
-            return (
-              <>
-                {renderSection('nightMode')}
-                {rest.map((s) => s.visible ? renderSection(s.id) : null)}
-              </>
-            );
-          }
-          return sectionPrefs.map((s) => s.visible ? renderSection(s.id) : null);
-        })()}
+        {sortedSections.map((s) => s.visible ? renderSection(s.id) : null)}
 
         <View style={styles.bottomPad} />
       </ScrollView>
@@ -1122,6 +1150,7 @@ export default function DashboardScreen() {
       >
         <DashboardPrefsModal
           sections={sectionPrefs}
+          smartSort={smartSort}
           onSave={saveSectionPrefs}
           onClose={() => setPrefsModalVisible(false)}
         />
