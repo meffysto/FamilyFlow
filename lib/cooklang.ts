@@ -292,8 +292,8 @@ const UNIT_FR: Record<string, string> = {
   tbsp: 'c. à s.', tbs: 'c. à s.', tablespoon: 'c. à s.', tablespoons: 'c. à s.',
   tsp: 'c. à c.', teaspoon: 'c. à c.', teaspoons: 'c. à c.',
   cup: 'tasse', cups: 'tasses',
-  oz: 'oz', ounce: 'oz', ounces: 'oz',
-  lb: 'lb', pound: 'lb', pounds: 'lb',
+  oz: 'g', ounce: 'g', ounces: 'g',
+  lb: 'g', pound: 'g', pounds: 'g',
   pinch: 'pincée', clove: 'gousse', cloves: 'gousses',
   slice: 'tranche', slices: 'tranches',
   bunch: 'botte', packet: 'paquet', can: 'boîte',
@@ -515,6 +515,108 @@ function parseIngredientText(text: string): AppIngredient {
     };
   }
   return { name: text.trim(), quantity: null, unit: '' };
+}
+
+// ─── Imperial → Metric conversion ────────────────────────────────────────
+
+interface UnitConversion {
+  factor: number;
+  toUnit: string;
+  /** If result > threshold, use altUnit instead (e.g. g → kg) */
+  alt?: { threshold: number; factor: number; unit: string };
+}
+
+const IMPERIAL_TO_METRIC: Record<string, UnitConversion> = {
+  // Weight
+  lb: { factor: 453.6, toUnit: 'g', alt: { threshold: 1000, factor: 0.001, unit: 'kg' } },
+  lbs: { factor: 453.6, toUnit: 'g', alt: { threshold: 1000, factor: 0.001, unit: 'kg' } },
+  pound: { factor: 453.6, toUnit: 'g', alt: { threshold: 1000, factor: 0.001, unit: 'kg' } },
+  pounds: { factor: 453.6, toUnit: 'g', alt: { threshold: 1000, factor: 0.001, unit: 'kg' } },
+  oz: { factor: 28.35, toUnit: 'g' },
+  ounce: { factor: 28.35, toUnit: 'g' },
+  ounces: { factor: 28.35, toUnit: 'g' },
+  // Volume
+  cup: { factor: 240, toUnit: 'ml' },
+  cups: { factor: 240, toUnit: 'ml' },
+  'fl oz': { factor: 30, toUnit: 'ml' },
+  'fluid ounce': { factor: 30, toUnit: 'ml' },
+  'fluid ounces': { factor: 30, toUnit: 'ml' },
+  quart: { factor: 946, toUnit: 'ml' },
+  quarts: { factor: 946, toUnit: 'ml' },
+  gallon: { factor: 3785, toUnit: 'ml' },
+  gallons: { factor: 3785, toUnit: 'ml' },
+  pint: { factor: 473, toUnit: 'ml' },
+  pints: { factor: 473, toUnit: 'ml' },
+  // Temperature (handled separately in text)
+};
+
+/** Round to nice values for cooking */
+function roundMetric(value: number): number {
+  if (value >= 100) return Math.round(value / 5) * 5; // 455 → 455, 453.6 → 455
+  if (value >= 10) return Math.round(value);
+  return Math.round(value * 10) / 10; // 1 decimal for small values
+}
+
+/**
+ * Convert a .cook file from imperial units to metric.
+ * Handles inline cooklang syntax @ingredient{qty%unit} and ~timer{qty%unit},
+ * and also converts °F to °C in plain text.
+ */
+export function convertCookToMetric(content: string): string {
+  // Convert inline cooklang tokens: @name{qty%unit} and ~timer{qty%unit}
+  let result = content.replace(
+    /([@~#](?:[^{]*?))\{(\d+(?:[.,]\d+)?)%([^}]+)\}/g,
+    (_match, prefix: string, qtyStr: string, unit: string) => {
+      const qty = parseFloat(qtyStr.replace(',', '.'));
+      const conv = IMPERIAL_TO_METRIC[unit.toLowerCase().trim()];
+      if (!conv || isNaN(qty)) return _match;
+      let converted = qty * conv.factor;
+      let newUnit = conv.toUnit;
+      if (conv.alt && converted >= conv.alt.threshold) {
+        converted = converted * conv.alt.factor;
+        newUnit = conv.alt.unit;
+      }
+      return `${prefix}{${roundMetric(converted)}%${newUnit}}`;
+    },
+  );
+
+  // Convert standalone quantities in text: "1 lb", "4 oz" (not inside {})
+  result = result.replace(
+    /(\d+(?:[.,]\d+)?)\s*(lb|lbs|pounds?|oz|ounces?|cups?|pints?|quarts?|gallons?)\b/gi,
+    (_match, qtyStr: string, unit: string) => {
+      const qty = parseFloat(qtyStr.replace(',', '.'));
+      const conv = IMPERIAL_TO_METRIC[unit.toLowerCase()];
+      if (!conv || isNaN(qty)) return _match;
+      let converted = qty * conv.factor;
+      let newUnit = conv.toUnit;
+      if (conv.alt && converted >= conv.alt.threshold) {
+        converted = converted * conv.alt.factor;
+        newUnit = conv.alt.unit;
+      }
+      return `${roundMetric(converted)} ${newUnit}`;
+    },
+  );
+
+  // Convert Fahrenheit to Celsius in text: "425°F" or "425 °F" or "425 degrees F"
+  result = result.replace(
+    /(\d+)\s*°?\s*(?:°F|degrees?\s*F(?:ahrenheit)?)\b/gi,
+    (_match, tempStr: string) => {
+      const f = parseInt(tempStr, 10);
+      const c = Math.round((f - 32) * 5 / 9 / 5) * 5; // round to nearest 5°C
+      return `${c}°C`;
+    },
+  );
+  // Also handle "425°F" where ° is directly attached
+  result = result.replace(
+    /(\d+)°F\b/g,
+    (_match, tempStr: string) => {
+      const f = parseInt(tempStr, 10);
+      const c = Math.round((f - 32) * 5 / 9 / 5) * 5;
+      return `${c}°C`;
+    },
+  );
+
+  return result;
 }
 
 /** Generate a .cook file content from imported recipe data */

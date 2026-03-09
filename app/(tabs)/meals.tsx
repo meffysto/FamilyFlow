@@ -29,10 +29,10 @@ import { fr } from 'date-fns/locale';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { MealItem, CourseItem, Recipe } from '../../lib/types';
-import { formatIngredient, aggregateIngredients, categorizeIngredient, type AppIngredient } from '../../lib/cooklang';
+import { formatIngredient, aggregateIngredients, categorizeIngredient, convertCookToMetric, type AppIngredient } from '../../lib/cooklang';
 import RecipeCard from '../../components/RecipeCard';
 import RecipeViewer from '../../components/RecipeViewer';
-import { importRecipeFromUrl, parseTextToRecipe, type ImportResult, type ImportedRecipe, type CookImportResult } from '../../lib/recipe-import';
+import { importRecipeFromUrl, parseTextToRecipe, searchCommunityRecipes, downloadCommunityRecipe, type ImportResult, type ImportedRecipe, type CookImportResult, type CommunityRecipe } from '../../lib/recipe-import';
 import { generateCookFile } from '../../lib/cooklang';
 
 const DAYS_ORDER = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
@@ -110,6 +110,15 @@ export default function MealsScreen() {
   const [textImportValue, setTextImportValue] = useState('');
   const [textImportResult, setTextImportResult] = useState<ImportResult | null>(null);
   const [textImportCategory, setTextImportCategory] = useState('Importées');
+
+  // Community explore state
+  const [showExplore, setShowExplore] = useState(false);
+  const [exploreQuery, setExploreQuery] = useState('');
+  const [exploreResults, setExploreResults] = useState<CommunityRecipe[]>([]);
+  const [exploreLoading, setExploreLoading] = useState(false);
+  const [exploreDownloading, setExploreDownloading] = useState<number | null>(null);
+  const [explorePreview, setExplorePreview] = useState<{ id: number; title: string; content: string } | null>(null);
+  const [exploreCategory, setExploreCategory] = useState('Communauté');
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -522,6 +531,56 @@ export default function MealsScreen() {
     }
   }, [textImportResult, textImportCategory, vault, refresh]);
 
+  // ─── Community explore logic ─────────────────────────────────────
+
+  const handleExploreSearch = useCallback(async () => {
+    const q = exploreQuery.trim();
+    if (!q) return;
+    setExploreLoading(true);
+    setExploreResults([]);
+    setExplorePreview(null);
+    try {
+      const results = await searchCommunityRecipes(q);
+      setExploreResults(results);
+      if (results.length === 0) {
+        Alert.alert('Aucun résultat', `Aucune recette trouvée pour « ${q} ».`);
+      }
+    } catch (e) {
+      Alert.alert('Erreur', String(e));
+    } finally {
+      setExploreLoading(false);
+    }
+  }, [exploreQuery]);
+
+  const handleExploreDownload = useCallback(async (recipe: CommunityRecipe) => {
+    setExploreDownloading(recipe.id);
+    try {
+      const raw = await downloadCommunityRecipe(recipe.id);
+      const content = convertCookToMetric(raw);
+      setExplorePreview({ id: recipe.id, title: recipe.title, content });
+    } catch (e) {
+      Alert.alert('Erreur', String(e instanceof Error ? e.message : e));
+    } finally {
+      setExploreDownloading(null);
+    }
+  }, []);
+
+  const handleExploreSave = useCallback(async () => {
+    if (!explorePreview || !vault) return;
+    const cat = exploreCategory.trim() || 'Communauté';
+    try {
+      const fileName = explorePreview.title.replace(/[/\\:*?"<>|]/g, '').trim();
+      const relPath = `03 - Cuisine/Recettes/${cat}/${fileName}.cook`;
+      await vault.ensureDir(`03 - Cuisine/Recettes/${cat}`);
+      await vault.writeFile(relPath, explorePreview.content);
+      await refresh();
+      Alert.alert('Importée !', `« ${explorePreview.title} » ajoutée dans ${cat}.`);
+      setExplorePreview(null);
+    } catch (e) {
+      Alert.alert('Erreur', String(e));
+    }
+  }, [explorePreview, exploreCategory, vault, refresh]);
+
   // ─── Header ──────────────────────────────────────────────────────
 
   const headerTitle = tab === 'repas' ? '🍽️ Repas' : tab === 'courses' ? '🛒 Courses' : '📖 Recettes';
@@ -914,6 +973,15 @@ export default function MealsScreen() {
               >
                 <Text style={[styles.importBtnText, { color: primary }]}>
                   🔍 Scanner le vault
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.importBtn, { backgroundColor: tint, borderColor: primary + '30' }]}
+                onPress={() => { setShowExplore(true); setExploreQuery(''); setExploreResults([]); setExplorePreview(null); }}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.importBtnText, { color: primary }]}>
+                  🌍 Explorer la communauté
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1423,6 +1491,145 @@ export default function MealsScreen() {
                 </View>
               )}
             </ScrollView>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Community explore modal */}
+      <Modal
+        visible={showExplore}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => { setShowExplore(false); setExplorePreview(null); }}
+      >
+        <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
+          <View style={[styles.pickerHeader, { backgroundColor: colors.card, borderBottomColor: colors.borderLight }]}>
+            <TouchableOpacity onPress={() => { setShowExplore(false); setExplorePreview(null); }}>
+              <Text style={[styles.pickerClose, { color: colors.textMuted }]}>✕</Text>
+            </TouchableOpacity>
+            <Text style={[styles.pickerHeaderTitle, { color: colors.text }]}>Explorer la communauté</Text>
+            <View style={{ width: 28 }} />
+          </View>
+
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1 }}
+          >
+            {/* Search bar */}
+            <View style={[styles.recipeSearchBar, { backgroundColor: colors.card, borderBottomColor: colors.borderLight }]}>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <TextInput
+                  style={[styles.recipeSearchInput, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.borderLight, flex: 1 }]}
+                  value={exploreQuery}
+                  onChangeText={setExploreQuery}
+                  placeholder="Ex: pasta, chicken, dessert…"
+                  placeholderTextColor={colors.textMuted}
+                  autoFocus
+                  returnKeyType="search"
+                  onSubmitEditing={handleExploreSearch}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <TouchableOpacity
+                  style={[styles.addBtn, { backgroundColor: primary }, (!exploreQuery.trim() || exploreLoading) && { opacity: 0.5 }]}
+                  onPress={handleExploreSearch}
+                  disabled={!exploreQuery.trim() || exploreLoading}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.addBtnText}>{exploreLoading ? '⏳' : '🔍'}</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 6 }}>
+                Recherche en anglais sur cooklang.org · {exploreResults.length > 0 ? `${exploreResults.length} résultat${exploreResults.length > 1 ? 's' : ''}` : '4295+ recettes disponibles'}
+              </Text>
+            </View>
+
+            {/* Preview mode */}
+            {explorePreview ? (
+              <ScrollView style={styles.scroll} contentContainerStyle={{ padding: 16, gap: 16 }}>
+                <TouchableOpacity onPress={() => setExplorePreview(null)}>
+                  <Text style={{ fontSize: 14, color: primary, fontWeight: '600' }}>← Retour aux résultats</Text>
+                </TouchableOpacity>
+
+                <View style={[styles.importPreview, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
+                  <Text style={[styles.importPreviewTitle, { color: colors.text }]}>
+                    {explorePreview.title}
+                  </Text>
+                  <Text style={[styles.importPreviewMeta, { color: '#22C55E' }]}>
+                    Fichier .cook prêt
+                  </Text>
+
+                  {/* Raw preview (first 15 lines) */}
+                  <View style={{ marginTop: 8, padding: 10, borderRadius: 8, backgroundColor: colors.bg }}>
+                    <Text style={{ fontSize: 12, color: colors.textSub, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' }} numberOfLines={15}>
+                      {explorePreview.content}
+                    </Text>
+                  </View>
+
+                  {/* Category */}
+                  <View style={{ marginTop: 12, gap: 6 }}>
+                    <Text style={[styles.importLabel, { color: colors.text }]}>Catégorie</Text>
+                    <TextInput
+                      style={[styles.recipeSearchInput, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.borderLight }]}
+                      value={exploreCategory}
+                      onChangeText={setExploreCategory}
+                      placeholder="Ex: Plats, Desserts, Entrées…"
+                      placeholderTextColor={colors.textMuted}
+                    />
+                  </View>
+
+                  <TouchableOpacity
+                    style={[styles.importFetchBtn, { backgroundColor: '#22C55E', marginTop: 12 }]}
+                    onPress={handleExploreSave}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.importFetchBtnText}>✅ Importer dans le vault</Text>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            ) : (
+              /* Results list */
+              <FlatList
+                data={exploreResults}
+                keyExtractor={(item) => String(item.id)}
+                contentContainerStyle={{ padding: 16, gap: 8 }}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[styles.pickerRecipeRow, { backgroundColor: colors.card, borderColor: colors.borderLight }]}
+                    onPress={() => handleExploreDownload(item)}
+                    disabled={exploreDownloading === item.id}
+                    activeOpacity={0.7}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.pickerRecipeTitle, { color: colors.text }]} numberOfLines={1}>
+                        {item.title}
+                      </Text>
+                      {item.tags.length > 0 && (
+                        <Text style={[styles.pickerRecipeMeta, { color: colors.textMuted }]} numberOfLines={1}>
+                          {item.tags.join(', ')}
+                        </Text>
+                      )}
+                    </View>
+                    <Text style={{ fontSize: 14, color: primary }}>
+                      {exploreDownloading === item.id ? '⏳' : '📥'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                ListEmptyComponent={
+                  !exploreLoading ? (
+                    <View style={styles.emptyState}>
+                      <Text style={styles.emptyEmoji}>🌍</Text>
+                      <Text style={[styles.emptyText, { color: colors.textSub }]}>
+                        Recherchez des recettes
+                      </Text>
+                      <Text style={[styles.emptyHint, { color: colors.textMuted }]}>
+                        {'Tapez un mot-clé en anglais\n(chicken, pasta, cake, soup…)'}
+                      </Text>
+                    </View>
+                  ) : null
+                }
+              />
+            )}
           </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>

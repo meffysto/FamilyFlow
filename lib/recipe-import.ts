@@ -294,6 +294,86 @@ export async function importRecipeFromUrl(
   throw new Error('Impossible d\'extraire la recette. Le site ne contient pas de données structurées (JSON-LD).');
 }
 
+// ─── Community recipes (cooklang.org) ─────────────────────────────────────
+
+export interface CommunityRecipe {
+  id: number;
+  title: string;
+  tags: string[];
+  url: string;
+}
+
+const COOKLANG_BASE = 'https://recipes.cooklang.org';
+
+/**
+ * Search community recipes from cooklang.org
+ * Returns a list of matching recipes with id, title, tags.
+ */
+export async function searchCommunityRecipes(query: string): Promise<CommunityRecipe[]> {
+  const url = `${COOKLANG_BASE}/?q=${encodeURIComponent(query)}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const html = await res.text();
+    return parseCommunitySearchResults(html);
+  } catch (e) {
+    if (__DEV__) console.log('[recipe-import] community search error:', e);
+    return [];
+  }
+}
+
+/** Parse HTML search results from cooklang.org */
+function parseCommunitySearchResults(html: string): CommunityRecipe[] {
+  const results: CommunityRecipe[] = [];
+  const seen = new Set<number>();
+
+  // Split by recipe card anchors — each card is ~700 chars
+  const parts = html.split(/<a\s+href="\/recipes\//i);
+
+  for (let i = 1; i < parts.length; i++) {
+    const part = parts[i];
+    // Extract ID from start of this part: 1234" class="...
+    const idMatch = part.match(/^(\d+)"/);
+    if (!idMatch) continue;
+    const id = parseInt(idMatch[1], 10);
+    if (seen.has(id)) continue;
+    seen.add(id);
+
+    // Extract title from <h3>...</h3>
+    const h3Match = part.match(/<h3[^>]*>([^<]+)<\/h3>/i);
+    const title = h3Match ? h3Match[1].trim() : '';
+    if (!title) continue;
+
+    // Extract tags from <span ...rounded-full">tag</span>
+    const tags: string[] = [];
+    const tagRegex = /rounded-full"[^>]*>([^<]+)</g;
+    let tagMatch: RegExpExecArray | null;
+    while ((tagMatch = tagRegex.exec(part)) !== null) {
+      const tag = tagMatch[1].trim();
+      if (tag && tag.length < 40) tags.push(tag);
+    }
+
+    results.push({ id, title, tags, url: `${COOKLANG_BASE}/recipes/${id}` });
+  }
+  return results;
+}
+
+/**
+ * Download a .cook file from cooklang.org by recipe ID.
+ * Returns the raw .cook content string.
+ */
+export async function downloadCommunityRecipe(id: number): Promise<string> {
+  const url = `${COOKLANG_BASE}/api/recipes/${id}/download`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Erreur téléchargement (${res.status})`);
+  const content = await res.text();
+  if (!content || content.length < 10) throw new Error('Fichier .cook vide');
+  if (content.trimStart().startsWith('<!DOCTYPE') || content.trimStart().startsWith('<html')) {
+    throw new Error('Le serveur a retourné une page HTML au lieu du fichier .cook');
+  }
+  return content;
+}
+
 // ─── Text-to-recipe converter ────────────────────────────────────────────
 
 /**
