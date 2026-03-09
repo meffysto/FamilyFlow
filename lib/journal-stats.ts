@@ -165,7 +165,8 @@ export function parseJournalStats(content: string): JournalStats {
     // Alimentation section
     if (currentSection.includes('alimentation')) {
       const [heure, type, detail] = cells;
-      if (!heure && !type) continue; // empty row
+      // Ignorer les lignes sans heure ET sans détail (lignes template vides)
+      if (!heure && !detail) continue;
 
       const typeLower = (type || '').toLowerCase();
       if (typeLower.includes('biberon')) {
@@ -180,14 +181,15 @@ export function parseJournalStats(content: string): JournalStats {
 
     // Couches section
     if (currentSection.includes('couche')) {
-      const [heure, type] = cells;
-      if (heure || type) stats.couches++;
+      const [heure] = cells;
+      if (!heure) continue; // ignorer les lignes sans heure
+      stats.couches++;
     }
 
     // Sommeil section
     if (currentSection.includes('sommeil')) {
       const [debut, fin, dureeCell] = cells;
-      if (!debut && !fin) continue; // empty row
+      if (!debut) continue; // ignorer les lignes sans heure de début
 
       let duree = dureeCell?.trim() || null;
 
