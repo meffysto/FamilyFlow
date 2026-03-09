@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -22,6 +23,11 @@ export const Chip = React.memo(function Chip({
   size = 'md',
 }: ChipProps) {
   const { primary, tint, colors } = useThemeColors();
+
+  const handlePress = useCallback(() => {
+    Haptics.selectionAsync();
+    onPress?.();
+  }, [onPress]);
   const accentColor = color || primary;
 
   const containerStyle: ViewStyle = {
@@ -45,7 +51,7 @@ export const Chip = React.memo(function Chip({
   return (
     <TouchableOpacity
       style={containerStyle}
-      onPress={onPress}
+      onPress={onPress ? handlePress : undefined}
       activeOpacity={0.7}
       disabled={!onPress}
       accessibilityRole={onPress ? 'button' : 'text'}

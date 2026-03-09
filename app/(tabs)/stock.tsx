@@ -16,10 +16,12 @@ import {
   TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { StockEditor } from '../../components/StockEditor';
+import { EmptyState } from '../../components/EmptyState';
 import { StockItem } from '../../lib/types';
 
 export default function StockScreen() {
@@ -77,6 +79,7 @@ export default function StockScreen() {
     const qty = item.qteAchat ? ` x${item.qteAchat}` : '';
     const detail = item.detail ? ` (${item.detail})` : '';
     addCourseItem(`- [ ] ${item.produit}${detail}${qty}`);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     showToast(`${item.produit} ajouté aux courses !`);
   };
 
@@ -160,7 +163,7 @@ export default function StockScreen() {
                     <View style={styles.qtyRow}>
                       <TouchableOpacity
                         style={[styles.qtyBtn, { backgroundColor: colors.bg }, item.quantite <= 0 && styles.qtyBtnDisabled]}
-                        onPress={() => updateStockQuantity(item.lineIndex, Math.max(0, item.quantite - 1))}
+                        onPress={() => { Haptics.selectionAsync(); updateStockQuantity(item.lineIndex, Math.max(0, item.quantite - 1)); }}
                         disabled={item.quantite <= 0}
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       >
@@ -171,7 +174,7 @@ export default function StockScreen() {
                       </Text>
                       <TouchableOpacity
                         style={[styles.qtyBtn, { backgroundColor: colors.bg }]}
-                        onPress={() => updateStockQuantity(item.lineIndex, item.quantite + 1)}
+                        onPress={() => { Haptics.selectionAsync(); updateStockQuantity(item.lineIndex, item.quantite + 1); }}
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       >
                         <Text style={[styles.qtyBtnText, { color: colors.textSub }]}>+</Text>
@@ -185,14 +188,13 @@ export default function StockScreen() {
         ))}
 
         {filteredStock.length === 0 && (
-          <View style={[styles.emptyCard, { backgroundColor: colors.card }]}>
-            <Text style={[styles.emptyText, { color: colors.textFaint }]}>
-              {search.trim() ? 'Aucun résultat' : 'Aucun produit en stock'}
-            </Text>
-            <Text style={[styles.emptyHint, { color: colors.separator }]}>
-              {search.trim() ? 'Essayez un autre terme de recherche' : 'Appuie sur "+ Ajouter" pour commencer'}
-            </Text>
-          </View>
+          <EmptyState
+            emoji={search.trim() ? '🔍' : '📦'}
+            title={search.trim() ? 'Aucun résultat' : 'Aucun produit en stock'}
+            subtitle={search.trim() ? 'Essayez un autre terme de recherche' : undefined}
+            ctaLabel={search.trim() ? undefined : '+ Ajouter'}
+            onCta={search.trim() ? undefined : () => setEditorVisible(true)}
+          />
         )}
       </ScrollView>
 

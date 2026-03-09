@@ -3,14 +3,19 @@
  * Tap checkbox to toggle completion → triggers gamification points
  */
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  Vibration,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Task } from '../lib/types';
 import { formatDateForDisplay } from '../lib/parser';
@@ -53,6 +58,26 @@ export const TaskCard = React.memo(function TaskCard({
   showSource = false,
 }: TaskCardProps) {
   const { primary, tint, colors } = useThemeColors();
+  const checkScale = useSharedValue(task.completed ? 1 : 0);
+  const textOpacity = useSharedValue(task.completed ? 0.7 : 1);
+
+  useEffect(() => {
+    checkScale.value = withSpring(task.completed ? 1 : 0, { damping: 12, stiffness: 200 });
+    textOpacity.value = withTiming(task.completed ? 0.7 : 1, { duration: 200 });
+  }, [task.completed]);
+
+  const checkAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: 0.8 + 0.2 * checkScale.value }],
+  }));
+
+  const checkmarkAnimStyle = useAnimatedStyle(() => ({
+    opacity: checkScale.value,
+  }));
+
+  const textAnimStyle = useAnimatedStyle(() => ({
+    opacity: textOpacity.value,
+  }));
+
   const handleToggle = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onToggle(task, !task.completed);
@@ -83,27 +108,29 @@ export const TaskCard = React.memo(function TaskCard({
         accessibilityRole="checkbox"
         accessibilityState={{ checked: task.completed }}
       >
-        <View style={[
+        <Animated.View style={[
           styles.checkboxInner,
           { borderColor: colors.separator, backgroundColor: colors.card },
           task.completed && { backgroundColor: primary, borderColor: primary },
+          checkAnimStyle,
         ]}>
-          {task.completed && <Text style={[styles.checkmark, { color: colors.onPrimary }]}>✓</Text>}
-        </View>
+          <Animated.Text style={[styles.checkmark, { color: colors.onPrimary }, checkmarkAnimStyle]}>✓</Animated.Text>
+        </Animated.View>
       </TouchableOpacity>
 
       <View style={styles.content}>
-        <Text
+        <Animated.Text
           style={[
             styles.taskText,
             { color: colors.text },
             task.completed && [styles.completedText, { color: colors.textFaint }],
             isOverdue && { color: colors.error },
+            textAnimStyle,
           ]}
           numberOfLines={2}
         >
           {task.text}
-        </Text>
+        </Animated.Text>
 
         <View style={styles.meta}>
           {showSource && (

@@ -22,6 +22,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { useVault } from '../../contexts/VaultContext';
 import { useGamification } from '../../hooks/useGamification';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -30,6 +31,7 @@ import { TaskCard } from '../../components/TaskCard';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { Chip } from '../../components/ui/Chip';
 import { DateInput } from '../../components/ui/DateInput';
+import { EmptyState } from '../../components/EmptyState';
 import {
   dispatchNotificationAsync,
   buildAllTasksDoneContext,
@@ -157,6 +159,8 @@ export default function TasksScreen() {
             const remaining = tasks.filter((t) => !t.completed && t.id !== task.id).length;
             if (remaining === 0) {
               allDoneSentRef.current = true;
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              setTimeout(() => showToast('🎉 Journée terminée ! Toutes les tâches sont faites !'), 300);
               const totalDone = tasks.filter((t) => t.completed).length + 1;
               dispatchNotificationAsync(
                 'all_tasks_done',
@@ -388,10 +392,9 @@ export default function TasksScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
         }
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyEmoji}>✅</Text>
-            <Text style={[styles.emptyText, { color: colors.textFaint }]}>Aucune tâche dans cette catégorie !</Text>
-          </View>
+          filter === 'done'
+            ? <EmptyState emoji="🎯" title="Aucune tâche terminée" subtitle="Termine tes premières tâches pour les voir ici" />
+            : <EmptyState emoji="✅" title="Bravo, tout est fait !" subtitle="Profite bien de ton temps libre 🎉" />
         }
         stickySectionHeadersEnabled={false}
       />

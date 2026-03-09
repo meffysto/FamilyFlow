@@ -39,6 +39,7 @@ import { fr } from 'date-fns/locale';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { MemoryEditor } from '../../components/MemoryEditor';
+import { EmptyState } from '../../components/EmptyState';
 import { formatDateForDisplay } from '../../lib/parser';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -344,13 +345,11 @@ export default function PhotosScreen() {
             }
           >
             {filteredMemories.length === 0 ? (
-              <View style={[styles.emptyCard, { backgroundColor: colors.card }]}>
-                <Text style={styles.emptyEmoji}>🌟</Text>
-                <Text style={[styles.emptyText, { color: colors.textFaint }]}>Aucun souvenir enregistré</Text>
-                <Text style={[styles.emptyHint, { color: colors.textFaint }]}>
-                  Ajoute les premières fois et moments forts de tes enfants !
-                </Text>
-              </View>
+              <EmptyState
+                emoji="🌟"
+                title="Aucun souvenir enregistré"
+                subtitle="Ajoute les premières fois et moments forts de tes enfants !"
+              />
             ) : (
               filteredMemories.map((mem, idx) => (
                 <View key={`${mem.date}-${mem.title}-${idx}`} style={styles.memoryCard}>

@@ -35,6 +35,7 @@ import { fr } from 'date-fns/locale';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Chip } from '../../components/ui/Chip';
+import { EmptyState } from '../../components/EmptyState';
 import { RDVEditor } from '../../components/RDVEditor';
 import { formatDateForDisplay, isRdvUpcoming } from '../../lib/parser';
 import { RDV } from '../../lib/types';
@@ -350,9 +351,7 @@ export default function RDVScreen() {
           À venir ({upcoming.length})
         </Text>
         {upcoming.length === 0 ? (
-          <View style={[styles.emptyCard, { backgroundColor: colors.card }]}>
-            <Text style={[styles.emptyText, { color: colors.textFaint }]}>Aucun rendez-vous à venir</Text>
-          </View>
+          <EmptyState emoji="📅" title="Aucun rendez-vous à venir" subtitle="Votre agenda est libre !" />
         ) : (
           upcoming.map((r) => renderRDV(r, false))
         )}

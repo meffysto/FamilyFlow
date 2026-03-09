@@ -2,8 +2,9 @@
  * DashboardCard.tsx — Reusable card widget for dashboard sections
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
@@ -30,6 +31,18 @@ export function DashboardCard({
 }: DashboardCardProps) {
   const { primary, colors } = useThemeColors();
   const accentColor = color ?? primary;
+  const badgeScale = useSharedValue(0);
+
+  useEffect(() => {
+    if (count !== undefined && count > 0) {
+      badgeScale.value = withSpring(1, { damping: 12, stiffness: 200 });
+    }
+  }, [count]);
+
+  const badgeAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: badgeScale.value }],
+  }));
+
   return (
     <View
       style={[styles.card, Shadows.md, { backgroundColor: colors.card }, style]}
@@ -41,9 +54,9 @@ export function DashboardCard({
           {icon && <Text style={styles.icon}>{icon}</Text>}
           <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
           {count !== undefined && (
-            <View style={[styles.badge, { backgroundColor: accentColor }]}>
+            <Animated.View style={[styles.badge, { backgroundColor: accentColor }, badgeAnimStyle]}>
               <Text style={[styles.badgeText, { color: colors.onPrimary }]}>{count}</Text>
-            </View>
+            </Animated.View>
           )}
         </View>
         {onPressMore && (

@@ -42,7 +42,7 @@ import { RDVEditor } from '../../components/RDVEditor';
 import RecipeViewer from '../../components/RecipeViewer';
 import type { AppRecipe } from '../../lib/cooklang';
 import { buildLeaderboard, processActiveRewards, lootProgress, calculateLevel } from '../../lib/gamification';
-import { LOOT_THRESHOLD } from '../../constants/rewards';
+import { LOOT_THRESHOLD, POINTS_PER_TASK } from '../../constants/rewards';
 import {
   dispatchNotification,
   buildManualContext,
@@ -647,13 +647,21 @@ export default function DashboardScreen() {
                 </Text>
               </TouchableOpacity>
             )}
-            {!hasBoxes && (
-              <Text style={[styles.lootHint, { color: colors.textFaint }]}>
-                {isChildMode
-                  ? 'Fais tes tâches pour gagner un cadeau ! 💪'
-                  : 'Complète des tâches pour gagner une loot box !'}
-              </Text>
-            )}
+            {!hasBoxes && (() => {
+              const remaining = Math.max(0, loot.threshold - loot.current);
+              const tasksLeft = Math.ceil(remaining / POINTS_PER_TASK);
+              return (
+                <Text style={[styles.lootHint, { color: colors.textFaint }]}>
+                  {isChildMode
+                    ? tasksLeft <= 3
+                      ? `Presque ! Plus que ${tasksLeft} tâche${tasksLeft > 1 ? 's' : ''} ! 🔥`
+                      : `Encore ~${tasksLeft} tâches avant ton cadeau ! 💪`
+                    : tasksLeft <= 3
+                      ? `Plus que ${tasksLeft} tâche${tasksLeft > 1 ? 's' : ''} avant la loot box ! 🔥`
+                      : `~${tasksLeft} tâches avant la prochaine loot box`}
+                </Text>
+              );
+            })()}
           </DashboardCard>
         );
       }
