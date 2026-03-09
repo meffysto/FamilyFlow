@@ -33,7 +33,7 @@ export interface FABProps {
 
 const MAIN_SIZE = 56;
 const ACTION_SIZE = 44;
-const ACTION_GAP = 12;
+const ACTION_GAP = 8;
 const ACTION_OFFSET_RIGHT = (MAIN_SIZE - ACTION_SIZE) / 2;
 
 const TIMING_CONFIG = { duration: 200, easing: Easing.out(Easing.cubic) };
@@ -125,7 +125,8 @@ function FABActionItem({
   colors: ReturnType<typeof useThemeColors>['colors'];
   onPress: () => void;
 }) {
-  const offset = (index + 1) * (ACTION_SIZE + ACTION_GAP);
+  const FIRST_GAP = 20;
+  const offset = FIRST_GAP + index * (ACTION_SIZE + ACTION_GAP) + ACTION_SIZE;
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [
@@ -196,9 +197,11 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   labelBadge: {
+    minWidth: 72,
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.sm,
     borderRadius: Radius.md,
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -208,6 +211,7 @@ const styles = StyleSheet.create({
   labelText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
+    textAlign: 'center',
   },
   actionButton: {
     width: ACTION_SIZE,
