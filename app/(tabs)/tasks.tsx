@@ -33,6 +33,7 @@ import { Chip } from '../../components/ui/Chip';
 import { DateInput } from '../../components/ui/DateInput';
 import { Spacing } from '../../constants/spacing';
 import { EmptyState } from '../../components/EmptyState';
+import { getTheme } from '../../constants/themes';
 import {
   dispatchNotificationAsync,
   buildAllTasksDoneContext,
@@ -146,10 +147,13 @@ export default function TasksScreen() {
           try {
             const { lootAwarded, pointsGained } = await completeTask(activeProfile, task.text);
             await refreshGamification();
+            const themeEmoji = getTheme(activeProfile.theme).emoji;
+            const name = activeProfile.name;
+            const taskShort = task.text.length > 25 ? task.text.slice(0, 25) + '…' : task.text;
             if (lootAwarded) {
-              showToast(`🎁 Récompense ! +${pointsGained} pts`);
+              showToast(`${themeEmoji} Bravo ${name} ! ${taskShort} → +${pointsGained} pts + 🎁`);
             } else {
-              showToast(`✅ +${pointsGained} pts !`);
+              showToast(`${themeEmoji} Bravo ${name} ! ${taskShort} → +${pointsGained} pts`);
             }
           } catch {
             // Gamification error — non-critical
