@@ -217,13 +217,38 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
           </TouchableOpacity>
         </View>
 
+        {/* Bouton IA en haut (toujours visible si configuré + query) */}
+        {ai.isConfigured && query.trim().length >= 2 && (
+          <View style={styles.aiSection}>
+            <TouchableOpacity
+              style={[styles.aiBtn, { backgroundColor: primary + '15', borderColor: primary + '40' }]}
+              onPress={handleAskAI}
+              disabled={ai.isLoading}
+              activeOpacity={0.7}
+            >
+              {ai.isLoading ? (
+                <ActivityIndicator size="small" color={primary} />
+              ) : (
+                <Text style={[styles.aiBtnText, { color: primary }]}>
+                  🤖 Demander à l'IA : "{query.length > 30 ? query.slice(0, 30) + '…' : query}"
+                </Text>
+              )}
+            </TouchableOpacity>
+            {aiError ? (
+              <Text style={[styles.aiError, { color: colors.error }]}>{aiError}</Text>
+            ) : null}
+            {aiAnswer ? (
+              <View style={[styles.aiAnswer, { backgroundColor: colors.cardAlt }]}>
+                <Text style={[styles.aiAnswerLabel, { color: primary }]}>🤖 Assistant</Text>
+                <Text style={[styles.aiAnswerText, { color: colors.text }]}>{aiAnswer}</Text>
+              </View>
+            ) : null}
+          </View>
+        )}
+
         {/* Résultats */}
         {query.trim().length < 2 ? (
-          <View style={styles.emptyState}>
-            <Text style={[styles.emptyIcon]}>🔍</Text>
-            <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-              Tapez au moins 2 caractères pour chercher
-            </Text>
+          <View style={styles.emptyHintContainer}>
             <Text style={[styles.emptyHint, { color: colors.textFaint }]}>
               Tâches, RDV, recettes, stock, repas, courses, souvenirs, défis, souhaits
               {ai.isConfigured ? '\n\nOu posez une question à l\'assistant IA' : ''}
@@ -238,50 +263,17 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
             keyboardDismissMode="on-drag"
             contentContainerStyle={styles.listContent}
             ListHeaderComponent={
-              <>
-                {results.length > 0 && (
-                  <Text style={[styles.resultCount, { color: colors.textFaint }]}>
-                    {results.length} résultat{results.length > 1 ? 's' : ''}
+              results.length > 0 ? (
+                <Text style={[styles.resultCount, { color: colors.textFaint }]}>
+                  {results.length} résultat{results.length > 1 ? 's' : ''}
+                </Text>
+              ) : (
+                <View style={styles.noResults}>
+                  <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+                    Aucun résultat pour "{query}"
                   </Text>
-                )}
-                {results.length === 0 && (
-                  <View style={styles.noResults}>
-                    <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                      Aucun résultat pour "{query}"
-                    </Text>
-                  </View>
-                )}
-              </>
-            }
-            ListFooterComponent={
-              ai.isConfigured ? (
-                <View style={styles.aiSection}>
-                  <View style={[styles.aiDivider, { backgroundColor: colors.separator }]} />
-                  <TouchableOpacity
-                    style={[styles.aiBtn, { backgroundColor: primary + '15', borderColor: primary + '40' }]}
-                    onPress={handleAskAI}
-                    disabled={ai.isLoading}
-                    activeOpacity={0.7}
-                  >
-                    {ai.isLoading ? (
-                      <ActivityIndicator size="small" color={primary} />
-                    ) : (
-                      <Text style={[styles.aiBtnText, { color: primary }]}>
-                        🤖 Demander à l'IA : "{query.length > 30 ? query.slice(0, 30) + '…' : query}"
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                  {aiError ? (
-                    <Text style={[styles.aiError, { color: colors.error }]}>{aiError}</Text>
-                  ) : null}
-                  {aiAnswer ? (
-                    <View style={[styles.aiAnswer, { backgroundColor: colors.cardAlt }]}>
-                      <Text style={[styles.aiAnswerLabel, { color: primary }]}>🤖 Assistant</Text>
-                      <Text style={[styles.aiAnswerText, { color: colors.text }]}>{aiAnswer}</Text>
-                    </View>
-                  ) : null}
                 </View>
-              ) : null
+              )
             }
           />
         )}
@@ -367,15 +359,10 @@ const styles = StyleSheet.create({
     fontSize: FontSize.micro,
     fontWeight: FontWeight.semibold,
   },
-  emptyState: {
-    flex: 1,
+  emptyHintContainer: {
+    paddingHorizontal: Spacing['3xl'],
+    paddingTop: Spacing['3xl'],
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing['5xl'],
-    gap: Spacing.xl,
-  },
-  emptyIcon: {
-    fontSize: 48,
   },
   emptyText: {
     fontSize: FontSize.body,
