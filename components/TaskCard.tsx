@@ -73,6 +73,8 @@ export const TaskCard = React.memo(function TaskCard({
       onLongPress={onLongPress}
       activeOpacity={onLongPress ? 0.7 : 1}
       delayLongPress={500}
+      accessibilityLabel={`Tâche : ${task.text}${task.completed ? ', terminée' : ''}${isOverdue ? ', en retard' : ''}`}
+      accessibilityRole="button"
     >
       <TouchableOpacity
         style={styles.checkbox}

@@ -371,6 +371,7 @@ export default function TasksScreen() {
           <SwipeToDelete
             onDelete={() => handleDeleteTask(item)}
             disabled={item.completed}
+            hintId="tasks"
           >
             <TaskCard task={item} onToggle={handleTaskToggle} />
           </SwipeToDelete>
