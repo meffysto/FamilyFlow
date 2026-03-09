@@ -86,6 +86,7 @@ const ALL_SECTIONS: SectionPref[] = [
   { id: 'rewards',    label: 'Récompenses actives',     emoji: '🏆', visible: true,  priority: 'medium' },
   { id: 'defis',      label: 'Défis familiaux',         emoji: '🏅', visible: true,  priority: 'medium' },
   { id: 'gratitude',  label: 'Gratitude',               emoji: '🙏', visible: true,  priority: 'medium' },
+  { id: 'wishlist',   label: 'Souhaits',                emoji: '🎁', visible: true,  priority: 'medium' },
   // Optionnelles — masquées par défaut pour les nouveaux utilisateurs
   { id: 'stock',      label: 'Alertes stock',            emoji: '📦', visible: false, priority: 'low' },
   { id: 'quicknotifs',label: 'Notifications rapides',   emoji: '📤', visible: false, priority: 'low' },
@@ -163,6 +164,7 @@ export default function DashboardScreen() {
     defis,
     checkInDefi,
     gratitudeDays,
+    wishlistItems,
   } = useVault();
 
   // Active rewards (filtered for non-expired)
@@ -467,6 +469,7 @@ export default function DashboardScreen() {
     if (defis.some((d) => d.status === 'active')) activeSections.add('defis');
     const todayGrat = gratitudeDays.find((d) => d.date === todayStr);
     if (todayGrat && todayGrat.entries.length > 0) activeSections.add('gratitude');
+    if (wishlistItems.length > 0) activeSections.add('wishlist');
     return smartSortSections(sectionPrefs, {
       hour: new Date().getHours(),
       hasBaby,
@@ -477,7 +480,7 @@ export default function DashboardScreen() {
   }, [smartSort, sectionPrefs, hasBaby, overdueTasks.length, isVacationActive,
     pendingMenage.length, todayMeals.length, topCourses.length, upcomingRdvs.length,
     enfants.length, stock.length, activeRewards.length, leaderboard.length,
-    weeklyStatsData.total, activeProfile, recipes.length, customNotifs.length, defis, gratitudeDays, todayStr]);
+    weeklyStatsData.total, activeProfile, recipes.length, customNotifs.length, defis, gratitudeDays, todayStr, wishlistItems]);
 
   const renderSection = (id: string): React.ReactNode => {
     switch (id) {
@@ -981,6 +984,17 @@ export default function DashboardScreen() {
             <Text style={[styles.defiMeta, { color: colors.textSub }]}>
               {todayCount}/{profiles.length} aujourd'hui
               {gratitudeStreak > 0 ? ` · ${gratitudeStreak}j 🔥` : ''}
+            </Text>
+          </DashboardCard>
+        );
+      }
+
+      case 'wishlist': {
+        const unbought = wishlistItems.filter((w) => !w.bought).length;
+        return (
+          <DashboardCard key="wishlist" title="Souhaits" icon="🎁" color="#E11D48" onPressMore={() => router.push('/(tabs)/wishlist' as any)}>
+            <Text style={[styles.defiMeta, { color: colors.textSub }]}>
+              {unbought} idée{unbought !== 1 ? 's' : ''} cadeau
             </Text>
           </DashboardCard>
         );

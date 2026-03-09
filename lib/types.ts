@@ -335,6 +335,24 @@ export interface GratitudeDay {
   entries: GratitudeEntry[];
 }
 
+// ─── Wishlist / Idées cadeaux ────────────────────────────────────────────────
+
+export type WishBudget = '' | '💰' | '💰💰' | '💰💰💰';
+export type WishOccasion = '' | '🎂' | '🎄';
+
+export interface WishlistItem {
+  id: string;
+  text: string;
+  budget: WishBudget;
+  occasion: WishOccasion;
+  notes: string;
+  bought: boolean;
+  boughtBy: string;        // profileName du parent qui a acheté
+  profileName: string;     // propriétaire du souhait (section ##)
+  sourceFile: string;
+  lineIndex: number;
+}
+
 export type NotifEvent =
   | 'task_completed'
   | 'loot_box_opened'

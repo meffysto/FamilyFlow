@@ -48,9 +48,12 @@ import {
   GRATITUDE_FILE,
   parseGratitude,
   serializeGratitude,
+  WISHLIST_FILE,
+  parseWishlist,
+  serializeWishlist,
 } from '../lib/parser';
 import { processActiveRewards } from '../lib/gamification';
-import { Task, RDV, CourseItem, MealItem, StockItem, Profile, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, DefiDayEntry, GratitudeDay } from '../lib/types';
+import { Task, RDV, CourseItem, MealItem, StockItem, Profile, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, DefiDayEntry, GratitudeDay, WishlistItem, WishBudget, WishOccasion } from '../lib/types';
 import {
   parseBudgetConfig,
   parseBudgetMonth,
@@ -170,6 +173,11 @@ export interface VaultState {
   gratitudeDays: GratitudeDay[];
   addGratitudeEntry: (date: string, profileId: string, profileName: string, text: string) => Promise<void>;
   deleteGratitudeEntry: (date: string, profileId: string) => Promise<void>;
+  wishlistItems: WishlistItem[];
+  addWishItem: (text: string, profileName: string, budget?: WishBudget, occasion?: WishOccasion, notes?: string) => Promise<void>;
+  updateWishItem: (item: WishlistItem, updates: Partial<WishlistItem>) => Promise<void>;
+  deleteWishItem: (item: WishlistItem) => Promise<void>;
+  toggleWishBought: (item: WishlistItem, boughtBy: string) => Promise<void>;
 }
 
 // Static task files (non-enfant)
@@ -316,6 +324,7 @@ export function useVaultInternal(): VaultState {
   const [healthRecords, setHealthRecords] = useState<HealthRecord[]>([]);
   const [defis, setDefis] = useState<Defi[]>([]);
   const [gratitudeDays, setGratitudeDays] = useState<GratitudeDay[]>([]);
+  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const vaultRef = useRef<VaultManager | null>(null);
   const busyRef = useRef(false); // Guard against AppState race condition
 
@@ -639,6 +648,14 @@ export function useVaultInternal(): VaultState {
         setGratitudeDays(parseGratitude(gratContent));
       } catch {
         setGratitudeDays([]);
+      }
+
+      // Load wishlist
+      try {
+        const wishContent = await vault.readFile(WISHLIST_FILE);
+        setWishlistItems(parseWishlist(wishContent));
+      } catch {
+        setWishlistItems([]);
       }
 
       // Load notification preferences
@@ -1799,6 +1816,72 @@ export function useVaultInternal(): VaultState {
     setGratitudeDays(days);
   }, []);
 
+  // ─── Wishlist CRUD ────────────────────────────────────────────────────────
+
+  const reloadWishlist = useCallback(async (): Promise<WishlistItem[]> => {
+    if (!vaultRef.current) return [];
+    try {
+      const content = await vaultRef.current.readFile(WISHLIST_FILE);
+      return parseWishlist(content);
+    } catch {
+      return [];
+    }
+  }, []);
+
+  const addWishItem = useCallback(async (text: string, profileName: string, budget?: WishBudget, occasion?: WishOccasion, notes?: string) => {
+    if (!vaultRef.current) return;
+    const items = await reloadWishlist();
+    const newItem: WishlistItem = {
+      id: `wish_${Date.now()}`,
+      text,
+      budget: budget || '',
+      occasion: occasion || '',
+      notes: notes || '',
+      bought: false,
+      boughtBy: '',
+      profileName,
+      sourceFile: WISHLIST_FILE,
+      lineIndex: -1,
+    };
+    items.push(newItem);
+    await vaultRef.current.writeFile(WISHLIST_FILE, serializeWishlist(items));
+    setWishlistItems(parseWishlist(await vaultRef.current.readFile(WISHLIST_FILE)));
+  }, [reloadWishlist]);
+
+  const updateWishItem = useCallback(async (item: WishlistItem, updates: Partial<WishlistItem>) => {
+    if (!vaultRef.current) return;
+    const items = await reloadWishlist();
+    const idx = items.findIndex((w) => w.lineIndex === item.lineIndex && w.profileName === item.profileName);
+    if (idx === -1) return;
+    items[idx] = { ...items[idx], ...updates };
+    await vaultRef.current.writeFile(WISHLIST_FILE, serializeWishlist(items));
+    setWishlistItems(parseWishlist(await vaultRef.current.readFile(WISHLIST_FILE)));
+  }, [reloadWishlist]);
+
+  const deleteWishItem = useCallback(async (item: WishlistItem) => {
+    if (!vaultRef.current) return;
+    const items = await reloadWishlist();
+    const filtered = items.filter((w) => !(w.lineIndex === item.lineIndex && w.profileName === item.profileName));
+    await vaultRef.current.writeFile(WISHLIST_FILE, serializeWishlist(filtered));
+    setWishlistItems(parseWishlist(await vaultRef.current.readFile(WISHLIST_FILE)));
+  }, [reloadWishlist]);
+
+  const toggleWishBought = useCallback(async (item: WishlistItem, boughtBy: string) => {
+    if (!vaultRef.current) return;
+    const items = await reloadWishlist();
+    const idx = items.findIndex((w) => w.lineIndex === item.lineIndex && w.profileName === item.profileName);
+    if (idx === -1) return;
+    if (items[idx].bought) {
+      items[idx].bought = false;
+      items[idx].boughtBy = '';
+    } else {
+      items[idx].bought = true;
+      items[idx].boughtBy = boughtBy;
+    }
+    await vaultRef.current.writeFile(WISHLIST_FILE, serializeWishlist(items));
+    setWishlistItems(parseWishlist(await vaultRef.current.readFile(WISHLIST_FILE)));
+  }, [reloadWishlist]);
+
   return {
     vaultPath,
     isLoading,
@@ -1884,5 +1967,10 @@ export function useVaultInternal(): VaultState {
     gratitudeDays,
     addGratitudeEntry,
     deleteGratitudeEntry,
+    wishlistItems,
+    addWishItem,
+    updateWishItem,
+    deleteWishItem,
+    toggleWishBought,
   };
 }

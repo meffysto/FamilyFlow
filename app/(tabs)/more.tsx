@@ -34,7 +34,7 @@ interface GridItem {
 
 export default function MoreScreen() {
   const router = useRouter();
-  const { rdvs, stock, gamiData, budgetEntries, budgetConfig, activeProfile, profiles, defis } = useVault();
+  const { rdvs, stock, gamiData, budgetEntries, budgetConfig, activeProfile, profiles, defis, wishlistItems } = useVault();
   const { colors } = useThemeColors();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
 
@@ -49,6 +49,7 @@ export default function MoreScreen() {
       : 0;
 
     const activeDefis = defis.filter((d) => d.status === 'active').length;
+    const wishlistUnbought = wishlistItems.filter((w) => !w.bought).length;
 
     return [
       // Vie quotidienne
@@ -98,7 +99,7 @@ export default function MoreScreen() {
       }] : []),
       // Famille
       {
-        emoji: '🎁',
+        emoji: '🎰',
         label: 'Récompenses',
         route: '/(tabs)/loot',
         badge: lootBoxes || undefined,
@@ -118,6 +119,14 @@ export default function MoreScreen() {
         label: 'Gratitude',
         route: '/(tabs)/gratitude',
         color: '#8B5CF6',
+        category: 'famille' as const,
+      },
+      {
+        emoji: '🎁',
+        label: 'Souhaits',
+        route: '/(tabs)/wishlist',
+        badge: wishlistUnbought || undefined,
+        color: '#E11D48',
         category: 'famille' as const,
       },
       {
@@ -144,7 +153,7 @@ export default function MoreScreen() {
         category: 'systeme' as const,
       },
     ];
-  }, [rdvs, stock, gamiData, budgetEntries, budgetConfig, colors, profiles, defis]);
+  }, [rdvs, stock, gamiData, budgetEntries, budgetConfig, colors, profiles, defis, wishlistItems]);
 
   const visibleItems = isChildMode ? items.filter((i) => i.label !== 'Budget') : items;
 

@@ -33,6 +33,9 @@ import {
   DefiStatus,
   GratitudeDay,
   GratitudeEntry,
+  WishlistItem,
+  WishBudget,
+  WishOccasion,
 } from './types';
 import { VALID_THEMES, type ProfileTheme } from '../constants/themes';
 
@@ -948,6 +951,133 @@ export function serializeGratitude(days: GratitudeDay[]): string {
     if (i < sorted.length - 1) {
       parts.push('---\n');
     }
+  }
+
+  return parts.join('\n');
+}
+
+// ─── Wishlist / Idées cadeaux ────────────────────────────────────────────────
+
+export const WISHLIST_FILE = '05 - Famille/Souhaits.md';
+
+/**
+ * Parse le fichier Souhaits.md en WishlistItem[].
+ * H2 = profileName, chaque ligne : - [ ] texte | budget | occasion | notes | 🔒 achetéPar
+ */
+export function parseWishlist(content: string): WishlistItem[] {
+  const { content: body } = matter(content);
+  const items: WishlistItem[] = [];
+  const lines = body.split('\n');
+
+  let currentProfile = '';
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Détecter les sections ## profileName
+    const h2Match = line.match(/^## (.+)$/);
+    if (h2Match) {
+      currentProfile = h2Match[1].trim();
+      continue;
+    }
+
+    if (!currentProfile) continue;
+
+    // Ligne checkbox : - [ ] texte | ... | ... | ...
+    const checkMatch = line.match(/^- \[([ xX])\] (.+)$/);
+    if (!checkMatch) continue;
+
+    const completed = checkMatch[1] !== ' ';
+    const rest = checkMatch[2];
+
+    // Split par |
+    const parts = rest.split('|').map((p) => p.trim());
+    const text = parts[0] || '';
+    const budgetRaw = parts[1] || '';
+    const occasionRaw = parts[2] || '';
+    const notesAndBought = parts.slice(3).join('|').trim();
+
+    // Extraire 🔒 achetéPar
+    let bought = false;
+    let boughtBy = '';
+    let notes = notesAndBought;
+
+    const boughtMatch = notesAndBought.match(/🔒\s*(.+)$/);
+    if (boughtMatch) {
+      bought = true;
+      boughtBy = boughtMatch[1].trim();
+      notes = notesAndBought.replace(/\|?\s*🔒\s*.+$/, '').trim();
+    }
+
+    // Normaliser budget
+    let budget: WishBudget = '';
+    if (budgetRaw.includes('💰💰💰')) budget = '💰💰💰';
+    else if (budgetRaw.includes('💰💰')) budget = '💰💰';
+    else if (budgetRaw.includes('💰')) budget = '💰';
+
+    // Normaliser occasion
+    let occasion: WishOccasion = '';
+    if (occasionRaw.includes('🎂')) occasion = '🎂';
+    else if (occasionRaw.includes('🎄')) occasion = '🎄';
+
+    items.push({
+      id: `wish_${i}`,
+      text,
+      budget,
+      occasion,
+      notes,
+      bought,
+      boughtBy,
+      profileName: currentProfile,
+      sourceFile: WISHLIST_FILE,
+      lineIndex: i,
+    });
+  }
+
+  return items;
+}
+
+/**
+ * Sérialise WishlistItem[] en Markdown.
+ */
+export function serializeWishlist(items: WishlistItem[]): string {
+  const parts: string[] = [];
+  parts.push('---\ntags:\n  - souhaits\n---\n');
+  parts.push('# Souhaits familiaux\n');
+
+  // Grouper par profileName, préserver l'ordre d'apparition
+  const profileOrder: string[] = [];
+  const byProfile = new Map<string, WishlistItem[]>();
+  for (const item of items) {
+    if (!byProfile.has(item.profileName)) {
+      profileOrder.push(item.profileName);
+      byProfile.set(item.profileName, []);
+    }
+    byProfile.get(item.profileName)!.push(item);
+  }
+
+  for (const name of profileOrder) {
+    parts.push(`## ${name}\n`);
+    for (const item of byProfile.get(name)!) {
+      const check = item.bought ? 'x' : ' ';
+      const segments = [item.text];
+      segments.push(item.budget || '');
+      segments.push(item.occasion || '');
+
+      // Notes + bought
+      let extra = item.notes || '';
+      if (item.bought && item.boughtBy) {
+        extra = extra ? `${extra} | 🔒 ${item.boughtBy}` : `🔒 ${item.boughtBy}`;
+      }
+      segments.push(extra);
+
+      // Nettoyer les segments vides en fin
+      while (segments.length > 1 && !segments[segments.length - 1]) {
+        segments.pop();
+      }
+
+      parts.push(`- [${check}] ${segments.join(' | ')}`);
+    }
+    parts.push('');
   }
 
   return parts.join('\n');
