@@ -17,6 +17,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { RDV } from '../lib/types';
 import { formatDateForDisplay, parseDateInput } from '../lib/parser';
+import { Spacing, Radius } from '../constants/spacing';
+import { FontSize, FontWeight } from '../constants/typography';
 
 const TYPE_OPTIONS = [
   { label: '👨‍⚕️ Pédiatre', value: 'pédiatre' },
@@ -168,7 +170,7 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
               <Text style={[
                 styles.chipText,
                 { color: colors.textMuted },
-                typeRdv === opt.value && { color: primary, fontWeight: '700' },
+                typeRdv === opt.value && { color: primary, fontWeight: FontWeight.bold },
               ]}>
                 {opt.label}
               </Text>
@@ -192,7 +194,7 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
               <Text style={[
                 styles.chipText,
                 { color: colors.textMuted },
-                enfant === name && { color: primary, fontWeight: '700' },
+                enfant === name && { color: primary, fontWeight: FontWeight.bold },
               ]}>
                 {name}
               </Text>
@@ -290,79 +292,79 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     alignSelf: 'center',
-    marginTop: 8,
-    marginBottom: 4,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.xs,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    padding: Spacing['2xl'],
     borderBottomWidth: 1,
   },
-  headerClose: { fontSize: 20, padding: 4 },
-  headerTitle: { fontSize: 17, fontWeight: '800' },
-  headerSave: { fontSize: 15, fontWeight: '700', padding: 4 },
+  headerClose: { fontSize: FontSize.title, padding: Spacing.xs },
+  headerTitle: { fontSize: FontSize.subtitle, fontWeight: FontWeight.heavy },
+  headerSave: { fontSize: FontSize.body, fontWeight: FontWeight.bold, padding: Spacing.xs },
   scroll: { flex: 1 },
-  content: { padding: 20, gap: 16, paddingBottom: 40 },
+  content: { padding: Spacing['3xl'], gap: Spacing['2xl'], paddingBottom: 40 },
   label: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
   },
   input: {
     borderWidth: 1.5,
-    borderRadius: 12,
+    borderRadius: Radius.lg,
     padding: 14,
-    fontSize: 15,
+    fontSize: FontSize.body,
   },
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: Spacing.md,
   },
   chip: {
     paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
+    paddingVertical: Spacing.lg,
+    borderRadius: Radius.lg,
     borderWidth: 1.5,
     borderColor: 'transparent',
   },
   chipText: {
-    fontSize: 13,
-    fontWeight: '500',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.medium,
   },
   deleteBtn: {
     backgroundColor: '#FEF2F2',
     padding: 14,
-    borderRadius: 12,
+    borderRadius: Radius.lg,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#FECACA',
-    marginTop: 8,
+    marginTop: Spacing.md,
   },
   deleteBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
     color: '#EF4444',
   },
   sectionDivider: {
     height: 1,
-    marginTop: 4,
-    marginBottom: 4,
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.xs,
   },
   sectionLabel: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
   },
   sectionHint: {
-    fontSize: 13,
+    fontSize: FontSize.label,
     lineHeight: 18,
-    marginTop: -8,
+    marginTop: -Spacing.md,
   },
   questionRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 8,
+    gap: Spacing.md,
   },
   questionInput: {
     flex: 1,
@@ -371,26 +373,26 @@ const styles = StyleSheet.create({
     marginTop: 14,
     width: 32,
     height: 32,
-    borderRadius: 8,
+    borderRadius: Radius.md,
     backgroundColor: '#FEF2F2',
     alignItems: 'center',
     justifyContent: 'center',
   },
   questionRemoveBtnText: {
-    fontSize: 14,
+    fontSize: FontSize.sm,
     color: '#EF4444',
-    fontWeight: '700',
+    fontWeight: FontWeight.bold,
   },
   addQuestionBtn: {
     paddingVertical: 13,
-    borderRadius: 12,
+    borderRadius: Radius.lg,
     alignItems: 'center',
     borderWidth: 1.5,
     borderStyle: 'dashed',
   },
   addQuestionBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
   },
   reponsesInput: {
     minHeight: 110,

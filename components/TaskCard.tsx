@@ -13,7 +13,10 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Task } from '../lib/types';
+import { formatDateForDisplay } from '../lib/parser';
 import { useThemeColors } from '../contexts/ThemeContext';
+import { Spacing, Radius } from '../constants/spacing';
+import { FontSize, FontWeight, LineHeight } from '../constants/typography';
 
 interface TaskCardProps {
   task: Task;
@@ -114,7 +117,7 @@ export const TaskCard = React.memo(function TaskCard({
           {task.dueDate && !task.completed && (
             <View style={[styles.badge, { backgroundColor: colors.cardAlt }, isOverdue && { backgroundColor: colors.errorBg }]}>
               <Text style={[styles.dueDate, { color: colors.textMuted }, isOverdue && { color: colors.error, fontWeight: '700' as const }]}>
-                📅 {task.dueDate}
+                📅 {formatDateForDisplay(task.dueDate)}
               </Text>
             </View>
           )}
@@ -158,18 +161,18 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
+    borderRadius: Radius.lg,
+    padding: Spacing.xl,
+    marginBottom: Spacing.lg,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
     shadowRadius: 3,
     elevation: 2,
-    gap: 14,
+    gap: Spacing.xl,
   },
   checkbox: {
-    marginTop: 2,
+    marginTop: Spacing.xxs,
   },
   checkboxInner: {
     width: 26,
@@ -180,18 +183,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   checkmark: {
-    color: '#FFFFFF', // on primary — overridden inline if needed
-    fontSize: 15,
-    fontWeight: '700',
+    color: '#FFFFFF',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
   },
   content: {
     flex: 1,
     gap: 5,
   },
   taskText: {
-    fontSize: 16,
-    fontWeight: '500',
-    lineHeight: 22,
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.medium,
+    lineHeight: LineHeight.body,
   },
   completedText: {
     textDecorationLine: 'line-through',
@@ -200,54 +203,54 @@ const styles = StyleSheet.create({
   meta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: Spacing.sm,
     flexWrap: 'wrap',
-    marginTop: 2,
+    marginTop: Spacing.xxs,
   },
   badge: {
-    paddingHorizontal: 8,
+    paddingHorizontal: Spacing.md,
     paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: Radius.sm,
   },
   sectionBadge: {
-    paddingHorizontal: 8,
+    paddingHorizontal: Spacing.md,
     paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: Radius.sm,
   },
   sourceLabel: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.semibold,
   },
   sectionLabel: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.semibold,
   },
   dueDate: {
-    fontSize: 13,
-    fontWeight: '500',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.medium,
   },
   overdueBadgeContainer: {},
   overdueBadge: {},
   recurrenceBadge: {
-    fontSize: 12,
+    fontSize: FontSize.caption,
   },
   tags: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 4,
-    marginTop: 2,
+    gap: Spacing.xs,
+    marginTop: Spacing.xxs,
   },
   tag: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xxs,
+    borderRadius: Radius.xs,
   },
   tagText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
   },
   mentionText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
   },
 });

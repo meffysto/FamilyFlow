@@ -32,6 +32,7 @@ import {
   buildAllTasksDoneContext,
 } from '../../lib/notifications';
 import { Task, CourseItem, Profile } from '../../lib/types';
+import { formatDateForDisplay } from '../../lib/parser';
 
 interface FilterDef {
   id: string;
@@ -310,7 +311,7 @@ export default function TasksScreen() {
       {isVacationActive && vacationConfig && (
         <View style={[styles.vacationBanner, { backgroundColor: colors.warningBg, borderBottomColor: colors.warning }]}>
           <Text style={[styles.vacationBannerText, { color: colors.warningText }]}>
-            ☀️ Mode Vacances — du {vacationConfig.startDate.split('-').reverse().join('/')} au {vacationConfig.endDate.split('-').reverse().join('/')}
+            ☀️ Mode Vacances — du {formatDateForDisplay(vacationConfig.startDate)} au {formatDateForDisplay(vacationConfig.endDate)}
           </Text>
         </View>
       )}

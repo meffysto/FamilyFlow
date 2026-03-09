@@ -17,6 +17,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useVault } from '../../hooks/useVault';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { Spacing, Radius } from '../../constants/spacing';
+import { FontSize, FontWeight } from '../../constants/typography';
 import { isRdvUpcoming } from '../../lib/parser';
 import { totalSpent, totalBudget } from '../../lib/budget';
 
@@ -141,33 +143,33 @@ export default function MoreScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   header: {
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingHorizontal: Spacing['3xl'],
+    paddingVertical: Spacing.xl,
     borderBottomWidth: 1,
   },
-  title: { fontSize: 22, fontWeight: '800' },
+  title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
   scroll: { flex: 1 },
-  content: { padding: 16, paddingBottom: 40 },
+  content: { padding: Spacing['2xl'], paddingBottom: 40 },
   sectionHeader: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.bold,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginBottom: 8,
-    marginTop: 12,
-    paddingHorizontal: 4,
+    marginBottom: Spacing.md,
+    marginTop: Spacing.xl,
+    paddingHorizontal: Spacing.xs,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: Spacing.xl,
   },
   card: {
     width: '47%',
     borderRadius: 18,
-    padding: 20,
+    padding: Spacing['3xl'],
     alignItems: 'center',
-    gap: 10,
+    gap: Spacing.lg,
     shadowColor: '#000',
     shadowOpacity: 0.04,
     shadowRadius: 8,
@@ -178,28 +180,28 @@ const styles = StyleSheet.create({
   iconCircle: {
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emoji: { fontSize: 28 },
+  emoji: { fontSize: FontSize.icon },
   cardLabel: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
   },
   badgeContainer: {
     position: 'absolute',
-    top: 10,
-    right: 10,
+    top: Spacing.lg,
+    right: Spacing.lg,
     minWidth: 22,
     height: 22,
-    borderRadius: 11,
+    borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 6,
+    paddingHorizontal: Spacing.sm,
   },
   badgeText: {
-    fontSize: 11,
-    fontWeight: '800',
+    fontSize: FontSize.code,
+    fontWeight: FontWeight.heavy,
   },
 });

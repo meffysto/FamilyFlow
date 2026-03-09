@@ -29,7 +29,7 @@ import { useVault, VAULT_PATH_KEY } from '../../hooks/useVault';
 import { VaultPicker } from '../../components/VaultPicker';
 import { NotificationSettings } from '../../components/NotificationSettings';
 import { testTelegram, sendTelegram, buildWeeklyRecapText, sendWeeklyRecap, buildMonthlyRecapText, buildGrossesseUpdateText } from '../../lib/telegram';
-import { serializeGamification } from '../../lib/parser';
+import { serializeGamification, formatDateForDisplay } from '../../lib/parser';
 import { RARITY_LABELS } from '../../constants/rewards';
 import { format } from 'date-fns';
 import { THEME_LIST, getTheme } from '../../constants/themes';
@@ -634,7 +634,7 @@ export default function SettingsScreen() {
                   <Text style={[styles.rowLabel, { color: colors.textSub }]}>☀️ Vacances en cours</Text>
                 </View>
                 <Text style={[styles.vacationDates, { color: colors.text }]}>
-                  Du {vacationConfig.startDate.split('-').reverse().join('/')} au {vacationConfig.endDate.split('-').reverse().join('/')}
+                  Du {formatDateForDisplay(vacationConfig.startDate)} au {formatDateForDisplay(vacationConfig.endDate)}
                 </Text>
                 <Text style={[styles.vacationCountdown, { color: primary }]}>
                   {(() => {
