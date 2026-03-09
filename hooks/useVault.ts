@@ -43,9 +43,11 @@ import {
   parseFamille,
   serializeGamification,
   formatMealLine,
+  parseDefis,
+  serializeDefis,
 } from '../lib/parser';
 import { processActiveRewards } from '../lib/gamification';
-import { Task, RDV, CourseItem, MealItem, StockItem, Profile, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry } from '../lib/types';
+import { Task, RDV, CourseItem, MealItem, StockItem, Profile, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, DefiDayEntry } from '../lib/types';
 import {
   parseBudgetConfig,
   parseBudgetMonth,
@@ -157,6 +159,11 @@ export interface VaultState {
   saveHealthRecord: (record: HealthRecord) => Promise<void>;
   addGrowthEntry: (enfant: string, entry: GrowthEntry) => Promise<void>;
   addVaccineEntry: (enfant: string, entry: VaccineEntry) => Promise<void>;
+  defis: Defi[];
+  createDefi: (defi: Omit<Defi, 'progress' | 'status'>) => Promise<void>;
+  checkInDefi: (defiId: string, profileId: string, completed: boolean, value?: number, note?: string) => Promise<void>;
+  completeDefi: (defiId: string) => Promise<void>;
+  deleteDefi: (defiId: string) => Promise<void>;
 }
 
 // Static task files (non-enfant)
@@ -212,6 +219,7 @@ const VACATION_FILE = '02 - Maison/Vacances.md';
 const BUDGET_DIR = '05 - Budget';
 const BUDGET_CONFIG_FILE = '05 - Budget/config.md';
 const ROUTINES_FILE = '02 - Maison/Routines.md';
+const DEFIS_FILE = 'defis.md';
 const HEALTH_DIR = '01 - Enfants';
 const VACATION_STORE_KEY = 'vacation_mode';
 const VACATION_TEMPLATE = `# Checklist Vacances
@@ -300,6 +308,7 @@ export function useVaultInternal(): VaultState {
   const [budgetMonth, setBudgetMonth] = useState(() => format(new Date(), 'yyyy-MM'));
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [healthRecords, setHealthRecords] = useState<HealthRecord[]>([]);
+  const [defis, setDefis] = useState<Defi[]>([]);
   const vaultRef = useRef<VaultManager | null>(null);
   const busyRef = useRef(false); // Guard against AppState race condition
 
@@ -558,6 +567,63 @@ export function useVaultInternal(): VaultState {
         setHealthRecords(results.filter((r): r is HealthRecord => r !== null));
       } catch {
         setHealthRecords([]);
+      }
+
+      // Load défis familiaux
+      try {
+        const defisContent = await vault.readFile(DEFIS_FILE);
+        const parsed = parseDefis(defisContent);
+        // Auto-résolution statut : endDate passée → completed ou failed
+        const todayStr = new Date().toISOString().slice(0, 10);
+        let changed = false;
+        const autoCompleted: typeof parsed = [];
+        for (const d of parsed) {
+          if (d.status === 'active' && d.endDate < todayStr) {
+            const uniqueDays = new Set(d.progress.filter((p) => p.completed).map((p) => p.date)).size;
+            if (d.type === 'abstinence') {
+              const hasFail = d.progress.some((p) => !p.completed);
+              d.status = hasFail ? 'failed' : uniqueDays >= d.targetDays ? 'completed' : 'failed';
+            } else {
+              d.status = uniqueDays >= d.targetDays ? 'completed' : 'failed';
+            }
+            changed = true;
+            if (d.status === 'completed') autoCompleted.push(d);
+          }
+        }
+        if (changed) {
+          await vault.writeFile(DEFIS_FILE, serializeDefis(parsed));
+          // Distribuer les récompenses pour les défis auto-complétés
+          if (autoCompleted.length > 0 && gamiContent) {
+            try {
+              const gami = parseGamification(gamiContent);
+              const allProfileIds = parseFamille(familleContent).map((p) => p.id);
+              for (const d of autoCompleted) {
+                const participantIds = d.participants.length > 0 ? d.participants : allProfileIds;
+                for (const pid of participantIds) {
+                  const profile = gami.profiles.find((p) => p.name.toLowerCase().replace(/\s+/g, '') === pid);
+                  if (profile) {
+                    profile.points += d.rewardPoints;
+                    profile.lootBoxesAvailable += d.rewardLootBoxes;
+                    gami.history.push({
+                      profileId: pid,
+                      action: `+${d.rewardPoints}`,
+                      points: d.rewardPoints,
+                      note: `Défi: ${d.title}`,
+                      timestamp: new Date().toISOString(),
+                    });
+                  }
+                }
+              }
+              const gamiStr = serializeGamification(gami);
+              await vault.writeFile(GAMI_FILE, gamiStr);
+              setProfiles(mergeProfiles(familleContent, gamiStr));
+              setGamiData(gami);
+            } catch { /* non-critique */ }
+          }
+        }
+        setDefis(parsed);
+      } catch {
+        setDefis([]);
       }
 
       // Load notification preferences
@@ -1573,6 +1639,97 @@ export function useVaultInternal(): VaultState {
     await addHealthEntry(enfant, 'vaccins', entry);
   }, [addHealthEntry]);
 
+  // ─── Défis familiaux CRUD ──────────────────────────────────────────────────
+
+  const createDefi = useCallback(async (defi: Omit<Defi, 'progress' | 'status'>) => {
+    if (!vaultRef.current) return;
+    const newDefi: Defi = { ...defi, status: 'active', progress: [] };
+    const updated = [...defis, newDefi];
+    await vaultRef.current.writeFile(DEFIS_FILE, serializeDefis(updated));
+    setDefis(updated);
+  }, [defis]);
+
+  const checkInDefi = useCallback(async (defiId: string, profileId: string, completed: boolean, value?: number, note?: string) => {
+    if (!vaultRef.current) return;
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const updated = defis.map((d) => {
+      if (d.id !== defiId) return d;
+      // Retirer l'entrée existante pour ce profil + date (pour remplacer)
+      const filtered = d.progress.filter((p) => !(p.date === todayStr && p.profileId === profileId));
+      const entry: DefiDayEntry = { date: todayStr, profileId, completed, value, note };
+      const newProgress = [...filtered, entry];
+
+      // Pour abstinence, un échec = défi raté
+      let newStatus = d.status;
+      if (d.type === 'abstinence' && !completed) {
+        newStatus = 'failed';
+      }
+
+      return { ...d, progress: newProgress, status: newStatus };
+    });
+    await vaultRef.current.writeFile(DEFIS_FILE, serializeDefis(updated));
+    setDefis(updated);
+  }, [defis]);
+
+  const completeDefi = useCallback(async (defiId: string) => {
+    if (!vaultRef.current) return;
+    const defi = defis.find((d) => d.id === defiId);
+    if (!defi) return;
+
+    // Marquer comme complété
+    const updated = defis.map((d) => d.id === defiId ? { ...d, status: 'completed' as const } : d);
+    await vaultRef.current.writeFile(DEFIS_FILE, serializeDefis(updated));
+    setDefis(updated);
+
+    // Distribuer les récompenses via gamification
+    try {
+      const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
+      const gami = parseGamification(gamiContent);
+      const participantIds = defi.participants.length > 0
+        ? defi.participants
+        : profiles.map((p) => p.id);
+
+      for (const pid of participantIds) {
+        // Match par ID (profiles utilisent p.id = nom normalisé)
+        const matchProfile = profiles.find((p) => p.id === pid);
+        const gamiName = matchProfile?.name;
+        const profile = gamiName
+          ? gami.profiles.find((p) => p.name === gamiName)
+          : gami.profiles.find((p) => p.name.toLowerCase().replace(/\s+/g, '') === pid);
+        if (profile) {
+          profile.points += defi.rewardPoints;
+          profile.lootBoxesAvailable += defi.rewardLootBoxes;
+          gami.history.push({
+            profileId: pid,
+            action: `+${defi.rewardPoints}`,
+            points: defi.rewardPoints,
+            note: `Défi: ${defi.title}`,
+            timestamp: new Date().toISOString(),
+          });
+        }
+      }
+      const gamiStr = serializeGamification(gami);
+      await vaultRef.current.writeFile(GAMI_FILE, gamiStr);
+      const familleContent = await vaultRef.current.readFile(FAMILLE_FILE);
+      setProfiles(mergeProfiles(familleContent, gamiStr));
+      setGamiData(gami);
+    } catch {
+      // Non-critique — le défi est marqué complété quand même
+    }
+  }, [defis, profiles]);
+
+  const deleteDefi = useCallback(async (defiId: string) => {
+    if (!vaultRef.current) return;
+    const updated = defis.filter((d) => d.id !== defiId);
+    if (updated.length > 0) {
+      await vaultRef.current.writeFile(DEFIS_FILE, serializeDefis(updated));
+    } else {
+      // Supprimer le fichier si plus aucun défi
+      try { await vaultRef.current.deleteFile(DEFIS_FILE); } catch { /* ignore */ }
+    }
+    setDefis(updated);
+  }, [defis]);
+
   return {
     vaultPath,
     isLoading,
@@ -1650,5 +1807,10 @@ export function useVaultInternal(): VaultState {
     saveHealthRecord,
     addGrowthEntry,
     addVaccineEntry,
+    defis,
+    createDefi,
+    checkInDefi,
+    completeDefi,
+    deleteDefi,
   };
 }

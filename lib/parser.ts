@@ -27,6 +27,10 @@ import {
   StockItem,
   Memory,
   MemoryType,
+  Defi,
+  DefiDayEntry,
+  DefiType,
+  DefiStatus,
 } from './types';
 import { VALID_THEMES, type ProfileTheme } from '../constants/themes';
 
@@ -750,6 +754,114 @@ export function mergeProfiles(
       pityCounter: gami?.pityCounter ?? 0,
     };
   });
+}
+
+// ─── Défis familiaux ────────────────────────────────────────────────────────
+
+/**
+ * Parse defis.md into Defi[].
+ * Format: H2 per défi, key-value props, ### Progression section with entries.
+ */
+export function parseDefis(content: string): Defi[] {
+  const lines = content.split('\n');
+  const defis: Defi[] = [];
+  let current: Record<string, string> | null = null;
+  let currentTitle = '';
+  let progress: DefiDayEntry[] = [];
+  let inProgress = false;
+
+  const flush = () => {
+    if (current && current.id) {
+      defis.push({
+        id: current.id,
+        title: currentTitle,
+        description: current.description ?? '',
+        type: (current.type ?? 'daily') as DefiType,
+        startDate: current.startDate ?? '',
+        endDate: current.endDate ?? '',
+        targetDays: parseInt(current.targetDays ?? '7', 10),
+        targetMetric: current.targetMetric ? parseInt(current.targetMetric, 10) : undefined,
+        metricUnit: current.metricUnit || undefined,
+        emoji: current.emoji ?? '🏅',
+        difficulty: (current.difficulty ?? 'moyen') as 'facile' | 'moyen' | 'difficile',
+        participants: current.participants ? current.participants.split(',').map((s) => s.trim()).filter(Boolean) : [],
+        status: (current.status ?? 'active') as DefiStatus,
+        progress,
+        rewardPoints: parseInt(current.rewardPoints ?? '30', 10),
+        rewardLootBoxes: parseInt(current.rewardLootBoxes ?? '0', 10),
+        templateId: current.templateId || undefined,
+      });
+    }
+  };
+
+  for (const line of lines) {
+    if (line.startsWith('## ')) {
+      flush();
+      currentTitle = line.slice(3).trim();
+      current = {};
+      progress = [];
+      inProgress = false;
+    } else if (line.startsWith('### Progression')) {
+      inProgress = true;
+    } else if (line.startsWith('### ') || line.startsWith('## ')) {
+      inProgress = false;
+    } else if (inProgress && line.startsWith('- ')) {
+      // Format: - 2026-03-10 | papa | true | 30 | Super journée
+      const parts = line.slice(2).split(' | ');
+      if (parts.length >= 3) {
+        const entry: DefiDayEntry = {
+          date: parts[0].trim(),
+          profileId: parts[1].trim(),
+          completed: parts[2].trim() === 'true',
+          value: parts[3]?.trim() ? parseFloat(parts[3].trim()) || undefined : undefined,
+          note: parts[4]?.trim() || undefined,
+        };
+        progress.push(entry);
+      }
+    } else if (current && !inProgress && line.includes(': ')) {
+      const colonIdx = line.indexOf(': ');
+      const key = line.slice(0, colonIdx).trim();
+      const val = line.slice(colonIdx + 2).trim();
+      current[key] = val;
+    }
+  }
+  flush();
+
+  return defis;
+}
+
+/**
+ * Serialize Defi[] back to Markdown string.
+ */
+export function serializeDefis(defis: Defi[]): string {
+  const sections = defis.map((d) => {
+    const props = [
+      `id: ${d.id}`,
+      `type: ${d.type}`,
+      `emoji: ${d.emoji}`,
+      `difficulty: ${d.difficulty}`,
+      `startDate: ${d.startDate}`,
+      `endDate: ${d.endDate}`,
+      `targetDays: ${d.targetDays}`,
+      ...(d.targetMetric !== undefined ? [`targetMetric: ${d.targetMetric}`] : []),
+      ...(d.metricUnit ? [`metricUnit: ${d.metricUnit}`] : []),
+      `participants: ${d.participants.join(',')}`,
+      `status: ${d.status}`,
+      `rewardPoints: ${d.rewardPoints}`,
+      `rewardLootBoxes: ${d.rewardLootBoxes}`,
+      ...(d.templateId ? [`templateId: ${d.templateId}`] : []),
+      `description: ${d.description}`,
+    ].join('\n');
+
+    const progressLines = d.progress
+      .map((p) => `- ${p.date} | ${p.profileId} | ${p.completed} | ${p.value ?? ''} | ${p.note ?? ''}`)
+      .join('\n');
+
+    return `## ${d.title}\n${props}\n\n### Progression\n${progressLines}`;
+  });
+
+  return `---\ntags:\n  - defis\n---\n# Défis familiaux\n\n${sections.join('\n\n')}
+`;
 }
 
 // ─── Journal bébé ───────────────────────────────────────────────────────────

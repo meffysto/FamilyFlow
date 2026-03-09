@@ -288,6 +288,39 @@ export interface RoutineProgress {
 
 // ─── Notifications ──────────────────────────────────────────────────────────
 
+// ─── Défis familiaux ─────────────────────────────────────────────────────────
+
+export type DefiType = 'daily' | 'abstinence' | 'cumulative';
+export type DefiStatus = 'active' | 'completed' | 'failed' | 'archived';
+
+export interface Defi {
+  id: string;                    // "defi_<timestamp>_<rand>"
+  title: string;
+  description: string;
+  type: DefiType;
+  startDate: string;             // YYYY-MM-DD
+  endDate: string;
+  targetDays: number;
+  targetMetric?: number;         // pour cumulative (ex: 900 min)
+  metricUnit?: string;           // "min", "pas", "pages"
+  emoji: string;
+  difficulty: 'facile' | 'moyen' | 'difficile';
+  participants: string[];        // profile IDs (vide = toute la famille)
+  status: DefiStatus;
+  progress: DefiDayEntry[];
+  rewardPoints: number;
+  rewardLootBoxes: number;
+  templateId?: string;
+}
+
+export interface DefiDayEntry {
+  date: string;
+  profileId: string;
+  completed: boolean;
+  value?: number;                // pour cumulative
+  note?: string;
+}
+
 export type NotifEvent =
   | 'task_completed'
   | 'loot_box_opened'

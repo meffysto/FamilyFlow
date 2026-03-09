@@ -87,6 +87,9 @@ function getContextScore(id: string, ctx: SmartSortContext): number {
     case 'recipes':
       return hasData ? 5 : -10;
 
+    case 'defis':
+      return hasData ? 20 : -10;
+
     default:
       return 0;
   }

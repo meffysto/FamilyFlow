@@ -83,6 +83,7 @@ const ALL_SECTIONS: SectionPref[] = [
   { id: 'weeklyStats',  label: 'Stats semaine',            emoji: '📊', visible: true,  priority: 'medium' },
   { id: 'lootProgress', label: 'Progression',            emoji: '🎁', visible: true,  priority: 'medium' },
   { id: 'rewards',    label: 'Récompenses actives',     emoji: '🏆', visible: true,  priority: 'medium' },
+  { id: 'defis',      label: 'Défis familiaux',         emoji: '🏅', visible: true,  priority: 'medium' },
   // Optionnelles — masquées par défaut pour les nouveaux utilisateurs
   { id: 'stock',      label: 'Alertes stock',            emoji: '📦', visible: false, priority: 'low' },
   { id: 'quicknotifs',label: 'Notifications rapides',   emoji: '📤', visible: false, priority: 'low' },
@@ -98,6 +99,7 @@ const ADULT_ONLY_SECTIONS = new Set(['courses', 'budget', 'stock', 'quicknotifs'
 const CHILD_PROMOTED: Record<string, { visible: boolean; priority: 'high' | 'medium' | 'low' }> = {
   rewards:     { visible: true, priority: 'high' },
   leaderboard: { visible: true, priority: 'high' },
+  defis:       { visible: true, priority: 'high' },
 };
 
 function getDefaultSections(role?: string): SectionPref[] {
@@ -156,6 +158,8 @@ export default function DashboardScreen() {
     convertToBorn,
     budgetEntries,
     budgetConfig,
+    defis,
+    checkInDefi,
   } = useVault();
 
   // Active rewards (filtered for non-expired)
@@ -456,6 +460,7 @@ export default function DashboardScreen() {
     if (activeProfile) activeSections.add('lootProgress');
     if (recipes.length > 0) activeSections.add('recipes');
     if (customNotifs.length > 0) activeSections.add('quicknotifs');
+    if (defis.some((d) => d.status === 'active')) activeSections.add('defis');
     return smartSortSections(sectionPrefs, {
       hour: new Date().getHours(),
       hasBaby,
@@ -466,7 +471,7 @@ export default function DashboardScreen() {
   }, [smartSort, sectionPrefs, hasBaby, overdueTasks.length, isVacationActive,
     pendingMenage.length, todayMeals.length, topCourses.length, upcomingRdvs.length,
     enfants.length, stock.length, activeRewards.length, leaderboard.length,
-    weeklyStatsData.total, activeProfile, recipes.length, customNotifs.length]);
+    weeklyStatsData.total, activeProfile, recipes.length, customNotifs.length, defis]);
 
   const renderSection = (id: string): React.ReactNode => {
     switch (id) {
@@ -919,6 +924,48 @@ export default function DashboardScreen() {
             <FamilyLeaderboard profiles={leaderboard} compact gamiHistory={gamiData?.history} />
           </DashboardCard>
         );
+
+      case 'defis': {
+        const activeDefis = defis.filter((d) => d.status === 'active');
+        if (activeDefis.length === 0) return null;
+        const mainDefi = activeDefis[0];
+        const uniqueDays = new Set(mainDefi.progress.filter((p) => p.completed).map((p) => p.date)).size;
+        const progress = mainDefi.targetDays > 0 ? uniqueDays / mainDefi.targetDays : 0;
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const todayDone = activeProfile ? mainDefi.progress.some((p) => p.date === todayStr && p.profileId === activeProfile.id && p.completed) : false;
+        return (
+          <DashboardCard key="defis" title="Défis familiaux" icon="🏅" count={activeDefis.length} color="#F59E0B" onPressMore={() => router.push('/(tabs)/defis')}>
+            <View style={styles.defiRow}>
+              <Text style={styles.defiEmoji}>{mainDefi.emoji}</Text>
+              <View style={{ flex: 1, gap: 4 }}>
+                <Text style={[styles.defiTitle, { color: colors.text }]} numberOfLines={1}>{mainDefi.title}</Text>
+                <View style={[styles.defiProgressBg, { backgroundColor: colors.cardAlt }]}>
+                  <View style={[styles.defiProgressFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: '#F59E0B' }]} />
+                </View>
+                <Text style={[styles.defiMeta, { color: colors.textMuted }]}>{uniqueDays}/{mainDefi.targetDays} jours</Text>
+              </View>
+              {!todayDone && activeProfile && (
+                <TouchableOpacity
+                  style={[styles.defiCheckBtn, { backgroundColor: '#F59E0B' }]}
+                  onPress={async () => {
+                    await checkInDefi(mainDefi.id, activeProfile.id, true);
+                    showToast(`Check-in ${mainDefi.emoji} ${mainDefi.title}`);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.defiCheckText, { color: colors.onPrimary }]}>✓</Text>
+                </TouchableOpacity>
+              )}
+              {todayDone && <Text style={{ color: colors.success, fontSize: 18 }}>✅</Text>}
+            </View>
+            {activeDefis.length > 1 && (
+              <TouchableOpacity onPress={() => router.push('/(tabs)/defis')} activeOpacity={0.7}>
+                <Text style={[styles.seeAllText, { color: primary }]}>+{activeDefis.length - 1} autre{activeDefis.length > 2 ? 's' : ''} →</Text>
+              </TouchableOpacity>
+            )}
+          </DashboardCard>
+        );
+      }
 
       default:
         return null;
@@ -1735,5 +1782,40 @@ const styles = StyleSheet.create({
   budgetCatAmount: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  defiRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  defiEmoji: {
+    fontSize: 28,
+  },
+  defiTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  defiProgressBg: {
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  defiProgressFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  defiMeta: {
+    fontSize: 12,
+  },
+  defiCheckBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  defiCheckText: {
+    fontSize: 16,
+    fontWeight: '800',
   },
 });

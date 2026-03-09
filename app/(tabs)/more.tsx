@@ -34,7 +34,7 @@ interface GridItem {
 
 export default function MoreScreen() {
   const router = useRouter();
-  const { rdvs, stock, gamiData, budgetEntries, budgetConfig, activeProfile, profiles } = useVault();
+  const { rdvs, stock, gamiData, budgetEntries, budgetConfig, activeProfile, profiles, defis } = useVault();
   const { colors } = useThemeColors();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
 
@@ -47,6 +47,8 @@ export default function MoreScreen() {
     const lootBoxes = gamiData?.profiles
       ? gamiData.profiles.reduce((sum, p) => sum + (p.lootBoxesAvailable ?? 0), 0)
       : 0;
+
+    const activeDefis = defis.filter((d) => d.status === 'active').length;
 
     return [
       // Vie quotidienne
@@ -104,6 +106,14 @@ export default function MoreScreen() {
         category: 'famille' as const,
       },
       {
+        emoji: '🏅',
+        label: 'Défis',
+        route: '/(tabs)/defis',
+        badge: activeDefis || undefined,
+        color: '#F59E0B',
+        category: 'famille' as const,
+      },
+      {
         emoji: '💰',
         label: 'Budget',
         route: '/(tabs)/budget',
@@ -127,7 +137,7 @@ export default function MoreScreen() {
         category: 'systeme' as const,
       },
     ];
-  }, [rdvs, stock, gamiData, budgetEntries, budgetConfig, colors, profiles]);
+  }, [rdvs, stock, gamiData, budgetEntries, budgetConfig, colors, profiles, defis]);
 
   const visibleItems = isChildMode ? items.filter((i) => i.label !== 'Budget') : items;
 
