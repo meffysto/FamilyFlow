@@ -124,18 +124,18 @@ export default function RDVScreen() {
     switch (rdv.statut) {
       case 'planifié':
         return [
-          { label: 'Fait', emoji: '✅', statut: 'fait', color: '#10B981' },
-          { label: 'Annulé', emoji: '❌', statut: 'annulé', color: '#EF4444' },
+          { label: 'Fait', emoji: '✅', statut: 'fait', color: colors.success },
+          { label: 'Annulé', emoji: '❌', statut: 'annulé', color: colors.error },
         ];
       case 'fait':
         return [
-          { label: 'Planifié', emoji: '📅', statut: 'planifié', color: '#8B5CF6' },
-          { label: 'Annulé', emoji: '❌', statut: 'annulé', color: '#EF4444' },
+          { label: 'Planifié', emoji: '📅', statut: 'planifié', color: colors.info },
+          { label: 'Annulé', emoji: '❌', statut: 'annulé', color: colors.error },
         ];
       case 'annulé':
         return [
-          { label: 'Planifié', emoji: '📅', statut: 'planifié', color: '#8B5CF6' },
-          { label: 'Fait', emoji: '✅', statut: 'fait', color: '#10B981' },
+          { label: 'Planifié', emoji: '📅', statut: 'planifié', color: colors.info },
+          { label: 'Fait', emoji: '✅', statut: 'fait', color: colors.success },
         ];
     }
   };
@@ -163,7 +163,7 @@ export default function RDVScreen() {
             activeOpacity={0.8}
           >
             <Text style={styles.swipeActionEmoji}>{action.emoji}</Text>
-            <Text style={styles.swipeActionLabel}>{action.label}</Text>
+            <Text style={[styles.swipeActionLabel, { color: colors.onPrimary }]}>{action.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -190,8 +190,8 @@ export default function RDVScreen() {
               {rdv.heure ? ` à ${rdv.heure}` : ''}
             </Text>
             {isPast && rdv.statut !== 'planifié' && (
-              <View style={[styles.badge, rdv.statut === 'fait' ? styles.badgeDone : styles.badgeCancelled]}>
-                <Text style={styles.badgeText}>
+              <View style={[styles.badge, { backgroundColor: rdv.statut === 'fait' ? colors.successBg : colors.errorBg }]}>
+                <Text style={[styles.badgeText, { color: colors.textSub }]}>
                   {rdv.statut === 'fait' ? 'Fait' : 'Annulé'}
                 </Text>
               </View>
@@ -225,8 +225,8 @@ export default function RDVScreen() {
 
           {/* Réponses du médecin */}
           {hasReponses && (
-            <View style={styles.reponsesBlock}>
-              <Text style={styles.reponsesTitle}>💬 Réponses du médecin</Text>
+            <View style={[styles.reponsesBlock, { borderTopColor: colors.borderLight, backgroundColor: colors.successBg }]}>
+              <Text style={[styles.reponsesTitle, { color: colors.successText }]}>💬 Réponses du médecin</Text>
               <Text style={[styles.reponsesText, { color: colors.textSub }]} numberOfLines={4}>
                 {rdv.reponses}
               </Text>
@@ -300,7 +300,7 @@ export default function RDVScreen() {
                   {dayRdvs.length > 0 && (
                     <View style={styles.calDots}>
                       {dayRdvs.slice(0, 3).map((r, i) => (
-                        <View key={i} style={[styles.calDot, { backgroundColor: r.statut === 'fait' ? '#10B981' : r.statut === 'annulé' ? '#EF4444' : primary }]} />
+                        <View key={i} style={[styles.calDot, { backgroundColor: r.statut === 'fait' ? colors.success : r.statut === 'annulé' ? colors.error : primary }]} />
                       ))}
                     </View>
                   )}
@@ -342,7 +342,7 @@ export default function RDVScreen() {
 
       {/* Day RDVs Modal (calendar tap) */}
       <Modal visible={calDayRdvs !== null} transparent animationType="slide" onRequestClose={() => setCalDayRdvs(null)}>
-        <TouchableOpacity style={styles.dayModalOverlay} activeOpacity={1} onPress={() => setCalDayRdvs(null)} />
+        <TouchableOpacity style={[styles.dayModalOverlay, { backgroundColor: colors.overlay }]} activeOpacity={1} onPress={() => setCalDayRdvs(null)} />
         <View style={[styles.dayModalContent, { backgroundColor: colors.card }]}>
           <Text style={[styles.dayModalTitle, { color: colors.text }]}>
             {calDayRdvs ? formatDateForDisplay(calDayRdvs.date) : ''}
@@ -461,9 +461,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 8,
   },
-  badgeDone: { backgroundColor: '#D1FAE5' },
-  badgeCancelled: { backgroundColor: '#FEE2E2' },
-  badgeText: { fontSize: 11, fontWeight: '600', color: '#374151' },
+  badgeText: { fontSize: 11, fontWeight: '600' },
   togglePast: {
     alignSelf: 'center',
     paddingVertical: 10,
@@ -503,7 +501,6 @@ const styles = StyleSheet.create({
   swipeActionLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#FFFFFF',
   },
   modeTabs: {
     flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 8,
@@ -523,7 +520,7 @@ const styles = StyleSheet.create({
   calDayNum: { fontSize: 13, fontWeight: '600' },
   calDots: { flexDirection: 'row', gap: 2, marginTop: 2 },
   calDot: { width: 5, height: 5, borderRadius: 3 },
-  dayModalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' },
+  dayModalOverlay: { flex: 1 },
   dayModalContent: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, gap: 10, paddingBottom: 40 },
   dayModalTitle: { fontSize: 17, fontWeight: '800', marginBottom: 4 },
   dayModalRdv: { borderRadius: 12, padding: 14, gap: 4 },
@@ -550,9 +547,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
     gap: 4,
-    backgroundColor: '#F0FDF4',
     borderRadius: 8,
     padding: 10,
     marginLeft: -4,
@@ -561,7 +556,6 @@ const styles = StyleSheet.create({
   reponsesTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#15803D',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
     marginBottom: 2,

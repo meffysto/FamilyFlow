@@ -18,6 +18,7 @@ import { useRouter } from 'expo-router';
 import { useVault } from '../../hooks/useVault';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { isRdvUpcoming } from '../../lib/parser';
+import { totalSpent, totalBudget } from '../../lib/budget';
 
 interface GridItem {
   emoji: string;
@@ -29,7 +30,7 @@ interface GridItem {
 
 export default function MoreScreen() {
   const router = useRouter();
-  const { rdvs, stock, gamiData } = useVault();
+  const { rdvs, stock, gamiData, budgetEntries, budgetConfig } = useVault();
   const { colors } = useThemeColors();
 
   const items: GridItem[] = useMemo(() => {
@@ -47,20 +48,20 @@ export default function MoreScreen() {
         label: 'Rendez-vous',
         route: '/(tabs)/rdv',
         badge: upcomingRdvs || undefined,
-        color: '#8B5CF6',
+        color: colors.info,
       },
       {
         emoji: '📦',
         label: 'Stock bébé',
         route: '/(tabs)/stock',
         badge: lowStock || undefined,
-        color: '#F59E0B',
+        color: colors.warning,
       },
       {
         emoji: '🍽️',
         label: 'Repas',
         route: '/(tabs)/meals',
-        color: '#10B981',
+        color: colors.success,
       },
       {
         emoji: '🎁',
@@ -70,13 +71,20 @@ export default function MoreScreen() {
         color: '#EC4899',
       },
       {
+        emoji: '💰',
+        label: 'Budget',
+        route: '/(tabs)/budget',
+        badge: totalSpent(budgetEntries) > totalBudget(budgetConfig) ? 1 : undefined,
+        color: '#059669',
+      },
+      {
         emoji: '⚙️',
         label: 'Réglages',
         route: '/(tabs)/settings',
-        color: '#6B7280',
+        color: colors.textMuted,
       },
     ];
-  }, [rdvs, stock, gamiData]);
+  }, [rdvs, stock, gamiData, budgetEntries, budgetConfig, colors]);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
@@ -99,7 +107,7 @@ export default function MoreScreen() {
               <Text style={[styles.cardLabel, { color: colors.textSub }]}>{item.label}</Text>
               {item.badge ? (
                 <View style={[styles.badgeContainer, { backgroundColor: item.color }]}>
-                  <Text style={styles.badgeText}>{item.badge}</Text>
+                  <Text style={[styles.badgeText, { color: colors.onPrimary }]}>{item.badge}</Text>
                 </View>
               ) : null}
             </TouchableOpacity>
@@ -164,6 +172,5 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#FFFFFF',
   },
 });

@@ -34,7 +34,7 @@ export function DashboardCard({
           <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
           {count !== undefined && (
             <View style={[styles.badge, { backgroundColor: color }]}>
-              <Text style={styles.badgeText}>{count}</Text>
+              <Text style={[styles.badgeText, { color: colors.onPrimary }]}>{count}</Text>
             </View>
           )}
         </View>
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   badgeText: {
-    color: '#FFFFFF',
+    color: '#FFFFFF', // on primary
     fontSize: 13,
     fontWeight: '700',
   },
