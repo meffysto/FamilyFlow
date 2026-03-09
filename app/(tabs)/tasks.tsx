@@ -330,44 +330,6 @@ export default function TasksScreen() {
         </View>
       )}
 
-      {/* Search */}
-      <View style={[styles.searchContainer, { backgroundColor: colors.card }]}>
-        <TextInput
-          style={[styles.searchInput, { backgroundColor: colors.inputBg, color: colors.text }]}
-          placeholder="Rechercher..."
-          placeholderTextColor={colors.textFaint}
-          value={search}
-          onChangeText={setSearch}
-          clearButtonMode="while-editing"
-        />
-      </View>
-
-      {/* Filter chips */}
-      <View style={[styles.filterWrapper, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterContainer}
-        >
-          {filters.map((f) => (
-            <Chip
-              key={f.id}
-              label={f.label}
-              emoji={f.emoji}
-              selected={filter === f.id}
-              onPress={() => setFilter(f.id)}
-            />
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* Swipe hint */}
-      {sections.length > 0 && (
-        <View style={[styles.deleteTip, { backgroundColor: colors.warningBg, borderBottomColor: colors.warning }]}>
-          <Text style={[styles.deleteTipText, { color: colors.warningText }]}>💡 Glissez une tâche vers la gauche pour la supprimer</Text>
-        </View>
-      )}
-
       {/* Task list */}
       <SectionList
         sections={sections}
@@ -387,6 +349,43 @@ export default function TasksScreen() {
             <Text style={[styles.sectionCount, { color: colors.textFaint }]}>{section.data.length}</Text>
           </View>
         )}
+        ListHeaderComponent={
+          <>
+            <View style={[styles.searchContainer, { backgroundColor: colors.card }]}>
+              <TextInput
+                style={[styles.searchInput, { backgroundColor: colors.inputBg, color: colors.text }]}
+                placeholder="Rechercher..."
+                placeholderTextColor={colors.textFaint}
+                value={search}
+                onChangeText={setSearch}
+                clearButtonMode="while-editing"
+              />
+            </View>
+            <View style={[styles.filterWrapper, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.filterContainer}
+                directionalLockEnabled
+              >
+                {filters.map((f) => (
+                  <Chip
+                    key={f.id}
+                    label={f.label}
+                    emoji={f.emoji}
+                    selected={filter === f.id}
+                    onPress={() => setFilter(f.id)}
+                  />
+                ))}
+              </ScrollView>
+            </View>
+            {sections.length > 0 && (
+              <View style={[styles.deleteTip, { backgroundColor: colors.warningBg, borderBottomColor: colors.warning }]}>
+                <Text style={[styles.deleteTipText, { color: colors.warningText }]}>💡 Glissez une tâche vers la gauche pour la supprimer</Text>
+              </View>
+            )}
+          </>
+        }
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshControl={

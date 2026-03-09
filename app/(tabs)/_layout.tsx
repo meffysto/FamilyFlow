@@ -80,7 +80,6 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
       <Tabs
         screenOptions={{
           headerShown: false,
-          animation: 'fade',
           tabBarStyle: {
             backgroundColor: colors.tabBar,
             borderTopColor: colors.tabBarBorder,
