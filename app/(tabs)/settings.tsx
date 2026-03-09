@@ -23,6 +23,7 @@ import { SettingsAppearance } from '../../components/settings/SettingsAppearance
 import { SettingsVacation } from '../../components/settings/SettingsVacation';
 import { SettingsProfiles } from '../../components/settings/SettingsProfiles';
 import { SettingsGamification } from '../../components/settings/SettingsGamification';
+import { SettingsAI } from '../../components/settings/SettingsAI';
 
 const TELEGRAM_TOKEN_KEY = 'telegram_token';
 const TELEGRAM_CHAT_KEY = 'telegram_chat_id';
@@ -88,6 +89,7 @@ export default function SettingsScreen() {
           updateProfile={updateProfile} addChild={addChild} convertToBorn={convertToBorn}
         />
         <SettingsGamification vault={vault} gamiData={gamiData} refresh={refresh} />
+        {!isChildMode && <SettingsAI />}
 
         {/* App info */}
         <View style={styles.appInfo}>

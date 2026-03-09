@@ -15,12 +15,15 @@ import {
   StyleSheet,
   Keyboard,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useVault } from '../contexts/VaultContext';
 import { useThemeColors } from '../contexts/ThemeContext';
+import { useAI } from '../contexts/AIContext';
 import { searchVault, type SearchResult, type SearchInput, type SearchResultType } from '../lib/search';
+import type { AIMessage, VaultContext as AIVaultContext } from '../lib/ai-service';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
 
@@ -64,9 +67,13 @@ interface GlobalSearchProps {
 
 export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose }: GlobalSearchProps) {
   const router = useRouter();
-  const { colors } = useThemeColors();
+  const { primary, colors } = useThemeColors();
   const vault = useVault();
+  const ai = useAI();
   const [query, setQuery] = useState('');
+  const [aiAnswer, setAiAnswer] = useState('');
+  const [aiError, setAiError] = useState('');
+  const [aiHistory, setAiHistory] = useState<AIMessage[]>([]);
   const inputRef = useRef<TextInput>(null);
 
   const searchInput: SearchInput = useMemo(() => ({
@@ -85,6 +92,41 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
 
   const results = useMemo(() => searchVault(query, searchInput), [query, searchInput]);
 
+  const aiVaultCtx: AIVaultContext = useMemo(() => ({
+    tasks: vault.tasks,
+    menageTasks: vault.menageTasks,
+    rdvs: vault.rdvs,
+    stock: vault.stock,
+    meals: vault.meals,
+    courses: vault.courses,
+    memories: vault.memories,
+    defis: vault.defis,
+    wishlistItems: vault.wishlistItems,
+    recipes: vault.recipes,
+    profiles: vault.profiles,
+    activeProfile: vault.activeProfile,
+  }), [vault.tasks, vault.menageTasks, vault.rdvs, vault.stock, vault.meals,
+    vault.courses, vault.memories, vault.defis, vault.wishlistItems, vault.recipes,
+    vault.profiles, vault.activeProfile]);
+
+  const handleAskAI = useCallback(async () => {
+    if (!query.trim() || !ai.isConfigured) return;
+    Keyboard.dismiss();
+    setAiError('');
+    setAiAnswer('');
+    const resp = await ai.ask(query, aiVaultCtx, aiHistory);
+    if (resp.error) {
+      setAiError(resp.error);
+    } else {
+      setAiAnswer(resp.text);
+      setAiHistory((prev) => [
+        ...prev,
+        { role: 'user' as const, content: query },
+        { role: 'assistant' as const, content: resp.text },
+      ]);
+    }
+  }, [query, ai, aiVaultCtx, aiHistory]);
+
   const handleSelect = useCallback((result: SearchResult) => {
     Keyboard.dismiss();
     onClose();
@@ -102,6 +144,9 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
 
   const handleClose = useCallback(() => {
     setQuery('');
+    setAiAnswer('');
+    setAiError('');
+    setAiHistory([]);
     onClose();
   }, [onClose]);
 
@@ -181,13 +226,7 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
             </Text>
             <Text style={[styles.emptyHint, { color: colors.textFaint }]}>
               Tâches, RDV, recettes, stock, repas, courses, souvenirs, défis, souhaits
-            </Text>
-          </View>
-        ) : results.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>🤷</Text>
-            <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-              Aucun résultat pour "{query}"
+              {ai.isConfigured ? '\n\nOu posez une question à l\'assistant IA' : ''}
             </Text>
           </View>
         ) : (
@@ -199,9 +238,50 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
             keyboardDismissMode="on-drag"
             contentContainerStyle={styles.listContent}
             ListHeaderComponent={
-              <Text style={[styles.resultCount, { color: colors.textFaint }]}>
-                {results.length} résultat{results.length > 1 ? 's' : ''}
-              </Text>
+              <>
+                {results.length > 0 && (
+                  <Text style={[styles.resultCount, { color: colors.textFaint }]}>
+                    {results.length} résultat{results.length > 1 ? 's' : ''}
+                  </Text>
+                )}
+                {results.length === 0 && (
+                  <View style={styles.noResults}>
+                    <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+                      Aucun résultat pour "{query}"
+                    </Text>
+                  </View>
+                )}
+              </>
+            }
+            ListFooterComponent={
+              ai.isConfigured ? (
+                <View style={styles.aiSection}>
+                  <View style={[styles.aiDivider, { backgroundColor: colors.separator }]} />
+                  <TouchableOpacity
+                    style={[styles.aiBtn, { backgroundColor: primary + '15', borderColor: primary + '40' }]}
+                    onPress={handleAskAI}
+                    disabled={ai.isLoading}
+                    activeOpacity={0.7}
+                  >
+                    {ai.isLoading ? (
+                      <ActivityIndicator size="small" color={primary} />
+                    ) : (
+                      <Text style={[styles.aiBtnText, { color: primary }]}>
+                        🤖 Demander à l'IA : "{query.length > 30 ? query.slice(0, 30) + '…' : query}"
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                  {aiError ? (
+                    <Text style={[styles.aiError, { color: colors.error }]}>{aiError}</Text>
+                  ) : null}
+                  {aiAnswer ? (
+                    <View style={[styles.aiAnswer, { backgroundColor: colors.cardAlt }]}>
+                      <Text style={[styles.aiAnswerLabel, { color: primary }]}>🤖 Assistant</Text>
+                      <Text style={[styles.aiAnswerText, { color: colors.text }]}>{aiAnswer}</Text>
+                    </View>
+                  ) : null}
+                </View>
+              ) : null
             }
           />
         )}
@@ -306,5 +386,47 @@ const styles = StyleSheet.create({
     fontSize: FontSize.caption,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  noResults: {
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing['3xl'],
+    alignItems: 'center',
+  },
+  aiSection: {
+    paddingHorizontal: Spacing['2xl'],
+    paddingBottom: Spacing['5xl'],
+    gap: Spacing.xl,
+  },
+  aiDivider: {
+    height: StyleSheet.hairlineWidth,
+    marginVertical: Spacing.md,
+  },
+  aiBtn: {
+    paddingVertical: Spacing.xl,
+    paddingHorizontal: Spacing['2xl'],
+    borderRadius: Radius.base,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  aiBtnText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+  },
+  aiError: {
+    fontSize: FontSize.caption,
+    textAlign: 'center',
+  },
+  aiAnswer: {
+    padding: Spacing['2xl'],
+    borderRadius: Radius.lg,
+    gap: Spacing.md,
+  },
+  aiAnswerLabel: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
+  },
+  aiAnswerText: {
+    fontSize: FontSize.sm,
+    lineHeight: 22,
   },
 });

@@ -1,17 +1,21 @@
 /**
  * DashboardPrefsModal.tsx — Configure dashboard section order and visibility
+ *
+ * Réordonnement par drag (long-press) ou boutons flèches.
  */
 
-import { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
   Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { GestureDetector, Gesture, GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS, type SharedValue } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
@@ -31,151 +35,297 @@ interface Props {
   onClose: () => void;
 }
 
+/** Hauteur approximative d'un item (row + gap) pour le calcul de position drag */
+const ITEM_H = 72;
+
+// ─── DraggableRow ─────────────────────────────────────────────────────────────
+
+interface DraggableRowProps {
+  section: SectionPref;
+  index: number;
+  totalCount: number;
+  draggedIdx: SharedValue<number>;
+  dragY: SharedValue<number>;
+  isFirst: boolean;
+  isLast: boolean;
+  onDragStart: () => void;
+  onDragEnd: (from: number, to: number) => void;
+  onToggle: (id: string) => void;
+  onMoveUp: (index: number) => void;
+  onMoveDown: (index: number) => void;
+  colors: any;
+  primary: string;
+  tint: string;
+}
+
+const DraggableRow = React.memo(function DraggableRow({
+  section,
+  index,
+  totalCount,
+  draggedIdx,
+  dragY,
+  isFirst,
+  isLast,
+  onDragStart,
+  onDragEnd,
+  onToggle,
+  onMoveUp,
+  onMoveDown,
+  colors,
+  primary,
+  tint,
+}: DraggableRowProps) {
+  const animStyle = useAnimatedStyle(() => {
+    // Cet item est en cours de drag
+    if (draggedIdx.value === index) {
+      return {
+        transform: [{ translateY: dragY.value }, { scale: 1.04 }],
+        zIndex: 100,
+        elevation: 10,
+        shadowOpacity: 0.2,
+        shadowRadius: 12,
+      };
+    }
+
+    // Pas de drag en cours
+    if (draggedIdx.value < 0) {
+      return { transform: [{ translateY: withTiming(0, { duration: 200 }) }] };
+    }
+
+    // Décalage des items entre la position d'origine et la position survolée
+    const from = draggedIdx.value;
+    const hoverAt = Math.max(0, Math.min(totalCount - 1, from + Math.round(dragY.value / ITEM_H)));
+
+    if (from < hoverAt && index > from && index <= hoverAt) {
+      return { transform: [{ translateY: withTiming(-ITEM_H, { duration: 200 }) }] };
+    }
+    if (from > hoverAt && index < from && index >= hoverAt) {
+      return { transform: [{ translateY: withTiming(ITEM_H, { duration: 200 }) }] };
+    }
+
+    return { transform: [{ translateY: withTiming(0, { duration: 200 }) }] };
+  });
+
+  const panGesture = Gesture.Pan()
+    .activateAfterLongPress(250)
+    .onStart(() => {
+      draggedIdx.value = index;
+      runOnJS(onDragStart)();
+    })
+    .onUpdate((e) => {
+      dragY.value = e.translationY;
+    })
+    .onFinalize(() => {
+      const from = draggedIdx.value;
+      const hoverAt = Math.max(0, Math.min(totalCount - 1, from + Math.round(dragY.value / ITEM_H)));
+      dragY.value = 0;
+      draggedIdx.value = -1;
+      runOnJS(onDragEnd)(from, hoverAt);
+    });
+
+  return (
+    <GestureDetector gesture={panGesture}>
+      <Animated.View
+        style={[
+          styles.row,
+          { backgroundColor: colors.card, borderColor: colors.borderLight },
+          !section.visible && styles.rowHidden,
+          animStyle,
+        ]}
+        accessibilityHint="Maintenez appuyé pour réordonner"
+      >
+        <Text style={[styles.dragHandle, { color: colors.textFaint }]}>☰</Text>
+        <Text style={styles.rowEmoji}>{section.emoji}</Text>
+        <Text
+          style={[
+            styles.rowLabel,
+            { color: colors.text },
+            !section.visible && { color: colors.textFaint },
+          ]}
+          numberOfLines={1}
+        >
+          {section.label}
+        </Text>
+        <View style={styles.rowActions}>
+          <TouchableOpacity
+            style={[styles.arrowBtn, { backgroundColor: colors.cardAlt }, isFirst && styles.arrowBtnDisabled]}
+            onPress={() => onMoveUp(index)}
+            disabled={isFirst}
+            hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+            accessibilityLabel="Monter"
+            accessibilityRole="button"
+          >
+            <Text style={[styles.arrowText, { color: colors.textSub }]}>▲</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.arrowBtn, { backgroundColor: colors.cardAlt }, isLast && styles.arrowBtnDisabled]}
+            onPress={() => onMoveDown(index)}
+            disabled={isLast}
+            hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+            accessibilityLabel="Descendre"
+            accessibilityRole="button"
+          >
+            <Text style={[styles.arrowText, { color: colors.textSub }]}>▼</Text>
+          </TouchableOpacity>
+          <Switch
+            value={section.visible}
+            onValueChange={() => onToggle(section.id)}
+            trackColor={{ false: colors.switchOff, true: tint }}
+            thumbColor={section.visible ? primary : colors.textFaint}
+          />
+        </View>
+      </Animated.View>
+    </GestureDetector>
+  );
+});
+
+// ─── Modal principal ──────────────────────────────────────────────────────────
+
 export function DashboardPrefsModal({ sections: initialSections, smartSort: initialSmartSort, onSave, onClose }: Props) {
   const { primary, tint, colors } = useThemeColors();
   const [sections, setSections] = useState<SectionPref[]>(initialSections);
   const [smartSort, setSmartSort] = useState(initialSmartSort);
+  const [isDragging, setIsDragging] = useState(false);
 
-  const toggleVisible = (id: string) => {
+  // Shared values pour le drag (partagés entre tous les DraggableRow)
+  const draggedIdx = useSharedValue(-1);
+  const dragY = useSharedValue(0);
+
+  const toggleVisible = useCallback((id: string) => {
     setSections((prev) =>
       prev.map((s) => (s.id === id ? { ...s, visible: !s.visible } : s))
     );
-  };
+  }, []);
 
-  const moveUp = (index: number) => {
+  const moveUp = useCallback((index: number) => {
     if (index === 0) return;
     setSections((prev) => {
       const next = [...prev];
       [next[index - 1], next[index]] = [next[index], next[index - 1]];
       return next;
     });
-  };
+  }, []);
 
-  const moveDown = (index: number) => {
+  const moveDown = useCallback((index: number) => {
     setSections((prev) => {
       if (index === prev.length - 1) return prev;
       const next = [...prev];
       [next[index], next[index + 1]] = [next[index + 1], next[index]];
       return next;
     });
+  }, []);
+
+  const handleDragStart = useCallback(() => {
+    setIsDragging(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  }, []);
+
+  const handleDragEnd = useCallback((from: number, to: number) => {
+    setIsDragging(false);
+    if (from === to) return;
+    setSections((prev) => {
+      const next = [...prev];
+      const [item] = next.splice(from, 1);
+      next.splice(to, 0, item);
+      return next;
+    });
+  }, []);
+
+  const priorityLabels: Record<string, string> = {
+    high: '⭐ Essentielles',
+    medium: '📌 Secondaires',
+    low: '💤 Optionnelles',
   };
 
-  const renderRow = (section: SectionPref, index: number) => (
-    <View
-      style={[
-        styles.row,
-        { backgroundColor: colors.card, borderColor: colors.borderLight },
-        !section.visible && styles.rowHidden,
-      ]}
-    >
-      <Text style={styles.rowEmoji}>{section.emoji}</Text>
-      <Text style={[
-        styles.rowLabel,
-        { color: colors.text },
-        !section.visible && { color: colors.textFaint },
-      ]}>
-        {section.label}
-      </Text>
-      <View style={styles.rowActions}>
-        <TouchableOpacity
-          style={[styles.arrowBtn, { backgroundColor: colors.cardAlt }, index === 0 && styles.arrowBtnDisabled]}
-          onPress={() => moveUp(index)}
-          disabled={index === 0}
-          hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
-        >
-          <Text style={[styles.arrowText, { color: colors.textSub }]}>▲</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.arrowBtn, { backgroundColor: colors.cardAlt }, index === sections.length - 1 && styles.arrowBtnDisabled]}
-          onPress={() => moveDown(index)}
-          disabled={index === sections.length - 1}
-          hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
-        >
-          <Text style={[styles.arrowText, { color: colors.textSub }]}>▼</Text>
-        </TouchableOpacity>
-        <Switch
-          value={section.visible}
-          onValueChange={() => toggleVisible(section.id)}
-          trackColor={{ false: colors.switchOff, true: tint }}
-          thumbColor={section.visible ? primary : colors.textFaint}
-        />
-      </View>
-    </View>
-  );
-
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
-      <View style={[styles.dragHandle, { backgroundColor: colors.separator }]} />
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Text style={[styles.headerClose, { color: colors.textFaint }]}>✕</Text>
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Personnaliser</Text>
-        <TouchableOpacity
-          onPress={() => { onSave({ sections, smartSort }); onClose(); }}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Text style={[styles.headerSave, { color: primary }]}>Enregistrer</Text>
-        </TouchableOpacity>
-      </View>
-
-      <Text style={[styles.hint, { color: colors.textMuted, borderBottomColor: colors.borderLight }]}>
-        Affichez ou masquez des sections, et changez leur ordre d'apparition sur le dashboard.
-      </Text>
-
-      <View style={[styles.smartSortRow, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
-        <View style={styles.smartSortInfo}>
-          <Text style={[styles.smartSortLabel, { color: colors.text }]}>
-            🪄 Tri intelligent
-          </Text>
-          <Text style={[styles.smartSortDesc, { color: colors.textMuted }]}>
-            Réordonne les cartes selon le contexte (heure, urgences, données disponibles)
-          </Text>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
+        <View style={[styles.dragHandleBar, { backgroundColor: colors.separator }]} />
+        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+          <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Text style={[styles.headerClose, { color: colors.textFaint }]}>✕</Text>
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Personnaliser</Text>
+          <TouchableOpacity
+            onPress={() => { onSave({ sections, smartSort }); onClose(); }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text style={[styles.headerSave, { color: primary }]}>Enregistrer</Text>
+          </TouchableOpacity>
         </View>
-        <Switch
-          value={smartSort}
-          onValueChange={setSmartSort}
-          trackColor={{ false: colors.switchOff, true: tint }}
-          thumbColor={smartSort ? primary : colors.textFaint}
-        />
-      </View>
 
-      {smartSort && (
-        <Text style={[styles.smartSortNote, { color: colors.textMuted }]}>
-          L'ordre manuel ci-dessous sert de base — le tri intelligent le réajuste selon le contexte.
+        <Text style={[styles.hint, { color: colors.textMuted, borderBottomColor: colors.borderLight }]}>
+          Affichez ou masquez des sections, et changez leur ordre en glissant ou avec les flèches.
         </Text>
-      )}
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-        {sections.map((section, index) => {
-          // Afficher un header de catégorie si c'est le premier de sa priorité
-          const prevPriority = index > 0 ? (sections[index - 1].priority ?? 'medium') : null;
-          const curPriority = section.priority ?? 'medium';
-          const showHeader = curPriority !== prevPriority;
-          const priorityLabels: Record<string, string> = {
-            high: '⭐ Essentielles',
-            medium: '📌 Secondaires',
-            low: '💤 Optionnelles',
-          };
-          return (
-            <View key={section.id}>
-              {showHeader && (
-                <Text style={[styles.priorityHeader, { color: colors.textMuted }]}>
-                  {priorityLabels[curPriority]}
-                </Text>
-              )}
-              {renderRow(section, index)}
-            </View>
-          );
-        })}
-      </ScrollView>
-    </SafeAreaView>
+        <View style={[styles.smartSortRow, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
+          <View style={styles.smartSortInfo}>
+            <Text style={[styles.smartSortLabel, { color: colors.text }]}>
+              🪄 Tri intelligent
+            </Text>
+            <Text style={[styles.smartSortDesc, { color: colors.textMuted }]}>
+              Réordonne les cartes selon le contexte (heure, urgences, données disponibles)
+            </Text>
+          </View>
+          <Switch
+            value={smartSort}
+            onValueChange={setSmartSort}
+            trackColor={{ false: colors.switchOff, true: tint }}
+            thumbColor={smartSort ? primary : colors.textFaint}
+          />
+        </View>
+
+        {smartSort && (
+          <Text style={[styles.smartSortNote, { color: colors.textMuted }]}>
+            L'ordre manuel ci-dessous sert de base — le tri intelligent le réajuste selon le contexte.
+          </Text>
+        )}
+
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          scrollEnabled={!isDragging}
+        >
+          {sections.map((section, index) => {
+            const prevPriority = index > 0 ? (sections[index - 1].priority ?? 'medium') : null;
+            const curPriority = section.priority ?? 'medium';
+            const showHeader = curPriority !== prevPriority;
+            return (
+              <View key={section.id}>
+                {showHeader && (
+                  <Text style={[styles.priorityHeader, { color: colors.textMuted }]}>
+                    {priorityLabels[curPriority]}
+                  </Text>
+                )}
+                <DraggableRow
+                  section={section}
+                  index={index}
+                  totalCount={sections.length}
+                  draggedIdx={draggedIdx}
+                  dragY={dragY}
+                  isFirst={index === 0}
+                  isLast={index === sections.length - 1}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
+                  onToggle={toggleVisible}
+                  onMoveUp={moveUp}
+                  onMoveDown={moveDown}
+                  colors={colors}
+                  primary={primary}
+                  tint={tint}
+                />
+              </View>
+            );
+          })}
+        </ScrollView>
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  dragHandle: {
+  dragHandleBar: {
     width: 36,
     height: 4,
     borderRadius: 2,
@@ -208,8 +358,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 14,
     paddingVertical: 14,
-    paddingHorizontal: Spacing['2xl'],
-    gap: Spacing.xl,
+    paddingLeft: Spacing.xl,
+    paddingRight: Spacing['2xl'],
+    gap: Spacing.md,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
@@ -220,9 +371,14 @@ const styles = StyleSheet.create({
   rowHidden: {
     opacity: 0.4,
   },
+  dragHandle: {
+    fontSize: FontSize.lg,
+    width: 20,
+    textAlign: 'center',
+  },
   rowEmoji: {
     fontSize: FontSize.titleLg,
-    width: 30,
+    width: 28,
     textAlign: 'center',
   },
   rowLabel: {
@@ -233,12 +389,12 @@ const styles = StyleSheet.create({
   rowActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: Spacing.xs,
   },
   arrowBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: Radius.md,
+    width: 28,
+    height: 28,
+    borderRadius: Radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -246,7 +402,7 @@ const styles = StyleSheet.create({
     opacity: 0.2,
   },
   arrowText: {
-    fontSize: FontSize.code,
+    fontSize: FontSize.micro,
     fontWeight: FontWeight.bold,
   },
   smartSortRow: {

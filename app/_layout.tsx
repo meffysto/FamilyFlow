@@ -18,6 +18,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { configureNotifications } from '../lib/scheduled-notifications';
 import { ToastProvider } from '../contexts/ToastContext';
 import { ThemeProvider } from '../contexts/ThemeContext';
+import { AIProvider } from '../contexts/AIContext';
 
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
@@ -48,6 +49,7 @@ export default function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <VaultProvider>
           <ThemeProvider>
+            <AIProvider>
             <ToastProvider>
               <StatusBar style="auto" />
               <Stack screenOptions={{ headerShown: false }}>
@@ -56,6 +58,7 @@ export default function RootLayout() {
               </Stack>
               {!hasVault && <Redirect href="/setup" />}
             </ToastProvider>
+            </AIProvider>
           </ThemeProvider>
         </VaultProvider>
       </GestureHandlerRootView>
