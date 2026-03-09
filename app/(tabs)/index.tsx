@@ -426,8 +426,8 @@ export default function DashboardScreen() {
   const upcomingRdvs = rdvs.filter((r) => isRdvUpcoming(r));
   // pastRdvs/displayedRdvs removed — full RDV view is now in /(tabs)/rdv
 
-  // Top courses
-  const topCourses = courses.filter((c) => !c.completed).slice(0, 5);
+  // Top courses — derniers ajoutés en premier
+  const topCourses = courses.filter((c) => !c.completed).slice(-5).reverse();
 
   const pendingMenage = menageTasks.filter((t) => !t.completed);
 
