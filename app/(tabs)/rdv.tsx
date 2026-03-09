@@ -5,7 +5,8 @@
  * Reuses the existing RDVEditor component for create/edit.
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
 import {
   View,
   Text,
@@ -17,6 +18,7 @@ import {
   TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocalSearchParams } from 'expo-router';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import * as Haptics from 'expo-haptics';
 import {
@@ -56,8 +58,14 @@ export default function RDVScreen() {
   const { rdvs, addRDV, updateRDV, deleteRDV } = useVault();
   const { primary, tint, colors } = useThemeColors();
 
+  const { addNew } = useLocalSearchParams<{ addNew?: string }>();
   const [search, setSearch] = useState('');
   const [editorVisible, setEditorVisible] = useState(false);
+
+  // FAB: ouvrir l'éditeur si addNew=1
+  useEffect(() => {
+    if (addNew === '1') { setEditingRDV(undefined); setEditorVisible(true); }
+  }, [addNew]);
   const [editingRDV, setEditingRDV] = useState<RDV | undefined>(undefined);
   const [showPast, setShowPast] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('liste');

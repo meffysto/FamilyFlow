@@ -6,7 +6,7 @@
  * - 🌟 Souvenirs: Timeline of premières fois & moments forts.
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import {
   format,
@@ -57,8 +58,14 @@ export default function PhotosScreen() {
   const [selectedEnfantIdx, setSelectedEnfantIdx] = useState(0);
   const [viewingPhoto, setViewingPhoto] = useState<{ uri: string; date: string } | null>(null);
   const [activeTab, setActiveTab] = useState<TabMode>('photos');
+  const { addNew } = useLocalSearchParams<{ addNew?: string }>();
   const [memoryEditorVisible, setMemoryEditorVisible] = useState(false);
   const [editingMemory, setEditingMemory] = useState<import('../../lib/types').Memory | null>(null);
+
+  // FAB: ouvrir l'éditeur de souvenir si addNew=1
+  useEffect(() => {
+    if (addNew === '1') { setActiveTab('souvenirs'); setEditingMemory(null); setMemoryEditorVisible(true); }
+  }, [addNew]);
 
   const enfants = useMemo(
     () => profiles.filter((p) => p.role === 'enfant'),

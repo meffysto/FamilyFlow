@@ -89,7 +89,12 @@ export default function TasksScreen() {
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
 
-  const { filter: filterParam } = useLocalSearchParams<{ filter?: string }>();
+  const { filter: filterParam, addNew } = useLocalSearchParams<{ filter?: string; addNew?: string }>();
+
+  // FAB: ouvrir le modal d'ajout si addNew=1
+  useEffect(() => {
+    if (addNew === '1') setAddModalVisible(true);
+  }, [addNew]);
   const filters = useMemo(() => {
     if (isVacationActive) {
       return [
