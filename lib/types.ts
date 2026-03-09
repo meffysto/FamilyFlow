@@ -73,6 +73,20 @@ export interface Profile {
   pityCounter: number;       // boxes opened without épique+ (pity system)
 }
 
+/** Détecte un profil bébé : ageCategory === 'bebe' OU birthdate < 2 ans (fallback si ageCategory absent) */
+export function isBabyProfile(p: Profile): boolean {
+  if (p.role !== 'enfant') return false;
+  if (p.ageCategory === 'bebe') return true;
+  if (p.ageCategory) return false; // catégorie définie mais pas bébé
+  // Fallback : calculer depuis birthdate quand ageCategory absent
+  if (!p.birthdate) return false;
+  const birth = new Date(p.birthdate);
+  if (isNaN(birth.getTime())) return false;
+  const ageMs = Date.now() - birth.getTime();
+  const ageYears = ageMs / (365.25 * 24 * 60 * 60 * 1000);
+  return ageYears < 2;
+}
+
 export interface AgeUpgrade {
   profileId: string;
   childName: string;
@@ -203,6 +217,23 @@ export interface ActiveReward {
   expiresAt?: string;         // ISO date (vacation, crown)
   remainingDays?: number;
   remainingTasks?: number;    // multiplier tasks remaining
+}
+
+// ─── Mode nuit bébé ──────────────────────────────────────────────────────────
+
+export type FeedType = 'allaitement' | 'biberon';
+export type BreastSide = 'gauche' | 'droite';
+
+export interface NightFeedEntry {
+  id: string;
+  type: FeedType;
+  startedAt: string;       // ISO timestamp
+  durationSeconds: number;
+  side?: BreastSide;       // allaitement seulement
+  volumeMl?: number;       // biberon seulement
+  enfant: string;
+  enfantId: string;
+  note?: string;
 }
 
 // ─── Suivi médical ────────────────────────────────────────────────────────────

@@ -803,6 +803,97 @@ ${couchesSection}
 `;
 }
 
+// ─── Mode nuit — helpers alimentation ────────────────────────────────────────
+
+import type { NightFeedEntry } from './types';
+
+/** Parse les entrées Tétée/Biberon de la section Alimentation d'un journal */
+export function parseNightFeeds(content: string, enfant: string = '', enfantId: string = ''): NightFeedEntry[] {
+  const lines = content.split('\n');
+  const entries: NightFeedEntry[] = [];
+  let inAlimentation = false;
+
+  for (const line of lines) {
+    if (line.startsWith('## Alimentation')) { inAlimentation = true; continue; }
+    if (line.startsWith('## ') && inAlimentation) break;
+    if (!inAlimentation || !line.startsWith('|')) continue;
+
+    const cells = line.split('|').map((c) => c.trim()).filter((c) => c.length > 0);
+    if (cells.length < 3) continue;
+    if (cells[0] === 'Heure' || cells[0].startsWith('---')) continue;
+
+    const heure = cells[0]; // "01:15"
+    const type = cells[1];  // "Tétée" ou "Biberon"
+    const detail = cells[2]; // "Gauche — 12 min" ou "120 ml — 8 min"
+    const notes = cells[3] || '';
+
+    if (type !== 'Tétée' && type !== 'Biberon') continue;
+
+    const feedType = type === 'Tétée' ? 'allaitement' : 'biberon';
+    const durationMatch = detail.match(/(\d+)\s*min/);
+    const durationSeconds = durationMatch ? parseInt(durationMatch[1], 10) * 60 : 0;
+
+    const entry: NightFeedEntry = {
+      id: `feed-${heure}`,
+      type: feedType as NightFeedEntry['type'],
+      startedAt: heure,
+      durationSeconds,
+      enfant,
+      enfantId,
+    };
+
+    if (feedType === 'allaitement') {
+      if (detail.toLowerCase().includes('gauche')) entry.side = 'gauche';
+      else if (detail.toLowerCase().includes('droit')) entry.side = 'droite';
+    } else {
+      const mlMatch = detail.match(/(\d+)\s*ml/);
+      if (mlMatch) entry.volumeMl = parseInt(mlMatch[1], 10);
+    }
+
+    if (notes) entry.note = notes;
+    entries.push(entry);
+  }
+
+  return entries;
+}
+
+/** Insère une ligne dans la table Alimentation du journal. Retourne le contenu modifié. */
+export function insertAlimentationRow(
+  content: string,
+  heure: string,
+  type: 'Tétée' | 'Biberon',
+  detail: string,
+  notes: string = '',
+): string {
+  const lines = content.split('\n');
+  let insertIndex = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].startsWith('## Alimentation')) {
+      // Trouver la fin de la table (après le header + separator + lignes existantes)
+      for (let j = i + 1; j < lines.length; j++) {
+        if (lines[j].startsWith('|')) {
+          insertIndex = j + 1; // après cette ligne
+        } else if (lines[j].trim() === '') {
+          if (insertIndex === -1) insertIndex = j;
+          break;
+        } else {
+          // Nouvelle section
+          if (insertIndex === -1) insertIndex = j;
+          break;
+        }
+      }
+      break;
+    }
+  }
+
+  if (insertIndex === -1) return content; // section non trouvée
+
+  const row = `| ${heure} | ${type} | ${detail} | ${notes} |`;
+  lines.splice(insertIndex, 0, row);
+  return lines.join('\n');
+}
+
 // ─── Stock ──────────────────────────────────────────────────────────────────
 
 /**

@@ -48,7 +48,7 @@ import {
   buildManualContext,
 } from '../../lib/notifications';
 import { buildWeeklyRecapText, sendWeeklyRecap } from '../../lib/telegram';
-import { Task, RDV } from '../../lib/types';
+import { Task, RDV, isBabyProfile } from '../../lib/types';
 import { formatAmount, categoryDisplay, totalSpent, totalBudget } from '../../lib/budget';
 import { aggregateTasksByWeek, getWeekStart } from '../../lib/stats';
 import { BarChart } from '../../components/charts';
@@ -304,7 +304,7 @@ export default function DashboardScreen() {
   );
 
   const leaderboard = buildLeaderboard(profiles);
-  const hasBaby = useMemo(() => profiles.some((p) => p.ageCategory === 'bebe' && p.role === 'enfant'), [profiles]);
+  const hasBaby = useMemo(() => profiles.some(isBabyProfile), [profiles]);
 
   // Custom notifications for quick-send buttons
   const customNotifs = notifPrefs.notifications.filter(
@@ -853,6 +853,9 @@ export default function DashboardScreen() {
 
       case 'nightMode': {
         if (!hasBaby) return null;
+        const hour = new Date().getHours();
+        const isNightTime = hour >= 20 || hour < 8;
+        if (!isNightTime) return null;
         return (
           <DashboardCard key="nightMode" title="Mode nuit bébé" icon="🌙" color="#B8860B" onPressMore={() => router.push('/(tabs)/night-mode')}>
             <TouchableOpacity
@@ -1092,7 +1095,21 @@ export default function DashboardScreen() {
           );
         })}
 
-        {sectionPrefs.map((s) => s.visible ? renderSection(s.id) : null)}
+        {(() => {
+          const hour = new Date().getHours();
+          const isNight = hour >= 20 || hour < 8;
+          if (isNight && hasBaby) {
+            // Mode nuit en premier la nuit
+            const rest = sectionPrefs.filter((s) => s.id !== 'nightMode');
+            return (
+              <>
+                {renderSection('nightMode')}
+                {rest.map((s) => s.visible ? renderSection(s.id) : null)}
+              </>
+            );
+          }
+          return sectionPrefs.map((s) => s.visible ? renderSection(s.id) : null);
+        })()}
 
         <View style={styles.bottomPad} />
       </ScrollView>

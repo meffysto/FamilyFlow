@@ -9,6 +9,7 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { FAB, FABAction } from '../../components/FAB';
 
+
 function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
   return <Text style={{ fontSize: focused ? 22 : 20, opacity: focused ? 1 : 0.6 }}>{emoji}</Text>;
 }
@@ -63,8 +64,6 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
 
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
 
-  const hasBaby = profiles.some((p) => p.ageCategory === 'bebe' && p.role === 'enfant');
-
   const fabActions: FABAction[] = isChildMode
     ? [
         { id: 'task', emoji: '\u{1F4CB}', label: 'Tâche', onPress: () => router.push('/tasks?addNew=1') },
@@ -74,7 +73,6 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
         { id: 'rdv', emoji: '\u{1F4C5}', label: 'RDV', onPress: () => router.push('/rdv?addNew=1') },
         { id: 'journal', emoji: '\u{1F4D6}', label: 'Journal', onPress: () => router.push(`/journal?enfant=${lastEnfant}`) },
         { id: 'photo', emoji: '\u{1F4F8}', label: 'Photo', onPress: () => router.push('/photos?addNew=1') },
-        ...(hasBaby ? [{ id: 'night', emoji: '\u{1F319}', label: 'Nuit bébé', onPress: () => router.push('/(tabs)/night-mode') }] : []),
       ];
 
   return (
@@ -145,7 +143,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
         <Tabs.Screen name="routines" options={{ href: null }} />
         <Tabs.Screen name="health" options={{ href: null }} />
         <Tabs.Screen name="stats" options={{ href: null }} />
-        <Tabs.Screen name="night-mode" options={{ href: null }} />
+        <Tabs.Screen name="night-mode" options={{ href: null, tabBarStyle: { display: 'none' } }} />
       </Tabs>
 
       {showFAB && <FAB actions={fabActions} />}
