@@ -236,7 +236,14 @@ export default function LootScreen() {
                   <View key={idx} style={[styles.historyRow, { borderBottomColor: colors.bg }]}>
                     <Text style={styles.historyAvatar}>{profileObj?.avatar ?? '👤'}</Text>
                     <View style={styles.historyInfo}>
-                      <Text style={[styles.historyName, { color: colors.textSub }]}>{profileObj?.name ?? entry.profileId}</Text>
+                      <View style={styles.historyNameRow}>
+                        <Text style={[styles.historyName, { color: colors.textSub }]}>{profileObj?.name ?? entry.profileId}</Text>
+                        <View style={[styles.historyTypeBadge, { backgroundColor: isLoot ? '#F3E8FF' : '#ECFDF5' }]}>
+                          <Text style={[styles.historyTypeText, { color: isLoot ? '#7C3AED' : '#059669' }]}>
+                            {isLoot ? '🎁 Loot' : '📋 Tâche'}
+                          </Text>
+                        </View>
+                      </View>
                       <Text style={[styles.historyNote, { color: colors.textFaint }]}>{entry.note}</Text>
                     </View>
                     <View style={styles.historyPoints}>
@@ -493,8 +500,11 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   historyAvatar: { fontSize: 24 },
-  historyInfo: { flex: 1, gap: 1 },
+  historyInfo: { flex: 1, gap: 2 },
+  historyNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   historyName: { fontSize: 13, fontWeight: '600' },
+  historyTypeBadge: { paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6 },
+  historyTypeText: { fontSize: 10, fontWeight: '700' },
   historyNote: { fontSize: 12 },
   historyPoints: { alignItems: 'flex-end' },
   historyPts: { fontSize: 13, fontWeight: '700', color: '#059669' },
