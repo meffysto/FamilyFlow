@@ -935,8 +935,8 @@ export default function DashboardScreen() {
         const mainDefi = activeDefis[0];
         const uniqueDays = new Set(mainDefi.progress.filter((p) => p.completed).map((p) => p.date)).size;
         const progress = mainDefi.targetDays > 0 ? uniqueDays / mainDefi.targetDays : 0;
-        const todayStr = new Date().toISOString().slice(0, 10);
-        const todayDone = activeProfile ? mainDefi.progress.some((p) => p.date === todayStr && p.profileId === activeProfile.id && p.completed) : false;
+        const todayStr2 = new Date().toISOString().slice(0, 10);
+        const todayDone = activeProfile ? mainDefi.progress.some((p) => p.date === todayStr2 && p.profileId === activeProfile.id && p.completed) : false;
         return (
           <DashboardCard key="defis" title="Défis familiaux" icon="🏅" count={activeDefis.length} color="#F59E0B" onPressMore={() => router.push('/(tabs)/defis')}>
             <View style={styles.defiRow}>
@@ -971,6 +971,27 @@ export default function DashboardScreen() {
         );
       }
 
+      case 'gratitude': {
+        const todayGrat = gratitudeDays.find((d) => d.date === todayStr);
+        const todayCount = todayGrat?.entries.length ?? 0;
+        const totalProfiles = profiles.length;
+        // Calcul streak : jours consécutifs où tous les profils ont contribué
+        let streak = 0;
+        const sortedDays = [...gratitudeDays].sort((a, b) => b.date.localeCompare(a.date));
+        for (const day of sortedDays) {
+          if (day.entries.length >= totalProfiles) streak++;
+          else break;
+        }
+        return (
+          <DashboardCard key="gratitude" title="Gratitude" icon="🙏" color="#8B5CF6" onPressMore={() => router.push('/(tabs)/gratitude')}>
+            <Text style={[styles.defiMeta, { color: colors.textSub }]}>
+              {todayCount}/{totalProfiles} aujourd'hui
+              {streak > 0 ? ` · ${streak}j 🔥` : ''}
+            </Text>
+          </DashboardCard>
+        );
+      }
+
       default:
         return null;
     }
@@ -987,7 +1008,14 @@ export default function DashboardScreen() {
           ]}>
             {isChildMode
               ? `Salut ${activeProfile?.name ?? ''} ! 🌟`
-              : `Bonjour${activeProfile ? ` ${activeProfile.name}` : ''} 👋`}
+              : (() => {
+                  const h = new Date().getHours();
+                  const name = activeProfile?.name ?? '';
+                  if (h < 6) return `Bonne nuit${name ? ` ${name}` : ''} 🌙`;
+                  if (h < 12) return `Bon matin${name ? ` ${name}` : ''} ☀️`;
+                  if (h < 18) return `Bon après-midi${name ? ` ${name}` : ''} 🌤️`;
+                  return `Bonsoir${name ? ` ${name}` : ''} 🌙`;
+                })()}
           </Text>
           <Text style={[styles.dateText, { color: colors.text }]}>{today}</Text>
         </View>
