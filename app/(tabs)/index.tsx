@@ -85,7 +85,7 @@ const ALL_SECTIONS: SectionPref[] = [
 ];
 
 /** Sections masquées pour les enfants (outils parentaux) */
-const ADULT_ONLY_SECTIONS = new Set(['courses', 'budget', 'stock', 'quicknotifs', 'recipes']);
+const ADULT_ONLY_SECTIONS = new Set(['courses', 'budget', 'stock', 'quicknotifs', 'recipes', 'photos', 'rdvs']);
 
 /** Sections promues en haute priorité pour les enfants */
 const CHILD_PROMOTED: Record<string, { visible: boolean; priority: 'high' | 'medium' | 'low' }> = {
