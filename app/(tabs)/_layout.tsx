@@ -10,7 +10,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { FAB, FABAction } from '../../components/FAB';
 
 function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
-  return <Text style={{ fontSize: focused ? 26 : 22, opacity: focused ? 1 : 0.6 }}>{emoji}</Text>;
+  return <Text style={{ fontSize: focused ? 22 : 20, opacity: focused ? 1 : 0.6 }}>{emoji}</Text>;
 }
 
 interface ThemedTabsContentProps {
@@ -90,7 +90,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
           tabBarActiveTintColor: primary,
           tabBarInactiveTintColor: colors.tabBarOff,
           tabBarLabelStyle: {
-            fontSize: 12,
+            fontSize: 10,
             fontWeight: '600',
             marginBottom: 2,
           },
