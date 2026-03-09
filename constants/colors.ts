@@ -59,7 +59,7 @@ export const DarkColors: typeof LightColors = {
   text:        '#F1F5F9',
   textSub:     '#CBD5E1',
   textMuted:   '#94A3B8',
-  textFaint:   '#475569',
+  textFaint:   '#64748B',
   border:      '#334155',
   borderLight: '#1E293B',
   separator:   '#475569',

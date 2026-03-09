@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
+import { Chip } from './ui/Chip';
 import { RDV } from '../lib/types';
 import { formatDateForDisplay, parseDateInput } from '../lib/parser';
 import { Spacing, Radius } from '../constants/spacing';
@@ -113,8 +114,6 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
   };
 
   const inputStyle = [styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }];
-  const chipStyle = [styles.chip, { backgroundColor: colors.cardAlt }];
-
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.card }]}>
       {/* Drag handle — indicates swipe-down-to-dismiss */}
@@ -160,23 +159,12 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
         <Text style={[styles.label, { color: colors.textSub }]}>Type de RDV</Text>
         <View style={styles.chipRow}>
           {TYPE_OPTIONS.map((opt) => (
-            <TouchableOpacity
+            <Chip
               key={opt.value}
-              style={[
-                chipStyle,
-                typeRdv === opt.value && { backgroundColor: tint, borderColor: primary },
-              ]}
+              label={opt.label}
+              selected={typeRdv === opt.value}
               onPress={() => setTypeRdv(opt.value)}
-              activeOpacity={0.7}
-            >
-              <Text style={[
-                styles.chipText,
-                { color: colors.textMuted },
-                typeRdv === opt.value && { color: primary, fontWeight: FontWeight.bold },
-              ]}>
-                {opt.label}
-              </Text>
-            </TouchableOpacity>
+            />
           ))}
         </View>
 
@@ -184,23 +172,12 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
         <Text style={[styles.label, { color: colors.textSub }]}>👶 Enfant</Text>
         <View style={styles.chipRow}>
           {ENFANT_OPTIONS.map((name) => (
-            <TouchableOpacity
+            <Chip
               key={name}
-              style={[
-                chipStyle,
-                enfant === name && { backgroundColor: tint, borderColor: primary },
-              ]}
+              label={name}
+              selected={enfant === name}
               onPress={() => setEnfant(name)}
-              activeOpacity={0.7}
-            >
-              <Text style={[
-                styles.chipText,
-                { color: colors.textMuted },
-                enfant === name && { color: primary, fontWeight: FontWeight.bold },
-              ]}>
-                {name}
-              </Text>
-            </TouchableOpacity>
+            />
           ))}
         </View>
 
@@ -323,17 +300,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.md,
-  },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: Spacing.lg,
-    borderRadius: Radius.lg,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
-  },
-  chipText: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.medium,
   },
   deleteBtn: {
     backgroundColor: '#FEF2F2',

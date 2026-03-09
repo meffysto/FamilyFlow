@@ -34,6 +34,7 @@ import {
 import { fr } from 'date-fns/locale';
 import { useVault } from '../../hooks/useVault';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { Chip } from '../../components/ui/Chip';
 import { RDVEditor } from '../../components/RDVEditor';
 import { formatDateForDisplay, isRdvUpcoming } from '../../lib/parser';
 import { RDV } from '../../lib/types';
@@ -276,15 +277,13 @@ export default function RDVScreen() {
       {/* View mode tabs */}
       <View style={[styles.modeTabs, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         {(['liste', 'calendrier'] as ViewMode[]).map((mode) => (
-          <TouchableOpacity
+          <Chip
             key={mode}
-            style={[styles.modeTab, { backgroundColor: colors.cardAlt }, viewMode === mode && { backgroundColor: tint }]}
+            label={mode === 'liste' ? 'Liste' : 'Calendrier'}
+            emoji={mode === 'liste' ? '📋' : '🗓'}
+            selected={viewMode === mode}
             onPress={() => setViewMode(mode)}
-          >
-            <Text style={[styles.modeTabText, { color: colors.textMuted }, viewMode === mode && { color: primary, fontWeight: '700' }]}>
-              {mode === 'liste' ? '📋 Liste' : '🗓 Calendrier'}
-            </Text>
-          </TouchableOpacity>
+          />
         ))}
       </View>
 
@@ -552,8 +551,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 8,
     gap: 8, borderBottomWidth: 1,
   },
-  modeTab: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 12 },
-  modeTabText: { fontSize: 14, fontWeight: '600' },
   monthNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   monthArrow: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
   monthArrowText: { fontSize: 24, fontWeight: '300' },

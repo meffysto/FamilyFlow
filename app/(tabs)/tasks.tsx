@@ -28,6 +28,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { TaskCard } from '../../components/TaskCard';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
+import { Chip } from '../../components/ui/Chip';
 import {
   dispatchNotificationAsync,
   buildAllTasksDoneContext,
@@ -343,24 +344,13 @@ export default function TasksScreen() {
           contentContainerStyle={styles.filterContainer}
         >
           {filters.map((f) => (
-            <TouchableOpacity
+            <Chip
               key={f.id}
-              style={[
-                styles.chip,
-                { backgroundColor: colors.cardAlt },
-                filter === f.id && { backgroundColor: tint, borderColor: primary },
-              ]}
+              label={f.label}
+              emoji={f.emoji}
+              selected={filter === f.id}
               onPress={() => setFilter(f.id)}
-            >
-              <Text style={styles.chipEmoji}>{f.emoji}</Text>
-              <Text style={[
-                styles.chipText,
-                { color: colors.textMuted },
-                filter === f.id && { color: primary },
-              ]}>
-                {f.label}
-              </Text>
-            </TouchableOpacity>
+            />
           ))}
         </ScrollView>
       </View>
@@ -461,48 +451,26 @@ export default function TasksScreen() {
                 { label: 'Chaque semaine', value: 'every week' },
                 { label: 'Chaque mois', value: 'every month' },
               ].map((opt) => (
-                <TouchableOpacity
+                <Chip
                   key={opt.value}
-                  style={[
-                    styles.targetChip,
-                    { backgroundColor: colors.cardAlt },
-                    newTaskRecurrence === opt.value && { backgroundColor: tint, borderColor: primary },
-                  ]}
+                  label={opt.label}
+                  selected={newTaskRecurrence === opt.value}
                   onPress={() => setNewTaskRecurrence(opt.value)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[
-                    styles.targetChipText,
-                    { color: colors.textMuted },
-                    newTaskRecurrence === opt.value && { color: primary, fontWeight: '700' },
-                  ]}>
-                    {opt.label}
-                  </Text>
-                </TouchableOpacity>
+                  size="sm"
+                />
               ))}
             </View>
 
             <Text style={[styles.modalLabel, { color: colors.textSub }]}>📁 Enregistrer pour</Text>
             <View style={styles.targetRow}>
               {targetFiles.map((t) => (
-                <TouchableOpacity
+                <Chip
                   key={t.value}
-                  style={[
-                    styles.targetChip,
-                    { backgroundColor: colors.cardAlt },
-                    newTaskTarget === t.value && { backgroundColor: tint, borderColor: primary },
-                  ]}
+                  label={t.label}
+                  selected={newTaskTarget === t.value}
                   onPress={() => setNewTaskTarget(t.value)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[
-                    styles.targetChipText,
-                    { color: colors.textMuted },
-                    newTaskTarget === t.value && { color: primary, fontWeight: '700' },
-                  ]}>
-                    {t.label}
-                  </Text>
-                </TouchableOpacity>
+                  size="sm"
+                />
               ))}
             </View>
           </ScrollView>
@@ -564,23 +532,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     height: 56,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
-  },
-  chipEmoji: {
-    fontSize: 16,
-  },
-  chipText: {
-    fontSize: 14,
-    fontWeight: '600',
   },
   vacationBanner: {
     paddingHorizontal: 16,
@@ -682,16 +633,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-  },
-  targetChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
-  },
-  targetChipText: {
-    fontSize: 13,
-    fontWeight: '500',
   },
 });
