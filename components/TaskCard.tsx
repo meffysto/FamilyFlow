@@ -28,6 +28,7 @@ interface TaskCardProps {
   onToggle: (task: Task, completed: boolean) => void;
   onLongPress?: () => void;
   showSource?: boolean;
+  hideSection?: boolean;
 }
 
 const TAG_COLORS: Record<string, string> = {
@@ -56,6 +57,7 @@ export const TaskCard = React.memo(function TaskCard({
   onToggle,
   onLongPress,
   showSource = false,
+  hideSection = false,
 }: TaskCardProps) {
   const { primary, tint, colors } = useThemeColors();
   const checkScale = useSharedValue(task.completed ? 1 : 0);
@@ -138,7 +140,7 @@ export const TaskCard = React.memo(function TaskCard({
               <Text style={[styles.sourceLabel, { color: colors.textMuted }]}>{getSourceLabel(task.sourceFile)}</Text>
             </View>
           )}
-          {task.section && !showSource && !task.recurrence && (
+          {task.section && !showSource && !hideSection && !task.recurrence && (
             <View style={[styles.sectionBadge, { backgroundColor: tint }]}>
               <Text style={[styles.sectionLabel, { color: primary }]}>{task.section}</Text>
             </View>
