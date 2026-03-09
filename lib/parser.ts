@@ -757,8 +757,12 @@ export function mergeProfiles(
 /** Check if a journal file exists for today */
 export function todayJournalPath(enfant: string): string {
   const today = format(new Date(), 'yyyy-MM-dd');
-  const enfantDir = enfant.replace(' ', ' ');
   return `03 - Journal/${enfant}/${today} ${enfant}.md`;
+}
+
+/** Journal path for an arbitrary date */
+export function journalPathForDate(enfant: string, date: string): string {
+  return `03 - Journal/${enfant}/${date} ${enfant}.md`;
 }
 
 /** Generate a new journal entry from template */

@@ -1,10 +1,10 @@
 /**
  * journal.tsx — Baby journal screen
  *
- * View today's journal for Maxence or Enfant 2.
- * If journal doesn't exist: create from template.
+ * View journal for any date. Mini calendar for navigation.
  * Quick-add buttons for all entry types.
  * Tap any row to edit inline. Long-press to delete.
+ * Enfants/ados: lecture seule.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -22,10 +22,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
-import { format } from 'date-fns';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, isToday as isTodayFn } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useVault } from '../../contexts/VaultContext';
-import { todayJournalPath, generateJournalTemplate, todayAdultJournalPath, generateAdultJournalTemplate } from '../../lib/parser';
+import { todayJournalPath, journalPathForDate, generateJournalTemplate, todayAdultJournalPath, generateAdultJournalTemplate } from '../../lib/parser';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { parseJournalStats, calculerDuree } from '../../lib/journal-stats';
 
@@ -156,6 +156,96 @@ function typeFromHeading(heading: string): EntryType | null {
   return null;
 }
 
+// ─── Mini Calendar ───────────────────────────────────────────────────────────
+
+function MiniCalendar({
+  selectedDate,
+  onSelectDate,
+  availableDates,
+  colors,
+  primary,
+  tint,
+}: {
+  selectedDate: Date;
+  onSelectDate: (date: Date) => void;
+  availableDates: Set<string>;
+  colors: any;
+  primary: string;
+  tint: string;
+}) {
+  const [viewMonth, setViewMonth] = useState(startOfMonth(selectedDate));
+
+  const days = useMemo(() => {
+    const start = startOfMonth(viewMonth);
+    const end = endOfMonth(viewMonth);
+    const allDays = eachDayOfInterval({ start, end });
+    const startDay = getDay(start); // 0=Sun
+    // Padding pour aligner au lundi (1=lundi, on décale)
+    const mondayOffset = startDay === 0 ? 6 : startDay - 1;
+    const padding: (Date | null)[] = Array(mondayOffset).fill(null);
+    return [...padding, ...allDays];
+  }, [viewMonth]);
+
+  const monthLabel = format(viewMonth, 'MMMM yyyy', { locale: fr });
+
+  return (
+    <View style={[calStyles.container, { backgroundColor: colors.card }]}>
+      <View style={calStyles.nav}>
+        <TouchableOpacity onPress={() => setViewMonth(subMonths(viewMonth, 1))} style={calStyles.navBtn}>
+          <Text style={[calStyles.navArrow, { color: colors.textMuted }]}>‹</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setViewMonth(startOfMonth(new Date()))} style={calStyles.monthBtn}>
+          <Text style={[calStyles.monthLabel, { color: colors.text }]}>{monthLabel}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setViewMonth(addMonths(viewMonth, 1))} style={calStyles.navBtn}>
+          <Text style={[calStyles.navArrow, { color: colors.textMuted }]}>›</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={calStyles.weekdays}>
+        {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => (
+          <Text key={i} style={[calStyles.weekday, { color: colors.textFaint }]}>{d}</Text>
+        ))}
+      </View>
+      <View style={calStyles.grid}>
+        {days.map((day, i) => {
+          if (!day) return <View key={`pad-${i}`} style={calStyles.dayCell} />;
+          const dateStr = format(day, 'yyyy-MM-dd');
+          const hasJournal = availableDates.has(dateStr);
+          const isSelected = isSameDay(day, selectedDate);
+          const isToday = isTodayFn(day);
+          return (
+            <TouchableOpacity
+              key={dateStr}
+              style={[
+                calStyles.dayCell,
+                isSelected && { backgroundColor: primary },
+                !isSelected && isToday && { backgroundColor: tint },
+              ]}
+              onPress={() => hasJournal && onSelectDate(day)}
+              disabled={!hasJournal}
+              activeOpacity={0.6}
+            >
+              <Text
+                style={[
+                  calStyles.dayText,
+                  { color: hasJournal ? colors.text : colors.textFaint },
+                  isSelected && { color: '#FFFFFF', fontWeight: '800' },
+                  !isSelected && isToday && { color: primary, fontWeight: '800' },
+                ]}
+              >
+                {day.getDate()}
+              </Text>
+              {hasJournal && !isSelected && (
+                <View style={[calStyles.dot, { backgroundColor: primary }]} />
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function JournalScreen() {
@@ -169,9 +259,10 @@ export default function JournalScreen() {
   );
 
   const isAdultMode = activeProfile?.role === 'adulte' || activeProfile?.role === 'ado';
+  const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
+  const canEdit = !isChildMode;
 
   // Tab can be 'adulte' (personal journal) or an enfant ID
-  // Si un param enfant est passé, l'utiliser comme tab initial
   const [selectedTab, setSelectedTab] = useState<string>(
     enfantParam && enfants.some((e) => e.id === enfantParam)
       ? enfantParam
@@ -184,6 +275,15 @@ export default function JournalScreen() {
   );
   const selectedEnfantName = selectedEnfant?.name ?? '';
 
+  // Date navigation
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [availableDates, setAvailableDates] = useState<Set<string>>(new Set());
+
+  const isToday = isTodayFn(selectedDate);
+  const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
+  const selectedDateDisplay = format(selectedDate, 'EEEE dd MMMM yyyy', { locale: fr });
+
   const [journalContent, setJournalContent] = useState<string | null>(null);
   const [journalExists, setJournalExists] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -195,18 +295,45 @@ export default function JournalScreen() {
     fields: {},
   });
 
-  const today = format(new Date(), 'EEEE dd MMMM yyyy', { locale: fr });
-  const todayPath = isViewingAdultTab && activeProfile
-    ? todayAdultJournalPath(activeProfile.name)
-    : selectedEnfantName ? todayJournalPath(selectedEnfantName) : '';
+  // Chemin du journal pour la date sélectionnée
+  const journalPath = useMemo(() => {
+    if (isViewingAdultTab && activeProfile) {
+      return todayAdultJournalPath(activeProfile.name);
+    }
+    if (!selectedEnfantName) return '';
+    return journalPathForDate(selectedEnfantName, selectedDateStr);
+  }, [isViewingAdultTab, activeProfile, selectedEnfantName, selectedDateStr]);
+
+  // Charger les dates disponibles pour l'enfant sélectionné
+  const loadAvailableDates = useCallback(async () => {
+    if (!vault || isViewingAdultTab || !selectedEnfantName) {
+      setAvailableDates(new Set());
+      return;
+    }
+    try {
+      const dir = `03 - Journal/${selectedEnfantName}`;
+      const files = await vault.listDir(dir);
+      const dates = new Set(
+        files
+          .filter((f: string) => f.endsWith('.md'))
+          .map((f: string) => f.split(' ')[0])
+          .filter((d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d))
+      );
+      setAvailableDates(dates);
+    } catch {
+      setAvailableDates(new Set());
+    }
+  }, [vault, isViewingAdultTab, selectedEnfantName]);
+
+  useEffect(() => { loadAvailableDates(); }, [loadAvailableDates]);
 
   const loadJournal = useCallback(async () => {
-    if (!vault || !todayPath) return;
+    if (!vault || !journalPath) return;
     try {
-      const exists = await vault.exists(todayPath);
+      const exists = await vault.exists(journalPath);
       setJournalExists(exists);
       if (exists) {
-        const content = await vault.readFile(todayPath);
+        const content = await vault.readFile(journalPath);
         setJournalContent(content);
       } else {
         setJournalContent(null);
@@ -215,27 +342,51 @@ export default function JournalScreen() {
       setJournalContent(null);
       setJournalExists(false);
     }
-  }, [vault, todayPath]);
+  }, [vault, journalPath]);
 
   useEffect(() => { loadJournal(); }, [loadJournal]);
 
+  // Naviguer vers une date depuis le calendrier
+  const navigateToDate = useCallback((date: Date) => {
+    setSelectedDate(date);
+    setShowCalendar(false);
+  }, []);
+
+  // Navigation rapide : jour précédent/suivant avec journal
+  const navigatePrev = useCallback(() => {
+    const sorted = [...availableDates].sort().reverse();
+    const next = sorted.find((d) => d < selectedDateStr);
+    if (next) setSelectedDate(new Date(next + 'T12:00:00'));
+  }, [availableDates, selectedDateStr]);
+
+  const navigateNext = useCallback(() => {
+    const sorted = [...availableDates].sort();
+    const next = sorted.find((d) => d > selectedDateStr);
+    if (next) setSelectedDate(new Date(next + 'T12:00:00'));
+  }, [availableDates, selectedDateStr]);
+
+  const hasPrev = useMemo(() => [...availableDates].some((d) => d < selectedDateStr), [availableDates, selectedDateStr]);
+  const hasNext = useMemo(() => [...availableDates].some((d) => d > selectedDateStr), [availableDates, selectedDateStr]);
+
   const createJournal = useCallback(async () => {
-    if (!vault || !todayPath) return;
+    if (!vault || !journalPath) return;
     if (!isViewingAdultTab && !selectedEnfantName) return;
     setIsCreating(true);
     try {
       const template = isViewingAdultTab && activeProfile
         ? generateAdultJournalTemplate(activeProfile.name)
         : generateJournalTemplate(selectedEnfantName, { propre: selectedEnfant?.propre });
-      await vault.writeFile(todayPath, template);
+      await vault.writeFile(journalPath, template);
       setJournalContent(template);
       setJournalExists(true);
+      // Ajouter la date aux dates disponibles
+      setAvailableDates((prev) => new Set([...prev, selectedDateStr]));
     } catch (e) {
       Alert.alert('Erreur', `Impossible de créer le journal : ${e}`);
     } finally {
       setIsCreating(false);
     }
-  }, [vault, selectedEnfantName, todayPath]);
+  }, [vault, selectedEnfantName, journalPath, selectedDateStr]);
 
   const openAddModal = (type: EntryType) => {
     const defaultFields: Record<string, string> = {};
@@ -261,7 +412,7 @@ export default function JournalScreen() {
     const now = format(new Date(), 'HH:mm');
 
     try {
-      const content = await vault.readFile(todayPath);
+      const content = await vault.readFile(journalPath);
       const lines = content.split('\n');
 
       if (modal.mode === 'edit' && modal.lineIndex !== undefined) {
@@ -309,7 +460,7 @@ export default function JournalScreen() {
       }
 
       const newContent = lines.join('\n');
-      await vault.writeFile(todayPath, newContent);
+      await vault.writeFile(journalPath, newContent);
       setJournalContent(newContent);
     } catch (e) {
       Alert.alert('Erreur', String(e));
@@ -330,10 +481,10 @@ export default function JournalScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              const content = await vault.readFile(todayPath);
+              const content = await vault.readFile(journalPath);
               const lines = content.split('\n');
               lines.splice(modal.lineIndex!, 1);
-              await vault.writeFile(todayPath, lines.join('\n'));
+              await vault.writeFile(journalPath, lines.join('\n'));
               setJournalContent(lines.join('\n'));
             } catch (e) {
               Alert.alert('Erreur', String(e));
@@ -388,24 +539,27 @@ export default function JournalScreen() {
           <View key={si} style={[styles.tableSection, { backgroundColor: colors.card }]}>
             <View style={[styles.sectionHeader, { backgroundColor: colors.cardAlt, borderBottomColor: colors.border }]}>
               <Text style={[styles.tableSectionTitle, { color: colors.text }]}>{sec.heading}</Text>
-              <TouchableOpacity
-                style={[styles.sectionAddBtn, { backgroundColor: tint }]}
-                onPress={() => openAddModal('Observation')}
-              >
-                <Text style={[styles.sectionAddText, { color: primary }]}>+ Ajouter</Text>
-              </TouchableOpacity>
+              {canEdit && (
+                <TouchableOpacity
+                  style={[styles.sectionAddBtn, { backgroundColor: tint }]}
+                  onPress={() => openAddModal('Observation')}
+                >
+                  <Text style={[styles.sectionAddText, { color: primary }]}>+ Ajouter</Text>
+                </TouchableOpacity>
+              )}
             </View>
             {observations.length > 0 ? (
               observations.map((obs, oi) => (
                 <TouchableOpacity
                   key={oi}
                   style={[styles.obsRow, { borderBottomColor: colors.borderLight }, oi % 2 === 1 && { backgroundColor: colors.cardAlt }]}
-                  onPress={() => openEditModal('Observation', obs.lineIdx, allLines[obs.lineIdx])}
-                  activeOpacity={0.6}
+                  onPress={() => canEdit && openEditModal('Observation', obs.lineIdx, allLines[obs.lineIdx])}
+                  activeOpacity={canEdit ? 0.6 : 1}
+                  disabled={!canEdit}
                 >
                   <Text style={styles.obsNumber}>{oi + 1}.</Text>
                   <Text style={[styles.obsText, { color: colors.textSub }]}>{obs.text}</Text>
-                  <Text style={styles.editHint}>✏️</Text>
+                  {canEdit && <Text style={styles.editHint}>✏️</Text>}
                 </TouchableOpacity>
               ))
             ) : (
@@ -444,12 +598,14 @@ export default function JournalScreen() {
         <View key={si} style={[styles.tableSection, { backgroundColor: colors.card }]}>
           <View style={[styles.sectionHeader, { backgroundColor: colors.cardAlt, borderBottomColor: colors.border }]}>
             <Text style={[styles.tableSectionTitle, { color: colors.text }]}>{sec.heading}</Text>
-            <TouchableOpacity
-              style={[styles.sectionAddBtn, { backgroundColor: tint }]}
-              onPress={() => openAddModal(entryType)}
-            >
-              <Text style={[styles.sectionAddText, { color: primary }]}>+ Ajouter</Text>
-            </TouchableOpacity>
+            {canEdit && (
+              <TouchableOpacity
+                style={[styles.sectionAddBtn, { backgroundColor: tint }]}
+                onPress={() => openAddModal(entryType)}
+              >
+                <Text style={[styles.sectionAddText, { color: primary }]}>+ Ajouter</Text>
+              </TouchableOpacity>
+            )}
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View>
@@ -466,13 +622,14 @@ export default function JournalScreen() {
                     { borderBottomColor: colors.borderLight },
                     ri % 2 === 1 && { backgroundColor: colors.cardAlt },
                   ]}
-                  onPress={() => openEditModal(entryType, row.lineIdx, row.raw)}
-                  activeOpacity={0.6}
+                  onPress={() => canEdit && openEditModal(entryType, row.lineIdx, row.raw)}
+                  activeOpacity={canEdit ? 0.6 : 1}
+                  disabled={!canEdit}
                 >
                   {row.cells.map((cell, ci) => (
                     <Text key={ci} style={[styles.tableCell, { color: colors.textSub }]}>{cell}</Text>
                   ))}
-                  <Text style={styles.editHintCell}>✏️</Text>
+                  {canEdit && <Text style={styles.editHintCell}>✏️</Text>}
                 </TouchableOpacity>
               ))}
               {dataRows.length === 0 && (
@@ -494,9 +651,9 @@ export default function JournalScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.text }]}>📖 Journal</Text>
-        <Text style={[styles.dateText, { color: colors.textMuted }]}>{today}</Text>
       </View>
 
+      {/* Onglets enfant / adulte */}
       <View style={[styles.tabs, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         {isAdultMode && (
           <TouchableOpacity
@@ -523,7 +680,45 @@ export default function JournalScreen() {
         ))}
       </View>
 
-      {journalExists && !isViewingAdultTab && (
+      {/* Navigation date (journaux enfant seulement) */}
+      {!isViewingAdultTab && (
+        <View style={[styles.dateNav, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+          <TouchableOpacity onPress={navigatePrev} disabled={!hasPrev} style={styles.dateNavBtn}>
+            <Text style={[styles.dateNavArrow, { color: hasPrev ? colors.text : colors.textFaint }]}>‹</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setShowCalendar(!showCalendar)} style={styles.dateNavCenter}>
+            <Text style={[styles.dateNavText, { color: colors.text }]}>
+              {isToday ? "Aujourd'hui" : format(selectedDate, 'dd/MM/yyyy')}
+            </Text>
+            <Text style={[styles.dateNavSub, { color: colors.textMuted }]}>
+              {isToday ? format(selectedDate, 'dd MMMM', { locale: fr }) : format(selectedDate, 'EEEE', { locale: fr })}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={navigateNext} disabled={!hasNext} style={styles.dateNavBtn}>
+            <Text style={[styles.dateNavArrow, { color: hasNext ? colors.text : colors.textFaint }]}>›</Text>
+          </TouchableOpacity>
+          {!isToday && (
+            <TouchableOpacity onPress={() => setSelectedDate(new Date())} style={[styles.todayBtn, { backgroundColor: tint }]}>
+              <Text style={[styles.todayBtnText, { color: primary }]}>Aujourd'hui</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
+      {/* Calendrier mini */}
+      {showCalendar && !isViewingAdultTab && (
+        <MiniCalendar
+          selectedDate={selectedDate}
+          onSelectDate={navigateToDate}
+          availableDates={availableDates}
+          colors={colors}
+          primary={primary}
+          tint={tint}
+        />
+      )}
+
+      {/* Boutons ajout rapide (aujourd'hui + parent + journal bébé uniquement) */}
+      {journalExists && !isViewingAdultTab && canEdit && isToday && (
         <View style={[styles.quickAddContainer, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
           <View style={styles.quickAddRow}>
             {(['Biberon', 'Couche', 'Sieste'] as const).map((type) => (
@@ -563,22 +758,28 @@ export default function JournalScreen() {
             <Text style={[styles.createTitle, { color: colors.textSub }]}>
               {isViewingAdultTab
                 ? `Pas encore de journal pour ${activeProfile?.name}`
-                : `Pas encore de journal pour ${selectedEnfantName} aujourd'hui`}
+                : isToday
+                  ? `Pas encore de journal pour ${selectedEnfantName} aujourd'hui`
+                  : `Pas de journal le ${format(selectedDate, 'dd/MM/yyyy')}`}
             </Text>
-            <Text style={[styles.createSubtitle, { color: colors.textMuted }]}>
-              {isViewingAdultTab
-                ? 'Créez votre journal personnel pour noter vos pensées, humeur et objectifs.'
-                : `Créez le journal du ${format(new Date(), 'dd/MM/yyyy')} pour commencer à suivre l'alimentation, les couches et le sommeil.`}
-            </Text>
-            <TouchableOpacity
-              style={[styles.createBtn, { backgroundColor: primary }, isCreating && styles.createBtnDisabled]}
-              onPress={createJournal}
-              disabled={isCreating}
-            >
-              <Text style={styles.createBtnText}>
-                {isCreating ? 'Création...' : '📝 Créer le journal du jour'}
-              </Text>
-            </TouchableOpacity>
+            {isToday && canEdit && (
+              <>
+                <Text style={[styles.createSubtitle, { color: colors.textMuted }]}>
+                  {isViewingAdultTab
+                    ? 'Créez votre journal personnel pour noter vos pensées, humeur et objectifs.'
+                    : `Créez le journal du ${format(new Date(), 'dd/MM/yyyy')} pour commencer à suivre l'alimentation, les couches et le sommeil.`}
+                </Text>
+                <TouchableOpacity
+                  style={[styles.createBtn, { backgroundColor: primary }, isCreating && styles.createBtnDisabled]}
+                  onPress={createJournal}
+                  disabled={isCreating}
+                >
+                  <Text style={styles.createBtnText}>
+                    {isCreating ? 'Création...' : '📝 Créer le journal du jour'}
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         ) : journalContent ? (
           <View style={styles.journalContent}>
@@ -704,7 +905,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   title: { fontSize: 20, fontWeight: '800' },
-  dateText: { fontSize: 13, marginTop: 2, textTransform: 'capitalize' },
   tabs: {
     flexDirection: 'row',
     borderBottomWidth: 1,
@@ -721,6 +921,21 @@ const styles = StyleSheet.create({
   },
   tabEmoji: { fontSize: 18 },
   tabText: { fontSize: 14, fontWeight: '600' },
+
+  dateNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  dateNavBtn: { padding: 8 },
+  dateNavArrow: { fontSize: 24, fontWeight: '600' },
+  dateNavCenter: { flex: 1, alignItems: 'center' },
+  dateNavText: { fontSize: 16, fontWeight: '700' },
+  dateNavSub: { fontSize: 12, textTransform: 'capitalize', marginTop: 1 },
+  todayBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
+  todayBtnText: { fontSize: 12, fontWeight: '700' },
 
   quickAddContainer: {
     borderBottomWidth: 1,
@@ -837,4 +1052,54 @@ const styles = StyleSheet.create({
   modalCancelText: { fontSize: 15, fontWeight: '600' },
   modalConfirm: { flex: 2, padding: 14, borderRadius: 10, alignItems: 'center' },
   modalConfirmText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
+});
+
+const calStyles = StyleSheet.create({
+  container: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  nav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  navBtn: { padding: 8 },
+  navArrow: { fontSize: 22, fontWeight: '700' },
+  monthBtn: { flex: 1, alignItems: 'center' },
+  monthLabel: { fontSize: 15, fontWeight: '700', textTransform: 'capitalize' },
+  weekdays: {
+    flexDirection: 'row',
+    marginBottom: 4,
+  },
+  weekday: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  dayCell: {
+    width: `${100 / 7}%`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  dayText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginTop: 2,
+  },
 });
