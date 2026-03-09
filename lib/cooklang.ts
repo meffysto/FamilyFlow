@@ -606,16 +606,6 @@ export function convertCookToMetric(content: string): string {
       return `${c}°C`;
     },
   );
-  // Also handle "425°F" where ° is directly attached
-  result = result.replace(
-    /(\d+)°F\b/g,
-    (_match, tempStr: string) => {
-      const f = parseInt(tempStr, 10);
-      const c = Math.round((f - 32) * 5 / 9 / 5) * 5;
-      return `${c}°C`;
-    },
-  );
-
   return result;
 }
 

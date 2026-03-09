@@ -143,8 +143,8 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
                     <View
                       style={[
                         styles.checkbox,
-                        { borderColor: checked ? '#22C55E' : colors.border },
-                        checked && { backgroundColor: '#22C55E' },
+                        { borderColor: checked ? colors.success : colors.border },
+                        checked && { backgroundColor: colors.success },
                       ]}
                     >
                       {checked && <Text style={styles.checkmark}>✓</Text>}

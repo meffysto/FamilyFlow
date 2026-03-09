@@ -70,10 +70,6 @@ function formatTime(secs: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-function formatTimeLabel(duration: number, unit: string): string {
-  return `${duration} ${unit}`;
-}
-
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClose }: RecipeCookingModeProps) {
@@ -82,8 +78,8 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
   const [currentStep, setCurrentStep] = useState(0);
   const [checkedSteps, setCheckedSteps] = useState<Set<number>>(new Set());
   const [timers, setTimers] = useState<ActiveTimer[]>([]);
-  const [expandedTimer, setExpandedTimer] = useState<string | null>(null);
   const intervalsRef = useRef<Map<string, ReturnType<typeof setInterval>>>(new Map());
+  const timersRef = useRef<ActiveTimer[]>([]);
 
   const steps = recipe.steps;
   const total = steps.length;
@@ -94,6 +90,11 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
     ? scaleIngredients(step.ingredients, servings, recipe.servings || 1)
     : [];
 
+  // Keep timersRef in sync with state (fix #1 stale closure)
+  useEffect(() => {
+    timersRef.current = timers;
+  }, [timers]);
+
   // Progress bar
   useEffect(() => {
     progress.value = withSpring((currentStep + 1) / total, { damping: 15, stiffness: 100 });
@@ -103,8 +104,7 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
   useEffect(() => {
     return () => {
       intervalsRef.current.forEach((interval) => clearInterval(interval));
-      // Cancel scheduled notifications
-      timers.forEach((t) => {
+      timersRef.current.forEach((t) => {
         if (t.notificationId) {
           Notifications.cancelScheduledNotificationAsync(t.notificationId).catch(() => {});
         }
@@ -150,22 +150,36 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
 
   // ─── Timers ─────────────────────────────────────────────────────
 
-  const startTimer = useCallback(async (stepIdx: number, timerIdx: number, duration: number, unit: string) => {
-    const seconds = toSeconds(duration, unit);
-    const id = `${stepIdx}-${timerIdx}`;
+  const showToastRef = useRef(showToast);
+  showToastRef.current = showToast;
 
-    // Don't start if already running
-    if (timers.find((t) => t.id === id && !t.paused)) return;
+  const createTimerInterval = useCallback((id: string) => {
+    const interval = setInterval(() => {
+      setTimers((prev) => {
+        const updated = prev.map((t) => {
+          if (t.id !== id || t.paused) return t;
+          if (t.remaining <= 1) {
+            clearInterval(interval);
+            intervalsRef.current.delete(id);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            showToastRef.current(`⏱️ ${t.label} — Terminé !`, 'success');
+            return null;
+          }
+          return { ...t, remaining: t.remaining - 1 };
+        }).filter(Boolean) as ActiveTimer[];
+        return updated;
+      });
+    }, 1000);
+    intervalsRef.current.set(id, interval);
+    return interval;
+  }, []);
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-    // Schedule notification for background
-    let notificationId: string | undefined;
+  const scheduleNotification = useCallback(async (label: string, stepIdx: number, seconds: number) => {
     try {
-      notificationId = await Notifications.scheduleNotificationAsync({
+      return await Notifications.scheduleNotificationAsync({
         content: {
           title: '⏱️ Minuteur terminé !',
-          body: `${formatTimeLabel(duration, unit)} — Étape ${stepIdx + 1} de ${recipe.title}`,
+          body: `${label} — Étape ${stepIdx + 1} de ${recipe.title}`,
           sound: true,
         },
         trigger: {
@@ -173,102 +187,51 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
           seconds,
         },
       });
-    } catch { /* notification permission denied, timer still works */ }
+    } catch { return undefined; }
+  }, [recipe.title]);
+
+  const startTimer = useCallback(async (stepIdx: number, timerIdx: number, duration: number, unit: string) => {
+    const seconds = toSeconds(duration, unit);
+    const id = `${stepIdx}-${timerIdx}`;
+
+    if (timersRef.current.find((t) => t.id === id && !t.paused)) return;
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    const label = `${duration} ${unit}`;
+    const notificationId = await scheduleNotification(label, stepIdx, seconds);
 
     const timer: ActiveTimer = {
-      id,
-      stepIdx,
-      label: formatTimeLabel(duration, unit),
-      remaining: seconds,
-      total: seconds,
-      notificationId,
-      paused: false,
+      id, stepIdx, label, remaining: seconds, total: seconds, notificationId, paused: false,
     };
 
     setTimers((prev) => [...prev.filter((t) => t.id !== id), timer]);
-    setExpandedTimer(id);
-
-    // Start interval
-    const interval = setInterval(() => {
-      setTimers((prev) => {
-        const updated = prev.map((t) => {
-          if (t.id !== id || t.paused) return t;
-          if (t.remaining <= 1) {
-            // Timer finished!
-            clearInterval(interval);
-            intervalsRef.current.delete(id);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            showToast(`⏱️ ${t.label} — Terminé !`, 'success');
-            return null;
-          }
-          return { ...t, remaining: t.remaining - 1 };
-        }).filter(Boolean) as ActiveTimer[];
-        return updated;
-      });
-    }, 1000);
-
-    intervalsRef.current.set(id, interval);
-  }, [timers, recipe.title, showToast]);
+    createTimerInterval(id);
+  }, [scheduleNotification, createTimerInterval]);
 
   const pauseTimer = useCallback((id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    // Clear interval
     const interval = intervalsRef.current.get(id);
     if (interval) {
       clearInterval(interval);
       intervalsRef.current.delete(id);
     }
-    // Cancel notification
-    const timer = timers.find((t) => t.id === id);
+    const timer = timersRef.current.find((t) => t.id === id);
     if (timer?.notificationId) {
       Notifications.cancelScheduledNotificationAsync(timer.notificationId).catch(() => {});
     }
     setTimers((prev) => prev.map((t) => t.id === id ? { ...t, paused: true, notificationId: undefined } : t));
-  }, [timers]);
+  }, []);
 
   const resumeTimer = useCallback(async (id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const timer = timers.find((t) => t.id === id);
+    const timer = timersRef.current.find((t) => t.id === id);
     if (!timer) return;
 
-    // Re-schedule notification
-    let notificationId: string | undefined;
-    try {
-      notificationId = await Notifications.scheduleNotificationAsync({
-        content: {
-          title: '⏱️ Minuteur terminé !',
-          body: `${timer.label} — Étape ${timer.stepIdx + 1} de ${recipe.title}`,
-          sound: true,
-        },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-          seconds: timer.remaining,
-        },
-      });
-    } catch { /* ok */ }
-
+    const notificationId = await scheduleNotification(timer.label, timer.stepIdx, timer.remaining);
     setTimers((prev) => prev.map((t) => t.id === id ? { ...t, paused: false, notificationId } : t));
-
-    // Restart interval
-    const interval = setInterval(() => {
-      setTimers((prev) => {
-        const updated = prev.map((t) => {
-          if (t.id !== id || t.paused) return t;
-          if (t.remaining <= 1) {
-            clearInterval(interval);
-            intervalsRef.current.delete(id);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            showToast(`⏱️ ${t.label} — Terminé !`, 'success');
-            return null;
-          }
-          return { ...t, remaining: t.remaining - 1 };
-        }).filter(Boolean) as ActiveTimer[];
-        return updated;
-      });
-    }, 1000);
-
-    intervalsRef.current.set(id, interval);
-  }, [timers, recipe.title, showToast]);
+    createTimerInterval(id);
+  }, [scheduleNotification, createTimerInterval]);
 
   const stopTimer = useCallback((id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -277,44 +240,34 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
       clearInterval(interval);
       intervalsRef.current.delete(id);
     }
-    const timer = timers.find((t) => t.id === id);
+    const timer = timersRef.current.find((t) => t.id === id);
     if (timer?.notificationId) {
       Notifications.cancelScheduledNotificationAsync(timer.notificationId).catch(() => {});
     }
     setTimers((prev) => prev.filter((t) => t.id !== id));
-    if (expandedTimer === id) setExpandedTimer(null);
-  }, [timers, expandedTimer]);
+  }, []);
 
   const addMinute = useCallback(async (id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    // Cancel old notification & reschedule
-    const timer = timers.find((t) => t.id === id);
+    const timer = timersRef.current.find((t) => t.id === id);
     if (timer?.notificationId) {
       Notifications.cancelScheduledNotificationAsync(timer.notificationId).catch(() => {});
     }
+    // Use functional updater to get correct remaining value
+    let newRemaining = 0;
     setTimers((prev) => prev.map((t) => {
       if (t.id !== id) return t;
-      return { ...t, remaining: t.remaining + 60, total: t.total + 60 };
+      newRemaining = t.remaining + 60;
+      return { ...t, remaining: newRemaining, total: t.total + 60 };
     }));
-    // Reschedule notification with new time
-    const updated = timers.find((t) => t.id === id);
-    if (updated && !updated.paused) {
-      try {
-        const notificationId = await Notifications.scheduleNotificationAsync({
-          content: {
-            title: '⏱️ Minuteur terminé !',
-            body: `${updated.label} — Étape ${updated.stepIdx + 1} de ${recipe.title}`,
-            sound: true,
-          },
-          trigger: {
-            type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-            seconds: updated.remaining + 60,
-          },
-        });
+    // Reschedule with correct time from ref (updated after setTimers)
+    if (timer && !timer.paused) {
+      const notificationId = await scheduleNotification(timer.label, timer.stepIdx, (timer.remaining + 60));
+      if (notificationId) {
         setTimers((prev) => prev.map((t) => t.id === id ? { ...t, notificationId } : t));
-      } catch { /* ok */ }
+      }
     }
-  }, [timers, recipe.title]);
+  }, [scheduleNotification]);
 
   // Current step timers
   const stepTimers = timers.filter((t) => t.stepIdx === currentStep);
@@ -353,7 +306,7 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
             return (
               <Text
                 key={i}
-                style={[styles.tokenTimer, { color: isRunning ? '#22C55E' : '#F59E0B' }]}
+                style={[styles.tokenTimer, { color: isRunning ? colors.success : colors.warning }]}
                 onPress={() => {
                   if (!isRunning && t.quantity != null && t.unit) {
                     const idx = step.timers.findIndex(
@@ -377,7 +330,7 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
 
   const renderTimerCard = (timer: ActiveTimer, compact: boolean = false) => {
     const timerProgress = timer.total > 0 ? timer.remaining / timer.total : 0;
-    const ringColor = timer.remaining <= 10 ? '#EF4444' : timer.remaining <= 30 ? '#F59E0B' : primary;
+    const ringColor = timer.remaining <= 10 ? colors.error : timer.remaining <= 30 ? colors.warning : primary;
 
     if (compact) {
       return (
@@ -405,8 +358,8 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
             remaining={timer.remaining}
             size={80}
             colorNormal={primary}
-            colorWarning="#F59E0B"
-            colorDanger="#EF4444"
+            colorWarning={colors.warning}
+            colorDanger={colors.error}
             trackColor={colors.cardAlt}
             bgColor={colors.card}
           >
@@ -423,11 +376,11 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
 
         <View style={styles.timerActions}>
           <TouchableOpacity
-            style={[styles.timerActionBtn, { backgroundColor: timer.paused ? '#22C55E' + '20' : colors.cardAlt }]}
+            style={[styles.timerActionBtn, { backgroundColor: timer.paused ? colors.success + '20' : colors.cardAlt }]}
             onPress={() => timer.paused ? resumeTimer(timer.id) : pauseTimer(timer.id)}
             activeOpacity={0.7}
           >
-            <Text style={[styles.timerActionText, { color: timer.paused ? '#22C55E' : colors.text }]}>
+            <Text style={[styles.timerActionText, { color: timer.paused ? colors.success : colors.text }]}>
               {timer.paused ? '▶ Reprendre' : '⏸ Pause'}
             </Text>
           </TouchableOpacity>
@@ -441,11 +394,11 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.timerActionBtn, { backgroundColor: '#EF4444' + '15' }]}
+            style={[styles.timerActionBtn, { backgroundColor: colors.error + '15' }]}
             onPress={() => stopTimer(timer.id)}
             activeOpacity={0.7}
           >
-            <Text style={[styles.timerActionText, { color: '#EF4444' }]}>⏹ Stop</Text>
+            <Text style={[styles.timerActionText, { color: colors.error }]}>⏹ Stop</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -472,10 +425,10 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
           </View>
           <TouchableOpacity
             onPress={toggleStepDone}
-            style={[styles.doneBtn, { backgroundColor: isStepDone ? '#22C55E' : colors.cardAlt }]}
+            style={[styles.doneBtn, { backgroundColor: isStepDone ? colors.success : colors.cardAlt }]}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Text style={[styles.doneBtnText, { color: isStepDone ? '#FFFFFF' : colors.textMuted }]}>
+            <Text style={[styles.doneBtnText, { color: isStepDone ? colors.onPrimary : colors.textMuted }]}>
               {isStepDone ? '✓' : '○'}
             </Text>
           </TouchableOpacity>
@@ -531,15 +484,15 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
                     style={[
                       styles.timerLaunchBtn,
                       {
-                        backgroundColor: isRunning ? '#22C55E' + '15' : '#F59E0B' + '15',
-                        borderColor: isRunning ? '#22C55E' + '40' : '#F59E0B' + '40',
+                        backgroundColor: isRunning ? colors.success + '15' : colors.warning + '15',
+                        borderColor: isRunning ? colors.success + '40' : colors.warning + '40',
                       },
                     ]}
                     disabled={isRunning}
                     activeOpacity={0.7}
                   >
                     <Text style={styles.timerLaunchEmoji}>{isRunning ? '✓' : '⏱'}</Text>
-                    <Text style={[styles.timerLaunchText, { color: isRunning ? '#22C55E' : '#F59E0B' }]}>
+                    <Text style={[styles.timerLaunchText, { color: isRunning ? colors.success : colors.warning }]}>
                       {timer.duration} {timer.unit}
                     </Text>
                     {!isRunning && (
@@ -587,7 +540,7 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
 
           <TouchableOpacity
             onPress={toggleStepDone}
-            style={[styles.navDoneBtn, { backgroundColor: isStepDone ? '#22C55E' : primary }]}
+            style={[styles.navDoneBtn, { backgroundColor: isStepDone ? colors.success : primary }]}
             activeOpacity={0.8}
           >
             <Text style={styles.navDoneBtnText}>
@@ -609,8 +562,8 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
               style={styles.navBtn}
               activeOpacity={0.7}
             >
-              <Text style={[styles.navBtnArrow, { color: '#22C55E' }]}>✓</Text>
-              <Text style={[styles.navBtnLabel, { color: '#22C55E' }]}>Terminer</Text>
+              <Text style={[styles.navBtnArrow, { color: colors.success }]}>✓</Text>
+              <Text style={[styles.navBtnLabel, { color: colors.success }]}>Terminer</Text>
             </TouchableOpacity>
           )}
         </View>
