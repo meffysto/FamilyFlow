@@ -35,6 +35,7 @@ export default function SettingsScreen() {
     isVacationActive, activateVacation, deactivateVacation, addChild, convertToBorn,
   } = useVault();
   const { colors } = useThemeColors();
+  const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
 
   const [showVaultPicker, setShowVaultPicker] = useState(false);
   const [telegramToken, setTelegramToken] = useState('');
@@ -55,24 +56,32 @@ export default function SettingsScreen() {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         <Text style={[styles.screenTitle, { color: colors.text }]}>⚙️ Réglages</Text>
 
-        <SettingsVault vaultPath={vaultPath} onChangeVault={() => setShowVaultPicker(true)} />
-        <SettingsTelegram
-          telegramToken={telegramToken} telegramChatId={telegramChatId}
-          setTelegramToken={setTelegramToken} setTelegramChatId={setTelegramChatId}
-        />
-        <SettingsGrandparents
-          telegramToken={telegramToken} profiles={profiles}
-          memories={memories} photoDates={photoDates} getPhotoUri={getPhotoUri}
-        />
+        {!isChildMode && (
+          <SettingsVault vaultPath={vaultPath} onChangeVault={() => setShowVaultPicker(true)} />
+        )}
+        {!isChildMode && (
+          <SettingsTelegram
+            telegramToken={telegramToken} telegramChatId={telegramChatId}
+            setTelegramToken={setTelegramToken} setTelegramChatId={setTelegramChatId}
+          />
+        )}
+        {!isChildMode && (
+          <SettingsGrandparents
+            telegramToken={telegramToken} profiles={profiles}
+            memories={memories} photoDates={photoDates} getPhotoUri={getPhotoUri}
+          />
+        )}
         <SettingsNotificationsSection
           notifPrefs={notifPrefs} saveNotifPrefs={saveNotifPrefs}
           activeProfile={activeProfile} profiles={profiles}
         />
         <SettingsAppearance />
-        <SettingsVacation
-          vacationConfig={vacationConfig} isVacationActive={isVacationActive}
-          activateVacation={activateVacation} deactivateVacation={deactivateVacation}
-        />
+        {!isChildMode && (
+          <SettingsVacation
+            vacationConfig={vacationConfig} isVacationActive={isVacationActive}
+            activateVacation={activateVacation} deactivateVacation={deactivateVacation}
+          />
+        )}
         <SettingsProfiles
           profiles={profiles} activeProfile={activeProfile}
           setActiveProfile={setActiveProfile} updateProfileTheme={updateProfileTheme}

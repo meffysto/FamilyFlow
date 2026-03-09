@@ -33,8 +33,9 @@ interface GridItem {
 
 export default function MoreScreen() {
   const router = useRouter();
-  const { rdvs, stock, gamiData, budgetEntries, budgetConfig } = useVault();
+  const { rdvs, stock, gamiData, budgetEntries, budgetConfig, activeProfile } = useVault();
   const { colors } = useThemeColors();
+  const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
 
   const items: GridItem[] = useMemo(() => {
     const upcomingRdvs = rdvs.filter((r) => isRdvUpcoming(r)).length;
@@ -98,6 +99,8 @@ export default function MoreScreen() {
     ];
   }, [rdvs, stock, gamiData, budgetEntries, budgetConfig, colors]);
 
+  const visibleItems = isChildMode ? items.filter((i) => i.label !== 'Budget') : items;
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
@@ -106,7 +109,7 @@ export default function MoreScreen() {
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {(['quotidien', 'famille', 'systeme'] as const).map((cat) => {
-          const catItems = items.filter((i) => i.category === cat);
+          const catItems = visibleItems.filter((i) => i.category === cat);
           if (catItems.length === 0) return null;
           const catLabels = { quotidien: 'Vie quotidienne', famille: 'Famille', systeme: 'Système' };
           return (
