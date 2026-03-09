@@ -29,6 +29,7 @@ interface TaskCardProps {
   onLongPress?: () => void;
   showSource?: boolean;
   hideSection?: boolean;
+  compact?: boolean;
 }
 
 const TAG_COLORS: Record<string, string> = {
@@ -58,6 +59,7 @@ export const TaskCard = React.memo(function TaskCard({
   onLongPress,
   showSource = false,
   hideSection = false,
+  compact = false,
 }: TaskCardProps) {
   const { primary, tint, colors } = useThemeColors();
   const checkScale = useSharedValue(task.completed ? 1 : 0);
@@ -96,6 +98,7 @@ export const TaskCard = React.memo(function TaskCard({
         styles.card,
         { backgroundColor: colors.card },
         task.completed && { backgroundColor: colors.cardAlt, opacity: 0.7 },
+        compact && { padding: Spacing.md, marginBottom: Spacing.xs, gap: Spacing.md },
       ]}
       onLongPress={onLongPress}
       activeOpacity={onLongPress ? 0.7 : 1}

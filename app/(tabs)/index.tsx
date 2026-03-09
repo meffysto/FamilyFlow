@@ -579,7 +579,7 @@ export default function DashboardScreen() {
         return (
           <DashboardCard key="menage" title="Ménage du jour" icon="🧹" count={pendingMenage.length} color={colors.success} onPressMore={() => router.push('/(tabs)/tasks')}>
             {pendingMenage.slice(0, 4).map((task) => (
-              <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} hideSection />
+              <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} hideSection compact />
             ))}
           </DashboardCard>
         );
