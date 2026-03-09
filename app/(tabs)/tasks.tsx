@@ -26,6 +26,7 @@ import { useVault } from '../../hooks/useVault';
 import { useGamification } from '../../hooks/useGamification';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { TaskCard } from '../../components/TaskCard';
+import { SwipeToDelete } from '../../components/SwipeToDelete';
 import {
   dispatchNotificationAsync,
   buildAllTasksDoneContext,
@@ -356,10 +357,10 @@ export default function TasksScreen() {
         </ScrollView>
       </View>
 
-      {/* Long-press hint */}
+      {/* Swipe hint */}
       {sections.length > 0 && (
         <View style={[styles.deleteTip, { backgroundColor: colors.warningBg, borderBottomColor: colors.warning }]}>
-          <Text style={[styles.deleteTipText, { color: colors.warningText }]}>💡 Appui long sur une tâche pour la supprimer</Text>
+          <Text style={[styles.deleteTipText, { color: colors.warningText }]}>💡 Glissez une tâche vers la gauche pour la supprimer</Text>
         </View>
       )}
 
@@ -368,7 +369,12 @@ export default function TasksScreen() {
         sections={sections}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <TaskCard task={item} onToggle={handleTaskToggle} onLongPress={() => handleDeleteTask(item)} />
+          <SwipeToDelete
+            onDelete={() => handleDeleteTask(item)}
+            disabled={item.completed}
+          >
+            <TaskCard task={item} onToggle={handleTaskToggle} />
+          </SwipeToDelete>
         )}
         renderSectionHeader={({ section }) => (
           <View style={styles.sectionHeader}>
