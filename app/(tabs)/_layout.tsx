@@ -52,7 +52,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
 
   const fabActions: FABAction[] = [
     { id: 'task', emoji: '\u{1F4CB}', label: 'T\u00E2che', onPress: () => router.push('/tasks?addNew=1') },
-    { id: 'rdv', emoji: '\u{1F4C5}', label: 'Rendez-vous', onPress: () => router.push('/rdv?addNew=1') },
+    { id: 'rdv', emoji: '\u{1F4C5}', label: 'RDV', onPress: () => router.push('/rdv?addNew=1') },
     { id: 'photo', emoji: '\u{1F4F8}', label: 'Photo', onPress: () => router.push('/photos?addNew=1') },
   ];
 

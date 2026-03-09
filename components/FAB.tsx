@@ -10,9 +10,10 @@ import { View, Text, TouchableOpacity, StyleSheet, Pressable } from 'react-nativ
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
+  withTiming,
   interpolate,
   SharedValue,
+  Easing,
 } from 'react-native-reanimated';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
@@ -32,8 +33,9 @@ export interface FABProps {
 const MAIN_SIZE = 56;
 const ACTION_SIZE = 44;
 const ACTION_GAP = 12;
+const ACTION_OFFSET_RIGHT = (MAIN_SIZE - ACTION_SIZE) / 2;
 
-const SPRING_CONFIG = { damping: 15, stiffness: 150 };
+const TIMING_CONFIG = { duration: 200, easing: Easing.out(Easing.cubic) };
 
 function FABComponent({ actions }: FABProps) {
   const { primary, colors } = useThemeColors();
@@ -43,12 +45,12 @@ function FABComponent({ actions }: FABProps) {
   const toggle = useCallback(() => {
     const next = !open;
     setOpen(next);
-    progress.value = withSpring(next ? 1 : 0, SPRING_CONFIG);
+    progress.value = withTiming(next ? 1 : 0, TIMING_CONFIG);
   }, [open, progress]);
 
   const close = useCallback(() => {
     setOpen(false);
-    progress.value = withSpring(0, SPRING_CONFIG);
+    progress.value = withTiming(0, TIMING_CONFIG);
   }, [progress]);
 
   // Rotation animée du "+" → "×"
@@ -181,7 +183,7 @@ const styles = StyleSheet.create({
   actionRow: {
     position: 'absolute',
     bottom: 0,
-    right: 0,
+    right: ACTION_OFFSET_RIGHT,
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
