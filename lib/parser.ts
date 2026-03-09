@@ -774,10 +774,6 @@ export function generateJournalTemplate(enfant: string, options?: { propre?: boo
 ## Couches
 | Heure | Type | Notes |
 | ----- | ---- | ----- |
-|       | | |
-|       | | |
-|       | | |
-|       | | |
 `;
 
   return `---
@@ -794,28 +790,16 @@ tags:
 ## Alimentation
 | Heure | Type | Détail (ml) | Notes |
 | ----- | ---- | ----------- | ----- |
-|       | Biberon | | |
-|       | Biberon | | |
-|       | Biberon | | |
-|       | Biberon | | |
-|       | Tétée | | |
 ${couchesSection}
 ## Sommeil
 | Début | Fin | Durée | Notes |
 | ----- | --- | ----- | ----- |
-|       |     |       |       |
-|       |     |       |       |
-|       |     |       |       |
 
 ## Humeur & observations
-1.
-2.
-3.
 
 ## Médicaments / Soins
 | Heure | Médicament | Dose | Notes |
 | ----- | ---------- | ---- | ----- |
-|       | | | |
 `;
 }
 
