@@ -57,6 +57,7 @@ import { BarChart } from '../../components/charts';
 import { formatDateForDisplay, isRdvUpcoming } from '../../lib/parser';
 import { DashboardPrefsModal, SectionPref } from '../../components/DashboardPrefsModal';
 import { GlobalSearch } from '../../components/GlobalSearch';
+import { useAI } from '../../contexts/AIContext';
 import { getTheme } from '../../constants/themes';
 import { categorizeIngredient } from '../../lib/cooklang';
 import { generateInsights, type InsightInput } from '../../lib/insights';
@@ -96,6 +97,7 @@ const ALL_SECTIONS: SectionPref[] = [
   { id: 'recipes',    label: 'Idée recette',             emoji: '📖', visible: false, priority: 'low' },
   { id: 'nightMode',  label: 'Mode nuit bébé',           emoji: '🌙', visible: true,  priority: 'medium' },
   { id: 'leaderboard',label: 'Classement',              emoji: '🥇', visible: false, priority: 'low' },
+  { id: 'aiAssistant',label: 'Assistant IA',             emoji: '🤖', visible: true,  priority: 'medium' },
 ];
 
 /** Sections masquées pour les enfants (outils parentaux) */
@@ -124,6 +126,7 @@ export default function DashboardScreen() {
   const router = useRouter();
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
+  const ai = useAI();
   const {
     isLoading,
     error,
@@ -185,6 +188,8 @@ export default function DashboardScreen() {
   const [dashboardRecipe, setDashboardRecipe] = useState<AppRecipe | null>(null);
   const [smartSort, setSmartSort] = useState(false); // désactivé par défaut (safe pour utilisateurs existants)
   const [searchVisible, setSearchVisible] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   // Mode enfant : UX simplifiée (gros boutons, vocab simple)
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
@@ -1058,6 +1063,57 @@ export default function DashboardScreen() {
             <Text style={[styles.defiMeta, { color: colors.textSub }]}>
               {unbought} idée{unbought !== 1 ? 's' : ''} cadeau
             </Text>
+          </DashboardCard>
+        );
+      }
+
+      case 'aiAssistant': {
+        if (!ai.isConfigured) return null;
+        return (
+          <DashboardCard key="aiAssistant" title="Assistant IA" icon="🤖" color={primary}>
+            {aiSuggestions ? (
+              <View style={{ gap: 8 }}>
+                <Text style={[styles.insightBody, { color: colors.text, lineHeight: 20 }]}>{aiSuggestions}</Text>
+                <TouchableOpacity
+                  style={[styles.lootCTA, { borderColor: primary }]}
+                  onPress={async () => {
+                    setAiLoading(true);
+                    const ctx = {
+                      tasks, menageTasks, rdvs, stock, meals, courses,
+                      memories, defis, wishlistItems, recipes, profiles, activeProfile,
+                    };
+                    const resp = await ai.getSuggestions(ctx);
+                    setAiSuggestions(resp.error || resp.text);
+                    setAiLoading(false);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.lootCTAText, { color: primary }]}>
+                    {aiLoading ? '...' : '🔄 Nouvelles suggestions'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={[styles.lootCTA, { borderColor: primary }]}
+                onPress={async () => {
+                  setAiLoading(true);
+                  const ctx = {
+                    tasks, menageTasks, rdvs, stock, meals, courses,
+                    memories, defis, wishlistItems, recipes, profiles, activeProfile,
+                  };
+                  const resp = await ai.getSuggestions(ctx);
+                  setAiSuggestions(resp.error || resp.text);
+                  setAiLoading(false);
+                }}
+                disabled={aiLoading}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.lootCTAText, { color: primary }]}>
+                  {aiLoading ? '⏳ Analyse en cours...' : '🤖 Obtenir des suggestions IA'}
+                </Text>
+              </TouchableOpacity>
+            )}
           </DashboardCard>
         );
       }
