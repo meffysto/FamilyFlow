@@ -11,7 +11,7 @@
  * - Mini leaderboard
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -34,6 +34,7 @@ import * as SecureStore from 'expo-secure-store';
 import { useVault } from '../../hooks/useVault';
 import { useGamification } from '../../hooks/useGamification';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { useToast } from '../../contexts/ToastContext';
 import { DashboardCard } from '../../components/DashboardCard';
 import { TaskCard } from '../../components/TaskCard';
 import { FamilyLeaderboard } from '../../components/FamilyLeaderboard';
@@ -61,7 +62,7 @@ function parseCourseInput(text: string): { name: string; quantity: number | null
 
 const PREFS_KEY = 'dashboard_prefs_v1';
 
-const DEFAULT_SECTIONS: SectionPref[] = [
+const ALL_SECTIONS: SectionPref[] = [
   // Essentielles — toujours visibles par défaut
   { id: 'vacation',   label: 'Vacances',               emoji: '☀️', visible: true,  priority: 'high' },
   { id: 'overdue',    label: 'En retard',               emoji: '⚠️', visible: true,  priority: 'high' },
@@ -80,9 +81,31 @@ const DEFAULT_SECTIONS: SectionPref[] = [
   { id: 'leaderboard',label: 'Classement',              emoji: '🥇', visible: false, priority: 'low' },
 ];
 
+/** Sections masquées pour les enfants (outils parentaux) */
+const ADULT_ONLY_SECTIONS = new Set(['courses', 'budget', 'stock', 'quicknotifs', 'recipes']);
+
+/** Sections promues en haute priorité pour les enfants */
+const CHILD_PROMOTED: Record<string, { visible: boolean; priority: 'high' | 'medium' | 'low' }> = {
+  rewards:     { visible: true, priority: 'high' },
+  leaderboard: { visible: true, priority: 'high' },
+};
+
+function getDefaultSections(role?: string): SectionPref[] {
+  if (role === 'enfant' || role === 'ado') {
+    return ALL_SECTIONS
+      .filter((s) => !ADULT_ONLY_SECTIONS.has(s.id))
+      .map((s) => CHILD_PROMOTED[s.id] ? { ...s, ...CHILD_PROMOTED[s.id] } : s);
+  }
+  return ALL_SECTIONS;
+}
+
+/** @deprecated alias for backward compatibility with saved prefs */
+const DEFAULT_SECTIONS = ALL_SECTIONS;
+
 export default function DashboardScreen() {
   const router = useRouter();
   const { primary, tint, colors } = useThemeColors();
+  const { showToast } = useToast();
   const {
     isLoading,
     error,
@@ -134,33 +157,35 @@ export default function DashboardScreen() {
   const [isSendingRecap, setIsSendingRecap] = useState(false);
   const [rdvEditorVisible, setRdvEditorVisible] = useState(false);
   const [editingRDV, setEditingRDV] = useState<RDV | undefined>(undefined);
-  const [sectionPrefs, setSectionPrefs] = useState<SectionPref[]>(DEFAULT_SECTIONS);
+  const [sectionPrefs, setSectionPrefs] = useState<SectionPref[]>(() => getDefaultSections(activeProfile?.role));
   const [prefsModalVisible, setPrefsModalVisible] = useState(false);
   const [newCourseText, setNewCourseText] = useState('');
   const [dashboardRecipe, setDashboardRecipe] = useState<AppRecipe | null>(null);
 
-  // Load persisted section prefs on mount
+  // Load persisted section prefs on mount (filtered by profile role)
+  const roleDefaults = useMemo(() => getDefaultSections(activeProfile?.role), [activeProfile?.role]);
+
   useEffect(() => {
     SecureStore.getItemAsync(PREFS_KEY).then((raw) => {
-      if (!raw) return;
+      if (!raw) { setSectionPrefs(roleDefaults); return; }
       try {
         const saved: SectionPref[] = JSON.parse(raw);
-        // Re-order saved sections, then append any new ones from DEFAULT
-        const orderedIds = saved.map((s) => s.id);
+        const validIds = new Set(roleDefaults.map((s) => s.id));
+        const orderedIds = saved.map((s) => s.id).filter((id) => validIds.has(id));
         const merged: SectionPref[] = [
           ...orderedIds
             .map((id) => {
-              const def = DEFAULT_SECTIONS.find((s) => s.id === id);
+              const def = roleDefaults.find((s) => s.id === id);
               const sv = saved.find((s) => s.id === id);
               return def ? { ...def, visible: sv?.visible ?? true } : null;
             })
             .filter(Boolean) as SectionPref[],
-          ...DEFAULT_SECTIONS.filter((s) => !orderedIds.includes(s.id)),
+          ...roleDefaults.filter((s) => !orderedIds.includes(s.id)),
         ];
         setSectionPrefs(merged);
-      } catch {}
+      } catch { setSectionPrefs(roleDefaults); }
     });
-  }, []);
+  }, [roleDefaults]);
 
   const saveSectionPrefs = useCallback(async (prefs: SectionPref[]) => {
     setSectionPrefs(prefs);
@@ -217,9 +242,13 @@ export default function DashboardScreen() {
     const recapText = buildWeeklyRecapText({ memories: weekMemories, photoCount: weekPhotoUris.length, enfantNames });
     try {
       const ok = await sendWeeklyRecap(token.trim(), gpChatId.trim(), recapText, weekPhotoUris);
-      Alert.alert(ok ? '✅ Recap envoyé !' : '❌ Échec', ok ? `${weekMemories.length} souvenir(s) + ${weekPhotoUris.length} photo(s)` : "Erreur lors de l'envoi.");
+      if (ok) {
+        showToast(`Récap envoyé ! ${weekMemories.length} souvenir(s) + ${weekPhotoUris.length} photo(s)`);
+      } else {
+        showToast("Erreur lors de l'envoi du récap", 'error');
+      }
     } catch (e) {
-      Alert.alert('Erreur', String(e));
+      showToast(String(e), 'error');
     }
     setIsSendingRecap(false);
   }, [memories, photoDates, profiles, getPhotoUri]);
@@ -235,14 +264,14 @@ export default function DashboardScreen() {
             const { lootAwarded, pointsGained } = await completeTask(activeProfile, task.text);
             await refreshGamification();
             if (lootAwarded) {
-              Alert.alert('🎁 Récompense !', `+${pointsGained} points ! Tu as gagné une récompense ! Va dans Menu > Récompenses pour l'ouvrir.`);
+              showToast(`🎁 Récompense ! +${pointsGained} pts`);
             }
           } catch {
             // Gamification error — non-critical
           }
         }
       } catch (e) {
-        Alert.alert('Erreur', `Impossible de modifier la tâche : ${e}`);
+        showToast(`Impossible de modifier la tâche : ${e}`, 'error');
         // Refresh to revert optimistic update on error
         await refresh();
       }
@@ -262,9 +291,9 @@ export default function DashboardScreen() {
       const context = buildManualContext(activeProfile);
       const ok = await dispatchNotification(notifId, context, notifPrefs);
       if (ok) {
-        Alert.alert('Envoyé !', 'Notification envoyée sur Telegram.');
+        showToast('Notification envoyée sur Telegram !');
       } else {
-        Alert.alert('Envoi impossible', 'Vérifiez votre connexion internet ou la configuration dans les réglages.');
+        showToast('Envoi impossible — vérifiez la configuration', 'error');
       }
     },
     [activeProfile, notifPrefs]

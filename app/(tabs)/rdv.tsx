@@ -14,6 +14,7 @@ import {
   ScrollView,
   Modal,
   Dimensions,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
@@ -55,6 +56,7 @@ export default function RDVScreen() {
   const { rdvs, addRDV, updateRDV, deleteRDV } = useVault();
   const { primary, tint, colors } = useThemeColors();
 
+  const [search, setSearch] = useState('');
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingRDV, setEditingRDV] = useState<RDV | undefined>(undefined);
   const [showPast, setShowPast] = useState(false);
@@ -62,15 +64,28 @@ export default function RDVScreen() {
   const [calMonth, setCalMonth] = useState(new Date());
   const [calDayRdvs, setCalDayRdvs] = useState<{ date: string; rdvs: RDV[] } | null>(null);
 
+  // Filter by search
+  const filteredRdvs = useMemo(() => {
+    if (!search.trim()) return rdvs;
+    const q = search.toLowerCase();
+    return rdvs.filter(
+      (r) =>
+        r.enfant.toLowerCase().includes(q) ||
+        r.type_rdv.toLowerCase().includes(q) ||
+        (r.médecin ?? '').toLowerCase().includes(q) ||
+        (r.lieu ?? '').toLowerCase().includes(q)
+    );
+  }, [rdvs, search]);
+
   const upcoming = useMemo(
-    () => rdvs.filter((r) => isRdvUpcoming(r)),
-    [rdvs]
+    () => filteredRdvs.filter((r) => isRdvUpcoming(r)),
+    [filteredRdvs]
   );
 
   const past = useMemo(
-    () => rdvs.filter((r) => !isRdvUpcoming(r))
+    () => filteredRdvs.filter((r) => !isRdvUpcoming(r))
       .sort((a, b) => b.date_rdv.localeCompare(a.date_rdv)), // most recent first
-    [rdvs]
+    [filteredRdvs]
   );
 
   const calendarDays = useMemo(() => {
@@ -265,6 +280,18 @@ export default function RDVScreen() {
         ))}
       </View>
 
+      {/* Search */}
+      <View style={[styles.searchContainer, { backgroundColor: colors.card }]}>
+        <TextInput
+          style={[styles.searchInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
+          placeholder="🔍 Rechercher un rendez-vous..."
+          placeholderTextColor={colors.textMuted}
+          value={search}
+          onChangeText={setSearch}
+          clearButtonMode="while-editing"
+        />
+      </View>
+
       {viewMode === 'calendrier' ? (
         <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, { paddingBottom: 60 }]}>
           <View style={styles.monthNav}>
@@ -413,6 +440,17 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   addBtnText: { fontSize: 14, fontWeight: '700' },
+  searchContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  searchInput: {
+    height: 40,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    fontSize: 15,
+    borderWidth: 1,
+  },
   scroll: { flex: 1 },
   content: { padding: 16, gap: 12, paddingBottom: 40 },
   sectionTitle: {

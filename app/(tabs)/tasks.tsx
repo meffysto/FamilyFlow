@@ -25,6 +25,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useVault } from '../../hooks/useVault';
 import { useGamification } from '../../hooks/useGamification';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { useToast } from '../../contexts/ToastContext';
 import { TaskCard } from '../../components/TaskCard';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import {
@@ -86,6 +87,7 @@ export default function TasksScreen() {
   const { tasks, menageTasks, vault, profiles, activeProfile, notifPrefs, toggleTask, addTask, deleteTask, refresh, isLoading, vacationTasks, vacationConfig, isVacationActive, refreshGamification } = useVault();
   const { completeTask } = useGamification({ vault, notifPrefs });
   const { primary, tint, colors } = useThemeColors();
+  const { showToast } = useToast();
 
   const { filter: filterParam } = useLocalSearchParams<{ filter?: string }>();
   const filters = useMemo(() => {
@@ -135,9 +137,9 @@ export default function TasksScreen() {
             const { lootAwarded, pointsGained } = await completeTask(activeProfile, task.text);
             await refreshGamification();
             if (lootAwarded) {
-              Alert.alert('🎁 Récompense !', `+${pointsGained} pts ! Tu as gagné une récompense ! Va dans Menu > Récompenses pour l'ouvrir.`);
+              showToast(`🎁 Récompense ! +${pointsGained} pts`);
             } else {
-              Alert.alert('✅ +' + pointsGained + ' pts !', `Bravo ${activeProfile.name} !`, [{ text: 'Super !' }]);
+              showToast(`✅ +${pointsGained} pts !`);
             }
           } catch {
             // Gamification error — non-critical
@@ -158,20 +160,20 @@ export default function TasksScreen() {
           }
         }
       } catch (e) {
-        Alert.alert('Erreur', String(e));
+        showToast(String(e), 'error');
         await refresh();
       }
     },
-    [toggleTask, activeProfile, profiles, tasks, completeTask, refresh, notifPrefs, refreshGamification]
+    [toggleTask, activeProfile, profiles, tasks, completeTask, refresh, notifPrefs, refreshGamification, showToast]
   );
 
   const handleAddTask = useCallback(async () => {
     if (!newTaskText.trim()) {
-      Alert.alert('Champ requis', 'Le texte de la tâche est obligatoire.');
+      showToast('Le texte de la tâche est obligatoire', 'error');
       return;
     }
     if (newTaskDueDate && !/^\d{4}-\d{2}-\d{2}$/.test(newTaskDueDate)) {
-      Alert.alert('Date incorrecte', 'Veuillez entrer la date au format année-mois-jour.\nExemple : 2026-03-15 pour le 15 mars 2026.');
+      showToast('Date incorrecte (format : 2026-03-15)', 'error');
       return;
     }
     setIsSaving(true);
@@ -182,15 +184,15 @@ export default function TasksScreen() {
       setNewTaskRecurrence('');
       setAddModalVisible(false);
     } catch (e) {
-      Alert.alert('Erreur', String(e));
+      showToast(String(e), 'error');
     } finally {
       setIsSaving(false);
     }
-  }, [newTaskText, newTaskDueDate, newTaskRecurrence, newTaskTarget, addTask]);
+  }, [newTaskText, newTaskDueDate, newTaskRecurrence, newTaskTarget, addTask, showToast]);
 
   const handleDeleteTask = useCallback(async (task: Task) => {
     if (activeProfile?.role === 'enfant') {
-      Alert.alert('🔒 Admin requis', 'Seuls les adultes peuvent supprimer des tâches.');
+      showToast('🔒 Seuls les adultes peuvent supprimer des tâches', 'error');
       return;
     }
     Alert.alert(

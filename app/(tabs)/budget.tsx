@@ -27,6 +27,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useVault } from '../../hooks/useVault';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { useToast } from '../../contexts/ToastContext';
 import {
   formatAmount,
   categoryDisplay,
@@ -59,6 +60,7 @@ type TabId = 'resume' | 'list';
 
 export default function BudgetScreen() {
   const { primary, colors } = useThemeColors();
+  const { showToast } = useToast();
   const {
     budgetEntries,
     budgetConfig,
@@ -88,12 +90,12 @@ export default function BudgetScreen() {
 
   const handleAdd = useCallback(async () => {
     if (!selectedCategory || !amountText.trim() || !labelText.trim()) {
-      Alert.alert('Champs requis', 'Remplis la catégorie, le montant et le libellé.');
+      showToast('Remplis la catégorie, le montant et le libellé', 'error');
       return;
     }
     const amount = parseFloat(amountText.replace(',', '.'));
     if (isNaN(amount) || amount <= 0) {
-      Alert.alert('Montant invalide', 'Entre un montant valide.');
+      showToast('Montant invalide', 'error');
       return;
     }
 

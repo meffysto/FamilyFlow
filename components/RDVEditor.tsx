@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../contexts/ThemeContext';
+import { useToast } from '../contexts/ToastContext';
 import { RDV } from '../lib/types';
 import { formatDateForDisplay, parseDateInput } from '../lib/parser';
 import { Spacing, Radius } from '../constants/spacing';
@@ -40,6 +41,7 @@ interface RDVEditorProps {
 
 export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
   const { primary, tint, colors } = useThemeColors();
+  const { showToast } = useToast();
   const isEditing = !!rdv;
 
   // Display in DD/MM/YYYY, store internally as YYYY-MM-DD
@@ -67,13 +69,13 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
 
   const handleSave = async () => {
     if (!dateRdv) {
-      Alert.alert('Champ requis', 'La date est obligatoire.');
+      showToast('La date est obligatoire', 'error');
       return;
     }
     // Parse DD/MM/YYYY (or YYYY-MM-DD) to YYYY-MM-DD
     const parsedDate = parseDateInput(dateRdv);
     if (!parsedDate) {
-      Alert.alert('Format invalide', 'La date doit être au format JJ/MM/AAAA (ex: 06/03/2026).');
+      showToast('Date invalide (format : JJ/MM/AAAA)', 'error');
       return;
     }
 
@@ -92,7 +94,7 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
       });
       onClose();
     } catch (e) {
-      Alert.alert('Erreur', String(e));
+      showToast(String(e), 'error');
     } finally {
       setIsSaving(false);
     }

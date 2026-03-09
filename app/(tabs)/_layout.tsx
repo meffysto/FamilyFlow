@@ -2,10 +2,11 @@
  * (tabs)/_layout.tsx — Tab bar configuration + profile picker modal + ThemeProvider
  */
 
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { View, Text, Modal, StyleSheet, TouchableOpacity } from 'react-native';
 import { useVault } from '../../hooks/useVault';
 import { ThemeProvider, useThemeColors } from '../../contexts/ThemeContext';
+import { FAB, FABAction } from '../../components/FAB';
 
 function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
   return <Text style={{ fontSize: focused ? 26 : 22, opacity: focused ? 1 : 0.6 }}>{emoji}</Text>;
@@ -46,7 +47,14 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
   isVacationActive: boolean;
 }) {
   const { primary, colors } = useThemeColors();
+  const router = useRouter();
   const showPicker = profiles.length > 0 && !activeProfile;
+
+  const fabActions: FABAction[] = [
+    { id: 'task', emoji: '\u{1F4CB}', label: 'T\u00E2che', onPress: () => router.push('/tasks?addNew=1') },
+    { id: 'rdv', emoji: '\u{1F4C5}', label: 'Rendez-vous', onPress: () => router.push('/rdv?addNew=1') },
+    { id: 'photo', emoji: '\u{1F4F8}', label: 'Photo', onPress: () => router.push('/photos?addNew=1') },
+  ];
 
   return (
     <View style={{ flex: 1 }}>
@@ -114,6 +122,8 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
         <Tabs.Screen name="stock" options={{ href: null }} />
         <Tabs.Screen name="budget" options={{ href: null }} />
       </Tabs>
+
+      <FAB actions={fabActions} />
 
       {/* Profile picker modal — shown on first launch */}
       <Modal visible={showPicker} animationType="fade" transparent statusBarTranslucent>
