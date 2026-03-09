@@ -12,6 +12,7 @@ import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../contexts/ThemeContext';
 import type { AppRecipe, AppIngredient } from '../lib/cooklang';
 import { scaleIngredients, formatIngredient, renderStepText } from '../lib/cooklang';
+import RecipeCookingMode from './RecipeCookingMode';
 
 interface RecipeViewerProps {
   recipe: AppRecipe;
@@ -27,6 +28,7 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
   const { primary, tint, colors } = useThemeColors();
   const [servings, setServings] = useState(familySize || recipe.servings || 1);
   const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set());
+  const [showCookingMode, setShowCookingMode] = useState(false);
 
   const baseServings = recipe.servings || 1;
   const scaleFactor = baseServings > 0 ? servings / baseServings : 1;
@@ -205,20 +207,41 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
             </View>
           )}
 
-          {/* Add to shopping list button */}
-          {onAddToShoppingList && scaledIngredients.length > 0 && (
-            <TouchableOpacity
-              style={[styles.addButton, { backgroundColor: primary }]}
-              onPress={() => onAddToShoppingList(scaledIngredients)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.addButtonText}>Ajouter aux courses</Text>
-            </TouchableOpacity>
-          )}
+          {/* Action buttons */}
+          <View style={styles.actionButtons}>
+            {recipe.steps.length > 0 && (
+              <TouchableOpacity
+                style={[styles.addButton, { backgroundColor: primary, flex: 1 }]}
+                onPress={() => setShowCookingMode(true)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.addButtonText}>🍳 Lancer la recette</Text>
+              </TouchableOpacity>
+            )}
+            {onAddToShoppingList && scaledIngredients.length > 0 && (
+              <TouchableOpacity
+                style={[styles.addButton, { backgroundColor: colors.card, borderWidth: 1.5, borderColor: primary, flex: 1 }]}
+                onPress={() => onAddToShoppingList(scaledIngredients)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.addButtonText, { color: primary }]}>🛒 Aux courses</Text>
+              </TouchableOpacity>
+            )}
+          </View>
 
           <View style={styles.bottomSpacer} />
         </ScrollView>
       </SafeAreaView>
+
+      {/* Cooking mode */}
+      {showCookingMode && (
+        <RecipeCookingMode
+          recipe={recipe}
+          scaleFactor={scaleFactor}
+          servings={servings}
+          onClose={() => setShowCookingMode(false)}
+        />
+      )}
     </Modal>
   );
 }
@@ -404,11 +427,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
   },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 4,
+  },
   addButton: {
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 4,
   },
   addButtonText: {
     color: '#FFFFFF',
