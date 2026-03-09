@@ -1001,16 +1001,6 @@ export default function DashboardScreen() {
               <Text style={[styles.headerBtnLabel, { color: colors.onPrimaryMuted }]}>Récap GP</Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity
-            onPress={onRefresh}
-            style={styles.headerBtn}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityLabel="Actualiser"
-            accessibilityRole="button"
-          >
-            <Text style={styles.headerBtnIcon}>{isLoading ? '⏳' : '🔄'}</Text>
-            <Text style={[styles.headerBtnLabel, { color: colors.onPrimaryMuted }]}>Actualiser</Text>
-          </TouchableOpacity>
           {!isChildMode && (
             <TouchableOpacity
               onPress={() => setPrefsModalVisible(true)}
