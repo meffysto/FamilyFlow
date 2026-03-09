@@ -139,6 +139,8 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
         <Tabs.Screen name="rdv" options={{ href: null }} />
         <Tabs.Screen name="stock" options={{ href: null }} />
         <Tabs.Screen name="budget" options={{ href: null }} />
+        <Tabs.Screen name="routines" options={{ href: null }} />
+        <Tabs.Screen name="health" options={{ href: null }} />
       </Tabs>
 
       {showFAB && <FAB actions={fabActions} />}

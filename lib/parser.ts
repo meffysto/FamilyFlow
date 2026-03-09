@@ -1089,3 +1089,297 @@ tags:
 - [ ]
 `;
 }
+
+// ─── Carnet de santé ──────────────────────────────────────────────────────────
+
+/**
+ * Parse un fichier Carnet de santé.md en HealthRecord.
+ *
+ * Format attendu :
+ * ```
+ * # Carnet de santé — Maxence
+ *
+ * ## Informations
+ * - Groupe sanguin: A+
+ * - Médecin: Dr. Martin — 01 23 45 67 89
+ * - Pédiatre: Dr. Dupont — 01 98 76 54 32
+ * - Urgences: 15 / 112
+ *
+ * ## Allergies
+ * - Arachides
+ * - Pollen
+ *
+ * ## Antécédents
+ * - Varicelle (2025-06)
+ *
+ * ## Médicaments en cours
+ * - Vitamine D 1000UI/jour
+ *
+ * ## Croissance
+ * | Date | Poids (kg) | Taille (cm) | PC (cm) | Notes |
+ * | ---- | ---------- | ----------- | ------- | ----- |
+ * | 2026-03-01 | 12.5 | 85 | 48 | RAS |
+ *
+ * ## Vaccins
+ * | Vaccin | Date | Dose | Notes |
+ * | ------ | ---- | ---- | ----- |
+ * | DTP | 2025-06-15 | 1ère dose | OK |
+ * ```
+ */
+export function parseHealthRecord(enfant: string, enfantId: string, content: string): {
+  enfant: string;
+  enfantId: string;
+  allergies: string[];
+  antecedents: string[];
+  medicamentsEnCours: string[];
+  groupeSanguin?: string;
+  contactMedecin?: string;
+  contactPediatre?: string;
+  contactUrgences?: string;
+  croissance: { date: string; poids?: number; taille?: number; perimetre?: number; note?: string }[];
+  vaccins: { nom: string; date: string; dose?: string; note?: string }[];
+} {
+  const lines = content.split('\n');
+  let currentSection = '';
+
+  const allergies: string[] = [];
+  const antecedents: string[] = [];
+  const medicamentsEnCours: string[] = [];
+  let groupeSanguin: string | undefined;
+  let contactMedecin: string | undefined;
+  let contactPediatre: string | undefined;
+  let contactUrgences: string | undefined;
+  const croissance: { date: string; poids?: number; taille?: number; perimetre?: number; note?: string }[] = [];
+  const vaccins: { nom: string; date: string; dose?: string; note?: string }[] = [];
+
+  for (const line of lines) {
+    if (line.startsWith('## ')) {
+      currentSection = line.slice(3).trim().toLowerCase();
+      continue;
+    }
+
+    const bulletMatch = line.match(/^[-*]\s+(.+)/);
+
+    if (currentSection === 'informations' && bulletMatch) {
+      const text = bulletMatch[1].trim();
+      if (text.toLowerCase().startsWith('groupe sanguin')) {
+        groupeSanguin = text.split(':').slice(1).join(':').trim();
+      } else if (text.toLowerCase().startsWith('médecin') || text.toLowerCase().startsWith('medecin')) {
+        contactMedecin = text.split(':').slice(1).join(':').trim();
+      } else if (text.toLowerCase().startsWith('pédiatre') || text.toLowerCase().startsWith('pediatre')) {
+        contactPediatre = text.split(':').slice(1).join(':').trim();
+      } else if (text.toLowerCase().startsWith('urgences')) {
+        contactUrgences = text.split(':').slice(1).join(':').trim();
+      }
+      continue;
+    }
+
+    if (currentSection === 'allergies' && bulletMatch) {
+      allergies.push(bulletMatch[1].trim());
+      continue;
+    }
+
+    if (currentSection === 'antécédents' && bulletMatch) {
+      antecedents.push(bulletMatch[1].trim());
+      continue;
+    }
+
+    if ((currentSection === 'médicaments en cours' || currentSection === 'medicaments en cours') && bulletMatch) {
+      medicamentsEnCours.push(bulletMatch[1].trim());
+      continue;
+    }
+
+    // Parse table rows for croissance
+    if (currentSection === 'croissance' && line.startsWith('|') && !line.includes('----') && !line.toLowerCase().includes('date')) {
+      const cols = line.split('|').map(c => c.trim()).filter(Boolean);
+      if (cols.length >= 2) {
+        const date = cols[0];
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+        const poids = cols[1] ? parseFloat(cols[1]) : undefined;
+        const taille = cols[2] ? parseFloat(cols[2]) : undefined;
+        const perimetre = cols[3] ? parseFloat(cols[3]) : undefined;
+        const note = cols[4] || undefined;
+        croissance.push({
+          date,
+          poids: isNaN(poids!) ? undefined : poids,
+          taille: isNaN(taille!) ? undefined : taille,
+          perimetre: isNaN(perimetre!) ? undefined : perimetre,
+          note,
+        });
+      }
+      continue;
+    }
+
+    // Parse table rows for vaccins
+    if (currentSection === 'vaccins' && line.startsWith('|') && !line.includes('----') && !line.toLowerCase().includes('vaccin')) {
+      const cols = line.split('|').map(c => c.trim()).filter(Boolean);
+      if (cols.length >= 2) {
+        const nom = cols[0];
+        const date = cols[1];
+        if (!nom || !date) continue;
+        vaccins.push({
+          nom,
+          date,
+          dose: cols[2] || undefined,
+          note: cols[3] || undefined,
+        });
+      }
+      continue;
+    }
+  }
+
+  return {
+    enfant,
+    enfantId,
+    allergies,
+    antecedents,
+    medicamentsEnCours,
+    groupeSanguin,
+    contactMedecin,
+    contactPediatre,
+    contactUrgences,
+    croissance,
+    vaccins,
+  };
+}
+
+/**
+ * Sérialise un HealthRecord en Markdown.
+ */
+export function serializeHealthRecord(record: {
+  enfant: string;
+  allergies: string[];
+  antecedents: string[];
+  medicamentsEnCours: string[];
+  groupeSanguin?: string;
+  contactMedecin?: string;
+  contactPediatre?: string;
+  contactUrgences?: string;
+  croissance: { date: string; poids?: number; taille?: number; perimetre?: number; note?: string }[];
+  vaccins: { nom: string; date: string; dose?: string; note?: string }[];
+}): string {
+  const lines: string[] = [];
+  lines.push(`# Carnet de santé — ${record.enfant}`, '');
+
+  // Informations
+  lines.push('## Informations');
+  if (record.groupeSanguin) lines.push(`- Groupe sanguin: ${record.groupeSanguin}`);
+  if (record.contactMedecin) lines.push(`- Médecin: ${record.contactMedecin}`);
+  if (record.contactPediatre) lines.push(`- Pédiatre: ${record.contactPediatre}`);
+  if (record.contactUrgences) lines.push(`- Urgences: ${record.contactUrgences}`);
+  lines.push('');
+
+  // Allergies
+  lines.push('## Allergies');
+  if (record.allergies.length > 0) {
+    for (const a of record.allergies) lines.push(`- ${a}`);
+  } else {
+    lines.push('*Aucune allergie connue*');
+  }
+  lines.push('');
+
+  // Antécédents
+  lines.push('## Antécédents');
+  if (record.antecedents.length > 0) {
+    for (const a of record.antecedents) lines.push(`- ${a}`);
+  } else {
+    lines.push('*Aucun antécédent*');
+  }
+  lines.push('');
+
+  // Médicaments
+  lines.push('## Médicaments en cours');
+  if (record.medicamentsEnCours.length > 0) {
+    for (const m of record.medicamentsEnCours) lines.push(`- ${m}`);
+  } else {
+    lines.push('*Aucun médicament*');
+  }
+  lines.push('');
+
+  // Croissance
+  lines.push('## Croissance');
+  lines.push('| Date | Poids (kg) | Taille (cm) | PC (cm) | Notes |');
+  lines.push('| ---- | ---------- | ----------- | ------- | ----- |');
+  for (const g of record.croissance) {
+    const poids = g.poids != null ? String(g.poids) : '';
+    const taille = g.taille != null ? String(g.taille) : '';
+    const pc = g.perimetre != null ? String(g.perimetre) : '';
+    const note = g.note || '';
+    lines.push(`| ${g.date} | ${poids} | ${taille} | ${pc} | ${note} |`);
+  }
+  lines.push('');
+
+  // Vaccins
+  lines.push('## Vaccins');
+  lines.push('| Vaccin | Date | Dose | Notes |');
+  lines.push('| ------ | ---- | ---- | ----- |');
+  for (const v of record.vaccins) {
+    lines.push(`| ${v.nom} | ${v.date} | ${v.dose || ''} | ${v.note || ''} |`);
+  }
+  lines.push('');
+
+  return lines.join('\n');
+}
+
+// ─── Routines ─────────────────────────────────────────────────────────────────
+
+/**
+ * Parse un fichier Routines.md en liste de Routine.
+ *
+ * Format attendu :
+ * ```
+ * ## ☀️ Matin
+ * - Se brosser les dents ~3min
+ * - S'habiller ~5min
+ *
+ * ## 🌙 Soir
+ * - Bain / douche ~15min
+ * ```
+ */
+export function parseRoutines(content: string): { id: string; label: string; emoji: string; steps: { text: string; durationMinutes?: number }[] }[] {
+  const routines: { id: string; label: string; emoji: string; steps: { text: string; durationMinutes?: number }[] }[] = [];
+  const lines = content.split('\n');
+  let current: (typeof routines)[number] | null = null;
+
+  for (const line of lines) {
+    if (line.startsWith('## ')) {
+      if (current && current.steps.length > 0) routines.push(current);
+      const headerText = line.slice(3).trim();
+      // Séparer l'emoji du label
+      const parts = headerText.split(/\s+/);
+      const emoji = parts[0] || '📋';
+      const label = parts.slice(1).join(' ') || headerText;
+      const id = label.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+      current = { label, emoji, id, steps: [] };
+      continue;
+    }
+
+    if (current && /^[-*]\s+/.test(line)) {
+      const stepText = line.replace(/^[-*]\s+/, '').trim();
+      if (!stepText) continue;
+      const timerMatch = stepText.match(/~(\d+)\s*min/i);
+      const durationMinutes = timerMatch ? parseInt(timerMatch[1], 10) : undefined;
+      const text = stepText.replace(/~\d+\s*min/i, '').trim();
+      current.steps.push({ text, durationMinutes });
+    }
+  }
+
+  if (current && current.steps.length > 0) routines.push(current);
+  return routines;
+}
+
+/**
+ * Sérialise des routines en contenu Markdown.
+ */
+export function serializeRoutines(routines: { emoji: string; label: string; steps: { text: string; durationMinutes?: number }[] }[]): string {
+  const lines = ['# Routines', ''];
+  for (const routine of routines) {
+    lines.push(`## ${routine.emoji} ${routine.label}`);
+    for (const step of routine.steps) {
+      const timer = step.durationMinutes ? ` ~${step.durationMinutes}min` : '';
+      lines.push(`- ${step.text}${timer}`);
+    }
+    lines.push('');
+  }
+  return lines.join('\n');
+}

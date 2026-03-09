@@ -23,6 +23,10 @@ import { VaultManager } from '../lib/vault';
 import {
   parseTaskFile,
   parseMénage,
+  parseRoutines,
+  serializeRoutines,
+  parseHealthRecord,
+  serializeHealthRecord,
   parseCourses,
   parseMeals,
   parseRDV,
@@ -41,7 +45,7 @@ import {
   formatMealLine,
 } from '../lib/parser';
 import { processActiveRewards } from '../lib/gamification';
-import { Task, RDV, CourseItem, MealItem, StockItem, Profile, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig } from '../lib/types';
+import { Task, RDV, CourseItem, MealItem, StockItem, Profile, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry } from '../lib/types';
 import {
   parseBudgetConfig,
   parseBudgetMonth,
@@ -147,6 +151,12 @@ export interface VaultState {
   deleteExpense: (lineIndex: number) => Promise<void>;
   updateBudgetConfig: (config: BudgetConfig) => Promise<void>;
   loadBudgetData: (month?: string) => Promise<void>;
+  routines: Routine[];
+  saveRoutines: (routines: Routine[]) => Promise<void>;
+  healthRecords: HealthRecord[];
+  saveHealthRecord: (record: HealthRecord) => Promise<void>;
+  addGrowthEntry: (enfant: string, entry: GrowthEntry) => Promise<void>;
+  addVaccineEntry: (enfant: string, entry: VaccineEntry) => Promise<void>;
 }
 
 // Static task files (non-enfant)
@@ -201,6 +211,8 @@ const RECIPES_DIR = '03 - Cuisine/Recettes';
 const VACATION_FILE = '02 - Maison/Vacances.md';
 const BUDGET_DIR = '05 - Budget';
 const BUDGET_CONFIG_FILE = '05 - Budget/config.md';
+const ROUTINES_FILE = '02 - Maison/Routines.md';
+const HEALTH_DIR = '01 - Enfants';
 const VACATION_STORE_KEY = 'vacation_mode';
 const VACATION_TEMPLATE = `# Checklist Vacances
 
@@ -286,6 +298,8 @@ export function useVaultInternal(): VaultState {
   const [budgetEntries, setBudgetEntries] = useState<BudgetEntry[]>([]);
   const [budgetConfig, setBudgetConfig] = useState<BudgetConfig>(DEFAULT_BUDGET_CONFIG);
   const [budgetMonth, setBudgetMonth] = useState(() => format(new Date(), 'yyyy-MM'));
+  const [routines, setRoutines] = useState<Routine[]>([]);
+  const [healthRecords, setHealthRecords] = useState<HealthRecord[]>([]);
   const vaultRef = useRef<VaultManager | null>(null);
   const busyRef = useRef(false); // Guard against AppState race condition
 
@@ -406,6 +420,15 @@ export function useVaultInternal(): VaultState {
         setMenageTasks([]);
       }
 
+      // Load routines
+      try {
+        const routinesContent = await vault.readFile(ROUTINES_FILE);
+        setRoutines(parseRoutines(routinesContent));
+      } catch (e) {
+        debugErrors.push(`routines: ${e}`);
+        setRoutines([]);
+      }
+
       // Load courses
       try {
         const coursesContent = await vault.readFile(COURSES_FILE);
@@ -519,6 +542,22 @@ export function useVaultInternal(): VaultState {
         setMemories(allMemories);
       } catch {
         setMemories([]);
+      }
+
+      // Load health records per child (parallel, no TOCTOU)
+      try {
+        const results = await Promise.all(
+          enfantNames.map(async (name) => {
+            const id = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+            try {
+              const content = await vault.readFile(`${HEALTH_DIR}/${name}/Carnet de santé.md`);
+              return parseHealthRecord(name, id, content);
+            } catch { return null; }
+          })
+        );
+        setHealthRecords(results.filter((r): r is HealthRecord => r !== null));
+      } catch {
+        setHealthRecords([]);
       }
 
       // Load notification preferences
@@ -1487,6 +1526,53 @@ export function useVaultInternal(): VaultState {
     setBudgetConfig(config);
   }, []);
 
+  const saveRoutines = useCallback(async (newRoutines: Routine[]) => {
+    if (!vaultRef.current) return;
+    await vaultRef.current.writeFile(ROUTINES_FILE, serializeRoutines(newRoutines));
+    setRoutines(newRoutines);
+  }, []);
+
+  const saveHealthRecord = useCallback(async (record: HealthRecord) => {
+    if (!vaultRef.current) return;
+    const healthPath = `${HEALTH_DIR}/${record.enfant}/Carnet de santé.md`;
+    await vaultRef.current.ensureDir(`${HEALTH_DIR}/${record.enfant}`);
+    await vaultRef.current.writeFile(healthPath, serializeHealthRecord(record));
+    setHealthRecords(prev => {
+      const without = prev.filter(r => r.enfantId !== record.enfantId);
+      return [...without, record];
+    });
+  }, []);
+
+  const healthRecordsRef = useRef(healthRecords);
+  healthRecordsRef.current = healthRecords;
+
+  const addHealthEntry = useCallback(async (
+    enfant: string,
+    field: 'croissance' | 'vaccins',
+    entry: GrowthEntry | VaccineEntry,
+  ) => {
+    const existing = healthRecordsRef.current.find(r => r.enfant === enfant);
+    const record: HealthRecord = existing || {
+      enfant,
+      enfantId: enfant.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-'),
+      allergies: [], antecedents: [], medicamentsEnCours: [],
+      croissance: [], vaccins: [],
+    };
+    const updated: HealthRecord = {
+      ...record,
+      [field]: [...record[field], entry].sort((a: any, b: any) => a.date.localeCompare(b.date)),
+    };
+    await saveHealthRecord(updated);
+  }, [saveHealthRecord]);
+
+  const addGrowthEntry = useCallback(async (enfant: string, entry: GrowthEntry) => {
+    await addHealthEntry(enfant, 'croissance', entry);
+  }, [addHealthEntry]);
+
+  const addVaccineEntry = useCallback(async (enfant: string, entry: VaccineEntry) => {
+    await addHealthEntry(enfant, 'vaccins', entry);
+  }, [addHealthEntry]);
+
   return {
     vaultPath,
     isLoading,
@@ -1558,5 +1644,11 @@ export function useVaultInternal(): VaultState {
     deleteExpense,
     updateBudgetConfig,
     loadBudgetData,
+    routines,
+    saveRoutines,
+    healthRecords,
+    saveHealthRecord,
+    addGrowthEntry,
+    addVaccineEntry,
   };
 }

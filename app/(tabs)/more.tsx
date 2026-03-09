@@ -49,6 +49,13 @@ export default function MoreScreen() {
     return [
       // Vie quotidienne
       {
+        emoji: '🔄',
+        label: 'Routines',
+        route: '/(tabs)/routines',
+        color: colors.info,
+        category: 'quotidien' as const,
+      },
+      {
         emoji: '📅',
         label: 'Rendez-vous',
         route: '/(tabs)/rdv',
@@ -69,6 +76,13 @@ export default function MoreScreen() {
         route: '/(tabs)/stock',
         badge: lowStock || undefined,
         color: colors.warning,
+        category: 'quotidien' as const,
+      },
+      {
+        emoji: '🏥',
+        label: 'Santé',
+        route: '/(tabs)/health',
+        color: colors.error,
         category: 'quotidien' as const,
       },
       // Famille

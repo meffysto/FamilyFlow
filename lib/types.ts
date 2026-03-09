@@ -205,6 +205,56 @@ export interface ActiveReward {
   remainingTasks?: number;    // multiplier tasks remaining
 }
 
+// ─── Suivi médical ────────────────────────────────────────────────────────────
+
+export interface GrowthEntry {
+  date: string;       // YYYY-MM-DD
+  poids?: number;     // kg
+  taille?: number;    // cm
+  perimetre?: number; // périmètre crânien cm (bébé)
+  note?: string;
+}
+
+export interface VaccineEntry {
+  nom: string;        // ex: "ROR", "DTP", "BCG"
+  date: string;       // YYYY-MM-DD de l'injection
+  dose?: string;      // "1ère dose", "Rappel"
+  note?: string;
+}
+
+export interface HealthRecord {
+  enfant: string;
+  enfantId: string;
+  allergies: string[];
+  antecedents: string[];     // maladies passées
+  medicamentsEnCours: string[];
+  groupeSanguin?: string;
+  contactMedecin?: string;   // nom + tel du médecin traitant
+  contactPediatre?: string;
+  contactUrgences?: string;
+  croissance: GrowthEntry[];
+  vaccins: VaccineEntry[];
+}
+
+// ─── Routines ─────────────────────────────────────────────────────────────────
+
+export interface RoutineStep {
+  text: string;
+  durationMinutes?: number; // durée optionnelle du timer (en minutes)
+}
+
+export interface Routine {
+  id: string;         // "matin" | "soir" | slug custom
+  label: string;      // titre affiché ("Matin", "Soir")
+  emoji: string;      // ☀️ | 🌙
+  steps: RoutineStep[];
+}
+
+export interface RoutineProgress {
+  completedSteps: number[];  // indices des étapes terminées
+  startedAt?: string;        // ISO timestamp du début de la routine
+}
+
 // ─── Notifications ──────────────────────────────────────────────────────────
 
 export type NotifEvent =
