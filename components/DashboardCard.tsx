@@ -31,7 +31,11 @@ export function DashboardCard({
   const { primary, colors } = useThemeColors();
   const accentColor = color ?? primary;
   return (
-    <View style={[styles.card, Shadows.md, { backgroundColor: colors.card }, style]}>
+    <View
+      style={[styles.card, Shadows.md, { backgroundColor: colors.card }, style]}
+      accessibilityRole="summary"
+      accessibilityLabel={`Section ${title}${count !== undefined ? `, ${count} éléments` : ''}`}
+    >
       <View style={styles.header}>
         <View style={styles.titleRow}>
           {icon && <Text style={styles.icon}>{icon}</Text>}
@@ -43,7 +47,12 @@ export function DashboardCard({
           )}
         </View>
         {onPressMore && (
-          <TouchableOpacity onPress={onPressMore} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity
+            onPress={onPressMore}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityLabel={`Voir tout ${title}`}
+            accessibilityRole="button"
+          >
             <Text style={[styles.moreLink, { color: accentColor }]}>Voir tout →</Text>
           </TouchableOpacity>
         )}

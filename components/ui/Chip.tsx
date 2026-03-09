@@ -48,6 +48,9 @@ export const Chip = React.memo(function Chip({
       onPress={onPress}
       activeOpacity={0.7}
       disabled={!onPress}
+      accessibilityRole={onPress ? 'button' : 'text'}
+      accessibilityLabel={label}
+      accessibilityState={onPress ? { selected } : undefined}
     >
       {emoji ? <Text style={styles.emoji}>{emoji} </Text> : null}
       <Text style={textStyle}>{label}</Text>

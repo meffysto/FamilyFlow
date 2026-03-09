@@ -5,16 +5,25 @@
  * NE PAS utiliser dans un ScrollView (conflit de geste).
  */
 
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Alert } from 'react-native';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Animated, {
   SharedValue,
+  useSharedValue,
   useAnimatedStyle,
   interpolate,
+  withSequence,
+  withTiming,
+  withDelay,
+  Easing,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import * as SecureStore from 'expo-secure-store';
 import { useThemeColors } from '../contexts/ThemeContext';
+
+const SWIPE_HINT_KEY = 'swipe_hint_count';
+const MAX_HINT_COUNT = 3;
 
 interface SwipeToDeleteProps {
   onDelete: () => void;
@@ -24,6 +33,8 @@ interface SwipeToDeleteProps {
   /** Si true, appelle onDelete directement sans confirmation (utile si onDelete gère déjà sa propre Alert) */
   skipConfirm?: boolean;
   disabled?: boolean;
+  /** Identifiant pour le hint (ex: 'tasks', 'rdv') — un compteur par contexte */
+  hintId?: string;
 }
 
 export function SwipeToDelete({
@@ -33,9 +44,38 @@ export function SwipeToDelete({
   confirmMessage,
   skipConfirm = false,
   disabled = false,
+  hintId,
 }: SwipeToDeleteProps) {
   const { colors } = useThemeColors();
   const swipeableRef = useRef<any>(null);
+  const hintX = useSharedValue(0);
+  const [showHint, setShowHint] = useState(false);
+
+  // Afficher le hint les 3 premières fois
+  useEffect(() => {
+    if (disabled || !hintId) return;
+    (async () => {
+      const key = `${SWIPE_HINT_KEY}_${hintId}`;
+      const raw = await SecureStore.getItemAsync(key);
+      const count = raw ? parseInt(raw, 10) : 0;
+      if (count < MAX_HINT_COUNT) {
+        setShowHint(true);
+        await SecureStore.setItemAsync(key, String(count + 1));
+        // Animation : glisser légèrement à gauche puis revenir
+        hintX.value = withDelay(
+          800,
+          withSequence(
+            withTiming(-40, { duration: 400, easing: Easing.out(Easing.cubic) }),
+            withTiming(0, { duration: 300, easing: Easing.in(Easing.cubic) }),
+          )
+        );
+      }
+    })();
+  }, [hintId, disabled]);
+
+  const hintStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: hintX.value }],
+  }));
 
   const handleDelete = useCallback(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -76,7 +116,9 @@ export function SwipeToDelete({
       rightThreshold={60}
       friction={2}
     >
-      {children}
+      <Animated.View style={showHint ? hintStyle : undefined}>
+        {children}
+      </Animated.View>
     </ReanimatedSwipeable>
   );
 }

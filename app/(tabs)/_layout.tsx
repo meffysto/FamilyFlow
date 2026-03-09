@@ -3,7 +3,7 @@
  */
 
 import { useEffect } from 'react';
-import { Tabs, useRouter } from 'expo-router';
+import { Tabs, useRouter, useSegments } from 'expo-router';
 import { View, Text, Modal, StyleSheet, TouchableOpacity } from 'react-native';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -49,7 +49,12 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
 }) {
   const { primary, colors } = useThemeColors();
   const router = useRouter();
+  const segments = useSegments();
   const showPicker = profiles.length > 0 && !activeProfile;
+
+  // FAB uniquement sur le dashboard (évite de bloquer les boutons des autres écrans)
+  const activeTab = segments[segments.length - 1];
+  const showFAB = !activeTab || activeTab === '(tabs)' || (activeTab as string) === 'index';
 
   const fabActions: FABAction[] = [
     { id: 'task', emoji: '\u{1F4CB}', label: 'T\u00E2che', onPress: () => router.push('/tasks?addNew=1') },
@@ -124,7 +129,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
         <Tabs.Screen name="budget" options={{ href: null }} />
       </Tabs>
 
-      <FAB actions={fabActions} />
+      {showFAB && <FAB actions={fabActions} />}
 
       {/* Profile picker modal — shown on first launch */}
       <Modal visible={showPicker} animationType="fade" transparent statusBarTranslucent>

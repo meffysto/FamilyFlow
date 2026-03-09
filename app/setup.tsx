@@ -25,6 +25,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { VaultPicker } from '../components/VaultPicker';
 import { useVault } from '../contexts/VaultContext';
+import * as SecureStore from 'expo-secure-store';
 import { VaultManager } from '../lib/vault';
 import { useThemeColors } from '../contexts/ThemeContext';
 
@@ -142,6 +143,7 @@ export default function SetupScreen() {
         }))
       );
       await setVaultPath(vaultPath);
+      await SecureStore.setItemAsync('show_onboarding_guide', '1');
       router.replace('/(tabs)' as any);
     } catch (e) {
       Alert.alert(

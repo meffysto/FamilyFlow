@@ -65,6 +65,9 @@ export const Button = React.memo(function Button({
       onPress={onPress}
       activeOpacity={0.7}
       disabled={disabled}
+      accessibilityLabel={label}
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
     >
       {icon ? <Text style={styles.icon}>{icon} </Text> : null}
       <Text style={textStyle}>{label}</Text>

@@ -165,6 +165,17 @@ export default function DashboardScreen() {
   const [newCourseText, setNewCourseText] = useState('');
   const [dashboardRecipe, setDashboardRecipe] = useState<AppRecipe | null>(null);
 
+  // Mode enfant : UX simplifiée (gros boutons, vocab simple)
+  const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
+
+  // Guide post-onboarding (affiché une seule fois après le setup)
+  const [showOnboardingGuide, setShowOnboardingGuide] = useState(false);
+  useEffect(() => {
+    SecureStore.getItemAsync('show_onboarding_guide').then((v) => {
+      if (v === '1') setShowOnboardingGuide(true);
+    });
+  }, []);
+
   // Load persisted section prefs on mount (filtered by profile role)
   const roleDefaults = useMemo(() => getDefaultSections(activeProfile?.role), [activeProfile?.role]);
 
@@ -606,33 +617,41 @@ export default function DashboardScreen() {
         const hasBoxes = (activeProfile.lootBoxesAvailable ?? 0) > 0;
         const level = calculateLevel(activeProfile.points ?? 0);
         return (
-          <DashboardCard key="lootProgress" title="Progression" icon="🎁" color={primary}>
+          <DashboardCard key="lootProgress" title={isChildMode ? 'Tes points !' : 'Progression'} icon="🎁" color={primary}>
             {/* Barre de progression vers prochaine loot box */}
             <View style={styles.lootProgressRow}>
-              <Text style={[styles.lootProgressLabel, { color: colors.text }]}>
-                Nv. {level} — {activeProfile.avatar} {activeProfile.name}
+              <Text style={[isChildMode ? styles.lootProgressLabelChild : styles.lootProgressLabel, { color: colors.text }]}>
+                {isChildMode
+                  ? `${activeProfile.avatar} Niveau ${level} !`
+                  : `Nv. ${level} — ${activeProfile.avatar} ${activeProfile.name}`}
               </Text>
               <Text style={[styles.lootProgressPts, { color: colors.textMuted }]}>
                 {loot.current}/{loot.threshold} pts
               </Text>
             </View>
-            <View style={[styles.lootProgressBar, { backgroundColor: colors.cardAlt }]}>
-              <View style={[styles.lootProgressFill, { width: `${Math.round(loot.progress * 100)}%`, backgroundColor: primary }]} />
+            <View style={[isChildMode ? styles.lootProgressBarChild : styles.lootProgressBar, { backgroundColor: colors.cardAlt }]}>
+              <View style={[isChildMode ? styles.lootProgressFillChild : styles.lootProgressFill, { width: `${Math.round(loot.progress * 100)}%`, backgroundColor: primary }]} />
             </View>
             {hasBoxes && (
               <TouchableOpacity
-                style={[styles.lootCTA, { backgroundColor: tint, borderColor: primary }]}
+                style={[isChildMode ? styles.lootCTAChild : styles.lootCTA, { backgroundColor: tint, borderColor: primary }]}
                 onPress={() => router.push('/(tabs)/loot')}
                 activeOpacity={0.7}
+                accessibilityLabel="Ouvrir les loot boxes"
+                accessibilityRole="button"
               >
-                <Text style={[styles.lootCTAText, { color: primary }]}>
-                  🎁 Ouvre ta récompense ! ({activeProfile.lootBoxesAvailable} dispo)
+                <Text style={[isChildMode ? styles.lootCTATextChild : styles.lootCTAText, { color: primary }]}>
+                  {isChildMode
+                    ? `🎁 Ouvre ton cadeau ! (${activeProfile.lootBoxesAvailable})`
+                    : `🎁 Ouvre ta récompense ! (${activeProfile.lootBoxesAvailable} dispo)`}
                 </Text>
               </TouchableOpacity>
             )}
             {!hasBoxes && (
               <Text style={[styles.lootHint, { color: colors.textFaint }]}>
-                Complète des tâches pour gagner une loot box !
+                {isChildMode
+                  ? 'Fais tes tâches pour gagner un cadeau ! 💪'
+                  : 'Complète des tâches pour gagner une loot box !'}
               </Text>
             )}
           </DashboardCard>
@@ -805,35 +824,52 @@ export default function DashboardScreen() {
       {/* Header */}
       <View style={[styles.header, { backgroundColor: primary }]}>
         <View style={styles.headerLeft}>
-          <Text style={[styles.greeting, { color: colors.onPrimaryMuted }]}>Bonjour{activeProfile ? ` ${activeProfile.name}` : ''} 👋</Text>
+          <Text style={[
+            isChildMode ? styles.greetingChild : styles.greeting,
+            { color: colors.onPrimaryMuted },
+          ]}>
+            {isChildMode
+              ? `Salut ${activeProfile?.name ?? ''} ! 🌟`
+              : `Bonjour${activeProfile ? ` ${activeProfile.name}` : ''} 👋`}
+          </Text>
           <Text style={[styles.dateText, { color: colors.onPrimary }]}>{today}</Text>
         </View>
         <View style={styles.headerActions}>
-          <TouchableOpacity
-            onPress={handleSendRecap}
-            style={styles.headerBtn}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            disabled={isSendingRecap}
-          >
-            <Text style={styles.headerBtnIcon}>{isSendingRecap ? '⏳' : '📤'}</Text>
-            <Text style={[styles.headerBtnLabel, { color: colors.onPrimaryMuted }]}>Récap GP</Text>
-          </TouchableOpacity>
+          {!isChildMode && (
+            <TouchableOpacity
+              onPress={handleSendRecap}
+              style={styles.headerBtn}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              disabled={isSendingRecap}
+              accessibilityLabel="Envoyer le récap aux grands-parents"
+              accessibilityRole="button"
+            >
+              <Text style={styles.headerBtnIcon}>{isSendingRecap ? '⏳' : '📤'}</Text>
+              <Text style={[styles.headerBtnLabel, { color: colors.onPrimaryMuted }]}>Récap GP</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             onPress={onRefresh}
             style={styles.headerBtn}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityLabel="Actualiser"
+            accessibilityRole="button"
           >
             <Text style={styles.headerBtnIcon}>{isLoading ? '⏳' : '🔄'}</Text>
             <Text style={[styles.headerBtnLabel, { color: colors.onPrimaryMuted }]}>Actualiser</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setPrefsModalVisible(true)}
-            style={styles.headerBtn}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Text style={styles.headerBtnIcon}>⚙️</Text>
-            <Text style={[styles.headerBtnLabel, { color: colors.onPrimaryMuted }]}>Sections</Text>
-          </TouchableOpacity>
+          {!isChildMode && (
+            <TouchableOpacity
+              onPress={() => setPrefsModalVisible(true)}
+              style={styles.headerBtn}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityLabel="Configurer les sections"
+              accessibilityRole="button"
+            >
+              <Text style={styles.headerBtnIcon}>⚙️</Text>
+              <Text style={[styles.headerBtnLabel, { color: colors.onPrimaryMuted }]}>Sections</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
@@ -860,6 +896,71 @@ export default function DashboardScreen() {
               activeOpacity={0.8}
             >
               <Text style={[styles.welcomeBtnText, { color: colors.onPrimary }]}>⚙️  Ouvrir les réglages</Text>
+            </TouchableOpacity>
+          </DashboardCard>
+        )}
+
+        {/* Guide post-setup — affiché une seule fois */}
+        {showOnboardingGuide && vaultPath && (
+          <DashboardCard title="Premiers pas" icon="🚀" color={primary}>
+            <Text style={[styles.welcomeText, { color: colors.textSub }]}>
+              Votre espace familial est prêt ! Voici comment démarrer :
+            </Text>
+            <View style={styles.onboardingSteps}>
+              <TouchableOpacity
+                style={[styles.onboardingStep, { backgroundColor: colors.cardAlt }]}
+                onPress={() => router.push('/tasks?addNew=1')}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Créer ma première tâche"
+              >
+                <Text style={styles.onboardingStepEmoji}>📋</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.onboardingStepTitle, { color: colors.text }]}>Créer une tâche</Text>
+                  <Text style={[styles.onboardingStepDesc, { color: colors.textMuted }]}>Ajoutez votre première tâche familiale</Text>
+                </View>
+                <Text style={{ color: primary }}>→</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.onboardingStep, { backgroundColor: colors.cardAlt }]}
+                onPress={() => router.push('/rdv?addNew=1')}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Ajouter un rendez-vous"
+              >
+                <Text style={styles.onboardingStepEmoji}>📅</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.onboardingStepTitle, { color: colors.text }]}>Ajouter un RDV</Text>
+                  <Text style={[styles.onboardingStepDesc, { color: colors.textMuted }]}>Planifiez un rendez-vous médical</Text>
+                </View>
+                <Text style={{ color: primary }}>→</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.onboardingStep, { backgroundColor: colors.cardAlt }]}
+                onPress={() => router.push('/(tabs)/settings')}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Configurer Telegram"
+              >
+                <Text style={styles.onboardingStepEmoji}>📱</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.onboardingStepTitle, { color: colors.text }]}>Configurer Telegram</Text>
+                  <Text style={[styles.onboardingStepDesc, { color: colors.textMuted }]}>Recevez les notifications de la famille</Text>
+                </View>
+                <Text style={{ color: primary }}>→</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity
+              style={[styles.onboardingDismiss, { backgroundColor: tint }]}
+              onPress={async () => {
+                setShowOnboardingGuide(false);
+                await SecureStore.deleteItemAsync('show_onboarding_guide');
+              }}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Masquer le guide"
+            >
+              <Text style={[styles.onboardingDismissText, { color: primary }]}>J'ai compris, merci !</Text>
             </TouchableOpacity>
           </DashboardCard>
         )}
@@ -1221,6 +1322,13 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: 16,
   },
+  onboardingSteps: { gap: 10, marginTop: 8 },
+  onboardingStep: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12 },
+  onboardingStepEmoji: { fontSize: 24 },
+  onboardingStepTitle: { fontSize: 15, fontWeight: '700' },
+  onboardingStepDesc: { fontSize: 13 },
+  onboardingDismiss: { paddingVertical: 12, borderRadius: 10, alignItems: 'center', marginTop: 8 },
+  onboardingDismissText: { fontSize: 14, fontWeight: '700' },
   welcomeBtn: {
     paddingVertical: 14,
     paddingHorizontal: 20,
@@ -1266,6 +1374,37 @@ const styles = StyleSheet.create({
   lootCTAText: {
     fontSize: 15,
     fontWeight: '700',
+  },
+  // Styles enfant — plus gros, plus lisibles
+  greetingChild: {
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  lootProgressLabelChild: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  lootProgressBarChild: {
+    height: 16,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  lootProgressFillChild: {
+    height: '100%',
+    borderRadius: 8,
+  },
+  lootCTAChild: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 14,
+    borderWidth: 2,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  lootCTATextChild: {
+    fontSize: 18,
+    fontWeight: '800',
   },
   lootHint: {
     fontSize: 13,

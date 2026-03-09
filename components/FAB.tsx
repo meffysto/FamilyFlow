@@ -96,6 +96,9 @@ function FABComponent({ actions }: FABProps) {
           style={[styles.mainButton, { backgroundColor: primary }]}
           onPress={toggle}
           activeOpacity={0.8}
+          accessibilityLabel={open ? 'Fermer le menu d\'ajout rapide' : 'Ajouter'}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: open }}
         >
           <Animated.Text style={[styles.mainIcon, { color: colors.onPrimary }, mainAnimStyle]}>
             +
@@ -143,6 +146,8 @@ function FABActionItem({
         style={[styles.actionButton, { backgroundColor: primary }]}
         onPress={onPress}
         activeOpacity={0.8}
+        accessibilityLabel={`Ajouter ${action.label}`}
+        accessibilityRole="button"
       >
         <Text style={styles.actionEmoji}>{action.emoji}</Text>
       </TouchableOpacity>
