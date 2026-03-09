@@ -58,6 +58,7 @@ import { formatDateForDisplay, isRdvUpcoming } from '../../lib/parser';
 import { DashboardPrefsModal, SectionPref } from '../../components/DashboardPrefsModal';
 import { getTheme } from '../../constants/themes';
 import { categorizeIngredient } from '../../lib/cooklang';
+import { generateInsights, type InsightInput } from '../../lib/insights';
 
 /** Parse "50g beurre" or "50 g de beurre" into name/qty for merge */
 function parseCourseInput(text: string): { name: string; quantity: number | null } {
@@ -71,6 +72,7 @@ const SMART_SORT_KEY = 'dashboard_smart_sort';
 
 const ALL_SECTIONS: SectionPref[] = [
   // Essentielles — toujours visibles par défaut
+  { id: 'insights',   label: 'Suggestions',             emoji: '💡', visible: true,  priority: 'high' },
   { id: 'vacation',   label: 'Vacances',               emoji: '☀️', visible: true,  priority: 'high' },
   { id: 'overdue',    label: 'En retard',               emoji: '⚠️', visible: true,  priority: 'high' },
   { id: 'menage',     label: 'Ménage du jour',         emoji: '🧹', visible: true,  priority: 'high' },
@@ -450,10 +452,23 @@ export default function DashboardScreen() {
     return { data, total };
   }, [tasks, menageTasks]);
 
+  // Insights locaux (analyse déterministe du vault)
+  const insights = useMemo(() => {
+    const input: InsightInput = {
+      tasks, menageTasks, courses, stock, meals, rdvs,
+      profiles, activeProfile, defis, gratitudeDays,
+      memories, vacationConfig, isVacationActive,
+      gamiData, photoDates,
+    };
+    return generateInsights(input);
+  }, [tasks, menageTasks, courses, stock, meals, rdvs, profiles, activeProfile,
+    defis, gratitudeDays, memories, vacationConfig, isVacationActive, gamiData, photoDates]);
+
   // Tri intelligent mémorisé (évite recalcul à chaque render)
   const sortedSections = useMemo(() => {
     if (!smartSort) return sectionPrefs;
     const activeSections = new Set<string>();
+    if (insights.length > 0) activeSections.add('insights');
     if (pendingMenage.length > 0) activeSections.add('menage');
     if (todayMeals.length > 0) activeSections.add('meals');
     if (topCourses.length > 0) activeSections.add('courses');
@@ -484,6 +499,47 @@ export default function DashboardScreen() {
 
   const renderSection = (id: string): React.ReactNode => {
     switch (id) {
+      case 'insights': {
+        if (insights.length === 0) return null;
+        const topInsights = insights.slice(0, 5);
+        return (
+          <DashboardCard key="insights" title="Suggestions" icon="💡" count={insights.length} color={primary}>
+            {topInsights.map((insight) => {
+              const priorityColor = insight.priority === 'high' ? colors.error
+                : insight.priority === 'medium' ? colors.warning
+                : colors.textMuted;
+              return (
+                <TouchableOpacity
+                  key={insight.id}
+                  style={[styles.insightRow, { borderLeftColor: priorityColor }]}
+                  activeOpacity={insight.action?.route ? 0.7 : 1}
+                  onPress={() => {
+                    if (insight.action?.type === 'navigate' && insight.action.route) {
+                      router.push(insight.action.route as any);
+                    } else if (insight.action?.type === 'addCourse' && insight.action.payload) {
+                      const items: string[] = insight.action.payload;
+                      Promise.all(items.map((item) => addCourseItem(item))).then(() => {
+                        showToast(`${items.length} article${items.length > 1 ? 's' : ''} ajouté${items.length > 1 ? 's' : ''} aux courses`);
+                      });
+                    }
+                  }}
+                >
+                  <Text style={styles.insightIcon}>{insight.icon}</Text>
+                  <View style={styles.insightContent}>
+                    <Text style={[styles.insightTitle, { color: colors.text }]} numberOfLines={1}>{insight.title}</Text>
+                    <Text style={[styles.insightBody, { color: colors.textSub }]} numberOfLines={2}>{insight.body}</Text>
+                  </View>
+                  {insight.action && (
+                    <Text style={[styles.insightAction, { color: primary }]}>
+                      {insight.action.type === 'addCourse' ? '+' : '›'}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </DashboardCard>
+        );
+      }
       case 'vacation': {
         if (!isVacationActive || !vacationConfig) return null;
         const vacCompleted = vacationTasks.filter((t) => t.completed).length;
@@ -1849,5 +1905,36 @@ const styles = StyleSheet.create({
   defiCheckText: {
     fontSize: 16,
     fontWeight: '800',
+  },
+  // Insights
+  insightRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderLeftWidth: 3,
+    paddingLeft: 10,
+    marginBottom: 6,
+    borderRadius: 4,
+  },
+  insightIcon: {
+    fontSize: 18,
+    marginRight: 10,
+  },
+  insightContent: {
+    flex: 1,
+  },
+  insightTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  insightBody: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  insightAction: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginLeft: 8,
   },
 });

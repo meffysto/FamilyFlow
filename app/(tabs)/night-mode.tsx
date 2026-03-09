@@ -77,7 +77,7 @@ export default function NightModeScreen() {
       try {
         const current = await Brightness.getBrightnessAsync();
         originalBrightnessRef.current = current;
-        await Brightness.setBrightnessAsync(0.05);
+        await Brightness.setBrightnessAsync(0.15);
       } catch {
         // Permissions non accordées — on continue sans
       }

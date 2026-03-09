@@ -36,6 +36,9 @@ function getContextScore(id: string, ctx: SmartSortContext): number {
   const hasData = activeSections.has(id);
 
   switch (id) {
+    case 'insights':
+      return hasData ? 75 : -20;
+
     case 'nightMode':
       if (isNight && hasBaby) return 100;
       return -50;
