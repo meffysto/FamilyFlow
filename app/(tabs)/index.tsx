@@ -601,9 +601,6 @@ export default function DashboardScreen() {
             ))}
             {upcomingRdvs.length === 0 && <Text style={[styles.rdvEmpty, { color: colors.textMuted }]}>Aucun RDV à venir</Text>}
             <View style={styles.cardActions}>
-              <TouchableOpacity style={[styles.rdvAddBtn, { backgroundColor: tint, borderColor: primary }]} onPress={() => { setEditingRDV(undefined); setRdvEditorVisible(true); }} activeOpacity={0.7}>
-                <Text style={[styles.rdvAddBtnText, { color: primary }]}>+ Nouveau</Text>
-              </TouchableOpacity>
               <TouchableOpacity onPress={() => router.push('/(tabs)/rdv')} activeOpacity={0.7}>
                 <Text style={[styles.seeAllText, { color: primary }]}>Voir tout →</Text>
               </TouchableOpacity>
