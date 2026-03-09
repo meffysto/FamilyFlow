@@ -1069,10 +1069,16 @@ export function insertJalonInContent(
 // ─── Journal adulte ──────────────────────────────────────────────────────────
 
 /**
- * Path for the adult/ado journal file (persists across days, unlike baby journal).
+ * Path for today's adult/ado journal file (one file per day, like baby journal).
  */
 export function todayAdultJournalPath(prenom: string): string {
-  return `01 - Adultes/${prenom}/Journal.md`;
+  const today = format(new Date(), 'yyyy-MM-dd');
+  return `01 - Adultes/${prenom}/Journal/${today} ${prenom}.md`;
+}
+
+/** Adult journal path for an arbitrary date */
+export function adultJournalPathForDate(prenom: string, date: string): string {
+  return `01 - Adultes/${prenom}/Journal/${date} ${prenom}.md`;
 }
 
 /**
@@ -1080,6 +1086,7 @@ export function todayAdultJournalPath(prenom: string): string {
  */
 export function generateAdultJournalTemplate(prenom: string): string {
   const today = format(new Date(), 'yyyy-MM-dd');
+  const todayDisplay = format(new Date(), 'dd/MM/yyyy');
 
   return `---
 date: ${today}
@@ -1088,7 +1095,7 @@ tags:
   - journal-adulte
 ---
 
-# Journal — ${prenom}
+# Journal — ${prenom} — ${todayDisplay}
 
 ## 📝 Notes du jour
 

@@ -25,7 +25,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, isToday as isTodayFn } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useVault } from '../../contexts/VaultContext';
-import { todayJournalPath, journalPathForDate, generateJournalTemplate, todayAdultJournalPath, generateAdultJournalTemplate } from '../../lib/parser';
+import { todayJournalPath, journalPathForDate, generateJournalTemplate, todayAdultJournalPath, adultJournalPathForDate, generateAdultJournalTemplate } from '../../lib/parser';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { parseJournalStats, calculerDuree } from '../../lib/journal-stats';
 
@@ -298,20 +298,26 @@ export default function JournalScreen() {
   // Chemin du journal pour la date sélectionnée
   const journalPath = useMemo(() => {
     if (isViewingAdultTab && activeProfile) {
-      return todayAdultJournalPath(activeProfile.name);
+      return adultJournalPathForDate(activeProfile.name, selectedDateStr);
     }
     if (!selectedEnfantName) return '';
     return journalPathForDate(selectedEnfantName, selectedDateStr);
   }, [isViewingAdultTab, activeProfile, selectedEnfantName, selectedDateStr]);
 
-  // Charger les dates disponibles pour l'enfant sélectionné
+  // Charger les dates disponibles
   const loadAvailableDates = useCallback(async () => {
-    if (!vault || isViewingAdultTab || !selectedEnfantName) {
+    if (!vault) {
       setAvailableDates(new Set());
       return;
     }
     try {
-      const dir = `03 - Journal/${selectedEnfantName}`;
+      const dir = isViewingAdultTab && activeProfile
+        ? `01 - Adultes/${activeProfile.name}/Journal`
+        : `03 - Journal/${selectedEnfantName}`;
+      if (!isViewingAdultTab && !selectedEnfantName) {
+        setAvailableDates(new Set());
+        return;
+      }
       const files = await vault.listDir(dir);
       const dates = new Set(
         files
@@ -323,7 +329,7 @@ export default function JournalScreen() {
     } catch {
       setAvailableDates(new Set());
     }
-  }, [vault, isViewingAdultTab, selectedEnfantName]);
+  }, [vault, isViewingAdultTab, activeProfile, selectedEnfantName]);
 
   useEffect(() => { loadAvailableDates(); }, [loadAvailableDates]);
 
@@ -680,33 +686,31 @@ export default function JournalScreen() {
         ))}
       </View>
 
-      {/* Navigation date (journaux enfant seulement) */}
-      {!isViewingAdultTab && (
-        <View style={[styles.dateNav, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-          <TouchableOpacity onPress={navigatePrev} disabled={!hasPrev} style={styles.dateNavBtn}>
-            <Text style={[styles.dateNavArrow, { color: hasPrev ? colors.text : colors.textFaint }]}>‹</Text>
+      {/* Navigation date */}
+      <View style={[styles.dateNav, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <TouchableOpacity onPress={navigatePrev} disabled={!hasPrev} style={styles.dateNavBtn}>
+          <Text style={[styles.dateNavArrow, { color: hasPrev ? colors.text : colors.textFaint }]}>‹</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setShowCalendar(!showCalendar)} style={styles.dateNavCenter}>
+          <Text style={[styles.dateNavText, { color: colors.text }]}>
+            {isToday ? "Aujourd'hui" : format(selectedDate, 'dd/MM/yyyy')}
+          </Text>
+          <Text style={[styles.dateNavSub, { color: colors.textMuted }]}>
+            {isToday ? format(selectedDate, 'dd MMMM', { locale: fr }) : format(selectedDate, 'EEEE', { locale: fr })}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={navigateNext} disabled={!hasNext} style={styles.dateNavBtn}>
+          <Text style={[styles.dateNavArrow, { color: hasNext ? colors.text : colors.textFaint }]}>›</Text>
+        </TouchableOpacity>
+        {!isToday && (
+          <TouchableOpacity onPress={() => setSelectedDate(new Date())} style={[styles.todayBtn, { backgroundColor: tint }]}>
+            <Text style={[styles.todayBtnText, { color: primary }]}>Aujourd'hui</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => setShowCalendar(!showCalendar)} style={styles.dateNavCenter}>
-            <Text style={[styles.dateNavText, { color: colors.text }]}>
-              {isToday ? "Aujourd'hui" : format(selectedDate, 'dd/MM/yyyy')}
-            </Text>
-            <Text style={[styles.dateNavSub, { color: colors.textMuted }]}>
-              {isToday ? format(selectedDate, 'dd MMMM', { locale: fr }) : format(selectedDate, 'EEEE', { locale: fr })}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={navigateNext} disabled={!hasNext} style={styles.dateNavBtn}>
-            <Text style={[styles.dateNavArrow, { color: hasNext ? colors.text : colors.textFaint }]}>›</Text>
-          </TouchableOpacity>
-          {!isToday && (
-            <TouchableOpacity onPress={() => setSelectedDate(new Date())} style={[styles.todayBtn, { backgroundColor: tint }]}>
-              <Text style={[styles.todayBtnText, { color: primary }]}>Aujourd'hui</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
+        )}
+      </View>
 
       {/* Calendrier mini */}
-      {showCalendar && !isViewingAdultTab && (
+      {showCalendar && (
         <MiniCalendar
           selectedDate={selectedDate}
           onSelectDate={navigateToDate}
