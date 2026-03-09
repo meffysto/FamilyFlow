@@ -381,7 +381,8 @@ const styles = StyleSheet.create({
   },
   aiSection: {
     paddingHorizontal: Spacing['2xl'],
-    paddingBottom: Spacing['5xl'],
+    paddingTop: Spacing['2xl'],
+    paddingBottom: Spacing.xl,
     gap: Spacing.xl,
   },
   aiDivider: {
