@@ -26,6 +26,7 @@ interface GridItem {
   route: string;
   badge?: number;
   color: string;
+  category: 'quotidien' | 'famille' | 'systeme';
 }
 
 export default function MoreScreen() {
@@ -43,12 +44,21 @@ export default function MoreScreen() {
       : 0;
 
     return [
+      // Vie quotidienne
       {
         emoji: '📅',
         label: 'Rendez-vous',
         route: '/(tabs)/rdv',
         badge: upcomingRdvs || undefined,
         color: colors.info,
+        category: 'quotidien' as const,
+      },
+      {
+        emoji: '🍽️',
+        label: 'Repas',
+        route: '/(tabs)/meals',
+        color: colors.success,
+        category: 'quotidien' as const,
       },
       {
         emoji: '📦',
@@ -56,19 +66,16 @@ export default function MoreScreen() {
         route: '/(tabs)/stock',
         badge: lowStock || undefined,
         color: colors.warning,
+        category: 'quotidien' as const,
       },
-      {
-        emoji: '🍽️',
-        label: 'Repas',
-        route: '/(tabs)/meals',
-        color: colors.success,
-      },
+      // Famille
       {
         emoji: '🎁',
         label: 'Récompenses',
         route: '/(tabs)/loot',
         badge: lootBoxes || undefined,
         color: '#EC4899',
+        category: 'famille' as const,
       },
       {
         emoji: '💰',
@@ -76,12 +83,15 @@ export default function MoreScreen() {
         route: '/(tabs)/budget',
         badge: totalSpent(budgetEntries) > totalBudget(budgetConfig) ? 1 : undefined,
         color: '#059669',
+        category: 'famille' as const,
       },
+      // Système
       {
         emoji: '⚙️',
         label: 'Réglages',
         route: '/(tabs)/settings',
         color: colors.textMuted,
+        category: 'systeme' as const,
       },
     ];
   }, [rdvs, stock, gamiData, budgetEntries, budgetConfig, colors]);
@@ -93,26 +103,36 @@ export default function MoreScreen() {
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-        <View style={styles.grid}>
-          {items.map((item) => (
-            <TouchableOpacity
-              key={item.route}
-              style={[styles.card, { backgroundColor: colors.card }]}
-              onPress={() => router.push(item.route as any)}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.iconCircle, { backgroundColor: item.color + '20' }]}>
-                <Text style={styles.emoji}>{item.emoji}</Text>
+        {(['quotidien', 'famille', 'systeme'] as const).map((cat) => {
+          const catItems = items.filter((i) => i.category === cat);
+          if (catItems.length === 0) return null;
+          const catLabels = { quotidien: 'Vie quotidienne', famille: 'Famille', systeme: 'Système' };
+          return (
+            <View key={cat}>
+              <Text style={[styles.sectionHeader, { color: colors.textMuted }]}>{catLabels[cat]}</Text>
+              <View style={styles.grid}>
+                {catItems.map((item) => (
+                  <TouchableOpacity
+                    key={item.route}
+                    style={[styles.card, { backgroundColor: colors.card }]}
+                    onPress={() => router.push(item.route as any)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.iconCircle, { backgroundColor: item.color + '20' }]}>
+                      <Text style={styles.emoji}>{item.emoji}</Text>
+                    </View>
+                    <Text style={[styles.cardLabel, { color: colors.textSub }]}>{item.label}</Text>
+                    {item.badge ? (
+                      <View style={[styles.badgeContainer, { backgroundColor: item.color }]}>
+                        <Text style={[styles.badgeText, { color: colors.onPrimary }]}>{item.badge}</Text>
+                      </View>
+                    ) : null}
+                  </TouchableOpacity>
+                ))}
               </View>
-              <Text style={[styles.cardLabel, { color: colors.textSub }]}>{item.label}</Text>
-              {item.badge ? (
-                <View style={[styles.badgeContainer, { backgroundColor: item.color }]}>
-                  <Text style={[styles.badgeText, { color: colors.onPrimary }]}>{item.badge}</Text>
-                </View>
-              ) : null}
-            </TouchableOpacity>
-          ))}
-        </View>
+            </View>
+          );
+        })}
       </ScrollView>
     </SafeAreaView>
   );
@@ -128,6 +148,15 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: '800' },
   scroll: { flex: 1 },
   content: { padding: 16, paddingBottom: 40 },
+  sectionHeader: {
+    fontSize: 13,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+    marginTop: 12,
+    paddingHorizontal: 4,
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
