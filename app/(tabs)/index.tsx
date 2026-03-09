@@ -52,6 +52,7 @@ import { Task, RDV } from '../../lib/types';
 import { formatAmount, categoryDisplay, totalSpent, totalBudget } from '../../lib/budget';
 import { formatDateForDisplay, isRdvUpcoming } from '../../lib/parser';
 import { DashboardPrefsModal, SectionPref } from '../../components/DashboardPrefsModal';
+import { getTheme } from '../../constants/themes';
 import { categorizeIngredient } from '../../lib/cooklang';
 
 /** Parse "50g beurre" or "50 g de beurre" into name/qty for merge */
@@ -277,8 +278,13 @@ export default function DashboardScreen() {
           try {
             const { lootAwarded, pointsGained } = await completeTask(activeProfile, task.text);
             await refreshGamification();
+            const themeEmoji = getTheme(activeProfile.theme).emoji;
+            const name = activeProfile.name;
+            const taskShort = task.text.length > 25 ? task.text.slice(0, 25) + '…' : task.text;
             if (lootAwarded) {
-              showToast(`🎁 Récompense ! +${pointsGained} pts`);
+              showToast(`${themeEmoji} Bravo ${name} ! ${taskShort} → +${pointsGained} pts + 🎁`);
+            } else {
+              showToast(`${themeEmoji} Bravo ${name} ! ${taskShort} → +${pointsGained} pts`);
             }
           } catch {
             // Gamification error — non-critical
