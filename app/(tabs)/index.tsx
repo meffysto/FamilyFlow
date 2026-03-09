@@ -56,6 +56,7 @@ import { aggregateTasksByWeek, getWeekStart } from '../../lib/stats';
 import { BarChart } from '../../components/charts';
 import { formatDateForDisplay, isRdvUpcoming } from '../../lib/parser';
 import { DashboardPrefsModal, SectionPref } from '../../components/DashboardPrefsModal';
+import { GlobalSearch } from '../../components/GlobalSearch';
 import { getTheme } from '../../constants/themes';
 import { categorizeIngredient } from '../../lib/cooklang';
 import { generateInsights, type InsightInput } from '../../lib/insights';
@@ -183,6 +184,7 @@ export default function DashboardScreen() {
   const [newCourseText, setNewCourseText] = useState('');
   const [dashboardRecipe, setDashboardRecipe] = useState<AppRecipe | null>(null);
   const [smartSort, setSmartSort] = useState(false); // désactivé par défaut (safe pour utilisateurs existants)
+  const [searchVisible, setSearchVisible] = useState(false);
 
   // Mode enfant : UX simplifiée (gros boutons, vocab simple)
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
@@ -515,7 +517,11 @@ export default function DashboardScreen() {
                   activeOpacity={insight.action?.route ? 0.7 : 1}
                   onPress={() => {
                     if (insight.action?.type === 'navigate' && insight.action.route) {
-                      router.push(insight.action.route as any);
+                      if (insight.action.params) {
+                        router.push({ pathname: insight.action.route as any, params: insight.action.params });
+                      } else {
+                        router.push(insight.action.route as any);
+                      }
                     } else if (insight.action?.type === 'addCourse' && insight.action.payload) {
                       const items: string[] = insight.action.payload;
                       Promise.all(items.map((item) => addCourseItem(item))).then(() => {
@@ -1084,6 +1090,16 @@ export default function DashboardScreen() {
           <Text style={[styles.dateText, { color: colors.text }]}>{today}</Text>
         </View>
         <View style={styles.headerActions}>
+          <TouchableOpacity
+            onPress={() => setSearchVisible(true)}
+            style={[styles.headerBtn, { backgroundColor: colors.cardAlt }]}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityLabel="Rechercher dans le vault"
+            accessibilityRole="search"
+          >
+            <Text style={styles.headerBtnIcon}>🔍</Text>
+            <Text style={[styles.headerBtnLabel, { color: colors.textMuted }]}>Chercher</Text>
+          </TouchableOpacity>
           {!isChildMode && (
             <TouchableOpacity
               onPress={handleSendRecap}
@@ -1334,6 +1350,9 @@ export default function DashboardScreen() {
           familySize={profiles.length}
         />
       )}
+
+      {/* Recherche globale */}
+      <GlobalSearch visible={searchVisible} onClose={() => setSearchVisible(false)} />
     </SafeAreaView>
   );
 }

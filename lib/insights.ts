@@ -21,6 +21,7 @@ export interface InsightAction {
   label: string;
   type: 'navigate' | 'addCourse' | 'dismiss';
   route?: string;
+  params?: Record<string, string>;
   payload?: any;
 }
 
@@ -179,7 +180,7 @@ function stockInsights(input: InsightInput): Insight[] {
       body: 'Pensez à réapprovisionner rapidement.',
       priority: 'high',
       category: 'alert',
-      action: { label: 'Voir le stock', type: 'navigate', route: '/(tabs)/more' },
+      action: { label: 'Voir le stock', type: 'navigate', route: '/(tabs)/stock' },
     });
   }
 
@@ -240,7 +241,7 @@ function mealInsights(input: InsightInput, tc: TimeContext): Insight[] {
         body: relevant.map((m) => m.mealType).join(', ') + ` — ${todayDay}`,
         priority: 'medium',
         category: 'suggestion',
-        action: { label: 'Planifier', type: 'navigate', route: '/(tabs)/more' },
+        action: { label: 'Planifier', type: 'navigate', route: '/(tabs)/meals' },
       });
     }
   }
@@ -296,6 +297,7 @@ function photoInsights(input: InsightInput, tc: TimeContext): Insight[] {
         body: longMissing.map((s) => `${s.name} : ${s.days} jour${s.days > 1 ? 's' : ''} sans photo`).join(', '),
         priority: 'medium',
         category: 'reminder',
+        action: { label: 'Voir les photos', type: 'navigate', route: '/(tabs)/photos' },
       });
     } else if (missingPhoto.length > 0) {
       insights.push({
@@ -305,6 +307,7 @@ function photoInsights(input: InsightInput, tc: TimeContext): Insight[] {
         body: `Pas encore de photo pour ${missingPhoto.map((e) => e.name).join(', ')}`,
         priority: 'low',
         category: 'reminder',
+        action: { label: 'Ajouter une photo', type: 'navigate', route: '/(tabs)/photos' },
       });
     }
   }
@@ -369,7 +372,7 @@ function defiInsights(input: InsightInput, tc: TimeContext): Insight[] {
         body: `${defi.emoji} Plus que ${daysLeft} jour${daysLeft > 1 ? 's' : ''} !`,
         priority: 'high',
         category: 'reminder',
-        action: { label: 'Voir le défi', type: 'navigate', route: '/(tabs)/more' },
+        action: { label: 'Voir le défi', type: 'navigate', route: '/(tabs)/defis' },
       });
     }
 
@@ -406,7 +409,7 @@ function coursesInsights(input: InsightInput): Insight[] {
       body: 'La liste de courses est longue — pensez à faire les courses bientôt.',
       priority: 'medium',
       category: 'suggestion',
-      action: { label: 'Voir la liste', type: 'navigate', route: '/(tabs)/more' },
+      action: { label: 'Voir la liste', type: 'navigate', route: '/(tabs)/meals', params: { tab: 'courses' } },
     });
   }
 
@@ -466,7 +469,7 @@ function gamificationInsights(input: InsightInput): Insight[] {
       body: 'Ouvrez-la pour découvrir votre récompense !',
       priority: 'medium',
       category: 'suggestion',
-      action: { label: 'Ouvrir', type: 'navigate', route: '/(tabs)/more' },
+      action: { label: 'Ouvrir', type: 'navigate', route: '/(tabs)/loot' },
     });
   }
 
