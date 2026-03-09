@@ -50,6 +50,8 @@ import {
 import { buildWeeklyRecapText, sendWeeklyRecap } from '../../lib/telegram';
 import { Task, RDV } from '../../lib/types';
 import { formatAmount, categoryDisplay, totalSpent, totalBudget } from '../../lib/budget';
+import { aggregateTasksByWeek, getWeekStart } from '../../lib/stats';
+import { BarChart } from '../../components/charts';
 import { formatDateForDisplay, isRdvUpcoming } from '../../lib/parser';
 import { DashboardPrefsModal, SectionPref } from '../../components/DashboardPrefsModal';
 import { getTheme } from '../../constants/themes';
@@ -76,17 +78,19 @@ const ALL_SECTIONS: SectionPref[] = [
   { id: 'photos',     label: 'Photo du jour',           emoji: '📸', visible: true,  priority: 'medium' },
   { id: 'budget',     label: 'Budget',                   emoji: '💰', visible: true,  priority: 'medium' },
   // Gamification — visible par défaut
+  { id: 'weeklyStats',  label: 'Stats semaine',            emoji: '📊', visible: true,  priority: 'medium' },
   { id: 'lootProgress', label: 'Progression',            emoji: '🎁', visible: true,  priority: 'medium' },
   { id: 'rewards',    label: 'Récompenses actives',     emoji: '🏆', visible: true,  priority: 'medium' },
   // Optionnelles — masquées par défaut pour les nouveaux utilisateurs
   { id: 'stock',      label: 'Alertes stock',            emoji: '📦', visible: false, priority: 'low' },
   { id: 'quicknotifs',label: 'Notifications rapides',   emoji: '📤', visible: false, priority: 'low' },
   { id: 'recipes',    label: 'Idée recette',             emoji: '📖', visible: false, priority: 'low' },
+  { id: 'nightMode',  label: 'Mode nuit bébé',           emoji: '🌙', visible: true,  priority: 'medium' },
   { id: 'leaderboard',label: 'Classement',              emoji: '🥇', visible: false, priority: 'low' },
 ];
 
 /** Sections masquées pour les enfants (outils parentaux) */
-const ADULT_ONLY_SECTIONS = new Set(['courses', 'budget', 'stock', 'quicknotifs', 'recipes', 'photos', 'rdvs']);
+const ADULT_ONLY_SECTIONS = new Set(['courses', 'budget', 'stock', 'quicknotifs', 'recipes', 'photos', 'rdvs', 'nightMode']);
 
 /** Sections promues en haute priorité pour les enfants */
 const CHILD_PROMOTED: Record<string, { visible: boolean; priority: 'high' | 'medium' | 'low' }> = {
@@ -300,6 +304,7 @@ export default function DashboardScreen() {
   );
 
   const leaderboard = buildLeaderboard(profiles);
+  const hasBaby = useMemo(() => profiles.some((p) => p.ageCategory === 'bebe' && p.role === 'enfant'), [profiles]);
 
   // Custom notifications for quick-send buttons
   const customNotifs = notifPrefs.notifications.filter(
@@ -411,6 +416,15 @@ export default function DashboardScreen() {
     ...e,
     hasPhoto: (photoDates[e.id] ?? []).includes(todayStr),
   }));
+
+  // Stats semaine (mémorisé pour éviter recalcul à chaque render)
+  const weeklyStatsData = useMemo(() => {
+    const weekStart = getWeekStart(new Date());
+    const all = [...tasks, ...menageTasks];
+    const data = aggregateTasksByWeek(all, weekStart);
+    const total = data.reduce((s, d) => s + d.value, 0);
+    return { data, total };
+  }, [tasks, menageTasks]);
 
   const renderSection = (id: string): React.ReactNode => {
     switch (id) {
@@ -732,6 +746,26 @@ export default function DashboardScreen() {
         );
       }
 
+      case 'weeklyStats': {
+        const { data: weekData, total: weekTotal } = weeklyStatsData;
+        if (weekTotal === 0) return null;
+        return (
+          <DashboardCard
+            key="weeklyStats"
+            title="Stats semaine"
+            icon="📊"
+            count={weekTotal}
+            color={primary}
+            onPressMore={() => router.push('/(tabs)/stats')}
+          >
+            <BarChart data={weekData} compact showValues={false} barColor={primary} />
+            <Text style={[styles.weekStatsSummary, { color: colors.textMuted }]}>
+              {weekTotal} tâche{weekTotal !== 1 ? 's' : ''} cette semaine
+            </Text>
+          </DashboardCard>
+        );
+      }
+
       case 'budget': {
         const budgetSpent = totalSpent(budgetEntries);
         const budgetTotal = totalBudget(budgetConfig);
@@ -812,6 +846,22 @@ export default function DashboardScreen() {
                 )}
               </View>
               <Text style={{ fontSize: 24 }}>🎲</Text>
+            </TouchableOpacity>
+          </DashboardCard>
+        );
+      }
+
+      case 'nightMode': {
+        if (!hasBaby) return null;
+        return (
+          <DashboardCard key="nightMode" title="Mode nuit bébé" icon="🌙" color="#B8860B" onPressMore={() => router.push('/(tabs)/night-mode')}>
+            <TouchableOpacity
+              style={[styles.nightModeBtn, { backgroundColor: colors.cardAlt }]}
+              onPress={() => router.push('/(tabs)/night-mode')}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.nightModeBtnTitle, { color: colors.text }]}>🌙 Ouvrir le mode nuit</Text>
+              <Text style={[styles.nightModeBtnSub, { color: colors.textMuted }]}>Écran sombre pour les tétées nocturnes</Text>
             </TouchableOpacity>
           </DashboardCard>
         );
@@ -1531,6 +1581,24 @@ const styles = StyleSheet.create({
   vacProgressText: {
     fontSize: 13,
     fontWeight: '600',
+  },
+  weekStatsSummary: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  nightModeBtn: {
+    borderRadius: 12,
+    padding: 14,
+    alignItems: 'center' as const,
+  },
+  nightModeBtnTitle: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+  },
+  nightModeBtnSub: {
+    fontSize: 13,
+    marginTop: 4,
   },
   bottomPad: {
     height: 20,

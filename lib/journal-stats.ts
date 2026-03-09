@@ -86,7 +86,7 @@ export function calculerDuree(debut: string, fin: string): string | null {
 /**
  * Parse a duration string like "11h30", "2h", "45min" → total minutes.
  */
-function parseDureeToMinutes(s: string): number {
+export function parseDureeToMinutes(s: string): number {
   if (!s) return 0;
   const clean = s.trim();
 
@@ -102,7 +102,7 @@ function parseDureeToMinutes(s: string): number {
 }
 
 /** Format minutes → "Xh" or "XhYY" or "Xmin" */
-function formatMinutes(totalMin: number): string {
+export function formatMinutes(totalMin: number): string {
   if (totalMin <= 0) return '';
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;

@@ -33,13 +33,14 @@ interface GridItem {
 
 export default function MoreScreen() {
   const router = useRouter();
-  const { rdvs, stock, gamiData, budgetEntries, budgetConfig, activeProfile } = useVault();
+  const { rdvs, stock, gamiData, budgetEntries, budgetConfig, activeProfile, profiles } = useVault();
   const { colors } = useThemeColors();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
 
   const items: GridItem[] = useMemo(() => {
     const upcomingRdvs = rdvs.filter((r) => isRdvUpcoming(r)).length;
 
+    const hasBaby = profiles.some((p) => p.ageCategory === 'bebe' && p.role === 'enfant');
     const lowStock = stock.filter((s) => s.quantite <= s.seuil).length;
 
     const lootBoxes = gamiData?.profiles
@@ -85,6 +86,13 @@ export default function MoreScreen() {
         color: colors.error,
         category: 'quotidien' as const,
       },
+      ...(hasBaby ? [{
+        emoji: '🌙',
+        label: 'Mode nuit',
+        route: '/(tabs)/night-mode',
+        color: '#B8860B', // NightColors.accentBright
+        category: 'quotidien' as const,
+      }] : []),
       // Famille
       {
         emoji: '🎁',
@@ -102,6 +110,13 @@ export default function MoreScreen() {
         color: '#059669',
         category: 'famille' as const,
       },
+      {
+        emoji: '📊',
+        label: 'Statistiques',
+        route: '/(tabs)/stats',
+        color: colors.info,
+        category: 'famille' as const,
+      },
       // Système
       {
         emoji: '⚙️',
@@ -111,7 +126,7 @@ export default function MoreScreen() {
         category: 'systeme' as const,
       },
     ];
-  }, [rdvs, stock, gamiData, budgetEntries, budgetConfig, colors]);
+  }, [rdvs, stock, gamiData, budgetEntries, budgetConfig, colors, profiles]);
 
   const visibleItems = isChildMode ? items.filter((i) => i.label !== 'Budget') : items;
 

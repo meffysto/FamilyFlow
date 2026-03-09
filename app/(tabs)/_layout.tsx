@@ -63,6 +63,8 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
 
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
 
+  const hasBaby = profiles.some((p) => p.ageCategory === 'bebe' && p.role === 'enfant');
+
   const fabActions: FABAction[] = isChildMode
     ? [
         { id: 'task', emoji: '\u{1F4CB}', label: 'Tâche', onPress: () => router.push('/tasks?addNew=1') },
@@ -72,6 +74,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
         { id: 'rdv', emoji: '\u{1F4C5}', label: 'RDV', onPress: () => router.push('/rdv?addNew=1') },
         { id: 'journal', emoji: '\u{1F4D6}', label: 'Journal', onPress: () => router.push(`/journal?enfant=${lastEnfant}`) },
         { id: 'photo', emoji: '\u{1F4F8}', label: 'Photo', onPress: () => router.push('/photos?addNew=1') },
+        ...(hasBaby ? [{ id: 'night', emoji: '\u{1F319}', label: 'Nuit bébé', onPress: () => router.push('/(tabs)/night-mode') }] : []),
       ];
 
   return (
@@ -141,6 +144,8 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
         <Tabs.Screen name="budget" options={{ href: null }} />
         <Tabs.Screen name="routines" options={{ href: null }} />
         <Tabs.Screen name="health" options={{ href: null }} />
+        <Tabs.Screen name="stats" options={{ href: null }} />
+        <Tabs.Screen name="night-mode" options={{ href: null }} />
       </Tabs>
 
       {showFAB && <FAB actions={fabActions} />}
