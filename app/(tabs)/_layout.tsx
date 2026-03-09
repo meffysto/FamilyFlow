@@ -56,11 +56,23 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
   const activeTab = segments[segments.length - 1];
   const showFAB = !activeTab || activeTab === '(tabs)' || (activeTab as string) === 'index';
 
-  const fabActions: FABAction[] = [
-    { id: 'task', emoji: '\u{1F4CB}', label: 'T\u00E2che', onPress: () => router.push('/tasks?addNew=1') },
-    { id: 'rdv', emoji: '\u{1F4C5}', label: 'RDV', onPress: () => router.push('/rdv?addNew=1') },
-    { id: 'photo', emoji: '\u{1F4F8}', label: 'Photo', onPress: () => router.push('/photos?addNew=1') },
-  ];
+  // Dernier enfant pour le journal : profil actif si enfant, sinon premier enfant
+  const lastEnfant = activeProfile?.role === 'enfant'
+    ? activeProfile.id
+    : profiles.find((p) => p.role === 'enfant')?.id ?? '';
+
+  const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
+
+  const fabActions: FABAction[] = isChildMode
+    ? [
+        { id: 'task', emoji: '\u{1F4CB}', label: 'Tâche', onPress: () => router.push('/tasks?addNew=1') },
+      ]
+    : [
+        { id: 'task', emoji: '\u{1F4CB}', label: 'Tâche', onPress: () => router.push('/tasks?addNew=1') },
+        { id: 'rdv', emoji: '\u{1F4C5}', label: 'RDV', onPress: () => router.push('/rdv?addNew=1') },
+        { id: 'journal', emoji: '\u{1F4D6}', label: 'Journal', onPress: () => router.push(`/journal?enfant=${lastEnfant}`) },
+        { id: 'photo', emoji: '\u{1F4F8}', label: 'Photo', onPress: () => router.push('/photos?addNew=1') },
+      ];
 
   return (
     <View style={{ flex: 1 }}>

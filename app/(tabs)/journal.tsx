@@ -21,6 +21,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocalSearchParams } from 'expo-router';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useVault } from '../../contexts/VaultContext';
@@ -160,6 +161,7 @@ function typeFromHeading(heading: string): EntryType | null {
 export default function JournalScreen() {
   const { vault, profiles, activeProfile } = useVault();
   const { primary, tint, colors } = useThemeColors();
+  const { enfant: enfantParam } = useLocalSearchParams<{ enfant?: string }>();
 
   const enfants = useMemo(
     () => profiles.filter((p) => p.role === 'enfant'),
@@ -169,8 +171,11 @@ export default function JournalScreen() {
   const isAdultMode = activeProfile?.role === 'adulte' || activeProfile?.role === 'ado';
 
   // Tab can be 'adulte' (personal journal) or an enfant ID
+  // Si un param enfant est passé, l'utiliser comme tab initial
   const [selectedTab, setSelectedTab] = useState<string>(
-    isAdultMode ? 'adulte' : (enfants[0]?.id ?? '')
+    enfantParam && enfants.some((e) => e.id === enfantParam)
+      ? enfantParam
+      : isAdultMode ? 'adulte' : (enfants[0]?.id ?? '')
   );
   const isViewingAdultTab = selectedTab === 'adulte';
   const selectedEnfant = useMemo(
