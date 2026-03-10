@@ -157,7 +157,6 @@ export default function DashboardScreen() {
     addCourseItem,
     mergeCourseIngredients,
     removeCourseItem,
-    restockAndRemoveCourse,
     clearCompletedCourses,
     refresh,
     vacationTasks,
@@ -740,7 +739,11 @@ export default function DashboardScreen() {
                     const stockMatch = stock.find((s) => itemTextLower.includes(s.produit.toLowerCase()));
                     const addQty = stockMatch?.qteAchat ?? 1;
                     const prevQty = stockMatch?.quantite ?? 0;
-                    await restockAndRemoveCourse(item.lineIndex, stockMatch?.lineIndex, stockMatch ? prevQty + addQty : undefined);
+                    await removeCourseItem(item.lineIndex);
+                    if (stockMatch) {
+                      await updateStockQuantity(stockMatch.lineIndex, prevQty + addQty);
+                    }
+
                     const msg = stockMatch ? `${stockMatch.produit} restocké (+${addQty})` : `${item.text} retiré`;
                     showToast(msg, 'success', {
                       label: 'Annuler',
@@ -927,7 +930,7 @@ export default function DashboardScreen() {
                   </View>
                   <View style={styles.stockBtnGroup}>
                     {isLow && (
-                      <TouchableOpacity style={[styles.stockCartBtn, { backgroundColor: colors.warningBg, borderColor: colors.warning }]} onPress={async () => { const n = item.detail && !/^\d+$/.test(item.detail.trim()) ? `${item.produit} (${item.detail})` : item.produit; await addCourseItem(n, 'Produits bébé'); Alert.alert('Ajouté !', `${n} ajouté aux courses`); }} activeOpacity={0.6} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
+                      <TouchableOpacity style={[styles.stockCartBtn, { backgroundColor: colors.warningBg, borderColor: colors.warning }]} onPress={async () => { const detail = item.detail && !/^\d+$/.test(item.detail.trim()) ? ` (${item.detail})` : ''; const qty = item.qteAchat ? ` x${item.qteAchat}` : ''; const n = `${item.produit}${detail}${qty}`; await addCourseItem(n, item.section ?? 'Produits bébé'); Alert.alert('Ajouté !', `${n} ajouté aux courses`); }} activeOpacity={0.6} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
                         <Text style={styles.stockCartBtnText}>🛒</Text>
                       </TouchableOpacity>
                     )}

@@ -1273,14 +1273,15 @@ export function parseStock(content: string): StockItem[] {
     // Skip rows where quantite or seuil is not a number
     if (isNaN(quantite) || isNaN(seuil)) continue;
 
-    const qteAchat = cells[4] ? parseInt(cells[4], 10) : undefined;
+    const rawQteAchat = cells[4] ? parseInt(cells[4], 10) : undefined;
+    const qteAchat = rawQteAchat && !isNaN(rawQteAchat) ? rawQteAchat : 1;
 
     items.push({
       produit,
       detail: detail || undefined,
       quantite,
       seuil,
-      qteAchat: isNaN(qteAchat as number) ? undefined : qteAchat,
+      qteAchat,
       section: currentSection,
       lineIndex: i,
     });

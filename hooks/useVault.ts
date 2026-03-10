@@ -128,7 +128,6 @@ export interface VaultState {
   mergeCourseIngredients: (items: { text: string; name: string; quantity: number | null; section: string }[]) => Promise<{ added: number; merged: number }>;
   toggleCourseItem: (item: CourseItem, completed: boolean) => Promise<void>;
   removeCourseItem: (lineIndex: number) => Promise<void>;
-  restockAndRemoveCourse: (courseLineIndex: number, stockLineIndex?: number, newStockQty?: number) => Promise<void>;
   clearCompletedCourses: () => Promise<void>;
   memories: Memory[];
   addMemory: (enfant: string, memory: Omit<Memory, 'enfant' | 'enfantId'>) => Promise<void>;
@@ -1024,7 +1023,7 @@ export function useVaultInternal(): VaultState {
         detail: cells[1] || undefined,
         quantite: parseInt(cells[2], 10) || 0,
         seuil: parseInt(cells[3], 10) || 0,
-        qteAchat: cells[4] ? parseInt(cells[4], 10) || undefined : undefined,
+        qteAchat: cells[4] ? parseInt(cells[4], 10) || 1 : 1,
       };
 
       // Apply updates
@@ -1173,52 +1172,14 @@ export function useVaultInternal(): VaultState {
       if (lineIndex >= 0 && lineIndex < lines.length) {
         lines.splice(lineIndex, 1);
         await vaultRef.current.writeFile(COURSES_FILE, lines.join('\n'));
-        await loadVaultData(vaultRef.current);
+        // Update local courses state (sans loadVaultData qui écraserait le stock)
+        const updated = parseCourses(lines.join('\n'), COURSES_FILE);
+        setCourses(updated);
       }
     } catch (e) {
       throw new Error(`removeCourseItem: ${e}`);
     }
-  }, [loadVaultData]);
-
-  /** Restock un produit ET supprime l'article de courses en une seule opération atomique.
-   *  Écrit les deux fichiers AVANT de recharger le vault → pas de race condition. */
-  const restockAndRemoveCourse = useCallback(async (
-    courseLineIndex: number,
-    stockLineIndex?: number,
-    newStockQty?: number,
-  ) => {
-    if (!vaultRef.current) return;
-    try {
-      // 1. Mettre à jour le stock si match trouvé
-      if (stockLineIndex !== undefined && newStockQty !== undefined) {
-        const stockContent = await vaultRef.current.readFile(STOCK_FILE);
-        const stockLines = stockContent.split('\n');
-        if (stockLineIndex >= 0 && stockLineIndex < stockLines.length) {
-          const cells = stockLines[stockLineIndex].split('|');
-          if (cells.length >= 5) {
-            const qty = Math.max(0, newStockQty);
-            cells[3] = cells[3].replace(/\d+/, String(qty));
-            if (!/\d/.test(cells[3])) cells[3] = ` ${qty} `;
-          }
-          stockLines[stockLineIndex] = cells.join('|');
-          await vaultRef.current.writeFile(STOCK_FILE, stockLines.join('\n'));
-        }
-      }
-
-      // 2. Supprimer l'article des courses
-      const courseContent = await vaultRef.current.readFile(COURSES_FILE);
-      const courseLines = courseContent.split('\n');
-      if (courseLineIndex >= 0 && courseLineIndex < courseLines.length) {
-        courseLines.splice(courseLineIndex, 1);
-        await vaultRef.current.writeFile(COURSES_FILE, courseLines.join('\n'));
-      }
-
-      // 3. Un seul loadVaultData — lit les deux fichiers déjà mis à jour
-      await loadVaultData(vaultRef.current);
-    } catch (e) {
-      throw new Error(`restockAndRemoveCourse: ${e}`);
-    }
-  }, [loadVaultData]);
+  }, []);
 
   /** Batch merge ingredients into the shopping list (single file write) */
   const mergeCourseIngredients = useCallback(async (items: { text: string; name: string; quantity: number | null; section: string }[]): Promise<{ added: number; merged: number }> => {
@@ -1962,7 +1923,6 @@ export function useVaultInternal(): VaultState {
     mergeCourseIngredients,
     toggleCourseItem,
     removeCourseItem,
-    restockAndRemoveCourse,
     clearCompletedCourses,
     memories,
     addMemory,

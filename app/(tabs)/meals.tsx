@@ -53,7 +53,7 @@ export default function MealsScreen() {
   const {
     meals, updateMeal,
     courses, vault,
-    addCourseItem, removeCourseItem, restockAndRemoveCourse, mergeCourseIngredients,
+    addCourseItem, removeCourseItem, mergeCourseIngredients,
     stock, updateStockQuantity,
     recipes, deleteRecipe,
     scanAllCookFiles, moveCookToRecipes,
@@ -284,7 +284,7 @@ export default function MealsScreen() {
         return;
       }
 
-      // Cocher → restocker + supprimer (atomique, un seul loadVaultData)
+      // Cocher → supprimer + éventuellement restocker
       const itemTextLower = item.text.toLowerCase();
       const stockMatch = stock.find((s) =>
         itemTextLower.includes(s.produit.toLowerCase()),
@@ -292,13 +292,10 @@ export default function MealsScreen() {
       const addQty = stockMatch?.qteAchat ?? 1;
       const prevQty = stockMatch?.quantite ?? 0;
 
-      await restockAndRemoveCourse(
-        item.lineIndex,
-        stockMatch?.lineIndex,
-        stockMatch ? prevQty + addQty : undefined,
-      );
-
-      // 3. Toast avec undo
+      await removeCourseItem(item.lineIndex);
+      if (stockMatch) {
+        await updateStockQuantity(stockMatch.lineIndex, prevQty + addQty);
+      }
       const msg = stockMatch
         ? `${stockMatch.produit} restocké (+${addQty})`
         : `${item.text} retiré`;
@@ -315,7 +312,7 @@ export default function MealsScreen() {
     } catch (e) {
       Alert.alert('Erreur', String(e));
     }
-  }, [vault, refresh, stock, updateStockQuantity, restockAndRemoveCourse, addCourseItem, showToast]);
+  }, [vault, refresh, stock, updateStockQuantity, removeCourseItem, addCourseItem, showToast]);
 
   const handleCourseRemove = useCallback((item: CourseItem) => {
     Alert.alert(
