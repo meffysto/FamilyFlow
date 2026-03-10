@@ -356,6 +356,52 @@ export async function downloadCommunityRecipe(id: number): Promise<string> {
   return content;
 }
 
+const TRANSLATE_SYSTEM_PROMPT = `Tu traduis des recettes au format Cooklang (.cook) de l'anglais vers le français.
+
+Règles :
+- Traduis le texte (titres, étapes, noms d'ingrédients, metadata) en français naturel
+- Conserve EXACTEMENT la syntaxe Cooklang : @ingredient{qty%unit}, ~equipment{}, #timer{duration%unit}, >> key: value
+- Ne change PAS les quantités ni les unités
+- Garde les lignes vides entre étapes
+- Réponds UNIQUEMENT avec le fichier .cook traduit, sans explication`;
+
+/**
+ * Traduit un fichier .cook anglais en français via Haiku (très bon marché).
+ * Retourne le contenu original si pas de config IA ou en cas d'erreur.
+ */
+export async function translateCookToFrench(
+  cookContent: string,
+  aiConfig?: AIConfig | null,
+): Promise<string> {
+  if (!aiConfig) return cookContent;
+
+  try {
+    const response = await fetch(AI_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': aiConfig.apiKey,
+        'anthropic-version': AI_API_VERSION,
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2048,
+        system: TRANSLATE_SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: cookContent }],
+      }),
+    });
+
+    if (!response.ok) return cookContent;
+
+    const data = await response.json();
+    const translated = data?.content?.[0]?.text?.trim();
+    return translated && translated.length > 10 ? translated : cookContent;
+  } catch {
+    return cookContent;
+  }
+}
+
 // ─── Text-to-recipe local fallback (sans IA) ─────────────────────────────
 
 /**

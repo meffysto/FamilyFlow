@@ -157,6 +157,7 @@ export default function DashboardScreen() {
     addCourseItem,
     mergeCourseIngredients,
     removeCourseItem,
+    restockAndRemoveCourse,
     clearCompletedCourses,
     refresh,
     vacationTasks,
@@ -739,11 +740,7 @@ export default function DashboardScreen() {
                     const stockMatch = stock.find((s) => itemTextLower.includes(s.produit.toLowerCase()));
                     const addQty = stockMatch?.qteAchat ?? 1;
                     const prevQty = stockMatch?.quantite ?? 0;
-                    // Restocker AVANT de supprimer des courses (removeCourseItem déclenche loadVaultData qui écraserait le stock)
-                    if (stockMatch) {
-                      await updateStockQuantity(stockMatch.lineIndex, prevQty + addQty);
-                    }
-                    await removeCourseItem(item.lineIndex);
+                    await restockAndRemoveCourse(item.lineIndex, stockMatch?.lineIndex, stockMatch ? prevQty + addQty : undefined);
                     const msg = stockMatch ? `${stockMatch.produit} restocké (+${addQty})` : `${item.text} retiré`;
                     showToast(msg, 'success', {
                       label: 'Annuler',

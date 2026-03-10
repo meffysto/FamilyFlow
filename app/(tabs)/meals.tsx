@@ -32,7 +32,7 @@ import { MealItem, CourseItem, Recipe } from '../../lib/types';
 import { formatIngredient, aggregateIngredients, categorizeIngredient, convertCookToMetric, type AppIngredient } from '../../lib/cooklang';
 import RecipeCard from '../../components/RecipeCard';
 import RecipeViewer from '../../components/RecipeViewer';
-import { importRecipeFromUrl, convertTextWithAI, parseTextToRecipe, searchCommunityRecipes, downloadCommunityRecipe, type ImportResult, type ImportedRecipe, type CookImportResult, type CommunityRecipe } from '../../lib/recipe-import';
+import { importRecipeFromUrl, convertTextWithAI, parseTextToRecipe, searchCommunityRecipes, downloadCommunityRecipe, translateCookToFrench, type ImportResult, type ImportedRecipe, type CookImportResult, type CommunityRecipe } from '../../lib/recipe-import';
 import { generateCookFile } from '../../lib/cooklang';
 import { useAI } from '../../contexts/AIContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -53,7 +53,7 @@ export default function MealsScreen() {
   const {
     meals, updateMeal,
     courses, vault,
-    addCourseItem, removeCourseItem, mergeCourseIngredients,
+    addCourseItem, removeCourseItem, restockAndRemoveCourse, mergeCourseIngredients,
     stock, updateStockQuantity,
     recipes, deleteRecipe,
     scanAllCookFiles, moveCookToRecipes,
@@ -284,7 +284,7 @@ export default function MealsScreen() {
         return;
       }
 
-      // Cocher → restocker + supprimer
+      // Cocher → restocker + supprimer (atomique, un seul loadVaultData)
       const itemTextLower = item.text.toLowerCase();
       const stockMatch = stock.find((s) =>
         itemTextLower.includes(s.produit.toLowerCase()),
@@ -292,13 +292,11 @@ export default function MealsScreen() {
       const addQty = stockMatch?.qteAchat ?? 1;
       const prevQty = stockMatch?.quantite ?? 0;
 
-      // 1. Restocker AVANT de supprimer (removeCourseItem déclenche loadVaultData qui écraserait le stock)
-      if (stockMatch) {
-        await updateStockQuantity(stockMatch.lineIndex, prevQty + addQty);
-      }
-
-      // 2. Supprimer des courses (loadVaultData relira le stock déjà mis à jour)
-      await removeCourseItem(item.lineIndex);
+      await restockAndRemoveCourse(
+        item.lineIndex,
+        stockMatch?.lineIndex,
+        stockMatch ? prevQty + addQty : undefined,
+      );
 
       // 3. Toast avec undo
       const msg = stockMatch
@@ -317,7 +315,7 @@ export default function MealsScreen() {
     } catch (e) {
       Alert.alert('Erreur', String(e));
     }
-  }, [vault, refresh, stock, updateStockQuantity, removeCourseItem, addCourseItem, showToast]);
+  }, [vault, refresh, stock, updateStockQuantity, restockAndRemoveCourse, addCourseItem, showToast]);
 
   const handleCourseRemove = useCallback((item: CourseItem) => {
     Alert.alert(
@@ -615,14 +613,15 @@ export default function MealsScreen() {
     setExploreDownloading(recipe.id);
     try {
       const raw = await downloadCommunityRecipe(recipe.id);
-      const content = convertCookToMetric(raw);
-      setExplorePreview({ id: recipe.id, title: recipe.title, content });
+      const metric = convertCookToMetric(raw);
+      const translated = await translateCookToFrench(metric, aiConfig);
+      setExplorePreview({ id: recipe.id, title: recipe.title, content: translated });
     } catch (e) {
       Alert.alert('Erreur', String(e instanceof Error ? e.message : e));
     } finally {
       setExploreDownloading(null);
     }
-  }, []);
+  }, [aiConfig]);
 
   const handleExploreSave = useCallback(async () => {
     if (!explorePreview || !vault) return;
@@ -1641,7 +1640,7 @@ export default function MealsScreen() {
                 </TouchableOpacity>
               </View>
               <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 6 }}>
-                Recherche en anglais sur cooklang.org · {exploreResults.length > 0 ? `${exploreResults.length} résultat${exploreResults.length > 1 ? 's' : ''}` : '4295+ recettes disponibles'}
+                Recherche en anglais sur cooklang.org{aiConfig ? ' · traduction auto FR' : ''} · {exploreResults.length > 0 ? `${exploreResults.length} résultat${exploreResults.length > 1 ? 's' : ''}` : '4295+ recettes disponibles'}
               </Text>
             </View>
 
