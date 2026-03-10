@@ -38,6 +38,7 @@ import { Routine, RoutineProgress } from '../../lib/types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { parseRoutines } from '../../lib/parser';
+import { RoutineEditor } from '../../components/RoutineEditor';
 
 const PROGRESS_KEY_PREFIX = 'routine_progress_';
 const DEFAULT_ROUTINES_TEMPLATE = `# Routines
@@ -330,13 +331,15 @@ function RoutinePlayer({
 // ─── Écran principal ──────────────────────────────────────────────────────────
 
 export default function RoutinesScreen() {
-  const { routines, activeProfile, vault, notifPrefs, refresh } = useVault();
+  const { routines, saveRoutines, activeProfile, vault, notifPrefs, refresh } = useVault();
   const { completeTask } = useGamification({ vault, notifPrefs });
   const { primary, colors } = useThemeColors();
   const { showToast } = useToast();
 
   const [dayProgress, setDayProgress] = useState<DayProgress>({});
   const [playerRoutine, setPlayerRoutine] = useState<Routine | null>(null);
+  const [editorRoutine, setEditorRoutine] = useState<Routine | null | undefined>(undefined);
+  // undefined = fermé, null = nouvelle routine, Routine = édition
 
   // Charger la progression du jour
   useEffect(() => {
@@ -395,6 +398,28 @@ export default function RoutinesScreen() {
     }
   }, [activeProfile, completeTask, refresh, showToast]);
 
+  const handleEditorSave = useCallback(async (edited: Routine) => {
+    let updated: Routine[];
+    if (editorRoutine === null) {
+      // Nouvelle routine
+      updated = [...routines, edited];
+    } else {
+      // Modification
+      updated = routines.map(r => r.id === editorRoutine?.id ? edited : r);
+    }
+    await saveRoutines(updated);
+    setEditorRoutine(undefined);
+    showToast(editorRoutine === null ? 'Routine créée !' : 'Routine modifiée !', 'success');
+  }, [editorRoutine, routines, saveRoutines, showToast]);
+
+  const handleEditorDelete = useCallback(async () => {
+    if (!editorRoutine) return;
+    const updated = routines.filter(r => r.id !== editorRoutine.id);
+    await saveRoutines(updated);
+    setEditorRoutine(undefined);
+    showToast('Routine supprimée', 'success');
+  }, [editorRoutine, routines, saveRoutines, showToast]);
+
   const handleResetRoutine = useCallback(async (routineId: string) => {
     Alert.alert(
       'Réinitialiser',
@@ -423,8 +448,19 @@ export default function RoutinesScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <Text style={[styles.title, { color: colors.text }]}>🔄 Routines</Text>
-        <Text style={[styles.subtitle, { color: colors.textMuted }]}>{todayLabel}</Text>
+        <View>
+          <Text style={[styles.title, { color: colors.text }]}>🔄 Routines</Text>
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>{todayLabel}</Text>
+        </View>
+        <TouchableOpacity
+          style={[styles.addBtn, { backgroundColor: primary }]}
+          onPress={() => setEditorRoutine(null)}
+          activeOpacity={0.7}
+          accessibilityLabel="Ajouter une routine"
+          accessibilityRole="button"
+        >
+          <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
@@ -466,6 +502,14 @@ export default function RoutinesScreen() {
                           ` · ~${routine.steps.reduce((sum, s) => sum + (s.durationMinutes || 0), 0)}min`}
                       </Text>
                     </View>
+                    <TouchableOpacity
+                      style={[styles.editBtn, { backgroundColor: colors.cardAlt }]}
+                      onPress={() => setEditorRoutine(routine)}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      accessibilityLabel={`Modifier ${routine.label}`}
+                    >
+                      <Text style={[styles.editBtnText, { color: colors.textMuted }]}>✏️</Text>
+                    </TouchableOpacity>
                     {isComplete ? (
                       <View style={[styles.doneBadge, { backgroundColor: colors.successBg }]}>
                         <Text style={[styles.doneBadgeText, { color: colors.successText }]}>✅ Fait</Text>
@@ -541,7 +585,7 @@ export default function RoutinesScreen() {
         <View style={[styles.infoCard, { backgroundColor: colors.cardAlt }]}>
           <Text style={[styles.infoText, { color: colors.textMuted }]}>
             💡 Appui long sur une routine pour la réinitialiser.
-            Modifiez les routines dans le fichier Vault : 02 - Maison/Routines.md
+            Touchez ✏️ pour modifier ou + pour en ajouter une nouvelle.
           </Text>
         </View>
       </ScrollView>
@@ -563,6 +607,23 @@ export default function RoutinesScreen() {
           />
         )}
       </Modal>
+
+      {/* Editor Modal */}
+      <Modal
+        visible={editorRoutine !== undefined}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setEditorRoutine(undefined)}
+      >
+        {editorRoutine !== undefined && (
+          <RoutineEditor
+            routine={editorRoutine || undefined}
+            onSave={handleEditorSave}
+            onDelete={editorRoutine ? handleEditorDelete : undefined}
+            onClose={() => setEditorRoutine(undefined)}
+          />
+        )}
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -572,6 +633,9 @@ export default function RoutinesScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: Spacing['3xl'],
     paddingVertical: Spacing.xl,
     borderBottomWidth: 1,
@@ -641,6 +705,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   startBtnText: { fontSize: FontSize.body, fontWeight: FontWeight.bold },
+
+  // Bouton ajouter (header)
+  addBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addBtnText: { fontSize: 22, fontWeight: FontWeight.bold, marginTop: -1 },
+
+  // Bouton modifier (carte)
+  editBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.sm,
+  },
+  editBtnText: { fontSize: 16 },
 
   // Empty state
   emptyState: { alignItems: 'center', paddingVertical: 60, gap: Spacing.lg },

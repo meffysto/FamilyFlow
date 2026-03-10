@@ -1,0 +1,330 @@
+/**
+ * RoutineEditor.tsx — Modal d'édition / création de routine
+ *
+ * Permet d'ajouter, modifier et supprimer des routines et leurs étapes.
+ */
+
+import React, { useState, useCallback } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { useThemeColors } from '../contexts/ThemeContext';
+import { Spacing, Radius } from '../constants/spacing';
+import { FontSize, FontWeight } from '../constants/typography';
+import { ModalHeader } from './ui';
+import { Routine, RoutineStep } from '../lib/types';
+
+interface RoutineEditorProps {
+  routine?: Routine; // undefined = nouvelle routine
+  onSave: (routine: Routine) => void;
+  onDelete?: () => void;
+  onClose: () => void;
+}
+
+const EMOJI_SUGGESTIONS = ['☀️', '🌙', '📚', '🏃', '🧹', '🍽️', '🎵', '🛁', '💪', '🧘', '🎒', '⭐'];
+
+export function RoutineEditor({ routine, onSave, onDelete, onClose }: RoutineEditorProps) {
+  const { primary, colors } = useThemeColors();
+  const isNew = !routine;
+
+  const [emoji, setEmoji] = useState(routine?.emoji || '📋');
+  const [label, setLabel] = useState(routine?.label || '');
+  const [steps, setSteps] = useState<RoutineStep[]>(
+    routine?.steps.length ? [...routine.steps] : [{ text: '' }]
+  );
+
+  const canSave = label.trim().length > 0 && steps.some(s => s.text.trim().length > 0);
+
+  const handleSave = useCallback(() => {
+    const cleanSteps = steps.filter(s => s.text.trim().length > 0).map(s => ({
+      text: s.text.trim(),
+      durationMinutes: s.durationMinutes,
+    }));
+
+    if (!label.trim() || cleanSteps.length === 0) return;
+
+    const id = routine?.id || label.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+
+    onSave({ id, label: label.trim(), emoji, steps: cleanSteps });
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  }, [label, emoji, steps, routine, onSave]);
+
+  const handleDelete = useCallback(() => {
+    Alert.alert(
+      'Supprimer la routine',
+      `Supprimer « ${routine?.label} » ? Cette action est irréversible.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Supprimer', style: 'destructive', onPress: onDelete },
+      ]
+    );
+  }, [routine, onDelete]);
+
+  const addStep = useCallback(() => {
+    setSteps(prev => [...prev, { text: '' }]);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }, []);
+
+  const updateStepText = useCallback((index: number, text: string) => {
+    setSteps(prev => prev.map((s, i) => i === index ? { ...s, text } : s));
+  }, []);
+
+  const updateStepDuration = useCallback((index: number, value: string) => {
+    const num = parseInt(value, 10);
+    setSteps(prev => prev.map((s, i) =>
+      i === index ? { ...s, durationMinutes: isNaN(num) || num <= 0 ? undefined : num } : s
+    ));
+  }, []);
+
+  const removeStep = useCallback((index: number) => {
+    setSteps(prev => {
+      if (prev.length <= 1) return prev;
+      return prev.filter((_, i) => i !== index);
+    });
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }, []);
+
+  const moveStep = useCallback((index: number, direction: -1 | 1) => {
+    setSteps(prev => {
+      const newIndex = index + direction;
+      if (newIndex < 0 || newIndex >= prev.length) return prev;
+      const arr = [...prev];
+      [arr[index], arr[newIndex]] = [arr[newIndex], arr[index]];
+      return arr;
+    });
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }, []);
+
+  return (
+    <KeyboardAvoidingView
+      style={[st.container, { backgroundColor: colors.bg }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ModalHeader
+        title={isNew ? 'Nouvelle routine' : 'Modifier la routine'}
+        onClose={onClose}
+        rightLabel="Enregistrer"
+        onRight={handleSave}
+        rightDisabled={!canSave}
+      />
+
+      <ScrollView
+        style={st.scroll}
+        contentContainerStyle={st.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Emoji */}
+        <Text style={[st.sectionLabel, { color: colors.textMuted }]}>Icône</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={st.emojiRow}>
+          {EMOJI_SUGGESTIONS.map(e => (
+            <TouchableOpacity
+              key={e}
+              style={[
+                st.emojiBtn,
+                { backgroundColor: emoji === e ? primary + '20' : colors.cardAlt, borderColor: emoji === e ? primary : 'transparent' },
+              ]}
+              onPress={() => { setEmoji(e); Haptics.selectionAsync(); }}
+              activeOpacity={0.7}
+            >
+              <Text style={st.emojiBtnText}>{e}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {/* Nom */}
+        <Text style={[st.sectionLabel, { color: colors.textMuted }]}>Nom de la routine</Text>
+        <TextInput
+          style={[st.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
+          value={label}
+          onChangeText={setLabel}
+          placeholder="Ex : Matin, Soir, Après l'école…"
+          placeholderTextColor={colors.textFaint}
+          autoFocus={isNew}
+        />
+
+        {/* Étapes */}
+        <Text style={[st.sectionLabel, { color: colors.textMuted }]}>Étapes</Text>
+        {steps.map((step, i) => (
+          <View key={i} style={[st.stepCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={st.stepHeader}>
+              <Text style={[st.stepNum, { color: primary }]}>{i + 1}</Text>
+              <View style={st.stepActions}>
+                {i > 0 && (
+                  <TouchableOpacity onPress={() => moveStep(i, -1)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <Text style={[st.stepActionText, { color: colors.textMuted }]}>▲</Text>
+                  </TouchableOpacity>
+                )}
+                {i < steps.length - 1 && (
+                  <TouchableOpacity onPress={() => moveStep(i, 1)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <Text style={[st.stepActionText, { color: colors.textMuted }]}>▼</Text>
+                  </TouchableOpacity>
+                )}
+                {steps.length > 1 && (
+                  <TouchableOpacity onPress={() => removeStep(i)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <Text style={[st.stepActionText, { color: colors.error }]}>✕</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+            <TextInput
+              style={[st.stepInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
+              value={step.text}
+              onChangeText={(t) => updateStepText(i, t)}
+              placeholder={`Étape ${i + 1}…`}
+              placeholderTextColor={colors.textFaint}
+            />
+            <View style={st.durationRow}>
+              <Text style={[st.durationLabel, { color: colors.textSub }]}>⏱ Timer (optionnel)</Text>
+              <TextInput
+                style={[st.durationInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
+                value={step.durationMinutes ? String(step.durationMinutes) : ''}
+                onChangeText={(v) => updateStepDuration(i, v)}
+                placeholder="min"
+                placeholderTextColor={colors.textFaint}
+                keyboardType="number-pad"
+                maxLength={3}
+              />
+            </View>
+          </View>
+        ))}
+
+        <TouchableOpacity
+          style={[st.addStepBtn, { backgroundColor: primary + '15', borderColor: primary + '40' }]}
+          onPress={addStep}
+          activeOpacity={0.7}
+        >
+          <Text style={[st.addStepText, { color: primary }]}>+ Ajouter une étape</Text>
+        </TouchableOpacity>
+
+        {/* Supprimer */}
+        {!isNew && onDelete && (
+          <TouchableOpacity
+            style={[st.deleteBtn, { backgroundColor: colors.errorBg }]}
+            onPress={handleDelete}
+            activeOpacity={0.7}
+          >
+            <Text style={[st.deleteBtnText, { color: colors.error }]}>Supprimer cette routine</Text>
+          </TouchableOpacity>
+        )}
+
+        <View style={{ height: 40 }} />
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
+
+const st = StyleSheet.create({
+  container: { flex: 1 },
+  scroll: { flex: 1 },
+  scrollContent: { padding: Spacing['2xl'], gap: Spacing.lg },
+
+  sectionLabel: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginTop: Spacing.md,
+  },
+
+  emojiRow: { flexDirection: 'row' },
+  emojiBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.sm,
+    borderWidth: 2,
+  },
+  emojiBtnText: { fontSize: 24 },
+
+  input: {
+    fontSize: FontSize.body,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.lg,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+  },
+
+  stepCard: {
+    borderRadius: Radius.lg,
+    padding: Spacing.xl,
+    borderWidth: 1,
+    gap: Spacing.md,
+  },
+  stepHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  stepNum: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.heavy,
+  },
+  stepActions: {
+    flexDirection: 'row',
+    gap: Spacing.lg,
+  },
+  stepActionText: {
+    fontSize: FontSize.heading,
+    fontWeight: FontWeight.bold,
+  },
+  stepInput: {
+    fontSize: FontSize.body,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+  },
+  durationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  durationLabel: {
+    fontSize: FontSize.sm,
+    flex: 1,
+  },
+  durationInput: {
+    width: 70,
+    fontSize: FontSize.body,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    textAlign: 'center',
+  },
+
+  addStepBtn: {
+    paddingVertical: Spacing.xl,
+    borderRadius: Radius.lg,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderStyle: 'dashed',
+  },
+  addStepText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+  },
+
+  deleteBtn: {
+    paddingVertical: Spacing.xl,
+    borderRadius: Radius.lg,
+    alignItems: 'center',
+    marginTop: Spacing.xl,
+  },
+  deleteBtnText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+  },
+});

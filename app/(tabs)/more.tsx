@@ -77,7 +77,7 @@ export default function MoreScreen() {
       },
       {
         emoji: '📦',
-        label: 'Stock bébé',
+        label: 'Stocks & Fournitures',
         route: '/(tabs)/stock',
         badge: lowStock || undefined,
         color: colors.warning,
