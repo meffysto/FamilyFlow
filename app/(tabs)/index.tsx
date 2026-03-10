@@ -62,6 +62,8 @@ import { getTheme } from '../../constants/themes';
 import { categorizeIngredient } from '../../lib/cooklang';
 import { generateInsights, type InsightInput } from '../../lib/insights';
 import { MarkdownText } from '../../components/ui/MarkdownText';
+import { Spacing, Radius } from '../../constants/spacing';
+import { FontSize, FontWeight } from '../../constants/typography';
 
 /** Parse "50g beurre" or "50 g de beurre" into name/qty for merge */
 function parseCourseInput(text: string): { name: string; quantity: number | null } {
@@ -98,7 +100,7 @@ const ALL_SECTIONS: SectionPref[] = [
   { id: 'recipes',    label: 'Idée recette',             emoji: '📖', visible: false, priority: 'low' },
   { id: 'nightMode',  label: 'Mode nuit bébé',           emoji: '🌙', visible: true,  priority: 'medium' },
   { id: 'leaderboard',label: 'Classement',              emoji: '🥇', visible: false, priority: 'low' },
-  { id: 'aiAssistant',label: 'Assistant IA',             emoji: '🤖', visible: true,  priority: 'medium' },
+  // aiAssistant retiré — intégré dans la carte Suggestions
 ];
 
 /** Sections masquées pour les enfants (outils parentaux) */
@@ -510,10 +512,12 @@ export default function DashboardScreen() {
   const renderSection = (id: string): React.ReactNode => {
     switch (id) {
       case 'insights': {
-        if (insights.length === 0) return null;
+        const hasInsights = insights.length > 0;
+        const hasAI = ai.isConfigured;
+        if (!hasInsights && !hasAI) return null;
         const topInsights = insights.slice(0, 5);
         return (
-          <DashboardCard key="insights" title="Suggestions" icon="💡" count={insights.length} color={primary}>
+          <DashboardCard key="insights" title="Suggestions" icon="💡" count={hasInsights ? insights.length : undefined} color={primary}>
             {topInsights.map((insight) => {
               const priorityColor = insight.priority === 'high' ? colors.error
                 : insight.priority === 'medium' ? colors.warning
@@ -551,6 +555,58 @@ export default function DashboardScreen() {
                 </TouchableOpacity>
               );
             })}
+            {hasAI && (
+              <>
+                {hasInsights && (
+                  <View style={[styles.aiDivider, { backgroundColor: colors.separator }]} />
+                )}
+                {aiSuggestions ? (
+                  <View style={{ gap: Spacing.md }}>
+                    <MarkdownText style={{ color: colors.text }}>{aiSuggestions}</MarkdownText>
+                    <TouchableOpacity
+                      style={[styles.aiRefreshBtn, { borderColor: primary + '40' }]}
+                      onPress={async () => {
+                        setAiLoading(true);
+                        const ctx = {
+                          tasks, menageTasks, rdvs, stock, meals, courses,
+                          memories, defis, wishlistItems, recipes, profiles, activeProfile,
+                          journalStats, healthRecords,
+                        };
+                        const resp = await ai.getSuggestions(ctx);
+                        setAiSuggestions(resp.error || resp.text);
+                        setAiLoading(false);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.aiRefreshBtnText, { color: primary }]}>
+                        {aiLoading ? '...' : '🔄 Nouvelles suggestions'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={[styles.aiRefreshBtn, { borderColor: primary + '40' }]}
+                    onPress={async () => {
+                      setAiLoading(true);
+                      const ctx = {
+                        tasks, menageTasks, rdvs, stock, meals, courses,
+                        memories, defis, wishlistItems, recipes, profiles, activeProfile,
+                        journalStats, healthRecords,
+                      };
+                      const resp = await ai.getSuggestions(ctx);
+                      setAiSuggestions(resp.error || resp.text);
+                      setAiLoading(false);
+                    }}
+                    disabled={aiLoading}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.aiRefreshBtnText, { color: primary }]}>
+                      {aiLoading ? '⏳ Analyse en cours...' : '🤖 Enrichir avec l\'IA'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
           </DashboardCard>
         );
       }
@@ -1070,57 +1126,7 @@ export default function DashboardScreen() {
         );
       }
 
-      case 'aiAssistant': {
-        if (!ai.isConfigured) return null;
-        return (
-          <DashboardCard key="aiAssistant" title="Assistant IA" icon="🤖" color={primary}>
-            {aiSuggestions ? (
-              <View style={{ gap: 8 }}>
-                <MarkdownText style={{ color: colors.text }}>{aiSuggestions}</MarkdownText>
-                <TouchableOpacity
-                  style={[styles.lootCTA, { borderColor: primary }]}
-                  onPress={async () => {
-                    setAiLoading(true);
-                    const ctx = {
-                      tasks, menageTasks, rdvs, stock, meals, courses,
-                      memories, defis, wishlistItems, recipes, profiles, activeProfile,
-                      journalStats, healthRecords,
-                    };
-                    const resp = await ai.getSuggestions(ctx);
-                    setAiSuggestions(resp.error || resp.text);
-                    setAiLoading(false);
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.lootCTAText, { color: primary }]}>
-                    {aiLoading ? '...' : '🔄 Nouvelles suggestions'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity
-                style={[styles.lootCTA, { borderColor: primary }]}
-                onPress={async () => {
-                  setAiLoading(true);
-                  const ctx = {
-                    tasks, menageTasks, rdvs, stock, meals, courses,
-                    memories, defis, wishlistItems, recipes, profiles, activeProfile,
-                  };
-                  const resp = await ai.getSuggestions(ctx);
-                  setAiSuggestions(resp.error || resp.text);
-                  setAiLoading(false);
-                }}
-                disabled={aiLoading}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.lootCTAText, { color: primary }]}>
-                  {aiLoading ? '⏳ Analyse en cours...' : '🤖 Obtenir des suggestions IA'}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </DashboardCard>
-        );
-      }
+      // aiAssistant retiré — intégré dans insights ci-dessus
 
       default:
         return null;
@@ -2015,5 +2021,21 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     marginLeft: 8,
+  },
+  aiDivider: {
+    height: StyleSheet.hairlineWidth,
+    marginVertical: Spacing.xl,
+  },
+  aiRefreshBtn: {
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing['2xl'],
+    borderRadius: Radius.base,
+    borderWidth: 1,
+    alignItems: 'center' as const,
+    marginTop: Spacing.xs,
+  },
+  aiRefreshBtnText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
 });
