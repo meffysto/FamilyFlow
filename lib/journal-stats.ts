@@ -176,8 +176,8 @@ export function parseJournalStats(content: string): JournalStats {
     // Alimentation section
     if (currentSection.includes('alimentation')) {
       const [heure, type, detail] = cells;
-      // Ignorer les lignes sans heure ET sans détail (lignes template vides)
-      if (!heure && !detail) continue;
+      // Ignorer les lignes sans heure (cohérent avec couches/sommeil)
+      if (!heure) continue;
 
       const typeLower = (type || '').toLowerCase();
       if (typeLower.includes('biberon')) {
