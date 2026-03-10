@@ -77,7 +77,7 @@ export default function StockScreen() {
 
   const handleAddToCourses = (item: StockItem) => {
     const qty = item.qteAchat ? ` x${item.qteAchat}` : '';
-    const detail = item.detail ? ` (${item.detail})` : '';
+    const detail = item.detail && !/^\d+$/.test(item.detail.trim()) ? ` (${item.detail})` : '';
     addCourseItem(`${item.produit}${detail}${qty}`);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     showToast(`${item.produit} ajouté aux courses !`);

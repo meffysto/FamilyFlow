@@ -476,7 +476,7 @@ export default function DashboardScreen() {
   }, [tasks, menageTasks, courses, stock, meals, rdvs, profiles, activeProfile,
     defis, gratitudeDays, memories, vacationConfig, isVacationActive, gamiData, photoDates]);
 
-  // Tri intelligent mémorisé (évite recalcul à chaque render)
+  // Tri intelligent
   const sortedSections = useMemo(() => {
     if (!smartSort) return sectionPrefs;
     const activeSections = new Set<string>();
@@ -507,7 +507,8 @@ export default function DashboardScreen() {
   }, [smartSort, sectionPrefs, hasBaby, overdueTasks.length, isVacationActive,
     pendingMenage.length, todayMeals.length, topCourses.length, upcomingRdvs.length,
     enfants.length, stock.length, activeRewards.length, leaderboard.length,
-    weeklyStatsData.total, activeProfile, recipes.length, customNotifs.length, defis, gratitudeDays, todayStr, wishlistItems]);
+    weeklyStatsData.total, activeProfile, recipes.length, customNotifs.length,
+    defis, gratitudeDays, todayStr, wishlistItems]);
 
   const renderSection = (id: string): React.ReactNode => {
     switch (id) {
@@ -738,10 +739,11 @@ export default function DashboardScreen() {
                     const stockMatch = stock.find((s) => itemTextLower.includes(s.produit.toLowerCase()));
                     const addQty = stockMatch?.qteAchat ?? 1;
                     const prevQty = stockMatch?.quantite ?? 0;
-                    await removeCourseItem(item.lineIndex);
+                    // Restocker AVANT de supprimer des courses (removeCourseItem déclenche loadVaultData qui écraserait le stock)
                     if (stockMatch) {
                       await updateStockQuantity(stockMatch.lineIndex, prevQty + addQty);
                     }
+                    await removeCourseItem(item.lineIndex);
                     const msg = stockMatch ? `${stockMatch.produit} restocké (+${addQty})` : `${item.text} retiré`;
                     showToast(msg, 'success', {
                       label: 'Annuler',
@@ -928,7 +930,7 @@ export default function DashboardScreen() {
                   </View>
                   <View style={styles.stockBtnGroup}>
                     {isLow && (
-                      <TouchableOpacity style={[styles.stockCartBtn, { backgroundColor: colors.warningBg, borderColor: colors.warning }]} onPress={async () => { const n = item.detail ? `${item.produit} (${item.detail})` : item.produit; await addCourseItem(n, 'Produits bébé'); Alert.alert('Ajouté !', `${n} ajouté aux courses`); }} activeOpacity={0.6} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
+                      <TouchableOpacity style={[styles.stockCartBtn, { backgroundColor: colors.warningBg, borderColor: colors.warning }]} onPress={async () => { const n = item.detail && !/^\d+$/.test(item.detail.trim()) ? `${item.produit} (${item.detail})` : item.produit; await addCourseItem(n, 'Produits bébé'); Alert.alert('Ajouté !', `${n} ajouté aux courses`); }} activeOpacity={0.6} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
                         <Text style={styles.stockCartBtnText}>🛒</Text>
                       </TouchableOpacity>
                     )}

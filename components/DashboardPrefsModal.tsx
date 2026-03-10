@@ -1,7 +1,7 @@
 /**
  * DashboardPrefsModal.tsx — Configure dashboard section order and visibility
  *
- * Réordonnement par drag (long-press) ou boutons flèches.
+ * Réordonnement par drag (long-press).
  */
 
 import React, { useState, useCallback } from 'react';
@@ -46,13 +46,9 @@ interface DraggableRowProps {
   totalCount: number;
   draggedIdx: SharedValue<number>;
   dragY: SharedValue<number>;
-  isFirst: boolean;
-  isLast: boolean;
   onDragStart: () => void;
   onDragEnd: (from: number, to: number) => void;
   onToggle: (id: string) => void;
-  onMoveUp: (index: number) => void;
-  onMoveDown: (index: number) => void;
   colors: any;
   primary: string;
   tint: string;
@@ -64,13 +60,9 @@ const DraggableRow = React.memo(function DraggableRow({
   totalCount,
   draggedIdx,
   dragY,
-  isFirst,
-  isLast,
   onDragStart,
   onDragEnd,
   onToggle,
-  onMoveUp,
-  onMoveDown,
   colors,
   primary,
   tint,
@@ -117,6 +109,11 @@ const DraggableRow = React.memo(function DraggableRow({
     })
     .onFinalize(() => {
       const from = draggedIdx.value;
+      // Ignorer si le geste n'a jamais démarré (scroll sans long-press)
+      if (from < 0) {
+        dragY.value = 0;
+        return;
+      }
       const hoverAt = Math.max(0, Math.min(totalCount - 1, from + Math.round(dragY.value / ITEM_H)));
       dragY.value = 0;
       draggedIdx.value = -1;
@@ -147,26 +144,6 @@ const DraggableRow = React.memo(function DraggableRow({
           {section.label}
         </Text>
         <View style={styles.rowActions}>
-          <TouchableOpacity
-            style={[styles.arrowBtn, { backgroundColor: colors.cardAlt }, isFirst && styles.arrowBtnDisabled]}
-            onPress={() => onMoveUp(index)}
-            disabled={isFirst}
-            hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
-            accessibilityLabel="Monter"
-            accessibilityRole="button"
-          >
-            <Text style={[styles.arrowText, { color: colors.textSub }]}>▲</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.arrowBtn, { backgroundColor: colors.cardAlt }, isLast && styles.arrowBtnDisabled]}
-            onPress={() => onMoveDown(index)}
-            disabled={isLast}
-            hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
-            accessibilityLabel="Descendre"
-            accessibilityRole="button"
-          >
-            <Text style={[styles.arrowText, { color: colors.textSub }]}>▼</Text>
-          </TouchableOpacity>
           <Switch
             value={section.visible}
             onValueChange={() => onToggle(section.id)}
@@ -195,24 +172,6 @@ export function DashboardPrefsModal({ sections: initialSections, smartSort: init
     setSections((prev) =>
       prev.map((s) => (s.id === id ? { ...s, visible: !s.visible } : s))
     );
-  }, []);
-
-  const moveUp = useCallback((index: number) => {
-    if (index === 0) return;
-    setSections((prev) => {
-      const next = [...prev];
-      [next[index - 1], next[index]] = [next[index], next[index - 1]];
-      return next;
-    });
-  }, []);
-
-  const moveDown = useCallback((index: number) => {
-    setSections((prev) => {
-      if (index === prev.length - 1) return prev;
-      const next = [...prev];
-      [next[index], next[index + 1]] = [next[index + 1], next[index]];
-      return next;
-    });
   }, []);
 
   const handleDragStart = useCallback(() => {
@@ -255,7 +214,7 @@ export function DashboardPrefsModal({ sections: initialSections, smartSort: init
         </View>
 
         <Text style={[styles.hint, { color: colors.textMuted, borderBottomColor: colors.borderLight }]}>
-          Affichez ou masquez des sections, et changez leur ordre en glissant ou avec les flèches.
+          Affichez ou masquez des sections, et maintenez appuyé pour réordonner.
         </Text>
 
         <View style={[styles.smartSortRow, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
@@ -303,13 +262,9 @@ export function DashboardPrefsModal({ sections: initialSections, smartSort: init
                   totalCount={sections.length}
                   draggedIdx={draggedIdx}
                   dragY={dragY}
-                  isFirst={index === 0}
-                  isLast={index === sections.length - 1}
                   onDragStart={handleDragStart}
                   onDragEnd={handleDragEnd}
                   onToggle={toggleVisible}
-                  onMoveUp={moveUp}
-                  onMoveDown={moveDown}
                   colors={colors}
                   primary={primary}
                   tint={tint}
@@ -390,20 +345,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xs,
-  },
-  arrowBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: Radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  arrowBtnDisabled: {
-    opacity: 0.2,
-  },
-  arrowText: {
-    fontSize: FontSize.micro,
-    fontWeight: FontWeight.bold,
   },
   smartSortRow: {
     flexDirection: 'row',

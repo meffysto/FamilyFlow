@@ -284,7 +284,7 @@ export default function MealsScreen() {
         return;
       }
 
-      // Cocher → supprimer + éventuellement restocker
+      // Cocher → restocker + supprimer
       const itemTextLower = item.text.toLowerCase();
       const stockMatch = stock.find((s) =>
         itemTextLower.includes(s.produit.toLowerCase()),
@@ -292,13 +292,13 @@ export default function MealsScreen() {
       const addQty = stockMatch?.qteAchat ?? 1;
       const prevQty = stockMatch?.quantite ?? 0;
 
-      // 1. Supprimer des courses d'abord (déclenche loadVaultData)
-      await removeCourseItem(item.lineIndex);
-
-      // 2. Restocker APRÈS le reload vault
+      // 1. Restocker AVANT de supprimer (removeCourseItem déclenche loadVaultData qui écraserait le stock)
       if (stockMatch) {
         await updateStockQuantity(stockMatch.lineIndex, prevQty + addQty);
       }
+
+      // 2. Supprimer des courses (loadVaultData relira le stock déjà mis à jour)
+      await removeCourseItem(item.lineIndex);
 
       // 3. Toast avec undo
       const msg = stockMatch
