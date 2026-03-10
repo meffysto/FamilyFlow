@@ -10,7 +10,7 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://meffysto.github.io/FamilyFlow/">
   <meta property="og:image" content="https://meffysto.github.io/FamilyFlow/og-image.png">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👨‍👩‍👧‍👦</text></svg>">
+  <link rel="icon" type="image/png" href="favicon.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -18,9 +18,9 @@
         extend: {
           colors: {
             brand: {
-              50: '#EEF2FF', 100: '#E0E7FF', 200: '#C7D2FE', 300: '#A5B4FC',
-              400: '#818CF8', 500: '#6366F1', 600: '#4F46E5', 700: '#4338CA',
-              800: '#3730A3', 900: '#312E81',
+              50: '#ECFEFF', 100: '#CFFAFE', 200: '#A5F3FC', 300: '#67E8F9',
+              400: '#22D3EE', 500: '#06B6D4', 600: '#0891B2', 700: '#0E7490',
+              800: '#155E75', 900: '#164E63',
             }
           }
         }
@@ -30,10 +30,10 @@
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif; }
     .gradient-text {
-      background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #EC4899 100%);
+      background: linear-gradient(135deg, #0E7490 0%, #06B6D4 50%, #2DD4BF 100%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
-    .hero-glow { background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99,102,241,0.15) 0%, transparent 70%); }
+    .hero-glow { background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(6,182,212,0.15) 0%, transparent 70%); }
     .phone-mockup {
       background: linear-gradient(145deg, #1F2937 0%, #111827 100%);
       border-radius: 40px; padding: 10px;
@@ -65,7 +65,7 @@
   <nav class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-100">
     <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
       <div class="flex items-center gap-2">
-        <span class="text-2xl">👨‍👩‍👧‍👦</span>
+        <img src="logo.jpg" alt="FamilyFlow" class="h-10 w-auto">
         <span class="font-bold text-lg text-gray-900">FamilyFlow</span>
       </div>
       <div class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
@@ -132,7 +132,7 @@
                 </div>
               </div>
               <!-- Streak -->
-              <div class="bg-gradient-to-r from-brand-500 to-purple-500 rounded-xl p-3 text-white">
+              <div class="bg-gradient-to-r from-brand-500 to-teal-500 rounded-xl p-3 text-white">
                 <div class="flex items-center justify-between">
                   <div><p class="text-[10px] opacity-80">Série en cours</p><p class="text-[18px] font-bold">🔥 12 jours</p></div>
                   <div class="text-right"><p class="text-[10px] opacity-80">Points</p><p class="text-[14px] font-bold">2 450</p></div>
@@ -162,7 +162,7 @@
               <div class="bg-white rounded-xl p-3 shadow-sm">
                 <p class="text-[11px] font-bold text-gray-900 mb-2">🏥 Prochain RDV</p>
                 <div class="flex items-center gap-2">
-                  <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center text-[14px]">👨‍⚕️</div>
+                  <div class="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center text-[14px]">👨‍⚕️</div>
                   <div><p class="text-[11px] font-semibold text-gray-900">Pédiatre — Lucas</p><p class="text-[10px] text-gray-400">15/03/2026 à 14:30</p></div>
                 </div>
               </div>
@@ -430,7 +430,7 @@
             </div>
             <div class="flex-1 px-4 py-3 space-y-3 overflow-hidden">
               <!-- Stats banner -->
-              <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-3">
+              <div class="bg-gradient-to-r from-blue-50 to-teal-50 rounded-xl p-3">
                 <p class="text-[10px] font-bold text-gray-700 mb-2">👶 Lucas — aujourd'hui</p>
                 <div class="grid grid-cols-3 gap-2 text-center">
                   <div><p class="text-[14px]">🍼</p><p class="text-[10px] font-bold">3</p><p class="text-[8px] text-gray-400">biberons</p></div>
@@ -608,35 +608,35 @@
                   <!-- Box -->
                   <div class="w-28 h-28 mx-auto mb-4 relative">
                     <div class="absolute inset-0 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-2xl transform rotate-3 opacity-30"></div>
-                    <div class="absolute inset-0 bg-gradient-to-br from-purple-600 to-brand-600 rounded-2xl flex items-center justify-center">
+                    <div class="absolute inset-0 bg-gradient-to-br from-teal-600 to-brand-600 rounded-2xl flex items-center justify-center">
                       <span class="text-5xl">🎁</span>
                     </div>
                     <!-- Sparkles -->
                     <span class="absolute -top-2 -right-2 text-yellow-300 text-[16px]">✦</span>
                     <span class="absolute -bottom-1 -left-2 text-yellow-300 text-[12px]">✦</span>
-                    <span class="absolute top-1 -left-3 text-purple-300 text-[10px]">✦</span>
+                    <span class="absolute top-1 -left-3 text-teal-300 text-[10px]">✦</span>
                   </div>
                   <p class="text-[18px] font-extrabold text-white mb-1">Félicitations !</p>
-                  <p class="text-[12px] text-purple-200 mb-4">Vous avez obtenu :</p>
+                  <p class="text-[12px] text-teal-200 mb-4">Vous avez obtenu :</p>
                   <!-- Reward card -->
                   <div class="bg-white/10 backdrop-blur border border-white/20 rounded-xl p-4 mx-2">
                     <div class="flex items-center gap-3">
                       <span class="text-3xl">💆</span>
                       <div class="text-left">
                         <p class="text-[13px] font-bold text-white">Massage 30 min</p>
-                        <p class="text-[10px] text-purple-200">Rareté : <span class="text-yellow-300 font-bold">EPIQUE</span></p>
+                        <p class="text-[10px] text-teal-200">Rareté : <span class="text-yellow-300 font-bold">EPIQUE</span></p>
                       </div>
                     </div>
                   </div>
                   <!-- Points info -->
                   <div class="mt-4 flex items-center justify-center gap-4">
                     <div class="text-center">
-                      <p class="text-[10px] text-purple-300">Coûte</p>
+                      <p class="text-[10px] text-teal-300">Coûte</p>
                       <p class="text-[14px] font-bold text-yellow-300">500 pts</p>
                     </div>
                     <div class="w-px h-8 bg-white/20"></div>
                     <div class="text-center">
-                      <p class="text-[10px] text-purple-300">Solde</p>
+                      <p class="text-[10px] text-teal-300">Solde</p>
                       <p class="text-[14px] font-bold text-white">1 950 pts</p>
                     </div>
                   </div>
@@ -940,7 +940,7 @@
                 </div>
                 <p class="text-[10px] text-gray-500 mt-1">"Papa" — en regardant Maman 😄</p>
               </div>
-              <div class="bg-purple-50 border border-purple-200 rounded-xl p-3">
+              <div class="bg-teal-50 border border-teal-200 rounded-xl p-3">
                 <div class="flex items-center gap-2 mb-1">
                   <span class="text-[14px]">🎂</span>
                   <div>
@@ -1091,7 +1091,7 @@
         <!-- ROW 1 : Organisation | Bébé | Vie de famille -->
 
         <!-- 1. ORGANISATION -->
-        <div class="feature-card bg-gradient-to-br from-brand-100 to-purple-100 border border-brand-200 rounded-2xl p-6">
+        <div class="feature-card bg-gradient-to-br from-brand-100 to-teal-100 border border-brand-200 rounded-2xl p-6">
           <div class="flex items-center gap-3 mb-4">
             <div class="w-10 h-10 bg-brand-500 rounded-xl flex items-center justify-center text-white text-lg">&#x2713;</div>
             <h3 class="text-lg font-bold text-gray-900">Organisation</h3>
@@ -1152,19 +1152,19 @@
         </div>
 
         <!-- 5. GAMIFICATION (col-span-2) -->
-        <div class="feature-card bg-gradient-to-br from-purple-900 to-brand-800 border border-purple-700 rounded-2xl p-6 text-white lg:col-span-2">
+        <div class="feature-card bg-gradient-to-br from-teal-900 to-brand-800 border border-teal-700 rounded-2xl p-6 text-white lg:col-span-2">
           <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 bg-yellow-400 rounded-xl flex items-center justify-center text-purple-900 text-lg">&#x2605;</div>
+            <div class="w-10 h-10 bg-yellow-400 rounded-xl flex items-center justify-center text-teal-900 text-lg">&#x2605;</div>
             <h3 class="text-lg font-bold">Motivation & jeu</h3>
-            <p class="text-purple-300 text-xs ml-auto hidden sm:block">Transformez les corvées en défi !</p>
+            <p class="text-teal-300 text-xs ml-auto hidden sm:block">Transformez les corvées en défi !</p>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            <div class="bg-white/10 backdrop-blur rounded-xl p-3 flex items-center gap-3"><span class="text-lg">🎮</span><div><p class="text-sm font-semibold">Points & niveaux</p><p class="text-[10px] text-purple-200">XP, progression, multiplicateurs</p></div></div>
-            <div class="bg-white/10 backdrop-blur rounded-xl p-3 flex items-center gap-3"><span class="text-lg">🎁</span><div><p class="text-sm font-semibold">Loot boxes</p><p class="text-[10px] text-purple-200">5 raretés, récompenses réelles</p></div></div>
-            <div class="bg-white/10 backdrop-blur rounded-xl p-3 flex items-center gap-3"><span class="text-lg">🔥</span><div><p class="text-sm font-semibold">Séries quotidiennes</p><p class="text-[10px] text-purple-200">Maintenez votre série chaque jour</p></div></div>
-            <div class="bg-white/10 backdrop-blur rounded-xl p-3 flex items-center gap-3"><span class="text-lg">🏆</span><div><p class="text-sm font-semibold">Classement familial</p><p class="text-[10px] text-purple-200">Tableau avec médailles</p></div></div>
-            <div class="bg-white/10 backdrop-blur rounded-xl p-3 flex items-center gap-3"><span class="text-lg">🎯</span><div><p class="text-sm font-semibold">Défis familiaux</p><p class="text-[10px] text-purple-200">7 catégories, 3 difficultés</p></div></div>
-            <div class="bg-white/10 backdrop-blur rounded-xl p-3 flex items-center gap-3"><span class="text-lg">🏅</span><div><p class="text-sm font-semibold">Badges & collection</p><p class="text-[10px] text-purple-200">30+ badges à collectionner</p></div></div>
+            <div class="bg-white/10 backdrop-blur rounded-xl p-3 flex items-center gap-3"><span class="text-lg">🎮</span><div><p class="text-sm font-semibold">Points & niveaux</p><p class="text-[10px] text-teal-200">XP, progression, multiplicateurs</p></div></div>
+            <div class="bg-white/10 backdrop-blur rounded-xl p-3 flex items-center gap-3"><span class="text-lg">🎁</span><div><p class="text-sm font-semibold">Loot boxes</p><p class="text-[10px] text-teal-200">5 raretés, récompenses réelles</p></div></div>
+            <div class="bg-white/10 backdrop-blur rounded-xl p-3 flex items-center gap-3"><span class="text-lg">🔥</span><div><p class="text-sm font-semibold">Séries quotidiennes</p><p class="text-[10px] text-teal-200">Maintenez votre série chaque jour</p></div></div>
+            <div class="bg-white/10 backdrop-blur rounded-xl p-3 flex items-center gap-3"><span class="text-lg">🏆</span><div><p class="text-sm font-semibold">Classement familial</p><p class="text-[10px] text-teal-200">Tableau avec médailles</p></div></div>
+            <div class="bg-white/10 backdrop-blur rounded-xl p-3 flex items-center gap-3"><span class="text-lg">🎯</span><div><p class="text-sm font-semibold">Défis familiaux</p><p class="text-[10px] text-teal-200">7 catégories, 3 difficultés</p></div></div>
+            <div class="bg-white/10 backdrop-blur rounded-xl p-3 flex items-center gap-3"><span class="text-lg">🏅</span><div><p class="text-sm font-semibold">Badges & collection</p><p class="text-[10px] text-teal-200">30+ badges à collectionner</p></div></div>
           </div>
         </div>
 
@@ -1231,7 +1231,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div class="feature-card p-8 border border-gray-100 rounded-2xl bg-white"><div class="w-12 h-12 bg-brand-50 rounded-xl flex items-center justify-center text-xl mb-5">🔒</div><h3 class="font-bold text-lg mb-3">Vos données, chez vous</h3><p class="text-gray-500 text-sm leading-relaxed">Pas de cloud. Pas de compte. Vos fichiers Markdown restent sur votre appareil. Vous êtes propriétaire de vos données.</p></div>
         <div class="feature-card p-8 border border-gray-100 rounded-2xl bg-white"><div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center text-xl mb-5">⚡</div><h3 class="font-bold text-lg mb-3">Réactif, pas différé</h3><p class="text-gray-500 text-sm leading-relaxed">Chaque action a un effet immédiat. Cochez une tâche récurrente → elle se replanifie automatiquement. Zéro maintenance.</p></div>
-        <div class="feature-card p-8 border border-gray-100 rounded-2xl bg-white"><div class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-xl mb-5">🎮</div><h3 class="font-bold text-lg mb-3">L'organisation, en jeu</h3><p class="text-gray-500 text-sm leading-relaxed">Points, séries, loot boxes, récompenses. Transformez les corvées en défi ludique. Les deux parents jouent !</p></div>
+        <div class="feature-card p-8 border border-gray-100 rounded-2xl bg-white"><div class="w-12 h-12 bg-teal-50 rounded-xl flex items-center justify-center text-xl mb-5">🎮</div><h3 class="font-bold text-lg mb-3">L'organisation, en jeu</h3><p class="text-gray-500 text-sm leading-relaxed">Points, séries, loot boxes, récompenses. Transformez les corvées en défi ludique. Les deux parents jouent !</p></div>
         <div class="feature-card p-8 border border-gray-100 rounded-2xl bg-white"><div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-xl mb-5">📱</div><h3 class="font-bold text-lg mb-3">Vos fichiers, votre format</h3><p class="text-gray-500 text-sm leading-relaxed">Tout est stocké en Markdown, un format universel. Modifiez depuis l'app ou n'importe quel éditeur texte — pas de format propriétaire.</p></div>
         <div class="feature-card p-8 border border-gray-100 rounded-2xl bg-white"><div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center text-xl mb-5">🤖</div><h3 class="font-bold text-lg mb-3">Notifications Telegram</h3><p class="text-gray-500 text-sm leading-relaxed">Recevez vos récaps, bilans mensuels et mises à jour grossesse directement sur Telegram. Partagez avec les grands-parents.</p></div>
         <div class="feature-card p-8 border border-gray-100 rounded-2xl bg-white"><div class="w-12 h-12 bg-pink-50 rounded-xl flex items-center justify-center text-xl mb-5">👶</div><h3 class="font-bold text-lg mb-3">Multi-enfants & adultes</h3><p class="text-gray-500 text-sm leading-relaxed">Journal, tâches et RDV séparés par profil. Les adultes ont leur propre journal. Chaque membre à son thème.</p></div>
@@ -1287,7 +1287,7 @@
   </section>
 
   <!-- CTA -->
-  <section class="pt-16 pb-20 md:pt-20 md:pb-28 px-4 bg-gradient-to-br from-brand-600 via-purple-600 to-pink-500">
+  <section class="pt-16 pb-20 md:pt-20 md:pb-28 px-4 bg-gradient-to-br from-brand-600 via-teal-600 to-cyan-500">
     <div class="max-w-4xl mx-auto flex flex-col items-center text-center gap-8">
       <h2 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight">Moins de charge mentale<br>dès ce soir</h2>
       <p class="text-lg text-white/80 max-w-xl">35+ fonctionnalités. Zéro cloud. Une famille mieux organisée. Gratuit, sans pub, 100 % privé.</p>
