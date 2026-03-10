@@ -25,13 +25,14 @@ class VaultHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(404)
 
     def send_manifest(self):
-        """List all .md files in the vault"""
+        """List all vault files (.md, .cook)"""
         files = []
+        extensions = ('.md', '.cook')
         for root, dirs, filenames in os.walk(VAULT_PATH):
             # Skip .obsidian and .scripts
             dirs[:] = [d for d in dirs if not d.startswith('.')]
             for f in filenames:
-                if f.endswith('.md'):
+                if f.endswith(extensions):
                     rel = os.path.relpath(os.path.join(root, f), VAULT_PATH)
                     # Normalize to NFC (iOS/app expects NFC, macOS APFS uses NFD)
                     rel = unicodedata.normalize('NFC', rel)

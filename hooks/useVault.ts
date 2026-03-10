@@ -422,161 +422,111 @@ export function useVaultInternal(): VaultState {
         setGamiData(null);
       }
 
+      // --- Parallel loading: batch all independent sections ---
       // Build task file paths dynamically from enfant names
       const taskFiles = [
         ...enfantNames.map((name) => `01 - Enfants/${name}/Tâches récurrentes.md`),
         ...STATIC_TASK_FILES,
       ];
 
-      // Load tasks
-      const allTasks: Task[] = [];
-      for (const relPath of taskFiles) {
-        try {
-          const content = await vault.readFile(relPath);
-          const fileTasks = parseTaskFile(relPath, content);
-          allTasks.push(...fileTasks);
-        } catch (e) {
-          debugErrors.push(`tasks[${relPath}]: ${e}`);
-        }
-      }
-      setTasks(allTasks);
-
-      // Load ménage tasks for today
-      try {
-        const menageContent = await vault.readFile(MENAGE_FILE);
-        setMenageTasks(parseMénage(menageContent, MENAGE_FILE));
-      } catch (e) {
-        debugErrors.push(`ménage: ${e}`);
-        setMenageTasks([]);
-      }
-
-      // Load routines
-      try {
-        const routinesContent = await vault.readFile(ROUTINES_FILE);
-        setRoutines(parseRoutines(routinesContent));
-      } catch (e) {
-        debugErrors.push(`routines: ${e}`);
-        setRoutines([]);
-      }
-
-      // Load courses
-      try {
-        const coursesContent = await vault.readFile(COURSES_FILE);
-        setCourses(parseCourses(coursesContent, COURSES_FILE));
-      } catch (e) {
-        debugErrors.push(`courses: ${e}`);
-        setCourses([]);
-      }
-
-      // Load stock
-      try {
-        const stockContent = await vault.readFile(STOCK_FILE);
-        setStock(parseStock(stockContent));
-        setStockSections(parseStockSections(stockContent));
-      } catch (e) {
-        debugErrors.push(`stock: ${e}`);
-        setStock([]);
-        setStockSections([]);
-      }
-
-      // Load meals (auto-create template if missing)
-      try {
-        if (!(await vault.exists(MEALS_FILE))) {
-          const template = MEALS_TEMPLATE;
-          await vault.writeFile(MEALS_FILE, template);
-        }
-        const mealsContent = await vault.readFile(MEALS_FILE);
-        setMeals(parseMeals(mealsContent, MEALS_FILE));
-      } catch (e) {
-        debugErrors.push(`meals: ${e}`);
-        setMeals([]);
-      }
-
-      // Load RDVs from active directory + archives
-      try {
-        await vault.ensureDir(RDV_DIR);
-        const loadedRdvs: RDV[] = [];
-
-        // Helper: load all .md files from a directory as RDVs
-        const loadRdvsFromDir = async (dir: string) => {
-          let files: string[] = [];
-          try {
-            files = await vault.listDir(dir);
-          } catch {
-            return;
-          }
-          for (const file of files) {
-            if (!file.endsWith('.md')) continue;
-            const relPath = `${dir}/${file}`;
+      const results = await Promise.allSettled([
+        // [0] Tasks
+        (async () => {
+          const allTasks: Task[] = [];
+          for (const relPath of taskFiles) {
             try {
               const content = await vault.readFile(relPath);
-              const rdv = parseRDV(relPath, content);
-              if (rdv && rdv.statut !== 'annulé') {
-                loadedRdvs.push(rdv);
-              }
-            } catch {
-              // skip unreadable files
-            }
+              allTasks.push(...parseTaskFile(relPath, content));
+            } catch (e) { debugErrors.push(`tasks[${relPath}]: ${e}`); }
           }
-        };
+          return allTasks;
+        })(),
 
-        // Active RDVs
-        await loadRdvsFromDir(RDV_DIR);
-        // Archived RDVs (past, moved by maintenance.py)
-        await loadRdvsFromDir(RDV_ARCHIVES_DIR);
+        // [1] Ménage
+        vault.readFile(MENAGE_FILE).then((c) => parseMénage(c, MENAGE_FILE)).catch((e) => {
+          debugErrors.push(`ménage: ${e}`); return [] as Task[];
+        }),
 
-        loadedRdvs.sort((a, b) => a.date_rdv.localeCompare(b.date_rdv));
-        setRdvs(loadedRdvs);
-        // Schedule RDV notification alerts (fire-and-forget)
-        scheduleRDVAlerts(loadedRdvs).catch(() => {});
-      } catch (e) {
-        debugErrors.push(`rdv: ${e}`);
-        setRdvs([]);
-      }
+        // [2] Routines
+        vault.readFile(ROUTINES_FILE).then((c) => parseRoutines(c)).catch((e) => {
+          debugErrors.push(`routines: ${e}`); return [] as any[];
+        }),
 
-      // Load photo dates per child
-      try {
-        const photoMap: Record<string, string[]> = {};
-        for (const name of enfantNames) {
-          try {
-            const dates = await vault.listPhotoDates(name);
+        // [3] Courses
+        vault.readFile(COURSES_FILE).then((c) => parseCourses(c, COURSES_FILE)).catch((e) => {
+          debugErrors.push(`courses: ${e}`); return [] as CourseItem[];
+        }),
+
+        // [4] Stock
+        vault.readFile(STOCK_FILE).then((c) => ({
+          items: parseStock(c),
+          sections: parseStockSections(c),
+        })).catch((e) => {
+          debugErrors.push(`stock: ${e}`); return { items: [] as StockItem[], sections: [] as string[] };
+        }),
+
+        // [5] Meals
+        (async () => {
+          if (!(await vault.exists(MEALS_FILE))) {
+            await vault.writeFile(MEALS_FILE, MEALS_TEMPLATE);
+          }
+          const c = await vault.readFile(MEALS_FILE);
+          return parseMeals(c, MEALS_FILE);
+        })().catch((e) => { debugErrors.push(`meals: ${e}`); return [] as MealItem[]; }),
+
+        // [6] RDVs
+        (async () => {
+          await vault.ensureDir(RDV_DIR);
+          const loadedRdvs: RDV[] = [];
+          const loadRdvsFromDir = async (dir: string) => {
+            let files: string[] = [];
+            try { files = await vault.listDir(dir); } catch { return; }
+            for (const file of files) {
+              if (!file.endsWith('.md')) continue;
+              try {
+                const content = await vault.readFile(`${dir}/${file}`);
+                const rdv = parseRDV(`${dir}/${file}`, content);
+                if (rdv && rdv.statut !== 'annulé') loadedRdvs.push(rdv);
+              } catch { /* skip */ }
+            }
+          };
+          await Promise.all([loadRdvsFromDir(RDV_DIR), loadRdvsFromDir(RDV_ARCHIVES_DIR)]);
+          loadedRdvs.sort((a, b) => a.date_rdv.localeCompare(b.date_rdv));
+          return loadedRdvs;
+        })().catch((e) => { debugErrors.push(`rdv: ${e}`); return [] as RDV[]; }),
+
+        // [7] Photos
+        (async () => {
+          const photoMap: Record<string, string[]> = {};
+          await Promise.all(enfantNames.map(async (name) => {
+            try {
+              const dates = await vault.listPhotoDates(name);
+              const id = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+              photoMap[id] = dates;
+            } catch { /* dir may not exist */ }
+          }));
+          return photoMap;
+        })().catch((e) => { debugErrors.push(`photos: ${e}`); return {} as Record<string, string[]>; }),
+
+        // [8] Memories/jalons
+        (async () => {
+          const allMemories: Memory[] = [];
+          await Promise.all(enfantNames.map(async (name) => {
             const id = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
-            photoMap[id] = dates;
-          } catch {
-            // dir may not exist yet
-          }
-        }
-        setPhotoDates(photoMap);
-      } catch (e) {
-        debugErrors.push(`photos: ${e}`);
-        setPhotoDates({});
-      }
+            try {
+              const jalonsPath = `${MEMOIRES_DIR}/${name}/Jalons.md`;
+              if (await vault.exists(jalonsPath)) {
+                const content = await vault.readFile(jalonsPath);
+                allMemories.push(...parseJalons(name, id, content));
+              }
+            } catch { /* skip */ }
+          }));
+          allMemories.sort((a, b) => b.date.localeCompare(a.date));
+          return allMemories;
+        })().catch(() => [] as Memory[]),
 
-      // Load souvenirs/jalons per child
-      try {
-        const allMemories: Memory[] = [];
-        for (const name of enfantNames) {
-          const id = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
-          const jalonsPath = `${MEMOIRES_DIR}/${name}/Jalons.md`;
-          try {
-            if (await vault.exists(jalonsPath)) {
-              const content = await vault.readFile(jalonsPath);
-              allMemories.push(...parseJalons(name, id, content));
-            }
-          } catch {
-            // file may not exist
-          }
-        }
-        // Sort by date descending (most recent first)
-        allMemories.sort((a, b) => b.date.localeCompare(a.date));
-        setMemories(allMemories);
-      } catch {
-        setMemories([]);
-      }
-
-      // Load health records per child (parallel, no TOCTOU)
-      try {
-        const results = await Promise.all(
+        // [9] Health records
+        Promise.all(
           enfantNames.map(async (name) => {
             const id = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
             try {
@@ -584,36 +534,51 @@ export function useVaultInternal(): VaultState {
               return parseHealthRecord(name, id, content);
             } catch { return null; }
           })
-        );
-        setHealthRecords(results.filter((r): r is HealthRecord => r !== null));
-      } catch {
-        setHealthRecords([]);
-      }
+        ).then((r) => r.filter((x): x is HealthRecord => x !== null)).catch(() => [] as HealthRecord[]),
 
-      // Load journal stats des 7 derniers jours (pour contexte IA)
-      try {
-        const today = new Date();
-        const last7 = Array.from({ length: 7 }, (_, i) => {
-          const d = new Date(today);
-          d.setDate(d.getDate() - i);
-          return format(d, 'yyyy-MM-dd');
-        });
-        const entries: JournalSummaryEntry[] = [];
-        for (const name of enfantNames) {
-          for (const dateStr of last7) {
-            try {
-              const path = `03 - Journal/${name}/${dateStr} ${name}.md`;
-              const content = await vault.readFile(path);
-              if (content) {
-                entries.push({ enfant: name, date: dateStr, stats: parseJournalStats(content) });
-              }
-            } catch { /* fichier inexistant = pas d'entrée ce jour */ }
-          }
-        }
-        setJournalStats(entries);
-      } catch {
-        setJournalStats([]);
-      }
+        // [10] Journal stats (7 derniers jours)
+        (async () => {
+          const today = new Date();
+          const last7 = Array.from({ length: 7 }, (_, i) => {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            return format(d, 'yyyy-MM-dd');
+          });
+          const entries: JournalSummaryEntry[] = [];
+          await Promise.all(enfantNames.map(async (name) => {
+            for (const dateStr of last7) {
+              try {
+                const path = `03 - Journal/${name}/${dateStr} ${name}.md`;
+                const content = await vault.readFile(path);
+                if (content) {
+                  entries.push({ enfant: name, date: dateStr, stats: parseJournalStats(content) });
+                }
+              } catch { /* fichier inexistant */ }
+            }
+          }));
+          return entries;
+        })().catch(() => [] as JournalSummaryEntry[]),
+      ]);
+
+      // Apply results — use helper to extract settled values
+      const val = <T,>(r: PromiseSettledResult<T>, fallback: T): T =>
+        r.status === 'fulfilled' ? r.value : fallback;
+
+      setTasks(val(results[0], []));
+      setMenageTasks(val(results[1], []));
+      setRoutines(val(results[2], []));
+      setCourses(val(results[3], []));
+      const stockResult = val(results[4], { items: [] as StockItem[], sections: [] as string[] });
+      setStock(stockResult.items);
+      setStockSections(stockResult.sections);
+      setMeals(val(results[5], []));
+      const rdvResult = val(results[6], [] as RDV[]);
+      setRdvs(rdvResult);
+      scheduleRDVAlerts(rdvResult).catch(() => {});
+      setPhotoDates(val(results[7], {}));
+      setMemories(val(results[8], []));
+      setHealthRecords(val(results[9], []));
+      setJournalStats(val(results[10], []));
 
       // Load défis familiaux
       try {

@@ -37,10 +37,16 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
 
   const [showWizard, setShowWizard] = useState(false);
   const [syncProgress, setSyncProgress] = useState('');
+  const [macIp, setMacIp] = useState('');
   const COFFRE_DEFAULT = '/Users/USER/Documents/coffre';
-  const MAC_SERVER = 'http://YOUR_MAC_IP:8765';
 
   const syncFromMac = async () => {
+    const ip = macIp.trim();
+    if (!ip) {
+      setError('Entrez l\'adresse IP de votre Mac (ex: 192.168.1.42)');
+      return;
+    }
+    const MAC_SERVER = `http://${ip}:8765`;
     setSyncProgress('Connexion au Mac...');
     setError(null);
 
@@ -75,20 +81,47 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
       setSyncProgress(`✅ ${downloaded} fichiers synchronisés`);
       setPath(localVault);
 
-      // Auto-select vault
-      setTimeout(() => {
-        setSyncProgress('');
-        onPathSelected(localVault);
-      }, 1000);
+      // Laisser le JS engine respirer avant le rechargement du vault
+      await new Promise((r) => setTimeout(r, 1500));
+      setSyncProgress('');
+      onPathSelected(localVault);
     } catch (e: any) {
       setSyncProgress('');
       setError(`Sync échouée : ${e.message}\n\nVérifiez que serve-vault.py tourne sur le Mac.`);
     }
   };
 
+  const copyVaultToLocal = async (sourceDir: string): Promise<string> => {
+    const localVault = `${FileSystem.documentDirectory}coffre`;
+
+    // Recursive copy
+    const copyDir = async (srcDir: string, destDir: string) => {
+      const destInfo = await FileSystem.getInfoAsync(destDir);
+      if (!destInfo.exists) {
+        await FileSystem.makeDirectoryAsync(destDir, { intermediates: true });
+      }
+      const entries = await FileSystem.readDirectoryAsync(srcDir);
+      for (const entry of entries) {
+        if (entry.startsWith('.')) continue; // Skip hidden files
+        const srcPath = `${srcDir}/${entry}`;
+        const destPath = `${destDir}/${entry}`;
+        const info = await FileSystem.getInfoAsync(srcPath);
+        if ('isDirectory' in info && info.isDirectory) {
+          await copyDir(srcPath, destPath);
+        } else {
+          await FileSystem.copyAsync({ from: srcPath, to: destPath });
+        }
+      }
+    };
+
+    setSyncProgress('Copie du vault en cours...');
+    await copyDir(sourceDir, localVault);
+    setSyncProgress('');
+    return localVault;
+  };
+
   const pickFile = async () => {
     try {
-      // First try without cache copy (to get original URI)
       const result = await DocumentPicker.getDocumentAsync({
         copyToCacheDirectory: false,
       });
@@ -97,44 +130,40 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
 
       const fileUri = result.assets[0].uri;
       const fileName = result.assets[0].name;
+      const dirUri = fileUri.substring(0, fileUri.lastIndexOf('/'));
 
-      // Show full URI for debugging
-      Alert.alert(
-        'URI du fichier',
-        `Fichier: ${fileName}\n\nURI: ${decodeURIComponent(fileUri)}`,
-        [
-          {
-            text: 'Utiliser ce vault',
-            onPress: () => {
-              const dirUri = fileUri.substring(0, fileUri.lastIndexOf('/'));
-              setPath(decodeURIComponent(dirUri));
-              setError(null);
-              onPathSelected(dirUri);
-            },
-          },
-          { text: 'Annuler', style: 'cancel' },
-        ],
-      );
-    } catch (e) {
-      // If copyToCacheDirectory:false fails, retry with true
-      try {
-        const result = await DocumentPicker.getDocumentAsync({
-          copyToCacheDirectory: true,
-        });
-
-        if (result.canceled || !result.assets?.[0]) return;
-
-        const fileUri = result.assets[0].uri;
-        const fileName = result.assets[0].name;
-
+      if (Platform.OS === 'ios') {
+        // iOS: le dossier source est en lecture seule (sandbox)
+        // → copier le vault dans documentDirectory
         Alert.alert(
-          'URI du fichier (cache)',
-          `Fichier: ${fileName}\n\nURI: ${decodeURIComponent(fileUri)}`,
-          [{ text: 'OK' }],
+          'Vault détecté',
+          `Fichier : ${fileName}\n\nLe vault sera copié dans l'espace de l'app pour pouvoir y écrire.`,
+          [
+            {
+              text: 'Copier et utiliser',
+              onPress: async () => {
+                try {
+                  const localPath = await copyVaultToLocal(dirUri);
+                  setPath(localPath);
+                  setError(null);
+                  onPathSelected(localPath);
+                } catch (e: any) {
+                  setSyncProgress('');
+                  setError(`Copie échouée : ${e.message}`);
+                }
+              },
+            },
+            { text: 'Annuler', style: 'cancel' },
+          ],
         );
-      } catch (e2) {
-        Alert.alert('Erreur', `${e2}`);
+      } else {
+        // Android / Mac: accès direct
+        setPath(decodeURIComponent(dirUri));
+        setError(null);
+        onPathSelected(dirUri);
       }
+    } catch (e: any) {
+      setError(`Erreur lors de la sélection : ${e.message}`);
     }
   };
 
@@ -225,6 +254,20 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
       {error && <Text style={styles.errorText}>{error}</Text>}
 
       {/* Sync from Mac — download vault via HTTP */}
+      <View style={styles.syncSection}>
+        <TextInput
+          style={[styles.ipInput, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }]}
+          value={macIp}
+          onChangeText={(t) => { setMacIp(t); setError(null); }}
+          placeholder="IP du Mac (ex: 192.168.1.42)"
+          placeholderTextColor={colors.textFaint}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="numbers-and-punctuation"
+          returnKeyType="go"
+          onSubmitEditing={syncFromMac}
+        />
+      </View>
       <TouchableOpacity
         style={[styles.syncBtn, { backgroundColor: tint }]}
         onPress={syncFromMac}
@@ -339,6 +382,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#EF4444',
     lineHeight: 18,
+  },
+  syncSection: {
+    gap: 8,
+  },
+  ipInput: {
+    borderWidth: 1.5,
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 14,
   },
   syncBtn: {
     borderRadius: 10,
