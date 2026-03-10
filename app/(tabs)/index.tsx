@@ -663,7 +663,7 @@ export default function DashboardScreen() {
         return (
           <DashboardCard key="overdue" title="En retard" icon="⚠️" count={overdueTasks.length} color={colors.error} onPressMore={() => router.push('/(tabs)/tasks')}>
             {overdueTasks.slice(0, 3).map((task) => (
-              <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} showSource />
+              <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} hideSection compact />
             ))}
           </DashboardCard>
         );
