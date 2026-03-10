@@ -517,7 +517,7 @@ export default function DashboardScreen() {
         if (!hasInsights && !hasAI) return null;
         const topInsights = insights.slice(0, 5);
         return (
-          <DashboardCard key="insights" title="Suggestions" icon="💡" count={hasInsights ? insights.length : undefined} color={primary}>
+          <DashboardCard key="insights" title="Suggestions" icon="💡" count={hasInsights ? insights.length : undefined} color={primary} collapsible cardId="insights">
             {topInsights.map((insight) => {
               const priorityColor = insight.priority === 'high' ? colors.error
                 : insight.priority === 'medium' ? colors.warning
