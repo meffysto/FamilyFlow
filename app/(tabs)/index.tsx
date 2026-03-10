@@ -95,7 +95,7 @@ const ALL_SECTIONS: SectionPref[] = [
   { id: 'gratitude',  label: 'Gratitude',               emoji: '🙏', visible: true,  priority: 'medium' },
   { id: 'wishlist',   label: 'Souhaits',                emoji: '🎁', visible: true,  priority: 'medium' },
   // Optionnelles — masquées par défaut pour les nouveaux utilisateurs
-  { id: 'stock',      label: 'Alertes stock',            emoji: '📦', visible: false, priority: 'low' },
+  { id: 'stock',      label: 'Stock & Fournitures',      emoji: '📦', visible: false, priority: 'low' },
   { id: 'quicknotifs',label: 'Notifications rapides',   emoji: '📤', visible: false, priority: 'low' },
   { id: 'recipes',    label: 'Idée recette',             emoji: '📖', visible: false, priority: 'low' },
   { id: 'nightMode',  label: 'Mode nuit bébé',           emoji: '🌙', visible: true,  priority: 'medium' },
@@ -893,7 +893,7 @@ export default function DashboardScreen() {
         if (stock.length === 0) return null;
         const lowCount = stock.filter((s) => s.quantite <= s.seuil).length;
         return (
-          <DashboardCard key="stock" title="Stock bébé" icon="📦" count={lowCount > 0 ? lowCount : undefined} color={lowCount > 0 ? colors.error : colors.success}>
+          <DashboardCard key="stock" title="Stock & Fournitures" icon="📦" count={lowCount > 0 ? lowCount : undefined} color={lowCount > 0 ? colors.error : colors.success} collapsible cardId="stock">
             {stock.filter((s) => s.quantite <= s.seuil + 1).map((item) => {
               const isLow = item.quantite <= item.seuil;
               const statusColor = isLow ? colors.error : colors.warning;
