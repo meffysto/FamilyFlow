@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   TextInput,
   ScrollView,
+  KeyboardAvoidingView,
   Platform,
   Alert,
 } from 'react-native';
@@ -124,7 +125,8 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* Date */}
         <Text style={[styles.label, { color: colors.textSub }]}>📅 Date *</Text>
         <DateInput value={dateRdv} onChange={setDateRdv} placeholder="Choisir une date" />
@@ -238,6 +240,7 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
           </TouchableOpacity>
         )}
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
