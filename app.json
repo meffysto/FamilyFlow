@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.familyvault.app",
+      "bundleIdentifier": "com.familyvault.dev",
       "infoPlist": {
         "NSDocumentsFolderUsageDescription": "Family Vault a besoin d'accéder à vos documents pour lire et modifier votre vault Obsidian.",
         "NSFileProviderPresenceUsageDescription": "Family Vault utilise iCloud pour synchroniser votre vault Obsidian.",

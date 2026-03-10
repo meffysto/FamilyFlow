@@ -27,6 +27,8 @@ import type { AIMessage, VaultContext as AIVaultContext } from '../lib/ai-servic
 import { useParentalControls } from '../contexts/ParentalControlsContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
+import { Shadows } from '../constants/shadows';
+import { MarkdownText } from './ui/MarkdownText';
 
 /** Map type → route de navigation détaillée */
 const ROUTE_MAP: Record<SearchResultType, string> = {
@@ -272,9 +274,9 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
               <Text style={[styles.aiError, { color: colors.error }]}>{aiError}</Text>
             ) : null}
             {aiAnswer ? (
-              <View style={[styles.aiAnswer, { backgroundColor: colors.cardAlt }]}>
-                <Text style={[styles.aiAnswerLabel, { color: primary }]}>🤖 Assistant</Text>
-                <Text style={[styles.aiAnswerText, { color: colors.text }]}>{aiAnswer}</Text>
+              <View style={[styles.aiAnswer, Shadows.sm, { backgroundColor: colors.card }]}>
+                <Text style={[styles.aiAnswerLabel, { color: primary }]}>Réponse IA</Text>
+                <MarkdownText style={{ color: colors.text }}>{aiAnswer}</MarkdownText>
               </View>
             ) : null}
           </View>
@@ -439,16 +441,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   aiAnswer: {
-    padding: Spacing['2xl'],
-    borderRadius: Radius.lg,
+    padding: Spacing['2xl'] + 2,
+    borderRadius: Radius.xl,
     gap: Spacing.md,
   },
   aiAnswerLabel: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.bold,
-  },
-  aiAnswerText: {
     fontSize: FontSize.sm,
-    lineHeight: 22,
+    fontWeight: FontWeight.semibold,
+    marginBottom: Spacing.xs,
   },
 });

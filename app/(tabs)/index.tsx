@@ -61,6 +61,7 @@ import { useAI } from '../../contexts/AIContext';
 import { getTheme } from '../../constants/themes';
 import { categorizeIngredient } from '../../lib/cooklang';
 import { generateInsights, type InsightInput } from '../../lib/insights';
+import { MarkdownText } from '../../components/ui/MarkdownText';
 
 /** Parse "50g beurre" or "50 g de beurre" into name/qty for merge */
 function parseCourseInput(text: string): { name: string; quantity: number | null } {
@@ -1075,7 +1076,7 @@ export default function DashboardScreen() {
           <DashboardCard key="aiAssistant" title="Assistant IA" icon="🤖" color={primary}>
             {aiSuggestions ? (
               <View style={{ gap: 8 }}>
-                <Text style={[styles.insightBody, { color: colors.text, lineHeight: 20 }]}>{aiSuggestions}</Text>
+                <MarkdownText style={{ color: colors.text }}>{aiSuggestions}</MarkdownText>
                 <TouchableOpacity
                   style={[styles.lootCTA, { borderColor: primary }]}
                   onPress={async () => {
