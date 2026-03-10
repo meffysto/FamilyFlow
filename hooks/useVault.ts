@@ -70,6 +70,8 @@ import {
 import { scheduleRDVAlerts } from '../lib/scheduled-notifications';
 import { nextOccurrence } from '../lib/recurrence';
 import { format } from 'date-fns';
+import { parseJournalStats } from '../lib/journal-stats';
+import type { JournalSummaryEntry } from '../lib/ai-service';
 
 export const VAULT_PATH_KEY = 'vault_path';
 export const ACTIVE_PROFILE_KEY = 'active_profile_id';
@@ -178,6 +180,8 @@ export interface VaultState {
   updateWishItem: (item: WishlistItem, updates: Partial<WishlistItem>) => Promise<void>;
   deleteWishItem: (item: WishlistItem) => Promise<void>;
   toggleWishBought: (item: WishlistItem, boughtBy: string) => Promise<void>;
+  /** Stats journal bébé des 7 derniers jours (pour contexte IA) */
+  journalStats: JournalSummaryEntry[];
 }
 
 // Static task files (non-enfant)
@@ -322,6 +326,7 @@ export function useVaultInternal(): VaultState {
   const [budgetMonth, setBudgetMonth] = useState(() => format(new Date(), 'yyyy-MM'));
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [healthRecords, setHealthRecords] = useState<HealthRecord[]>([]);
+  const [journalStats, setJournalStats] = useState<JournalSummaryEntry[]>([]);
   const [defis, setDefis] = useState<Defi[]>([]);
   const [gratitudeDays, setGratitudeDays] = useState<GratitudeDay[]>([]);
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
@@ -583,6 +588,31 @@ export function useVaultInternal(): VaultState {
         setHealthRecords(results.filter((r): r is HealthRecord => r !== null));
       } catch {
         setHealthRecords([]);
+      }
+
+      // Load journal stats des 7 derniers jours (pour contexte IA)
+      try {
+        const today = new Date();
+        const last7 = Array.from({ length: 7 }, (_, i) => {
+          const d = new Date(today);
+          d.setDate(d.getDate() - i);
+          return format(d, 'yyyy-MM-dd');
+        });
+        const entries: JournalSummaryEntry[] = [];
+        for (const name of enfantNames) {
+          for (const dateStr of last7) {
+            try {
+              const path = `03 - Journal/${name}/${dateStr} ${name}.md`;
+              const content = await vault.readFile(path);
+              if (content) {
+                entries.push({ enfant: name, date: dateStr, stats: parseJournalStats(content) });
+              }
+            } catch { /* fichier inexistant = pas d'entrée ce jour */ }
+          }
+        }
+        setJournalStats(entries);
+      } catch {
+        setJournalStats([]);
       }
 
       // Load défis familiaux
@@ -1972,5 +2002,6 @@ export function useVaultInternal(): VaultState {
     updateWishItem,
     deleteWishItem,
     toggleWishBought,
+    journalStats,
   };
 }

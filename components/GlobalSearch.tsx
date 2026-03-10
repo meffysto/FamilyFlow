@@ -105,9 +105,11 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
     recipes: vault.recipes,
     profiles: vault.profiles,
     activeProfile: vault.activeProfile,
+    journalStats: vault.journalStats,
+    healthRecords: vault.healthRecords,
   }), [vault.tasks, vault.menageTasks, vault.rdvs, vault.stock, vault.meals,
     vault.courses, vault.memories, vault.defis, vault.wishlistItems, vault.recipes,
-    vault.profiles, vault.activeProfile]);
+    vault.profiles, vault.activeProfile, vault.journalStats, vault.healthRecords]);
 
   const handleAskAI = useCallback(async () => {
     if (!query.trim() || !ai.isConfigured) return;

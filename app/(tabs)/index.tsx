@@ -171,6 +171,8 @@ export default function DashboardScreen() {
     checkInDefi,
     gratitudeDays,
     wishlistItems,
+    journalStats,
+    healthRecords,
   } = useVault();
 
   // Active rewards (filtered for non-expired)
@@ -1081,6 +1083,7 @@ export default function DashboardScreen() {
                     const ctx = {
                       tasks, menageTasks, rdvs, stock, meals, courses,
                       memories, defis, wishlistItems, recipes, profiles, activeProfile,
+                      journalStats, healthRecords,
                     };
                     const resp = await ai.getSuggestions(ctx);
                     setAiSuggestions(resp.error || resp.text);

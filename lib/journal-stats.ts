@@ -16,22 +16,33 @@ export interface SleepEntry {
   isNight: boolean;
 }
 
+export interface CouchesDetail {
+  total: number;
+  pipi: number;
+  selle: number;
+  mixte: number;
+}
+
 export interface JournalStats {
   biberons: number;
   totalMl: number;
   tetees: number;
   couches: number;
+  couchesDetail: CouchesDetail;
   siestes: SleepEntry[];
   sommeilTotal: string;
   sommeilNuit: string;
   sommeilJour: string;
 }
 
+const EMPTY_COUCHES: CouchesDetail = { total: 0, pipi: 0, selle: 0, mixte: 0 };
+
 const EMPTY_STATS: JournalStats = {
   biberons: 0,
   totalMl: 0,
   tetees: 0,
   couches: 0,
+  couchesDetail: { ...EMPTY_COUCHES },
   siestes: [],
   sommeilTotal: '',
   sommeilNuit: '',
@@ -136,7 +147,7 @@ export function parseJournalStats(content: string): JournalStats {
   if (!content) return { ...EMPTY_STATS };
 
   const lines = content.split('\n');
-  const stats: JournalStats = { ...EMPTY_STATS, siestes: [] };
+  const stats: JournalStats = { ...EMPTY_STATS, couchesDetail: { ...EMPTY_COUCHES }, siestes: [] };
 
   let currentSection = '';
 
@@ -181,9 +192,21 @@ export function parseJournalStats(content: string): JournalStats {
 
     // Couches section
     if (currentSection.includes('couche')) {
-      const [heure] = cells;
+      const [heure, type] = cells;
       if (!heure) continue; // ignorer les lignes sans heure
       stats.couches++;
+      stats.couchesDetail.total++;
+      const typeLower = (type || '').toLowerCase().trim();
+      if (typeLower.includes('mixte') || (typeLower.includes('pipi') && typeLower.includes('selle'))) {
+        stats.couchesDetail.mixte++;
+      } else if (typeLower.includes('selle') || typeLower.includes('caca')) {
+        stats.couchesDetail.selle++;
+      } else if (typeLower.includes('pipi') || typeLower.includes('urine')) {
+        stats.couchesDetail.pipi++;
+      } else {
+        // Type non reconnu → compter comme total seulement
+        stats.couchesDetail.pipi++;
+      }
     }
 
     // Sommeil section
