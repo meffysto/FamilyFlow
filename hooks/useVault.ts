@@ -931,21 +931,20 @@ export function useVaultInternal(): VaultState {
       if (lineIndex < 0 || lineIndex >= lines.length) return;
 
       const line = lines[lineIndex];
-      // Table row: | Produit | Detail | Quantité | Seuil | QteAchat |
-      // split('|') → ['', ' Produit ', ' Detail ', ' Quantité ', ' Seuil ', ' QteAchat ', '']
-      // Column index 3 (0-based) is always the quantity
-      const cells = line.split('|');
-      if (cells.length >= 5) {
-        const qty = Math.max(0, newQuantity);
-        // Preserve padding by replacing just the number
-        cells[3] = cells[3].replace(/\d+/, String(qty));
-        if (!/\d/.test(cells[3])) {
-          // Cell had no number (was empty/dash) — set it directly
-          cells[3] = ` ${qty} `;
-        }
-      }
+      // Utiliser le même parsing que parseStock (trim+filter) pour indexer correctement
+      const cells = line.split('|').map(c => c.trim()).filter(c => c.length > 0);
+      if (cells.length < 4) return;
 
-      lines[lineIndex] = cells.join('|');
+      // cells[0]=produit, cells[1]=detail, cells[2]=quantite, cells[3]=seuil, cells[4]=qteAchat
+      const qty = Math.max(0, newQuantity);
+      const updated: Omit<StockItem, 'lineIndex'> = {
+        produit: cells[0],
+        detail: cells[1] || undefined,
+        quantite: qty,
+        seuil: parseInt(cells[3], 10) || 0,
+        qteAchat: cells[4] ? parseInt(cells[4], 10) || 1 : 1,
+      };
+      lines[lineIndex] = serializeStockRow(updated);
       await vaultRef.current.writeFile(STOCK_FILE, lines.join('\n'));
 
       // Update local state immediately
