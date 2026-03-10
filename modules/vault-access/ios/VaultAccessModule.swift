@@ -22,7 +22,7 @@ public class VaultAccessModule: Module {
       // Save bookmark for persistent access across app launches
       do {
         let bookmarkData = try url.bookmarkData(
-          options: .minimalBookmark,
+          options: [],
           includingResourceValuesForKeys: nil,
           relativeTo: nil
         )
@@ -54,7 +54,7 @@ public class VaultAccessModule: Module {
         if isStale {
           // Re-save the bookmark
           let newBookmark = try url.bookmarkData(
-            options: .minimalBookmark,
+            options: [],
             includingResourceValuesForKeys: nil,
             relativeTo: nil
           )
@@ -64,6 +64,16 @@ public class VaultAccessModule: Module {
         let success = url.startAccessingSecurityScopedResource()
         if success {
           self.activeURLs.append(url)
+
+          // Always re-save bookmark to upgrade from old minimalBookmark (read-only)
+          // to full read/write bookmark
+          if let freshBookmark = try? url.bookmarkData(
+            options: [],
+            includingResourceValuesForKeys: nil,
+            relativeTo: nil
+          ) {
+            UserDefaults.standard.set(freshBookmark, forKey: "vault_bookmark")
+          }
         }
 
         return url.absoluteString
