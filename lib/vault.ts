@@ -66,11 +66,12 @@ export class VaultManager {
   async writeFile(relativePath: string, content: string): Promise<void> {
     const uri = this.uri(relativePath);
     // On iOS, use NSFileCoordinator for file provider compatibility (Obsidian, iCloud…)
+    // Falls back to expo-file-system if native module unavailable (Expo Go)
     if (Platform.OS === 'ios') {
-      await coordinatedWriteFile(uri, content);
-      return;
+      const ok = await coordinatedWriteFile(uri, content);
+      if (ok) return;
     }
-    // Fallback: expo-file-system (Android, desktop)
+    // Fallback: expo-file-system (Android, desktop, Expo Go)
     const parts = relativePath.split('/');
     if (parts.length > 1) {
       const dir = parts.slice(0, -1).join('/');
@@ -85,8 +86,8 @@ export class VaultManager {
   async deleteFile(relativePath: string): Promise<void> {
     const uri = this.uri(relativePath);
     if (Platform.OS === 'ios') {
-      await coordinatedDeleteFile(uri);
-      return;
+      const ok = await coordinatedDeleteFile(uri);
+      if (ok) return;
     }
     await FileSystem.deleteAsync(uri, { idempotent: true });
   }
@@ -106,8 +107,8 @@ export class VaultManager {
   async ensureDir(relativeDir: string): Promise<void> {
     const uri = this.uri(relativeDir);
     if (Platform.OS === 'ios') {
-      await coordinatedEnsureDir(uri);
-      return;
+      const ok = await coordinatedEnsureDir(uri);
+      if (ok) return;
     }
     const info = await FileSystem.getInfoAsync(uri);
     if (!info.exists) {
@@ -154,17 +155,23 @@ export class VaultManager {
   async copyFileToVault(sourceUri: string, relativePath: string): Promise<void> {
     const destUri = this.uri(relativePath);
     if (Platform.OS === 'ios') {
-      await coordinatedCopyFile(sourceUri, destUri);
-    } else {
-      const parts = relativePath.split('/');
-      if (parts.length > 1) {
-        const dir = parts.slice(0, -1).join('/');
-        await this.ensureDir(dir);
+      const ok = await coordinatedCopyFile(sourceUri, destUri);
+      if (ok) {
+        const info = await FileSystem.getInfoAsync(destUri);
+        if (!info.exists) {
+          throw new Error(`Copie échouée.\nSource: ${sourceUri}\nDest: ${destUri}`);
+        }
+        return;
       }
-      await FileSystem.copyAsync({ from: sourceUri, to: destUri });
     }
+    // Fallback: expo-file-system (Android, Expo Go)
+    const parts = relativePath.split('/');
+    if (parts.length > 1) {
+      const dir = parts.slice(0, -1).join('/');
+      await this.ensureDir(dir);
+    }
+    await FileSystem.copyAsync({ from: sourceUri, to: destUri });
 
-    // Verify the copy succeeded
     const info = await FileSystem.getInfoAsync(destUri);
     if (!info.exists) {
       throw new Error(`Copie échouée.\nSource: ${sourceUri}\nDest: ${destUri}`);

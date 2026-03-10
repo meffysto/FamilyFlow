@@ -203,7 +203,10 @@ function stockInsights(input: InsightInput): Insight[] {
         action: {
           label: 'Ajouter aux courses',
           type: 'addCourse',
-          payload: notInCourses.map((s) => `${s.produit}${s.qteAchat ? ` x${s.qteAchat}` : ''}`),
+          payload: notInCourses.map((s) => ({
+            text: `${s.produit}${s.qteAchat ? ` x${s.qteAchat}` : ''}`,
+            section: s.section ?? 'Produits bébé',
+          })),
         },
       });
     }

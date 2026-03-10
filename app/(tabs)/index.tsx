@@ -535,10 +535,13 @@ export default function DashboardScreen() {
                         router.push(insight.action.route as any);
                       }
                     } else if (insight.action?.type === 'addCourse' && insight.action.payload) {
-                      const items: string[] = insight.action.payload;
-                      Promise.all(items.map((item) => addCourseItem(item))).then(() => {
+                      const items: { text: string; section?: string }[] = insight.action.payload;
+                      (async () => {
+                        for (const item of items) {
+                          await addCourseItem(item.text, item.section);
+                        }
                         showToast(`${items.length} article${items.length > 1 ? 's' : ''} ajouté${items.length > 1 ? 's' : ''} aux courses`);
-                      });
+                      })();
                     }
                   }}
                 >
