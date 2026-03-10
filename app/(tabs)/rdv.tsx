@@ -57,8 +57,9 @@ const TYPE_EMOJI: Record<string, string> = {
 };
 
 export default function RDVScreen() {
-  const { rdvs, addRDV, updateRDV, deleteRDV } = useVault();
+  const { rdvs, addRDV, updateRDV, deleteRDV, activeProfile } = useVault();
   const { primary, tint, colors } = useThemeColors();
+  const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
 
   const { addNew } = useLocalSearchParams<{ addNew?: string }>();
   const [search, setSearch] = useState('');
@@ -74,18 +75,25 @@ export default function RDVScreen() {
   const [calMonth, setCalMonth] = useState(new Date());
   const [calDayRdvs, setCalDayRdvs] = useState<{ date: string; rdvs: RDV[] } | null>(null);
 
+  // Filtrer par profil enfant : un enfant ne voit que ses propres RDV
+  const profileRdvs = useMemo(() => {
+    if (!isChildMode || !activeProfile) return rdvs;
+    const nameLower = activeProfile.name.toLowerCase();
+    return rdvs.filter((r) => r.enfant.toLowerCase() === nameLower);
+  }, [rdvs, isChildMode, activeProfile]);
+
   // Filter by search
   const filteredRdvs = useMemo(() => {
-    if (!search.trim()) return rdvs;
+    if (!search.trim()) return profileRdvs;
     const q = search.toLowerCase();
-    return rdvs.filter(
+    return profileRdvs.filter(
       (r) =>
         r.enfant.toLowerCase().includes(q) ||
         r.type_rdv.toLowerCase().includes(q) ||
         (r.médecin ?? '').toLowerCase().includes(q) ||
         (r.lieu ?? '').toLowerCase().includes(q)
     );
-  }, [rdvs, search]);
+  }, [profileRdvs, search]);
 
   const upcoming = useMemo(
     () => filteredRdvs.filter((r) => isRdvUpcoming(r)),

@@ -76,19 +76,48 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
   const [aiHistory, setAiHistory] = useState<AIMessage[]>([]);
   const inputRef = useRef<TextInput>(null);
 
-  const searchInput: SearchInput = useMemo(() => ({
-    tasks: vault.tasks,
-    menageTasks: vault.menageTasks,
-    rdvs: vault.rdvs,
-    stock: vault.stock,
-    meals: vault.meals,
-    courses: vault.courses,
-    memories: vault.memories,
-    defis: vault.defis,
-    wishlistItems: vault.wishlistItems,
-    recipes: vault.recipes,
-  }), [vault.tasks, vault.menageTasks, vault.rdvs, vault.stock, vault.meals,
-    vault.courses, vault.memories, vault.defis, vault.wishlistItems, vault.recipes]);
+  const isChildMode = vault.activeProfile?.role === 'enfant' || vault.activeProfile?.role === 'ado';
+
+  // Filtrer les données de recherche en mode enfant
+  const searchInput: SearchInput = useMemo(() => {
+    const nameLower = vault.activeProfile?.name?.toLowerCase() ?? '';
+    const profileId = vault.activeProfile?.id ?? '';
+
+    if (!isChildMode || !nameLower) {
+      return {
+        tasks: vault.tasks,
+        menageTasks: vault.menageTasks,
+        rdvs: vault.rdvs,
+        stock: vault.stock,
+        meals: vault.meals,
+        courses: vault.courses,
+        memories: vault.memories,
+        defis: vault.defis,
+        wishlistItems: vault.wishlistItems,
+        recipes: vault.recipes,
+      };
+    }
+
+    return {
+      tasks: vault.tasks.filter((t) => {
+        const f = t.sourceFile.toLowerCase();
+        return f.includes(nameLower) || f.includes('maison');
+      }),
+      menageTasks: vault.menageTasks,
+      rdvs: vault.rdvs.filter((r) => r.enfant.toLowerCase() === nameLower),
+      stock: [], // masqué pour les enfants
+      meals: vault.meals,
+      courses: vault.courses,
+      memories: vault.memories.filter((m) => m.enfant.toLowerCase() === nameLower),
+      defis: vault.defis.filter((d) =>
+        d.participants.length === 0 || d.participants.includes(profileId),
+      ),
+      wishlistItems: vault.wishlistItems.filter((w) => w.profileName.toLowerCase() === nameLower),
+      recipes: vault.recipes,
+    };
+  }, [vault.tasks, vault.menageTasks, vault.rdvs, vault.stock, vault.meals,
+    vault.courses, vault.memories, vault.defis, vault.wishlistItems, vault.recipes,
+    isChildMode, vault.activeProfile]);
 
   const results = useMemo(() => searchVault(query, searchInput), [query, searchInput]);
 

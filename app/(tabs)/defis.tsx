@@ -672,14 +672,23 @@ export default function DefisScreen() {
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
   const { profiles, defis, createDefi, checkInDefi, completeDefi, deleteDefi, activeProfile } = useVault();
+  const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
+
+  // Filtrer les défis : un enfant ne voit que ceux auxquels il participe (ou familiaux sans participants)
+  const visibleDefis = useMemo(() => {
+    if (!isChildMode || !activeProfile) return defis;
+    return defis.filter((d) =>
+      d.participants.length === 0 || d.participants.includes(activeProfile.id),
+    );
+  }, [defis, isChildMode, activeProfile]);
 
   const [activeTab, setActiveTab] = useState<TabId>('actifs');
   const [configModal, setConfigModal] = useState<{ visible: boolean; template?: DefiTemplate }>({ visible: false });
   const [detailDefiId, setDetailDefiId] = useState<string | null>(null);
-  const detailDefi = detailDefiId ? defis.find((d) => d.id === detailDefiId) ?? null : null;
+  const detailDefi = detailDefiId ? visibleDefis.find((d) => d.id === detailDefiId) ?? null : null;
 
-  const activeDefis = useMemo(() => defis.filter((d) => d.status === 'active'), [defis]);
-  const historyDefis = useMemo(() => defis.filter((d) => d.status !== 'active'), [defis]);
+  const activeDefis = useMemo(() => visibleDefis.filter((d) => d.status === 'active'), [visibleDefis]);
+  const historyDefis = useMemo(() => visibleDefis.filter((d) => d.status !== 'active'), [visibleDefis]);
 
   const handleCreateDefi = useCallback(async (defi: Omit<Defi, 'progress' | 'status'>) => {
     await createDefi(defi);

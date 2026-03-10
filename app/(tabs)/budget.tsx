@@ -69,7 +69,20 @@ export default function BudgetScreen() {
     loadBudgetData,
     addExpense,
     deleteExpense,
+    activeProfile,
   } = useVault();
+
+  const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
+
+  // Guard : les enfants n'ont pas accès au budget
+  if (isChildMode) {
+    return (
+      <SafeAreaView style={[{ flex: 1, backgroundColor: colors.bg, justifyContent: 'center', alignItems: 'center' }]} edges={['top']}>
+        <Text style={{ fontSize: 48, marginBottom: 16 }}>🔒</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 16 }}>Accès réservé aux parents</Text>
+      </SafeAreaView>
+    );
+  }
 
   const [tab, setTab] = useState<TabId>('resume');
   const [addModalVisible, setAddModalVisible] = useState(false);
