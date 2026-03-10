@@ -22,7 +22,7 @@ export function SettingsParentalControls() {
       <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Contrôle parental</Text>
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
         <Text style={[styles.description, { color: colors.textSub }]}>
-          Autorisez ou restreignez ce que les profils enfants et ados peuvent voir.
+          Par défaut, chaque enfant ne voit que ses propres données. Activez un toggle pour lui donner accès aux données de toute la famille.
         </Text>
         {PARENTAL_CATEGORIES.map((cat) => (
           <View key={cat.id} style={[styles.row, { borderBottomColor: colors.separator }]}>
@@ -43,7 +43,7 @@ export function SettingsParentalControls() {
         ))}
         <View style={[styles.hint, { backgroundColor: colors.infoBg }]}>
           <Text style={[styles.hintText, { color: colors.info }]}>
-            Par défaut tout est restreint. Les adultes voient toujours tout.
+            Les adultes voient toujours tout, quel que soit le réglage.
           </Text>
         </View>
       </View>
