@@ -281,7 +281,10 @@ export class VaultManager {
     }
 
     if (sectionStart === -1) {
-      lines.push(taskLine);
+      // Section inexistante → la créer en fin de fichier
+      lines.push('', `## ${section}`, taskLine);
+      await this.writeFile(relativePath, lines.join('\n'));
+      return;
     } else {
       let insertAt = lines.length;
       for (let i = sectionStart + 1; i < lines.length; i++) {

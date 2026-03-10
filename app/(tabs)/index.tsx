@@ -156,7 +156,7 @@ export default function DashboardScreen() {
     deleteRDV,
     addCourseItem,
     mergeCourseIngredients,
-    toggleCourseItem,
+    removeCourseItem,
     clearCompletedCourses,
     refresh,
     vacationTasks,
@@ -733,7 +733,26 @@ export default function DashboardScreen() {
                 <Text style={[styles.courseText, { color: colors.textSub }]}>{item.text}</Text>
                 <TouchableOpacity
                   style={[styles.courseCheckBtn, { borderColor: colors.separator, backgroundColor: colors.card }]}
-                  onPress={() => toggleCourseItem(item, true)}
+                  onPress={async () => {
+                    const itemTextLower = item.text.toLowerCase();
+                    const stockMatch = stock.find((s) => itemTextLower.includes(s.produit.toLowerCase()));
+                    const addQty = stockMatch?.qteAchat ?? 1;
+                    const prevQty = stockMatch?.quantite ?? 0;
+                    await removeCourseItem(item.lineIndex);
+                    if (stockMatch) {
+                      await updateStockQuantity(stockMatch.lineIndex, prevQty + addQty);
+                    }
+                    const msg = stockMatch ? `${stockMatch.produit} restocké (+${addQty})` : `${item.text} retiré`;
+                    showToast(msg, 'success', {
+                      label: 'Annuler',
+                      onPress: async () => {
+                        try {
+                          await addCourseItem(item.text, item.section);
+                          if (stockMatch) await updateStockQuantity(stockMatch.lineIndex, prevQty);
+                        } catch { /* best effort */ }
+                      },
+                    });
+                  }}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   activeOpacity={0.6}
                 >

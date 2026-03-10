@@ -35,6 +35,7 @@ import RecipeViewer from '../../components/RecipeViewer';
 import { importRecipeFromUrl, convertTextWithAI, parseTextToRecipe, searchCommunityRecipes, downloadCommunityRecipe, type ImportResult, type ImportedRecipe, type CookImportResult, type CommunityRecipe } from '../../lib/recipe-import';
 import { generateCookFile } from '../../lib/cooklang';
 import { useAI } from '../../contexts/AIContext';
+import { useToast } from '../../contexts/ToastContext';
 
 const DAYS_ORDER = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
@@ -53,6 +54,7 @@ export default function MealsScreen() {
     meals, updateMeal,
     courses, vault,
     addCourseItem, removeCourseItem, mergeCourseIngredients,
+    stock, updateStockQuantity,
     recipes, deleteRecipe,
     scanAllCookFiles, moveCookToRecipes,
     profiles,
@@ -62,6 +64,7 @@ export default function MealsScreen() {
   } = useVault();
   const { primary, tint, colors } = useThemeColors();
   const { config: aiConfig, isConfigured: aiConfigured } = useAI();
+  const { showToast } = useToast();
 
   const { tab: tabParam } = useLocalSearchParams<{ tab?: string }>();
   const [tab, setTab] = useState<Tab>('repas');
@@ -274,12 +277,47 @@ export default function MealsScreen() {
   const handleCourseToggle = useCallback(async (item: CourseItem) => {
     if (!vault) return;
     try {
-      await vault.toggleTask(COURSES_FILE, item.lineIndex, !item.completed);
-      await refresh();
+      if (item.completed) {
+        // Décocher simplement
+        await vault.toggleTask(COURSES_FILE, item.lineIndex, false);
+        await refresh();
+        return;
+      }
+
+      // Cocher → supprimer + éventuellement restocker
+      const itemTextLower = item.text.toLowerCase();
+      const stockMatch = stock.find((s) =>
+        itemTextLower.includes(s.produit.toLowerCase()),
+      );
+      const addQty = stockMatch?.qteAchat ?? 1;
+      const prevQty = stockMatch?.quantite ?? 0;
+
+      // 1. Supprimer des courses d'abord (déclenche loadVaultData)
+      await removeCourseItem(item.lineIndex);
+
+      // 2. Restocker APRÈS le reload vault
+      if (stockMatch) {
+        await updateStockQuantity(stockMatch.lineIndex, prevQty + addQty);
+      }
+
+      // 3. Toast avec undo
+      const msg = stockMatch
+        ? `${stockMatch.produit} restocké (+${addQty})`
+        : `${item.text} retiré`;
+
+      showToast(msg, 'success', {
+        label: 'Annuler',
+        onPress: async () => {
+          try {
+            await addCourseItem(item.text, item.section);
+            if (stockMatch) await updateStockQuantity(stockMatch.lineIndex, prevQty);
+          } catch { /* best effort */ }
+        },
+      });
     } catch (e) {
       Alert.alert('Erreur', String(e));
     }
-  }, [vault, refresh]);
+  }, [vault, refresh, stock, updateStockQuantity, removeCourseItem, addCourseItem, showToast]);
 
   const handleCourseRemove = useCallback((item: CourseItem) => {
     Alert.alert(
