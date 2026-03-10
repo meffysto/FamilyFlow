@@ -1,9 +1,10 @@
 /**
  * VaultPicker.tsx — Vault folder selection UI
  *
- * iOS: pick a .md file → extract parent directory as vault path
+ * iOS: folder picker (public.folder) → copie dans documentDirectory
  * Android: SAF folder picker
- * Mac: manual text input + coffre quick-fill
+ * Desktop: manual text input + coffre quick-fill
+ * Tous: sync depuis un ordinateur via serve-vault.py
  */
 
 import React, { useState } from 'react';
@@ -16,12 +17,14 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as DocumentPicker from 'expo-document-picker';
 import { VaultManager } from '../lib/vault';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { SetupWizard } from './SetupWizard';
+import { startAccessing } from '../modules/vault-access/src';
 
 interface VaultPickerProps {
   currentPath?: string | null;
@@ -37,48 +40,45 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
 
   const [showWizard, setShowWizard] = useState(false);
   const [syncProgress, setSyncProgress] = useState('');
-  const [macIp, setMacIp] = useState('');
+  const [serverIp, setServerIp] = useState('');
   const COFFRE_DEFAULT = '/Users/USER/Documents/coffre';
 
-  const syncFromMac = async () => {
-    const ip = macIp.trim();
+  // --- Sync depuis un ordinateur (Python serve-vault.py) ---
+  const syncFromServer = async () => {
+    const ip = serverIp.trim();
     if (!ip) {
-      setError('Entrez l\'adresse IP de votre Mac (ex: 192.168.1.42)');
+      setError('Entrez l\'adresse IP de votre ordinateur (ex: 192.168.1.42)');
       return;
     }
-    const MAC_SERVER = `http://${ip}:8765`;
-    setSyncProgress('Connexion au Mac...');
+    const SERVER_URL = `http://${ip}:8765`;
+    setSyncProgress('Connexion...');
     setError(null);
 
     try {
-      // 1. Fetch manifest
-      const manifestRes = await fetch(`${MAC_SERVER}/manifest.json`);
-      if (!manifestRes.ok) throw new Error('Serveur non trouvé. Lancez serve-vault.py sur le Mac.');
+      const manifestRes = await fetch(`${SERVER_URL}/manifest.json`);
+      if (!manifestRes.ok) throw new Error('Serveur non trouvé. Lancez serve-vault.py sur l\'ordinateur.');
       const { files } = await manifestRes.json() as { files: string[] };
 
       const localVault = `${FileSystem.documentDirectory}coffre`;
 
-      // 2. Download each file
       let downloaded = 0;
       for (const relPath of files) {
         setSyncProgress(`${downloaded + 1}/${files.length} — ${relPath}`);
 
-        const fileUrl = `${MAC_SERVER}/file/${encodeURIComponent(relPath)}`;
+        const fileUrl = `${SERVER_URL}/file/${encodeURIComponent(relPath)}`;
         const localPath = `${localVault}/${relPath}`;
 
-        // Ensure parent dir exists
         const parentDir = localPath.substring(0, localPath.lastIndexOf('/'));
         const dirInfo = await FileSystem.getInfoAsync(parentDir);
         if (!dirInfo.exists) {
           await FileSystem.makeDirectoryAsync(parentDir, { intermediates: true });
         }
 
-        // Download file
         await FileSystem.downloadAsync(fileUrl, localPath);
         downloaded++;
       }
 
-      setSyncProgress(`✅ ${downloaded} fichiers synchronisés`);
+      setSyncProgress(`${downloaded} fichiers synchronisés`);
       setPath(localVault);
 
       // Laisser le JS engine respirer avant le rechargement du vault
@@ -87,81 +87,32 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
       onPathSelected(localVault);
     } catch (e: any) {
       setSyncProgress('');
-      setError(`Sync échouée : ${e.message}\n\nVérifiez que serve-vault.py tourne sur le Mac.`);
+      setError(`Sync échouée : ${e.message}\n\nVérifiez que serve-vault.py tourne sur l'ordinateur et que vous êtes sur le même réseau Wi-Fi.`);
     }
   };
 
-  const copyVaultToLocal = async (sourceDir: string): Promise<string> => {
-    const localVault = `${FileSystem.documentDirectory}coffre`;
-
-    // Recursive copy
-    const copyDir = async (srcDir: string, destDir: string) => {
-      const destInfo = await FileSystem.getInfoAsync(destDir);
-      if (!destInfo.exists) {
-        await FileSystem.makeDirectoryAsync(destDir, { intermediates: true });
-      }
-      const entries = await FileSystem.readDirectoryAsync(srcDir);
-      for (const entry of entries) {
-        if (entry.startsWith('.')) continue; // Skip hidden files
-        const srcPath = `${srcDir}/${entry}`;
-        const destPath = `${destDir}/${entry}`;
-        const info = await FileSystem.getInfoAsync(srcPath);
-        if ('isDirectory' in info && info.isDirectory) {
-          await copyDir(srcPath, destPath);
-        } else {
-          await FileSystem.copyAsync({ from: srcPath, to: destPath });
-        }
-      }
-    };
-
-    setSyncProgress('Copie du vault en cours...');
-    await copyDir(sourceDir, localVault);
-    setSyncProgress('');
-    return localVault;
-  };
-
-  const pickFile = async () => {
+  // --- iOS: picker de dossier (public.folder) — accès direct via security-scoped URL ---
+  const pickFolder = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
+        type: 'public.folder',
         copyToCacheDirectory: false,
       });
 
       if (result.canceled || !result.assets?.[0]) return;
 
-      const fileUri = result.assets[0].uri;
-      const fileName = result.assets[0].name;
-      const dirUri = fileUri.substring(0, fileUri.lastIndexOf('/'));
+      const folderUri = result.assets[0].uri;
 
-      if (Platform.OS === 'ios') {
-        // iOS: le dossier source est en lecture seule (sandbox)
-        // → copier le vault dans documentDirectory
-        Alert.alert(
-          'Vault détecté',
-          `Fichier : ${fileName}\n\nLe vault sera copié dans l'espace de l'app pour pouvoir y écrire.`,
-          [
-            {
-              text: 'Copier et utiliser',
-              onPress: async () => {
-                try {
-                  const localPath = await copyVaultToLocal(dirUri);
-                  setPath(localPath);
-                  setError(null);
-                  onPathSelected(localPath);
-                } catch (e: any) {
-                  setSyncProgress('');
-                  setError(`Copie échouée : ${e.message}`);
-                }
-              },
-            },
-            { text: 'Annuler', style: 'cancel' },
-          ],
-        );
-      } else {
-        // Android / Mac: accès direct
-        setPath(decodeURIComponent(dirUri));
-        setError(null);
-        onPathSelected(dirUri);
+      // Activer l'accès security-scoped + sauvegarder le bookmark
+      const granted = await startAccessing(folderUri);
+      if (!granted) {
+        setError('Accès refusé au dossier. Réessayez en sélectionnant le dossier.');
+        return;
       }
+
+      setPath(decodeURIComponent(folderUri));
+      setError(null);
+      onPathSelected(folderUri);
     } catch (e: any) {
       setError(`Erreur lors de la sélection : ${e.message}`);
     }
@@ -226,7 +177,7 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
         style={[styles.createBtn, { backgroundColor: primary }]}
         onPress={() => setShowWizard(true)}
       >
-        <Text style={styles.createBtnText}>✨ Créer un nouveau vault</Text>
+        <Text style={styles.createBtnText}>Créer un nouveau vault</Text>
         <Text style={styles.createBtnSub}>Pas besoin d'Obsidian — tout est créé automatiquement</Text>
       </TouchableOpacity>
 
@@ -236,46 +187,57 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
         <View style={[styles.separatorLine, { backgroundColor: colors.separator }]} />
       </View>
 
-      <Text style={[styles.label, { color: colors.textSub }]}>Chemin du vault</Text>
+      {/* iOS: folder picker */}
+      {Platform.OS === 'ios' && (
+        <TouchableOpacity
+          style={[styles.pickerBtn, { backgroundColor: colors.infoBg }]}
+          onPress={pickFolder}
+        >
+          <Text style={[styles.pickerBtnText, { color: colors.info || '#1D4ED8' }]}>Sélectionner le dossier du vault</Text>
+          <Text style={[styles.pickerBtnSub, { color: colors.textMuted }]}>Depuis Fichiers, iCloud, Obsidian...</Text>
+        </TouchableOpacity>
+      )}
 
-      <TextInput
-        style={[styles.input, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }, error ? styles.inputError : null]}
-        value={path}
-        onChangeText={(t) => { setPath(t); setError(null); }}
-        placeholder="/chemin/vers/mon-vault"
-        placeholderTextColor={colors.textFaint}
-        autoCapitalize="none"
-        autoCorrect={false}
-        returnKeyType="done"
-        onSubmitEditing={() => validate(path)}
-        multiline
-      />
+      {/* Android SAF picker */}
+      {Platform.OS === 'android' && (
+        <TouchableOpacity
+          style={[styles.pickerBtn, { backgroundColor: colors.infoBg }]}
+          onPress={useSAF}
+        >
+          <Text style={[styles.pickerBtnText, { color: colors.info || '#1D4ED8' }]}>Sélectionner le dossier du vault</Text>
+          <Text style={[styles.pickerBtnSub, { color: colors.textMuted }]}>Depuis le stockage de l'appareil</Text>
+        </TouchableOpacity>
+      )}
 
-      {error && <Text style={styles.errorText}>{error}</Text>}
-
-      {/* Sync from Mac — download vault via HTTP */}
+      {/* Sync from any computer */}
       <View style={styles.syncSection}>
         <TextInput
           style={[styles.ipInput, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }]}
-          value={macIp}
-          onChangeText={(t) => { setMacIp(t); setError(null); }}
-          placeholder="IP du Mac (ex: 192.168.1.42)"
+          value={serverIp}
+          onChangeText={(t) => { setServerIp(t); setError(null); }}
+          placeholder="IP de l'ordinateur (ex: 192.168.1.42)"
           placeholderTextColor={colors.textFaint}
           autoCapitalize="none"
           autoCorrect={false}
           keyboardType="numbers-and-punctuation"
           returnKeyType="go"
-          onSubmitEditing={syncFromMac}
+          onSubmitEditing={syncFromServer}
         />
+        <TouchableOpacity
+          style={[styles.syncBtn, { backgroundColor: tint }]}
+          onPress={syncFromServer}
+          disabled={!!syncProgress}
+        >
+          <Text style={[styles.syncBtnText, { color: primary }]}>Sync depuis un ordinateur</Text>
+          <Text style={[styles.syncBtnSub, { color: colors.textMuted }]}>
+            Lancez{' '}
+            <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: 10 }}>
+              python3 serve-vault.py
+            </Text>
+            {' '}sur le PC/Mac
+          </Text>
+        </TouchableOpacity>
       </View>
-      <TouchableOpacity
-        style={[styles.syncBtn, { backgroundColor: tint }]}
-        onPress={syncFromMac}
-        disabled={!!syncProgress}
-      >
-        <Text style={[styles.syncBtnText, { color: primary }]}>💻 Sync depuis le Mac</Text>
-        <Text style={[styles.syncBtnSub, { color: colors.textMuted }]}>Télécharge le vault via Wi-Fi</Text>
-      </TouchableOpacity>
 
       {!!syncProgress && (
         <View style={[styles.progressBox, { backgroundColor: colors.bg }]}>
@@ -284,28 +246,32 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
         </View>
       )}
 
-      {/* File picker — pick a .md then use parent dir */}
-      <TouchableOpacity style={styles.pickerBtn} onPress={pickFile}>
-        <Text style={styles.pickerBtnText}>📂 Sélectionner un fichier du vault</Text>
-        <Text style={styles.pickerBtnSub}>Choisissez un .md à la racine du vault</Text>
-      </TouchableOpacity>
+      {error && <Text style={styles.errorText}>{error}</Text>}
 
-      {/* Quick fill for coffre — Mac */}
-      {Platform.OS !== 'ios' && (
-        <TouchableOpacity
-          style={[styles.quickFillBtn, { backgroundColor: tint }]}
-          onPress={() => { setPath(COFFRE_DEFAULT); setError(null); }}
-        >
-          <Text style={[styles.quickFillText, { color: primary }]}>📁 Utiliser le vault coffre</Text>
-          <Text style={[styles.quickFillSub, { color: colors.textMuted }]}>{COFFRE_DEFAULT}</Text>
-        </TouchableOpacity>
-      )}
-
-      {/* Android SAF picker */}
-      {Platform.OS === 'android' && (
-        <TouchableOpacity style={styles.safBtn} onPress={useSAF}>
-          <Text style={styles.safBtnText}>📂 Sélecteur Android (SAF)</Text>
-        </TouchableOpacity>
+      {/* Desktop: manual path input */}
+      {Platform.OS !== 'ios' && Platform.OS !== 'android' && (
+        <>
+          <Text style={[styles.label, { color: colors.textSub }]}>Chemin du vault</Text>
+          <TextInput
+            style={[styles.input, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }, error ? styles.inputError : null]}
+            value={path}
+            onChangeText={(t) => { setPath(t); setError(null); }}
+            placeholder="/chemin/vers/mon-vault"
+            placeholderTextColor={colors.textFaint}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="done"
+            onSubmitEditing={() => validate(path)}
+            multiline
+          />
+          <TouchableOpacity
+            style={[styles.quickFillBtn, { backgroundColor: tint }]}
+            onPress={() => { setPath(COFFRE_DEFAULT); setError(null); }}
+          >
+            <Text style={[styles.quickFillText, { color: primary }]}>Utiliser le vault coffre</Text>
+            <Text style={[styles.quickFillSub, { color: colors.textMuted }]}>{COFFRE_DEFAULT}</Text>
+          </TouchableOpacity>
+        </>
       )}
 
       <View style={styles.actions}>
@@ -315,17 +281,19 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
           </TouchableOpacity>
         )}
 
-        <TouchableOpacity
-          style={[styles.confirmBtn, { backgroundColor: primary }, isValidating && styles.confirmBtnDisabled]}
-          onPress={() => validate(path)}
-          disabled={isValidating}
-        >
-          {isValidating ? (
-            <ActivityIndicator color="#FFFFFF" size="small" />
-          ) : (
-            <Text style={styles.confirmText}>Confirmer</Text>
-          )}
-        </TouchableOpacity>
+        {Platform.OS !== 'ios' && Platform.OS !== 'android' && (
+          <TouchableOpacity
+            style={[styles.confirmBtn, { backgroundColor: primary }, isValidating && styles.confirmBtnDisabled]}
+            onPress={() => validate(path)}
+            disabled={isValidating}
+          >
+            {isValidating ? (
+              <ActivityIndicator color="#FFFFFF" size="small" />
+            ) : (
+              <Text style={styles.confirmText}>Confirmer</Text>
+            )}
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -416,7 +384,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   pickerBtn: {
-    backgroundColor: '#DBEAFE',
     borderRadius: 10,
     padding: 14,
     gap: 2,
@@ -424,11 +391,9 @@ const styles = StyleSheet.create({
   pickerBtnText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1D4ED8',
   },
   pickerBtnSub: {
     fontSize: 11,
-    color: '#3B82F6',
   },
   quickFillBtn: {
     borderRadius: 10,
@@ -442,33 +407,6 @@ const styles = StyleSheet.create({
   quickFillSub: {
     fontSize: 11,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-  },
-  safBtn: {
-    backgroundColor: '#DBEAFE',
-    borderRadius: 10,
-    padding: 12,
-    alignItems: 'center',
-  },
-  safBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1D4ED8',
-  },
-  iosHint: {
-    backgroundColor: '#FEF3C7',
-    borderRadius: 10,
-    padding: 12,
-    gap: 6,
-  },
-  hintTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#92400E',
-  },
-  hintText: {
-    fontSize: 12,
-    color: '#78350F',
-    lineHeight: 18,
   },
   actions: {
     flexDirection: 'row',

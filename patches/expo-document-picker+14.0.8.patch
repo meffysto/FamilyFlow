@@ -1,0 +1,25 @@
+diff --git a/node_modules/expo-document-picker/ios/DocumentPickerModule.swift b/node_modules/expo-document-picker/ios/DocumentPickerModule.swift
+index 8b093cd..ea7fe36 100644
+--- a/node_modules/expo-document-picker/ios/DocumentPickerModule.swift
++++ b/node_modules/expo-document-picker/ios/DocumentPickerModule.swift
+@@ -176,6 +176,8 @@ public class DocumentPickerModule: Module, PickingResultHandler {
+       return UTType.audio
+     case "text/*":
+       return UTType.text
++    case "public.folder":
++      return UTType.folder
+     default:
+       return UTType(mimeType: mimeType)
+     }
+@@ -212,9 +214,10 @@ public class DocumentPickerModule: Module, PickingResultHandler {
+   private func createDocumentPicker(with options: DocumentPickerOptions) -> UIDocumentPickerViewController {
+     if #available(iOS 14.0, *) {
+       let utTypes = options.type.compactMap { toUTType(mimeType: $0) }
++      let isFolder = utTypes.contains(.folder)
+       return UIDocumentPickerViewController(
+         forOpeningContentTypes: utTypes,
+-        asCopy: true
++        asCopy: isFolder ? false : true
+       )
+     } else {
+       let utiTypes = options.type.map { toUTI(mimeType: $0) }

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 Serve vault files for Family Vault app to download.
-Run: python3 serve-vault.py
-Then tap "Sync from Mac" in the app.
+Run on any computer (Mac/Windows/Linux): python3 serve-vault.py
+Then enter your computer's IP in the app and tap "Sync depuis un ordinateur".
 """
 
 import http.server

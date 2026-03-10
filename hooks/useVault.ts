@@ -20,6 +20,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { VaultManager } from '../lib/vault';
+import { restoreAccess } from '../modules/vault-access/src';
 import {
   parseTaskFile,
   parseMénage,
@@ -337,6 +338,9 @@ export function useVaultInternal(): VaultState {
   useEffect(() => {
     (async () => {
       try {
+        // Restore iOS security-scoped access before reading vault
+        await restoreAccess();
+
         const [stored, storedProfileId] = await Promise.all([
           SecureStore.getItemAsync(VAULT_PATH_KEY),
           SecureStore.getItemAsync(ACTIVE_PROFILE_KEY),
