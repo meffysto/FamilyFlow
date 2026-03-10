@@ -13,9 +13,14 @@ interface VaultAccessModuleType {
   clearBookmark(): void;
 }
 
-const VaultAccessNative: VaultAccessModuleType | null = isIOS
-  ? requireNativeModule('VaultAccess')
-  : null;
+let VaultAccessNative: VaultAccessModuleType | null = null;
+if (isIOS) {
+  try {
+    VaultAccessNative = requireNativeModule('VaultAccess');
+  } catch {
+    // Expo Go: module natif indisponible, fallback sur expo-file-system
+  }
+}
 
 /**
  * Start accessing a security-scoped folder URL (iOS only).
