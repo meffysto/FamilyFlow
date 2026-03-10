@@ -32,8 +32,9 @@ import { MealItem, CourseItem, Recipe } from '../../lib/types';
 import { formatIngredient, aggregateIngredients, categorizeIngredient, convertCookToMetric, type AppIngredient } from '../../lib/cooklang';
 import RecipeCard from '../../components/RecipeCard';
 import RecipeViewer from '../../components/RecipeViewer';
-import { importRecipeFromUrl, parseTextToRecipe, searchCommunityRecipes, downloadCommunityRecipe, type ImportResult, type ImportedRecipe, type CookImportResult, type CommunityRecipe } from '../../lib/recipe-import';
+import { importRecipeFromUrl, convertTextWithAI, parseTextToRecipe, searchCommunityRecipes, downloadCommunityRecipe, type ImportResult, type ImportedRecipe, type CookImportResult, type CommunityRecipe } from '../../lib/recipe-import';
 import { generateCookFile } from '../../lib/cooklang';
+import { useAI } from '../../contexts/AIContext';
 
 const DAYS_ORDER = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
@@ -60,6 +61,7 @@ export default function MealsScreen() {
     refresh, isLoading,
   } = useVault();
   const { primary, tint, colors } = useThemeColors();
+  const { config: aiConfig, isConfigured: aiConfigured } = useAI();
 
   const { tab: tabParam } = useLocalSearchParams<{ tab?: string }>();
   const [tab, setTab] = useState<Tab>('repas');
@@ -406,7 +408,7 @@ export default function MealsScreen() {
     setImportStatus('');
     setImportResult(null);
     try {
-      const result = await importRecipeFromUrl(url, setImportStatus);
+      const result = await importRecipeFromUrl(url, setImportStatus, aiConfig);
       setImportResult(result);
       if (result.type === 'cook') {
         setImportCategory(result.data.category || 'Importées');
@@ -419,7 +421,7 @@ export default function MealsScreen() {
       setImportLoading(false);
       setImportStatus('');
     }
-  }, [importUrl]);
+  }, [importUrl, aiConfig]);
 
   const handleImportSave = useCallback(async () => {
     if (!importResult) return;
@@ -491,38 +493,57 @@ export default function MealsScreen() {
 
   // ─── Text import logic ──────────────────────────────────────────
 
-  const handleTextImportParse = useCallback(() => {
+  const handleTextImportParse = useCallback(async () => {
     const text = textImportValue.trim();
     if (!text) return;
+    setImportLoading(true);
     try {
-      const result = parseTextToRecipe(text);
+      let result: ImportResult;
+      if (aiConfig) {
+        result = await convertTextWithAI(text, aiConfig);
+      } else {
+        result = parseTextToRecipe(text);
+      }
       setTextImportResult(result);
       if (result.type === 'parsed' && result.data.tags?.[0]) {
         setTextImportCategory(result.data.tags[0]);
       }
     } catch (e) {
       Alert.alert('Erreur', String(e instanceof Error ? e.message : e));
+    } finally {
+      setImportLoading(false);
     }
-  }, [textImportValue]);
+  }, [textImportValue, aiConfig]);
 
   const handleTextImportSave = useCallback(async () => {
-    if (!textImportResult || textImportResult.type !== 'parsed') return;
+    if (!textImportResult) return;
     const cat = textImportCategory.trim() || 'Importées';
     try {
       if (!vault) throw new Error('Vault non initialisé');
-      const d = textImportResult.data;
-      const cookContent = generateCookFile({
-        title: d.title, tags: d.tags, servings: d.servings,
-        prepTime: d.prepTime, cookTime: d.cookTime,
-        ingredients: d.ingredients.map(text => ({ name: text })),
-        steps: d.steps,
-      });
-      const fileName = d.title.replace(/[/\\:*?"<>|]/g, '').trim();
+
+      let cookContent: string;
+      let title: string;
+
+      if (textImportResult.type === 'cook') {
+        cookContent = textImportResult.data.cookContent;
+        title = textImportResult.data.title;
+      } else {
+        const d = textImportResult.data;
+        cookContent = generateCookFile({
+          title: d.title, tags: d.tags, servings: d.servings,
+          prepTime: d.prepTime, cookTime: d.cookTime,
+          ingredients: d.ingredients.map(text => ({ name: text })),
+          steps: d.steps,
+        });
+        title = d.title;
+      }
+
+      const fileName = title.replace(/[/\\:*?"<>|]/g, '').trim();
       const relPath = `03 - Cuisine/Recettes/${cat}/${fileName}.cook`;
       await vault.ensureDir(`03 - Cuisine/Recettes/${cat}`);
       await vault.writeFile(relPath, cookContent);
       await refresh();
-      Alert.alert('Importée !', `« ${d.title} » ajoutée dans ${cat}.`);
+      Alert.alert('Importée !', `« ${title} » ajoutée dans ${cat}.`);
       setShowTextImport(false);
       setTextImportValue('');
       setTextImportResult(null);
@@ -1407,69 +1428,55 @@ export default function MealsScreen() {
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={{ flex: 1 }}
+            keyboardVerticalOffset={10}
           >
-            <ScrollView style={styles.scroll} contentContainerStyle={{ padding: 16, gap: 16 }}>
+            <ScrollView
+              style={styles.scroll}
+              contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 40 }}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="interactive"
+            >
               <View style={{ gap: 8 }}>
                 <Text style={[styles.importLabel, { color: colors.text }]}>Texte de la recette</Text>
                 <TextInput
                   style={[styles.recipeSearchInput, {
                     backgroundColor: colors.cardAlt, color: colors.text, borderColor: colors.borderLight,
-                    minHeight: 200, textAlignVertical: 'top', paddingTop: 12,
+                    minHeight: 160, textAlignVertical: 'top', paddingTop: 12,
                   }]}
                   value={textImportValue}
                   onChangeText={setTextImportValue}
                   placeholder={'Collez ici le texte brut de la recette\n(copié depuis un mail, un livre, WhatsApp…)'}
                   placeholderTextColor={colors.textMuted}
                   multiline
-                  autoFocus
                 />
                 <TouchableOpacity
-                  style={[styles.importFetchBtn, { backgroundColor: primary }, !textImportValue.trim() && { opacity: 0.5 }]}
+                  style={[styles.importFetchBtn, { backgroundColor: primary }, (!textImportValue.trim() || importLoading) && { opacity: 0.5 }]}
                   onPress={handleTextImportParse}
-                  disabled={!textImportValue.trim()}
+                  disabled={!textImportValue.trim() || importLoading}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.importFetchBtnText}>🔍 Analyser le texte</Text>
+                  <Text style={styles.importFetchBtnText}>
+                    {importLoading ? '⏳ Analyse en cours…' : aiConfigured ? '🤖 Convertir avec l\'IA' : '🔍 Analyser le texte'}
+                  </Text>
                 </TouchableOpacity>
               </View>
 
-              {textImportResult && textImportResult.type === 'parsed' && (
+              {/* Preview for cook type (AI result) */}
+              {textImportResult && textImportResult.type === 'cook' && (
                 <View style={[styles.importPreview, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
                   <Text style={[styles.importPreviewTitle, { color: colors.text }]}>
                     {textImportResult.data.title}
                   </Text>
-                  <Text style={[styles.importPreviewMeta, { color: colors.textMuted }]}>
-                    {textImportResult.data.servings ? `👤 ${textImportResult.data.servings} pers.` : ''}
-                    {textImportResult.data.prepTime ? `  ⏱ ${textImportResult.data.prepTime}` : ''}
-                    {textImportResult.data.cookTime ? `  🔥 ${textImportResult.data.cookTime}` : ''}
-                  </Text>
-                  <Text style={[styles.importPreviewMeta, { color: colors.textMuted }]}>
-                    🥕 {textImportResult.data.ingredients.length} ingrédient{textImportResult.data.ingredients.length > 1 ? 's' : ''} · {textImportResult.data.steps.length} étape{textImportResult.data.steps.length > 1 ? 's' : ''}
+                  <Text style={[styles.importPreviewMeta, { color: '#22C55E' }]}>
+                    Fichier .cook prêt (via IA)
                   </Text>
 
-                  {/* Ingredients preview */}
-                  {textImportResult.data.ingredients.length > 0 && (
-                    <View style={{ marginTop: 8, gap: 2 }}>
-                      <Text style={[{ fontSize: 13, fontWeight: '600', color: colors.text }]}>Ingrédients :</Text>
-                      {textImportResult.data.ingredients.map((ing, i) => (
-                        <Text key={i} style={[{ fontSize: 13, color: colors.textSub }]}>• {ing}</Text>
-                      ))}
-                    </View>
-                  )}
+                  <View style={{ marginTop: 8, padding: 10, borderRadius: 8, backgroundColor: colors.bg }}>
+                    <Text style={{ fontSize: 12, color: colors.textSub, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' }} numberOfLines={15}>
+                      {textImportResult.data.cookContent}
+                    </Text>
+                  </View>
 
-                  {/* Steps preview */}
-                  {textImportResult.data.steps.length > 0 && (
-                    <View style={{ marginTop: 8, gap: 2 }}>
-                      <Text style={[{ fontSize: 13, fontWeight: '600', color: colors.text }]}>Étapes :</Text>
-                      {textImportResult.data.steps.map((step, i) => (
-                        <Text key={i} style={[{ fontSize: 13, color: colors.textSub }]} numberOfLines={2}>
-                          {i + 1}. {step}
-                        </Text>
-                      ))}
-                    </View>
-                  )}
-
-                  {/* Category */}
                   <View style={{ marginTop: 12, gap: 6 }}>
                     <Text style={[styles.importLabel, { color: colors.text }]}>Catégorie</Text>
                     <TextInput
@@ -1486,7 +1493,63 @@ export default function MealsScreen() {
                     onPress={handleTextImportSave}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.importFetchBtnText}>✅ Sauvegarder dans le vault</Text>
+                    <Text style={styles.importFetchBtnText}>Sauvegarder dans le vault</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* Preview for parsed type (heuristic fallback) */}
+              {textImportResult && textImportResult.type === 'parsed' && (
+                <View style={[styles.importPreview, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
+                  <Text style={[styles.importPreviewTitle, { color: colors.text }]}>
+                    {textImportResult.data.title}
+                  </Text>
+                  <Text style={[styles.importPreviewMeta, { color: colors.textMuted }]}>
+                    {textImportResult.data.servings ? `${textImportResult.data.servings} pers.` : ''}
+                    {textImportResult.data.prepTime ? `  Prep ${textImportResult.data.prepTime}` : ''}
+                    {textImportResult.data.cookTime ? `  Cuisson ${textImportResult.data.cookTime}` : ''}
+                  </Text>
+                  <Text style={[styles.importPreviewMeta, { color: colors.textMuted }]}>
+                    {textImportResult.data.ingredients.length} ingrédient{textImportResult.data.ingredients.length > 1 ? 's' : ''} · {textImportResult.data.steps.length} étape{textImportResult.data.steps.length > 1 ? 's' : ''}
+                  </Text>
+
+                  {textImportResult.data.ingredients.length > 0 && (
+                    <View style={{ marginTop: 8, gap: 2 }}>
+                      <Text style={[{ fontSize: 13, fontWeight: '600', color: colors.text }]}>Ingrédients :</Text>
+                      {textImportResult.data.ingredients.map((ing, i) => (
+                        <Text key={i} style={[{ fontSize: 13, color: colors.textSub }]}>- {ing}</Text>
+                      ))}
+                    </View>
+                  )}
+
+                  {textImportResult.data.steps.length > 0 && (
+                    <View style={{ marginTop: 8, gap: 2 }}>
+                      <Text style={[{ fontSize: 13, fontWeight: '600', color: colors.text }]}>Étapes :</Text>
+                      {textImportResult.data.steps.map((step, i) => (
+                        <Text key={i} style={[{ fontSize: 13, color: colors.textSub }]} numberOfLines={2}>
+                          {i + 1}. {step}
+                        </Text>
+                      ))}
+                    </View>
+                  )}
+
+                  <View style={{ marginTop: 12, gap: 6 }}>
+                    <Text style={[styles.importLabel, { color: colors.text }]}>Catégorie</Text>
+                    <TextInput
+                      style={[styles.recipeSearchInput, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.borderLight }]}
+                      value={textImportCategory}
+                      onChangeText={setTextImportCategory}
+                      placeholder="Ex: Plats, Desserts, Entrées…"
+                      placeholderTextColor={colors.textMuted}
+                    />
+                  </View>
+
+                  <TouchableOpacity
+                    style={[styles.importFetchBtn, { backgroundColor: '#22C55E', marginTop: 12 }]}
+                    onPress={handleTextImportSave}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.importFetchBtnText}>Sauvegarder dans le vault</Text>
                   </TouchableOpacity>
                 </View>
               )}

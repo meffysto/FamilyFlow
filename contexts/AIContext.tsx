@@ -27,6 +27,8 @@ export const AVAILABLE_MODELS = [
 interface AIState {
   /** true si une clé API est configurée */
   isConfigured: boolean;
+  /** Config API (apiKey + model), null si pas configuré */
+  config: AIConfig | null;
   /** Modèle sélectionné */
   model: string;
   /** true pendant un appel API */
@@ -117,8 +119,8 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
   );
 
   const value: AIState = useMemo(
-    () => ({ isConfigured, model, isLoading, setApiKey, clearApiKey, setModel, ask, getSuggestions }),
-    [isConfigured, model, isLoading, setApiKey, clearApiKey, setModel, ask, getSuggestions],
+    () => ({ isConfigured, config, model, isLoading, setApiKey, clearApiKey, setModel, ask, getSuggestions }),
+    [isConfigured, config, model, isLoading, setApiKey, clearApiKey, setModel, ask, getSuggestions],
   );
 
   return <AICtx.Provider value={value}>{children}</AICtx.Provider>;

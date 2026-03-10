@@ -1,24 +1,27 @@
 /**
- * recipe-import.ts — Import recipes from URLs
+ * recipe-import.ts — Import recipes from URLs, text, community
  *
- * Strategy:
- * 1. cook.md — sends URL, polls for .cook file (best quality, uses LLM)
- * 2. Direct HTML fetch + JSON-LD extraction (fast, for sites with schema.org)
+ * Stratégie URL:
+ * 1. cook.md — envoie l'URL, poll le .cook (meilleure qualité, LLM)
+ * 2. Fallback IA — fetch HTML, extraction texte, conversion via Claude API
+ *
+ * Stratégie texte:
+ * - IA: Claude API convertit le texte brut en .cook
+ * - Fallback local: heuristiques regex (sans clé API)
  */
+
+import type { AIConfig } from './ai-service';
 
 declare const __DEV__: boolean;
 
-/** Result from cook.md: raw .cook file content */
+/** Result from cook.md or AI: raw .cook file content */
 export interface CookImportResult {
-  /** Raw .cook file content (frontmatter + cooklang steps) */
   cookContent: string;
-  /** Title extracted from metadata for preview */
   title: string;
-  /** Category suggestion from metadata */
   category?: string;
 }
 
-/** Result from JSON-LD fallback: structured data needing conversion */
+/** Result from local heuristic fallback: structured data needing conversion */
 export interface ImportedRecipe {
   title: string;
   servings?: number;
@@ -36,19 +39,15 @@ export type ImportResult =
 
 // ─── cook.md integration ──────────────────────────────────────────────────
 
-const COOK_MD_TIMEOUT = 90_000; // 90s max
-const COOK_MD_POLL_INTERVAL = 3_000; // poll every 3s
+const COOK_MD_TIMEOUT = 90_000;
+const COOK_MD_POLL_INTERVAL = 3_000;
 
-/** Submit URL to cook.md → get cookify UUID from redirect or final page */
 async function submitToCookMd(url: string): Promise<string | null> {
   try {
-    // RN follows redirects automatically, so we land on /cookifies/{uuid} page
     const res = await fetch(`https://cook.md/${url}`);
-    // Try to get UUID from the response URL (works if RN exposes it)
     const resUrl = res.url || '';
     const urlMatch = resUrl.match(/cookifies\/([a-f0-9-]+)/i);
     if (urlMatch) return urlMatch[1];
-    // Fallback: extract UUID from the HTML body
     if (res.ok) {
       const body = await res.text();
       const bodyMatch = body.match(/cookifies\/([a-f0-9-]+)/i);
@@ -61,7 +60,6 @@ async function submitToCookMd(url: string): Promise<string | null> {
   }
 }
 
-/** Parse .cook file metadata (frontmatter between --- markers) */
 function parseCookMetadata(content: string): Record<string, string> {
   const meta: Record<string, string> = {};
   const match = content.match(/^---\n([\s\S]*?)\n---/);
@@ -77,7 +75,6 @@ function parseCookMetadata(content: string): Record<string, string> {
   return meta;
 }
 
-/** Poll cook.md for the .cook file until ready */
 async function pollCookMd(uuid: string): Promise<CookImportResult | null> {
   const downloadUrl = `https://cook.md/cookifies/${uuid}/download`;
   const start = Date.now();
@@ -92,13 +89,10 @@ async function pollCookMd(uuid: string): Promise<CookImportResult | null> {
       }
       if (res.ok) {
         const body = await res.text();
-        if (__DEV__) console.log('[recipe-import] poll body length:', body.length, 'first 100:', body.substring(0, 100));
-        // HTML = not ready yet (error page served as 200)
         if (body.trimStart().startsWith('<!DOCTYPE') || body.trimStart().startsWith('<html')) {
           await new Promise(r => setTimeout(r, COOK_MD_POLL_INTERVAL));
           continue;
         }
-        // Validate it looks like a .cook file (--- frontmatter or >> metadata)
         if ((body.includes('---') || body.includes('>>')) && body.length > 50) {
           const meta = parseCookMetadata(body);
           return {
@@ -107,21 +101,16 @@ async function pollCookMd(uuid: string): Promise<CookImportResult | null> {
             category: meta.course || meta.cuisine || undefined,
           };
         }
-        if (__DEV__) console.log('[recipe-import] poll: body not recognized as .cook');
       }
-      // Other error (5xx etc) — keep polling, don't give up immediately
       await new Promise(r => setTimeout(r, COOK_MD_POLL_INTERVAL));
     } catch (e) {
       if (__DEV__) console.log('[recipe-import] poll error:', e);
       await new Promise(r => setTimeout(r, COOK_MD_POLL_INTERVAL));
     }
   }
-
-  if (__DEV__) console.log('[recipe-import] cook.md timeout after', COOK_MD_TIMEOUT / 1000, 's');
   return null;
 }
 
-/** Import via cook.md: submit URL → poll → download .cook */
 async function importViaCookMd(url: string, onStatus?: (msg: string) => void): Promise<CookImportResult | null> {
   onStatus?.('Envoi à cook.md…');
   const uuid = await submitToCookMd(url);
@@ -129,126 +118,100 @@ async function importViaCookMd(url: string, onStatus?: (msg: string) => void): P
     if (__DEV__) console.log('[recipe-import] cook.md: no UUID from redirect');
     return null;
   }
-  if (__DEV__) console.log('[recipe-import] cook.md UUID:', uuid);
-
   onStatus?.('Conversion en cours…');
   return pollCookMd(uuid);
 }
 
-// ─── JSON-LD fallback ─────────────────────────────────────────────────────
+// ─── AI-powered conversion ────────────────────────────────────────────────
 
-/** Strip HTML tags from a string */
-function stripHtml(s: string): string {
-  return s.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/\s+/g, ' ').trim();
+const AI_API_URL = 'https://api.anthropic.com/v1/messages';
+const AI_API_VERSION = '2023-06-01';
+
+const COOK_SYSTEM_PROMPT = `Tu es un convertisseur de recettes au format Cooklang (.cook).
+Convertis le contenu fourni en fichier .cook valide.
+
+Format attendu :
+>> title: Nom de la recette
+>> servings: 4
+>> prep time: 15 min
+>> cook time: 30 min
+
+Étape 1 avec @ingrédient{quantité%unité} et ~ustensile{}.
+
+Étape 2…
+
+Règles :
+- Syntaxe Cooklang : @ingredient{qty%unit}, ~equipment{}, #timer{duration%unit}
+- Metadata avec >> key: value
+- Une ligne vide entre chaque étape
+- Unités en métrique (g, kg, ml, cl, L)
+- Réponds UNIQUEMENT avec le fichier .cook, sans explication ni commentaire
+- Si le contenu n'est clairement pas une recette, réponds exactement : NOT_A_RECIPE`;
+
+/** Strip HTML to plain text for AI processing */
+function htmlToPlainText(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(?:p|div|li|h[1-6]|tr)>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
-/** Parse ISO 8601 duration (PT15M, PT1H30M) to human-readable French */
-function parseDuration(iso?: string): string {
-  if (!iso || typeof iso !== 'string') return '';
-  const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
-  if (!match) return '';
-  const hours = match[1] ? parseInt(match[1], 10) : 0;
-  const mins = match[2] ? parseInt(match[2], 10) : 0;
-  if (hours > 0 && mins > 0) return `${hours}h${mins}min`;
-  if (hours > 0) return `${hours}h`;
-  if (mins > 0) return `${mins} min`;
-  return '';
-}
+/** Call Claude API to convert content to .cook */
+async function convertToCookWithAI(
+  content: string,
+  config: AIConfig,
+  sourceType: 'html' | 'text',
+): Promise<CookImportResult> {
+  const truncated = content.length > 12000 ? content.substring(0, 12000) + '\n[…tronqué]' : content;
 
-/** Extract Recipe from JSON-LD blocks in HTML */
-function extractJsonLd(html: string): ImportedRecipe | null {
-  const regex = /<script[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
-  let match: RegExpExecArray | null;
-  while ((match = regex.exec(html)) !== null) {
-    try {
-      const data = JSON.parse(match[1]);
-      const recipe = findRecipeInLd(data);
-      if (recipe) return recipe;
-    } catch { /* skip malformed JSON */ }
-  }
-  return null;
-}
+  const userMsg = sourceType === 'html'
+    ? `Convertis cette page web de recette en .cook :\n\n${truncated}`
+    : `Convertis ce texte de recette en .cook :\n\n${truncated}`;
 
-/** Recursively find a Recipe object in JSON-LD */
-function findRecipeInLd(data: any): ImportedRecipe | null {
-  if (!data) return null;
-  if (data['@type'] === 'Recipe' || (Array.isArray(data['@type']) && data['@type'].includes('Recipe'))) {
-    return mapLdToRecipe(data);
-  }
-  if (data['@graph'] && Array.isArray(data['@graph'])) {
-    for (const item of data['@graph']) {
-      const found = findRecipeInLd(item);
-      if (found) return found;
-    }
-  }
-  if (Array.isArray(data)) {
-    for (const item of data) {
-      const found = findRecipeInLd(item);
-      if (found) return found;
-    }
-  }
-  return null;
-}
+  const response = await fetch(AI_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': config.apiKey,
+      'anthropic-version': AI_API_VERSION,
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: config.model,
+      max_tokens: 2048,
+      system: COOK_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: userMsg }],
+    }),
+  });
 
-/** Map JSON-LD Recipe to ImportedRecipe */
-function mapLdToRecipe(ld: any): ImportedRecipe {
-  const title = ld.name || 'Recette importée';
-
-  let servings: number | undefined;
-  if (ld.recipeYield) {
-    const yieldStr = Array.isArray(ld.recipeYield) ? ld.recipeYield[0] : ld.recipeYield;
-    const num = parseInt(String(yieldStr), 10);
-    if (!isNaN(num) && num > 0) servings = num;
+  if (!response.ok) {
+    if (response.status === 401) throw new Error('Clé API invalide. Vérifiez dans les réglages.');
+    if (response.status === 429) throw new Error('Trop de requêtes IA. Réessayez dans un moment.');
+    throw new Error(`Erreur API IA (${response.status})`);
   }
 
-  const ingredients: string[] = [];
-  if (Array.isArray(ld.recipeIngredient)) {
-    for (const ing of ld.recipeIngredient) {
-      const text = stripHtml(String(ing));
-      if (text) ingredients.push(text);
-    }
+  const data = await response.json();
+  const cookContent = (data.content?.[0]?.text ?? '').trim();
+
+  if (!cookContent || cookContent === 'NOT_A_RECIPE') {
+    throw new Error('Le contenu ne semble pas être une recette.');
   }
 
-  const steps: string[] = [];
-  if (Array.isArray(ld.recipeInstructions)) {
-    for (const step of ld.recipeInstructions) {
-      if (typeof step === 'string') {
-        const clean = stripHtml(step);
-        if (clean) steps.push(clean);
-      } else if (step && (step.text || step.description)) {
-        const clean = stripHtml(String(step.text || step.description));
-        if (clean) steps.push(clean);
-      } else if (step && step['@type'] === 'HowToSection' && Array.isArray(step.itemListElement)) {
-        for (const sub of step.itemListElement) {
-          const raw = sub.text || sub.description || (typeof sub === 'string' ? sub : '');
-          const text = stripHtml(String(raw));
-          if (text) steps.push(text);
-        }
-      }
-    }
-  } else if (typeof ld.recipeInstructions === 'string') {
-    const parts = ld.recipeInstructions.split(/\n+/).map((s: string) => s.trim()).filter(Boolean);
-    steps.push(...parts);
-  }
+  const titleMatch = cookContent.match(/^>> title:\s*(.+)/m);
+  const title = titleMatch ? titleMatch[1].trim() : 'Recette importée';
 
-  const tags: string[] = [];
-  if (ld.recipeCategory) {
-    const cats = Array.isArray(ld.recipeCategory) ? ld.recipeCategory : [ld.recipeCategory];
-    tags.push(...cats.map((c: string) => String(c).trim()).filter(Boolean));
-  }
-  if (ld.recipeCuisine) {
-    const cuisines = Array.isArray(ld.recipeCuisine) ? ld.recipeCuisine : [ld.recipeCuisine];
-    tags.push(...cuisines.map((c: string) => String(c).trim()).filter(Boolean));
-  }
-
-  return {
-    title, servings,
-    prepTime: parseDuration(ld.prepTime),
-    cookTime: parseDuration(ld.cookTime),
-    ingredients, steps,
-    tags: tags.length > 0 ? tags : undefined,
-    sourceUrl: '',
-  };
+  return { cookContent, title };
 }
 
 // ─── Public API ────────────────────────────────────────────────────────────
@@ -256,13 +219,14 @@ function mapLdToRecipe(ld: any): ImportedRecipe {
 /**
  * Import a recipe from a URL.
  * 1. cook.md (best quality — LLM-powered cooklang conversion)
- * 2. Fallback: direct HTML fetch + JSON-LD
+ * 2. Fallback IA: fetch HTML → Claude API → .cook
  */
 export async function importRecipeFromUrl(
   url: string,
   onStatus?: (msg: string) => void,
+  aiConfig?: AIConfig | null,
 ): Promise<ImportResult> {
-  // 1. Try cook.md (async, may take up to 90s)
+  // 1. Try cook.md
   onStatus?.('Envoi à cook.md…');
   const cookResult = await importViaCookMd(url, onStatus);
   if (cookResult) {
@@ -270,28 +234,41 @@ export async function importRecipeFromUrl(
     return { type: 'cook', data: cookResult };
   }
 
-  // 2. Fallback: direct HTML fetch + JSON-LD
-  onStatus?.('Extraction JSON-LD…');
-  try {
-    if (__DEV__) console.log('[recipe-import] Fetching URL directly:', url);
-    const res = await fetch(url);
-    if (__DEV__) console.log('[recipe-import] Direct fetch status:', res.status);
-    if (res.ok) {
-      const html = await res.text();
-      if (__DEV__) console.log('[recipe-import] HTML length:', html.length);
-      const recipe = extractJsonLd(html);
-      if (recipe) {
-        recipe.sourceUrl = url;
-        if (__DEV__) console.log('[recipe-import] JSON-LD success:', recipe.title);
-        return { type: 'parsed', data: recipe };
+  // 2. Fallback: fetch HTML + AI conversion
+  if (aiConfig) {
+    onStatus?.('Conversion IA en cours…');
+    try {
+      const res = await fetch(url);
+      if (res.ok) {
+        const html = await res.text();
+        const plainText = htmlToPlainText(html);
+        if (__DEV__) console.log('[recipe-import] HTML→text length:', plainText.length);
+        const result = await convertToCookWithAI(plainText, aiConfig, 'html');
+        return { type: 'cook', data: result };
       }
-      if (__DEV__) console.log('[recipe-import] No JSON-LD found in page');
+    } catch (e) {
+      if (__DEV__) console.log('[recipe-import] AI fallback error:', e);
+      throw e instanceof Error ? e : new Error(String(e));
     }
-  } catch (e) {
-    if (__DEV__) console.log('[recipe-import] Direct fetch error:', e);
   }
 
-  throw new Error('Impossible d\'extraire la recette. Le site ne contient pas de données structurées (JSON-LD).');
+  throw new Error(
+    aiConfig
+      ? 'Impossible d\'extraire la recette depuis cette URL.'
+      : 'cook.md n\'a pas pu convertir cette recette. Configurez l\'IA (réglages) pour activer la conversion automatique.',
+  );
+}
+
+/**
+ * Convert raw text to .cook via Claude API.
+ * Requires AI config.
+ */
+export async function convertTextWithAI(
+  rawText: string,
+  aiConfig: AIConfig,
+): Promise<ImportResult> {
+  const result = await convertToCookWithAI(rawText, aiConfig, 'text');
+  return { type: 'cook', data: result };
 }
 
 // ─── Community recipes (cooklang.org) ─────────────────────────────────────
@@ -305,46 +282,31 @@ export interface CommunityRecipe {
 
 const COOKLANG_BASE = 'https://recipes.cooklang.org';
 
-/**
- * Search community recipes from cooklang.org
- * Returns a list of matching recipes with id, title, tags.
- */
 export async function searchCommunityRecipes(query: string): Promise<CommunityRecipe[]> {
   const url = `${COOKLANG_BASE}/?q=${encodeURIComponent(query)}`;
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return [];
-    const html = await res.text();
-    return parseCommunitySearchResults(html);
-  } catch (e) {
-    if (__DEV__) console.log('[recipe-import] community search error:', e);
-    return [];
-  }
+  const res = await fetchWithRetry(url);
+  if (!res.ok) return [];
+  const html = await res.text();
+  return parseCommunitySearchResults(html);
 }
 
-/** Parse HTML search results from cooklang.org */
 function parseCommunitySearchResults(html: string): CommunityRecipe[] {
   const results: CommunityRecipe[] = [];
   const seen = new Set<number>();
-
-  // Split by recipe card anchors — each card is ~700 chars
   const parts = html.split(/<a\s+href="\/recipes\//i);
 
   for (let i = 1; i < parts.length; i++) {
     const part = parts[i];
-    // Extract ID from start of this part: 1234" class="...
     const idMatch = part.match(/^(\d+)"/);
     if (!idMatch) continue;
     const id = parseInt(idMatch[1], 10);
     if (seen.has(id)) continue;
     seen.add(id);
 
-    // Extract title from <h3>...</h3>
     const h3Match = part.match(/<h3[^>]*>([^<]+)<\/h3>/i);
     const title = h3Match ? h3Match[1].trim() : '';
     if (!title) continue;
 
-    // Extract tags from <span ...rounded-full">tag</span>
     const tags: string[] = [];
     const tagRegex = /rounded-full"[^>]*>([^<]+)</g;
     let tagMatch: RegExpExecArray | null;
@@ -359,12 +321,32 @@ function parseCommunitySearchResults(html: string): CommunityRecipe[] {
 }
 
 /**
- * Download a .cook file from cooklang.org by recipe ID.
- * Returns the raw .cook content string.
+ * Fetch with retry on 429 (rate limit).
+ * 3 tentatives avec backoff exponentiel.
  */
+async function fetchWithRetry(url: string, maxRetries = 3): Promise<Response> {
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const res = await fetch(url);
+      if (res.status !== 429) return res;
+      // 429 — attendre avant de réessayer
+      const delay = (attempt + 1) * 2000; // 2s, 4s, 6s
+      if (__DEV__) console.log(`[recipe-import] 429, retry in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
+      await new Promise(r => setTimeout(r, delay));
+    } catch (e) {
+      lastError = e instanceof Error ? e : new Error(String(e));
+      if (attempt < maxRetries - 1) {
+        await new Promise(r => setTimeout(r, (attempt + 1) * 2000));
+      }
+    }
+  }
+  throw lastError || new Error('Trop de requêtes (429). Réessayez dans quelques minutes.');
+}
+
 export async function downloadCommunityRecipe(id: number): Promise<string> {
   const url = `${COOKLANG_BASE}/api/recipes/${id}/download`;
-  const res = await fetch(url);
+  const res = await fetchWithRetry(url);
   if (!res.ok) throw new Error(`Erreur téléchargement (${res.status})`);
   const content = await res.text();
   if (!content || content.length < 10) throw new Error('Fichier .cook vide');
@@ -374,36 +356,28 @@ export async function downloadCommunityRecipe(id: number): Promise<string> {
   return content;
 }
 
-// ─── Text-to-recipe converter ────────────────────────────────────────────
+// ─── Text-to-recipe local fallback (sans IA) ─────────────────────────────
 
 /**
- * Parse raw text (pasted from email, book, WhatsApp, etc.) into a recipe.
- *
- * Heuristics:
- * - Title: first non-empty line (or shortest line in the first 3)
- * - Ingredients: lines matching qty+unit patterns, or bullet lists
- * - Steps: numbered paragraphs or remaining long lines
- * - Metadata: detects "portions/personnes" and "préparation/cuisson" mentions
+ * Parse raw text into a recipe using heuristics.
+ * Fallback quand l'IA n'est pas configurée.
  */
 export function parseTextToRecipe(rawText: string): ImportResult {
   const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   if (lines.length === 0) throw new Error('Le texte est vide.');
 
-  // ── Extract title ──
-  // First line, or shortest of first 3 lines if it looks like a title (< 60 chars)
   let titleIndex = 0;
   const firstThree = lines.slice(0, 3);
   const shortest = firstThree.reduce((best, line, i) =>
     line.length < firstThree[best].length ? i : best, 0);
   if (firstThree[shortest].length < 60) titleIndex = shortest;
   const title = lines[titleIndex]
-    .replace(/^#+\s*/, '')  // strip markdown headers
+    .replace(/^#+\s*/, '')
     .replace(/^recette\s*:\s*/i, '')
     .trim();
 
   const remaining = lines.filter((_, i) => i !== titleIndex);
 
-  // ── Detect ingredients vs steps ──
   const RE_INGREDIENT = /^[-•*·]\s+.+|^\d+(?:[.,]\d+)?\s*(?:g|kg|ml|cl|dl|l|cs|cc|c\.\s*à\s*[sc]\.?|càs|càc|tbsp|tsp|tasse|pincée|sachet|tranche|gousse|botte|paquet|boîte|feuille|brin)\s+/i;
   const RE_NUMBERED_STEP = /^(?:\d+[\.\)]\s*|étape\s+\d+\s*[:\-]\s*)/i;
   const RE_SECTION_HEADER = /^(?:ingrédients?|étapes?|préparation|instructions?|pour\s+\d+|matériel)\s*:?\s*$/i;
@@ -417,7 +391,6 @@ export function parseTextToRecipe(rawText: string): ImportResult {
   let prepTime = '';
   let cookTime = '';
 
-  // First pass: extract metadata from any line
   for (const line of remaining) {
     const sm = line.match(RE_SERVINGS);
     if (sm && !servings) servings = parseInt(sm[1], 10);
@@ -427,49 +400,37 @@ export function parseTextToRecipe(rawText: string): ImportResult {
     if (cm && !cookTime) cookTime = cm[1];
   }
 
-  // Detect if there are section headers to guide parsing
   let mode: 'auto' | 'ingredients' | 'steps' = 'auto';
 
   for (const line of remaining) {
-    // Skip section headers themselves
     if (RE_SECTION_HEADER.test(line)) {
       if (/ingrédients?/i.test(line)) mode = 'ingredients';
       else if (/étapes?|préparation|instructions?/i.test(line)) mode = 'steps';
       continue;
     }
 
-    // Skip pure metadata lines (already extracted)
     if (RE_SERVINGS.test(line) && !RE_INGREDIENT.test(line) && line.length < 40) continue;
     if (RE_PREP_TIME.test(line) && line.length < 40) continue;
     if (RE_COOK_TIME.test(line) && line.length < 40) continue;
 
     if (mode === 'ingredients') {
-      // In explicit ingredients section: everything is an ingredient until next section
       const cleaned = line.replace(/^[-•*·]\s+/, '').trim();
       if (cleaned) ingredients.push(cleaned);
     } else if (mode === 'steps') {
-      // In explicit steps section
       const cleaned = line.replace(RE_NUMBERED_STEP, '').trim();
       if (cleaned) steps.push(cleaned);
     } else {
-      // Auto mode: heuristic detection
       if (RE_INGREDIENT.test(line)) {
-        const cleaned = line.replace(/^[-•*·]\s+/, '').trim();
-        ingredients.push(cleaned);
+        ingredients.push(line.replace(/^[-•*·]\s+/, '').trim());
       } else if (RE_NUMBERED_STEP.test(line)) {
         const cleaned = line.replace(RE_NUMBERED_STEP, '').trim();
         if (cleaned) steps.push(cleaned);
       } else if (line.length > 80) {
-        // Long lines are likely steps
         steps.push(line);
       } else if (line.length < 50 && /\d/.test(line)) {
-        // Short lines with numbers → probably ingredient
         ingredients.push(line.replace(/^[-•*·]\s+/, '').trim());
       } else {
-        // Default: treat as step if we already have ingredients, otherwise ingredient
-        if (ingredients.length > 0 && steps.length > 0) {
-          steps.push(line);
-        } else if (ingredients.length > 0) {
+        if (ingredients.length > 0) {
           steps.push(line);
         } else {
           ingredients.push(line.replace(/^[-•*·]\s+/, '').trim());
@@ -478,9 +439,7 @@ export function parseTextToRecipe(rawText: string): ImportResult {
     }
   }
 
-  // If no steps detected, move long "ingredients" to steps
   if (steps.length === 0 && ingredients.length > 2) {
-    const threshold = ingredients.length > 5 ? Math.floor(ingredients.length * 0.6) : 2;
     const longOnes = ingredients.filter(l => l.length > 60);
     if (longOnes.length > 0) {
       const kept: string[] = [];
@@ -499,14 +458,6 @@ export function parseTextToRecipe(rawText: string): ImportResult {
 
   return {
     type: 'parsed',
-    data: {
-      title,
-      servings,
-      prepTime,
-      cookTime,
-      ingredients,
-      steps,
-      sourceUrl: '',
-    },
+    data: { title, servings, prepTime, cookTime, ingredients, steps, sourceUrl: '' },
   };
 }
