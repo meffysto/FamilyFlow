@@ -82,7 +82,7 @@ function getContextScore(id: string, ctx: SmartSortContext): number {
       return hasData ? 10 : -5;
 
     case 'budget':
-      return 5;
+      return -10;
 
     case 'quicknotifs':
       return hasData ? 5 : -10;
