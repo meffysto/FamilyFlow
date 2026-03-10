@@ -22,6 +22,13 @@
 
 // Use legacy API for broader compatibility across expo-file-system versions
 import * as FileSystem from 'expo-file-system/legacy';
+import { Platform } from 'react-native';
+import {
+  coordinatedWriteFile,
+  coordinatedEnsureDir,
+  coordinatedDeleteFile,
+  coordinatedCopyFile,
+} from '../modules/vault-access/src';
 import { Profile } from './types';
 import { format } from 'date-fns';
 import { nextOccurrence } from './recurrence';
@@ -58,7 +65,12 @@ export class VaultManager {
   /** Write a file (creates if missing, overwrites if exists) */
   async writeFile(relativePath: string, content: string): Promise<void> {
     const uri = this.uri(relativePath);
-    // Ensure parent directory exists
+    // On iOS, use NSFileCoordinator for file provider compatibility (Obsidian, iCloud…)
+    if (Platform.OS === 'ios') {
+      await coordinatedWriteFile(uri, content);
+      return;
+    }
+    // Fallback: expo-file-system (Android, desktop)
     const parts = relativePath.split('/');
     if (parts.length > 1) {
       const dir = parts.slice(0, -1).join('/');
@@ -72,6 +84,10 @@ export class VaultManager {
   /** Delete a file from the vault */
   async deleteFile(relativePath: string): Promise<void> {
     const uri = this.uri(relativePath);
+    if (Platform.OS === 'ios') {
+      await coordinatedDeleteFile(uri);
+      return;
+    }
     await FileSystem.deleteAsync(uri, { idempotent: true });
   }
 
@@ -89,6 +105,10 @@ export class VaultManager {
   /** Ensure a directory exists (recursive) */
   async ensureDir(relativeDir: string): Promise<void> {
     const uri = this.uri(relativeDir);
+    if (Platform.OS === 'ios') {
+      await coordinatedEnsureDir(uri);
+      return;
+    }
     const info = await FileSystem.getInfoAsync(uri);
     if (!info.exists) {
       await FileSystem.makeDirectoryAsync(uri, { intermediates: true });
@@ -132,13 +152,17 @@ export class VaultManager {
 
   /** Copy a file (e.g. image) into the vault */
   async copyFileToVault(sourceUri: string, relativePath: string): Promise<void> {
-    const parts = relativePath.split('/');
-    if (parts.length > 1) {
-      const dir = parts.slice(0, -1).join('/');
-      await this.ensureDir(dir);
-    }
     const destUri = this.uri(relativePath);
-    await FileSystem.copyAsync({ from: sourceUri, to: destUri });
+    if (Platform.OS === 'ios') {
+      await coordinatedCopyFile(sourceUri, destUri);
+    } else {
+      const parts = relativePath.split('/');
+      if (parts.length > 1) {
+        const dir = parts.slice(0, -1).join('/');
+        await this.ensureDir(dir);
+      }
+      await FileSystem.copyAsync({ from: sourceUri, to: destUri });
+    }
 
     // Verify the copy succeeded
     const info = await FileSystem.getInfoAsync(destUri);
