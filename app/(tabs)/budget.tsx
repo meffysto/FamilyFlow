@@ -39,6 +39,7 @@ import {
 import { formatDateForDisplay } from '../../lib/parser';
 import { DateInput } from '../../components/ui/DateInput';
 import type { BudgetCategory, BudgetEntry } from '../../lib/types';
+import { useParentalControls } from '../../contexts/ParentalControlsContext';
 
 function prevMonth(month: string): string {
   const [y, m] = month.split('-').map(Number);
@@ -73,9 +74,10 @@ export default function BudgetScreen() {
   } = useVault();
 
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
+  const { isAllowed } = useParentalControls();
 
-  // Guard : les enfants n'ont pas accès au budget
-  if (isChildMode) {
+  // Guard : les enfants n'ont pas accès au budget (sauf si autorisé)
+  if (isChildMode && !isAllowed('budget', activeProfile!.role)) {
     return (
       <SafeAreaView style={[{ flex: 1, backgroundColor: colors.bg, justifyContent: 'center', alignItems: 'center' }]} edges={['top']}>
         <Text style={{ fontSize: 48, marginBottom: 16 }}>🔒</Text>

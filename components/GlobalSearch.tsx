@@ -24,6 +24,7 @@ import { useThemeColors } from '../contexts/ThemeContext';
 import { useAI } from '../contexts/AIContext';
 import { searchVault, type SearchResult, type SearchInput, type SearchResultType } from '../lib/search';
 import type { AIMessage, VaultContext as AIVaultContext } from '../lib/ai-service';
+import { useParentalControls } from '../contexts/ParentalControlsContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
 
@@ -77,13 +78,15 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
   const inputRef = useRef<TextInput>(null);
 
   const isChildMode = vault.activeProfile?.role === 'enfant' || vault.activeProfile?.role === 'ado';
+  const { isAllowed } = useParentalControls();
+  const role = vault.activeProfile?.role ?? 'adulte';
 
-  // Filtrer les données de recherche en mode enfant
+  // Filtrer les données de recherche en mode enfant (sauf si autorisé)
   const searchInput: SearchInput = useMemo(() => {
     const nameLower = vault.activeProfile?.name?.toLowerCase() ?? '';
     const profileId = vault.activeProfile?.id ?? '';
 
-    if (!isChildMode || !nameLower) {
+    if (!isChildMode || !nameLower || isAllowed('recherche', role as 'enfant' | 'ado')) {
       return {
         tasks: vault.tasks,
         menageTasks: vault.menageTasks,

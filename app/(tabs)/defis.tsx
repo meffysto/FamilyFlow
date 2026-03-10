@@ -43,6 +43,7 @@ import {
   type DefiCategory,
 } from '../../constants/defiTemplates';
 import type { Defi, DefiType } from '../../lib/types';
+import { useParentalControls } from '../../contexts/ParentalControlsContext';
 
 type TabId = 'actifs' | 'templates' | 'historique';
 
@@ -673,14 +674,15 @@ export default function DefisScreen() {
   const { showToast } = useToast();
   const { profiles, defis, createDefi, checkInDefi, completeDefi, deleteDefi, activeProfile } = useVault();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
+  const { isAllowed } = useParentalControls();
 
-  // Filtrer les défis : un enfant ne voit que ceux auxquels il participe (ou familiaux sans participants)
+  // Filtrer les défis : un enfant ne voit que ceux auxquels il participe (sauf si autorisé)
   const visibleDefis = useMemo(() => {
-    if (!isChildMode || !activeProfile) return defis;
+    if (!isChildMode || !activeProfile || isAllowed('defis', activeProfile.role)) return defis;
     return defis.filter((d) =>
       d.participants.length === 0 || d.participants.includes(activeProfile.id),
     );
-  }, [defis, isChildMode, activeProfile]);
+  }, [defis, isChildMode, activeProfile, isAllowed]);
 
   const [activeTab, setActiveTab] = useState<TabId>('actifs');
   const [configModal, setConfigModal] = useState<{ visible: boolean; template?: DefiTemplate }>({ visible: false });

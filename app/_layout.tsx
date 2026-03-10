@@ -19,6 +19,7 @@ import { configureNotifications } from '../lib/scheduled-notifications';
 import { ToastProvider } from '../contexts/ToastContext';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { AIProvider } from '../contexts/AIContext';
+import { ParentalControlsProvider } from '../contexts/ParentalControlsContext';
 
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
@@ -50,6 +51,7 @@ export default function RootLayout() {
         <VaultProvider>
           <ThemeProvider>
             <AIProvider>
+            <ParentalControlsProvider>
             <ToastProvider>
               <StatusBar style="auto" />
               <Stack screenOptions={{ headerShown: false }}>
@@ -58,6 +60,7 @@ export default function RootLayout() {
               </Stack>
               {!hasVault && <Redirect href="/setup" />}
             </ToastProvider>
+            </ParentalControlsProvider>
             </AIProvider>
           </ThemeProvider>
         </VaultProvider>

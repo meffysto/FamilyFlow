@@ -39,6 +39,7 @@ import { EmptyState } from '../../components/EmptyState';
 import { RDVEditor } from '../../components/RDVEditor';
 import { formatDateForDisplay, isRdvUpcoming } from '../../lib/parser';
 import { RDV } from '../../lib/types';
+import { useParentalControls } from '../../contexts/ParentalControlsContext';
 
 const CAL_PADDING = 16;
 const DAY_GAP = 4;
@@ -60,6 +61,7 @@ export default function RDVScreen() {
   const { rdvs, addRDV, updateRDV, deleteRDV, activeProfile } = useVault();
   const { primary, tint, colors } = useThemeColors();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
+  const { isAllowed } = useParentalControls();
 
   const { addNew } = useLocalSearchParams<{ addNew?: string }>();
   const [search, setSearch] = useState('');
@@ -75,12 +77,12 @@ export default function RDVScreen() {
   const [calMonth, setCalMonth] = useState(new Date());
   const [calDayRdvs, setCalDayRdvs] = useState<{ date: string; rdvs: RDV[] } | null>(null);
 
-  // Filtrer par profil enfant : un enfant ne voit que ses propres RDV
+  // Filtrer par profil enfant : un enfant ne voit que ses propres RDV (sauf si autorisé)
   const profileRdvs = useMemo(() => {
-    if (!isChildMode || !activeProfile) return rdvs;
+    if (!isChildMode || !activeProfile || isAllowed('rdv', activeProfile.role)) return rdvs;
     const nameLower = activeProfile.name.toLowerCase();
     return rdvs.filter((r) => r.enfant.toLowerCase() === nameLower);
-  }, [rdvs, isChildMode, activeProfile]);
+  }, [rdvs, isChildMode, activeProfile, isAllowed]);
 
   // Filter by search
   const filteredRdvs = useMemo(() => {
