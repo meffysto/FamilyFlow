@@ -432,6 +432,54 @@ export async function askVault(
   return { text: deanoText };
 }
 
+/** Résume une transcription de consultation médicale en notes structurées */
+export async function summarizeConsultation(
+  config: AIConfig,
+  transcript: string,
+  rdv: { type_rdv: string; enfant: string; médecin: string; questions?: string[] },
+  vaultCtx: VaultContext,
+): Promise<AIResponse> {
+  // Anonymiser la transcription
+  const anonMap = buildAnonymizationMap(
+    vaultCtx.profiles,
+    vaultCtx.rdvs,
+    vaultCtx.healthRecords,
+  );
+
+  const anonTranscript = anonymize(transcript, anonMap);
+  const anonEnfant = anonymize(rdv.enfant, anonMap);
+  const anonMedecin = anonymize(rdv.médecin, anonMap);
+  const anonQuestions = rdv.questions?.map((q) => anonymize(q, anonMap)) ?? [];
+
+  const questionsBlock = anonQuestions.length > 0
+    ? `\nQuestions posées :\n${anonQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n')}`
+    : '';
+
+  const systemPrompt = `Tu es un assistant médical qui structure des notes de consultation.
+Tu reçois la transcription brute d'une consultation ${rdv.type_rdv} pour ${anonEnfant} avec ${anonMedecin}.${questionsBlock}
+
+Règles :
+- Résume en français, de façon claire et concise
+- Structure avec des sections (Diagnostic, Prescriptions, Recommandations, Suivi)
+- Omets les sections vides
+- Si des questions ont été posées, inclus les réponses correspondantes
+- Garde uniquement les informations médicalement pertinentes
+- N'invente rien — ne mets que ce qui est dans la transcription
+- Les noms utilisés sont des pseudonymes — utilise-les tels quels
+- Maximum 300 mots`;
+
+  const messages: AIMessage[] = [
+    { role: 'user', content: `Voici la transcription de la consultation :\n\n${anonTranscript}` },
+  ];
+
+  // Utiliser Haiku pour le coût minimal
+  const haikiConfig = { ...config, model: 'claude-haiku-4-5-20251001' };
+  const resp = await callClaude(haikiConfig, systemPrompt, messages);
+  if (resp.error) return resp;
+
+  return { text: deanonymize(resp.text, anonMap) };
+}
+
 /** Génère des suggestions IA basées sur le contexte vault */
 export async function generateAISuggestions(
   config: AIConfig,

@@ -59,6 +59,13 @@
           "photosPermission": "FamilyFlow accède à vos photos pour la photo du jour.",
           "cameraPermission": "FamilyFlow utilise la caméra pour prendre la photo du jour."
         }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "FamilyFlow utilise le micro pour transcrire les consultations médicales.",
+          "speechRecognitionPermission": "FamilyFlow utilise la reconnaissance vocale pour transcrire les réponses du médecin."
+        }
       ]
     ],
     "experiments": {
