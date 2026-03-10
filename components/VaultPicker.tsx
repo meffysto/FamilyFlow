@@ -39,6 +39,7 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
   const [error, setError] = useState<string | null>(null);
 
   const [showWizard, setShowWizard] = useState(false);
+  const [wizardTargetPath, setWizardTargetPath] = useState<string | undefined>();
   const [syncProgress, setSyncProgress] = useState('');
   const [serverIp, setServerIp] = useState('');
   const COFFRE_DEFAULT = '/Users/USER/Documents/coffre';
@@ -88,6 +89,31 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
     } catch (e: any) {
       setSyncProgress('');
       setError(`Sync échouée : ${e.message}\n\nVérifiez que serve-vault.py tourne sur l'ordinateur et que vous êtes sur le même réseau Wi-Fi.`);
+    }
+  };
+
+  // --- iOS: créer un vault dans iCloud Drive via folder picker + SetupWizard ---
+  const createInICloud = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'public.folder',
+        copyToCacheDirectory: false,
+      });
+
+      if (result.canceled || !result.assets?.[0]) return;
+
+      const folderUri = result.assets[0].uri;
+
+      const granted = await startAccessing(folderUri);
+      if (!granted) {
+        setError('Accès refusé au dossier. Réessayez en sélectionnant le dossier.');
+        return;
+      }
+
+      setWizardTargetPath(folderUri);
+      setShowWizard(true);
+    } catch (e: any) {
+      setError(`Erreur lors de la sélection : ${e.message}`);
     }
   };
 
@@ -161,25 +187,41 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
   if (showWizard) {
     return (
       <SetupWizard
+        targetPath={wizardTargetPath}
         onComplete={(newPath) => {
           setShowWizard(false);
+          setWizardTargetPath(undefined);
           onPathSelected(newPath);
         }}
-        onCancel={() => setShowWizard(false)}
+        onCancel={() => {
+          setShowWizard(false);
+          setWizardTargetPath(undefined);
+        }}
       />
     );
   }
 
   return (
     <View style={styles.container}>
-      {/* Create new vault button */}
+      {/* Create new vault button (local) */}
       <TouchableOpacity
         style={[styles.createBtn, { backgroundColor: primary }]}
-        onPress={() => setShowWizard(true)}
+        onPress={() => { setWizardTargetPath(undefined); setShowWizard(true); }}
       >
         <Text style={styles.createBtnText}>Créer un nouveau vault</Text>
         <Text style={styles.createBtnSub}>Pas besoin d'Obsidian — tout est créé automatiquement</Text>
       </TouchableOpacity>
+
+      {/* Create in iCloud Drive (iOS only) */}
+      {Platform.OS === 'ios' && (
+        <TouchableOpacity
+          style={[styles.icloudBtn, { backgroundColor: tint }]}
+          onPress={createInICloud}
+        >
+          <Text style={[styles.icloudBtnText, { color: primary }]}>Créer dans iCloud Drive</Text>
+          <Text style={[styles.icloudBtnSub, { color: colors.textMuted }]}>Sync automatique entre vos appareils Apple</Text>
+        </TouchableOpacity>
+      )}
 
       <View style={styles.separator}>
         <View style={[styles.separatorLine, { backgroundColor: colors.separator }]} />
@@ -317,6 +359,19 @@ const styles = StyleSheet.create({
   createBtnSub: {
     fontSize: 12,
     color: 'rgba(255,255,255,0.8)',
+  },
+  icloudBtn: {
+    borderRadius: 12,
+    padding: 16,
+    gap: 4,
+    alignItems: 'center',
+  },
+  icloudBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  icloudBtnSub: {
+    fontSize: 12,
   },
   separator: {
     flexDirection: 'row',

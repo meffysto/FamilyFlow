@@ -24,6 +24,8 @@ import { useThemeColors } from '../contexts/ThemeContext';
 interface SetupWizardProps {
   onComplete: (vaultPath: string) => void;
   onCancel: () => void;
+  /** Si fourni, le vault sera créé dans ce dossier au lieu de documentDirectory */
+  targetPath?: string;
 }
 
 interface PersonInput {
@@ -40,7 +42,7 @@ interface ChildInput {
 const PARENT_AVATARS = ['👨', '👩', '👨‍💻', '👩‍💼', '🧑', '👴', '👵'];
 const CHILD_AVATARS = ['👶', '🍼', '👧', '👦', '🧒', '🐣', '🌟'];
 
-export function SetupWizard({ onComplete, onCancel }: SetupWizardProps) {
+export function SetupWizard({ onComplete, onCancel, targetPath }: SetupWizardProps) {
   const { primary, tint, colors } = useThemeColors();
   const [step, setStep] = useState(0);
   const [parents, setParents] = useState<PersonInput[]>([{ name: '', avatar: '👨' }]);
@@ -91,7 +93,7 @@ export function SetupWizard({ onComplete, onCancel }: SetupWizardProps) {
   const handleCreate = async () => {
     setIsCreating(true);
     try {
-      const vaultPath = `${FileSystem.documentDirectory}family-vault`;
+      const vaultPath = targetPath || `${FileSystem.documentDirectory}family-vault`;
 
       // Ensure the root dir exists
       const info = await FileSystem.getInfoAsync(vaultPath);
