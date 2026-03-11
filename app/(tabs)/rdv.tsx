@@ -37,6 +37,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { Chip } from '../../components/ui/Chip';
 import { EmptyState } from '../../components/EmptyState';
 import { RDVEditor } from '../../components/RDVEditor';
+import { DictaphoneRecorder } from '../../components/DictaphoneRecorder';
 import { formatDateForDisplay, isRdvUpcoming } from '../../lib/parser';
 import { RDV } from '../../lib/types';
 import { useParentalControls } from '../../contexts/ParentalControlsContext';
@@ -80,6 +81,7 @@ export default function RDVScreen() {
   const searchRef = useRef<View>(null);
   const [calMonth, setCalMonth] = useState(new Date());
   const [calDayRdvs, setCalDayRdvs] = useState<{ date: string; rdvs: RDV[] } | null>(null);
+  const [dictaphoneRDV, setDictaphoneRDV] = useState<RDV | null>(null);
 
   // Filtrer par profil enfant : un enfant ne voit que ses propres RDV (sauf si autorisé)
   const profileRdvs = useMemo(() => {
@@ -179,11 +181,14 @@ export default function RDVScreen() {
     }
   };
 
+  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
   const renderRDV = (rdv: RDV, isPast: boolean) => {
     const emoji = TYPE_EMOJI[rdv.type_rdv] ?? '📋';
     const hasQuestions = rdv.questions && rdv.questions.length > 0;
     const hasReponses = !!rdv.reponses?.trim();
     const actions = getStatutActions(rdv);
+    const isTodayRdv = rdv.date_rdv === todayStr && rdv.statut === 'planifié';
 
     const renderRightActions = (
       _progress: any,
@@ -260,6 +265,20 @@ export default function RDVScreen() {
                 </Text>
               ))}
             </View>
+          )}
+
+          {/* Bouton dictaphone — RDV du jour sans réponses */}
+          {isTodayRdv && !hasReponses && !isChildMode && (
+            <TouchableOpacity
+              style={[styles.dictaphoneBtn, { backgroundColor: tint, borderColor: primary }]}
+              onPress={() => setDictaphoneRDV(rdv)}
+              activeOpacity={0.7}
+              accessibilityLabel="Ouvrir le dictaphone pour enregistrer les réponses du médecin"
+              accessibilityRole="button"
+            >
+              <Text style={styles.dictaphoneBtnEmoji}>🎙️</Text>
+              <Text style={[styles.dictaphoneBtnText, { color: primary }]}>Dicter les réponses</Text>
+            </TouchableOpacity>
           )}
 
           {/* Réponses du médecin */}
@@ -439,6 +458,34 @@ export default function RDVScreen() {
             setEditingRDV(undefined);
           }}
         />
+      </Modal>
+
+      {/* Dictaphone Modal */}
+      <Modal
+        visible={dictaphoneRDV !== null}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setDictaphoneRDV(null)}
+      >
+        {dictaphoneRDV && (
+          <DictaphoneRecorder
+            rdv={dictaphoneRDV}
+            onResult={async (text) => {
+              await updateRDV(dictaphoneRDV.sourceFile, {
+                date_rdv: dictaphoneRDV.date_rdv,
+                heure: dictaphoneRDV.heure,
+                type_rdv: dictaphoneRDV.type_rdv,
+                enfant: dictaphoneRDV.enfant,
+                médecin: dictaphoneRDV.médecin,
+                lieu: dictaphoneRDV.lieu,
+                statut: 'fait',
+                questions: dictaphoneRDV.questions,
+                reponses: text,
+              });
+            }}
+            onClose={() => setDictaphoneRDV(null)}
+          />
+        )}
       </Modal>
 
       <ScreenGuide
@@ -629,5 +676,23 @@ const styles = StyleSheet.create({
   reponsesText: {
     fontSize: 14,
     lineHeight: 20,
+  },
+  dictaphoneBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    borderWidth: 1.5,
+  },
+  dictaphoneBtnEmoji: {
+    fontSize: 16,
+  },
+  dictaphoneBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
 });

@@ -13,11 +13,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
 import { Chip } from './ui/Chip';
+import { DictaphoneRecorder } from './DictaphoneRecorder';
 import { RDV } from '../lib/types';
 import { formatDateForDisplay, parseDateInput } from '../lib/parser';
 import { DateInput } from './ui/DateInput';
@@ -57,6 +59,7 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
   const [questions, setQuestions] = useState<string[]>(rdv?.questions ?? []);
   const [reponses, setReponses] = useState(rdv?.reponses ?? '');
   const [isSaving, setIsSaving] = useState(false);
+  const [dictaphoneVisible, setDictaphoneVisible] = useState(false);
 
   const addQuestion = () => setQuestions((prev) => [...prev, '']);
 
@@ -219,10 +222,24 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
 
         {/* Réponses / Notes post-consultation */}
         <View style={[styles.sectionDivider, { backgroundColor: colors.border }]} />
-        <Text style={[styles.sectionLabel, { color: colors.textSub }]}>💬 Réponses du médecin</Text>
-        <Text style={[styles.sectionHint, { color: colors.textMuted }]}>
-          Notez les réponses et recommandations du médecin après la consultation.
-        </Text>
+        <View style={styles.reponsesTitleRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.sectionLabel, { color: colors.textSub }]}>💬 Réponses du médecin</Text>
+            <Text style={[styles.sectionHint, { color: colors.textMuted }]}>
+              Notez ou dictez les réponses du médecin.
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.dictaphoneBtn, { backgroundColor: tint, borderColor: primary }]}
+            onPress={() => setDictaphoneVisible(true)}
+            activeOpacity={0.7}
+            accessibilityLabel="Ouvrir le dictaphone"
+            accessibilityRole="button"
+          >
+            <Text style={styles.dictaphoneBtnEmoji}>🎙️</Text>
+            <Text style={[styles.dictaphoneBtnText, { color: primary }]}>Dicter</Text>
+          </TouchableOpacity>
+        </View>
         <TextInput
           style={[inputStyle, styles.reponsesInput]}
           value={reponses}
@@ -240,6 +257,35 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
           </TouchableOpacity>
         )}
       </ScrollView>
+
+      {/* Dictaphone Modal */}
+      <Modal
+        visible={dictaphoneVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setDictaphoneVisible(false)}
+      >
+        <DictaphoneRecorder
+          rdv={{
+            title: '',
+            sourceFile: rdv?.sourceFile ?? '',
+            date_rdv: dateRdv,
+            heure,
+            type_rdv: typeRdv,
+            enfant,
+            médecin,
+            lieu,
+            statut: rdv?.statut ?? 'planifié',
+            questions,
+            reponses,
+          }}
+          onResult={(text) => {
+            // Append ou remplacer les réponses existantes
+            setReponses((prev) => prev.trim() ? `${prev}\n\n${text}` : text);
+          }}
+          onClose={() => setDictaphoneVisible(false)}
+        />
+      </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -346,5 +392,27 @@ const styles = StyleSheet.create({
   reponsesInput: {
     minHeight: 110,
     paddingTop: 14,
+  },
+  reponsesTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: Spacing.md,
+  },
+  dictaphoneBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: Radius.md,
+    borderWidth: 1.5,
+  },
+  dictaphoneBtnEmoji: {
+    fontSize: FontSize.sm,
+  },
+  dictaphoneBtnText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
   },
 });
