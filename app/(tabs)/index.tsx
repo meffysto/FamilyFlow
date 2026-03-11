@@ -66,6 +66,9 @@ import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
+import { DashboardEmptyState } from '../../components/DashboardEmptyState';
+import { getCardTemplate } from '../../lib/card-templates';
+import type { CardTemplateContext } from '../../lib/card-templates';
 
 /** Parse "50g beurre" or "50 g de beurre" into name/qty for merge */
 function parseCourseInput(text: string): { name: string; quantity: number | null } {
@@ -452,6 +455,24 @@ export default function DashboardScreen() {
     hasPhoto: (photoDates[e.id] ?? []).includes(todayStr),
   }));
 
+  // Contexte pour les templates de cartes vides
+  const cardTemplateCtx: CardTemplateContext = useMemo(() => ({
+    today: todayStr,
+    childrenNames: enfants.map((e) => e.name),
+  }), [todayStr, enfants]);
+
+  // Activer une carte vide → crée les fichiers template dans le vault
+  const activateCardTemplate = useCallback(async (cardId: string) => {
+    if (!vault) return;
+    const template = getCardTemplate(cardId);
+    if (!template) return;
+    const files = template.generateFiles(cardTemplateCtx);
+    for (const file of files) {
+      await vault.writeFile(file.path, file.content);
+    }
+    await refresh();
+  }, [vault, cardTemplateCtx, refresh]);
+
   // Stats semaine (mémorisé pour éviter recalcul à chaque render)
   const weeklyStatsData = useMemo(() => {
     const weekStart = getWeekStart(new Date());
@@ -646,12 +667,19 @@ export default function DashboardScreen() {
         );
       }
       case 'menage':
-        if (pendingMenage.length === 0) return null;
         return (
-          <DashboardCard key="menage" title="Ménage du jour" icon="🧹" count={pendingMenage.length} color={colors.success} onPressMore={() => router.push('/(tabs)/tasks')}>
-            {pendingMenage.slice(0, 4).map((task) => (
-              <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} hideSection compact />
-            ))}
+          <DashboardCard key="menage" title="Ménage du jour" icon="🧹" count={pendingMenage.length || undefined} color={colors.success} onPressMore={pendingMenage.length > 0 ? () => router.push('/(tabs)/tasks') : undefined}>
+            {pendingMenage.length === 0 ? (
+              <DashboardEmptyState
+                description="Organisez le ménage par jour avec des tâches récurrentes"
+                onActivate={() => activateCardTemplate('menage')}
+                activateLabel="Importer le modèle"
+              />
+            ) : (
+              pendingMenage.slice(0, 4).map((task) => (
+                <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} hideSection compact />
+              ))
+            )}
           </DashboardCard>
         );
 
@@ -666,10 +694,15 @@ export default function DashboardScreen() {
         );
 
       case 'meals':
-        if (todayMeals.length === 0) return null;
         return (
-          <DashboardCard key="meals" title="Repas du jour" icon="🍽️" count={todayMeals.length} color="#EC4899" onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'repas' } })}>
-            {todayMeals.map((meal) => {
+          <DashboardCard key="meals" title="Repas du jour" icon="🍽️" count={todayMeals.length || undefined} color="#EC4899" onPressMore={todayMeals.length > 0 ? () => router.push({ pathname: '/(tabs)/meals', params: { tab: 'repas' } }) : undefined}>
+            {todayMeals.length === 0 ? (
+              <DashboardEmptyState
+                description="Planifiez les repas de la semaine pour toute la famille"
+                onActivate={() => activateCardTemplate('meals')}
+                activateLabel="Importer le modèle"
+              />
+            ) : todayMeals.map((meal) => {
               const linkedRecipe = meal.recipeRef ? recipes.find(r => {
                 const ref = r.sourceFile.replace('03 - Cuisine/Recettes/', '').replace('.cook', '');
                 return ref === meal.recipeRef;
@@ -696,7 +729,8 @@ export default function DashboardScreen() {
                   )}
                 </TouchableOpacity>
               );
-            })}
+            })
+            }
           </DashboardCard>
         );
 
@@ -813,21 +847,30 @@ export default function DashboardScreen() {
         );
 
       case 'rdvs':
-        if (upcomingRdvs.length === 0) return null;
         return (
-          <DashboardCard key="rdvs" title="Rendez-vous" icon="📅" count={upcomingRdvs.length} color={colors.info}>
-            {upcomingRdvs.slice(0, 3).map((rdv) => (
-              <TouchableOpacity key={rdv.sourceFile} style={[styles.rdvRow, { borderLeftColor: colors.info }]} onPress={() => { setEditingRDV(rdv); setRdvEditorVisible(true); }} activeOpacity={0.7}>
-                <Text style={[styles.rdvDate, { color: colors.info }]}>{formatDateForDisplay(rdv.date_rdv)} {rdv.heure ? `à ${rdv.heure}` : ''}</Text>
-                <Text style={[styles.rdvTitle, { color: colors.text }]}>{rdv.type_rdv} — {rdv.enfant}</Text>
-                {rdv.médecin && <Text style={[styles.rdvMeta, { color: colors.textMuted }]}>{rdv.médecin}</Text>}
-              </TouchableOpacity>
-            ))}
-            <View style={styles.cardActions}>
-              <TouchableOpacity onPress={() => router.push('/(tabs)/rdv')} activeOpacity={0.7}>
-                <Text style={[styles.seeAllText, { color: primary }]}>Voir tout →</Text>
-              </TouchableOpacity>
-            </View>
+          <DashboardCard key="rdvs" title="Rendez-vous" icon="📅" count={upcomingRdvs.length || undefined} color={colors.info}>
+            {upcomingRdvs.length === 0 ? (
+              <DashboardEmptyState
+                description="Centralisez les rendez-vous médicaux et administratifs"
+                onActivate={() => activateCardTemplate('rdvs')}
+                activateLabel="Importer le modèle"
+              />
+            ) : (
+              <>
+                {upcomingRdvs.slice(0, 3).map((rdv) => (
+                  <TouchableOpacity key={rdv.sourceFile} style={[styles.rdvRow, { borderLeftColor: colors.info }]} onPress={() => { setEditingRDV(rdv); setRdvEditorVisible(true); }} activeOpacity={0.7}>
+                    <Text style={[styles.rdvDate, { color: colors.info }]}>{formatDateForDisplay(rdv.date_rdv)} {rdv.heure ? `à ${rdv.heure}` : ''}</Text>
+                    <Text style={[styles.rdvTitle, { color: colors.text }]}>{rdv.type_rdv} — {rdv.enfant}</Text>
+                    {rdv.médecin && <Text style={[styles.rdvMeta, { color: colors.textMuted }]}>{rdv.médecin}</Text>}
+                  </TouchableOpacity>
+                ))}
+                <View style={styles.cardActions}>
+                  <TouchableOpacity onPress={() => router.push('/(tabs)/rdv')} activeOpacity={0.7}>
+                    <Text style={[styles.seeAllText, { color: primary }]}>Voir tout →</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
           </DashboardCard>
         );
 
@@ -887,7 +930,7 @@ export default function DashboardScreen() {
       }
 
       case 'rewards':
-        if (activeRewards.length === 0) return null;
+        if (activeRewards.length === 0) return null; // Pas de template — les récompenses viennent de la gamification
         return (
           <DashboardCard key="rewards" title="Récompenses actives" icon="🏆" color={colors.error}>
             {activeRewards.map((reward) => {
@@ -911,8 +954,16 @@ export default function DashboardScreen() {
         );
 
       case 'stock': {
-        if (stock.length === 0) return null;
-        const lowCount = stock.filter((s) => s.quantite <= s.seuil).length;
+        const lowCount = stock.length > 0 ? stock.filter((s) => s.quantite <= s.seuil).length : 0;
+        if (stock.length === 0) return (
+          <DashboardCard key="stock" title="Stock & Fournitures" icon="📦" color={colors.success}>
+            <DashboardEmptyState
+              description="Suivez vos stocks de produits et soyez alerté quand il faut racheter"
+              onActivate={() => activateCardTemplate('stock')}
+              activateLabel="Importer le modèle"
+            />
+          </DashboardCard>
+        );
         return (
           <DashboardCard key="stock" title="Stock & Fournitures" icon="📦" count={lowCount > 0 ? lowCount : undefined} color={lowCount > 0 ? colors.error : colors.success} collapsible cardId="stock">
             {stock.filter((s) => s.quantite <= s.seuil + 1).map((item) => {
@@ -970,6 +1021,15 @@ export default function DashboardScreen() {
       }
 
       case 'budget': {
+        if (budgetConfig.categories.length === 0) return (
+          <DashboardCard key="budget" title="Budget du mois" icon="💰" color={colors.success}>
+            <DashboardEmptyState
+              description="Suivez les dépenses familiales par catégorie avec des plafonds"
+              onActivate={() => activateCardTemplate('budget')}
+              activateLabel="Importer le modèle"
+            />
+          </DashboardCard>
+        );
         const budgetSpent = totalSpent(budgetEntries);
         const budgetTotal = totalBudget(budgetConfig);
         // Single-pass: build spent-by-category map
@@ -1007,22 +1067,37 @@ export default function DashboardScreen() {
       }
 
       case 'quicknotifs':
-        if (customNotifs.length === 0) return null;
         return (
           <DashboardCard key="quicknotifs" title="Notifications rapides" icon="📤" color={colors.success}>
-            <View style={styles.quickNotifGrid}>
-              {customNotifs.map((notif) => (
-                <TouchableOpacity key={notif.id} style={[styles.quickNotifBtn, { backgroundColor: colors.successBg, borderColor: colors.success }]} onPress={() => handleSendCustomNotif(notif.id)}>
-                  <Text style={styles.quickNotifEmoji}>{notif.emoji}</Text>
-                  <Text style={[styles.quickNotifLabel, { color: colors.successText }]}>{notif.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            {customNotifs.length === 0 ? (
+              <DashboardEmptyState
+                description="Envoyez des notifications rapides à la famille en un tap"
+                onActivate={() => activateCardTemplate('quicknotifs')}
+                activateLabel="Importer le modèle"
+              />
+            ) : (
+              <View style={styles.quickNotifGrid}>
+                {customNotifs.map((notif) => (
+                  <TouchableOpacity key={notif.id} style={[styles.quickNotifBtn, { backgroundColor: colors.successBg, borderColor: colors.success }]} onPress={() => handleSendCustomNotif(notif.id)}>
+                    <Text style={styles.quickNotifEmoji}>{notif.emoji}</Text>
+                    <Text style={[styles.quickNotifLabel, { color: colors.successText }]}>{notif.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </DashboardCard>
         );
 
       case 'recipes': {
-        if (recipes.length === 0) return null;
+        if (recipes.length === 0) return (
+          <DashboardCard key="recipes" title="Idée recette" icon="📖" color={colors.info}>
+            <DashboardEmptyState
+              description="Ajoutez vos recettes favorites au format Cooklang"
+              onActivate={() => activateCardTemplate('recipes')}
+              activateLabel="Importer le modèle"
+            />
+          </DashboardCard>
+        );
         // Pick a random recipe suggestion based on today's date (stable per day)
         const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
         const suggestedRecipe = recipes[dayOfYear % recipes.length];

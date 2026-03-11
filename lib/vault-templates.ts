@@ -190,7 +190,7 @@ const menageOrganise: TemplatePack = {
 `;
 
     return [{
-      path: '02 - Maison/Tâches récurrentes.md',
+      path: '02 - Maison/Ménage hebdo.md',
       content,
       append: true,
     }];
