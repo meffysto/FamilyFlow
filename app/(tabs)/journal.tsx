@@ -21,7 +21,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, isToday as isTodayFn } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useVault } from '../../contexts/VaultContext';
@@ -356,6 +356,9 @@ export default function JournalScreen() {
   }, [vault, journalPath]);
 
   useEffect(() => { loadJournal(); }, [loadJournal]);
+
+  // Recharger quand l'écran gagne le focus (sync iCloud depuis un autre appareil)
+  useFocusEffect(useCallback(() => { loadJournal(); }, [loadJournal]));
 
   // Naviguer vers une date depuis le calendrier
   const navigateToDate = useCallback((date: Date) => {
