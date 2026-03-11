@@ -667,19 +667,25 @@ export default function DashboardScreen() {
         );
       }
       case 'menage':
+        if (menageTasks.length === 0) return (
+          <DashboardCard key="menage" title="Ménage du jour" icon="🧹" color={colors.success}>
+            <DashboardEmptyState
+              description="Organisez le ménage par jour avec des tâches récurrentes"
+              onActivate={() => activateCardTemplate('menage')}
+              activateLabel="Importer le modèle"
+            />
+          </DashboardCard>
+        );
+        if (pendingMenage.length === 0) return (
+          <DashboardCard key="menage" title="Ménage du jour" icon="🧹" color={colors.success}>
+            <Text style={[styles.emptyHint, { color: colors.textMuted }]}>Tout est fait pour aujourd'hui ✓</Text>
+          </DashboardCard>
+        );
         return (
-          <DashboardCard key="menage" title="Ménage du jour" icon="🧹" count={pendingMenage.length || undefined} color={colors.success} onPressMore={pendingMenage.length > 0 ? () => router.push('/(tabs)/tasks') : undefined}>
-            {pendingMenage.length === 0 ? (
-              <DashboardEmptyState
-                description="Organisez le ménage par jour avec des tâches récurrentes"
-                onActivate={() => activateCardTemplate('menage')}
-                activateLabel="Importer le modèle"
-              />
-            ) : (
-              pendingMenage.slice(0, 4).map((task) => (
-                <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} hideSection compact />
-              ))
-            )}
+          <DashboardCard key="menage" title="Ménage du jour" icon="🧹" count={pendingMenage.length} color={colors.success} onPressMore={() => router.push('/(tabs)/tasks')}>
+            {pendingMenage.slice(0, 4).map((task) => (
+              <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} hideSection compact />
+            ))}
           </DashboardCard>
         );
 
@@ -694,15 +700,23 @@ export default function DashboardScreen() {
         );
 
       case 'meals':
+        if (meals.length === 0) return (
+          <DashboardCard key="meals" title="Repas du jour" icon="🍽️" color="#EC4899">
+            <DashboardEmptyState
+              description="Planifiez les repas de la semaine pour toute la famille"
+              onActivate={() => activateCardTemplate('meals')}
+              activateLabel="Importer le modèle"
+            />
+          </DashboardCard>
+        );
+        if (todayMeals.length === 0) return (
+          <DashboardCard key="meals" title="Repas du jour" icon="🍽️" color="#EC4899" onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'repas' } })}>
+            <Text style={[styles.emptyHint, { color: colors.textMuted }]}>Aucun repas planifié aujourd'hui</Text>
+          </DashboardCard>
+        );
         return (
-          <DashboardCard key="meals" title="Repas du jour" icon="🍽️" count={todayMeals.length || undefined} color="#EC4899" onPressMore={todayMeals.length > 0 ? () => router.push({ pathname: '/(tabs)/meals', params: { tab: 'repas' } }) : undefined}>
-            {todayMeals.length === 0 ? (
-              <DashboardEmptyState
-                description="Planifiez les repas de la semaine pour toute la famille"
-                onActivate={() => activateCardTemplate('meals')}
-                activateLabel="Importer le modèle"
-              />
-            ) : todayMeals.map((meal) => {
+          <DashboardCard key="meals" title="Repas du jour" icon="🍽️" count={todayMeals.length} color="#EC4899" onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'repas' } })}>
+            {todayMeals.map((meal) => {
               const linkedRecipe = meal.recipeRef ? recipes.find(r => {
                 const ref = r.sourceFile.replace('03 - Cuisine/Recettes/', '').replace('.cook', '');
                 return ref === meal.recipeRef;
@@ -847,30 +861,39 @@ export default function DashboardScreen() {
         );
 
       case 'rdvs':
+        if (rdvs.length === 0) return (
+          <DashboardCard key="rdvs" title="Rendez-vous" icon="📅" color={colors.info}>
+            <DashboardEmptyState
+              description="Centralisez les rendez-vous médicaux et administratifs"
+              onActivate={() => activateCardTemplate('rdvs')}
+              activateLabel="Importer le modèle"
+            />
+          </DashboardCard>
+        );
+        if (upcomingRdvs.length === 0) return (
+          <DashboardCard key="rdvs" title="Rendez-vous" icon="📅" color={colors.info}>
+            <Text style={[styles.emptyHint, { color: colors.textMuted }]}>Aucun rendez-vous à venir</Text>
+            <View style={styles.cardActions}>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/rdv')} activeOpacity={0.7}>
+                <Text style={[styles.seeAllText, { color: primary }]}>Voir tout →</Text>
+              </TouchableOpacity>
+            </View>
+          </DashboardCard>
+        );
         return (
-          <DashboardCard key="rdvs" title="Rendez-vous" icon="📅" count={upcomingRdvs.length || undefined} color={colors.info}>
-            {upcomingRdvs.length === 0 ? (
-              <DashboardEmptyState
-                description="Centralisez les rendez-vous médicaux et administratifs"
-                onActivate={() => activateCardTemplate('rdvs')}
-                activateLabel="Importer le modèle"
-              />
-            ) : (
-              <>
-                {upcomingRdvs.slice(0, 3).map((rdv) => (
-                  <TouchableOpacity key={rdv.sourceFile} style={[styles.rdvRow, { borderLeftColor: colors.info }]} onPress={() => { setEditingRDV(rdv); setRdvEditorVisible(true); }} activeOpacity={0.7}>
-                    <Text style={[styles.rdvDate, { color: colors.info }]}>{formatDateForDisplay(rdv.date_rdv)} {rdv.heure ? `à ${rdv.heure}` : ''}</Text>
-                    <Text style={[styles.rdvTitle, { color: colors.text }]}>{rdv.type_rdv} — {rdv.enfant}</Text>
-                    {rdv.médecin && <Text style={[styles.rdvMeta, { color: colors.textMuted }]}>{rdv.médecin}</Text>}
-                  </TouchableOpacity>
-                ))}
-                <View style={styles.cardActions}>
-                  <TouchableOpacity onPress={() => router.push('/(tabs)/rdv')} activeOpacity={0.7}>
-                    <Text style={[styles.seeAllText, { color: primary }]}>Voir tout →</Text>
-                  </TouchableOpacity>
-                </View>
-              </>
-            )}
+          <DashboardCard key="rdvs" title="Rendez-vous" icon="📅" count={upcomingRdvs.length} color={colors.info}>
+            {upcomingRdvs.slice(0, 3).map((rdv) => (
+              <TouchableOpacity key={rdv.sourceFile} style={[styles.rdvRow, { borderLeftColor: colors.info }]} onPress={() => { setEditingRDV(rdv); setRdvEditorVisible(true); }} activeOpacity={0.7}>
+                <Text style={[styles.rdvDate, { color: colors.info }]}>{formatDateForDisplay(rdv.date_rdv)} {rdv.heure ? `à ${rdv.heure}` : ''}</Text>
+                <Text style={[styles.rdvTitle, { color: colors.text }]}>{rdv.type_rdv} — {rdv.enfant}</Text>
+                {rdv.médecin && <Text style={[styles.rdvMeta, { color: colors.textMuted }]}>{rdv.médecin}</Text>}
+              </TouchableOpacity>
+            ))}
+            <View style={styles.cardActions}>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/rdv')} activeOpacity={0.7}>
+                <Text style={[styles.seeAllText, { color: primary }]}>Voir tout →</Text>
+              </TouchableOpacity>
+            </View>
           </DashboardCard>
         );
 
@@ -1956,6 +1979,12 @@ const styles = StyleSheet.create({
   seeAllText: {
     fontSize: 14,
     fontWeight: '700',
+  },
+  emptyHint: {
+    fontSize: 13,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    paddingVertical: 4,
   },
   recipeSuggestion: {
     flexDirection: 'row',
