@@ -200,6 +200,30 @@ export default function DashboardScreen() {
   const [aiSuggestions, setAiSuggestions] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
 
+  // Fichiers vault qui existent réellement (pour distinguer "fichier absent" de "données vides")
+  const [vaultFileExists, setVaultFileExists] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    if (!vault) return;
+    (async () => {
+      const keys = {
+        menage: '02 - Maison/Ménage hebdo.md',
+        meals: '02 - Maison/Repas de la semaine.md',
+        stock: '01 - Enfants/Commun/Stock & fournitures.md',
+        budget: '05 - Budget/config.md',
+        notifications: 'notifications.md',
+      };
+      const checks: Record<string, boolean> = {};
+      await Promise.all(
+        Object.entries(keys).map(async ([key, path]) => {
+          checks[key] = await vault.exists(path);
+        })
+      );
+      // RDV : vérifier si le dossier contient des fichiers .md
+      checks.rdvs = rdvs.length > 0;
+      setVaultFileExists(checks);
+    })();
+  }, [vault, isLoading, rdvs.length]);
+
   // Mode enfant : UX simplifiée (gros boutons, vocab simple)
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
 
@@ -470,6 +494,8 @@ export default function DashboardScreen() {
     for (const file of files) {
       await vault.writeFile(file.path, file.content);
     }
+    // Marquer le fichier comme existant immédiatement
+    setVaultFileExists(prev => ({ ...prev, [cardId]: true }));
     await refresh();
   }, [vault, cardTemplateCtx, refresh]);
 
@@ -667,7 +693,7 @@ export default function DashboardScreen() {
         );
       }
       case 'menage':
-        if (menageTasks.length === 0) return (
+        if (!vaultFileExists.menage) return (
           <DashboardCard key="menage" title="Ménage du jour" icon="🧹" color={colors.success}>
             <DashboardEmptyState
               description="Organisez le ménage par jour avec des tâches récurrentes"
@@ -700,7 +726,7 @@ export default function DashboardScreen() {
         );
 
       case 'meals':
-        if (meals.length === 0) return (
+        if (!vaultFileExists.meals) return (
           <DashboardCard key="meals" title="Repas du jour" icon="🍽️" color="#EC4899">
             <DashboardEmptyState
               description="Planifiez les repas de la semaine pour toute la famille"
@@ -861,7 +887,7 @@ export default function DashboardScreen() {
         );
 
       case 'rdvs':
-        if (rdvs.length === 0) return (
+        if (!vaultFileExists.rdvs) return (
           <DashboardCard key="rdvs" title="Rendez-vous" icon="📅" color={colors.info}>
             <DashboardEmptyState
               description="Centralisez les rendez-vous médicaux et administratifs"
@@ -978,7 +1004,7 @@ export default function DashboardScreen() {
 
       case 'stock': {
         const lowCount = stock.length > 0 ? stock.filter((s) => s.quantite <= s.seuil).length : 0;
-        if (stock.length === 0) return (
+        if (!vaultFileExists.stock) return (
           <DashboardCard key="stock" title="Stock & Fournitures" icon="📦" color={colors.success}>
             <DashboardEmptyState
               description="Suivez vos stocks de produits et soyez alerté quand il faut racheter"
@@ -1044,7 +1070,7 @@ export default function DashboardScreen() {
       }
 
       case 'budget': {
-        if (budgetConfig.categories.length === 0) return (
+        if (!vaultFileExists.budget) return (
           <DashboardCard key="budget" title="Budget du mois" icon="💰" color={colors.success}>
             <DashboardEmptyState
               description="Suivez les dépenses familiales par catégorie avec des plafonds"
@@ -1092,7 +1118,7 @@ export default function DashboardScreen() {
       case 'quicknotifs':
         return (
           <DashboardCard key="quicknotifs" title="Notifications rapides" icon="📤" color={colors.success}>
-            {customNotifs.length === 0 ? (
+            {!vaultFileExists.notifications ? (
               <DashboardEmptyState
                 description="Envoyez des notifications rapides à la famille en un tap"
                 onActivate={() => activateCardTemplate('quicknotifs')}
