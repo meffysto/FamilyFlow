@@ -24,10 +24,15 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import { Platform } from 'react-native';
 import {
+  coordinatedReadFile,
   coordinatedWriteFile,
   coordinatedEnsureDir,
   coordinatedDeleteFile,
   coordinatedCopyFile,
+  coordinatedListDir,
+  coordinatedIsDirectory,
+  coordinatedFileExists,
+  downloadICloudFiles,
 } from '../modules/vault-access/src';
 import { Profile } from './types';
 import { format } from 'date-fns';
@@ -44,9 +49,13 @@ export class VaultManager {
 
   /** Absolute URI for a relative vault path */
   private uri(relativePath: string): string {
-    const path = `${this.vaultPath}/${relativePath}`;
-    // Ensure file:// prefix for expo-file-system
-    if (path.startsWith('file://') || path.startsWith('content://')) return path;
+    // When vaultPath is already a URI (file:// or content://), encode relative path components
+    const isUri = this.vaultPath.startsWith('file://') || this.vaultPath.startsWith('content://');
+    const rel = isUri
+      ? relativePath.split('/').map((c) => encodeURIComponent(c)).join('/')
+      : relativePath;
+    const path = `${this.vaultPath}/${rel}`;
+    if (isUri) return path;
     return `file://${path}`;
   }
 
@@ -54,6 +63,11 @@ export class VaultManager {
   async readFile(relativePath: string): Promise<string> {
     const uri = this.uri(relativePath);
     try {
+      // Try coordinated read first (required for iCloud Drive files)
+      if (Platform.OS === 'ios') {
+        const coordinated = await coordinatedReadFile(uri);
+        if (coordinated !== null) return coordinated;
+      }
       const content = await FileSystem.readAsStringAsync(uri, {
         encoding: FileSystem.EncodingType.UTF8,
       });
@@ -97,6 +111,11 @@ export class VaultManager {
   async exists(relativePath: string): Promise<boolean> {
     const uri = this.uri(relativePath);
     try {
+      // Sur iOS, utiliser FileManager natif (fonctionne avec les dossiers partagés iCloud)
+      if (Platform.OS === 'ios') {
+        const nativeExists = await coordinatedFileExists(uri);
+        if (nativeExists !== null) return nativeExists;
+      }
       const info = await FileSystem.getInfoAsync(uri);
       return info.exists;
     } catch {
@@ -121,6 +140,11 @@ export class VaultManager {
   async listDir(relativeDir: string): Promise<string[]> {
     const uri = this.uri(relativeDir);
     try {
+      // Sur iOS, utiliser NSFileCoordinator (requis pour les dossiers partagés iCloud)
+      if (Platform.OS === 'ios') {
+        const coordinated = await coordinatedListDir(uri);
+        if (coordinated !== null) return coordinated;
+      }
       const entries = await FileSystem.readDirectoryAsync(uri);
       return entries;
     } catch {
@@ -137,8 +161,22 @@ export class VaultManager {
       if (entry.endsWith(extension)) {
         results.push(entryPath);
       } else if (!entry.startsWith('.')) {
-        const info = await FileSystem.getInfoAsync(this.uri(entryPath));
-        if ('isDirectory' in info && info.isDirectory) {
+        // Sur iOS, utiliser le module natif pour vérifier si c'est un dossier
+        const uri = this.uri(entryPath);
+        let isDir = false;
+        if (Platform.OS === 'ios') {
+          const nativeIsDir = await coordinatedIsDirectory(uri);
+          if (nativeIsDir !== null) {
+            isDir = nativeIsDir;
+          } else {
+            const info = await FileSystem.getInfoAsync(uri);
+            isDir = 'isDirectory' in info && (info.isDirectory ?? false);
+          }
+        } else {
+          const info = await FileSystem.getInfoAsync(uri);
+          isDir = 'isDirectory' in info && (info.isDirectory ?? false);
+        }
+        if (isDir) {
           const sub = await this.listFilesRecursive(entryPath, extension);
           results.push(...sub);
         }
@@ -158,8 +196,9 @@ export class VaultManager {
     if (Platform.OS === 'ios') {
       const ok = await coordinatedCopyFile(sourceUri, destUri);
       if (ok) {
-        const info = await FileSystem.getInfoAsync(destUri);
-        if (!info.exists) {
+        // Vérifier avec le module natif (FileSystem.getInfoAsync ne voit pas les containers iCloud)
+        const nativeExists = await coordinatedFileExists(destUri);
+        if (nativeExists === false) {
           throw new Error(`Copie échouée.\nSource: ${sourceUri}\nDest: ${destUri}`);
         }
         return;
@@ -771,6 +810,11 @@ export class VaultManager {
   static async validate(vaultPath: string): Promise<boolean> {
     try {
       const uri = vaultPath.startsWith('file://') ? vaultPath : `file://${vaultPath}`;
+      // Sur iOS, utiliser le module natif (fonctionne avec les dossiers partagés iCloud)
+      if (Platform.OS === 'ios') {
+        const nativeIsDir = await coordinatedIsDirectory(uri);
+        if (nativeIsDir !== null) return nativeIsDir;
+      }
       const info = await FileSystem.getInfoAsync(uri);
       return info.exists && ('isDirectory' in info ? (info.isDirectory ?? false) : false);
     } catch {

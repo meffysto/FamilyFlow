@@ -878,7 +878,7 @@ export const GRATITUDE_FILE = '06 - Mémoires/Gratitude familiale.md';
  * H2 = date (DD/MM/YYYY), H3 = 🙏 profil, texte libre entre H3.
  */
 export function parseGratitude(content: string): GratitudeDay[] {
-  const { content: body } = matter(content);
+  const { content: body } = parseFrontmatter(content);
   const days: GratitudeDay[] = [];
 
   // Splitter par H2 (date)
@@ -965,7 +965,7 @@ export const WISHLIST_FILE = '05 - Famille/Souhaits.md';
  * H2 = profileName, chaque ligne : - [ ] texte | budget | occasion | notes | 🔒 achetéPar
  */
 export function parseWishlist(content: string): WishlistItem[] {
-  const { content: body } = matter(content);
+  const { content: body } = parseFrontmatter(content);
   const items: WishlistItem[] = [];
   const lines = body.split('\n');
 

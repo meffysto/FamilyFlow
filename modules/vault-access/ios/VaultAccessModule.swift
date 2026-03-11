@@ -12,14 +12,12 @@ public class VaultAccessModule: Module {
     AsyncFunction("startAccessing") { (uriString: String) -> Bool in
       guard let url = URL(string: uriString) else { return false }
 
-      // Start security-scoped access
       let success = url.startAccessingSecurityScopedResource()
       if !success {
         return false
       }
       self.activeURLs.append(url)
 
-      // Save bookmark for persistent access across app launches
       do {
         let bookmarkData = try url.bookmarkData(
           options: [],
@@ -29,7 +27,7 @@ public class VaultAccessModule: Module {
         UserDefaults.standard.set(bookmarkData, forKey: "vault_bookmark")
         UserDefaults.standard.set(uriString, forKey: "vault_uri")
       } catch {
-        print("[VaultAccess] Bookmark save failed: \(error)")
+        // Bookmark save failed — access still works for this session
       }
 
       return true
@@ -66,14 +64,41 @@ public class VaultAccessModule: Module {
 
         return url.absoluteString
       } catch {
-        print("[VaultAccess] Restore failed: \(error)")
         return nil
       }
     }
 
     // ─── Coordinated File Operations ─────────────────────────────────────
-    // Required for writing to file provider containers (Obsidian, iCloud, etc.)
-    // expo-file-system doesn't use NSFileCoordinator, so writes fail.
+    // Required for reading/writing iCloud Drive files.
+    // expo-file-system doesn't use NSFileCoordinator, so reads/writes can fail.
+
+    /// Read a file using NSFileCoordinator (required for iCloud Drive files)
+    AsyncFunction("readFile") { (uriString: String) -> String in
+      guard let url = URL(string: uriString) else {
+        throw NSError(domain: "VaultAccess", code: 1, userInfo: [
+          NSLocalizedDescriptionKey: "URL invalide: \(uriString)"
+        ])
+      }
+
+      var coordinatorError: NSError?
+      var readError: Error?
+      var content: String = ""
+
+      let coordinator = NSFileCoordinator()
+      coordinator.coordinate(readingItemAt: url, options: [], error: &coordinatorError) { readingURL in
+        do {
+          content = try String(contentsOf: readingURL, encoding: .utf8)
+        } catch {
+          readError = error
+        }
+      }
+
+      if let err = coordinatorError ?? readError {
+        throw err
+      }
+
+      return content
+    }
 
     /// Write a string to a file using NSFileCoordinator
     AsyncFunction("writeFile") { (uriString: String, content: String) in
@@ -83,7 +108,6 @@ public class VaultAccessModule: Module {
         ])
       }
 
-      // Ensure parent directory exists
       let parent = url.deletingLastPathComponent()
       try self.coordinatedMkdir(at: parent)
 
@@ -91,9 +115,10 @@ public class VaultAccessModule: Module {
       var writeError: Error?
 
       let coordinator = NSFileCoordinator()
-      coordinator.coordinate(writingItemAt: url, options: .forReplacing, error: &coordinatorError) { writingURL in
+      coordinator.coordinate(writingItemAt: url, options: .forMerging, error: &coordinatorError) { writingURL in
         do {
-          try content.write(to: writingURL, atomically: true, encoding: .utf8)
+          let data = content.data(using: .utf8)!
+          try data.write(to: writingURL, options: [])
         } catch {
           writeError = error
         }
@@ -150,25 +175,24 @@ public class VaultAccessModule: Module {
         ])
       }
 
-      // Ensure parent directory exists
       let parent = destURL.deletingLastPathComponent()
       try self.coordinatedMkdir(at: parent)
 
+      let fm = FileManager.default
       var coordinatorError: NSError?
       var copyError: Error?
 
       let coordinator = NSFileCoordinator()
       coordinator.coordinate(
         readingItemAt: sourceURL, options: [],
-        writingItemAt: destURL, options: .forReplacing,
+        writingItemAt: destURL, options: .forMerging,
         error: &coordinatorError
       ) { readingURL, writingURL in
         do {
-          // Remove destination if it exists
-          if FileManager.default.fileExists(atPath: writingURL.path) {
-            try FileManager.default.removeItem(at: writingURL)
+          if fm.fileExists(atPath: writingURL.path) {
+            try fm.removeItem(at: writingURL)
           }
-          try FileManager.default.copyItem(at: readingURL, to: writingURL)
+          try fm.copyItem(at: readingURL, to: writingURL)
         } catch {
           copyError = error
         }
@@ -177,6 +201,87 @@ public class VaultAccessModule: Module {
       if let err = coordinatorError ?? copyError {
         throw err
       }
+    }
+
+    /// Force download all iCloud evicted files in a directory (recursive)
+    /// Returns the number of files triggered for download
+    AsyncFunction("downloadICloudFiles") { (uriString: String) -> Int in
+      guard let url = URL(string: uriString) else { return 0 }
+
+      let fm = FileManager.default
+      var count = 0
+
+      guard let enumerator = fm.enumerator(
+        at: url,
+        includingPropertiesForKeys: [.ubiquitousItemDownloadingStatusKey, .isDirectoryKey],
+        options: [.skipsHiddenFiles]
+      ) else { return 0 }
+
+      for case let fileURL as URL in enumerator {
+        do {
+          let resourceValues = try fileURL.resourceValues(forKeys: [
+            .ubiquitousItemDownloadingStatusKey,
+            .isDirectoryKey,
+          ])
+
+          let isDir = resourceValues.isDirectory ?? false
+          if isDir { continue }
+
+          let status = resourceValues.ubiquitousItemDownloadingStatus
+          if status == .notDownloaded {
+            try fm.startDownloadingUbiquitousItem(at: fileURL)
+            count += 1
+          }
+        } catch {
+          // Skip files we can't access
+        }
+      }
+
+      return count
+    }
+
+    /// List directory contents using NSFileCoordinator
+    AsyncFunction("listDirectory") { (uriString: String) -> [String] in
+      guard let url = URL(string: uriString) else { return [] }
+
+      var coordinatorError: NSError?
+      var listError: Error?
+      var entries: [String] = []
+
+      let coordinator = NSFileCoordinator()
+      coordinator.coordinate(readingItemAt: url, options: [], error: &coordinatorError) { readingURL in
+        do {
+          let contents = try FileManager.default.contentsOfDirectory(
+            at: readingURL,
+            includingPropertiesForKeys: nil,
+            options: [.skipsHiddenFiles]
+          )
+          entries = contents.map { $0.lastPathComponent }
+        } catch {
+          listError = error
+        }
+      }
+
+      if let err = coordinatorError ?? listError {
+        throw err
+      }
+
+      return entries
+    }
+
+    /// Check if path is a directory using FileManager
+    AsyncFunction("isDirectory") { (uriString: String) -> Bool in
+      guard let url = URL(string: uriString) else { return false }
+
+      var isDir: ObjCBool = false
+      let exists = FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir)
+      return exists && isDir.boolValue
+    }
+
+    /// Check if a file or directory exists using FileManager
+    AsyncFunction("fileExists") { (uriString: String) -> Bool in
+      guard let url = URL(string: uriString) else { return false }
+      return FileManager.default.fileExists(atPath: url.path)
     }
 
     /// Stop accessing all security-scoped resources
@@ -205,7 +310,7 @@ public class VaultAccessModule: Module {
     var mkdirError: Error?
 
     let coordinator = NSFileCoordinator()
-    coordinator.coordinate(writingItemAt: url, options: .forReplacing, error: &coordinatorError) { writingURL in
+    coordinator.coordinate(writingItemAt: url, options: .forMerging, error: &coordinatorError) { writingURL in
       do {
         try fm.createDirectory(at: writingURL, withIntermediateDirectories: true, attributes: nil)
       } catch {

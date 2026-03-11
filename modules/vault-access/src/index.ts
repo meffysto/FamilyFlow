@@ -5,10 +5,15 @@ const isIOS = Platform.OS === 'ios';
 interface VaultAccessModuleType {
   startAccessing(uri: string): Promise<boolean>;
   restoreAccess(): Promise<string | null>;
+  readFile(uri: string): Promise<string>;
   writeFile(uri: string, content: string): Promise<void>;
   ensureDir(uri: string): Promise<void>;
   deleteFile(uri: string): Promise<void>;
   copyFile(sourceUri: string, destUri: string): Promise<void>;
+  downloadICloudFiles(uri: string): Promise<number>;
+  listDirectory(uri: string): Promise<string[]>;
+  isDirectory(uri: string): Promise<boolean>;
+  fileExists(uri: string): Promise<boolean>;
   stopAccessing(): void;
   clearBookmark(): void;
 }
@@ -38,6 +43,15 @@ export async function startAccessing(uri: string): Promise<boolean> {
 export async function restoreAccess(): Promise<string | null> {
   if (!VaultAccessNative) return null;
   return VaultAccessNative.restoreAccess();
+}
+
+/**
+ * Read a file using NSFileCoordinator (required for iCloud Drive files).
+ * Returns null on non-iOS (caller should fall back to expo-file-system).
+ */
+export async function coordinatedReadFile(uri: string): Promise<string | null> {
+  if (!VaultAccessNative) return null;
+  return VaultAccessNative.readFile(uri);
 }
 
 /**
@@ -83,6 +97,24 @@ export async function coordinatedCopyFile(sourceUri: string, destUri: string): P
 }
 
 /**
+ * List directory contents using NSFileCoordinator (résout les listings stale iCloud).
+ * Returns null on non-iOS (caller should fall back to expo-file-system).
+ */
+export async function coordinatedListDir(uri: string): Promise<string[] | null> {
+  if (!VaultAccessNative) return null;
+  return VaultAccessNative.listDirectory(uri);
+}
+
+/**
+ * Check if a path is a directory (via FileManager).
+ * Returns null on non-iOS.
+ */
+export async function coordinatedIsDirectory(uri: string): Promise<boolean | null> {
+  if (!VaultAccessNative) return null;
+  return VaultAccessNative.isDirectory(uri);
+}
+
+/**
  * Stop accessing all security-scoped resources.
  */
 export function stopAccessing(): void {
@@ -94,4 +126,22 @@ export function stopAccessing(): void {
  */
 export function clearBookmark(): void {
   VaultAccessNative?.clearBookmark();
+}
+
+/**
+ * Check if a file or directory exists (via FileManager).
+ * Returns null on non-iOS.
+ */
+export async function coordinatedFileExists(uri: string): Promise<boolean | null> {
+  if (!VaultAccessNative) return null;
+  return VaultAccessNative.fileExists(uri);
+}
+
+/**
+ * Force download all iCloud evicted files in a directory (recursive).
+ * Returns the number of files triggered for download.
+ */
+export async function downloadICloudFiles(uri: string): Promise<number> {
+  if (!VaultAccessNative) return 0;
+  return VaultAccessNative.downloadICloudFiles(uri);
 }

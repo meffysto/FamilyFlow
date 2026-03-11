@@ -379,6 +379,7 @@ export function useVaultInternal(): VaultState {
     const debugErrors: string[] = [];
 
     try {
+
       // Load profiles first (needed for dynamic task file paths)
       let familleContent = '';
       let gamiContent = '';
