@@ -96,12 +96,11 @@ const ALL_SECTIONS: SectionPref[] = [
   { id: 'defis',      label: 'Défis familiaux',         emoji: '🏅', visible: true,  priority: 'medium' },
   { id: 'gratitude',  label: 'Gratitude',               emoji: '🙏', visible: true,  priority: 'medium' },
   { id: 'wishlist',   label: 'Souhaits',                emoji: '🎁', visible: true,  priority: 'medium' },
-  // Optionnelles — masquées par défaut pour les nouveaux utilisateurs
-  { id: 'stock',      label: 'Stock & Fournitures',      emoji: '📦', visible: false, priority: 'low' },
-  { id: 'quicknotifs',label: 'Notifications rapides',   emoji: '📤', visible: false, priority: 'low' },
-  { id: 'recipes',    label: 'Idée recette',             emoji: '📖', visible: false, priority: 'low' },
+  { id: 'stock',      label: 'Stock & Fournitures',      emoji: '📦', visible: true,  priority: 'low' },
+  { id: 'quicknotifs',label: 'Notifications rapides',   emoji: '📤', visible: true,  priority: 'low' },
+  { id: 'recipes',    label: 'Idée recette',             emoji: '📖', visible: true,  priority: 'low' },
   { id: 'nightMode',  label: 'Mode nuit bébé',           emoji: '🌙', visible: true,  priority: 'medium' },
-  { id: 'leaderboard',label: 'Classement',              emoji: '🥇', visible: false, priority: 'low' },
+  { id: 'leaderboard',label: 'Classement',              emoji: '🥇', visible: true,  priority: 'low' },
   // aiAssistant retiré — intégré dans la carte Suggestions
 ];
 
