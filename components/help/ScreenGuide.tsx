@@ -61,11 +61,19 @@ export const ScreenGuide = React.memo(function ScreenGuide({
   const [currentStep, setCurrentStep] = useState(-1); // -1 = pas encore démarré
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
   const hasStarted = useRef(false);
+  const seen = hasSeenScreen(screenId);
+
+  // Quand resetScreen() est appelé (guide), réautoriser le démarrage
+  useEffect(() => {
+    if (!seen) {
+      hasStarted.current = false;
+    }
+  }, [seen]);
 
   // Vérifier et démarrer la séquence
   useEffect(() => {
     if (!isLoaded || hasStarted.current) return;
-    if (hasSeenScreen(screenId)) return;
+    if (seen) return;
     if (targets.length === 0) return;
 
     hasStarted.current = true;
@@ -83,7 +91,7 @@ export const ScreenGuide = React.memo(function ScreenGuide({
     }, delay);
 
     return () => clearTimeout(timer);
-  }, [isLoaded, screenId, targets, delay]);
+  }, [isLoaded, seen, screenId, targets, delay]);
 
   const handleNext = useCallback(async () => {
     const nextStep = currentStep + 1;
