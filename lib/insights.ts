@@ -285,19 +285,27 @@ function photoInsights(input: InsightInput, tc: TimeContext): Insight[] {
     // Vérifier depuis combien de jours la photo manque
     const streaks = missingPhoto.map((e) => {
       const dates = input.photoDates[e.id] || [];
-      if (dates.length === 0) return { name: e.name, days: 999 };
+      if (dates.length === 0) return { name: e.name, days: -1 };
       // Trouver la date la plus récente sans trier
       const latest = dates.reduce((a, b) => a > b ? a : b);
       return { name: e.name, days: daysSince(tc.now, latest) };
     });
 
+    const noPhotos = streaks.filter((s) => s.days === -1);
     const longMissing = streaks.filter((s) => s.days >= 3);
+    const bodyParts: string[] = [];
+    if (noPhotos.length > 0) {
+      bodyParts.push(noPhotos.map((s) => `${s.name} : aucune photo enregistrée`).join(', '));
+    }
     if (longMissing.length > 0) {
+      bodyParts.push(longMissing.map((s) => `${s.name} : ${s.days} jour${s.days > 1 ? 's' : ''} sans photo`).join(', '));
+    }
+    if (bodyParts.length > 0) {
       insights.push({
         id: 'photos-missing-long',
         icon: '📸',
         title: 'Photo du jour manquante',
-        body: longMissing.map((s) => `${s.name} : ${s.days} jour${s.days > 1 ? 's' : ''} sans photo`).join(', '),
+        body: bodyParts.join(', '),
         priority: 'medium',
         category: 'reminder',
         action: { label: 'Voir les photos', type: 'navigate', route: '/(tabs)/photos' },
