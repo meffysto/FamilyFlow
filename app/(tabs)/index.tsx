@@ -11,7 +11,7 @@
  * - Mini leaderboard
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -64,6 +64,8 @@ import { generateInsights, type InsightInput } from '../../lib/insights';
 import { MarkdownText } from '../../components/ui/MarkdownText';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { ScreenGuide } from '../../components/help/ScreenGuide';
+import { HELP_CONTENT } from '../../lib/help-content';
 
 /** Parse "50g beurre" or "50 g de beurre" into name/qty for merge */
 function parseCourseInput(text: string): { name: string; quantity: number | null } {
@@ -199,13 +201,9 @@ export default function DashboardScreen() {
   // Mode enfant : UX simplifiée (gros boutons, vocab simple)
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
 
-  // Guide post-onboarding (affiché une seule fois après le setup)
-  const [showOnboardingGuide, setShowOnboardingGuide] = useState(false);
-  useEffect(() => {
-    SecureStore.getItemAsync('show_onboarding_guide').then((v) => {
-      if (v === '1') setShowOnboardingGuide(true);
-    });
-  }, []);
+  // Refs pour les coach marks
+  const headerRef = useRef<View>(null);
+  const scrollContentRef = useRef<View>(null);
 
   // Load persisted section prefs on mount (filtered by profile role)
   const roleDefaults = useMemo(() => getDefaultSections(activeProfile?.role), [activeProfile?.role]);
@@ -1160,7 +1158,7 @@ export default function DashboardScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.bg, borderBottomColor: colors.separator }]}>
+      <View ref={headerRef} style={[styles.header, { backgroundColor: colors.bg, borderBottomColor: colors.separator }]}>
         <View style={styles.headerLeft}>
           <Text style={[
             isChildMode ? styles.greetingChild : styles.greeting,
@@ -1245,70 +1243,6 @@ export default function DashboardScreen() {
           </DashboardCard>
         )}
 
-        {/* Guide post-setup — affiché une seule fois */}
-        {showOnboardingGuide && vaultPath && (
-          <DashboardCard title="Premiers pas" icon="🚀" color={primary}>
-            <Text style={[styles.welcomeText, { color: colors.textSub }]}>
-              Votre espace familial est prêt ! Voici comment démarrer :
-            </Text>
-            <View style={styles.onboardingSteps}>
-              <TouchableOpacity
-                style={[styles.onboardingStep, { backgroundColor: colors.cardAlt }]}
-                onPress={() => router.push('/tasks?addNew=1')}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel="Créer ma première tâche"
-              >
-                <Text style={styles.onboardingStepEmoji}>📋</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.onboardingStepTitle, { color: colors.text }]}>Créer une tâche</Text>
-                  <Text style={[styles.onboardingStepDesc, { color: colors.textMuted }]}>Ajoutez votre première tâche familiale</Text>
-                </View>
-                <Text style={{ color: primary }}>→</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.onboardingStep, { backgroundColor: colors.cardAlt }]}
-                onPress={() => router.push('/rdv?addNew=1')}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel="Ajouter un rendez-vous"
-              >
-                <Text style={styles.onboardingStepEmoji}>📅</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.onboardingStepTitle, { color: colors.text }]}>Ajouter un RDV</Text>
-                  <Text style={[styles.onboardingStepDesc, { color: colors.textMuted }]}>Planifiez un rendez-vous médical</Text>
-                </View>
-                <Text style={{ color: primary }}>→</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.onboardingStep, { backgroundColor: colors.cardAlt }]}
-                onPress={() => router.push('/(tabs)/settings')}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel="Configurer Telegram"
-              >
-                <Text style={styles.onboardingStepEmoji}>📱</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.onboardingStepTitle, { color: colors.text }]}>Configurer Telegram</Text>
-                  <Text style={[styles.onboardingStepDesc, { color: colors.textMuted }]}>Recevez les notifications de la famille</Text>
-                </View>
-                <Text style={{ color: primary }}>→</Text>
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity
-              style={[styles.onboardingDismiss, { backgroundColor: tint }]}
-              onPress={async () => {
-                setShowOnboardingGuide(false);
-                await SecureStore.deleteItemAsync('show_onboarding_guide');
-              }}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel="Masquer le guide"
-            >
-              <Text style={[styles.onboardingDismissText, { color: primary }]}>J'ai compris, merci !</Text>
-            </TouchableOpacity>
-          </DashboardCard>
-        )}
 
         {profiles.filter((p) => p.statut === 'grossesse' && p.dateTerme).map((p) => {
           const daysLeft = Math.ceil((new Date(p.dateTerme!).getTime() - new Date().getTime()) / 86400000);
@@ -1443,6 +1377,15 @@ export default function DashboardScreen() {
 
       {/* Recherche globale */}
       <GlobalSearch visible={searchVisible} onClose={() => setSearchVisible(false)} />
+
+      {/* Coach marks */}
+      <ScreenGuide
+        screenId="dashboard"
+        targets={[
+          { ref: headerRef, ...HELP_CONTENT.dashboard[0] },
+          { ref: headerRef, title: 'Ajout rapide & navigation', body: 'Utilisez le bouton + en bas à droite pour créer rapidement une tâche, un RDV ou un journal. L\'onglet « Plus » donne accès à toutes les fonctions.', position: 'below' },
+        ]}
+      />
     </SafeAreaView>
   );
 }
@@ -1673,13 +1616,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: 16,
   },
-  onboardingSteps: { gap: 10, marginTop: 8 },
-  onboardingStep: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12 },
-  onboardingStepEmoji: { fontSize: 24 },
-  onboardingStepTitle: { fontSize: 15, fontWeight: '700' },
-  onboardingStepDesc: { fontSize: 13 },
-  onboardingDismiss: { paddingVertical: 12, borderRadius: 10, alignItems: 'center', marginTop: 8 },
-  onboardingDismissText: { fontSize: 14, fontWeight: '700' },
   welcomeBtn: {
     paddingVertical: 14,
     paddingHorizontal: 20,

@@ -6,7 +6,7 @@
  * - 🌟 Souvenirs: Timeline of premières fois & moments forts.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -41,6 +41,8 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { MemoryEditor } from '../../components/MemoryEditor';
 import { EmptyState } from '../../components/EmptyState';
 import { formatDateForDisplay } from '../../lib/parser';
+import { ScreenGuide } from '../../components/help/ScreenGuide';
+import { HELP_CONTENT } from '../../lib/help-content';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CALENDAR_PADDING = 16;
@@ -59,6 +61,7 @@ export default function PhotosScreen() {
   const [selectedEnfantIdx, setSelectedEnfantIdx] = useState(0);
   const [viewingPhoto, setViewingPhoto] = useState<{ uri: string; date: string } | null>(null);
   const [activeTab, setActiveTab] = useState<TabMode>('photos');
+  const photoGridRef = useRef<View>(null);
   const { addNew } = useLocalSearchParams<{ addNew?: string }>();
   const [memoryEditorVisible, setMemoryEditorVisible] = useState(false);
   const [editingMemory, setEditingMemory] = useState<import('../../lib/types').Memory | null>(null);
@@ -188,7 +191,7 @@ export default function PhotosScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View ref={photoGridRef} style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.text }]}>
           {activeTab === 'photos' ? '📸 Photos' : '🌟 Souvenirs'}
         </Text>
@@ -457,6 +460,13 @@ export default function PhotosScreen() {
           }}
         />
       </Modal>
+
+      <ScreenGuide
+        screenId="photos"
+        targets={[
+          { ref: photoGridRef, ...HELP_CONTENT.photos[0] },
+        ]}
+      />
     </SafeAreaView>
   );
 }

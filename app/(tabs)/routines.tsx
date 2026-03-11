@@ -39,6 +39,8 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { parseRoutines } from '../../lib/parser';
 import { RoutineEditor } from '../../components/RoutineEditor';
+import { ScreenGuide } from '../../components/help/ScreenGuide';
+import { HELP_CONTENT } from '../../lib/help-content';
 
 const PROGRESS_KEY_PREFIX = 'routine_progress_';
 const DEFAULT_ROUTINES_TEMPLATE = `# Routines
@@ -348,6 +350,7 @@ export default function RoutinesScreen() {
 
   // Créer le fichier template si aucune routine n'existe
   const templateCreated = useRef(false);
+  const routineListRef = useRef<View>(null);
   useEffect(() => {
     if (routines.length === 0 && vault && !templateCreated.current) {
       templateCreated.current = true;
@@ -447,7 +450,7 @@ export default function RoutinesScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View ref={routineListRef} style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <View>
           <Text style={[styles.title, { color: colors.text }]}>🔄 Routines</Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>{todayLabel}</Text>
@@ -624,6 +627,13 @@ export default function RoutinesScreen() {
           />
         )}
       </Modal>
+
+      <ScreenGuide
+        screenId="routines"
+        targets={[
+          { ref: routineListRef, ...HELP_CONTENT.routines[0] },
+        ]}
+      />
     </SafeAreaView>
   );
 }

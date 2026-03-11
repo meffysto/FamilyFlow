@@ -25,6 +25,7 @@ import { SettingsProfiles } from '../../components/settings/SettingsProfiles';
 import { SettingsGamification } from '../../components/settings/SettingsGamification';
 import { SettingsAI } from '../../components/settings/SettingsAI';
 import { SettingsParentalControls } from '../../components/settings/SettingsParentalControls';
+import { SettingsHelp } from '../../components/settings/SettingsHelp';
 
 const TELEGRAM_TOKEN_KEY = 'telegram_token';
 const TELEGRAM_CHAT_KEY = 'telegram_chat_id';
@@ -78,6 +79,7 @@ export default function SettingsScreen() {
           activeProfile={activeProfile} profiles={profiles}
         />
         <SettingsAppearance />
+        {!isChildMode && <SettingsHelp />}
         {!isChildMode && (
           <SettingsVacation
             vacationConfig={vacationConfig} isVacationActive={isVacationActive}

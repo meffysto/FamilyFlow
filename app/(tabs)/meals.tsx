@@ -36,6 +36,8 @@ import { importRecipeFromUrl, convertTextWithAI, parseTextToRecipe, searchCommun
 import { generateCookFile } from '../../lib/cooklang';
 import { useAI } from '../../contexts/AIContext';
 import { useToast } from '../../contexts/ToastContext';
+import { ScreenGuide } from '../../components/help/ScreenGuide';
+import { HELP_CONTENT } from '../../lib/help-content';
 
 const DAYS_ORDER = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
@@ -95,6 +97,10 @@ export default function MealsScreen() {
   const [recipeCategory, setRecipeCategory] = useState<string | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+
+  // Refs pour les coach marks
+  const mealsHeaderRef = useRef<View>(null);
+  const tabBarRef = useRef<View>(null);
 
   // Import state
   const [showImport, setShowImport] = useState(false);
@@ -650,13 +656,13 @@ export default function MealsScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.card }]}>
+      <View ref={mealsHeaderRef} style={[styles.header, { backgroundColor: colors.card }]}>
         <Text style={[styles.title, { color: colors.text }]}>{headerTitle}</Text>
         <Text style={[styles.stats, { color: colors.textMuted }]}>{headerStats}</Text>
       </View>
 
       {/* Tab bar */}
-      <View style={[styles.tabBar, { backgroundColor: colors.card, borderBottomColor: colors.borderLight }]}>
+      <View ref={tabBarRef} style={[styles.tabBar, { backgroundColor: colors.card, borderBottomColor: colors.borderLight }]}>
         {(['repas', 'courses', 'recettes'] as Tab[]).map((t) => (
           <TouchableOpacity
             key={t}
@@ -1730,6 +1736,15 @@ export default function MealsScreen() {
           </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
+
+      {/* Coach marks */}
+      <ScreenGuide
+        screenId="meals"
+        targets={[
+          { ref: mealsHeaderRef, ...HELP_CONTENT.meals[0] },
+          { ref: tabBarRef, ...HELP_CONTENT.meals[1] },
+        ]}
+      />
     </SafeAreaView>
   );
 }

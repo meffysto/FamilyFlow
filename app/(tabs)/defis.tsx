@@ -6,7 +6,7 @@
  * Modal détail pour voir la progression + check-in
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -43,6 +43,8 @@ import {
   type DefiCategory,
 } from '../../constants/defiTemplates';
 import type { Defi, DefiType } from '../../lib/types';
+import { ScreenGuide } from '../../components/help/ScreenGuide';
+import { HELP_CONTENT } from '../../lib/help-content';
 import { useParentalControls } from '../../contexts/ParentalControlsContext';
 
 type TabId = 'actifs' | 'templates' | 'historique';
@@ -685,6 +687,7 @@ export default function DefisScreen() {
   }, [defis, isChildMode, activeProfile, isAllowed]);
 
   const [activeTab, setActiveTab] = useState<TabId>('actifs');
+  const defisContentRef = useRef<View>(null);
   const [configModal, setConfigModal] = useState<{ visible: boolean; template?: DefiTemplate }>({ visible: false });
   const [detailDefiId, setDetailDefiId] = useState<string | null>(null);
   const detailDefi = detailDefiId ? visibleDefis.find((d) => d.id === detailDefiId) ?? null : null;
@@ -740,7 +743,7 @@ export default function DefisScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View ref={defisContentRef} style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.text }]}>Défis familiaux</Text>
       </View>
 
@@ -896,6 +899,13 @@ export default function DefisScreen() {
           />
         )}
       </Modal>
+
+      <ScreenGuide
+        screenId="defis"
+        targets={[
+          { ref: defisContentRef, ...HELP_CONTENT.defis[0] },
+        ]}
+      />
     </SafeAreaView>
   );
 }

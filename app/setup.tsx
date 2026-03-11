@@ -5,7 +5,8 @@
  * Step 2: Parents (count + name + avatar)
  * Step 3: Children (count + name + birthdate + avatar)
  * Step 4: Vault path (VaultPicker)
- * Step 5: Recap + create vault
+ * Step 5: Template packs (optional)
+ * Step 6: Recap + create vault
  */
 
 import { useState, useCallback } from 'react';
@@ -28,10 +29,12 @@ import { useVault } from '../contexts/VaultContext';
 import * as SecureStore from 'expo-secure-store';
 import { VaultManager } from '../lib/vault';
 import { useThemeColors } from '../contexts/ThemeContext';
+import { TEMPLATE_PACKS, DEFAULT_SELECTED_PACKS } from '../lib/vault-templates';
+import { useHelp } from '../contexts/HelpContext';
 
 const PARENT_AVATARS = ['👨', '👩', '👨‍💻', '👩‍💻', '🧔', '👱‍♀️', '🧑', '👤'];
 const CHILD_AVATARS = ['👶', '🧒', '👦', '👧', '🍼', '🐣', '🎒', '👼'];
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 
 interface ParentData {
   name: string;
@@ -48,6 +51,7 @@ export default function SetupScreen() {
   const router = useRouter();
   const { setVaultPath } = useVault();
   const { primary, tint } = useThemeColors();
+  const { markTemplateInstalled } = useHelp();
 
   const [step, setStep] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
@@ -65,6 +69,9 @@ export default function SetupScreen() {
 
   // Step 4 — Vault path
   const [vaultPath, setVaultPathLocal] = useState('');
+
+  // Step 5 — Templates
+  const [selectedPacks, setSelectedPacks] = useState<Set<string>>(new Set(DEFAULT_SELECTED_PACKS));
 
   // --- Parent helpers ---
   const updateParentCount = (count: number) => {
@@ -114,6 +121,23 @@ export default function SetupScreen() {
     setChildren(updated);
   };
 
+  // --- Template helpers ---
+  const togglePack = (packId: string) => {
+    setSelectedPacks((prev) => {
+      const next = new Set(prev);
+      if (next.has(packId)) next.delete(packId);
+      else next.add(packId);
+      return next;
+    });
+  };
+
+  const selectAllPacks = () => {
+    const visiblePacks = TEMPLATE_PACKS.filter(
+      (p) => !p.requiresChildren || childCount > 0
+    );
+    setSelectedPacks(new Set(visiblePacks.map((p) => p.id)));
+  };
+
   // --- Navigation ---
   const canGoNext = (): boolean => {
     if (step === 2) return parents.every((p) => p.name.trim().length > 0);
@@ -134,14 +158,25 @@ export default function SetupScreen() {
     setIsCreating(true);
     try {
       const vault = new VaultManager(vaultPath);
-      await vault.scaffoldVault(
-        parents.map((p) => ({ name: p.name.trim(), avatar: p.avatar })),
-        children.map((c) => ({
-          name: c.name.trim(),
-          avatar: c.avatar,
-          birthdate: c.birthdate.trim(),
-        }))
-      );
+      const parentData = parents.map((p) => ({ name: p.name.trim(), avatar: p.avatar }));
+      const childData = children.map((c) => ({
+        name: c.name.trim(),
+        avatar: c.avatar,
+        birthdate: c.birthdate.trim(),
+      }));
+
+      await vault.scaffoldVault(parentData, childData);
+
+      // Installer les templates sélectionnés
+      if (selectedPacks.size > 0) {
+        const packIds = Array.from(selectedPacks);
+        await vault.installTemplates(packIds, parentData, childData);
+        // Marquer chaque pack comme installé dans SecureStore
+        for (const packId of packIds) {
+          await markTemplateInstalled(packId);
+        }
+      }
+
       await setVaultPath(vaultPath);
       await SecureStore.setItemAsync('show_onboarding_guide', '1');
       router.replace('/(tabs)' as any);
@@ -153,7 +188,7 @@ export default function SetupScreen() {
     } finally {
       setIsCreating(false);
     }
-  }, [vaultPath, parents, children, setVaultPath, router]);
+  }, [vaultPath, parents, children, selectedPacks, setVaultPath, router, markTemplateInstalled]);
 
   // --- Render steps ---
   const renderStep = () => {
@@ -321,14 +356,60 @@ export default function SetupScreen() {
             <VaultPicker
               onPathSelected={(path) => {
                 setVaultPathLocal(path);
-                // Auto-advance to recap
+                // Auto-advance to templates step
                 setTimeout(() => setStep(5), 300);
               }}
             />
           </View>
         );
 
-      case 5:
+      case 5: {
+        const visiblePacks = TEMPLATE_PACKS.filter(
+          (p) => !p.requiresChildren || childCount > 0
+        );
+        return (
+          <View style={s.stepContent}>
+            <Text style={s.stepTitle}>📦 Modèles de départ</Text>
+            <Text style={s.stepSubtitle}>
+              Choisissez les modèles à installer dans votre vault. Vous pourrez en ajouter d'autres plus tard dans les réglages.
+            </Text>
+
+            {visiblePacks.map((pack) => {
+              const isSelected = selectedPacks.has(pack.id);
+              return (
+                <TouchableOpacity
+                  key={pack.id}
+                  style={[
+                    s.templateItem,
+                    isSelected && { backgroundColor: tint, borderColor: primary },
+                  ]}
+                  onPress={() => togglePack(pack.id)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[s.templateCheckbox, isSelected && { backgroundColor: primary, borderColor: primary }]}>
+                    {isSelected && <Text style={s.templateCheck}>✓</Text>}
+                  </View>
+                  <Text style={s.templateEmoji}>{pack.emoji}</Text>
+                  <View style={s.templateText}>
+                    <Text style={s.templateName}>{pack.name}</Text>
+                    <Text style={s.templateDesc}>{pack.description}</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+
+            <TouchableOpacity
+              style={s.selectAllBtn}
+              onPress={selectAllPacks}
+              activeOpacity={0.6}
+            >
+              <Text style={[s.selectAllText, { color: primary }]}>Tout sélectionner</Text>
+            </TouchableOpacity>
+          </View>
+        );
+      }
+
+      case 6:
         return (
           <View style={s.stepContent}>
             <Text style={s.stepTitle}>✨ Récapitulatif</Text>
@@ -364,6 +445,18 @@ export default function SetupScreen() {
 
               <Text style={s.recapSection}>Vault</Text>
               <Text style={s.recapPath}>{vaultPath}</Text>
+
+              {selectedPacks.size > 0 && (
+                <>
+                  <Text style={s.recapSection}>Modèles</Text>
+                  <Text style={s.recapTemplates}>
+                    {TEMPLATE_PACKS
+                      .filter((p) => selectedPacks.has(p.id))
+                      .map((p) => `${p.emoji} ${p.name}`)
+                      .join('\n')}
+                  </Text>
+                </>
+              )}
             </View>
 
             <View style={[s.createInfo, { backgroundColor: tint }]}>
@@ -374,6 +467,7 @@ export default function SetupScreen() {
                 🛒 Liste de courses{'\n'}
                 📖 Dossiers journaux{'\n'}
                 👨‍👩‍👧 Profils famille + gamification
+                {selectedPacks.size > 0 ? `\n📦 ${selectedPacks.size} modèle${selectedPacks.size > 1 ? 's' : ''} de contenu` : ''}
               </Text>
             </View>
           </View>
@@ -418,7 +512,26 @@ export default function SetupScreen() {
             <View style={s.navSpacer} />
           )}
 
-          {step < TOTAL_STEPS ? (
+          {step === 5 ? (
+            // Template step: "Passer" + "Suivant"
+            <View style={s.templateNav}>
+              <TouchableOpacity
+                style={s.navSkip}
+                onPress={() => {
+                  setSelectedPacks(new Set());
+                  setStep(6);
+                }}
+              >
+                <Text style={s.navSkipText}>Passer</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[s.navNext, { backgroundColor: primary }]}
+                onPress={goNext}
+              >
+                <Text style={s.navNextText}>Suivant →</Text>
+              </TouchableOpacity>
+            </View>
+          ) : step < TOTAL_STEPS ? (
             <TouchableOpacity
               style={[s.navNext, { backgroundColor: primary }, !canGoNext() && s.navDisabled]}
               onPress={goNext}
@@ -575,7 +688,36 @@ const s = StyleSheet.create({
   },
   ageWarningText: { fontSize: 13, color: '#92400E', lineHeight: 18, textAlign: 'center' },
 
-  // Step 5 — Recap
+  // Step 5 — Templates
+  templateItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+  },
+  templateCheckbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 7,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  templateCheck: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
+  templateEmoji: { fontSize: 24 },
+  templateText: { flex: 1, gap: 2 },
+  templateName: { fontSize: 15, fontWeight: '700', color: '#111827' },
+  templateDesc: { fontSize: 13, color: '#6B7280' },
+  selectAllBtn: { alignSelf: 'center', paddingVertical: 8 },
+  selectAllText: { fontSize: 14, fontWeight: '600' },
+  templateNav: { flexDirection: 'row', gap: 12 },
+
+  // Step 6 — Recap
   recapCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -594,6 +736,7 @@ const s = StyleSheet.create({
   recapName: { fontSize: 15, fontWeight: '700', color: '#111827' },
   recapDate: { fontSize: 12, color: '#9CA3AF' },
   recapPath: { fontSize: 13, color: '#374151', fontFamily: 'Menlo', backgroundColor: '#F9FAFB', padding: 10, borderRadius: 8 },
+  recapTemplates: { fontSize: 14, color: '#374151', lineHeight: 22 },
 
   // Create info
   createInfo: {
@@ -624,6 +767,8 @@ const s = StyleSheet.create({
     borderRadius: 14,
   },
   navNextText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
+  navSkip: { paddingVertical: 14, paddingHorizontal: 16 },
+  navSkipText: { fontSize: 15, fontWeight: '600', color: '#6B7280' },
   navCreate: {
     paddingVertical: 14,
     paddingHorizontal: 24,

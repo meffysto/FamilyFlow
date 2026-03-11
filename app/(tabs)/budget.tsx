@@ -9,7 +9,7 @@
  * Accessible depuis Menu (more.tsx) et Dashboard card.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -40,6 +40,8 @@ import { formatDateForDisplay } from '../../lib/parser';
 import { DateInput } from '../../components/ui/DateInput';
 import type { BudgetCategory, BudgetEntry } from '../../lib/types';
 import { useParentalControls } from '../../contexts/ParentalControlsContext';
+import { ScreenGuide } from '../../components/help/ScreenGuide';
+import { HELP_CONTENT } from '../../lib/help-content';
 
 function prevMonth(month: string): string {
   const [y, m] = month.split('-').map(Number);
@@ -87,6 +89,7 @@ export default function BudgetScreen() {
   }
 
   const [tab, setTab] = useState<TabId>('resume');
+  const budgetHeaderRef = useRef<View>(null);
   const [addModalVisible, setAddModalVisible] = useState(false);
 
   // Add form state
@@ -154,7 +157,7 @@ export default function BudgetScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View ref={budgetHeaderRef} style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.text }]}>Budget</Text>
         <TouchableOpacity
           style={[styles.addBtn, { backgroundColor: primary }]}
@@ -365,6 +368,13 @@ export default function BudgetScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       </Modal>
+
+      <ScreenGuide
+        screenId="budget"
+        targets={[
+          { ref: budgetHeaderRef, ...HELP_CONTENT.budget[0] },
+        ]}
+      />
     </SafeAreaView>
   );
 }

@@ -12,14 +12,14 @@ import { useParentalControls, PARENTAL_CATEGORIES, type ParentalCategory } from 
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { CollapsibleSection } from '../ui/CollapsibleSection';
 
 export function SettingsParentalControls() {
   const { primary, colors } = useThemeColors();
   const { controls, setControl } = useParentalControls();
 
   return (
-    <View style={styles.section} accessibilityRole="summary" accessibilityLabel="Section Contrôle parental">
-      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Contrôle parental</Text>
+    <CollapsibleSection id="parental-controls" title="Contrôle parental" defaultCollapsed>
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
         <Text style={[styles.description, { color: colors.textSub }]}>
           Par défaut, chaque enfant ne voit que ses propres données. Activez un toggle pour lui donner accès aux données de toute la famille.
@@ -47,19 +47,11 @@ export function SettingsParentalControls() {
           </Text>
         </View>
       </View>
-    </View>
+    </CollapsibleSection>
   );
 }
 
 const styles = StyleSheet.create({
-  section: { marginBottom: Spacing['3xl'] },
-  sectionTitle: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: Spacing.md,
-  },
   card: {
     borderRadius: Radius.lg,
     padding: Spacing.lg,

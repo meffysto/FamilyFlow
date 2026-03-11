@@ -40,6 +40,8 @@ import {
 } from '../../lib/notifications';
 import { Task, CourseItem, Profile } from '../../lib/types';
 import { formatDateForDisplay } from '../../lib/parser';
+import { ScreenGuide } from '../../components/help/ScreenGuide';
+import { HELP_CONTENT } from '../../lib/help-content';
 
 interface FilterDef {
   id: string;
@@ -96,6 +98,10 @@ export default function TasksScreen() {
   const { showToast } = useToast();
 
   const { filter: filterParam, addNew } = useLocalSearchParams<{ filter?: string; addNew?: string }>();
+
+  // Refs pour les coach marks
+  const taskListRef = useRef<View>(null);
+  const filterRef = useRef<View>(null);
 
   // FAB: ouvrir le modal d'ajout si addNew=1
   useEffect(() => {
@@ -318,7 +324,7 @@ export default function TasksScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View ref={taskListRef} style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.text }]}>{isVacationActive ? '☀️ Vacances' : '📋 Tâches'}</Text>
         <Text style={[styles.stats, { color: colors.textMuted }]}>
           {completedCount}/{totalCount} terminées
@@ -365,7 +371,7 @@ export default function TasksScreen() {
                 clearButtonMode="while-editing"
               />
             </View>
-            <View style={[styles.filterWrapper, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+            <View ref={filterRef} style={[styles.filterWrapper, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -479,6 +485,15 @@ export default function TasksScreen() {
           </ScrollView>
         </SafeAreaView>
       </Modal>
+
+      {/* Coach marks */}
+      <ScreenGuide
+        screenId="tasks"
+        targets={[
+          { ref: taskListRef, ...HELP_CONTENT.tasks[0] },
+          { ref: filterRef, ...HELP_CONTENT.tasks[1] },
+        ]}
+      />
     </SafeAreaView>
   );
 }

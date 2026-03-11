@@ -8,7 +8,7 @@
  * - Last 10 history entries
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -35,6 +35,8 @@ import {
 import { Profile, LootBox, LootRarity } from '../../lib/types';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
+import { ScreenGuide } from '../../components/help/ScreenGuide';
+import { HELP_CONTENT } from '../../lib/help-content';
 
 export default function LootScreen() {
   const { profiles, gamiData, notifPrefs, vault, refresh, isLoading } = useVault();
@@ -45,6 +47,7 @@ export default function LootScreen() {
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [lootOpenerVisible, setLootOpenerVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const lootSectionRef = useRef<View>(null);
   const [showDropRates, setShowDropRates] = useState(false);
 
   const onRefresh = useCallback(async () => {
@@ -114,7 +117,7 @@ export default function LootScreen() {
         </View>
 
         {/* Loot box cards per profile */}
-        <View style={styles.section}>
+        <View ref={lootSectionRef} style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Tes récompenses à ouvrir</Text>
           {profiles.map((profile) => (
             <View key={profile.id} style={[styles.lootCard, { backgroundColor: colors.card }]}>
@@ -362,6 +365,13 @@ export default function LootScreen() {
           }}
         />
       )}
+
+      <ScreenGuide
+        screenId="loot"
+        targets={[
+          { ref: lootSectionRef, ...HELP_CONTENT.loot[0] },
+        ]}
+      />
     </SafeAreaView>
   );
 }

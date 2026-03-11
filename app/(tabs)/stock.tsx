@@ -5,7 +5,7 @@
  * add new products, edit thresholds, delete items.
  */
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -23,6 +23,8 @@ import { useToast } from '../../contexts/ToastContext';
 import { StockEditor } from '../../components/StockEditor';
 import { EmptyState } from '../../components/EmptyState';
 import { StockItem } from '../../lib/types';
+import { ScreenGuide } from '../../components/help/ScreenGuide';
+import { HELP_CONTENT } from '../../lib/help-content';
 
 export default function StockScreen() {
   const {
@@ -38,6 +40,7 @@ export default function StockScreen() {
   const { showToast } = useToast();
 
   const [search, setSearch] = useState('');
+  const stockListRef = useRef<View>(null);
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingItem, setEditingItem] = useState<StockItem | undefined>(undefined);
 
@@ -97,7 +100,7 @@ export default function StockScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View ref={stockListRef} style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <View>
           <Text style={[styles.title, { color: colors.text }]}>📦 Stocks & fournitures</Text>
           {lowStockCount > 0 && (
@@ -225,6 +228,13 @@ export default function StockScreen() {
           }}
         />
       </Modal>
+
+      <ScreenGuide
+        screenId="stock"
+        targets={[
+          { ref: stockListRef, ...HELP_CONTENT.stock[0] },
+        ]}
+      />
     </SafeAreaView>
   );
 }

@@ -5,7 +5,7 @@
  * Each card navigates to the corresponding hidden tab screen.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,8 @@ import { FontSize, FontWeight } from '../../constants/typography';
 import { isRdvUpcoming } from '../../lib/parser';
 import { totalSpent, totalBudget } from '../../lib/budget';
 import { isBabyProfile } from '../../lib/types';
+import { ScreenGuide } from '../../components/help/ScreenGuide';
+import { HELP_CONTENT } from '../../lib/help-content';
 
 interface GridItem {
   emoji: string;
@@ -34,6 +36,7 @@ interface GridItem {
 
 export default function MoreScreen() {
   const router = useRouter();
+  const gridRef = useRef<View>(null);
   const { rdvs, stock, gamiData, budgetEntries, budgetConfig, activeProfile, profiles, defis, wishlistItems } = useVault();
   const { colors } = useThemeColors();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
@@ -159,7 +162,7 @@ export default function MoreScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View ref={gridRef} style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.text }]}>Plus</Text>
       </View>
 
@@ -195,6 +198,13 @@ export default function MoreScreen() {
           );
         })}
       </ScrollView>
+
+      <ScreenGuide
+        screenId="more"
+        targets={[
+          { ref: gridRef, ...HELP_CONTENT.more[0] },
+        ]}
+      />
     </SafeAreaView>
   );
 }

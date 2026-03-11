@@ -32,6 +32,7 @@ import {
 import { Profile } from './types';
 import { format } from 'date-fns';
 import { nextOccurrence } from './recurrence';
+import { TEMPLATE_PACKS, TemplateContext } from './vault-templates';
 
 export class VaultManager {
   vaultPath: string;
@@ -329,6 +330,63 @@ export class VaultManager {
       const gamiContent = `---\ntags:\n  - gamification\n---\n# Gamification\n\n<!-- Family Vault — historique des points et loot boxes. -->\n\n${profileSections}\n\n## Journal des gains\n`;
       await this.writeFile('gamification.md', gamiContent);
     }
+  }
+
+  /**
+   * Install template packs into the vault.
+   * Appends to existing files or creates new ones (never overwrites non-empty files).
+   */
+  async installTemplates(
+    packIds: string[],
+    parents: Array<{ name: string; avatar: string }>,
+    children: Array<{ name: string; avatar: string; birthdate: string }>
+  ): Promise<{ installed: number; skipped: number }> {
+    const ctx: TemplateContext = {
+      parents,
+      children: children.map(c => ({
+        ...c,
+        ageCategory: this._getAgeCategory(c.birthdate),
+      })),
+      today: format(new Date(), 'yyyy-MM-dd'),
+    };
+
+    let installed = 0;
+    let skipped = 0;
+
+    for (const packId of packIds) {
+      const pack = TEMPLATE_PACKS.find(p => p.id === packId);
+      if (!pack) continue;
+
+      const files = pack.generate(ctx);
+      for (const file of files) {
+        if (file.append) {
+          const existing = await this.readFile(file.path).catch(() => '');
+          await this.writeFile(file.path, existing.trimEnd() + '\n\n' + file.content);
+          installed++;
+        } else {
+          // Écrire seulement si le fichier n'existe pas ou est vide/template
+          const exists = await this.exists(file.path);
+          if (!exists) {
+            await this.writeFile(file.path, file.content);
+            installed++;
+          } else {
+            const existing = await this.readFile(file.path);
+            // Remplacer si le contenu est essentiellement vide (juste des en-têtes sans données)
+            const hasRealContent = existing.split('\n').some(l =>
+              l.startsWith('- [') || (l.startsWith('- ') && l.includes(':') && l.split(':')[1]?.trim().length > 0)
+            );
+            if (!hasRealContent) {
+              await this.writeFile(file.path, file.content);
+              installed++;
+            } else {
+              skipped++;
+            }
+          }
+        }
+      }
+    }
+
+    return { installed, skipped };
   }
 
   /**

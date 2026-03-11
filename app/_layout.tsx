@@ -20,6 +20,7 @@ import { ToastProvider } from '../contexts/ToastContext';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { AIProvider } from '../contexts/AIContext';
 import { ParentalControlsProvider } from '../contexts/ParentalControlsContext';
+import { HelpProvider } from '../contexts/HelpContext';
 
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
@@ -51,6 +52,7 @@ export default function RootLayout() {
         <VaultProvider>
           <ThemeProvider>
             <AIProvider>
+            <HelpProvider>
             <ParentalControlsProvider>
             <ToastProvider>
               <StatusBar style="auto" />
@@ -61,6 +63,7 @@ export default function RootLayout() {
               {!hasVault && <Redirect href="/setup" />}
             </ToastProvider>
             </ParentalControlsProvider>
+            </HelpProvider>
             </AIProvider>
           </ThemeProvider>
         </VaultProvider>

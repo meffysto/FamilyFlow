@@ -5,7 +5,7 @@
  * Reuses the existing RDVEditor component for create/edit.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   View,
@@ -40,6 +40,8 @@ import { RDVEditor } from '../../components/RDVEditor';
 import { formatDateForDisplay, isRdvUpcoming } from '../../lib/parser';
 import { RDV } from '../../lib/types';
 import { useParentalControls } from '../../contexts/ParentalControlsContext';
+import { ScreenGuide } from '../../components/help/ScreenGuide';
+import { HELP_CONTENT } from '../../lib/help-content';
 
 const CAL_PADDING = 16;
 const DAY_GAP = 4;
@@ -74,6 +76,8 @@ export default function RDVScreen() {
   const [editingRDV, setEditingRDV] = useState<RDV | undefined>(undefined);
   const [showPast, setShowPast] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('liste');
+  const rdvListRef = useRef<View>(null);
+  const searchRef = useRef<View>(null);
   const [calMonth, setCalMonth] = useState(new Date());
   const [calDayRdvs, setCalDayRdvs] = useState<{ date: string; rdvs: RDV[] } | null>(null);
 
@@ -299,7 +303,7 @@ export default function RDVScreen() {
       </View>
 
       {/* Search */}
-      <View style={[styles.searchContainer, { backgroundColor: colors.card }]}>
+      <View ref={searchRef} style={[styles.searchContainer, { backgroundColor: colors.card }]}>
         <TextInput
           style={[styles.searchInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
           placeholder="🔍 Rechercher un rendez-vous..."
@@ -357,9 +361,11 @@ export default function RDVScreen() {
       ) : (
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {/* Upcoming */}
+        <View ref={rdvListRef}>
         <Text style={[styles.sectionTitle, { color: colors.textSub }]}>
           À venir ({upcoming.length})
         </Text>
+        </View>
         {upcoming.length === 0 ? (
           <EmptyState emoji="📅" title="Aucun rendez-vous à venir" subtitle="Votre agenda est libre !" />
         ) : (
@@ -434,6 +440,14 @@ export default function RDVScreen() {
           }}
         />
       </Modal>
+
+      <ScreenGuide
+        screenId="rdv"
+        targets={[
+          { ref: rdvListRef, ...HELP_CONTENT.rdv[0] },
+          { ref: searchRef, ...HELP_CONTENT.rdv[1] },
+        ]}
+      />
     </SafeAreaView>
   );
 }

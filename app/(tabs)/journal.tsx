@@ -26,6 +26,8 @@ import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterv
 import { fr } from 'date-fns/locale';
 import { useVault } from '../../contexts/VaultContext';
 import { todayJournalPath, journalPathForDate, generateJournalTemplate, todayAdultJournalPath, adultJournalPathForDate, generateAdultJournalTemplate } from '../../lib/parser';
+import { ScreenGuide } from '../../components/help/ScreenGuide';
+import { HELP_CONTENT } from '../../lib/help-content';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { parseJournalStats, calculerDuree } from '../../lib/journal-stats';
 
@@ -252,6 +254,9 @@ export default function JournalScreen() {
   const { vault, profiles, activeProfile } = useVault();
   const { primary, tint, colors } = useThemeColors();
   const { enfant: enfantParam } = useLocalSearchParams<{ enfant?: string }>();
+
+  const childSelectorRef = useRef<View>(null);
+  const firstSectionRef = useRef<View>(null);
 
   const enfants = useMemo(
     () => profiles.filter((p) => p.role === 'enfant'),
@@ -660,7 +665,7 @@ export default function JournalScreen() {
       </View>
 
       {/* Onglets enfant / adulte */}
-      <View style={[styles.tabs, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View ref={childSelectorRef} style={[styles.tabs, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         {isAdultMode && (
           <TouchableOpacity
             style={[styles.tab, isViewingAdultTab && { borderBottomColor: primary }]}
@@ -786,7 +791,7 @@ export default function JournalScreen() {
             )}
           </View>
         ) : journalContent ? (
-          <View style={styles.journalContent}>
+          <View ref={firstSectionRef} style={styles.journalContent}>
             {!isViewingAdultTab && hasStats && journalStats && (
               <View style={[styles.statsBanner, { backgroundColor: colors.card }]}>
                 <Text style={[styles.statsBannerTitle, { color: colors.text }]}>📊 Résumé du jour</Text>
@@ -893,6 +898,14 @@ export default function JournalScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      <ScreenGuide
+        screenId="journal"
+        targets={[
+          { ref: childSelectorRef, ...HELP_CONTENT.journal[0] },
+          { ref: firstSectionRef, ...HELP_CONTENT.journal[1] },
+        ]}
+      />
     </SafeAreaView>
   );
 }
