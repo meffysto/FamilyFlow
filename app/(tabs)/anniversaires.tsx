@@ -26,6 +26,7 @@ import { Button } from '../../components/ui/Button';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { AnniversaryEditor } from '../../components/AnniversaryEditor';
 import { ContactImporter } from '../../components/ContactImporter';
+import { CalendarImporter } from '../../components/CalendarImporter';
 import type { Anniversary } from '../../lib/types';
 
 const MONTH_NAMES = [
@@ -94,6 +95,7 @@ export default function AnniversairesScreen() {
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingAnniversary, setEditingAnniversary] = useState<Anniversary | undefined>();
   const [importerVisible, setImporterVisible] = useState(false);
+  const [calendarImporterVisible, setCalendarImporterVisible] = useState(false);
 
   // Grouper par mois prochain, trié par nombre de jours restants
   const sections: SectionData[] = useMemo(() => {
@@ -247,6 +249,12 @@ export default function AnniversairesScreen() {
             icon="📇"
           />
           <Button
+            label="Importer du calendrier"
+            onPress={() => setCalendarImporterVisible(true)}
+            variant="primary"
+            icon="📅"
+          />
+          <Button
             label="Ajouter manuellement"
             onPress={handleAdd}
             variant="secondary"
@@ -289,18 +297,30 @@ export default function AnniversairesScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Bouton import */}
+      {/* Boutons import */}
       {anniversaries.length > 0 && (
-        <TouchableOpacity
-          style={[styles.importBar, { backgroundColor: tint, borderColor: primary + '30' }]}
-          onPress={() => setImporterVisible(true)}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.importEmoji}>{'📇'}</Text>
-          <Text style={[styles.importText, { color: primary }]}>
-            Importer depuis mes contacts
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.importRow}>
+          <TouchableOpacity
+            style={[styles.importBar, styles.importBarHalf, { backgroundColor: tint, borderColor: primary + '30' }]}
+            onPress={() => setImporterVisible(true)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.importEmoji}>{'📇'}</Text>
+            <Text style={[styles.importText, { color: primary }]}>
+              Contacts
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.importBar, styles.importBarHalf, { backgroundColor: tint, borderColor: primary + '30' }]}
+            onPress={() => setCalendarImporterVisible(true)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.importEmoji}>{'📅'}</Text>
+            <Text style={[styles.importText, { color: primary }]}>
+              Calendrier
+            </Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       {/* Liste */}
@@ -335,6 +355,14 @@ export default function AnniversairesScreen() {
       <ContactImporter
         visible={importerVisible}
         onClose={() => setImporterVisible(false)}
+        onImport={handleImport}
+        existingAnniversaries={anniversaries}
+      />
+
+      {/* Modal import calendrier */}
+      <CalendarImporter
+        visible={calendarImporterVisible}
+        onClose={() => setCalendarImporterVisible(false)}
         onImport={handleImport}
         existingAnniversaries={anniversaries}
       />
@@ -383,16 +411,23 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
     lineHeight: 22,
   },
+  importRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    marginHorizontal: Spacing['2xl'],
+    marginTop: Spacing['2xl'],
+  },
   importBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.md,
-    marginHorizontal: Spacing['2xl'],
-    marginTop: Spacing['2xl'],
     paddingVertical: Spacing.xl,
     borderRadius: Radius.lg,
     borderWidth: 1,
+  },
+  importBarHalf: {
+    flex: 1,
   },
   importEmoji: {
     fontSize: FontSize.lg,
