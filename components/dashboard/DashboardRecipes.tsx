@@ -2,7 +2,7 @@
  * DashboardRecipes.tsx — Section idée recette du jour
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
@@ -19,7 +19,9 @@ interface DashboardRecipesProps extends DashboardSectionProps {
 function DashboardRecipesInner({ activateCardTemplate, onViewRecipe }: DashboardRecipesProps) {
   const router = useRouter();
   const { colors } = useThemeColors();
-  const { recipes } = useVault();
+  const { recipes, loadRecipes } = useVault();
+
+  useEffect(() => { loadRecipes(); }, [loadRecipes]);
 
   if (recipes.length === 0) return (
     <DashboardCard key="recipes" title="Idée recette" icon="📖" color={colors.info}>

@@ -141,6 +141,7 @@ export interface VaultState {
   deactivateVacation: () => Promise<void>;
   refreshGamification: () => Promise<void>;
   recipes: Recipe[];
+  loadRecipes: () => Promise<void>;
   addRecipe: (category: string, data: { title: string; tags?: string[]; servings?: number; prepTime?: string; cookTime?: string; ingredients: { name: string; quantity?: string; unit?: string }[]; steps: string[] }) => Promise<void>;
   deleteRecipe: (sourceFile: string) => Promise<void>;
   /** Scan tout le vault pour des .cook en dehors de 03 - Cuisine/Recettes/ */
@@ -381,7 +382,6 @@ export function useVaultInternal(): VaultState {
     const debugErrors: string[] = [];
 
     try {
-
       // Load profiles first (needed for dynamic task file paths)
       let familleContent = '';
       let gamiContent = '';
@@ -439,14 +439,13 @@ export function useVaultInternal(): VaultState {
       const results = await Promise.allSettled([
         // [0] Tasks
         (async () => {
-          const allTasks: Task[] = [];
-          for (const relPath of taskFiles) {
+          const results = await Promise.all(taskFiles.map(async (relPath) => {
             try {
               const content = await vault.readFile(relPath);
-              allTasks.push(...parseTaskFile(relPath, content));
-            } catch (e) { debugErrors.push(`tasks[${relPath}]: ${e}`); }
-          }
-          return allTasks;
+              return parseTaskFile(relPath, content);
+            } catch (e) { debugErrors.push(`tasks[${relPath}]: ${e}`); return []; }
+          }));
+          return results.flat();
         })(),
 
         // [1] Ménage
@@ -488,14 +487,14 @@ export function useVaultInternal(): VaultState {
           const loadRdvsFromDir = async (dir: string) => {
             let files: string[] = [];
             try { files = await vault.listDir(dir); } catch { return; }
-            for (const file of files) {
-              if (!file.endsWith('.md')) continue;
+            const rdvResults = await Promise.all(files.filter(f => f.endsWith('.md')).map(async (file) => {
               try {
                 const content = await vault.readFile(`${dir}/${file}`);
                 const rdv = parseRDV(`${dir}/${file}`, content);
-                if (rdv && rdv.statut !== 'annulé') loadedRdvs.push(rdv);
-              } catch { /* skip */ }
-            }
+                return (rdv && rdv.statut !== 'annulé') ? rdv : null;
+              } catch { return null; }
+            }));
+            loadedRdvs.push(...rdvResults.filter((r): r is RDV => r !== null));
           };
           await Promise.all([loadRdvsFromDir(RDV_DIR), loadRdvsFromDir(RDV_ARCHIVES_DIR)]);
           loadedRdvs.sort((a, b) => a.date_rdv.localeCompare(b.date_rdv));
@@ -543,17 +542,17 @@ export function useVaultInternal(): VaultState {
           })
         ).then((r) => r.filter((x): x is HealthRecord => x !== null)).catch(() => [] as HealthRecord[]),
 
-        // [10] Journal stats (7 derniers jours)
+        // [10] Journal — aujourd'hui + hier seulement au boot
         (async () => {
           const today = new Date();
-          const last7 = Array.from({ length: 7 }, (_, i) => {
+          const last2 = Array.from({ length: 2 }, (_, i) => {
             const d = new Date(today);
             d.setDate(d.getDate() - i);
             return format(d, 'yyyy-MM-dd');
           });
           const entries: JournalSummaryEntry[] = [];
-          await Promise.all(enfantNames.map(async (name) => {
-            for (const dateStr of last7) {
+          await Promise.all(enfantNames.flatMap((name) =>
+            last2.map(async (dateStr) => {
               try {
                 const path = `03 - Journal/${name}/${dateStr} ${name}.md`;
                 const content = await vault.readFile(path);
@@ -561,10 +560,102 @@ export function useVaultInternal(): VaultState {
                   entries.push({ enfant: name, date: dateStr, stats: parseJournalStats(content) });
                 }
               } catch { /* fichier inexistant */ }
-            }
-          }));
+            })
+          ));
           return entries;
         })().catch(() => [] as JournalSummaryEntry[]),
+
+        // [11] Défis familiaux
+        (async () => {
+          const defisContent = await vault.readFile(DEFIS_FILE);
+          const parsed = parseDefis(defisContent);
+          const todayStr = new Date().toISOString().slice(0, 10);
+          let changed = false;
+          const autoCompleted: typeof parsed = [];
+          for (const d of parsed) {
+            if (d.status === 'active' && d.endDate < todayStr) {
+              const uniqueDays = new Set(d.progress.filter((p) => p.completed).map((p) => p.date)).size;
+              if (d.type === 'abstinence') {
+                const hasFail = d.progress.some((p) => !p.completed);
+                d.status = hasFail ? 'failed' : uniqueDays >= d.targetDays ? 'completed' : 'failed';
+              } else {
+                d.status = uniqueDays >= d.targetDays ? 'completed' : 'failed';
+              }
+              changed = true;
+              if (d.status === 'completed') autoCompleted.push(d);
+            }
+          }
+          if (changed) {
+            await vault.writeFile(DEFIS_FILE, serializeDefis(parsed));
+            if (autoCompleted.length > 0 && gamiContent) {
+              try {
+                const gami = parseGamification(gamiContent);
+                const allProfileIds = parseFamille(familleContent).map((p) => p.id);
+                for (const d of autoCompleted) {
+                  const participantIds = d.participants.length > 0 ? d.participants : allProfileIds;
+                  for (const pid of participantIds) {
+                    const profile = gami.profiles.find((p) => p.name.toLowerCase().replace(/\s+/g, '') === pid);
+                    if (profile) {
+                      profile.points += d.rewardPoints;
+                      profile.lootBoxesAvailable += d.rewardLootBoxes;
+                      gami.history.push({
+                        profileId: pid,
+                        action: `+${d.rewardPoints}`,
+                        points: d.rewardPoints,
+                        note: `Défi: ${d.title}`,
+                        timestamp: new Date().toISOString(),
+                      });
+                    }
+                  }
+                }
+                const gamiStr = serializeGamification(gami);
+                await vault.writeFile(GAMI_FILE, gamiStr);
+                setProfiles(mergeProfiles(familleContent, gamiStr));
+                setGamiData(gami);
+              } catch { /* non-critique */ }
+            }
+          }
+          return parsed;
+        })().catch(() => [] as any[]),
+
+        // [12] Gratitude
+        vault.readFile(GRATITUDE_FILE).then((c) => parseGratitude(c)).catch(() => [] as any[]),
+
+        // [13] Wishlist
+        vault.readFile(WISHLIST_FILE).then((c) => parseWishlist(c)).catch(() => [] as any[]),
+
+        // [14] Notification preferences
+        (async () => {
+          if (await vault.exists(NOTIF_FILE)) {
+            const notifContent = await vault.readFile(NOTIF_FILE);
+            return parseNotificationPrefs(notifContent);
+          }
+          return getDefaultNotificationPrefs();
+        })().catch(() => getDefaultNotificationPrefs()),
+
+        // [15] Vacation mode
+        (async () => {
+          const vacRaw = await SecureStore.getItemAsync(VACATION_STORE_KEY);
+          let config: VacationConfig | null = null;
+          if (vacRaw) {
+            config = JSON.parse(vacRaw);
+            const todayISO = new Date().toISOString().slice(0, 10);
+            if (config!.active && config!.endDate < todayISO) {
+              config = { ...config!, active: false };
+              await SecureStore.setItemAsync(VACATION_STORE_KEY, JSON.stringify(config));
+            }
+          }
+          let vacTasks: Task[] = [];
+          try {
+            if (await vault.exists(VACATION_FILE)) {
+              const vacContent = await vault.readFile(VACATION_FILE);
+              vacTasks = parseTaskFile(VACATION_FILE, vacContent);
+            }
+          } catch { /* skip */ }
+          return { config, vacTasks };
+        })().catch(() => ({ config: null as VacationConfig | null, vacTasks: [] as Task[] })),
+
+        // [16] Recipes — lazy-loaded via loadRecipes(), placeholder vide au boot
       ]);
 
       // Apply results — use helper to extract settled values
@@ -593,147 +684,16 @@ export function useVaultInternal(): VaultState {
       setMemories(val(results[8], []));
       setHealthRecords(val(results[9], []));
       setJournalStats(val(results[10], []));
+      setDefis(val(results[11], []));
+      setGratitudeDays(val(results[12], []));
+      setWishlistItems(val(results[13], []));
+      setNotifPrefs(val(results[14], getDefaultNotificationPrefs()));
+      const vacResult = val(results[15], { config: null as VacationConfig | null, vacTasks: [] as Task[] });
+      setVacationConfig(vacResult.config);
+      setVacationTasks(vacResult.vacTasks);
 
       // Mettre à jour le widget iOS
       refreshWidget(val(results[5], []), val(results[1], []), rdvResult);
-
-      // Load défis familiaux
-      try {
-        const defisContent = await vault.readFile(DEFIS_FILE);
-        const parsed = parseDefis(defisContent);
-        // Auto-résolution statut : endDate passée → completed ou failed
-        const todayStr = new Date().toISOString().slice(0, 10);
-        let changed = false;
-        const autoCompleted: typeof parsed = [];
-        for (const d of parsed) {
-          if (d.status === 'active' && d.endDate < todayStr) {
-            const uniqueDays = new Set(d.progress.filter((p) => p.completed).map((p) => p.date)).size;
-            if (d.type === 'abstinence') {
-              const hasFail = d.progress.some((p) => !p.completed);
-              d.status = hasFail ? 'failed' : uniqueDays >= d.targetDays ? 'completed' : 'failed';
-            } else {
-              d.status = uniqueDays >= d.targetDays ? 'completed' : 'failed';
-            }
-            changed = true;
-            if (d.status === 'completed') autoCompleted.push(d);
-          }
-        }
-        if (changed) {
-          await vault.writeFile(DEFIS_FILE, serializeDefis(parsed));
-          // Distribuer les récompenses pour les défis auto-complétés
-          if (autoCompleted.length > 0 && gamiContent) {
-            try {
-              const gami = parseGamification(gamiContent);
-              const allProfileIds = parseFamille(familleContent).map((p) => p.id);
-              for (const d of autoCompleted) {
-                const participantIds = d.participants.length > 0 ? d.participants : allProfileIds;
-                for (const pid of participantIds) {
-                  const profile = gami.profiles.find((p) => p.name.toLowerCase().replace(/\s+/g, '') === pid);
-                  if (profile) {
-                    profile.points += d.rewardPoints;
-                    profile.lootBoxesAvailable += d.rewardLootBoxes;
-                    gami.history.push({
-                      profileId: pid,
-                      action: `+${d.rewardPoints}`,
-                      points: d.rewardPoints,
-                      note: `Défi: ${d.title}`,
-                      timestamp: new Date().toISOString(),
-                    });
-                  }
-                }
-              }
-              const gamiStr = serializeGamification(gami);
-              await vault.writeFile(GAMI_FILE, gamiStr);
-              setProfiles(mergeProfiles(familleContent, gamiStr));
-              setGamiData(gami);
-            } catch { /* non-critique */ }
-          }
-        }
-        setDefis(parsed);
-      } catch {
-        setDefis([]);
-      }
-
-      // Load gratitude
-      try {
-        const gratContent = await vault.readFile(GRATITUDE_FILE);
-        setGratitudeDays(parseGratitude(gratContent));
-      } catch {
-        setGratitudeDays([]);
-      }
-
-      // Load wishlist
-      try {
-        const wishContent = await vault.readFile(WISHLIST_FILE);
-        setWishlistItems(parseWishlist(wishContent));
-      } catch {
-        setWishlistItems([]);
-      }
-
-      // Load notification preferences
-      try {
-        if (await vault.exists(NOTIF_FILE)) {
-          const notifContent = await vault.readFile(NOTIF_FILE);
-          setNotifPrefs(parseNotificationPrefs(notifContent));
-        } else {
-          // Pas de fichier → defaults en mémoire (le template dashboard propose l'import)
-          setNotifPrefs(getDefaultNotificationPrefs());
-        }
-      } catch (e) {
-        debugErrors.push(`notifications: ${e}`);
-      }
-
-      // Load vacation mode
-      try {
-        const vacRaw = await SecureStore.getItemAsync(VACATION_STORE_KEY);
-        if (vacRaw) {
-          const config: VacationConfig = JSON.parse(vacRaw);
-          const todayISO = new Date().toISOString().slice(0, 10);
-          // Auto-deactivate if end date has passed
-          if (config.active && config.endDate < todayISO) {
-            const deactivated = { ...config, active: false };
-            await SecureStore.setItemAsync(VACATION_STORE_KEY, JSON.stringify(deactivated));
-            setVacationConfig(deactivated);
-          } else {
-            setVacationConfig(config);
-          }
-        } else {
-          setVacationConfig(null);
-        }
-        // Load vacation tasks if file exists
-        try {
-          if (await vault.exists(VACATION_FILE)) {
-            const vacContent = await vault.readFile(VACATION_FILE);
-            setVacationTasks(parseTaskFile(VACATION_FILE, vacContent));
-          } else {
-            setVacationTasks([]);
-          }
-        } catch {
-          setVacationTasks([]);
-        }
-      } catch (e) {
-        debugErrors.push(`vacation: ${e}`);
-        setVacationConfig(null);
-        setVacationTasks([]);
-      }
-
-      // Load recipes (.cook files)
-      try {
-        const cookFiles = await vault.listFilesRecursive(RECIPES_DIR, '.cook');
-        const loaded: Recipe[] = [];
-        for (const relPath of cookFiles) {
-          try {
-            const content = await vault.readFile(relPath);
-            loaded.push(parseRecipe(relPath, content));
-          } catch {
-            // skip unreadable .cook files
-          }
-        }
-        loaded.sort((a, b) => a.title.localeCompare(b.title, 'fr'));
-        setRecipes(loaded);
-      } catch {
-        setRecipes([]);
-      }
 
     } catch (e) {
       debugErrors.push(`global: ${e}`);
@@ -766,6 +726,7 @@ export function useVaultInternal(): VaultState {
     setPhotoDates({});
     setMemories([]);
     setRecipes([]);
+    recipesLoadedRef.current = false;
     setBudgetEntries([]);
     setBudgetConfig(DEFAULT_BUDGET_CONFIG);
     setVaultPathState(path);
@@ -775,6 +736,27 @@ export function useVaultInternal(): VaultState {
     await loadVaultData(vault);
     setIsLoading(false);
   }, [loadVaultData]);
+
+  // Lazy-load recettes (appelé quand on accède à l'écran recettes/meals)
+  const recipesLoadedRef = useRef(false);
+  const loadRecipes = useCallback(async () => {
+    if (!vaultRef.current || recipesLoadedRef.current) return;
+    recipesLoadedRef.current = true;
+    try {
+      const cookFiles = await vaultRef.current.listFilesRecursive(RECIPES_DIR, '.cook');
+      const results = await Promise.all(cookFiles.map(async (relPath) => {
+        try {
+          const content = await vaultRef.current!.readFile(relPath);
+          return parseRecipe(relPath, content);
+        } catch { return null; }
+      }));
+      const loaded = results.filter((r): r is Recipe => r !== null);
+      loaded.sort((a, b) => a.title.localeCompare(b.title, 'fr'));
+      setRecipes(loaded);
+    } catch {
+      setRecipes([]);
+    }
+  }, []);
 
   const setActiveProfile = useCallback(async (profileId: string) => {
     await SecureStore.setItemAsync(ACTIVE_PROFILE_KEY, profileId);
@@ -1993,6 +1975,7 @@ export function useVaultInternal(): VaultState {
     deactivateVacation,
     refreshGamification,
     recipes,
+    loadRecipes,
     addRecipe,
     deleteRecipe,
     scanAllCookFiles,
@@ -2048,7 +2031,7 @@ export function useVaultInternal(): VaultState {
     addCourseItem, mergeCourseIngredients, toggleCourseItem, removeCourseItem,
     clearCompletedCourses, addMemory, updateMemory, activateVacation,
     deactivateVacation, refreshGamification, addRecipe, deleteRecipe,
-    scanAllCookFiles, moveCookToRecipes, toggleFavorite, isFavorite,
+    loadRecipes, scanAllCookFiles, moveCookToRecipes, toggleFavorite, isFavorite,
     getFavorites, applyAgeUpgrade, dismissAgeUpgrade, addChild, convertToBorn,
     setBudgetMonth, addExpense, deleteExpense, updateBudgetConfig, loadBudgetData,
     saveRoutines, saveHealthRecord, addGrowthEntry, addVaccineEntry,

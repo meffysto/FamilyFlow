@@ -57,7 +57,7 @@ export default function MealsScreen() {
     courses, vault,
     addCourseItem, removeCourseItem, mergeCourseIngredients,
     stock, updateStockQuantity,
-    recipes, deleteRecipe,
+    recipes, loadRecipes, deleteRecipe,
     scanAllCookFiles, moveCookToRecipes,
     profiles,
     activeProfile,
@@ -76,6 +76,9 @@ export default function MealsScreen() {
   useEffect(() => {
     if (tabParam === 'repas' || tabParam === 'courses' || tabParam === 'recettes') setTab(tabParam);
   }, [tabParam]);
+
+  // Lazy-load recettes au premier accès
+  useEffect(() => { loadRecipes(); }, [loadRecipes]);
 
   // Meal edit state
   const [editingMeal, setEditingMeal] = useState<{
