@@ -882,7 +882,7 @@ export default function MealsScreen() {
 
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            keyboardVerticalOffset={90}
+            keyboardVerticalOffset={160}
           >
             <View style={[styles.addBar, { backgroundColor: colors.card, borderTopColor: colors.borderLight }]}>
               <TouchableOpacity
