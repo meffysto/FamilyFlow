@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, Switch } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, Switch, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NotificationSettings } from '../NotificationSettings';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { useVault } from '../../contexts/VaultContext';
+import { useToast } from '../../contexts/ToastContext';
 import { Button } from '../ui/Button';
+import { buildAndSendWeeklySummary } from '../../lib/telegram';
+import type { VaultContext as AIVaultContext } from '../../lib/ai-service';
 import {
   loadNotifConfig,
   saveNotifConfig,
@@ -62,8 +66,43 @@ function ToggleItem({ emoji, label, detail, enabled, onToggle, colors, primary, 
 
 export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activeProfile, profiles, notifData }: SettingsNotificationsProps) {
   const { primary, tint, colors } = useThemeColors();
+  const vault = useVault();
+  const { showToast } = useToast();
   const [showNotifSettings, setShowNotifSettings] = useState(false);
   const [config, setConfig] = useState<NotifScheduleConfig | null>(null);
+  const [sendingWeekly, setSendingWeekly] = useState(false);
+
+  const handleSendWeeklyNow = useCallback(async () => {
+    setSendingWeekly(true);
+    try {
+      const vaultCtx: AIVaultContext = {
+        tasks: vault.tasks,
+        menageTasks: vault.menageTasks,
+        rdvs: vault.rdvs,
+        stock: vault.stock,
+        meals: vault.meals,
+        courses: vault.courses,
+        memories: vault.memories,
+        defis: vault.defis,
+        wishlistItems: vault.wishlistItems,
+        recipes: [],
+        profiles: vault.profiles,
+        activeProfile: vault.activeProfile,
+        journalStats: vault.journalStats,
+        healthRecords: vault.healthRecords,
+      };
+      const result = await buildAndSendWeeklySummary(vaultCtx);
+      if (result.sent) {
+        showToast('Résumé hebdo envoyé sur Telegram');
+      } else {
+        showToast(result.error ?? 'Erreur inconnue', 'error');
+      }
+    } catch {
+      showToast("Erreur lors de l'envoi", 'error');
+    } finally {
+      setSendingWeekly(false);
+    }
+  }, [vault, showToast]);
 
   useEffect(() => {
     loadNotifConfig().then(setConfig);
@@ -173,8 +212,17 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
               onToggle={() => updateConfig({ weeklyAISummaryEnabled: !config.weeklyAISummaryEnabled })}
               colors={colors}
               primary={primary}
-              isLast
             />
+            <View style={styles.sendNowRow}>
+              <Button
+                label={sendingWeekly ? 'Envoi en cours...' : 'Envoyer maintenant'}
+                onPress={handleSendWeeklyNow}
+                variant="secondary"
+                size="sm"
+                disabled={sendingWeekly}
+                icon="📬"
+              />
+            </View>
           </View>
         </View>
       )}
@@ -216,5 +264,6 @@ const styles = StyleSheet.create({
   toggleContent: { flex: 1 },
   toggleLabel: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
   toggleDetail: { fontSize: FontSize.caption, marginTop: 2 },
+  sendNowRow: { paddingTop: Spacing.sm, paddingBottom: Spacing.xs },
   modalSafe: { flex: 1 },
 });
