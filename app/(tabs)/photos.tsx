@@ -62,6 +62,7 @@ export default function PhotosScreen() {
   const [viewingPhoto, setViewingPhoto] = useState<{ uri: string; date: string } | null>(null);
   const [activeTab, setActiveTab] = useState<TabMode>('photos');
   const photoGridRef = useRef<View>(null);
+  const [photoCacheBust, setPhotoCacheBust] = useState(0);
   const { addNew } = useLocalSearchParams<{ addNew?: string }>();
   const [memoryEditorVisible, setMemoryEditorVisible] = useState(false);
   const [editingMemory, setEditingMemory] = useState<import('../../lib/types').Memory | null>(null);
@@ -144,6 +145,7 @@ export default function PhotosScreen() {
         if (result.canceled || !result.assets?.[0]?.uri) return;
 
         await addPhoto(enfantName, dateStr, result.assets[0].uri);
+        setPhotoCacheBust(prev => prev + 1);
       } catch (e: any) {
         Alert.alert('Erreur photo', `${useCamera ? 'Caméra' : 'Galerie'} — ${enfantName}\n\n${e?.message || String(e)}`);
       }
@@ -170,7 +172,7 @@ export default function PhotosScreen() {
     if (!selectedEnfant) return;
     const dateStr = format(date, 'yyyy-MM-dd');
     const uri = getPhotoUri(selectedEnfant.name, dateStr);
-    if (uri) setViewingPhoto({ uri, date: dateStr });
+    if (uri) setViewingPhoto({ uri: `${uri}?v=${photoCacheBust}`, date: dateStr });
   };
 
   const onDayPress = (date: Date) => {
@@ -291,9 +293,10 @@ export default function PhotosScreen() {
                 const today = isToday(date);
                 const future = isFuture(date);
                 const dayNum = date.getDate();
-                const photoUri = hasPhoto && selectedEnfant
+                const rawUri = hasPhoto && selectedEnfant
                   ? getPhotoUri(selectedEnfant.name, dateStr)
                   : null;
+                const photoUri = rawUri ? `${rawUri}?v=${photoCacheBust}` : null;
 
                 return (
                   <TouchableOpacity
