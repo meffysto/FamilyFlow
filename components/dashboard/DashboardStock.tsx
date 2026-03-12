@@ -5,9 +5,10 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Alert } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { useToast } from '../../contexts/ToastContext';
 import { DashboardCard } from '../DashboardCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
 import type { DashboardSectionProps } from './types';
@@ -16,6 +17,7 @@ function DashboardStockInner({ vaultFileExists, activateCardTemplate }: Dashboar
   const router = useRouter();
   const { primary, colors } = useThemeColors();
   const { stock, updateStockQuantity, addCourseItem } = useVault();
+  const { showToast } = useToast();
 
   const lowCount = stock.length > 0 ? stock.filter((s) => s.quantite <= s.seuil).length : 0;
 
@@ -43,7 +45,7 @@ function DashboardStockInner({ vaultFileExists, activateCardTemplate }: Dashboar
             </View>
             <View style={styles.stockBtnGroup}>
               {isLow && (
-                <TouchableOpacity style={[styles.stockCartBtn, { backgroundColor: colors.warningBg, borderColor: colors.warning }]} onPress={async () => { const detail = item.detail && !/^\d+$/.test(item.detail.trim()) ? ` (${item.detail})` : ''; const qty = item.qteAchat ? ` x${item.qteAchat}` : ''; const n = `${item.produit}${detail}${qty}`; await addCourseItem(n, item.section ?? 'Produits bébé'); Alert.alert('Ajouté !', `${n} ajouté aux courses`); }} activeOpacity={0.6} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
+                <TouchableOpacity style={[styles.stockCartBtn, { backgroundColor: colors.warningBg, borderColor: colors.warning }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); const detail = item.detail && !/^\d+$/.test(item.detail.trim()) ? ` (${item.detail})` : ''; const qty = item.qteAchat ? ` x${item.qteAchat}` : ''; const n = `${item.produit}${detail}${qty}`; addCourseItem(n, item.section ?? 'Produits bébé'); showToast(`${item.produit} ajouté aux courses`, 'success'); }} activeOpacity={0.6} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
                     <Text style={styles.stockCartBtnText}>🛒</Text>
                   </TouchableOpacity>
               )}

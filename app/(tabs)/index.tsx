@@ -551,19 +551,6 @@ export default function DashboardScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
         }
       >
-        {/* Skeleton de chargement */}
-        {isLoading && vaultPath && (
-          <View style={{ gap: 12 }}>
-            {[1, 2, 3].map((i) => (
-              <View key={i} style={[styles.skeletonCard, { backgroundColor: colors.card }]}>
-                <View style={[styles.skeletonLine, { width: '40%', backgroundColor: colors.borderLight }]} />
-                <View style={[styles.skeletonLine, { width: '80%', backgroundColor: colors.borderLight }]} />
-                <View style={[styles.skeletonLine, { width: '60%', backgroundColor: colors.borderLight }]} />
-              </View>
-            ))}
-          </View>
-        )}
-
         {/* Welcome card when no vault configured */}
         {!isLoading && !vaultPath && (
           <DashboardCard title="Bienvenue !" icon="👋" color={primary}>
@@ -848,14 +835,5 @@ const styles = StyleSheet.create({
   ageUpgradeDismissText: {
     fontSize: 14,
     fontWeight: '600',
-  },
-  skeletonCard: {
-    borderRadius: 16,
-    padding: 20,
-    gap: 10,
-  },
-  skeletonLine: {
-    height: 12,
-    borderRadius: 6,
   },
 });

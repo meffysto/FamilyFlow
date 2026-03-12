@@ -2,7 +2,7 @@
  * RDVEditor.tsx — Modal form for creating/editing RDV (medical appointments)
  */
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -66,6 +66,7 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
   const [reponses, setReponses] = useState(rdv?.reponses ?? '');
   const [isSaving, setIsSaving] = useState(false);
   const [dictaphoneVisible, setDictaphoneVisible] = useState(false);
+  const dictaphoneResultRef = useRef<string>('');
 
   const addQuestion = () => setQuestions((prev) => [...prev, '']);
 
@@ -269,7 +270,15 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
         visible={dictaphoneVisible}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setDictaphoneVisible(false)}
+        onRequestClose={() => {
+          // Drag-to-dismiss : sauvegarder le texte transcrit s'il existe
+          const pending = dictaphoneResultRef.current;
+          if (pending) {
+            setReponses((prev) => prev.trim() ? `${prev}\n\n${pending}` : pending);
+            dictaphoneResultRef.current = '';
+          }
+          setDictaphoneVisible(false);
+        }}
       >
         <DictaphoneRecorder
           rdv={{
@@ -286,10 +295,13 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
             reponses,
           }}
           onResult={(text) => {
-            // Append ou remplacer les réponses existantes
+            dictaphoneResultRef.current = text;
             setReponses((prev) => prev.trim() ? `${prev}\n\n${text}` : text);
           }}
-          onClose={() => setDictaphoneVisible(false)}
+          onClose={() => {
+            dictaphoneResultRef.current = '';
+            setDictaphoneVisible(false);
+          }}
         />
       </Modal>
       </KeyboardAvoidingView>

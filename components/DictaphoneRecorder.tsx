@@ -65,6 +65,7 @@ export function DictaphoneRecorder({ rdv, onResult, onClose }: DictaphoneRecorde
   const [volume, setVolume] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const transcriptRef = useRef('');
+  const stoppingRef = useRef(false);
 
   // Animation pulsation pendant l'enregistrement
   const pulseScale = useSharedValue(1);
@@ -120,7 +121,7 @@ export function DictaphoneRecorder({ rdv, onResult, onClose }: DictaphoneRecorde
 
   useSpeechRecognitionEvent('end', () => {
     // iOS peut stopper la reconnaissance après un silence — on la relance si on est encore en mode recording
-    if (state === 'recording') {
+    if (state === 'recording' && !stoppingRef.current) {
       try {
         ExpoSpeechRecognitionModule.start({
           lang: 'fr-FR',
@@ -191,6 +192,7 @@ export function DictaphoneRecorder({ rdv, onResult, onClose }: DictaphoneRecorde
       }
 
       transcriptRef.current = '';
+      stoppingRef.current = false;
       setTranscript('');
       setDuration(0);
       setState('recording');
@@ -213,6 +215,7 @@ export function DictaphoneRecorder({ rdv, onResult, onClose }: DictaphoneRecorde
   }, [startPulse, showToast]);
 
   const finishRecording = useCallback(() => {
+    stoppingRef.current = true;
     setState('done');
     stopPulse();
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -223,9 +226,13 @@ export function DictaphoneRecorder({ rdv, onResult, onClose }: DictaphoneRecorde
       // déjà arrêté
     }
 
-    const finalText = transcriptRef.current;
-    setTranscript(finalText);
-    setEditedTranscript(finalText);
+    // Utiliser le transcript affiché (inclut les résultats intérimaires)
+    // plutôt que transcriptRef qui ne contient que les segments finalisés
+    setTranscript((current) => {
+      const finalText = current || transcriptRef.current;
+      setEditedTranscript(finalText);
+      return finalText;
+    });
   }, [stopPulse]);
 
   const stopRecording = useCallback(() => {
@@ -273,6 +280,15 @@ export function DictaphoneRecorder({ rdv, onResult, onClose }: DictaphoneRecorde
     onClose();
   }, [onResult, onClose]);
 
+  const handleClose = useCallback(() => {
+    // Sauvegarder le texte transcrit avant de fermer (résumé prioritaire, sinon transcription)
+    const textToSave = summary.trim() || editedTranscript.trim();
+    if (textToSave) {
+      onResult(textToSave);
+    }
+    onClose();
+  }, [summary, editedTranscript, onResult, onClose]);
+
   // ── Helpers ──
 
   const formatDuration = (secs: number) => {
@@ -292,7 +308,7 @@ export function DictaphoneRecorder({ rdv, onResult, onClose }: DictaphoneRecorde
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.card }]}>
       <ModalHeader
         title="Dictaphone"
-        onClose={onClose}
+        onClose={handleClose}
       />
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
