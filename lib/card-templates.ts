@@ -175,20 +175,131 @@ Cuire les crêpes dans une poêle chaude beurrée ~{2%minutes} par face.
     description: 'Envoyez des notifications rapides à la famille en un tap',
     generateFiles: () => [{
       path: 'notifications.md',
-      content: `# Notifications rapides
+      content: `---
+tags:
+  - notifications
+---
+# Notifications
 
-## Boutons
-- 🍽️ À table ! | {{profile.avatar}} {{profile.name}} : À table ! Le repas est prêt 🍽️
-- 🛁 Au bain ! | {{profile.avatar}} {{profile.name}} : C'est l'heure du bain ! 🛁
-- 😴 Au dodo ! | {{profile.avatar}} {{profile.name}} : C'est l'heure d'aller dormir 😴
-- 🏠 On rentre ! | {{profile.avatar}} {{profile.name}} : On est en route, on arrive bientôt ! 🏠
-- 🚗 Je pars ! | {{profile.avatar}} {{profile.name}} part, à tout à l'heure ! ({{time}})
-- 🏫 C'est parti ! | {{profile.avatar}} {{profile.name}} : Départ pour l'école ! 🏫 ({{time}})
-- 🛒 Courses | {{profile.avatar}} {{profile.name}} fait les courses — besoin de quelque chose ? 🛒
-- 💊 Médicament ! | ⚠️ Rappel de {{profile.name}} : n'oubliez pas le médicament ! 💊
-- 🔑 Tu as tes clés ? | {{profile.avatar}} {{profile.name}} : Vérifiez vos clés avant de partir ! 🔑
-- ❤️ Je t'aime | {{profile.avatar}} {{profile.name}} vous envoie un gros bisou ❤️
-- 🎉 Bravo ! | {{profile.avatar}} {{profile.name}} : Bravo, on est fiers de toi ! 🎉
+<!-- Family Vault — configuration des notifications. -->
+
+## task_completed
+label: Tâche terminée
+emoji: ✅
+enabled: true
+template: {{profile.avatar}} <b>{{profile.name}}</b> a terminé une tâche !\\n\\n📋 <i>{{task.text}}</i>\\n+{{points.gained}} pts → Total : <b>{{profile.points}} pts</b>
+
+## loot_box_opened
+label: Loot box ouverte
+emoji: 🎁
+enabled: true
+template: {{box.emoji}} <b>{{profile.name}}</b> a ouvert une loot box !\\n\\n{{box.emoji}} <b>{{box.rarity}}</b>\\n🎁 {{box.reward}}
+
+## all_tasks_done
+label: Journée terminée
+emoji: 🎉
+enabled: true
+template: 🎉 <b>Journée terminée !</b>\\n\\n✅ {{tasks.completedCount}} tâche(s) complétée(s)\\n\\n🏆 <b>Classement</b>\\n{{leaderboard}}\\nBravo à toute la famille ! 💪
+
+## leaderboard
+label: Classement
+emoji: 🏆
+enabled: false
+template: 🏆 <b>Classement du jour</b>\\n\\n{{leaderboard}}
+
+## daily_summary
+label: Résumé du jour
+emoji: 📋
+enabled: false
+template: 📋 <b>Résumé du {{date}}</b>\\n\\n✅ {{tasks.completedCount}} terminée(s) | ⏳ {{tasks.pendingCount}} restante(s)\\n\\n🏆 {{leaderboard}}
+
+## custom_a_table
+label: À table !
+emoji: 🍽️
+enabled: true
+template: {{profile.avatar}} {{profile.name}} : À table ! Le repas est prêt 🍽️
+isCustom: true
+event: manual
+
+## custom_au_bain
+label: Au bain !
+emoji: 🛁
+enabled: true
+template: {{profile.avatar}} {{profile.name}} : C'est l'heure du bain ! 🛁
+isCustom: true
+event: manual
+
+## custom_au_dodo
+label: Au dodo !
+emoji: 😴
+enabled: true
+template: {{profile.avatar}} {{profile.name}} : C'est l'heure d'aller dormir 😴
+isCustom: true
+event: manual
+
+## custom_on_rentre
+label: On rentre !
+emoji: 🏠
+enabled: true
+template: {{profile.avatar}} {{profile.name}} : On est en route, on arrive bientôt ! 🏠
+isCustom: true
+event: manual
+
+## custom_je_pars
+label: Je pars !
+emoji: 🚗
+enabled: true
+template: {{profile.avatar}} {{profile.name}} part, à tout à l'heure ! ({{time}})
+isCustom: true
+event: manual
+
+## custom_ecole
+label: C'est parti !
+emoji: 🏫
+enabled: true
+template: {{profile.avatar}} {{profile.name}} : Départ pour l'école ! 🏫 ({{time}})
+isCustom: true
+event: manual
+
+## custom_courses
+label: Courses
+emoji: 🛒
+enabled: true
+template: {{profile.avatar}} {{profile.name}} fait les courses — besoin de quelque chose ? 🛒
+isCustom: true
+event: manual
+
+## custom_medicament
+label: Médicament !
+emoji: 💊
+enabled: true
+template: ⚠️ Rappel de {{profile.name}} : n'oubliez pas le médicament ! 💊
+isCustom: true
+event: manual
+
+## custom_cles
+label: Tu as tes clés ?
+emoji: 🔑
+enabled: true
+template: {{profile.avatar}} {{profile.name}} : Vérifiez vos clés avant de partir ! 🔑
+isCustom: true
+event: manual
+
+## custom_je_taime
+label: Je t'aime
+emoji: ❤️
+enabled: true
+template: {{profile.avatar}} {{profile.name}} vous envoie un gros bisou ❤️
+isCustom: true
+event: manual
+
+## custom_bravo
+label: Bravo !
+emoji: 🎉
+enabled: true
+template: {{profile.avatar}} {{profile.name}} : Bravo, on est fiers de toi ! 🎉
+isCustom: true
+event: manual
 `,
     }],
   },
