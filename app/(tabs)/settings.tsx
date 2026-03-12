@@ -36,6 +36,7 @@ export default function SettingsScreen() {
     refresh, gamiData, notifPrefs, saveNotifPrefs, updateProfileTheme,
     updateProfile, deleteProfile, memories, photoDates, getPhotoUri, vacationConfig,
     isVacationActive, activateVacation, deactivateVacation, addChild, convertToBorn,
+    tasks, rdvs, stock,
   } = useVault();
   const { colors } = useThemeColors();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
@@ -77,6 +78,7 @@ export default function SettingsScreen() {
         <SettingsNotificationsSection
           notifPrefs={notifPrefs} saveNotifPrefs={saveNotifPrefs}
           activeProfile={activeProfile} profiles={profiles}
+          notifData={{ rdvs, tasks, stock, hasGrossesse: profiles.some(p => p.statut === 'grossesse' && p.dateTerme) }}
         />
         <SettingsAppearance />
         {!isChildMode && <SettingsHelp />}

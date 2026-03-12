@@ -68,7 +68,7 @@ import {
   serializeNotificationPrefs,
   getDefaultNotificationPrefs,
 } from '../lib/notifications';
-import { scheduleRDVAlerts } from '../lib/scheduled-notifications';
+import { setupAllNotifications, loadNotifConfig, scheduleRDVAlerts } from '../lib/scheduled-notifications';
 import { nextOccurrence } from '../lib/recurrence';
 import { format } from 'date-fns';
 import { parseJournalStats } from '../lib/journal-stats';
@@ -570,7 +570,8 @@ export function useVaultInternal(): VaultState {
       const val = <T,>(r: PromiseSettledResult<T>, fallback: T): T =>
         r.status === 'fulfilled' ? r.value : fallback;
 
-      setTasks(val(results[0], []));
+      const tasksResult = val(results[0], [] as Task[]);
+      setTasks(tasksResult);
       setMenageTasks(val(results[1], []));
       setRoutines(val(results[2], []));
       setCourses(val(results[3], []));
@@ -580,7 +581,13 @@ export function useVaultInternal(): VaultState {
       setMeals(val(results[5], []));
       const rdvResult = val(results[6], [] as RDV[]);
       setRdvs(rdvResult);
-      scheduleRDVAlerts(rdvResult).catch(() => {});
+      // Planifier toutes les notifications locales
+      setupAllNotifications({
+        rdvs: rdvResult,
+        tasks: tasksResult,
+        stock: stockResult.items,
+        hasGrossesse: profiles.some(p => p.statut === 'grossesse' && p.dateTerme),
+      }).catch(() => {});
       setPhotoDates(val(results[7], {}));
       setMemories(val(results[8], []));
       setHealthRecords(val(results[9], []));
@@ -1127,8 +1134,10 @@ export function useVaultInternal(): VaultState {
     };
     setRdvs(prev => [...prev, newRDV].sort((a, b) => a.date_rdv.localeCompare(b.date_rdv)));
 
-    // Schedule alerts for the new RDV (fire-and-forget)
-    scheduleRDVAlerts([newRDV]).catch(() => {});
+    // Replanifier les alertes RDV (fire-and-forget)
+    loadNotifConfig().then(config =>
+      scheduleRDVAlerts([...rdvs, newRDV], config)
+    ).catch(() => {});
   }, []);
 
   const updateRDV = useCallback(async (sourceFile: string, rdv: Omit<RDV, 'sourceFile' | 'title'>) => {

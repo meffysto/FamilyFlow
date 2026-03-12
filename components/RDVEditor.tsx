@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
   sectionHint: {
     fontSize: FontSize.label,
     lineHeight: 18,
-    marginTop: -Spacing.md,
+    marginTop: Spacing.xxs,
   },
   questionRow: {
     flexDirection: 'row',

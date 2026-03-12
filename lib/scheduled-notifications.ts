@@ -1,59 +1,89 @@
 /**
- * scheduled-notifications.ts — Local notifications for Family Vault
+ * scheduled-notifications.ts — Notifications locales contextuelles
  *
- * Uses expo-notifications to schedule recurring reminders and RDV alerts.
- * Works in Expo Go AND TestFlight builds.
+ * 5 catégories :
+ * 1. RDV — veille (20h) + jour J (matin 7h30) + 1h avant
+ * 2. Tâches — jour J pour les tâches avec échéance
+ * 3. Ménage — rappel récurrent configurable
+ * 4. Courses — stock bas (rappel quotidien configurable)
+ * 5. Général — rappel quotidien "ouvrir l'app"
+ * 6. Grossesse — rappel hebdomadaire (si profil grossesse)
  */
 
 import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
-import { RDV } from './types';
+import { RDV, Task, StockItem } from './types';
 import * as SecureStore from 'expo-secure-store';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface NotifScheduleConfig {
-  morningEnabled: boolean;
-  morningHour: number;    // default 7
-  morningMinute: number;  // default 30
-  middayEnabled: boolean;
-  middayHour: number;     // default 12
-  middayMinute: number;   // default 0
-  eveningEnabled: boolean;
-  eveningHour: number;    // default 20
-  eveningMinute: number;  // default 0
-  rdvAlertEnabled: boolean;
-  rdvAlertMinutes: number; // minutes before RDV, default 60
-  grossesseWeeklyEnabled: boolean;
-  grossesseWeeklyDay: number; // 1=lundi … 7=dimanche (ISO weekday)
-  grossesseWeeklyHour: number;
-  grossesseWeeklyMinute: number;
+  // RDV
+  rdvEnabled: boolean;
+  rdvVeilleHour: number;       // notif veille à cette heure (default 20)
+  rdvMatinHour: number;        // notif jour J matin (default 7)
+  rdvMatinMinute: number;      // default 30
+  rdvAvantMinutes: number;     // minutes avant le RDV (default 60)
+  // Tâches
+  taskEnabled: boolean;
+  taskHour: number;            // heure du rappel (default 8)
+  taskMinute: number;          // default 0
+  taskVeille: boolean;         // aussi la veille ? (default false)
+  // Ménage
+  menageEnabled: boolean;
+  menageHour: number;          // default 9
+  menageMinute: number;        // default 0
+  menageDay: number;           // 1=dimanche … 7=samedi (iOS weekday), default 7 (samedi)
+  // Courses / stock bas
+  coursesEnabled: boolean;
+  coursesHour: number;         // default 10
+  coursesMinute: number;       // default 0
+  // Général — ouvrir l'app
+  generalEnabled: boolean;
+  generalHour: number;         // default 8
+  generalMinute: number;       // default 30
+  // Grossesse
+  grossesseEnabled: boolean;
+  grossesseDay: number;        // 1=dimanche … 7=samedi (iOS weekday), default 2 (lundi)
+  grossesseHour: number;       // default 9
+  grossesseMinute: number;     // default 0
 }
 
-const DEFAULT_CONFIG: NotifScheduleConfig = {
-  morningEnabled: true,
-  morningHour: 7,
-  morningMinute: 30,
-  middayEnabled: true,
-  middayHour: 12,
-  middayMinute: 0,
-  eveningEnabled: true,
-  eveningHour: 20,
-  eveningMinute: 0,
-  rdvAlertEnabled: true,
-  rdvAlertMinutes: 60,
-  grossesseWeeklyEnabled: false,
-  grossesseWeeklyDay: 1, // lundi
-  grossesseWeeklyHour: 9,
-  grossesseWeeklyMinute: 0,
+export const DEFAULT_CONFIG: NotifScheduleConfig = {
+  rdvEnabled: true,
+  rdvVeilleHour: 20,
+  rdvMatinHour: 7,
+  rdvMatinMinute: 30,
+  rdvAvantMinutes: 60,
+  taskEnabled: true,
+  taskHour: 8,
+  taskMinute: 0,
+  taskVeille: false,
+  menageEnabled: true,
+  menageHour: 9,
+  menageMinute: 0,
+  menageDay: 7, // samedi
+  coursesEnabled: true,
+  coursesHour: 10,
+  coursesMinute: 0,
+  generalEnabled: false,
+  generalHour: 8,
+  generalMinute: 30,
+  grossesseEnabled: false,
+  grossesseDay: 2, // lundi
+  grossesseHour: 9,
+  grossesseMinute: 0,
 };
 
-const STORAGE_KEY = 'notif_schedule_config';
-const CATEGORY_MORNING = 'morning-reminder';
-const CATEGORY_MIDDAY = 'midday-reminder';
-const CATEGORY_EVENING = 'evening-reminder';
-const CATEGORY_RDV = 'rdv-alert';
-const CATEGORY_GROSSESSE = 'grossesse-weekly';
+const STORAGE_KEY = 'notif_schedule_config_v2';
+
+const CAT_RDV_VEILLE = 'rdv-veille';
+const CAT_RDV_MATIN = 'rdv-matin';
+const CAT_RDV_AVANT = 'rdv-avant';
+const CAT_TASK = 'task-due';
+const CAT_MENAGE = 'menage-weekly';
+const CAT_COURSES = 'courses-stock';
+const CAT_GENERAL = 'general-daily';
+const CAT_GROSSESSE = 'grossesse-weekly';
 
 // ─── Setup ───────────────────────────────────────────────────────────────────
 
@@ -74,7 +104,6 @@ export function configureNotifications(): void {
 export async function requestNotificationPermissions(): Promise<boolean> {
   const { status: existing } = await Notifications.getPermissionsAsync();
   if (existing === 'granted') return true;
-
   const { status } = await Notifications.requestPermissionsAsync();
   return status === 'granted';
 }
@@ -93,9 +122,8 @@ export async function saveNotifConfig(config: NotifScheduleConfig): Promise<void
   await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(config));
 }
 
-// ─── Daily recurring reminders ───────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-/** Cancel all scheduled notifications for a given category prefix */
 async function cancelByCategory(prefix: string): Promise<void> {
   const all = await Notifications.getAllScheduledNotificationsAsync();
   for (const notif of all) {
@@ -105,71 +133,22 @@ async function cancelByCategory(prefix: string): Promise<void> {
   }
 }
 
-/** Schedule or update all daily recurring reminders based on config */
-export async function setupDailyReminders(config: NotifScheduleConfig): Promise<void> {
-  // Cancel existing daily reminders
-  await cancelByCategory(CATEGORY_MORNING);
-  await cancelByCategory(CATEGORY_MIDDAY);
-  await cancelByCategory(CATEGORY_EVENING);
-
-  if (config.morningEnabled) {
-    await Notifications.scheduleNotificationAsync({
-      identifier: `${CATEGORY_MORNING}-daily`,
-      content: {
-        title: '☀️ Bonjour !',
-        body: 'Ouvre Family Vault pour ton résumé du jour',
-        sound: true,
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DAILY,
-        hour: config.morningHour,
-        minute: config.morningMinute,
-      },
-    });
-  }
-
-  if (config.middayEnabled) {
-    await Notifications.scheduleNotificationAsync({
-      identifier: `${CATEGORY_MIDDAY}-daily`,
-      content: {
-        title: '📋 Check du midi',
-        body: 'Tâches en cours, journaux à remplir ?',
-        sound: true,
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DAILY,
-        hour: config.middayHour,
-        minute: config.middayMinute,
-      },
-    });
-  }
-
-  if (config.eveningEnabled) {
-    await Notifications.scheduleNotificationAsync({
-      identifier: `${CATEGORY_EVENING}-daily`,
-      content: {
-        title: '🌙 Bilan du soir',
-        body: 'Bilan de la journée disponible',
-        sound: true,
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DAILY,
-        hour: config.eveningHour,
-        minute: config.eveningMinute,
-      },
-    });
-  }
+function formatDate(d: string): string {
+  const [y, m, day] = d.split('-');
+  return `${day}/${m}/${y}`;
 }
 
-// ─── RDV Alerts ──────────────────────────────────────────────────────────────
+// ─── 1. RDV ──────────────────────────────────────────────────────────────────
 
-/** Schedule alerts for upcoming RDVs (1h before by default) */
 export async function scheduleRDVAlerts(
   rdvs: RDV[],
-  minutesBefore: number = 60
+  config: NotifScheduleConfig
 ): Promise<number> {
-  // Cancel all existing RDV alerts
-  await cancelByCategory(CATEGORY_RDV);
+  await cancelByCategory(CAT_RDV_VEILLE);
+  await cancelByCategory(CAT_RDV_MATIN);
+  await cancelByCategory(CAT_RDV_AVANT);
+
+  if (!config.rdvEnabled) return 0;
 
   const now = new Date();
   let scheduled = 0;
@@ -178,50 +157,205 @@ export async function scheduleRDVAlerts(
     if (rdv.statut !== 'planifié') continue;
     if (!rdv.date_rdv || !rdv.heure) continue;
 
-    // Parse RDV datetime
     const [year, month, day] = rdv.date_rdv.split('-').map(Number);
     const [hour, minute] = rdv.heure.split(':').map(Number);
     if (isNaN(year) || isNaN(hour)) continue;
 
     const rdvDate = new Date(year, month - 1, day, hour, minute);
-    const alertDate = new Date(rdvDate.getTime() - minutesBefore * 60 * 1000);
-
-    // Only schedule future alerts
-    if (alertDate <= now) continue;
-
     const typeLabel = rdv.type_rdv || 'RDV';
-    const enfantLabel = rdv.enfant || '';
+    const enfantLabel = rdv.enfant ? ` ${rdv.enfant}` : '';
     const lieuLabel = rdv.lieu ? ` — ${rdv.lieu}` : '';
 
-    await Notifications.scheduleNotificationAsync({
-      identifier: `${CATEGORY_RDV}-${rdv.sourceFile}`,
-      content: {
-        title: `🏥 ${typeLabel} ${enfantLabel}`,
-        body: `Dans ${minutesBefore} min · ${rdv.heure}${lieuLabel}`,
-        sound: true,
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DATE,
-        date: alertDate,
-      },
-    });
+    // Veille à 20h
+    const veilleDate = new Date(year, month - 1, day - 1, config.rdvVeilleHour, 0);
+    if (veilleDate > now) {
+      await Notifications.scheduleNotificationAsync({
+        identifier: `${CAT_RDV_VEILLE}-${rdv.sourceFile}`,
+        content: {
+          title: `🏥 Demain : ${typeLabel}${enfantLabel}`,
+          body: `À ${rdv.heure}${lieuLabel}`,
+          sound: true,
+        },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: veilleDate },
+      });
+      scheduled++;
+    }
 
-    scheduled++;
+    // Jour J matin
+    const matinDate = new Date(year, month - 1, day, config.rdvMatinHour, config.rdvMatinMinute);
+    if (matinDate > now && matinDate < rdvDate) {
+      await Notifications.scheduleNotificationAsync({
+        identifier: `${CAT_RDV_MATIN}-${rdv.sourceFile}`,
+        content: {
+          title: `🏥 Aujourd'hui : ${typeLabel}${enfantLabel}`,
+          body: `À ${rdv.heure}${lieuLabel}`,
+          sound: true,
+        },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: matinDate },
+      });
+      scheduled++;
+    }
+
+    // 1h (ou X min) avant
+    const avantDate = new Date(rdvDate.getTime() - config.rdvAvantMinutes * 60 * 1000);
+    if (avantDate > now) {
+      await Notifications.scheduleNotificationAsync({
+        identifier: `${CAT_RDV_AVANT}-${rdv.sourceFile}`,
+        content: {
+          title: `🏥 ${typeLabel}${enfantLabel}`,
+          body: `Dans ${config.rdvAvantMinutes} min · ${rdv.heure}${lieuLabel}`,
+          sound: true,
+        },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: avantDate },
+      });
+      scheduled++;
+    }
   }
 
   return scheduled;
 }
 
-// ─── Grossesse weekly reminder ───────────────────────────────────────────────
+// ─── 2. Tâches avec échéance ─────────────────────────────────────────────────
 
-/** Schedule or cancel the weekly pregnancy reminder notification */
-export async function setupGrossesseWeekly(config: NotifScheduleConfig): Promise<void> {
-  await cancelByCategory(CATEGORY_GROSSESSE);
+export async function scheduleTaskAlerts(
+  tasks: Task[],
+  config: NotifScheduleConfig
+): Promise<number> {
+  await cancelByCategory(CAT_TASK);
 
-  if (!config.grossesseWeeklyEnabled) return;
+  if (!config.taskEnabled) return 0;
+
+  const now = new Date();
+  let scheduled = 0;
+
+  const dueTasks = tasks.filter(t => !t.completed && t.dueDate);
+
+  for (const task of dueTasks) {
+    const [year, month, day] = task.dueDate!.split('-').map(Number);
+    if (isNaN(year)) continue;
+
+    // Jour J
+    const jourJ = new Date(year, month - 1, day, config.taskHour, config.taskMinute);
+    if (jourJ > now) {
+      await Notifications.scheduleNotificationAsync({
+        identifier: `${CAT_TASK}-${task.id}`,
+        content: {
+          title: '📋 Tâche à faire aujourd\'hui',
+          body: task.text.replace(/📅.*$/, '').replace(/#\w+/g, '').trim(),
+          sound: true,
+        },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: jourJ },
+      });
+      scheduled++;
+    }
+
+    // Veille
+    if (config.taskVeille) {
+      const veille = new Date(year, month - 1, day - 1, config.rdvVeilleHour, 0);
+      if (veille > now) {
+        await Notifications.scheduleNotificationAsync({
+          identifier: `${CAT_TASK}-veille-${task.id}`,
+          content: {
+            title: '📋 Tâche demain',
+            body: task.text.replace(/📅.*$/, '').replace(/#\w+/g, '').trim(),
+            sound: true,
+          },
+          trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: veille },
+        });
+        scheduled++;
+      }
+    }
+  }
+
+  return scheduled;
+}
+
+// ─── 3. Ménage hebdomadaire ──────────────────────────────────────────────────
+
+export async function setupMenageReminder(config: NotifScheduleConfig): Promise<void> {
+  await cancelByCategory(CAT_MENAGE);
+
+  if (!config.menageEnabled) return;
 
   await Notifications.scheduleNotificationAsync({
-    identifier: `${CATEGORY_GROSSESSE}-weekly`,
+    identifier: `${CAT_MENAGE}-weekly`,
+    content: {
+      title: '🧹 C\'est le jour du ménage !',
+      body: 'Ouvre Family Vault pour voir les tâches ménage',
+      sound: true,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+      weekday: config.menageDay,
+      hour: config.menageHour,
+      minute: config.menageMinute,
+    },
+  });
+}
+
+// ─── 4. Courses / stock bas ──────────────────────────────────────────────────
+
+export async function scheduleCoursesAlert(
+  stock: StockItem[],
+  config: NotifScheduleConfig
+): Promise<void> {
+  await cancelByCategory(CAT_COURSES);
+
+  if (!config.coursesEnabled) return;
+
+  const lowItems = stock.filter(s => s.quantite <= s.seuil);
+  if (lowItems.length === 0) return;
+
+  const body = lowItems.length <= 3
+    ? lowItems.map(s => s.produit).join(', ')
+    : `${lowItems.slice(0, 3).map(s => s.produit).join(', ')} et ${lowItems.length - 3} autre${lowItems.length - 3 > 1 ? 's' : ''}`;
+
+  await Notifications.scheduleNotificationAsync({
+    identifier: `${CAT_COURSES}-daily`,
+    content: {
+      title: `🛒 ${lowItems.length} produit${lowItems.length > 1 ? 's' : ''} en stock bas`,
+      body,
+      sound: true,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
+      hour: config.coursesHour,
+      minute: config.coursesMinute,
+    },
+  });
+}
+
+// ─── 5. Rappel général ───────────────────────────────────────────────────────
+
+export async function setupGeneralReminder(config: NotifScheduleConfig): Promise<void> {
+  await cancelByCategory(CAT_GENERAL);
+
+  if (!config.generalEnabled) return;
+
+  await Notifications.scheduleNotificationAsync({
+    identifier: `${CAT_GENERAL}-daily`,
+    content: {
+      title: '📱 Family Vault',
+      body: 'Ouvre l\'app pour voir ton résumé du jour',
+      sound: true,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
+      hour: config.generalHour,
+      minute: config.generalMinute,
+    },
+  });
+}
+
+// ─── 6. Grossesse hebdomadaire ───────────────────────────────────────────────
+
+export async function setupGrossesseWeekly(config: NotifScheduleConfig): Promise<void> {
+  await cancelByCategory(CAT_GROSSESSE);
+
+  if (!config.grossesseEnabled) return;
+
+  await Notifications.scheduleNotificationAsync({
+    identifier: `${CAT_GROSSESSE}-weekly`,
     content: {
       title: '🤰 Suivi grossesse',
       body: 'Ouvre Family Vault pour envoyer la mise à jour hebdo',
@@ -229,35 +363,45 @@ export async function setupGrossesseWeekly(config: NotifScheduleConfig): Promise
     },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
-      weekday: config.grossesseWeeklyDay,
-      hour: config.grossesseWeeklyHour,
-      minute: config.grossesseWeeklyMinute,
+      weekday: config.grossesseDay,
+      hour: config.grossesseHour,
+      minute: config.grossesseMinute,
     },
   });
 }
 
 // ─── Master setup ────────────────────────────────────────────────────────────
 
+export interface NotifData {
+  rdvs: RDV[];
+  tasks: Task[];
+  stock: StockItem[];
+  hasGrossesse: boolean;
+}
+
 /**
- * Full notification setup: request permissions, load config, schedule everything.
- * Call this when the app opens and data is loaded.
+ * Planifie toutes les notifications locales selon la config et les données.
+ * Appeler au chargement du vault et quand les données changent.
  */
-export async function setupAllNotifications(rdvs: RDV[]): Promise<{
+export async function setupAllNotifications(data: NotifData): Promise<{
   permitted: boolean;
   config: NotifScheduleConfig;
-  rdvScheduled: number;
 }> {
   const permitted = await requestNotificationPermissions();
   if (!permitted) {
-    return { permitted: false, config: DEFAULT_CONFIG, rdvScheduled: 0 };
+    return { permitted: false, config: DEFAULT_CONFIG };
   }
 
   const config = await loadNotifConfig();
-  await setupDailyReminders(config);
-  await setupGrossesseWeekly(config);
-  const rdvScheduled = config.rdvAlertEnabled
-    ? await scheduleRDVAlerts(rdvs, config.rdvAlertMinutes)
-    : 0;
 
-  return { permitted, config, rdvScheduled };
+  await Promise.all([
+    scheduleRDVAlerts(data.rdvs, config),
+    scheduleTaskAlerts(data.tasks, config),
+    setupMenageReminder(config),
+    scheduleCoursesAlert(data.stock, config),
+    setupGeneralReminder(config),
+    data.hasGrossesse ? setupGrossesseWeekly(config) : cancelByCategory(CAT_GROSSESSE),
+  ]);
+
+  return { permitted, config };
 }

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NotificationSettings } from '../NotificationSettings';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -7,40 +7,170 @@ import { Button } from '../ui/Button';
 import {
   loadNotifConfig,
   saveNotifConfig,
-  setupDailyReminders,
-  setupGrossesseWeekly,
   requestNotificationPermissions,
+  setupAllNotifications,
   NotifScheduleConfig,
+  DEFAULT_CONFIG,
+  type NotifData,
 } from '../../lib/scheduled-notifications';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+
+const JOURS = ['', 'Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 
 interface SettingsNotificationsProps {
   notifPrefs: any;
   saveNotifPrefs: (prefs: any) => Promise<void>;
   activeProfile: any;
   profiles: any[];
+  notifData: NotifData;
 }
 
-export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activeProfile, profiles }: SettingsNotificationsProps) {
+function pad(n: number): string {
+  return String(n).padStart(2, '0');
+}
+
+interface ToggleItemProps {
+  emoji: string;
+  label: string;
+  detail: string;
+  enabled: boolean;
+  onToggle: () => void;
+  colors: any;
+  primary: string;
+  isLast?: boolean;
+}
+
+function ToggleItem({ emoji, label, detail, enabled, onToggle, colors, primary, isLast }: ToggleItemProps) {
+  return (
+    <View style={[styles.toggleRow, !isLast && { borderBottomWidth: 1, borderBottomColor: colors.borderLight }]}>
+      <Text style={styles.toggleEmoji}>{emoji}</Text>
+      <View style={styles.toggleContent}>
+        <Text style={[styles.toggleLabel, { color: colors.text }]}>{label}</Text>
+        <Text style={[styles.toggleDetail, { color: colors.textMuted }]}>{detail}</Text>
+      </View>
+      <Switch
+        value={enabled}
+        onValueChange={onToggle}
+        trackColor={{ true: primary, false: colors.switchOff }}
+        thumbColor="#FFFFFF"
+      />
+    </View>
+  );
+}
+
+export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activeProfile, profiles, notifData }: SettingsNotificationsProps) {
   const { primary, tint, colors } = useThemeColors();
   const [showNotifSettings, setShowNotifSettings] = useState(false);
-  const [localConfig, setLocalConfig] = useState<NotifScheduleConfig | null>(null);
+  const [config, setConfig] = useState<NotifScheduleConfig | null>(null);
 
-  // Load on mount
-  useState(() => {
-    (async () => {
-      const config = await loadNotifConfig();
-      setLocalConfig(config);
-    })();
-  });
+  useEffect(() => {
+    loadNotifConfig().then(setConfig);
+  }, []);
+
+  const updateConfig = async (patch: Partial<NotifScheduleConfig>) => {
+    const updated = { ...config!, ...patch };
+    setConfig(updated);
+    await saveNotifConfig(updated);
+    const permitted = await requestNotificationPermissions();
+    if (permitted) {
+      await setupAllNotifications({ ...notifData, hasGrossesse: profiles.some(p => p.statut === 'grossesse' && p.dateTerme) });
+    }
+  };
+
+  const hasGrossesse = profiles.some(p => p.statut === 'grossesse' && p.dateTerme);
+  const activeCount = config ? [
+    config.rdvEnabled,
+    config.taskEnabled,
+    config.menageEnabled,
+    config.coursesEnabled,
+    config.generalEnabled,
+    hasGrossesse && config.grossesseEnabled,
+  ].filter(Boolean).length : 0;
 
   return (
     <>
+      {/* Notifications locales iOS */}
+      {config && (
+        <View style={styles.section} accessibilityRole="summary" accessibilityLabel="Section Notifications locales">
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Notifications locales</Text>
+          <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
+            <Text style={[styles.hint, { color: colors.textFaint }]}>
+              Notifications iOS basées sur tes données. Fonctionnent même quand l'app est fermée.
+              {'\n'}{activeCount} catégorie{activeCount > 1 ? 's' : ''} active{activeCount > 1 ? 's' : ''}.
+            </Text>
+
+            <ToggleItem
+              emoji="🏥"
+              label="Rendez-vous médicaux"
+              detail={`Veille ${pad(config.rdvVeilleHour)}h · Matin ${pad(config.rdvMatinHour)}h${pad(config.rdvMatinMinute)} · ${config.rdvAvantMinutes} min avant`}
+              enabled={config.rdvEnabled}
+              onToggle={() => updateConfig({ rdvEnabled: !config.rdvEnabled })}
+              colors={colors}
+              primary={primary}
+            />
+
+            <ToggleItem
+              emoji="📋"
+              label="Tâches avec échéance"
+              detail={`Jour J à ${pad(config.taskHour)}h${pad(config.taskMinute)}${config.taskVeille ? ' + veille' : ''}`}
+              enabled={config.taskEnabled}
+              onToggle={() => updateConfig({ taskEnabled: !config.taskEnabled })}
+              colors={colors}
+              primary={primary}
+            />
+
+            <ToggleItem
+              emoji="🧹"
+              label="Ménage hebdomadaire"
+              detail={`${JOURS[config.menageDay]} à ${pad(config.menageHour)}h${pad(config.menageMinute)}`}
+              enabled={config.menageEnabled}
+              onToggle={() => updateConfig({ menageEnabled: !config.menageEnabled })}
+              colors={colors}
+              primary={primary}
+            />
+
+            <ToggleItem
+              emoji="🛒"
+              label="Stock bas / courses"
+              detail={`Tous les jours à ${pad(config.coursesHour)}h${pad(config.coursesMinute)} si stock bas`}
+              enabled={config.coursesEnabled}
+              onToggle={() => updateConfig({ coursesEnabled: !config.coursesEnabled })}
+              colors={colors}
+              primary={primary}
+            />
+
+            <ToggleItem
+              emoji="📱"
+              label="Rappel quotidien"
+              detail={`Tous les jours à ${pad(config.generalHour)}h${pad(config.generalMinute)}`}
+              enabled={config.generalEnabled}
+              onToggle={() => updateConfig({ generalEnabled: !config.generalEnabled })}
+              colors={colors}
+              primary={primary}
+              isLast={!hasGrossesse}
+            />
+
+            {hasGrossesse && (
+              <ToggleItem
+                emoji="🤰"
+                label="Suivi grossesse"
+                detail={`${JOURS[config.grossesseDay]} à ${pad(config.grossesseHour)}h${pad(config.grossesseMinute)}`}
+                enabled={config.grossesseEnabled}
+                onToggle={() => updateConfig({ grossesseEnabled: !config.grossesseEnabled })}
+                colors={colors}
+                primary={primary}
+                isLast
+              />
+            )}
+          </View>
+        </View>
+      )}
+
       {/* Telegram notifications */}
-      <View style={styles.section} accessibilityRole="summary" accessibilityLabel="Section Notifications">
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Notifications</Text>
+      <View style={styles.section} accessibilityRole="summary" accessibilityLabel="Section Notifications Telegram">
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Notifications Telegram</Text>
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           <View style={styles.row}>
             <Text style={[styles.rowLabel, { color: colors.textSub }]}>🔔 Notifications Telegram</Text>
@@ -48,83 +178,9 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
               {notifPrefs.notifications.filter((n: any) => n.enabled).length}/{notifPrefs.notifications.length} actives
             </Text>
           </View>
-          <Button label="Configurer les notifications" onPress={() => setShowNotifSettings(true)} variant="secondary" size="sm" fullWidth />
+          <Button label="Configurer" onPress={() => setShowNotifSettings(true)} variant="secondary" size="sm" fullWidth />
         </View>
       </View>
-
-      {/* Local reminders */}
-      {localConfig && (
-        <View style={styles.section} accessibilityRole="summary" accessibilityLabel="Section Rappels locaux">
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Rappels locaux</Text>
-          <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
-            <Text style={[styles.hint, { color: colors.textFaint }]}>
-              Notifications iOS qui rappellent d'ouvrir l'app. Fonctionnent même quand l'app est fermée.
-            </Text>
-            {([
-              { key: 'morningEnabled' as const, label: '☀️ Matin', hourKey: 'morningHour' as const, minuteKey: 'morningMinute' as const },
-              { key: 'middayEnabled' as const, label: '📋 Midi', hourKey: 'middayHour' as const, minuteKey: 'middayMinute' as const },
-              { key: 'eveningEnabled' as const, label: '🌙 Soir', hourKey: 'eveningHour' as const, minuteKey: 'eveningMinute' as const },
-            ]).map(({ key, label, hourKey, minuteKey }) => (
-              <TouchableOpacity
-                key={key}
-                style={[styles.toggleRow, { borderTopColor: colors.borderLight }]}
-                onPress={async () => {
-                  const updated = { ...localConfig, [key]: !localConfig[key] };
-                  setLocalConfig(updated);
-                  await saveNotifConfig(updated);
-                  const permitted = await requestNotificationPermissions();
-                  if (permitted) await setupDailyReminders(updated);
-                }}
-                accessibilityRole="switch"
-                accessibilityState={{ checked: localConfig[key] }}
-                accessibilityLabel={`Rappel ${label}`}
-              >
-                <Text style={[styles.toggleLabel, { color: colors.text }]}>{label}</Text>
-                <Text style={[styles.toggleTime, { color: colors.textMuted }]}>
-                  {String(localConfig[hourKey]).padStart(2, '0')}:{String(localConfig[minuteKey]).padStart(2, '0')}
-                </Text>
-                <Text style={styles.toggleIcon}>{localConfig[key] ? '✅' : '⬜'}</Text>
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity
-              style={[styles.toggleRow, { borderTopColor: colors.borderLight }]}
-              onPress={async () => {
-                const updated = { ...localConfig, rdvAlertEnabled: !localConfig.rdvAlertEnabled };
-                setLocalConfig(updated);
-                await saveNotifConfig(updated);
-              }}
-              accessibilityRole="switch"
-              accessibilityState={{ checked: localConfig.rdvAlertEnabled }}
-              accessibilityLabel="Alertes RDV"
-            >
-              <Text style={[styles.toggleLabel, { color: colors.text }]}>🏥 Alertes RDV</Text>
-              <Text style={[styles.toggleTime, { color: colors.textMuted }]}>1h avant</Text>
-              <Text style={styles.toggleIcon}>{localConfig.rdvAlertEnabled ? '✅' : '⬜'}</Text>
-            </TouchableOpacity>
-            {profiles.some((p) => p.statut === 'grossesse' && p.dateTerme) && (
-              <TouchableOpacity
-                style={[styles.toggleRow, { borderTopColor: colors.borderLight }]}
-                onPress={async () => {
-                  const updated = { ...localConfig, grossesseWeeklyEnabled: !localConfig.grossesseWeeklyEnabled };
-                  setLocalConfig(updated);
-                  await saveNotifConfig(updated);
-                  const permitted = await requestNotificationPermissions();
-                  if (permitted) await setupGrossesseWeekly(updated);
-                }}
-                accessibilityRole="switch"
-                accessibilityState={{ checked: localConfig.grossesseWeeklyEnabled }}
-                accessibilityLabel="Rappel grossesse hebdomadaire"
-              >
-                <Text style={[styles.toggleLabel, { color: colors.text }]}>🤰 Rappel grossesse</Text>
-                <Text style={[styles.toggleTime, { color: colors.textMuted }]}>
-                  Lundi {String(localConfig.grossesseWeeklyHour).padStart(2, '0')}:{String(localConfig.grossesseWeeklyMinute).padStart(2, '0')}
-                </Text>
-                <Text style={styles.toggleIcon}>{localConfig.grossesseWeeklyEnabled ? '✅' : '⬜'}</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-      )}
 
       {/* Notification Settings Modal */}
       <Modal visible={showNotifSettings} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowNotifSettings(false)}>
@@ -139,14 +195,15 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
 const styles = StyleSheet.create({
   section: { marginBottom: Spacing['3xl'] },
   sectionTitle: { fontSize: FontSize.label, fontWeight: FontWeight.bold, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: Spacing.md },
-  card: { borderRadius: Radius.xl, padding: Spacing['2xl'], gap: Spacing.lg },
+  card: { borderRadius: Radius.xl, padding: Spacing['2xl'], gap: Spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   rowLabel: { fontSize: FontSize.body, fontWeight: FontWeight.semibold },
   rowStatus: { fontSize: FontSize.label, fontWeight: FontWeight.medium },
-  hint: { fontSize: FontSize.caption, marginBottom: Spacing.md, lineHeight: 17 },
-  toggleRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: Spacing.lg, borderTopWidth: 1 },
-  toggleLabel: { flex: 1, fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
-  toggleTime: { fontSize: FontSize.caption, marginRight: Spacing.md },
-  toggleIcon: { fontSize: FontSize.lg },
+  hint: { fontSize: FontSize.caption, lineHeight: 17, marginBottom: Spacing.sm },
+  toggleRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: Spacing.lg, gap: Spacing.md },
+  toggleEmoji: { fontSize: FontSize.heading },
+  toggleContent: { flex: 1 },
+  toggleLabel: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
+  toggleDetail: { fontSize: FontSize.caption, marginTop: 2 },
   modalSafe: { flex: 1 },
 });
