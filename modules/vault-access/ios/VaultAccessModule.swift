@@ -1,5 +1,6 @@
 import ExpoModulesCore
 import Foundation
+import WidgetKit
 
 public class VaultAccessModule: Module {
   /// Tracks active security-scoped resources to stop accessing on cleanup
@@ -296,6 +297,22 @@ public class VaultAccessModule: Module {
     Function("clearBookmark") {
       UserDefaults.standard.removeObject(forKey: "vault_bookmark")
       UserDefaults.standard.removeObject(forKey: "vault_uri")
+    }
+
+    /// Write widget data JSON to App Group container and reload timelines
+    AsyncFunction("updateWidgetData") { (jsonString: String) in
+      guard let containerURL = FileManager.default.containerURL(
+        forSecurityApplicationGroupIdentifier: "group.com.familyvault.dev"
+      ) else {
+        throw NSError(domain: "VaultAccess", code: 2, userInfo: [
+          NSLocalizedDescriptionKey: "App Group container introuvable"
+        ])
+      }
+
+      let fileURL = containerURL.appendingPathComponent("widget-data.json")
+      try jsonString.data(using: .utf8)!.write(to: fileURL)
+
+      WidgetCenter.shared.reloadAllTimelines()
     }
   }
 

@@ -45,6 +45,7 @@
     },
     "plugins": [
       "./plugins/remove-push-entitlement",
+      "./plugins/with-widget",
       "expo-router",
       "expo-secure-store",
       [

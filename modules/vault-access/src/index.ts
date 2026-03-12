@@ -12,6 +12,7 @@ interface VaultAccessModuleType {
   listDirectory(uri: string): Promise<string[]>;
   isDirectory(uri: string): Promise<boolean>;
   fileExists(uri: string): Promise<boolean>;
+  updateWidgetData(json: string): Promise<void>;
   stopAccessing(): void;
   clearBookmark(): void;
 }
@@ -142,4 +143,13 @@ export async function coordinatedFileExists(uri: string): Promise<boolean | null
 export async function downloadICloudFiles(uri: string): Promise<number> {
   if (!VaultAccessNative) return 0;
   return VaultAccessNative.downloadICloudFiles(uri);
+}
+
+/**
+ * Write widget data JSON to App Group shared container and reload widget timelines.
+ * No-op on non-iOS.
+ */
+export async function updateWidgetData(json: string): Promise<void> {
+  if (!VaultAccessNative) return;
+  return VaultAccessNative.updateWidgetData(json);
 }

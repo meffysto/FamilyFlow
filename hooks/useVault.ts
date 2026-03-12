@@ -73,6 +73,7 @@ import { nextOccurrence } from '../lib/recurrence';
 import { format } from 'date-fns';
 import { parseJournalStats } from '../lib/journal-stats';
 import type { JournalSummaryEntry } from '../lib/ai-service';
+import { refreshWidget } from '../lib/widget-bridge';
 
 export const VAULT_PATH_KEY = 'vault_path';
 export const ACTIVE_PROFILE_KEY = 'active_profile_id';
@@ -592,6 +593,9 @@ export function useVaultInternal(): VaultState {
       setMemories(val(results[8], []));
       setHealthRecords(val(results[9], []));
       setJournalStats(val(results[10], []));
+
+      // Mettre à jour le widget iOS
+      refreshWidget(val(results[5], []), val(results[1], []), rdvResult);
 
       // Load défis familiaux
       try {
