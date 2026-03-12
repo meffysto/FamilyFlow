@@ -176,8 +176,13 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
       }
       const result = await SAF.requestDirectoryPermissionsAsync();
       if (!result.granted) return;
+
+      // Prendre la permission persistante via le module natif
+      await startAccessing(result.directoryUri);
+
       setPath(result.directoryUri);
       setError(null);
+      onPathSelected(result.directoryUri);
     } catch (e) {
       Alert.alert('Erreur', `Impossible d'ouvrir le sélecteur : ${e}`);
     }

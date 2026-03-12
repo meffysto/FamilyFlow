@@ -1,7 +1,5 @@
 import { requireNativeModule, Platform } from 'expo-modules-core';
 
-const isIOS = Platform.OS === 'ios';
-
 interface VaultAccessModuleType {
   startAccessing(uri: string): Promise<boolean>;
   restoreAccess(): Promise<string | null>;
@@ -19,11 +17,11 @@ interface VaultAccessModuleType {
 }
 
 let VaultAccessNative: VaultAccessModuleType | null = null;
-if (isIOS) {
+if (Platform.OS === 'ios' || Platform.OS === 'android') {
   try {
     VaultAccessNative = requireNativeModule('VaultAccess');
   } catch {
-    // Expo Go: module natif indisponible, fallback sur expo-file-system
+    // Module natif indisponible, fallback sur expo-file-system
   }
 }
 
