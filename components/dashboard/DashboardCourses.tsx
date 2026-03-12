@@ -30,7 +30,8 @@ function DashboardCoursesInner(_props: DashboardSectionProps) {
 
   const [newCourseText, setNewCourseText] = useState('');
 
-  const topCourses = courses.filter((c) => !c.completed).slice(-5).reverse();
+  const unchecked = courses.filter((c) => !c.completed);
+  const topCourses = unchecked.slice(-5).reverse();
 
   const handleSubmit = async () => {
     const text = newCourseText.trim();
@@ -41,7 +42,7 @@ function DashboardCoursesInner(_props: DashboardSectionProps) {
   };
 
   return (
-    <DashboardCard key="courses" title="Courses" icon="🛒" count={topCourses.length || undefined} color={colors.warning} onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'courses' } })}>
+    <DashboardCard key="courses" title="Courses" icon="🛒" count={unchecked.length || undefined} color={colors.warning} onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'courses' } })}>
       {topCourses.map((item) => (
         <View key={item.id} style={styles.courseRow}>
           <Text style={[styles.courseBullet, { color: colors.warning }]}>•</Text>
