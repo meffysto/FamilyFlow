@@ -2,8 +2,9 @@
  * DashboardQuickNotifs.tsx — Section notifications rapides
  */
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -13,9 +14,10 @@ import { dispatchNotification, buildManualContext } from '../../lib/notification
 import type { DashboardSectionProps } from './types';
 
 function DashboardQuickNotifsInner({ vaultFileExists, activateCardTemplate }: DashboardSectionProps) {
-  const { colors } = useThemeColors();
+  const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
   const { notifPrefs, activeProfile } = useVault();
+  const [pressedLabel, setPressedLabel] = useState<string | null>(null);
 
   const customNotifs = notifPrefs.notifications.filter(
     (n) => n.isCustom && n.enabled && n.event === 'manual'
@@ -23,6 +25,7 @@ function DashboardQuickNotifsInner({ vaultFileExists, activateCardTemplate }: Da
 
   const handleSendCustomNotif = useCallback(
     async (notifId: string) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const context = buildManualContext(activeProfile);
       const ok = await dispatchNotification(notifId, context, notifPrefs);
       if (ok) {
@@ -34,8 +37,14 @@ function DashboardQuickNotifsInner({ vaultFileExists, activateCardTemplate }: Da
     [activeProfile, notifPrefs]
   );
 
+  const handleLongPress = useCallback((label: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setPressedLabel(label);
+    setTimeout(() => setPressedLabel(null), 1500);
+  }, []);
+
   return (
-    <DashboardCard key="quicknotifs" title="Notifications rapides" icon="📤" color={colors.success}>
+    <DashboardCard key="quicknotifs" title="Notifications rapides" icon="📤" color={primary}>
       {!vaultFileExists.notifications ? (
         <DashboardEmptyState
           description="Envoyez des notifications rapides à la famille en un tap"
@@ -43,13 +52,23 @@ function DashboardQuickNotifsInner({ vaultFileExists, activateCardTemplate }: Da
           activateLabel="Importer le modèle"
         />
       ) : (
-        <View style={styles.quickNotifGrid}>
-          {customNotifs.map((notif) => (
-            <TouchableOpacity key={notif.id} style={[styles.quickNotifBtn, { backgroundColor: colors.successBg, borderColor: colors.success }]} onPress={() => handleSendCustomNotif(notif.id)}>
-              <Text style={styles.quickNotifEmoji}>{notif.emoji}</Text>
-              <Text style={[styles.quickNotifLabel, { color: colors.successText }]}>{notif.label}</Text>
-            </TouchableOpacity>
-          ))}
+        <View>
+          {pressedLabel && (
+            <Text style={[styles.tooltip, { color: colors.textMuted }]}>{pressedLabel}</Text>
+          )}
+          <View style={styles.quickNotifGrid}>
+            {customNotifs.map((notif) => (
+              <TouchableOpacity
+                key={notif.id}
+                style={[styles.quickNotifBtn, { backgroundColor: tint, borderColor: primary }]}
+                onPress={() => handleSendCustomNotif(notif.id)}
+                onLongPress={() => handleLongPress(notif.label)}
+                activeOpacity={0.6}
+              >
+                <Text style={styles.quickNotifEmoji}>{notif.emoji}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       )}
     </DashboardCard>
@@ -59,20 +78,25 @@ function DashboardQuickNotifsInner({ vaultFileExists, activateCardTemplate }: Da
 export const DashboardQuickNotifs = React.memo(DashboardQuickNotifsInner);
 
 const styles = StyleSheet.create({
+  tooltip: {
+    fontSize: 12,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 6,
+  },
   quickNotifGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    justifyContent: 'center',
   },
   quickNotifBtn: {
-    flexDirection: 'row',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
-    gap: 8,
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 13,
+    justifyContent: 'center',
     borderWidth: 1,
   },
-  quickNotifEmoji: { fontSize: 18 },
-  quickNotifLabel: { fontSize: 14, fontWeight: '600' },
+  quickNotifEmoji: { fontSize: 20 },
 });

@@ -16,7 +16,7 @@
  * - gamification.md
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { VaultManager } from '../lib/vault';
@@ -676,10 +676,8 @@ export function useVaultInternal(): VaultState {
           const notifContent = await vault.readFile(NOTIF_FILE);
           setNotifPrefs(parseNotificationPrefs(notifContent));
         } else {
-          // Create default notifications.md
-          const defaults = getDefaultNotificationPrefs();
-          await vault.writeFile(NOTIF_FILE, serializeNotificationPrefs(defaults));
-          setNotifPrefs(defaults);
+          // Pas de fichier → defaults en mémoire (le template dashboard propose l'import)
+          setNotifPrefs(getDefaultNotificationPrefs());
         }
       } catch (e) {
         debugErrors.push(`notifications: ${e}`);
@@ -1142,7 +1140,7 @@ export function useVaultInternal(): VaultState {
     loadNotifConfig().then(config =>
       scheduleRDVAlerts([...rdvs, newRDV], config)
     ).catch(() => {});
-  }, []);
+  }, [rdvs]);
 
   const updateRDV = useCallback(async (sourceFile: string, rdv: Omit<RDV, 'sourceFile' | 'title'>) => {
     if (!vaultRef.current) return;
@@ -1721,54 +1719,66 @@ export function useVaultInternal(): VaultState {
   const createDefi = useCallback(async (defi: Omit<Defi, 'progress' | 'status'>) => {
     if (!vaultRef.current) return;
     const newDefi: Defi = { ...defi, status: 'active', progress: [] };
-    const updated = [...defis, newDefi];
+    let updated: Defi[] = [];
+    setDefis(prev => {
+      updated = [...prev, newDefi];
+      return updated;
+    });
     await vaultRef.current.writeFile(DEFIS_FILE, serializeDefis(updated));
-    setDefis(updated);
-  }, [defis]);
+  }, []);
 
   const checkInDefi = useCallback(async (defiId: string, profileId: string, completed: boolean, value?: number, note?: string) => {
     if (!vaultRef.current) return;
     const todayStr = new Date().toISOString().slice(0, 10);
-    const updated = defis.map((d) => {
-      if (d.id !== defiId) return d;
-      // Retirer l'entrée existante pour ce profil + date (pour remplacer)
-      const filtered = d.progress.filter((p) => !(p.date === todayStr && p.profileId === profileId));
-      const entry: DefiDayEntry = { date: todayStr, profileId, completed, value, note };
-      const newProgress = [...filtered, entry];
+    let updated: Defi[] = [];
+    setDefis(prev => {
+      updated = prev.map((d) => {
+        if (d.id !== defiId) return d;
+        // Retirer l'entrée existante pour ce profil + date (pour remplacer)
+        const filtered = d.progress.filter((p) => !(p.date === todayStr && p.profileId === profileId));
+        const entry: DefiDayEntry = { date: todayStr, profileId, completed, value, note };
+        const newProgress = [...filtered, entry];
 
-      // Pour abstinence, un échec = défi raté
-      let newStatus = d.status;
-      if (d.type === 'abstinence' && !completed) {
-        newStatus = 'failed';
-      }
+        // Pour abstinence, un échec = défi raté
+        let newStatus = d.status;
+        if (d.type === 'abstinence' && !completed) {
+          newStatus = 'failed';
+        }
 
-      return { ...d, progress: newProgress, status: newStatus };
+        return { ...d, progress: newProgress, status: newStatus };
+      });
+      return updated;
     });
     await vaultRef.current.writeFile(DEFIS_FILE, serializeDefis(updated));
-    setDefis(updated);
-  }, [defis]);
+  }, []);
 
   const completeDefi = useCallback(async (defiId: string) => {
     if (!vaultRef.current) return;
-    const defi = defis.find((d) => d.id === defiId);
+
+    // Lire le state frais via setter fonctionnel
+    let defi: Defi | undefined;
+    let updated: Defi[] = [];
+    setDefis(prev => {
+      defi = prev.find((d) => d.id === defiId);
+      updated = prev.map((d) => d.id === defiId ? { ...d, status: 'completed' as const } : d);
+      return updated;
+    });
     if (!defi) return;
 
-    // Marquer comme complété
-    const updated = defis.map((d) => d.id === defiId ? { ...d, status: 'completed' as const } : d);
     await vaultRef.current.writeFile(DEFIS_FILE, serializeDefis(updated));
-    setDefis(updated);
 
     // Distribuer les récompenses via gamification
     try {
       const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
       const gami = parseGamification(gamiContent);
+      const familleContent = await vaultRef.current.readFile(FAMILLE_FILE);
+      const currentProfiles = mergeProfiles(familleContent, gamiContent);
       const participantIds = defi.participants.length > 0
         ? defi.participants
-        : profiles.map((p) => p.id);
+        : currentProfiles.map((p) => p.id);
 
       for (const pid of participantIds) {
-        // Match par ID (profiles utilisent p.id = nom normalisé)
-        const matchProfile = profiles.find((p) => p.id === pid);
+        const matchProfile = currentProfiles.find((p) => p.id === pid);
         const gamiName = matchProfile?.name;
         const profile = gamiName
           ? gami.profiles.find((p) => p.name === gamiName)
@@ -1787,25 +1797,27 @@ export function useVaultInternal(): VaultState {
       }
       const gamiStr = serializeGamification(gami);
       await vaultRef.current.writeFile(GAMI_FILE, gamiStr);
-      const familleContent = await vaultRef.current.readFile(FAMILLE_FILE);
       setProfiles(mergeProfiles(familleContent, gamiStr));
       setGamiData(gami);
     } catch {
       // Non-critique — le défi est marqué complété quand même
     }
-  }, [defis, profiles]);
+  }, []);
 
   const deleteDefi = useCallback(async (defiId: string) => {
     if (!vaultRef.current) return;
-    const updated = defis.filter((d) => d.id !== defiId);
+    let updated: Defi[] = [];
+    setDefis(prev => {
+      updated = prev.filter((d) => d.id !== defiId);
+      return updated;
+    });
     if (updated.length > 0) {
       await vaultRef.current.writeFile(DEFIS_FILE, serializeDefis(updated));
     } else {
       // Supprimer le fichier si plus aucun défi
       try { await vaultRef.current.deleteFile(DEFIS_FILE); } catch { /* ignore */ }
     }
-    setDefis(updated);
-  }, [defis]);
+  }, []);
 
   // ─── Gratitude CRUD ──────────────────────────────────────────────────────
 
@@ -1927,7 +1939,9 @@ export function useVaultInternal(): VaultState {
     setWishlistItems(parseWishlist(await vaultRef.current.readFile(WISHLIST_FILE)));
   }, [reloadWishlist]);
 
-  return {
+  // Mémoïser la valeur du contexte pour éviter les re-renders en cascade
+  const vault = vaultRef.current;
+  return useMemo(() => ({
     vaultPath,
     isLoading,
     error,
@@ -1941,7 +1955,7 @@ export function useVaultInternal(): VaultState {
     activeProfile,
     gamiData,
     notifPrefs,
-    vault: vaultRef.current,
+    vault,
     refresh,
     setVaultPath,
     setActiveProfile,
@@ -2019,5 +2033,27 @@ export function useVaultInternal(): VaultState {
     deleteWishItem,
     toggleWishBought,
     journalStats,
-  };
+  }), [
+    // State values (déclenchent un re-render quand ils changent)
+    vaultPath, isLoading, error, tasks, menageTasks, courses, stock, meals,
+    rdvs, profiles, activeProfile, gamiData, notifPrefs, vault, photoDates,
+    stockSections, memories, vacationConfig, vacationTasks, isVacationActive,
+    recipes, ageUpgrades, budgetEntries, budgetConfig, budgetMonth, routines,
+    healthRecords, defis, gratitudeDays, wishlistItems, journalStats,
+    // Callbacks (stables grâce à useCallback)
+    refresh, setVaultPath, setActiveProfile, saveNotifPrefs, updateMeal,
+    addPhoto, getPhotoUri, updateProfileTheme, updateProfile, deleteProfile,
+    updateStockQuantity, addStockItem, deleteStockItem, updateStockItem,
+    toggleTask, addRDV, updateRDV, deleteRDV, addTask, deleteTask,
+    addCourseItem, mergeCourseIngredients, toggleCourseItem, removeCourseItem,
+    clearCompletedCourses, addMemory, updateMemory, activateVacation,
+    deactivateVacation, refreshGamification, addRecipe, deleteRecipe,
+    scanAllCookFiles, moveCookToRecipes, toggleFavorite, isFavorite,
+    getFavorites, applyAgeUpgrade, dismissAgeUpgrade, addChild, convertToBorn,
+    setBudgetMonth, addExpense, deleteExpense, updateBudgetConfig, loadBudgetData,
+    saveRoutines, saveHealthRecord, addGrowthEntry, addVaccineEntry,
+    createDefi, checkInDefi, completeDefi, deleteDefi,
+    addGratitudeEntry, deleteGratitudeEntry,
+    addWishItem, updateWishItem, deleteWishItem, toggleWishBought,
+  ]);
 }
