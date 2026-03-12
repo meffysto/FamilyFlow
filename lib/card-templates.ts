@@ -178,10 +178,17 @@ Cuire les crêpes dans une poêle chaude beurrée ~{2%minutes} par face.
       content: `# Notifications rapides
 
 ## Boutons
-- 🍽️ À table ! | À table ! Le repas est prêt.
-- 🛁 Au bain ! | C'est l'heure du bain !
-- 😴 Au dodo ! | C'est l'heure d'aller dormir.
-- 🏠 On rentre ! | On est en route, on arrive bientôt.
+- 🍽️ À table ! | {{profile.avatar}} {{profile.name}} : À table ! Le repas est prêt 🍽️
+- 🛁 Au bain ! | {{profile.avatar}} {{profile.name}} : C'est l'heure du bain ! 🛁
+- 😴 Au dodo ! | {{profile.avatar}} {{profile.name}} : C'est l'heure d'aller dormir 😴
+- 🏠 On rentre ! | {{profile.avatar}} {{profile.name}} : On est en route, on arrive bientôt ! 🏠
+- 🚗 Je pars ! | {{profile.avatar}} {{profile.name}} part, à tout à l'heure ! ({{time}})
+- 🏫 C'est parti ! | {{profile.avatar}} {{profile.name}} : Départ pour l'école ! 🏫 ({{time}})
+- 🛒 Courses | {{profile.avatar}} {{profile.name}} fait les courses — besoin de quelque chose ? 🛒
+- 💊 Médicament ! | ⚠️ Rappel de {{profile.name}} : n'oubliez pas le médicament ! 💊
+- 🔑 Tu as tes clés ? | {{profile.avatar}} {{profile.name}} : Vérifiez vos clés avant de partir ! 🔑
+- ❤️ Je t'aime | {{profile.avatar}} {{profile.name}} vous envoie un gros bisou ❤️
+- 🎉 Bravo ! | {{profile.avatar}} {{profile.name}} : Bravo, on est fiers de toi ! 🎉
 `,
     }],
   },
