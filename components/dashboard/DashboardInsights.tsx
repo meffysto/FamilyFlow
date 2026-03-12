@@ -11,38 +11,25 @@ import { useToast } from '../../contexts/ToastContext';
 import { useAI } from '../../contexts/AIContext';
 import { DashboardCard } from '../DashboardCard';
 import { MarkdownText } from '../ui/MarkdownText';
-import { generateInsights, type InsightInput } from '../../lib/insights';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import type { DashboardSectionProps } from './types';
 
-function DashboardInsightsInner(_props: DashboardSectionProps) {
+function DashboardInsightsInner({ insights: insightsProp }: DashboardSectionProps) {
   const router = useRouter();
   const { primary, colors } = useThemeColors();
   const { showToast } = useToast();
   const ai = useAI();
   const {
     tasks, menageTasks, courses, stock, meals, rdvs,
-    profiles, activeProfile, defis, gratitudeDays,
-    memories, vacationConfig, isVacationActive,
-    gamiData, photoDates, addCourseItem,
-    wishlistItems, recipes, journalStats, healthRecords,
+    profiles, activeProfile, addCourseItem,
+    memories, defis, wishlistItems, recipes, journalStats, healthRecords,
   } = useVault();
 
   const [aiSuggestions, setAiSuggestions] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
 
-  // Insights locaux (analyse déterministe du vault)
-  const insights = useMemo(() => {
-    const input: InsightInput = {
-      tasks, menageTasks, courses, stock, meals, rdvs,
-      profiles, activeProfile, defis, gratitudeDays,
-      memories, vacationConfig, isVacationActive,
-      gamiData, photoDates,
-    };
-    return generateInsights(input);
-  }, [tasks, menageTasks, courses, stock, meals, rdvs, profiles, activeProfile,
-    defis, gratitudeDays, memories, vacationConfig, isVacationActive, gamiData, photoDates]);
+  const insights = insightsProp ?? [];
 
   const hasInsights = insights.length > 0;
   const hasAI = ai.isConfigured;
