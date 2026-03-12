@@ -7,11 +7,14 @@
  * Catégories anonymisées :
  * - Noms de profils (enfants, adultes) → "Enfant 1", "Parent 1"
  * - Médecins → "Médecin A", "Médecin B"
- * - Lieux → "Lieu 1", "Lieu 2"
+ * - Lieux (RDV + texte libre souvenirs/tâches) → "Lieu 1", "Lieu 2"
  * - Contacts médicaux → "Contact 1", "Contact 2"
+ * - Allergies → "Allergie 1", "Allergie 2"
+ * - Médicaments → "Médicament 1", "Médicament 2"
+ * - Antécédents médicaux → "Antécédent 1", "Antécédent 2"
  */
 
-import type { Profile, RDV, HealthRecord } from './types';
+import type { Profile, RDV, HealthRecord, Memory, Task } from './types';
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -43,11 +46,18 @@ function uniqueNonEmpty(arr: string[]): string[] {
 
 /**
  * Construit le mapping d'anonymisation à partir des données vault.
+ *
+ * Sources de lieux : champs `lieu` des RDV + titres/descriptions de souvenirs
+ * et texte de tâches contenant des noms de lieux détectés par heuristique.
+ *
+ * Sources médicales : allergies, médicaments et antécédents des dossiers santé.
  */
 export function buildAnonymizationMap(
   profiles: Profile[],
   rdvs: RDV[],
   healthRecords?: HealthRecord[],
+  memories?: Memory[],
+  tasks?: Task[],
 ): AnonymizationMap {
   const forward = new Map<string, string>();
   const reverse = new Map<string, string>();
@@ -93,12 +103,86 @@ export function buildAnonymizationMap(
   }
 
   // ── Lieux (depuis RDV) ──
-  const locations = uniqueNonEmpty(rdvs.map((r) => r.lieu));
+  const rdvLocations = uniqueNonEmpty(rdvs.map((r) => r.lieu));
+  const allLocationStrings = [...rdvLocations];
+
+  // ── Lieux (depuis texte libre : souvenirs + tâches) ──
+  // Extraire les noms de lieux potentiels via patterns courants
+  const freeTexts: string[] = [];
+  if (memories) {
+    for (const m of memories) {
+      if (m.title) freeTexts.push(m.title);
+      if (m.description) freeTexts.push(m.description);
+    }
+  }
+  if (tasks) {
+    for (const t of tasks) {
+      if (t.text) freeTexts.push(t.text);
+    }
+  }
+
+  const extractedLocations = extractLocationsFromText(freeTexts);
+  allLocationStrings.push(...extractedLocations);
+
+  const locations = uniqueNonEmpty(allLocationStrings);
   locations.forEach((loc, i) => {
     add(loc, `Lieu ${i + 1}`);
   });
 
+  // ── Données médicales (depuis dossiers santé) ──
+  if (healthRecords) {
+    const allergies = uniqueNonEmpty(healthRecords.flatMap((h) => h.allergies));
+    allergies.forEach((a, i) => {
+      add(a, `Allergie ${i + 1}`);
+    });
+
+    const medicaments = uniqueNonEmpty(healthRecords.flatMap((h) => h.medicamentsEnCours));
+    medicaments.forEach((m, i) => {
+      add(m, `Médicament ${i + 1}`);
+    });
+
+    const antecedents = uniqueNonEmpty(healthRecords.flatMap((h) => h.antecedents));
+    antecedents.forEach((a, i) => {
+      add(a, `Antécédent ${i + 1}`);
+    });
+  }
+
   return { forward, reverse };
+}
+
+// ─── Extraction de lieux depuis le texte libre ──────────────────────────────────
+
+/**
+ * Patterns courants pour détecter des noms de lieux dans du texte français libre.
+ * Chaque regex capture le nom du lieu (group 1).
+ */
+const LOCATION_PATTERNS = [
+  // "à l'école Saint-Joseph", "à la crèche Les Petits Loups"
+  /(?:à l[a'']|au|aux|chez)\s+(?:école|crèche|garderie|maternelle|collège|lycée|centre|cabinet|clinique|hôpital|pharmacie|mairie|parc|piscine|bibliothèque|médiathèque)\s+([A-ZÀ-Ü][\w\s-]+)/gi,
+  // "école Saint-Joseph", "crèche Les Petits"
+  /(?:école|crèche|garderie|maternelle|collège|lycée|centre|cabinet|clinique|hôpital|pharmacie)\s+([A-ZÀ-Ü][\w\s-]{2,})/gi,
+  // "chez Mamie", "chez Nounou", "chez Dr Martin"
+  /chez\s+([A-ZÀ-Ü][\w-]+(?:\s+[A-ZÀ-Ü][\w-]+)?)/gi,
+  // Adresses : "12 rue de la Paix", "3 avenue Victor Hugo"
+  /\d+\s+(?:rue|avenue|boulevard|allée|impasse|chemin|place|passage|cours)\s+[^\n,]{3,40}/gi,
+];
+
+function extractLocationsFromText(texts: string[]): string[] {
+  const found: string[] = [];
+  const joined = texts.join('\n');
+
+  for (const pattern of LOCATION_PATTERNS) {
+    // Reset lastIndex pour les regex globales
+    pattern.lastIndex = 0;
+    let match: RegExpExecArray | null;
+    while ((match = pattern.exec(joined)) !== null) {
+      // Prendre le groupe capturé ou le match entier (pour les adresses)
+      const loc = (match[1] ?? match[0]).trim();
+      if (loc.length >= 3) found.push(loc);
+    }
+  }
+
+  return found;
 }
 
 // ─── Anonymisation / Dé-anonymisation ───────────────────────────────────────────

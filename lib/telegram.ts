@@ -109,6 +109,67 @@ export function formatDailySummaryMessage(
     (top ? `🏆 Leader du jour : ${top.avatar} <b>${top.name}</b> (${top.points} pts)` : '');
 }
 
+// ─── Weekly AI Summary ──────────────────────────────────────────────────────
+
+import * as SecureStore from 'expo-secure-store';
+import { generateWeeklySummary, type AIConfig, type VaultContext } from './ai-service';
+
+const WEEKLY_SUMMARY_LAST_SENT_KEY = 'weekly_summary_last_sent';
+const AI_API_KEY = 'ai_api_key';
+const AI_MODEL_KEY = 'ai_model';
+const TELEGRAM_TOKEN_KEY_T = 'telegram_token';
+const TELEGRAM_CHAT_KEY_T = 'telegram_chat_id';
+
+/**
+ * Vérifie si le résumé hebdo doit être envoyé (dimanche, pas encore envoyé cette semaine).
+ */
+export async function shouldSendWeeklySummary(): Promise<boolean> {
+  const now = new Date();
+  if (now.getDay() !== 0) return false; // Pas dimanche
+
+  const lastSent = await SecureStore.getItemAsync(WEEKLY_SUMMARY_LAST_SENT_KEY);
+  if (!lastSent) return true;
+
+  // Déjà envoyé aujourd'hui ?
+  const todayStr = now.toISOString().slice(0, 10);
+  return lastSent !== todayStr;
+}
+
+/**
+ * Génère le résumé hebdo via IA (anonymisé) et l'envoie sur Telegram.
+ * Retourne true si envoyé avec succès.
+ */
+export async function buildAndSendWeeklySummary(
+  vaultCtx: VaultContext,
+): Promise<{ sent: boolean; error?: string }> {
+  // 1. Vérifier la clé API Claude
+  const apiKey = await SecureStore.getItemAsync(AI_API_KEY);
+  const model = (await SecureStore.getItemAsync(AI_MODEL_KEY)) || 'claude-haiku-4-5-20251001';
+  if (!apiKey) return { sent: false, error: 'Clé API Claude non configurée' };
+
+  // 2. Vérifier Telegram
+  const token = await SecureStore.getItemAsync(TELEGRAM_TOKEN_KEY_T);
+  const chatId = await SecureStore.getItemAsync(TELEGRAM_CHAT_KEY_T);
+  if (!token || !chatId) return { sent: false, error: 'Telegram non configuré' };
+
+  // 3. Générer le résumé via IA (données anonymisées)
+  const config: AIConfig = { apiKey, model };
+  const response = await generateWeeklySummary(config, vaultCtx);
+  if (response.error) return { sent: false, error: response.error };
+  if (!response.text) return { sent: false, error: 'Résumé vide' };
+
+  // 4. Envoyer sur Telegram
+  const header = '📬 <b>Résumé hebdo — Family Vault</b>\n\n';
+  const ok = await sendTelegram(token, chatId, header + response.text);
+  if (!ok) return { sent: false, error: 'Échec envoi Telegram' };
+
+  // 5. Marquer comme envoyé
+  const todayStr = new Date().toISOString().slice(0, 10);
+  await SecureStore.setItemAsync(WEEKLY_SUMMARY_LAST_SENT_KEY, todayStr);
+
+  return { sent: true };
+}
+
 // ─── Grossesse Weekly Update ────────────────────────────────────────────────
 
 /** Fruit size comparison by week of pregnancy (SA = semaines d'aménorrhée) */

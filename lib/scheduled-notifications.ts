@@ -46,6 +46,10 @@ export interface NotifScheduleConfig {
   grossesseDay: number;        // 1=dimanche … 7=samedi (iOS weekday), default 2 (lundi)
   grossesseHour: number;       // default 9
   grossesseMinute: number;     // default 0
+  // Résumé hebdo IA (dimanche soir, envoi Telegram)
+  weeklyAISummaryEnabled: boolean;
+  weeklyAISummaryHour: number;   // default 20
+  weeklyAISummaryMinute: number; // default 0
 }
 
 export const DEFAULT_CONFIG: NotifScheduleConfig = {
@@ -72,6 +76,9 @@ export const DEFAULT_CONFIG: NotifScheduleConfig = {
   grossesseDay: 2, // lundi
   grossesseHour: 9,
   grossesseMinute: 0,
+  weeklyAISummaryEnabled: false,
+  weeklyAISummaryHour: 20,
+  weeklyAISummaryMinute: 0,
 };
 
 const STORAGE_KEY = 'notif_schedule_config_v2';
@@ -84,6 +91,7 @@ const CAT_MENAGE = 'menage-weekly';
 const CAT_COURSES = 'courses-stock';
 const CAT_GENERAL = 'general-daily';
 const CAT_GROSSESSE = 'grossesse-weekly';
+const CAT_WEEKLY_AI = 'weekly-ai-summary';
 
 // ─── Setup ───────────────────────────────────────────────────────────────────
 
@@ -370,6 +378,29 @@ export async function setupGrossesseWeekly(config: NotifScheduleConfig): Promise
   });
 }
 
+// ─── 7. Résumé hebdo IA ─────────────────────────────────────────────────────
+
+export async function setupWeeklyAISummaryReminder(config: NotifScheduleConfig): Promise<void> {
+  await cancelByCategory(CAT_WEEKLY_AI);
+
+  if (!config.weeklyAISummaryEnabled) return;
+
+  await Notifications.scheduleNotificationAsync({
+    identifier: `${CAT_WEEKLY_AI}-weekly`,
+    content: {
+      title: '📬 Résumé hebdo',
+      body: 'Ouvre Family Vault pour envoyer le digest de la semaine',
+      sound: true,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+      weekday: 1, // dimanche (iOS weekday: 1=dimanche)
+      hour: config.weeklyAISummaryHour,
+      minute: config.weeklyAISummaryMinute,
+    },
+  });
+}
+
 // ─── Master setup ────────────────────────────────────────────────────────────
 
 export interface NotifData {
@@ -401,6 +432,7 @@ export async function setupAllNotifications(data: NotifData): Promise<{
     scheduleCoursesAlert(data.stock, config),
     setupGeneralReminder(config),
     data.hasGrossesse ? setupGrossesseWeekly(config) : cancelByCategory(CAT_GROSSESSE),
+    setupWeeklyAISummaryReminder(config),
   ]);
 
   return { permitted, config };

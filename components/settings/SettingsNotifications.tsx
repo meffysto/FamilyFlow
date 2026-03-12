@@ -87,6 +87,7 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
     config.coursesEnabled,
     config.generalEnabled,
     hasGrossesse && config.grossesseEnabled,
+    config.weeklyAISummaryEnabled,
   ].filter(Boolean).length : 0;
 
   return (
@@ -161,9 +162,19 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
                 onToggle={() => updateConfig({ grossesseEnabled: !config.grossesseEnabled })}
                 colors={colors}
                 primary={primary}
-                isLast
               />
             )}
+
+            <ToggleItem
+              emoji="📬"
+              label="Résumé hebdo IA"
+              detail={`Dimanche à ${pad(config.weeklyAISummaryHour)}h${pad(config.weeklyAISummaryMinute)} · Telegram · Clé API requise`}
+              enabled={config.weeklyAISummaryEnabled}
+              onToggle={() => updateConfig({ weeklyAISummaryEnabled: !config.weeklyAISummaryEnabled })}
+              colors={colors}
+              primary={primary}
+              isLast
+            />
           </View>
         </View>
       )}

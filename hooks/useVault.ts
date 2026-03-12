@@ -75,8 +75,9 @@ import { setupAllNotifications, loadNotifConfig, scheduleRDVAlerts } from '../li
 import { nextOccurrence } from '../lib/recurrence';
 import { format } from 'date-fns';
 import { parseJournalStats } from '../lib/journal-stats';
-import type { JournalSummaryEntry } from '../lib/ai-service';
+import type { JournalSummaryEntry, VaultContext as AIVaultContext } from '../lib/ai-service';
 import { refreshWidget } from '../lib/widget-bridge';
+import { shouldSendWeeklySummary, buildAndSendWeeklySummary } from '../lib/telegram';
 
 export const VAULT_PATH_KEY = 'vault_path';
 export const ACTIVE_PROFILE_KEY = 'active_profile_id';
@@ -707,6 +708,38 @@ export function useVaultInternal(): VaultState {
 
       // Mettre à jour le widget iOS
       refreshWidget(val(results[5], []), val(results[1], []), rdvResult);
+
+      // Auto-envoi résumé hebdo IA le dimanche (fire-and-forget)
+      loadNotifConfig().then(async (notifCfg) => {
+        if (!notifCfg.weeklyAISummaryEnabled) return;
+        const shouldSend = await shouldSendWeeklySummary();
+        if (!shouldSend) return;
+        const menageResult = val(results[1], [] as Task[]);
+        const mealsResult = val(results[5], [] as MealItem[]);
+        const coursesResult = val(results[3], [] as CourseItem[]);
+        const memoriesResult = val(results[8], [] as Memory[]);
+        const defisResult = val(results[11], [] as Defi[]);
+        const wishlistResult = val(results[13], [] as WishlistItem[]);
+        const journalResult = val(results[10], [] as JournalSummaryEntry[]);
+        const healthResult = val(results[9], [] as HealthRecord[]);
+        const vaultCtx: AIVaultContext = {
+          tasks: tasksResult,
+          menageTasks: menageResult,
+          rdvs: rdvResult,
+          stock: stockResult.items,
+          meals: mealsResult,
+          courses: coursesResult,
+          memories: memoriesResult,
+          defis: defisResult,
+          wishlistItems: wishlistResult,
+          recipes: [],
+          profiles,
+          activeProfile: profiles.find(p => p.id === activeProfileId) ?? null,
+          journalStats: journalResult,
+          healthRecords: healthResult,
+        };
+        buildAndSendWeeklySummary(vaultCtx).catch(() => {});
+      }).catch(() => {});
 
     } catch (e) {
       debugErrors.push(`global: ${e}`);

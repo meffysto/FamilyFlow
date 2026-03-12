@@ -326,6 +326,8 @@ function prepareAnonymized(
     ctx.profiles,
     ctx.rdvs,
     ctx.healthRecords,
+    ctx.memories,
+    ctx.tasks,
   );
 
   // 3. Construire le résumé à partir des données filtrées
@@ -442,6 +444,8 @@ export async function summarizeConsultation(
     vaultCtx.profiles,
     vaultCtx.rdvs,
     vaultCtx.healthRecords,
+    vaultCtx.memories,
+    vaultCtx.tasks,
   );
 
   const anonTranscript = anonymize(transcript, anonMap);
@@ -468,6 +472,36 @@ Règles :
 
   const messages: AIMessage[] = [
     { role: 'user', content: `Voici la transcription de la consultation :\n\n${anonTranscript}` },
+  ];
+
+  // Utiliser Haiku pour le coût minimal
+  const haikiConfig = { ...config, model: 'claude-haiku-4-5-20251001' };
+  const resp = await callClaude(haikiConfig, systemPrompt, messages);
+  if (resp.error) return resp;
+
+  return { text: deanonymize(resp.text, anonMap) };
+}
+
+/** Génère un résumé hebdomadaire via IA (anonymisé) pour envoi Telegram */
+export async function generateWeeklySummary(
+  config: AIConfig,
+  vaultCtx: VaultContext,
+): Promise<AIResponse> {
+  const { systemPrompt, anonMap } = prepareAnonymized(vaultCtx);
+
+  const messages: AIMessage[] = [
+    {
+      role: 'user',
+      content: `Fais un résumé hebdomadaire de la vie familiale en format digest, à envoyer le dimanche soir. Inclus :
+- Tâches accomplies cette semaine vs en retard
+- RDV de la semaine prochaine
+- Stocks à racheter
+- Progression gamification (points, streaks, niveaux)
+- Défis en cours
+- Un petit mot d'encouragement pour la semaine à venir
+
+Format : sections avec emojis, concis et chaleureux. Pas de markdown, juste du texte avec emojis. Maximum 400 mots.`,
+    },
   ];
 
   // Utiliser Haiku pour le coût minimal
