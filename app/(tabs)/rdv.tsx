@@ -61,7 +61,7 @@ const TYPE_EMOJI: Record<string, string> = {
 };
 
 export default function RDVScreen() {
-  const { rdvs, addRDV, updateRDV, deleteRDV, activeProfile } = useVault();
+  const { rdvs, addRDV, updateRDV, deleteRDV, activeProfile, profiles } = useVault();
   const { primary, tint, colors } = useThemeColors();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
   const { isAllowed } = useParentalControls();
@@ -437,6 +437,7 @@ export default function RDVScreen() {
       >
         <RDVEditor
           rdv={editingRDV}
+          profiles={profiles}
           onSave={async (data) => {
             if (editingRDV) {
               await updateRDV(editingRDV.sourceFile, data);

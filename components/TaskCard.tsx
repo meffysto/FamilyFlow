@@ -17,7 +17,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { Task } from '../lib/types';
+import { Task, Profile } from '../lib/types';
 import { formatDateForDisplay } from '../lib/parser';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
@@ -30,6 +30,8 @@ interface TaskCardProps {
   showSource?: boolean;
   hideSection?: boolean;
   compact?: boolean;
+  /** Profils pour libellé source dynamique */
+  profiles?: Profile[];
 }
 
 const TAG_COLORS: Record<string, string> = {
@@ -45,9 +47,14 @@ function getTagColor(tag: string): string {
   return TAG_COLORS[tag.toLowerCase()] ?? TAG_COLORS.default;
 }
 
-function getSourceLabel(sourceFile: string): string {
-  if (sourceFile.includes('Maxence')) return '👶 Maxence';
-  if (sourceFile.includes('Enfant2')) return '🍼 Enfant2';
+function getSourceLabel(sourceFile: string, profiles?: Profile[]): string {
+  // Chercher un profil enfant dont le nom apparaît dans le chemin du fichier
+  if (profiles) {
+    const match = profiles.find((p) =>
+      (p.role === 'enfant' || p.role === 'ado') && sourceFile.includes(p.name),
+    );
+    if (match) return `${match.avatar} ${match.name}`;
+  }
   if (sourceFile.includes('Maison')) return '🏠 Maison';
   if (sourceFile.includes('courses')) return '🛒 Courses';
   return '📋 Tâches';
@@ -60,6 +67,7 @@ export const TaskCard = React.memo(function TaskCard({
   showSource = false,
   hideSection = false,
   compact = false,
+  profiles,
 }: TaskCardProps) {
   const { primary, tint, colors } = useThemeColors();
   const checkScale = useSharedValue(task.completed ? 1 : 0);
@@ -140,7 +148,7 @@ export const TaskCard = React.memo(function TaskCard({
         <View style={styles.meta}>
           {showSource && (
             <View style={[styles.badge, { backgroundColor: colors.cardAlt }]}>
-              <Text style={[styles.sourceLabel, { color: colors.textMuted }]}>{getSourceLabel(task.sourceFile)}</Text>
+              <Text style={[styles.sourceLabel, { color: colors.textMuted }]}>{getSourceLabel(task.sourceFile, profiles)}</Text>
             </View>
           )}
           {task.section && !showSource && !hideSection && !task.recurrence && (

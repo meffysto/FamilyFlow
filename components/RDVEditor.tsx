@@ -20,7 +20,7 @@ import { useThemeColors } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
 import { Chip } from './ui/Chip';
 import { DictaphoneRecorder } from './DictaphoneRecorder';
-import { RDV } from '../lib/types';
+import { RDV, Profile } from '../lib/types';
 import { formatDateForDisplay, parseDateInput } from '../lib/parser';
 import { DateInput } from './ui/DateInput';
 import { Spacing, Radius } from '../constants/spacing';
@@ -35,25 +35,31 @@ const TYPE_OPTIONS = [
   { label: '📋 Autre', value: 'autre' },
 ];
 
-const ENFANT_OPTIONS = ['Maxence', 'Enfant2'];
-
 interface RDVEditorProps {
   rdv?: RDV; // if provided, we're editing
+  /** Profils enfants pour le sélecteur d'enfant */
+  profiles?: Profile[];
   onSave: (rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
   onDelete?: () => void;
   onClose: () => void;
 }
 
-export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
+export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEditorProps) {
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
   const isEditing = !!rdv;
+
+  // Noms d'enfants dynamiques depuis les profils
+  const enfantOptions = (profiles ?? [])
+    .filter((p) => p.role === 'enfant' || p.role === 'ado')
+    .map((p) => p.name);
+  const defaultEnfant = rdv?.enfant ?? enfantOptions[0] ?? '';
 
   // Stocké en ISO (YYYY-MM-DD), affiché via DateInput natif
   const [dateRdv, setDateRdv] = useState(rdv?.date_rdv ?? '');
   const [heure, setHeure] = useState(rdv?.heure ?? '');
   const [typeRdv, setTypeRdv] = useState(rdv?.type_rdv ?? 'pédiatre');
-  const [enfant, setEnfant] = useState(rdv?.enfant ?? 'Maxence');
+  const [enfant, setEnfant] = useState(defaultEnfant);
   const [médecin, setMédecin] = useState(rdv?.médecin ?? '');
   const [lieu, setLieu] = useState(rdv?.lieu ?? '');
   const [questions, setQuestions] = useState<string[]>(rdv?.questions ?? []);
@@ -154,7 +160,7 @@ export function RDVEditor({ rdv, onSave, onDelete, onClose }: RDVEditorProps) {
         {/* Enfant */}
         <Text style={[styles.label, { color: colors.textSub }]}>👶 Enfant</Text>
         <View style={styles.chipRow}>
-          {ENFANT_OPTIONS.map((name) => (
+          {enfantOptions.map((name) => (
             <Chip
               key={name}
               label={name}

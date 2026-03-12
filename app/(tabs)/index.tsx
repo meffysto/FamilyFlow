@@ -1466,6 +1466,7 @@ export default function DashboardScreen() {
       >
         <RDVEditor
           rdv={editingRDV}
+          profiles={profiles}
           onSave={async (data) => {
             if (editingRDV) {
               await updateRDV(editingRDV.sourceFile, data);

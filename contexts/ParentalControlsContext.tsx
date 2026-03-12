@@ -85,20 +85,24 @@ export function ParentalControlsProvider({ children }: { children: React.ReactNo
 
   // Charger au mount
   useEffect(() => {
-    SecureStore.getItemAsync(STORAGE_KEY).then((raw) => {
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw);
-          setControls({ ...DEFAULT_CONTROLS, ...parsed });
-        } catch { /* ignore parse errors */ }
-      }
-    });
+    SecureStore.getItemAsync(STORAGE_KEY)
+      .then((raw) => {
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw);
+            setControls({ ...DEFAULT_CONTROLS, ...parsed });
+          } catch { /* ignore parse errors — garde les défauts */ }
+        }
+      })
+      .catch(() => { /* SecureStore indisponible — garde les défauts restrictifs */ });
   }, []);
 
   const setControl = useCallback(async (category: ParentalCategory, allowed: boolean) => {
     setControls((prev) => {
       const next = { ...prev, [category]: allowed };
-      SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(next));
+      SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(next)).catch(() => {
+        /* Échec silencieux de persistance — le state local reste correct pour la session */
+      });
       return next;
     });
   }, []);
