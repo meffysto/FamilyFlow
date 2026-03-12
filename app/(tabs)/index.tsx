@@ -1377,19 +1377,21 @@ export default function DashboardScreen() {
               <Text style={[styles.ageUpgradeDesc, { color: colors.textSub }]}>
                 Terme prévu le {p.dateTerme}
               </Text>
-              <TouchableOpacity
-                style={[styles.ageUpgradeBtn, { backgroundColor: primary }]}
-                onPress={() => {
-                  Alert.prompt
-                    ? Alert.prompt('Date de naissance', 'AAAA-MM-JJ', (date) => {
-                        if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) convertToBorn(p.id, date);
-                      }, 'plain-text', format(new Date(), 'yyyy-MM-dd'))
-                    : Alert.alert('Bébé est né ?', 'Allez dans Réglages > Profils pour confirmer la naissance.');
-                }}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.ageUpgradeBtnText, { color: colors.onPrimary }]}>C'est né !</Text>
-              </TouchableOpacity>
+              {daysLeft <= 28 && (
+                <TouchableOpacity
+                  style={[styles.ageUpgradeBtn, { backgroundColor: primary }]}
+                  onPress={() => {
+                    Alert.prompt
+                      ? Alert.prompt('Date de naissance', 'AAAA-MM-JJ', (date) => {
+                          if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) convertToBorn(p.id, date);
+                        }, 'plain-text', format(new Date(), 'yyyy-MM-dd'))
+                      : Alert.alert('Bébé est né ?', 'Allez dans Réglages > Profils pour confirmer la naissance.');
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.ageUpgradeBtnText, { color: colors.onPrimary }]}>{p.name ? `${p.name} est là !` : 'Bébé est là !'}</Text>
+                </TouchableOpacity>
+              )}
             </View>
           );
         })}
