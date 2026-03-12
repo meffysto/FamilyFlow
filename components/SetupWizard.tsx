@@ -26,14 +26,17 @@ interface SetupWizardProps {
   onCancel: () => void;
   /** Si fourni, le vault sera créé dans ce dossier au lieu de documentDirectory */
   targetPath?: string;
+  /** Données pré-remplies depuis l'onboarding (évite de redemander) */
+  initialParents?: PersonInput[];
+  initialChildren?: ChildInput[];
 }
 
-interface PersonInput {
+export interface PersonInput {
   name: string;
   avatar: string;
 }
 
-interface ChildInput {
+export interface ChildInput {
   name: string;
   avatar: string;
   birthdate: string;
@@ -42,11 +45,12 @@ interface ChildInput {
 const PARENT_AVATARS = ['👨', '👩', '👨‍💻', '👩‍💼', '🧑', '👴', '👵'];
 const CHILD_AVATARS = ['👶', '🍼', '👧', '👦', '🧒', '🐣', '🌟'];
 
-export function SetupWizard({ onComplete, onCancel, targetPath }: SetupWizardProps) {
+export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, initialChildren }: SetupWizardProps) {
   const { primary, tint, colors } = useThemeColors();
-  const [step, setStep] = useState(0);
-  const [parents, setParents] = useState<PersonInput[]>([{ name: '', avatar: '👨' }]);
-  const [children, setChildren] = useState<ChildInput[]>([{ name: '', avatar: '👶', birthdate: '' }]);
+  const hasInitialData = !!(initialParents?.length && initialParents.some(p => p.name.trim()));
+  const [step, setStep] = useState(hasInitialData ? 2 : 0);
+  const [parents, setParents] = useState<PersonInput[]>(initialParents?.length ? initialParents : [{ name: '', avatar: '👨' }]);
+  const [children, setChildren] = useState<ChildInput[]>(initialChildren?.length ? initialChildren : [{ name: '', avatar: '👶', birthdate: '' }]);
   const [isCreating, setIsCreating] = useState(false);
 
   // --- Step 0: Parents ---
@@ -295,7 +299,7 @@ export function SetupWizard({ onComplete, onCancel, targetPath }: SetupWizardPro
         <TouchableOpacity
           style={[styles.navBtnSecondary, { borderColor: colors.separator }]}
           onPress={() => {
-            if (step === 0) onCancel();
+            if (step === 0 || (hasInitialData && step === 2)) onCancel();
             else setStep(step - 1);
           }}
         >

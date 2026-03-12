@@ -354,6 +354,12 @@ export default function SetupScreen() {
               Où stocker les données de votre famille ? Choisissez un dossier existant ou un nouveau dossier vide.
             </Text>
             <VaultPicker
+              initialParents={parents}
+              initialChildren={children.map(c => ({
+                name: c.name,
+                avatar: c.avatar,
+                birthdate: c.birthdate,
+              }))}
               onPathSelected={(path) => {
                 setVaultPathLocal(path);
                 // Auto-advance to templates step

@@ -23,16 +23,19 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as DocumentPicker from 'expo-document-picker';
 import { VaultManager } from '../lib/vault';
 import { useThemeColors } from '../contexts/ThemeContext';
-import { SetupWizard } from './SetupWizard';
+import { SetupWizard, PersonInput, ChildInput } from './SetupWizard';
 import { startAccessing } from '../modules/vault-access/src';
 
 interface VaultPickerProps {
   currentPath?: string | null;
   onPathSelected: (path: string) => void;
   onCancel?: () => void;
+  /** Données famille pré-remplies (depuis l'onboarding) pour éviter de les redemander */
+  initialParents?: PersonInput[];
+  initialChildren?: ChildInput[];
 }
 
-export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPickerProps) {
+export function VaultPicker({ currentPath, onPathSelected, onCancel, initialParents, initialChildren }: VaultPickerProps) {
   const { primary, tint, colors } = useThemeColors();
   const [path, setPath] = useState(currentPath ?? '');
   const [isValidating, setIsValidating] = useState(false);
@@ -193,6 +196,8 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel }: VaultPick
     return (
       <SetupWizard
         targetPath={wizardTargetPath}
+        initialParents={initialParents}
+        initialChildren={initialChildren}
         onComplete={(newPath) => {
           setShowWizard(false);
           setWizardTargetPath(undefined);
