@@ -28,6 +28,7 @@ import { FontSize, FontWeight } from '../../constants/typography';
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import { Shadows } from '../../constants/shadows';
 import type { GratitudeEntry, GratitudeDay } from '../../lib/types';
+import { isBabyProfile } from '../../lib/types';
 
 type TabId = 'aujourdhui' | 'livre';
 
@@ -82,9 +83,15 @@ export default function GratitudeScreen() {
     return gratitudeDays.find((d) => d.date === selectedDate);
   }, [gratitudeDays, selectedDate]);
 
+  // Exclure les profils grossesse + bébés < 2 ans (ne peuvent pas écrire de gratitude)
+  const gratitudeProfiles = useMemo(
+    () => profiles.filter((p) => p.statut !== 'grossesse' && !isBabyProfile(p)),
+    [profiles],
+  );
+
   const streak = useMemo(
-    () => computeGratitudeStreak(gratitudeDays, profiles.length),
-    [gratitudeDays, profiles.length],
+    () => computeGratitudeStreak(gratitudeDays, gratitudeProfiles.length),
+    [gratitudeDays, gratitudeProfiles.length],
   );
 
   // Livre d'or : sections pour SectionList (gratitudeDays already sorted desc)
@@ -176,8 +183,8 @@ export default function GratitudeScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Liste profils */}
-          {profiles.map((profile) => {
+          {/* Liste profils (exclut grossesse + bébés < 2 ans) */}
+          {gratitudeProfiles.map((profile) => {
             const entry = dayData?.entries.find((e) => e.profileId === profile.id);
             const isActiveUser = activeProfile?.id === profile.id;
 
@@ -214,7 +221,7 @@ export default function GratitudeScreen() {
             );
           })}
 
-          {profiles.length === 0 && (
+          {gratitudeProfiles.length === 0 && (
             <View style={[styles.emptyState, { backgroundColor: colors.card }]}>
               <Text style={styles.emptyEmoji}>🙏</Text>
               <Text style={[styles.emptyTitle, { color: colors.text }]}>Aucun profil</Text>

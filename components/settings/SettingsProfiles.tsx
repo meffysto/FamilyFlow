@@ -182,17 +182,20 @@ export function SettingsProfiles({
                         {profile.statut !== 'grossesse' && profile.birthdate ? ` · 🎂 ${profile.birthdate}` : ''}
                       </Text>
                     </View>
-                    {profile.statut === 'grossesse' && (
-                      <TouchableOpacity
-                        style={[styles.bornBtn, { backgroundColor: primary }]}
-                        onPress={() => { setConvertingProfile(profile.id); setBornDate(format(new Date(), 'yyyy-MM-dd')); }}
-                        activeOpacity={0.7}
-                        accessibilityLabel="Marquer comme né"
-                        accessibilityRole="button"
-                      >
-                        <Text style={[styles.bornBtnText, { color: colors.onPrimary }]}>C'est né !</Text>
-                      </TouchableOpacity>
-                    )}
+                    {profile.statut === 'grossesse' && profile.dateTerme && (() => {
+                      const daysLeft = Math.ceil((new Date(profile.dateTerme!).getTime() - new Date().getTime()) / 86400000);
+                      return daysLeft <= 28 ? (
+                        <TouchableOpacity
+                          style={[styles.bornBtn, { backgroundColor: primary }]}
+                          onPress={() => { setConvertingProfile(profile.id); setBornDate(format(new Date(), 'yyyy-MM-dd')); }}
+                          activeOpacity={0.7}
+                          accessibilityLabel="Marquer comme né"
+                          accessibilityRole="button"
+                        >
+                          <Text style={[styles.bornBtnText, { color: colors.onPrimary }]}>{profile.name ? `${profile.name} est là !` : 'Bébé est là !'}</Text>
+                        </TouchableOpacity>
+                      ) : null;
+                    })()}
                     {profile.lootBoxesAvailable > 0 && (
                       <Text style={[styles.profileLoot, { color: colors.warning }]}>🎁 ×{profile.lootBoxesAvailable}</Text>
                     )}

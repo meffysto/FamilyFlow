@@ -42,6 +42,7 @@ import { generateInsights, type InsightInput } from '../../lib/insights';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { getCardTemplate } from '../../lib/card-templates';
+import { getFruitForWeek, getFruitLabel } from '../../lib/pregnancy';
 import type { CardTemplateContext } from '../../lib/card-templates';
 
 // Composants de section dashboard
@@ -603,13 +604,17 @@ export default function DashboardScreen() {
 
         {profiles.filter((p) => p.statut === 'grossesse' && p.dateTerme).map((p) => {
           const daysLeft = Math.ceil((new Date(p.dateTerme!).getTime() - new Date().getTime()) / 86400000);
+          const totalDays = 280; // 40 semaines
+          const daysElapsed = totalDays - daysLeft;
+          const weeksElapsed = Math.max(0, Math.floor(daysElapsed / 7));
+          const fruitEmoji = getFruitForWeek(weeksElapsed);
           return (
             <View key={p.id} style={[styles.ageUpgradeBanner, { backgroundColor: colors.warningBg, borderColor: primary }]}>
               <Text style={[styles.ageUpgradeTitle, { color: colors.text }]}>
-                🤰 {p.name} — {daysLeft > 0 ? `J-${daysLeft}` : daysLeft === 0 ? "C'est pour aujourd'hui !" : `J+${Math.abs(daysLeft)}`}
+                {fruitEmoji} {p.name} — {daysLeft > 0 ? `J-${daysLeft} (SA ${weeksElapsed})` : daysLeft === 0 ? "C'est pour aujourd'hui !" : `J+${Math.abs(daysLeft)}`}
               </Text>
               <Text style={[styles.ageUpgradeDesc, { color: colors.textSub }]}>
-                Terme prévu le {p.dateTerme}
+                Terme prévu le {p.dateTerme} · Taille d'un(e) {getFruitLabel(weeksElapsed)}
               </Text>
               {daysLeft <= 28 && (
                 <TouchableOpacity
