@@ -8,6 +8,10 @@ struct WidgetData: Codable {
     let dayOfWeek: String
     let meals: MealsData?
     let tasksProgress: TasksProgress?
+    let nextTasks: [String]?
+    let nextRDVs: [NextRDV]?
+
+    // Rétro-compatibilité
     let nextTask: String?
     let nextRDV: NextRDV?
 
@@ -28,6 +32,20 @@ struct WidgetData: Codable {
         let lieu: String?
     }
 
+    /// Tâches à afficher (préfère la liste, fallback sur l'ancien champ)
+    var pendingTasks: [String] {
+        if let tasks = nextTasks, !tasks.isEmpty { return tasks }
+        if let task = nextTask, !task.isEmpty { return [task] }
+        return []
+    }
+
+    /// RDVs à afficher (préfère la liste, fallback sur l'ancien champ)
+    var upcomingRDVs: [NextRDV] {
+        if let rdvs = nextRDVs, !rdvs.isEmpty { return rdvs }
+        if let rdv = nextRDV { return [rdv] }
+        return []
+    }
+
     static func load() -> WidgetData? {
         guard let url = FileManager.default.containerURL(
             forSecurityApplicationGroupIdentifier: "group.com.familyvault.dev"
@@ -41,10 +59,12 @@ struct WidgetData: Codable {
     static let placeholder = WidgetData(
         date: "2026-03-12",
         dayOfWeek: "Mercredi",
-        meals: MealsData(dejeuner: "Pates carbonara", diner: "Salade composee"),
+        meals: MealsData(dejeuner: "Pâtes carbonara", diner: "Salade composée"),
         tasksProgress: TasksProgress(done: 2, total: 5),
-        nextTask: "Nettoyer la cuisine",
-        nextRDV: NextRDV(title: "Pediatre", date: "14/03", heure: "10h30", lieu: "Cabinet medical")
+        nextTasks: ["Nettoyer la cuisine", "Sortir les poubelles"],
+        nextRDVs: [NextRDV(title: "Pédiatre", date: "14/03", heure: "10h30", lieu: "Cabinet médical")],
+        nextTask: nil,
+        nextRDV: nil
     )
 }
 
@@ -120,10 +140,11 @@ struct MaJourneeSmallView: View {
                 .font(.caption2)
                 .foregroundStyle(.orange)
                 .frame(width: 14)
-            Text(text?.isEmpty == false ? text! : "\u{2014}")
+            Text(text?.isEmpty == false ? text! : "Pas encore planifié")
                 .font(.caption)
                 .fontWeight(.medium)
                 .lineLimit(1)
+                .foregroundStyle(text?.isEmpty == false ? .primary : .tertiary)
         }
     }
 }
@@ -164,39 +185,55 @@ struct MaJourneeMediumView: View {
 
             Divider()
 
-            // Droite : Tache + RDV
-            VStack(alignment: .leading, spacing: 8) {
-                if let task = data.nextTask, !task.isEmpty {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Label("A faire", systemImage: "checklist")
-                            .font(.caption2)
-                            .foregroundStyle(.orange)
-                        Text(task)
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .lineLimit(2)
-                    }
-                }
+            // Droite : Tâches + RDVs (dynamique)
+            VStack(alignment: .leading, spacing: 6) {
+                let tasks = data.pendingTasks
+                let rdvs = data.upcomingRDVs
 
-                if let rdv = data.nextRDV {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Label("\(rdv.date) \u{00B7} \(rdv.heure)", systemImage: "calendar")
-                            .font(.caption2)
-                            .foregroundStyle(.blue)
-                        Text(rdv.title)
+                if !tasks.isEmpty {
+                    Label("À faire", systemImage: "checklist")
+                        .font(.caption2)
+                        .foregroundStyle(.orange)
+                    ForEach(tasks.prefix(3), id: \.self) { task in
+                        Text("• \(task)")
                             .font(.caption)
                             .fontWeight(.medium)
                             .lineLimit(1)
-                        if let lieu = rdv.lieu, !lieu.isEmpty {
-                            Text(lieu)
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
+                    }
+                }
+
+                if !rdvs.isEmpty {
+                    if !tasks.isEmpty {
+                        Divider()
+                    }
+                    Label("RDV", systemImage: "calendar")
+                        .font(.caption2)
+                        .foregroundStyle(.blue)
+                    ForEach(Array(rdvs.prefix(3).enumerated()), id: \.offset) { _, rdv in
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("\(rdv.date) · \(rdv.heure) — \(rdv.title)")
+                                .font(.caption)
+                                .fontWeight(.medium)
                                 .lineLimit(1)
+                            if let lieu = rdv.lieu, !lieu.isEmpty {
+                                Text(lieu)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
                         }
                     }
                 }
 
-                Spacer()
+                if tasks.isEmpty && rdvs.isEmpty {
+                    Spacer()
+                    Text("Rien de prévu")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                    Spacer()
+                }
+
+                Spacer(minLength: 0)
             }
         }
         .padding()
@@ -209,10 +246,11 @@ struct MaJourneeMediumView: View {
                 .font(.caption2)
                 .foregroundStyle(.orange)
                 .frame(width: 14)
-            Text(text?.isEmpty == false ? text! : "\u{2014}")
+            Text(text?.isEmpty == false ? text! : "Pas encore planifié")
                 .font(.caption)
                 .fontWeight(.medium)
                 .lineLimit(1)
+                .foregroundStyle(text?.isEmpty == false ? .primary : .tertiary)
         }
     }
 }

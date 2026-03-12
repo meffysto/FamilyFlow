@@ -20,6 +20,13 @@ if (Platform.OS === 'ios') {
 
 const DAYS_FR = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 
+interface WidgetRDV {
+  title: string;
+  date: string;
+  heure: string;
+  lieu: string | null;
+}
+
 interface WidgetData {
   date: string;
   dayOfWeek: string;
@@ -31,13 +38,8 @@ interface WidgetData {
     done: number;
     total: number;
   };
-  nextTask: string | null;
-  nextRDV: {
-    title: string;
-    date: string;
-    heure: string;
-    lieu: string | null;
-  } | null;
+  nextTasks: string[];
+  nextRDVs: WidgetRDV[];
 }
 
 function buildWidgetData(
@@ -54,31 +56,33 @@ function buildWidgetData(
   const dejeuner = todayMeals.find(m => m.mealType === 'Déjeuner')?.text || null;
   const diner = todayMeals.find(m => m.mealType === 'Dîner')?.text || null;
 
-  // Progression ménage
+  // Progression ménage + prochaines tâches
   const done = menageTasks.filter(t => t.completed).length;
   const total = menageTasks.length;
-  const nextTask = menageTasks.find(t => !t.completed)?.text || null;
+  const nextTasks = menageTasks
+    .filter(t => !t.completed)
+    .slice(0, 3)
+    .map(t => t.text);
 
-  // Prochain RDV planifié
+  // Prochains RDVs planifiés
   const upcoming = rdvs
     .filter(r => r.statut === 'planifié' && r.date_rdv >= todayStr)
     .sort((a, b) => a.date_rdv.localeCompare(b.date_rdv) || a.heure.localeCompare(b.heure));
 
-  const next = upcoming[0];
-  const nextRDV = next ? {
-    title: `${next.type_rdv} — ${next.enfant}`,
-    date: formatDateShort(next.date_rdv),
-    heure: next.heure.replace(':', 'h'),
-    lieu: next.lieu || null,
-  } : null;
+  const nextRDVs: WidgetRDV[] = upcoming.slice(0, 3).map(r => ({
+    title: `${r.type_rdv} — ${r.enfant}`,
+    date: formatDateShort(r.date_rdv),
+    heure: r.heure.replace(':', 'h'),
+    lieu: r.lieu || null,
+  }));
 
   return {
     date: todayStr,
     dayOfWeek: dayName,
     meals: { dejeuner, diner },
     tasksProgress: { done, total },
-    nextTask,
-    nextRDV,
+    nextTasks,
+    nextRDVs,
   };
 }
 
