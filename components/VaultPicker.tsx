@@ -67,6 +67,15 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
 
       let downloaded = 0;
       for (const relPath of files) {
+        // Sécurité : rejeter les chemins qui pourraient sortir du vault
+        if (
+          relPath.includes('..') ||
+          relPath.startsWith('/') ||
+          relPath.includes('\0')
+        ) {
+          console.warn(`Chemin ignoré (traversal détecté) : ${relPath}`);
+          continue;
+        }
         setSyncProgress(`${downloaded + 1}/${files.length} — ${relPath}`);
 
         const fileUrl = `${SERVER_URL}/file/${encodeURIComponent(relPath)}`;

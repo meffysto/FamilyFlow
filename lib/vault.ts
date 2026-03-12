@@ -49,6 +49,15 @@ export class VaultManager {
 
   /** Absolute URI for a relative vault path */
   private uri(relativePath: string): string {
+    // Sécurité : rejeter les chemins qui pourraient sortir du vault
+    if (
+      relativePath.includes('..') ||
+      relativePath.startsWith('/') ||
+      relativePath.includes('\0')
+    ) {
+      throw new Error(`Chemin invalide (traversal détecté) : ${relativePath}`);
+    }
+
     // When vaultPath is already a URI (file:// or content://), encode relative path components
     const isUri = this.vaultPath.startsWith('file://') || this.vaultPath.startsWith('content://');
     const rel = isUri
