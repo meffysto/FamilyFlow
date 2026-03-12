@@ -36,6 +36,7 @@ import {
   WishlistItem,
   WishBudget,
   WishOccasion,
+  Anniversary,
 } from './types';
 import { VALID_THEMES, type ProfileTheme } from '../constants/themes';
 
@@ -1080,6 +1081,85 @@ export function serializeWishlist(items: WishlistItem[]): string {
     parts.push('');
   }
 
+  return parts.join('\n');
+}
+
+// ─── Anniversaires ──────────────────────────────────────────────────────────
+
+export const ANNIVERSAIRES_FILE = '01 - Famille/Anniversaires.md';
+
+/**
+ * Parse le fichier Anniversaires.md (table markdown) en Anniversary[].
+ * Retourne [] si le contenu est vide ou inexistant.
+ */
+export function parseAnniversaries(content: string): Anniversary[] {
+  if (!content || !content.trim()) return [];
+
+  const lines = content.split('\n');
+  const items: Anniversary[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Ne traiter que les lignes de table
+    if (!line.startsWith('|')) continue;
+
+    const cells = line.split('|').map((c) => c.trim()).filter((c) => c.length > 0);
+    if (cells.length < 2) continue;
+
+    // Skip header et separator
+    if (cells[0] === 'Nom' || cells[0].startsWith('---')) continue;
+
+    const name = cells[0];
+    if (!name) continue;
+
+    const dateRaw = cells[1]?.trim() || '';
+    // Valider le format MM-DD
+    if (!/^\d{2}-\d{2}$/.test(dateRaw)) continue;
+
+    const yearRaw = cells[2]?.trim() || '';
+    const birthYear = yearRaw ? parseInt(yearRaw, 10) : undefined;
+
+    const category = cells[3]?.trim() || undefined;
+    const contactId = cells[4]?.trim() || undefined;
+    const notes = cells[5]?.trim() || undefined;
+
+    items.push({
+      name,
+      date: dateRaw,
+      birthYear: birthYear && !isNaN(birthYear) ? birthYear : undefined,
+      category: category || undefined,
+      contactId: contactId || undefined,
+      notes: notes || undefined,
+      sourceFile: ANNIVERSAIRES_FILE,
+    });
+  }
+
+  return items;
+}
+
+/**
+ * Sérialise Anniversary[] en Markdown (header + table).
+ */
+export function serializeAnniversaries(anniversaries: Anniversary[]): string {
+  const parts: string[] = [];
+  parts.push('# Anniversaires\n');
+  parts.push('| Nom | Date | Année | Catégorie | Contact ID | Notes |');
+  parts.push('|-----|------|-------|-----------|------------|-------|');
+
+  for (const a of anniversaries) {
+    const row = [
+      a.name,
+      a.date,
+      a.birthYear != null ? String(a.birthYear) : '',
+      a.category || '',
+      a.contactId || '',
+      a.notes || '',
+    ];
+    parts.push(`| ${row.join(' | ')} |`);
+  }
+
+  parts.push('');
   return parts.join('\n');
 }
 

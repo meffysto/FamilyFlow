@@ -67,6 +67,12 @@
           "microphonePermission": "FamilyFlow utilise le micro pour transcrire les consultations médicales.",
           "speechRecognitionPermission": "FamilyFlow utilise la reconnaissance vocale pour transcrire les réponses du médecin."
         }
+      ],
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "FamilyFlow accède à vos contacts pour importer les anniversaires."
+        }
       ]
     ],
     "experiments": {

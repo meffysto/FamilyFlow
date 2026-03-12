@@ -37,7 +37,7 @@ interface GridItem {
 export default function MoreScreen() {
   const router = useRouter();
   const gridRef = useRef<View>(null);
-  const { rdvs, stock, gamiData, budgetEntries, budgetConfig, activeProfile, profiles, defis, wishlistItems } = useVault();
+  const { rdvs, stock, gamiData, budgetEntries, budgetConfig, activeProfile, profiles, defis, wishlistItems, anniversaries } = useVault();
   const { colors } = useThemeColors();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
 
@@ -53,6 +53,20 @@ export default function MoreScreen() {
 
     const activeDefis = defis.filter((d) => d.status === 'active').length;
     const wishlistUnbought = wishlistItems.filter((w) => !w.bought).length;
+
+    // Anniversaires dans les 7 prochains jours
+    const upcomingBirthdays = anniversaries.filter((a) => {
+      const [mm, dd] = a.date.split('-').map(Number);
+      const today = new Date();
+      const thisYear = today.getFullYear();
+      let next = new Date(thisYear, mm - 1, dd);
+      if (next < new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
+        next = new Date(thisYear + 1, mm - 1, dd);
+      }
+      const diff = next.getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+      const days = Math.round(diff / (1000 * 60 * 60 * 24));
+      return days <= 7;
+    }).length;
 
     return [
       // Vie quotidienne
@@ -133,6 +147,14 @@ export default function MoreScreen() {
         category: 'famille' as const,
       },
       {
+        emoji: '🎂',
+        label: 'Anniversaires',
+        route: '/(tabs)/anniversaires',
+        badge: upcomingBirthdays || undefined,
+        color: '#D946EF',
+        category: 'famille' as const,
+      },
+      {
         emoji: '💰',
         label: 'Budget',
         route: '/(tabs)/budget',
@@ -156,7 +178,7 @@ export default function MoreScreen() {
         category: 'systeme' as const,
       },
     ];
-  }, [rdvs, stock, gamiData, budgetEntries, budgetConfig, colors, profiles, defis, wishlistItems]);
+  }, [rdvs, stock, gamiData, budgetEntries, budgetConfig, colors, profiles, defis, wishlistItems, anniversaries]);
 
   const visibleItems = isChildMode ? items.filter((i) => i.label !== 'Budget') : items;
 

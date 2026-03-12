@@ -8,7 +8,7 @@
  */
 
 import { format, differenceInCalendarDays, isToday, isTomorrow, isYesterday, parseISO, addDays } from 'date-fns';
-import type { Task, RDV, StockItem, MealItem, CourseItem, Profile, Defi, GratitudeDay, Memory, VacationConfig, GamificationData } from './types';
+import type { Task, RDV, StockItem, MealItem, CourseItem, Profile, Defi, GratitudeDay, Memory, VacationConfig, GamificationData, Anniversary } from './types';
 import { formatDateForDisplay } from './parser';
 import { LOOT_THRESHOLD } from '../constants/rewards';
 
@@ -53,6 +53,7 @@ export interface InsightInput {
   isVacationActive: boolean;
   gamiData: GamificationData | null;
   photoDates: Record<string, string[]>;
+  anniversaries?: Anniversary[];
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────
@@ -487,6 +488,57 @@ function gamificationInsights(input: InsightInput): Insight[] {
   return insights;
 }
 
+function anniversaryInsights(input: InsightInput, tc: TimeContext): Insight[] {
+  const insights: Insight[] = [];
+  const anniversaries = input.anniversaries;
+  if (!anniversaries || anniversaries.length === 0) return insights;
+
+  const now = tc.now;
+  const currentYear = now.getFullYear();
+
+  for (const a of anniversaries) {
+    const [mm, dd] = a.date.split('-').map(Number);
+    if (!mm || !dd) continue;
+
+    const thisYear = new Date(currentYear, mm - 1, dd);
+    thisYear.setHours(0, 0, 0, 0);
+    const today = new Date(currentYear, now.getMonth(), now.getDate());
+    today.setHours(0, 0, 0, 0);
+
+    let days = Math.round((thisYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    if (days < 0) continue; // passé cette année → pas imminent
+
+    // Uniquement les 3 prochains jours pour les insights
+    if (days > 3) continue;
+
+    const age = a.birthYear ? currentYear - a.birthYear : null;
+    const ageText = age !== null ? ` (${age} ans)` : '';
+
+    if (days === 0) {
+      insights.push({
+        id: `anniversary-today-${a.name}`,
+        icon: '🎂',
+        title: `Anniversaire de ${a.name} aujourd'hui !`,
+        body: `C'est l'anniversaire de ${a.name}${ageText}. Pensez à lui souhaiter !`,
+        priority: 'high',
+        category: 'reminder',
+      });
+    } else {
+      const quand = days === 1 ? 'demain' : `dans ${days} jours`;
+      insights.push({
+        id: `anniversary-soon-${a.name}`,
+        icon: '🎈',
+        title: `Anniversaire de ${a.name} ${quand}`,
+        body: `${a.name}${ageText}${a.category ? ` · ${a.category}` : ''}`,
+        priority: days === 1 ? 'medium' : 'low',
+        category: 'reminder',
+      });
+    }
+  }
+
+  return insights;
+}
+
 // ─── Moteur principal ───────────────────────────────────────────────────────────
 
 /**
@@ -513,6 +565,7 @@ export function generateInsights(input: InsightInput): Insight[] {
     ...coursesInsights(input),
     ...vacationInsights(input, tc),
     ...gamificationInsights(input),
+    ...anniversaryInsights(input, tc),
   ];
 
   // Tri par priorité

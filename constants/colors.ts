@@ -46,6 +46,10 @@ export const LightColors = {
   // Tags
   tagMention:     '#FEF3C7',
   tagMentionText: '#D97706',
+  // Accent — pink (souvenirs, etc.)
+  accentPink:     '#EC4899',
+  accentPinkBg:   '#FCE7F3',
+  accentPinkText: '#9D174D',
   // Misc
   overlay:     'rgba(0,0,0,0.5)',
   overlayLight:'rgba(0,0,0,0.4)',
@@ -89,6 +93,10 @@ export const DarkColors: typeof LightColors = {
   // Tags
   tagMention:     '#78350F',
   tagMentionText: '#FBBF24',
+  // Accent — pink (souvenirs, etc.)
+  accentPink:     '#F472B6',
+  accentPinkBg:   '#831843',
+  accentPinkText: '#FBCFE8',
   // Misc
   overlay:     'rgba(0,0,0,0.75)',
   overlayLight:'rgba(0,0,0,0.6)',

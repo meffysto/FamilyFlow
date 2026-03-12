@@ -104,7 +104,7 @@ export default function LootScreen() {
         {/* Header */}
         <View style={[styles.header, { backgroundColor: primary }]}>
           <View style={styles.headerTop}>
-            <Text style={styles.title}>🎁 Récompenses</Text>
+            <Text style={[styles.title, { color: colors.onPrimary }]}>🎁 Récompenses</Text>
             <TouchableOpacity
               style={styles.dropRatesBtn}
               onPress={() => setShowDropRates(true)}
@@ -136,7 +136,7 @@ export default function LootScreen() {
                   disabled={isProcessing}
                 >
                   <Text style={styles.openBtnEmoji}>🎁</Text>
-                  <Text style={styles.openBtnText}>
+                  <Text style={[styles.openBtnText, { color: colors.onPrimary }]}>
                     Ouvrir{profile.lootBoxesAvailable > 1 ? ` (×${profile.lootBoxesAvailable})` : ''}
                   </Text>
                 </TouchableOpacity>
@@ -167,7 +167,7 @@ export default function LootScreen() {
                         {ownerProfile?.avatar ?? '👤'} {ownerProfile?.name ?? reward.profileId}
                       </Text>
                       <Text style={[styles.activeRewardLabel, { color: colors.text }]}>{reward.label}</Text>
-                      <Text style={styles.activeRewardMeta}>
+                      <Text style={[styles.activeRewardMeta, { color: colors.error }]}>
                         {reward.remainingDays !== undefined && `${reward.remainingDays}j restant${reward.remainingDays > 1 ? 's' : ''}`}
                         {reward.remainingTasks !== undefined && `${reward.remainingTasks} tâche${reward.remainingTasks > 1 ? 's' : ''} restante${reward.remainingTasks > 1 ? 's' : ''}`}
                       </Text>
@@ -212,7 +212,7 @@ export default function LootScreen() {
                           style={[
                             styles.badge,
                             { borderColor, backgroundColor: colors.cardAlt },
-                            isMythique && styles.badgeMythique,
+                            isMythique && [styles.badgeMythique, { borderColor: colors.error, backgroundColor: colors.errorBg, shadowColor: colors.error }],
                           ]}
                         >
                           <Text style={styles.badgeEmoji}>{badge.note.split(' ')[0]}</Text>
@@ -241,8 +241,8 @@ export default function LootScreen() {
                     <View style={styles.historyInfo}>
                       <View style={styles.historyNameRow}>
                         <Text style={[styles.historyName, { color: colors.textSub }]}>{profileObj?.name ?? entry.profileId}</Text>
-                        <View style={[styles.historyTypeBadge, { backgroundColor: isLoot ? '#F3E8FF' : '#ECFDF5' }]}>
-                          <Text style={[styles.historyTypeText, { color: isLoot ? '#7C3AED' : '#059669' }]}>
+                        <View style={[styles.historyTypeBadge, { backgroundColor: isLoot ? colors.infoBg : colors.successBg }]}>
+                          <Text style={[styles.historyTypeText, { color: isLoot ? colors.info : colors.success }]}>
                             {isLoot ? '🎁 Loot' : '📋 Tâche'}
                           </Text>
                         </View>
@@ -255,7 +255,7 @@ export default function LootScreen() {
                           {RARITY_LABELS[rarity as keyof typeof RARITY_LABELS]}
                         </Text>
                       ) : (
-                        <Text style={styles.historyPts}>{entry.action} pts</Text>
+                        <Text style={[styles.historyPts, { color: colors.success }]}>{entry.action} pts</Text>
                       )}
                     </View>
                   </View>
@@ -319,7 +319,7 @@ export default function LootScreen() {
               <View key={rarity} style={[styles.drCard, { backgroundColor: colors.card }]}>
                 <View style={styles.drRarityHeader}>
                   <View style={[styles.drRarityBadge, { backgroundColor: RARITY_COLORS[rarity] }]}>
-                    <Text style={styles.drRarityBadgeText}>
+                    <Text style={[styles.drRarityBadgeText, { color: colors.onPrimary }]}>
                       {RARITY_EMOJIS[rarity]} {RARITY_LABELS[rarity]}
                     </Text>
                   </View>
@@ -330,7 +330,7 @@ export default function LootScreen() {
                     <Text style={styles.drRewardEmoji}>{reward.emoji}</Text>
                     <Text style={[styles.drRewardName, { color: colors.textSub }]}>{reward.reward}</Text>
                     {reward.bonusPoints > 0 && (
-                      <Text style={styles.drRewardPts}>+{reward.bonusPoints}</Text>
+                      <Text style={[styles.drRewardPts, { color: colors.success }]}>+{reward.bonusPoints}</Text>
                     )}
                     {reward.requiresParent && (
                       <Text style={styles.drParentTag}>👨‍👩‍👧</Text>
@@ -342,7 +342,7 @@ export default function LootScreen() {
 
             {/* Close button */}
             <TouchableOpacity style={[styles.drCloseButton, { backgroundColor: primary }]} onPress={() => setShowDropRates(false)}>
-              <Text style={styles.drCloseButtonText}>Fermer</Text>
+              <Text style={[styles.drCloseButtonText, { color: colors.onPrimary }]}>Fermer</Text>
             </TouchableOpacity>
 
             <View style={{ height: 40 }} />

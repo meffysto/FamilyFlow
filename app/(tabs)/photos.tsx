@@ -361,7 +361,7 @@ export default function PhotosScreen() {
                 <View key={`${mem.date}-${mem.title}-${idx}`} style={styles.memoryCard}>
                   <View style={styles.memoryLeft}>
                     <Text style={styles.memoryEmoji}>{TYPE_EMOJI[mem.type]}</Text>
-                    <View style={[styles.memoryLine, { backgroundColor: mem.type === 'premières-fois' ? '#F59E0B' : '#EC4899' }]} />
+                    <View style={[styles.memoryLine, { backgroundColor: mem.type === 'premières-fois' ? colors.warning : colors.accentPink }]} />
                   </View>
                   <View style={[styles.memoryRight, { backgroundColor: colors.card }]}>
                     <View style={styles.memoryHeader}>
@@ -369,11 +369,11 @@ export default function PhotosScreen() {
                       <View style={styles.memoryHeaderRight}>
                         <View style={[
                           styles.memoryBadge,
-                          { backgroundColor: mem.type === 'premières-fois' ? '#FEF3C7' : '#FCE7F3' },
+                          { backgroundColor: mem.type === 'premières-fois' ? colors.warningBg : colors.accentPinkBg },
                         ]}>
                           <Text style={[
                             styles.memoryBadgeText,
-                            { color: mem.type === 'premières-fois' ? '#92400E' : '#9D174D' },
+                            { color: mem.type === 'premières-fois' ? colors.warningText : colors.accentPinkText },
                           ]}>
                             {TYPE_LABEL[mem.type]}
                           </Text>

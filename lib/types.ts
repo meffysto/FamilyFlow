@@ -353,6 +353,18 @@ export interface WishlistItem {
   lineIndex: number;
 }
 
+// ─── Anniversaires ──────────────────────────────────────────────────────────
+
+export interface Anniversary {
+  name: string;           // Nom de la personne
+  date: string;           // MM-DD (jour et mois, sans année)
+  birthYear?: number;     // Année de naissance (optionnel)
+  contactId?: string;     // ID contact iOS (pour déduplication import)
+  category?: string;      // famille, ami, collègue, etc.
+  notes?: string;         // Notes optionnelles
+  sourceFile: string;     // Chemin fichier vault
+}
+
 export type NotifEvent =
   | 'task_completed'
   | 'loot_box_opened'

@@ -686,12 +686,12 @@ export default function MealsScreen() {
             </Text>
             {t === 'courses' && courses.filter((c) => !c.completed).length > 0 && (
               <View style={[styles.tabBadge, { backgroundColor: primary }]}>
-                <Text style={styles.tabBadgeText}>{courses.filter((c) => !c.completed).length}</Text>
+                <Text style={[styles.tabBadgeText, { color: colors.onPrimary }]}>{courses.filter((c) => !c.completed).length}</Text>
               </View>
             )}
             {t === 'recettes' && recipes.length > 0 && (
               <View style={[styles.tabBadge, { backgroundColor: primary }]}>
-                <Text style={styles.tabBadgeText}>{recipes.length}</Text>
+                <Text style={[styles.tabBadgeText, { color: colors.onPrimary }]}>{recipes.length}</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -768,7 +768,7 @@ export default function MealsScreen() {
                           </Text>
                           <View style={styles.mealInfo}>
                             <Text style={[styles.mealType, { color: colors.textMuted }]}>{meal.mealType}</Text>
-                            <Text style={[styles.mealText, { color: colors.text }, !meal.text && styles.mealTextEmpty]} numberOfLines={1}>
+                            <Text style={[styles.mealText, { color: colors.text }, !meal.text && [styles.mealTextEmpty, { color: colors.textFaint }]]} numberOfLines={1}>
                               {meal.text || 'Pas encore planifié'}
                             </Text>
                             {linkedRecipe && (
@@ -851,7 +851,7 @@ export default function MealsScreen() {
                             { borderColor: colors.border },
                             item.completed && { backgroundColor: primary, borderColor: primary },
                           ]}>
-                            {item.completed && <Text style={styles.checkboxCheck}>✓</Text>}
+                            {item.completed && <Text style={[styles.checkboxCheck, { color: colors.onPrimary }]}>✓</Text>}
                           </View>
                         </TouchableOpacity>
                         <Text
@@ -916,7 +916,7 @@ export default function MealsScreen() {
                 disabled={!newItemText.trim()}
                 activeOpacity={0.7}
               >
-                <Text style={styles.addBtnText}>+</Text>
+                <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>
               </TouchableOpacity>
             </View>
           </KeyboardAvoidingView>
@@ -940,7 +940,7 @@ export default function MealsScreen() {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              style={[styles.categoryScroll, { backgroundColor: colors.card }]}
+              style={[styles.categoryScroll, { backgroundColor: colors.card, borderBottomColor: colors.border }]}
               contentContainerStyle={styles.categoryScrollContent}
             >
               <TouchableOpacity
@@ -1152,7 +1152,7 @@ export default function MealsScreen() {
                 style={[styles.modalSave, { backgroundColor: primary }]}
                 onPress={saveEdit}
               >
-                <Text style={styles.modalSaveText}>Valider</Text>
+                <Text style={[styles.modalSaveText, { color: colors.onPrimary }]}>Valider</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1321,7 +1321,7 @@ export default function MealsScreen() {
                 disabled={importLoading || !importUrl.trim()}
                 activeOpacity={0.7}
               >
-                <Text style={styles.importFetchBtnText}>
+                <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>
                   {importLoading ? `⏳ ${importStatus || 'Chargement…'}` : '🔍 Extraire la recette'}
                 </Text>
               </TouchableOpacity>
@@ -1334,7 +1334,7 @@ export default function MealsScreen() {
                   {importResult.type === 'cook' ? importResult.data.title : importResult.data.title}
                 </Text>
                 {importResult.type === 'cook' ? (
-                  <Text style={[styles.importPreviewMeta, { color: '#22C55E' }]}>
+                  <Text style={[styles.importPreviewMeta, { color: colors.success }]}>
                     Fichier .cook prêt (via cook.md)
                   </Text>
                 ) : (
@@ -1365,11 +1365,11 @@ export default function MealsScreen() {
                 </View>
 
                 <TouchableOpacity
-                  style={[styles.importFetchBtn, { backgroundColor: '#22C55E', marginTop: 12 }]}
+                  style={[styles.importFetchBtn, { backgroundColor: colors.success, marginTop: 12 }]}
                   onPress={handleImportSave}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.importFetchBtnText}>✅ Sauvegarder dans le vault</Text>
+                  <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>✅ Sauvegarder dans le vault</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -1404,7 +1404,7 @@ export default function MealsScreen() {
               disabled={scanLoading}
               activeOpacity={0.7}
             >
-              <Text style={styles.importFetchBtnText}>
+              <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>
                 {scanLoading ? '⏳ Scan en cours…' : '🔍 Lancer le scan'}
               </Text>
             </TouchableOpacity>
@@ -1438,11 +1438,11 @@ export default function MealsScreen() {
                       📁 {item.path}
                     </Text>
                     <TouchableOpacity
-                      style={[styles.importFetchBtn, { backgroundColor: '#22C55E', marginTop: 8 }]}
+                      style={[styles.importFetchBtn, { backgroundColor: colors.success, marginTop: 8 }]}
                       onPress={() => handleMoveCook(item.path, item.title)}
                       activeOpacity={0.7}
                     >
-                      <Text style={styles.importFetchBtnText}>📂 Déplacer dans Recettes</Text>
+                      <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>📂 Déplacer dans Recettes</Text>
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -1498,7 +1498,7 @@ export default function MealsScreen() {
                   disabled={!textImportValue.trim() || importLoading}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.importFetchBtnText}>
+                  <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>
                     {importLoading ? '⏳ Analyse en cours…' : aiConfigured ? '🤖 Convertir avec l\'IA' : '🔍 Analyser le texte'}
                   </Text>
                 </TouchableOpacity>
@@ -1510,7 +1510,7 @@ export default function MealsScreen() {
                   <Text style={[styles.importPreviewTitle, { color: colors.text }]}>
                     {textImportResult.data.title}
                   </Text>
-                  <Text style={[styles.importPreviewMeta, { color: '#22C55E' }]}>
+                  <Text style={[styles.importPreviewMeta, { color: colors.success }]}>
                     Fichier .cook prêt (via IA)
                   </Text>
 
@@ -1532,11 +1532,11 @@ export default function MealsScreen() {
                   </View>
 
                   <TouchableOpacity
-                    style={[styles.importFetchBtn, { backgroundColor: '#22C55E', marginTop: 12 }]}
+                    style={[styles.importFetchBtn, { backgroundColor: colors.success, marginTop: 12 }]}
                     onPress={handleTextImportSave}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.importFetchBtnText}>Sauvegarder dans le vault</Text>
+                    <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>Sauvegarder dans le vault</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -1588,11 +1588,11 @@ export default function MealsScreen() {
                   </View>
 
                   <TouchableOpacity
-                    style={[styles.importFetchBtn, { backgroundColor: '#22C55E', marginTop: 12 }]}
+                    style={[styles.importFetchBtn, { backgroundColor: colors.success, marginTop: 12 }]}
                     onPress={handleTextImportSave}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.importFetchBtnText}>Sauvegarder dans le vault</Text>
+                    <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>Sauvegarder dans le vault</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -1642,7 +1642,7 @@ export default function MealsScreen() {
                   disabled={!exploreQuery.trim() || exploreLoading}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.addBtnText}>{exploreLoading ? '⏳' : '🔍'}</Text>
+                  <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>{exploreLoading ? '⏳' : '🔍'}</Text>
                 </TouchableOpacity>
               </View>
               <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 6 }}>
@@ -1661,7 +1661,7 @@ export default function MealsScreen() {
                   <Text style={[styles.importPreviewTitle, { color: colors.text }]}>
                     {explorePreview.title}
                   </Text>
-                  <Text style={[styles.importPreviewMeta, { color: '#22C55E' }]}>
+                  <Text style={[styles.importPreviewMeta, { color: colors.success }]}>
                     Fichier .cook prêt
                   </Text>
 
@@ -1685,11 +1685,11 @@ export default function MealsScreen() {
                   </View>
 
                   <TouchableOpacity
-                    style={[styles.importFetchBtn, { backgroundColor: '#22C55E', marginTop: 12 }]}
+                    style={[styles.importFetchBtn, { backgroundColor: colors.success, marginTop: 12 }]}
                     onPress={handleExploreSave}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.importFetchBtnText}>✅ Importer dans le vault</Text>
+                    <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>✅ Importer dans le vault</Text>
                   </TouchableOpacity>
                 </View>
               </ScrollView>

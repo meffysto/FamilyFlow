@@ -66,6 +66,7 @@ import {
   DashboardDefis,
   DashboardGratitude,
   DashboardWishlist,
+  DashboardAnniversaires,
 } from '../../components/dashboard';
 
 const PREFS_KEY = 'dashboard_prefs_v1';
@@ -90,6 +91,7 @@ const ALL_SECTIONS: SectionPref[] = [
   { id: 'defis',      label: 'Défis familiaux',         emoji: '🏅', visible: true,  priority: 'medium' },
   { id: 'gratitude',  label: 'Gratitude',               emoji: '🙏', visible: true,  priority: 'medium' },
   { id: 'wishlist',   label: 'Souhaits',                emoji: '🎁', visible: true,  priority: 'medium' },
+  { id: 'anniversaires', label: 'Anniversaires',         emoji: '🎂', visible: true,  priority: 'medium' },
   { id: 'stock',      label: 'Stock & Fournitures',      emoji: '📦', visible: true,  priority: 'low' },
   { id: 'quicknotifs',label: 'Notifications rapides',   emoji: '📤', visible: true,  priority: 'low' },
   { id: 'recipes',    label: 'Idée recette',             emoji: '📖', visible: true,  priority: 'low' },
@@ -161,6 +163,8 @@ export default function DashboardScreen() {
     defis,
     gratitudeDays,
     wishlistItems,
+    anniversaries,
+    setActiveProfile,
   } = useVault();
 
   // Active rewards (filtered for non-expired)
@@ -177,6 +181,7 @@ export default function DashboardScreen() {
   const [dashboardRecipe, setDashboardRecipe] = useState<AppRecipe | null>(null);
   const [smartSort, setSmartSort] = useState(false);
   const [searchVisible, setSearchVisible] = useState(false);
+  const [profilePickerVisible, setProfilePickerVisible] = useState(false);
 
   // Fichiers vault qui existent réellement (pour distinguer "fichier absent" de "données vides")
   const [vaultFileExists, setVaultFileExists] = useState<Record<string, boolean>>({});
@@ -392,11 +397,11 @@ export default function DashboardScreen() {
       tasks, menageTasks, courses, stock, meals, rdvs,
       profiles, activeProfile, defis, gratitudeDays,
       memories, vacationConfig, isVacationActive,
-      gamiData, photoDates,
+      gamiData, photoDates, anniversaries,
     };
     return generateInsights(input);
   }, [tasks, menageTasks, courses, stock, meals, rdvs, profiles, activeProfile,
-    defis, gratitudeDays, memories, vacationConfig, isVacationActive, gamiData, photoDates]);
+    defis, gratitudeDays, memories, vacationConfig, isVacationActive, gamiData, photoDates, anniversaries]);
 
   // Tri intelligent
   const sortedSections = useMemo(() => {
@@ -419,6 +424,19 @@ export default function DashboardScreen() {
     const todayGrat = gratitudeDays.find((d) => d.date === todayStr);
     if (todayGrat && todayGrat.entries.length > 0) activeSections.add('gratitude');
     if (wishlistItems.length > 0) activeSections.add('wishlist');
+    // Anniversaires : vérifier s'il y en a dans les 7 prochains jours
+    if (anniversaries && anniversaries.length > 0) {
+      const now = new Date();
+      const hasUpcoming = anniversaries.some((a) => {
+        const [mm, dd] = a.date.split('-').map(Number);
+        if (!mm || !dd) return false;
+        const thisYear = new Date(now.getFullYear(), mm - 1, dd);
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const diff = Math.round((thisYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        return diff >= 0 && diff <= 7;
+      });
+      if (hasUpcoming) activeSections.add('anniversaires');
+    }
     return smartSortSections(sectionPrefs, {
       hour: new Date().getHours(),
       hasBaby,
@@ -430,7 +448,7 @@ export default function DashboardScreen() {
     pendingMenage.length, todayMeals.length, topCourses.length, upcomingRdvs.length,
     enfants.length, stock.length, activeRewards.length, leaderboard.length,
     weeklyStatsData.total, activeProfile, recipes.length, customNotifs.length,
-    defis, gratitudeDays, todayStr, wishlistItems]);
+    defis, gratitudeDays, todayStr, wishlistItems, anniversaries]);
 
   // Props partagées pour toutes les sections
   const sectionProps = useMemo(() => ({
@@ -478,6 +496,7 @@ export default function DashboardScreen() {
       case 'defis':        return <DashboardDefis key={id} {...sectionProps} />;
       case 'gratitude':    return <DashboardGratitude key={id} {...sectionProps} />;
       case 'wishlist':     return <DashboardWishlist key={id} {...sectionProps} />;
+      case 'anniversaires': return <DashboardAnniversaires key={id} {...sectionProps} />;
       default:             return null;
     }
   };
@@ -487,22 +506,33 @@ export default function DashboardScreen() {
       {/* Header */}
       <View ref={headerRef} style={[styles.header, { backgroundColor: colors.bg, borderBottomColor: colors.separator }]}>
         <View style={styles.headerLeft}>
-          <Text style={[
-            isChildMode ? styles.greetingChild : styles.greeting,
-            { color: colors.textSub },
-          ]}>
-            {isChildMode
-              ? `Salut ${activeProfile?.name ?? ''} ! 🌟`
-              : (() => {
-                  const h = new Date().getHours();
-                  const name = activeProfile?.name ?? '';
-                  if (h < 6) return `Bonne nuit${name ? ` ${name}` : ''} 🌙`;
-                  if (h < 12) return `Bon matin${name ? ` ${name}` : ''} ☀️`;
-                  if (h < 18) return `Bon après-midi${name ? ` ${name}` : ''} 🌤️`;
-                  return `Bonsoir${name ? ` ${name}` : ''} 🌙`;
-                })()}
-          </Text>
-          <Text style={[styles.dateText, { color: colors.text }]}>{today}</Text>
+          <TouchableOpacity
+            onPress={() => setProfilePickerVisible(true)}
+            style={[styles.avatarBtn, { backgroundColor: tint }]}
+            activeOpacity={0.7}
+            accessibilityLabel={`Profil actif : ${activeProfile?.name ?? 'aucun'}. Appuyer pour changer.`}
+            accessibilityRole="button"
+          >
+            <Text style={styles.avatarEmoji}>{activeProfile?.avatar ?? '👤'}</Text>
+          </TouchableOpacity>
+          <View style={styles.headerGreeting}>
+            <Text style={[
+              isChildMode ? styles.greetingChild : styles.greeting,
+              { color: colors.textSub },
+            ]}>
+              {isChildMode
+                ? `Salut ${activeProfile?.name ?? ''} ! 🌟`
+                : (() => {
+                    const h = new Date().getHours();
+                    const name = activeProfile?.name ?? '';
+                    if (h < 6) return `Bonne nuit${name ? ` ${name}` : ''} 🌙`;
+                    if (h < 12) return `Bon matin${name ? ` ${name}` : ''} ☀️`;
+                    if (h < 18) return `Bon après-midi${name ? ` ${name}` : ''} 🌤️`;
+                    return `Bonsoir${name ? ` ${name}` : ''} 🌙`;
+                  })()}
+            </Text>
+            <Text style={[styles.dateText, { color: colors.text }]}>{today}</Text>
+          </View>
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity
@@ -706,6 +736,45 @@ export default function DashboardScreen() {
       {/* Recherche globale */}
       <GlobalSearch visible={searchVisible} onClose={() => setSearchVisible(false)} />
 
+      {/* Profile picker rapide */}
+      <Modal
+        visible={profilePickerVisible}
+        animationType="fade"
+        transparent
+        statusBarTranslucent
+        onRequestClose={() => setProfilePickerVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.pickerOverlay}
+          activeOpacity={1}
+          onPress={() => setProfilePickerVisible(false)}
+        >
+          <View style={[styles.pickerCard, { backgroundColor: colors.card }]}>
+            <Text style={[styles.pickerTitle, { color: colors.text }]}>Changer de profil</Text>
+            <View style={styles.pickerGrid}>
+              {profiles.map((p) => (
+                <TouchableOpacity
+                  key={p.id}
+                  style={[
+                    styles.pickerItem,
+                    { backgroundColor: colors.cardAlt },
+                    p.id === activeProfile?.id && { borderColor: primary, borderWidth: 2 },
+                  ]}
+                  onPress={() => {
+                    setActiveProfile(p.id);
+                    setProfilePickerVisible(false);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.pickerAvatar}>{p.avatar}</Text>
+                  <Text style={[styles.pickerName, { color: colors.text }]} numberOfLines={1}>{p.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
       {/* Coach marks */}
       <ScreenGuide
         screenId="dashboard"
@@ -731,6 +800,22 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   headerLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  avatarBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarEmoji: {
+    fontSize: 24,
+  },
+  headerGreeting: {
     flex: 1,
   },
   greeting: {
@@ -834,6 +919,47 @@ const styles = StyleSheet.create({
   },
   ageUpgradeDismissText: {
     fontSize: 14,
+    fontWeight: '600',
+  },
+  // Profile picker
+  pickerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  pickerCard: {
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    maxWidth: 340,
+  },
+  pickerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  pickerGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    justifyContent: 'center',
+  },
+  pickerItem: {
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    minWidth: 80,
+    gap: 4,
+  },
+  pickerAvatar: {
+    fontSize: 28,
+  },
+  pickerName: {
+    fontSize: 13,
     fontWeight: '600',
   },
 });

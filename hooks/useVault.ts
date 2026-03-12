@@ -52,9 +52,12 @@ import {
   WISHLIST_FILE,
   parseWishlist,
   serializeWishlist,
+  ANNIVERSAIRES_FILE,
+  parseAnniversaries,
+  serializeAnniversaries,
 } from '../lib/parser';
 import { processActiveRewards } from '../lib/gamification';
-import { Task, RDV, CourseItem, MealItem, StockItem, Profile, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, DefiDayEntry, GratitudeDay, WishlistItem, WishBudget, WishOccasion } from '../lib/types';
+import { Task, RDV, CourseItem, MealItem, StockItem, Profile, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, DefiDayEntry, GratitudeDay, WishlistItem, WishBudget, WishOccasion, Anniversary } from '../lib/types';
 import {
   parseBudgetConfig,
   parseBudgetMonth,
@@ -186,6 +189,11 @@ export interface VaultState {
   toggleWishBought: (item: WishlistItem, boughtBy: string) => Promise<void>;
   /** Stats journal bébé des 7 derniers jours (pour contexte IA) */
   journalStats: JournalSummaryEntry[];
+  anniversaries: Anniversary[];
+  addAnniversary: (anniversary: Omit<Anniversary, 'sourceFile'>) => Promise<void>;
+  updateAnniversary: (oldName: string, anniversary: Omit<Anniversary, 'sourceFile'>) => Promise<void>;
+  removeAnniversary: (name: string) => Promise<void>;
+  importAnniversaries: (anniversaries: Omit<Anniversary, 'sourceFile'>[]) => Promise<void>;
 }
 
 // Static task files (non-enfant)
@@ -334,6 +342,7 @@ export function useVaultInternal(): VaultState {
   const [defis, setDefis] = useState<Defi[]>([]);
   const [gratitudeDays, setGratitudeDays] = useState<GratitudeDay[]>([]);
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
+  const [anniversaries, setAnniversaries] = useState<Anniversary[]>([]);
   const vaultRef = useRef<VaultManager | null>(null);
   const busyRef = useRef(false); // Guard against AppState race condition
 
@@ -624,7 +633,10 @@ export function useVaultInternal(): VaultState {
         // [13] Wishlist
         vault.readFile(WISHLIST_FILE).then((c) => parseWishlist(c)).catch(() => [] as any[]),
 
-        // [14] Notification preferences
+        // [14] Anniversaires
+        vault.readFile(ANNIVERSAIRES_FILE).then((c) => parseAnniversaries(c)).catch(() => [] as Anniversary[]),
+
+        // [15] Notification preferences
         (async () => {
           if (await vault.exists(NOTIF_FILE)) {
             const notifContent = await vault.readFile(NOTIF_FILE);
@@ -633,7 +645,7 @@ export function useVaultInternal(): VaultState {
           return getDefaultNotificationPrefs();
         })().catch(() => getDefaultNotificationPrefs()),
 
-        // [15] Vacation mode
+        // [16] Vacation mode
         (async () => {
           const vacRaw = await SecureStore.getItemAsync(VACATION_STORE_KEY);
           let config: VacationConfig | null = null;
@@ -687,8 +699,9 @@ export function useVaultInternal(): VaultState {
       setDefis(val(results[11], []));
       setGratitudeDays(val(results[12], []));
       setWishlistItems(val(results[13], []));
-      setNotifPrefs(val(results[14], getDefaultNotificationPrefs()));
-      const vacResult = val(results[15], { config: null as VacationConfig | null, vacTasks: [] as Task[] });
+      setAnniversaries(val(results[14], []));
+      setNotifPrefs(val(results[15], getDefaultNotificationPrefs()));
+      const vacResult = val(results[16], { config: null as VacationConfig | null, vacTasks: [] as Task[] });
       setVacationConfig(vacResult.config);
       setVacationTasks(vacResult.vacTasks);
 
@@ -1921,6 +1934,66 @@ export function useVaultInternal(): VaultState {
     setWishlistItems(parseWishlist(await vaultRef.current.readFile(WISHLIST_FILE)));
   }, [reloadWishlist]);
 
+  // ─── Anniversaires CRUD ──────────────────────────────────────────────────
+
+  const reloadAnniversaries = useCallback(async (): Promise<Anniversary[]> => {
+    if (!vaultRef.current) return [];
+    try {
+      const content = await vaultRef.current.readFile(ANNIVERSAIRES_FILE);
+      return parseAnniversaries(content);
+    } catch {
+      return [];
+    }
+  }, []);
+
+  const addAnniversary = useCallback(async (anniversary: Omit<Anniversary, 'sourceFile'>) => {
+    if (!vaultRef.current) return;
+    const items = await reloadAnniversaries();
+    items.push({ ...anniversary, sourceFile: ANNIVERSAIRES_FILE });
+    await vaultRef.current.writeFile(ANNIVERSAIRES_FILE, serializeAnniversaries(items));
+    setAnniversaries(parseAnniversaries(await vaultRef.current.readFile(ANNIVERSAIRES_FILE)));
+  }, [reloadAnniversaries]);
+
+  const updateAnniversary = useCallback(async (oldName: string, anniversary: Omit<Anniversary, 'sourceFile'>) => {
+    if (!vaultRef.current) return;
+    const items = await reloadAnniversaries();
+    const idx = items.findIndex((a) => a.name === oldName);
+    if (idx === -1) return;
+    items[idx] = { ...anniversary, sourceFile: ANNIVERSAIRES_FILE };
+    await vaultRef.current.writeFile(ANNIVERSAIRES_FILE, serializeAnniversaries(items));
+    setAnniversaries(parseAnniversaries(await vaultRef.current.readFile(ANNIVERSAIRES_FILE)));
+  }, [reloadAnniversaries]);
+
+  const removeAnniversary = useCallback(async (name: string) => {
+    if (!vaultRef.current) return;
+    const items = await reloadAnniversaries();
+    const filtered = items.filter((a) => a.name !== name);
+    await vaultRef.current.writeFile(ANNIVERSAIRES_FILE, serializeAnniversaries(filtered));
+    setAnniversaries(parseAnniversaries(await vaultRef.current.readFile(ANNIVERSAIRES_FILE)));
+  }, [reloadAnniversaries]);
+
+  const importAnniversaries = useCallback(async (newItems: Omit<Anniversary, 'sourceFile'>[]) => {
+    if (!vaultRef.current) return;
+    const existing = await reloadAnniversaries();
+    // Merge : skip les doublons par contactId (si présent), sinon par nom+date
+    const existingContactIds = new Set(existing.filter((a) => a.contactId).map((a) => a.contactId));
+    const existingKeys = new Set(existing.map((a) => `${a.name}|${a.date}`));
+
+    for (const item of newItems) {
+      // Skip si contactId déjà présent
+      if (item.contactId && existingContactIds.has(item.contactId)) continue;
+      // Skip si même nom+date
+      if (existingKeys.has(`${item.name}|${item.date}`)) continue;
+
+      existing.push({ ...item, sourceFile: ANNIVERSAIRES_FILE });
+      if (item.contactId) existingContactIds.add(item.contactId);
+      existingKeys.add(`${item.name}|${item.date}`);
+    }
+
+    await vaultRef.current.writeFile(ANNIVERSAIRES_FILE, serializeAnniversaries(existing));
+    setAnniversaries(parseAnniversaries(await vaultRef.current.readFile(ANNIVERSAIRES_FILE)));
+  }, [reloadAnniversaries]);
+
   // Mémoïser la valeur du contexte pour éviter les re-renders en cascade
   const vault = vaultRef.current;
   return useMemo(() => ({
@@ -2016,13 +2089,18 @@ export function useVaultInternal(): VaultState {
     deleteWishItem,
     toggleWishBought,
     journalStats,
+    anniversaries,
+    addAnniversary,
+    updateAnniversary,
+    removeAnniversary,
+    importAnniversaries,
   }), [
     // State values (déclenchent un re-render quand ils changent)
     vaultPath, isLoading, error, tasks, menageTasks, courses, stock, meals,
     rdvs, profiles, activeProfile, gamiData, notifPrefs, vault, photoDates,
     stockSections, memories, vacationConfig, vacationTasks, isVacationActive,
     recipes, ageUpgrades, budgetEntries, budgetConfig, budgetMonth, routines,
-    healthRecords, defis, gratitudeDays, wishlistItems, journalStats,
+    healthRecords, defis, gratitudeDays, wishlistItems, journalStats, anniversaries,
     // Callbacks (stables grâce à useCallback)
     refresh, setVaultPath, setActiveProfile, saveNotifPrefs, updateMeal,
     addPhoto, getPhotoUri, updateProfileTheme, updateProfile, deleteProfile,
@@ -2038,5 +2116,6 @@ export function useVaultInternal(): VaultState {
     createDefi, checkInDefi, completeDefi, deleteDefi,
     addGratitudeEntry, deleteGratitudeEntry,
     addWishItem, updateWishItem, deleteWishItem, toggleWishBought,
+    addAnniversary, updateAnniversary, removeAnniversary, importAnniversaries,
   ]);
 }
