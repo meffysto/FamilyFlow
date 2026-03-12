@@ -44,7 +44,7 @@ import { formatDateForDisplay } from '../../lib/parser';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const CALENDAR_PADDING = 16;
 const DAY_GAP = 4;
 const CELL_SIZE = Math.floor((SCREEN_WIDTH - CALENDAR_PADDING * 2 - DAY_GAP * 6) / 7);
@@ -59,7 +59,7 @@ export default function PhotosScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedEnfantIdx, setSelectedEnfantIdx] = useState(0);
-  const [viewingPhoto, setViewingPhoto] = useState<{ uri: string; date: string } | null>(null);
+  const [viewingPhotoIndex, setViewingPhotoIndex] = useState<number>(-1);
   const [activeTab, setActiveTab] = useState<TabMode>('photos');
   const photoGridRef = useRef<View>(null);
   const [photoCacheBust, setPhotoCacheBust] = useState(0);
@@ -102,6 +102,22 @@ export default function PhotosScreen() {
     const dates = photoDates[selectedEnfant.id] ?? [];
     return new Set(dates);
   }, [photoDates, selectedEnfant]);
+
+  // Liste triée des photos du mois pour la navigation gauche/droite
+  const monthPhotos = useMemo(() => {
+    if (!selectedEnfant) return [];
+    const dates = photoDates[selectedEnfant.id] ?? [];
+    const monthStr = format(currentMonth, 'yyyy-MM');
+    return dates
+      .filter((d) => d.startsWith(monthStr))
+      .sort()
+      .map((d) => ({
+        date: d,
+        uri: `${getPhotoUri(selectedEnfant.name, d)}?v=${photoCacheBust}`,
+      }));
+  }, [photoDates, selectedEnfant, currentMonth, getPhotoUri, photoCacheBust]);
+
+  const viewingPhoto = viewingPhotoIndex >= 0 ? monthPhotos[viewingPhotoIndex] ?? null : null;
 
   const filteredMemories = useMemo(() => {
     if (!selectedEnfant) return memories;
@@ -171,8 +187,8 @@ export default function PhotosScreen() {
   const openPhoto = (date: Date) => {
     if (!selectedEnfant) return;
     const dateStr = format(date, 'yyyy-MM-dd');
-    const uri = getPhotoUri(selectedEnfant.name, dateStr);
-    if (uri) setViewingPhoto({ uri: `${uri}?v=${photoCacheBust}`, date: dateStr });
+    const idx = monthPhotos.findIndex((p) => p.date === dateStr);
+    if (idx >= 0) setViewingPhotoIndex(idx);
   };
 
   const onDayPress = (date: Date) => {
@@ -418,23 +434,47 @@ export default function PhotosScreen() {
         visible={viewingPhoto !== null}
         transparent
         animationType="fade"
-        onRequestClose={() => setViewingPhoto(null)}
+        onRequestClose={() => setViewingPhotoIndex(-1)}
       >
         <View style={styles.modalOverlay}>
-          <TouchableOpacity style={styles.modalClose} onPress={() => setViewingPhoto(null)}>
+          <TouchableOpacity style={styles.modalClose} onPress={() => setViewingPhotoIndex(-1)}>
             <Text style={styles.modalCloseText}>✕</Text>
           </TouchableOpacity>
           {viewingPhoto && (
             <>
+              {/* Flèche gauche */}
+              {viewingPhotoIndex > 0 && (
+                <TouchableOpacity
+                  style={[styles.modalArrow, styles.modalArrowLeft]}
+                  onPress={() => setViewingPhotoIndex((i) => i - 1)}
+                >
+                  <Text style={styles.modalArrowText}>‹</Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Photo plein écran */}
               <Image source={{ uri: viewingPhoto.uri }} style={styles.modalImage} resizeMode="contain" />
+
+              {/* Flèche droite */}
+              {viewingPhotoIndex < monthPhotos.length - 1 && (
+                <TouchableOpacity
+                  style={[styles.modalArrow, styles.modalArrowRight]}
+                  onPress={() => setViewingPhotoIndex((i) => i + 1)}
+                >
+                  <Text style={styles.modalArrowText}>›</Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Date + compteur */}
               <Text style={styles.modalDate}>
                 {format(new Date(viewingPhoto.date), 'EEEE d MMMM yyyy', { locale: fr })}
+                {'  '}({viewingPhotoIndex + 1}/{monthPhotos.length})
               </Text>
               <TouchableOpacity
                 style={styles.modalRetake}
                 onPress={() => {
                   const dateToRetake = new Date(viewingPhoto.date + 'T00:00:00');
-                  setViewingPhoto(null);
+                  setViewingPhotoIndex(-1);
                   setTimeout(() => pickPhoto(dateToRetake), 600);
                 }}
               >
@@ -589,7 +629,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', zIndex: 10,
   },
   modalCloseText: { fontSize: 18, color: '#FFFFFF', fontWeight: '700' },
-  modalImage: { width: SCREEN_WIDTH - 32, height: SCREEN_WIDTH - 32, borderRadius: 16 },
+  modalImage: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT * 0.65 },
+  modalArrow: {
+    position: 'absolute',
+    top: '45%',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  modalArrowLeft: { left: 12 },
+  modalArrowRight: { right: 12 },
+  modalArrowText: { fontSize: 28, color: '#FFFFFF', fontWeight: '300' },
   modalDate: { fontSize: 16, color: '#FFFFFF', fontWeight: '600', marginTop: 20, textTransform: 'capitalize' },
   modalRetake: {
     marginTop: 20, paddingHorizontal: 24, paddingVertical: 12,
