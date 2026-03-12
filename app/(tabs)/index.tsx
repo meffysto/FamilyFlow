@@ -42,7 +42,7 @@ import { generateInsights, type InsightInput } from '../../lib/insights';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { getCardTemplate } from '../../lib/card-templates';
-import { getFruitForWeek, getFruitLabel } from '../../lib/pregnancy';
+import { getFruitForWeek } from '../../lib/pregnancy';
 import type { CardTemplateContext } from '../../lib/card-templates';
 
 // Composants de section dashboard
@@ -614,7 +614,7 @@ export default function DashboardScreen() {
                 {fruitEmoji} {p.name} — {daysLeft > 0 ? `J-${daysLeft} (SA ${weeksElapsed})` : daysLeft === 0 ? "C'est pour aujourd'hui !" : `J+${Math.abs(daysLeft)}`}
               </Text>
               <Text style={[styles.ageUpgradeDesc, { color: colors.textSub }]}>
-                Terme prévu le {p.dateTerme} · Taille d'un(e) {getFruitLabel(weeksElapsed)}
+                Terme prévu le {p.dateTerme}
               </Text>
               {daysLeft <= 28 && (
                 <TouchableOpacity

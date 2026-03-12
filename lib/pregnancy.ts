@@ -45,8 +45,3 @@ export function getFruitForWeek(week: number): string {
   const idx = Math.min(Math.max(0, week), PREGNANCY_FRUITS.length - 1);
   return PREGNANCY_FRUITS[idx].emoji;
 }
-
-export function getFruitLabel(week: number): string {
-  const idx = Math.min(Math.max(0, week), PREGNANCY_FRUITS.length - 1);
-  return PREGNANCY_FRUITS[idx].label;
-}
