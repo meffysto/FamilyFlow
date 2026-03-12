@@ -10,6 +10,7 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { computeGratitudeStreak } from '../../app/(tabs)/gratitude';
+import { isBabyProfile } from '../../lib/types';
 import type { DashboardSectionProps } from './types';
 
 function DashboardGratitudeInner(_props: DashboardSectionProps) {
@@ -17,15 +18,20 @@ function DashboardGratitudeInner(_props: DashboardSectionProps) {
   const { colors } = useThemeColors();
   const { gratitudeDays, profiles } = useVault();
 
+  const gratitudeProfiles = useMemo(
+    () => profiles.filter((p) => p.statut !== 'grossesse' && !isBabyProfile(p)),
+    [profiles],
+  );
+
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const todayGrat = gratitudeDays.find((d) => d.date === todayStr);
   const todayCount = todayGrat?.entries.length ?? 0;
-  const gratitudeStreak = useMemo(() => computeGratitudeStreak(gratitudeDays, profiles.length), [gratitudeDays, profiles.length]);
+  const gratitudeStreak = useMemo(() => computeGratitudeStreak(gratitudeDays, gratitudeProfiles.length), [gratitudeDays, gratitudeProfiles.length]);
 
   return (
     <DashboardCard key="gratitude" title="Gratitude" icon="🙏" color={colors.info} onPressMore={() => router.push('/(tabs)/gratitude')}>
       <Text style={[styles.defiMeta, { color: colors.textSub }]}>
-        {todayCount}/{profiles.length} aujourd'hui
+        {todayCount}/{gratitudeProfiles.length} aujourd'hui
         {gratitudeStreak > 0 ? ` · ${gratitudeStreak}j 🔥` : ''}
       </Text>
     </DashboardCard>
