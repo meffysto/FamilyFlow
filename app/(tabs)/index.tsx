@@ -1,17 +1,11 @@
 /**
  * index.tsx — Dashboard screen
  *
- * Shows:
- * - Today's date + refresh button
- * - Today's ménage tasks (by day of week)
- * - Overdue tasks
- * - Top 5 shopping items
- * - Upcoming RDVs (7 days)
- * - Baby stock alerts
- * - Mini leaderboard
+ * Orchestrateur : header, scroll, préférences sections, modals.
+ * Chaque section est rendue par un composant dédié dans components/dashboard/.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -20,14 +14,10 @@ import {
   TouchableOpacity,
   RefreshControl,
   Alert,
-  ActionSheetIOS,
-  Platform,
   Modal,
-  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import * as SecureStore from 'expo-secure-store';
@@ -36,46 +26,47 @@ import { useGamification } from '../../hooks/useGamification';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { DashboardCard } from '../../components/DashboardCard';
-import { TaskCard } from '../../components/TaskCard';
-import { FamilyLeaderboard } from '../../components/FamilyLeaderboard';
 import { RDVEditor } from '../../components/RDVEditor';
 import RecipeViewer from '../../components/RecipeViewer';
 import type { AppRecipe } from '../../lib/cooklang';
-import { buildLeaderboard, processActiveRewards, lootProgress, calculateLevel } from '../../lib/gamification';
+import { buildLeaderboard, processActiveRewards } from '../../lib/gamification';
 import { smartSortSections } from '../../lib/smart-sort';
-import { computeGratitudeStreak } from './gratitude';
-import { LOOT_THRESHOLD, POINTS_PER_TASK } from '../../constants/rewards';
-import {
-  dispatchNotification,
-  buildManualContext,
-} from '../../lib/notifications';
 import { buildWeeklyRecapText, sendWeeklyRecap } from '../../lib/telegram';
 import { Task, RDV, isBabyProfile } from '../../lib/types';
-import { formatAmount, categoryDisplay, totalSpent, totalBudget } from '../../lib/budget';
 import { aggregateTasksByWeek, getWeekStart } from '../../lib/stats';
-import { BarChart } from '../../components/charts';
-import { formatDateForDisplay, isRdvUpcoming } from '../../lib/parser';
+import { isRdvUpcoming } from '../../lib/parser';
 import { DashboardPrefsModal, SectionPref } from '../../components/DashboardPrefsModal';
 import { GlobalSearch } from '../../components/GlobalSearch';
-import { useAI } from '../../contexts/AIContext';
 import { getTheme } from '../../constants/themes';
-import { categorizeIngredient } from '../../lib/cooklang';
 import { generateInsights, type InsightInput } from '../../lib/insights';
-import { MarkdownText } from '../../components/ui/MarkdownText';
-import { Spacing, Radius } from '../../constants/spacing';
-import { FontSize, FontWeight } from '../../constants/typography';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
-import { DashboardEmptyState } from '../../components/DashboardEmptyState';
 import { getCardTemplate } from '../../lib/card-templates';
 import type { CardTemplateContext } from '../../lib/card-templates';
 
-/** Parse "50g beurre" or "50 g de beurre" into name/qty for merge */
-function parseCourseInput(text: string): { name: string; quantity: number | null } {
-  const m = text.match(/^(\d+(?:[.,]\d+)?)\s*(?:g|kg|ml|cl|dl|l|c\.\s*à\s*[sc]\.?|tasse|pincée)?\s*(?:de\s+|d')?(.+)/i);
-  if (m) return { quantity: parseFloat(m[1].replace(',', '.')) || null, name: m[2].trim() };
-  return { name: text.trim(), quantity: null };
-}
+// Composants de section dashboard
+import {
+  DashboardInsights,
+  DashboardVacation,
+  DashboardMenage,
+  DashboardOverdue,
+  DashboardMeals,
+  DashboardPhotos,
+  DashboardCourses,
+  DashboardRdvs,
+  DashboardLoot,
+  DashboardRewards,
+  DashboardStock,
+  DashboardWeeklyStats,
+  DashboardBudget,
+  DashboardQuickNotifs,
+  DashboardRecipes,
+  DashboardNightMode,
+  DashboardLeaderboard,
+  DashboardDefis,
+  DashboardGratitude,
+  DashboardWishlist,
+} from '../../components/dashboard';
 
 const PREFS_KEY = 'dashboard_prefs_v1';
 const SMART_SORT_KEY = 'dashboard_smart_sort';
@@ -133,7 +124,6 @@ export default function DashboardScreen() {
   const router = useRouter();
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
-  const ai = useAI();
   const {
     isLoading,
     error,
@@ -150,18 +140,12 @@ export default function DashboardScreen() {
     vault,
     tasks,
     photoDates,
-    addPhoto,
     getPhotoUri,
     memories,
-    updateStockQuantity,
     toggleTask,
     addRDV,
     updateRDV,
     deleteRDV,
-    addCourseItem,
-    mergeCourseIngredients,
-    removeCourseItem,
-    clearCompletedCourses,
     refresh,
     vacationTasks,
     vacationConfig,
@@ -175,11 +159,8 @@ export default function DashboardScreen() {
     budgetEntries,
     budgetConfig,
     defis,
-    checkInDefi,
     gratitudeDays,
     wishlistItems,
-    journalStats,
-    healthRecords,
   } = useVault();
 
   // Active rewards (filtered for non-expired)
@@ -193,12 +174,9 @@ export default function DashboardScreen() {
   const [editingRDV, setEditingRDV] = useState<RDV | undefined>(undefined);
   const [sectionPrefs, setSectionPrefs] = useState<SectionPref[]>(() => getDefaultSections(activeProfile?.role));
   const [prefsModalVisible, setPrefsModalVisible] = useState(false);
-  const [newCourseText, setNewCourseText] = useState('');
   const [dashboardRecipe, setDashboardRecipe] = useState<AppRecipe | null>(null);
-  const [smartSort, setSmartSort] = useState(false); // désactivé par défaut (safe pour utilisateurs existants)
+  const [smartSort, setSmartSort] = useState(false);
   const [searchVisible, setSearchVisible] = useState(false);
-  const [aiSuggestions, setAiSuggestions] = useState<string | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
 
   // Fichiers vault qui existent réellement (pour distinguer "fichier absent" de "données vides")
   const [vaultFileExists, setVaultFileExists] = useState<Record<string, boolean>>({});
@@ -229,7 +207,6 @@ export default function DashboardScreen() {
 
   // Refs pour les coach marks
   const headerRef = useRef<View>(null);
-  const scrollContentRef = useRef<View>(null);
 
   // Load persisted section prefs on mount (filtered by profile role)
   const roleDefaults = useMemo(() => getDefaultSections(activeProfile?.role), [activeProfile?.role]);
@@ -271,11 +248,9 @@ export default function DashboardScreen() {
     await SecureStore.setItemAsync(PREFS_KEY, JSON.stringify(prefs));
     await SecureStore.setItemAsync(SMART_SORT_KEY, newSmartSort ? '1' : '0');
   }, []);
-  // showPastRdvs removed — full RDV view is now in /(tabs)/rdv
 
   const today = format(new Date(), 'EEEE dd MMMM yyyy', { locale: fr });
   const todayStr = format(new Date(), 'yyyy-MM-dd');
-  const in7Days = format(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd');
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -336,9 +311,7 @@ export default function DashboardScreen() {
   const handleTaskToggle = useCallback(
     async (task: Task, completed: boolean) => {
       try {
-        // Optimistic toggle — updates state immediately, file write in background
         await toggleTask(task, completed);
-        // Gamification (non-critical)
         if (completed && activeProfile) {
           try {
             const { lootAwarded, pointsGained } = await completeTask(activeProfile, task.text);
@@ -357,7 +330,6 @@ export default function DashboardScreen() {
         }
       } catch (e) {
         showToast(`Impossible de modifier la tâche : ${e}`, 'error');
-        // Refresh to revert optimistic update on error
         await refresh();
       }
     },
@@ -366,118 +338,25 @@ export default function DashboardScreen() {
 
   const leaderboard = buildLeaderboard(profiles);
   const hasBaby = useMemo(() => profiles.some(isBabyProfile), [profiles]);
-  const gratitudeStreak = useMemo(() => computeGratitudeStreak(gratitudeDays, profiles.length), [gratitudeDays, profiles.length]);
 
   // Custom notifications for quick-send buttons
   const customNotifs = notifPrefs.notifications.filter(
     (n) => n.isCustom && n.enabled && n.event === 'manual'
   );
 
-  const handleSendCustomNotif = useCallback(
-    async (notifId: string) => {
-      const context = buildManualContext(activeProfile);
-      const ok = await dispatchNotification(notifId, context, notifPrefs);
-      if (ok) {
-        showToast('Notification envoyée sur Telegram !');
-      } else {
-        showToast('Envoi impossible — vérifiez la configuration', 'error');
-      }
-    },
-    [activeProfile, notifPrefs]
-  );
-
-  const pickPhotoForEnfant = useCallback(
-    async (enfantName: string) => {
-      const launchPicker = async (useCamera: boolean) => {
-        try {
-          if (useCamera) {
-            const perm = await ImagePicker.requestCameraPermissionsAsync();
-            if (perm.status !== 'granted') {
-              Alert.alert(
-                'Accès refusé',
-                `L'application n'a pas accès à votre appareil photo.\n\nAllez dans Réglages > Expo Go > Appareil photo pour l'autoriser.`
-              );
-              return;
-            }
-          } else {
-            const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (perm.status !== 'granted') {
-              Alert.alert(
-                'Accès refusé',
-                `L'application n'a pas accès à vos photos.\n\nAllez dans Réglages > Expo Go > Photos pour l'autoriser.`
-              );
-              return;
-            }
-          }
-
-          const options: ImagePicker.ImagePickerOptions = {
-            mediaTypes: ['images'],
-            quality: 0.7,
-            allowsEditing: false,
-          };
-
-          const result = useCamera
-            ? await ImagePicker.launchCameraAsync(options)
-            : await ImagePicker.launchImageLibraryAsync(options);
-
-          if (result.canceled || !result.assets?.[0]?.uri) return;
-
-          await addPhoto(enfantName, todayStr, result.assets[0].uri);
-        } catch (e: any) {
-          const msg = e?.message || String(e);
-          Alert.alert('Erreur', `Impossible d'ajouter la photo pour ${enfantName}. Réessayez.`);
-        }
-      };
-
-      if (Platform.OS === 'ios') {
-        ActionSheetIOS.showActionSheetWithOptions(
-          {
-            options: ['Annuler', '📷 Appareil photo', '🖼 Galerie'],
-            cancelButtonIndex: 0,
-          },
-          (buttonIndex) => {
-            if (buttonIndex === 1) launchPicker(true);
-            if (buttonIndex === 2) launchPicker(false);
-          }
-        );
-      } else {
-        Alert.alert('Photo du jour', 'Choisir une source', [
-          { text: 'Annuler', style: 'cancel' },
-          { text: '📷 Appareil photo', onPress: () => launchPicker(true) },
-          { text: '🖼 Galerie', onPress: () => launchPicker(false) },
-        ]);
-      }
-    },
-    [addPhoto, todayStr]
-  );
-
-  // Overdue tasks
+  // Données dérivées pour le tri intelligent
+  const pendingMenage = menageTasks.filter((t) => !t.completed);
+  const todayDayName = useMemo(() => {
+    const name = format(new Date(), 'EEEE', { locale: fr });
+    return name.charAt(0).toUpperCase() + name.slice(1);
+  }, []);
+  const todayMeals = meals.filter((m) => m.day === todayDayName && m.text.length > 0);
+  const topCourses = courses.filter((c) => !c.completed).slice(-5).reverse();
+  const upcomingRdvs = rdvs.filter((r) => isRdvUpcoming(r));
+  const enfants = profiles.filter((p) => p.role === 'enfant');
   const overdueTasks = tasks.filter(
     (t) => !t.completed && t.dueDate && t.dueDate < todayStr
   );
-
-  // RDVs: upcoming (planifié + future, time-aware for today)
-  const upcomingRdvs = rdvs.filter((r) => isRdvUpcoming(r));
-  // pastRdvs/displayedRdvs removed — full RDV view is now in /(tabs)/rdv
-
-  // Top courses — derniers ajoutés en premier
-  const topCourses = courses.filter((c) => !c.completed).slice(-5).reverse();
-
-  const pendingMenage = menageTasks.filter((t) => !t.completed);
-
-  // Today's meals
-  const todayDayName = (() => {
-    const name = format(new Date(), 'EEEE', { locale: fr });
-    return name.charAt(0).toUpperCase() + name.slice(1);
-  })();
-  const todayMeals = meals.filter((m) => m.day === todayDayName && m.text.length > 0);
-
-  // Photo du jour status per enfant
-  const enfants = profiles.filter((p) => p.role === 'enfant');
-  const photoStatus = enfants.map((e) => ({
-    ...e,
-    hasPhoto: (photoDates[e.id] ?? []).includes(todayStr),
-  }));
 
   // Contexte pour les templates de cartes vides
   const cardTemplateCtx: CardTemplateContext = useMemo(() => ({
@@ -494,12 +373,11 @@ export default function DashboardScreen() {
     for (const file of files) {
       await vault.writeFile(file.path, file.content);
     }
-    // Marquer le fichier comme existant immédiatement
     setVaultFileExists(prev => ({ ...prev, [cardId]: true }));
     await refresh();
   }, [vault, cardTemplateCtx, refresh]);
 
-  // Stats semaine (mémorisé pour éviter recalcul à chaque render)
+  // Stats semaine (pour tri intelligent)
   const weeklyStatsData = useMemo(() => {
     const weekStart = getWeekStart(new Date());
     const all = [...tasks, ...menageTasks];
@@ -508,7 +386,7 @@ export default function DashboardScreen() {
     return { data, total };
   }, [tasks, menageTasks]);
 
-  // Insights locaux (analyse déterministe du vault)
+  // Insights locaux (pour tri intelligent)
   const insights = useMemo(() => {
     const input: InsightInput = {
       tasks, menageTasks, courses, stock, meals, rdvs,
@@ -554,727 +432,52 @@ export default function DashboardScreen() {
     weeklyStatsData.total, activeProfile, recipes.length, customNotifs.length,
     defis, gratitudeDays, todayStr, wishlistItems]);
 
+  // Props partagées pour toutes les sections
+  const sectionProps = useMemo(() => ({
+    isChildMode,
+    vaultFileExists,
+    activateCardTemplate,
+  }), [isChildMode, vaultFileExists, activateCardTemplate]);
+
+  const sectionPropsWithToggle = useMemo(() => ({
+    ...sectionProps,
+    handleTaskToggle,
+  }), [sectionProps, handleTaskToggle]);
+
+  // Callbacks pour les modals
+  const handleEditRDV = useCallback((rdv?: RDV) => {
+    setEditingRDV(rdv);
+    setRdvEditorVisible(true);
+  }, []);
+
+  const handleViewRecipe = useCallback((recipe: AppRecipe) => {
+    setDashboardRecipe(recipe);
+  }, []);
+
+  // Mapping section ID → composant React
   const renderSection = (id: string): React.ReactNode => {
     switch (id) {
-      case 'insights': {
-        const hasInsights = insights.length > 0;
-        const hasAI = ai.isConfigured;
-        if (!hasInsights && !hasAI) return null;
-        const topInsights = insights.slice(0, 5);
-        return (
-          <DashboardCard key="insights" title="Suggestions" icon="💡" count={hasInsights ? insights.length : undefined} color={primary} collapsible cardId="insights">
-            {topInsights.map((insight) => {
-              const priorityColor = insight.priority === 'high' ? colors.error
-                : insight.priority === 'medium' ? colors.warning
-                : colors.textMuted;
-              return (
-                <TouchableOpacity
-                  key={insight.id}
-                  style={[styles.insightRow, { borderLeftColor: priorityColor }]}
-                  activeOpacity={insight.action?.route ? 0.7 : 1}
-                  onPress={() => {
-                    if (insight.action?.type === 'navigate' && insight.action.route) {
-                      if (insight.action.params) {
-                        router.push({ pathname: insight.action.route as any, params: insight.action.params });
-                      } else {
-                        router.push(insight.action.route as any);
-                      }
-                    } else if (insight.action?.type === 'addCourse' && insight.action.payload) {
-                      const items: { text: string; section?: string }[] = insight.action.payload;
-                      (async () => {
-                        for (const item of items) {
-                          await addCourseItem(item.text, item.section);
-                        }
-                        showToast(`${items.length} article${items.length > 1 ? 's' : ''} ajouté${items.length > 1 ? 's' : ''} aux courses`);
-                      })();
-                    }
-                  }}
-                >
-                  <Text style={styles.insightIcon}>{insight.icon}</Text>
-                  <View style={styles.insightContent}>
-                    <Text style={[styles.insightTitle, { color: colors.text }]} numberOfLines={1}>{insight.title}</Text>
-                    <Text style={[styles.insightBody, { color: colors.textSub }]} numberOfLines={2}>{insight.body}</Text>
-                  </View>
-                  {insight.action && (
-                    <Text style={[styles.insightAction, { color: primary }]}>
-                      {insight.action.type === 'addCourse' ? '+' : '›'}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-            {hasAI && (
-              <>
-                {hasInsights && (
-                  <View style={[styles.aiDivider, { backgroundColor: colors.separator }]} />
-                )}
-                {aiSuggestions ? (
-                  <View style={{ gap: Spacing.md }}>
-                    <MarkdownText style={{ color: colors.text }}>{aiSuggestions}</MarkdownText>
-                    <TouchableOpacity
-                      style={[styles.aiRefreshBtn, { borderColor: primary + '40' }]}
-                      onPress={async () => {
-                        setAiLoading(true);
-                        const ctx = {
-                          tasks, menageTasks, rdvs, stock, meals, courses,
-                          memories, defis, wishlistItems, recipes, profiles, activeProfile,
-                          journalStats, healthRecords,
-                        };
-                        const resp = await ai.getSuggestions(ctx);
-                        setAiSuggestions(resp.error || resp.text);
-                        setAiLoading(false);
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[styles.aiRefreshBtnText, { color: primary }]}>
-                        {aiLoading ? '...' : '🔄 Nouvelles suggestions'}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  <TouchableOpacity
-                    style={[styles.aiRefreshBtn, { borderColor: primary + '40' }]}
-                    onPress={async () => {
-                      setAiLoading(true);
-                      const ctx = {
-                        tasks, menageTasks, rdvs, stock, meals, courses,
-                        memories, defis, wishlistItems, recipes, profiles, activeProfile,
-                        journalStats, healthRecords,
-                      };
-                      const resp = await ai.getSuggestions(ctx);
-                      setAiSuggestions(resp.error || resp.text);
-                      setAiLoading(false);
-                    }}
-                    disabled={aiLoading}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.aiRefreshBtnText, { color: primary }]}>
-                      {aiLoading ? '⏳ Analyse en cours...' : '🤖 Enrichir avec l\'IA'}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </>
-            )}
-          </DashboardCard>
-        );
-      }
-      case 'vacation': {
-        if (!isVacationActive || !vacationConfig) return null;
-        const vacCompleted = vacationTasks.filter((t) => t.completed).length;
-        const vacTotal = vacationTasks.length;
-        const vacIncomplete = vacationTasks.filter((t) => !t.completed).slice(0, 5);
-        const now = new Date();
-        const start = new Date(vacationConfig.startDate + 'T00:00:00');
-        const end = new Date(vacationConfig.endDate + 'T23:59:59');
-        let vacCountdown: string;
-        if (now < start) {
-          const days = Math.ceil((start.getTime() - now.getTime()) / 86400000);
-          vacCountdown = `Départ dans ${days} jour${days > 1 ? 's' : ''}`;
-        } else if (now <= end) {
-          const days = Math.ceil((end.getTime() - now.getTime()) / 86400000);
-          vacCountdown = days > 0 ? `Retour dans ${days} jour${days > 1 ? 's' : ''}` : 'Dernier jour !';
-        } else {
-          vacCountdown = 'Terminé';
-        }
-        const progress = vacTotal > 0 ? vacCompleted / vacTotal : 0;
-        return (
-          <DashboardCard key="vacation" title="Vacances" icon="☀️" color={colors.warning} onPressMore={() => router.push('/(tabs)/tasks')}>
-            <Text style={[styles.vacCountdown, { color: colors.warning }]}>{vacCountdown}</Text>
-            <View style={styles.vacProgressRow}>
-              <View style={[styles.vacProgressBg, { backgroundColor: colors.borderLight }]}>
-                <View style={[styles.vacProgressFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: colors.warning }]} />
-              </View>
-              <Text style={[styles.vacProgressText, { color: colors.textMuted }]}>{vacCompleted}/{vacTotal}</Text>
-            </View>
-            {vacIncomplete.map((task) => (
-              <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} />
-            ))}
-          </DashboardCard>
-        );
-      }
-      case 'menage':
-        if (!vaultFileExists.menage) return (
-          <DashboardCard key="menage" title="Ménage du jour" icon="🧹" color={colors.success}>
-            <DashboardEmptyState
-              description="Organisez le ménage par jour avec des tâches récurrentes"
-              onActivate={() => activateCardTemplate('menage')}
-              activateLabel="Importer le modèle"
-            />
-          </DashboardCard>
-        );
-        if (pendingMenage.length === 0) return (
-          <DashboardCard key="menage" title="Ménage du jour" icon="🧹" color={colors.success}>
-            <Text style={[styles.emptyHint, { color: colors.textMuted }]}>Tout est fait pour aujourd'hui ✓</Text>
-          </DashboardCard>
-        );
-        return (
-          <DashboardCard key="menage" title="Ménage du jour" icon="🧹" count={pendingMenage.length} color={colors.success} onPressMore={() => router.push('/(tabs)/tasks')}>
-            {pendingMenage.slice(0, 4).map((task) => (
-              <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} hideSection compact />
-            ))}
-          </DashboardCard>
-        );
-
-      case 'overdue':
-        if (overdueTasks.length === 0) return null;
-        return (
-          <DashboardCard key="overdue" title="En retard" icon="⚠️" count={overdueTasks.length} color={colors.error} onPressMore={() => router.push('/(tabs)/tasks')}>
-            {overdueTasks.slice(0, 3).map((task) => (
-              <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} hideSection compact />
-            ))}
-          </DashboardCard>
-        );
-
-      case 'meals':
-        if (!vaultFileExists.meals) return (
-          <DashboardCard key="meals" title="Repas du jour" icon="🍽️" color="#EC4899">
-            <DashboardEmptyState
-              description="Planifiez les repas de la semaine pour toute la famille"
-              onActivate={() => activateCardTemplate('meals')}
-              activateLabel="Importer le modèle"
-            />
-          </DashboardCard>
-        );
-        if (todayMeals.length === 0) return (
-          <DashboardCard key="meals" title="Repas du jour" icon="🍽️" color="#EC4899" onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'repas' } })}>
-            <Text style={[styles.emptyHint, { color: colors.textMuted }]}>Aucun repas planifié aujourd'hui</Text>
-          </DashboardCard>
-        );
-        return (
-          <DashboardCard key="meals" title="Repas du jour" icon="🍽️" count={todayMeals.length} color="#EC4899" onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'repas' } })}>
-            {todayMeals.map((meal) => {
-              const linkedRecipe = meal.recipeRef ? recipes.find(r => {
-                const ref = r.sourceFile.replace('03 - Cuisine/Recettes/', '').replace('.cook', '');
-                return ref === meal.recipeRef;
-              }) : undefined;
-              return (
-                <TouchableOpacity
-                  key={meal.id}
-                  style={styles.mealRow}
-                  onPress={linkedRecipe
-                    ? () => setDashboardRecipe(linkedRecipe)
-                    : () => router.push({ pathname: '/(tabs)/meals', params: { tab: 'repas' } })
-                  }
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.mealEmoji}>
-                    {meal.mealType === 'Petit-déj' ? '🥐' : meal.mealType === 'Déjeuner' ? '🍽️' : '🌙'}
-                  </Text>
-                  <View style={styles.mealInfo}>
-                    <Text style={[styles.mealType, { color: colors.textMuted }]}>{meal.mealType}</Text>
-                    <Text style={[styles.mealText, { color: colors.text }]}>{meal.text}</Text>
-                  </View>
-                  {linkedRecipe && (
-                    <Text style={{ fontSize: 14, color: primary }}>📖</Text>
-                  )}
-                </TouchableOpacity>
-              );
-            })
-            }
-          </DashboardCard>
-        );
-
-      case 'photos':
-        if (enfants.length === 0) return null;
-        return (
-          <DashboardCard key="photos" title="Photo du jour" icon="📸" color="#06B6D4" onPressMore={() => router.push('/(tabs)/photos')}>
-            {photoStatus.map((e) => (
-              <TouchableOpacity
-                key={e.id}
-                style={styles.photoStatusRow}
-                onPress={() => { if (!e.hasPhoto) { pickPhotoForEnfant(e.name); } else { router.push('/(tabs)/photos'); } }}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.photoStatusEmoji}>{e.avatar}</Text>
-                <View style={styles.photoStatusInfo}>
-                  <Text style={[styles.photoStatusName, { color: colors.text }]}>{e.name}</Text>
-                  {!e.hasPhoto && <Text style={[styles.photoStatusHint, { color: colors.textMuted }]}>Appuyer pour ajouter une photo</Text>}
-                </View>
-                <Text style={styles.photoStatusIcon}>{e.hasPhoto ? '✅' : '📷'}</Text>
-              </TouchableOpacity>
-            ))}
-          </DashboardCard>
-        );
-
-      case 'courses':
-        return (
-          <DashboardCard key="courses" title="Courses" icon="🛒" count={topCourses.length || undefined} color={colors.warning} onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'courses' } })}>
-            {topCourses.map((item) => (
-              <View key={item.id} style={styles.courseRow}>
-                <Text style={[styles.courseBullet, { color: colors.warning }]}>•</Text>
-                <Text style={[styles.courseText, { color: colors.textSub }]}>{item.text}</Text>
-                <TouchableOpacity
-                  style={[styles.courseCheckBtn, { borderColor: colors.separator, backgroundColor: colors.card }]}
-                  onPress={async () => {
-                    const itemTextLower = item.text.toLowerCase();
-                    const stockMatch = stock.find((s) => itemTextLower.includes(s.produit.toLowerCase()));
-                    const addQty = stockMatch?.qteAchat ?? 1;
-                    const prevQty = stockMatch?.quantite ?? 0;
-                    await removeCourseItem(item.lineIndex);
-                    if (stockMatch) {
-                      await updateStockQuantity(stockMatch.lineIndex, prevQty + addQty);
-                    }
-
-                    const msg = stockMatch ? `${stockMatch.produit} restocké (+${addQty})` : `${item.text} retiré`;
-                    showToast(msg, 'success', {
-                      label: 'Annuler',
-                      onPress: async () => {
-                        try {
-                          await addCourseItem(item.text, item.section);
-                          if (stockMatch) await updateStockQuantity(stockMatch.lineIndex, prevQty);
-                        } catch { /* best effort */ }
-                      },
-                    });
-                  }}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  activeOpacity={0.6}
-                >
-                  <Text style={[styles.courseCheckBtnText, { color: colors.success }]}>✓</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-            {topCourses.length === 0 && (
-              <Text style={[styles.courseEmpty, { color: colors.textFaint }]}>Liste vide — ajoutez un article ci-dessous</Text>
-            )}
-            {/* Champ d'ajout rapide */}
-            <View style={[styles.courseAddRow, { borderTopColor: colors.borderLight }]}>
-              <TextInput
-                style={[styles.courseAddInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
-                value={newCourseText}
-                onChangeText={setNewCourseText}
-                placeholder="Ajouter un article…"
-                placeholderTextColor={colors.textFaint}
-                returnKeyType="done"
-                onSubmitEditing={async () => {
-                  const text = newCourseText.trim();
-                  if (!text) return;
-                  setNewCourseText('');
-                  const parsed = parseCourseInput(text);
-                  await mergeCourseIngredients([{ text, name: parsed.name, quantity: parsed.quantity, section: categorizeIngredient(parsed.name) }]);
-                }}
-              />
-              <TouchableOpacity
-                style={[styles.courseAddBtn, { backgroundColor: colors.warning }]}
-                onPress={async () => {
-                  const text = newCourseText.trim();
-                  if (!text) return;
-                  setNewCourseText('');
-                  const parsed = parseCourseInput(text);
-                  await mergeCourseIngredients([{ text, name: parsed.name, quantity: parsed.quantity, section: categorizeIngredient(parsed.name) }]);
-                }}
-                activeOpacity={0.7}
-                disabled={!newCourseText.trim()}
-              >
-                <Text style={[styles.courseAddBtnText, { color: colors.onPrimary }]}>+</Text>
-              </TouchableOpacity>
-            </View>
-            {courses.some((c) => c.completed) && (
-              <TouchableOpacity
-                style={[styles.clearCoursesBtn, { backgroundColor: colors.errorBg }]}
-                onPress={() => {
-                  const count = courses.filter((c) => c.completed).length;
-                  Alert.alert('Vider les cochés', `Supprimer ${count} article${count > 1 ? 's' : ''} coché${count > 1 ? 's' : ''} ?`, [
-                    { text: 'Annuler', style: 'cancel' },
-                    { text: 'Supprimer', style: 'destructive', onPress: clearCompletedCourses },
-                  ]);
-                }}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.clearCoursesBtnText, { color: colors.error }]}>🗑 Vider les cochés</Text>
-              </TouchableOpacity>
-            )}
-          </DashboardCard>
-        );
-
-      case 'rdvs':
-        if (!vaultFileExists.rdvs) return (
-          <DashboardCard key="rdvs" title="Rendez-vous" icon="📅" color={colors.info}>
-            <DashboardEmptyState
-              description="Centralisez les rendez-vous médicaux et administratifs"
-              onActivate={() => activateCardTemplate('rdvs')}
-              activateLabel="Importer le modèle"
-            />
-          </DashboardCard>
-        );
-        if (upcomingRdvs.length === 0) return (
-          <DashboardCard key="rdvs" title="Rendez-vous" icon="📅" color={colors.info}>
-            <Text style={[styles.emptyHint, { color: colors.textMuted }]}>Aucun rendez-vous à venir</Text>
-            <View style={styles.cardActions}>
-              <TouchableOpacity onPress={() => router.push('/(tabs)/rdv')} activeOpacity={0.7}>
-                <Text style={[styles.seeAllText, { color: primary }]}>Voir tout →</Text>
-              </TouchableOpacity>
-            </View>
-          </DashboardCard>
-        );
-        return (
-          <DashboardCard key="rdvs" title="Rendez-vous" icon="📅" count={upcomingRdvs.length} color={colors.info}>
-            {upcomingRdvs.slice(0, 3).map((rdv) => (
-              <TouchableOpacity key={rdv.sourceFile} style={[styles.rdvRow, { borderLeftColor: colors.info }]} onPress={() => { setEditingRDV(rdv); setRdvEditorVisible(true); }} activeOpacity={0.7}>
-                <Text style={[styles.rdvDate, { color: colors.info }]}>{formatDateForDisplay(rdv.date_rdv)} {rdv.heure ? `à ${rdv.heure}` : ''}</Text>
-                <Text style={[styles.rdvTitle, { color: colors.text }]}>{rdv.type_rdv} — {rdv.enfant}</Text>
-                {rdv.médecin && <Text style={[styles.rdvMeta, { color: colors.textMuted }]}>{rdv.médecin}</Text>}
-              </TouchableOpacity>
-            ))}
-            <View style={styles.cardActions}>
-              <TouchableOpacity onPress={() => router.push('/(tabs)/rdv')} activeOpacity={0.7}>
-                <Text style={[styles.seeAllText, { color: primary }]}>Voir tout →</Text>
-              </TouchableOpacity>
-            </View>
-          </DashboardCard>
-        );
-
-      case 'lootProgress': {
-        if (!activeProfile) return null;
-        const loot = lootProgress(activeProfile);
-        const hasBoxes = (activeProfile.lootBoxesAvailable ?? 0) > 0;
-        const level = calculateLevel(activeProfile.points ?? 0);
-        return (
-          <DashboardCard key="lootProgress" title={isChildMode ? 'Tes points !' : 'Progression'} icon="🎁" color={primary}>
-            {/* Barre de progression vers prochaine loot box */}
-            <View style={styles.lootProgressRow}>
-              <Text style={[isChildMode ? styles.lootProgressLabelChild : styles.lootProgressLabel, { color: colors.text }]}>
-                {isChildMode
-                  ? `${activeProfile.avatar} Niveau ${level} !`
-                  : `Nv. ${level} — ${activeProfile.avatar} ${activeProfile.name}`}
-              </Text>
-              <Text style={[styles.lootProgressPts, { color: colors.textMuted }]}>
-                {loot.current}/{loot.threshold} pts
-              </Text>
-            </View>
-            <View style={[isChildMode ? styles.lootProgressBarChild : styles.lootProgressBar, { backgroundColor: colors.cardAlt }]}>
-              <View style={[isChildMode ? styles.lootProgressFillChild : styles.lootProgressFill, { width: `${Math.round(loot.progress * 100)}%`, backgroundColor: primary }]} />
-            </View>
-            {hasBoxes && (
-              <TouchableOpacity
-                style={[isChildMode ? styles.lootCTAChild : styles.lootCTA, { backgroundColor: tint, borderColor: primary }]}
-                onPress={() => router.push('/(tabs)/loot')}
-                activeOpacity={0.7}
-                accessibilityLabel="Ouvrir les loot boxes"
-                accessibilityRole="button"
-              >
-                <Text style={[isChildMode ? styles.lootCTATextChild : styles.lootCTAText, { color: primary }]}>
-                  {isChildMode
-                    ? `🎁 Ouvre ton cadeau ! (${activeProfile.lootBoxesAvailable})`
-                    : `🎁 Ouvre ta récompense ! (${activeProfile.lootBoxesAvailable} dispo)`}
-                </Text>
-              </TouchableOpacity>
-            )}
-            {!hasBoxes && (() => {
-              const remaining = Math.max(0, loot.threshold - loot.current);
-              const tasksLeft = Math.ceil(remaining / POINTS_PER_TASK);
-              return (
-                <Text style={[styles.lootHint, { color: colors.textFaint }]}>
-                  {isChildMode
-                    ? tasksLeft <= 3
-                      ? `Presque ! Plus que ${tasksLeft} tâche${tasksLeft > 1 ? 's' : ''} ! 🔥`
-                      : `Encore ~${tasksLeft} tâches avant ton cadeau ! 💪`
-                    : tasksLeft <= 3
-                      ? `Plus que ${tasksLeft} tâche${tasksLeft > 1 ? 's' : ''} avant la loot box ! 🔥`
-                      : `~${tasksLeft} tâches avant la prochaine loot box`}
-                </Text>
-              );
-            })()}
-          </DashboardCard>
-        );
-      }
-
-      case 'rewards':
-        if (activeRewards.length === 0) return null; // Pas de template — les récompenses viennent de la gamification
-        return (
-          <DashboardCard key="rewards" title="Récompenses actives" icon="🏆" color={colors.error}>
-            {activeRewards.map((reward) => {
-              const ownerProfile = profiles.find((p) => p.id === reward.profileId);
-              const typeColor = reward.type === 'vacation' || reward.type === 'crown' || reward.type === 'multiplier' ? colors.error : colors.warning;
-              return (
-                <View key={reward.id} style={styles.activeRewardRow}>
-                  <Text style={styles.activeRewardEmoji}>{reward.emoji}</Text>
-                  <View style={styles.activeRewardInfo}>
-                    <Text style={[styles.activeRewardLabel, { color: colors.text }]}>{ownerProfile?.avatar ?? '👤'} {ownerProfile?.name ?? reward.profileId} — {reward.label}</Text>
-                    <Text style={[styles.activeRewardMeta, { color: typeColor }]}>
-                      {reward.remainingDays !== undefined && `${reward.remainingDays}j restant${reward.remainingDays > 1 ? 's' : ''}`}
-                      {reward.remainingTasks !== undefined && `${reward.remainingTasks} tâche${reward.remainingTasks > 1 ? 's' : ''} restante${reward.remainingTasks > 1 ? 's' : ''}`}
-                      {reward.expiresAt && !reward.remainingDays && !reward.remainingTasks && `expire ${reward.expiresAt}`}
-                    </Text>
-                  </View>
-                </View>
-              );
-            })}
-          </DashboardCard>
-        );
-
-      case 'stock': {
-        const lowCount = stock.length > 0 ? stock.filter((s) => s.quantite <= s.seuil).length : 0;
-        if (!vaultFileExists.stock) return (
-          <DashboardCard key="stock" title="Stock & Fournitures" icon="📦" color={colors.success}>
-            <DashboardEmptyState
-              description="Suivez vos stocks de produits et soyez alerté quand il faut racheter"
-              onActivate={() => activateCardTemplate('stock')}
-              activateLabel="Importer le modèle"
-            />
-          </DashboardCard>
-        );
-        return (
-          <DashboardCard key="stock" title="Stock & Fournitures" icon="📦" count={lowCount > 0 ? lowCount : undefined} color={lowCount > 0 ? colors.error : colors.success} collapsible cardId="stock">
-            {stock.filter((s) => s.quantite <= s.seuil + 1).map((item) => {
-              const isLow = item.quantite <= item.seuil;
-              const statusColor = isLow ? colors.error : colors.warning;
-              return (
-                <View key={`${item.section}-${item.produit}`} style={styles.stockRow}>
-                  <Text style={styles.stockAlertIcon}>{isLow ? '🔴' : '🟡'}</Text>
-                  <View style={styles.stockInfo}>
-                    <Text style={[styles.stockName, { color: colors.text }]}>{item.produit}{item.detail ? ` (${item.detail})` : ''}</Text>
-                    <Text style={[styles.stockMeta, { color: statusColor }]}>{item.quantite} restant{item.quantite > 1 ? 's' : ''} (seuil: {item.seuil})</Text>
-                  </View>
-                  <View style={styles.stockBtnGroup}>
-                    {isLow && (
-                      <TouchableOpacity style={[styles.stockCartBtn, { backgroundColor: colors.warningBg, borderColor: colors.warning }]} onPress={async () => { const detail = item.detail && !/^\d+$/.test(item.detail.trim()) ? ` (${item.detail})` : ''; const qty = item.qteAchat ? ` x${item.qteAchat}` : ''; const n = `${item.produit}${detail}${qty}`; await addCourseItem(n, item.section ?? 'Produits bébé'); Alert.alert('Ajouté !', `${n} ajouté aux courses`); }} activeOpacity={0.6} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
-                        <Text style={styles.stockCartBtnText}>🛒</Text>
-                      </TouchableOpacity>
-                    )}
-                    <TouchableOpacity style={[styles.stockBtn, { backgroundColor: colors.cardAlt, borderColor: colors.border }, item.quantite <= 0 && styles.stockBtnDisabled]} onPress={() => updateStockQuantity(item.lineIndex, Math.max(0, item.quantite - 1))} activeOpacity={0.6} disabled={item.quantite <= 0} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
-                      <Text style={[styles.stockBtnText, { color: colors.textSub }]}>−</Text>
-                    </TouchableOpacity>
-                    <Text style={[styles.stockQty, { color: colors.text }]}>{item.quantite}</Text>
-                    <TouchableOpacity style={[styles.stockBtn, { backgroundColor: colors.cardAlt, borderColor: colors.border }]} onPress={() => updateStockQuantity(item.lineIndex, item.quantite + 1)} activeOpacity={0.6} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
-                      <Text style={[styles.stockBtnText, { color: colors.textSub }]}>+</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              );
-            })}
-            <TouchableOpacity style={styles.seeAllLink} onPress={() => router.push('/(tabs)/stock')} activeOpacity={0.7}>
-              <Text style={[styles.seeAllText, { color: primary }]}>Gérer le stock →</Text>
-            </TouchableOpacity>
-          </DashboardCard>
-        );
-      }
-
-      case 'weeklyStats': {
-        const { data: weekData, total: weekTotal } = weeklyStatsData;
-        if (weekTotal === 0) return null;
-        return (
-          <DashboardCard
-            key="weeklyStats"
-            title="Stats semaine"
-            icon="📊"
-            count={weekTotal}
-            color={primary}
-            onPressMore={() => router.push('/(tabs)/stats')}
-          >
-            <BarChart data={weekData} compact showValues={false} barColor={primary} />
-            <Text style={[styles.weekStatsSummary, { color: colors.textMuted }]}>
-              {weekTotal} tâche{weekTotal !== 1 ? 's' : ''} cette semaine
-            </Text>
-          </DashboardCard>
-        );
-      }
-
-      case 'budget': {
-        if (!vaultFileExists.budget) return (
-          <DashboardCard key="budget" title="Budget du mois" icon="💰" color={colors.success}>
-            <DashboardEmptyState
-              description="Suivez les dépenses familiales par catégorie avec des plafonds"
-              onActivate={() => activateCardTemplate('budget')}
-              activateLabel="Importer le modèle"
-            />
-          </DashboardCard>
-        );
-        const budgetSpent = totalSpent(budgetEntries);
-        const budgetTotal = totalBudget(budgetConfig);
-        // Single-pass: build spent-by-category map
-        const spentMap = new Map<string, number>();
-        for (const e of budgetEntries) {
-          spentMap.set(e.category, (spentMap.get(e.category) ?? 0) + e.amount);
-        }
-        const catStats = budgetConfig.categories
-          .map((c) => ({ ...c, spent: spentMap.get(categoryDisplay(c)) ?? 0 }));
-        const overCount = catStats.filter((c) => c.spent > c.limit).length;
-        const topCats = catStats.filter((c) => c.spent > 0).sort((a, b) => b.spent - a.spent).slice(0, 2);
-
-        return (
-          <DashboardCard
-            key="budget"
-            title="Budget du mois"
-            icon="💰"
-            count={overCount > 0 ? overCount : undefined}
-            color={overCount > 0 ? colors.error : colors.success}
-            onPressMore={() => router.push('/(tabs)/budget')}
-          >
-            <Text style={[styles.budgetTotal, { color: budgetSpent > budgetTotal ? colors.error : colors.text }]}>
-              {formatAmount(budgetSpent)} / {formatAmount(budgetTotal)}
-            </Text>
-            {topCats.map((c) => (
-              <View key={c.name} style={styles.budgetCatRow}>
-                <Text style={[styles.budgetCatName, { color: colors.textSub }]}>{c.emoji} {c.name}</Text>
-                <Text style={[styles.budgetCatAmount, { color: c.spent > c.limit ? colors.error : colors.textMuted }]}>
-                  {formatAmount(c.spent)}
-                </Text>
-              </View>
-            ))}
-          </DashboardCard>
-        );
-      }
-
-      case 'quicknotifs':
-        return (
-          <DashboardCard key="quicknotifs" title="Notifications rapides" icon="📤" color={colors.success}>
-            {!vaultFileExists.notifications ? (
-              <DashboardEmptyState
-                description="Envoyez des notifications rapides à la famille en un tap"
-                onActivate={() => activateCardTemplate('quicknotifs')}
-                activateLabel="Importer le modèle"
-              />
-            ) : (
-              <View style={styles.quickNotifGrid}>
-                {customNotifs.map((notif) => (
-                  <TouchableOpacity key={notif.id} style={[styles.quickNotifBtn, { backgroundColor: colors.successBg, borderColor: colors.success }]} onPress={() => handleSendCustomNotif(notif.id)}>
-                    <Text style={styles.quickNotifEmoji}>{notif.emoji}</Text>
-                    <Text style={[styles.quickNotifLabel, { color: colors.successText }]}>{notif.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </DashboardCard>
-        );
-
-      case 'recipes': {
-        if (recipes.length === 0) return (
-          <DashboardCard key="recipes" title="Idée recette" icon="📖" color={colors.info}>
-            <DashboardEmptyState
-              description="Ajoutez vos recettes favorites au format Cooklang"
-              onActivate={() => activateCardTemplate('recipes')}
-              activateLabel="Importer le modèle"
-            />
-          </DashboardCard>
-        );
-        // Pick a random recipe suggestion based on today's date (stable per day)
-        const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
-        const suggestedRecipe = recipes[dayOfYear % recipes.length];
-        return (
-          <DashboardCard key="recipes" title="Idée recette" icon="📖" count={recipes.length} color={colors.info} onPressMore={() => router.push('/(tabs)/meals')}>
-            <TouchableOpacity
-              style={[styles.recipeSuggestion, { backgroundColor: colors.cardAlt }]}
-              onPress={() => router.push('/(tabs)/meals')}
-              activeOpacity={0.7}
-            >
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.recipeSuggestionTitle, { color: colors.text }]} numberOfLines={1}>
-                  {suggestedRecipe.title}
-                </Text>
-                <Text style={[styles.recipeSuggestionMeta, { color: colors.textMuted }]} numberOfLines={1}>
-                  {suggestedRecipe.category}
-                  {suggestedRecipe.servings > 0 ? ` · ${suggestedRecipe.servings} pers.` : ''}
-                  {suggestedRecipe.prepTime ? ` · ${suggestedRecipe.prepTime}` : ''}
-                </Text>
-                {suggestedRecipe.ingredients.length > 0 && (
-                  <Text style={[styles.recipeSuggestionMeta, { color: colors.textMuted }]} numberOfLines={1}>
-                    🥕 {suggestedRecipe.ingredients.length} ingrédient{suggestedRecipe.ingredients.length > 1 ? 's' : ''}
-                  </Text>
-                )}
-              </View>
-              <Text style={{ fontSize: 24 }}>🎲</Text>
-            </TouchableOpacity>
-          </DashboardCard>
-        );
-      }
-
-      case 'nightMode': {
-        if (!hasBaby) return null;
-        const hour = new Date().getHours();
-        const isNightTime = hour >= 20 || hour < 8;
-        if (!isNightTime) return null;
-        return (
-          <DashboardCard key="nightMode" title="Mode nuit bébé" icon="🌙" color="#B8860B" onPressMore={() => router.push('/(tabs)/night-mode')}>
-            <TouchableOpacity
-              style={[styles.nightModeBtn, { backgroundColor: colors.cardAlt }]}
-              onPress={() => router.push('/(tabs)/night-mode')}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.nightModeBtnTitle, { color: colors.text }]}>🌙 Ouvrir le mode nuit</Text>
-              <Text style={[styles.nightModeBtnSub, { color: colors.textMuted }]}>Écran sombre pour les tétées nocturnes</Text>
-            </TouchableOpacity>
-          </DashboardCard>
-        );
-      }
-
-      case 'leaderboard':
-        if (leaderboard.length === 0) return null;
-        return (
-          <DashboardCard key="leaderboard" title="Classement" icon="🏆" color={primary} onPressMore={() => router.push('/(tabs)/loot')}>
-            <FamilyLeaderboard profiles={leaderboard} compact gamiHistory={gamiData?.history} />
-          </DashboardCard>
-        );
-
-      case 'defis': {
-        const activeDefis = defis.filter((d) => d.status === 'active');
-        if (activeDefis.length === 0) return null;
-        const mainDefi = activeDefis[0];
-        const uniqueDays = new Set(mainDefi.progress.filter((p) => p.completed).map((p) => p.date)).size;
-        const progress = mainDefi.targetDays > 0 ? uniqueDays / mainDefi.targetDays : 0;
-        const todayStr2 = new Date().toISOString().slice(0, 10);
-        const todayDone = activeProfile ? mainDefi.progress.some((p) => p.date === todayStr2 && p.profileId === activeProfile.id && p.completed) : false;
-        return (
-          <DashboardCard key="defis" title="Défis familiaux" icon="🏅" count={activeDefis.length} color="#F59E0B" onPressMore={() => router.push('/(tabs)/defis')}>
-            <View style={styles.defiRow}>
-              <Text style={styles.defiEmoji}>{mainDefi.emoji}</Text>
-              <View style={{ flex: 1, gap: 4 }}>
-                <Text style={[styles.defiTitle, { color: colors.text }]} numberOfLines={1}>{mainDefi.title}</Text>
-                <View style={[styles.defiProgressBg, { backgroundColor: colors.cardAlt }]}>
-                  <View style={[styles.defiProgressFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: '#F59E0B' }]} />
-                </View>
-                <Text style={[styles.defiMeta, { color: colors.textMuted }]}>{uniqueDays}/{mainDefi.targetDays} jours</Text>
-              </View>
-              {!todayDone && activeProfile && (
-                <TouchableOpacity
-                  style={[styles.defiCheckBtn, { backgroundColor: '#F59E0B' }]}
-                  onPress={async () => {
-                    await checkInDefi(mainDefi.id, activeProfile.id, true);
-                    showToast(`Check-in ${mainDefi.emoji} ${mainDefi.title}`);
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.defiCheckText, { color: colors.onPrimary }]}>✓</Text>
-                </TouchableOpacity>
-              )}
-              {todayDone && <Text style={{ color: colors.success, fontSize: 18 }}>✅</Text>}
-            </View>
-            {activeDefis.length > 1 && (
-              <TouchableOpacity onPress={() => router.push('/(tabs)/defis')} activeOpacity={0.7}>
-                <Text style={[styles.seeAllText, { color: primary }]}>+{activeDefis.length - 1} autre{activeDefis.length > 2 ? 's' : ''} →</Text>
-              </TouchableOpacity>
-            )}
-          </DashboardCard>
-        );
-      }
-
-      case 'gratitude': {
-        const todayGrat = gratitudeDays.find((d) => d.date === todayStr);
-        const todayCount = todayGrat?.entries.length ?? 0;
-        return (
-          <DashboardCard key="gratitude" title="Gratitude" icon="🙏" color={colors.info} onPressMore={() => router.push('/(tabs)/gratitude')}>
-            <Text style={[styles.defiMeta, { color: colors.textSub }]}>
-              {todayCount}/{profiles.length} aujourd'hui
-              {gratitudeStreak > 0 ? ` · ${gratitudeStreak}j 🔥` : ''}
-            </Text>
-          </DashboardCard>
-        );
-      }
-
-      case 'wishlist': {
-        const unbought = wishlistItems.filter((w) => !w.bought).length;
-        return (
-          <DashboardCard key="wishlist" title="Souhaits" icon="🎁" color="#E11D48" onPressMore={() => router.push('/(tabs)/wishlist' as any)}>
-            <Text style={[styles.defiMeta, { color: colors.textSub }]}>
-              {unbought} idée{unbought !== 1 ? 's' : ''} cadeau
-            </Text>
-          </DashboardCard>
-        );
-      }
-
-      // aiAssistant retiré — intégré dans insights ci-dessus
-
-      default:
-        return null;
+      case 'insights':     return <DashboardInsights key={id} {...sectionProps} />;
+      case 'vacation':     return <DashboardVacation key={id} {...sectionPropsWithToggle} />;
+      case 'menage':       return <DashboardMenage key={id} {...sectionPropsWithToggle} />;
+      case 'overdue':      return <DashboardOverdue key={id} {...sectionPropsWithToggle} />;
+      case 'meals':        return <DashboardMeals key={id} {...sectionProps} onViewRecipe={handleViewRecipe} />;
+      case 'photos':       return <DashboardPhotos key={id} {...sectionProps} />;
+      case 'courses':      return <DashboardCourses key={id} {...sectionProps} />;
+      case 'rdvs':         return <DashboardRdvs key={id} {...sectionProps} onEditRDV={handleEditRDV} />;
+      case 'lootProgress': return <DashboardLoot key={id} {...sectionProps} />;
+      case 'rewards':      return <DashboardRewards key={id} {...sectionProps} />;
+      case 'stock':        return <DashboardStock key={id} {...sectionProps} />;
+      case 'weeklyStats':  return <DashboardWeeklyStats key={id} {...sectionProps} />;
+      case 'budget':       return <DashboardBudget key={id} {...sectionProps} />;
+      case 'quicknotifs':  return <DashboardQuickNotifs key={id} {...sectionProps} />;
+      case 'recipes':      return <DashboardRecipes key={id} {...sectionProps} onViewRecipe={handleViewRecipe} />;
+      case 'nightMode':    return <DashboardNightMode key={id} {...sectionProps} />;
+      case 'leaderboard':  return <DashboardLeaderboard key={id} {...sectionProps} />;
+      case 'defis':        return <DashboardDefis key={id} {...sectionProps} />;
+      case 'gratitude':    return <DashboardGratitude key={id} {...sectionProps} />;
+      case 'wishlist':     return <DashboardWishlist key={id} {...sectionProps} />;
+      default:             return null;
     }
   };
 
@@ -1473,8 +676,6 @@ export default function DashboardScreen() {
             } else {
               await addRDV(data);
             }
-            // addRDV/updateRDV handle optimistic state update internally
-            // No extra refresh() — it would race and overwrite the optimistic update
           }}
           onDelete={
             editingRDV
@@ -1535,6 +736,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
+  greetingChild: {
+    fontSize: 20,
+    fontWeight: '800',
+  },
   dateText: {
     fontSize: 16,
     fontWeight: '700',
@@ -1568,170 +773,6 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingTop: 12,
   },
-  courseRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 4,
-    gap: 8,
-  },
-  courseBullet: {
-    fontSize: 16,
-  },
-  courseText: {
-    fontSize: 15,
-    flex: 1,
-  },
-  rdvRow: {
-    paddingVertical: 8,
-    borderLeftWidth: 3,
-    paddingLeft: 10,
-    gap: 2,
-  },
-  rdvDate: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  rdvTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  rdvMeta: {
-    fontSize: 13,
-  },
-  rdvEmpty: {
-    fontSize: 14,
-    fontStyle: 'italic',
-    paddingVertical: 8,
-  },
-  rdvAddBtn: {
-    marginTop: 8,
-    paddingVertical: 13,
-    borderRadius: 10,
-    alignItems: 'center',
-    borderWidth: 1.5,
-  },
-  rdvAddBtnText: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  stockRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 6,
-  },
-  stockAlertIcon: {
-    fontSize: 14,
-    width: 20,
-    textAlign: 'center',
-  },
-  stockInfo: {
-    flex: 1,
-    gap: 1,
-  },
-  stockName: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  stockMeta: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  stockCartBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    marginRight: 4,
-  },
-  stockCartBtnText: {
-    fontSize: 14,
-  },
-  stockBtnGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  stockBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  stockBtnDisabled: {
-    opacity: 0.3,
-  },
-  stockBtnText: {
-    fontSize: 20,
-    fontWeight: '700',
-    lineHeight: 22,
-  },
-  stockQty: {
-    fontSize: 17,
-    fontWeight: '800',
-    minWidth: 26,
-    textAlign: 'center',
-  },
-  courseCheckBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  courseCheckBtnText: {
-    fontSize: 15,
-    fontWeight: '800',
-    lineHeight: 18,
-  },
-  courseEmpty: {
-    fontSize: 13,
-    fontStyle: 'italic',
-    paddingVertical: 4,
-  },
-  courseAddRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 8,
-    borderTopWidth: 1,
-    paddingTop: 10,
-  },
-  courseAddInput: {
-    flex: 1,
-    borderWidth: 1.5,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    fontSize: 14,
-  },
-  courseAddBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  courseAddBtnText: {
-    fontSize: 22,
-    fontWeight: '700',
-    lineHeight: 26,
-  },
-  clearCoursesBtn: {
-    marginTop: 8,
-    paddingVertical: 8,
-    alignItems: 'center',
-    borderRadius: 8,
-  },
-  clearCoursesBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
   welcomeText: {
     fontSize: 16,
     lineHeight: 24,
@@ -1751,206 +792,6 @@ const styles = StyleSheet.create({
   welcomeBtnText: {
     fontSize: 15,
     fontWeight: '700',
-  },
-  lootProgressRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  lootProgressLabel: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  lootProgressPts: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  lootProgressBar: {
-    height: 10,
-    borderRadius: 5,
-    overflow: 'hidden',
-    marginBottom: 8,
-  },
-  lootProgressFill: {
-    height: '100%',
-    borderRadius: 5,
-  },
-  lootCTA: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  lootCTAText: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  // Styles enfant — plus gros, plus lisibles
-  greetingChild: {
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  lootProgressLabelChild: {
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  lootProgressBarChild: {
-    height: 16,
-    borderRadius: 8,
-    overflow: 'hidden',
-    marginBottom: 8,
-  },
-  lootProgressFillChild: {
-    height: '100%',
-    borderRadius: 8,
-  },
-  lootCTAChild: {
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 14,
-    borderWidth: 2,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  lootCTATextChild: {
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  lootHint: {
-    fontSize: 13,
-    textAlign: 'center',
-  },
-  activeRewardRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.06)',
-  },
-  activeRewardEmoji: {
-    fontSize: 28,
-  },
-  activeRewardInfo: {
-    flex: 1,
-    gap: 2,
-  },
-  activeRewardLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  activeRewardMeta: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  quickNotifGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  quickNotifBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 13,
-    borderWidth: 1,
-  },
-  quickNotifEmoji: { fontSize: 18 },
-  quickNotifLabel: { fontSize: 14, fontWeight: '600' },
-  mealRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 6,
-  },
-  mealEmoji: {
-    fontSize: 20,
-    width: 28,
-    textAlign: 'center',
-  },
-  mealInfo: {
-    flex: 1,
-    gap: 1,
-  },
-  mealType: {
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  mealText: {
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  photoStatusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 6,
-  },
-  photoStatusEmoji: {
-    fontSize: 20,
-  },
-  photoStatusInfo: {
-    flex: 1,
-    gap: 1,
-  },
-  photoStatusName: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  photoStatusHint: {
-    fontSize: 13,
-  },
-  photoStatusIcon: {
-    fontSize: 20,
-  },
-  vacCountdown: {
-    fontSize: 16,
-    fontWeight: '800',
-    marginBottom: 6,
-  },
-  vacProgressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 8,
-  },
-  vacProgressBg: {
-    flex: 1,
-    height: 8,
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  vacProgressFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  vacProgressText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  weekStatsSummary: {
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 4,
-  },
-  nightModeBtn: {
-    borderRadius: 12,
-    padding: 14,
-    alignItems: 'center' as const,
-  },
-  nightModeBtnTitle: {
-    fontSize: 15,
-    fontWeight: '600' as const,
-  },
-  nightModeBtnSub: {
-    fontSize: 13,
-    marginTop: 4,
   },
   bottomPad: {
     height: 20,
@@ -1993,141 +834,5 @@ const styles = StyleSheet.create({
   ageUpgradeDismissText: {
     fontSize: 14,
     fontWeight: '600',
-  },
-  cardActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  seeAllLink: {
-    alignSelf: 'flex-end',
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-  },
-  seeAllText: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  emptyHint: {
-    fontSize: 13,
-    textAlign: 'center',
-    fontStyle: 'italic',
-    paddingVertical: 4,
-  },
-  recipeSuggestion: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
-    gap: 12,
-  },
-  recipeSuggestionTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  recipeSuggestionMeta: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  budgetTotal: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 6,
-  },
-  budgetCatRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 2,
-  },
-  budgetCatName: {
-    fontSize: 14,
-  },
-  budgetCatAmount: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  defiRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  defiEmoji: {
-    fontSize: 28,
-  },
-  defiTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  defiProgressBg: {
-    height: 6,
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  defiProgressFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  defiMeta: {
-    fontSize: 12,
-  },
-  defiCheckBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  defiCheckText: {
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  // Insights
-  insightRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    borderLeftWidth: 3,
-    paddingLeft: 10,
-    marginBottom: 6,
-    borderRadius: 4,
-  },
-  insightIcon: {
-    fontSize: 18,
-    marginRight: 10,
-  },
-  insightContent: {
-    flex: 1,
-  },
-  insightTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  insightBody: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  insightAction: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
-  aiDivider: {
-    height: StyleSheet.hairlineWidth,
-    marginVertical: Spacing.xl,
-  },
-  aiRefreshBtn: {
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing['2xl'],
-    borderRadius: Radius.base,
-    borderWidth: 1,
-    alignItems: 'center' as const,
-    marginTop: Spacing.xs,
-  },
-  aiRefreshBtnText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
   },
 });
