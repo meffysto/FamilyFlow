@@ -34,7 +34,7 @@ export default function SettingsScreen() {
   const {
     vaultPath, profiles, activeProfile, vault, setVaultPath, setActiveProfile,
     refresh, gamiData, notifPrefs, saveNotifPrefs, updateProfileTheme,
-    updateProfile, memories, photoDates, getPhotoUri, vacationConfig,
+    updateProfile, deleteProfile, memories, photoDates, getPhotoUri, vacationConfig,
     isVacationActive, activateVacation, deactivateVacation, addChild, convertToBorn,
   } = useVault();
   const { colors } = useThemeColors();
@@ -89,7 +89,7 @@ export default function SettingsScreen() {
         <SettingsProfiles
           profiles={profiles} activeProfile={activeProfile}
           setActiveProfile={setActiveProfile} updateProfileTheme={updateProfileTheme}
-          updateProfile={updateProfile} addChild={addChild} convertToBorn={convertToBorn}
+          updateProfile={updateProfile} deleteProfile={deleteProfile} addChild={addChild} convertToBorn={convertToBorn}
         />
         <SettingsGamification vault={vault} gamiData={gamiData} refresh={refresh} />
         {!isChildMode && <SettingsAI />}

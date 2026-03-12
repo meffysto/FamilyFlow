@@ -20,6 +20,7 @@ interface SettingsProfilesProps {
   setActiveProfile: (id: string) => void;
   updateProfileTheme: (id: string, themeId: ProfileTheme) => Promise<void>;
   updateProfile: (id: string, data: any) => Promise<void>;
+  deleteProfile: (id: string) => Promise<void>;
   addChild: (data: any) => Promise<void>;
   convertToBorn: (id: string, date: string) => Promise<void>;
 }
@@ -30,6 +31,7 @@ export function SettingsProfiles({
   setActiveProfile,
   updateProfileTheme,
   updateProfile,
+  deleteProfile,
   addChild,
   convertToBorn,
 }: SettingsProfilesProps) {
@@ -300,6 +302,36 @@ export function SettingsProfiles({
                 />
               </View>
             )}
+            {/* Supprimer le profil */}
+            {editingProfile && editingProfile.id !== activeProfile?.id && (
+              <TouchableOpacity
+                style={[styles.deleteBtn, { borderColor: colors.error }]}
+                onPress={() => {
+                  Alert.alert(
+                    'Supprimer le profil',
+                    `Êtes-vous sûr de vouloir supprimer le profil de ${editingProfile.name} ? Cette action est irréversible.`,
+                    [
+                      { text: 'Annuler', style: 'cancel' },
+                      {
+                        text: 'Supprimer',
+                        style: 'destructive',
+                        onPress: async () => {
+                          try {
+                            await deleteProfile(editingProfile.id);
+                            setEditingProfile(null);
+                          } catch (e) { Alert.alert('Erreur', String(e)); }
+                        },
+                      },
+                    ],
+                  );
+                }}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`Supprimer le profil de ${editingProfile.name}`}
+              >
+                <Text style={[styles.deleteBtnText, { color: colors.error }]}>Supprimer ce profil</Text>
+              </TouchableOpacity>
+            )}
           </ScrollView>
         </SafeAreaView>
       </Modal>
@@ -446,4 +478,6 @@ const styles = StyleSheet.create({
   propreRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: Spacing.xl, paddingVertical: Spacing.md },
   propreLabel: { flex: 1, gap: 2 },
   propreHint: { fontSize: FontSize.caption },
+  deleteBtn: { borderWidth: 1.5, borderRadius: Radius.base, paddingVertical: Spacing.xl, alignItems: 'center', marginTop: Spacing['3xl'] },
+  deleteBtnText: { fontSize: FontSize.body, fontWeight: FontWeight.semibold },
 });

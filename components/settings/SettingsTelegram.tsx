@@ -112,7 +112,9 @@ export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramTok
                 3. Ouvrez cette URL dans un navigateur :{'\n'}
               </Text>
               <Text style={[styles.codeBlock, { backgroundColor: colors.text, color: colors.info }]} selectable>
-                https://api.telegram.org/bot{'<'}VOTRE_TOKEN{'>'}/getUpdates
+                {telegramToken.trim()
+                  ? `https://api.telegram.org/bot${telegramToken.trim()}/getUpdates`
+                  : 'https://api.telegram.org/bot<VOTRE_TOKEN>/getUpdates'}
               </Text>
               <Text style={[styles.setupText, { color: colors.textSub }]}>
                 {'\n'}4. Dans le JSON, cherchez <Text style={[styles.code, { color: primary, backgroundColor: colors.border }]}>"chat":{'{'}  "id": 123456789</Text>{'\n'}

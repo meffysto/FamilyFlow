@@ -113,6 +113,7 @@ export interface VaultState {
   getPhotoUri: (enfantName: string, date: string) => string | null;
   updateProfileTheme: (profileId: string, theme: ProfileTheme) => Promise<void>;
   updateProfile: (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string }) => Promise<void>;
+  deleteProfile: (profileId: string) => Promise<void>;
   updateStockQuantity: (lineIndex: number, newQuantity: number) => Promise<void>;
   addStockItem: (item: Omit<StockItem, 'lineIndex'>) => Promise<void>;
   deleteStockItem: (lineIndex: number) => Promise<void>;
@@ -921,6 +922,36 @@ export function useVaultInternal(): VaultState {
       await loadVaultData(vaultRef.current);
     } catch (e) {
       throw new Error(`updateProfile: ${e}`);
+    }
+  }, [loadVaultData]);
+
+  const deleteProfile = useCallback(async (profileId: string) => {
+    if (!vaultRef.current) return;
+    try {
+      const content = await vaultRef.current.readFile(FAMILLE_FILE);
+      const lines = content.split('\n');
+      let sectionStart = -1;
+      let sectionEnd = lines.length;
+
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].startsWith('### ')) {
+          if (sectionStart >= 0) { sectionEnd = i; break; }
+          if (lines[i].replace('### ', '').trim() === profileId) {
+            sectionStart = i;
+          }
+        }
+      }
+
+      if (sectionStart === -1) return;
+
+      // Supprimer les lignes du profil
+      lines.splice(sectionStart, sectionEnd - sectionStart);
+      // Nettoyer les lignes vides consécutives
+      const cleaned = lines.join('\n').replace(/\n{3,}/g, '\n\n');
+      await vaultRef.current.writeFile(FAMILLE_FILE, cleaned);
+      await loadVaultData(vaultRef.current);
+    } catch (e) {
+      throw new Error(`deleteProfile: ${e}`);
     }
   }, [loadVaultData]);
 
@@ -1908,6 +1939,7 @@ export function useVaultInternal(): VaultState {
     getPhotoUri,
     updateProfileTheme,
     updateProfile,
+    deleteProfile,
     updateStockQuantity,
     addStockItem,
     deleteStockItem,
