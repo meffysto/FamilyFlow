@@ -494,7 +494,7 @@ export default function MealsScreen() {
       const relPath = `03 - Cuisine/Recettes/${cat}/${fileName}.cook`;
       await vault.ensureDir(`03 - Cuisine/Recettes/${cat}`);
       await vault.writeFile(relPath, cookContent);
-      await refresh();
+      await loadRecipes(true);
 
       Alert.alert('Importée !', `« ${title} » ajoutée dans ${cat}.`);
       setShowImport(false);

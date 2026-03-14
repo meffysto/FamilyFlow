@@ -610,9 +610,12 @@ export default function DashboardScreen() {
           const fruitEmoji = getFruitForWeek(weeksElapsed);
           return (
             <View key={p.id} style={[styles.ageUpgradeBanner, { backgroundColor: colors.warningBg, borderColor: primary }]}>
-              <Text style={[styles.ageUpgradeTitle, { color: colors.text }]}>
-                {fruitEmoji} {p.name} — {daysLeft > 0 ? `J-${daysLeft} (SA ${weeksElapsed})` : daysLeft === 0 ? "C'est pour aujourd'hui !" : `J+${Math.abs(daysLeft)}`}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={[styles.ageUpgradeTitle, { color: colors.text, flex: 1 }]}>
+                  🤰 {p.name} — {daysLeft > 0 ? `J-${daysLeft} (SA ${weeksElapsed})` : daysLeft === 0 ? "C'est pour aujourd'hui !" : `J+${Math.abs(daysLeft)}`}
+                </Text>
+                <Text style={{ fontSize: 28, marginLeft: 8 }}>{fruitEmoji}</Text>
+              </View>
               <Text style={[styles.ageUpgradeDesc, { color: colors.textSub }]}>
                 Terme prévu le {p.dateTerme}
               </Text>

@@ -68,6 +68,14 @@ struct WidgetData: Codable {
     )
 }
 
+// MARK: - Deep Link URLs
+
+private enum DeepLink {
+    static let meals = URL(string: "family-vault://meals")!
+    static let tasks = URL(string: "family-vault://tasks")!
+    static let rdv = URL(string: "family-vault://rdv")!
+}
+
 // MARK: - Timeline
 
 struct MaJourneeEntry: TimelineEntry {
@@ -112,21 +120,25 @@ struct MaJourneeSmallView: View {
                 .foregroundStyle(.secondary)
                 .textCase(.uppercase)
 
-            VStack(alignment: .leading, spacing: 4) {
-                mealRow(icon: "sun.max.fill", text: data.meals?.dejeuner)
-                mealRow(icon: "moon.fill", text: data.meals?.diner)
+            Link(destination: DeepLink.meals) {
+                VStack(alignment: .leading, spacing: 4) {
+                    mealRow(icon: "sun.max.fill", text: data.meals?.dejeuner)
+                    mealRow(icon: "moon.fill", text: data.meals?.diner)
+                }
             }
 
             Spacer()
 
             if let progress = data.tasksProgress, progress.total > 0 {
-                HStack(spacing: 4) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.caption2)
-                        .foregroundStyle(.green)
-                    Text("\(progress.done)/\(progress.total) taches")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                Link(destination: DeepLink.tasks) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.caption2)
+                            .foregroundStyle(.green)
+                        Text("\(progress.done)/\(progress.total) tâches")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
         }
@@ -164,21 +176,25 @@ struct MaJourneeMediumView: View {
                     .foregroundStyle(.secondary)
                     .textCase(.uppercase)
 
-                VStack(alignment: .leading, spacing: 4) {
-                    mealRow(icon: "sun.max.fill", label: "Midi", text: data.meals?.dejeuner)
-                    mealRow(icon: "moon.fill", label: "Soir", text: data.meals?.diner)
+                Link(destination: DeepLink.meals) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        mealRow(icon: "sun.max.fill", label: "Midi", text: data.meals?.dejeuner)
+                        mealRow(icon: "moon.fill", label: "Soir", text: data.meals?.diner)
+                    }
                 }
 
                 Spacer()
 
                 if let progress = data.tasksProgress, progress.total > 0 {
-                    HStack(spacing: 4) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.caption2)
-                            .foregroundStyle(.green)
-                        Text("\(progress.done)/\(progress.total) taches")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                    Link(destination: DeepLink.tasks) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.caption2)
+                                .foregroundStyle(.green)
+                            Text("\(progress.done)/\(progress.total) tâches")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             }
@@ -191,14 +207,18 @@ struct MaJourneeMediumView: View {
                 let rdvs = data.upcomingRDVs
 
                 if !tasks.isEmpty {
-                    Label("À faire", systemImage: "checklist")
-                        .font(.caption2)
-                        .foregroundStyle(.orange)
-                    ForEach(tasks.prefix(3), id: \.self) { task in
-                        Text("• \(task)")
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .lineLimit(1)
+                    Link(destination: DeepLink.tasks) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Label("À faire", systemImage: "checklist")
+                                .font(.caption2)
+                                .foregroundStyle(.orange)
+                            ForEach(tasks.prefix(3), id: \.self) { task in
+                                Text("• \(task)")
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .lineLimit(1)
+                            }
+                        }
                     }
                 }
 
@@ -206,20 +226,24 @@ struct MaJourneeMediumView: View {
                     if !tasks.isEmpty {
                         Divider()
                     }
-                    Label("RDV", systemImage: "calendar")
-                        .font(.caption2)
-                        .foregroundStyle(.blue)
-                    ForEach(Array(rdvs.prefix(3).enumerated()), id: \.offset) { _, rdv in
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text("\(rdv.date) · \(rdv.heure) — \(rdv.title)")
-                                .font(.caption)
-                                .fontWeight(.medium)
-                                .lineLimit(1)
-                            if let lieu = rdv.lieu, !lieu.isEmpty {
-                                Text(lieu)
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
+                    Link(destination: DeepLink.rdv) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Label("RDV", systemImage: "calendar")
+                                .font(.caption2)
+                                .foregroundStyle(.blue)
+                            ForEach(Array(rdvs.prefix(3).enumerated()), id: \.offset) { _, rdv in
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text("\(rdv.date) · \(rdv.heure) — \(rdv.title)")
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                        .lineLimit(1)
+                                    if let lieu = rdv.lieu, !lieu.isEmpty {
+                                        Text(lieu)
+                                            .font(.caption2)
+                                            .foregroundStyle(.secondary)
+                                            .lineLimit(1)
+                                    }
+                                }
                             }
                         }
                     }
@@ -288,8 +312,8 @@ struct MaJourneeWidget: Widget {
                 MaJourneeEntryView(entry: entry)
             }
         }
-        .configurationDisplayName("Ma Journee")
-        .description("Repas, taches et RDV du jour")
+        .configurationDisplayName("Ma Journée")
+        .description("Repas, tâches et RDV du jour")
         .supportedFamilies([.systemSmall, .systemMedium])
     }
 }

@@ -38,10 +38,10 @@ function DashboardRecipesInner({ activateCardTemplate, onViewRecipe }: Dashboard
   const suggestedRecipe = recipes[dayOfYear % recipes.length];
 
   return (
-    <DashboardCard key="recipes" title="Idée recette" icon="📖" count={recipes.length} color={colors.info} onPressMore={() => router.push('/(tabs)/meals')}>
+    <DashboardCard key="recipes" title="Idée recette" icon="📖" count={recipes.length} color={colors.info} onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'recettes' } })}>
       <TouchableOpacity
         style={[styles.recipeSuggestion, { backgroundColor: colors.cardAlt }]}
-        onPress={() => router.push('/(tabs)/meals')}
+        onPress={() => onViewRecipe(suggestedRecipe)}
         activeOpacity={0.7}
       >
         <View style={{ flex: 1 }}>

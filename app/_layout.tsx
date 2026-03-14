@@ -7,10 +7,11 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Redirect, Stack } from 'expo-router';
+import { Redirect, Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as SecureStore from 'expo-secure-store';
+import * as Linking from 'expo-linking';
 import { VAULT_PATH_KEY } from '../contexts/VaultContext';
 import { VaultProvider } from '../contexts/VaultContext';
 import { View, Text, ActivityIndicator, StyleSheet, useColorScheme, TouchableOpacity } from 'react-native';
@@ -67,10 +68,43 @@ class AppErrorBoundary extends React.Component<
   }
 }
 
+// Deep link routing map: family-vault://xxx → route
+const DEEP_LINK_ROUTES: Record<string, { pathname: string; params?: Record<string, string> }> = {
+  meals: { pathname: '/(tabs)/meals', params: { tab: 'repas' } },
+  tasks: { pathname: '/(tabs)/tasks' },
+  rdv:   { pathname: '/(tabs)/rdv' },
+};
+
+function useWidgetDeepLink() {
+  const router = useRouter();
+
+  useEffect(() => {
+    function handleUrl(event: { url: string }) {
+      const parsed = Linking.parse(event.url);
+      const route = DEEP_LINK_ROUTES[parsed.hostname ?? ''];
+      if (route) {
+        router.push(route.params ? { pathname: route.pathname as any, params: route.params } : route.pathname as any);
+      }
+    }
+
+    // URL reçue alors que l'app était déjà ouverte
+    const sub = Linking.addEventListener('url', handleUrl);
+
+    // URL qui a lancé l'app (cold start)
+    Linking.getInitialURL().then((url) => {
+      if (url) handleUrl({ url });
+    });
+
+    return () => sub.remove();
+  }, [router]);
+}
+
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
   const [hasVault, setHasVault] = useState(false);
   const systemScheme = useColorScheme();
+
+  useWidgetDeepLink();
 
   useEffect(() => {
     // Configure notification handler at app startup

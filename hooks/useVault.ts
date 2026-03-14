@@ -145,7 +145,7 @@ export interface VaultState {
   deactivateVacation: () => Promise<void>;
   refreshGamification: () => Promise<void>;
   recipes: Recipe[];
-  loadRecipes: () => Promise<void>;
+  loadRecipes: (force?: boolean) => Promise<void>;
   addRecipe: (category: string, data: { title: string; tags?: string[]; servings?: number; prepTime?: string; cookTime?: string; ingredients: { name: string; quantity?: string; unit?: string }[]; steps: string[] }) => Promise<void>;
   deleteRecipe: (sourceFile: string) => Promise<void>;
   /** Scan tout le vault pour des .cook en dehors de 03 - Cuisine/Recettes/ */
@@ -322,6 +322,18 @@ export function useVaultInternal(): VaultState {
   const [stock, setStock] = useState<StockItem[]>([]);
   const [meals, setMeals] = useState<MealItem[]>([]);
   const [rdvs, setRdvs] = useState<RDV[]>([]);
+
+  // Refs pour le widget (accès à jour dans les useCallback sans dépendances)
+  const mealsRef = useRef(meals);
+  const menageTasksRef = useRef(menageTasks);
+  const rdvsRef = useRef(rdvs);
+  useEffect(() => { mealsRef.current = meals; }, [meals]);
+  useEffect(() => { menageTasksRef.current = menageTasks; }, [menageTasks]);
+  useEffect(() => { rdvsRef.current = rdvs; }, [rdvs]);
+
+  const triggerWidgetRefresh = useCallback(() => {
+    refreshWidget(mealsRef.current, menageTasksRef.current, rdvsRef.current);
+  }, []);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
   const [gamiData, setGamiData] = useState<GamificationData | null>(null);
@@ -785,8 +797,8 @@ export function useVaultInternal(): VaultState {
 
   // Lazy-load recettes (appelé quand on accède à l'écran recettes/meals)
   const recipesLoadedRef = useRef(false);
-  const loadRecipes = useCallback(async () => {
-    if (!vaultRef.current || recipesLoadedRef.current) return;
+  const loadRecipes = useCallback(async (force?: boolean) => {
+    if (!vaultRef.current || (!force && recipesLoadedRef.current)) return;
     recipesLoadedRef.current = true;
     try {
       const cookFiles = await vaultRef.current.listFilesRecursive(RECIPES_DIR, '.cook');
@@ -837,10 +849,11 @@ export function useVaultInternal(): VaultState {
 
       await vaultRef.current.writeFile(MEALS_FILE, lines.join('\n'));
       setMeals(parseMeals(lines.join('\n'), MEALS_FILE));
+      setTimeout(triggerWidgetRefresh, 0);
     } catch (e) {
       throw new Error(`updateMeal: ${e}`);
     }
-  }, []);
+  }, [triggerWidgetRefresh]);
 
   const addPhoto = useCallback(async (enfantName: string, date: string, imageUri: string) => {
     if (!vaultRef.current) throw new Error('Vault non initialisé');
@@ -1135,10 +1148,11 @@ export function useVaultInternal(): VaultState {
     setTasks(prev => prev.map(updateTask));
     setMenageTasks(prev => prev.map(updateTask));
     setVacationTasks(prev => prev.map(updateTask));
+    setTimeout(triggerWidgetRefresh, 0);
 
     // No background loadVaultData — optimistic state is authoritative.
     // Next foreground event will fully sync.
-  }, []);
+  }, [triggerWidgetRefresh]);
 
   const addRDV = useCallback(async (rdv: Omit<RDV, 'sourceFile' | 'title'>) => {
     if (!vaultRef.current) return;
@@ -1163,12 +1177,13 @@ export function useVaultInternal(): VaultState {
       sourceFile: relPath,
     };
     setRdvs(prev => [...prev, newRDV].sort((a, b) => a.date_rdv.localeCompare(b.date_rdv)));
+    setTimeout(triggerWidgetRefresh, 0);
 
     // Replanifier les alertes RDV (fire-and-forget)
     loadNotifConfig().then(config =>
       scheduleRDVAlerts([...rdvs, newRDV], config)
     ).catch(() => {});
-  }, [rdvs]);
+  }, [rdvs, triggerWidgetRefresh]);
 
   const updateRDV = useCallback(async (sourceFile: string, rdv: Omit<RDV, 'sourceFile' | 'title'>) => {
     if (!vaultRef.current) return;
@@ -1186,14 +1201,16 @@ export function useVaultInternal(): VaultState {
       if (r.sourceFile !== sourceFile) return r;
       return { ...rdv, title: newFileName.replace('.md', ''), sourceFile: newPath };
     }).sort((a, b) => a.date_rdv.localeCompare(b.date_rdv)));
-  }, []);
+    setTimeout(triggerWidgetRefresh, 0);
+  }, [triggerWidgetRefresh]);
 
   const deleteRDV = useCallback(async (sourceFile: string) => {
     if (!vaultRef.current) return;
     await vaultRef.current.deleteFile(sourceFile);
     // Optimistic: remove from state immediately
     setRdvs(prev => prev.filter(r => r.sourceFile !== sourceFile));
-  }, []);
+    setTimeout(triggerWidgetRefresh, 0);
+  }, [triggerWidgetRefresh]);
 
   const addTask = useCallback(async (text: string, targetFile: string, dueDate?: string, recurrence?: string) => {
     if (!vaultRef.current) return;
@@ -1401,9 +1418,10 @@ export function useVaultInternal(): VaultState {
     await vault.ensureDir(`${RECIPES_DIR}/${category}`);
     const content = generateCookFile(data);
     await vault.writeFile(relPath, content);
-    // Reload to get parsed recipe
-    await loadVaultData(vault);
-  }, [loadVaultData]);
+    // Force reload recipes
+    recipesLoadedRef.current = false;
+    await loadRecipes(true);
+  }, [loadRecipes]);
 
   const deleteRecipe = useCallback(async (sourceFile: string) => {
     if (!vaultRef.current) return;
