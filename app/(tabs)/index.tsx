@@ -416,11 +416,15 @@ export default function DashboardScreen() {
       'overdue', 'menage', 'insights',
       // Gamification — pour le calme
       'lootProgress', 'rewards', 'weeklyStats', 'leaderboard', 'defis',
-      // Budget — on a bien travaillé, pas besoin de voir les chiffres
+      // Budget — on a bien travaillé
       'budget',
+      // Notifications rapides — pas urgent
+      'quicknotifs',
+      // Stock — informatif, pas besoin ce soir
+      'stock',
     ]);
 
-    // Photos — masquer uniquement si toutes les photos du jour sont prises
+    // Photos — masquer si toutes les photos du jour sont prises
     const allPhotosTaken = enfants.length > 0 && enfants.every(
       (e) => (photoDates[e.id] ?? []).includes(todayStr)
     );
@@ -429,8 +433,55 @@ export default function DashboardScreen() {
     // Repas — masquer si les repas sont planifiés pour aujourd'hui
     if (todayMeals.length > 0) hidden.add('meals');
 
+    // Recettes — masquer si les repas sont déjà configurés
+    if (todayMeals.length > 0) hidden.add('recipes');
+
+    // Courses — masquer si la liste est vide
+    if (topCourses.length === 0) hidden.add('courses');
+
+    // RDV — masquer s'il n'y a rien aujourd'hui ni demain
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = format(tomorrow, 'yyyy-MM-dd');
+    const hasRdvTodayOrTomorrow = rdvs.some(
+      (r) => r.statut === 'planifié' && (r.date_rdv === todayStr || r.date_rdv === tomorrowStr)
+    );
+    if (!hasRdvTodayOrTomorrow) hidden.add('rdvs');
+
+    // Gratitude — masquer si toutes les gratitudes du jour sont faites
+    const gratitudeProfiles = profiles.filter(
+      (p) => p.statut !== 'grossesse' && !isBabyProfile(p)
+    );
+    const todayGrat = gratitudeDays.find((d) => d.date === todayStr);
+    const allGratitudeDone = gratitudeProfiles.length > 0
+      && (todayGrat?.entries.length ?? 0) >= gratitudeProfiles.length;
+    if (allGratitudeDone) hidden.add('gratitude');
+
+    // Anniversaires — masquer si aucun dans les 7 prochains jours (le composant retourne déjà null, mais on évite la carte vide)
+    const now = new Date();
+    const hasUpcomingAnniv = anniversaries?.some((a) => {
+      const [mm, dd] = a.date.split('-').map(Number);
+      if (!mm || !dd) return false;
+      const thisYear = new Date(now.getFullYear(), mm - 1, dd);
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const diff = Math.round((thisYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      return diff >= 0 && diff <= 7;
+    });
+    if (!hasUpcomingAnniv) hidden.add('anniversaires');
+
+    // Souhaits — masquer si aucun souhait
+    if (!wishlistItems || wishlistItems.length === 0) hidden.add('wishlist');
+
+    // Mode nuit bébé — déjà géré par le composant (return null si pas bébé ou pas nuit)
+    // mais on le masque aussi ici pour cohérence
+    const hour = new Date().getHours();
+    const isNightTime = hour >= 20 || hour < 8;
+    if (!hasBaby || !isNightTime) hidden.add('nightMode');
+
     return hidden;
-  }, [isDayComplete, enfants, photoDates, todayStr, todayMeals.length]);
+  }, [isDayComplete, enfants, photoDates, todayStr, todayMeals.length,
+    topCourses.length, rdvs, profiles, gratitudeDays, anniversaries,
+    wishlistItems, hasBaby]);
 
   // Contexte pour les templates de cartes vides
   const cardTemplateCtx: CardTemplateContext = useMemo(() => ({
