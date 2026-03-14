@@ -371,8 +371,9 @@ export default function DashboardScreen() {
     const hasPendingTasks = tasks.some(
       (t) => !t.completed && t.dueDate && t.dueDate <= todayStr
     );
+    if (isLoading) return false;
     return overdueTasks.length === 0 && pendingMenage.length === 0 && !hasPendingTasks;
-  }, [overdueTasks.length, pendingMenage.length, tasks, todayStr]);
+  }, [isLoading, overdueTasks.length, pendingMenage.length, tasks, todayStr]);
 
   // Aperçu de demain (uniquement si la journée est finie)
   const tomorrowPreview = useMemo(() => {
