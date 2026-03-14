@@ -68,6 +68,7 @@ import {
   DashboardGratitude,
   DashboardWishlist,
   DashboardAnniversaires,
+  DashboardZenState,
 } from '../../components/dashboard';
 
 const PREFS_KEY = 'dashboard_prefs_v1';
@@ -363,6 +364,72 @@ export default function DashboardScreen() {
   const overdueTasks = tasks.filter(
     (t) => !t.completed && t.dueDate && t.dueDate < todayStr
   );
+
+  // === État zen : la journée est-elle terminée ? ===
+  const isDayComplete = useMemo(() => {
+    // Pas de tâches en retard, pas de ménage en attente, pas de tâches du jour en attente
+    const hasPendingTasks = tasks.some(
+      (t) => !t.completed && t.dueDate && t.dueDate <= todayStr
+    );
+    return overdueTasks.length === 0 && pendingMenage.length === 0 && !hasPendingTasks;
+  }, [overdueTasks.length, pendingMenage.length, tasks, todayStr]);
+
+  // Aperçu de demain (uniquement si la journée est finie)
+  const tomorrowPreview = useMemo(() => {
+    if (!isDayComplete) return undefined;
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = format(tomorrow, 'yyyy-MM-dd');
+    const tomorrowDayName = (() => {
+      const name = format(tomorrow, 'EEEE', { locale: fr });
+      return name.charAt(0).toUpperCase() + name.slice(1);
+    })();
+
+    const tomorrowTasks = tasks.filter(
+      (t) => !t.completed && t.dueDate && t.dueDate === tomorrowStr
+    ).length;
+    const tomorrowMeals = meals.filter(
+      (m) => m.day === tomorrowDayName && m.text.length > 0
+    ).length;
+    const tomorrowRdvs = rdvs.filter(
+      (r) => r.statut === 'planifié' && r.date_rdv === tomorrowStr
+    );
+    const firstRdv = tomorrowRdvs.length > 0
+      ? `${tomorrowRdvs[0].type_rdv} ${tomorrowRdvs[0].enfant}${tomorrowRdvs[0].heure ? ` ${tomorrowRdvs[0].heure}` : ''}`
+      : undefined;
+
+    return {
+      tasks: tomorrowTasks,
+      rdvs: tomorrowRdvs.length,
+      meals: tomorrowMeals,
+      firstRdv,
+    };
+  }, [isDayComplete, tasks, meals, rdvs, todayStr]);
+
+  // Sections à masquer quand la journée est terminée (remplacées par l'état zen)
+  const zenHiddenSections = useMemo(() => {
+    if (!isDayComplete) return new Set<string>();
+
+    // Sections toujours masquées en mode zen
+    const hidden = new Set([
+      'overdue', 'menage', 'insights',
+      // Gamification — pour le calme
+      'lootProgress', 'rewards', 'weeklyStats', 'leaderboard', 'defis',
+      // Budget — on a bien travaillé, pas besoin de voir les chiffres
+      'budget',
+    ]);
+
+    // Photos — masquer uniquement si toutes les photos du jour sont prises
+    const allPhotosTaken = enfants.length > 0 && enfants.every(
+      (e) => (photoDates[e.id] ?? []).includes(todayStr)
+    );
+    if (allPhotosTaken) hidden.add('photos');
+
+    // Repas — masquer si les repas sont planifiés pour aujourd'hui
+    if (todayMeals.length > 0) hidden.add('meals');
+
+    return hidden;
+  }, [isDayComplete, enfants, photoDates, todayStr, todayMeals.length]);
 
   // Contexte pour les templates de cartes vides
   const cardTemplateCtx: CardTemplateContext = useMemo(() => ({
@@ -677,7 +744,18 @@ export default function DashboardScreen() {
           );
         })}
 
-        {sortedSections.map((s) => s.visible ? renderSection(s.id) : null)}
+        {isDayComplete && vaultPath && (
+          <DashboardZenState
+            isChildMode={isChildMode}
+            tomorrow={tomorrowPreview}
+          />
+        )}
+
+        {sortedSections.map((s) => {
+          if (!s.visible) return null;
+          if (isDayComplete && zenHiddenSections.has(s.id)) return null;
+          return renderSection(s.id);
+        })}
 
         <View style={styles.bottomPad} />
       </ScrollView>
