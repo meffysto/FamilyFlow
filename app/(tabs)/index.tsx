@@ -511,8 +511,7 @@ export default function DashboardScreen() {
     });
     if (!hasUpcomingAnniv) hidden.add('anniversaires');
 
-    // Souhaits — masquer si aucun souhait
-    if (!wishlistItems || wishlistItems.length === 0) hidden.add('wishlist');
+    // Souhaits — toujours visible (ne participe pas au masquage)
 
     // Mode nuit bébé — pas de bébé ou pas la nuit
     const hour = new Date().getHours();
@@ -545,11 +544,13 @@ export default function DashboardScreen() {
     activeProfile, activeRewards.length, weeklyStatsData.total,
     leaderboard.length, defis, vaultFileExists, stock.length, isVacationActive]);
 
-  // === Mode zen : TOUTES les sections visibles sont masquées ===
+  // === Mode zen : TOUTES les sections visibles sont masquées (sauf exceptions) ===
+  // Sections exclues du calcul zen — elles restent visibles mais ne bloquent pas le zen
+  const ZEN_EXCLUDED = new Set(['wishlist']);
   const isDayComplete = useMemo(() => {
     if (isLoading) return false;
     return sortedSections
-      .filter((s) => s.visible)
+      .filter((s) => s.visible && !ZEN_EXCLUDED.has(s.id))
       .every((s) => sectionHidden.has(s.id));
   }, [isLoading, sortedSections, sectionHidden]);
 
