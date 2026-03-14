@@ -472,23 +472,17 @@ export default function DashboardScreen() {
     );
     if (allPhotosTaken) hidden.add('photos');
 
-    // Repas — masquer si les repas sont planifiés pour aujourd'hui
-    if (todayMeals.length > 0) hidden.add('meals');
-
     // Recettes — masquer si les repas sont déjà configurés
     if (todayMeals.length > 0) hidden.add('recipes');
 
     // Courses — masquer si la liste est vide
     if (topCourses.length === 0) hidden.add('courses');
 
-    // RDV — masquer s'il n'y a rien aujourd'hui ni demain
-    const tomorrowDate = new Date();
-    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-    const tomorrowRdvStr = format(tomorrowDate, 'yyyy-MM-dd');
-    const hasRdvTodayOrTomorrow = rdvs.some(
-      (r) => r.statut === 'planifié' && (r.date_rdv === todayStr || r.date_rdv === tomorrowRdvStr)
+    // RDV — masquer s'il n'y a rien aujourd'hui (demain est rappelé dans l'aperçu zen)
+    const hasRdvToday = rdvs.some(
+      (r) => r.statut === 'planifié' && r.date_rdv === todayStr
     );
-    if (!hasRdvTodayOrTomorrow) hidden.add('rdvs');
+    if (!hasRdvToday) hidden.add('rdvs');
 
     // Gratitude — masquer si toutes les gratitudes du jour sont faites
     const gratitudeProfiles = profiles.filter(
@@ -526,7 +520,7 @@ export default function DashboardScreen() {
     if (!defis.some((d) => d.status === 'active')) hidden.add('defis');
 
     // Budget — masquer si pas configuré
-    if (!vaultFileExists.budget) hidden.add('budget');
+    if (!vaultFileExists.budget || budgetEntries.length === 0) hidden.add('budget');
 
     // Stock — masquer si vide
     if (stock.length === 0) hidden.add('stock');
@@ -542,17 +536,30 @@ export default function DashboardScreen() {
     enfants, photoDates, todayStr, todayMeals.length, topCourses.length,
     rdvs, profiles, gratitudeDays, anniversaries, wishlistItems, hasBaby,
     activeProfile, activeRewards.length, weeklyStatsData.total,
-    leaderboard.length, defis, vaultFileExists, stock.length, isVacationActive]);
+    leaderboard.length, defis, vaultFileExists, stock.length, isVacationActive,
+    budgetEntries.length]);
 
   // === Mode zen : TOUTES les sections visibles sont masquées (sauf exceptions) ===
   // Sections exclues du calcul zen — elles restent visibles mais ne bloquent pas le zen
-  const ZEN_EXCLUDED = new Set(['wishlist']);
+  const ZEN_EXCLUDED = new Set([
+    'wishlist', 'anniversaires', 'lootProgress', 'rewards',
+    'weeklyStats', 'leaderboard', 'defis', 'quicknotifs', 'vacation',
+    'nightMode', 'budget', 'insights', 'meals',
+  ]);
+  // Sections toujours visibles mais requises pour le zen (condition vérifiée séparément)
+  const ZEN_ALWAYS_VISIBLE_CONDITIONS = useMemo(() => ({
+    meals: todayMeals.length > 0,
+  }), [todayMeals.length]);
   const isDayComplete = useMemo(() => {
     if (isLoading) return false;
-    return sortedSections
+    // Toutes les sections masquables doivent être masquées
+    const allHiddenOk = sortedSections
       .filter((s) => s.visible && !ZEN_EXCLUDED.has(s.id))
       .every((s) => sectionHidden.has(s.id));
-  }, [isLoading, sortedSections, sectionHidden]);
+    // Les sections toujours visibles doivent remplir leur condition
+    const alwaysVisibleOk = Object.values(ZEN_ALWAYS_VISIBLE_CONDITIONS).every(Boolean);
+    return allHiddenOk && alwaysVisibleOk;
+  }, [isLoading, sortedSections, sectionHidden, ZEN_ALWAYS_VISIBLE_CONDITIONS]);
 
   // Aperçu de demain (uniquement si mode zen actif)
   const tomorrowPreview = useMemo(() => {
