@@ -365,124 +365,6 @@ export default function DashboardScreen() {
     (t) => !t.completed && t.dueDate && t.dueDate < todayStr
   );
 
-  // === État zen : la journée est-elle terminée ? ===
-  const isDayComplete = useMemo(() => {
-    // Pas de tâches en retard, pas de ménage en attente, pas de tâches du jour en attente
-    const hasPendingTasks = tasks.some(
-      (t) => !t.completed && t.dueDate && t.dueDate <= todayStr
-    );
-    if (isLoading) return false;
-    return overdueTasks.length === 0 && pendingMenage.length === 0 && !hasPendingTasks;
-  }, [isLoading, overdueTasks.length, pendingMenage.length, tasks, todayStr]);
-
-  // Aperçu de demain (uniquement si la journée est finie)
-  const tomorrowPreview = useMemo(() => {
-    if (!isDayComplete) return undefined;
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = format(tomorrow, 'yyyy-MM-dd');
-    const tomorrowDayName = (() => {
-      const name = format(tomorrow, 'EEEE', { locale: fr });
-      return name.charAt(0).toUpperCase() + name.slice(1);
-    })();
-
-    const tomorrowTasks = tasks.filter(
-      (t) => !t.completed && t.dueDate && t.dueDate === tomorrowStr
-    ).length;
-    const tomorrowMeals = meals.filter(
-      (m) => m.day === tomorrowDayName && m.text.length > 0
-    ).length;
-    const tomorrowRdvs = rdvs.filter(
-      (r) => r.statut === 'planifié' && r.date_rdv === tomorrowStr
-    );
-    const firstRdv = tomorrowRdvs.length > 0
-      ? `${tomorrowRdvs[0].type_rdv} ${tomorrowRdvs[0].enfant}${tomorrowRdvs[0].heure ? ` ${tomorrowRdvs[0].heure}` : ''}`
-      : undefined;
-
-    return {
-      tasks: tomorrowTasks,
-      rdvs: tomorrowRdvs.length,
-      meals: tomorrowMeals,
-      firstRdv,
-    };
-  }, [isDayComplete, tasks, meals, rdvs, todayStr]);
-
-  // Sections à masquer quand la journée est terminée (remplacées par l'état zen)
-  const zenHiddenSections = useMemo(() => {
-    if (!isDayComplete) return new Set<string>();
-
-    // Sections toujours masquées en mode zen
-    const hidden = new Set([
-      'overdue', 'menage', 'insights',
-      // Gamification — pour le calme
-      'lootProgress', 'rewards', 'weeklyStats', 'leaderboard', 'defis',
-      // Budget — on a bien travaillé
-      'budget',
-      // Notifications rapides — pas urgent
-      'quicknotifs',
-      // Stock — informatif, pas besoin ce soir
-      'stock',
-    ]);
-
-    // Photos — masquer si toutes les photos du jour sont prises
-    const allPhotosTaken = enfants.length > 0 && enfants.every(
-      (e) => (photoDates[e.id] ?? []).includes(todayStr)
-    );
-    if (allPhotosTaken) hidden.add('photos');
-
-    // Repas — masquer si les repas sont planifiés pour aujourd'hui
-    if (todayMeals.length > 0) hidden.add('meals');
-
-    // Recettes — masquer si les repas sont déjà configurés
-    if (todayMeals.length > 0) hidden.add('recipes');
-
-    // Courses — masquer si la liste est vide
-    if (topCourses.length === 0) hidden.add('courses');
-
-    // RDV — masquer s'il n'y a rien aujourd'hui ni demain
-    const tomorrowDate = new Date();
-    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-    const tomorrowStr = format(tomorrowDate, 'yyyy-MM-dd');
-    const hasRdvTodayOrTomorrow = rdvs.some(
-      (r) => r.statut === 'planifié' && (r.date_rdv === todayStr || r.date_rdv === tomorrowStr)
-    );
-    if (!hasRdvTodayOrTomorrow) hidden.add('rdvs');
-
-    // Gratitude — masquer si toutes les gratitudes du jour sont faites
-    const gratitudeProfiles = profiles.filter(
-      (p) => p.statut !== 'grossesse' && !isBabyProfile(p)
-    );
-    const todayGrat = gratitudeDays.find((d) => d.date === todayStr);
-    const allGratitudeDone = gratitudeProfiles.length > 0
-      && (todayGrat?.entries.length ?? 0) >= gratitudeProfiles.length;
-    if (allGratitudeDone) hidden.add('gratitude');
-
-    // Anniversaires — masquer si aucun dans les 7 prochains jours (le composant retourne déjà null, mais on évite la carte vide)
-    const now = new Date();
-    const hasUpcomingAnniv = anniversaries?.some((a) => {
-      const [mm, dd] = a.date.split('-').map(Number);
-      if (!mm || !dd) return false;
-      const thisYear = new Date(now.getFullYear(), mm - 1, dd);
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const diff = Math.round((thisYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      return diff >= 0 && diff <= 7;
-    });
-    if (!hasUpcomingAnniv) hidden.add('anniversaires');
-
-    // Souhaits — masquer si aucun souhait
-    if (!wishlistItems || wishlistItems.length === 0) hidden.add('wishlist');
-
-    // Mode nuit bébé — déjà géré par le composant (return null si pas bébé ou pas nuit)
-    // mais on le masque aussi ici pour cohérence
-    const hour = new Date().getHours();
-    const isNightTime = hour >= 20 || hour < 8;
-    if (!hasBaby || !isNightTime) hidden.add('nightMode');
-
-    return hidden;
-  }, [isDayComplete, enfants, photoDates, todayStr, todayMeals.length,
-    topCourses.length, rdvs, profiles, gratitudeDays, anniversaries,
-    wishlistItems, hasBaby]);
-
   // Contexte pour les templates de cartes vides
   const cardTemplateCtx: CardTemplateContext = useMemo(() => ({
     today: todayStr,
@@ -569,6 +451,139 @@ export default function DashboardScreen() {
     enfants.length, stock.length, activeRewards.length, leaderboard.length,
     weeklyStatsData.total, activeProfile, recipes.length, customNotifs.length,
     defis, gratitudeDays, todayStr, wishlistItems, anniversaries]);
+
+  // === Masquage individuel des sections ===
+  const sectionHidden = useMemo(() => {
+    if (isLoading) return new Set<string>();
+    const hidden = new Set<string>();
+
+    // Tâches en retard — masquer si aucune
+    if (overdueTasks.length === 0) hidden.add('overdue');
+
+    // Ménage — masquer si tout est fait
+    if (pendingMenage.length === 0) hidden.add('menage');
+
+    // Suggestions — masquer si aucun insight
+    if (insights.length === 0) hidden.add('insights');
+
+    // Photos — masquer si toutes les photos du jour sont prises
+    const allPhotosTaken = enfants.length > 0 && enfants.every(
+      (e) => (photoDates[e.id] ?? []).includes(todayStr)
+    );
+    if (allPhotosTaken) hidden.add('photos');
+
+    // Repas — masquer si les repas sont planifiés pour aujourd'hui
+    if (todayMeals.length > 0) hidden.add('meals');
+
+    // Recettes — masquer si les repas sont déjà configurés
+    if (todayMeals.length > 0) hidden.add('recipes');
+
+    // Courses — masquer si la liste est vide
+    if (topCourses.length === 0) hidden.add('courses');
+
+    // RDV — masquer s'il n'y a rien aujourd'hui ni demain
+    const tomorrowDate = new Date();
+    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+    const tomorrowRdvStr = format(tomorrowDate, 'yyyy-MM-dd');
+    const hasRdvTodayOrTomorrow = rdvs.some(
+      (r) => r.statut === 'planifié' && (r.date_rdv === todayStr || r.date_rdv === tomorrowRdvStr)
+    );
+    if (!hasRdvTodayOrTomorrow) hidden.add('rdvs');
+
+    // Gratitude — masquer si toutes les gratitudes du jour sont faites
+    const gratitudeProfiles = profiles.filter(
+      (p) => p.statut !== 'grossesse' && !isBabyProfile(p)
+    );
+    const todayGrat = gratitudeDays.find((d) => d.date === todayStr);
+    const allGratitudeDone = gratitudeProfiles.length > 0
+      && (todayGrat?.entries.length ?? 0) >= gratitudeProfiles.length;
+    if (allGratitudeDone) hidden.add('gratitude');
+
+    // Anniversaires — masquer si aucun dans les 7 prochains jours
+    const now = new Date();
+    const hasUpcomingAnniv = anniversaries?.some((a) => {
+      const [mm, dd] = a.date.split('-').map(Number);
+      if (!mm || !dd) return false;
+      const thisYear = new Date(now.getFullYear(), mm - 1, dd);
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const diff = Math.round((thisYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      return diff >= 0 && diff <= 7;
+    });
+    if (!hasUpcomingAnniv) hidden.add('anniversaires');
+
+    // Souhaits — masquer si aucun souhait
+    if (!wishlistItems || wishlistItems.length === 0) hidden.add('wishlist');
+
+    // Mode nuit bébé — pas de bébé ou pas la nuit
+    const hour = new Date().getHours();
+    const isNightTime = hour >= 20 || hour < 8;
+    if (!hasBaby || !isNightTime) hidden.add('nightMode');
+
+    // Gamification
+    if (!activeProfile) hidden.add('lootProgress');
+    if (activeRewards.length === 0) hidden.add('rewards');
+    if (weeklyStatsData.total === 0) hidden.add('weeklyStats');
+    if (leaderboard.length === 0) hidden.add('leaderboard');
+    if (!defis.some((d) => d.status === 'active')) hidden.add('defis');
+
+    // Budget — masquer si pas configuré
+    if (!vaultFileExists.budget) hidden.add('budget');
+
+    // Stock — masquer si vide
+    if (stock.length === 0) hidden.add('stock');
+
+    // Notifications rapides — masquer si pas configuré
+    if (!vaultFileExists.notifications) hidden.add('quicknotifs');
+
+    // Vacances — masquer si pas actives (le composant le fait déjà mais cohérence)
+    if (!isVacationActive) hidden.add('vacation');
+
+    return hidden;
+  }, [isLoading, overdueTasks.length, pendingMenage.length, insights.length,
+    enfants, photoDates, todayStr, todayMeals.length, topCourses.length,
+    rdvs, profiles, gratitudeDays, anniversaries, wishlistItems, hasBaby,
+    activeProfile, activeRewards.length, weeklyStatsData.total,
+    leaderboard.length, defis, vaultFileExists, stock.length, isVacationActive]);
+
+  // === Mode zen : TOUTES les sections visibles sont masquées ===
+  const isDayComplete = useMemo(() => {
+    if (isLoading) return false;
+    return sortedSections
+      .filter((s) => s.visible)
+      .every((s) => sectionHidden.has(s.id));
+  }, [isLoading, sortedSections, sectionHidden]);
+
+  // Aperçu de demain (uniquement si mode zen actif)
+  const tomorrowPreview = useMemo(() => {
+    if (!isDayComplete) return undefined;
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = format(tomorrow, 'yyyy-MM-dd');
+    const tomorrowDayName = (() => {
+      const name = format(tomorrow, 'EEEE', { locale: fr });
+      return name.charAt(0).toUpperCase() + name.slice(1);
+    })();
+
+    const tomorrowTasks = tasks.filter(
+      (t) => !t.completed && t.dueDate && t.dueDate === tomorrowStr
+    ).length;
+    const tomorrowMeals = meals.filter(
+      (m) => m.day === tomorrowDayName && m.text.length > 0
+    ).length;
+    const tomorrowRdvs = rdvs.filter(
+      (r) => r.statut === 'planifié' && r.date_rdv === tomorrowStr
+    );
+    const firstRdv = tomorrowRdvs.length > 0
+      ? `${tomorrowRdvs[0].type_rdv} ${tomorrowRdvs[0].enfant}${tomorrowRdvs[0].heure ? ` ${tomorrowRdvs[0].heure}` : ''}`
+      : undefined;
+
+    return {
+      tasks: tomorrowTasks,
+      rdvs: tomorrowRdvs.length,
+      meals: tomorrowMeals,
+      firstRdv,
+    };
+  }, [isDayComplete, tasks, meals, rdvs]);
 
   // Props partagées pour toutes les sections
   const sectionProps = useMemo(() => ({
@@ -805,7 +820,7 @@ export default function DashboardScreen() {
 
         {sortedSections.map((s) => {
           if (!s.visible) return null;
-          if (isDayComplete && zenHiddenSections.has(s.id)) return null;
+          if (sectionHidden.has(s.id)) return null;
           return renderSection(s.id);
         })}
 
