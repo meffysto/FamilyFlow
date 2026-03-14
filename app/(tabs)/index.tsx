@@ -439,11 +439,14 @@ export default function DashboardScreen() {
     // Courses — masquer si la liste est vide
     if (topCourses.length === 0) hidden.add('courses');
 
-    // RDV — masquer s'il n'y a rien aujourd'hui
-    const hasRdvToday = rdvs.some(
-      (r) => r.statut === 'planifié' && r.date_rdv === todayStr
+    // RDV — masquer s'il n'y a rien aujourd'hui ni demain
+    const tomorrowDate = new Date();
+    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+    const tomorrowStr = format(tomorrowDate, 'yyyy-MM-dd');
+    const hasRdvTodayOrTomorrow = rdvs.some(
+      (r) => r.statut === 'planifié' && (r.date_rdv === todayStr || r.date_rdv === tomorrowStr)
     );
-    if (!hasRdvToday) hidden.add('rdvs');
+    if (!hasRdvTodayOrTomorrow) hidden.add('rdvs');
 
     // Gratitude — masquer si toutes les gratitudes du jour sont faites
     const gratitudeProfiles = profiles.filter(
