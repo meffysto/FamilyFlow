@@ -71,9 +71,9 @@ struct WidgetData: Codable {
 // MARK: - Deep Link URLs
 
 private enum DeepLink {
-    static let meals = URL(string: "family-vault://meals")!
-    static let tasks = URL(string: "family-vault://tasks")!
-    static let rdv = URL(string: "family-vault://rdv")!
+    static let meals = URL(string: "family-vault://open/meals")!
+    static let tasks = URL(string: "family-vault://open/tasks")!
+    static let rdv = URL(string: "family-vault://open/rdv")!
 }
 
 // MARK: - Timeline
@@ -120,29 +120,27 @@ struct MaJourneeSmallView: View {
                 .foregroundStyle(.secondary)
                 .textCase(.uppercase)
 
-            Link(destination: DeepLink.meals) {
-                VStack(alignment: .leading, spacing: 4) {
-                    mealRow(icon: "sun.max.fill", text: data.meals?.dejeuner)
-                    mealRow(icon: "moon.fill", text: data.meals?.diner)
-                }
+            VStack(alignment: .leading, spacing: 4) {
+                mealRow(icon: "sun.max.fill", text: data.meals?.dejeuner)
+                mealRow(icon: "moon.fill", text: data.meals?.diner)
             }
 
             Spacer()
 
             if let progress = data.tasksProgress, progress.total > 0 {
-                Link(destination: DeepLink.tasks) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.caption2)
-                            .foregroundStyle(.green)
-                        Text("\(progress.done)/\(progress.total) tâches")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
+                HStack(spacing: 4) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.caption2)
+                        .foregroundStyle(.green)
+                    Text("\(progress.done)/\(progress.total) tâches")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
         .padding()
+        // Small widget : un seul lien pour tout le widget
+        .widgetURL(DeepLink.meals)
     }
 
     @ViewBuilder

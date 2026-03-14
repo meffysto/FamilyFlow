@@ -4,14 +4,16 @@
  * On mount, checks if vault path is configured.
  * If not → redirect to /setup.
  * If yes → proceed to /(tabs)/.
+ *
+ * Le <Stack> doit TOUJOURS monter dès le premier rendu pour que
+ * expo-router puisse appliquer l'initialState des deep links (widget).
  */
 
 import React, { useEffect, useState } from 'react';
-import { Redirect, Stack, useRouter } from 'expo-router';
+import { Redirect, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as SecureStore from 'expo-secure-store';
-import * as Linking from 'expo-linking';
 import { VAULT_PATH_KEY } from '../contexts/VaultContext';
 import { VaultProvider } from '../contexts/VaultContext';
 import { View, Text, ActivityIndicator, StyleSheet, useColorScheme, TouchableOpacity } from 'react-native';
@@ -68,46 +70,19 @@ class AppErrorBoundary extends React.Component<
   }
 }
 
-// Deep link routing map: family-vault://xxx → route
-const DEEP_LINK_ROUTES: Record<string, { pathname: string; params?: Record<string, string> }> = {
-  meals: { pathname: '/(tabs)/meals', params: { tab: 'repas' } },
-  tasks: { pathname: '/(tabs)/tasks' },
-  rdv:   { pathname: '/(tabs)/rdv' },
-};
-
-function useWidgetDeepLink() {
-  const router = useRouter();
-
-  useEffect(() => {
-    function handleUrl(event: { url: string }) {
-      const parsed = Linking.parse(event.url);
-      const route = DEEP_LINK_ROUTES[parsed.hostname ?? ''];
-      if (route) {
-        router.push(route.params ? { pathname: route.pathname as any, params: route.params } : route.pathname as any);
-      }
-    }
-
-    // URL reçue alors que l'app était déjà ouverte
-    const sub = Linking.addEventListener('url', handleUrl);
-
-    // URL qui a lancé l'app (cold start)
-    Linking.getInitialURL().then((url) => {
-      if (url) handleUrl({ url });
-    });
-
-    return () => sub.remove();
-  }, [router]);
-}
+// ─── Deep link ──────────────────────────────────────────────────────────────
+// expo-router gère les deep links nativement via useLinking.native.js :
+// - Cold start : ExpoLinking.getLinkingURL() → initialState sur NavigationContainer
+// - Warm start : Linking.addEventListener('url') → subscribe → navigation.dispatch
+// Un listener manuel ici CONFLIT avec le handler intégré (double navigation).
+// URL format widget : family-vault:///meals → extractExpoPathFromURL → "meals" → (tabs)/meals
 
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
   const [hasVault, setHasVault] = useState(false);
   const systemScheme = useColorScheme();
 
-  useWidgetDeepLink();
-
   useEffect(() => {
-    // Configure notification handler at app startup
     configureNotifications();
 
     (async () => {
@@ -117,14 +92,9 @@ export default function RootLayout() {
     })();
   }, []);
 
-  if (!isReady) {
-    return (
-      <View style={[styles.loading, { backgroundColor: systemScheme === 'dark' ? '#0F172A' : '#F9FAFB' }]}>
-        <ActivityIndicator size="large" color="#7C3AED" />
-      </View>
-    );
-  }
-
+  // Le Stack monte TOUJOURS dès le premier rendu pour que
+  // expo-router puisse appliquer l'initialState du deep link (widget).
+  // Le loading spinner est affiché PAR-DESSUS le Stack via position absolute.
   return (
     <AppErrorBoundary>
       <SafeAreaProvider>
@@ -140,7 +110,12 @@ export default function RootLayout() {
                   <Stack.Screen name="setup" />
                   <Stack.Screen name="(tabs)" />
                 </Stack>
-                {!hasVault && <Redirect href="/setup" />}
+                {isReady && !hasVault && <Redirect href="/setup" />}
+                {!isReady && (
+                  <View style={[styles.loading, { backgroundColor: systemScheme === 'dark' ? '#0F172A' : '#F9FAFB' }]} pointerEvents="auto">
+                    <ActivityIndicator size="large" color="#7C3AED" />
+                  </View>
+                )}
               </ToastProvider>
               </ParentalControlsProvider>
               </HelpProvider>
@@ -155,9 +130,10 @@ export default function RootLayout() {
 
 const styles = StyleSheet.create({
   loading: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 999,
   },
   errorContainer: {
     flex: 1,
