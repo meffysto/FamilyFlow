@@ -16,6 +16,7 @@ import { ModalHeader } from '../../components/ui/ModalHeader';
 import { Spacing } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { calculateLevel } from '../../lib/gamification';
+import { useAI } from '../../contexts/AIContext';
 
 import { SettingsRow, SettingsSectionHeader } from '../../components/settings/SettingsRow';
 import { SettingsVault } from '../../components/settings/SettingsVault';
@@ -89,7 +90,7 @@ export default function SettingsScreen() {
 
   const telegramStatus = telegramToken ? 'Connecté' : 'Non configuré';
 
-  const aiConfigured = !!SecureStore.getItem('anthropic_api_key');
+  const { isConfigured: aiConfigured, model: aiModel } = useAI();
 
   // Titre du modal selon la section active
   const sectionTitles: Record<SectionId, string> = {
@@ -169,7 +170,7 @@ export default function SettingsScreen() {
             <SettingsRow
               emoji="🤖"
               title="Intelligence artificielle"
-              subtitle={aiConfigured ? 'Configurée' : 'Non configurée'}
+              subtitle={aiConfigured ? `Configurée · ${aiModel}` : 'Non configurée'}
               onPress={() => setActiveSection('ai')}
               isFirst
             />
