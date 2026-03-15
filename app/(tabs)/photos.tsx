@@ -43,6 +43,7 @@ import { EmptyState } from '../../components/EmptyState';
 import { formatDateForDisplay } from '../../lib/parser';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
+import { PhotoViewer } from '../../components/PhotoViewer';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const CALENDAR_PADDING = 16;
@@ -103,21 +104,19 @@ export default function PhotosScreen() {
     return new Set(dates);
   }, [photoDates, selectedEnfant]);
 
-  // Liste triée des photos du mois pour la navigation gauche/droite
-  const monthPhotos = useMemo(() => {
+  // Toutes les photos triées chronologiquement (pour le swipe viewer)
+  const allPhotos = useMemo(() => {
     if (!selectedEnfant) return [];
     const dates = photoDates[selectedEnfant.id] ?? [];
-    const monthStr = format(currentMonth, 'yyyy-MM');
-    return dates
-      .filter((d) => d.startsWith(monthStr))
+    return [...dates]
       .sort()
       .map((d) => ({
         date: d,
         uri: `${getPhotoUri(selectedEnfant.name, d)}?v=${photoCacheBust}`,
       }));
-  }, [photoDates, selectedEnfant, currentMonth, getPhotoUri, photoCacheBust]);
+  }, [photoDates, selectedEnfant, getPhotoUri, photoCacheBust]);
 
-  const viewingPhoto = viewingPhotoIndex >= 0 ? monthPhotos[viewingPhotoIndex] ?? null : null;
+  const viewingPhoto = viewingPhotoIndex >= 0;
 
   const filteredMemories = useMemo(() => {
     if (!selectedEnfant) return memories;
@@ -187,7 +186,7 @@ export default function PhotosScreen() {
   const openPhoto = (date: Date) => {
     if (!selectedEnfant) return;
     const dateStr = format(date, 'yyyy-MM-dd');
-    const idx = monthPhotos.findIndex((p) => p.date === dateStr);
+    const idx = allPhotos.findIndex((p) => p.date === dateStr);
     if (idx >= 0) setViewingPhotoIndex(idx);
   };
 
@@ -429,60 +428,22 @@ export default function PhotosScreen() {
         </>
       )}
 
-      {/* Fullscreen photo modal */}
+      {/* Fullscreen photo viewer (swipe) */}
       <Modal
-        visible={viewingPhoto !== null}
+        visible={viewingPhoto}
         transparent
         animationType="fade"
+        statusBarTranslucent
         onRequestClose={() => setViewingPhotoIndex(-1)}
       >
-        <View style={styles.modalOverlay}>
-          <TouchableOpacity style={styles.modalClose} onPress={() => setViewingPhotoIndex(-1)}>
-            <Text style={styles.modalCloseText}>✕</Text>
-          </TouchableOpacity>
-          {viewingPhoto && (
-            <>
-              {/* Flèche gauche */}
-              {viewingPhotoIndex > 0 && (
-                <TouchableOpacity
-                  style={[styles.modalArrow, styles.modalArrowLeft]}
-                  onPress={() => setViewingPhotoIndex((i) => i - 1)}
-                >
-                  <Text style={styles.modalArrowText}>‹</Text>
-                </TouchableOpacity>
-              )}
-
-              {/* Photo plein écran */}
-              <Image source={{ uri: viewingPhoto.uri }} style={styles.modalImage} resizeMode="contain" />
-
-              {/* Flèche droite */}
-              {viewingPhotoIndex < monthPhotos.length - 1 && (
-                <TouchableOpacity
-                  style={[styles.modalArrow, styles.modalArrowRight]}
-                  onPress={() => setViewingPhotoIndex((i) => i + 1)}
-                >
-                  <Text style={styles.modalArrowText}>›</Text>
-                </TouchableOpacity>
-              )}
-
-              {/* Date + compteur */}
-              <Text style={styles.modalDate}>
-                {format(new Date(viewingPhoto.date), 'EEEE d MMMM yyyy', { locale: fr })}
-                {'  '}({viewingPhotoIndex + 1}/{monthPhotos.length})
-              </Text>
-              <TouchableOpacity
-                style={styles.modalRetake}
-                onPress={() => {
-                  const dateToRetake = new Date(viewingPhoto.date + 'T00:00:00');
-                  setViewingPhotoIndex(-1);
-                  setTimeout(() => pickPhoto(dateToRetake), 600);
-                }}
-              >
-                <Text style={styles.modalRetakeText}>📷 Reprendre</Text>
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
+        {viewingPhoto && (
+          <PhotoViewer
+            photos={allPhotos}
+            initialIndex={viewingPhotoIndex}
+            onClose={() => setViewingPhotoIndex(-1)}
+            onRetake={(dateStr) => pickPhoto(new Date(dateStr + 'T00:00:00'))}
+          />
+        )}
       </Modal>
 
       {/* Memory Editor Modal */}
@@ -621,33 +582,4 @@ const styles = StyleSheet.create({
   emptyEmoji: { fontSize: 40 },
   emptyText: { fontSize: 16, fontWeight: '600' },
   emptyHint: { fontSize: 13, textAlign: 'center' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center' },
-  modalClose: {
-    position: 'absolute', top: 60, right: 20,
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center', alignItems: 'center', zIndex: 10,
-  },
-  modalCloseText: { fontSize: 18, color: '#FFFFFF', fontWeight: '700' },
-  modalImage: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT * 0.65 },
-  modalArrow: {
-    position: 'absolute',
-    top: '45%',
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  modalArrowLeft: { left: 12 },
-  modalArrowRight: { right: 12 },
-  modalArrowText: { fontSize: 28, color: '#FFFFFF', fontWeight: '300' },
-  modalDate: { fontSize: 16, color: '#FFFFFF', fontWeight: '600', marginTop: 20, textTransform: 'capitalize' },
-  modalRetake: {
-    marginTop: 20, paddingHorizontal: 24, paddingVertical: 12,
-    borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.15)',
-  },
-  modalRetakeText: { fontSize: 15, color: '#FFFFFF', fontWeight: '600' },
 });
