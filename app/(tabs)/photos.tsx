@@ -41,9 +41,18 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { MemoryEditor } from '../../components/MemoryEditor';
 import { EmptyState } from '../../components/EmptyState';
 import { formatDateForDisplay } from '../../lib/parser';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { PhotoViewer } from '../../components/PhotoViewer';
+import { computePhotoStats } from '../../lib/photo-stats';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const CALENDAR_PADDING = 16;
@@ -53,6 +62,29 @@ const CELL_SIZE = Math.floor((SCREEN_WIDTH - CALENDAR_PADDING * 2 - DAY_GAP * 6)
 const WEEKDAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
 type TabMode = 'photos' | 'souvenirs';
+
+/** Caméra pulsante pour la cellule du jour sans photo */
+function PulsingCamera({ color }: { color: string }) {
+  const scale = useSharedValue(1);
+  useEffect(() => {
+    scale.value = withRepeat(
+      withSequence(
+        withTiming(1.15, { duration: 800, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.95, { duration: 800, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+      false,
+    );
+  }, []);
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+  return (
+    <Animated.Text style={[{ fontSize: 18, position: 'absolute', top: 4 }, animStyle]}>
+      📷
+    </Animated.Text>
+  );
+}
 
 export default function PhotosScreen() {
   const { profiles, photoDates, addPhoto, getPhotoUri, refresh, isLoading, memories, addMemory, updateMemory } = useVault();
@@ -103,6 +135,14 @@ export default function PhotosScreen() {
     const dates = photoDates[selectedEnfant.id] ?? [];
     return new Set(dates);
   }, [photoDates, selectedEnfant]);
+
+  // Stats photo (streak, complétion mois, record)
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const photoStats = useMemo(() => {
+    if (!selectedEnfant) return null;
+    const dates = photoDates[selectedEnfant.id] ?? [];
+    return computePhotoStats(dates, todayStr);
+  }, [photoDates, selectedEnfant, todayStr]);
 
   // Toutes les photos triées chronologiquement (pour le swipe viewer)
   const allPhotos = useMemo(() => {
@@ -287,6 +327,35 @@ export default function PhotosScreen() {
               </TouchableOpacity>
             </View>
 
+            {/* Stats streak */}
+            {photoStats && (
+              <View style={styles.statsRow}>
+                <View style={[
+                  styles.statPill,
+                  { backgroundColor: photoStats.currentStreak >= 7 ? colors.successBg : photoStats.currentStreak === 0 ? colors.warningBg : colors.cardAlt },
+                ]}>
+                  <Text style={[
+                    styles.statPillText,
+                    { color: photoStats.currentStreak >= 7 ? colors.successText : photoStats.currentStreak === 0 ? colors.warningText : colors.textSub },
+                  ]}>
+                    🔥 {photoStats.currentStreak}j
+                  </Text>
+                </View>
+                <View style={[styles.statPill, { backgroundColor: colors.cardAlt }]}>
+                  <Text style={[styles.statPillText, { color: colors.textSub }]}>
+                    📸 {photoStats.thisMonthCount}/{photoStats.thisMonthTotal}
+                  </Text>
+                </View>
+                {photoStats.longestStreak > 0 && (
+                  <View style={[styles.statPill, { backgroundColor: colors.cardAlt }]}>
+                    <Text style={[styles.statPillText, { color: colors.textSub }]}>
+                      🏆 {photoStats.longestStreak}j
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+
             {/* Weekday headers */}
             <View style={styles.weekdayRow}>
               {WEEKDAY_LABELS.map((label, i) => (
@@ -329,6 +398,8 @@ export default function PhotosScreen() {
                   >
                     {hasPhoto && photoUri ? (
                       <Image source={{ uri: photoUri }} style={styles.dayPhoto} resizeMode="cover" />
+                    ) : today && !hasPhoto ? (
+                      <PulsingCamera color={primary} />
                     ) : null}
                     <Text style={[
                       styles.dayNum,
@@ -521,11 +592,26 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: { padding: CALENDAR_PADDING, paddingBottom: 100 },
   souvenirContent: { padding: 16, paddingBottom: 100, gap: 12 },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  statPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statPillText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
   monthNav: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   monthArrow: {
     width: 40, height: 40, borderRadius: 20,
