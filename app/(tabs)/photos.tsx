@@ -80,7 +80,7 @@ function PulsingCamera({ color }: { color: string }) {
     transform: [{ scale: scale.value }],
   }));
   return (
-    <Animated.Text style={[{ fontSize: 18, position: 'absolute', top: 4 }, animStyle]}>
+    <Animated.Text style={[{ fontSize: 26 }, animStyle]}>
       📷
     </Animated.Text>
   );
