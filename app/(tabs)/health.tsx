@@ -27,6 +27,8 @@ import { FontSize, FontWeight } from '../../constants/typography';
 import { ModalHeader, DateInput } from '../../components/ui';
 import { HealthRecord, GrowthEntry, VaccineEntry } from '../../lib/types';
 import { formatDateForDisplay } from '../../lib/parser';
+import { GrowthChart } from '../../components/growth/GrowthChart';
+import { GrowthLegend } from '../../components/growth/GrowthLegend';
 
 type TabId = 'croissance' | 'vaccins' | 'infos';
 
@@ -438,7 +440,7 @@ export default function HealthScreen() {
       {/* Contenu */}
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {activeTab === 'croissance' && (
-          <CroissanceTab record={record} onAdd={() => setShowGrowthForm(true)} />
+          <CroissanceTab record={record} enfant={selectedEnfant} onAdd={() => setShowGrowthForm(true)} />
         )}
         {activeTab === 'vaccins' && (
           <VaccinsTab record={record} onAdd={() => setShowVaccineForm(true)} />
@@ -466,9 +468,34 @@ export default function HealthScreen() {
 
 // ─── Onglet Croissance ────────────────────────────────────────────────────────
 
-function CroissanceTab({ record, onAdd }: { record: HealthRecord; onAdd: () => void }) {
-  const { primary, colors } = useThemeColors();
+function CroissanceTab({ record, enfant, onAdd }: { record: HealthRecord; enfant?: import('../../lib/types').Profile; onAdd: () => void }) {
+  const { primary, tint, colors } = useThemeColors();
   const entries = [...record.croissance].reverse(); // plus récent en premier
+  const [chartMetric, setChartMetric] = useState<'weight' | 'height' | 'head'>('weight');
+
+  // Déterminer le sexe depuis le profil (fallback garçon)
+  // On utilise le nom pour heuristique simple — pas de champ genre dans Profile
+  const childSex: 'garçon' | 'fille' = 'garçon'; // TODO: ajouter genre au profil
+
+  // Âge de l'enfant en mois
+  const ageMonths = useMemo(() => {
+    if (!enfant?.birthdate) return 0;
+    const birth = new Date(enfant.birthdate);
+    const now = new Date();
+    return (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth());
+  }, [enfant?.birthdate]);
+
+  // Masquer périmètre crânien si enfant > 3 ans
+  const showHead = ageMonths <= 36;
+
+  const metricChips = useMemo(() => {
+    const chips: { id: 'weight' | 'height' | 'head'; label: string }[] = [
+      { id: 'weight', label: 'Poids' },
+      { id: 'height', label: 'Taille' },
+    ];
+    if (showHead) chips.push({ id: 'head', label: 'Périmètre' });
+    return chips;
+  }, [showHead]);
 
   // Calculer les deltas
   const getEvolution = (current: number | undefined, previous: number | undefined) => {
@@ -479,9 +506,50 @@ function CroissanceTab({ record, onAdd }: { record: HealthRecord; onAdd: () => v
 
   return (
     <View style={styles.tabContent}>
+      {/* Sélecteur de courbe */}
+      {enfant?.birthdate && (
+        <>
+          <View style={styles.chipRow}>
+            {metricChips.map((chip) => (
+              <TouchableOpacity
+                key={chip.id}
+                style={[
+                  styles.metricChip,
+                  { backgroundColor: chartMetric === chip.id ? tint : colors.inputBg,
+                    borderColor: chartMetric === chip.id ? primary : 'transparent' },
+                ]}
+                onPress={() => setChartMetric(chip.id)}
+                activeOpacity={0.7}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: chartMetric === chip.id }}
+              >
+                <Text style={[
+                  styles.metricChipText,
+                  { color: chartMetric === chip.id ? primary : colors.textSub },
+                ]}>{chip.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Courbe de croissance */}
+          <Animated.View entering={FadeInDown.delay(100)}>
+            <GrowthChart
+              entries={record.croissance}
+              sex={childSex}
+              dateNaissance={enfant.birthdate}
+              metric={chartMetric}
+            />
+            <GrowthLegend
+              childName={enfant.name}
+              sex={childSex}
+            />
+          </Animated.View>
+        </>
+      )}
+
       {/* Résumé dernières mesures */}
       {entries.length > 0 && (
-        <Animated.View entering={FadeInDown.delay(100)} style={[styles.summaryCard, { backgroundColor: colors.card }]}>
+        <Animated.View entering={FadeInDown.delay(200)} style={[styles.summaryCard, { backgroundColor: colors.card }]}>
           <Text style={[styles.summaryTitle, { color: colors.text }]}>Dernière mesure</Text>
           <Text style={[styles.summaryDate, { color: colors.textMuted }]}>
             {formatDateDisplay(entries[0].date)}
@@ -750,6 +818,24 @@ const styles = StyleSheet.create({
   summaryValue: { fontSize: FontSize.display, fontWeight: FontWeight.heavy },
   summaryUnit: { fontSize: FontSize.caption },
   summaryDelta: { fontSize: FontSize.caption, fontWeight: FontWeight.semibold, marginTop: 2 },
+
+  // Chips sélecteur de métrique
+  chipRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    paddingHorizontal: Spacing['2xl'],
+    marginBottom: Spacing.xl,
+  },
+  metricChip: {
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: Radius.base,
+    borderWidth: 1.5,
+  },
+  metricChipText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+  },
 
   // Section header
   sectionHeader: {
