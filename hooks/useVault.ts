@@ -76,7 +76,7 @@ import { nextOccurrence } from '../lib/recurrence';
 import { format } from 'date-fns';
 import { parseJournalStats } from '../lib/journal-stats';
 import type { JournalSummaryEntry, VaultContext as AIVaultContext } from '../lib/ai-service';
-import { refreshWidget } from '../lib/widget-bridge';
+import { refreshWidget, refreshJournalWidget } from '../lib/widget-bridge';
 import { shouldSendWeeklySummary, buildAndSendWeeklySummary } from '../lib/telegram';
 
 export const VAULT_PATH_KEY = 'vault_path';
@@ -174,6 +174,8 @@ export interface VaultState {
   healthRecords: HealthRecord[];
   saveHealthRecord: (record: HealthRecord) => Promise<void>;
   addGrowthEntry: (enfant: string, entry: GrowthEntry) => Promise<void>;
+  updateGrowthEntry: (enfant: string, oldDate: string, newEntry: GrowthEntry) => Promise<void>;
+  deleteGrowthEntry: (enfant: string, date: string) => Promise<void>;
   addVaccineEntry: (enfant: string, entry: VaccineEntry) => Promise<void>;
   defis: Defi[];
   createDefi: (defi: Omit<Defi, 'progress' | 'status'>) => Promise<void>;
@@ -718,8 +720,9 @@ export function useVaultInternal(): VaultState {
       setVacationConfig(vacResult.config);
       setVacationTasks(vacResult.vacTasks);
 
-      // Mettre à jour le widget iOS
+      // Mettre à jour les widgets iOS
       refreshWidget(val(results[5], []), val(results[1], []), rdvResult);
+      refreshJournalWidget(profiles);
 
       // Auto-envoi résumé hebdo IA le dimanche (fire-and-forget)
       loadNotifConfig().then(async (notifCfg) => {
@@ -1756,6 +1759,28 @@ export function useVaultInternal(): VaultState {
     await addHealthEntry(enfant, 'croissance', entry);
   }, [addHealthEntry]);
 
+  const updateGrowthEntry = useCallback(async (enfant: string, oldDate: string, newEntry: GrowthEntry) => {
+    const existing = healthRecordsRef.current.find(r => r.enfant === enfant);
+    if (!existing) return;
+    const updated: HealthRecord = {
+      ...existing,
+      croissance: existing.croissance
+        .map(e => e.date === oldDate ? newEntry : e)
+        .sort((a, b) => a.date.localeCompare(b.date)),
+    };
+    await saveHealthRecord(updated);
+  }, [saveHealthRecord]);
+
+  const deleteGrowthEntry = useCallback(async (enfant: string, date: string) => {
+    const existing = healthRecordsRef.current.find(r => r.enfant === enfant);
+    if (!existing) return;
+    const updated: HealthRecord = {
+      ...existing,
+      croissance: existing.croissance.filter(e => e.date !== date),
+    };
+    await saveHealthRecord(updated);
+  }, [saveHealthRecord]);
+
   const addVaccineEntry = useCallback(async (enfant: string, entry: VaccineEntry) => {
     await addHealthEntry(enfant, 'vaccins', entry);
   }, [addHealthEntry]);
@@ -2125,6 +2150,8 @@ export function useVaultInternal(): VaultState {
     healthRecords,
     saveHealthRecord,
     addGrowthEntry,
+    updateGrowthEntry,
+    deleteGrowthEntry,
     addVaccineEntry,
     defis,
     createDefi,
@@ -2163,7 +2190,7 @@ export function useVaultInternal(): VaultState {
     loadRecipes, scanAllCookFiles, moveCookToRecipes, toggleFavorite, isFavorite,
     getFavorites, applyAgeUpgrade, dismissAgeUpgrade, addChild, convertToBorn,
     setBudgetMonth, addExpense, deleteExpense, updateBudgetConfig, loadBudgetData,
-    saveRoutines, saveHealthRecord, addGrowthEntry, addVaccineEntry,
+    saveRoutines, saveHealthRecord, addGrowthEntry, updateGrowthEntry, deleteGrowthEntry, addVaccineEntry,
     createDefi, checkInDefi, completeDefi, deleteDefi,
     addGratitudeEntry, deleteGratitudeEntry,
     addWishItem, updateWishItem, deleteWishItem, toggleWishBought,

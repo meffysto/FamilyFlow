@@ -39,6 +39,7 @@ export interface GrowthChartProps {
   sex: 'garçon' | 'fille';
   dateNaissance: string; // YYYY-MM-DD
   metric: 'weight' | 'height' | 'head';
+  height?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -168,7 +169,8 @@ function buildLinePath(
 // Composant
 // ---------------------------------------------------------------------------
 
-export function GrowthChart({ entries, sex, dateNaissance, metric }: GrowthChartProps) {
+export function GrowthChart({ entries, sex, dateNaissance, metric, height: heightProp }: GrowthChartProps) {
+  const chartHeight = heightProp ?? CHART_HEIGHT;
   const { primary, colors } = useThemeColors();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [chartWidth, setChartWidth] = useState(0);
@@ -247,7 +249,7 @@ export function GrowthChart({ entries, sex, dateNaissance, metric }: GrowthChart
 
   // Zone de dessin effective
   const plotWidth = chartWidth - Y_AXIS_WIDTH - PADDING_RIGHT;
-  const plotHeight = CHART_HEIGHT - PADDING_TOP - X_AXIS_HEIGHT;
+  const plotHeight = chartHeight - PADDING_TOP - X_AXIS_HEIGHT;
 
   // Fonctions de projection
   const xScale = useCallback(
@@ -315,12 +317,12 @@ export function GrowthChart({ entries, sex, dateNaissance, metric }: GrowthChart
 
   return (
     <View
-      style={styles.container}
+      style={[styles.container, { height: chartHeight }]}
       onLayout={(e) => setChartWidth(e.nativeEvent.layout.width)}
     >
       {chartWidth > 0 && (
         <>
-          <Svg width={chartWidth} height={CHART_HEIGHT}>
+          <Svg width={chartWidth} height={chartHeight}>
             <Defs>
               <ClipPath id="plotClip">
                 <Rect

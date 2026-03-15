@@ -42,13 +42,19 @@ const formatDateDisplay = formatDateForDisplay;
 
 // ─── Formulaire mesure croissance ─────────────────────────────────────────────
 
-function GrowthForm({ onSave, onClose }: { onSave: (entry: GrowthEntry) => void; onClose: () => void }) {
+function GrowthForm({ onSave, onClose, onDelete, initialEntry }: {
+  onSave: (entry: GrowthEntry) => void;
+  onClose: () => void;
+  onDelete?: () => void;
+  initialEntry?: GrowthEntry;
+}) {
   const { colors, primary } = useThemeColors();
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [poids, setPoids] = useState('');
-  const [taille, setTaille] = useState('');
-  const [perimetre, setPerimetre] = useState('');
-  const [note, setNote] = useState('');
+  const isEditing = !!initialEntry;
+  const [date, setDate] = useState(initialEntry?.date || new Date().toISOString().slice(0, 10));
+  const [poids, setPoids] = useState(initialEntry?.poids != null ? String(initialEntry.poids) : '');
+  const [taille, setTaille] = useState(initialEntry?.taille != null ? String(initialEntry.taille) : '');
+  const [perimetre, setPerimetre] = useState(initialEntry?.perimetre != null ? String(initialEntry.perimetre) : '');
+  const [note, setNote] = useState(initialEntry?.note || '');
 
   const canSave = date && (poids || taille);
 
@@ -64,7 +70,7 @@ function GrowthForm({ onSave, onClose }: { onSave: (entry: GrowthEntry) => void;
 
   return (
     <View style={[formStyles.container, { backgroundColor: colors.bg }]}>
-      <ModalHeader title="Nouvelle mesure" onClose={onClose} rightLabel="Enregistrer" onRight={handleSave} rightDisabled={!canSave} />
+      <ModalHeader title={isEditing ? 'Modifier la mesure' : 'Nouvelle mesure'} onClose={onClose} rightLabel="Enregistrer" onRight={handleSave} rightDisabled={!canSave} />
       <ScrollView style={formStyles.scroll} contentContainerStyle={formStyles.content}>
         <Text style={[formStyles.label, { color: colors.textSub }]}>Date</Text>
         <DateInput value={date} onChange={setDate} />
@@ -107,6 +113,16 @@ function GrowthForm({ onSave, onClose }: { onSave: (entry: GrowthEntry) => void;
           placeholder="RAS, observation..."
           placeholderTextColor={colors.textFaint}
         />
+
+        {isEditing && onDelete && (
+          <TouchableOpacity
+            style={[formStyles.deleteBtn, { backgroundColor: colors.errorBg }]}
+            onPress={onDelete}
+            activeOpacity={0.7}
+          >
+            <Text style={[formStyles.deleteBtnText, { color: colors.error }]}>Supprimer cette mesure</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </View>
   );
@@ -313,7 +329,7 @@ function InfoEditor({
 // ─── Écran principal ──────────────────────────────────────────────────────────
 
 export default function HealthScreen() {
-  const { profiles, healthRecords, saveHealthRecord, addGrowthEntry, addVaccineEntry } = useVault();
+  const { profiles, healthRecords, saveHealthRecord, addGrowthEntry, updateGrowthEntry, deleteGrowthEntry, addVaccineEntry } = useVault();
   const { primary, colors } = useThemeColors();
   const { showToast } = useToast();
 
@@ -374,6 +390,33 @@ export default function HealthScreen() {
       showToast('Erreur', 'error');
     }
   }, [saveHealthRecord, showToast]);
+
+  // Édition / suppression mesure croissance
+  const [editingEntry, setEditingEntry] = useState<GrowthEntry | null>(null);
+
+  const handleUpdateGrowth = useCallback(async (oldDate: string, newEntry: GrowthEntry) => {
+    if (!selectedEnfant) return;
+    try {
+      await updateGrowthEntry(selectedEnfant.name, oldDate, newEntry);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      showToast('Mesure modifiée', 'success');
+      setEditingEntry(null);
+    } catch {
+      showToast('Erreur', 'error');
+    }
+  }, [selectedEnfant, updateGrowthEntry, showToast]);
+
+  const handleDeleteGrowth = useCallback(async (date: string) => {
+    if (!selectedEnfant) return;
+    Alert.alert('Supprimer la mesure ?', `La mesure du ${formatDateForDisplay(date)} sera supprimée.`, [
+      { text: 'Annuler', style: 'cancel' },
+      { text: 'Supprimer', style: 'destructive', onPress: async () => {
+        await deleteGrowthEntry(selectedEnfant.name, date);
+        showToast('Mesure supprimée', 'success');
+        setEditingEntry(null);
+      }},
+    ]);
+  }, [selectedEnfant, deleteGrowthEntry, showToast]);
 
   if (enfants.length === 0) {
     return (
@@ -440,7 +483,7 @@ export default function HealthScreen() {
       {/* Contenu */}
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {activeTab === 'croissance' && (
-          <CroissanceTab record={record} enfant={selectedEnfant} onAdd={() => setShowGrowthForm(true)} />
+          <CroissanceTab record={record} enfant={selectedEnfant} onAdd={() => setShowGrowthForm(true)} onEditEntry={setEditingEntry} />
         )}
         {activeTab === 'vaccins' && (
           <VaccinsTab record={record} onAdd={() => setShowVaccineForm(true)} />
@@ -462,16 +505,27 @@ export default function HealthScreen() {
       <Modal visible={showInfoEditor} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowInfoEditor(false)}>
         <InfoEditor record={record} onSave={handleSaveInfo} onClose={() => setShowInfoEditor(false)} />
       </Modal>
+
+      <Modal visible={editingEntry !== null} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setEditingEntry(null)}>
+        {editingEntry && (
+          <GrowthForm
+            initialEntry={editingEntry}
+            onSave={(newEntry) => handleUpdateGrowth(editingEntry.date, newEntry)}
+            onClose={() => setEditingEntry(null)}
+            onDelete={() => handleDeleteGrowth(editingEntry.date)}
+          />
+        )}
+      </Modal>
     </SafeAreaView>
   );
 }
 
 // ─── Onglet Croissance ────────────────────────────────────────────────────────
 
-function CroissanceTab({ record, enfant, onAdd }: { record: HealthRecord; enfant?: import('../../lib/types').Profile; onAdd: () => void }) {
+function CroissanceTab({ record, enfant, onAdd, onEditEntry }: { record: HealthRecord; enfant?: import('../../lib/types').Profile; onAdd: () => void; onEditEntry?: (entry: GrowthEntry) => void }) {
   const { primary, tint, colors } = useThemeColors();
   const entries = [...record.croissance].reverse(); // plus récent en premier
-  const [chartMetric, setChartMetric] = useState<'weight' | 'height' | 'head'>('weight');
+  const [chartMetric, setChartMetric] = useState<'weight' | 'height' | 'head' | 'global'>('weight');
 
   // Déterminer le sexe depuis le profil (fallback garçon)
   // On utilise le nom pour heuristique simple — pas de champ genre dans Profile
@@ -489,11 +543,12 @@ function CroissanceTab({ record, enfant, onAdd }: { record: HealthRecord; enfant
   const showHead = ageMonths <= 36;
 
   const metricChips = useMemo(() => {
-    const chips: { id: 'weight' | 'height' | 'head'; label: string }[] = [
+    const chips: { id: 'weight' | 'height' | 'head' | 'global'; label: string }[] = [
       { id: 'weight', label: 'Poids' },
       { id: 'height', label: 'Taille' },
     ];
     if (showHead) chips.push({ id: 'head', label: 'Périmètre' });
+    chips.push({ id: 'global', label: 'Vue globale' });
     return chips;
   }, [showHead]);
 
@@ -532,18 +587,38 @@ function CroissanceTab({ record, enfant, onAdd }: { record: HealthRecord; enfant
           </View>
 
           {/* Courbe de croissance */}
-          <Animated.View entering={FadeInDown.delay(100)}>
-            <GrowthChart
-              entries={record.croissance}
-              sex={childSex}
-              dateNaissance={enfant.birthdate}
-              metric={chartMetric}
-            />
-            <GrowthLegend
-              childName={enfant.name}
-              sex={childSex}
-            />
-          </Animated.View>
+          {chartMetric === 'global' ? (
+            <Animated.View entering={FadeInDown.delay(100)} style={{ gap: Spacing.xl }}>
+              <View>
+                <Text style={[styles.miniChartLabel, { color: colors.textSub }]}>Poids (kg)</Text>
+                <GrowthChart entries={record.croissance} sex={childSex} dateNaissance={enfant.birthdate} metric="weight" height={160} />
+              </View>
+              <View>
+                <Text style={[styles.miniChartLabel, { color: colors.textSub }]}>Taille (cm)</Text>
+                <GrowthChart entries={record.croissance} sex={childSex} dateNaissance={enfant.birthdate} metric="height" height={160} />
+              </View>
+              {showHead && (
+                <View>
+                  <Text style={[styles.miniChartLabel, { color: colors.textSub }]}>Périmètre crânien (cm)</Text>
+                  <GrowthChart entries={record.croissance} sex={childSex} dateNaissance={enfant.birthdate} metric="head" height={160} />
+                </View>
+              )}
+              <GrowthLegend childName={enfant.name} sex={childSex} />
+            </Animated.View>
+          ) : (
+            <Animated.View entering={FadeInDown.delay(100)}>
+              <GrowthChart
+                entries={record.croissance}
+                sex={childSex}
+                dateNaissance={enfant.birthdate}
+                metric={chartMetric}
+              />
+              <GrowthLegend
+                childName={enfant.name}
+                sex={childSex}
+              />
+            </Animated.View>
+          )}
         </>
       )}
 
@@ -611,16 +686,21 @@ function CroissanceTab({ record, enfant, onAdd }: { record: HealthRecord; enfant
             <Text style={[styles.tableCell, styles.tableCellHeader, { color: colors.textMuted }]}>PC</Text>
           </View>
           {entries.map((entry, i) => (
-            <Animated.View
+            <TouchableOpacity
               key={`${entry.date}-${i}`}
-              entering={FadeInDown.delay(i * 50)}
-              style={[styles.tableRow, i < entries.length - 1 && { borderBottomColor: colors.separator, borderBottomWidth: StyleSheet.hairlineWidth }]}
+              activeOpacity={0.6}
+              onPress={() => onEditEntry?.(entry)}
             >
-              <Text style={[styles.tableCell, { color: colors.text }]}>{formatDateDisplay(entry.date)}</Text>
-              <Text style={[styles.tableCell, { color: colors.text }]}>{entry.poids != null ? `${entry.poids} kg` : '—'}</Text>
-              <Text style={[styles.tableCell, { color: colors.text }]}>{entry.taille != null ? `${entry.taille} cm` : '—'}</Text>
-              <Text style={[styles.tableCell, { color: colors.text }]}>{entry.perimetre != null ? `${entry.perimetre}` : '—'}</Text>
-            </Animated.View>
+              <Animated.View
+                entering={FadeInDown.delay(i * 50)}
+                style={[styles.tableRow, i < entries.length - 1 && { borderBottomColor: colors.separator, borderBottomWidth: StyleSheet.hairlineWidth }]}
+              >
+                <Text style={[styles.tableCell, { color: colors.text }]}>{formatDateDisplay(entry.date)}</Text>
+                <Text style={[styles.tableCell, { color: colors.text }]}>{entry.poids != null ? `${entry.poids} kg` : '—'}</Text>
+                <Text style={[styles.tableCell, { color: colors.text }]}>{entry.taille != null ? `${entry.taille} cm` : '—'}</Text>
+                <Text style={[styles.tableCell, { color: colors.text }]}>{entry.perimetre != null ? `${entry.perimetre}` : '—'}</Text>
+              </Animated.View>
+            </TouchableOpacity>
           ))}
         </View>
       )}
@@ -944,6 +1024,7 @@ const styles = StyleSheet.create({
   emptySubtitle: { fontSize: FontSize.sm, textAlign: 'center' },
   emptySection: { alignItems: 'center', paddingVertical: Spacing['3xl'] },
   emptySectionText: { fontSize: FontSize.sm, textAlign: 'center' },
+  miniChartLabel: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, marginBottom: Spacing.sm, paddingHorizontal: Spacing['2xl'] },
 });
 
 const formStyles = StyleSheet.create({
@@ -979,4 +1060,14 @@ const formStyles = StyleSheet.create({
     marginRight: Spacing.sm,
   },
   chipText: { fontSize: FontSize.caption, fontWeight: FontWeight.semibold },
+  deleteBtn: {
+    marginTop: Spacing['2xl'],
+    paddingVertical: Spacing.lg,
+    borderRadius: Radius.base,
+    alignItems: 'center',
+  },
+  deleteBtnText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+  },
 });
