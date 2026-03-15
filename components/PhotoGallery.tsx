@@ -12,6 +12,7 @@ import {
   Image,
   TouchableOpacity,
   SectionList,
+  RefreshControl,
   StyleSheet,
   Dimensions,
 } from 'react-native';
@@ -112,9 +113,9 @@ export function PhotoGallery({
       sections={sections}
       keyExtractor={(item, index) => `row-${index}-${item[0]}`}
       stickySectionHeadersEnabled
-      onRefresh={onRefresh}
-      refreshing={refreshing}
-      tintColor={primaryColor}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primaryColor} />
+      }
       contentContainerStyle={styles.listContent}
       showsVerticalScrollIndicator={false}
       getItemLayout={(data, index) => ({

@@ -22,7 +22,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import {
   format,
@@ -97,6 +97,7 @@ export default function PhotosScreen() {
   const [activeTab, setActiveTab] = useState<TabMode>('photos');
   const photoGridRef = useRef<View>(null);
   const [photoCacheBust, setPhotoCacheBust] = useState(0);
+  const router = useRouter();
   const { addNew } = useLocalSearchParams<{ addNew?: string }>();
   const [viewMode, setViewMode] = useState<'calendar' | 'gallery'>('calendar');
   const [memoryEditorVisible, setMemoryEditorVisible] = useState(false);
@@ -259,17 +260,28 @@ export default function PhotosScreen() {
             {activeTab === 'photos' ? `${photoCount} photos` : `${filteredMemories.length} souvenirs`}
           </Text>
           {activeTab === 'photos' && (
-            <TouchableOpacity
-              style={[styles.viewToggle, { backgroundColor: colors.cardAlt }]}
-              onPress={() => setViewMode(v => v === 'calendar' ? 'gallery' : 'calendar')}
-              activeOpacity={0.7}
-              accessibilityLabel={viewMode === 'calendar' ? 'Passer en vue galerie' : 'Passer en vue calendrier'}
-              accessibilityRole="button"
-            >
-              <Text style={styles.viewToggleText}>
-                {viewMode === 'calendar' ? '▦' : '📅'}
-              </Text>
-            </TouchableOpacity>
+            <>
+              <TouchableOpacity
+                style={[styles.viewToggle, { backgroundColor: colors.cardAlt }]}
+                onPress={() => router.push('/(tabs)/compare')}
+                activeOpacity={0.7}
+                accessibilityLabel="Comparer des photos"
+                accessibilityRole="button"
+              >
+                <Text style={styles.viewToggleText}>⚖️</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.viewToggle, { backgroundColor: colors.cardAlt }]}
+                onPress={() => setViewMode(v => v === 'calendar' ? 'gallery' : 'calendar')}
+                activeOpacity={0.7}
+                accessibilityLabel={viewMode === 'calendar' ? 'Passer en vue galerie' : 'Passer en vue calendrier'}
+                accessibilityRole="button"
+              >
+                <Text style={styles.viewToggleText}>
+                  {viewMode === 'calendar' ? '▦' : '📅'}
+                </Text>
+              </TouchableOpacity>
+            </>
           )}
         </View>
       </View>
@@ -436,7 +448,7 @@ export default function PhotosScreen() {
           ) : (
             <PhotoGallery
               photoDates={selectedEnfant ? (photoDates[selectedEnfant.id] ?? []) : []}
-              getPhotoUri={(date: string) => selectedEnfant ? getPhotoUri(selectedEnfant.name, date) : ''}
+              getPhotoUri={(date: string) => (selectedEnfant ? getPhotoUri(selectedEnfant.name, date) : '') ?? ''}
               cacheBust={photoCacheBust}
               onPhotoPress={(dateStr: string) => {
                 const idx = allPhotos.findIndex(p => p.date === dateStr);
@@ -545,6 +557,7 @@ export default function PhotosScreen() {
             initialIndex={viewingPhotoIndex}
             onClose={() => setViewingPhotoIndex(-1)}
             onRetake={(dateStr) => pickPhoto(new Date(dateStr + 'T00:00:00'))}
+            onCompare={(dateStr) => router.push({ pathname: '/(tabs)/compare', params: { initialDate: dateStr } })}
           />
         )}
       </Modal>

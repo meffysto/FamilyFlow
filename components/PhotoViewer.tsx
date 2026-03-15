@@ -43,9 +43,10 @@ interface PhotoViewerProps {
   initialIndex: number;
   onClose: () => void;
   onRetake: (date: string) => void;
+  onCompare?: (date: string) => void;
 }
 
-export function PhotoViewer({ photos, initialIndex, onClose, onRetake }: PhotoViewerProps) {
+export function PhotoViewer({ photos, initialIndex, onClose, onRetake, onCompare }: PhotoViewerProps) {
   const flatListRef = useRef<FlatList>(null);
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [controlsVisible, setControlsVisible] = useState(true);
@@ -169,17 +170,32 @@ export function PhotoViewer({ photos, initialIndex, onClose, onRetake }: PhotoVi
             <Text style={styles.counterText}>
               {currentIndex + 1} / {photos.length}
             </Text>
-            <TouchableOpacity
-              style={styles.retakeBtn}
-              onPress={() => {
-                if (currentPhoto) {
-                  onClose();
-                  setTimeout(() => onRetake(currentPhoto.date), 400);
-                }
-              }}
-            >
-              <Text style={styles.retakeBtnText}>📷 Reprendre</Text>
-            </TouchableOpacity>
+            <View style={styles.footerActions}>
+              <TouchableOpacity
+                style={styles.retakeBtn}
+                onPress={() => {
+                  if (currentPhoto) {
+                    onClose();
+                    setTimeout(() => onRetake(currentPhoto.date), 400);
+                  }
+                }}
+              >
+                <Text style={styles.retakeBtnText}>📷 Reprendre</Text>
+              </TouchableOpacity>
+              {onCompare && (
+                <TouchableOpacity
+                  style={styles.retakeBtn}
+                  onPress={() => {
+                    if (currentPhoto) {
+                      onClose();
+                      setTimeout(() => onCompare(currentPhoto.date), 400);
+                    }
+                  }}
+                >
+                  <Text style={styles.retakeBtnText}>⚖️ Comparer</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         </>
       )}
@@ -246,8 +262,12 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.6)',
     fontWeight: '500',
   },
-  retakeBtn: {
+  footerActions: {
+    flexDirection: 'row',
+    gap: 10,
     marginTop: 8,
+  },
+  retakeBtn: {
     paddingHorizontal: 24,
     paddingVertical: 10,
     borderRadius: 12,
