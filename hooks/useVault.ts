@@ -77,6 +77,7 @@ import { format } from 'date-fns';
 import { parseJournalStats } from '../lib/journal-stats';
 import type { JournalSummaryEntry, VaultContext as AIVaultContext } from '../lib/ai-service';
 import { refreshWidget, refreshJournalWidget } from '../lib/widget-bridge';
+import { syncWidgetFeedingsToVault } from '../lib/widget-sync';
 import { shouldSendWeeklySummary, buildAndSendWeeklySummary } from '../lib/telegram';
 
 export const VAULT_PATH_KEY = 'vault_path';
@@ -723,6 +724,9 @@ export function useVaultInternal(): VaultState {
       // Mettre à jour les widgets iOS
       refreshWidget(val(results[5], []), val(results[1], []), rdvResult);
       refreshJournalWidget(profiles);
+
+      // Sync feedings du widget vers le vault markdown (fire-and-forget)
+      syncWidgetFeedingsToVault(vault).catch(() => {});
 
       // Auto-envoi résumé hebdo IA le dimanche (fire-and-forget)
       loadNotifConfig().then(async (notifCfg) => {

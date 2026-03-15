@@ -194,7 +194,7 @@ function DashboardZenStateInner({ isChildMode, tomorrow }: DashboardZenStateProp
               tomorrow!.tasks > 0 && `${tomorrow!.tasks} tâche${tomorrow!.tasks > 1 ? 's' : ''}`,
               tomorrow!.rdvs > 0 && `${tomorrow!.rdvs} RDV`,
               tomorrow!.meals > 0 && `${tomorrow!.meals} repas`,
-            ].filter(Boolean).join(' \u00B7 ')}
+            ].filter(Boolean).join(' · ')}
           </Text>
           {tomorrow!.firstRdv && (
             <Text style={[styles.tomorrowDetail, { color: colors.textFaint }]}>

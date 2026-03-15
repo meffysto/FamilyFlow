@@ -53,6 +53,7 @@ import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { PhotoViewer } from '../../components/PhotoViewer';
 import { computePhotoStats } from '../../lib/photo-stats';
+import { PhotoGallery } from '../../components/PhotoGallery';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const CALENDAR_PADDING = 16;
@@ -97,6 +98,7 @@ export default function PhotosScreen() {
   const photoGridRef = useRef<View>(null);
   const [photoCacheBust, setPhotoCacheBust] = useState(0);
   const { addNew } = useLocalSearchParams<{ addNew?: string }>();
+  const [viewMode, setViewMode] = useState<'calendar' | 'gallery'>('calendar');
   const [memoryEditorVisible, setMemoryEditorVisible] = useState(false);
   const [editingMemory, setEditingMemory] = useState<import('../../lib/types').Memory | null>(null);
 
@@ -252,9 +254,24 @@ export default function PhotosScreen() {
         <Text style={[styles.title, { color: colors.text }]}>
           {activeTab === 'photos' ? '📸 Photos' : '🌟 Souvenirs'}
         </Text>
-        <Text style={[styles.stats, { color: colors.textMuted }]}>
-          {activeTab === 'photos' ? `${photoCount} photos` : `${filteredMemories.length} souvenirs`}
-        </Text>
+        <View style={styles.headerRight}>
+          <Text style={[styles.stats, { color: colors.textMuted }]}>
+            {activeTab === 'photos' ? `${photoCount} photos` : `${filteredMemories.length} souvenirs`}
+          </Text>
+          {activeTab === 'photos' && (
+            <TouchableOpacity
+              style={[styles.viewToggle, { backgroundColor: colors.cardAlt }]}
+              onPress={() => setViewMode(v => v === 'calendar' ? 'gallery' : 'calendar')}
+              activeOpacity={0.7}
+              accessibilityLabel={viewMode === 'calendar' ? 'Passer en vue galerie' : 'Passer en vue calendrier'}
+              accessibilityRole="button"
+            >
+              <Text style={styles.viewToggleText}>
+                {viewMode === 'calendar' ? '▦' : '📅'}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* Mode tabs */}
@@ -302,119 +319,134 @@ export default function PhotosScreen() {
 
       {activeTab === 'photos' ? (
         <>
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
-            }
-          >
-            {/* Month navigation */}
-            <View style={styles.monthNav}>
-              <TouchableOpacity
-                style={[styles.monthArrow, { backgroundColor: colors.card }]}
-                onPress={() => setCurrentMonth((m) => subMonths(m, 1))}
-              >
-                <Text style={[styles.monthArrowText, { color: primary }]}>‹</Text>
-              </TouchableOpacity>
-              <Text style={[styles.monthLabel, { color: colors.text }]}>{monthLabelCapitalized}</Text>
-              <TouchableOpacity
-                style={[styles.monthArrow, { backgroundColor: colors.card }]}
-                onPress={() => setCurrentMonth((m) => addMonths(m, 1))}
-              >
-                <Text style={[styles.monthArrowText, { color: primary }]}>›</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Stats streak */}
-            {photoStats && (
-              <View style={styles.statsRow}>
-                <View style={[
-                  styles.statPill,
-                  { backgroundColor: photoStats.currentStreak >= 7 ? colors.successBg : photoStats.currentStreak === 0 ? colors.warningBg : colors.cardAlt },
+          {/* Stats streak — visible dans les deux modes */}
+          {photoStats && (
+            <View style={[styles.statsRow, { backgroundColor: colors.bg }]}>
+              <View style={[
+                styles.statPill,
+                { backgroundColor: photoStats.currentStreak >= 7 ? colors.successBg : photoStats.currentStreak === 0 ? colors.warningBg : colors.cardAlt },
+              ]}>
+                <Text style={[
+                  styles.statPillText,
+                  { color: photoStats.currentStreak >= 7 ? colors.successText : photoStats.currentStreak === 0 ? colors.warningText : colors.textSub },
                 ]}>
-                  <Text style={[
-                    styles.statPillText,
-                    { color: photoStats.currentStreak >= 7 ? colors.successText : photoStats.currentStreak === 0 ? colors.warningText : colors.textSub },
-                  ]}>
-                    🔥 {photoStats.currentStreak}j
-                  </Text>
-                </View>
+                  🔥 {photoStats.currentStreak}j
+                </Text>
+              </View>
+              <View style={[styles.statPill, { backgroundColor: colors.cardAlt }]}>
+                <Text style={[styles.statPillText, { color: colors.textSub }]}>
+                  📸 {photoStats.thisMonthCount}/{photoStats.thisMonthTotal}
+                </Text>
+              </View>
+              {photoStats.longestStreak > 0 && (
                 <View style={[styles.statPill, { backgroundColor: colors.cardAlt }]}>
                   <Text style={[styles.statPillText, { color: colors.textSub }]}>
-                    📸 {photoStats.thisMonthCount}/{photoStats.thisMonthTotal}
+                    🏆 {photoStats.longestStreak}j
                   </Text>
                 </View>
-                {photoStats.longestStreak > 0 && (
-                  <View style={[styles.statPill, { backgroundColor: colors.cardAlt }]}>
-                    <Text style={[styles.statPillText, { color: colors.textSub }]}>
-                      🏆 {photoStats.longestStreak}j
-                    </Text>
-                  </View>
-                )}
+              )}
+            </View>
+          )}
+
+          {viewMode === 'calendar' ? (
+            <ScrollView
+              style={styles.scroll}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
+              }
+            >
+              {/* Month navigation */}
+              <View style={styles.monthNav}>
+                <TouchableOpacity
+                  style={[styles.monthArrow, { backgroundColor: colors.card }]}
+                  onPress={() => setCurrentMonth((m) => subMonths(m, 1))}
+                >
+                  <Text style={[styles.monthArrowText, { color: primary }]}>‹</Text>
+                </TouchableOpacity>
+                <Text style={[styles.monthLabel, { color: colors.text }]}>{monthLabelCapitalized}</Text>
+                <TouchableOpacity
+                  style={[styles.monthArrow, { backgroundColor: colors.card }]}
+                  onPress={() => setCurrentMonth((m) => addMonths(m, 1))}
+                >
+                  <Text style={[styles.monthArrowText, { color: primary }]}>›</Text>
+                </TouchableOpacity>
               </View>
-            )}
 
-            {/* Weekday headers */}
-            <View style={styles.weekdayRow}>
-              {WEEKDAY_LABELS.map((label, i) => (
-                <View key={i} style={styles.weekdayCell}>
-                  <Text style={[styles.weekdayText, { color: colors.textFaint }]}>{label}</Text>
-                </View>
-              ))}
-            </View>
+              {/* Weekday headers */}
+              <View style={styles.weekdayRow}>
+                {WEEKDAY_LABELS.map((label, i) => (
+                  <View key={i} style={styles.weekdayCell}>
+                    <Text style={[styles.weekdayText, { color: colors.textFaint }]}>{label}</Text>
+                  </View>
+                ))}
+              </View>
 
-            {/* Calendar grid */}
-            <View style={styles.calendarGrid}>
-              {calendarDays.padding.map((_, i) => (
-                <View key={`pad-${i}`} style={styles.dayCell} />
-              ))}
+              {/* Calendar grid */}
+              <View style={styles.calendarGrid}>
+                {calendarDays.padding.map((_, i) => (
+                  <View key={`pad-${i}`} style={styles.dayCell} />
+                ))}
 
-              {calendarDays.days.map((date) => {
-                const dateStr = format(date, 'yyyy-MM-dd');
-                const hasPhoto = photoSet.has(dateStr);
-                const today = isToday(date);
-                const future = isFuture(date);
-                const dayNum = date.getDate();
-                const rawUri = hasPhoto && selectedEnfant
-                  ? getPhotoUri(selectedEnfant.name, dateStr)
-                  : null;
-                const photoUri = rawUri ? `${rawUri}?v=${photoCacheBust}` : null;
+                {calendarDays.days.map((date) => {
+                  const dateStr = format(date, 'yyyy-MM-dd');
+                  const hasPhoto = photoSet.has(dateStr);
+                  const today = isToday(date);
+                  const future = isFuture(date);
+                  const dayNum = date.getDate();
+                  const rawUri = hasPhoto && selectedEnfant
+                    ? getPhotoUri(selectedEnfant.name, dateStr)
+                    : null;
+                  const photoUri = rawUri ? `${rawUri}?v=${photoCacheBust}` : null;
 
-                return (
-                  <TouchableOpacity
-                    key={dateStr}
-                    style={[
-                      styles.dayCell,
-                      { backgroundColor: colors.card },
-                      today && styles.dayCellToday,
-                      today && { borderColor: primary },
-                      future && { backgroundColor: colors.cardAlt, opacity: 0.5 },
-                    ]}
-                    onPress={() => onDayPress(date)}
-                    disabled={future}
-                    activeOpacity={0.7}
-                  >
-                    {hasPhoto && photoUri ? (
-                      <Image source={{ uri: photoUri }} style={styles.dayPhoto} resizeMode="cover" />
-                    ) : today && !hasPhoto ? (
-                      <PulsingCamera color={primary} />
-                    ) : null}
-                    <Text style={[
-                      styles.dayNum,
-                      { color: colors.textSub },
-                      today && { color: primary, fontWeight: '800' },
-                      future && { color: colors.textFaint },
-                      hasPhoto && styles.dayNumWithPhoto,
-                    ]}>
-                      {dayNum}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </ScrollView>
+                  return (
+                    <TouchableOpacity
+                      key={dateStr}
+                      style={[
+                        styles.dayCell,
+                        { backgroundColor: colors.card },
+                        today && styles.dayCellToday,
+                        today && { borderColor: primary },
+                        future && { backgroundColor: colors.cardAlt, opacity: 0.5 },
+                      ]}
+                      onPress={() => onDayPress(date)}
+                      disabled={future}
+                      activeOpacity={0.7}
+                    >
+                      {hasPhoto && photoUri ? (
+                        <Image source={{ uri: photoUri }} style={styles.dayPhoto} resizeMode="cover" />
+                      ) : today && !hasPhoto ? (
+                        <PulsingCamera color={primary} />
+                      ) : null}
+                      <Text style={[
+                        styles.dayNum,
+                        { color: colors.textSub },
+                        today && { color: primary, fontWeight: '800' },
+                        future && { color: colors.textFaint },
+                        hasPhoto && styles.dayNumWithPhoto,
+                      ]}>
+                        {dayNum}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          ) : (
+            <PhotoGallery
+              photoDates={selectedEnfant ? (photoDates[selectedEnfant.id] ?? []) : []}
+              getPhotoUri={(date: string) => selectedEnfant ? getPhotoUri(selectedEnfant.name, date) : ''}
+              cacheBust={photoCacheBust}
+              onPhotoPress={(dateStr: string) => {
+                const idx = allPhotos.findIndex(p => p.date === dateStr);
+                if (idx >= 0) setViewingPhotoIndex(idx);
+              }}
+              onRefresh={onRefresh}
+              refreshing={refreshing}
+              primaryColor={primary}
+            />
+          )}
 
           {selectedEnfant && (
             <TouchableOpacity
@@ -557,7 +589,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   title: { fontSize: 20, fontWeight: '800' },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   stats: { fontSize: 13, fontWeight: '500' },
+  viewToggle: {
+    width: 34, height: 34, borderRadius: 10,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  viewToggleText: { fontSize: 18 },
   modeTabBar: {
     flexDirection: 'row',
     paddingHorizontal: 16,
@@ -596,7 +634,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 8,
-    marginBottom: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
   },
   statPill: {
     paddingHorizontal: 10,

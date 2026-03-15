@@ -46,6 +46,8 @@ module.exports = function withMaJourneeWidget(config) {
 
     // 2d. Ajouter les fichiers sources au target (manuellement pour éviter l'ajout au main target)
     addFileToTarget(proj, target, groupKey, 'MaJourneeWidget.swift', 'sourcecode.swift', 'Sources');
+    addFileToTarget(proj, target, groupKey, 'JournalBebeWidget.swift', 'sourcecode.swift', 'Sources');
+    addFileToTarget(proj, target, groupKey, 'FamilyVaultWidgets.swift', 'sourcecode.swift', 'Sources');
 
     // 2e. Ajouter Assets.xcassets comme folder reference au target
     addFileToTarget(proj, target, groupKey, 'Assets.xcassets', 'folder.assetcatalog', 'Resources');

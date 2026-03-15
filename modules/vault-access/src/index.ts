@@ -13,6 +13,9 @@ interface VaultAccessModuleType {
   isDirectory(uri: string): Promise<boolean>;
   fileExists(uri: string): Promise<boolean>;
   updateWidgetData(json: string): Promise<void>;
+  updateJournalWidgetData(json: string): Promise<void>;
+  readJournalWidgetData(): Promise<string>;
+  clearJournalWidgetFeedings(): Promise<void>;
   stopAccessing(): void;
   clearBookmark(): void;
 }
@@ -152,4 +155,33 @@ export async function downloadICloudFiles(uri: string): Promise<number> {
 export async function updateWidgetData(json: string): Promise<void> {
   if (!VaultAccessNative) return;
   return VaultAccessNative.updateWidgetData(json);
+}
+
+/**
+ * Write journal bébé widget data JSON to App Group shared container.
+ * Merges childName with existing feedings (written by the widget itself).
+ * No-op on non-iOS.
+ */
+export async function updateJournalWidgetData(json: string): Promise<void> {
+  if (!VaultAccessNative) return;
+  return VaultAccessNative.updateJournalWidgetData(json);
+}
+
+/**
+ * Read journal bébé widget JSON from App Group container.
+ * Returns empty string on non-iOS or if file doesn't exist.
+ */
+export async function readJournalWidgetData(): Promise<string> {
+  if (!VaultAccessNative) return '';
+  return VaultAccessNative.readJournalWidgetData();
+}
+
+/**
+ * Clear feedings and activeFeeding from journal widget JSON.
+ * Keeps childName and lastSide intact.
+ * No-op on non-iOS.
+ */
+export async function clearJournalWidgetFeedings(): Promise<void> {
+  if (!VaultAccessNative) return;
+  return VaultAccessNative.clearJournalWidgetFeedings();
 }

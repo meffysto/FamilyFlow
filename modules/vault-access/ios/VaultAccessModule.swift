@@ -299,6 +299,77 @@ public class VaultAccessModule: Module {
       UserDefaults.standard.removeObject(forKey: "vault_uri")
     }
 
+    /// Write journal bébé widget data JSON to App Group container and reload timeline
+    AsyncFunction("updateJournalWidgetData") { (jsonString: String) in
+      guard let containerURL = FileManager.default.containerURL(
+        forSecurityApplicationGroupIdentifier: "group.com.familyvault.dev"
+      ) else {
+        throw NSError(domain: "VaultAccess", code: 2, userInfo: [
+          NSLocalizedDescriptionKey: "App Group container introuvable"
+        ])
+      }
+
+      let fileURL = containerURL.appendingPathComponent("journal-bebe-widget.json")
+
+      // Lire les données existantes pour conserver les feedings enregistrés par le widget
+      var existingData: [String: Any] = [:]
+      if let data = try? Data(contentsOf: fileURL),
+         let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+        existingData = json
+      }
+
+      // Parser les nouvelles données (childName de l'app)
+      if let newData = jsonString.data(using: .utf8),
+         let newJson = try? JSONSerialization.jsonObject(with: newData) as? [String: Any] {
+        // Mettre à jour le childName mais garder les feedings existants
+        existingData["childName"] = newJson["childName"]
+        if existingData["feedings"] == nil {
+          existingData["feedings"] = [] as [[String: Any]]
+        }
+      }
+
+      let mergedData = try JSONSerialization.data(withJSONObject: existingData, options: .prettyPrinted)
+      try mergedData.write(to: fileURL)
+
+      WidgetCenter.shared.reloadTimelines(ofKind: "JournalBebeWidget")
+    }
+
+    /// Read journal bébé widget JSON from App Group container
+    AsyncFunction("readJournalWidgetData") { () -> String in
+      guard let containerURL = FileManager.default.containerURL(
+        forSecurityApplicationGroupIdentifier: "group.com.familyvault.dev"
+      ) else {
+        return ""
+      }
+
+      let fileURL = containerURL.appendingPathComponent("journal-bebe-widget.json")
+      guard let data = try? Data(contentsOf: fileURL),
+            let content = String(data: data, encoding: .utf8) else {
+        return ""
+      }
+      return content
+    }
+
+    /// Clear feedings and activeFeeding from journal widget JSON, keep childName and lastSide
+    AsyncFunction("clearJournalWidgetFeedings") { () in
+      guard let containerURL = FileManager.default.containerURL(
+        forSecurityApplicationGroupIdentifier: "group.com.familyvault.dev"
+      ) else { return }
+
+      let fileURL = containerURL.appendingPathComponent("journal-bebe-widget.json")
+      guard let data = try? Data(contentsOf: fileURL),
+            var json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
+
+      // Garder childName et lastSide, vider feedings et activeFeeding
+      json["feedings"] = [] as [[String: Any]]
+      json.removeValue(forKey: "activeFeeding")
+
+      let cleanedData = try JSONSerialization.data(withJSONObject: json, options: .prettyPrinted)
+      try cleanedData.write(to: fileURL)
+
+      WidgetCenter.shared.reloadTimelines(ofKind: "JournalBebeWidget")
+    }
+
     /// Write widget data JSON to App Group container and reload timelines
     AsyncFunction("updateWidgetData") { (jsonString: String) in
       guard let containerURL = FileManager.default.containerURL(

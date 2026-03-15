@@ -42,7 +42,7 @@ import { generateInsights, type InsightInput } from '../../lib/insights';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { getCardTemplate } from '../../lib/card-templates';
-import { getFruitForWeek } from '../../lib/pregnancy';
+import { getFruitForWeek, getSizeForWeek } from '../../lib/pregnancy';
 import type { CardTemplateContext } from '../../lib/card-templates';
 
 // Composants de section dashboard
@@ -73,6 +73,19 @@ import {
 
 const PREFS_KEY = 'dashboard_prefs_v1';
 const SMART_SORT_KEY = 'dashboard_smart_sort';
+const ZEN_CONFIG_KEY = 'zen_config_v1';
+
+interface ZenConfig {
+  enabled: boolean;
+  excludedSections: string[];
+}
+
+/** Sections TOUJOURS exclues du calcul zen (non configurables par l'utilisateur) */
+const ZEN_HARDCODED_EXCLUDED = [
+  'wishlist', 'anniversaires', 'lootProgress', 'rewards',
+  'weeklyStats', 'leaderboard', 'defis', 'quicknotifs', 'vacation',
+  'nightMode', 'budget', 'insights',
+];
 
 const ALL_SECTIONS: SectionPref[] = [
   // Essentielles — toujours visibles par défaut
@@ -184,6 +197,7 @@ export default function DashboardScreen() {
   const [smartSort, setSmartSort] = useState(false);
   const [searchVisible, setSearchVisible] = useState(false);
   const [profilePickerVisible, setProfilePickerVisible] = useState(false);
+  const [zenConfig, setZenConfig] = useState<ZenConfig>({ enabled: true, excludedSections: [] });
 
   // Fichiers vault qui existent réellement (pour distinguer "fichier absent" de "données vides")
   const [vaultFileExists, setVaultFileExists] = useState<Record<string, boolean>>({});
@@ -222,7 +236,8 @@ export default function DashboardScreen() {
     Promise.all([
       SecureStore.getItemAsync(PREFS_KEY),
       SecureStore.getItemAsync(SMART_SORT_KEY),
-    ]).then(([raw, smartSortVal]) => {
+      SecureStore.getItemAsync(ZEN_CONFIG_KEY),
+    ]).then(([raw, smartSortVal, zenRaw]) => {
       // Section prefs
       if (raw) {
         try {
@@ -246,6 +261,10 @@ export default function DashboardScreen() {
       }
       // Smart sort toggle
       if (smartSortVal !== null) setSmartSort(smartSortVal === '1');
+      // Zen config
+      if (zenRaw) {
+        try { setZenConfig(JSON.parse(zenRaw)); } catch { /* ignore */ }
+      }
     });
   }, [roleDefaults]);
 
@@ -540,17 +559,31 @@ export default function DashboardScreen() {
     budgetEntries.length]);
 
   // === Mode zen : TOUTES les sections visibles sont masquées (sauf exceptions) ===
-  // Sections exclues du calcul zen — elles restent visibles mais ne bloquent pas le zen
-  const ZEN_EXCLUDED = new Set([
-    'wishlist', 'anniversaires', 'lootProgress', 'rewards',
-    'weeklyStats', 'leaderboard', 'defis', 'quicknotifs', 'vacation',
-    'nightMode', 'budget', 'insights', 'meals',
-  ]);
+  // Combine les exclusions hardcodées (toujours exclues) + les sections exclues par l'utilisateur
+  const ZEN_EXCLUDED = useMemo(() => {
+    const set = new Set(ZEN_HARDCODED_EXCLUDED);
+    // meals est exclu du filtre sectionHidden (toujours visible) — géré via ZEN_ALWAYS_VISIBLE_CONDITIONS
+    set.add('meals');
+    // Ajouter les sections que l'utilisateur a exclues du zen
+    for (const id of zenConfig.excludedSections) {
+      set.add(id);
+    }
+    return set;
+  }, [zenConfig.excludedSections]);
+
   // Sections toujours visibles mais requises pour le zen (condition vérifiée séparément)
-  const ZEN_ALWAYS_VISIBLE_CONDITIONS = useMemo(() => ({
-    meals: todayMeals.length > 0,
-  }), [todayMeals.length]);
+  const ZEN_ALWAYS_VISIBLE_CONDITIONS = useMemo(() => {
+    const conditions: Record<string, boolean> = {};
+    // meals n'est requis que si l'utilisateur ne l'a pas exclu
+    if (!zenConfig.excludedSections.includes('meals')) {
+      conditions.meals = todayMeals.length > 0;
+    }
+    return conditions;
+  }, [todayMeals.length, zenConfig.excludedSections]);
+
   const isDayComplete = useMemo(() => {
+    // Le mode zen doit être activé dans les réglages
+    if (!zenConfig.enabled) return false;
     if (isLoading) return false;
     // Toutes les sections masquables doivent être masquées
     const allHiddenOk = sortedSections
@@ -559,7 +592,7 @@ export default function DashboardScreen() {
     // Les sections toujours visibles doivent remplir leur condition
     const alwaysVisibleOk = Object.values(ZEN_ALWAYS_VISIBLE_CONDITIONS).every(Boolean);
     return allHiddenOk && alwaysVisibleOk;
-  }, [isLoading, sortedSections, sectionHidden, ZEN_ALWAYS_VISIBLE_CONDITIONS]);
+  }, [zenConfig.enabled, isLoading, sortedSections, sectionHidden, ZEN_EXCLUDED, ZEN_ALWAYS_VISIBLE_CONDITIONS]);
 
   // Aperçu de demain (uniquement si mode zen actif)
   const tomorrowPreview = useMemo(() => {
@@ -750,13 +783,17 @@ export default function DashboardScreen() {
           const daysElapsed = totalDays - daysLeft;
           const weeksElapsed = Math.max(0, Math.floor(daysElapsed / 7));
           const fruitEmoji = getFruitForWeek(weeksElapsed);
+          const sizeCm = getSizeForWeek(weeksElapsed);
           return (
             <View key={p.id} style={[styles.ageUpgradeBanner, { backgroundColor: colors.warningBg, borderColor: primary }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Text style={[styles.ageUpgradeTitle, { color: colors.text, flex: 1 }]}>
                   🤰 {p.name} — {daysLeft > 0 ? `J-${daysLeft} (SA ${weeksElapsed})` : daysLeft === 0 ? "C'est pour aujourd'hui !" : `J+${Math.abs(daysLeft)}`}
                 </Text>
-                <Text style={{ fontSize: 28, marginLeft: 8 }}>{fruitEmoji}</Text>
+                <View style={{ alignItems: 'center', marginLeft: 8 }}>
+                  {sizeCm > 0 && <Text style={[{ fontSize: 12, color: colors.textMuted, fontWeight: '600' }]}>{sizeCm} cm</Text>}
+                  <Text style={{ fontSize: 28 }}>{fruitEmoji}</Text>
+                </View>
               </View>
               <Text style={[styles.ageUpgradeDesc, { color: colors.textSub }]}>
                 Terme prévu le {p.dateTerme}

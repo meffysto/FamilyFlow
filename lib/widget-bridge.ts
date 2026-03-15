@@ -5,14 +5,17 @@
  */
 
 import { Platform } from 'react-native';
-import type { MealItem, Task, RDV } from './types';
+import type { MealItem, Task, RDV, Profile } from './types';
+import { isBabyProfile } from './types';
 
 // Import conditionnel du module natif
 let updateWidgetDataNative: ((json: string) => Promise<void>) | null = null;
+let updateJournalWidgetDataNative: ((json: string) => Promise<void>) | null = null;
 if (Platform.OS === 'ios') {
   try {
     const mod = require('../modules/vault-access/src');
     updateWidgetDataNative = mod.updateWidgetData;
+    updateJournalWidgetDataNative = mod.updateJournalWidgetData;
   } catch {
     // Module non disponible
   }
@@ -104,6 +107,29 @@ export function refreshWidget(
 
   const data = buildWidgetData(meals, menageTasks, rdvs);
   updateWidgetDataNative(JSON.stringify(data)).catch(() => {
+    // Widget update non critique — on ignore les erreurs
+  });
+}
+
+/**
+ * Met à jour le widget Journal bébé avec le nom du premier bébé.
+ * Le widget gère lui-même les feedings via AppIntent.
+ * Fire-and-forget — ne bloque jamais l'app.
+ */
+export function refreshJournalWidget(profiles: Profile[]): void {
+  if (Platform.OS !== 'ios' || !updateJournalWidgetDataNative) return;
+
+  // Trouver le premier profil bébé
+  const baby = profiles.find(p =>
+    p.role === 'enfant' &&
+    p.statut !== 'grossesse' &&
+    isBabyProfile(p)
+  );
+
+  if (!baby) return;
+
+  const data = { childName: baby.name };
+  updateJournalWidgetDataNative(JSON.stringify(data)).catch(() => {
     // Widget update non critique — on ignore les erreurs
   });
 }

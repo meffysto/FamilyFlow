@@ -297,7 +297,6 @@ struct MaJourneeEntryView: View {
 
 // MARK: - Widget
 
-@main
 struct MaJourneeWidget: Widget {
     let kind = "MaJourneeWidget"
 
