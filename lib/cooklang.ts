@@ -451,18 +451,36 @@ export function aggregateIngredients(allIngredients: AppIngredient[]): AppIngred
 
 /** Map ingredient name to shopping category */
 const CATEGORY_MAP: [RegExp, string][] = [
-  [/poulet|bœuf|boeuf|porc|veau|agneau|steak|saucisse|jambon|lardons|bacon|viande|dinde|canard|merguez|guanciale/i, '🥩 Viandes'],
-  [/saumon|thon|crevette|poisson|cabillaud|moule|calamar|sardine/i, '🐟 Poissons'],
-  [/lait|crème|beurre|fromage|yaourt|yogourt|mascarpone|ricotta|mozzarella|gruyère|parmesan|pecorino|emmental|comté/i, '🧀 Crèmerie'],
+  // Viandes & charcuterie
+  [/poulet|bœuf|boeuf|porc|veau|agneau|steak|saucisse|jambon|lardons|bacon|viande|dinde|canard|merguez|guanciale|magret|escalope|côtelette|cotelette|rôti|roti|filet|entrecôte|entrecote|lapin|tournedos|gigot|côte|bavette|paupiette|andouillette|boudin|chorizo|pancetta|mortadelle|coppa|terrine|pâté|pate|os à moelle|gésier|foie/i, '🥩 Viandes'],
+  // Poissons & fruits de mer
+  [/saumon|thon|crevette|poisson|cabillaud|moule|calamar|sardine|truite|bar |loup|dorade|daurade|lieu|sole|merlu|maquereau|anchois|hareng|gambas|langoustine|homard|huître|huitre|coquille|bulot|bigorneau|crabe|poulpe|encornet|flétan|fletan|raie|lotte/i, '🐟 Poissons'],
+  // Crèmerie & fromages
+  [/lait|crème|beurre|fromage|yaourt|yogourt|mascarpone|ricotta|mozzarella|gruyère|parmesan|pecorino|emmental|comté|chèvre|chevre|roquefort|camembert|brie|reblochon|raclette|munster|beaufort|cantal|saint-nectaire|bleu|boursin|kiri|petit-suisse|faisselle|crème fraîche|creme fraiche|feta/i, '🧀 Crèmerie'],
+  // Œufs
   [/œuf|oeuf/i, '🥚 Œufs'],
-  [/tomate|oignon|ail|carotte|courgette|poivron|salade|épinard|champignon|pomme de terre|patate|haricot|petit pois|brocoli|chou|céleri|poireau|navet|radis|concombre|aubergine|avocat|artichaut|betterave|fenouil|endive/i, '🥬 Légumes'],
-  [/pomme|poire|banane|orange|citron|fraise|framboise|myrtille|mangue|ananas|kiwi|pêche|abricot|raisin|melon|pastèque|cerise|clémentine/i, '🍎 Fruits'],
-  [/pâtes|riz|spaghetti|penne|fusilli|tagliatelle|nouille|couscous|semoule|quinoa|boulgour/i, '🍝 Féculents'],
-  [/farine|sucre|levure|maïzena|chapelure|cacao|chocolat|vanille|bicarbonate/i, '🧁 Pâtisserie'],
-  [/huile|vinaigre|sauce soja|moutarde|ketchup|mayonnaise|sauce/i, '🫙 Condiments'],
-  [/sel|poivre|cumin|paprika|curry|thym|romarin|basilic|persil|coriandre|origan|cannelle|muscade|curcuma|herbes|épice/i, '🌿 Épices'],
-  [/pain|baguette|brioche|croissant|toast/i, '🥖 Boulangerie'],
-  [/eau|jus|vin|bière|bouillon|lait de coco/i, '🥤 Boissons'],
+  // Légumes
+  [/tomate|oignon|ail|carotte|courgette|poivron|salade|épinard|epinard|champignon|pomme de terre|patate|haricot|petit pois|brocoli|chou|céleri|celeri|poireau|navet|radis|concombre|aubergine|avocat|artichaut|betterave|fenouil|endive|échalote|echalote|courge|potiron|potimarron|butternut|asperge|roquette|mâche|mache|ciboulette|laitue|cresson|blette|topinambour|panais|cœur de palmier|olive|cornichon|câpre|capre/i, '🥬 Légumes'],
+  // Fruits
+  [/pomme(?! de terre)|poire|banane|orange|citron|fraise|framboise|myrtille|mangue|ananas|kiwi|pêche|peche|abricot|raisin|melon|pastèque|pasteque|cerise|clémentine|clementine|nectarine|prune|figue|grenade|litchi|fruit de la passion|noix de coco|pamplemousse|mandarine|groseille|cassis|mirabelle|quetsche|datte|cranberry/i, '🍎 Fruits'],
+  // Féculents & céréales
+  [/pâtes|pate(?!s)|riz|spaghetti|penne|fusilli|tagliatelle|nouille|couscous|semoule|quinoa|boulgour|lentille|pois chiche|flageolet|haricot sec|haricot rouge|haricot blanc|céréale|muesli|flocon|avoine|macaroni|lasagne|gnocchi|tortellini|ravioli|polenta|sarrasin|épeautre|blé/i, '🍝 Féculents'],
+  // Pâtisserie & aide culinaire
+  [/farine|sucre|levure|maïzena|maizena|chapelure|cacao|chocolat|vanille|bicarbonate|poudre d'amande|pralin|pépite|confiture|miel|sirop|gélatine|gelatine|pâte feuilletée|pâte brisée|pâte sablée|sucre glace|sucre vanillé|extrait/i, '🧁 Pâtisserie'],
+  // Condiments & sauces
+  [/huile|vinaigre|sauce soja|moutarde|ketchup|mayonnaise|sauce|concentré de tomate|coulis|pesto|harissa|tabasco|worcestershire|nuoc mam|tamari|tahini|houmous|hummus|tapenade|aïoli|raifort/i, '🫙 Condiments'],
+  // Épices & aromates
+  [/sel|poivre|cumin|paprika|curry|thym|romarin|basilic|persil|coriandre|origan|cannelle|muscade|curcuma|herbes|épice|laurier|safran|gingembre|piment|aneth|estragon|cerfeuil|sauge|menthe|citronnelle|baie|genièvre|cardamome|clou de girofle|fenugrec|sumac|zaatar|ras el hanout|cinq-épices|bouquet garni/i, '🌿 Épices'],
+  // Boulangerie
+  [/pain|baguette|brioche|croissant|toast|pain de mie|wrap|tortilla|naan|pita|focaccia|cracker|biscottes|gressin/i, '🥖 Boulangerie'],
+  // Boissons
+  [/eau|jus|vin|bière|biere|bouillon|lait de coco|soda|limonade|sirop|thé|the|café|cafe|infusion|tisane|cidre|champagne|prosecco|apéritif|aperitif|tonic|cola/i, '🥤 Boissons'],
+  // Surgelés
+  [/surgelé|surgele|glacé|glace|sorbet|pizza surgelée|frite|nugget|cordon bleu/i, '🧊 Surgelés'],
+  // Hygiène & ménage
+  [/savon|shampoing|shampooing|dentifrice|brosse à dent|déodorant|deodorant|papier toilette|essuie-tout|lessive|liquide vaisselle|éponge|eponge|javel|nettoyant|désinfectant|desinfectant|sac poubelle|sopalin|mouchoir|coton|rasoir|serviette hygiénique|gel douche/i, '🧴 Hygiène'],
+  // Bébé
+  [/couche|lingette|sérum physiologique|serum physiologique|biberon|tétine|tetine|lait infantile|petit pot|compote bébé|liniment|crème change|body|bavoir/i, '👶 Bébé'],
 ];
 
 export function categorizeIngredient(name: string): string {

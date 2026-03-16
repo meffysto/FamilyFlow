@@ -348,7 +348,7 @@ export default function MealsScreen() {
     const text = newItemText.trim();
     if (!text) return;
     try {
-      await addCourseItem(text, selectedSection);
+      await addCourseItem(text, selectedSection ?? categorizeIngredient(text));
       setNewItemText('');
     } catch (e) {
       Alert.alert('Erreur', String(e));
