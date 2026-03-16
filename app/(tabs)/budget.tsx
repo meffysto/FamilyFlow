@@ -23,12 +23,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { useAI } from '../../contexts/AIContext';
 import { useToast } from '../../contexts/ToastContext';
 import {
   formatAmount,
@@ -40,6 +42,10 @@ import {
 } from '../../lib/budget';
 import { formatDateForDisplay } from '../../lib/parser';
 import { DateInput } from '../../components/ui/DateInput';
+import { ReceiptReview } from '../../components/ReceiptReview';
+import { captureAndScanReceipt } from '../../lib/receipt-scanner';
+import type { ScanOutcome } from '../../lib/receipt-scanner';
+import type { ReceiptScanResult } from '../../lib/ai-service';
 import type { BudgetCategory, BudgetEntry } from '../../lib/types';
 import { useParentalControls } from '../../contexts/ParentalControlsContext';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
@@ -103,6 +109,21 @@ export default function BudgetScreen() {
   const [labelText, setLabelText] = useState('');
   const [dateText, setDateText] = useState(todayISO());
 
+  // Scanner ticket
+  const { config: aiConfig, isConfigured: aiConfigured } = useAI();
+  const [scanning, setScanning] = useState(false);
+  const [receiptData, setReceiptData] = useState<ReceiptScanResult | null>(null);
+  const [receiptReviewVisible, setReceiptReviewVisible] = useState(false);
+
+  // Valeurs dérivées mémorisées
+  const spent = useMemo(() => totalSpent(budgetEntries), [budgetEntries]);
+  const budgetTotal = useMemo(() => totalBudget(budgetConfig), [budgetConfig]);
+  const categoryNames = useMemo(() => budgetConfig.categories.map(categoryDisplay), [budgetConfig]);
+  const sortedEntries = useMemo(
+    () => [...budgetEntries].sort((a, b) => b.date.localeCompare(a.date)),
+    [budgetEntries]
+  );
+
   useEffect(() => {
     loadBudgetData();
   }, []);
@@ -152,25 +173,71 @@ export default function BudgetScreen() {
     );
   }, [deleteExpense]);
 
-  const spent = totalSpent(budgetEntries);
-  const budget = totalBudget(budgetConfig);
-  const sortedEntries = useMemo(
-    () => [...budgetEntries].sort((a, b) => b.date.localeCompare(a.date)),
-    [budgetEntries]
-  );
+  const handleScanReceipt = useCallback(async () => {
+    if (!aiConfig) {
+      showToast('Configure ta clé API dans les réglages', 'error');
+      return;
+    }
+    setScanning(true);
+    try {
+      const outcome = await captureAndScanReceipt(aiConfig, categoryNames);
+      switch (outcome.status) {
+        case 'success':
+          setReceiptData(outcome.data);
+          setReceiptReviewVisible(true);
+          break;
+        case 'error':
+          showToast(outcome.message, 'error');
+          break;
+        case 'cancelled':
+          // L'utilisateur a annulé le picker — pas de feedback
+          break;
+      }
+    } catch {
+      showToast('Erreur lors du scan', 'error');
+    } finally {
+      setScanning(false);
+    }
+  }, [aiConfig, categoryNames, showToast]);
+
+  const handleReceiptSave = useCallback(async (items: Array<{ date: string; category: string; amount: number; label: string }>) => {
+    for (const item of items) {
+      await addExpense(item.date, item.category, item.amount, item.label);
+    }
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    showToast(`${items.length} dépense${items.length > 1 ? 's' : ''} ajoutée${items.length > 1 ? 's' : ''}`, 'success');
+    setReceiptReviewVisible(false);
+    setReceiptData(null);
+  }, [addExpense, showToast]);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
       <View ref={budgetHeaderRef} style={[styles.header, { backgroundColor: colors.bg }]}>
         <Text style={[styles.title, { color: colors.text }]}>Budget</Text>
-        <TouchableOpacity
-          style={[styles.addBtn, { backgroundColor: primary }]}
-          onPress={() => setAddModalVisible(true)}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+ Dépense</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          {aiConfigured && (
+            <TouchableOpacity
+              style={[styles.scanBtn, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}
+              onPress={handleScanReceipt}
+              activeOpacity={0.7}
+              disabled={scanning}
+            >
+              {scanning ? (
+                <ActivityIndicator size="small" color={primary} />
+              ) : (
+                <Text style={[styles.scanBtnText, { color: primary }]}>📷 Ticket</Text>
+              )}
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={[styles.addBtn, { backgroundColor: primary }]}
+            onPress={() => setAddModalVisible(true)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+ Dépense</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Month navigation */}
@@ -206,19 +273,19 @@ export default function BudgetScreen() {
           {/* Total */}
           <View style={[styles.totalCard, { backgroundColor: colors.card }]}>
             <Text style={[styles.totalLabel, { color: colors.textMuted }]}>Total dépensé</Text>
-            <Text style={[styles.totalAmount, { color: spent > budget ? colors.error : colors.text }]}>
+            <Text style={[styles.totalAmount, { color: spent > budgetTotal ? colors.error : colors.text }]}>
               {formatAmount(spent)}
             </Text>
             <Text style={[styles.totalBudget, { color: colors.textMuted }]}>
-              sur {formatAmount(budget)}
+              sur {formatAmount(budgetTotal)}
             </Text>
             <View style={[styles.totalBar, { backgroundColor: colors.borderLight }]}>
               <View
                 style={[
                   styles.totalBarFill,
                   {
-                    width: `${Math.min((spent / budget) * 100, 100)}%`,
-                    backgroundColor: spent > budget ? colors.error : primary,
+                    width: `${Math.min((spent / budgetTotal) * 100, 100)}%`,
+                    backgroundColor: spent > budgetTotal ? colors.error : primary,
                   },
                 ]}
               />
@@ -379,6 +446,15 @@ export default function BudgetScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
+      {/* Modal review ticket scanné */}
+      <ReceiptReview
+        visible={receiptReviewVisible}
+        onClose={() => { setReceiptReviewVisible(false); setReceiptData(null); }}
+        onSave={handleReceiptSave}
+        data={receiptData}
+        categories={categoryNames}
+      />
+
       <ScreenGuide
         screenId="budget"
         targets={[
@@ -399,6 +475,20 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   title: { fontSize: 22, fontWeight: '800' },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  scanBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  scanBtnText: { fontWeight: '700', fontSize: 14 },
   addBtn: {
     paddingHorizontal: 16,
     paddingVertical: 8,

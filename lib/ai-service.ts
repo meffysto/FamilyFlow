@@ -356,14 +356,40 @@ const API_URL = 'https://api.anthropic.com/v1/messages';
 const API_VERSION = '2023-06-01';
 const MAX_TOKENS = 512;
 
+/** Image en base64 pour l'API Vision */
+interface ImageBlock {
+  base64: string;
+  mediaType: string;
+}
+
 /** Appelle l'API Claude. Retourne le texte ou une erreur. */
 async function callClaude(
   config: AIConfig,
   systemPrompt: string,
   messages: AIMessage[],
   maxTokens: number = MAX_TOKENS,
+  images?: ImageBlock[],
 ): Promise<AIResponse> {
   try {
+    // Construire les messages — ajout des blocs image si fournis
+    const formattedMessages = (!images || images.length === 0)
+      ? messages.map((m) => ({ role: m.role, content: m.content }))
+      : messages.map((m, idx) => {
+          const isLastUser = m.role === 'user' && idx === messages.length - 1;
+          if (isLastUser) {
+            const content: Array<
+              | { type: 'image'; source: { type: 'base64'; media_type: string; data: string } }
+              | { type: 'text'; text: string }
+            > = images.map((img) => ({
+              type: 'image' as const,
+              source: { type: 'base64' as const, media_type: img.mediaType, data: img.base64 },
+            }));
+            content.push({ type: 'text' as const, text: m.content });
+            return { role: m.role, content };
+          }
+          return { role: m.role, content: m.content };
+        });
+
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: {
@@ -376,7 +402,7 @@ async function callClaude(
         model: config.model,
         max_tokens: maxTokens,
         system: systemPrompt,
-        messages: messages.map((m) => ({ role: m.role, content: m.content })),
+        messages: formattedMessages,
       }),
     });
 
@@ -574,4 +600,102 @@ export async function generateAISuggestions(
   if (resp.error) return resp;
 
   return { text: deanonymize(resp.text, anonMap) };
+}
+
+// ─── Scan ticket de caisse (Vision) ──────────────────────────────────────────
+
+/** Résultat structuré d'un scan de ticket de caisse */
+export interface ReceiptScanResult {
+  store: string;
+  date: string; // YYYY-MM-DD
+  items: Array<{ label: string; amount: number; category: string }>;
+  total: number;
+}
+
+/** Erreur spécifique au scan pour remonter le message à l'UI */
+export class ReceiptScanError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ReceiptScanError';
+  }
+}
+
+/** Scanne un ticket de caisse via Claude Vision et extrait les articles */
+export async function scanReceiptImage(
+  config: AIConfig,
+  imageBase64: string,
+  mediaType: string,
+  categories: string[],
+): Promise<ReceiptScanResult> {
+  const categoriesList = categories.join(', ');
+  const today = new Date().toISOString().slice(0, 10);
+
+  const systemPrompt = `Tu es un assistant spécialisé dans l'extraction de données de tickets de caisse français.
+Tu réponds UNIQUEMENT avec du JSON valide, sans markdown, sans backticks, sans texte avant ou après.
+
+Format de réponse :
+{
+  "store": "Nom du magasin",
+  "date": "YYYY-MM-DD",
+  "items": [
+    { "label": "Nom article", "amount": 3.99, "category": "catégorie" }
+  ],
+  "total": 42.50
+}
+
+Règles :
+- Le ticket peut être orienté dans n'importe quel sens (horizontal, vertical, tourné) — adapte ta lecture
+- Le montant (amount) est le prix total de la ligne (prix unitaire × quantité si indiqué)
+- Ignore les lignes de remise, sous-totaux intermédiaires, TVA, et moyens de paiement
+- La date doit être au format YYYY-MM-DD. Si illisible, utilise ${today}
+- Catégories disponibles : ${categoriesList}
+- Choisis la catégorie la plus pertinente pour chaque article
+- Si le magasin n'est pas lisible, mets une chaîne vide
+- Inclus TOUS les articles visibles, même partiellement lisibles
+- Si l'image n'est pas un ticket de caisse, réponds {"store":"","date":"","items":[],"total":0}`;
+
+  const messages: AIMessage[] = [
+    { role: 'user', content: 'Extrais les données de ce ticket de caisse.' },
+  ];
+
+  // Utiliser Sonnet pour la qualité Vision
+  const sonnetConfig = { ...config, model: 'claude-sonnet-4-6' };
+  const resp = await callClaude(
+    sonnetConfig,
+    systemPrompt,
+    messages,
+    4096,
+    [{ base64: imageBase64, mediaType }],
+  );
+
+  if (resp.error) {
+    if (__DEV__) console.log('🧾 [RECEIPT] Erreur Vision:', resp.error);
+    throw new ReceiptScanError(resp.error);
+  }
+
+  // Parser la réponse JSON
+  try {
+    // Nettoyer les éventuels blocs markdown
+    const cleaned = resp.text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+
+    if (__DEV__) console.log('🧾 [RECEIPT] Réponse brute (100 premiers chars):', cleaned.slice(0, 100));
+
+    const parsed = JSON.parse(cleaned);
+
+    return {
+      store: typeof parsed.store === 'string' ? parsed.store : '',
+      date: typeof parsed.date === 'string' ? parsed.date : '',
+      items: Array.isArray(parsed.items)
+        ? parsed.items.map((item: any) => ({
+            label: typeof item.label === 'string' ? item.label : '',
+            amount: typeof item.amount === 'number' ? item.amount : 0,
+            category: typeof item.category === 'string' ? item.category : categories[0] || '',
+          }))
+        : [],
+      total: typeof parsed.total === 'number' ? parsed.total : 0,
+    };
+  } catch (e) {
+    if (__DEV__) console.log('🧾 [RECEIPT] Erreur parsing JSON:', e, '\nRéponse brute:', resp.text);
+    throw new ReceiptScanError('Impossible de lire la réponse IA');
+  }
 }
