@@ -29,6 +29,7 @@ interface GridItem {
   emoji: string;
   label: string;
   route: string;
+  params?: Record<string, string>;
   badge?: number;
   color: string;
   category: 'quotidien' | 'famille' | 'systeme';
@@ -37,7 +38,7 @@ interface GridItem {
 export default function MoreScreen() {
   const router = useRouter();
   const gridRef = useRef<View>(null);
-  const { rdvs, stock, gamiData, budgetEntries, budgetConfig, activeProfile, profiles, defis, wishlistItems, anniversaries, notes } = useVault();
+  const { rdvs, stock, courses, gamiData, budgetEntries, budgetConfig, activeProfile, profiles, defis, wishlistItems, anniversaries, notes } = useVault();
   const { colors } = useThemeColors();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
 
@@ -89,6 +90,15 @@ export default function MoreScreen() {
         emoji: '🍽️',
         label: 'Repas',
         route: '/(tabs)/meals',
+        color: colors.success,
+        category: 'quotidien' as const,
+      },
+      {
+        emoji: '🛒',
+        label: 'Courses',
+        route: '/(tabs)/meals',
+        params: { tab: 'courses' },
+        badge: courses.filter((c) => !c.completed).length || undefined,
         color: colors.success,
         category: 'quotidien' as const,
       },
@@ -209,7 +219,7 @@ export default function MoreScreen() {
                   <TouchableOpacity
                     key={item.route}
                     style={[styles.card, { backgroundColor: colors.card }]}
-                    onPress={() => router.push(item.route as any)}
+                    onPress={() => item.params ? router.push({ pathname: item.route as any, params: item.params }) : router.push(item.route as any)}
                     activeOpacity={0.7}
                   >
                     <View style={[styles.iconCircle, { backgroundColor: item.color + '20' }]}>
