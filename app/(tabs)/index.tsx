@@ -587,8 +587,9 @@ export default function DashboardScreen() {
     // Budget — masquer si pas configuré
     if (!vaultFileExists.budget || budgetEntries.length === 0) hidden.add('budget');
 
-    // Stock — masquer si vide
-    if (stock.length === 0) hidden.add('stock');
+    // Stock — masquer si aucun item en alerte (quantité ≤ seuil + 1)
+    const hasStockAlert = stock.some((s) => s.quantite <= s.seuil + 1);
+    if (stock.length === 0 || !hasStockAlert) hidden.add('stock');
 
     // Notifications rapides — masquer si pas configuré
     if (!vaultFileExists.notifications) hidden.add('quicknotifs');
