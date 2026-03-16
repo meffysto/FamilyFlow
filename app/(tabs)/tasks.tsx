@@ -92,7 +92,7 @@ function buildTargetFiles(profiles: Profile[]) {
 }
 
 export default function TasksScreen() {
-  const { tasks, menageTasks, vault, profiles, activeProfile, notifPrefs, toggleTask, addTask, deleteTask, refresh, isLoading, vacationTasks, vacationConfig, isVacationActive, refreshGamification } = useVault();
+  const { tasks, menageTasks, vault, profiles, activeProfile, notifPrefs, toggleTask, addTask, editTask, deleteTask, refresh, isLoading, vacationTasks, vacationConfig, isVacationActive, refreshGamification } = useVault();
   const { completeTask } = useGamification({ vault, notifPrefs });
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
@@ -133,6 +133,15 @@ export default function TasksScreen() {
   const [newTaskRecurrence, setNewTaskRecurrence] = useState('');
   const [newTaskTarget, setNewTaskTarget] = useState(targetFiles[0]?.value ?? '');
   const [isSaving, setIsSaving] = useState(false);
+
+  // Edit task modal
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editTaskText, setEditTaskText] = useState('');
+  const [editTaskDueDate, setEditTaskDueDate] = useState('');
+  const [editTaskRecurrence, setEditTaskRecurrence] = useState('');
+  const [editTaskTarget, setEditTaskTarget] = useState('');
+  const [isEditSaving, setIsEditSaving] = useState(false);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -236,6 +245,55 @@ export default function TasksScreen() {
       ]
     );
   }, [deleteTask, activeProfile]);
+
+  const handleOpenEdit = useCallback((task: Task) => {
+    if (activeProfile?.role === 'enfant') {
+      showToast('Seuls les adultes peuvent modifier des tâches', 'error');
+      return;
+    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setEditingTask(task);
+    setEditTaskText(task.text);
+    setEditTaskDueDate(task.dueDate ?? '');
+    setEditTaskRecurrence(task.recurrence ?? '');
+    setEditTaskTarget(task.sourceFile);
+    setEditModalVisible(true);
+  }, [activeProfile, showToast]);
+
+  const handleEditTask = useCallback(async () => {
+    if (!editingTask) return;
+    if (!editTaskText.trim()) {
+      showToast('Le texte de la tâche est obligatoire', 'error');
+      return;
+    }
+    if (editTaskDueDate && !/^\d{4}-\d{2}-\d{2}$/.test(editTaskDueDate)) {
+      showToast('Date incorrecte (format : 2026-03-15)', 'error');
+      return;
+    }
+    setIsEditSaving(true);
+    try {
+      await editTask(editingTask, {
+        text: editTaskText.trim(),
+        dueDate: editTaskDueDate || undefined,
+        recurrence: editTaskRecurrence || undefined,
+        targetFile: editTaskTarget || undefined,
+      });
+      setEditModalVisible(false);
+      setEditingTask(null);
+      showToast('Tâche modifiée');
+    } catch (e) {
+      showToast(String(e), 'error');
+    } finally {
+      setIsEditSaving(false);
+    }
+  }, [editingTask, editTaskText, editTaskDueDate, editTaskRecurrence, editTaskTarget, editTask, showToast]);
+
+  const handleDeleteFromEdit = useCallback(() => {
+    if (!editingTask) return;
+    setEditModalVisible(false);
+    // Petit délai pour laisser le modal se fermer avant l'alert
+    setTimeout(() => handleDeleteTask(editingTask), 300);
+  }, [editingTask, handleDeleteTask]);
 
   // Filter + search
   const allTasks = useMemo(() => {
@@ -350,7 +408,7 @@ export default function TasksScreen() {
             disabled={item.completed}
             hintId="tasks"
           >
-            <TaskCard task={item} onToggle={handleTaskToggle} />
+            <TaskCard task={item} onToggle={handleTaskToggle} onLongPress={() => handleOpenEdit(item)} />
           </SwipeToDelete>
         )}
         renderSectionHeader={({ section }) => (
@@ -391,7 +449,7 @@ export default function TasksScreen() {
             </View>
             {sections.length > 0 && (
               <View style={[styles.deleteTip, { backgroundColor: colors.warningBg, borderBottomColor: colors.warning }]}>
-                <Text style={[styles.deleteTipText, { color: colors.warningText }]}>💡 Glissez une tâche vers la gauche pour la supprimer</Text>
+                <Text style={[styles.deleteTipText, { color: colors.warningText }]}>💡 Glissez pour supprimer · Appui long pour modifier</Text>
               </View>
             )}
           </>
@@ -482,6 +540,78 @@ export default function TasksScreen() {
                 />
               ))}
             </View>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Edit Task Modal */}
+      <Modal visible={editModalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setEditModalVisible(false)}>
+        <SafeAreaView style={[styles.modalSafe, { backgroundColor: colors.card }]}>
+          <View style={[styles.dragHandle, { backgroundColor: colors.separator }]} />
+          <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+            <TouchableOpacity onPress={() => setEditModalVisible(false)}>
+              <Text style={[styles.modalClose, { color: colors.textFaint }]}>✕</Text>
+            </TouchableOpacity>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Modifier la tâche</Text>
+            <TouchableOpacity onPress={handleEditTask} disabled={isEditSaving}>
+              <Text style={[styles.modalSave, { color: primary }]}>
+                {isEditSaving ? '...' : 'Enregistrer'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalContent}>
+            <Text style={[styles.modalLabel, { color: colors.textSub }]}>Tâche *</Text>
+            <TextInput
+              style={[styles.modalInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
+              value={editTaskText}
+              onChangeText={setEditTaskText}
+              placeholder="Ex: Acheter cadeau anniversaire"
+              placeholderTextColor={colors.textFaint}
+              autoFocus
+              multiline
+            />
+
+            <Text style={[styles.modalLabel, { color: colors.textSub }]}>Date d'échéance (optionnel)</Text>
+            <DateInput value={editTaskDueDate} onChange={setEditTaskDueDate} placeholder="Choisir une date" />
+
+            <Text style={[styles.modalLabel, { color: colors.textSub }]}>Se répète (optionnel)</Text>
+            <View style={styles.targetRow}>
+              {[
+                { label: 'Aucune', value: '' },
+                { label: 'Chaque jour', value: 'every day' },
+                { label: 'Chaque semaine', value: 'every week' },
+                { label: 'Chaque mois', value: 'every month' },
+              ].map((opt) => (
+                <Chip
+                  key={opt.value}
+                  label={opt.label}
+                  selected={editTaskRecurrence === opt.value}
+                  onPress={() => setEditTaskRecurrence(opt.value)}
+                  size="sm"
+                />
+              ))}
+            </View>
+
+            <Text style={[styles.modalLabel, { color: colors.textSub }]}>Enregistrer pour</Text>
+            <View style={styles.targetRow}>
+              {targetFiles.map((t) => (
+                <Chip
+                  key={t.value}
+                  label={t.label}
+                  selected={editTaskTarget === t.value}
+                  onPress={() => setEditTaskTarget(t.value)}
+                  size="sm"
+                />
+              ))}
+            </View>
+
+            <TouchableOpacity
+              style={[styles.deleteButton, { backgroundColor: colors.errorBg }]}
+              onPress={handleDeleteFromEdit}
+            >
+              <Text style={[styles.deleteButtonText, { color: colors.error }]}>Supprimer cette tâche</Text>
+            </TouchableOpacity>
           </ScrollView>
         </SafeAreaView>
       </Modal>
@@ -652,5 +782,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+  },
+  deleteButton: {
+    marginTop: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  deleteButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
   },
 });

@@ -130,6 +130,7 @@ export interface VaultState {
   updateRDV: (sourceFile: string, rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
   deleteRDV: (sourceFile: string) => Promise<void>;
   addTask: (text: string, targetFile: string, dueDate?: string, recurrence?: string) => Promise<void>;
+  editTask: (task: Task, updates: { text?: string; dueDate?: string; recurrence?: string; targetFile?: string }) => Promise<void>;
   deleteTask: (sourceFile: string, lineIndex: number) => Promise<void>;
   addCourseItem: (text: string, section?: string) => Promise<void>;
   mergeCourseIngredients: (items: { text: string; name: string; quantity: number | null; section: string }[]) => Promise<{ added: number; merged: number }>;
@@ -1235,6 +1236,60 @@ export function useVaultInternal(): VaultState {
     await loadVaultData(vaultRef.current);
   }, [loadVaultData]);
 
+  const editTask = useCallback(async (task: Task, updates: { text?: string; dueDate?: string; recurrence?: string; targetFile?: string }) => {
+    if (!vaultRef.current) return;
+    const newText = updates.text ?? task.text;
+    const newRecurrence = updates.recurrence !== undefined ? updates.recurrence : (task.recurrence ?? '');
+    const newDueDate = updates.dueDate !== undefined ? updates.dueDate : (task.dueDate ?? '');
+    const newTargetFile = updates.targetFile ?? task.sourceFile;
+
+    // Déterminer la section cible selon la récurrence
+    let newSection: string | null = null;
+    if (newRecurrence) {
+      if (/every\s+day/i.test(newRecurrence)) newSection = 'Quotidien';
+      else if (/every\s+week/i.test(newRecurrence)) newSection = 'Hebdomadaire';
+      else if (/every\s+month/i.test(newRecurrence)) newSection = 'Mensuel';
+    }
+
+    // Déterminer la section actuelle de la tâche
+    let currentSection: string | null = null;
+    if (task.recurrence) {
+      if (/every\s+day/i.test(task.recurrence)) currentSection = 'Quotidien';
+      else if (/every\s+week/i.test(task.recurrence)) currentSection = 'Hebdomadaire';
+      else if (/every\s+month/i.test(task.recurrence)) currentSection = 'Mensuel';
+    }
+
+    // Construire la nouvelle ligne markdown
+    let taskLine = newText;
+    if (newRecurrence) taskLine += ` 🔁 ${newRecurrence}`;
+    if (newDueDate) taskLine += ` 📅 ${newDueDate}`;
+    const fullLine = `- [${task.completed ? 'x' : ' '}] ${taskLine}`;
+
+    const fileChanged = newTargetFile !== task.sourceFile;
+    const sectionChanged = newSection !== currentSection;
+
+    if (fileChanged || sectionChanged) {
+      // Supprimer l'ancienne ligne
+      const content = await vaultRef.current.readFile(task.sourceFile);
+      const lines = content.split('\n');
+      if (task.lineIndex >= 0 && task.lineIndex < lines.length) {
+        lines.splice(task.lineIndex, 1);
+        await vaultRef.current.writeFile(task.sourceFile, lines.join('\n'));
+      }
+      // Ajouter dans le nouveau fichier/section
+      await vaultRef.current.appendTask(newTargetFile, newSection, taskLine);
+    } else {
+      // Remplacement en place
+      const content = await vaultRef.current.readFile(task.sourceFile);
+      const lines = content.split('\n');
+      if (task.lineIndex >= 0 && task.lineIndex < lines.length) {
+        lines[task.lineIndex] = fullLine;
+        await vaultRef.current.writeFile(task.sourceFile, lines.join('\n'));
+      }
+    }
+    await loadVaultData(vaultRef.current);
+  }, [loadVaultData]);
+
   const deleteTask = useCallback(async (sourceFile: string, lineIndex: number) => {
     if (!vaultRef.current) return;
     const content = await vaultRef.current.readFile(sourceFile);
@@ -2112,6 +2167,7 @@ export function useVaultInternal(): VaultState {
     updateRDV,
     deleteRDV,
     addTask,
+    editTask,
     deleteTask,
     addCourseItem,
     mergeCourseIngredients,
@@ -2187,7 +2243,7 @@ export function useVaultInternal(): VaultState {
     refresh, setVaultPath, setActiveProfile, saveNotifPrefs, updateMeal,
     addPhoto, getPhotoUri, updateProfileTheme, updateProfile, deleteProfile,
     updateStockQuantity, addStockItem, deleteStockItem, updateStockItem,
-    toggleTask, addRDV, updateRDV, deleteRDV, addTask, deleteTask,
+    toggleTask, addRDV, updateRDV, deleteRDV, addTask, editTask, deleteTask,
     addCourseItem, mergeCourseIngredients, toggleCourseItem, removeCourseItem,
     clearCompletedCourses, addMemory, updateMemory, activateVacation,
     deactivateVacation, refreshGamification, addRecipe, deleteRecipe,
