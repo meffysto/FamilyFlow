@@ -21,7 +21,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring, interpolateColor, useDerivedValue } from 'react-native-reanimated';
 import { useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useVault } from '../../contexts/VaultContext';
@@ -50,6 +50,100 @@ interface FilterDef {
   label: string;
   emoji: string;
 }
+
+// ─── Météo des tâches (profils enfants) ─────────────────────────────────────
+
+const WEATHER_STAGES = [
+  { threshold: 0,    emoji: '⛈️', label: 'Orage…',           message: 'Allez, on commence !' },
+  { threshold: 0.25, emoji: '🌧️', label: 'Pluie',            message: 'Continue comme ça !' },
+  { threshold: 0.50, emoji: '⛅',  label: 'Nuages',           message: 'Le soleil arrive !' },
+  { threshold: 0.75, emoji: '☀️', label: 'Soleil',            message: 'Presque fini !' },
+  { threshold: 1.00, emoji: '🌈', label: 'Arc-en-ciel !',    message: 'Bravo, tout est fait !' },
+];
+
+const WEATHER_COLORS = ['#4B5563', '#6B7280', '#93C5FD', '#FDE68A', '#C4B5FD'];
+
+function getWeatherStage(progress: number) {
+  for (let i = WEATHER_STAGES.length - 1; i >= 0; i--) {
+    if (progress >= WEATHER_STAGES[i].threshold) return i;
+  }
+  return 0;
+}
+
+/** Bandeau météo animé pour les enfants */
+function TaskWeather({ completed, total }: { completed: number; total: number }) {
+  const progress = total > 0 ? completed / total : 0;
+  const stageIdx = getWeatherStage(progress);
+  const stage = WEATHER_STAGES[stageIdx];
+
+  const animProgress = useSharedValue(progress);
+
+  useEffect(() => {
+    animProgress.value = withSpring(progress, { damping: 15, stiffness: 90 });
+  }, [progress]);
+
+  const bgStyle = useAnimatedStyle(() => {
+    const bg = interpolateColor(
+      animProgress.value,
+      [0, 0.25, 0.5, 0.75, 1],
+      WEATHER_COLORS,
+    );
+    return { backgroundColor: bg };
+  });
+
+  const emojiScale = useDerivedValue(() =>
+    withSpring(1 + animProgress.value * 0.3, { damping: 12 }),
+  );
+
+  const emojiStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: emojiScale.value }],
+  }));
+
+  return (
+    <Animated.View style={[weatherStyles.container, bgStyle]}>
+      <Animated.Text style={[weatherStyles.emoji, emojiStyle]}>{stage.emoji}</Animated.Text>
+      <View style={weatherStyles.textCol}>
+        <Text style={weatherStyles.label}>{stage.label}</Text>
+        <Text style={weatherStyles.message}>{stage.message}</Text>
+      </View>
+      <Text style={weatherStyles.count}>{completed}/{total}</Text>
+    </Animated.View>
+  );
+}
+
+const weatherStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    gap: 12,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: 16,
+  },
+  emoji: {
+    fontSize: 32,
+  },
+  textCol: {
+    flex: 1,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  message: {
+    fontSize: 13,
+    color: '#374151',
+    marginTop: 2,
+  },
+  count: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#4B5563',
+  },
+});
 
 const STATIC_FILTERS: FilterDef[] = [
   { id: 'tous', label: 'Tous', emoji: '📋' },
@@ -386,10 +480,17 @@ export default function TasksScreen() {
       {/* Header */}
       <View ref={taskListRef} style={[styles.header, { backgroundColor: colors.bg }]}>
         <Text style={[styles.title, { color: colors.text }]}>{isVacationActive ? '☀️ Vacances' : '📋 Tâches'}</Text>
-        <Text style={[styles.stats, { color: colors.textMuted }]}>
-          {completedCount}/{totalCount} terminées
-        </Text>
+        {(activeProfile?.role !== 'enfant') && (
+          <Text style={[styles.stats, { color: colors.textMuted }]}>
+            {completedCount}/{totalCount} terminées
+          </Text>
+        )}
       </View>
+
+      {/* Météo des tâches (enfants uniquement) */}
+      {activeProfile?.role === 'enfant' && totalCount > 0 && (
+        <TaskWeather completed={completedCount} total={totalCount} />
+      )}
 
       {/* Vacation banner */}
       {isVacationActive && vacationConfig && (
