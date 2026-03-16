@@ -125,6 +125,7 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
     config.menageEnabled,
     config.coursesEnabled,
     config.generalEnabled,
+    config.gratitudeEnabled,
     hasGrossesse && config.grossesseEnabled,
     config.weeklyAISummaryEnabled,
   ].filter(Boolean).length : 0;
@@ -203,6 +204,16 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
                 primary={primary}
               />
             )}
+
+            <ToggleItem
+              emoji="🙏"
+              label="Gratitude du soir"
+              detail={`Tous les jours à ${pad(config.gratitudeHour)}h${pad(config.gratitudeMinute)}`}
+              enabled={config.gratitudeEnabled}
+              onToggle={() => updateConfig({ gratitudeEnabled: !config.gratitudeEnabled })}
+              colors={colors}
+              primary={primary}
+            />
 
             <ToggleItem
               emoji="📬"

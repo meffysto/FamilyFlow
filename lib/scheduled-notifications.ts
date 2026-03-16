@@ -46,6 +46,10 @@ export interface NotifScheduleConfig {
   grossesseDay: number;        // 1=dimanche … 7=samedi (iOS weekday), default 2 (lundi)
   grossesseHour: number;       // default 9
   grossesseMinute: number;     // default 0
+  // Gratitude — rappel quotidien (soir)
+  gratitudeEnabled: boolean;
+  gratitudeHour: number;         // default 21
+  gratitudeMinute: number;       // default 0
   // Résumé hebdo IA (dimanche soir, envoi Telegram)
   weeklyAISummaryEnabled: boolean;
   weeklyAISummaryHour: number;   // default 20
@@ -76,6 +80,9 @@ export const DEFAULT_CONFIG: NotifScheduleConfig = {
   grossesseDay: 2, // lundi
   grossesseHour: 9,
   grossesseMinute: 0,
+  gratitudeEnabled: true,
+  gratitudeHour: 21,
+  gratitudeMinute: 0,
   weeklyAISummaryEnabled: false,
   weeklyAISummaryHour: 20,
   weeklyAISummaryMinute: 0,
@@ -91,6 +98,7 @@ const CAT_MENAGE = 'menage-weekly';
 const CAT_COURSES = 'courses-stock';
 const CAT_GENERAL = 'general-daily';
 const CAT_GROSSESSE = 'grossesse-weekly';
+const CAT_GRATITUDE = 'gratitude-daily';
 const CAT_WEEKLY_AI = 'weekly-ai-summary';
 
 // ─── Setup ───────────────────────────────────────────────────────────────────
@@ -378,7 +386,41 @@ export async function setupGrossesseWeekly(config: NotifScheduleConfig): Promise
   });
 }
 
-// ─── 7. Résumé hebdo IA ─────────────────────────────────────────────────────
+// ─── 7. Gratitude quotidienne ────────────────────────────────────────────────
+
+const GRATITUDE_MESSAGES = [
+  { title: '🌙 Moment gratitude', body: 'Prends 1 minute pour noter ce qui t\'a rendu heureux aujourd\'hui' },
+  { title: '✨ Avant de dormir…', body: 'Qu\'est-ce qui t\'a fait sourire aujourd\'hui ?' },
+  { title: '🙏 Gratitude du soir', body: '3 petites choses positives de ta journée ?' },
+  { title: '💛 Un instant pour toi', body: 'Note un moment de bonheur avant de fermer les yeux' },
+  { title: '🌟 Ta dose de gratitude', body: 'De quoi es-tu reconnaissant(e) ce soir ?' },
+];
+
+export async function setupGratitudeReminder(config: NotifScheduleConfig): Promise<void> {
+  await cancelByCategory(CAT_GRATITUDE);
+
+  if (!config.gratitudeEnabled) return;
+
+  // Choisir un message aléatoire basé sur le jour
+  const dayIndex = new Date().getDay();
+  const msg = GRATITUDE_MESSAGES[dayIndex % GRATITUDE_MESSAGES.length];
+
+  await Notifications.scheduleNotificationAsync({
+    identifier: `${CAT_GRATITUDE}-daily`,
+    content: {
+      title: msg.title,
+      body: msg.body,
+      sound: true,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
+      hour: config.gratitudeHour,
+      minute: config.gratitudeMinute,
+    },
+  });
+}
+
+// ─── 8. Résumé hebdo IA ─────────────────────────────────────────────────────
 
 export async function setupWeeklyAISummaryReminder(config: NotifScheduleConfig): Promise<void> {
   await cancelByCategory(CAT_WEEKLY_AI);
@@ -432,6 +474,7 @@ export async function setupAllNotifications(data: NotifData): Promise<{
     scheduleCoursesAlert(data.stock, config),
     setupGeneralReminder(config),
     data.hasGrossesse ? setupGrossesseWeekly(config) : cancelByCategory(CAT_GROSSESSE),
+    setupGratitudeReminder(config),
     setupWeeklyAISummaryReminder(config),
   ]);
 
