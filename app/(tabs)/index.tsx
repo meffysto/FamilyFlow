@@ -826,7 +826,7 @@ export default function DashboardScreen() {
 
         {profiles.filter((p) => p.statut === 'grossesse' && p.dateTerme).map((p) => {
           const daysLeft = Math.ceil((new Date(p.dateTerme!).getTime() - new Date().getTime()) / 86400000);
-          const totalDays = 280; // 40 semaines
+          const totalDays = 287; // 41 SA (convention française)
           const daysElapsed = totalDays - daysLeft;
           const weeksElapsed = Math.max(0, Math.floor(daysElapsed / 7));
           const fruitEmoji = getFruitForWeek(weeksElapsed);
