@@ -43,7 +43,11 @@ import {
 import { formatDateForDisplay } from '../../lib/parser';
 import { DateInput } from '../../components/ui/DateInput';
 import { ReceiptReview } from '../../components/ReceiptReview';
+import { StockUpdateReview } from '../../components/StockUpdateReview';
+import type { StockUpdateAction } from '../../components/StockUpdateReview';
 import { captureAndScanReceipt } from '../../lib/receipt-scanner';
+import { matchReceiptToStock } from '../../lib/stock-matcher';
+import type { StockMatch } from '../../lib/stock-matcher';
 import type { ScanOutcome } from '../../lib/receipt-scanner';
 import type { ReceiptScanResult } from '../../lib/ai-service';
 import type { BudgetCategory, BudgetEntry } from '../../lib/types';
@@ -82,6 +86,9 @@ export default function BudgetScreen() {
     deleteExpense,
     activeProfile,
     refresh,
+    stock,
+    updateStockQuantity,
+    addStockItem,
   } = useVault();
 
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
@@ -114,6 +121,63 @@ export default function BudgetScreen() {
   const [scanning, setScanning] = useState(false);
   const [receiptData, setReceiptData] = useState<ReceiptScanResult | null>(null);
   const [receiptReviewVisible, setReceiptReviewVisible] = useState(false);
+
+  // Mise à jour stock après ticket
+  const [stockMatches, setStockMatches] = useState<StockMatch[]>([]);
+  const [stockUpdateVisible, setStockUpdateVisible] = useState(false);
+
+  // Mode sélection multiple (dépenses)
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedEntries, setSelectedEntries] = useState<Set<number>>(new Set()); // lineIndex set
+
+  const toggleSelection = useCallback((lineIndex: number) => {
+    setSelectedEntries(prev => {
+      const next = new Set(prev);
+      if (next.has(lineIndex)) next.delete(lineIndex);
+      else next.add(lineIndex);
+      if (next.size === 0) setSelectionMode(false);
+      return next;
+    });
+  }, []);
+
+  const enterSelectionMode = useCallback((lineIndex: number) => {
+    setSelectionMode(true);
+    setSelectedEntries(new Set([lineIndex]));
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  }, []);
+
+  const cancelSelection = useCallback(() => {
+    setSelectionMode(false);
+    setSelectedEntries(new Set());
+  }, []);
+
+  const handleDeleteSelected = useCallback(() => {
+    const count = selectedEntries.size;
+    Alert.alert(
+      `Supprimer ${count} dépense${count > 1 ? 's' : ''} ?`,
+      `${formatAmount([...selectedEntries].reduce((sum, li) => {
+        const entry = budgetEntries.find(e => e.lineIndex === li);
+        return sum + (entry?.amount ?? 0);
+      }, 0))} au total`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            // Supprimer du plus grand lineIndex au plus petit pour éviter le décalage
+            const sorted = [...selectedEntries].sort((a, b) => b - a);
+            for (const li of sorted) {
+              await deleteExpense(li);
+            }
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            showToast(`${count} dépense${count > 1 ? 's' : ''} supprimée${count > 1 ? 's' : ''}`, 'success');
+            cancelSelection();
+          },
+        },
+      ]
+    );
+  }, [selectedEntries, budgetEntries, deleteExpense, showToast, cancelSelection]);
 
   // Valeurs dérivées mémorisées
   const spent = useMemo(() => totalSpent(budgetEntries), [budgetEntries]);
@@ -207,8 +271,39 @@ export default function BudgetScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     showToast(`${items.length} dépense${items.length > 1 ? 's' : ''} ajoutée${items.length > 1 ? 's' : ''}`, 'success');
     setReceiptReviewVisible(false);
+
+    // Proposer la mise à jour du stock si des produits matchent
+    const matches = matchReceiptToStock(items, stock);
+    if (matches.length > 0) {
+      setStockMatches(matches);
+      setStockUpdateVisible(true);
+    } else {
+      setReceiptData(null);
+    }
+  }, [addExpense, showToast, stock]);
+
+  const handleStockUpdate = useCallback(async (actions: StockUpdateAction[]) => {
+    for (const action of actions) {
+      if (action.type === 'increment') {
+        await updateStockQuantity(action.stockItem.lineIndex, action.stockItem.quantite + action.qtyToAdd);
+      } else {
+        await addStockItem({
+          produit: action.label,
+          quantite: 1,
+          seuil: 1,
+          qteAchat: 1,
+          emplacement: action.emplacement,
+          section: action.section,
+        });
+      }
+    }
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    const count = actions.length;
+    showToast(`Stock mis à jour (${count} produit${count > 1 ? 's' : ''})`, 'success');
+    setStockUpdateVisible(false);
+    setStockMatches([]);
     setReceiptData(null);
-  }, [addExpense, showToast]);
+  }, [updateStockQuantity, addStockItem, showToast]);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
@@ -325,35 +420,68 @@ export default function BudgetScreen() {
           <View style={styles.bottomPad} />
         </ScrollView>
       ) : (
-        <FlatList
-          data={sortedEntries}
-          keyExtractor={(item, i) => `${item.date}-${item.lineIndex}-${i}`}
-          contentContainerStyle={styles.content}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>Aucune dépense ce mois</Text>
+        <>
+          {/* Barre d'action en mode sélection */}
+          {selectionMode && (
+            <View style={[styles.selectionBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+              <TouchableOpacity onPress={cancelSelection} hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}>
+                <Text style={[styles.selectionCancel, { color: primary }]}>Annuler</Text>
+              </TouchableOpacity>
+              <Text style={[styles.selectionCount, { color: colors.text }]}>
+                {selectedEntries.size} sélectionnée{selectedEntries.size > 1 ? 's' : ''}
+              </Text>
+              <TouchableOpacity onPress={handleDeleteSelected}>
+                <Text style={[styles.selectionDelete, { color: colors.error }]}>Supprimer</Text>
+              </TouchableOpacity>
             </View>
-          }
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[styles.entryRow, { backgroundColor: colors.card }]}
-              onLongPress={() => handleDelete(item)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.entryLeft}>
-                <Text style={[styles.entryCategory, { color: colors.text }]}>{item.category}</Text>
-                <Text style={[styles.entryLabel, { color: colors.textMuted }]}>{item.label}</Text>
-              </View>
-              <View style={styles.entryRight}>
-                <Text style={[styles.entryAmount, { color: colors.text }]}>{formatAmount(item.amount)}</Text>
-                <Text style={[styles.entryDate, { color: colors.textFaint }]}>
-                  {formatDateForDisplay(item.date)}
-                </Text>
-              </View>
-            </TouchableOpacity>
           )}
-        />
+          <FlatList
+            data={sortedEntries}
+            keyExtractor={(item, i) => `${item.date}-${item.lineIndex}-${i}`}
+            contentContainerStyle={styles.content}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text style={[styles.emptyText, { color: colors.textMuted }]}>Aucune dépense ce mois</Text>
+              </View>
+            }
+            renderItem={({ item }) => {
+              const isSelected = selectedEntries.has(item.lineIndex);
+              return (
+                <TouchableOpacity
+                  style={[
+                    styles.entryRow,
+                    { backgroundColor: isSelected ? primary + '15' : colors.card },
+                    isSelected && { borderColor: primary, borderWidth: 1 },
+                  ]}
+                  onPress={selectionMode ? () => toggleSelection(item.lineIndex) : undefined}
+                  onLongPress={selectionMode ? undefined : () => enterSelectionMode(item.lineIndex)}
+                  activeOpacity={0.7}
+                >
+                  {selectionMode && (
+                    <View style={[
+                      styles.checkbox,
+                      { borderColor: isSelected ? primary : colors.border },
+                      isSelected && { backgroundColor: primary },
+                    ]}>
+                      {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                    </View>
+                  )}
+                  <View style={styles.entryLeft}>
+                    <Text style={[styles.entryCategory, { color: colors.text }]}>{item.category}</Text>
+                    <Text style={[styles.entryLabel, { color: colors.textMuted }]}>{item.label}</Text>
+                  </View>
+                  <View style={styles.entryRight}>
+                    <Text style={[styles.entryAmount, { color: colors.text }]}>{formatAmount(item.amount)}</Text>
+                    <Text style={[styles.entryDate, { color: colors.textFaint }]}>
+                      {formatDateForDisplay(item.date)}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            }}
+          />
+        </>
       )}
 
       {/* Add expense modal */}
@@ -453,6 +581,14 @@ export default function BudgetScreen() {
         onSave={handleReceiptSave}
         data={receiptData}
         categories={categoryNames}
+      />
+
+      {/* Modal mise à jour stock après ticket */}
+      <StockUpdateReview
+        visible={stockUpdateVisible}
+        onClose={() => { setStockUpdateVisible(false); setStockMatches([]); setReceiptData(null); }}
+        onConfirm={handleStockUpdate}
+        matches={stockMatches}
       />
 
       <ScreenGuide
@@ -614,4 +750,27 @@ const styles = StyleSheet.create({
   cancelBtn: { alignItems: 'center', paddingVertical: 14 },
   cancelBtnText: { fontSize: 15 },
   bottomPad: { height: 40 },
+
+  // Sélection multiple
+  selectionBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+  },
+  selectionCancel: { fontSize: 15, fontWeight: '600' },
+  selectionCount: { fontSize: 14, fontWeight: '600' },
+  selectionDelete: { fontSize: 15, fontWeight: '700' },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  checkmark: { color: '#fff', fontSize: 14, fontWeight: '700' },
 });
