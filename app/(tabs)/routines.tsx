@@ -454,7 +454,7 @@ export default function RoutinesScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View ref={routineListRef} style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View ref={routineListRef} style={[styles.header, { backgroundColor: colors.bg }]}>
         <View>
           <Text style={[styles.title, { color: colors.text }]}>🔄 Routines</Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>{todayLabel}</Text>
@@ -656,7 +656,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing['3xl'],
     paddingVertical: Spacing.xl,
-    borderBottomWidth: 1,
   },
   title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
   subtitle: { fontSize: FontSize.sm, marginTop: 2 },

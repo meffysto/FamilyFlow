@@ -113,7 +113,7 @@ export default function StatsScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View style={[styles.header, { backgroundColor: colors.bg }]}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
           <Text style={[styles.backBtn, { color: primary }]}>← Retour</Text>
         </TouchableOpacity>
@@ -225,7 +225,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: Spacing['3xl'],
     paddingVertical: Spacing.xl,
-    borderBottomWidth: 1,
   },
   backBtn: {
     fontSize: FontSize.body,

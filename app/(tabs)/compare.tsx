@@ -204,7 +204,7 @@ export default function CompareScreen() {
   if (!selectedEnfant) {
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-        <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <View style={[styles.header, { backgroundColor: colors.bg }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={[styles.backBtnText, { color: primary }]}>‹</Text>
           </TouchableOpacity>
@@ -226,7 +226,7 @@ export default function CompareScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View style={[styles.header, { backgroundColor: colors.bg }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Text style={[styles.backBtnText, { color: primary }]}>‹</Text>
         </TouchableOpacity>
@@ -420,7 +420,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: Spacing['2xl'],
     paddingVertical: Spacing.xl,
-    borderBottomWidth: 1,
   },
   backBtn: {
     width: 36,

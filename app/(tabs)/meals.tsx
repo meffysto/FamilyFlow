@@ -659,7 +659,7 @@ export default function MealsScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
-      <View ref={mealsHeaderRef} style={[styles.header, { backgroundColor: colors.card }]}>
+      <View ref={mealsHeaderRef} style={[styles.header, { backgroundColor: colors.bg }]}>
         <Text style={[styles.title, { color: colors.text }]}>{headerTitle}</Text>
         <Text style={[styles.stats, { color: colors.textMuted }]}>{headerStats}</Text>
       </View>

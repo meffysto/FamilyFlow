@@ -221,7 +221,7 @@ export default function NotesScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View style={[styles.header, { backgroundColor: colors.bg }]}>
         <View style={styles.headerRow}>
           <Text style={[styles.title, { color: colors.text }]}>Notes & Articles</Text>
           <TouchableOpacity
@@ -328,7 +328,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.xl,
     paddingBottom: Spacing.md,
-    borderBottomWidth: 1,
     gap: Spacing.md,
   },
   headerRow: {

@@ -384,7 +384,7 @@ export default function TasksScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
-      <View ref={taskListRef} style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View ref={taskListRef} style={[styles.header, { backgroundColor: colors.bg }]}>
         <Text style={[styles.title, { color: colors.text }]}>{isVacationActive ? '☀️ Vacances' : '📋 Tâches'}</Text>
         <Text style={[styles.stats, { color: colors.textMuted }]}>
           {completedCount}/{totalCount} terminées
@@ -433,7 +433,7 @@ export default function TasksScreen() {
                 clearButtonMode="while-editing"
               />
             </View>
-            <View ref={filterRef} style={[styles.filterWrapper, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+            <View ref={filterRef} style={[styles.filterWrapper, { backgroundColor: colors.bg }]}>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -646,7 +646,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    borderBottomWidth: 1,
   },
   title: {
     fontSize: 20,
@@ -666,7 +665,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   filterWrapper: {
-    borderBottomWidth: 1,
     height: 56,
   },
   filterContainer: {

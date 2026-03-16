@@ -424,7 +424,7 @@ export default function HealthScreen() {
   if (enfants.length === 0) {
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-        <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <View style={[styles.header, { backgroundColor: colors.bg }]}>
           <Text style={[styles.title, { color: colors.text }]}>🏥 Santé</Text>
         </View>
         <View style={styles.emptyContainer}>
@@ -440,7 +440,7 @@ export default function HealthScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View style={[styles.header, { backgroundColor: colors.bg }]}>
         <Text style={[styles.title, { color: colors.text }]}>🏥 Santé</Text>
       </View>
 
@@ -846,7 +846,6 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: Spacing['3xl'],
     paddingVertical: Spacing.xl,
-    borderBottomWidth: 1,
   },
   title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
   scroll: { flex: 1 },

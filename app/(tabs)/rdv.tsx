@@ -301,7 +301,7 @@ export default function RDVScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View style={[styles.header, { backgroundColor: colors.bg }]}>
         <Text style={[styles.title, { color: colors.text }]}>📅 Rendez-vous</Text>
         <TouchableOpacity
           style={[styles.addBtn, { backgroundColor: tint, borderColor: primary }]}
@@ -511,7 +511,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
-    borderBottomWidth: 1,
   },
   title: { fontSize: 22, fontWeight: '800' },
   addBtn: {

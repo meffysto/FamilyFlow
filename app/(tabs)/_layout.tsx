@@ -148,6 +148,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
         <Tabs.Screen name="wishlist" options={{ href: null }} />
         <Tabs.Screen name="anniversaires" options={{ href: null }} />
         <Tabs.Screen name="compare" options={{ href: null }} />
+        <Tabs.Screen name="notes" options={{ href: null }} />
         <Tabs.Screen name="night-mode" options={{ href: null, tabBarStyle: { display: 'none' } }} />
       </Tabs>
 

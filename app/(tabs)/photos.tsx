@@ -290,7 +290,7 @@ export default function PhotosScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View ref={photoGridRef} style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View ref={photoGridRef} style={[styles.header, { backgroundColor: colors.bg }]}>
         <Text style={[styles.title, { color: colors.text }]}>
           {activeTab === 'photos' ? '📸 Photos' : '🌟 Souvenirs'}
         </Text>
@@ -642,7 +642,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 14,
-    borderBottomWidth: 1,
   },
   title: { fontSize: 20, fontWeight: '800' },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },

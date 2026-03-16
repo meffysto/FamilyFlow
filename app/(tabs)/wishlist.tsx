@@ -193,7 +193,7 @@ export default function WishlistScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View style={[styles.header, { backgroundColor: colors.bg }]}>
         <View style={styles.headerRow}>
           <Text style={[styles.title, { color: colors.text }]}>Souhaits</Text>
           {totalUnbought > 0 && (
@@ -408,7 +408,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: Spacing['3xl'],
     paddingVertical: Spacing.xl,
-    borderBottomWidth: 1,
   },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.lg },
   title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },

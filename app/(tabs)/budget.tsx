@@ -162,7 +162,7 @@ export default function BudgetScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
-      <View ref={budgetHeaderRef} style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View ref={budgetHeaderRef} style={[styles.header, { backgroundColor: colors.bg }]}>
         <Text style={[styles.title, { color: colors.text }]}>Budget</Text>
         <TouchableOpacity
           style={[styles.addBtn, { backgroundColor: primary }]}
@@ -397,7 +397,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 14,
-    borderBottomWidth: 1,
   },
   title: { fontSize: 22, fontWeight: '800' },
   addBtn: {

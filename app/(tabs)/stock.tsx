@@ -106,7 +106,7 @@ export default function StockScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View ref={stockListRef} style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View ref={stockListRef} style={[styles.header, { backgroundColor: colors.bg }]}>
         <View>
           <Text style={[styles.title, { color: colors.text }]}>📦 Stocks & fournitures</Text>
           {lowStockCount > 0 && (
@@ -258,7 +258,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
-    borderBottomWidth: 1,
   },
   title: { fontSize: 22, fontWeight: '800' },
   subtitle: { fontSize: 12, fontWeight: '600', marginTop: 2 },

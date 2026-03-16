@@ -280,7 +280,7 @@ export default function AnniversairesScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View style={[styles.header, { backgroundColor: colors.bg }]}>
         <View style={styles.headerLeft}>
           <Text style={[styles.title, { color: colors.text }]}>Anniversaires</Text>
           {upcomingSoon > 0 && (
@@ -384,7 +384,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: Spacing['3xl'],
     paddingVertical: Spacing.xl,
-    borderBottomWidth: 1,
   },
   headerLeft: {
     flexDirection: 'row',

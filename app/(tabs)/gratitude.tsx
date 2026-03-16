@@ -137,7 +137,7 @@ export default function GratitudeScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View style={[styles.header, { backgroundColor: colors.bg }]}>
         <Text style={[styles.title, { color: colors.text }]}>Gratitude</Text>
         {streak > 0 && (
           <View style={[styles.streakBadge, { backgroundColor: colors.info + '20' }]}>
@@ -333,7 +333,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: Spacing['3xl'],
     paddingVertical: Spacing.xl,
-    borderBottomWidth: 1,
   },
   title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
   streakBadge: {

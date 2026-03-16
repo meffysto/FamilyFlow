@@ -747,7 +747,7 @@ export default function DefisScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View ref={defisContentRef} style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View ref={defisContentRef} style={[styles.header, { backgroundColor: colors.bg }]}>
         <Text style={[styles.title, { color: colors.text }]}>Défis familiaux</Text>
       </View>
 
@@ -923,7 +923,6 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: Spacing['3xl'],
     paddingVertical: Spacing.xl,
-    borderBottomWidth: 1,
   },
   title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
   tabBar: {
