@@ -17,16 +17,18 @@ import { useThemeColors } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
 import { ModalHeader } from './ui/ModalHeader';
 import { StockItem } from '../lib/types';
+import { EMPLACEMENTS, SUBCATEGORIES, type EmplacementId } from '../constants/stock';
 
 interface StockEditorProps {
   item?: StockItem; // if provided, editing mode
-  sections: string[]; // available sections
+  sections: string[];
+  defaultEmplacement?: EmplacementId; // emplacement par défaut pour les nouveaux items
   onSave: (item: Omit<StockItem, 'lineIndex'>) => Promise<void>;
   onDelete?: () => void;
   onClose: () => void;
 }
 
-export function StockEditor({ item, sections, onSave, onDelete, onClose }: StockEditorProps) {
+export function StockEditor({ item, sections, defaultEmplacement, onSave, onDelete, onClose }: StockEditorProps) {
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
   const isEditing = !!item;
@@ -36,15 +38,28 @@ export function StockEditor({ item, sections, onSave, onDelete, onClose }: Stock
   const [quantite, setQuantite] = useState(String(item?.quantite ?? 0));
   const [seuil, setSeuil] = useState(String(item?.seuil ?? 1));
   const [qteAchat, setQteAchat] = useState(item?.qteAchat ? String(item.qteAchat) : '');
-  const [section, setSection] = useState(item?.section ?? sections[0] ?? '');
+  const [emplacement, setEmplacement] = useState<EmplacementId>(
+    (item?.emplacement as EmplacementId) ?? defaultEmplacement ?? 'placards'
+  );
+  const [section, setSection] = useState(item?.section ?? '');
   const [isSaving, setIsSaving] = useState(false);
+
+  // Sous-catégories disponibles pour l'emplacement sélectionné
+  const availableSubcategories = SUBCATEGORIES[emplacement] ?? [];
+  const sectionRequired = availableSubcategories.length > 0;
+
+  // Quand l'emplacement change, réinitialiser la section
+  const handleEmplacementChange = (newEmp: EmplacementId) => {
+    setEmplacement(newEmp);
+    setSection('');
+  };
 
   const handleSave = async () => {
     if (!produit.trim()) {
       showToast('Le nom du produit est obligatoire', 'error');
       return;
     }
-    if (!section) {
+    if (sectionRequired && !section) {
       showToast('Sélectionne une catégorie', 'error');
       return;
     }
@@ -57,7 +72,8 @@ export function StockEditor({ item, sections, onSave, onDelete, onClose }: Stock
         quantite: parseInt(quantite, 10) || 0,
         seuil: parseInt(seuil, 10) || 1,
         qteAchat: qteAchat ? parseInt(qteAchat, 10) || undefined : undefined,
-        section,
+        emplacement,
+        section: section || undefined,
       });
       onClose();
     } catch (e) {
@@ -110,30 +126,59 @@ export function StockEditor({ item, sections, onSave, onDelete, onClose }: Stock
           placeholderTextColor={colors.textFaint}
         />
 
-        {/* Catégorie */}
-        <Text style={[styles.label, { color: colors.textSub }]}>🏷️ Catégorie *</Text>
+        {/* Emplacement */}
+        <Text style={[styles.label, { color: colors.textSub }]}>📍 Emplacement *</Text>
         <View style={styles.chipRow}>
-          {sections.map((s) => (
+          {EMPLACEMENTS.map((emp) => (
             <TouchableOpacity
-              key={s}
+              key={emp.id}
               style={[
                 styles.chip,
                 { backgroundColor: colors.bg },
-                section === s && { backgroundColor: tint, borderColor: primary },
+                emplacement === emp.id && { backgroundColor: tint, borderColor: primary },
               ]}
-              onPress={() => setSection(s)}
+              onPress={() => handleEmplacementChange(emp.id)}
               activeOpacity={0.7}
             >
               <Text style={[
                 styles.chipText,
                 { color: colors.textMuted },
-                section === s && { color: primary, fontWeight: '700' },
+                emplacement === emp.id && { color: primary, fontWeight: '700' },
               ]}>
-                {s}
+                {emp.emoji} {emp.label}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
+
+        {/* Catégorie (sous-catégorie de l'emplacement) */}
+        {availableSubcategories.length > 0 && (
+          <>
+            <Text style={[styles.label, { color: colors.textSub }]}>🏷️ Catégorie *</Text>
+            <View style={styles.chipRow}>
+              {availableSubcategories.map((s) => (
+                <TouchableOpacity
+                  key={s}
+                  style={[
+                    styles.chip,
+                    { backgroundColor: colors.bg },
+                    section === s && { backgroundColor: tint, borderColor: primary },
+                  ]}
+                  onPress={() => setSection(s)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[
+                    styles.chipText,
+                    { color: colors.textMuted },
+                    section === s && { color: primary, fontWeight: '700' },
+                  ]}>
+                    {s}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        )}
 
         {/* Numeric fields row */}
         <View style={styles.numRow}>
@@ -174,8 +219,11 @@ export function StockEditor({ item, sections, onSave, onDelete, onClose }: Stock
 
         {/* Delete button (edit mode only) */}
         {isEditing && onDelete && (
-          <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
-            <Text style={styles.deleteBtnText}>🗑️ Supprimer ce produit</Text>
+          <TouchableOpacity
+            style={[styles.deleteBtn, { backgroundColor: colors.errorBg, borderColor: colors.error }]}
+            onPress={handleDelete}
+          >
+            <Text style={[styles.deleteBtnText, { color: colors.error }]}>🗑️ Supprimer ce produit</Text>
           </TouchableOpacity>
         )}
       </ScrollView>
@@ -222,17 +270,14 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   deleteBtn: {
-    backgroundColor: '#FEF2F2',
     padding: 14,
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#FECACA',
     marginTop: 8,
   },
   deleteBtnText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#EF4444',
   },
 });

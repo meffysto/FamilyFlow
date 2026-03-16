@@ -30,7 +30,6 @@ const ZEN_SECTIONS = [
   { id: 'courses',   emoji: '🛒',  label: 'Liste de courses',     detail: 'Liste de courses vide' },
   { id: 'rdvs',      emoji: '📅',  label: 'Rendez-vous',          detail: 'Aucun RDV aujourd\'hui' },
   { id: 'gratitude', emoji: '🙏',  label: 'Gratitude',            detail: 'Gratitude du jour complétée' },
-  { id: 'stock',     emoji: '📦',  label: 'Stock & Fournitures',  detail: 'Stock vérifié' },
 ] as const;
 
 export function SettingsZen({ zenConfig, onSave }: SettingsZenProps) {

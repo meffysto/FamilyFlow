@@ -198,8 +198,9 @@ export interface StockItem {
   quantite: number;
   seuil: number;
   qteAchat?: number;
-  section?: string;   // e.g. "Couches", "Hygiène & soins"
-  lineIndex: number;  // 0-based line index in file (for writes)
+  emplacement: string;  // 'frigo' | 'congelateur' | 'placards' | 'bebe'
+  section?: string;      // sous-catégorie dans l'emplacement (e.g. "Couches", "Épicerie")
+  lineIndex: number;     // 0-based line index in file (for writes)
 }
 
 export type LootRarity = 'commun' | 'rare' | 'épique' | 'légendaire' | 'mythique';

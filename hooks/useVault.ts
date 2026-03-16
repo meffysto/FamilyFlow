@@ -85,6 +85,7 @@ import type { JournalSummaryEntry, VaultContext as AIVaultContext } from '../lib
 import { refreshWidget, refreshJournalWidget } from '../lib/widget-bridge';
 import { syncWidgetFeedingsToVault } from '../lib/widget-sync';
 import { shouldSendWeeklySummary, buildAndSendWeeklySummary } from '../lib/telegram';
+import { buildSectionHeader, type EmplacementId } from '../constants/stock';
 
 export const VAULT_PATH_KEY = 'vault_path';
 export const ACTIVE_PROFILE_KEY = 'active_profile_id';
@@ -1063,24 +1064,28 @@ export function useVaultInternal(): VaultState {
 
       // cells[0]=produit, cells[1]=detail, cells[2]=quantite, cells[3]=seuil, cells[4]=qteAchat
       const qty = Math.max(0, newQuantity);
+      // Retrouver l'emplacement depuis l'état local pour le préserver
+      const existingItem = stock.find(s => s.lineIndex === lineIndex);
       const updated: Omit<StockItem, 'lineIndex'> = {
         produit: cells[0],
         detail: cells[1] || undefined,
         quantite: qty,
         seuil: parseInt(cells[3], 10) || 0,
         qteAchat: cells[4] ? parseInt(cells[4], 10) || 1 : 1,
+        emplacement: existingItem?.emplacement ?? 'bebe',
+        section: existingItem?.section,
       };
       lines[lineIndex] = serializeStockRow(updated);
       await vaultRef.current.writeFile(STOCK_FILE, lines.join('\n'));
 
-      // Update local state immediately
+      // Mise à jour locale immédiate
       setStock((prev) =>
         prev.map((s) => s.lineIndex === lineIndex ? { ...s, quantite: Math.max(0, newQuantity) } : s)
       );
     } catch (e) {
       throw new Error(`updateStockQuantity: ${e}`);
     }
-  }, []);
+  }, [stock]);
 
   const addStockItem = useCallback(async (item: Omit<StockItem, 'lineIndex'>) => {
     if (!vaultRef.current) return;
@@ -1089,13 +1094,19 @@ export function useVaultInternal(): VaultState {
       const lines = content.split('\n');
       const newRow = serializeStockRow(item);
 
-      // Find insertion point: last table row in the target section
+      // Construire le header de section depuis emplacement + sous-catégorie
+      const sectionHeader = buildSectionHeader(
+        (item.emplacement || 'bebe') as EmplacementId,
+        item.section,
+      );
+
+      // Trouver le point d'insertion : dernière ligne de table dans la section cible
       let insertIdx = -1;
       let inSection = false;
       for (let i = 0; i < lines.length; i++) {
         if (lines[i].startsWith('## ')) {
-          if (inSection) break; // hit next section
-          if (lines[i].slice(3).trim() === item.section) inSection = true;
+          if (inSection) break; // section suivante atteinte
+          if (lines[i].slice(3).trim() === sectionHeader) inSection = true;
         }
         if (inSection && lines[i].startsWith('|') && !lines[i].includes('---')) {
           insertIdx = i;
@@ -1103,14 +1114,21 @@ export function useVaultInternal(): VaultState {
       }
 
       if (insertIdx === -1) {
-        // Section not found or empty — append at end
-        lines.push(newRow);
+        // Section inexistante → la créer en fin de fichier
+        const tableHeader = [
+          '',
+          `## ${sectionHeader}`,
+          '| Produit | Détail | Quantité | Seuil alerte | Qté/achat |',
+          '| --- | --- | --- | --- | --- |',
+          newRow,
+        ];
+        lines.push(...tableHeader);
       } else {
         lines.splice(insertIdx + 1, 0, newRow);
       }
 
       await vaultRef.current.writeFile(STOCK_FILE, lines.join('\n'));
-      // Full reload to recalculate lineIndex values
+      // Rechargement complet pour recalculer les lineIndex
       await loadVaultData(vaultRef.current);
     } catch (e) {
       throw new Error(`addStockItem: ${e}`);
@@ -1135,11 +1153,49 @@ export function useVaultInternal(): VaultState {
   const updateStockItem = useCallback(async (lineIndex: number, updates: Partial<StockItem>) => {
     if (!vaultRef.current) return;
     try {
+      // Retrouver l'emplacement/section actuels depuis l'état local
+      const existingItem = stock.find(s => s.lineIndex === lineIndex);
+      const oldEmplacement = existingItem?.emplacement ?? 'bebe';
+      const oldSection = existingItem?.section;
+      const newEmplacement = updates.emplacement ?? oldEmplacement;
+      const newSection = updates.section !== undefined ? updates.section : oldSection;
+
+      // Si l'emplacement ou la section change, il faut déplacer la ligne
+      if (newEmplacement !== oldEmplacement || newSection !== oldSection) {
+        const content = await vaultRef.current.readFile(STOCK_FILE);
+        const lines = content.split('\n');
+        if (lineIndex < 0 || lineIndex >= lines.length) return;
+
+        // Lire les valeurs actuelles
+        const cells = lines[lineIndex].split('|').map(c => c.trim()).filter(c => c.length > 0);
+        if (cells.length < 4) return;
+
+        const current: Omit<StockItem, 'lineIndex'> = {
+          produit: cells[0],
+          detail: cells[1] || undefined,
+          quantite: parseInt(cells[2], 10) || 0,
+          seuil: parseInt(cells[3], 10) || 0,
+          qteAchat: cells[4] ? parseInt(cells[4], 10) || 1 : 1,
+          emplacement: oldEmplacement,
+          section: oldSection,
+        };
+
+        // Supprimer l'ancienne ligne
+        lines.splice(lineIndex, 1);
+        await vaultRef.current.writeFile(STOCK_FILE, lines.join('\n'));
+
+        // Réinsérer dans la bonne section via addStockItem
+        const updated = { ...current, ...updates };
+        delete (updated as any).lineIndex;
+        await addStockItem(updated);
+        return; // addStockItem fait déjà le reload
+      }
+
+      // Pas de changement d'emplacement → mise à jour in-place
       const content = await vaultRef.current.readFile(STOCK_FILE);
       const lines = content.split('\n');
       if (lineIndex < 0 || lineIndex >= lines.length) return;
 
-      // Read current values from the existing line
       const cells = lines[lineIndex].split('|').map(c => c.trim()).filter(c => c.length > 0);
       if (cells.length < 4) return;
 
@@ -1149,14 +1205,15 @@ export function useVaultInternal(): VaultState {
         quantite: parseInt(cells[2], 10) || 0,
         seuil: parseInt(cells[3], 10) || 0,
         qteAchat: cells[4] ? parseInt(cells[4], 10) || 1 : 1,
+        emplacement: oldEmplacement,
+        section: oldSection,
       };
 
-      // Apply updates
       const updated = { ...current, ...updates };
       lines[lineIndex] = serializeStockRow(updated);
       await vaultRef.current.writeFile(STOCK_FILE, lines.join('\n'));
 
-      // Optimistic update (lineIndex unchanged)
+      // Optimistic update
       setStock(prev => prev.map(s =>
         s.lineIndex === lineIndex
           ? { ...s, ...updates }
@@ -1165,7 +1222,7 @@ export function useVaultInternal(): VaultState {
     } catch (e) {
       throw new Error(`updateStockItem: ${e}`);
     }
-  }, []);
+  }, [stock, addStockItem]);
 
   /**
    * Toggle task + optimistic state update.

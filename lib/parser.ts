@@ -41,6 +41,7 @@ import {
   isValidGender,
 } from './types';
 import { VALID_THEMES, type ProfileTheme } from '../constants/themes';
+import { parseEmplacementFromHeader, LEGACY_BEBE_SECTIONS, type EmplacementId } from '../constants/stock';
 
 // ─── Task parsing ───────────────────────────────────────────────────────────
 
@@ -1325,27 +1326,44 @@ const STOCK_SKIP_SECTIONS = new Set(['Matériel', 'À racheter bientôt']);
 export function parseStock(content: string): StockItem[] {
   const lines = content.split('\n');
   const items: StockItem[] = [];
+  let currentEmplacement: EmplacementId = 'bebe'; // défaut rétrocompatible
   let currentSection: string | undefined;
   let skipSection = false;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    // Track section headers
+    // Détection des headers de section
     if (line.startsWith('## ')) {
-      currentSection = line.slice(3).trim();
-      skipSection = STOCK_SKIP_SECTIONS.has(currentSection);
+      const headerText = line.slice(3).trim();
+      skipSection = STOCK_SKIP_SECTIONS.has(headerText);
+      if (skipSection) continue;
+
+      // Essayer de parser comme emplacement connu
+      const parsed = parseEmplacementFromHeader(headerText);
+      if (parsed) {
+        currentEmplacement = parsed.emplacement;
+        currentSection = parsed.section;
+      } else if (LEGACY_BEBE_SECTIONS.has(headerText)) {
+        // Rétrocompatibilité : anciens headers bébé
+        currentEmplacement = 'bebe';
+        currentSection = headerText;
+      } else {
+        // Header inconnu → placards par défaut
+        currentEmplacement = 'placards';
+        currentSection = headerText;
+      }
       continue;
     }
 
     if (skipSection) continue;
 
-    // Match table rows: | col1 | col2 | col3 | col4 | col5 |
+    // Lignes de table : | col1 | col2 | col3 | col4 | col5 |
     if (!line.startsWith('|')) continue;
 
     const cells = line.split('|').map((c) => c.trim()).filter((c) => c.length > 0);
     if (cells.length < 4) continue;
 
-    // Skip header and separator rows
+    // Ignorer les lignes d'en-tête et de séparation
     if (cells[0] === 'Produit' || cells[0].startsWith('---')) continue;
 
     const produit = cells[0].trim();
@@ -1355,7 +1373,7 @@ export function parseStock(content: string): StockItem[] {
     const quantite = parseInt(cells[2], 10);
     const seuil = parseInt(cells[3], 10);
 
-    // Skip rows where quantite or seuil is not a number
+    // Ignorer les lignes où quantité ou seuil n'est pas un nombre
     if (isNaN(quantite) || isNaN(seuil)) continue;
 
     const rawQteAchat = cells[4] ? parseInt(cells[4], 10) : undefined;
@@ -1367,6 +1385,7 @@ export function parseStock(content: string): StockItem[] {
       quantite,
       seuil,
       qteAchat,
+      emplacement: currentEmplacement,
       section: currentSection,
       lineIndex: i,
     });
@@ -1383,7 +1402,8 @@ export function serializeStockRow(item: Omit<StockItem, 'lineIndex'>): string {
 }
 
 /**
- * Extract available section names from the stock file (excluding skipped sections).
+ * Extrait les noms de sections disponibles dans le fichier stock (hors sections ignorées).
+ * Retourne les headers complets (ex: "Placards — Épicerie", "Frigo").
  */
 export function parseStockSections(content: string): string[] {
   const sections: string[] = [];

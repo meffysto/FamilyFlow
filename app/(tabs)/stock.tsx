@@ -1,11 +1,11 @@
 /**
- * stock.tsx — Dedicated stock management screen
+ * stock.tsx — Écran de gestion du stock avec onglets par emplacement
  *
- * Full CRUD for baby stock items: view by section, +/- quantity,
- * add new products, edit thresholds, delete items.
+ * Affiche les produits groupés par emplacement (Frigo, Congélateur, Placards, Bébé),
+ * avec des sections repliables pour les sous-catégories, recherche, et +/- quantité.
  */
 
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -19,7 +19,12 @@ import {
 import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, {
+  FadeIn,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from 'react-native-reanimated';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -28,6 +33,112 @@ import { EmptyState } from '../../components/EmptyState';
 import { StockItem } from '../../lib/types';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
+import { EMPLACEMENTS, SUBCATEGORIES } from '../../constants/stock';
+import type { EmplacementId } from '../../constants/stock';
+import { Spacing, Radius } from '../../constants/spacing';
+import { FontSize, FontWeight } from '../../constants/typography';
+import { Shadows } from '../../constants/shadows';
+
+// ─── Sous-composant : Section repliable ────────────────────────────────────────
+
+interface CollapsibleSectionProps {
+  title: string;
+  count: number;
+  defaultExpanded?: boolean;
+  children: React.ReactNode;
+}
+
+function CollapsibleSection({
+  title,
+  count,
+  defaultExpanded = true,
+  children,
+}: CollapsibleSectionProps) {
+  const { primary, tint, colors } = useThemeColors();
+  const [expanded, setExpanded] = useState(defaultExpanded);
+  const rotation = useSharedValue(defaultExpanded ? 1 : 0);
+  const contentHeight = useSharedValue(defaultExpanded ? 1 : 0);
+
+  const toggleExpanded = useCallback(() => {
+    Haptics.selectionAsync();
+    const next = !expanded;
+    setExpanded(next);
+    rotation.value = withTiming(next ? 1 : 0, { duration: 250 });
+    contentHeight.value = withTiming(next ? 1 : 0, { duration: 250 });
+  }, [expanded]);
+
+  // Rotation du chevron (0° → 90°)
+  const chevronStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value * 90}deg` }],
+  }));
+
+  // Animation hauteur du contenu (maxHeight trick)
+  const containerStyle = useAnimatedStyle(() => ({
+    maxHeight: contentHeight.value * 2000,
+    opacity: contentHeight.value,
+    overflow: 'hidden' as const,
+  }));
+
+  return (
+    <View style={sectionStyles.wrapper}>
+      <TouchableOpacity
+        style={[sectionStyles.header, { backgroundColor: colors.cardAlt }]}
+        onPress={toggleExpanded}
+        activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={`${title}, ${count} produit${count > 1 ? 's' : ''}`}
+        accessibilityState={{ expanded }}
+      >
+        <Animated.Text style={[sectionStyles.chevron, { color: colors.textSub }, chevronStyle]}>
+          ▸
+        </Animated.Text>
+        <Text style={[sectionStyles.title, { color: colors.text }]}>{title}</Text>
+        <View style={[sectionStyles.badge, { backgroundColor: tint }]}>
+          <Text style={[sectionStyles.badgeText, { color: primary }]}>{count}</Text>
+        </View>
+      </TouchableOpacity>
+      <Animated.View style={containerStyle}>{children}</Animated.View>
+    </View>
+  );
+}
+
+const sectionStyles = StyleSheet.create({
+  wrapper: {
+    gap: Spacing.xs,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.lg,
+    borderRadius: Radius.base,
+    gap: Spacing.md,
+  },
+  chevron: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    width: 18,
+    textAlign: 'center',
+  },
+  title: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    flex: 1,
+  },
+  badge: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xxs,
+    borderRadius: Radius.full,
+    minWidth: 24,
+    alignItems: 'center',
+  },
+  badgeText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
+  },
+});
+
+// ─── Composant principal ────────────────────────────────────────────────────────
 
 export default function StockScreen() {
   const {
@@ -42,91 +153,300 @@ export default function StockScreen() {
   } = useVault();
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
-
   const { refreshing, onRefresh } = useRefresh(refresh);
 
-  const [search, setSearch] = useState('');
   const stockListRef = useRef<View>(null);
+  const [selectedEmplacement, setSelectedEmplacement] = useState<EmplacementId>('frigo');
+  const [search, setSearch] = useState('');
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingItem, setEditingItem] = useState<StockItem | undefined>(undefined);
 
-  // Filter by search
-  const filteredStock = useMemo(() => {
-    if (!search.trim()) return stock;
-    const q = search.toLowerCase();
-    return stock.filter(
-      (item) =>
-        item.produit.toLowerCase().includes(q) ||
-        (item.section ?? '').toLowerCase().includes(q)
-    );
-  }, [stock, search]);
-
-  // Group items by section
-  const grouped = useMemo(() => {
-    const map: Record<string, StockItem[]> = {};
-    for (const item of filteredStock) {
-      const sec = item.section ?? 'Autre';
-      if (!map[sec]) map[sec] = [];
-      map[sec].push(item);
+  // ─── Compteur total par emplacement ──────────────────────────────────
+  const countsByEmplacement = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const emp of EMPLACEMENTS) {
+      counts[emp.id] = stock.filter((s) => s.emplacement === emp.id).length;
     }
-    return map;
-  }, [filteredStock]);
+    return counts;
+  }, [stock]);
 
-  const lowStockCount = stock.filter((s) => s.quantite <= s.seuil).length;
+  // ─── Items filtrés par emplacement + recherche ───────────────────────
+  const filteredItems = useMemo(() => {
+    let items = stock.filter((s) => s.emplacement === selectedEmplacement);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      items = items.filter(
+        (item) =>
+          item.produit.toLowerCase().includes(q) ||
+          (item.detail ?? '').toLowerCase().includes(q) ||
+          (item.section ?? '').toLowerCase().includes(q)
+      );
+    }
+    return items;
+  }, [stock, selectedEmplacement, search]);
 
-  const openCreate = () => {
+  // ─── Groupement par section/sous-catégorie ───────────────────────────
+  const subcategories = SUBCATEGORIES[selectedEmplacement];
+  const hasSubcategories = subcategories.length > 0;
+
+  const grouped = useMemo(() => {
+    if (!hasSubcategories) return null;
+    const map = new Map<string, StockItem[]>();
+    for (const item of filteredItems) {
+      const key = item.section ?? 'Autre';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(item);
+    }
+    // Trier les groupes : sous-catégories définies d'abord (dans l'ordre), puis "Autre"
+    const sorted = new Map<string, StockItem[]>();
+    for (const sub of subcategories) {
+      if (map.has(sub)) sorted.set(sub, map.get(sub)!);
+    }
+    // Ajouter les groupes restants (non prévus dans les sous-catégories)
+    for (const [key, items] of map) {
+      if (!sorted.has(key)) sorted.set(key, items);
+    }
+    // Trier les items à l'intérieur de chaque groupe par nom
+    for (const [key, items] of sorted) {
+      sorted.set(
+        key,
+        items.sort((a, b) => a.produit.localeCompare(b.produit, 'fr'))
+      );
+    }
+    return sorted;
+  }, [filteredItems, hasSubcategories, subcategories]);
+
+  // Items triés pour liste plate (frigo, congélateur)
+  const sortedFlatItems = useMemo(() => {
+    if (hasSubcategories) return [];
+    return [...filteredItems].sort((a, b) => a.produit.localeCompare(b.produit, 'fr'));
+  }, [filteredItems, hasSubcategories]);
+
+  // ─── Stock bas total ─────────────────────────────────────────────────
+  const lowStockCount = useMemo(
+    () => stock.filter((s) => s.quantite <= s.seuil).length,
+    [stock]
+  );
+
+  // ─── Actions ─────────────────────────────────────────────────────────
+  const openCreate = useCallback(() => {
     setEditingItem(undefined);
     setEditorVisible(true);
-  };
+  }, []);
 
-  const openEdit = (item: StockItem) => {
+  const openEdit = useCallback((item: StockItem) => {
     setEditingItem(item);
     setEditorVisible(true);
-  };
+  }, []);
 
-  const handleAddToCourses = (item: StockItem) => {
-    const qty = item.qteAchat ? ` x${item.qteAchat}` : '';
-    const detail = item.detail && !/^\d+$/.test(item.detail.trim()) ? ` (${item.detail})` : '';
-    addCourseItem(`${item.produit}${detail}${qty}`);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    showToast(`${item.produit} ajouté aux courses !`);
-  };
+  const handleAddToCourses = useCallback(
+    (item: StockItem) => {
+      const qty = item.qteAchat ? ` x${item.qteAchat}` : '';
+      const detail =
+        item.detail && !/^\d+$/.test(item.detail.trim()) ? ` (${item.detail})` : '';
+      addCourseItem(`${item.produit}${detail}${qty}`);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      showToast(`${item.produit} ajouté aux courses !`);
+    },
+    [addCourseItem, showToast]
+  );
 
-  const getStatusColor = (item: StockItem) => {
-    if (item.quantite <= item.seuil) return colors.error;
-    if (item.quantite <= item.seuil + 1) return colors.warning;
-    return colors.success;
-  };
+  const getStatusColor = useCallback(
+    (item: StockItem) => {
+      if (item.quantite <= item.seuil) return colors.error;
+      if (item.quantite <= item.seuil + 1) return colors.warning;
+      return colors.success;
+    },
+    [colors]
+  );
 
-  const getStatusEmoji = (item: StockItem) => {
-    if (item.quantite <= item.seuil) return '🔴';
-    if (item.quantite <= item.seuil + 1) return '🟡';
-    return '🟢';
+  const handleQuantityChange = useCallback(
+    (lineIndex: number, newQty: number) => {
+      Haptics.selectionAsync();
+      updateStockQuantity(lineIndex, Math.max(0, newQty));
+    },
+    [updateStockQuantity]
+  );
+
+  // ─── Emplacement courant (pour l'empty state) ───────────────────────
+  const currentEmplacement = EMPLACEMENTS.find((e) => e.id === selectedEmplacement);
+
+  // ─── Rendu d'un item ─────────────────────────────────────────────────
+  const renderItem = (item: StockItem, index: number) => {
+    const statusColor = getStatusColor(item);
+    const isLow = item.quantite <= item.seuil;
+
+    return (
+      <Animated.View key={item.lineIndex} entering={FadeIn.delay(Math.min(index * 40, 300))}>
+        <TouchableOpacity
+          style={[styles.itemRow, { backgroundColor: colors.card }, Shadows.sm]}
+          onPress={() => openEdit(item)}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={`${item.produit}, quantité ${item.quantite}`}
+        >
+          {/* Point de statut */}
+          <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+
+          {/* Infos produit */}
+          <View style={styles.itemInfo}>
+            <Text style={[styles.itemName, { color: colors.text }]} numberOfLines={1}>
+              {item.produit}
+              {item.detail ? (
+                <Text style={[styles.itemDetail, { color: colors.textMuted }]}>
+                  {' '}
+                  · {item.detail}
+                </Text>
+              ) : null}
+            </Text>
+          </View>
+
+          {/* Quantité affichée */}
+          <Text
+            style={[
+              styles.qtyLabel,
+              { color: colors.textSub },
+              isLow && { color: colors.error },
+            ]}
+          >
+            {item.quantite}
+          </Text>
+
+          {/* Boutons +/- */}
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              style={[styles.qtyBtn, { backgroundColor: colors.bg }]}
+              onPress={() => handleQuantityChange(item.lineIndex, item.quantite - 1)}
+              disabled={item.quantite <= 0}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityLabel="Diminuer la quantité"
+            >
+              <Text
+                style={[
+                  styles.qtyBtnText,
+                  { color: colors.textSub },
+                  item.quantite <= 0 && styles.qtyBtnDisabled,
+                ]}
+              >
+                −
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.qtyBtn, { backgroundColor: colors.bg }]}
+              onPress={() => handleQuantityChange(item.lineIndex, item.quantite + 1)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityLabel="Augmenter la quantité"
+            >
+              <Text style={[styles.qtyBtnText, { color: colors.textSub }]}>+</Text>
+            </TouchableOpacity>
+
+            {/* Bouton courses (uniquement si stock bas) */}
+            {isLow && (
+              <TouchableOpacity
+                style={[styles.courseBtn, { backgroundColor: colors.warningBg }]}
+                onPress={() => handleAddToCourses(item)}
+                accessibilityLabel={`Ajouter ${item.produit} aux courses`}
+              >
+                <Text style={styles.courseBtnText}>🛒</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </TouchableOpacity>
+      </Animated.View>
+    );
   };
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View ref={stockListRef} style={[styles.header, { backgroundColor: colors.bg }]}>
-        <View>
-          <Text style={[styles.title, { color: colors.text }]}>📦 Stocks & fournitures</Text>
+      {/* ─── Header ────────────────────────────────────────── */}
+      <View ref={stockListRef} style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Text style={[styles.title, { color: colors.text }]}>Stock</Text>
           {lowStockCount > 0 && (
-            <Text style={[styles.subtitle, { color: colors.error }]}>
-              ⚠️ {lowStockCount} produit{lowStockCount > 1 ? 's' : ''} en stock bas
-            </Text>
+            <View style={[styles.lowBadge, { backgroundColor: colors.errorBg }]}>
+              <Text style={[styles.lowBadgeText, { color: colors.error }]}>
+                {lowStockCount} bas
+              </Text>
+            </View>
           )}
         </View>
         <TouchableOpacity
           style={[styles.addBtn, { backgroundColor: tint, borderColor: primary }]}
           onPress={openCreate}
+          accessibilityRole="button"
+          accessibilityLabel="Ajouter un produit"
         >
-          <Text style={[styles.addBtnText, { color: primary }]}>+ Ajouter</Text>
+          <Text style={[styles.addBtnText, { color: primary }]}>+</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Search */}
-      <View style={[styles.searchContainer, { backgroundColor: colors.card }]}>
+      {/* ─── Onglets emplacement ───────────────────────────── */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.tabsContainer}
+        style={styles.tabsScroll}
+      >
+        {EMPLACEMENTS.map((emp) => {
+          const isSelected = emp.id === selectedEmplacement;
+          const count = countsByEmplacement[emp.id] ?? 0;
+          return (
+            <TouchableOpacity
+              key={emp.id}
+              style={[
+                styles.tab,
+                { backgroundColor: colors.cardAlt },
+                isSelected && { backgroundColor: tint, borderColor: primary, borderWidth: 1.5 },
+              ]}
+              onPress={() => {
+                Haptics.selectionAsync();
+                setSelectedEmplacement(emp.id);
+                setSearch('');
+              }}
+              activeOpacity={0.7}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isSelected }}
+              accessibilityLabel={`${emp.label}, ${count} produit${count > 1 ? 's' : ''}`}
+            >
+              <Text style={styles.tabEmoji}>{emp.emoji}</Text>
+              <Text
+                style={[
+                  styles.tabLabel,
+                  { color: colors.textMuted },
+                  isSelected && { color: primary, fontWeight: FontWeight.bold },
+                ]}
+              >
+                {emp.label}
+              </Text>
+              {count > 0 && (
+                <View
+                  style={[
+                    styles.tabBadge,
+                    { backgroundColor: isSelected ? primary : colors.textMuted },
+                  ]}
+                >
+                  <Text style={[styles.tabBadgeText, { color: colors.onPrimary }]}>
+                    {count}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      {/* ─── Barre de recherche ────────────────────────────── */}
+      <View style={styles.searchContainer}>
         <TextInput
-          style={[styles.searchInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
+          style={[
+            styles.searchInput,
+            {
+              backgroundColor: colors.inputBg,
+              borderColor: colors.inputBorder,
+              color: colors.text,
+            },
+          ]}
           placeholder="🔍 Rechercher un produit..."
           placeholderTextColor={colors.textMuted}
           value={search}
@@ -135,88 +455,67 @@ export default function StockScreen() {
         />
       </View>
 
+      {/* ─── Contenu ───────────────────────────────────────── */}
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
+        }
+        keyboardShouldPersistTaps="handled"
       >
-        {Object.entries(grouped).map(([sectionName, items]) => (
-          <View key={sectionName} style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textSub }]}>{sectionName}</Text>
-            {items.map((item, index) => {
-              const statusColor = getStatusColor(item);
-              const isLow = item.quantite <= item.seuil;
-              return (
-                <Animated.View key={item.lineIndex} entering={FadeInDown.delay(Math.min(index * 30, 300))}>
-                <TouchableOpacity
-                  style={[styles.itemCard, { backgroundColor: colors.card }]}
-                  onPress={() => openEdit(item)}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
-                  <View style={styles.itemInfo}>
-                    <Text style={[styles.itemName, { color: colors.text }]}>
-                      {item.produit}
-                      {item.detail ? <Text style={[styles.itemDetail, { color: colors.textMuted }]}> · {item.detail}</Text> : null}
-                    </Text>
-                    <Text style={[styles.itemMeta, { color: colors.textMuted }]}>
-                      {getStatusEmoji(item)} {item.quantite} restant{item.quantite > 1 ? 's' : ''} · seuil {item.seuil}
-                    </Text>
-                    <Text style={[styles.itemEditHint, { color: colors.separator }]}>Appuyer pour modifier</Text>
-                  </View>
-                  <View style={styles.itemActions}>
-                    {isLow && (
-                      <TouchableOpacity
-                        style={[styles.courseBtn, { backgroundColor: colors.warningBg }]}
-                        onPress={() => handleAddToCourses(item)}
-                      >
-                        <Text style={styles.courseBtnText}>🛒</Text>
-                      </TouchableOpacity>
-                    )}
-                    <View style={styles.qtyRow}>
-                      <TouchableOpacity
-                        style={[styles.qtyBtn, { backgroundColor: colors.bg }, item.quantite <= 0 && styles.qtyBtnDisabled]}
-                        onPress={() => { Haptics.selectionAsync(); updateStockQuantity(item.lineIndex, Math.max(0, item.quantite - 1)); }}
-                        disabled={item.quantite <= 0}
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      >
-                        <Text style={[styles.qtyBtnText, { color: colors.textSub }]}>−</Text>
-                      </TouchableOpacity>
-                      <Text style={[styles.qtyValue, { color: colors.text }, isLow && { color: colors.error }]}>
-                        {item.quantite}
-                      </Text>
-                      <TouchableOpacity
-                        style={[styles.qtyBtn, { backgroundColor: colors.bg }]}
-                        onPress={() => { Haptics.selectionAsync(); updateStockQuantity(item.lineIndex, item.quantite + 1); }}
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      >
-                        <Text style={[styles.qtyBtnText, { color: colors.textSub }]}>+</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-                </Animated.View>
-              );
-            })}
+        {/* Liste plate (Frigo, Congélateur) */}
+        {!hasSubcategories && sortedFlatItems.length > 0 && (
+          <View style={styles.itemsList}>
+            {sortedFlatItems.map((item, index) => renderItem(item, index))}
           </View>
-        ))}
+        )}
 
-        {filteredStock.length === 0 && (
+        {/* Sections repliables (Placards, Bébé) */}
+        {hasSubcategories &&
+          grouped &&
+          Array.from(grouped.entries()).map(([sectionName, items]) => (
+            <CollapsibleSection
+              key={sectionName}
+              title={sectionName}
+              count={items.length}
+              defaultExpanded={true}
+            >
+              <View style={styles.itemsList}>
+                {items.map((item, index) => renderItem(item, index))}
+              </View>
+            </CollapsibleSection>
+          ))}
+
+        {/* État vide */}
+        {filteredItems.length === 0 && (
           <EmptyState
-            emoji={search.trim() ? '🔍' : '📦'}
-            title={search.trim() ? 'Aucun résultat' : 'Aucun produit en stock'}
-            subtitle={search.trim() ? 'Essayez un autre terme de recherche' : undefined}
+            emoji={search.trim() ? '🔍' : currentEmplacement?.emoji ?? '📦'}
+            title={
+              search.trim()
+                ? 'Aucun résultat'
+                : `Aucun produit dans ${currentEmplacement?.label ?? 'ce stock'}`
+            }
+            subtitle={
+              search.trim()
+                ? 'Essayez un autre terme de recherche'
+                : 'Ajoutez votre premier produit'
+            }
             ctaLabel={search.trim() ? undefined : '+ Ajouter'}
-            onCta={search.trim() ? undefined : () => setEditorVisible(true)}
+            onCta={search.trim() ? undefined : openCreate}
           />
         )}
+
+        {/* Espacement bas pour le tab bar */}
+        <View style={styles.bottomSpacer} />
       </ScrollView>
 
-      {/* Stock Editor Modal */}
-      <Modal visible={editorVisible} animationType="slide" presentationStyle="pageSheet">
+      {/* ─── Modal StockEditor ─────────────────────────────── */}
+      <Modal visible={editorVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => { setEditorVisible(false); setEditingItem(undefined); }}>
         <StockEditor
           item={editingItem}
           sections={stockSections}
+          defaultEmplacement={selectedEmplacement}
           onSave={async (data) => {
             if (editingItem) {
               await updateStockItem(editingItem.lineIndex, data);
@@ -240,137 +539,187 @@ export default function StockScreen() {
         />
       </Modal>
 
+      {/* ─── Aide contextuelle ─────────────────────────────── */}
       <ScreenGuide
         screenId="stock"
-        targets={[
-          { ref: stockListRef, ...HELP_CONTENT.stock[0] },
-        ]}
+        targets={[{ ref: stockListRef, ...HELP_CONTENT.stock[0] }]}
       />
     </SafeAreaView>
   );
 }
 
+// ─── Styles ─────────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-  safe: { flex: 1 },
+  safe: {
+    flex: 1,
+  },
+
+  // Header
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingHorizontal: Spacing['3xl'],
+    paddingVertical: Spacing.xl,
   },
-  title: { fontSize: 22, fontWeight: '800' },
-  subtitle: { fontSize: 12, fontWeight: '600', marginTop: 2 },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  title: {
+    fontSize: FontSize.titleLg,
+    fontWeight: FontWeight.heavy,
+  },
+  lowBadge: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xxs,
+    borderRadius: Radius.full,
+  },
+  lowBadgeText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
+  },
   addBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 12,
+    width: 40,
+    height: 40,
+    borderRadius: Radius.base,
     borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  addBtnText: { fontSize: 14, fontWeight: '700' },
+  addBtnText: {
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.bold,
+  },
+
+  // Onglets emplacement
+  tabsScroll: {
+    flexGrow: 0,
+  },
+  tabsContainer: {
+    paddingHorizontal: Spacing['2xl'],
+    gap: Spacing.md,
+    paddingBottom: Spacing.md,
+  },
+  tab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.full,
+    gap: Spacing.sm,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+  },
+  tabEmoji: {
+    fontSize: FontSize.lg,
+  },
+  tabLabel: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.medium,
+  },
+  tabBadge: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.xs,
+  },
+  tabBadgeText: {
+    fontSize: FontSize.micro,
+    fontWeight: FontWeight.bold,
+  },
+
+  // Recherche
   searchContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: Spacing['2xl'],
+    paddingBottom: Spacing.md,
   },
   searchInput: {
     height: 40,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    fontSize: 15,
+    borderRadius: Radius.base,
+    paddingHorizontal: Spacing.xl,
+    fontSize: FontSize.body,
     borderWidth: 1,
   },
-  scroll: { flex: 1 },
-  content: { padding: 16, gap: 20, paddingBottom: 40 },
-  section: { gap: 8 },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 2,
+
+  // Contenu
+  scroll: {
+    flex: 1,
   },
-  itemCard: {
+  content: {
+    paddingHorizontal: Spacing['2xl'],
+    paddingTop: Spacing.md,
+    gap: Spacing['2xl'],
+  },
+  itemsList: {
+    gap: Spacing.md,
+  },
+  bottomSpacer: {
+    height: Spacing['6xl'],
+  },
+
+  // Item row (compact, 1 ligne)
+  itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 14,
-    padding: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-    gap: 10,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.lg,
+    borderRadius: Radius.lg,
+    gap: Spacing.md,
   },
   statusDot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: Radius.xs,
   },
   itemInfo: {
     flex: 1,
-    gap: 2,
+    marginRight: Spacing.xs,
   },
   itemName: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
   itemDetail: {
-    fontWeight: '400',
+    fontWeight: FontWeight.normal,
   },
-  itemMeta: {
-    fontSize: 12,
+  qtyLabel: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    minWidth: 22,
+    textAlign: 'center',
   },
-  itemEditHint: {
-    fontSize: 10,
-    marginTop: 1,
-  },
-  itemActions: {
+  actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-  },
-  courseBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  courseBtnText: { fontSize: 16 },
-  qtyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+    gap: Spacing.xs,
   },
   qtyBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
+    width: 32,
+    height: 32,
+    borderRadius: Radius.md,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  qtyBtnText: {
+    fontSize: FontSize.heading,
+    fontWeight: FontWeight.bold,
   },
   qtyBtnDisabled: {
     opacity: 0.3,
   },
-  qtyBtnText: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  qtyValue: {
-    fontSize: 15,
-    fontWeight: '700',
-    minWidth: 24,
-    textAlign: 'center',
-  },
-  emptyCard: {
-    borderRadius: 14,
-    padding: 32,
+  courseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.md,
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
   },
-  emptyText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  emptyHint: {
-    fontSize: 13,
+  courseBtnText: {
+    fontSize: FontSize.sm,
   },
 });

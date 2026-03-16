@@ -114,9 +114,6 @@ function getContextScore(id: string, ctx: SmartSortContext): number {
     case 'rewards':
       return hasData ? 20 : -10;
 
-    case 'stock':
-      return hasData ? 15 : -10;
-
     case 'leaderboard':
       return hasData ? 15 : -10;
 

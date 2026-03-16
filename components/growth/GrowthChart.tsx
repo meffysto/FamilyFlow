@@ -196,24 +196,42 @@ export function GrowthChart({ entries, sex, dateNaissance, metric, height: heigh
       .sort((a, b) => a.age - b.age);
   }, [entries, dateNaissance, metric, ref]);
 
-  // Determiner la plage visible d'age : couvre les donnees de reference
-  // mais aussi les points de l'enfant
+  // Determiner la plage visible d'age : auto-zoom sur l'age de l'enfant
+  // plutot que d'afficher toute la reference WHO (0-60 mois)
   const { minMonth, maxMonth, minValue, maxValue, xGridMonths } = useMemo(() => {
     if (!ref) return { minMonth: 0, maxMonth: 36, minValue: 0, maxValue: 20, xGridMonths: [] as number[] };
 
     const refMin = ref.months[0];
-    let refMax = ref.months[ref.months.length - 1];
+    const refMax = ref.months[ref.months.length - 1];
 
-    // Si l'enfant a des mesures au-dela de la reference, etendre
+    // Age max de l'enfant (dernier point de mesure)
     const childMaxAge = childPoints.length > 0 ? childPoints[childPoints.length - 1].age : 0;
-    refMax = Math.max(refMax, childMaxAge);
 
-    // Arrondir la plage de mois au multiple de 6 superieur
-    const displayMax = Math.ceil(refMax / 6) * 6;
+    // Auto-zoom : si l'enfant a des mesures, on zoome sur son age + ~30% de marge
+    // (minimum 6 mois d'avance) pour voir la trajectoire a venir.
+    // Si aucune mesure, on affiche toute la reference.
+    let displayMax: number;
+    if (childMaxAge > 0) {
+      const margin = Math.max(6, Math.ceil(childMaxAge * 0.3));
+      displayMax = Math.min(
+        Math.ceil((childMaxAge + margin) / 6) * 6,
+        refMax,
+      );
+      // Minimum 12 mois affiches pour que le graphe soit lisible
+      displayMax = Math.max(displayMax, 12);
+    } else {
+      displayMax = refMax;
+    }
 
-    // Plage Y : du min P3 au max P97 + 5% de marge
-    let yMin = Math.min(...ref.p3);
-    let yMax = Math.max(...ref.p97);
+    // Plage Y : filtrer les ref sur la plage visible pour un Y-range adapte
+    const visibleRefIndices = ref.months
+      .map((m, i) => (m <= displayMax ? i : -1))
+      .filter((i) => i >= 0);
+    const visibleP3 = visibleRefIndices.map((i) => ref.p3[i]);
+    const visibleP97 = visibleRefIndices.map((i) => ref.p97[i]);
+
+    let yMin = Math.min(...visibleP3);
+    let yMax = Math.max(...visibleP97);
 
     // Inclure les valeurs de l'enfant
     childPoints.forEach((p) => {
@@ -225,9 +243,9 @@ export function GrowthChart({ entries, sex, dateNaissance, metric, height: heigh
     yMin = Math.max(0, yMin - yPadding);
     yMax = yMax + yPadding;
 
-    // Grille X : tous les 6 mois si <= 36 mois, sinon tous les 12 mois
+    // Grille X : tous les 3 mois si <= 24, tous les 6 si <= 60, sinon 12
     const xGrid: number[] = [];
-    const step = displayMax <= 36 ? 6 : 12;
+    const step = displayMax <= 24 ? 3 : displayMax <= 60 ? 6 : 12;
     for (let m = refMin; m <= displayMax; m += step) {
       xGrid.push(m);
     }

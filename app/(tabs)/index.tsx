@@ -57,7 +57,7 @@ import {
   DashboardRdvs,
   DashboardLoot,
   DashboardRewards,
-  DashboardStock,
+
   DashboardWeeklyStats,
   DashboardBudget,
   DashboardQuickNotifs,
@@ -109,7 +109,7 @@ const ALL_SECTIONS: SectionPref[] = [
   { id: 'wishlist',   label: 'Souhaits',                emoji: '🎁', visible: true,  priority: 'medium' },
   { id: 'anniversaires', label: 'Anniversaires',         emoji: '🎂', visible: true,  priority: 'medium' },
   { id: 'onThisDay',    label: 'Il y a 1 an…',           emoji: '🕰️', visible: true,  priority: 'medium' },
-  { id: 'stock',      label: 'Stock & Fournitures',      emoji: '📦', visible: true,  priority: 'low' },
+
   { id: 'quicknotifs',label: 'Notifications rapides',   emoji: '📤', visible: true,  priority: 'low' },
   { id: 'recipes',    label: 'Idée recette',             emoji: '📖', visible: true,  priority: 'low' },
   { id: 'nightMode',  label: 'Mode nuit bébé',           emoji: '🌙', visible: true,  priority: 'medium' },
@@ -118,7 +118,7 @@ const ALL_SECTIONS: SectionPref[] = [
 ];
 
 /** Sections masquées pour les enfants (outils parentaux) */
-const ADULT_ONLY_SECTIONS = new Set(['courses', 'budget', 'stock', 'quicknotifs', 'recipes', 'photos', 'rdvs', 'nightMode']);
+const ADULT_ONLY_SECTIONS = new Set(['courses', 'budget', 'quicknotifs', 'recipes', 'photos', 'rdvs', 'nightMode']);
 
 /** Sections promues en haute priorité pour les enfants */
 const CHILD_PROMOTED: Record<string, { visible: boolean; priority: 'high' | 'medium' | 'low' }> = {
@@ -209,7 +209,6 @@ export default function DashboardScreen() {
       const keys = {
         menage: '02 - Maison/Ménage hebdo.md',
         meals: '02 - Maison/Repas de la semaine.md',
-        stock: '01 - Enfants/Commun/Stock & fournitures.md',
         budget: '05 - Budget/config.md',
         notifications: 'notifications.md',
       };
@@ -436,7 +435,6 @@ export default function DashboardScreen() {
     if (topCourses.length > 0) activeSections.add('courses');
     if (upcomingRdvs.length > 0) activeSections.add('rdvs');
     if (enfants.length > 0) activeSections.add('photos');
-    if (stock.length > 0) activeSections.add('stock');
     if (activeRewards.length > 0) activeSections.add('rewards');
     if (leaderboard.length > 0) activeSections.add('leaderboard');
     if (weeklyStatsData.total > 0) activeSections.add('weeklyStats');
@@ -499,7 +497,7 @@ export default function DashboardScreen() {
     });
   }, [smartSort, sectionPrefs, hasBaby, overdueTasks.length, isVacationActive,
     pendingMenage.length, todayMeals.length, topCourses.length, upcomingRdvs.length,
-    enfants.length, stock.length, activeRewards.length, leaderboard.length,
+    enfants.length, activeRewards.length, leaderboard.length,
     weeklyStatsData.total, activeProfile, recipes.length, customNotifs.length,
     defis, gratitudeDays, todayStr, wishlistItems, anniversaries, rdvs, insights.length]);
 
@@ -587,10 +585,6 @@ export default function DashboardScreen() {
     // Budget — masquer si pas configuré
     if (!vaultFileExists.budget || budgetEntries.length === 0) hidden.add('budget');
 
-    // Stock — masquer si aucun item en alerte (quantité ≤ seuil + 1)
-    const hasStockAlert = stock.some((s) => s.quantite <= s.seuil + 1);
-    if (stock.length === 0 || !hasStockAlert) hidden.add('stock');
-
     // Notifications rapides — masquer si pas configuré
     if (!vaultFileExists.notifications) hidden.add('quicknotifs');
 
@@ -602,7 +596,7 @@ export default function DashboardScreen() {
     enfants, photoDates, todayStr, todayMeals.length, topCourses.length,
     rdvs, profiles, gratitudeDays, anniversaries, wishlistItems, hasBaby,
     activeProfile, activeRewards.length, weeklyStatsData.total,
-    leaderboard.length, defis, vaultFileExists, stock.length, isVacationActive,
+    leaderboard.length, defis, vaultFileExists, isVacationActive,
     budgetEntries.length, memories]);
 
   // === Mode zen : TOUTES les sections visibles sont masquées (sauf exceptions) ===
@@ -709,7 +703,7 @@ export default function DashboardScreen() {
       case 'rdvs':         return <DashboardRdvs key={id} {...sectionProps} onEditRDV={handleEditRDV} />;
       case 'lootProgress': return <DashboardLoot key={id} {...sectionProps} />;
       case 'rewards':      return <DashboardRewards key={id} {...sectionProps} />;
-      case 'stock':        return <DashboardStock key={id} {...sectionProps} />;
+
       case 'weeklyStats':  return <DashboardWeeklyStats key={id} {...sectionProps} />;
       case 'budget':       return <DashboardBudget key={id} {...sectionProps} />;
       case 'quicknotifs':  return <DashboardQuickNotifs key={id} {...sectionProps} />;
