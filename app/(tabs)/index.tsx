@@ -68,6 +68,7 @@ import {
   DashboardGratitude,
   DashboardWishlist,
   DashboardAnniversaires,
+  DashboardOnThisDay,
   DashboardZenState,
 } from '../../components/dashboard';
 
@@ -82,7 +83,7 @@ interface ZenConfig {
 
 /** Sections TOUJOURS exclues du calcul zen (non configurables par l'utilisateur) */
 const ZEN_HARDCODED_EXCLUDED = [
-  'wishlist', 'anniversaires', 'lootProgress', 'rewards',
+  'wishlist', 'anniversaires', 'onThisDay', 'lootProgress', 'rewards',
   'weeklyStats', 'leaderboard', 'defis', 'quicknotifs', 'vacation',
   'nightMode', 'budget', 'insights',
 ];
@@ -107,6 +108,7 @@ const ALL_SECTIONS: SectionPref[] = [
   { id: 'gratitude',  label: 'Gratitude',               emoji: '🙏', visible: true,  priority: 'medium' },
   { id: 'wishlist',   label: 'Souhaits',                emoji: '🎁', visible: true,  priority: 'medium' },
   { id: 'anniversaires', label: 'Anniversaires',         emoji: '🎂', visible: true,  priority: 'medium' },
+  { id: 'onThisDay',    label: 'Il y a 1 an…',           emoji: '🕰️', visible: true,  priority: 'medium' },
   { id: 'stock',      label: 'Stock & Fournitures',      emoji: '📦', visible: true,  priority: 'low' },
   { id: 'quicknotifs',label: 'Notifications rapides',   emoji: '📤', visible: true,  priority: 'low' },
   { id: 'recipes',    label: 'Idée recette',             emoji: '📖', visible: true,  priority: 'low' },
@@ -194,7 +196,7 @@ export default function DashboardScreen() {
   const [sectionPrefs, setSectionPrefs] = useState<SectionPref[]>(() => getDefaultSections(activeProfile?.role));
   const [prefsModalVisible, setPrefsModalVisible] = useState(false);
   const [dashboardRecipe, setDashboardRecipe] = useState<AppRecipe | null>(null);
-  const [smartSort, setSmartSort] = useState(false);
+  const [smartSort, setSmartSort] = useState(true);
   const [searchVisible, setSearchVisible] = useState(false);
   const [profilePickerVisible, setProfilePickerVisible] = useState(false);
   const [zenConfig, setZenConfig] = useState<ZenConfig>({ enabled: true, excludedSections: [] });
@@ -458,18 +460,48 @@ export default function DashboardScreen() {
       });
       if (hasUpcoming) activeSections.add('anniversaires');
     }
+    // Minutes avant le prochain RDV d'aujourd'hui
+    const now = new Date();
+    const todayRdvs = rdvs.filter(
+      (r) => r.statut === 'planifié' && r.date_rdv === todayStr && r.heure,
+    );
+    let rdvMinutesUntilNext: number | undefined;
+    if (todayRdvs.length > 0) {
+      const nowMin = now.getHours() * 60 + now.getMinutes();
+      const futureMinutes = todayRdvs
+        .map((r) => {
+          const [h, m] = r.heure.split(':').map(Number);
+          return (h ?? 0) * 60 + (m ?? 0);
+        })
+        .filter((m) => m > nowMin)
+        .sort((a, b) => a - b);
+      if (futureMinutes.length > 0) {
+        rdvMinutesUntilNext = futureMinutes[0] - nowMin;
+      }
+    }
+
     return smartSortSections(sectionPrefs, {
-      hour: new Date().getHours(),
+      hour: now.getHours(),
       hasBaby,
-      hasOverdue: overdueTasks.length > 0,
       isVacationActive: !!isVacationActive,
       activeSections,
+      counts: {
+        overdue: overdueTasks.length,
+        menagePending: pendingMenage.length,
+        coursesRemaining: topCourses.length,
+        rdvToday: todayRdvs.length,
+        rdvMinutesUntilNext,
+        mealsPlanned: todayMeals.length,
+        insightsCount: insights.length,
+        defisActive: defis.filter((d) => d.status === 'active').length,
+        dayOfWeek: now.getDay(),
+      },
     });
   }, [smartSort, sectionPrefs, hasBaby, overdueTasks.length, isVacationActive,
     pendingMenage.length, todayMeals.length, topCourses.length, upcomingRdvs.length,
     enfants.length, stock.length, activeRewards.length, leaderboard.length,
     weeklyStatsData.total, activeProfile, recipes.length, customNotifs.length,
-    defis, gratitudeDays, todayStr, wishlistItems, anniversaries]);
+    defis, gratitudeDays, todayStr, wishlistItems, anniversaries, rdvs, insights.length]);
 
   // === Masquage individuel des sections ===
   const sectionHidden = useMemo(() => {
@@ -524,6 +556,20 @@ export default function DashboardScreen() {
     });
     if (!hasUpcomingAnniv) hidden.add('anniversaires');
 
+    // Il y a 1 an — masquer si aucun souvenir/photo à cette date les années passées
+    const mmStr = String(now.getMonth() + 1).padStart(2, '0');
+    const ddStr = String(now.getDate()).padStart(2, '0');
+    const todaySuffix = `-${mmStr}-${ddStr}`;
+    const hasMemoryOnThisDay = memories.some(
+      (m) => m.date?.endsWith(todaySuffix) && parseInt(m.date.substring(0, 4), 10) < now.getFullYear()
+    );
+    const hasPhotoOnThisDay = enfants.some(
+      (e) => (photoDates[e.id] ?? []).some(
+        (d) => d.endsWith(todaySuffix) && parseInt(d.substring(0, 4), 10) < now.getFullYear()
+      )
+    );
+    if (!hasMemoryOnThisDay && !hasPhotoOnThisDay) hidden.add('onThisDay');
+
     // Souhaits — toujours visible (ne participe pas au masquage)
 
     // Mode nuit bébé — pas de bébé ou pas la nuit
@@ -556,7 +602,7 @@ export default function DashboardScreen() {
     rdvs, profiles, gratitudeDays, anniversaries, wishlistItems, hasBaby,
     activeProfile, activeRewards.length, weeklyStatsData.total,
     leaderboard.length, defis, vaultFileExists, stock.length, isVacationActive,
-    budgetEntries.length]);
+    budgetEntries.length, memories]);
 
   // === Mode zen : TOUTES les sections visibles sont masquées (sauf exceptions) ===
   // Combine les exclusions hardcodées (toujours exclues) + les sections exclues par l'utilisateur
@@ -673,6 +719,7 @@ export default function DashboardScreen() {
       case 'gratitude':    return <DashboardGratitude key={id} {...sectionProps} />;
       case 'wishlist':     return <DashboardWishlist key={id} {...sectionProps} />;
       case 'anniversaires': return <DashboardAnniversaires key={id} {...sectionProps} />;
+      case 'onThisDay':    return <DashboardOnThisDay key={id} {...sectionProps} />;
       default:             return null;
     }
   };

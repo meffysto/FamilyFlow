@@ -2,7 +2,11 @@
  * smart-sort.ts — Tri intelligent contextuel des sections dashboard
  *
  * Réordonne automatiquement les sections visibles en fonction du contexte :
- * heure, données disponibles, urgences, etc.
+ * heure, données disponibles, urgences, **volume de données**.
+ *
+ * Les scores sont proportionnels à la pression réelle :
+ * plus il y a de tâches en retard / ménage à faire / courses restantes,
+ * plus la section monte — pas juste "a des données oui/non".
  */
 
 import type { SectionPref } from '../components/DashboardPrefsModal';
@@ -10,10 +14,26 @@ import type { SectionPref } from '../components/DashboardPrefsModal';
 export interface SmartSortContext {
   hour: number;
   hasBaby: boolean;
-  hasOverdue: boolean;
   isVacationActive: boolean;
   /** IDs des sections qui ont des données à afficher */
   activeSections: Set<string>;
+  /** Métriques quantitatives — toutes optionnelles pour rétrocompat */
+  counts?: {
+    overdue?: number;         // tâches en retard
+    menagePending?: number;   // tâches ménage non faites
+    coursesRemaining?: number; // articles courses restants
+    rdvToday?: number;        // RDV aujourd'hui
+    rdvMinutesUntilNext?: number; // minutes avant le prochain RDV
+    mealsPlanned?: number;    // repas planifiés aujourd'hui
+    insightsCount?: number;   // suggestions actives
+    defisActive?: number;     // défis actifs
+    dayOfWeek?: number;       // 0=dimanche, 6=samedi
+  };
+}
+
+/** Clamp un score entre min et max */
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
 }
 
 /**
@@ -21,50 +41,78 @@ export interface SmartSortContext {
  * Plus le score est élevé, plus la section monte dans le dashboard.
  *
  * Tiers de score :
- *   100  = urgence contextuelle (nuit + bébé)
- *    80  = urgence données (retard)
- *  60-70 = contexte temporel fort (vacances, repas à l'heure, ménage le matin)
- *  15-30 = données disponibles (rdvs, rewards, stock, etc.)
- *   5-10 = données secondaires
- *  <0    = pas de données → descend
+ *   90-100 = urgence critique (nuit+bébé, RDV imminent, 5+ retards)
+ *    70-89 = urgence forte (retards, vacances, ménage chargé le matin)
+ *    40-69 = contexte temporel (repas à l'heure, gratitude le soir)
+ *    15-39 = données disponibles (rdvs, rewards, stock, etc.)
+ *     5-14 = données secondaires
+ *     <0   = pas de données → descend
  */
 function getContextScore(id: string, ctx: SmartSortContext): number {
-  const { hour, hasBaby, hasOverdue, isVacationActive, activeSections } = ctx;
+  const { hour, hasBaby, isVacationActive, activeSections, counts = {} } = ctx;
   const isNight = hour >= 20 || hour < 8;
   const isMealTime = (hour >= 11 && hour < 14) || (hour >= 18 && hour < 21);
   const isMorning = hour >= 6 && hour < 11;
+  const isEvening = hour >= 18;
+  const isSunday = counts.dayOfWeek === 0;
   const hasData = activeSections.has(id);
 
   switch (id) {
     case 'insights':
-      return hasData ? 75 : -20;
+      if (!hasData) return -20;
+      // Plus il y a de suggestions, plus c'est pertinent
+      return clamp(60 + (counts.insightsCount ?? 1) * 5, 60, 80);
 
     case 'nightMode':
       if (isNight && hasBaby) return 100;
       return -50;
 
-    case 'overdue':
-      return hasOverdue ? 80 : -30;
+    case 'overdue': {
+      const n = counts.overdue ?? 0;
+      if (n === 0) return -30;
+      // 1 retard = 75, 3+ = 85, 5+ = 95 — pression croissante
+      return clamp(70 + n * 5, 75, 95);
+    }
 
     case 'vacation':
       return isVacationActive ? 70 : -30;
 
-    case 'menage':
-      if (hasData && isMorning) return 60;
-      return hasData ? 30 : -20;
+    case 'menage': {
+      const n = counts.menagePending ?? 0;
+      if (n === 0) return -20;
+      // Matin = moment ménage, score amplifié par le volume
+      if (isMorning) return clamp(45 + n * 5, 50, 75);
+      // Après-midi/soir : monte si beaucoup reste à faire
+      return clamp(20 + n * 4, 25, 55);
+    }
 
-    case 'meals':
-      if (hasData && isMealTime) return 65;
-      return hasData ? 20 : -20;
+    case 'meals': {
+      const n = counts.mealsPlanned ?? 0;
+      if (n === 0) return -20;
+      // Aux heures repas : score fort
+      if (isMealTime) return clamp(55 + n * 5, 60, 75);
+      return clamp(15 + n * 3, 15, 30);
+    }
 
-    case 'rdvs':
-      return hasData ? 25 : -15;
+    case 'rdvs': {
+      const n = counts.rdvToday ?? 0;
+      if (n === 0) return -15;
+      const minUntil = counts.rdvMinutesUntilNext ?? Infinity;
+      // RDV dans moins de 2h = urgence
+      if (minUntil <= 120) return clamp(80 + Math.round((120 - minUntil) / 12), 80, 95);
+      // RDV aujourd'hui, proportionnel au nombre
+      return clamp(25 + n * 10, 25, 50);
+    }
+
+    case 'courses': {
+      const n = counts.coursesRemaining ?? 0;
+      if (n === 0) return -10;
+      // Plus la liste est longue, plus c'est pertinent
+      return clamp(10 + n * 2, 15, 40);
+    }
 
     case 'rewards':
       return hasData ? 20 : -10;
-
-    case 'courses':
-      return hasData ? 15 : -10;
 
     case 'stock':
       return hasData ? 15 : -10;
@@ -76,6 +124,8 @@ function getContextScore(id: string, ctx: SmartSortContext): number {
       return hasData ? 10 : -10;
 
     case 'weeklyStats':
+      // Dimanche = résumé de la semaine, score boosté
+      if (isSunday && hasData) return 50;
       return hasData ? 10 : -10;
 
     case 'lootProgress':
@@ -90,13 +140,22 @@ function getContextScore(id: string, ctx: SmartSortContext): number {
     case 'recipes':
       return hasData ? 5 : -10;
 
-    case 'defis':
-      return hasData ? 20 : -10;
+    case 'defis': {
+      const n = counts.defisActive ?? 0;
+      if (n === 0) return -10;
+      return clamp(15 + n * 5, 20, 40);
+    }
 
     case 'gratitude':
       // Le soir (18h+), la gratitude monte — c'est le moment d'écrire
-      if (hasData) return hour >= 18 ? 40 : 15;
-      return hour >= 18 ? 25 : -5;
+      if (hasData) return isEvening ? 40 : 15;
+      return isEvening ? 25 : -5;
+
+    case 'wishlist':
+      return hasData ? 5 : -10;
+
+    case 'anniversaires':
+      return hasData ? 30 : -10;
 
     default:
       return 0;
