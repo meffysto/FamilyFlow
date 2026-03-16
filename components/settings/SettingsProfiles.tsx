@@ -6,11 +6,13 @@ import { format } from 'date-fns';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { THEME_LIST, getTheme, ProfileTheme } from '../../constants/themes';
 import { Button } from '../ui/Button';
+import { Chip } from '../ui/Chip';
 import { ModalHeader } from '../ui/ModalHeader';
 import { DateInput } from '../ui/DateInput';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import type { Gender } from '../../lib/types';
 
 const CHILD_AVATARS = ['👶', '🧒', '👦', '👧', '🍼', '🐣', '🎒', '👼'];
 
@@ -45,6 +47,7 @@ export function SettingsProfiles({
   const [editAvatar, setEditAvatar] = useState('');
   const [editBirthdate, setEditBirthdate] = useState('');
   const [editPropre, setEditPropre] = useState(false);
+  const [editGender, setEditGender] = useState<Gender | undefined>(undefined);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   // Add child
@@ -53,6 +56,7 @@ export function SettingsProfiles({
   const [newChildAvatar, setNewChildAvatar] = useState('👶');
   const [newChildBirthdate, setNewChildBirthdate] = useState('');
   const [newChildPropre, setNewChildPropre] = useState(false);
+  const [newChildGender, setNewChildGender] = useState<Gender | undefined>(undefined);
   const [newChildGrossesse, setNewChildGrossesse] = useState(false);
   const [newChildDateTerme, setNewChildDateTerme] = useState('');
   const [isAddingChild, setIsAddingChild] = useState(false);
@@ -73,6 +77,7 @@ export function SettingsProfiles({
     setEditAvatar(profile.avatar);
     setEditBirthdate(profile.birthdate ?? '');
     setEditPropre(profile.propre ?? false);
+    setEditGender(profile.gender);
   }, []);
 
   const handleSaveProfile = useCallback(async () => {
@@ -85,12 +90,12 @@ export function SettingsProfiles({
         name: editName.trim(),
         avatar: editAvatar.trim() || '👤',
         birthdate: editBirthdate || undefined,
-        ...(editingProfile.role === 'enfant' ? { propre: editPropre } : {}),
+        ...(editingProfile.role === 'enfant' ? { propre: editPropre, gender: editGender } : {}),
       });
       setEditingProfile(null);
     } catch (e) { Alert.alert('Erreur', String(e)); }
     finally { setIsSavingProfile(false); }
-  }, [editingProfile, editName, editAvatar, editBirthdate, editPropre, updateProfile]);
+  }, [editingProfile, editName, editAvatar, editBirthdate, editPropre, editGender, updateProfile]);
 
   const handleAddChild = useCallback(async () => {
     if (!newChildName.trim()) { Alert.alert('Champ requis', 'Le prénom est obligatoire.'); return; }
@@ -100,13 +105,14 @@ export function SettingsProfiles({
         name: newChildName.trim(), avatar: newChildAvatar,
         birthdate: newChildGrossesse ? '' : newChildBirthdate,
         propre: newChildPropre,
+        gender: newChildGender,
         ...(newChildGrossesse ? { statut: 'grossesse' as const, dateTerme: newChildDateTerme } : {}),
       });
       setShowAddChild(false);
-      setNewChildName(''); setNewChildAvatar('👶'); setNewChildBirthdate(''); setNewChildPropre(false); setNewChildGrossesse(false); setNewChildDateTerme('');
+      setNewChildName(''); setNewChildAvatar('👶'); setNewChildBirthdate(''); setNewChildPropre(false); setNewChildGender(undefined); setNewChildGrossesse(false); setNewChildDateTerme('');
     } catch (e) { Alert.alert('Erreur', String(e)); }
     finally { setIsAddingChild(false); }
-  }, [newChildName, newChildAvatar, newChildBirthdate, newChildPropre, newChildGrossesse, newChildDateTerme, addChild]);
+  }, [newChildName, newChildAvatar, newChildBirthdate, newChildPropre, newChildGender, newChildGrossesse, newChildDateTerme, addChild]);
 
   const handleConvertToBorn = useCallback(async () => {
     if (!convertingProfile || !bornDate) { Alert.alert('Champ requis', 'La date de naissance est obligatoire.'); return; }
@@ -305,6 +311,16 @@ export function SettingsProfiles({
                 />
               </View>
             )}
+            {editingProfile?.role === 'enfant' && (
+              <View>
+                <Text style={[styles.inputLabel, { color: colors.textSub }]}>⚧ Sexe (courbes de croissance)</Text>
+                <View style={styles.genderRow}>
+                  <Chip label="Garçon" selected={editGender === 'garçon'} onPress={() => setEditGender('garçon')} />
+                  <Chip label="Fille" selected={editGender === 'fille'} onPress={() => setEditGender('fille')} />
+                  <Chip label="Non spécifié" selected={editGender === undefined} onPress={() => setEditGender(undefined)} />
+                </View>
+              </View>
+            )}
             {/* Supprimer le profil */}
             {editingProfile && editingProfile.id !== activeProfile?.id && (
               <TouchableOpacity
@@ -408,6 +424,14 @@ export function SettingsProfiles({
                     accessibilityLabel="Propre"
                   />
                 </View>
+                <View>
+                  <Text style={[styles.inputLabel, { color: colors.textSub }]}>⚧ Sexe (courbes de croissance)</Text>
+                  <View style={styles.genderRow}>
+                    <Chip label="Garçon" selected={newChildGender === 'garçon'} onPress={() => setNewChildGender('garçon')} />
+                    <Chip label="Fille" selected={newChildGender === 'fille'} onPress={() => setNewChildGender('fille')} />
+                    <Chip label="Non spécifié" selected={newChildGender === undefined} onPress={() => setNewChildGender(undefined)} />
+                  </View>
+                </View>
               </>
             )}
           </ScrollView>
@@ -481,6 +505,7 @@ const styles = StyleSheet.create({
   propreRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: Spacing.xl, paddingVertical: Spacing.md },
   propreLabel: { flex: 1, gap: 2 },
   propreHint: { fontSize: FontSize.caption },
+  genderRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md, marginTop: Spacing.md },
   deleteBtn: { borderWidth: 1.5, borderRadius: Radius.base, paddingVertical: Spacing.xl, alignItems: 'center', marginTop: Spacing['3xl'] },
   deleteBtnText: { fontSize: FontSize.body, fontWeight: FontWeight.semibold },
 });

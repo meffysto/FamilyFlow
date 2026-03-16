@@ -17,7 +17,9 @@ import {
   TextInput,
   Alert,
   FlatList,
+  RefreshControl,
 } from 'react-native';
+import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Animated, {
@@ -674,7 +676,7 @@ const detailStyles = StyleSheet.create({
 export default function DefisScreen() {
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
-  const { profiles, defis, createDefi, checkInDefi, completeDefi, deleteDefi, activeProfile } = useVault();
+  const { profiles, defis, createDefi, checkInDefi, completeDefi, deleteDefi, activeProfile, refresh } = useVault();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
   const { isAllowed } = useParentalControls();
 
@@ -685,6 +687,8 @@ export default function DefisScreen() {
       d.participants.length === 0 || d.participants.includes(activeProfile.id),
     );
   }, [defis, isChildMode, activeProfile, isAllowed]);
+
+  const { refreshing, onRefresh } = useRefresh(refresh);
 
   const [activeTab, setActiveTab] = useState<TabId>('actifs');
   const defisContentRef = useRef<View>(null);
@@ -765,7 +769,11 @@ export default function DefisScreen() {
       </View>
 
       {/* Contenu */}
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
+      >
         {activeTab === 'actifs' && (
           <>
             {activeDefis.length === 0 && (

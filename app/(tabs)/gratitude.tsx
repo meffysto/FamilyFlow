@@ -15,7 +15,9 @@ import {
   SectionList,
   Modal,
   TextInput,
+  RefreshControl,
 } from 'react-native';
+import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { format, addDays, subDays } from 'date-fns';
@@ -29,6 +31,7 @@ import { ModalHeader } from '../../components/ui/ModalHeader';
 import { Shadows } from '../../constants/shadows';
 import type { GratitudeEntry, GratitudeDay } from '../../lib/types';
 import { isBabyProfile } from '../../lib/types';
+import { MarkdownText } from '../../components/ui/MarkdownText';
 
 type TabId = 'aujourdhui' | 'livre';
 
@@ -59,13 +62,14 @@ export function computeGratitudeStreak(days: GratitudeDay[], totalProfiles: numb
 export default function GratitudeScreen() {
   const { primary, colors } = useThemeColors();
   const { showToast } = useToast();
-  const { profiles, activeProfile, gratitudeDays, addGratitudeEntry, deleteGratitudeEntry } = useVault();
+  const { profiles, activeProfile, gratitudeDays, addGratitudeEntry, deleteGratitudeEntry, refresh } = useVault();
 
   const [activeTab, setActiveTab] = useState<TabId>('aujourdhui');
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [writeModal, setWriteModal] = useState<{ visible: boolean; existing?: GratitudeEntry }>({ visible: false });
   const [writeText, setWriteText] = useState('');
   const [visibleCount, setVisibleCount] = useState(LOAD_BATCH);
+  const { refreshing, onRefresh } = useRefresh(refresh);
 
   // Navigation entre jours
   const goToDay = (offset: number) => {
@@ -159,7 +163,11 @@ export default function GratitudeScreen() {
       </View>
 
       {activeTab === 'aujourdhui' && (
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
+        >
           {/* Navigation date */}
           <View style={styles.dateNav}>
             <TouchableOpacity onPress={() => goToDay(-1)} activeOpacity={0.7} style={styles.dateArrow}>
@@ -250,6 +258,7 @@ export default function GratitudeScreen() {
               sections={bookSections}
               keyExtractor={(item, index) => `${item.date}-${item.profileId}-${index}`}
               contentContainerStyle={styles.content}
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
               renderSectionHeader={({ section }) => (
                 <Text style={[styles.sectionDate, { color: colors.textMuted }]}>{section.title}</Text>
               )}
@@ -261,7 +270,7 @@ export default function GratitudeScreen() {
                     </Text>
                     <Text style={[styles.bookName, { color: colors.text }]}>{item.profileName}</Text>
                   </View>
-                  <Text style={[styles.bookText, { color: colors.textSub }]}>{item.text}</Text>
+                  <MarkdownText style={{ color: colors.textSub }}>{item.text}</MarkdownText>
                 </View>
               )}
               renderSectionFooter={() => <View style={styles.sectionSep} />}

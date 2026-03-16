@@ -15,7 +15,9 @@ import {
   ScrollView,
   Modal,
   Alert,
+  RefreshControl,
 } from 'react-native';
+import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
 import * as Haptics from 'expo-haptics';
@@ -338,6 +340,8 @@ export default function RoutinesScreen() {
   const { primary, colors } = useThemeColors();
   const { showToast } = useToast();
 
+  const { refreshing, onRefresh } = useRefresh(refresh);
+
   const [dayProgress, setDayProgress] = useState<DayProgress>({});
   const [playerRoutine, setPlayerRoutine] = useState<Routine | null>(null);
   const [editorRoutine, setEditorRoutine] = useState<Routine | null | undefined>(undefined);
@@ -466,7 +470,11 @@ export default function RoutinesScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
+      >
         {routines.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={[styles.emptyEmoji]}>🔄</Text>

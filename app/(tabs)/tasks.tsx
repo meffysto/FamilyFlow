@@ -21,6 +21,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useVault } from '../../contexts/VaultContext';
@@ -31,6 +32,7 @@ import { TaskCard } from '../../components/TaskCard';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { Chip } from '../../components/ui/Chip';
 import { DateInput } from '../../components/ui/DateInput';
+import { ModalHeader } from '../../components/ui/ModalHeader';
 import { Spacing } from '../../constants/spacing';
 import { EmptyState } from '../../components/EmptyState';
 import { getTheme } from '../../constants/themes';
@@ -402,14 +404,16 @@ export default function TasksScreen() {
       <SectionList
         sections={sections}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <SwipeToDelete
-            onDelete={() => handleDeleteTask(item)}
-            disabled={item.completed}
-            hintId="tasks"
-          >
-            <TaskCard task={item} onToggle={handleTaskToggle} onLongPress={() => handleOpenEdit(item)} />
-          </SwipeToDelete>
+        renderItem={({ item, index }) => (
+          <Animated.View entering={FadeInDown.delay(Math.min(index * 30, 300))}>
+            <SwipeToDelete
+              onDelete={() => handleDeleteTask(item)}
+              disabled={item.completed}
+              hintId="tasks"
+            >
+              <TaskCard task={item} onToggle={handleTaskToggle} onLongPress={() => handleOpenEdit(item)} />
+            </SwipeToDelete>
+          </Animated.View>
         )}
         renderSectionHeader={({ section }) => (
           <View style={styles.sectionHeader}>
@@ -483,17 +487,13 @@ export default function TasksScreen() {
       <Modal visible={addModalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setAddModalVisible(false)}>
         <SafeAreaView style={[styles.modalSafe, { backgroundColor: colors.card }]}>
           <View style={[styles.dragHandle, { backgroundColor: colors.separator }]} />
-          <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-            <TouchableOpacity onPress={() => setAddModalVisible(false)}>
-              <Text style={[styles.modalClose, { color: colors.textFaint }]}>✕</Text>
-            </TouchableOpacity>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Nouvelle tâche</Text>
-            <TouchableOpacity onPress={handleAddTask} disabled={isSaving}>
-              <Text style={[styles.modalSave, { color: primary }]}>
-                {isSaving ? '...' : 'Ajouter'}
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <ModalHeader
+            title="Nouvelle tâche"
+            onClose={() => setAddModalVisible(false)}
+            rightLabel={isSaving ? '…' : 'Ajouter'}
+            onRight={handleAddTask}
+            rightDisabled={isSaving}
+          />
 
           <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalContent}>
             <Text style={[styles.modalLabel, { color: colors.textSub }]}>📝 Tâche *</Text>
@@ -548,17 +548,13 @@ export default function TasksScreen() {
       <Modal visible={editModalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setEditModalVisible(false)}>
         <SafeAreaView style={[styles.modalSafe, { backgroundColor: colors.card }]}>
           <View style={[styles.dragHandle, { backgroundColor: colors.separator }]} />
-          <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-            <TouchableOpacity onPress={() => setEditModalVisible(false)}>
-              <Text style={[styles.modalClose, { color: colors.textFaint }]}>✕</Text>
-            </TouchableOpacity>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Modifier la tâche</Text>
-            <TouchableOpacity onPress={handleEditTask} disabled={isEditSaving}>
-              <Text style={[styles.modalSave, { color: primary }]}>
-                {isEditSaving ? '...' : 'Enregistrer'}
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <ModalHeader
+            title="Modifier la tâche"
+            onClose={() => setEditModalVisible(false)}
+            rightLabel={isEditSaving ? '…' : 'Enregistrer'}
+            onRight={handleEditTask}
+            rightDisabled={isEditSaving}
+          />
 
           <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalContent}>
             <Text style={[styles.modalLabel, { color: colors.textSub }]}>Tâche *</Text>
@@ -756,16 +752,6 @@ const styles = StyleSheet.create({
   },
   modalSafe: { flex: 1 },
   dragHandle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center', marginTop: Spacing.md, marginBottom: Spacing.xs },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-  },
-  modalClose: { fontSize: 20, padding: 4 },
-  modalTitle: { fontSize: 17, fontWeight: '800' },
-  modalSave: { fontSize: 15, fontWeight: '700', padding: 4 },
   modalScroll: { flex: 1 },
   modalContent: { padding: 20, gap: 16, paddingBottom: 40 },
   modalLabel: {

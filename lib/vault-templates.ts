@@ -62,7 +62,10 @@ const coursesEssentielles: TemplatePack = {
   generate: (ctx) => {
     const hasBebe = ctx.children.some(c => c.ageCategory === 'bebe');
 
-    let content = `## 🥩 Frais
+    let content = `> [!tip] Astuce
+> Cochez les articles au fur et à mesure en magasin !
+
+## 🥩 Frais
 - [ ] Lait demi-écrémé x2
 - [ ] Yaourts nature x6
 - [ ] Beurre
@@ -116,6 +119,9 @@ const repasSemaine: TemplatePack = {
   generate: () => {
     const content = `# Repas de la semaine
 
+> [!info] Organisation
+> Préparez les courses le weekend et faites du ==batch cooking== le dimanche pour gagner du temps en semaine.
+
 ## Lundi
 - Déjeuner: Pâtes bolognaise + salade verte
 - Dîner: Soupe de légumes + pain + fromage
@@ -135,6 +141,8 @@ const repasSemaine: TemplatePack = {
 ## Vendredi
 - Déjeuner: Poisson grillé + ratatouille
 - Dîner: Crêpes salées (jambon-fromage)
+
+---
 
 ## Samedi
 - Petit-déj: Crêpes + fruits frais
@@ -226,12 +234,12 @@ statut: planifié
 ---
 
 ## Questions à poser
-- Courbe de croissance
-- Vaccins à jour ?
-- Développement moteur / langage
+- [ ] Courbe de croissance
+- [ ] Vaccins à jour ?
+- [ ] Développement moteur / langage
 
 ## Notes
-(à compléter après le RDV)
+> [!note] À compléter après le RDV
 `,
         });
         files.push({
@@ -249,8 +257,11 @@ statut: planifié
 ## Vaccins prévus
 - Rappel selon carnet de santé (2, 4, 11 mois)
 
+> [!warning] Important
+> Apporter le **carnet de santé** au RDV.
+
 ## Notes
-(à compléter après le RDV)
+> [!note] À compléter après le RDV
 `,
         });
       } else if (cat === 'petit') {
@@ -267,12 +278,12 @@ statut: planifié
 ---
 
 ## Questions à poser
-- Courbe de croissance
-- Développement langage / motricité
-- Vaccins à jour ?
+- [ ] Courbe de croissance
+- [ ] Développement langage / motricité
+- [ ] Vaccins à jour ?
 
 ## Notes
-(à compléter après le RDV)
+> [!note] À compléter après le RDV
 `,
         });
         files.push({
@@ -290,7 +301,7 @@ statut: planifié
 ## Notes
 Contrôle semestriel
 
-(à compléter après le RDV)
+> [!note] À compléter après le RDV
 `,
         });
       } else {
@@ -308,11 +319,11 @@ statut: planifié
 ---
 
 ## Questions à poser
-- Visite annuelle
-- Vaccins à jour ?
+- [ ] Visite annuelle
+- [ ] Vaccins à jour ?
 
 ## Notes
-(à compléter après le RDV)
+> [!note] À compléter après le RDV
 `,
         });
         files.push({
@@ -330,7 +341,7 @@ statut: planifié
 ## Notes
 Contrôle semestriel
 
-(à compléter après le RDV)
+> [!note] À compléter après le RDV
 `,
         });
       }
@@ -353,7 +364,7 @@ statut: planifié
 ## Notes
 Visite annuelle
 
-(à compléter après le RDV)
+> [!note] À compléter après le RDV
 `,
       });
       files.push({
@@ -371,7 +382,7 @@ statut: planifié
 ## Notes
 Contrôle semestriel
 
-(à compléter après le RDV)
+> [!note] À compléter après le RDV
 `,
       });
     }
@@ -475,6 +486,9 @@ tags:
   - budget
 ---
 # Configuration budget
+
+> [!info] Plafonds mensuels
+> Modifiez les montants ci-dessous pour les adapter à votre situation.
 
 ## Catégories
 - 🛒 Alimentation: 600

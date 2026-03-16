@@ -54,6 +54,9 @@ import { HELP_CONTENT } from '../../lib/help-content';
 import { PhotoViewer } from '../../components/PhotoViewer';
 import { computePhotoStats } from '../../lib/photo-stats';
 import { PhotoGallery } from '../../components/PhotoGallery';
+import { MarkdownText } from '../../components/ui/MarkdownText';
+import { getThumbnailUri } from '../../lib/thumbnails';
+import * as FileSystem from 'expo-file-system/legacy';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const CALENDAR_PADDING = 16;
@@ -63,6 +66,39 @@ const CELL_SIZE = Math.floor((SCREEN_WIDTH - CALENDAR_PADDING * 2 - DAY_GAP * 6)
 const WEEKDAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
 type TabMode = 'photos' | 'souvenirs';
+
+/** Hook pour charger les miniatures disponibles pour un enfant et un ensemble de dates */
+function useThumbnailMap(enfantName: string | undefined, dates: Set<string>, cacheBust: number) {
+  const [thumbMap, setThumbMap] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!enfantName) return;
+    let cancelled = false;
+
+    // Vérifier quelles miniatures existent dans le cache
+    const checkThumbs = async () => {
+      const result: Record<string, string> = {};
+      const promises = Array.from(dates).map(async (date) => {
+        const thumbPath = getThumbnailUri(enfantName, date);
+        try {
+          const info = await FileSystem.getInfoAsync(thumbPath);
+          if (info.exists && !cancelled) {
+            result[date] = thumbPath;
+          }
+        } catch {
+          // Silencieux
+        }
+      });
+      await Promise.all(promises);
+      if (!cancelled) setThumbMap(result);
+    };
+
+    checkThumbs();
+    return () => { cancelled = true; };
+  }, [enfantName, dates.size, cacheBust]);
+
+  return thumbMap;
+}
 
 /** Caméra pulsante pour la cellule du jour sans photo */
 function PulsingCamera({ color }: { color: string }) {
@@ -138,6 +174,9 @@ export default function PhotosScreen() {
     const dates = photoDates[selectedEnfant.id] ?? [];
     return new Set(dates);
   }, [photoDates, selectedEnfant]);
+
+  // Miniatures en cache pour les cellules calendrier
+  const thumbMap = useThumbnailMap(selectedEnfant?.name, photoSet, photoCacheBust);
 
   // Stats photo (streak, complétion mois, record)
   const todayStr = format(new Date(), 'yyyy-MM-dd');
@@ -407,8 +446,10 @@ export default function PhotosScreen() {
                   const today = isToday(date);
                   const future = isFuture(date);
                   const dayNum = date.getDate();
+                  // Utiliser la miniature si disponible, sinon la photo originale
+                  const thumbUri = hasPhoto ? thumbMap[dateStr] : undefined;
                   const rawUri = hasPhoto && selectedEnfant
-                    ? getPhotoUri(selectedEnfant.name, dateStr)
+                    ? (thumbUri || getPhotoUri(selectedEnfant.name, dateStr))
                     : null;
                   const photoUri = rawUri ? `${rawUri}?v=${photoCacheBust}` : null;
 
@@ -448,8 +489,10 @@ export default function PhotosScreen() {
           ) : (
             <PhotoGallery
               photoDates={selectedEnfant ? (photoDates[selectedEnfant.id] ?? []) : []}
+              enfantName={selectedEnfant?.name ?? ''}
               getPhotoUri={(date: string) => (selectedEnfant ? getPhotoUri(selectedEnfant.name, date) : '') ?? ''}
               cacheBust={photoCacheBust}
+              thumbnailMap={thumbMap}
               onPhotoPress={(dateStr: string) => {
                 const idx = allPhotos.findIndex(p => p.date === dateStr);
                 if (idx >= 0) setViewingPhotoIndex(idx);
@@ -522,7 +565,7 @@ export default function PhotosScreen() {
                     </View>
                     <Text style={[styles.memoryTitle, { color: colors.text }]}>{mem.title}</Text>
                     {mem.description ? (
-                      <Text style={[styles.memoryDesc, { color: colors.textMuted }]}>{mem.description}</Text>
+                      <MarkdownText style={{ color: colors.textMuted }}>{mem.description}</MarkdownText>
                     ) : null}
                     {enfants.length > 1 && (
                       <Text style={[styles.memoryEnfant, { color: colors.textFaint }]}>{mem.enfant}</Text>

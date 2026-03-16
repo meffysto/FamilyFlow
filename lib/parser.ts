@@ -37,6 +37,8 @@ import {
   WishBudget,
   WishOccasion,
   Anniversary,
+  Note,
+  isValidGender,
 } from './types';
 import { VALID_THEMES, type ProfileTheme } from '../constants/themes';
 
@@ -567,6 +569,7 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'level' 
         birthdate: currentProps.birthdate,
         ageCategory,
         propre: currentProps.propre === 'true',
+        gender: isValidGender(currentProps.gender) ? currentProps.gender : undefined,
         statut,
         dateTerme: currentProps.dateTerme,
         theme,
@@ -1208,6 +1211,8 @@ ${couchesSection}
 
 ## Humeur & observations
 
+> [!tip] Notez ici les moments marquants de la journée
+
 ## Médicaments / Soins
 | Heure | Médicament | Dose | Notes |
 | ----- | ---------- | ---- | ----- |
@@ -1588,8 +1593,14 @@ tags:
 
 ## 😊 Humeur
 
+> Comment s'est passée la journée ?
+
 ## 🎯 Objectifs
 - [ ]
+
+## 🙏 Gratitude
+
+> [!tip] 3 choses positives aujourd'hui
 `;
 }
 
@@ -1884,5 +1895,72 @@ export function serializeRoutines(routines: { emoji: string; label: string; step
     }
     lines.push('');
   }
+  return lines.join('\n');
+}
+
+// ─── Notes & Articles ────────────────────────────────────────────────────────
+
+export const NOTES_DIR = '08 - Notes';
+
+/** Extrait le label sans emoji d'une catégorie (ex: "🏥 Santé" → "Santé") */
+export function noteCategoryLabel(category: string): string {
+  return category.replace(/^[^\w\s]*\s*/, '').trim() || category;
+}
+
+/** Génère un nom de fichier slug à partir du titre */
+export function noteFileName(title: string): string {
+  return title
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')  // retirer accents
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')     // non-alphanum → tiret
+    .replace(/^-+|-+$/g, '')          // trim tirets
+    + '.md';
+}
+
+/** Parse une note markdown avec frontmatter */
+export function parseNote(relativePath: string, content: string): Note | null {
+  const { data, content: body } = parseFrontmatter(content);
+  if (!data.title) return null;
+
+  return {
+    title: String(data.title),
+    url: data.url ? String(data.url) : undefined,
+    category: String(data.category ?? '📌 Divers'),
+    created: String(data.created ?? ''),
+    tags: Array.isArray(data.tags) ? data.tags.map(String) : [],
+    content: body.trim(),
+    sourceFile: relativePath,
+  };
+}
+
+/** Sérialise une note en markdown avec frontmatter YAML */
+export function serializeNote(note: Omit<Note, 'sourceFile'>): string {
+  const lines = [
+    '---',
+    `title: "${note.title.replace(/"/g, '\\"')}"`,
+  ];
+
+  if (note.url) {
+    lines.push(`url: "${note.url}"`);
+  }
+
+  lines.push(`category: "${note.category}"`);
+  lines.push(`created: "${note.created}"`);
+
+  if (note.tags.length > 0) {
+    lines.push('tags:');
+    for (const tag of note.tags) {
+      lines.push(`  - ${tag}`);
+    }
+  } else {
+    lines.push('tags: []');
+  }
+
+  lines.push('---');
+  lines.push('');
+  lines.push(note.content);
+  lines.push('');
+
   return lines.join('\n');
 }

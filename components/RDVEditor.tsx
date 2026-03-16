@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
 import { Chip } from './ui/Chip';
+import { ModalHeader } from './ui/ModalHeader';
 import { DictaphoneRecorder } from './DictaphoneRecorder';
 import { RDV, Profile } from '../lib/types';
 import { formatDateForDisplay, parseDateInput } from '../lib/parser';
@@ -121,19 +122,13 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.card }]}>
       {/* Drag handle — indicates swipe-down-to-dismiss */}
       <View style={[styles.dragHandle, { backgroundColor: colors.separator }]} />
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={onClose}>
-          <Text style={[styles.headerClose, { color: colors.textFaint }]}>✕</Text>
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>
-          {isEditing ? 'Modifier le RDV' : 'Nouveau RDV'}
-        </Text>
-        <TouchableOpacity onPress={handleSave} disabled={isSaving}>
-          <Text style={[styles.headerSave, { color: primary }]}>
-            {isSaving ? '...' : 'Enregistrer'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <ModalHeader
+        title={isEditing ? 'Modifier le RDV' : 'Nouveau RDV'}
+        onClose={onClose}
+        rightLabel={isSaving ? '…' : 'Enregistrer'}
+        onRight={handleSave}
+        rightDisabled={isSaving}
+      />
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
@@ -319,16 +314,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
     marginBottom: Spacing.xs,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: Spacing['2xl'],
-    borderBottomWidth: 1,
-  },
-  headerClose: { fontSize: FontSize.title, padding: Spacing.xs },
-  headerTitle: { fontSize: FontSize.subtitle, fontWeight: FontWeight.heavy },
-  headerSave: { fontSize: FontSize.body, fontWeight: FontWeight.bold, padding: Spacing.xs },
   scroll: { flex: 1 },
   content: { padding: Spacing['3xl'], gap: Spacing['2xl'], paddingBottom: 40 },
   label: {

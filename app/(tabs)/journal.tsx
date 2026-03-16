@@ -30,6 +30,7 @@ import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { parseJournalStats, calculerDuree } from '../../lib/journal-stats';
+import { MarkdownText } from '../../components/ui/MarkdownText';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -572,7 +573,7 @@ export default function JournalScreen() {
                   disabled={!canEdit}
                 >
                   <Text style={styles.obsNumber}>{oi + 1}.</Text>
-                  <Text style={[styles.obsText, { color: colors.textSub }]}>{obs.text}</Text>
+                  <MarkdownText style={{ color: colors.textSub }}>{obs.text}</MarkdownText>
                   {canEdit && <Text style={styles.editHint}>✏️</Text>}
                 </TouchableOpacity>
               ))

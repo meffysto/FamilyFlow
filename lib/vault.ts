@@ -34,7 +34,7 @@ import {
   coordinatedFileExists,
   downloadICloudFiles,
 } from '../modules/vault-access/src';
-import { Profile } from './types';
+import { Profile, Gender } from './types';
 import { format } from 'date-fns';
 import { nextOccurrence } from './recurrence';
 import { TEMPLATE_PACKS, TemplateContext } from './vault-templates';
@@ -539,7 +539,7 @@ export class VaultManager {
    * Add a child to an existing vault (post-setup).
    * Creates profile in famille.md + gamification.md + all child files/dirs.
    */
-  async addChild(child: { name: string; avatar: string; birthdate: string; propre?: boolean; statut?: 'grossesse'; dateTerme?: string }): Promise<void> {
+  async addChild(child: { name: string; avatar: string; birthdate: string; propre?: boolean; gender?: Gender; statut?: 'grossesse'; dateTerme?: string }): Promise<void> {
     const today = format(new Date(), 'yyyy-MM-dd');
     const id = child.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
     const isGrossesse = child.statut === 'grossesse';
@@ -551,6 +551,7 @@ export class VaultManager {
       child.birthdate ? `\nbirthdate: ${child.birthdate}` : ''
     }${ageCategory ? `\nageCategory: ${ageCategory}` : ''
     }${child.propre ? '\npropre: true' : ''
+    }${child.gender ? `\ngender: ${child.gender}` : ''
     }${isGrossesse ? '\nstatut: grossesse' : ''
     }${child.dateTerme ? `\ndateTerme: ${child.dateTerme}` : ''}\n`;
     await this.writeFile('famille.md', familleContent.trimEnd() + '\n' + profileSection);

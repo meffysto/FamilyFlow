@@ -12,7 +12,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   SectionList,
+  RefreshControl,
 } from 'react-native';
+import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useVault } from '../../contexts/VaultContext';
@@ -90,7 +92,10 @@ export default function AnniversairesScreen() {
     updateAnniversary,
     removeAnniversary,
     importAnniversaries,
+    refresh,
   } = useVault();
+
+  const { refreshing, onRefresh } = useRefresh(refresh);
 
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingAnniversary, setEditingAnniversary] = useState<Anniversary | undefined>();
@@ -335,6 +340,7 @@ export default function AnniversairesScreen() {
           contentContainerStyle={styles.listContent}
           ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
           stickySectionHeadersEnabled={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
         />
       )}
 

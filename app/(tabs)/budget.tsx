@@ -22,7 +22,9 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  RefreshControl,
 } from 'react-native';
+import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useVault } from '../../contexts/VaultContext';
@@ -73,6 +75,7 @@ export default function BudgetScreen() {
     addExpense,
     deleteExpense,
     activeProfile,
+    refresh,
   } = useVault();
 
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
@@ -87,6 +90,8 @@ export default function BudgetScreen() {
       </SafeAreaView>
     );
   }
+
+  const { refreshing, onRefresh } = useRefresh(refresh);
 
   const [tab, setTab] = useState<TabId>('resume');
   const budgetHeaderRef = useRef<View>(null);
@@ -193,7 +198,11 @@ export default function BudgetScreen() {
       </View>
 
       {tab === 'resume' ? (
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
+        >
           {/* Total */}
           <View style={[styles.totalCard, { backgroundColor: colors.card }]}>
             <Text style={[styles.totalLabel, { color: colors.textMuted }]}>Total dépensé</Text>
@@ -253,6 +262,7 @@ export default function BudgetScreen() {
           data={sortedEntries}
           keyExtractor={(item, i) => `${item.date}-${item.lineIndex}-${i}`}
           contentContainerStyle={styles.content}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>Aucune dépense ce mois</Text>

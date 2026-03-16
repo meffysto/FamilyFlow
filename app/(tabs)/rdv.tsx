@@ -20,6 +20,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import {
   format,
@@ -35,6 +36,7 @@ import { fr } from 'date-fns/locale';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Chip } from '../../components/ui/Chip';
+import { MarkdownText } from '../../components/ui/MarkdownText';
 import { EmptyState } from '../../components/EmptyState';
 import { RDVEditor } from '../../components/RDVEditor';
 import { DictaphoneRecorder } from '../../components/DictaphoneRecorder';
@@ -183,7 +185,7 @@ export default function RDVScreen() {
 
   const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
-  const renderRDV = (rdv: RDV, isPast: boolean) => {
+  const renderRDV = (rdv: RDV, isPast: boolean, index: number = 0) => {
     const emoji = TYPE_EMOJI[rdv.type_rdv] ?? '📋';
     const hasQuestions = rdv.questions && rdv.questions.length > 0;
     const hasReponses = !!rdv.reponses?.trim();
@@ -214,8 +216,8 @@ export default function RDVScreen() {
     );
 
     return (
+      <Animated.View key={rdv.sourceFile} entering={FadeInDown.delay(Math.min(index * 30, 300))}>
       <ReanimatedSwipeable
-        key={rdv.sourceFile}
         renderRightActions={renderRightActions}
         rightThreshold={60}
         friction={2}
@@ -285,14 +287,15 @@ export default function RDVScreen() {
           {hasReponses && (
             <View style={[styles.reponsesBlock, { borderTopColor: colors.borderLight, backgroundColor: colors.successBg }]}>
               <Text style={[styles.reponsesTitle, { color: colors.successText }]}>💬 Réponses du médecin</Text>
-              <Text style={[styles.reponsesText, { color: colors.textSub }]} numberOfLines={4}>
-                {rdv.reponses}
-              </Text>
+              <MarkdownText style={{ color: colors.textSub }} numberOfLines={4}>
+                {rdv.reponses ?? ''}
+              </MarkdownText>
             </View>
           )}
         </View>
       </TouchableOpacity>
       </ReanimatedSwipeable>
+      </Animated.View>
     );
   };
 
@@ -388,7 +391,7 @@ export default function RDVScreen() {
         {upcoming.length === 0 ? (
           <EmptyState emoji="📅" title="Aucun rendez-vous à venir" subtitle="Votre agenda est libre !" />
         ) : (
-          upcoming.map((r) => renderRDV(r, false))
+          upcoming.map((r, index) => renderRDV(r, false, index))
         )}
 
         {/* Past */}
@@ -402,7 +405,7 @@ export default function RDVScreen() {
                 {showPast ? '🔼 Masquer les passés' : `🔽 Passés (${past.length})`}
               </Text>
             </TouchableOpacity>
-            {showPast && past.map((r) => renderRDV(r, true))}
+            {showPast && past.map((r, index) => renderRDV(r, true, index))}
           </>
         )}
       </ScrollView>

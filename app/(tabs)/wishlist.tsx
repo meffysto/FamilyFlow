@@ -16,7 +16,9 @@ import {
   Modal,
   TextInput,
   Alert,
+  RefreshControl,
 } from 'react-native';
+import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams } from 'expo-router';
@@ -57,10 +59,13 @@ export default function WishlistScreen() {
     updateWishItem,
     deleteWishItem,
     toggleWishBought,
+    refresh,
   } = useVault();
   const params = useLocalSearchParams<{ addNew?: string }>();
 
   const isAdult = activeProfile?.role === 'adulte';
+  const { refreshing, onRefresh } = useRefresh(refresh);
+
   const [filter, setFilter] = useState<FilterId>('tous');
   const [editorVisible, setEditorVisible] = useState(params.addNew === '1');
   const [editingItem, setEditingItem] = useState<WishlistItem | null>(null);
@@ -234,6 +239,7 @@ export default function WishlistScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           stickySectionHeadersEnabled={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
           renderSectionHeader={({ section }) => (
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionAvatar}>{section.avatar}</Text>

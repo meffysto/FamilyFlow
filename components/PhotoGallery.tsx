@@ -3,6 +3,7 @@
  *
  * Affiche toutes les photos en grille 3 colonnes, groupées par mois
  * (plus récent en premier). Utilise SectionList pour la virtualisation.
+ * Les miniatures sont fournies par le parent via thumbnailMap (pas de vérification par cellule).
  */
 
 import React, { useMemo } from 'react';
@@ -19,7 +20,7 @@ import {
 import { format, parse } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useThemeColors } from '../contexts/ThemeContext';
-import { Spacing, Radius } from '../constants/spacing';
+import { Spacing } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -29,8 +30,11 @@ const CELL_SIZE = Math.floor((SCREEN_WIDTH - GRID_GAP * (NUM_COLUMNS - 1)) / NUM
 
 interface PhotoGalleryProps {
   photoDates: string[];
+  enfantName: string;
   getPhotoUri: (date: string) => string;
   cacheBust: number;
+  /** Map date → URI miniature (fourni par le parent, ex: useThumbnailMap) */
+  thumbnailMap?: Record<string, string>;
   onPhotoPress: (dateStr: string) => void;
   onRefresh: () => void;
   refreshing: boolean;
@@ -46,27 +50,23 @@ interface GallerySection {
  * Regroupe les dates par mois et les chunk en lignes de 3
  */
 function buildSections(photoDates: string[]): GallerySection[] {
-  // Trier en ordre chronologique inverse (plus récent d'abord)
   const sorted = [...photoDates].sort((a, b) => b.localeCompare(a));
 
-  // Grouper par mois
   const monthMap = new Map<string, string[]>();
   for (const dateStr of sorted) {
-    const monthKey = dateStr.substring(0, 7); // YYYY-MM
+    const monthKey = dateStr.substring(0, 7);
     if (!monthMap.has(monthKey)) {
       monthMap.set(monthKey, []);
     }
     monthMap.get(monthKey)!.push(dateStr);
   }
 
-  // Construire les sections
   const sections: GallerySection[] = [];
   for (const [monthKey, dates] of monthMap) {
     const parsed = parse(monthKey + '-01', 'yyyy-MM-dd', new Date());
     const label = format(parsed, 'MMMM yyyy', { locale: fr });
     const title = label.charAt(0).toUpperCase() + label.slice(1);
 
-    // Chunk en lignes de 3
     const rows: string[][] = [];
     for (let i = 0; i < dates.length; i += NUM_COLUMNS) {
       rows.push(dates.slice(i, i + NUM_COLUMNS));
@@ -80,8 +80,10 @@ function buildSections(photoDates: string[]): GallerySection[] {
 
 export function PhotoGallery({
   photoDates,
+  enfantName,
   getPhotoUri,
   cacheBust,
+  thumbnailMap,
   onPhotoPress,
   onRefresh,
   refreshing,
@@ -92,7 +94,6 @@ export function PhotoGallery({
   const sections = useMemo(() => buildSections(photoDates), [photoDates]);
 
   const ROW_HEIGHT = CELL_SIZE + GRID_GAP;
-  const HEADER_HEIGHT = 44;
 
   if (photoDates.length === 0) {
     return (
@@ -133,7 +134,10 @@ export function PhotoGallery({
       renderItem={({ item: row }) => (
         <View style={styles.row}>
           {row.map((dateStr) => {
-            const uri = `${getPhotoUri(dateStr)}?v=${cacheBust}`;
+            const thumbUri = thumbnailMap?.[dateStr];
+            const uri = thumbUri
+              ? `${thumbUri}?v=${cacheBust}`
+              : `${getPhotoUri(dateStr)}?v=${cacheBust}`;
             return (
               <TouchableOpacity
                 key={dateStr}
@@ -149,7 +153,6 @@ export function PhotoGallery({
               </TouchableOpacity>
             );
           })}
-          {/* Remplir les cellules vides pour la dernière ligne */}
           {row.length < NUM_COLUMNS &&
             Array.from({ length: NUM_COLUMNS - row.length }).map((_, i) => (
               <View key={`empty-${i}`} style={styles.cell} />

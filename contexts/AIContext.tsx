@@ -7,7 +7,7 @@
  * Sans clé API = tout est désactivé/masqué.
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { askVault, generateAISuggestions, type AIConfig, type AIMessage, type AIResponse, type VaultContext as AIVaultContext } from '../lib/ai-service';
 
@@ -65,6 +65,10 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  // Protection anti-spam : intervalle minimum entre les appels API
+  const lastCallRef = useRef<number>(0);
+  const MIN_INTERVAL = 2000; // 2 secondes minimum entre les appels
+
   const isConfigured = apiKey.length > 0;
 
   const config: AIConfig | null = useMemo(
@@ -95,6 +99,13 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
   const ask = useCallback(
     async (question: string, vaultCtx: AIVaultContext, history: AIMessage[] = []): Promise<AIResponse> => {
       if (!config) return { text: '', error: 'IA non configurée' };
+      if (isLoading) return { text: '', error: '' }; // Requête déjà en cours
+      // Protection debounce — ignore les appels trop rapprochés
+      const now = Date.now();
+      if (now - lastCallRef.current < MIN_INTERVAL) {
+        return { text: '', error: 'Veuillez patienter quelques secondes…' };
+      }
+      lastCallRef.current = now;
       setIsLoading(true);
       try {
         return await askVault(config, question, vaultCtx, history);
@@ -102,12 +113,19 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
       }
     },
-    [config],
+    [config, isLoading],
   );
 
   const getSuggestions = useCallback(
     async (vaultCtx: AIVaultContext): Promise<AIResponse> => {
       if (!config) return { text: '', error: 'IA non configurée' };
+      if (isLoading) return { text: '', error: '' }; // Requête déjà en cours
+      // Protection debounce — ignore les appels trop rapprochés
+      const now = Date.now();
+      if (now - lastCallRef.current < MIN_INTERVAL) {
+        return { text: '', error: 'Veuillez patienter quelques secondes…' };
+      }
+      lastCallRef.current = now;
       setIsLoading(true);
       try {
         return await generateAISuggestions(config, vaultCtx);
@@ -115,7 +133,7 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
       }
     },
-    [config],
+    [config, isLoading],
   );
 
   const value: AIState = useMemo(

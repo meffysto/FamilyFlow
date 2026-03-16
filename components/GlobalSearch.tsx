@@ -22,7 +22,7 @@ import { useRouter } from 'expo-router';
 import { useVault } from '../contexts/VaultContext';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { useAI } from '../contexts/AIContext';
-import { searchVault, type SearchResult, type SearchInput, type SearchResultType } from '../lib/search';
+import { searchVaultWithFilters, type SearchResult, type SearchInput, type SearchResultType, type SearchOutput } from '../lib/search';
 import type { AIMessage, VaultContext as AIVaultContext } from '../lib/ai-service';
 import { useParentalControls } from '../contexts/ParentalControlsContext';
 import { Spacing, Radius } from '../constants/spacing';
@@ -100,6 +100,7 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
         defis: vault.defis,
         wishlistItems: vault.wishlistItems,
         recipes: vault.recipes,
+        profiles: vault.profiles,
       };
     }
 
@@ -119,12 +120,15 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
       ),
       wishlistItems: vault.wishlistItems.filter((w) => w.profileName.toLowerCase() === nameLower),
       recipes: vault.recipes,
+      profiles: vault.profiles,
     };
   }, [vault.tasks, vault.menageTasks, vault.rdvs, vault.stock, vault.meals,
     vault.courses, vault.memories, vault.defis, vault.wishlistItems, vault.recipes,
-    isChildMode, vault.activeProfile]);
+    vault.profiles, isChildMode, vault.activeProfile]);
 
-  const results = useMemo(() => searchVault(query, searchInput), [query, searchInput]);
+  const searchOutput: SearchOutput = useMemo(() => searchVaultWithFilters(query, searchInput), [query, searchInput]);
+  const results = searchOutput.results;
+  const activeFilters = searchOutput.filters;
 
   const aiVaultCtx: AIVaultContext = useMemo(() => ({
     tasks: vault.tasks,
@@ -252,6 +256,26 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
             <Text style={[styles.cancelBtn, { color: colors.textSub }]}>Annuler</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Badges filtres actifs */}
+        {query.trim().length >= 2 && (activeFilters.dateFilter || activeFilters.personFilter) && (
+          <View style={styles.filterRow}>
+            {activeFilters.dateFilter && (
+              <View style={[styles.filterChip, { backgroundColor: primary + '18', borderColor: primary + '40' }]}>
+                <Text style={[styles.filterChipText, { color: primary }]}>
+                  📅 {activeFilters.dateFilter.label}
+                </Text>
+              </View>
+            )}
+            {activeFilters.personFilter && (
+              <View style={[styles.filterChip, { backgroundColor: primary + '18', borderColor: primary + '40' }]}>
+                <Text style={[styles.filterChipText, { color: primary }]}>
+                  👤 {activeFilters.personFilter.name}
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
 
         {/* Bouton IA en haut (toujours visible si configuré + query) */}
         {ai.isConfigured && query.trim().length >= 2 && (
@@ -414,6 +438,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing['2xl'],
     paddingVertical: Spacing['3xl'],
     alignItems: 'center',
+  },
+  filterRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: Spacing['2xl'],
+    paddingTop: Spacing.xl,
+    gap: Spacing.md,
+  },
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    gap: Spacing.xs,
+  },
+  filterChipText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
   },
   aiSection: {
     paddingHorizontal: Spacing['2xl'],

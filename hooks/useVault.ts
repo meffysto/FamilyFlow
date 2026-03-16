@@ -55,9 +55,14 @@ import {
   ANNIVERSAIRES_FILE,
   parseAnniversaries,
   serializeAnniversaries,
+  NOTES_DIR,
+  parseNote,
+  serializeNote,
+  noteFileName,
+  noteCategoryLabel,
 } from '../lib/parser';
 import { processActiveRewards } from '../lib/gamification';
-import { Task, RDV, CourseItem, MealItem, StockItem, Profile, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, DefiDayEntry, GratitudeDay, WishlistItem, WishBudget, WishOccasion, Anniversary } from '../lib/types';
+import { Task, RDV, CourseItem, MealItem, StockItem, Profile, Gender, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, DefiDayEntry, GratitudeDay, WishlistItem, WishBudget, WishOccasion, Anniversary, Note } from '../lib/types';
 import {
   parseBudgetConfig,
   parseBudgetMonth,
@@ -72,6 +77,7 @@ import {
   getDefaultNotificationPrefs,
 } from '../lib/notifications';
 import { setupAllNotifications, loadNotifConfig, scheduleRDVAlerts } from '../lib/scheduled-notifications';
+import { generateThumbnail } from '../lib/thumbnails';
 import { nextOccurrence } from '../lib/recurrence';
 import { format } from 'date-fns';
 import { parseJournalStats } from '../lib/journal-stats';
@@ -118,7 +124,7 @@ export interface VaultState {
   addPhoto: (enfantName: string, date: string, imageUri: string) => Promise<void>;
   getPhotoUri: (enfantName: string, date: string) => string | null;
   updateProfileTheme: (profileId: string, theme: ProfileTheme) => Promise<void>;
-  updateProfile: (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string }) => Promise<void>;
+  updateProfile: (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string; propre?: boolean; gender?: Gender }) => Promise<void>;
   deleteProfile: (profileId: string) => Promise<void>;
   updateStockQuantity: (lineIndex: number, newQuantity: number) => Promise<void>;
   addStockItem: (item: Omit<StockItem, 'lineIndex'>) => Promise<void>;
@@ -161,7 +167,7 @@ export interface VaultState {
   ageUpgrades: AgeUpgrade[];
   applyAgeUpgrade: (upgrade: AgeUpgrade) => Promise<void>;
   dismissAgeUpgrade: (profileId: string) => void;
-  addChild: (child: { name: string; avatar: string; birthdate: string; propre?: boolean; statut?: 'grossesse'; dateTerme?: string }) => Promise<void>;
+  addChild: (child: { name: string; avatar: string; birthdate: string; propre?: boolean; gender?: Gender; statut?: 'grossesse'; dateTerme?: string }) => Promise<void>;
   convertToBorn: (profileId: string, birthdate: string) => Promise<void>;
   budgetEntries: BudgetEntry[];
   budgetConfig: BudgetConfig;
@@ -199,6 +205,10 @@ export interface VaultState {
   updateAnniversary: (oldName: string, anniversary: Omit<Anniversary, 'sourceFile'>) => Promise<void>;
   removeAnniversary: (name: string) => Promise<void>;
   importAnniversaries: (anniversaries: Omit<Anniversary, 'sourceFile'>[]) => Promise<void>;
+  notes: Note[];
+  addNote: (note: Omit<Note, 'sourceFile'>) => Promise<void>;
+  updateNote: (sourceFile: string, note: Omit<Note, 'sourceFile'>) => Promise<void>;
+  deleteNote: (sourceFile: string) => Promise<void>;
 }
 
 // Static task files (non-enfant)
@@ -360,6 +370,7 @@ export function useVaultInternal(): VaultState {
   const [gratitudeDays, setGratitudeDays] = useState<GratitudeDay[]>([]);
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [anniversaries, setAnniversaries] = useState<Anniversary[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
   const vaultRef = useRef<VaultManager | null>(null);
   const busyRef = useRef(false); // Guard against AppState race condition
 
@@ -684,7 +695,22 @@ export function useVaultInternal(): VaultState {
           return { config, vacTasks };
         })().catch(() => ({ config: null as VacationConfig | null, vacTasks: [] as Task[] })),
 
-        // [16] Recipes — lazy-loaded via loadRecipes(), placeholder vide au boot
+        // [17] Notes & Articles
+        (async () => {
+          await vault.ensureDir(NOTES_DIR);
+          const files = await vault.listFilesRecursive(NOTES_DIR, '.md');
+          const noteResults = await Promise.all(
+            files.map(async (file) => {
+              try {
+                const content = await vault.readFile(file);
+                return parseNote(file, content);
+              } catch { return null; }
+            })
+          );
+          const loaded = noteResults.filter((n): n is Note => n !== null);
+          loaded.sort((a, b) => b.created.localeCompare(a.created));
+          return loaded;
+        })().catch(() => [] as Note[]),
       ]);
 
       // Apply results — use helper to extract settled values
@@ -721,6 +747,8 @@ export function useVaultInternal(): VaultState {
       const vacResult = val(results[16], { config: null as VacationConfig | null, vacTasks: [] as Task[] });
       setVacationConfig(vacResult.config);
       setVacationTasks(vacResult.vacTasks);
+      setNotes(val(results[17], []));
+
 
       // Mettre à jour les widgets iOS
       refreshWidget(val(results[5], []), val(results[1], []), rdvResult);
@@ -879,6 +907,14 @@ export function useVaultInternal(): VaultState {
         return { ...prev, [id]: [...existing, date].sort() };
       });
 
+      // Générer la miniature en arrière-plan (ne bloque pas l'UI)
+      const photoUri = vaultRef.current.getPhotoUri(enfantName, date);
+      if (photoUri) {
+        generateThumbnail(photoUri, enfantName, date).catch(() => {
+          // Silencieux — fallback vers la photo originale
+        });
+      }
+
       // Full reload to ensure consistency (file is already on disk)
       if (vaultRef.current) {
         await loadVaultData(vaultRef.current);
@@ -933,7 +969,7 @@ export function useVaultInternal(): VaultState {
     }
   }, []);
 
-  const updateProfile = useCallback(async (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string; propre?: boolean }) => {
+  const updateProfile = useCallback(async (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string; propre?: boolean; gender?: Gender }) => {
     if (!vaultRef.current) return;
     try {
       const content = await vaultRef.current.readFile(FAMILLE_FILE);
@@ -1683,7 +1719,7 @@ export function useVaultInternal(): VaultState {
     setAgeUpgrades((prev) => prev.filter((u) => u.profileId !== profileId));
   }, []);
 
-  const addChild = useCallback(async (child: { name: string; avatar: string; birthdate: string; propre?: boolean; statut?: 'grossesse'; dateTerme?: string }) => {
+  const addChild = useCallback(async (child: { name: string; avatar: string; birthdate: string; propre?: boolean; gender?: Gender; statut?: 'grossesse'; dateTerme?: string }) => {
     if (!vaultRef.current) return;
     await vaultRef.current.addChild(child);
     await loadVaultData(vaultRef.current);
@@ -2129,6 +2165,42 @@ export function useVaultInternal(): VaultState {
     setAnniversaries(parseAnniversaries(await vaultRef.current.readFile(ANNIVERSAIRES_FILE)));
   }, [reloadAnniversaries]);
 
+  // ─── Notes & Articles CRUD ──────────────────────────────────────────────────
+
+  const addNote = useCallback(async (note: Omit<Note, 'sourceFile'>) => {
+    if (!vaultRef.current) return;
+    const categoryDir = noteCategoryLabel(note.category);
+    const dir = `${NOTES_DIR}/${categoryDir}`;
+    await vaultRef.current.ensureDir(dir);
+    const relPath = `${dir}/${noteFileName(note.title)}`;
+    await vaultRef.current.writeFile(relPath, serializeNote(note));
+    const exists = await vaultRef.current.exists(relPath);
+    if (!exists) throw new Error('Échec de l\'écriture');
+    setNotes((prev) => [{ ...note, sourceFile: relPath }, ...prev]);
+  }, []);
+
+  const updateNote = useCallback(async (sourceFile: string, note: Omit<Note, 'sourceFile'>) => {
+    if (!vaultRef.current) return;
+    const categoryDir = noteCategoryLabel(note.category);
+    const newDir = `${NOTES_DIR}/${categoryDir}`;
+    const newPath = `${newDir}/${noteFileName(note.title)}`;
+    // Si le chemin a changé (catégorie ou titre modifié), supprimer l'ancien
+    if (newPath !== sourceFile) {
+      try { await vaultRef.current.deleteFile(sourceFile); } catch { /* ancien fichier peut ne plus exister */ }
+    }
+    await vaultRef.current.ensureDir(newDir);
+    await vaultRef.current.writeFile(newPath, serializeNote(note));
+    setNotes((prev) => prev.map((n) =>
+      n.sourceFile === sourceFile ? { ...note, sourceFile: newPath } : n
+    ));
+  }, []);
+
+  const deleteNote = useCallback(async (sourceFile: string) => {
+    if (!vaultRef.current) return;
+    await vaultRef.current.deleteFile(sourceFile);
+    setNotes((prev) => prev.filter((n) => n.sourceFile !== sourceFile));
+  }, []);
+
   // Mémoïser la valeur du contexte pour éviter les re-renders en cascade
   const vault = vaultRef.current;
   return useMemo(() => ({
@@ -2232,13 +2304,17 @@ export function useVaultInternal(): VaultState {
     updateAnniversary,
     removeAnniversary,
     importAnniversaries,
+    notes,
+    addNote,
+    updateNote,
+    deleteNote,
   }), [
     // State values (déclenchent un re-render quand ils changent)
     vaultPath, isLoading, error, tasks, menageTasks, courses, stock, meals,
     rdvs, profiles, activeProfile, gamiData, notifPrefs, vault, photoDates,
     stockSections, memories, vacationConfig, vacationTasks, isVacationActive,
     recipes, ageUpgrades, budgetEntries, budgetConfig, budgetMonth, routines,
-    healthRecords, defis, gratitudeDays, wishlistItems, journalStats, anniversaries,
+    healthRecords, defis, gratitudeDays, wishlistItems, journalStats, anniversaries, notes,
     // Callbacks (stables grâce à useCallback)
     refresh, setVaultPath, setActiveProfile, saveNotifPrefs, updateMeal,
     addPhoto, getPhotoUri, updateProfileTheme, updateProfile, deleteProfile,
@@ -2255,5 +2331,6 @@ export function useVaultInternal(): VaultState {
     addGratitudeEntry, deleteGratitudeEntry,
     addWishItem, updateWishItem, deleteWishItem, toggleWishBought,
     addAnniversary, updateAnniversary, removeAnniversary, importAnniversaries,
+    addNote, updateNote, deleteNote,
   ]);
 }

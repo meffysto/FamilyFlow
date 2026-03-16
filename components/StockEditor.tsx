@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
+import { ModalHeader } from './ui/ModalHeader';
 import { StockItem } from '../lib/types';
 
 interface StockEditorProps {
@@ -80,19 +81,13 @@ export function StockEditor({ item, sections, onSave, onDelete, onClose }: Stock
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.card }]}>
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={onClose}>
-          <Text style={[styles.headerClose, { color: colors.textFaint }]}>✕</Text>
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>
-          {isEditing ? 'Modifier le produit' : 'Nouveau produit'}
-        </Text>
-        <TouchableOpacity onPress={handleSave} disabled={isSaving}>
-          <Text style={[styles.headerSave, { color: primary }]}>
-            {isSaving ? '...' : 'Enregistrer'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <ModalHeader
+        title={isEditing ? 'Modifier le produit' : 'Nouveau produit'}
+        onClose={onClose}
+        rightLabel={isSaving ? '…' : 'Enregistrer'}
+        onRight={handleSave}
+        rightDisabled={isSaving}
+      />
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {/* Produit */}
@@ -190,16 +185,6 @@ export function StockEditor({ item, sections, onSave, onDelete, onClose }: Stock
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-  },
-  headerClose: { fontSize: 20, padding: 4 },
-  headerTitle: { fontSize: 17, fontWeight: '800' },
-  headerSave: { fontSize: 15, fontWeight: '700', padding: 4 },
   scroll: { flex: 1 },
   content: { padding: 20, gap: 16, paddingBottom: 40 },
   label: {

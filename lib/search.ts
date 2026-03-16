@@ -9,9 +9,10 @@
  * Aucune dépendance externe — fonctionne hors-ligne.
  */
 
-import type { Task, RDV, StockItem, MealItem, CourseItem, Memory, Defi, WishlistItem } from './types';
+import type { Task, RDV, StockItem, MealItem, CourseItem, Memory, Defi, WishlistItem, Profile } from './types';
 import type { AppRecipe } from './cooklang';
 import { formatDateForDisplay } from './parser';
+import { startOfWeek, endOfWeek, addDays, format as fnsFormat } from 'date-fns';
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -37,6 +38,13 @@ export interface SearchInput {
   defis: Defi[];
   wishlistItems: WishlistItem[];
   recipes: AppRecipe[];
+  profiles?: Profile[];
+}
+
+/** Résultat enrichi avec les filtres actifs */
+export interface SearchOutput {
+  results: SearchResult[];
+  filters: ParsedFilters;
 }
 
 // ─── Normalisation ──────────────────────────────────────────────────────────────
@@ -64,6 +72,266 @@ function matchScore(tokens: string[], ...texts: string[]): number {
     if (combined.includes(token)) score++;
   }
   return score;
+}
+
+// ─── Filtres date & personne ────────────────────────────────────────────────────
+
+/** Filtre de date extrait de la requête */
+export interface DateFilter {
+  month?: number;   // 1-12
+  day?: number;     // 1-31
+  year?: number;    // ex: 2026
+  from?: string;    // YYYY-MM-DD (plage)
+  to?: string;      // YYYY-MM-DD (plage)
+  label: string;    // libellé pour affichage (ex: "Mars 2026", "Aujourd'hui")
+}
+
+/** Filtre de personne extrait de la requête */
+export interface PersonFilter {
+  name: string;     // nom original (avec casse/accents)
+  normalized: string; // normalisé pour comparaison
+}
+
+/** Résultat du parsing des filtres */
+export interface ParsedFilters {
+  dateFilter?: DateFilter;
+  personFilter?: PersonFilter;
+  contentTokens: string[];  // tokens restants pour la recherche textuelle
+}
+
+/** Noms de mois français → numéro (1-12) */
+const FRENCH_MONTHS: Record<string, number> = {
+  janvier: 1, fevrier: 2, mars: 3, avril: 4, mai: 5, juin: 6,
+  juillet: 7, aout: 8, septembre: 9, octobre: 10, novembre: 11, decembre: 12,
+};
+
+/** Labels affichés pour les mois */
+const MONTH_LABELS = [
+  '', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
+];
+
+/**
+ * Parse les filtres date et personne dans la requête.
+ * Retourne les filtres détectés et les tokens restants pour la recherche texte.
+ */
+export function parseFilters(rawQuery: string, profiles: Profile[]): ParsedFilters {
+  const tokens = tokenize(rawQuery);
+  const usedIndices = new Set<number>();
+  let dateFilter: DateFilter | undefined;
+  let personFilter: PersonFilter | undefined;
+
+  const today = new Date();
+
+  // --- Détection des dates relatives (multi-tokens d'abord) ---
+  const normalized = normalize(rawQuery);
+
+  if (normalized.includes('cette semaine')) {
+    const weekStart = startOfWeek(today, { weekStartsOn: 1 });
+    const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
+    dateFilter = {
+      from: formatISO(weekStart),
+      to: formatISO(weekEnd),
+      label: 'Cette semaine',
+    };
+    // Marquer les tokens "cette" et "semaine" comme utilisés
+    for (let i = 0; i < tokens.length; i++) {
+      if (tokens[i] === 'cette' || tokens[i] === 'semaine') usedIndices.add(i);
+    }
+  } else if (normalized.includes('ce mois')) {
+    const m = today.getMonth() + 1;
+    const y = today.getFullYear();
+    dateFilter = { month: m, year: y, label: `${MONTH_LABELS[m]} ${y}` };
+    for (let i = 0; i < tokens.length; i++) {
+      if (tokens[i] === 'ce' || tokens[i] === 'mois') usedIndices.add(i);
+    }
+  }
+
+  // --- Détection mots-clés simples (aujourd'hui, demain, hier) ---
+  if (!dateFilter) {
+    for (let i = 0; i < tokens.length; i++) {
+      const t = tokens[i];
+      if (t === "aujourd'hui" || t === 'aujourdhui' || t === "aujourd\u2019hui") {
+        dateFilter = { day: today.getDate(), month: today.getMonth() + 1, year: today.getFullYear(), label: "Aujourd'hui" };
+        usedIndices.add(i);
+        break;
+      }
+      if (t === 'demain') {
+        const tom = addDays(today, 1);
+        dateFilter = { day: tom.getDate(), month: tom.getMonth() + 1, year: tom.getFullYear(), label: 'Demain' };
+        usedIndices.add(i);
+        break;
+      }
+      if (t === 'hier') {
+        const yest = addDays(today, -1);
+        dateFilter = { day: yest.getDate(), month: yest.getMonth() + 1, year: yest.getFullYear(), label: 'Hier' };
+        usedIndices.add(i);
+        break;
+      }
+    }
+  }
+
+  // --- Détection mois (+ jour optionnel avant, + année optionnelle après) ---
+  if (!dateFilter) {
+    for (let i = 0; i < tokens.length; i++) {
+      const monthNum = FRENCH_MONTHS[tokens[i]];
+      if (!monthNum) continue;
+
+      let day: number | undefined;
+      let year: number | undefined;
+
+      // Vérifier un jour avant le mois : "5 mars"
+      if (i > 0 && /^\d{1,2}$/.test(tokens[i - 1])) {
+        const d = parseInt(tokens[i - 1], 10);
+        if (d >= 1 && d <= 31) { day = d; usedIndices.add(i - 1); }
+      }
+
+      // Vérifier une année après le mois : "mars 2026"
+      if (i + 1 < tokens.length && /^\d{4}$/.test(tokens[i + 1])) {
+        year = parseInt(tokens[i + 1], 10);
+        usedIndices.add(i + 1);
+      }
+
+      let label = MONTH_LABELS[monthNum];
+      if (day) label = `${day} ${label}`;
+      if (year) label += ` ${year}`;
+
+      dateFilter = { month: monthNum, day, year, label };
+      usedIndices.add(i);
+      break;
+    }
+  }
+
+  // --- Détection pattern JJ/MM ou JJ/MM/AAAA ---
+  if (!dateFilter) {
+    for (let i = 0; i < tokens.length; i++) {
+      const match = tokens[i].match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/);
+      if (match) {
+        const d = parseInt(match[1], 10);
+        const m = parseInt(match[2], 10);
+        if (m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+          let y: number | undefined;
+          if (match[3]) {
+            y = parseInt(match[3], 10);
+            if (y < 100) y += 2000; // 26 → 2026
+          }
+          let label = `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}`;
+          if (y) label += `/${y}`;
+          dateFilter = { day: d, month: m, year: y, label };
+          usedIndices.add(i);
+        }
+      }
+    }
+  }
+
+  // --- Détection personne ---
+  const profilesNorm = profiles.map((p) => ({
+    name: p.name,
+    normalized: normalize(p.name),
+  }));
+
+  for (let i = 0; i < tokens.length; i++) {
+    if (usedIndices.has(i)) continue;
+    const t = tokens[i];
+    const match = profilesNorm.find((p) => p.normalized === t);
+    if (match) {
+      personFilter = { name: match.name, normalized: match.normalized };
+      usedIndices.add(i);
+      break;
+    }
+  }
+
+  // Tokens restants (ni filtres de date, ni personne, ni type keywords)
+  const contentTokens = tokens.filter((_, i) => !usedIndices.has(i));
+
+  return { dateFilter, personFilter, contentTokens };
+}
+
+/** Formate une date en YYYY-MM-DD (utilise date-fns) */
+function formatISO(d: Date): string {
+  return fnsFormat(d, 'yyyy-MM-dd');
+}
+
+/** Vérifie si une date YYYY-MM-DD correspond au filtre */
+function matchesDateFilter(dateStr: string | undefined, filter: DateFilter): boolean {
+  if (!dateStr) return false;
+
+  // Plage de dates (cette semaine)
+  if (filter.from && filter.to) {
+    return dateStr >= filter.from && dateStr <= filter.to;
+  }
+
+  // Date exacte ou partielle
+  const parts = dateStr.split('-');
+  if (parts.length < 2) return false;
+
+  const y = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+  const d = parts.length >= 3 ? parseInt(parts[2], 10) : undefined;
+
+  if (filter.year && y !== filter.year) return false;
+  if (filter.month && m !== filter.month) return false;
+  if (filter.day && d !== filter.day) return false;
+
+  return true;
+}
+
+/** Vérifie si un résultat correspond au filtre personne */
+function matchesPersonFilter(item: any, type: SearchResultType, filter: PersonFilter): boolean {
+  const norm = filter.normalized;
+  switch (type) {
+    case 'task': {
+      const task = item as Task;
+      // Vérifier mentions ou dossier source
+      if (task.mentions?.some((m: string) => normalize(m) === norm)) return true;
+      if (normalize(task.sourceFile).includes(norm)) return true;
+      return false;
+    }
+    case 'rdv': {
+      const rdv = item as RDV;
+      return normalize(rdv.enfant) === norm;
+    }
+    case 'memory': {
+      const mem = item as Memory;
+      return normalize(mem.enfant) === norm;
+    }
+    case 'wishlist': {
+      const wish = item as WishlistItem;
+      return normalize(wish.profileName) === norm;
+    }
+    case 'defi': {
+      const defi = item as Defi;
+      // Vérifier participants (par nom ou id normalisé)
+      return defi.participants.length === 0 || defi.participants.some((p: string) => normalize(p) === norm);
+    }
+    default:
+      // Types sans filtre personne : on les laisse passer
+      return true;
+  }
+}
+
+/** Extrait la date d'un item selon son type */
+function getItemDate(item: any, type: SearchResultType): string | undefined {
+  switch (type) {
+    case 'task': return (item as Task).dueDate;
+    case 'rdv': return (item as RDV).date_rdv;
+    case 'memory': return (item as Memory).date;
+    case 'defi': return (item as Defi).startDate; // Filtre sur startDate ou endDate
+    default: return undefined;
+  }
+}
+
+/** Pour les défis, vérifier si le filtre date tombe dans la période start-end */
+function defiMatchesDateFilter(defi: Defi, filter: DateFilter): boolean {
+  // Vérifier si startDate ou endDate match
+  if (matchesDateFilter(defi.startDate, filter)) return true;
+  if (matchesDateFilter(defi.endDate, filter)) return true;
+  // Vérifier si le filtre tombe dans la plage du défi
+  if (filter.year && filter.month && filter.day) {
+    const dateStr = `${filter.year}-${String(filter.month).padStart(2, '0')}-${String(filter.day).padStart(2, '0')}`;
+    return dateStr >= defi.startDate && dateStr <= defi.endDate;
+  }
+  return false;
 }
 
 // ─── Détection de type ──────────────────────────────────────────────────────────
@@ -122,10 +390,16 @@ interface SearchEntityConfig<T> {
   getBonus?: (item: T) => number;
 }
 
-function searchEntities<T>(tokens: string[], items: T[], config: SearchEntityConfig<T>): SearchResult[] {
-  const results: SearchResult[] = [];
+/** Résultat interne avec référence à l'item source pour le post-filtrage */
+interface InternalResult<T = any> extends SearchResult {
+  _item: T;
+}
+
+function searchEntities<T>(tokens: string[], items: T[], config: SearchEntityConfig<T>): InternalResult<T>[] {
+  const results: InternalResult<T>[] = [];
   for (const item of items) {
-    const score = matchScore(tokens, ...config.getFields(item));
+    // Si aucun token texte, on accepte tout (filtrage uniquement par date/personne)
+    const score = tokens.length === 0 ? 1 : matchScore(tokens, ...config.getFields(item));
     if (score === 0) continue;
     results.push({
       type: config.type,
@@ -134,6 +408,7 @@ function searchEntities<T>(tokens: string[], items: T[], config: SearchEntityCon
       title: config.getTitle(item),
       snippet: config.getSnippet(item),
       relevance: score + (config.getBonus?.(item) ?? 0),
+      _item: item,
     });
   }
   return results;
@@ -246,22 +521,41 @@ const SEARCH_CONFIGS: { type: SearchResultType; getItems: (input: SearchInput) =
  * Recherche dans tout le vault.
  * Détecte le type de données via les mots-clés, puis cherche partout ou
  * dans le sous-ensemble pertinent.
+ * Supporte les filtres de date et de personne extraits de la requête.
  * Retourne les résultats triés par pertinence décroissante.
  */
 export function searchVault(query: string, input: SearchInput): SearchResult[] {
+  const output = searchVaultWithFilters(query, input);
+  return output.results;
+}
+
+/**
+ * Recherche enrichie : retourne les résultats ET les filtres détectés.
+ * Utilisé par GlobalSearch pour afficher les badges de filtres actifs.
+ */
+export function searchVaultWithFilters(query: string, input: SearchInput): SearchOutput {
   const trimmed = query.trim();
-  if (trimmed.length < 2) return [];
+  const emptyOutput: SearchOutput = { results: [], filters: { contentTokens: [] } };
+  if (trimmed.length < 2) return emptyOutput;
 
   const tokens = tokenize(trimmed);
-  if (tokens.length === 0) return [];
+  if (tokens.length === 0) return emptyOutput;
 
+  // Extraction des filtres date/personne
+  const filters = parseFilters(trimmed, input.profiles ?? []);
+  const hasDateFilter = !!filters.dateFilter;
+  const hasPersonFilter = !!filters.personFilter;
+
+  // Détection de type sur les tokens restants + tokens originaux
   const detectedTypes = detectTypes(tokens);
-  // Tokens sans les mots-clés de type (pour ne pas scorer sur "recette" quand on cherche "recette courgette")
-  const contentTokens = tokens.filter((t) => !TYPE_KEYWORDS[t]);
-  const searchTokens = contentTokens.length > 0 ? contentTokens : tokens;
+  // Tokens sans mots-clés de type ni filtres déjà extraits
+  const contentTokens = filters.contentTokens.filter((t) => !TYPE_KEYWORDS[t]);
+  // Si on a des filtres mais pas de tokens texte, chercher partout (filtrage seul)
+  const searchTokens = contentTokens.length > 0 ? contentTokens :
+    (hasDateFilter || hasPersonFilter) ? [] : tokens;
 
   const searchAll = detectedTypes.size === 0;
-  const results: SearchResult[] = [];
+  const results: InternalResult[] = [];
 
   for (const { type, getItems, config } of SEARCH_CONFIGS) {
     if (searchAll || detectedTypes.has(type)) {
@@ -269,8 +563,29 @@ export function searchVault(query: string, input: SearchInput): SearchResult[] {
     }
   }
 
-  // Tri par pertinence décroissante
-  results.sort((a, b) => b.relevance - a.relevance);
+  // Post-filtrage par date
+  let filtered: InternalResult[] = results;
+  if (hasDateFilter) {
+    filtered = filtered.filter((r) => {
+      // Les types sans champ date ne sont pas filtrés par date
+      const itemDate = getItemDate(r._item, r.type);
+      if (r.type === 'defi') return defiMatchesDateFilter(r._item as Defi, filters.dateFilter!);
+      if (!itemDate && ['task', 'rdv', 'memory'].includes(r.type)) return false;
+      if (!itemDate) return true; // recettes, stock, courses, repas : pas de filtre date
+      return matchesDateFilter(itemDate, filters.dateFilter!);
+    });
+  }
 
-  return results.slice(0, 20);
+  // Post-filtrage par personne
+  if (hasPersonFilter) {
+    filtered = filtered.filter((r) => matchesPersonFilter(r._item, r.type, filters.personFilter!));
+  }
+
+  // Nettoyage du champ _item interne avant retour
+  const cleanResults: SearchResult[] = filtered.map(({ _item, ...rest }) => rest);
+
+  // Tri par pertinence décroissante
+  cleanResults.sort((a, b) => b.relevance - a.relevance);
+
+  return { results: cleanResults.slice(0, 30), filters };
 }

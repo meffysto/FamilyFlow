@@ -16,7 +16,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
+import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
@@ -39,7 +41,7 @@ import { Shadows } from '../../constants/shadows';
 export default function StatsScreen() {
   const router = useRouter();
   const { primary, colors } = useThemeColors();
-  const { tasks, menageTasks, meals, profiles } = useVault();
+  const { tasks, menageTasks, meals, profiles, refresh } = useVault();
 
   // Fusion tâches récurrentes + ménage pour le comptage complet
   const allTasks = useMemo(
@@ -53,6 +55,8 @@ export default function StatsScreen() {
     [profiles],
   );
   const { sleepByChild, budgetTrend, isLoading } = useStatsData(enfantNames);
+
+  const { refreshing, onRefresh } = useRefresh(refresh);
 
   // Navigation semaine
   const [weekOffset, setWeekOffset] = useState(0);
@@ -117,7 +121,11 @@ export default function StatsScreen() {
         <View style={{ width: 60 }} />
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
+      >
         {isLoading && (
           <ActivityIndicator size="small" color={primary} style={{ marginVertical: Spacing['2xl'] }} />
         )}

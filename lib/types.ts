@@ -53,6 +53,13 @@ export interface JournalTableRow {
 
 export type AgeCategory = 'bebe' | 'petit' | 'enfant' | 'ado';
 
+export type Gender = 'garçon' | 'fille';
+
+/** Vérifie si une valeur est un genre valide */
+export function isValidGender(value: unknown): value is Gender {
+  return value === 'garçon' || value === 'fille';
+}
+
 export interface Profile {
   id: string;               // snake_case key used in files
   name: string;
@@ -61,6 +68,7 @@ export interface Profile {
   birthdate?: string;       // YYYY-MM-DD or YYYY
   ageCategory?: AgeCategory; // stored at scaffold, used for upgrade detection
   propre?: boolean;          // potty-trained — hides diaper sections in journal/tasks
+  gender?: Gender;              // sexe — utilisé pour les courbes de croissance
   statut?: 'grossesse' | 'ne'; // pregnancy mode vs born (absent = born)
   dateTerme?: string;        // YYYY-MM-DD expected due date (grossesse only)
   theme?: import('../constants/themes').ProfileTheme;  // visual theme
@@ -394,4 +402,27 @@ export interface NotificationConfig {
 export interface NotificationPreferences {
   version: 1;
   notifications: NotificationConfig[];
+}
+
+// ─── Notes & Articles ────────────────────────────────────────────────────────
+
+export const NOTE_CATEGORIES = [
+  '📋 Administratif',
+  '🏥 Santé',
+  '🎓 École',
+  '💰 Finances',
+  '📖 Articles',
+  '📌 Divers',
+] as const;
+
+export type NoteCategory = typeof NOTE_CATEGORIES[number];
+
+export interface Note {
+  title: string;
+  url?: string;           // URL source (articles importés)
+  category: string;       // ex: "📋 Administratif"
+  created: string;        // YYYY-MM-DD
+  tags: string[];
+  content: string;        // corps markdown
+  sourceFile: string;     // chemin relatif vault
 }

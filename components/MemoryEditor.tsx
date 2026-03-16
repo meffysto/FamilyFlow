@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../contexts/ThemeContext';
+import { ModalHeader } from './ui/ModalHeader';
 import { Memory, MemoryType } from '../lib/types';
 import { DateInput } from './ui/DateInput';
 import { format } from 'date-fns';
@@ -71,19 +72,13 @@ export function MemoryEditor({ memory, enfants, onSave, onClose }: MemoryEditorP
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: card }]}>
-      <View style={[styles.header, { borderBottomColor: border }]}>
-        <TouchableOpacity onPress={onClose}>
-          <Text style={[styles.cancel, { color: textMuted }]}>Annuler</Text>
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: text }]}>
-          {memory ? 'Modifier' : 'Nouveau souvenir'}
-        </Text>
-        <TouchableOpacity onPress={handleSave} disabled={isSaving}>
-          <Text style={[styles.saveBtn, { color: primary }]}>
-            {isSaving ? '...' : 'Enregistrer'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <ModalHeader
+        title={memory ? 'Modifier' : 'Nouveau souvenir'}
+        onClose={onClose}
+        rightLabel={isSaving ? '…' : 'Enregistrer'}
+        onRight={handleSave}
+        rightDisabled={isSaving}
+      />
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {/* Type */}
@@ -175,17 +170,6 @@ export function MemoryEditor({ memory, enfants, onSave, onClose }: MemoryEditorP
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  cancel: { fontSize: 15 },
-  headerTitle: { fontSize: 16, fontWeight: '700' },
-  saveBtn: { fontSize: 15, fontWeight: '700' },
   scroll: { flex: 1 },
   content: { padding: 20, gap: 16, paddingBottom: 40 },
   label: {

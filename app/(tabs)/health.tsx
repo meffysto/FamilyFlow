@@ -15,7 +15,9 @@ import {
   Modal,
   TextInput,
   Alert,
+  RefreshControl,
 } from 'react-native';
+import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -329,13 +331,14 @@ function InfoEditor({
 // ─── Écran principal ──────────────────────────────────────────────────────────
 
 export default function HealthScreen() {
-  const { profiles, healthRecords, saveHealthRecord, addGrowthEntry, updateGrowthEntry, deleteGrowthEntry, addVaccineEntry } = useVault();
+  const { profiles, healthRecords, saveHealthRecord, addGrowthEntry, updateGrowthEntry, deleteGrowthEntry, addVaccineEntry, refresh } = useVault();
   const { primary, colors } = useThemeColors();
   const { showToast } = useToast();
 
   const enfants = useMemo(() => profiles.filter(p => p.role === 'enfant'), [profiles]);
   const [selectedEnfantId, setSelectedEnfantId] = useState<string>(enfants[0]?.id || '');
   const [activeTab, setActiveTab] = useState<TabId>('croissance');
+  const { refreshing, onRefresh } = useRefresh(refresh);
 
   // Sync selectedEnfantId quand les profils chargent
   useEffect(() => {
@@ -481,7 +484,11 @@ export default function HealthScreen() {
       </View>
 
       {/* Contenu */}
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
+      >
         {activeTab === 'croissance' && (
           <CroissanceTab record={record} enfant={selectedEnfant} onAdd={() => setShowGrowthForm(true)} onEditEntry={setEditingEntry} />
         )}
@@ -528,8 +535,7 @@ function CroissanceTab({ record, enfant, onAdd, onEditEntry }: { record: HealthR
   const [chartMetric, setChartMetric] = useState<'weight' | 'height' | 'head' | 'global'>('weight');
 
   // Déterminer le sexe depuis le profil (fallback garçon)
-  // On utilise le nom pour heuristique simple — pas de champ genre dans Profile
-  const childSex: 'garçon' | 'fille' = 'garçon'; // TODO: ajouter genre au profil
+  const childSex: 'garçon' | 'fille' = enfant?.gender ?? 'garçon';
 
   // Âge de l'enfant en mois
   const ageMonths = useMemo(() => {

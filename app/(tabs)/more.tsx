@@ -37,7 +37,7 @@ interface GridItem {
 export default function MoreScreen() {
   const router = useRouter();
   const gridRef = useRef<View>(null);
-  const { rdvs, stock, gamiData, budgetEntries, budgetConfig, activeProfile, profiles, defis, wishlistItems, anniversaries } = useVault();
+  const { rdvs, stock, gamiData, budgetEntries, budgetConfig, activeProfile, profiles, defis, wishlistItems, anniversaries, notes } = useVault();
   const { colors } = useThemeColors();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
 
@@ -163,6 +163,14 @@ export default function MoreScreen() {
         category: 'famille' as const,
       },
       {
+        emoji: '📝',
+        label: 'Notes',
+        route: '/(tabs)/notes',
+        badge: notes.length || undefined,
+        color: colors.info,
+        category: 'famille' as const,
+      },
+      {
         emoji: '📊',
         label: 'Statistiques',
         route: '/(tabs)/stats',
@@ -180,7 +188,7 @@ export default function MoreScreen() {
     ];
   }, [rdvs, stock, gamiData, budgetEntries, budgetConfig, colors, profiles, defis, wishlistItems, anniversaries]);
 
-  const visibleItems = isChildMode ? items.filter((i) => i.label !== 'Budget') : items;
+  const visibleItems = isChildMode ? items.filter((i) => i.label !== 'Budget' && i.label !== 'Notes') : items;
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>

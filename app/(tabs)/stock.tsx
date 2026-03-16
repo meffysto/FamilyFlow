@@ -14,9 +14,12 @@ import {
   ScrollView,
   Modal,
   TextInput,
+  RefreshControl,
 } from 'react-native';
+import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -35,9 +38,12 @@ export default function StockScreen() {
     deleteStockItem,
     updateStockItem,
     addCourseItem,
+    refresh,
   } = useVault();
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
+
+  const { refreshing, onRefresh } = useRefresh(refresh);
 
   const [search, setSearch] = useState('');
   const stockListRef = useRef<View>(null);
@@ -87,9 +93,9 @@ export default function StockScreen() {
   };
 
   const getStatusColor = (item: StockItem) => {
-    if (item.quantite <= item.seuil) return '#EF4444';
-    if (item.quantite <= item.seuil + 1) return '#F59E0B';
-    return '#10B981';
+    if (item.quantite <= item.seuil) return colors.error;
+    if (item.quantite <= item.seuil + 1) return colors.warning;
+    return colors.success;
   };
 
   const getStatusEmoji = (item: StockItem) => {
@@ -104,7 +110,7 @@ export default function StockScreen() {
         <View>
           <Text style={[styles.title, { color: colors.text }]}>📦 Stocks & fournitures</Text>
           {lowStockCount > 0 && (
-            <Text style={styles.subtitle}>
+            <Text style={[styles.subtitle, { color: colors.error }]}>
               ⚠️ {lowStockCount} produit{lowStockCount > 1 ? 's' : ''} en stock bas
             </Text>
           )}
@@ -129,16 +135,20 @@ export default function StockScreen() {
         />
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
+      >
         {Object.entries(grouped).map(([sectionName, items]) => (
           <View key={sectionName} style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.textSub }]}>{sectionName}</Text>
-            {items.map((item) => {
+            {items.map((item, index) => {
               const statusColor = getStatusColor(item);
               const isLow = item.quantite <= item.seuil;
               return (
+                <Animated.View key={item.lineIndex} entering={FadeInDown.delay(Math.min(index * 30, 300))}>
                 <TouchableOpacity
-                  key={item.lineIndex}
                   style={[styles.itemCard, { backgroundColor: colors.card }]}
                   onPress={() => openEdit(item)}
                   activeOpacity={0.7}
@@ -157,7 +167,7 @@ export default function StockScreen() {
                   <View style={styles.itemActions}>
                     {isLow && (
                       <TouchableOpacity
-                        style={styles.courseBtn}
+                        style={[styles.courseBtn, { backgroundColor: colors.warningBg }]}
                         onPress={() => handleAddToCourses(item)}
                       >
                         <Text style={styles.courseBtnText}>🛒</Text>
@@ -172,7 +182,7 @@ export default function StockScreen() {
                       >
                         <Text style={[styles.qtyBtnText, { color: colors.textSub }]}>−</Text>
                       </TouchableOpacity>
-                      <Text style={[styles.qtyValue, { color: colors.text }, isLow && { color: '#EF4444' }]}>
+                      <Text style={[styles.qtyValue, { color: colors.text }, isLow && { color: colors.error }]}>
                         {item.quantite}
                       </Text>
                       <TouchableOpacity
@@ -185,6 +195,7 @@ export default function StockScreen() {
                     </View>
                   </View>
                 </TouchableOpacity>
+                </Animated.View>
               );
             })}
           </View>
@@ -250,7 +261,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   title: { fontSize: 22, fontWeight: '800' },
-  subtitle: { fontSize: 12, color: '#EF4444', fontWeight: '600', marginTop: 2 },
+  subtitle: { fontSize: 12, fontWeight: '600', marginTop: 2 },
   addBtn: {
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -321,7 +332,6 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 8,
-    backgroundColor: '#FEF3C7',
     alignItems: 'center',
     justifyContent: 'center',
   },
