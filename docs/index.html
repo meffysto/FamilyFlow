@@ -3,1324 +3,1232 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FamilyFlow — L'app famille qui simplifie votre quotidien</title>
-  <meta name="description" content="FamilyFlow : moins de charge mentale, plus de moments en famille. Tâches, RDV, journal bébé, recettes, courses, grossesse, budget — 100% privé, 0 cloud.">
-  <meta property="og:title" content="FamilyFlow — Moins de charge mentale, plus de famille">
-  <meta property="og:description" content="L'app qui remplace 10 apps. Tâches, RDV, journal bébé, recettes, courses, grossesse — 100% privé.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://meffysto.github.io/FamilyFlow/">
-  <meta property="og:image" content="https://meffysto.github.io/FamilyFlow/og-image.png">
-  <link rel="icon" type="image/png" href="favicon.png">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      thème: {
-        extend: {
-          colors: {
-            brand: {
-              50: '#ECFEFF', 100: '#CFFAFE', 200: '#A5F3FC', 300: '#67E8F9',
-              400: '#22D3EE', 500: '#06B6D4', 600: '#0891B2', 700: '#0E7490',
-              800: '#155E75', 900: '#164E63',
-            }
-          }
-        }
+  <title>FamilyFlow — Le quotidien familial, sans la charge mentale</title>
+  <meta name="description" content="Une seule app pour toute la famille : courses, tâches, journal bébé, rendez-vous, recettes, widgets iOS. Privé par design.">
+  <link rel="icon" href="favicon.png" type="image/png">
+
+  <!-- Fonts: Zodiak (serif, titres) + DM Sans (body) via Fontshare -->
+  <link href="https://api.fontshare.com/v2/css?f[]=zodiak@400,500,600,700&f[]=dm-sans@400,500,600,700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ================================================================
+       RESET & BASE
+       ================================================================ */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+      overflow-x: hidden;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #F6F0FF;
+      color: #2D1B4E;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ================================================================
+       CSS CUSTOM PROPERTIES
+       ================================================================ */
+    :root {
+      --bg: #F6F0FF;
+      --primary: #7C3AED;
+      --primary-light: #A78BFA;
+      --primary-dark: #5B21B6;
+      --accent-rose: #EC4899;
+      --accent-amber: #F59E0B;
+      --text: #2D1B4E;
+      --text-sub: #6B5B8A;
+      --card-bg: #FFFFFF;
+      --card-border: #EDE5F7;
+      --card-shadow: rgba(124, 58, 237, 0.08);
+      --gradient-text: linear-gradient(135deg, #7C3AED, #EC4899, #F59E0B);
+      --font-title: 'Zodiak', Georgia, 'Times New Roman', serif;
+      --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* ================================================================
+       SLIDE BASE
+       ================================================================ */
+    .slide {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      scroll-snap-align: start;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: clamp(16px, 4vw, 64px);
+    }
+
+    .slide-inner {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    /* ================================================================
+       FLOATING SHAPES (pastel circles)
+       ================================================================ */
+    .shape {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.35;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .shape--violet {
+      background: radial-gradient(circle, #C4B5FD, #DDD6FE);
+    }
+
+    .shape--rose {
+      background: radial-gradient(circle, #FBCFE8, #FCE7F3);
+    }
+
+    .shape--amber {
+      background: radial-gradient(circle, #FDE68A, #FEF3C7);
+    }
+
+    .shape--mint {
+      background: radial-gradient(circle, #A7F3D0, #D1FAE5);
+    }
+
+    @keyframes floatShape {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      25% { transform: translateY(-20px) rotate(3deg); }
+      50% { transform: translateY(-8px) rotate(-2deg); }
+      75% { transform: translateY(-25px) rotate(1deg); }
+    }
+
+    .shape { animation: floatShape 12s ease-in-out infinite; }
+    .shape:nth-child(2) { animation-delay: -3s; animation-duration: 15s; }
+    .shape:nth-child(3) { animation-delay: -7s; animation-duration: 18s; }
+    .shape:nth-child(4) { animation-delay: -5s; animation-duration: 14s; }
+
+    /* ================================================================
+       ANIMATIONS
+       ================================================================ */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.85); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+
+    .anim-fadeUp,
+    .anim-popIn {
+      opacity: 0;
+    }
+
+    .slide.visible .anim-fadeUp {
+      animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .slide.visible .anim-popIn {
+      animation: popIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Stagger delays */
+    .delay-1 { animation-delay: 0.1s !important; }
+    .delay-2 { animation-delay: 0.2s !important; }
+    .delay-3 { animation-delay: 0.3s !important; }
+    .delay-4 { animation-delay: 0.4s !important; }
+    .delay-5 { animation-delay: 0.5s !important; }
+    .delay-6 { animation-delay: 0.6s !important; }
+    .delay-7 { animation-delay: 0.7s !important; }
+    .delay-8 { animation-delay: 0.8s !important; }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .shape { animation: none !important; }
+      .anim-fadeUp, .anim-popIn { opacity: 1; animation: none !important; }
+      html { scroll-behavior: auto; }
+    }
+
+    /* ================================================================
+       TYPOGRAPHY
+       ================================================================ */
+    .title {
+      font-family: var(--font-title);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .title--hero {
+      font-size: clamp(2rem, 5vw + 0.5rem, 4.2rem);
+    }
+
+    .title--section {
+      font-size: clamp(1.6rem, 3.5vw + 0.3rem, 3rem);
+    }
+
+    .title--sub {
+      font-size: clamp(1.1rem, 2vw + 0.3rem, 1.6rem);
+      font-weight: 600;
+    }
+
+    .subtitle {
+      font-family: var(--font-body);
+      font-size: clamp(0.95rem, 1.5vw + 0.2rem, 1.25rem);
+      color: var(--text-sub);
+      line-height: 1.6;
+      max-width: 680px;
+    }
+
+    .gradient-text {
+      background: var(--gradient-text);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ================================================================
+       BADGE
+       ================================================================ */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: clamp(4px, 0.5vw, 8px);
+      padding: clamp(6px, 1vw, 10px) clamp(12px, 2vw, 20px);
+      background: rgba(124, 58, 237, 0.08);
+      border: 1px solid var(--card-border);
+      border-radius: 100px;
+      font-size: clamp(0.75rem, 1vw + 0.2rem, 0.95rem);
+      font-weight: 600;
+      color: var(--primary);
+      white-space: nowrap;
+    }
+
+    /* ================================================================
+       PILLS ROW
+       ================================================================ */
+    .pills {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: clamp(6px, 1vw, 12px);
+    }
+
+    .pill {
+      padding: clamp(6px, 0.8vw, 10px) clamp(12px, 1.5vw, 20px);
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 100px;
+      font-size: clamp(0.7rem, 1vw + 0.15rem, 0.9rem);
+      font-weight: 500;
+      color: var(--text);
+      box-shadow: 0 2px 8px var(--card-shadow);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+    }
+
+    .pill:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(124, 58, 237, 0.12);
+    }
+
+    /* ================================================================
+       CARDS
+       ================================================================ */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: clamp(12px, 2vw, 20px);
+      padding: clamp(16px, 2.5vw, 32px);
+      box-shadow: 0 4px 20px var(--card-shadow);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(124, 58, 237, 0.12);
+    }
+
+    .card-icon {
+      font-size: clamp(1.5rem, 2.5vw, 2.2rem);
+      margin-bottom: clamp(8px, 1vw, 16px);
+    }
+
+    .card-title {
+      font-family: var(--font-title);
+      font-weight: 600;
+      font-size: clamp(0.95rem, 1.3vw + 0.2rem, 1.2rem);
+      color: var(--text);
+      margin-bottom: clamp(4px, 0.5vw, 8px);
+    }
+
+    .card-desc {
+      font-size: clamp(0.8rem, 1vw + 0.1rem, 0.95rem);
+      color: var(--text-sub);
+      line-height: 1.5;
+    }
+
+    /* Card grid layouts */
+    .card-grid {
+      display: grid;
+      gap: clamp(12px, 2vw, 24px);
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .card-grid--2 { grid-template-columns: repeat(2, 1fr); }
+    .card-grid--3 { grid-template-columns: repeat(3, 1fr); }
+    .card-grid--4 { grid-template-columns: repeat(2, 1fr); }
+
+    @media (min-width: 768px) {
+      .card-grid--4 { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    @media (max-width: 600px) {
+      .card-grid--2 { grid-template-columns: 1fr; }
+      .card-grid--3 { grid-template-columns: 1fr; }
+      .card-grid--4 { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ================================================================
+       FEATURE LIST
+       ================================================================ */
+    .feature-list {
+      list-style: none;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(8px, 1.2vw, 16px);
+    }
+
+    .feature-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: clamp(8px, 1vw, 14px);
+      font-size: clamp(0.85rem, 1.2vw + 0.1rem, 1.05rem);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .feature-list li::before {
+      content: '\2726';
+      color: var(--primary);
+      font-size: clamp(0.7rem, 1vw, 0.9rem);
+      flex-shrink: 0;
+      margin-top: 3px;
+    }
+
+    /* ================================================================
+       PRIVACY SHIELD ICON
+       ================================================================ */
+    .shield-icon {
+      width: clamp(48px, 6vw, 80px);
+      height: clamp(48px, 6vw, 80px);
+      background: linear-gradient(135deg, #7C3AED, #EC4899);
+      border-radius: clamp(12px, 2vw, 20px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(1.5rem, 3vw, 2.5rem);
+      margin-bottom: clamp(12px, 2vw, 24px);
+    }
+
+    /* ================================================================
+       CTA BUTTON
+       ================================================================ */
+    .cta-button {
+      display: inline-flex;
+      align-items: center;
+      gap: clamp(8px, 1vw, 12px);
+      padding: clamp(14px, 2vw, 20px) clamp(28px, 4vw, 48px);
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #FFFFFF;
+      text-decoration: none;
+      border-radius: 100px;
+      font-family: var(--font-body);
+      font-size: clamp(0.95rem, 1.3vw + 0.1rem, 1.15rem);
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 8px 30px rgba(124, 58, 237, 0.3);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+    }
+
+    .cta-button:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 14px 40px rgba(124, 58, 237, 0.4);
+    }
+
+    .cta-button svg {
+      width: clamp(18px, 2vw, 24px);
+      height: clamp(18px, 2vw, 24px);
+    }
+
+    /* ================================================================
+       PROGRESS BAR (fixed top)
+       ================================================================ */
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: var(--gradient-text);
+      background-size: 200% 100%;
+      z-index: 1000;
+      transition: width 0.3s ease;
+      border-radius: 0 2px 2px 0;
+    }
+
+    /* ================================================================
+       NAV DOTS (fixed right side)
+       ================================================================ */
+    .nav-dots {
+      position: fixed;
+      right: clamp(12px, 2vw, 24px);
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(8px, 1vh, 14px);
+    }
+
+    .nav-dot {
+      width: clamp(8px, 1vw, 10px);
+      height: clamp(8px, 1vw, 10px);
+      border-radius: 50%;
+      background: var(--primary-light);
+      opacity: 0.3;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease;
+      padding: 0;
+    }
+
+    .nav-dot:hover {
+      opacity: 0.6;
+      transform: scale(1.3);
+    }
+
+    .nav-dot.active {
+      opacity: 1;
+      background: var(--primary);
+      transform: scale(1.3);
+    }
+
+    /* ================================================================
+       SPACING UTILITIES
+       ================================================================ */
+    .gap-xs { height: clamp(8px, 1vh, 12px); }
+    .gap-sm { height: clamp(12px, 1.5vh, 20px); }
+    .gap-md { height: clamp(16px, 2.5vh, 32px); }
+    .gap-lg { height: clamp(24px, 3.5vh, 48px); }
+
+    /* ================================================================
+       SPLIT LAYOUT (visual left, content right)
+       ================================================================ */
+    .split {
+      display: flex;
+      align-items: center;
+      gap: clamp(24px, 4vw, 64px);
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .split__visual {
+      flex-shrink: 0;
+      width: clamp(80px, 15vw, 180px);
+      height: clamp(80px, 15vw, 180px);
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(236, 72, 153, 0.08));
+      border-radius: clamp(16px, 3vw, 32px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      border: 1px solid var(--card-border);
+    }
+
+    .split__content {
+      text-align: left;
+      flex: 1;
+    }
+
+    @media (max-width: 600px) {
+      .split {
+        flex-direction: column;
+        text-align: center;
+      }
+      .split__visual {
+        width: clamp(64px, 20vw, 100px);
+        height: clamp(64px, 20vw, 100px);
+        font-size: clamp(2rem, 8vw, 3rem);
+      }
+      .split__content {
+        text-align: center;
+      }
+      .split__content .feature-list {
+        text-align: left;
       }
     }
-  </script>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .gradient-text {
-      background: linear-gradient(135deg, #0E7490 0%, #06B6D4 50%, #2DD4BF 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+
+    /* ================================================================
+       SMALL SCREEN HEIGHT ADJUSTMENTS
+       ================================================================ */
+    @media (max-height: 700px) {
+      .slide { padding: clamp(12px, 2vw, 24px); }
+      .gap-lg { height: clamp(12px, 2vh, 24px); }
+      .gap-md { height: clamp(8px, 1.5vh, 16px); }
+      .title--hero { font-size: clamp(1.6rem, 4vw + 0.3rem, 3rem); }
+      .title--section { font-size: clamp(1.3rem, 3vw + 0.2rem, 2.2rem); }
+      .subtitle { font-size: clamp(0.85rem, 1.2vw + 0.15rem, 1.05rem); }
+      .card { padding: clamp(10px, 1.5vw, 20px); }
+      .split__visual {
+        width: clamp(56px, 10vw, 100px);
+        height: clamp(56px, 10vw, 100px);
+        font-size: clamp(1.8rem, 4vw, 3rem);
+      }
     }
-    .hero-glow { background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(6,182,212,0.15) 0%, transparent 70%); }
-    .phone-mockup {
-      background: linear-gradient(145deg, #1F2937 0%, #111827 100%);
-      border-radius: 40px; padding: 10px;
-      box-shadow: 0 25px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1) inset;
+
+    @media (max-height: 600px) {
+      .title--hero { font-size: clamp(1.4rem, 3.5vw + 0.2rem, 2.4rem); }
+      .title--section { font-size: clamp(1.1rem, 2.5vw + 0.2rem, 1.8rem); }
+      .gap-lg { height: clamp(8px, 1.5vh, 16px); }
+      .gap-md { height: clamp(6px, 1vh, 12px); }
+      .gap-sm { height: clamp(4px, 0.8vh, 10px); }
     }
-    .phone-screen { border-radius: 30px; overflow: hidden; }
-    .phone-sm .phone-mockup { border-radius: 32px; padding: 8px; box-shadow: 0 15px 40px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.08) inset; }
-    .phone-sm .phone-screen { border-radius: 24px; }
-    .feature-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
-    .feature-card { transition: all 0.3s ease; }
-    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-    .float-animation { animation: float 6s ease-in-out infinite; }
-    .fade-in { opacity: 0; transform: translateY(20px); transition: all 0.6s ease; }
-    .fade-in.visible { opacity: 1; transform: translateY(0); }
-    @keyframes pulse-badge { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-    .badge-new { animation: pulse-badge 2s ease-in-out infinite; }
-    /* Gallery scroll */
-    .gallery-scroll { display: flex; gap: 20px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding: 20px 0; scrollbar-width: none; }
-    .gallery-scroll::-webkit-scrollbar { display: none; }
-    .gallery-item { scroll-snap-align: center; flex-shrink: 0; }
-    /* Dark phone */
-    .dark-phone-screen { background: #111827; }
-    .dark-card { background: #1F2937; border: 1px solid #374151; }
+
+    @media (max-height: 500px) {
+      .title--hero { font-size: clamp(1.2rem, 3vw, 2rem); }
+      .title--section { font-size: clamp(1rem, 2vw, 1.5rem); }
+      .subtitle { font-size: clamp(0.75rem, 1vw + 0.1rem, 0.9rem); }
+      .badge { padding: 4px 10px; font-size: 0.7rem; }
+      .pill { padding: 4px 10px; font-size: 0.65rem; }
+      .card { padding: clamp(8px, 1vw, 14px); }
+      .card-icon { font-size: 1.2rem; margin-bottom: 4px; }
+      .card-title { font-size: 0.85rem; }
+      .card-desc { font-size: 0.75rem; }
+    }
+
+    /* ================================================================
+       WIDGET CARDS (slide 7)
+       ================================================================ */
+    .widget-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: clamp(16px, 2.5vw, 24px);
+      padding: clamp(20px, 3vw, 36px);
+      box-shadow: 0 4px 20px var(--card-shadow);
+      text-align: left;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+    }
+
+    .widget-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(124, 58, 237, 0.12);
+    }
+
+    .widget-card__header {
+      display: flex;
+      align-items: center;
+      gap: clamp(8px, 1.2vw, 14px);
+      margin-bottom: clamp(8px, 1.2vw, 16px);
+    }
+
+    .widget-card__icon {
+      width: clamp(36px, 4vw, 48px);
+      height: clamp(36px, 4vw, 48px);
+      border-radius: clamp(8px, 1.2vw, 12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(1.2rem, 2vw, 1.6rem);
+      flex-shrink: 0;
+    }
+
+    .widget-card__icon--purple {
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(124, 58, 237, 0.05));
+    }
+
+    .widget-card__icon--pink {
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(236, 72, 153, 0.05));
+    }
+
+    /* ================================================================
+       ZEN CIRCLE (slide 8) — breathing animation
+       ================================================================ */
+    @keyframes breathe {
+      0%, 100% { transform: scale(1); opacity: 0.6; }
+      50% { transform: scale(1.12); opacity: 1; }
+    }
+
+    .zen-circle {
+      width: clamp(100px, 18vw, 180px);
+      height: clamp(100px, 18vw, 180px);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(124, 58, 237, 0.15), rgba(236, 72, 153, 0.08), transparent);
+      border: 2px solid rgba(124, 58, 237, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      animation: breathe 5s ease-in-out infinite;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .zen-circle { animation: none; }
+    }
+
+    /* ================================================================
+       PRIVACY GRID (slide 10)
+       ================================================================ */
+    .privacy-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: clamp(12px, 2vw, 20px);
+      width: 100%;
+      max-width: 700px;
+    }
+
+    .privacy-item {
+      display: flex;
+      align-items: flex-start;
+      gap: clamp(8px, 1vw, 14px);
+      text-align: left;
+      font-size: clamp(0.8rem, 1.1vw + 0.1rem, 1rem);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .privacy-item__icon {
+      flex-shrink: 0;
+      width: clamp(32px, 4vw, 44px);
+      height: clamp(32px, 4vw, 44px);
+      border-radius: clamp(8px, 1.2vw, 12px);
+      background: rgba(124, 58, 237, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(1rem, 1.5vw, 1.3rem);
+    }
+
+    @media (max-width: 600px) {
+      .privacy-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ================================================================
+       FOOTER
+       ================================================================ */
+    .footer-text {
+      font-size: clamp(0.75rem, 1vw + 0.1rem, 0.9rem);
+      color: var(--text-sub);
+    }
+
+    .footer-text a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .footer-text a:hover {
+      text-decoration: underline;
+    }
+
+    /* ================================================================
+       HIDE NAV DOTS ON NARROW MOBILE
+       ================================================================ */
+    @media (max-width: 480px) {
+      .nav-dots { display: none; }
+    }
   </style>
 </head>
-<body class="bg-white text-gray-900 overflow-x-hidden">
+<body>
 
-  <!-- NAV -->
-  <nav class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-100">
-    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <img src="logo.jpg" alt="FamilyFlow" class="h-10 w-auto">
-        <span class="font-bold text-lg text-gray-900">FamilyFlow</span>
-      </div>
-      <div class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
-        <a href="#features" class="hover:text-brand-600 transition-colors">Fonctionnalités</a>
-        <a href="#screenshots" class="hover:text-brand-600 transition-colors">Aperçu</a>
-        <a href="#how-it-works" class="hover:text-brand-600 transition-colors">Comment ça marche</a>
-        <a href="#faq" class="hover:text-brand-600 transition-colors">FAQ</a>
-      </div>
-      <a href="https://apps.apple.com" class="bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold py-2 px-5 rounded-full transition-colors">
-        Télécharger
-      </a>
-    </div>
-  </nav>
+  <!-- ================================================================
+       FIXED UI: Progress bar + Nav dots
+       ================================================================ -->
+  <div class="progress-bar" id="progressBar"></div>
+  <nav class="nav-dots" id="navDots" aria-label="Navigation des slides"></nav>
 
-  <!-- HERO -->
-  <section class="hero-glow pt-32 pb-16 md:pt-40 md:pb-24 px-4">
-    <div class="max-w-6xl mx-auto flex flex-col items-center text-center gap-8">
-      <div class="inline-flex items-center gap-2 bg-brand-50 text-brand-700 text-sm font-semibold px-4 py-2 rounded-full border border-brand-100">
-        <span>🔒</span>
-        <span>Enfin une app qui respecte votre famille</span>
+  <!-- ================================================================
+       SLIDE 1 — HERO
+       ================================================================ -->
+  <section class="slide" id="slide-0">
+    <div class="shape shape--violet" style="width: 300px; height: 300px; top: -80px; left: -60px;"></div>
+    <div class="shape shape--rose" style="width: 200px; height: 200px; bottom: -40px; right: -30px;"></div>
+    <div class="shape shape--amber" style="width: 150px; height: 150px; top: 30%; right: 10%;"></div>
+
+    <div class="slide-inner">
+      <div class="anim-fadeUp delay-1">
+        <span class="badge">&#x1F3E0; Pour toute la famille</span>
       </div>
-      <h1 class="text-5xl md:text-7xl font-extrabold leading-[1.1] max-w-4xl tracking-tight">
+
+      <div class="gap-md"></div>
+
+      <h1 class="title title--hero anim-fadeUp delay-2">
         Le quotidien familial,<br><span class="gradient-text">sans la charge mentale</span>
       </h1>
-      <p class="text-lg md:text-xl text-gray-500 max-w-2xl leading-relaxed">
-        Courses, tâches, rendez-vous, journal bébé, recettes — tout est là. Une IA anonymisée vous aide à tout orchestrer : vos données sont nettoyées avant chaque requête, aucun nom ni info personnelle ne sort de votre téléphone.
+
+      <div class="gap-sm"></div>
+
+      <p class="subtitle anim-fadeUp delay-3">
+        Courses, t&#226;ches, journal b&#233;b&#233;, rendez-vous, recettes, widgets interactifs &#8212; tout est l&#224;. Priv&#233; par design.
       </p>
-      <div class="max-w-3xl grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-sm text-gray-400 text-left">
-        <p>🍼 <strong class="text-gray-600">Mode nuit tétée</strong> — une tétée, deux touches, dodo.</p>
-        <p>🎁 <strong class="text-gray-600">Récompenses</strong> — vos corvées deviennent un jeu d'enfant avec de vraies récompenses.</p>
-        <p>🍳 <strong class="text-gray-600">Recettes → courses</strong> — choisissez vos repas, la liste se génère toute seule.</p>
-        <p>🤰 <strong class="text-gray-600">Suivi grossesse</strong> — votre cacahuète, suivie en temps réel.</p>
-        <p>📓 <strong class="text-gray-600">Journal bébé</strong> — chaque biberon, chaque sieste, chaque couche — rien ne s'oublie.</p>
-        <p>🔒 <strong class="text-gray-600">Zéro cloud</strong> — vos données restent sur votre téléphone, point final.</p>
+
+      <div class="gap-md"></div>
+
+      <div class="pills anim-fadeUp delay-4">
+        <span class="pill">&#x1F4CB; T&#226;ches</span>
+        <span class="pill">&#x1F37C; Journal b&#233;b&#233;</span>
+        <span class="pill">&#x1F37D;&#xFE0F; Repas</span>
+        <span class="pill">&#x1F4C5; RDV</span>
+        <span class="pill">&#x1F9D8; Mode zen</span>
+        <span class="pill">&#x1F4F1; Widgets iOS</span>
       </div>
-      <div class="flex gap-4 flex-col sm:flex-row">
-        <a href="https://apps.apple.com" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3.5 px-8 rounded-full transition-all hover:shadow-lg hover:shadow-brand-600/25 flex items-center gap-2">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-          App Store
-        </a>
-        <a href="#screenshots" class="border-2 border-gray-200 text-gray-700 hover:border-brand-300 hover:text-brand-600 font-semibold py-3.5 px-8 rounded-full transition-all">
-          Découvrir →
-        </a>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       SLIDE 2 — LE PROBL&#200;ME
+       ================================================================ -->
+  <section class="slide" id="slide-1">
+    <div class="shape shape--rose" style="width: 250px; height: 250px; top: -60px; right: -40px;"></div>
+    <div class="shape shape--violet" style="width: 180px; height: 180px; bottom: -30px; left: -20px;"></div>
+
+    <div class="slide-inner">
+      <h2 class="title title--section anim-fadeUp delay-1">
+        10 apps pour g&#233;rer <span class="gradient-text">une famille</span> ?
+      </h2>
+
+      <div class="gap-md"></div>
+
+      <div class="card-grid card-grid--4 anim-popIn delay-2">
+        <div class="card">
+          <div class="card-icon">&#x1F4CB;</div>
+          <div class="card-title">Rappels</div>
+          <div class="card-desc">Dans une app</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">&#x1F373;</div>
+          <div class="card-title">Recettes</div>
+          <div class="card-desc">Dans une autre</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">&#x1F476;</div>
+          <div class="card-title">Journal b&#233;b&#233;</div>
+          <div class="card-desc">Sur papier</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">&#x1F4C5;</div>
+          <div class="card-title">Rendez-vous</div>
+          <div class="card-desc">Dans le calendrier</div>
+        </div>
       </div>
 
-      <!-- HERO PHONE MOCKUP — Dashboard -->
-      <div class="mt-8 float-animation">
-        <div class="phone-mockup w-[280px] md:w-[320px]">
-          <div class="phone-screen bg-white flex flex-col" style="aspect-ratio:9/19.5">
-            <div class="bg-gray-50 px-6 pt-4 pb-2 flex justify-between items-center text-[10px] text-gray-400 font-semibold">
-              <span>9:41</span>
-              <div class="flex gap-1"><span>📶</span><span>🔋</span></div>
-            </div>
-            <div class="bg-white px-5 py-3 border-b border-gray-100">
-              <p class="text-[11px] text-gray-400 font-medium">Bonjour Papa 👋</p>
-              <p class="text-[15px] font-bold text-gray-900 mt-0.5">Tableau de bord</p>
-            </div>
-            <div class="flex-1 bg-gray-50 px-4 py-3 space-y-2.5 overflow-hidden">
-              <!-- Grossesse banner -->
-              <div class="bg-gradient-to-r from-pink-500 to-rose-400 rounded-xl p-3 text-white">
-                <div class="flex items-center justify-between">
-                  <div><p class="text-[10px] opacity-80">🤰 Grossesse</p><p class="text-[14px] font-bold">J-42 · 35 SA</p></div>
-                  <div class="text-right"><p class="text-[10px] opacity-80">Taille</p><p class="text-[14px]">🍈 Melon</p></div>
-                </div>
-              </div>
-              <!-- Streak -->
-              <div class="bg-gradient-to-r from-brand-500 to-teal-500 rounded-xl p-3 text-white">
-                <div class="flex items-center justify-between">
-                  <div><p class="text-[10px] opacity-80">Série en cours</p><p class="text-[18px] font-bold">🔥 12 jours</p></div>
-                  <div class="text-right"><p class="text-[10px] opacity-80">Points</p><p class="text-[14px] font-bold">2 450</p></div>
-                </div>
-              </div>
-              <!-- Tasks -->
-              <div class="bg-white rounded-xl p-3 shadow-sm">
-                <p class="text-[11px] font-bold text-gray-900 mb-2">📋 Tâches du jour</p>
-                <div class="space-y-2">
-                  <div class="flex items-center gap-2">
-                    <div class="w-4 h-4 rounded border-2 border-brand-500 bg-brand-500 flex items-center justify-center"><span class="text-white text-[8px]">✓</span></div>
-                    <span class="text-[11px] text-gray-400 line-through">Bain Lucas</span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <div class="w-4 h-4 rounded border-2 border-gray-300"></div>
-                    <span class="text-[11px] text-gray-700">Courses Lidl</span>
-                    <span class="text-[8px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded font-medium ml-auto">#courses</span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <div class="w-4 h-4 rounded border-2 border-gray-300"></div>
-                    <span class="text-[11px] text-gray-700">Préparer biberon</span>
-                    <span class="text-[8px] bg-pink-100 text-pink-600 px-1.5 py-0.5 rounded font-medium ml-auto">🍼</span>
-                  </div>
-                </div>
-              </div>
-              <!-- RDV -->
-              <div class="bg-white rounded-xl p-3 shadow-sm">
-                <p class="text-[11px] font-bold text-gray-900 mb-2">🏥 Prochain RDV</p>
-                <div class="flex items-center gap-2">
-                  <div class="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center text-[14px]">👨‍⚕️</div>
-                  <div><p class="text-[11px] font-semibold text-gray-900">Pédiatre — Lucas</p><p class="text-[10px] text-gray-400">15/03/2026 à 14:30</p></div>
-                </div>
-              </div>
-            </div>
-            <!-- Tab bar -->
-            <div class="bg-white border-t border-gray-100 px-3 py-2 flex justify-around">
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[14px]">🏠</span><span class="text-[8px] font-semibold text-brand-600">Accueil</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[14px]">📋</span><span class="text-[8px] text-gray-400">Tâches</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[14px]">📓</span><span class="text-[8px] text-gray-400">Journal</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[14px]">📸</span><span class="text-[8px] text-gray-400">Photos</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[14px]">⚙️</span><span class="text-[8px] text-gray-400">Menu</span></div>
-            </div>
-          </div>
+      <div class="gap-md"></div>
+
+      <p class="subtitle anim-fadeUp delay-3">
+        La charge mentale, c'est &#231;a : tout &#233;parpill&#233;, rien de synchronis&#233;.
+      </p>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       SLIDE 3 — LA SOLUTION
+       ================================================================ -->
+  <section class="slide" id="slide-2">
+    <div class="shape shape--mint" style="width: 280px; height: 280px; top: -80px; left: 10%;"></div>
+    <div class="shape shape--amber" style="width: 160px; height: 160px; bottom: 10%; right: -30px;"></div>
+
+    <div class="slide-inner">
+      <h2 class="title title--section anim-fadeUp delay-1">
+        Une seule app. <span class="gradient-text">Toute la famille.</span>
+      </h2>
+
+      <div class="gap-sm"></div>
+
+      <p class="subtitle anim-fadeUp delay-2">
+        FamilyFlow r&#233;unit tout ce dont votre famille a besoin, dans un espace &#233;l&#233;gant et priv&#233;.
+      </p>
+
+      <div class="gap-md"></div>
+
+      <div class="anim-fadeUp delay-3" style="max-width: 600px;">
+        <ul class="feature-list">
+          <li>T&#226;ches m&#233;nag&#232;res avec r&#233;currence et gamification</li>
+          <li>Journal b&#233;b&#233; complet : t&#233;t&#233;es, couches, sommeil, humeur</li>
+          <li>Planning repas et recettes int&#233;gr&#233;es (format Cooklang)</li>
+          <li>Rendez-vous familiaux avec rappels et suivi</li>
+          <li>Donn&#233;es 100% locales &#8212; synchronis&#233;es via iCloud Drive</li>
+        </ul>
+      </div>
+
+      <div class="gap-md"></div>
+
+      <div class="anim-popIn delay-4">
+        <span class="badge">&#x1F512; 100% priv&#233; &#183; z&#233;ro cloud</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       SLIDE 4 — T&#194;CHES INTELLIGENTES
+       ================================================================ -->
+  <section class="slide" id="slide-3">
+    <div class="shape shape--violet" style="width: 220px; height: 220px; bottom: -60px; left: -40px;"></div>
+    <div class="shape shape--rose" style="width: 140px; height: 140px; top: 15%; right: 5%;"></div>
+
+    <div class="slide-inner">
+      <div class="split anim-fadeUp delay-1">
+        <div class="split__visual">&#x1F4CB;</div>
+        <div class="split__content">
+          <h2 class="title title--section" style="text-align: left;">T&#226;ches &amp; m&#233;nage</h2>
+          <div class="gap-sm"></div>
+          <ul class="feature-list">
+            <li><strong>R&#233;currence automatique</strong> &#8212; quotidien, hebdomadaire ou mensuel</li>
+            <li><strong>&#201;dition rapide</strong> &#8212; appui long pour modifier en place</li>
+            <li><strong>Gamification</strong> &#8212; chaque t&#226;che rapporte des points et des loot boxes</li>
+            <li><strong>Swipe-to-delete</strong> &#8212; suppression d'un geste fluide</li>
+          </ul>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- SCREENSHOTS GALLERY (all CSS mockups) -->
-  <section id="screenshots" class="py-20 md:py-28 px-4 bg-gray-50">
-    <div class="max-w-6xl mx-auto">
-      <div class="text-center mb-12">
-        <p class="text-brand-600 font-semibold text-sm mb-3 uppercase tracking-wide">L'app en images</p>
-        <h2 class="text-4xl md:text-5xl font-extrabold tracking-tight">Votre quotidien, en un coup d'œil</h2>
-        <p class="text-gray-500 mt-4 max-w-xl mx-auto">Faites défiler pour découvrir les 12 écrans principaux — du tableau de bord au mode nuit biberon.</p>
-      </div>
-    </div>
+  <!-- ================================================================
+       SLIDE 5 — JOURNAL B&#201;B&#201;
+       ================================================================ -->
+  <section class="slide" id="slide-4">
+    <div class="shape shape--amber" style="width: 260px; height: 260px; top: -70px; right: -50px;"></div>
+    <div class="shape shape--mint" style="width: 170px; height: 170px; bottom: 10%; left: 5%;"></div>
 
-    <div class="gallery-scroll px-8 md:px-16">
-
-      <!-- 1. TACHES DARK MODE -->
-      <div class="gallery-item phone-sm">
-        <p class="text-center text-xs font-semibold text-gray-500 mb-3">🌙 Tâches — mode sombre</p>
-        <div class="phone-mockup w-[240px]">
-          <div class="phone-screen dark-phone-screen flex flex-col" style="aspect-ratio:9/19.5">
-            <div class="px-5 pt-5 pb-2 flex justify-between items-center text-[10px] text-gray-500 font-semibold">
-              <span>19:45</span><div class="flex gap-1"><span>📶</span><span>🔋</span></div>
-            </div>
-            <div class="px-5 py-3">
-              <div class="flex justify-between items-center">
-                <p class="text-[15px] font-bold text-white">📋 Tâches</p>
-                <p class="text-[10px] text-gray-500">9/19 terminées</p>
-              </div>
-              <!-- Search -->
-              <div class="mt-2 bg-gray-800 rounded-lg px-3 py-2"><p class="text-[10px] text-gray-500">Rechercher...</p></div>
-              <!-- Filters -->
-              <div class="flex gap-2 mt-2">
-                <span class="text-[9px] bg-orange-900/40 text-orange-400 px-2 py-1 rounded-full font-semibold border border-orange-700">📋 Tous</span>
-                <span class="text-[9px] text-gray-500 px-2 py-1">👨 Mes tâches</span>
-                <span class="text-[9px] text-gray-500 px-2 py-1">👶 Lucas</span>
-              </div>
-            </div>
-            <div class="flex-1 px-4 space-y-2 overflow-hidden">
-              <p class="text-[9px] text-yellow-500/70 bg-yellow-900/20 rounded px-2 py-1.5 mt-1">💡 Appui long sur une tâche pour la supprimer</p>
-              <p class="text-[9px] text-gray-500 font-bold mt-2">👶 MAXENCE — TÂCHES RÉCURRENTES <span class="float-right">3</span></p>
-              <div class="dark-card rounded-xl p-3 space-y-2.5">
-                <div class="flex items-center gap-2">
-                  <div class="w-4 h-4 rounded border-2 border-gray-600"></div>
-                  <span class="text-[11px] text-gray-200">Bain du soir</span>
-                  <span class="text-[8px] bg-blue-900/40 text-blue-400 px-1.5 py-0.5 rounded ml-auto">Quotidien</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="w-4 h-4 rounded border-2 border-brand-500 bg-brand-500 flex items-center justify-center"><span class="text-white text-[8px]">✓</span></div>
-                  <span class="text-[11px] text-gray-500 line-through">Biberon 18h</span>
-                  <span class="text-[8px] bg-green-900/40 text-green-400 px-1.5 py-0.5 rounded ml-auto">✅</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="w-4 h-4 rounded border-2 border-gray-600"></div>
-                  <span class="text-[11px] text-gray-200">Vaccin rappel</span>
-                  <span class="text-[8px] bg-red-900/40 text-red-400 px-1.5 py-0.5 rounded ml-auto">Mensuel</span>
-                </div>
-              </div>
-              <p class="text-[9px] text-gray-500 font-bold mt-2">👨 PAPA — TÂCHES DU JOUR <span class="float-right">2</span></p>
-              <div class="dark-card rounded-xl p-3 space-y-2.5">
-                <div class="flex items-center gap-2">
-                  <div class="w-4 h-4 rounded border-2 border-gray-600"></div>
-                  <span class="text-[11px] text-gray-200">Courses Lidl</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="w-4 h-4 rounded border-2 border-gray-600"></div>
-                  <span class="text-[11px] text-gray-200">Ménage cuisine</span>
-                </div>
-              </div>
-            </div>
-            <!-- FAB -->
-            <div class="px-4 pb-3 flex justify-end"><div class="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-white text-xl shadow-lg">+</div></div>
-            <div class="bg-gray-900 border-t border-gray-800 px-3 py-2 flex justify-around">
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">🏠</span><span class="text-[7px] text-gray-500">Accueil</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📋</span><span class="text-[7px] text-orange-400 font-bold">Tâches</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📓</span><span class="text-[7px] text-gray-500">Journal</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📸</span><span class="text-[7px] text-gray-500">Photos</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">⚙️</span><span class="text-[7px] text-gray-500">Menu</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 2. RECETTES COOKLANG -->
-      <div class="gallery-item phone-sm">
-        <p class="text-center text-xs font-semibold text-gray-500 mb-3">🍳 Recette détaillée</p>
-        <div class="phone-mockup w-[240px]">
-          <div class="phone-screen bg-white flex flex-col" style="aspect-ratio:9/19.5">
-            <div class="px-5 pt-5 pb-2 flex justify-between items-center text-[10px] text-gray-400 font-semibold">
-              <span>14:25</span><div class="flex gap-1"><span>📶</span><span>🔋</span></div>
-            </div>
-            <div class="px-5 py-2 border-b border-gray-100">
-              <p class="text-[9px] text-brand-500 font-medium">← Retour</p>
-              <p class="text-[15px] font-bold text-gray-900 mt-1">Pâte à crêpes</p>
-              <p class="text-[10px] text-gray-400">pâte à crêpes</p>
-            </div>
-            <div class="flex-1 px-4 py-3 space-y-3 overflow-hidden">
-              <!-- Servings -->
-              <div class="flex items-center justify-around text-center">
-                <div>
-                  <p class="text-[10px] text-gray-400 font-semibold">PORTIONS</p>
-                  <div class="flex items-center gap-2 mt-1">
-                    <span class="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center text-red-500 text-[12px] font-bold">-</span>
-                    <span class="text-[16px] font-bold">15</span>
-                    <span class="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center text-red-500 text-[12px] font-bold">+</span>
-                  </div>
-                </div>
-                <div><p class="text-[10px] text-gray-400 font-semibold">PREP</p><p class="text-[12px] font-bold mt-1">10 min</p></div>
-                <div><p class="text-[10px] text-gray-400 font-semibold">CUISSON</p><p class="text-[12px] font-bold mt-1">0 min</p></div>
-              </div>
-              <!-- Steps -->
-              <div>
-                <p class="text-[13px] font-bold text-gray-900 mb-2">Étapes</p>
-                <div class="space-y-2.5">
-                  <div class="flex gap-2">
-                    <div class="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center text-[9px] text-gray-500 font-bold flex-shrink-0 mt-0.5">1</div>
-                    <p class="text-[10px] text-gray-700 leading-relaxed">Mettre <span class="text-brand-600 font-semibold">@farine{300g}</span> dans une terrine et former un puits.</p>
-                  </div>
-                  <div class="flex gap-2">
-                    <div class="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center text-[9px] text-gray-500 font-bold flex-shrink-0 mt-0.5">2</div>
-                    <p class="text-[10px] text-gray-700 leading-relaxed">Y déposer <span class="text-brand-600 font-semibold">@oeufs{3}</span>, <span class="text-brand-600 font-semibold">@sucre{3 tbsp}</span>, <span class="text-brand-600 font-semibold">@beurre fondu{50g}</span>.</p>
-                  </div>
-                  <div class="flex gap-2">
-                    <div class="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center text-[9px] text-gray-500 font-bold flex-shrink-0 mt-0.5">3</div>
-                    <p class="text-[10px] text-gray-700 leading-relaxed">Mélanger délicatement avec un <span class="text-amber-600 font-semibold">#fouet{}</span> en ajoutant <span class="text-brand-600 font-semibold">@lait{60cl}</span>.</p>
-                  </div>
-                  <div class="flex gap-2">
-                    <div class="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center text-[9px] text-gray-500 font-bold flex-shrink-0 mt-0.5">4</div>
-                    <p class="text-[10px] text-gray-700 leading-relaxed">Parfumer de <span class="text-brand-600 font-semibold">@rhum{5cl}</span>.</p>
-                  </div>
-                </div>
-              </div>
-              <!-- Ingredients footer -->
-              <div class="border-t border-gray-100 pt-2">
-                <p class="text-[9px] text-gray-400 font-semibold mb-1.5">INGREDIENTS</p>
-                <div class="flex flex-wrap gap-1">
-                  <span class="text-[8px] bg-brand-50 text-brand-700 px-2 py-0.5 rounded-full">farine</span>
-                  <span class="text-[8px] bg-brand-50 text-brand-700 px-2 py-0.5 rounded-full">oeufs</span>
-                  <span class="text-[8px] bg-brand-50 text-brand-700 px-2 py-0.5 rounded-full">sucre</span>
-                  <span class="text-[8px] bg-brand-50 text-brand-700 px-2 py-0.5 rounded-full">beurre</span>
-                  <span class="text-[8px] bg-brand-50 text-brand-700 px-2 py-0.5 rounded-full">lait</span>
-                  <span class="text-[8px] bg-brand-50 text-brand-700 px-2 py-0.5 rounded-full">rhum</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 3. COURSES -->
-      <div class="gallery-item phone-sm">
-        <p class="text-center text-xs font-semibold text-gray-500 mb-3">🛒 Courses par catégorie</p>
-        <div class="phone-mockup w-[240px]">
-          <div class="phone-screen bg-white flex flex-col" style="aspect-ratio:9/19.5">
-            <div class="px-5 pt-5 pb-2 flex justify-between items-center text-[10px] text-gray-400 font-semibold">
-              <span>15:17</span><div class="flex gap-1"><span>📶</span><span>🔋</span></div>
-            </div>
-            <div class="px-5 py-2 border-b border-gray-100">
-              <div class="flex justify-between items-center">
-                <p class="text-[15px] font-bold text-gray-900">🛒 Courses</p>
-                <p class="text-[10px] text-gray-400">19/34 achetés</p>
-              </div>
-              <!-- Tabs -->
-              <div class="flex gap-2 mt-2">
-                <span class="text-[9px] text-gray-500 px-2 py-1">🍽 Repas</span>
-                <span class="text-[9px] bg-red-100 text-red-600 px-2 py-1 rounded-full font-bold border border-red-200">🛒 Courses 15</span>
-                <span class="text-[9px] text-gray-500 px-2 py-1">📖 Recettes 2</span>
-              </div>
-            </div>
-            <div class="flex-1 px-4 py-3 space-y-3 overflow-hidden">
-              <!-- Crémerie -->
-              <div class="bg-gray-50 rounded-xl p-3">
-                <p class="text-[11px] font-bold text-gray-900 mb-2">🧀 Crémerie</p>
-                <div class="space-y-2">
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2"><div class="w-4 h-4 rounded border-2 border-gray-300"></div><span class="text-[10px] text-gray-700">50 g de beurre</span></div>
-                    <span class="text-gray-400 text-[10px]">×</span>
-                  </div>
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2"><div class="w-4 h-4 rounded border-2 border-gray-300"></div><span class="text-[10px] text-gray-700">60 cl de lait</span></div>
-                    <span class="text-gray-400 text-[10px]">×</span>
-                  </div>
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2"><div class="w-4 h-4 rounded border-2 border-brand-500 bg-brand-500 flex items-center justify-center"><span class="text-white text-[7px]">✓</span></div><span class="text-[10px] text-gray-400 line-through">Yaourts x6</span></div>
-                    <span class="text-gray-400 text-[10px]">×</span>
-                  </div>
-                </div>
-              </div>
-              <!-- Pâtisserie -->
-              <div class="bg-gray-50 rounded-xl p-3">
-                <p class="text-[11px] font-bold text-gray-900 mb-2">🧁 Pâtisserie</p>
-                <div class="space-y-2">
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2"><div class="w-4 h-4 rounded border-2 border-gray-300"></div><span class="text-[10px] text-gray-700">50 g de farine</span></div>
-                    <span class="text-gray-400 text-[10px]">×</span>
-                  </div>
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2"><div class="w-4 h-4 rounded border-2 border-gray-300"></div><span class="text-[10px] text-gray-700">Sucre vanille x3</span></div>
-                    <span class="text-gray-400 text-[10px]">×</span>
-                  </div>
-                </div>
-              </div>
-              <!-- Fruits -->
-              <div class="bg-gray-50 rounded-xl p-3">
-                <p class="text-[11px] font-bold text-gray-900 mb-2">🍎 Fruits & légumes</p>
-                <div class="space-y-2">
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2"><div class="w-4 h-4 rounded border-2 border-gray-300"></div><span class="text-[10px] text-gray-700">Bananes x5</span></div>
-                    <span class="text-gray-400 text-[10px]">×</span>
-                  </div>
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2"><div class="w-4 h-4 rounded border-2 border-gray-300"></div><span class="text-[10px] text-gray-700">Courgettes x3</span></div>
-                    <span class="text-gray-400 text-[10px]">×</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!-- Input -->
-            <div class="px-4 pb-2 flex gap-2">
-              <div class="flex-1 bg-gray-100 rounded-lg px-3 py-2"><p class="text-[10px] text-gray-400">Ajouter un article...</p></div>
-              <div class="w-8 h-8 bg-brand-500 rounded-full flex items-center justify-center text-white text-[14px]">+</div>
-            </div>
-            <div class="bg-white border-t border-gray-100 px-3 py-2 flex justify-around">
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">🏠</span><span class="text-[7px] text-gray-400">Accueil</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📋</span><span class="text-[7px] text-brand-600 font-bold">Tâches</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📓</span><span class="text-[7px] text-gray-400">Journal</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📸</span><span class="text-[7px] text-gray-400">Photos</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">⚙️</span><span class="text-[7px] text-gray-400">Menu</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 4. JOURNAL BEBE -->
-      <div class="gallery-item phone-sm">
-        <p class="text-center text-xs font-semibold text-gray-500 mb-3">📓 Journal bébé</p>
-        <div class="phone-mockup w-[240px]">
-          <div class="phone-screen bg-white flex flex-col" style="aspect-ratio:9/19.5">
-            <div class="px-5 pt-5 pb-2 flex justify-between items-center text-[10px] text-gray-400 font-semibold">
-              <span>08:30</span><div class="flex gap-1"><span>📶</span><span>🔋</span></div>
-            </div>
-            <div class="px-5 py-2 border-b border-gray-100">
-              <p class="text-[15px] font-bold text-gray-900">📓 Journal</p>
-              <p class="text-[10px] text-gray-400">Samedi 8 mars 2026</p>
-              <!-- Child tabs -->
-              <div class="flex gap-2 mt-2">
-                <span class="text-[9px] bg-brand-100 text-brand-700 px-2 py-1 rounded-full font-bold border border-brand-200">📝 Mon journal</span>
-                <span class="text-[9px] text-gray-500 px-2 py-1">👶 Lucas</span>
-                <span class="text-[9px] text-gray-500 px-2 py-1">👶 Emma</span>
-              </div>
-            </div>
-            <div class="flex-1 px-4 py-3 space-y-3 overflow-hidden">
-              <!-- Stats banner -->
-              <div class="bg-gradient-to-r from-blue-50 to-teal-50 rounded-xl p-3">
-                <p class="text-[10px] font-bold text-gray-700 mb-2">👶 Lucas — aujourd'hui</p>
-                <div class="grid grid-cols-3 gap-2 text-center">
-                  <div><p class="text-[14px]">🍼</p><p class="text-[10px] font-bold">3</p><p class="text-[8px] text-gray-400">biberons</p></div>
-                  <div><p class="text-[14px]">🧷</p><p class="text-[10px] font-bold">5</p><p class="text-[8px] text-gray-400">couches</p></div>
-                  <div><p class="text-[14px]">😴</p><p class="text-[10px] font-bold">2h30</p><p class="text-[8px] text-gray-400">siestes</p></div>
-                </div>
-              </div>
-              <!-- Entries -->
-              <div class="space-y-2">
-                <div class="bg-gray-50 rounded-xl p-3">
-                  <div class="flex items-center gap-2 mb-1">
-                    <span class="text-[12px]">🍼</span>
-                    <span class="text-[10px] font-bold text-gray-700">Biberon — 08:15</span>
-                  </div>
-                  <p class="text-[10px] text-gray-500">210 ml, lait maternel</p>
-                </div>
-                <div class="bg-gray-50 rounded-xl p-3">
-                  <div class="flex items-center gap-2 mb-1">
-                    <span class="text-[12px]">😴</span>
-                    <span class="text-[10px] font-bold text-gray-700">Sieste — 09:30</span>
-                  </div>
-                  <p class="text-[10px] text-gray-500">1h15, dans le lit</p>
-                </div>
-                <div class="bg-gray-50 rounded-xl p-3">
-                  <div class="flex items-center gap-2 mb-1">
-                    <span class="text-[12px]">🧷</span>
-                    <span class="text-[10px] font-bold text-gray-700">Couche — 10:45</span>
-                  </div>
-                  <p class="text-[10px] text-gray-500">Propre ✅</p>
-                </div>
-                <div class="bg-gray-50 rounded-xl p-3">
-                  <div class="flex items-center gap-2 mb-1">
-                    <span class="text-[12px]">📝</span>
-                    <span class="text-[10px] font-bold text-gray-700">Note</span>
-                  </div>
-                  <p class="text-[10px] text-gray-500">Premier éclat de rire ce matin ! 🎉</p>
-                </div>
-              </div>
-            </div>
-            <div class="bg-white border-t border-gray-100 px-3 py-2 flex justify-around">
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">🏠</span><span class="text-[7px] text-gray-400">Accueil</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📋</span><span class="text-[7px] text-gray-400">Tâches</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📓</span><span class="text-[7px] text-brand-600 font-bold">Journal</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📸</span><span class="text-[7px] text-gray-400">Photos</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">⚙️</span><span class="text-[7px] text-gray-400">Menu</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 5. CALENDRIER RDV -->
-      <div class="gallery-item phone-sm">
-        <p class="text-center text-xs font-semibold text-gray-500 mb-3">📅 Calendrier RDV</p>
-        <div class="phone-mockup w-[240px]">
-          <div class="phone-screen bg-white flex flex-col" style="aspect-ratio:9/19.5">
-            <div class="px-5 pt-5 pb-2 flex justify-between items-center text-[10px] text-gray-400 font-semibold">
-              <span>10:30</span><div class="flex gap-1"><span>📶</span><span>🔋</span></div>
-            </div>
-            <div class="px-5 py-2 border-b border-gray-100">
-              <p class="text-[15px] font-bold text-gray-900">🏥 Rendez-vous</p>
-              <div class="flex gap-2 mt-2">
-                <span class="text-[9px] text-gray-500 px-2 py-1">📋 Liste</span>
-                <span class="text-[9px] bg-brand-100 text-brand-700 px-2 py-1 rounded-full font-bold border border-brand-200">📅 Calendrier</span>
-              </div>
-            </div>
-            <div class="flex-1 px-4 py-3 overflow-hidden">
-              <!-- Month header -->
-              <div class="flex justify-between items-center mb-2">
-                <span class="text-[10px] text-gray-400">◀</span>
-                <span class="text-[12px] font-bold text-gray-900">Mars 2026</span>
-                <span class="text-[10px] text-gray-400">▶</span>
-              </div>
-              <!-- Day headers -->
-              <div class="grid grid-cols-7 gap-0.5 mb-1 text-center">
-                <span class="text-[8px] text-gray-400 font-semibold">L</span>
-                <span class="text-[8px] text-gray-400 font-semibold">M</span>
-                <span class="text-[8px] text-gray-400 font-semibold">M</span>
-                <span class="text-[8px] text-gray-400 font-semibold">J</span>
-                <span class="text-[8px] text-gray-400 font-semibold">V</span>
-                <span class="text-[8px] text-gray-400 font-semibold">S</span>
-                <span class="text-[8px] text-gray-400 font-semibold">D</span>
-              </div>
-              <!-- Calendar grid -->
-              <div class="grid grid-cols-7 gap-0.5 text-center mb-3">
-                <!-- Week 1 (starts Sunday=1) -->
-                <span class="text-[9px] text-gray-300 p-1.5"></span>
-                <span class="text-[9px] text-gray-300 p-1.5"></span>
-                <span class="text-[9px] text-gray-300 p-1.5"></span>
-                <span class="text-[9px] text-gray-300 p-1.5"></span>
-                <span class="text-[9px] text-gray-300 p-1.5"></span>
-                <span class="text-[9px] text-gray-300 p-1.5"></span>
-                <span class="text-[9px] text-gray-700 p-1.5">1</span>
-                <!-- Week 2 -->
-                <span class="text-[9px] text-gray-700 p-1.5">2</span>
-                <span class="text-[9px] text-gray-700 p-1.5">3</span>
-                <span class="text-[9px] text-gray-700 p-1.5">4</span>
-                <span class="text-[9px] text-gray-700 p-1.5">5</span>
-                <span class="text-[9px] text-gray-700 p-1.5">6</span>
-                <span class="text-[9px] text-gray-700 p-1.5">7</span>
-                <span class="text-[9px] bg-brand-500 text-white rounded-full p-1.5 font-bold">8</span>
-                <!-- Week 3 -->
-                <span class="text-[9px] text-gray-700 p-1.5">9</span>
-                <span class="text-[9px] text-gray-700 p-1.5">10</span>
-                <span class="text-[9px] text-gray-700 p-1.5">11</span>
-                <span class="text-[9px] text-gray-700 p-1.5">12</span>
-                <span class="text-[9px] text-gray-700 p-1.5">13</span>
-                <span class="text-[9px] text-gray-700 p-1.5">14</span>
-                <span class="text-[9px] text-gray-700 p-1.5 relative">15<span class="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-green-500 rounded-full"></span></span>
-                <!-- Week 4 -->
-                <span class="text-[9px] text-gray-700 p-1.5">16</span>
-                <span class="text-[9px] text-gray-700 p-1.5">17</span>
-                <span class="text-[9px] text-gray-700 p-1.5">18</span>
-                <span class="text-[9px] text-gray-700 p-1.5 relative">19<span class="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-500 rounded-full"></span></span>
-                <span class="text-[9px] text-gray-700 p-1.5">20</span>
-                <span class="text-[9px] text-gray-700 p-1.5">21</span>
-                <span class="text-[9px] text-gray-700 p-1.5">22</span>
-                <!-- Week 5 -->
-                <span class="text-[9px] text-gray-700 p-1.5">23</span>
-                <span class="text-[9px] text-gray-700 p-1.5">24</span>
-                <span class="text-[9px] text-gray-700 p-1.5 relative">25<span class="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-pink-500 rounded-full"></span></span>
-                <span class="text-[9px] text-gray-700 p-1.5">26</span>
-                <span class="text-[9px] text-gray-700 p-1.5">27</span>
-                <span class="text-[9px] text-gray-700 p-1.5">28</span>
-                <span class="text-[9px] text-gray-700 p-1.5">29</span>
-                <span class="text-[9px] text-gray-700 p-1.5">30</span>
-                <span class="text-[9px] text-gray-700 p-1.5">31</span>
-              </div>
-              <!-- RDV list for selected day -->
-              <p class="text-[10px] font-bold text-gray-900 mb-2">RDV du 15 mars</p>
-              <div class="bg-gray-50 rounded-xl p-3 space-y-2">
-                <div class="flex items-center gap-2">
-                  <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <div>
-                    <p class="text-[10px] font-semibold text-gray-900">Pédiatre — Lucas</p>
-                    <p class="text-[9px] text-gray-400">14:30 · Dr. Leroy · Planifié</p>
-                  </div>
-                </div>
-              </div>
-              <p class="text-[10px] font-bold text-gray-900 mb-2 mt-3">RDV du 25 mars</p>
-              <div class="bg-gray-50 rounded-xl p-3 space-y-2">
-                <div class="flex items-center gap-2">
-                  <div class="w-2 h-2 bg-pink-500 rounded-full"></div>
-                  <div>
-                    <p class="text-[10px] font-semibold text-gray-900">Échographie T3</p>
-                    <p class="text-[9px] text-gray-400">10:00 · Clinique · 🤰 Grossesse</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="bg-white border-t border-gray-100 px-3 py-2 flex justify-around">
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">🏠</span><span class="text-[7px] text-gray-400">Accueil</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📋</span><span class="text-[7px] text-gray-400">Tâches</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📓</span><span class="text-[7px] text-gray-400">Journal</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📸</span><span class="text-[7px] text-gray-400">Photos</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">⚙️</span><span class="text-[7px] text-gray-400">Menu</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 6. LOOT BOX / GAMIFICATION -->
-      <div class="gallery-item phone-sm">
-        <p class="text-center text-xs font-semibold text-gray-500 mb-3">🎮 Gamification</p>
-        <div class="phone-mockup w-[240px]">
-          <div class="phone-screen flex flex-col" style="aspect-ratio:9/19.5; background: linear-gradient(180deg, #1a103c 0%, #2d1b69 40%, #1a103c 100%);">
-            <div class="px-5 pt-5 pb-2 flex justify-between items-center text-[10px] text-gray-400 font-semibold">
-              <span>20:15</span><div class="flex gap-1"><span>📶</span><span>🔋</span></div>
-            </div>
-            <div class="flex-1 flex flex-col items-center justify-center px-6 text-center">
-              <!-- Glow effect -->
-              <div class="relative">
-                <div class="absolute inset-0 bg-yellow-400/20 blur-3xl rounded-full"></div>
-                <div class="relative">
-                  <p class="text-[10px] text-yellow-300/80 font-semibold mb-2">✨ LOOT BOX OUVERTE ✨</p>
-                  <!-- Box -->
-                  <div class="w-28 h-28 mx-auto mb-4 relative">
-                    <div class="absolute inset-0 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-2xl transform rotate-3 opacity-30"></div>
-                    <div class="absolute inset-0 bg-gradient-to-br from-teal-600 to-brand-600 rounded-2xl flex items-center justify-center">
-                      <span class="text-5xl">🎁</span>
-                    </div>
-                    <!-- Sparkles -->
-                    <span class="absolute -top-2 -right-2 text-yellow-300 text-[16px]">✦</span>
-                    <span class="absolute -bottom-1 -left-2 text-yellow-300 text-[12px]">✦</span>
-                    <span class="absolute top-1 -left-3 text-teal-300 text-[10px]">✦</span>
-                  </div>
-                  <p class="text-[18px] font-extrabold text-white mb-1">Félicitations !</p>
-                  <p class="text-[12px] text-teal-200 mb-4">Vous avez obtenu :</p>
-                  <!-- Reward card -->
-                  <div class="bg-white/10 backdrop-blur border border-white/20 rounded-xl p-4 mx-2">
-                    <div class="flex items-center gap-3">
-                      <span class="text-3xl">💆</span>
-                      <div class="text-left">
-                        <p class="text-[13px] font-bold text-white">Massage 30 min</p>
-                        <p class="text-[10px] text-teal-200">Rareté : <span class="text-yellow-300 font-bold">EPIQUE</span></p>
-                      </div>
-                    </div>
-                  </div>
-                  <!-- Points info -->
-                  <div class="mt-4 flex items-center justify-center gap-4">
-                    <div class="text-center">
-                      <p class="text-[10px] text-teal-300">Coûte</p>
-                      <p class="text-[14px] font-bold text-yellow-300">500 pts</p>
-                    </div>
-                    <div class="w-px h-8 bg-white/20"></div>
-                    <div class="text-center">
-                      <p class="text-[10px] text-teal-300">Solde</p>
-                      <p class="text-[14px] font-bold text-white">1 950 pts</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="px-6 pb-4">
-              <div class="bg-white/20 backdrop-blur rounded-xl py-3 text-center">
-                <p class="text-[12px] font-bold text-white">Continuer</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 7. GROSSESSE SUIVI -->
-      <div class="gallery-item phone-sm">
-        <p class="text-center text-xs font-semibold text-gray-500 mb-3">🤰 Suivi grossesse</p>
-        <div class="phone-mockup w-[240px]">
-          <div class="phone-screen bg-white flex flex-col" style="aspect-ratio:9/19.5">
-            <div class="px-5 pt-5 pb-2 flex justify-between items-center text-[10px] text-gray-400 font-semibold">
-              <span>9:00</span><div class="flex gap-1"><span>📶</span><span>🔋</span></div>
-            </div>
-            <div class="px-5 py-2 border-b border-gray-100">
-              <p class="text-[15px] font-bold text-gray-900">🤰 Suivi grossesse</p>
-              <p class="text-[10px] text-gray-400">Bébé Dupont</p>
-            </div>
-            <div class="flex-1 px-4 py-3 space-y-3 overflow-hidden">
-              <!-- Progress -->
-              <div class="bg-gradient-to-r from-pink-500 to-rose-400 rounded-xl p-4 text-white text-center">
-                <p class="text-[10px] opacity-80 mb-1">Semaine d'aménorrhée</p>
-                <p class="text-[32px] font-extrabold leading-none">35</p>
-                <p class="text-[11px] opacity-90 mt-1">SA — 8e mois</p>
-                <div class="mt-3 bg-white/20 rounded-full h-2"><div class="bg-white rounded-full h-2" style="width:85%"></div></div>
-                <p class="text-[9px] opacity-70 mt-1">85% du chemin parcouru</p>
-              </div>
-              <!-- Fruit comparison -->
-              <div class="bg-pink-50 rounded-xl p-4 text-center">
-                <p class="text-[10px] text-pink-600 font-semibold mb-2">Taille de bébé cette semaine</p>
-                <p class="text-[48px] leading-none mb-2">🥥</p>
-                <p class="text-[14px] font-bold text-gray-900">Noix de coco</p>
-                <p class="text-[11px] text-gray-500 mt-1">~45 cm · ~2,4 kg</p>
-              </div>
-              <!-- Info cards -->
-              <div class="grid grid-cols-2 gap-2">
-                <div class="bg-gray-50 rounded-xl p-3 text-center">
-                  <p class="text-[16px] mb-1">📅</p>
-                  <p class="text-[10px] font-bold text-gray-900">Terme prévu</p>
-                  <p class="text-[10px] text-gray-500">20/04/2026</p>
-                </div>
-                <div class="bg-gray-50 rounded-xl p-3 text-center">
-                  <p class="text-[16px] mb-1">⏳</p>
-                  <p class="text-[10px] font-bold text-gray-900">Reste</p>
-                  <p class="text-[10px] text-gray-500">42 jours</p>
-                </div>
-              </div>
-              <!-- Telegram button -->
-              <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center gap-3">
-                <span class="text-[18px]">📤</span>
-                <div>
-                  <p class="text-[10px] font-bold text-gray-900">Envoyer le suivi hebdo</p>
-                  <p class="text-[9px] text-gray-500">Via Telegram aux grands-parents</p>
-                </div>
-              </div>
-            </div>
-            <div class="bg-white border-t border-gray-100 px-3 py-2 flex justify-around">
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">🏠</span><span class="text-[7px] text-gray-400">Accueil</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📋</span><span class="text-[7px] text-gray-400">Tâches</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📓</span><span class="text-[7px] text-gray-400">Journal</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📸</span><span class="text-[7px] text-gray-400">Photos</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">⚙️</span><span class="text-[7px] text-gray-400">Menu</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 8. BUDGET FAMILIAL -->
-      <div class="gallery-item phone-sm">
-        <p class="text-center text-xs font-semibold text-gray-500 mb-3">💰 Budget familial</p>
-        <div class="phone-mockup w-[240px]">
-          <div class="phone-screen bg-white flex flex-col" style="aspect-ratio:9/19.5">
-            <div class="px-5 pt-5 pb-2 flex justify-between items-center text-[10px] text-gray-400 font-semibold">
-              <span>11:20</span><div class="flex gap-1"><span>📶</span><span>🔋</span></div>
-            </div>
-            <div class="px-5 py-2 border-b border-gray-100 flex justify-between items-center">
-              <p class="text-[15px] font-bold text-gray-900">💰 Budget</p>
-              <div class="bg-brand-500 text-white text-[9px] font-bold px-3 py-1.5 rounded-full">+ Dépense</div>
-            </div>
-            <!-- Month nav -->
-            <div class="flex justify-center items-center gap-4 py-2 text-[11px]">
-              <span class="text-brand-500 font-bold">&lt;</span>
-              <span class="font-bold text-gray-900">Mars 2026</span>
-              <span class="text-brand-500 font-bold">&gt;</span>
-            </div>
-            <!-- Tabs -->
-            <div class="flex border-b border-gray-100">
-              <div class="flex-1 text-center py-2 text-[10px] font-bold text-brand-600 border-b-2 border-brand-500">Résumé</div>
-              <div class="flex-1 text-center py-2 text-[10px] text-gray-400">Dépenses</div>
-            </div>
-            <div class="flex-1 px-4 py-3 space-y-2.5 overflow-hidden">
-              <!-- Total card -->
-              <div class="bg-gray-50 rounded-xl p-3 text-center">
-                <p class="text-[9px] text-gray-400 font-semibold">Total dépensé</p>
-                <p class="text-[22px] font-extrabold text-gray-900">1 245,00 €</p>
-                <p class="text-[9px] text-gray-400">sur 1 780,00 €</p>
-                <div class="mt-2 bg-gray-200 rounded-full h-1.5"><div class="bg-brand-500 rounded-full h-1.5" style="width:70%"></div></div>
-              </div>
-              <!-- Categories -->
-              <div class="bg-white rounded-xl p-2.5 border border-gray-100 space-y-2">
-                <div>
-                  <div class="flex justify-between items-center mb-1">
-                    <span class="text-[10px] font-semibold text-gray-700">🛒 Courses</span>
-                    <span class="text-[9px] font-semibold text-gray-500">480 / 600 €</span>
-                  </div>
-                  <div class="bg-gray-100 rounded-full h-1"><div class="bg-emerald-500 rounded-full h-1" style="width:80%"></div></div>
-                </div>
-                <div>
-                  <div class="flex justify-between items-center mb-1">
-                    <span class="text-[10px] font-semibold text-gray-700">👶 Bébé</span>
-                    <span class="text-[9px] font-semibold text-red-500">230 / 200 €</span>
-                  </div>
-                  <div class="bg-gray-100 rounded-full h-1"><div class="bg-red-500 rounded-full h-1" style="width:100%"></div></div>
-                </div>
-                <div>
-                  <div class="flex justify-between items-center mb-1">
-                    <span class="text-[10px] font-semibold text-gray-700">🏠 Maison</span>
-                    <span class="text-[9px] font-semibold text-gray-500">185 / 300 €</span>
-                  </div>
-                  <div class="bg-gray-100 rounded-full h-1"><div class="bg-emerald-500 rounded-full h-1" style="width:62%"></div></div>
-                </div>
-                <div>
-                  <div class="flex justify-between items-center mb-1">
-                    <span class="text-[10px] font-semibold text-gray-700">🎉 Loisirs</span>
-                    <span class="text-[9px] font-semibold text-amber-500">175 / 200 €</span>
-                  </div>
-                  <div class="bg-gray-100 rounded-full h-1"><div class="bg-amber-400 rounded-full h-1" style="width:88%"></div></div>
-                </div>
-                <div>
-                  <div class="flex justify-between items-center mb-1">
-                    <span class="text-[10px] font-semibold text-gray-700">🚗 Transport</span>
-                    <span class="text-[9px] font-semibold text-gray-500">95 / 150 €</span>
-                  </div>
-                  <div class="bg-gray-100 rounded-full h-1"><div class="bg-emerald-500 rounded-full h-1" style="width:63%"></div></div>
-                </div>
-              </div>
-            </div>
-            <div class="bg-white border-t border-gray-100 px-3 py-2 flex justify-around">
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">🏠</span><span class="text-[7px] text-gray-400">Accueil</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📋</span><span class="text-[7px] text-gray-400">Tâches</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📓</span><span class="text-[7px] text-gray-400">Journal</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📸</span><span class="text-[7px] text-gray-400">Photos</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">⚙️</span><span class="text-[7px] text-gray-400">Menu</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 9. MODE NUIT -->
-      <div class="gallery-item phone-sm">
-        <p class="text-center text-xs font-semibold text-gray-500 mb-3">🌙 Mode nuit biberon</p>
-        <div class="phone-mockup w-[240px]">
-          <div class="phone-screen flex flex-col" style="aspect-ratio:9/19.5; background: #000;">
-            <div class="flex-1 flex flex-col items-center justify-center px-6 text-center">
-              <!-- Timer ring -->
-              <div class="relative w-36 h-36 mb-6">
-                <svg class="w-full h-full -rotate-90" viewBox="0 0 120 120">
-                  <circle cx="60" cy="60" r="54" fill="none" stroke="#1a1a2e" stroke-width="8"/>
-                  <circle cx="60" cy="60" r="54" fill="none" stroke="#f59e0b" stroke-width="8" stroke-linecap="round" stroke-dasharray="339" stroke-dashoffset="100"/>
-                </svg>
-                <div class="absolute inset-0 flex flex-col items-center justify-center">
-                  <p class="text-[28px] font-bold text-white font-mono">04:32</p>
-                  <p class="text-[10px] text-gray-500">en cours</p>
-                </div>
-              </div>
-              <p class="text-[11px] text-gray-500 mb-2">👶 Lucas — Biberon</p>
-              <div class="flex gap-4 mb-6">
-                <div class="text-center"><p class="text-[10px] text-gray-600">Type</p><p class="text-[14px]">🍼</p></div>
-                <div class="text-center"><p class="text-[10px] text-gray-600">Volume</p><p class="text-[13px] text-amber-400 font-bold">180 ml</p></div>
-              </div>
-              <!-- History -->
-              <div class="w-full space-y-2">
-                <p class="text-[9px] text-gray-600 font-semibold text-left">Cette nuit</p>
-                <div class="bg-gray-900 rounded-lg p-2 flex justify-between items-center">
-                  <span class="text-[10px] text-gray-400">🍼 02:15</span>
-                  <span class="text-[10px] text-gray-500">150 ml · 6 min</span>
-                </div>
-                <div class="bg-gray-900 rounded-lg p-2 flex justify-between items-center">
-                  <span class="text-[10px] text-gray-400">🍼 23:40</span>
-                  <span class="text-[10px] text-gray-500">180 ml · 8 min</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 10. DEFIS FAMILIAUX -->
-      <div class="gallery-item phone-sm">
-        <p class="text-center text-xs font-semibold text-gray-500 mb-3">🎯 Défis familiaux</p>
-        <div class="phone-mockup w-[240px]">
-          <div class="phone-screen bg-white flex flex-col" style="aspect-ratio:9/19.5">
-            <div class="px-5 pt-5 pb-2 flex justify-between items-center text-[10px] text-gray-400 font-semibold">
-              <span>18:00</span><div class="flex gap-1"><span>📶</span><span>🔋</span></div>
-            </div>
-            <div class="px-5 py-2 border-b border-gray-100">
-              <p class="text-[15px] font-bold text-gray-900">🎯 Défis</p>
-              <div class="flex gap-2 mt-2">
-                <span class="text-[9px] bg-brand-100 text-brand-700 px-2 py-1 rounded-full font-bold border border-brand-200">Actifs 2</span>
-                <span class="text-[9px] text-gray-500 px-2 py-1">Templates</span>
-                <span class="text-[9px] text-gray-500 px-2 py-1">Historique</span>
-              </div>
-            </div>
-            <div class="flex-1 px-4 py-3 space-y-3 overflow-hidden">
-              <!-- Defi 1 -->
-              <div class="bg-green-50 border border-green-200 rounded-xl p-3">
-                <div class="flex justify-between items-start mb-2">
-                  <div>
-                    <p class="text-[11px] font-bold text-gray-900">📚 Lire 20 min/jour</p>
-                    <p class="text-[9px] text-gray-400">Famille · 14 jours · Moyen</p>
-                  </div>
-                  <span class="text-[9px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">J8/14</span>
-                </div>
-                <div class="bg-white rounded-full h-2 mb-1"><div class="bg-green-500 rounded-full h-2" style="width:57%"></div></div>
-                <p class="text-[9px] text-gray-400">57% · +30 pts à la fin</p>
-              </div>
-              <!-- Defi 2 -->
-              <div class="bg-orange-50 border border-orange-200 rounded-xl p-3">
-                <div class="flex justify-between items-start mb-2">
-                  <div>
-                    <p class="text-[11px] font-bold text-gray-900">📵 Zéro écrans après 20h</p>
-                    <p class="text-[9px] text-gray-400">Parents · 7 jours · Difficile</p>
-                  </div>
-                  <span class="text-[9px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold">J3/7</span>
-                </div>
-                <div class="bg-white rounded-full h-2 mb-1"><div class="bg-orange-500 rounded-full h-2" style="width:43%"></div></div>
-                <p class="text-[9px] text-gray-400">43% · +50 pts + 2 loot boxes</p>
-              </div>
-              <!-- Templates preview -->
-              <p class="text-[10px] font-bold text-gray-900 mt-2">Templates populaires</p>
-              <div class="grid grid-cols-2 gap-2">
-                <div class="bg-gray-50 rounded-lg p-2 text-center"><span class="text-[16px]">🏃</span><p class="text-[9px] font-semibold text-gray-600 mt-1">Sport en famille</p></div>
-                <div class="bg-gray-50 rounded-lg p-2 text-center"><span class="text-[16px]">🌿</span><p class="text-[9px] font-semibold text-gray-600 mt-1">Sortie nature</p></div>
-                <div class="bg-gray-50 rounded-lg p-2 text-center"><span class="text-[16px]">🍳</span><p class="text-[9px] font-semibold text-gray-600 mt-1">Cuisiner ensemble</p></div>
-                <div class="bg-gray-50 rounded-lg p-2 text-center"><span class="text-[16px]">🧹</span><p class="text-[9px] font-semibold text-gray-600 mt-1">Grand ménage</p></div>
-              </div>
-            </div>
-            <div class="bg-white border-t border-gray-100 px-3 py-2 flex justify-around">
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">🏠</span><span class="text-[7px] text-gray-400">Accueil</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📋</span><span class="text-[7px] text-gray-400">Tâches</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📓</span><span class="text-[7px] text-gray-400">Journal</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📸</span><span class="text-[7px] text-gray-400">Photos</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">⚙️</span><span class="text-[7px] text-gray-400">Menu</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 11. PHOTOS & SOUVENIRS -->
-      <div class="gallery-item phone-sm">
-        <p class="text-center text-xs font-semibold text-gray-500 mb-3">📸 Photos & souvenirs</p>
-        <div class="phone-mockup w-[240px]">
-          <div class="phone-screen bg-white flex flex-col" style="aspect-ratio:9/19.5">
-            <div class="px-5 pt-5 pb-2 flex justify-between items-center text-[10px] text-gray-400 font-semibold">
-              <span>14:00</span><div class="flex gap-1"><span>📶</span><span>🔋</span></div>
-            </div>
-            <div class="px-5 py-2 border-b border-gray-100">
-              <p class="text-[15px] font-bold text-gray-900">📸 Photos</p>
-              <div class="flex gap-2 mt-2">
-                <span class="text-[9px] text-gray-500 px-2 py-1">📸 Photos</span>
-                <span class="text-[9px] bg-brand-100 text-brand-700 px-2 py-1 rounded-full font-bold border border-brand-200">🌟 Souvenirs</span>
-              </div>
-            </div>
-            <div class="flex-1 px-4 py-3 space-y-3 overflow-hidden">
-              <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="text-[14px]">⭐</span>
-                  <div>
-                    <p class="text-[11px] font-bold text-gray-900">Premier sourire</p>
-                    <p class="text-[9px] text-gray-400">👶 Lucas · 15/01/2026</p>
-                  </div>
-                </div>
-                <p class="text-[10px] text-gray-500 mt-1">Un grand sourire en voyant Papa ce matin !</p>
-              </div>
-              <div class="bg-pink-50 border border-pink-200 rounded-xl p-3">
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="text-[14px]">🎉</span>
-                  <div>
-                    <p class="text-[11px] font-bold text-gray-900">Premiers pas</p>
-                    <p class="text-[9px] text-gray-400">👶 Emma · 02/03/2026</p>
-                  </div>
-                </div>
-                <p class="text-[10px] text-gray-500 mt-1">3 pas toute seule dans le salon !</p>
-              </div>
-              <div class="bg-blue-50 border border-blue-200 rounded-xl p-3">
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="text-[14px]">🗣️</span>
-                  <div>
-                    <p class="text-[11px] font-bold text-gray-900">Premier mot</p>
-                    <p class="text-[9px] text-gray-400">👶 Lucas · 28/02/2026</p>
-                  </div>
-                </div>
-                <p class="text-[10px] text-gray-500 mt-1">"Papa" — en regardant Maman 😄</p>
-              </div>
-              <div class="bg-teal-50 border border-teal-200 rounded-xl p-3">
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="text-[14px]">🎂</span>
-                  <div>
-                    <p class="text-[11px] font-bold text-gray-900">1er anniversaire</p>
-                    <p class="text-[9px] text-gray-400">👶 Emma · 10/01/2026</p>
-                  </div>
-                </div>
-                <p class="text-[10px] text-gray-500 mt-1">Gâteau au chocolat, déjà 1 an !</p>
-              </div>
-            </div>
-            <div class="bg-white border-t border-gray-100 px-3 py-2 flex justify-around">
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">🏠</span><span class="text-[7px] text-gray-400">Accueil</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📋</span><span class="text-[7px] text-gray-400">Tâches</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📓</span><span class="text-[7px] text-gray-400">Journal</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📸</span><span class="text-[7px] text-brand-600 font-bold">Photos</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">⚙️</span><span class="text-[7px] text-gray-400">Menu</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 12. STATISTIQUES -->
-      <div class="gallery-item phone-sm">
-        <p class="text-center text-xs font-semibold text-gray-500 mb-3">📊 Statistiques</p>
-        <div class="phone-mockup w-[240px]">
-          <div class="phone-screen bg-white flex flex-col" style="aspect-ratio:9/19.5">
-            <div class="px-5 pt-5 pb-2 flex justify-between items-center text-[10px] text-gray-400 font-semibold">
-              <span>16:45</span><div class="flex gap-1"><span>📶</span><span>🔋</span></div>
-            </div>
-            <div class="px-5 py-2 border-b border-gray-100">
-              <p class="text-[15px] font-bold text-gray-900">📊 Statistiques</p>
-            </div>
-            <div class="flex-1 px-4 py-3 space-y-3 overflow-hidden">
-              <!-- Tasks chart -->
-              <div class="bg-gray-50 rounded-xl p-3">
-                <p class="text-[10px] font-bold text-gray-900 mb-2">Tâches cette semaine</p>
-                <div class="flex items-end gap-1.5 h-16">
-                  <div class="flex-1 flex flex-col items-center gap-0.5">
-                    <div class="w-full bg-brand-400 rounded-t" style="height:60%"></div>
-                    <span class="text-[7px] text-gray-400">L</span>
-                  </div>
-                  <div class="flex-1 flex flex-col items-center gap-0.5">
-                    <div class="w-full bg-brand-400 rounded-t" style="height:80%"></div>
-                    <span class="text-[7px] text-gray-400">M</span>
-                  </div>
-                  <div class="flex-1 flex flex-col items-center gap-0.5">
-                    <div class="w-full bg-brand-400 rounded-t" style="height:45%"></div>
-                    <span class="text-[7px] text-gray-400">M</span>
-                  </div>
-                  <div class="flex-1 flex flex-col items-center gap-0.5">
-                    <div class="w-full bg-brand-400 rounded-t" style="height:90%"></div>
-                    <span class="text-[7px] text-gray-400">J</span>
-                  </div>
-                  <div class="flex-1 flex flex-col items-center gap-0.5">
-                    <div class="w-full bg-brand-500 rounded-t" style="height:70%"></div>
-                    <span class="text-[7px] text-brand-600 font-bold">V</span>
-                  </div>
-                  <div class="flex-1 flex flex-col items-center gap-0.5">
-                    <div class="w-full bg-gray-200 rounded-t" style="height:20%"></div>
-                    <span class="text-[7px] text-gray-400">S</span>
-                  </div>
-                  <div class="flex-1 flex flex-col items-center gap-0.5">
-                    <div class="w-full bg-gray-200 rounded-t" style="height:10%"></div>
-                    <span class="text-[7px] text-gray-400">D</span>
-                  </div>
-                </div>
-              </div>
-              <!-- Budget trend -->
-              <div class="bg-gray-50 rounded-xl p-3">
-                <p class="text-[10px] font-bold text-gray-900 mb-2">Budget 6 mois</p>
-                <div class="flex items-end gap-2 h-12">
-                  <div class="flex-1 flex flex-col items-center gap-0.5">
-                    <div class="w-full bg-emerald-400 rounded-t" style="height:65%"></div>
-                    <span class="text-[7px] text-gray-400">Oct</span>
-                  </div>
-                  <div class="flex-1 flex flex-col items-center gap-0.5">
-                    <div class="w-full bg-emerald-400 rounded-t" style="height:80%"></div>
-                    <span class="text-[7px] text-gray-400">Nov</span>
-                  </div>
-                  <div class="flex-1 flex flex-col items-center gap-0.5">
-                    <div class="w-full bg-red-400 rounded-t" style="height:100%"></div>
-                    <span class="text-[7px] text-gray-400">Dec</span>
-                  </div>
-                  <div class="flex-1 flex flex-col items-center gap-0.5">
-                    <div class="w-full bg-emerald-400 rounded-t" style="height:55%"></div>
-                    <span class="text-[7px] text-gray-400">Jan</span>
-                  </div>
-                  <div class="flex-1 flex flex-col items-center gap-0.5">
-                    <div class="w-full bg-emerald-400 rounded-t" style="height:70%"></div>
-                    <span class="text-[7px] text-gray-400">Fev</span>
-                  </div>
-                  <div class="flex-1 flex flex-col items-center gap-0.5">
-                    <div class="w-full bg-amber-400 rounded-t" style="height:75%"></div>
-                    <span class="text-[7px] text-brand-600 font-bold">Mar</span>
-                  </div>
-                </div>
-              </div>
-              <!-- Sleep dots -->
-              <div class="bg-gray-50 rounded-xl p-3">
-                <p class="text-[10px] font-bold text-gray-900 mb-2">😴 Sommeil Lucas — 7 jours</p>
-                <div class="flex gap-1">
-                  <div class="flex-1 text-center"><div class="w-4 h-4 mx-auto bg-blue-400 rounded-full"></div><p class="text-[7px] text-gray-400 mt-1">2h</p></div>
-                  <div class="flex-1 text-center"><div class="w-5 h-5 mx-auto bg-blue-500 rounded-full"></div><p class="text-[7px] text-gray-400 mt-1">3h</p></div>
-                  <div class="flex-1 text-center"><div class="w-3 h-3 mx-auto bg-blue-300 rounded-full mt-1"></div><p class="text-[7px] text-gray-400 mt-1">1h</p></div>
-                  <div class="flex-1 text-center"><div class="w-5 h-5 mx-auto bg-blue-500 rounded-full"></div><p class="text-[7px] text-gray-400 mt-1">3h</p></div>
-                  <div class="flex-1 text-center"><div class="w-4 h-4 mx-auto bg-blue-400 rounded-full"></div><p class="text-[7px] text-gray-400 mt-1">2h</p></div>
-                  <div class="flex-1 text-center"><div class="w-6 h-6 mx-auto bg-blue-600 rounded-full"></div><p class="text-[7px] text-gray-400 mt-1">4h</p></div>
-                  <div class="flex-1 text-center"><div class="w-4 h-4 mx-auto bg-blue-400 rounded-full"></div><p class="text-[7px] text-brand-600 font-bold mt-1">Auj</p></div>
-                </div>
-              </div>
-              <!-- Meal frequency -->
-              <div class="bg-gray-50 rounded-xl p-3">
-                <p class="text-[10px] font-bold text-gray-900 mb-2">🍽 Top recettes</p>
-                <div class="space-y-1.5">
-                  <div class="flex items-center gap-2"><div class="bg-amber-400 rounded h-2" style="width:90%"></div><span class="text-[8px] text-gray-500">Crêpes</span></div>
-                  <div class="flex items-center gap-2"><div class="bg-amber-300 rounded h-2" style="width:65%"></div><span class="text-[8px] text-gray-500">Pâtes carbo</span></div>
-                  <div class="flex items-center gap-2"><div class="bg-amber-200 rounded h-2" style="width:50%"></div><span class="text-[8px] text-gray-500">Poulet rôti</span></div>
-                </div>
-              </div>
-            </div>
-            <div class="bg-white border-t border-gray-100 px-3 py-2 flex justify-around">
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">🏠</span><span class="text-[7px] text-gray-400">Accueil</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📋</span><span class="text-[7px] text-gray-400">Tâches</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📓</span><span class="text-[7px] text-gray-400">Journal</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">📸</span><span class="text-[7px] text-gray-400">Photos</span></div>
-              <div class="flex flex-col items-center gap-0.5"><span class="text-[12px]">⚙️</span><span class="text-[7px] text-gray-400">Menu</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /gallery-scroll -->
-
-  </section>
-
-  <!-- FEATURES — BENTO GRID -->
-  <section id="features" class="py-20 md:py-28 px-4">
-    <div class="max-w-6xl mx-auto">
-      <div class="text-center mb-16">
-        <p class="text-brand-600 font-semibold text-sm mb-3 uppercase tracking-wide">Fonctionnalités</p>
-        <h2 class="text-4xl md:text-5xl font-extrabold tracking-tight">Tout est là — et rien ne part dans le cloud</h2>
-        <p class="text-gray-500 mt-4 max-w-2xl mx-auto">De la grossesse au budget, du biberon aux courses — 35+ fonctionnalités sans jamais quitter l'app.</p>
-      </div>
-
-      <!-- BENTO GRID -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-        <!-- ROW 1 : Organisation | Bébé | Vie de famille -->
-
-        <!-- 1. ORGANISATION -->
-        <div class="feature-card bg-gradient-to-br from-brand-100 to-teal-100 border border-brand-200 rounded-2xl p-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 bg-brand-500 rounded-xl flex items-center justify-center text-white text-lg">&#x2713;</div>
-            <h3 class="text-lg font-bold text-gray-900">Organisation</h3>
-          </div>
-          <div class="space-y-2">
-            <div class="bg-white rounded-xl p-2.5 flex items-center gap-2.5 shadow-sm"><span class="text-lg">📋</span><p class="text-[11px] font-semibold text-gray-700">Tâches récurrentes</p></div>
-            <div class="bg-white rounded-xl p-2.5 flex items-center gap-2.5 shadow-sm"><span class="text-lg">🏠</span><p class="text-[11px] font-semibold text-gray-700">Ménage hebdo</p></div>
-            <div class="bg-white rounded-xl p-2.5 flex items-center gap-2.5 shadow-sm"><span class="text-lg">🔄</span><p class="text-[11px] font-semibold text-gray-700">Routines matin/soir</p></div>
-            <div class="bg-white rounded-xl p-2.5 flex items-center gap-2.5 shadow-sm"><span class="text-lg">🏥</span><p class="text-[11px] font-semibold text-gray-700">RDV médicaux</p></div>
-            <div class="bg-white rounded-xl p-2.5 flex items-center gap-2.5 shadow-sm"><span class="text-lg">📅</span><p class="text-[11px] font-semibold text-gray-700">Calendrier mensuel</p></div>
-          </div>
-        </div>
-
-        <!-- 2. BÉBÉ & GROSSESSE -->
-        <div class="feature-card bg-gradient-to-br from-pink-50 to-rose-50 border border-pink-100 rounded-2xl p-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 bg-pink-500 rounded-xl flex items-center justify-center text-white text-lg">&#x2764;</div>
-            <h3 class="text-lg font-bold text-gray-900">Bébé & grossesse</h3>
-          </div>
-          <div class="space-y-2">
-            <div class="bg-white/80 rounded-xl p-2.5 flex items-center gap-2.5"><span class="text-lg">🤰</span><div><p class="text-[11px] font-semibold text-gray-700">Suivi grossesse</p><p class="text-[10px] text-gray-400">SA, taille fruit, terme</p></div></div>
-            <div class="bg-white/80 rounded-xl p-2.5 flex items-center gap-2.5"><span class="text-lg">📓</span><div><p class="text-[11px] font-semibold text-gray-700">Journal bébé</p><p class="text-[10px] text-gray-400">Biberons, couches, siestes</p></div></div>
-            <div class="bg-white/80 rounded-xl p-2.5 flex items-center gap-2.5"><span class="text-lg">🌙</span><div><p class="text-[11px] font-semibold text-gray-700">Mode nuit</p><p class="text-[10px] text-gray-400">Écran OLED + chrono</p></div></div>
-            <div class="bg-white/80 rounded-xl p-2.5 flex items-center gap-2.5"><span class="text-lg">🏥</span><div><p class="text-[11px] font-semibold text-gray-700">Carnet de santé</p><p class="text-[10px] text-gray-400">Croissance, vaccins</p></div></div>
-          </div>
-        </div>
-
-        <!-- 3. VIE DE FAMILLE -->
-        <div class="feature-card bg-gradient-to-br from-sky-50 to-blue-50 border border-sky-100 rounded-2xl p-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 bg-sky-500 rounded-xl flex items-center justify-center text-white text-lg">&#x1F46A;</div>
-            <h3 class="text-lg font-bold text-gray-900">Vie de famille</h3>
-          </div>
-          <div class="space-y-2">
-            <div class="bg-white/80 rounded-xl p-2.5 flex items-center gap-2.5"><span class="text-lg">📸</span><div><p class="text-[11px] font-semibold text-gray-700">Photos & souvenirs</p><p class="text-[10px] text-gray-400">Galerie + premières fois</p></div></div>
-            <div class="bg-white/80 rounded-xl p-2.5 flex items-center gap-2.5"><span class="text-lg">🙏</span><div><p class="text-[11px] font-semibold text-gray-700">Gratitude familiale</p><p class="text-[10px] text-gray-400">Livre quotidien + séries</p></div></div>
-            <div class="bg-white/80 rounded-xl p-2.5 flex items-center gap-2.5"><span class="text-lg">🎁</span><div><p class="text-[11px] font-semibold text-gray-700">Liste de souhaits</p><p class="text-[10px] text-gray-400">Par enfant, achats secrets</p></div></div>
-            <div class="bg-white/80 rounded-xl p-2.5 flex items-center gap-2.5"><span class="text-lg">💰</span><div><p class="text-[11px] font-semibold text-gray-700">Budget familial</p><p class="text-[10px] text-gray-400">Catégories, plafonds, suivi</p></div></div>
-            <div class="bg-white/80 rounded-xl p-2.5 flex items-center gap-2.5"><span class="text-lg">📊</span><div><p class="text-[11px] font-semibold text-gray-700">Statistiques</p><p class="text-[10px] text-gray-400">Tâches, budget, sommeil, repas</p></div></div>
-          </div>
-        </div>
-
-        <!-- ROW 2 : Cuisine | Gamification (col-span-2) -->
-
-        <!-- 4. CUISINE & COURSES -->
-        <div class="feature-card bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 rounded-2xl p-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-white text-lg">&#x1F373;</div>
-            <h3 class="text-lg font-bold text-gray-900">Cuisine & courses</h3>
-          </div>
-          <div class="space-y-2">
-            <div class="bg-white/80 rounded-xl p-2.5 flex items-center gap-2.5"><span class="text-lg">🍳</span><div><p class="text-[11px] font-semibold text-gray-700">Recettes intelligentes</p><p class="text-[10px] text-gray-400">Étapes, ingrédients, portions</p></div></div>
-            <div class="bg-white/80 rounded-xl p-2.5 flex items-center gap-2.5"><span class="text-lg">🌐</span><div><p class="text-[11px] font-semibold text-gray-700">Import recettes URL</p><p class="text-[10px] text-gray-400">Depuis n'importe quel site</p></div></div>
-            <div class="bg-white/80 rounded-xl p-2.5 flex items-center gap-2.5"><span class="text-lg">🛒</span><div><p class="text-[11px] font-semibold text-gray-700">Courses auto</p><p class="text-[10px] text-gray-400">Générées depuis les recettes</p></div></div>
-            <div class="bg-white/80 rounded-xl p-2.5 flex items-center gap-2.5"><span class="text-lg">🍽</span><div><p class="text-[11px] font-semibold text-gray-700">Planning repas</p><p class="text-[10px] text-gray-400">Semaine avec recettes liées</p></div></div>
-            <div class="bg-white/80 rounded-xl p-2.5 flex items-center gap-2.5"><span class="text-lg">📦</span><div><p class="text-[11px] font-semibold text-gray-700">Stocks & alertes</p><p class="text-[10px] text-gray-400">Seuils, ajout courses auto</p></div></div>
-          </div>
-        </div>
-
-        <!-- 5. GAMIFICATION (col-span-2) -->
-        <div class="feature-card bg-gradient-to-br from-teal-900 to-brand-800 border border-teal-700 rounded-2xl p-6 text-white lg:col-span-2">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 bg-yellow-400 rounded-xl flex items-center justify-center text-teal-900 text-lg">&#x2605;</div>
-            <h3 class="text-lg font-bold">Motivation & jeu</h3>
-            <p class="text-teal-300 text-xs ml-auto hidden sm:block">Transformez les corvées en défi !</p>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            <div class="bg-white/10 backdrop-blur rounded-xl p-3 flex items-center gap-3"><span class="text-lg">🎮</span><div><p class="text-sm font-semibold">Points & niveaux</p><p class="text-[10px] text-teal-200">XP, progression, multiplicateurs</p></div></div>
-            <div class="bg-white/10 backdrop-blur rounded-xl p-3 flex items-center gap-3"><span class="text-lg">🎁</span><div><p class="text-sm font-semibold">Loot boxes</p><p class="text-[10px] text-teal-200">5 raretés, récompenses réelles</p></div></div>
-            <div class="bg-white/10 backdrop-blur rounded-xl p-3 flex items-center gap-3"><span class="text-lg">🔥</span><div><p class="text-sm font-semibold">Séries quotidiennes</p><p class="text-[10px] text-teal-200">Maintenez votre série chaque jour</p></div></div>
-            <div class="bg-white/10 backdrop-blur rounded-xl p-3 flex items-center gap-3"><span class="text-lg">🏆</span><div><p class="text-sm font-semibold">Classement familial</p><p class="text-[10px] text-teal-200">Tableau avec médailles</p></div></div>
-            <div class="bg-white/10 backdrop-blur rounded-xl p-3 flex items-center gap-3"><span class="text-lg">🎯</span><div><p class="text-sm font-semibold">Défis familiaux</p><p class="text-[10px] text-teal-200">7 catégories, 3 difficultés</p></div></div>
-            <div class="bg-white/10 backdrop-blur rounded-xl p-3 flex items-center gap-3"><span class="text-lg">🏅</span><div><p class="text-sm font-semibold">Badges & collection</p><p class="text-[10px] text-teal-200">30+ badges à collectionner</p></div></div>
-          </div>
-        </div>
-
-        <!-- 6. INTELLIGENT & PERSONNALISABLE — full width -->
-        <div class="feature-card bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border border-gray-700 rounded-2xl p-8 lg:col-span-3 text-white">
-          <div class="flex items-center gap-3 mb-5">
-            <div class="w-10 h-10 bg-brand-500 rounded-xl flex items-center justify-center text-white text-lg">&#x2728;</div>
-            <h3 class="text-xl font-bold">Intelligent & personnalisable</h3>
-          </div>
-          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            <div class="bg-white/10 backdrop-blur rounded-xl p-4 text-center"><span class="text-2xl block mb-2">🔍</span><p class="text-xs font-semibold">Recherche globale</p><p class="text-[10px] text-gray-400">9 types de contenu</p></div>
-            <div class="bg-white/10 backdrop-blur rounded-xl p-4 text-center"><span class="text-2xl block mb-2">💡</span><p class="text-xs font-semibold">Suggestions IA</p><p class="text-[10px] text-gray-400">Alertes contextuelles, anonymisées</p></div>
-            <div class="bg-white/10 backdrop-blur rounded-xl p-4 text-center"><span class="text-2xl block mb-2">🤖</span><p class="text-xs font-semibold">IA conversationnelle</p><p class="text-[10px] text-gray-400">Anonymisée, facultative</p></div>
-            <div class="bg-white/10 backdrop-blur rounded-xl p-4 text-center"><span class="text-2xl block mb-2">👨‍👩‍👧‍👦</span><p class="text-xs font-semibold">Multi-profils</p><p class="text-[10px] text-gray-400">Adulte, enfant, ado</p></div>
-            <div class="bg-white/10 backdrop-blur rounded-xl p-4 text-center"><span class="text-2xl block mb-2">🎨</span><p class="text-xs font-semibold">9 thèmes visuels</p><p class="text-[10px] text-gray-400">Licorne, Espace, Pirates...</p></div>
-            <div class="bg-white/10 backdrop-blur rounded-xl p-4 text-center"><span class="text-2xl block mb-2">👶</span><p class="text-xs font-semibold">Mode enfant</p><p class="text-[10px] text-gray-400">Interface simplifiée</p></div>
-            <div class="bg-white/10 backdrop-blur rounded-xl p-4 text-center"><span class="text-2xl block mb-2">🌴</span><p class="text-xs font-semibold">Mode vacances</p><p class="text-[10px] text-gray-400">Pause tâches auto</p></div>
-            <div class="bg-white/10 backdrop-blur rounded-xl p-4 text-center"><span class="text-2xl block mb-2">🌓</span><p class="text-xs font-semibold">Mode sombre</p><p class="text-[10px] text-gray-400">Clair & sombre natifs</p></div>
-            <div class="bg-white/10 backdrop-blur rounded-xl p-4 text-center"><span class="text-2xl block mb-2">⚙️</span><p class="text-xs font-semibold">Tableau de bord configurable</p><p class="text-[10px] text-gray-400">Sections, ordre, priorité</p></div>
-            <div class="bg-white/10 backdrop-blur rounded-xl p-4 text-center"><span class="text-2xl block mb-2">🔔</span><p class="text-xs font-semibold">Telegram</p><p class="text-[10px] text-gray-400">Notifications & résumés</p></div>
-            <div class="bg-white/10 backdrop-blur rounded-xl p-4 text-center"><span class="text-2xl block mb-2">👴</span><p class="text-xs font-semibold">Résumé grands-parents</p><p class="text-[10px] text-gray-400">Photos & nouvelles par Telegram</p></div>
-            <div class="bg-white/10 backdrop-blur rounded-xl p-4 text-center"><span class="text-2xl block mb-2">🔒</span><p class="text-xs font-semibold">100% local</p><p class="text-[10px] text-gray-400">Zéro cloud, zéro compte</p></div>
-          </div>
-        </div>
-
-      </div><!-- /bento grid -->
-    </div>
-  </section>
-
-  <!-- HOW IT WORKS -->
-  <section id="how-it-works" class="py-20 md:py-28 px-4 bg-gray-50">
-    <div class="max-w-6xl mx-auto">
-      <div class="text-center mb-16">
-        <p class="text-brand-600 font-semibold text-sm mb-3 uppercase tracking-wide">Simple & rapide</p>
-        <h2 class="text-4xl md:text-5xl font-extrabold tracking-tight">Comment ça marche</h2>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
-        <div class="flex flex-col items-center text-center gap-5">
-          <div class="w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center text-brand-600 font-bold text-2xl">1</div>
-          <h3 class="text-xl font-bold">Créez votre espace famille</h3>
-          <p class="text-gray-500 leading-relaxed">Ajoutez les parents, les enfants — l'app crée tout pour vous. Si vous avez déjà un dossier Obsidian, connectez-le directement.</p>
-        </div>
-        <div class="flex flex-col items-center text-center gap-5">
-          <div class="w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center text-brand-600 font-bold text-2xl">2</div>
-          <h3 class="text-xl font-bold">Vivez votre quotidien</h3>
-          <p class="text-gray-500 leading-relaxed">Cochez vos tâches, notez les biberons, planifiez les repas, suivez le budget. L'app vous suggère ce qui est important, rien ne se perd, rien ne s'oublie.</p>
-        </div>
-        <div class="flex flex-col items-center text-center gap-5">
-          <div class="w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center text-brand-600 font-bold text-2xl">3</div>
-          <h3 class="text-xl font-bold">Récoltez les récompenses</h3>
-          <p class="text-gray-500 leading-relaxed">Chaque tâche complétée rapporte des points. Débloquez des récompenses, maintenez votre série, et transformez le quotidien en jeu de famille.</p>
+    <div class="slide-inner">
+      <div class="split anim-fadeUp delay-1">
+        <div class="split__visual">&#x1F37C;</div>
+        <div class="split__content">
+          <h2 class="title title--section" style="text-align: left;">Journal b&#233;b&#233;</h2>
+          <div class="gap-sm"></div>
+          <ul class="feature-list">
+            <li><strong>Tout en un</strong> &#8212; t&#233;t&#233;es, biberons, couches, sommeil, humeur</li>
+            <li><strong>Stats temps r&#233;el</strong> &#8212; dur&#233;es, fr&#233;quences, tendances automatiques</li>
+            <li><strong>Widget interactif</strong> &#8212; timer t&#233;t&#233;e gauche/droite depuis l'&#233;cran d'accueil</li>
+            <li><strong>Historique quotidien</strong> &#8212; un fichier par jour, consultable dans Obsidian</li>
+          </ul>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- BENEFITS -->
-  <section class="py-20 md:py-28 px-4">
-    <div class="max-w-6xl mx-auto">
-      <div class="text-center mb-16">
-        <p class="text-brand-600 font-semibold text-sm mb-3 uppercase tracking-wide">Pourquoi FamilyFlow</p>
-        <h2 class="text-4xl md:text-5xl font-extrabold tracking-tight">Pensé par des parents, pour des parents</h2>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div class="feature-card p-8 border border-gray-100 rounded-2xl bg-white"><div class="w-12 h-12 bg-brand-50 rounded-xl flex items-center justify-center text-xl mb-5">🔒</div><h3 class="font-bold text-lg mb-3">Vos données, chez vous</h3><p class="text-gray-500 text-sm leading-relaxed">Pas de cloud. Pas de compte. Vos fichiers Markdown restent sur votre appareil. Vous êtes propriétaire de vos données.</p></div>
-        <div class="feature-card p-8 border border-gray-100 rounded-2xl bg-white"><div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center text-xl mb-5">⚡</div><h3 class="font-bold text-lg mb-3">Réactif, pas différé</h3><p class="text-gray-500 text-sm leading-relaxed">Chaque action a un effet immédiat. Cochez une tâche récurrente → elle se replanifie automatiquement. Zéro maintenance.</p></div>
-        <div class="feature-card p-8 border border-gray-100 rounded-2xl bg-white"><div class="w-12 h-12 bg-teal-50 rounded-xl flex items-center justify-center text-xl mb-5">🎮</div><h3 class="font-bold text-lg mb-3">L'organisation, en jeu</h3><p class="text-gray-500 text-sm leading-relaxed">Points, séries, loot boxes, récompenses. Transformez les corvées en défi ludique. Les deux parents jouent !</p></div>
-        <div class="feature-card p-8 border border-gray-100 rounded-2xl bg-white"><div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-xl mb-5">📱</div><h3 class="font-bold text-lg mb-3">Vos fichiers, votre format</h3><p class="text-gray-500 text-sm leading-relaxed">Tout est stocké en Markdown, un format universel. Modifiez depuis l'app ou n'importe quel éditeur texte — pas de format propriétaire.</p></div>
-        <div class="feature-card p-8 border border-gray-100 rounded-2xl bg-white"><div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center text-xl mb-5">🤖</div><h3 class="font-bold text-lg mb-3">Notifications Telegram</h3><p class="text-gray-500 text-sm leading-relaxed">Recevez vos récaps, bilans mensuels et mises à jour grossesse directement sur Telegram. Partagez avec les grands-parents.</p></div>
-        <div class="feature-card p-8 border border-gray-100 rounded-2xl bg-white"><div class="w-12 h-12 bg-pink-50 rounded-xl flex items-center justify-center text-xl mb-5">👶</div><h3 class="font-bold text-lg mb-3">Multi-enfants & adultes</h3><p class="text-gray-500 text-sm leading-relaxed">Journal, tâches et RDV séparés par profil. Les adultes ont leur propre journal. Chaque membre à son thème.</p></div>
+  <!-- ================================================================
+       SLIDE 6 — REPAS & RECETTES
+       ================================================================ -->
+  <section class="slide" id="slide-5">
+    <div class="shape shape--rose" style="width: 200px; height: 200px; top: -50px; left: -30px;"></div>
+    <div class="shape shape--violet" style="width: 150px; height: 150px; bottom: -30px; right: 8%;"></div>
+
+    <div class="slide-inner">
+      <div class="split anim-fadeUp delay-1">
+        <div class="split__visual">&#x1F37D;&#xFE0F;</div>
+        <div class="split__content">
+          <h2 class="title title--section" style="text-align: left;">Repas &amp; recettes</h2>
+          <div class="gap-sm"></div>
+          <ul class="feature-list">
+            <li><strong>Planning semaine</strong> &#8212; glissez-d&#233;posez vos repas du lundi au dimanche</li>
+            <li><strong>Import par URL</strong> &#8212; collez un lien, la recette est extraite automatiquement</li>
+            <li><strong>Liste de courses</strong> &#8212; g&#233;n&#233;r&#233;e &#224; partir de vos repas planifi&#233;s</li>
+            <li><strong>Format Cooklang</strong> &#8212; recettes lisibles et partageables</li>
+          </ul>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- COMPARISON TABLE -->
-  <section class="py-20 md:py-28 px-4 bg-gray-50">
-    <div class="max-w-4xl mx-auto">
-      <div class="text-center mb-16">
-        <p class="text-brand-600 font-semibold text-sm mb-3 uppercase tracking-wide">Comparaison</p>
-        <h2 class="text-4xl md:text-5xl font-extrabold tracking-tight">Ce que vous faites avec 5 apps, FamilyFlow le fait en une</h2>
-      </div>
-      <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-        <table class="w-full text-sm">
-          <thead><tr class="border-b border-gray-100"><th class="text-left p-5 font-semibold text-gray-500 w-1/3"></th><th class="p-5 font-bold text-brand-600 bg-brand-50/50"><span class="text-lg">👨‍👩‍👧‍👦</span><br>FamilyFlow</th><th class="p-5 font-semibold text-gray-400">Apps spécialisées<br><span class="font-normal text-xs">(une par besoin)</span></th><th class="p-5 font-semibold text-gray-400">Carnet papier</th></tr></thead>
-          <tbody>
-            <tr class="border-b border-gray-50"><td class="p-5 font-medium text-gray-700">Données 100% locales</td><td class="p-5 text-center text-green-500 font-bold bg-brand-50/30">✅ Local</td><td class="p-5 text-center text-red-400">❌ Cloud</td><td class="p-5 text-center text-green-500">✅</td></tr>
-            <tr class="border-b border-gray-50"><td class="p-5 font-medium text-gray-700">Tâches récurrentes auto</td><td class="p-5 text-center text-green-500 font-bold bg-brand-50/30">✅</td><td class="p-5 text-center text-yellow-500">⚠️ Partiel</td><td class="p-5 text-center text-red-400">❌</td></tr>
-            <tr class="border-b border-gray-50"><td class="p-5 font-medium text-gray-700">Journal bébé + mode nuit</td><td class="p-5 text-center text-green-500 font-bold bg-brand-50/30">✅</td><td class="p-5 text-center text-red-400">❌</td><td class="p-5 text-center text-yellow-500">⚠️</td></tr>
-            <tr class="border-b border-gray-50"><td class="p-5 font-medium text-gray-700">Recettes, courses & repas</td><td class="p-5 text-center text-green-500 font-bold bg-brand-50/30">✅</td><td class="p-5 text-center text-yellow-500">⚠️ Séparé</td><td class="p-5 text-center text-red-400">❌</td></tr>
-            <tr class="border-b border-gray-50"><td class="p-5 font-medium text-gray-700">Suivi grossesse</td><td class="p-5 text-center text-green-500 font-bold bg-brand-50/30">✅</td><td class="p-5 text-center text-red-400">❌</td><td class="p-5 text-center text-red-400">❌</td></tr>
-            <tr class="border-b border-gray-50"><td class="p-5 font-medium text-gray-700">Gamification & défis</td><td class="p-5 text-center text-green-500 font-bold bg-brand-50/30">✅</td><td class="p-5 text-center text-red-400">❌</td><td class="p-5 text-center text-red-400">❌</td></tr>
-            <tr class="border-b border-gray-50"><td class="p-5 font-medium text-gray-700">Budget familial</td><td class="p-5 text-center text-green-500 font-bold bg-brand-50/30">✅</td><td class="p-5 text-center text-red-400">❌</td><td class="p-5 text-center text-yellow-500">⚠️</td></tr>
-            <tr class="border-b border-gray-50"><td class="p-5 font-medium text-gray-700">IA anonymisée intégrée</td><td class="p-5 text-center text-green-500 font-bold bg-brand-50/30">✅</td><td class="p-5 text-center text-red-400">❌</td><td class="p-5 text-center text-red-400">❌</td></tr>
-            <tr><td class="p-5 font-medium text-gray-700">Notifications Telegram</td><td class="p-5 text-center text-green-500 font-bold bg-brand-50/30">✅</td><td class="p-5 text-center text-red-400">❌</td><td class="p-5 text-center text-red-400">❌</td></tr>
-          </tbody>
-        </table>
+  <!-- ================================================================
+       SLIDE 7 — WIDGETS iOS
+       ================================================================ -->
+  <section class="slide" id="slide-6">
+    <div class="shape shape--amber" style="width: 240px; height: 240px; bottom: -60px; left: -40px;"></div>
+    <div class="shape shape--mint" style="width: 180px; height: 180px; top: -40px; right: -20px;"></div>
+
+    <div class="slide-inner">
+      <h2 class="title title--section anim-fadeUp delay-1">
+        Widgets qui <span class="gradient-text">travaillent pour vous</span>
+      </h2>
+
+      <div class="gap-sm"></div>
+
+      <p class="subtitle anim-fadeUp delay-2">
+        Boutons interactifs, sans ouvrir l'app. Compatibles iOS 17+ avec deep links.
+      </p>
+
+      <div class="gap-md"></div>
+
+      <div class="card-grid card-grid--2 anim-popIn delay-3">
+        <div class="widget-card">
+          <div class="widget-card__header">
+            <div class="widget-card__icon widget-card__icon--purple">&#x1F4C5;</div>
+            <div>
+              <div class="card-title">Ma Journ&#233;e</div>
+            </div>
+          </div>
+          <div class="card-desc">Repas, t&#226;ches et rendez-vous du jour en un coup d'&#339;il. Cochez directement depuis votre &#233;cran d'accueil.</div>
+        </div>
+        <div class="widget-card">
+          <div class="widget-card__header">
+            <div class="widget-card__icon widget-card__icon--pink">&#x1F37C;</div>
+            <div>
+              <div class="card-title">Journal b&#233;b&#233;</div>
+            </div>
+          </div>
+          <div class="card-desc">Timer t&#233;t&#233;e gauche/droite et biberon rapide. Lancez un suivi en un tap sans d&#233;verrouiller.</div>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- FAQ -->
-  <section id="faq" class="pt-20 pb-12 md:pt-28 md:pb-16 px-4">
-    <div class="max-w-3xl mx-auto">
-      <div class="text-center mb-16">
-        <p class="text-brand-600 font-semibold text-sm mb-3 uppercase tracking-wide">FAQ</p>
-        <h2 class="text-4xl md:text-5xl font-extrabold tracking-tight">Questions fréquentes</h2>
+  <!-- ================================================================
+       SLIDE 8 — MODE ZEN
+       ================================================================ -->
+  <section class="slide" id="slide-7">
+    <div class="shape shape--violet" style="width: 300px; height: 300px; top: -100px; right: -60px; opacity: 0.2;"></div>
+    <div class="shape shape--mint" style="width: 200px; height: 200px; bottom: -50px; left: -30px; opacity: 0.25;"></div>
+
+    <div class="slide-inner">
+      <div class="anim-popIn delay-1">
+        <div class="zen-circle">&#x1F9D8;</div>
       </div>
-      <div class="space-y-0">
-        <details class="group border-b border-gray-200 py-6"><summary class="flex justify-between items-center cursor-pointer list-none font-semibold text-lg text-gray-900 hover:text-brand-600 transition-colors">FamilyFlow est-il gratuit ?<span class="text-gray-400 group-open:rotate-45 transition-transform text-2xl font-light">+</span></summary><p class="mt-4 text-gray-500 leading-relaxed">Oui, entièrement gratuit et open source. Aucun abonnement, aucune limitation, aucune publicité.</p></details>
-        <details class="group border-b border-gray-200 py-6"><summary class="flex justify-between items-center cursor-pointer list-none font-semibold text-lg text-gray-900 hover:text-brand-600 transition-colors">Ai-je besoin d'Obsidian ?<span class="text-gray-400 group-open:rotate-45 transition-transform text-2xl font-light">+</span></summary><p class="mt-4 text-gray-500 leading-relaxed">Non. FamilyFlow utilise le même format de fichiers (Markdown), mais vous n'avez pas besoin d'installer Obsidian. Si vous en avez déjà un, vous pouvez le connecter. Sinon, l'app crée tout pour vous.</p></details>
-        <details class="group border-b border-gray-200 py-6"><summary class="flex justify-between items-center cursor-pointer list-none font-semibold text-lg text-gray-900 hover:text-brand-600 transition-colors">Je pars de zéro, comment démarrer ?<span class="text-gray-400 group-open:rotate-45 transition-transform text-2xl font-light">+</span></summary><p class="mt-4 text-gray-500 leading-relaxed">Au premier lancement, un assistant vous guide en 3 étapes : ajoutez les parents, les enfants, puis validez. FamilyFlow crée automatiquement un vault complet avec tous les dossiers et fichiers pré-remplis — tâches, courses, ménage, journal de bébé, rendez-vous. Vous êtes opérationnel en moins de 2 minutes.</p></details>
-        <details class="group border-b border-gray-200 py-6"><summary class="flex justify-between items-center cursor-pointer list-none font-semibold text-lg text-gray-900 hover:text-brand-600 transition-colors">Mes données sont-elles envoyées sur un serveur ?<span class="text-gray-400 group-open:rotate-45 transition-transform text-2xl font-light">+</span></summary><p class="mt-4 text-gray-500 leading-relaxed">Non. Toutes vos données restent en local sur votre appareil. La synchronisation entre appareils passe par Obsidian Sync ou Syncthing, que vous contrôlez.</p></details>
-        <details class="group border-b border-gray-200 py-6"><summary class="flex justify-between items-center cursor-pointer list-none font-semibold text-lg text-gray-900 hover:text-brand-600 transition-colors">Comment fonctionnent les recettes ?<span class="text-gray-400 group-open:rotate-45 transition-transform text-2xl font-light">+</span></summary><p class="mt-4 text-gray-500 leading-relaxed">Vos recettes sont stockées en texte simple (format Cooklang). L'app reconnaît automatiquement les ingrédients et les quantités pour générer votre liste de courses. Vous pouvez aussi importer des recettes depuis n'importe quel site web.</p></details>
-        <details class="group border-b border-gray-200 py-6"><summary class="flex justify-between items-center cursor-pointer list-none font-semibold text-lg text-gray-900 hover:text-brand-600 transition-colors">Comment fonctionne le suivi grossesse ?<span class="text-gray-400 group-open:rotate-45 transition-transform text-2xl font-light">+</span></summary><p class="mt-4 text-gray-500 leading-relaxed">Ajoutez un profil avec le statut "grossesse" et la date de terme. L'app calcule les semaines d'aménorrhée, compare la taille du bébé à un fruit, et peut envoyer un récap hebdomadaire par Telegram. À la naissance, le profil bascule automatiquement en mode bébé.</p></details>
-        <details class="group border-b border-gray-200 py-6"><summary class="flex justify-between items-center cursor-pointer list-none font-semibold text-lg text-gray-900 hover:text-brand-600 transition-colors">Que font les suggestions intelligentes ?<span class="text-gray-400 group-open:rotate-45 transition-transform text-2xl font-light">+</span></summary><p class="mt-4 text-gray-500 leading-relaxed">L'app analyse localement vos données (tâches en retard, RDV proches, stocks bas, courses manquantes...) et affiche des suggestions sur le tableau de bord. Optionnellement, vous pouvez activer l'IA (Claude) pour enrichir ces suggestions et poser des questions en langage naturel via la recherche globale. Toutes les requêtes sont anonymisées : les prénoms, lieux et données sensibles sont remplacés avant d'être envoyés.</p></details>
-        <details class="group border-b border-gray-200 py-6"><summary class="flex justify-between items-center cursor-pointer list-none font-semibold text-lg text-gray-900 hover:text-brand-600 transition-colors">Mon conjoint peut-il aussi utiliser l'app ?<span class="text-gray-400 group-open:rotate-45 transition-transform text-2xl font-light">+</span></summary><p class="mt-4 text-gray-500 leading-relaxed">Oui ! Chaque parent a son propre profil. Pour partager les données entre deux téléphones, synchronisez le dossier via Obsidian Sync, Syncthing ou iCloud. Les deux parents voient les mêmes tâches, RDV et journaux en temps réel.</p></details>
-        <details class="group border-b border-gray-200 py-6"><summary class="flex justify-between items-center cursor-pointer list-none font-semibold text-lg text-gray-900 hover:text-brand-600 transition-colors">Sur quels appareils ça fonctionne ?<span class="text-gray-400 group-open:rotate-45 transition-transform text-2xl font-light">+</span></summary><p class="mt-4 text-gray-500 leading-relaxed">L'app est disponible sur iOS (iPhone/iPad). Une version Android est prévue. Le dossier Markdown peut être édité sur n'importe quel appareil.</p></details>
+
+      <div class="gap-md"></div>
+
+      <h2 class="title title--section anim-fadeUp delay-2">
+        Mode zen
+      </h2>
+
+      <div class="gap-sm"></div>
+
+      <p class="subtitle anim-fadeUp delay-3">
+        Quand toutes les t&#226;ches sont faites, le dashboard se transforme en espace de calme. Cercle de respiration, aper&#231;u de demain, s&#233;r&#233;nit&#233; retrouv&#233;e.
+      </p>
+
+      <div class="gap-sm"></div>
+
+      <p class="subtitle anim-fadeUp delay-4" style="font-size: clamp(0.8rem, 1vw + 0.1rem, 0.95rem); opacity: 0.7;">
+        Configurable dans les r&#233;glages &#8212; activez-le quand vous en avez besoin.
+      </p>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       SLIDE 9 — SUIVI GROSSESSE
+       ================================================================ -->
+  <section class="slide" id="slide-8">
+    <div class="shape shape--rose" style="width: 280px; height: 280px; top: -80px; left: -60px;"></div>
+    <div class="shape shape--amber" style="width: 160px; height: 160px; bottom: 5%; right: 5%;"></div>
+
+    <div class="slide-inner">
+      <div class="split anim-fadeUp delay-1">
+        <div class="split__visual">&#x1F930;</div>
+        <div class="split__content">
+          <h2 class="title title--section" style="text-align: left;">Suivi grossesse</h2>
+          <div class="gap-sm"></div>
+          <ul class="feature-list">
+            <li><strong>Compte &#224; rebours J-XX</strong> &#8212; suivez chaque jour qui passe</li>
+            <li><strong>Taille du b&#233;b&#233;</strong> &#8212; en cm et emoji fruit, semaine par semaine</li>
+            <li><strong>T&#226;ches automatiques</strong> &#8212; prises de sang mensuelles, &#233;chographies planifi&#233;es</li>
+            <li><strong>Transition fluide</strong> &#8212; passage automatique au journal b&#233;b&#233; &#224; la naissance</li>
+          </ul>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- CTA -->
-  <section class="pt-16 pb-20 md:pt-20 md:pb-28 px-4 bg-gradient-to-br from-brand-600 via-teal-600 to-cyan-500">
-    <div class="max-w-4xl mx-auto flex flex-col items-center text-center gap-8">
-      <h2 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight">Moins de charge mentale<br>dès ce soir</h2>
-      <p class="text-lg text-white/80 max-w-xl">35+ fonctionnalités. Zéro cloud. Une famille mieux organisée. Gratuit, sans pub, 100 % privé.</p>
-      <div class="flex gap-4 flex-col sm:flex-row">
-        <a href="https://apps.apple.com" class="bg-white text-brand-600 hover:bg-gray-100 font-bold py-4 px-10 rounded-full transition-colors flex items-center gap-2 text-lg shadow-lg">
-          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-          Télécharger sur l'App Store
-        </a>
-        <a href="https://github.com/meffysto/FamilyFlow" class="border-2 border-white/40 text-white hover:bg-white/10 font-semibold py-4 px-10 rounded-full transition-colors flex items-center gap-2">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-          GitHub
+  <!-- ================================================================
+       SLIDE 10 — VIE PRIV&#201;E
+       ================================================================ -->
+  <section class="slide" id="slide-9">
+    <div class="shape shape--violet" style="width: 220px; height: 220px; bottom: -50px; right: -30px;"></div>
+    <div class="shape shape--mint" style="width: 160px; height: 160px; top: -30px; left: 10%;"></div>
+
+    <div class="slide-inner">
+      <div class="anim-popIn delay-1">
+        <div class="shield-icon">&#x1F512;</div>
+      </div>
+
+      <h2 class="title title--section anim-fadeUp delay-2">
+        Vos donn&#233;es, <span class="gradient-text">votre famille</span>
+      </h2>
+
+      <div class="gap-md"></div>
+
+      <div class="privacy-grid anim-fadeUp delay-3">
+        <div class="privacy-item">
+          <div class="privacy-item__icon">&#x1F4C1;</div>
+          <div>
+            <strong>Stockage local</strong><br>
+            Vos donn&#233;es restent dans Obsidian, sur votre appareil
+          </div>
+        </div>
+        <div class="privacy-item">
+          <div class="privacy-item__icon">&#x2601;&#xFE0F;</div>
+          <div>
+            <strong>Sync iCloud Drive</strong><br>
+            Partagez entre vos appareils Apple, sans serveur tiers
+          </div>
+        </div>
+        <div class="privacy-item">
+          <div class="privacy-item__icon">&#x1F6AB;</div>
+          <div>
+            <strong>Z&#233;ro serveur</strong><br>
+            Aucune donn&#233;e ne quitte vos appareils
+          </div>
+        </div>
+        <div class="privacy-item">
+          <div class="privacy-item__icon">&#x1F916;</div>
+          <div>
+            <strong>IA anonymis&#233;e</strong><br>
+            Donn&#233;es nettoy&#233;es avant tout envoi optionnel
+          </div>
+        </div>
+      </div>
+
+      <div class="gap-md"></div>
+
+      <div class="anim-popIn delay-4">
+        <span class="badge">&#10022; Privacy by design</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       SLIDE 11 — CTA FINAL
+       ================================================================ -->
+  <section class="slide" id="slide-10">
+    <div class="shape shape--violet" style="width: 350px; height: 350px; top: -120px; left: -80px;"></div>
+    <div class="shape shape--rose" style="width: 250px; height: 250px; bottom: -80px; right: -60px;"></div>
+    <div class="shape shape--amber" style="width: 180px; height: 180px; top: 40%; right: -40px;"></div>
+
+    <div class="slide-inner">
+      <h2 class="title title--hero anim-fadeUp delay-1">
+        Pr&#234;t &#224; simplifier<br><span class="gradient-text">votre quotidien ?</span>
+      </h2>
+
+      <div class="gap-md"></div>
+
+      <div class="anim-popIn delay-2">
+        <a href="https://apps.apple.com" class="cta-button" target="_blank" rel="noopener">
+          <!-- Apple logo SVG -->
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          T&#233;l&#233;charger sur l'App Store
         </a>
       </div>
+
+      <div class="gap-sm"></div>
+
+      <p class="subtitle anim-fadeUp delay-3">
+        Gratuit &#183; iOS &#183; Open source
+      </p>
+
+      <div class="gap-sm"></div>
+
+      <p class="footer-text anim-fadeUp delay-4">
+        <a href="privacy.html">Politique de confidentialit&#233;</a>
+      </p>
     </div>
   </section>
 
-  <!-- FOOTER -->
-  <footer class="bg-white border-t border-gray-100 py-12 px-4">
-    <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-      <div class="flex items-center gap-2"><span class="text-xl">👨‍👩‍👧‍👦</span><span class="font-bold text-gray-900">FamilyFlow</span></div>
-      <div class="flex gap-6 text-sm text-gray-400">
-        <a href="privacy.html" class="hover:text-gray-600 transition-colors">Confidentialité</a>
-        <a href="https://github.com/meffysto/FamilyFlow" class="hover:text-gray-600 transition-colors">GitHub</a>
-      </div>
-      <p class="text-sm text-gray-400">&copy; 2026 FamilyFlow. Open source.</p>
-    </div>
-  </footer>
-
+  <!-- ================================================================
+       JAVASCRIPT — SlidePresentation controller
+       ================================================================ -->
   <script>
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
-    }, { threshold: 0.1 });
-    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+    class SlidePresentation {
+      constructor() {
+        /** @type {NodeListOf<HTMLElement>} */
+        this.slides = document.querySelectorAll('.slide');
+        this.totalSlides = this.slides.length;
+        this.currentSlide = 0;
+
+        /** @type {HTMLElement} */
+        this.progressBar = document.getElementById('progressBar');
+        /** @type {HTMLElement} */
+        this.navDotsContainer = document.getElementById('navDots');
+
+        this.init();
+      }
+
+      /* ---- Initialisation ---- */
+      init() {
+        this.createNavDots();
+        this.setupIntersectionObserver();
+        this.setupKeyboardNav();
+        this.setupTouchNav();
+        this.setupWheelNav();
+        this.updateProgress();
+      }
+
+      /* ---- Nav Dots (right side) ---- */
+      createNavDots() {
+        for (let i = 0; i < this.totalSlides; i++) {
+          const dot = document.createElement('button');
+          dot.classList.add('nav-dot');
+          dot.setAttribute('aria-label', 'Slide ' + (i + 1));
+          if (i === 0) dot.classList.add('active');
+          dot.addEventListener('click', () => this.goToSlide(i));
+          this.navDotsContainer.appendChild(dot);
+        }
+      }
+
+      updateNavDots() {
+        const dots = this.navDotsContainer.querySelectorAll('.nav-dot');
+        dots.forEach((dot, i) => {
+          dot.classList.toggle('active', i === this.currentSlide);
+        });
+      }
+
+      /* ---- Progress Bar (top) ---- */
+      updateProgress() {
+        const progress = ((this.currentSlide + 1) / this.totalSlides) * 100;
+        this.progressBar.style.width = progress + '%';
+      }
+
+      /* ---- Core navigation ---- */
+      goToSlide(index) {
+        if (index < 0 || index >= this.totalSlides) return;
+        this.currentSlide = index;
+        this.slides[index].scrollIntoView({ behavior: 'smooth' });
+        this.updateNavDots();
+        this.updateProgress();
+      }
+
+      nextSlide() {
+        if (this.currentSlide < this.totalSlides - 1) {
+          this.goToSlide(this.currentSlide + 1);
+        }
+      }
+
+      prevSlide() {
+        if (this.currentSlide > 0) {
+          this.goToSlide(this.currentSlide - 1);
+        }
+      }
+
+      /* ---- Intersection Observer: trigger .visible class for animations ---- */
+      setupIntersectionObserver() {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+
+              /* Sync current slide index */
+              const index = Array.from(this.slides).indexOf(entry.target);
+              if (index !== -1) {
+                this.currentSlide = index;
+                this.updateNavDots();
+                this.updateProgress();
+              }
+            }
+          });
+        }, {
+          threshold: 0.5
+        });
+
+        this.slides.forEach(slide => observer.observe(slide));
+      }
+
+      /* ---- Keyboard: arrows, space, page up/down, home/end ---- */
+      setupKeyboardNav() {
+        document.addEventListener('keydown', (e) => {
+          switch (e.key) {
+            case 'ArrowDown':
+            case 'ArrowRight':
+            case ' ':
+            case 'PageDown':
+              e.preventDefault();
+              this.nextSlide();
+              break;
+            case 'ArrowUp':
+            case 'ArrowLeft':
+            case 'PageUp':
+              e.preventDefault();
+              this.prevSlide();
+              break;
+            case 'Home':
+              e.preventDefault();
+              this.goToSlide(0);
+              break;
+            case 'End':
+              e.preventDefault();
+              this.goToSlide(this.totalSlides - 1);
+              break;
+          }
+        });
+      }
+
+      /* ---- Touch swipe support (vertical) ---- */
+      setupTouchNav() {
+        let touchStartY = 0;
+        const threshold = 50;
+
+        document.addEventListener('touchstart', (e) => {
+          touchStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+
+        document.addEventListener('touchend', (e) => {
+          const delta = touchStartY - e.changedTouches[0].screenY;
+          if (Math.abs(delta) > threshold) {
+            if (delta > 0) {
+              this.nextSlide();
+            } else {
+              this.prevSlide();
+            }
+          }
+        }, { passive: true });
+      }
+
+      /* ---- Mouse wheel with cooldown ---- */
+      setupWheelNav() {
+        let lastWheelTime = 0;
+        const cooldown = 800;
+
+        document.addEventListener('wheel', (e) => {
+          const now = Date.now();
+          if (now - lastWheelTime < cooldown) return;
+
+          if (Math.abs(e.deltaY) > 30) {
+            lastWheelTime = now;
+            if (e.deltaY > 0) {
+              this.nextSlide();
+            } else {
+              this.prevSlide();
+            }
+          }
+        }, { passive: true });
+      }
+    }
+
+    /* Initialize on DOM ready */
+    document.addEventListener('DOMContentLoaded', () => {
+      new SlidePresentation();
+    });
   </script>
+
 </body>
 </html>
