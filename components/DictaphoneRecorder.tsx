@@ -37,21 +37,30 @@ import { useThemeColors } from '../contexts/ThemeContext';
 import { useAI } from '../contexts/AIContext';
 import { useVault } from '../contexts/VaultContext';
 import { useToast } from '../contexts/ToastContext';
-import { summarizeConsultation, type VaultContext as AIVaultContext } from '../lib/ai-service';
+import { summarizeConsultation, summarizeTranscription, type VaultContext as AIVaultContext } from '../lib/ai-service';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../constants/typography';
 import { ModalHeader } from './ui/ModalHeader';
 import type { RDV } from '../lib/types';
 
+/** Contexte générique pour le dictaphone hors-RDV */
+interface DictaphoneContext {
+  title: string;
+  subtitle?: string;
+}
+
 interface DictaphoneRecorderProps {
-  rdv: RDV;
+  /** Contexte RDV (résumé médical structuré) */
+  rdv?: RDV;
+  /** Contexte générique (résumé libre) — ignoré si rdv est fourni */
+  context?: DictaphoneContext;
   onResult: (text: string) => void;
   onClose: () => void;
 }
 
 type RecordingState = 'idle' | 'recording' | 'done' | 'summarizing';
 
-export function DictaphoneRecorder({ rdv, onResult, onClose }: DictaphoneRecorderProps) {
+export function DictaphoneRecorder({ rdv, context, onResult, onClose }: DictaphoneRecorderProps) {
   const { primary, tint, colors } = useThemeColors();
   const { config, isConfigured } = useAI();
   const vault = useVault();
@@ -262,7 +271,9 @@ export function DictaphoneRecorder({ rdv, onResult, onClose }: DictaphoneRecorde
       activeProfile: vault.activeProfile,
     };
 
-    const resp = await summarizeConsultation(config, editedTranscript, rdv, vaultCtx);
+    const resp = rdv
+      ? await summarizeConsultation(config, editedTranscript, rdv, vaultCtx)
+      : await summarizeTranscription(config, editedTranscript, context?.title, vaultCtx);
 
     if (resp.error) {
       showToast(resp.error, 'error');
@@ -272,7 +283,7 @@ export function DictaphoneRecorder({ rdv, onResult, onClose }: DictaphoneRecorde
 
     setSummary(resp.text);
     setState('done');
-  }, [config, editedTranscript, rdv, vault, showToast]);
+  }, [config, editedTranscript, rdv, context, vault, showToast]);
 
   const handleUseText = useCallback((text: string) => {
     onResult(text);
@@ -312,22 +323,32 @@ export function DictaphoneRecorder({ rdv, onResult, onClose }: DictaphoneRecorde
       />
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-        {/* Info RDV */}
-        <View style={[styles.rdvInfo, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}>
-          <Text style={[styles.rdvInfoTitle, { color: colors.text }]}>
-            {rdv.type_rdv} — {rdv.enfant}
-          </Text>
-          <Text style={[styles.rdvInfoSub, { color: colors.textMuted }]}>
-            {rdv.médecin ? `Dr. ${rdv.médecin}` : 'Médecin non renseigné'}
-          </Text>
-        </View>
+        {/* Info contexte */}
+        {(rdv || context) && (
+          <View style={[styles.rdvInfo, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}>
+            <Text style={[styles.rdvInfoTitle, { color: colors.text }]}>
+              {rdv ? `${rdv.type_rdv} — ${rdv.enfant}` : context!.title}
+            </Text>
+            {rdv ? (
+              <Text style={[styles.rdvInfoSub, { color: colors.textMuted }]}>
+                {rdv.médecin ? `Dr. ${rdv.médecin}` : 'Médecin non renseigné'}
+              </Text>
+            ) : context?.subtitle ? (
+              <Text style={[styles.rdvInfoSub, { color: colors.textMuted }]}>
+                {context.subtitle}
+              </Text>
+            ) : null}
+          </View>
+        )}
 
         {/* Zone enregistrement */}
         {state === 'idle' && (
           <View style={styles.idleContainer}>
             <Text style={[styles.instructions, { color: colors.textSub }]}>
-              Appuyez sur le micro pour enregistrer les réponses du médecin.
-              La transcription se fait en temps réel, sur votre appareil.
+              {rdv
+                ? 'Appuyez sur le micro pour enregistrer les réponses du médecin.'
+                : 'Appuyez sur le micro pour dicter votre texte.'}
+              {' '}La transcription se fait en temps réel, sur votre appareil.
             </Text>
             <TouchableOpacity
               style={[styles.recordBtn, { backgroundColor: colors.error }]}

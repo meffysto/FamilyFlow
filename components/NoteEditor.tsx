@@ -2,7 +2,7 @@
  * NoteEditor.tsx — Modal pour créer/éditer des notes et importer des URLs en markdown
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import {
 import { useThemeColors } from '../contexts/ThemeContext';
 import { ModalHeader } from './ui/ModalHeader';
 import { Chip } from './ui/Chip';
+import { DictaphoneRecorder } from './DictaphoneRecorder';
 import { Note, NOTE_CATEGORIES } from '../lib/types';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../constants/typography';
@@ -41,6 +42,8 @@ export function NoteEditor({ visible, note, onSave, onDelete, onClose }: NoteEdi
   const [tagsInput, setTagsInput] = useState('');
   const [content, setContent] = useState('');
   const [importing, setImporting] = useState(false);
+  const [dictaphoneVisible, setDictaphoneVisible] = useState(false);
+  const dictaphoneResultRef = useRef<string>('');
 
   // Reset / pré-remplir quand la modal s'ouvre
   useEffect(() => {
@@ -257,9 +260,21 @@ export function NoteEditor({ visible, note, onSave, onDelete, onClose }: NoteEdi
             />
 
             {/* Contenu */}
-            <Text style={[styles.label, { color: colors.textSub }]}>
-              Contenu
-            </Text>
+            <View style={styles.contentLabelRow}>
+              <Text style={[styles.label, styles.labelNoMarginBottom, { color: colors.textSub }]}>
+                Contenu
+              </Text>
+              <TouchableOpacity
+                style={[styles.dictaphoneBtn, { backgroundColor: colors.cardAlt, borderColor: primary }]}
+                onPress={() => setDictaphoneVisible(true)}
+                activeOpacity={0.7}
+                accessibilityLabel="Dicter le contenu"
+                accessibilityRole="button"
+              >
+                <Text style={styles.dictaphoneBtnEmoji}>🎙️</Text>
+                <Text style={[styles.dictaphoneBtnText, { color: primary }]}>Dicter</Text>
+              </TouchableOpacity>
+            </View>
             <TextInput
               style={[
                 styles.input,
@@ -294,6 +309,36 @@ export function NoteEditor({ visible, note, onSave, onDelete, onClose }: NoteEdi
             )}
           </ScrollView>
         </KeyboardAvoidingView>
+
+        {/* Dictaphone Modal */}
+        <Modal
+          visible={dictaphoneVisible}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => {
+            const pending = dictaphoneResultRef.current;
+            if (pending) {
+              setContent((prev) => prev.trim() ? `${prev}\n\n${pending}` : pending);
+              dictaphoneResultRef.current = '';
+            }
+            setDictaphoneVisible(false);
+          }}
+        >
+          <DictaphoneRecorder
+            context={{
+              title: title.trim() || 'Nouvelle note',
+              subtitle: selectedCategory,
+            }}
+            onResult={(text) => {
+              dictaphoneResultRef.current = text;
+              setContent((prev) => prev.trim() ? `${prev}\n\n${text}` : text);
+            }}
+            onClose={() => {
+              dictaphoneResultRef.current = '';
+              setDictaphoneVisible(false);
+            }}
+          />
+        </Modal>
       </View>
     </Modal>
   );
@@ -350,6 +395,33 @@ const styles = StyleSheet.create({
   chipRow: {
     gap: Spacing.sm,
     paddingVertical: Spacing.xs,
+  },
+  contentLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.xs,
+  },
+  labelNoMarginBottom: {
+    marginTop: 0,
+    marginBottom: 0,
+  },
+  dictaphoneBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.full,
+    borderWidth: 1.5,
+  },
+  dictaphoneBtnEmoji: {
+    fontSize: FontSize.sm,
+  },
+  dictaphoneBtnText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
   },
   contentInput: {
     minHeight: 200,

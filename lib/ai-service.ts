@@ -361,6 +361,7 @@ async function callClaude(
   config: AIConfig,
   systemPrompt: string,
   messages: AIMessage[],
+  maxTokens: number = MAX_TOKENS,
 ): Promise<AIResponse> {
   try {
     const response = await fetch(API_URL, {
@@ -373,7 +374,7 @@ async function callClaude(
       },
       body: JSON.stringify({
         model: config.model,
-        max_tokens: MAX_TOKENS,
+        max_tokens: maxTokens,
         system: systemPrompt,
         messages: messages.map((m) => ({ role: m.role, content: m.content })),
       }),
@@ -482,6 +483,50 @@ Règles :
   return { text: deanonymize(resp.text, anonMap) };
 }
 
+/** Résume une transcription vocale générique en note structurée */
+export async function summarizeTranscription(
+  config: AIConfig,
+  transcript: string,
+  title?: string,
+  vaultCtx?: VaultContext,
+): Promise<AIResponse> {
+  const anonMap = vaultCtx
+    ? buildAnonymizationMap(
+        vaultCtx.profiles,
+        vaultCtx.rdvs,
+        vaultCtx.healthRecords,
+        vaultCtx.memories,
+        vaultCtx.tasks,
+      )
+    : { forward: new Map(), reverse: new Map() };
+
+  const anonTranscript = anonymize(transcript, anonMap);
+  const anonTitle = title ? anonymize(title, anonMap) : '';
+
+  const titleHint = anonTitle ? `\nContexte : "${anonTitle}"` : '';
+
+  const systemPrompt = `Tu es un assistant qui structure des notes dictées oralement.
+Tu reçois la transcription brute d'une dictée vocale.${titleHint}
+
+Règles :
+- Résume en français, de façon claire et concise
+- Corrige les erreurs de transcription évidentes
+- Structure le texte avec des paragraphes ou des listes si pertinent
+- N'invente rien — ne mets que ce qui est dans la transcription
+- Les noms utilisés sont des pseudonymes — utilise-les tels quels
+- Maximum 300 mots`;
+
+  const messages: AIMessage[] = [
+    { role: 'user', content: `Voici la transcription :\n\n${anonTranscript}` },
+  ];
+
+  const haikiConfig = { ...config, model: 'claude-haiku-4-5-20251001' };
+  const resp = await callClaude(haikiConfig, systemPrompt, messages);
+  if (resp.error) return resp;
+
+  return { text: deanonymize(resp.text, anonMap) };
+}
+
 /** Génère un résumé hebdomadaire via IA (anonymisé) pour envoi Telegram */
 export async function generateWeeklySummary(
   config: AIConfig,
@@ -492,15 +537,14 @@ export async function generateWeeklySummary(
   const messages: AIMessage[] = [
     {
       role: 'user',
-      content: `Fais un résumé hebdomadaire de la vie familiale en format digest, à envoyer le dimanche soir. Inclus :
-- Tâches accomplies cette semaine vs en retard
-- RDV de la semaine prochaine
-- Stocks à racheter
-- Progression gamification (points, streaks, niveaux)
-- Défis en cours
-- Un petit mot d'encouragement pour la semaine à venir
+      content: `Résumé hebdo familial ultra-concis pour dimanche soir. Inclus UNIQUEMENT les sections pertinentes (ignore celles sans données) :
+- ✅ Tâches : X faites / Y en retard
+- 📅 RDV semaine prochaine (si existants)
+- 📦 Stocks bas (si existants)
+- 🏆 Top gamification (points, streaks)
+- Un petit mot d'encouragement (1 phrase)
 
-Format : sections avec emojis, concis et chaleureux. Pas de markdown, juste du texte avec emojis. Maximum 400 mots.`,
+Format : emojis + texte brut, PAS de markdown. Maximum 150 mots. Sois direct et chaleureux.`,
     },
   ];
 

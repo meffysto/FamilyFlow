@@ -1850,10 +1850,11 @@ export function serializeHealthRecord(record: {
  * - Bain / douche ~15min
  * ```
  */
-export function parseRoutines(content: string): { id: string; label: string; emoji: string; steps: { text: string; durationMinutes?: number }[] }[] {
-  const routines: { id: string; label: string; emoji: string; steps: { text: string; durationMinutes?: number }[] }[] = [];
+export function parseRoutines(content: string): { id: string; label: string; emoji: string; steps: { text: string; durationMinutes?: number }[]; profileId?: string; timeOfDay?: 'matin' | 'soir'; isVisual?: boolean }[] {
+  type ParsedRoutine = { id: string; label: string; emoji: string; steps: { text: string; durationMinutes?: number }[]; profileId?: string; timeOfDay?: 'matin' | 'soir'; isVisual?: boolean };
+  const routines: ParsedRoutine[] = [];
   const lines = content.split('\n');
-  let current: (typeof routines)[number] | null = null;
+  let current: ParsedRoutine | null = null;
 
   for (const line of lines) {
     if (line.startsWith('## ')) {
@@ -1862,9 +1863,21 @@ export function parseRoutines(content: string): { id: string; label: string; emo
       // Séparer l'emoji du label
       const parts = headerText.split(/\s+/);
       const emoji = parts[0] || '📋';
-      const label = parts.slice(1).join(' ') || headerText;
+      const rawLabel = parts.slice(1).join(' ') || headerText;
+
+      // Extraire métadonnées optionnelles : "Matin — lucas [visuel]"
+      const isVisual = /\[visuel\]/i.test(rawLabel);
+      const cleanLabel = rawLabel.replace(/\s*\[visuel\]/i, '').trim();
+      const metaMatch = cleanLabel.match(/^(.+?)\s*(?:—\s*(\w+))?\s*$/);
+      const label = metaMatch ? metaMatch[1].trim() : cleanLabel;
+      const profileId = metaMatch?.[2] || undefined;
+
+      // Détecter timeOfDay depuis le label
+      const labelLower = label.toLowerCase();
+      const timeOfDay: 'matin' | 'soir' | undefined = labelLower.includes('matin') ? 'matin' : labelLower.includes('soir') ? 'soir' : undefined;
+
       const id = label.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
-      current = { label, emoji, id, steps: [] };
+      current = { label, emoji, id, steps: [], ...(profileId && { profileId }), ...(timeOfDay && { timeOfDay }), ...(isVisual && { isVisual }) };
       continue;
     }
 
@@ -1885,10 +1898,14 @@ export function parseRoutines(content: string): { id: string; label: string; emo
 /**
  * Sérialise des routines en contenu Markdown.
  */
-export function serializeRoutines(routines: { emoji: string; label: string; steps: { text: string; durationMinutes?: number }[] }[]): string {
+export function serializeRoutines(routines: { emoji: string; label: string; steps: { text: string; durationMinutes?: number }[]; profileId?: string; isVisual?: boolean }[]): string {
   const lines = ['# Routines', ''];
   for (const routine of routines) {
-    lines.push(`## ${routine.emoji} ${routine.label}`);
+    // Reconstruire le header avec métadonnées optionnelles
+    let header = `## ${routine.emoji} ${routine.label}`;
+    if (routine.profileId) header += ` — ${routine.profileId}`;
+    if (routine.isVisual) header += ' [visuel]';
+    lines.push(header);
     for (const step of routine.steps) {
       const timer = step.durationMinutes ? ` ~${step.durationMinutes}min` : '';
       lines.push(`- ${step.text}${timer}`);

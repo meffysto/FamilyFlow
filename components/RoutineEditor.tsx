@@ -15,6 +15,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Switch,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../contexts/ThemeContext';
@@ -41,6 +42,7 @@ export function RoutineEditor({ routine, onSave, onDelete, onClose }: RoutineEdi
   const [steps, setSteps] = useState<RoutineStep[]>(
     routine?.steps.length ? [...routine.steps] : [{ text: '' }]
   );
+  const [isVisual, setIsVisual] = useState(routine?.isVisual ?? false);
 
   const canSave = label.trim().length > 0 && steps.some(s => s.text.trim().length > 0);
 
@@ -54,7 +56,13 @@ export function RoutineEditor({ routine, onSave, onDelete, onClose }: RoutineEdi
 
     const id = routine?.id || label.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
 
-    onSave({ id, label: label.trim(), emoji, steps: cleanSteps });
+    onSave({
+      id,
+      label: label.trim(),
+      emoji,
+      steps: cleanSteps,
+      isVisual,
+    });
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   }, [label, emoji, steps, routine, onSave]);
 
@@ -151,6 +159,22 @@ export function RoutineEditor({ routine, onSave, onDelete, onClose }: RoutineEdi
           placeholderTextColor={colors.textFaint}
           autoFocus={isNew}
         />
+
+        {/* Mode visuel */}
+        <View style={st.visualRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={[st.sectionLabel, { color: colors.textMuted, marginTop: 0 }]}>Mode visuel 👶</Text>
+            <Text style={[st.visualHint, { color: colors.textFaint }]}>
+              Plein écran avec gros emojis pour les petits (3-7 ans)
+            </Text>
+          </View>
+          <Switch
+            value={isVisual}
+            onValueChange={setIsVisual}
+            trackColor={{ false: colors.switchOff, true: primary + '60' }}
+            thumbColor={isVisual ? primary : colors.textMuted}
+          />
+        </View>
 
         {/* Étapes */}
         <Text style={[st.sectionLabel, { color: colors.textMuted }]}>Étapes</Text>
@@ -303,6 +327,17 @@ const st = StyleSheet.create({
     borderRadius: Radius.md,
     borderWidth: 1,
     textAlign: 'center',
+  },
+
+  visualRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    marginTop: Spacing.md,
+  },
+  visualHint: {
+    fontSize: FontSize.caption,
+    marginTop: 2,
   },
 
   addStepBtn: {

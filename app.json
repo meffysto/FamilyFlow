@@ -8,9 +8,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#EAECF0"
+      "backgroundColor": "#F9FAFB"
     },
     "ios": {
       "supportsTablet": true,
@@ -72,6 +70,12 @@
         "expo-contacts",
         {
           "contactsPermission": "FamilyFlow accède à vos contacts pour importer les anniversaires."
+        }
+      ],
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "FamilyFlow accède à votre calendrier pour importer les anniversaires."
         }
       ]
     ],

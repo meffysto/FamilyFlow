@@ -41,6 +41,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { parseRoutines } from '../../lib/parser';
 import { RoutineEditor } from '../../components/RoutineEditor';
+import { VisualRoutinePlayer } from '../../components/VisualRoutinePlayer';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 
@@ -511,6 +512,7 @@ export default function RoutinesScreen() {
                         {totalSteps} étapes
                         {routine.steps.some(s => s.durationMinutes) &&
                           ` · ~${routine.steps.reduce((sum, s) => sum + (s.durationMinutes || 0), 0)}min`}
+                        {routine.isVisual && ' · 👶 Visuel'}
                       </Text>
                     </View>
                     <TouchableOpacity
@@ -601,14 +603,14 @@ export default function RoutinesScreen() {
         </View>
       </ScrollView>
 
-      {/* Player Modal */}
+      {/* Player Modal — mode classique (texte) */}
       <Modal
-        visible={!!playerRoutine}
+        visible={!!playerRoutine && !playerRoutine.isVisual}
         animationType="slide"
         presentationStyle="pageSheet"
         onRequestClose={() => setPlayerRoutine(null)}
       >
-        {playerRoutine && (
+        {playerRoutine && !playerRoutine.isVisual && (
           <RoutinePlayer
             routine={playerRoutine}
             progress={getProgress(playerRoutine.id)}
@@ -618,6 +620,18 @@ export default function RoutinesScreen() {
           />
         )}
       </Modal>
+
+      {/* Player Modal — mode visuel (gros emojis pour petits) */}
+      {playerRoutine && (
+        <VisualRoutinePlayer
+          visible={!!playerRoutine?.isVisual}
+          routine={playerRoutine}
+          progress={getProgress(playerRoutine.id)}
+          onStepComplete={(stepIndex) => handleStepComplete(playerRoutine.id, stepIndex)}
+          onRoutineComplete={() => handleRoutineComplete(playerRoutine)}
+          onClose={() => setPlayerRoutine(null)}
+        />
+      )}
 
       {/* Editor Modal */}
       <Modal

@@ -287,6 +287,9 @@ export interface Routine {
   label: string;      // titre affiché ("Matin", "Soir")
   emoji: string;      // ☀️ | 🌙
   steps: RoutineStep[];
+  profileId?: string;        // lié à un profil enfant (mode visuel)
+  timeOfDay?: 'matin' | 'soir';  // pour auto-affichage dashboard
+  isVisual?: boolean;        // active le mode plein écran gros emojis
 }
 
 export interface RoutineProgress {
