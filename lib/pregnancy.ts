@@ -6,7 +6,10 @@
  * Sources : courbes Hadlock, CNGOF, OMS (50e percentile)
  */
 const PREGNANCY_FRUITS: { emoji: string; label: string; sizeCm: number }[] = [
-  /* SA 0–3  */ { emoji: '🌰', label: 'graine de pavot', sizeCm: 0 },
+  /* SA 0    */ { emoji: '🌰', label: 'graine de pavot', sizeCm: 0 },
+  /* SA 1    */ { emoji: '🌰', label: 'graine de pavot', sizeCm: 0 },
+  /* SA 2    */ { emoji: '🌰', label: 'graine de pavot', sizeCm: 0 },
+  /* SA 3    */ { emoji: '🌰', label: 'graine de pavot', sizeCm: 0 },
   /* SA 4    */ { emoji: '🌰', label: 'graine de pavot', sizeCm: 0.1 },
   /* SA 5    */ { emoji: '🫘', label: 'graine de sésame', sizeCm: 0.2 },
   /* SA 6    */ { emoji: '🫐', label: 'lentille', sizeCm: 0.4 },
