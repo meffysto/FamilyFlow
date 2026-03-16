@@ -5,7 +5,7 @@
  * Fichier vault : 06 - Mémoires/Gratitude familiale.md
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -32,6 +32,7 @@ import { Shadows } from '../../constants/shadows';
 import type { GratitudeEntry, GratitudeDay } from '../../lib/types';
 import { isBabyProfile } from '../../lib/types';
 import { MarkdownText } from '../../components/ui/MarkdownText';
+import { DictaphoneRecorder } from '../../components/DictaphoneRecorder';
 
 type TabId = 'aujourdhui' | 'livre';
 
@@ -68,6 +69,8 @@ export default function GratitudeScreen() {
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [writeModal, setWriteModal] = useState<{ visible: boolean; existing?: GratitudeEntry }>({ visible: false });
   const [writeText, setWriteText] = useState('');
+  const [dictaphoneVisible, setDictaphoneVisible] = useState(false);
+  const dictaphoneResultRef = useRef<string>('');
   const [visibleCount, setVisibleCount] = useState(LOAD_BATCH);
   const { refreshing, onRefresh } = useRefresh(refresh);
 
@@ -305,9 +308,21 @@ export default function GratitudeScreen() {
             onRight={handleSave}
           />
           <View style={styles.writeContent}>
-            <Text style={[styles.writePrompt, { color: colors.textMuted }]}>
-              Qu'est-ce qui vous rend reconnaissant(e) aujourd'hui ?
-            </Text>
+            <View style={styles.promptRow}>
+              <Text style={[styles.writePrompt, { color: colors.textMuted, flex: 1 }]}>
+                Qu'est-ce qui vous rend reconnaissant(e) aujourd'hui ?
+              </Text>
+              <TouchableOpacity
+                style={[styles.dictaphoneBtn, { backgroundColor: colors.cardAlt, borderColor: primary }]}
+                onPress={() => setDictaphoneVisible(true)}
+                activeOpacity={0.7}
+                accessibilityLabel="Dicter la gratitude"
+                accessibilityRole="button"
+              >
+                <Text style={styles.dictaphoneBtnEmoji}>🎙️</Text>
+                <Text style={[styles.dictaphoneBtnText, { color: primary }]}>Dicter</Text>
+              </TouchableOpacity>
+            </View>
             <TextInput
               style={[styles.writeInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
               value={writeText}
@@ -319,6 +334,36 @@ export default function GratitudeScreen() {
               textAlignVertical="top"
             />
           </View>
+
+          {/* Dictaphone Modal */}
+          <Modal
+            visible={dictaphoneVisible}
+            animationType="slide"
+            presentationStyle="pageSheet"
+            onRequestClose={() => {
+              const pending = dictaphoneResultRef.current;
+              if (pending) {
+                setWriteText((prev) => prev.trim() ? `${prev}\n\n${pending}` : pending);
+                dictaphoneResultRef.current = '';
+              }
+              setDictaphoneVisible(false);
+            }}
+          >
+            <DictaphoneRecorder
+              context={{
+                title: 'Gratitude',
+                subtitle: activeProfile?.name ?? '',
+              }}
+              onResult={(text) => {
+                dictaphoneResultRef.current = text;
+                setWriteText((prev) => prev.trim() ? `${prev}\n\n${text}` : text);
+              }}
+              onClose={() => {
+                dictaphoneResultRef.current = '';
+                setDictaphoneVisible(false);
+              }}
+            />
+          </Modal>
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
@@ -449,9 +494,30 @@ const styles = StyleSheet.create({
     padding: Spacing['2xl'],
     gap: Spacing.xl,
   },
+  promptRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.lg,
+  },
   writePrompt: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
+  },
+  dictaphoneBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.full,
+    borderWidth: 1.5,
+  },
+  dictaphoneBtnEmoji: {
+    fontSize: FontSize.sm,
+  },
+  dictaphoneBtnText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
   },
   writeInput: {
     flex: 1,
