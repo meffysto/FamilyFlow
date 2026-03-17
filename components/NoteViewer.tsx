@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Modal,
   View,
@@ -15,6 +15,7 @@ import { FontSize, FontWeight, LineHeight } from '../constants/typography';
 import { ModalHeader } from './ui/ModalHeader';
 import { MarkdownText } from './ui/MarkdownText';
 import { Chip } from './ui/Chip';
+import { FocusReader } from './FocusReader';
 import { formatDateForDisplay } from '../lib/parser';
 import type { Note } from '../lib/types';
 
@@ -32,6 +33,8 @@ export const NoteViewer = React.memo(function NoteViewer({
   onEdit,
 }: NoteViewerProps) {
   const { primary, colors } = useThemeColors();
+  const [showReader, setShowReader] = useState(false);
+  const closeReader = useCallback(() => setShowReader(false), []);
 
   return (
     <Modal
@@ -49,6 +52,21 @@ export const NoteViewer = React.memo(function NoteViewer({
               rightLabel="Modifier"
               onRight={onEdit}
             />
+
+            {/* Bouton lecture immersive */}
+            {note.content.trim().length > 0 && (
+              <TouchableOpacity
+                onPress={() => setShowReader(true)}
+                activeOpacity={0.7}
+                style={[styles.readBtn, { backgroundColor: primary + '15', borderColor: primary + '30' }]}
+                accessibilityRole="button"
+                accessibilityLabel="Mode lecture"
+              >
+                <Text style={[styles.readBtnText, { color: primary }]}>
+                  Lecture immersive
+                </Text>
+              </TouchableOpacity>
+            )}
 
             <ScrollView
               style={styles.scroll}
@@ -90,6 +108,14 @@ export const NoteViewer = React.memo(function NoteViewer({
                 <MarkdownText>{note.content}</MarkdownText>
               </View>
             </ScrollView>
+
+            {/* Lecteur immersif */}
+            <FocusReader
+              visible={showReader}
+              content={note.content}
+              title={note.title}
+              onClose={closeReader}
+            />
           </>
         )}
       </SafeAreaView>
@@ -132,6 +158,20 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: Spacing.sm,
     marginBottom: Spacing['2xl'],
+  },
+  readBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: Spacing['3xl'],
+    marginBottom: Spacing.md,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+  },
+  readBtnText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
   contentWrap: {
     marginTop: Spacing.sm,
