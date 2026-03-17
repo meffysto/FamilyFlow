@@ -49,6 +49,7 @@ function buildWidgetData(
   meals: MealItem[],
   menageTasks: Task[],
   rdvs: RDV[],
+  allTasks: Task[],
 ): WidgetData {
   const now = new Date();
   const todayStr = now.toISOString().slice(0, 10);
@@ -59,10 +60,14 @@ function buildWidgetData(
   const dejeuner = todayMeals.find(m => m.mealType === 'Déjeuner')?.text || null;
   const diner = todayMeals.find(m => m.mealType === 'Dîner')?.text || null;
 
-  // Progression ménage + prochaines tâches
-  const done = menageTasks.filter(t => t.completed).length;
-  const total = menageTasks.length;
-  const nextTasks = menageTasks
+  // Tâches du jour : ménage + tâches dues aujourd'hui ou en retard
+  const dueTodayOrOverdue = allTasks.filter(t =>
+    t.dueDate && t.dueDate <= todayStr && !t.completed
+  );
+  const allDayTasks = [...menageTasks, ...dueTodayOrOverdue];
+  const done = allDayTasks.filter(t => t.completed).length;
+  const total = allDayTasks.length;
+  const nextTasks = allDayTasks
     .filter(t => !t.completed)
     .slice(0, 3)
     .map(t => t.text);
@@ -102,10 +107,11 @@ export function refreshWidget(
   meals: MealItem[],
   menageTasks: Task[],
   rdvs: RDV[],
+  allTasks: Task[] = [],
 ): void {
   if (Platform.OS !== 'ios' || !updateWidgetDataNative) return;
 
-  const data = buildWidgetData(meals, menageTasks, rdvs);
+  const data = buildWidgetData(meals, menageTasks, rdvs, allTasks);
   updateWidgetDataNative(JSON.stringify(data)).catch(() => {
     // Widget update non critique — on ignore les erreurs
   });

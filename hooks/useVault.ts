@@ -121,6 +121,7 @@ export interface VaultState {
   setActiveProfile: (profileId: string) => Promise<void>;
   saveNotifPrefs: (prefs: NotificationPreferences) => Promise<void>;
   updateMeal: (day: string, mealType: string, text: string, recipeRef?: string) => Promise<void>;
+  loadMealsForWeek: (date: Date) => Promise<MealItem[]>;
   photoDates: Record<string, string[]>;  // enfantId → dates with photos
   addPhoto: (enfantName: string, date: string, imageUri: string) => Promise<void>;
   getPhotoUri: (enfantName: string, date: string) => string | null;
@@ -223,7 +224,19 @@ const RDV_DIR = '04 - Rendez-vous';
 const RDV_ARCHIVES_DIR = 'Archives/Rendez-vous';
 const FAMILLE_FILE = 'famille.md';
 const GAMI_FILE = 'gamification.md';
-const MEALS_FILE = '02 - Maison/Repas de la semaine.md';
+const MEALS_DIR = '02 - Maison';
+/** Retourne le chemin du fichier repas pour la semaine contenant `date` (lundi = début de semaine) */
+function mealsFileForWeek(date: Date = new Date()): string {
+  const d = new Date(date);
+  const day = d.getDay(); // 0=dimanche
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // lundi
+  const monday = new Date(d);
+  monday.setDate(diff);
+  const iso = format(monday, 'yyyy-MM-dd');
+  return `${MEALS_DIR}/Repas semaine du ${iso}.md`;
+}
+/** Ancien fichier (migration) */
+const MEALS_LEGACY_FILE = '02 - Maison/Repas de la semaine.md';
 const MEALS_TEMPLATE = `# Repas de la semaine
 
 ## Lundi
@@ -342,12 +355,14 @@ export function useVaultInternal(): VaultState {
   const mealsRef = useRef(meals);
   const menageTasksRef = useRef(menageTasks);
   const rdvsRef = useRef(rdvs);
+  const tasksRef = useRef(tasks);
   useEffect(() => { mealsRef.current = meals; }, [meals]);
   useEffect(() => { menageTasksRef.current = menageTasks; }, [menageTasks]);
   useEffect(() => { rdvsRef.current = rdvs; }, [rdvs]);
+  useEffect(() => { tasksRef.current = tasks; }, [tasks]);
 
   const triggerWidgetRefresh = useCallback(() => {
-    refreshWidget(mealsRef.current, menageTasksRef.current, rdvsRef.current);
+    refreshWidget(mealsRef.current, menageTasksRef.current, rdvsRef.current, tasksRef.current);
   }, []);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
@@ -509,13 +524,22 @@ export function useVaultInternal(): VaultState {
           debugErrors.push(`stock: ${e}`); return { items: [] as StockItem[], sections: [] as string[] };
         }),
 
-        // [5] Meals
+        // [5] Meals (fichier par semaine, migration auto depuis l'ancien fichier unique)
         (async () => {
-          if (!(await vault.exists(MEALS_FILE))) {
-            await vault.writeFile(MEALS_FILE, MEALS_TEMPLATE);
+          const currentFile = mealsFileForWeek();
+          if (!(await vault.exists(currentFile))) {
+            // Migration : si l'ancien fichier existe, le renommer pour cette semaine
+            if (await vault.exists(MEALS_LEGACY_FILE)) {
+              const legacy = await vault.readFile(MEALS_LEGACY_FILE);
+              await vault.writeFile(currentFile, legacy);
+              // Supprimer l'ancien fichier
+              try { await vault.deleteFile(MEALS_LEGACY_FILE); } catch {}
+            } else {
+              await vault.writeFile(currentFile, MEALS_TEMPLATE);
+            }
           }
-          const c = await vault.readFile(MEALS_FILE);
-          return parseMeals(c, MEALS_FILE);
+          const c = await vault.readFile(currentFile);
+          return parseMeals(c, currentFile);
         })().catch((e) => { debugErrors.push(`meals: ${e}`); return [] as MealItem[]; }),
 
         // [6] RDVs
@@ -752,7 +776,7 @@ export function useVaultInternal(): VaultState {
 
 
       // Mettre à jour les widgets iOS
-      refreshWidget(val(results[5], []), val(results[1], []), rdvResult);
+      refreshWidget(val(results[5], []), val(results[1], []), rdvResult, tasksResult);
       refreshJournalWidget(profiles);
 
       // Sync feedings du widget vers le vault markdown (fire-and-forget)
@@ -867,7 +891,8 @@ export function useVaultInternal(): VaultState {
   const updateMeal = useCallback(async (day: string, mealType: string, text: string, recipeRef?: string) => {
     if (!vaultRef.current) return;
     try {
-      const content = await vaultRef.current.readFile(MEALS_FILE);
+      const file = mealsFileForWeek();
+      const content = await vaultRef.current.readFile(file);
       const lines = content.split('\n');
       let currentDay: string | null = null;
 
@@ -884,13 +909,25 @@ export function useVaultInternal(): VaultState {
         }
       }
 
-      await vaultRef.current.writeFile(MEALS_FILE, lines.join('\n'));
-      setMeals(parseMeals(lines.join('\n'), MEALS_FILE));
+      await vaultRef.current.writeFile(file, lines.join('\n'));
+      setMeals(parseMeals(lines.join('\n'), file));
       setTimeout(triggerWidgetRefresh, 0);
     } catch (e) {
       throw new Error(`updateMeal: ${e}`);
     }
   }, [triggerWidgetRefresh]);
+
+  const loadMealsForWeek = useCallback(async (date: Date): Promise<MealItem[]> => {
+    if (!vaultRef.current) return [];
+    const file = mealsFileForWeek(date);
+    try {
+      if (!(await vaultRef.current.exists(file))) return [];
+      const c = await vaultRef.current.readFile(file);
+      return parseMeals(c, file);
+    } catch {
+      return [];
+    }
+  }, []);
 
   const addPhoto = useCallback(async (enfantName: string, date: string, imageUri: string) => {
     if (!vaultRef.current) throw new Error('Vault non initialisé');
@@ -1243,7 +1280,8 @@ export function useVaultInternal(): VaultState {
         const newDate = nextOccurrence(t.dueDate, t.recurrence);
         return { ...t, dueDate: newDate, completed: false };
       }
-      return { ...t, completed };
+      const today = format(new Date(), 'yyyy-MM-dd');
+      return { ...t, completed, completedDate: completed ? today : undefined };
     };
 
     setTasks(prev => prev.map(updateTask));
@@ -2280,6 +2318,7 @@ export function useVaultInternal(): VaultState {
     setActiveProfile,
     saveNotifPrefs,
     updateMeal,
+    loadMealsForWeek,
     photoDates,
     addPhoto,
     getPhotoUri,
@@ -2373,7 +2412,7 @@ export function useVaultInternal(): VaultState {
     recipes, ageUpgrades, budgetEntries, budgetConfig, budgetMonth, routines,
     healthRecords, defis, gratitudeDays, wishlistItems, journalStats, anniversaries, notes,
     // Callbacks (stables grâce à useCallback)
-    refresh, setVaultPath, setActiveProfile, saveNotifPrefs, updateMeal,
+    refresh, setVaultPath, setActiveProfile, saveNotifPrefs, updateMeal, loadMealsForWeek,
     addPhoto, getPhotoUri, updateProfileTheme, updateProfile, deleteProfile,
     updateStockQuantity, addStockItem, deleteStockItem, updateStockItem,
     toggleTask, addRDV, updateRDV, deleteRDV, addTask, editTask, deleteTask,

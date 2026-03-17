@@ -11,7 +11,7 @@
  */
 
 import matter from 'gray-matter';
-import { format } from 'date-fns';
+import { format, startOfWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
   Task,
@@ -119,12 +119,17 @@ export function parseTaskFile(relativePath: string, content: string): Task[] {
   return tasks;
 }
 
-/** Parse ménage hebdo tasks for today's day of week */
+/** Parse ménage hebdo tasks for today's day of week.
+ *  Les tâches cochées [x] sont considérées comme "à refaire" si
+ *  leur date ✅ est antérieure au lundi de la semaine courante
+ *  (ou absente). Cela permet le reset hebdomadaire automatique. */
 export function parseMénage(content: string, relativePath: string): Task[] {
   const today = new Date();
   const dayName = format(today, 'EEEE', { locale: fr });
   // Capitalize first letter to match section headers like "Lundi — Cuisine"
   const dayCapitalized = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+  // Lundi de cette semaine (locale FR = semaine commence lundi)
+  const weekStart = startOfWeek(today, { weekStartsOn: 1 });
 
   const lines = content.split('\n');
   const tasks: Task[] = [];
@@ -140,7 +145,16 @@ export function parseMénage(content: string, relativePath: string): Task[] {
     }
     if (inTodaySection) {
       const task = parseTask(line, i, relativePath, currentSection);
-      if (task) tasks.push(task);
+      if (task) {
+        // Reset hebdo : si cochée mais date ✅ d'une semaine précédente (ou absente), décocher
+        if (task.completed) {
+          const doneThisWeek = task.completedDate && new Date(task.completedDate + 'T00:00:00') >= weekStart;
+          if (!doneThisWeek) {
+            task.completed = false;
+          }
+        }
+        tasks.push(task);
+      }
     }
   }
 

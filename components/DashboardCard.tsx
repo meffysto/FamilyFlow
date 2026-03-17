@@ -20,6 +20,7 @@ import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
 import { Shadows } from '../constants/shadows';
+import { GlassView } from './ui/GlassView';
 
 interface DashboardCardProps {
   title: string;
@@ -35,6 +36,8 @@ interface DashboardCardProps {
   cardId?: string;
   /** État initial si pas de préférence persistée. Default: false (ouvert). */
   defaultCollapsed?: boolean;
+  /** Effet Liquid Glass (fond translucide + blur). Default: false */
+  glass?: boolean;
 }
 
 const STORAGE_PREFIX = 'dashboard_collapsed_';
@@ -52,6 +55,7 @@ export function DashboardCard({
   collapsible = false,
   cardId,
   defaultCollapsed = false,
+  glass = true,
 }: DashboardCardProps) {
   const { primary, colors } = useThemeColors();
   const accentColor = color ?? primary;
@@ -117,12 +121,8 @@ export function DashboardCard({
       }
     : {};
 
-  return (
-    <View
-      style={[styles.card, Shadows.md, { backgroundColor: colors.card }, style]}
-      accessibilityRole="summary"
-      accessibilityLabel={`Section ${title}${count !== undefined ? `, ${count} éléments` : ''}`}
-    >
+  const cardContent = (
+    <>
       <HeaderWrapper
         style={[styles.header, !collapsible || !isCollapsed ? styles.headerExpanded : undefined]}
         {...headerProps}
@@ -167,6 +167,33 @@ export function DashboardCard({
       ) : (
         <View style={styles.body}>{children}</View>
       )}
+    </>
+  );
+
+  const a11yProps = {
+    accessibilityRole: 'summary' as const,
+    accessibilityLabel: `Section ${title}${count !== undefined ? `, ${count} éléments` : ''}`,
+  };
+
+  if (glass) {
+    return (
+      <GlassView
+        style={[styles.card, style]}
+        intensity={35}
+        borderRadius={Radius.xl}
+        {...a11yProps}
+      >
+        {cardContent}
+      </GlassView>
+    );
+  }
+
+  return (
+    <View
+      style={[styles.card, Shadows.md, { backgroundColor: colors.card }, style]}
+      {...a11yProps}
+    >
+      {cardContent}
     </View>
   );
 }

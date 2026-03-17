@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
   scroll: { flex: 1 },
-  content: { padding: Spacing['2xl'], paddingBottom: 40 },
+  content: { padding: Spacing['2xl'], paddingBottom: 90 },
   sectionHeader: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.bold,

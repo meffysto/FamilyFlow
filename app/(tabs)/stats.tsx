@@ -237,6 +237,7 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: {
     padding: Spacing['2xl'],
+    paddingBottom: 90,
     gap: Spacing['2xl'],
   },
   card: {

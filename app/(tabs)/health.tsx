@@ -849,7 +849,7 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
   scroll: { flex: 1 },
-  content: { paddingBottom: 40 },
+  content: { paddingBottom: 90 },
 
   // Sélecteur enfant
   enfantPicker: { maxHeight: 56 },

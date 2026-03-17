@@ -337,7 +337,7 @@ export default function RDVScreen() {
       </View>
 
       {viewMode === 'calendrier' ? (
-        <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, { paddingBottom: 60 }]}>
+        <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, { paddingBottom: 90 }]}>
           <View style={styles.monthNav}>
             <TouchableOpacity style={[styles.monthArrow, { backgroundColor: colors.card }]} onPress={() => setCalMonth((m) => subMonths(m, 1))}>
               <Text style={[styles.monthArrowText, { color: primary }]}>‹</Text>
@@ -532,7 +532,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   scroll: { flex: 1 },
-  content: { padding: 16, gap: 12, paddingBottom: 40 },
+  content: { padding: 16, gap: 12, paddingBottom: 90 },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',

@@ -978,7 +978,7 @@ const styles = StyleSheet.create({
   quickBtnText: { fontSize: 11, fontWeight: '600' },
 
   scroll: { flex: 1 },
-  content: { padding: 16, paddingBottom: 40 },
+  content: { padding: 16, paddingBottom: 90 },
 
   createContainer: { alignItems: 'center', paddingVertical: 48, gap: 16 },
   createEmoji: { fontSize: 64 },

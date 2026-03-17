@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: Spacing['2xl'],
-    paddingBottom: 40,
+    paddingBottom: 90,
   },
   sectionHeader: {
     fontSize: FontSize.label,

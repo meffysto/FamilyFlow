@@ -399,7 +399,7 @@ const styles = StyleSheet.create({
   },
   tabLabel: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
   scroll: { flex: 1 },
-  content: { padding: Spacing['2xl'], gap: Spacing.xl, paddingBottom: 40 },
+  content: { padding: Spacing['2xl'], gap: Spacing.xl, paddingBottom: 90 },
   // Date navigation
   dateNav: {
     flexDirection: 'row',

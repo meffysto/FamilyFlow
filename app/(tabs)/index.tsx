@@ -1098,6 +1098,7 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     paddingTop: 12,
+    paddingBottom: 90,
   },
   welcomeText: {
     fontSize: 16,

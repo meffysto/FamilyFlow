@@ -5,3 +5,4 @@ export { DateInput } from './DateInput';
 export { ModalHeader } from './ModalHeader';
 export { MarkdownText } from './MarkdownText';
 export { CollapsibleSection } from './CollapsibleSection';
+export { GlassView } from './GlassView';

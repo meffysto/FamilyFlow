@@ -321,7 +321,7 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   scroll: { flex: 1 },
-  content: { padding: Spacing['2xl'], paddingBottom: Spacing['5xl'] + 8 },
+  content: { padding: Spacing['2xl'], paddingBottom: 90 },
   screenTitle: { fontSize: FontSize.display, fontWeight: FontWeight.heavy },
   appInfo: { alignItems: 'center', gap: Spacing.xs, paddingVertical: Spacing['3xl'] },
   appInfoText: { fontSize: FontSize.caption, textAlign: 'center' },

@@ -54,6 +54,10 @@ export const LightColors = {
   overlay:     'rgba(0,0,0,0.5)',
   overlayLight:'rgba(0,0,0,0.4)',
   switchOff:   '#E5E7EB',
+  // Glass / Liquid Glass
+  glassBg:     'rgba(255,255,255,0.65)',
+  glassBorder: 'rgba(255,255,255,0.45)',
+  glassShadow: 'rgba(0,0,0,0.08)',
 };
 
 export const DarkColors: typeof LightColors = {
@@ -101,6 +105,10 @@ export const DarkColors: typeof LightColors = {
   overlay:     'rgba(0,0,0,0.75)',
   overlayLight:'rgba(0,0,0,0.6)',
   switchOff:   '#334155',
+  // Glass / Liquid Glass
+  glassBg:     'rgba(30,41,59,0.55)',
+  glassBorder: 'rgba(148,163,184,0.25)',
+  glassShadow: 'rgba(0,0,0,0.25)',
 };
 
 export type AppColors = typeof LightColors;

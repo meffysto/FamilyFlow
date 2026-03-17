@@ -379,7 +379,7 @@ export default function LootScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   scroll: { flex: 1 },
-  content: { padding: 16 },
+  content: { padding: 16, paddingBottom: 90 },
   header: {
     borderRadius: 16,
     padding: 20,

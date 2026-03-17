@@ -15,6 +15,7 @@ import Animated, {
   SharedValue,
   Easing,
 } from 'react-native-reanimated';
+import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
@@ -39,7 +40,7 @@ const ACTION_OFFSET_RIGHT = (MAIN_SIZE - ACTION_SIZE) / 2;
 const TIMING_CONFIG = { duration: 200, easing: Easing.out(Easing.cubic) };
 
 function FABComponent({ actions }: FABProps) {
-  const { primary, colors } = useThemeColors();
+  const { primary, colors, isDark } = useThemeColors();
   const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
   const progress = useSharedValue(0);
@@ -68,8 +69,9 @@ function FABComponent({ actions }: FABProps) {
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop avec blur */}
       <Animated.View style={[styles.backdrop, backdropStyle]}>
+        <BlurView intensity={20} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
         <Pressable style={StyleSheet.absoluteFill} onPress={close} />
       </Animated.View>
 
@@ -161,8 +163,9 @@ export const FAB = React.memo(FABComponent);
 const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(0,0,0,0.15)',
     zIndex: 90,
+    overflow: 'hidden',
   },
   container: {
     position: 'absolute',

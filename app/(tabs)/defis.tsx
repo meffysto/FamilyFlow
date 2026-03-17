@@ -376,7 +376,7 @@ function DefiConfigModal({
 const configStyles = StyleSheet.create({
   safe: { flex: 1 },
   scroll: { flex: 1 },
-  content: { padding: Spacing['2xl'], gap: Spacing.xl, paddingBottom: 40 },
+  content: { padding: Spacing['2xl'], gap: Spacing.xl, paddingBottom: 90 },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.lg },
   emojiPicker: {
     width: 52, height: 52, borderRadius: Radius.lg,
@@ -618,7 +618,7 @@ function DefiDetailModal({
 const detailStyles = StyleSheet.create({
   safe: { flex: 1 },
   scroll: { flex: 1 },
-  content: { padding: Spacing['2xl'], gap: Spacing.xl, paddingBottom: 40 },
+  content: { padding: Spacing['2xl'], gap: Spacing.xl, paddingBottom: 90 },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between' },
   summaryText: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
   sectionTitle: {
@@ -938,7 +938,7 @@ const styles = StyleSheet.create({
   },
   tabLabel: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
   scroll: { flex: 1 },
-  content: { padding: Spacing['2xl'], gap: Spacing.xl, paddingBottom: 40 },
+  content: { padding: Spacing['2xl'], gap: Spacing.xl, paddingBottom: 90 },
   emptyState: {
     padding: Spacing['3xl'],
     borderRadius: Radius.lg,

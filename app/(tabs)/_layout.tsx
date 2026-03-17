@@ -5,9 +5,11 @@
 import { useEffect } from 'react';
 import { Tabs, useRouter, useSegments } from 'expo-router';
 import { View, Text, Modal, StyleSheet, TouchableOpacity } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { FAB, FABAction } from '../../components/FAB';
+import { GlassView } from '../../components/ui/GlassView';
 
 
 function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
@@ -48,7 +50,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
   vacationConfig: ReturnType<typeof useVault>['vacationConfig'];
   isVacationActive: boolean;
 }) {
-  const { primary, colors } = useThemeColors();
+  const { primary, colors, isDark } = useThemeColors();
   const router = useRouter();
   const segments = useSegments();
   const showPicker = profiles.length > 0 && !activeProfile;
@@ -82,12 +84,21 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
-            backgroundColor: colors.tabBar,
-            borderTopColor: colors.tabBarBorder,
-            borderTopWidth: 1,
+            position: 'absolute',
+            backgroundColor: 'transparent',
+            borderTopColor: colors.glassBorder,
+            borderTopWidth: StyleSheet.hairlineWidth,
             paddingBottom: 6,
             height: 70,
+            elevation: 0,
           },
+          tabBarBackground: () => (
+            <BlurView
+              intensity={60}
+              tint={isDark ? 'dark' : 'light'}
+              style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassBg }]}
+            />
+          ),
           tabBarActiveTintColor: primary,
           tabBarInactiveTintColor: colors.tabBarOff,
           tabBarLabelStyle: {
@@ -157,7 +168,8 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
       {/* Profile picker modal — shown on first launch */}
       <Modal visible={showPicker} animationType="fade" transparent statusBarTranslucent>
         <View style={pickerStyles.overlay}>
-          <View style={[pickerStyles.card, { backgroundColor: colors.card }]}>
+          <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+          <GlassView style={pickerStyles.card} intensity={50} borderRadius={24}>
             <Text style={[pickerStyles.title, { color: colors.text }]}>👋 Qui es-tu ?</Text>
             <Text style={[pickerStyles.subtitle, { color: colors.textMuted }]}>Choisis ton profil pour commencer</Text>
 
@@ -165,7 +177,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
               {profiles.map((p) => (
                 <TouchableOpacity
                   key={p.id}
-                  style={[pickerStyles.profileBtn, { backgroundColor: colors.cardAlt }]}
+                  style={[pickerStyles.profileBtn, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}
                   onPress={() => setActiveProfile(p.id)}
                   activeOpacity={0.7}
                 >
@@ -177,7 +189,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
                 </TouchableOpacity>
               ))}
             </View>
-          </View>
+          </GlassView>
         </View>
       </Modal>
     </View>
@@ -207,22 +219,15 @@ export default function TabsLayout() {
 const pickerStyles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
   },
   card: {
-    borderRadius: 24,
     padding: 28,
     width: '100%',
     maxWidth: 380,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 24,
-    elevation: 12,
+    alignItems: 'center' as const,
   },
   title: {
     fontSize: 24,
@@ -244,8 +249,7 @@ const pickerStyles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     width: 140,
-    borderWidth: 2,
-    borderColor: 'transparent',
+    borderWidth: StyleSheet.hairlineWidth,
   },
   avatar: {
     fontSize: 40,

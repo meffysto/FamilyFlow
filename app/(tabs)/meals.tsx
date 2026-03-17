@@ -24,7 +24,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
-import { format } from 'date-fns';
+import { format, startOfWeek, addWeeks, isSameWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -32,7 +32,7 @@ import { MealItem, CourseItem, Recipe } from '../../lib/types';
 import { formatIngredient, aggregateIngredients, categorizeIngredient, convertCookToMetric, type AppIngredient } from '../../lib/cooklang';
 import RecipeCard from '../../components/RecipeCard';
 import RecipeViewer from '../../components/RecipeViewer';
-import { importRecipeFromUrl, convertTextWithAI, parseTextToRecipe, searchCommunityRecipes, downloadCommunityRecipe, translateCookToFrench, type ImportResult, type ImportedRecipe, type CookImportResult, type CommunityRecipe } from '../../lib/recipe-import';
+import { importRecipeFromUrl, importRecipeFromPhoto, convertTextWithAI, parseTextToRecipe, searchCommunityRecipes, downloadCommunityRecipe, translateCookToFrench, type ImportResult, type ImportedRecipe, type CookImportResult, type CommunityRecipe } from '../../lib/recipe-import';
 import { generateCookFile } from '../../lib/cooklang';
 import { useAI } from '../../contexts/AIContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -53,7 +53,7 @@ type Tab = 'repas' | 'courses' | 'recettes';
 
 export default function MealsScreen() {
   const {
-    meals, updateMeal,
+    meals, updateMeal, loadMealsForWeek,
     courses, vault,
     addCourseItem, removeCourseItem, mergeCourseIngredients,
     stock, updateStockQuantity,
@@ -160,6 +160,42 @@ export default function MealsScreen() {
     return recipeByRef.get(recipeRef);
   }, [recipeByRef]);
 
+  // ─── Navigation semaine ────────────────────────────────────────
+
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [pastMeals, setPastMeals] = useState<MealItem[] | null>(null);
+
+  const isCurrentWeek = weekOffset === 0;
+  const viewedWeekMonday = useMemo(() => {
+    const now = new Date();
+    const monday = startOfWeek(now, { weekStartsOn: 1 });
+    return addWeeks(monday, weekOffset);
+  }, [weekOffset]);
+
+  const weekLabel = useMemo(() => {
+    if (isCurrentWeek) return 'Cette semaine';
+    const endOfWeek = addWeeks(viewedWeekMonday, 1);
+    endOfWeek.setDate(endOfWeek.getDate() - 1);
+    return `${format(viewedWeekMonday, 'dd/MM', { locale: fr })} — ${format(endOfWeek, 'dd/MM', { locale: fr })}`;
+  }, [viewedWeekMonday, isCurrentWeek]);
+
+  const goToPrevWeek = useCallback(() => setWeekOffset(w => w - 1), []);
+  const goToNextWeek = useCallback(() => {
+    if (weekOffset < 0) setWeekOffset(w => w + 1);
+  }, [weekOffset]);
+  const goToCurrentWeek = useCallback(() => setWeekOffset(0), []);
+
+  // Charger les repas d'une semaine passée/future
+  useEffect(() => {
+    if (isCurrentWeek) {
+      setPastMeals(null);
+      return;
+    }
+    loadMealsForWeek(viewedWeekMonday).then(setPastMeals);
+  }, [viewedWeekMonday, isCurrentWeek, loadMealsForWeek]);
+
+  const displayedMeals = isCurrentWeek ? meals : (pastMeals ?? []);
+
   // ─── Repas logic ────────────────────────────────────────────────
 
   const todayName = useMemo(() => {
@@ -168,19 +204,22 @@ export default function MealsScreen() {
   }, []);
 
   const orderedDays = useMemo(() => {
-    const todayIdx = DAYS_ORDER.indexOf(todayName);
-    if (todayIdx === -1) return DAYS_ORDER;
-    return [...DAYS_ORDER.slice(todayIdx), ...DAYS_ORDER.slice(0, todayIdx)];
-  }, [todayName]);
+    if (isCurrentWeek) {
+      const todayIdx = DAYS_ORDER.indexOf(todayName);
+      if (todayIdx === -1) return DAYS_ORDER;
+      return [...DAYS_ORDER.slice(todayIdx), ...DAYS_ORDER.slice(0, todayIdx)];
+    }
+    return DAYS_ORDER;
+  }, [todayName, isCurrentWeek]);
 
   const mealsByDay = useMemo(() => {
     const map: Record<string, MealItem[]> = {};
-    for (const meal of meals) {
+    for (const meal of displayedMeals) {
       if (!map[meal.day]) map[meal.day] = [];
       map[meal.day].push(meal);
     }
     return map;
-  }, [meals]);
+  }, [displayedMeals]);
 
   const openEdit = (meal: MealItem) => {
     setEditingMeal({ day: meal.day, mealType: meal.mealType, text: meal.text, recipeRef: meal.recipeRef });
@@ -212,18 +251,18 @@ export default function MealsScreen() {
     setEditRecipeRef(undefined);
   };
 
-  const filledCount = meals.filter((m) => m.text.length > 0).length;
+  const filledCount = displayedMeals.filter((m) => m.text.length > 0).length;
 
   // ─── Weekly shopping list generation ─────────────────────────────
 
   const linkedRecipeCount = useMemo(() =>
-    meals.filter(m => m.recipeRef && resolveRecipe(m.recipeRef)).length,
-    [meals, resolveRecipe]
+    displayedMeals.filter(m => m.recipeRef && resolveRecipe(m.recipeRef)).length,
+    [displayedMeals, resolveRecipe]
   );
 
   const generateWeeklyShoppingList = useCallback(async () => {
     const allIngredients: AppIngredient[] = [];
-    for (const meal of meals) {
+    for (const meal of displayedMeals) {
       const recipe = resolveRecipe(meal.recipeRef);
       if (recipe) {
         allIngredients.push(...recipe.ingredients);
@@ -505,6 +544,38 @@ export default function MealsScreen() {
     }
   }, [importResult, importCategory, vault, refresh]);
 
+  // ─── Photo import logic ───────────────────────────────────────
+
+  const [photoImportLoading, setPhotoImportLoading] = useState(false);
+
+  const handlePhotoImport = useCallback(async () => {
+    if (!aiConfig) {
+      Alert.alert('IA non configurée', 'Configurez votre clé API dans les réglages pour utiliser l\'import photo.');
+      return;
+    }
+    setPhotoImportLoading(true);
+    setImportStatus('');
+    setImportResult(null);
+    try {
+      const result = await importRecipeFromPhoto(aiConfig, setImportStatus);
+      if (!result) {
+        // Annulé par l'utilisateur
+        setPhotoImportLoading(false);
+        return;
+      }
+      setImportResult(result);
+      if (result.type === 'cook') {
+        setImportCategory(result.data.category || 'Importées');
+      }
+      setShowImport(true);
+    } catch (e) {
+      Alert.alert('Erreur', String(e instanceof Error ? e.message : e));
+    } finally {
+      setPhotoImportLoading(false);
+      setImportStatus('');
+    }
+  }, [aiConfig]);
+
   // ─── Scanner vault logic ────────────────────────────────────────
 
   const handleScanVault = useCallback(async () => {
@@ -649,7 +720,7 @@ export default function MealsScreen() {
 
   const headerTitle = tab === 'repas' ? '🍽️ Repas' : tab === 'courses' ? '🛒 Courses' : '📖 Recettes';
   const headerStats = tab === 'repas'
-    ? `${filledCount}/${meals.length} planifiés`
+    ? `${filledCount}/${displayedMeals.length} planifiés`
     : tab === 'courses'
       ? `${courseDoneCount}/${courses.length} achetés`
       : `${recipes.length} recette${recipes.length > 1 ? 's' : ''}`;
@@ -701,6 +772,34 @@ export default function MealsScreen() {
       {/* ═════════════ Content ═════════════ */}
       {tab === 'repas' ? (
         /* ─── Repas tab ──────────────────────────────── */
+        <>
+        {/* Navigation semaine */}
+        <View style={[styles.weekNav, { borderBottomColor: colors.borderLight }]}>
+          <TouchableOpacity onPress={goToPrevWeek} style={styles.weekArrow} activeOpacity={0.6}>
+            <Text style={[styles.weekArrowText, { color: primary }]}>‹</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={goToCurrentWeek} activeOpacity={0.7}>
+            <Text style={[styles.weekLabel, { color: isCurrentWeek ? colors.text : primary }]}>{weekLabel}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={goToNextWeek}
+            style={styles.weekArrow}
+            activeOpacity={0.6}
+            disabled={weekOffset >= 0}
+          >
+            <Text style={[styles.weekArrowText, { color: weekOffset >= 0 ? colors.textFaint : primary }]}>›</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Semaine vide (passée sans données) */}
+        {!isCurrentWeek && displayedMeals.length === 0 ? (
+          <View style={styles.emptyWeek}>
+            <Text style={[styles.emptyWeekText, { color: colors.textMuted }]}>Aucun repas enregistré cette semaine</Text>
+            <TouchableOpacity onPress={goToCurrentWeek} style={[styles.backBtn, { backgroundColor: tint }]} activeOpacity={0.7}>
+              <Text style={[styles.backBtnText, { color: primary }]}>Revenir à cette semaine</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
@@ -710,7 +809,7 @@ export default function MealsScreen() {
           }
         >
           {/* Generate weekly shopping list button */}
-          {linkedRecipeCount > 0 && (
+          {isCurrentWeek && linkedRecipeCount > 0 && (
             <TouchableOpacity
               style={[styles.generateBtn, { backgroundColor: tint, borderColor: primary + '30' }]}
               onPress={generateWeeklyShoppingList}
@@ -760,8 +859,8 @@ export default function MealsScreen() {
                       <View key={meal.id} style={{ gap: 0 }}>
                         <TouchableOpacity
                           style={[styles.mealRow, { borderTopColor: colors.cardAlt }]}
-                          onPress={() => openEdit(meal)}
-                          activeOpacity={0.6}
+                          onPress={isCurrentWeek ? () => openEdit(meal) : undefined}
+                          activeOpacity={isCurrentWeek ? 0.6 : 1}
                         >
                           <Text style={styles.mealEmoji}>
                             {MEAL_EMOJI[meal.mealType] ?? '🍴'}
@@ -815,6 +914,8 @@ export default function MealsScreen() {
             );
           })}
         </ScrollView>
+        )}
+        </>
       ) : tab === 'courses' ? (
         /* ─── Courses tab ─────────────────────────────── */
         <View style={styles.coursesContainer}>
@@ -1019,6 +1120,16 @@ export default function MealsScreen() {
               >
                 <Text style={[styles.importBtnText, { color: primary }]}>
                   🌐 Importer depuis une URL
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.importBtn, { backgroundColor: tint, borderColor: primary + '30' }, photoImportLoading && { opacity: 0.6 }]}
+                onPress={handlePhotoImport}
+                activeOpacity={0.7}
+                disabled={photoImportLoading}
+              >
+                <Text style={[styles.importBtnText, { color: primary }]}>
+                  {photoImportLoading ? `📷 ${importStatus || 'Import en cours…'}` : '📷 Importer depuis une photo'}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -1475,7 +1586,7 @@ export default function MealsScreen() {
           >
             <ScrollView
               style={styles.scroll}
-              contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 40 }}
+              contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 90 }}
               keyboardShouldPersistTaps="handled"
               keyboardDismissMode="interactive"
             >
@@ -1808,12 +1919,56 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
   },
+  // Navigation semaine
+  weekNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  weekArrow: {
+    width: 40,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  weekArrowText: {
+    fontSize: 28,
+    fontWeight: '300',
+  },
+  weekLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  emptyWeek: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+    padding: 32,
+  },
+  emptyWeekText: {
+    fontSize: 15,
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
+  backBtn: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  backBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
   scroll: {
     flex: 1,
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 32,
+    paddingBottom: 90,
     gap: 12,
   },
   // Generate weekly shopping list

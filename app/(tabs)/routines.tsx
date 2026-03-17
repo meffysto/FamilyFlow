@@ -674,7 +674,7 @@ const styles = StyleSheet.create({
   title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
   subtitle: { fontSize: FontSize.sm, marginTop: 2 },
   scroll: { flex: 1 },
-  content: { padding: Spacing['2xl'], paddingBottom: 40, gap: Spacing.xl },
+  content: { padding: Spacing['2xl'], paddingBottom: 90, gap: Spacing.xl },
 
   // Carte routine
   routineCard: {

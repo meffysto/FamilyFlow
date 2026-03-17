@@ -283,10 +283,27 @@ export default function BudgetScreen() {
   }, [addExpense, showToast, stock]);
 
   const handleStockUpdate = useCallback(async (actions: StockUpdateAction[]) => {
-    for (const action of actions) {
-      if (action.type === 'increment') {
+    // Fermer la modal immédiatement pour éviter le freeze UI
+    setStockUpdateVisible(false);
+    setStockMatches([]);
+    setReceiptData(null);
+
+    const count = actions.length;
+    showToast(`Mise à jour du stock en cours…`, 'info');
+
+    try {
+      // 1. D'abord les incréments (par lineIndex décroissant pour éviter les décalages)
+      const increments = actions
+        .filter((a): a is Extract<StockUpdateAction, { type: 'increment' }> => a.type === 'increment')
+        .sort((a, b) => b.stockItem.lineIndex - a.stockItem.lineIndex);
+
+      for (const action of increments) {
         await updateStockQuantity(action.stockItem.lineIndex, action.stockItem.quantite + action.qtyToAdd);
-      } else {
+      }
+
+      // 2. Ensuite les créations
+      const creates = actions.filter((a): a is Extract<StockUpdateAction, { type: 'create' }> => a.type === 'create');
+      for (const action of creates) {
         await addStockItem({
           produit: action.label,
           quantite: 1,
@@ -296,13 +313,12 @@ export default function BudgetScreen() {
           section: action.section,
         });
       }
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      showToast(`Stock mis à jour (${count} produit${count > 1 ? 's' : ''})`, 'success');
+    } catch (e) {
+      showToast('Erreur lors de la mise à jour du stock', 'error');
     }
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    const count = actions.length;
-    showToast(`Stock mis à jour (${count} produit${count > 1 ? 's' : ''})`, 'success');
-    setStockUpdateVisible(false);
-    setStockMatches([]);
-    setReceiptData(null);
   }, [updateStockQuantity, addStockItem, showToast]);
 
   return (
@@ -653,7 +669,7 @@ const styles = StyleSheet.create({
   },
   tabText: { fontSize: 15, fontWeight: '600' },
   scroll: { flex: 1 },
-  content: { padding: 16, paddingBottom: 40 },
+  content: { padding: 16, paddingBottom: 90 },
 
   // Total card
   totalCard: {
