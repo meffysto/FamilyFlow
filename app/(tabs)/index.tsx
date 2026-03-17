@@ -42,7 +42,8 @@ import { generateInsights, type InsightInput } from '../../lib/insights';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { getCardTemplate } from '../../lib/card-templates';
-import { getFruitForWeek, getSizeForWeek } from '../../lib/pregnancy';
+import { getFruitForWeek, getSizeForWeek, getFruitLabel } from '../../lib/pregnancy';
+import { GlassView } from '../../components/ui/GlassView';
 import type { CardTemplateContext } from '../../lib/card-templates';
 
 // Composants de section dashboard
@@ -826,37 +827,45 @@ export default function DashboardScreen() {
           const daysElapsed = totalDays - daysLeft;
           const weeksElapsed = Math.max(0, Math.floor(daysElapsed / 7));
           const fruitEmoji = getFruitForWeek(weeksElapsed);
+          const fruitLabel = getFruitLabel(weeksElapsed);
           const sizeCm = getSizeForWeek(weeksElapsed);
+          const progress = Math.min(1, Math.max(0, daysElapsed / totalDays));
           return (
-            <View key={p.id} style={[styles.ageUpgradeBanner, { backgroundColor: colors.warningBg, borderColor: primary }]}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text style={[styles.ageUpgradeTitle, { color: colors.text, flex: 1 }]}>
-                  🤰 {p.name} — {daysLeft > 0 ? `J-${daysLeft} (SA ${weeksElapsed})` : daysLeft === 0 ? "C'est pour aujourd'hui !" : `J+${Math.abs(daysLeft)}`}
-                </Text>
-                <View style={{ alignItems: 'center', marginLeft: 8 }}>
-                  {sizeCm > 0 && <Text style={[{ fontSize: 12, color: colors.textMuted, fontWeight: '600' }]}>{sizeCm} cm</Text>}
-                  <Text style={{ fontSize: 28 }}>{fruitEmoji}</Text>
+            <GlassView key={p.id} style={styles.pregnancyCard}>
+              <View style={styles.pregnancyRow}>
+                <Text style={styles.pregnancyFruit}>{fruitEmoji}</Text>
+                <View style={styles.pregnancyInfo}>
+                  <Text style={[styles.pregnancyTitle, { color: colors.text }]} numberOfLines={1}>
+                    {p.name} — SA {weeksElapsed}
+                  </Text>
+                  <Text style={[styles.pregnancySub, { color: colors.textSub }]}>
+                    {daysLeft > 0
+                      ? `J-${daysLeft} · ${fruitLabel}${sizeCm > 0 ? ` · ${sizeCm} cm` : ''}`
+                      : daysLeft === 0
+                        ? "C'est pour aujourd'hui !"
+                        : `J+${Math.abs(daysLeft)} · terme dépassé`}
+                  </Text>
                 </View>
+                {daysLeft <= 28 && (
+                  <TouchableOpacity
+                    style={[styles.pregnancyCta, { backgroundColor: primary }]}
+                    onPress={() => {
+                      Alert.prompt
+                        ? Alert.prompt('Date de naissance', 'AAAA-MM-JJ', (date) => {
+                            if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) convertToBorn(p.id, date);
+                          }, 'plain-text', format(new Date(), 'yyyy-MM-dd'))
+                        : Alert.alert('Bébé est né ?', 'Allez dans Réglages > Profils pour confirmer la naissance.');
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.pregnancyCtaText, { color: colors.onPrimary }]}>Né(e) !</Text>
+                  </TouchableOpacity>
+                )}
               </View>
-              <Text style={[styles.ageUpgradeDesc, { color: colors.textSub }]}>
-                Terme prévu le {p.dateTerme}
-              </Text>
-              {daysLeft <= 28 && (
-                <TouchableOpacity
-                  style={[styles.ageUpgradeBtn, { backgroundColor: primary }]}
-                  onPress={() => {
-                    Alert.prompt
-                      ? Alert.prompt('Date de naissance', 'AAAA-MM-JJ', (date) => {
-                          if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) convertToBorn(p.id, date);
-                        }, 'plain-text', format(new Date(), 'yyyy-MM-dd'))
-                      : Alert.alert('Bébé est né ?', 'Allez dans Réglages > Profils pour confirmer la naissance.');
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.ageUpgradeBtnText, { color: colors.onPrimary }]}>{p.name ? `${p.name} est là !` : 'Bébé est là !'}</Text>
-                </TouchableOpacity>
-              )}
-            </View>
+              <View style={[styles.pregnancyBar, { backgroundColor: colors.border }]}>
+                <View style={[styles.pregnancyBarFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: primary }]} />
+              </View>
+            </GlassView>
           );
         })}
 
@@ -1162,6 +1171,51 @@ const styles = StyleSheet.create({
   ageUpgradeDismissText: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  // Grossesse — Liquid Glass
+  pregnancyCard: {
+    marginHorizontal: 16,
+    marginBottom: 12,
+    padding: 14,
+    gap: 10,
+  },
+  pregnancyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  pregnancyFruit: {
+    fontSize: 32,
+  },
+  pregnancyInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  pregnancyTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  pregnancySub: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  pregnancyCta: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  pregnancyCtaText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  pregnancyBar: {
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  pregnancyBarFill: {
+    height: '100%',
+    borderRadius: 2,
   },
   // Profile picker
   pickerOverlay: {

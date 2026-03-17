@@ -59,3 +59,8 @@ export function getSizeForWeek(week: number): number {
   const idx = Math.min(Math.max(0, week), PREGNANCY_FRUITS.length - 1);
   return PREGNANCY_FRUITS[idx].sizeCm;
 }
+
+export function getFruitLabel(week: number): string {
+  const idx = Math.min(Math.max(0, week), PREGNANCY_FRUITS.length - 1);
+  return PREGNANCY_FRUITS[idx].label;
+}

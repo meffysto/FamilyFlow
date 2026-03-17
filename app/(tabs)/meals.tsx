@@ -174,15 +174,15 @@ export default function MealsScreen() {
 
   const weekLabel = useMemo(() => {
     if (isCurrentWeek) return 'Cette semaine';
+    if (weekOffset === 1) return 'Semaine prochaine';
+    if (weekOffset === -1) return 'Semaine dernière';
     const endOfWeek = addWeeks(viewedWeekMonday, 1);
     endOfWeek.setDate(endOfWeek.getDate() - 1);
     return `${format(viewedWeekMonday, 'dd/MM', { locale: fr })} — ${format(endOfWeek, 'dd/MM', { locale: fr })}`;
-  }, [viewedWeekMonday, isCurrentWeek]);
+  }, [viewedWeekMonday, isCurrentWeek, weekOffset]);
 
   const goToPrevWeek = useCallback(() => setWeekOffset(w => w - 1), []);
-  const goToNextWeek = useCallback(() => {
-    if (weekOffset < 0) setWeekOffset(w => w + 1);
-  }, [weekOffset]);
+  const goToNextWeek = useCallback(() => setWeekOffset(w => w + 1), []);
   const goToCurrentWeek = useCallback(() => setWeekOffset(0), []);
 
   // Charger les repas d'une semaine passée/future
@@ -230,7 +230,13 @@ export default function MealsScreen() {
   const saveEdit = async () => {
     if (!editingMeal) return;
     try {
-      await updateMeal(editingMeal.day, editingMeal.mealType, editText.trim(), editRecipeRef);
+      const weekDate = isCurrentWeek ? undefined : viewedWeekMonday;
+      await updateMeal(editingMeal.day, editingMeal.mealType, editText.trim(), editRecipeRef, weekDate);
+      // Recharger les repas de la semaine affichée si pas la courante
+      if (!isCurrentWeek) {
+        const updated = await loadMealsForWeek(viewedWeekMonday);
+        setPastMeals(updated);
+      }
       setEditingMeal(null);
     } catch (e) {
       Alert.alert('Erreur', String(e));
@@ -785,9 +791,8 @@ export default function MealsScreen() {
             onPress={goToNextWeek}
             style={styles.weekArrow}
             activeOpacity={0.6}
-            disabled={weekOffset >= 0}
           >
-            <Text style={[styles.weekArrowText, { color: weekOffset >= 0 ? colors.textFaint : primary }]}>›</Text>
+            <Text style={[styles.weekArrowText, { color: primary }]}>›</Text>
           </TouchableOpacity>
         </View>
 
@@ -859,8 +864,8 @@ export default function MealsScreen() {
                       <View key={meal.id} style={{ gap: 0 }}>
                         <TouchableOpacity
                           style={[styles.mealRow, { borderTopColor: colors.cardAlt }]}
-                          onPress={isCurrentWeek ? () => openEdit(meal) : undefined}
-                          activeOpacity={isCurrentWeek ? 0.6 : 1}
+                          onPress={weekOffset >= 0 ? () => openEdit(meal) : undefined}
+                          activeOpacity={weekOffset >= 0 ? 0.6 : 1}
                         >
                           <Text style={styles.mealEmoji}>
                             {MEAL_EMOJI[meal.mealType] ?? '🍴'}

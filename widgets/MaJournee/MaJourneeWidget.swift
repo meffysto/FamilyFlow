@@ -203,8 +203,57 @@ struct MaJourneeMediumView: View {
             VStack(alignment: .leading, spacing: 6) {
                 let tasks = data.pendingTasks
                 let rdvs = data.upcomingRDVs
+                let allTasksDone = data.tasksProgress.map { $0.done == $0.total && $0.total > 0 } ?? false
 
-                if !tasks.isEmpty {
+                if allTasksDone {
+                    // État zen : toutes les tâches sont faites
+                    Link(destination: DeepLink.tasks) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "checkmark.seal.fill")
+                                .font(.title3)
+                                .foregroundStyle(.green)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Tâches bouclées")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                Text("\(data.tasksProgress!.total) tâche\(data.tasksProgress!.total > 1 ? "s" : "") faite\(data.tasksProgress!.total > 1 ? "s" : "")")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+
+                    if !rdvs.isEmpty {
+                        Divider()
+                        Link(destination: DeepLink.rdv) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Label("RDV", systemImage: "calendar")
+                                    .font(.caption2)
+                                    .foregroundStyle(.blue)
+                                ForEach(Array(rdvs.prefix(3).enumerated()), id: \.offset) { _, rdv in
+                                    VStack(alignment: .leading, spacing: 1) {
+                                        Text("\(rdv.date) · \(rdv.heure) — \(rdv.title)")
+                                            .font(.caption)
+                                            .fontWeight(.medium)
+                                            .lineLimit(1)
+                                        if let lieu = rdv.lieu, !lieu.isEmpty {
+                                            Text(lieu)
+                                                .font(.caption2)
+                                                .foregroundStyle(.secondary)
+                                                .lineLimit(1)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        Spacer()
+                        Text("Journée tranquille ☀️")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                    }
+                } else if !tasks.isEmpty {
                     Link(destination: DeepLink.tasks) {
                         VStack(alignment: .leading, spacing: 4) {
                             Label("À faire", systemImage: "checklist")
@@ -218,12 +267,32 @@ struct MaJourneeMediumView: View {
                             }
                         }
                     }
-                }
 
-                if !rdvs.isEmpty {
-                    if !tasks.isEmpty {
+                    if !rdvs.isEmpty {
                         Divider()
+                        Link(destination: DeepLink.rdv) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Label("RDV", systemImage: "calendar")
+                                    .font(.caption2)
+                                    .foregroundStyle(.blue)
+                                ForEach(Array(rdvs.prefix(3).enumerated()), id: \.offset) { _, rdv in
+                                    VStack(alignment: .leading, spacing: 1) {
+                                        Text("\(rdv.date) · \(rdv.heure) — \(rdv.title)")
+                                            .font(.caption)
+                                            .fontWeight(.medium)
+                                            .lineLimit(1)
+                                        if let lieu = rdv.lieu, !lieu.isEmpty {
+                                            Text(lieu)
+                                                .font(.caption2)
+                                                .foregroundStyle(.secondary)
+                                                .lineLimit(1)
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
+                } else if !rdvs.isEmpty {
                     Link(destination: DeepLink.rdv) {
                         VStack(alignment: .leading, spacing: 4) {
                             Label("RDV", systemImage: "calendar")
@@ -245,9 +314,7 @@ struct MaJourneeMediumView: View {
                             }
                         }
                     }
-                }
-
-                if tasks.isEmpty && rdvs.isEmpty {
+                } else {
                     Spacer()
                     Text("Rien de prévu")
                         .font(.caption)

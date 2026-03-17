@@ -10,6 +10,9 @@
  * - Fallback local: heuristiques regex (sans clé API)
  */
 
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
+import * as FileSystem from 'expo-file-system/legacy';
 import type { AIConfig } from './ai-service';
 
 declare const __DEV__: boolean;
@@ -399,6 +402,108 @@ export async function translateCookToFrench(
     return translated && translated.length > 10 ? translated : cookContent;
   } catch {
     return cookContent;
+  }
+}
+
+// ─── Photo → recette (Vision) ─────────────────────────────────────────────
+
+/**
+ * Import une recette depuis une photo (screenshot Instagram, livre, etc.)
+ * Pipeline : picker → optimise → base64 → Claude Vision → .cook
+ */
+export async function importRecipeFromPhoto(
+  aiConfig: AIConfig,
+  onStatus?: (msg: string) => void,
+): Promise<ImportResult | null> {
+  // 1. Picker image
+  onStatus?.('Sélection de la photo…');
+  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (status !== 'granted') {
+    throw new Error('Permission d\'accès aux photos refusée.');
+  }
+
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    quality: 0.8,
+    allowsEditing: false,
+  });
+
+  if (result.canceled || !result.assets?.[0]) return null;
+  const asset = result.assets[0];
+
+  let optimizedUri: string | null = null;
+  try {
+    // 2. Optimiser (HEIC→JPEG + redimensionner)
+    onStatus?.('Optimisation de l\'image…');
+    const maxWidth = 1568;
+    const actions: ImageManipulator.Action[] = [];
+    if ((asset.width ?? 0) > maxWidth) {
+      actions.push({ resize: { width: maxWidth } });
+    }
+    const manipulated = await ImageManipulator.manipulateAsync(asset.uri, actions, {
+      compress: 0.8,
+      format: ImageManipulator.SaveFormat.JPEG,
+    });
+    optimizedUri = manipulated.uri;
+
+    // 3. Convertir en base64
+    const base64 = await FileSystem.readAsStringAsync(optimizedUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    if (__DEV__) console.log('[recipe-import] Photo base64 prêt, taille:', Math.round(base64.length / 1024), 'KB');
+
+    // 4. Envoyer à Claude Vision
+    onStatus?.('Extraction de la recette…');
+    const response = await fetch(AI_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': aiConfig.apiKey,
+        'anthropic-version': AI_API_VERSION,
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2048,
+        system: COOK_SYSTEM_PROMPT,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: { type: 'base64', media_type: 'image/jpeg', data: base64 },
+            },
+            {
+              type: 'text',
+              text: 'Extrais la recette de cette image et convertis-la en fichier .cook.',
+            },
+          ],
+        }],
+      }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) throw new Error('Clé API invalide. Vérifiez dans les réglages.');
+      if (response.status === 429) throw new Error('Trop de requêtes IA. Réessayez dans un moment.');
+      throw new Error(`Erreur API IA (${response.status})`);
+    }
+
+    const data = await response.json();
+    const cookContent = (data.content?.[0]?.text ?? '').trim();
+
+    if (!cookContent || cookContent === 'NOT_A_RECIPE') {
+      throw new Error('L\'image ne semble pas contenir une recette.');
+    }
+
+    const titleMatch = cookContent.match(/^>> title:\s*(.+)/m);
+    const title = titleMatch ? titleMatch[1].trim() : 'Recette importée';
+
+    return { type: 'cook', data: { cookContent, title } };
+  } finally {
+    if (optimizedUri) {
+      FileSystem.deleteAsync(optimizedUri, { idempotent: true }).catch(() => {});
+    }
   }
 }
 
