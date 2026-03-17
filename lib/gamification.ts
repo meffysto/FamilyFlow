@@ -13,6 +13,7 @@ import {
   POINTS_PER_TASK,
   STREAK_BONUS,
   PITY_THRESHOLD,
+  getCachedGamiConfig,
 } from '../constants/rewards';
 import { format } from 'date-fns';
 
@@ -62,14 +63,15 @@ export function awardTaskCompletion(
   profile: Profile,
   taskNote: string
 ): { profile: Profile; entry: GamificationEntry; lootAwarded: boolean } {
-  const basePoints = POINTS_PER_TASK;
-  const streakBonus = profile.streak > 1 ? STREAK_BONUS : 0;
+  const config = getCachedGamiConfig();
+  const basePoints = config.pointsPerTask;
+  const streakBonus = profile.streak > 1 ? config.streakBonus : 0;
   const total = basePoints + streakBonus;
 
   const { profile: updated, entry } = addPoints(profile, total, `Tâche: ${taskNote}`);
 
   // Check if loot box threshold crossed
-  const threshold = LOOT_THRESHOLD[profile.role];
+  const threshold = config.lootThreshold[profile.role] ?? LOOT_THRESHOLD[profile.role];
   const previousBoxes = Math.floor(profile.points / threshold);
   const newBoxes = Math.floor(updated.points / threshold);
   const lootAwarded = newBoxes > previousBoxes;
@@ -365,7 +367,8 @@ export function levelProgress(points: number): number {
 
 /** Progress (0-1) toward next loot box for a given profile */
 export function lootProgress(profile: Profile): { progress: number; current: number; threshold: number } {
-  const threshold = LOOT_THRESHOLD[profile.role] ?? LOOT_THRESHOLD.adulte;
+  const config = getCachedGamiConfig();
+  const threshold = config.lootThreshold[profile.role] ?? LOOT_THRESHOLD[profile.role];
   const current = profile.points % threshold;
   return { progress: current / threshold, current, threshold };
 }

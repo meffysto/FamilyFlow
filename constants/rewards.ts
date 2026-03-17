@@ -14,7 +14,51 @@
  * Pity system: after 10 boxes without épique+, next is guaranteed épique minimum.
  */
 
+import * as SecureStore from 'expo-secure-store';
 import { RewardDefinition, LootRarity, Profile } from '../lib/types';
+
+// ─── Gamification Config (modifiable via réglages) ─────────────────────────────
+
+export const GAMI_CONFIG_KEY = 'gami_config_v1';
+
+export interface GamificationConfig {
+  pointsPerTask: number;
+  streakBonus: number;
+  lootThreshold: { enfant: number; ado: number; adulte: number };
+}
+
+export const DEFAULT_GAMI_CONFIG: GamificationConfig = {
+  pointsPerTask: 10,
+  streakBonus: 5,
+  lootThreshold: { enfant: 50, ado: 75, adulte: 100 },
+};
+
+let _cachedConfig: GamificationConfig | null = null;
+
+/** Charge la config gamification depuis SecureStore (avec cache mémoire) */
+export async function loadGamiConfig(): Promise<GamificationConfig> {
+  if (_cachedConfig) return _cachedConfig;
+  try {
+    const raw = await SecureStore.getItemAsync(GAMI_CONFIG_KEY);
+    if (raw) {
+      _cachedConfig = { ...DEFAULT_GAMI_CONFIG, ...JSON.parse(raw) };
+      return _cachedConfig!;
+    }
+  } catch {}
+  _cachedConfig = DEFAULT_GAMI_CONFIG;
+  return _cachedConfig;
+}
+
+/** Sauvegarde la config et invalide le cache */
+export async function saveGamiConfig(config: GamificationConfig): Promise<void> {
+  _cachedConfig = config;
+  await SecureStore.setItemAsync(GAMI_CONFIG_KEY, JSON.stringify(config));
+}
+
+/** Retourne la config en cache (synchrone, pour les appels chauds) */
+export function getCachedGamiConfig(): GamificationConfig {
+  return _cachedConfig ?? DEFAULT_GAMI_CONFIG;
+}
 
 // ─── Reward Pool ──────────────────────────────────────────────────────────────
 

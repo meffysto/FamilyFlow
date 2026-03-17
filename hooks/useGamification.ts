@@ -7,7 +7,7 @@
  * Handles active rewards (vacation, crown, multiplier, etc.)
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { VaultManager } from '../lib/vault';
 import {
   parseGamification,
@@ -27,6 +27,7 @@ import {
   buildLootBoxContext,
 } from '../lib/notifications';
 import { Profile, LootBox, GamificationData, NotificationPreferences } from '../lib/types';
+import { loadGamiConfig } from '../constants/rewards';
 
 interface UseGamificationArgs {
   vault: VaultManager | null;
@@ -53,6 +54,9 @@ const FAMILLE_FILE = 'famille.md';
 
 export function useGamification({ vault, notifPrefs, onDataChange }: UseGamificationArgs): UseGamificationResult {
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Charger la config gamification au montage (remplit le cache synchrone)
+  useEffect(() => { loadGamiConfig(); }, []);
 
   const completeTask = useCallback(
     async (profile: Profile, taskText: string) => {
