@@ -77,6 +77,33 @@
         {
           "calendarPermission": "FamilyFlow accède à votre calendrier pour importer les anniversaires."
         }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "MaJourneeWidget",
+              "label": "Ma Journée",
+              "description": "Repas, tâches et RDV du jour",
+              "minWidth": "280dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "JournalBebeWidget",
+              "label": "Journal Bébé",
+              "description": "Dernier repas et stats du jour",
+              "minWidth": "180dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 3,
+              "targetCellHeight": 2,
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
       ]
     ],
     "experiments": {

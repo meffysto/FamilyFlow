@@ -1,14 +1,17 @@
 /**
- * widget-bridge.ts — Prépare et envoie les données au widget iOS "Ma Journée"
+ * widget-bridge.ts — Prépare et envoie les données aux widgets iOS et Android
  *
- * Écrit un JSON dans le container App Group partagé, lu par le widget WidgetKit.
+ * iOS : JSON dans le container App Group partagé, lu par WidgetKit.
+ * Android : JSON dans le FileSystem, lu par le widget task handler +
+ *           requestWidgetUpdate pour déclencher le rafraîchissement.
  */
 
 import { Platform } from 'react-native';
+import * as FileSystem from 'expo-file-system/legacy';
 import type { MealItem, Task, RDV, Profile } from './types';
 import { isBabyProfile } from './types';
 
-// Import conditionnel du module natif
+// Import conditionnel des modules natifs
 let updateWidgetDataNative: ((json: string) => Promise<void>) | null = null;
 let updateJournalWidgetDataNative: ((json: string) => Promise<void>) | null = null;
 if (Platform.OS === 'ios') {
@@ -20,6 +23,9 @@ if (Platform.OS === 'ios') {
     // Module non disponible
   }
 }
+
+const ANDROID_WIDGET_CACHE = `${FileSystem.documentDirectory}widget-data.json`;
+const ANDROID_JOURNAL_CACHE = `${FileSystem.documentDirectory}journal-widget-data.json`;
 
 const DAYS_FR = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 
@@ -100,7 +106,7 @@ function formatDateShort(dateStr: string): string {
 }
 
 /**
- * Met à jour les données du widget iOS.
+ * Met à jour les données des widgets iOS et Android.
  * Fire-and-forget — ne bloque jamais l'app.
  */
 export function refreshWidget(
@@ -109,12 +115,20 @@ export function refreshWidget(
   rdvs: RDV[],
   allTasks: Task[] = [],
 ): void {
-  if (Platform.OS !== 'ios' || !updateWidgetDataNative) return;
-
   const data = buildWidgetData(meals, menageTasks, rdvs, allTasks);
-  updateWidgetDataNative(JSON.stringify(data)).catch(() => {
-    // Widget update non critique — on ignore les erreurs
-  });
+  const jsonData = JSON.stringify(data);
+
+  if (Platform.OS === 'ios' && updateWidgetDataNative) {
+    updateWidgetDataNative(jsonData).catch(() => {});
+  } else if (Platform.OS === 'android') {
+    // Écrire le cache JSON + déclencher le rafraîchissement du widget
+    FileSystem.writeAsStringAsync(ANDROID_WIDGET_CACHE, jsonData)
+      .then(() => {
+        const { requestWidgetUpdate } = require('react-native-android-widget');
+        requestWidgetUpdate({ widgetName: 'MaJourneeWidget' }).catch(() => {});
+      })
+      .catch(() => {});
+  }
 }
 
 /**
@@ -123,8 +137,6 @@ export function refreshWidget(
  * Fire-and-forget — ne bloque jamais l'app.
  */
 export function refreshJournalWidget(profiles: Profile[]): void {
-  if (Platform.OS !== 'ios' || !updateJournalWidgetDataNative) return;
-
   // Trouver le premier profil bébé
   const baby = profiles.find(p =>
     p.role === 'enfant' &&
@@ -135,7 +147,16 @@ export function refreshJournalWidget(profiles: Profile[]): void {
   if (!baby) return;
 
   const data = { childName: baby.name };
-  updateJournalWidgetDataNative(JSON.stringify(data)).catch(() => {
-    // Widget update non critique — on ignore les erreurs
-  });
+  const jsonData = JSON.stringify(data);
+
+  if (Platform.OS === 'ios' && updateJournalWidgetDataNative) {
+    updateJournalWidgetDataNative(jsonData).catch(() => {});
+  } else if (Platform.OS === 'android') {
+    FileSystem.writeAsStringAsync(ANDROID_JOURNAL_CACHE, jsonData)
+      .then(() => {
+        const { requestWidgetUpdate } = require('react-native-android-widget');
+        requestWidgetUpdate({ widgetName: 'JournalBebeWidget' }).catch(() => {});
+      })
+      .catch(() => {});
+  }
 }
