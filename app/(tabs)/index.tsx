@@ -208,21 +208,22 @@ export default function DashboardScreen() {
     (async () => {
       const keys = {
         menage: '02 - Maison/Ménage hebdo.md',
-        meals: '02 - Maison/Repas de la semaine.md',
+        meals: '', // vérifié via meals.length ci-dessous
         budget: '05 - Budget/config.md',
         notifications: 'notifications.md',
       };
       const checks: Record<string, boolean> = {};
       await Promise.all(
         Object.entries(keys).map(async ([key, path]) => {
-          checks[key] = await vault.exists(path);
+          checks[key] = path ? await vault.exists(path) : false;
         })
       );
-      // RDV : vérifier si le dossier contient des fichiers .md
+      // Fichiers dynamiques : vérifier via les données chargées
       checks.rdvs = rdvs.length > 0;
+      checks.meals = meals.length > 0;
       setVaultFileExists(checks);
     })();
-  }, [vault, isLoading, rdvs.length]);
+  }, [vault, isLoading, rdvs.length, meals.length]);
 
   // Mode enfant : UX simplifiée (gros boutons, vocab simple)
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
