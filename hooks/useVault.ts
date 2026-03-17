@@ -120,7 +120,7 @@ export interface VaultState {
   setVaultPath: (path: string) => Promise<void>;
   setActiveProfile: (profileId: string) => Promise<void>;
   saveNotifPrefs: (prefs: NotificationPreferences) => Promise<void>;
-  updateMeal: (day: string, mealType: string, text: string, recipeRef?: string) => Promise<void>;
+  updateMeal: (day: string, mealType: string, text: string, recipeRef?: string, weekDate?: Date) => Promise<void>;
   loadMealsForWeek: (date: Date) => Promise<MealItem[]>;
   photoDates: Record<string, string[]>;  // enfantId → dates with photos
   addPhoto: (enfantName: string, date: string, imageUri: string) => Promise<void>;
@@ -888,10 +888,14 @@ export function useVaultInternal(): VaultState {
     await vaultRef.current.writeFile(NOTIF_FILE, serializeNotificationPrefs(prefs));
   }, []);
 
-  const updateMeal = useCallback(async (day: string, mealType: string, text: string, recipeRef?: string) => {
+  const updateMeal = useCallback(async (day: string, mealType: string, text: string, recipeRef?: string, weekDate?: Date) => {
     if (!vaultRef.current) return;
     try {
-      const file = mealsFileForWeek();
+      const file = mealsFileForWeek(weekDate);
+      // Créer le fichier s'il n'existe pas (semaine future)
+      if (!(await vaultRef.current.exists(file))) {
+        await vaultRef.current.writeFile(file, MEALS_TEMPLATE);
+      }
       const content = await vaultRef.current.readFile(file);
       const lines = content.split('\n');
       let currentDay: string | null = null;
@@ -910,8 +914,11 @@ export function useVaultInternal(): VaultState {
       }
 
       await vaultRef.current.writeFile(file, lines.join('\n'));
-      setMeals(parseMeals(lines.join('\n'), file));
-      setTimeout(triggerWidgetRefresh, 0);
+      // Ne mettre à jour l'état global que pour la semaine courante
+      if (!weekDate || mealsFileForWeek() === file) {
+        setMeals(parseMeals(lines.join('\n'), file));
+        setTimeout(triggerWidgetRefresh, 0);
+      }
     } catch (e) {
       throw new Error(`updateMeal: ${e}`);
     }
@@ -921,7 +928,15 @@ export function useVaultInternal(): VaultState {
     if (!vaultRef.current) return [];
     const file = mealsFileForWeek(date);
     try {
-      if (!(await vaultRef.current.exists(file))) return [];
+      const isFuture = date > new Date();
+      if (!(await vaultRef.current.exists(file))) {
+        if (isFuture) {
+          // Créer le fichier template pour les semaines futures (éditable)
+          await vaultRef.current.writeFile(file, MEALS_TEMPLATE);
+        } else {
+          return [];
+        }
+      }
       const c = await vaultRef.current.readFile(file);
       return parseMeals(c, file);
     } catch {
