@@ -144,6 +144,7 @@ export interface VaultState {
   mergeCourseIngredients: (items: { text: string; name: string; quantity: number | null; section: string }[]) => Promise<{ added: number; merged: number }>;
   toggleCourseItem: (item: CourseItem, completed: boolean) => Promise<void>;
   removeCourseItem: (lineIndex: number) => Promise<void>;
+  moveCourseItem: (lineIndex: number, text: string, newSection: string) => Promise<void>;
   clearCompletedCourses: () => Promise<void>;
   memories: Memory[];
   addMemory: (enfant: string, memory: Omit<Memory, 'enfant' | 'enfantId'>) => Promise<void>;
@@ -394,8 +395,8 @@ export function useVaultInternal(): VaultState {
   useEffect(() => {
     (async () => {
       try {
-        // Restore iOS security-scoped access before reading vault
-        await restoreAccess();
+        // Restaurer l'accès security-scoped (iOS) ou SAF persistable (Android)
+        const restoredUri = await restoreAccess();
 
         const [stored, storedProfileId] = await Promise.all([
           SecureStore.getItemAsync(VAULT_PATH_KEY),
@@ -403,6 +404,11 @@ export function useVaultInternal(): VaultState {
         ]);
         if (storedProfileId) setActiveProfileId(storedProfileId);
         if (stored) {
+          // Vérifier que la permission est toujours valide (SAF peut la révoquer)
+          if (stored.startsWith('content://') && !restoredUri) {
+            setError('L\'accès au vault a été révoqué. Reconnectez le dossier dans les Réglages.');
+            return;
+          }
           setVaultPathState(stored);
           vaultRef.current = new VaultManager(stored);
           await loadVaultData(vaultRef.current);
@@ -502,7 +508,22 @@ export function useVaultInternal(): VaultState {
         })(),
 
         // [1] Ménage
-        vault.readFile(MENAGE_FILE).then((c) => parseMénage(c, MENAGE_FILE)).catch((e) => {
+        vault.readFile(MENAGE_FILE).then(async (c) => {
+          const tasks = parseMénage(c, MENAGE_FILE);
+          // Patcher le fichier si des tâches cochées sans date ✅ ont été détectées
+          const needsPatch = tasks.filter(t => t._needsDatePatch);
+          if (needsPatch.length > 0) {
+            const lines = c.split('\n');
+            for (const t of needsPatch) {
+              if (t.lineIndex < lines.length && t.completedDate) {
+                lines[t.lineIndex] = lines[t.lineIndex].trimEnd() + ` ✅ ${t.completedDate}`;
+              }
+              delete t._needsDatePatch;
+            }
+            vault.writeFile(MENAGE_FILE, lines.join('\n')).catch(() => {});
+          }
+          return tasks;
+        }).catch((e) => {
           debugErrors.push(`ménage: ${e}`); return [] as Task[];
         }),
 
@@ -1476,6 +1497,37 @@ export function useVaultInternal(): VaultState {
     }
   }, []);
 
+  /** Déplace un article de courses dans une autre section (une seule écriture fichier) */
+  const moveCourseItem = useCallback(async (lineIndex: number, text: string, newSection: string) => {
+    if (!vaultRef.current) return;
+    const content = await vaultRef.current.readFile(COURSES_FILE);
+    const lines = content.split('\n');
+    if (lineIndex < 0 || lineIndex >= lines.length) return;
+
+    // 1. Supprimer l'ancienne ligne
+    lines.splice(lineIndex, 1);
+
+    // 2. Trouver ou créer la section cible, insérer l'article
+    const sectionHeader = `## ${newSection}`;
+    let sectionIdx = lines.findIndex(l => l.trim() === sectionHeader);
+    if (sectionIdx === -1) {
+      // Section n'existe pas — l'ajouter à la fin
+      lines.push('', sectionHeader, `- [ ] ${text}`);
+    } else {
+      // Insérer après le header de section (et après les items existants)
+      let insertIdx = sectionIdx + 1;
+      while (insertIdx < lines.length && lines[insertIdx].startsWith('- [')) {
+        insertIdx++;
+      }
+      lines.splice(insertIdx, 0, `- [ ] ${text}`);
+    }
+
+    // 3. Écriture unique + mise à jour state locale
+    const newContent = lines.join('\n');
+    await vaultRef.current.writeFile(COURSES_FILE, newContent);
+    setCourses(parseCourses(newContent, COURSES_FILE));
+  }, []);
+
   /** Batch merge ingredients into the shopping list (single file write) */
   const mergeCourseIngredients = useCallback(async (items: { text: string; name: string; quantity: number | null; section: string }[]): Promise<{ added: number; merged: number }> => {
     if (!vaultRef.current) return { added: 0, merged: 0 };
@@ -2356,6 +2408,7 @@ export function useVaultInternal(): VaultState {
     mergeCourseIngredients,
     toggleCourseItem,
     removeCourseItem,
+    moveCourseItem,
     clearCompletedCourses,
     memories,
     addMemory,
@@ -2431,7 +2484,7 @@ export function useVaultInternal(): VaultState {
     addPhoto, getPhotoUri, updateProfileTheme, updateProfile, deleteProfile,
     updateStockQuantity, addStockItem, deleteStockItem, updateStockItem,
     toggleTask, addRDV, updateRDV, deleteRDV, addTask, editTask, deleteTask,
-    addCourseItem, mergeCourseIngredients, toggleCourseItem, removeCourseItem,
+    addCourseItem, mergeCourseIngredients, toggleCourseItem, removeCourseItem, moveCourseItem,
     clearCompletedCourses, addMemory, updateMemory, activateVacation,
     deactivateVacation, refreshGamification, addRecipe, deleteRecipe,
     loadRecipes, scanAllCookFiles, moveCookToRecipes, toggleFavorite, isFavorite,

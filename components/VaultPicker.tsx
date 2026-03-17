@@ -242,6 +242,30 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
         </TouchableOpacity>
       )}
 
+      {/* Create in cloud folder (Android) */}
+      {Platform.OS === 'android' && (
+        <TouchableOpacity
+          style={[styles.icloudBtn, { backgroundColor: tint }]}
+          onPress={async () => {
+            try {
+              // @ts-ignore
+              const SAF = (FileSystem as any).StorageAccessFramework;
+              if (!SAF) return;
+              const result = await SAF.requestDirectoryPermissionsAsync();
+              if (!result.granted) return;
+              await startAccessing(result.directoryUri);
+              setWizardTargetPath(result.directoryUri);
+              setShowWizard(true);
+            } catch (e: any) {
+              Alert.alert('Erreur', `${e.message}`);
+            }
+          }}
+        >
+          <Text style={[styles.icloudBtnText, { color: primary }]}>Créer dans Google Drive / Dropbox</Text>
+          <Text style={[styles.icloudBtnSub, { color: colors.textMuted }]}>Choisissez un dossier cloud syncé localement</Text>
+        </TouchableOpacity>
+      )}
+
       <View style={styles.separator}>
         <View style={[styles.separatorLine, { backgroundColor: colors.separator }]} />
         <Text style={[styles.separatorText, { color: colors.textFaint }]}>ou connecter un vault existant</Text>
@@ -266,7 +290,7 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
           onPress={useSAF}
         >
           <Text style={[styles.pickerBtnText, { color: colors.info || '#1D4ED8' }]}>Sélectionner le dossier du vault</Text>
-          <Text style={[styles.pickerBtnSub, { color: colors.textMuted }]}>Depuis le stockage de l'appareil</Text>
+          <Text style={[styles.pickerBtnSub, { color: colors.textMuted }]}>Depuis le stockage, Google Drive, Dropbox...</Text>
         </TouchableOpacity>
       )}
 

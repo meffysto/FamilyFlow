@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Button } from '../ui/Button';
 import { Spacing, Radius } from '../../constants/spacing';
@@ -30,6 +30,13 @@ export function SettingsVault({ vaultPath, onChangeVault }: SettingsVaultProps) 
             ✅ Les données sont stockées en fichiers .md standard, compatibles avec Obsidian.
           </Text>
         </View>
+        {Platform.OS === 'android' && (
+          <View style={[styles.hint, { backgroundColor: colors.infoBg }]}>
+            <Text style={[styles.hintText, { color: colors.info }]}>
+              📱 Sync multi-appareils : placez le vault dans un dossier Google Drive ou Dropbox syncé localement sur chaque téléphone.
+            </Text>
+          </View>
+        )}
       </View>
     </View>
   );
