@@ -35,7 +35,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { LootBox, ProfileTheme } from '../lib/types';
-import { RARITY_COLORS, RARITY_LABELS, RARITY_EMOJIS } from '../constants/rewards';
+import { RARITY_COLORS, RARITY_LABELS, RARITY_EMOJIS, SEASONAL_EVENTS } from '../lib/gamification';
 import { getTheme } from '../constants/themes';
 import { useThemeColors } from '../contexts/ThemeContext';
 
@@ -1122,6 +1122,16 @@ export function LootBoxOpener({
                   </Text>
                 </View>
 
+                {/* Tag saisonnier */}
+                {(() => {
+                  const sEvent = result.seasonal ? SEASONAL_EVENTS.find((e) => e.id === result.seasonal) : undefined;
+                  return sEvent ? (
+                    <Text style={[styles.seasonalTag, { color: sEvent.themeColor }]}>
+                      {sEvent.emoji} Exclusif {sEvent.name}
+                    </Text>
+                  ) : null;
+                })()}
+
                 {/* Reward emoji */}
                 <Text style={[
                   styles.rewardEmoji,
@@ -1380,6 +1390,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.8,
     shadowRadius: 16,
     elevation: 10,
+  },
+  seasonalTag: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: 4,
+    textAlign: 'center',
   },
   rarityText: {
     color: '#FFFFFF',

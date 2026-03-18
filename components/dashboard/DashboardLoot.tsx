@@ -8,14 +8,16 @@ import { useRouter } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
-import { lootProgress, calculateLevel } from '../../lib/gamification';
-import { POINTS_PER_TASK } from '../../constants/rewards';
+import { lootProgress, calculateLevel, POINTS_PER_TASK, getActiveEvent } from '../../lib/gamification';
+import { SeasonalBanner } from '../SeasonalBanner';
 import type { DashboardSectionProps } from './types';
 
 function DashboardLootInner({ isChildMode }: DashboardSectionProps) {
   const router = useRouter();
   const { primary, tint, colors } = useThemeColors();
   const { activeProfile } = useVault();
+
+  const activeEvent = getActiveEvent();
 
   if (!activeProfile) return null;
 
@@ -69,6 +71,7 @@ function DashboardLootInner({ isChildMode }: DashboardSectionProps) {
           </Text>
         );
       })()}
+      {activeEvent && <SeasonalBanner event={activeEvent} compact />}
     </DashboardCard>
   );
 }

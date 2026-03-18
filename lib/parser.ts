@@ -38,6 +38,8 @@ import {
   WishOccasion,
   Anniversary,
   Note,
+  SkillTreeData,
+  SkillUnlock,
   isValidGender,
 } from './types';
 import { VALID_THEMES, type ProfileTheme } from '../constants/themes';
@@ -146,11 +148,13 @@ export function parseMénage(content: string, relativePath: string): Task[] {
     if (inTodaySection) {
       const task = parseTask(line, i, relativePath, currentSection);
       if (task) {
-        // Reset hebdo : si cochée mais date ✅ d'une semaine précédente (ou absente), décocher
-        if (task.completed) {
-          const doneThisWeek = task.completedDate && new Date(task.completedDate + 'T00:00:00') >= weekStart;
+        // Reset hebdo géré en amont (useVault écrit le fichier avant le parse).
+        // Ici on vérifie juste la cohérence pour le state en mémoire.
+        if (task.completed && task.completedDate) {
+          const doneThisWeek = new Date(task.completedDate + 'T00:00:00') >= weekStart;
           if (!doneThisWeek) {
             task.completed = false;
+            task.completedDate = undefined;
           }
         }
         tasks.push(task);
@@ -2014,4 +2018,58 @@ export function serializeNote(note: Omit<Note, 'sourceFile'>): string {
   lines.push('');
 
   return lines.join('\n');
+}
+
+// ─── Arbre de compétences ───────────────────────────────────────────────────
+
+export const SKILLS_DIR = '08 - Compétences';
+
+/** Parse un fichier compétences enfant (pipe-delimited) */
+export function parseSkillTree(content: string): SkillTreeData {
+  const { data } = parseFrontmatter(content);
+  const profileId = String(data.profil ?? '');
+  const profileName = String(data.nom ?? profileId);
+
+  const unlocked: SkillUnlock[] = [];
+  let inUnlocked = false;
+
+  for (const line of content.split('\n')) {
+    if (line.startsWith('## Compétences débloquées')) {
+      inUnlocked = true;
+      continue;
+    }
+    if (line.startsWith('## ') && inUnlocked) break;
+
+    if (inUnlocked && line.startsWith('- ')) {
+      const parts = line.slice(2).split('|').map((c) => c.trim()).filter((c) => c.length > 0);
+      if (parts.length >= 3) {
+        unlocked.push({
+          skillId: parts[0],
+          unlockedAt: parts[1],
+          unlockedBy: parts[2],
+        });
+      }
+    }
+  }
+
+  return { profileId, profileName, unlocked };
+}
+
+/** Sérialise les données compétences en markdown */
+export function serializeSkillTree(data: SkillTreeData): string {
+  const unlockLines = data.unlocked
+    .map((u) => `- ${u.skillId} | ${u.unlockedAt} | ${u.unlockedBy}`)
+    .join('\n');
+
+  return `---
+tags:
+  - competences
+profil: ${data.profileId}
+nom: ${data.profileName}
+---
+# Arbre de compétences — ${data.profileName}
+
+## Compétences débloquées
+${unlockLines}
+`;
 }

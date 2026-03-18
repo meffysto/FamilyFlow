@@ -10,7 +10,7 @@
 import { format, differenceInCalendarDays, isToday, isTomorrow, isYesterday, parseISO, addDays } from 'date-fns';
 import type { Task, RDV, StockItem, MealItem, CourseItem, Profile, Defi, GratitudeDay, Memory, VacationConfig, GamificationData, Anniversary } from './types';
 import { formatDateForDisplay } from './parser';
-import { LOOT_THRESHOLD } from '../constants/rewards';
+import { LOOT_THRESHOLD } from './gamification';
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 

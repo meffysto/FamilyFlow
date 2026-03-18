@@ -157,6 +157,14 @@ export const HELP_CONTENT: Record<string, CoachMarkContent[]> = {
       childBody: 'Toutes les fonctions de l\'app sont ici !',
     },
   ],
+  skills: [
+    {
+      title: 'Arbre de compétences',
+      body: 'Suivez la progression de chaque enfant par catégorie. Les parents valident les compétences acquises.',
+      position: 'below',
+      childBody: 'Regarde toutes tes compétences ! Demande à un parent de valider celles que tu maîtrises.',
+    },
+  ],
 };
 
 /** Contenu pour le guide revisitable (HelpModal) */

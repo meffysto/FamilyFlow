@@ -11,7 +11,7 @@ import {
   saveGamiConfig,
   DEFAULT_GAMI_CONFIG,
   type GamificationConfig,
-} from '../../constants/rewards';
+} from '../../lib/gamification';
 
 interface SettingsGamificationProps {
   vault: any;

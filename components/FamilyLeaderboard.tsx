@@ -6,8 +6,7 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Profile, GamificationEntry } from '../lib/types';
 import { useThemeColors } from '../contexts/ThemeContext';
-import { levelProgress } from '../lib/gamification';
-import { LOOT_THRESHOLD, RARITY_COLORS } from '../constants/rewards';
+import { levelProgress, LOOT_THRESHOLD, RARITY_COLORS } from '../lib/gamification';
 
 interface FamilyLeaderboardProps {
   profiles: Profile[];

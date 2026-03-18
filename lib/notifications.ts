@@ -21,6 +21,7 @@ import {
   TemplateVariable,
 } from './types';
 import { sendTelegram } from './telegram';
+import { SEASONAL_EVENTS } from './gamification';
 
 const TELEGRAM_TOKEN_KEY = 'telegram_token';
 const TELEGRAM_CHAT_KEY = 'telegram_chat_id';
@@ -43,6 +44,7 @@ const LOOT_BOX_VARS: TemplateVariable[] = [
   { key: 'box.emoji', label: 'Emoji récompense', example: '🦄' },
   { key: 'box.reward', label: 'Récompense', example: 'Badge Licorne' },
   { key: 'box.bonusPoints', label: 'Points bonus', example: '15' },
+  { key: 'box.seasonal', label: 'Événement saisonnier', example: '🎃 Halloween' },
 ];
 
 const ALL_TASKS_DONE_VARS: TemplateVariable[] = [
@@ -183,6 +185,12 @@ export function buildLootBoxContext(
   profile: Profile,
   box: LootBox
 ): Record<string, string> {
+  // Résoudre le nom de l'événement saisonnier si présent
+  let seasonalLabel = '';
+  if (box.seasonal) {
+    const event = SEASONAL_EVENTS.find((e) => e.id === box.seasonal);
+    seasonalLabel = event ? `${event.emoji} ${event.name}` : '';
+  }
   return {
     'profile.name': profile.name,
     'profile.avatar': profile.avatar,
@@ -190,6 +198,7 @@ export function buildLootBoxContext(
     'box.emoji': box.emoji,
     'box.reward': box.reward,
     'box.bonusPoints': String(box.bonusPoints),
+    'box.seasonal': seasonalLabel,
   };
 }
 

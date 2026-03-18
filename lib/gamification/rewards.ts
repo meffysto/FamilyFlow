@@ -11,11 +11,11 @@
  * | Légendaire  | 5%     | 5%    | 4%     |
  * | Mythique    | 1%     | 1%    | 1%     |
  *
- * Pity system: after 10 boxes without épique+, next is guaranteed épique minimum.
+ * Pity system: after 5 boxes without épique+, next is guaranteed épique minimum.
  */
 
 import * as SecureStore from 'expo-secure-store';
-import { RewardDefinition, LootRarity, Profile } from '../lib/types';
+import { RewardDefinition, LootRarity, Profile } from '../types';
 
 // ─── Gamification Config (modifiable via réglages) ─────────────────────────────
 
@@ -134,7 +134,7 @@ export const POINTS_PER_TASK = 10;
 export const STREAK_BONUS = 5;
 
 /** Pity system: guaranteed épique+ after this many boxes without one */
-export const PITY_THRESHOLD = 10;
+export const PITY_THRESHOLD = 5;
 
 // ─── Display ──────────────────────────────────────────────────────────────────
 

@@ -126,6 +126,13 @@ export default function MoreScreen() {
       }] : []),
       // Famille
       {
+        emoji: '🌳',
+        label: 'Compétences',
+        route: '/(tabs)/skills',
+        color: '#10B981',
+        category: 'famille' as const,
+      },
+      {
         emoji: '🎰',
         label: 'Récompenses',
         route: '/(tabs)/loot',

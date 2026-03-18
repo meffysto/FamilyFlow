@@ -60,9 +60,13 @@ import {
   serializeNote,
   noteFileName,
   noteCategoryLabel,
+  SKILLS_DIR,
+  parseSkillTree,
+  serializeSkillTree,
 } from '../lib/parser';
-import { processActiveRewards } from '../lib/gamification';
-import { Task, RDV, CourseItem, MealItem, StockItem, Profile, Gender, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, DefiDayEntry, GratitudeDay, WishlistItem, WishBudget, WishOccasion, Anniversary, Note } from '../lib/types';
+import { processActiveRewards, addPoints } from '../lib/gamification';
+import { XP_PER_BRACKET, getSkillById } from '../lib/gamification/skill-tree';
+import { Task, RDV, CourseItem, MealItem, StockItem, Profile, Gender, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, DefiDayEntry, GratitudeDay, WishlistItem, WishBudget, WishOccasion, Anniversary, Note, SkillTreeData } from '../lib/types';
 import {
   parseBudgetConfig,
   parseBudgetMonth,
@@ -79,7 +83,7 @@ import {
 import { setupAllNotifications, loadNotifConfig, scheduleRDVAlerts } from '../lib/scheduled-notifications';
 import { generateThumbnail } from '../lib/thumbnails';
 import { nextOccurrence } from '../lib/recurrence';
-import { format } from 'date-fns';
+import { format, startOfWeek } from 'date-fns';
 import { parseJournalStats } from '../lib/journal-stats';
 import type { JournalSummaryEntry, VaultContext as AIVaultContext } from '../lib/ai-service';
 import { refreshWidget, refreshJournalWidget } from '../lib/widget-bridge';
@@ -212,6 +216,8 @@ export interface VaultState {
   addNote: (note: Omit<Note, 'sourceFile'>) => Promise<void>;
   updateNote: (sourceFile: string, note: Omit<Note, 'sourceFile'>) => Promise<void>;
   deleteNote: (sourceFile: string) => Promise<void>;
+  skillTrees: SkillTreeData[];
+  unlockSkill: (childProfileId: string, skillId: string) => Promise<void>;
 }
 
 // Static task files (non-enfant)
@@ -388,6 +394,7 @@ export function useVaultInternal(): VaultState {
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [anniversaries, setAnniversaries] = useState<Anniversary[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
+  const [skillTrees, setSkillTrees] = useState<SkillTreeData[]>([]);
   const vaultRef = useRef<VaultManager | null>(null);
   const busyRef = useRef(false); // Guard against AppState race condition
 
@@ -507,22 +514,40 @@ export function useVaultInternal(): VaultState {
           return results.flat();
         })(),
 
-        // [1] Ménage
+        // [1] Ménage — reset hebdo dans le fichier + parse
         vault.readFile(MENAGE_FILE).then(async (c) => {
-          const tasks = parseMénage(c, MENAGE_FILE);
-          // Patcher le fichier si des tâches cochées sans date ✅ ont été détectées
-          const needsPatch = tasks.filter(t => t._needsDatePatch);
-          if (needsPatch.length > 0) {
-            const lines = c.split('\n');
-            for (const t of needsPatch) {
-              if (t.lineIndex < lines.length && t.completedDate) {
-                lines[t.lineIndex] = lines[t.lineIndex].trimEnd() + ` ✅ ${t.completedDate}`;
+          const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+          const todayStr = format(new Date(), 'yyyy-MM-dd');
+          const lines = c.split('\n');
+          let fileChanged = false;
+
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const isChecked = /^- \[x\]/i.test(line.trim());
+            if (!isChecked) continue;
+
+            const dateMatch = line.match(/✅\s*(\d{4}-\d{2}-\d{2})/);
+
+            if (dateMatch) {
+              // Date présente — reset si semaine précédente
+              const completedDate = new Date(dateMatch[1] + 'T00:00:00');
+              if (completedDate < weekStart) {
+                lines[i] = line.replace(/- \[x\]/i, '- [ ]').replace(/\s*✅\s*\d{4}-\d{2}-\d{2}/, '');
+                fileChanged = true;
               }
-              delete t._needsDatePatch;
+            } else {
+              // Pas de date ✅ — ajouter la date d'aujourd'hui pour le tracking
+              lines[i] = line.trimEnd() + ` ✅ ${todayStr}`;
+              fileChanged = true;
             }
-            vault.writeFile(MENAGE_FILE, lines.join('\n')).catch(() => {});
           }
-          return tasks;
+
+          if (fileChanged) {
+            const newContent = lines.join('\n');
+            await vault.writeFile(MENAGE_FILE, newContent);
+            return parseMénage(newContent, MENAGE_FILE);
+          }
+          return parseMénage(c, MENAGE_FILE);
         }).catch((e) => {
           debugErrors.push(`ménage: ${e}`); return [] as Task[];
         }),
@@ -757,6 +782,20 @@ export function useVaultInternal(): VaultState {
           loaded.sort((a, b) => b.created.localeCompare(a.created));
           return loaded;
         })().catch(() => [] as Note[]),
+
+        // [18] Skill trees (compétences enfants)
+        (async () => {
+          try {
+            const files = await vault.listDir(SKILLS_DIR);
+            const trees = await Promise.all(
+              files.filter((f) => f.endsWith('.md')).map(async (file) => {
+                const content = await vault.readFile(`${SKILLS_DIR}/${file}`);
+                return parseSkillTree(content);
+              })
+            );
+            return trees;
+          } catch { return [] as SkillTreeData[]; }
+        })(),
       ]);
 
       // Apply results — use helper to extract settled values
@@ -794,7 +833,7 @@ export function useVaultInternal(): VaultState {
       setVacationConfig(vacResult.config);
       setVacationTasks(vacResult.vacTasks);
       setNotes(val(results[17], []));
-
+      setSkillTrees(val(results[18], []));
 
       // Mettre à jour les widgets iOS
       refreshWidget(val(results[5], []), val(results[1], []), rdvResult, tasksResult);
@@ -2363,6 +2402,62 @@ export function useVaultInternal(): VaultState {
     setNotes((prev) => prev.filter((n) => n.sourceFile !== sourceFile));
   }, []);
 
+  // ─── Skill Trees (compétences enfants) ────────────────────────────────────
+
+  const unlockSkill = useCallback(async (childProfileId: string, skillId: string) => {
+    if (!vaultRef.current || !gamiData) return;
+
+    const child = profiles.find((p) => p.id === childProfileId);
+    if (!child) return;
+
+    const skill = getSkillById(skillId);
+    if (!skill) return;
+
+    const xp = XP_PER_BRACKET[skill.ageBracketId];
+    const now = new Date().toISOString();
+    const currentActiveProfile = profiles.find((p) => p.id === activeProfileId);
+    const unlockedBy = currentActiveProfile?.id ?? 'parent';
+
+    // Trouver ou créer le skill tree
+    const existing = skillTrees.find((t) => t.profileId === childProfileId);
+    const treeData: SkillTreeData = existing ?? {
+      profileId: childProfileId,
+      profileName: child.name,
+      unlocked: [],
+    };
+
+    // Ajouter l'unlock
+    const updated: SkillTreeData = {
+      ...treeData,
+      unlocked: [...treeData.unlocked, { skillId, unlockedAt: now, unlockedBy }],
+    };
+
+    // Écrire le fichier
+    const filePath = `${SKILLS_DIR}/${child.name}.md`;
+    await vaultRef.current.ensureDir(SKILLS_DIR);
+    await vaultRef.current.writeFile(filePath, serializeSkillTree(updated));
+
+    // Mettre à jour le state local
+    setSkillTrees((prev) => {
+      const idx = prev.findIndex((t) => t.profileId === childProfileId);
+      if (idx >= 0) return [...prev.slice(0, idx), updated, ...prev.slice(idx + 1)];
+      return [...prev, updated];
+    });
+
+    // Award XP via gamification
+    const childProfile = gamiData.profiles.find((p) => p.id === childProfileId);
+    if (childProfile) {
+      const { profile: updatedProfile, entry } = addPoints(childProfile, xp, `Compétence: ${skill.label}`);
+      const updatedGami = {
+        ...gamiData,
+        profiles: gamiData.profiles.map((p) => p.id === childProfileId ? updatedProfile : p),
+        history: [...gamiData.history, entry],
+      };
+      setGamiData(updatedGami);
+      await vaultRef.current.writeFile('gamification.md', serializeGamification(updatedGami));
+    }
+  }, [gamiData, profiles, skillTrees, activeProfileId]);
+
   // Mémoïser la valeur du contexte pour éviter les re-renders en cascade
   const vault = vaultRef.current;
   return useMemo(() => ({
@@ -2472,6 +2567,8 @@ export function useVaultInternal(): VaultState {
     addNote,
     updateNote,
     deleteNote,
+    skillTrees,
+    unlockSkill,
   }), [
     // State values (déclenchent un re-render quand ils changent)
     vaultPath, isLoading, error, tasks, menageTasks, courses, stock, meals,
@@ -2479,6 +2576,7 @@ export function useVaultInternal(): VaultState {
     stockSections, memories, vacationConfig, vacationTasks, isVacationActive,
     recipes, ageUpgrades, budgetEntries, budgetConfig, budgetMonth, routines,
     healthRecords, defis, gratitudeDays, wishlistItems, journalStats, anniversaries, notes,
+    skillTrees,
     // Callbacks (stables grâce à useCallback)
     refresh, setVaultPath, setActiveProfile, saveNotifPrefs, updateMeal, loadMealsForWeek,
     addPhoto, getPhotoUri, updateProfileTheme, updateProfile, deleteProfile,
@@ -2495,6 +2593,6 @@ export function useVaultInternal(): VaultState {
     addGratitudeEntry, deleteGratitudeEntry,
     addWishItem, updateWishItem, deleteWishItem, toggleWishBought,
     addAnniversary, updateAnniversary, removeAnniversary, importAnniversaries,
-    addNote, updateNote, deleteNote,
+    addNote, updateNote, deleteNote, unlockSkill,
   ]);
 }

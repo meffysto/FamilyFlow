@@ -23,20 +23,26 @@ import { useVault } from '../../contexts/VaultContext';
 import { useGamification } from '../../hooks/useGamification';
 import { FamilyLeaderboard } from '../../components/FamilyLeaderboard';
 import { LootBoxOpener } from '../../components/LootBoxOpener';
-import { buildLeaderboard, processActiveRewards } from '../../lib/gamification';
 import {
+  buildLeaderboard,
+  processActiveRewards,
   RARITY_COLORS,
   RARITY_LABELS,
   RARITY_EMOJIS,
   REWARDS,
   DROP_RATES,
   PITY_THRESHOLD,
-} from '../../constants/rewards';
+  getActiveEvent,
+  seasonalDaysRemaining,
+  getNextEvent,
+  SEASONAL_EVENTS,
+} from '../../lib/gamification';
 import { Profile, LootBox, LootRarity } from '../../lib/types';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
+import { SeasonalBanner } from '../../components/SeasonalBanner';
 
 export default function LootScreen() {
   const { profiles, gamiData, notifPrefs, vault, refresh, isLoading } = useVault();
@@ -49,6 +55,8 @@ export default function LootScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const lootSectionRef = useRef<View>(null);
   const [showDropRates, setShowDropRates] = useState(false);
+  const activeEvent = getActiveEvent();
+  const nextEvent = !activeEvent ? getNextEvent() : null;
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -115,6 +123,24 @@ export default function LootScreen() {
           </View>
           <Text style={[styles.subtitle, { color: tint }]}>Complète des tâches pour gagner des récompenses !</Text>
         </View>
+
+        {/* Bandeau événement saisonnier */}
+        {activeEvent && (
+          <SeasonalBanner
+            event={activeEvent}
+            daysLeft={seasonalDaysRemaining()}
+            onShowRewards={() => setShowDropRates(true)}
+          />
+        )}
+
+        {/* Prochain événement (quand aucun n'est actif) */}
+        {!activeEvent && nextEvent && (
+          <View style={[styles.nextEventCard, { backgroundColor: colors.cardAlt }]}>
+            <Text style={[styles.nextEventText, { color: colors.textSub }]}>
+              {nextEvent.event.emoji} Prochain événement : <Text style={{ fontWeight: '700', color: nextEvent.event.themeColor }}>{nextEvent.event.name}</Text> — dans {nextEvent.daysUntil} jour{nextEvent.daysUntil > 1 ? 's' : ''}
+            </Text>
+          </View>
+        )}
 
         {/* Loot box cards per profile */}
         <View ref={lootSectionRef} style={styles.section}>
@@ -206,6 +232,12 @@ export default function LootScreen() {
                       const rarityKey = badge.action.split(':')[1] as keyof typeof RARITY_COLORS;
                       const borderColor = RARITY_COLORS[rarityKey] ?? colors.textFaint;
                       const isMythique = rarityKey === 'mythique';
+                      // Détecter le tag saisonnier dans la note [eventId]
+                      const seasonalMatch = badge.note.match(/\[(\w[\w-]*)\]$/);
+                      const seasonalId = seasonalMatch?.[1];
+                      const seasonalEvent = seasonalId
+                        ? SEASONAL_EVENTS.find((e) => e.id === seasonalId)
+                        : undefined;
                       return (
                         <View
                           key={idx}
@@ -216,6 +248,9 @@ export default function LootScreen() {
                           ]}
                         >
                           <Text style={styles.badgeEmoji}>{badge.note.split(' ')[0]}</Text>
+                          {seasonalEvent && (
+                            <Text style={styles.badgeSeasonalTag}>{seasonalEvent.emoji}</Text>
+                          )}
                         </View>
                       );
                     })}
@@ -314,6 +349,31 @@ export default function LootScreen() {
               </Text>
             </View>
 
+            {/* Récompenses saisonnières */}
+            {activeEvent && (
+              <View style={[styles.drCard, { backgroundColor: activeEvent.themeColor + '15' }]}>
+                <View style={styles.drRarityHeader}>
+                  <View style={[styles.drRarityBadge, { backgroundColor: activeEvent.themeColor }]}>
+                    <Text style={[styles.drRarityBadgeText, { color: '#FFFFFF' }]}>
+                      {activeEvent.emoji} {activeEvent.name}
+                    </Text>
+                  </View>
+                  <Text style={[styles.drRewardCount, { color: activeEvent.themeColor }]}>20% de chance</Text>
+                </View>
+                {(Object.entries(activeEvent.rewards) as [LootRarity, typeof REWARDS[LootRarity]][]).map(([rarity, rewards]) =>
+                  rewards?.map((reward, idx) => (
+                    <View key={`${rarity}-${idx}`} style={[styles.drRewardRow, { borderBottomColor: activeEvent.themeColor + '20' }]}>
+                      <Text style={styles.drRewardEmoji}>{reward.emoji}</Text>
+                      <Text style={[styles.drRewardName, { color: colors.textSub }]}>{reward.reward}</Text>
+                      <Text style={[styles.drRewardPts, { color: RARITY_COLORS[rarity as LootRarity] }]}>
+                        {RARITY_LABELS[rarity as LootRarity]}
+                      </Text>
+                    </View>
+                  ))
+                )}
+              </View>
+            )}
+
             {/* Rewards by rarity */}
             {(Object.keys(REWARDS) as LootRarity[]).map((rarity) => (
               <View key={rarity} style={[styles.drCard, { backgroundColor: colors.card }]}>
@@ -402,6 +462,16 @@ const styles = StyleSheet.create({
   },
   dropRatesBtnText: { fontSize: 18 },
   subtitle: { fontSize: 14 },
+  nextEventCard: {
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 12,
+  },
+  nextEventText: {
+    fontSize: 13,
+    textAlign: 'center',
+  },
   section: { marginBottom: 16, gap: 8 },
   sectionTitle: {
     fontSize: 16,
@@ -492,6 +562,12 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   badgeEmoji: { fontSize: 28 },
+  badgeSeasonalTag: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    fontSize: 12,
+  },
   badgeProfileHeader: {
     flexDirection: 'row',
     alignItems: 'center',

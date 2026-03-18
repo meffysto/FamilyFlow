@@ -1,11 +1,11 @@
 /**
- * gamification.ts — Points, streaks, loot box logic, active rewards, pity system
+ * engine.ts — Points, streaks, loot box logic, active rewards, pity system
  *
  * All state is read from / written to gamification.md in the vault.
  * No internal database.
  */
 
-import { Profile, LootBox, LootRarity, GamificationEntry, GamificationData, ActiveReward } from './types';
+import { Profile, LootBox, LootRarity, GamificationEntry, GamificationData, ActiveReward, RewardDefinition } from '../types';
 import {
   REWARDS,
   DROP_RATES,
@@ -14,7 +14,8 @@ import {
   STREAK_BONUS,
   PITY_THRESHOLD,
   getCachedGamiConfig,
-} from '../constants/rewards';
+} from './rewards';
+import { trySeasonalDraw } from './seasonal';
 import { format } from 'date-fns';
 
 // ─── Points ─────────────────────────────────────────────────────────────────
@@ -145,8 +146,13 @@ export function openLootBox(
 
   const { rarity, newPityCounter } = drawRarityWithPity(profile.role, profile.pityCounter);
 
-  const pool = REWARDS[rarity];
-  const rewardDef = pool[Math.floor(Math.random() * pool.length)];
+  // Tenter un drop saisonnier (20% de chance si événement actif)
+  const seasonalDraw = trySeasonalDraw(rarity);
+  const rewardDef: RewardDefinition = seasonalDraw
+    ? seasonalDraw.reward
+    : REWARDS[rarity][Math.floor(Math.random() * REWARDS[rarity].length)];
+  const seasonalEventId = seasonalDraw?.eventId;
+
   const now = new Date().toISOString();
 
   const box: LootBox = {
@@ -159,14 +165,16 @@ export function openLootBox(
     multiplierTasks: rewardDef.multiplierTasks,
     rewardType: rewardDef.rewardType,
     openedAt: now,
+    seasonal: seasonalEventId,
   };
 
+  const seasonalTag = seasonalEventId ? ` [${seasonalEventId}]` : '';
   const entries: GamificationEntry[] = [
     {
       profileId: profile.id,
       action: `loot:${rarity}`,
       points: rewardDef.bonusPoints,
-      note: `${rewardDef.emoji} ${rewardDef.reward}`,
+      note: `${rewardDef.emoji} ${rewardDef.reward}${seasonalTag}`,
       timestamp: now,
     },
   ];

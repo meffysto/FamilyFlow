@@ -112,6 +112,7 @@ export interface LootBox {
   multiplierTasks?: number; // how many tasks the multiplier lasts
   rewardType?: RewardType;  // type of reward for active rewards
   openedAt?: string;        // ISO timestamp
+  seasonal?: string;        // event id si reward saisonnière (ex: 'halloween', 'noel')
 }
 
 export interface RewardDefinition {
@@ -226,6 +227,18 @@ export interface ActiveReward {
   expiresAt?: string;         // ISO date (vacation, crown)
   remainingDays?: number;
   remainingTasks?: number;    // multiplier tasks remaining
+}
+
+// ─── Événements saisonniers ──────────────────────────────────────────────────
+
+export interface SeasonalEvent {
+  id: string;              // 'halloween' | 'noel' | 'paques' | ...
+  name: string;            // 'Halloween'
+  emoji: string;           // '🎃'
+  startDate: string;       // 'MM-DD' ou 'dynamic' pour Pâques
+  endDate: string;         // 'MM-DD' ou 'dynamic'
+  themeColor: string;      // couleur du bandeau
+  rewards: Partial<Record<LootRarity, RewardDefinition[]>>;
 }
 
 // ─── Mode nuit bébé ──────────────────────────────────────────────────────────
@@ -406,6 +419,20 @@ export interface NotificationConfig {
 export interface NotificationPreferences {
   version: 1;
   notifications: NotificationConfig[];
+}
+
+// ─── Arbre de compétences ────────────────────────────────────────────────────
+
+export interface SkillUnlock {
+  skillId: string;          // ex: "autonomie_3-5_1"
+  unlockedAt: string;       // ISO timestamp
+  unlockedBy: string;       // profileId du parent validateur
+}
+
+export interface SkillTreeData {
+  profileId: string;        // enfant id
+  profileName: string;      // enfant name
+  unlocked: SkillUnlock[];
 }
 
 // ─── Notes & Articles ────────────────────────────────────────────────────────

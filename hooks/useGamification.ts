@@ -20,6 +20,7 @@ import {
   updateProfileInData,
   applyFamilyBonus,
   calculateStreak,
+  loadGamiConfig,
 } from '../lib/gamification';
 import {
   dispatchNotificationAsync,
@@ -27,7 +28,6 @@ import {
   buildLootBoxContext,
 } from '../lib/notifications';
 import { Profile, LootBox, GamificationData, NotificationPreferences } from '../lib/types';
-import { loadGamiConfig } from '../constants/rewards';
 
 interface UseGamificationArgs {
   vault: VaultManager | null;
