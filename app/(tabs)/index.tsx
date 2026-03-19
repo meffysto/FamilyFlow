@@ -45,6 +45,7 @@ import { HELP_CONTENT } from '../../lib/help-content';
 import { getCardTemplate } from '../../lib/card-templates';
 import { getFruitForWeek, getSizeForWeek, getFruitLabel } from '../../lib/pregnancy';
 import { GlassView } from '../../components/ui/GlassView';
+import { SectionErrorBoundary } from '../../components/SectionErrorBoundary';
 import { FontSize, FontWeight } from '../../constants/typography';
 import type { CardTemplateContext } from '../../lib/card-templates';
 
@@ -922,7 +923,11 @@ export default function DashboardScreen() {
         {sortedSections.map((s) => {
           if (!s.visible) return null;
           if (sectionHidden.has(s.id)) return null;
-          return renderSection(s.id);
+          return (
+            <SectionErrorBoundary key={`eb-${s.id}`} name={s.label}>
+              {renderSection(s.id)}
+            </SectionErrorBoundary>
+          );
         })}
 
         <View style={styles.bottomPad} />
