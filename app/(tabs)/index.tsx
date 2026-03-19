@@ -182,6 +182,7 @@ export default function DashboardScreen() {
     gratitudeDays,
     wishlistItems,
     anniversaries,
+    skillTrees,
     setActiveProfile,
   } = useVault();
 
@@ -421,11 +422,11 @@ export default function DashboardScreen() {
       tasks, menageTasks, courses, stock, meals, rdvs,
       profiles, activeProfile, defis, gratitudeDays,
       memories, vacationConfig, isVacationActive,
-      gamiData, photoDates, anniversaries,
+      gamiData, photoDates, anniversaries, skillTrees,
     };
     return generateInsights(input);
   }, [tasks, menageTasks, courses, stock, meals, rdvs, profiles, activeProfile,
-    defis, gratitudeDays, memories, vacationConfig, isVacationActive, gamiData, photoDates, anniversaries]);
+    defis, gratitudeDays, memories, vacationConfig, isVacationActive, gamiData, photoDates, anniversaries, skillTrees]);
 
   // Tri intelligent
   const sortedSections = useMemo(() => {

@@ -11,6 +11,8 @@ import { format, differenceInCalendarDays, isToday, isTomorrow, isYesterday, par
 import type { Task, RDV, StockItem, MealItem, CourseItem, Profile, Defi, GratitudeDay, Memory, VacationConfig, GamificationData, Anniversary } from './types';
 import { formatDateForDisplay, isRdvUpcoming } from './parser';
 import { LOOT_THRESHOLD } from './gamification';
+import { SKILL_TREE, SKILL_CATEGORIES, detectAgeBracket, type SkillDefinition } from './gamification/skill-tree';
+import type { SkillTreeData } from './types';
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -54,6 +56,7 @@ export interface InsightInput {
   gamiData: GamificationData | null;
   photoDates: Record<string, string[]>;
   anniversaries?: Anniversary[];
+  skillTrees?: SkillTreeData[];
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────
@@ -539,6 +542,88 @@ function anniversaryInsights(input: InsightInput, tc: TimeContext): Insight[] {
   return insights;
 }
 
+// ─── Jalons développementaux ─────────────────────────────────────────────────
+
+/** Calcule l'âge en mois depuis une date de naissance */
+function ageInMonths(birthdate: string): number {
+  const now = new Date();
+  const parts = birthdate.split('-').map(Number);
+  const birth = new Date(parts[0], (parts[1] ?? 1) - 1, parts[2] ?? 1);
+  const months = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth());
+  if (now.getDate() < birth.getDate()) return months - 1;
+  return months;
+}
+
+function skillTreeInsights(input: InsightInput): Insight[] {
+  const insights: Insight[] = [];
+  if (!input.skillTrees) return insights;
+
+  const children = input.profiles.filter((p) => p.role === 'enfant' && p.birthdate);
+
+  for (const child of children) {
+    const months = ageInMonths(child.birthdate!);
+    const bracket = detectAgeBracket(child.birthdate!);
+    const tree = input.skillTrees.find((t) => t.profileId === child.id);
+    const unlockedIds = new Set(tree?.unlocked.map((u) => u.skillId) ?? []);
+
+    // Jalons attendus pour cet âge, non encore débloqués
+    const dueJalons = SKILL_TREE.filter((s) =>
+      s.ageBracketId === bracket &&
+      s.type === 'jalon' &&
+      s.expectedMonths != null &&
+      s.expectedMonths <= months &&
+      !unlockedIds.has(s.id)
+    );
+
+    // Drapeaux rouges : jalons avec redFlagMonths <= âge actuel (toujours affichés)
+    const redFlags = dueJalons.filter((s) => s.redFlagMonths != null && s.redFlagMonths <= months);
+
+    if (redFlags.length > 0) {
+      const first = redFlags[0];
+      insights.push({
+        id: `skill-redflag-${child.id}`,
+        icon: '⚠️',
+        title: `${child.name} : jalon à surveiller`,
+        body: `« ${first.label} » est attendu depuis ${months - first.expectedMonths!} mois. Parlez-en à votre pédiatre si besoin.`,
+        priority: 'high',
+        category: 'alert',
+        action: { label: 'Voir les compétences', type: 'navigate', route: '/(tabs)/skills' },
+      });
+    }
+
+    // Suggestions : adapter le message selon le nombre de jalons en attente
+    if (dueJalons.length > 5 && unlockedIds.size === 0) {
+      // Nouveau profil avec beaucoup de jalons en retard → message d'accueil
+      insights.push({
+        id: `skill-onboard-${child.id}`,
+        icon: '🌳',
+        title: `${child.name} a ${months} mois`,
+        body: `${dueJalons.length} jalons à valider ! Ouvrez les compétences pour commencer le suivi.`,
+        priority: 'medium',
+        category: 'suggestion',
+        action: { label: 'Commencer', type: 'navigate', route: '/(tabs)/skills' },
+      });
+    } else if (dueJalons.length > 0) {
+      // Profil en cours → prochain jalon le plus récent (le plus proche de l'âge actuel)
+      const mostRecent = dueJalons.reduce((best, s) =>
+        (s.expectedMonths ?? 0) > (best.expectedMonths ?? 0) ? s : best
+      , dueJalons[0]);
+      const cat = SKILL_CATEGORIES.find((c) => c.id === mostRecent.categoryId);
+      insights.push({
+        id: `skill-due-${child.id}`,
+        icon: cat?.emoji ?? '🌳',
+        title: `${child.name} a l'âge pour débloquer`,
+        body: `« ${mostRecent.label} » — attendu vers ${mostRecent.expectedMonths} mois`,
+        priority: 'medium',
+        category: 'suggestion',
+        action: { label: 'Voir les compétences', type: 'navigate', route: '/(tabs)/skills' },
+      });
+    }
+  }
+
+  return insights;
+}
+
 // ─── Moteur principal ───────────────────────────────────────────────────────────
 
 /**
@@ -566,6 +651,7 @@ export function generateInsights(input: InsightInput): Insight[] {
     ...vacationInsights(input, tc),
     ...gamificationInsights(input),
     ...anniversaryInsights(input, tc),
+    ...skillTreeInsights(input),
   ];
 
   // Tri par priorité
