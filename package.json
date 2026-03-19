@@ -18,6 +18,7 @@
     "expo-blur": "~15.0.8",
     "expo-brightness": "~14.0.8",
     "expo-calendar": "~15.0.8",
+    "expo-constants": "~18.0.13",
     "expo-contacts": "~15.0.11",
     "expo-dev-client": "~6.0.20",
     "expo-document-picker": "~14.0.8",
@@ -46,7 +47,7 @@
     "react-native-worklets": "0.5.1"
   },
   "devDependencies": {
-    "@types/jest": "^30.0.0",
+    "@types/jest": "^29.5.14",
     "@types/react": "~19.1.0",
     "jest": "^29.7.0",
     "ts-jest": "^29.4.6",

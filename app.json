@@ -26,13 +26,7 @@
         "NSMicrophoneUsageDescription": "FamilyFlow utilise le micro pour transcrire les consultations médicales.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "4",
-      "appExtensions": [
-        {
-          "targetName": "MaJourneeWidget",
-          "bundleIdentifier": "com.familyvault.dev.MaJourneeWidget"
-        }
-      ]
+      "buildNumber": "5"
     },
     "android": {
       "adaptiveIcon": {
