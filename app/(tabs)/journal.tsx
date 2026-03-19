@@ -31,6 +31,7 @@ import { HELP_CONTENT } from '../../lib/help-content';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { parseJournalStats, calculerDuree } from '../../lib/journal-stats';
 import { MarkdownText } from '../../components/ui/MarkdownText';
+import { SegmentedControl } from '../../components/ui/SegmentedControl';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -670,29 +671,14 @@ export default function JournalScreen() {
 
       {/* Onglets enfant / adulte */}
       <View ref={childSelectorRef} style={[styles.tabs, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        {isAdultMode && (
-          <TouchableOpacity
-            style={[styles.tab, isViewingAdultTab && { borderBottomColor: primary }]}
-            onPress={() => setSelectedTab('adulte')}
-          >
-            <Text style={styles.tabEmoji}>{activeProfile?.avatar ?? '📖'}</Text>
-            <Text style={[styles.tabText, { color: colors.textFaint }, isViewingAdultTab && { color: primary }]}>
-              Mon journal
-            </Text>
-          </TouchableOpacity>
-        )}
-        {enfants.map((enfant) => (
-          <TouchableOpacity
-            key={enfant.id}
-            style={[styles.tab, selectedTab === enfant.id && { borderBottomColor: primary }]}
-            onPress={() => setSelectedTab(enfant.id)}
-          >
-            <Text style={styles.tabEmoji}>{enfant.avatar}</Text>
-            <Text style={[styles.tabText, { color: colors.textFaint }, selectedTab === enfant.id && { color: primary }]}>
-              {enfant.name}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        <SegmentedControl
+          segments={[
+            ...(isAdultMode ? [{ id: 'adulte', label: `${activeProfile?.avatar ?? '📖'} Mon journal` }] : []),
+            ...enfants.map((e) => ({ id: e.id, label: `${e.avatar} ${e.name}` })),
+          ]}
+          value={selectedTab}
+          onChange={setSelectedTab}
+        />
       </View>
 
       {/* Navigation date */}
@@ -926,21 +912,10 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 20, fontWeight: '800' },
   tabs: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    gap: 6,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  tabEmoji: { fontSize: 18 },
-  tabText: { fontSize: 14, fontWeight: '600' },
 
   dateNav: {
     flexDirection: 'row',

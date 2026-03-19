@@ -33,7 +33,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
-import { Chip } from '../../components/ui';
+import { Chip, SegmentedControl } from '../../components/ui';
 import { DateInput } from '../../components/ui/DateInput';
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import {
@@ -753,19 +753,11 @@ export default function DefisScreen() {
 
       {/* Onglets */}
       <View style={[styles.tabBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        {tabs.map((tab) => (
-          <TouchableOpacity
-            key={tab.id}
-            style={[styles.tab, activeTab === tab.id && { borderBottomColor: primary }]}
-            onPress={() => setActiveTab(tab.id)}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.tabLabel, { color: activeTab === tab.id ? primary : colors.textMuted }]}>
-              {tab.label}
-              {tab.count ? ` (${tab.count})` : ''}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        <SegmentedControl
+          segments={tabs}
+          value={activeTab}
+          onChange={(id) => setActiveTab(id as TabId)}
+        />
       </View>
 
       {/* Contenu */}
@@ -926,17 +918,10 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
   tabBar: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  tab: {
-    flex: 1,
-    paddingVertical: Spacing.xl,
-    alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  tabLabel: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
   scroll: { flex: 1 },
   content: { padding: Spacing['2xl'], gap: Spacing.xl, paddingBottom: 90 },
   emptyState: {

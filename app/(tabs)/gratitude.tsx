@@ -32,6 +32,8 @@ import { Shadows } from '../../constants/shadows';
 import type { GratitudeEntry, GratitudeDay } from '../../lib/types';
 import { isBabyProfile } from '../../lib/types';
 import { MarkdownText } from '../../components/ui/MarkdownText';
+import { SegmentedControl } from '../../components/ui/SegmentedControl';
+import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { DictaphoneRecorder } from '../../components/DictaphoneRecorder';
 
 type TabId = 'aujourdhui' | 'livre';
@@ -113,6 +115,12 @@ export default function GratitudeScreen() {
     });
   }, [gratitudeDays, visibleCount]);
 
+  const handleDeleteEntry = useCallback(async (entry: GratitudeEntry) => {
+    await deleteGratitudeEntry(entry.date, entry.profileId);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    showToast('Gratitude supprimée');
+  }, [deleteGratitudeEntry, showToast]);
+
   const handleOpenWrite = useCallback((existing?: GratitudeEntry) => {
     setWriteText(existing?.text ?? '');
     setWriteModal({ visible: true, existing });
@@ -151,18 +159,11 @@ export default function GratitudeScreen() {
 
       {/* Onglets */}
       <View style={[styles.tabBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        {tabs.map((tab) => (
-          <TouchableOpacity
-            key={tab.id}
-            style={[styles.tab, activeTab === tab.id && { borderBottomColor: primary }]}
-            onPress={() => setActiveTab(tab.id)}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.tabLabel, { color: activeTab === tab.id ? primary : colors.textMuted }]}>
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        <SegmentedControl
+          segments={tabs}
+          value={activeTab}
+          onChange={(id) => setActiveTab(id as TabId)}
+        />
       </View>
 
       {activeTab === 'aujourdhui' && (
@@ -266,15 +267,22 @@ export default function GratitudeScreen() {
                 <Text style={[styles.sectionDate, { color: colors.textMuted }]}>{section.title}</Text>
               )}
               renderItem={({ item }) => (
-                <View style={[styles.bookEntry, { backgroundColor: colors.card }]}>
-                  <View style={styles.bookEntryHeader}>
-                    <Text style={styles.bookAvatar}>
-                      {profiles.find((p) => p.id === item.profileId)?.avatar ?? '🙏'}
-                    </Text>
-                    <Text style={[styles.bookName, { color: colors.text }]}>{item.profileName}</Text>
+                <SwipeToDelete
+                  onDelete={() => handleDeleteEntry(item)}
+                  confirmTitle="Supprimer cette gratitude ?"
+                  confirmMessage={`Supprimer l'entrée de ${item.profileName} ?`}
+                  hintId="gratitude"
+                >
+                  <View style={[styles.bookEntry, { backgroundColor: colors.card }]}>
+                    <View style={styles.bookEntryHeader}>
+                      <Text style={styles.bookAvatar}>
+                        {profiles.find((p) => p.id === item.profileId)?.avatar ?? '🙏'}
+                      </Text>
+                      <Text style={[styles.bookName, { color: colors.text }]}>{item.profileName}</Text>
+                    </View>
+                    <MarkdownText style={{ color: colors.textSub }}>{item.text}</MarkdownText>
                   </View>
-                  <MarkdownText style={{ color: colors.textSub }}>{item.text}</MarkdownText>
-                </View>
+                </SwipeToDelete>
               )}
               renderSectionFooter={() => <View style={styles.sectionSep} />}
               ListFooterComponent={
@@ -387,17 +395,10 @@ const styles = StyleSheet.create({
   },
   streakText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
   tabBar: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  tab: {
-    flex: 1,
-    paddingVertical: Spacing.xl,
-    alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  tabLabel: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
   scroll: { flex: 1 },
   content: { padding: Spacing['2xl'], gap: Spacing.xl, paddingBottom: 90 },
   // Date navigation

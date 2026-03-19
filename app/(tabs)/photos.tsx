@@ -21,7 +21,7 @@ import {
   Alert,
   Dimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import {
@@ -55,6 +55,7 @@ import { PhotoViewer } from '../../components/PhotoViewer';
 import { computePhotoStats } from '../../lib/photo-stats';
 import { PhotoGallery } from '../../components/PhotoGallery';
 import { MarkdownText } from '../../components/ui/MarkdownText';
+import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { getThumbnailUri } from '../../lib/thumbnails';
 import * as FileSystem from 'expo-file-system/legacy';
 
@@ -126,6 +127,7 @@ function PulsingCamera({ color }: { color: string }) {
 export default function PhotosScreen() {
   const { profiles, photoDates, addPhoto, getPhotoUri, refresh, isLoading, memories, addMemory, updateMemory } = useVault();
   const { primary, tint, colors } = useThemeColors();
+  const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedEnfantIdx, setSelectedEnfantIdx] = useState(0);
@@ -325,48 +327,41 @@ export default function PhotosScreen() {
         </View>
       </View>
 
-      {/* Mode tabs */}
-      <View style={[styles.modeTabBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <TouchableOpacity
-          style={[styles.modeTab, { backgroundColor: colors.cardAlt }, activeTab === 'photos' && { backgroundColor: tint }]}
-          onPress={() => setActiveTab('photos')}
-        >
-          <Text style={[styles.modeTabText, { color: colors.textMuted }, activeTab === 'photos' && { color: primary, fontWeight: '700' }]}>
-            📸 Photos
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.modeTab, { backgroundColor: colors.cardAlt }, activeTab === 'souvenirs' && { backgroundColor: tint }]}
-          onPress={() => setActiveTab('souvenirs')}
-        >
-          <Text style={[styles.modeTabText, { color: colors.textMuted }, activeTab === 'souvenirs' && { color: primary, fontWeight: '700' }]}>
-            🌟 Souvenirs
-          </Text>
-        </TouchableOpacity>
-      </View>
+      {/* Barre unique : segment Photos/Souvenirs + enfants */}
+      <View style={[styles.navBlock, { backgroundColor: colors.card, borderBottomColor: colors.borderLight }]}>
+        {/* Segment control */}
+        <SegmentedControl
+          segments={[
+            { id: 'photos', label: '📸 Photos' },
+            { id: 'souvenirs', label: '🌟 Souvenirs' },
+          ]}
+          value={activeTab}
+          onChange={(t) => setActiveTab(t as TabMode)}
+        />
 
-      {/* Enfant selector */}
-      {enfants.length > 1 && (
-        <View style={[styles.tabBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-          {enfants.map((e, idx) => (
-            <TouchableOpacity
-              key={e.id}
-              style={[
-                styles.tab,
-                { backgroundColor: colors.cardAlt },
-                idx === selectedEnfantIdx && { backgroundColor: tint },
-              ]}
-              onPress={() => setSelectedEnfantIdx(idx)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.tabEmoji}>{e.avatar}</Text>
-              <Text style={[styles.tabLabel, { color: colors.textMuted }, idx === selectedEnfantIdx && { color: primary }]}>
-                {e.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
+        {/* Enfants */}
+        {enfants.length > 1 && (
+          <View style={styles.enfantRow}>
+            {enfants.map((e, idx) => (
+              <TouchableOpacity
+                key={e.id}
+                style={[
+                  styles.enfantChip,
+                  { borderColor: colors.borderLight },
+                  idx === selectedEnfantIdx && { borderColor: primary, backgroundColor: tint },
+                ]}
+                onPress={() => setSelectedEnfantIdx(idx)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.enfantEmoji}>{e.avatar}</Text>
+                <Text style={[styles.enfantLabel, { color: colors.textMuted }, idx === selectedEnfantIdx && { color: primary, fontWeight: '700' }]}>
+                  {e.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </View>
 
       {activeTab === 'photos' ? (
         <>
@@ -505,7 +500,7 @@ export default function PhotosScreen() {
 
           {selectedEnfant && (
             <TouchableOpacity
-              style={[styles.fab, { backgroundColor: primary, shadowColor: primary }]}
+              style={[styles.fab, { backgroundColor: primary, shadowColor: primary, bottom: 70 + Math.max(insets.bottom, 20) }]}
               onPress={() => pickPhoto(new Date())}
               activeOpacity={0.8}
             >
@@ -577,7 +572,7 @@ export default function PhotosScreen() {
           </ScrollView>
 
           <TouchableOpacity
-            style={[styles.fab, { backgroundColor: primary, shadowColor: primary }]}
+            style={[styles.fab, { backgroundColor: primary, shadowColor: primary, bottom: 70 + Math.max(insets.bottom, 20) }]}
             onPress={() => { setEditingMemory(null); setMemoryEditorVisible(true); }}
             activeOpacity={0.8}
           >
@@ -651,37 +646,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   viewToggleText: { fontSize: 18 },
-  modeTabBar: {
-    flexDirection: 'row',
+  navBlock: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    gap: 8,
-    borderBottomWidth: 1,
-  },
-  modeTab: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderRadius: 12,
-  },
-  modeTabText: { fontSize: 14, fontWeight: '600' },
-  tabBar: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
+    paddingTop: 10,
     paddingBottom: 12,
-    gap: 8,
-    borderBottomWidth: 1,
+    gap: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  tab: {
+  enfantRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  enfantChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 20,
+    borderWidth: 1.5,
   },
-  tabEmoji: { fontSize: 16 },
-  tabLabel: { fontSize: 13, fontWeight: '600' },
+  enfantEmoji: { fontSize: 15 },
+  enfantLabel: { fontSize: 13, fontWeight: '500' },
   scroll: { flex: 1 },
   scrollContent: { padding: CALENDAR_PADDING, paddingBottom: 100 },
   souvenirContent: { padding: 16, paddingBottom: 100, gap: 12 },

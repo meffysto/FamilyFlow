@@ -29,7 +29,7 @@ import { fr } from 'date-fns/locale';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { MealItem, CourseItem, Recipe } from '../../lib/types';
-import { formatIngredient, aggregateIngredients, categorizeIngredient, convertCookToMetric, type AppIngredient } from '../../lib/cooklang';
+import { formatIngredient, aggregateIngredients, categorizeIngredient, convertCookToMetric, COURSE_CATEGORIES, type AppIngredient } from '../../lib/cooklang';
 import RecipeCard from '../../components/RecipeCard';
 import RecipeViewer from '../../components/RecipeViewer';
 import { importRecipeFromUrl, importRecipeFromPhoto, convertTextWithAI, parseTextToRecipe, searchCommunityRecipes, downloadCommunityRecipe, translateCookToFrench, type ImportResult, type ImportedRecipe, type CookImportResult, type CommunityRecipe } from '../../lib/recipe-import';
@@ -38,6 +38,7 @@ import { useAI } from '../../contexts/AIContext';
 import { useToast } from '../../contexts/ToastContext';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
+import { SegmentedControl } from '../../components/ui/SegmentedControl';
 
 const DAYS_ORDER = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
@@ -55,7 +56,7 @@ export default function MealsScreen() {
   const {
     meals, updateMeal, loadMealsForWeek,
     courses, vault,
-    addCourseItem, removeCourseItem, mergeCourseIngredients,
+    addCourseItem, removeCourseItem, moveCourseItem, mergeCourseIngredients,
     stock, updateStockQuantity,
     recipes, loadRecipes, deleteRecipe,
     scanAllCookFiles, moveCookToRecipes,
@@ -124,6 +125,10 @@ export default function MealsScreen() {
   const [textImportValue, setTextImportValue] = useState('');
   const [textImportResult, setTextImportResult] = useState<ImportResult | null>(null);
   const [textImportCategory, setTextImportCategory] = useState('Importées');
+
+  // Category picker modal state
+  const [categoryPickerItem, setCategoryPickerItem] = useState<CourseItem | null>(null);
+  const [newCategoryName, setNewCategoryName] = useState('');
 
   // Community explore state
   const [showExplore, setShowExplore] = useState(false);
@@ -399,6 +404,39 @@ export default function MealsScreen() {
       Alert.alert('Erreur', String(e));
     }
   }, [newItemText, selectedSection, addCourseItem]);
+
+  const handleChangeCourseCategory = useCallback((item: CourseItem) => {
+    setCategoryPickerItem(item);
+    setNewCategoryName('');
+  }, []);
+
+  const handleSelectCategory = useCallback(async (newSection: string) => {
+    if (!categoryPickerItem) return;
+    if (newSection === categoryPickerItem.section) {
+      setCategoryPickerItem(null);
+      return;
+    }
+    try {
+      await moveCourseItem(categoryPickerItem.lineIndex, categoryPickerItem.text, newSection);
+      setCategoryPickerItem(null);
+    } catch (e) {
+      Alert.alert('Erreur', String(e));
+    }
+  }, [categoryPickerItem, moveCourseItem]);
+
+  const handleAddNewCategory = useCallback(async () => {
+    const name = newCategoryName.trim();
+    if (!name || !categoryPickerItem) return;
+    // Ajouter emoji par défaut si absent
+    const section = /^\p{Emoji}/u.test(name) ? name : `🏷️ ${name}`;
+    try {
+      await moveCourseItem(categoryPickerItem.lineIndex, categoryPickerItem.text, section);
+      setCategoryPickerItem(null);
+      setNewCategoryName('');
+    } catch (e) {
+      Alert.alert('Erreur', String(e));
+    }
+  }, [newCategoryName, categoryPickerItem, moveCourseItem]);
 
   // ─── Recettes logic ─────────────────────────────────────────────
 
@@ -743,36 +781,15 @@ export default function MealsScreen() {
 
       {/* Tab bar */}
       <View ref={tabBarRef} style={[styles.tabBar, { backgroundColor: colors.card, borderBottomColor: colors.borderLight }]}>
-        {(['repas', 'courses', 'recettes'] as Tab[]).map((t) => (
-          <TouchableOpacity
-            key={t}
-            style={[
-              styles.tabBtn,
-              { backgroundColor: colors.cardAlt },
-              tab === t && { backgroundColor: tint },
-            ]}
-            onPress={() => setTab(t)}
-            activeOpacity={0.7}
-          >
-            <Text style={[
-              styles.tabBtnText,
-              { color: colors.textMuted },
-              tab === t && { color: primary },
-            ]}>
-              {t === 'repas' ? '🍽️ Repas' : t === 'courses' ? '🛒 Courses' : '📖 Recettes'}
-            </Text>
-            {t === 'courses' && courses.filter((c) => !c.completed).length > 0 && (
-              <View style={[styles.tabBadge, { backgroundColor: primary }]}>
-                <Text style={[styles.tabBadgeText, { color: colors.onPrimary }]}>{courses.filter((c) => !c.completed).length}</Text>
-              </View>
-            )}
-            {t === 'recettes' && recipes.length > 0 && (
-              <View style={[styles.tabBadge, { backgroundColor: primary }]}>
-                <Text style={[styles.tabBadgeText, { color: colors.onPrimary }]}>{recipes.length}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        ))}
+        <SegmentedControl
+          segments={[
+            { id: 'repas', label: '🍽️ Repas' },
+            { id: 'courses', label: '🛒 Courses', badge: courses.filter((c) => !c.completed).length || undefined },
+            { id: 'recettes', label: '📖 Recettes', badge: recipes.length || undefined },
+          ]}
+          value={tab}
+          onChange={(t) => setTab(t as Tab)}
+        />
       </View>
 
       {/* ═════════════ Content ═════════════ */}
@@ -967,6 +984,7 @@ export default function MealsScreen() {
                             item.completed && { color: colors.textMuted, textDecorationLine: 'line-through' },
                           ]}
                           numberOfLines={2}
+                          onLongPress={() => handleChangeCourseCategory(item)}
                         >
                           {item.text}
                         </Text>
@@ -1399,6 +1417,91 @@ export default function MealsScreen() {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* Category picker modal (grille) */}
+      <Modal
+        visible={categoryPickerItem !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setCategoryPickerItem(null)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setCategoryPickerItem(null)}
+        >
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <View
+              style={[styles.catPickerContent, { backgroundColor: colors.card }]}
+              onStartShouldSetResponder={() => true}
+            >
+              <Text style={[styles.catPickerTitle, { color: colors.text }]}>
+                Catégorie de « {categoryPickerItem?.text} »
+              </Text>
+
+              {/* Grille de catégories */}
+              <View style={styles.catGrid}>
+                {COURSE_CATEGORIES.map((cat) => {
+                  const isActive = categoryPickerItem?.section === cat;
+                  return (
+                    <TouchableOpacity
+                      key={cat}
+                      style={[
+                        styles.catChip,
+                        { backgroundColor: colors.cardAlt, borderColor: colors.borderLight },
+                        isActive && { backgroundColor: tint, borderColor: primary },
+                      ]}
+                      onPress={() => handleSelectCategory(cat)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[
+                        styles.catChipText,
+                        { color: colors.text },
+                        isActive && { color: primary, fontWeight: '700' },
+                      ]}>
+                        {cat}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* Nouvelle catégorie */}
+              <View style={styles.catNewRow}>
+                <TextInput
+                  style={[
+                    styles.catNewInput,
+                    { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+                  ]}
+                  placeholder="Nouvelle catégorie…"
+                  placeholderTextColor={colors.textMuted}
+                  value={newCategoryName}
+                  onChangeText={setNewCategoryName}
+                  onSubmitEditing={handleAddNewCategory}
+                  returnKeyType="done"
+                />
+                <TouchableOpacity
+                  style={[
+                    styles.catNewBtn,
+                    { backgroundColor: newCategoryName.trim() ? primary : colors.cardAlt },
+                  ]}
+                  onPress={handleAddNewCategory}
+                  disabled={!newCategoryName.trim()}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[
+                    styles.catNewBtnText,
+                    { color: newCategoryName.trim() ? colors.onPrimary : colors.textMuted },
+                  ]}>
+                    Ajouter
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </TouchableOpacity>
+      </Modal>
+
       {/* Import recipe modal */}
       <Modal
         visible={showImport}
@@ -1889,40 +1992,10 @@ const styles = StyleSheet.create({
   },
   // Tab bar
   tabBar: {
-    flexDirection: 'row',
     paddingHorizontal: 16,
-    paddingBottom: 12,
-    paddingTop: 4,
-    gap: 6,
-    borderBottomWidth: 1,
-  },
-  tabBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 20,
-    gap: 4,
-  },
-  tabBtnActive: {},
-  tabBtnText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  tabBadge: {
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 5,
-  },
-  tabBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    paddingBottom: 10,
+    paddingTop: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   // Navigation semaine
   weekNav: {
@@ -2418,5 +2491,55 @@ const styles = StyleSheet.create({
   },
   importPreviewMeta: {
     fontSize: 13,
+  },
+  // Category picker modal
+  catPickerContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingBottom: 34,
+    gap: 16,
+  },
+  catPickerTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  catGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  catChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  catChipText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  catNewRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  catNewInput: {
+    flex: 1,
+    borderWidth: 1.5,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+  },
+  catNewBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  catNewBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

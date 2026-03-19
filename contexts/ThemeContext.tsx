@@ -13,6 +13,21 @@ import { LightColors, DarkColors, AppColors } from '../constants/colors';
 
 const DARK_MODE_KEY = 'dark_mode_preference';
 
+/**
+ * Fallback programmatique : assombrit un hex clair pour le dark mode.
+ * Réduit la luminosité à ~20% de l'original pour un rendu sombre et saturé.
+ */
+function darkenColor(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const factor = 0.2;
+  const dr = Math.round(r * factor);
+  const dg = Math.round(g * factor);
+  const db = Math.round(b * factor);
+  return `#${dr.toString(16).padStart(2, '0')}${dg.toString(16).padStart(2, '0')}${db.toString(16).padStart(2, '0')}`;
+}
+
 export interface ThemeColors {
   primary: string;
   tint: string;
@@ -74,17 +89,24 @@ export function ThemeProvider({ themeId: initialThemeId, children }: ThemeProvid
 
   const colors: AppColors = isDark ? DarkColors : LightColors;
 
+  // Résolution dark mode : utiliser les variantes sombres si disponibles,
+  // sinon fallback programmatique (assombrir le tint light)
+  const resolvedPrimary = isDark && theme.primaryDark ? theme.primaryDark : theme.primary;
+  const resolvedTint = isDark
+    ? (theme.tintDark ?? darkenColor(theme.tint))
+    : theme.tint;
+
   const value = useMemo<ThemeColors>(
     () => ({
-      primary: theme.primary,
-      tint: theme.tint,
+      primary: resolvedPrimary,
+      tint: resolvedTint,
       setThemeId,
       colors,
       isDark,
       darkModePreference,
       setDarkModePreference,
     }),
-    [theme.primary, theme.tint, colors, isDark, darkModePreference, setDarkModePreference],
+    [resolvedPrimary, resolvedTint, colors, isDark, darkModePreference, setDarkModePreference],
   );
 
   return (

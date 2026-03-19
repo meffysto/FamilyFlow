@@ -2,11 +2,14 @@
  * setup.tsx — Onboarding wizard (multi-step)
  *
  * Step 1: Welcome
- * Step 2: Parents (count + name + avatar)
- * Step 3: Children (count + name + birthdate + avatar)
- * Step 4: Vault path (VaultPicker)
- * Step 5: Template packs (optional)
- * Step 6: Recap + create vault
+ * Step 2: Feature intro — "Votre quotidien, simplifié"
+ * Step 3: Feature intro — "Suivez la santé de vos enfants"
+ * Step 4: Feature intro — "Toute la famille participe"
+ * Step 5: Parents (count + name + avatar)
+ * Step 6: Children (count + name + birthdate + avatar)
+ * Step 7: Vault path (VaultPicker)
+ * Step 8: Template packs (optional)
+ * Step 9: Recap + create vault
  */
 
 import { useState, useCallback } from 'react';
@@ -24,6 +27,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { VaultPicker } from '../components/VaultPicker';
 import { useVault } from '../contexts/VaultContext';
 import * as SecureStore from 'expo-secure-store';
@@ -31,10 +35,34 @@ import { VaultManager } from '../lib/vault';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { TEMPLATE_PACKS, DEFAULT_SELECTED_PACKS } from '../lib/vault-templates';
 import { useHelp } from '../contexts/HelpContext';
+import { Spacing, Radius } from '../constants/spacing';
+import { FontSize, FontWeight, LineHeight } from '../constants/typography';
+import { LightColors } from '../constants/colors';
 
 const PARENT_AVATARS = ['👨', '👩', '👨‍💻', '👩‍💻', '🧔', '👱‍♀️', '🧑', '👤'];
 const CHILD_AVATARS = ['👶', '🧒', '👦', '👧', '🍼', '🐣', '🎒', '👼'];
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 9;
+
+// Étapes 2-4 : écrans de présentation des features
+const FIRST_SETUP_STEP = 5; // Première étape de configuration (parents)
+
+const FEATURE_SLIDES = [
+  {
+    emojis: ['🍽️', '🧹', '🛒'],
+    title: 'Votre quotidien, simplifié',
+    subtitle: 'Planifiez les repas, répartissez les tâches, gérez les courses',
+  },
+  {
+    emojis: ['👶', '📅', '💊'],
+    title: 'Suivez la santé de vos enfants',
+    subtitle: 'Biberon, couches, sommeil, rendez-vous — tout est noté',
+  },
+  {
+    emojis: ['🎮', '🏆', '⭐'],
+    title: 'Toute la famille participe',
+    subtitle: 'Chaque membre a son profil, les enfants gagnent des points',
+  },
+];
 
 interface ParentData {
   name: string;
@@ -50,7 +78,7 @@ interface ChildData {
 export default function SetupScreen() {
   const router = useRouter();
   const { setVaultPath } = useVault();
-  const { primary, tint } = useThemeColors();
+  const { primary, tint, colors } = useThemeColors();
   const { markTemplateInstalled } = useHelp();
 
   const [step, setStep] = useState(1);
@@ -140,11 +168,17 @@ export default function SetupScreen() {
 
   // --- Navigation ---
   const canGoNext = (): boolean => {
-    if (step === 2) return parents.every((p) => p.name.trim().length > 0);
-    if (step === 3) return childCount === 0 || children.every((c) => c.name.trim().length > 0 && isValidBirthdate(c.birthdate));
-    if (step === 4) return vaultPath.length > 0;
+    if (step === 5) return parents.every((p) => p.name.trim().length > 0);
+    if (step === 6) return childCount === 0 || children.every((c) => c.name.trim().length > 0 && isValidBirthdate(c.birthdate));
+    if (step === 7) return vaultPath.length > 0;
     return true;
   };
+
+  /** Sauter les écrans d'intro pour aller directement à la config */
+  const skipIntro = () => setStep(FIRST_SETUP_STEP);
+
+  /** Est-ce un écran d'intro feature (2, 3, 4) ? */
+  const isFeatureStep = step >= 2 && step <= 4;
 
   const goNext = () => {
     if (step < TOTAL_STEPS && canGoNext()) setStep(step + 1);
@@ -191,6 +225,72 @@ export default function SetupScreen() {
   }, [vaultPath, parents, children, selectedPacks, setVaultPath, router, markTemplateInstalled]);
 
   // --- Render steps ---
+  /** Rendu d'un écran de présentation feature (étapes 2, 3, 4) */
+  const renderFeatureSlide = (slideIndex: number) => {
+    const slide = FEATURE_SLIDES[slideIndex];
+    return (
+      <View style={s.stepContent}>
+        {/* Bouton Passer en haut à droite */}
+        <View style={s.skipRow}>
+          <TouchableOpacity
+            style={s.skipIntroBtn}
+            onPress={skipIntro}
+            activeOpacity={0.6}
+          >
+            <Text style={[s.skipIntroText, { color: primary }]}>Passer</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Hero emojis */}
+        <Animated.View
+          entering={FadeInDown.delay(100).duration(500).springify()}
+          style={s.featureHeroEmojis}
+        >
+          {slide.emojis.map((emoji, i) => (
+            <Animated.Text
+              key={i}
+              entering={FadeInDown.delay(200 + i * 120).duration(400).springify()}
+              style={s.featureHeroEmoji}
+            >
+              {emoji}
+            </Animated.Text>
+          ))}
+        </Animated.View>
+
+        {/* Titre */}
+        <Animated.Text
+          entering={FadeInDown.delay(500).duration(400)}
+          style={[s.featureSlideTitle, { color: colors.text }]}
+        >
+          {slide.title}
+        </Animated.Text>
+
+        {/* Sous-texte */}
+        <Animated.Text
+          entering={FadeInDown.delay(600).duration(400)}
+          style={[s.featureSlideSubtitle, { color: colors.textMuted }]}
+        >
+          {slide.subtitle}
+        </Animated.Text>
+
+        {/* Dots de pagination */}
+        <View style={s.featureDots}>
+          {FEATURE_SLIDES.map((_, i) => (
+            <View
+              key={i}
+              style={[
+                s.featureDot,
+                i === slideIndex
+                  ? { backgroundColor: primary, width: 24 }
+                  : { backgroundColor: colors.border },
+              ]}
+            />
+          ))}
+        </View>
+      </View>
+    );
+  };
+
   const renderStep = () => {
     switch (step) {
       case 1:
@@ -219,7 +319,15 @@ export default function SetupScreen() {
           </View>
         );
 
+      // Écrans de présentation des features
       case 2:
+        return renderFeatureSlide(0);
+      case 3:
+        return renderFeatureSlide(1);
+      case 4:
+        return renderFeatureSlide(2);
+
+      case 5:
         return (
           <View style={s.stepContent}>
             <Text style={s.stepTitle}>👨‍👩‍👧‍👦 Les parents</Text>
@@ -267,7 +375,7 @@ export default function SetupScreen() {
           </View>
         );
 
-      case 3:
+      case 6:
         return (
           <View style={s.stepContent}>
             <Text style={s.stepTitle}>👶 Les enfants</Text>
@@ -346,7 +454,7 @@ export default function SetupScreen() {
           </View>
         );
 
-      case 4:
+      case 7:
         return (
           <View style={s.stepContent}>
             <Text style={s.stepTitle}>📁 Emplacement du vault</Text>
@@ -363,13 +471,13 @@ export default function SetupScreen() {
               onPathSelected={(path) => {
                 setVaultPathLocal(path);
                 // Auto-advance to templates step
-                setTimeout(() => setStep(5), 300);
+                setTimeout(() => setStep(8), 300);
               }}
             />
           </View>
         );
 
-      case 5: {
+      case 8: {
         const visiblePacks = TEMPLATE_PACKS.filter(
           (p) => !p.requiresChildren || childCount > 0
         );
@@ -415,7 +523,7 @@ export default function SetupScreen() {
         );
       }
 
-      case 6:
+      case 9:
         return (
           <View style={s.stepContent}>
             <Text style={s.stepTitle}>✨ Récapitulatif</Text>
@@ -490,13 +598,22 @@ export default function SetupScreen() {
         style={s.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        {/* Progress bar */}
-        <View style={s.progressContainer}>
-          <View style={s.progressBar}>
-            <View style={[s.progressFill, { width: `${(step / TOTAL_STEPS) * 100}%`, backgroundColor: primary }]} />
+        {/* Progress bar — masquée pendant l'intro features, montre uniquement les étapes de config */}
+        {step >= FIRST_SETUP_STEP ? (
+          <View style={s.progressContainer}>
+            <View style={s.progressBar}>
+              <View style={[s.progressFill, {
+                width: `${((step - FIRST_SETUP_STEP + 1) / (TOTAL_STEPS - FIRST_SETUP_STEP + 1)) * 100}%`,
+                backgroundColor: primary,
+              }]} />
+            </View>
+            <Text style={s.progressText}>
+              Étape {step - FIRST_SETUP_STEP + 1}/{TOTAL_STEPS - FIRST_SETUP_STEP + 1}
+            </Text>
           </View>
-          <Text style={s.progressText}>Étape {step}/{TOTAL_STEPS}</Text>
-        </View>
+        ) : (
+          <View style={s.progressContainer} />
+        )}
 
         {/* Scrollable content */}
         <ScrollView
@@ -518,14 +635,14 @@ export default function SetupScreen() {
             <View style={s.navSpacer} />
           )}
 
-          {step === 5 ? (
+          {step === 8 ? (
             // Template step: "Passer" + "Suivant"
             <View style={s.templateNav}>
               <TouchableOpacity
                 style={s.navSkip}
                 onPress={() => {
                   setSelectedPacks(new Set());
-                  setStep(6);
+                  setStep(9);
                 }}
               >
                 <Text style={s.navSkipText}>Passer</Text>
@@ -596,6 +713,56 @@ const s = StyleSheet.create({
 
   // Step content
   stepContent: { gap: 16, alignItems: 'stretch' },
+
+  // Feature intro slides (steps 2-4)
+  skipRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  skipIntroBtn: {
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing['2xl'],
+  },
+  skipIntroText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+  },
+  featureHeroEmojis: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: Spacing['3xl'],
+    marginTop: Spacing['6xl'],
+    marginBottom: Spacing['5xl'],
+  },
+  featureHeroEmoji: {
+    fontSize: 56,
+  },
+  featureSlideTitle: {
+    fontSize: FontSize.display,
+    fontWeight: FontWeight.heavy,
+    textAlign: 'center',
+    marginBottom: Spacing.md,
+  },
+  featureSlideSubtitle: {
+    fontSize: FontSize.lg,
+    textAlign: 'center',
+    lineHeight: LineHeight.loose,
+    paddingHorizontal: Spacing['2xl'],
+    marginBottom: Spacing['5xl'],
+  },
+  featureDots: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: Spacing.md,
+    marginTop: Spacing['3xl'],
+  },
+  featureDot: {
+    height: 8,
+    width: 8,
+    borderRadius: Radius.full,
+  },
 
   // Step 1 — Welcome
   logo: { fontSize: 64, textAlign: 'center' },

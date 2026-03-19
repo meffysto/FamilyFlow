@@ -490,6 +490,13 @@ export function categorizeIngredient(name: string): string {
   return '🛒 Autres';
 }
 
+/** Liste canonique des catégories de courses (dérivée de CATEGORY_MAP + extras) */
+export const COURSE_CATEGORIES: string[] = [
+  ...CATEGORY_MAP.map(([, label]) => label),
+  '🧹 Entretien',
+  '🛒 Autres',
+];
+
 /** Group ingredients by shopping category */
 export function groupByCategory(ingredients: AppIngredient[]): Record<string, AppIngredient[]> {
   const groups: Record<string, AppIngredient[]> = {};

@@ -42,6 +42,7 @@ import {
 } from '../../lib/budget';
 import { formatDateForDisplay } from '../../lib/parser';
 import { DateInput } from '../../components/ui/DateInput';
+import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { ReceiptReview } from '../../components/ReceiptReview';
 import { StockUpdateReview } from '../../components/StockUpdateReview';
 import type { StockUpdateAction } from '../../components/StockUpdateReview';
@@ -54,6 +55,10 @@ import type { BudgetCategory, BudgetEntry } from '../../lib/types';
 import { useParentalControls } from '../../contexts/ParentalControlsContext';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
+import { Spacing, Radius } from '../../constants/spacing';
+import { FontSize, FontWeight } from '../../constants/typography';
+import { Shadows } from '../../constants/shadows';
+import { SwipeToDelete } from '../../components/SwipeToDelete';
 
 function prevMonth(month: string): string {
   const [y, m] = month.split('-').map(Number);
@@ -364,15 +369,14 @@ export default function BudgetScreen() {
 
       {/* Tabs */}
       <View style={[styles.tabBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        {([['resume', 'Résumé'], ['list', 'Dépenses']] as const).map(([id, label]) => (
-          <TouchableOpacity
-            key={id}
-            style={[styles.tabItem, tab === id && { borderBottomColor: primary }]}
-            onPress={() => setTab(id)}
-          >
-            <Text style={[styles.tabText, { color: tab === id ? primary : colors.textMuted }]}>{label}</Text>
-          </TouchableOpacity>
-        ))}
+        <SegmentedControl
+          segments={[
+            { id: 'resume', label: 'Résumé' },
+            { id: 'list', label: 'Dépenses' },
+          ]}
+          value={tab}
+          onChange={(id) => setTab(id as typeof tab)}
+        />
       </View>
 
       {tab === 'resume' ? (
@@ -464,36 +468,43 @@ export default function BudgetScreen() {
             renderItem={({ item }) => {
               const isSelected = selectedEntries.has(item.lineIndex);
               return (
-                <TouchableOpacity
-                  style={[
-                    styles.entryRow,
-                    { backgroundColor: isSelected ? primary + '15' : colors.card },
-                    isSelected && { borderColor: primary, borderWidth: 1 },
-                  ]}
-                  onPress={selectionMode ? () => toggleSelection(item.lineIndex) : undefined}
-                  onLongPress={selectionMode ? undefined : () => enterSelectionMode(item.lineIndex)}
-                  activeOpacity={0.7}
+                <SwipeToDelete
+                  onDelete={() => handleDelete(item)}
+                  skipConfirm
+                  disabled={selectionMode}
+                  hintId="budget"
                 >
-                  {selectionMode && (
-                    <View style={[
-                      styles.checkbox,
-                      { borderColor: isSelected ? primary : colors.border },
-                      isSelected && { backgroundColor: primary },
-                    ]}>
-                      {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                  <TouchableOpacity
+                    style={[
+                      styles.entryRow,
+                      { backgroundColor: isSelected ? primary + '15' : colors.card },
+                      isSelected && { borderColor: primary, borderWidth: 1 },
+                    ]}
+                    onPress={selectionMode ? () => toggleSelection(item.lineIndex) : undefined}
+                    onLongPress={selectionMode ? undefined : () => enterSelectionMode(item.lineIndex)}
+                    activeOpacity={0.7}
+                  >
+                    {selectionMode && (
+                      <View style={[
+                        styles.checkbox,
+                        { borderColor: isSelected ? primary : colors.border },
+                        isSelected && { backgroundColor: primary },
+                      ]}>
+                        {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                      </View>
+                    )}
+                    <View style={styles.entryLeft}>
+                      <Text style={[styles.entryCategory, { color: colors.text }]}>{item.category}</Text>
+                      <Text style={[styles.entryLabel, { color: colors.textMuted }]}>{item.label}</Text>
                     </View>
-                  )}
-                  <View style={styles.entryLeft}>
-                    <Text style={[styles.entryCategory, { color: colors.text }]}>{item.category}</Text>
-                    <Text style={[styles.entryLabel, { color: colors.textMuted }]}>{item.label}</Text>
-                  </View>
-                  <View style={styles.entryRight}>
-                    <Text style={[styles.entryAmount, { color: colors.text }]}>{formatAmount(item.amount)}</Text>
-                    <Text style={[styles.entryDate, { color: colors.textFaint }]}>
-                      {formatDateForDisplay(item.date)}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
+                    <View style={styles.entryRight}>
+                      <Text style={[styles.entryAmount, { color: colors.text }]}>{formatAmount(item.amount)}</Text>
+                      <Text style={[styles.entryDate, { color: colors.textFaint }]}>
+                        {formatDateForDisplay(item.date)}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                </SwipeToDelete>
               );
             }}
           />
@@ -623,91 +634,76 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingHorizontal: Spacing['3xl'],
+    paddingVertical: Radius['lg+'],
   },
-  title: { fontSize: 22, fontWeight: '800' },
+  title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: Spacing.md,
   },
   scanBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius['2xl'],
     borderWidth: 1,
     minWidth: 80,
     alignItems: 'center',
   },
-  scanBtnText: { fontWeight: '700', fontSize: 14 },
+  scanBtnText: { fontWeight: FontWeight.bold, fontSize: FontSize.sm },
   addBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.md,
+    borderRadius: Radius['2xl'],
   },
-  addBtnText: { fontWeight: '700', fontSize: 14 },
+  addBtnText: { fontWeight: FontWeight.bold, fontSize: FontSize.sm },
   monthNav: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    gap: 24,
+    paddingVertical: Spacing.xl,
+    gap: Spacing['4xl'],
   },
-  monthArrow: { fontSize: 22, fontWeight: '700' },
-  monthLabel: { fontSize: 17, fontWeight: '700' },
+  monthArrow: { fontSize: 22, fontWeight: FontWeight.bold },
+  monthLabel: { fontSize: FontSize.subtitle, fontWeight: FontWeight.bold },
   tabBar: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  tabItem: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  tabText: { fontSize: 15, fontWeight: '600' },
   scroll: { flex: 1 },
-  content: { padding: 16, paddingBottom: 90 },
+  content: { padding: Spacing['2xl'], paddingBottom: 90 },
 
   // Total card
   totalCard: {
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    borderRadius: Radius.xl,
+    padding: Spacing['3xl'],
+    marginBottom: Spacing['2xl'],
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    ...Shadows.sm,
   },
-  totalLabel: { fontSize: 14, fontWeight: '600', marginBottom: 4 },
-  totalAmount: { fontSize: 32, fontWeight: '800' },
-  totalBudget: { fontSize: 14, marginTop: 2, marginBottom: 12 },
-  totalBar: { width: '100%', height: 8, borderRadius: 4, overflow: 'hidden' },
-  totalBarFill: { height: '100%', borderRadius: 4 },
+  totalLabel: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold, marginBottom: Spacing.xs },
+  totalAmount: { fontSize: 32, fontWeight: FontWeight.heavy },
+  totalBudget: { fontSize: FontSize.sm, marginTop: 2, marginBottom: Spacing.xl },
+  totalBar: { width: '100%', height: 8, borderRadius: Spacing.xs, overflow: 'hidden' },
+  totalBarFill: { height: '100%', borderRadius: Spacing.xs },
 
   // Category cards
   catCard: {
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
+    borderRadius: Radius['lg+'],
+    padding: Radius['lg+'],
+    marginBottom: Spacing.lg,
+    ...Shadows.xs,
   },
   catHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: Spacing.md,
   },
-  catName: { fontSize: 15, fontWeight: '600' },
-  catAmount: { fontSize: 13, fontWeight: '600' },
+  catName: { fontSize: FontSize.body, fontWeight: FontWeight.semibold },
+  catAmount: { fontSize: FontSize.label, fontWeight: FontWeight.semibold },
   catBar: { height: 6, borderRadius: 3, overflow: 'hidden' },
   catBarFill: { height: '100%', borderRadius: 3 },
 
@@ -716,55 +712,51 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
+    borderRadius: Radius.lg,
+    padding: Radius['lg+'],
+    marginBottom: Spacing.md,
+    ...Shadows.xs,
   },
-  entryLeft: { flex: 1, marginRight: 12 },
-  entryCategory: { fontSize: 15, fontWeight: '600' },
-  entryLabel: { fontSize: 13, marginTop: 2 },
+  entryLeft: { flex: 1, marginRight: Spacing.xl },
+  entryCategory: { fontSize: FontSize.body, fontWeight: FontWeight.semibold },
+  entryLabel: { fontSize: FontSize.label, marginTop: 2 },
   entryRight: { alignItems: 'flex-end' },
-  entryAmount: { fontSize: 16, fontWeight: '700' },
-  entryDate: { fontSize: 12, marginTop: 2 },
+  entryAmount: { fontSize: FontSize.lg, fontWeight: FontWeight.bold },
+  entryDate: { fontSize: FontSize.caption, marginTop: 2 },
 
   emptyContainer: { alignItems: 'center', paddingVertical: 40 },
-  emptyText: { fontSize: 15 },
+  emptyText: { fontSize: FontSize.body },
 
   // Modal
   modalContainer: { flex: 1 },
-  dragHandleBar: { alignItems: 'center', paddingTop: 10, paddingBottom: 6 },
+  dragHandleBar: { alignItems: 'center', paddingTop: Spacing.lg, paddingBottom: Spacing.sm },
   dragHandle: { width: 40, height: 5, borderRadius: 3 },
-  modalContent: { padding: 20 },
-  modalTitle: { fontSize: 22, fontWeight: '800', marginBottom: 20 },
-  fieldLabel: { fontSize: 14, fontWeight: '600', marginBottom: 8, marginTop: 16 },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  modalContent: { padding: Spacing['3xl'] },
+  modalTitle: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy, marginBottom: Spacing['3xl'] },
+  fieldLabel: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold, marginBottom: Spacing.md, marginTop: Spacing['2xl'] },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md },
   chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: Radius['lg+'],
+    paddingVertical: Spacing.md,
+    borderRadius: Radius['2xl'],
     borderWidth: 1,
   },
-  chipText: { fontSize: 14, fontWeight: '600' },
+  chipText: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
   input: {
     borderWidth: 1,
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 16,
+    borderRadius: Radius.lg,
+    padding: Radius['lg+'],
+    fontSize: FontSize.lg,
   },
   submitBtn: {
-    borderRadius: 14,
-    padding: 16,
+    borderRadius: Radius['lg+'],
+    padding: Spacing['2xl'],
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: Spacing['4xl'],
   },
-  submitBtnText: { fontSize: 17, fontWeight: '700' },
-  cancelBtn: { alignItems: 'center', paddingVertical: 14 },
-  cancelBtnText: { fontSize: 15 },
+  submitBtnText: { fontSize: FontSize.subtitle, fontWeight: FontWeight.bold },
+  cancelBtn: { alignItems: 'center', paddingVertical: Radius['lg+'] },
+  cancelBtnText: { fontSize: FontSize.body },
   bottomPad: { height: 40 },
 
   // Sélection multiple
@@ -772,21 +764,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.lg,
     borderBottomWidth: 1,
   },
-  selectionCancel: { fontSize: 15, fontWeight: '600' },
-  selectionCount: { fontSize: 14, fontWeight: '600' },
-  selectionDelete: { fontSize: 15, fontWeight: '700' },
+  selectionCancel: { fontSize: FontSize.body, fontWeight: FontWeight.semibold },
+  selectionCount: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
+  selectionDelete: { fontSize: FontSize.body, fontWeight: FontWeight.bold },
   checkbox: {
     width: 24,
     height: 24,
-    borderRadius: 12,
+    borderRadius: Spacing.xl,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: Spacing.xl,
   },
-  checkmark: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  checkmark: { color: '#fff', fontSize: FontSize.sm, fontWeight: FontWeight.bold },
 });

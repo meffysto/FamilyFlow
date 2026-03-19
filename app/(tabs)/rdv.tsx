@@ -37,6 +37,7 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Chip } from '../../components/ui/Chip';
 import { MarkdownText } from '../../components/ui/MarkdownText';
+import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { EmptyState } from '../../components/EmptyState';
 import { RDVEditor } from '../../components/RDVEditor';
 import { DictaphoneRecorder } from '../../components/DictaphoneRecorder';
@@ -45,6 +46,9 @@ import { RDV } from '../../lib/types';
 import { useParentalControls } from '../../contexts/ParentalControlsContext';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
+import { Spacing, Radius } from '../../constants/spacing';
+import { FontSize, FontWeight } from '../../constants/typography';
+import { Shadows } from '../../constants/shadows';
 
 const CAL_PADDING = 16;
 const DAY_GAP = 4;
@@ -313,15 +317,14 @@ export default function RDVScreen() {
 
       {/* View mode tabs */}
       <View style={[styles.modeTabs, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        {(['liste', 'calendrier'] as ViewMode[]).map((mode) => (
-          <Chip
-            key={mode}
-            label={mode === 'liste' ? 'Liste' : 'Calendrier'}
-            emoji={mode === 'liste' ? '📋' : '🗓'}
-            selected={viewMode === mode}
-            onPress={() => setViewMode(mode)}
-          />
-        ))}
+        <SegmentedControl
+          segments={[
+            { id: 'liste', label: '📋 Liste' },
+            { id: 'calendrier', label: '🗓 Calendrier' },
+          ]}
+          value={viewMode}
+          onChange={(m) => setViewMode(m as ViewMode)}
+        />
       </View>
 
       {/* Search */}
@@ -509,45 +512,41 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingHorizontal: Spacing['3xl'],
+    paddingVertical: Spacing.xl,
   },
-  title: { fontSize: 22, fontWeight: '800' },
+  title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
   addBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 12,
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.lg,
     borderWidth: 1.5,
   },
-  addBtnText: { fontSize: 14, fontWeight: '700' },
+  addBtnText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
   searchContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.md,
   },
   searchInput: {
     height: 40,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    fontSize: 15,
+    borderRadius: Radius.base,
+    paddingHorizontal: Spacing.xl,
+    fontSize: FontSize.body,
     borderWidth: 1,
   },
   scroll: { flex: 1 },
-  content: { padding: 16, gap: 12, paddingBottom: 90 },
+  content: { padding: Spacing['2xl'], gap: Spacing.xl, paddingBottom: 90 },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginTop: 4,
-    marginBottom: 4,
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.xs,
   },
   rdvCard: {
     flexDirection: 'row',
-    borderRadius: 14,
+    borderRadius: Radius['lg+'],
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    ...Shadows.xs,
   },
   rdvCardPast: { opacity: 0.6 },
   rdvBorder: {
@@ -555,8 +554,8 @@ const styles = StyleSheet.create({
   },
   rdvContent: {
     flex: 1,
-    padding: 14,
-    gap: 4,
+    padding: Radius['lg+'],
+    gap: Spacing.xs,
   },
   rdvTopRow: {
     flexDirection: 'row',
@@ -564,45 +563,45 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   rdvDate: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
   },
   rdvType: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
   },
   rdvDetail: {
-    fontSize: 13,
+    fontSize: FontSize.label,
   },
   badge: {
-    paddingHorizontal: 8,
+    paddingHorizontal: Spacing.md,
     paddingVertical: 2,
-    borderRadius: 8,
+    borderRadius: Spacing.md,
   },
-  badgeText: { fontSize: 11, fontWeight: '600' },
+  badgeText: { fontSize: 11, fontWeight: FontWeight.semibold },
   togglePast: {
     alignSelf: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    marginTop: 8,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing['2xl'],
+    marginTop: Spacing.md,
   },
   togglePastText: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.semibold,
   },
   emptyCard: {
-    borderRadius: 14,
-    padding: 24,
+    borderRadius: Radius['lg+'],
+    padding: Spacing['4xl'],
     alignItems: 'center',
   },
   emptyText: {
-    fontSize: 14,
+    fontSize: FontSize.sm,
   },
   swipeActions: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    marginBottom: 12,
-    borderRadius: 14,
+    marginBottom: Spacing.xl,
+    borderRadius: Radius['lg+'],
     overflow: 'hidden',
     gap: 2,
   },
@@ -610,92 +609,92 @@ const styles = StyleSheet.create({
     width: 76,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 4,
-    paddingVertical: 12,
+    gap: Spacing.xs,
+    paddingVertical: Spacing.xl,
   },
   swipeActionEmoji: {
     fontSize: 22,
   },
   swipeActionLabel: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
   },
   modeTabs: {
-    flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 8,
-    gap: 8, borderBottomWidth: 1,
+    paddingHorizontal: Spacing['2xl'], paddingVertical: Spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  monthNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  monthNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing['2xl'] },
   monthArrow: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
   monthArrowText: { fontSize: 24, fontWeight: '300' },
-  monthLabel: { fontSize: 18, fontWeight: '700' },
-  weekdayRow: { flexDirection: 'row', gap: DAY_GAP, marginBottom: 8 },
+  monthLabel: { fontSize: FontSize.heading, fontWeight: FontWeight.bold },
+  weekdayRow: { flexDirection: 'row', gap: DAY_GAP, marginBottom: Spacing.md },
   weekdayCell: { width: CELL_SIZE, alignItems: 'center' },
-  weekdayText: { fontSize: 12, fontWeight: '600' },
+  weekdayText: { fontSize: FontSize.caption, fontWeight: FontWeight.semibold },
   calGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: DAY_GAP },
-  calCell: { width: CELL_SIZE, height: CELL_SIZE, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
-  calDayNum: { fontSize: 13, fontWeight: '600' },
+  calCell: { width: CELL_SIZE, height: CELL_SIZE, borderRadius: Radius.base, justifyContent: 'center', alignItems: 'center' },
+  calDayNum: { fontSize: FontSize.label, fontWeight: FontWeight.semibold },
   calDots: { flexDirection: 'row', gap: 2, marginTop: 2 },
   calDot: { width: 5, height: 5, borderRadius: 3 },
   dayModalOverlay: { flex: 1 },
-  dayModalContent: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, gap: 10, paddingBottom: 40 },
-  dayModalTitle: { fontSize: 17, fontWeight: '800', marginBottom: 4 },
-  dayModalRdv: { borderRadius: 12, padding: 14, gap: 4 },
-  dayModalRdvText: { fontSize: 15, fontWeight: '600' },
-  dayModalRdvTime: { fontSize: 13 },
+  dayModalContent: { borderTopLeftRadius: Radius['2xl'], borderTopRightRadius: Radius['2xl'], padding: Spacing['3xl'], gap: Spacing.lg, paddingBottom: 40 },
+  dayModalTitle: { fontSize: FontSize.subtitle, fontWeight: FontWeight.heavy, marginBottom: Spacing.xs },
+  dayModalRdv: { borderRadius: Radius.lg, padding: Radius['lg+'], gap: Spacing.xs },
+  dayModalRdvText: { fontSize: FontSize.body, fontWeight: FontWeight.semibold },
+  dayModalRdvTime: { fontSize: FontSize.label },
   questionsBlock: {
-    marginTop: 10,
-    paddingTop: 10,
+    marginTop: Spacing.lg,
+    paddingTop: Spacing.lg,
     borderTopWidth: 1,
-    gap: 4,
+    gap: Spacing.xs,
   },
   questionsTitle: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
     marginBottom: 2,
   },
   questionItem: {
-    fontSize: 14,
+    fontSize: FontSize.sm,
     lineHeight: 20,
   },
   reponsesBlock: {
-    marginTop: 10,
-    paddingTop: 10,
+    marginTop: Spacing.lg,
+    paddingTop: Spacing.lg,
     borderTopWidth: 1,
-    gap: 4,
-    borderRadius: 8,
-    padding: 10,
-    marginLeft: -4,
-    marginRight: -4,
+    gap: Spacing.xs,
+    borderRadius: Radius.md,
+    padding: Spacing.lg,
+    marginLeft: -Spacing.xs,
+    marginRight: -Spacing.xs,
   },
   reponsesTitle: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
     marginBottom: 2,
   },
   reponsesText: {
-    fontSize: 14,
+    fontSize: FontSize.sm,
     lineHeight: 20,
   },
   dictaphoneBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    marginTop: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 10,
+    gap: Spacing.sm,
+    marginTop: Spacing.lg,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing['2xl'],
+    borderRadius: Radius.base,
     borderWidth: 1.5,
   },
   dictaphoneBtnEmoji: {
-    fontSize: 16,
+    fontSize: FontSize.lg,
   },
   dictaphoneBtnText: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.bold,
   },
 });

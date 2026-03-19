@@ -23,7 +23,9 @@ export interface ThemeConfig {
   label: string;
   emoji: string;
   primary: string;         // main accent color
-  tint: string;            // light background for badges, chips (always light)
+  primaryDark?: string;    // dark mode variant (si primary trop sombre sur fond #0F172A)
+  tint: string;            // light background for badges, chips (light mode)
+  tintDark?: string;       // dark mode variant (sombre, saturé, basse opacité)
   secondary: string;       // complementary color for loot packs (can be dark)
   packEmoji: string;       // booster pack closed
   packOpenEmoji: string;   // booster pack opening
@@ -38,6 +40,7 @@ export const THEMES: Record<ProfileTheme, ThemeConfig> = {
     emoji: '🏎️',
     primary: '#DC2626',
     tint: '#FEE2E2',
+    tintDark: '#3B1A1A',
     secondary: '#1F2937',
     packEmoji: '🏎️',
     packOpenEmoji: '🏁',
@@ -50,6 +53,7 @@ export const THEMES: Record<ProfileTheme, ThemeConfig> = {
     emoji: '🌿',
     primary: '#059669',
     tint: '#D1FAE5',
+    tintDark: '#1A3B2A',
     secondary: '#D1FAE5',
     packEmoji: '🌿',
     packOpenEmoji: '🌸',
@@ -62,6 +66,7 @@ export const THEMES: Record<ProfileTheme, ThemeConfig> = {
     emoji: '🚒',
     primary: '#EA580C',
     tint: '#FEF3C7',
+    tintDark: '#3B2A10',
     secondary: '#FEF3C7',
     packEmoji: '🚒',
     packOpenEmoji: '🔥',
@@ -74,6 +79,7 @@ export const THEMES: Record<ProfileTheme, ThemeConfig> = {
     emoji: '🦄',
     primary: '#EC4899',
     tint: '#FCE7F3',
+    tintDark: '#3B1A2E',
     secondary: '#FCE7F3',
     packEmoji: '🦄',
     packOpenEmoji: '✨',
@@ -86,6 +92,7 @@ export const THEMES: Record<ProfileTheme, ThemeConfig> = {
     emoji: '🚀',
     primary: '#2563EB',
     tint: '#DBEAFE',
+    tintDark: '#1A2A4B',
     secondary: '#1E3A5F',
     packEmoji: '🚀',
     packOpenEmoji: '🌟',
@@ -97,7 +104,9 @@ export const THEMES: Record<ProfileTheme, ThemeConfig> = {
     label: 'Pirates',
     emoji: '🏴‍☠️',
     primary: '#78350F',
+    primaryDark: '#D97706',
     tint: '#FDE68A',
+    tintDark: '#3B2F10',
     secondary: '#FDE68A',
     packEmoji: '🏴‍☠️',
     packOpenEmoji: '💰',
@@ -110,6 +119,7 @@ export const THEMES: Record<ProfileTheme, ThemeConfig> = {
     emoji: '🦕',
     primary: '#16A34A',
     tint: '#DCFCE7',
+    tintDark: '#1A3520',
     secondary: '#DCFCE7',
     packEmoji: '🦕',
     packOpenEmoji: '🦖',
@@ -122,6 +132,7 @@ export const THEMES: Record<ProfileTheme, ThemeConfig> = {
     emoji: '🔴',
     primary: '#E3350D',
     tint: '#FEE2E2',
+    tintDark: '#3B1A1A',
     secondary: '#1A1A2E',
     packEmoji: '🔴',
     packOpenEmoji: '⚡',
@@ -134,6 +145,7 @@ export const THEMES: Record<ProfileTheme, ThemeConfig> = {
     emoji: '🎁',
     primary: '#7C3AED',
     tint: '#EDE9FE',
+    tintDark: '#2A1A4B',
     secondary: '#EDE9FE',
     packEmoji: '🎁',
     packOpenEmoji: '✨',
