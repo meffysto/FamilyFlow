@@ -2,12 +2,14 @@
  * (tabs)/_layout.tsx — Tab bar configuration + profile picker modal
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Tabs, useRouter, useSegments } from 'expo-router';
-import { View, Text, Modal, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Modal, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { FAB, FABAction } from '../../components/FAB';
 import { GlassView } from '../../components/ui/GlassView';
 
@@ -51,9 +53,63 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
   isVacationActive: boolean;
 }) {
   const { primary, colors, isDark } = useThemeColors();
+  const { hasPin, authenticate, verifyPin, biometryAvailable } = useAuth();
   const router = useRouter();
   const segments = useSegments();
   const showPicker = profiles.length > 0 && !activeProfile;
+
+  // ── PIN parent pour changement de profil enfant → adulte ──
+  const [pendingProfileId, setPendingProfileId] = useState<string | null>(null);
+  const [pinInput, setPinInput] = useState('');
+  const [pinError, setPinError] = useState('');
+
+  const handleProfileSelect = useCallback(async (profileId: string) => {
+    const target = profiles.find((p) => p.id === profileId);
+    const currentIsChild = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
+    const targetIsAdult = target?.role === 'adulte';
+
+    // Si un enfant tente d'accéder à un profil adulte ET qu'un PIN est configuré
+    if (currentIsChild && targetIsAdult && hasPin) {
+      // Tenter la biométrie d'abord
+      if (biometryAvailable) {
+        const ok = await authenticate();
+        if (ok) {
+          setActiveProfile(profileId);
+          return;
+        }
+      }
+      // Fallback : demander le PIN
+      setPendingProfileId(profileId);
+      setPinInput('');
+      setPinError('');
+      return;
+    }
+
+    // Sinon : changement direct
+    setActiveProfile(profileId);
+  }, [profiles, activeProfile, hasPin, biometryAvailable, authenticate, setActiveProfile]);
+
+  const handlePinConfirm = useCallback(() => {
+    if (pinInput.length !== 4) return;
+    const ok = verifyPin(pinInput);
+    if (ok) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (pendingProfileId) setActiveProfile(pendingProfileId);
+      setPendingProfileId(null);
+      setPinInput('');
+      setPinError('');
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setPinError('PIN incorrect');
+      setPinInput('');
+    }
+  }, [pinInput, verifyPin, pendingProfileId, setActiveProfile]);
+
+  const cancelPinPrompt = useCallback(() => {
+    setPendingProfileId(null);
+    setPinInput('');
+    setPinError('');
+  }, []);
 
   // FAB uniquement sur le dashboard (évite de bloquer les boutons des autres écrans)
   const activeTab = segments[segments.length - 1];
@@ -179,7 +235,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
                 <TouchableOpacity
                   key={p.id}
                   style={[pickerStyles.profileBtn, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}
-                  onPress={() => setActiveProfile(p.id)}
+                  onPress={() => handleProfileSelect(p.id)}
                   activeOpacity={0.7}
                 >
                   <Text style={pickerStyles.avatar}>{p.avatar}</Text>
@@ -190,6 +246,86 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
                 </TouchableOpacity>
               ))}
             </View>
+          </GlassView>
+        </View>
+      </Modal>
+
+      {/* PIN prompt modal — enfant → adulte */}
+      <Modal visible={!!pendingProfileId} animationType="fade" transparent statusBarTranslucent>
+        <View style={pickerStyles.overlay}>
+          <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+          <GlassView style={pickerStyles.card} intensity={50} borderRadius={24}>
+            <Text style={[pickerStyles.title, { color: colors.text }]}>🔒 PIN parent</Text>
+            <Text style={[pickerStyles.subtitle, { color: colors.textMuted }]}>
+              Entre le PIN pour accéder au profil adulte
+            </Text>
+
+            <TextInput
+              style={[pinPromptStyles.input, {
+                backgroundColor: colors.inputBg,
+                borderColor: pinError ? colors.error : colors.inputBorder,
+                color: colors.text,
+              }]}
+              value={pinInput}
+              onChangeText={(t) => {
+                setPinError('');
+                const cleaned = t.replace(/[^0-9]/g, '').slice(0, 4);
+                setPinInput(cleaned);
+                // Auto-submit quand 4 chiffres
+                if (cleaned.length === 4) {
+                  setTimeout(() => {
+                    const ok = verifyPin(cleaned);
+                    if (ok) {
+                      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                      if (pendingProfileId) setActiveProfile(pendingProfileId);
+                      setPendingProfileId(null);
+                      setPinInput('');
+                      setPinError('');
+                    } else {
+                      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                      setPinError('PIN incorrect');
+                      setPinInput('');
+                    }
+                  }, 100);
+                }
+              }}
+              keyboardType="number-pad"
+              maxLength={4}
+              secureTextEntry
+              placeholder="• • • •"
+              placeholderTextColor={colors.textFaint}
+              textAlign="center"
+              autoFocus
+              accessibilityLabel="PIN parent"
+            />
+
+            {/* Dots visuels */}
+            <View style={pinPromptStyles.dots}>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    pinPromptStyles.dot,
+                    {
+                      backgroundColor: pinError
+                        ? colors.error
+                        : i < pinInput.length ? primary : colors.border,
+                      borderColor: pinError
+                        ? colors.error
+                        : i < pinInput.length ? primary : colors.border,
+                    },
+                  ]}
+                />
+              ))}
+            </View>
+
+            {pinError ? (
+              <Text style={[pinPromptStyles.error, { color: colors.error }]}>{pinError}</Text>
+            ) : null}
+
+            <TouchableOpacity onPress={cancelPinPrompt} activeOpacity={0.7} style={pinPromptStyles.cancelBtn}>
+              <Text style={[pinPromptStyles.cancelText, { color: colors.textMuted }]}>Annuler</Text>
+            </TouchableOpacity>
           </GlassView>
         </View>
       </Modal>
@@ -263,6 +399,45 @@ const pickerStyles = StyleSheet.create({
   role: {
     fontSize: 12,
     marginTop: 2,
+  },
+});
+
+const pinPromptStyles = StyleSheet.create({
+  input: {
+    borderWidth: 1.5,
+    borderRadius: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    fontSize: 28,
+    fontWeight: '700',
+    letterSpacing: 12,
+    width: 180,
+    textAlign: 'center',
+  },
+  dots: {
+    flexDirection: 'row',
+    gap: 14,
+    marginTop: 8,
+  },
+  dot: {
+    width: 12,
+    height: 12,
+    borderRadius: 9999,
+    borderWidth: 2,
+  },
+  error: {
+    fontSize: 13,
+    fontWeight: '500',
+    marginTop: 4,
+  },
+  cancelBtn: {
+    marginTop: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  cancelText: {
+    fontSize: 15,
+    fontWeight: '600',
   },
 });
 

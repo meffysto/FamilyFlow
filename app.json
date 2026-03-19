@@ -19,7 +19,8 @@
         "NSFileProviderPresenceUsageDescription": "FamilyFlow utilise iCloud pour synchroniser votre vault Obsidian.",
         "NSCameraUsageDescription": "FamilyFlow utilise la caméra pour prendre la photo du jour.",
         "NSPhotoLibraryUsageDescription": "FamilyFlow accède à vos photos pour la photo du jour.",
-        "UIFileSharingEnabled": true,
+        "NSFaceIDUsageDescription": "Family Vault utilise Face ID pour protéger l'accès à l'application.",
+        "UIFileSharingEnabled": false,
         "LSSupportsOpeningDocumentsInPlace": true
       }
     },
@@ -46,6 +47,12 @@
       "./plugins/with-widget",
       "expo-router",
       "expo-secure-store",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Family Vault utilise Face ID pour protéger l'accès à l'application."
+        }
+      ],
       [
         "expo-file-system",
         {

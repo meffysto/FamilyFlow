@@ -12,6 +12,7 @@ import { DateInput } from '../ui/DateInput';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { useAuth } from '../../contexts/AuthContext';
 import type { Gender } from '../../lib/types';
 
 const CHILD_AVATARS = ['👶', '🧒', '👦', '👧', '🍼', '🐣', '🎒', '👼'];
@@ -38,6 +39,7 @@ export function SettingsProfiles({
   convertToBorn,
 }: SettingsProfilesProps) {
   const { primary, tint, setThemeId, colors } = useThemeColors();
+  const auth = useAuth();
   const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
   const themeDropdownAnim = useRef(new Animated.Value(0)).current;
 
@@ -148,7 +150,15 @@ export function SettingsProfiles({
               <TouchableOpacity
                 key={p.id}
                 style={[styles.switchBtn, { backgroundColor: colors.bg }, activeProfile?.id === p.id && { backgroundColor: tint, borderColor: primary }]}
-                onPress={() => setActiveProfile(p.id)}
+                onPress={async () => {
+                  const currentIsChild = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
+                  const targetIsAdult = p.role === 'adulte';
+                  if (currentIsChild && targetIsAdult && auth.hasPin) {
+                    const ok = await auth.authenticate();
+                    if (!ok) return;
+                  }
+                  setActiveProfile(p.id);
+                }}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: activeProfile?.id === p.id }}
                 accessibilityLabel={`Profil ${p.name}`}

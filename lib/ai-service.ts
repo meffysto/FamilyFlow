@@ -336,7 +336,7 @@ function prepareAnonymized(
   const systemPrompt = anonymize(rawPrompt, anonMap);
 
   if (__DEV__) {
-    console.log('🔒 [ANON] Mapping: ', anonMap.forward.size, 'entrées');
+    if (__DEV__) console.log('🔒 [ANON] Mapping: ', anonMap.forward.size, 'entrées');
   }
 
   return { systemPrompt, anonMap };
@@ -445,7 +445,7 @@ export async function askVault(
   ], anonMap);
 
   if (__DEV__) {
-    console.log('🔒 [ANON] Question envoyée (anonymisée)');
+    if (__DEV__) console.log('🔒 [ANON] Question envoyée (anonymisée)');
   }
 
   const resp = await callClaude(config, systemPrompt, messages);
@@ -453,7 +453,7 @@ export async function askVault(
 
   const deanoText = deanonymize(resp.text, anonMap);
   if (__DEV__) {
-    console.log('🔓 [ANON] Réponse reçue, longueur:', deanoText.length);
+    if (__DEV__) console.log('🔓 [ANON] Réponse reçue, longueur:', deanoText.length);
   }
 
   return { text: deanoText };

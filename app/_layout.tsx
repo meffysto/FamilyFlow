@@ -24,6 +24,8 @@ import { ThemeProvider } from '../contexts/ThemeContext';
 import { AIProvider } from '../contexts/AIContext';
 import { ParentalControlsProvider } from '../contexts/ParentalControlsContext';
 import { HelpProvider } from '../contexts/HelpContext';
+import { AuthProvider, useAuth } from '../contexts/AuthContext';
+import { LockScreen } from '../components/LockScreen';
 
 // ─── Error Boundary ──────────────────────────────────────────────────────────
 
@@ -70,6 +72,16 @@ class AppErrorBoundary extends React.Component<
   }
 }
 
+// ─── Auth lock overlay ──────────────────────────────────────────────────────
+// Affiché par-dessus tout quand l'app est verrouillée.
+// Doit être à l'intérieur de AuthProvider ET ThemeProvider.
+
+function AuthLockOverlay() {
+  const { isAuthenticated, isAuthEnabled, isReady } = useAuth();
+  if (!isReady || !isAuthEnabled || isAuthenticated) return null;
+  return <LockScreen />;
+}
+
 // ─── Deep link ──────────────────────────────────────────────────────────────
 // expo-router gère les deep links nativement via useLinking.native.js :
 // - Cold start : ExpoLinking.getLinkingURL() → initialState sur NavigationContainer
@@ -100,6 +112,7 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <VaultProvider>
+            <AuthProvider>
             <ThemeProvider>
               <AIProvider>
               <HelpProvider>
@@ -116,11 +129,13 @@ export default function RootLayout() {
                     <ActivityIndicator size="large" color="#7C3AED" />
                   </View>
                 )}
+                <AuthLockOverlay />
               </ToastProvider>
               </ParentalControlsProvider>
               </HelpProvider>
               </AIProvider>
             </ThemeProvider>
+            </AuthProvider>
           </VaultProvider>
         </GestureHandlerRootView>
       </SafeAreaProvider>

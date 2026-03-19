@@ -28,9 +28,11 @@ import { SettingsVacation } from '../../components/settings/SettingsVacation';
 import { SettingsProfiles } from '../../components/settings/SettingsProfiles';
 import { SettingsGamification } from '../../components/settings/SettingsGamification';
 import { SettingsAI } from '../../components/settings/SettingsAI';
+import { useAuth } from '../../contexts/AuthContext';
 import { SettingsParentalControls } from '../../components/settings/SettingsParentalControls';
 import { SettingsHelp } from '../../components/settings/SettingsHelp';
 import { SettingsZen, ZenConfig, DEFAULT_ZEN_CONFIG } from '../../components/settings/SettingsZen';
+import { SettingsAuth } from '../../components/settings/SettingsAuth';
 
 const TELEGRAM_TOKEN_KEY = 'telegram_token';
 const TELEGRAM_CHAT_KEY = 'telegram_chat_id';
@@ -40,7 +42,7 @@ type SectionId =
   | 'profiles' | 'appearance'
   | 'notifications' | 'zen' | 'vacation' | 'gamification'
   | 'ai' | 'telegram' | 'grandparents'
-  | 'parental' | 'vault' | 'help';
+  | 'auth' | 'parental' | 'vault' | 'help';
 
 export default function SettingsScreen() {
   const {
@@ -91,6 +93,10 @@ export default function SettingsScreen() {
   const telegramStatus = telegramToken ? 'Connecté' : 'Non configuré';
 
   const { isConfigured: aiConfigured, model: aiModel } = useAI();
+  const { isAuthEnabled: authEnabled, biometryType } = useAuth();
+  const authSubtitle = authEnabled
+    ? `Activé${biometryType === 'face' ? ' · Face ID' : biometryType === 'fingerprint' ? ' · Touch ID' : ''}`
+    : 'Désactivé';
 
   // Titre du modal selon la section active
   const sectionTitles: Record<SectionId, string> = {
@@ -103,6 +109,7 @@ export default function SettingsScreen() {
     ai: 'Intelligence artificielle',
     telegram: 'Telegram',
     grandparents: 'Grands-parents',
+    auth: 'Sécurité',
     parental: 'Contrôle parental',
     vault: 'Vault Obsidian',
     help: 'Aide et découverte',
@@ -195,11 +202,17 @@ export default function SettingsScreen() {
           <>
             <SettingsSectionHeader label="Avancé" />
             <SettingsRow
+              emoji="🛡️"
+              title="Sécurité"
+              subtitle={authSubtitle}
+              onPress={() => setActiveSection('auth')}
+              isFirst
+            />
+            <SettingsRow
               emoji="🔒"
               title="Contrôle parental"
               subtitle="Visibilité données enfants"
               onPress={() => setActiveSection('parental')}
-              isFirst
             />
             <SettingsRow
               emoji="📂"
@@ -289,6 +302,7 @@ export default function SettingsScreen() {
                 memories={memories} photoDates={photoDates} getPhotoUri={getPhotoUri}
               />
             )}
+            {activeSection === 'auth' && <SettingsAuth />}
             {activeSection === 'parental' && <SettingsParentalControls />}
             {activeSection === 'vault' && (
               <SettingsVault vaultPath={vaultPath} onChangeVault={() => {

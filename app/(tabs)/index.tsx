@@ -25,6 +25,7 @@ import { useVault } from '../../contexts/VaultContext';
 import { useGamification } from '../../hooks/useGamification';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { DashboardCard } from '../../components/DashboardCard';
 import { RDVEditor } from '../../components/RDVEditor';
 import RecipeViewer from '../../components/RecipeViewer';
@@ -101,20 +102,20 @@ const ALL_SECTIONS: SectionPref[] = [
   { id: 'rdvs',       label: 'Rendez-vous',             emoji: '📅', visible: true,  priority: 'medium' },
   { id: 'photos',     label: 'Photo du jour',           emoji: '📸', visible: true,  priority: 'medium' },
   { id: 'budget',     label: 'Budget',                   emoji: '💰', visible: true,  priority: 'medium' },
-  // Gamification — visible par défaut
-  { id: 'weeklyStats',  label: 'Stats semaine',            emoji: '📊', visible: true,  priority: 'medium' },
-  { id: 'lootProgress', label: 'Progression',            emoji: '🎁', visible: true,  priority: 'medium' },
-  { id: 'rewards',    label: 'Récompenses actives',     emoji: '🏆', visible: true,  priority: 'medium' },
-  { id: 'defis',      label: 'Défis familiaux',         emoji: '🏅', visible: true,  priority: 'medium' },
-  { id: 'gratitude',  label: 'Gratitude',               emoji: '🙏', visible: true,  priority: 'medium' },
-  { id: 'wishlist',   label: 'Souhaits',                emoji: '🎁', visible: true,  priority: 'medium' },
-  { id: 'anniversaires', label: 'Anniversaires',         emoji: '🎂', visible: true,  priority: 'medium' },
-  { id: 'onThisDay',    label: 'Il y a 1 an…',           emoji: '🕰️', visible: true,  priority: 'medium' },
+  // Gamification & secondaires — masqués par défaut (découverte progressive)
+  { id: 'weeklyStats',  label: 'Stats semaine',            emoji: '📊', visible: false, priority: 'medium' },
+  { id: 'lootProgress', label: 'Progression',            emoji: '🎁', visible: false, priority: 'medium' },
+  { id: 'rewards',    label: 'Récompenses actives',     emoji: '🏆', visible: false, priority: 'medium' },
+  { id: 'defis',      label: 'Défis familiaux',         emoji: '🏅', visible: false, priority: 'medium' },
+  { id: 'gratitude',  label: 'Gratitude',               emoji: '🙏', visible: false, priority: 'medium' },
+  { id: 'wishlist',   label: 'Souhaits',                emoji: '🎁', visible: false, priority: 'medium' },
+  { id: 'anniversaires', label: 'Anniversaires',         emoji: '🎂', visible: false, priority: 'medium' },
+  { id: 'onThisDay',    label: 'Il y a 1 an…',           emoji: '🕰️', visible: false, priority: 'medium' },
 
-  { id: 'quicknotifs',label: 'Notifications rapides',   emoji: '📤', visible: true,  priority: 'low' },
-  { id: 'recipes',    label: 'Idée recette',             emoji: '📖', visible: true,  priority: 'low' },
-  { id: 'nightMode',  label: 'Mode nuit bébé',           emoji: '🌙', visible: true,  priority: 'medium' },
-  { id: 'leaderboard',label: 'Classement',              emoji: '🥇', visible: true,  priority: 'low' },
+  { id: 'quicknotifs',label: 'Notifications rapides',   emoji: '📤', visible: false, priority: 'low' },
+  { id: 'recipes',    label: 'Idée recette',             emoji: '📖', visible: false, priority: 'low' },
+  { id: 'nightMode',  label: 'Mode nuit bébé',           emoji: '🌙', visible: false, priority: 'medium' },
+  { id: 'leaderboard',label: 'Classement',              emoji: '🥇', visible: false, priority: 'low' },
   // aiAssistant retiré — intégré dans la carte Suggestions
 ];
 
@@ -190,6 +191,7 @@ export default function DashboardScreen() {
   const activeRewards = processActiveRewards(gamiData?.activeRewards ?? []);
 
   const { completeTask } = useGamification({ vault, notifPrefs });
+  const auth = useAuth();
 
   const [refreshing, setRefreshing] = useState(false);
   const [isSendingRecap, setIsSendingRecap] = useState(false);
@@ -1011,7 +1013,13 @@ export default function DashboardScreen() {
                     { backgroundColor: colors.cardAlt },
                     p.id === activeProfile?.id && { borderColor: primary, borderWidth: 2 },
                   ]}
-                  onPress={() => {
+                  onPress={async () => {
+                    const currentIsChild = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
+                    const targetIsAdult = p.role === 'adulte';
+                    if (currentIsChild && targetIsAdult && auth.hasPin) {
+                      const ok = await auth.authenticate();
+                      if (!ok) return; // PIN sera géré via LockScreen
+                    }
                     setActiveProfile(p.id);
                     setProfilePickerVisible(false);
                   }}

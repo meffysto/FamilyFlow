@@ -1027,15 +1027,10 @@ export function useVaultInternal(): VaultState {
           // Silencieux — fallback vers la photo originale
         });
       }
-
-      // Full reload to ensure consistency (file is already on disk)
-      if (vaultRef.current) {
-        await loadVaultData(vaultRef.current);
-      }
     } finally {
       busyRef.current = false;
     }
-  }, [loadVaultData]);
+  }, []);
 
   const getPhotoUri = useCallback((enfantName: string, date: string): string | null => {
     if (!vaultRef.current) return null;
@@ -1125,12 +1120,21 @@ export function useVaultInternal(): VaultState {
         }
       }
 
-      await vaultRef.current.writeFile(FAMILLE_FILE, lines.join('\n'));
-      await loadVaultData(vaultRef.current);
+      const newFamilleContent = lines.join('\n');
+      await vaultRef.current.writeFile(FAMILLE_FILE, newFamilleContent);
+
+      // Mise à jour optimiste du state local
+      try {
+        const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
+        setProfiles(mergeProfiles(newFamilleContent, gamiContent));
+      } catch {
+        // Fallback : mise à jour partielle
+        setProfiles(prev => prev.map(p => p.id === profileId ? { ...p, ...updates } : p));
+      }
     } catch (e) {
       throw new Error(`updateProfile: ${e}`);
     }
-  }, [loadVaultData]);
+  }, []);
 
   const deleteProfile = useCallback(async (profileId: string) => {
     if (!vaultRef.current) return;
@@ -1156,11 +1160,13 @@ export function useVaultInternal(): VaultState {
       // Nettoyer les lignes vides consécutives
       const cleaned = lines.join('\n').replace(/\n{3,}/g, '\n\n');
       await vaultRef.current.writeFile(FAMILLE_FILE, cleaned);
-      await loadVaultData(vaultRef.current);
+
+      // Mise à jour optimiste du state local
+      setProfiles(prev => prev.filter(p => p.id !== profileId));
     } catch (e) {
       throw new Error(`deleteProfile: ${e}`);
     }
-  }, [loadVaultData]);
+  }, []);
 
   const updateStockQuantity = useCallback(async (lineIndex: number, newQuantity: number) => {
     if (!vaultRef.current) return;
@@ -1239,13 +1245,15 @@ export function useVaultInternal(): VaultState {
         lines.splice(insertIdx + 1, 0, newRow);
       }
 
-      await vaultRef.current.writeFile(STOCK_FILE, lines.join('\n'));
-      // Rechargement complet pour recalculer les lineIndex
-      await loadVaultData(vaultRef.current);
+      const newContent = lines.join('\n');
+      await vaultRef.current.writeFile(STOCK_FILE, newContent);
+      // Re-parser le fichier localement pour recalculer les lineIndex
+      setStock(parseStock(newContent));
+      setStockSections(parseStockSections(newContent));
     } catch (e) {
       throw new Error(`addStockItem: ${e}`);
     }
-  }, [loadVaultData]);
+  }, []);
 
   const deleteStockItem = useCallback(async (lineIndex: number) => {
     if (!vaultRef.current) return;
@@ -1254,13 +1262,16 @@ export function useVaultInternal(): VaultState {
       const lines = content.split('\n');
       if (lineIndex >= 0 && lineIndex < lines.length) {
         lines.splice(lineIndex, 1);
-        await vaultRef.current.writeFile(STOCK_FILE, lines.join('\n'));
-        await loadVaultData(vaultRef.current);
+        const newContent = lines.join('\n');
+        await vaultRef.current.writeFile(STOCK_FILE, newContent);
+        // Re-parser le fichier localement pour recalculer les lineIndex
+        setStock(parseStock(newContent));
+        setStockSections(parseStockSections(newContent));
       }
     } catch (e) {
       throw new Error(`deleteStockItem: ${e}`);
     }
-  }, [loadVaultData]);
+  }, []);
 
   const updateStockItem = useCallback(async (lineIndex: number, updates: Partial<StockItem>) => {
     if (!vaultRef.current) return;
@@ -1439,8 +1450,16 @@ export function useVaultInternal(): VaultState {
       else if (/every\s+month/i.test(recurrence)) section = 'Mensuel';
     }
     await vaultRef.current.appendTask(targetFile, section, taskText);
-    await loadVaultData(vaultRef.current);
-  }, [loadVaultData]);
+    // Re-parser le fichier modifié pour recalculer les lineIndex
+    const updatedContent = await vaultRef.current.readFile(targetFile);
+    const updatedTasks = parseTaskFile(targetFile, updatedContent);
+    setTasks(prev => {
+      // Remplacer les tâches de ce fichier par les nouvelles
+      const otherTasks = prev.filter(t => t.sourceFile !== targetFile);
+      return [...otherTasks, ...updatedTasks];
+    });
+    setTimeout(triggerWidgetRefresh, 0);
+  }, [triggerWidgetRefresh]);
 
   const editTask = useCallback(async (task: Task, updates: { text?: string; dueDate?: string; recurrence?: string; targetFile?: string }) => {
     if (!vaultRef.current) return;
@@ -1484,6 +1503,22 @@ export function useVaultInternal(): VaultState {
       }
       // Ajouter dans le nouveau fichier/section
       await vaultRef.current.appendTask(newTargetFile, newSection, taskLine);
+
+      // Re-parser les fichiers modifiés pour recalculer les lineIndex
+      const filesToReparse = new Set([task.sourceFile, newTargetFile]);
+      const vault = vaultRef.current;
+      const reparsed = await Promise.all(
+        [...filesToReparse].map(async (f) => {
+          try {
+            const c = await vault.readFile(f);
+            return parseTaskFile(f, c);
+          } catch { return [] as Task[]; }
+        })
+      );
+      setTasks(prev => {
+        const otherTasks = prev.filter(t => !filesToReparse.has(t.sourceFile));
+        return [...otherTasks, ...reparsed.flat()];
+      });
     } else {
       // Remplacement en place
       const content = await vaultRef.current.readFile(task.sourceFile);
@@ -1492,9 +1527,15 @@ export function useVaultInternal(): VaultState {
         lines[task.lineIndex] = fullLine;
         await vaultRef.current.writeFile(task.sourceFile, lines.join('\n'));
       }
+
+      // Mise à jour optimiste du state local
+      setTasks(prev => prev.map(t => {
+        if (t.sourceFile !== task.sourceFile || t.lineIndex !== task.lineIndex) return t;
+        return { ...t, text: newText, recurrence: newRecurrence || undefined, dueDate: newDueDate || undefined };
+      }));
     }
-    await loadVaultData(vaultRef.current);
-  }, [loadVaultData]);
+    setTimeout(triggerWidgetRefresh, 0);
+  }, [triggerWidgetRefresh]);
 
   const deleteTask = useCallback(async (sourceFile: string, lineIndex: number) => {
     if (!vaultRef.current) return;
@@ -1502,16 +1543,29 @@ export function useVaultInternal(): VaultState {
     const lines = content.split('\n');
     if (lineIndex >= 0 && lineIndex < lines.length) {
       lines.splice(lineIndex, 1);
-      await vaultRef.current.writeFile(sourceFile, lines.join('\n'));
-      await loadVaultData(vaultRef.current);
+      const newContent = lines.join('\n');
+      await vaultRef.current.writeFile(sourceFile, newContent);
+      // Re-parser le fichier pour recalculer les lineIndex
+      const updatedTasks = parseTaskFile(sourceFile, newContent);
+      setTasks(prev => {
+        const otherTasks = prev.filter(t => t.sourceFile !== sourceFile);
+        return [...otherTasks, ...updatedTasks];
+      });
+      // Aussi mettre à jour menageTasks si c'est le fichier ménage
+      if (sourceFile === MENAGE_FILE) {
+        setMenageTasks(parseMénage(newContent, MENAGE_FILE));
+      }
+      setTimeout(triggerWidgetRefresh, 0);
     }
-  }, [loadVaultData]);
+  }, [triggerWidgetRefresh]);
 
   const addCourseItem = useCallback(async (text: string, section?: string) => {
     if (!vaultRef.current) return;
     await vaultRef.current.appendTask(COURSES_FILE, section ?? null, text);
-    await loadVaultData(vaultRef.current);
-  }, [loadVaultData]);
+    // Re-parser le fichier pour recalculer les lineIndex
+    const newContent = await vaultRef.current.readFile(COURSES_FILE);
+    setCourses(parseCourses(newContent, COURSES_FILE));
+  }, []);
 
   const toggleCourseItem = useCallback(async (item: CourseItem, completed: boolean) => {
     if (!vaultRef.current) return;
@@ -1630,14 +1684,16 @@ export function useVaultInternal(): VaultState {
         added++;
       }
 
-      await vaultRef.current.writeFile(COURSES_FILE, lines.join('\n'));
-      await loadVaultData(vaultRef.current);
+      const newContent = lines.join('\n');
+      await vaultRef.current.writeFile(COURSES_FILE, newContent);
+      // Re-parser le fichier localement
+      setCourses(parseCourses(newContent, COURSES_FILE));
     } catch (e) {
       throw new Error(`mergeCourseIngredients: ${e}`);
     }
 
     return { added, merged };
-  }, [loadVaultData]);
+  }, []);
 
   const clearCompletedCourses = useCallback(async () => {
     if (!vaultRef.current) return;
@@ -1645,12 +1701,14 @@ export function useVaultInternal(): VaultState {
       const content = await vaultRef.current.readFile(COURSES_FILE);
       const lines = content.split('\n');
       const cleaned = lines.filter((l) => !l.match(/^-\s+\[x\]/i));
-      await vaultRef.current.writeFile(COURSES_FILE, cleaned.join('\n'));
-      await loadVaultData(vaultRef.current);
+      const newContent = cleaned.join('\n');
+      await vaultRef.current.writeFile(COURSES_FILE, newContent);
+      // Re-parser localement
+      setCourses(parseCourses(newContent, COURSES_FILE));
     } catch (e) {
       throw new Error(`clearCompletedCourses: ${e}`);
     }
-  }, [loadVaultData]);
+  }, []);
 
   const updateMemory = useCallback(async (oldMemory: Memory, newMemory: Omit<Memory, 'enfant' | 'enfantId'>) => {
     if (!vaultRef.current) return;
@@ -1771,8 +1829,19 @@ export function useVaultInternal(): VaultState {
     await vault.ensureDir(`${RECIPES_DIR}/${category}`);
     await vault.writeFile(destPath, content);
     await vault.deleteFile(sourcePath);
-    await loadVaultData(vault);
-  }, [loadVaultData]);
+
+    // Mise à jour optimiste : ajouter la recette déplacée au state
+    try {
+      const recipe = parseRecipe(destPath, content);
+      if (recipe) {
+        setRecipes(prev => [...prev, recipe].sort((a, b) => a.title.localeCompare(b.title, 'fr')));
+      }
+    } catch {
+      // Fallback : recharger toutes les recettes
+      recipesLoadedRef.current = false;
+      await loadRecipes(true);
+    }
+  }, [loadRecipes]);
 
   // ─── Recipe Favorites (per-profile, persisted in SecureStore) ────────────
 
@@ -1910,10 +1979,31 @@ export function useVaultInternal(): VaultState {
     }
     await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
 
-    // Remove this upgrade from the list and reload
+    // Remove this upgrade from the list
     setAgeUpgrades((prev) => prev.filter((u) => u.profileId !== upgrade.profileId));
-    await loadVaultData(vault);
-  }, [profiles, loadVaultData]);
+
+    // Mise à jour optimiste des profils (ageCategory mis à jour)
+    try {
+      const newFamilleContent = lines.join('\n');
+      const gamiContent = await vault.readFile(GAMI_FILE);
+      setProfiles(mergeProfiles(newFamilleContent, gamiContent));
+    } catch {
+      // Fallback partiel
+      setProfiles(prev => prev.map(p =>
+        p.id === upgrade.profileId ? { ...p, ageCategory: upgrade.newCategory } : p
+      ));
+    }
+
+    // Re-parser les tâches du fichier régénéré
+    try {
+      const newTaskContent = await vault.readFile(tasksPath);
+      const newTasks = parseTaskFile(tasksPath, newTaskContent);
+      setTasks(prev => {
+        const otherTasks = prev.filter(t => t.sourceFile !== tasksPath);
+        return [...otherTasks, ...newTasks];
+      });
+    } catch { /* non-critique */ }
+  }, [profiles]);
 
   /** Dismiss an age upgrade notification without applying */
   const dismissAgeUpgrade = useCallback((profileId: string) => {
@@ -1923,14 +2013,28 @@ export function useVaultInternal(): VaultState {
   const addChild = useCallback(async (child: { name: string; avatar: string; birthdate: string; propre?: boolean; gender?: Gender; statut?: 'grossesse'; dateTerme?: string }) => {
     if (!vaultRef.current) return;
     await vaultRef.current.addChild(child);
-    await loadVaultData(vaultRef.current);
-  }, [loadVaultData]);
+
+    // Mise à jour optimiste des profils et gamification
+    try {
+      const familleContent = await vaultRef.current.readFile(FAMILLE_FILE);
+      const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
+      const merged = mergeProfiles(familleContent, gamiContent);
+      setProfiles(merged);
+      setGamiData(parseGamification(gamiContent));
+    } catch { /* non-critique, sync au prochain foreground */ }
+  }, []);
 
   const convertToBorn = useCallback(async (profileId: string, birthdate: string) => {
     if (!vaultRef.current) return;
     await vaultRef.current.convertToBorn(profileId, birthdate);
-    await loadVaultData(vaultRef.current);
-  }, [loadVaultData]);
+
+    // Mise à jour optimiste des profils
+    try {
+      const familleContent = await vaultRef.current.readFile(FAMILLE_FILE);
+      const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
+      setProfiles(mergeProfiles(familleContent, gamiContent));
+    } catch { /* non-critique, sync au prochain foreground */ }
+  }, []);
 
   // ─── Budget CRUD ────────────────────────────────────────────────────────
 

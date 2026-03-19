@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Family Vault — Politique de confidentialit&eacute;</title>
+  <title>Family Vault &mdash; Politique de confidentialit&eacute;</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -56,6 +56,14 @@
       margin: 16px 0;
     }
     .highlight p { margin-bottom: 0; }
+    .warning {
+      background: #FEF3C7;
+      border-left: 3px solid #F59E0B;
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin: 16px 0;
+    }
+    .warning p { margin-bottom: 0; }
     footer {
       text-align: center;
       color: #9CA3AF;
@@ -67,45 +75,79 @@
 <body>
   <div class="container">
     <h1>Politique de confidentialit&eacute;</h1>
-    <p class="subtitle">Derni&egrave;re mise &agrave; jour : 6 mars 2026</p>
+    <p class="subtitle">Derni&egrave;re mise &agrave; jour : 19 mars 2026</p>
 
     <div class="highlight">
-      <p><strong>Family Vault est une application familiale priv&eacute;e.</strong> Aucune donn&eacute;e personnelle n'est collect&eacute;e, stock&eacute;e ou transmise &agrave; des serveurs externes.</p>
+      <p><strong>Family Vault est une application familiale locale.</strong> Par d&eacute;faut, toutes vos donn&eacute;es restent sur votre appareil. Certaines fonctionnalit&eacute;s optionnelles (assistant IA, notifications Telegram) transmettent des donn&eacute;es &agrave; des services tiers, uniquement si vous les activez.</p>
     </div>
 
-    <h2>Donn&eacute;es stock&eacute;es</h2>
+    <h2>Donn&eacute;es stock&eacute;es localement</h2>
     <p>Toutes les donn&eacute;es de l'application sont stock&eacute;es <strong>localement sur votre appareil</strong>, dans votre vault Obsidian :</p>
     <ul>
       <li>Profils famille (noms, avatars, dates de naissance)</li>
       <li>T&acirc;ches et listes de courses</li>
-      <li>Journal b&eacute;b&eacute; (alimentation, couches, sommeil)</li>
-      <li>Rendez-vous m&eacute;dicaux</li>
+      <li>Journal b&eacute;b&eacute; (alimentation, couches, sommeil, m&eacute;dicaments)</li>
+      <li>Rendez-vous m&eacute;dicaux et notes de consultation</li>
+      <li>Donn&eacute;es de sant&eacute; (carnet de sant&eacute;, croissance)</li>
+      <li>Photos, souvenirs et notes</li>
       <li>Points de gamification et historique</li>
     </ul>
+    <p>Les cl&eacute;s API et tokens sont stock&eacute;s dans le <strong>stockage s&eacute;curis&eacute;</strong> de votre appareil (Keychain iOS / Keystore Android), chiffr&eacute; au niveau mat&eacute;riel.</p>
 
     <h2>Synchronisation</h2>
-    <p>La synchronisation de vos donn&eacute;es entre appareils est g&eacute;r&eacute;e par <strong>Obsidian Sync</strong> ou <strong>Syncthing</strong>, des outils tiers que vous configurez vous-m&ecirc;me. Family Vault ne g&egrave;re pas directement la synchronisation.</p>
+    <p>La synchronisation entre appareils est g&eacute;r&eacute;e par <strong>iCloud Drive</strong>, <strong>Obsidian Sync</strong> ou <strong>Syncthing</strong>, des outils tiers que vous configurez vous-m&ecirc;me. Family Vault ne g&egrave;re pas directement la synchronisation.</p>
 
-    <h2>Notifications Telegram</h2>
+    <h2>Assistant IA (fonctionnalit&eacute; optionnelle)</h2>
+    <div class="warning">
+      <p>Cette fonctionnalit&eacute; est <strong>d&eacute;sactiv&eacute;e par d&eacute;faut</strong> et n&eacute;cessite que vous fournissiez votre propre cl&eacute; API Anthropic.</p>
+    </div>
+    <p>Si vous activez l'assistant IA :</p>
+    <ul>
+      <li>Un <strong>r&eacute;sum&eacute; anonymis&eacute;</strong> de vos donn&eacute;es familiales est envoy&eacute; &agrave; l'API Anthropic (<code>api.anthropic.com</code>) pour r&eacute;pondre &agrave; vos questions</li>
+      <li>Avant envoi, toutes les donn&eacute;es personnelles (noms, m&eacute;decins, lieux, allergies, m&eacute;dicaments) sont <strong>remplac&eacute;es par des pseudonymes</strong>. La correspondance reste uniquement sur votre appareil.</li>
+      <li>Les r&eacute;ponses sont d&eacute;-anonymis&eacute;es localement avant affichage</li>
+      <li>La cl&eacute; API est envoy&eacute;e directement depuis votre appareil vers Anthropic (pas de serveur interm&eacute;diaire)</li>
+      <li>Anthropic est bas&eacute; aux &Eacute;tats-Unis &mdash; les donn&eacute;es transitent hors de l'Union europ&eacute;enne</li>
+    </ul>
+    <p>Vous pouvez d&eacute;sactiver cette fonctionnalit&eacute; &agrave; tout moment dans R&eacute;glages &gt; Intelligence artificielle.</p>
+
+    <h2>Notifications Telegram (fonctionnalit&eacute; optionnelle)</h2>
     <p>Si vous configurez les notifications Telegram :</p>
     <ul>
-      <li>Votre <strong>token de bot</strong> et <strong>chat ID</strong> sont stock&eacute;s dans le stockage s&eacute;curis&eacute; de votre appareil (Secure Store)</li>
-      <li>Les messages sont envoy&eacute;s directement &agrave; l'API Telegram depuis votre appareil</li>
+      <li>Votre <strong>token de bot</strong> et <strong>chat ID</strong> sont stock&eacute;s dans le stockage s&eacute;curis&eacute; de votre appareil</li>
+      <li>Les messages et photos sont envoy&eacute;s directement &agrave; l'API Telegram (<code>api.telegram.org</code>) depuis votre appareil</li>
+      <li>Les messages peuvent contenir des noms de membres de la famille et des r&eacute;sum&eacute;s de t&acirc;ches/repas</li>
       <li>Aucun serveur interm&eacute;diaire n'est utilis&eacute;</li>
     </ul>
 
-    <h2>Collecte de donn&eacute;es</h2>
-    <p>Family Vault <strong>ne collecte aucune donn&eacute;e</strong> :</p>
+    <h2>Collecte de donn&eacute;es par Family Vault</h2>
+    <p>Family Vault <strong>ne collecte aucune donn&eacute;e</strong> pour son propre compte :</p>
     <ul>
       <li>Pas d'analytics ni de tracking</li>
       <li>Pas de publicit&eacute;</li>
       <li>Pas de cookies</li>
-      <li>Pas de transmission &agrave; des tiers</li>
       <li>Pas de compte utilisateur ni d'inscription</li>
+      <li>Pas de serveur propri&eacute;taire</li>
     </ul>
 
     <h2>Donn&eacute;es des enfants</h2>
-    <p>L'application permet de suivre des informations sur les enfants (journal b&eacute;b&eacute;, rendez-vous m&eacute;dicaux). Ces donn&eacute;es restent <strong>enti&egrave;rement sur votre appareil</strong> et ne sont jamais transmises &agrave; l'ext&eacute;rieur.</p>
+    <p>L'application permet de suivre des informations sensibles sur les enfants (journal b&eacute;b&eacute;, rendez-vous m&eacute;dicaux, carnet de sant&eacute;). Ces donn&eacute;es :</p>
+    <ul>
+      <li>Restent <strong>sur votre appareil</strong> par d&eacute;faut</li>
+      <li>Sont prot&eacute;g&eacute;es par le verrouillage biom&eacute;trique/PIN de l'application</li>
+      <li>Ne sont <strong>jamais envoy&eacute;es &agrave; l'IA sans anonymisation</strong> pr&eacute;alable si l'assistant est activ&eacute;</li>
+      <li>Un contr&ocirc;le parental int&eacute;gr&eacute; restreint l'acc&egrave;s des profils enfants aux donn&eacute;es sensibles</li>
+    </ul>
+
+    <h2>Vos droits (RGPD)</h2>
+    <p>Vos donn&eacute;es &eacute;tant stock&eacute;es localement, vous en avez le contr&ocirc;le total :</p>
+    <ul>
+      <li><strong>Acc&egrave;s</strong> : toutes vos donn&eacute;es sont des fichiers Markdown lisibles dans votre vault</li>
+      <li><strong>Rectification</strong> : vous pouvez modifier vos fichiers directement</li>
+      <li><strong>Effacement</strong> : supprimez vos fichiers ou utilisez R&eacute;glages &gt; Supprimer les donn&eacute;es</li>
+      <li><strong>Portabilit&eacute;</strong> : vos donn&eacute;es sont au format Markdown standard, lisible par tout &eacute;diteur</li>
+    </ul>
+    <p>Pour les donn&eacute;es transmises aux services tiers (Anthropic, Telegram), consultez leurs politiques de confidentialit&eacute; respectives.</p>
 
     <h2>Contact</h2>
     <p>Pour toute question concernant cette politique de confidentialit&eacute;, contactez : <strong>familyvault@proton.me</strong></p>
