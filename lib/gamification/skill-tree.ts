@@ -12,7 +12,13 @@ export type SkillCategoryId =
   | 'menage'
   | 'social'
   | 'organisation'
-  | 'responsabilite';
+  | 'responsabilite'
+  | 'motricite_globale'
+  | 'motricite_fine'
+  | 'langage'
+  | 'proprete';
+
+export type SkillType = 'jalon' | 'pratique';
 
 export type AgeBracketId =
   | '0-1'
@@ -28,6 +34,7 @@ export interface SkillCategory {
   id: SkillCategoryId;
   label: string;
   emoji: string;
+  color: string;
 }
 
 export interface AgeBracket {
@@ -44,6 +51,11 @@ export interface SkillDefinition {
   categoryId: SkillCategoryId;
   ageBracketId: AgeBracketId;
   order: number;
+  type: SkillType;
+  /** Âge attendu en mois (jalons 0-3 ans uniquement) */
+  expectedMonths?: number;
+  /** Drapeau rouge si absent à cet âge (en mois) */
+  redFlagMonths?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -51,13 +63,26 @@ export interface SkillDefinition {
 // ---------------------------------------------------------------------------
 
 export const SKILL_CATEGORIES: SkillCategory[] = [
-  { id: 'autonomie', label: 'Autonomie personnelle', emoji: '👕' },
-  { id: 'cuisine', label: 'Cuisine / alimentation', emoji: '🍳' },
-  { id: 'menage', label: 'Ménage / responsabilités', emoji: '🧹' },
-  { id: 'social', label: 'Social / communication', emoji: '🗣️' },
-  { id: 'organisation', label: 'Organisation / scolaire', emoji: '📋' },
-  { id: 'responsabilite', label: 'Responsabilité / finances', emoji: '💰' },
+  // Catégories petite enfance (0-3 ans) — jalons développementaux
+  { id: 'motricite_globale', label: 'Motricité globale', emoji: '🏃', color: '#EF4444' },
+  { id: 'motricite_fine', label: 'Motricité fine', emoji: '✋', color: '#F97316' },
+  { id: 'langage', label: 'Langage / communication', emoji: '💬', color: '#06B6D4' },
+  { id: 'proprete', label: 'Propreté / autonomie', emoji: '🚿', color: '#14B8A6' },
+  // Catégories transversales (tous âges)
+  { id: 'autonomie', label: 'Autonomie personnelle', emoji: '👕', color: '#6366F1' },
+  { id: 'cuisine', label: 'Cuisine / alimentation', emoji: '🍳', color: '#F59E0B' },
+  { id: 'menage', label: 'Ménage / responsabilités', emoji: '🧹', color: '#10B981' },
+  { id: 'social', label: 'Social / émotionnel', emoji: '🗣️', color: '#EC4899' },
+  { id: 'organisation', label: 'Organisation / scolaire', emoji: '📋', color: '#3B82F6' },
+  { id: 'responsabilite', label: 'Responsabilité / finances', emoji: '💰', color: '#8B5CF6' },
 ];
+
+/** Catégories pertinentes par tranche d'âge */
+export function getCategoriesForBracket(bracketId: AgeBracketId): SkillCategory[] {
+  const skills = getSkillsForBracket(bracketId);
+  const catIds = new Set(skills.map((s) => s.categoryId));
+  return SKILL_CATEGORIES.filter((c) => catIds.has(c.id));
+}
 
 // ---------------------------------------------------------------------------
 // Tranches d'âge
@@ -98,6 +123,9 @@ function skill(
   ageBracketId: AgeBracketId,
   order: number,
   label: string,
+  type: SkillType = 'pratique',
+  expectedMonths?: number,
+  redFlagMonths?: number,
 ): SkillDefinition {
   return {
     id: `${categoryId}_${ageBracketId}_${order}`,
@@ -105,6 +133,9 @@ function skill(
     categoryId,
     ageBracketId,
     order,
+    type,
+    expectedMonths,
+    redFlagMonths,
   };
 }
 
@@ -114,115 +145,178 @@ function skill(
 
 export const SKILL_TREE: SkillDefinition[] = [
   // =========================================================================
-  // 0-1 an (Bébé)
+  // 0-1 an (Bébé) — Jalons développementaux + pratique
   // =========================================================================
 
-  // autonomie
-  skill('autonomie', '0-1', 1, 'Tient sa tétine / son biberon avec aide'),
-  skill('autonomie', '0-1', 2, 'Tient son biberon seul'),
-  skill('autonomie', '0-1', 3, 'Commence à porter la cuillère à la bouche'),
-  skill('autonomie', '0-1', 4, 'Tend les bras pour aider à l\'habillage'),
+  // Motricité globale (jalons)
+  skill('motricite_globale', '0-1', 1, 'Soulève la tête sur le ventre', 'jalon', 2),
+  skill('motricite_globale', '0-1', 2, 'Tient sa tête droite', 'jalon', 3, 4),
+  skill('motricite_globale', '0-1', 3, 'Appui sur les avant-bras', 'jalon', 4),
+  skill('motricite_globale', '0-1', 4, 'Se retourne ventre-dos', 'jalon', 6, 8),
+  skill('motricite_globale', '0-1', 5, 'Tient assis avec appui', 'jalon', 7),
+  skill('motricite_globale', '0-1', 6, 'Tient assis sans appui', 'jalon', 9, 10),
+  skill('motricite_globale', '0-1', 7, 'Se déplace (rampe, 4 pattes)', 'jalon', 10),
+  skill('motricite_globale', '0-1', 8, 'Se met debout avec appui', 'jalon', 11, 12),
 
-  // cuisine
-  skill('cuisine', '0-1', 1, 'Tète / prend le biberon'),
-  skill('cuisine', '0-1', 2, 'Accepte les purées à la cuillère'),
-  skill('cuisine', '0-1', 3, 'Mange des morceaux fondants (DME)'),
-  skill('cuisine', '0-1', 4, 'Boit au gobelet avec aide'),
+  // Motricité fine (jalons)
+  skill('motricite_fine', '0-1', 1, 'Ouvre les mains, les observe', 'jalon', 3, 4),
+  skill('motricite_fine', '0-1', 2, 'Joue avec ses mains', 'jalon', 4),
+  skill('motricite_fine', '0-1', 3, 'Préhension palmaire volontaire', 'jalon', 5, 6),
+  skill('motricite_fine', '0-1', 4, 'Passe un objet d\'une main à l\'autre', 'jalon', 6),
+  skill('motricite_fine', '0-1', 5, 'Pince pouce-index inférieure', 'jalon', 9, 12),
+  skill('motricite_fine', '0-1', 6, 'Pince pouce-index fine', 'jalon', 12),
+  skill('motricite_fine', '0-1', 7, 'Lâcher volontaire d\'un objet', 'jalon', 12),
 
-  // menage
-  skill('menage', '0-1', 1, 'Attrape un objet qu\'on lui tend'),
-  skill('menage', '0-1', 2, 'Passe un objet d\'une main à l\'autre'),
-  skill('menage', '0-1', 3, 'Explore les objets du quotidien'),
-  skill('menage', '0-1', 4, 'Range un objet dans un contenant'),
+  // Langage (jalons)
+  skill('langage', '0-1', 1, 'Gazouille (sons de gorge)', 'jalon', 2),
+  skill('langage', '0-1', 2, 'Vocalise en réponse', 'jalon', 3, 4),
+  skill('langage', '0-1', 3, 'Babille (ba-ba, da-da)', 'jalon', 6, 9),
+  skill('langage', '0-1', 4, 'Babillage varié (mamama, papapa)', 'jalon', 9),
+  skill('langage', '0-1', 5, 'Réagit à son prénom', 'jalon', 9, 12),
+  skill('langage', '0-1', 6, 'Dit 2-3 mots (papa, mama, non)', 'jalon', 12),
+  skill('langage', '0-1', 7, 'Pointe du doigt', 'jalon', 12, 12),
 
-  // social
-  skill('social', '0-1', 1, 'Sourit en réponse'),
-  skill('social', '0-1', 2, 'Gazouille, babille'),
-  skill('social', '0-1', 3, 'Fait « coucou » de la main'),
-  skill('social', '0-1', 4, 'Pointe du doigt pour demander'),
+  // Social / émotionnel (jalons)
+  skill('social', '0-1', 1, 'Sourire social (en réponse)', 'jalon', 2, 3),
+  skill('social', '0-1', 2, 'Rit aux éclats', 'jalon', 4),
+  skill('social', '0-1', 3, 'Sourit aux visages familiers', 'jalon', 6),
+  skill('social', '0-1', 4, 'Angoisse du 8e mois', 'jalon', 8),
+  skill('social', '0-1', 5, 'Joue à « coucou-caché »', 'jalon', 9, 12),
+  skill('social', '0-1', 6, 'Imite les gestes simples', 'jalon', 9),
+  skill('social', '0-1', 7, 'Fait « au revoir » de la main', 'jalon', 12),
 
-  // organisation
-  skill('organisation', '0-1', 1, 'S\'endort avec un rituel'),
-  skill('organisation', '0-1', 2, 'Commence à différencier jour/nuit'),
-  skill('organisation', '0-1', 3, 'Participe au rituel du bain'),
-  skill('organisation', '0-1', 4, 'Montre des signes de fatigue reconnaissables'),
-
-  // responsabilite — aucune pour 0-1
-
-  // =========================================================================
-  // 1-2 ans (Tout-petit)
-  // =========================================================================
-
-  // autonomie
-  skill('autonomie', '1-2', 1, 'Enlève ses chaussettes / chapeau'),
-  skill('autonomie', '1-2', 2, 'Essaie d\'enfiler ses chaussures'),
-  skill('autonomie', '1-2', 3, 'Aide à retirer son manteau'),
-  skill('autonomie', '1-2', 4, 'Se lave les mains avec aide'),
-  skill('autonomie', '1-2', 5, 'Commence à signaler la couche sale'),
-
-  // cuisine
-  skill('cuisine', '1-2', 1, 'Mange seul à la cuillère'),
-  skill('cuisine', '1-2', 2, 'Boit au gobelet sans couvercle'),
-  skill('cuisine', '1-2', 3, 'Utilise une fourchette pour piquer'),
-  skill('cuisine', '1-2', 4, 'Commence à exprimer ses préférences'),
-
-  // menage
-  skill('menage', '1-2', 1, 'Met un objet dans la poubelle'),
-  skill('menage', '1-2', 2, 'Range un jouet dans son bac'),
-  skill('menage', '1-2', 3, 'Aide à essuyer une surface'),
-  skill('menage', '1-2', 4, 'Rapporte un objet à sa place'),
-
-  // social
-  skill('social', '1-2', 1, 'Dit quelques mots'),
-  skill('social', '1-2', 2, 'Montre ce qu\'il veut du doigt'),
-  skill('social', '1-2', 3, 'Comprend des consignes simples'),
-  skill('social', '1-2', 4, 'Commence à jouer à côté d\'autres enfants'),
-
-  // organisation
-  skill('organisation', '1-2', 1, 'Participe au brossage de dents'),
-  skill('organisation', '1-2', 2, 'Va chercher ses chaussures avant de sortir'),
-  skill('organisation', '1-2', 3, 'Suit une routine simple'),
-  skill('organisation', '1-2', 4, 'S\'assied sur le pot quand on le propose'),
-
-  // responsabilite — aucune pour 1-2
+  // Alimentation (pratique)
+  skill('cuisine', '0-1', 1, 'Début diversification alimentaire', 'jalon', 5),
+  skill('cuisine', '0-1', 2, 'Mange à la cuillère (purées)', 'jalon', 6),
+  skill('cuisine', '0-1', 3, 'Boit au verre/tasse avec aide', 'pratique', 6),
+  skill('cuisine', '0-1', 4, 'Mange un biscuit seul', 'pratique', 9),
+  skill('cuisine', '0-1', 5, 'Saisit petits morceaux (pince)', 'jalon', 10),
+  skill('cuisine', '0-1', 6, 'S\'intéresse à la cuillère', 'pratique', 12),
 
   // =========================================================================
-  // 2-3 ans (Petit enfant)
+  // 1-2 ans (Tout-petit) — Jalons développementaux + pratique
   // =========================================================================
 
-  // autonomie
-  skill('autonomie', '2-3', 1, 'Enfile un t-shirt avec aide'),
-  skill('autonomie', '2-3', 2, 'Met et enlève ses chaussures à scratch'),
-  skill('autonomie', '2-3', 3, 'Se lave les mains seul'),
-  skill('autonomie', '2-3', 4, 'Se brosse les dents (parent termine)'),
-  skill('autonomie', '2-3', 5, 'Va aux toilettes avec aide'),
+  // Motricité globale (jalons)
+  skill('motricite_globale', '1-2', 1, 'Premiers pas (avec appui)', 'jalon', 13),
+  skill('motricite_globale', '1-2', 2, 'Marche acquise (seul, stable)', 'jalon', 16, 18),
+  skill('motricite_globale', '1-2', 3, 'Monte un escalier tenu par la main', 'jalon', 18),
+  skill('motricite_globale', '1-2', 4, 'Se baisse pour ramasser un objet', 'jalon', 18),
+  skill('motricite_globale', '1-2', 5, 'Court', 'jalon', 22, 24),
+  skill('motricite_globale', '1-2', 6, 'Donne un coup de pied dans un ballon', 'jalon', 24),
+  skill('motricite_globale', '1-2', 7, 'Monte/descend escalier (2 pieds/marche)', 'jalon', 24),
 
-  // cuisine
-  skill('cuisine', '2-3', 1, 'Verse un ingrédient dans un bol'),
-  skill('cuisine', '2-3', 2, 'Mélange avec une cuillère en bois'),
-  skill('cuisine', '2-3', 3, 'Étale du beurre sur une tartine'),
-  skill('cuisine', '2-3', 4, 'Lave un fruit sous le robinet'),
+  // Motricité fine (jalons)
+  skill('motricite_fine', '1-2', 1, 'Empile 2 cubes', 'jalon', 14),
+  skill('motricite_fine', '1-2', 2, 'Gribouille avec un crayon', 'jalon', 15),
+  skill('motricite_fine', '1-2', 3, 'Empile 3-4 cubes', 'jalon', 18),
+  skill('motricite_fine', '1-2', 4, 'Commence à tourner les pages', 'jalon', 18),
+  skill('motricite_fine', '1-2', 5, 'Empile 6 cubes', 'jalon', 24),
+  skill('motricite_fine', '1-2', 6, 'Copie un trait vertical', 'jalon', 24, 24),
 
-  // menage
-  skill('menage', '2-3', 1, 'Range ses jouets en fin de journée'),
-  skill('menage', '2-3', 2, 'Met son linge sale dans le panier'),
-  skill('menage', '2-3', 3, 'Essuie une petite flaque avec une éponge'),
-  skill('menage', '2-3', 4, 'Aide à mettre les serviettes sur la table'),
-  skill('menage', '2-3', 5, 'Arrose une plante'),
+  // Langage (jalons)
+  skill('langage', '1-2', 1, 'Dit 3-5 mots reconnaissables', 'jalon', 14),
+  skill('langage', '1-2', 2, 'Comprend des ordres simples', 'jalon', 15, 18),
+  skill('langage', '1-2', 3, 'Dit au moins 5-10 mots', 'jalon', 18, 18),
+  skill('langage', '1-2', 4, 'Montre des parties du corps', 'jalon', 18),
+  skill('langage', '1-2', 5, 'Explosion lexicale (~50 mots)', 'jalon', 22, 24),
+  skill('langage', '1-2', 6, 'Associe 2 mots (« papa parti »)', 'jalon', 24, 24),
+  skill('langage', '1-2', 7, 'Dit son prénom', 'jalon', 24),
 
-  // social
-  skill('social', '2-3', 1, 'Dit « s\'il te plaît » et « merci »'),
-  skill('social', '2-3', 2, 'Attend son tour (avec aide)'),
-  skill('social', '2-3', 3, 'Exprime ses émotions avec des mots simples'),
-  skill('social', '2-3', 4, 'Joue à faire semblant'),
+  // Social / émotionnel (jalons)
+  skill('social', '1-2', 1, 'Imite les activités quotidiennes', 'jalon', 14),
+  skill('social', '1-2', 2, 'Joue seul quelques minutes', 'jalon', 16),
+  skill('social', '1-2', 3, 'Montre du doigt pour partager', 'jalon', 18, 18),
+  skill('social', '1-2', 4, 'Comprend le « non »', 'jalon', 18),
+  skill('social', '1-2', 5, 'Phase d\'opposition (« non ! »)', 'jalon', 20),
+  skill('social', '1-2', 6, 'Jeu symbolique simple (nourrir poupée)', 'jalon', 24, 24),
+  skill('social', '1-2', 7, 'Joue à côté d\'autres enfants', 'jalon', 24),
 
-  // organisation
-  skill('organisation', '2-3', 1, 'Suit une routine visuelle'),
-  skill('organisation', '2-3', 2, 'Choisit entre deux options'),
-  skill('organisation', '2-3', 3, 'Reconnaît ses affaires'),
-  skill('organisation', '2-3', 4, 'Comprend « avant » et « après »'),
+  // Alimentation (pratique)
+  skill('cuisine', '1-2', 1, 'Boit seul à la tasse', 'pratique', 14),
+  skill('cuisine', '1-2', 2, 'Utilise une cuillère (maladroit)', 'pratique', 16),
+  skill('cuisine', '1-2', 3, 'Mange à la cuillère seul', 'pratique', 20),
+  skill('cuisine', '1-2', 4, 'Boit proprement au verre', 'pratique', 24),
+  skill('cuisine', '1-2', 5, 'Mastique tous les aliments', 'pratique', 24),
 
-  // responsabilite — aucune pour 2-3
+  // Propreté / autonomie (pratique + jalons)
+  skill('proprete', '1-2', 1, 'Maturation sphinctérienne', 'jalon', 18),
+  skill('proprete', '1-2', 2, 'Signale la couche sale', 'pratique', 20),
+  skill('proprete', '1-2', 3, 'S\'intéresse au pot', 'pratique', 24),
+  skill('proprete', '1-2', 4, 'Enlève chaussettes / chaussures', 'pratique', 24),
+
+  // Ménage / responsabilités (pratique)
+  skill('menage', '1-2', 1, 'Met un objet dans la poubelle', 'pratique'),
+  skill('menage', '1-2', 2, 'Range un jouet dans son bac', 'pratique'),
+  skill('menage', '1-2', 3, 'Aide à essuyer une surface', 'pratique'),
+  skill('menage', '1-2', 4, 'Rapporte un objet à sa place', 'pratique'),
+
+  // =========================================================================
+  // 2-3 ans (Petit enfant) — Jalons développementaux + pratique
+  // =========================================================================
+
+  // Motricité globale (jalons)
+  skill('motricite_globale', '2-3', 1, 'Saute sur place (2 pieds)', 'jalon', 26),
+  skill('motricite_globale', '2-3', 2, 'Se tient sur 1 pied (bref)', 'jalon', 30),
+  skill('motricite_globale', '2-3', 3, 'Monte escalier en alternant pieds', 'jalon', 30),
+  skill('motricite_globale', '2-3', 4, 'Pédale sur un tricycle', 'jalon', 36, 36),
+  skill('motricite_globale', '2-3', 5, 'Lance un ballon en l\'air', 'jalon', 36),
+  skill('motricite_globale', '2-3', 6, 'Monte/descend escalier seul', 'jalon', 36),
+
+  // Motricité fine (jalons)
+  skill('motricite_fine', '2-3', 1, 'Dévisse un couvercle', 'jalon', 26),
+  skill('motricite_fine', '2-3', 2, 'Empile 8 cubes', 'jalon', 30),
+  skill('motricite_fine', '2-3', 3, 'Tient un crayon (prise digitale)', 'jalon', 32),
+  skill('motricite_fine', '2-3', 4, 'Copie un cercle', 'jalon', 36, 36),
+  skill('motricite_fine', '2-3', 5, 'Découpe avec des ciseaux (début)', 'jalon', 36),
+  skill('motricite_fine', '2-3', 6, 'Enfile de grosses perles', 'jalon', 36),
+
+  // Langage (jalons)
+  skill('langage', '2-3', 1, 'Phrases de 3 mots', 'jalon', 26),
+  skill('langage', '2-3', 2, 'Utilise « je / moi »', 'jalon', 30),
+  skill('langage', '2-3', 3, 'Vocabulaire > 200 mots', 'jalon', 30, 30),
+  skill('langage', '2-3', 4, 'Pose des questions (« c\'est quoi ? »)', 'jalon', 32),
+  skill('langage', '2-3', 5, 'Phrases sujet + verbe + complément', 'jalon', 36, 36),
+  skill('langage', '2-3', 6, 'Se fait comprendre par l\'entourage', 'jalon', 36, 36),
+  skill('langage', '2-3', 7, 'Raconte un petit événement vécu', 'jalon', 36),
+
+  // Social / émotionnel (jalons)
+  skill('social', '2-3', 1, 'Jeu symbolique élaboré (scénarios)', 'jalon', 26),
+  skill('social', '2-3', 2, 'Exprime des émotions (content, triste)', 'jalon', 28),
+  skill('social', '2-3', 3, 'Joue avec d\'autres enfants (début)', 'jalon', 30, 36),
+  skill('social', '2-3', 4, 'Comprend les tours de rôle', 'jalon', 32),
+  skill('social', '2-3', 5, 'Joue à faire semblant (jeu de rôle)', 'jalon', 36),
+  skill('social', '2-3', 6, 'Manifeste de l\'empathie', 'jalon', 36),
+  skill('social', '2-3', 7, 'Connaît son âge et son sexe', 'jalon', 36),
+
+  // Alimentation (pratique)
+  skill('cuisine', '2-3', 1, 'Mange seul proprement (cuillère)', 'pratique', 26),
+  skill('cuisine', '2-3', 2, 'Utilise une fourchette', 'pratique', 32),
+  skill('cuisine', '2-3', 3, 'Mange de tout (repas familiaux)', 'pratique', 36),
+  skill('cuisine', '2-3', 4, 'Verse un ingrédient dans un bol', 'pratique'),
+  skill('cuisine', '2-3', 5, 'Mélange avec une cuillère en bois', 'pratique'),
+  skill('cuisine', '2-3', 6, 'Lave un fruit sous le robinet', 'pratique'),
+
+  // Propreté / autonomie (jalons + pratique)
+  skill('proprete', '2-3', 1, 'Va sur le pot quand on lui propose', 'jalon', 26),
+  skill('proprete', '2-3', 2, 'Reste sec 2 heures en journée', 'jalon', 28),
+  skill('proprete', '2-3', 3, 'Propreté diurne acquise', 'jalon', 32),
+  skill('proprete', '2-3', 4, 'Demande à aller aux toilettes', 'jalon', 36, 36),
+  skill('proprete', '2-3', 5, 'S\'habille avec aide', 'pratique', 36),
+  skill('proprete', '2-3', 6, 'Se lave les mains avec aide', 'pratique', 36),
+
+  // Ménage / responsabilités (pratique)
+  skill('menage', '2-3', 1, 'Range ses jouets en fin de journée', 'pratique'),
+  skill('menage', '2-3', 2, 'Met son linge sale dans le panier', 'pratique'),
+  skill('menage', '2-3', 3, 'Essuie une petite flaque avec une éponge', 'pratique'),
+  skill('menage', '2-3', 4, 'Aide à mettre les serviettes sur la table', 'pratique'),
+  skill('menage', '2-3', 5, 'Arrose une plante', 'pratique'),
+
+  // Organisation (pratique)
+  skill('organisation', '2-3', 1, 'Suit une routine visuelle', 'pratique'),
+  skill('organisation', '2-3', 2, 'Choisit entre deux options', 'pratique'),
+  skill('organisation', '2-3', 3, 'Reconnaît ses affaires', 'pratique'),
+  skill('organisation', '2-3', 4, 'Comprend « avant » et « après »', 'pratique'),
 
   // =========================================================================
   // 3-5 ans (Maternelle)

@@ -1,17 +1,22 @@
 /**
- * SkillTreeGraph.tsx — Graphe arbre de compétences RPG horizontal
+ * SkillTreeGraph.tsx — Arbre de compétences RPG vertical
  *
- * 6 lignes (une par catégorie) empilées verticalement,
- * défilement horizontal synchronisé via un ScrollView unique.
- * Connexions entre nœuds en pure View (pas de SVG).
+ * Branches verticales collapsibles, une par catégorie.
+ * Chaque branche est une carte avec un header et des nœuds à l'intérieur.
  */
 
-import React, { useMemo } from 'react';
-import { ScrollView, View, Text, StyleSheet } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Pressable, View, Text, StyleSheet } from 'react-native';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing } from '../constants/spacing';
+import { FontSize, FontWeight } from '../constants/typography';
 import { SkillNode } from './SkillNode';
-import { getSkillState, type SkillDefinition, type SkillCategory, type SkillState } from '../lib/gamification/skill-tree';
+import {
+  getSkillState,
+  XP_PER_BRACKET,
+  type SkillDefinition,
+  type SkillCategory,
+} from '../lib/gamification/skill-tree';
 
 interface SkillTreeGraphProps {
   skills: SkillDefinition[];
@@ -20,18 +25,20 @@ interface SkillTreeGraphProps {
   onSkillPress: (skillId: string) => void;
 }
 
-const LANE_HEIGHT = 90;
-const NODE_SPACING = 90;
-const LABEL_WIDTH = 80;
-const NODE_SIZE = 52;
-
 export function SkillTreeGraph({
   skills,
   unlockedIds,
   categories,
   onSkillPress,
 }: SkillTreeGraphProps) {
-  const { primary, colors } = useThemeColors();
+  const { colors } = useThemeColors();
+
+  // Toutes les branches démarrées ouvertes
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+
+  const toggleCategory = (id: string) => {
+    setCollapsed((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   // Grouper les compétences par catégorie et trier par ordre
   const skillsByCategory = useMemo(() => {
@@ -41,136 +48,218 @@ export function SkillTreeGraph({
       list.push(skill);
       map.set(skill.categoryId, list);
     }
-    // Trier chaque catégorie par ordre croissant
     for (const [key, list] of map) {
       map.set(key, list.sort((a, b) => a.order - b.order));
     }
     return map;
   }, [skills]);
 
-  // Largeur maximale pour le scroll horizontal
-  const maxSkillsInCategory = useMemo(() => {
-    let max = 0;
-    for (const list of skillsByCategory.values()) {
-      if (list.length > max) max = list.length;
-    }
-    return max;
-  }, [skillsByCategory]);
-
-  const contentWidth = LABEL_WIDTH + maxSkillsInCategory * NODE_SPACING + Spacing['2xl'];
-
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={[styles.scrollContent, { minWidth: contentWidth }]}
-    >
-      <View style={styles.container}>
-        {categories.map((category) => {
-          const categorySkills = skillsByCategory.get(category.id) ?? [];
+    <View>
+      {categories.map((category) => {
+        const categorySkills = skillsByCategory.get(category.id) ?? [];
+        const unlockedCount = categorySkills.filter((s) =>
+          unlockedIds.has(s.id),
+        ).length;
+        const totalCount = categorySkills.length;
+        const progress = totalCount > 0 ? unlockedCount / totalCount : 0;
+        const isCollapsed = collapsed[category.id] ?? false;
 
-          return (
-            <View key={category.id} style={styles.lane}>
-              {/* Étiquette fixe à gauche */}
-              <View style={styles.laneLabel}>
-                <Text style={styles.laneLabelEmoji}>{category.emoji}</Text>
+        return (
+          <View
+            key={category.id}
+            style={[
+              styles.branchCard,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            {/* Header */}
+            <Pressable
+              onPress={() => toggleCategory(category.id)}
+              style={styles.branchHeader}
+              accessibilityRole="button"
+              accessibilityLabel={`${category.label}, ${unlockedCount} sur ${totalCount} débloquées`}
+            >
+              {/* Icône catégorie */}
+              <View
+                style={[
+                  styles.iconCircle,
+                  {
+                    backgroundColor: category.color + '26', // 15% opacity
+                  },
+                ]}
+              >
+                <Text style={styles.iconEmoji}>{category.emoji}</Text>
+              </View>
+
+              {/* Infos */}
+              <View style={styles.headerMiddle}>
                 <Text
-                  style={[styles.laneLabelText, { color: colors.textSub }]}
-                  numberOfLines={2}
+                  style={[styles.categoryName, { color: colors.text }]}
+                  numberOfLines={1}
                 >
                   {category.label}
                 </Text>
+                <Text
+                  style={[styles.categoryCount, { color: colors.textMuted }]}
+                >
+                  {unlockedCount} / {totalCount} débloquées
+                </Text>
+                {/* Barre de progression */}
+                <View
+                  style={[
+                    styles.progressBar,
+                    { backgroundColor: colors.borderLight },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.progressFill,
+                      {
+                        backgroundColor: category.color,
+                        width: `${Math.round(progress * 100)}%`,
+                      },
+                    ]}
+                  />
+                </View>
               </View>
 
-              {/* Nœuds de compétences */}
-              <View style={styles.nodesRow}>
+              {/* Chevron */}
+              <Text
+                style={[
+                  styles.chevron,
+                  { color: colors.textMuted },
+                  isCollapsed && styles.chevronCollapsed,
+                ]}
+              >
+                ›
+              </Text>
+            </Pressable>
+
+            {/* Nœuds (visibles quand non collapsé) */}
+            {!isCollapsed && categorySkills.length > 0 && (
+              <View style={styles.nodesContainer}>
                 {categorySkills.map((skill, index) => {
                   const state = getSkillState(skill.id, unlockedIds);
                   const isLast = index === categorySkills.length - 1;
+                  const xp = XP_PER_BRACKET[skill.ageBracketId] ?? 0;
+
+                  // Pour la ligne de connexion : vérifier si le nœud actuel ET le suivant sont débloqués
+                  const nextSkill = !isLast
+                    ? categorySkills[index + 1]
+                    : undefined;
+                  const bothUnlocked =
+                    nextSkill !== undefined &&
+                    unlockedIds.has(skill.id) &&
+                    unlockedIds.has(nextSkill.id);
 
                   return (
                     <React.Fragment key={skill.id}>
-                      <View style={styles.nodeContainer}>
+                      <View style={styles.nodeRow}>
                         <SkillNode
                           label={skill.label}
                           emoji={category.emoji}
+                          categoryColor={category.color}
                           state={state}
+                          xp={xp}
                           onPress={() => onSkillPress(skill.id)}
                         />
                       </View>
 
-                      {/* Ligne de connexion vers le nœud suivant */}
+                      {/* Ligne de connexion verticale */}
                       {!isLast && (
-                        <View style={styles.connectionContainer}>
-                          <View
-                            style={[
-                              styles.connectionLine,
-                              {
-                                borderBottomColor:
-                                  state === 'unlocked' &&
-                                  unlockedIds.has(categorySkills[index + 1].id)
-                                    ? primary
-                                    : colors.borderLight,
-                              },
-                            ]}
-                          />
-                        </View>
+                        <View
+                          style={[
+                            styles.connectorLine,
+                            {
+                              backgroundColor: bothUnlocked
+                                ? category.color
+                                : colors.borderLight,
+                            },
+                          ]}
+                        />
                       )}
                     </React.Fragment>
                   );
                 })}
               </View>
-            </View>
-          );
-        })}
-      </View>
-    </ScrollView>
+            )}
+          </View>
+        );
+      })}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    paddingRight: Spacing['2xl'],
+  branchCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: Spacing.md,
+    overflow: 'hidden',
   },
-  container: {
-    flexDirection: 'column',
-  },
-  lane: {
+  branchHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: LANE_HEIGHT,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
   },
-  laneLabel: {
-    width: LABEL_WIDTH,
+  iconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: Spacing.xs,
   },
-  laneLabelEmoji: {
-    fontSize: 20,
-    marginBottom: Spacing.xxs,
+  iconEmoji: {
+    fontSize: 22,
   },
-  laneLabelText: {
-    fontSize: 11,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  nodesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  headerMiddle: {
     flex: 1,
+    marginLeft: Spacing.sm,
+    marginRight: Spacing.xs,
   },
-  nodeContainer: {
-    width: NODE_SIZE,
+  categoryName: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold as '700',
+  },
+  categoryCount: {
+    fontSize: FontSize.code,
+    marginTop: 2,
+  },
+  progressBar: {
+    height: 4,
+    borderRadius: 2,
+    marginTop: Spacing.xs,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: 4,
+    borderRadius: 2,
+  },
+  chevron: {
+    fontSize: 24,
+    fontWeight: FontWeight.bold as '700',
+    transform: [{ rotate: '90deg' }],
+  },
+  chevronCollapsed: {
+    transform: [{ rotate: '0deg' }],
+  },
+  nodesContainer: {
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.md,
+    alignItems: 'flex-start',
+  },
+  nodeRow: {
     alignItems: 'center',
+    marginLeft: Spacing.xxs,
   },
-  connectionContainer: {
-    width: NODE_SPACING - NODE_SIZE,
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.xxs,
-  },
-  connectionLine: {
-    borderBottomWidth: 2,
-    width: '100%',
+  connectorLine: {
+    width: 2,
+    height: 28,
+    marginLeft: 27, // Centré sous le cercle du nœud (64/2 - 2/2 ≈ 27)
   },
 });

@@ -9,7 +9,7 @@
 
 import { format, differenceInCalendarDays, isToday, isTomorrow, isYesterday, parseISO, addDays } from 'date-fns';
 import type { Task, RDV, StockItem, MealItem, CourseItem, Profile, Defi, GratitudeDay, Memory, VacationConfig, GamificationData, Anniversary } from './types';
-import { formatDateForDisplay } from './parser';
+import { formatDateForDisplay, isRdvUpcoming } from './parser';
 import { LOOT_THRESHOLD } from './gamification';
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
@@ -127,7 +127,7 @@ function rdvInsights(input: InsightInput, tc: TimeContext): Insight[] {
   const insights: Insight[] = [];
 
   const upcoming = input.rdvs.filter(
-    (r) => r.statut === 'planifié' && r.date_rdv >= tc.todayStr,
+    (r) => isRdvUpcoming(r),
   );
 
   // RDV dans les 48h

@@ -8,6 +8,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Circle } from 'react-native-svg';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Chip } from '../../components/ui';
@@ -25,10 +26,16 @@ import {
   getSkillById,
   getSkillState,
   getPrerequisiteId,
+  getCategoriesForBracket,
   detectAgeBracket,
   type AgeBracketId,
   type SkillCategoryId,
 } from '../../lib/gamification/skill-tree';
+
+const RING_SIZE = 72;
+const RING_RADIUS = 30;
+const RING_STROKE = 6;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 export default function SkillsScreen() {
   const headerRef = useRef<View>(null);
@@ -65,6 +72,12 @@ export default function SkillsScreen() {
   }, [selectedChild]);
 
   const activeBracket = selectedBracket ?? detectedBracket;
+
+  // Infos tranche active
+  const activeBracketInfo = useMemo(() =>
+    AGE_BRACKETS.find((b) => b.id === activeBracket),
+    [activeBracket]
+  );
 
   // Compétences pour la tranche active
   const skills = useMemo(() => {
@@ -132,6 +145,12 @@ export default function SkillsScreen() {
     };
   }, [skills, activeBracket, selectedCategory, unlockedIds]);
 
+  // XP total et progression
+  const totalXp = unlockedCount * XP_PER_BRACKET[activeBracket];
+  const progress = totalSkills > 0 ? unlockedCount / totalSkills : 0;
+  const progressPercent = Math.round(progress * 100);
+  const strokeDashoffset = RING_CIRCUMFERENCE * (1 - progress);
+
   if (childProfiles.length === 0) {
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
@@ -155,7 +174,7 @@ export default function SkillsScreen() {
           {selectedChild?.avatar} Compétences
         </Text>
         <Text style={[styles.subtitle, { color: colors.textSub }]}>
-          {selectedChild?.name} — {unlockedCount}/{totalSkills} débloquées
+          {selectedChild?.name} — {activeBracketInfo?.label ?? activeBracket}
         </Text>
       </View>
 
@@ -164,6 +183,60 @@ export default function SkillsScreen() {
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
       >
+        {/* Anneau de progression RPG */}
+        <View style={[styles.progressSection, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
+          <View style={styles.ringContainer}>
+            <Svg width={RING_SIZE} height={RING_SIZE}>
+              {/* Cercle de fond */}
+              <Circle
+                cx={RING_SIZE / 2}
+                cy={RING_SIZE / 2}
+                r={RING_RADIUS}
+                stroke={colors.cardAlt}
+                strokeWidth={RING_STROKE}
+                fill="none"
+              />
+              {/* Cercle de progression */}
+              <Circle
+                cx={RING_SIZE / 2}
+                cy={RING_SIZE / 2}
+                r={RING_RADIUS}
+                stroke={primary}
+                strokeWidth={RING_STROKE}
+                fill="none"
+                strokeLinecap="round"
+                strokeDasharray={RING_CIRCUMFERENCE}
+                strokeDashoffset={strokeDashoffset}
+                rotation={-90}
+                origin={`${RING_SIZE / 2}, ${RING_SIZE / 2}`}
+              />
+            </Svg>
+            {/* Texte central superposé */}
+            <View style={styles.ringOverlay}>
+              <Text style={[styles.ringPercent, { color: colors.text }]}>
+                {progressPercent}%
+              </Text>
+              <Text style={[styles.ringLabel, { color: colors.textMuted }]}>
+                complété
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.progressInfo}>
+            <Text style={[styles.progressTitle, { color: colors.text }]}>
+              {unlockedCount} / {totalSkills} compétences
+            </Text>
+            <Text style={[styles.progressSubtitle, { color: colors.textSub }]}>
+              Tranche {activeBracketInfo?.label ?? activeBracket} · {activeBracketInfo?.subtitle ?? ''}
+            </Text>
+            <View style={[styles.xpBadge, { backgroundColor: primary + '26' }]}>
+              <Text style={[styles.xpText, { color: primary }]}>
+                ⚡ {totalXp} XP gagnés
+              </Text>
+            </View>
+          </View>
+        </View>
+
         {/* Sélection enfant (si parent avec plusieurs enfants) */}
         {isParent && childProfiles.length > 1 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipStrip}>
@@ -193,7 +266,7 @@ export default function SkillsScreen() {
         {/* Filtre par catégorie */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipStrip}>
           <Chip label="Tout" selected={selectedCategory === 'all'} onPress={() => setSelectedCategory('all')} />
-          {SKILL_CATEGORIES.map((cat) => (
+          {getCategoriesForBracket(activeBracket).map((cat) => (
             <Chip
               key={cat.id}
               label={`${cat.emoji} ${cat.label}`}
@@ -207,7 +280,7 @@ export default function SkillsScreen() {
         <SkillTreeGraph
           skills={skills}
           unlockedIds={unlockedIds}
-          categories={SKILL_CATEGORIES.filter((c) =>
+          categories={getCategoriesForBracket(activeBracket).filter((c) =>
             selectedCategory === 'all' || c.id === selectedCategory
           )}
           onSkillPress={handleSkillPress}
@@ -256,6 +329,59 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: FontSize.sm,
     marginTop: Spacing.xs,
+  },
+  // Anneau de progression
+  progressSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: Spacing['2xl'],
+    marginBottom: Spacing.lg,
+    padding: Spacing.lg,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  ringContainer: {
+    width: RING_SIZE,
+    height: RING_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ringOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ringPercent: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  ringLabel: {
+    fontSize: 9,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  progressInfo: {
+    flex: 1,
+    marginLeft: Spacing.lg,
+  },
+  progressTitle: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+  },
+  progressSubtitle: {
+    fontSize: FontSize.caption,
+    marginTop: 2,
+  },
+  xpBadge: {
+    alignSelf: 'flex-start',
+    marginTop: Spacing.sm,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 20,
+  },
+  xpText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   scroll: { flex: 1 },
   content: {

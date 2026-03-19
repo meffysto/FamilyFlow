@@ -1,7 +1,8 @@
 /**
- * SkillNode.tsx — Noeud de compétence pour l'arbre de compétences
+ * SkillNode.tsx — Noeud de compétence RPG pour l'arbre de compétences
  *
- * 3 états visuels : verrouillé, débloquable (pulse), débloqué (spring + haptics)
+ * Layout horizontal : cercle (56px) + texte à droite
+ * 3 états visuels : verrouillé, débloquable (glow pulse), débloqué (check badge + glow)
  */
 
 import React, { useEffect } from 'react';
@@ -21,33 +22,37 @@ import { Shadows } from '../constants/shadows';
 interface SkillNodeProps {
   label: string;
   emoji: string;
+  categoryColor: string;
   state: 'locked' | 'unlockable' | 'unlocked';
+  xp: number;
   onPress: () => void;
-  size?: number;
 }
+
+const CIRCLE_SIZE = 56;
+const BADGE_SIZE = 20;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export function SkillNode({ label, emoji, state, onPress, size = 52 }: SkillNodeProps) {
-  const { primary, colors } = useThemeColors();
+export function SkillNode({ label, emoji, categoryColor, state, xp, onPress }: SkillNodeProps) {
+  const { colors } = useThemeColors();
 
   const scale = useSharedValue(1);
-  const borderPulse = useSharedValue(0);
+  const glowPulse = useSharedValue(0);
   const prevState = useSharedValue(state);
 
-  // Pulsation de la bordure pour l'état débloquable
+  // Pulsation du glow pour l'état débloquable
   useEffect(() => {
     if (state === 'unlockable') {
-      borderPulse.value = withRepeat(
+      glowPulse.value = withRepeat(
         withSequence(
-          withTiming(1, { duration: 800 }),
-          withTiming(0, { duration: 800 }),
+          withTiming(1, { duration: 1000 }),
+          withTiming(0, { duration: 1000 }),
         ),
         -1,
         false,
       );
     } else {
-      borderPulse.value = withTiming(0, { duration: 200 });
+      glowPulse.value = withTiming(0, { duration: 200 });
     }
   }, [state]);
 
@@ -65,75 +70,146 @@ export function SkillNode({ label, emoji, state, onPress, size = 52 }: SkillNode
     transform: [{ scale: scale.value }],
   }));
 
-  const primaryRgb = hexToRgbValues(primary);
-  const isUnlockable = state === 'unlockable';
+  const categoryRgb = hexToRgbValues(categoryColor);
+  const lighterBorder = lightenHex(categoryColor, 0.3);
 
-  const animatedBorderStyle = useAnimatedStyle(() => {
-    if (!isUnlockable) return {};
-    const opacity = 0.4 + borderPulse.value * 0.6;
+  // Glow animé pour l'état débloquable
+  const animatedGlowStyle = useAnimatedStyle(() => {
+    if (state !== 'unlockable') return {};
+    const opacity = 0.15 + glowPulse.value * 0.25;
     return {
-      borderWidth: 2.5,
-      borderColor: `rgba(${primaryRgb}, ${opacity})`,
+      shadowColor: categoryColor,
+      shadowOpacity: opacity,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 0 },
+      elevation: 6,
     };
   });
 
-  const renderContent = () => {
+  const circleStyle = (): object => {
     switch (state) {
-      case 'locked':
-        return <Text style={[styles.emoji, { fontSize: size * 0.38 }]}>🔒</Text>;
-      case 'unlockable':
-        return <Text style={[styles.emoji, { fontSize: size * 0.42 }]}>{emoji}</Text>;
       case 'unlocked':
-        return <Text style={[styles.checkmark, { fontSize: size * 0.4, color: colors.onPrimary }]}>✓</Text>;
+        return {
+          backgroundColor: categoryColor,
+          borderWidth: 3,
+          borderColor: lighterBorder,
+          shadowColor: categoryColor,
+          shadowOpacity: 0.35,
+          shadowRadius: 10,
+          shadowOffset: { width: 0, height: 0 },
+          elevation: 8,
+        };
+      case 'unlockable':
+        return {
+          backgroundColor: colors.bg,
+          borderWidth: 2.5,
+          borderColor: categoryColor,
+        };
+      case 'locked':
+        return {
+          backgroundColor: colors.cardAlt,
+          borderWidth: 2,
+          borderColor: '#475569',
+          opacity: 0.5,
+        };
     }
   };
 
-  const circleBackground = () => {
+  const renderEmoji = () => {
+    if (state === 'locked') {
+      return <Text style={styles.emoji}>{'🔒'}</Text>;
+    }
+    return <Text style={styles.emoji}>{emoji}</Text>;
+  };
+
+  const renderXpLine = () => {
+    switch (state) {
+      case 'unlocked':
+        return (
+          <Text style={[styles.xpText, { color: '#10B981' }]}>
+            {'⚡ +'}{xp}{' XP · Débloqué'}
+          </Text>
+        );
+      case 'unlockable':
+        return (
+          <Text style={[styles.xpText, { color: categoryColor }]}>
+            {'⚡ +'}{xp}{' XP'}
+          </Text>
+        );
+      case 'locked':
+        return (
+          <Text style={[styles.xpText, { color: '#475569' }]}>
+            {'+'}{xp}{' XP'}
+          </Text>
+        );
+    }
+  };
+
+  const labelColor = () => {
+    switch (state) {
+      case 'unlocked':
+        return colors.text;
+      case 'unlockable':
+        return colors.text;
+      case 'locked':
+        return '#475569';
+    }
+  };
+
+  const stateLabel = () => {
     switch (state) {
       case 'locked':
-        return colors.cardAlt;
+        return 'verrouillé';
       case 'unlockable':
-        return colors.card;
+        return 'débloquable';
       case 'unlocked':
-        return primary;
+        return 'débloqué';
     }
   };
 
   return (
-    <View style={styles.container}>
-      <AnimatedPressable
-        onPress={state !== 'locked' ? onPress : undefined}
+    <AnimatedPressable
+      onPress={state !== 'locked' ? onPress : undefined}
+      style={[styles.row, animatedScaleStyle]}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}, ${stateLabel()}, ${xp} points d'expérience`}
+      accessibilityState={{ disabled: state === 'locked' }}
+    >
+      {/* Cercle avec emoji */}
+      <Animated.View
         style={[
-          animatedScaleStyle,
+          styles.circle,
+          circleStyle(),
+          state === 'unlockable' && animatedGlowStyle,
         ]}
-        accessibilityRole="button"
-        accessibilityLabel={`${label}, ${state === 'locked' ? 'verrouillé' : state === 'unlockable' ? 'débloquable' : 'débloqué'}`}
-        accessibilityState={{ disabled: state === 'locked' }}
       >
-        <Animated.View
+        {renderEmoji()}
+
+        {/* Badge check vert pour l'état débloqué */}
+        {state === 'unlocked' && (
+          <View style={styles.checkBadge}>
+            <Text style={styles.checkText}>{'✓'}</Text>
+          </View>
+        )}
+      </Animated.View>
+
+      {/* Texte à droite */}
+      <View style={styles.textContainer}>
+        <Text
           style={[
-            styles.circle,
+            styles.label,
             {
-              width: size,
-              height: size,
-              borderRadius: size / 2,
-              backgroundColor: circleBackground(),
-              opacity: state === 'locked' ? 0.4 : 1,
+              color: labelColor(),
+              fontWeight: state === 'unlocked' ? '600' : '500',
             },
-            state === 'unlocked' && Shadows.md,
-            animatedBorderStyle,
           ]}
+          numberOfLines={2}
         >
-          {renderContent()}
-        </Animated.View>
-      </AnimatedPressable>
-      <Text
-        style={[styles.label, { color: colors.textSub }]}
-        numberOfLines={2}
-      >
-        {label}
-      </Text>
-    </View>
+          {label}
+        </Text>
+        {renderXpLine()}
+      </View>
+    </AnimatedPressable>
   );
 }
 
@@ -148,28 +224,66 @@ function hexToRgbValues(hex: string): string {
   return `${r}, ${g}, ${b}`;
 }
 
+/**
+ * Éclaircit une couleur hex d'un facteur donné (0-1)
+ */
+function lightenHex(hex: string, factor: number): string {
+  const clean = hex.replace('#', '');
+  const r = parseInt(clean.substring(0, 2), 16);
+  const g = parseInt(clean.substring(2, 4), 16);
+  const b = parseInt(clean.substring(4, 6), 16);
+  const lighten = (c: number) => Math.min(255, Math.round(c + (255 - c) * factor));
+  const toHex = (c: number) => c.toString(16).padStart(2, '0');
+  return `#${toHex(lighten(r))}${toHex(lighten(g))}${toHex(lighten(b))}`;
+}
+
 const styles = StyleSheet.create({
-  container: {
+  row: {
+    flexDirection: 'row',
     alignItems: 'center',
-    width: 64,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
   },
   circle: {
+    width: CIRCLE_SIZE,
+    height: CIRCLE_SIZE,
+    borderRadius: CIRCLE_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   emoji: {
+    fontSize: 24,
     textAlign: 'center',
   },
-  checkmark: {
+  checkBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: BADGE_SIZE,
+    height: BADGE_SIZE,
+    borderRadius: BADGE_SIZE / 2,
+    backgroundColor: '#10B981',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkText: {
+    color: '#FFFFFF',
+    fontSize: 12,
     fontWeight: '700',
-    textAlign: 'center',
-    // color défini dynamiquement via colors.onPrimary
+    lineHeight: 14,
+  },
+  textContainer: {
+    flex: 1,
+    marginLeft: 12,
+    justifyContent: 'center',
   },
   label: {
-    fontSize: 10,
-    textAlign: 'center',
-    marginTop: 4,
-    width: 64,
-    lineHeight: 13,
+    fontSize: 14,
+    lineHeight: 18,
+  },
+  xpText: {
+    fontSize: 11,
+    lineHeight: 14,
+    marginTop: 2,
   },
 });

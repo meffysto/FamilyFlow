@@ -10,6 +10,7 @@ import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import type { MealItem, Task, RDV, Profile } from './types';
 import { isBabyProfile } from './types';
+import { isRdvUpcoming } from './parser';
 
 // Import conditionnel des modules natifs
 let updateWidgetDataNative: ((json: string) => Promise<void>) | null = null;
@@ -80,7 +81,7 @@ function buildWidgetData(
 
   // Prochains RDVs planifiés
   const upcoming = rdvs
-    .filter(r => r.statut === 'planifié' && r.date_rdv >= todayStr)
+    .filter(r => isRdvUpcoming(r))
     .sort((a, b) => a.date_rdv.localeCompare(b.date_rdv) || a.heure.localeCompare(b.heure));
 
   const nextRDVs: WidgetRDV[] = upcoming.slice(0, 3).map(r => ({
