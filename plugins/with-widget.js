@@ -38,6 +38,32 @@ module.exports = function withMaJourneeWidget(config) {
     // 2b. Ajouter le target app_extension
     const target = proj.addTarget(WIDGET_NAME, 'app_extension', WIDGET_NAME);
 
+    // 2b-fix. Créer les build phases manquantes (addTarget ne les crée pas pour app_extension)
+    const objects = proj.hash.project.objects;
+    const nativeTarget = objects['PBXNativeTarget'][target.uuid];
+
+    const sourcesPhaseUuid = proj.generateUuid();
+    if (!objects['PBXSourcesBuildPhase']) objects['PBXSourcesBuildPhase'] = {};
+    objects['PBXSourcesBuildPhase'][sourcesPhaseUuid] = {
+      isa: 'PBXSourcesBuildPhase',
+      buildActionMask: 2147483647,
+      files: [],
+      runOnlyForDeploymentPostprocessing: 0,
+    };
+    objects['PBXSourcesBuildPhase'][`${sourcesPhaseUuid}_comment`] = 'Sources';
+    nativeTarget.buildPhases.push({ value: sourcesPhaseUuid, comment: 'Sources' });
+
+    const resourcesPhaseUuid = proj.generateUuid();
+    if (!objects['PBXResourcesBuildPhase']) objects['PBXResourcesBuildPhase'] = {};
+    objects['PBXResourcesBuildPhase'][resourcesPhaseUuid] = {
+      isa: 'PBXResourcesBuildPhase',
+      buildActionMask: 2147483647,
+      files: [],
+      runOnlyForDeploymentPostprocessing: 0,
+    };
+    objects['PBXResourcesBuildPhase'][`${resourcesPhaseUuid}_comment`] = 'Resources';
+    nativeTarget.buildPhases.push({ value: resourcesPhaseUuid, comment: 'Resources' });
+
     // 2c. Créer un PBXGroup pour les fichiers widget
     const groupKey = proj.pbxCreateGroup(WIDGET_NAME, WIDGET_NAME);
     const mainGroup = proj.getFirstProject().firstProject.mainGroup;
