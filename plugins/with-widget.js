@@ -16,6 +16,8 @@ const APP_GROUP_ID = 'group.com.familyvault.dev';
 module.exports = function withMaJourneeWidget(config) {
   const bundleId = `${config.ios?.bundleIdentifier}.${WIDGET_NAME}`;
   const teamId = config.ios?.appleTeamId || 'AKMNXGVVGX';
+  const buildNumber = config.ios?.buildNumber || '1';
+  const appVersion = config.version || '1.0.0';
 
   // 1. Ajouter l'App Group aux entitlements de l'app principale
   config = withEntitlementsPlist(config, (mod) => {
@@ -70,8 +72,8 @@ module.exports = function withMaJourneeWidget(config) {
         INFOPLIST_FILE: `"${WIDGET_NAME}/Info.plist"`,
         CODE_SIGN_STYLE: '"Automatic"',
         GENERATE_INFOPLIST_FILE: 'YES',
-        MARKETING_VERSION: '"1.0.0"',
-        CURRENT_PROJECT_VERSION: '"1"',
+        MARKETING_VERSION: `"${appVersion}"`,
+        CURRENT_PROJECT_VERSION: `"${buildNumber}"`,
         SWIFT_EMIT_LOC_STRINGS: 'YES',
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: '"AccentColor"',
         ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME: '"WidgetBackground"',
