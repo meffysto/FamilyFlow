@@ -1,7 +1,8 @@
 {
   "cli": {
     "version": ">= 14.0.0",
-    "appVersionSource": "local"
+    "appVersionSource": "local",
+    "promptToConfigurePushNotifications": false
   },
   "build": {
     "development": {
@@ -18,7 +19,16 @@
       }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "credentialsSource": "remote",
+      "ios": {
+        "appExtensions": [
+          {
+            "targetName": "MaJourneeWidget",
+            "bundleIdentifier": "com.familyvault.dev.MaJourneeWidget"
+          }
+        ]
+      }
     }
   },
   "submit": {
