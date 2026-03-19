@@ -8,6 +8,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
+  useReducedMotion,
 } from 'react-native-reanimated';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
@@ -23,10 +24,13 @@ interface EmptyStateProps {
 
 export function EmptyState({ emoji, title, subtitle, ctaLabel, onCta }: EmptyStateProps) {
   const { primary, colors } = useThemeColors();
-  const emojiScale = useSharedValue(0.3);
+  const reduceMotion = useReducedMotion();
+  const emojiScale = useSharedValue(reduceMotion ? 1 : 0.3);
 
   useEffect(() => {
-    emojiScale.value = withSpring(1, { damping: 12, stiffness: 150 });
+    if (!reduceMotion) {
+      emojiScale.value = withSpring(1, { damping: 12, stiffness: 150 });
+    }
   }, []);
 
   const emojiStyle = useAnimatedStyle(() => ({

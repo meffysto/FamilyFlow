@@ -214,7 +214,7 @@ export default function NightModeScreen() {
         <StatusBar hidden />
         <View style={s.center}>
           <Text style={s.emptyText}>Aucun profil bébé configuré</Text>
-          <TouchableOpacity style={s.closeBtn} onPress={handleClose}>
+          <TouchableOpacity style={s.closeBtn} onPress={handleClose} accessibilityLabel="Fermer le mode nuit" accessibilityRole="button">
             <Text style={s.closeBtnText}>Fermer</Text>
           </TouchableOpacity>
         </View>
@@ -237,6 +237,9 @@ export default function NightModeScreen() {
                 key={b.id}
                 style={[s.babyChip, selectedBaby?.id === b.id && s.babyChipActive]}
                 onPress={() => setSelectedBaby(b)}
+                accessibilityLabel={b.name}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: selectedBaby?.id === b.id }}
               >
                 <Text style={s.babyChipText}>{b.avatar} {b.name}</Text>
               </TouchableOpacity>
@@ -246,7 +249,7 @@ export default function NightModeScreen() {
           <Text style={s.babyName}>{selectedBaby?.avatar} {selectedBaby?.name}</Text>
         )}
 
-        <TouchableOpacity style={s.closeX} onPress={handleClose}>
+        <TouchableOpacity style={s.closeX} onPress={handleClose} accessibilityLabel="Fermer le mode nuit" accessibilityRole="button">
           <Text style={s.closeXText}>✕</Text>
         </TouchableOpacity>
       </View>
@@ -263,6 +266,9 @@ export default function NightModeScreen() {
               <TouchableOpacity
                 style={[s.typeBtn, feedType === 'allaitement' && s.typeBtnActive]}
                 onPress={() => setFeedType('allaitement')}
+                accessibilityLabel="Allaitement"
+                accessibilityRole="tab"
+                accessibilityState={{ selected: feedType === 'allaitement' }}
               >
                 <Text style={s.typeBtnEmoji}>🤱</Text>
                 <Text style={s.typeBtnLabel}>Allaitement</Text>
@@ -271,6 +277,9 @@ export default function NightModeScreen() {
               <TouchableOpacity
                 style={[s.typeBtn, feedType === 'biberon' && s.typeBtnActive]}
                 onPress={() => setFeedType('biberon')}
+                accessibilityLabel="Biberon"
+                accessibilityRole="tab"
+                accessibilityState={{ selected: feedType === 'biberon' }}
               >
                 <Text style={s.typeBtnEmoji}>🍼</Text>
                 <Text style={s.typeBtnLabel}>Biberon</Text>
@@ -283,12 +292,18 @@ export default function NightModeScreen() {
                 <TouchableOpacity
                   style={[s.sideBtn, side === 'gauche' && s.sideBtnActive]}
                   onPress={() => setSide('gauche')}
+                  accessibilityLabel="Côté gauche"
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: side === 'gauche' }}
                 >
                   <Text style={s.sideBtnText}>G</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[s.sideBtn, side === 'droite' && s.sideBtnActive]}
                   onPress={() => setSide('droite')}
+                  accessibilityLabel="Côté droit"
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: side === 'droite' }}
                 >
                   <Text style={s.sideBtnText}>D</Text>
                 </TouchableOpacity>
@@ -302,6 +317,9 @@ export default function NightModeScreen() {
                     key={ml}
                     style={[s.volumeChip, volumeMl === ml && s.volumeChipActive]}
                     onPress={() => setVolumeMl(ml)}
+                    accessibilityLabel={`${ml} millilitres`}
+                    accessibilityRole="tab"
+                    accessibilityState={{ selected: volumeMl === ml }}
                   >
                     <Text style={[s.volumeChipText, volumeMl === ml && s.volumeChipTextActive]}>
                       {ml}
@@ -314,7 +332,7 @@ export default function NightModeScreen() {
 
             {/* Bouton démarrer */}
             {feedType && (
-              <TouchableOpacity style={s.startBtn} onPress={startTimer}>
+              <TouchableOpacity style={s.startBtn} onPress={startTimer} accessibilityLabel="Démarrer le chronomètre" accessibilityRole="button">
                 <Text style={s.startBtnText}>▶ Démarrer</Text>
               </TouchableOpacity>
             )}
@@ -345,16 +363,16 @@ export default function NightModeScreen() {
 
             <View style={s.actionRow}>
               {state === 'timing' ? (
-                <TouchableOpacity style={s.actionBtn} onPress={pauseTimer}>
+                <TouchableOpacity style={s.actionBtn} onPress={pauseTimer} accessibilityLabel="Mettre en pause" accessibilityRole="button">
                   <Text style={s.actionBtnText}>⏸ Pause</Text>
                 </TouchableOpacity>
               ) : (
-                <TouchableOpacity style={s.actionBtn} onPress={resumeTimer}>
+                <TouchableOpacity style={s.actionBtn} onPress={resumeTimer} accessibilityLabel="Reprendre le chronomètre" accessibilityRole="button">
                   <Text style={s.actionBtnText}>▶ Reprendre</Text>
                 </TouchableOpacity>
               )}
 
-              <TouchableOpacity style={[s.actionBtn, s.stopBtn]} onPress={saveEntry}>
+              <TouchableOpacity style={[s.actionBtn, s.stopBtn]} onPress={saveEntry} accessibilityLabel="Terminer et enregistrer" accessibilityRole="button">
                 <Text style={s.actionBtnText}>⏹ Terminer</Text>
               </TouchableOpacity>
             </View>

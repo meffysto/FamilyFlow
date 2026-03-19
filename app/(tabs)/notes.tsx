@@ -183,6 +183,9 @@ export default function NotesScreen() {
           onPress={() => openViewer(note)}
           onLongPress={() => openEditor(note)}
           activeOpacity={0.7}
+          accessibilityLabel={`${note.title}, ${formatDateForDisplay(note.created)}${note.url ? ', article web' : ''}`}
+          accessibilityRole="button"
+          accessibilityHint="Appuyez pour lire, appui long pour modifier"
         >
           <View style={styles.noteHeader}>
             <Text
@@ -249,6 +252,8 @@ export default function NotesScreen() {
           value={search}
           onChangeText={setSearch}
           autoCorrect={false}
+          accessibilityLabel="Rechercher une note"
+          accessibilityRole="search"
         />
 
         {/* Filtre catégories */}

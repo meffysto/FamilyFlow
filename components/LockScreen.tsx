@@ -16,6 +16,7 @@ import Animated, {
   withTiming,
   withSpring,
   runOnJS,
+  useReducedMotion,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../contexts/ThemeContext';
@@ -36,6 +37,7 @@ const KEYPAD_ROWS = [
 export const LockScreen = React.memo(function LockScreen() {
   const { primary, colors } = useThemeColors();
   const { authenticate, verifyPin, biometryAvailable, biometryType } = useAuth();
+  const reduceMotion = useReducedMotion();
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
   const [attempts, setAttempts] = useState(0);
@@ -63,6 +65,7 @@ export const LockScreen = React.memo(function LockScreen() {
   }, [biometryAvailable, authenticate]);
 
   const triggerShake = useCallback(() => {
+    if (reduceMotion) return;
     shakeX.value = withSequence(
       withTiming(-12, { duration: 50 }),
       withTiming(12, { duration: 50 }),
@@ -71,7 +74,7 @@ export const LockScreen = React.memo(function LockScreen() {
       withTiming(-4, { duration: 50 }),
       withTiming(0, { duration: 50 }),
     );
-  }, [shakeX]);
+  }, [shakeX, reduceMotion]);
 
   const resetPin = useCallback(() => {
     setPin('');
@@ -100,7 +103,7 @@ export const LockScreen = React.memo(function LockScreen() {
 
         // Animer le dot correspondant
         const idx = newPin.length - 1;
-        if (idx >= 0 && idx < 4) {
+        if (idx >= 0 && idx < 4 && !reduceMotion) {
           dotScales[idx].value = withSequence(
             withSpring(1.4, { damping: 6, stiffness: 400 }),
             withSpring(1, { damping: 8, stiffness: 300 }),

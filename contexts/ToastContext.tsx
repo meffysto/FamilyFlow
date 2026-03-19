@@ -15,6 +15,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withTiming,
+  useReducedMotion,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from './ThemeContext';
@@ -46,6 +47,7 @@ const UNDO_DISMISS_MS = 4000;
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const insets = useSafeAreaInsets();
   const { primary, colors } = useThemeColors();
+  const reduceMotion = useReducedMotion();
 
   const translateY = useSharedValue(-120);
   const opacity = useSharedValue(0);
@@ -54,11 +56,17 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const hide = useCallback(() => {
-    translateY.value = withTiming(-120, { duration: 250 });
-    opacity.value = withTiming(0, { duration: 250 });
-    // Nettoyer le state après l'animation de sortie
-    setTimeout(() => setToast(null), 300);
-  }, [translateY, opacity]);
+    if (reduceMotion) {
+      translateY.value = -120;
+      opacity.value = 0;
+      setToast(null);
+    } else {
+      translateY.value = withTiming(-120, { duration: 250 });
+      opacity.value = withTiming(0, { duration: 250 });
+      // Nettoyer le state après l'animation de sortie
+      setTimeout(() => setToast(null), 300);
+    }
+  }, [translateY, opacity, reduceMotion]);
 
   const showToast = useCallback(
     (message: string, type: ToastType = 'success', action?: ToastAction) => {
@@ -75,9 +83,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       translateY.value = -120;
       opacity.value = 0;
 
-      // Animer l'entrée avec un spring
-      translateY.value = withSpring(0, { damping: 18, stiffness: 200 });
-      opacity.value = withTiming(1, { duration: 200 });
+      // Animer l'entrée (instantané si reduceMotion)
+      if (reduceMotion) {
+        translateY.value = 0;
+        opacity.value = 1;
+      } else {
+        translateY.value = withSpring(0, { damping: 18, stiffness: 200 });
+        opacity.value = withTiming(1, { duration: 200 });
+      }
 
       // Auto-dismiss (plus long si action undo)
       const delay = action ? UNDO_DISMISS_MS : AUTO_DISMISS_MS;

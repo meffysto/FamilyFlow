@@ -228,6 +228,9 @@ export default function MoreScreen() {
                     style={[styles.card, { backgroundColor: colors.card }]}
                     onPress={() => item.params ? router.push({ pathname: item.route as any, params: item.params }) : router.push(item.route as any)}
                     activeOpacity={0.7}
+                    accessibilityLabel={`${item.label}${item.badge ? `, ${item.badge} élément${item.badge > 1 ? 's' : ''}` : ''}`}
+                    accessibilityRole="button"
+                    accessibilityHint={`Ouvrir ${item.label}`}
                   >
                     <View style={[styles.iconCircle, { backgroundColor: item.color + '20' }]}>
                       <Text style={styles.emoji}>{item.emoji}</Text>

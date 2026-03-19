@@ -534,6 +534,8 @@ export default function TasksScreen() {
                 value={search}
                 onChangeText={setSearch}
                 clearButtonMode="while-editing"
+                accessibilityLabel="Rechercher une tâche"
+                accessibilityRole="search"
               />
             </View>
             <View ref={filterRef} style={[styles.filterWrapper, { backgroundColor: colors.bg }]}>
@@ -582,6 +584,8 @@ export default function TasksScreen() {
           setAddModalVisible(true);
         }}
         activeOpacity={0.8}
+        accessibilityLabel="Ajouter une tâche"
+        accessibilityRole="button"
       >
         <Text style={[styles.fabText, { color: colors.onPrimary }]}>+</Text>
       </TouchableOpacity>
@@ -708,6 +712,8 @@ export default function TasksScreen() {
             <TouchableOpacity
               style={[styles.deleteButton, { backgroundColor: colors.errorBg }]}
               onPress={handleDeleteFromEdit}
+              accessibilityLabel="Supprimer cette tâche"
+              accessibilityRole="button"
             >
               <Text style={[styles.deleteButtonText, { color: colors.error }]}>Supprimer cette tâche</Text>
             </TouchableOpacity>

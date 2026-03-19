@@ -7,7 +7,8 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "postinstall": "npx patch-package"
+    "postinstall": "npx patch-package",
+    "test": "jest"
   },
   "dependencies": {
     "@react-native-community/datetimepicker": "^8.4.4",
@@ -45,7 +46,10 @@
     "react-native-worklets": "0.5.1"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/react": "~18.3.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.6",
     "typescript": "~5.9.2"
   },
   "private": true

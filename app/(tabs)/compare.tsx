@@ -189,6 +189,8 @@ export default function CompareScreen() {
         ]}
         onPress={() => onThumbPress(item.date)}
         activeOpacity={0.7}
+        accessibilityLabel={`Photo du ${formatDateForDisplay(item.date)}${isLeft ? ', sélectionnée à gauche' : ''}${isRight ? ', sélectionnée à droite' : ''}`}
+        accessibilityRole="button"
       >
         <Image
           source={{ uri: item.uri }}
@@ -205,7 +207,7 @@ export default function CompareScreen() {
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
         <View style={[styles.header, { backgroundColor: colors.bg }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} accessibilityLabel="Retour" accessibilityRole="button">
             <Text style={[styles.backBtnText, { color: primary }]}>‹</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text }]}>Comparer</Text>
@@ -227,7 +229,7 @@ export default function CompareScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.bg }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} accessibilityLabel="Retour" accessibilityRole="button">
           <Text style={[styles.backBtnText, { color: primary }]}>‹</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Comparer</Text>
@@ -247,6 +249,9 @@ export default function CompareScreen() {
               ]}
               onPress={() => setSelectedEnfantIdx(idx)}
               activeOpacity={0.7}
+              accessibilityLabel={`${e.name}`}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: idx === selectedEnfantIdx }}
             >
               <Text style={styles.enfantEmoji}>{e.avatar}</Text>
               <Text style={[
@@ -295,6 +300,9 @@ export default function CompareScreen() {
               ]}
               onPress={() => onPhotoSlotPress('left')}
               activeOpacity={0.8}
+              accessibilityLabel={`Photo de gauche${leftDate ? `, ${formatDateForDisplay(leftDate)}` : ', aucune sélectionnée'}`}
+              accessibilityRole="button"
+              accessibilityHint="Appuyez pour sélectionner cette photo"
             >
               {leftUri ? (
                 <Image
@@ -318,6 +326,9 @@ export default function CompareScreen() {
               ]}
               onPress={() => onPhotoSlotPress('right')}
               activeOpacity={0.8}
+              accessibilityLabel={`Photo de droite${rightDate ? `, ${formatDateForDisplay(rightDate)}` : ', aucune sélectionnée'}`}
+              accessibilityRole="button"
+              accessibilityHint="Appuyez pour sélectionner cette photo"
             >
               {rightUri ? (
                 <Image
@@ -367,6 +378,8 @@ export default function CompareScreen() {
                   style={[styles.yearPill, { backgroundColor: colors.cardAlt }]}
                   onPress={() => scrollToYear(year)}
                   activeOpacity={0.7}
+                  accessibilityLabel={`Aller à l'année ${year}`}
+                  accessibilityRole="button"
                 >
                   <Text style={[styles.yearText, { color: colors.textSub }]}>{year}</Text>
                 </TouchableOpacity>
@@ -399,6 +412,8 @@ export default function CompareScreen() {
               Alert.alert('Bientôt', 'Le partage sera disponible prochainement.')
             }
             activeOpacity={0.7}
+            accessibilityLabel="Partager la comparaison"
+            accessibilityRole="button"
           >
             <Text style={[styles.shareBtnText, { color: colors.textSub }]}>
               📤 Partager

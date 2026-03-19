@@ -102,7 +102,7 @@ function DefiCard({
   const diffColor = defi.difficulty === 'facile' ? colors.success : defi.difficulty === 'moyen' ? colors.warning : colors.error;
 
   return (
-    <TouchableOpacity style={[cardStyles.card, { backgroundColor: colors.card }]} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity style={[cardStyles.card, { backgroundColor: colors.card }]} onPress={onPress} activeOpacity={0.7} accessibilityLabel={`Défi ${defi.title}, ${uniqueCompletedDays} sur ${defi.targetDays} jours, difficulté ${defi.difficulty}`} accessibilityRole="button" accessibilityHint="Appuyez pour voir les détails">
       <View style={cardStyles.header}>
         <Text style={cardStyles.emoji}>{defi.emoji}</Text>
         <View style={cardStyles.titleArea}>
@@ -132,6 +132,8 @@ function DefiCard({
             onCheckIn();
           }}
           activeOpacity={0.7}
+          accessibilityLabel={`Check-in pour ${defi.title}`}
+          accessibilityRole="button"
         >
           <Text style={[cardStyles.checkInText, { color: colors.onPrimary }]}>Check-in</Text>
         </TouchableOpacity>
@@ -256,6 +258,8 @@ function DefiConfigModal({
               const idx = emojis.indexOf(emoji);
               setEmoji(emojis[(idx + 1) % emojis.length]);
             }}
+            accessibilityLabel={`Choisir un emoji, actuel : ${emoji}`}
+            accessibilityRole="button"
           >
             <Text style={configStyles.emojiText}>{emoji}</Text>
           </TouchableOpacity>
@@ -265,6 +269,7 @@ function DefiConfigModal({
             onChangeText={setTitle}
             placeholder="Titre du défi"
             placeholderTextColor={colors.textFaint}
+            accessibilityLabel="Titre du défi"
           />
         </View>
 
@@ -351,6 +356,9 @@ function DefiConfigModal({
                 borderColor: selectedProfiles.has(p.id) ? primary : colors.border,
               }]}
               onPress={() => toggleProfile(p.id)}
+              accessibilityLabel={`${p.name}`}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: selectedProfiles.has(p.id) }}
             >
               <Text style={configStyles.profileAvatar}>{p.avatar}</Text>
               <Text style={[configStyles.profileName, { color: selectedProfiles.has(p.id) ? primary : colors.textSub }]}>{p.name}</Text>
@@ -556,6 +564,9 @@ function DefiDetailModal({
                     }}
                     disabled={todayDone}
                     activeOpacity={0.7}
+                    accessibilityLabel={todayDone ? `${p.name}, déjà fait aujourd'hui` : `Check-in pour ${p.name}`}
+                    accessibilityRole="button"
+                    accessibilityState={{ disabled: todayDone }}
                   >
                     <Text style={detailStyles.checkInBtnAvatar}>{p.avatar}</Text>
                     <Text style={[detailStyles.checkInBtnText, { color: todayDone ? colors.success : colors.onPrimary }]}>
@@ -568,6 +579,8 @@ function DefiDetailModal({
             {defi.type === 'abstinence' && (
               <TouchableOpacity
                 style={[detailStyles.failBtn, { backgroundColor: colors.errorBg, borderColor: colors.error }]}
+                accessibilityLabel="Signaler un échec"
+                accessibilityRole="button"
                 onPress={() => {
                   Alert.alert('Signaler un échec ?', 'Pour un défi abstinence, un échec met fin au défi.', [
                     { text: 'Annuler', style: 'cancel' },
@@ -593,6 +606,8 @@ function DefiDetailModal({
               style={[detailStyles.completeBtn, { backgroundColor: colors.success }]}
               onPress={onComplete}
               activeOpacity={0.7}
+              accessibilityLabel="Valider le défi comme réussi"
+              accessibilityRole="button"
             >
               <Text style={[detailStyles.completeBtnText, { color: colors.onPrimary }]}>Valider le défi</Text>
             </TouchableOpacity>
@@ -606,6 +621,8 @@ function DefiDetailModal({
               ]);
             }}
             activeOpacity={0.7}
+            accessibilityLabel="Supprimer le défi"
+            accessibilityRole="button"
           >
             <Text style={[detailStyles.deleteBtnText, { color: colors.error }]}>Supprimer</Text>
           </TouchableOpacity>
@@ -779,6 +796,8 @@ export default function DefisScreen() {
                   style={[styles.emptyBtn, { backgroundColor: primary }]}
                   onPress={() => setActiveTab('templates')}
                   activeOpacity={0.7}
+                  accessibilityLabel="Voir les templates de défis"
+                  accessibilityRole="button"
                 >
                   <Text style={[styles.emptyBtnText, { color: colors.onPrimary }]}>Voir les templates</Text>
                 </TouchableOpacity>
@@ -809,6 +828,9 @@ export default function DefisScreen() {
                     style={[styles.templateCard, { backgroundColor: colors.card }]}
                     onPress={() => setConfigModal({ visible: true, template: t })}
                     activeOpacity={0.7}
+                    accessibilityLabel={`Template ${t.title}, difficulté ${t.difficulty}`}
+                    accessibilityRole="button"
+                    accessibilityHint="Appuyez pour lancer ce défi"
                   >
                     <Text style={styles.templateEmoji}>{t.emoji}</Text>
                     <View style={styles.templateInfo}>
@@ -829,6 +851,8 @@ export default function DefisScreen() {
               style={[styles.customBtn, { borderColor: primary }]}
               onPress={() => setConfigModal({ visible: true })}
               activeOpacity={0.7}
+              accessibilityLabel="Créer un défi personnalisé"
+              accessibilityRole="button"
             >
               <Text style={[styles.customBtnText, { color: primary }]}>+ Créer un défi personnalisé</Text>
             </TouchableOpacity>
@@ -854,6 +878,8 @@ export default function DefisScreen() {
                   style={[styles.historyCard, { backgroundColor: colors.card }]}
                   onPress={() => setDetailDefiId(d.id)}
                   activeOpacity={0.7}
+                  accessibilityLabel={`${d.title}, ${isCompleted ? 'réussi' : 'échoué'}`}
+                  accessibilityRole="button"
                 >
                   <Text style={styles.historyEmoji}>{d.emoji}</Text>
                   <View style={styles.historyInfo}>

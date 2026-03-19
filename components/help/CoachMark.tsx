@@ -13,6 +13,7 @@ import Animated, {
   withTiming,
   withSpring,
   runOnJS,
+  useReducedMotion,
 } from 'react-native-reanimated';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
@@ -62,14 +63,17 @@ export const CoachMark = React.memo(function CoachMark({
 }: CoachMarkProps) {
   const { primary, colors } = useThemeColors();
   const { width: screenWidth } = useWindowDimensions();
+  const reduceMotion = useReducedMotion();
 
   // Animation d'entrée
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(position === 'below' ? -8 : 8);
+  const opacity = useSharedValue(reduceMotion ? 1 : 0);
+  const translateY = useSharedValue(reduceMotion ? 0 : (position === 'below' ? -8 : 8));
 
   useEffect(() => {
-    opacity.value = withTiming(1, { duration: 250 });
-    translateY.value = withSpring(0, { damping: 15, stiffness: 150, mass: 0.8 });
+    if (!reduceMotion) {
+      opacity.value = withTiming(1, { duration: 250 });
+      translateY.value = withSpring(0, { damping: 15, stiffness: 150, mass: 0.8 });
+    }
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => ({

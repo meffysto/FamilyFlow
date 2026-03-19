@@ -195,13 +195,13 @@ function MiniCalendar({
   return (
     <View style={[calStyles.container, { backgroundColor: colors.card }]}>
       <View style={calStyles.nav}>
-        <TouchableOpacity onPress={() => setViewMonth(subMonths(viewMonth, 1))} style={calStyles.navBtn}>
+        <TouchableOpacity onPress={() => setViewMonth(subMonths(viewMonth, 1))} style={calStyles.navBtn} accessibilityLabel="Mois précédent" accessibilityRole="button">
           <Text style={[calStyles.navArrow, { color: colors.textMuted }]}>‹</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setViewMonth(startOfMonth(new Date()))} style={calStyles.monthBtn}>
+        <TouchableOpacity onPress={() => setViewMonth(startOfMonth(new Date()))} style={calStyles.monthBtn} accessibilityLabel={`${monthLabel}, appuyez pour revenir au mois courant`} accessibilityRole="button">
           <Text style={[calStyles.monthLabel, { color: colors.text }]}>{monthLabel}</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setViewMonth(addMonths(viewMonth, 1))} style={calStyles.navBtn}>
+        <TouchableOpacity onPress={() => setViewMonth(addMonths(viewMonth, 1))} style={calStyles.navBtn} accessibilityLabel="Mois suivant" accessibilityRole="button">
           <Text style={[calStyles.navArrow, { color: colors.textMuted }]}>›</Text>
         </TouchableOpacity>
       </View>
@@ -228,6 +228,9 @@ function MiniCalendar({
               onPress={() => hasJournal && onSelectDate(day)}
               disabled={!hasJournal}
               activeOpacity={0.6}
+              accessibilityLabel={`${day.getDate()} ${format(day, 'MMMM', { locale: fr })}${hasJournal ? ', journal disponible' : ''}${isToday ? ", aujourd'hui" : ''}${isSelected ? ', sélectionné' : ''}`}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isSelected, disabled: !hasJournal }}
             >
               <Text
                 style={[
@@ -559,6 +562,8 @@ export default function JournalScreen() {
                 <TouchableOpacity
                   style={[styles.sectionAddBtn, { backgroundColor: tint }]}
                   onPress={() => openAddModal('Observation')}
+                  accessibilityLabel="Ajouter une observation"
+                  accessibilityRole="button"
                 >
                   <Text style={[styles.sectionAddText, { color: primary }]}>+ Ajouter</Text>
                 </TouchableOpacity>
@@ -618,6 +623,8 @@ export default function JournalScreen() {
               <TouchableOpacity
                 style={[styles.sectionAddBtn, { backgroundColor: tint }]}
                 onPress={() => openAddModal(entryType)}
+                accessibilityLabel={`Ajouter dans ${sec.heading}`}
+                accessibilityRole="button"
               >
                 <Text style={[styles.sectionAddText, { color: primary }]}>+ Ajouter</Text>
               </TouchableOpacity>
@@ -683,10 +690,10 @@ export default function JournalScreen() {
 
       {/* Navigation date */}
       <View style={[styles.dateNav, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={navigatePrev} disabled={!hasPrev} style={styles.dateNavBtn}>
+        <TouchableOpacity onPress={navigatePrev} disabled={!hasPrev} style={styles.dateNavBtn} accessibilityLabel="Jour précédent" accessibilityRole="button" accessibilityState={{ disabled: !hasPrev }}>
           <Text style={[styles.dateNavArrow, { color: hasPrev ? colors.text : colors.textFaint }]}>‹</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setShowCalendar(!showCalendar)} style={styles.dateNavCenter}>
+        <TouchableOpacity onPress={() => setShowCalendar(!showCalendar)} style={styles.dateNavCenter} accessibilityLabel={`${selectedDateDisplay}, appuyez pour ouvrir le calendrier`} accessibilityRole="button">
           <Text style={[styles.dateNavText, { color: colors.text }]}>
             {isToday ? "Aujourd'hui" : format(selectedDate, 'dd/MM/yyyy')}
           </Text>
@@ -694,11 +701,11 @@ export default function JournalScreen() {
             {isToday ? format(selectedDate, 'dd MMMM', { locale: fr }) : format(selectedDate, 'EEEE', { locale: fr })}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={navigateNext} disabled={!hasNext} style={styles.dateNavBtn}>
+        <TouchableOpacity onPress={navigateNext} disabled={!hasNext} style={styles.dateNavBtn} accessibilityLabel="Jour suivant" accessibilityRole="button" accessibilityState={{ disabled: !hasNext }}>
           <Text style={[styles.dateNavArrow, { color: hasNext ? colors.text : colors.textFaint }]}>›</Text>
         </TouchableOpacity>
         {!isToday && (
-          <TouchableOpacity onPress={() => setSelectedDate(new Date())} style={[styles.todayBtn, { backgroundColor: tint }]}>
+          <TouchableOpacity onPress={() => setSelectedDate(new Date())} style={[styles.todayBtn, { backgroundColor: tint }]} accessibilityLabel="Revenir à aujourd'hui" accessibilityRole="button">
             <Text style={[styles.todayBtnText, { color: primary }]}>Aujourd'hui</Text>
           </TouchableOpacity>
         )}
@@ -725,6 +732,8 @@ export default function JournalScreen() {
                 key={type}
                 style={[styles.quickBtn, { backgroundColor: tint }]}
                 onPress={() => openAddModal(type)}
+                accessibilityLabel={`Ajouter un ${ENTRY_META[type].label.toLowerCase()}`}
+                accessibilityRole="button"
               >
                 <Text style={styles.quickBtnEmoji}>{ENTRY_META[type].emoji}</Text>
                 <Text style={[styles.quickBtnText, { color: primary }]}>+ {ENTRY_META[type].label}</Text>
@@ -737,12 +746,14 @@ export default function JournalScreen() {
                 key={type}
                 style={[styles.quickBtn, { backgroundColor: tint }]}
                 onPress={() => openAddModal(type)}
+                accessibilityLabel={`Ajouter ${type === 'Observation' ? 'une observation' : 'un médicament'}`}
+                accessibilityRole="button"
               >
                 <Text style={styles.quickBtnEmoji}>{ENTRY_META[type].emoji}</Text>
                 <Text style={[styles.quickBtnText, { color: primary }]}>+ {ENTRY_META[type].label}</Text>
               </TouchableOpacity>
             ))}
-            <TouchableOpacity style={[styles.quickBtn, { backgroundColor: tint }]} onPress={loadJournal}>
+            <TouchableOpacity style={[styles.quickBtn, { backgroundColor: tint }]} onPress={loadJournal} accessibilityLabel="Rafraîchir le journal" accessibilityRole="button">
               <Text style={styles.quickBtnEmoji}>🔄</Text>
               <Text style={[styles.quickBtnText, { color: primary }]}>Rafraîchir</Text>
             </TouchableOpacity>
@@ -772,6 +783,9 @@ export default function JournalScreen() {
                   style={[styles.createBtn, { backgroundColor: primary }, isCreating && styles.createBtnDisabled]}
                   onPress={createJournal}
                   disabled={isCreating}
+                  accessibilityLabel="Créer le journal du jour"
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: isCreating }}
                 >
                   <Text style={styles.createBtnText}>
                     {isCreating ? 'Création...' : '📝 Créer le journal du jour'}
@@ -869,16 +883,18 @@ export default function JournalScreen() {
 
             <View style={styles.modalActions}>
               {modal.mode === 'edit' && (
-                <TouchableOpacity style={styles.modalDelete} onPress={deleteEntry}>
+                <TouchableOpacity style={styles.modalDelete} onPress={deleteEntry} accessibilityLabel="Supprimer cette entrée" accessibilityRole="button">
                   <Text style={styles.modalDeleteText}>🗑</Text>
                 </TouchableOpacity>
               )}
-              <TouchableOpacity style={[styles.modalCancel, { borderColor: colors.border }]} onPress={closeModal}>
+              <TouchableOpacity style={[styles.modalCancel, { borderColor: colors.border }]} onPress={closeModal} accessibilityLabel="Annuler" accessibilityRole="button">
                 <Text style={[styles.modalCancelText, { color: colors.textMuted }]}>Annuler</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalConfirm, { backgroundColor: primary }]}
                 onPress={confirmModal}
+                accessibilityLabel={modal.mode === 'edit' ? 'Modifier' : 'Ajouter'}
+                accessibilityRole="button"
               >
                 <Text style={styles.modalConfirmText}>
                   {modal.mode === 'edit' ? 'Modifier' : 'Ajouter'}

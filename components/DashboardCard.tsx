@@ -14,6 +14,7 @@ import Animated, {
   withTiming,
   Easing,
   interpolate,
+  useReducedMotion,
 } from 'react-native-reanimated';
 import * as SecureStore from 'expo-secure-store';
 import { useThemeColors } from '../contexts/ThemeContext';
@@ -58,8 +59,9 @@ export function DashboardCard({
   glass = true,
 }: DashboardCardProps) {
   const { primary, colors } = useThemeColors();
+  const reduceMotion = useReducedMotion();
   const accentColor = color ?? primary;
-  const badgeScale = useSharedValue(0);
+  const badgeScale = useSharedValue(reduceMotion ? 1 : 0);
 
   // -- Collapse state --
   const [contentHeight, setContentHeight] = useState(0);
@@ -73,7 +75,7 @@ export function DashboardCard({
 
   useEffect(() => {
     if (count !== undefined && count > 0) {
-      badgeScale.value = withSpring(1, { damping: 12, stiffness: 200 });
+      badgeScale.value = reduceMotion ? 1 : withSpring(1, { damping: 12, stiffness: 200 });
     }
   }, [count]);
 
@@ -81,8 +83,8 @@ export function DashboardCard({
     if (!collapsible) return;
     const next = !isCollapsed;
     setIsCollapsed(next);
-    animProgress.value = withTiming(next ? 0 : 1, { duration: ANIM_DURATION, easing: ANIM_EASING });
-    chevronRotation.value = withTiming(next ? 0 : 1, { duration: ANIM_DURATION, easing: ANIM_EASING });
+    animProgress.value = reduceMotion ? (next ? 0 : 1) : withTiming(next ? 0 : 1, { duration: ANIM_DURATION, easing: ANIM_EASING });
+    chevronRotation.value = reduceMotion ? (next ? 0 : 1) : withTiming(next ? 0 : 1, { duration: ANIM_DURATION, easing: ANIM_EASING });
     if (cardId) {
       SecureStore.setItemAsync(`${STORAGE_PREFIX}${cardId}`, next ? '1' : '0');
     }

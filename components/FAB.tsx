@@ -14,6 +14,7 @@ import Animated, {
   interpolate,
   SharedValue,
   Easing,
+  useReducedMotion,
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -42,19 +43,20 @@ const TIMING_CONFIG = { duration: 200, easing: Easing.out(Easing.cubic) };
 function FABComponent({ actions }: FABProps) {
   const { primary, colors, isDark } = useThemeColors();
   const insets = useSafeAreaInsets();
+  const reduceMotion = useReducedMotion();
   const [open, setOpen] = useState(false);
   const progress = useSharedValue(0);
 
   const toggle = useCallback(() => {
     const next = !open;
     setOpen(next);
-    progress.value = withTiming(next ? 1 : 0, TIMING_CONFIG);
-  }, [open, progress]);
+    progress.value = reduceMotion ? (next ? 1 : 0) : withTiming(next ? 1 : 0, TIMING_CONFIG);
+  }, [open, progress, reduceMotion]);
 
   const close = useCallback(() => {
     setOpen(false);
-    progress.value = withTiming(0, TIMING_CONFIG);
-  }, [progress]);
+    progress.value = reduceMotion ? 0 : withTiming(0, TIMING_CONFIG);
+  }, [progress, reduceMotion]);
 
   // Rotation animée du "+" → "×"
   const mainAnimStyle = useAnimatedStyle(() => ({

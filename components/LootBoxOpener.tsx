@@ -32,6 +32,7 @@ import Animated, {
   interpolate,
   Easing,
   cancelAnimation,
+  useReducedMotion,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { LootBox, ProfileTheme } from '../lib/types';
@@ -604,6 +605,7 @@ export function LootBoxOpener({
   onClose,
 }: LootBoxOpenerProps) {
   const { colors: { textFaint } } = useThemeColors();
+  const reduceMotion = useReducedMotion();
   const theme = getTheme(profileTheme);
   const [phase, setPhase] = useState<Phase>('idle');
   const [result, setResult] = useState<LootBox | null>(null);
@@ -659,11 +661,13 @@ export function LootBoxOpener({
       setPhase('idle');
       setResult(null);
       resetAnimations();
-      startIdleAnimations();
+      if (!reduceMotion) {
+        startIdleAnimations();
+      }
     } else {
       stopAllAnimations();
     }
-  }, [visible]);
+  }, [visible, reduceMotion]);
 
   function resetAnimations() {
     breathe.value = 0;
@@ -751,6 +755,34 @@ export function LootBoxOpener({
   const handleOpen = useCallback(async () => {
     if (phase !== 'idle' || lootCount <= 0) return;
 
+    // ─── Mode reduceMotion : ouverture rapide, résultat immédiat ─────
+    if (reduceMotion) {
+      const box = await onOpen();
+      if (!box) return;
+
+      setResult(box);
+      setPhase('reveal');
+
+      // Afficher directement la carte sans animation
+      cardOpacity.value = 1;
+      cardScale.value = 1;
+      cardScaleX.value = 1;
+      packOpacity.value = 0;
+
+      const boxIsMythique = box.rarity === 'mythique';
+      const boxIsLegendaire = box.rarity === 'légendaire';
+      const isHighTier = boxIsMythique || boxIsLegendaire;
+
+      if (isHighTier) {
+        bannerOpacity.value = 1;
+        bannerScale.value = 1;
+      }
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      return;
+    }
+
+    // ─── Mode normal : animations complètes ─────────────────────────
     setPhase('spinning');
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
@@ -887,7 +919,7 @@ export function LootBoxOpener({
     if (boxIsMythique && confettiRef2.current) {
       setTimeout(() => confettiRef2.current?.start(), 400);
     }
-  }, [phase, lootCount, onOpen, theme]);
+  }, [phase, lootCount, onOpen, theme, reduceMotion]);
 
   // ─── Close handler ────────────────────────────────────────────────────
 
@@ -931,22 +963,24 @@ export function LootBoxOpener({
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={handleClose}>
       <View style={[styles.container, { backgroundColor: bgColor }]}>
-        {/* Screen flash */}
-        <Animated.View
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: flashColor, zIndex: 100, pointerEvents: 'none' },
-            flashStyle,
-          ]}
-        />
+        {/* Screen flash (skip si reduceMotion) */}
+        {!reduceMotion && (
+          <Animated.View
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: flashColor, zIndex: 100, pointerEvents: 'none' },
+              flashStyle,
+            ]}
+          />
+        )}
 
-        {/* Idle floating particles */}
-        {phase === 'idle' && idleParticles.map((p) => (
+        {/* Idle floating particles (skip si reduceMotion) */}
+        {!reduceMotion && phase === 'idle' && idleParticles.map((p) => (
           <FloatingParticle key={p.id} particle={p} />
         ))}
 
-        {/* Reveal particles */}
-        {(phase === 'reveal' || phase === 'done') && (
+        {/* Reveal particles (skip si reduceMotion) */}
+        {!reduceMotion && (phase === 'reveal' || phase === 'done') && (
           <>
             {revealParticles.map((p) => (
               <FloatingParticle key={`r${p.id}`} particle={p} />
@@ -957,8 +991,8 @@ export function LootBoxOpener({
           </>
         )}
 
-        {/* Confetti */}
-        {ConfettiCannon && (
+        {/* Confetti (skip si reduceMotion) */}
+        {!reduceMotion && ConfettiCannon && (
           <>
             <ConfettiCannon
               ref={confettiRef}
@@ -1022,8 +1056,8 @@ export function LootBoxOpener({
             </>
           )}
 
-          {/* ═══ SPINNING PHASE ═══ */}
-          {phase === 'spinning' && (
+          {/* ═══ SPINNING PHASE ═══ (jamais affiché si reduceMotion — on passe directement au reveal) */}
+          {!reduceMotion && phase === 'spinning' && (
             <View style={styles.spinContainer}>
               <View style={styles.raysContainer}>
                 {Array.from({ length: 12 }, (_, i) => (
@@ -1045,8 +1079,8 @@ export function LootBoxOpener({
           {/* ═══ REVEAL PHASE ═══ */}
           {(phase === 'reveal' || phase === 'done') && result && (
             <View style={styles.revealContainer}>
-              {/* Glow rings behind card — Pokémon TCG Pocket style */}
-              {(isHighTier || isEpique) && (
+              {/* Glow rings behind card — Pokémon TCG Pocket style (skip si reduceMotion) */}
+              {!reduceMotion && (isHighTier || isEpique) && (
                 <View style={styles.glowCenter}>
                   {/* Inner ring */}
                   <GlowRing

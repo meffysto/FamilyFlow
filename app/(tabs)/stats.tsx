@@ -114,7 +114,7 @@ export default function StatsScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <View style={[styles.header, { backgroundColor: colors.bg }]}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
+        <TouchableOpacity onPress={() => router.back()} hitSlop={12} accessibilityLabel="Retour" accessibilityRole="button">
           <Text style={[styles.backBtn, { color: primary }]}>← Retour</Text>
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.text }]}>Statistiques</Text>
@@ -136,14 +136,17 @@ export default function StatsScreen() {
             <Text style={[styles.cardTitle, { color: colors.text }]}>📋 Tâches complétées</Text>
           </View>
           <View style={styles.weekNav}>
-            <TouchableOpacity onPress={() => setWeekOffset((o) => o - 1)} hitSlop={8}>
+            <TouchableOpacity onPress={() => setWeekOffset((o) => o - 1)} hitSlop={8} accessibilityLabel="Semaine précédente" accessibilityRole="button">
               <Text style={[styles.navBtn, { color: primary }]}>◀</Text>
             </TouchableOpacity>
-            <Text style={[styles.weekLabel, { color: colors.textSub }]}>{weekLabel}</Text>
+            <Text style={[styles.weekLabel, { color: colors.textSub }]} accessibilityLabel={`Semaine du ${weekLabel}`}>{weekLabel}</Text>
             <TouchableOpacity
               onPress={() => setWeekOffset((o) => Math.min(o + 1, 0))}
               hitSlop={8}
               disabled={weekOffset >= 0}
+              accessibilityLabel="Semaine suivante"
+              accessibilityRole="button"
+              accessibilityState={{ disabled: weekOffset >= 0 }}
             >
               <Text style={[styles.navBtn, { color: weekOffset >= 0 ? colors.textFaint : primary }]}>▶</Text>
             </TouchableOpacity>

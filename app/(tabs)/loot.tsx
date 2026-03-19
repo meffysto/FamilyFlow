@@ -117,6 +117,8 @@ export default function LootScreen() {
               style={styles.dropRatesBtn}
               onPress={() => setShowDropRates(true)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityLabel="Voir les probabilités de récompenses"
+              accessibilityRole="button"
             >
               <Text style={styles.dropRatesBtnText}>📊</Text>
             </TouchableOpacity>
@@ -160,6 +162,8 @@ export default function LootScreen() {
                   style={[styles.openBtn, { backgroundColor: primary }]}
                   onPress={() => handleOpenLoot(profile)}
                   disabled={isProcessing}
+                  accessibilityLabel={`Ouvrir ${profile.lootBoxesAvailable} récompense${profile.lootBoxesAvailable > 1 ? 's' : ''} pour ${profile.name}`}
+                  accessibilityRole="button"
                 >
                   <Text style={styles.openBtnEmoji}>🎁</Text>
                   <Text style={[styles.openBtnText, { color: colors.onPrimary }]}>
@@ -310,7 +314,7 @@ export default function LootScreen() {
             {/* Header */}
             <View style={styles.drHeader}>
               <Text style={[styles.drTitle, { color: colors.text }]}>📊 Probabilités & Récompenses</Text>
-              <TouchableOpacity onPress={() => setShowDropRates(false)}>
+              <TouchableOpacity onPress={() => setShowDropRates(false)} accessibilityLabel="Fermer" accessibilityRole="button">
                 <Text style={[styles.drCloseBtn, { color: colors.textFaint }]}>✕</Text>
               </TouchableOpacity>
             </View>
@@ -401,7 +405,7 @@ export default function LootScreen() {
             ))}
 
             {/* Close button */}
-            <TouchableOpacity style={[styles.drCloseButton, { backgroundColor: primary }]} onPress={() => setShowDropRates(false)}>
+            <TouchableOpacity style={[styles.drCloseButton, { backgroundColor: primary }]} onPress={() => setShowDropRates(false)} accessibilityLabel="Fermer les probabilités" accessibilityRole="button">
               <Text style={[styles.drCloseButtonText, { color: colors.onPrimary }]}>Fermer</Text>
             </TouchableOpacity>
 

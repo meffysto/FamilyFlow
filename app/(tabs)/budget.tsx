@@ -338,6 +338,9 @@ export default function BudgetScreen() {
               onPress={handleScanReceipt}
               activeOpacity={0.7}
               disabled={scanning}
+              accessibilityLabel={scanning ? 'Scan en cours' : 'Scanner un ticket de caisse'}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: scanning }}
             >
               {scanning ? (
                 <ActivityIndicator size="small" color={primary} />
@@ -350,6 +353,8 @@ export default function BudgetScreen() {
             style={[styles.addBtn, { backgroundColor: primary }]}
             onPress={() => setAddModalVisible(true)}
             activeOpacity={0.7}
+            accessibilityLabel="Ajouter une dépense"
+            accessibilityRole="button"
           >
             <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+ Dépense</Text>
           </TouchableOpacity>
@@ -358,11 +363,11 @@ export default function BudgetScreen() {
 
       {/* Month navigation */}
       <View style={[styles.monthNav, { backgroundColor: colors.card }]}>
-        <TouchableOpacity onPress={() => handleMonthChange('prev')} hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}>
+        <TouchableOpacity onPress={() => handleMonthChange('prev')} hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }} accessibilityLabel="Mois précédent" accessibilityRole="button">
           <Text style={[styles.monthArrow, { color: primary }]}>{'<'}</Text>
         </TouchableOpacity>
-        <Text style={[styles.monthLabel, { color: colors.text }]}>{formatMonthLabel(budgetMonth)}</Text>
-        <TouchableOpacity onPress={() => handleMonthChange('next')} hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}>
+        <Text style={[styles.monthLabel, { color: colors.text }]} accessibilityLabel={`Mois : ${formatMonthLabel(budgetMonth)}`}>{formatMonthLabel(budgetMonth)}</Text>
+        <TouchableOpacity onPress={() => handleMonthChange('next')} hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }} accessibilityLabel="Mois suivant" accessibilityRole="button">
           <Text style={[styles.monthArrow, { color: primary }]}>{'>'}</Text>
         </TouchableOpacity>
       </View>
@@ -444,13 +449,13 @@ export default function BudgetScreen() {
           {/* Barre d'action en mode sélection */}
           {selectionMode && (
             <View style={[styles.selectionBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-              <TouchableOpacity onPress={cancelSelection} hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}>
+              <TouchableOpacity onPress={cancelSelection} hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }} accessibilityLabel="Annuler la sélection" accessibilityRole="button">
                 <Text style={[styles.selectionCancel, { color: primary }]}>Annuler</Text>
               </TouchableOpacity>
-              <Text style={[styles.selectionCount, { color: colors.text }]}>
+              <Text style={[styles.selectionCount, { color: colors.text }]} accessibilityLabel={`${selectedEntries.size} dépense${selectedEntries.size > 1 ? 's' : ''} sélectionnée${selectedEntries.size > 1 ? 's' : ''}`}>
                 {selectedEntries.size} sélectionnée{selectedEntries.size > 1 ? 's' : ''}
               </Text>
-              <TouchableOpacity onPress={handleDeleteSelected}>
+              <TouchableOpacity onPress={handleDeleteSelected} accessibilityLabel={`Supprimer ${selectedEntries.size} dépense${selectedEntries.size > 1 ? 's' : ''}`} accessibilityRole="button">
                 <Text style={[styles.selectionDelete, { color: colors.error }]}>Supprimer</Text>
               </TouchableOpacity>
             </View>
@@ -547,6 +552,9 @@ export default function BudgetScreen() {
                     ]}
                     onPress={() => setSelectedCategory(cat)}
                     activeOpacity={0.7}
+                    accessibilityLabel={`Catégorie ${cat.name}`}
+                    accessibilityRole="tab"
+                    accessibilityState={{ selected }}
                   >
                     <Text style={[styles.chipText, { color: selected ? colors.onPrimary : colors.text }]}>
                       {cat.emoji} {cat.name}
@@ -565,6 +573,7 @@ export default function BudgetScreen() {
               keyboardType="decimal-pad"
               value={amountText}
               onChangeText={setAmountText}
+              accessibilityLabel="Montant de la dépense"
             />
 
             {/* Label */}
@@ -575,6 +584,7 @@ export default function BudgetScreen() {
               placeholderTextColor={colors.textFaint}
               value={labelText}
               onChangeText={setLabelText}
+              accessibilityLabel="Libellé de la dépense"
             />
 
             {/* Date */}
@@ -586,6 +596,8 @@ export default function BudgetScreen() {
               style={[styles.submitBtn, { backgroundColor: primary }]}
               onPress={handleAdd}
               activeOpacity={0.7}
+              accessibilityLabel="Ajouter la dépense"
+              accessibilityRole="button"
             >
               <Text style={[styles.submitBtnText, { color: colors.onPrimary }]}>Ajouter</Text>
             </TouchableOpacity>
@@ -594,6 +606,8 @@ export default function BudgetScreen() {
               style={styles.cancelBtn}
               onPress={() => setAddModalVisible(false)}
               activeOpacity={0.7}
+              accessibilityLabel="Annuler"
+              accessibilityRole="button"
             >
               <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>Annuler</Text>
             </TouchableOpacity>

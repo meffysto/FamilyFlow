@@ -798,16 +798,18 @@ export default function MealsScreen() {
         <>
         {/* Navigation semaine */}
         <View style={[styles.weekNav, { borderBottomColor: colors.borderLight }]}>
-          <TouchableOpacity onPress={goToPrevWeek} style={styles.weekArrow} activeOpacity={0.6}>
+          <TouchableOpacity onPress={goToPrevWeek} style={styles.weekArrow} activeOpacity={0.6} accessibilityLabel="Semaine précédente" accessibilityRole="button">
             <Text style={[styles.weekArrowText, { color: primary }]}>‹</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={goToCurrentWeek} activeOpacity={0.7}>
+          <TouchableOpacity onPress={goToCurrentWeek} activeOpacity={0.7} accessibilityLabel={`${weekLabel}, appuyez pour revenir à cette semaine`} accessibilityRole="button">
             <Text style={[styles.weekLabel, { color: isCurrentWeek ? colors.text : primary }]}>{weekLabel}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={goToNextWeek}
             style={styles.weekArrow}
             activeOpacity={0.6}
+            accessibilityLabel="Semaine suivante"
+            accessibilityRole="button"
           >
             <Text style={[styles.weekArrowText, { color: primary }]}>›</Text>
           </TouchableOpacity>
@@ -836,6 +838,8 @@ export default function MealsScreen() {
               style={[styles.generateBtn, { backgroundColor: tint, borderColor: primary + '30' }]}
               onPress={generateWeeklyShoppingList}
               activeOpacity={0.7}
+              accessibilityLabel={`Générer la liste de courses depuis ${linkedRecipeCount} recette${linkedRecipeCount > 1 ? 's' : ''}`}
+              accessibilityRole="button"
             >
               <Text style={[styles.generateBtnText, { color: primary }]}>
                 🛒 Générer la liste de courses ({linkedRecipeCount} recette{linkedRecipeCount > 1 ? 's' : ''})
@@ -883,6 +887,9 @@ export default function MealsScreen() {
                           style={[styles.mealRow, { borderTopColor: colors.cardAlt }]}
                           onPress={weekOffset >= 0 ? () => openEdit(meal) : undefined}
                           activeOpacity={weekOffset >= 0 ? 0.6 : 1}
+                          accessibilityLabel={`${meal.mealType}, ${meal.text || 'pas encore planifié'}${linkedRecipe ? ', recette liée' : ''}`}
+                          accessibilityRole="button"
+                          accessibilityHint={weekOffset >= 0 ? 'Appuyez pour modifier' : undefined}
                         >
                           <Text style={styles.mealEmoji}>
                             {MEAL_EMOJI[meal.mealType] ?? '🍴'}
@@ -922,6 +929,8 @@ export default function MealsScreen() {
                             style={[styles.viewRecipeBtn, { backgroundColor: tint }]}
                             onPress={() => setSelectedRecipe(linkedRecipe)}
                             activeOpacity={0.7}
+                            accessibilityLabel={`Voir la recette ${linkedRecipe.title}`}
+                            accessibilityRole="button"
                           >
                             <Text style={[styles.viewRecipeBtnText, { color: primary }]}>
                               📖 Voir la recette
@@ -968,6 +977,9 @@ export default function MealsScreen() {
                           style={styles.courseCheckbox}
                           onPress={() => handleCourseToggle(item)}
                           activeOpacity={0.6}
+                          accessibilityLabel={`${item.text}, ${item.completed ? 'acheté' : 'à acheter'}`}
+                          accessibilityRole="checkbox"
+                          accessibilityState={{ checked: item.completed }}
                         >
                           <View style={[
                             styles.checkboxBox,
@@ -993,6 +1005,8 @@ export default function MealsScreen() {
                           onPress={() => handleCourseRemove(item)}
                           activeOpacity={0.6}
                           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          accessibilityLabel={`Supprimer ${item.text}`}
+                          accessibilityRole="button"
                         >
                           <Text style={[styles.courseRemoveText, { color: colors.textMuted }]}>✕</Text>
                         </TouchableOpacity>
@@ -1013,6 +1027,9 @@ export default function MealsScreen() {
                 style={[styles.sectionPickerBtn, { backgroundColor: colors.cardAlt }]}
                 onPress={() => setShowSectionPicker(true)}
                 activeOpacity={0.7}
+                accessibilityLabel={`Catégorie : ${selectedSection ?? 'automatique'}`}
+                accessibilityRole="button"
+                accessibilityHint="Choisir la catégorie de l'article"
               >
                 <Text style={[styles.sectionPickerText, { color: colors.textSub }]} numberOfLines={1}>
                   {selectedSection
@@ -1029,6 +1046,7 @@ export default function MealsScreen() {
                 placeholderTextColor={colors.textMuted}
                 returnKeyType="send"
                 onSubmitEditing={handleAddCourse}
+                accessibilityLabel="Ajouter un article à la liste de courses"
               />
               <TouchableOpacity
                 style={[
@@ -1039,6 +1057,9 @@ export default function MealsScreen() {
                 onPress={handleAddCourse}
                 disabled={!newItemText.trim()}
                 activeOpacity={0.7}
+                accessibilityLabel="Ajouter l'article"
+                accessibilityRole="button"
+                accessibilityState={{ disabled: !newItemText.trim() }}
               >
                 <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>
               </TouchableOpacity>
@@ -1057,6 +1078,8 @@ export default function MealsScreen() {
               placeholderTextColor={colors.textMuted}
               returnKeyType="search"
               clearButtonMode="while-editing"
+              accessibilityLabel="Rechercher une recette"
+              accessibilityRole="search"
             />
           </View>
 
@@ -1075,6 +1098,9 @@ export default function MealsScreen() {
                 ]}
                 onPress={() => setRecipeCategory(null)}
                 activeOpacity={0.7}
+                accessibilityLabel="Toutes les catégories"
+                accessibilityRole="tab"
+                accessibilityState={{ selected: recipeCategory === null && !showFavoritesOnly }}
               >
                 <Text style={[
                   styles.categoryChipText,
@@ -1093,6 +1119,9 @@ export default function MealsScreen() {
                   ]}
                   onPress={() => setShowFavoritesOnly(!showFavoritesOnly)}
                   activeOpacity={0.7}
+                  accessibilityLabel={`Favoris${profileFavorites.length > 0 ? `, ${profileFavorites.length} recette${profileFavorites.length > 1 ? 's' : ''}` : ''}`}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: showFavoritesOnly }}
                 >
                   <Text style={[
                     styles.categoryChipText,
@@ -1140,6 +1169,8 @@ export default function MealsScreen() {
                 style={[styles.importBtn, { backgroundColor: tint, borderColor: primary + '30' }]}
                 onPress={() => setShowImport(true)}
                 activeOpacity={0.7}
+                accessibilityLabel="Importer une recette depuis une URL"
+                accessibilityRole="button"
               >
                 <Text style={[styles.importBtnText, { color: primary }]}>
                   🌐 Importer depuis une URL
@@ -1150,6 +1181,9 @@ export default function MealsScreen() {
                 onPress={handlePhotoImport}
                 activeOpacity={0.7}
                 disabled={photoImportLoading}
+                accessibilityLabel={photoImportLoading ? 'Import photo en cours' : 'Importer une recette depuis une photo'}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: photoImportLoading }}
               >
                 <Text style={[styles.importBtnText, { color: primary }]}>
                   {photoImportLoading ? `📷 ${importStatus || 'Import en cours…'}` : '📷 Importer depuis une photo'}
@@ -1159,6 +1193,8 @@ export default function MealsScreen() {
                 style={[styles.importBtn, { backgroundColor: tint, borderColor: primary + '30' }]}
                 onPress={() => { setShowTextImport(true); setTextImportValue(''); setTextImportResult(null); }}
                 activeOpacity={0.7}
+                accessibilityLabel="Coller une recette en texte"
+                accessibilityRole="button"
               >
                 <Text style={[styles.importBtnText, { color: primary }]}>
                   📋 Coller une recette (texte)
@@ -1168,6 +1204,8 @@ export default function MealsScreen() {
                 style={[styles.importBtn, { backgroundColor: tint, borderColor: primary + '30' }]}
                 onPress={() => { setShowScanner(true); setScanResults([]); }}
                 activeOpacity={0.7}
+                accessibilityLabel="Scanner le vault pour des fichiers recette"
+                accessibilityRole="button"
               >
                 <Text style={[styles.importBtnText, { color: primary }]}>
                   🔍 Scanner le vault
@@ -1177,6 +1215,8 @@ export default function MealsScreen() {
                 style={[styles.importBtn, { backgroundColor: tint, borderColor: primary + '30' }]}
                 onPress={() => { setShowExplore(true); setExploreQuery(''); setExploreResults([]); setExplorePreview(null); }}
                 activeOpacity={0.7}
+                accessibilityLabel="Explorer les recettes de la communauté"
+                accessibilityRole="button"
               >
                 <Text style={[styles.importBtnText, { color: primary }]}>
                   🌍 Explorer la communauté
@@ -1259,7 +1299,7 @@ export default function MealsScreen() {
                 <Text style={[styles.linkedRecipeText, { color: primary }]} numberOfLines={1}>
                   📖 {resolveRecipe(editRecipeRef)?.title ?? editRecipeRef}
                 </Text>
-                <TouchableOpacity onPress={clearRecipeLink} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <TouchableOpacity onPress={clearRecipeLink} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityLabel="Retirer le lien vers la recette" accessibilityRole="button">
                   <Text style={[styles.linkedRecipeRemove, { color: primary }]}>✕</Text>
                 </TouchableOpacity>
               </View>
@@ -1268,6 +1308,8 @@ export default function MealsScreen() {
                 style={[styles.linkRecipeBtn, { borderColor: colors.border }]}
                 onPress={() => setShowRecipePicker(true)}
                 activeOpacity={0.7}
+                accessibilityLabel="Lier une recette à ce repas"
+                accessibilityRole="button"
               >
                 <Text style={[styles.linkRecipeBtnText, { color: colors.textSub }]}>
                   📖 Lier une recette
@@ -1279,12 +1321,16 @@ export default function MealsScreen() {
               <TouchableOpacity
                 style={[styles.modalCancel, { borderColor: colors.border }]}
                 onPress={() => setEditingMeal(null)}
+                accessibilityLabel="Annuler"
+                accessibilityRole="button"
               >
                 <Text style={[styles.modalCancelText, { color: colors.textSub }]}>Annuler</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalSave, { backgroundColor: primary }]}
                 onPress={saveEdit}
+                accessibilityLabel="Valider le repas"
+                accessibilityRole="button"
               >
                 <Text style={[styles.modalSaveText, { color: colors.onPrimary }]}>Valider</Text>
               </TouchableOpacity>

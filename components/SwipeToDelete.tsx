@@ -17,6 +17,7 @@ import Animated, {
   withTiming,
   withDelay,
   Easing,
+  useReducedMotion,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import * as SecureStore from 'expo-secure-store';
@@ -47,6 +48,7 @@ export function SwipeToDelete({
   hintId,
 }: SwipeToDeleteProps) {
   const { colors } = useThemeColors();
+  const reduceMotion = useReducedMotion();
   const swipeableRef = useRef<any>(null);
   const hintX = useSharedValue(0);
   const [showHint, setShowHint] = useState(false);
@@ -61,14 +63,16 @@ export function SwipeToDelete({
       if (count < MAX_HINT_COUNT) {
         setShowHint(true);
         await SecureStore.setItemAsync(key, String(count + 1));
-        // Animation : glisser légèrement à gauche puis revenir
-        hintX.value = withDelay(
-          800,
-          withSequence(
-            withTiming(-40, { duration: 400, easing: Easing.out(Easing.cubic) }),
-            withTiming(0, { duration: 300, easing: Easing.in(Easing.cubic) }),
-          )
-        );
+        // Animation : glisser légèrement à gauche puis revenir (skip si reduceMotion)
+        if (!reduceMotion) {
+          hintX.value = withDelay(
+            800,
+            withSequence(
+              withTiming(-40, { duration: 400, easing: Easing.out(Easing.cubic) }),
+              withTiming(0, { duration: 300, easing: Easing.in(Easing.cubic) }),
+            )
+          );
+        }
       }
     })();
   }, [hintId, disabled]);
