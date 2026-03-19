@@ -11,7 +11,7 @@
       "backgroundColor": "#F9FAFB"
     },
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.familyvault.dev",
       "appleTeamId": "AKMNXGVVGX",
       "infoPlist": {
@@ -26,7 +26,7 @@
         "NSMicrophoneUsageDescription": "FamilyFlow utilise le micro pour transcrire les consultations médicales.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "6"
+      "buildNumber": "12"
     },
     "android": {
       "adaptiveIcon": {
