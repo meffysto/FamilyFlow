@@ -45,6 +45,7 @@ import { HELP_CONTENT } from '../../lib/help-content';
 import { getCardTemplate } from '../../lib/card-templates';
 import { getFruitForWeek, getSizeForWeek, getFruitLabel } from '../../lib/pregnancy';
 import { GlassView } from '../../components/ui/GlassView';
+import { FontSize, FontWeight } from '../../constants/typography';
 import type { CardTemplateContext } from '../../lib/card-templates';
 
 // Composants de section dashboard
@@ -1072,22 +1073,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarEmoji: {
-    fontSize: 24,
+    fontSize: FontSize.display,
   },
   headerGreeting: {
     flex: 1,
   },
   greeting: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
   },
   greetingChild: {
-    fontSize: 20,
-    fontWeight: '800',
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.heavy,
   },
   dateText: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
     textTransform: 'capitalize',
   },
   headerActions: {
@@ -1104,11 +1105,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   headerBtnIcon: {
-    fontSize: 22,
+    fontSize: FontSize.titleLg,
   },
   headerBtnLabel: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: FontSize.code,
+    fontWeight: FontWeight.semibold,
     letterSpacing: 0.2,
   },
   scroll: {
@@ -1120,12 +1121,12 @@ const styles = StyleSheet.create({
     paddingBottom: 90,
   },
   welcomeText: {
-    fontSize: 16,
+    fontSize: FontSize.lg,
     lineHeight: 24,
     marginBottom: 6,
   },
   welcomeSubText: {
-    fontSize: 14,
+    fontSize: FontSize.sm,
     lineHeight: 22,
     marginBottom: 16,
   },
@@ -1136,8 +1137,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   welcomeBtnText: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
   },
   bottomPad: {
     height: 20,
@@ -1151,11 +1152,11 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   ageUpgradeTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
   },
   ageUpgradeDesc: {
-    fontSize: 14,
+    fontSize: FontSize.sm,
     lineHeight: 20,
   },
   ageUpgradeActions: {
@@ -1170,16 +1171,16 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   ageUpgradeBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
   },
   ageUpgradeDismiss: {
     paddingVertical: 10,
     paddingHorizontal: 12,
   },
   ageUpgradeDismissText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
   // Grossesse — Liquid Glass
   pregnancyCard: {
@@ -1194,18 +1195,18 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   pregnancyFruit: {
-    fontSize: 32,
+    fontSize: FontSize.hero,
   },
   pregnancyInfo: {
     flex: 1,
     gap: 2,
   },
   pregnancyTitle: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
   },
   pregnancySub: {
-    fontSize: 13,
+    fontSize: FontSize.label,
     lineHeight: 18,
   },
   pregnancyCta: {
@@ -1214,8 +1215,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   pregnancyCtaText: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.bold,
   },
   pregnancyBar: {
     height: 4,
@@ -1241,8 +1242,8 @@ const styles = StyleSheet.create({
     maxWidth: 340,
   },
   pickerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: FontSize.heading,
+    fontWeight: FontWeight.bold,
     textAlign: 'center',
     marginBottom: 16,
   },
@@ -1261,10 +1262,10 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   pickerAvatar: {
-    fontSize: 28,
+    fontSize: FontSize.icon,
   },
   pickerName: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.semibold,
   },
 });

@@ -11,6 +11,7 @@ import { DashboardCard } from '../DashboardCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
 import type { AppRecipe } from '../../lib/cooklang';
 import type { DashboardSectionProps } from './types';
+import { FontSize, FontWeight } from '../../constants/typography';
 
 interface DashboardRecipesProps extends DashboardSectionProps {
   onViewRecipe: (recipe: AppRecipe) => void;
@@ -59,7 +60,7 @@ function DashboardRecipesInner({ activateCardTemplate, onViewRecipe }: Dashboard
             </Text>
           )}
         </View>
-        <Text style={{ fontSize: 24 }}>🎲</Text>
+        <Text style={{ fontSize: FontSize.heading }}>🎲</Text>
       </TouchableOpacity>
     </DashboardCard>
   );
@@ -76,11 +77,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   recipeSuggestionTitle: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
   },
   recipeSuggestionMeta: {
-    fontSize: 12,
+    fontSize: FontSize.caption,
     marginTop: 2,
   },
 });

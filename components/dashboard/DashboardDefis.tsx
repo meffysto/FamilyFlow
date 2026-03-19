@@ -10,6 +10,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { DashboardCard } from '../DashboardCard';
 import type { DashboardSectionProps } from './types';
+import { FontSize, FontWeight } from '../../constants/typography';
 
 function DashboardDefisInner(_props: DashboardSectionProps) {
   const router = useRouter();
@@ -49,7 +50,7 @@ function DashboardDefisInner(_props: DashboardSectionProps) {
             <Text style={[styles.defiCheckText, { color: colors.onPrimary }]}>✓</Text>
           </TouchableOpacity>
         )}
-        {todayDone && <Text style={{ color: colors.success, fontSize: 18 }}>✅</Text>}
+        {todayDone && <Text style={{ color: colors.success, fontSize: FontSize.heading }}>✅</Text>}
       </View>
       {activeDefis.length > 1 && (
         <TouchableOpacity onPress={() => router.push('/(tabs)/defis')} activeOpacity={0.7}>
@@ -69,11 +70,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   defiEmoji: {
-    fontSize: 28,
+    fontSize: FontSize.icon,
   },
   defiTitle: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
   },
   defiProgressBg: {
     height: 6,
@@ -85,7 +86,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   defiMeta: {
-    fontSize: 12,
+    fontSize: FontSize.caption,
   },
   defiCheckBtn: {
     width: 36,
@@ -95,11 +96,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   defiCheckText: {
-    fontSize: 16,
-    fontWeight: '800',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.heavy,
   },
   seeAllText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
   },
 });

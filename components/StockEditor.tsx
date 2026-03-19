@@ -18,6 +18,7 @@ import { useToast } from '../contexts/ToastContext';
 import { ModalHeader } from './ui/ModalHeader';
 import { StockItem } from '../lib/types';
 import { EMPLACEMENTS, SUBCATEGORIES, type EmplacementId } from '../constants/stock';
+import { FontSize, FontWeight } from '../constants/typography';
 
 interface StockEditorProps {
   item?: StockItem; // if provided, editing mode
@@ -143,7 +144,7 @@ export function StockEditor({ item, sections, defaultEmplacement, onSave, onDele
               <Text style={[
                 styles.chipText,
                 { color: colors.textMuted },
-                emplacement === emp.id && { color: primary, fontWeight: '700' },
+                emplacement === emp.id && { color: primary, fontWeight: FontWeight.bold },
               ]}>
                 {emp.emoji} {emp.label}
               </Text>
@@ -170,7 +171,7 @@ export function StockEditor({ item, sections, defaultEmplacement, onSave, onDele
                   <Text style={[
                     styles.chipText,
                     { color: colors.textMuted },
-                    section === s && { color: primary, fontWeight: '700' },
+                    section === s && { color: primary, fontWeight: FontWeight.bold },
                   ]}>
                     {s}
                   </Text>
@@ -236,14 +237,14 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { padding: 20, gap: 16, paddingBottom: 40 },
   label: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
   },
   input: {
     borderWidth: 1.5,
     borderRadius: 12,
     padding: 14,
-    fontSize: 15,
+    fontSize: FontSize.body,
   },
   chipRow: {
     flexDirection: 'row',
@@ -258,8 +259,8 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   chipText: {
-    fontSize: 13,
-    fontWeight: '500',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.medium,
   },
   numRow: {
     flexDirection: 'row',
@@ -277,7 +278,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   deleteBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
 });

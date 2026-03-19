@@ -125,24 +125,24 @@ const weatherStyles = StyleSheet.create({
     borderRadius: 16,
   },
   emoji: {
-    fontSize: 32,
+    fontSize: FontSize.hero,
   },
   textCol: {
     flex: 1,
   },
   label: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
     color: '#1F2937',
   },
   message: {
-    fontSize: 13,
+    fontSize: FontSize.label,
     color: '#374151',
     marginTop: 2,
   },
   count: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.semibold,
     color: '#4B5563',
   },
 });

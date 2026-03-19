@@ -12,6 +12,7 @@ import { DashboardCard } from '../DashboardCard';
 import { computeGratitudeStreak } from '../../app/(tabs)/gratitude';
 import { isBabyProfile } from '../../lib/types';
 import type { DashboardSectionProps } from './types';
+import { FontSize } from '../../constants/typography';
 
 function DashboardGratitudeInner(_props: DashboardSectionProps) {
   const router = useRouter();
@@ -42,6 +43,6 @@ export const DashboardGratitude = React.memo(DashboardGratitudeInner);
 
 const styles = StyleSheet.create({
   defiMeta: {
-    fontSize: 12,
+    fontSize: FontSize.caption,
   },
 });

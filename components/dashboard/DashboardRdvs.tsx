@@ -12,6 +12,7 @@ import { DashboardEmptyState } from '../DashboardEmptyState';
 import { formatDateForDisplay, isRdvUpcoming } from '../../lib/parser';
 import type { RDV } from '../../lib/types';
 import type { DashboardSectionProps } from './types';
+import { FontSize, FontWeight } from '../../constants/typography';
 
 interface DashboardRdvsProps extends DashboardSectionProps {
   onEditRDV: (rdv?: RDV) => void;
@@ -67,7 +68,7 @@ export const DashboardRdvs = React.memo(DashboardRdvsInner);
 
 const styles = StyleSheet.create({
   emptyHint: {
-    fontSize: 13,
+    fontSize: FontSize.label,
     textAlign: 'center',
     fontStyle: 'italic',
     paddingVertical: 4,
@@ -79,15 +80,15 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   rdvDate: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.semibold,
   },
   rdvTitle: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
   },
   rdvMeta: {
-    fontSize: 13,
+    fontSize: FontSize.label,
   },
   cardActions: {
     flexDirection: 'row',
@@ -96,7 +97,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   seeAllText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
   },
 });

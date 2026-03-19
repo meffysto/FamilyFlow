@@ -11,6 +11,7 @@ import { DashboardCard } from '../DashboardCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
 import { formatAmount, categoryDisplay, totalSpent, totalBudget } from '../../lib/budget';
 import type { DashboardSectionProps } from './types';
+import { FontSize, FontWeight } from '../../constants/typography';
 
 function DashboardBudgetInner({ vaultFileExists, activateCardTemplate }: DashboardSectionProps) {
   const router = useRouter();
@@ -67,8 +68,8 @@ export const DashboardBudget = React.memo(DashboardBudgetInner);
 
 const styles = StyleSheet.create({
   budgetTotal: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: FontSize.heading,
+    fontWeight: FontWeight.bold,
     marginBottom: 6,
   },
   budgetCatRow: {
@@ -78,10 +79,10 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   budgetCatName: {
-    fontSize: 14,
+    fontSize: FontSize.sm,
   },
   budgetCatAmount: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
 });

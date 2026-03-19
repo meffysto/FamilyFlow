@@ -141,23 +141,23 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   insightIcon: {
-    fontSize: 18,
+    fontSize: FontSize.heading,
     marginRight: 10,
   },
   insightContent: {
     flex: 1,
   },
   insightTitle: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
   insightBody: {
-    fontSize: 12,
+    fontSize: FontSize.caption,
     marginTop: 2,
   },
   insightAction: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.semibold,
     marginLeft: 8,
   },
   aiDivider: {

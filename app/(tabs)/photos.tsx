@@ -56,6 +56,7 @@ import { computePhotoStats } from '../../lib/photo-stats';
 import { PhotoGallery } from '../../components/PhotoGallery';
 import { MarkdownText } from '../../components/ui/MarkdownText';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
+import { FontSize, FontWeight } from '../../constants/typography';
 import { getThumbnailUri } from '../../lib/thumbnails';
 import * as FileSystem from 'expo-file-system/legacy';
 
@@ -354,7 +355,7 @@ export default function PhotosScreen() {
                 activeOpacity={0.7}
               >
                 <Text style={styles.enfantEmoji}>{e.avatar}</Text>
-                <Text style={[styles.enfantLabel, { color: colors.textMuted }, idx === selectedEnfantIdx && { color: primary, fontWeight: '700' }]}>
+                <Text style={[styles.enfantLabel, { color: colors.textMuted }, idx === selectedEnfantIdx && { color: primary, fontWeight: FontWeight.bold }]}>
                   {e.name}
                 </Text>
               </TouchableOpacity>
@@ -470,7 +471,7 @@ export default function PhotosScreen() {
                       <Text style={[
                         styles.dayNum,
                         { color: colors.textSub },
-                        today && { color: primary, fontWeight: '800' },
+                        today && { color: primary, fontWeight: FontWeight.heavy },
                         future && { color: colors.textFaint },
                         hasPhoto && styles.dayNumWithPhoto,
                       ]}>
@@ -638,14 +639,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
   },
-  title: { fontSize: 20, fontWeight: '800' },
+  title: { fontSize: FontSize.title, fontWeight: FontWeight.heavy },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  stats: { fontSize: 13, fontWeight: '500' },
+  stats: { fontSize: FontSize.label, fontWeight: FontWeight.medium },
   viewToggle: {
     width: 34, height: 34, borderRadius: 10,
     justifyContent: 'center', alignItems: 'center',
   },
-  viewToggleText: { fontSize: 18 },
+  viewToggleText: { fontSize: FontSize.heading },
   navBlock: {
     paddingHorizontal: 16,
     paddingTop: 10,
@@ -666,8 +667,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1.5,
   },
-  enfantEmoji: { fontSize: 15 },
-  enfantLabel: { fontSize: 13, fontWeight: '500' },
+  enfantEmoji: { fontSize: FontSize.body },
+  enfantLabel: { fontSize: FontSize.label, fontWeight: FontWeight.medium },
   scroll: { flex: 1 },
   scrollContent: { padding: CALENDAR_PADDING, paddingBottom: 100 },
   souvenirContent: { padding: 16, paddingBottom: 100, gap: 12 },
@@ -684,8 +685,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   statPillText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
   },
   monthNav: {
     flexDirection: 'row',
@@ -699,11 +700,11 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05, shadowRadius: 3, elevation: 1,
   },
-  monthArrowText: { fontSize: 24, fontWeight: '300' },
-  monthLabel: { fontSize: 18, fontWeight: '700' },
+  monthArrowText: { fontSize: FontSize.display, fontWeight: FontWeight.normal },
+  monthLabel: { fontSize: FontSize.heading, fontWeight: FontWeight.bold },
   weekdayRow: { flexDirection: 'row', gap: DAY_GAP, marginBottom: 8 },
   weekdayCell: { width: CELL_SIZE, alignItems: 'center' },
-  weekdayText: { fontSize: 12, fontWeight: '600' },
+  weekdayText: { fontSize: FontSize.caption, fontWeight: FontWeight.semibold },
   calendarGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: DAY_GAP },
   dayCell: {
     width: CELL_SIZE, height: CELL_SIZE, borderRadius: 10,
@@ -711,9 +712,9 @@ const styles = StyleSheet.create({
   },
   dayCellToday: { borderWidth: 2 },
   dayPhoto: { ...StyleSheet.absoluteFillObject, borderRadius: 10 },
-  dayNum: { fontSize: 13, fontWeight: '600' },
+  dayNum: { fontSize: FontSize.label, fontWeight: FontWeight.semibold },
   dayNumWithPhoto: {
-    color: '#FFFFFF', fontWeight: '800',
+    color: '#FFFFFF', fontWeight: FontWeight.heavy,
     textShadowColor: 'rgba(0,0,0,0.6)',
     textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3,
   },
@@ -724,10 +725,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3,
     shadowRadius: 8, elevation: 8,
   },
-  fabText: { fontSize: 24, color: '#FFFFFF', fontWeight: '700' },
+  fabText: { fontSize: FontSize.display, color: '#FFFFFF', fontWeight: FontWeight.bold },
   memoryCard: { flexDirection: 'row', gap: 12 },
   memoryLeft: { alignItems: 'center', width: 32 },
-  memoryEmoji: { fontSize: 20 },
+  memoryEmoji: { fontSize: FontSize.title },
   memoryLine: { flex: 1, width: 2, marginTop: 4, borderRadius: 1, opacity: 0.3 },
   memoryRight: {
     flex: 1, borderRadius: 14, padding: 14, gap: 4,
@@ -737,15 +738,15 @@ const styles = StyleSheet.create({
   memoryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   memoryHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   memoryEditBtn: { padding: 2 },
-  memoryEditBtnText: { fontSize: 14 },
-  memoryDate: { fontSize: 12, fontWeight: '600' },
+  memoryEditBtnText: { fontSize: FontSize.sm },
+  memoryDate: { fontSize: FontSize.caption, fontWeight: FontWeight.semibold },
   memoryBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
-  memoryBadgeText: { fontSize: 10, fontWeight: '700' },
-  memoryTitle: { fontSize: 15, fontWeight: '700' },
-  memoryDesc: { fontSize: 13, fontStyle: 'italic' },
-  memoryEnfant: { fontSize: 11, marginTop: 2 },
+  memoryBadgeText: { fontSize: FontSize.micro, fontWeight: FontWeight.bold },
+  memoryTitle: { fontSize: FontSize.body, fontWeight: FontWeight.bold },
+  memoryDesc: { fontSize: FontSize.label, fontStyle: 'italic' },
+  memoryEnfant: { fontSize: FontSize.code, marginTop: 2 },
   emptyCard: { borderRadius: 16, padding: 40, alignItems: 'center', gap: 8, marginTop: 20 },
   emptyEmoji: { fontSize: 40 },
-  emptyText: { fontSize: 16, fontWeight: '600' },
-  emptyHint: { fontSize: 13, textAlign: 'center' },
+  emptyText: { fontSize: FontSize.lg, fontWeight: FontWeight.semibold },
+  emptyHint: { fontSize: FontSize.label, textAlign: 'center' },
 });

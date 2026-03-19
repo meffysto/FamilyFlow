@@ -11,6 +11,7 @@ import { DashboardCard } from '../DashboardCard';
 import { lootProgress, calculateLevel, POINTS_PER_TASK, getActiveEvent } from '../../lib/gamification';
 import { SeasonalBanner } from '../SeasonalBanner';
 import type { DashboardSectionProps } from './types';
+import { FontSize, FontWeight } from '../../constants/typography';
 
 function DashboardLootInner({ isChildMode }: DashboardSectionProps) {
   const router = useRouter();
@@ -86,12 +87,12 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   lootProgressLabel: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
   },
   lootProgressPts: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.semibold,
   },
   lootProgressBar: {
     height: 10,
@@ -112,13 +113,13 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   lootCTAText: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
   },
   // Styles enfant — plus gros, plus lisibles
   lootProgressLabelChild: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: FontSize.heading,
+    fontWeight: FontWeight.heavy,
   },
   lootProgressBarChild: {
     height: 16,
@@ -139,11 +140,11 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   lootCTATextChild: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: FontSize.heading,
+    fontWeight: FontWeight.heavy,
   },
   lootHint: {
-    fontSize: 13,
+    fontSize: FontSize.label,
     textAlign: 'center',
   },
 });

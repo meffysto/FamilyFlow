@@ -11,6 +11,7 @@ import { DashboardCard } from '../DashboardCard';
 import { BarChart } from '../charts';
 import { aggregateTasksByWeek, getWeekStart } from '../../lib/stats';
 import type { DashboardSectionProps } from './types';
+import { FontSize } from '../../constants/typography';
 
 function DashboardWeeklyStatsInner(_props: DashboardSectionProps) {
   const router = useRouter();
@@ -49,7 +50,7 @@ export const DashboardWeeklyStats = React.memo(DashboardWeeklyStatsInner);
 
 const styles = StyleSheet.create({
   weekStatsSummary: {
-    fontSize: 12,
+    fontSize: FontSize.caption,
     textAlign: 'center',
     marginTop: 4,
   },

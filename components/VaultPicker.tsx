@@ -25,6 +25,7 @@ import { VaultManager } from '../lib/vault';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { SetupWizard, PersonInput, ChildInput } from './SetupWizard';
 import { startAccessing } from '../modules/vault-access/src';
+import { FontSize, FontWeight } from '../constants/typography';
 
 interface VaultPickerProps {
   currentPath?: string | null;
@@ -316,7 +317,7 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
           <Text style={[styles.syncBtnText, { color: primary }]}>Sync depuis un ordinateur</Text>
           <Text style={[styles.syncBtnSub, { color: colors.textMuted }]}>
             Lancez{' '}
-            <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: 10 }}>
+            <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: FontSize.micro }}>
               python3 serve-vault.py
             </Text>
             {' '}sur le PC/Mac
@@ -395,12 +396,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   createBtnText: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
     color: '#FFFFFF',
   },
   createBtnSub: {
-    fontSize: 12,
+    fontSize: FontSize.caption,
     color: 'rgba(255,255,255,0.8)',
   },
   icloudBtn: {
@@ -410,11 +411,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   icloudBtnText: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
   },
   icloudBtnSub: {
-    fontSize: 12,
+    fontSize: FontSize.caption,
   },
   separator: {
     flexDirection: 'row',
@@ -427,17 +428,17 @@ const styles = StyleSheet.create({
     height: 1,
   },
   separatorText: {
-    fontSize: 12,
+    fontSize: FontSize.caption,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
   input: {
     borderWidth: 1.5,
     borderRadius: 10,
     padding: 12,
-    fontSize: 13,
+    fontSize: FontSize.label,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     minHeight: 60,
   },
@@ -445,7 +446,7 @@ const styles = StyleSheet.create({
     borderColor: '#EF4444',
   },
   errorText: {
-    fontSize: 13,
+    fontSize: FontSize.label,
     color: '#EF4444',
     lineHeight: 18,
   },
@@ -456,7 +457,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderRadius: 10,
     padding: 12,
-    fontSize: 14,
+    fontSize: FontSize.sm,
   },
   syncBtn: {
     borderRadius: 10,
@@ -464,8 +465,8 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   syncBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
   },
   syncBtnSub: {
     fontSize: 11,
@@ -478,7 +479,7 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   progressText: {
-    fontSize: 12,
+    fontSize: FontSize.caption,
     flex: 1,
   },
   pickerBtn: {
@@ -487,8 +488,8 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   pickerBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
   },
   pickerBtnSub: {
     fontSize: 11,
@@ -499,8 +500,8 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   quickFillText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
   quickFillSub: {
     fontSize: 11,
@@ -519,8 +520,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelText: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
   },
   confirmBtn: {
     flex: 2,
@@ -532,8 +533,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#A78BFA',
   },
   confirmText: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
     color: '#FFFFFF',
   },
 });

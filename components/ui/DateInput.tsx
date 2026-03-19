@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, Modal } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { FontSize, FontWeight } from '../../constants/typography';
 
 interface DateInputProps {
   /** Date au format YYYY-MM-DD (ISO) */
@@ -134,11 +135,11 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   buttonText: {
-    fontSize: 15,
+    fontSize: FontSize.body,
     flex: 1,
   },
   icon: {
-    fontSize: 18,
+    fontSize: FontSize.heading,
     marginLeft: 8,
   },
   iosOverlay: {
@@ -158,11 +159,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   iosCancel: {
-    fontSize: 16,
+    fontSize: FontSize.lg,
   },
   iosConfirm: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
   },
   iosPicker: {
     height: 200,

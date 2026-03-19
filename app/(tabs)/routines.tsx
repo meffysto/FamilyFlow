@@ -723,7 +723,7 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
     paddingVertical: 2,
   },
-  stepPreviewDot: { fontSize: 14, width: 20, textAlign: 'center' },
+  stepPreviewDot: { fontSize: FontSize.sm, width: 20, textAlign: 'center' },
   stepPreviewText: { flex: 1, fontSize: FontSize.sm },
   stepPreviewDone: { textDecorationLine: 'line-through' },
   stepDuration: { fontSize: FontSize.caption },
@@ -745,7 +745,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addBtnText: { fontSize: 22, fontWeight: FontWeight.bold, marginTop: -1 },
+  addBtnText: { fontSize: FontSize.titleLg, fontWeight: FontWeight.bold, marginTop: -1 },
 
   // Bouton modifier (carte)
   editBtn: {
@@ -756,7 +756,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: Spacing.sm,
   },
-  editBtnText: { fontSize: 16 },
+  editBtnText: { fontSize: FontSize.lg },
 
   // Empty state
   emptyState: { alignItems: 'center', paddingVertical: 60, gap: Spacing.lg },
@@ -789,7 +789,7 @@ const timerStyles = StyleSheet.create({
     borderRadius: 70,
     borderWidth: 6,
   },
-  time: { fontSize: 32, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  time: { fontSize: FontSize.hero, fontWeight: FontWeight.bold, fontVariant: ['tabular-nums'] },
   buttons: { flexDirection: 'row', gap: Spacing.lg },
   btn: {
     paddingHorizontal: Spacing['2xl'],
@@ -862,7 +862,7 @@ const playerStyles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: Spacing.sm,
   },
-  stepDot: { fontSize: 14, width: 24, textAlign: 'center' },
+  stepDot: { fontSize: FontSize.sm, width: 24, textAlign: 'center' },
   stepRowText: { flex: 1, fontSize: FontSize.sm },
   stepRowDone: { textDecorationLine: 'line-through' },
   stepDuration: { fontSize: FontSize.caption },

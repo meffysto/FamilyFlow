@@ -10,6 +10,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { TaskCard } from '../TaskCard';
 import type { DashboardSectionWithTaskToggleProps } from './types';
+import { FontSize, FontWeight } from '../../constants/typography';
 
 function DashboardVacationInner({ handleTaskToggle }: DashboardSectionWithTaskToggleProps) {
   const router = useRouter();
@@ -56,8 +57,8 @@ export const DashboardVacation = React.memo(DashboardVacationInner);
 
 const styles = StyleSheet.create({
   vacCountdown: {
-    fontSize: 16,
-    fontWeight: '800',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.heavy,
     marginBottom: 6,
   },
   vacProgressRow: {
@@ -77,7 +78,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   vacProgressText: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.semibold,
   },
 });

@@ -104,7 +104,7 @@ export default function BudgetScreen() {
     return (
       <SafeAreaView style={[{ flex: 1, backgroundColor: colors.bg, justifyContent: 'center', alignItems: 'center' }]} edges={['top']}>
         <Text style={{ fontSize: 48, marginBottom: 16 }}>🔒</Text>
-        <Text style={{ color: colors.textMuted, fontSize: 16 }}>Accès réservé aux parents</Text>
+        <Text style={{ color: colors.textMuted, fontSize: FontSize.lg }}>Accès réservé aux parents</Text>
       </SafeAreaView>
     );
   }
@@ -679,7 +679,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xl,
     gap: Spacing['4xl'],
   },
-  monthArrow: { fontSize: 22, fontWeight: FontWeight.bold },
+  monthArrow: { fontSize: FontSize.titleLg, fontWeight: FontWeight.bold },
   monthLabel: { fontSize: FontSize.subtitle, fontWeight: FontWeight.bold },
   tabBar: {
     paddingHorizontal: Spacing['2xl'],
@@ -698,7 +698,7 @@ const styles = StyleSheet.create({
     ...Shadows.sm,
   },
   totalLabel: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold, marginBottom: Spacing.xs },
-  totalAmount: { fontSize: 32, fontWeight: FontWeight.heavy },
+  totalAmount: { fontSize: FontSize.hero, fontWeight: FontWeight.heavy },
   totalBudget: { fontSize: FontSize.sm, marginTop: 2, marginBottom: Spacing.xl },
   totalBar: { width: '100%', height: 8, borderRadius: Spacing.xs, overflow: 'hidden' },
   totalBarFill: { height: '100%', borderRadius: Spacing.xs },

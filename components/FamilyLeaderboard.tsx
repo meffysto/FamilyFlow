@@ -7,6 +7,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Profile, GamificationEntry } from '../lib/types';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { levelProgress, LOOT_THRESHOLD, RARITY_COLORS } from '../lib/gamification';
+import { FontSize, FontWeight } from '../constants/typography';
 
 interface FamilyLeaderboardProps {
   profiles: Profile[];
@@ -135,12 +136,12 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   medal: {
-    fontSize: 20,
+    fontSize: FontSize.title,
     width: 28,
     textAlign: 'center',
   },
   avatar: {
-    fontSize: 28,
+    fontSize: FontSize.icon,
   },
   info: {
     flex: 1,
@@ -153,24 +154,24 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   name: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
   },
   level: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
     paddingHorizontal: 6,
     paddingVertical: 1,
     borderRadius: 4,
   },
   streak: {
-    fontSize: 12,
+    fontSize: FontSize.caption,
     color: '#F59E0B',
-    fontWeight: '600',
+    fontWeight: FontWeight.semibold,
   },
   lootBadge: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
     color: '#059669',
   },
   bars: {
@@ -206,11 +207,11 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   compactPoints: {
-    fontSize: 12,
+    fontSize: FontSize.caption,
   },
   empty: {
     textAlign: 'center',
-    fontSize: 14,
+    fontSize: FontSize.sm,
     padding: 16,
   },
   badgeStrip: {
@@ -228,6 +229,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   miniBadgeEmoji: {
-    fontSize: 18,
+    fontSize: FontSize.heading,
   },
 });

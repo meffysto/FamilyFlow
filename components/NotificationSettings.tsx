@@ -22,6 +22,7 @@ import { NotificationConfig, NotificationPreferences, Profile } from '../lib/typ
 import { useThemeColors } from '../contexts/ThemeContext';
 import { createCustomNotification } from '../lib/notifications';
 import { NotificationEditor } from './NotificationEditor';
+import { FontSize, FontWeight } from '../constants/typography';
 
 interface Props {
   prefs: NotificationPreferences;
@@ -197,7 +198,7 @@ export function NotificationSettings({ prefs, activeProfile, onSave, onClose }: 
             <View style={styles.modalField}>
               <Text style={[styles.modalLabel, { color: colors.textMuted }]}>Emoji</Text>
               <TextInput
-                style={[styles.modalInput, { width: 70, textAlign: 'center', fontSize: 24, borderColor: colors.inputBorder, color: colors.text }]}
+                style={[styles.modalInput, { width: 70, textAlign: 'center', fontSize: FontSize.heading, borderColor: colors.inputBorder, color: colors.text }]}
                 value={newEmoji}
                 onChangeText={setNewEmoji}
                 maxLength={4}
@@ -249,12 +250,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
-  title: { fontSize: 22, fontWeight: '800' },
-  subtitle: { fontSize: 13, marginTop: 2 },
-  closeBtn: { fontSize: 22, padding: 4 },
+  title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
+  subtitle: { fontSize: FontSize.label, marginTop: 2 },
+  closeBtn: { fontSize: FontSize.titleLg, padding: 4 },
   sectionLabel: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
     letterSpacing: 0.5,
     marginTop: 4,
   },
@@ -276,18 +277,18 @@ const styles = StyleSheet.create({
   notifRowBorder: {
     borderBottomWidth: 1,
   },
-  notifEmoji: { fontSize: 22 },
+  notifEmoji: { fontSize: FontSize.titleLg },
   notifLabel: {
     flex: 1,
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
   },
   emptyCustom: {
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
   },
-  emptyText: { fontSize: 14 },
+  emptyText: { fontSize: FontSize.sm },
   addBtn: {
     borderRadius: 12,
     padding: 14,
@@ -296,8 +297,8 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   addBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
   },
   // New custom modal
   modalOverlay: {
@@ -313,14 +314,14 @@ const styles = StyleSheet.create({
     maxWidth: 360,
     gap: 16,
   },
-  modalTitle: { fontSize: 18, fontWeight: '800' },
+  modalTitle: { fontSize: FontSize.heading, fontWeight: FontWeight.heavy },
   modalField: { gap: 6 },
-  modalLabel: { fontSize: 13, fontWeight: '600' },
+  modalLabel: { fontSize: FontSize.label, fontWeight: FontWeight.semibold },
   modalInput: {
     borderWidth: 1.5,
     borderRadius: 10,
     padding: 12,
-    fontSize: 15,
+    fontSize: FontSize.body,
   },
   modalActions: { flexDirection: 'row', gap: 10, marginTop: 4 },
   modalCancelBtn: {
@@ -330,12 +331,12 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     alignItems: 'center',
   },
-  modalCancelText: { fontSize: 14, fontWeight: '600' },
+  modalCancelText: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
   modalCreateBtn: {
     flex: 2,
     padding: 12,
     borderRadius: 10,
     alignItems: 'center',
   },
-  modalCreateText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
+  modalCreateText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: '#FFFFFF' },
 });

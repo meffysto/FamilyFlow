@@ -352,8 +352,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   ringPercent: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: FontSize.heading,
+    fontWeight: FontWeight.heavy,
   },
   ringLabel: {
     fontSize: 9,
@@ -380,8 +380,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   xpText: {
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: FontSize.code,
+    fontWeight: FontWeight.bold,
   },
   scroll: { flex: 1 },
   content: {

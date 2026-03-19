@@ -9,6 +9,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { processActiveRewards } from '../../lib/gamification';
 import type { DashboardSectionProps } from './types';
+import { FontSize, FontWeight } from '../../constants/typography';
 
 function DashboardRewardsInner(_props: DashboardSectionProps) {
   const { colors } = useThemeColors();
@@ -52,18 +53,18 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(0,0,0,0.06)',
   },
   activeRewardEmoji: {
-    fontSize: 28,
+    fontSize: FontSize.icon,
   },
   activeRewardInfo: {
     flex: 1,
     gap: 2,
   },
   activeRewardLabel: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
   },
   activeRewardMeta: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.bold,
   },
 });

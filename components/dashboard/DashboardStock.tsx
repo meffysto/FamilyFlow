@@ -12,6 +12,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { DashboardCard } from '../DashboardCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
 import type { DashboardSectionProps } from './types';
+import { FontSize, FontWeight } from '../../constants/typography';
 
 function DashboardStockInner({ vaultFileExists, activateCardTemplate }: DashboardSectionProps) {
   const router = useRouter();
@@ -77,7 +78,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   stockAlertIcon: {
-    fontSize: 14,
+    fontSize: FontSize.sm,
     width: 20,
     textAlign: 'center',
   },
@@ -86,12 +87,12 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   stockName: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
   stockMeta: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
   },
   stockCartBtn: {
     width: 30,
@@ -103,7 +104,7 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   stockCartBtnText: {
-    fontSize: 14,
+    fontSize: FontSize.sm,
   },
   stockBtnGroup: {
     flexDirection: 'row',
@@ -122,13 +123,13 @@ const styles = StyleSheet.create({
     opacity: 0.3,
   },
   stockBtnText: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.bold,
     lineHeight: 22,
   },
   stockQty: {
-    fontSize: 17,
-    fontWeight: '800',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.heavy,
     minWidth: 26,
     textAlign: 'center',
   },
@@ -138,7 +139,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   seeAllText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
   },
 });

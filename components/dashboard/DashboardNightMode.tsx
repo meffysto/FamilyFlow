@@ -10,6 +10,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { isBabyProfile } from '../../lib/types';
 import type { DashboardSectionProps } from './types';
+import { FontSize, FontWeight } from '../../constants/typography';
 
 function DashboardNightModeInner(_props: DashboardSectionProps) {
   const router = useRouter();
@@ -46,11 +47,11 @@ const styles = StyleSheet.create({
     alignItems: 'center' as const,
   },
   nightModeBtnTitle: {
-    fontSize: 15,
-    fontWeight: '600' as const,
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
   },
   nightModeBtnSub: {
-    fontSize: 13,
+    fontSize: FontSize.label,
     marginTop: 4,
   },
 });

@@ -17,6 +17,7 @@ import { useThemeColors } from '../contexts/ThemeContext';
 import { ModalHeader } from './ui/ModalHeader';
 import { Memory, MemoryType } from '../lib/types';
 import { DateInput } from './ui/DateInput';
+import { FontSize, FontWeight } from '../constants/typography';
 import { format } from 'date-fns';
 
 const TYPE_OPTIONS: { label: string; value: MemoryType }[] = [
@@ -98,7 +99,7 @@ export function MemoryEditor({ memory, enfants, onSave, onClose }: MemoryEditorP
                 style={[
                   styles.chipText,
                   { color: textMuted },
-                  type === opt.value && { color: primary, fontWeight: '700' },
+                  type === opt.value && { color: primary, fontWeight: FontWeight.bold },
                 ]}
               >
                 {opt.label}
@@ -126,7 +127,7 @@ export function MemoryEditor({ memory, enfants, onSave, onClose }: MemoryEditorP
                     style={[
                       styles.chipText,
                       { color: textMuted },
-                      enfant === e.name && { color: primary, fontWeight: '700' },
+                      enfant === e.name && { color: primary, fontWeight: FontWeight.bold },
                     ]}
                   >
                     {e.name}
@@ -173,15 +174,15 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { padding: 20, gap: 16, paddingBottom: 40 },
   label: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.semibold,
     marginBottom: 4,
   },
   input: {
     borderWidth: 1,
     borderRadius: 12,
     padding: 12,
-    fontSize: 15,
+    fontSize: FontSize.body,
   },
   textArea: {
     minHeight: 80,
@@ -198,6 +199,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   chipText: {
-    fontSize: 14,
+    fontSize: FontSize.sm,
   },
 });

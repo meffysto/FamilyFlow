@@ -32,6 +32,7 @@ import { useToast } from '../contexts/ToastContext';
 import type { AppRecipe, StepToken } from '../lib/cooklang';
 import { formatIngredient, scaleIngredients } from '../lib/cooklang';
 import TimerRing from './TimerRing';
+import { FontSize, FontWeight } from '../constants/typography';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -582,15 +583,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth, gap: 12,
   },
-  closeText: { fontSize: 20, fontWeight: '600' },
+  closeText: { fontSize: FontSize.title, fontWeight: FontWeight.semibold },
   headerCenter: { flex: 1 },
-  headerTitle: { fontSize: 16, fontWeight: '700' },
-  headerSub: { fontSize: 12, marginTop: 1 },
+  headerTitle: { fontSize: FontSize.lg, fontWeight: FontWeight.bold },
+  headerSub: { fontSize: FontSize.caption, marginTop: 1 },
   doneBtn: {
     width: 36, height: 36, borderRadius: 18,
     alignItems: 'center', justifyContent: 'center',
   },
-  doneBtnText: { fontSize: 18, fontWeight: '700' },
+  doneBtnText: { fontSize: FontSize.heading, fontWeight: FontWeight.bold },
   // Progress
   progressTrack: { height: 4 },
   progressFill: { height: 4, borderRadius: 2 },
@@ -601,23 +602,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 20,
   },
   stepBadge: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20 },
-  stepBadgeText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
-  stepOf: { fontSize: 14 },
+  stepBadgeText: { color: '#FFFFFF', fontSize: FontSize.sm, fontWeight: FontWeight.bold },
+  stepOf: { fontSize: FontSize.sm },
   stepBody: { marginBottom: 24 },
-  stepText: { fontSize: 20, lineHeight: 30, fontWeight: '400' },
-  tokenIngredient: { fontWeight: '600', borderRadius: 4, overflow: 'hidden' },
-  tokenCookware: { fontWeight: '600', fontStyle: 'italic' },
-  tokenTimer: { fontWeight: '700', textDecorationLine: 'underline' },
+  stepText: { fontSize: FontSize.title, lineHeight: 30, fontWeight: FontWeight.normal },
+  tokenIngredient: { fontWeight: FontWeight.semibold, borderRadius: 4, overflow: 'hidden' },
+  tokenCookware: { fontWeight: FontWeight.semibold, fontStyle: 'italic' },
+  tokenTimer: { fontWeight: FontWeight.bold, textDecorationLine: 'underline' },
   // Step ingredients
   stepIngredients: {
     borderRadius: 12, padding: 14,
     borderWidth: StyleSheet.hairlineWidth, marginBottom: 16,
   },
   stepIngredientsTitle: {
-    fontSize: 12, fontWeight: '600',
+    fontSize: FontSize.caption, fontWeight: FontWeight.semibold,
     textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8,
   },
-  stepIngredientItem: { fontSize: 14, lineHeight: 22 },
+  stepIngredientItem: { fontSize: FontSize.sm, lineHeight: 22 },
   // Timer launch buttons
   timerLaunchRow: {
     flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16,
@@ -627,9 +628,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 12,
     borderRadius: 14, borderWidth: 1,
   },
-  timerLaunchEmoji: { fontSize: 20 },
-  timerLaunchText: { fontSize: 16, fontWeight: '700' },
-  timerLaunchHint: { fontSize: 12, marginLeft: 4 },
+  timerLaunchEmoji: { fontSize: FontSize.title },
+  timerLaunchText: { fontSize: FontSize.lg, fontWeight: FontWeight.bold },
+  timerLaunchHint: { fontSize: FontSize.caption, marginLeft: 4 },
   // Active timer cards
   activeTimersSection: { gap: 12, marginBottom: 16 },
   timerCard: {
@@ -639,21 +640,21 @@ const styles = StyleSheet.create({
   timerCardMain: {
     flexDirection: 'row', alignItems: 'center', gap: 16,
   },
-  timerTime: { fontSize: 18, fontWeight: '800', fontVariant: ['tabular-nums'] },
+  timerTime: { fontSize: FontSize.heading, fontWeight: FontWeight.heavy, fontVariant: ['tabular-nums'] },
   timerCardInfo: { flex: 1 },
-  timerLabel: { fontSize: 16, fontWeight: '600' },
-  timerStepRef: { fontSize: 13, marginTop: 2 },
+  timerLabel: { fontSize: FontSize.lg, fontWeight: FontWeight.semibold },
+  timerStepRef: { fontSize: FontSize.label, marginTop: 2 },
   timerActions: {
     flexDirection: 'row', gap: 8,
   },
   timerActionBtn: {
     flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center',
   },
-  timerActionText: { fontSize: 13, fontWeight: '600' },
+  timerActionText: { fontSize: FontSize.label, fontWeight: FontWeight.semibold },
   // Other timers (compact)
   otherTimersSection: { marginBottom: 16, gap: 8 },
   otherTimersTitle: {
-    fontSize: 12, fontWeight: '600',
+    fontSize: FontSize.caption, fontWeight: FontWeight.semibold,
     textTransform: 'uppercase', letterSpacing: 0.5,
   },
   miniTimerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -662,8 +663,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 8,
     borderRadius: 12, borderWidth: 1,
   },
-  miniTimerText: { fontSize: 14, fontWeight: '700', fontVariant: ['tabular-nums'] },
-  miniTimerLabel: { fontSize: 12 },
+  miniTimerText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, fontVariant: ['tabular-nums'] },
+  miniTimerLabel: { fontSize: FontSize.caption },
   // Navigation
   navBar: {
     flexDirection: 'row', alignItems: 'center',
@@ -671,10 +672,10 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth, gap: 12,
   },
   navBtn: { flex: 1, alignItems: 'center', paddingVertical: 8 },
-  navBtnArrow: { fontSize: 24, fontWeight: '300' },
-  navBtnLabel: { fontSize: 12, fontWeight: '500', marginTop: 2 },
+  navBtnArrow: { fontSize: FontSize.display, fontWeight: '300' },
+  navBtnLabel: { fontSize: FontSize.caption, fontWeight: FontWeight.medium, marginTop: 2 },
   navDoneBtn: {
     flex: 2, paddingVertical: 14, borderRadius: 14, alignItems: 'center',
   },
-  navDoneBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
+  navDoneBtnText: { color: '#FFFFFF', fontSize: FontSize.lg, fontWeight: FontWeight.bold },
 });

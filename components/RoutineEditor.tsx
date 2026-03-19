@@ -270,7 +270,7 @@ const st = StyleSheet.create({
     marginRight: Spacing.sm,
     borderWidth: 2,
   },
-  emojiBtnText: { fontSize: 24 },
+  emojiBtnText: { fontSize: FontSize.display },
 
   input: {
     fontSize: FontSize.body,

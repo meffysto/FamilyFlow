@@ -30,6 +30,7 @@ import {
 } from 'react-native-gesture-handler';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { FontSize, FontWeight } from '../constants/typography';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -239,9 +240,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   closeBtnText: {
-    fontSize: 18,
+    fontSize: FontSize.heading,
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontWeight: FontWeight.bold,
   },
   footer: {
     position: 'absolute',
@@ -253,14 +254,14 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   dateText: {
-    fontSize: 16,
+    fontSize: FontSize.lg,
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontWeight: FontWeight.semibold,
   },
   counterText: {
-    fontSize: 13,
+    fontSize: FontSize.label,
     color: 'rgba(255,255,255,0.6)',
-    fontWeight: '500',
+    fontWeight: FontWeight.medium,
   },
   footerActions: {
     flexDirection: 'row',
@@ -274,8 +275,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.15)',
   },
   retakeBtnText: {
-    fontSize: 15,
+    fontSize: FontSize.body,
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontWeight: FontWeight.semibold,
   },
 });

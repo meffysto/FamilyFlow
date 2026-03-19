@@ -7,6 +7,7 @@
 
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Alert } from 'react-native';
+import { FontSize, FontWeight } from '../constants/typography';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Animated, {
   SharedValue,
@@ -160,8 +161,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   rightActionText: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.bold,
     textAlign: 'center',
   },
 });

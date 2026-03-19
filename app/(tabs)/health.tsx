@@ -868,7 +868,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     gap: Spacing.sm,
   },
-  enfantAvatar: { fontSize: 18 },
+  enfantAvatar: { fontSize: FontSize.heading },
   enfantName: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
 
   // Onglets
@@ -973,7 +973,7 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
     marginBottom: Spacing.md,
   },
-  vaccineEmoji: { fontSize: 20 },
+  vaccineEmoji: { fontSize: FontSize.title },
   vaccineName: { flex: 1, fontSize: FontSize.body, fontWeight: FontWeight.bold },
   doseBadge: {
     paddingHorizontal: Spacing.md,
@@ -1003,7 +1003,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     gap: Spacing.lg,
   },
-  infoEmoji: { fontSize: 22 },
+  infoEmoji: { fontSize: FontSize.titleLg },
   infoContent: { flex: 1 },
   infoLabel: { fontSize: FontSize.caption },
   infoValue: { fontSize: FontSize.body, fontWeight: FontWeight.semibold, marginTop: 1 },

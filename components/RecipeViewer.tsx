@@ -13,6 +13,7 @@ import { useThemeColors } from '../contexts/ThemeContext';
 import type { AppRecipe, AppIngredient } from '../lib/cooklang';
 import { scaleIngredients, formatIngredient, renderStepText } from '../lib/cooklang';
 import RecipeCookingMode from './RecipeCookingMode';
+import { FontSize, FontWeight } from '../constants/typography';
 
 interface RecipeViewerProps {
   recipe: AppRecipe;
@@ -264,23 +265,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   closeBtnText: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.semibold,
   },
   heartHeaderText: {
-    fontSize: 22,
+    fontSize: FontSize.titleLg,
   },
   headerCenter: {
     flex: 1,
     alignItems: 'center',
   },
   title: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: FontSize.heading,
+    fontWeight: FontWeight.bold,
     textAlign: 'center',
   },
   category: {
-    fontSize: 13,
+    fontSize: FontSize.label,
     marginTop: 2,
   },
   body: {
@@ -315,12 +316,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   servingsBtnText: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: FontSize.heading,
+    fontWeight: FontWeight.bold,
   },
   servingsValue: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: FontSize.heading,
+    fontWeight: FontWeight.bold,
     minWidth: 24,
     textAlign: 'center',
   },
@@ -328,22 +329,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   metaLabel: {
-    fontSize: 11,
-    fontWeight: '500',
+    fontSize: FontSize.code,
+    fontWeight: FontWeight.medium,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   metaValue: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
     marginTop: 4,
   },
   section: {
     marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
     marginBottom: 10,
   },
   ingredientRow: {
@@ -363,11 +364,11 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.bold,
   },
   ingredientText: {
-    fontSize: 15,
+    fontSize: FontSize.body,
     flex: 1,
   },
   ingredientChecked: {
@@ -388,14 +389,14 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   stepNumberText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
   },
   stepContent: {
     flex: 1,
   },
   stepText: {
-    fontSize: 15,
+    fontSize: FontSize.body,
     lineHeight: 22,
   },
   timersRow: {
@@ -410,8 +411,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   timerText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
   },
   tagsRow: {
     flexDirection: 'row',
@@ -424,8 +425,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   chipText: {
-    fontSize: 13,
-    fontWeight: '500',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.medium,
   },
   actionButtons: {
     flexDirection: 'row',
@@ -439,8 +440,8 @@ const styles = StyleSheet.create({
   },
   addButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
   },
   bottomSpacer: {
     height: 40,

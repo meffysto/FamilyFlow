@@ -7,6 +7,7 @@
 
 import React, { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { FontSize, FontWeight } from '../constants/typography';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -252,7 +253,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emoji: {
-    fontSize: 24,
+    fontSize: FontSize.display,
     textAlign: 'center',
   },
   checkBadge: {
@@ -268,8 +269,8 @@ const styles = StyleSheet.create({
   },
   checkText: {
     color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
     lineHeight: 14,
   },
   textContainer: {
@@ -278,11 +279,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   label: {
-    fontSize: 14,
+    fontSize: FontSize.sm,
     lineHeight: 18,
   },
   xpText: {
-    fontSize: 11,
+    fontSize: FontSize.code,
     lineHeight: 14,
     marginTop: 2,
   },

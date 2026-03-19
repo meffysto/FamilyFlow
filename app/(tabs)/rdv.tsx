@@ -370,7 +370,7 @@ export default function RDVScreen() {
                   onPress={() => dayRdvs.length > 0 && setCalDayRdvs({ date: dateStr, rdvs: dayRdvs })}
                   activeOpacity={dayRdvs.length > 0 ? 0.7 : 1}
                 >
-                  <Text style={[styles.calDayNum, { color: today ? primary : colors.textSub }, today && { fontWeight: '800' }]}>{date.getDate()}</Text>
+                  <Text style={[styles.calDayNum, { color: today ? primary : colors.textSub }, today && { fontWeight: FontWeight.heavy }]}>{date.getDate()}</Text>
                   {dayRdvs.length > 0 && (
                     <View style={styles.calDots}>
                       {dayRdvs.slice(0, 3).map((r, i) => (
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: Spacing.md,
   },
-  badgeText: { fontSize: 11, fontWeight: FontWeight.semibold },
+  badgeText: { fontSize: FontSize.code, fontWeight: FontWeight.semibold },
   togglePast: {
     alignSelf: 'center',
     paddingVertical: Spacing.lg,
@@ -613,7 +613,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xl,
   },
   swipeActionEmoji: {
-    fontSize: 22,
+    fontSize: FontSize.titleLg,
   },
   swipeActionLabel: {
     fontSize: FontSize.caption,
@@ -625,7 +625,7 @@ const styles = StyleSheet.create({
   },
   monthNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing['2xl'] },
   monthArrow: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
-  monthArrowText: { fontSize: 24, fontWeight: '300' },
+  monthArrowText: { fontSize: FontSize.display, fontWeight: FontWeight.normal },
   monthLabel: { fontSize: FontSize.heading, fontWeight: FontWeight.bold },
   weekdayRow: { flexDirection: 'row', gap: DAY_GAP, marginBottom: Spacing.md },
   weekdayCell: { width: CELL_SIZE, alignItems: 'center' },

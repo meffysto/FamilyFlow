@@ -13,6 +13,7 @@ import { DashboardCard } from '../DashboardCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
 import type { AppRecipe } from '../../lib/cooklang';
 import type { DashboardSectionProps } from './types';
+import { FontSize, FontWeight } from '../../constants/typography';
 
 interface DashboardMealsProps extends DashboardSectionProps {
   onViewRecipe: (recipe: AppRecipe) => void;
@@ -71,7 +72,7 @@ function DashboardMealsInner({ vaultFileExists, activateCardTemplate, onViewReci
               <Text style={[styles.mealText, { color: colors.text }]}>{meal.text}</Text>
             </View>
             {linkedRecipe && (
-              <Text style={{ fontSize: 14, color: primary }}>📖</Text>
+              <Text style={{ fontSize: FontSize.sm, color: primary }}>📖</Text>
             )}
           </TouchableOpacity>
         );
@@ -84,7 +85,7 @@ export const DashboardMeals = React.memo(DashboardMealsInner);
 
 const styles = StyleSheet.create({
   emptyHint: {
-    fontSize: 13,
+    fontSize: FontSize.label,
     textAlign: 'center',
     fontStyle: 'italic',
     paddingVertical: 4,
@@ -96,7 +97,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   mealEmoji: {
-    fontSize: 20,
+    fontSize: FontSize.title,
     width: 28,
     textAlign: 'center',
   },
@@ -105,12 +106,12 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   mealType: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
     textTransform: 'uppercase',
   },
   mealText: {
-    fontSize: 15,
-    fontWeight: '500',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.medium,
   },
 });

@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: Radius.xl,
   },
   emoji: {
-    fontSize: 22,
+    fontSize: FontSize.titleLg,
     width: 30,
     textAlign: 'center',
   },
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.label,
   },
   chevron: {
-    fontSize: 24,
+    fontSize: FontSize.heading,
     fontWeight: FontWeight.medium,
   },
   sectionHeader: {

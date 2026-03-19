@@ -30,6 +30,7 @@ import TimerRing from '../../components/TimerRing';
 import { NightColors } from '../../constants/nightMode';
 import { isBabyProfile } from '../../lib/types';
 import type { FeedType, BreastSide, NightFeedEntry, Profile } from '../../lib/types';
+import { FontSize, FontWeight } from '../../constants/typography';
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
 
@@ -424,7 +425,7 @@ const s = StyleSheet.create({
   },
   emptyText: {
     color: NightColors.text,
-    fontSize: 18,
+    fontSize: FontSize.heading,
     textAlign: 'center',
     marginBottom: 24,
   },
@@ -436,8 +437,8 @@ const s = StyleSheet.create({
   },
   closeBtnText: {
     color: NightColors.text,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.semibold,
   },
 
   // Header
@@ -450,8 +451,8 @@ const s = StyleSheet.create({
   },
   babyName: {
     color: NightColors.text,
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.bold,
   },
   babyPicker: {
     flexDirection: 'row',
@@ -471,8 +472,8 @@ const s = StyleSheet.create({
   },
   babyChipText: {
     color: NightColors.text,
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
   },
   closeX: {
     width: 44,
@@ -484,8 +485,8 @@ const s = StyleSheet.create({
   },
   closeXText: {
     color: NightColors.textSub,
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.semibold,
   },
 
   // Scroll
@@ -505,7 +506,7 @@ const s = StyleSheet.create({
   idleTimer: {
     color: NightColors.timer,
     fontSize: 56,
-    fontWeight: '200',
+    fontWeight: FontWeight.normal,
     fontVariant: ['tabular-nums'],
   },
   typeRow: {
@@ -532,8 +533,8 @@ const s = StyleSheet.create({
   },
   typeBtnLabel: {
     color: NightColors.text,
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
   },
   optionRow: {
     flexDirection: 'row',
@@ -555,8 +556,8 @@ const s = StyleSheet.create({
   },
   sideBtnText: {
     color: NightColors.text,
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: FontSize.titleLg,
+    fontWeight: FontWeight.bold,
   },
   volumeRow: {
     flexDirection: 'row',
@@ -579,16 +580,16 @@ const s = StyleSheet.create({
   },
   volumeChipText: {
     color: NightColors.textSub,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.semibold,
   },
   volumeChipTextActive: {
     color: NightColors.timer,
   },
   volumeUnit: {
     color: NightColors.textSub,
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
     marginLeft: 4,
   },
   startBtn: {
@@ -600,8 +601,8 @@ const s = StyleSheet.create({
   },
   startBtnText: {
     color: NightColors.timer,
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.bold,
   },
 
   // TIMING
@@ -613,13 +614,13 @@ const s = StyleSheet.create({
   timerText: {
     color: NightColors.timer,
     fontSize: 42,
-    fontWeight: '300',
+    fontWeight: FontWeight.normal,
     fontVariant: ['tabular-nums'],
   },
   timerLabel: {
     color: NightColors.textSub,
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.medium,
   },
   actionRow: {
     flexDirection: 'row',
@@ -641,15 +642,15 @@ const s = StyleSheet.create({
   },
   actionBtnText: {
     color: NightColors.text,
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: FontSize.heading,
+    fontWeight: FontWeight.bold,
   },
 
   // Saved message
   savedMsg: {
     color: NightColors.success,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.semibold,
     marginTop: 16,
     textAlign: 'center',
   },
@@ -664,8 +665,8 @@ const s = StyleSheet.create({
   },
   historyTitle: {
     color: NightColors.textSub,
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 12,
@@ -683,23 +684,23 @@ const s = StyleSheet.create({
   },
   historyTime: {
     color: NightColors.timer,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.semibold,
     fontVariant: ['tabular-nums'],
     width: 50,
   },
   historyEmoji: {
-    fontSize: 18,
+    fontSize: FontSize.heading,
   },
   historyDetail: {
     color: NightColors.text,
-    fontSize: 15,
-    fontWeight: '500',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.medium,
     flex: 1,
   },
   historyDuration: {
     color: NightColors.textSub,
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
   },
 });

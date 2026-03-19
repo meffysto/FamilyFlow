@@ -32,6 +32,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { parseJournalStats, calculerDuree } from '../../lib/journal-stats';
 import { MarkdownText } from '../../components/ui/MarkdownText';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
+import { FontSize, FontWeight } from '../../constants/typography';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -236,8 +237,8 @@ function MiniCalendar({
                 style={[
                   calStyles.dayText,
                   { color: hasJournal ? colors.text : colors.textFaint },
-                  isSelected && { color: '#FFFFFF', fontWeight: '800' },
-                  !isSelected && isToday && { color: primary, fontWeight: '800' },
+                  isSelected && { color: '#FFFFFF', fontWeight: FontWeight.heavy },
+                  !isSelected && isToday && { color: primary, fontWeight: FontWeight.heavy },
                 ]}
               >
                 {day.getDate()}
@@ -926,7 +927,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
-  title: { fontSize: 20, fontWeight: '800' },
+  title: { fontSize: FontSize.title, fontWeight: FontWeight.heavy },
   tabs: {
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -941,12 +942,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   dateNavBtn: { padding: 8 },
-  dateNavArrow: { fontSize: 24, fontWeight: '600' },
+  dateNavArrow: { fontSize: FontSize.display, fontWeight: FontWeight.semibold },
   dateNavCenter: { flex: 1, alignItems: 'center' },
-  dateNavText: { fontSize: 16, fontWeight: '700' },
-  dateNavSub: { fontSize: 12, textTransform: 'capitalize', marginTop: 1 },
+  dateNavText: { fontSize: FontSize.lg, fontWeight: FontWeight.bold },
+  dateNavSub: { fontSize: FontSize.caption, textTransform: 'capitalize', marginTop: 1 },
   todayBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
-  todayBtnText: { fontSize: 12, fontWeight: '700' },
+  todayBtnText: { fontSize: FontSize.caption, fontWeight: FontWeight.bold },
 
   quickAddContainer: {
     borderBottomWidth: 1,
@@ -965,19 +966,19 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     gap: 2,
   },
-  quickBtnEmoji: { fontSize: 18 },
-  quickBtnText: { fontSize: 11, fontWeight: '600' },
+  quickBtnEmoji: { fontSize: FontSize.heading },
+  quickBtnText: { fontSize: FontSize.caption, fontWeight: FontWeight.semibold },
 
   scroll: { flex: 1 },
   content: { padding: 16, paddingBottom: 90 },
 
   createContainer: { alignItems: 'center', paddingVertical: 48, gap: 16 },
   createEmoji: { fontSize: 64 },
-  createTitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
-  createSubtitle: { fontSize: 14, textAlign: 'center', lineHeight: 20, maxWidth: 300 },
+  createTitle: { fontSize: FontSize.heading, fontWeight: FontWeight.bold, textAlign: 'center' },
+  createSubtitle: { fontSize: FontSize.sm, textAlign: 'center', lineHeight: 20, maxWidth: 300 },
   createBtn: { paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14, marginTop: 8 },
   createBtnDisabled: { opacity: 0.6 },
-  createBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
+  createBtnText: { color: '#FFFFFF', fontSize: FontSize.lg, fontWeight: FontWeight.bold },
 
   journalContent: { gap: 16 },
 
@@ -992,15 +993,15 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: '#8B5CF6',
   },
-  statsBannerTitle: { fontSize: 14, fontWeight: '700', marginBottom: 10 },
+  statsBannerTitle: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, marginBottom: 10 },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   statItem: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8,
   },
-  statEmoji: { fontSize: 16 },
-  statValue: { fontSize: 15, fontWeight: '800' },
-  statLabel: { fontSize: 12, fontWeight: '500' },
+  statEmoji: { fontSize: FontSize.lg },
+  statValue: { fontSize: FontSize.body, fontWeight: FontWeight.heavy },
+  statLabel: { fontSize: FontSize.caption, fontWeight: FontWeight.medium },
 
   tableSection: {
     borderRadius: 12,
@@ -1018,24 +1019,24 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     paddingRight: 8,
   },
-  tableSectionTitle: { fontSize: 15, fontWeight: '700', padding: 12 },
+  tableSectionTitle: { fontSize: FontSize.body, fontWeight: FontWeight.bold, padding: 12 },
   sectionAddBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
-  sectionAddText: { fontSize: 12, fontWeight: '700' },
+  sectionAddText: { fontSize: FontSize.caption, fontWeight: FontWeight.bold },
   tableRow: { flexDirection: 'row', borderBottomWidth: 1 },
-  tableHeader: { width: COL_WIDTH, padding: 8, fontSize: 12, fontWeight: '700' },
-  tableCell: { width: COL_WIDTH, padding: 8, fontSize: 13 },
-  editHintCell: { padding: 8, fontSize: 12, opacity: 0.3 },
+  tableHeader: { width: COL_WIDTH, padding: 8, fontSize: FontSize.caption, fontWeight: FontWeight.bold },
+  tableCell: { width: COL_WIDTH, padding: 8, fontSize: FontSize.label },
+  editHintCell: { padding: 8, fontSize: FontSize.caption, opacity: 0.3 },
 
   obsRow: {
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10,
     borderBottomWidth: 1, gap: 8,
   },
-  obsNumber: { fontSize: 14, fontWeight: '700', color: '#8B5CF6', width: 24 },
-  obsText: { flex: 1, fontSize: 14, lineHeight: 20 },
-  editHint: { fontSize: 12, opacity: 0.3 },
+  obsNumber: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: '#8B5CF6', width: 24 },
+  obsText: { flex: 1, fontSize: FontSize.sm, lineHeight: 20 },
+  editHint: { fontSize: FontSize.caption, opacity: 0.3 },
 
   emptySection: { padding: 16, alignItems: 'center' },
-  emptySectionText: { fontSize: 13, fontStyle: 'italic' },
+  emptySectionText: { fontSize: FontSize.label, fontStyle: 'italic' },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalDismiss: { flex: 1 },
@@ -1043,26 +1044,26 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20, borderTopRightRadius: 20,
     padding: 24, gap: 12,
   },
-  modalTitle: { fontSize: 18, fontWeight: '800' },
+  modalTitle: { fontSize: FontSize.heading, fontWeight: FontWeight.heavy },
   fieldGroup: { gap: 4 },
-  fieldLabel: { fontSize: 13, fontWeight: '600' },
+  fieldLabel: { fontSize: FontSize.label, fontWeight: FontWeight.semibold },
   modalInput: {
     borderWidth: 1.5, borderRadius: 10,
-    padding: 12, fontSize: 15,
+    padding: 12, fontSize: FontSize.body,
   },
   modalActions: { flexDirection: 'row', gap: 10, marginTop: 4 },
   modalDelete: {
     padding: 14, borderRadius: 10, backgroundColor: '#FEE2E2',
     alignItems: 'center', justifyContent: 'center', width: 48,
   },
-  modalDeleteText: { fontSize: 18 },
+  modalDeleteText: { fontSize: FontSize.heading },
   modalCancel: {
     flex: 1, padding: 14, borderRadius: 10,
     borderWidth: 1.5, alignItems: 'center',
   },
-  modalCancelText: { fontSize: 15, fontWeight: '600' },
+  modalCancelText: { fontSize: FontSize.body, fontWeight: FontWeight.semibold },
   modalConfirm: { flex: 2, padding: 14, borderRadius: 10, alignItems: 'center' },
-  modalConfirmText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
+  modalConfirmText: { fontSize: FontSize.body, fontWeight: FontWeight.bold, color: '#FFFFFF' },
 });
 
 const calStyles = StyleSheet.create({
@@ -1079,9 +1080,9 @@ const calStyles = StyleSheet.create({
     marginBottom: 8,
   },
   navBtn: { padding: 8 },
-  navArrow: { fontSize: 22, fontWeight: '700' },
+  navArrow: { fontSize: FontSize.titleLg, fontWeight: FontWeight.bold },
   monthBtn: { flex: 1, alignItems: 'center' },
-  monthLabel: { fontSize: 15, fontWeight: '700', textTransform: 'capitalize' },
+  monthLabel: { fontSize: FontSize.body, fontWeight: FontWeight.bold, textTransform: 'capitalize' },
   weekdays: {
     flexDirection: 'row',
     marginBottom: 4,
@@ -1089,8 +1090,8 @@ const calStyles = StyleSheet.create({
   weekday: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
   },
   grid: {
     flexDirection: 'row',
@@ -1104,8 +1105,8 @@ const calStyles = StyleSheet.create({
     borderRadius: 8,
   },
   dayText: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
   },
   dot: {
     width: 4,

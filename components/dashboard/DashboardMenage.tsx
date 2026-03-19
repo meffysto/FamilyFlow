@@ -11,6 +11,7 @@ import { DashboardCard } from '../DashboardCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
 import { TaskCard } from '../TaskCard';
 import type { DashboardSectionWithTaskToggleProps } from './types';
+import { FontSize } from '../../constants/typography';
 
 function DashboardMenageInner({ vaultFileExists, activateCardTemplate, handleTaskToggle }: DashboardSectionWithTaskToggleProps) {
   const router = useRouter();
@@ -48,7 +49,7 @@ export const DashboardMenage = React.memo(DashboardMenageInner);
 
 const styles = StyleSheet.create({
   emptyHint: {
-    fontSize: 13,
+    fontSize: FontSize.label,
     textAlign: 'center',
     fontStyle: 'italic',
     paddingVertical: 4,

@@ -20,6 +20,7 @@ import {
 import * as FileSystem from 'expo-file-system/legacy';
 import { VaultManager } from '../lib/vault';
 import { useThemeColors } from '../contexts/ThemeContext';
+import { FontSize, FontWeight } from '../constants/typography';
 
 interface SetupWizardProps {
   onComplete: (vaultPath: string) => void;
@@ -361,11 +362,11 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   stepTitle: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: FontSize.titleLg,
+    fontWeight: FontWeight.heavy,
   },
   stepDesc: {
-    fontSize: 14,
+    fontSize: FontSize.sm,
     marginBottom: 4,
   },
   personRow: {
@@ -387,7 +388,7 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   avatarEmoji: {
-    fontSize: 22,
+    fontSize: FontSize.titleLg,
   },
   nameRow: {
     flexDirection: 'row',
@@ -399,7 +400,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderRadius: 8,
     padding: 10,
-    fontSize: 15,
+    fontSize: FontSize.body,
   },
   removeBtn: {
     width: 32,
@@ -410,9 +411,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   removeBtnText: {
-    fontSize: 14,
+    fontSize: FontSize.sm,
     color: '#DC2626',
-    fontWeight: '700',
+    fontWeight: FontWeight.bold,
   },
   addBtn: {
     borderWidth: 1.5,
@@ -422,11 +423,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   addBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
   noChildHint: {
-    fontSize: 13,
+    fontSize: FontSize.label,
     textAlign: 'center',
     fontStyle: 'italic',
   },
@@ -436,16 +437,16 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   summaryLabel: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   summaryItem: {
-    fontSize: 16,
+    fontSize: FontSize.lg,
   },
   summaryDetail: {
-    fontSize: 13,
+    fontSize: FontSize.label,
     lineHeight: 18,
   },
   navRow: {
@@ -463,8 +464,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   navBtnSecondaryText: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
   },
   navBtnPrimary: {
     flex: 2,
@@ -473,8 +474,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   navBtnPrimaryText: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
     color: '#FFFFFF',
   },
   navBtnDisabled: {

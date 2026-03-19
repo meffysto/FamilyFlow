@@ -99,7 +99,7 @@ export function SettingsZen({ zenConfig, onSave }: SettingsZenProps) {
                 }
               </Text>
             </View>
-            <Text style={{ fontSize: 16, color: colors.textMuted }}>
+            <Text style={{ fontSize: FontSize.lg, color: colors.textMuted }}>
               {expanded ? '▲' : '▼'}
             </Text>
           </TouchableOpacity>

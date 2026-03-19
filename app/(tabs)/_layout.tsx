@@ -12,10 +12,11 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { FAB, FABAction } from '../../components/FAB';
 import { GlassView } from '../../components/ui/GlassView';
+import { FontSize, FontWeight } from '../../constants/typography';
 
 
 function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
-  return <Text style={{ fontSize: focused ? 22 : 20, opacity: focused ? 1 : 0.6 }}>{emoji}</Text>;
+  return <Text style={{ fontSize: focused ? FontSize.titleLg : FontSize.title, opacity: focused ? 1 : 0.6 }}>{emoji}</Text>;
 }
 
 interface ThemedTabsContentProps {
@@ -158,8 +159,8 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
           tabBarActiveTintColor: primary,
           tabBarInactiveTintColor: colors.tabBarOff,
           tabBarLabelStyle: {
-            fontSize: 10,
-            fontWeight: '600',
+            fontSize: FontSize.micro,
+            fontWeight: FontWeight.semibold,
             marginBottom: 2,
           },
         }}
@@ -367,12 +368,12 @@ const pickerStyles = StyleSheet.create({
     alignItems: 'center' as const,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: FontSize.display,
+    fontWeight: FontWeight.heavy,
     marginBottom: 4,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: FontSize.body,
     marginBottom: 24,
   },
   grid: {
@@ -393,11 +394,11 @@ const pickerStyles = StyleSheet.create({
     marginBottom: 8,
   },
   name: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
   },
   role: {
-    fontSize: 12,
+    fontSize: FontSize.caption,
     marginTop: 2,
   },
 });
@@ -408,8 +409,8 @@ const pinPromptStyles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 20,
     paddingVertical: 14,
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: FontSize.icon,
+    fontWeight: FontWeight.bold,
     letterSpacing: 12,
     width: 180,
     textAlign: 'center',
@@ -426,8 +427,8 @@ const pinPromptStyles = StyleSheet.create({
     borderWidth: 2,
   },
   error: {
-    fontSize: 13,
-    fontWeight: '500',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.medium,
     marginTop: 4,
   },
   cancelBtn: {
@@ -436,8 +437,8 @@ const pinPromptStyles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   cancelText: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
   },
 });
 
@@ -449,7 +450,7 @@ const bannerStyles = StyleSheet.create({
     alignItems: 'center',
   },
   text: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.semibold,
   },
 });

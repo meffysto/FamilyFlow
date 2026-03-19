@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, TouchableOpacity, View, Text } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../contexts/ThemeContext';
+import { FontSize, FontWeight } from '../constants/typography';
 import type { AppRecipe } from '../lib/cooklang';
 
 interface RecipeCardProps {
@@ -98,7 +99,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   heartText: {
-    fontSize: 18,
+    fontSize: FontSize.heading,
   },
   card: {
     borderRadius: 16,
@@ -112,12 +113,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   title: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
     marginBottom: 4,
   },
   category: {
-    fontSize: 12,
+    fontSize: FontSize.caption,
     marginBottom: 8,
   },
   metaRow: {
@@ -133,11 +134,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   badgeText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
   },
   metaText: {
-    fontSize: 12,
+    fontSize: FontSize.caption,
   },
   tagsRow: {
     flexDirection: 'row',
@@ -151,10 +152,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   chipText: {
-    fontSize: 11,
-    fontWeight: '500',
+    fontSize: FontSize.code,
+    fontWeight: FontWeight.medium,
   },
   ingredientCount: {
-    fontSize: 12,
+    fontSize: FontSize.caption,
   },
 });

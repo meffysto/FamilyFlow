@@ -11,6 +11,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { DashboardCard } from '../DashboardCard';
 import { categorizeIngredient } from '../../lib/cooklang';
 import type { DashboardSectionProps } from './types';
+import { FontSize, FontWeight } from '../../constants/typography';
 
 /** Parse "50g beurre" or "50 g de beurre" into name/qty for merge */
 function parseCourseInput(text: string): { name: string; quantity: number | null } {
@@ -129,10 +130,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   courseBullet: {
-    fontSize: 16,
+    fontSize: FontSize.lg,
   },
   courseText: {
-    fontSize: 15,
+    fontSize: FontSize.body,
     flex: 1,
   },
   courseCheckBtn: {
@@ -144,12 +145,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   courseCheckBtnText: {
-    fontSize: 15,
-    fontWeight: '800',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.heavy,
     lineHeight: 18,
   },
   courseEmpty: {
-    fontSize: 13,
+    fontSize: FontSize.label,
     fontStyle: 'italic',
     paddingVertical: 4,
   },
@@ -167,7 +168,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 9,
-    fontSize: 14,
+    fontSize: FontSize.sm,
   },
   courseAddBtn: {
     width: 38,
@@ -177,8 +178,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   courseAddBtnText: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: FontSize.titleLg,
+    fontWeight: FontWeight.bold,
     lineHeight: 26,
   },
   clearCoursesBtn: {
@@ -188,7 +189,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   clearCoursesBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
 });

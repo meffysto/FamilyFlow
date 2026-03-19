@@ -26,6 +26,7 @@ import { NotificationConfig, Profile } from '../lib/types';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
 import { renderTemplate, dispatchNotification, buildManualContext } from '../lib/notifications';
+import { FontSize, FontWeight } from '../constants/typography';
 
 interface Props {
   config: NotificationConfig;
@@ -251,8 +252,8 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 20, paddingBottom: 40, gap: 16 },
   header: { gap: 8 },
-  backBtn: { fontSize: 15, fontWeight: '600' },
-  title: { fontSize: 20, fontWeight: '800' },
+  backBtn: { fontSize: FontSize.body, fontWeight: FontWeight.semibold },
+  title: { fontSize: FontSize.title, fontWeight: FontWeight.heavy },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -260,19 +261,19 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
   },
-  toggleLabel: { fontSize: 15, fontWeight: '600' },
+  toggleLabel: { fontSize: FontSize.body, fontWeight: FontWeight.semibold },
   customFields: { gap: 10 },
   fieldRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  fieldLabel: { fontSize: 14, fontWeight: '600', width: 50 },
+  fieldLabel: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold, width: 50 },
   fieldInput: {
     borderWidth: 1.5,
     borderRadius: 10,
     padding: 10,
-    fontSize: 15,
+    fontSize: FontSize.body,
   },
   sectionLabel: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.bold,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -280,7 +281,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderRadius: 12,
     padding: 14,
-    fontSize: 14,
+    fontSize: FontSize.sm,
     minHeight: 120,
     lineHeight: 20,
     fontFamily: 'Menlo',
@@ -296,15 +297,15 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     gap: 2,
   },
-  varKey: { fontSize: 11, fontWeight: '700', fontFamily: 'Menlo' },
-  varLabel: { fontSize: 10 },
+  varKey: { fontSize: FontSize.code, fontWeight: FontWeight.bold, fontFamily: 'Menlo' },
+  varLabel: { fontSize: FontSize.micro },
   previewBox: {
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
   },
   previewText: {
-    fontSize: 14,
+    fontSize: FontSize.sm,
     lineHeight: 20,
   },
   actions: {
@@ -318,14 +319,14 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     alignItems: 'center',
   },
-  resetBtnText: { fontSize: 14, fontWeight: '600' },
+  resetBtnText: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
   saveBtn: {
     flex: 2,
     padding: 14,
     borderRadius: 12,
     alignItems: 'center',
   },
-  saveBtnText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
+  saveBtnText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: '#FFFFFF' },
   customActions: { gap: 10 },
   sendBtn: {
     padding: 14,
@@ -333,7 +334,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#10B981',
     alignItems: 'center',
   },
-  sendBtnText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
+  sendBtnText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: '#FFFFFF' },
   deleteBtn: {
     padding: 14,
     borderRadius: 12,
@@ -342,6 +343,6 @@ const styles = StyleSheet.create({
     borderColor: '#FECACA',
     alignItems: 'center',
   },
-  deleteBtnText: { fontSize: 14, fontWeight: '600', color: '#EF4444' },
+  deleteBtnText: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold, color: '#EF4444' },
   btnDisabled: { opacity: 0.6 },
 });

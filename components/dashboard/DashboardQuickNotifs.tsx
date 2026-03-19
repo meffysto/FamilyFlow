@@ -12,6 +12,7 @@ import { DashboardCard } from '../DashboardCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
 import { dispatchNotification, buildManualContext } from '../../lib/notifications';
 import type { DashboardSectionProps } from './types';
+import { FontSize, FontWeight } from '../../constants/typography';
 
 function DashboardQuickNotifsInner({ vaultFileExists, activateCardTemplate }: DashboardSectionProps) {
   const { primary, tint, colors } = useThemeColors();
@@ -79,8 +80,8 @@ export const DashboardQuickNotifs = React.memo(DashboardQuickNotifsInner);
 
 const styles = StyleSheet.create({
   tooltip: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.medium,
     textAlign: 'center',
     marginBottom: 6,
   },
@@ -98,5 +99,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
   },
-  quickNotifEmoji: { fontSize: 20 },
+  quickNotifEmoji: { fontSize: FontSize.title },
 });

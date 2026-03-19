@@ -43,6 +43,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { SeasonalBanner } from '../../components/SeasonalBanner';
+import { FontSize, FontWeight } from '../../constants/typography';
 
 export default function LootScreen() {
   const { profiles, gamiData, notifPrefs, vault, refresh, isLoading } = useVault();
@@ -139,7 +140,7 @@ export default function LootScreen() {
         {!activeEvent && nextEvent && (
           <View style={[styles.nextEventCard, { backgroundColor: colors.cardAlt }]}>
             <Text style={[styles.nextEventText, { color: colors.textSub }]}>
-              {nextEvent.event.emoji} Prochain événement : <Text style={{ fontWeight: '700', color: nextEvent.event.themeColor }}>{nextEvent.event.name}</Text> — dans {nextEvent.daysUntil} jour{nextEvent.daysUntil > 1 ? 's' : ''}
+              {nextEvent.event.emoji} Prochain événement : <Text style={{ fontWeight: FontWeight.bold, color: nextEvent.event.themeColor }}>{nextEvent.event.name}</Text> — dans {nextEvent.daysUntil} jour{nextEvent.daysUntil > 1 ? 's' : ''}
             </Text>
           </View>
         )}
@@ -349,7 +350,7 @@ export default function LootScreen() {
             <View style={[styles.drPityBox, { backgroundColor: tint, borderColor: tint }]}>
               <Text style={[styles.drPityTitle, { color: primary }]}>🎯 Garantie</Text>
               <Text style={[styles.drPityText, { color: colors.textSub }]}>
-                Après {PITY_THRESHOLD} récompenses sans obtenir Épique ou mieux, la suivante est <Text style={{ fontWeight: '800' }}>garantie Épique minimum</Text>.
+                Après {PITY_THRESHOLD} récompenses sans obtenir Épique ou mieux, la suivante est <Text style={{ fontWeight: FontWeight.heavy }}>garantie Épique minimum</Text>.
               </Text>
             </View>
 
@@ -455,7 +456,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  title: { fontSize: 22, fontWeight: '800', color: '#FFFFFF' },
+  title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy, color: '#FFFFFF' },
   dropRatesBtn: {
     backgroundColor: 'rgba(255,255,255,0.2)',
     width: 36,
@@ -464,8 +465,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dropRatesBtnText: { fontSize: 18 },
-  subtitle: { fontSize: 14 },
+  dropRatesBtnText: { fontSize: FontSize.heading },
+  subtitle: { fontSize: FontSize.sm },
   nextEventCard: {
     borderRadius: 12,
     paddingHorizontal: 14,
@@ -473,13 +474,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   nextEventText: {
-    fontSize: 13,
+    fontSize: FontSize.label,
     textAlign: 'center',
   },
   section: { marginBottom: 16, gap: 8 },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '800',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.heavy,
     marginBottom: 4,
   },
   card: {
@@ -509,9 +510,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  lootCardAvatar: { fontSize: 32 },
-  lootCardName: { fontSize: 16, fontWeight: '700' },
-  lootCardLevel: { fontSize: 12, fontWeight: '600' },
+  lootCardAvatar: { fontSize: FontSize.hero },
+  lootCardName: { fontSize: FontSize.lg, fontWeight: FontWeight.bold },
+  lootCardLevel: { fontSize: FontSize.caption, fontWeight: FontWeight.semibold },
   openBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -520,14 +521,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     gap: 6,
   },
-  openBtnEmoji: { fontSize: 18 },
-  openBtnText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
+  openBtnEmoji: { fontSize: FontSize.heading },
+  openBtnText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: '#FFFFFF' },
   noLootBadge: {
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
   },
-  noLootText: { fontSize: 12, fontWeight: '600' },
+  noLootText: { fontSize: FontSize.caption, fontWeight: FontWeight.semibold },
   // Active rewards
   activeRewardRow: {
     flexDirection: 'row',
@@ -536,11 +537,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
   },
-  activeRewardEmoji: { fontSize: 32 },
+  activeRewardEmoji: { fontSize: FontSize.hero },
   activeRewardInfo: { flex: 1, gap: 2 },
-  activeRewardName: { fontSize: 13, fontWeight: '700' },
-  activeRewardLabel: { fontSize: 14, fontWeight: '600' },
-  activeRewardMeta: { fontSize: 12, fontWeight: '700', color: '#EF4444' },
+  activeRewardName: { fontSize: FontSize.label, fontWeight: FontWeight.bold },
+  activeRewardLabel: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
+  activeRewardMeta: { fontSize: FontSize.caption, fontWeight: FontWeight.bold, color: '#EF4444' },
   // Badges
   badgeGrid: {
     flexDirection: 'row',
@@ -565,12 +566,12 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
-  badgeEmoji: { fontSize: 28 },
+  badgeEmoji: { fontSize: FontSize.icon },
   badgeSeasonalTag: {
     position: 'absolute',
     top: -4,
     right: -4,
-    fontSize: 12,
+    fontSize: FontSize.caption,
   },
   badgeProfileHeader: {
     flexDirection: 'row',
@@ -578,9 +579,9 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 10,
   },
-  badgeProfileAvatar: { fontSize: 24 },
-  badgeProfileName: { fontSize: 15, fontWeight: '700', flex: 1 },
-  badgeProfileCount: { fontSize: 12, fontWeight: '600' },
+  badgeProfileAvatar: { fontSize: FontSize.display },
+  badgeProfileName: { fontSize: FontSize.body, fontWeight: FontWeight.bold, flex: 1 },
+  badgeProfileCount: { fontSize: FontSize.caption, fontWeight: FontWeight.semibold },
   // History
   historyRow: {
     flexDirection: 'row',
@@ -589,16 +590,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     gap: 10,
   },
-  historyAvatar: { fontSize: 24 },
+  historyAvatar: { fontSize: FontSize.display },
   historyInfo: { flex: 1, gap: 2 },
   historyNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  historyName: { fontSize: 13, fontWeight: '600' },
+  historyName: { fontSize: FontSize.label, fontWeight: FontWeight.semibold },
   historyTypeBadge: { paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6 },
-  historyTypeText: { fontSize: 10, fontWeight: '700' },
-  historyNote: { fontSize: 12 },
+  historyTypeText: { fontSize: FontSize.micro, fontWeight: FontWeight.bold },
+  historyNote: { fontSize: FontSize.caption },
   historyPoints: { alignItems: 'flex-end' },
-  historyPts: { fontSize: 13, fontWeight: '700', color: '#059669' },
-  historyRarity: { fontSize: 12, fontWeight: '700' },
+  historyPts: { fontSize: FontSize.label, fontWeight: FontWeight.bold, color: '#059669' },
+  historyRarity: { fontSize: FontSize.caption, fontWeight: FontWeight.bold },
   // ─── Drop Rates Modal ─────────────────────────────────────────────────────
   drModal: { flex: 1 },
   drContent: { padding: 20, gap: 16 },
@@ -607,8 +608,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  drTitle: { fontSize: 22, fontWeight: '800' },
-  drCloseBtn: { fontSize: 22, padding: 4 },
+  drTitle: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
+  drCloseBtn: { fontSize: FontSize.titleLg, padding: 4 },
   drCard: {
     borderRadius: 16,
     padding: 16,
@@ -619,7 +620,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  drSectionTitle: { fontSize: 15, fontWeight: '800', marginBottom: 4 },
+  drSectionTitle: { fontSize: FontSize.body, fontWeight: FontWeight.heavy, marginBottom: 4 },
   drTableRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -627,12 +628,12 @@ const styles = StyleSheet.create({
   },
   drTableCell: {
     flex: 1,
-    fontSize: 13,
+    fontSize: FontSize.label,
     textAlign: 'center',
   },
   drTableHeader: {
-    fontWeight: '700',
-    fontSize: 11,
+    fontWeight: FontWeight.bold,
+    fontSize: FontSize.caption,
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
@@ -641,15 +642,15 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
   },
-  drRarityLabel: { fontSize: 13, fontWeight: '700' },
+  drRarityLabel: { fontSize: FontSize.label, fontWeight: FontWeight.bold },
   drPityBox: {
     borderRadius: 14,
     padding: 16,
     borderWidth: 1.5,
     gap: 6,
   },
-  drPityTitle: { fontSize: 15, fontWeight: '800' },
-  drPityText: { fontSize: 13, lineHeight: 18 },
+  drPityTitle: { fontSize: FontSize.body, fontWeight: FontWeight.heavy },
+  drPityText: { fontSize: FontSize.label, lineHeight: 18 },
   drRarityHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -661,8 +662,8 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
   },
-  drRarityBadgeText: { fontSize: 12, fontWeight: '800', color: '#FFFFFF', textTransform: 'uppercase' },
-  drRewardCount: { fontSize: 11, fontWeight: '600' },
+  drRarityBadgeText: { fontSize: FontSize.caption, fontWeight: FontWeight.heavy, color: '#FFFFFF', textTransform: 'uppercase' },
+  drRewardCount: { fontSize: FontSize.caption, fontWeight: FontWeight.semibold },
   drRewardRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -672,14 +673,14 @@ const styles = StyleSheet.create({
   drRewardRowBorder: {
     borderBottomWidth: 1,
   },
-  drRewardEmoji: { fontSize: 20 },
-  drRewardName: { flex: 1, fontSize: 13 },
-  drRewardPts: { fontSize: 12, fontWeight: '700', color: '#059669' },
-  drParentTag: { fontSize: 14 },
+  drRewardEmoji: { fontSize: FontSize.title },
+  drRewardName: { flex: 1, fontSize: FontSize.label },
+  drRewardPts: { fontSize: FontSize.caption, fontWeight: FontWeight.bold, color: '#059669' },
+  drParentTag: { fontSize: FontSize.sm },
   drCloseButton: {
     borderRadius: 14,
     padding: 16,
     alignItems: 'center',
   },
-  drCloseButtonText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
+  drCloseButtonText: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: '#FFFFFF' },
 });

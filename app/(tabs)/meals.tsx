@@ -39,6 +39,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
+import { FontSize, FontWeight } from '../../constants/typography';
 
 const DAYS_ORDER = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
@@ -1105,7 +1106,7 @@ export default function MealsScreen() {
                 <Text style={[
                   styles.categoryChipText,
                   { color: colors.textSub },
-                  recipeCategory === null && { color: primary, fontWeight: '700' },
+                  recipeCategory === null && { color: primary, fontWeight: FontWeight.bold },
                 ]}>
                   Toutes
                 </Text>
@@ -1126,7 +1127,7 @@ export default function MealsScreen() {
                   <Text style={[
                     styles.categoryChipText,
                     { color: colors.textSub },
-                    showFavoritesOnly && { color: primary, fontWeight: '700' },
+                    showFavoritesOnly && { color: primary, fontWeight: FontWeight.bold },
                   ]}>
                     {`❤️ Favoris${profileFavorites.length > 0 ? ` (${profileFavorites.length})` : ''}`}
                   </Text>
@@ -1146,7 +1147,7 @@ export default function MealsScreen() {
                   <Text style={[
                     styles.categoryChipText,
                     { color: colors.textSub },
-                    recipeCategory === cat && { color: primary, fontWeight: '700' },
+                    recipeCategory === cat && { color: primary, fontWeight: FontWeight.bold },
                   ]}>
                     {cat}
                   </Text>
@@ -1389,7 +1390,7 @@ export default function MealsScreen() {
                     {item.prepTime ? ` · ${item.prepTime}` : ''}
                   </Text>
                 </View>
-                <Text style={{ fontSize: 16, color: primary }}>+</Text>
+                <Text style={{ fontSize: FontSize.lg, color: primary }}>+</Text>
               </TouchableOpacity>
             )}
             ListEmptyComponent={
@@ -1433,7 +1434,7 @@ export default function MealsScreen() {
                 <Text style={[
                   styles.pickerOptionText,
                   { color: colors.textSub },
-                  selectedSection === s && { color: primary, fontWeight: '700' },
+                  selectedSection === s && { color: primary, fontWeight: FontWeight.bold },
                 ]}>
                   {s}
                 </Text>
@@ -1455,7 +1456,7 @@ export default function MealsScreen() {
               <Text style={[
                 styles.pickerOptionText,
                 { color: colors.textSub },
-                selectedSection === undefined && { color: primary, fontWeight: '700' },
+                selectedSection === undefined && { color: primary, fontWeight: FontWeight.bold },
               ]}>
                 📋 Fin de liste
               </Text>
@@ -1503,7 +1504,7 @@ export default function MealsScreen() {
                       <Text style={[
                         styles.catChipText,
                         { color: colors.text },
-                        isActive && { color: primary, fontWeight: '700' },
+                        isActive && { color: primary, fontWeight: FontWeight.bold },
                       ]}>
                         {cat}
                       </Text>
@@ -1659,7 +1660,7 @@ export default function MealsScreen() {
           </View>
 
           <ScrollView style={styles.scroll} contentContainerStyle={{ padding: 16, gap: 16 }}>
-            <Text style={[{ fontSize: 14, color: colors.textSub, lineHeight: 20 }]}>
+            <Text style={[{ fontSize: FontSize.sm, color: colors.textSub, lineHeight: 20 }]}>
               Recherche des fichiers .cook en dehors du dossier Recettes pour les importer.
             </Text>
 
@@ -1780,7 +1781,7 @@ export default function MealsScreen() {
                   </Text>
 
                   <View style={{ marginTop: 8, padding: 10, borderRadius: 8, backgroundColor: colors.bg }}>
-                    <Text style={{ fontSize: 12, color: colors.textSub, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' }} numberOfLines={15}>
+                    <Text style={{ fontSize: FontSize.caption, color: colors.textSub, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' }} numberOfLines={15}>
                       {textImportResult.data.cookContent}
                     </Text>
                   </View>
@@ -1823,18 +1824,18 @@ export default function MealsScreen() {
 
                   {textImportResult.data.ingredients.length > 0 && (
                     <View style={{ marginTop: 8, gap: 2 }}>
-                      <Text style={[{ fontSize: 13, fontWeight: '600', color: colors.text }]}>Ingrédients :</Text>
+                      <Text style={[{ fontSize: FontSize.label, fontWeight: FontWeight.semibold, color: colors.text }]}>Ingrédients :</Text>
                       {textImportResult.data.ingredients.map((ing, i) => (
-                        <Text key={i} style={[{ fontSize: 13, color: colors.textSub }]}>- {ing}</Text>
+                        <Text key={i} style={[{ fontSize: FontSize.label, color: colors.textSub }]}>- {ing}</Text>
                       ))}
                     </View>
                   )}
 
                   {textImportResult.data.steps.length > 0 && (
                     <View style={{ marginTop: 8, gap: 2 }}>
-                      <Text style={[{ fontSize: 13, fontWeight: '600', color: colors.text }]}>Étapes :</Text>
+                      <Text style={[{ fontSize: FontSize.label, fontWeight: FontWeight.semibold, color: colors.text }]}>Étapes :</Text>
                       {textImportResult.data.steps.map((step, i) => (
-                        <Text key={i} style={[{ fontSize: 13, color: colors.textSub }]} numberOfLines={2}>
+                        <Text key={i} style={[{ fontSize: FontSize.label, color: colors.textSub }]} numberOfLines={2}>
                           {i + 1}. {step}
                         </Text>
                       ))}
@@ -1910,7 +1911,7 @@ export default function MealsScreen() {
                   <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>{exploreLoading ? '⏳' : '🔍'}</Text>
                 </TouchableOpacity>
               </View>
-              <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 6 }}>
+              <Text style={{ fontSize: FontSize.caption, color: colors.textMuted, marginTop: 6 }}>
                 Recherche en anglais sur cooklang.org{aiConfig ? ' · traduction auto FR' : ''} · {exploreResults.length > 0 ? `${exploreResults.length} résultat${exploreResults.length > 1 ? 's' : ''}` : '4295+ recettes disponibles'}
               </Text>
             </View>
@@ -1919,7 +1920,7 @@ export default function MealsScreen() {
             {explorePreview ? (
               <ScrollView style={styles.scroll} contentContainerStyle={{ padding: 16, gap: 16 }}>
                 <TouchableOpacity onPress={() => setExplorePreview(null)}>
-                  <Text style={{ fontSize: 14, color: primary, fontWeight: '600' }}>← Retour aux résultats</Text>
+                  <Text style={{ fontSize: FontSize.sm, color: primary, fontWeight: FontWeight.semibold }}>← Retour aux résultats</Text>
                 </TouchableOpacity>
 
                 <View style={[styles.importPreview, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
@@ -1932,7 +1933,7 @@ export default function MealsScreen() {
 
                   {/* Raw preview (first 15 lines) */}
                   <View style={{ marginTop: 8, padding: 10, borderRadius: 8, backgroundColor: colors.bg }}>
-                    <Text style={{ fontSize: 12, color: colors.textSub, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' }} numberOfLines={15}>
+                    <Text style={{ fontSize: FontSize.caption, color: colors.textSub, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' }} numberOfLines={15}>
                       {explorePreview.content}
                     </Text>
                   </View>
@@ -1981,7 +1982,7 @@ export default function MealsScreen() {
                         </Text>
                       )}
                     </View>
-                    <Text style={{ fontSize: 14, color: primary }}>
+                    <Text style={{ fontSize: FontSize.sm, color: primary }}>
                       {exploreDownloading === item.id ? '⏳' : '📥'}
                     </Text>
                   </TouchableOpacity>
@@ -2029,12 +2030,12 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '800',
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.heavy,
   },
   stats: {
-    fontSize: 13,
-    fontWeight: '500',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.medium,
   },
   // Tab bar
   tabBar: {
@@ -2059,12 +2060,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   weekArrowText: {
-    fontSize: 28,
-    fontWeight: '300',
+    fontSize: FontSize.icon,
+    fontWeight: FontWeight.normal,
   },
   weekLabel: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
   },
   emptyWeek: {
     flex: 1,
@@ -2074,7 +2075,7 @@ const styles = StyleSheet.create({
     padding: 32,
   },
   emptyWeekText: {
-    fontSize: 15,
+    fontSize: FontSize.body,
     fontStyle: 'italic',
     textAlign: 'center',
   },
@@ -2084,8 +2085,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   backBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
   scroll: {
     flex: 1,
@@ -2104,8 +2105,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   generateBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
   },
   // Meal cards
   dayCard: {
@@ -2128,8 +2129,8 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   dayName: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
   },
   todayBadge: {
     paddingHorizontal: 10,
@@ -2137,11 +2138,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   todayBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
   },
   noMeals: {
-    fontSize: 13,
+    fontSize: FontSize.label,
     fontStyle: 'italic',
   },
   mealRow: {
@@ -2152,7 +2153,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   mealEmoji: {
-    fontSize: 20,
+    fontSize: FontSize.title,
     width: 28,
     textAlign: 'center',
   },
@@ -2161,19 +2162,19 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   mealType: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
   mealText: {
-    fontSize: 15,
-    fontWeight: '500',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.medium,
   },
   mealTextEmpty: {
     color: '#D1D5DB',
     fontStyle: 'italic',
-    fontWeight: '400',
+    fontWeight: FontWeight.normal,
   },
   mealRecipeMeta: {
     flexDirection: 'row',
@@ -2181,7 +2182,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   mealRecipeMetaText: {
-    fontSize: 11,
+    fontSize: FontSize.caption,
   },
   recipeBadge: {
     width: 26,
@@ -2191,10 +2192,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   recipeBadgeText: {
-    fontSize: 12,
+    fontSize: FontSize.caption,
   },
   editIcon: {
-    fontSize: 14,
+    fontSize: FontSize.sm,
     opacity: 0.4,
   },
   // Courses
@@ -2212,8 +2213,8 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   courseSectionTitle: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
     marginBottom: 8,
   },
   courseRow: {
@@ -2238,14 +2239,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   checkboxCheck: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.bold,
     color: '#FFFFFF',
   },
   courseText: {
     flex: 1,
-    fontSize: 15,
-    fontWeight: '500',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.medium,
   },
   courseRemoveBtn: {
     width: 28,
@@ -2255,8 +2256,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   courseRemoveText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
   emptyState: {
     alignItems: 'center',
@@ -2267,11 +2268,11 @@ const styles = StyleSheet.create({
     fontSize: 48,
   },
   emptyText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.semibold,
   },
   emptyHint: {
-    fontSize: 13,
+    fontSize: FontSize.label,
     textAlign: 'center',
   },
   // Add bar
@@ -2291,8 +2292,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sectionPickerText: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.semibold,
   },
   addInput: {
     flex: 1,
@@ -2300,7 +2301,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    fontSize: 15,
+    fontSize: FontSize.body,
   },
   addBtn: {
     width: 38,
@@ -2311,8 +2312,8 @@ const styles = StyleSheet.create({
   },
   addBtnDisabled: {},
   addBtnText: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.bold,
     color: '#FFFFFF',
   },
   // Recettes
@@ -2326,7 +2327,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    fontSize: 15,
+    fontSize: FontSize.body,
   },
   categoryScroll: {
     maxHeight: 48,
@@ -2346,8 +2347,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   categoryChipText: {
-    fontSize: 13,
-    fontWeight: '500',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.medium,
   },
   // Meal edit modal — recipe link
   linkedRecipeRow: {
@@ -2360,12 +2361,12 @@ const styles = StyleSheet.create({
   },
   linkedRecipeText: {
     flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
   linkedRecipeRemove: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
   },
   linkRecipeBtn: {
     borderWidth: 1.5,
@@ -2375,8 +2376,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   linkRecipeBtnText: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
   },
   // Recipe picker modal
   pickerHeader: {
@@ -2388,14 +2389,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   pickerClose: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.semibold,
     width: 28,
     textAlign: 'center',
   },
   pickerHeaderTitle: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
   },
   pickerRecipeRow: {
     flexDirection: 'row',
@@ -2406,11 +2407,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   pickerRecipeTitle: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
   },
   pickerRecipeMeta: {
-    fontSize: 12,
+    fontSize: FontSize.caption,
     marginTop: 2,
   },
   // Modals
@@ -2427,15 +2428,15 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: FontSize.heading,
+    fontWeight: FontWeight.bold,
     textAlign: 'center',
   },
   modalInput: {
     borderWidth: 1.5,
     borderRadius: 12,
     padding: 14,
-    fontSize: 16,
+    fontSize: FontSize.lg,
   },
   modalActions: {
     flexDirection: 'row',
@@ -2449,8 +2450,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalCancelText: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
   },
   modalSave: {
     flex: 2,
@@ -2459,8 +2460,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalSaveText: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
     color: '#FFFFFF',
   },
   // Section picker
@@ -2472,8 +2473,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   pickerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: FontSize.heading,
+    fontWeight: FontWeight.bold,
     textAlign: 'center',
     marginBottom: 8,
   },
@@ -2483,8 +2484,8 @@ const styles = StyleSheet.create({
   },
   pickerOptionActive: {},
   pickerOptionText: {
-    fontSize: 15,
-    fontWeight: '500',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.medium,
   },
   // View recipe button on meal row
   viewRecipeBtn: {
@@ -2497,8 +2498,8 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   viewRecipeBtnText: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.semibold,
   },
   // Import
   importBtn: {
@@ -2508,12 +2509,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   importBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
   },
   importLabel: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
   importFetchBtn: {
     borderRadius: 12,
@@ -2522,8 +2523,8 @@ const styles = StyleSheet.create({
   },
   importFetchBtnText: {
     color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
   },
   importPreview: {
     borderRadius: 14,
@@ -2532,11 +2533,11 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   importPreviewTitle: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
   },
   importPreviewMeta: {
-    fontSize: 13,
+    fontSize: FontSize.label,
   },
   // Category picker modal
   catPickerContent: {
@@ -2547,8 +2548,8 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   catPickerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
     textAlign: 'center',
   },
   catGrid: {
@@ -2563,8 +2564,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   catChipText: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
   },
   catNewRow: {
     flexDirection: 'row',
@@ -2577,7 +2578,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    fontSize: 15,
+    fontSize: FontSize.body,
   },
   catNewBtn: {
     paddingHorizontal: 16,
@@ -2585,7 +2586,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   catNewBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
   },
 });

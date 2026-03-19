@@ -158,7 +158,7 @@ export const TaskCard = React.memo(function TaskCard({
           )}
           {task.dueDate && !task.completed && (
             <View style={[styles.badge, { backgroundColor: colors.cardAlt }, isOverdue && { backgroundColor: colors.errorBg }]}>
-              <Text style={[styles.dueDate, { color: colors.textMuted }, isOverdue && { color: colors.error, fontWeight: '700' as const }]}>
+              <Text style={[styles.dueDate, { color: colors.textMuted }, isOverdue && { color: colors.error, fontWeight: FontWeight.bold }]}>
                 📅 {formatDateForDisplay(task.dueDate)}
               </Text>
             </View>

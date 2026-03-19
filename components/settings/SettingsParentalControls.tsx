@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     marginRight: Spacing.md,
   },
   emoji: {
-    fontSize: 20,
+    fontSize: FontSize.title,
     marginRight: Spacing.sm,
   },
   rowText: {

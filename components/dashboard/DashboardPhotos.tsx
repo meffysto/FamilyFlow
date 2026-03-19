@@ -11,6 +11,7 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import type { DashboardSectionProps } from './types';
+import { FontSize, FontWeight } from '../../constants/typography';
 
 function DashboardPhotosInner(_props: DashboardSectionProps) {
   const router = useRouter();
@@ -123,20 +124,20 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   photoStatusEmoji: {
-    fontSize: 20,
+    fontSize: FontSize.title,
   },
   photoStatusInfo: {
     flex: 1,
     gap: 1,
   },
   photoStatusName: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
   },
   photoStatusHint: {
-    fontSize: 13,
+    fontSize: FontSize.label,
   },
   photoStatusIcon: {
-    fontSize: 20,
+    fontSize: FontSize.title,
   },
 });

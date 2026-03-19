@@ -9,6 +9,7 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import type { DashboardSectionProps } from './types';
+import { FontSize } from '../../constants/typography';
 
 function DashboardWishlistInner(_props: DashboardSectionProps) {
   const router = useRouter();
@@ -30,6 +31,6 @@ export const DashboardWishlist = React.memo(DashboardWishlistInner);
 
 const styles = StyleSheet.create({
   defiMeta: {
-    fontSize: 12,
+    fontSize: FontSize.caption,
   },
 });

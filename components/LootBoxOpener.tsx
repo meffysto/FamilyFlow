@@ -39,6 +39,7 @@ import { LootBox, ProfileTheme } from '../lib/types';
 import { RARITY_COLORS, RARITY_LABELS, RARITY_EMOJIS, SEASONAL_EVENTS } from '../lib/gamification';
 import { getTheme } from '../constants/themes';
 import { useThemeColors } from '../contexts/ThemeContext';
+import { FontSize, FontWeight } from '../constants/typography';
 
 let ConfettiCannon: any = null;
 try {
@@ -533,7 +534,7 @@ const emblemStyles = StyleSheet.create({
   // Pompier — Shield
   shield: { width: 40, height: 44, borderTopLeftRadius: 6, borderTopRightRadius: 6, borderBottomLeftRadius: 20, borderBottomRightRadius: 20, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   shieldInner: { width: 32, height: 36, borderTopLeftRadius: 4, borderTopRightRadius: 4, borderBottomLeftRadius: 16, borderBottomRightRadius: 16, backgroundColor: '#B91C1C', alignItems: 'center', justifyContent: 'center' },
-  shieldCross: { color: '#FFFFFF', fontSize: 20, fontWeight: '900' },
+  shieldCross: { color: '#FFFFFF', fontSize: FontSize.title, fontWeight: FontWeight.heavy },
 
   // Licorne — Gem / Crystal
   gem: { width: 36, height: 42, alignItems: 'center', justifyContent: 'center' },
@@ -564,7 +565,7 @@ const emblemStyles = StyleSheet.create({
 
   // Default — Star
   giftStar: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'rgba(255,255,255,0.4)' },
-  giftStarText: { fontSize: 24, color: '#FDE68A' },
+  giftStarText: { fontSize: FontSize.display, color: '#FDE68A' },
 });
 
 // ─── Decoration Styles (shared helpers) ─────────────────────────────────────
@@ -1273,13 +1274,13 @@ const styles = StyleSheet.create({
     paddingTop: 40,
   },
   profileInfo: {
-    fontSize: 18,
+    fontSize: FontSize.heading,
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontWeight: FontWeight.semibold,
   },
   closeBtn: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.semibold,
   },
   content: {
     flex: 1,
@@ -1291,13 +1292,13 @@ const styles = StyleSheet.create({
   // ─── Idle ─────────────────────────────────────────────────────────────
   title: {
     fontSize: 36,
-    fontWeight: '800',
+    fontWeight: FontWeight.heavy,
     color: '#FFFFFF',
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 18,
+    fontSize: FontSize.heading,
     marginBottom: 48,
   },
   chestButton: {
@@ -1317,8 +1318,8 @@ const styles = StyleSheet.create({
     borderRadius: 100,
   },
   openText: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: FontSize.heading,
+    fontWeight: FontWeight.semibold,
   },
 
   // ─── Spinning ─────────────────────────────────────────────────────────
@@ -1334,7 +1335,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   spinText: {
-    fontSize: 18,
+    fontSize: FontSize.heading,
     color: 'rgba(255,255,255,0.6)',
     marginTop: 16,
   },
@@ -1373,14 +1374,14 @@ const styles = StyleSheet.create({
   },
   incredibleText: {
     color: '#FDE68A',
-    fontSize: 18,
-    fontWeight: '900',
+    fontSize: FontSize.heading,
+    fontWeight: FontWeight.heavy,
     letterSpacing: 2,
     textAlign: 'center',
   },
   incredibleTextMythique: {
     color: '#FFD700',
-    fontSize: 22,
+    fontSize: FontSize.titleLg,
     letterSpacing: 3,
     textShadowColor: '#EF4444',
     textShadowOffset: { width: 0, height: 0 },
@@ -1426,15 +1427,15 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   seasonalTag: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
     marginTop: 4,
     textAlign: 'center',
   },
   rarityText: {
     color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 14,
+    fontWeight: FontWeight.heavy,
+    fontSize: FontSize.sm,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
@@ -1448,22 +1449,22 @@ const styles = StyleSheet.create({
     fontSize: 80,
   },
   rewardText: {
-    fontSize: 20,
+    fontSize: FontSize.title,
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontWeight: FontWeight.bold,
     textAlign: 'center',
     maxWidth: 260,
   },
   rewardTextMythique: {
-    fontSize: 24,
-    fontWeight: '900',
+    fontSize: FontSize.display,
+    fontWeight: FontWeight.heavy,
     textShadowColor: '#EF4444',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 12,
   },
   rewardTextLegendaire: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: FontSize.titleLg,
+    fontWeight: FontWeight.heavy,
     textShadowColor: '#F59E0B',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 8,
@@ -1476,8 +1477,8 @@ const styles = StyleSheet.create({
   },
   bonusText: {
     color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    fontSize: FontSize.lg,
   },
   parentNote: {
     backgroundColor: 'rgba(255,255,255,0.15)',
@@ -1487,8 +1488,8 @@ const styles = StyleSheet.create({
   },
   parentNoteText: {
     color: '#FDE68A',
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
   specialNote: {
     backgroundColor: 'rgba(245, 158, 11, 0.2)',
@@ -1498,8 +1499,8 @@ const styles = StyleSheet.create({
   },
   specialNoteText: {
     color: '#FDE68A',
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
     textAlign: 'center',
   },
   closeRewardBtn: {
@@ -1510,7 +1511,7 @@ const styles = StyleSheet.create({
   },
   closeRewardText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
   },
 });

@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconEmoji: {
-    fontSize: 22,
+    fontSize: FontSize.titleLg,
   },
   headerMiddle: {
     flex: 1,
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   chevron: {
-    fontSize: 24,
+    fontSize: FontSize.display,
     fontWeight: FontWeight.bold as '700',
     transform: [{ rotate: '90deg' }],
   },
