@@ -30,10 +30,10 @@ import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import { Chip } from '../../components/ui/Chip';
+import { SegmentedControl } from '../../components/ui';
+import type { Segment } from '../../components/ui';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import type { WishlistItem, WishBudget, WishOccasion } from '../../lib/types';
-
-type FilterId = 'tous' | '🎂' | '🎄' | string; // string = profileName
 
 const BUDGET_OPTIONS: { label: string; value: WishBudget }[] = [
   { label: 'Aucun', value: '' },
@@ -47,6 +47,8 @@ const OCCASION_OPTIONS: { label: string; value: WishOccasion }[] = [
   { label: '🎂 Anniversaire', value: '🎂' },
   { label: '🎄 Noël', value: '🎄' },
 ];
+
+type OccasionFilter = 'tous' | '🎂' | '🎄';
 
 export default function WishlistScreen() {
   const { primary, colors } = useThemeColors();
@@ -66,7 +68,8 @@ export default function WishlistScreen() {
   const isAdult = activeProfile?.role === 'adulte';
   const { refreshing, onRefresh } = useRefresh(refresh);
 
-  const [filter, setFilter] = useState<FilterId>('tous');
+  const [personFilter, setPersonFilter] = useState<string>('tous');
+  const [occasionFilter, setOccasionFilter] = useState<OccasionFilter>('tous');
   const [editorVisible, setEditorVisible] = useState(params.addNew === '1');
   const [editingItem, setEditingItem] = useState<WishlistItem | null>(null);
 
@@ -76,6 +79,24 @@ export default function WishlistScreen() {
   const [editBudget, setEditBudget] = useState<WishBudget>('');
   const [editOccasion, setEditOccasion] = useState<WishOccasion>('');
   const [editNotes, setEditNotes] = useState('');
+
+  // Segments personne pour SegmentedControl
+  const personSegments = useMemo(() => {
+    const segs: Segment<string>[] = [{ id: 'tous', label: 'Tous' }];
+    const names = new Set(wishlistItems.map((w) => w.profileName));
+    for (const name of names) {
+      const p = profiles.find((pr) => pr.name === name);
+      segs.push({ id: name, label: p ? `${p.avatar} ${name}` : name });
+    }
+    return segs;
+  }, [wishlistItems, profiles]);
+
+  // Chips occasion
+  const occasionChips: { id: OccasionFilter; label: string }[] = [
+    { id: 'tous', label: 'Tous' },
+    { id: '🎂', label: '🎂 Anniversaire' },
+    { id: '🎄', label: '🎄 Noël' },
+  ];
 
   // Filtrer les items
   const filteredItems = useMemo(() => {
@@ -89,11 +110,41 @@ export default function WishlistScreen() {
       });
     }
 
-    if (filter === '🎂') return items.filter((w) => w.occasion === '🎂');
-    if (filter === '🎄') return items.filter((w) => w.occasion === '🎄');
-    if (filter !== 'tous') return items.filter((w) => w.profileName === filter);
+    // Filtre personne
+    if (personFilter !== 'tous') {
+      items = items.filter((w) => w.profileName === personFilter);
+    }
+
+    // Filtre occasion
+    if (occasionFilter === '🎂') items = items.filter((w) => w.occasion === '🎂');
+    if (occasionFilter === '🎄') items = items.filter((w) => w.occasion === '🎄');
+
     return items;
-  }, [wishlistItems, filter, isAdult, activeProfile]);
+  }, [wishlistItems, personFilter, occasionFilter, isAdult, activeProfile]);
+
+  // Stats (adultes)
+  const totalToGive = useMemo(
+    () => wishlistItems.filter((w) => !w.bought).length,
+    [wishlistItems],
+  );
+  const totalBought = useMemo(
+    () => wishlistItems.filter((w) => w.bought).length,
+    [wishlistItems],
+  );
+
+  // Stats par section (adultes)
+  const sectionStats = useMemo(() => {
+    const map = new Map<string, { total: number; bought: number }>();
+    for (const item of wishlistItems) {
+      if (!map.has(item.profileName)) {
+        map.set(item.profileName, { total: 0, bought: 0 });
+      }
+      const s = map.get(item.profileName)!;
+      s.total++;
+      if (item.bought) s.bought++;
+    }
+    return map;
+  }, [wishlistItems]);
 
   // Sections pour SectionList
   const sections = useMemo(() => {
@@ -112,24 +163,6 @@ export default function WishlistScreen() {
       data: byProfile.get(name)!,
     }));
   }, [filteredItems, profiles]);
-
-  // Chips de filtre
-  const filterChips = useMemo(() => {
-    const chips: { id: FilterId; label: string }[] = [{ id: 'tous', label: 'Tous' }];
-    const names = new Set(wishlistItems.map((w) => w.profileName));
-    for (const name of names) {
-      const p = profiles.find((pr) => pr.name === name);
-      chips.push({ id: name, label: p ? `${p.avatar} ${name}` : name });
-    }
-    chips.push({ id: '🎂', label: '🎂' });
-    chips.push({ id: '🎄', label: '🎄' });
-    return chips;
-  }, [wishlistItems, profiles]);
-
-  const totalUnbought = useMemo(
-    () => wishlistItems.filter((w) => !w.bought).length,
-    [wishlistItems],
-  );
 
   // Ouvrir l'éditeur
   const openEditor = useCallback((item?: WishlistItem) => {
@@ -191,14 +224,23 @@ export default function WishlistScreen() {
     showToast(item.bought ? 'Marqué non-acheté' : 'Marqué acheté 🔒');
   }, [activeProfile, toggleWishBought, showToast]);
 
+  // Icône occasion : bg + emoji
+  const getWishIconStyle = (occasion: WishOccasion) => {
+    if (occasion === '🎂') return { bg: colors.warningBg, emoji: '🎂' };
+    if (occasion === '🎄') return { bg: colors.successBg, emoji: '🎄' };
+    return { bg: primary + '15', emoji: '🎁' };
+  };
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <View style={[styles.header, { backgroundColor: colors.bg }]}>
         <View style={styles.headerRow}>
-          <Text style={[styles.title, { color: colors.text }]}>Souhaits</Text>
-          {totalUnbought > 0 && (
+          <Text style={[styles.title, { color: colors.text }]}>
+            {isAdult ? 'Souhaits' : 'Mes souhaits ✨'}
+          </Text>
+          {totalToGive > 0 && (
             <View style={[styles.countBadge, { backgroundColor: primary + '20' }]}>
-              <Text style={[styles.countText, { color: primary }]}>{totalUnbought}</Text>
+              <Text style={[styles.countText, { color: primary }]}>{totalToGive}</Text>
             </View>
           )}
         </View>
@@ -213,17 +255,37 @@ export default function WishlistScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Filtres */}
-      <View style={[styles.filterBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        {filterChips.map((chip) => (
-          <Chip
-            key={chip.id}
-            label={chip.label}
-            selected={filter === chip.id}
-            onPress={() => setFilter(chip.id)}
-          />
-        ))}
+      {/* Filtres — SegmentedControl personne */}
+      <View style={[styles.filterSection, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <SegmentedControl
+          segments={personSegments}
+          value={personFilter}
+          onChange={setPersonFilter}
+          style={{ marginBottom: Spacing.md }}
+        />
+        <View style={styles.occasionRow}>
+          {occasionChips.map((chip) => (
+            <Chip
+              key={chip.id}
+              label={chip.label}
+              selected={occasionFilter === chip.id}
+              onPress={() => setOccasionFilter(chip.id)}
+            />
+          ))}
+        </View>
       </View>
+
+      {/* Stats bar — adultes uniquement */}
+      {isAdult && (
+        <View style={styles.statsBar}>
+          <View style={[styles.statPill, { backgroundColor: primary + '15' }]}>
+            <Text style={[styles.statPillText, { color: primary }]}>🎁 {totalToGive} à offrir</Text>
+          </View>
+          <View style={[styles.statPill, { backgroundColor: colors.successBg }]}>
+            <Text style={[styles.statPillText, { color: colors.success }]}>✓ {totalBought} achetés</Text>
+          </View>
+        </View>
+      )}
 
       {sections.length === 0 ? (
         <View style={[styles.emptyState, { backgroundColor: colors.card, margin: Spacing['2xl'] }]}>
@@ -232,6 +294,13 @@ export default function WishlistScreen() {
           <Text style={[styles.emptyDesc, { color: colors.textMuted }]}>
             Ajoutez des idées cadeaux pour chaque membre de la famille !
           </Text>
+          <TouchableOpacity
+            style={[styles.emptyCta, { backgroundColor: primary }]}
+            onPress={() => openEditor()}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.emptyCtaText, { color: colors.onPrimary }]}>+ Ajouter un souhait</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <SectionList
@@ -240,78 +309,121 @@ export default function WishlistScreen() {
           contentContainerStyle={styles.listContent}
           stickySectionHeadersEnabled={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
-          renderSectionHeader={({ section }) => (
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionAvatar}>{section.avatar}</Text>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>{section.title}</Text>
-              <Text style={[styles.sectionCount, { color: colors.textMuted }]}>
-                {section.data.filter((d) => !d.bought).length} souhait{section.data.filter((d) => !d.bought).length !== 1 ? 's' : ''}
-              </Text>
-            </View>
-          )}
-          renderItem={({ item }) => (
-            <SwipeToDelete
-              onDelete={() => handleDelete(item)}
-              skipConfirm
-              hintId="wishlist"
-            >
-              <TouchableOpacity
-                style={[styles.itemCard, { backgroundColor: colors.card }, item.bought && styles.itemBought]}
-                onPress={() => openEditor(item)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.itemRow}>
-                  <View style={styles.itemContent}>
-                    <Text
-                      style={[
-                        styles.itemText,
-                        { color: colors.text },
-                        item.bought && { textDecorationLine: 'line-through', color: colors.textFaint },
-                      ]}
-                      numberOfLines={1}
-                    >
-                      {item.text}
-                    </Text>
-                    {item.notes ? (
-                      <Text style={[styles.itemNotes, { color: colors.textMuted }]} numberOfLines={1}>
-                        {item.notes}
-                      </Text>
-                    ) : null}
-                  </View>
+          renderSectionHeader={({ section }) => {
+            const stats = sectionStats.get(section.title);
+            const bought = stats?.bought ?? 0;
+            const total = stats?.total ?? 0;
+            const progress = total > 0 ? bought / total : 0;
 
-                  <View style={styles.itemBadges}>
-                    {item.budget ? <Text style={styles.badgeText}>{item.budget}</Text> : null}
-                    {item.occasion ? <Text style={styles.badgeText}>{item.occasion}</Text> : null}
-                  </View>
-
-                  {/* Bouton acheté — adultes seulement */}
+            return (
+              <View style={styles.sectionHeader}>
+                <View style={[styles.sectionAvatarCircle, { backgroundColor: primary + '15' }]}>
+                  <Text style={styles.sectionAvatarEmoji}>{section.avatar}</Text>
+                </View>
+                <View style={styles.sectionInfo}>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>{section.title}</Text>
                   {isAdult && (
-                    <TouchableOpacity
-                      style={[
-                        styles.boughtBtn,
-                        item.bought
-                          ? { backgroundColor: colors.success + '20' }
-                          : { backgroundColor: colors.inputBg },
-                      ]}
-                      onPress={() => handleToggleBought(item)}
-                      activeOpacity={0.7}
-                      accessibilityLabel={item.bought ? 'Marquer non-acheté' : 'Marquer acheté'}
-                      accessibilityRole="button"
-                    >
-                      <Text style={{ fontSize: 16 }}>{item.bought ? '🔒' : '🛒'}</Text>
-                    </TouchableOpacity>
+                    <View style={styles.sectionProgressRow}>
+                      <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
+                        <View style={[styles.progressFill, { backgroundColor: colors.success, width: 60 * progress }]} />
+                      </View>
+                      <Text style={[styles.sectionProgressText, { color: colors.textMuted }]}>
+                        {bought}/{total} acheté{bought !== 1 ? 's' : ''}
+                      </Text>
+                    </View>
                   )}
                 </View>
-
-                {/* Info acheteur — adultes seulement */}
-                {isAdult && item.bought && item.boughtBy && (
-                  <Text style={[styles.boughtInfo, { color: colors.success }]}>
-                    🔒 Acheté par {item.boughtBy}
+                {!isAdult && (
+                  <Text style={[styles.sectionCount, { color: colors.textMuted }]}>
+                    {section.data.filter((d) => !d.bought).length} souhait{section.data.filter((d) => !d.bought).length !== 1 ? 's' : ''}
                   </Text>
                 )}
-              </TouchableOpacity>
-            </SwipeToDelete>
-          )}
+              </View>
+            );
+          }}
+          renderItem={({ item }) => {
+            const icon = getWishIconStyle(item.occasion);
+            return (
+              <SwipeToDelete
+                onDelete={() => handleDelete(item)}
+                skipConfirm
+                hintId="wishlist"
+              >
+                <TouchableOpacity
+                  style={[
+                    styles.itemCard,
+                    { backgroundColor: colors.card },
+                    item.bought && {
+                      backgroundColor: colors.cardAlt,
+                      borderWidth: 1,
+                      borderStyle: 'dashed' as const,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                  onPress={() => openEditor(item)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.itemRow}>
+                    {/* Icône occasion */}
+                    <View style={[styles.wishIcon, { backgroundColor: icon.bg }]}>
+                      <Text style={[styles.wishIconEmoji, item.bought && { opacity: 0.5 }]}>{icon.emoji}</Text>
+                    </View>
+
+                    <View style={styles.itemContent}>
+                      <Text
+                        style={[
+                          styles.itemText,
+                          { color: colors.text },
+                          item.bought && { textDecorationLine: 'line-through', color: colors.textFaint },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {item.text}
+                      </Text>
+                      {item.notes ? (
+                        <Text style={[styles.itemNotes, { color: colors.textMuted }]} numberOfLines={1}>
+                          {item.notes}
+                        </Text>
+                      ) : null}
+                    </View>
+
+                    <View style={styles.itemBadges}>
+                      {item.budget ? (
+                        <View style={[styles.budgetPill, { backgroundColor: colors.warningBg }]}>
+                          <Text style={[styles.budgetPillText, { color: colors.warningText }]}>{item.budget}</Text>
+                        </View>
+                      ) : null}
+                    </View>
+
+                    {/* Bouton acheté — adultes seulement */}
+                    {isAdult && (
+                      <TouchableOpacity
+                        style={[
+                          styles.boughtBtn,
+                          item.bought
+                            ? { backgroundColor: colors.success + '20' }
+                            : { backgroundColor: colors.inputBg },
+                        ]}
+                        onPress={() => handleToggleBought(item)}
+                        activeOpacity={0.7}
+                        accessibilityLabel={item.bought ? 'Marquer non-acheté' : 'Marquer acheté'}
+                        accessibilityRole="button"
+                      >
+                        <Text style={{ fontSize: 16 }}>{item.bought ? '🔒' : '🛒'}</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
+                  {/* Info acheteur — adultes seulement */}
+                  {isAdult && item.bought && item.boughtBy && (
+                    <Text style={[styles.boughtInfo, { color: colors.success }]}>
+                      🔒 Acheté par {item.boughtBy}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </SwipeToDelete>
+            );
+          }}
           renderSectionFooter={() => <View style={styles.sectionSep} />}
         />
       )}
@@ -423,14 +535,36 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
   },
   addBtnText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
-  filterBar: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.md,
+  // Filtres
+  filterSection: {
     paddingHorizontal: Spacing['2xl'],
     paddingVertical: Spacing.lg,
     borderBottomWidth: 1,
   },
+  occasionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.md,
+  },
+  // Stats bar
+  statsBar: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.lg,
+  },
+  statPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.full,
+  },
+  statPillText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+  },
+  // Liste
   listContent: {
     padding: Spacing['2xl'],
     paddingBottom: 100,
@@ -442,27 +576,67 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
     marginTop: Spacing.xl,
   },
-  sectionAvatar: { fontSize: 28 },
-  sectionTitle: { fontSize: FontSize.heading, fontWeight: FontWeight.heavy, flex: 1 },
+  sectionAvatarCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sectionAvatarEmoji: { fontSize: 18 },
+  sectionInfo: { flex: 1, gap: Spacing.xs },
+  sectionTitle: { fontSize: FontSize.heading, fontWeight: FontWeight.heavy },
+  sectionProgressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  progressBar: {
+    width: 60,
+    height: 4,
+    borderRadius: Radius.xxs,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: 4,
+    borderRadius: Radius.xxs,
+  },
+  sectionProgressText: { fontSize: FontSize.micro },
   sectionCount: { fontSize: FontSize.sm },
   sectionSep: { height: Spacing.md },
+  // Items
   itemCard: {
     borderRadius: Radius.lg,
     padding: Spacing['2xl'],
     marginBottom: Spacing.md,
     ...Shadows.xs,
   },
-  itemBought: { opacity: 0.7 },
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.lg,
   },
+  wishIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: Radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  wishIconEmoji: { fontSize: 20 },
   itemContent: { flex: 1, gap: Spacing.xs },
   itemText: { fontSize: FontSize.body, fontWeight: FontWeight.semibold },
   itemNotes: { fontSize: FontSize.sm },
   itemBadges: { flexDirection: 'row', gap: Spacing.sm },
-  badgeText: { fontSize: 16 },
+  budgetPill: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xxs,
+    borderRadius: Radius.sm,
+  },
+  budgetPillText: {
+    fontSize: FontSize.code,
+    fontWeight: FontWeight.bold,
+  },
   boughtBtn: {
     width: 40,
     height: 40,
@@ -485,6 +659,16 @@ const styles = StyleSheet.create({
   emptyEmoji: { fontSize: 48 },
   emptyTitle: { fontSize: FontSize.heading, fontWeight: FontWeight.heavy },
   emptyDesc: { fontSize: FontSize.body, textAlign: 'center' },
+  emptyCta: {
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.xl,
+    borderRadius: Radius.lg,
+    marginTop: Spacing.md,
+  },
+  emptyCtaText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+  },
   // Éditeur
   editorContent: {
     flex: 1,
