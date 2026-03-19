@@ -101,6 +101,7 @@ module.exports = function withMaJourneeWidget(config) {
         MARKETING_VERSION: `"${appVersion}"`,
         CURRENT_PROJECT_VERSION: `"${buildNumber}"`,
         SWIFT_EMIT_LOC_STRINGS: 'YES',
+        INFOPLIST_KEY_CFBundleDisplayName: '"Ma Journée"',
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: '"AccentColor"',
         ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME: '"WidgetBackground"',
       });
