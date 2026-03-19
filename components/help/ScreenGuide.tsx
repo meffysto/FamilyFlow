@@ -20,7 +20,7 @@ import { CoachMarkOverlay } from './CoachMarkOverlay';
 
 interface ScreenGuideTarget {
   /** Ref vers l'élément cible */
-  ref: React.RefObject<View>;
+  ref: React.RefObject<View | null>;
   /** Titre du coach mark (optionnel) */
   title?: string;
   /** Corps du coach mark */
@@ -36,7 +36,7 @@ interface ScreenGuideProps {
   delay?: number;
 }
 
-function measureTarget(ref: React.RefObject<View>): Promise<TargetRect | null> {
+function measureTarget(ref: React.RefObject<View | null>): Promise<TargetRect | null> {
   return new Promise((resolve) => {
     if (!ref.current) {
       resolve(null);

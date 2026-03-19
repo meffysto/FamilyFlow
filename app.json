@@ -21,8 +21,12 @@
         "NSPhotoLibraryUsageDescription": "FamilyFlow accède à vos photos pour la photo du jour.",
         "NSFaceIDUsageDescription": "Family Vault utilise Face ID pour protéger l'accès à l'application.",
         "UIFileSharingEnabled": false,
-        "LSSupportsOpeningDocumentsInPlace": true
-      }
+        "LSSupportsOpeningDocumentsInPlace": true,
+        "NSSpeechRecognitionUsageDescription": "FamilyFlow utilise la reconnaissance vocale pour transcrire les réponses du médecin.",
+        "NSMicrophoneUsageDescription": "FamilyFlow utilise le micro pour transcrire les consultations médicales.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "buildNumber": "2"
     },
     "android": {
       "adaptiveIcon": {
@@ -35,7 +39,15 @@
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.MANAGE_EXTERNAL_STORAGE",
-        "android.permission.CAMERA"
+        "android.permission.CAMERA",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.INTERNET",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_CONTACTS",
+        "android.permission.WRITE_CONTACTS",
+        "android.permission.READ_CALENDAR",
+        "android.permission.WRITE_CALENDAR"
       ],
       "package": "com.familyvault.app"
     },
@@ -117,7 +129,12 @@
       "typedRoutes": true
     },
     "extra": {
-      "privacyUrl": "https://meffysto.github.io/FamilyFlow/privacy.html"
-    }
+      "privacyUrl": "https://meffysto.github.io/FamilyFlow/privacy.html",
+      "router": {},
+      "eas": {
+        "projectId": "0ca7b0af-8d38-4a79-8e90-7863bff80584"
+      }
+    },
+    "owner": "meffysto"
   }
 }
