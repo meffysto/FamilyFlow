@@ -20,15 +20,7 @@
     },
     "production": {
       "autoIncrement": true,
-      "credentialsSource": "remote",
-      "ios": {
-        "appExtensions": [
-          {
-            "targetName": "MaJourneeWidget",
-            "bundleIdentifier": "com.familyvault.dev.MaJourneeWidget"
-          }
-        ]
-      }
+      "credentialsSource": "remote"
     }
   },
   "submit": {
