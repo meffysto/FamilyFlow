@@ -40,6 +40,7 @@ import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { computeMissingIngredients } from '../../lib/auto-courses';
 
 const DAYS_ORDER = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
@@ -260,15 +261,30 @@ export default function MealsScreen() {
 
   const saveEdit = async () => {
     if (!editingMeal) return;
+    const recipeRef = editRecipeRef;
     try {
       const weekDate = isCurrentWeek ? undefined : viewedWeekMonday;
-      await updateMeal(editingMeal.day, editingMeal.mealType, editText.trim(), editRecipeRef, weekDate);
+      await updateMeal(editingMeal.day, editingMeal.mealType, editText.trim(), recipeRef, weekDate);
       // Recharger les repas de la semaine affichée si pas la courante
       if (!isCurrentWeek) {
         const updated = await loadMealsForWeek(viewedWeekMonday);
         setPastMeals(updated);
       }
       setEditingMeal(null);
+
+      // Auto-ajout des ingrédients aux courses (après fermeture du modal)
+      if (recipeRef) {
+        const recipe = resolveRecipe(recipeRef);
+        if (recipe && recipe.ingredients.length > 0) {
+          const missing = computeMissingIngredients(recipe.ingredients, stock);
+          if (missing.length > 0) {
+            const { added } = await mergeCourseIngredients(missing);
+            if (added > 0) {
+              showToast(`${added} ingrédient${added > 1 ? 's' : ''} ajouté${added > 1 ? 's' : ''} aux courses`);
+            }
+          }
+        }
+      }
     } catch (e) {
       Alert.alert('Erreur', String(e));
     }
