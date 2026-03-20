@@ -155,8 +155,9 @@ export const SKILL_TREE: SkillDefinition[] = [
   skill('motricite_globale', '0-1', 4, 'Se retourne ventre-dos', 'jalon', 6, 8),
   skill('motricite_globale', '0-1', 5, 'Tient assis avec appui', 'jalon', 7),
   skill('motricite_globale', '0-1', 6, 'Tient assis sans appui', 'jalon', 9, 10),
-  skill('motricite_globale', '0-1', 7, 'Se déplace (rampe, 4 pattes)', 'jalon', 10),
-  skill('motricite_globale', '0-1', 8, 'Se met debout avec appui', 'jalon', 11, 12),
+  skill('motricite_globale', '0-1', 7, 'Rampe sur le ventre', 'jalon', 8),
+  skill('motricite_globale', '0-1', 8, 'Se déplace à 4 pattes', 'jalon', 10),
+  skill('motricite_globale', '0-1', 9, 'Se met debout avec appui', 'jalon', 11, 12),
 
   // Motricité fine (jalons)
   skill('motricite_fine', '0-1', 1, 'Ouvre les mains, les observe', 'jalon', 3, 4),
@@ -204,7 +205,8 @@ export const SKILL_TREE: SkillDefinition[] = [
   skill('motricite_globale', '1-2', 4, 'Se baisse pour ramasser un objet', 'jalon', 18),
   skill('motricite_globale', '1-2', 5, 'Court', 'jalon', 22, 24),
   skill('motricite_globale', '1-2', 6, 'Donne un coup de pied dans un ballon', 'jalon', 24),
-  skill('motricite_globale', '1-2', 7, 'Monte/descend escalier (2 pieds/marche)', 'jalon', 24),
+  skill('motricite_globale', '1-2', 7, 'Monte escalier (2 pieds par marche)', 'jalon', 22),
+  skill('motricite_globale', '1-2', 8, 'Descend escalier (2 pieds par marche)', 'jalon', 24),
 
   // Motricité fine (jalons)
   skill('motricite_fine', '1-2', 1, 'Empile 2 cubes', 'jalon', 14),
@@ -261,7 +263,8 @@ export const SKILL_TREE: SkillDefinition[] = [
   skill('motricite_globale', '2-3', 3, 'Monte escalier en alternant pieds', 'jalon', 30),
   skill('motricite_globale', '2-3', 4, 'Pédale sur un tricycle', 'jalon', 36, 36),
   skill('motricite_globale', '2-3', 5, 'Lance un ballon en l\'air', 'jalon', 36),
-  skill('motricite_globale', '2-3', 6, 'Monte/descend escalier seul', 'jalon', 36),
+  skill('motricite_globale', '2-3', 6, 'Monte escalier seul', 'jalon', 34),
+  skill('motricite_globale', '2-3', 7, 'Descend escalier seul', 'jalon', 36),
 
   // Motricité fine (jalons)
   skill('motricite_fine', '2-3', 1, 'Dévisse un couvercle', 'jalon', 26),
@@ -615,19 +618,9 @@ export function getSkillById(id: string): SkillDefinition | undefined {
 
 export type SkillState = 'locked' | 'unlockable' | 'unlocked';
 
-/** Retourne l'ID de la compétence précédente (prérequis), ou undefined si c'est la première */
-export function getPrerequisiteId(skill: SkillDefinition): string | undefined {
-  if (skill.order <= 1) return undefined;
-  return `${skill.categoryId}_${skill.ageBracketId}_${skill.order - 1}`;
-}
-
-/** Calcule l'état d'une compétence par rapport aux déverrouillages */
+/** Calcule l'état d'une compétence par rapport aux déverrouillages.
+ * Pas de prérequis linéaire — chaque compétence est déblocable indépendamment. */
 export function getSkillState(skillId: string, unlockedIds: Set<string>): SkillState {
   if (unlockedIds.has(skillId)) return 'unlocked';
-  const skill = SKILL_BY_ID.get(skillId);
-  if (!skill) return 'locked';
-  if (skill.order === 1) return 'unlockable';
-  const prevId = getPrerequisiteId(skill);
-  if (prevId && unlockedIds.has(prevId)) return 'unlockable';
-  return 'locked';
+  return 'unlockable';
 }

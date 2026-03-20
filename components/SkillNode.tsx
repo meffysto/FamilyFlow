@@ -170,7 +170,7 @@ export function SkillNode({ label, emoji, categoryColor, state, xp, onPress }: S
 
   return (
     <AnimatedPressable
-      onPress={state !== 'locked' ? onPress : undefined}
+      onPress={onPress}
       style={[styles.row, animatedScaleStyle]}
       accessibilityRole="button"
       accessibilityLabel={`${label}, ${stateLabel()}, ${xp} points d'expérience`}

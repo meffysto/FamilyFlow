@@ -22,7 +22,6 @@ interface SkillDetailModalProps {
   unlockedAt?: string;
   unlockedBy?: string;
   onUnlock?: () => void;
-  prerequisiteLabel?: string;
 }
 
 export function SkillDetailModal({
@@ -33,7 +32,6 @@ export function SkillDetailModal({
   unlockedAt,
   unlockedBy,
   onUnlock,
-  prerequisiteLabel,
 }: SkillDetailModalProps) {
   const { primary, colors } = useThemeColors();
 
@@ -110,12 +108,6 @@ export function SkillDetailModal({
             </View>
           )}
 
-          {/* État : verrouillé */}
-          {state === 'locked' && prerequisiteLabel ? (
-            <Text style={[styles.lockedHint, { color: colors.textMuted }]}>
-              Débloquer d'abord : {prerequisiteLabel}
-            </Text>
-          ) : null}
         </View>
       </View>
     </Modal>
@@ -155,9 +147,5 @@ const styles = StyleSheet.create({
   actionSection: {
     width: '100%',
     marginTop: Spacing.md,
-  },
-  lockedHint: {
-    fontSize: FontSize.sm,
-    textAlign: 'center',
   },
 });

@@ -25,15 +25,14 @@ import {
   getSkillsForBracket,
   getSkillById,
   getSkillState,
-  getPrerequisiteId,
   getCategoriesForBracket,
   detectAgeBracket,
   type AgeBracketId,
   type SkillCategoryId,
 } from '../../lib/gamification/skill-tree';
 
-const RING_SIZE = 72;
-const RING_RADIUS = 30;
+const RING_SIZE = 84;
+const RING_RADIUS = 35;
 const RING_STROKE = 6;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
@@ -111,13 +110,6 @@ export default function SkillsScreen() {
     if (!selectedSkillId) return 'locked' as const;
     return getSkillState(selectedSkillId, unlockedIds);
   }, [selectedSkillId, unlockedIds]);
-
-  const prerequisiteLabel = useMemo(() => {
-    if (selectedSkillState !== 'locked' || !selectedSkill) return undefined;
-    const prevId = getPrerequisiteId(selectedSkill);
-    if (!prevId) return undefined;
-    return getSkillById(prevId)?.label;
-  }, [selectedSkillState, selectedSkill]);
 
   const handleSkillPress = useCallback((skillId: string) => {
     setSelectedSkillId(skillId);
@@ -303,7 +295,6 @@ export default function SkillsScreen() {
         unlockedAt={selectedSkillUnlock?.unlockedAt}
         unlockedBy={selectedSkillUnlock ? profiles.find((p) => p.id === selectedSkillUnlock.unlockedBy)?.name ?? selectedSkillUnlock.unlockedBy : undefined}
         onUnlock={isParent && selectedSkillState === 'unlockable' ? handleUnlock : undefined}
-        prerequisiteLabel={prerequisiteLabel}
       />
 
       <ScreenGuide

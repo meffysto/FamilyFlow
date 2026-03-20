@@ -93,8 +93,22 @@ const ENTRY_META: Record<EntryType, { emoji: string; label: string }> = {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+/** Formate une saisie d'heure : "7" → "7h00", "18" → "18h00", "7h" → "7h00", "14:30" → "14h30", "7h30" → "7h30" */
+function formatTime(raw: string): string {
+  const s = raw.trim();
+  if (!s) return '';
+  // Déjà au format complet HHhMM ou HH:MM
+  if (/^\d{1,2}h\d{2}$/.test(s)) return s;
+  if (/^\d{1,2}:\d{2}$/.test(s)) return s.replace(':', 'h');
+  // Juste un nombre (ex: "7", "18")
+  if (/^\d{1,2}$/.test(s)) return `${s}h00`;
+  // "7h" sans minutes
+  if (/^\d{1,2}h$/.test(s)) return `${s}00`;
+  return s;
+}
+
 function buildRowFromFields(type: EntryType, fields: Record<string, string>, autoTime: string): string {
-  const h = fields.heure?.trim() || autoTime;
+  const h = formatTime(fields.heure?.trim()) || autoTime;
 
   switch (type) {
     case 'Biberon': {
@@ -104,8 +118,8 @@ function buildRowFromFields(type: EntryType, fields: Record<string, string>, aut
     case 'Couche':
       return `| ${h} | ${fields.type?.trim() || 'Mouillée'} | ${fields.notes?.trim() || ''} |`;
     case 'Sieste': {
-      const debut = fields.debut?.trim() || h;
-      const fin = fields.fin?.trim() || '';
+      const debut = formatTime(fields.debut?.trim()) || h;
+      const fin = formatTime(fields.fin?.trim());
       let duree = fields.duree?.trim() || '';
       if (!duree && debut && fin) {
         duree = calculerDuree(debut, fin) || '';
@@ -113,7 +127,7 @@ function buildRowFromFields(type: EntryType, fields: Record<string, string>, aut
       return `| ${debut} | ${fin} | ${duree} | ${fields.notes?.trim() || ''} |`;
     }
     case 'Médicament':
-      return `| ${h} | ${fields.medicament?.trim() || ''} | ${fields.dose?.trim() || ''} | ${fields.notes?.trim() || ''} |`;
+      return `| ${formatTime(fields.heure?.trim()) || h} | ${fields.medicament?.trim() || ''} | ${fields.dose?.trim() || ''} | ${fields.notes?.trim() || ''} |`;
     case 'Observation':
       return fields.text?.trim() || '';
     default:
@@ -559,16 +573,6 @@ export default function JournalScreen() {
           <View key={si} style={[styles.tableSection, { backgroundColor: colors.card }]}>
             <View style={[styles.sectionHeader, { backgroundColor: colors.cardAlt, borderBottomColor: colors.border }]}>
               <Text style={[styles.tableSectionTitle, { color: colors.text }]}>{sec.heading}</Text>
-              {canEdit && (
-                <TouchableOpacity
-                  style={[styles.sectionAddBtn, { backgroundColor: tint }]}
-                  onPress={() => openAddModal('Observation')}
-                  accessibilityLabel="Ajouter une observation"
-                  accessibilityRole="button"
-                >
-                  <Text style={[styles.sectionAddText, { color: primary }]}>+ Ajouter</Text>
-                </TouchableOpacity>
-              )}
             </View>
             {observations.length > 0 ? (
               observations.map((obs, oi) => (
@@ -588,6 +592,17 @@ export default function JournalScreen() {
               <View style={styles.emptySection}>
                 <Text style={[styles.emptySectionText, { color: colors.textFaint }]}>Aucune observation</Text>
               </View>
+            )}
+            {canEdit && (
+              <TouchableOpacity
+                style={[styles.sectionEmojiBtn, { borderTopColor: colors.borderLight }]}
+                onPress={() => openAddModal('Observation')}
+                accessibilityLabel="Ajouter une observation"
+                accessibilityRole="button"
+              >
+                <Text style={styles.sectionEmojiBtnIcon}>{ENTRY_META.Observation.emoji}</Text>
+                <Text style={[styles.sectionEmojiBtnText, { color: primary }]}>Ajouter</Text>
+              </TouchableOpacity>
             )}
           </View>
         );
@@ -620,49 +635,48 @@ export default function JournalScreen() {
         <View key={si} style={[styles.tableSection, { backgroundColor: colors.card }]}>
           <View style={[styles.sectionHeader, { backgroundColor: colors.cardAlt, borderBottomColor: colors.border }]}>
             <Text style={[styles.tableSectionTitle, { color: colors.text }]}>{sec.heading}</Text>
-            {canEdit && (
+          </View>
+          <View>
+            <View style={[styles.tableRow, { backgroundColor: tint, borderBottomColor: colors.border }]}>
+              {cols.map((col, ci) => (
+                <Text key={ci} style={[ci === cols.length - 1 ? styles.tableHeaderFlex : styles.tableHeader, { color: primary }]}>{col}</Text>
+              ))}
+            </View>
+            {dataRows.map((row, ri) => (
               <TouchableOpacity
-                style={[styles.sectionAddBtn, { backgroundColor: tint }]}
-                onPress={() => openAddModal(entryType)}
-                accessibilityLabel={`Ajouter dans ${sec.heading}`}
-                accessibilityRole="button"
+                key={ri}
+                style={[
+                  styles.tableRow,
+                  { borderBottomColor: colors.borderLight },
+                  ri % 2 === 1 && { backgroundColor: colors.cardAlt },
+                ]}
+                onPress={() => canEdit && openEditModal(entryType, row.lineIdx, row.raw)}
+                activeOpacity={canEdit ? 0.6 : 1}
+                disabled={!canEdit}
               >
-                <Text style={[styles.sectionAddText, { color: primary }]}>+ Ajouter</Text>
+                {row.cells.map((cell, ci) => (
+                  <Text key={ci} style={[ci === row.cells.length - 1 ? styles.tableCellFlex : styles.tableCell, { color: colors.textSub }]} numberOfLines={2}>{cell}</Text>
+                ))}
+                {canEdit && <Text style={styles.editHintCell}>✏️</Text>}
               </TouchableOpacity>
+            ))}
+            {dataRows.length === 0 && (
+              <View style={styles.emptySection}>
+                <Text style={[styles.emptySectionText, { color: colors.textFaint }]}>Aucune entrée</Text>
+              </View>
             )}
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View>
-              <View style={[styles.tableRow, { backgroundColor: tint, borderBottomColor: colors.border }]}>
-                {cols.map((col, ci) => (
-                  <Text key={ci} style={[styles.tableHeader, { color: primary }]}>{col}</Text>
-                ))}
-              </View>
-              {dataRows.map((row, ri) => (
-                <TouchableOpacity
-                  key={ri}
-                  style={[
-                    styles.tableRow,
-                    { borderBottomColor: colors.borderLight },
-                    ri % 2 === 1 && { backgroundColor: colors.cardAlt },
-                  ]}
-                  onPress={() => canEdit && openEditModal(entryType, row.lineIdx, row.raw)}
-                  activeOpacity={canEdit ? 0.6 : 1}
-                  disabled={!canEdit}
-                >
-                  {row.cells.map((cell, ci) => (
-                    <Text key={ci} style={[styles.tableCell, { color: colors.textSub }]}>{cell}</Text>
-                  ))}
-                  {canEdit && <Text style={styles.editHintCell}>✏️</Text>}
-                </TouchableOpacity>
-              ))}
-              {dataRows.length === 0 && (
-                <View style={styles.emptySection}>
-                  <Text style={[styles.emptySectionText, { color: colors.textFaint }]}>Aucune entrée</Text>
-                </View>
-              )}
-            </View>
-          </ScrollView>
+          {canEdit && (
+            <TouchableOpacity
+              style={[styles.sectionEmojiBtn, { borderTopColor: colors.borderLight }]}
+              onPress={() => openAddModal(entryType)}
+              accessibilityLabel={`Ajouter dans ${sec.heading}`}
+              accessibilityRole="button"
+            >
+              <Text style={styles.sectionEmojiBtnIcon}>{ENTRY_META[entryType].emoji}</Text>
+              <Text style={[styles.sectionEmojiBtnText, { color: primary }]}>Ajouter</Text>
+            </TouchableOpacity>
+          )}
         </View>
       );
     });
@@ -722,44 +736,6 @@ export default function JournalScreen() {
           primary={primary}
           tint={tint}
         />
-      )}
-
-      {/* Boutons ajout rapide (aujourd'hui + parent + journal bébé uniquement) */}
-      {journalExists && !isViewingAdultTab && canEdit && isToday && (
-        <View style={[styles.quickAddContainer, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-          <View style={styles.quickAddRow}>
-            {(['Biberon', 'Couche', 'Sieste'] as const).map((type) => (
-              <TouchableOpacity
-                key={type}
-                style={[styles.quickBtn, { backgroundColor: tint }]}
-                onPress={() => openAddModal(type)}
-                accessibilityLabel={`Ajouter un ${ENTRY_META[type].label.toLowerCase()}`}
-                accessibilityRole="button"
-              >
-                <Text style={styles.quickBtnEmoji}>{ENTRY_META[type].emoji}</Text>
-                <Text style={[styles.quickBtnText, { color: primary }]}>+ {ENTRY_META[type].label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <View style={styles.quickAddRow}>
-            {(['Observation', 'Médicament'] as const).map((type) => (
-              <TouchableOpacity
-                key={type}
-                style={[styles.quickBtn, { backgroundColor: tint }]}
-                onPress={() => openAddModal(type)}
-                accessibilityLabel={`Ajouter ${type === 'Observation' ? 'une observation' : 'un médicament'}`}
-                accessibilityRole="button"
-              >
-                <Text style={styles.quickBtnEmoji}>{ENTRY_META[type].emoji}</Text>
-                <Text style={[styles.quickBtnText, { color: primary }]}>+ {ENTRY_META[type].label}</Text>
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity style={[styles.quickBtn, { backgroundColor: tint }]} onPress={loadJournal} accessibilityLabel="Rafraîchir le journal" accessibilityRole="button">
-              <Text style={styles.quickBtnEmoji}>🔄</Text>
-              <Text style={[styles.quickBtnText, { color: primary }]}>Rafraîchir</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
       )}
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
@@ -919,7 +895,7 @@ export default function JournalScreen() {
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const COL_WIDTH = 110;
+const COL_WIDTH = 86;
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
@@ -948,26 +924,6 @@ const styles = StyleSheet.create({
   dateNavSub: { fontSize: FontSize.caption, textTransform: 'capitalize', marginTop: 1 },
   todayBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
   todayBtnText: { fontSize: FontSize.caption, fontWeight: FontWeight.bold },
-
-  quickAddContainer: {
-    borderBottomWidth: 1,
-    paddingVertical: 6,
-    gap: 4,
-  },
-  quickAddRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 12,
-    gap: 8,
-  },
-  quickBtn: {
-    flex: 1,
-    alignItems: 'center',
-    borderRadius: 10,
-    paddingVertical: 8,
-    gap: 2,
-  },
-  quickBtnEmoji: { fontSize: FontSize.heading },
-  quickBtnText: { fontSize: FontSize.caption, fontWeight: FontWeight.semibold },
 
   scroll: { flex: 1 },
   content: { padding: 16, paddingBottom: 90 },
@@ -1020,12 +976,22 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   tableSectionTitle: { fontSize: FontSize.body, fontWeight: FontWeight.bold, padding: 12 },
-  sectionAddBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
-  sectionAddText: { fontSize: FontSize.caption, fontWeight: FontWeight.bold },
+  sectionEmojiBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+  },
+  sectionEmojiBtnIcon: { fontSize: FontSize.heading },
+  sectionEmojiBtnText: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
   tableRow: { flexDirection: 'row', borderBottomWidth: 1 },
-  tableHeader: { width: COL_WIDTH, padding: 8, fontSize: FontSize.caption, fontWeight: FontWeight.bold },
-  tableCell: { width: COL_WIDTH, padding: 8, fontSize: FontSize.label },
-  editHintCell: { padding: 8, fontSize: FontSize.caption, opacity: 0.3 },
+  tableHeader: { width: COL_WIDTH, paddingHorizontal: 6, paddingVertical: 7, fontSize: FontSize.caption, fontWeight: FontWeight.bold },
+  tableHeaderFlex: { flex: 1, paddingHorizontal: 6, paddingVertical: 7, fontSize: FontSize.caption, fontWeight: FontWeight.bold },
+  tableCell: { width: COL_WIDTH, paddingHorizontal: 6, paddingVertical: 7, fontSize: FontSize.label },
+  tableCellFlex: { flex: 1, paddingHorizontal: 6, paddingVertical: 7, fontSize: FontSize.label },
+  editHintCell: { paddingHorizontal: 4, paddingVertical: 7, fontSize: FontSize.caption, opacity: 0.3 },
 
   obsRow: {
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10,
