@@ -40,7 +40,7 @@ import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { FontSize, FontWeight } from '../../constants/typography';
-import { computeMissingIngredients } from '../../lib/auto-courses';
+import { computeMissingIngredients, computeStockDecrements } from '../../lib/auto-courses';
 
 const DAYS_ORDER = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
@@ -305,6 +305,42 @@ export default function MealsScreen() {
   };
 
   const filledCount = displayedMeals.filter((m) => m.text.length > 0).length;
+
+  // ─── Phase 3 : Marquer un repas comme cuisiné ──────────────────
+
+  const [cookingMealId, setCookingMealId] = useState<string | null>(null);
+
+  const markMealCooked = useCallback(async (meal: MealItem) => {
+    if (cookingMealId) return;
+    const recipe = resolveRecipe(meal.recipeRef);
+    if (!recipe) return;
+    const decrements = computeStockDecrements(recipe.ingredients, stock);
+    if (decrements.length === 0) {
+      showToast('Stock déjà à jour');
+      return;
+    }
+    Alert.alert(
+      'Marquer comme cuisiné ?',
+      `Le stock sera mis à jour (${decrements.length} produit${decrements.length > 1 ? 's' : ''}).`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Confirmer',
+          onPress: async () => {
+            setCookingMealId(meal.id);
+            try {
+              for (const { stockItem, newQuantity } of decrements) {
+                await updateStockQuantity(stockItem.lineIndex, newQuantity);
+              }
+              showToast(`Stock mis à jour (${decrements.length} produit${decrements.length > 1 ? 's' : ''})`);
+            } finally {
+              setCookingMealId(null);
+            }
+          },
+        },
+      ],
+    );
+  }, [cookingMealId, resolveRecipe, stock, updateStockQuantity, showToast]);
 
   // ─── Weekly shopping list generation ─────────────────────────────
 
@@ -970,17 +1006,33 @@ export default function MealsScreen() {
                           <Text style={styles.editIcon}>✏️</Text>
                         </TouchableOpacity>
                         {linkedRecipe && (
-                          <TouchableOpacity
-                            style={[styles.viewRecipeBtn, { backgroundColor: tint }]}
-                            onPress={() => setSelectedRecipe(linkedRecipe)}
-                            activeOpacity={0.7}
-                            accessibilityLabel={`Voir la recette ${linkedRecipe.title}`}
-                            accessibilityRole="button"
-                          >
-                            <Text style={[styles.viewRecipeBtnText, { color: primary }]}>
-                              📖 Voir la recette
-                            </Text>
-                          </TouchableOpacity>
+                          <View style={styles.mealActions}>
+                            <TouchableOpacity
+                              style={[styles.viewRecipeBtn, { backgroundColor: tint, flex: 1 }]}
+                              onPress={() => setSelectedRecipe(linkedRecipe)}
+                              activeOpacity={0.7}
+                              accessibilityLabel={`Voir la recette ${linkedRecipe.title}`}
+                              accessibilityRole="button"
+                            >
+                              <Text style={[styles.viewRecipeBtnText, { color: primary }]}>
+                                📖 Voir la recette
+                              </Text>
+                            </TouchableOpacity>
+                            {isCurrentWeek && (
+                              <TouchableOpacity
+                                style={[styles.viewRecipeBtn, { backgroundColor: colors.successBg, opacity: cookingMealId === meal.id ? 0.5 : 1 }]}
+                                onPress={() => markMealCooked(meal)}
+                                disabled={cookingMealId === meal.id}
+                                activeOpacity={0.7}
+                                accessibilityLabel={`Marquer ${meal.text} comme cuisiné`}
+                                accessibilityRole="button"
+                              >
+                                <Text style={[styles.viewRecipeBtnText, { color: colors.success }]}>
+                                  {cookingMealId === meal.id ? '...' : 'Cuisiné'}
+                                </Text>
+                              </TouchableOpacity>
+                            )}
+                          </View>
                         )}
                       </View>
                     );
@@ -2566,14 +2618,17 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.medium,
   },
   // View recipe button on meal row
-  viewRecipeBtn: {
+  mealActions: {
+    flexDirection: 'row',
     marginLeft: 38,
     marginTop: 2,
     marginBottom: 4,
+    gap: 8,
+  },
+  viewRecipeBtn: {
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 8,
-    alignSelf: 'flex-start',
   },
   viewRecipeBtnText: {
     fontSize: FontSize.label,

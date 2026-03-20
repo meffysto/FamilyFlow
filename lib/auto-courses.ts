@@ -3,6 +3,7 @@
  *
  * Phase 1 : Recette planifiée → ingrédients manquants ajoutés aux courses
  * Phase 2 : Course cochée → stock incrémenté ou créé (si catégorie stockable)
+ * Phase 3 : Repas cuisiné → stock décrémenté des ingrédients de la recette
  */
 
 import type { AppIngredient } from './cooklang';
@@ -138,4 +139,39 @@ export function resolveStockAction(
       emplacement: emplacementFromCategory(category),
     },
   };
+}
+
+// ─── Phase 3 : Repas cuisiné → Stock décrémenté ─────────────────────────────
+
+export interface StockDecrementAction {
+  stockItem: StockItem;
+  /** Nouvelle quantité après décrémentation (minimum 0) */
+  newQuantity: number;
+}
+
+/**
+ * Calcule les décrémentations stock pour les ingrédients d'une recette cuisinée.
+ * Heuristique quantités : si la recette demande < 1 unité stock, on décrémente de 1.
+ */
+export function computeStockDecrements(
+  ingredients: AppIngredient[],
+  stock: StockItem[],
+): StockDecrementAction[] {
+  const actions: StockDecrementAction[] = [];
+  const used = new Set<number>(); // lineIndex déjà utilisés (évite double décrémentation)
+
+  for (const ing of ingredients) {
+    if (isBasicIngredient(ing.name)) continue;
+    const match = findStockMatch(ing.name, stock);
+    if (!match || match.quantite <= 0) continue;
+    if (used.has(match.lineIndex)) continue;
+    used.add(match.lineIndex);
+
+    actions.push({
+      stockItem: match,
+      newQuantity: Math.max(0, match.quantite - 1),
+    });
+  }
+
+  return actions;
 }
