@@ -1,16 +1,30 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, TextInput, StyleSheet, ActivityIndicator, Alert } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
-import { sendTelegram, buildWeeklyRecapText, sendWeeklyRecap, buildMonthlyRecapText, buildGrossesseUpdateText } from '../../lib/telegram';
+/**
+ * SettingsGrandparents.tsx — Partage multi-canal grands-parents
+ *
+ * Liste de contacts (Telegram / WhatsApp / iMessage).
+ * Envoi recap hebdo, bilan mensuel, suivi grossesse.
+ */
+
+import React, { useState, useCallback, useEffect } from 'react';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, Modal, ScrollView } from 'react-native';
+import { buildWeeklyRecapText, buildMonthlyRecapText, buildGrossesseUpdateText } from '../../lib/telegram';
+import {
+  loadGrandparentContacts,
+  saveGrandparentContacts,
+  sendViaChannel,
+  testContact,
+  CHANNEL_META,
+  type GrandparentContact,
+  type SharingChannel,
+} from '../../lib/sharing';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { useToast } from '../../contexts/ToastContext';
 import { Button } from '../ui/Button';
+import { Chip } from '../ui/Chip';
+import { ModalHeader } from '../ui/ModalHeader';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
-
-const TELEGRAM_TOKEN_KEY = 'telegram_token';
-const TELEGRAM_GP_CHAT_KEY = 'telegram_gp_chat_id';
-const TELEGRAM_CHAT_KEY = 'telegram_chat_id';
 
 interface SettingsGrandparentsProps {
   telegramToken: string;
@@ -22,47 +36,74 @@ interface SettingsGrandparentsProps {
 
 export function SettingsGrandparents({ telegramToken, profiles, memories, photoDates, getPhotoUri }: SettingsGrandparentsProps) {
   const { primary, tint, colors } = useThemeColors();
-  const [gpChatId, setGpChatId] = useState('');
-  const [isSendingRecap, setIsSendingRecap] = useState(false);
-  const [isSendingMonthly, setIsSendingMonthly] = useState(false);
+  const { showToast } = useToast();
 
-  // Load GP chat ID on mount
-  useState(() => {
-    (async () => {
-      const gpId = await SecureStore.getItemAsync(TELEGRAM_GP_CHAT_KEY);
-      if (gpId) setGpChatId(gpId);
-    })();
-  });
+  const [contacts, setContacts] = useState<GrandparentContact[]>([]);
+  const [addModalVisible, setAddModalVisible] = useState(false);
+  const [sending, setSending] = useState<string | null>(null);
 
-  const handleSaveGpChatId = useCallback(async () => {
-    await SecureStore.setItemAsync(TELEGRAM_GP_CHAT_KEY, gpChatId.trim());
-    Alert.alert('✅ Sauvegardé', 'Chat ID grands-parents enregistré.');
-  }, [gpChatId]);
+  // Add form state
+  const [newName, setNewName] = useState('');
+  const [newChannel, setNewChannel] = useState<SharingChannel>('whatsapp');
+  const [newChatId, setNewChatId] = useState('');
 
-  const handleTestGp = useCallback(async () => {
-    if (!telegramToken || !gpChatId) {
-      Alert.alert('Config manquante', 'Configurez le bot Telegram et le chat ID grands-parents.');
-      return;
+  // Load contacts on mount
+  useEffect(() => {
+    loadGrandparentContacts().then(setContacts);
+  }, []);
+
+  const save = useCallback(async (updated: GrandparentContact[]) => {
+    setContacts(updated);
+    await saveGrandparentContacts(updated);
+  }, []);
+
+  // ─── CRUD ─────────────────────────────────────────────────────────────────
+
+  const handleAdd = useCallback(async () => {
+    const name = newName.trim();
+    if (!name) { showToast('Le nom est obligatoire', 'error'); return; }
+    if (newChannel === 'telegram' && !newChatId.trim()) { showToast('Chat ID requis pour Telegram', 'error'); return; }
+
+    const contact: GrandparentContact = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      name,
+      channel: newChannel,
+      chatId: newChannel === 'telegram' ? newChatId.trim() : undefined,
+    };
+    await save([...contacts, contact]);
+    setNewName('');
+    setNewChatId('');
+    setAddModalVisible(false);
+    showToast(`${name} ajouté`);
+  }, [newName, newChannel, newChatId, contacts, save, showToast]);
+
+  const handleDelete = useCallback((id: string) => {
+    const contact = contacts.find((c) => c.id === id);
+    Alert.alert('Supprimer ?', `Retirer ${contact?.name ?? ''} des contacts ?`, [
+      { text: 'Annuler', style: 'cancel' },
+      { text: 'Supprimer', style: 'destructive', onPress: () => save(contacts.filter((c) => c.id !== id)) },
+    ]);
+  }, [contacts, save]);
+
+  const handleTest = useCallback(async (contact: GrandparentContact) => {
+    const result = await testContact(contact, telegramToken);
+    if (result.manual) {
+      showToast('Message pré-rempli — confirmez l\'envoi');
+    } else if (result.sent) {
+      showToast('Message test envoyé !');
+    } else {
+      showToast(result.error ?? 'Échec', 'error');
     }
-    const ok = await sendTelegram(
-      telegramToken.trim(),
-      gpChatId.trim(),
-      '✅ <b>Family Vault</b> — Connexion grands-parents réussie ! Vous recevrez les recaps ici. 👴👵'
-    );
-    Alert.alert(ok ? '✅ Envoyé !' : '❌ Échec', ok ? 'Message test reçu chez les grands-parents.' : 'Vérifiez le chat ID.');
-  }, [telegramToken, gpChatId]);
+  }, [telegramToken, showToast]);
 
-  const handleSendRecap = useCallback(async () => {
-    if (!telegramToken || !gpChatId) {
-      Alert.alert('Config manquante', 'Configurez le bot Telegram et le chat ID grands-parents.');
-      return;
-    }
-    setIsSendingRecap(true);
+  // ─── Envoi contenus ───────────────────────────────────────────────────────
+
+  const buildWeekData = useCallback(() => {
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const weekAgoStr = `${weekAgo.getFullYear()}-${String(weekAgo.getMonth() + 1).padStart(2, '0')}-${String(weekAgo.getDate()).padStart(2, '0')}`;
-    const weekMemories = memories.filter((m) => m.date >= weekAgoStr);
-    const enfantNames = profiles.filter((p) => p.role === 'enfant').map((p) => p.name);
+    const weekMemories = memories.filter((m: any) => m.date >= weekAgoStr);
+    const enfantNames = profiles.filter((p: any) => p.role === 'enfant').map((p: any) => p.name);
     const weekPhotoUris: string[] = [];
     for (const name of enfantNames) {
       const id = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
@@ -74,95 +115,218 @@ export function SettingsGrandparents({ telegramToken, profiles, memories, photoD
         }
       }
     }
-    const recapText = buildWeeklyRecapText({ memories: weekMemories, photoCount: weekPhotoUris.length, enfantNames });
-    try {
-      const ok = await sendWeeklyRecap(telegramToken.trim(), gpChatId.trim(), recapText, weekPhotoUris);
-      Alert.alert(ok ? '✅ Recap envoyé !' : '❌ Échec', ok ? `${weekMemories.length} souvenir(s) + ${weekPhotoUris.length} photo(s) envoyé(s).` : 'Erreur lors de l\'envoi.');
-    } catch (e) {
-      Alert.alert('Erreur', String(e));
-    }
-    setIsSendingRecap(false);
-  }, [telegramToken, gpChatId, memories, photoDates, profiles, getPhotoUri]);
+    const text = buildWeeklyRecapText({ memories: weekMemories, photoCount: weekPhotoUris.length, enfantNames });
+    return { text, photoUris: weekPhotoUris, count: weekMemories.length };
+  }, [memories, profiles, photoDates, getPhotoUri]);
 
-  const handleSendMonthly = useCallback(async () => {
-    const token = await SecureStore.getItemAsync(TELEGRAM_TOKEN_KEY);
-    const gpId = await SecureStore.getItemAsync(TELEGRAM_GP_CHAT_KEY);
-    if (!token || !gpId) {
-      Alert.alert('Config manquante', 'Configurez le bot Telegram et le chat ID grands-parents.');
-      return;
+  const handleSendRecap = useCallback(async (contact: GrandparentContact) => {
+    setSending(`recap-${contact.id}`);
+    const { text, photoUris, count } = buildWeekData();
+    const result = await sendViaChannel(contact, text, telegramToken, photoUris);
+    if (result.manual) {
+      showToast('Recap prêt — choisissez le destinataire');
+    } else if (result.sent) {
+      showToast(`Recap envoyé (${count} souvenir(s))`);
+    } else {
+      showToast(result.error ?? 'Échec', 'error');
     }
+    setSending(null);
+  }, [buildWeekData, telegramToken, showToast]);
+
+  const handleSendMonthly = useCallback(async (contact: GrandparentContact) => {
+    setSending(`monthly-${contact.id}`);
     const now = new Date();
     const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
     const monthLabel = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-    const monthMemories = memories.filter((m) => m.date >= monthStart);
-    const enfantNames = profiles.filter((p) => p.role === 'enfant').map((p) => p.name);
+    const monthMemories = memories.filter((m: any) => m.date >= monthStart);
+    const enfantNames = profiles.filter((p: any) => p.role === 'enfant').map((p: any) => p.name);
     let photoCount = 0;
     for (const name of enfantNames) {
       const id = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
-      photoCount += (photoDates[id] ?? []).filter((d) => d >= monthStart).length;
+      photoCount += (photoDates[id] ?? []).filter((d: string) => d >= monthStart).length;
     }
-    setIsSendingMonthly(true);
     const text = buildMonthlyRecapText({ profiles, memories: monthMemories, rdvs: [], photoCount, completedTasksCount: 0, month: monthLabel });
-    try {
-      const ok = await sendTelegram(token.trim(), gpId.trim(), text);
-      Alert.alert(ok ? '✅ Bilan envoyé !' : '❌ Échec', ok ? `Bilan de ${monthLabel} envoyé.` : "Erreur lors de l'envoi.");
-    } catch (e) {
-      Alert.alert('Erreur', String(e));
+    const result = await sendViaChannel(contact, text, telegramToken);
+    if (result.manual) {
+      showToast('Bilan pré-rempli — confirmez l\'envoi');
+    } else if (result.sent) {
+      showToast(`Bilan de ${monthLabel} envoyé`);
+    } else {
+      showToast(result.error ?? 'Échec', 'error');
     }
-    setIsSendingMonthly(false);
-  }, [memories, photoDates, profiles]);
+    setSending(null);
+  }, [memories, profiles, photoDates, telegramToken, showToast]);
 
-  const handleSendGrossesse = useCallback(async () => {
+  const handleSendGrossesse = useCallback(async (contact: GrandparentContact) => {
     const text = buildGrossesseUpdateText(profiles);
     if (!text) return;
-    const token = telegramToken.trim() || (await SecureStore.getItemAsync(TELEGRAM_TOKEN_KEY) || '');
-    const chatId = await SecureStore.getItemAsync(TELEGRAM_CHAT_KEY) || '';
-    if (!token || !chatId) { Alert.alert('Config manquante', 'Configurez Telegram d\'abord.'); return; }
-    const ok = await sendTelegram(token, chatId, text);
-    Alert.alert(ok ? '✅ Envoyé !' : '❌ Échec', ok ? 'Mise à jour grossesse envoyée.' : "Erreur lors de l'envoi.");
-  }, [telegramToken, profiles]);
+    setSending(`grossesse-${contact.id}`);
+    const result = await sendViaChannel(contact, text, telegramToken);
+    if (result.manual) {
+      showToast('Suivi pré-rempli — confirmez l\'envoi');
+    } else if (result.sent) {
+      showToast('Suivi grossesse envoyé');
+    } else {
+      showToast(result.error ?? 'Échec', 'error');
+    }
+    setSending(null);
+  }, [profiles, telegramToken, showToast]);
+
+  // Envoi à tous
+  const handleSendToAll = useCallback(async (type: 'recap' | 'monthly' | 'grossesse') => {
+    if (contacts.length === 0) { showToast('Aucun contact configuré', 'error'); return; }
+    for (const contact of contacts) {
+      if (type === 'recap') await handleSendRecap(contact);
+      else if (type === 'monthly') await handleSendMonthly(contact);
+      else if (type === 'grossesse') await handleSendGrossesse(contact);
+    }
+  }, [contacts, handleSendRecap, handleSendMonthly, handleSendGrossesse, showToast]);
+
+  const hasGrossesse = profiles.some((p: any) => p.statut === 'grossesse' && p.dateTerme);
+
+  // ─── Rendu ────────────────────────────────────────────────────────────────
 
   return (
     <View style={styles.section} accessibilityRole="summary" accessibilityLabel="Section Grands-parents">
       <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>👴 Grands-parents</Text>
+
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
         <Text style={[styles.hint, { color: colors.textFaint }]}>
-          Envoyez un recap hebdo avec photos et souvenirs aux grands-parents via Telegram.
+          Partagez des recaps et photos avec les grands-parents via Telegram, WhatsApp ou iMessage.
         </Text>
-        <Text style={[styles.inputLabel, { color: colors.textSub }]}>Chat ID grands-parents</Text>
-        <TextInput
-          style={[styles.input, { borderColor: colors.inputBorder, color: colors.text }]}
-          value={gpChatId}
-          onChangeText={setGpChatId}
-          placeholder="Ex: -100123456789"
-          placeholderTextColor={colors.textFaint}
-          keyboardType="numbers-and-punctuation"
-          accessibilityLabel="Chat ID grands-parents"
-        />
-        <View style={styles.btnRow}>
-          <Button label="Sauver" onPress={handleSaveGpChatId} variant="secondary" size="sm" />
-          <Button label="Tester" onPress={handleTestGp} variant="secondary" size="sm" />
-        </View>
-        <Button
-          label={isSendingRecap ? '...' : '📤 Recap de la semaine'}
-          onPress={handleSendRecap}
-          variant="secondary"
-          size="sm"
-          disabled={isSendingRecap}
-          fullWidth
-        />
-        <Button
-          label={isSendingMonthly ? '...' : '📊 Bilan du mois'}
-          onPress={handleSendMonthly}
-          variant="secondary"
-          size="sm"
-          disabled={isSendingMonthly}
-          fullWidth
-        />
-        {profiles.some((p) => p.statut === 'grossesse' && p.dateTerme) && (
-          <Button label="🤰 Suivi grossesse" onPress={handleSendGrossesse} variant="secondary" size="sm" fullWidth />
+
+        {/* Liste des contacts */}
+        {contacts.map((contact) => {
+          const meta = CHANNEL_META[contact.channel];
+          return (
+            <View key={contact.id} style={[styles.contactCard, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}>
+              {/* En-tête contact */}
+              <View style={styles.contactHeader}>
+                <View style={[styles.channelBadge, { backgroundColor: meta.color + '20' }]}>
+                  <Text style={styles.channelEmoji}>{meta.emoji}</Text>
+                </View>
+                <View style={styles.contactInfo}>
+                  <Text style={[styles.contactName, { color: colors.text }]}>{contact.name}</Text>
+                  <Text style={[styles.contactDetail, { color: colors.textMuted }]}>
+                    {contact.channel === 'telegram'
+                      ? `Telegram · ${contact.chatId}`
+                      : `${meta.label} · ${meta.description}`}
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={() => handleDelete(contact.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <Text style={{ fontSize: FontSize.heading, opacity: 0.4 }}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Actions */}
+              <View style={styles.contactActions}>
+                <Button
+                  label={sending === `recap-${contact.id}` ? '...' : '📤 Semaine'}
+                  onPress={() => handleSendRecap(contact)}
+                  variant="secondary" size="sm"
+                  disabled={sending !== null}
+                />
+                <Button
+                  label={sending === `monthly-${contact.id}` ? '...' : '📊 Mois'}
+                  onPress={() => handleSendMonthly(contact)}
+                  variant="secondary" size="sm"
+                  disabled={sending !== null}
+                />
+                <Button
+                  label="Tester"
+                  onPress={() => handleTest(contact)}
+                  variant="secondary" size="sm"
+                  disabled={sending !== null}
+                />
+              </View>
+              {hasGrossesse && (
+                <Button
+                  label={sending === `grossesse-${contact.id}` ? '...' : '🤰 Grossesse'}
+                  onPress={() => handleSendGrossesse(contact)}
+                  variant="secondary" size="sm" fullWidth
+                  disabled={sending !== null}
+                />
+              )}
+              {contact.channel !== 'telegram' && (
+                <Text style={[styles.manualHint, { color: colors.textFaint }]}>
+                  Choisissez le groupe ou contact dans le Share sheet
+                </Text>
+              )}
+            </View>
+          );
+        })}
+
+        {/* Bouton ajouter */}
+        <Button label="+ Ajouter un contact" onPress={() => setAddModalVisible(true)} variant="secondary" fullWidth />
+
+        {/* Envoi groupé */}
+        {contacts.length > 1 && (
+          <View style={styles.bulkSection}>
+            <Text style={[styles.bulkTitle, { color: colors.textSub }]}>Envoyer à tous</Text>
+            <View style={styles.contactActions}>
+              <Button label="📤 Semaine" onPress={() => handleSendToAll('recap')} variant="secondary" size="sm" disabled={sending !== null} />
+              <Button label="📊 Mois" onPress={() => handleSendToAll('monthly')} variant="secondary" size="sm" disabled={sending !== null} />
+              {hasGrossesse && (
+                <Button label="🤰" onPress={() => handleSendToAll('grossesse')} variant="secondary" size="sm" disabled={sending !== null} />
+              )}
+            </View>
+          </View>
         )}
       </View>
+
+      {/* Modal ajout contact */}
+      <Modal visible={addModalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setAddModalVisible(false)}>
+        <View style={[styles.modalContainer, { backgroundColor: colors.card }]}>
+          <ModalHeader title="Nouveau contact" onClose={() => setAddModalVisible(false)} rightLabel="Ajouter" onRight={handleAdd} />
+
+          <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalContent}>
+            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>Nom</Text>
+            <TextInput
+              style={[styles.input, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }]}
+              value={newName}
+              onChangeText={setNewName}
+              placeholder="Ex: Mamie Dupont"
+              placeholderTextColor={colors.textFaint}
+              autoFocus
+            />
+
+            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>Canal de partage</Text>
+            <View style={styles.channelRow}>
+              {(['whatsapp', 'imessage', 'telegram'] as SharingChannel[]).map((ch) => (
+                <Chip
+                  key={ch}
+                  label={`${CHANNEL_META[ch].emoji} ${CHANNEL_META[ch].label}`}
+                  selected={newChannel === ch}
+                  onPress={() => setNewChannel(ch)}
+                />
+              ))}
+            </View>
+
+            {newChannel === 'telegram' && (
+              <>
+                <Text style={[styles.fieldLabel, { color: colors.textSub }]}>Chat ID Telegram</Text>
+                <TextInput
+                  style={[styles.input, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }]}
+                  value={newChatId}
+                  onChangeText={setNewChatId}
+                  placeholder="Ex: -100123456789"
+                  placeholderTextColor={colors.textFaint}
+                  keyboardType="numbers-and-punctuation"
+                />
+                <Text style={[styles.helperText, { color: colors.textFaint }]}>
+                  Créez un bot via @BotFather, ajoutez-le au groupe, puis récupérez le chat ID via l'API getUpdates.
+                </Text>
+              </>
+            )}
+
+            {newChannel !== 'telegram' && (
+              <Text style={[styles.helperText, { color: colors.textFaint }]}>
+                Lors du partage, le Share sheet s'ouvrira et vous pourrez choisir le groupe {CHANNEL_META[newChannel].label} ou le contact souhaité.
+              </Text>
+            )}
+          </ScrollView>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -171,8 +335,51 @@ const styles = StyleSheet.create({
   section: { marginBottom: Spacing['3xl'] },
   sectionTitle: { fontSize: FontSize.label, fontWeight: FontWeight.bold, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: Spacing.md },
   card: { borderRadius: Radius.xl, padding: Spacing['2xl'], gap: Spacing.lg },
-  hint: { fontSize: FontSize.caption, marginBottom: Spacing.md, lineHeight: 17 },
-  inputLabel: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
-  input: { borderWidth: 1.5, borderRadius: Radius.base, padding: Spacing.xl, fontSize: FontSize.body, marginBottom: Spacing.xl },
-  btnRow: { flexDirection: 'row', gap: Spacing.md },
+  hint: { fontSize: FontSize.caption, lineHeight: 17 },
+
+  contactCard: {
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    padding: Spacing.lg,
+    gap: Spacing.md,
+  },
+  contactHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  channelBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  channelEmoji: { fontSize: FontSize.heading },
+  contactInfo: { flex: 1 },
+  contactName: { fontSize: FontSize.body, fontWeight: FontWeight.bold },
+  contactDetail: { fontSize: FontSize.caption, marginTop: 1 },
+  contactActions: { flexDirection: 'row', gap: Spacing.sm, flexWrap: 'wrap' },
+  manualHint: { fontSize: FontSize.code, fontStyle: 'italic' },
+
+  bulkSection: {
+    paddingTop: Spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(0,0,0,0.08)',
+    gap: Spacing.sm,
+  },
+  bulkTitle: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
+
+  modalContainer: { flex: 1 },
+  modalScroll: { flex: 1 },
+  modalContent: { padding: Spacing['3xl'], gap: Spacing.lg },
+  fieldLabel: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
+  input: {
+    borderWidth: 1.5,
+    borderRadius: Radius.base,
+    padding: Spacing.xl,
+    fontSize: FontSize.body,
+  },
+  channelRow: { flexDirection: 'row', gap: Spacing.sm, flexWrap: 'wrap' },
+  helperText: { fontSize: FontSize.caption, lineHeight: 17 },
 });

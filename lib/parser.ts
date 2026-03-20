@@ -1378,16 +1378,19 @@ export function parseStock(content: string): StockItem[] {
     // Lignes de table : | col1 | col2 | col3 | col4 | col5 |
     if (!line.startsWith('|')) continue;
 
-    const cells = line.split('|').map((c) => c.trim()).filter((c) => c.length > 0);
+    // split('|') sans filter pour préserver les cellules vides (ex: détail vide)
+    const rawCells = line.split('|');
+    // Retirer la première et dernière cellule vide (avant/après les |)
+    const cells = rawCells.slice(1, rawCells.length - 1).map((c) => c.trim());
     if (cells.length < 4) continue;
 
     // Ignorer les lignes d'en-tête et de séparation
     if (cells[0] === 'Produit' || cells[0].startsWith('---')) continue;
 
-    const produit = cells[0].trim();
+    const produit = cells[0];
     if (!produit) continue;
 
-    const detail = cells[1]?.trim() || undefined;
+    const detail = cells[1] || undefined;
     const quantite = parseInt(cells[2], 10);
     const seuil = parseInt(cells[3], 10);
 

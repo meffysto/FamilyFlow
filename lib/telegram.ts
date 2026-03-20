@@ -404,7 +404,7 @@ export function buildWeeklyRecapText(data: {
  * Telegram accepts max 10 photos per group.
  * Uses RN FormData with { uri, type, name } for each file.
  */
-async function sendTelegramMediaGroup(
+export async function sendTelegramMediaGroup(
   token: string,
   chatId: string,
   photoUris: string[],

@@ -32,7 +32,8 @@ import RecipeViewer from '../../components/RecipeViewer';
 import type { AppRecipe } from '../../lib/cooklang';
 import { buildLeaderboard, processActiveRewards } from '../../lib/gamification';
 import { smartSortSections } from '../../lib/smart-sort';
-import { buildWeeklyRecapText, sendWeeklyRecap } from '../../lib/telegram';
+import { buildWeeklyRecapText, buildMonthlyRecapText, buildGrossesseUpdateText } from '../../lib/telegram';
+import { loadGrandparentContacts, sendViaChannel, CHANNEL_META, type GrandparentContact } from '../../lib/sharing';
 import { Task, RDV, isBabyProfile } from '../../lib/types';
 import { aggregateTasksByWeek, getWeekStart } from '../../lib/stats';
 import { isRdvUpcoming } from '../../lib/parser';
@@ -292,30 +293,11 @@ export default function DashboardScreen() {
     setRefreshing(false);
   }, [refresh]);
 
-  const handleSendRecap = useCallback(async () => {
-    const token = await SecureStore.getItemAsync('telegram_token');
-    const gpChatId = await SecureStore.getItemAsync('telegram_gp_chat_id');
-    if (!token || !gpChatId) {
-      Alert.alert('Configuration manquante', 'Le partage avec les grands-parents n\'est pas encore configuré. Rendez-vous dans Menu > Réglages.');
-      return;
-    }
-    const enfantNames = profiles.filter((p) => p.role === 'enfant').map((p) => p.name);
-    const confirmed = await new Promise<boolean>((resolve) => {
-      Alert.alert(
-        'Envoyer le récap ?',
-        `Un résumé de la semaine avec les photos des enfants va être envoyé aux grands-parents.`,
-        [
-          { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
-          { text: 'Envoyer', onPress: () => resolve(true) },
-        ]
-      );
-    });
-    if (!confirmed) return;
-
-    setIsSendingRecap(true);
+  const buildRecapData = useCallback(() => {
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const weekAgoStr = `${weekAgo.getFullYear()}-${String(weekAgo.getMonth() + 1).padStart(2, '0')}-${String(weekAgo.getDate()).padStart(2, '0')}`;
+    const enfantNames = profiles.filter((p) => p.role === 'enfant').map((p) => p.name);
     const weekMemories = memories.filter((m) => m.date >= weekAgoStr);
     const weekPhotoUris: string[] = [];
     for (const name of enfantNames) {
@@ -328,19 +310,78 @@ export default function DashboardScreen() {
         }
       }
     }
-    const recapText = buildWeeklyRecapText({ memories: weekMemories, photoCount: weekPhotoUris.length, enfantNames });
-    try {
-      const ok = await sendWeeklyRecap(token.trim(), gpChatId.trim(), recapText, weekPhotoUris);
-      if (ok) {
-        showToast(`Récap envoyé ! ${weekMemories.length} souvenir(s) + ${weekPhotoUris.length} photo(s)`);
-      } else {
-        showToast("Erreur lors de l'envoi du récap", 'error');
-      }
-    } catch (e) {
-      showToast(String(e), 'error');
-    }
-    setIsSendingRecap(false);
+    return { enfantNames, weekMemories, weekPhotoUris };
   }, [memories, photoDates, profiles, getPhotoUri]);
+
+  const handleSendRecap = useCallback(async () => {
+    const contacts = await loadGrandparentContacts();
+    if (contacts.length === 0) {
+      Alert.alert('Aucun contact', 'Configurez vos contacts grands-parents dans Réglages > Grands-parents.');
+      return;
+    }
+
+    const hasGrossesse = profiles.some((p) => p.statut === 'grossesse' && p.dateTerme);
+
+    // Construire les options
+    type RecapAction = { label: string; type: 'recap' | 'monthly' | 'grossesse'; contact?: GrandparentContact };
+    const actions: RecapAction[] = [];
+
+    if (contacts.length === 1) {
+      actions.push({ label: `📤 Recap semaine → ${contacts[0].name}`, type: 'recap', contact: contacts[0] });
+      actions.push({ label: `📊 Bilan du mois → ${contacts[0].name}`, type: 'monthly', contact: contacts[0] });
+      if (hasGrossesse) actions.push({ label: `🤰 Suivi grossesse → ${contacts[0].name}`, type: 'grossesse', contact: contacts[0] });
+    } else {
+      // Envoi à tous
+      actions.push({ label: '📤 Recap semaine → Tous', type: 'recap' });
+      actions.push({ label: '📊 Bilan du mois → Tous', type: 'monthly' });
+      if (hasGrossesse) actions.push({ label: '🤰 Suivi grossesse → Tous', type: 'grossesse' });
+      // Envoi individuel
+      for (const c of contacts) {
+        const meta = CHANNEL_META[c.channel];
+        actions.push({ label: `📤 Semaine → ${meta.emoji} ${c.name}`, type: 'recap', contact: c });
+      }
+    }
+
+    const buttons = actions.map((a) => ({
+      text: a.label,
+      onPress: async () => {
+        setIsSendingRecap(true);
+        const token = await SecureStore.getItemAsync('telegram_token') ?? '';
+        const targetContacts = a.contact ? [a.contact] : contacts;
+
+        for (const contact of targetContacts) {
+          if (a.type === 'recap') {
+            const { weekMemories, weekPhotoUris, enfantNames } = buildRecapData();
+            const text = buildWeeklyRecapText({ memories: weekMemories, photoCount: weekPhotoUris.length, enfantNames });
+            await sendViaChannel(contact, text, token, weekPhotoUris);
+          } else if (a.type === 'monthly') {
+            const now = new Date();
+            const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+            const monthLabel = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+            const monthMemories = memories.filter((m) => m.date >= monthStart);
+            const enfantNames = profiles.filter((p) => p.role === 'enfant').map((p) => p.name);
+            let photoCount = 0;
+            for (const name of enfantNames) {
+              const id = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+              photoCount += (photoDates[id] ?? []).filter((d) => d >= monthStart).length;
+            }
+            const text = buildMonthlyRecapText({ profiles, memories: monthMemories, rdvs: [], photoCount, completedTasksCount: 0, month: monthLabel });
+            await sendViaChannel(contact, text, token);
+          } else if (a.type === 'grossesse') {
+            const text = buildGrossesseUpdateText(profiles);
+            if (text) await sendViaChannel(contact, text, token);
+          }
+        }
+
+        showToast('Envoi terminé !');
+        setIsSendingRecap(false);
+      },
+    }));
+
+    buttons.push({ text: 'Annuler', onPress: async () => {} });
+
+    Alert.alert('Partager aux grands-parents', 'Que souhaitez-vous envoyer ?', buttons);
+  }, [profiles, memories, photoDates, buildRecapData, showToast]);
 
   const handleTaskToggle = useCallback(
     async (task: Task, completed: boolean) => {
@@ -922,7 +963,10 @@ export default function DashboardScreen() {
 
         {sortedSections.map((s) => {
           if (!s.visible) return null;
-          if (sectionHidden.has(s.id)) return null;
+          // Le masquage auto ne s'applique que si la section est visible par défaut
+          // (sinon l'utilisateur a explicitement activé la section → on la respecte)
+          const defaultPref = ALL_SECTIONS.find((d) => d.id === s.id);
+          if (sectionHidden.has(s.id) && defaultPref?.visible !== false) return null;
           return (
             <SectionErrorBoundary key={`eb-${s.id}`} name={s.label}>
               {renderSection(s.id)}

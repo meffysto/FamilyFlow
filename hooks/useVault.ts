@@ -1209,7 +1209,14 @@ export function useVaultInternal(): VaultState {
   const addStockItem = useCallback(async (item: Omit<StockItem, 'lineIndex'>) => {
     if (!vaultRef.current) return;
     try {
-      const content = await vaultRef.current.readFile(STOCK_FILE);
+      let content: string;
+      try {
+        content = await vaultRef.current.readFile(STOCK_FILE);
+      } catch {
+        // Fichier inexistant → le créer avec un header minimal
+        content = '# Stock & fournitures\n';
+        await vaultRef.current.writeFile(STOCK_FILE, content);
+      }
       const lines = content.split('\n');
       const newRow = serializeStockRow(item);
 

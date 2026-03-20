@@ -190,7 +190,7 @@ export default function SettingsScreen() {
             <SettingsRow
               emoji="👴"
               title="Grands-parents"
-              subtitle="Partage photos et récap"
+              subtitle="Telegram, WhatsApp, iMessage"
               onPress={() => setActiveSection('grandparents')}
               isLast
             />
