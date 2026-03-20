@@ -31,6 +31,11 @@ import { NightColors } from '../../constants/nightMode';
 import { isBabyProfile } from '../../lib/types';
 import type { FeedType, BreastSide, NightFeedEntry, Profile } from '../../lib/types';
 import { FontSize, FontWeight } from '../../constants/typography';
+import {
+  startFeedingActivity,
+  updateFeedingActivity,
+  stopFeedingActivity,
+} from '../../modules/vault-access/src/index';
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
 
@@ -122,7 +127,20 @@ export default function NightModeScreen() {
     setElapsed(0);
     setState('timing');
     startTick();
-  }, [startTick]);
+
+    // Lancer le Live Activity (Dynamic Island + Lock Screen)
+    if (selectedBaby && feedType) {
+      const sideLabel = feedType === 'allaitement' ? (side === 'gauche' ? 'G' : 'D') : null;
+      const vol = feedType === 'biberon' ? volumeMl : null;
+      startFeedingActivity(
+        selectedBaby.name,
+        selectedBaby.avatar || '👶',
+        feedType,
+        sideLabel,
+        vol,
+      ).catch(() => {}); // Silencieux si pas supporté
+    }
+  }, [startTick, selectedBaby, feedType, side, volumeMl]);
 
   const pauseTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -134,12 +152,22 @@ export default function NightModeScreen() {
     startTimeRef.current = null;
     setElapsed(pausedElapsedRef.current);
     setState('paused');
-  }, []);
+
+    // Mettre à jour le Live Activity
+    const sideLabel = feedType === 'allaitement' ? (side === 'gauche' ? 'G' : 'D') : null;
+    const vol = feedType === 'biberon' ? volumeMl : null;
+    updateFeedingActivity(true, sideLabel, vol).catch(() => {});
+  }, [feedType, side, volumeMl]);
 
   const resumeTimer = useCallback(() => {
     setState('timing');
     startTick();
-  }, [startTick]);
+
+    // Reprendre le Live Activity
+    const sideLabel = feedType === 'allaitement' ? (side === 'gauche' ? 'G' : 'D') : null;
+    const vol = feedType === 'biberon' ? volumeMl : null;
+    updateFeedingActivity(false, sideLabel, vol).catch(() => {});
+  }, [startTick, feedType, side, volumeMl]);
 
   // Cleanup timer au unmount
   useEffect(() => {
@@ -161,6 +189,9 @@ export default function NightModeScreen() {
 
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = null;
+
+    // Arrêter le Live Activity
+    stopFeedingActivity().catch(() => {});
 
     const startedAt = format(new Date(Date.now() - elapsed * 1000), 'HH:mm');
     const durationMin = Math.max(1, Math.round(elapsed / 60));
@@ -199,6 +230,7 @@ export default function NightModeScreen() {
 
   const handleClose = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
+    stopFeedingActivity().catch(() => {});
     router.back();
   }, [router]);
 

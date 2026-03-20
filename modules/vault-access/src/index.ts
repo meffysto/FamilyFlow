@@ -1,6 +1,9 @@
 import { requireNativeModule, Platform } from 'expo-modules-core';
 
 interface VaultAccessModuleType {
+  startFeedingActivity(babyName: string, babyEmoji: string, feedType: string, side: string | null, volumeMl: number | null): Promise<boolean>;
+  updateFeedingActivity(isPaused: boolean, side: string | null, volumeMl: number | null): Promise<void>;
+  stopFeedingActivity(): Promise<void>;
   startAccessing(uri: string): Promise<boolean>;
   restoreAccess(): Promise<string | null>;
   readFile(uri: string): Promise<string>;
@@ -146,6 +149,43 @@ export async function coordinatedFileExists(uri: string): Promise<boolean | null
 export async function downloadICloudFiles(uri: string): Promise<number> {
   if (!VaultAccessNative) return 0;
   return VaultAccessNative.downloadICloudFiles(uri);
+}
+
+// ─── Live Activity (Feeding Timer) ──────────────────────────────────────────
+
+/**
+ * Start a feeding Live Activity (Dynamic Island + Lock Screen).
+ * Returns true if started successfully, false if not supported or denied.
+ */
+export async function startFeedingActivity(
+  babyName: string,
+  babyEmoji: string,
+  feedType: 'allaitement' | 'biberon',
+  side: string | null,
+  volumeMl: number | null,
+): Promise<boolean> {
+  if (!VaultAccessNative) return false;
+  return VaultAccessNative.startFeedingActivity(babyName, babyEmoji, feedType, side, volumeMl);
+}
+
+/**
+ * Update the Live Activity state (pause/resume, change side).
+ */
+export async function updateFeedingActivity(
+  isPaused: boolean,
+  side: string | null,
+  volumeMl: number | null,
+): Promise<void> {
+  if (!VaultAccessNative) return;
+  return VaultAccessNative.updateFeedingActivity(isPaused, side, volumeMl);
+}
+
+/**
+ * End the feeding Live Activity.
+ */
+export async function stopFeedingActivity(): Promise<void> {
+  if (!VaultAccessNative) return;
+  return VaultAccessNative.stopFeedingActivity();
 }
 
 /**

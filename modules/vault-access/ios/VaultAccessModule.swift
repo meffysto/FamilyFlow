@@ -1,6 +1,23 @@
 import ExpoModulesCore
 import Foundation
 import WidgetKit
+import ActivityKit
+
+// MARK: - Live Activity Attributes (dupliqué dans FeedingLiveActivity.swift pour le widget target)
+
+@available(iOS 16.2, *)
+struct FeedingActivityAttributes: ActivityAttributes {
+    public struct ContentState: Codable, Hashable {
+        var isPaused: Bool
+        var side: String?
+        var volumeMl: Int?
+    }
+
+    var babyName: String
+    var babyEmoji: String
+    var feedType: String
+    var startedAt: Date
+}
 
 public class VaultAccessModule: Module {
   /// Tracks active security-scoped resources to stop accessing on cleanup
@@ -368,6 +385,72 @@ public class VaultAccessModule: Module {
       try cleanedData.write(to: fileURL)
 
       WidgetCenter.shared.reloadTimelines(ofKind: "JournalBebeWidget")
+    }
+
+    // ─── Live Activity (Feeding Timer) ─────────────────────────────────
+
+    /// Start a feeding Live Activity
+    AsyncFunction("startFeedingActivity") { (babyName: String, babyEmoji: String, feedType: String, side: String?, volumeMl: Int?) -> Bool in
+      if #available(iOS 16.2, *) {
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return false }
+
+        let attributes = FeedingActivityAttributes(
+          babyName: babyName,
+          babyEmoji: babyEmoji,
+          feedType: feedType,
+          startedAt: Date()
+        )
+
+        let state = FeedingActivityAttributes.ContentState(
+          isPaused: false,
+          side: side,
+          volumeMl: volumeMl != nil ? volumeMl : nil
+        )
+
+        do {
+          let content = ActivityContent(state: state, staleDate: nil)
+          _ = try Activity<FeedingActivityAttributes>.request(
+            attributes: attributes,
+            content: content,
+            pushType: nil
+          )
+          return true
+        } catch {
+          return false
+        }
+      }
+      return false
+    }
+
+    /// Update the Live Activity state (pause/resume, change side)
+    AsyncFunction("updateFeedingActivity") { (isPaused: Bool, side: String?, volumeMl: Int?) in
+      if #available(iOS 16.2, *) {
+        guard let activity = Activity<FeedingActivityAttributes>.activities.first else { return }
+
+        let state = FeedingActivityAttributes.ContentState(
+          isPaused: isPaused,
+          side: side,
+          volumeMl: volumeMl
+        )
+
+        let content = ActivityContent(state: state, staleDate: nil)
+        await activity.update(content)
+      }
+    }
+
+    /// End the Live Activity
+    AsyncFunction("stopFeedingActivity") { () in
+      if #available(iOS 16.2, *) {
+        for activity in Activity<FeedingActivityAttributes>.activities {
+          let state = FeedingActivityAttributes.ContentState(
+            isPaused: true,
+            side: activity.content.state.side,
+            volumeMl: activity.content.state.volumeMl
+          )
+          let content = ActivityContent(state: state, staleDate: nil)
+          await activity.end(content, dismissalPolicy: .immediate)
+        }
+      }
     }
 
     /// Write widget data JSON to App Group container and reload timelines
