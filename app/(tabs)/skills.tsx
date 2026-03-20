@@ -14,6 +14,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { Chip } from '../../components/ui';
 import { SkillTreeGraph } from '../../components/SkillTreeGraph';
 import { SkillDetailModal } from '../../components/SkillDetailModal';
+import { CategoryCompleteOverlay } from '../../components/CategoryCompleteOverlay';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { Spacing } from '../../constants/spacing';
@@ -45,6 +46,7 @@ export default function SkillsScreen() {
   const [selectedCategory, setSelectedCategory] = useState<SkillCategoryId | 'all'>('all');
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [celebration, setCelebration] = useState<{ emoji: string; label: string } | null>(null);
 
   const isParent = activeProfile?.role === 'adulte';
 
@@ -118,9 +120,27 @@ export default function SkillsScreen() {
 
   const handleUnlock = useCallback(async () => {
     if (!selectedChild || !selectedSkillId) return;
+    const skill = getSkillById(selectedSkillId);
     await unlockSkill(selectedChild.id, selectedSkillId);
     setModalVisible(false);
-  }, [selectedChild, selectedSkillId, unlockSkill]);
+
+    // Vérifier si la catégorie est maintenant complète
+    if (skill) {
+      const catSkills = getSkillsForBracket(activeBracket).filter(
+        (s) => s.categoryId === skill.categoryId,
+      );
+      const newUnlocked = new Set(unlockedIds);
+      newUnlocked.add(selectedSkillId);
+      const allDone = catSkills.every((s) => newUnlocked.has(s.id));
+      if (allDone) {
+        const cat = SKILL_CATEGORIES.find((c) => c.id === skill.categoryId);
+        if (cat) {
+          // Petit délai pour laisser le modal se fermer
+          setTimeout(() => setCelebration({ emoji: cat.emoji, label: cat.label }), 400);
+        }
+      }
+    }
+  }, [selectedChild, selectedSkillId, unlockSkill, activeBracket, unlockedIds]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -302,6 +322,14 @@ export default function SkillsScreen() {
         targets={[
           { ref: headerRef, ...HELP_CONTENT.skills[0] },
         ]}
+      />
+
+      <CategoryCompleteOverlay
+        visible={celebration !== null}
+        categoryEmoji={celebration?.emoji ?? ''}
+        categoryLabel={celebration?.label ?? ''}
+        childName={selectedChild?.name ?? ''}
+        onDismiss={() => setCelebration(null)}
       />
     </SafeAreaView>
   );

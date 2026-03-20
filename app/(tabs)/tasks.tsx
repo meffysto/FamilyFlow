@@ -150,7 +150,6 @@ const weatherStyles = StyleSheet.create({
 const STATIC_FILTERS: FilterDef[] = [
   { id: 'tous', label: 'Tous', emoji: '📋' },
   { id: 'maison', label: 'Maison', emoji: '🏠' },
-  { id: 'terminées', label: 'Terminées', emoji: '✅' },
 ];
 
 /** Build dynamic filters from enfant profiles */
@@ -209,7 +208,6 @@ export default function TasksScreen() {
     if (isVacationActive) {
       return [
         { id: 'tous', label: 'Tous', emoji: '☀️' },
-        { id: 'terminées', label: 'Terminées', emoji: '✅' },
       ];
     }
     return buildFilters(profiles, activeProfile);
@@ -230,6 +228,7 @@ export default function TasksScreen() {
   const [newTaskDueDate, setNewTaskDueDate] = useState('');
   const [newTaskRecurrence, setNewTaskRecurrence] = useState('');
   const [newTaskTarget, setNewTaskTarget] = useState(targetFiles[0]?.value ?? '');
+  const [newTaskAssignees, setNewTaskAssignees] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
   // Edit task modal
@@ -239,6 +238,7 @@ export default function TasksScreen() {
   const [editTaskDueDate, setEditTaskDueDate] = useState('');
   const [editTaskRecurrence, setEditTaskRecurrence] = useState('');
   const [editTaskTarget, setEditTaskTarget] = useState('');
+  const [editTaskAssignees, setEditTaskAssignees] = useState<string[]>([]);
   const [isEditSaving, setIsEditSaving] = useState(false);
 
   const onRefresh = useCallback(async () => {
@@ -307,10 +307,13 @@ export default function TasksScreen() {
     }
     setIsSaving(true);
     try {
-      await addTask(newTaskText.trim(), newTaskTarget, newTaskDueDate || undefined, newTaskRecurrence || undefined);
+      const mentions = newTaskAssignees.map((n) => `@${n}`).join(' ');
+      const fullText = mentions ? `${newTaskText.trim()} ${mentions}` : newTaskText.trim();
+      await addTask(fullText, newTaskTarget, newTaskDueDate || undefined, newTaskRecurrence || undefined);
       setNewTaskText('');
       setNewTaskDueDate('');
       setNewTaskRecurrence('');
+      setNewTaskAssignees([]);
       setAddModalVisible(false);
     } catch (e) {
       showToast(String(e), 'error');
@@ -355,6 +358,7 @@ export default function TasksScreen() {
     setEditTaskDueDate(task.dueDate ?? '');
     setEditTaskRecurrence(task.recurrence ?? '');
     setEditTaskTarget(task.sourceFile);
+    setEditTaskAssignees(task.mentions ?? []);
     setEditModalVisible(true);
   }, [activeProfile, showToast]);
 
@@ -370,8 +374,12 @@ export default function TasksScreen() {
     }
     setIsEditSaving(true);
     try {
+      // Retirer les anciennes mentions du texte, puis ajouter les nouvelles
+      const cleanText = editTaskText.trim().replace(/@\S+/g, '').trim();
+      const mentions = editTaskAssignees.map((n) => `@${n}`).join(' ');
+      const fullText = mentions ? `${cleanText} ${mentions}` : cleanText;
       await editTask(editingTask, {
-        text: editTaskText.trim(),
+        text: fullText,
         dueDate: editTaskDueDate || undefined,
         recurrence: editTaskRecurrence || undefined,
         targetFile: editTaskTarget || undefined,
@@ -393,22 +401,16 @@ export default function TasksScreen() {
     setTimeout(() => handleDeleteTask(editingTask), 300);
   }, [editingTask, handleDeleteTask]);
 
+  const [showCompleted, setShowCompleted] = useState(false);
+
   // Filter + search
-  const allTasks = useMemo(() => {
+  const { activeTasks, completedTasks } = useMemo(() => {
     let result: Task[] = [];
 
     if (isVacationActive) {
       result = [...vacationTasks];
-      if (filter === 'terminées') {
-        result = result.filter((t) => t.completed);
-      } else {
-        result = result.filter((t) => !t.completed);
-      }
     } else {
-      result = [
-        ...tasks,
-        ...menageTasks,
-      ];
+      result = [...tasks, ...menageTasks];
 
       // Apply filter
       if (filter === 'mes-taches') {
@@ -422,23 +424,8 @@ export default function TasksScreen() {
         const enfantName = filter.slice('enfant:'.length);
         result = result.filter((t) => t.sourceFile.includes(enfantName));
       } else if (filter === 'maison') {
-        result = result.filter(
-          (t) => t.sourceFile.includes('Maison')
-        );
-      } else if (filter === 'terminées') {
-        result = result.filter((t) => t.completed);
-      } else {
-        result = result.filter((t) => !t.completed);
+        result = result.filter((t) => t.sourceFile.includes('Maison'));
       }
-    }
-
-    // Masquer les tâches récurrentes dont la date est dans le futur (déjà validées aujourd'hui)
-    if (filter !== 'terminées') {
-      const today = new Date().toISOString().slice(0, 10);
-      result = result.filter((t) => {
-        if (t.recurrence && t.dueDate && t.dueDate > today) return false;
-        return true;
-      });
     }
 
     // Search
@@ -452,13 +439,27 @@ export default function TasksScreen() {
       );
     }
 
-    return result;
-  }, [tasks, menageTasks, vacationTasks, isVacationActive, filter, search]);
+    // Séparer actives / terminées
+    const today = new Date().toISOString().slice(0, 10);
+    const active = result.filter((t) => {
+      if (t.completed) return false;
+      // Masquer les récurrentes dont la date est dans le futur (déjà validées aujourd'hui)
+      if (t.recurrence && t.dueDate && t.dueDate > today) return false;
+      return true;
+    });
+    const completed = result.filter((t) =>
+      t.completed ||
+      // Récurrentes validées aujourd'hui (date avancée = dans le futur)
+      (t.recurrence && t.dueDate && t.dueDate > today && !t.completed)
+    );
+
+    return { activeTasks: active, completedTasks: completed };
+  }, [tasks, menageTasks, vacationTasks, isVacationActive, filter, search, activeProfile]);
 
   // Group by source file
   const sections: TaskSection[] = useMemo(() => {
     const groups: Record<string, Task[]> = {};
-    for (const task of allTasks) {
+    for (const task of activeTasks) {
       const key = task.sourceFile;
       if (!groups[key]) groups[key] = [];
       groups[key].push(task);
@@ -466,9 +467,33 @@ export default function TasksScreen() {
 
     return Object.entries(groups).map(([file, data]) => ({
       title: getFileLabel(file),
+      data: data.sort((a, b) => {
+        // Récurrentes en priorité
+        const aRec = a.recurrence ? 0 : 1;
+        const bRec = b.recurrence ? 0 : 1;
+        if (aRec !== bRec) return aRec - bRec;
+        // Puis par date d'échéance (les plus proches d'abord)
+        if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate);
+        if (a.dueDate) return -1;
+        if (b.dueDate) return 1;
+        return 0;
+      }),
+    }));
+  }, [activeTasks]);
+
+  // Sections terminées groupées par fichier
+  const completedSections: TaskSection[] = useMemo(() => {
+    const groups: Record<string, Task[]> = {};
+    for (const task of completedTasks) {
+      const key = task.sourceFile;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(task);
+    }
+    return Object.entries(groups).map(([file, data]) => ({
+      title: getFileLabel(file),
       data,
     }));
-  }, [allTasks]);
+  }, [completedTasks]);
 
   const completedCount = isVacationActive
     ? vacationTasks.filter((t) => t.completed).length
@@ -569,10 +594,42 @@ export default function TasksScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
         }
         ListEmptyComponent={
-          filter === 'done'
-            ? <EmptyState emoji="🎯" title="Aucune tâche terminée" subtitle="Termine tes premières tâches pour les voir ici" />
-            : <EmptyState emoji="✅" title="Bravo, tout est fait !" subtitle="Profite bien de ton temps libre 🎉" />
+          <EmptyState emoji="✅" title="Bravo, tout est fait !" subtitle="Profite bien de ton temps libre 🎉" />
         }
+        ListFooterComponent={completedTasks.length > 0 ? (
+          <View style={styles.completedSection}>
+            <TouchableOpacity
+              style={[styles.toggleCompletedBtn, { backgroundColor: colors.cardAlt }]}
+              onPress={() => setShowCompleted(!showCompleted)}
+              activeOpacity={0.7}
+              accessibilityLabel={showCompleted ? 'Masquer les terminées' : `Afficher les terminées (${completedTasks.length})`}
+              accessibilityRole="button"
+            >
+              <Text style={[styles.toggleCompletedText, { color: colors.textMuted }]}>
+                {showCompleted ? `🔼 Masquer les terminées` : `🔽 Terminées (${completedTasks.length})`}
+              </Text>
+            </TouchableOpacity>
+            {showCompleted && completedSections.map((section) => (
+              <View key={section.title}>
+                <View style={styles.sectionHeader}>
+                  <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{section.title}</Text>
+                  <Text style={[styles.sectionCount, { color: colors.textFaint }]}>{section.data.length}</Text>
+                </View>
+                {section.data.map((item) => (
+                  <View key={item.id} style={{ opacity: 0.6 }}>
+                    <SwipeToDelete
+                      onDelete={() => handleDeleteTask(item)}
+                      disabled={false}
+                      hintId="tasks"
+                    >
+                      <TaskCard task={item} onToggle={handleTaskToggle} onLongPress={() => handleOpenEdit(item)} />
+                    </SwipeToDelete>
+                  </View>
+                ))}
+              </View>
+            ))}
+          </View>
+        ) : null}
         stickySectionHeadersEnabled={false}
       />
 
@@ -630,6 +687,21 @@ export default function TasksScreen() {
                   label={opt.label}
                   selected={newTaskRecurrence === opt.value}
                   onPress={() => setNewTaskRecurrence(opt.value)}
+                  size="sm"
+                />
+              ))}
+            </View>
+
+            <Text style={[styles.modalLabel, { color: colors.textSub }]}>👤 Attribuer à (optionnel)</Text>
+            <View style={styles.targetRow}>
+              {profiles.map((p) => (
+                <Chip
+                  key={p.id}
+                  label={`${p.avatar} ${p.name}`}
+                  selected={newTaskAssignees.includes(p.name)}
+                  onPress={() => setNewTaskAssignees((prev) =>
+                    prev.includes(p.name) ? prev.filter((n) => n !== p.name) : [...prev, p.name]
+                  )}
                   size="sm"
                 />
               ))}
@@ -696,6 +768,21 @@ export default function TasksScreen() {
               ))}
             </View>
 
+            <Text style={[styles.modalLabel, { color: colors.textSub }]}>👤 Attribuer à</Text>
+            <View style={styles.targetRow}>
+              {profiles.map((p) => (
+                <Chip
+                  key={p.id}
+                  label={`${p.avatar} ${p.name}`}
+                  selected={editTaskAssignees.includes(p.name)}
+                  onPress={() => setEditTaskAssignees((prev) =>
+                    prev.includes(p.name) ? prev.filter((n) => n !== p.name) : [...prev, p.name]
+                  )}
+                  size="sm"
+                />
+              ))}
+            </View>
+
             <Text style={[styles.modalLabel, { color: colors.textSub }]}>Enregistrer pour</Text>
             <View style={styles.targetRow}>
               {targetFiles.map((t) => (
@@ -735,7 +822,7 @@ export default function TasksScreen() {
 
 function getFileLabel(sourceFile: string): string {
   if (sourceFile.includes('Vacances')) return '☀️ Checklist Vacances';
-  if (sourceFile.includes('Ménage')) return '🧹 Ménage hebdo';
+  if (sourceFile.includes('Ménage')) return '🏠 Maison — Ménage hebdo';
   if (sourceFile.includes('Maison')) return '🏠 Maison — Tâches';
   // Extract folder name for enfant tasks (e.g. "01 - Enfants/Maxence/..." → "Maxence")
   const parts = sourceFile.split('/');
@@ -840,7 +927,7 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     right: Spacing['3xl'],
-    bottom: Spacing['4xl'],
+    bottom: 90,
     width: 56,
     height: 56,
     borderRadius: 28,
@@ -881,5 +968,19 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
+  },
+  completedSection: {
+    marginTop: Spacing.xl,
+    paddingBottom: 80,
+  },
+  toggleCompletedBtn: {
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    marginHorizontal: Spacing['2xl'],
+    borderRadius: Radius.base,
+  },
+  toggleCompletedText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
 });
