@@ -514,11 +514,15 @@ export function DictaphoneRecorder({ rdv, context, onResult, onClose }: Dictapho
               </TouchableOpacity>
             </View>
 
-            {!isConfigured && (
+            {summary ? (
+              <Text style={[styles.privacyNote, { color: colors.textFaint }]}>
+                Ce résumé est généré par IA à titre informatif uniquement et ne constitue pas un avis médical.
+              </Text>
+            ) : !isConfigured ? (
               <Text style={[styles.privacyNote, { color: colors.textFaint }]}>
                 Ajoutez une clé API Claude dans les réglages pour activer le résumé IA.
               </Text>
-            )}
+            ) : null}
 
             {/* Recommencer */}
             <TouchableOpacity

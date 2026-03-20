@@ -495,7 +495,8 @@ Règles :
 - Garde uniquement les informations médicalement pertinentes
 - N'invente rien — ne mets que ce qui est dans la transcription
 - Les noms utilisés sont des pseudonymes — utilise-les tels quels
-- Maximum 300 mots`;
+- Maximum 300 mots
+- Termine toujours par : "⚠️ Ce résumé est fourni à titre informatif uniquement et ne remplace pas un avis médical professionnel."`;
 
   const messages: AIMessage[] = [
     { role: 'user', content: `Voici la transcription de la consultation :\n\n${anonTranscript}` },

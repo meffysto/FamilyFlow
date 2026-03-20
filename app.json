@@ -131,6 +131,7 @@
     },
     "extra": {
       "privacyUrl": "https://meffysto.github.io/FamilyFlow/privacy.html",
+      "supportUrl": "https://meffysto.github.io/FamilyFlow/support.html",
       "router": {},
       "eas": {
         "projectId": "0ca7b0af-8d38-4a79-8e90-7863bff80584",
