@@ -1,13 +1,12 @@
 /**
- * auto-courses.ts — Calcul automatique des ingrédients manquants
+ * auto-courses.ts — Automatisations du flux recettes→courses→stock
  *
- * Quand un repas est planifié avec une recette, on compare les ingrédients
- * de la recette avec le stock actuel, puis on retourne le delta à ajouter
- * aux courses. La dédup courses est gérée par mergeCourseIngredients().
+ * Phase 1 : Recette planifiée → ingrédients manquants ajoutés aux courses
+ * Phase 2 : Course cochée → stock incrémenté ou créé (si catégorie stockable)
  */
 
 import type { AppIngredient } from './cooklang';
-import type { StockItem } from './types';
+import type { StockItem, CourseItem } from './types';
 import { categorizeIngredient, formatIngredient } from './cooklang';
 
 function normalize(text: string): string {
@@ -32,17 +31,16 @@ function isBasicIngredient(name: string): boolean {
   return BASIC_INGREDIENTS.has(normalize(name));
 }
 
-/** Vérifie si un ingrédient est déjà couvert par le stock actuel (fuzzy) */
-function isInStock(ingredientName: string, stock: StockItem[]): boolean {
-  const norm = normalize(ingredientName);
+/** Trouve un produit stock correspondant au texte donné (fuzzy match) */
+function findStockMatch(text: string, stock: StockItem[]): StockItem | null {
+  const norm = normalize(text);
   for (const item of stock) {
-    if (item.quantite <= 0) continue;
     const prodNorm = normalize(item.produit);
-    if (norm === prodNorm) return true;
-    if (norm.includes(prodNorm) && prodNorm.length >= 3) return true;
-    if (prodNorm.includes(norm) && norm.length >= 3) return true;
+    if (norm === prodNorm) return item;
+    if (norm.includes(prodNorm) && prodNorm.length >= 3) return item;
+    if (prodNorm.includes(norm) && norm.length >= 3) return item;
   }
-  return false;
+  return null;
 }
 
 export interface CourseIngredientItem {
@@ -64,7 +62,7 @@ export function computeMissingIngredients(
 
   for (const ing of ingredients) {
     if (isBasicIngredient(ing.name)) continue;
-    if (isInStock(ing.name, stock)) continue;
+    if (findStockMatch(ing.name, stock.filter(s => s.quantite > 0))) continue;
 
     missing.push({
       text: formatIngredient(ing),
@@ -75,4 +73,69 @@ export function computeMissingIngredients(
   }
 
   return missing;
+}
+
+// ─── Phase 2 : Course cochée → Stock ────────────────────────────────────────
+
+/** Catégories dont les produits méritent d'être trackés en stock */
+const STOCKABLE_CATEGORIES = new Set([
+  '🥩 Viandes', '🐟 Poissons', '🧀 Crèmerie', '🥚 Œufs',
+  '🥬 Légumes', '🍎 Fruits', '🍝 Féculents', '🧁 Pâtisserie',
+  '🫙 Condiments', '🌿 Épices', '🥖 Boulangerie', '🥤 Boissons',
+  '🧊 Surgelés', '👶 Bébé',
+]);
+
+/** Déduit l'emplacement stock depuis la catégorie courses */
+function emplacementFromCategory(category: string): string {
+  if (category === '🧊 Surgelés') return 'congelateur';
+  if (category === '👶 Bébé') return 'bebe';
+  if (['🧀 Crèmerie', '🥚 Œufs', '🥩 Viandes', '🐟 Poissons'].includes(category))
+    return 'frigo';
+  return 'placards';
+}
+
+export interface StockUpdateResult {
+  /** Produit stock existant → incrémenté */
+  incremented: StockItem | null;
+  /** Produit nouveau → à créer dans le stock */
+  newItem: Omit<StockItem, 'lineIndex'> | null;
+}
+
+/** Regex alignée sur parseIngredientText() de cooklang.ts */
+const QUANTITY_PREFIX_RE = /^(?:\d+(?:[.,]\d+)?\s*(?:g|kg|ml|cl|dl|l|cs|cc|CS|CC|càs|càc|c\.?\s*à\s*s\.?|c\.?\s*à\s*c\.?|tasse|pincée|sachet|tranche|feuille|brin|gousse|botte|paquet|boîte|pot|verre|tbsp|tsp)?\s*(?:de\s+|d')?)?(.+)/i;
+
+/**
+ * Détermine l'action stock quand une course est cochée.
+ * - Si le produit existe dans le stock → incrémenter
+ * - Si le produit n'existe pas mais est dans une catégorie stockable → créer
+ * - Sinon → rien (hygiène, entretien, etc.)
+ *
+ * Note : le décochage ne décrémente pas le stock — une course cochée = achetée.
+ */
+export function resolveStockAction(
+  courseItem: CourseItem,
+  stock: StockItem[],
+): StockUpdateResult {
+  // Chercher un match dans le stock existant
+  const match = findStockMatch(courseItem.text, stock);
+  if (match) return { incremented: match, newItem: null };
+
+  // Pas dans le stock — vérifier si la catégorie est stockable
+  const category = courseItem.section || categorizeIngredient(courseItem.text);
+  if (!STOCKABLE_CATEGORIES.has(category)) return { incremented: null, newItem: null };
+
+  // Extraire le nom propre (sans quantité/unité) pour le produit stock
+  const nameMatch = courseItem.text.match(QUANTITY_PREFIX_RE);
+  const produit = nameMatch ? nameMatch[1].trim() : courseItem.text;
+
+  return {
+    incremented: null,
+    newItem: {
+      produit,
+      quantite: 1,
+      seuil: 1,
+      qteAchat: 1,
+      emplacement: emplacementFromCategory(category),
+    },
+  };
 }

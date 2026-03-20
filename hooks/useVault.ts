@@ -75,6 +75,7 @@ import {
   DEFAULT_BUDGET_CONFIG,
 } from '../lib/budget';
 import { parseRecipe, generateCookFile } from '../lib/cooklang';
+import { resolveStockAction } from '../lib/auto-courses';
 import {
   parseNotificationPrefs,
   serializeNotificationPrefs,
@@ -1579,7 +1580,17 @@ export function useVaultInternal(): VaultState {
     if (!vaultRef.current) return;
     await vaultRef.current.toggleTask(COURSES_FILE, item.lineIndex, completed);
     setCourses((prev) => prev.map((c) => (c.id === item.id ? { ...c, completed } : c)));
-  }, []);
+
+    // Phase 2 : course cochée → mettre à jour le stock
+    if (completed) {
+      const { incremented, newItem } = resolveStockAction(item, stock);
+      if (incremented) {
+        await updateStockQuantity(incremented.lineIndex, incremented.quantite + (incremented.qteAchat ?? 1));
+      } else if (newItem) {
+        await addStockItem(newItem);
+      }
+    }
+  }, [stock, updateStockQuantity, addStockItem]);
 
   const removeCourseItem = useCallback(async (lineIndex: number) => {
     if (!vaultRef.current) return;
