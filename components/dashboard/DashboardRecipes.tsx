@@ -20,9 +20,10 @@ interface DashboardRecipesProps extends DashboardSectionProps {
 function DashboardRecipesInner({ activateCardTemplate, onViewRecipe }: DashboardRecipesProps) {
   const router = useRouter();
   const { colors } = useThemeColors();
-  const { recipes, loadRecipes } = useVault();
+  const { recipes, loadRecipes, isLoading } = useVault();
 
-  useEffect(() => { loadRecipes(); }, [loadRecipes]);
+  // Relancer quand le vault finit de charger (loadRecipes sort silencieusement si vault pas prêt)
+  useEffect(() => { if (!isLoading) loadRecipes(); }, [loadRecipes, isLoading]);
 
   if (recipes.length === 0) return (
     <DashboardCard key="recipes" title="Idée recette" icon="📖" color={colors.info}>
