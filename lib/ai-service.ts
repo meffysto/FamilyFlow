@@ -509,6 +509,70 @@ Règles :
   return { text: deanonymize(resp.text, anonMap) };
 }
 
+/** Génère un briefing de préparation avant un RDV médical */
+export async function generateRDVBriefing(
+  config: AIConfig,
+  rdv: { type_rdv: string; enfant: string; médecin: string; date_rdv: string },
+  vaultCtx: VaultContext,
+): Promise<AIResponse> {
+  const anonMap = buildAnonymizationMap(
+    vaultCtx.profiles,
+    vaultCtx.rdvs,
+    vaultCtx.healthRecords,
+    vaultCtx.memories,
+    vaultCtx.tasks,
+  );
+
+  const anonEnfant = anonymize(rdv.enfant, anonMap);
+  const anonMedecin = anonymize(rdv.médecin, anonMap);
+
+  // Construire le contexte santé
+  const healthRecord = vaultCtx.healthRecords?.find(h => h.enfant === rdv.enfant);
+  let healthContext = '';
+  if (healthRecord) {
+    const lastGrowth = healthRecord.croissance.slice(-1)[0];
+    const recentVaccins = healthRecord.vaccins.slice(-5);
+    const parts: string[] = [];
+    if (healthRecord.allergies.length > 0) parts.push(`Allergies : ${healthRecord.allergies.join(', ')}`);
+    if (healthRecord.medicamentsEnCours.length > 0) parts.push(`Médicaments en cours : ${healthRecord.medicamentsEnCours.join(', ')}`);
+    if (lastGrowth) parts.push(`Dernière mesure : ${lastGrowth.date} — ${lastGrowth.poids ? lastGrowth.poids + ' kg' : ''} ${lastGrowth.taille ? lastGrowth.taille + ' cm' : ''}`);
+    if (recentVaccins.length > 0) parts.push(`Derniers vaccins : ${recentVaccins.map(v => `${v.nom} (${v.date})`).join(', ')}`);
+    if (healthRecord.antecedents.length > 0) parts.push(`Antécédents : ${healthRecord.antecedents.join(', ')}`);
+    healthContext = anonymize(parts.join('\n'), anonMap);
+  }
+
+  const enfantProfile = vaultCtx.profiles.find(p => p.name === rdv.enfant);
+  const ageInfo = enfantProfile?.birthdate ? `Date de naissance : ${enfantProfile.birthdate}` : '';
+
+  const systemPrompt = `Tu es un assistant qui aide les parents à préparer un rendez-vous médical.
+Tu génères une liste de questions pertinentes à poser au médecin, basée sur le type de RDV, l'âge de l'enfant et son dossier santé.
+
+Rendez-vous : ${rdv.type_rdv} pour ${anonEnfant} avec ${anonMedecin}
+Date : ${rdv.date_rdv}
+${ageInfo ? anonymize(ageInfo, anonMap) : ''}
+
+${healthContext ? `Dossier santé :\n${healthContext}` : 'Pas de dossier santé disponible.'}
+
+Règles :
+- Génère 5 à 8 questions pertinentes, numérotées
+- Adapte les questions au type de RDV et à l'âge de l'enfant
+- Inclus des rappels si des vaccins semblent en retard
+- Si des allergies ou médicaments sont listés, pose des questions de suivi
+- Sois concis, pratique, en français
+- Les noms utilisés sont des pseudonymes — utilise-les tels quels
+- Maximum 200 mots`;
+
+  const messages: AIMessage[] = [
+    { role: 'user', content: 'Prépare-moi pour ce rendez-vous médical.' },
+  ];
+
+  const haikiConfig = { ...config, model: 'claude-haiku-4-5-20251001' };
+  const resp = await callClaude(haikiConfig, systemPrompt, messages);
+  if (resp.error) return resp;
+
+  return { text: deanonymize(resp.text, anonMap) };
+}
+
 /** Résume une transcription vocale générique en note structurée */
 export async function summarizeTranscription(
   config: AIConfig,

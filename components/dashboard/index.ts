@@ -24,6 +24,9 @@ export { DashboardGratitude } from './DashboardGratitude';
 export { DashboardWishlist } from './DashboardWishlist';
 export { DashboardAnniversaires } from './DashboardAnniversaires';
 export { DashboardOnThisDay } from './DashboardOnThisDay';
+export { DashboardQuotes } from './DashboardQuotes';
+export { DashboardMoods } from './DashboardMoods';
+export { DashboardCalendar } from './DashboardCalendar';
 export { DashboardZenState } from './DashboardZenState';
 
 export type { DashboardSectionProps, DashboardSectionWithTaskToggleProps } from './types';

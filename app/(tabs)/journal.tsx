@@ -655,7 +655,7 @@ export default function JournalScreen() {
                 disabled={!canEdit}
               >
                 {row.cells.map((cell, ci) => (
-                  <Text key={ci} style={[ci === row.cells.length - 1 ? styles.tableCellFlex : styles.tableCell, { color: colors.textSub }]} numberOfLines={2}>{cell}</Text>
+                  <Text key={ci} style={[ci === row.cells.length - 1 ? styles.tableCellFlex : styles.tableCell, { color: colors.textSub }]} numberOfLines={ci === row.cells.length - 1 ? undefined : 2}>{cell}</Text>
                 ))}
                 {canEdit && <Text style={styles.editHintCell}>✏️</Text>}
               </TouchableOpacity>

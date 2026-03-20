@@ -193,6 +193,44 @@ export interface Memory {
   enfantId: string;      // "maxence"
 }
 
+// ─── Mots d'enfants ──────────────────────────────────────────────────────────
+
+export interface ChildQuote {
+  date: string;          // YYYY-MM-DD
+  enfant: string;        // prénom
+  citation: string;      // la perle
+  contexte?: string;     // "Au parc", "Avant de dormir"
+  sourceFile: string;
+  lineIndex: number;
+}
+
+// ─── Météo des humeurs ───────────────────────────────────────────────────────
+
+export type MoodLevel = 1 | 2 | 3 | 4 | 5;
+export const MOOD_EMOJIS: Record<MoodLevel, string> = { 1: '😢', 2: '😐', 3: '😊', 4: '😄', 5: '🤩' };
+
+export interface MoodEntry {
+  date: string;        // YYYY-MM-DD
+  profileId: string;
+  profileName: string;
+  level: MoodLevel;
+  note?: string;
+  sourceFile: string;
+  lineIndex: number;
+}
+
+// ─── Journal grossesse ───────────────────────────────────────────────────────
+
+export interface PregnancyWeekEntry {
+  week: number;          // SA (semaine d'aménorrhée)
+  date: string;          // YYYY-MM-DD (date de la saisie)
+  poids?: number;        // kg
+  symptomes?: string;    // texte libre
+  notes?: string;        // texte libre
+  sourceFile: string;
+  lineIndex: number;
+}
+
 export interface StockItem {
   produit: string;
   detail?: string;
