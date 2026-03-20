@@ -52,6 +52,29 @@ const MEAL_EMOJI: Record<string, string> = {
 const COURSES_FILE = '02 - Maison/Liste de courses.md';
 
 type Tab = 'repas' | 'courses' | 'recettes';
+type MealType = 'entrée' | 'plat' | 'dessert';
+
+const MEAL_TYPE_FILTERS: { id: MealType; label: string; emoji: string }[] = [
+  { id: 'entrée', label: 'Entrées', emoji: '🥗' },
+  { id: 'plat', label: 'Plats', emoji: '🍽️' },
+  { id: 'dessert', label: 'Desserts', emoji: '🍰' },
+];
+
+/** Mappe une catégorie de dossier ou des tags vers un type de plat */
+function detectMealType(category: string, tags: string[]): MealType | null {
+  const all = [category, ...tags].map((s) => s.toLowerCase());
+  for (const s of all) {
+    if (/entr[ée]e|salade|soupe|velouté|tarte salée|quiche/.test(s)) return 'entrée';
+    if (/dessert|gâteau|gateau|cake|tarte sucrée|mousse|crème|creme|biscuit|cookie|fondant|brownie|glace|sorbet|compote|pâtisserie|patisserie|sucré/.test(s)) return 'dessert';
+    if (/plat|viande|poisson|poulet|boeuf|bœuf|pâtes|pates|riz|gratin|curry|wok|mijoté|rôti|roti|pizza|burger|accompagnement/.test(s)) return 'plat';
+  }
+  // Heuristique par catégorie de dossier commune
+  const catLower = category.toLowerCase();
+  if (/petit.d[ée]j|breakfast|brunch|goûter|gouter|snack/.test(catLower)) return null;
+  // Par défaut les recettes non classées → plat
+  if (category) return 'plat';
+  return null;
+}
 
 export default function MealsScreen() {
   const {
@@ -99,7 +122,7 @@ export default function MealsScreen() {
 
   // Recettes state
   const [recipeSearch, setRecipeSearch] = useState('');
-  const [recipeCategory, setRecipeCategory] = useState<string | null>(null);
+  const [mealTypeFilter, setMealTypeFilter] = useState<MealType | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
@@ -130,6 +153,8 @@ export default function MealsScreen() {
   // Category picker modal state
   const [categoryPickerItem, setCategoryPickerItem] = useState<CourseItem | null>(null);
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryEmoji, setNewCategoryEmoji] = useState('🏷️');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   // Community explore state
   const [showExplore, setShowExplore] = useState(false);
@@ -428,25 +453,28 @@ export default function MealsScreen() {
   const handleAddNewCategory = useCallback(async () => {
     const name = newCategoryName.trim();
     if (!name || !categoryPickerItem) return;
-    // Ajouter emoji par défaut si absent
-    const section = /^\p{Emoji}/u.test(name) ? name : `🏷️ ${name}`;
+    // Utiliser l'emoji choisi ou celui déjà dans le nom
+    const section = /^\p{Emoji}/u.test(name) ? name : `${newCategoryEmoji} ${name}`;
     try {
       await moveCourseItem(categoryPickerItem.lineIndex, categoryPickerItem.text, section);
       setCategoryPickerItem(null);
       setNewCategoryName('');
+      setNewCategoryEmoji('🏷️');
+      setShowEmojiPicker(false);
     } catch (e) {
       Alert.alert('Erreur', String(e));
     }
-  }, [newCategoryName, categoryPickerItem, moveCourseItem]);
+  }, [newCategoryName, newCategoryEmoji, categoryPickerItem, moveCourseItem]);
 
   // ─── Recettes logic ─────────────────────────────────────────────
 
-  const recipeCategories = useMemo(() => {
-    const cats = new Set<string>();
+  // Index meal type pour chaque recette
+  const recipeMealTypes = useMemo(() => {
+    const map = new Map<string, MealType | null>();
     for (const r of recipes) {
-      if (r.category) cats.add(r.category);
+      map.set(r.id, detectMealType(r.category, r.tags));
     }
-    return [...cats].sort((a, b) => a.localeCompare(b, 'fr'));
+    return map;
   }, [recipes]);
 
   const profileFavorites = useMemo(() => {
@@ -460,8 +488,8 @@ export default function MealsScreen() {
       const favSet = new Set(profileFavorites);
       result = result.filter((r) => favSet.has(r.sourceFile));
     }
-    if (recipeCategory) {
-      result = result.filter((r) => r.category === recipeCategory);
+    if (mealTypeFilter) {
+      result = result.filter((r) => recipeMealTypes.get(r.id) === mealTypeFilter);
     }
     if (recipeSearch.trim()) {
       const q = recipeSearch.toLowerCase().trim();
@@ -472,7 +500,7 @@ export default function MealsScreen() {
       );
     }
     return result;
-  }, [recipes, recipeCategory, recipeSearch, showFavoritesOnly, activeProfile, profileFavorites]);
+  }, [recipes, mealTypeFilter, recipeMealTypes, recipeSearch, showFavoritesOnly, activeProfile, profileFavorites]);
 
   // Recipe picker filtered list (for meal editing)
   const pickerRecipes = useMemo(() => {
@@ -1470,12 +1498,12 @@ export default function MealsScreen() {
         visible={categoryPickerItem !== null}
         transparent
         animationType="slide"
-        onRequestClose={() => setCategoryPickerItem(null)}
+        onRequestClose={() => { setCategoryPickerItem(null); setNewCategoryEmoji('🏷️'); setShowEmojiPicker(false); }}
       >
         <TouchableOpacity
           style={styles.modalOverlay}
           activeOpacity={1}
-          onPress={() => setCategoryPickerItem(null)}
+          onPress={() => { setCategoryPickerItem(null); setNewCategoryEmoji('🏷️'); setShowEmojiPicker(false); }}
         >
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <View
@@ -1515,6 +1543,18 @@ export default function MealsScreen() {
 
               {/* Nouvelle catégorie */}
               <View style={styles.catNewRow}>
+                <TouchableOpacity
+                  style={[
+                    styles.catEmojiBtn,
+                    { backgroundColor: colors.cardAlt, borderColor: colors.borderLight },
+                  ]}
+                  onPress={() => setShowEmojiPicker(!showEmojiPicker)}
+                  activeOpacity={0.7}
+                  accessibilityLabel="Choisir un emoji"
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.catEmojiBtnText}>{newCategoryEmoji}</Text>
+                </TouchableOpacity>
                 <TextInput
                   style={[
                     styles.catNewInput,
@@ -1544,6 +1584,29 @@ export default function MealsScreen() {
                   </Text>
                 </TouchableOpacity>
               </View>
+
+              {/* Grille d'emojis pour nouvelle catégorie */}
+              {showEmojiPicker && (
+                <View style={[styles.emojiGrid, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}>
+                  {['🏷️','🥩','🐟','🧀','🥚','🥬','🍎','🍝','🧁','🫙','🌿','🥖','🥤','🧊','🧴','👶','🧹','🛒',
+                    '🍫','🍪','🍯','🫒','🍕','🥜','🌾','🧃','🍷','☕','🧂','🫧','🐾','🎁','💊','🏠','🪴','✨'].map((emoji) => (
+                    <TouchableOpacity
+                      key={emoji}
+                      style={[
+                        styles.emojiOption,
+                        newCategoryEmoji === emoji && { backgroundColor: tint, borderColor: primary },
+                      ]}
+                      onPress={() => {
+                        setNewCategoryEmoji(emoji);
+                        setShowEmojiPicker(false);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.emojiOptionText}>{emoji}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
             </View>
           </KeyboardAvoidingView>
         </TouchableOpacity>
@@ -2572,6 +2635,17 @@ const styles = StyleSheet.create({
     gap: 8,
     alignItems: 'center',
   },
+  catEmojiBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  catEmojiBtnText: {
+    fontSize: FontSize.title,
+  },
   catNewInput: {
     flex: 1,
     borderWidth: 1.5,
@@ -2588,5 +2662,26 @@ const styles = StyleSheet.create({
   catNewBtnText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
+  },
+  emojiGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 8,
+  },
+  emojiOption: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+  },
+  emojiOptionText: {
+    fontSize: FontSize.lg,
   },
 });
