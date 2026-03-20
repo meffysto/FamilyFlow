@@ -44,11 +44,7 @@ import { formatDateForDisplay } from '../../lib/parser';
 import { DateInput } from '../../components/ui/DateInput';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { ReceiptReview } from '../../components/ReceiptReview';
-import { StockUpdateReview } from '../../components/StockUpdateReview';
-import type { StockUpdateAction } from '../../components/StockUpdateReview';
 import { captureAndScanReceipt } from '../../lib/receipt-scanner';
-import { matchReceiptToStock } from '../../lib/stock-matcher';
-import type { StockMatch } from '../../lib/stock-matcher';
 import type { ScanOutcome } from '../../lib/receipt-scanner';
 import type { ReceiptScanResult } from '../../lib/ai-service';
 import type { BudgetCategory, BudgetEntry } from '../../lib/types';
@@ -92,9 +88,6 @@ export default function BudgetScreen() {
     deleteExpense,
     activeProfile,
     refresh,
-    stock,
-    updateStockQuantity,
-    addStockItem,
   } = useVault();
 
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
@@ -128,9 +121,6 @@ export default function BudgetScreen() {
   const [receiptData, setReceiptData] = useState<ReceiptScanResult | null>(null);
   const [receiptReviewVisible, setReceiptReviewVisible] = useState(false);
 
-  // Mise à jour stock après ticket
-  const [stockMatches, setStockMatches] = useState<StockMatch[]>([]);
-  const [stockUpdateVisible, setStockUpdateVisible] = useState(false);
 
   // Mode sélection multiple (dépenses)
   const [selectionMode, setSelectionMode] = useState(false);
@@ -277,55 +267,8 @@ export default function BudgetScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     showToast(`${items.length} dépense${items.length > 1 ? 's' : ''} ajoutée${items.length > 1 ? 's' : ''}`, 'success');
     setReceiptReviewVisible(false);
-
-    // Proposer la mise à jour du stock si des produits matchent
-    const matches = matchReceiptToStock(items, stock);
-    if (matches.length > 0) {
-      setStockMatches(matches);
-      setStockUpdateVisible(true);
-    } else {
-      setReceiptData(null);
-    }
-  }, [addExpense, showToast, stock]);
-
-  const handleStockUpdate = useCallback(async (actions: StockUpdateAction[]) => {
-    // Fermer la modal immédiatement pour éviter le freeze UI
-    setStockUpdateVisible(false);
-    setStockMatches([]);
     setReceiptData(null);
-
-    const count = actions.length;
-    showToast(`Mise à jour du stock en cours…`, 'info');
-
-    try {
-      // 1. D'abord les incréments (par lineIndex décroissant pour éviter les décalages)
-      const increments = actions
-        .filter((a): a is Extract<StockUpdateAction, { type: 'increment' }> => a.type === 'increment')
-        .sort((a, b) => b.stockItem.lineIndex - a.stockItem.lineIndex);
-
-      for (const action of increments) {
-        await updateStockQuantity(action.stockItem.lineIndex, action.stockItem.quantite + action.qtyToAdd);
-      }
-
-      // 2. Ensuite les créations
-      const creates = actions.filter((a): a is Extract<StockUpdateAction, { type: 'create' }> => a.type === 'create');
-      for (const action of creates) {
-        await addStockItem({
-          produit: action.label,
-          quantite: 1,
-          seuil: 1,
-          qteAchat: 1,
-          emplacement: action.emplacement,
-          section: action.section,
-        });
-      }
-
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showToast(`Stock mis à jour (${count} produit${count > 1 ? 's' : ''})`, 'success');
-    } catch (e) {
-      showToast('Erreur lors de la mise à jour du stock', 'error');
-    }
-  }, [updateStockQuantity, addStockItem, showToast]);
+  }, [addExpense, showToast]);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
@@ -629,13 +572,6 @@ export default function BudgetScreen() {
         categories={categoryNames}
       />
 
-      {/* Modal mise à jour stock après ticket */}
-      <StockUpdateReview
-        visible={stockUpdateVisible}
-        onClose={() => { setStockUpdateVisible(false); setStockMatches([]); setReceiptData(null); }}
-        onConfirm={handleStockUpdate}
-        matches={stockMatches}
-      />
 
       <ScreenGuide
         screenId="budget"
