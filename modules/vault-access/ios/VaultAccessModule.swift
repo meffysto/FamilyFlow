@@ -394,6 +394,11 @@ public class VaultAccessModule: Module {
       if #available(iOS 16.2, *) {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return false }
 
+        // Arrêter tous les Live Activities existants d'abord
+        for activity in Activity<FeedingActivityAttributes>.activities {
+          await activity.end(nil, dismissalPolicy: .immediate)
+        }
+
         let attributes = FeedingActivityAttributes(
           babyName: babyName,
           babyEmoji: babyEmoji,
@@ -453,6 +458,90 @@ public class VaultAccessModule: Module {
       }
     }
 
+    /// Pause the widget feeding timer (sync app → widget)
+    AsyncFunction("pauseWidgetFeeding") { () in
+      self.mutateWidgetFeeding { json, active, formatter in
+        var a = active
+        if a.pausedAt == nil, let start = formatter.date(from: a.startTimestamp) {
+          a.accumulatedSeconds += Int(Date().timeIntervalSince(start))
+        }
+        a.pausedAt = formatter.string(from: Date())
+        json["activeFeeding"] = try? JSONSerialization.jsonObject(
+          with: JSONEncoder().encode(a)) as? [String: Any]
+      }
+    }
+
+    /// Resume the widget feeding timer (sync app → widget)
+    AsyncFunction("resumeWidgetFeeding") { () in
+      self.mutateWidgetFeeding { json, active, formatter in
+        var a = active
+        a.startTimestamp = formatter.string(from: Date())
+        a.pausedAt = nil
+        json["activeFeeding"] = try? JSONSerialization.jsonObject(
+          with: JSONEncoder().encode(a)) as? [String: Any]
+      }
+    }
+
+    /// Stop the widget feeding timer (sync app → widget)
+    AsyncFunction("stopWidgetFeeding") { () in
+      self.mutateWidgetFeeding { json, active, formatter in
+        json.removeValue(forKey: "activeFeeding")
+        if active.side == "gauche" || active.side == "droite" {
+          json["lastSide"] = active.side
+        }
+      }
+    }
+
+    /// Check if the widget requested a Live Activity start, consume the flag, and start it
+    AsyncFunction("checkAndStartWidgetLiveActivity") { () -> String? in
+      guard let containerURL = FileManager.default.containerURL(
+        forSecurityApplicationGroupIdentifier: "group.com.familyvault.dev"
+      ) else { return nil }
+
+      let flagURL = containerURL.appendingPathComponent("start-live-activity.json")
+      guard let data = try? Data(contentsOf: flagURL),
+            let payload = try? JSONSerialization.jsonObject(with: data) as? [String: String] else {
+        return nil
+      }
+
+      // Supprimer le flag immédiatement
+      try? FileManager.default.removeItem(at: flagURL)
+
+      // Lancer le Live Activity
+      if #available(iOS 16.2, *),
+         ActivityAuthorizationInfo().areActivitiesEnabled {
+        let babyName = payload["babyName"] ?? ""
+        let feedType = payload["feedType"] ?? "allaitement"
+        let side = payload["side"] ?? "gauche"
+        let sideLabel = side == "gauche" ? "G" : "D"
+
+        // Arrêter les existants
+        for activity in Activity<FeedingActivityAttributes>.activities {
+          await activity.end(nil, dismissalPolicy: .immediate)
+        }
+
+        let attributes = FeedingActivityAttributes(
+          babyName: babyName,
+          babyEmoji: "👶",
+          feedType: feedType,
+          startedAt: Date()
+        )
+        let state = FeedingActivityAttributes.ContentState(
+          isPaused: false,
+          side: sideLabel,
+          volumeMl: nil
+        )
+        let content = ActivityContent(state: state, staleDate: nil)
+        _ = try? Activity<FeedingActivityAttributes>.request(
+          attributes: attributes,
+          content: content,
+          pushType: nil
+        )
+      }
+
+      return String(data: data, encoding: .utf8)
+    }
+
     /// Write widget data JSON to App Group container and reload timelines
     AsyncFunction("updateWidgetData") { (jsonString: String) in
       guard let containerURL = FileManager.default.containerURL(
@@ -492,5 +581,41 @@ public class VaultAccessModule: Module {
     if let err = coordinatorError ?? mkdirError {
       throw err
     }
+  }
+
+  // MARK: - Widget Feeding Sync
+
+  private struct WidgetActiveFeeding: Codable {
+    var side: String
+    var startTimestamp: String
+    var child: String
+    var pausedAt: String?
+    var accumulatedSeconds: Int
+  }
+
+  /// Read-modify-write the widget feeding JSON
+  private func mutateWidgetFeeding(_ mutation: (inout [String: Any], WidgetActiveFeeding, ISO8601DateFormatter) -> Void) {
+    guard let containerURL = FileManager.default.containerURL(
+      forSecurityApplicationGroupIdentifier: "group.com.familyvault.dev"
+    ) else { return }
+
+    let fileURL = containerURL.appendingPathComponent("journal-bebe-widget.json")
+    guard let data = try? Data(contentsOf: fileURL),
+          var json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+          let activeFeedingData = try? JSONSerialization.data(withJSONObject: json["activeFeeding"] as Any),
+          let active = try? JSONDecoder().decode(WidgetActiveFeeding.self, from: activeFeedingData) else {
+      return
+    }
+
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime]
+
+    mutation(&json, active, formatter)
+
+    if let updatedData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
+      try? updatedData.write(to: fileURL)
+    }
+
+    WidgetCenter.shared.reloadTimelines(ofKind: "JournalBebeWidget")
   }
 }

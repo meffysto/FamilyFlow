@@ -1,6 +1,7 @@
 import WidgetKit
 import SwiftUI
 import AppIntents
+import ActivityKit
 
 // MARK: - Data Model
 
@@ -533,6 +534,15 @@ struct JournalBebeSmallView: View {
                                 .background(.red, in: Circle())
                         }
                         .buttonStyle(.plain)
+
+                        // Ouvrir l'app → lance le Live Activity
+                        Link(destination: URL(string: "family-vault://open/night-mode?startLive=1")!) {
+                            Image(systemName: "lock.display")
+                                .font(.caption)
+                                .foregroundStyle(.white)
+                                .padding(6)
+                                .background(.purple, in: Circle())
+                        }
                     }
                 }
             } else {
@@ -712,20 +722,37 @@ struct JournalBebeMediumView: View {
                             }
                         }
 
-                        Button(intent: StopFeedingIntent()) {
-                            HStack(spacing: 4) {
-                                Image(systemName: "stop.circle.fill")
-                                    .font(.caption)
-                                Text("Arrêter")
-                                    .font(.caption)
-                                    .fontWeight(.medium)
+                        HStack(spacing: 6) {
+                            Button(intent: StopFeedingIntent()) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "stop.circle.fill")
+                                        .font(.caption)
+                                    Text("Arrêter")
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                                .background(.red.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
+                                .foregroundStyle(.red)
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
-                            .background(.red.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
-                            .foregroundStyle(.red)
+                            .buttonStyle(.plain)
+
+                            // Ouvrir l'app → lance le Live Activity sur écran verrouillé
+                            Link(destination: URL(string: "family-vault://open/night-mode?startLive=1")!) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "lock.display")
+                                        .font(.caption)
+                                    Text("Écran")
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                                .background(.purple.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
+                                .foregroundStyle(.purple)
+                            }
                         }
-                        .buttonStyle(.plain)
                     }
                     .frame(maxWidth: .infinity)
                 } else {

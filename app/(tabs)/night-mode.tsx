@@ -16,7 +16,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { format } from 'date-fns';
 import * as Brightness from 'expo-brightness';
 import { useVault } from '../../contexts/VaultContext';
@@ -35,6 +35,9 @@ import {
   startFeedingActivity,
   updateFeedingActivity,
   stopFeedingActivity,
+  pauseWidgetFeeding,
+  resumeWidgetFeeding,
+  stopWidgetFeeding,
 } from '../../modules/vault-access/src/index';
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
@@ -48,6 +51,7 @@ type NightState = 'idle' | 'timing' | 'paused';
 
 export default function NightModeScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ startLive?: string }>();
   const { profiles, vault } = useVault();
 
   // Bébés = profils bébé (ageCategory ou birthdate < 2 ans)
@@ -142,6 +146,29 @@ export default function NightModeScreen() {
     }
   }, [startTick, selectedBaby, feedType, side, volumeMl]);
 
+  // Si on arrive via le widget (startLive=1), lancer le Live Activity
+  useEffect(() => {
+    if (params.startLive !== '1') return;
+    if (babies.length === 0) return;
+    // Déjà en cours → ne pas relancer
+    if (state === 'timing') return;
+
+    const baby = selectedBaby || babies[0];
+    if (!baby) return;
+
+    setSelectedBaby(baby);
+    setFeedType('allaitement');
+    setState('timing');
+    pausedElapsedRef.current = 0;
+    setElapsed(0);
+    startTick();
+
+    startFeedingActivity(baby.name, baby.avatar || '👶', 'allaitement', 'G', null).catch(() => {});
+
+    // Nettoyer le param pour permettre un prochain lancement
+    router.setParams({ startLive: undefined });
+  }, [params.startLive, babies]);
+
   const pauseTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = null;
@@ -157,6 +184,7 @@ export default function NightModeScreen() {
     const sideLabel = feedType === 'allaitement' ? (side === 'gauche' ? 'G' : 'D') : null;
     const vol = feedType === 'biberon' ? volumeMl : null;
     updateFeedingActivity(true, sideLabel, vol).catch(() => {});
+    pauseWidgetFeeding().catch(() => {});
   }, [feedType, side, volumeMl]);
 
   const resumeTimer = useCallback(() => {
@@ -167,6 +195,7 @@ export default function NightModeScreen() {
     const sideLabel = feedType === 'allaitement' ? (side === 'gauche' ? 'G' : 'D') : null;
     const vol = feedType === 'biberon' ? volumeMl : null;
     updateFeedingActivity(false, sideLabel, vol).catch(() => {});
+    resumeWidgetFeeding().catch(() => {});
   }, [startTick, feedType, side, volumeMl]);
 
   // Cleanup timer au unmount
@@ -190,8 +219,9 @@ export default function NightModeScreen() {
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = null;
 
-    // Arrêter le Live Activity
+    // Arrêter le Live Activity + le timer du widget
     stopFeedingActivity().catch(() => {});
+    stopWidgetFeeding().catch(() => {});
 
     const startedAt = format(new Date(Date.now() - elapsed * 1000), 'HH:mm');
     const durationMin = Math.max(1, Math.round(elapsed / 60));
@@ -231,6 +261,7 @@ export default function NightModeScreen() {
   const handleClose = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     stopFeedingActivity().catch(() => {});
+    stopWidgetFeeding().catch(() => {});
     router.back();
   }, [router]);
 

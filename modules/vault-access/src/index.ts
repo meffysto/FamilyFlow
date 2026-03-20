@@ -4,6 +4,10 @@ interface VaultAccessModuleType {
   startFeedingActivity(babyName: string, babyEmoji: string, feedType: string, side: string | null, volumeMl: number | null): Promise<boolean>;
   updateFeedingActivity(isPaused: boolean, side: string | null, volumeMl: number | null): Promise<void>;
   stopFeedingActivity(): Promise<void>;
+  pauseWidgetFeeding(): Promise<void>;
+  resumeWidgetFeeding(): Promise<void>;
+  stopWidgetFeeding(): Promise<void>;
+  checkAndStartWidgetLiveActivity(): Promise<string | null>;
   startAccessing(uri: string): Promise<boolean>;
   restoreAccess(): Promise<string | null>;
   readFile(uri: string): Promise<string>;
@@ -186,6 +190,31 @@ export async function updateFeedingActivity(
 export async function stopFeedingActivity(): Promise<void> {
   if (!VaultAccessNative) return;
   return VaultAccessNative.stopFeedingActivity();
+}
+
+/**
+ * Sync app → widget: pause/resume/stop the widget feeding timer.
+ */
+export async function pauseWidgetFeeding(): Promise<void> {
+  if (!VaultAccessNative) return;
+  return VaultAccessNative.pauseWidgetFeeding();
+}
+export async function resumeWidgetFeeding(): Promise<void> {
+  if (!VaultAccessNative) return;
+  return VaultAccessNative.resumeWidgetFeeding();
+}
+export async function stopWidgetFeeding(): Promise<void> {
+  if (!VaultAccessNative) return;
+  return VaultAccessNative.stopWidgetFeeding();
+}
+
+/**
+ * Check if the widget requested a Live Activity, consume the flag, and start it.
+ * Returns the payload JSON if a Live Activity was started, null otherwise.
+ */
+export async function checkAndStartWidgetLiveActivity(): Promise<string | null> {
+  if (!VaultAccessNative) return null;
+  return VaultAccessNative.checkAndStartWidgetLiveActivity();
 }
 
 /**
