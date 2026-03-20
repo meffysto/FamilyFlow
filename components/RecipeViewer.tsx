@@ -166,7 +166,7 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
                         checked && { backgroundColor: colors.success },
                       ]}
                     >
-                      {checked && <Text style={styles.checkmark}>✓</Text>}
+                      {checked && <Text style={[styles.checkmark, { color: colors.onPrimary }]}>✓</Text>}
                     </View>
                     <Text
                       style={[
@@ -234,7 +234,7 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
                 onPress={() => setShowCookingMode(true)}
                 activeOpacity={0.8}
               >
-                <Text style={styles.addButtonText}>🍳 Lancer la recette</Text>
+                <Text style={[styles.addButtonText, { color: colors.onPrimary }]}>🍳 Lancer la recette</Text>
               </TouchableOpacity>
             )}
             {onAddToShoppingList && scaledIngredients.length > 0 && (
@@ -384,7 +384,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   checkmark: {
-    color: '#FFFFFF',
     fontSize: FontSize.label,
     fontWeight: FontWeight.bold,
   },
@@ -460,7 +459,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   addButtonText: {
-    color: '#FFFFFF',
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
   },

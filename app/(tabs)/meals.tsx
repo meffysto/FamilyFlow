@@ -2239,7 +2239,6 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.medium,
   },
   mealTextEmpty: {
-    color: '#D1D5DB',
     fontStyle: 'italic',
     fontWeight: FontWeight.normal,
   },
@@ -2308,7 +2307,6 @@ const styles = StyleSheet.create({
   checkboxCheck: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.bold,
-    color: '#FFFFFF',
   },
   courseText: {
     flex: 1,
@@ -2381,7 +2379,6 @@ const styles = StyleSheet.create({
   addBtnText: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
-    color: '#FFFFFF',
   },
   // Recettes
   recipeSearchBar: {
@@ -2399,7 +2396,6 @@ const styles = StyleSheet.create({
   categoryScroll: {
     maxHeight: 48,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E5E7EB',
   },
   categoryScrollContent: {
     paddingHorizontal: 16,
@@ -2529,7 +2525,6 @@ const styles = StyleSheet.create({
   modalSaveText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
-    color: '#FFFFFF',
   },
   // Section picker
   pickerContent: {
@@ -2589,7 +2584,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   importFetchBtnText: {
-    color: '#FFFFFF',
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
   },

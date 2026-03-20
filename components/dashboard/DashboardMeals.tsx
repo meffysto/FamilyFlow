@@ -32,7 +32,7 @@ function DashboardMealsInner({ vaultFileExists, activateCardTemplate, onViewReci
   const todayMeals = meals.filter((m) => m.day === todayDayName && m.text.length > 0);
 
   if (!vaultFileExists.meals) return (
-    <DashboardCard key="meals" title="Repas du jour" icon="🍽️" color="#EC4899">
+    <DashboardCard key="meals" title="Repas du jour" icon="🍽️" color={primary}>
       <DashboardEmptyState
         description="Planifiez les repas de la semaine pour toute la famille"
         onActivate={() => activateCardTemplate('meals')}
@@ -42,13 +42,13 @@ function DashboardMealsInner({ vaultFileExists, activateCardTemplate, onViewReci
   );
 
   if (todayMeals.length === 0) return (
-    <DashboardCard key="meals" title="Repas du jour" icon="🍽️" color="#EC4899" onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'repas' } })}>
+    <DashboardCard key="meals" title="Repas du jour" icon="🍽️" color={primary} onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'repas' } })}>
       <Text style={[styles.emptyHint, { color: colors.textMuted }]}>Aucun repas planifié aujourd'hui</Text>
     </DashboardCard>
   );
 
   return (
-    <DashboardCard key="meals" title="Repas du jour" icon="🍽️" count={todayMeals.length} color="#EC4899" onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'repas' } })}>
+    <DashboardCard key="meals" title="Repas du jour" icon="🍽️" count={todayMeals.length} color={primary} onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'repas' } })}>
       {todayMeals.map((meal) => {
         const linkedRecipe = meal.recipeRef ? recipes.find(r => {
           const ref = r.sourceFile.replace('03 - Cuisine/Recettes/', '').replace('.cook', '');
