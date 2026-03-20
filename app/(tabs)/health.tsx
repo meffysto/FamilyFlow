@@ -31,6 +31,7 @@ import { HealthRecord, GrowthEntry, VaccineEntry } from '../../lib/types';
 import { formatDateForDisplay } from '../../lib/parser';
 import { GrowthChart } from '../../components/growth/GrowthChart';
 import { GrowthLegend } from '../../components/growth/GrowthLegend';
+import { EmptyState } from '../../components/EmptyState';
 
 type TabId = 'croissance' | 'vaccins' | 'infos';
 
@@ -427,13 +428,13 @@ export default function HealthScreen() {
         <View style={[styles.header, { backgroundColor: colors.bg }]}>
           <Text style={[styles.title, { color: colors.text }]}>🏥 Santé</Text>
         </View>
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyEmoji}>👶</Text>
-          <Text style={[styles.emptyTitle, { color: colors.text }]}>Aucun enfant</Text>
-          <Text style={[styles.emptySubtitle, { color: colors.textSub }]}>
-            Ajoutez un enfant dans les réglages pour accéder au suivi médical.
-          </Text>
-        </View>
+        <EmptyState
+          emoji="🏥"
+          title="Aucun suivi santé"
+          subtitle="Ajoutez les infos médicales de la famille"
+          ctaLabel="Ajouter"
+          onCta={() => setShowGrowthForm(true)}
+        />
       </SafeAreaView>
     );
   }

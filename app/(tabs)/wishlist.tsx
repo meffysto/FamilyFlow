@@ -33,6 +33,7 @@ import { Chip } from '../../components/ui/Chip';
 import { SegmentedControl } from '../../components/ui';
 import type { Segment } from '../../components/ui';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
+import { EmptyState } from '../../components/EmptyState';
 import type { WishlistItem, WishBudget, WishOccasion } from '../../lib/types';
 
 const BUDGET_OPTIONS: { label: string; value: WishBudget }[] = [
@@ -288,20 +289,13 @@ export default function WishlistScreen() {
       )}
 
       {sections.length === 0 ? (
-        <View style={[styles.emptyState, { backgroundColor: colors.card, margin: Spacing['2xl'] }]}>
-          <Text style={styles.emptyEmoji}>🎁</Text>
-          <Text style={[styles.emptyTitle, { color: colors.text }]}>Aucun souhait</Text>
-          <Text style={[styles.emptyDesc, { color: colors.textMuted }]}>
-            Ajoutez des idées cadeaux pour chaque membre de la famille !
-          </Text>
-          <TouchableOpacity
-            style={[styles.emptyCta, { backgroundColor: primary }]}
-            onPress={() => openEditor()}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.emptyCtaText, { color: colors.onPrimary }]}>+ Ajouter un souhait</Text>
-          </TouchableOpacity>
-        </View>
+        <EmptyState
+          emoji="🎁"
+          title="Liste vide"
+          subtitle="Ajoutez les envies de la famille"
+          ctaLabel="Ajouter un souhait"
+          onCta={() => openEditor()}
+        />
       ) : (
         <SectionList
           sections={sections}

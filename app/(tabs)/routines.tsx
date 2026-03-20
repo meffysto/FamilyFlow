@@ -44,6 +44,7 @@ import { RoutineEditor } from '../../components/RoutineEditor';
 import { VisualRoutinePlayer } from '../../components/VisualRoutinePlayer';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
+import { EmptyState } from '../../components/EmptyState';
 
 const PROGRESS_KEY_PREFIX = 'routine_progress_';
 const DEFAULT_ROUTINES_TEMPLATE = `# Routines
@@ -477,13 +478,13 @@ export default function RoutinesScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
       >
         {routines.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={[styles.emptyEmoji]}>🔄</Text>
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>Aucune routine</Text>
-            <Text style={[styles.emptySubtitle, { color: colors.textSub }]}>
-              Les routines aident à structurer la journée. Un fichier par défaut va être créé.
-            </Text>
-          </View>
+          <EmptyState
+            emoji="⏰"
+            title="Aucune routine"
+            subtitle="Créez des routines pour structurer la journée"
+            ctaLabel="Créer une routine"
+            onCta={() => setEditorRoutine(null)}
+          />
         ) : (
           routines.map((routine) => {
             const progress = getProgress(routine.id);

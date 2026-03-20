@@ -35,6 +35,7 @@ import { MarkdownText } from '../../components/ui/MarkdownText';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { DictaphoneRecorder } from '../../components/DictaphoneRecorder';
+import { EmptyState } from '../../components/EmptyState';
 
 type TabId = 'aujourdhui' | 'livre';
 
@@ -234,13 +235,13 @@ export default function GratitudeScreen() {
           })}
 
           {gratitudeProfiles.length === 0 && (
-            <View style={[styles.emptyState, { backgroundColor: colors.card }]}>
-              <Text style={styles.emptyEmoji}>🙏</Text>
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>Aucun profil</Text>
-              <Text style={[styles.emptyDesc, { color: colors.textMuted }]}>
-                Configurez des profils familiaux pour commencer.
-              </Text>
-            </View>
+            <EmptyState
+              emoji="🙏"
+              title="Rien pour le moment"
+              subtitle="Notez ce qui vous rend reconnaissant aujourd'hui"
+              ctaLabel="Ajouter"
+              onCta={() => handleOpenWrite()}
+            />
           )}
 
           <View style={styles.bottomPad} />
@@ -250,13 +251,13 @@ export default function GratitudeScreen() {
       {activeTab === 'livre' && (
         <>
           {bookSections.length === 0 ? (
-            <View style={[styles.emptyState, { backgroundColor: colors.card, margin: Spacing['2xl'] }]}>
-              <Text style={styles.emptyEmoji}>📖</Text>
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>Livre d'or vide</Text>
-              <Text style={[styles.emptyDesc, { color: colors.textMuted }]}>
-                Les gratitudes écrites apparaîtront ici.
-              </Text>
-            </View>
+            <EmptyState
+              emoji="🙏"
+              title="Rien pour le moment"
+              subtitle="Notez ce qui vous rend reconnaissant aujourd'hui"
+              ctaLabel="Ajouter"
+              onCta={() => { setActiveTab('aujourdhui'); handleOpenWrite(); }}
+            />
           ) : (
             <SectionList
               sections={bookSections}

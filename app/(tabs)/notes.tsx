@@ -30,6 +30,7 @@ import { Chip } from '../../components/ui/Chip';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { NoteEditor } from '../../components/NoteEditor';
 import { NoteViewer } from '../../components/NoteViewer';
+import { EmptyState } from '../../components/EmptyState';
 
 export default function NotesScreen() {
   const { notes, addNote, updateNote, deleteNote, activeProfile, refresh } = useVault();
@@ -281,17 +282,15 @@ export default function NotesScreen() {
 
       {/* Liste */}
       {listData.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyEmoji}>📝</Text>
-          <Text style={[styles.emptyTitle, { color: colors.text }]}>
-            {search || selectedCategory ? 'Aucun résultat' : 'Aucune note'}
-          </Text>
-          <Text style={[styles.emptyText, { color: colors.textSub }]}>
-            {search || selectedCategory
-              ? 'Essayez un autre filtre'
-              : 'Importez un article ou créez une note\npour commencer'}
-          </Text>
-        </View>
+        <EmptyState
+          emoji="📝"
+          title={search || selectedCategory ? 'Aucun résultat' : 'Aucune note'}
+          subtitle={search || selectedCategory
+            ? 'Essayez un autre filtre'
+            : 'Capturez vos idées et informations'}
+          ctaLabel={search || selectedCategory ? undefined : 'Créer une note'}
+          onCta={search || selectedCategory ? undefined : () => openEditor()}
+        />
       ) : (
         <FlatList
           data={listData}

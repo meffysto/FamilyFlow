@@ -29,6 +29,7 @@ import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { AnniversaryEditor } from '../../components/AnniversaryEditor';
 import { ContactImporter } from '../../components/ContactImporter';
 import { CalendarImporter } from '../../components/CalendarImporter';
+import { EmptyState } from '../../components/EmptyState';
 import type { Anniversary } from '../../lib/types';
 
 const MONTH_NAMES = [
@@ -238,37 +239,15 @@ export default function AnniversairesScreen() {
 
   const renderEmpty = useCallback(
     () => (
-      <View style={[styles.emptyState, { backgroundColor: colors.card }]}>
-        <Text style={styles.emptyEmoji}>{'🎂'}</Text>
-        <Text style={[styles.emptyTitle, { color: colors.text }]}>
-          Aucun anniversaire
-        </Text>
-        <Text style={[styles.emptyDesc, { color: colors.textMuted }]}>
-          Importez des anniversaires depuis vos contacts ou ajoutez-en manuellement.
-        </Text>
-        <View style={styles.emptyActions}>
-          <Button
-            label="Importer mes contacts"
-            onPress={() => setImporterVisible(true)}
-            variant="primary"
-            icon="📇"
-          />
-          <Button
-            label="Importer du calendrier"
-            onPress={() => setCalendarImporterVisible(true)}
-            variant="primary"
-            icon="📅"
-          />
-          <Button
-            label="Ajouter manuellement"
-            onPress={handleAdd}
-            variant="secondary"
-            icon="✏️"
-          />
-        </View>
-      </View>
+      <EmptyState
+        emoji="🎂"
+        title="Aucun anniversaire"
+        subtitle="Gardez en mémoire les dates importantes"
+        ctaLabel="Ajouter"
+        onCta={handleAdd}
+      />
     ),
-    [colors, handleAdd],
+    [handleAdd],
   );
 
   // Prochain anniversaire pour le badge compteur

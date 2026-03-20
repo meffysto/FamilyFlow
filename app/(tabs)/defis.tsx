@@ -48,6 +48,7 @@ import type { Defi, DefiType } from '../../lib/types';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { useParentalControls } from '../../contexts/ParentalControlsContext';
+import { EmptyState } from '../../components/EmptyState';
 
 type TabId = 'actifs' | 'templates' | 'historique';
 
@@ -786,22 +787,13 @@ export default function DefisScreen() {
         {activeTab === 'actifs' && (
           <>
             {activeDefis.length === 0 && (
-              <View style={[styles.emptyState, { backgroundColor: colors.card }]}>
-                <Text style={styles.emptyEmoji}>🏅</Text>
-                <Text style={[styles.emptyTitle, { color: colors.text }]}>Aucun défi en cours</Text>
-                <Text style={[styles.emptyDesc, { color: colors.textMuted }]}>
-                  Lancez un défi familial depuis les templates !
-                </Text>
-                <TouchableOpacity
-                  style={[styles.emptyBtn, { backgroundColor: primary }]}
-                  onPress={() => setActiveTab('templates')}
-                  activeOpacity={0.7}
-                  accessibilityLabel="Voir les templates de défis"
-                  accessibilityRole="button"
-                >
-                  <Text style={[styles.emptyBtnText, { color: colors.onPrimary }]}>Voir les templates</Text>
-                </TouchableOpacity>
-              </View>
+              <EmptyState
+                emoji="🏆"
+                title="Aucun défi en cours"
+                subtitle="Lancez un défi familial pour motiver tout le monde"
+                ctaLabel="Créer un défi"
+                onCta={() => setConfigModal({ visible: true })}
+              />
             )}
             {activeDefis.map((d) => (
               <DefiCard

@@ -59,6 +59,7 @@ import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
+import { EmptyState } from '../../components/EmptyState';
 
 function prevMonth(month: string): string {
   const [y, m] = month.split('-').map(Number);
@@ -466,9 +467,13 @@ export default function BudgetScreen() {
             contentContainerStyle={styles.content}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
             ListEmptyComponent={
-              <View style={styles.emptyContainer}>
-                <Text style={[styles.emptyText, { color: colors.textMuted }]}>Aucune dépense ce mois</Text>
-              </View>
+              <EmptyState
+                emoji="💰"
+                title="Aucun budget"
+                subtitle="Suivez vos dépenses familiales"
+                ctaLabel="Ajouter une entrée"
+                onCta={() => setAddModalVisible(true)}
+              />
             }
             renderItem={({ item }) => {
               const isSelected = selectedEntries.has(item.lineIndex);

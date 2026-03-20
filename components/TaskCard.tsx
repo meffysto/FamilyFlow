@@ -3,7 +3,7 @@
  * Tap checkbox to toggle completion → triggers gamification points
  */
 
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { FloatingPoints } from './FloatingPoints';
 import * as Haptics from 'expo-haptics';
 import { Task, Profile } from '../lib/types';
 import { formatDateForDisplay } from '../lib/parser';
@@ -32,6 +33,8 @@ interface TaskCardProps {
   compact?: boolean;
   /** Profils pour libellé source dynamique */
   profiles?: Profile[];
+  /** Points à afficher en animation flottante quand la tâche est complétée */
+  pointsOnComplete?: number;
 }
 
 const TAG_COLORS: Record<string, string> = {
@@ -68,10 +71,12 @@ export const TaskCard = React.memo(function TaskCard({
   hideSection = false,
   compact = false,
   profiles,
+  pointsOnComplete,
 }: TaskCardProps) {
   const { primary, tint, colors } = useThemeColors();
   const checkScale = useSharedValue(task.completed ? 1 : 0);
   const textOpacity = useSharedValue(task.completed ? 0.7 : 1);
+  const [floatingPts, setFloatingPts] = useState<number | null>(null);
 
   useEffect(() => {
     checkScale.value = withSpring(task.completed ? 1 : 0, { damping: 12, stiffness: 200 });
@@ -92,8 +97,11 @@ export const TaskCard = React.memo(function TaskCard({
 
   const handleToggle = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (!task.completed && pointsOnComplete) {
+      setFloatingPts(pointsOnComplete);
+    }
     onToggle(task, !task.completed);
-  }, [task, onToggle]);
+  }, [task, onToggle, pointsOnComplete]);
 
   const isOverdue =
     !task.completed &&
@@ -114,22 +122,31 @@ export const TaskCard = React.memo(function TaskCard({
       accessibilityLabel={`Tâche : ${task.text}${task.completed ? ', terminée' : ''}${isOverdue ? ', en retard' : ''}`}
       accessibilityRole="button"
     >
-      <TouchableOpacity
-        style={styles.checkbox}
-        onPress={handleToggle}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        accessibilityRole="checkbox"
-        accessibilityState={{ checked: task.completed }}
-      >
-        <Animated.View style={[
-          styles.checkboxInner,
-          { borderColor: colors.separator, backgroundColor: colors.card },
-          task.completed && { backgroundColor: primary, borderColor: primary },
-          checkAnimStyle,
-        ]}>
-          <Animated.Text style={[styles.checkmark, { color: colors.onPrimary }, checkmarkAnimStyle]}>✓</Animated.Text>
-        </Animated.View>
-      </TouchableOpacity>
+      <View style={styles.checkboxWrapper}>
+        {floatingPts != null && (
+          <FloatingPoints
+            points={floatingPts}
+            visible
+            onDone={() => setFloatingPts(null)}
+          />
+        )}
+        <TouchableOpacity
+          style={styles.checkbox}
+          onPress={handleToggle}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: task.completed }}
+        >
+          <Animated.View style={[
+            styles.checkboxInner,
+            { borderColor: colors.separator, backgroundColor: colors.card },
+            task.completed && { backgroundColor: primary, borderColor: primary },
+            checkAnimStyle,
+          ]}>
+            <Animated.Text style={[styles.checkmark, { color: colors.onPrimary }, checkmarkAnimStyle]}>✓</Animated.Text>
+          </Animated.View>
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.content}>
         <Animated.Text
@@ -212,6 +229,9 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
     gap: Spacing.xl,
+  },
+  checkboxWrapper: {
+    position: 'relative',
   },
   checkbox: {
     marginTop: Spacing.xxs,

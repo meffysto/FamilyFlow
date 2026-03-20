@@ -37,7 +37,9 @@ import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { EmptyState } from '../../components/EmptyState';
+import { AllDoneOverlay } from '../../components/AllDoneOverlay';
 import { getTheme } from '../../constants/themes';
+import { POINTS_PER_TASK } from '../../lib/gamification';
 import {
   dispatchNotificationAsync,
   buildAllTasksDoneContext,
@@ -249,6 +251,9 @@ export default function TasksScreen() {
 
   // Track whether we already sent the "all done" notification today
   const allDoneSentRef = useRef(false);
+  const [showAllDone, setShowAllDone] = useState(false);
+
+  const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
 
   const handleTaskToggle = useCallback(
     async (task: Task, completed: boolean) => {
@@ -272,14 +277,13 @@ export default function TasksScreen() {
             // Gamification error — non-critical
           }
 
-          // Check if all tasks are now done → send "journée terminée" notification
+          // Check if all tasks are now done → show celebration overlay
           if (!allDoneSentRef.current) {
             const remaining = tasks.filter((t) => !t.completed && t.id !== task.id).length;
             if (remaining === 0) {
               allDoneSentRef.current = true;
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              setTimeout(() => showToast('🎉 Journée terminée ! Toutes les tâches sont faites !'), 300);
               const totalDone = tasks.filter((t) => t.completed).length + 1;
+              setTimeout(() => setShowAllDone(true), 300);
               dispatchNotificationAsync(
                 'all_tasks_done',
                 buildAllTasksDoneContext(totalDone, profiles),
@@ -539,7 +543,7 @@ export default function TasksScreen() {
               disabled={item.completed}
               hintId="tasks"
             >
-              <TaskCard task={item} onToggle={handleTaskToggle} onLongPress={() => handleOpenEdit(item)} />
+              <TaskCard task={item} onToggle={handleTaskToggle} onLongPress={() => handleOpenEdit(item)} pointsOnComplete={isChildMode ? POINTS_PER_TASK : undefined} />
             </SwipeToDelete>
           </Animated.View>
         )}
@@ -622,7 +626,7 @@ export default function TasksScreen() {
                       disabled={false}
                       hintId="tasks"
                     >
-                      <TaskCard task={item} onToggle={handleTaskToggle} onLongPress={() => handleOpenEdit(item)} />
+                      <TaskCard task={item} onToggle={handleTaskToggle} onLongPress={() => handleOpenEdit(item)} pointsOnComplete={isChildMode ? POINTS_PER_TASK : undefined} />
                     </SwipeToDelete>
                   </View>
                 ))}
@@ -807,6 +811,14 @@ export default function TasksScreen() {
           </ScrollView>
         </SafeAreaView>
       </Modal>
+
+      {/* Célébration journée terminée */}
+      <AllDoneOverlay
+        visible={showAllDone}
+        taskCount={completedCount}
+        childName={isChildMode ? activeProfile?.name : undefined}
+        onDismiss={() => setShowAllDone(false)}
+      />
 
       {/* Coach marks */}
       <ScreenGuide
