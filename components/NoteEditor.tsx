@@ -24,15 +24,36 @@ import { Note, NOTE_CATEGORIES } from '../lib/types';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../constants/typography';
 
+/** Sépare le frontmatter YAML de defuddle (--- delimited) du contenu markdown */
+function parseDefuddleResponse(raw: string): { title?: string; content: string } {
+  let title: string | undefined;
+  let content = raw;
+
+  // Frontmatter YAML : --- ... ---
+  const fmMatch = raw.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+  if (fmMatch) {
+    const frontmatter = fmMatch[1];
+    content = fmMatch[2].trim();
+
+    // Extraire le titre du frontmatter
+    const titleMatch = frontmatter.match(/^title:\s*"?(.+?)"?\s*$/m);
+    if (titleMatch) title = titleMatch[1];
+  }
+
+  return { title, content };
+}
+
 interface NoteEditorProps {
   visible: boolean;
   note?: Note | null;
+  /** URL à importer automatiquement à l'ouverture (deep link) */
+  initialUrl?: string;
   onSave: (note: Omit<Note, 'sourceFile'>) => void;
   onDelete?: (note: Note) => void;
   onClose: () => void;
 }
 
-export function NoteEditor({ visible, note, onSave, onDelete, onClose }: NoteEditorProps) {
+export function NoteEditor({ visible, note, initialUrl, onSave, onDelete, onClose }: NoteEditorProps) {
   const { primary, colors } = useThemeColors();
   const isEditing = !!note;
 
@@ -56,13 +77,43 @@ export function NoteEditor({ visible, note, onSave, onDelete, onClose }: NoteEdi
         setContent(note.content);
       } else {
         setTitle('');
-        setUrlInput('');
-        setSelectedCategory(NOTE_CATEGORIES[5]);
+        setUrlInput(initialUrl ?? '');
+        setSelectedCategory(initialUrl ? NOTE_CATEGORIES[4] : NOTE_CATEGORIES[5]); // Articles si URL
         setTagsInput('');
         setContent('');
       }
     }
-  }, [visible, note]);
+  }, [visible, note, initialUrl]);
+
+  // Import automatique quand initialUrl est fourni (deep link)
+  const initialImportDone = useRef(false);
+  useEffect(() => {
+    if (visible && initialUrl && !initialImportDone.current && !note) {
+      initialImportDone.current = true;
+      (async () => {
+        setImporting(true);
+        try {
+          const urlWithoutProtocol = initialUrl.replace(/^https?:\/\//, '');
+          const response = await fetch(`https://defuddle.md/${urlWithoutProtocol}`);
+          if (!response.ok) throw new Error(`Erreur ${response.status}`);
+          const raw = await response.text();
+          const parsed = parseDefuddleResponse(raw);
+          setContent(parsed.content);
+          if (parsed.title) {
+            setTitle(parsed.title);
+          } else {
+            const headingMatch = parsed.content.match(/^#\s+(.+)$/m);
+            if (headingMatch) setTitle(headingMatch[1].trim());
+          }
+        } catch (error: any) {
+          Alert.alert('Erreur d\'importation', `Impossible de récupérer le contenu : ${error.message ?? 'erreur inconnue'}`);
+        } finally {
+          setImporting(false);
+        }
+      })();
+    }
+    if (!visible) initialImportDone.current = false;
+  }, [visible, initialUrl, note]);
 
   const handleImport = useCallback(async () => {
     const trimmed = urlInput.trim();
@@ -81,14 +132,17 @@ export function NoteEditor({ visible, note, onSave, onDelete, onClose }: NoteEdi
       if (!response.ok) {
         throw new Error(`Erreur ${response.status}`);
       }
-      const markdown = await response.text();
-      setContent(markdown);
+      const raw = await response.text();
+      const parsed = parseDefuddleResponse(raw);
+      setContent(parsed.content);
 
-      // Auto-remplir le titre depuis le premier heading
+      // Auto-remplir le titre depuis les métadonnées ou le premier heading
       if (!title.trim()) {
-        const headingMatch = markdown.match(/^#\s+(.+)$/m);
-        if (headingMatch) {
-          setTitle(headingMatch[1].trim());
+        if (parsed.title) {
+          setTitle(parsed.title);
+        } else {
+          const headingMatch = parsed.content.match(/^#\s+(.+)$/m);
+          if (headingMatch) setTitle(headingMatch[1].trim());
         }
       }
     } catch (error: any) {

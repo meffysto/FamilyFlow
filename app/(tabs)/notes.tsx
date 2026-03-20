@@ -36,7 +36,7 @@ export default function NotesScreen() {
   const { primary, colors } = useThemeColors();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
 
-  const { addNew } = useLocalSearchParams<{ addNew?: string }>();
+  const { addNew, importUrl } = useLocalSearchParams<{ addNew?: string; importUrl?: string }>();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [editorVisible, setEditorVisible] = useState(false);
@@ -45,13 +45,18 @@ export default function NotesScreen() {
   const [viewingNote, setViewingNote] = useState<Note | null>(null);
   const { refreshing, onRefresh } = useRefresh(refresh);
 
-  // Ouvrir l'éditeur si addNew=1
+  // Ouvrir l'éditeur si addNew=1 ou importUrl
+  const [pendingImportUrl, setPendingImportUrl] = useState<string | undefined>(undefined);
   useEffect(() => {
-    if (addNew === '1') {
+    if (importUrl) {
+      setPendingImportUrl(decodeURIComponent(importUrl));
+      setEditingNote(null);
+      setEditorVisible(true);
+    } else if (addNew === '1') {
       setEditingNote(null);
       setEditorVisible(true);
     }
-  }, [addNew]);
+  }, [addNew, importUrl]);
 
   // Filtrage par recherche et catégorie
   const filteredNotes = useMemo(() => {
@@ -303,11 +308,13 @@ export default function NotesScreen() {
       <NoteEditor
         visible={editorVisible}
         note={editingNote}
+        initialUrl={pendingImportUrl}
         onSave={handleSave}
         onDelete={(noteToDelete) => handleDelete(noteToDelete)}
         onClose={() => {
           setEditorVisible(false);
           setEditingNote(null);
+          setPendingImportUrl(undefined);
         }}
       />
 
