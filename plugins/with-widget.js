@@ -25,6 +25,11 @@ module.exports = function withMaJourneeWidget(config) {
     return mod;
   });
 
+  // 1b. Ajouter NSSupportsLiveActivities au Info.plist de l'app
+  if (!config.ios) config.ios = {};
+  if (!config.ios.infoPlist) config.ios.infoPlist = {};
+  config.ios.infoPlist.NSSupportsLiveActivities = true;
+
   // 2. Modifier le projet Xcode pour ajouter le target widget
   config = withXcodeProject(config, (mod) => {
     const proj = mod.modResults;
@@ -76,6 +81,7 @@ module.exports = function withMaJourneeWidget(config) {
     addFileToTarget(proj, target, groupKey, 'MaJourneeWidget.swift', 'sourcecode.swift', 'Sources');
     addFileToTarget(proj, target, groupKey, 'JournalBebeWidget.swift', 'sourcecode.swift', 'Sources');
     addFileToTarget(proj, target, groupKey, 'FamilyVaultWidgets.swift', 'sourcecode.swift', 'Sources');
+    addFileToTarget(proj, target, groupKey, 'FeedingLiveActivity.swift', 'sourcecode.swift', 'Sources');
 
     // 2e. Ajouter Assets.xcassets comme folder reference au target
     addFileToTarget(proj, target, groupKey, 'Assets.xcassets', 'folder.assetcatalog', 'Resources');

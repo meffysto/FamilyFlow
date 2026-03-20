@@ -224,7 +224,7 @@ export default function MoreScreen() {
               <View style={styles.grid}>
                 {catItems.map((item) => (
                   <TouchableOpacity
-                    key={item.route}
+                    key={item.label}
                     style={[styles.card, { backgroundColor: colors.card }]}
                     onPress={() => item.params ? router.push({ pathname: item.route as any, params: item.params }) : router.push(item.route as any)}
                     activeOpacity={0.7}
