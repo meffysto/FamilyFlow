@@ -163,6 +163,7 @@ export interface VaultState {
   loadRecipes: (force?: boolean) => Promise<void>;
   addRecipe: (category: string, data: { title: string; tags?: string[]; servings?: number; prepTime?: string; cookTime?: string; ingredients: { name: string; quantity?: string; unit?: string }[]; steps: string[] }) => Promise<void>;
   deleteRecipe: (sourceFile: string) => Promise<void>;
+  renameRecipe: (sourceFile: string, newTitle: string) => Promise<void>;
   /** Scan tout le vault pour des .cook en dehors de 03 - Cuisine/Recettes/ */
   scanAllCookFiles: () => Promise<{ path: string; title: string }[]>;
   /** Déplacer un .cook vers le dossier Recettes */
@@ -1786,6 +1787,28 @@ export function useVaultInternal(): VaultState {
     setRecipes(prev => prev.filter(r => r.sourceFile !== sourceFile));
   }, []);
 
+  const renameRecipe = useCallback(async (sourceFile: string, newTitle: string) => {
+    if (!vaultRef.current) return;
+    const content = await vaultRef.current.readFile(sourceFile);
+    let updated: string;
+    // Mettre à jour ou ajouter le title dans le frontmatter/metadata
+    if (/^>> title:.*$/m.test(content)) {
+      updated = content.replace(/^>> title:.*$/m, `>> title: ${newTitle}`);
+    } else if (/^---/.test(content)) {
+      // Frontmatter YAML — ajouter title
+      updated = content.replace(/^---\n/, `---\ntitle: "${newTitle}"\n`);
+    } else {
+      // Pas de metadata — ajouter en haut
+      updated = `>> title: ${newTitle}\n\n${content}`;
+    }
+    await vaultRef.current.writeFile(sourceFile, updated);
+    // Mettre à jour le state local
+    const { parseRecipe } = require('../lib/cooklang');
+    setRecipes(prev => prev.map(r =>
+      r.sourceFile === sourceFile ? parseRecipe(sourceFile, updated) : r
+    ));
+  }, []);
+
   /** Scanner tout le vault pour des .cook en dehors du dossier Recettes */
   const scanAllCookFiles = useCallback(async (): Promise<{ path: string; title: string }[]> => {
     if (!vaultRef.current) return [];
@@ -2622,6 +2645,7 @@ export function useVaultInternal(): VaultState {
     loadRecipes,
     addRecipe,
     deleteRecipe,
+    renameRecipe,
     scanAllCookFiles,
     moveCookToRecipes,
     toggleFavorite,
@@ -2688,7 +2712,7 @@ export function useVaultInternal(): VaultState {
     toggleTask, addRDV, updateRDV, deleteRDV, addTask, editTask, deleteTask,
     addCourseItem, mergeCourseIngredients, toggleCourseItem, removeCourseItem, moveCourseItem,
     clearCompletedCourses, addMemory, updateMemory, activateVacation,
-    deactivateVacation, refreshGamification, addRecipe, deleteRecipe,
+    deactivateVacation, refreshGamification, addRecipe, deleteRecipe, renameRecipe,
     loadRecipes, scanAllCookFiles, moveCookToRecipes, toggleFavorite, isFavorite,
     getFavorites, applyAgeUpgrade, dismissAgeUpgrade, addChild, convertToBorn,
     setBudgetMonth, addExpense, deleteExpense, updateBudgetConfig, loadBudgetData,

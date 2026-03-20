@@ -6,6 +6,8 @@ import {
   Text,
   ScrollView,
   Modal,
+  Alert,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -21,11 +23,12 @@ interface RecipeViewerProps {
   onAddToShoppingList?: (ingredients: AppIngredient[]) => void;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
+  onRename?: (newTitle: string) => void;
   /** Nombre de personnes dans la famille — utilisé comme portions par défaut */
   familySize?: number;
 }
 
-export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isFavorite, onToggleFavorite, familySize }: RecipeViewerProps) {
+export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isFavorite, onToggleFavorite, onRename, familySize }: RecipeViewerProps) {
   const { primary, tint, colors } = useThemeColors();
   const [servings, setServings] = useState(familySize || recipe.servings || 1);
   const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set());
@@ -67,14 +70,29 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
           <TouchableOpacity onPress={onClose} style={styles.closeBtn} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Text style={[styles.closeBtnText, { color: colors.textMuted }]}>✕</Text>
           </TouchableOpacity>
-          <View style={styles.headerCenter}>
+          <TouchableOpacity
+            style={styles.headerCenter}
+            onPress={() => {
+              if (!onRename) return;
+              Alert.prompt(
+                'Renommer la recette',
+                '',
+                (text) => { if (text?.trim()) onRename(text.trim()); },
+                'plain-text',
+                recipe.title,
+              );
+            }}
+            activeOpacity={onRename ? 0.6 : 1}
+            disabled={!onRename}
+          >
             <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
               {recipe.title}
+              {onRename ? <Text style={[styles.editIcon, { color: colors.textFaint }]}> ✏️</Text> : null}
             </Text>
             {recipe.category ? (
               <Text style={[styles.category, { color: colors.textMuted }]}>{recipe.category}</Text>
             ) : null}
-          </View>
+          </TouchableOpacity>
           {onToggleFavorite ? (
             <TouchableOpacity
               style={styles.closeBtn}
@@ -274,6 +292,9 @@ const styles = StyleSheet.create({
   headerCenter: {
     flex: 1,
     alignItems: 'center',
+  },
+  editIcon: {
+    fontSize: FontSize.caption,
   },
   title: {
     fontSize: FontSize.heading,

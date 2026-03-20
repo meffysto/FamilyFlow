@@ -363,6 +363,7 @@ function streakInsights(input: InsightInput, tc: TimeContext): Insight[] {
       body: "Vous avez écrit hier — continuez la série !",
       priority: 'low',
       category: 'reminder',
+      action: { label: 'Écrire', type: 'navigate', route: '/(tabs)/gratitude' },
     });
   }
 

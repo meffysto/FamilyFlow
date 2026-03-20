@@ -68,16 +68,6 @@ export default function RecipeCard({ recipe, onPress, onLongPress, isFavorite, o
         ) : null}
       </View>
 
-      {recipe.tags.length > 0 && (
-        <View style={styles.tagsRow}>
-          {recipe.tags.map((tag) => (
-            <View key={tag} style={[styles.chip, { backgroundColor: colors.cardAlt }]}>
-              <Text style={[styles.chipText, { color: colors.textSub }]}>{tag}</Text>
-            </View>
-          ))}
-        </View>
-      )}
-
       {recipe.ingredients.length > 0 && (
         <Text style={[styles.ingredientCount, { color: colors.textMuted }]}>
           {recipe.ingredients.length} ingredient{recipe.ingredients.length > 1 ? 's' : ''}
@@ -139,21 +129,6 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: FontSize.caption,
-  },
-  tagsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginBottom: 8,
-  },
-  chip: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  chipText: {
-    fontSize: FontSize.code,
-    fontWeight: FontWeight.medium,
   },
   ingredientCount: {
     fontSize: FontSize.caption,

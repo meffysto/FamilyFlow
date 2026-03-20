@@ -82,7 +82,7 @@ export default function MealsScreen() {
     courses, vault,
     addCourseItem, removeCourseItem, moveCourseItem, mergeCourseIngredients,
     stock, updateStockQuantity,
-    recipes, loadRecipes, deleteRecipe,
+    recipes, loadRecipes, deleteRecipe, renameRecipe,
     scanAllCookFiles, moveCookToRecipes,
     profiles,
     activeProfile,
@@ -1112,77 +1112,77 @@ export default function MealsScreen() {
             />
           </View>
 
-          {recipeCategories.length > 0 && (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={[styles.categoryScroll, { backgroundColor: colors.card, borderBottomColor: colors.border }]}
-              contentContainerStyle={styles.categoryScrollContent}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={[styles.categoryScroll, { backgroundColor: colors.card, borderBottomColor: colors.border }]}
+            contentContainerStyle={styles.categoryScrollContent}
+          >
+            <TouchableOpacity
+              style={[
+                styles.categoryChip,
+                { backgroundColor: colors.cardAlt },
+                mealTypeFilter === null && !showFavoritesOnly && { backgroundColor: tint },
+              ]}
+              onPress={() => { setMealTypeFilter(null); setShowFavoritesOnly(false); }}
+              activeOpacity={0.7}
+              accessibilityLabel="Toutes les recettes"
+              accessibilityRole="tab"
+              accessibilityState={{ selected: mealTypeFilter === null && !showFavoritesOnly }}
             >
+              <Text style={[
+                styles.categoryChipText,
+                { color: colors.textSub },
+                mealTypeFilter === null && !showFavoritesOnly && { color: primary, fontWeight: FontWeight.bold },
+              ]}>
+                Toutes
+              </Text>
+            </TouchableOpacity>
+            {activeProfile && (
               <TouchableOpacity
                 style={[
                   styles.categoryChip,
                   { backgroundColor: colors.cardAlt },
-                  recipeCategory === null && { backgroundColor: tint },
+                  showFavoritesOnly && { backgroundColor: tint },
                 ]}
-                onPress={() => setRecipeCategory(null)}
+                onPress={() => setShowFavoritesOnly(!showFavoritesOnly)}
                 activeOpacity={0.7}
-                accessibilityLabel="Toutes les catégories"
+                accessibilityLabel={`Favoris${profileFavorites.length > 0 ? `, ${profileFavorites.length} recette${profileFavorites.length > 1 ? 's' : ''}` : ''}`}
                 accessibilityRole="tab"
-                accessibilityState={{ selected: recipeCategory === null && !showFavoritesOnly }}
+                accessibilityState={{ selected: showFavoritesOnly }}
               >
                 <Text style={[
                   styles.categoryChipText,
                   { color: colors.textSub },
-                  recipeCategory === null && { color: primary, fontWeight: FontWeight.bold },
+                  showFavoritesOnly && { color: primary, fontWeight: FontWeight.bold },
                 ]}>
-                  Toutes
+                  {`❤️ Favoris${profileFavorites.length > 0 ? ` (${profileFavorites.length})` : ''}`}
                 </Text>
               </TouchableOpacity>
-              {activeProfile && (
-                <TouchableOpacity
-                  style={[
-                    styles.categoryChip,
-                    { backgroundColor: colors.cardAlt },
-                    showFavoritesOnly && { backgroundColor: tint },
-                  ]}
-                  onPress={() => setShowFavoritesOnly(!showFavoritesOnly)}
-                  activeOpacity={0.7}
-                  accessibilityLabel={`Favoris${profileFavorites.length > 0 ? `, ${profileFavorites.length} recette${profileFavorites.length > 1 ? 's' : ''}` : ''}`}
-                  accessibilityRole="tab"
-                  accessibilityState={{ selected: showFavoritesOnly }}
-                >
-                  <Text style={[
-                    styles.categoryChipText,
-                    { color: colors.textSub },
-                    showFavoritesOnly && { color: primary, fontWeight: FontWeight.bold },
-                  ]}>
-                    {`❤️ Favoris${profileFavorites.length > 0 ? ` (${profileFavorites.length})` : ''}`}
-                  </Text>
-                </TouchableOpacity>
-              )}
-              {recipeCategories.map((cat) => (
-                <TouchableOpacity
-                  key={cat}
-                  style={[
-                    styles.categoryChip,
-                    { backgroundColor: colors.cardAlt },
-                    recipeCategory === cat && { backgroundColor: tint },
-                  ]}
-                  onPress={() => setRecipeCategory(recipeCategory === cat ? null : cat)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[
-                    styles.categoryChipText,
-                    { color: colors.textSub },
-                    recipeCategory === cat && { color: primary, fontWeight: FontWeight.bold },
-                  ]}>
-                    {cat}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          )}
+            )}
+            {MEAL_TYPE_FILTERS.map((mt) => (
+              <TouchableOpacity
+                key={mt.id}
+                style={[
+                  styles.categoryChip,
+                  { backgroundColor: colors.cardAlt },
+                  mealTypeFilter === mt.id && { backgroundColor: tint },
+                ]}
+                onPress={() => setMealTypeFilter(mealTypeFilter === mt.id ? null : mt.id)}
+                activeOpacity={0.7}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: mealTypeFilter === mt.id }}
+              >
+                <Text style={[
+                  styles.categoryChipText,
+                  { color: colors.textSub },
+                  mealTypeFilter === mt.id && { color: primary, fontWeight: FontWeight.bold },
+                ]}>
+                  {mt.emoji} {mt.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
 
           <ScrollView
             style={styles.scroll}
@@ -1291,6 +1291,10 @@ export default function MealsScreen() {
           onAddToShoppingList={handleAddToShoppingList}
           isFavorite={activeProfile ? isFavorite(activeProfile.id, selectedRecipe.sourceFile) : false}
           onToggleFavorite={activeProfile ? () => toggleFavorite(activeProfile.id, selectedRecipe.sourceFile) : undefined}
+          onRename={async (newTitle) => {
+            await renameRecipe(selectedRecipe.sourceFile, newTitle);
+            setSelectedRecipe((prev) => prev ? { ...prev, title: newTitle } : null);
+          }}
           familySize={profiles.length}
         />
       )}

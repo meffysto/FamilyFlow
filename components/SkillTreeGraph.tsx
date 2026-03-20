@@ -33,12 +33,8 @@ export function SkillTreeGraph({
 }: SkillTreeGraphProps) {
   const { colors } = useThemeColors();
 
-  // Toutes les branches démarrées ouvertes
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
-
-  const toggleCategory = (id: string) => {
-    setCollapsed((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
+  // Catégories 100% complétées démarrées réduites pour lisibilité
+  const [manualOverrides, setManualOverrides] = useState<Record<string, boolean>>({});
 
   // Grouper les compétences par catégorie et trier par ordre
   const skillsByCategory = useMemo(() => {
@@ -54,6 +50,17 @@ export function SkillTreeGraph({
     return map;
   }, [skills]);
 
+  // Une catégorie est réduite si : override manuel, ou 100% complétée (sans override)
+  const isCategoryCollapsed = (catId: string): boolean => {
+    if (catId in manualOverrides) return manualOverrides[catId];
+    const catSkills = skillsByCategory.get(catId) ?? [];
+    return catSkills.length > 0 && catSkills.every((s) => unlockedIds.has(s.id));
+  };
+
+  const toggleCategory = (id: string) => {
+    setManualOverrides((prev) => ({ ...prev, [id]: !isCategoryCollapsed(id) ? true : false }));
+  };
+
   return (
     <View>
       {categories.map((category) => {
@@ -63,7 +70,7 @@ export function SkillTreeGraph({
         ).length;
         const totalCount = categorySkills.length;
         const progress = totalCount > 0 ? unlockedCount / totalCount : 0;
-        const isCollapsed = collapsed[category.id] ?? false;
+        const isCollapsed = isCategoryCollapsed(category.id);
 
         return (
           <View
