@@ -255,9 +255,9 @@ export default function LootScreen() {
                     <View style={styles.historyInfo}>
                       <View style={styles.historyNameRow}>
                         <Text style={[styles.historyName, { color: colors.textSub }]}>{profileObj?.name ?? entry.profileId}</Text>
-                        <View style={[styles.historyTypeBadge, { backgroundColor: isLoot ? colors.infoBg : colors.successBg }]}>
-                          <Text style={[styles.historyTypeText, { color: isLoot ? colors.info : colors.success }]}>
-                            {isLoot ? '🎁 Loot' : '📋 Tâche'}
+                        <View style={[styles.historyTypeBadge, { backgroundColor: isLoot ? colors.infoBg : entry.note.startsWith('Compétence:') ? colors.warningBg : entry.note.startsWith('Défi:') ? colors.infoBg : colors.successBg }]}>
+                          <Text style={[styles.historyTypeText, { color: isLoot ? colors.info : entry.note.startsWith('Compétence:') ? colors.warning : entry.note.startsWith('Défi:') ? colors.info : colors.success }]}>
+                            {isLoot ? '🎁 Loot' : entry.note.startsWith('Compétence:') ? '🧠 Compétence' : entry.note.startsWith('Défi:') ? '🎯 Défi' : entry.note.startsWith('Bonus') ? '✨ Bonus' : '📋 Tâche'}
                           </Text>
                         </View>
                       </View>
