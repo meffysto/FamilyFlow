@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FamilyFlow — Le quotidien familial, sans la charge mentale</title>
-  <meta name="description" content="Une seule app pour toute la famille : courses, tâches, journal bébé, rendez-vous, recettes, widgets iOS. Privé par design.">
+  <meta name="description" content="Une seule app pour toute la famille : courses, tâches, journal bébé, calendrier, recettes, IA, widgets iOS. Privé par design.">
   <link rel="icon" href="favicon.png" type="image/png">
 
   <!-- Fonts: Zodiak (serif, titres) + DM Sans (body) via Fontshare -->
@@ -21,1213 +21,1251 @@
     }
 
     html {
-      scroll-snap-type: y mandatory;
       scroll-behavior: smooth;
-      overflow-x: hidden;
       -webkit-text-size-adjust: 100%;
     }
 
     body {
       font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #F6F0FF;
-      color: #2D1B4E;
-      overflow-x: hidden;
+      background: #FAFAFA;
+      color: #1D1D1F;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
     }
 
     /* ================================================================
        CSS CUSTOM PROPERTIES
        ================================================================ */
     :root {
-      --bg: #F6F0FF;
       --primary: #7C3AED;
       --primary-light: #A78BFA;
       --primary-dark: #5B21B6;
+      --primary-bg: #F3EEFF;
       --accent-rose: #EC4899;
       --accent-amber: #F59E0B;
-      --text: #2D1B4E;
-      --text-sub: #6B5B8A;
-      --card-bg: #FFFFFF;
-      --card-border: #EDE5F7;
-      --card-shadow: rgba(124, 58, 237, 0.08);
-      --gradient-text: linear-gradient(135deg, #7C3AED, #EC4899, #F59E0B);
+      --accent-mint: #10B981;
+      --accent-blue: #3B82F6;
+      --text: #1D1D1F;
+      --text-secondary: #6E6E73;
+      --text-tertiary: #86868B;
+      --bg: #FAFAFA;
+      --bg-white: #FFFFFF;
+      --border: #E5E5EA;
       --font-title: 'Zodiak', Georgia, 'Times New Roman', serif;
       --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --section-padding: clamp(48px, 8vw, 120px) clamp(20px, 5vw, 80px);
+      --max-width: 1080px;
     }
 
     /* ================================================================
-       SLIDE BASE
+       SCROLL ANIMATIONS
        ================================================================ */
-    .slide {
-      position: relative;
-      width: 100%;
-      height: 100vh;
-      height: 100dvh;
-      overflow: hidden;
-      scroll-snap-align: start;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: clamp(16px, 4vw, 64px);
-    }
-
-    .slide-inner {
-      position: relative;
-      z-index: 2;
-      width: 100%;
-      max-width: 1100px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-    }
-
-    /* ================================================================
-       FLOATING SHAPES (pastel circles)
-       ================================================================ */
-    .shape {
-      position: absolute;
-      border-radius: 50%;
-      opacity: 0.35;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .shape--violet {
-      background: radial-gradient(circle, #C4B5FD, #DDD6FE);
-    }
-
-    .shape--rose {
-      background: radial-gradient(circle, #FBCFE8, #FCE7F3);
-    }
-
-    .shape--amber {
-      background: radial-gradient(circle, #FDE68A, #FEF3C7);
-    }
-
-    .shape--mint {
-      background: radial-gradient(circle, #A7F3D0, #D1FAE5);
-    }
-
-    @keyframes floatShape {
-      0%, 100% { transform: translateY(0) rotate(0deg); }
-      25% { transform: translateY(-20px) rotate(3deg); }
-      50% { transform: translateY(-8px) rotate(-2deg); }
-      75% { transform: translateY(-25px) rotate(1deg); }
-    }
-
-    .shape { animation: floatShape 12s ease-in-out infinite; }
-    .shape:nth-child(2) { animation-delay: -3s; animation-duration: 15s; }
-    .shape:nth-child(3) { animation-delay: -7s; animation-duration: 18s; }
-    .shape:nth-child(4) { animation-delay: -5s; animation-duration: 14s; }
-
-    /* ================================================================
-       ANIMATIONS
-       ================================================================ */
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(40px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes popIn {
-      from { opacity: 0; transform: scale(0.85); }
-      to { opacity: 1; transform: scale(1); }
-    }
-
-    @keyframes shimmer {
-      0% { background-position: -200% center; }
-      100% { background-position: 200% center; }
-    }
-
-    .anim-fadeUp,
-    .anim-popIn {
+    .reveal {
       opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .slide.visible .anim-fadeUp {
-      animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
     }
 
-    .slide.visible .anim-popIn {
-      animation: popIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
+    .reveal.delay-1 { transition-delay: 0.1s; }
+    .reveal.delay-2 { transition-delay: 0.2s; }
+    .reveal.delay-3 { transition-delay: 0.3s; }
+    .reveal.delay-4 { transition-delay: 0.4s; }
+    .reveal.delay-5 { transition-delay: 0.5s; }
 
-    /* Stagger delays */
-    .delay-1 { animation-delay: 0.1s !important; }
-    .delay-2 { animation-delay: 0.2s !important; }
-    .delay-3 { animation-delay: 0.3s !important; }
-    .delay-4 { animation-delay: 0.4s !important; }
-    .delay-5 { animation-delay: 0.5s !important; }
-    .delay-6 { animation-delay: 0.6s !important; }
-    .delay-7 { animation-delay: 0.7s !important; }
-    .delay-8 { animation-delay: 0.8s !important; }
-
-    /* Reduced motion */
     @media (prefers-reduced-motion: reduce) {
-      .shape { animation: none !important; }
-      .anim-fadeUp, .anim-popIn { opacity: 1; animation: none !important; }
-      html { scroll-behavior: auto; }
+      .reveal {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
     }
 
     /* ================================================================
-       TYPOGRAPHY
+       HERO SECTION (App Store style)
        ================================================================ */
-    .title {
+    .hero {
+      text-align: center;
+      padding: clamp(60px, 10vw, 140px) clamp(20px, 5vw, 80px) clamp(40px, 6vw, 80px);
+      background: linear-gradient(180deg, var(--primary-bg) 0%, var(--bg) 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(124, 58, 237, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      position: relative;
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
+
+    .app-icon {
+      width: clamp(80px, 12vw, 120px);
+      height: clamp(80px, 12vw, 120px);
+      border-radius: clamp(18px, 2.5vw, 28px);
+      background: linear-gradient(135deg, var(--primary), var(--accent-rose));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      margin: 0 auto clamp(16px, 2vw, 24px);
+      box-shadow: 0 8px 32px rgba(124, 58, 237, 0.25);
+    }
+
+    .app-name {
       font-family: var(--font-title);
+      font-size: clamp(1.75rem, 4vw, 3rem);
       font-weight: 700;
-      line-height: 1.1;
+      color: var(--text);
       letter-spacing: -0.02em;
-      color: var(--text);
+      line-height: 1.15;
     }
 
-    .title--hero {
-      font-size: clamp(2rem, 5vw + 0.5rem, 4.2rem);
+    .app-subtitle {
+      font-size: clamp(1rem, 2vw, 1.35rem);
+      color: var(--text-secondary);
+      margin-top: clamp(8px, 1vw, 12px);
+      line-height: 1.5;
+      max-width: 560px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
-    .title--section {
-      font-size: clamp(1.6rem, 3.5vw + 0.3rem, 3rem);
-    }
-
-    .title--sub {
-      font-size: clamp(1.1rem, 2vw + 0.3rem, 1.6rem);
-      font-weight: 600;
-    }
-
-    .subtitle {
-      font-family: var(--font-body);
-      font-size: clamp(0.95rem, 1.5vw + 0.2rem, 1.25rem);
-      color: var(--text-sub);
-      line-height: 1.6;
-      max-width: 680px;
-    }
-
-    .gradient-text {
-      background: var(--gradient-text);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    /* ================================================================
-       BADGE
-       ================================================================ */
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: clamp(4px, 0.5vw, 8px);
-      padding: clamp(6px, 1vw, 10px) clamp(12px, 2vw, 20px);
-      background: rgba(124, 58, 237, 0.08);
-      border: 1px solid var(--card-border);
-      border-radius: 100px;
-      font-size: clamp(0.75rem, 1vw + 0.2rem, 0.95rem);
-      font-weight: 600;
-      color: var(--primary);
-      white-space: nowrap;
-    }
-
-    /* ================================================================
-       PILLS ROW
-       ================================================================ */
-    .pills {
+    .app-meta {
       display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(16px, 3vw, 32px);
+      margin-top: clamp(16px, 2vw, 24px);
       flex-wrap: wrap;
-      justify-content: center;
-      gap: clamp(6px, 1vw, 12px);
     }
 
-    .pill {
-      padding: clamp(6px, 0.8vw, 10px) clamp(12px, 1.5vw, 20px);
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 100px;
-      font-size: clamp(0.7rem, 1vw + 0.15rem, 0.9rem);
-      font-weight: 500;
-      color: var(--text);
-      box-shadow: 0 2px 8px var(--card-shadow);
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
-    }
-
-    .pill:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(124, 58, 237, 0.12);
-    }
-
-    /* ================================================================
-       CARDS
-       ================================================================ */
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: clamp(12px, 2vw, 20px);
-      padding: clamp(16px, 2.5vw, 32px);
-      box-shadow: 0 4px 20px var(--card-shadow);
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
-    }
-
-    .card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(124, 58, 237, 0.12);
-    }
-
-    .card-icon {
-      font-size: clamp(1.5rem, 2.5vw, 2.2rem);
-      margin-bottom: clamp(8px, 1vw, 16px);
-    }
-
-    .card-title {
-      font-family: var(--font-title);
-      font-weight: 600;
-      font-size: clamp(0.95rem, 1.3vw + 0.2rem, 1.2rem);
-      color: var(--text);
-      margin-bottom: clamp(4px, 0.5vw, 8px);
-    }
-
-    .card-desc {
-      font-size: clamp(0.8rem, 1vw + 0.1rem, 0.95rem);
-      color: var(--text-sub);
-      line-height: 1.5;
-    }
-
-    /* Card grid layouts */
-    .card-grid {
-      display: grid;
-      gap: clamp(12px, 2vw, 24px);
-      width: 100%;
-      max-width: 900px;
-    }
-
-    .card-grid--2 { grid-template-columns: repeat(2, 1fr); }
-    .card-grid--3 { grid-template-columns: repeat(3, 1fr); }
-    .card-grid--4 { grid-template-columns: repeat(2, 1fr); }
-
-    @media (min-width: 768px) {
-      .card-grid--4 { grid-template-columns: repeat(4, 1fr); }
-    }
-
-    @media (max-width: 600px) {
-      .card-grid--2 { grid-template-columns: 1fr; }
-      .card-grid--3 { grid-template-columns: 1fr; }
-      .card-grid--4 { grid-template-columns: repeat(2, 1fr); }
-    }
-
-    /* ================================================================
-       FEATURE LIST
-       ================================================================ */
-    .feature-list {
-      list-style: none;
-      text-align: left;
-      display: flex;
-      flex-direction: column;
-      gap: clamp(8px, 1.2vw, 16px);
-    }
-
-    .feature-list li {
-      display: flex;
-      align-items: flex-start;
-      gap: clamp(8px, 1vw, 14px);
-      font-size: clamp(0.85rem, 1.2vw + 0.1rem, 1.05rem);
-      color: var(--text);
-      line-height: 1.5;
-    }
-
-    .feature-list li::before {
-      content: '\2726';
-      color: var(--primary);
-      font-size: clamp(0.7rem, 1vw, 0.9rem);
-      flex-shrink: 0;
-      margin-top: 3px;
-    }
-
-    /* ================================================================
-       PRIVACY SHIELD ICON
-       ================================================================ */
-    .shield-icon {
-      width: clamp(48px, 6vw, 80px);
-      height: clamp(48px, 6vw, 80px);
-      background: linear-gradient(135deg, #7C3AED, #EC4899);
-      border-radius: clamp(12px, 2vw, 20px);
+    .app-meta-item {
+      font-size: clamp(0.75rem, 1vw, 0.875rem);
+      color: var(--text-tertiary);
       display: flex;
       align-items: center;
-      justify-content: center;
-      font-size: clamp(1.5rem, 3vw, 2.5rem);
-      margin-bottom: clamp(12px, 2vw, 24px);
+      gap: 6px;
     }
 
-    /* ================================================================
-       CTA BUTTON
-       ================================================================ */
-    .cta-button {
+    .app-meta-item strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .store-button {
       display: inline-flex;
       align-items: center;
       gap: clamp(8px, 1vw, 12px);
-      padding: clamp(14px, 2vw, 20px) clamp(28px, 4vw, 48px);
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      padding: clamp(14px, 2vw, 18px) clamp(28px, 4vw, 40px);
+      background: var(--text);
       color: #FFFFFF;
       text-decoration: none;
-      border-radius: 100px;
+      border-radius: 14px;
       font-family: var(--font-body);
-      font-size: clamp(0.95rem, 1.3vw + 0.1rem, 1.15rem);
+      font-size: clamp(0.9rem, 1.2vw, 1.05rem);
       font-weight: 600;
       border: none;
       cursor: pointer;
-      box-shadow: 0 8px 30px rgba(124, 58, 237, 0.3);
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+      margin-top: clamp(24px, 3vw, 36px);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
     }
 
-    .cta-button:hover {
-      transform: translateY(-3px) scale(1.02);
-      box-shadow: 0 14px 40px rgba(124, 58, 237, 0.4);
+    .store-button:hover {
+      transform: scale(1.03);
+      opacity: 0.9;
     }
 
-    .cta-button svg {
-      width: clamp(18px, 2vw, 24px);
-      height: clamp(18px, 2vw, 24px);
-    }
-
-    /* ================================================================
-       PROGRESS BAR (fixed top)
-       ================================================================ */
-    .progress-bar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      height: 3px;
-      background: var(--gradient-text);
-      background-size: 200% 100%;
-      z-index: 1000;
-      transition: width 0.3s ease;
-      border-radius: 0 2px 2px 0;
+    .store-button svg {
+      width: clamp(20px, 2.5vw, 24px);
+      height: clamp(20px, 2.5vw, 24px);
     }
 
     /* ================================================================
-       NAV DOTS (fixed right side)
+       PHONE MOCKUPS CAROUSEL
        ================================================================ */
-    .nav-dots {
-      position: fixed;
-      right: clamp(12px, 2vw, 24px);
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 1000;
+    .screenshots-section {
+      padding: clamp(24px, 4vw, 60px) 0;
+      overflow: hidden;
+    }
+
+    .screenshots-track {
+      display: flex;
+      gap: clamp(16px, 2vw, 24px);
+      padding: 0 clamp(20px, 5vw, 80px);
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .screenshots-track::-webkit-scrollbar {
+      display: none;
+    }
+
+    .phone-frame {
+      flex-shrink: 0;
+      width: clamp(220px, 28vw, 280px);
+      height: clamp(440px, 56vw, 560px);
+      background: var(--bg-white);
+      border-radius: clamp(28px, 4vw, 40px);
+      border: 3px solid #E5E5EA;
+      overflow: hidden;
+      scroll-snap-align: center;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
       display: flex;
       flex-direction: column;
-      gap: clamp(8px, 1vh, 14px);
+      position: relative;
     }
 
-    .nav-dot {
-      width: clamp(8px, 1vw, 10px);
-      height: clamp(8px, 1vw, 10px);
-      border-radius: 50%;
-      background: var(--primary-light);
-      opacity: 0.3;
-      border: none;
-      cursor: pointer;
-      transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease;
-      padding: 0;
+    .phone-notch {
+      width: clamp(100px, 14vw, 130px);
+      height: clamp(24px, 3vw, 32px);
+      background: var(--bg-white);
+      border-radius: 0 0 20px 20px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+      border-bottom: 2px solid #E5E5EA;
+      border-left: 2px solid #E5E5EA;
+      border-right: 2px solid #E5E5EA;
     }
 
-    .nav-dot:hover {
-      opacity: 0.6;
-      transform: scale(1.3);
-    }
-
-    .nav-dot.active {
-      opacity: 1;
-      background: var(--primary);
-      transform: scale(1.3);
-    }
-
-    /* ================================================================
-       SPACING UTILITIES
-       ================================================================ */
-    .gap-xs { height: clamp(8px, 1vh, 12px); }
-    .gap-sm { height: clamp(12px, 1.5vh, 20px); }
-    .gap-md { height: clamp(16px, 2.5vh, 32px); }
-    .gap-lg { height: clamp(24px, 3.5vh, 48px); }
-
-    /* ================================================================
-       SPLIT LAYOUT (visual left, content right)
-       ================================================================ */
-    .split {
-      display: flex;
-      align-items: center;
-      gap: clamp(24px, 4vw, 64px);
-      width: 100%;
-      max-width: 900px;
-    }
-
-    .split__visual {
-      flex-shrink: 0;
-      width: clamp(80px, 15vw, 180px);
-      height: clamp(80px, 15vw, 180px);
-      background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(236, 72, 153, 0.08));
-      border-radius: clamp(16px, 3vw, 32px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: clamp(2.5rem, 6vw, 5rem);
-      border: 1px solid var(--card-border);
-    }
-
-    .split__content {
-      text-align: left;
+    .phone-screen {
       flex: 1;
+      padding: clamp(12px, 2vw, 20px);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(8px, 1.2vw, 14px);
+      overflow: hidden;
     }
 
-    @media (max-width: 600px) {
-      .split {
-        flex-direction: column;
-        text-align: center;
-      }
-      .split__visual {
-        width: clamp(64px, 20vw, 100px);
-        height: clamp(64px, 20vw, 100px);
-        font-size: clamp(2rem, 8vw, 3rem);
-      }
-      .split__content {
-        text-align: center;
-      }
-      .split__content .feature-list {
-        text-align: left;
-      }
+    .phone-screen-title {
+      font-family: var(--font-title);
+      font-size: clamp(0.85rem, 1.3vw, 1.1rem);
+      font-weight: 700;
+      color: var(--text);
     }
 
-    /* ================================================================
-       SMALL SCREEN HEIGHT ADJUSTMENTS
-       ================================================================ */
-    @media (max-height: 700px) {
-      .slide { padding: clamp(12px, 2vw, 24px); }
-      .gap-lg { height: clamp(12px, 2vh, 24px); }
-      .gap-md { height: clamp(8px, 1.5vh, 16px); }
-      .title--hero { font-size: clamp(1.6rem, 4vw + 0.3rem, 3rem); }
-      .title--section { font-size: clamp(1.3rem, 3vw + 0.2rem, 2.2rem); }
-      .subtitle { font-size: clamp(0.85rem, 1.2vw + 0.15rem, 1.05rem); }
-      .card { padding: clamp(10px, 1.5vw, 20px); }
-      .split__visual {
-        width: clamp(56px, 10vw, 100px);
-        height: clamp(56px, 10vw, 100px);
-        font-size: clamp(1.8rem, 4vw, 3rem);
-      }
-    }
-
-    @media (max-height: 600px) {
-      .title--hero { font-size: clamp(1.4rem, 3.5vw + 0.2rem, 2.4rem); }
-      .title--section { font-size: clamp(1.1rem, 2.5vw + 0.2rem, 1.8rem); }
-      .gap-lg { height: clamp(8px, 1.5vh, 16px); }
-      .gap-md { height: clamp(6px, 1vh, 12px); }
-      .gap-sm { height: clamp(4px, 0.8vh, 10px); }
-    }
-
-    @media (max-height: 500px) {
-      .title--hero { font-size: clamp(1.2rem, 3vw, 2rem); }
-      .title--section { font-size: clamp(1rem, 2vw, 1.5rem); }
-      .subtitle { font-size: clamp(0.75rem, 1vw + 0.1rem, 0.9rem); }
-      .badge { padding: 4px 10px; font-size: 0.7rem; }
-      .pill { padding: 4px 10px; font-size: 0.65rem; }
-      .card { padding: clamp(8px, 1vw, 14px); }
-      .card-icon { font-size: 1.2rem; margin-bottom: 4px; }
-      .card-title { font-size: 0.85rem; }
-      .card-desc { font-size: 0.75rem; }
-    }
-
-    /* ================================================================
-       WIDGET CARDS (slide 7)
-       ================================================================ */
-    .widget-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: clamp(16px, 2.5vw, 24px);
-      padding: clamp(20px, 3vw, 36px);
-      box-shadow: 0 4px 20px var(--card-shadow);
-      text-align: left;
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
-    }
-
-    .widget-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(124, 58, 237, 0.12);
-    }
-
-    .widget-card__header {
+    .mock-card {
+      background: var(--primary-bg);
+      border-radius: clamp(10px, 1.5vw, 14px);
+      padding: clamp(10px, 1.5vw, 16px);
       display: flex;
       align-items: center;
-      gap: clamp(8px, 1.2vw, 14px);
-      margin-bottom: clamp(8px, 1.2vw, 16px);
+      gap: clamp(8px, 1vw, 12px);
     }
 
-    .widget-card__icon {
-      width: clamp(36px, 4vw, 48px);
-      height: clamp(36px, 4vw, 48px);
-      border-radius: clamp(8px, 1.2vw, 12px);
+    .mock-card-icon {
+      font-size: clamp(1.2rem, 1.8vw, 1.5rem);
+      flex-shrink: 0;
+    }
+
+    .mock-card-text {
+      font-size: clamp(0.65rem, 0.9vw, 0.8rem);
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .mock-card-text strong {
+      display: block;
+      color: var(--text);
+      font-size: clamp(0.7rem, 1vw, 0.85rem);
+      margin-bottom: 2px;
+    }
+
+    .mock-card--rose { background: #FDF2F8; }
+    .mock-card--amber { background: #FFFBEB; }
+    .mock-card--mint { background: #ECFDF5; }
+    .mock-card--blue { background: #EFF6FF; }
+
+    .mock-progress {
+      height: clamp(6px, 0.8vw, 8px);
+      background: #E5E5EA;
+      border-radius: 100px;
+      overflow: hidden;
+    }
+
+    .mock-progress-bar {
+      height: 100%;
+      border-radius: 100px;
+      background: linear-gradient(90deg, var(--primary), var(--accent-rose));
+    }
+
+    .mock-timer {
+      text-align: center;
+      padding: clamp(14px, 2vw, 24px);
+      background: var(--primary-bg);
+      border-radius: clamp(12px, 2vw, 18px);
+    }
+
+    .mock-timer-time {
+      font-family: var(--font-title);
+      font-size: clamp(1.8rem, 3vw, 2.4rem);
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 0.02em;
+    }
+
+    .mock-timer-label {
+      font-size: clamp(0.6rem, 0.8vw, 0.75rem);
+      color: var(--text-tertiary);
+      margin-top: 4px;
+    }
+
+    .mock-calendar-row {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      text-align: center;
+    }
+
+    .mock-calendar-day {
+      font-size: clamp(0.55rem, 0.7vw, 0.7rem);
+      padding: clamp(4px, 0.5vw, 6px);
+      border-radius: 6px;
+      color: var(--text-secondary);
+    }
+
+    .mock-calendar-day.today {
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .mock-calendar-day.event {
+      position: relative;
+    }
+
+    .mock-calendar-day.event::after {
+      content: '';
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--accent-rose);
+    }
+
+    .mock-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      background: var(--primary-bg);
+      border-radius: 100px;
+      font-size: clamp(0.6rem, 0.8vw, 0.7rem);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .mock-pill-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    /* ================================================================
+       SECTION TITLES
+       ================================================================ */
+    .section {
+      padding: var(--section-padding);
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: clamp(0.75rem, 1vw, 0.875rem);
+      font-weight: 600;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: clamp(8px, 1vw, 12px);
+    }
+
+    .section-title {
+      font-family: var(--font-title);
+      font-size: clamp(1.5rem, 3.5vw, 2.5rem);
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+    }
+
+    .section-subtitle {
+      font-size: clamp(0.9rem, 1.3vw, 1.1rem);
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-top: clamp(8px, 1vw, 16px);
+      max-width: 600px;
+    }
+
+    /* ================================================================
+       FEATURES GRID (App Store style)
+       ================================================================ */
+    .features-band {
+      background: var(--bg-white);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(24px, 3vw, 40px);
+      margin-top: clamp(24px, 3vw, 40px);
+    }
+
+    @media (max-width: 768px) {
+      .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .feature-card {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(8px, 1vw, 12px);
+    }
+
+    .feature-icon {
+      width: clamp(40px, 5vw, 52px);
+      height: clamp(40px, 5vw, 52px);
+      border-radius: clamp(10px, 1.5vw, 14px);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: clamp(1.2rem, 2vw, 1.6rem);
+    }
+
+    .feature-icon--purple { background: var(--primary-bg); }
+    .feature-icon--rose { background: #FDF2F8; }
+    .feature-icon--amber { background: #FFFBEB; }
+    .feature-icon--mint { background: #ECFDF5; }
+    .feature-icon--blue { background: #EFF6FF; }
+    .feature-icon--gray { background: #F3F4F6; }
+
+    .feature-title {
+      font-family: var(--font-title);
+      font-size: clamp(0.95rem, 1.3vw, 1.15rem);
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .feature-desc {
+      font-size: clamp(0.8rem, 1vw, 0.9rem);
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+
+    /* ================================================================
+       DETAIL SECTIONS (alternating text + visual)
+       ================================================================ */
+    .detail {
+      display: flex;
+      align-items: center;
+      gap: clamp(32px, 6vw, 80px);
+      padding: var(--section-padding);
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
+
+    .detail--reverse {
+      flex-direction: row-reverse;
+    }
+
+    .detail-text {
+      flex: 1;
+    }
+
+    .detail-visual {
+      flex: 1;
+      max-width: 420px;
+    }
+
+    .detail-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(10px, 1.5vw, 16px);
+      margin-top: clamp(16px, 2vw, 24px);
+    }
+
+    .detail-list li {
+      font-size: clamp(0.85rem, 1.1vw, 0.95rem);
+      color: var(--text-secondary);
+      line-height: 1.55;
+      padding-left: 24px;
+      position: relative;
+    }
+
+    .detail-list li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 8px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary-light);
+    }
+
+    .detail-list li strong {
+      color: var(--text);
+    }
+
+    @media (max-width: 768px) {
+      .detail, .detail--reverse {
+        flex-direction: column;
+        text-align: center;
+      }
+      .detail-list li {
+        text-align: left;
+      }
+      .detail-visual {
+        max-width: 320px;
+        width: 100%;
+      }
+    }
+
+    /* ================================================================
+       VISUAL BLOCKS (CSS art for detail sections)
+       ================================================================ */
+    .visual-block {
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: clamp(16px, 2.5vw, 24px);
+      padding: clamp(20px, 3vw, 32px);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    .visual-block-row {
+      display: flex;
+      align-items: center;
+      gap: clamp(10px, 1.5vw, 14px);
+      padding: clamp(10px, 1.5vw, 14px) 0;
+    }
+
+    .visual-block-row + .visual-block-row {
+      border-top: 1px solid var(--border);
+    }
+
+    .visual-block-icon {
+      font-size: clamp(1.3rem, 2vw, 1.6rem);
       flex-shrink: 0;
     }
 
-    .widget-card__icon--purple {
-      background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(124, 58, 237, 0.05));
+    .visual-block-label {
+      font-size: clamp(0.8rem, 1vw, 0.9rem);
+      font-weight: 500;
+      color: var(--text);
+      flex: 1;
     }
 
-    .widget-card__icon--pink {
-      background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(236, 72, 153, 0.05));
+    .visual-block-value {
+      font-size: clamp(0.75rem, 0.9vw, 0.85rem);
+      color: var(--text-tertiary);
     }
 
-    /* ================================================================
-       ZEN CIRCLE (slide 8) — breathing animation
-       ================================================================ */
-    @keyframes breathe {
-      0%, 100% { transform: scale(1); opacity: 0.6; }
-      50% { transform: scale(1.12); opacity: 1; }
-    }
-
-    .zen-circle {
-      width: clamp(100px, 18vw, 180px);
-      height: clamp(100px, 18vw, 180px);
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(124, 58, 237, 0.15), rgba(236, 72, 153, 0.08), transparent);
-      border: 2px solid rgba(124, 58, 237, 0.2);
-      display: flex;
+    .visual-block-badge {
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
-      font-size: clamp(2rem, 5vw, 3.5rem);
-      animation: breathe 5s ease-in-out infinite;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: clamp(0.65rem, 0.8vw, 0.75rem);
+      font-weight: 600;
     }
 
-    @media (prefers-reduced-motion: reduce) {
-      .zen-circle { animation: none; }
+    .visual-block-badge--green {
+      background: #ECFDF5;
+      color: #059669;
+    }
+
+    .visual-block-badge--purple {
+      background: var(--primary-bg);
+      color: var(--primary);
+    }
+
+    .visual-block-badge--amber {
+      background: #FFFBEB;
+      color: #D97706;
     }
 
     /* ================================================================
-       PRIVACY GRID (slide 10)
+       PRIVACY SECTION
        ================================================================ */
+    .privacy-band {
+      background: var(--text);
+      color: #FFFFFF;
+    }
+
+    .privacy-band .section-label {
+      color: var(--primary-light);
+    }
+
+    .privacy-band .section-title {
+      color: #FFFFFF;
+    }
+
+    .privacy-band .section-subtitle {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
     .privacy-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: clamp(12px, 2vw, 20px);
-      width: 100%;
-      max-width: 700px;
-    }
-
-    .privacy-item {
-      display: flex;
-      align-items: flex-start;
-      gap: clamp(8px, 1vw, 14px);
-      text-align: left;
-      font-size: clamp(0.8rem, 1.1vw + 0.1rem, 1rem);
-      color: var(--text);
-      line-height: 1.5;
-    }
-
-    .privacy-item__icon {
-      flex-shrink: 0;
-      width: clamp(32px, 4vw, 44px);
-      height: clamp(32px, 4vw, 44px);
-      border-radius: clamp(8px, 1.2vw, 12px);
-      background: rgba(124, 58, 237, 0.08);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: clamp(1rem, 1.5vw, 1.3rem);
+      gap: clamp(20px, 3vw, 32px);
+      margin-top: clamp(24px, 3vw, 40px);
     }
 
     @media (max-width: 600px) {
       .privacy-grid { grid-template-columns: 1fr; }
     }
 
+    .privacy-item {
+      display: flex;
+      gap: clamp(12px, 1.5vw, 16px);
+    }
+
+    .privacy-item-icon {
+      width: clamp(40px, 5vw, 48px);
+      height: clamp(40px, 5vw, 48px);
+      border-radius: 12px;
+      background: rgba(124, 58, 237, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(1.1rem, 1.5vw, 1.3rem);
+      flex-shrink: 0;
+    }
+
+    .privacy-item-title {
+      font-size: clamp(0.9rem, 1.1vw, 1rem);
+      font-weight: 600;
+      color: #FFFFFF;
+      margin-bottom: 4px;
+    }
+
+    .privacy-item-desc {
+      font-size: clamp(0.8rem, 0.95vw, 0.875rem);
+      color: rgba(255, 255, 255, 0.5);
+      line-height: 1.5;
+    }
+
+    /* ================================================================
+       CTA SECTION
+       ================================================================ */
+    .cta-section {
+      text-align: center;
+      padding: clamp(60px, 8vw, 120px) clamp(20px, 5vw, 80px);
+    }
+
+    .cta-title {
+      font-family: var(--font-title);
+      font-size: clamp(1.5rem, 3.5vw, 2.5rem);
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+    }
+
+    .cta-subtitle {
+      font-size: clamp(0.9rem, 1.3vw, 1.1rem);
+      color: var(--text-secondary);
+      margin-top: clamp(8px, 1vw, 16px);
+    }
+
     /* ================================================================
        FOOTER
        ================================================================ */
-    .footer-text {
-      font-size: clamp(0.75rem, 1vw + 0.1rem, 0.9rem);
-      color: var(--text-sub);
+    .footer {
+      text-align: center;
+      padding: clamp(24px, 3vw, 40px) clamp(20px, 5vw, 80px);
+      border-top: 1px solid var(--border);
     }
 
-    .footer-text a {
-      color: var(--primary);
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: clamp(16px, 3vw, 32px);
+      flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      font-size: clamp(0.8rem, 1vw, 0.875rem);
+      color: var(--text-tertiary);
       text-decoration: none;
+      transition: color 0.2s ease;
     }
 
-    .footer-text a:hover {
-      text-decoration: underline;
+    .footer-links a:hover {
+      color: var(--primary);
+    }
+
+    .footer-copy {
+      font-size: clamp(0.7rem, 0.85vw, 0.8rem);
+      color: var(--text-tertiary);
+      margin-top: clamp(12px, 1.5vw, 20px);
     }
 
     /* ================================================================
-       HIDE NAV DOTS ON NARROW MOBILE
+       DIVIDER
        ================================================================ */
-    @media (max-width: 480px) {
-      .nav-dots { display: none; }
+    .divider {
+      height: 1px;
+      background: var(--border);
+      max-width: var(--max-width);
+      margin: 0 auto;
     }
   </style>
 </head>
 <body>
 
   <!-- ================================================================
-       FIXED UI: Progress bar + Nav dots
+       HERO — App Store style
        ================================================================ -->
-  <div class="progress-bar" id="progressBar"></div>
-  <nav class="nav-dots" id="navDots" aria-label="Navigation des slides"></nav>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="app-icon reveal">&#x1F3E0;</div>
 
-  <!-- ================================================================
-       SLIDE 1 — HERO
-       ================================================================ -->
-  <section class="slide" id="slide-0">
-    <div class="shape shape--violet" style="width: 300px; height: 300px; top: -80px; left: -60px;"></div>
-    <div class="shape shape--rose" style="width: 200px; height: 200px; bottom: -40px; right: -30px;"></div>
-    <div class="shape shape--amber" style="width: 150px; height: 150px; top: 30%; right: 10%;"></div>
+      <h1 class="app-name reveal delay-1">FamilyFlow</h1>
+      <p class="app-subtitle reveal delay-2">Le quotidien familial, sans la charge mentale.</p>
 
-    <div class="slide-inner">
-      <div class="anim-fadeUp delay-1">
-        <span class="badge">&#x1F3E0; Pour toute la famille</span>
+      <div class="app-meta reveal delay-3">
+        <div class="app-meta-item"><strong>Gratuit</strong></div>
+        <div class="app-meta-item">&#x2022;</div>
+        <div class="app-meta-item"><strong>iOS 17+</strong></div>
+        <div class="app-meta-item">&#x2022;</div>
+        <div class="app-meta-item"><strong>Open source</strong></div>
+        <div class="app-meta-item">&#x2022;</div>
+        <div class="app-meta-item"><strong>100% priv&#233;</strong></div>
       </div>
 
-      <div class="gap-md"></div>
-
-      <h1 class="title title--hero anim-fadeUp delay-2">
-        Le quotidien familial,<br><span class="gradient-text">sans la charge mentale</span>
-      </h1>
-
-      <div class="gap-sm"></div>
-
-      <p class="subtitle anim-fadeUp delay-3">
-        Courses, t&#226;ches, journal b&#233;b&#233;, rendez-vous, recettes, widgets interactifs &#8212; tout est l&#224;. Priv&#233; par design.
-      </p>
-
-      <div class="gap-md"></div>
-
-      <div class="pills anim-fadeUp delay-4">
-        <span class="pill">&#x1F4CB; T&#226;ches</span>
-        <span class="pill">&#x1F37C; Journal b&#233;b&#233;</span>
-        <span class="pill">&#x1F37D;&#xFE0F; Repas</span>
-        <span class="pill">&#x1F4C5; RDV</span>
-        <span class="pill">&#x1F9D8; Mode zen</span>
-        <span class="pill">&#x1F4F1; Widgets iOS</span>
-      </div>
+      <a href="https://apps.apple.com" class="store-button reveal delay-4" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        T&#233;l&#233;charger sur l'App Store
+      </a>
     </div>
-  </section>
+  </header>
 
   <!-- ================================================================
-       SLIDE 2 — LE PROBL&#200;ME
+       SCREENSHOTS CAROUSEL (CSS mockups)
        ================================================================ -->
-  <section class="slide" id="slide-1">
-    <div class="shape shape--rose" style="width: 250px; height: 250px; top: -60px; right: -40px;"></div>
-    <div class="shape shape--violet" style="width: 180px; height: 180px; bottom: -30px; left: -20px;"></div>
+  <section class="screenshots-section">
+    <div class="screenshots-track">
 
-    <div class="slide-inner">
-      <h2 class="title title--section anim-fadeUp delay-1">
-        10 apps pour g&#233;rer <span class="gradient-text">une famille</span> ?
-      </h2>
-
-      <div class="gap-md"></div>
-
-      <div class="card-grid card-grid--4 anim-popIn delay-2">
-        <div class="card">
-          <div class="card-icon">&#x1F4CB;</div>
-          <div class="card-title">Rappels</div>
-          <div class="card-desc">Dans une app</div>
-        </div>
-        <div class="card">
-          <div class="card-icon">&#x1F373;</div>
-          <div class="card-title">Recettes</div>
-          <div class="card-desc">Dans une autre</div>
-        </div>
-        <div class="card">
-          <div class="card-icon">&#x1F476;</div>
-          <div class="card-title">Journal b&#233;b&#233;</div>
-          <div class="card-desc">Sur papier</div>
-        </div>
-        <div class="card">
-          <div class="card-icon">&#x1F4C5;</div>
-          <div class="card-title">Rendez-vous</div>
-          <div class="card-desc">Dans le calendrier</div>
-        </div>
-      </div>
-
-      <div class="gap-md"></div>
-
-      <p class="subtitle anim-fadeUp delay-3">
-        La charge mentale, c'est &#231;a : tout &#233;parpill&#233;, rien de synchronis&#233;.
-      </p>
-    </div>
-  </section>
-
-  <!-- ================================================================
-       SLIDE 3 — LA SOLUTION
-       ================================================================ -->
-  <section class="slide" id="slide-2">
-    <div class="shape shape--mint" style="width: 280px; height: 280px; top: -80px; left: 10%;"></div>
-    <div class="shape shape--amber" style="width: 160px; height: 160px; bottom: 10%; right: -30px;"></div>
-
-    <div class="slide-inner">
-      <h2 class="title title--section anim-fadeUp delay-1">
-        Une seule app. <span class="gradient-text">Toute la famille.</span>
-      </h2>
-
-      <div class="gap-sm"></div>
-
-      <p class="subtitle anim-fadeUp delay-2">
-        FamilyFlow r&#233;unit tout ce dont votre famille a besoin, dans un espace &#233;l&#233;gant et priv&#233;.
-      </p>
-
-      <div class="gap-md"></div>
-
-      <div class="anim-fadeUp delay-3" style="max-width: 600px;">
-        <ul class="feature-list">
-          <li>T&#226;ches m&#233;nag&#232;res avec r&#233;currence et gamification</li>
-          <li>Journal b&#233;b&#233; complet : t&#233;t&#233;es, couches, sommeil, humeur</li>
-          <li>Planning repas et recettes int&#233;gr&#233;es (format Cooklang)</li>
-          <li>Rendez-vous familiaux avec rappels et suivi</li>
-          <li>Donn&#233;es 100% locales &#8212; synchronis&#233;es via iCloud Drive</li>
-        </ul>
-      </div>
-
-      <div class="gap-md"></div>
-
-      <div class="anim-popIn delay-4">
-        <span class="badge">&#x1F512; 100% priv&#233; &#183; z&#233;ro cloud</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================================================================
-       SLIDE 4 — T&#194;CHES INTELLIGENTES
-       ================================================================ -->
-  <section class="slide" id="slide-3">
-    <div class="shape shape--violet" style="width: 220px; height: 220px; bottom: -60px; left: -40px;"></div>
-    <div class="shape shape--rose" style="width: 140px; height: 140px; top: 15%; right: 5%;"></div>
-
-    <div class="slide-inner">
-      <div class="split anim-fadeUp delay-1">
-        <div class="split__visual">&#x1F4CB;</div>
-        <div class="split__content">
-          <h2 class="title title--section" style="text-align: left;">T&#226;ches &amp; m&#233;nage</h2>
-          <div class="gap-sm"></div>
-          <ul class="feature-list">
-            <li><strong>R&#233;currence automatique</strong> &#8212; quotidien, hebdomadaire ou mensuel</li>
-            <li><strong>&#201;dition rapide</strong> &#8212; appui long pour modifier en place</li>
-            <li><strong>Gamification</strong> &#8212; chaque t&#226;che rapporte des points et des loot boxes</li>
-            <li><strong>Swipe-to-delete</strong> &#8212; suppression d'un geste fluide</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================================================================
-       SLIDE 5 — JOURNAL B&#201;B&#201;
-       ================================================================ -->
-  <section class="slide" id="slide-4">
-    <div class="shape shape--amber" style="width: 260px; height: 260px; top: -70px; right: -50px;"></div>
-    <div class="shape shape--mint" style="width: 170px; height: 170px; bottom: 10%; left: 5%;"></div>
-
-    <div class="slide-inner">
-      <div class="split anim-fadeUp delay-1">
-        <div class="split__visual">&#x1F37C;</div>
-        <div class="split__content">
-          <h2 class="title title--section" style="text-align: left;">Journal b&#233;b&#233;</h2>
-          <div class="gap-sm"></div>
-          <ul class="feature-list">
-            <li><strong>Tout en un</strong> &#8212; t&#233;t&#233;es, biberons, couches, sommeil, humeur</li>
-            <li><strong>Stats temps r&#233;el</strong> &#8212; dur&#233;es, fr&#233;quences, tendances automatiques</li>
-            <li><strong>Widget interactif</strong> &#8212; timer t&#233;t&#233;e gauche/droite depuis l'&#233;cran d'accueil</li>
-            <li><strong>Historique quotidien</strong> &#8212; un fichier par jour, consultable dans Obsidian</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================================================================
-       SLIDE 6 — REPAS & RECETTES
-       ================================================================ -->
-  <section class="slide" id="slide-5">
-    <div class="shape shape--rose" style="width: 200px; height: 200px; top: -50px; left: -30px;"></div>
-    <div class="shape shape--violet" style="width: 150px; height: 150px; bottom: -30px; right: 8%;"></div>
-
-    <div class="slide-inner">
-      <div class="split anim-fadeUp delay-1">
-        <div class="split__visual">&#x1F37D;&#xFE0F;</div>
-        <div class="split__content">
-          <h2 class="title title--section" style="text-align: left;">Repas &amp; recettes</h2>
-          <div class="gap-sm"></div>
-          <ul class="feature-list">
-            <li><strong>Planning semaine</strong> &#8212; glissez-d&#233;posez vos repas du lundi au dimanche</li>
-            <li><strong>Import par URL</strong> &#8212; collez un lien, la recette est extraite automatiquement</li>
-            <li><strong>Liste de courses</strong> &#8212; g&#233;n&#233;r&#233;e &#224; partir de vos repas planifi&#233;s</li>
-            <li><strong>Format Cooklang</strong> &#8212; recettes lisibles et partageables</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================================================================
-       SLIDE 7 — WIDGETS iOS
-       ================================================================ -->
-  <section class="slide" id="slide-6">
-    <div class="shape shape--amber" style="width: 240px; height: 240px; bottom: -60px; left: -40px;"></div>
-    <div class="shape shape--mint" style="width: 180px; height: 180px; top: -40px; right: -20px;"></div>
-
-    <div class="slide-inner">
-      <h2 class="title title--section anim-fadeUp delay-1">
-        Widgets qui <span class="gradient-text">travaillent pour vous</span>
-      </h2>
-
-      <div class="gap-sm"></div>
-
-      <p class="subtitle anim-fadeUp delay-2">
-        Boutons interactifs, sans ouvrir l'app. Compatibles iOS 17+ avec deep links.
-      </p>
-
-      <div class="gap-md"></div>
-
-      <div class="card-grid card-grid--2 anim-popIn delay-3">
-        <div class="widget-card">
-          <div class="widget-card__header">
-            <div class="widget-card__icon widget-card__icon--purple">&#x1F4C5;</div>
-            <div>
-              <div class="card-title">Ma Journ&#233;e</div>
+      <!-- Screen 1: Dashboard -->
+      <div class="phone-frame reveal">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="phone-screen-title">&#x1F3E0; Ma journ&#233;e</div>
+          <div class="mock-card">
+            <div class="mock-card-icon">&#x1F373;</div>
+            <div class="mock-card-text">
+              <strong>D&#233;jeuner</strong>
+              Gratin dauphinois
             </div>
           </div>
-          <div class="card-desc">Repas, t&#226;ches et rendez-vous du jour en un coup d'&#339;il. Cochez directement depuis votre &#233;cran d'accueil.</div>
-        </div>
-        <div class="widget-card">
-          <div class="widget-card__header">
-            <div class="widget-card__icon widget-card__icon--pink">&#x1F37C;</div>
-            <div>
-              <div class="card-title">Journal b&#233;b&#233;</div>
+          <div class="mock-card mock-card--rose">
+            <div class="mock-card-icon">&#x1F4CB;</div>
+            <div class="mock-card-text">
+              <strong>3 t&#226;ches</strong>
+              Aspirateur, lessive, courses
             </div>
           </div>
-          <div class="card-desc">Timer t&#233;t&#233;e gauche/droite et biberon rapide. Lancez un suivi en un tap sans d&#233;verrouiller.</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================================================================
-       SLIDE 8 — MODE ZEN
-       ================================================================ -->
-  <section class="slide" id="slide-7">
-    <div class="shape shape--violet" style="width: 300px; height: 300px; top: -100px; right: -60px; opacity: 0.2;"></div>
-    <div class="shape shape--mint" style="width: 200px; height: 200px; bottom: -50px; left: -30px; opacity: 0.25;"></div>
-
-    <div class="slide-inner">
-      <div class="anim-popIn delay-1">
-        <div class="zen-circle">&#x1F9D8;</div>
-      </div>
-
-      <div class="gap-md"></div>
-
-      <h2 class="title title--section anim-fadeUp delay-2">
-        Mode zen
-      </h2>
-
-      <div class="gap-sm"></div>
-
-      <p class="subtitle anim-fadeUp delay-3">
-        Quand toutes les t&#226;ches sont faites, le dashboard se transforme en espace de calme. Cercle de respiration, aper&#231;u de demain, s&#233;r&#233;nit&#233; retrouv&#233;e.
-      </p>
-
-      <div class="gap-sm"></div>
-
-      <p class="subtitle anim-fadeUp delay-4" style="font-size: clamp(0.8rem, 1vw + 0.1rem, 0.95rem); opacity: 0.7;">
-        Configurable dans les r&#233;glages &#8212; activez-le quand vous en avez besoin.
-      </p>
-    </div>
-  </section>
-
-  <!-- ================================================================
-       SLIDE 9 — SUIVI GROSSESSE
-       ================================================================ -->
-  <section class="slide" id="slide-8">
-    <div class="shape shape--rose" style="width: 280px; height: 280px; top: -80px; left: -60px;"></div>
-    <div class="shape shape--amber" style="width: 160px; height: 160px; bottom: 5%; right: 5%;"></div>
-
-    <div class="slide-inner">
-      <div class="split anim-fadeUp delay-1">
-        <div class="split__visual">&#x1F930;</div>
-        <div class="split__content">
-          <h2 class="title title--section" style="text-align: left;">Suivi grossesse</h2>
-          <div class="gap-sm"></div>
-          <ul class="feature-list">
-            <li><strong>Compte &#224; rebours J-XX</strong> &#8212; suivez chaque jour qui passe</li>
-            <li><strong>Taille du b&#233;b&#233;</strong> &#8212; en cm et emoji fruit, semaine par semaine</li>
-            <li><strong>T&#226;ches automatiques</strong> &#8212; prises de sang mensuelles, &#233;chographies planifi&#233;es</li>
-            <li><strong>Transition fluide</strong> &#8212; passage automatique au journal b&#233;b&#233; &#224; la naissance</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================================================================
-       SLIDE 10 — VIE PRIV&#201;E
-       ================================================================ -->
-  <section class="slide" id="slide-9">
-    <div class="shape shape--violet" style="width: 220px; height: 220px; bottom: -50px; right: -30px;"></div>
-    <div class="shape shape--mint" style="width: 160px; height: 160px; top: -30px; left: 10%;"></div>
-
-    <div class="slide-inner">
-      <div class="anim-popIn delay-1">
-        <div class="shield-icon">&#x1F512;</div>
-      </div>
-
-      <h2 class="title title--section anim-fadeUp delay-2">
-        Vos donn&#233;es, <span class="gradient-text">votre famille</span>
-      </h2>
-
-      <div class="gap-md"></div>
-
-      <div class="privacy-grid anim-fadeUp delay-3">
-        <div class="privacy-item">
-          <div class="privacy-item__icon">&#x1F4C1;</div>
-          <div>
-            <strong>Stockage local</strong><br>
-            Vos donn&#233;es restent dans Obsidian, sur votre appareil
+          <div class="mock-card mock-card--mint">
+            <div class="mock-card-icon">&#x1F4C5;</div>
+            <div class="mock-card-text">
+              <strong>RDV 14h30</strong>
+              P&#233;diatre &#8212; Dr. Martin
+            </div>
           </div>
-        </div>
-        <div class="privacy-item">
-          <div class="privacy-item__icon">&#x2601;&#xFE0F;</div>
-          <div>
-            <strong>Sync iCloud Drive</strong><br>
-            Partagez entre vos appareils Apple, sans serveur tiers
-          </div>
-        </div>
-        <div class="privacy-item">
-          <div class="privacy-item__icon">&#x1F6AB;</div>
-          <div>
-            <strong>Z&#233;ro serveur</strong><br>
-            Aucune donn&#233;e ne quitte vos appareils
-          </div>
-        </div>
-        <div class="privacy-item">
-          <div class="privacy-item__icon">&#x1F916;</div>
-          <div>
-            <strong>IA anonymis&#233;e</strong><br>
-            Donn&#233;es nettoy&#233;es avant tout envoi optionnel
+          <div class="mock-card mock-card--amber">
+            <div class="mock-card-icon">&#x1F3C6;</div>
+            <div class="mock-card-text">
+              <strong>+15 points</strong>
+              Encore 5 pour la loot box !
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="gap-md"></div>
-
-      <div class="anim-popIn delay-4">
-        <span class="badge">&#10022; Privacy by design</span>
+      <!-- Screen 2: Journal b&#233;b&#233; -->
+      <div class="phone-frame reveal delay-1">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="phone-screen-title">&#x1F37C; Journal b&#233;b&#233;</div>
+          <div class="mock-timer">
+            <div class="mock-timer-time">12:34</div>
+            <div class="mock-timer-label">T&#233;t&#233;e en cours &#8212; c&#244;t&#233; gauche</div>
+          </div>
+          <div class="mock-pill-row">
+            <div class="mock-badge">&#x1F7E2; Live Activity</div>
+            <div class="mock-badge">&#x23F1; Timer</div>
+          </div>
+          <div class="mock-card mock-card--rose">
+            <div class="mock-card-icon">&#x1F476;</div>
+            <div class="mock-card-text">
+              <strong>Aujourd'hui</strong>
+              3 t&#233;t&#233;es &#183; 2 couches &#183; 1 sieste
+            </div>
+          </div>
+          <div class="mock-progress">
+            <div class="mock-progress-bar" style="width: 65%;"></div>
+          </div>
+        </div>
       </div>
+
+      <!-- Screen 3: Calendrier -->
+      <div class="phone-frame reveal delay-2">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="phone-screen-title">&#x1F4C5; Calendrier</div>
+          <div class="mock-card mock-card--blue" style="padding: 10px;">
+            <div style="width: 100%;">
+              <div style="font-size: 0.7rem; font-weight: 600; color: var(--text); margin-bottom: 6px; text-align: center;">Mars 2026</div>
+              <div class="mock-calendar-row">
+                <div class="mock-calendar-day">L</div>
+                <div class="mock-calendar-day">M</div>
+                <div class="mock-calendar-day">M</div>
+                <div class="mock-calendar-day">J</div>
+                <div class="mock-calendar-day">V</div>
+                <div class="mock-calendar-day">S</div>
+                <div class="mock-calendar-day">D</div>
+              </div>
+              <div class="mock-calendar-row">
+                <div class="mock-calendar-day">16</div>
+                <div class="mock-calendar-day event">17</div>
+                <div class="mock-calendar-day">18</div>
+                <div class="mock-calendar-day event">19</div>
+                <div class="mock-calendar-day">20</div>
+                <div class="mock-calendar-day today">21</div>
+                <div class="mock-calendar-day">22</div>
+              </div>
+            </div>
+          </div>
+          <div class="mock-card">
+            <div class="mock-card-icon">&#x1F382;</div>
+            <div class="mock-card-text">
+              <strong>Anniversaire Emma</strong>
+              Samedi 22 mars
+            </div>
+          </div>
+          <div class="mock-card mock-card--rose">
+            <div class="mock-card-icon">&#x1F3AF;</div>
+            <div class="mock-card-text">
+              <strong>D&#233;fi famille</strong>
+              Ranger le garage
+            </div>
+          </div>
+          <div class="mock-card mock-card--mint">
+            <div class="mock-card-icon">&#x1F9D8;</div>
+            <div class="mock-card-text">
+              <strong>Humeur du jour</strong>
+              &#x1F60A; Content
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Screen 4: Recettes & Stock -->
+      <div class="phone-frame reveal delay-3">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="phone-screen-title">&#x1F37D;&#xFE0F; Repas & stock</div>
+          <div class="mock-card">
+            <div class="mock-card-icon">&#x1F916;</div>
+            <div class="mock-card-text">
+              <strong>Que cuisiner ce soir ?</strong>
+              Bas&#233; sur votre stock
+            </div>
+          </div>
+          <div class="mock-card mock-card--amber">
+            <div class="mock-card-icon">&#x1F955;</div>
+            <div class="mock-card-text">
+              <strong>Stock</strong>
+              Carottes &#215;3, P&#226;tes &#215;2, Cr&#232;me &#215;1
+            </div>
+          </div>
+          <div class="mock-card mock-card--mint">
+            <div class="mock-card-icon">&#x2705;</div>
+            <div class="mock-card-text">
+              <strong>Cuisin&#233; !</strong>
+              Stock mis &#224; jour automatiquement
+            </div>
+          </div>
+          <div class="mock-progress">
+            <div class="mock-progress-bar" style="width: 40%; background: linear-gradient(90deg, #10B981, #34D399);"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Screen 5: Comp&#233;tences -->
+      <div class="phone-frame reveal delay-4">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="phone-screen-title">&#x1F3C6; Comp&#233;tences</div>
+          <div class="mock-card mock-card--amber">
+            <div class="mock-card-icon">&#x1F3C3;</div>
+            <div class="mock-card-text">
+              <strong>Motricit&#233;</strong>
+              12/18 comp&#233;tences
+            </div>
+          </div>
+          <div class="mock-progress">
+            <div class="mock-progress-bar" style="width: 67%; background: linear-gradient(90deg, #F59E0B, #FBBF24);"></div>
+          </div>
+          <div class="mock-card mock-card--blue">
+            <div class="mock-card-icon">&#x1F4AC;</div>
+            <div class="mock-card-text">
+              <strong>Langage</strong>
+              8/15 comp&#233;tences
+            </div>
+          </div>
+          <div class="mock-progress">
+            <div class="mock-progress-bar" style="width: 53%; background: linear-gradient(90deg, #3B82F6, #60A5FA);"></div>
+          </div>
+          <div class="mock-card mock-card--mint">
+            <div class="mock-card-icon">&#x1F91D;</div>
+            <div class="mock-card-text">
+              <strong>Social</strong>
+              5/12 comp&#233;tences
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </section>
 
   <!-- ================================================================
-       SLIDE 11 — CTA FINAL
+       FEATURES GRID
        ================================================================ -->
-  <section class="slide" id="slide-10">
-    <div class="shape shape--violet" style="width: 350px; height: 350px; top: -120px; left: -80px;"></div>
-    <div class="shape shape--rose" style="width: 250px; height: 250px; bottom: -80px; right: -60px;"></div>
-    <div class="shape shape--amber" style="width: 180px; height: 180px; top: 40%; right: -40px;"></div>
+  <div class="features-band">
+    <div class="section">
+      <div class="section-label reveal">Tout-en-un</div>
+      <h2 class="section-title reveal delay-1">Tout ce dont votre famille a besoin</h2>
+      <p class="section-subtitle reveal delay-2">Plus besoin de jongler entre 10 apps. FamilyFlow r&#233;unit l'essentiel dans un espace &#233;l&#233;gant et priv&#233;.</p>
 
-    <div class="slide-inner">
-      <h2 class="title title--hero anim-fadeUp delay-1">
-        Pr&#234;t &#224; simplifier<br><span class="gradient-text">votre quotidien ?</span>
-      </h2>
+      <div class="features-grid">
+        <div class="feature-card reveal">
+          <div class="feature-icon feature-icon--purple">&#x1F4CB;</div>
+          <div class="feature-title">T&#226;ches & m&#233;nage</div>
+          <div class="feature-desc">R&#233;currence, gamification avec loot boxes, swipe pour supprimer.</div>
+        </div>
 
-      <div class="gap-md"></div>
+        <div class="feature-card reveal delay-1">
+          <div class="feature-icon feature-icon--rose">&#x1F37C;</div>
+          <div class="feature-title">Journal b&#233;b&#233;</div>
+          <div class="feature-desc">T&#233;t&#233;es, biberons, couches, sommeil. Timer avec Live Activity sur l'&#233;cran de verrouillage.</div>
+        </div>
 
-      <div class="anim-popIn delay-2">
-        <a href="https://apps.apple.com" class="cta-button" target="_blank" rel="noopener">
-          <!-- Apple logo SVG -->
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-          T&#233;l&#233;charger sur l'App Store
-        </a>
+        <div class="feature-card reveal delay-2">
+          <div class="feature-icon feature-icon--amber">&#x1F37D;&#xFE0F;</div>
+          <div class="feature-title">Repas & recettes</div>
+          <div class="feature-desc">Planning semaine, import par URL, boucle ferm&#233;e recette &#8594; courses &#8594; stock.</div>
+        </div>
+
+        <div class="feature-card reveal delay-3">
+          <div class="feature-icon feature-icon--blue">&#x1F4C5;</div>
+          <div class="feature-title">Calendrier unifi&#233;</div>
+          <div class="feature-desc">9 sources fusionn&#233;es : RDV, t&#226;ches, anniversaires, repas, vacances, d&#233;fis et plus.</div>
+        </div>
+
+        <div class="feature-card reveal delay-4">
+          <div class="feature-icon feature-icon--mint">&#x1F3C6;</div>
+          <div class="feature-title">Arbre de comp&#233;tences</div>
+          <div class="feature-desc">~180 comp&#233;tences de 0 &#224; 18 ans. Motricit&#233;, langage, autonomie, social.</div>
+        </div>
+
+        <div class="feature-card reveal delay-5">
+          <div class="feature-icon feature-icon--gray">&#x1F916;</div>
+          <div class="feature-title">Assistant IA</div>
+          <div class="feature-desc">Suggestions repas bas&#233;es sur le stock, briefing RDV. Donn&#233;es anonymis&#233;es.</div>
+        </div>
       </div>
-
-      <div class="gap-sm"></div>
-
-      <p class="subtitle anim-fadeUp delay-3">
-        Gratuit &#183; iOS &#183; Open source
-      </p>
-
-      <div class="gap-sm"></div>
-
-      <p class="footer-text anim-fadeUp delay-4">
-        <a href="privacy.html">Politique de confidentialit&#233;</a>
-      </p>
     </div>
+  </div>
+
+  <!-- ================================================================
+       DETAIL: Calendrier unifi&#233;
+       ================================================================ -->
+  <div class="detail">
+    <div class="detail-text reveal">
+      <div class="section-label">Calendrier</div>
+      <h2 class="section-title">Toute la famille en un coup d'&#339;il</h2>
+      <ul class="detail-list">
+        <li><strong>9 sources fusionn&#233;es</strong> &#8212; RDV, t&#226;ches, anniversaires, repas, vacances, d&#233;fis, souvenirs, humeurs, mots d'enfants</li>
+        <li><strong>Vue mois + semaine</strong> &#8212; basculez d'un tap</li>
+        <li><strong>Codes couleur</strong> &#8212; chaque type a sa couleur pour une lecture rapide</li>
+        <li><strong>Navigation directe</strong> &#8212; touchez un &#233;v&#233;nement pour y aller</li>
+      </ul>
+    </div>
+    <div class="detail-visual reveal delay-2">
+      <div class="visual-block">
+        <div class="visual-block-row">
+          <div class="visual-block-icon">&#x1F4C5;</div>
+          <div class="visual-block-label">RDV p&#233;diatre</div>
+          <div class="visual-block-badge visual-block-badge--purple">14h30</div>
+        </div>
+        <div class="visual-block-row">
+          <div class="visual-block-icon">&#x1F382;</div>
+          <div class="visual-block-label">Anniversaire Emma</div>
+          <div class="visual-block-badge visual-block-badge--amber">Sam.</div>
+        </div>
+        <div class="visual-block-row">
+          <div class="visual-block-icon">&#x1F37D;&#xFE0F;</div>
+          <div class="visual-block-label">Gratin dauphinois</div>
+          <div class="visual-block-badge visual-block-badge--green">Ce soir</div>
+        </div>
+        <div class="visual-block-row">
+          <div class="visual-block-icon">&#x1F3AF;</div>
+          <div class="visual-block-label">D&#233;fi : ranger garage</div>
+          <div class="visual-block-value">En cours</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ================================================================
+       DETAIL: Flux recettes → stock
+       ================================================================ -->
+  <div class="detail detail--reverse">
+    <div class="detail-text reveal">
+      <div class="section-label">Cuisine</div>
+      <h2 class="section-title">De la recette au stock, automatiquement</h2>
+      <ul class="detail-list">
+        <li><strong>Planifiez vos repas</strong> &#8212; la liste de courses se g&#233;n&#232;re toute seule</li>
+        <li><strong>Achetez</strong> &#8212; les ingr&#233;dients entrent dans votre stock</li>
+        <li><strong>Cuisinez</strong> &#8212; un tap et le stock est mis &#224; jour</li>
+        <li><strong>&#171; Que cuisiner ? &#187;</strong> &#8212; l'IA sugg&#232;re en fonction de ce qu'il reste</li>
+      </ul>
+    </div>
+    <div class="detail-visual reveal delay-2">
+      <div class="visual-block">
+        <div class="visual-block-row">
+          <div class="visual-block-icon">&#x1F4D6;</div>
+          <div class="visual-block-label">Recette choisie</div>
+          <div class="visual-block-badge visual-block-badge--purple">&#x2192;</div>
+        </div>
+        <div class="visual-block-row">
+          <div class="visual-block-icon">&#x1F6D2;</div>
+          <div class="visual-block-label">Liste de courses</div>
+          <div class="visual-block-badge visual-block-badge--amber">Auto</div>
+        </div>
+        <div class="visual-block-row">
+          <div class="visual-block-icon">&#x1F4E6;</div>
+          <div class="visual-block-label">Stock mis &#224; jour</div>
+          <div class="visual-block-badge visual-block-badge--green">&#x2713;</div>
+        </div>
+        <div class="visual-block-row">
+          <div class="visual-block-icon">&#x1F916;</div>
+          <div class="visual-block-label">Suggestion IA</div>
+          <div class="visual-block-value">&#171; Gratin ? &#187;</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ================================================================
+       DETAIL: Arbre de comp&#233;tences
+       ================================================================ -->
+  <div class="detail">
+    <div class="detail-text reveal">
+      <div class="section-label">D&#233;veloppement</div>
+      <h2 class="section-title">Suivez chaque progr&#232;s de votre enfant</h2>
+      <ul class="detail-list">
+        <li><strong>8 tranches d'&#226;ge</strong> &#8212; de la naissance &#224; 18 ans</li>
+        <li><strong>~180 comp&#233;tences</strong> &#8212; motricit&#233;, langage, autonomie, social</li>
+        <li><strong>Progression visuelle</strong> &#8212; barres et badges &#224; chaque jalon</li>
+        <li><strong>C&#233;l&#233;brations</strong> &#8212; confettis quand une comp&#233;tence est d&#233;bloqu&#233;e</li>
+      </ul>
+    </div>
+    <div class="detail-visual reveal delay-2">
+      <div class="visual-block">
+        <div class="visual-block-row">
+          <div class="visual-block-icon">&#x1F3C3;</div>
+          <div class="visual-block-label">Motricit&#233;</div>
+          <div class="visual-block-badge visual-block-badge--green">12/18</div>
+        </div>
+        <div class="visual-block-row">
+          <div class="visual-block-icon">&#x1F4AC;</div>
+          <div class="visual-block-label">Langage</div>
+          <div class="visual-block-badge visual-block-badge--amber">8/15</div>
+        </div>
+        <div class="visual-block-row">
+          <div class="visual-block-icon">&#x1F91D;</div>
+          <div class="visual-block-label">Social</div>
+          <div class="visual-block-badge visual-block-badge--purple">5/12</div>
+        </div>
+        <div class="visual-block-row">
+          <div class="visual-block-icon">&#x1F9E9;</div>
+          <div class="visual-block-label">Autonomie</div>
+          <div class="visual-block-badge visual-block-badge--green">10/14</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ================================================================
+       DETAIL: Widgets & Live Activities
+       ================================================================ -->
+  <div class="detail detail--reverse">
+    <div class="detail-text reveal">
+      <div class="section-label">iOS</div>
+      <h2 class="section-title">Widgets & Live Activities</h2>
+      <ul class="detail-list">
+        <li><strong>Widget Ma Journ&#233;e</strong> &#8212; repas, t&#226;ches et RDV d'un coup d'&#339;il</li>
+        <li><strong>Widget Journal b&#233;b&#233;</strong> &#8212; timer t&#233;t&#233;e depuis l'&#233;cran d'accueil</li>
+        <li><strong>Live Activity</strong> &#8212; timer t&#233;t&#233;e sur l'&#233;cran de verrouillage, en temps r&#233;el</li>
+        <li><strong>Deep links</strong> &#8212; chaque bouton ouvre directement le bon &#233;cran</li>
+      </ul>
+    </div>
+    <div class="detail-visual reveal delay-2">
+      <div class="visual-block">
+        <div class="visual-block-row">
+          <div class="visual-block-icon">&#x1F4F1;</div>
+          <div class="visual-block-label">Ma Journ&#233;e</div>
+          <div class="visual-block-badge visual-block-badge--purple">Widget</div>
+        </div>
+        <div class="visual-block-row">
+          <div class="visual-block-icon">&#x1F37C;</div>
+          <div class="visual-block-label">Timer t&#233;t&#233;e</div>
+          <div class="visual-block-badge visual-block-badge--green">&#x1F7E2; Live</div>
+        </div>
+        <div class="visual-block-row">
+          <div class="visual-block-icon">&#x1F517;</div>
+          <div class="visual-block-label">Deep links natifs</div>
+          <div class="visual-block-badge visual-block-badge--amber">iOS 17+</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       PRIVACY
+       ================================================================ -->
+  <div class="privacy-band">
+    <div class="section">
+      <div class="section-label reveal">Vie priv&#233;e</div>
+      <h2 class="section-title reveal delay-1">Vos donn&#233;es, votre famille</h2>
+      <p class="section-subtitle reveal delay-2">Aucun compte, aucun serveur, aucun tracking. Vos donn&#233;es ne quittent jamais vos appareils.</p>
+
+      <div class="privacy-grid">
+        <div class="privacy-item reveal delay-3">
+          <div class="privacy-item-icon">&#x1F4C1;</div>
+          <div>
+            <div class="privacy-item-title">Stockage local</div>
+            <div class="privacy-item-desc">Fichiers Markdown dans votre vault Obsidian, sur votre appareil</div>
+          </div>
+        </div>
+        <div class="privacy-item reveal delay-3">
+          <div class="privacy-item-icon">&#x2601;&#xFE0F;</div>
+          <div>
+            <div class="privacy-item-title">Sync iCloud Drive</div>
+            <div class="privacy-item-desc">Partagez entre vos appareils Apple, sans serveur tiers</div>
+          </div>
+        </div>
+        <div class="privacy-item reveal delay-4">
+          <div class="privacy-item-icon">&#x1F6AB;</div>
+          <div>
+            <div class="privacy-item-title">Z&#233;ro tracking</div>
+            <div class="privacy-item-desc">Pas d'analytics, pas de cookies, pas de pub</div>
+          </div>
+        </div>
+        <div class="privacy-item reveal delay-4">
+          <div class="privacy-item-icon">&#x1F916;</div>
+          <div>
+            <div class="privacy-item-title">IA anonymis&#233;e</div>
+            <div class="privacy-item-desc">Noms et lieux remplac&#233;s par des pseudonymes avant envoi</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       CTA
+       ================================================================ -->
+  <section class="cta-section">
+    <h2 class="cta-title reveal">Pr&#234;t &#224; simplifier votre quotidien ?</h2>
+    <p class="cta-subtitle reveal delay-1">Gratuit &#183; Sans pub &#183; Sans abonnement</p>
+
+    <a href="https://apps.apple.com" class="store-button reveal delay-2" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+      T&#233;l&#233;charger sur l'App Store
+    </a>
   </section>
 
   <!-- ================================================================
-       JAVASCRIPT — SlidePresentation controller
+       FOOTER
+       ================================================================ -->
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="privacy.html">Confidentialit&#233;</a>
+      <a href="support.html">Support</a>
+      <a href="https://github.com/meffysto/FamilyFlow" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <p class="footer-copy">&copy; 2026 FamilyFlow &#8212; Application familiale priv&#233;e</p>
+  </footer>
+
+  <!-- ================================================================
+       JAVASCRIPT — Scroll reveal animations
        ================================================================ -->
   <script>
-    class SlidePresentation {
-      constructor() {
-        /** @type {NodeListOf<HTMLElement>} */
-        this.slides = document.querySelectorAll('.slide');
-        this.totalSlides = this.slides.length;
-        this.currentSlide = 0;
-
-        /** @type {HTMLElement} */
-        this.progressBar = document.getElementById('progressBar');
-        /** @type {HTMLElement} */
-        this.navDotsContainer = document.getElementById('navDots');
-
-        this.init();
-      }
-
-      /* ---- Initialisation ---- */
-      init() {
-        this.createNavDots();
-        this.setupIntersectionObserver();
-        this.setupKeyboardNav();
-        this.setupTouchNav();
-        this.setupWheelNav();
-        this.updateProgress();
-      }
-
-      /* ---- Nav Dots (right side) ---- */
-      createNavDots() {
-        for (let i = 0; i < this.totalSlides; i++) {
-          const dot = document.createElement('button');
-          dot.classList.add('nav-dot');
-          dot.setAttribute('aria-label', 'Slide ' + (i + 1));
-          if (i === 0) dot.classList.add('active');
-          dot.addEventListener('click', () => this.goToSlide(i));
-          this.navDotsContainer.appendChild(dot);
-        }
-      }
-
-      updateNavDots() {
-        const dots = this.navDotsContainer.querySelectorAll('.nav-dot');
-        dots.forEach((dot, i) => {
-          dot.classList.toggle('active', i === this.currentSlide);
-        });
-      }
-
-      /* ---- Progress Bar (top) ---- */
-      updateProgress() {
-        const progress = ((this.currentSlide + 1) / this.totalSlides) * 100;
-        this.progressBar.style.width = progress + '%';
-      }
-
-      /* ---- Core navigation ---- */
-      goToSlide(index) {
-        if (index < 0 || index >= this.totalSlides) return;
-        this.currentSlide = index;
-        this.slides[index].scrollIntoView({ behavior: 'smooth' });
-        this.updateNavDots();
-        this.updateProgress();
-      }
-
-      nextSlide() {
-        if (this.currentSlide < this.totalSlides - 1) {
-          this.goToSlide(this.currentSlide + 1);
-        }
-      }
-
-      prevSlide() {
-        if (this.currentSlide > 0) {
-          this.goToSlide(this.currentSlide - 1);
-        }
-      }
-
-      /* ---- Intersection Observer: trigger .visible class for animations ---- */
-      setupIntersectionObserver() {
-        const observer = new IntersectionObserver((entries) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add('visible');
-
-              /* Sync current slide index */
-              const index = Array.from(this.slides).indexOf(entry.target);
-              if (index !== -1) {
-                this.currentSlide = index;
-                this.updateNavDots();
-                this.updateProgress();
-              }
-            }
-          });
-        }, {
-          threshold: 0.5
-        });
-
-        this.slides.forEach(slide => observer.observe(slide));
-      }
-
-      /* ---- Keyboard: arrows, space, page up/down, home/end ---- */
-      setupKeyboardNav() {
-        document.addEventListener('keydown', (e) => {
-          switch (e.key) {
-            case 'ArrowDown':
-            case 'ArrowRight':
-            case ' ':
-            case 'PageDown':
-              e.preventDefault();
-              this.nextSlide();
-              break;
-            case 'ArrowUp':
-            case 'ArrowLeft':
-            case 'PageUp':
-              e.preventDefault();
-              this.prevSlide();
-              break;
-            case 'Home':
-              e.preventDefault();
-              this.goToSlide(0);
-              break;
-            case 'End':
-              e.preventDefault();
-              this.goToSlide(this.totalSlides - 1);
-              break;
+    /* =============================================
+       Intersection Observer for scroll animations.
+       Adds .visible class to .reveal elements
+       when they enter the viewport.
+       ============================================= */
+    (function() {
+      const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
           }
         });
-      }
+      }, {
+        threshold: 0.15,
+        rootMargin: '0px 0px -40px 0px'
+      });
 
-      /* ---- Touch swipe support (vertical) ---- */
-      setupTouchNav() {
-        let touchStartY = 0;
-        const threshold = 50;
-
-        document.addEventListener('touchstart', (e) => {
-          touchStartY = e.changedTouches[0].screenY;
-        }, { passive: true });
-
-        document.addEventListener('touchend', (e) => {
-          const delta = touchStartY - e.changedTouches[0].screenY;
-          if (Math.abs(delta) > threshold) {
-            if (delta > 0) {
-              this.nextSlide();
-            } else {
-              this.prevSlide();
-            }
-          }
-        }, { passive: true });
-      }
-
-      /* ---- Mouse wheel with cooldown ---- */
-      setupWheelNav() {
-        let lastWheelTime = 0;
-        const cooldown = 800;
-
-        document.addEventListener('wheel', (e) => {
-          const now = Date.now();
-          if (now - lastWheelTime < cooldown) return;
-
-          if (Math.abs(e.deltaY) > 30) {
-            lastWheelTime = now;
-            if (e.deltaY > 0) {
-              this.nextSlide();
-            } else {
-              this.prevSlide();
-            }
-          }
-        }, { passive: true });
-      }
-    }
-
-    /* Initialize on DOM ready */
-    document.addEventListener('DOMContentLoaded', () => {
-      new SlidePresentation();
-    });
+      document.querySelectorAll('.reveal').forEach(function(el) {
+        observer.observe(el);
+      });
+    })();
   </script>
 
 </body>
