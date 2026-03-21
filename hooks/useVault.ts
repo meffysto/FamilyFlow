@@ -2269,9 +2269,15 @@ export function useVaultInternal(): VaultState {
     if (!vaultRef.current) return;
     const todayStr = new Date().toISOString().slice(0, 10);
     let updated: Defi[] = [];
+    let isNewCheckIn = false;
+    let defiTitle = '';
     setDefis(prev => {
       updated = prev.map((d) => {
         if (d.id !== defiId) return d;
+        defiTitle = d.title;
+        // Vérifier si c'est un nouveau check-in (pas un remplacement)
+        const existing = d.progress.find((p) => p.date === todayStr && p.profileId === profileId);
+        isNewCheckIn = !existing && completed;
         // Retirer l'entrée existante pour ce profil + date (pour remplacer)
         const filtered = d.progress.filter((p) => !(p.date === todayStr && p.profileId === profileId));
         const entry: DefiDayEntry = { date: todayStr, profileId, completed, value, note };
@@ -2288,6 +2294,26 @@ export function useVaultInternal(): VaultState {
       return updated;
     });
     await vaultRef.current.writeFile(DEFIS_FILE, serializeDefis(updated));
+
+    // Mini-points (+3) pour chaque check-in réussi d'un défi
+    if (isNewCheckIn && completed) {
+      try {
+        const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
+        const gami = parseGamification(gamiContent);
+        const familleContent = await vaultRef.current.readFile(FAMILLE_FILE);
+        const currentProfiles = mergeProfiles(familleContent, gamiContent);
+        const profile = currentProfiles.find((p) => p.id === profileId);
+        if (profile) {
+          const { profile: updated, entry } = addPoints(profile, 3, `Défi: ${defiTitle}`);
+          const newGami = {
+            ...gami,
+            profiles: gami.profiles.map((p) => p.id === profileId ? { ...p, points: updated.points, level: updated.level } : p),
+            history: [...gami.history, entry],
+          };
+          await vaultRef.current.writeFile(GAMI_FILE, serializeGamification(newGami));
+        }
+      } catch {}
+    }
   }, []);
 
   const completeDefi = useCallback(async (defiId: string) => {

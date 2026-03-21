@@ -18,6 +18,34 @@ import {
 import { trySeasonalDraw } from './seasonal';
 import { format } from 'date-fns';
 
+// ─── Streak progressif ──────────────────────────────────────────────────────
+
+/** Paliers de streak avec bonus progressif */
+export const STREAK_MILESTONES = [
+  { days: 30, bonus: 25, emoji: '🔥💎', label: 'Flamme Légendaire' },
+  { days: 14, bonus: 15, emoji: '🔥🔥', label: 'Flamme Intense' },
+  { days: 7, bonus: 10, emoji: '🔥', label: 'Flamme Ardente' },
+  { days: 2, bonus: 5, emoji: '✨', label: 'Série en cours' },
+] as const;
+
+/** Calcule le bonus de streak progressif (basé sur le palier atteint) */
+export function calculateStreakBonus(streak: number, baseBonus: number): number {
+  if (streak <= 1) return 0;
+  for (const milestone of STREAK_MILESTONES) {
+    if (streak >= milestone.days) return milestone.bonus;
+  }
+  return baseBonus; // fallback
+}
+
+/** Retourne le palier de streak actuel (pour l'affichage) */
+export function getStreakMilestone(streak: number): { emoji: string; label: string; bonus: number } | null {
+  if (streak <= 1) return null;
+  for (const milestone of STREAK_MILESTONES) {
+    if (streak >= milestone.days) return milestone;
+  }
+  return { emoji: '✨', label: 'Série en cours', bonus: 5 };
+}
+
 // ─── Points ─────────────────────────────────────────────────────────────────
 
 /**
@@ -58,6 +86,7 @@ export function addPoints(
 
 /**
  * Award task completion points (+10 base, +streak bonus if applicable).
+ * Streak bonus progressif : +5 (2j), +10 (7j), +15 (14j), +25 (30j+)
  * Also checks if a loot box should be awarded.
  */
 export function awardTaskCompletion(
@@ -66,7 +95,7 @@ export function awardTaskCompletion(
 ): { profile: Profile; entry: GamificationEntry; lootAwarded: boolean } {
   const config = getCachedGamiConfig();
   const basePoints = config.pointsPerTask;
-  const streakBonus = profile.streak > 1 ? config.streakBonus : 0;
+  const streakBonus = calculateStreakBonus(profile.streak, config.streakBonus);
   const total = basePoints + streakBonus;
 
   const { profile: updated, entry } = addPoints(profile, total, `Tâche: ${taskNote}`);
@@ -522,23 +551,70 @@ export function applyFamilyBonus(
 
 // ─── Level calculation ───────────────────────────────────────────────────────
 
-/** Level thresholds: level = floor(points / 100) + 1, max level 50 */
+/**
+ * Courbe de progression quadratique adoucie (inspirée Habitica/Pokémon GO).
+ * XP cumulé pour atteindre le niveau n = 50n² + 50n
+ * Formule inversée : level = floor((-50 + sqrt(2500 + 200 * points)) / 100)
+ */
+export const MAX_LEVEL = 50;
+
+/** XP cumulé nécessaire pour atteindre un niveau donné */
+export function xpForLevel(level: number): number {
+  return 50 * level * level + 50 * level;
+}
+
+/** Calcule le niveau actuel à partir des points totaux */
 export function calculateLevel(points: number): number {
-  return Math.min(50, Math.floor(points / 100) + 1);
+  // Résolution quadratique : 50n² + 50n = points → n = (-50 + sqrt(2500 + 200*points)) / 100
+  const level = Math.floor((-50 + Math.sqrt(2500 + 200 * points)) / 100);
+  return Math.min(MAX_LEVEL, Math.max(1, level + 1));
 }
 
 /** Points needed for next level */
 export function pointsToNextLevel(points: number): number {
-  const nextLevel = calculateLevel(points) + 1;
-  return nextLevel * 100 - points;
+  const level = calculateLevel(points);
+  if (level >= MAX_LEVEL) return 0;
+  return xpForLevel(level) - points;
 }
 
 /** Progress (0-1) toward next level */
 export function levelProgress(points: number): number {
   const level = calculateLevel(points);
-  const levelStart = (level - 1) * 100;
-  const levelEnd = level * 100;
-  return (points - levelStart) / (levelEnd - levelStart);
+  if (level >= MAX_LEVEL) return 1;
+  const levelStart = xpForLevel(level - 1);
+  const levelEnd = xpForLevel(level);
+  if (levelEnd === levelStart) return 1;
+  return Math.min(1, Math.max(0, (points - levelStart) / (levelEnd - levelStart)));
+}
+
+// ─── Paliers de niveau (thème Explorateur) ──────────────────────────────────
+
+export interface LevelTier {
+  name: string;
+  emoji: string;
+  minLevel: number;
+  maxLevel: number;
+  color: string;
+}
+
+export const LEVEL_TIERS: LevelTier[] = [
+  { name: 'Curieux',            emoji: '🔍', minLevel: 1,  maxLevel: 3,  color: '#4ADE80' },  // vert tendre
+  { name: 'Aventurier',         emoji: '🧭', minLevel: 4,  maxLevel: 7,  color: '#38BDF8' },  // bleu ciel
+  { name: 'Explorateur',        emoji: '🗺️', minLevel: 8,  maxLevel: 12, color: '#2563EB' },  // bleu profond
+  { name: 'Découvreur',         emoji: '🔭', minLevel: 13, maxLevel: 18, color: '#8B5CF6' },  // violet
+  { name: 'Navigateur',         emoji: '⛵', minLevel: 19, maxLevel: 25, color: '#F97316' },  // orange
+  { name: 'Capitaine',          emoji: '⚓', minLevel: 26, maxLevel: 32, color: '#EF4444' },  // rouge
+  { name: 'Maître du Voyage',   emoji: '⭐', minLevel: 33, maxLevel: 40, color: '#EAB308' },  // or
+  { name: 'Légende Familiale',  emoji: '👑', minLevel: 41, maxLevel: 47, color: '#94A3B8' },  // platine
+  { name: 'Gardien du Vault',   emoji: '🏆', minLevel: 48, maxLevel: 50, color: '#E879F9' },  // prismatique
+];
+
+/** Retourne le palier (tier) correspondant au niveau donné */
+export function getLevelTier(level: number): LevelTier {
+  for (let i = LEVEL_TIERS.length - 1; i >= 0; i--) {
+    if (level >= LEVEL_TIERS[i].minLevel) return LEVEL_TIERS[i];
+  }
+  return LEVEL_TIERS[0];
 }
 
 /** Progress (0-1) toward next loot box for a given profile */

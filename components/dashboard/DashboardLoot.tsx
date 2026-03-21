@@ -8,7 +8,7 @@ import { useRouter } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
-import { lootProgress, calculateLevel, POINTS_PER_TASK, getActiveEvent } from '../../lib/gamification';
+import { lootProgress, calculateLevel, getLevelTier, getStreakMilestone, POINTS_PER_TASK, getActiveEvent } from '../../lib/gamification';
 import { SeasonalBanner } from '../SeasonalBanner';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -25,6 +25,8 @@ function DashboardLootInner({ isChildMode }: DashboardSectionProps) {
   const loot = lootProgress(activeProfile);
   const hasBoxes = (activeProfile.lootBoxesAvailable ?? 0) > 0;
   const level = calculateLevel(activeProfile.points ?? 0);
+  const tier = getLevelTier(level);
+  const streakInfo = getStreakMilestone(activeProfile.streak ?? 0);
 
   return (
     <DashboardCard key="lootProgress" title={isChildMode ? 'Tes points !' : 'Progression'} icon="🎁" color={primary}>
@@ -32,12 +34,23 @@ function DashboardLootInner({ isChildMode }: DashboardSectionProps) {
       <View style={styles.lootProgressRow}>
         <Text style={[isChildMode ? styles.lootProgressLabelChild : styles.lootProgressLabel, { color: colors.text }]}>
           {isChildMode
-            ? `${activeProfile.avatar} Niveau ${level} !`
-            : `Nv. ${level} — ${activeProfile.avatar} ${activeProfile.name}`}
+            ? `${activeProfile.avatar} ${tier.emoji} ${tier.name} !`
+            : `${tier.emoji} ${tier.name} — ${activeProfile.avatar} ${activeProfile.name}`}
         </Text>
         <Text style={[styles.lootProgressPts, { color: colors.textMuted }]}>
-          {loot.current}/{loot.threshold} pts
+          Nv. {level}
         </Text>
+      </View>
+      {/* Barre XP vers prochaine loot box */}
+      <View style={styles.lootThresholdRow}>
+        <Text style={[styles.lootThresholdText, { color: colors.textFaint }]}>
+          {loot.current}/{loot.threshold} pts → prochain cadeau
+        </Text>
+        {streakInfo && (
+          <Text style={[styles.lootThresholdText, { color: tier.color }]}>
+            {streakInfo.emoji} +{streakInfo.bonus}/tâche
+          </Text>
+        )}
       </View>
       <View style={[isChildMode ? styles.lootProgressBarChild : styles.lootProgressBar, { backgroundColor: colors.cardAlt }]}>
         <View style={[isChildMode ? styles.lootProgressFillChild : styles.lootProgressFill, { width: `${Math.round(loot.progress * 100)}%`, backgroundColor: primary }]} />
@@ -93,6 +106,15 @@ const styles = StyleSheet.create({
   lootProgressPts: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.semibold,
+  },
+  lootThresholdRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  lootThresholdText: {
+    fontSize: FontSize.caption,
   },
   lootProgressBar: {
     height: 10,

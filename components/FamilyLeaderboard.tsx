@@ -6,7 +6,7 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Profile, GamificationEntry } from '../lib/types';
 import { useThemeColors } from '../contexts/ThemeContext';
-import { levelProgress, LOOT_THRESHOLD, RARITY_COLORS } from '../lib/gamification';
+import { levelProgress, getLevelTier, LOOT_THRESHOLD, RARITY_COLORS } from '../lib/gamification';
 import { FontSize, FontWeight } from '../constants/typography';
 
 interface FamilyLeaderboardProps {
@@ -56,7 +56,9 @@ export function FamilyLeaderboard({ profiles, compact = false, gamiHistory = [] 
             <View style={styles.info}>
               <View style={styles.nameRow}>
                 <Text style={[styles.name, { color: colors.text }]}>{profile.name}</Text>
-                <Text style={[styles.level, { color: primary, backgroundColor: tint }]}>Niv. {profile.level}</Text>
+                <Text style={[styles.level, { color: getLevelTier(profile.level).color, backgroundColor: getLevelTier(profile.level).color + '20' }]}>
+                  {getLevelTier(profile.level).emoji} {profile.level}
+                </Text>
                 {profile.streak > 1 && (
                   <Text style={[styles.streak, { color: colors.warning }]}>🔥 {profile.streak}j</Text>
                 )}

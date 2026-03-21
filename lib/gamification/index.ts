@@ -13,11 +13,19 @@ export {
   pointsToNextLevel,
   levelProgress,
   lootProgress,
+  xpForLevel,
+  MAX_LEVEL,
+  LEVEL_TIERS,
+  getLevelTier,
   calculateStreak,
+  calculateStreakBonus,
+  getStreakMilestone,
+  STREAK_MILESTONES,
   buildLeaderboard,
   updateProfileInData,
   openAgentSecretLootBox,
 } from './engine';
+export type { LevelTier } from './engine';
 
 // Rewards pool, config, display
 export {

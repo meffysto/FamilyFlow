@@ -26,11 +26,13 @@ import { LootBoxOpener } from '../../components/LootBoxOpener';
 import {
   buildLeaderboard,
   processActiveRewards,
+  getLevelTier,
   RARITY_COLORS,
   RARITY_LABELS,
   RARITY_EMOJIS,
   REWARDS,
   DROP_RATES,
+  LOOT_THRESHOLD,
   PITY_THRESHOLD,
   getActiveEvent,
   seasonalDaysRemaining,
@@ -154,7 +156,9 @@ export default function LootScreen() {
                 <Text style={styles.lootCardAvatar}>{profile.avatar}</Text>
                 <View>
                   <Text style={[styles.lootCardName, { color: colors.text }]}>{profile.name}</Text>
-                  <Text style={[styles.lootCardLevel, { color: primary }]}>Niveau {profile.level}</Text>
+                  <Text style={[styles.lootCardLevel, { color: getLevelTier(profile.level).color }]}>
+                    {getLevelTier(profile.level).emoji} {getLevelTier(profile.level).name} (Nv. {profile.level})
+                  </Text>
                 </View>
               </View>
 
@@ -174,8 +178,7 @@ export default function LootScreen() {
               ) : (
                 <View style={[styles.noLootBadge, { backgroundColor: colors.bg }]}>
                   <Text style={[styles.noLootText, { color: colors.textFaint }]}>
-                    {profile.points % (profile.role === 'enfant' ? 50 : 100)}/
-                    {profile.role === 'enfant' ? 50 : 100} pts
+                    {(() => { const t = LOOT_THRESHOLD[profile.role] ?? 100; return `${profile.points % t}/${t} pts`; })()}
                   </Text>
                 </View>
               )}
@@ -218,53 +221,65 @@ export default function LootScreen() {
           </View>
         </View>
 
-        {/* Badges collection — grouped by profile */}
-        {badges.length > 0 && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>🏅 Badges gagnés</Text>
-            {profiles.map((profile) => {
-              const profileBadges = badges.filter((b) => b.profileId === profile.id);
-              if (profileBadges.length === 0) return null;
-              return (
-                <View key={profile.id} style={[styles.card, { backgroundColor: colors.card, marginBottom: 10 }]}>
-                  <View style={styles.badgeProfileHeader}>
-                    <Text style={styles.badgeProfileAvatar}>{profile.avatar}</Text>
-                    <Text style={[styles.badgeProfileName, { color: colors.text }]}>{profile.name}</Text>
-                    <Text style={[styles.badgeProfileCount, { color: colors.textFaint }]}>{profileBadges.length} badge{profileBadges.length > 1 ? 's' : ''}</Text>
-                  </View>
-                  <View style={styles.badgeGrid}>
-                    {profileBadges.map((badge, idx) => {
-                      const rarityKey = badge.action.split(':')[1] as keyof typeof RARITY_COLORS;
-                      const borderColor = RARITY_COLORS[rarityKey] ?? colors.textFaint;
-                      const isMythique = rarityKey === 'mythique';
-                      // Détecter le tag saisonnier dans la note [eventId]
-                      const seasonalMatch = badge.note.match(/\[(\w[\w-]*)\]$/);
-                      const seasonalId = seasonalMatch?.[1];
-                      const seasonalEvent = seasonalId
-                        ? SEASONAL_EVENTS.find((e) => e.id === seasonalId)
-                        : undefined;
-                      return (
-                        <View
-                          key={idx}
-                          style={[
-                            styles.badge,
-                            { borderColor, backgroundColor: colors.cardAlt },
-                            isMythique && [styles.badgeMythique, { borderColor: colors.error, backgroundColor: colors.errorBg, shadowColor: colors.error }],
-                          ]}
-                        >
-                          <Text style={styles.badgeEmoji}>{badge.note.split(' ')[0]}</Text>
-                          {seasonalEvent && (
-                            <Text style={styles.badgeSeasonalTag}>{seasonalEvent.emoji}</Text>
-                          )}
-                        </View>
-                      );
-                    })}
-                  </View>
+        {/* Collection de badges — catalogue complet avec découverts/manquants */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>🏅 Collection de badges</Text>
+          {profiles.map((profile) => {
+            // Badges obtenus par ce profil (extraire les emojis uniques)
+            const earnedEmojis = new Set(
+              (gamiData?.history ?? [])
+                .filter((h) => h.profileId === profile.id && h.action.startsWith('loot:') && h.note.includes('Badge'))
+                .map((h) => h.note.split(' ')[0])
+            );
+
+            // Catalogue complet des badges par rareté
+            const allBadges = (Object.entries(REWARDS) as [LootRarity, typeof REWARDS[LootRarity]][]).flatMap(
+              ([rarity, rewards]) =>
+                rewards
+                  .filter((r) => r.rewardType === 'badge')
+                  .map((r) => ({ ...r, rarity }))
+            );
+
+            const earnedCount = allBadges.filter((b) => earnedEmojis.has(b.emoji)).length;
+
+            return (
+              <View key={profile.id} style={[styles.card, { backgroundColor: colors.card, marginBottom: 10 }]}>
+                <View style={styles.badgeProfileHeader}>
+                  <Text style={styles.badgeProfileAvatar}>{profile.avatar}</Text>
+                  <Text style={[styles.badgeProfileName, { color: colors.text }]}>{profile.name}</Text>
+                  <Text style={[styles.badgeProfileCount, { color: earnedCount === allBadges.length ? colors.success : colors.textFaint }]}>
+                    {earnedCount}/{allBadges.length}
+                  </Text>
                 </View>
-              );
-            })}
-          </View>
-        )}
+                {/* Barre de progression collection */}
+                <View style={[styles.collectionBar, { backgroundColor: colors.border }]}>
+                  <View style={[styles.collectionBarFill, { width: `${Math.round((earnedCount / allBadges.length) * 100)}%`, backgroundColor: earnedCount === allBadges.length ? colors.success : primary }]} />
+                </View>
+                <View style={styles.badgeGrid}>
+                  {allBadges.map((badge, idx) => {
+                    const earned = earnedEmojis.has(badge.emoji);
+                    const borderColor = earned ? RARITY_COLORS[badge.rarity] : colors.border;
+                    return (
+                      <View
+                        key={idx}
+                        style={[
+                          styles.badge,
+                          { borderColor, backgroundColor: earned ? colors.cardAlt : colors.bg },
+                          !earned && { opacity: 0.4 },
+                        ]}
+                      >
+                        <Text style={styles.badgeEmoji}>{earned ? badge.emoji : '❓'}</Text>
+                        {earned && (
+                          <View style={[styles.badgeRarityDot, { backgroundColor: RARITY_COLORS[badge.rarity] }]} />
+                        )}
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+            );
+          })}
+        </View>
 
         {/* Recent history */}
         {recentHistory.length > 0 && (
@@ -556,22 +571,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgeMythique: {
-    borderWidth: 3,
-    borderColor: '#EF4444',
-    backgroundColor: '#FEF2F2',
-    shadowColor: '#EF4444',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 8,
-    elevation: 5,
-  },
   badgeEmoji: { fontSize: FontSize.icon },
-  badgeSeasonalTag: {
+  badgeRarityDot: {
     position: 'absolute',
-    top: -4,
-    right: -4,
-    fontSize: FontSize.caption,
+    bottom: 2,
+    right: 2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  collectionBar: {
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginBottom: 10,
+  },
+  collectionBarFill: {
+    height: '100%',
+    borderRadius: 3,
   },
   badgeProfileHeader: {
     flexDirection: 'row',
