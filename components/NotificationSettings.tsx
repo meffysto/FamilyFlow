@@ -23,6 +23,7 @@ import { useThemeColors } from '../contexts/ThemeContext';
 import { createCustomNotification } from '../lib/notifications';
 import { NotificationEditor } from './NotificationEditor';
 import { FontSize, FontWeight } from '../constants/typography';
+import { Shadows } from '../constants/shadows';
 
 interface Props {
   prefs: NotificationPreferences;
@@ -147,7 +148,7 @@ export function NotificationSettings({ prefs, activeProfile, onSave, onClose }: 
               value={notif.enabled}
               onValueChange={(val) => handleToggle(notif.id, val)}
               trackColor={{ true: primary, false: colors.switchOff }}
-              thumbColor="#FFFFFF"
+              thumbColor={colors.onPrimary}
             />
           </TouchableOpacity>
         ))}
@@ -170,7 +171,7 @@ export function NotificationSettings({ prefs, activeProfile, onSave, onClose }: 
                 value={notif.enabled}
                 onValueChange={(val) => handleToggle(notif.id, val)}
                 trackColor={{ true: primary, false: colors.switchOff }}
-                thumbColor="#FFFFFF"
+                thumbColor={colors.onPrimary}
               />
             </TouchableOpacity>
           ))}
@@ -232,7 +233,7 @@ export function NotificationSettings({ prefs, activeProfile, onSave, onClose }: 
                 style={[styles.modalCreateBtn, { backgroundColor: primary }]}
                 onPress={handleCreateCustom}
               >
-                <Text style={styles.modalCreateText}>Créer</Text>
+                <Text style={[styles.modalCreateText, { color: colors.onPrimary }]}>Créer</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -262,11 +263,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 8,
-    elevation: 3,
+    ...Shadows.md,
   },
   notifRow: {
     flexDirection: 'row',
@@ -338,5 +335,5 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
   },
-  modalCreateText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: '#FFFFFF' },
+  modalCreateText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
 });

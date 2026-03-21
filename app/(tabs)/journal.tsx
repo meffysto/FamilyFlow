@@ -94,7 +94,8 @@ const ENTRY_META: Record<EntryType, { emoji: string; label: string }> = {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 /** Formate une saisie d'heure : "7" → "7h00", "18" → "18h00", "7h" → "7h00", "14:30" → "14h30", "7h30" → "7h30" */
-function formatTime(raw: string): string {
+function formatTime(raw: string | undefined): string {
+  if (!raw) return '';
   const s = raw.trim();
   if (!s) return '';
   // Déjà au format complet HHhMM ou HH:MM
@@ -147,7 +148,7 @@ function sectionNameForType(type: EntryType): string {
 }
 
 function parseRowToFields(type: EntryType, row: string): Record<string, string> {
-  const cells = row.split('|').filter(Boolean).map((c) => c.trim());
+  const cells = row.split('|').slice(1, -1).map((c) => c.trim());
 
   switch (type) {
     case 'Biberon':
@@ -612,7 +613,7 @@ export default function JournalScreen() {
       if (tableLines.length === 0) return null;
 
       const [header, _separator, ...rows] = tableLines;
-      const cols = header.split('|').filter(Boolean).map((c) => c.trim());
+      const cols = header.split('|').slice(1, -1).map((c) => c.trim());
 
       let tableLineIndices: number[] = [];
       for (let i = 0; i < sectionLines.length; i++) {
@@ -625,7 +626,7 @@ export default function JournalScreen() {
       const dataRows = rows
         .filter((r) => r.trim() && !r.includes('---'))
         .map((row, idx) => {
-          const cells = row.split('|').filter(Boolean).map((c) => c.trim());
+          const cells = row.split('|').slice(1, -1).map((c) => c.trim());
           const hasContent = cells.some((c) => c);
           return { cells, hasContent, lineIdx: dataLineIndices[idx], raw: row };
         })

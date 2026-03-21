@@ -19,7 +19,7 @@ function DashboardWishlistInner(_props: DashboardSectionProps) {
   const unbought = wishlistItems.filter((w) => !w.bought).length;
 
   return (
-    <DashboardCard key="wishlist" title="Souhaits" icon="🎁" color="#E11D48" onPressMore={() => router.push('/(tabs)/wishlist' as any)}>
+    <DashboardCard key="wishlist" title="Souhaits" icon="🎁" color={colors.accentPink} onPressMore={() => router.push('/(tabs)/wishlist' as any)}>
       <Text style={[styles.defiMeta, { color: colors.textSub }]}>
         {unbought} idée{unbought !== 1 ? 's' : ''} cadeau
       </Text>

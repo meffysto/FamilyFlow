@@ -275,11 +275,11 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
               multiline
             />
             <TouchableOpacity
-              style={styles.questionRemoveBtn}
+              style={[styles.questionRemoveBtn, { backgroundColor: colors.errorBg }]}
               onPress={() => removeQuestion(index)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Text style={styles.questionRemoveBtnText}>✕</Text>
+              <Text style={[styles.questionRemoveBtnText, { color: colors.error }]}>✕</Text>
             </TouchableOpacity>
           </View>
         ))}
@@ -324,8 +324,8 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
 
         {/* Delete button (edit mode only) */}
         {isEditing && onDelete && (
-          <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
-            <Text style={styles.deleteBtnText}>🗑️ Supprimer ce RDV</Text>
+          <TouchableOpacity style={[styles.deleteBtn, { backgroundColor: colors.errorBg, borderColor: colors.error + '40' }]} onPress={handleDelete}>
+            <Text style={[styles.deleteBtnText, { color: colors.error }]}>🗑️ Supprimer ce RDV</Text>
           </TouchableOpacity>
         )}
       </ScrollView>
@@ -402,18 +402,15 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   deleteBtn: {
-    backgroundColor: '#FEF2F2',
     padding: 14,
     borderRadius: Radius.lg,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#FECACA',
     marginTop: Spacing.md,
   },
   deleteBtnText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
-    color: '#EF4444',
   },
   sectionDivider: {
     height: 1,
@@ -442,13 +439,11 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: Radius.md,
-    backgroundColor: '#FEF2F2',
     alignItems: 'center',
     justifyContent: 'center',
   },
   questionRemoveBtnText: {
     fontSize: FontSize.sm,
-    color: '#EF4444',
     fontWeight: FontWeight.bold,
   },
   addQuestionBtn: {

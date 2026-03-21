@@ -160,7 +160,7 @@ export function SettingsHelp() {
                     accessibilityRole="button"
                     accessibilityLabel={`Installer ${pack.name}`}
                   >
-                    <Text style={styles.installBtnText}>Installer</Text>
+                    <Text style={[styles.installBtnText, { color: colors.onPrimary }]}>Installer</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -219,7 +219,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
   },
   installBtnText: {
-    color: '#FFFFFF',
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
   },

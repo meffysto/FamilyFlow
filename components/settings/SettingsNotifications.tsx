@@ -58,7 +58,7 @@ function ToggleItem({ emoji, label, detail, enabled, onToggle, colors, primary, 
         value={enabled}
         onValueChange={onToggle}
         trackColor={{ true: primary, false: colors.switchOff }}
-        thumbColor="#FFFFFF"
+        thumbColor={colors.onPrimary}
       />
     </View>
   );

@@ -163,8 +163,8 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
           placeholderTextColor={colors.textFaint}
         />
         {canRemove && (
-          <TouchableOpacity style={styles.removeBtn} onPress={() => onRemove(index)}>
-            <Text style={styles.removeBtnText}>✕</Text>
+          <TouchableOpacity style={[styles.removeBtn, { backgroundColor: colors.errorBg }]} onPress={() => onRemove(index)}>
+            <Text style={[styles.removeBtnText, { color: colors.error }]}>✕</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -203,8 +203,8 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
           placeholderTextColor={colors.textFaint}
           keyboardType="numbers-and-punctuation"
         />
-        <TouchableOpacity style={styles.removeBtn} onPress={() => removeChild(index)}>
-          <Text style={styles.removeBtnText}>✕</Text>
+        <TouchableOpacity style={[styles.removeBtn, { backgroundColor: colors.errorBg }]} onPress={() => removeChild(index)}>
+          <Text style={[styles.removeBtnText, { color: colors.error }]}>✕</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -317,7 +317,7 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
             onPress={() => setStep(step + 1)}
             disabled={!(step === 0 ? canProceedStep0 : canProceedStep1)}
           >
-            <Text style={styles.navBtnPrimaryText}>Suivant</Text>
+            <Text style={[styles.navBtnPrimaryText, { color: colors.onPrimary }]}>Suivant</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
@@ -326,9 +326,9 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
             disabled={isCreating}
           >
             {isCreating ? (
-              <ActivityIndicator color="#FFF" size="small" />
+              <ActivityIndicator color={colors.onPrimary} size="small" />
             ) : (
-              <Text style={styles.navBtnPrimaryText}>Créer le vault</Text>
+              <Text style={[styles.navBtnPrimaryText, { color: colors.onPrimary }]}>Créer le vault</Text>
             )}
           </TouchableOpacity>
         )}
@@ -406,13 +406,11 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#FEE2E2',
     alignItems: 'center',
     justifyContent: 'center',
   },
   removeBtnText: {
     fontSize: FontSize.sm,
-    color: '#DC2626',
     fontWeight: FontWeight.bold,
   },
   addBtn: {
@@ -476,7 +474,6 @@ const styles = StyleSheet.create({
   navBtnPrimaryText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
-    color: '#FFFFFF',
   },
   navBtnDisabled: {
     opacity: 0.5,

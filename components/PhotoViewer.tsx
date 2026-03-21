@@ -31,6 +31,7 @@ import {
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { FontSize, FontWeight } from '../constants/typography';
+import { useThemeColors } from '../contexts/ThemeContext';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -48,6 +49,7 @@ interface PhotoViewerProps {
 }
 
 export function PhotoViewer({ photos, initialIndex, onClose, onRetake, onCompare }: PhotoViewerProps) {
+  const { colors } = useThemeColors();
   const flatListRef = useRef<FlatList>(null);
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [controlsVisible, setControlsVisible] = useState(true);
@@ -161,13 +163,13 @@ export function PhotoViewer({ photos, initialIndex, onClose, onRetake, onCompare
           {/* Header */}
           <View style={styles.header} pointerEvents="box-none">
             <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-              <Text style={styles.closeBtnText}>✕</Text>
+              <Text style={[styles.closeBtnText, { color: colors.onPrimary }]}>✕</Text>
             </TouchableOpacity>
           </View>
 
           {/* Footer */}
           <View style={styles.footer} pointerEvents="box-none">
-            <Text style={styles.dateText}>{dateLabel}</Text>
+            <Text style={[styles.dateText, { color: colors.onPrimary }]}>{dateLabel}</Text>
             <Text style={styles.counterText}>
               {currentIndex + 1} / {photos.length}
             </Text>
@@ -181,7 +183,7 @@ export function PhotoViewer({ photos, initialIndex, onClose, onRetake, onCompare
                   }
                 }}
               >
-                <Text style={styles.retakeBtnText}>📷 Reprendre</Text>
+                <Text style={[styles.retakeBtnText, { color: colors.onPrimary }]}>📷 Reprendre</Text>
               </TouchableOpacity>
               {onCompare && (
                 <TouchableOpacity
@@ -193,7 +195,7 @@ export function PhotoViewer({ photos, initialIndex, onClose, onRetake, onCompare
                     }
                   }}
                 >
-                  <Text style={styles.retakeBtnText}>⚖️ Comparer</Text>
+                  <Text style={[styles.retakeBtnText, { color: colors.onPrimary }]}>⚖️ Comparer</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -241,7 +243,6 @@ const styles = StyleSheet.create({
   },
   closeBtnText: {
     fontSize: FontSize.heading,
-    color: '#FFFFFF',
     fontWeight: FontWeight.bold,
   },
   footer: {
@@ -255,7 +256,6 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: FontSize.lg,
-    color: '#FFFFFF',
     fontWeight: FontWeight.semibold,
   },
   counterText: {
@@ -276,7 +276,6 @@ const styles = StyleSheet.create({
   },
   retakeBtnText: {
     fontSize: FontSize.body,
-    color: '#FFFFFF',
     fontWeight: FontWeight.semibold,
   },
 });

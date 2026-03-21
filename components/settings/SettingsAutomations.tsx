@@ -63,7 +63,7 @@ export function SettingsAutomations() {
               value={config[toggle.key]}
               onValueChange={() => handleToggle(toggle.key)}
               trackColor={{ true: primary, false: colors.switchOff }}
-              thumbColor="#FFFFFF"
+              thumbColor={colors.onPrimary}
               accessibilityRole="switch"
               accessibilityLabel={toggle.label}
             />

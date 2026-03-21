@@ -58,10 +58,10 @@ export function FamilyLeaderboard({ profiles, compact = false, gamiHistory = [] 
                 <Text style={[styles.name, { color: colors.text }]}>{profile.name}</Text>
                 <Text style={[styles.level, { color: primary, backgroundColor: tint }]}>Niv. {profile.level}</Text>
                 {profile.streak > 1 && (
-                  <Text style={styles.streak}>🔥 {profile.streak}j</Text>
+                  <Text style={[styles.streak, { color: colors.warning }]}>🔥 {profile.streak}j</Text>
                 )}
                 {profile.lootBoxesAvailable > 0 && (
-                  <Text style={styles.lootBadge}>🎁 ×{profile.lootBoxesAvailable}</Text>
+                  <Text style={[styles.lootBadge, { color: colors.success }]}>🎁 ×{profile.lootBoxesAvailable}</Text>
                 )}
               </View>
 
@@ -80,7 +80,7 @@ export function FamilyLeaderboard({ profiles, compact = false, gamiHistory = [] 
                   <View style={styles.barRow}>
                     <Text style={[styles.barLabel, { color: colors.textFaint }]}>🎁</Text>
                     <View style={[styles.barTrack, { backgroundColor: colors.border }]}>
-                      <View style={[styles.barFill, styles.lootFill, { width: `${Math.round(lootProgress * 100)}%` as any }]} />
+                      <View style={[styles.barFill, { backgroundColor: colors.warning, width: `${Math.round(lootProgress * 100)}%` as any }]} />
                     </View>
                     <Text style={[styles.barValue, { color: colors.textMuted }]}>{profile.points % threshold}/{threshold}</Text>
                   </View>
@@ -104,7 +104,7 @@ export function FamilyLeaderboard({ profiles, compact = false, gamiHistory = [] 
                         style={[
                           styles.miniBadge,
                           { borderColor, backgroundColor: colors.bg },
-                          isMythique && { borderWidth: 2, shadowColor: '#EF4444', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.5, shadowRadius: 6, elevation: 4 },
+                          isMythique && { borderWidth: 2, shadowColor: colors.error, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.5, shadowRadius: 6, elevation: 4 },
                         ]}
                       >
                         <Text style={styles.miniBadgeEmoji}>{badge.note.split(' ')[0]}</Text>
@@ -166,13 +166,11 @@ const styles = StyleSheet.create({
   },
   streak: {
     fontSize: FontSize.caption,
-    color: '#F59E0B',
     fontWeight: FontWeight.semibold,
   },
   lootBadge: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.bold,
-    color: '#059669',
   },
   bars: {
     gap: 4,
@@ -197,10 +195,7 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 3,
   },
-  // xpFill color moved to inline style (dynamic theme)
-  lootFill: {
-    backgroundColor: '#F59E0B',
-  },
+  // lootFill color moved to inline style (dynamic theme)
   barValue: {
     fontSize: 11,
     width: 60,

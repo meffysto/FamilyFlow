@@ -73,7 +73,7 @@ export function SettingsZen({ zenConfig, onSave }: SettingsZenProps) {
             value={zenConfig.enabled}
             onValueChange={handleToggleEnabled}
             trackColor={{ true: primary, false: colors.switchOff }}
-            thumbColor="#FFFFFF"
+            thumbColor={colors.onPrimary}
             accessibilityRole="switch"
             accessibilityLabel="Activer le mode zen"
           />
@@ -128,7 +128,7 @@ export function SettingsZen({ zenConfig, onSave }: SettingsZenProps) {
                   value={required}
                   onValueChange={() => handleToggleSection(s.id)}
                   trackColor={{ true: primary, false: colors.switchOff }}
-                  thumbColor="#FFFFFF"
+                  thumbColor={colors.onPrimary}
                   accessibilityRole="switch"
                   accessibilityLabel={`${s.label} requis pour le mode zen`}
                 />

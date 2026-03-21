@@ -23,6 +23,7 @@ import { formatDateForDisplay } from '../lib/parser';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../constants/typography';
+import { Shadows } from '../constants/shadows';
 
 interface TaskCardProps {
   task: Task;
@@ -223,11 +224,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     padding: Spacing.xl,
     marginBottom: Spacing.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
-    elevation: 2,
+    ...Shadows.sm,
     gap: Spacing.xl,
   },
   checkboxWrapper: {
@@ -245,7 +242,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   checkmark: {
-    color: '#FFFFFF',
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
   },

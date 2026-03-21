@@ -269,22 +269,27 @@ const MEALS_LEGACY_FILE = '02 - Maison/Repas de la semaine.md';
 const MEALS_TEMPLATE = `# Repas de la semaine
 
 ## Lundi
+- Petit-déj:
 - Déjeuner:
 - Dîner:
 
 ## Mardi
+- Petit-déj:
 - Déjeuner:
 - Dîner:
 
 ## Mercredi
+- Petit-déj:
 - Déjeuner:
 - Dîner:
 
 ## Jeudi
+- Petit-déj:
 - Déjeuner:
 - Dîner:
 
 ## Vendredi
+- Petit-déj:
 - Déjeuner:
 - Dîner:
 

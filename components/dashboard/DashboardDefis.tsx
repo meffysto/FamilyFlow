@@ -28,19 +28,19 @@ function DashboardDefisInner(_props: DashboardSectionProps) {
   const todayDone = activeProfile ? mainDefi.progress.some((p) => p.date === todayStr2 && p.profileId === activeProfile.id && p.completed) : false;
 
   return (
-    <DashboardCard key="defis" title="Défis familiaux" icon="🏅" count={activeDefis.length} color="#F59E0B" onPressMore={() => router.push('/(tabs)/defis')}>
+    <DashboardCard key="defis" title="Défis familiaux" icon="🏅" count={activeDefis.length} color={colors.warning} onPressMore={() => router.push('/(tabs)/defis')}>
       <View style={styles.defiRow}>
         <Text style={styles.defiEmoji}>{mainDefi.emoji}</Text>
         <View style={{ flex: 1, gap: 4 }}>
           <Text style={[styles.defiTitle, { color: colors.text }]} numberOfLines={1}>{mainDefi.title}</Text>
           <View style={[styles.defiProgressBg, { backgroundColor: colors.cardAlt }]}>
-            <View style={[styles.defiProgressFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: '#F59E0B' }]} />
+            <View style={[styles.defiProgressFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: colors.warning }]} />
           </View>
           <Text style={[styles.defiMeta, { color: colors.textMuted }]}>{uniqueDays}/{mainDefi.targetDays} jours</Text>
         </View>
         {!todayDone && activeProfile && (
           <TouchableOpacity
-            style={[styles.defiCheckBtn, { backgroundColor: '#F59E0B' }]}
+            style={[styles.defiCheckBtn, { backgroundColor: colors.warning }]}
             onPress={async () => {
               await checkInDefi(mainDefi.id, activeProfile.id, true);
               showToast(`Check-in ${mainDefi.emoji} ${mainDefi.title}`);

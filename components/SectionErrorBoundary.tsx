@@ -3,23 +3,29 @@
  *
  * Si un composant enfant plante, affiche un message discret
  * au lieu de crasher toute l'app.
+ *
+ * Classe composant (ErrorBoundary oblige) enveloppée par un wrapper
+ * fonctionnel pour accéder aux couleurs du thème.
  */
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { FontSize, FontWeight } from '../constants/typography';
 import { Spacing, Radius } from '../constants/spacing';
+import { useThemeColors } from '../contexts/ThemeContext';
 
 interface Props {
   name: string;
   children: React.ReactNode;
+  /** Couleurs injectées par le wrapper fonctionnel */
+  _colors?: ReturnType<typeof useThemeColors>['colors'];
 }
 
 interface State {
   hasError: boolean;
 }
 
-export class SectionErrorBoundary extends React.Component<Props, State> {
+class SectionErrorBoundaryInner extends React.Component<Props, State> {
   state: State = { hasError: false };
 
   static getDerivedStateFromError(): State {
@@ -34,24 +40,35 @@ export class SectionErrorBoundary extends React.Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      const c = this.props._colors;
       return (
-        <View style={styles.container}>
-          <Text style={styles.text}>
+        <View style={[styles.container, c && { backgroundColor: c.overlayLight }]}>
+          <Text style={[styles.text, c && { color: c.textFaint }]}>
             Section « {this.props.name} » indisponible
           </Text>
           <TouchableOpacity
             onPress={() => this.setState({ hasError: false })}
-            style={styles.retry}
+            style={[styles.retry, c && { backgroundColor: c.overlayLight }]}
             accessibilityLabel={`Réessayer la section ${this.props.name}`}
             accessibilityRole="button"
           >
-            <Text style={styles.retryText}>Réessayer</Text>
+            <Text style={[styles.retryText, c && { color: c.textMuted }]}>Réessayer</Text>
           </TouchableOpacity>
         </View>
       );
     }
     return this.props.children;
   }
+}
+
+/** Wrapper fonctionnel pour injecter les couleurs du thème */
+export function SectionErrorBoundary({ name, children }: Omit<Props, '_colors'>) {
+  const { colors } = useThemeColors();
+  return (
+    <SectionErrorBoundaryInner name={name} _colors={colors}>
+      {children}
+    </SectionErrorBoundaryInner>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -67,7 +84,6 @@ const styles = StyleSheet.create({
   text: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
-    color: '#9CA3AF',
     textAlign: 'center',
   },
   retry: {
@@ -79,6 +95,5 @@ const styles = StyleSheet.create({
   retryText: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
-    color: '#6B7280',
   },
 });

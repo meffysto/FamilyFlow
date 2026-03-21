@@ -150,7 +150,7 @@ export function NotificationEditor({ config, activeProfile, onSave, onDelete, on
           value={enabled}
           onValueChange={setEnabled}
           trackColor={{ true: primary, false: colors.switchOff }}
-          thumbColor="#FFFFFF"
+          thumbColor={colors.onPrimary}
         />
       </View>
 
@@ -221,7 +221,7 @@ export function NotificationEditor({ config, activeProfile, onSave, onDelete, on
           </TouchableOpacity>
         )}
         <TouchableOpacity style={[styles.saveBtn, { backgroundColor: primary }]} onPress={handleSave}>
-          <Text style={styles.saveBtnText}>Sauvegarder</Text>
+          <Text style={[styles.saveBtnText, { color: colors.onPrimary }]}>Sauvegarder</Text>
         </TouchableOpacity>
       </View>
 
@@ -229,18 +229,18 @@ export function NotificationEditor({ config, activeProfile, onSave, onDelete, on
       {config.isCustom && (
         <View style={styles.customActions}>
           <TouchableOpacity
-            style={[styles.sendBtn, isSending && styles.btnDisabled]}
+            style={[styles.sendBtn, { backgroundColor: colors.success }, isSending && styles.btnDisabled]}
             onPress={handleSendNow}
             disabled={isSending}
           >
             {isSending ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
+              <ActivityIndicator size="small" color={colors.onPrimary} />
             ) : (
-              <Text style={styles.sendBtnText}>📤 Envoyer maintenant</Text>
+              <Text style={[styles.sendBtnText, { color: colors.onPrimary }]}>📤 Envoyer maintenant</Text>
             )}
           </TouchableOpacity>
-          <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
-            <Text style={styles.deleteBtnText}>Supprimer</Text>
+          <TouchableOpacity style={[styles.deleteBtn, { backgroundColor: colors.errorBg, borderColor: colors.error + '40' }]} onPress={handleDelete}>
+            <Text style={[styles.deleteBtnText, { color: colors.error }]}>Supprimer</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -326,23 +326,20 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
   },
-  saveBtnText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: '#FFFFFF' },
+  saveBtnText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
   customActions: { gap: 10 },
   sendBtn: {
     padding: 14,
     borderRadius: 12,
-    backgroundColor: '#10B981',
     alignItems: 'center',
   },
-  sendBtnText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: '#FFFFFF' },
+  sendBtnText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
   deleteBtn: {
     padding: 14,
     borderRadius: 12,
-    backgroundColor: '#FEF2F2',
     borderWidth: 1,
-    borderColor: '#FECACA',
     alignItems: 'center',
   },
-  deleteBtnText: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold, color: '#EF4444' },
+  deleteBtnText: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
   btnDisabled: { opacity: 0.6 },
 });

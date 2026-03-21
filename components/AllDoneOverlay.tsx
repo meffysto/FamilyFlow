@@ -20,6 +20,7 @@ import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { FontSize, FontWeight } from '../constants/typography';
 import { Spacing } from '../constants/spacing';
+import { Shadows } from '../constants/shadows';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 const CONFETTI_COUNT = 40;
@@ -184,7 +185,7 @@ export function AllDoneOverlay({
             style={[styles.button, { backgroundColor: primary }]}
             onPress={onDismiss}
           >
-            <Text style={styles.buttonText}>Super ! 🎊</Text>
+            <Text style={[styles.buttonText, { color: colors.onPrimary }]}>Super ! 🎊</Text>
           </Pressable>
         </Animated.View>
       </Pressable>
@@ -212,11 +213,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing['4xl'],
     paddingHorizontal: Spacing['3xl'],
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 24,
-    elevation: 12,
+    ...Shadows.xl,
   },
   stars: {
     fontSize: 28,
@@ -244,7 +241,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   buttonText: {
-    color: '#FFFFFF',
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
   },
