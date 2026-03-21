@@ -58,6 +58,7 @@ export default function LootScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const lootSectionRef = useRef<View>(null);
   const [showDropRates, setShowDropRates] = useState(false);
+  const [activeTab, setActiveTab] = useState<'rewards' | 'collection'>('rewards');
   const activeEvent = getActiveEvent();
   const nextEvent = !activeEvent ? getNextEvent() : null;
 
@@ -147,6 +148,23 @@ export default function LootScreen() {
           </View>
         )}
 
+        {/* Onglets internes */}
+        <View style={styles.tabRow}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'rewards' && { borderBottomColor: primary, borderBottomWidth: 2 }]}
+            onPress={() => setActiveTab('rewards')}
+          >
+            <Text style={[styles.tabText, { color: activeTab === 'rewards' ? primary : colors.textMuted }]}>🎁 Récompenses</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'collection' && { borderBottomColor: primary, borderBottomWidth: 2 }]}
+            onPress={() => setActiveTab('collection')}
+          >
+            <Text style={[styles.tabText, { color: activeTab === 'collection' ? primary : colors.textMuted }]}>🏅 Collection</Text>
+          </TouchableOpacity>
+        </View>
+
+        {activeTab === 'rewards' && <>
         {/* Loot box cards per profile */}
         <View ref={lootSectionRef} style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Tes récompenses à ouvrir</Text>
@@ -217,10 +235,51 @@ export default function LootScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>🏆 Classement</Text>
           <View style={[styles.card, { backgroundColor: colors.card }]}>
-            <FamilyLeaderboard profiles={leaderboard} gamiHistory={gamiData?.history} />
+            <FamilyLeaderboard profiles={leaderboard} />
           </View>
         </View>
 
+        {/* Recent history */}
+        {recentHistory.length > 0 && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>📜 Historique récent</Text>
+            <View style={[styles.card, { backgroundColor: colors.card }]}>
+              {recentHistory.map((entry, idx) => {
+                const profileObj = profiles.find((p) => p.id === entry.profileId);
+                const isLoot = entry.action.startsWith('loot:');
+                const rarity = isLoot ? entry.action.split(':')[1] : null;
+                return (
+                  <View key={idx} style={[styles.historyRow, { borderBottomColor: colors.bg }]}>
+                    <Text style={styles.historyAvatar}>{profileObj?.avatar ?? '👤'}</Text>
+                    <View style={styles.historyInfo}>
+                      <View style={styles.historyNameRow}>
+                        <Text style={[styles.historyName, { color: colors.textSub }]}>{profileObj?.name ?? entry.profileId}</Text>
+                        <View style={[styles.historyTypeBadge, { backgroundColor: isLoot ? colors.infoBg : colors.successBg }]}>
+                          <Text style={[styles.historyTypeText, { color: isLoot ? colors.info : colors.success }]}>
+                            {isLoot ? '🎁 Loot' : '📋 Tâche'}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text style={[styles.historyNote, { color: colors.textFaint }]}>{entry.note}</Text>
+                    </View>
+                    <View style={styles.historyPoints}>
+                      {isLoot && rarity ? (
+                        <Text style={[styles.historyRarity, { color: RARITY_COLORS[rarity as keyof typeof RARITY_COLORS] ?? colors.textFaint }]}>
+                          {RARITY_LABELS[rarity as keyof typeof RARITY_LABELS]}
+                        </Text>
+                      ) : (
+                        <Text style={[styles.historyPts, { color: colors.success }]}>{entry.action} pts</Text>
+                      )}
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        )}
+        </>}
+
+        {activeTab === 'collection' && <>
         {/* Collection de badges — catalogue complet avec découverts/manquants */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>🏅 Collection de badges</Text>
@@ -280,45 +339,7 @@ export default function LootScreen() {
             );
           })}
         </View>
-
-        {/* Recent history */}
-        {recentHistory.length > 0 && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>📜 Historique récent</Text>
-            <View style={[styles.card, { backgroundColor: colors.card }]}>
-              {recentHistory.map((entry, idx) => {
-                const profileObj = profiles.find((p) => p.id === entry.profileId);
-                const isLoot = entry.action.startsWith('loot:');
-                const rarity = isLoot ? entry.action.split(':')[1] : null;
-                return (
-                  <View key={idx} style={[styles.historyRow, { borderBottomColor: colors.bg }]}>
-                    <Text style={styles.historyAvatar}>{profileObj?.avatar ?? '👤'}</Text>
-                    <View style={styles.historyInfo}>
-                      <View style={styles.historyNameRow}>
-                        <Text style={[styles.historyName, { color: colors.textSub }]}>{profileObj?.name ?? entry.profileId}</Text>
-                        <View style={[styles.historyTypeBadge, { backgroundColor: isLoot ? colors.infoBg : colors.successBg }]}>
-                          <Text style={[styles.historyTypeText, { color: isLoot ? colors.info : colors.success }]}>
-                            {isLoot ? '🎁 Loot' : '📋 Tâche'}
-                          </Text>
-                        </View>
-                      </View>
-                      <Text style={[styles.historyNote, { color: colors.textFaint }]}>{entry.note}</Text>
-                    </View>
-                    <View style={styles.historyPoints}>
-                      {isLoot && rarity ? (
-                        <Text style={[styles.historyRarity, { color: RARITY_COLORS[rarity as keyof typeof RARITY_COLORS] ?? colors.textFaint }]}>
-                          {RARITY_LABELS[rarity as keyof typeof RARITY_LABELS]}
-                        </Text>
-                      ) : (
-                        <Text style={[styles.historyPts, { color: colors.success }]}>{entry.action} pts</Text>
-                      )}
-                    </View>
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-        )}
+        </>}
 
         <View style={{ height: 32 }} />
       </ScrollView>
@@ -491,6 +512,23 @@ const styles = StyleSheet.create({
   nextEventText: {
     fontSize: FontSize.label,
     textAlign: 'center',
+  },
+  tabRow: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.08)',
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
   },
   section: { marginBottom: 16, gap: 8 },
   sectionTitle: {

@@ -21,7 +21,7 @@ function DashboardLeaderboardInner(_props: DashboardSectionProps) {
 
   return (
     <DashboardCard key="leaderboard" title="Classement" icon="🏆" color={primary} onPressMore={() => router.push('/(tabs)/loot')}>
-      <FamilyLeaderboard profiles={leaderboard} compact gamiHistory={gamiData?.history} />
+      <FamilyLeaderboard profiles={leaderboard} compact />
     </DashboardCard>
   );
 }
