@@ -63,10 +63,16 @@ import {
   SKILLS_DIR,
   parseSkillTree,
   serializeSkillTree,
+  QUOTES_FILE,
+  parseQuotes,
+  serializeQuotes,
+  MOODS_FILE,
+  parseMoods,
+  serializeMoods,
 } from '../lib/parser';
 import { processActiveRewards, addPoints } from '../lib/gamification';
 import { XP_PER_BRACKET, getSkillById } from '../lib/gamification/skill-tree';
-import { Task, RDV, CourseItem, MealItem, StockItem, Profile, Gender, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, DefiDayEntry, GratitudeDay, WishlistItem, WishBudget, WishOccasion, Anniversary, Note, SkillTreeData } from '../lib/types';
+import { Task, RDV, CourseItem, MealItem, StockItem, Profile, Gender, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, DefiDayEntry, GratitudeDay, WishlistItem, WishBudget, WishOccasion, Anniversary, Note, SkillTreeData, ChildQuote, MoodEntry, MoodLevel } from '../lib/types';
 import {
   parseBudgetConfig,
   parseBudgetMonth,
@@ -93,6 +99,15 @@ import { buildSectionHeader, type EmplacementId } from '../constants/stock';
 
 export const VAULT_PATH_KEY = 'vault_path';
 export const ACTIVE_PROFILE_KEY = 'active_profile_id';
+
+/** Distinguer "fichier inexistant" (attendu) des vraies erreurs */
+function isFileNotFound(e: unknown): boolean {
+  const msg = String(e);
+  return msg.includes('cannot read') || msg.includes('not exist') || msg.includes('no such') || msg.includes('ENOENT');
+}
+function warnUnexpected(context: string, e: unknown) {
+  if (!isFileNotFound(e)) console.warn(`[useVault] ${context}:`, e);
+}
 
 /** Compute age category from birthdate (YYYY or YYYY-MM-DD) */
 function getAgeCategoryFromBirthdate(birthdate: string): AgeCategory {
@@ -217,6 +232,12 @@ export interface VaultState {
   addNote: (note: Omit<Note, 'sourceFile'>) => Promise<void>;
   updateNote: (sourceFile: string, note: Omit<Note, 'sourceFile'>) => Promise<void>;
   deleteNote: (sourceFile: string) => Promise<void>;
+  quotes: ChildQuote[];
+  addQuote: (enfant: string, citation: string, contexte?: string) => Promise<void>;
+  deleteQuote: (lineIndex: number) => Promise<void>;
+  moods: MoodEntry[];
+  addMood: (profileId: string, profileName: string, level: MoodLevel, note?: string) => Promise<void>;
+  deleteMood: (lineIndex: number) => Promise<void>;
   skillTrees: SkillTreeData[];
   unlockSkill: (childProfileId: string, skillId: string) => Promise<void>;
 }
@@ -395,6 +416,8 @@ export function useVaultInternal(): VaultState {
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [anniversaries, setAnniversaries] = useState<Anniversary[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
+  const [quotes, setQuotes] = useState<ChildQuote[]>([]);
+  const [moods, setMoods] = useState<MoodEntry[]>([]);
   const [skillTrees, setSkillTrees] = useState<SkillTreeData[]>([]);
   const vaultRef = useRef<VaultManager | null>(null);
   const busyRef = useRef(false); // Guard against AppState race condition
@@ -580,7 +603,7 @@ export function useVaultInternal(): VaultState {
               const legacy = await vault.readFile(MEALS_LEGACY_FILE);
               await vault.writeFile(currentFile, legacy);
               // Supprimer l'ancien fichier
-              try { await vault.deleteFile(MEALS_LEGACY_FILE); } catch {}
+              try { await vault.deleteFile(MEALS_LEGACY_FILE); } catch (e) { warnUnexpected('meals-legacy-delete', e); }
             } else {
               await vault.writeFile(currentFile, MEALS_TEMPLATE);
             }
@@ -595,13 +618,13 @@ export function useVaultInternal(): VaultState {
           const loadedRdvs: RDV[] = [];
           const loadRdvsFromDir = async (dir: string) => {
             let files: string[] = [];
-            try { files = await vault.listDir(dir); } catch { return; }
+            try { files = await vault.listDir(dir); } catch (e) { warnUnexpected(`rdv-listDir(${dir})`, e); return; }
             const rdvResults = await Promise.all(files.filter(f => f.endsWith('.md')).map(async (file) => {
               try {
                 const content = await vault.readFile(`${dir}/${file}`);
                 const rdv = parseRDV(`${dir}/${file}`, content);
                 return (rdv && rdv.statut !== 'annulé') ? rdv : null;
-              } catch { return null; }
+              } catch (e) { warnUnexpected(`rdv-read(${file})`, e); return null; }
             }));
             loadedRdvs.push(...rdvResults.filter((r): r is RDV => r !== null));
           };
@@ -618,7 +641,7 @@ export function useVaultInternal(): VaultState {
               const dates = await vault.listPhotoDates(name);
               const id = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
               photoMap[id] = dates;
-            } catch { /* dir may not exist */ }
+            } catch (e) { warnUnexpected(`photos(${name})`, e); }
           }));
           return photoMap;
         })().catch((e) => { debugErrors.push(`photos: ${e}`); return {} as Record<string, string[]>; }),
@@ -634,7 +657,7 @@ export function useVaultInternal(): VaultState {
                 const content = await vault.readFile(jalonsPath);
                 allMemories.push(...parseJalons(name, id, content));
               }
-            } catch { /* skip */ }
+            } catch (e) { warnUnexpected(`jalons(${name})`, e); }
           }));
           allMemories.sort((a, b) => b.date.localeCompare(a.date));
           return allMemories;
@@ -647,7 +670,7 @@ export function useVaultInternal(): VaultState {
             try {
               const content = await vault.readFile(`${HEALTH_DIR}/${name}/Carnet de santé.md`);
               return parseHealthRecord(name, id, content);
-            } catch { return null; }
+            } catch (e) { warnUnexpected(`health(${name})`, e); return null; }
           })
         ).then((r) => r.filter((x): x is HealthRecord => x !== null)).catch(() => [] as HealthRecord[]),
 
@@ -668,7 +691,7 @@ export function useVaultInternal(): VaultState {
                 if (content) {
                   entries.push({ enfant: name, date: dateStr, stats: parseJournalStats(content) });
                 }
-              } catch { /* fichier inexistant */ }
+              } catch (e) { warnUnexpected(`journal(${name}/${dateStr})`, e); }
             })
           ));
           return entries;
@@ -721,7 +744,7 @@ export function useVaultInternal(): VaultState {
                 await vault.writeFile(GAMI_FILE, gamiStr);
                 setProfiles(mergeProfiles(familleContent, gamiStr));
                 setGamiData(gami);
-              } catch { /* non-critique */ }
+              } catch (e) { warnUnexpected('defis-gamification', e); }
             }
           }
           return parsed;
@@ -763,7 +786,7 @@ export function useVaultInternal(): VaultState {
               const vacContent = await vault.readFile(VACATION_FILE);
               vacTasks = parseTaskFile(VACATION_FILE, vacContent);
             }
-          } catch { /* skip */ }
+          } catch (e) { warnUnexpected('vacation-tasks', e); }
           return { config, vacTasks };
         })().catch(() => ({ config: null as VacationConfig | null, vacTasks: [] as Task[] })),
 
@@ -776,7 +799,7 @@ export function useVaultInternal(): VaultState {
               try {
                 const content = await vault.readFile(file);
                 return parseNote(file, content);
-              } catch { return null; }
+              } catch (e) { warnUnexpected(`note(${file})`, e); return null; }
             })
           );
           const loaded = noteResults.filter((n): n is Note => n !== null);
@@ -784,7 +807,13 @@ export function useVaultInternal(): VaultState {
           return loaded;
         })().catch(() => [] as Note[]),
 
-        // [18] Skill trees (compétences enfants)
+        // [18] Mots d'enfants
+        vault.readFile(QUOTES_FILE).then((c) => parseQuotes(c)).catch(() => [] as ChildQuote[]),
+
+        // [19] Météo des humeurs
+        vault.readFile(MOODS_FILE).then((c) => parseMoods(c)).catch(() => [] as MoodEntry[]),
+
+        // [20] Skill trees (compétences enfants)
         (async () => {
           try {
             const files = await vault.listDir(SKILLS_DIR);
@@ -795,7 +824,7 @@ export function useVaultInternal(): VaultState {
               })
             );
             return trees;
-          } catch { return [] as SkillTreeData[]; }
+          } catch (e) { warnUnexpected('skill-trees', e); return [] as SkillTreeData[]; }
         })(),
       ]);
 
@@ -834,7 +863,9 @@ export function useVaultInternal(): VaultState {
       setVacationConfig(vacResult.config);
       setVacationTasks(vacResult.vacTasks);
       setNotes(val(results[17], []));
-      setSkillTrees(val(results[18], []));
+      setQuotes(val(results[18], []));
+      setMoods(val(results[19], []));
+      setSkillTrees(val(results[20], []));
 
       // Mettre à jour les widgets iOS
       refreshWidget(val(results[5], []), val(results[1], []), rdvResult, tasksResult);
@@ -928,12 +959,12 @@ export function useVaultInternal(): VaultState {
         try {
           const content = await vaultRef.current!.readFile(relPath);
           return parseRecipe(relPath, content);
-        } catch { return null; }
+        } catch (e) { warnUnexpected('recipe-read', e); return null; }
       }));
       const loaded = results.filter((r): r is Recipe => r !== null);
       loaded.sort((a, b) => a.title.localeCompare(b.title, 'fr'));
       setRecipes(loaded);
-    } catch {
+    } catch (e) { warnUnexpected('loadRecipes', e);
       setRecipes([]);
     }
   }, []);
@@ -1128,8 +1159,8 @@ export function useVaultInternal(): VaultState {
       try {
         const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
         setProfiles(mergeProfiles(newFamilleContent, gamiContent));
-      } catch {
-        // Fallback : mise à jour partielle
+      } catch (e) {
+        warnUnexpected('updateProfile-optimistic', e);
         setProfiles(prev => prev.map(p => p.id === profileId ? { ...p, ...updates } : p));
       }
     } catch (e) {
@@ -1177,8 +1208,8 @@ export function useVaultInternal(): VaultState {
       if (lineIndex < 0 || lineIndex >= lines.length) return;
 
       const line = lines[lineIndex];
-      // Utiliser le même parsing que parseStock (trim+filter) pour indexer correctement
-      const cells = line.split('|').map(c => c.trim()).filter(c => c.length > 0);
+      // Utiliser slice(1,-1) pour garder les cellules vides à leur position
+      const cells = line.split('|').slice(1, -1).map(c => c.trim());
       if (cells.length < 4) return;
 
       // cells[0]=produit, cells[1]=detail, cells[2]=quantite, cells[3]=seuil, cells[4]=qteAchat
@@ -1212,8 +1243,8 @@ export function useVaultInternal(): VaultState {
       let content: string;
       try {
         content = await vaultRef.current.readFile(STOCK_FILE);
-      } catch {
-        // Fichier inexistant → le créer avec un header minimal
+      } catch (e) {
+        warnUnexpected('addStockItem-read', e);
         content = '# Stock & fournitures\n';
         await vaultRef.current.writeFile(STOCK_FILE, content);
       }
@@ -1298,7 +1329,7 @@ export function useVaultInternal(): VaultState {
         if (lineIndex < 0 || lineIndex >= lines.length) return;
 
         // Lire les valeurs actuelles
-        const cells = lines[lineIndex].split('|').map(c => c.trim()).filter(c => c.length > 0);
+        const cells = lines[lineIndex].split('|').slice(1, -1).map(c => c.trim());
         if (cells.length < 4) return;
 
         const current: Omit<StockItem, 'lineIndex'> = {
@@ -1327,7 +1358,7 @@ export function useVaultInternal(): VaultState {
       const lines = content.split('\n');
       if (lineIndex < 0 || lineIndex >= lines.length) return;
 
-      const cells = lines[lineIndex].split('|').map(c => c.trim()).filter(c => c.length > 0);
+      const cells = lines[lineIndex].split('|').slice(1, -1).map(c => c.trim());
       if (cells.length < 4) return;
 
       const current: Omit<StockItem, 'lineIndex'> = {
@@ -1520,7 +1551,7 @@ export function useVaultInternal(): VaultState {
           try {
             const c = await vault.readFile(f);
             return parseTaskFile(f, c);
-          } catch { return [] as Task[]; }
+          } catch (e) { warnUnexpected('moveTask-reparse', e); return [] as Task[]; }
         })
       );
       setTasks(prev => {
@@ -1637,7 +1668,7 @@ export function useVaultInternal(): VaultState {
 
     try {
       let content = '';
-      try { content = await vaultRef.current.readFile(COURSES_FILE); } catch { /* file may not exist */ }
+      try { content = await vaultRef.current.readFile(COURSES_FILE); } catch (e) { warnUnexpected('mergeCourses-read', e); }
       const lines = content.split('\n');
 
       for (const item of items) {
@@ -1748,8 +1779,8 @@ export function useVaultInternal(): VaultState {
     let content: string;
     try {
       content = await vault.readFile(jalonsPath);
-    } catch {
-      // Create default Jalons.md
+    } catch (e) {
+      warnUnexpected('addMemory-read', e);
       content = [
         '---',
         `enfant: ${enfant}`,
@@ -1834,8 +1865,8 @@ export function useVaultInternal(): VaultState {
           const fileName = parts[parts.length - 1].replace('.cook', '');
           results.push({ path: filePath, title: fileName });
         }
-      } catch {
-        // skip unreadable dirs
+      } catch (e) {
+        warnUnexpected(`findOrphanCook(${dir})`, e);
       }
     }
     // Scanner aussi les .cook à la racine
@@ -1866,8 +1897,8 @@ export function useVaultInternal(): VaultState {
       if (recipe) {
         setRecipes(prev => [...prev, recipe].sort((a, b) => a.title.localeCompare(b.title, 'fr')));
       }
-    } catch {
-      // Fallback : recharger toutes les recettes
+    } catch (e) {
+      warnUnexpected('moveCookToRecipes-optimistic', e);
       recipesLoadedRef.current = false;
       await loadRecipes(true);
     }
@@ -1881,7 +1912,7 @@ export function useVaultInternal(): VaultState {
     try {
       const raw = await SecureStore.getItemAsync(`${FAVORITES_KEY_PREFIX}${profileId}`);
       if (raw) return JSON.parse(raw) as string[];
-    } catch { /* ignore */ }
+    } catch (e) { warnUnexpected('loadFavorites', e); }
     return [];
   }, []);
 
@@ -1924,8 +1955,8 @@ export function useVaultInternal(): VaultState {
       setProfiles(merged);
       const gami = parseGamification(gamiContent);
       setGamiData(gami);
-    } catch {
-      // ignore
+    } catch (e) {
+      warnUnexpected('refreshGamification', e);
     }
   }, []);
 
@@ -2017,8 +2048,8 @@ export function useVaultInternal(): VaultState {
       const newFamilleContent = lines.join('\n');
       const gamiContent = await vault.readFile(GAMI_FILE);
       setProfiles(mergeProfiles(newFamilleContent, gamiContent));
-    } catch {
-      // Fallback partiel
+    } catch (e) {
+      warnUnexpected('applyAgeUpgrade-optimistic', e);
       setProfiles(prev => prev.map(p =>
         p.id === upgrade.profileId ? { ...p, ageCategory: upgrade.newCategory } : p
       ));
@@ -2032,7 +2063,7 @@ export function useVaultInternal(): VaultState {
         const otherTasks = prev.filter(t => t.sourceFile !== tasksPath);
         return [...otherTasks, ...newTasks];
       });
-    } catch { /* non-critique */ }
+    } catch (e) { warnUnexpected('applyAgeUpgrade-tasks', e); }
   }, [profiles]);
 
   /** Dismiss an age upgrade notification without applying */
@@ -2051,7 +2082,7 @@ export function useVaultInternal(): VaultState {
       const merged = mergeProfiles(familleContent, gamiContent);
       setProfiles(merged);
       setGamiData(parseGamification(gamiContent));
-    } catch { /* non-critique, sync au prochain foreground */ }
+    } catch (e) { warnUnexpected('addChild-optimistic', e); }
   }, []);
 
   const convertToBorn = useCallback(async (profileId: string, birthdate: string) => {
@@ -2063,7 +2094,7 @@ export function useVaultInternal(): VaultState {
       const familleContent = await vaultRef.current.readFile(FAMILLE_FILE);
       const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
       setProfiles(mergeProfiles(familleContent, gamiContent));
-    } catch { /* non-critique, sync au prochain foreground */ }
+    } catch (e) { warnUnexpected('convertToBorn-optimistic', e); }
   }, []);
 
   // ─── Budget CRUD ────────────────────────────────────────────────────────
@@ -2078,7 +2109,8 @@ export function useVaultInternal(): VaultState {
       try {
         const configContent = await vaultRef.current.readFile(BUDGET_CONFIG_FILE);
         setBudgetConfig(parseBudgetConfig(configContent));
-      } catch {
+      } catch (e) {
+        warnUnexpected('loadBudgetConfig', e);
         await vaultRef.current.ensureDir(BUDGET_DIR);
         await vaultRef.current.writeFile(BUDGET_CONFIG_FILE, serializeBudgetConfig(DEFAULT_BUDGET_CONFIG));
         setBudgetConfig(DEFAULT_BUDGET_CONFIG);
@@ -2087,10 +2119,12 @@ export function useVaultInternal(): VaultState {
       try {
         const content = await vaultRef.current.readFile(`${BUDGET_DIR}/${m}.md`);
         setBudgetEntries(parseBudgetMonth(content));
-      } catch {
+      } catch (e) {
+        warnUnexpected(`loadBudgetMonth(${m})`, e);
         setBudgetEntries([]);
       }
-    } catch {
+    } catch (e) {
+      warnUnexpected('loadBudgetData', e);
       setBudgetEntries([]);
     }
   }, [budgetMonth]);
@@ -2105,8 +2139,8 @@ export function useVaultInternal(): VaultState {
     try {
       const content = await vaultRef.current.readFile(monthFile);
       entries = parseBudgetMonth(content);
-    } catch {
-      // file doesn't exist yet — start fresh
+    } catch (e) {
+      warnUnexpected('addExpense-read', e);
     }
 
     const newEntry: BudgetEntry = { date, category, amount, label, lineIndex: -1 };
@@ -2127,8 +2161,9 @@ export function useVaultInternal(): VaultState {
     let content: string;
     try {
       content = await vaultRef.current.readFile(monthFile);
-    } catch {
-      return; // file doesn't exist
+    } catch (e) {
+      warnUnexpected('deleteExpense-read', e);
+      return;
     }
     const lines = content.split('\n');
     if (lineIndex >= 0 && lineIndex < lines.length) {
@@ -2300,8 +2335,8 @@ export function useVaultInternal(): VaultState {
       await vaultRef.current.writeFile(GAMI_FILE, gamiStr);
       setProfiles(mergeProfiles(familleContent, gamiStr));
       setGamiData(gami);
-    } catch {
-      // Non-critique — le défi est marqué complété quand même
+    } catch (e) {
+      warnUnexpected('completeDefi-gamification', e);
     }
   }, []);
 
@@ -2316,7 +2351,7 @@ export function useVaultInternal(): VaultState {
       await vaultRef.current.writeFile(DEFIS_FILE, serializeDefis(updated));
     } else {
       // Supprimer le fichier si plus aucun défi
-      try { await vaultRef.current.deleteFile(DEFIS_FILE); } catch { /* ignore */ }
+      try { await vaultRef.current.deleteFile(DEFIS_FILE); } catch (e) { warnUnexpected('deleteDefi-file', e); }
     }
   }, []);
 
@@ -2328,7 +2363,8 @@ export function useVaultInternal(): VaultState {
     try {
       const content = await vaultRef.current.readFile(GRATITUDE_FILE);
       days = parseGratitude(content);
-    } catch {
+    } catch (e) {
+      warnUnexpected('addGratitude-read', e);
       days = [];
     }
 
@@ -2354,7 +2390,8 @@ export function useVaultInternal(): VaultState {
     try {
       const content = await vaultRef.current.readFile(GRATITUDE_FILE);
       days = parseGratitude(content);
-    } catch {
+    } catch (e) {
+      warnUnexpected('deleteGratitude-read', e);
       return;
     }
 
@@ -2369,7 +2406,7 @@ export function useVaultInternal(): VaultState {
     if (days.length > 0) {
       await vaultRef.current.writeFile(GRATITUDE_FILE, serializeGratitude(days));
     } else {
-      try { await vaultRef.current.deleteFile(GRATITUDE_FILE); } catch { /* ignore */ }
+      try { await vaultRef.current.deleteFile(GRATITUDE_FILE); } catch (e) { warnUnexpected('deleteGratitude-file', e); }
     }
     setGratitudeDays(days);
   }, []);
@@ -2381,7 +2418,8 @@ export function useVaultInternal(): VaultState {
     try {
       const content = await vaultRef.current.readFile(WISHLIST_FILE);
       return parseWishlist(content);
-    } catch {
+    } catch (e) {
+      warnUnexpected('reloadWishlist', e);
       return [];
     }
   }, []);
@@ -2447,7 +2485,8 @@ export function useVaultInternal(): VaultState {
     try {
       const content = await vaultRef.current.readFile(ANNIVERSAIRES_FILE);
       return parseAnniversaries(content);
-    } catch {
+    } catch (e) {
+      warnUnexpected('reloadAnniversaries', e);
       return [];
     }
   }, []);
@@ -2521,7 +2560,7 @@ export function useVaultInternal(): VaultState {
     const newPath = `${newDir}/${noteFileName(note.title)}`;
     // Si le chemin a changé (catégorie ou titre modifié), supprimer l'ancien
     if (newPath !== sourceFile) {
-      try { await vaultRef.current.deleteFile(sourceFile); } catch { /* ancien fichier peut ne plus exister */ }
+      try { await vaultRef.current.deleteFile(sourceFile); } catch (e) { warnUnexpected('updateNote-deleteOld', e); }
     }
     await vaultRef.current.ensureDir(newDir);
     await vaultRef.current.writeFile(newPath, serializeNote(note));
@@ -2534,6 +2573,77 @@ export function useVaultInternal(): VaultState {
     if (!vaultRef.current) return;
     await vaultRef.current.deleteFile(sourceFile);
     setNotes((prev) => prev.filter((n) => n.sourceFile !== sourceFile));
+  }, []);
+
+  // ─── Mots d'enfants CRUD ─────────────────────────────────────────────────
+
+  const addQuote = useCallback(async (enfant: string, citation: string, contexte?: string) => {
+    if (!vaultRef.current) return;
+    const date = new Date().toISOString().slice(0, 10);
+    const newQuote: ChildQuote = { date, enfant, citation, contexte, sourceFile: QUOTES_FILE, lineIndex: -1 };
+    let existing: ChildQuote[] = [];
+    try {
+      const content = await vaultRef.current.readFile(QUOTES_FILE);
+      existing = parseQuotes(content);
+    } catch (e) { warnUnexpected('addQuote-read', e); }
+    const updated = [newQuote, ...existing];
+    await vaultRef.current.ensureDir('06 - Mémoires');
+    const serialized = serializeQuotes(updated);
+    await vaultRef.current.writeFile(QUOTES_FILE, serialized);
+    setQuotes(parseQuotes(serialized));
+  }, []);
+
+  const deleteQuote = useCallback(async (lineIndex: number) => {
+    if (!vaultRef.current) return;
+    try {
+      const content = await vaultRef.current.readFile(QUOTES_FILE);
+      const existing = parseQuotes(content);
+      const filtered = existing.filter(q => q.lineIndex !== lineIndex);
+      const serialized = serializeQuotes(filtered);
+      await vaultRef.current.writeFile(QUOTES_FILE, serialized);
+      setQuotes(parseQuotes(serialized));
+    } catch (e) {
+      warnUnexpected('deleteQuote', e);
+    }
+  }, []);
+
+  // ─── Météo des humeurs CRUD ──────────────────────────────────────────────
+
+  const addMood = useCallback(async (profileId: string, profileName: string, level: MoodLevel, note?: string) => {
+    if (!vaultRef.current) return;
+    const date = new Date().toISOString().slice(0, 10);
+    let existing: MoodEntry[] = [];
+    try {
+      const content = await vaultRef.current.readFile(MOODS_FILE);
+      existing = parseMoods(content);
+    } catch (e) { warnUnexpected('addMood-read', e); }
+    // Remplacer l'entrée du même profil pour aujourd'hui si elle existe
+    const filtered = existing.filter(m => !(m.date === date && m.profileId === profileId));
+    const newEntry: MoodEntry = { date, profileId, profileName, level, note, sourceFile: MOODS_FILE, lineIndex: -1 };
+    const updated = [newEntry, ...filtered];
+    try {
+      await vaultRef.current.ensureDir('05 - Famille');
+      const serialized = serializeMoods(updated);
+      await vaultRef.current.writeFile(MOODS_FILE, serialized);
+      setMoods(parseMoods(serialized));
+    } catch (e) {
+      warnUnexpected('addMood-write', e);
+      throw e;
+    }
+  }, []);
+
+  const deleteMood = useCallback(async (lineIndex: number) => {
+    if (!vaultRef.current) return;
+    try {
+      const content = await vaultRef.current.readFile(MOODS_FILE);
+      const existing = parseMoods(content);
+      const filtered = existing.filter(m => m.lineIndex !== lineIndex);
+      const serialized = serializeMoods(filtered);
+      await vaultRef.current.writeFile(MOODS_FILE, serialized);
+      setMoods(parseMoods(serialized));
+    } catch (e) {
+      warnUnexpected('deleteMood', e);
+    }
   }, []);
 
   // ─── Skill Trees (compétences enfants) ────────────────────────────────────
@@ -2702,6 +2812,12 @@ export function useVaultInternal(): VaultState {
     addNote,
     updateNote,
     deleteNote,
+    quotes,
+    addQuote,
+    deleteQuote,
+    moods,
+    addMood,
+    deleteMood,
     skillTrees,
     unlockSkill,
   }), [
@@ -2711,7 +2827,7 @@ export function useVaultInternal(): VaultState {
     stockSections, memories, vacationConfig, vacationTasks, isVacationActive,
     recipes, ageUpgrades, budgetEntries, budgetConfig, budgetMonth, routines,
     healthRecords, defis, gratitudeDays, wishlistItems, journalStats, anniversaries, notes,
-    skillTrees,
+    quotes, moods, skillTrees,
     // Callbacks (stables grâce à useCallback)
     refresh, setVaultPath, setActiveProfile, saveNotifPrefs, updateMeal, loadMealsForWeek,
     addPhoto, getPhotoUri, updateProfileTheme, updateProfile, deleteProfile,
@@ -2728,6 +2844,6 @@ export function useVaultInternal(): VaultState {
     addGratitudeEntry, deleteGratitudeEntry,
     addWishItem, updateWishItem, deleteWishItem, toggleWishBought,
     addAnniversary, updateAnniversary, removeAnniversary, importAnniversaries,
-    addNote, updateNote, deleteNote, unlockSkill,
+    addNote, updateNote, deleteNote, addQuote, deleteQuote, addMood, deleteMood, unlockSkill,
   ]);
 }

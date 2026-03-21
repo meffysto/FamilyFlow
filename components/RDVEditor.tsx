@@ -14,15 +14,20 @@ import {
   Platform,
   Alert,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
+import { useAI } from '../contexts/AIContext';
+import { useVault } from '../contexts/VaultContext';
 import { Chip } from './ui/Chip';
 import { ModalHeader } from './ui/ModalHeader';
 import { DictaphoneRecorder } from './DictaphoneRecorder';
 import { RDV, Profile } from '../lib/types';
 import { formatDateForDisplay, parseDateInput } from '../lib/parser';
+import { generateRDVBriefing } from '../lib/ai-service';
+import type { VaultContext as AIVaultContext } from '../lib/ai-service';
 import { DateInput } from './ui/DateInput';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
@@ -48,6 +53,8 @@ interface RDVEditorProps {
 export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEditorProps) {
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
+  const { config: aiConfig, isConfigured: aiConfigured } = useAI();
+  const vault = useVault();
   const isEditing = !!rdv;
 
   // Noms d'enfants dynamiques depuis les profils
@@ -68,6 +75,49 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
   const [isSaving, setIsSaving] = useState(false);
   const [dictaphoneVisible, setDictaphoneVisible] = useState(false);
   const dictaphoneResultRef = useRef<string>('');
+  const [isBriefing, setIsBriefing] = useState(false);
+
+  const handleBriefing = async () => {
+    if (!aiConfig || !enfant) return;
+    setIsBriefing(true);
+    try {
+      const vaultCtx: AIVaultContext = {
+        tasks: vault.tasks,
+        menageTasks: vault.menageTasks,
+        rdvs: vault.rdvs,
+        stock: vault.stock,
+        meals: vault.meals,
+        courses: vault.courses,
+        memories: vault.memories,
+        defis: vault.defis,
+        wishlistItems: vault.wishlistItems,
+        recipes: [],
+        profiles: vault.profiles,
+        activeProfile: vault.activeProfile,
+        healthRecords: vault.healthRecords,
+      };
+      const resp = await generateRDVBriefing(aiConfig, { type_rdv: typeRdv, enfant, médecin, date_rdv: dateRdv }, vaultCtx);
+      if (resp.error) {
+        showToast(resp.error, 'error');
+      } else {
+        // Parser les questions générées (lignes numérotées)
+        const lines = resp.text.split('\n').filter(l => /^\d+[.)]\s/.test(l.trim()));
+        const newQuestions = lines.map(l => l.replace(/^\d+[.)]\s*/, '').trim());
+        if (newQuestions.length > 0) {
+          setQuestions(prev => [...prev, ...newQuestions]);
+          showToast(`${newQuestions.length} questions suggérées !`, 'success');
+        } else {
+          // Si pas de format numéroté, ajouter le texte brut comme une question
+          setQuestions(prev => [...prev, resp.text.trim()]);
+          showToast('Briefing généré !', 'success');
+        }
+      }
+    } catch {
+      showToast('Impossible de générer le briefing', 'error');
+    } finally {
+      setIsBriefing(false);
+    }
+  };
 
   const addQuestion = () => setQuestions((prev) => [...prev, '']);
 
@@ -193,6 +243,26 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
         <Text style={[styles.sectionHint, { color: colors.textMuted }]}>
           Notez vos questions avant le rendez-vous pour ne rien oublier.
         </Text>
+
+        {aiConfigured && (
+          <TouchableOpacity
+            style={[styles.briefingBtn, { backgroundColor: tint, borderColor: primary }]}
+            onPress={handleBriefing}
+            disabled={isBriefing}
+            activeOpacity={0.7}
+            accessibilityLabel="Préparer le RDV avec l'IA"
+            accessibilityRole="button"
+          >
+            {isBriefing ? (
+              <ActivityIndicator size="small" color={primary} />
+            ) : (
+              <>
+                <Text style={styles.briefingBtnEmoji}>🤖</Text>
+                <Text style={[styles.briefingBtnText, { color: primary }]}>Préparer avec l'IA</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
 
         {questions.map((q, index) => (
           <View key={index} style={styles.questionRow}>
@@ -401,6 +471,24 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: Spacing.md,
+  },
+  briefingBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.md,
+    borderWidth: 1.5,
+    marginBottom: Spacing.md,
+  },
+  briefingBtnEmoji: {
+    fontSize: FontSize.sm,
+  },
+  briefingBtnText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
   },
   dictaphoneBtn: {
     flexDirection: 'row',

@@ -38,6 +38,10 @@ import {
   WishOccasion,
   Anniversary,
   Note,
+  ChildQuote,
+  MoodEntry,
+  MoodLevel,
+  PregnancyWeekEntry,
   SkillTreeData,
   SkillUnlock,
   isValidGender,
@@ -977,6 +981,175 @@ export function serializeGratitude(days: GratitudeDay[]): string {
   }
 
   return parts.join('\n');
+}
+
+// ─── Mots d'enfants ─────────────────────────────────────────────────────────
+
+export const QUOTES_FILE = '06 - Mémoires/Mots d\'enfants.md';
+
+/**
+ * Parse le fichier Mots d'enfants (table markdown).
+ * Format : | Date | Enfant | Citation | Contexte |
+ */
+export function parseQuotes(content: string, sourceFile: string = QUOTES_FILE): ChildQuote[] {
+  const lines = content.split('\n');
+  const quotes: ChildQuote[] = [];
+  let inTable = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    // Détecter le header de table
+    if (line.startsWith('| Date')) { inTable = true; continue; }
+    // Sauter le séparateur
+    if (line.startsWith('| ---') || line.startsWith('|---')) continue;
+    // Parser les lignes de données
+    if (inTable && line.startsWith('|') && line.endsWith('|')) {
+      const cells = line.split('|').slice(1, -1).map(c => c.trim());
+      if (cells.length < 3) continue;
+      const [dateRaw, enfant, citation, contexte] = cells;
+      // Date DD/MM/YYYY → YYYY-MM-DD
+      const dateMatch = dateRaw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      const date = dateMatch ? `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}` : dateRaw;
+      if (!enfant || !citation) continue;
+      quotes.push({
+        date,
+        enfant,
+        citation,
+        contexte: contexte || undefined,
+        sourceFile,
+        lineIndex: i,
+      });
+    } else if (inTable && !line.startsWith('|')) {
+      inTable = false;
+    }
+  }
+
+  return quotes.sort((a, b) => b.date.localeCompare(a.date));
+}
+
+/**
+ * Sérialise ChildQuote[] en Markdown.
+ */
+export function serializeQuotes(quotes: ChildQuote[]): string {
+  const sorted = [...quotes].sort((a, b) => b.date.localeCompare(a.date));
+  const parts: string[] = [];
+  parts.push('---\ntags:\n  - mots-enfants\n---\n');
+  parts.push('# Mots d\'enfants\n');
+  parts.push('| Date | Enfant | Citation | Contexte |');
+  parts.push('| --- | --- | --- | --- |');
+  for (const q of sorted) {
+    parts.push(`| ${formatDateForDisplay(q.date)} | ${q.enfant} | ${q.citation} | ${q.contexte || ''} |`);
+  }
+  return parts.join('\n') + '\n';
+}
+
+// ─── Météo des humeurs ──────────────────────────────────────────────────────
+
+export const MOODS_FILE = '05 - Famille/Humeurs.md';
+
+/**
+ * Parse le fichier Humeurs (table markdown).
+ * Format : | Date | Profil | Humeur | Note |
+ */
+export function parseMoods(content: string, sourceFile: string = MOODS_FILE): MoodEntry[] {
+  const lines = content.split('\n');
+  const entries: MoodEntry[] = [];
+  let inTable = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line.startsWith('| Date')) { inTable = true; continue; }
+    if (line.startsWith('| ---') || line.startsWith('|---')) continue;
+    if (inTable && line.startsWith('|') && line.endsWith('|')) {
+      const cells = line.split('|').slice(1, -1).map(c => c.trim());
+      if (cells.length < 4) continue;
+      const [dateRaw, profileId, profileName, levelStr, note] = cells;
+      const dateMatch = dateRaw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      const date = dateMatch ? `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}` : dateRaw;
+      const level = parseInt(levelStr, 10);
+      if (!profileId || !profileName || isNaN(level) || level < 1 || level > 5) continue;
+      entries.push({
+        date,
+        profileId,
+        profileName,
+        level: level as MoodLevel,
+        note: note || undefined,
+        sourceFile,
+        lineIndex: i,
+      });
+    } else if (inTable && !line.startsWith('|')) {
+      inTable = false;
+    }
+  }
+
+  return entries.sort((a, b) => b.date.localeCompare(a.date) || a.profileName.localeCompare(b.profileName));
+}
+
+export function serializeMoods(entries: MoodEntry[]): string {
+  const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date) || a.profileName.localeCompare(b.profileName));
+  const parts: string[] = [];
+  parts.push('---\ntags:\n  - humeurs\n---\n');
+  parts.push('# Météo des humeurs\n');
+  parts.push('| Date | ID | Profil | Humeur | Note |');
+  parts.push('| --- | --- | --- | --- | --- |');
+  for (const e of sorted) {
+    parts.push(`| ${formatDateForDisplay(e.date)} | ${e.profileId} | ${e.profileName} | ${e.level} | ${e.note || ''} |`);
+  }
+  return parts.join('\n') + '\n';
+}
+
+// ─── Journal grossesse ──────────────────────────────────────────────────────
+
+export function pregnancyJournalPath(enfant: string): string {
+  return `03 - Journal/Grossesse/${enfant}.md`;
+}
+
+export function parsePregnancyJournal(content: string, sourceFile: string): PregnancyWeekEntry[] {
+  const lines = content.split('\n');
+  const entries: PregnancyWeekEntry[] = [];
+  let inTable = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line.startsWith('| SA')) { inTable = true; continue; }
+    if (line.startsWith('| ---') || line.startsWith('|---')) continue;
+    if (inTable && line.startsWith('|') && line.endsWith('|')) {
+      const cells = line.split('|').slice(1, -1).map(c => c.trim());
+      if (cells.length < 3) continue;
+      const [weekStr, dateRaw, poidsStr, symptomes, notes] = cells;
+      const week = parseInt(weekStr, 10);
+      if (isNaN(week)) continue;
+      const dateMatch = dateRaw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      const date = dateMatch ? `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}` : dateRaw;
+      const poids = poidsStr ? parseFloat(poidsStr) : undefined;
+      entries.push({
+        week,
+        date,
+        poids: poids && !isNaN(poids) ? poids : undefined,
+        symptomes: symptomes || undefined,
+        notes: notes || undefined,
+        sourceFile,
+        lineIndex: i,
+      });
+    } else if (inTable && !line.startsWith('|')) {
+      inTable = false;
+    }
+  }
+
+  return entries.sort((a, b) => a.week - b.week);
+}
+
+export function serializePregnancyJournal(entries: PregnancyWeekEntry[], enfant: string): string {
+  const sorted = [...entries].sort((a, b) => a.week - b.week);
+  const parts: string[] = [];
+  parts.push('---\ntags:\n  - grossesse\n---\n');
+  parts.push(`# Journal de grossesse — ${enfant}\n`);
+  parts.push('| SA | Date | Poids (kg) | Symptômes | Notes |');
+  parts.push('| --- | --- | --- | --- | --- |');
+  for (const e of sorted) {
+    parts.push(`| ${e.week} | ${formatDateForDisplay(e.date)} | ${e.poids ?? ''} | ${e.symptomes ?? ''} | ${e.notes ?? ''} |`);
+  }
+  return parts.join('\n') + '\n';
 }
 
 // ─── Wishlist / Idées cadeaux ────────────────────────────────────────────────

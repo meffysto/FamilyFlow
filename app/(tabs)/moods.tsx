@@ -1,0 +1,338 @@
+/**
+ * moods.tsx — Météo des humeurs familiales
+ *
+ * Chaque membre note son humeur du jour (1-5).
+ * Historique sur 30 jours.
+ * Fichier vault : 05 - Famille/Humeurs.md
+ */
+
+import { useCallback, useMemo, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  RefreshControl,
+  TextInput,
+  Modal,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
+import { format, subDays } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { useVault } from '../../contexts/VaultContext';
+import { useThemeColors } from '../../contexts/ThemeContext';
+import { useToast } from '../../contexts/ToastContext';
+import { useRefresh } from '../../hooks/useRefresh';
+import { Spacing, Radius } from '../../constants/spacing';
+import { FontSize, FontWeight } from '../../constants/typography';
+import { Shadows } from '../../constants/shadows';
+import { ModalHeader } from '../../components/ui/ModalHeader';
+import { Button } from '../../components/ui/Button';
+import { SegmentedControl } from '../../components/ui/SegmentedControl';
+import { MOOD_EMOJIS, type MoodLevel } from '../../lib/types';
+
+type TabId = 'aujourdhui' | 'historique';
+const MOOD_LEVELS: MoodLevel[] = [1, 2, 3, 4, 5];
+const HISTORY_DAYS = 30;
+
+export default function MoodsScreen() {
+  const { primary, colors } = useThemeColors();
+  const { showToast } = useToast();
+  const { profiles, activeProfile, moods, addMood, refresh } = useVault();
+  const { refreshing, onRefresh } = useRefresh(refresh);
+
+  const [activeTab, setActiveTab] = useState<TabId>('aujourdhui');
+  const [noteModal, setNoteModal] = useState<{ visible: boolean; level: MoodLevel | null }>({ visible: false, level: null });
+  const [noteText, setNoteText] = useState('');
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  const moodableProfiles = useMemo(
+    () => profiles.filter(p => p.statut !== 'grossesse'),
+    [profiles],
+  );
+
+  const todayMoods = useMemo(
+    () => moods.filter(m => m.date === todayStr),
+    [moods, todayStr],
+  );
+
+  const myMoodToday = useMemo(
+    () => todayMoods.find(m => m.profileId === activeProfile?.id),
+    [todayMoods, activeProfile],
+  );
+
+  // Historique : grille 30 jours × profils
+  const historyGrid = useMemo(() => {
+    const days: { date: string; label: string; entries: Map<string, MoodLevel> }[] = [];
+    const now = new Date();
+    for (let i = 0; i < HISTORY_DAYS; i++) {
+      const d = subDays(now, i);
+      const dateStr = format(d, 'yyyy-MM-dd');
+      const label = format(d, 'dd/MM', { locale: fr });
+      const entries = new Map<string, MoodLevel>();
+      for (const m of moods) {
+        if (m.date === dateStr) entries.set(m.profileId, m.level);
+      }
+      days.push({ date: dateStr, label, entries });
+    }
+    return days;
+  }, [moods]);
+
+  const handleSelectMood = useCallback((level: MoodLevel) => {
+    setNoteText('');
+    setNoteModal({ visible: true, level });
+  }, []);
+
+  const handleSaveMood = useCallback(async () => {
+    if (!activeProfile || !noteModal.level) return;
+    try {
+      await addMood(activeProfile.id, activeProfile.name, noteModal.level, noteText.trim() || undefined);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      showToast(`Humeur enregistrée ${MOOD_EMOJIS[noteModal.level]}`, 'success');
+      setNoteModal({ visible: false, level: null });
+    } catch {
+      showToast('Impossible d\'enregistrer l\'humeur', 'error');
+    }
+  }, [activeProfile, noteModal.level, noteText, addMood, showToast]);
+
+  const tabs: { id: TabId; label: string }[] = [
+    { id: 'aujourdhui', label: "Aujourd'hui" },
+    { id: 'historique', label: 'Historique' },
+  ];
+
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: colors.text }]}>🌤️ Météo des humeurs</Text>
+      </View>
+
+      <View style={styles.tabBar}>
+        <SegmentedControl segments={tabs} value={activeTab} onChange={(id) => setActiveTab(id as TabId)} />
+      </View>
+
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
+      >
+        {activeTab === 'aujourdhui' ? (
+          <>
+            {/* Mon humeur */}
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Comment tu te sens ?
+            </Text>
+
+            <View style={styles.moodRow}>
+              {MOOD_LEVELS.map(level => (
+                <TouchableOpacity
+                  key={level}
+                  style={[
+                    styles.moodBtn,
+                    { backgroundColor: myMoodToday?.level === level ? primary + '20' : colors.card, borderColor: myMoodToday?.level === level ? primary : colors.border },
+                    Shadows.sm,
+                  ]}
+                  onPress={() => handleSelectMood(level)}
+                  accessibilityLabel={`Humeur ${level} sur 5`}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.moodEmoji}>{MOOD_EMOJIS[level]}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {myMoodToday && (
+              <Text style={[styles.myMoodLabel, { color: colors.textSub }]}>
+                Ton humeur : {MOOD_EMOJIS[myMoodToday.level]}
+                {myMoodToday.note ? ` — ${myMoodToday.note}` : ''}
+              </Text>
+            )}
+
+            {/* Humeurs de la famille */}
+            <Text style={[styles.sectionTitle, { color: colors.text, marginTop: Spacing.xl }]}>
+              La famille aujourd'hui
+            </Text>
+
+            {moodableProfiles.map(p => {
+              const entry = todayMoods.find(m => m.profileId === p.id);
+              return (
+                <View key={p.id} style={[styles.familyRow, { borderBottomColor: colors.separator }]}>
+                  <Text style={[styles.familyName, { color: colors.text }]}>
+                    {p.avatar} {p.name}
+                  </Text>
+                  <Text style={styles.familyMood}>
+                    {entry ? MOOD_EMOJIS[entry.level] : '—'}
+                  </Text>
+                  {entry?.note ? (
+                    <Text style={[styles.familyNote, { color: colors.textMuted }]} numberOfLines={1}>
+                      {entry.note}
+                    </Text>
+                  ) : null}
+                </View>
+              );
+            })}
+          </>
+        ) : (
+          <>
+            {/* Grille historique */}
+            <View style={styles.gridHeader}>
+              <View style={styles.gridDateCol} />
+              {moodableProfiles.map(p => (
+                <Text key={p.id} style={[styles.gridProfileName, { color: colors.textSub }]} numberOfLines={1}>
+                  {p.avatar}
+                </Text>
+              ))}
+            </View>
+
+            {historyGrid.map(day => (
+              <View key={day.date} style={[styles.gridRow, { borderBottomColor: colors.separator }]}>
+                <Text style={[styles.gridDate, { color: colors.textMuted }]}>{day.label}</Text>
+                {moodableProfiles.map(p => (
+                  <Text key={p.id} style={styles.gridCell}>
+                    {day.entries.has(p.id) ? MOOD_EMOJIS[day.entries.get(p.id)!] : '·'}
+                  </Text>
+                ))}
+              </View>
+            ))}
+          </>
+        )}
+      </ScrollView>
+
+      {/* Modal note */}
+      <Modal visible={noteModal.visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setNoteModal({ visible: false, level: null })}>
+        <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.bg }]}>
+          <ModalHeader title={noteModal.level ? `${MOOD_EMOJIS[noteModal.level]} Ton humeur` : 'Humeur'} onClose={() => setNoteModal({ visible: false, level: null })} />
+          <View style={styles.modalContent}>
+            <Text style={[styles.label, { color: colors.textSub }]}>Ajouter une note (optionnel)</Text>
+            <TextInput
+              style={[styles.input, { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.inputBg }]}
+              placeholder="Bonne journée, fatigué, stressé..."
+              placeholderTextColor={colors.textMuted}
+              value={noteText}
+              onChangeText={setNoteText}
+            />
+            <View style={styles.saveBtn}>
+              <Button label="Enregistrer" onPress={handleSaveMood} variant="primary" />
+            </View>
+          </View>
+        </SafeAreaView>
+      </Modal>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  header: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+  },
+  title: {
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.bold,
+  },
+  tabBar: {
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  scroll: { flex: 1 },
+  scrollContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing['4xl'],
+  },
+  sectionTitle: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+    marginBottom: Spacing.md,
+  },
+  moodRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: Spacing.sm,
+  },
+  moodBtn: {
+    flex: 1,
+    aspectRatio: 1,
+    maxWidth: 64,
+    borderRadius: Radius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+  },
+  moodEmoji: {
+    fontSize: 28,
+  },
+  myMoodLabel: {
+    fontSize: FontSize.caption,
+    marginTop: Spacing.sm,
+    textAlign: 'center',
+  },
+  familyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    gap: Spacing.sm,
+  },
+  familyName: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.medium,
+    flex: 1,
+  },
+  familyMood: {
+    fontSize: 20,
+  },
+  familyNote: {
+    fontSize: FontSize.caption,
+    flex: 1,
+  },
+  // Grille historique
+  gridHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.xs,
+  },
+  gridDateCol: {
+    width: 48,
+  },
+  gridProfileName: {
+    flex: 1,
+    fontSize: FontSize.body,
+    textAlign: 'center',
+  },
+  gridRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.xs,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  gridDate: {
+    width: 48,
+    fontSize: FontSize.micro,
+  },
+  gridCell: {
+    flex: 1,
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  // Modal
+  modalContainer: { flex: 1 },
+  modalContent: { padding: Spacing.lg },
+  label: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    marginBottom: Spacing.xs,
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: Radius.base,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    fontSize: FontSize.body,
+  },
+  saveBtn: {
+    marginTop: Spacing.xl,
+  },
+});

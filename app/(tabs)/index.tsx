@@ -74,6 +74,9 @@ import {
   DashboardWishlist,
   DashboardAnniversaires,
   DashboardOnThisDay,
+  DashboardQuotes,
+  DashboardMoods,
+  DashboardCalendar,
   DashboardZenState,
 } from '../../components/dashboard';
 
@@ -88,7 +91,7 @@ interface ZenConfig {
 
 /** Sections TOUJOURS exclues du calcul zen (non configurables par l'utilisateur) */
 const ZEN_HARDCODED_EXCLUDED = [
-  'wishlist', 'anniversaires', 'onThisDay', 'lootProgress', 'rewards',
+  'wishlist', 'anniversaires', 'onThisDay', 'quotes', 'moods', 'lootProgress', 'rewards',
   'weeklyStats', 'leaderboard', 'defis', 'quicknotifs', 'vacation',
   'nightMode', 'budget', 'insights',
 ];
@@ -100,6 +103,7 @@ const ALL_SECTIONS: SectionPref[] = [
   { id: 'overdue',    label: 'En retard',               emoji: '⚠️', visible: true,  priority: 'high' },
   { id: 'menage',     label: 'Ménage du jour',         emoji: '🧹', visible: true,  priority: 'high' },
   { id: 'meals',      label: 'Repas du jour',           emoji: '🍽️', visible: true,  priority: 'high' },
+  { id: 'calendar',   label: 'Calendrier',              emoji: '📆', visible: true,  priority: 'high' },
   // Secondaires — visibles par défaut
   { id: 'courses',    label: 'Courses',                 emoji: '🛒', visible: true,  priority: 'medium' },
   { id: 'rdvs',       label: 'Rendez-vous',             emoji: '📅', visible: true,  priority: 'medium' },
@@ -114,6 +118,8 @@ const ALL_SECTIONS: SectionPref[] = [
   { id: 'wishlist',   label: 'Souhaits',                emoji: '🎁', visible: false, priority: 'medium' },
   { id: 'anniversaires', label: 'Anniversaires',         emoji: '🎂', visible: false, priority: 'medium' },
   { id: 'onThisDay',    label: 'Il y a 1 an…',           emoji: '🕰️', visible: false, priority: 'medium' },
+  { id: 'quotes',       label: 'Mots d\'enfants',         emoji: '💬', visible: false, priority: 'medium' },
+  { id: 'moods',        label: 'Humeurs',                 emoji: '🌤️', visible: false, priority: 'medium' },
 
   { id: 'quicknotifs',label: 'Notifications rapides',   emoji: '📤', visible: false, priority: 'low' },
   { id: 'recipes',    label: 'Idée recette',             emoji: '📖', visible: false, priority: 'low' },
@@ -763,6 +769,9 @@ export default function DashboardScreen() {
       case 'wishlist':     return <DashboardWishlist key={id} {...sectionProps} />;
       case 'anniversaires': return <DashboardAnniversaires key={id} {...sectionProps} />;
       case 'onThisDay':    return <DashboardOnThisDay key={id} {...sectionProps} />;
+      case 'quotes':       return <DashboardQuotes key={id} {...sectionProps} />;
+      case 'moods':        return <DashboardMoods key={id} {...sectionProps} />;
+      case 'calendar':     return <DashboardCalendar key={id} {...sectionProps} />;
       default:             return null;
     }
   };
@@ -877,7 +886,8 @@ export default function DashboardScreen() {
           const sizeCm = getSizeForWeek(weeksElapsed);
           const progress = Math.min(1, Math.max(0, daysElapsed / totalDays));
           return (
-            <GlassView key={p.id} style={styles.pregnancyCard}>
+            <TouchableOpacity key={p.id} onPress={() => router.push('/(tabs)/pregnancy' as any)} activeOpacity={0.8}>
+            <GlassView style={styles.pregnancyCard}>
               <View style={styles.pregnancyRow}>
                 <Text style={styles.pregnancyFruit}>{fruitEmoji}</Text>
                 <View style={styles.pregnancyInfo}>
@@ -912,6 +922,7 @@ export default function DashboardScreen() {
                 <View style={[styles.pregnancyBarFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: primary }]} />
               </View>
             </GlassView>
+            </TouchableOpacity>
           );
         })}
 

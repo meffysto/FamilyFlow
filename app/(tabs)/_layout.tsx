@@ -188,10 +188,10 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
           }}
         />
         <Tabs.Screen
-          name="photos"
+          name="calendar"
           options={{
-            title: 'Photos',
-            tabBarIcon: ({ focused }) => <TabIcon emoji="📸" focused={focused} />,
+            title: 'Calendrier',
+            tabBarIcon: ({ focused }) => <TabIcon emoji="📆" focused={focused} />,
           }}
         />
         <Tabs.Screen
@@ -217,6 +217,10 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
         <Tabs.Screen name="anniversaires" options={{ href: null }} />
         <Tabs.Screen name="compare" options={{ href: null }} />
         <Tabs.Screen name="notes" options={{ href: null }} />
+        <Tabs.Screen name="quotes" options={{ href: null }} />
+        <Tabs.Screen name="moods" options={{ href: null }} />
+        <Tabs.Screen name="photos" options={{ href: null }} />
+        <Tabs.Screen name="pregnancy" options={{ href: null }} />
         <Tabs.Screen name="skills" options={{ href: null }} />
         <Tabs.Screen name="night-mode" options={{ href: null, tabBarStyle: { display: 'none' } }} />
       </Tabs>
@@ -337,7 +341,6 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
 export default function TabsLayout() {
   const { profiles, activeProfile, setActiveProfile, vacationConfig, isVacationActive } = useVault();
   const { setThemeId } = useThemeColors();
-
   // Sync le thème du profil actif avec le ThemeProvider racine
   useEffect(() => {
     setThemeId(activeProfile?.theme ?? '');

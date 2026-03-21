@@ -54,9 +54,13 @@ export default function NightModeScreen() {
   const params = useLocalSearchParams<{ startLive?: string }>();
   const { profiles, vault } = useVault();
 
-  // Bébés = profils bébé (ageCategory ou birthdate < 2 ans)
+  // Bébés = profils bébé, triés du plus jeune au plus vieux
   const babies = useMemo(
-    () => profiles.filter(isBabyProfile),
+    () => profiles.filter(isBabyProfile).sort((a, b) => {
+      const da = a.birthdate ? new Date(a.birthdate).getTime() : 0;
+      const db = b.birthdate ? new Date(b.birthdate).getTime() : 0;
+      return db - da; // plus récent en premier
+    }),
     [profiles],
   );
 
