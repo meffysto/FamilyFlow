@@ -28,5 +28,6 @@ export { DashboardQuotes } from './DashboardQuotes';
 export { DashboardMoods } from './DashboardMoods';
 export { DashboardCalendar } from './DashboardCalendar';
 export { DashboardZenState } from './DashboardZenState';
+export { DashboardBilanSemaine } from './DashboardBilanSemaine';
 
 export type { DashboardSectionProps, DashboardSectionWithTaskToggleProps } from './types';

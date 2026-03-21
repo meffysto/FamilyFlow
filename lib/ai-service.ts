@@ -800,3 +800,30 @@ Règles :
     throw new ReceiptScanError('Impossible de lire la réponse IA');
   }
 }
+
+// ─── Bilan hebdomadaire IA ──────────────────────────────────────────────────────
+
+/**
+ * Génère un bilan de semaine chaleureux à partir du récap formaté.
+ * Le texte recapText doit déjà être anonymisé par l'appelant si nécessaire.
+ */
+export async function generateWeeklyBilan(
+  config: AIConfig,
+  recapText: string,
+): Promise<AIResponse> {
+  const systemPrompt = 'Tu es un assistant familial chaleureux. Tu rédiges des bilans de semaine pour une famille française.';
+
+  const messages: AIMessage[] = [
+    {
+      role: 'user',
+      content: `Voici le résumé de notre semaine :\n\n${recapText}\n\nRédige un bilan de semaine en 2-3 paragraphes courts, ton chaleureux et bienveillant. Maximum 200 mots. Mets en valeur les mots d'enfants s'il y en a. Termine par un encouragement pour la semaine prochaine. Pas de markdown, pas de listes à puces, 2-3 emojis max. Utilise les prénoms tels quels.`,
+    },
+  ];
+
+  // Utiliser Haiku pour le coût minimal
+  const haikiConfig = { ...config, model: 'claude-haiku-4-5-20251001' };
+  const resp = await callClaude(haikiConfig, systemPrompt, messages);
+  if (resp.error) return resp;
+
+  return { text: resp.text };
+}

@@ -78,6 +78,7 @@ import {
   DashboardMoods,
   DashboardCalendar,
   DashboardZenState,
+  DashboardBilanSemaine,
 } from '../../components/dashboard';
 
 const PREFS_KEY = 'dashboard_prefs_v1';
@@ -120,6 +121,7 @@ const ALL_SECTIONS: SectionPref[] = [
   { id: 'onThisDay',    label: 'Il y a 1 an…',           emoji: '🕰️', visible: false, priority: 'medium' },
   { id: 'quotes',       label: 'Mots d\'enfants',         emoji: '💬', visible: false, priority: 'medium' },
   { id: 'moods',        label: 'Humeurs',                 emoji: '🌤️', visible: false, priority: 'medium' },
+  { id: 'bilanSemaine', label: 'Bilan de semaine',         emoji: '📝', visible: true,  priority: 'medium' },
 
   { id: 'quicknotifs',label: 'Notifications rapides',   emoji: '📤', visible: false, priority: 'low' },
   { id: 'recipes',    label: 'Idée recette',             emoji: '📖', visible: false, priority: 'low' },
@@ -772,6 +774,7 @@ export default function DashboardScreen() {
       case 'quotes':       return <DashboardQuotes key={id} {...sectionProps} />;
       case 'moods':        return <DashboardMoods key={id} {...sectionProps} />;
       case 'calendar':     return <DashboardCalendar key={id} {...sectionProps} />;
+      case 'bilanSemaine': return <DashboardBilanSemaine key={id} {...sectionProps} />;
       default:             return null;
     }
   };
