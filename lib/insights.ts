@@ -335,19 +335,19 @@ function streakInsights(input: InsightInput, tc: TimeContext): Insight[] {
   const profile = input.activeProfile;
   if (!profile) return insights;
 
-  // Streak de tâches
+  // Série de tâches complétées
   if (profile.streak >= 5) {
     insights.push({
       id: 'streak-tasks',
       icon: '🔥',
-      title: `Streak de ${profile.streak} jours !`,
-      body: 'Continuez sur cette lancée, ne cassez pas la série.',
+      title: `${profile.streak} jours d'affilée !`,
+      body: 'Vous complétez des tâches chaque jour depuis plusieurs jours. Bravo, continuez !',
       priority: 'low',
       category: 'stat',
     });
   }
 
-  // Gratitude streak
+  // Série de gratitudes
   const hasGratitudeToday = input.gratitudeDays.some(
     (d) => d.date === tc.todayStr && d.entries.some((e) => e.profileId === profile.id),
   );
@@ -359,8 +359,8 @@ function streakInsights(input: InsightInput, tc: TimeContext): Insight[] {
     insights.push({
       id: 'gratitude-reminder',
       icon: '🙏',
-      title: "Gratitude du jour",
-      body: "Vous avez écrit hier — continuez la série !",
+      title: 'Gratitude du jour',
+      body: "Vous avez noté une gratitude hier — écrivez celle d'aujourd'hui pour garder la série !",
       priority: 'low',
       category: 'reminder',
       action: { label: 'Écrire', type: 'navigate', route: '/(tabs)/gratitude' },

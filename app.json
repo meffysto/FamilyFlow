@@ -25,7 +25,11 @@
         "NSSpeechRecognitionUsageDescription": "FamilyFlow utilise la reconnaissance vocale pour transcrire les réponses du médecin.",
         "NSMicrophoneUsageDescription": "FamilyFlow utilise le micro pour transcrire les consultations médicales.",
         "ITSAppUsesNonExemptEncryption": false,
-        "LSApplicationQueriesSchemes": ["whatsapp", "sms", "tel"]
+        "LSApplicationQueriesSchemes": [
+          "whatsapp",
+          "sms",
+          "tel"
+        ]
       },
       "buildNumber": "12"
     },
@@ -124,7 +128,8 @@
             }
           ]
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true

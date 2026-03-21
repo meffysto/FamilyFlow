@@ -7,7 +7,6 @@ import { useVault } from '../../contexts/VaultContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Button } from '../ui/Button';
 import { buildAndSendWeeklySummary } from '../../lib/telegram';
-import type { VaultContext as AIVaultContext } from '../../lib/ai-service';
 import {
   loadNotifConfig,
   saveNotifConfig,
@@ -75,23 +74,16 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
   const handleSendWeeklyNow = useCallback(async () => {
     setSendingWeekly(true);
     try {
-      const vaultCtx: AIVaultContext = {
+      const result = await buildAndSendWeeklySummary({
         tasks: vault.tasks,
         menageTasks: vault.menageTasks,
-        rdvs: vault.rdvs,
-        stock: vault.stock,
         meals: vault.meals,
-        courses: vault.courses,
-        memories: vault.memories,
+        moods: vault.moods,
+        quotes: vault.quotes,
         defis: vault.defis,
-        wishlistItems: vault.wishlistItems,
-        recipes: [],
         profiles: vault.profiles,
-        activeProfile: vault.activeProfile,
-        journalStats: vault.journalStats,
-        healthRecords: vault.healthRecords,
-      };
-      const result = await buildAndSendWeeklySummary(vaultCtx);
+        stock: vault.stock,
+      });
       if (result.sent) {
         showToast('Résumé hebdo envoyé sur Telegram');
       } else {

@@ -37,12 +37,15 @@ interface MenuItem {
   params?: Record<string, string>;
   badge?: number;
   color: string;
-  category: 'quotidien' | 'famille' | 'systeme';
+  category: 'organisation' | 'sante' | 'souvenirs' | 'jeux' | 'famille' | 'systeme';
 }
 
 const CATEGORY_LABELS = {
-  quotidien: 'Vie quotidienne',
-  famille: 'Famille',
+  organisation: 'Organisation',
+  sante: 'Santé & Bien-être',
+  souvenirs: 'Souvenirs & Émotions',
+  jeux: 'Jeux & Progrès',
+  famille: 'Vie de famille',
   systeme: 'Système',
 } as const;
 
@@ -92,25 +95,28 @@ export default function MoreScreen() {
     }).length;
 
     return [
-      // Vie quotidienne
-      { emoji: '📸', label: 'Photos', route: '/(tabs)/photos', color: colors.accentPink, category: 'quotidien' as const },
-      { emoji: '🔄', label: 'Routines', route: '/(tabs)/routines', color: colors.info, category: 'quotidien' as const },
-      { emoji: '📅', label: 'Rendez-vous', route: '/(tabs)/rdv', badge: upcomingRdvs || undefined, color: colors.info, category: 'quotidien' as const },
-      { emoji: '🍽️', label: 'Repas', route: '/(tabs)/meals', color: colors.success, category: 'quotidien' as const },
-      { emoji: '🛒', label: 'Courses', route: '/(tabs)/meals', params: { tab: 'courses' }, badge: courses.filter((c) => !c.completed).length || undefined, color: colors.success, category: 'quotidien' as const },
-      { emoji: '📦', label: 'Stocks & Fournitures', route: '/(tabs)/stock', badge: lowStock || undefined, color: colors.warning, category: 'quotidien' as const },
-      { emoji: '🏥', label: 'Santé', route: '/(tabs)/health', color: colors.error, category: 'quotidien' as const },
-      ...(hasBaby ? [{ emoji: '🌙', label: 'Mode nuit', route: '/(tabs)/night-mode', color: '#B8860B', category: 'quotidien' as const }] : []),
-      ...(profiles.some(p => p.statut === 'grossesse') ? [{ emoji: '🤰', label: 'Grossesse', route: '/(tabs)/pregnancy' as const, color: '#EC4899', category: 'quotidien' as const }] : []),
-      // Famille
-      { emoji: '🌳', label: 'Compétences', route: '/(tabs)/skills', color: '#10B981', category: 'famille' as const },
-      { emoji: '🎰', label: 'Récompenses', route: '/(tabs)/loot', badge: lootBoxes || undefined, color: '#EC4899', category: 'famille' as const },
-      { emoji: '🏅', label: 'Défis', route: '/(tabs)/defis', badge: activeDefis || undefined, color: '#F59E0B', category: 'famille' as const },
-      { emoji: '💬', label: 'Mots d\'enfants', route: '/(tabs)/quotes', color: '#06B6D4', category: 'famille' as const },
-      { emoji: '🌤️', label: 'Humeurs', route: '/(tabs)/moods', color: '#F59E0B', category: 'famille' as const },
-      { emoji: '🙏', label: 'Gratitude', route: '/(tabs)/gratitude', color: '#8B5CF6', category: 'famille' as const },
-      { emoji: '🎁', label: 'Souhaits', route: '/(tabs)/wishlist', badge: wishlistUnbought || undefined, color: '#E11D48', category: 'famille' as const },
+      // Organisation
+      { emoji: '🔄', label: 'Routines', route: '/(tabs)/routines', color: colors.info, category: 'organisation' as const },
+      { emoji: '📅', label: 'Rendez-vous', route: '/(tabs)/rdv', badge: upcomingRdvs || undefined, color: colors.info, category: 'organisation' as const },
+      { emoji: '🍽️', label: 'Repas', route: '/(tabs)/meals', color: colors.success, category: 'organisation' as const },
+      { emoji: '🛒', label: 'Courses', route: '/(tabs)/meals', params: { tab: 'courses' }, badge: courses.filter((c) => !c.completed).length || undefined, color: colors.success, category: 'organisation' as const },
+      { emoji: '📦', label: 'Stocks & Fournitures', route: '/(tabs)/stock', badge: lowStock || undefined, color: colors.warning, category: 'organisation' as const },
+      // Santé & Bien-être
+      { emoji: '🏥', label: 'Santé', route: '/(tabs)/health', color: colors.error, category: 'sante' as const },
+      { emoji: '🌤️', label: 'Humeurs', route: '/(tabs)/moods', color: '#F59E0B', category: 'sante' as const },
+      ...(hasBaby ? [{ emoji: '🌙', label: 'Mode nuit', route: '/(tabs)/night-mode', color: '#B8860B', category: 'sante' as const }] : []),
+      ...(profiles.some(p => p.statut === 'grossesse') ? [{ emoji: '🤰', label: 'Grossesse', route: '/(tabs)/pregnancy' as const, color: '#EC4899', category: 'sante' as const }] : []),
+      // Souvenirs & Émotions
+      { emoji: '📸', label: 'Photos', route: '/(tabs)/photos', color: colors.accentPink, category: 'souvenirs' as const },
+      { emoji: '💬', label: 'Mots d\'enfants', route: '/(tabs)/quotes', color: '#06B6D4', category: 'souvenirs' as const },
+      { emoji: '🙏', label: 'Gratitude', route: '/(tabs)/gratitude', color: '#8B5CF6', category: 'souvenirs' as const },
+      // Jeux & Progrès
+      { emoji: '🌳', label: 'Compétences', route: '/(tabs)/skills', color: '#10B981', category: 'jeux' as const },
+      { emoji: '🎰', label: 'Récompenses', route: '/(tabs)/loot', badge: lootBoxes || undefined, color: '#EC4899', category: 'jeux' as const },
+      { emoji: '🏅', label: 'Défis', route: '/(tabs)/defis', badge: activeDefis || undefined, color: '#F59E0B', category: 'jeux' as const },
+      // Vie de famille
       { emoji: '🎂', label: 'Anniversaires', route: '/(tabs)/anniversaires', badge: upcomingBirthdays || undefined, color: '#D946EF', category: 'famille' as const },
+      { emoji: '🎁', label: 'Souhaits', route: '/(tabs)/wishlist', badge: wishlistUnbought || undefined, color: '#E11D48', category: 'famille' as const },
       { emoji: '💰', label: 'Budget', route: '/(tabs)/budget', badge: totalSpent(budgetEntries) > totalBudget(budgetConfig) ? 1 : undefined, color: '#059669', category: 'famille' as const },
       { emoji: '📝', label: 'Notes', route: '/(tabs)/notes', badge: notes.length || undefined, color: colors.info, category: 'famille' as const },
       { emoji: '📊', label: 'Statistiques', route: '/(tabs)/stats', color: colors.info, category: 'famille' as const },
@@ -132,7 +138,7 @@ export default function MoreScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <View ref={headerRef} style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>Plus</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Menu</Text>
         <TouchableOpacity
           style={[styles.viewToggle, { backgroundColor: colors.card }]}
           onPress={toggleView}
@@ -153,7 +159,7 @@ export default function MoreScreen() {
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-        {(['quotidien', 'famille', 'systeme'] as const).map((cat) => {
+        {(['organisation', 'sante', 'souvenirs', 'jeux', 'famille', 'systeme'] as const).map((cat) => {
           const catItems = visibleItems.filter((i) => i.category === cat);
           if (catItems.length === 0) return null;
           return (

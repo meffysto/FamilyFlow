@@ -26,6 +26,7 @@ import { ParentalControlsProvider } from '../contexts/ParentalControlsContext';
 import { HelpProvider } from '../contexts/HelpContext';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { LockScreen } from '../components/LockScreen';
+import '../lib/i18n';
 
 // ─── Error Boundary ──────────────────────────────────────────────────────────
 
