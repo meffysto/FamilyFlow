@@ -12,7 +12,7 @@
  * Step 9: Recap + create vault
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'expo-router';
 import {
   View,
@@ -37,7 +37,7 @@ import { TEMPLATE_PACKS, DEFAULT_SELECTED_PACKS } from '../lib/vault-templates';
 import { useHelp } from '../contexts/HelpContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../constants/typography';
-import { LightColors } from '../constants/colors';
+import { Shadows } from '../constants/shadows';
 
 const PARENT_AVATARS = ['👨', '👩', '👨‍💻', '👩‍💻', '🧔', '👱‍♀️', '🧑', '👤'];
 const CHILD_AVATARS = ['👶', '🧒', '👦', '👧', '🍼', '🐣', '🎒', '👼'];
@@ -80,6 +80,7 @@ export default function SetupScreen() {
   const { setVaultPath } = useVault();
   const { primary, tint, colors } = useThemeColors();
   const { markTemplateInstalled } = useHelp();
+  const ds = useDynamicStyles(colors, primary);
 
   const [step, setStep] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
@@ -298,7 +299,7 @@ export default function SetupScreen() {
           <View style={s.stepContent}>
             <Text style={s.logo}>🏠</Text>
             <Text style={[s.appName, { color: primary }]}>Family Vault</Text>
-            <Text style={s.tagline}>Votre famille, organisée ensemble</Text>
+            <Text style={ds.tagline}>Votre famille, organisée ensemble</Text>
 
             <View style={s.features}>
               {[
@@ -307,11 +308,11 @@ export default function SetupScreen() {
                 ['📝', 'Obsidian', '100% Markdown, compatible avec Obsidian'],
                 ['📱', 'Telegram', 'Notifications via Telegram'],
               ].map(([icon, title, desc]) => (
-                <View key={title} style={s.feature}>
+                <View key={title} style={ds.feature}>
                   <Text style={s.featureIcon}>{icon}</Text>
                   <View style={s.featureText}>
-                    <Text style={s.featureTitle}>{title}</Text>
-                    <Text style={s.featureDesc}>{desc}</Text>
+                    <Text style={ds.featureTitle}>{title}</Text>
+                    <Text style={ds.featureDesc}>{desc}</Text>
                   </View>
                 </View>
               ))}
@@ -330,17 +331,17 @@ export default function SetupScreen() {
       case 5:
         return (
           <View style={s.stepContent}>
-            <Text style={s.stepTitle}>👨‍👩‍👧‍👦 Les parents</Text>
-            <Text style={s.stepSubtitle}>Combien de parents dans la famille ?</Text>
+            <Text style={ds.stepTitle}>👨‍👩‍👧‍👦 Les parents</Text>
+            <Text style={ds.stepSubtitle}>Combien de parents dans la famille ?</Text>
 
             <View style={s.countRow}>
               {[1, 2].map((n) => (
                 <TouchableOpacity
                   key={n}
-                  style={[s.countBtn, parentCount === n && { backgroundColor: tint, borderColor: primary }]}
+                  style={[ds.countBtn, parentCount === n && { backgroundColor: tint, borderColor: primary }]}
                   onPress={() => updateParentCount(n)}
                 >
-                  <Text style={[s.countBtnText, parentCount === n && { color: primary }]}>
+                  <Text style={[ds.countBtnText, parentCount === n && { color: primary }]}>
                     {n} parent{n > 1 ? 's' : ''}
                   </Text>
                 </TouchableOpacity>
@@ -348,22 +349,22 @@ export default function SetupScreen() {
             </View>
 
             {parents.map((parent, i) => (
-              <View key={i} style={s.profileForm}>
-                <Text style={s.formLabel}>Parent {i + 1}</Text>
+              <View key={i} style={ds.profileForm}>
+                <Text style={ds.formLabel}>Parent {i + 1}</Text>
                 <TextInput
-                  style={s.input}
+                  style={ds.input}
                   placeholder="Prénom"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.textFaint}
                   value={parent.name}
                   onChangeText={(v) => updateParent(i, 'name', v)}
                   autoCapitalize="words"
                 />
-                <Text style={s.formLabel}>Avatar</Text>
+                <Text style={ds.formLabel}>Avatar</Text>
                 <View style={s.avatarGrid}>
                   {PARENT_AVATARS.map((emoji) => (
                     <TouchableOpacity
                       key={emoji}
-                      style={[s.avatarBtn, parent.avatar === emoji && { backgroundColor: tint, borderColor: primary }]}
+                      style={[ds.avatarBtn, parent.avatar === emoji && { backgroundColor: tint, borderColor: primary }]}
                       onPress={() => updateParent(i, 'avatar', emoji)}
                     >
                       <Text style={s.avatarEmoji}>{emoji}</Text>
@@ -378,17 +379,17 @@ export default function SetupScreen() {
       case 6:
         return (
           <View style={s.stepContent}>
-            <Text style={s.stepTitle}>👶 Les enfants</Text>
-            <Text style={s.stepSubtitle}>Combien d'enfants ?</Text>
+            <Text style={ds.stepTitle}>👶 Les enfants</Text>
+            <Text style={ds.stepSubtitle}>Combien d'enfants ?</Text>
 
             <View style={s.countRow}>
               {[0, 1, 2, 3, 4].map((n) => (
                 <TouchableOpacity
                   key={n}
-                  style={[s.countBtn, childCount === n && { backgroundColor: tint, borderColor: primary }]}
+                  style={[ds.countBtn, childCount === n && { backgroundColor: tint, borderColor: primary }]}
                   onPress={() => updateChildCount(n)}
                 >
-                  <Text style={[s.countBtnText, childCount === n && { color: primary }]}>
+                  <Text style={[ds.countBtnText, childCount === n && { color: primary }]}>
                     {n}
                   </Text>
                 </TouchableOpacity>
@@ -396,37 +397,37 @@ export default function SetupScreen() {
             </View>
 
             {children.map((child, i) => (
-              <View key={i} style={s.profileForm}>
-                <Text style={s.formLabel}>Enfant {i + 1}</Text>
+              <View key={i} style={ds.profileForm}>
+                <Text style={ds.formLabel}>Enfant {i + 1}</Text>
                 <TextInput
-                  style={s.input}
+                  style={ds.input}
                   placeholder="Prénom"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.textFaint}
                   value={child.name}
                   onChangeText={(v) => updateChild(i, 'name', v)}
                   autoCapitalize="words"
                 />
                 <TextInput
                   style={[
-                    s.input,
-                    child.birthdate && !isValidBirthdate(child.birthdate) && s.inputError,
+                    ds.input,
+                    child.birthdate && !isValidBirthdate(child.birthdate) && ds.inputError,
                   ]}
                   placeholder="Année (AAAA) ou date complète (AAAA-MM-JJ)"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.textFaint}
                   value={child.birthdate}
                   onChangeText={(v) => updateChild(i, 'birthdate', formatBirthdate(v))}
                   keyboardType="number-pad"
                   maxLength={10}
                 />
-                <Text style={s.birthdateHint}>
+                <Text style={ds.birthdateHint}>
                   L'année permet d'adapter les tâches à l'âge (bébé, enfant, ado)
                 </Text>
-                <Text style={s.formLabel}>Avatar</Text>
+                <Text style={ds.formLabel}>Avatar</Text>
                 <View style={s.avatarGrid}>
                   {CHILD_AVATARS.map((emoji) => (
                     <TouchableOpacity
                       key={emoji}
-                      style={[s.avatarBtn, child.avatar === emoji && { backgroundColor: tint, borderColor: primary }]}
+                      style={[ds.avatarBtn, child.avatar === emoji && { backgroundColor: tint, borderColor: primary }]}
                       onPress={() => updateChild(i, 'avatar', emoji)}
                     >
                       <Text style={s.avatarEmoji}>{emoji}</Text>
@@ -437,16 +438,16 @@ export default function SetupScreen() {
             ))}
 
             {childCount > 0 && children.some((c) => !c.birthdate) && (
-              <View style={s.ageWarning}>
-                <Text style={s.ageWarningText}>
+              <View style={ds.ageWarning}>
+                <Text style={ds.ageWarningText}>
                   Sans année de naissance, les tâches « bébé » seront créées par défaut (biberons, couches…)
                 </Text>
               </View>
             )}
 
             {childCount === 0 && (
-              <View style={s.noChildHint}>
-                <Text style={s.noChildText}>
+              <View style={ds.noChildHint}>
+                <Text style={ds.noChildText}>
                   Pas de souci ! Vous pourrez ajouter des enfants plus tard dans les réglages.
                 </Text>
               </View>
@@ -457,8 +458,8 @@ export default function SetupScreen() {
       case 7:
         return (
           <View style={s.stepContent}>
-            <Text style={s.stepTitle}>📁 Emplacement du vault</Text>
-            <Text style={s.stepSubtitle}>
+            <Text style={ds.stepTitle}>📁 Emplacement du vault</Text>
+            <Text style={ds.stepSubtitle}>
               Où stocker les données de votre famille ? Choisissez un dossier existant ou un nouveau dossier vide.
             </Text>
             <VaultPicker
@@ -483,8 +484,8 @@ export default function SetupScreen() {
         );
         return (
           <View style={s.stepContent}>
-            <Text style={s.stepTitle}>📦 Modèles de départ</Text>
-            <Text style={s.stepSubtitle}>
+            <Text style={ds.stepTitle}>📦 Modèles de départ</Text>
+            <Text style={ds.stepSubtitle}>
               Choisissez les modèles à installer dans votre vault. Vous pourrez en ajouter d'autres plus tard dans les réglages.
             </Text>
 
@@ -494,19 +495,19 @@ export default function SetupScreen() {
                 <TouchableOpacity
                   key={pack.id}
                   style={[
-                    s.templateItem,
+                    ds.templateItem,
                     isSelected && { backgroundColor: tint, borderColor: primary },
                   ]}
                   onPress={() => togglePack(pack.id)}
                   activeOpacity={0.7}
                 >
-                  <View style={[s.templateCheckbox, isSelected && { backgroundColor: primary, borderColor: primary }]}>
-                    {isSelected && <Text style={s.templateCheck}>✓</Text>}
+                  <View style={[ds.templateCheckbox, isSelected && { backgroundColor: primary, borderColor: primary }]}>
+                    {isSelected && <Text style={ds.templateCheck}>✓</Text>}
                   </View>
                   <Text style={s.templateEmoji}>{pack.emoji}</Text>
                   <View style={s.templateText}>
-                    <Text style={s.templateName}>{pack.name}</Text>
-                    <Text style={s.templateDesc}>{pack.description}</Text>
+                    <Text style={ds.templateName}>{pack.name}</Text>
+                    <Text style={ds.templateDesc}>{pack.description}</Text>
                   </View>
                 </TouchableOpacity>
               );
@@ -526,30 +527,30 @@ export default function SetupScreen() {
       case 9:
         return (
           <View style={s.stepContent}>
-            <Text style={s.stepTitle}>✨ Récapitulatif</Text>
-            <Text style={s.stepSubtitle}>Voici votre famille :</Text>
+            <Text style={ds.stepTitle}>✨ Récapitulatif</Text>
+            <Text style={ds.stepSubtitle}>Voici votre famille :</Text>
 
-            <View style={s.recapCard}>
-              <Text style={s.recapSection}>Parents</Text>
+            <View style={ds.recapCard}>
+              <Text style={ds.recapSection}>Parents</Text>
               <View style={s.recapProfiles}>
                 {parents.map((p, i) => (
                   <View key={i} style={s.recapProfile}>
                     <Text style={s.recapAvatar}>{p.avatar}</Text>
-                    <Text style={s.recapName}>{p.name}</Text>
+                    <Text style={ds.recapName}>{p.name}</Text>
                   </View>
                 ))}
               </View>
 
               {children.length > 0 && (
                 <>
-                  <Text style={s.recapSection}>Enfants</Text>
+                  <Text style={ds.recapSection}>Enfants</Text>
                   <View style={s.recapProfiles}>
                     {children.map((c, i) => (
                       <View key={i} style={s.recapProfile}>
                         <Text style={s.recapAvatar}>{c.avatar}</Text>
-                        <Text style={s.recapName}>{c.name}</Text>
+                        <Text style={ds.recapName}>{c.name}</Text>
                         {c.birthdate ? (
-                          <Text style={s.recapDate}>{c.birthdate}</Text>
+                          <Text style={ds.recapDate}>{c.birthdate}</Text>
                         ) : null}
                       </View>
                     ))}
@@ -557,13 +558,13 @@ export default function SetupScreen() {
                 </>
               )}
 
-              <Text style={s.recapSection}>Vault</Text>
-              <Text style={s.recapPath}>{vaultPath}</Text>
+              <Text style={ds.recapSection}>Vault</Text>
+              <Text style={ds.recapPath}>{vaultPath}</Text>
 
               {selectedPacks.size > 0 && (
                 <>
-                  <Text style={s.recapSection}>Modèles</Text>
-                  <Text style={s.recapTemplates}>
+                  <Text style={ds.recapSection}>Modèles</Text>
+                  <Text style={ds.recapTemplates}>
                     {TEMPLATE_PACKS
                       .filter((p) => selectedPacks.has(p.id))
                       .map((p) => `${p.emoji} ${p.name}`)
@@ -574,8 +575,8 @@ export default function SetupScreen() {
             </View>
 
             <View style={[s.createInfo, { backgroundColor: tint }]}>
-              <Text style={s.createInfoTitle}>Fichiers qui seront créés :</Text>
-              <Text style={s.createInfoText}>
+              <Text style={ds.createInfoTitle}>Fichiers qui seront créés :</Text>
+              <Text style={ds.createInfoText}>
                 📋 Tâches récurrentes par enfant{'\n'}
                 🧹 Ménage hebdomadaire{'\n'}
                 🛒 Liste de courses{'\n'}
@@ -593,7 +594,7 @@ export default function SetupScreen() {
   };
 
   return (
-    <SafeAreaView style={s.safe}>
+    <SafeAreaView style={ds.safe}>
       <KeyboardAvoidingView
         style={s.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -601,13 +602,13 @@ export default function SetupScreen() {
         {/* Progress bar — masquée pendant l'intro features, montre uniquement les étapes de config */}
         {step >= FIRST_SETUP_STEP ? (
           <View style={s.progressContainer}>
-            <View style={s.progressBar}>
+            <View style={ds.progressBar}>
               <View style={[s.progressFill, {
                 width: `${((step - FIRST_SETUP_STEP + 1) / (TOTAL_STEPS - FIRST_SETUP_STEP + 1)) * 100}%`,
                 backgroundColor: primary,
               }]} />
             </View>
-            <Text style={s.progressText}>
+            <Text style={ds.progressText}>
               Étape {step - FIRST_SETUP_STEP + 1}/{TOTAL_STEPS - FIRST_SETUP_STEP + 1}
             </Text>
           </View>
@@ -626,10 +627,10 @@ export default function SetupScreen() {
         </ScrollView>
 
         {/* Bottom navigation */}
-        <View style={s.nav}>
+        <View style={ds.nav}>
           {step > 1 ? (
             <TouchableOpacity style={s.navBack} onPress={goBack}>
-              <Text style={s.navBackText}>← Retour</Text>
+              <Text style={ds.navBackText}>← Retour</Text>
             </TouchableOpacity>
           ) : (
             <View style={s.navSpacer} />
@@ -645,13 +646,13 @@ export default function SetupScreen() {
                   setStep(9);
                 }}
               >
-                <Text style={s.navSkipText}>Passer</Text>
+                <Text style={ds.navSkipText}>Passer</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[s.navNext, { backgroundColor: primary }]}
                 onPress={goNext}
               >
-                <Text style={s.navNextText}>Suivant →</Text>
+                <Text style={ds.navNextText}>Suivant →</Text>
               </TouchableOpacity>
             </View>
           ) : step < TOTAL_STEPS ? (
@@ -660,7 +661,7 @@ export default function SetupScreen() {
               onPress={goNext}
               disabled={!canGoNext()}
             >
-              <Text style={s.navNextText}>
+              <Text style={ds.navNextText}>
                 {step === 1 ? 'Commencer' : 'Suivant →'}
               </Text>
             </TouchableOpacity>
@@ -671,9 +672,9 @@ export default function SetupScreen() {
               disabled={isCreating}
             >
               {isCreating ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
+                <ActivityIndicator color={colors.onPrimary} size="small" />
               ) : (
-                <Text style={s.navCreateText}>Créer le vault familial 🚀</Text>
+                <Text style={ds.navCreateText}>Créer le vault familial 🚀</Text>
               )}
             </TouchableOpacity>
           )}
@@ -683,36 +684,273 @@ export default function SetupScreen() {
   );
 }
 
+// --- Styles dynamiques (dépendent du thème) ---
+function useDynamicStyles(colors: ReturnType<typeof useThemeColors>['colors'], primary: string) {
+  return useMemo(() => ({
+    safe: { flex: 1, backgroundColor: colors.bg } as const,
+    progressBar: {
+      flex: 1,
+      height: Spacing.sm,
+      backgroundColor: colors.border,
+      borderRadius: Radius.xxs,
+      overflow: 'hidden' as const,
+    },
+    progressText: {
+      fontSize: FontSize.caption,
+      color: colors.textFaint,
+      fontWeight: FontWeight.semibold,
+    },
+    tagline: {
+      fontSize: FontSize.lg,
+      color: colors.textMuted,
+      textAlign: 'center' as const,
+      marginBottom: Spacing.md,
+    },
+    feature: {
+      flexDirection: 'row' as const,
+      alignItems: 'flex-start' as const,
+      gap: Spacing.xl,
+      backgroundColor: colors.card,
+      borderRadius: Radius.lg,
+      padding: Spacing.xl + 2, // 14
+      ...Shadows.sm,
+    },
+    featureTitle: {
+      fontSize: FontSize.body,
+      fontWeight: FontWeight.bold,
+      color: colors.text,
+    },
+    featureDesc: {
+      fontSize: FontSize.label,
+      color: colors.textMuted,
+      lineHeight: LineHeight.tight,
+    },
+    stepTitle: {
+      fontSize: FontSize.display,
+      fontWeight: FontWeight.heavy,
+      color: colors.text,
+      textAlign: 'center' as const,
+    },
+    stepSubtitle: {
+      fontSize: FontSize.body,
+      color: colors.textMuted,
+      textAlign: 'center' as const,
+      marginBottom: Spacing.xs,
+    },
+    countBtn: {
+      paddingVertical: Spacing.lg,
+      paddingHorizontal: Spacing['3xl'],
+      borderRadius: Radius.lg,
+      backgroundColor: colors.bg,
+      borderWidth: 2,
+      borderColor: 'transparent',
+      minWidth: 54,
+      alignItems: 'center' as const,
+    },
+    countBtnText: {
+      fontSize: FontSize.body,
+      fontWeight: FontWeight.semibold,
+      color: colors.textMuted,
+    },
+    profileForm: {
+      backgroundColor: colors.card,
+      borderRadius: Radius.xl,
+      padding: Spacing['2xl'],
+      gap: Spacing.lg,
+      ...Shadows.sm,
+    },
+    formLabel: {
+      fontSize: FontSize.label,
+      fontWeight: FontWeight.bold,
+      color: colors.textMuted,
+      textTransform: 'uppercase' as const,
+      letterSpacing: 0.5,
+    },
+    input: {
+      borderWidth: 1.5,
+      borderColor: colors.inputBorder,
+      borderRadius: Radius.base,
+      padding: Spacing.xl,
+      fontSize: FontSize.lg,
+      color: colors.text,
+      backgroundColor: colors.inputBg,
+    },
+    inputError: {
+      borderColor: colors.error,
+      backgroundColor: colors.errorBg,
+    },
+    avatarBtn: {
+      width: Spacing['6xl'],
+      height: Spacing['6xl'],
+      borderRadius: Radius.lg,
+      backgroundColor: colors.bg,
+      justifyContent: 'center' as const,
+      alignItems: 'center' as const,
+      borderWidth: 2,
+      borderColor: 'transparent',
+    },
+    noChildHint: {
+      backgroundColor: colors.successBg,
+      borderRadius: Radius.lg,
+      padding: Spacing.xl + 2, // 14
+    },
+    noChildText: {
+      fontSize: FontSize.sm,
+      color: colors.successText,
+      lineHeight: LineHeight.normal,
+      textAlign: 'center' as const,
+    },
+    birthdateHint: {
+      fontSize: FontSize.caption,
+      color: colors.textFaint,
+      marginTop: -Spacing.xs,
+      marginLeft: Spacing.xs,
+    },
+    ageWarning: {
+      backgroundColor: colors.warningBg,
+      borderRadius: Radius.lg,
+      padding: Spacing.xl + 2, // 14
+    },
+    ageWarningText: {
+      fontSize: FontSize.label,
+      color: colors.warningText,
+      lineHeight: LineHeight.tight,
+      textAlign: 'center' as const,
+    },
+    templateItem: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: Spacing.xl,
+      backgroundColor: colors.card,
+      borderRadius: Radius['lg+'],
+      padding: Spacing.xl + 2, // 14
+      borderWidth: 2,
+      borderColor: colors.border,
+    },
+    templateCheckbox: {
+      width: Spacing['4xl'],
+      height: Spacing['4xl'],
+      borderRadius: 7,
+      borderWidth: 2,
+      borderColor: colors.separator,
+      justifyContent: 'center' as const,
+      alignItems: 'center' as const,
+    },
+    templateCheck: {
+      color: colors.onPrimary,
+      fontSize: FontSize.sm,
+      fontWeight: FontWeight.bold,
+    },
+    templateName: {
+      fontSize: FontSize.body,
+      fontWeight: FontWeight.bold,
+      color: colors.text,
+    },
+    templateDesc: {
+      fontSize: FontSize.label,
+      color: colors.textMuted,
+    },
+    recapCard: {
+      backgroundColor: colors.card,
+      borderRadius: Radius.xl,
+      padding: Spacing['3xl'],
+      gap: Spacing.xl + 2, // 14
+      ...Shadows.md,
+    },
+    recapSection: {
+      fontSize: FontSize.label,
+      fontWeight: FontWeight.bold,
+      color: colors.textMuted,
+      textTransform: 'uppercase' as const,
+      letterSpacing: 0.5,
+    },
+    recapName: {
+      fontSize: FontSize.body,
+      fontWeight: FontWeight.bold,
+      color: colors.text,
+    },
+    recapDate: {
+      fontSize: FontSize.caption,
+      color: colors.textFaint,
+    },
+    recapPath: {
+      fontSize: FontSize.label,
+      color: colors.textSub,
+      fontFamily: 'Menlo',
+      backgroundColor: colors.cardAlt,
+      padding: Spacing.lg,
+      borderRadius: Radius.md,
+    },
+    recapTemplates: {
+      fontSize: FontSize.sm,
+      color: colors.textSub,
+      lineHeight: LineHeight.body,
+    },
+    createInfoTitle: {
+      fontSize: FontSize.sm,
+      fontWeight: FontWeight.bold,
+      color: primary,
+    },
+    createInfoText: {
+      fontSize: FontSize.label,
+      color: primary,
+      lineHeight: LineHeight.normal,
+    },
+    nav: {
+      flexDirection: 'row' as const,
+      justifyContent: 'space-between' as const,
+      alignItems: 'center' as const,
+      paddingHorizontal: Spacing['4xl'],
+      paddingVertical: Spacing['2xl'],
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      backgroundColor: colors.card,
+    },
+    navBackText: {
+      fontSize: FontSize.body,
+      fontWeight: FontWeight.semibold,
+      color: colors.textMuted,
+    },
+    navNextText: {
+      fontSize: FontSize.lg,
+      fontWeight: FontWeight.bold,
+      color: colors.onPrimary,
+    },
+    navSkipText: {
+      fontSize: FontSize.body,
+      fontWeight: FontWeight.semibold,
+      color: colors.textMuted,
+    },
+    navCreateText: {
+      fontSize: FontSize.lg,
+      fontWeight: FontWeight.bold,
+      color: colors.onPrimary,
+    },
+  }), [colors, primary]);
+}
+
+// --- Styles statiques (indépendants du thème) ---
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FAFAFA' },
   flex: { flex: 1 },
   scroll: { flex: 1 },
-  scrollContent: { padding: 24, paddingBottom: 20 },
+  scrollContent: { padding: Spacing['4xl'], paddingBottom: Spacing['3xl'] },
 
   // Progress
   progressContainer: {
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 8,
+    paddingHorizontal: Spacing['4xl'],
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-  },
-  progressBar: {
-    flex: 1,
-    height: 6,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 3,
-    overflow: 'hidden',
+    gap: Spacing.xl,
   },
   progressFill: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: Radius.xxs,
   },
-  progressText: { fontSize: 12, color: '#9CA3AF', fontWeight: '600' },
 
   // Step content
-  stepContent: { gap: 16, alignItems: 'stretch' },
+  stepContent: { gap: Spacing['2xl'], alignItems: 'stretch' },
 
   // Feature intro slides (steps 2-4)
   skipRow: {
@@ -759,197 +997,60 @@ const s = StyleSheet.create({
     marginTop: Spacing['3xl'],
   },
   featureDot: {
-    height: 8,
-    width: 8,
+    height: Spacing.md,
+    width: Spacing.md,
     borderRadius: Radius.full,
   },
 
   // Step 1 — Welcome
   logo: { fontSize: 64, textAlign: 'center' },
-  appName: { fontSize: 32, fontWeight: '800', textAlign: 'center' },
-  tagline: { fontSize: 16, color: '#6B7280', textAlign: 'center', marginBottom: 8 },
-  features: { gap: 10 },
-  feature: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  featureIcon: { fontSize: 24 },
-  featureText: { flex: 1, gap: 2 },
-  featureTitle: { fontSize: 15, fontWeight: '700', color: '#111827' },
-  featureDesc: { fontSize: 13, color: '#6B7280', lineHeight: 18 },
-
-  // Steps 2-3 — Titles
-  stepTitle: { fontSize: 24, fontWeight: '800', color: '#111827', textAlign: 'center' },
-  stepSubtitle: { fontSize: 15, color: '#6B7280', textAlign: 'center', marginBottom: 4 },
+  appName: { fontSize: FontSize.hero, fontWeight: FontWeight.heavy, textAlign: 'center' },
+  features: { gap: Spacing.lg },
+  featureIcon: { fontSize: FontSize.display },
+  featureText: { flex: 1, gap: Spacing.xxs },
 
   // Count selector
-  countRow: { flexDirection: 'row', justifyContent: 'center', gap: 10 },
-  countBtn: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    backgroundColor: '#F3F4F6',
-    borderWidth: 2,
-    borderColor: 'transparent',
-    minWidth: 54,
-    alignItems: 'center',
-  },
-  countBtnText: { fontSize: 15, fontWeight: '600', color: '#6B7280' },
-
-  // Profile form
-  profileForm: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    gap: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  formLabel: { fontSize: 13, fontWeight: '700', color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.5 },
-  input: {
-    borderWidth: 1.5,
-    borderColor: '#D1D5DB',
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 16,
-    color: '#111827',
-    backgroundColor: '#FAFAFA',
-  },
-  inputError: {
-    borderColor: '#EF4444',
-    backgroundColor: '#FEF2F2',
-  },
+  countRow: { flexDirection: 'row', justifyContent: 'center', gap: Spacing.lg },
 
   // Avatar grid
-  avatarGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  avatarBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: '#F3F4F6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  avatarEmoji: { fontSize: 24 },
+  avatarGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md },
+  avatarEmoji: { fontSize: FontSize.display },
 
-  // No child hint
-  noChildHint: {
-    backgroundColor: '#F0FDF4',
-    borderRadius: 12,
-    padding: 14,
-  },
-  noChildText: { fontSize: 14, color: '#15803D', lineHeight: 20, textAlign: 'center' },
-  birthdateHint: { fontSize: 12, color: '#9CA3AF', marginTop: -4, marginLeft: 4 },
-  ageWarning: {
-    backgroundColor: '#FFFBEB',
-    borderRadius: 12,
-    padding: 14,
-  },
-  ageWarningText: { fontSize: 13, color: '#92400E', lineHeight: 18, textAlign: 'center' },
+  // Templates
+  templateEmoji: { fontSize: FontSize.display },
+  templateText: { flex: 1, gap: Spacing.xxs },
+  selectAllBtn: { alignSelf: 'center', paddingVertical: Spacing.md },
+  selectAllText: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
+  templateNav: { flexDirection: 'row', gap: Spacing.xl },
 
-  // Step 5 — Templates
-  templateItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-  },
-  templateCheckbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 7,
-    borderWidth: 2,
-    borderColor: '#D1D5DB',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  templateCheck: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
-  templateEmoji: { fontSize: 24 },
-  templateText: { flex: 1, gap: 2 },
-  templateName: { fontSize: 15, fontWeight: '700', color: '#111827' },
-  templateDesc: { fontSize: 13, color: '#6B7280' },
-  selectAllBtn: { alignSelf: 'center', paddingVertical: 8 },
-  selectAllText: { fontSize: 14, fontWeight: '600' },
-  templateNav: { flexDirection: 'row', gap: 12 },
-
-  // Step 6 — Recap
-  recapCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    gap: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  recapSection: { fontSize: 13, fontWeight: '700', color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.5 },
-  recapProfiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
-  recapProfile: { alignItems: 'center', gap: 4 },
+  // Recap
+  recapProfiles: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing['2xl'] },
+  recapProfile: { alignItems: 'center', gap: Spacing.xs },
   recapAvatar: { fontSize: 40 },
-  recapName: { fontSize: 15, fontWeight: '700', color: '#111827' },
-  recapDate: { fontSize: 12, color: '#9CA3AF' },
-  recapPath: { fontSize: 13, color: '#374151', fontFamily: 'Menlo', backgroundColor: '#F9FAFB', padding: 10, borderRadius: 8 },
-  recapTemplates: { fontSize: 14, color: '#374151', lineHeight: 22 },
 
   // Create info
   createInfo: {
-    borderRadius: 12,
-    padding: 16,
-    gap: 6,
+    borderRadius: Radius.lg,
+    padding: Spacing['2xl'],
+    gap: Spacing.sm,
   },
-  createInfoTitle: { fontSize: 14, fontWeight: '700', color: '#5B21B6' },
-  createInfoText: { fontSize: 13, color: '#6D28D9', lineHeight: 20 },
 
   // Bottom nav
-  nav: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-    backgroundColor: '#FFFFFF',
-  },
   navSpacer: { flex: 1 },
-  navBack: { paddingVertical: 12, paddingHorizontal: 16 },
-  navBackText: { fontSize: 15, fontWeight: '600', color: '#6B7280' },
+  navBack: { paddingVertical: Spacing.xl, paddingHorizontal: Spacing['2xl'] },
   navNext: {
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: 14,
+    paddingVertical: Spacing.xl + 2, // 14
+    paddingHorizontal: Spacing.xl * 2 + 4, // 28
+    borderRadius: Radius['lg+'],
   },
-  navNextText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
-  navSkip: { paddingVertical: 14, paddingHorizontal: 16 },
-  navSkipText: { fontSize: 15, fontWeight: '600', color: '#6B7280' },
+  navSkip: { paddingVertical: Spacing.xl + 2, paddingHorizontal: Spacing['2xl'] },
   navCreate: {
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 14,
+    paddingVertical: Spacing.xl + 2, // 14
+    paddingHorizontal: Spacing['4xl'],
+    borderRadius: Radius['lg+'],
     flex: 1,
-    marginLeft: 12,
+    marginLeft: Spacing.xl,
     alignItems: 'center',
   },
-  navCreateText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
   navDisabled: { opacity: 0.5 },
 });
