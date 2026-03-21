@@ -143,7 +143,7 @@ function rdvInsights(input: InsightInput, tc: TimeContext): Insight[] {
       id: `rdv-imminent-${rdv.sourceFile}`,
       icon: '🏥',
       title: `${rdv.type_rdv} ${rdv.enfant} ${quand}`,
-      body: `${rdv.heure} — ${rdv.lieu || rdv.médecin || ''}${questionsNote}`,
+      body: `${rdv.heure || ''} — ${rdv.lieu || rdv.médecin || ''}${questionsNote}`,
       priority: 'high',
       category: 'reminder',
       action: { label: 'Voir le RDV', type: 'navigate', route: '/(tabs)/rdv' },

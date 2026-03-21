@@ -46,6 +46,7 @@ import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { SeasonalBanner } from '../../components/SeasonalBanner';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { Shadows } from '../../constants/shadows';
 
 export default function LootScreen() {
   const { profiles, gamiData, notifPrefs, vault, refresh, isLoading } = useVault();
@@ -539,11 +540,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 16,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 8,
-    elevation: 3,
+    ...Shadows.md,
   },
   lootCard: {
     borderRadius: 14,
@@ -551,11 +548,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    ...Shadows.sm,
     marginBottom: 8,
   },
   lootCardLeft: {
@@ -669,11 +662,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 8,
-    elevation: 3,
+    ...Shadows.md,
   },
   drSectionTitle: { fontSize: FontSize.body, fontWeight: FontWeight.heavy, marginBottom: 4 },
   drTableRow: {

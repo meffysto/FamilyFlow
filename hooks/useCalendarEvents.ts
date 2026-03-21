@@ -58,8 +58,8 @@ export function useCalendarEvents(displayMonth: Date): UseCalendarEventsResult {
       }
       if (!cancelled) {
         setExtraMeals(weeks);
+        setIsLoadingMeals(false);
       }
-      setIsLoadingMeals(false);
     })();
     return () => { cancelled = true; setIsLoadingMeals(false); };
   }, [monthKey]); // eslint-disable-line react-hooks/exhaustive-deps

@@ -69,7 +69,7 @@ export function aggregateCalendarEvents(
       time: rdv.heure || undefined,
       type: 'rdv',
       label: `${rdv.type_rdv} ${rdv.enfant}`,
-      sublabel: rdv.heure ? `${rdv.heure} — ${rdv.lieu || rdv.médecin}` : rdv.lieu || rdv.médecin,
+      sublabel: rdv.heure ? `${rdv.heure} — ${rdv.lieu || rdv.médecin || ''}` : rdv.lieu || rdv.médecin || '',
       emoji: EVENT_CONFIG.rdv.emoji,
       colorKey: rdv.statut === 'fait' ? 'success' : 'info',
       route: '/(tabs)/rdv',

@@ -35,6 +35,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { Shadows } from '../../constants/shadows';
 import { ModalHeader } from '../../components/ui';
 import { Routine, RoutineProgress } from '../../lib/types';
 import { format } from 'date-fns';
@@ -681,11 +682,7 @@ const styles = StyleSheet.create({
   routineCard: {
     borderRadius: 20,
     padding: Spacing['2xl'],
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    ...Shadows.md,
   },
   routineHeader: {
     flexDirection: 'row',
@@ -831,11 +828,7 @@ const playerStyles = StyleSheet.create({
     padding: Spacing['3xl'],
     alignItems: 'center',
     gap: Spacing.xl,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
+    ...Shadows.md,
   },
   stepNumber: { fontSize: FontSize.label, fontWeight: FontWeight.bold, textTransform: 'uppercase', letterSpacing: 1 },
   stepText: { fontSize: FontSize.titleLg, fontWeight: FontWeight.bold, textAlign: 'center' },

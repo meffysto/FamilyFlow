@@ -40,6 +40,7 @@ import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { Shadows } from '../../constants/shadows';
 import { computeMissingIngredients, computeStockDecrements, resolveStockAction, computeFamilyServings } from '../../lib/auto-courses';
 import { suggestRecipesFromStock } from '../../lib/ai-service';
 import { getAutomationFlag } from '../../lib/automation-config';
@@ -2317,11 +2318,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 16,
     gap: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
+    ...Shadows.xs,
   },
   dayCardToday: {
     borderWidth: 2,
@@ -2409,11 +2406,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 16,
     gap: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
+    ...Shadows.xs,
   },
   courseSectionTitle: {
     fontSize: FontSize.body,

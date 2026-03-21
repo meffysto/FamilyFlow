@@ -33,6 +33,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { Shadows } from '../../constants/shadows';
 import { Chip, SegmentedControl } from '../../components/ui';
 import { DateInput } from '../../components/ui/DateInput';
 import { ModalHeader } from '../../components/ui/ModalHeader';
@@ -151,11 +152,7 @@ const cardStyles = StyleSheet.create({
     borderRadius: Radius.lg,
     padding: Spacing['2xl'],
     gap: Spacing.lg,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    ...Shadows.sm,
   },
   header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.lg },
   emoji: { fontSize: FontSize.icon },
@@ -966,8 +963,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: Spacing.lg,
     padding: Spacing['2xl'], borderRadius: Radius.lg,
     marginBottom: Spacing.md,
-    shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 }, elevation: 1,
+    ...Shadows.xs,
   },
   templateEmoji: { fontSize: FontSize.icon },
   templateInfo: { flex: 1, gap: 2 },
@@ -982,8 +978,7 @@ const styles = StyleSheet.create({
   historyCard: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing.lg,
     padding: Spacing['2xl'], borderRadius: Radius.lg,
-    shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 }, elevation: 1,
+    ...Shadows.xs,
   },
   historyEmoji: { fontSize: FontSize.display },
   historyInfo: { flex: 1, gap: 2 },

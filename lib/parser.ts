@@ -927,7 +927,7 @@ export function parseGratitude(content: string): GratitudeDay[] {
 
     for (const entryBlock of entryBlocks) {
       const entryLines = entryBlock.split('\n');
-      const profileName = entryLines[0].trim();
+      const profileName = entryLines[0]?.trim() ?? '';
       const text = entryLines
         .slice(1)
         .map((l) => l.trim())
@@ -1299,7 +1299,7 @@ export function parseAnniversaries(content: string): Anniversary[] {
     // Ne traiter que les lignes de table
     if (!line.startsWith('|')) continue;
 
-    const cells = line.split('|').map((c) => c.trim()).filter((c) => c.length > 0);
+    const cells = line.split('|').slice(1, -1).map((c) => c.trim());
     if (cells.length < 2) continue;
 
     // Skip header et separator
@@ -1426,7 +1426,7 @@ export function parseNightFeeds(content: string, enfant: string = '', enfantId: 
     if (line.startsWith('## ') && inAlimentation) break;
     if (!inAlimentation || !line.startsWith('|')) continue;
 
-    const cells = line.split('|').map((c) => c.trim()).filter((c) => c.length > 0);
+    const cells = line.split('|').slice(1, -1).map((c) => c.trim());
     if (cells.length < 3) continue;
     if (cells[0] === 'Heure' || cells[0].startsWith('---')) continue;
 
@@ -1919,7 +1919,7 @@ export function parseHealthRecord(enfant: string, enfantId: string, content: str
 
     // Parse table rows for croissance
     if (currentSection === 'croissance' && line.startsWith('|') && !line.includes('----') && !line.toLowerCase().includes('date')) {
-      const cols = line.split('|').map(c => c.trim()).filter(Boolean);
+      const cols = line.split('|').slice(1, -1).map(c => c.trim());
       if (cols.length >= 2) {
         const date = cols[0];
         if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
@@ -1940,7 +1940,7 @@ export function parseHealthRecord(enfant: string, enfantId: string, content: str
 
     // Parse table rows for vaccins
     if (currentSection === 'vaccins' && line.startsWith('|') && !line.includes('----') && !line.toLowerCase().includes('vaccin')) {
-      const cols = line.split('|').map(c => c.trim()).filter(Boolean);
+      const cols = line.split('|').slice(1, -1).map(c => c.trim());
       if (cols.length >= 2) {
         const nom = cols[0];
         const date = cols[1];
@@ -2217,7 +2217,7 @@ export function parseSkillTree(content: string): SkillTreeData {
     if (line.startsWith('## ') && inUnlocked) break;
 
     if (inUnlocked && line.startsWith('- ')) {
-      const parts = line.slice(2).split('|').map((c) => c.trim()).filter((c) => c.length > 0);
+      const parts = line.slice(2).split('|').map((c) => c.trim());
       if (parts.length >= 3) {
         unlocked.push({
           skillId: parts[0],

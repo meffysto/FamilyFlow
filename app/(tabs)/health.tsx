@@ -26,6 +26,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { Shadows } from '../../constants/shadows';
 import { ModalHeader, DateInput } from '../../components/ui';
 import { HealthRecord, GrowthEntry, VaccineEntry } from '../../lib/types';
 import { formatDateForDisplay } from '../../lib/parser';
@@ -891,11 +892,7 @@ const styles = StyleSheet.create({
   summaryCard: {
     borderRadius: 20,
     padding: Spacing['2xl'],
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    ...Shadows.md,
   },
   summaryTitle: { fontSize: FontSize.heading, fontWeight: FontWeight.bold },
   summaryDate: { fontSize: FontSize.caption, marginTop: 2, marginBottom: Spacing.lg },

@@ -166,7 +166,7 @@ function extractExistingHours(content: string): string[] {
     if (line.startsWith('## ') && inAlimentation) break;
     if (!inAlimentation || !line.startsWith('|')) continue;
 
-    const cells = line.split('|').map(c => c.trim()).filter(c => c.length > 0);
+    const cells = line.split('|').slice(1, -1).map(c => c.trim());
     if (cells.length < 2) continue;
     if (cells[0] === 'Heure' || cells[0].startsWith('---')) continue;
 

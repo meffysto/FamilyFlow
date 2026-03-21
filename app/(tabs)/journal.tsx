@@ -33,6 +33,7 @@ import { parseJournalStats, calculerDuree } from '../../lib/journal-stats';
 import { MarkdownText } from '../../components/ui/MarkdownText';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { Shadows } from '../../constants/shadows';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -942,11 +943,7 @@ const styles = StyleSheet.create({
   statsBanner: {
     borderRadius: 12,
     padding: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    ...Shadows.xs,
     borderLeftWidth: 3,
     borderLeftColor: '#8B5CF6',
   },
@@ -963,11 +960,7 @@ const styles = StyleSheet.create({
   tableSection: {
     borderRadius: 12,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    ...Shadows.xs,
   },
   sectionHeader: {
     flexDirection: 'row',

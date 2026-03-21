@@ -19,6 +19,7 @@ import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
+import { Shadows } from '../constants/shadows';
 
 export interface SectionPref {
   id: string;
@@ -316,11 +317,7 @@ const styles = StyleSheet.create({
     paddingLeft: Spacing.xl,
     paddingRight: Spacing['2xl'],
     gap: Spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: Spacing.xs,
-    elevation: 2,
+    ...Shadows.sm,
     borderWidth: 1,
   },
   rowHidden: {

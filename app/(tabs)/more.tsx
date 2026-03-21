@@ -20,6 +20,7 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { Shadows } from '../../constants/shadows';
 import { isRdvUpcoming } from '../../lib/parser';
 import { totalSpent, totalBudget } from '../../lib/budget';
 import { isBabyProfile } from '../../lib/types';
@@ -325,11 +326,7 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
     alignItems: 'center',
     gap: Spacing.md,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    ...Shadows.sm,
     position: 'relative',
   },
   gridIcon: {

@@ -57,6 +57,7 @@ import { PhotoGallery } from '../../components/PhotoGallery';
 import { MarkdownText } from '../../components/ui/MarkdownText';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { Shadows } from '../../constants/shadows';
 import { getThumbnailUri } from '../../lib/thumbnails';
 import * as FileSystem from 'expo-file-system/legacy';
 
@@ -697,8 +698,7 @@ const styles = StyleSheet.create({
   monthArrow: {
     width: 40, height: 40, borderRadius: 20,
     justifyContent: 'center', alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05, shadowRadius: 3, elevation: 1,
+    ...Shadows.xs,
   },
   monthArrowText: { fontSize: FontSize.display, fontWeight: FontWeight.normal },
   monthLabel: { fontSize: FontSize.heading, fontWeight: FontWeight.bold },
@@ -732,8 +732,7 @@ const styles = StyleSheet.create({
   memoryLine: { flex: 1, width: 2, marginTop: 4, borderRadius: 1, opacity: 0.3 },
   memoryRight: {
     flex: 1, borderRadius: 14, padding: 14, gap: 4,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 }, elevation: 2,
+    ...Shadows.sm,
   },
   memoryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   memoryHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },

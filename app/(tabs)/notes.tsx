@@ -24,6 +24,7 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../../constants/typography';
+import { Shadows } from '../../constants/shadows';
 import { Note, NOTE_CATEGORIES } from '../../lib/types';
 import { formatDateForDisplay } from '../../lib/parser';
 import { Chip } from '../../components/ui/Chip';
@@ -399,11 +400,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     padding: Spacing.lg,
     marginBottom: Spacing.md,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    ...Shadows.sm,
   },
   noteHeader: {
     flexDirection: 'row',
