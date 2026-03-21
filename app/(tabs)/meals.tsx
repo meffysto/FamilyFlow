@@ -41,6 +41,7 @@ import { HELP_CONTENT } from '../../lib/help-content';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { computeMissingIngredients, computeStockDecrements, resolveStockAction, computeFamilyServings } from '../../lib/auto-courses';
+import { suggestRecipesFromStock } from '../../lib/ai-service';
 import { getAutomationFlag } from '../../lib/automation-config';
 
 const DAYS_ORDER = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
@@ -347,6 +348,27 @@ export default function MealsScreen() {
       ],
     );
   }, [cookingMealId, resolveRecipe, stock, updateStockQuantity, showToast]);
+
+  // ─── Suggestion IA : que cuisiner avec le stock ? ───────────────
+
+  const [suggestingRecipes, setSuggestingRecipes] = useState(false);
+
+  const handleSuggestFromStock = useCallback(async () => {
+    if (!aiConfig?.apiKey) return;
+    setSuggestingRecipes(true);
+    try {
+      const resp = await suggestRecipesFromStock(aiConfig, stock, recipes, profiles);
+      if (resp.error) {
+        Alert.alert('Erreur IA', resp.error);
+      } else {
+        Alert.alert('Que cuisiner ce soir ?', resp.text);
+      }
+    } catch (e) {
+      Alert.alert('Erreur', String(e));
+    } finally {
+      setSuggestingRecipes(false);
+    }
+  }, [aiConfig, stock, recipes, profiles]);
 
   // ─── Weekly shopping list generation ─────────────────────────────
 
@@ -940,6 +962,22 @@ export default function MealsScreen() {
             >
               <Text style={[styles.generateBtnText, { color: primary }]}>
                 🛒 Générer la liste de courses ({linkedRecipeCount} recette{linkedRecipeCount > 1 ? 's' : ''})
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Suggestion IA : que cuisiner avec le stock ? */}
+          {isCurrentWeek && aiConfigured && (
+            <TouchableOpacity
+              style={[styles.generateBtn, { backgroundColor: tint, borderColor: primary + '30' }]}
+              onPress={handleSuggestFromStock}
+              disabled={suggestingRecipes}
+              activeOpacity={0.7}
+              accessibilityLabel="Suggestions de recettes avec le stock"
+              accessibilityRole="button"
+            >
+              <Text style={[styles.generateBtnText, { color: primary }]}>
+                {suggestingRecipes ? '...' : '🤖 Que cuisiner ce soir ?'}
               </Text>
             </TouchableOpacity>
           )}

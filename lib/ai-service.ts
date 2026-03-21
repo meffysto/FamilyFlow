@@ -603,6 +603,42 @@ export async function generateAISuggestions(
   return { text: deanonymize(resp.text, anonMap) };
 }
 
+// ─── Suggestion de recettes à partir du stock ───────────────────────────────
+
+/** Suggère des recettes réalisables avec le stock actuel */
+export async function suggestRecipesFromStock(
+  config: AIConfig,
+  stock: StockItem[],
+  recipes: AppRecipe[],
+  profiles: Profile[],
+): Promise<AIResponse> {
+  const available = stock
+    .filter(s => s.quantite > 0)
+    .map(s => `${s.produit} (${s.quantite})`)
+    .join(', ');
+
+  const recipeList = recipes
+    .slice(0, 50) // limiter pour pas dépasser le contexte
+    .map(r => `- ${r.title} (${r.ingredients.map(i => i.name).join(', ')})`)
+    .join('\n');
+
+  const family = profiles
+    .filter(p => p.statut !== 'grossesse')
+    .map(p => `${p.name} (${p.role})`)
+    .join(', ');
+
+  const systemPrompt = `Tu es un assistant cuisine familial. La famille : ${family}.`;
+
+  const messages: AIMessage[] = [
+    {
+      role: 'user',
+      content: `Voici mon stock actuel :\n${available}\n\nVoici mes recettes disponibles :\n${recipeList}\n\nSuggère 2-3 recettes que je peux faire avec ce que j'ai en stock (ou presque). Pour chaque suggestion :\n- Nom de la recette\n- Ce que j'ai déjà\n- Ce qu'il manque éventuellement (1-2 ingrédients max)\n\nFormat court, une recette par paragraphe, emoji en début de ligne. Si aucune recette ne colle, suggère une recette simple faisable avec le stock.`,
+    },
+  ];
+
+  return callClaude(config, systemPrompt, messages);
+}
+
 // ─── Scan ticket de caisse (Vision) ──────────────────────────────────────────
 
 /** Résultat structuré d'un scan de ticket de caisse */
