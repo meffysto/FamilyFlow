@@ -7,8 +7,24 @@
  */
 
 import type { AppIngredient } from './cooklang';
-import type { StockItem, CourseItem } from './types';
-import { categorizeIngredient, formatIngredient } from './cooklang';
+import type { StockItem, CourseItem, Profile } from './types';
+import { categorizeIngredient, formatIngredient, scaleIngredients } from './cooklang';
+import { isBabyProfile } from './types';
+
+/** Calcule le nombre de portions familiales à partir des profils */
+export function computeFamilyServings(profiles: Profile[]): number {
+  let total = 0;
+  for (const p of profiles) {
+    if (p.statut === 'grossesse') continue; // pas encore né
+    if (p.role === 'adulte') { total += 1; continue; }
+    if (p.role === 'ado') { total += 0.75; continue; }
+    // role === 'enfant' → distinguer par âge
+    if (isBabyProfile(p)) { total += 0.25; continue; }
+    if (p.ageCategory === 'petit') { total += 0.35; continue; }
+    total += 0.5; // enfant par défaut
+  }
+  return Math.max(1, Math.round(total * 4) / 4); // arrondi au quart
+}
 
 function normalize(text: string): string {
   return text
@@ -51,20 +67,60 @@ export interface CourseIngredientItem {
   section: string;
 }
 
+/** Unités de poids/volume — impossible de comparer avec le stock (en unités) */
+const WEIGHT_UNIT_RE = /^(g|kg|ml|cl|dl|l|cs|cc|càs|càc|tasse|pincée|tbsp|tsp)$/i;
+
 /**
  * Calcule les ingrédients manquants d'une recette par rapport au stock.
+ * - Poids (120g pecorino) : toujours ajouté (on ne sait pas combien il reste)
+ * - Comptes (3 œufs) : delta = max(0, besoin - stock)
+ * - Sans quantité (persil) : skip si en stock
+ * Si targetServings et baseServings sont fournis, les ingrédients sont scalés.
  * La dédup vs courses existantes est gérée par mergeCourseIngredients().
  */
 export function computeMissingIngredients(
   ingredients: AppIngredient[],
   stock: StockItem[],
+  targetServings?: number,
+  baseServings?: number,
 ): CourseIngredientItem[] {
+  const scaled = targetServings && baseServings
+    ? scaleIngredients(ingredients, targetServings, baseServings)
+    : ingredients;
   const missing: CourseIngredientItem[] = [];
 
-  for (const ing of ingredients) {
+  for (const ing of scaled) {
     if (isBasicIngredient(ing.name)) continue;
-    if (findStockMatch(ing.name, stock.filter(s => s.quantite > 0))) continue;
 
+    const match = findStockMatch(ing.name, stock);
+    const isWeight = ing.unit && WEIGHT_UNIT_RE.test(ing.unit);
+
+    if (isWeight) {
+      // Poids → toujours ajouter (on ne peut pas comparer g vs unités stock)
+      missing.push({
+        text: formatIngredient(ing),
+        name: ing.name,
+        quantity: ing.quantity,
+        section: categorizeIngredient(ing.name),
+      });
+      continue;
+    }
+
+    if (match && match.quantite > 0) {
+      if (ing.quantity === null) continue; // "persil" en stock → skip
+      // Compte → delta
+      const delta = ing.quantity - match.quantite;
+      if (delta <= 0) continue; // assez en stock
+      missing.push({
+        text: `${delta} ${ing.name}`,
+        name: ing.name,
+        quantity: delta,
+        section: categorizeIngredient(ing.name),
+      });
+      continue;
+    }
+
+    // Pas en stock → ajouter tel quel
     missing.push({
       text: formatIngredient(ing),
       name: ing.name,
@@ -102,8 +158,38 @@ export interface StockUpdateResult {
   newItem: Omit<StockItem, 'lineIndex'> | null;
 }
 
-/** Regex alignée sur parseIngredientText() de cooklang.ts */
-const QUANTITY_PREFIX_RE = /^(?:\d+(?:[.,]\d+)?\s*(?:g|kg|ml|cl|dl|l|cs|cc|CS|CC|càs|càc|c\.?\s*à\s*s\.?|c\.?\s*à\s*c\.?|tasse|pincée|sachet|tranche|feuille|brin|gousse|botte|paquet|boîte|pot|verre|tbsp|tsp)?\s*(?:de\s+|d')?)?(.+)/i;
+/** Unités de poids/volume — quantité stock = 1 unité (paquet), détail = "120g" */
+const WEIGHT_UNITS = /^(g|kg|ml|cl|dl|l|cs|cc|CS|CC|càs|càc|c\.?\s*à\s*s\.?|c\.?\s*à\s*c\.?|tasse|pincée|tbsp|tsp)$/i;
+
+/** Regex pour parser "3 oeufs", "120 g de pecorino", "sachet de levure" */
+const COURSE_TEXT_RE = /^(\d+(?:[.,]\d+)?)\s*(g|kg|ml|cl|dl|l|cs|cc|CS|CC|càs|càc|c\.?\s*à\s*s\.?|c\.?\s*à\s*c\.?|tasse|pincée|sachet|tranche|feuille|brin|gousse|botte|paquet|boîte|pot|verre|tbsp|tsp)?\s*(?:de\s+|d')?(.+)/i;
+
+interface ParsedCourseText {
+  produit: string;
+  detail?: string;
+  quantite: number;
+}
+
+/** Parse le texte d'une course en produit + quantité + détail */
+function parseCourseText(text: string): ParsedCourseText {
+  const m = text.match(COURSE_TEXT_RE);
+  if (!m) return { produit: text.trim(), quantite: 1 };
+
+  const num = parseFloat(m[1].replace(',', '.')) || 1;
+  const unit = (m[2] || '').trim();
+  const name = m[3].trim();
+
+  if (unit && WEIGHT_UNITS.test(unit)) {
+    // "120 g de pecorino" → produit: pecorino, detail: 120g, quantité: 1 unité
+    return { produit: name, detail: `${m[1]}${unit}`, quantite: 1 };
+  }
+  if (unit) {
+    // "2 sachets de levure" → produit: levure, quantité: 2
+    return { produit: name, quantite: Math.round(num) };
+  }
+  // "3 oeufs" → produit: oeufs, quantité: 3
+  return { produit: name, quantite: Math.round(num) };
+}
 
 /**
  * Détermine l'action stock quand une course est cochée.
@@ -125,17 +211,15 @@ export function resolveStockAction(
   const category = courseItem.section || categorizeIngredient(courseItem.text);
   if (!STOCKABLE_CATEGORIES.has(category)) return { incremented: null, newItem: null };
 
-  // Extraire le nom propre (sans quantité/unité) pour le produit stock
-  const nameMatch = courseItem.text.match(QUANTITY_PREFIX_RE);
-  const produit = nameMatch ? nameMatch[1].trim() : courseItem.text;
+  const parsed = parseCourseText(courseItem.text);
 
   return {
     incremented: null,
     newItem: {
-      produit,
-      quantite: 1,
+      produit: parsed.produit,
+      quantite: parsed.quantite,
       seuil: 1,
-      qteAchat: 1,
+      qteAchat: parsed.quantite,
       emplacement: emplacementFromCategory(category),
     },
   };

@@ -29,7 +29,7 @@ import { fr } from 'date-fns/locale';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { MealItem, CourseItem, Recipe } from '../../lib/types';
-import { formatIngredient, aggregateIngredients, categorizeIngredient, convertCookToMetric, COURSE_CATEGORIES, type AppIngredient } from '../../lib/cooklang';
+import { formatIngredient, aggregateIngredients, categorizeIngredient, scaleIngredients, convertCookToMetric, COURSE_CATEGORIES, type AppIngredient } from '../../lib/cooklang';
 import RecipeCard from '../../components/RecipeCard';
 import RecipeViewer from '../../components/RecipeViewer';
 import { importRecipeFromUrl, importRecipeFromPhoto, convertTextWithAI, parseTextToRecipe, searchCommunityRecipes, downloadCommunityRecipe, translateCookToFrench, type ImportResult, type ImportedRecipe, type CookImportResult, type CommunityRecipe } from '../../lib/recipe-import';
@@ -40,7 +40,7 @@ import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { FontSize, FontWeight } from '../../constants/typography';
-import { computeMissingIngredients, computeStockDecrements } from '../../lib/auto-courses';
+import { computeMissingIngredients, computeStockDecrements, resolveStockAction, computeFamilyServings } from '../../lib/auto-courses';
 import { getAutomationFlag } from '../../lib/automation-config';
 
 const DAYS_ORDER = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
@@ -83,7 +83,7 @@ export default function MealsScreen() {
     meals, updateMeal, loadMealsForWeek,
     courses, vault,
     addCourseItem, removeCourseItem, moveCourseItem, mergeCourseIngredients,
-    stock, updateStockQuantity,
+    stock, updateStockQuantity, addStockItem,
     recipes, loadRecipes, deleteRecipe, renameRecipe,
     scanAllCookFiles, moveCookToRecipes,
     profiles,
@@ -277,7 +277,8 @@ export default function MealsScreen() {
       if (recipeRef && await getAutomationFlag('autoCoursesFromRecipes')) {
         const recipe = resolveRecipe(recipeRef);
         if (recipe && recipe.ingredients.length > 0) {
-          const missing = computeMissingIngredients(recipe.ingredients, stock);
+          const familyServings = computeFamilyServings(profiles);
+          const missing = computeMissingIngredients(recipe.ingredients, stock, familyServings, recipe.servings);
           if (missing.length > 0) {
             const { added } = await mergeCourseIngredients(missing);
             if (added > 0) {
@@ -352,11 +353,13 @@ export default function MealsScreen() {
   );
 
   const generateWeeklyShoppingList = useCallback(async () => {
+    const familyServings = computeFamilyServings(profiles);
     const allIngredients: AppIngredient[] = [];
     for (const meal of displayedMeals) {
       const recipe = resolveRecipe(meal.recipeRef);
       if (recipe) {
-        allIngredients.push(...recipe.ingredients);
+        const scaled = scaleIngredients(recipe.ingredients, familyServings, recipe.servings);
+        allIngredients.push(...scaled);
       }
     }
     if (allIngredients.length === 0) {
@@ -423,35 +426,43 @@ export default function MealsScreen() {
         return;
       }
 
-      // Cocher → supprimer + éventuellement restocker
-      const itemTextLower = item.text.toLowerCase();
-      const stockMatch = stock.find((s) =>
-        itemTextLower.includes(s.produit.toLowerCase()),
-      );
-      const addQty = stockMatch?.qteAchat ?? 1;
-      const prevQty = stockMatch?.quantite ?? 0;
+      // Cocher → supprimer + restocker (existant ou nouveau si catégorie stockable)
+      const autoStock = await getAutomationFlag('autoStockFromCourses');
+      const { incremented, newItem } = autoStock
+        ? resolveStockAction(item, stock)
+        : { incremented: null, newItem: null };
+
+      const prevQty = incremented?.quantite ?? 0;
+      const addQty = incremented?.qteAchat ?? 1;
 
       await removeCourseItem(item.lineIndex);
-      if (stockMatch) {
-        await updateStockQuantity(stockMatch.lineIndex, prevQty + addQty);
+
+      if (incremented) {
+        await updateStockQuantity(incremented.lineIndex, prevQty + addQty);
+      } else if (newItem) {
+        await addStockItem(newItem);
       }
-      const msg = stockMatch
-        ? `${stockMatch.produit} restocké (+${addQty})`
-        : `${item.text} retiré`;
+
+      const msg = incremented
+        ? `${incremented.produit} restocké (+${addQty})`
+        : newItem
+          ? `${newItem.produit} ajouté au stock (${newItem.quantite})`
+          : `${item.text} retiré`;
 
       showToast(msg, 'success', {
         label: 'Annuler',
         onPress: async () => {
           try {
             await addCourseItem(item.text, item.section);
-            if (stockMatch) await updateStockQuantity(stockMatch.lineIndex, prevQty);
+            if (incremented) await updateStockQuantity(incremented.lineIndex, prevQty);
+            // Note: pas de rollback pour newItem (suppression stock = rare edge case)
           } catch { /* best effort */ }
         },
       });
     } catch (e) {
       Alert.alert('Erreur', String(e));
     }
-  }, [vault, refresh, stock, updateStockQuantity, removeCourseItem, addCourseItem, showToast]);
+  }, [vault, refresh, stock, updateStockQuantity, addStockItem, removeCourseItem, addCourseItem, showToast]);
 
   const handleCourseRemove = useCallback((item: CourseItem) => {
     Alert.alert(
