@@ -29,6 +29,7 @@ import { useGamification } from '../../hooks/useGamification';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { TaskCard } from '../../components/TaskCard';
+import { SecretMissionCard } from '../../components/SecretMissionCard';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { Chip } from '../../components/ui/Chip';
 import { DateInput } from '../../components/ui/DateInput';
@@ -191,7 +192,7 @@ function buildTargetFiles(profiles: Profile[]) {
 }
 
 export default function TasksScreen() {
-  const { tasks, menageTasks, vault, profiles, activeProfile, notifPrefs, toggleTask, addTask, editTask, deleteTask, refresh, isLoading, vacationTasks, vacationConfig, isVacationActive, refreshGamification } = useVault();
+  const { tasks, menageTasks, vault, profiles, activeProfile, notifPrefs, toggleTask, addTask, editTask, deleteTask, refresh, isLoading, vacationTasks, vacationConfig, isVacationActive, refreshGamification, secretMissions, completeSecretMission, validateSecretMission } = useVault();
   const { completeTask } = useGamification({ vault, notifPrefs });
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
@@ -254,6 +255,19 @@ export default function TasksScreen() {
   const [showAllDone, setShowAllDone] = useState(false);
 
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
+  const isParent = activeProfile?.role === 'adulte';
+
+  // Missions secrètes filtrées selon le mode
+  const visibleMissions = useMemo(() => {
+    if (!activeProfile) return [];
+    if (isChildMode) {
+      return secretMissions.filter(
+        (m) => m.targetProfileId === activeProfile.id && m.secretStatus !== 'validated',
+      );
+    }
+    // Parent : toutes les missions non validées
+    return secretMissions.filter((m) => m.secretStatus !== 'validated');
+  }, [secretMissions, activeProfile, isChildMode]);
 
   const handleTaskToggle = useCallback(
     async (task: Task, completed: boolean) => {
@@ -590,6 +604,24 @@ export default function TasksScreen() {
                 <Text style={[styles.deleteTipText, { color: colors.warningText }]}>💡 Glissez pour supprimer · Appui long pour modifier</Text>
               </View>
             )}
+            {/* Section missions secrètes */}
+            {visibleMissions.length > 0 && (
+              <View style={styles.secretMissionsSection}>
+                <View style={styles.sectionHeader}>
+                  <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>🕵️ Missions secrètes</Text>
+                  <Text style={[styles.sectionCount, { color: colors.textFaint }]}>{visibleMissions.length}</Text>
+                </View>
+                {visibleMissions.map((mission) => (
+                  <SecretMissionCard
+                    key={mission.id}
+                    mission={mission}
+                    isParent={isParent}
+                    onComplete={() => completeSecretMission(mission.id)}
+                    onValidate={() => validateSecretMission(mission.id)}
+                  />
+                ))}
+              </View>
+            )}
           </>
         }
         contentContainerStyle={styles.listContent}
@@ -901,6 +933,10 @@ const styles = StyleSheet.create({
   deleteTipText: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.medium,
+  },
+  secretMissionsSection: {
+    paddingHorizontal: Spacing['2xl'],
+    paddingTop: Spacing.md,
   },
   listContent: {
     padding: Spacing['2xl'],

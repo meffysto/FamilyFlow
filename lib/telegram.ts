@@ -112,7 +112,9 @@ export function formatDailySummaryMessage(
 // ─── Weekly AI Summary ──────────────────────────────────────────────────────
 
 import * as SecureStore from 'expo-secure-store';
-import { generateWeeklySummary, type AIConfig, type VaultContext } from './ai-service';
+import { generateWeeklyBilan, type AIConfig } from './ai-service';
+import { buildWeeklyRecapData, formatRecapForAI } from './weekly-recap';
+import type { Task, MealItem, MoodEntry, ChildQuote, Defi, StockItem } from './types';
 
 const WEEKLY_SUMMARY_LAST_SENT_KEY = 'weekly_summary_last_sent';
 const AI_API_KEY = 'ai_api_key';
@@ -136,12 +138,19 @@ export async function shouldSendWeeklySummary(): Promise<boolean> {
 }
 
 /**
- * Génère le résumé hebdo via IA (anonymisé) et l'envoie sur Telegram.
- * Retourne true si envoyé avec succès.
+ * Génère le bilan de semaine via IA et l'envoie sur Telegram.
+ * Utilise le même pipeline que la carte in-app (buildWeeklyRecapData + generateWeeklyBilan).
  */
-export async function buildAndSendWeeklySummary(
-  vaultCtx: VaultContext,
-): Promise<{ sent: boolean; error?: string }> {
+export async function buildAndSendWeeklySummary(data: {
+  tasks: Task[];
+  menageTasks: Task[];
+  meals: MealItem[];
+  moods: MoodEntry[];
+  quotes: ChildQuote[];
+  defis: Defi[];
+  profiles: Profile[];
+  stock: StockItem[];
+}): Promise<{ sent: boolean; error?: string }> {
   // 1. Vérifier la clé API Claude
   const apiKey = await SecureStore.getItemAsync(AI_API_KEY);
   const model = (await SecureStore.getItemAsync(AI_MODEL_KEY)) || 'claude-haiku-4-5-20251001';
@@ -152,14 +161,19 @@ export async function buildAndSendWeeklySummary(
   const chatId = await SecureStore.getItemAsync(TELEGRAM_CHAT_KEY_T);
   if (!token || !chatId) return { sent: false, error: 'Telegram non configuré' };
 
-  // 3. Générer le résumé via IA (données anonymisées)
+  // 3. Agréger les données de la semaine et générer le bilan IA
+  const recap = buildWeeklyRecapData(
+    data.tasks, data.menageTasks, data.meals, data.moods,
+    data.quotes, data.defis, data.profiles, data.stock,
+  );
+  const recapText = formatRecapForAI(recap);
   const config: AIConfig = { apiKey, model };
-  const response = await generateWeeklySummary(config, vaultCtx);
+  const response = await generateWeeklyBilan(config, recapText);
   if (response.error) return { sent: false, error: response.error };
   if (!response.text) return { sent: false, error: 'Résumé vide' };
 
   // 4. Envoyer sur Telegram
-  const header = '📬 <b>Résumé hebdo — Family Vault</b>\n\n';
+  const header = '📬 <b>Bilan de semaine — Family Vault</b>\n\n';
   const ok = await sendTelegram(token, chatId, header + response.text);
   if (!ok) return { sent: false, error: 'Échec envoi Telegram' };
 

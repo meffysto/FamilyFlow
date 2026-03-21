@@ -16,6 +16,7 @@ export {
   calculateStreak,
   buildLeaderboard,
   updateProfileInData,
+  openAgentSecretLootBox,
 } from './engine';
 
 // Rewards pool, config, display

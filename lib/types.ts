@@ -17,6 +17,9 @@ export interface Task {
   sourceFile: string;     // relative path in vault
   lineIndex: number;      // line index in file (0-based, for writes)
   section?: string;       // H2/H3 section header above this task
+  secret?: boolean;                           // mission secrète
+  targetProfileId?: string;                   // profil ciblé par la mission
+  secretStatus?: 'active' | 'pending' | 'validated'; // statut de la mission secrète
 }
 
 export interface RDV {

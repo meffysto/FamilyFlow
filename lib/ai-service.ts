@@ -618,35 +618,6 @@ Règles :
   return { text: deanonymize(resp.text, anonMap) };
 }
 
-/** Génère un résumé hebdomadaire via IA (anonymisé) pour envoi Telegram */
-export async function generateWeeklySummary(
-  config: AIConfig,
-  vaultCtx: VaultContext,
-): Promise<AIResponse> {
-  const { systemPrompt, anonMap } = prepareAnonymized(vaultCtx);
-
-  const messages: AIMessage[] = [
-    {
-      role: 'user',
-      content: `Résumé hebdo familial ultra-concis pour dimanche soir. Inclus UNIQUEMENT les sections pertinentes (ignore celles sans données) :
-- ✅ Tâches : X faites / Y en retard
-- 📅 RDV semaine prochaine (si existants)
-- 📦 Stocks bas (si existants)
-- 🏆 Top gamification (points, streaks)
-- Un petit mot d'encouragement (1 phrase)
-
-Format : emojis + texte brut, PAS de markdown. Maximum 150 mots. Sois direct et chaleureux.`,
-    },
-  ];
-
-  // Utiliser Haiku pour le coût minimal
-  const haikiConfig = { ...config, model: 'claude-haiku-4-5-20251001' };
-  const resp = await callClaude(haikiConfig, systemPrompt, messages);
-  if (resp.error) return resp;
-
-  return { text: deanonymize(resp.text, anonMap) };
-}
-
 /** Génère des suggestions IA basées sur le contexte vault */
 export async function generateAISuggestions(
   config: AIConfig,

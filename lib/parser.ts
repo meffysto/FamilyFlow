@@ -2249,3 +2249,136 @@ nom: ${data.profileName}
 ${unlockLines}
 `;
 }
+
+// ─── Missions secrètes ──────────────────────────────────────────────────────
+
+export const SECRET_MISSIONS_FILE = '05 - Famille/Missions secrètes.md';
+
+/**
+ * Parse le fichier Missions secrètes.
+ *
+ * Format attendu :
+ * ## {profileId}
+ * - [ ] Mission texte 📅2026-03-21
+ * - [p] Mission pending 📅2026-03-20
+ * - [x] Mission validée ✅2026-03-19
+ */
+export function parseSecretMissions(content: string, sourceFile: string = SECRET_MISSIONS_FILE): Task[] {
+  const lines = content.split('\n');
+  const missions: Task[] = [];
+  let currentProfileId: string | undefined;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Détecter les sections ## profileId
+    if (line.startsWith('## ')) {
+      currentProfileId = line.replace(/^##\s+/, '').trim();
+      continue;
+    }
+
+    if (!currentProfileId) continue;
+
+    // Parser les missions : - [ ], - [p], - [x]
+    const missionMatch = line.match(/^-\s+\[([xXp ])\]\s+(.+)$/);
+    if (!missionMatch) continue;
+
+    const [, checkmark, rawText] = missionMatch;
+
+    let secretStatus: 'active' | 'pending' | 'validated';
+    let completed = false;
+    if (checkmark.toLowerCase() === 'x') {
+      secretStatus = 'validated';
+      completed = true;
+    } else if (checkmark === 'p') {
+      secretStatus = 'pending';
+    } else {
+      secretStatus = 'active';
+    }
+
+    // Extraire la date de création (📅YYYY-MM-DD)
+    const dateMatch = rawText.match(/📅(\d{4}-\d{2}-\d{2})/);
+    const dueDate = dateMatch?.[1];
+
+    // Extraire la date de validation (✅YYYY-MM-DD)
+    const completedMatch = rawText.match(/✅(\d{4}-\d{2}-\d{2})/);
+    const completedDate = completedMatch?.[1];
+
+    // Nettoyer le texte (enlever les marqueurs de date)
+    const text = rawText
+      .replace(/📅\d{4}-\d{2}-\d{2}/, '')
+      .replace(/✅\d{4}-\d{2}-\d{2}/, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+
+    missions.push({
+      id: `${sourceFile}:${i}`,
+      text,
+      completed,
+      dueDate,
+      completedDate,
+      tags: [],
+      mentions: [],
+      sourceFile,
+      lineIndex: i,
+      section: currentProfileId,
+      secret: true,
+      targetProfileId: currentProfileId,
+      secretStatus,
+    });
+  }
+
+  return missions;
+}
+
+/**
+ * Sérialise les missions secrètes en Markdown, groupées par targetProfileId.
+ */
+export function serializeSecretMissions(missions: Task[], profiles: Profile[]): string {
+  const parts: string[] = [];
+  parts.push('# Missions secrètes\n');
+
+  // Grouper par targetProfileId
+  const grouped = new Map<string, Task[]>();
+  for (const m of missions) {
+    const pid = m.targetProfileId ?? 'inconnu';
+    if (!grouped.has(pid)) grouped.set(pid, []);
+    grouped.get(pid)!.push(m);
+  }
+
+  // Trier les profils dans l'ordre des profiles fournis, puis les inconnus
+  const profileOrder = profiles.map(p => p.id);
+  const sortedKeys = [...grouped.keys()].sort((a, b) => {
+    const ia = profileOrder.indexOf(a);
+    const ib = profileOrder.indexOf(b);
+    if (ia === -1 && ib === -1) return a.localeCompare(b);
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
+
+  for (const profileId of sortedKeys) {
+    const profileMissions = grouped.get(profileId)!;
+    parts.push(`## ${profileId}`);
+
+    for (const m of profileMissions) {
+      let checkbox: string;
+      if (m.secretStatus === 'validated') {
+        checkbox = '[x]';
+      } else if (m.secretStatus === 'pending') {
+        checkbox = '[p]';
+      } else {
+        checkbox = '[ ]';
+      }
+
+      let line = `- ${checkbox} ${m.text}`;
+      if (m.dueDate) line += ` 📅${m.dueDate}`;
+      if (m.completedDate) line += ` ✅${m.completedDate}`;
+      parts.push(line);
+    }
+
+    parts.push('');
+  }
+
+  return parts.join('\n');
+}

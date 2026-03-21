@@ -79,6 +79,7 @@ import {
   DashboardCalendar,
   DashboardZenState,
   DashboardBilanSemaine,
+  DashboardSecretMissions,
 } from '../../components/dashboard';
 
 const PREFS_KEY = 'dashboard_prefs_v1';
@@ -122,6 +123,7 @@ const ALL_SECTIONS: SectionPref[] = [
   { id: 'quotes',       label: 'Mots d\'enfants',         emoji: '💬', visible: false, priority: 'medium' },
   { id: 'moods',        label: 'Humeurs',                 emoji: '🌤️', visible: false, priority: 'medium' },
   { id: 'bilanSemaine', label: 'Bilan de semaine',         emoji: '📝', visible: true,  priority: 'medium' },
+  { id: 'secretMissions', label: 'Missions secrètes',    emoji: '🕵️', visible: true,  priority: 'high' },
 
   { id: 'quicknotifs',label: 'Notifications rapides',   emoji: '📤', visible: false, priority: 'low' },
   { id: 'recipes',    label: 'Idée recette',             emoji: '📖', visible: false, priority: 'low' },
@@ -137,7 +139,8 @@ const ADULT_ONLY_SECTIONS = new Set(['courses', 'budget', 'quicknotifs', 'recipe
 const CHILD_PROMOTED: Record<string, { visible: boolean; priority: 'high' | 'medium' | 'low' }> = {
   rewards:     { visible: true, priority: 'high' },
   leaderboard: { visible: true, priority: 'high' },
-  defis:       { visible: true, priority: 'high' },
+  defis:          { visible: true, priority: 'high' },
+  secretMissions: { visible: true, priority: 'high' },
 };
 
 function getDefaultSections(role?: string): SectionPref[] {
@@ -775,6 +778,7 @@ export default function DashboardScreen() {
       case 'moods':        return <DashboardMoods key={id} {...sectionProps} />;
       case 'calendar':     return <DashboardCalendar key={id} {...sectionProps} />;
       case 'bilanSemaine': return <DashboardBilanSemaine key={id} {...sectionProps} />;
+      case 'secretMissions': return <DashboardSecretMissions key={id} {...sectionProps} />;
       default:             return null;
     }
   };

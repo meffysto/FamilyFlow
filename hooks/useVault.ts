@@ -69,6 +69,9 @@ import {
   MOODS_FILE,
   parseMoods,
   serializeMoods,
+  SECRET_MISSIONS_FILE,
+  parseSecretMissions,
+  serializeSecretMissions,
 } from '../lib/parser';
 import { processActiveRewards, addPoints } from '../lib/gamification';
 import { XP_PER_BRACKET, getSkillById } from '../lib/gamification/skill-tree';
@@ -91,7 +94,7 @@ import { generateThumbnail } from '../lib/thumbnails';
 import { nextOccurrence } from '../lib/recurrence';
 import { format, startOfWeek } from 'date-fns';
 import { parseJournalStats } from '../lib/journal-stats';
-import type { JournalSummaryEntry, VaultContext as AIVaultContext } from '../lib/ai-service';
+import type { JournalSummaryEntry } from '../lib/ai-service';
 import { refreshWidget, refreshJournalWidget } from '../lib/widget-bridge';
 import { syncWidgetFeedingsToVault } from '../lib/widget-sync';
 import { shouldSendWeeklySummary, buildAndSendWeeklySummary } from '../lib/telegram';
@@ -240,6 +243,10 @@ export interface VaultState {
   deleteMood: (lineIndex: number) => Promise<void>;
   skillTrees: SkillTreeData[];
   unlockSkill: (childProfileId: string, skillId: string) => Promise<void>;
+  secretMissions: Task[];
+  addSecretMission: (text: string, targetProfileId: string) => Promise<void>;
+  completeSecretMission: (missionId: string) => Promise<void>;
+  validateSecretMission: (missionId: string) => Promise<void>;
 }
 
 // Static task files (non-enfant)
@@ -424,6 +431,7 @@ export function useVaultInternal(): VaultState {
   const [quotes, setQuotes] = useState<ChildQuote[]>([]);
   const [moods, setMoods] = useState<MoodEntry[]>([]);
   const [skillTrees, setSkillTrees] = useState<SkillTreeData[]>([]);
+  const [secretMissions, setSecretMissions] = useState<Task[]>([]);
   const vaultRef = useRef<VaultManager | null>(null);
   const busyRef = useRef(false); // Guard against AppState race condition
 
@@ -831,6 +839,9 @@ export function useVaultInternal(): VaultState {
             return trees;
           } catch (e) { warnUnexpected('skill-trees', e); return [] as SkillTreeData[]; }
         })(),
+
+        // [21] Missions secrètes
+        vault.readFile(SECRET_MISSIONS_FILE).then((c) => parseSecretMissions(c)).catch(() => [] as Task[]),
       ]);
 
       // Apply results — use helper to extract settled values
@@ -871,6 +882,7 @@ export function useVaultInternal(): VaultState {
       setQuotes(val(results[18], []));
       setMoods(val(results[19], []));
       setSkillTrees(val(results[20], []));
+      setSecretMissions(val(results[21], []));
 
       // Mettre à jour les widgets iOS
       refreshWidget(val(results[5], []), val(results[1], []), rdvResult, tasksResult);
@@ -879,36 +891,21 @@ export function useVaultInternal(): VaultState {
       // Sync feedings du widget vers le vault markdown (fire-and-forget)
       syncWidgetFeedingsToVault(vault).catch(() => {});
 
-      // Auto-envoi résumé hebdo IA le dimanche (fire-and-forget)
+      // Auto-envoi bilan de semaine IA le dimanche (fire-and-forget)
       loadNotifConfig().then(async (notifCfg) => {
         if (!notifCfg.weeklyAISummaryEnabled) return;
         const shouldSend = await shouldSendWeeklySummary();
         if (!shouldSend) return;
-        const menageResult = val(results[1], [] as Task[]);
-        const mealsResult = val(results[5], [] as MealItem[]);
-        const coursesResult = val(results[3], [] as CourseItem[]);
-        const memoriesResult = val(results[8], [] as Memory[]);
-        const defisResult = val(results[11], [] as Defi[]);
-        const wishlistResult = val(results[13], [] as WishlistItem[]);
-        const journalResult = val(results[10], [] as JournalSummaryEntry[]);
-        const healthResult = val(results[9], [] as HealthRecord[]);
-        const vaultCtx: AIVaultContext = {
+        buildAndSendWeeklySummary({
           tasks: tasksResult,
-          menageTasks: menageResult,
-          rdvs: rdvResult,
-          stock: stockResult.items,
-          meals: mealsResult,
-          courses: coursesResult,
-          memories: memoriesResult,
-          defis: defisResult,
-          wishlistItems: wishlistResult,
-          recipes: [],
+          menageTasks: val(results[1], [] as Task[]),
+          meals: val(results[5], [] as MealItem[]),
+          moods: val(results[19], [] as MoodEntry[]),
+          quotes: val(results[18], [] as ChildQuote[]),
+          defis: val(results[11], [] as Defi[]),
           profiles,
-          activeProfile: profiles.find(p => p.id === activeProfileId) ?? null,
-          journalStats: journalResult,
-          healthRecords: healthResult,
-        };
-        buildAndSendWeeklySummary(vaultCtx).catch(() => {});
+          stock: stockResult.items,
+        }).catch(() => {});
       }).catch(() => {});
 
     } catch (e) {
@@ -2707,6 +2704,57 @@ export function useVaultInternal(): VaultState {
     }
   }, [gamiData, profiles, skillTrees, activeProfileId]);
 
+  // ─── Missions secrètes CRUD ───────────────────────────────────────────────
+
+  const addSecretMission = useCallback(async (text: string, targetProfileId: string) => {
+    if (!vaultRef.current) return;
+    const date = new Date().toISOString().slice(0, 10);
+    const newMission: Task = {
+      id: `${SECRET_MISSIONS_FILE}:-1`,
+      text,
+      completed: false,
+      dueDate: date,
+      tags: [],
+      mentions: [],
+      sourceFile: SECRET_MISSIONS_FILE,
+      lineIndex: -1,
+      secret: true,
+      targetProfileId,
+      secretStatus: 'active',
+    };
+    let existing: Task[] = [];
+    try {
+      const content = await vaultRef.current.readFile(SECRET_MISSIONS_FILE);
+      existing = parseSecretMissions(content);
+    } catch (e) { warnUnexpected('addSecretMission-read', e); }
+    const updated = [...existing, newMission];
+    await vaultRef.current.ensureDir('05 - Famille');
+    const serialized = serializeSecretMissions(updated, profiles);
+    await vaultRef.current.writeFile(SECRET_MISSIONS_FILE, serialized);
+    setSecretMissions(parseSecretMissions(serialized));
+  }, [profiles]);
+
+  const completeSecretMission = useCallback(async (missionId: string) => {
+    if (!vaultRef.current) return;
+    const updated = secretMissions.map((m) =>
+      m.id === missionId ? { ...m, secretStatus: 'pending' as const } : m
+    );
+    setSecretMissions(updated);
+    const serialized = serializeSecretMissions(updated, profiles);
+    await vaultRef.current.writeFile(SECRET_MISSIONS_FILE, serialized);
+  }, [secretMissions, profiles]);
+
+  const validateSecretMission = useCallback(async (missionId: string) => {
+    if (!vaultRef.current) return;
+    const date = new Date().toISOString().slice(0, 10);
+    const updated = secretMissions.map((m) =>
+      m.id === missionId ? { ...m, secretStatus: 'validated' as const, completed: true, completedDate: date } : m
+    );
+    setSecretMissions(updated);
+    const serialized = serializeSecretMissions(updated, profiles);
+    await vaultRef.current.writeFile(SECRET_MISSIONS_FILE, serialized);
+  }, [secretMissions, profiles]);
+
   // Mémoïser la valeur du contexte pour éviter les re-renders en cascade
   const vault = vaultRef.current;
   return useMemo(() => ({
@@ -2825,6 +2873,10 @@ export function useVaultInternal(): VaultState {
     deleteMood,
     skillTrees,
     unlockSkill,
+    secretMissions,
+    addSecretMission,
+    completeSecretMission,
+    validateSecretMission,
   }), [
     // State values (déclenchent un re-render quand ils changent)
     vaultPath, isLoading, error, tasks, menageTasks, courses, stock, meals,
@@ -2832,7 +2884,7 @@ export function useVaultInternal(): VaultState {
     stockSections, memories, vacationConfig, vacationTasks, isVacationActive,
     recipes, ageUpgrades, budgetEntries, budgetConfig, budgetMonth, routines,
     healthRecords, defis, gratitudeDays, wishlistItems, journalStats, anniversaries, notes,
-    quotes, moods, skillTrees,
+    quotes, moods, skillTrees, secretMissions,
     // Callbacks (stables grâce à useCallback)
     refresh, setVaultPath, setActiveProfile, saveNotifPrefs, updateMeal, loadMealsForWeek,
     addPhoto, getPhotoUri, updateProfileTheme, updateProfile, deleteProfile,
@@ -2850,5 +2902,6 @@ export function useVaultInternal(): VaultState {
     addWishItem, updateWishItem, deleteWishItem, toggleWishBought,
     addAnniversary, updateAnniversary, removeAnniversary, importAnniversaries,
     addNote, updateNote, deleteNote, addQuote, deleteQuote, addMood, deleteMood, unlockSkill,
+    addSecretMission, completeSecretMission, validateSecretMission,
   ]);
 }

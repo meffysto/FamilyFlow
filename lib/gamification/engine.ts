@@ -301,6 +301,174 @@ export function openLootBox(
   return { box, profile: updatedProfile, entries, newActiveRewards, extraLootBoxes };
 }
 
+// ─── Loot box Agent Secret (missions secrètes) ─────────────────────────────
+
+/**
+ * Ouvre une loot box spéciale Agent Secret.
+ * - Rareté minimale : épique (jamais commun ni rare)
+ * - Ne décrémente PAS lootBoxesAvailable (bonus gratuit)
+ * - Utilise le pool de récompenses existant filtré épique+
+ */
+export function openAgentSecretLootBox(
+  profile: Profile,
+  gamiData: GamificationData
+): {
+  box: LootBox;
+  profile: Profile;
+  entries: GamificationEntry[];
+  newActiveRewards: ActiveReward[];
+  extraLootBoxes: number;
+} {
+  const rates = DROP_RATES[profile.role];
+
+  // Redistribuer parmi épique/légendaire/mythique
+  const epicTotal = rates.épique + rates.légendaire + rates.mythique;
+  const rand = Math.random() * epicTotal;
+  let rarity: LootRarity;
+  if (rand < rates.mythique) {
+    rarity = 'mythique';
+  } else if (rand < rates.mythique + rates.légendaire) {
+    rarity = 'légendaire';
+  } else {
+    rarity = 'épique';
+  }
+
+  const rewardDef: RewardDefinition = REWARDS[rarity][Math.floor(Math.random() * REWARDS[rarity].length)];
+  const now = new Date().toISOString();
+
+  const box: LootBox = {
+    rarity,
+    reward: rewardDef.reward,
+    emoji: rewardDef.emoji,
+    bonusPoints: rewardDef.bonusPoints,
+    requiresParent: rewardDef.requiresParent,
+    multiplier: rewardDef.multiplier,
+    multiplierTasks: rewardDef.multiplierTasks,
+    rewardType: rewardDef.rewardType,
+    openedAt: now,
+  };
+
+  const entries: GamificationEntry[] = [
+    {
+      profileId: profile.id,
+      action: `loot:agent-secret:${rarity}`,
+      points: rewardDef.bonusPoints,
+      note: `🕵️ Agent Secret: ${rewardDef.emoji} ${rewardDef.reward}`,
+      timestamp: now,
+    },
+  ];
+
+  // NE PAS décrémenter lootBoxesAvailable — c'est un bonus gratuit
+  let updatedProfile: Profile = { ...profile };
+
+  // Appliquer les points bonus
+  if (rewardDef.bonusPoints > 0) {
+    const { profile: withBonus, entry: bonusEntry } = addPoints(
+      updatedProfile,
+      rewardDef.bonusPoints,
+      `Bonus Agent Secret: ${rewardDef.reward}`
+    );
+    updatedProfile = withBonus;
+    entries.push(bonusEntry);
+  }
+
+  // Appliquer le multiplicateur si présent
+  if (rewardDef.multiplier && rewardDef.multiplier > 1) {
+    updatedProfile = {
+      ...updatedProfile,
+      multiplier: rewardDef.multiplier,
+      multiplierRemaining: rewardDef.multiplierTasks ?? 10,
+    };
+  }
+
+  // Gérer les récompenses actives (même logique que openLootBox)
+  const newActiveRewards: ActiveReward[] = [];
+  let extraLootBoxes = 0;
+  const rewardId = `ar_agent_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+
+  switch (rewardDef.rewardType) {
+    case 'vacation': {
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 2);
+      newActiveRewards.push({
+        id: rewardId,
+        type: 'vacation',
+        emoji: rewardDef.emoji,
+        label: '2 jours sans tâches !',
+        profileId: profile.id,
+        expiresAt: format(expiresAt, 'yyyy-MM-dd'),
+        remainingDays: 2,
+      });
+      break;
+    }
+    case 'crown': {
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+      newActiveRewards.push({
+        id: rewardId,
+        type: 'crown',
+        emoji: rewardDef.emoji,
+        label: 'Roi/Reine de la semaine',
+        profileId: profile.id,
+        expiresAt: format(expiresAt, 'yyyy-MM-dd'),
+        remainingDays: 7,
+      });
+      break;
+    }
+    case 'skip': {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      newActiveRewards.push({
+        id: rewardId,
+        type: 'skip',
+        emoji: rewardDef.emoji,
+        label: 'Skip une tâche demain',
+        profileId: profile.id,
+        expiresAt: format(tomorrow, 'yyyy-MM-dd'),
+        remainingDays: 1,
+      });
+      break;
+    }
+    case 'skip_all': {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      newActiveRewards.push({
+        id: rewardId,
+        type: 'skip_all',
+        emoji: rewardDef.emoji,
+        label: 'Skip TOUTES les tâches demain',
+        profileId: profile.id,
+        expiresAt: format(tomorrow, 'yyyy-MM-dd'),
+        remainingDays: 1,
+      });
+      break;
+    }
+    case 'multiplier': {
+      newActiveRewards.push({
+        id: rewardId,
+        type: 'multiplier',
+        emoji: rewardDef.emoji,
+        label: `Multiplicateur ×${rewardDef.multiplier}`,
+        profileId: profile.id,
+        remainingTasks: rewardDef.multiplierTasks ?? 10,
+      });
+      break;
+    }
+    case 'double_loot': {
+      extraLootBoxes = 2;
+      updatedProfile = {
+        ...updatedProfile,
+        lootBoxesAvailable: updatedProfile.lootBoxesAvailable + 2,
+      };
+      break;
+    }
+    default:
+      break;
+  }
+
+  return { box, profile: updatedProfile, entries, newActiveRewards, extraLootBoxes };
+}
+
 // ─── Active Rewards Processing ──────────────────────────────────────────────
 
 /** Process active rewards: expire finished ones, return updated list */
