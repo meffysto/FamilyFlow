@@ -26,9 +26,11 @@ interface RecipeViewerProps {
   onRename?: (newTitle: string) => void;
   /** Nombre de personnes dans la famille — utilisé comme portions par défaut */
   familySize?: number;
+  /** Appelé quand la recette est terminée en mode cuisine */
+  onCookingFinished?: () => void;
 }
 
-export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isFavorite, onToggleFavorite, onRename, familySize }: RecipeViewerProps) {
+export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isFavorite, onToggleFavorite, onRename, familySize, onCookingFinished }: RecipeViewerProps) {
   const { primary, tint, colors } = useThemeColors();
   const [servings, setServings] = useState(familySize || recipe.servings || 1);
   const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set());
@@ -259,6 +261,7 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
           scaleFactor={scaleFactor}
           servings={servings}
           onClose={() => setShowCookingMode(false)}
+          onFinish={onCookingFinished}
         />
       )}
     </Modal>

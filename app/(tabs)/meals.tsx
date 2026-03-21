@@ -311,6 +311,7 @@ export default function MealsScreen() {
   // ─── Phase 3 : Marquer un repas comme cuisiné ──────────────────
 
   const [cookingMealId, setCookingMealId] = useState<string | null>(null);
+  const [cookedMealIds, setCookedMealIds] = useState<Set<string>>(new Set());
 
   const markMealCooked = useCallback(async (meal: MealItem) => {
     if (cookingMealId) return;
@@ -337,6 +338,7 @@ export default function MealsScreen() {
                 await updateStockQuantity(stockItem.lineIndex, newQuantity);
               }
               showToast(`Stock mis à jour (${decrements.length} produit${decrements.length > 1 ? 's' : ''})`);
+              setCookedMealIds(prev => new Set(prev).add(meal.id));
             } finally {
               setCookingMealId(null);
             }
@@ -1034,15 +1036,20 @@ export default function MealsScreen() {
                             </TouchableOpacity>
                             {isCurrentWeek && (
                               <TouchableOpacity
-                                style={[styles.viewRecipeBtn, { backgroundColor: colors.successBg, opacity: cookingMealId === meal.id ? 0.5 : 1 }]}
+                                style={[styles.viewRecipeBtn, {
+                                  backgroundColor: cookedMealIds.has(meal.id) ? colors.cardAlt : colors.successBg,
+                                  opacity: cookingMealId === meal.id ? 0.5 : 1,
+                                }]}
                                 onPress={() => markMealCooked(meal)}
-                                disabled={cookingMealId === meal.id}
+                                disabled={cookingMealId === meal.id || cookedMealIds.has(meal.id)}
                                 activeOpacity={0.7}
-                                accessibilityLabel={`Marquer ${meal.text} comme cuisiné`}
+                                accessibilityLabel={cookedMealIds.has(meal.id) ? `${meal.text} déjà cuisiné` : `Marquer ${meal.text} comme cuisiné`}
                                 accessibilityRole="button"
                               >
-                                <Text style={[styles.viewRecipeBtnText, { color: colors.success }]}>
-                                  {cookingMealId === meal.id ? '...' : 'Cuisiné'}
+                                <Text style={[styles.viewRecipeBtnText, {
+                                  color: cookedMealIds.has(meal.id) ? colors.textMuted : colors.success,
+                                }]}>
+                                  {cookingMealId === meal.id ? '...' : cookedMealIds.has(meal.id) ? 'Cuisiné \u2713' : 'Cuisiné'}
                                 </Text>
                               </TouchableOpacity>
                             )}
@@ -1378,6 +1385,16 @@ export default function MealsScreen() {
             setSelectedRecipe((prev) => prev ? { ...prev, title: newTitle } : null);
           }}
           familySize={profiles.length}
+          onCookingFinished={async () => {
+            if (!await getAutomationFlag('autoStockDecrementCook')) return;
+            const familyServings = computeFamilyServings(profiles);
+            const decrements = computeStockDecrements(selectedRecipe.ingredients, stock, familyServings, selectedRecipe.servings);
+            if (decrements.length === 0) return;
+            for (const { stockItem, newQuantity } of decrements) {
+              await updateStockQuantity(stockItem.lineIndex, newQuantity);
+            }
+            showToast(`Stock mis à jour (${decrements.length} produit${decrements.length > 1 ? 's' : ''})`);
+          }}
         />
       )}
 

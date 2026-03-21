@@ -51,6 +51,7 @@ interface RecipeCookingModeProps {
   scaleFactor: number;
   servings: number;
   onClose: () => void;
+  onFinish?: () => void;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -73,7 +74,7 @@ function formatTime(secs: number): string {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClose }: RecipeCookingModeProps) {
+export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClose, onFinish }: RecipeCookingModeProps) {
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
@@ -558,6 +559,7 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
             <TouchableOpacity
               onPress={() => {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                onFinish?.();
                 onClose();
               }}
               style={styles.navBtn}
