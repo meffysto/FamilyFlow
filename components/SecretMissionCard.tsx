@@ -53,6 +53,13 @@ export const SecretMissionCard = React.memo(function SecretMissionCard({
           {mission.text}
         </Text>
 
+        {/* Récompense */}
+        {status !== 'validated' && (
+          <Text style={[styles.rewardHint, { color: colors.warning }]}>
+            🎁 Récompense : coffre Agent Secret (épique minimum !)
+          </Text>
+        )}
+
         {/* Actions selon le statut */}
         <View style={styles.footer}>
           {status === 'active' && !isParent && (
@@ -142,6 +149,11 @@ const styles = StyleSheet.create({
     fontSize: FontSize.lg,
     fontWeight: FontWeight.medium,
     lineHeight: LineHeight.body,
+  },
+  rewardHint: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    marginTop: Spacing.xs,
   },
   footer: {
     gap: Spacing.md,

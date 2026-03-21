@@ -236,6 +236,9 @@ export const SecretMissionCreator = React.memo(function SecretMissionCreator({
               🕵️ Envoyer la mission
             </Text>
           </TouchableOpacity>
+          <Text style={[styles.rewardInfo, { color: colors.textMuted }]}>
+            🎁 L'enfant recevra un coffre Agent Secret (épique minimum) à la validation
+          </Text>
         </View>
       </SafeAreaView>
     </Modal>
@@ -320,5 +323,10 @@ const styles = StyleSheet.create({
   submitBtnText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
+  },
+  rewardInfo: {
+    fontSize: FontSize.caption,
+    textAlign: 'center',
+    marginTop: Spacing.md,
   },
 });
