@@ -30,6 +30,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { TaskCard } from '../../components/TaskCard';
 import { SecretMissionCard } from '../../components/SecretMissionCard';
+import { SecretMissionCreator } from '../../components/SecretMissionCreator';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { Chip } from '../../components/ui/Chip';
 import { DateInput } from '../../components/ui/DateInput';
@@ -227,6 +228,7 @@ export default function TasksScreen() {
 
   // Add task modal
   const [addModalVisible, setAddModalVisible] = useState(false);
+  const [missionCreatorVisible, setMissionCreatorVisible] = useState(false);
   const [newTaskText, setNewTaskText] = useState('');
   const [newTaskDueDate, setNewTaskDueDate] = useState('');
   const [newTaskRecurrence, setNewTaskRecurrence] = useState('');
@@ -755,9 +757,27 @@ export default function TasksScreen() {
                 />
               ))}
             </View>
+            {!isChildMode && (
+              <TouchableOpacity
+                style={[styles.secretMissionBtn, { borderColor: colors.warning }]}
+                onPress={() => {
+                  setAddModalVisible(false);
+                  setMissionCreatorVisible(true);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.secretMissionBtnText, { color: colors.warning }]}>🕵️ Créer une mission secrète</Text>
+              </TouchableOpacity>
+            )}
           </ScrollView>
         </SafeAreaView>
       </Modal>
+
+      {/* Modal création mission secrète */}
+      <SecretMissionCreator
+        visible={missionCreatorVisible}
+        onClose={() => setMissionCreatorVisible(false)}
+      />
 
       {/* Edit Task Modal */}
       <Modal visible={editModalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setEditModalVisible(false)}>
@@ -937,6 +957,18 @@ const styles = StyleSheet.create({
   secretMissionsSection: {
     paddingHorizontal: Spacing['2xl'],
     paddingTop: Spacing.md,
+  },
+  secretMissionBtn: {
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderRadius: Radius.md,
+    paddingVertical: Spacing.lg,
+    alignItems: 'center',
+    marginTop: Spacing.xl,
+  },
+  secretMissionBtnText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
   },
   listContent: {
     padding: Spacing['2xl'],

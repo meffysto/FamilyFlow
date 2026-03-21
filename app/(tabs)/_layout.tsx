@@ -11,7 +11,7 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { FAB, FABAction } from '../../components/FAB';
-import { SecretMissionCreator } from '../../components/SecretMissionCreator';
+
 import { GlassView } from '../../components/ui/GlassView';
 import { FontSize, FontWeight } from '../../constants/typography';
 
@@ -124,8 +124,6 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
 
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
 
-  // Modal création de mission secrète (parent uniquement)
-  const [missionCreatorVisible, setMissionCreatorVisible] = useState(false);
 
   const fabActions: FABAction[] = isChildMode
     ? [
@@ -136,7 +134,6 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
         { id: 'rdv', emoji: '\u{1F4C5}', label: 'RDV', onPress: () => router.push('/rdv?addNew=1') },
         { id: 'journal', emoji: '\u{1F4D6}', label: 'Journal', onPress: () => router.push(`/journal?enfant=${lastEnfant}`) },
         { id: 'photo', emoji: '\u{1F4F8}', label: 'Photo', onPress: () => router.push('/photos?addNew=1') },
-        { id: 'secret-mission', emoji: '🕵️', label: 'Mission secrète', onPress: () => setMissionCreatorVisible(true) },
       ];
 
   return (
@@ -231,12 +228,6 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
       </Tabs>
 
       {showFAB && <FAB actions={fabActions} />}
-
-      {/* Modal création de mission secrète */}
-      <SecretMissionCreator
-        visible={missionCreatorVisible}
-        onClose={() => setMissionCreatorVisible(false)}
-      />
 
       {/* Profile picker modal — shown on first launch */}
       <Modal visible={showPicker} animationType="fade" transparent statusBarTranslucent>
