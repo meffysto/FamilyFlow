@@ -984,7 +984,7 @@ export default function MealsScreen() {
 
           {orderedDays.map((day) => {
             const dayMeals = mealsByDay[day] ?? [];
-            const isToday = day === todayName;
+            const isToday = isCurrentWeek && day === todayName;
 
             return (
               <View
