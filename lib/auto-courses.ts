@@ -235,25 +235,38 @@ export interface StockDecrementAction {
 
 /**
  * Calcule les décrémentations stock pour les ingrédients d'une recette cuisinée.
- * Heuristique quantités : si la recette demande < 1 unité stock, on décrémente de 1.
+ * - Comptes (3 œufs) : décrémente de la quantité scalée
+ * - Poids (120g pecorino) : décrémente de 1 unité (on ne sait pas le poids stock)
+ * - Sans quantité : décrémente de 1
+ * Si targetServings et baseServings sont fournis, les ingrédients sont scalés.
  */
 export function computeStockDecrements(
   ingredients: AppIngredient[],
   stock: StockItem[],
+  targetServings?: number,
+  baseServings?: number,
 ): StockDecrementAction[] {
-  const actions: StockDecrementAction[] = [];
-  const used = new Set<number>(); // lineIndex déjà utilisés (évite double décrémentation)
+  const scaled = targetServings && baseServings
+    ? scaleIngredients(ingredients, targetServings, baseServings)
+    : ingredients;
 
-  for (const ing of ingredients) {
+  const actions: StockDecrementAction[] = [];
+  const used = new Set<number>();
+
+  for (const ing of scaled) {
     if (isBasicIngredient(ing.name)) continue;
     const match = findStockMatch(ing.name, stock);
     if (!match || match.quantite <= 0) continue;
     if (used.has(match.lineIndex)) continue;
     used.add(match.lineIndex);
 
+    const isWeight = ing.unit && WEIGHT_UNIT_RE.test(ing.unit);
+    // Poids → 1 unité, Compte → quantité scalée, Sans quantité → 1
+    const decrement = isWeight ? 1 : Math.ceil(ing.quantity ?? 1);
+
     actions.push({
       stockItem: match,
-      newQuantity: Math.max(0, match.quantite - 1),
+      newQuantity: Math.max(0, match.quantite - decrement),
     });
   }
 

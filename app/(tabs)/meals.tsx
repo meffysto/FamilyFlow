@@ -317,7 +317,8 @@ export default function MealsScreen() {
     if (!await getAutomationFlag('autoStockDecrementCook')) return;
     const recipe = resolveRecipe(meal.recipeRef);
     if (!recipe) return;
-    const decrements = computeStockDecrements(recipe.ingredients, stock);
+    const familyServings = computeFamilyServings(profiles);
+    const decrements = computeStockDecrements(recipe.ingredients, stock, familyServings, recipe.servings);
     if (decrements.length === 0) {
       showToast('Stock déjà à jour');
       return;
