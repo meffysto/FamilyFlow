@@ -33,6 +33,7 @@ import { SettingsParentalControls } from '../../components/settings/SettingsPare
 import { SettingsHelp } from '../../components/settings/SettingsHelp';
 import { SettingsZen, ZenConfig, DEFAULT_ZEN_CONFIG } from '../../components/settings/SettingsZen';
 import { SettingsAuth } from '../../components/settings/SettingsAuth';
+import { SettingsAutomations } from '../../components/settings/SettingsAutomations';
 
 const TELEGRAM_TOKEN_KEY = 'telegram_token';
 const TELEGRAM_CHAT_KEY = 'telegram_chat_id';
@@ -40,7 +41,7 @@ const ZEN_CONFIG_KEY = 'zen_config_v1';
 
 type SectionId =
   | 'profiles' | 'appearance'
-  | 'notifications' | 'zen' | 'vacation' | 'gamification'
+  | 'notifications' | 'zen' | 'vacation' | 'gamification' | 'automations'
   | 'ai' | 'telegram' | 'grandparents'
   | 'auth' | 'parental' | 'vault' | 'help';
 
@@ -106,6 +107,7 @@ export default function SettingsScreen() {
     zen: 'Mode zen',
     vacation: 'Vacances',
     gamification: 'Gamification',
+    automations: 'Automatisations',
     ai: 'Intelligence artificielle',
     telegram: 'Telegram',
     grandparents: 'Grands-parents',
@@ -169,6 +171,15 @@ export default function SettingsScreen() {
           onPress={() => setActiveSection('gamification')}
           isLast={isChildMode}
         />
+        {!isChildMode && (
+          <SettingsRow
+            emoji="⚙️"
+            title="Automatisations"
+            subtitle="Recettes → Courses → Stock"
+            onPress={() => setActiveSection('automations')}
+            isLast
+          />
+        )}
 
         {/* ── CONNEXIONS (adultes) ── */}
         {!isChildMode && (
@@ -289,6 +300,7 @@ export default function SettingsScreen() {
             {activeSection === 'gamification' && (
               <SettingsGamification vault={vault} gamiData={gamiData} refresh={refresh} />
             )}
+            {activeSection === 'automations' && <SettingsAutomations />}
             {activeSection === 'ai' && <SettingsAI />}
             {activeSection === 'telegram' && (
               <SettingsTelegram

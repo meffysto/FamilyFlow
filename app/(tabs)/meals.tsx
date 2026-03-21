@@ -41,6 +41,7 @@ import { HELP_CONTENT } from '../../lib/help-content';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { computeMissingIngredients, computeStockDecrements } from '../../lib/auto-courses';
+import { getAutomationFlag } from '../../lib/automation-config';
 
 const DAYS_ORDER = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
@@ -273,7 +274,7 @@ export default function MealsScreen() {
       setEditingMeal(null);
 
       // Auto-ajout des ingrédients aux courses (après fermeture du modal)
-      if (recipeRef) {
+      if (recipeRef && await getAutomationFlag('autoCoursesFromRecipes')) {
         const recipe = resolveRecipe(recipeRef);
         if (recipe && recipe.ingredients.length > 0) {
           const missing = computeMissingIngredients(recipe.ingredients, stock);
@@ -312,6 +313,7 @@ export default function MealsScreen() {
 
   const markMealCooked = useCallback(async (meal: MealItem) => {
     if (cookingMealId) return;
+    if (!await getAutomationFlag('autoStockDecrementCook')) return;
     const recipe = resolveRecipe(meal.recipeRef);
     if (!recipe) return;
     const decrements = computeStockDecrements(recipe.ingredients, stock);
