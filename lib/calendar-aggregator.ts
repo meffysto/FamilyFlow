@@ -5,7 +5,7 @@
  * retourne un tableau trié d'événements calendrier.
  */
 
-import { format, eachDayOfInterval, parseISO, addDays } from 'date-fns';
+import { format, eachDayOfInterval, parseISO, addDays, addWeeks, addMonths } from 'date-fns';
 import type { RDV, Task, Anniversary, MealItem, Defi, Memory, MoodEntry, ChildQuote, VacationConfig } from './types';
 import { MOOD_EMOJIS } from './types';
 import type { CalendarEvent, CalendarEventType } from './calendar-types';
@@ -51,6 +51,37 @@ export function resolveMealsForRange(
 }
 
 /**
+ * Projette une tâche récurrente sur toutes les dates dans la plage.
+ * Supporte : "every day", "every week", "every month", "every N days/weeks/months"
+ */
+function expandRecurrence(startDate: string, recurrence: string, range: DateRange): string[] {
+  const match = recurrence.match(/every\s+(\d+\s+)?(day|week|month)s?/);
+  if (!match) return [];
+
+  const interval = match[1] ? parseInt(match[1].trim(), 10) : 1;
+  const unit = match[2] as 'day' | 'week' | 'month';
+
+  const advanceFn = unit === 'day' ? addDays : unit === 'week' ? addWeeks : addMonths;
+  const dates: string[] = [];
+  let current = parseISO(startDate);
+  const rangeEnd = parseISO(range.end);
+  const rangeStart = parseISO(range.start);
+
+  // Avancer jusqu'au début de la plage si la date de départ est avant
+  while (current < rangeStart) {
+    current = advanceFn(current, interval);
+  }
+
+  // Collecter les dates dans la plage
+  while (current <= rangeEnd) {
+    dates.push(format(current, 'yyyy-MM-dd'));
+    current = advanceFn(current, interval);
+  }
+
+  return dates;
+}
+
+/**
  * Agrège toutes les sources en CalendarEvent[] triés par date + heure.
  */
 export function aggregateCalendarEvents(
@@ -77,20 +108,41 @@ export function aggregateCalendarEvents(
     });
   }
 
-  // Tâches avec deadline
+  // Tâches avec deadline (+ projection récurrences)
   for (const task of input.tasks) {
-    if (!task.dueDate || !inRange(task.dueDate) || task.completed) continue;
-    events.push({
-      id: `task-${task.id}`,
-      date: task.dueDate,
-      type: 'task',
-      label: task.text.replace(/📅\s*\d{4}-\d{2}-\d{2}/, '').replace(/🔁\s*\S+/, '').trim(),
-      sublabel: task.section || undefined,
-      emoji: EVENT_CONFIG.task.emoji,
-      colorKey: 'warning',
-      route: '/(tabs)/tasks',
-      source: task,
-    });
+    if (!task.dueDate || task.completed) continue;
+    const label = task.text.replace(/📅\s*\d{4}-\d{2}-\d{2}/, '').replace(/🔁\s*\S+/, '').trim();
+    const sublabel = task.section || undefined;
+
+    if (task.recurrence) {
+      // Projeter les occurrences dans la plage
+      const dates = expandRecurrence(task.dueDate, task.recurrence, range);
+      for (const date of dates) {
+        events.push({
+          id: `task-${task.id}-${date}`,
+          date,
+          type: 'task',
+          label,
+          sublabel,
+          emoji: EVENT_CONFIG.task.emoji,
+          colorKey: 'warning',
+          route: '/(tabs)/tasks',
+          source: task,
+        });
+      }
+    } else if (inRange(task.dueDate)) {
+      events.push({
+        id: `task-${task.id}`,
+        date: task.dueDate,
+        type: 'task',
+        label,
+        sublabel,
+        emoji: EVENT_CONFIG.task.emoji,
+        colorKey: 'warning',
+        route: '/(tabs)/tasks',
+        source: task,
+      });
+    }
   }
 
   // Anniversaires (récurrents annuels)
