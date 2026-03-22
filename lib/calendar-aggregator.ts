@@ -108,37 +108,40 @@ export function aggregateCalendarEvents(
     });
   }
 
-  // Tâches ménage (pas de dueDate — valides pour aujourd'hui uniquement)
+  // Tâches sans dueDate (ménage du jour, récurrentes sans 📅)
   const today = format(new Date(), 'yyyy-MM-dd');
   for (const task of input.tasks) {
-    if (!task.dueDate && task.sourceFile.includes('Ménage')) {
-      if (!inRange(today) || task.completed) continue;
+    if (!task.dueDate && !task.recurrence) {
+      // Tâches sans date ni récurrence (ménage) → aujourd'hui
+      if (task.completed || !inRange(today)) continue;
+      const isMenage = task.sourceFile.includes('Ménage');
       events.push({
         id: `task-${task.id}`,
         date: today,
         type: 'task',
         label: task.text.trim(),
         sublabel: task.section || undefined,
-        emoji: '🧹',
-        colorKey: task.completed ? 'success' : 'warning',
+        emoji: isMenage ? '🧹' : EVENT_CONFIG.task.emoji,
+        colorKey: 'warning',
         route: '/(tabs)/tasks',
         source: task,
       });
       continue;
     }
-    if (!task.dueDate || task.completed) continue;
+    if (task.completed) continue;
     const label = task.text.replace(/📅\s*\d{4}-\d{2}-\d{2}/, '').replace(/🔁\s*\S+/, '').trim();
     const sublabel = task.section || undefined;
 
     if (task.recurrence) {
       // Projeter les occurrences dans la plage
-      const dates = expandRecurrence(task.dueDate, task.recurrence, range);
-      // Tâche récurrente en retard : ajouter aujourd'hui si aucune occurrence future
-      if (dates.length === 0 && task.dueDate < today && inRange(today)) {
+      const startDate = task.dueDate || today;
+      const dates = expandRecurrence(startDate, task.recurrence, range);
+      // Tâche récurrente en retard : ajouter aujourd'hui si aucune occurrence dans la plage
+      if (dates.length === 0 && startDate < today && inRange(today)) {
         dates.push(today);
       }
       for (const date of dates) {
-        const isOverdue = date === today && task.dueDate < today && dates.length === 1;
+        const isOverdue = date === today && !!task.dueDate && task.dueDate < today && dates.length === 1;
         events.push({
           id: `task-${task.id}-${date}`,
           date,
@@ -151,7 +154,7 @@ export function aggregateCalendarEvents(
           source: task,
         });
       }
-    } else if (inRange(task.dueDate) || task.dueDate < today) {
+    } else if (task.dueDate && (inRange(task.dueDate) || task.dueDate < today)) {
       // Tâches en retard : affichées à aujourd'hui
       const displayDate = task.dueDate < today ? today : task.dueDate;
       events.push({
