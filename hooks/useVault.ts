@@ -156,7 +156,7 @@ export interface VaultState {
   addRDV: (rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
   updateRDV: (sourceFile: string, rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
   deleteRDV: (sourceFile: string) => Promise<void>;
-  addTask: (text: string, targetFile: string, dueDate?: string, recurrence?: string) => Promise<void>;
+  addTask: (text: string, targetFile: string, dueDate?: string, recurrence?: string, sectionOverride?: string) => Promise<void>;
   editTask: (task: Task, updates: { text?: string; dueDate?: string; recurrence?: string; targetFile?: string }) => Promise<void>;
   deleteTask: (sourceFile: string, lineIndex: number) => Promise<void>;
   addCourseItem: (text: string, section?: string) => Promise<void>;
@@ -1570,14 +1570,14 @@ export function useVaultInternal(): VaultState {
     setTimeout(triggerWidgetRefresh, 0);
   }, [triggerWidgetRefresh]);
 
-  const addTask = useCallback(async (text: string, targetFile: string, dueDate?: string, recurrence?: string) => {
+  const addTask = useCallback(async (text: string, targetFile: string, dueDate?: string, recurrence?: string, sectionOverride?: string) => {
     if (!vaultRef.current) return;
     let taskText = text;
     if (recurrence) taskText += ` 🔁 ${recurrence}`;
     if (dueDate) taskText += ` 📅 ${dueDate}`;
-    // Placer dans la bonne section selon la récurrence
-    let section: string | null = null;
-    if (recurrence) {
+    // Section explicite (ex: "Lundi — Cuisine") ou auto selon récurrence
+    let section: string | null = sectionOverride || null;
+    if (!section && recurrence) {
       if (/every\s+day/i.test(recurrence)) section = 'Quotidien';
       else if (/every\s+week/i.test(recurrence)) section = 'Hebdomadaire';
       else if (/every\s+month/i.test(recurrence)) section = 'Mensuel';
