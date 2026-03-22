@@ -361,7 +361,7 @@ export default function TasksScreen() {
     } finally {
       setIsSaving(false);
     }
-  }, [newTaskText, newTaskDueDate, newTaskRecurrence, newTaskTarget, addTask, showToast]);
+  }, [newTaskText, newTaskDueDate, newTaskRecurrence, newTaskTarget, newTaskAssignees, addTask, showToast]);
 
   const handleDeleteTask = useCallback(async (task: Task) => {
     if (activeProfile?.role === 'enfant') {
@@ -433,7 +433,7 @@ export default function TasksScreen() {
     } finally {
       setIsEditSaving(false);
     }
-  }, [editingTask, editTaskText, editTaskDueDate, editTaskRecurrence, editTaskTarget, editTask, showToast]);
+  }, [editingTask, editTaskText, editTaskDueDate, editTaskRecurrence, editTaskTarget, editTaskAssignees, editTask, showToast]);
 
   const handleDeleteFromEdit = useCallback(() => {
     if (!editingTask) return;
