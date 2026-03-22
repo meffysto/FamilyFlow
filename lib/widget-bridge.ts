@@ -66,14 +66,12 @@ function buildWidgetData(
   const dejeuner = todayMeals.find(m => m.mealType === 'Déjeuner')?.text || null;
   const diner = todayMeals.find(m => m.mealType === 'Dîner')?.text || null;
 
-  // Tâches du jour : ménage (par section) + tâches dues aujourd'hui ou en retard
-  const isMenageTask = (t: Task) =>
-    t.section != null && /^(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s/i.test(t.section);
-  const menageTodayTasks = allTasks.filter(t => isMenageTask(t) && !t.completed);
-  const dueTodayOrOverdue = allTasks.filter(t =>
-    t.dueDate && t.dueDate <= todayStr && !t.completed
-  );
-  const allDayTasks = [...menageTodayTasks, ...dueTodayOrOverdue];
+  // Tâches du jour : récurrentes dues aujourd'hui/retard + ponctuelles dues aujourd'hui
+  const allDayTasks = allTasks.filter(t => {
+    if (t.completed) return false;
+    if (t.recurrence) return t.dueDate && t.dueDate <= todayStr;
+    return t.dueDate === todayStr;
+  });
   const done = allDayTasks.filter(t => t.completed).length;
   const total = allDayTasks.length;
   const nextTasks = allDayTasks
