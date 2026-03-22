@@ -146,15 +146,17 @@ export function aggregateCalendarEvents(
           source: task,
         });
       }
-    } else if (inRange(task.dueDate)) {
+    } else if (inRange(task.dueDate) || task.dueDate < today) {
+      // Tâches en retard : affichées à aujourd'hui
+      const displayDate = task.dueDate < today ? today : task.dueDate;
       events.push({
         id: `task-${task.id}`,
-        date: task.dueDate,
+        date: displayDate,
         type: 'task',
         label,
-        sublabel,
+        sublabel: task.dueDate < today ? `⚠️ En retard (${task.dueDate})` : sublabel,
         emoji: EVENT_CONFIG.task.emoji,
-        colorKey: 'warning',
+        colorKey: task.dueDate < today ? 'error' : 'warning',
         route: '/(tabs)/tasks',
         source: task,
       });
