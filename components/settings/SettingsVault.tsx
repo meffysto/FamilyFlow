@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, Platform, Alert } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import * as SecureStore from 'expo-secure-store';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Button } from '../ui/Button';
@@ -14,16 +15,17 @@ interface SettingsVaultProps {
 }
 
 export function SettingsVault({ vaultPath, onChangeVault }: SettingsVaultProps) {
+  const { t } = useTranslation();
   const { colors } = useThemeColors();
 
   const handleDeleteData = useCallback(() => {
     Alert.alert(
-      'Supprimer les données',
-      'Cette action va dissocier le vault de l\'application et effacer les préférences locales (clés API, PIN, réglages).\n\nVos fichiers Markdown dans le vault ne seront pas supprimés.',
+      t('settings.vault.deleteTitle'),
+      t('settings.vault.deleteMessage'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('settings.vault.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('settings.vault.deleteConfirm'),
           style: 'destructive',
           onPress: async () => {
             await SecureStore.deleteItemAsync(VAULT_PATH_KEY);
@@ -34,46 +36,46 @@ export function SettingsVault({ vaultPath, onChangeVault }: SettingsVaultProps) 
             await SecureStore.deleteItemAsync('auth_enabled');
             await SecureStore.deleteItemAsync('zen_config_v1');
             await SecureStore.deleteItemAsync('active_profile_key');
-            Alert.alert('Données supprimées', 'Redémarrez l\'application pour terminer la réinitialisation.');
+            Alert.alert(t('settings.vault.deletedTitle'), t('settings.vault.deletedMsg'));
           },
         },
       ],
     );
-  }, []);
+  }, [t]);
 
   return (
-    <View style={styles.section} accessibilityRole="summary" accessibilityLabel="Section Vault Obsidian">
-      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Vault Obsidian</Text>
+    <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.vault.sectionA11y')}>
+      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.vault.sectionTitle')}</Text>
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
         <View style={styles.row}>
-          <Text style={[styles.rowLabel, { color: colors.textSub }]}>📁 Chemin</Text>
+          <Text style={[styles.rowLabel, { color: colors.textSub }]}>{t('settings.vault.pathLabel')}</Text>
         </View>
         <Text style={[styles.pathText, { color: colors.textSub, backgroundColor: colors.cardAlt }]} numberOfLines={3}>
-          {vaultPath ?? 'Non configuré'}
+          {vaultPath ?? t('settings.vault.notConfigured')}
         </Text>
-        <Button label="Changer le vault" onPress={onChangeVault} variant="secondary" size="sm" fullWidth />
+        <Button label={t('settings.vault.changeVault')} onPress={onChangeVault} variant="secondary" size="sm" fullWidth />
         <View style={[styles.hint, { backgroundColor: colors.successBg }]}>
           <Text style={[styles.hintText, { color: colors.successText }]}>
-            Les données sont stockées en fichiers .md standard, compatibles avec Obsidian.
+            {t('settings.vault.compatHint')}
           </Text>
         </View>
         {Platform.OS === 'android' && (
           <View style={[styles.hint, { backgroundColor: colors.infoBg }]}>
             <Text style={[styles.hintText, { color: colors.info }]}>
-              Sync multi-appareils : placez le vault dans un dossier Google Drive ou Dropbox syncé localement sur chaque téléphone.
+              {t('settings.vault.syncHint')}
             </Text>
           </View>
         )}
       </View>
 
-      <Text style={[styles.sectionTitle, { color: colors.textMuted, marginTop: Spacing['3xl'] }]}>Données</Text>
+      <Text style={[styles.sectionTitle, { color: colors.textMuted, marginTop: Spacing['3xl'] }]}>{t('settings.vault.dataSectionTitle')}</Text>
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
         <View style={[styles.hint, { backgroundColor: colors.warningBg }]}>
           <Text style={[styles.hintText, { color: colors.warningText }]}>
-            Supprime les préférences locales (clés API, PIN, réglages) et dissocie le vault. Vos fichiers Markdown ne sont pas affectés.
+            {t('settings.vault.deleteWarning')}
           </Text>
         </View>
-        <Button label="Supprimer les données locales" onPress={handleDeleteData} variant="danger" size="sm" fullWidth />
+        <Button label={t('settings.vault.deleteBtn')} onPress={handleDeleteData} variant="danger" size="sm" fullWidth />
       </View>
     </View>
   );

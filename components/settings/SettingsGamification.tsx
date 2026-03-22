@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Alert, TextInput } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { serializeGamification } from '../../lib/parser';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Button } from '../ui/Button';
@@ -20,6 +21,7 @@ interface SettingsGamificationProps {
 }
 
 export function SettingsGamification({ vault, gamiData, refresh }: SettingsGamificationProps) {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
   const [config, setConfig] = useState<GamificationConfig>(DEFAULT_GAMI_CONFIG);
   const [dirty, setDirty] = useState(false);
@@ -39,8 +41,8 @@ export function SettingsGamification({ vault, gamiData, refresh }: SettingsGamif
   const handleSave = useCallback(async () => {
     await saveGamiConfig(config);
     setDirty(false);
-    Alert.alert('Enregistré', 'Les points de gamification ont été mis à jour.');
-  }, [config]);
+    Alert.alert(t('settings.gamification.savedTitle'), t('settings.gamification.savedMsg'));
+  }, [config, t]);
 
   const handleResetConfig = useCallback(() => {
     setConfig(DEFAULT_GAMI_CONFIG);
@@ -49,12 +51,12 @@ export function SettingsGamification({ vault, gamiData, refresh }: SettingsGamif
 
   const handleReset = useCallback(() => {
     Alert.alert(
-      'Réinitialiser la gamification',
-      'Tous les points, niveaux, streaks et loot boxes seront remis à zéro. Cette action est irréversible.',
+      t('settings.gamification.resetTitle'),
+      t('settings.gamification.resetMessage'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('settings.gamification.cancel'), style: 'cancel' },
         {
-          text: 'Réinitialiser',
+          text: t('settings.gamification.resetConfirm'),
           style: 'destructive',
           onPress: async () => {
             if (!vault || !gamiData) return;
@@ -67,12 +69,12 @@ export function SettingsGamification({ vault, gamiData, refresh }: SettingsGamif
             };
             await vault.writeFile('gamification.md', serializeGamification(resetData));
             await refresh();
-            Alert.alert('Gamification réinitialisée.');
+            Alert.alert(t('settings.gamification.resetDone'));
           },
         },
       ]
     );
-  }, [vault, gamiData, refresh]);
+  }, [vault, gamiData, refresh, t]);
 
   const parseNum = (text: string, fallback: number) => {
     const n = parseInt(text, 10);
@@ -80,15 +82,15 @@ export function SettingsGamification({ vault, gamiData, refresh }: SettingsGamif
   };
 
   return (
-    <View style={styles.section} accessibilityRole="summary" accessibilityLabel="Section Gamification">
-      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Gamification</Text>
+    <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.gamification.sectionA11y')}>
+      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.gamification.sectionTitle')}</Text>
 
       {/* Points config */}
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
-        <Text style={[styles.cardTitle, { color: colors.text }]}>Points par action</Text>
+        <Text style={[styles.cardTitle, { color: colors.text }]}>{t('settings.gamification.pointsPerAction')}</Text>
 
         <View style={styles.row}>
-          <Text style={[styles.rowLabel, { color: colors.textSub }]}>Points par tâche</Text>
+          <Text style={[styles.rowLabel, { color: colors.textSub }]}>{t('settings.gamification.pointsPerTask')}</Text>
           <TextInput
             style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.inputBg }]}
             value={String(config.pointsPerTask)}
@@ -99,7 +101,7 @@ export function SettingsGamification({ vault, gamiData, refresh }: SettingsGamif
         </View>
 
         <View style={styles.row}>
-          <Text style={[styles.rowLabel, { color: colors.textSub }]}>Bonus streak (jours consécutifs)</Text>
+          <Text style={[styles.rowLabel, { color: colors.textSub }]}>{t('settings.gamification.streakBonus')}</Text>
           <TextInput
             style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.inputBg }]}
             value={String(config.streakBonus)}
@@ -112,12 +114,12 @@ export function SettingsGamification({ vault, gamiData, refresh }: SettingsGamif
 
       {/* Loot thresholds */}
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
-        <Text style={[styles.cardTitle, { color: colors.text }]}>Points pour 1 loot box</Text>
+        <Text style={[styles.cardTitle, { color: colors.text }]}>{t('settings.gamification.lootThreshold')}</Text>
 
         {(['enfant', 'ado', 'adulte'] as const).map(role => (
           <View key={role} style={styles.row}>
             <Text style={[styles.rowLabel, { color: colors.textSub }]}>
-              {role === 'enfant' ? 'Enfant' : role === 'ado' ? 'Ado' : 'Adulte'}
+              {role === 'enfant' ? t('settings.gamification.roleChild') : role === 'ado' ? t('settings.gamification.roleTeen') : t('settings.gamification.roleAdult')}
             </Text>
             <TextInput
               style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.inputBg }]}
@@ -136,21 +138,21 @@ export function SettingsGamification({ vault, gamiData, refresh }: SettingsGamif
       {/* Actions */}
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
         {dirty && (
-          <Button label="Enregistrer les modifications" onPress={handleSave} variant="primary" size="md" fullWidth />
+          <Button label={t('settings.gamification.saveChanges')} onPress={handleSave} variant="primary" size="md" fullWidth />
         )}
-        <Button label="Valeurs par défaut" onPress={handleResetConfig} variant="secondary" size="sm" fullWidth />
+        <Button label={t('settings.gamification.defaultValues')} onPress={handleResetConfig} variant="secondary" size="sm" fullWidth />
 
         {gamiData && (
           <View style={styles.stats}>
             <Text style={[styles.statText, { color: colors.textMuted }]}>
-              Total tâches complétées : {gamiData.history.filter((h: any) => h.action.startsWith('+')).length}
+              {t('settings.gamification.totalCompleted', { count: gamiData.history.filter((h: any) => h.action.startsWith('+')).length })}
             </Text>
             <Text style={[styles.statText, { color: colors.textMuted }]}>
-              Total loot boxes ouvertes : {gamiData.history.filter((h: any) => h.action.startsWith('loot:')).length}
+              {t('settings.gamification.totalLootOpened', { count: gamiData.history.filter((h: any) => h.action.startsWith('loot:')).length })}
             </Text>
           </View>
         )}
-        <Button label="Réinitialiser la gamification" onPress={handleReset} variant="danger" size="sm" fullWidth />
+        <Button label={t('settings.gamification.resetBtn')} onPress={handleReset} variant="danger" size="sm" fullWidth />
       </View>
     </View>
   );

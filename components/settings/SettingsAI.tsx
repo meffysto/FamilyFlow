@@ -8,6 +8,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { View, Text, TextInput, StyleSheet, Alert, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useAI, AVAILABLE_MODELS } from '../../contexts/AIContext';
 import { Button } from '../ui/Button';
@@ -18,6 +19,7 @@ import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 
 export function SettingsAI() {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
   const { isConfigured, model, setApiKey, clearApiKey, setModel } = useAI();
   const [showKeyModal, setShowKeyModal] = useState(false);
@@ -28,11 +30,11 @@ export function SettingsAI() {
   const handleSave = useCallback(async () => {
     const trimmed = keyInput.trim();
     if (!trimmed) {
-      Alert.alert('Clé vide', 'Collez votre clé API Anthropic.');
+      Alert.alert(t('settings.ai.emptyKeyTitle'), t('settings.ai.emptyKeyMsg'));
       return;
     }
     if (!trimmed.startsWith('sk-ant-')) {
-      Alert.alert('Format invalide', 'La clé API doit commencer par "sk-ant-".');
+      Alert.alert(t('settings.ai.invalidKeyTitle'), t('settings.ai.invalidKeyMsg'));
       return;
     }
     setIsSaving(true);
@@ -40,51 +42,50 @@ export function SettingsAI() {
     setIsSaving(false);
     setKeyInput('');
     setShowKeyModal(false);
-    Alert.alert('Sauvegardé', 'Clé API enregistrée. L\'assistant IA est activé.');
-  }, [keyInput, setApiKey]);
+    Alert.alert(t('settings.ai.savedTitle'), t('settings.ai.savedMsg'));
+  }, [keyInput, setApiKey, t]);
 
   const handleClear = useCallback(() => {
     Alert.alert(
-      'Supprimer la clé ?',
-      'L\'assistant IA sera désactivé.',
+      t('settings.ai.deleteTitle'),
+      t('settings.ai.deleteMessage'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('settings.ai.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('settings.ai.deleteConfirm'),
           style: 'destructive',
           onPress: async () => { await clearApiKey(); },
         },
       ],
     );
-  }, [clearApiKey]);
+  }, [clearApiKey, t]);
 
   return (
     <>
-      <View style={styles.section} accessibilityRole="summary" accessibilityLabel="Section assistant IA">
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Assistant IA</Text>
+      <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.ai.sectionA11y')}>
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.ai.sectionTitle')}</Text>
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           <View style={styles.row}>
-            <Text style={[styles.rowLabel, { color: colors.textSub }]}>🤖 Claude API</Text>
+            <Text style={[styles.rowLabel, { color: colors.textSub }]}>{t('settings.ai.apiLabel')}</Text>
             <Text style={[styles.rowStatus, { color: colors.textMuted }]}>
-              {isConfigured ? '🟢 Actif' : '⚪ Désactivé'}
+              {isConfigured ? t('settings.ai.active') : t('settings.ai.inactive')}
             </Text>
           </View>
 
           <Text style={[styles.description, { color: colors.textMuted }]}>
-            Active un assistant IA pour des suggestions personnalisées et une recherche conversationnelle.
-            Vos données restent sur votre appareil — seul un résumé anonymisé est envoyé.
+            {t('settings.ai.description')}
           </Text>
 
           {!isConfigured ? (
             <Button
-              label="Configurer la clé API"
+              label={t('settings.ai.configureKey')}
               onPress={() => setShowKeyModal(true)}
               variant="primary"
             />
           ) : (
             <>
               <View style={styles.modelSection}>
-                <Text style={[styles.modelLabel, { color: colors.textSub }]}>Modèle</Text>
+                <Text style={[styles.modelLabel, { color: colors.textSub }]}>{t('settings.ai.modelLabel')}</Text>
                 <View style={styles.modelChips}>
                   {AVAILABLE_MODELS.map((m) => (
                     <Chip
@@ -98,10 +99,10 @@ export function SettingsAI() {
               </View>
               <View style={styles.configuredRow}>
                 <Text style={[styles.configuredKey, { color: colors.success }]}>
-                  sk-ant-•••• configurée
+                  {t('settings.ai.keyConfigured')}
                 </Text>
                 <Button
-                  label="Supprimer"
+                  label={t('settings.ai.deleteBtn')}
                   onPress={handleClear}
                   variant="danger"
                   size="sm"
@@ -122,9 +123,9 @@ export function SettingsAI() {
       >
         <SafeAreaView style={[styles.modalSafe, { backgroundColor: colors.bg }]}>
           <ModalHeader
-            title="Clé API Claude"
+            title={t('settings.ai.keyModalTitle')}
             onClose={() => { setShowKeyModal(false); setKeyInput(''); }}
-            rightLabel="Enregistrer"
+            rightLabel={t('settings.ai.keyModalSave')}
             onRight={handleSave}
             rightDisabled={isSaving || !keyInput.trim()}
           />
@@ -133,10 +134,10 @@ export function SettingsAI() {
             style={styles.modalBody}
           >
             <Text style={[styles.modalDesc, { color: colors.textMuted }]}>
-              Collez votre clé API Anthropic. Elle sera stockée de façon sécurisée sur votre appareil.
+              {t('settings.ai.keyModalDesc')}
             </Text>
             <Text style={[styles.modalHint, { color: colors.textFaint }]}>
-              Obtenez une clé sur console.anthropic.com
+              {t('settings.ai.keyModalHint')}
             </Text>
             <TextInput
               ref={inputRef}
@@ -148,7 +149,7 @@ export function SettingsAI() {
               autoCapitalize="none"
               autoCorrect={false}
               multiline
-              accessibilityLabel="Clé API Anthropic"
+              accessibilityLabel={t('settings.ai.keyA11y')}
             />
           </KeyboardAvoidingView>
         </SafeAreaView>

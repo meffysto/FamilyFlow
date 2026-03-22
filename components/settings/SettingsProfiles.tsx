@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, TextInput, StyleSheet, Modal, Switch, Ale
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { THEME_LIST, getTheme, ProfileTheme } from '../../constants/themes';
 import { Button } from '../ui/Button';
@@ -38,6 +39,7 @@ export function SettingsProfiles({
   addChild,
   convertToBorn,
 }: SettingsProfilesProps) {
+  const { t } = useTranslation();
   const { primary, tint, setThemeId, colors } = useThemeColors();
   const auth = useAuth();
   const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
@@ -84,8 +86,8 @@ export function SettingsProfiles({
 
   const handleSaveProfile = useCallback(async () => {
     if (!editingProfile) return;
-    if (!editName.trim()) { Alert.alert('Champ requis', 'Le nom est obligatoire.'); return; }
-    if (editBirthdate && !/^\d{4}-\d{2}-\d{2}$/.test(editBirthdate)) { Alert.alert('Format invalide', 'La date doit être au format AAAA-MM-JJ.'); return; }
+    if (!editName.trim()) { Alert.alert(t('settings.profiles.fieldRequired'), t('settings.profiles.nameRequired')); return; }
+    if (editBirthdate && !/^\d{4}-\d{2}-\d{2}$/.test(editBirthdate)) { Alert.alert(t('settings.profiles.invalidFormat'), t('settings.profiles.dateFormatError')); return; }
     setIsSavingProfile(true);
     try {
       await updateProfile(editingProfile.id, {
@@ -95,12 +97,12 @@ export function SettingsProfiles({
         ...(editingProfile.role === 'enfant' ? { propre: editPropre, gender: editGender } : {}),
       });
       setEditingProfile(null);
-    } catch (e) { Alert.alert('Erreur', String(e)); }
+    } catch (e) { Alert.alert(t('settings.profiles.error'), String(e)); }
     finally { setIsSavingProfile(false); }
-  }, [editingProfile, editName, editAvatar, editBirthdate, editPropre, editGender, updateProfile]);
+  }, [editingProfile, editName, editAvatar, editBirthdate, editPropre, editGender, updateProfile, t]);
 
   const handleAddChild = useCallback(async () => {
-    if (!newChildName.trim()) { Alert.alert('Champ requis', 'Le prénom est obligatoire.'); return; }
+    if (!newChildName.trim()) { Alert.alert(t('settings.profiles.fieldRequired'), t('settings.profiles.firstNameRequired')); return; }
     setIsAddingChild(true);
     try {
       await addChild({
@@ -112,25 +114,25 @@ export function SettingsProfiles({
       });
       setShowAddChild(false);
       setNewChildName(''); setNewChildAvatar('👶'); setNewChildBirthdate(''); setNewChildPropre(false); setNewChildGender(undefined); setNewChildGrossesse(false); setNewChildDateTerme('');
-    } catch (e) { Alert.alert('Erreur', String(e)); }
+    } catch (e) { Alert.alert(t('settings.profiles.error'), String(e)); }
     finally { setIsAddingChild(false); }
   }, [newChildName, newChildAvatar, newChildBirthdate, newChildPropre, newChildGender, newChildGrossesse, newChildDateTerme, addChild]);
 
   const handleConvertToBorn = useCallback(async () => {
-    if (!convertingProfile || !bornDate) { Alert.alert('Champ requis', 'La date de naissance est obligatoire.'); return; }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(bornDate)) { Alert.alert('Format invalide', 'La date doit être au format AAAA-MM-JJ.'); return; }
+    if (!convertingProfile || !bornDate) { Alert.alert(t('settings.profiles.fieldRequired'), t('settings.profiles.birthdateRequired')); return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(bornDate)) { Alert.alert(t('settings.profiles.invalidFormat'), t('settings.profiles.dateFormatError')); return; }
     try {
       await convertToBorn(convertingProfile, bornDate);
       setConvertingProfile(null); setBornDate('');
-      Alert.alert('Bienvenue !', 'Les tâches et jalons ont été mis à jour pour le nouveau bébé.');
-    } catch (e) { Alert.alert('Erreur', String(e)); }
+      Alert.alert(t('settings.profiles.welcomeTitle'), t('settings.profiles.welcomeMessage'));
+    } catch (e) { Alert.alert(t('settings.profiles.error'), String(e)); }
   }, [convertingProfile, bornDate, convertToBorn]);
 
   return (
     <>
       {/* Mon profil */}
-      <View style={styles.section} accessibilityRole="summary" accessibilityLabel="Section Mon profil">
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Mon profil</Text>
+      <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.profiles.sectionMyProfile')}>
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.profiles.sectionMyProfile')}</Text>
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           {activeProfile ? (
             <View style={styles.activeRow}>
@@ -138,12 +140,12 @@ export function SettingsProfiles({
               <View style={styles.profileInfo}>
                 <Text style={[styles.profileName, { color: colors.text }]}>{activeProfile.name}</Text>
                 <Text style={[styles.profileMeta, { color: colors.textMuted }]}>
-                  {activeProfile.role === 'adulte' ? '👤 Adulte' : '👶 Enfant'} · Niv. {activeProfile.level} · {activeProfile.points} pts
+                  {activeProfile.role === 'adulte' ? `👤 ${t('settings.profiles.adult')}` : `👶 ${t('settings.profiles.child')}`} · {t('settings.profiles.level', { level: activeProfile.level })} · {t('settings.profiles.points', { points: activeProfile.points })}
                 </Text>
               </View>
             </View>
           ) : (
-            <Text style={[styles.empty, { color: colors.textFaint }]}>Aucun profil sélectionné</Text>
+            <Text style={[styles.empty, { color: colors.textFaint }]}>{t('settings.profiles.noProfileSelected')}</Text>
           )}
           <View style={styles.profileSwitcher}>
             {profiles.map((p) => (
@@ -161,7 +163,7 @@ export function SettingsProfiles({
                 }}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: activeProfile?.id === p.id }}
-                accessibilityLabel={`Profil ${p.name}`}
+                accessibilityLabel={t('settings.profiles.profileA11y', { name: p.name })}
               >
                 <Text style={styles.switchAvatar}>{p.avatar}</Text>
                 <Text style={[styles.switchName, { color: colors.textMuted }, activeProfile?.id === p.id && { color: primary }]}>{p.name}</Text>
@@ -172,11 +174,11 @@ export function SettingsProfiles({
       </View>
 
       {/* Profils famille */}
-      <View style={styles.section} accessibilityRole="summary" accessibilityLabel="Section Profils famille">
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Profils famille</Text>
+      <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.profiles.sectionFamilyProfiles')}>
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.profiles.sectionFamilyProfiles')}</Text>
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           {profiles.length === 0 ? (
-            <Text style={[styles.empty, { color: colors.textFaint }]}>Aucun profil trouvé dans famille.md</Text>
+            <Text style={[styles.empty, { color: colors.textFaint }]}>{t('settings.profiles.noProfilesFound')}</Text>
           ) : (
             profiles.map((profile) => {
               const currentTheme = getTheme(profile.theme);
@@ -187,14 +189,14 @@ export function SettingsProfiles({
                     onPress={() => openProfileEditor(profile)}
                     activeOpacity={0.7}
                     accessibilityRole="button"
-                    accessibilityLabel={`Modifier ${profile.name}`}
+                    accessibilityLabel={t('settings.profiles.editProfile', { name: profile.name })}
                   >
                     <Text style={styles.profileAvatar}>{profile.avatar}</Text>
                     <View style={styles.profileInfo}>
                       <Text style={[styles.profileName, { color: colors.text }]}>{profile.name}</Text>
                       <Text style={[styles.profileMeta, { color: colors.textMuted }]}>
-                        {profile.statut === 'grossesse' ? '🤰 Grossesse' : profile.role} · Niv. {profile.level} · {profile.points} pts
-                        {profile.statut === 'grossesse' && profile.dateTerme ? ` · Terme: ${profile.dateTerme}` : ''}
+                        {profile.statut === 'grossesse' ? `🤰 ${t('settings.profiles.pregnancy')}` : profile.role} · {t('settings.profiles.level', { level: profile.level })} · {t('settings.profiles.points', { points: profile.points })}
+                        {profile.statut === 'grossesse' && profile.dateTerme ? ` · ${t('settings.profiles.dueDate', { date: profile.dateTerme })}` : ''}
                         {profile.statut !== 'grossesse' && profile.birthdate ? ` · 🎂 ${profile.birthdate}` : ''}
                       </Text>
                     </View>
@@ -205,10 +207,10 @@ export function SettingsProfiles({
                           style={[styles.bornBtn, { backgroundColor: primary }]}
                           onPress={() => { setConvertingProfile(profile.id); setBornDate(format(new Date(), 'yyyy-MM-dd')); }}
                           activeOpacity={0.7}
-                          accessibilityLabel="Marquer comme né"
+                          accessibilityLabel={t('settings.profiles.markAsBorn')}
                           accessibilityRole="button"
                         >
-                          <Text style={[styles.bornBtnText, { color: colors.onPrimary }]}>{profile.name ? `${profile.name} est là !` : 'Bébé est là !'}</Text>
+                          <Text style={[styles.bornBtnText, { color: colors.onPrimary }]}>{profile.name ? t('settings.profiles.babyIsHere', { name: profile.name }) : t('settings.profiles.babyIsHereDefault')}</Text>
                         </TouchableOpacity>
                       ) : null;
                     })()}
@@ -225,7 +227,7 @@ export function SettingsProfiles({
                         onPress={toggleThemeDropdown}
                         activeOpacity={0.7}
                         accessibilityRole="button"
-                        accessibilityLabel={`Thème actuel: ${currentTheme.label}`}
+                        accessibilityLabel={t('settings.profiles.themeA11y', { theme: currentTheme.label })}
                       >
                         <View style={styles.themeBtnLeft}>
                           <View style={[styles.themeDot, { backgroundColor: currentTheme.primary }]} />
@@ -235,21 +237,21 @@ export function SettingsProfiles({
                       </TouchableOpacity>
                       {themeDropdownOpen && (
                         <Animated.View style={[styles.themeList, { opacity: themeDropdownAnim, backgroundColor: colors.card, borderColor: colors.border }]}>
-                          {THEME_LIST.map((t) => {
-                            const isActive = currentTheme.id === t.id;
+                          {THEME_LIST.map((th) => {
+                            const isActive = currentTheme.id === th.id;
                             return (
                               <TouchableOpacity
-                                key={t.id}
+                                key={th.id}
                                 style={[styles.themeItem, { borderBottomColor: colors.borderLight }, isActive && { backgroundColor: tint }]}
-                                onPress={() => { updateProfileTheme(profile.id, t.id as ProfileTheme); setThemeId(t.id); toggleThemeDropdown(); }}
+                                onPress={() => { updateProfileTheme(profile.id, th.id as ProfileTheme); setThemeId(th.id); toggleThemeDropdown(); }}
                                 activeOpacity={0.7}
                                 accessibilityRole="radio"
                                 accessibilityState={{ selected: isActive }}
-                                accessibilityLabel={`Thème ${t.label}`}
+                                accessibilityLabel={t('settings.profiles.themeSelectA11y', { theme: th.label })}
                               >
-                                <View style={[styles.themeDot, { backgroundColor: t.primary }]} />
-                                <Text style={styles.themeItemEmoji}>{t.emoji}</Text>
-                                <Text style={[styles.themeItemLabel, { color: colors.textSub }, isActive && { color: primary, fontWeight: FontWeight.bold }]}>{t.label}</Text>
+                                <View style={[styles.themeDot, { backgroundColor: th.primary }]} />
+                                <Text style={styles.themeItemEmoji}>{th.emoji}</Text>
+                                <Text style={[styles.themeItemLabel, { color: colors.textSub }, isActive && { color: primary, fontWeight: FontWeight.bold }]}>{th.label}</Text>
                                 {isActive && <Text style={[styles.themeCheck, { color: primary }]}>✓</Text>}
                               </TouchableOpacity>
                             );
@@ -263,16 +265,16 @@ export function SettingsProfiles({
             })
           )}
           <Text style={[styles.profileHint, { color: colors.textFaint }]}>
-            Tapez sur un profil pour modifier le nom, l'avatar ou la date de naissance.
+            {t('settings.profiles.tapToEditHint')}
           </Text>
           <TouchableOpacity
             style={[styles.addChildBtn, { borderColor: primary }]}
             onPress={() => setShowAddChild(true)}
             activeOpacity={0.7}
             accessibilityRole="button"
-            accessibilityLabel="Ajouter un enfant"
+            accessibilityLabel={t('settings.profiles.addChildA11y')}
           >
-            <Text style={[styles.addChildBtnText, { color: primary }]}>+ Ajouter un enfant</Text>
+            <Text style={[styles.addChildBtnText, { color: primary }]}>{t('settings.profiles.addChild')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -281,53 +283,53 @@ export function SettingsProfiles({
       <Modal visible={!!editingProfile} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setEditingProfile(null)}>
         <SafeAreaView style={[styles.modalSafe, { backgroundColor: colors.card }]}>
           <ModalHeader
-            title="Modifier le profil"
+            title={t('settings.profiles.editModalTitle')}
             onClose={() => setEditingProfile(null)}
             closeLeft
-            rightLabel={isSavingProfile ? '...' : 'Enregistrer'}
+            rightLabel={isSavingProfile ? '...' : t('settings.profiles.save')}
             onRight={handleSaveProfile}
             rightDisabled={isSavingProfile}
           />
           <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalContent}>
-            <Text style={[styles.inputLabel, { color: colors.textSub }]}>👤 Nom</Text>
+            <Text style={[styles.inputLabel, { color: colors.textSub }]}>{t('settings.profiles.nameLabel')}</Text>
             <TextInput
               style={[styles.input, { borderColor: colors.inputBorder, color: colors.text }]}
               value={editName} onChangeText={setEditName}
-              placeholder="Papa" placeholderTextColor={colors.textFaint} autoFocus
-              accessibilityLabel="Nom du profil"
+              placeholder={t('settings.profiles.namePlaceholder')} placeholderTextColor={colors.textFaint} autoFocus
+              accessibilityLabel={t('settings.profiles.nameA11y')}
             />
-            <Text style={[styles.inputLabel, { color: colors.textSub }]}>😀 Avatar (emoji)</Text>
+            <Text style={[styles.inputLabel, { color: colors.textSub }]}>{t('settings.profiles.avatarLabel')}</Text>
             <TextInput
               style={[styles.input, styles.avatarInput, { borderColor: colors.inputBorder, color: colors.text }]}
               value={editAvatar}
               onChangeText={(text) => { const chars = [...text]; setEditAvatar(chars.length > 0 ? chars[chars.length - 1] : ''); }}
               placeholder="👤" placeholderTextColor={colors.textFaint}
-              accessibilityLabel="Avatar emoji"
+              accessibilityLabel={t('settings.profiles.avatarA11y')}
             />
             <Text style={styles.avatarPreview}>{editAvatar || '👤'}</Text>
-            <Text style={[styles.inputLabel, { color: colors.textSub }]}>🎂 Date de naissance (optionnel)</Text>
-            <DateInput value={editBirthdate} onChange={setEditBirthdate} placeholder="Date de naissance" />
+            <Text style={[styles.inputLabel, { color: colors.textSub }]}>{t('settings.profiles.birthdateLabel')}</Text>
+            <DateInput value={editBirthdate} onChange={setEditBirthdate} placeholder={t('settings.profiles.birthdatePlaceholder')} />
             {editingProfile?.role === 'enfant' && (
               <View style={styles.propreRow}>
                 <View style={styles.propreLabel}>
-                  <Text style={[styles.inputLabel, { color: colors.textSub }]}>🚽 Propre</Text>
-                  <Text style={[styles.propreHint, { color: colors.textFaint }]}>Masque la section couches du journal</Text>
+                  <Text style={[styles.inputLabel, { color: colors.textSub }]}>{t('settings.profiles.pottyTrainedLabel')}</Text>
+                  <Text style={[styles.propreHint, { color: colors.textFaint }]}>{t('settings.profiles.pottyTrainedHint')}</Text>
                 </View>
                 <Switch
                   value={editPropre} onValueChange={setEditPropre}
                   trackColor={{ false: colors.switchOff, true: primary + '80' }}
                   thumbColor={editPropre ? primary : colors.bg}
-                  accessibilityLabel="Propre"
+                  accessibilityLabel={t('settings.profiles.pottyTrainedA11y')}
                 />
               </View>
             )}
             {editingProfile?.role === 'enfant' && (
               <View>
-                <Text style={[styles.inputLabel, { color: colors.textSub }]}>⚧ Sexe (courbes de croissance)</Text>
+                <Text style={[styles.inputLabel, { color: colors.textSub }]}>{t('settings.profiles.genderLabel')}</Text>
                 <View style={styles.genderRow}>
-                  <Chip label="Garçon" selected={editGender === 'garçon'} onPress={() => setEditGender('garçon')} />
-                  <Chip label="Fille" selected={editGender === 'fille'} onPress={() => setEditGender('fille')} />
-                  <Chip label="Non spécifié" selected={editGender === undefined} onPress={() => setEditGender(undefined)} />
+                  <Chip label={t('settings.profiles.genderBoy')} selected={editGender === 'garçon'} onPress={() => setEditGender('garçon')} />
+                  <Chip label={t('settings.profiles.genderGirl')} selected={editGender === 'fille'} onPress={() => setEditGender('fille')} />
+                  <Chip label={t('settings.profiles.genderUnspecified')} selected={editGender === undefined} onPress={() => setEditGender(undefined)} />
                 </View>
               </View>
             )}
@@ -337,18 +339,18 @@ export function SettingsProfiles({
                 style={[styles.deleteBtn, { borderColor: colors.error }]}
                 onPress={() => {
                   Alert.alert(
-                    'Supprimer le profil',
-                    `Êtes-vous sûr de vouloir supprimer le profil de ${editingProfile.name} ? Cette action est irréversible.`,
+                    t('settings.profiles.deleteProfileTitle'),
+                    t('settings.profiles.deleteProfileMessage', { name: editingProfile.name }),
                     [
-                      { text: 'Annuler', style: 'cancel' },
+                      { text: t('settings.profiles.cancel'), style: 'cancel' },
                       {
-                        text: 'Supprimer',
+                        text: t('settings.profiles.delete'),
                         style: 'destructive',
                         onPress: async () => {
                           try {
                             await deleteProfile(editingProfile.id);
                             setEditingProfile(null);
-                          } catch (e) { Alert.alert('Erreur', String(e)); }
+                          } catch (e) { Alert.alert(t('settings.profiles.error'), String(e)); }
                         },
                       },
                     ],
@@ -356,9 +358,9 @@ export function SettingsProfiles({
                 }}
                 activeOpacity={0.7}
                 accessibilityRole="button"
-                accessibilityLabel={`Supprimer le profil de ${editingProfile.name}`}
+                accessibilityLabel={t('settings.profiles.deleteProfileA11y', { name: editingProfile.name })}
               >
-                <Text style={[styles.deleteBtnText, { color: colors.error }]}>Supprimer ce profil</Text>
+                <Text style={[styles.deleteBtnText, { color: colors.error }]}>{t('settings.profiles.deleteProfile')}</Text>
               </TouchableOpacity>
             )}
           </ScrollView>
@@ -369,22 +371,22 @@ export function SettingsProfiles({
       <Modal visible={showAddChild} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowAddChild(false)}>
         <SafeAreaView style={[styles.modalSafe, { backgroundColor: colors.card }]}>
           <ModalHeader
-            title="Ajouter un enfant"
+            title={t('settings.profiles.addChildModalTitle')}
             onClose={() => setShowAddChild(false)}
             closeLeft
-            rightLabel={isAddingChild ? '...' : 'Ajouter'}
+            rightLabel={isAddingChild ? '...' : t('settings.profiles.add')}
             onRight={handleAddChild}
             rightDisabled={isAddingChild}
           />
           <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalContent}>
-            <Text style={[styles.inputLabel, { color: colors.textSub }]}>👤 Prénom</Text>
+            <Text style={[styles.inputLabel, { color: colors.textSub }]}>{t('settings.profiles.firstNameLabel')}</Text>
             <TextInput
               style={[styles.input, { borderColor: colors.inputBorder, color: colors.text }]}
               value={newChildName} onChangeText={setNewChildName}
-              placeholder="Prénom" placeholderTextColor={colors.textFaint} autoFocus
-              accessibilityLabel="Prénom de l'enfant"
+              placeholder={t('settings.profiles.firstNamePlaceholder')} placeholderTextColor={colors.textFaint} autoFocus
+              accessibilityLabel={t('settings.profiles.firstNameA11y')}
             />
-            <Text style={[styles.inputLabel, { color: colors.textSub }]}>😀 Avatar</Text>
+            <Text style={[styles.inputLabel, { color: colors.textSub }]}>{t('settings.profiles.avatarSectionLabel')}</Text>
             <View style={styles.avatarGrid}>
               {CHILD_AVATARS.map((emoji) => (
                 <TouchableOpacity
@@ -393,7 +395,7 @@ export function SettingsProfiles({
                   onPress={() => setNewChildAvatar(emoji)}
                   accessibilityRole="radio"
                   accessibilityState={{ selected: newChildAvatar === emoji }}
-                  accessibilityLabel={`Avatar ${emoji}`}
+                  accessibilityLabel={t('settings.profiles.avatarSelectA11y', { emoji })}
                 >
                   <Text style={styles.avatarEmoji}>{emoji}</Text>
                 </TouchableOpacity>
@@ -401,45 +403,45 @@ export function SettingsProfiles({
             </View>
             <View style={styles.propreRow}>
               <View style={styles.propreLabel}>
-                <Text style={[styles.inputLabel, { color: colors.textSub }]}>🤰 Grossesse en cours</Text>
-                <Text style={[styles.propreHint, { color: colors.textFaint }]}>Active le suivi grossesse au lieu des tâches bébé</Text>
+                <Text style={[styles.inputLabel, { color: colors.textSub }]}>{t('settings.profiles.pregnancyToggleLabel')}</Text>
+                <Text style={[styles.propreHint, { color: colors.textFaint }]}>{t('settings.profiles.pregnancyToggleHint')}</Text>
               </View>
               <Switch
                 value={newChildGrossesse}
                 onValueChange={(v) => { setNewChildGrossesse(v); if (v) setNewChildPropre(false); }}
                 trackColor={{ false: colors.switchOff, true: primary + '80' }}
                 thumbColor={newChildGrossesse ? primary : colors.bg}
-                accessibilityLabel="Grossesse en cours"
+                accessibilityLabel={t('settings.profiles.pregnancyToggleA11y')}
               />
             </View>
             {newChildGrossesse ? (
               <>
-                <Text style={[styles.inputLabel, { color: colors.textSub }]}>📅 Date terme prévue</Text>
-                <DateInput value={newChildDateTerme} onChange={setNewChildDateTerme} placeholder="Date terme prévue" />
+                <Text style={[styles.inputLabel, { color: colors.textSub }]}>{t('settings.profiles.dueDateLabel')}</Text>
+                <DateInput value={newChildDateTerme} onChange={setNewChildDateTerme} placeholder={t('settings.profiles.dueDatePlaceholder')} />
               </>
             ) : (
               <>
-                <Text style={[styles.inputLabel, { color: colors.textSub }]}>🎂 Date de naissance</Text>
-                <DateInput value={newChildBirthdate} onChange={setNewChildBirthdate} placeholder="Date de naissance" />
-                <Text style={[styles.propreHint, { color: colors.textFaint }]}>L'année adapte les tâches à l'âge (bébé, enfant, ado)</Text>
+                <Text style={[styles.inputLabel, { color: colors.textSub }]}>{t('settings.profiles.addBirthdateLabel')}</Text>
+                <DateInput value={newChildBirthdate} onChange={setNewChildBirthdate} placeholder={t('settings.profiles.addBirthdatePlaceholder')} />
+                <Text style={[styles.propreHint, { color: colors.textFaint }]}>{t('settings.profiles.ageAdaptHint')}</Text>
                 <View style={styles.propreRow}>
                   <View style={styles.propreLabel}>
-                    <Text style={[styles.inputLabel, { color: colors.textSub }]}>🚽 Propre</Text>
-                    <Text style={[styles.propreHint, { color: colors.textFaint }]}>Masque la section couches du journal</Text>
+                    <Text style={[styles.inputLabel, { color: colors.textSub }]}>{t('settings.profiles.pottyTrainedLabel')}</Text>
+                    <Text style={[styles.propreHint, { color: colors.textFaint }]}>{t('settings.profiles.pottyTrainedHint')}</Text>
                   </View>
                   <Switch
                     value={newChildPropre} onValueChange={setNewChildPropre}
                     trackColor={{ false: colors.switchOff, true: primary + '80' }}
                     thumbColor={newChildPropre ? primary : colors.bg}
-                    accessibilityLabel="Propre"
+                    accessibilityLabel={t('settings.profiles.pottyTrainedA11y')}
                   />
                 </View>
                 <View>
-                  <Text style={[styles.inputLabel, { color: colors.textSub }]}>⚧ Sexe (courbes de croissance)</Text>
+                  <Text style={[styles.inputLabel, { color: colors.textSub }]}>{t('settings.profiles.genderLabel')}</Text>
                   <View style={styles.genderRow}>
-                    <Chip label="Garçon" selected={newChildGender === 'garçon'} onPress={() => setNewChildGender('garçon')} />
-                    <Chip label="Fille" selected={newChildGender === 'fille'} onPress={() => setNewChildGender('fille')} />
-                    <Chip label="Non spécifié" selected={newChildGender === undefined} onPress={() => setNewChildGender(undefined)} />
+                    <Chip label={t('settings.profiles.genderBoy')} selected={newChildGender === 'garçon'} onPress={() => setNewChildGender('garçon')} />
+                    <Chip label={t('settings.profiles.genderGirl')} selected={newChildGender === 'fille'} onPress={() => setNewChildGender('fille')} />
+                    <Chip label={t('settings.profiles.genderUnspecified')} selected={newChildGender === undefined} onPress={() => setNewChildGender(undefined)} />
                   </View>
                 </View>
               </>
@@ -451,13 +453,13 @@ export function SettingsProfiles({
       {/* Convert to Born Modal */}
       <Modal visible={!!convertingProfile} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setConvertingProfile(null)}>
         <SafeAreaView style={[styles.modalSafe, { backgroundColor: colors.card }]}>
-          <ModalHeader title="Bébé est né !" onClose={() => setConvertingProfile(null)} closeLeft />
+          <ModalHeader title={t('settings.profiles.bornModalTitle')} onClose={() => setConvertingProfile(null)} closeLeft />
           <View style={styles.modalContent}>
             <Text style={styles.bornEmoji}>🎉</Text>
-            <Text style={[styles.inputLabel, { color: colors.textSub }]}>📅 Date de naissance</Text>
-            <DateInput value={bornDate} onChange={setBornDate} placeholder="Date de naissance" />
-            <Text style={[styles.propreHint, { color: colors.textFaint }]}>Les tâches grossesse seront remplacées par les tâches bébé</Text>
-            <Button label="Confirmer la naissance" onPress={handleConvertToBorn} variant="primary" size="md" fullWidth />
+            <Text style={[styles.inputLabel, { color: colors.textSub }]}>{t('settings.profiles.bornBirthdateLabel')}</Text>
+            <DateInput value={bornDate} onChange={setBornDate} placeholder={t('settings.profiles.bornBirthdatePlaceholder')} />
+            <Text style={[styles.propreHint, { color: colors.textFaint }]}>{t('settings.profiles.bornTasksHint')}</Text>
+            <Button label={t('settings.profiles.confirmBirth')} onPress={handleConvertToBorn} variant="primary" size="md" fullWidth />
           </View>
         </SafeAreaView>
       </Modal>

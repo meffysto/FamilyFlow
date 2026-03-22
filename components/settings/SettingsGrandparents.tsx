@@ -7,6 +7,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, Modal, ScrollView } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { buildWeeklyRecapText, buildMonthlyRecapText, buildGrossesseUpdateText } from '../../lib/telegram';
 import {
   loadGrandparentContacts,
@@ -35,6 +36,7 @@ interface SettingsGrandparentsProps {
 }
 
 export function SettingsGrandparents({ telegramToken, profiles, memories, photoDates, getPhotoUri }: SettingsGrandparentsProps) {
+  const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
 
@@ -61,8 +63,8 @@ export function SettingsGrandparents({ telegramToken, profiles, memories, photoD
 
   const handleAdd = useCallback(async () => {
     const name = newName.trim();
-    if (!name) { showToast('Le nom est obligatoire', 'error'); return; }
-    if (newChannel === 'telegram' && !newChatId.trim()) { showToast('Chat ID requis pour Telegram', 'error'); return; }
+    if (!name) { showToast(t('settings.grandparents.nameRequired'), 'error'); return; }
+    if (newChannel === 'telegram' && !newChatId.trim()) { showToast(t('settings.grandparents.chatIdRequired'), 'error'); return; }
 
     const contact: GrandparentContact = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -74,25 +76,25 @@ export function SettingsGrandparents({ telegramToken, profiles, memories, photoD
     setNewName('');
     setNewChatId('');
     setAddModalVisible(false);
-    showToast(`${name} ajouté`);
+    showToast(t('settings.grandparents.contactAdded', { name }));
   }, [newName, newChannel, newChatId, contacts, save, showToast]);
 
   const handleDelete = useCallback((id: string) => {
     const contact = contacts.find((c) => c.id === id);
-    Alert.alert('Supprimer ?', `Retirer ${contact?.name ?? ''} des contacts ?`, [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: () => save(contacts.filter((c) => c.id !== id)) },
+    Alert.alert(t('settings.grandparents.deleteTitle'), t('settings.grandparents.deleteMessage', { name: contact?.name ?? '' }), [
+      { text: t('settings.grandparents.cancel'), style: 'cancel' },
+      { text: t('settings.grandparents.delete'), style: 'destructive', onPress: () => save(contacts.filter((c) => c.id !== id)) },
     ]);
   }, [contacts, save]);
 
   const handleTest = useCallback(async (contact: GrandparentContact) => {
     const result = await testContact(contact, telegramToken);
     if (result.manual) {
-      showToast('Message pré-rempli — confirmez l\'envoi');
+      showToast(t('settings.grandparents.testManual'));
     } else if (result.sent) {
-      showToast('Message test envoyé !');
+      showToast(t('settings.grandparents.testSent'));
     } else {
-      showToast(result.error ?? 'Échec', 'error');
+      showToast(result.error ?? t('settings.grandparents.failure'), 'error');
     }
   }, [telegramToken, showToast]);
 
@@ -124,11 +126,11 @@ export function SettingsGrandparents({ telegramToken, profiles, memories, photoD
     const { text, photoUris, count } = buildWeekData();
     const result = await sendViaChannel(contact, text, telegramToken, photoUris);
     if (result.manual) {
-      showToast('Recap prêt — choisissez le destinataire');
+      showToast(t('settings.grandparents.recapReady'));
     } else if (result.sent) {
-      showToast(`Recap envoyé (${count} souvenir(s))`);
+      showToast(t('settings.grandparents.recapSent', { count }));
     } else {
-      showToast(result.error ?? 'Échec', 'error');
+      showToast(result.error ?? t('settings.grandparents.failure'), 'error');
     }
     setSending(null);
   }, [buildWeekData, telegramToken, showToast]);
@@ -148,11 +150,11 @@ export function SettingsGrandparents({ telegramToken, profiles, memories, photoD
     const text = buildMonthlyRecapText({ profiles, memories: monthMemories, rdvs: [], photoCount, completedTasksCount: 0, month: monthLabel });
     const result = await sendViaChannel(contact, text, telegramToken);
     if (result.manual) {
-      showToast('Bilan pré-rempli — confirmez l\'envoi');
+      showToast(t('settings.grandparents.monthlyReady'));
     } else if (result.sent) {
-      showToast(`Bilan de ${monthLabel} envoyé`);
+      showToast(t('settings.grandparents.monthlySent', { month: monthLabel }));
     } else {
-      showToast(result.error ?? 'Échec', 'error');
+      showToast(result.error ?? t('settings.grandparents.failure'), 'error');
     }
     setSending(null);
   }, [memories, profiles, photoDates, telegramToken, showToast]);
@@ -163,18 +165,18 @@ export function SettingsGrandparents({ telegramToken, profiles, memories, photoD
     setSending(`grossesse-${contact.id}`);
     const result = await sendViaChannel(contact, text, telegramToken);
     if (result.manual) {
-      showToast('Suivi pré-rempli — confirmez l\'envoi');
+      showToast(t('settings.grandparents.grossesseReady'));
     } else if (result.sent) {
-      showToast('Suivi grossesse envoyé');
+      showToast(t('settings.grandparents.grossesseSent'));
     } else {
-      showToast(result.error ?? 'Échec', 'error');
+      showToast(result.error ?? t('settings.grandparents.failure'), 'error');
     }
     setSending(null);
   }, [profiles, telegramToken, showToast]);
 
   // Envoi à tous
   const handleSendToAll = useCallback(async (type: 'recap' | 'monthly' | 'grossesse') => {
-    if (contacts.length === 0) { showToast('Aucun contact configuré', 'error'); return; }
+    if (contacts.length === 0) { showToast(t('settings.grandparents.noContacts'), 'error'); return; }
     for (const contact of contacts) {
       if (type === 'recap') await handleSendRecap(contact);
       else if (type === 'monthly') await handleSendMonthly(contact);
@@ -187,12 +189,12 @@ export function SettingsGrandparents({ telegramToken, profiles, memories, photoD
   // ─── Rendu ────────────────────────────────────────────────────────────────
 
   return (
-    <View style={styles.section} accessibilityRole="summary" accessibilityLabel="Section Grands-parents">
-      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>👴 Grands-parents</Text>
+    <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.grandparents.sectionA11y')}>
+      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.grandparents.sectionTitle')}</Text>
 
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
         <Text style={[styles.hint, { color: colors.textFaint }]}>
-          Partagez des recaps et photos avec les grands-parents via Telegram, WhatsApp ou iMessage.
+          {t('settings.grandparents.hint')}
         </Text>
 
         {/* Liste des contacts */}
@@ -221,19 +223,19 @@ export function SettingsGrandparents({ telegramToken, profiles, memories, photoD
               {/* Actions */}
               <View style={styles.contactActions}>
                 <Button
-                  label={sending === `recap-${contact.id}` ? '...' : '📤 Semaine'}
+                  label={sending === `recap-${contact.id}` ? '...' : t('settings.grandparents.weekBtn')}
                   onPress={() => handleSendRecap(contact)}
                   variant="secondary" size="sm"
                   disabled={sending !== null}
                 />
                 <Button
-                  label={sending === `monthly-${contact.id}` ? '...' : '📊 Mois'}
+                  label={sending === `monthly-${contact.id}` ? '...' : t('settings.grandparents.monthBtn')}
                   onPress={() => handleSendMonthly(contact)}
                   variant="secondary" size="sm"
                   disabled={sending !== null}
                 />
                 <Button
-                  label="Tester"
+                  label={t('settings.grandparents.testBtn')}
                   onPress={() => handleTest(contact)}
                   variant="secondary" size="sm"
                   disabled={sending !== null}
@@ -241,7 +243,7 @@ export function SettingsGrandparents({ telegramToken, profiles, memories, photoD
               </View>
               {hasGrossesse && (
                 <Button
-                  label={sending === `grossesse-${contact.id}` ? '...' : '🤰 Grossesse'}
+                  label={sending === `grossesse-${contact.id}` ? '...' : t('settings.grandparents.grossesseBtn')}
                   onPress={() => handleSendGrossesse(contact)}
                   variant="secondary" size="sm" fullWidth
                   disabled={sending !== null}
@@ -249,7 +251,7 @@ export function SettingsGrandparents({ telegramToken, profiles, memories, photoD
               )}
               {contact.channel !== 'telegram' && (
                 <Text style={[styles.manualHint, { color: colors.textFaint }]}>
-                  Choisissez le groupe ou contact dans le Share sheet
+                  {t('settings.grandparents.shareSheetHint')}
                 </Text>
               )}
             </View>
@@ -257,15 +259,15 @@ export function SettingsGrandparents({ telegramToken, profiles, memories, photoD
         })}
 
         {/* Bouton ajouter */}
-        <Button label="+ Ajouter un contact" onPress={() => setAddModalVisible(true)} variant="secondary" fullWidth />
+        <Button label={t('settings.grandparents.addContact')} onPress={() => setAddModalVisible(true)} variant="secondary" fullWidth />
 
         {/* Envoi groupé */}
         {contacts.length > 1 && (
           <View style={styles.bulkSection}>
-            <Text style={[styles.bulkTitle, { color: colors.textSub }]}>Envoyer à tous</Text>
+            <Text style={[styles.bulkTitle, { color: colors.textSub }]}>{t('settings.grandparents.sendToAll')}</Text>
             <View style={styles.contactActions}>
-              <Button label="📤 Semaine" onPress={() => handleSendToAll('recap')} variant="secondary" size="sm" disabled={sending !== null} />
-              <Button label="📊 Mois" onPress={() => handleSendToAll('monthly')} variant="secondary" size="sm" disabled={sending !== null} />
+              <Button label={t('settings.grandparents.weekBtn')} onPress={() => handleSendToAll('recap')} variant="secondary" size="sm" disabled={sending !== null} />
+              <Button label={t('settings.grandparents.monthBtn')} onPress={() => handleSendToAll('monthly')} variant="secondary" size="sm" disabled={sending !== null} />
               {hasGrossesse && (
                 <Button label="🤰" onPress={() => handleSendToAll('grossesse')} variant="secondary" size="sm" disabled={sending !== null} />
               )}
@@ -277,20 +279,20 @@ export function SettingsGrandparents({ telegramToken, profiles, memories, photoD
       {/* Modal ajout contact */}
       <Modal visible={addModalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setAddModalVisible(false)}>
         <View style={[styles.modalContainer, { backgroundColor: colors.card }]}>
-          <ModalHeader title="Nouveau contact" onClose={() => setAddModalVisible(false)} rightLabel="Ajouter" onRight={handleAdd} />
+          <ModalHeader title={t('settings.grandparents.newContactTitle')} onClose={() => setAddModalVisible(false)} rightLabel={t('settings.grandparents.addBtn')} onRight={handleAdd} />
 
           <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalContent}>
-            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>Nom</Text>
+            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>{t('settings.grandparents.nameLabel')}</Text>
             <TextInput
               style={[styles.input, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }]}
               value={newName}
               onChangeText={setNewName}
-              placeholder="Ex: Mamie Dupont"
+              placeholder={t('settings.grandparents.namePlaceholder')}
               placeholderTextColor={colors.textFaint}
               autoFocus
             />
 
-            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>Canal de partage</Text>
+            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>{t('settings.grandparents.channelLabel')}</Text>
             <View style={styles.channelRow}>
               {(['whatsapp', 'imessage', 'telegram'] as SharingChannel[]).map((ch) => (
                 <Chip
@@ -304,24 +306,24 @@ export function SettingsGrandparents({ telegramToken, profiles, memories, photoD
 
             {newChannel === 'telegram' && (
               <>
-                <Text style={[styles.fieldLabel, { color: colors.textSub }]}>Chat ID Telegram</Text>
+                <Text style={[styles.fieldLabel, { color: colors.textSub }]}>{t('settings.grandparents.chatIdLabel')}</Text>
                 <TextInput
                   style={[styles.input, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }]}
                   value={newChatId}
                   onChangeText={setNewChatId}
-                  placeholder="Ex: -100123456789"
+                  placeholder={t('settings.grandparents.chatIdPlaceholder')}
                   placeholderTextColor={colors.textFaint}
                   keyboardType="numbers-and-punctuation"
                 />
                 <Text style={[styles.helperText, { color: colors.textFaint }]}>
-                  Créez un bot via @BotFather, ajoutez-le au groupe, puis récupérez le chat ID via l'API getUpdates.
+                  {t('settings.grandparents.chatIdHelper')}
                 </Text>
               </>
             )}
 
             {newChannel !== 'telegram' && (
               <Text style={[styles.helperText, { color: colors.textFaint }]}>
-                Lors du partage, le Share sheet s'ouvrira et vous pourrez choisir le groupe {CHANNEL_META[newChannel].label} ou le contact souhaité.
+                {t('settings.grandparents.shareSheetHelper', { channel: CHANNEL_META[newChannel].label })}
               </Text>
             )}
           </ScrollView>

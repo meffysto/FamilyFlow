@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, TextInput, StyleSheet, ActivityIndicator, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Modal } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import * as SecureStore from 'expo-secure-store';
 import { testTelegram } from '../../lib/telegram';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -22,6 +23,7 @@ interface SettingsTelegramProps {
 }
 
 export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramToken, setTelegramChatId }: SettingsTelegramProps) {
+  const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const [isTesting, setIsTesting] = useState(false);
   const [isSavingTelegram, setIsSavingTelegram] = useState(false);
@@ -29,14 +31,14 @@ export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramTok
 
   const handleTest = useCallback(async () => {
     if (!telegramToken || !telegramChatId) {
-      Alert.alert('Paramètres manquants', 'Entrez le token et le chat ID d\'abord.');
+      Alert.alert(t('settings.telegram.missingParams'), t('settings.telegram.missingParamsMsg'));
       return;
     }
     setIsTesting(true);
     const ok = await testTelegram(telegramToken.trim(), telegramChatId.trim());
     setIsTesting(false);
-    Alert.alert(ok ? '✅ Succès !' : '❌ Échec', ok ? 'Message Telegram envoyé avec succès.' : 'Impossible d\'envoyer le message. Vérifiez le token et le chat ID.');
-  }, [telegramToken, telegramChatId]);
+    Alert.alert(ok ? t('settings.telegram.testSuccess') : t('settings.telegram.testFail'), ok ? t('settings.telegram.testSuccessMsg') : t('settings.telegram.testFailMsg'));
+  }, [telegramToken, telegramChatId, t]);
 
   const handleSave = useCallback(async () => {
     setIsSavingTelegram(true);
@@ -44,29 +46,29 @@ export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramTok
     await SecureStore.setItemAsync(TELEGRAM_CHAT_KEY, telegramChatId.trim());
     setIsSavingTelegram(false);
     setShowSetup(false);
-    Alert.alert('✅ Sauvegardé', 'Les paramètres Telegram ont été sauvegardés.');
-  }, [telegramToken, telegramChatId]);
+    Alert.alert(t('settings.telegram.savedTitle'), t('settings.telegram.savedMsg'));
+  }, [telegramToken, telegramChatId, t]);
 
   return (
     <>
-      <View style={styles.section} accessibilityRole="summary" accessibilityLabel="Section Telegram">
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Telegram</Text>
+      <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.telegram.sectionA11y')}>
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.telegram.sectionTitle')}</Text>
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           <View style={styles.row}>
-            <Text style={[styles.rowLabel, { color: colors.textSub }]}>📱 Bot Telegram</Text>
+            <Text style={[styles.rowLabel, { color: colors.textSub }]}>{t('settings.telegram.botLabel')}</Text>
             <Text style={[styles.rowStatus, { color: colors.textMuted }]}>
-              {telegramToken ? '🟢 Configuré' : '🔴 Non configuré'}
+              {telegramToken ? t('settings.telegram.configured') : t('settings.telegram.notConfigured')}
             </Text>
           </View>
           {telegramToken ? (
             <Text style={[styles.tokenHint, { color: colors.textFaint }]}>
-              Token : {telegramToken.slice(0, 10)}...
+              {t('settings.telegram.tokenHint', { token: telegramToken.slice(0, 10) })}
             </Text>
           ) : null}
           <View style={styles.btnRow}>
-            <Button label="Configurer" onPress={() => setShowSetup(true)} variant="secondary" size="sm" />
+            <Button label={t('settings.telegram.configureBtn')} onPress={() => setShowSetup(true)} variant="secondary" size="sm" />
             <Button
-              label={isTesting ? '...' : 'Tester'}
+              label={isTesting ? '...' : t('settings.telegram.testBtn')}
               onPress={handleTest}
               variant="secondary"
               size="sm"
@@ -79,7 +81,7 @@ export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramTok
       {/* Modal configuration Telegram */}
       <Modal visible={showSetup} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowSetup(false)}>
         <SafeAreaView style={[styles.modalSafe, { backgroundColor: colors.card }]}>
-          <ModalHeader title="Configuration Telegram" onClose={() => setShowSetup(false)} />
+          <ModalHeader title={t('settings.telegram.modalTitle')} onClose={() => setShowSetup(false)} />
           <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalContent}>
             <View style={[styles.setupStep, { borderLeftColor: primary, backgroundColor: colors.cardAlt }]}>
               <Text style={[styles.setupTitle, { color: colors.text }]}>🤖 Étape 1 — Créer le bot</Text>
@@ -92,7 +94,7 @@ export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramTok
               </Text>
             </View>
 
-            <Text style={[styles.inputLabel, { color: colors.textSub }]}>Token du bot</Text>
+            <Text style={[styles.inputLabel, { color: colors.textSub }]}>{t('settings.telegram.tokenLabel')}</Text>
             <TextInput
               style={[styles.input, { borderColor: colors.inputBorder, color: colors.text }]}
               value={telegramToken}
@@ -101,7 +103,7 @@ export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramTok
               placeholderTextColor={colors.textFaint}
               autoCapitalize="none"
               autoCorrect={false}
-              accessibilityLabel="Token du bot Telegram"
+              accessibilityLabel={t('settings.telegram.tokenA11y')}
             />
 
             <View style={[styles.setupStep, { borderLeftColor: primary, backgroundColor: colors.cardAlt }]}>
@@ -124,11 +126,11 @@ export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramTok
 
             <View style={[styles.tip, { backgroundColor: colors.warningBg, borderLeftColor: colors.warning }]}>
               <Text style={[styles.tipText, { color: colors.warningText }]}>
-                💡 <Text style={[styles.bold, { color: colors.text }]}>Pour un groupe</Text> : ajoutez le bot au groupe, envoyez un message, puis appelez getUpdates. Le chat ID sera négatif.
+                💡 <Text style={[styles.bold, { color: colors.text }]}>{t('settings.telegram.groupTip')}</Text>
               </Text>
             </View>
 
-            <Text style={[styles.inputLabel, { color: colors.textSub }]}>Chat ID</Text>
+            <Text style={[styles.inputLabel, { color: colors.textSub }]}>{t('settings.telegram.chatIdLabel')}</Text>
             <TextInput
               style={[styles.input, { borderColor: colors.inputBorder, color: colors.text }]}
               value={telegramChatId}
@@ -136,12 +138,12 @@ export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramTok
               placeholder="1637148789"
               placeholderTextColor={colors.textFaint}
               keyboardType="numbers-and-punctuation"
-              accessibilityLabel="Chat ID Telegram"
+              accessibilityLabel={t('settings.telegram.chatIdA11y')}
             />
 
             <View style={styles.btnRow}>
-              <Button label={isTesting ? '...' : 'Tester'} onPress={handleTest} variant="secondary" size="md" disabled={isTesting} />
-              <Button label={isSavingTelegram ? '...' : 'Sauvegarder'} onPress={handleSave} variant="primary" size="md" disabled={isSavingTelegram} />
+              <Button label={isTesting ? '...' : t('settings.telegram.testBtn')} onPress={handleTest} variant="secondary" size="md" disabled={isTesting} />
+              <Button label={isSavingTelegram ? '...' : t('settings.telegram.saveBtn')} onPress={handleSave} variant="primary" size="md" disabled={isSavingTelegram} />
             </View>
           </ScrollView>
         </SafeAreaView>

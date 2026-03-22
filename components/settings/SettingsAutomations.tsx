@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Switch } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -11,29 +12,30 @@ import {
   setAutomationFlag,
 } from '../../lib/automation-config';
 
-const TOGGLES: { key: keyof AutomationConfig; emoji: string; label: string; detail: string }[] = [
-  {
-    key: 'autoCoursesFromRecipes',
-    emoji: '🛒',
-    label: 'Recettes \u2192 Courses',
-    detail: 'Ajouter les ingrédients manquants aux courses quand un repas est planifié avec une recette',
-  },
-  {
-    key: 'autoStockFromCourses',
-    emoji: '📦',
-    label: 'Courses \u2192 Stock',
-    detail: 'Mettre à jour le stock quand une course alimentaire est cochée',
-  },
-  {
-    key: 'autoStockDecrementCook',
-    emoji: '👨\u200D🍳',
-    label: 'Cuisiné \u2192 Stock',
-    detail: 'Décrémenter le stock quand un repas est marqué comme cuisiné',
-  },
-];
-
 export function SettingsAutomations() {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
+
+  const TOGGLES: { key: keyof AutomationConfig; emoji: string; label: string; detail: string }[] = [
+    {
+      key: 'autoCoursesFromRecipes',
+      emoji: '🛒',
+      label: t('settings.automations.recipesToShopping'),
+      detail: t('settings.automations.recipesToShoppingDetail'),
+    },
+    {
+      key: 'autoStockFromCourses',
+      emoji: '📦',
+      label: t('settings.automations.shoppingToStock'),
+      detail: t('settings.automations.shoppingToStockDetail'),
+    },
+    {
+      key: 'autoStockDecrementCook',
+      emoji: '👨‍🍳',
+      label: t('settings.automations.cookedToStock'),
+      detail: t('settings.automations.cookedToStockDetail'),
+    },
+  ];
   const [config, setConfig] = useState<AutomationConfig>(DEFAULT_AUTOMATION_CONFIG);
 
   useEffect(() => {
@@ -50,7 +52,7 @@ export function SettingsAutomations() {
     <View style={styles.section}>
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
         <Text style={[styles.description, { color: colors.textSub }]}>
-          Le flux automatique connecte vos recettes, courses et stock. Désactivez individuellement chaque étape si besoin.
+          {t('settings.automations.description')}
         </Text>
         {TOGGLES.map((toggle) => (
           <View key={toggle.key} style={[styles.toggleRow, { borderTopColor: colors.separator }]}>

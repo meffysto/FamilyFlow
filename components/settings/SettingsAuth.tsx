@@ -8,6 +8,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, Alert, Modal, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useAuth, LOCK_DELAY_OPTIONS, LockDelay } from '../../contexts/AuthContext';
@@ -21,6 +22,7 @@ import { Shadows } from '../../constants/shadows';
 type PinModalMode = 'setup' | 'change-verify' | 'change-new' | 'change-confirm' | null;
 
 export function SettingsAuth() {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
   const {
     isAuthEnabled, hasPin, lockDelay, biometryType, biometryAvailable,
@@ -48,12 +50,12 @@ export function SettingsAuth() {
     if (isAuthEnabled) {
       // Désactiver → confirmation
       Alert.alert(
-        'Désactiver le verrouillage ?',
-        'L\'app ne sera plus protégée au lancement.',
+        t('settings.auth.disableTitle'),
+        t('settings.auth.disableMessage'),
         [
-          { text: 'Annuler', style: 'cancel' },
+          { text: t('settings.auth.cancel'), style: 'cancel' },
           {
-            text: 'Désactiver',
+            text: t('settings.auth.disableBtn'),
             style: 'destructive',
             onPress: async () => {
               await removePin();
@@ -86,7 +88,7 @@ export function SettingsAuth() {
     const trimmed = pinInput.trim();
 
     if (trimmed.length !== 4 || !/^\d{4}$/.test(trimmed)) {
-      setPinError('Le PIN doit contenir 4 chiffres');
+      setPinError(t('settings.auth.pinError4Digits'));
       return;
     }
 
@@ -106,7 +108,7 @@ export function SettingsAuth() {
           setPinError('');
           setPinModal('change-new');
         } else {
-          setPinError('PIN incorrect');
+          setPinError(t('settings.auth.pinErrorWrong'));
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         }
         break;
@@ -128,7 +130,7 @@ export function SettingsAuth() {
           setPinInput('');
           setNewPin('');
         } else {
-          setPinError('Les PIN ne correspondent pas');
+          setPinError(t('settings.auth.pinErrorMismatch'));
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
           setPinInput('');
         }
@@ -146,35 +148,35 @@ export function SettingsAuth() {
   // ── Titre modal selon l'étape ──
 
   const pinModalTitle = {
-    'setup': 'Créer un PIN',
-    'change-verify': 'PIN actuel',
-    'change-new': 'Nouveau PIN',
-    'change-confirm': 'Confirmer le PIN',
+    'setup': t('settings.auth.pinModalSetup'),
+    'change-verify': t('settings.auth.pinModalVerify'),
+    'change-new': t('settings.auth.pinModalNew'),
+    'change-confirm': t('settings.auth.pinModalConfirm'),
   }[pinModal ?? 'setup'] ?? '';
 
   const pinModalSubtitle = {
-    'setup': 'Choisissez un PIN à 4 chiffres pour protéger l\'app.',
-    'change-verify': 'Entrez votre PIN actuel pour continuer.',
-    'change-new': 'Choisissez votre nouveau PIN à 4 chiffres.',
-    'change-confirm': 'Retapez le PIN pour confirmer.',
+    'setup': t('settings.auth.pinSubtitleSetup'),
+    'change-verify': t('settings.auth.pinSubtitleVerify'),
+    'change-new': t('settings.auth.pinSubtitleNew'),
+    'change-confirm': t('settings.auth.pinSubtitleConfirm'),
   }[pinModal ?? 'setup'] ?? '';
 
   return (
     <>
-      <View style={styles.section} accessibilityRole="summary" accessibilityLabel="Section sécurité">
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Sécurité</Text>
+      <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.auth.sectionA11y')}>
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.auth.sectionTitle')}</Text>
 
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           {/* Toggle verrouillage */}
           <View style={styles.row}>
             <View style={styles.rowContent}>
-              <Text style={[styles.rowLabel, { color: colors.textSub }]}>🔒 Verrouiller l'app</Text>
+              <Text style={[styles.rowLabel, { color: colors.textSub }]}>{t('settings.auth.lockApp')}</Text>
               <Text style={[styles.rowHint, { color: colors.textMuted }]}>
-                Protection au lancement par biométrie ou PIN
+                {t('settings.auth.lockHint')}
               </Text>
             </View>
             <Button
-              label={isAuthEnabled ? 'Activé' : 'Désactivé'}
+              label={isAuthEnabled ? t('settings.auth.enabled') : t('settings.auth.disabled')}
               onPress={handleToggleAuth}
               variant={isAuthEnabled ? 'primary' : 'secondary'}
               size="sm"
@@ -184,10 +186,10 @@ export function SettingsAuth() {
           {/* Biométrie info */}
           <View style={[styles.infoRow, { borderTopColor: colors.borderLight }]}>
             <Text style={[styles.infoLabel, { color: colors.textSub }]}>
-              {biometryType === 'face' ? '👤' : biometryType === 'fingerprint' ? '👆' : '🔐'} Biométrie
+              {biometryType === 'face' ? '👤' : biometryType === 'fingerprint' ? '👆' : '🔐'} {t('settings.auth.biometry')}
             </Text>
             <Text style={[styles.infoValue, { color: biometryAvailable ? colors.success : colors.textFaint }]}>
-              {biometryAvailable ? `${biometryLabel} disponible` : 'Non disponible'}
+              {biometryAvailable ? t('settings.auth.biometryAvailable', { type: biometryLabel }) : t('settings.auth.biometryUnavailable')}
             </Text>
           </View>
 
@@ -195,7 +197,7 @@ export function SettingsAuth() {
           {isAuthEnabled && hasPin && (
             <View style={[styles.actionRow, { borderTopColor: colors.borderLight }]}>
               <Button
-                label="Changer le PIN"
+                label={t('settings.auth.changePin')}
                 onPress={handleChangePin}
                 variant="secondary"
                 size="sm"
@@ -207,10 +209,10 @@ export function SettingsAuth() {
           {isAuthEnabled && hasPin && (
             <View style={[styles.delaySection, { borderTopColor: colors.borderLight }]}>
               <Text style={[styles.delayLabel, { color: colors.textSub }]}>
-                ⏱️ Délai avant re-verrouillage
+                {t('settings.auth.lockDelay')}
               </Text>
               <Text style={[styles.delayHint, { color: colors.textMuted }]}>
-                Temps avant que l'app se verrouille quand vous la quittez
+                {t('settings.auth.lockDelayHint')}
               </Text>
               <View style={styles.delayChips}>
                 {LOCK_DELAY_OPTIONS.map((opt) => (
@@ -239,7 +241,7 @@ export function SettingsAuth() {
           <ModalHeader
             title={pinModalTitle}
             onClose={closePinModal}
-            rightLabel="Valider"
+            rightLabel={t('settings.auth.validate')}
             onRight={handlePinSubmit}
             rightDisabled={pinInput.length !== 4}
           />
@@ -266,7 +268,7 @@ export function SettingsAuth() {
               placeholder="• • • •"
               placeholderTextColor={colors.textFaint}
               textAlign="center"
-              accessibilityLabel="Saisie PIN"
+              accessibilityLabel={t('settings.auth.pinA11y')}
               onSubmitEditing={handlePinSubmit}
             />
 

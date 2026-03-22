@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, Switch, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { NotificationSettings } from '../NotificationSettings';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useVault } from '../../contexts/VaultContext';
@@ -20,7 +21,7 @@ import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 
-const JOURS = ['', 'Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+const JOURS_KEYS = ['', 'sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
 interface SettingsNotificationsProps {
   notifPrefs: any;
@@ -64,9 +65,11 @@ function ToggleItem({ emoji, label, detail, enabled, onToggle, colors, primary, 
 }
 
 export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activeProfile, profiles, notifData }: SettingsNotificationsProps) {
+  const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const vault = useVault();
   const { showToast } = useToast();
+  const JOURS = JOURS_KEYS.map(k => k ? t(`settings.notifications.days.${k}`) : '');
   const [showNotifSettings, setShowNotifSettings] = useState(false);
   const [config, setConfig] = useState<NotifScheduleConfig | null>(null);
   const [sendingWeekly, setSendingWeekly] = useState(false);
@@ -84,12 +87,12 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
         stock: vault.stock,
       });
       if (result.sent) {
-        showToast('Résumé hebdo envoyé sur Telegram');
+        showToast(t('settings.notifications.weeklySent'));
       } else {
-        showToast(result.error ?? 'Erreur inconnue', 'error');
+        showToast(result.error ?? t('settings.notifications.unknownError'), 'error');
       }
     } catch {
-      showToast("Erreur lors de l'envoi", 'error');
+      showToast(t('settings.notifications.sendError'), 'error');
     } finally {
       setSendingWeekly(false);
     }
@@ -125,18 +128,18 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
     <>
       {/* Notifications locales iOS */}
       {config && (
-        <View style={styles.section} accessibilityRole="summary" accessibilityLabel="Section Notifications locales">
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Notifications locales</Text>
+        <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.notifications.localA11y')}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.notifications.localTitle')}</Text>
           <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
             <Text style={[styles.hint, { color: colors.textFaint }]}>
-              Notifications iOS basées sur tes données. Fonctionnent même quand l'app est fermée.
-              {'\n'}{activeCount} catégorie{activeCount > 1 ? 's' : ''} active{activeCount > 1 ? 's' : ''}.
+              {t('settings.notifications.localHint')}
+              {'\n'}{t('settings.notifications.categoriesActive', { count: activeCount })}
             </Text>
 
             <ToggleItem
               emoji="🏥"
-              label="Rendez-vous médicaux"
-              detail={`Veille ${pad(config.rdvVeilleHour)}h · Matin ${pad(config.rdvMatinHour)}h${pad(config.rdvMatinMinute)} · ${config.rdvAvantMinutes} min avant`}
+              label={t('settings.notifications.rdvLabel')}
+              detail={t('settings.notifications.rdvDetail', { veilleHour: pad(config.rdvVeilleHour), matinHour: pad(config.rdvMatinHour), matinMinute: pad(config.rdvMatinMinute), avantMinutes: config.rdvAvantMinutes })}
               enabled={config.rdvEnabled}
               onToggle={() => updateConfig({ rdvEnabled: !config.rdvEnabled })}
               colors={colors}
@@ -145,8 +148,8 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
 
             <ToggleItem
               emoji="📋"
-              label="Tâches avec échéance"
-              detail={`Jour J à ${pad(config.taskHour)}h${pad(config.taskMinute)}${config.taskVeille ? ' + veille' : ''}`}
+              label={t('settings.notifications.tasksLabel')}
+              detail={t('settings.notifications.tasksDetail', { hour: pad(config.taskHour), minute: pad(config.taskMinute), veille: config.taskVeille ? t('settings.notifications.tasksVeille') : '' })}
               enabled={config.taskEnabled}
               onToggle={() => updateConfig({ taskEnabled: !config.taskEnabled })}
               colors={colors}
@@ -155,8 +158,8 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
 
             <ToggleItem
               emoji="🧹"
-              label="Ménage hebdomadaire"
-              detail={`${JOURS[config.menageDay]} à ${pad(config.menageHour)}h${pad(config.menageMinute)}`}
+              label={t('settings.notifications.menageLabel')}
+              detail={t('settings.notifications.menageDetail', { day: JOURS[config.menageDay], hour: pad(config.menageHour), minute: pad(config.menageMinute) })}
               enabled={config.menageEnabled}
               onToggle={() => updateConfig({ menageEnabled: !config.menageEnabled })}
               colors={colors}
@@ -165,8 +168,8 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
 
             <ToggleItem
               emoji="🛒"
-              label="Stock bas / courses"
-              detail={`Tous les jours à ${pad(config.coursesHour)}h${pad(config.coursesMinute)} si stock bas`}
+              label={t('settings.notifications.coursesLabel')}
+              detail={t('settings.notifications.coursesDetail', { hour: pad(config.coursesHour), minute: pad(config.coursesMinute) })}
               enabled={config.coursesEnabled}
               onToggle={() => updateConfig({ coursesEnabled: !config.coursesEnabled })}
               colors={colors}
@@ -175,8 +178,8 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
 
             <ToggleItem
               emoji="📱"
-              label="Rappel quotidien"
-              detail={`Tous les jours à ${pad(config.generalHour)}h${pad(config.generalMinute)}`}
+              label={t('settings.notifications.generalLabel')}
+              detail={t('settings.notifications.generalDetail', { hour: pad(config.generalHour), minute: pad(config.generalMinute) })}
               enabled={config.generalEnabled}
               onToggle={() => updateConfig({ generalEnabled: !config.generalEnabled })}
               colors={colors}
@@ -187,8 +190,8 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
             {hasGrossesse && (
               <ToggleItem
                 emoji="🤰"
-                label="Suivi grossesse"
-                detail={`${JOURS[config.grossesseDay]} à ${pad(config.grossesseHour)}h${pad(config.grossesseMinute)}`}
+                label={t('settings.notifications.grossesseLabel')}
+                detail={t('settings.notifications.grossesseDetail', { day: JOURS[config.grossesseDay], hour: pad(config.grossesseHour), minute: pad(config.grossesseMinute) })}
                 enabled={config.grossesseEnabled}
                 onToggle={() => updateConfig({ grossesseEnabled: !config.grossesseEnabled })}
                 colors={colors}
@@ -198,8 +201,8 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
 
             <ToggleItem
               emoji="🙏"
-              label="Gratitude du soir"
-              detail={`Tous les jours à ${pad(config.gratitudeHour)}h${pad(config.gratitudeMinute)}`}
+              label={t('settings.notifications.gratitudeLabel')}
+              detail={t('settings.notifications.gratitudeDetail', { hour: pad(config.gratitudeHour), minute: pad(config.gratitudeMinute) })}
               enabled={config.gratitudeEnabled}
               onToggle={() => updateConfig({ gratitudeEnabled: !config.gratitudeEnabled })}
               colors={colors}
@@ -208,8 +211,8 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
 
             <ToggleItem
               emoji="📬"
-              label="Résumé hebdo IA"
-              detail={`Dimanche à ${pad(config.weeklyAISummaryHour)}h${pad(config.weeklyAISummaryMinute)} · Telegram · Clé API requise`}
+              label={t('settings.notifications.weeklyAILabel')}
+              detail={t('settings.notifications.weeklyAIDetail', { hour: pad(config.weeklyAISummaryHour), minute: pad(config.weeklyAISummaryMinute) })}
               enabled={config.weeklyAISummaryEnabled}
               onToggle={() => updateConfig({ weeklyAISummaryEnabled: !config.weeklyAISummaryEnabled })}
               colors={colors}
@@ -217,7 +220,7 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
             />
             <View style={styles.sendNowRow}>
               <Button
-                label={sendingWeekly ? 'Envoi en cours...' : 'Envoyer maintenant'}
+                label={sendingWeekly ? t('settings.notifications.sendNowLoading') : t('settings.notifications.sendNow')}
                 onPress={handleSendWeeklyNow}
                 variant="secondary"
                 size="sm"
@@ -230,16 +233,16 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
       )}
 
       {/* Telegram notifications */}
-      <View style={styles.section} accessibilityRole="summary" accessibilityLabel="Section Notifications Telegram">
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Notifications Telegram</Text>
+      <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.notifications.telegramA11y')}>
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.notifications.telegramTitle')}</Text>
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           <View style={styles.row}>
-            <Text style={[styles.rowLabel, { color: colors.textSub }]}>🔔 Notifications Telegram</Text>
+            <Text style={[styles.rowLabel, { color: colors.textSub }]}>{t('settings.notifications.telegramLabel')}</Text>
             <Text style={[styles.rowStatus, { color: colors.textMuted }]}>
-              {notifPrefs.notifications.filter((n: any) => n.enabled).length}/{notifPrefs.notifications.length} actives
+              {t('settings.notifications.telegramStatus', { active: notifPrefs.notifications.filter((n: any) => n.enabled).length, total: notifPrefs.notifications.length })}
             </Text>
           </View>
-          <Button label="Configurer" onPress={() => setShowNotifSettings(true)} variant="secondary" size="sm" fullWidth />
+          <Button label={t('settings.notifications.configureBtn')} onPress={() => setShowNotifSettings(true)} variant="secondary" size="sm" fullWidth />
         </View>
       </View>
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Alert } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { formatDateForDisplay } from '../../lib/parser';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Button } from '../ui/Button';
@@ -16,6 +17,7 @@ interface SettingsVacationProps {
 }
 
 export function SettingsVacation({ vacationConfig, isVacationActive, activateVacation, deactivateVacation }: SettingsVacationProps) {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
   const [showForm, setShowForm] = useState(false);
   const [startDate, setStartDate] = useState('');
@@ -23,30 +25,30 @@ export function SettingsVacation({ vacationConfig, isVacationActive, activateVac
 
   const handleActivate = async () => {
     if (!startDate || !endDate) {
-      Alert.alert('Champs requis', 'Les deux dates sont obligatoires.');
+      Alert.alert(t('settings.vacation.fieldsRequired'), t('settings.vacation.fieldsRequiredMsg'));
       return;
     }
     if (endDate <= startDate) {
-      Alert.alert('Dates invalides', 'La date de fin doit être après la date de début.');
+      Alert.alert(t('settings.vacation.invalidDates'), t('settings.vacation.endAfterStart'));
       return;
     }
     const todayStr = new Date().toISOString().slice(0, 10);
     if (endDate < todayStr) {
-      Alert.alert('Dates invalides', 'La date de fin doit être aujourd\'hui ou plus tard.');
+      Alert.alert(t('settings.vacation.invalidDates'), t('settings.vacation.endInFuture'));
       return;
     }
     await activateVacation(startDate, endDate);
     setShowForm(false);
-    Alert.alert('☀️ Mode vacances activé !', 'Rendez-vous dans l\'onglet Tâches pour voir votre checklist.');
+    Alert.alert(t('settings.vacation.activatedTitle'), t('settings.vacation.activatedMessage'));
   };
 
   const handleDeactivate = () => {
     Alert.alert(
-      'Désactiver le mode vacances ?',
-      'Les tâches normales seront restaurées. La checklist vacances sera conservée.',
+      t('settings.vacation.deactivateTitle'),
+      t('settings.vacation.deactivateMessage'),
       [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Désactiver', style: 'destructive', onPress: deactivateVacation },
+        { text: t('settings.vacation.cancel'), style: 'cancel' },
+        { text: t('settings.vacation.deactivateConfirmBtn'), style: 'destructive', onPress: deactivateVacation },
       ]
     );
   };
@@ -59,40 +61,40 @@ export function SettingsVacation({ vacationConfig, isVacationActive, activateVac
     const todayMs = now.getTime();
     if (todayMs < start.getTime()) {
       const days = Math.ceil((start.getTime() - todayMs) / 86400000);
-      return `Départ dans ${days} jour${days > 1 ? 's' : ''}`;
+      return t('settings.vacation.departureCountdown', { count: days });
     }
     const days = Math.ceil((end.getTime() - todayMs) / 86400000);
-    return `Fin dans ${days} jour${days > 1 ? 's' : ''}`;
+    return t('settings.vacation.endCountdown', { count: days });
   };
 
   return (
-    <View style={styles.section} accessibilityRole="summary" accessibilityLabel="Section Mode Vacances">
-      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Mode Vacances</Text>
+    <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.vacation.sectionA11y')}>
+      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.vacation.sectionTitle')}</Text>
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
         {isVacationActive && vacationConfig ? (
           <>
             <View style={styles.row}>
-              <Text style={[styles.rowLabel, { color: colors.textSub }]}>☀️ Vacances en cours</Text>
+              <Text style={[styles.rowLabel, { color: colors.textSub }]}>{t('settings.vacation.activeLabel')}</Text>
             </View>
             <Text style={[styles.dates, { color: colors.text }]}>
-              Du {formatDateForDisplay(vacationConfig.startDate)} au {formatDateForDisplay(vacationConfig.endDate)}
+              {t('settings.vacation.dateRange', { start: formatDateForDisplay(vacationConfig.startDate), end: formatDateForDisplay(vacationConfig.endDate) })}
             </Text>
             <Text style={[styles.countdown, { color: primary }]}>{renderCountdown()}</Text>
-            <Button label="Désactiver le mode vacances" onPress={handleDeactivate} variant="danger" size="sm" fullWidth />
+            <Button label={t('settings.vacation.deactivateBtn')} onPress={handleDeactivate} variant="danger" size="sm" fullWidth />
           </>
         ) : (
           <>
             {!showForm ? (
-              <Button label="☀️ Activer le mode vacances" onPress={() => { setShowForm(true); setStartDate(''); setEndDate(''); }} variant="secondary" size="sm" fullWidth />
+              <Button label={t('settings.vacation.activateBtn')} onPress={() => { setShowForm(true); setStartDate(''); setEndDate(''); }} variant="secondary" size="sm" fullWidth />
             ) : (
               <>
-                <Text style={[styles.rowLabel, { color: colors.textSub }]}>📅 Date de début</Text>
-                <DateInput value={startDate} onChange={setStartDate} placeholder="Date de début" />
-                <Text style={[styles.rowLabel, { color: colors.textSub }]}>📅 Date de fin</Text>
-                <DateInput value={endDate} onChange={setEndDate} placeholder="Date de fin" />
+                <Text style={[styles.rowLabel, { color: colors.textSub }]}>{t('settings.vacation.startDateLabel')}</Text>
+                <DateInput value={startDate} onChange={setStartDate} placeholder={t('settings.vacation.startDatePlaceholder')} />
+                <Text style={[styles.rowLabel, { color: colors.textSub }]}>{t('settings.vacation.endDateLabel')}</Text>
+                <DateInput value={endDate} onChange={setEndDate} placeholder={t('settings.vacation.endDatePlaceholder')} />
                 <View style={styles.btnRow}>
-                  <Button label="Annuler" onPress={() => setShowForm(false)} variant="ghost" size="sm" />
-                  <Button label="Activer" onPress={handleActivate} variant="primary" size="sm" />
+                  <Button label={t('settings.vacation.cancelBtn')} onPress={() => setShowForm(false)} variant="ghost" size="sm" />
+                  <Button label={t('settings.vacation.activateConfirmBtn')} onPress={handleActivate} variant="primary" size="sm" />
                 </View>
               </>
             )}

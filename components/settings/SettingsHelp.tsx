@@ -7,6 +7,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useHelp } from '../../contexts/HelpContext';
 import { useVault } from '../../contexts/VaultContext';
@@ -20,6 +21,7 @@ import { VaultManager } from '../../lib/vault';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
 
 export function SettingsHelp() {
+  const { t } = useTranslation();
   const { colors, primary, tint } = useThemeColors();
   const { resetAllHints, isTemplateInstalled, markTemplateInstalled } = useHelp();
   const { vaultPath, profiles, refresh } = useVault();
@@ -28,15 +30,15 @@ export function SettingsHelp() {
 
   const handleResetHints = () => {
     Alert.alert(
-      'Revoir les astuces',
-      'Les bulles d\'aide seront affichées à nouveau sur chaque écran.',
+      t('settings.help.resetHintsAlertTitle'),
+      t('settings.help.resetHintsAlertMessage'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('settings.help.cancel'), style: 'cancel' },
         {
-          text: 'Réinitialiser',
+          text: t('settings.help.resetBtn'),
           onPress: async () => {
             await resetAllHints();
-            showToast('Les astuces seront affichées à nouveau', 'success');
+            showToast(t('settings.help.resetSuccess'), 'success');
           },
         },
       ]
@@ -45,12 +47,12 @@ export function SettingsHelp() {
 
   const handleInstallPack = (packId: string, packName: string) => {
     Alert.alert(
-      'Installer le modèle',
-      `Installer « ${packName} » dans votre vault ?\n\nLes fichiers existants ne seront pas écrasés.`,
+      t('settings.help.installAlertTitle'),
+      t('settings.help.installAlertMessage', { name: packName }),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('settings.help.cancel'), style: 'cancel' },
         {
-          text: 'Installer',
+          text: t('settings.help.installBtn'),
           onPress: async () => {
             if (!vaultPath) return;
             try {
@@ -65,9 +67,9 @@ export function SettingsHelp() {
               const result = await vault.installTemplates([packId], parents, children);
               await markTemplateInstalled(packId);
               await refresh();
-              showToast(`${packName} installé (${result.installed} fichier${result.installed > 1 ? 's' : ''})`, 'success');
+              showToast(t('settings.help.installSuccess', { name: packName, count: result.installed }), 'success');
             } catch (e) {
-              showToast(`Erreur : ${e}`, 'error');
+              showToast(t('settings.help.installError', { error: String(e) }), 'error');
             }
           },
         },
@@ -80,14 +82,14 @@ export function SettingsHelp() {
   const ITEMS = [
     {
       emoji: '❓',
-      title: 'Guide de l\'application',
-      subtitle: 'Découvrez toutes les fonctions',
+      title: t('settings.help.guideTitle'),
+      subtitle: t('settings.help.guideSubtitle'),
       onPress: () => setShowGuide(true),
     },
     {
       emoji: '🔄',
-      title: 'Revoir les astuces',
-      subtitle: 'Relancer les bulles d\'aide',
+      title: t('settings.help.resetHintsTitle'),
+      subtitle: t('settings.help.resetHintsSubtitle'),
       onPress: handleResetHints,
     },
   ];
@@ -98,8 +100,8 @@ export function SettingsHelp() {
 
   return (
     <>
-      <View style={styles.section} accessibilityRole="summary" accessibilityLabel="Section Aide et découverte">
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Aide et découverte</Text>
+      <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.help.sectionA11y')}>
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.help.sectionTitle')}</Text>
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           {ITEMS.map((item, index) => (
             <TouchableOpacity
@@ -128,7 +130,7 @@ export function SettingsHelp() {
       </View>
 
       {/* Section Modèles de contenu */}
-      <CollapsibleSection id="templates" title="Modèles de contenu" defaultCollapsed>
+      <CollapsibleSection id="templates" title={t('settings.help.templatesTitle')} defaultCollapsed>
         <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
           {visiblePacks.map((pack, index) => {
             const installed = isTemplateInstalled(pack.id);
@@ -150,7 +152,7 @@ export function SettingsHelp() {
                 </View>
                 {installed ? (
                   <View style={[styles.installedBadge, { backgroundColor: tint }]}>
-                    <Text style={[styles.installedText, { color: primary }]}>Installé</Text>
+                    <Text style={[styles.installedText, { color: primary }]}>{t('settings.help.installed')}</Text>
                   </View>
                 ) : (
                   <TouchableOpacity
@@ -158,9 +160,9 @@ export function SettingsHelp() {
                     onPress={() => handleInstallPack(pack.id, pack.name)}
                     activeOpacity={0.7}
                     accessibilityRole="button"
-                    accessibilityLabel={`Installer ${pack.name}`}
+                    accessibilityLabel={t('settings.help.installA11y', { name: pack.name })}
                   >
-                    <Text style={[styles.installBtnText, { color: colors.onPrimary }]}>Installer</Text>
+                    <Text style={[styles.installBtnText, { color: colors.onPrimary }]}>{t('settings.help.installBtn')}</Text>
                   </TouchableOpacity>
                 )}
               </View>

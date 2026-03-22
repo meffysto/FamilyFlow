@@ -1,23 +1,25 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 
 export function SettingsAppearance() {
+  const { t } = useTranslation();
   const { primary, tint, colors, darkModePreference, setDarkModePreference } = useThemeColors();
 
   return (
-    <View style={styles.section} accessibilityRole="summary" accessibilityLabel="Section Apparence">
-      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Apparence</Text>
+    <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.appearance.sectionA11y')}>
+      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.appearance.sectionTitle')}</Text>
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
-        <Text style={[styles.label, { color: colors.textSub }]}>🌙 Mode sombre</Text>
+        <Text style={[styles.label, { color: colors.textSub }]}>{t('settings.appearance.darkModeLabel')}</Text>
         <View style={styles.row}>
           {([
-            { value: 'auto', label: 'Auto', emoji: '⚙️' },
-            { value: 'light', label: 'Clair', emoji: '☀️' },
-            { value: 'dark', label: 'Sombre', emoji: '🌙' },
+            { value: 'auto', label: t('settings.appearance.auto'), emoji: '⚙️' },
+            { value: 'light', label: t('settings.appearance.light'), emoji: '☀️' },
+            { value: 'dark', label: t('settings.appearance.dark'), emoji: '🌙' },
           ] as const).map((opt) => (
             <TouchableOpacity
               key={opt.value}
@@ -30,7 +32,7 @@ export function SettingsAppearance() {
               activeOpacity={0.7}
               accessibilityRole="radio"
               accessibilityState={{ selected: darkModePreference === opt.value }}
-              accessibilityLabel={`Mode ${opt.label}`}
+              accessibilityLabel={t('settings.appearance.modeA11y', { mode: opt.label })}
             >
               <Text style={styles.chipEmoji}>{opt.emoji}</Text>
               <Text style={[

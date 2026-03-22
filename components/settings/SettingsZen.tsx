@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Switch, TouchableOpacity } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Chip } from '../ui/Chip';
 import { Spacing, Radius } from '../../constants/spacing';
@@ -21,19 +22,19 @@ interface SettingsZenProps {
   onSave: (config: ZenConfig) => Promise<void>;
 }
 
-const ZEN_SECTIONS = [
-  { id: 'overdue',   emoji: '⚠️', label: 'Tâches en retard',     detail: 'Aucune tâche en retard' },
-  { id: 'menage',    emoji: '🧹',  label: 'Ménage du jour',       detail: 'Toutes les tâches ménage faites' },
-  { id: 'photos',    emoji: '📸',  label: 'Photo du jour',        detail: 'Photo prise pour chaque enfant' },
-  { id: 'meals',     emoji: '🍽️', label: 'Repas du jour',        detail: 'Au moins un repas planifié' },
-  { id: 'recipes',   emoji: '📖',  label: 'Idée recette',         detail: 'Repas du jour déjà planifiés' },
-  { id: 'courses',   emoji: '🛒',  label: 'Liste de courses',     detail: 'Liste de courses vide' },
-  { id: 'rdvs',      emoji: '📅',  label: 'Rendez-vous',          detail: 'Aucun RDV aujourd\'hui' },
-  { id: 'gratitude', emoji: '🙏',  label: 'Gratitude',            detail: 'Gratitude du jour complétée' },
-] as const;
+const ZEN_SECTION_IDS = ['overdue', 'menage', 'photos', 'meals', 'recipes', 'courses', 'rdvs', 'gratitude'] as const;
+const ZEN_EMOJIS: Record<string, string> = { overdue: '⚠️', menage: '🧹', photos: '📸', meals: '🍽️', recipes: '📖', courses: '🛒', rdvs: '📅', gratitude: '🙏' };
 
 export function SettingsZen({ zenConfig, onSave }: SettingsZenProps) {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
+
+  const ZEN_SECTIONS = ZEN_SECTION_IDS.map(id => ({
+    id,
+    emoji: ZEN_EMOJIS[id],
+    label: t(`settings.zen.${id}.label`),
+    detail: t(`settings.zen.${id}.detail`),
+  }));
   const [expanded, setExpanded] = useState(false);
 
   const handleToggleEnabled = () => {
@@ -55,19 +56,19 @@ export function SettingsZen({ zenConfig, onSave }: SettingsZenProps) {
   };
 
   return (
-    <View style={styles.section} accessibilityRole="summary" accessibilityLabel="Section Mode Zen">
-      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>🧘 Mode zen</Text>
+    <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.zen.sectionA11y')}>
+      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('settings.zen.sectionTitle')}</Text>
 
       {/* Card 1 : Description + toggle global */}
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
         <Text style={[styles.description, { color: colors.textSub }]}>
-          Quand toutes les conditions sont remplies, le dashboard affiche un espace de calme avec un cercle de respiration et un aperçu de demain.
+          {t('settings.zen.description')}
         </Text>
         <View style={styles.toggleRow}>
           <Text style={styles.toggleEmoji}>🧘</Text>
           <View style={styles.toggleContent}>
-            <Text style={[styles.toggleLabel, { color: colors.text }]}>Activer le mode zen</Text>
-            <Text style={[styles.toggleDetail, { color: colors.textMuted }]}>Cercle de respiration + aperçu de demain</Text>
+            <Text style={[styles.toggleLabel, { color: colors.text }]}>{t('settings.zen.enableLabel')}</Text>
+            <Text style={[styles.toggleDetail, { color: colors.textMuted }]}>{t('settings.zen.enableDetail')}</Text>
           </View>
           <Switch
             value={zenConfig.enabled}
@@ -75,7 +76,7 @@ export function SettingsZen({ zenConfig, onSave }: SettingsZenProps) {
             trackColor={{ true: primary, false: colors.switchOff }}
             thumbColor={colors.onPrimary}
             accessibilityRole="switch"
-            accessibilityLabel="Activer le mode zen"
+            accessibilityLabel={t('settings.zen.enableA11y')}
           />
         </View>
       </View>
@@ -88,14 +89,14 @@ export function SettingsZen({ zenConfig, onSave }: SettingsZenProps) {
             activeOpacity={0.7}
             style={styles.collapseHeader}
             accessibilityRole="button"
-            accessibilityLabel={expanded ? 'Réduire les sections requises' : 'Afficher les sections requises'}
+            accessibilityLabel={expanded ? t('settings.zen.collapseA11y') : t('settings.zen.expandA11y')}
           >
             <View style={{ flex: 1 }}>
-              <Text style={[styles.subTitle, { color: colors.text }]}>Sections requises</Text>
+              <Text style={[styles.subTitle, { color: colors.text }]}>{t('settings.zen.requiredSections')}</Text>
               <Text style={[styles.description, { color: colors.textSub }]}>
                 {expanded
-                  ? 'Ces sections doivent être terminées ou vides pour atteindre l\'état zen.'
-                  : `${ZEN_SECTIONS.length - zenConfig.excludedSections.length}/${ZEN_SECTIONS.length} sections actives`
+                  ? t('settings.zen.sectionsDescription')
+                  : t('settings.zen.sectionsCount', { active: ZEN_SECTIONS.length - zenConfig.excludedSections.length, total: ZEN_SECTIONS.length })
                 }
               </Text>
             </View>
@@ -119,7 +120,7 @@ export function SettingsZen({ zenConfig, onSave }: SettingsZenProps) {
                   <View style={styles.labelRow}>
                     <Text style={[styles.toggleLabel, { color: colors.text }]}>{s.label}</Text>
                     {s.id === 'meals' && (
-                      <Chip label="Toujours visible" size="sm" />
+                      <Chip label={t('settings.zen.alwaysVisible')} size="sm" />
                     )}
                   </View>
                   <Text style={[styles.toggleDetail, { color: colors.textMuted }]}>{s.detail}</Text>
@@ -130,7 +131,7 @@ export function SettingsZen({ zenConfig, onSave }: SettingsZenProps) {
                   trackColor={{ true: primary, false: colors.switchOff }}
                   thumbColor={colors.onPrimary}
                   accessibilityRole="switch"
-                  accessibilityLabel={`${s.label} requis pour le mode zen`}
+                  accessibilityLabel={t('settings.zen.sectionRequiredA11y', { label: s.label })}
                 />
               </View>
             );
