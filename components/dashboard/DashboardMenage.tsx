@@ -1,5 +1,5 @@
 /**
- * DashboardMenage.tsx — Section ménage du jour
+ * DashboardMenage.tsx — Tâches maison du jour
  */
 
 import React from 'react';
@@ -19,29 +19,29 @@ function DashboardMenageInner({ vaultFileExists, activateCardTemplate, handleTas
   const { tasks } = useVault();
 
   const todayStr = new Date().toISOString().slice(0, 10);
-  const isMenageTask = (t: { section?: string }) =>
-    t.section != null && t.section.toLowerCase().includes('ménage');
-  const pendingMenage = tasks.filter((t) => isMenageTask(t) && !t.completed && (!t.dueDate || t.dueDate <= todayStr));
+  const pendingMaison = tasks.filter((t) =>
+    t.sourceFile.includes('Maison') && !t.completed && t.dueDate && t.dueDate <= todayStr
+  );
 
   if (!vaultFileExists.menage) return (
-    <DashboardCard key="menage" title="Ménage du jour" icon="🧹" color={colors.success}>
+    <DashboardCard key="menage" title="Tâches maison du jour" icon="🏠" color={colors.success}>
       <DashboardEmptyState
-        description="Organisez le ménage par jour avec des tâches récurrentes"
+        description="Organisez les tâches de la maison avec des récurrences"
         onActivate={() => activateCardTemplate('menage')}
         activateLabel="Importer le modèle"
       />
     </DashboardCard>
   );
 
-  if (pendingMenage.length === 0) return (
-    <DashboardCard key="menage" title="Ménage du jour" icon="🧹" color={colors.success}>
+  if (pendingMaison.length === 0) return (
+    <DashboardCard key="menage" title="Tâches maison du jour" icon="🏠" color={colors.success}>
       <Text style={[styles.emptyHint, { color: colors.textMuted }]}>Tout est fait pour aujourd'hui ✓</Text>
     </DashboardCard>
   );
 
   return (
-    <DashboardCard key="menage" title="Ménage du jour" icon="🧹" count={pendingMenage.length} color={colors.success} onPressMore={() => router.push('/(tabs)/tasks')}>
-      {pendingMenage.slice(0, 4).map((task) => (
+    <DashboardCard key="menage" title="Tâches maison du jour" icon="🏠" count={pendingMaison.length} color={colors.success} onPressMore={() => router.push({ pathname: '/(tabs)/tasks', params: { filter: 'maison' } })}>
+      {pendingMaison.slice(0, 4).map((task) => (
         <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} hideSection compact />
       ))}
     </DashboardCard>

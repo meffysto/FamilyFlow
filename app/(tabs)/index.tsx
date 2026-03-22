@@ -103,7 +103,7 @@ const ALL_SECTIONS: SectionPref[] = [
   { id: 'insights',   label: 'Suggestions',             emoji: '💡', visible: true,  priority: 'high' },
   { id: 'vacation',   label: 'Vacances',               emoji: '☀️', visible: true,  priority: 'high' },
   { id: 'overdue',    label: 'En retard',               emoji: '⚠️', visible: true,  priority: 'high' },
-  { id: 'menage',     label: 'Ménage du jour',         emoji: '🧹', visible: true,  priority: 'high' },
+  { id: 'menage',     label: 'Tâches maison du jour',  emoji: '🏠', visible: true,  priority: 'high' },
   { id: 'meals',      label: 'Repas du jour',           emoji: '🍽️', visible: true,  priority: 'high' },
   { id: 'calendar',   label: 'Calendrier',              emoji: '📆', visible: true,  priority: 'high' },
   // Secondaires — visibles par défaut
@@ -430,9 +430,10 @@ export default function DashboardScreen() {
   );
 
   // Données dérivées pour le tri intelligent
-  const isMenageTask = (t: { section?: string }) =>
-    t.section != null && t.section.toLowerCase().includes('ménage');
-  const pendingMenage = tasks.filter((t) => isMenageTask(t) && !t.completed);
+  const todayForMaison = new Date().toISOString().slice(0, 10);
+  const pendingMenage = tasks.filter((t) =>
+    t.sourceFile.includes('Maison') && !t.completed && t.dueDate && t.dueDate <= todayForMaison
+  );
   const todayDayName = useMemo(() => {
     const name = format(new Date(), 'EEEE', { locale: fr });
     return name.charAt(0).toUpperCase() + name.slice(1);
