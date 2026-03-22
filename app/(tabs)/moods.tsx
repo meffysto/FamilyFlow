@@ -49,9 +49,19 @@ export default function MoodsScreen() {
 
   const todayStr = new Date().toISOString().slice(0, 10);
 
+  const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
+
   const moodableProfiles = useMemo(
     () => profiles.filter(p => p.statut !== 'grossesse'),
     [profiles],
+  );
+
+  // Enfants ne peuvent modifier que leur propre humeur
+  const editableProfileIds = useMemo(
+    () => isChildMode
+      ? new Set([activeProfile?.id].filter(Boolean))
+      : new Set(moodableProfiles.map(p => p.id)),
+    [moodableProfiles, isChildMode, activeProfile],
   );
 
   const todayMoods = useMemo(
@@ -157,8 +167,9 @@ export default function MoodsScreen() {
 
             {moodableProfiles.map(p => {
               const entry = todayMoods.find(m => m.profileId === p.id);
+              const canEdit = editableProfileIds.has(p.id);
               return (
-                <View key={p.id} style={[styles.familyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View key={p.id} style={[styles.familyCard, { backgroundColor: colors.card, borderColor: colors.border }, !canEdit && { opacity: 0.6 }]}>
                   <View style={styles.familyCardHeader}>
                     <Text style={[styles.familyName, { color: colors.text }]}>
                       {p.avatar} {p.name}
@@ -169,21 +180,27 @@ export default function MoodsScreen() {
                       </Text>
                     )}
                   </View>
-                  <View style={styles.familyMoodRow}>
-                    {MOOD_LEVELS.map(level => (
-                      <TouchableOpacity
-                        key={level}
-                        style={[
-                          styles.familyMoodBtn,
-                          { backgroundColor: entry?.level === level ? primary + '20' : colors.cardAlt, borderColor: entry?.level === level ? primary : 'transparent' },
-                        ]}
-                        onPress={() => handleSelectMood(level, p.id, p.name)}
-                        accessibilityLabel={`Humeur ${level} pour ${p.name}`}
-                      >
-                        <Text style={styles.familyMoodEmoji}>{MOOD_EMOJIS[level]}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
+                  {canEdit ? (
+                    <View style={styles.familyMoodRow}>
+                      {MOOD_LEVELS.map(level => (
+                        <TouchableOpacity
+                          key={level}
+                          style={[
+                            styles.familyMoodBtn,
+                            { backgroundColor: entry?.level === level ? primary + '20' : colors.cardAlt, borderColor: entry?.level === level ? primary : 'transparent' },
+                          ]}
+                          onPress={() => handleSelectMood(level, p.id, p.name)}
+                          accessibilityLabel={`Humeur ${level} pour ${p.name}`}
+                        >
+                          <Text style={styles.familyMoodEmoji}>{MOOD_EMOJIS[level]}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  ) : (
+                    <Text style={[styles.familyMoodReadonly, { color: colors.textMuted }]}>
+                      {entry ? MOOD_EMOJIS[entry.level] : '—'}
+                    </Text>
+                  )}
                 </View>
               );
             })}
@@ -323,6 +340,11 @@ const styles = StyleSheet.create({
   },
   familyMood: {
     fontSize: 20,
+  },
+  familyMoodReadonly: {
+    fontSize: FontSize.heading,
+    textAlign: 'center',
+    paddingVertical: Spacing.xs,
   },
   familyNote: {
     fontSize: FontSize.caption,
