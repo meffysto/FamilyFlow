@@ -308,7 +308,7 @@ export default function RDVScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <View style={[styles.header, { backgroundColor: colors.bg }]}>
-        <Text style={[styles.title, { color: colors.text }]}>📅 Rendez-vous</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('rdvScreen.title')}</Text>
         <TouchableOpacity
           style={[styles.addBtn, { backgroundColor: tint, borderColor: primary }]}
           onPress={openCreate}

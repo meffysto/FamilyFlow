@@ -38,8 +38,19 @@ const RING_RADIUS = 35;
 const RING_STROKE = 6;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
+/** Traduit les labels statiques via le namespace skills */
+function useSkillt() {
+  const { t } = useTranslation('skills');
+  const catLabel = (id: string) => t(`categories.${id}`, { defaultValue: id });
+  const bracketLabel = (id: string) => t(`ageBrackets.${id}.label`, { defaultValue: id });
+  const bracketSubtitle = (id: string) => t(`ageBrackets.${id}.subtitle`, { defaultValue: '' });
+  const skillLabel = (id: string) => t(`tree.${id}`, { defaultValue: id });
+  return { catLabel, bracketLabel, bracketSubtitle, skillLabel };
+}
+
 export default function SkillsScreen() {
   const { t } = useTranslation();
+  const sk = useSkillt();
   const headerRef = useRef<View>(null);
   const { profiles, activeProfile, skillTrees, unlockSkill, refresh } = useVault();
   const { primary, colors } = useThemeColors();
@@ -138,7 +149,7 @@ export default function SkillsScreen() {
         const cat = SKILL_CATEGORIES.find((c) => c.id === skill.categoryId);
         if (cat) {
           // Petit délai pour laisser le modal se fermer
-          setTimeout(() => setCelebration({ emoji: cat.emoji, label: cat.label }), 400);
+          setTimeout(() => setCelebration({ emoji: cat.emoji, label: sk.catLabel(cat.id) }), 400);
         }
       }
     }
@@ -275,7 +286,7 @@ export default function SkillsScreen() {
               accessibilityRole="button"
             >
               <Text style={[styles.bracketPillText, { color: primary }]}>
-                {activeBracketInfo?.label ?? activeBracket} · {activeBracketInfo?.subtitle ?? ''}
+                {sk.bracketLabel(activeBracket)} · {sk.bracketSubtitle(activeBracket)}
               </Text>
               <Text style={[styles.bracketPillArrow, { color: primary }]}> ▾</Text>
             </TouchableOpacity>
@@ -293,7 +304,7 @@ export default function SkillsScreen() {
           {getCategoriesForBracket(activeBracket).map((cat) => (
             <Chip
               key={cat.id}
-              label={`${cat.emoji} ${cat.label}`}
+              label={`${cat.emoji} ${sk.catLabel(cat.id)}`}
               selected={selectedCategory === cat.id}
               onPress={() => setSelectedCategory(cat.id)}
             />
@@ -317,10 +328,10 @@ export default function SkillsScreen() {
         onClose={() => setModalVisible(false)}
         skill={selectedSkill ? {
           id: selectedSkill.id,
-          label: selectedSkill.label,
+          label: sk.skillLabel(selectedSkill.id),
           categoryEmoji: categoryForSkill?.emoji ?? '',
-          categoryLabel: categoryForSkill?.label ?? '',
-          ageBracketLabel: AGE_BRACKETS.find((b) => b.id === selectedSkill.ageBracketId)?.label ?? '',
+          categoryLabel: sk.catLabel(categoryForSkill?.id ?? ''),
+          ageBracketLabel: sk.bracketLabel(selectedSkill.ageBracketId),
           xp: XP_PER_BRACKET[selectedSkill.ageBracketId],
         } : null}
         state={selectedSkillState}

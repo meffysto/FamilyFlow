@@ -588,7 +588,7 @@ export default function RoutinesScreen() {
                       activeOpacity={0.7}
                     >
                       <Text style={[styles.startBtnText, { color: colors.onPrimary }]}>
-                        {doneCount > 0 ? '▶️ Continuer' : '▶️ Commencer'}
+                        {doneCount > 0 ? t('routines.continueBtn') : t('routines.startBtn')}
                       </Text>
                     </TouchableOpacity>
                   )}

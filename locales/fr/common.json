@@ -2187,6 +2187,8 @@
     }
   },
   "routines": {
+    "startBtn": "▶️ Commencer",
+    "continueBtn": "▶️ Continuer",
     "toast": {
       "complete": "{{emoji}} {{profileName}} a terminé la routine {{label}} ! +{{points}} pts{{loot}}",
       "pointsError": "Erreur lors de l'enregistrement des points",
@@ -2298,6 +2300,7 @@
     "deleteConfirm": "Supprimer « {{title}} » ?"
   },
   "rdvScreen": {
+    "title": "📅 Rendez-vous",
     "placeholder": {
       "search": "🔍 Rechercher un rendez-vous..."
     },

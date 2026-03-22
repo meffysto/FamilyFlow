@@ -55,7 +55,7 @@
       "moods": "Moods",
       "nightMode": "Night Mode",
       "pregnancy": "Pregnancy",
-      "photos": "Photos",
+      "photos": "Pictures",
       "quotes": "Kids' Quotes",
       "gratitude": "Gratitude",
       "skills": "Skills",
@@ -2187,6 +2187,8 @@
     }
   },
   "routines": {
+    "startBtn": "▶️ Start",
+    "continueBtn": "▶️ Continue",
     "toast": {
       "complete": "{{emoji}} {{profileName}} completed routine {{label}}! +{{points}} pts{{loot}}",
       "pointsError": "Error saving points",
@@ -2298,6 +2300,7 @@
     "deleteConfirm": "Delete \"{{title}}\"?"
   },
   "rdvScreen": {
+    "title": "📅 Appointments",
     "placeholder": {
       "search": "🔍 Search appointments..."
     },

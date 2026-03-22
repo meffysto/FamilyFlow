@@ -7,6 +7,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { Pressable, View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
@@ -32,6 +33,9 @@ export function SkillTreeGraph({
   onSkillPress,
 }: SkillTreeGraphProps) {
   const { colors } = useThemeColors();
+  const { t: ts } = useTranslation('skills');
+  const catLabel = (id: string) => ts(`categories.${id}`, { defaultValue: id });
+  const skillLabel = (id: string) => ts(`tree.${id}`, { defaultValue: id });
 
   // Catégories 100% complétées démarrées réduites pour lisibilité
   const [manualOverrides, setManualOverrides] = useState<Record<string, boolean>>({});
@@ -88,7 +92,7 @@ export function SkillTreeGraph({
               onPress={() => toggleCategory(category.id)}
               style={styles.branchHeader}
               accessibilityRole="button"
-              accessibilityLabel={`${category.label}, ${unlockedCount} sur ${totalCount} débloquées`}
+              accessibilityLabel={`${catLabel(category.id)}, ${unlockedCount}/${totalCount}`}
             >
               {/* Icône catégorie */}
               <View
@@ -108,7 +112,7 @@ export function SkillTreeGraph({
                   style={[styles.categoryName, { color: colors.text }]}
                   numberOfLines={1}
                 >
-                  {category.label}
+                  {catLabel(category.id)}
                 </Text>
                 <Text
                   style={[styles.categoryCount, { color: colors.textMuted }]}
@@ -167,7 +171,7 @@ export function SkillTreeGraph({
                     <React.Fragment key={skill.id}>
                       <View style={styles.nodeRow}>
                         <SkillNode
-                          label={skill.label}
+                          label={skillLabel(skill.id)}
                           emoji={category.emoji}
                           categoryColor={category.color}
                           state={state}
