@@ -348,7 +348,7 @@ export default function TasksScreen() {
     }
     setIsSaving(true);
     try {
-      const mentions = newTaskAssignees.map((n) => `@${n}`).join(' ');
+      const mentions = newTaskAssignees.map((n) => `@${n.replace(/\s+/g, '_')}`).join(' ');
       const fullText = mentions ? `${newTaskText.trim()} ${mentions}` : newTaskText.trim();
       await addTask(fullText, newTaskTarget, newTaskDueDate || undefined, newTaskRecurrence || undefined);
       setNewTaskText('');
@@ -417,7 +417,7 @@ export default function TasksScreen() {
     try {
       // Retirer les anciennes mentions du texte, puis ajouter les nouvelles
       const cleanText = editTaskText.trim().replace(/@\S+/g, '').trim();
-      const mentions = editTaskAssignees.map((n) => `@${n}`).join(' ');
+      const mentions = editTaskAssignees.map((n) => `@${n.replace(/\s+/g, '_')}`).join(' ');
       const fullText = mentions ? `${cleanText} ${mentions}` : cleanText;
       await editTask(editingTask, {
         text: fullText,
@@ -456,9 +456,9 @@ export default function TasksScreen() {
       // Apply filter
       if (filter === 'mes-taches') {
         if (activeProfile) {
-          const nameNorm = activeProfile.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '');
+          const nameNorm = activeProfile.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[\s_]+/g, '');
           result = result.filter((t) =>
-            t.mentions.some((m) => m.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '') === nameNorm)
+            t.mentions.some((m) => m.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[\s_]+/g, '') === nameNorm)
           );
         }
       } else if (filter.startsWith('enfant:')) {
@@ -554,10 +554,10 @@ export default function TasksScreen() {
 
   const completedCount = isVacationActive
     ? vacationTasks.filter((t) => t.completed).length
-    : tasks.filter((t) => t.completed).length;
+    : completedTasks.length;
   const totalCount = isVacationActive
     ? vacationTasks.length
-    : tasks.length;
+    : activeTasks.length + completedTasks.length;
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>

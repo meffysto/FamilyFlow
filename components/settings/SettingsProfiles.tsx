@@ -17,6 +17,11 @@ import { useAuth } from '../../contexts/AuthContext';
 import type { Gender } from '../../lib/types';
 
 const CHILD_AVATARS = ['👶', '🧒', '👦', '👧', '🍼', '🐣', '🎒', '👼'];
+const AVATAR_EMOJIS = [
+  '👨', '👩', '👴', '👵', '🧑', '👦', '👧', '👶',
+  '🧒', '👼', '🦸', '🧙', '🐱', '🐶', '🦊', '🐻',
+  '🦁', '🐰', '🐼', '🐸', '🌸', '⭐', '🎒', '🏠',
+];
 
 interface SettingsProfilesProps {
   profiles: any[];
@@ -299,14 +304,21 @@ export function SettingsProfiles({
               accessibilityLabel={t('settings.profiles.nameA11y')}
             />
             <Text style={[styles.inputLabel, { color: colors.textSub }]}>{t('settings.profiles.avatarLabel')}</Text>
-            <TextInput
-              style={[styles.input, styles.avatarInput, { borderColor: colors.inputBorder, color: colors.text }]}
-              value={editAvatar}
-              onChangeText={(text) => { const chars = [...text]; setEditAvatar(chars.length > 0 ? chars[chars.length - 1] : ''); }}
-              placeholder="👤" placeholderTextColor={colors.textFaint}
-              accessibilityLabel={t('settings.profiles.avatarA11y')}
-            />
-            <Text style={styles.avatarPreview}>{editAvatar || '👤'}</Text>
+            <View style={styles.emojiGrid}>
+              {AVATAR_EMOJIS.map((emoji) => (
+                <TouchableOpacity
+                  key={emoji}
+                  style={[
+                    styles.emojiBtn,
+                    { backgroundColor: editAvatar === emoji ? primary + '20' : colors.cardAlt, borderColor: editAvatar === emoji ? primary : 'transparent' },
+                  ]}
+                  onPress={() => setEditAvatar(emoji)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.emojiBtnText}>{emoji}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
             <Text style={[styles.inputLabel, { color: colors.textSub }]}>{t('settings.profiles.birthdateLabel')}</Text>
             <DateInput value={editBirthdate} onChange={setEditBirthdate} placeholder={t('settings.profiles.birthdatePlaceholder')} />
             {editingProfile?.role === 'enfant' && (
@@ -511,6 +523,9 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1.5, borderRadius: Radius.base, padding: Spacing.xl, fontSize: FontSize.body },
   avatarInput: { fontSize: 32, textAlign: 'center', paddingVertical: Spacing.md },
   avatarPreview: { fontSize: 48, textAlign: 'center', marginVertical: Spacing.xs },
+  emojiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginVertical: Spacing.sm },
+  emojiBtn: { width: 44, height: 44, borderRadius: Radius.lg, justifyContent: 'center', alignItems: 'center', borderWidth: 2 },
+  emojiBtnText: { fontSize: 24 },
   avatarGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md, marginBottom: Spacing.md },
   avatarBtn: { width: 48, height: 48, borderRadius: Radius.lg, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: 'transparent' },
   avatarEmoji: { fontSize: FontSize.heading },
