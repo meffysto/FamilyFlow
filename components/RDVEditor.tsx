@@ -31,14 +31,15 @@ import type { VaultContext as AIVaultContext } from '../lib/ai-service';
 import { DateInput } from './ui/DateInput';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
+import { useTranslation } from 'react-i18next';
 
-const TYPE_OPTIONS = [
-  { label: '👨‍⚕️ Pédiatre', value: 'pédiatre' },
-  { label: '💉 Vaccin', value: 'vaccin' },
-  { label: '🏥 PMI', value: 'pmi' },
-  { label: '🦷 Dentiste', value: 'dentiste' },
-  { label: '🚑 Urgences', value: 'urgences' },
-  { label: '📋 Autre', value: 'autre' },
+const TYPE_KEYS: { key: string; value: string }[] = [
+  { key: 'pediatrician', value: 'pédiatre' },
+  { key: 'vaccine', value: 'vaccin' },
+  { key: 'pmi', value: 'pmi' },
+  { key: 'dentist', value: 'dentiste' },
+  { key: 'emergency', value: 'urgences' },
+  { key: 'other', value: 'autre' },
 ];
 
 interface RDVEditorProps {
@@ -51,6 +52,7 @@ interface RDVEditorProps {
 }
 
 export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEditorProps) {
+  const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
   const { config: aiConfig, isConfigured: aiConfigured } = useAI();
@@ -105,15 +107,15 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
         const newQuestions = lines.map(l => l.replace(/^\d+[.)]\s*/, '').trim());
         if (newQuestions.length > 0) {
           setQuestions(prev => [...prev, ...newQuestions]);
-          showToast(`${newQuestions.length} questions suggérées !`, 'success');
+          showToast(t('editors.rdv.toast.questionsSuggested', { count: newQuestions.length }), 'success');
         } else {
           // Si pas de format numéroté, ajouter le texte brut comme une question
           setQuestions(prev => [...prev, resp.text.trim()]);
-          showToast('Briefing généré !', 'success');
+          showToast(t('editors.rdv.toast.briefingGenerated'), 'success');
         }
       }
     } catch {
-      showToast('Impossible de générer le briefing', 'error');
+      showToast(t('editors.rdv.toast.briefingError'), 'error');
     } finally {
       setIsBriefing(false);
     }
@@ -131,7 +133,7 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
 
   const handleSave = async () => {
     if (!dateRdv) {
-      showToast('La date est obligatoire', 'error');
+      showToast(t('editors.rdv.toast.dateRequired'), 'error');
       return;
     }
     setIsSaving(true);
@@ -158,11 +160,11 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
   const handleDelete = () => {
     if (!onDelete) return;
     Alert.alert(
-      '🗑️ Supprimer le RDV',
-      'Êtes-vous sûr de vouloir supprimer ce rendez-vous ?',
+      t('editors.rdv.deleteConfirmTitle'),
+      t('editors.rdv.deleteConfirmMsg'),
       [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Supprimer', style: 'destructive', onPress: onDelete },
+        { text: t('editors.cancel'), style: 'cancel' },
+        { text: t('editors.delete'), style: 'destructive', onPress: onDelete },
       ]
     );
   };
@@ -173,9 +175,9 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
       {/* Drag handle — indicates swipe-down-to-dismiss */}
       <View style={[styles.dragHandle, { backgroundColor: colors.separator }]} />
       <ModalHeader
-        title={isEditing ? 'Modifier le RDV' : 'Nouveau RDV'}
+        title={isEditing ? t('editors.rdv.titleEdit') : t('editors.rdv.titleNew')}
         onClose={onClose}
-        rightLabel={isSaving ? '…' : 'Enregistrer'}
+        rightLabel={isSaving ? '…' : t('editors.save')}
         onRight={handleSave}
         rightDisabled={isSaving}
       />
@@ -183,20 +185,20 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* Date */}
-        <Text style={[styles.label, { color: colors.textSub }]}>📅 Date *</Text>
-        <DateInput value={dateRdv} onChange={setDateRdv} placeholder="Choisir une date" />
+        <Text style={[styles.label, { color: colors.textSub }]}>{t('editors.rdv.dateLabel')}</Text>
+        <DateInput value={dateRdv} onChange={setDateRdv} placeholder={t('editors.rdv.datePlaceholder')} />
 
         {/* Heure */}
-        <Text style={[styles.label, { color: colors.textSub }]}>🕐 Heure</Text>
-        <DateInput value={heure} onChange={setHeure} mode="time" placeholder="Choisir l'heure" />
+        <Text style={[styles.label, { color: colors.textSub }]}>{t('editors.rdv.timeLabel')}</Text>
+        <DateInput value={heure} onChange={setHeure} mode="time" placeholder={t('editors.rdv.timePlaceholder')} />
 
         {/* Type */}
-        <Text style={[styles.label, { color: colors.textSub }]}>Type de RDV</Text>
+        <Text style={[styles.label, { color: colors.textSub }]}>{t('editors.rdv.typeLabel')}</Text>
         <View style={styles.chipRow}>
-          {TYPE_OPTIONS.map((opt) => (
+          {TYPE_KEYS.map((opt) => (
             <Chip
               key={opt.value}
-              label={opt.label}
+              label={t(`editors.rdv.typeOptions.${opt.key}`)}
               selected={typeRdv === opt.value}
               onPress={() => setTypeRdv(opt.value)}
             />
@@ -204,7 +206,7 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
         </View>
 
         {/* Enfant */}
-        <Text style={[styles.label, { color: colors.textSub }]}>👶 Enfant</Text>
+        <Text style={[styles.label, { color: colors.textSub }]}>{t('editors.rdv.childLabel')}</Text>
         <View style={styles.chipRow}>
           {enfantOptions.map((name) => (
             <Chip
@@ -217,31 +219,31 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
         </View>
 
         {/* Médecin */}
-        <Text style={[styles.label, { color: colors.textSub }]}>👨‍⚕️ Médecin</Text>
+        <Text style={[styles.label, { color: colors.textSub }]}>{t('editors.rdv.doctorLabel')}</Text>
         <TextInput
           style={inputStyle}
           value={médecin}
           onChangeText={setMédecin}
-          placeholder="Dr. Martin"
+          placeholder={t('editors.rdv.doctorPlaceholder')}
           placeholderTextColor={colors.textFaint}
         />
 
         {/* Lieu */}
-        <Text style={[styles.label, { color: colors.textSub }]}>📍 Lieu</Text>
+        <Text style={[styles.label, { color: colors.textSub }]}>{t('editors.rdv.locationLabel')}</Text>
         <TextInput
           style={inputStyle}
           value={lieu}
           onChangeText={setLieu}
-          placeholder="Cabinet pédiatrie, 12 rue..."
+          placeholder={t('editors.rdv.locationPlaceholder')}
           placeholderTextColor={colors.textFaint}
           multiline
         />
 
         {/* Questions à poser */}
         <View style={[styles.sectionDivider, { backgroundColor: colors.border }]} />
-        <Text style={[styles.sectionLabel, { color: colors.textSub }]}>❓ Questions à poser au médecin</Text>
+        <Text style={[styles.sectionLabel, { color: colors.textSub }]}>{t('editors.rdv.questionsLabel')}</Text>
         <Text style={[styles.sectionHint, { color: colors.textMuted }]}>
-          Notez vos questions avant le rendez-vous pour ne rien oublier.
+          {t('editors.rdv.questionsHint')}
         </Text>
 
         {aiConfigured && (
@@ -250,7 +252,7 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
             onPress={handleBriefing}
             disabled={isBriefing}
             activeOpacity={0.7}
-            accessibilityLabel="Préparer le RDV avec l'IA"
+            accessibilityLabel={t('editors.rdv.prepareAIA11y')}
             accessibilityRole="button"
           >
             {isBriefing ? (
@@ -258,7 +260,7 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
             ) : (
               <>
                 <Text style={styles.briefingBtnEmoji}>🤖</Text>
-                <Text style={[styles.briefingBtnText, { color: primary }]}>Préparer avec l'IA</Text>
+                <Text style={[styles.briefingBtnText, { color: primary }]}>{t('editors.rdv.prepareAI')}</Text>
               </>
             )}
           </TouchableOpacity>
@@ -270,7 +272,7 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
               style={[inputStyle, styles.questionInput]}
               value={q}
               onChangeText={(text) => updateQuestion(index, text)}
-              placeholder={`Question ${index + 1}…`}
+              placeholder={t('editors.rdv.questionPlaceholder', { n: index + 1 })}
               placeholderTextColor={colors.textFaint}
               multiline
             />
@@ -289,34 +291,34 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
           onPress={addQuestion}
           activeOpacity={0.7}
         >
-          <Text style={[styles.addQuestionBtnText, { color: primary }]}>+ Ajouter une question</Text>
+          <Text style={[styles.addQuestionBtnText, { color: primary }]}>{t('editors.rdv.addQuestion')}</Text>
         </TouchableOpacity>
 
         {/* Réponses / Notes post-consultation */}
         <View style={[styles.sectionDivider, { backgroundColor: colors.border }]} />
         <View style={styles.reponsesTitleRow}>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.sectionLabel, { color: colors.textSub }]}>💬 Réponses du médecin</Text>
+            <Text style={[styles.sectionLabel, { color: colors.textSub }]}>{t('editors.rdv.answersLabel')}</Text>
             <Text style={[styles.sectionHint, { color: colors.textMuted }]}>
-              Notez ou dictez les réponses du médecin.
+              {t('editors.rdv.answersHint')}
             </Text>
           </View>
           <TouchableOpacity
             style={[styles.dictaphoneBtn, { backgroundColor: tint, borderColor: primary }]}
             onPress={() => setDictaphoneVisible(true)}
             activeOpacity={0.7}
-            accessibilityLabel="Ouvrir le dictaphone"
+            accessibilityLabel={t('editors.rdv.dictateA11y')}
             accessibilityRole="button"
           >
             <Text style={styles.dictaphoneBtnEmoji}>🎙️</Text>
-            <Text style={[styles.dictaphoneBtnText, { color: primary }]}>Dicter</Text>
+            <Text style={[styles.dictaphoneBtnText, { color: primary }]}>{t('editors.rdv.dictateBtn')}</Text>
           </TouchableOpacity>
         </View>
         <TextInput
           style={[inputStyle, styles.reponsesInput]}
           value={reponses}
           onChangeText={setReponses}
-          placeholder="Réponses, prescriptions, prochaine étape…"
+          placeholder={t('editors.rdv.answersPlaceholder')}
           placeholderTextColor={colors.textFaint}
           multiline
           textAlignVertical="top"
@@ -325,7 +327,7 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
         {/* Delete button (edit mode only) */}
         {isEditing && onDelete && (
           <TouchableOpacity style={[styles.deleteBtn, { backgroundColor: colors.errorBg, borderColor: colors.error + '40' }]} onPress={handleDelete}>
-            <Text style={[styles.deleteBtnText, { color: colors.error }]}>🗑️ Supprimer ce RDV</Text>
+            <Text style={[styles.deleteBtnText, { color: colors.error }]}>{t('editors.rdv.deleteBtn')}</Text>
           </TouchableOpacity>
         )}
       </ScrollView>

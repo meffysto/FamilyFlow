@@ -5,6 +5,7 @@
  * On teste les règles individuellement via generateInsights avec des inputs ciblés.
  */
 
+import '../i18n';
 import { generateInsights, type InsightInput } from '../insights';
 import type { Task, RDV, StockItem, CourseItem, MealItem, Profile, Defi, GratitudeDay, Memory, VacationConfig, GamificationData } from '../types';
 

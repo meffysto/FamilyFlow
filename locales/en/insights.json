@@ -1,1 +1,131 @@
-{}
+{
+  "overdueCritical": {
+    "title_one": "{{count}} critically overdue task",
+    "title_other": "{{count}} critically overdue tasks",
+    "body": "Max delay: {{days}} days. Consider handling or rescheduling them."
+  },
+  "overdueTasks": {
+    "title_one": "{{count}} overdue task",
+    "title_other": "{{count}} overdue tasks"
+  },
+  "rdvImminent": {
+    "prepareQuestions": " — remember to prepare your questions"
+  },
+  "rdvVaccin": {
+    "title": "Vaccine for {{child}} {{when}}",
+    "body": "{{time}} at {{doctor}}"
+  },
+  "stockCritical": {
+    "title": "Out of stock: {{products}}",
+    "body": "Consider restocking soon."
+  },
+  "stockLow": {
+    "title_one": "Low stock: {{count}} product",
+    "title_other": "Low stock: {{count}} products"
+  },
+  "mealsMissing": {
+    "title_one": "{{count}} unplanned meal",
+    "title_other": "{{count}} unplanned meals"
+  },
+  "mealsTomorrow": {
+    "title_one": "{{count}} unplanned meal tomorrow",
+    "title_other": "{{count}} unplanned meals tomorrow"
+  },
+  "photosMissingLong": {
+    "title": "Daily photo missing",
+    "noPhotos": "{{name}}: no photos recorded",
+    "daysMissing_one": "{{name}}: {{count}} day without a photo",
+    "daysMissing_other": "{{name}}: {{count}} days without a photo"
+  },
+  "photosMissingToday": {
+    "title": "Daily photo",
+    "body": "No photo yet for {{names}}"
+  },
+  "streakTasks": {
+    "title": "{{count}} days in a row!",
+    "body": "You've been completing tasks every day. Keep it up!"
+  },
+  "gratitudeReminder": {
+    "title": "Today's gratitude",
+    "body": "You wrote a gratitude yesterday — write today's to keep the streak going!"
+  },
+  "defiEnding": {
+    "title": "Challenge \"{{title}}\" ends {{when}}",
+    "body_one": "{{emoji}} Only {{count}} day left!",
+    "body_other": "{{emoji}} Only {{count}} days left!"
+  },
+  "defiCheckin": {
+    "title": "Check-in \"{{title}}\"",
+    "body": "You haven't checked in yet today."
+  },
+  "coursesLong": {
+    "title": "{{count}} items pending",
+    "body": "The shopping list is getting long — consider going shopping soon."
+  },
+  "vacationEnding": {
+    "title": "Vacation ending",
+    "bodyToday": "Last day of vacation!",
+    "bodyTomorrow": "Vacation ends tomorrow."
+  },
+  "lootClose": {
+    "title": "Only {{remaining}} points to go!",
+    "body": "A few more tasks to unlock a loot box."
+  },
+  "lootAvailable": {
+    "title_one": "{{count}} loot box available",
+    "title_other": "{{count}} loot boxes available",
+    "body": "Open it to discover your reward!"
+  },
+  "anniversaryToday": {
+    "title": "{{name}}'s birthday today!",
+    "body": "It's {{name}}'s birthday{{age}}. Don't forget to wish them well!"
+  },
+  "anniversarySoon": {
+    "title": "{{name}}'s birthday {{when}}"
+  },
+  "skillRedFlag": {
+    "title": "{{name}}: milestone to watch",
+    "body": "\"{{label}}\" has been expected for {{months}} months. Talk to your pediatrician if needed."
+  },
+  "skillOnboard": {
+    "title": "{{name}} is {{months}} months old",
+    "body": "{{count}} milestones to validate! Open skills to start tracking."
+  },
+  "skillDue": {
+    "title": "{{name}} is old enough to unlock",
+    "body": "\"{{label}}\" — expected around {{months}} months"
+  },
+  "actions": {
+    "viewTasks": "View tasks",
+    "viewRdv": "View appointment",
+    "viewStock": "View stock",
+    "addToShopping": "Add to shopping list",
+    "plan": "Plan",
+    "viewPhotos": "View photos",
+    "addPhoto": "Add a photo",
+    "write": "Write",
+    "viewChallenge": "View challenge",
+    "viewList": "View list",
+    "open": "Open",
+    "viewSkills": "View skills",
+    "start": "Start"
+  },
+  "relative": {
+    "today": "today",
+    "tomorrow": "tomorrow",
+    "yesterday": "yesterday",
+    "inDays_one": "in {{count}} day",
+    "inDays_other": "in {{count}} days",
+    "daysAgo_one": "{{count}} day ago",
+    "daysAgo_other": "{{count}} days ago"
+  },
+  "days": {
+    "sunday": "Sunday",
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday"
+  }
+}

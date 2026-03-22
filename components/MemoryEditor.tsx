@@ -19,10 +19,11 @@ import { Memory, MemoryType } from '../lib/types';
 import { DateInput } from './ui/DateInput';
 import { FontSize, FontWeight } from '../constants/typography';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
-const TYPE_OPTIONS: { label: string; value: MemoryType }[] = [
-  { label: '🌟 Première fois', value: 'premières-fois' },
-  { label: '💛 Moment fort', value: 'moment-fort' },
+const TYPE_KEYS: { key: string; value: MemoryType }[] = [
+  { key: 'firstTime', value: 'premières-fois' },
+  { key: 'highlight', value: 'moment-fort' },
 ];
 
 interface MemoryEditorProps {
@@ -33,6 +34,7 @@ interface MemoryEditorProps {
 }
 
 export function MemoryEditor({ memory, enfants, onSave, onClose }: MemoryEditorProps) {
+  const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const { bg, card, text, textSub, textMuted, textFaint, border, inputBg } = colors;
 
@@ -47,11 +49,11 @@ export function MemoryEditor({ memory, enfants, onSave, onClose }: MemoryEditorP
 
   const handleSave = async () => {
     if (!title.trim()) {
-      Alert.alert('Champ requis', 'Le titre est obligatoire.');
+      Alert.alert(t('editors.memory.toast.titleRequired'), t('editors.memory.toast.titleRequiredMsg'));
       return;
     }
     if (!date) {
-      Alert.alert('Champ requis', 'La date est obligatoire.');
+      Alert.alert(t('editors.memory.toast.dateRequired'), t('editors.memory.toast.dateRequiredMsg'));
       return;
     }
 
@@ -65,7 +67,7 @@ export function MemoryEditor({ memory, enfants, onSave, onClose }: MemoryEditorP
       });
       onClose();
     } catch (e) {
-      Alert.alert('Erreur', String(e));
+      Alert.alert(t('editors.memory.toast.error'), String(e));
     } finally {
       setIsSaving(false);
     }
@@ -74,18 +76,18 @@ export function MemoryEditor({ memory, enfants, onSave, onClose }: MemoryEditorP
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: card }]}>
       <ModalHeader
-        title={memory ? 'Modifier' : 'Nouveau souvenir'}
+        title={memory ? t('editors.memory.titleEdit') : t('editors.memory.titleNew')}
         onClose={onClose}
-        rightLabel={isSaving ? '…' : 'Enregistrer'}
+        rightLabel={isSaving ? '…' : t('editors.save')}
         onRight={handleSave}
         rightDisabled={isSaving}
       />
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {/* Type */}
-        <Text style={[styles.label, { color: textSub }]}>Type</Text>
+        <Text style={[styles.label, { color: textSub }]}>{t('editors.memory.typeLabel')}</Text>
         <View style={styles.chipRow}>
-          {TYPE_OPTIONS.map((opt) => (
+          {TYPE_KEYS.map((opt) => (
             <TouchableOpacity
               key={opt.value}
               style={[
@@ -102,7 +104,7 @@ export function MemoryEditor({ memory, enfants, onSave, onClose }: MemoryEditorP
                   type === opt.value && { color: primary, fontWeight: FontWeight.bold },
                 ]}
               >
-                {opt.label}
+                {t(`editors.memory.typeOptions.${opt.key}`)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -111,7 +113,7 @@ export function MemoryEditor({ memory, enfants, onSave, onClose }: MemoryEditorP
         {/* Enfant */}
         {enfants.length > 1 && (
           <>
-            <Text style={[styles.label, { color: textSub }]}>Enfant</Text>
+            <Text style={[styles.label, { color: textSub }]}>{t('editors.memory.childLabel')}</Text>
             <View style={styles.chipRow}>
               {enfants.map((e) => (
                 <TouchableOpacity
@@ -139,22 +141,22 @@ export function MemoryEditor({ memory, enfants, onSave, onClose }: MemoryEditorP
         )}
 
         {/* Titre */}
-        <Text style={[styles.label, { color: textSub }]}>Titre *</Text>
+        <Text style={[styles.label, { color: textSub }]}>{t('editors.memory.titleFieldLabel')}</Text>
         <TextInput
           style={[styles.input, { borderColor: border, color: text, backgroundColor: inputBg }]}
           value={title}
           onChangeText={setTitle}
-          placeholder="Premier sourire, Premier pas..."
+          placeholder={t('editors.memory.titlePlaceholder')}
           placeholderTextColor={textFaint}
         />
 
         {/* Description */}
-        <Text style={[styles.label, { color: textSub }]}>Description</Text>
+        <Text style={[styles.label, { color: textSub }]}>{t('editors.memory.descriptionLabel')}</Text>
         <TextInput
           style={[styles.input, styles.textArea, { borderColor: border, color: text, backgroundColor: inputBg }]}
           value={description}
           onChangeText={setDescription}
-          placeholder="Raconte ce moment..."
+          placeholder={t('editors.memory.descriptionPlaceholder')}
           placeholderTextColor={textFaint}
           multiline
           numberOfLines={3}
@@ -162,8 +164,8 @@ export function MemoryEditor({ memory, enfants, onSave, onClose }: MemoryEditorP
         />
 
         {/* Date */}
-        <Text style={[styles.label, { color: textSub }]}>Date</Text>
-        <DateInput value={date} onChange={setDate} placeholder="Choisir une date" />
+        <Text style={[styles.label, { color: textSub }]}>{t('editors.memory.dateLabel')}</Text>
+        <DateInput value={date} onChange={setDate} placeholder={t('editors.memory.datePlaceholder')} />
       </ScrollView>
     </SafeAreaView>
   );

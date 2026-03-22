@@ -1,1 +1,131 @@
-{}
+{
+  "overdueCritical": {
+    "title_one": "{{count}} tâche en retard critique",
+    "title_other": "{{count}} tâches en retard critique",
+    "body": "Retard max : {{days}} jours. Pensez à les traiter ou reporter."
+  },
+  "overdueTasks": {
+    "title_one": "{{count}} tâche en retard",
+    "title_other": "{{count}} tâches en retard"
+  },
+  "rdvImminent": {
+    "prepareQuestions": " — pensez à préparer vos questions"
+  },
+  "rdvVaccin": {
+    "title": "Vaccin {{child}} {{when}}",
+    "body": "{{time}} chez {{doctor}}"
+  },
+  "stockCritical": {
+    "title": "Stock épuisé : {{products}}",
+    "body": "Pensez à réapprovisionner rapidement."
+  },
+  "stockLow": {
+    "title_one": "Stock bas : {{count}} produit",
+    "title_other": "Stock bas : {{count}} produits"
+  },
+  "mealsMissing": {
+    "title_one": "{{count}} repas non prévu",
+    "title_other": "{{count}} repas non prévus"
+  },
+  "mealsTomorrow": {
+    "title_one": "{{count}} repas non prévu demain",
+    "title_other": "{{count}} repas non prévus demain"
+  },
+  "photosMissingLong": {
+    "title": "Photo du jour manquante",
+    "noPhotos": "{{name}} : aucune photo enregistrée",
+    "daysMissing_one": "{{name}} : {{count}} jour sans photo",
+    "daysMissing_other": "{{name}} : {{count}} jours sans photo"
+  },
+  "photosMissingToday": {
+    "title": "Photo du jour",
+    "body": "Pas encore de photo pour {{names}}"
+  },
+  "streakTasks": {
+    "title": "{{count}} jours d'affilée !",
+    "body": "Vous complétez des tâches chaque jour depuis plusieurs jours. Bravo, continuez !"
+  },
+  "gratitudeReminder": {
+    "title": "Gratitude du jour",
+    "body": "Vous avez noté une gratitude hier — écrivez celle d'aujourd'hui pour garder la série !"
+  },
+  "defiEnding": {
+    "title": "Défi \"{{title}}\" se termine {{when}}",
+    "body_one": "{{emoji}} Plus que {{count}} jour !",
+    "body_other": "{{emoji}} Plus que {{count}} jours !"
+  },
+  "defiCheckin": {
+    "title": "Check-in \"{{title}}\"",
+    "body": "Vous n'avez pas encore validé aujourd'hui."
+  },
+  "coursesLong": {
+    "title": "{{count}} articles en attente",
+    "body": "La liste de courses est longue — pensez à faire les courses bientôt."
+  },
+  "vacationEnding": {
+    "title": "Fin des vacances",
+    "bodyToday": "Dernier jour de vacances !",
+    "bodyTomorrow": "Les vacances se terminent demain."
+  },
+  "lootClose": {
+    "title": "Plus que {{remaining}} points !",
+    "body": "Encore quelques tâches pour débloquer une loot box."
+  },
+  "lootAvailable": {
+    "title_one": "{{count}} loot box disponible",
+    "title_other": "{{count}} loot boxes disponibles",
+    "body": "Ouvrez-la pour découvrir votre récompense !"
+  },
+  "anniversaryToday": {
+    "title": "Anniversaire de {{name}} aujourd'hui !",
+    "body": "C'est l'anniversaire de {{name}}{{age}}. Pensez à lui souhaiter !"
+  },
+  "anniversarySoon": {
+    "title": "Anniversaire de {{name}} {{when}}"
+  },
+  "skillRedFlag": {
+    "title": "{{name}} : jalon à surveiller",
+    "body": "« {{label}} » est attendu depuis {{months}} mois. Parlez-en à votre pédiatre si besoin."
+  },
+  "skillOnboard": {
+    "title": "{{name}} a {{months}} mois",
+    "body": "{{count}} jalons à valider ! Ouvrez les compétences pour commencer le suivi."
+  },
+  "skillDue": {
+    "title": "{{name}} a l'âge pour débloquer",
+    "body": "« {{label}} » — attendu vers {{months}} mois"
+  },
+  "actions": {
+    "viewTasks": "Voir les tâches",
+    "viewRdv": "Voir le RDV",
+    "viewStock": "Voir le stock",
+    "addToShopping": "Ajouter aux courses",
+    "plan": "Planifier",
+    "viewPhotos": "Voir les photos",
+    "addPhoto": "Ajouter une photo",
+    "write": "Écrire",
+    "viewChallenge": "Voir le défi",
+    "viewList": "Voir la liste",
+    "open": "Ouvrir",
+    "viewSkills": "Voir les compétences",
+    "start": "Commencer"
+  },
+  "relative": {
+    "today": "aujourd'hui",
+    "tomorrow": "demain",
+    "yesterday": "hier",
+    "inDays_one": "dans {{count}} jour",
+    "inDays_other": "dans {{count}} jours",
+    "daysAgo_one": "il y a {{count}} jour",
+    "daysAgo_other": "il y a {{count}} jours"
+  },
+  "days": {
+    "sunday": "Dimanche",
+    "monday": "Lundi",
+    "tuesday": "Mardi",
+    "wednesday": "Mercredi",
+    "thursday": "Jeudi",
+    "friday": "Vendredi",
+    "saturday": "Samedi"
+  }
+}

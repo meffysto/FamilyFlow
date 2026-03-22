@@ -19,6 +19,7 @@ import { ModalHeader } from './ui/ModalHeader';
 import { StockItem } from '../lib/types';
 import { EMPLACEMENTS, SUBCATEGORIES, type EmplacementId } from '../constants/stock';
 import { FontSize, FontWeight } from '../constants/typography';
+import { useTranslation } from 'react-i18next';
 
 interface StockEditorProps {
   item?: StockItem; // if provided, editing mode
@@ -30,6 +31,7 @@ interface StockEditorProps {
 }
 
 export function StockEditor({ item, sections, defaultEmplacement, onSave, onDelete, onClose }: StockEditorProps) {
+  const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
   const isEditing = !!item;
@@ -57,11 +59,11 @@ export function StockEditor({ item, sections, defaultEmplacement, onSave, onDele
 
   const handleSave = async () => {
     if (!produit.trim()) {
-      showToast('Le nom du produit est obligatoire', 'error');
+      showToast(t('editors.stock.toast.productRequired'), 'error');
       return;
     }
     if (sectionRequired && !section) {
-      showToast('Sélectionne une catégorie', 'error');
+      showToast(t('editors.stock.toast.categoryRequired'), 'error');
       return;
     }
 
@@ -87,11 +89,11 @@ export function StockEditor({ item, sections, defaultEmplacement, onSave, onDele
   const handleDelete = () => {
     if (!onDelete) return;
     Alert.alert(
-      'Supprimer le produit',
-      `Supprimer "${produit}" du stock ?`,
+      t('editors.stock.deleteConfirmTitle'),
+      t('editors.stock.deleteConfirmMsg', { name: produit }),
       [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Supprimer', style: 'destructive', onPress: onDelete },
+        { text: t('editors.cancel'), style: 'cancel' },
+        { text: t('editors.delete'), style: 'destructive', onPress: onDelete },
       ]
     );
   };
@@ -99,36 +101,36 @@ export function StockEditor({ item, sections, defaultEmplacement, onSave, onDele
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.card }]}>
       <ModalHeader
-        title={isEditing ? 'Modifier le produit' : 'Nouveau produit'}
+        title={isEditing ? t('editors.stock.titleEdit') : t('editors.stock.titleNew')}
         onClose={onClose}
-        rightLabel={isSaving ? '…' : 'Enregistrer'}
+        rightLabel={isSaving ? '…' : t('editors.save')}
         onRight={handleSave}
         rightDisabled={isSaving}
       />
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {/* Produit */}
-        <Text style={[styles.label, { color: colors.textSub }]}>📦 Produit *</Text>
+        <Text style={[styles.label, { color: colors.textSub }]}>{t('editors.stock.productLabel')}</Text>
         <TextInput
           style={[styles.input, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }]}
           value={produit}
           onChangeText={setProduit}
-          placeholder="Couches, Lait, Sérum phy..."
+          placeholder={t('editors.stock.productPlaceholder')}
           placeholderTextColor={colors.textFaint}
         />
 
         {/* Détail */}
-        <Text style={[styles.label, { color: colors.textSub }]}>📝 Détail / Taille</Text>
+        <Text style={[styles.label, { color: colors.textSub }]}>{t('editors.stock.detailLabel')}</Text>
         <TextInput
           style={[styles.input, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }]}
           value={detail}
           onChangeText={setDetail}
-          placeholder="T5, 400ml, etc."
+          placeholder={t('editors.stock.detailPlaceholder')}
           placeholderTextColor={colors.textFaint}
         />
 
         {/* Emplacement */}
-        <Text style={[styles.label, { color: colors.textSub }]}>📍 Emplacement *</Text>
+        <Text style={[styles.label, { color: colors.textSub }]}>{t('editors.stock.locationLabel')}</Text>
         <View style={styles.chipRow}>
           {EMPLACEMENTS.map((emp) => (
             <TouchableOpacity
@@ -155,7 +157,7 @@ export function StockEditor({ item, sections, defaultEmplacement, onSave, onDele
         {/* Catégorie (sous-catégorie de l'emplacement) */}
         {availableSubcategories.length > 0 && (
           <>
-            <Text style={[styles.label, { color: colors.textSub }]}>🏷️ Catégorie *</Text>
+            <Text style={[styles.label, { color: colors.textSub }]}>{t('editors.stock.categoryLabel')}</Text>
             <View style={styles.chipRow}>
               {availableSubcategories.map((s) => (
                 <TouchableOpacity
@@ -184,7 +186,7 @@ export function StockEditor({ item, sections, defaultEmplacement, onSave, onDele
         {/* Numeric fields row */}
         <View style={styles.numRow}>
           <View style={styles.numField}>
-            <Text style={[styles.label, { color: colors.textSub }]}>📊 Quantité</Text>
+            <Text style={[styles.label, { color: colors.textSub }]}>{t('editors.stock.quantityLabel')}</Text>
             <TextInput
               style={[styles.input, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }]}
               value={quantite}
@@ -195,7 +197,7 @@ export function StockEditor({ item, sections, defaultEmplacement, onSave, onDele
             />
           </View>
           <View style={styles.numField}>
-            <Text style={[styles.label, { color: colors.textSub }]}>⚠️ Seuil alerte</Text>
+            <Text style={[styles.label, { color: colors.textSub }]}>{t('editors.stock.thresholdLabel')}</Text>
             <TextInput
               style={[styles.input, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }]}
               value={seuil}
@@ -206,7 +208,7 @@ export function StockEditor({ item, sections, defaultEmplacement, onSave, onDele
             />
           </View>
           <View style={styles.numField}>
-            <Text style={[styles.label, { color: colors.textSub }]}>🛒 Qté/achat</Text>
+            <Text style={[styles.label, { color: colors.textSub }]}>{t('editors.stock.purchaseQtyLabel')}</Text>
             <TextInput
               style={[styles.input, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }]}
               value={qteAchat}
@@ -224,7 +226,7 @@ export function StockEditor({ item, sections, defaultEmplacement, onSave, onDele
             style={[styles.deleteBtn, { backgroundColor: colors.errorBg, borderColor: colors.error }]}
             onPress={handleDelete}
           >
-            <Text style={[styles.deleteBtnText, { color: colors.error }]}>🗑️ Supprimer ce produit</Text>
+            <Text style={[styles.deleteBtnText, { color: colors.error }]}>{t('editors.stock.deleteBtn')}</Text>
           </TouchableOpacity>
         )}
       </ScrollView>

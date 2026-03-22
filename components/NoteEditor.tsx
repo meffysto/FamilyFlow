@@ -23,6 +23,7 @@ import { DictaphoneRecorder } from './DictaphoneRecorder';
 import { Note, NOTE_CATEGORIES } from '../lib/types';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../constants/typography';
+import { useTranslation } from 'react-i18next';
 
 /** Sépare le frontmatter YAML de defuddle (--- delimited) du contenu markdown */
 function parseDefuddleResponse(raw: string): { title?: string; content: string } {
@@ -54,6 +55,7 @@ interface NoteEditorProps {
 }
 
 export function NoteEditor({ visible, note, initialUrl, onSave, onDelete, onClose }: NoteEditorProps) {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
   const isEditing = !!note;
 
@@ -106,7 +108,7 @@ export function NoteEditor({ visible, note, initialUrl, onSave, onDelete, onClos
             if (headingMatch) setTitle(headingMatch[1].trim());
           }
         } catch (error: any) {
-          Alert.alert('Erreur d\'importation', `Impossible de récupérer le contenu : ${error.message ?? 'erreur inconnue'}`);
+          Alert.alert(t('editors.note.toast.importErrorTitle'), t('editors.note.toast.importErrorMsg', { error: error.message ?? 'unknown' }));
         } finally {
           setImporting(false);
         }
@@ -118,7 +120,7 @@ export function NoteEditor({ visible, note, initialUrl, onSave, onDelete, onClos
   const handleImport = useCallback(async () => {
     const trimmed = urlInput.trim();
     if (!trimmed.startsWith('http')) {
-      Alert.alert('URL invalide', "L'URL doit commencer par http ou https.");
+      Alert.alert(t('editors.note.toast.invalidUrl'), t('editors.note.toast.invalidUrlMsg'));
       return;
     }
 
@@ -147,8 +149,8 @@ export function NoteEditor({ visible, note, initialUrl, onSave, onDelete, onClos
       }
     } catch (error: any) {
       Alert.alert(
-        'Erreur d\'importation',
-        `Impossible de récupérer le contenu : ${error.message ?? 'erreur inconnue'}`
+        t('editors.note.toast.importErrorTitle'),
+        t('editors.note.toast.importErrorMsg', { error: error.message ?? 'unknown' })
       );
     } finally {
       setImporting(false);
@@ -157,7 +159,7 @@ export function NoteEditor({ visible, note, initialUrl, onSave, onDelete, onClos
 
   const handleSave = useCallback(() => {
     if (!title.trim()) {
-      Alert.alert('Titre requis', 'Veuillez saisir un titre pour la note.');
+      Alert.alert(t('editors.note.toast.titleRequired'), t('editors.note.toast.titleRequiredMsg'));
       return;
     }
 
@@ -178,11 +180,11 @@ export function NoteEditor({ visible, note, initialUrl, onSave, onDelete, onClos
 
   const handleDelete = useCallback(() => {
     Alert.alert(
-      'Supprimer la note',
-      'Cette action est irréversible. Voulez-vous vraiment supprimer cette note ?',
+      t('editors.note.deleteConfirmTitle'),
+      t('editors.note.deleteConfirmMsg'),
       [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Supprimer', style: 'destructive', onPress: () => note && onDelete?.(note) },
+        { text: t('editors.cancel'), style: 'cancel' },
+        { text: t('editors.delete'), style: 'destructive', onPress: () => note && onDelete?.(note) },
       ]
     );
   }, [onDelete]);
@@ -196,9 +198,9 @@ export function NoteEditor({ visible, note, initialUrl, onSave, onDelete, onClos
     >
       <View style={[styles.container, { backgroundColor: colors.bg }]}>
         <ModalHeader
-          title={isEditing ? 'Modifier la note' : 'Nouvelle note'}
+          title={isEditing ? t('editors.note.titleEdit') : t('editors.note.titleNew')}
           onClose={onClose}
-          rightLabel="Enregistrer"
+          rightLabel={t('editors.save')}
           onRight={handleSave}
         />
 
@@ -213,7 +215,7 @@ export function NoteEditor({ visible, note, initialUrl, onSave, onDelete, onClos
           >
             {/* Section Importer un lien */}
             <Text style={[styles.label, { color: colors.textSub }]}>
-              Importer un lien
+              {t('editors.note.importLabel')}
             </Text>
             <View style={styles.importRow}>
               <TextInput
@@ -228,25 +230,25 @@ export function NoteEditor({ visible, note, initialUrl, onSave, onDelete, onClos
                 ]}
                 value={urlInput}
                 onChangeText={setUrlInput}
-                placeholder="https://exemple.com/article"
+                placeholder={t('editors.note.urlPlaceholder')}
                 placeholderTextColor={colors.textMuted}
                 autoCapitalize="none"
                 autoCorrect={false}
                 keyboardType="url"
-                accessibilityLabel="URL à importer"
+                accessibilityLabel={t('editors.note.urlA11y')}
               />
               <TouchableOpacity
                 style={[styles.importBtn, { backgroundColor: primary }]}
                 onPress={handleImport}
                 disabled={importing}
-                accessibilityLabel="Importer le lien"
+                accessibilityLabel={t('editors.note.importA11y')}
                 accessibilityRole="button"
               >
                 {importing ? (
                   <ActivityIndicator size="small" color={colors.onPrimary} />
                 ) : (
                   <Text style={[styles.importBtnText, { color: colors.onPrimary }]}>
-                    Importer
+                    {t('editors.note.importBtn')}
                   </Text>
                 )}
               </TouchableOpacity>
@@ -254,7 +256,7 @@ export function NoteEditor({ visible, note, initialUrl, onSave, onDelete, onClos
 
             {/* Titre */}
             <Text style={[styles.label, { color: colors.textSub }]}>
-              Titre
+              {t('editors.note.titleLabel')}
             </Text>
             <TextInput
               style={[
@@ -267,14 +269,14 @@ export function NoteEditor({ visible, note, initialUrl, onSave, onDelete, onClos
               ]}
               value={title}
               onChangeText={setTitle}
-              placeholder="Titre de la note"
+              placeholder={t('editors.note.titlePlaceholder')}
               placeholderTextColor={colors.textMuted}
-              accessibilityLabel="Titre de la note"
+              accessibilityLabel={t('editors.note.titleA11y')}
             />
 
             {/* Catégorie */}
             <Text style={[styles.label, { color: colors.textSub }]}>
-              Catégorie
+              {t('editors.note.categoryLabel')}
             </Text>
             <ScrollView
               horizontal
@@ -295,7 +297,7 @@ export function NoteEditor({ visible, note, initialUrl, onSave, onDelete, onClos
 
             {/* Tags */}
             <Text style={[styles.label, { color: colors.textSub }]}>
-              Tags
+              {t('editors.note.tagsLabel')}
             </Text>
             <TextInput
               style={[
@@ -308,25 +310,25 @@ export function NoteEditor({ visible, note, initialUrl, onSave, onDelete, onClos
               ]}
               value={tagsInput}
               onChangeText={setTagsInput}
-              placeholder="santé, important, urgent"
+              placeholder={t('editors.note.tagsPlaceholder')}
               placeholderTextColor={colors.textMuted}
-              accessibilityLabel="Tags séparés par des virgules"
+              accessibilityLabel={t('editors.note.tagsA11y')}
             />
 
             {/* Contenu */}
             <View style={styles.contentLabelRow}>
               <Text style={[styles.label, styles.labelNoMarginBottom, { color: colors.textSub }]}>
-                Contenu
+                {t('editors.note.contentLabel')}
               </Text>
               <TouchableOpacity
                 style={[styles.dictaphoneBtn, { backgroundColor: colors.cardAlt, borderColor: primary }]}
                 onPress={() => setDictaphoneVisible(true)}
                 activeOpacity={0.7}
-                accessibilityLabel="Dicter le contenu"
+                accessibilityLabel={t('editors.note.dictateA11y')}
                 accessibilityRole="button"
               >
                 <Text style={styles.dictaphoneBtnEmoji}>🎙️</Text>
-                <Text style={[styles.dictaphoneBtnText, { color: primary }]}>Dicter</Text>
+                <Text style={[styles.dictaphoneBtnText, { color: primary }]}>{t('editors.note.dictateBtn')}</Text>
               </TouchableOpacity>
             </View>
             <TextInput
@@ -341,11 +343,11 @@ export function NoteEditor({ visible, note, initialUrl, onSave, onDelete, onClos
               ]}
               value={content}
               onChangeText={setContent}
-              placeholder="Contenu de la note..."
+              placeholder={t('editors.note.contentPlaceholder')}
               placeholderTextColor={colors.textMuted}
               multiline
               textAlignVertical="top"
-              accessibilityLabel="Contenu de la note"
+              accessibilityLabel={t('editors.note.contentA11y')}
             />
 
             {/* Bouton supprimer (mode édition) */}
@@ -353,11 +355,11 @@ export function NoteEditor({ visible, note, initialUrl, onSave, onDelete, onClos
               <TouchableOpacity
                 style={[styles.deleteBtn, { backgroundColor: colors.errorBg }]}
                 onPress={handleDelete}
-                accessibilityLabel="Supprimer la note"
+                accessibilityLabel={t('editors.note.deleteA11y')}
                 accessibilityRole="button"
               >
                 <Text style={[styles.deleteBtnText, { color: colors.error }]}>
-                  Supprimer la note
+                  {t('editors.note.deleteBtn')}
                 </Text>
               </TouchableOpacity>
             )}
@@ -380,7 +382,7 @@ export function NoteEditor({ visible, note, initialUrl, onSave, onDelete, onClos
         >
           <DictaphoneRecorder
             context={{
-              title: title.trim() || 'Nouvelle note',
+              title: title.trim() || t('editors.note.titleNew'),
               subtitle: selectedCategory,
             }}
             onResult={(text) => {

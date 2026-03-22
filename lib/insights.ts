@@ -8,6 +8,7 @@
  */
 
 import { format, differenceInCalendarDays, isToday, isTomorrow, isYesterday, parseISO, addDays } from 'date-fns';
+import { t } from 'i18next';
 import type { Task, RDV, StockItem, MealItem, CourseItem, Profile, Defi, GratitudeDay, Memory, VacationConfig, GamificationData, Anniversary } from './types';
 import { formatDateForDisplay, isRdvUpcoming } from './parser';
 import { LOOT_THRESHOLD } from './gamification';
@@ -70,12 +71,12 @@ function daysUntil(now: Date, dateStr: string): number {
 
 function formatRelativeDate(now: Date, dateStr: string): string {
   const d = parseISO(dateStr);
-  if (isToday(d)) return "aujourd'hui";
-  if (isTomorrow(d)) return 'demain';
-  if (isYesterday(d)) return 'hier';
+  if (isToday(d)) return t('insights:relative.today');
+  if (isTomorrow(d)) return t('insights:relative.tomorrow');
+  if (isYesterday(d)) return t('insights:relative.yesterday');
   const days = daysUntil(now, dateStr);
-  if (days > 0 && days <= 7) return `dans ${days} jour${days > 1 ? 's' : ''}`;
-  if (days < 0) return `il y a ${Math.abs(days)} jour${Math.abs(days) > 1 ? 's' : ''}`;
+  if (days > 0 && days <= 7) return t('insights:relative.inDays', { count: days });
+  if (days < 0) return t('insights:relative.daysAgo', { count: Math.abs(days) });
   return formatDateForDisplay(dateStr);
 }
 
@@ -92,33 +93,33 @@ interface TimeContext {
 function overdueTaskInsights(input: InsightInput, tc: TimeContext): Insight[] {
   const insights: Insight[] = [];
   const overdue = input.tasks.filter(
-    (t) => !t.completed && t.dueDate && daysSince(tc.now, t.dueDate) > 0,
+    (tk) => !tk.completed && tk.dueDate && daysSince(tc.now, tk.dueDate) > 0,
   );
 
   if (overdue.length === 0) return insights;
 
   // Tâches en retard critique (> 3 jours)
-  const critical = overdue.filter((t) => daysSince(tc.now, t.dueDate!) > 3);
+  const critical = overdue.filter((tk) => daysSince(tc.now, tk.dueDate!) > 3);
   if (critical.length > 0) {
-    const oldest = Math.max(...critical.map((t) => daysSince(tc.now, t.dueDate!)));
+    const oldest = Math.max(...critical.map((tk) => daysSince(tc.now, tk.dueDate!)));
     insights.push({
       id: 'overdue-critical',
       icon: '🚨',
-      title: `${critical.length} tâche${critical.length > 1 ? 's' : ''} en retard critique`,
-      body: `Retard max : ${oldest} jours. Pensez à les traiter ou reporter.`,
+      title: t('insights:overdueCritical.title', { count: critical.length }),
+      body: t('insights:overdueCritical.body', { days: oldest }),
       priority: 'high',
       category: 'alert',
-      action: { label: 'Voir les tâches', type: 'navigate', route: '/(tabs)/tasks' },
+      action: { label: t('insights:actions.viewTasks'), type: 'navigate', route: '/(tabs)/tasks' },
     });
   } else if (overdue.length > 0) {
     insights.push({
       id: 'overdue-tasks',
       icon: '⚠️',
-      title: `${overdue.length} tâche${overdue.length > 1 ? 's' : ''} en retard`,
-      body: overdue.slice(0, 3).map((t) => t.text).join(', '),
+      title: t('insights:overdueTasks.title', { count: overdue.length }),
+      body: overdue.slice(0, 3).map((tk) => tk.text).join(', '),
       priority: 'medium',
       category: 'alert',
-      action: { label: 'Voir les tâches', type: 'navigate', route: '/(tabs)/tasks' },
+      action: { label: t('insights:actions.viewTasks'), type: 'navigate', route: '/(tabs)/tasks' },
     });
   }
 
@@ -137,7 +138,7 @@ function rdvInsights(input: InsightInput, tc: TimeContext): Insight[] {
   for (const rdv of imminent.slice(0, 2)) {
     const quand = formatRelativeDate(tc.now, rdv.date_rdv);
     const questionsNote = rdv.questions && rdv.questions.length > 0
-      ? '' : ' — pensez à préparer vos questions';
+      ? '' : t('insights:rdvImminent.prepareQuestions');
     insights.push({
       id: `rdv-imminent-${rdv.sourceFile}`,
       icon: '🏥',
@@ -145,7 +146,7 @@ function rdvInsights(input: InsightInput, tc: TimeContext): Insight[] {
       body: `${rdv.heure || ''} — ${rdv.lieu || rdv.médecin || ''}${questionsNote}`,
       priority: 'high',
       category: 'reminder',
-      action: { label: 'Voir le RDV', type: 'navigate', route: '/(tabs)/rdv' },
+      action: { label: t('insights:actions.viewRdv'), type: 'navigate', route: '/(tabs)/rdv' },
     });
   }
 
@@ -158,8 +159,8 @@ function rdvInsights(input: InsightInput, tc: TimeContext): Insight[] {
     insights.push({
       id: `rdv-vaccin-${rdv.sourceFile}`,
       icon: '💉',
-      title: `Vaccin ${rdv.enfant} ${formatRelativeDate(tc.now, rdv.date_rdv)}`,
-      body: `${rdv.heure} chez ${rdv.médecin || rdv.lieu || 'le médecin'}`,
+      title: t('insights:rdvVaccin.title', { child: rdv.enfant, when: formatRelativeDate(tc.now, rdv.date_rdv) }),
+      body: t('insights:rdvVaccin.body', { time: rdv.heure, doctor: rdv.médecin || rdv.lieu || '' }),
       priority: 'medium',
       category: 'reminder',
     });
@@ -179,11 +180,11 @@ function stockInsights(input: InsightInput): Insight[] {
     insights.push({
       id: 'stock-critical',
       icon: '🔴',
-      title: `Stock épuisé : ${critical.map((s) => s.produit).join(', ')}`,
-      body: 'Pensez à réapprovisionner rapidement.',
+      title: t('insights:stockCritical.title', { products: critical.map((s) => s.produit).join(', ') }),
+      body: t('insights:stockCritical.body'),
       priority: 'high',
       category: 'alert',
-      action: { label: 'Voir le stock', type: 'navigate', route: '/(tabs)/stock' },
+      action: { label: t('insights:actions.viewStock'), type: 'navigate', route: '/(tabs)/stock' },
     });
   }
 
@@ -192,19 +193,19 @@ function stockInsights(input: InsightInput): Insight[] {
     // Vérifier si déjà dans les courses
     const courseTexts = input.courses.map((c) => c.text.toLowerCase());
     const notInCourses = warning.filter(
-      (s) => !courseTexts.some((t) => t.includes(s.produit.toLowerCase())),
+      (s) => !courseTexts.some((ct) => ct.includes(s.produit.toLowerCase())),
     );
 
     if (notInCourses.length > 0) {
       insights.push({
         id: 'stock-low',
         icon: '📦',
-        title: `Stock bas : ${notInCourses.length} produit${notInCourses.length > 1 ? 's' : ''}`,
+        title: t('insights:stockLow.title', { count: notInCourses.length }),
         body: notInCourses.map((s) => `${s.produit} (${s.quantite}/${s.seuil})`).join(', '),
         priority: 'medium',
         category: 'alert',
         action: {
-          label: 'Ajouter aux courses',
+          label: t('insights:actions.addToShopping'),
           type: 'addCourse',
           payload: notInCourses.map((s) => ({
             text: `${s.produit}${s.qteAchat ? ` x${s.qteAchat}` : ''}`,
@@ -222,12 +223,15 @@ function mealInsights(input: InsightInput, tc: TimeContext): Insight[] {
   const insights: Insight[] = [];
   if (input.meals.length === 0) return insights;
 
-  const dayNames = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-  const todayDay = dayNames[tc.now.getDay()];
+  const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  // Day names used for matching meal data (always French in vault)
+  const dayNamesFR = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+  const todayDayFR = dayNamesFR[tc.now.getDay()];
+  const todayDayDisplay = t(`insights:days.${dayKeys[tc.now.getDay()]}`);
 
   // Repas non planifiés aujourd'hui
   const todayMeals = input.meals.filter(
-    (m) => m.day.toLowerCase() === todayDay.toLowerCase(),
+    (m) => m.day.toLowerCase() === todayDayFR.toLowerCase(),
   );
   const missing = todayMeals.filter((m) => !m.text || m.text.trim() === '');
 
@@ -243,20 +247,22 @@ function mealInsights(input: InsightInput, tc: TimeContext): Insight[] {
       insights.push({
         id: 'meals-missing',
         icon: '🍽️',
-        title: `${relevant.length} repas non prévu${relevant.length > 1 ? 's' : ''}`,
-        body: relevant.map((m) => m.mealType).join(', ') + ` — ${todayDay}`,
+        title: t('insights:mealsMissing.title', { count: relevant.length }),
+        body: relevant.map((m) => m.mealType).join(', ') + ` — ${todayDayDisplay}`,
         priority: 'medium',
         category: 'suggestion',
-        action: { label: 'Planifier', type: 'navigate', route: '/(tabs)/meals' },
+        action: { label: t('insights:actions.plan'), type: 'navigate', route: '/(tabs)/meals' },
       });
     }
   }
 
   // Repas non planifiés demain (le soir, pour anticiper)
   if (tc.hour >= 18) {
-    const tomorrowDay = dayNames[(tc.now.getDay() + 1) % 7];
+    const tomorrowIdx = (tc.now.getDay() + 1) % 7;
+    const tomorrowDayFR = dayNamesFR[tomorrowIdx];
+    const tomorrowDayDisplay = t(`insights:days.${dayKeys[tomorrowIdx]}`);
     const tomorrowMeals = input.meals.filter(
-      (m) => m.day.toLowerCase() === tomorrowDay.toLowerCase(),
+      (m) => m.day.toLowerCase() === tomorrowDayFR.toLowerCase(),
     );
     const tomorrowMissing = tomorrowMeals.filter((m) => !m.text || m.text.trim() === '');
 
@@ -264,8 +270,8 @@ function mealInsights(input: InsightInput, tc: TimeContext): Insight[] {
       insights.push({
         id: 'meals-tomorrow',
         icon: '📋',
-        title: `${tomorrowMissing.length} repas non prévu${tomorrowMissing.length > 1 ? 's' : ''} demain`,
-        body: `${tomorrowDay} : ${tomorrowMissing.map((m) => m.mealType).join(', ')}`,
+        title: t('insights:mealsTomorrow.title', { count: tomorrowMissing.length }),
+        body: `${tomorrowDayDisplay} : ${tomorrowMissing.map((m) => m.mealType).join(', ')}`,
         priority: 'low',
         category: 'suggestion',
       });
@@ -298,30 +304,30 @@ function photoInsights(input: InsightInput, tc: TimeContext): Insight[] {
     const longMissing = streaks.filter((s) => s.days >= 3);
     const bodyParts: string[] = [];
     if (noPhotos.length > 0) {
-      bodyParts.push(noPhotos.map((s) => `${s.name} : aucune photo enregistrée`).join(', '));
+      bodyParts.push(noPhotos.map((s) => t('insights:photosMissingLong.noPhotos', { name: s.name })).join(', '));
     }
     if (longMissing.length > 0) {
-      bodyParts.push(longMissing.map((s) => `${s.name} : ${s.days} jour${s.days > 1 ? 's' : ''} sans photo`).join(', '));
+      bodyParts.push(longMissing.map((s) => t('insights:photosMissingLong.daysMissing', { name: s.name, count: s.days })).join(', '));
     }
     if (bodyParts.length > 0) {
       insights.push({
         id: 'photos-missing-long',
         icon: '📸',
-        title: 'Photo du jour manquante',
+        title: t('insights:photosMissingLong.title'),
         body: bodyParts.join(', '),
         priority: 'medium',
         category: 'reminder',
-        action: { label: 'Voir les photos', type: 'navigate', route: '/(tabs)/photos' },
+        action: { label: t('insights:actions.viewPhotos'), type: 'navigate', route: '/(tabs)/photos' },
       });
     } else if (missingPhoto.length > 0) {
       insights.push({
         id: 'photos-missing-today',
         icon: '📸',
-        title: "Photo du jour",
-        body: `Pas encore de photo pour ${missingPhoto.map((e) => e.name).join(', ')}`,
+        title: t('insights:photosMissingToday.title'),
+        body: t('insights:photosMissingToday.body', { names: missingPhoto.map((e) => e.name).join(', ') }),
         priority: 'low',
         category: 'reminder',
-        action: { label: 'Ajouter une photo', type: 'navigate', route: '/(tabs)/photos' },
+        action: { label: t('insights:actions.addPhoto'), type: 'navigate', route: '/(tabs)/photos' },
       });
     }
   }
@@ -339,8 +345,8 @@ function streakInsights(input: InsightInput, tc: TimeContext): Insight[] {
     insights.push({
       id: 'streak-tasks',
       icon: '🔥',
-      title: `${profile.streak} jours d'affilée !`,
-      body: 'Vous complétez des tâches chaque jour depuis plusieurs jours. Bravo, continuez !',
+      title: t('insights:streakTasks.title', { count: profile.streak }),
+      body: t('insights:streakTasks.body'),
       priority: 'low',
       category: 'stat',
     });
@@ -358,11 +364,11 @@ function streakInsights(input: InsightInput, tc: TimeContext): Insight[] {
     insights.push({
       id: 'gratitude-reminder',
       icon: '🙏',
-      title: 'Gratitude du jour',
-      body: "Vous avez noté une gratitude hier — écrivez celle d'aujourd'hui pour garder la série !",
+      title: t('insights:gratitudeReminder.title'),
+      body: t('insights:gratitudeReminder.body'),
       priority: 'low',
       category: 'reminder',
-      action: { label: 'Écrire', type: 'navigate', route: '/(tabs)/gratitude' },
+      action: { label: t('insights:actions.write'), type: 'navigate', route: '/(tabs)/gratitude' },
     });
   }
 
@@ -383,11 +389,11 @@ function defiInsights(input: InsightInput, tc: TimeContext): Insight[] {
       insights.push({
         id: `defi-ending-${defi.id}`,
         icon: '🏅',
-        title: `Défi "${defi.title}" se termine ${formatRelativeDate(tc.now, defi.endDate)}`,
-        body: `${defi.emoji} Plus que ${daysLeft} jour${daysLeft > 1 ? 's' : ''} !`,
+        title: t('insights:defiEnding.title', { title: defi.title, when: formatRelativeDate(tc.now, defi.endDate) }),
+        body: t('insights:defiEnding.body', { emoji: defi.emoji, count: daysLeft }),
         priority: 'high',
         category: 'reminder',
-        action: { label: 'Voir le défi', type: 'navigate', route: '/(tabs)/defis' },
+        action: { label: t('insights:actions.viewChallenge'), type: 'navigate', route: '/(tabs)/defis' },
       });
     }
 
@@ -400,8 +406,8 @@ function defiInsights(input: InsightInput, tc: TimeContext): Insight[] {
         insights.push({
           id: `defi-checkin-${defi.id}`,
           icon: defi.emoji,
-          title: `Check-in "${defi.title}"`,
-          body: "Vous n'avez pas encore validé aujourd'hui.",
+          title: t('insights:defiCheckin.title', { title: defi.title }),
+          body: t('insights:defiCheckin.body'),
           priority: 'medium',
           category: 'reminder',
         });
@@ -420,11 +426,11 @@ function coursesInsights(input: InsightInput): Insight[] {
     insights.push({
       id: 'courses-long',
       icon: '🛒',
-      title: `${pending.length} articles en attente`,
-      body: 'La liste de courses est longue — pensez à faire les courses bientôt.',
+      title: t('insights:coursesLong.title', { count: pending.length }),
+      body: t('insights:coursesLong.body'),
       priority: 'medium',
       category: 'suggestion',
-      action: { label: 'Voir la liste', type: 'navigate', route: '/(tabs)/meals', params: { tab: 'courses' } },
+      action: { label: t('insights:actions.viewList'), type: 'navigate', route: '/(tabs)/meals', params: { tab: 'courses' } },
     });
   }
 
@@ -441,8 +447,8 @@ function vacationInsights(input: InsightInput, tc: TimeContext): Insight[] {
     insights.push({
       id: 'vacation-ending',
       icon: '🏠',
-      title: 'Fin des vacances',
-      body: daysLeft === 0 ? 'Dernier jour de vacances !' : 'Les vacances se terminent demain.',
+      title: t('insights:vacationEnding.title'),
+      body: daysLeft === 0 ? t('insights:vacationEnding.bodyToday') : t('insights:vacationEnding.bodyTomorrow'),
       priority: 'medium',
       category: 'reminder',
     });
@@ -467,8 +473,8 @@ function gamificationInsights(input: InsightInput): Insight[] {
       insights.push({
         id: 'loot-close',
         icon: '🎁',
-        title: `Plus que ${remaining} points !`,
-        body: 'Encore quelques tâches pour débloquer une loot box.',
+        title: t('insights:lootClose.title', { remaining }),
+        body: t('insights:lootClose.body'),
         priority: 'low',
         category: 'stat',
       });
@@ -480,11 +486,11 @@ function gamificationInsights(input: InsightInput): Insight[] {
     insights.push({
       id: 'loot-available',
       icon: '🎁',
-      title: `${profile.lootBoxesAvailable} loot box${profile.lootBoxesAvailable > 1 ? 'es' : ''} disponible${profile.lootBoxesAvailable > 1 ? 's' : ''}`,
-      body: 'Ouvrez-la pour découvrir votre récompense !',
+      title: t('insights:lootAvailable.title', { count: profile.lootBoxesAvailable }),
+      body: t('insights:lootAvailable.body'),
       priority: 'medium',
       category: 'suggestion',
-      action: { label: 'Ouvrir', type: 'navigate', route: '/(tabs)/loot' },
+      action: { label: t('insights:actions.open'), type: 'navigate', route: '/(tabs)/loot' },
     });
   }
 
@@ -515,23 +521,23 @@ function anniversaryInsights(input: InsightInput, tc: TimeContext): Insight[] {
     if (days > 3) continue;
 
     const age = a.birthYear ? currentYear - a.birthYear : null;
-    const ageText = age !== null ? ` (${age} ans)` : '';
+    const ageText = age !== null ? ` (${age})` : '';
 
     if (days === 0) {
       insights.push({
         id: `anniversary-today-${a.name}`,
         icon: '🎂',
-        title: `Anniversaire de ${a.name} aujourd'hui !`,
-        body: `C'est l'anniversaire de ${a.name}${ageText}. Pensez à lui souhaiter !`,
+        title: t('insights:anniversaryToday.title', { name: a.name }),
+        body: t('insights:anniversaryToday.body', { name: a.name, age: ageText }),
         priority: 'high',
         category: 'reminder',
       });
     } else {
-      const quand = days === 1 ? 'demain' : `dans ${days} jours`;
+      const quand = days === 1 ? t('insights:relative.tomorrow') : t('insights:relative.inDays', { count: days });
       insights.push({
         id: `anniversary-soon-${a.name}`,
         icon: '🎈',
-        title: `Anniversaire de ${a.name} ${quand}`,
+        title: t('insights:anniversarySoon.title', { name: a.name, when: quand }),
         body: `${a.name}${ageText}${a.category ? ` · ${a.category}` : ''}`,
         priority: days === 1 ? 'medium' : 'low',
         category: 'reminder',
@@ -563,7 +569,7 @@ function skillTreeInsights(input: InsightInput): Insight[] {
   for (const child of children) {
     const months = ageInMonths(child.birthdate!);
     const bracket = detectAgeBracket(child.birthdate!);
-    const tree = input.skillTrees.find((t) => t.profileId === child.id);
+    const tree = input.skillTrees.find((st) => st.profileId === child.id);
     const unlockedIds = new Set(tree?.unlocked.map((u) => u.skillId) ?? []);
 
     // Jalons attendus pour cet âge, non encore débloqués
@@ -583,11 +589,11 @@ function skillTreeInsights(input: InsightInput): Insight[] {
       insights.push({
         id: `skill-redflag-${child.id}`,
         icon: '⚠️',
-        title: `${child.name} : jalon à surveiller`,
-        body: `« ${first.label} » est attendu depuis ${months - first.expectedMonths!} mois. Parlez-en à votre pédiatre si besoin.`,
+        title: t('insights:skillRedFlag.title', { name: child.name }),
+        body: t('insights:skillRedFlag.body', { label: first.label, months: months - first.expectedMonths! }),
         priority: 'high',
         category: 'alert',
-        action: { label: 'Voir les compétences', type: 'navigate', route: '/(tabs)/skills' },
+        action: { label: t('insights:actions.viewSkills'), type: 'navigate', route: '/(tabs)/skills' },
       });
     }
 
@@ -597,11 +603,11 @@ function skillTreeInsights(input: InsightInput): Insight[] {
       insights.push({
         id: `skill-onboard-${child.id}`,
         icon: '🌳',
-        title: `${child.name} a ${months} mois`,
-        body: `${dueJalons.length} jalons à valider ! Ouvrez les compétences pour commencer le suivi.`,
+        title: t('insights:skillOnboard.title', { name: child.name, months }),
+        body: t('insights:skillOnboard.body', { count: dueJalons.length }),
         priority: 'medium',
         category: 'suggestion',
-        action: { label: 'Commencer', type: 'navigate', route: '/(tabs)/skills' },
+        action: { label: t('insights:actions.start'), type: 'navigate', route: '/(tabs)/skills' },
       });
     } else if (dueJalons.length > 0) {
       // Profil en cours → prochain jalon le plus récent (le plus proche de l'âge actuel)
@@ -612,11 +618,11 @@ function skillTreeInsights(input: InsightInput): Insight[] {
       insights.push({
         id: `skill-due-${child.id}`,
         icon: cat?.emoji ?? '🌳',
-        title: `${child.name} a l'âge pour débloquer`,
-        body: `« ${mostRecent.label} » — attendu vers ${mostRecent.expectedMonths} mois`,
+        title: t('insights:skillDue.title', { name: child.name }),
+        body: t('insights:skillDue.body', { label: mostRecent.label, months: mostRecent.expectedMonths }),
         priority: 'medium',
         category: 'suggestion',
-        action: { label: 'Voir les compétences', type: 'navigate', route: '/(tabs)/skills' },
+        action: { label: t('insights:actions.viewSkills'), type: 'navigate', route: '/(tabs)/skills' },
       });
     }
   }
