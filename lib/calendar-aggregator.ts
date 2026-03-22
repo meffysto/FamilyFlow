@@ -112,10 +112,11 @@ export function aggregateCalendarEvents(
   const today = format(new Date(), 'yyyy-MM-dd');
   for (const task of input.tasks) {
     if (!task.dueDate && !task.recurrence) {
-      // Tâches ménage + tâches récurrentes (fichiers "récurrentes") → aujourd'hui
+      // Tâches ménage + tâches sous sections récurrentes → aujourd'hui
       const isMenage = task.sourceFile.includes('Ménage');
-      const isRecurrente = task.sourceFile.includes('currentes');
-      if ((!isMenage && !isRecurrente) || task.completed || !inRange(today)) continue;
+      const section = (task.section || '').toLowerCase();
+      const isRecurringSection = section.includes('hebdo') || section.includes('mensuel') || section.includes('tous les') || section.includes('quotid');
+      if ((!isMenage && !isRecurringSection) || task.completed || !inRange(today)) continue;
       events.push({
         id: `task-${task.id}`,
         date: today,
