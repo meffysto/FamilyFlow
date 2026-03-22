@@ -26,7 +26,7 @@ import { ParentalControlsProvider } from '../contexts/ParentalControlsContext';
 import { HelpProvider } from '../contexts/HelpContext';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { LockScreen } from '../components/LockScreen';
-import '../lib/i18n';
+import { loadSavedLanguage } from '../lib/i18n';
 
 // ─── Error Boundary ──────────────────────────────────────────────────────────
 
@@ -99,6 +99,7 @@ export default function RootLayout() {
     configureNotifications();
 
     (async () => {
+      await loadSavedLanguage();
       const stored = await SecureStore.getItemAsync(VAULT_PATH_KEY);
       setHasVault(!!stored);
       setIsReady(true);

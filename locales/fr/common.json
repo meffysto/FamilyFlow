@@ -1418,7 +1418,12 @@
       "auto": "Auto",
       "light": "Clair",
       "dark": "Sombre",
-      "modeA11y": "Mode {{mode}}"
+      "modeA11y": "Mode {{mode}}",
+      "languageLabel": "🌐 Langue",
+      "languageAuto": "Auto",
+      "languageFr": "Français",
+      "languageEn": "English",
+      "languageA11y": "Langue {{lang}}"
     }
   }
 }

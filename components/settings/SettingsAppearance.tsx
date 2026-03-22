@@ -1,14 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { setAppLanguage, getSavedLanguage } from '../../lib/i18n';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 
+type LangPref = 'fr' | 'en' | 'auto';
+
 export function SettingsAppearance() {
   const { t } = useTranslation();
   const { primary, tint, colors, darkModePreference, setDarkModePreference } = useThemeColors();
+  const [langPref, setLangPref] = useState<LangPref>('auto');
+
+  useEffect(() => {
+    getSavedLanguage().then(setLangPref);
+  }, []);
+
+  const handleLanguageChange = async (lng: LangPref) => {
+    setLangPref(lng);
+    await setAppLanguage(lng);
+  };
 
   return (
     <View style={styles.section} accessibilityRole="summary" accessibilityLabel={t('settings.appearance.sectionA11y')}>
@@ -38,6 +51,36 @@ export function SettingsAppearance() {
               <Text style={[
                 styles.chipText, { color: colors.textMuted },
                 darkModePreference === opt.value && { color: primary, fontWeight: FontWeight.bold },
+              ]}>{opt.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Sélecteur de langue */}
+        <Text style={[styles.label, { color: colors.textSub, marginTop: Spacing.xl }]}>{t('settings.appearance.languageLabel')}</Text>
+        <View style={styles.row}>
+          {([
+            { value: 'auto' as LangPref, label: t('settings.appearance.languageAuto'), emoji: '🌐' },
+            { value: 'fr' as LangPref, label: t('settings.appearance.languageFr'), emoji: '🇫🇷' },
+            { value: 'en' as LangPref, label: t('settings.appearance.languageEn'), emoji: '🇬🇧' },
+          ]).map((opt) => (
+            <TouchableOpacity
+              key={opt.value}
+              style={[
+                styles.chip,
+                { backgroundColor: colors.bg },
+                langPref === opt.value && { backgroundColor: tint, borderColor: primary },
+              ]}
+              onPress={() => handleLanguageChange(opt.value)}
+              activeOpacity={0.7}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: langPref === opt.value }}
+              accessibilityLabel={t('settings.appearance.languageA11y', { lang: opt.label })}
+            >
+              <Text style={styles.chipEmoji}>{opt.emoji}</Text>
+              <Text style={[
+                styles.chipText, { color: colors.textMuted },
+                langPref === opt.value && { color: primary, fontWeight: FontWeight.bold },
               ]}>{opt.label}</Text>
             </TouchableOpacity>
           ))}
