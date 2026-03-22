@@ -2283,7 +2283,20 @@
       "notesLabel": "Notes (optional)",
       "notesPlaceholder": "E.g.: Decathlon, size 24 inches"
     },
-    "addBtn": "+ Add"
+    "addBtn": "+ Add",
+    "all": "All",
+    "toGive": "{{count}} to give",
+    "bought": "{{count}} bought",
+    "boughtBy": "Bought by {{name}}",
+    "empty": {
+      "title": "Empty list",
+      "subtitle": "Add the family's wishes",
+      "cta": "Add a wish"
+    },
+    "sectionBought_one": "{{count}} bought",
+    "sectionBought_other": "{{count}} bought",
+    "sectionWish_one": "{{count}} wish",
+    "sectionWish_other": "{{count}} wishes"
   },
   "gratitude": {
     "title": "Gratitude",
@@ -2476,6 +2489,25 @@
     "shareBtn": "📤 Share"
   },
   "anniversairesScreen": {
+    "title": "Birthdays",
+    "years": "years",
+    "thisWeek": "this week",
+    "importContacts": "Contacts",
+    "importCalendar": "Calendar",
+    "deleteTitle": "Delete this birthday?",
+    "deleteMessage": "{{name}}'s birthday will be deleted.",
+    "countdown": {
+      "today": "Today!",
+      "tomorrow": "Tomorrow",
+      "days": "In {{count}} days",
+      "weeks": "In {{count}} wk.",
+      "months": "In {{count}} mo."
+    },
+    "empty": {
+      "title": "No birthdays",
+      "subtitle": "Keep track of important dates",
+      "cta": "Add"
+    },
     "toast": {
       "deleted": "Birthday deleted"
     },

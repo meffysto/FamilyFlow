@@ -37,18 +37,22 @@ import { EmptyState } from '../../components/EmptyState';
 import type { WishlistItem, WishBudget, WishOccasion } from '../../lib/types';
 import { useTranslation } from 'react-i18next';
 
-const BUDGET_OPTIONS: { label: string; value: WishBudget }[] = [
-  { label: 'Aucun', value: '' },
-  { label: '💰', value: '💰' },
-  { label: '💰💰', value: '💰💰' },
-  { label: '💰💰💰', value: '💰💰💰' },
-];
+function getBudgetOptions(t: (key: string) => string): { label: string; value: WishBudget }[] {
+  return [
+    { label: t('wishlist.editor.budgetNone'), value: '' },
+    { label: '💰', value: '💰' },
+    { label: '💰💰', value: '💰💰' },
+    { label: '💰💰💰', value: '💰💰💰' },
+  ];
+}
 
-const OCCASION_OPTIONS: { label: string; value: WishOccasion }[] = [
-  { label: 'Général', value: '' },
-  { label: '🎂 Anniversaire', value: '🎂' },
-  { label: '🎄 Noël', value: '🎄' },
-];
+function getOccasionOptions(t: (key: string) => string): { label: string; value: WishOccasion }[] {
+  return [
+    { label: t('wishlist.editor.occasionGeneral'), value: '' },
+    { label: t('wishlist.editor.occasionBirthday'), value: '🎂' },
+    { label: t('wishlist.editor.occasionChristmas'), value: '🎄' },
+  ];
+}
 
 type OccasionFilter = 'tous' | '🎂' | '🎄';
 
@@ -85,21 +89,25 @@ export default function WishlistScreen() {
 
   // Segments personne pour SegmentedControl
   const personSegments = useMemo(() => {
-    const segs: Segment<string>[] = [{ id: 'tous', label: 'Tous' }];
+    const segs: Segment<string>[] = [{ id: 'tous', label: t('wishlist.all') }];
     const names = new Set(wishlistItems.map((w) => w.profileName));
     for (const name of names) {
       const p = profiles.find((pr) => pr.name === name);
       segs.push({ id: name, label: p ? `${p.avatar} ${name}` : name });
     }
     return segs;
-  }, [wishlistItems, profiles]);
+  }, [wishlistItems, profiles, t]);
 
   // Chips occasion
   const occasionChips: { id: OccasionFilter; label: string }[] = [
-    { id: 'tous', label: 'Tous' },
-    { id: '🎂', label: '🎂 Anniversaire' },
-    { id: '🎄', label: '🎄 Noël' },
+    { id: 'tous', label: t('wishlist.all') },
+    { id: '🎂', label: t('wishlist.editor.occasionBirthday') },
+    { id: '🎄', label: t('wishlist.editor.occasionChristmas') },
   ];
+
+  // Options localisées
+  const budgetOptions = useMemo(() => getBudgetOptions(t), [t]);
+  const occasionOptions = useMemo(() => getOccasionOptions(t), [t]);
 
   // Filtrer les items
   const filteredItems = useMemo(() => {
@@ -239,7 +247,7 @@ export default function WishlistScreen() {
       <View style={[styles.header, { backgroundColor: colors.bg }]}>
         <View style={styles.headerRow}>
           <Text style={[styles.title, { color: colors.text }]}>
-            {isAdult ? 'Souhaits' : 'Mes souhaits ✨'}
+            {isAdult ? t('wishlist.title') : t('wishlist.titleChild')}
           </Text>
           {totalToGive > 0 && (
             <View style={[styles.countBadge, { backgroundColor: primary + '20' }]}>
@@ -254,7 +262,7 @@ export default function WishlistScreen() {
           accessibilityLabel={t('wishlist.a11y.addWish')}
           accessibilityRole="button"
         >
-          <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+ Ajouter</Text>
+          <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>{t('wishlist.addBtn')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -282,10 +290,10 @@ export default function WishlistScreen() {
       {isAdult && (
         <View style={styles.statsBar}>
           <View style={[styles.statPill, { backgroundColor: primary + '15' }]}>
-            <Text style={[styles.statPillText, { color: primary }]}>🎁 {totalToGive} à offrir</Text>
+            <Text style={[styles.statPillText, { color: primary }]}>{t('wishlist.toGive', { count: totalToGive })}</Text>
           </View>
           <View style={[styles.statPill, { backgroundColor: colors.successBg }]}>
-            <Text style={[styles.statPillText, { color: colors.success }]}>✓ {totalBought} achetés</Text>
+            <Text style={[styles.statPillText, { color: colors.success }]}>{t('wishlist.bought', { count: totalBought })}</Text>
           </View>
         </View>
       )}
@@ -293,9 +301,9 @@ export default function WishlistScreen() {
       {sections.length === 0 ? (
         <EmptyState
           emoji="🎁"
-          title="Liste vide"
-          subtitle="Ajoutez les envies de la famille"
-          ctaLabel="Ajouter un souhait"
+          title={t('wishlist.empty.title')}
+          subtitle={t('wishlist.empty.subtitle')}
+          ctaLabel={t('wishlist.empty.cta')}
           onCta={() => openEditor()}
         />
       ) : (
@@ -324,14 +332,14 @@ export default function WishlistScreen() {
                         <View style={[styles.progressFill, { backgroundColor: colors.success, width: 60 * progress }]} />
                       </View>
                       <Text style={[styles.sectionProgressText, { color: colors.textMuted }]}>
-                        {bought}/{total} acheté{bought !== 1 ? 's' : ''}
+                        {t('wishlist.sectionBought', { count: bought })} / {total}
                       </Text>
                     </View>
                   )}
                 </View>
                 {!isAdult && (
                   <Text style={[styles.sectionCount, { color: colors.textMuted }]}>
-                    {section.data.filter((d) => !d.bought).length} souhait{section.data.filter((d) => !d.bought).length !== 1 ? 's' : ''}
+                    {t('wishlist.sectionWish', { count: section.data.filter((d) => !d.bought).length })}
                   </Text>
                 )}
               </View>
@@ -413,7 +421,7 @@ export default function WishlistScreen() {
                   {/* Info acheteur — adultes seulement */}
                   {isAdult && item.bought && item.boughtBy && (
                     <Text style={[styles.boughtInfo, { color: colors.success }]}>
-                      🔒 Acheté par {item.boughtBy}
+                      {t('wishlist.boughtBy', { name: item.boughtBy })}
                     </Text>
                   )}
                 </TouchableOpacity>
@@ -433,15 +441,15 @@ export default function WishlistScreen() {
       >
         <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
           <ModalHeader
-            title={editingItem ? 'Modifier le souhait' : 'Nouveau souhait'}
+            title={editingItem ? t('wishlist.editor.titleEdit') : t('wishlist.editor.titleNew')}
             onClose={() => setEditorVisible(false)}
-            rightLabel="Enregistrer"
+            rightLabel={t('wishlist.editor.save')}
             onRight={handleSave}
             rightDisabled={!editText.trim()}
           />
           <View style={styles.editorContent}>
             {/* Texte */}
-            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>Souhait</Text>
+            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>{t('wishlist.editor.wishLabel')}</Text>
             <TextInput
               style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
               value={editText}
@@ -452,7 +460,7 @@ export default function WishlistScreen() {
             />
 
             {/* Pour qui */}
-            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>Pour qui</Text>
+            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>{t('wishlist.editor.forWho')}</Text>
             <View style={styles.chipRow}>
               {profiles.map((p) => (
                 <Chip
@@ -465,9 +473,9 @@ export default function WishlistScreen() {
             </View>
 
             {/* Budget */}
-            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>Budget</Text>
+            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>{t('wishlist.editor.budget')}</Text>
             <View style={styles.chipRow}>
-              {BUDGET_OPTIONS.map((opt) => (
+              {budgetOptions.map((opt) => (
                 <Chip
                   key={opt.value || 'none'}
                   label={opt.label}
@@ -478,9 +486,9 @@ export default function WishlistScreen() {
             </View>
 
             {/* Occasion */}
-            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>Occasion</Text>
+            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>{t('wishlist.editor.occasion')}</Text>
             <View style={styles.chipRow}>
-              {OCCASION_OPTIONS.map((opt) => (
+              {occasionOptions.map((opt) => (
                 <Chip
                   key={opt.value || 'general'}
                   label={opt.label}
@@ -491,7 +499,7 @@ export default function WishlistScreen() {
             </View>
 
             {/* Notes */}
-            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>Notes (optionnel)</Text>
+            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>{t('wishlist.editor.notesLabel')}</Text>
             <TextInput
               style={[styles.input, styles.notesInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
               value={editNotes}

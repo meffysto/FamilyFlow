@@ -2283,7 +2283,20 @@
       "notesLabel": "Notes (optionnel)",
       "notesPlaceholder": "Ex : Decathlon, taille 24 pouces"
     },
-    "addBtn": "+ Ajouter"
+    "addBtn": "+ Ajouter",
+    "all": "Tous",
+    "toGive": "{{count}} à offrir",
+    "bought": "{{count}} achetés",
+    "boughtBy": "Acheté par {{name}}",
+    "empty": {
+      "title": "Liste vide",
+      "subtitle": "Ajoutez les envies de la famille",
+      "cta": "Ajouter un souhait"
+    },
+    "sectionBought_one": "{{count}} acheté",
+    "sectionBought_other": "{{count}} achetés",
+    "sectionWish_one": "{{count}} souhait",
+    "sectionWish_other": "{{count}} souhaits"
   },
   "gratitude": {
     "title": "Gratitude",
@@ -2476,6 +2489,25 @@
     "shareBtn": "📤 Partager"
   },
   "anniversairesScreen": {
+    "title": "Anniversaires",
+    "years": "ans",
+    "thisWeek": "cette semaine",
+    "importContacts": "Contacts",
+    "importCalendar": "Calendrier",
+    "deleteTitle": "Supprimer cet anniversaire ?",
+    "deleteMessage": "L'anniversaire de {{name}} sera supprimé.",
+    "countdown": {
+      "today": "Aujourd'hui !",
+      "tomorrow": "Demain",
+      "days": "Dans {{count}} jours",
+      "weeks": "Dans {{count}} sem.",
+      "months": "Dans {{count}} mois"
+    },
+    "empty": {
+      "title": "Aucun anniversaire",
+      "subtitle": "Gardez en mémoire les dates importantes",
+      "cta": "Ajouter"
+    },
     "toast": {
       "deleted": "Anniversaire supprimé"
     },

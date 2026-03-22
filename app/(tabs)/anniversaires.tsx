@@ -24,6 +24,8 @@ import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { useTranslation } from 'react-i18next';
+import { format } from 'date-fns';
+import { getDateLocale } from '../../lib/date-locale';
 import { Chip } from '../../components/ui/Chip';
 import { Button } from '../../components/ui/Button';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
@@ -33,10 +35,10 @@ import { CalendarImporter } from '../../components/CalendarImporter';
 import { EmptyState } from '../../components/EmptyState';
 import type { Anniversary } from '../../lib/types';
 
-const MONTH_NAMES = [
-  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
-];
+/** Retourne le nom du mois localisé (index 0-based) */
+function getMonthName(monthIndex: number): string {
+  return format(new Date(2024, monthIndex, 1), 'MMMM', { locale: getDateLocale() });
+}
 
 /** Calcule le nombre de jours avant le prochain anniversaire */
 function daysUntilBirthday(dateStr: string): number {
@@ -68,16 +70,16 @@ function computeAge(dateStr: string, birthYear?: number): number | undefined {
 }
 
 /** Format le countdown de manière lisible */
-function formatCountdown(days: number): string {
-  if (days === 0) return "Aujourd'hui !";
-  if (days === 1) return 'Demain';
-  if (days <= 7) return `Dans ${days} jours`;
+function formatCountdown(days: number, t: (key: string, opts?: Record<string, unknown>) => string): string {
+  if (days === 0) return t('anniversairesScreen.countdown.today');
+  if (days === 1) return t('anniversairesScreen.countdown.tomorrow');
+  if (days <= 7) return t('anniversairesScreen.countdown.days', { count: days });
   if (days <= 30) {
     const weeks = Math.floor(days / 7);
-    return `Dans ${weeks} sem.`;
+    return t('anniversairesScreen.countdown.weeks', { count: weeks });
   }
   const months = Math.floor(days / 30);
-  return `Dans ${months} mois`;
+  return t('anniversairesScreen.countdown.months', { count: months });
 }
 
 interface SectionData {
@@ -120,7 +122,7 @@ export default function AnniversairesScreen() {
     const grouped = new Map<string, typeof enriched>();
     for (const item of enriched) {
       const [mm] = item.date.split('-').map(Number);
-      const monthLabel = MONTH_NAMES[mm - 1];
+      const monthLabel = getMonthName(mm - 1);
       if (!grouped.has(monthLabel)) grouped.set(monthLabel, []);
       grouped.get(monthLabel)!.push(item);
     }
@@ -179,8 +181,8 @@ export default function AnniversairesScreen() {
       return (
         <SwipeToDelete
           onDelete={() => handleDelete(item.name)}
-          confirmTitle="Supprimer cet anniversaire ?"
-          confirmMessage={`L'anniversaire de ${item.name} sera supprimé.`}
+          confirmTitle={t('anniversairesScreen.deleteTitle')}
+          confirmMessage={t('anniversairesScreen.deleteMessage', { name: item.name })}
           hintId="anniversaires"
         >
           <TouchableOpacity
@@ -200,7 +202,7 @@ export default function AnniversairesScreen() {
                   </Text>
                   {item.age != null && (
                     <Text style={[styles.cardAge, { color: colors.textFaint }]}>
-                      {' \u2022 '}{item.age} ans
+                      {' \u2022 '}{item.age} {t('anniversairesScreen.years')}
                     </Text>
                   )}
                 </View>
@@ -220,14 +222,14 @@ export default function AnniversairesScreen() {
                   },
                 ]}
               >
-                {formatCountdown(item.daysUntil)}
+                {formatCountdown(item.daysUntil, t)}
               </Text>
             </View>
           </TouchableOpacity>
         </SwipeToDelete>
       );
     },
-    [colors, handleDelete, handleEdit],
+    [colors, handleDelete, handleEdit, t],
   );
 
   const renderSectionHeader = useCallback(
@@ -243,13 +245,13 @@ export default function AnniversairesScreen() {
     () => (
       <EmptyState
         emoji="🎂"
-        title="Aucun anniversaire"
-        subtitle="Gardez en mémoire les dates importantes"
-        ctaLabel="Ajouter"
+        title={t('anniversairesScreen.empty.title')}
+        subtitle={t('anniversairesScreen.empty.subtitle')}
+        ctaLabel={t('anniversairesScreen.empty.cta')}
         onCta={handleAdd}
       />
     ),
-    [handleAdd],
+    [handleAdd, t],
   );
 
   // Prochain anniversaire pour le badge compteur
@@ -263,11 +265,11 @@ export default function AnniversairesScreen() {
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.bg }]}>
         <View style={styles.headerLeft}>
-          <Text style={[styles.title, { color: colors.text }]}>Anniversaires</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{t('anniversairesScreen.title')}</Text>
           {upcomingSoon > 0 && (
             <View style={[styles.soonBadge, { backgroundColor: colors.warningBg }]}>
               <Text style={[styles.soonBadgeText, { color: colors.warningText }]}>
-                {upcomingSoon} cette semaine
+                {upcomingSoon} {t('anniversairesScreen.thisWeek')}
               </Text>
             </View>
           )}
@@ -293,7 +295,7 @@ export default function AnniversairesScreen() {
           >
             <Text style={styles.importEmoji}>{'📇'}</Text>
             <Text style={[styles.importText, { color: primary }]}>
-              Contacts
+              {t('anniversairesScreen.importContacts')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -303,7 +305,7 @@ export default function AnniversairesScreen() {
           >
             <Text style={styles.importEmoji}>{'📅'}</Text>
             <Text style={[styles.importText, { color: primary }]}>
-              Calendrier
+              {t('anniversairesScreen.importCalendar')}
             </Text>
           </TouchableOpacity>
         </View>
