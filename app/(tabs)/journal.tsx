@@ -753,17 +753,17 @@ export default function JournalScreen() {
             <Text style={styles.createEmoji}>{isViewingAdultTab ? (activeProfile?.avatar ?? '📖') : (selectedEnfant?.avatar ?? '👶')}</Text>
             <Text style={[styles.createTitle, { color: colors.textSub }]}>
               {isViewingAdultTab
-                ? `Pas encore de journal pour ${activeProfile?.name}`
+                ? t('journal.create.noJournalAdult', { name: activeProfile?.name })
                 : isToday
-                  ? `Pas encore de journal pour ${selectedEnfantName} aujourd'hui`
-                  : `Pas de journal le ${format(selectedDate, 'dd/MM/yyyy')}`}
+                  ? t('journal.create.noJournalChild', { name: selectedEnfantName })
+                  : t('journal.create.noJournalDate', { date: format(selectedDate, 'dd/MM/yyyy') })}
             </Text>
             {isToday && canEdit && (
               <>
                 <Text style={[styles.createSubtitle, { color: colors.textMuted }]}>
                   {isViewingAdultTab
-                    ? 'Créez votre journal personnel pour noter vos pensées, humeur et objectifs.'
-                    : `Créez le journal du ${format(new Date(), 'dd/MM/yyyy')} pour commencer à suivre l'alimentation, les couches et le sommeil.`}
+                    ? t('journal.create.adultSubtitle')
+                    : t('journal.create.childSubtitle', { date: format(new Date(), 'dd/MM/yyyy') })}
                 </Text>
                 <TouchableOpacity
                   style={[styles.createBtn, { backgroundColor: primary }, isCreating && styles.createBtnDisabled]}
@@ -774,7 +774,7 @@ export default function JournalScreen() {
                   accessibilityState={{ disabled: isCreating }}
                 >
                   <Text style={styles.createBtnText}>
-                    {isCreating ? 'Création...' : '📝 Créer le journal du jour'}
+                    {isCreating ? t('journal.create.creating') : t('journal.create.createBtn')}
                   </Text>
                 </TouchableOpacity>
               </>
