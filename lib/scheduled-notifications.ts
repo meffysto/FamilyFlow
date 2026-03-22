@@ -297,7 +297,7 @@ export async function setupMenageReminder(config: NotifScheduleConfig): Promise<
     identifier: `${CAT_MENAGE}-weekly`,
     content: {
       title: '🧹 C\'est le jour du ménage !',
-      body: 'Ouvre Family Vault pour voir les tâches ménage',
+      body: 'Ouvre Family Flow pour voir les tâches ménage',
       sound: true,
     },
     trigger: {
@@ -351,7 +351,7 @@ export async function setupGeneralReminder(config: NotifScheduleConfig): Promise
   await Notifications.scheduleNotificationAsync({
     identifier: `${CAT_GENERAL}-daily`,
     content: {
-      title: '📱 Family Vault',
+      title: '📱 Family Flow',
       body: 'Ouvre l\'app pour voir ton résumé du jour',
       sound: true,
     },
@@ -374,7 +374,7 @@ export async function setupGrossesseWeekly(config: NotifScheduleConfig): Promise
     identifier: `${CAT_GROSSESSE}-weekly`,
     content: {
       title: '🤰 Suivi grossesse',
-      body: 'Ouvre Family Vault pour envoyer la mise à jour hebdo',
+      body: 'Ouvre Family Flow pour envoyer la mise à jour hebdo',
       sound: true,
     },
     trigger: {
@@ -431,7 +431,7 @@ export async function setupWeeklyAISummaryReminder(config: NotifScheduleConfig):
     identifier: `${CAT_WEEKLY_AI}-weekly`,
     content: {
       title: '📬 Résumé hebdo',
-      body: 'Ouvre Family Vault pour envoyer le digest de la semaine',
+      body: 'Ouvre Family Flow pour envoyer le digest de la semaine',
       sound: true,
     },
     trigger: {

@@ -250,7 +250,6 @@ import { Task, RDV, StockItem } from './types';
 
 export function buildMorningDigest(data: {
   tasks: Task[];
-  menageTasks: Task[];
   rdvs: RDV[];
   stock: StockItem[];
 }): string {
@@ -269,8 +268,8 @@ export function buildMorningDigest(data: {
     lines.push('');
   }
 
-  // Ménage
-  const pendingMenage = data.menageTasks.filter((t) => !t.completed);
+  // Ménage (filtré depuis les tâches par sourceFile)
+  const pendingMenage = data.tasks.filter((t) => t.sourceFile.includes('Ménage') && !t.completed);
   if (pendingMenage.length > 0) {
     lines.push(`🧹 <b>${pendingMenage.length} tâche(s) ménage</b>`);
     pendingMenage.forEach((t) => lines.push(`  • ${t.text}`));
@@ -318,7 +317,6 @@ export function buildMorningDigest(data: {
 
 export function buildEveningDigest(data: {
   tasks: Task[];
-  menageTasks: Task[];
 }): string {
   const today = format(new Date(), 'dd/MM/yyyy');
   const todayStr = format(new Date(), 'yyyy-MM-dd');

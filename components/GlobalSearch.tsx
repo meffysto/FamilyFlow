@@ -91,7 +91,6 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
     if (!isChildMode || !nameLower || isAllowed('recherche', role as 'enfant' | 'ado')) {
       return {
         tasks: vault.tasks,
-        menageTasks: vault.menageTasks,
         rdvs: vault.rdvs,
         stock: vault.stock,
         meals: vault.meals,
@@ -109,7 +108,6 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
         const f = t.sourceFile.toLowerCase();
         return f.includes(nameLower) || f.includes('maison');
       }),
-      menageTasks: vault.menageTasks,
       rdvs: vault.rdvs.filter((r) => r.enfant.toLowerCase() === nameLower),
       stock: [], // masqué pour les enfants
       meals: vault.meals,
@@ -122,7 +120,7 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
       recipes: vault.recipes,
       profiles: vault.profiles,
     };
-  }, [vault.tasks, vault.menageTasks, vault.rdvs, vault.stock, vault.meals,
+  }, [vault.tasks, vault.rdvs, vault.stock, vault.meals,
     vault.courses, vault.memories, vault.defis, vault.wishlistItems, vault.recipes,
     vault.profiles, isChildMode, vault.activeProfile]);
 
@@ -132,7 +130,6 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
 
   const aiVaultCtx: AIVaultContext = useMemo(() => ({
     tasks: vault.tasks,
-    menageTasks: vault.menageTasks,
     rdvs: vault.rdvs,
     stock: vault.stock,
     meals: vault.meals,
@@ -145,7 +142,7 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
     activeProfile: vault.activeProfile,
     journalStats: vault.journalStats,
     healthRecords: vault.healthRecords,
-  }), [vault.tasks, vault.menageTasks, vault.rdvs, vault.stock, vault.meals,
+  }), [vault.tasks, vault.rdvs, vault.stock, vault.meals,
     vault.courses, vault.memories, vault.defis, vault.wishlistItems, vault.recipes,
     vault.profiles, vault.activeProfile, vault.journalStats, vault.healthRecords]);
 

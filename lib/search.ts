@@ -29,7 +29,6 @@ export interface SearchResult {
 
 export interface SearchInput {
   tasks: Task[];
-  menageTasks: Task[];
   rdvs: RDV[];
   stock: StockItem[];
   meals: MealItem[];
@@ -506,7 +505,7 @@ const wishlistConfig: SearchEntityConfig<WishlistItem> = {
 // ─── Moteur principal ───────────────────────────────────────────────────────────
 
 const SEARCH_CONFIGS: { type: SearchResultType; getItems: (input: SearchInput) => any[]; config: SearchEntityConfig<any> }[] = [
-  { type: 'task', getItems: (i) => [...i.tasks, ...i.menageTasks], config: taskConfig },
+  { type: 'task', getItems: (i) => i.tasks, config: taskConfig },
   { type: 'rdv', getItems: (i) => i.rdvs, config: rdvConfig },
   { type: 'recipe', getItems: (i) => i.recipes, config: recipeConfig },
   { type: 'stock', getItems: (i) => i.stock, config: stockConfig },

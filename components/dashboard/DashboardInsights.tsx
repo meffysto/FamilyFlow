@@ -21,7 +21,7 @@ function DashboardInsightsInner({ insights: insightsProp }: DashboardSectionProp
   const { showToast } = useToast();
   const ai = useAI();
   const {
-    tasks, menageTasks, courses, stock, meals, rdvs,
+    tasks, courses, stock, meals, rdvs,
     profiles, activeProfile, addCourseItem,
     memories, defis, wishlistItems, recipes, journalStats, healthRecords,
   } = useVault();
@@ -40,7 +40,7 @@ function DashboardInsightsInner({ insights: insightsProp }: DashboardSectionProp
   const handleAIRequest = async () => {
     setAiLoading(true);
     const ctx = {
-      tasks, menageTasks, rdvs, stock, meals, courses,
+      tasks, menageTasks: tasks.filter(t => t.sourceFile.includes('Ménage')), rdvs, stock, meals, courses,
       memories, defis, wishlistItems, recipes, profiles, activeProfile,
       journalStats, healthRecords,
     };

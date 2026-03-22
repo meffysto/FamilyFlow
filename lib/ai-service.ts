@@ -43,7 +43,8 @@ export interface JournalSummaryEntry {
 
 export interface VaultContext {
   tasks: Task[];
-  menageTasks: Task[];
+  /** @deprecated Ménage tasks sont maintenant dans tasks[] avec sourceFile contenant 'Ménage' */
+  menageTasks?: Task[];
   rdvs: RDV[];
   stock: StockItem[];
   meals: MealItem[];
@@ -200,7 +201,7 @@ function buildVaultSummary(ctx: VaultContext): VaultSummary {
       pending: ctx.tasks.filter((t) => !t.completed).length,
     },
     menage: {
-      pending: ctx.menageTasks.filter((t) => !t.completed).length,
+      pending: (ctx.menageTasks ?? ctx.tasks.filter(t => t.sourceFile.includes('Ménage'))).filter((t) => !t.completed).length,
     },
     rdvs: {
       upcoming: ctx.rdvs

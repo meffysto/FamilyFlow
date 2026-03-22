@@ -62,7 +62,7 @@ function formatWeekLabel(start: Date, end: Date): string {
 // ─── Composant ───────────────────────────────────────────────────────────────
 
 function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
-  const { tasks, menageTasks, meals, moods, quotes, profiles, stock, defis } = useVault();
+  const { tasks, meals, moods, quotes, profiles, stock, defis } = useVault();
   const { primary, colors } = useThemeColors();
   const { config, isConfigured } = useAI();
 
@@ -90,7 +90,7 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
     weekEnd.setHours(23, 59, 59, 999);
 
     // Tâches complétées cette semaine
-    const allTasks = [...tasks, ...menageTasks];
+    const allTasks = [...tasks];
     const completedTasks = allTasks.filter((t) => {
       if (!t.completed) return false;
       if (!t.dueDate) return false;
@@ -128,7 +128,7 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
       moodsAverage: moodsAvg,
       quote: bestQuote,
     };
-  }, [tasks, menageTasks, meals, moods, quotes]);
+  }, [tasks, meals, moods, quotes]);
 
   // Génération du bilan IA
   const handleGenerate = useCallback(async () => {
@@ -141,7 +141,7 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
       // Construire les données de la semaine
       const recapData: WeeklyRecapData = buildWeeklyRecapData(
         tasks,
-        menageTasks,
+        tasks.filter(t => t.sourceFile.includes('Ménage')),
         meals,
         moods,
         quotes,
@@ -175,7 +175,7 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
       setState('error');
       setError(e instanceof Error ? e.message : 'Erreur inconnue');
     }
-  }, [config, tasks, menageTasks, meals, moods, quotes, defis, profiles, stock, weekStats]);
+  }, [config, tasks, meals, moods, quotes, defis, profiles, stock, weekStats]);
 
   // Partage du bilan
   const handleShare = useCallback(() => {

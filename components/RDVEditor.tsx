@@ -83,7 +83,7 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
     try {
       const vaultCtx: AIVaultContext = {
         tasks: vault.tasks,
-        menageTasks: vault.menageTasks,
+        menageTasks: vault.tasks.filter(t => t.sourceFile.includes('Ménage')),
         rdvs: vault.rdvs,
         stock: vault.stock,
         meals: vault.meals,

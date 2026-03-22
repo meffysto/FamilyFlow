@@ -16,15 +16,14 @@ import { FontSize } from '../../constants/typography';
 function DashboardWeeklyStatsInner(_props: DashboardSectionProps) {
   const router = useRouter();
   const { primary, colors } = useThemeColors();
-  const { tasks, menageTasks } = useVault();
+  const { tasks } = useVault();
 
   const weeklyStatsData = useMemo(() => {
     const weekStart = getWeekStart(new Date());
-    const all = [...tasks, ...menageTasks];
-    const data = aggregateTasksByWeek(all, weekStart);
+    const data = aggregateTasksByWeek(tasks, weekStart);
     const total = data.reduce((s, d) => s + d.value, 0);
     return { data, total };
-  }, [tasks, menageTasks]);
+  }, [tasks]);
 
   const { data: weekData, total: weekTotal } = weeklyStatsData;
   if (weekTotal === 0) return null;

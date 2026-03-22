@@ -41,12 +41,12 @@ import { Shadows } from '../../constants/shadows';
 export default function StatsScreen() {
   const router = useRouter();
   const { primary, colors } = useThemeColors();
-  const { tasks, menageTasks, meals, profiles, refresh } = useVault();
+  const { tasks, meals, profiles, refresh } = useVault();
 
-  // Fusion tâches récurrentes + ménage pour le comptage complet
+  // Toutes les tâches (ménage inclus dans tasks via sourceFile)
   const allTasks = useMemo(
-    () => [...tasks, ...menageTasks],
-    [tasks, menageTasks],
+    () => [...tasks],
+    [tasks],
   );
 
   // Enfants pour le sommeil

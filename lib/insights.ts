@@ -41,7 +41,6 @@ export interface Insight {
 
 export interface InsightInput {
   tasks: Task[];
-  menageTasks: Task[];
   courses: CourseItem[];
   stock: StockItem[];
   meals: MealItem[];

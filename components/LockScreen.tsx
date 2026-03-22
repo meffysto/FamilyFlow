@@ -145,7 +145,7 @@ export const LockScreen = React.memo(function LockScreen() {
       {/* Titre */}
       <View style={styles.header}>
         <Text style={[styles.lockIcon, { color: primary }]}>🔒</Text>
-        <Text style={[styles.title, { color: colors.text }]}>Family Vault</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Family Flow</Text>
         <Text style={[styles.subtitle, { color: colors.textMuted }]}>
           {error ? 'PIN incorrect' : 'Entrez votre PIN'}
         </Text>

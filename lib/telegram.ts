@@ -143,7 +143,6 @@ export async function shouldSendWeeklySummary(): Promise<boolean> {
  */
 export async function buildAndSendWeeklySummary(data: {
   tasks: Task[];
-  menageTasks: Task[];
   meals: MealItem[];
   moods: MoodEntry[];
   quotes: ChildQuote[];
@@ -163,7 +162,7 @@ export async function buildAndSendWeeklySummary(data: {
 
   // 3. Agréger les données de la semaine et générer le bilan IA
   const recap = buildWeeklyRecapData(
-    data.tasks, data.menageTasks, data.meals, data.moods,
+    data.tasks, data.tasks.filter(t => t.sourceFile.includes('Ménage')), data.meals, data.moods,
     data.quotes, data.defis, data.profiles, data.stock,
   );
   const recapText = formatRecapForAI(recap);

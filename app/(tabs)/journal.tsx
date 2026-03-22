@@ -143,7 +143,7 @@ function sectionNameForType(type: EntryType): string {
     case 'Couche': return 'Couches';
     case 'Sieste': return 'Sommeil';
     case 'Observation': return 'Humeur';
-    case 'Médicament': return 'dicaments';
+    case 'Médicament': return 'Médicaments';
     default: return '';
   }
 }
@@ -614,7 +614,11 @@ export default function JournalScreen() {
       if (tableLines.length === 0) return null;
 
       const [header, _separator, ...rows] = tableLines;
-      const cols = header.split('|').slice(1, -1).map((c) => c.trim());
+      const SHORT_HEADERS: Record<string, string> = { 'Médicament': 'Médic.' };
+      const cols = header.split('|').slice(1, -1).map((c) => {
+        const t = c.trim();
+        return SHORT_HEADERS[t] ?? t;
+      });
 
       let tableLineIndices: number[] = [];
       for (let i = 0; i < sectionLines.length; i++) {

@@ -108,8 +108,24 @@ export function aggregateCalendarEvents(
     });
   }
 
-  // Tâches avec deadline (+ projection récurrences)
+  // Tâches ménage (pas de dueDate — valides pour aujourd'hui uniquement)
+  const today = format(new Date(), 'yyyy-MM-dd');
   for (const task of input.tasks) {
+    if (!task.dueDate && task.sourceFile.includes('Ménage')) {
+      if (!inRange(today) || task.completed) continue;
+      events.push({
+        id: `task-${task.id}`,
+        date: today,
+        type: 'task',
+        label: task.text.trim(),
+        sublabel: task.section || undefined,
+        emoji: '🧹',
+        colorKey: task.completed ? 'success' : 'warning',
+        route: '/(tabs)/tasks',
+        source: task,
+      });
+      continue;
+    }
     if (!task.dueDate || task.completed) continue;
     const label = task.text.replace(/📅\s*\d{4}-\d{2}-\d{2}/, '').replace(/🔁\s*\S+/, '').trim();
     const sublabel = task.section || undefined;

@@ -76,7 +76,6 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
     try {
       const result = await buildAndSendWeeklySummary({
         tasks: vault.tasks,
-        menageTasks: vault.menageTasks,
         meals: vault.meals,
         moods: vault.moods,
         quotes: vault.quotes,

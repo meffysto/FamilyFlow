@@ -16,9 +16,9 @@ import { FontSize } from '../../constants/typography';
 function DashboardMenageInner({ vaultFileExists, activateCardTemplate, handleTaskToggle }: DashboardSectionWithTaskToggleProps) {
   const router = useRouter();
   const { colors } = useThemeColors();
-  const { menageTasks } = useVault();
+  const { tasks } = useVault();
 
-  const pendingMenage = menageTasks.filter((t) => !t.completed);
+  const pendingMenage = tasks.filter((t) => t.sourceFile.includes('Ménage') && !t.completed);
 
   if (!vaultFileExists.menage) return (
     <DashboardCard key="menage" title="Ménage du jour" icon="🧹" color={colors.success}>

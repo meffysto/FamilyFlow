@@ -128,7 +128,6 @@ export interface VaultState {
   isLoading: boolean;
   error: string | null;
   tasks: Task[];          // all tasks from all tâches récurrentes files
-  menageTasks: Task[];    // today's ménage tasks
   courses: CourseItem[];  // shopping list
   stock: StockItem[];     // baby stock levels
   meals: MealItem[];      // weekly meal plan
@@ -254,7 +253,7 @@ const STATIC_TASK_FILES = [
   '02 - Maison/Tâches récurrentes.md',
 ];
 
-const MENAGE_FILE = '02 - Maison/Ménage hebdo.md';
+export const MENAGE_FILE = '02 - Maison/Ménage hebdo.md';
 const COURSES_FILE = '02 - Maison/Liste de courses.md';
 const RDV_DIR = '04 - Rendez-vous';
 const RDV_ARCHIVES_DIR = 'Archives/Rendez-vous';
@@ -386,7 +385,6 @@ export function useVaultInternal(): VaultState {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [menageTasks, setMenageTasks] = useState<Task[]>([]);
   const [courses, setCourses] = useState<CourseItem[]>([]);
   const [stock, setStock] = useState<StockItem[]>([]);
   const [meals, setMeals] = useState<MealItem[]>([]);
@@ -394,16 +392,16 @@ export function useVaultInternal(): VaultState {
 
   // Refs pour le widget (accès à jour dans les useCallback sans dépendances)
   const mealsRef = useRef(meals);
-  const menageTasksRef = useRef(menageTasks);
   const rdvsRef = useRef(rdvs);
   const tasksRef = useRef(tasks);
   useEffect(() => { mealsRef.current = meals; }, [meals]);
-  useEffect(() => { menageTasksRef.current = menageTasks; }, [menageTasks]);
   useEffect(() => { rdvsRef.current = rdvs; }, [rdvs]);
   useEffect(() => { tasksRef.current = tasks; }, [tasks]);
 
   const triggerWidgetRefresh = useCallback(() => {
-    refreshWidget(mealsRef.current, menageTasksRef.current, rdvsRef.current, tasksRef.current);
+    const menageFromTasks = tasksRef.current.filter(t => t.sourceFile === MENAGE_FILE);
+    const nonMenageTasks = tasksRef.current.filter(t => t.sourceFile !== MENAGE_FILE);
+    refreshWidget(mealsRef.current, menageFromTasks, rdvsRef.current, nonMenageTasks);
   }, []);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
@@ -849,8 +847,9 @@ export function useVaultInternal(): VaultState {
         r.status === 'fulfilled' ? r.value : fallback;
 
       const tasksResult = val(results[0], [] as Task[]);
-      setTasks(tasksResult);
-      setMenageTasks(val(results[1], []));
+      const menageResult = val(results[1], [] as Task[]);
+      const allTasks = [...tasksResult, ...menageResult];
+      setTasks(allTasks);
       setRoutines(val(results[2], []));
       setCourses(val(results[3], []));
       const stockResult = val(results[4], { items: [] as StockItem[], sections: [] as string[] });
@@ -897,8 +896,7 @@ export function useVaultInternal(): VaultState {
         const shouldSend = await shouldSendWeeklySummary();
         if (!shouldSend) return;
         buildAndSendWeeklySummary({
-          tasks: tasksResult,
-          menageTasks: val(results[1], [] as Task[]),
+          tasks: [...tasksResult, ...menageResult],
           meals: val(results[5], [] as MealItem[]),
           moods: val(results[19], [] as MoodEntry[]),
           quotes: val(results[18], [] as ChildQuote[]),
@@ -930,7 +928,6 @@ export function useVaultInternal(): VaultState {
     setProfiles([]);
     setGamiData(null);
     setTasks([]);
-    setMenageTasks([]);
     setCourses([]);
     setStock([]);
     setStockSections([]);
@@ -1390,7 +1387,7 @@ export function useVaultInternal(): VaultState {
 
   /**
    * Toggle task + optimistic state update.
-   * Writes to file AND immediately updates tasks/menageTasks state
+   * Writes to file AND immediately updates tasks state
    * without waiting for a full vault reload (avoids iOS file timing issues).
    */
   const toggleTask = useCallback(async (task: Task, completed: boolean) => {
@@ -1412,7 +1409,6 @@ export function useVaultInternal(): VaultState {
     };
 
     setTasks(prev => prev.map(updateTask));
-    setMenageTasks(prev => prev.map(updateTask));
     setVacationTasks(prev => prev.map(updateTask));
     setTimeout(triggerWidgetRefresh, 0);
 
@@ -1587,15 +1583,15 @@ export function useVaultInternal(): VaultState {
       const newContent = lines.join('\n');
       await vaultRef.current.writeFile(sourceFile, newContent);
       // Re-parser le fichier pour recalculer les lineIndex
-      const updatedTasks = parseTaskFile(sourceFile, newContent);
       setTasks(prev => {
+        if (sourceFile === MENAGE_FILE) {
+          const otherTasks = prev.filter(t => t.sourceFile !== MENAGE_FILE);
+          return [...otherTasks, ...parseMénage(newContent, MENAGE_FILE)];
+        }
+        const updatedTasks = parseTaskFile(sourceFile, newContent);
         const otherTasks = prev.filter(t => t.sourceFile !== sourceFile);
         return [...otherTasks, ...updatedTasks];
       });
-      // Aussi mettre à jour menageTasks si c'est le fichier ménage
-      if (sourceFile === MENAGE_FILE) {
-        setMenageTasks(parseMénage(newContent, MENAGE_FILE));
-      }
       setTimeout(triggerWidgetRefresh, 0);
     }
   }, [triggerWidgetRefresh]);
@@ -2788,7 +2784,6 @@ export function useVaultInternal(): VaultState {
     isLoading,
     error,
     tasks,
-    menageTasks,
     courses,
     stock,
     meals,
@@ -2905,7 +2900,7 @@ export function useVaultInternal(): VaultState {
     validateSecretMission,
   }), [
     // State values (déclenchent un re-render quand ils changent)
-    vaultPath, isLoading, error, tasks, menageTasks, courses, stock, meals,
+    vaultPath, isLoading, error, tasks, courses, stock, meals,
     rdvs, profiles, activeProfile, gamiData, notifPrefs, vault, photoDates,
     stockSections, memories, vacationConfig, vacationTasks, isVacationActive,
     recipes, ageUpgrades, budgetEntries, budgetConfig, budgetMonth, routines,
