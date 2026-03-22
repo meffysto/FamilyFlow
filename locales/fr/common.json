@@ -1,4 +1,28 @@
 {
+  "nightMode": {
+    "breastfeeding": "Allaitement",
+    "bottle": "Biberon",
+    "left": "Gauche",
+    "right": "Droite",
+    "start": "Démarrer",
+    "pause": "Pause",
+    "resume": "Reprendre",
+    "stop": "Terminer",
+    "close": "Fermer",
+    "saved": "Enregistré ✓",
+    "saveError": "Erreur de sauvegarde",
+    "noBaby": "Aucun profil bébé configuré",
+    "historyTitle": "Tétées de cette nuit",
+    "a11y": {
+      "close": "Fermer le mode nuit",
+      "leftSide": "Côté gauche",
+      "rightSide": "Côté droit",
+      "start": "Démarrer le chronomètre",
+      "pause": "Mettre en pause",
+      "resume": "Reprendre le chronomètre",
+      "stop": "Terminer et enregistrer"
+    }
+  },
   "tabs": {
     "today": "Aujourd'hui",
     "tasks": "Tâches",
@@ -586,6 +610,20 @@
       "servings": "{{count}} pers.",
       "prep": "Prep {{time}}",
       "cook": "Cuisson {{time}}"
+    },
+    "days": {
+      "monday": "Lundi",
+      "tuesday": "Mardi",
+      "wednesday": "Mercredi",
+      "thursday": "Jeudi",
+      "friday": "Vendredi",
+      "saturday": "Samedi",
+      "sunday": "Dimanche"
+    },
+    "mealTypes": {
+      "breakfast": "Petit-déj",
+      "lunch": "Déjeuner",
+      "dinner": "Dîner"
     }
   },
   "loot": {
@@ -1465,6 +1503,131 @@
       "languageFr": "Français",
       "languageEn": "English",
       "languageA11y": "Langue {{lang}}"
+    }
+  },
+  "pregnancy": {
+    "title": "🤰 Grossesse",
+    "emptyTitle": "Pas de grossesse en cours",
+    "emptySubtitle": "Ajoutez un profil grossesse dans les réglages pour suivre l'évolution semaine par semaine.",
+    "thisWeek": "Cette semaine",
+    "saPrefix": "SA",
+    "daysLeft": "J-{{count}}",
+    "daysOverdue": "J+{{count}}",
+    "dueToday": "C'est pour aujourd'hui !",
+    "overdue": "terme dépassé",
+    "weightChart": "📈 Évolution du poids",
+    "weekByWeek": "📅 Semaine par semaine",
+    "addWeekTracking": "Ajouter le suivi de cette semaine",
+    "form": {
+      "weight": "Poids (kg)",
+      "weightPlaceholder": "ex : 65.5",
+      "symptoms": "Symptômes",
+      "symptomsPlaceholder": "Nausées, fatigue, douleurs lombaires...",
+      "notes": "Notes",
+      "notesPlaceholder": "RDV écho, mouvements bébé, envies...",
+      "save": "Enregistrer"
+    },
+    "toast": {
+      "saved": "Semaine enregistrée !",
+      "error": "Impossible d'enregistrer"
+    },
+    "fruits": {
+      "sa0": "petite graine",
+      "sa1": "petite graine",
+      "sa2": "petite graine",
+      "sa3": "petite graine",
+      "sa4": "petite graine",
+      "sa5": "grain de riz",
+      "sa6": "myrtille",
+      "sa7": "grosse myrtille",
+      "sa8": "haricot sec",
+      "sa9": "grain de raisin",
+      "sa10": "olive",
+      "sa11": "fraise",
+      "sa12": "citron vert",
+      "sa13": "kiwi",
+      "sa14": "citron",
+      "sa15": "orange",
+      "sa16": "avocat",
+      "sa17": "poire",
+      "sa18": "poivron",
+      "sa19": "mangue",
+      "sa20": "banane",
+      "sa21": "carotte",
+      "sa22": "épi de maïs",
+      "sa23": "aubergine",
+      "sa24": "concombre",
+      "sa25": "brocoli",
+      "sa26": "laitue",
+      "sa27": "noix de coco",
+      "sa28": "patate douce",
+      "sa29": "courge",
+      "sa30": "chou",
+      "sa31": "grosse noix de coco",
+      "sa32": "ananas",
+      "sa33": "courgette",
+      "sa34": "courge butternut",
+      "sa35": "melon",
+      "sa36": "chou frisé",
+      "sa37": "grosse poire",
+      "sa38": "citrouille",
+      "sa39": "petit melon d'eau",
+      "sa40": "melon d'eau",
+      "sa41": "gros melon d'eau"
+    }
+  },
+  "stock": {
+    "searchPlaceholder": "🔍 Rechercher un produit...",
+    "low": "bas",
+    "noResults": "Aucun résultat",
+    "tryAnother": "Essayez un autre terme de recherche",
+    "emptyLocation": "Aucun produit dans {{location}}",
+    "thisStock": "ce stock",
+    "addFirst": "Ajoutez votre premier produit",
+    "addBtn": "+ Ajouter",
+    "addedToCourses": "{{name}} ajouté aux courses !",
+    "productCount_one": "produit",
+    "productCount_other": "produits",
+    "emplacements": {
+      "frigo": "Frigo",
+      "congelateur": "Congélateur",
+      "placards": "Placards",
+      "bebe": "Bébé & Hygiène"
+    },
+    "subcategories": {
+      "epicerie": "Épicerie",
+      "conserves": "Conserves",
+      "boissons": "Boissons",
+      "petitDejeuner": "Petit-déjeuner",
+      "condiments": "Condiments",
+      "couches": "Couches",
+      "hygieneSoins": "Hygiène & soins",
+      "alimentation": "Alimentation"
+    }
+  },
+  "quotes": {
+    "title": "💬 Mots d'enfants",
+    "addA11y": "Ajouter un mot",
+    "addBtn": "Ajouter un mot",
+    "emptyTitle": "Aucun mot enregistré",
+    "emptySubtitle": "Notez les perles de vos enfants pour les garder précieusement !",
+    "newQuote": "Nouveau mot",
+    "deleteTitle": "Supprimer ce mot ?",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "dictation": "Dictée vocale",
+    "form": {
+      "child": "Enfant",
+      "quote": "Citation",
+      "quotePlaceholder": "Ce que l'enfant a dit...",
+      "context": "Contexte (optionnel)",
+      "contextPlaceholder": "Au parc, avant de dormir...",
+      "save": "Enregistrer"
+    },
+    "toast": {
+      "fillRequired": "Remplissez au moins l'enfant et la citation",
+      "added": "Mot ajouté !",
+      "deleted": "Mot supprimé"
     }
   }
 }

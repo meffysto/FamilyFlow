@@ -17,6 +17,7 @@ import {
   TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -40,6 +41,7 @@ const TOTAL_SA = 41;
 export default function PregnancyScreen() {
   const { primary, colors } = useThemeColors();
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const { profiles, vault, refresh } = useVault();
   const { refreshing, onRefresh } = useRefresh(refresh);
 
@@ -122,10 +124,10 @@ export default function PregnancyScreen() {
       await vault.writeFile(path, serialized);
       setEntries(parsePregnancyJournal(serialized, path));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showToast('Semaine enregistrée !', 'success');
+      showToast(t('pregnancy.toast.saved'), 'success');
       setModalVisible(false);
     } catch {
-      showToast('Impossible d\'enregistrer', 'error');
+      showToast(t('pregnancy.toast.error'), 'error');
     }
   }, [vault, selectedProfile, pregnancyInfo, entries, formPoids, formSymptomes, formNotes, showToast]);
 
@@ -133,12 +135,12 @@ export default function PregnancyScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>🤰 Grossesse</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{t('pregnancy.title')}</Text>
         </View>
         <EmptyState
           emoji="🤰"
-          title="Pas de grossesse en cours"
-          subtitle="Ajoutez un profil grossesse dans les réglages pour suivre l'évolution semaine par semaine."
+          title={t('pregnancy.emptyTitle')}
+          subtitle={t('pregnancy.emptySubtitle')}
         />
       </SafeAreaView>
     );
@@ -147,9 +149,9 @@ export default function PregnancyScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>🤰 Grossesse</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('pregnancy.title')}</Text>
         <TouchableOpacity onPress={openAdd}>
-          <Text style={[styles.addBtn, { color: primary }]}>+ Cette semaine</Text>
+          <Text style={[styles.addBtn, { color: primary }]}>+ {t('pregnancy.thisWeek')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -165,14 +167,14 @@ export default function PregnancyScreen() {
               <Text style={styles.fruitEmoji}>{getFruitForWeek(pregnancyInfo.currentWeek)}</Text>
               <View style={styles.summaryInfo}>
                 <Text style={[styles.summaryTitle, { color: colors.text }]}>
-                  {selectedProfile?.name} — SA {pregnancyInfo.currentWeek}
+                  {selectedProfile?.name} — {t('pregnancy.saPrefix')} {pregnancyInfo.currentWeek}
                 </Text>
                 <Text style={[styles.summarySub, { color: colors.textSub }]}>
                   {pregnancyInfo.daysLeft > 0
-                    ? `J-${pregnancyInfo.daysLeft} · ${getFruitLabel(pregnancyInfo.currentWeek)} · ${getSizeForWeek(pregnancyInfo.currentWeek)} cm`
+                    ? `${t('pregnancy.daysLeft', { count: pregnancyInfo.daysLeft })} · ${getFruitLabel(pregnancyInfo.currentWeek)} · ${getSizeForWeek(pregnancyInfo.currentWeek)} cm`
                     : pregnancyInfo.daysLeft === 0
-                      ? "C'est pour aujourd'hui !"
-                      : `J+${Math.abs(pregnancyInfo.daysLeft)} · terme dépassé`}
+                      ? t('pregnancy.dueToday')
+                      : `${t('pregnancy.daysOverdue', { count: Math.abs(pregnancyInfo.daysLeft) })} · ${t('pregnancy.overdue')}`}
                 </Text>
               </View>
             </View>
@@ -185,13 +187,13 @@ export default function PregnancyScreen() {
         {/* Graphe poids */}
         {weightData.length >= 2 && (
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>📈 Évolution du poids</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('pregnancy.weightChart')}</Text>
             <DotChart data={weightData} color={primary} formatValue={(v) => `${v.toFixed(1)} kg`} />
           </View>
         )}
 
         {/* Timeline semaine par semaine */}
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>📅 Semaine par semaine</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('pregnancy.weekByWeek')}</Text>
 
         {Array.from({ length: (pregnancyInfo?.currentWeek ?? 0) + 1 }, (_, i) => (pregnancyInfo?.currentWeek ?? 0) - i).map(week => {
           const entry = entries.find(e => e.week === week);
@@ -209,7 +211,7 @@ export default function PregnancyScreen() {
                 <Text style={styles.weekFruit}>{getFruitForWeek(week)}</Text>
                 <View style={styles.weekInfo}>
                   <Text style={[styles.weekTitle, { color: isCurrent ? primary : colors.text }]}>
-                    SA {week} — {getFruitLabel(week)}
+                    {t('pregnancy.saPrefix')} {week} — {getFruitLabel(week)}
                   </Text>
                   <Text style={[styles.weekSize, { color: colors.textMuted }]}>
                     {getSizeForWeek(week)} cm
@@ -217,7 +219,7 @@ export default function PregnancyScreen() {
                 </View>
                 {isCurrent && (
                   <View style={[styles.currentBadge, { backgroundColor: primary + '20' }]}>
-                    <Text style={[styles.currentBadgeText, { color: primary }]}>Cette semaine</Text>
+                    <Text style={[styles.currentBadgeText, { color: primary }]}>{t('pregnancy.thisWeek')}</Text>
                   </View>
                 )}
               </View>
@@ -245,7 +247,7 @@ export default function PregnancyScreen() {
                 </View>
               ) : isCurrent ? (
                 <TouchableOpacity onPress={openAdd}>
-                  <Text style={[styles.weekCta, { color: primary }]}>+ Ajouter le suivi de cette semaine</Text>
+                  <Text style={[styles.weekCta, { color: primary }]}>+ {t('pregnancy.addWeekTracking')}</Text>
                 </TouchableOpacity>
               ) : null}
             </View>
@@ -259,24 +261,24 @@ export default function PregnancyScreen() {
       <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setModalVisible(false)}>
         <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.bg }]}>
           <ModalHeader
-            title={`SA ${pregnancyInfo?.currentWeek ?? '?'} — ${getFruitForWeek(pregnancyInfo?.currentWeek ?? 0)} ${getFruitLabel(pregnancyInfo?.currentWeek ?? 0)}`}
+            title={`${t('pregnancy.saPrefix')} ${pregnancyInfo?.currentWeek ?? '?'} — ${getFruitForWeek(pregnancyInfo?.currentWeek ?? 0)} ${getFruitLabel(pregnancyInfo?.currentWeek ?? 0)}`}
             onClose={() => setModalVisible(false)}
           />
           <View style={styles.modalContent}>
-            <Text style={[styles.label, { color: colors.textSub }]}>Poids (kg)</Text>
+            <Text style={[styles.label, { color: colors.textSub }]}>{t('pregnancy.form.weight')}</Text>
             <TextInput
               style={[styles.input, { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.inputBg }]}
-              placeholder="ex: 65.5"
+              placeholder={t('pregnancy.form.weightPlaceholder')}
               placeholderTextColor={colors.textMuted}
               value={formPoids}
               onChangeText={setFormPoids}
               keyboardType="decimal-pad"
             />
 
-            <Text style={[styles.label, { color: colors.textSub }]}>Symptômes</Text>
+            <Text style={[styles.label, { color: colors.textSub }]}>{t('pregnancy.form.symptoms')}</Text>
             <TextInput
               style={[styles.input, styles.multilineInput, { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.inputBg }]}
-              placeholder="Nausées, fatigue, douleurs lombaires..."
+              placeholder={t('pregnancy.form.symptomsPlaceholder')}
               placeholderTextColor={colors.textMuted}
               value={formSymptomes}
               onChangeText={setFormSymptomes}
@@ -284,10 +286,10 @@ export default function PregnancyScreen() {
               textAlignVertical="top"
             />
 
-            <Text style={[styles.label, { color: colors.textSub }]}>Notes</Text>
+            <Text style={[styles.label, { color: colors.textSub }]}>{t('pregnancy.form.notes')}</Text>
             <TextInput
               style={[styles.input, styles.multilineInput, { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.inputBg }]}
-              placeholder="RDV écho, mouvements bébé, envies..."
+              placeholder={t('pregnancy.form.notesPlaceholder')}
               placeholderTextColor={colors.textMuted}
               value={formNotes}
               onChangeText={setFormNotes}
@@ -296,7 +298,7 @@ export default function PregnancyScreen() {
             />
 
             <View style={styles.saveBtn}>
-              <Button label="Enregistrer" onPress={handleSave} variant="primary" />
+              <Button label={t('pregnancy.form.save')} onPress={handleSave} variant="primary" />
             </View>
           </View>
         </SafeAreaView>

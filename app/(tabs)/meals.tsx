@@ -56,6 +56,22 @@ const MEAL_EMOJI: Record<string, string> = {
   'Dîner': '🌙',
 };
 
+const DAY_DISPLAY_KEYS: Record<string, string> = {
+  'Lundi': 'meals.days.monday',
+  'Mardi': 'meals.days.tuesday',
+  'Mercredi': 'meals.days.wednesday',
+  'Jeudi': 'meals.days.thursday',
+  'Vendredi': 'meals.days.friday',
+  'Samedi': 'meals.days.saturday',
+  'Dimanche': 'meals.days.sunday',
+};
+
+const MEAL_DISPLAY_KEYS: Record<string, string> = {
+  'Petit-déj': 'meals.mealTypes.breakfast',
+  'Déjeuner': 'meals.mealTypes.lunch',
+  'Dîner': 'meals.mealTypes.dinner',
+};
+
 const COURSES_FILE = '02 - Maison/Liste de courses.md';
 
 type Tab = 'repas' | 'courses' | 'recettes';
@@ -1023,7 +1039,7 @@ export default function MealsScreen() {
                     { color: colors.text },
                     isToday && { color: primary },
                   ]}>
-                    {day}
+                    {DAY_DISPLAY_KEYS[day] ? t(DAY_DISPLAY_KEYS[day]) : day}
                   </Text>
                   {isToday && (
                     <View style={[styles.todayBadge, { backgroundColor: tint }]}>
@@ -1051,7 +1067,7 @@ export default function MealsScreen() {
                             {MEAL_EMOJI[meal.mealType] ?? '🍴'}
                           </Text>
                           <View style={styles.mealInfo}>
-                            <Text style={[styles.mealType, { color: colors.textMuted }]}>{meal.mealType}</Text>
+                            <Text style={[styles.mealType, { color: colors.textMuted }]}>{MEAL_DISPLAY_KEYS[meal.mealType] ? t(MEAL_DISPLAY_KEYS[meal.mealType]) : meal.mealType}</Text>
                             <Text style={[styles.mealText, { color: colors.text }, !meal.text && [styles.mealTextEmpty, { color: colors.textFaint }]]} numberOfLines={1}>
                               {meal.text || t('meals.mealPlan.notPlanned')}
                             </Text>

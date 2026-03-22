@@ -1,3 +1,5 @@
+import { t } from 'i18next';
+
 // ─── Stock — Emplacements & sous-catégories ─────────────────────────────────
 
 export const EMPLACEMENTS = [
@@ -34,6 +36,35 @@ export function buildSectionHeader(emplacement: EmplacementId, section?: string)
   const emp = EMPLACEMENTS.find(e => e.id === emplacement);
   if (!emp) return '';
   return section ? `${emp.label} — ${section}` : emp.label;
+}
+
+// ─── Display helpers (traduction) ─────────────────────────────────────────────
+
+const EMPLACEMENT_DISPLAY_KEYS: Record<EmplacementId, string> = {
+  frigo: 'stock.emplacements.frigo',
+  congelateur: 'stock.emplacements.congelateur',
+  placards: 'stock.emplacements.placards',
+  bebe: 'stock.emplacements.bebe',
+};
+
+const SUBCATEGORY_DISPLAY_KEYS: Record<string, string> = {
+  'Épicerie': 'stock.subcategories.epicerie',
+  'Conserves': 'stock.subcategories.conserves',
+  'Boissons': 'stock.subcategories.boissons',
+  'Petit-déjeuner': 'stock.subcategories.petitDejeuner',
+  'Condiments': 'stock.subcategories.condiments',
+  'Couches': 'stock.subcategories.couches',
+  'Hygiène & soins': 'stock.subcategories.hygieneSoins',
+  'Alimentation': 'stock.subcategories.alimentation',
+};
+
+export function getEmplacementDisplayLabel(id: EmplacementId): string {
+  return t(EMPLACEMENT_DISPLAY_KEYS[id]);
+}
+
+export function getSubcategoryDisplayLabel(label: string): string {
+  const key = SUBCATEGORY_DISPLAY_KEYS[label];
+  return key ? t(key) : label;
 }
 
 // Anciens noms de sections (pré-refactoring) mappés vers emplacement bébé

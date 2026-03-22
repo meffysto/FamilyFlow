@@ -26,6 +26,7 @@ import {
   parseNightFeeds,
   insertAlimentationRow,
 } from '../../lib/parser';
+import { useTranslation } from 'react-i18next';
 import TimerRing from '../../components/TimerRing';
 import { NightColors } from '../../constants/nightMode';
 import { isBabyProfile } from '../../lib/types';
@@ -52,6 +53,7 @@ type NightState = 'idle' | 'timing' | 'paused';
 export default function NightModeScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ startLive?: string }>();
+  const { t } = useTranslation();
   const { profiles, vault } = useVault();
 
   // Bébés = profils bébé, triés du plus jeune au plus vieux
@@ -246,7 +248,7 @@ export default function NightModeScreen() {
       const updated = insertAlimentationRow(content, startedAt, type, detail);
       await vault.writeFile(path, updated);
 
-      setSavedMessage('Enregistré ✓');
+      setSavedMessage(t('nightMode.saved'));
 
       // Reset
       setState('idle');
@@ -258,7 +260,7 @@ export default function NightModeScreen() {
       // Recharger l'historique
       await loadFeeds();
     } catch {
-      setSavedMessage('Erreur de sauvegarde');
+      setSavedMessage(t('nightMode.saveError'));
     }
   }, [vault, selectedBaby, feedType, side, volumeMl, elapsed, loadFeeds]);
 
@@ -281,9 +283,9 @@ export default function NightModeScreen() {
       <SafeAreaView style={s.safe}>
         <StatusBar hidden />
         <View style={s.center}>
-          <Text style={s.emptyText}>Aucun profil bébé configuré</Text>
-          <TouchableOpacity style={s.closeBtn} onPress={handleClose} accessibilityLabel="Fermer le mode nuit" accessibilityRole="button">
-            <Text style={s.closeBtnText}>Fermer</Text>
+          <Text style={s.emptyText}>{t('nightMode.noBaby')}</Text>
+          <TouchableOpacity style={s.closeBtn} onPress={handleClose} accessibilityLabel={t('nightMode.a11y.close')} accessibilityRole="button">
+            <Text style={s.closeBtnText}>{t('nightMode.close')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -317,7 +319,7 @@ export default function NightModeScreen() {
           <Text style={s.babyName}>{selectedBaby?.avatar} {selectedBaby?.name}</Text>
         )}
 
-        <TouchableOpacity style={s.closeX} onPress={handleClose} accessibilityLabel="Fermer le mode nuit" accessibilityRole="button">
+        <TouchableOpacity style={s.closeX} onPress={handleClose} accessibilityLabel={t('nightMode.a11y.close')} accessibilityRole="button">
           <Text style={s.closeXText}>✕</Text>
         </TouchableOpacity>
       </View>
@@ -334,23 +336,23 @@ export default function NightModeScreen() {
               <TouchableOpacity
                 style={[s.typeBtn, feedType === 'allaitement' && s.typeBtnActive]}
                 onPress={() => setFeedType('allaitement')}
-                accessibilityLabel="Allaitement"
+                accessibilityLabel={t('nightMode.breastfeeding')}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: feedType === 'allaitement' }}
               >
                 <Text style={s.typeBtnEmoji}>🤱</Text>
-                <Text style={s.typeBtnLabel}>Allaitement</Text>
+                <Text style={s.typeBtnLabel}>{t('nightMode.breastfeeding')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[s.typeBtn, feedType === 'biberon' && s.typeBtnActive]}
                 onPress={() => setFeedType('biberon')}
-                accessibilityLabel="Biberon"
+                accessibilityLabel={t('nightMode.bottle')}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: feedType === 'biberon' }}
               >
                 <Text style={s.typeBtnEmoji}>🍼</Text>
-                <Text style={s.typeBtnLabel}>Biberon</Text>
+                <Text style={s.typeBtnLabel}>{t('nightMode.bottle')}</Text>
               </TouchableOpacity>
             </View>
 
@@ -360,7 +362,7 @@ export default function NightModeScreen() {
                 <TouchableOpacity
                   style={[s.sideBtn, side === 'gauche' && s.sideBtnActive]}
                   onPress={() => setSide('gauche')}
-                  accessibilityLabel="Côté gauche"
+                  accessibilityLabel={t('nightMode.a11y.leftSide')}
                   accessibilityRole="tab"
                   accessibilityState={{ selected: side === 'gauche' }}
                 >
@@ -369,7 +371,7 @@ export default function NightModeScreen() {
                 <TouchableOpacity
                   style={[s.sideBtn, side === 'droite' && s.sideBtnActive]}
                   onPress={() => setSide('droite')}
-                  accessibilityLabel="Côté droit"
+                  accessibilityLabel={t('nightMode.a11y.rightSide')}
                   accessibilityRole="tab"
                   accessibilityState={{ selected: side === 'droite' }}
                 >
@@ -400,8 +402,8 @@ export default function NightModeScreen() {
 
             {/* Bouton démarrer */}
             {feedType && (
-              <TouchableOpacity style={s.startBtn} onPress={startTimer} accessibilityLabel="Démarrer le chronomètre" accessibilityRole="button">
-                <Text style={s.startBtnText}>▶ Démarrer</Text>
+              <TouchableOpacity style={s.startBtn} onPress={startTimer} accessibilityLabel={t('nightMode.a11y.start')} accessibilityRole="button">
+                <Text style={s.startBtnText}>▶ {t('nightMode.start')}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -425,23 +427,23 @@ export default function NightModeScreen() {
 
             <Text style={s.timerLabel}>
               {feedType === 'allaitement'
-                ? `Allaitement · ${side === 'gauche' ? 'Gauche' : 'Droite'}`
-                : `Biberon · ${volumeMl} ml`}
+                ? `${t('nightMode.breastfeeding')} · ${side === 'gauche' ? t('nightMode.left') : t('nightMode.right')}`
+                : `${t('nightMode.bottle')} · ${volumeMl} ml`}
             </Text>
 
             <View style={s.actionRow}>
               {state === 'timing' ? (
-                <TouchableOpacity style={s.actionBtn} onPress={pauseTimer} accessibilityLabel="Mettre en pause" accessibilityRole="button">
-                  <Text style={s.actionBtnText}>⏸ Pause</Text>
+                <TouchableOpacity style={s.actionBtn} onPress={pauseTimer} accessibilityLabel={t('nightMode.a11y.pause')} accessibilityRole="button">
+                  <Text style={s.actionBtnText}>⏸ {t('nightMode.pause')}</Text>
                 </TouchableOpacity>
               ) : (
-                <TouchableOpacity style={s.actionBtn} onPress={resumeTimer} accessibilityLabel="Reprendre le chronomètre" accessibilityRole="button">
-                  <Text style={s.actionBtnText}>▶ Reprendre</Text>
+                <TouchableOpacity style={s.actionBtn} onPress={resumeTimer} accessibilityLabel={t('nightMode.a11y.resume')} accessibilityRole="button">
+                  <Text style={s.actionBtnText}>▶ {t('nightMode.resume')}</Text>
                 </TouchableOpacity>
               )}
 
-              <TouchableOpacity style={[s.actionBtn, s.stopBtn]} onPress={saveEntry} accessibilityLabel="Terminer et enregistrer" accessibilityRole="button">
-                <Text style={s.actionBtnText}>⏹ Terminer</Text>
+              <TouchableOpacity style={[s.actionBtn, s.stopBtn]} onPress={saveEntry} accessibilityLabel={t('nightMode.a11y.stop')} accessibilityRole="button">
+                <Text style={s.actionBtnText}>⏹ {t('nightMode.stop')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -455,7 +457,7 @@ export default function NightModeScreen() {
         {/* ─── Historique des tétées de la nuit ─── */}
         {feeds.length > 0 && (
           <View style={s.historySection}>
-            <Text style={s.historyTitle}>Tétées de cette nuit</Text>
+            <Text style={s.historyTitle}>{t('nightMode.historyTitle')}</Text>
             {feeds.map((f, i) => (
               <View key={f.id + '-' + i} style={s.historyRow}>
                 <Text style={s.historyTime}>{f.startedAt}</Text>

@@ -18,6 +18,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import { format } from 'date-fns';
 import { getDateLocale, formatDateLocalized } from '../../lib/date-locale';
@@ -39,6 +40,7 @@ import type { ChildQuote } from '../../lib/types';
 export default function QuotesScreen() {
   const { primary, colors } = useThemeColors();
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const { profiles, quotes, addQuote, deleteQuote, refresh } = useVault();
   const { refreshing, onRefresh } = useRefresh(refresh);
 
@@ -79,28 +81,28 @@ export default function QuotesScreen() {
 
   const handleSave = useCallback(async () => {
     if (!citation.trim() || !selectedEnfant) {
-      showToast('Remplissez au moins l\'enfant et la citation', 'error');
+      showToast(t('quotes.toast.fillRequired'), 'error');
       return;
     }
     await addQuote(selectedEnfant, citation.trim(), contexte.trim() || undefined);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    showToast('Mot ajouté !', 'success');
+    showToast(t('quotes.toast.added'), 'success');
     setModalVisible(false);
   }, [citation, contexte, selectedEnfant, addQuote, showToast]);
 
   const handleDelete = useCallback(async (quote: ChildQuote) => {
     Alert.alert(
-      'Supprimer ce mot ?',
+      t('quotes.deleteTitle'),
       `« ${quote.citation} »`,
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('quotes.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('quotes.delete'),
           style: 'destructive',
           onPress: async () => {
             await deleteQuote(quote.lineIndex);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            showToast('Mot supprimé', 'success');
+            showToast(t('quotes.toast.deleted'), 'success');
           },
         },
       ],
@@ -160,11 +162,11 @@ export default function QuotesScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>💬 Mots d'enfants</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('quotes.title')}</Text>
         <TouchableOpacity
           style={[styles.addBtn, { backgroundColor: primary }]}
           onPress={openModal}
-          accessibilityLabel="Ajouter un mot"
+          accessibilityLabel={t('quotes.addA11y')}
           accessibilityRole="button"
         >
           <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>
@@ -174,9 +176,9 @@ export default function QuotesScreen() {
       {quotes.length === 0 ? (
         <EmptyState
           emoji="💬"
-          title="Aucun mot enregistré"
-          subtitle="Notez les perles de vos enfants pour les garder précieusement !"
-          ctaLabel="Ajouter un mot"
+          title={t('quotes.emptyTitle')}
+          subtitle={t('quotes.emptySubtitle')}
+          ctaLabel={t('quotes.addBtn')}
           onCta={openModal}
         />
       ) : (
@@ -200,11 +202,11 @@ export default function QuotesScreen() {
       {/* Modal ajout */}
       <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setModalVisible(false)}>
         <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.bg }]}>
-          <ModalHeader title="Nouveau mot" onClose={() => setModalVisible(false)} />
+          <ModalHeader title={t('quotes.newQuote')} onClose={() => setModalVisible(false)} />
 
           <View style={styles.modalContent}>
             {/* Sélecteur enfant */}
-            <Text style={[styles.label, { color: colors.textSub }]}>Enfant</Text>
+            <Text style={[styles.label, { color: colors.textSub }]}>{t('quotes.form.child')}</Text>
             <View style={styles.chipRow}>
               {enfants.map((e) => (
                 <Chip
@@ -219,14 +221,14 @@ export default function QuotesScreen() {
 
             {/* Citation */}
             <View style={styles.citationHeader}>
-              <Text style={[styles.label, { color: colors.textSub }]}>Citation</Text>
+              <Text style={[styles.label, { color: colors.textSub }]}>{t('quotes.form.quote')}</Text>
               <TouchableOpacity onPress={openDictaphone}>
                 <Text style={{ fontSize: FontSize.title }}>🎙️</Text>
               </TouchableOpacity>
             </View>
             <TextInput
               style={[styles.input, styles.citationInput, { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.inputBg }]}
-              placeholder="Ce que l'enfant a dit..."
+              placeholder={t('quotes.form.quotePlaceholder')}
               placeholderTextColor={colors.textMuted}
               value={citation}
               onChangeText={setCitation}
@@ -235,10 +237,10 @@ export default function QuotesScreen() {
             />
 
             {/* Contexte */}
-            <Text style={[styles.label, { color: colors.textSub }]}>Contexte (optionnel)</Text>
+            <Text style={[styles.label, { color: colors.textSub }]}>{t('quotes.form.context')}</Text>
             <TextInput
               style={[styles.input, { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.inputBg }]}
-              placeholder="Au parc, avant de dormir..."
+              placeholder={t('quotes.form.contextPlaceholder')}
               placeholderTextColor={colors.textMuted}
               value={contexte}
               onChangeText={setContexte}
@@ -246,7 +248,7 @@ export default function QuotesScreen() {
 
             <View style={styles.saveBtn}>
               <Button
-                label="Enregistrer"
+                label={t('quotes.form.save')}
                 onPress={handleSave}
                 variant="primary"
               />
@@ -258,7 +260,7 @@ export default function QuotesScreen() {
       {/* Dictaphone — modal séparé (max 1 niveau) */}
       <Modal visible={dictaphoneVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={closeDictaphone}>
         <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.bg }]}>
-          <ModalHeader title="Dictée vocale" onClose={closeDictaphone} />
+          <ModalHeader title={t('quotes.dictation')} onClose={closeDictaphone} />
           <DictaphoneRecorder
             onResult={handleDictaphoneClose}
             onClose={closeDictaphone}

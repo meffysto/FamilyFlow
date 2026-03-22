@@ -1,4 +1,28 @@
 {
+  "nightMode": {
+    "breastfeeding": "Breastfeeding",
+    "bottle": "Bottle",
+    "left": "Left",
+    "right": "Right",
+    "start": "Start",
+    "pause": "Pause",
+    "resume": "Resume",
+    "stop": "Finish",
+    "close": "Close",
+    "saved": "Saved ✓",
+    "saveError": "Save error",
+    "noBaby": "No baby profile configured",
+    "historyTitle": "Tonight's feeds",
+    "a11y": {
+      "close": "Close night mode",
+      "leftSide": "Left side",
+      "rightSide": "Right side",
+      "start": "Start timer",
+      "pause": "Pause",
+      "resume": "Resume timer",
+      "stop": "Finish and save"
+    }
+  },
   "tabs": {
     "today": "Today",
     "tasks": "Tasks",
@@ -586,6 +610,20 @@
       "servings": "{{count}} servings",
       "prep": "Prep {{time}}",
       "cook": "Cook {{time}}"
+    },
+    "days": {
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday"
+    },
+    "mealTypes": {
+      "breakfast": "Breakfast",
+      "lunch": "Lunch",
+      "dinner": "Dinner"
     }
   },
   "loot": {
@@ -1465,6 +1503,131 @@
       "languageFr": "Français",
       "languageEn": "English",
       "languageA11y": "Language {{lang}}"
+    }
+  },
+  "pregnancy": {
+    "title": "🤰 Pregnancy",
+    "emptyTitle": "No ongoing pregnancy",
+    "emptySubtitle": "Add a pregnancy profile in settings to track progress week by week.",
+    "thisWeek": "This week",
+    "saPrefix": "WK",
+    "daysLeft": "D-{{count}}",
+    "daysOverdue": "D+{{count}}",
+    "dueToday": "It's today!",
+    "overdue": "past due",
+    "weightChart": "📈 Weight progress",
+    "weekByWeek": "📅 Week by week",
+    "addWeekTracking": "Add this week's tracking",
+    "form": {
+      "weight": "Weight (kg)",
+      "weightPlaceholder": "e.g. 65.5",
+      "symptoms": "Symptoms",
+      "symptomsPlaceholder": "Nausea, fatigue, back pain...",
+      "notes": "Notes",
+      "notesPlaceholder": "Ultrasound appt, baby movements, cravings...",
+      "save": "Save"
+    },
+    "toast": {
+      "saved": "Week saved!",
+      "error": "Unable to save"
+    },
+    "fruits": {
+      "sa0": "tiny seed",
+      "sa1": "tiny seed",
+      "sa2": "tiny seed",
+      "sa3": "tiny seed",
+      "sa4": "tiny seed",
+      "sa5": "grain of rice",
+      "sa6": "blueberry",
+      "sa7": "large blueberry",
+      "sa8": "kidney bean",
+      "sa9": "grape",
+      "sa10": "olive",
+      "sa11": "strawberry",
+      "sa12": "lime",
+      "sa13": "kiwi",
+      "sa14": "lemon",
+      "sa15": "orange",
+      "sa16": "avocado",
+      "sa17": "pear",
+      "sa18": "bell pepper",
+      "sa19": "mango",
+      "sa20": "banana",
+      "sa21": "carrot",
+      "sa22": "ear of corn",
+      "sa23": "eggplant",
+      "sa24": "cucumber",
+      "sa25": "broccoli",
+      "sa26": "lettuce",
+      "sa27": "coconut",
+      "sa28": "sweet potato",
+      "sa29": "squash",
+      "sa30": "cabbage",
+      "sa31": "large coconut",
+      "sa32": "pineapple",
+      "sa33": "zucchini",
+      "sa34": "butternut squash",
+      "sa35": "melon",
+      "sa36": "kale",
+      "sa37": "large pear",
+      "sa38": "pumpkin",
+      "sa39": "small watermelon",
+      "sa40": "watermelon",
+      "sa41": "large watermelon"
+    }
+  },
+  "stock": {
+    "searchPlaceholder": "🔍 Search a product...",
+    "low": "low",
+    "noResults": "No results",
+    "tryAnother": "Try a different search term",
+    "emptyLocation": "No products in {{location}}",
+    "thisStock": "this stock",
+    "addFirst": "Add your first product",
+    "addBtn": "+ Add",
+    "addedToCourses": "{{name}} added to shopping list!",
+    "productCount_one": "product",
+    "productCount_other": "products",
+    "emplacements": {
+      "frigo": "Fridge",
+      "congelateur": "Freezer",
+      "placards": "Pantry",
+      "bebe": "Baby & Hygiene"
+    },
+    "subcategories": {
+      "epicerie": "Groceries",
+      "conserves": "Canned goods",
+      "boissons": "Beverages",
+      "petitDejeuner": "Breakfast",
+      "condiments": "Condiments",
+      "couches": "Diapers",
+      "hygieneSoins": "Hygiene & care",
+      "alimentation": "Baby food"
+    }
+  },
+  "quotes": {
+    "title": "💬 Kids' Quotes",
+    "addA11y": "Add a quote",
+    "addBtn": "Add a quote",
+    "emptyTitle": "No quotes yet",
+    "emptySubtitle": "Write down your kids' gems to keep them forever!",
+    "newQuote": "New quote",
+    "deleteTitle": "Delete this quote?",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "dictation": "Voice dictation",
+    "form": {
+      "child": "Child",
+      "quote": "Quote",
+      "quotePlaceholder": "What the child said...",
+      "context": "Context (optional)",
+      "contextPlaceholder": "At the park, before bedtime...",
+      "save": "Save"
+    },
+    "toast": {
+      "fillRequired": "Please fill in at least the child and the quote",
+      "added": "Quote added!",
+      "deleted": "Quote deleted"
     }
   }
 }

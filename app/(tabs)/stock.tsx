@@ -16,6 +16,7 @@ import {
   TextInput,
   RefreshControl,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -33,7 +34,7 @@ import { EmptyState } from '../../components/EmptyState';
 import { StockItem } from '../../lib/types';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
-import { EMPLACEMENTS, SUBCATEGORIES } from '../../constants/stock';
+import { EMPLACEMENTS, SUBCATEGORIES, getEmplacementDisplayLabel, getSubcategoryDisplayLabel } from '../../constants/stock';
 import type { EmplacementId } from '../../constants/stock';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -153,6 +154,7 @@ export default function StockScreen() {
   } = useVault();
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const { refreshing, onRefresh } = useRefresh(refresh);
 
   const stockListRef = useRef<View>(null);
@@ -246,7 +248,7 @@ export default function StockScreen() {
         item.detail && !/^\d+$/.test(item.detail.trim()) ? ` (${item.detail})` : '';
       addCourseItem(`${item.produit}${detail}${qty}`);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showToast(`${item.produit} ajouté aux courses !`);
+      showToast(t('stock.addedToCourses', { name: item.produit }));
     },
     [addCourseItem, showToast]
   );
@@ -366,7 +368,7 @@ export default function StockScreen() {
           {lowStockCount > 0 && (
             <View style={[styles.lowBadge, { backgroundColor: colors.errorBg }]}>
               <Text style={[styles.lowBadgeText, { color: colors.error }]}>
-                {lowStockCount} bas
+                {lowStockCount} {t('stock.low')}
               </Text>
             </View>
           )}
@@ -407,7 +409,7 @@ export default function StockScreen() {
               activeOpacity={0.7}
               accessibilityRole="tab"
               accessibilityState={{ selected: isSelected }}
-              accessibilityLabel={`${emp.label}, ${count} produit${count > 1 ? 's' : ''}`}
+              accessibilityLabel={`${getEmplacementDisplayLabel(emp.id)}, ${count} ${t('stock.productCount', { count })}`}
             >
               <Text style={styles.tabEmoji}>{emp.emoji}</Text>
               <Text
@@ -417,7 +419,7 @@ export default function StockScreen() {
                   isSelected && { color: primary, fontWeight: FontWeight.bold },
                 ]}
               >
-                {emp.label}
+                {getEmplacementDisplayLabel(emp.id)}
               </Text>
               {count > 0 && (
                 <View
@@ -447,7 +449,7 @@ export default function StockScreen() {
               color: colors.text,
             },
           ]}
-          placeholder="🔍 Rechercher un produit..."
+          placeholder={t('stock.searchPlaceholder')}
           placeholderTextColor={colors.textMuted}
           value={search}
           onChangeText={setSearch}
@@ -477,7 +479,7 @@ export default function StockScreen() {
           Array.from(grouped.entries()).map(([sectionName, items]) => (
             <CollapsibleSection
               key={sectionName}
-              title={sectionName}
+              title={getSubcategoryDisplayLabel(sectionName)}
               count={items.length}
               defaultExpanded={true}
             >
@@ -493,15 +495,15 @@ export default function StockScreen() {
             emoji={search.trim() ? '🔍' : currentEmplacement?.emoji ?? '📦'}
             title={
               search.trim()
-                ? 'Aucun résultat'
-                : `Aucun produit dans ${currentEmplacement?.label ?? 'ce stock'}`
+                ? t('stock.noResults')
+                : t('stock.emptyLocation', { location: currentEmplacement ? getEmplacementDisplayLabel(currentEmplacement.id) : t('stock.thisStock') })
             }
             subtitle={
               search.trim()
-                ? 'Essayez un autre terme de recherche'
-                : 'Ajoutez votre premier produit'
+                ? t('stock.tryAnother')
+                : t('stock.addFirst')
             }
-            ctaLabel={search.trim() ? undefined : '+ Ajouter'}
+            ctaLabel={search.trim() ? undefined : t('stock.addBtn')}
             onCta={search.trim() ? undefined : openCreate}
           />
         )}
