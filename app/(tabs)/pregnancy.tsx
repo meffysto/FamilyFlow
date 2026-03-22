@@ -23,7 +23,8 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useRefresh } from '../../hooks/useRefresh';
 import { getFruitForWeek, getFruitLabel, getSizeForWeek } from '../../lib/pregnancy';
-import { pregnancyJournalPath, parsePregnancyJournal, serializePregnancyJournal, formatDateForDisplay } from '../../lib/parser';
+import { pregnancyJournalPath, parsePregnancyJournal, serializePregnancyJournal } from '../../lib/parser';
+import { formatDateLocalized } from '../../lib/date-locale';
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/EmptyState';
@@ -239,7 +240,7 @@ export default function PregnancyScreen() {
                     </Text>
                   ) : null}
                   <Text style={[styles.weekDate, { color: colors.textMuted }]}>
-                    {formatDateForDisplay(entry.date)}
+                    {formatDateLocalized(entry.date)}
                   </Text>
                 </View>
               ) : isCurrent ? (

@@ -5,7 +5,7 @@ import { ModalHeader } from './ui/ModalHeader';
 import { Chip, Button } from './ui';
 import { Spacing } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
-import { formatDateForDisplay } from '../lib/parser';
+import { formatDateLocalized } from '../lib/date-locale';
 
 interface SkillDetailModalProps {
   visible: boolean;
@@ -85,7 +85,7 @@ export function SkillDetailModal({
               />
               {unlockedAt ? (
                 <Text style={[styles.meta, { color: colors.textSub }]}>
-                  {formatDateForDisplay(unlockedAt)}
+                  {formatDateLocalized(unlockedAt)}
                 </Text>
               ) : null}
               {unlockedBy ? (

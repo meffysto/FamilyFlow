@@ -8,7 +8,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { format, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '../../lib/date-locale';
 import { useRouter } from 'expo-router';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import type { CalendarEvent, CalendarEventType } from '../../lib/calendar-types';
@@ -36,7 +36,7 @@ function CalendarDayDetailInner({ date, events }: CalendarDayDetailProps) {
 
   const dateLabel = useMemo(() => {
     const d = parseISO(date);
-    const s = format(d, 'EEEE d MMMM', { locale: fr });
+    const s = format(d, 'EEEE d MMMM', { locale: getDateLocale() });
     return s.charAt(0).toUpperCase() + s.slice(1);
   }, [date]);
 

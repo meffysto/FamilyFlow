@@ -35,12 +35,11 @@ import {
   isToday,
   isFuture,
 } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale, formatDateLocalized } from '../../lib/date-locale';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { MemoryEditor } from '../../components/MemoryEditor';
 import { EmptyState } from '../../components/EmptyState';
-import { formatDateForDisplay } from '../../lib/parser';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -285,7 +284,7 @@ export default function PhotosScreen() {
     }
   };
 
-  const monthLabel = format(currentMonth, 'MMMM yyyy', { locale: fr });
+  const monthLabel = format(currentMonth, 'MMMM yyyy', { locale: getDateLocale() });
   const monthLabelCapitalized = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
   const photoCount = selectedEnfant ? (photoDates[selectedEnfant.id] ?? []).length : 0;
 
@@ -535,7 +534,7 @@ export default function PhotosScreen() {
                   </View>
                   <View style={[styles.memoryRight, { backgroundColor: colors.card }]}>
                     <View style={styles.memoryHeader}>
-                      <Text style={[styles.memoryDate, { color: colors.textMuted }]}>{formatDateForDisplay(mem.date)}</Text>
+                      <Text style={[styles.memoryDate, { color: colors.textMuted }]}>{formatDateLocalized(mem.date)}</Text>
                       <View style={styles.memoryHeaderRight}>
                         <View style={[
                           styles.memoryBadge,

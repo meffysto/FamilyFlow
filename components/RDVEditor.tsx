@@ -25,7 +25,7 @@ import { Chip } from './ui/Chip';
 import { ModalHeader } from './ui/ModalHeader';
 import { DictaphoneRecorder } from './DictaphoneRecorder';
 import { RDV, Profile } from '../lib/types';
-import { formatDateForDisplay, parseDateInput } from '../lib/parser';
+import { parseDateInput } from '../lib/parser';
 import { generateRDVBriefing } from '../lib/ai-service';
 import type { VaultContext as AIVaultContext } from '../lib/ai-service';
 import { DateInput } from './ui/DateInput';

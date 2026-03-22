@@ -19,7 +19,7 @@ import Animated, {
 import { FloatingPoints } from './FloatingPoints';
 import * as Haptics from 'expo-haptics';
 import { Task, Profile } from '../lib/types';
-import { formatDateForDisplay } from '../lib/parser';
+import { formatDateLocalized } from '../lib/date-locale';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../constants/typography';
@@ -177,7 +177,7 @@ export const TaskCard = React.memo(function TaskCard({
           {task.dueDate && !task.completed && (
             <View style={[styles.badge, { backgroundColor: colors.cardAlt }, isOverdue && { backgroundColor: colors.errorBg }]}>
               <Text style={[styles.dueDate, { color: colors.textMuted }, isOverdue && { color: colors.error, fontWeight: FontWeight.bold }]}>
-                📅 {formatDateForDisplay(task.dueDate)}
+                📅 {formatDateLocalized(task.dueDate)}
               </Text>
             </View>
           )}

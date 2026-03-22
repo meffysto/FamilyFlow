@@ -12,7 +12,7 @@
  */
 
 import { Profile, LootBox, Memory, RDV } from './types';
-import { formatDateForDisplay } from './parser';
+import { formatDateLocalized } from './date-locale';
 
 const TELEGRAM_API = 'https://api.telegram.org';
 
@@ -298,7 +298,7 @@ export function buildMonthlyRecapText(data: {
   if (doneRdvs.length > 0) {
     lines.push(`📅 <b>${doneRdvs.length} rendez-vous</b> effectué(s)`);
     for (const rdv of doneRdvs) {
-      lines.push(`  • ${rdv.type_rdv} — ${rdv.enfant} (${formatDateForDisplay(rdv.date_rdv)})`);
+      lines.push(`  • ${rdv.type_rdv} — ${rdv.enfant} (${formatDateLocalized(rdv.date_rdv)})`);
     }
     lines.push('');
   }
@@ -311,7 +311,7 @@ export function buildMonthlyRecapText(data: {
     lines.push('');
     lines.push('🌟 <b>Souvenirs du mois</b>');
     for (const m of data.memories) {
-      lines.push(`  • <b>${m.title}</b> — ${m.enfant} (${formatDateForDisplay(m.date)})`);
+      lines.push(`  • <b>${m.title}</b> — ${m.enfant} (${formatDateLocalized(m.date)})`);
       if (m.description) lines.push(`    <i>${m.description}</i>`);
     }
   }
@@ -383,7 +383,7 @@ export function buildWeeklyRecapText(data: {
   if (firsts.length > 0) {
     lines.push('🌟 <b>Premières fois</b>');
     for (const m of firsts) {
-      lines.push(`  • <b>${m.title}</b> — ${m.enfant} (${formatDateForDisplay(m.date)})`);
+      lines.push(`  • <b>${m.title}</b> — ${m.enfant} (${formatDateLocalized(m.date)})`);
       if (m.description) lines.push(`    <i>${m.description}</i>`);
     }
     lines.push('');
@@ -394,7 +394,7 @@ export function buildWeeklyRecapText(data: {
   if (moments.length > 0) {
     lines.push('💛 <b>Moments forts</b>');
     for (const m of moments) {
-      lines.push(`  • <b>${m.title}</b> — ${m.enfant} (${formatDateForDisplay(m.date)})`);
+      lines.push(`  • <b>${m.title}</b> — ${m.enfant} (${formatDateLocalized(m.date)})`);
       if (m.description) lines.push(`    <i>${m.description}</i>`);
     }
     lines.push('');

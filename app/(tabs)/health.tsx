@@ -30,7 +30,7 @@ import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { ModalHeader, DateInput } from '../../components/ui';
 import { HealthRecord, GrowthEntry, VaccineEntry } from '../../lib/types';
-import { formatDateForDisplay } from '../../lib/parser';
+import { formatDateLocalized } from '../../lib/date-locale';
 import { GrowthChart } from '../../components/growth/GrowthChart';
 import { GrowthLegend } from '../../components/growth/GrowthLegend';
 import { EmptyState } from '../../components/EmptyState';
@@ -43,7 +43,7 @@ const TAB_IDS: { id: TabId; emoji: string; labelKey: string }[] = [
   { id: 'infos', emoji: '📋', labelKey: 'health.tabs.info' },
 ];
 
-const formatDateDisplay = formatDateForDisplay;
+const formatDateDisplay = formatDateLocalized;
 
 // ─── Formulaire mesure croissance ─────────────────────────────────────────────
 
@@ -418,7 +418,7 @@ export default function HealthScreen() {
 
   const handleDeleteGrowth = useCallback(async (date: string) => {
     if (!selectedEnfant) return;
-    Alert.alert(t('health.alert.deleteMeasureTitle'), t('health.alert.deleteMeasureMsg', { date: formatDateForDisplay(date) }), [
+    Alert.alert(t('health.alert.deleteMeasureTitle'), t('health.alert.deleteMeasureMsg', { date: formatDateLocalized(date) }), [
       { text: t('health.alert.cancel'), style: 'cancel' },
       { text: t('health.alert.delete'), style: 'destructive', onPress: async () => {
         await deleteGrowthEntry(selectedEnfant.name, date);

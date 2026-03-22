@@ -29,7 +29,7 @@ import {
   GestureHandlerRootView,
 } from 'react-native-gesture-handler';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '../lib/date-locale';
 import { FontSize, FontWeight } from '../constants/typography';
 import { useThemeColors } from '../contexts/ThemeContext';
 
@@ -102,7 +102,7 @@ export function PhotoViewer({ photos, initialIndex, onClose, onRetake, onCompare
   const currentPhoto = photos[currentIndex];
   const dateLabel = currentPhoto
     ? (() => {
-        const d = format(new Date(currentPhoto.date + 'T12:00:00'), 'EEEE d MMMM yyyy', { locale: fr });
+        const d = format(new Date(currentPhoto.date + 'T12:00:00'), 'EEEE d MMMM yyyy', { locale: getDateLocale() });
         return d.charAt(0).toUpperCase() + d.slice(1);
       })()
     : '';

@@ -26,7 +26,7 @@ import { useThemeColors } from '../contexts/ThemeContext';
 import { ModalHeader } from './ui/ModalHeader';
 import { Button } from './ui/Button';
 import { formatAmount } from '../lib/budget';
-import { formatDateForDisplay } from '../lib/parser';
+import { formatDateLocalized } from '../lib/date-locale';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
 import { Shadows } from '../constants/shadows';
@@ -262,7 +262,7 @@ export function ReceiptReview({ visible, onClose, onSave, data, categories }: Re
               <View style={[styles.storeCard, { backgroundColor: colors.card }, Shadows.sm]}>
                 <Text style={[styles.storeName, { color: colors.text }]}>{data.store}</Text>
                 <Text style={[styles.storeDate, { color: colors.textMuted }]}>
-                  {formatDateForDisplay(data.date)}
+                  {formatDateLocalized(data.date)}
                 </Text>
               </View>
 

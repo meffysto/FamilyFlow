@@ -41,7 +41,7 @@ import {
   totalBudget,
   formatMonthLabel,
 } from '../../lib/budget';
-import { formatDateForDisplay } from '../../lib/parser';
+import { formatDateLocalized } from '../../lib/date-locale';
 import { DateInput } from '../../components/ui/DateInput';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { ReceiptReview } from '../../components/ReceiptReview';
@@ -456,7 +456,7 @@ export default function BudgetScreen() {
                     <View style={styles.entryRight}>
                       <Text style={[styles.entryAmount, { color: colors.text }]}>{formatAmount(item.amount)}</Text>
                       <Text style={[styles.entryDate, { color: colors.textFaint }]}>
-                        {formatDateForDisplay(item.date)}
+                        {formatDateLocalized(item.date)}
                       </Text>
                     </View>
                   </TouchableOpacity>

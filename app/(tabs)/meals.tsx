@@ -26,7 +26,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { format, startOfWeek, addWeeks, isSameWeek } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '../../lib/date-locale';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { MealItem, CourseItem, Recipe } from '../../lib/types';
@@ -218,7 +218,7 @@ export default function MealsScreen() {
     if (weekOffset === -1) return t('meals.week.lastWeek');
     const endOfWeek = addWeeks(viewedWeekMonday, 1);
     endOfWeek.setDate(endOfWeek.getDate() - 1);
-    return `${format(viewedWeekMonday, 'dd/MM', { locale: fr })} — ${format(endOfWeek, 'dd/MM', { locale: fr })}`;
+    return `${format(viewedWeekMonday, 'dd/MM', { locale: getDateLocale() })} — ${format(endOfWeek, 'dd/MM', { locale: getDateLocale() })}`;
   }, [viewedWeekMonday, isCurrentWeek, weekOffset, t]);
 
   const goToPrevWeek = useCallback(() => setWeekOffset(w => w - 1), []);
@@ -239,7 +239,7 @@ export default function MealsScreen() {
   // ─── Repas logic ────────────────────────────────────────────────
 
   const todayName = useMemo(() => {
-    const name = format(new Date(), 'EEEE', { locale: fr });
+    const name = format(new Date(), 'EEEE', { locale: getDateLocale() });
     return name.charAt(0).toUpperCase() + name.slice(1);
   }, []);
 

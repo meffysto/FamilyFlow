@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { formatDateForDisplay } from '../../lib/parser';
+import { formatDateLocalized } from '../../lib/date-locale';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Button } from '../ui/Button';
 import { DateInput } from '../ui/DateInput';
@@ -77,7 +77,7 @@ export function SettingsVacation({ vacationConfig, isVacationActive, activateVac
               <Text style={[styles.rowLabel, { color: colors.textSub }]}>{t('settings.vacation.activeLabel')}</Text>
             </View>
             <Text style={[styles.dates, { color: colors.text }]}>
-              {t('settings.vacation.dateRange', { start: formatDateForDisplay(vacationConfig.startDate), end: formatDateForDisplay(vacationConfig.endDate) })}
+              {t('settings.vacation.dateRange', { start: formatDateLocalized(vacationConfig.startDate), end: formatDateLocalized(vacationConfig.endDate) })}
             </Text>
             <Text style={[styles.countdown, { color: primary }]}>{renderCountdown()}</Text>
             <Button label={t('settings.vacation.deactivateBtn')} onPress={handleDeactivate} variant="danger" size="sm" fullWidth />

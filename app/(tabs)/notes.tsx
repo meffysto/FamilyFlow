@@ -26,7 +26,7 @@ import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { Note, NOTE_CATEGORIES } from '../../lib/types';
-import { formatDateForDisplay } from '../../lib/parser';
+import { formatDateLocalized } from '../../lib/date-locale';
 import { Chip } from '../../components/ui/Chip';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { NoteEditor } from '../../components/NoteEditor';
@@ -190,7 +190,7 @@ export default function NotesScreen() {
           onPress={() => openViewer(note)}
           onLongPress={() => openEditor(note)}
           activeOpacity={0.7}
-          accessibilityLabel={`${note.title}, ${formatDateForDisplay(note.created)}${note.url ? ', article web' : ''}`}
+          accessibilityLabel={`${note.title}, ${formatDateLocalized(note.created)}${note.url ? ', article web' : ''}`}
           accessibilityRole="button"
           accessibilityHint="Appuyez pour lire, appui long pour modifier"
         >
@@ -213,7 +213,7 @@ export default function NotesScreen() {
           </Text>
           <View style={styles.noteMeta}>
             <Text style={[styles.noteDate, { color: colors.textFaint }]}>
-              {formatDateForDisplay(note.created)}
+              {formatDateLocalized(note.created)}
             </Text>
             {note.tags.length > 0 && (
               <View style={styles.tagRow}>

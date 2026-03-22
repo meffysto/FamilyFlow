@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { format, addMonths, subMonths } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '../../lib/date-locale';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useRefresh } from '../../hooks/useRefresh';
@@ -62,7 +62,7 @@ export default function CalendarScreen() {
 
   // Label du mois
   const monthLabel = useMemo(() => {
-    const s = format(currentMonth, 'MMMM yyyy', { locale: fr });
+    const s = format(currentMonth, 'MMMM yyyy', { locale: getDateLocale() });
     return s.charAt(0).toUpperCase() + s.slice(1);
   }, [currentMonth]);
 
@@ -179,7 +179,7 @@ export default function CalendarScreen() {
               const isToday = dateStr === todayStr;
               const isVacation = vacationDates.has(dateStr);
               const d = new Date(dateStr + 'T12:00:00');
-              const dayLabel = format(d, 'EEEE d', { locale: fr });
+              const dayLabel = format(d, 'EEEE d', { locale: getDateLocale() });
               const label = dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1);
 
               return (

@@ -21,7 +21,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
-import { formatDateForDisplay } from '../../lib/parser';
+import { formatDateLocalized } from '../../lib/date-locale';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -189,7 +189,7 @@ export default function CompareScreen() {
         ]}
         onPress={() => onThumbPress(item.date)}
         activeOpacity={0.7}
-        accessibilityLabel={`Photo du ${formatDateForDisplay(item.date)}${isLeft ? ', sélectionnée à gauche' : ''}${isRight ? ', sélectionnée à droite' : ''}`}
+        accessibilityLabel={`Photo du ${formatDateLocalized(item.date)}${isLeft ? ', sélectionnée à gauche' : ''}${isRight ? ', sélectionnée à droite' : ''}`}
         accessibilityRole="button"
       >
         <Image
@@ -300,7 +300,7 @@ export default function CompareScreen() {
               ]}
               onPress={() => onPhotoSlotPress('left')}
               activeOpacity={0.8}
-              accessibilityLabel={`Photo de gauche${leftDate ? `, ${formatDateForDisplay(leftDate)}` : ', aucune sélectionnée'}`}
+              accessibilityLabel={`Photo de gauche${leftDate ? `, ${formatDateLocalized(leftDate)}` : ', aucune sélectionnée'}`}
               accessibilityRole="button"
               accessibilityHint="Appuyez pour sélectionner cette photo"
             >
@@ -326,7 +326,7 @@ export default function CompareScreen() {
               ]}
               onPress={() => onPhotoSlotPress('right')}
               activeOpacity={0.8}
-              accessibilityLabel={`Photo de droite${rightDate ? `, ${formatDateForDisplay(rightDate)}` : ', aucune sélectionnée'}`}
+              accessibilityLabel={`Photo de droite${rightDate ? `, ${formatDateLocalized(rightDate)}` : ', aucune sélectionnée'}`}
               accessibilityRole="button"
               accessibilityHint="Appuyez pour sélectionner cette photo"
             >
@@ -349,14 +349,14 @@ export default function CompareScreen() {
             <View style={styles.dateLabelContainer}>
               {leftDate && (
                 <Text style={[styles.dateLabel, { color: primary }]}>
-                  {formatDateForDisplay(leftDate)}
+                  {formatDateLocalized(leftDate)}
                 </Text>
               )}
             </View>
             <View style={styles.dateLabelContainer}>
               {rightDate && (
                 <Text style={[styles.dateLabel, { color: colors.success }]}>
-                  {formatDateForDisplay(rightDate)}
+                  {formatDateLocalized(rightDate)}
                 </Text>
               )}
             </View>

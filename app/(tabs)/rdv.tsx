@@ -32,7 +32,7 @@ import {
   subMonths,
   isToday,
 } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale, formatDateLocalized } from '../../lib/date-locale';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Chip } from '../../components/ui/Chip';
@@ -41,7 +41,7 @@ import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { EmptyState } from '../../components/EmptyState';
 import { RDVEditor } from '../../components/RDVEditor';
 import { DictaphoneRecorder } from '../../components/DictaphoneRecorder';
-import { formatDateForDisplay, isRdvUpcoming } from '../../lib/parser';
+import { isRdvUpcoming } from '../../lib/parser';
 import { RDV } from '../../lib/types';
 import { useParentalControls } from '../../contexts/ParentalControlsContext';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
@@ -236,7 +236,7 @@ export default function RDVScreen() {
         <View style={styles.rdvContent}>
           <View style={styles.rdvTopRow}>
             <Text style={[styles.rdvDate, { color: colors.text }, isPast && { color: colors.textMuted }]}>
-              {formatDateForDisplay(rdv.date_rdv)}
+              {formatDateLocalized(rdv.date_rdv)}
               {rdv.heure ? ` à ${rdv.heure}` : ''}
             </Text>
             {isPast && rdv.statut !== 'planifié' && (
@@ -346,7 +346,7 @@ export default function RDVScreen() {
               <Text style={[styles.monthArrowText, { color: primary }]}>‹</Text>
             </TouchableOpacity>
             <Text style={[styles.monthLabel, { color: colors.text }]}>
-              {(() => { const s = format(calMonth, 'MMMM yyyy', { locale: fr }); return s.charAt(0).toUpperCase() + s.slice(1); })()}
+              {(() => { const s = format(calMonth, 'MMMM yyyy', { locale: getDateLocale() }); return s.charAt(0).toUpperCase() + s.slice(1); })()}
             </Text>
             <TouchableOpacity style={[styles.monthArrow, { backgroundColor: colors.card }]} onPress={() => setCalMonth((m) => addMonths(m, 1))}>
               <Text style={[styles.monthArrowText, { color: primary }]}>›</Text>
@@ -419,7 +419,7 @@ export default function RDVScreen() {
         <TouchableOpacity style={[styles.dayModalOverlay, { backgroundColor: colors.overlay }]} activeOpacity={1} onPress={() => setCalDayRdvs(null)} />
         <View style={[styles.dayModalContent, { backgroundColor: colors.card }]}>
           <Text style={[styles.dayModalTitle, { color: colors.text }]}>
-            {calDayRdvs ? formatDateForDisplay(calDayRdvs.date) : ''}
+            {calDayRdvs ? formatDateLocalized(calDayRdvs.date) : ''}
           </Text>
           {calDayRdvs?.rdvs.map((r) => (
             <TouchableOpacity key={r.sourceFile} style={[styles.dayModalRdv, { backgroundColor: colors.cardAlt }]}

@@ -23,7 +23,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, isToday as isTodayFn } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '../../lib/date-locale';
 import { useVault } from '../../contexts/VaultContext';
 import { todayJournalPath, journalPathForDate, generateJournalTemplate, todayAdultJournalPath, adultJournalPathForDate, generateAdultJournalTemplate } from '../../lib/parser';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
@@ -207,7 +207,7 @@ function MiniCalendar({
     return [...padding, ...allDays];
   }, [viewMonth]);
 
-  const monthLabel = format(viewMonth, 'MMMM yyyy', { locale: fr });
+  const monthLabel = format(viewMonth, 'MMMM yyyy', { locale: getDateLocale() });
 
   return (
     <View style={[calStyles.container, { backgroundColor: colors.card }]}>
@@ -245,7 +245,7 @@ function MiniCalendar({
               onPress={() => hasJournal && onSelectDate(day)}
               disabled={!hasJournal}
               activeOpacity={0.6}
-              accessibilityLabel={`${day.getDate()} ${format(day, 'MMMM', { locale: fr })}${hasJournal ? ', journal disponible' : ''}${isToday ? ", aujourd'hui" : ''}${isSelected ? ', sélectionné' : ''}`}
+              accessibilityLabel={`${day.getDate()} ${format(day, 'MMMM', { locale: getDateLocale() })}${hasJournal ? ', journal disponible' : ''}${isToday ? ", aujourd'hui" : ''}${isSelected ? ', sélectionné' : ''}`}
               accessibilityRole="button"
               accessibilityState={{ selected: isSelected, disabled: !hasJournal }}
             >
@@ -309,7 +309,7 @@ export default function JournalScreen() {
 
   const isToday = isTodayFn(selectedDate);
   const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
-  const selectedDateDisplay = format(selectedDate, 'EEEE dd MMMM yyyy', { locale: fr });
+  const selectedDateDisplay = format(selectedDate, 'EEEE dd MMMM yyyy', { locale: getDateLocale() });
 
   const [journalContent, setJournalContent] = useState<string | null>(null);
   const [journalExists, setJournalExists] = useState(false);
@@ -719,7 +719,7 @@ export default function JournalScreen() {
             {isToday ? "Aujourd'hui" : format(selectedDate, 'dd/MM/yyyy')}
           </Text>
           <Text style={[styles.dateNavSub, { color: colors.textMuted }]}>
-            {isToday ? format(selectedDate, 'dd MMMM', { locale: fr }) : format(selectedDate, 'EEEE', { locale: fr })}
+            {isToday ? format(selectedDate, 'dd MMMM', { locale: getDateLocale() }) : format(selectedDate, 'EEEE', { locale: getDateLocale() })}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={navigateNext} disabled={!hasNext} style={styles.dateNavBtn} accessibilityLabel="Jour suivant" accessibilityRole="button" accessibilityState={{ disabled: !hasNext }}>

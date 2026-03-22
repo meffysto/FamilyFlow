@@ -10,7 +10,8 @@
 import { format, differenceInCalendarDays, isToday, isTomorrow, isYesterday, parseISO, addDays } from 'date-fns';
 import { t } from 'i18next';
 import type { Task, RDV, StockItem, MealItem, CourseItem, Profile, Defi, GratitudeDay, Memory, VacationConfig, GamificationData, Anniversary } from './types';
-import { formatDateForDisplay, isRdvUpcoming } from './parser';
+import { isRdvUpcoming } from './parser';
+import { formatDateLocalized } from './date-locale';
 import { LOOT_THRESHOLD } from './gamification';
 import { SKILL_TREE, SKILL_CATEGORIES, detectAgeBracket, type SkillDefinition } from './gamification/skill-tree';
 import type { SkillTreeData } from './types';
@@ -77,7 +78,7 @@ function formatRelativeDate(now: Date, dateStr: string): string {
   const days = daysUntil(now, dateStr);
   if (days > 0 && days <= 7) return t('insights:relative.inDays', { count: days });
   if (days < 0) return t('insights:relative.daysAgo', { count: Math.abs(days) });
-  return formatDateForDisplay(dateStr);
+  return formatDateLocalized(dateStr);
 }
 
 /** Contexte temporel calculé une seule fois par appel à generateInsights */

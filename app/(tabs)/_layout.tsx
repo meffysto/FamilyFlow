@@ -7,6 +7,11 @@ import { Tabs, useRouter, useSegments } from 'expo-router';
 import { View, Text, Modal, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -15,10 +20,51 @@ import { FAB, FABAction } from '../../components/FAB';
 import { GlassView } from '../../components/ui/GlassView';
 import { FontSize, FontWeight } from '../../constants/typography';
 
+const SPRING_CONFIG = { damping: 10, stiffness: 180 };
 
 function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
-  return <Text style={{ fontSize: focused ? FontSize.titleLg : FontSize.title, opacity: focused ? 1 : 0.6 }}>{emoji}</Text>;
+  const { tint } = useThemeColors();
+  const scale = useSharedValue(focused ? 1 : 0);
+  const iconScale = useSharedValue(focused ? 1.15 : 1);
+
+  useEffect(() => {
+    scale.value = withSpring(focused ? 1 : 0, SPRING_CONFIG);
+    iconScale.value = withSpring(focused ? 1.15 : 1, SPRING_CONFIG);
+  }, [focused]);
+
+  const pillStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: scale.value,
+  }));
+
+  const emojiStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: iconScale.value }, { translateY: focused ? -1 : 0 }],
+  }));
+
+  return (
+    <View style={tabIconStyles.container}>
+      <Animated.View style={[tabIconStyles.pill, { backgroundColor: tint }, pillStyle]} />
+      <Animated.Text style={[tabIconStyles.emoji, emojiStyle]}>{emoji}</Animated.Text>
+    </View>
+  );
 }
+
+const tabIconStyles = StyleSheet.create({
+  container: {
+    width: 48,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pill: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    borderRadius: 16,
+  },
+  emoji: {
+    fontSize: FontSize.title,
+  },
+});
 
 interface ThemedTabsContentProps {
   profiles: ReturnType<typeof useVault>['profiles'];

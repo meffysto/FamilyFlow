@@ -21,7 +21,7 @@ import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { format, addDays, subDays } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '../../lib/date-locale';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -139,7 +139,7 @@ export default function GratitudeScreen() {
   const dateDisplay = useMemo(() => {
     const d = new Date(selectedDate + 'T12:00:00');
     if (isToday) return "Aujourd'hui";
-    return format(d, 'EEEE d MMMM yyyy', { locale: fr });
+    return format(d, 'EEEE d MMMM yyyy', { locale: getDateLocale() });
   }, [selectedDate, isToday]);
 
   const tabs: { id: TabId; label: string }[] = [

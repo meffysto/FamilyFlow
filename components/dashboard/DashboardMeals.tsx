@@ -6,7 +6,7 @@ import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '../../lib/date-locale';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
@@ -27,7 +27,7 @@ function DashboardMealsInner({ vaultFileExists, activateCardTemplate, onViewReci
   const { meals, recipes } = useVault();
 
   const todayDayName = useMemo(() => {
-    const name = format(new Date(), 'EEEE', { locale: fr });
+    const name = format(new Date(), 'EEEE', { locale: getDateLocale() });
     return name.charAt(0).toUpperCase() + name.slice(1);
   }, []);
 

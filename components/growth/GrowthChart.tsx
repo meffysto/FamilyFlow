@@ -22,7 +22,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
-import { formatDateForDisplay } from '../../lib/parser';
+import { formatDateLocalized } from '../../lib/date-locale';
 import {
   getGrowthReference,
   estimatePercentile,
@@ -572,7 +572,7 @@ export function GrowthChart({ entries, sex, dateNaissance, metric, height: heigh
             >
               <Pressable onPress={() => setSelectedIndex(null)}>
                 <Text style={[styles.tooltipDate, { color: colors.text }]}>
-                  {formatDateForDisplay(selectedPoint.date)}
+                  {formatDateLocalized(selectedPoint.date)}
                 </Text>
                 <Text style={[styles.tooltipValue, { color: primary }]}>
                   {selectedPoint.value} {unit}

@@ -20,7 +20,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale, formatDateLocalized } from '../../lib/date-locale';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -34,7 +34,6 @@ import { Chip } from '../../components/ui/Chip';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { EmptyState } from '../../components/EmptyState';
 import { DictaphoneRecorder } from '../../components/DictaphoneRecorder';
-import { formatDateForDisplay } from '../../lib/parser';
 import type { ChildQuote } from '../../lib/types';
 
 export default function QuotesScreen() {
@@ -66,7 +65,7 @@ export default function QuotesScreen() {
     return [...grouped.entries()].map(([key, data]) => {
       const [yyyy, mm] = key.split('-');
       const d = new Date(parseInt(yyyy), parseInt(mm) - 1, 1);
-      const title = format(d, 'MMMM yyyy', { locale: fr });
+      const title = format(d, 'MMMM yyyy', { locale: getDateLocale() });
       return { title: title.charAt(0).toUpperCase() + title.slice(1), data };
     });
   }, [quotes]);
@@ -130,7 +129,7 @@ export default function QuotesScreen() {
             {item.enfant}
           </Text>
           <Text style={[styles.date, { color: colors.textMuted }]}>
-            {formatDateForDisplay(item.date)}
+            {formatDateLocalized(item.date)}
             {item.contexte ? ` · ${item.contexte}` : ''}
           </Text>
         </View>

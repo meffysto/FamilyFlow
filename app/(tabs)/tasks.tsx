@@ -49,7 +49,7 @@ import {
 } from '../../lib/notifications';
 import { useTranslation } from 'react-i18next';
 import { Task, CourseItem, Profile } from '../../lib/types';
-import { formatDateForDisplay } from '../../lib/parser';
+import { formatDateLocalized } from '../../lib/date-locale';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 
@@ -591,7 +591,7 @@ export default function TasksScreen() {
       {isVacationActive && vacationConfig && (
         <View style={[styles.vacationBanner, { backgroundColor: colors.warningBg, borderBottomColor: colors.warning }]}>
           <Text style={[styles.vacationBannerText, { color: colors.warningText }]}>
-            ☀️ Mode Vacances — du {formatDateForDisplay(vacationConfig.startDate)} au {formatDateForDisplay(vacationConfig.endDate)}
+            ☀️ Mode Vacances — du {formatDateLocalized(vacationConfig.startDate)} au {formatDateLocalized(vacationConfig.endDate)}
           </Text>
         </View>
       )}

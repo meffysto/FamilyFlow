@@ -16,7 +16,7 @@ import { ModalHeader } from './ui/ModalHeader';
 import { MarkdownText } from './ui/MarkdownText';
 import { Chip } from './ui/Chip';
 import { FocusReader } from './FocusReader';
-import { formatDateForDisplay } from '../lib/parser';
+import { formatDateLocalized } from '../lib/date-locale';
 import type { Note } from '../lib/types';
 
 interface NoteViewerProps {
@@ -77,7 +77,7 @@ export const NoteViewer = React.memo(function NoteViewer({
               <View style={styles.metaRow}>
                 <Chip label={note.category} size="sm" />
                 <Text style={[styles.date, { color: colors.textSub }]}>
-                  {formatDateForDisplay(note.created)}
+                  {formatDateLocalized(note.created)}
                 </Text>
               </View>
 

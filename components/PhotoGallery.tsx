@@ -18,7 +18,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { format, parse } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '../lib/date-locale';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
@@ -64,7 +64,7 @@ function buildSections(photoDates: string[]): GallerySection[] {
   const sections: GallerySection[] = [];
   for (const [monthKey, dates] of monthMap) {
     const parsed = parse(monthKey + '-01', 'yyyy-MM-dd', new Date());
-    const label = format(parsed, 'MMMM yyyy', { locale: fr });
+    const label = format(parsed, 'MMMM yyyy', { locale: getDateLocale() });
     const title = label.charAt(0).toUpperCase() + label.slice(1);
 
     const rows: string[][] = [];

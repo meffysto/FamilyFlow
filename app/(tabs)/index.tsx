@@ -19,7 +19,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '../../lib/date-locale';
 import * as SecureStore from 'expo-secure-store';
 import { useVault } from '../../contexts/VaultContext';
 import { useGamification } from '../../hooks/useGamification';
@@ -295,7 +295,7 @@ export default function DashboardScreen() {
     await SecureStore.setItemAsync(SMART_SORT_KEY, newSmartSort ? '1' : '0');
   }, []);
 
-  const today = format(new Date(), 'EEEE dd MMMM yyyy', { locale: fr });
+  const today = format(new Date(), 'EEEE dd MMMM yyyy', { locale: getDateLocale() });
   const todayStr = format(new Date(), 'yyyy-MM-dd');
 
   const onRefresh = useCallback(async () => {
@@ -436,7 +436,7 @@ export default function DashboardScreen() {
     t.sourceFile.includes('Maison') && !t.completed && t.dueDate && t.dueDate <= todayForMaison
   );
   const todayDayName = useMemo(() => {
-    const name = format(new Date(), 'EEEE', { locale: fr });
+    const name = format(new Date(), 'EEEE', { locale: getDateLocale() });
     return name.charAt(0).toUpperCase() + name.slice(1);
   }, []);
   const todayMeals = meals.filter((m) => m.day === todayDayName && m.text.length > 0);
@@ -703,7 +703,7 @@ export default function DashboardScreen() {
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowStr = format(tomorrow, 'yyyy-MM-dd');
     const tomorrowDayName = (() => {
-      const name = format(tomorrow, 'EEEE', { locale: fr });
+      const name = format(tomorrow, 'EEEE', { locale: getDateLocale() });
       return name.charAt(0).toUpperCase() + name.slice(1);
     })();
 

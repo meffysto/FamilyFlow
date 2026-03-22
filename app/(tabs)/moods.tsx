@@ -20,7 +20,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { format, subDays } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '../../lib/date-locale';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -81,7 +81,7 @@ export default function MoodsScreen() {
     for (let i = 0; i < HISTORY_DAYS; i++) {
       const d = subDays(now, i);
       const dateStr = format(d, 'yyyy-MM-dd');
-      const label = format(d, 'dd/MM', { locale: fr });
+      const label = format(d, 'dd/MM', { locale: getDateLocale() });
       const entries = new Map<string, MoodLevel>();
       for (const m of moods) {
         if (m.date === dateStr) entries.set(m.profileId, m.level);

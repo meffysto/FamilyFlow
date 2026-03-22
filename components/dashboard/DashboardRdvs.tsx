@@ -9,7 +9,8 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
-import { formatDateForDisplay, isRdvUpcoming } from '../../lib/parser';
+import { isRdvUpcoming } from '../../lib/parser';
+import { formatDateLocalized } from '../../lib/date-locale';
 import type { RDV } from '../../lib/types';
 import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
@@ -52,7 +53,7 @@ function DashboardRdvsInner({ vaultFileExists, activateCardTemplate, onEditRDV }
     <DashboardCard key="rdvs" title={t('dashboard.rdvs.title')} icon="📅" count={upcomingRdvs.length} color={colors.info}>
       {upcomingRdvs.slice(0, 3).map((rdv) => (
         <TouchableOpacity key={rdv.sourceFile} style={[styles.rdvRow, { borderLeftColor: colors.info }]} onPress={() => onEditRDV(rdv)} activeOpacity={0.7}>
-          <Text style={[styles.rdvDate, { color: colors.info }]}>{formatDateForDisplay(rdv.date_rdv)} {rdv.heure ? `à ${rdv.heure}` : ''}</Text>
+          <Text style={[styles.rdvDate, { color: colors.info }]}>{formatDateLocalized(rdv.date_rdv)} {rdv.heure ? `à ${rdv.heure}` : ''}</Text>
           <Text style={[styles.rdvTitle, { color: colors.text }]}>{rdv.type_rdv} — {rdv.enfant}</Text>
           {rdv.médecin && <Text style={[styles.rdvMeta, { color: colors.textMuted }]}>{rdv.médecin}</Text>}
         </TouchableOpacity>

@@ -6,7 +6,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { format, addDays } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '../../lib/date-locale';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useCalendarEvents } from '../../hooks/useCalendarEvents';
 import { DashboardCard } from '../DashboardCard';
@@ -35,7 +35,7 @@ function DashboardCalendarInner(_props: DashboardSectionProps) {
       const dateStr = format(d, 'yyyy-MM-dd');
       const events = (eventsByDate[dateStr] ?? []).filter(e => e.type !== 'vacation' && e.type !== 'mood');
       if (events.length > 0) {
-        const label = i === 0 ? t('dashboard.calendar.today') : i === 1 ? t('dashboard.calendar.tomorrow') : format(d, 'EEEE', { locale: fr });
+        const label = i === 0 ? t('dashboard.calendar.today') : i === 1 ? t('dashboard.calendar.tomorrow') : format(d, 'EEEE', { locale: getDateLocale() });
         days.push({ date: dateStr, label: label.charAt(0).toUpperCase() + label.slice(1), events });
       }
     }

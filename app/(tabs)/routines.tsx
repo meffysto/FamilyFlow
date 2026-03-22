@@ -39,7 +39,7 @@ import { Shadows } from '../../constants/shadows';
 import { ModalHeader } from '../../components/ui';
 import { Routine, RoutineProgress } from '../../lib/types';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { getDateLocale } from '../../lib/date-locale';
 import { parseRoutines } from '../../lib/parser';
 import { RoutineEditor } from '../../components/RoutineEditor';
 import { VisualRoutinePlayer } from '../../components/VisualRoutinePlayer';
@@ -453,7 +453,7 @@ export default function RoutinesScreen() {
     );
   }, []);
 
-  const todayLabel = format(new Date(), "EEEE d MMMM", { locale: fr });
+  const todayLabel = format(new Date(), "EEEE d MMMM", { locale: getDateLocale() });
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>

@@ -11,7 +11,7 @@
 
 import type { Task, RDV, StockItem, MealItem, CourseItem, Memory, Defi, WishlistItem, Profile } from './types';
 import type { AppRecipe } from './cooklang';
-import { formatDateForDisplay } from './parser';
+import { formatDateLocalized } from './date-locale';
 import { startOfWeek, endOfWeek, addDays, format as fnsFormat } from 'date-fns';
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
@@ -421,7 +421,7 @@ const taskConfig: SearchEntityConfig<Task> = {
   route: '/(tabs)/tasks',
   getFields: (t) => [t.text, t.section || '', t.sourceFile],
   getTitle: (t) => t.text,
-  getSnippet: (t) => `${t.completed ? '✅' : '⬜'} ${t.sourceFile.split('/').pop()?.replace('.md', '') || ''}${t.dueDate ? ` — ${formatDateForDisplay(t.dueDate)}` : ''}`,
+  getSnippet: (t) => `${t.completed ? '✅' : '⬜'} ${t.sourceFile.split('/').pop()?.replace('.md', '') || ''}${t.dueDate ? ` — ${formatDateLocalized(t.dueDate)}` : ''}`,
   getBonus: (t) => t.completed ? 0 : 0.5,
 };
 
@@ -431,7 +431,7 @@ const rdvConfig: SearchEntityConfig<RDV> = {
   route: '/(tabs)/rdv',
   getFields: (r) => [r.enfant, r.type_rdv, r.médecin, r.lieu, r.statut],
   getTitle: (r) => `${r.type_rdv} ${r.enfant}`,
-  getSnippet: (r) => `${formatDateForDisplay(r.date_rdv)} ${r.heure} — ${r.lieu || r.médecin || ''} (${r.statut})`,
+  getSnippet: (r) => `${formatDateLocalized(r.date_rdv)} ${r.heure} — ${r.lieu || r.médecin || ''} (${r.statut})`,
   getBonus: (r) => r.statut === 'planifié' ? 1 : 0,
 };
 
@@ -479,7 +479,7 @@ const memoryConfig: SearchEntityConfig<Memory> = {
   route: '/(tabs)/more',
   getFields: (m) => [m.title, m.description, m.enfant, m.type],
   getTitle: (m) => m.title,
-  getSnippet: (m) => `${m.enfant} — ${formatDateForDisplay(m.date)} — ${m.description}`,
+  getSnippet: (m) => `${m.enfant} — ${formatDateLocalized(m.date)} — ${m.description}`,
 };
 
 const defiConfig: SearchEntityConfig<Defi> = {
