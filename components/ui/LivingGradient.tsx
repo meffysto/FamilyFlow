@@ -59,7 +59,7 @@ interface LivingGradientProps {
 }
 
 export const LivingGradient = forwardRef<View, LivingGradientProps>(
-  ({ style, children, primaryBlend = 0.3 }, ref) => {
+  ({ style, children, primaryBlend = 0.5 }, ref) => {
     const { primary, isDark } = useThemeColors();
 
     const gradientColors = useMemo(() => {
@@ -80,10 +80,10 @@ export const LivingGradient = forwardRef<View, LivingGradientProps>(
           colors={[...gradientColors]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={[StyleSheet.absoluteFill, { opacity: 0.55 }]}
+          style={[StyleSheet.absoluteFill, { opacity: 0.75 }]}
         />
         <BlurView
-          intensity={30}
+          intensity={15}
           tint={isDark ? 'dark' : 'light'}
           style={StyleSheet.absoluteFill}
         />
