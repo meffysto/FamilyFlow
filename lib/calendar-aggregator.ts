@@ -112,15 +112,17 @@ export function aggregateCalendarEvents(
   const today = format(new Date(), 'yyyy-MM-dd');
   for (const task of input.tasks) {
     if (!task.dueDate && !task.recurrence) {
-      // Seules les tâches ménage (sans date) → aujourd'hui
-      if (!task.sourceFile.includes('Ménage') || task.completed || !inRange(today)) continue;
+      // Tâches ménage + tâches récurrentes (fichiers "récurrentes") → aujourd'hui
+      const isMenage = task.sourceFile.includes('Ménage');
+      const isRecurrente = task.sourceFile.includes('currentes');
+      if ((!isMenage && !isRecurrente) || task.completed || !inRange(today)) continue;
       events.push({
         id: `task-${task.id}`,
         date: today,
         type: 'task',
         label: task.text.trim(),
         sublabel: task.section || undefined,
-        emoji: '🧹',
+        emoji: isMenage ? '🧹' : EVENT_CONFIG.task.emoji,
         colorKey: 'warning',
         route: '/(tabs)/tasks',
         source: task,
