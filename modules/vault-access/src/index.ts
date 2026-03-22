@@ -21,6 +21,7 @@ interface VaultAccessModuleType {
   fileExists(uri: string): Promise<boolean>;
   updateWidgetData(json: string): Promise<void>;
   updateJournalWidgetData(json: string): Promise<void>;
+  updateWidgetLanguage(json: string): Promise<void>;
   readJournalWidgetData(): Promise<string>;
   clearJournalWidgetFeedings(): Promise<void>;
   stopAccessing(): void;
@@ -234,6 +235,15 @@ export async function updateWidgetData(json: string): Promise<void> {
 export async function updateJournalWidgetData(json: string): Promise<void> {
   if (!VaultAccessNative) return;
   return VaultAccessNative.updateJournalWidgetData(json);
+}
+
+/**
+ * Write widget language preference to App Group container and reload timelines.
+ * No-op on non-iOS.
+ */
+export async function updateWidgetLanguage(json: string): Promise<void> {
+  if (!VaultAccessNative) return;
+  return VaultAccessNative.updateWidgetLanguage(json);
 }
 
 /**

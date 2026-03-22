@@ -212,31 +212,27 @@ final class JournalWidgetStore {
     }
 
     /// Label relatif du dernier repas
-    var lastFeedingLabel: String {
+    func lastFeedingLabel(lang: WidgetLang = .fr) -> String {
         let journal = load()
         guard let last = journal.feedings.last else {
-            return "Aucun repas"
+            return JournalStrings.noMeal(lang)
         }
 
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime]
         guard let feedingDate = formatter.date(from: last.timestamp) else {
-            return "Aucun repas"
+            return JournalStrings.noMeal(lang)
         }
 
         let interval = Date().timeIntervalSince(feedingDate)
         let minutes = Int(interval / 60)
 
-        if minutes < 2 { return "À l'instant" }
-        if minutes < 60 { return "Il y a \(minutes) min" }
+        if minutes < 2 { return JournalStrings.justNow(lang) }
+        if minutes < 60 { return JournalStrings.agoMinutes(minutes, lang) }
 
         let hours = minutes / 60
         let remainingMin = minutes % 60
-
-        if remainingMin == 0 {
-            return "Il y a \(hours)h"
-        }
-        return "Il y a \(hours)h\(String(format: "%02d", remainingMin))"
+        return JournalStrings.agoHours(hours, remainingMin, lang)
     }
 
     /// Type du dernier repas
@@ -392,14 +388,16 @@ struct JournalBebeEntry: TimelineEntry {
     let isFeedingPaused: Bool
     let accumulatedSeconds: Int    // temps accumulé avant la pause
     let lastSide: String?
+    let lang: WidgetLang
 }
 
 struct JournalBebeProvider: TimelineProvider {
     func placeholder(in context: Context) -> JournalBebeEntry {
-        JournalBebeEntry(
+        let lang = WidgetLang.fromAppGroup()
+        return JournalBebeEntry(
             date: Date(),
             data: JournalData(childName: "Lucas"),
-            lastFeedingLabel: "Il y a 2h30",
+            lastFeedingLabel: JournalStrings.agoHours(2, 30, lang),
             lastFeedingType: "biberon",
             todayBiberons: 3,
             todayTetees: 2,
@@ -408,7 +406,8 @@ struct JournalBebeProvider: TimelineProvider {
             activeFeedingStart: nil,
             isFeedingPaused: false,
             accumulatedSeconds: 0,
-            lastSide: "gauche"
+            lastSide: "gauche",
+            lang: lang
         )
     }
 
@@ -430,11 +429,12 @@ struct JournalBebeProvider: TimelineProvider {
         let data = store.load()
         let stats = store.todayStats
         let feeding = store.isFeeding
+        let lang = WidgetLang.fromAppGroup()
 
         return JournalBebeEntry(
             date: Date(),
             data: data,
-            lastFeedingLabel: store.lastFeedingLabel,
+            lastFeedingLabel: store.lastFeedingLabel(lang: lang),
             lastFeedingType: store.lastFeedingType,
             todayBiberons: stats.biberons,
             todayTetees: stats.tetees,
@@ -448,7 +448,8 @@ struct JournalBebeProvider: TimelineProvider {
             }(),
             isFeedingPaused: data.activeFeeding?.isPaused ?? false,
             accumulatedSeconds: data.activeFeeding?.accumulatedSeconds ?? 0,
-            lastSide: store.lastSide
+            lastSide: store.lastSide,
+            lang: lang
         )
     }
 }
@@ -458,12 +459,14 @@ struct JournalBebeProvider: TimelineProvider {
 struct JournalBebeSmallView: View {
     let entry: JournalBebeEntry
 
+    private var lang: WidgetLang { entry.lang }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 4) {
                 Text("👶")
                     .font(.caption)
-                Text("Journal bébé")
+                Text(JournalStrings.title(lang))
                     .font(.caption2)
                     .fontWeight(.semibold)
                     .foregroundStyle(.secondary)
@@ -475,11 +478,11 @@ struct JournalBebeSmallView: View {
             if entry.isFeeding {
                 // État tétée en cours
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(entry.isFeedingPaused ? "⏸ Tétée en pause" : "🤱 Tétée en cours")
+                    Text(entry.isFeedingPaused ? JournalStrings.feedingPaused(lang) : JournalStrings.feedingActive(lang))
                         .font(.caption2)
                         .foregroundStyle(.pink)
                     if let side = entry.activeFeedingSide {
-                        Text(side.capitalized)
+                        Text(JournalStrings.sideLabel(side, lang))
                             .font(.caption)
                             .fontWeight(.medium)
                     }
@@ -548,7 +551,7 @@ struct JournalBebeSmallView: View {
             } else {
                 // État normal
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Dernier repas")
+                    Text(JournalStrings.lastMeal(lang))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                     Text(entry.lastFeedingLabel)
@@ -560,7 +563,7 @@ struct JournalBebeSmallView: View {
                 Spacer()
 
                 if #available(iOS 17.0, *) {
-                    let childName = entry.data.childName.isEmpty ? "Bébé" : entry.data.childName
+                    let childName = entry.data.childName.isEmpty ? JournalStrings.baby(lang) : entry.data.childName
                     // Smart default : côté opposé au dernier
                     let nextSide = (entry.lastSide == "gauche") ? "droite" : "gauche"
                     let sideEmoji = nextSide == "gauche" ? "⬅️" : "➡️"
@@ -570,7 +573,7 @@ struct JournalBebeSmallView: View {
                             HStack(spacing: 4) {
                                 Text(sideEmoji)
                                     .font(.caption2)
-                                Text("Tétée")
+                                Text(JournalStrings.nursing(lang))
                                     .font(.caption)
                                     .fontWeight(.medium)
                             }
@@ -585,7 +588,7 @@ struct JournalBebeSmallView: View {
                             HStack(spacing: 4) {
                                 Text("🍼")
                                     .font(.caption2)
-                                Text("Biberon")
+                                Text(JournalStrings.bottle(lang))
                                     .font(.caption)
                                     .fontWeight(.medium)
                             }
@@ -607,6 +610,8 @@ struct JournalBebeSmallView: View {
 struct JournalBebeMediumView: View {
     let entry: JournalBebeEntry
 
+    private var lang: WidgetLang { entry.lang }
+
     var body: some View {
         HStack(spacing: 12) {
             // Gauche : infos
@@ -614,7 +619,7 @@ struct JournalBebeMediumView: View {
                 HStack(spacing: 4) {
                     Text("👶")
                         .font(.caption)
-                    Text("Journal bébé")
+                    Text(JournalStrings.title(lang))
                         .font(.caption2)
                         .fontWeight(.semibold)
                         .foregroundStyle(.secondary)
@@ -622,7 +627,7 @@ struct JournalBebeMediumView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Dernier repas")
+                    Text(JournalStrings.lastMeal(lang))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
 
@@ -655,18 +660,18 @@ struct JournalBebeMediumView: View {
 
             // Droite : boutons d'action ou timer
             if #available(iOS 17.0, *) {
-                let childName = entry.data.childName.isEmpty ? "Bébé" : entry.data.childName
+                let childName = entry.data.childName.isEmpty ? JournalStrings.baby(lang) : entry.data.childName
 
                 if entry.isFeeding {
                     // État tétée en cours
                     VStack(spacing: 6) {
-                        Text(entry.isFeedingPaused ? "⏸ En pause" : "🤱 Tétée en cours")
+                        Text(entry.isFeedingPaused ? JournalStrings.feedingPausedShort(lang) : JournalStrings.feedingActiveShort(lang))
                             .font(.caption)
                             .fontWeight(.medium)
                             .foregroundStyle(.pink)
 
                         if let side = entry.activeFeedingSide {
-                            Text(side.capitalized)
+                            Text(JournalStrings.sideLabel(side, lang))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -694,7 +699,7 @@ struct JournalBebeMediumView: View {
                                     HStack(spacing: 4) {
                                         Image(systemName: "play.fill")
                                             .font(.caption)
-                                        Text("Reprendre")
+                                        Text(JournalStrings.resume(lang))
                                             .font(.caption)
                                             .fontWeight(.medium)
                                     }
@@ -727,7 +732,7 @@ struct JournalBebeMediumView: View {
                                 HStack(spacing: 4) {
                                     Image(systemName: "stop.circle.fill")
                                         .font(.caption)
-                                    Text("Arrêter")
+                                    Text(JournalStrings.stop(lang))
                                         .font(.caption)
                                         .fontWeight(.medium)
                                 }
@@ -743,7 +748,7 @@ struct JournalBebeMediumView: View {
                                 HStack(spacing: 4) {
                                     Image(systemName: "lock.display")
                                         .font(.caption)
-                                    Text("Écran")
+                                    Text(JournalStrings.screen(lang))
                                         .font(.caption)
                                         .fontWeight(.medium)
                                 }
@@ -760,7 +765,7 @@ struct JournalBebeMediumView: View {
                     VStack(spacing: 6) {
                         // Indication du dernier sein
                         if let side = entry.lastSide {
-                            Text("Dernier : \(side.capitalized) 🤱")
+                            Text(JournalStrings.lastSide(side, lang))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -771,7 +776,7 @@ struct JournalBebeMediumView: View {
                                 HStack(spacing: 2) {
                                     Text("⬅️")
                                         .font(.caption2)
-                                    Text("Gauche")
+                                    Text(JournalStrings.left(lang))
                                         .font(.caption)
                                         .fontWeight(.medium)
                                 }
@@ -784,7 +789,7 @@ struct JournalBebeMediumView: View {
 
                             Button(intent: StartFeedingIntent(side: "droite", childName: childName)) {
                                 HStack(spacing: 2) {
-                                    Text("Droite")
+                                    Text(JournalStrings.right(lang))
                                         .font(.caption)
                                         .fontWeight(.medium)
                                     Text("➡️")
@@ -803,7 +808,7 @@ struct JournalBebeMediumView: View {
                             HStack(spacing: 6) {
                                 Text("🍼")
                                     .font(.body)
-                                Text("Biberon")
+                                Text(JournalStrings.bottle(lang))
                                     .font(.subheadline)
                                     .fontWeight(.medium)
                             }
@@ -818,7 +823,7 @@ struct JournalBebeMediumView: View {
             } else {
                 VStack {
                     Spacer()
-                    Text("iOS 17+ requis")
+                    Text(JournalStrings.ios17Required(lang))
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                     Spacer()

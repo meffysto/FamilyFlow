@@ -82,6 +82,7 @@ module.exports = function withMaJourneeWidget(config) {
     addFileToTarget(proj, target, groupKey, 'JournalBebeWidget.swift', 'sourcecode.swift', 'Sources');
     addFileToTarget(proj, target, groupKey, 'FamilyVaultWidgets.swift', 'sourcecode.swift', 'Sources');
     addFileToTarget(proj, target, groupKey, 'FeedingLiveActivity.swift', 'sourcecode.swift', 'Sources');
+    addFileToTarget(proj, target, groupKey, 'WidgetLocalization.swift', 'sourcecode.swift', 'Sources');
 
     // 2e. Ajouter Assets.xcassets comme folder reference au target
     addFileToTarget(proj, target, groupKey, 'Assets.xcassets', 'folder.assetcatalog', 'Resources');

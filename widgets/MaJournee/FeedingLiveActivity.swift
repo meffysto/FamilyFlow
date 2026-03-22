@@ -78,13 +78,14 @@ struct FeedingLiveActivity: Widget {
     }
 
     private func feedLabel(context: ActivityViewContext<FeedingActivityAttributes>) -> String {
+        let lang = WidgetLang.fromAppGroup()
         let baby = context.attributes.babyName
         if context.attributes.feedType == "allaitement" {
             let side = context.state.side ?? ""
-            return "\(baby) · Tétée \(side)"
+            return LiveActivityStrings.feedLabel(baby: baby, side: side, lang)
         } else {
             let vol = context.state.volumeMl.map { "\($0) ml" } ?? ""
-            return "\(baby) · Biberon \(vol)"
+            return LiveActivityStrings.bottleLabel(baby: baby, volume: vol, lang)
         }
     }
 }
@@ -112,7 +113,7 @@ struct FeedingLockScreenView: View {
                         Image(systemName: "pause.fill")
                             .font(.caption)
                             .foregroundColor(.yellow)
-                        Text("En pause")
+                        Text(LiveActivityStrings.paused(WidgetLang.fromAppGroup()))
                             .font(.subheadline)
                             .foregroundColor(.yellow)
                     }
@@ -132,13 +133,14 @@ struct FeedingLockScreenView: View {
     }
 
     private var lockScreenLabel: String {
+        let lang = WidgetLang.fromAppGroup()
         let baby = context.attributes.babyName
         if context.attributes.feedType == "allaitement" {
-            let side = context.state.side == "G" ? "gauche" : context.state.side == "D" ? "droit" : ""
-            return "Tétée \(baby) — côté \(side)"
+            let side = context.state.side ?? ""
+            return LiveActivityStrings.nursingLabel(baby: baby, side: side, lang)
         } else {
             let vol = context.state.volumeMl.map { "\($0) ml" } ?? ""
-            return "Biberon \(baby) — \(vol)"
+            return LiveActivityStrings.bottleLabel(baby: baby, volume: vol, lang)
         }
     }
 }

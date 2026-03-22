@@ -542,6 +542,22 @@ public class VaultAccessModule: Module {
       return String(data: data, encoding: .utf8)
     }
 
+    /// Write widget language preference to App Group container and reload timelines
+    AsyncFunction("updateWidgetLanguage") { (jsonString: String) in
+      guard let containerURL = FileManager.default.containerURL(
+        forSecurityApplicationGroupIdentifier: "group.com.familyvault.dev"
+      ) else {
+        throw NSError(domain: "VaultAccess", code: 2, userInfo: [
+          NSLocalizedDescriptionKey: "App Group container introuvable"
+        ])
+      }
+
+      let fileURL = containerURL.appendingPathComponent("widget-language.json")
+      try jsonString.data(using: .utf8)!.write(to: fileURL)
+
+      WidgetCenter.shared.reloadAllTimelines()
+    }
+
     /// Write widget data JSON to App Group container and reload timelines
     AsyncFunction("updateWidgetData") { (jsonString: String) in
       guard let containerURL = FileManager.default.containerURL(

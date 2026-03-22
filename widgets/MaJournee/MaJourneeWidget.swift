@@ -111,10 +111,11 @@ struct MaJourneeProvider: TimelineProvider {
 
 struct MaJourneeSmallView: View {
     let data: WidgetData
+    let lang: WidgetLang
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(data.dayOfWeek)
+            Text(DayStrings.dayOfWeek(data.dayOfWeek, lang))
                 .font(.caption2)
                 .fontWeight(.semibold)
                 .foregroundStyle(.secondary)
@@ -132,7 +133,7 @@ struct MaJourneeSmallView: View {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.caption2)
                         .foregroundStyle(.green)
-                    Text("\(progress.done)/\(progress.total) tâches")
+                    Text("\(progress.done)/\(progress.total) \(MaJourneeStrings.tasks(lang))")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
@@ -150,7 +151,7 @@ struct MaJourneeSmallView: View {
                 .font(.caption2)
                 .foregroundStyle(.orange)
                 .frame(width: 14)
-            Text(text?.isEmpty == false ? text! : "Pas encore planifié")
+            Text(text?.isEmpty == false ? text! : MaJourneeStrings.notPlanned(lang))
                 .font(.caption)
                 .fontWeight(.medium)
                 .lineLimit(1)
@@ -163,12 +164,13 @@ struct MaJourneeSmallView: View {
 
 struct MaJourneeMediumView: View {
     let data: WidgetData
+    let lang: WidgetLang
 
     var body: some View {
         HStack(spacing: 12) {
             // Gauche : Repas
             VStack(alignment: .leading, spacing: 6) {
-                Text(data.dayOfWeek)
+                Text(DayStrings.dayOfWeek(data.dayOfWeek, lang))
                     .font(.caption2)
                     .fontWeight(.semibold)
                     .foregroundStyle(.secondary)
@@ -176,8 +178,8 @@ struct MaJourneeMediumView: View {
 
                 Link(destination: DeepLink.meals) {
                     VStack(alignment: .leading, spacing: 4) {
-                        mealRow(icon: "sun.max.fill", label: "Midi", text: data.meals?.dejeuner)
-                        mealRow(icon: "moon.fill", label: "Soir", text: data.meals?.diner)
+                        mealRow(icon: "sun.max.fill", label: MaJourneeStrings.noon(lang), text: data.meals?.dejeuner)
+                        mealRow(icon: "moon.fill", label: MaJourneeStrings.evening(lang), text: data.meals?.diner)
                     }
                 }
 
@@ -189,7 +191,7 @@ struct MaJourneeMediumView: View {
                             Image(systemName: "checkmark.circle.fill")
                                 .font(.caption2)
                                 .foregroundStyle(.green)
-                            Text("\(progress.done)/\(progress.total) tâches")
+                            Text("\(progress.done)/\(progress.total) \(MaJourneeStrings.tasks(lang))")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -213,10 +215,10 @@ struct MaJourneeMediumView: View {
                                 .font(.title3)
                                 .foregroundStyle(.green)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Tâches bouclées")
+                                Text(MaJourneeStrings.allDone(lang))
                                     .font(.caption)
                                     .fontWeight(.semibold)
-                                Text("\(data.tasksProgress!.total) tâche\(data.tasksProgress!.total > 1 ? "s" : "") faite\(data.tasksProgress!.total > 1 ? "s" : "")")
+                                Text(MaJourneeStrings.tasksDone(data.tasksProgress!.total, lang))
                                     .font(.caption2)
                                     .foregroundStyle(.secondary)
                             }
@@ -248,7 +250,7 @@ struct MaJourneeMediumView: View {
                         }
                     } else {
                         Spacer()
-                        Text("Journée tranquille ☀️")
+                        Text(MaJourneeStrings.quietDay(lang))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         Spacer()
@@ -256,7 +258,7 @@ struct MaJourneeMediumView: View {
                 } else if !tasks.isEmpty {
                     Link(destination: DeepLink.tasks) {
                         VStack(alignment: .leading, spacing: 4) {
-                            Label("À faire", systemImage: "checklist")
+                            Label(MaJourneeStrings.toDo(lang), systemImage: "checklist")
                                 .font(.caption2)
                                 .foregroundStyle(.orange)
                             ForEach(tasks.prefix(3), id: \.self) { task in
@@ -316,7 +318,7 @@ struct MaJourneeMediumView: View {
                     }
                 } else {
                     Spacer()
-                    Text("Rien de prévu")
+                    Text(MaJourneeStrings.nothingPlanned(lang))
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                     Spacer()
@@ -335,7 +337,7 @@ struct MaJourneeMediumView: View {
                 .font(.caption2)
                 .foregroundStyle(.orange)
                 .frame(width: 14)
-            Text(text?.isEmpty == false ? text! : "Pas encore planifié")
+            Text(text?.isEmpty == false ? text! : MaJourneeStrings.notPlanned(lang))
                 .font(.caption)
                 .fontWeight(.medium)
                 .lineLimit(1)
@@ -349,15 +351,16 @@ struct MaJourneeMediumView: View {
 struct MaJourneeEntryView: View {
     @Environment(\.widgetFamily) var family
     let entry: MaJourneeEntry
+    let lang = WidgetLang.fromAppGroup()
 
     var body: some View {
         switch family {
         case .systemSmall:
-            MaJourneeSmallView(data: entry.data)
+            MaJourneeSmallView(data: entry.data, lang: lang)
         case .systemMedium:
-            MaJourneeMediumView(data: entry.data)
+            MaJourneeMediumView(data: entry.data, lang: lang)
         default:
-            MaJourneeSmallView(data: entry.data)
+            MaJourneeSmallView(data: entry.data, lang: lang)
         }
     }
 }

@@ -15,11 +15,13 @@ import { isRdvUpcoming } from './parser';
 // Import conditionnel des modules natifs
 let updateWidgetDataNative: ((json: string) => Promise<void>) | null = null;
 let updateJournalWidgetDataNative: ((json: string) => Promise<void>) | null = null;
+let updateWidgetLanguageNative: ((json: string) => Promise<void>) | null = null;
 if (Platform.OS === 'ios') {
   try {
     const mod = require('../modules/vault-access/src');
     updateWidgetDataNative = mod.updateWidgetData;
     updateJournalWidgetDataNative = mod.updateJournalWidgetData;
+    updateWidgetLanguageNative = mod.updateWidgetLanguage;
   } catch {
     // Module non disponible
   }
@@ -158,5 +160,17 @@ export function refreshJournalWidget(profiles: Profile[]): void {
         requestWidgetUpdate({ widgetName: 'JournalBebeWidget' }).catch(() => {});
       })
       .catch(() => {});
+  }
+}
+
+/**
+ * Met à jour la langue des widgets iOS (widget-language.json dans App Group).
+ * Appelé quand l'utilisateur change la langue dans les réglages.
+ * Fire-and-forget — ne bloque jamais l'app.
+ */
+export function refreshWidgetLanguage(language: string): void {
+  if (Platform.OS === 'ios' && updateWidgetLanguageNative) {
+    const jsonData = JSON.stringify({ language });
+    updateWidgetLanguageNative(jsonData).catch(() => {});
   }
 }

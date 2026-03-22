@@ -2,6 +2,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { getLocales } from 'expo-localization';
 import * as SecureStore from 'expo-secure-store';
+import { refreshWidgetLanguage } from './widget-bridge';
 
 import frCommon from '../locales/fr/common.json';
 import frGamification from '../locales/fr/gamification.json';
@@ -55,6 +56,8 @@ export async function loadSavedLanguage(): Promise<void> {
   } catch {
     // Pas de langue sauvegardée → on garde celle du device
   }
+  // Synchroniser la langue vers les widgets iOS
+  refreshWidgetLanguage(i18n.language);
 }
 
 /** Change la langue et la persiste */
@@ -66,6 +69,8 @@ export async function setAppLanguage(lng: 'fr' | 'en' | 'auto'): Promise<void> {
     await SecureStore.setItemAsync(LANGUAGE_KEY, lng);
     await i18n.changeLanguage(lng);
   }
+  // Synchroniser la langue vers les widgets iOS
+  refreshWidgetLanguage(i18n.language);
 }
 
 /** Retourne la préférence de langue sauvegardée (ou 'auto') */
