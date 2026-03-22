@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Living Gradient — Aperçu</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #111; color: #fff; padding: 24px; }
+  h1 { text-align: center; margin-bottom: 6px; font-size: 24px; }
+  .subtitle { text-align: center; color: #888; margin-bottom: 24px; font-size: 13px; }
+
+  .theme-selector { display: flex; justify-content: center; gap: 6px; margin-bottom: 28px; flex-wrap: wrap; }
+  .theme-btn {
+    padding: 6px 14px; border-radius: 10px; border: 2px solid #333;
+    background: #1a1a1a; color: #aaa; cursor: pointer; font-size: 13px; transition: all 0.2s;
+  }
+  .theme-btn.active { border-color: var(--ap); background: #222; color: #fff; }
+
+  .mode-title { font-size: 18px; font-weight: 700; margin: 28px 0 14px; text-align: center; color: #aaa; }
+  .row { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+
+  .col { text-align: center; }
+  .col-label { font-size: 12px; font-weight: 600; color: #F59E0B; margin-bottom: 2px; }
+  .col-hours { font-size: 10px; color: #666; margin-bottom: 6px; }
+
+  .phone {
+    width: 220px; height: 420px;
+    border-radius: 28px; overflow: hidden;
+    border: 2px solid #333; background: var(--bg);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  }
+
+  .hero {
+    padding: 10px 12px;
+    display: flex; flex-direction: row; align-items: center; justify-content: space-between;
+  }
+  .hero-left { display: flex; align-items: center; gap: 8px; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.25);
+  }
+  .greeting { font-size: 10px; color: rgba(255,255,255,0.8); font-weight: 500; }
+  .date { font-size: 13px; font-weight: 800; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+  .search-pill {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 4px 8px; border-radius: 8px;
+    background: rgba(255,255,255,0.2); backdrop-filter: blur(6px);
+    font-size: 9px; color: rgba(255,255,255,0.85);
+    border: 1px solid rgba(255,255,255,0.25);
+  }
+
+  .cards { padding: 10px; }
+  .card {
+    background: var(--card); border-radius: 12px; padding: 10px; margin-bottom: 8px;
+    border: 1px solid var(--border);
+  }
+  .card-t { font-weight: 700; font-size: 12px; color: var(--text); margin-bottom: 3px; }
+  .card-b { font-size: 10px; color: var(--textSub); }
+</style>
+</head>
+<body>
+
+<h1>Living Gradient</h1>
+<p class="subtitle">Le header change selon l'heure du jour. Clique un theme pour voir l'effet.</p>
+<div class="theme-selector" id="sel"></div>
+<div id="app"></div>
+
+<script>
+const TH = {
+  default:    { e:'💜', l:'Défaut',     p:'#8B5CF6' },
+  voitures:   { e:'🏎️', l:'Voitures',   p:'#DC2626' },
+  nature:     { e:'🌿', l:'Nature',     p:'#059669' },
+  licorne:    { e:'🦄', l:'Licorne',    p:'#EC4899' },
+  espace:     { e:'🚀', l:'Espace',     p:'#6366F1' },
+  pokemon:    { e:'⚡', l:'Pokémon',    p:'#EAB308' },
+  dinosaures: { e:'🦕', l:'Dinos',      p:'#0D9488' },
+};
+
+// BOLD gradients — fully saturated, obvious colors
+const G = {
+  light: {
+    dawn:      ['#E879A8', '#F59E0B'], // pink → gold
+    morning:   ['#3B82F6', '#F59E0B'], // blue → amber
+    afternoon: ['#0EA5E9', '#8B5CF6'], // sky → purple
+    sunset:    ['#F97316', '#EC4899'], // orange → pink
+    night:     ['#6366F1', '#1E293B'], // indigo → slate
+  },
+  dark: {
+    dawn:      ['#9D174D', '#B45309'],
+    morning:   ['#1D4ED8', '#15803D'],
+    afternoon: ['#1E40AF', '#7C3AED'],
+    sunset:    ['#C2410C', '#BE185D'],
+    night:     ['#3730A3', '#0F172A'],
+  },
+};
+
+const SLOTS = [
+  { k:'dawn',      l:'Aurore',     h:'5-8h',   g:'Bon matin',       e:'🌅' },
+  { k:'morning',   l:'Matin',      h:'8-12h',  g:'Bon matin',       e:'☀️' },
+  { k:'afternoon', l:'Après-midi', h:'12-17h', g:'Bon après-midi',  e:'🌤️' },
+  { k:'sunset',    l:'Coucher',    h:'17-20h', g:'Bonsoir',         e:'🌇' },
+  { k:'night',     l:'Nuit',       h:'20-5h',  g:'Bonne nuit',      e:'🌙' },
+];
+
+const LC = { bg:'#F3F4F6', card:'#FFF', text:'#111827', textSub:'#6B7280', border:'#E5E7EB' };
+const DC = { bg:'#0F172A', card:'#1E293B', text:'#F1F5F9', textSub:'#94A3B8', border:'#334155' };
+
+function mix(a, b, t) {
+  const h = s => parseInt(s, 16);
+  const m = (i) => Math.round(h(a.slice(i,i+2)) * (1-t) + h(b.slice(i,i+2)) * t);
+  return `#${m(1).toString(16).padStart(2,'0')}${m(3).toString(16).padStart(2,'0')}${m(5).toString(16).padStart(2,'0')}`;
+}
+
+let at = 'default';
+
+function render() {
+  const th = TH[at];
+  document.getElementById('sel').innerHTML = Object.entries(TH).map(([k,v]) =>
+    `<button class="theme-btn ${k===at?'active':''}" style="--ap:${v.p}" onclick="at='${k}';render()">${v.e} ${v.l}</button>`
+  ).join('');
+
+  let h = '';
+  ['light','dark'].forEach(mode => {
+    const c = mode === 'light' ? LC : DC;
+    h += `<div class="mode-title">${mode==='light'?'☀️ Clair':'🌙 Sombre'}</div><div class="row">`;
+    SLOTS.forEach(s => {
+      const [c1, c2] = G[mode][s.k];
+      const top = mix(c1, th.p, 0.3);
+      h += `
+      <div class="col">
+        <div class="col-label">${s.l} ${s.e}</div>
+        <div class="col-hours">${s.h}</div>
+        <div class="phone" style="--bg:${c.bg};--card:${c.card};--text:${c.text};--textSub:${c.textSub};--border:${c.border}">
+          <div class="hero" style="background:linear-gradient(135deg, ${top}, ${c2})">
+            <div class="hero-left">
+              <div class="avatar">${th.e}</div>
+              <div>
+                <div class="greeting">${s.g} Lucas ${s.e}</div>
+                <div class="date">22 Mars 2026</div>
+              </div>
+            </div>
+            <div class="search-pill">🔍 Chercher</div>
+          </div>
+          <div class="cards">
+            <div class="card"><div class="card-t">📋 Tâches du jour</div><div class="card-b">3 en attente</div></div>
+            <div class="card"><div class="card-t">🍽️ Repas</div><div class="card-b">Pâtes carbonara</div></div>
+            <div class="card"><div class="card-t">📅 RDV</div><div class="card-b">Pédiatre 14h30</div></div>
+          </div>
+        </div>
+      </div>`;
+    });
+    h += '</div>';
+  });
+  document.getElementById('app').innerHTML = h;
+}
+render();
+</script>
+</body>
+</html>

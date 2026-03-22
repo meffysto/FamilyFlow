@@ -26,6 +26,7 @@ import { useGamification } from '../../hooks/useGamification';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { LivingGradient } from '../../components/ui/LivingGradient';
 import { DashboardCard } from '../../components/DashboardCard';
 import { RDVEditor } from '../../components/RDVEditor';
 import RecipeViewer from '../../components/RecipeViewer';
@@ -787,7 +788,7 @@ export default function DashboardScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
-      <View ref={headerRef} style={[styles.header, { backgroundColor: colors.bg, borderBottomColor: colors.separator }]}>
+      <LivingGradient style={[styles.header, { borderBottomColor: colors.separator }]} ref={headerRef}>
         <View style={styles.headerLeft}>
           <TouchableOpacity
             onPress={() => setProfilePickerVisible(true)}
@@ -854,7 +855,7 @@ export default function DashboardScreen() {
             </TouchableOpacity>
           )}
         </View>
-      </View>
+      </LivingGradient>
 
       <ScrollView
         style={styles.scroll}
