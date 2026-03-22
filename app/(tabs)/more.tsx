@@ -126,9 +126,9 @@ export default function MoreScreen() {
       // Système
       { emoji: '⚙️', label: t('menu.items.settings'), route: '/(tabs)/settings', color: colors.textMuted, category: 'systeme' as const },
     ];
-  }, [rdvs, stock, gamiData, budgetEntries, budgetConfig, colors, profiles, defis, wishlistItems, anniversaries]);
+  }, [rdvs, stock, gamiData, budgetEntries, budgetConfig, colors, profiles, defis, wishlistItems, anniversaries, t]);
 
-  const visibleItems = isChildMode ? items.filter((i) => i.label !== 'Budget' && i.label !== 'Notes') : items;
+  const visibleItems = isChildMode ? items.filter((i) => i.route !== '/(tabs)/budget' && i.route !== '/(tabs)/notes') : items;
 
   const onItemPress = useCallback((item: MenuItem) => {
     if (item.params) {
