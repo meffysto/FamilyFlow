@@ -235,7 +235,6 @@ export default function TasksScreen() {
   const [newTaskRecurrence, setNewTaskRecurrence] = useState('');
   const [newTaskTarget, setNewTaskTarget] = useState(targetFiles[0]?.value ?? '');
   const [newTaskAssignees, setNewTaskAssignees] = useState<string[]>([]);
-  const [newTaskMenageDay, setNewTaskMenageDay] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   // Edit task modal
@@ -347,26 +346,11 @@ export default function TasksScreen() {
     try {
       const mentions = newTaskAssignees.map((n) => `@${n}`).join(' ');
       const fullText = mentions ? `${newTaskText.trim()} ${mentions}` : newTaskText.trim();
-      // Auto-calculer la date pour les tâches ménage
-      let finalDueDate = newTaskDueDate;
-      if (newTaskMenageDay && !finalDueDate) {
-        const DAY_MAP: Record<string, number> = { 'Lundi': 1, 'Mardi': 2, 'Mercredi': 3, 'Jeudi': 4, 'Vendredi': 5, 'Samedi': 6, 'Dimanche': 0 };
-        const dayName = newTaskMenageDay.split(' — ')[0];
-        const target = DAY_MAP[dayName];
-        if (target !== undefined) {
-          const today = new Date();
-          const diff = (target - today.getDay() + 7) % 7 || 7;
-          const next = new Date(today);
-          next.setDate(today.getDate() + diff);
-          finalDueDate = next.toISOString().slice(0, 10);
-        }
-      }
-      await addTask(fullText, newTaskTarget, finalDueDate || undefined, newTaskRecurrence || undefined, newTaskMenageDay || undefined);
+      await addTask(fullText, newTaskTarget, newTaskDueDate || undefined, newTaskRecurrence || undefined);
       setNewTaskText('');
       setNewTaskDueDate('');
       setNewTaskRecurrence('');
       setNewTaskAssignees([]);
-      setNewTaskMenageDay('');
       setAddModalVisible(false);
     } catch (e) {
       showToast(String(e), 'error');
@@ -790,31 +774,7 @@ export default function TasksScreen() {
               ))}
             </View>
 
-            {newTaskRecurrence === 'every week' && newTaskTarget.includes('Maison') && (
-              <>
-                <Text style={[styles.modalLabel, { color: colors.textSub }]}>🧹 Jour de ménage (optionnel)</Text>
-                <View style={styles.targetRow}>
-                  {[
-                    { label: 'Aucun', value: '' },
-                    { label: 'Lun', value: 'Lundi — Cuisine' },
-                    { label: 'Mar', value: 'Mardi — Salle de bain' },
-                    { label: 'Mer', value: 'Mercredi — Cuisine' },
-                    { label: 'Jeu', value: 'Jeudi — Chambres' },
-                    { label: 'Ven', value: 'Vendredi — Sols & Courses' },
-                    { label: 'Sam', value: 'Samedi — Sols' },
-                    { label: 'Dim', value: 'Dimanche — Repos / rattrapage' },
-                  ].map((opt) => (
-                    <Chip
-                      key={opt.value}
-                      label={opt.label}
-                      selected={newTaskMenageDay === opt.value}
-                      onPress={() => setNewTaskMenageDay(opt.value)}
-                      size="sm"
-                    />
-                  ))}
-                </View>
-              </>
-            )}
+
 
             <Text style={[styles.modalLabel, { color: colors.textSub }]}>👤 Attribuer à (optionnel)</Text>
             <View style={styles.targetRow}>

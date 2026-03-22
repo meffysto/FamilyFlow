@@ -20,7 +20,7 @@ function DashboardMenageInner({ vaultFileExists, activateCardTemplate, handleTas
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const isMenageTask = (t: { section?: string }) =>
-    t.section != null && /^(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s/i.test(t.section);
+    t.section != null && t.section.toLowerCase().includes('ménage');
   const pendingMenage = tasks.filter((t) => isMenageTask(t) && !t.completed && (!t.dueDate || t.dueDate <= todayStr));
 
   if (!vaultFileExists.menage) return (

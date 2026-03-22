@@ -258,7 +258,7 @@ export function DictaphoneRecorder({ rdv, context, onResult, onClose }: Dictapho
 
     const vaultCtx: AIVaultContext = {
       tasks: vault.tasks,
-      menageTasks: vault.tasks.filter(t => t.section != null && /^(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s/i.test(t.section)),
+      menageTasks: vault.tasks.filter(t => t.section != null && t.section.toLowerCase().includes('ménage')),
       rdvs: vault.rdvs,
       stock: vault.stock,
       meals: vault.meals,

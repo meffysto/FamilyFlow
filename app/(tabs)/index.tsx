@@ -431,7 +431,7 @@ export default function DashboardScreen() {
 
   // Données dérivées pour le tri intelligent
   const isMenageTask = (t: { section?: string }) =>
-    t.section != null && /^(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s/i.test(t.section);
+    t.section != null && t.section.toLowerCase().includes('ménage');
   const pendingMenage = tasks.filter((t) => isMenageTask(t) && !t.completed);
   const todayDayName = useMemo(() => {
     const name = format(new Date(), 'EEEE', { locale: fr });

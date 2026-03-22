@@ -270,7 +270,7 @@ export function buildMorningDigest(data: {
 
   // Ménage (filtré par section)
   const pendingMenage = data.tasks.filter((t) =>
-    t.section != null && /^(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s/i.test(t.section) && !t.completed
+    t.section != null && t.section.toLowerCase().includes('ménage') && !t.completed
   );
   if (pendingMenage.length > 0) {
     lines.push(`🧹 <b>${pendingMenage.length} tâche(s) ménage</b>`);

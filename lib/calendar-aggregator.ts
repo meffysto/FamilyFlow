@@ -114,7 +114,7 @@ export function aggregateCalendarEvents(
     if (!task.dueDate && !task.recurrence) {
       // Tâches sous sections récurrentes ou ménage → aujourd'hui
       const section = (task.section || '').toLowerCase();
-      const isMenage = section.includes('ménage') || /^(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s/i.test(task.section || '');
+      const isMenage = section.includes('ménage');
       const isRecurringSection = section.includes('hebdo') || section.includes('mensuel') || section.includes('tous les') || section.includes('quotid');
       if ((!isMenage && !isRecurringSection) || task.completed || !inRange(today)) continue;
       events.push({

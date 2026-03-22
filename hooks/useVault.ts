@@ -156,7 +156,7 @@ export interface VaultState {
   addRDV: (rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
   updateRDV: (sourceFile: string, rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
   deleteRDV: (sourceFile: string) => Promise<void>;
-  addTask: (text: string, targetFile: string, dueDate?: string, recurrence?: string, sectionOverride?: string) => Promise<void>;
+  addTask: (text: string, targetFile: string, dueDate?: string, recurrence?: string) => Promise<void>;
   editTask: (task: Task, updates: { text?: string; dueDate?: string; recurrence?: string; targetFile?: string }) => Promise<void>;
   deleteTask: (sourceFile: string, lineIndex: number) => Promise<void>;
   addCourseItem: (text: string, section?: string) => Promise<void>;
@@ -409,7 +409,7 @@ async function migrateMenageToTasks(vault: VaultManager): Promise<{ migrated: nu
   } catch {
     // Le fichier n'existe pas encore, on le créera
   }
-  if (tachesContent.includes('## Ménage hebdomadaire')) {
+  if (tachesContent.includes('## Ménage')) {
     return { migrated: 0, skipped: 0 };
   }
 
@@ -419,10 +419,8 @@ async function migrateMenageToTasks(vault: VaultManager): Promise<{ migrated: nu
 
   let migrated = 0;
   let skipped = 0;
-  let currentDay: string | null = null;
   let currentDayNum: number | null = null;
-  const sections: { header: string; tasks: string[] }[] = [];
-  let currentSection: { header: string; tasks: string[] } | null = null;
+  const allTasks: string[] = [];
 
   for (const line of lines) {
     // Détecter les sections ## Lundi — ..., ## Mardi — ..., etc.
@@ -430,17 +428,14 @@ async function migrateMenageToTasks(vault: VaultManager): Promise<{ migrated: nu
     if (sectionMatch) {
       const dayName = sectionMatch[1].toLowerCase();
       if (dayName in DAY_MAP) {
-        currentDay = dayName;
         currentDayNum = DAY_MAP[dayName];
-        currentSection = { header: line.replace(/^##/, '###'), tasks: [] };
-        sections.push(currentSection);
         continue;
       }
     }
 
     // Détecter les tâches (cochées ou non)
     const taskMatch = line.match(/^- \[[ xX]\]\s+(.+)/);
-    if (taskMatch && currentDayNum !== null && currentSection) {
+    if (taskMatch && currentDayNum !== null) {
       // Nettoyer : retirer ✅ et date de complétion
       let taskText = taskMatch[1]
         .replace(/\s*✅\s*\d{4}-\d{2}-\d{2}/, '')
@@ -453,7 +448,7 @@ async function migrateMenageToTasks(vault: VaultManager): Promise<{ migrated: nu
       }
 
       const nextDate = nextWeekday(currentDayNum);
-      currentSection.tasks.push(`- [ ] ${taskText} 🔁 every week 📅 ${nextDate}`);
+      allTasks.push(`- [ ] ${taskText} 🔁 every week 📅 ${nextDate}`);
       migrated++;
     }
   }
@@ -462,15 +457,8 @@ async function migrateMenageToTasks(vault: VaultManager): Promise<{ migrated: nu
     return { migrated: 0, skipped };
   }
 
-  // Construire la nouvelle section
-  const newSection = ['', '## Ménage hebdomadaire', ''];
-  for (const section of sections) {
-    if (section.tasks.length > 0) {
-      newSection.push(section.header);
-      newSection.push(...section.tasks);
-      newSection.push('');
-    }
-  }
+  // Construire la nouvelle section (toutes les tâches sous ## Ménage)
+  const newSection = ['', '## Ménage', ...allTasks, ''];
 
   // Ajouter à la fin du fichier tâches récurrentes
   const updatedContent = tachesContent.trimEnd() + '\n' + newSection.join('\n');
@@ -1570,15 +1558,16 @@ export function useVaultInternal(): VaultState {
     setTimeout(triggerWidgetRefresh, 0);
   }, [triggerWidgetRefresh]);
 
-  const addTask = useCallback(async (text: string, targetFile: string, dueDate?: string, recurrence?: string, sectionOverride?: string) => {
+  const addTask = useCallback(async (text: string, targetFile: string, dueDate?: string, recurrence?: string) => {
     if (!vaultRef.current) return;
     let taskText = text;
     if (recurrence) taskText += ` 🔁 ${recurrence}`;
     if (dueDate) taskText += ` 📅 ${dueDate}`;
-    // Section explicite (ex: "Lundi — Cuisine") ou auto selon récurrence
-    let section: string | null = sectionOverride || null;
-    if (!section && recurrence) {
-      if (/every\s+day/i.test(recurrence)) section = 'Quotidien';
+    // Auto-déterminer la section selon la récurrence et le fichier cible
+    let section: string | null = null;
+    if (recurrence) {
+      if (/every\s+week/i.test(recurrence) && targetFile.includes('Maison')) section = 'Ménage';
+      else if (/every\s+day/i.test(recurrence)) section = 'Quotidien';
       else if (/every\s+week/i.test(recurrence)) section = 'Hebdomadaire';
       else if (/every\s+month/i.test(recurrence)) section = 'Mensuel';
     }

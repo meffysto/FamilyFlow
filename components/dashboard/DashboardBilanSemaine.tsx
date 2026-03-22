@@ -141,7 +141,7 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
       // Construire les données de la semaine
       const recapData: WeeklyRecapData = buildWeeklyRecapData(
         tasks,
-        tasks.filter(t => t.section != null && /^(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s/i.test(t.section)),
+        tasks.filter(t => t.section != null && t.section.toLowerCase().includes('ménage')),
         meals,
         moods,
         quotes,

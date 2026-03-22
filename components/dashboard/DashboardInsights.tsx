@@ -40,7 +40,7 @@ function DashboardInsightsInner({ insights: insightsProp }: DashboardSectionProp
   const handleAIRequest = async () => {
     setAiLoading(true);
     const ctx = {
-      tasks, menageTasks: tasks.filter(t => t.section != null && /^(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s/i.test(t.section)), rdvs, stock, meals, courses,
+      tasks, menageTasks: tasks.filter(t => t.section != null && t.section.toLowerCase().includes('ménage')), rdvs, stock, meals, courses,
       memories, defis, wishlistItems, recipes, profiles, activeProfile,
       journalStats, healthRecords,
     };
