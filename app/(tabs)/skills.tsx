@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, RefreshControl, TouchableOpacity, Modal, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import { useVault } from '../../contexts/VaultContext';
@@ -179,14 +179,44 @@ export default function SkillsScreen() {
     ? SKILL_CATEGORIES.find((c) => c.id === selectedSkill.categoryId)
     : null;
 
+  const [bracketPickerVisible, setBracketPickerVisible] = useState(false);
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <View ref={headerRef} style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>
-          {selectedChild?.avatar} Compétences
-        </Text>
+        <View style={styles.headerRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.title, { color: colors.text }]}>Compétences</Text>
+          </View>
+          {/* Avatars enfants compacts (si parent avec plusieurs enfants) */}
+          {isParent && childProfiles.length > 1 && (
+            <View style={styles.avatarRow}>
+              {childProfiles.map((child) => {
+                const isActive = child.id === selectedChild?.id;
+                return (
+                  <TouchableOpacity
+                    key={child.id}
+                    style={[
+                      styles.avatarBubble,
+                      {
+                        backgroundColor: isActive ? primary + '20' : colors.cardAlt,
+                        borderColor: isActive ? primary : 'transparent',
+                      },
+                    ]}
+                    onPress={() => setSelectedChildId(child.id)}
+                    accessibilityLabel={child.name}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isActive }}
+                  >
+                    <Text style={styles.avatarEmoji}>{child.avatar}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
+        </View>
         <Text style={[styles.subtitle, { color: colors.textSub }]}>
-          {selectedChild?.name} — {activeBracketInfo?.label ?? activeBracket}
+          {selectedChild?.avatar} {selectedChild?.name}
         </Text>
       </View>
 
@@ -195,11 +225,10 @@ export default function SkillsScreen() {
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
       >
-        {/* Anneau de progression RPG */}
+        {/* Carte de progression avec sélecteur de tranche intégré */}
         <View style={[styles.progressSection, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
           <View style={styles.ringContainer}>
             <Svg width={RING_SIZE} height={RING_SIZE}>
-              {/* Cercle de fond */}
               <Circle
                 cx={RING_SIZE / 2}
                 cy={RING_SIZE / 2}
@@ -208,7 +237,6 @@ export default function SkillsScreen() {
                 strokeWidth={RING_STROKE}
                 fill="none"
               />
-              {/* Cercle de progression */}
               <Circle
                 cx={RING_SIZE / 2}
                 cy={RING_SIZE / 2}
@@ -223,7 +251,6 @@ export default function SkillsScreen() {
                 origin={`${RING_SIZE / 2}, ${RING_SIZE / 2}`}
               />
             </Svg>
-            {/* Texte central superposé */}
             <View style={styles.ringOverlay}>
               <Text style={[styles.ringPercent, { color: colors.text }]}>
                 {progressPercent}%
@@ -238,9 +265,18 @@ export default function SkillsScreen() {
             <Text style={[styles.progressTitle, { color: colors.text }]}>
               {unlockedCount} / {totalSkills} compétences
             </Text>
-            <Text style={[styles.progressSubtitle, { color: colors.textSub }]}>
-              Tranche {activeBracketInfo?.label ?? activeBracket} · {activeBracketInfo?.subtitle ?? ''}
-            </Text>
+            {/* Sélecteur tranche d'âge intégré */}
+            <TouchableOpacity
+              style={[styles.bracketPill, { backgroundColor: primary + '15' }]}
+              onPress={() => setBracketPickerVisible(true)}
+              accessibilityLabel="Changer la tranche d'âge"
+              accessibilityRole="button"
+            >
+              <Text style={[styles.bracketPillText, { color: primary }]}>
+                {activeBracketInfo?.label ?? activeBracket} · {activeBracketInfo?.subtitle ?? ''}
+              </Text>
+              <Text style={[styles.bracketPillArrow, { color: primary }]}> ▾</Text>
+            </TouchableOpacity>
             <View style={[styles.xpBadge, { backgroundColor: primary + '26' }]}>
               <Text style={[styles.xpText, { color: primary }]}>
                 ⚡ {totalXp} XP gagnés
@@ -249,33 +285,7 @@ export default function SkillsScreen() {
           </View>
         </View>
 
-        {/* Sélection enfant (si parent avec plusieurs enfants) */}
-        {isParent && childProfiles.length > 1 && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipStrip}>
-            {childProfiles.map((child) => (
-              <Chip
-                key={child.id}
-                label={`${child.avatar} ${child.name}`}
-                selected={child.id === selectedChild?.id}
-                onPress={() => setSelectedChildId(child.id)}
-              />
-            ))}
-          </ScrollView>
-        )}
-
-        {/* Sélection tranche d'âge */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipStrip}>
-          {AGE_BRACKETS.map((bracket) => (
-            <Chip
-              key={bracket.id}
-              label={`${bracket.label} ${bracket.id === detectedBracket ? '(actuel)' : ''}`}
-              selected={bracket.id === activeBracket}
-              onPress={() => setSelectedBracket(bracket.id)}
-            />
-          ))}
-        </ScrollView>
-
-        {/* Filtre par catégorie */}
+        {/* Filtre par catégorie — seule bande de chips */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipStrip}>
           <Chip label="Tout" selected={selectedCategory === 'all'} onPress={() => setSelectedCategory('all')} />
           {getCategoriesForBracket(activeBracket).map((cat) => (
@@ -331,6 +341,61 @@ export default function SkillsScreen() {
         childName={selectedChild?.name ?? ''}
         onDismiss={() => setCelebration(null)}
       />
+
+      {/* Picker tranche d'âge (bottom sheet style) */}
+      <Modal
+        visible={bracketPickerVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setBracketPickerVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setBracketPickerVisible(false)}
+        >
+          <View style={[styles.bracketSheet, { backgroundColor: colors.card }]}>
+            <Text style={[styles.bracketSheetTitle, { color: colors.text }]}>
+              Tranche d'âge
+            </Text>
+            <FlatList
+              data={AGE_BRACKETS}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => {
+                const isActive = item.id === activeBracket;
+                const isCurrent = item.id === detectedBracket;
+                return (
+                  <TouchableOpacity
+                    style={[
+                      styles.bracketOption,
+                      {
+                        backgroundColor: isActive ? primary + '15' : 'transparent',
+                        borderColor: isActive ? primary : colors.borderLight,
+                      },
+                    ]}
+                    onPress={() => {
+                      setSelectedBracket(item.id);
+                      setBracketPickerVisible(false);
+                    }}
+                  >
+                    <Text style={[
+                      styles.bracketOptionText,
+                      { color: isActive ? primary : colors.text },
+                    ]}>
+                      {item.label} — {item.subtitle}
+                    </Text>
+                    {isCurrent && (
+                      <View style={[styles.currentBadge, { backgroundColor: primary + '26' }]}>
+                        <Text style={[styles.currentBadgeText, { color: primary }]}>actuel</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -339,7 +404,13 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   header: {
     paddingHorizontal: Spacing['3xl'],
-    paddingVertical: Spacing.xl,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.sm,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   title: {
     fontSize: FontSize.titleLg,
@@ -349,7 +420,23 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     marginTop: Spacing.xs,
   },
-  // Anneau de progression
+  // Avatars enfants compacts
+  avatarRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  avatarBubble: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+  },
+  avatarEmoji: {
+    fontSize: 20,
+  },
+  // Carte progression
   progressSection: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -387,9 +474,22 @@ const styles = StyleSheet.create({
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
   },
-  progressSubtitle: {
+  // Pill tranche d'âge
+  bracketPill: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 3,
+    borderRadius: 20,
+  },
+  bracketPillText: {
     fontSize: FontSize.caption,
-    marginTop: 2,
+    fontWeight: FontWeight.semibold,
+  },
+  bracketPillArrow: {
+    fontSize: FontSize.micro,
   },
   xpBadge: {
     alignSelf: 'flex-start',
@@ -417,5 +517,48 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: FontSize.body,
+  },
+  // Modal picker tranche d'âge
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  bracketSheet: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing['4xl'],
+    paddingHorizontal: Spacing['2xl'],
+    maxHeight: '60%',
+  },
+  bracketSheetTitle: {
+    fontSize: FontSize.heading,
+    fontWeight: FontWeight.bold,
+    marginBottom: Spacing.lg,
+  },
+  bracketOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.xs,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  bracketOptionText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.medium,
+  },
+  currentBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  currentBadgeText: {
+    fontSize: FontSize.micro,
+    fontWeight: FontWeight.bold,
+    textTransform: 'uppercase',
   },
 });
