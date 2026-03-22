@@ -921,6 +921,7 @@
   },
   "calendarScreen": {
     "title": "📆 Calendrier",
+    "today": "Aujourd'hui",
     "tabs": {
       "month": "Mois",
       "week": "Semaine"

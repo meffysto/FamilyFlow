@@ -97,7 +97,7 @@ export default function CalendarScreen() {
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.text }]}>{t('calendarScreen.title')}</Text>
         <TouchableOpacity onPress={goToToday}>
-          <Text style={[styles.todayBtn, { color: primary }]}>Aujourd'hui</Text>
+          <Text style={[styles.todayBtn, { color: primary }]}>{t('calendarScreen.today')}</Text>
         </TouchableOpacity>
       </View>
 

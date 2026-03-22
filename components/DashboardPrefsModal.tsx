@@ -208,12 +208,12 @@ export function DashboardPrefsModal({ sections: initialSections, smartSort: init
           <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Text style={[styles.headerClose, { color: colors.textFaint }]}>✕</Text>
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Personnaliser</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>{t('dashboardPrefs.title')}</Text>
           <TouchableOpacity
             onPress={() => { onSave({ sections, smartSort }); onClose(); }}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Text style={[styles.headerSave, { color: primary }]}>Enregistrer</Text>
+            <Text style={[styles.headerSave, { color: primary }]}>{t('dashboardPrefs.save')}</Text>
           </TouchableOpacity>
         </View>
 
