@@ -18,6 +18,7 @@ import { CategoryCompleteOverlay } from '../../components/CategoryCompleteOverla
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { Spacing } from '../../constants/spacing';
+import { useTranslation } from 'react-i18next';
 import { FontSize, FontWeight } from '../../constants/typography';
 import {
   SKILL_CATEGORIES,
@@ -38,6 +39,7 @@ const RING_STROKE = 6;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 export default function SkillsScreen() {
+  const { t } = useTranslation();
   const headerRef = useRef<View>(null);
   const { profiles, activeProfile, skillTrees, unlockSkill, refresh } = useVault();
   const { primary, colors } = useThemeColors();
@@ -269,7 +271,7 @@ export default function SkillsScreen() {
             <TouchableOpacity
               style={[styles.bracketPill, { backgroundColor: primary + '15' }]}
               onPress={() => setBracketPickerVisible(true)}
-              accessibilityLabel="Changer la tranche d'âge"
+              accessibilityLabel={t('skillsScreen.a11y.changeBracket')}
               accessibilityRole="button"
             >
               <Text style={[styles.bracketPillText, { color: primary }]}>

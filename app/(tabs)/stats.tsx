@@ -37,8 +37,10 @@ import { formatAmount } from '../../lib/budget';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { useTranslation } from 'react-i18next';
 
 export default function StatsScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { primary, colors } = useThemeColors();
   const { tasks, meals, profiles, refresh } = useVault();
@@ -114,8 +116,8 @@ export default function StatsScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <View style={[styles.header, { backgroundColor: colors.bg }]}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={12} accessibilityLabel="Retour" accessibilityRole="button">
-          <Text style={[styles.backBtn, { color: primary }]}>← Retour</Text>
+        <TouchableOpacity onPress={() => router.back()} hitSlop={12} accessibilityLabel={t('statsScreen.a11y.back')} accessibilityRole="button">
+          <Text style={[styles.backBtn, { color: primary }]}>{t('statsScreen.backBtn')}</Text>
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.text }]}>Statistiques</Text>
         <View style={{ width: 60 }} />
@@ -136,15 +138,15 @@ export default function StatsScreen() {
             <Text style={[styles.cardTitle, { color: colors.text }]}>📋 Tâches complétées</Text>
           </View>
           <View style={styles.weekNav}>
-            <TouchableOpacity onPress={() => setWeekOffset((o) => o - 1)} hitSlop={8} accessibilityLabel="Semaine précédente" accessibilityRole="button">
+            <TouchableOpacity onPress={() => setWeekOffset((o) => o - 1)} hitSlop={8} accessibilityLabel={t('statsScreen.a11y.prevWeek')} accessibilityRole="button">
               <Text style={[styles.navBtn, { color: primary }]}>◀</Text>
             </TouchableOpacity>
-            <Text style={[styles.weekLabel, { color: colors.textSub }]} accessibilityLabel={`Semaine du ${weekLabel}`}>{weekLabel}</Text>
+            <Text style={[styles.weekLabel, { color: colors.textSub }]} accessibilityLabel={t('statsScreen.a11y.weekLabel', { label: weekLabel })}>{weekLabel}</Text>
             <TouchableOpacity
               onPress={() => setWeekOffset((o) => Math.min(o + 1, 0))}
               hitSlop={8}
               disabled={weekOffset >= 0}
-              accessibilityLabel="Semaine suivante"
+              accessibilityLabel={t('statsScreen.a11y.nextWeek')}
               accessibilityRole="button"
               accessibilityState={{ disabled: weekOffset >= 0 }}
             >
@@ -153,7 +155,7 @@ export default function StatsScreen() {
           </View>
           <BarChart data={taskData} height={100} barColor={colors.success} />
           <Text style={[styles.summary, { color: colors.textMuted }]}>
-            {totalTasks} tâche{totalTasks !== 1 ? 's' : ''} cette semaine
+            {t('statsScreen.tasksSummary', { count: totalTasks })}
           </Text>
         </View>
 

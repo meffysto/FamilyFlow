@@ -68,9 +68,9 @@
     "tagline": "Your family, organized together",
     "features": {
       "tasks": { "title": "Family tasks", "desc": "Organize and complete tasks together" },
-      "loot": { "title": "Loot boxes", "desc": "Earn rewards by completing your tasks" },
-      "obsidian": { "title": "Obsidian", "desc": "100% Markdown, compatible with Obsidian" },
-      "telegram": { "title": "Telegram", "desc": "Notifications via Telegram" }
+      "loot": { "title": "Rewards", "desc": "Kids earn rewards by completing their tasks" },
+      "files": { "title": "Your data, your device", "desc": "Everything is stored on your phone in simple, readable files" },
+      "telegram": { "title": "Notifications", "desc": "Get reminders via Telegram" }
     },
     "slides": {
       "1": { "title": "Your daily life, simplified", "subtitle": "Plan meals, share chores, manage shopping" },
@@ -97,12 +97,12 @@
       "noChildHint": "No worries! You can add children later in the settings."
     },
     "vault": {
-      "title": "Vault location",
+      "title": "Data location",
       "subtitle": "Where should your family data be stored? Choose an existing folder or a new empty folder."
     },
     "templates": {
       "title": "Starter templates",
-      "subtitle": "Choose which templates to install in your vault. You can add more later in the settings.",
+      "subtitle": "Choose which templates to install. You can add more later in the settings.",
       "selectAll": "Select all"
     },
     "recap": {
@@ -110,10 +110,10 @@
       "subtitle": "Here's your family:",
       "parents": "Parents",
       "children": "Children",
-      "vault": "Vault",
+      "vault": "Folder",
       "models": "Templates",
-      "filesTitle": "Files that will be created:",
-      "filesDesc": "📋 Recurring tasks per child\n🧹 Weekly chores\n🛒 Shopping list\n📖 Journal folders\n👨‍👩‍👧 Family profiles + gamification",
+      "filesTitle": "What will be created:",
+      "filesDesc": "📋 Recurring tasks per child\n🧹 Weekly chores\n🛒 Shopping list\n📖 Journal folders\n👨‍👩‍👧 Family profiles + rewards",
       "modelCount_one": "\n📦 {{count}} content template",
       "modelCount_other": "\n📦 {{count}} content templates"
     },
@@ -122,12 +122,12 @@
       "skip": "Skip",
       "next": "Next →",
       "start": "Get started",
-      "create": "Create family vault 🚀",
+      "create": "Let's go! 🚀",
       "step": "Step {{current}}/{{total}}"
     },
     "error": {
       "title": "Error",
-      "createFailed": "Unable to create vault:\n{{error}}\n\nPlease check permissions."
+      "createFailed": "Unable to set up your data:\n{{error}}\n\nPlease check folder permissions."
     }
   },
   "tasks": {
@@ -1628,6 +1628,778 @@
       "fillRequired": "Please fill in at least the child and the quote",
       "added": "Quote added!",
       "deleted": "Quote deleted"
+    }
+  },
+  "common": {
+    "close": "Close",
+    "error": "Error",
+    "back": "← Back",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "retry": "Retry",
+    "reset": "Reset",
+    "send": "Send",
+    "searchEverywhere": "Search everywhere...",
+    "searchInVault": "Search in vault",
+    "closeSearch": "Close search",
+    "erase": "Delete",
+    "skipTips": "Skip tips",
+    "next": "Next",
+    "gotIt": "Got it!",
+    "previous": "Previous",
+    "finish": "Finish",
+    "validate": "Validate",
+    "done": "✓ Done",
+    "share": "📤 Share",
+    "immersiveReading": "Immersive reading",
+    "viewOriginalArticle": "View original article",
+    "closeRoutine": "Close routine",
+    "shareWeeklySummary": "Share weekly summary",
+    "longPressToReorder": "Long press to reorder",
+    "tapToChangeCategory": "Tap to change category",
+    "bravo": "Well done!",
+    "pass": "Skip"
+  },
+  "notificationEditor": {
+    "enabled": "Enabled",
+    "emoji": "Emoji",
+    "name": "Name",
+    "namePlaceholder": "Notification name",
+    "message": "Message",
+    "messagePlaceholder": "Write your message here...",
+    "availableVars": "Available variables",
+    "preview": "Preview",
+    "reset": "Reset",
+    "save": "Save",
+    "sendNow": "📤 Send now",
+    "delete": "Delete",
+    "alert": {
+      "resetTitle": "Reset",
+      "resetMsg": "Restore default message?",
+      "deleteTitle": "Delete",
+      "deleteMsg": "Delete notification \"{{label}}\"?"
+    },
+    "toast": {
+      "sent": "Notification sent to Telegram!",
+      "sendFailed": "Unable to send notification",
+      "sendError": "Failed to send"
+    }
+  },
+  "notificationSettings": {
+    "title": "Notifications",
+    "activeCount": "{{active}} active on {{total}}",
+    "builtinSection": "BUILT-IN NOTIFICATIONS",
+    "customSection": "CUSTOM NOTIFICATIONS",
+    "emptyCustom": "No custom notifications",
+    "addBtn": "+ Add a notification",
+    "newModal": {
+      "title": "New notification",
+      "emoji": "Emoji",
+      "name": "Name",
+      "namePlaceholder": "E.g.: Shopping reminder",
+      "cancel": "Cancel",
+      "create": "Create"
+    },
+    "alert": {
+      "errorTitle": "Error",
+      "nameRequired": "Name is required."
+    }
+  },
+  "anniversaryEditor": {
+    "titleNew": "New birthday",
+    "titleEdit": "Edit",
+    "save": "Save",
+    "nameLabel": "Name *",
+    "namePlaceholder": "Person's name",
+    "dateLabel": "Birthday *",
+    "dayLabel": "Day",
+    "monthLabel": "Month",
+    "birthYearLabel": "Birth year (optional)",
+    "birthYearPlaceholder": "E.g.: 1990",
+    "categoryLabel": "Category",
+    "notesLabel": "Notes (optional)",
+    "notesPlaceholder": "Gift ideas, preferences...",
+    "deleteBtn": "Delete this birthday",
+    "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+    "categories": {
+      "family": "Family",
+      "friend": "Friend",
+      "colleague": "Colleague",
+      "other": "Other"
+    },
+    "alert": {
+      "deleteTitle": "Delete this birthday?",
+      "deleteMsg": "{{name}}'s birthday will be deleted."
+    },
+    "toast": {
+      "nameRequired": "Please enter a name",
+      "updated": "Birthday updated",
+      "added": "Birthday added",
+      "deleted": "Birthday deleted",
+      "saveError": "Error while saving"
+    }
+  },
+  "secretMissionCreator": {
+    "title": "🕵️ New secret mission",
+    "send": "Send",
+    "chooseChild": "👦 Choose a child",
+    "missionText": "📝 Mission text",
+    "missionPlaceholder": "E.g.: Tidy your room in secret...",
+    "suggestions": "💡 Suggestions",
+    "sendMission": "🕵️ Send mission",
+    "sendMissionA11y": "Send mission",
+    "rewardInfo": "🎁 The child will receive an Agent Secret chest (epic minimum) upon validation",
+    "toast": {
+      "sent": "Mission sent!"
+    }
+  },
+  "routineEditor": {
+    "titleNew": "New routine",
+    "titleEdit": "Edit routine",
+    "save": "Save",
+    "iconLabel": "Icon",
+    "nameLabel": "Routine name",
+    "namePlaceholder": "E.g.: Morning, Evening, After school…",
+    "visualMode": "Visual mode 👶",
+    "visualHint": "Full screen with large emojis for young children (3-7 years)",
+    "stepsLabel": "Steps",
+    "stepPlaceholder": "Step {{n}}…",
+    "timerLabel": "⏱ Timer (optional)",
+    "timerPlaceholder": "min",
+    "addStep": "+ Add a step",
+    "deleteRoutine": "Delete this routine",
+    "alert": {
+      "deleteTitle": "Delete routine",
+      "deleteMsg": "Delete \"{{name}}\"? This action is irreversible."
+    }
+  },
+  "recipeViewer": {
+    "portions": "Servings",
+    "prep": "Prep",
+    "cooking": "Cook",
+    "ingredients": "Ingredients",
+    "steps": "Steps",
+    "startRecipe": "🍳 Start cooking",
+    "toShoppingList": "🛒 To shopping list",
+    "addPhoto": "Add a photo",
+    "renameTitle": "Rename recipe",
+    "alert": {
+      "permissionDenied": "Permission denied",
+      "permissionDeniedMsg": "Allow photo access to add an image.",
+      "error": "Error",
+      "saveImageError": "Unable to save image."
+    }
+  },
+  "recipeCookingMode": {
+    "stepLabel": "Step {{n}}",
+    "stepOf": "of {{total}}",
+    "stepsProgress": "{{done}}/{{total}} steps · {{servings}} servings",
+    "stepIngredients": "Ingredients for this step",
+    "launch": "Start",
+    "resume": "▶ Resume",
+    "pause": "⏸ Pause",
+    "addMinute": "+1 min",
+    "stop": "⏹ Stop",
+    "timerStep": "Step {{n}}",
+    "otherTimers": "Other running timers",
+    "previous": "Previous",
+    "next": "Next",
+    "timerFinished": "⏱️ {{label}} — Done!",
+    "timerNotifTitle": "⏱️ Timer finished!",
+    "timerNotifBody": "{{label}} — Step {{step}} of {{recipe}}"
+  },
+  "vaultPicker": {
+    "createNew": "Create a new vault",
+    "createNewSub": "No need for Obsidian — everything is created automatically",
+    "createICloud": "Create in iCloud Drive",
+    "createICloudSub": "Auto-sync between your Apple devices",
+    "createAndroid": "Create in Google Drive / Dropbox",
+    "createAndroidSub": "Choose a locally synced cloud folder",
+    "orConnect": "or connect an existing vault",
+    "selectFolder": "Select vault folder",
+    "selectFolderSubIos": "From Files, iCloud, Obsidian...",
+    "selectFolderSubAndroid": "From storage, Google Drive, Dropbox...",
+    "ipPlaceholder": "Computer IP (e.g.: 192.168.1.42)",
+    "syncFromComputer": "Sync from computer",
+    "syncSub": "Run python3 serve-vault.py on the PC/Mac",
+    "pathLabel": "Vault path",
+    "pathPlaceholder": "/path/to/my-vault",
+    "useVaultCoffre": "Use coffre vault",
+    "confirm": "Confirm",
+    "alert": {
+      "unavailable": "Not available",
+      "unavailableMsg": "Folder picker is not available.",
+      "error": "Error",
+      "errorOpenMsg": "Unable to open picker: {{error}}",
+      "accessDenied": "Folder access denied. Try selecting the folder again.",
+      "selectionError": "Error during selection: {{error}}",
+      "ipRequired": "Enter your computer's IP address (e.g.: 192.168.1.42)",
+      "syncFailed": "Sync failed: {{error}}\n\nMake sure serve-vault.py is running on the computer and you're on the same Wi-Fi network.",
+      "pathEmpty": "Path cannot be empty.",
+      "pathNotFound": "Folder not found: \"{{path}}\"\nCheck that the path exists and the app has access."
+    }
+  },
+  "globalSearch": {
+    "placeholder": "Search everywhere...",
+    "searchA11y": "Search in vault",
+    "closeA11y": "Close search",
+    "cancel": "Cancel",
+    "askAI": "🤖 Ask AI: \"{{query}}\"",
+    "aiAnswer": "AI Answer",
+    "resultCount_one": "{{count}} result",
+    "resultCount_other": "{{count}} results",
+    "noResults": "No results for \"{{query}}\"",
+    "hint": "Tasks, appointments, recipes, stock, meals, shopping, memories, challenges, wishes",
+    "hintWithAI": "\n\nOr ask the AI assistant",
+    "typeLabels": {
+      "task": "Task",
+      "rdv": "Appointment",
+      "recipe": "Recipe",
+      "stock": "Stock",
+      "meal": "Meal",
+      "course": "Shopping",
+      "memory": "Memory",
+      "defi": "Challenge",
+      "wishlist": "Wish"
+    }
+  },
+  "lockScreen": {
+    "pinIncorrect": "Incorrect PIN",
+    "enterPin": "Enter your PIN",
+    "failedAttempts": "{{count}} failed attempts",
+    "useBiometry": "Use {{type}}",
+    "biometry": "Biometrics",
+    "eraseA11y": "Delete"
+  },
+  "noteViewer": {
+    "edit": "Edit",
+    "readingMode": "Immersive reading",
+    "readingModeA11y": "Reading mode",
+    "viewOriginal": "View original article",
+    "viewOriginalA11y": "View original article"
+  },
+  "coachMark": {
+    "skip": "Skip",
+    "skipA11y": "Skip tips",
+    "next": "Next",
+    "gotIt": "Got it!",
+    "stepA11y": "{{label}}, step {{current}} of {{total}}"
+  },
+  "secretMissionCard": {
+    "badge": "🕵️ Secret mission",
+    "reward": "🎁 Reward: Agent Secret chest (epic minimum!)",
+    "missionComplete": "Mission complete!",
+    "missionCompleteA11y": "Mark mission as complete",
+    "inProgress": "🕵️ In progress...",
+    "pendingValidation": "⏳ Awaiting validation...",
+    "validate": "Validate",
+    "validateA11y": "Validate mission",
+    "notYet": "Not yet",
+    "notYetA11y": "Put mission back in progress",
+    "validated": "✅ Mission validated! 🎉"
+  },
+  "contactImporter": {
+    "title": "Import contacts",
+    "loading": "Loading contacts...",
+    "denied": "Contact access denied",
+    "deniedDesc": "To import birthdays from your contacts, allow access in your device settings.",
+    "openSettings": "Open settings",
+    "noContacts": "No contacts with birthday",
+    "noContactsDesc": "Add birthday dates in your contacts to be able to import them.",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "contactCount_one": "{{count}} contact with birthday",
+    "contactCount_other": "{{count}} contacts with birthday",
+    "alreadyImported": "Already imported",
+    "selectContacts": "Select contacts",
+    "importCount_one": "Import {{count}} birthday",
+    "importCount_other": "Import {{count}} birthdays",
+    "toast": {
+      "loadError": "Error loading contacts",
+      "imported_one": "{{count}} birthday imported",
+      "imported_other": "{{count}} birthdays imported",
+      "importError": "Error during import"
+    }
+  },
+  "calendarImporter": {
+    "title": "Import from calendar",
+    "loading": "Loading calendar...",
+    "denied": "Calendar access denied",
+    "deniedDesc": "To import birthdays from your calendar, allow access in your device settings.",
+    "openSettings": "Open settings",
+    "noEvents": "No birthdays found",
+    "noEventsDesc": "No birthday events found. Make sure your events contain \"Birthday\" in the title, or that the native Birthdays calendar is enabled.",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "birthdayCount_one": "{{count}} birthday",
+    "birthdayCount_other": "{{count}} birthdays",
+    "alreadyImported": "Already imported",
+    "selectBirthdays": "Select birthdays",
+    "importCount_one": "Import {{count}} birthday",
+    "importCount_other": "Import {{count}} birthdays",
+    "toast": {
+      "loadError": "Error loading calendar",
+      "imported_one": "{{count}} birthday imported",
+      "imported_other": "{{count}} birthdays imported",
+      "importError": "Error during import"
+    }
+  },
+  "dictaphone": {
+    "title": "Dictaphone",
+    "instructionRdv": "Tap the microphone to record the doctor's answers.",
+    "instructionGeneric": "Tap the microphone to dictate your text.",
+    "instructionSuffix": " Transcription happens in real time, on your device.",
+    "startRecording": "Start recording",
+    "startRecordingA11y": "Start recording",
+    "privacy": "🔒 100% local transcription — no audio data leaves your device",
+    "transcribing": "Transcribing...",
+    "waitingForSpeech": "Waiting for speech...",
+    "stopRecording": "Stop",
+    "stopRecordingA11y": "Stop recording",
+    "recordingDone": "Recording complete — {{duration}}",
+    "transcription": "Transcription",
+    "transcriptionHint": "You can correct the text before summarizing.",
+    "transcriptionEmpty": "Empty transcription...",
+    "aiSummary": "AI Summary",
+    "useSummary": "Use summary",
+    "summarize": "Summarize with AI",
+    "useRawText": "Use raw text",
+    "aiNotConfigured": "AI not configured — add your API key in settings",
+    "aiDisclaimer": "This summary is AI-generated for informational purposes only and does not constitute medical advice.",
+    "addApiKey": "Add a Claude API key in settings to enable AI summarization.",
+    "restart": "Start over",
+    "permissionsRequired": "Permissions required",
+    "permissionsMsg": "Allow microphone and speech recognition in settings.",
+    "doctorNotSpecified": "Doctor not specified",
+    "recognitionError": "Recognition error: {{message}}"
+  },
+  "focusReader": {
+    "closeA11y": "Close",
+    "guide": "Guide",
+    "rsvp": "RSVP",
+    "small": "Small",
+    "medium": "Medium",
+    "large": "Large",
+    "wordsPerMin": "{{wpm}} words/min",
+    "wordA11y": "Word {{current}} of {{total}}: {{word}}"
+  },
+  "visualRoutinePlayer": {
+    "closeA11y": "Close routine",
+    "skipTimer": "Skip",
+    "bravo": "Well done!"
+  },
+  "bilanSemaine": {
+    "tasks": "Tasks",
+    "meals": "Meals",
+    "mood": "Mood",
+    "shareA11y": "Share weekly summary"
+  },
+  "dashboardPrefs": {
+    "title": "Customize",
+    "save": "Save",
+    "hint": "Show or hide sections, and long press to reorder.",
+    "smartSort": "🪄 Smart sort",
+    "smartSortDesc": "Reorders cards based on context (time, urgency, available data)",
+    "smartSortNote": "The manual order below serves as a base — smart sort adjusts it based on context.",
+    "reorderHint": "Long press to reorder",
+    "priorities": {
+      "high": "⭐ Essential",
+      "medium": "📌 Secondary",
+      "low": "💤 Optional"
+    }
+  },
+  "sectionError": {
+    "unavailable": "Section \"{{name}}\" unavailable",
+    "retry": "Retry",
+    "retryA11y": "Retry section {{name}}"
+  },
+  "taskCard": {
+    "a11y": "Task: {{text}}{{completed}}{{overdue}}",
+    "completed": ", completed",
+    "overdue": ", overdue"
+  },
+  "receiptReview": {
+    "categoryHint": "Tap to change category"
+  },
+  "index": {
+    "alert": {
+      "noContact": "No contact",
+      "noContactMsg": "Set up your grandparent contacts in Settings > Grandparents.",
+      "shareToGrandparents": "Share with grandparents",
+      "shareQuestion": "What would you like to send?",
+      "babyBorn": "Baby is born?",
+      "babyBornMsg": "Go to Settings > Profiles to confirm the birth.",
+      "updateTasks": "Update tasks?",
+      "updateTasksMsg": "{{name}}'s current tasks will be replaced with tasks adapted to a \"{{category}}\" profile.",
+      "cancel": "Cancel",
+      "update": "Update"
+    },
+    "toast": {
+      "sendDone": "Sending complete!",
+      "taskError": "Unable to update task: {{error}}"
+    },
+    "greeting": {
+      "child": "Hey {{name}}! 🌟",
+      "night": "Good night {{name}} 🌙",
+      "morning": "Good morning {{name}} ☀️",
+      "afternoon": "Good afternoon {{name}} 🌤️",
+      "evening": "Good evening {{name}} 🌙"
+    },
+    "a11y": {
+      "activeProfile": "Active profile: {{name}}. Tap to switch.",
+      "search": "Search in vault",
+      "sendRecap": "Send recap to grandparents",
+      "configureSections": "Configure sections"
+    },
+    "header": {
+      "search": "Search",
+      "recap": "Recap GP",
+      "sections": "Sections"
+    },
+    "welcome": {
+      "title": "Welcome!",
+      "text": "The app is not yet configured.",
+      "subText": "Tap the button below to access settings and connect your family space.",
+      "openSettings": "⚙️  Open settings"
+    },
+    "pregnancy": {
+      "born": "Born!",
+      "birthDatePrompt": "Birth date"
+    },
+    "ageUpgrade": {
+      "title": "{{name}} has grown!",
+      "description": "Profile \"{{oldCategory}}\" → \"{{newCategory}}\". Update tasks?",
+      "update": "Update",
+      "later": "Later"
+    },
+    "profilePicker": {
+      "title": "Switch profile"
+    }
+  },
+  "journal": {
+    "alert": {
+      "error": "Error",
+      "createError": "Unable to create journal: {{error}}",
+      "oops": "Oops!",
+      "addEntryError": "Unable to add this entry. Today's journal seems incomplete.",
+      "deleteTitle": "Delete this entry?",
+      "deleteMsg": "This action is irreversible.",
+      "cancel": "Cancel",
+      "delete": "Delete"
+    },
+    "a11y": {
+      "prevMonth": "Previous month",
+      "nextMonth": "Next month",
+      "monthAction": "{{month}}, tap to go back to current month",
+      "addObservation": "Add an observation",
+      "addInSection": "Add in {{section}}",
+      "prevDay": "Previous day",
+      "nextDay": "Next day",
+      "dateAction": "{{date}}, tap to open calendar",
+      "backToToday": "Back to today",
+      "createJournal": "Create today's journal",
+      "deleteEntry": "Delete this entry",
+      "cancelAction": "Cancel",
+      "editAction": "Edit",
+      "addAction": "Add"
+    },
+    "nav": {
+      "today": "Today"
+    },
+    "create": {
+      "noJournalAdult": "No journal yet for {{name}}",
+      "noJournalChild": "No journal yet for {{name}} today",
+      "noJournalDate": "No journal on {{date}}",
+      "adultSubtitle": "Create your personal journal to note your thoughts, mood and goals.",
+      "childSubtitle": "Create the journal for {{date}} to start tracking feeding, diapers and sleep.",
+      "creating": "Creating...",
+      "createBtn": "📝 Create today's journal"
+    },
+    "stats": {
+      "title": "📊 Day summary"
+    },
+    "sections": {
+      "noObservation": "No observations",
+      "noEntry": "No entries",
+      "add": "Add"
+    },
+    "modal": {
+      "editPrefix": "Edit {{label}}",
+      "addPrefix": "Add {{label}}",
+      "edit": "Edit",
+      "add": "Add",
+      "cancel": "Cancel"
+    }
+  },
+  "photosScreen": {
+    "alert": {
+      "error": "Error",
+      "noChildSelected": "No child selected.",
+      "permissionRequired": "Permission required",
+      "cameraAccess": "Camera access is required.",
+      "galleryAccess": "Gallery access is required.",
+      "photoError": "Photo error",
+      "chooseSource": "Photo of the day",
+      "chooseSourceMsg": "Choose a source",
+      "cancel": "Cancel",
+      "camera": "📷 Camera",
+      "gallery": "🖼 Gallery"
+    },
+    "a11y": {
+      "compare": "Compare photos",
+      "switchToGallery": "Switch to gallery view",
+      "switchToCalendar": "Switch to calendar view"
+    },
+    "stats": {
+      "photos": "{{count}} photos",
+      "souvenirs": "{{count}} memories"
+    }
+  },
+  "routines": {
+    "toast": {
+      "complete": "{{emoji}} {{profileName}} completed routine {{label}}! +{{points}} pts{{loot}}",
+      "pointsError": "Error saving points",
+      "created": "Routine created!",
+      "modified": "Routine modified!",
+      "deleted": "Routine deleted"
+    },
+    "alert": {
+      "resetTitle": "Reset",
+      "resetMsg": "Reset this routine for today?",
+      "cancel": "Cancel",
+      "reset": "Reset"
+    },
+    "a11y": {
+      "addRoutine": "Add a routine",
+      "routineStatus": "Routine {{label}}, {{done}} of {{total}} steps",
+      "editRoutine": "Edit {{label}}"
+    }
+  },
+  "wishlist": {
+    "title": "Wishlist",
+    "titleChild": "My wishes ✨",
+    "toast": {
+      "modified": "Wish modified",
+      "added": "Wish added",
+      "deleted": "Wish deleted",
+      "markedUnbought": "Marked as not bought",
+      "markedBought": "Marked as bought 🔒"
+    },
+    "alert": {
+      "deleteTitle": "Delete this wish?",
+      "cancel": "Cancel",
+      "delete": "Delete"
+    },
+    "a11y": {
+      "addWish": "Add a wish",
+      "markUnbought": "Mark as not bought",
+      "markBought": "Mark as bought"
+    },
+    "editor": {
+      "titleEdit": "Edit wish",
+      "titleNew": "New wish",
+      "save": "Save",
+      "wishLabel": "Wish",
+      "wishPlaceholder": "E.g.: Red bicycle",
+      "forWho": "For whom",
+      "budget": "Budget",
+      "budgetNone": "None",
+      "occasion": "Occasion",
+      "occasionGeneral": "General",
+      "occasionBirthday": "🎂 Birthday",
+      "occasionChristmas": "🎄 Christmas",
+      "notesLabel": "Notes (optional)",
+      "notesPlaceholder": "E.g.: Decathlon, size 24 inches"
+    },
+    "addBtn": "+ Add"
+  },
+  "gratitude": {
+    "title": "Gratitude",
+    "toast": {
+      "deleted": "Gratitude deleted",
+      "saved": "Gratitude saved 🙏"
+    },
+    "tabs": {
+      "today": "Today",
+      "goldenBook": "Golden book"
+    },
+    "write": {
+      "editTitle": "Edit",
+      "writeTitle": "Write",
+      "save": "Save",
+      "prompt": "What are you grateful for today?",
+      "placeholder": "One positive thing about the day..."
+    },
+    "a11y": {
+      "dictate": "Dictate gratitude"
+    },
+    "dictateLabel": "Dictate"
+  },
+  "notesScreen": {
+    "title": "Notes & Articles",
+    "alert": {
+      "error": "Error",
+      "saveError": "Unable to save note",
+      "deleteError": "Unable to delete note"
+    },
+    "a11y": {
+      "noteHint": "Tap to read, long press to edit",
+      "addNote": "Add a note",
+      "searchNote": "Search notes"
+    },
+    "placeholder": {
+      "search": "Search notes…"
+    },
+    "childOnly": "This section is for adults only",
+    "deleteConfirm": "Delete \"{{title}}\"?"
+  },
+  "rdvScreen": {
+    "placeholder": {
+      "search": "🔍 Search appointments..."
+    },
+    "a11y": {
+      "dictaphone": "Open dictaphone to record doctor's answers"
+    },
+    "dictateLabel": "Dictate answers"
+  },
+  "settingsScreen": {
+    "title": "Settings",
+    "labels": {
+      "auto": "Automatic",
+      "dark": "Dark",
+      "light": "Light",
+      "notConfigured": "Not configured",
+      "connected": "Connected",
+      "disabled": "Disabled",
+      "enabled": "Enabled",
+      "faceId": "Face ID",
+      "touchId": "Touch ID",
+      "inactive": "Inactive"
+    },
+    "sections": {
+      "myAccount": "My account",
+      "experience": "Experience",
+      "connections": "Connections",
+      "advanced": "Advanced"
+    },
+    "rows": {
+      "profiles": "Family profiles",
+      "appearance": "Appearance",
+      "notifications": "Notifications",
+      "zen": "Zen mode",
+      "vacation": "Vacation",
+      "gamification": "Gamification",
+      "automations": "Automations",
+      "automationsSubtitle": "Recipes → Shopping → Stock",
+      "ai": "Artificial intelligence",
+      "aiConfigured": "Configured · {{model}}",
+      "aiNotConfigured": "Not configured",
+      "telegram": "Telegram",
+      "grandparents": "Grandparents",
+      "grandparentsSubtitle": "Telegram, WhatsApp, iMessage",
+      "auth": "Security",
+      "authEnabled": "Enabled",
+      "authEnabledFace": "Enabled · Face ID",
+      "authEnabledTouch": "Enabled · Touch ID",
+      "parental": "Parental controls",
+      "parentalSubtitle": "Children's data visibility",
+      "vault": "Obsidian Vault",
+      "help": "Help & discovery",
+      "helpSubtitle": "Guide, tips, templates"
+    },
+    "modalTitles": {
+      "profiles": "Family profiles",
+      "appearance": "Appearance",
+      "notifications": "Notifications",
+      "zen": "Zen mode",
+      "vacation": "Vacation",
+      "gamification": "Gamification",
+      "automations": "Automations",
+      "ai": "Artificial intelligence",
+      "telegram": "Telegram",
+      "grandparents": "Grandparents",
+      "auth": "Security",
+      "parental": "Parental controls",
+      "vault": "Obsidian Vault",
+      "help": "Help & discovery"
+    },
+    "subtitles": {
+      "notifActive_one": "{{count}} active",
+      "notifActive_other": "{{count}} active",
+      "vacationActive": "Active until {{date}}",
+      "gamificationLevel": "Level {{level}} · {{xp}} XP",
+      "profileCount_one": "{{count}} profile",
+      "profileCount_other": "{{count}} profiles"
+    },
+    "appInfo": {
+      "line1": "Family Flow v1.0.0",
+      "line2": "Local data · No tracking",
+      "line3": "Privacy-first · Offline-first"
+    }
+  },
+  "moodsScreen": {
+    "title": "🌤️ Mood Weather",
+    "toast": {
+      "saved": "Mood saved {{emoji}}",
+      "error": "Unable to save mood"
+    },
+    "tabs": {
+      "today": "Today",
+      "history": "History"
+    },
+    "sectionTitle": "How are you feeling?",
+    "a11y": {
+      "moodLevel": "Mood {{level}} out of 5",
+      "moodLevelFor": "Mood {{level}} for {{name}}"
+    },
+    "placeholder": "Good day, tired, stressed..."
+  },
+  "compare": {
+    "title": "Compare",
+    "noChild": "No child configured",
+    "alert": {
+      "soonTitle": "Coming soon",
+      "soonMsg": "Sharing will be available soon."
+    },
+    "a11y": {
+      "back": "Back",
+      "share": "Share comparison",
+      "leftPhotoSelected": "Left photo, {{date}}",
+      "leftPhotoEmpty": "Left photo, none selected",
+      "rightPhotoSelected": "Right photo, {{date}}",
+      "rightPhotoEmpty": "Right photo, none selected",
+      "photoHint": "Tap to select this photo",
+      "goToYear": "Go to year {{year}}",
+      "photoDate": "Photo from {{date}}"
+    },
+    "choose": "Choose",
+    "shareBtn": "📤 Share"
+  },
+  "anniversairesScreen": {
+    "toast": {
+      "deleted": "Birthday deleted"
+    },
+    "a11y": {
+      "addBirthday": "Add a birthday"
+    }
+  },
+  "statsScreen": {
+    "a11y": {
+      "back": "Back",
+      "prevWeek": "Previous week",
+      "weekLabel": "Week of {{label}}",
+      "nextWeek": "Next week"
+    },
+    "backBtn": "← Back",
+    "title": "Statistics",
+    "tasksCompleted": "📋 Completed tasks",
+    "tasksSummary_one": "{{count}} task this week",
+    "tasksSummary_other": "{{count}} tasks this week"
+  },
+  "skillsScreen": {
+    "a11y": {
+      "changeBracket": "Change age bracket"
     }
   }
 }

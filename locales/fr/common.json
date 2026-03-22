@@ -68,9 +68,9 @@
     "tagline": "Votre famille, organisée ensemble",
     "features": {
       "tasks": { "title": "Tâches familiales", "desc": "Organisez et complétez vos tâches ensemble" },
-      "loot": { "title": "Loot boxes", "desc": "Gagnez des récompenses en accomplissant vos tâches" },
-      "obsidian": { "title": "Obsidian", "desc": "100% Markdown, compatible avec Obsidian" },
-      "telegram": { "title": "Telegram", "desc": "Notifications via Telegram" }
+      "loot": { "title": "Récompenses", "desc": "Les enfants gagnent des récompenses en accomplissant leurs tâches" },
+      "files": { "title": "Vos données, chez vous", "desc": "Tout est stocké sur votre téléphone dans des fichiers simples et lisibles" },
+      "telegram": { "title": "Notifications", "desc": "Recevez des rappels via Telegram" }
     },
     "slides": {
       "1": { "title": "Votre quotidien, simplifié", "subtitle": "Planifiez les repas, répartissez les tâches, gérez les courses" },
@@ -97,12 +97,12 @@
       "noChildHint": "Pas de souci ! Vous pourrez ajouter des enfants plus tard dans les réglages."
     },
     "vault": {
-      "title": "Emplacement du vault",
+      "title": "Emplacement des données",
       "subtitle": "Où stocker les données de votre famille ? Choisissez un dossier existant ou un nouveau dossier vide."
     },
     "templates": {
       "title": "Modèles de départ",
-      "subtitle": "Choisissez les modèles à installer dans votre vault. Vous pourrez en ajouter d'autres plus tard dans les réglages.",
+      "subtitle": "Choisissez les modèles à installer. Vous pourrez en ajouter d'autres plus tard dans les réglages.",
       "selectAll": "Tout sélectionner"
     },
     "recap": {
@@ -110,10 +110,10 @@
       "subtitle": "Voici votre famille :",
       "parents": "Parents",
       "children": "Enfants",
-      "vault": "Vault",
+      "vault": "Dossier",
       "models": "Modèles",
-      "filesTitle": "Fichiers qui seront créés :",
-      "filesDesc": "📋 Tâches récurrentes par enfant\n🧹 Ménage hebdomadaire\n🛒 Liste de courses\n📖 Dossiers journaux\n👨‍👩‍👧 Profils famille + gamification",
+      "filesTitle": "Ce qui sera créé :",
+      "filesDesc": "📋 Tâches récurrentes par enfant\n🧹 Ménage hebdomadaire\n🛒 Liste de courses\n📖 Dossiers journaux\n👨‍👩‍👧 Profils famille + récompenses",
       "modelCount_one": "\n📦 {{count}} modèle de contenu",
       "modelCount_other": "\n📦 {{count}} modèles de contenu"
     },
@@ -122,12 +122,12 @@
       "skip": "Passer",
       "next": "Suivant →",
       "start": "Commencer",
-      "create": "Créer le vault familial 🚀",
+      "create": "C'est parti ! 🚀",
       "step": "Étape {{current}}/{{total}}"
     },
     "error": {
       "title": "Erreur",
-      "createFailed": "Impossible de créer le vault :\n{{error}}\n\nVérifiez les permissions."
+      "createFailed": "Impossible de créer les données :\n{{error}}\n\nVérifiez les permissions du dossier."
     }
   },
   "tasks": {
@@ -1628,6 +1628,778 @@
       "fillRequired": "Remplissez au moins l'enfant et la citation",
       "added": "Mot ajouté !",
       "deleted": "Mot supprimé"
+    }
+  },
+  "common": {
+    "close": "Fermer",
+    "error": "Erreur",
+    "back": "← Retour",
+    "cancel": "Annuler",
+    "save": "Sauvegarder",
+    "delete": "Supprimer",
+    "retry": "Réessayer",
+    "reset": "Réinitialiser",
+    "send": "Envoyer",
+    "searchEverywhere": "Rechercher partout...",
+    "searchInVault": "Rechercher dans le vault",
+    "closeSearch": "Fermer la recherche",
+    "erase": "Effacer",
+    "skipTips": "Passer les astuces",
+    "next": "Suivant",
+    "gotIt": "Compris !",
+    "previous": "Précédent",
+    "finish": "Terminer",
+    "validate": "Valider",
+    "done": "✓ Fait",
+    "share": "📤 Partager",
+    "immersiveReading": "Lecture immersive",
+    "viewOriginalArticle": "Voir l'article original",
+    "closeRoutine": "Fermer la routine",
+    "shareWeeklySummary": "Partager le bilan de la semaine",
+    "longPressToReorder": "Maintenez appuyé pour réordonner",
+    "tapToChangeCategory": "Appuyer pour changer la catégorie",
+    "bravo": "Bravo !",
+    "pass": "Passer"
+  },
+  "notificationEditor": {
+    "enabled": "Activée",
+    "emoji": "Emoji",
+    "name": "Nom",
+    "namePlaceholder": "Nom de la notification",
+    "message": "Message",
+    "messagePlaceholder": "Écrivez votre message ici...",
+    "availableVars": "Variables disponibles",
+    "preview": "Aperçu",
+    "reset": "Réinitialiser",
+    "save": "Sauvegarder",
+    "sendNow": "📤 Envoyer maintenant",
+    "delete": "Supprimer",
+    "alert": {
+      "resetTitle": "Réinitialiser",
+      "resetMsg": "Remettre le message par défaut ?",
+      "deleteTitle": "Supprimer",
+      "deleteMsg": "Supprimer la notification « {{label}} » ?"
+    },
+    "toast": {
+      "sent": "Notification envoyée sur Telegram !",
+      "sendFailed": "Impossible d'envoyer la notification",
+      "sendError": "Échec de l'envoi"
+    }
+  },
+  "notificationSettings": {
+    "title": "Notifications",
+    "activeCount": "{{active}} active{{plural}} sur {{total}}",
+    "builtinSection": "NOTIFICATIONS INTÉGRÉES",
+    "customSection": "NOTIFICATIONS PERSONNALISÉES",
+    "emptyCustom": "Aucune notification personnalisée",
+    "addBtn": "+ Ajouter une notification",
+    "newModal": {
+      "title": "Nouvelle notification",
+      "emoji": "Emoji",
+      "name": "Nom",
+      "namePlaceholder": "Ex: Rappel courses",
+      "cancel": "Annuler",
+      "create": "Créer"
+    },
+    "alert": {
+      "errorTitle": "Erreur",
+      "nameRequired": "Le nom est obligatoire."
+    }
+  },
+  "anniversaryEditor": {
+    "titleNew": "Nouvel anniversaire",
+    "titleEdit": "Modifier",
+    "save": "Enregistrer",
+    "nameLabel": "Nom *",
+    "namePlaceholder": "Nom de la personne",
+    "dateLabel": "Date d'anniversaire *",
+    "dayLabel": "Jour",
+    "monthLabel": "Mois",
+    "birthYearLabel": "Année de naissance (optionnel)",
+    "birthYearPlaceholder": "Ex : 1990",
+    "categoryLabel": "Catégorie",
+    "notesLabel": "Notes (optionnel)",
+    "notesPlaceholder": "Idées cadeaux, préférences...",
+    "deleteBtn": "Supprimer cet anniversaire",
+    "months": ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"],
+    "categories": {
+      "family": "Famille",
+      "friend": "Ami",
+      "colleague": "Collègue",
+      "other": "Autre"
+    },
+    "alert": {
+      "deleteTitle": "Supprimer cet anniversaire ?",
+      "deleteMsg": "L'anniversaire de {{name}} sera supprimé."
+    },
+    "toast": {
+      "nameRequired": "Veuillez saisir un nom",
+      "updated": "Anniversaire modifié",
+      "added": "Anniversaire ajouté",
+      "deleted": "Anniversaire supprimé",
+      "saveError": "Erreur lors de l'enregistrement"
+    }
+  },
+  "secretMissionCreator": {
+    "title": "🕵️ Nouvelle mission secrète",
+    "send": "Envoyer",
+    "chooseChild": "👦 Choisir l'enfant",
+    "missionText": "📝 Texte de la mission",
+    "missionPlaceholder": "Ex : Ranger ta chambre en secret...",
+    "suggestions": "💡 Suggestions",
+    "sendMission": "🕵️ Envoyer la mission",
+    "sendMissionA11y": "Envoyer la mission",
+    "rewardInfo": "🎁 L'enfant recevra un coffre Agent Secret (épique minimum) à la validation",
+    "toast": {
+      "sent": "Mission envoyée !"
+    }
+  },
+  "routineEditor": {
+    "titleNew": "Nouvelle routine",
+    "titleEdit": "Modifier la routine",
+    "save": "Enregistrer",
+    "iconLabel": "Icône",
+    "nameLabel": "Nom de la routine",
+    "namePlaceholder": "Ex : Matin, Soir, Après l'école…",
+    "visualMode": "Mode visuel 👶",
+    "visualHint": "Plein écran avec gros emojis pour les petits (3-7 ans)",
+    "stepsLabel": "Étapes",
+    "stepPlaceholder": "Étape {{n}}…",
+    "timerLabel": "⏱ Timer (optionnel)",
+    "timerPlaceholder": "min",
+    "addStep": "+ Ajouter une étape",
+    "deleteRoutine": "Supprimer cette routine",
+    "alert": {
+      "deleteTitle": "Supprimer la routine",
+      "deleteMsg": "Supprimer « {{name}} » ? Cette action est irréversible."
+    }
+  },
+  "recipeViewer": {
+    "portions": "Portions",
+    "prep": "Prep",
+    "cooking": "Cuisson",
+    "ingredients": "Ingredients",
+    "steps": "Etapes",
+    "startRecipe": "🍳 Lancer la recette",
+    "toShoppingList": "🛒 Aux courses",
+    "addPhoto": "Ajouter une photo",
+    "renameTitle": "Renommer la recette",
+    "alert": {
+      "permissionDenied": "Permission refusée",
+      "permissionDeniedMsg": "Autorisez l'accès aux photos pour ajouter une image.",
+      "error": "Erreur",
+      "saveImageError": "Impossible de sauvegarder l'image."
+    }
+  },
+  "recipeCookingMode": {
+    "stepLabel": "Étape {{n}}",
+    "stepOf": "sur {{total}}",
+    "stepsProgress": "{{done}}/{{total}} étapes · {{servings}} pers.",
+    "stepIngredients": "Ingrédients de cette étape",
+    "launch": "Lancer",
+    "resume": "▶ Reprendre",
+    "pause": "⏸ Pause",
+    "addMinute": "+1 min",
+    "stop": "⏹ Stop",
+    "timerStep": "Étape {{n}}",
+    "otherTimers": "Autres minuteurs en cours",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "timerFinished": "⏱️ {{label}} — Terminé !",
+    "timerNotifTitle": "⏱️ Minuteur terminé !",
+    "timerNotifBody": "{{label}} — Étape {{step}} de {{recipe}}"
+  },
+  "vaultPicker": {
+    "createNew": "Créer un nouveau vault",
+    "createNewSub": "Pas besoin d'Obsidian — tout est créé automatiquement",
+    "createICloud": "Créer dans iCloud Drive",
+    "createICloudSub": "Sync automatique entre vos appareils Apple",
+    "createAndroid": "Créer dans Google Drive / Dropbox",
+    "createAndroidSub": "Choisissez un dossier cloud syncé localement",
+    "orConnect": "ou connecter un vault existant",
+    "selectFolder": "Sélectionner le dossier du vault",
+    "selectFolderSubIos": "Depuis Fichiers, iCloud, Obsidian...",
+    "selectFolderSubAndroid": "Depuis le stockage, Google Drive, Dropbox...",
+    "ipPlaceholder": "IP de l'ordinateur (ex: 192.168.1.42)",
+    "syncFromComputer": "Sync depuis un ordinateur",
+    "syncSub": "Lancez python3 serve-vault.py sur le PC/Mac",
+    "pathLabel": "Chemin du vault",
+    "pathPlaceholder": "/chemin/vers/mon-vault",
+    "useVaultCoffre": "Utiliser le vault coffre",
+    "confirm": "Confirmer",
+    "alert": {
+      "unavailable": "Non disponible",
+      "unavailableMsg": "Le sélecteur de dossier n'est pas disponible.",
+      "error": "Erreur",
+      "errorOpenMsg": "Impossible d'ouvrir le sélecteur : {{error}}",
+      "accessDenied": "Accès refusé au dossier. Réessayez en sélectionnant le dossier.",
+      "selectionError": "Erreur lors de la sélection : {{error}}",
+      "ipRequired": "Entrez l'adresse IP de votre ordinateur (ex: 192.168.1.42)",
+      "syncFailed": "Sync échouée : {{error}}\n\nVérifiez que serve-vault.py tourne sur l'ordinateur et que vous êtes sur le même réseau Wi-Fi.",
+      "pathEmpty": "Le chemin ne peut pas être vide.",
+      "pathNotFound": "Dossier introuvable : \"{{path}}\"\nVérifiez que le chemin existe et que l'app y a accès."
+    }
+  },
+  "globalSearch": {
+    "placeholder": "Rechercher partout...",
+    "searchA11y": "Rechercher dans le vault",
+    "closeA11y": "Fermer la recherche",
+    "cancel": "Annuler",
+    "askAI": "🤖 Demander à l'IA : \"{{query}}\"",
+    "aiAnswer": "Réponse IA",
+    "resultCount_one": "{{count}} résultat",
+    "resultCount_other": "{{count}} résultats",
+    "noResults": "Aucun résultat pour \"{{query}}\"",
+    "hint": "Tâches, RDV, recettes, stock, repas, courses, souvenirs, défis, souhaits",
+    "hintWithAI": "\n\nOu posez une question à l'assistant IA",
+    "typeLabels": {
+      "task": "Tâche",
+      "rdv": "Rendez-vous",
+      "recipe": "Recette",
+      "stock": "Stock",
+      "meal": "Repas",
+      "course": "Course",
+      "memory": "Souvenir",
+      "defi": "Défi",
+      "wishlist": "Souhait"
+    }
+  },
+  "lockScreen": {
+    "pinIncorrect": "PIN incorrect",
+    "enterPin": "Entrez votre PIN",
+    "failedAttempts": "{{count}} tentatives échouées",
+    "useBiometry": "Utiliser {{type}}",
+    "biometry": "Biométrie",
+    "eraseA11y": "Effacer"
+  },
+  "noteViewer": {
+    "edit": "Modifier",
+    "readingMode": "Lecture immersive",
+    "readingModeA11y": "Mode lecture",
+    "viewOriginal": "Voir l'article original",
+    "viewOriginalA11y": "Voir l'article original"
+  },
+  "coachMark": {
+    "skip": "Passer",
+    "skipA11y": "Passer les astuces",
+    "next": "Suivant",
+    "gotIt": "Compris !",
+    "stepA11y": "{{label}}, étape {{current}} sur {{total}}"
+  },
+  "secretMissionCard": {
+    "badge": "🕵️ Mission secrète",
+    "reward": "🎁 Récompense : coffre Agent Secret (épique minimum !)",
+    "missionComplete": "Mission accomplie !",
+    "missionCompleteA11y": "Marquer la mission comme accomplie",
+    "inProgress": "🕵️ En cours...",
+    "pendingValidation": "⏳ En attente de validation...",
+    "validate": "Valider",
+    "validateA11y": "Valider la mission",
+    "notYet": "Pas encore",
+    "notYetA11y": "Remettre la mission en cours",
+    "validated": "✅ Mission validée ! 🎉"
+  },
+  "contactImporter": {
+    "title": "Importer des contacts",
+    "loading": "Chargement des contacts...",
+    "denied": "Accès aux contacts refusé",
+    "deniedDesc": "Pour importer les anniversaires depuis vos contacts, autorisez l'accès dans les réglages de votre appareil.",
+    "openSettings": "Ouvrir les réglages",
+    "noContacts": "Aucun contact avec anniversaire",
+    "noContactsDesc": "Ajoutez des dates d'anniversaire dans votre carnet de contacts pour pouvoir les importer.",
+    "selectAll": "Tout sélectionner",
+    "deselectAll": "Tout désélectionner",
+    "contactCount_one": "{{count}} contact avec anniversaire",
+    "contactCount_other": "{{count}} contacts avec anniversaire",
+    "alreadyImported": "Déjà importé",
+    "selectContacts": "Sélectionnez des contacts",
+    "importCount_one": "Importer {{count}} anniversaire",
+    "importCount_other": "Importer {{count}} anniversaires",
+    "toast": {
+      "loadError": "Erreur lors du chargement des contacts",
+      "imported_one": "{{count}} anniversaire importé",
+      "imported_other": "{{count}} anniversaires importés",
+      "importError": "Erreur lors de l'import"
+    }
+  },
+  "calendarImporter": {
+    "title": "Importer du calendrier",
+    "loading": "Chargement du calendrier...",
+    "denied": "Accès au calendrier refusé",
+    "deniedDesc": "Pour importer les anniversaires depuis votre calendrier, autorisez l'accès dans les réglages de votre appareil.",
+    "openSettings": "Ouvrir les réglages",
+    "noEvents": "Aucun anniversaire trouvé",
+    "noEventsDesc": "Aucun événement d'anniversaire trouvé. Vérifiez que vos événements contiennent « Anniversaire » dans le titre, ou que le calendrier natif Anniversaires est activé.",
+    "selectAll": "Tout sélectionner",
+    "deselectAll": "Tout désélectionner",
+    "birthdayCount_one": "{{count}} anniversaire",
+    "birthdayCount_other": "{{count}} anniversaires",
+    "alreadyImported": "Déjà importé",
+    "selectBirthdays": "Sélectionnez des anniversaires",
+    "importCount_one": "Importer {{count}} anniversaire",
+    "importCount_other": "Importer {{count}} anniversaires",
+    "toast": {
+      "loadError": "Erreur lors du chargement du calendrier",
+      "imported_one": "{{count}} anniversaire importé",
+      "imported_other": "{{count}} anniversaires importés",
+      "importError": "Erreur lors de l'import"
+    }
+  },
+  "dictaphone": {
+    "title": "Dictaphone",
+    "instructionRdv": "Appuyez sur le micro pour enregistrer les réponses du médecin.",
+    "instructionGeneric": "Appuyez sur le micro pour dicter votre texte.",
+    "instructionSuffix": " La transcription se fait en temps réel, sur votre appareil.",
+    "startRecording": "Commencer l'enregistrement",
+    "startRecordingA11y": "Démarrer l'enregistrement",
+    "privacy": "🔒 Transcription 100% locale — aucune donnée audio ne quitte votre appareil",
+    "transcribing": "Transcription en cours...",
+    "waitingForSpeech": "En attente de parole...",
+    "stopRecording": "Arrêter",
+    "stopRecordingA11y": "Arrêter l'enregistrement",
+    "recordingDone": "Enregistrement terminé — {{duration}}",
+    "transcription": "Transcription",
+    "transcriptionHint": "Vous pouvez corriger le texte avant de le résumer.",
+    "transcriptionEmpty": "Transcription vide...",
+    "aiSummary": "Résumé IA",
+    "useSummary": "Utiliser le résumé",
+    "summarize": "Résumer avec l'IA",
+    "useRawText": "Utiliser le texte brut",
+    "aiNotConfigured": "IA non configurée — ajoutez votre clé API dans les réglages",
+    "aiDisclaimer": "Ce résumé est généré par IA à titre informatif uniquement et ne constitue pas un avis médical.",
+    "addApiKey": "Ajoutez une clé API Claude dans les réglages pour activer le résumé IA.",
+    "restart": "Recommencer l'enregistrement",
+    "permissionsRequired": "Permissions requises",
+    "permissionsMsg": "Autorisez le micro et la reconnaissance vocale dans les réglages.",
+    "doctorNotSpecified": "Médecin non renseigné",
+    "recognitionError": "Erreur reconnaissance : {{message}}"
+  },
+  "focusReader": {
+    "closeA11y": "Fermer",
+    "guide": "Guide",
+    "rsvp": "RSVP",
+    "small": "Petit",
+    "medium": "Moyen",
+    "large": "Grand",
+    "wordsPerMin": "{{wpm}} mots/min",
+    "wordA11y": "Mot {{current}} sur {{total}}: {{word}}"
+  },
+  "visualRoutinePlayer": {
+    "closeA11y": "Fermer la routine",
+    "skipTimer": "Passer",
+    "bravo": "Bravo !"
+  },
+  "bilanSemaine": {
+    "tasks": "Tâches",
+    "meals": "Repas",
+    "mood": "Humeur",
+    "shareA11y": "Partager le bilan de la semaine"
+  },
+  "dashboardPrefs": {
+    "title": "Personnaliser",
+    "save": "Enregistrer",
+    "hint": "Affichez ou masquez des sections, et maintenez appuyé pour réordonner.",
+    "smartSort": "🪄 Tri intelligent",
+    "smartSortDesc": "Réordonne les cartes selon le contexte (heure, urgences, données disponibles)",
+    "smartSortNote": "L'ordre manuel ci-dessous sert de base — le tri intelligent le réajuste selon le contexte.",
+    "reorderHint": "Maintenez appuyé pour réordonner",
+    "priorities": {
+      "high": "⭐ Essentielles",
+      "medium": "📌 Secondaires",
+      "low": "💤 Optionnelles"
+    }
+  },
+  "sectionError": {
+    "unavailable": "Section « {{name}} » indisponible",
+    "retry": "Réessayer",
+    "retryA11y": "Réessayer la section {{name}}"
+  },
+  "taskCard": {
+    "a11y": "Tâche : {{text}}{{completed}}{{overdue}}",
+    "completed": ", terminée",
+    "overdue": ", en retard"
+  },
+  "receiptReview": {
+    "categoryHint": "Appuyer pour changer la catégorie"
+  },
+  "index": {
+    "alert": {
+      "noContact": "Aucun contact",
+      "noContactMsg": "Configurez vos contacts grands-parents dans Réglages > Grands-parents.",
+      "shareToGrandparents": "Partager aux grands-parents",
+      "shareQuestion": "Que souhaitez-vous envoyer ?",
+      "babyBorn": "Bébé est né ?",
+      "babyBornMsg": "Allez dans Réglages > Profils pour confirmer la naissance.",
+      "updateTasks": "Mettre à jour les tâches ?",
+      "updateTasksMsg": "Les tâches actuelles de {{name}} seront remplacées par des tâches adaptées à un profil « {{category}} ».",
+      "cancel": "Annuler",
+      "update": "Mettre à jour"
+    },
+    "toast": {
+      "sendDone": "Envoi terminé !",
+      "taskError": "Impossible de modifier la tâche : {{error}}"
+    },
+    "greeting": {
+      "child": "Salut {{name}} ! 🌟",
+      "night": "Bonne nuit {{name}} 🌙",
+      "morning": "Bon matin {{name}} ☀️",
+      "afternoon": "Bon après-midi {{name}} 🌤️",
+      "evening": "Bonsoir {{name}} 🌙"
+    },
+    "a11y": {
+      "activeProfile": "Profil actif : {{name}}. Appuyer pour changer.",
+      "search": "Rechercher dans le vault",
+      "sendRecap": "Envoyer le récap aux grands-parents",
+      "configureSections": "Configurer les sections"
+    },
+    "header": {
+      "search": "Chercher",
+      "recap": "Récap GP",
+      "sections": "Sections"
+    },
+    "welcome": {
+      "title": "Bienvenue !",
+      "text": "L'application n'est pas encore configurée.",
+      "subText": "Appuyez sur le bouton ci-dessous pour accéder aux réglages et connecter votre espace familial.",
+      "openSettings": "⚙️  Ouvrir les réglages"
+    },
+    "pregnancy": {
+      "born": "Né(e) !",
+      "birthDatePrompt": "Date de naissance"
+    },
+    "ageUpgrade": {
+      "title": "{{name}} a grandi !",
+      "description": "Profil « {{oldCategory}} » → « {{newCategory}} ». Mettre à jour les tâches ?",
+      "update": "Mettre à jour",
+      "later": "Plus tard"
+    },
+    "profilePicker": {
+      "title": "Changer de profil"
+    }
+  },
+  "journal": {
+    "alert": {
+      "error": "Erreur",
+      "createError": "Impossible de créer le journal : {{error}}",
+      "oops": "Oups !",
+      "addEntryError": "Impossible d'ajouter cette entrée. Le journal du jour semble incomplet.",
+      "deleteTitle": "Supprimer cette entrée ?",
+      "deleteMsg": "Cette action est irréversible.",
+      "cancel": "Annuler",
+      "delete": "Supprimer"
+    },
+    "a11y": {
+      "prevMonth": "Mois précédent",
+      "nextMonth": "Mois suivant",
+      "monthAction": "{{month}}, appuyez pour revenir au mois courant",
+      "addObservation": "Ajouter une observation",
+      "addInSection": "Ajouter dans {{section}}",
+      "prevDay": "Jour précédent",
+      "nextDay": "Jour suivant",
+      "dateAction": "{{date}}, appuyez pour ouvrir le calendrier",
+      "backToToday": "Revenir à aujourd'hui",
+      "createJournal": "Créer le journal du jour",
+      "deleteEntry": "Supprimer cette entrée",
+      "cancelAction": "Annuler",
+      "editAction": "Modifier",
+      "addAction": "Ajouter"
+    },
+    "nav": {
+      "today": "Aujourd'hui"
+    },
+    "create": {
+      "noJournalAdult": "Pas encore de journal pour {{name}}",
+      "noJournalChild": "Pas encore de journal pour {{name}} aujourd'hui",
+      "noJournalDate": "Pas de journal le {{date}}",
+      "adultSubtitle": "Créez votre journal personnel pour noter vos pensées, humeur et objectifs.",
+      "childSubtitle": "Créez le journal du {{date}} pour commencer à suivre l'alimentation, les couches et le sommeil.",
+      "creating": "Création...",
+      "createBtn": "📝 Créer le journal du jour"
+    },
+    "stats": {
+      "title": "📊 Résumé du jour"
+    },
+    "sections": {
+      "noObservation": "Aucune observation",
+      "noEntry": "Aucune entrée",
+      "add": "Ajouter"
+    },
+    "modal": {
+      "editPrefix": "Modifier {{label}}",
+      "addPrefix": "Ajouter {{label}}",
+      "edit": "Modifier",
+      "add": "Ajouter",
+      "cancel": "Annuler"
+    }
+  },
+  "photosScreen": {
+    "alert": {
+      "error": "Erreur",
+      "noChildSelected": "Aucun enfant sélectionné.",
+      "permissionRequired": "Permission requise",
+      "cameraAccess": "L'accès à la caméra est nécessaire.",
+      "galleryAccess": "L'accès à la galerie est nécessaire.",
+      "photoError": "Erreur photo",
+      "chooseSource": "Photo du jour",
+      "chooseSourceMsg": "Choisir une source",
+      "cancel": "Annuler",
+      "camera": "📷 Appareil photo",
+      "gallery": "🖼 Galerie"
+    },
+    "a11y": {
+      "compare": "Comparer des photos",
+      "switchToGallery": "Passer en vue galerie",
+      "switchToCalendar": "Passer en vue calendrier"
+    },
+    "stats": {
+      "photos": "{{count}} photos",
+      "souvenirs": "{{count}} souvenirs"
+    }
+  },
+  "routines": {
+    "toast": {
+      "complete": "{{emoji}} {{profileName}} a terminé la routine {{label}} ! +{{points}} pts{{loot}}",
+      "pointsError": "Erreur lors de l'enregistrement des points",
+      "created": "Routine créée !",
+      "modified": "Routine modifiée !",
+      "deleted": "Routine supprimée"
+    },
+    "alert": {
+      "resetTitle": "Réinitialiser",
+      "resetMsg": "Remettre cette routine à zéro pour aujourd'hui ?",
+      "cancel": "Annuler",
+      "reset": "Réinitialiser"
+    },
+    "a11y": {
+      "addRoutine": "Ajouter une routine",
+      "routineStatus": "Routine {{label}}, {{done}} sur {{total}} étapes",
+      "editRoutine": "Modifier {{label}}"
+    }
+  },
+  "wishlist": {
+    "title": "Souhaits",
+    "titleChild": "Mes souhaits ✨",
+    "toast": {
+      "modified": "Souhait modifié",
+      "added": "Souhait ajouté",
+      "deleted": "Souhait supprimé",
+      "markedUnbought": "Marqué non-acheté",
+      "markedBought": "Marqué acheté 🔒"
+    },
+    "alert": {
+      "deleteTitle": "Supprimer ce souhait ?",
+      "cancel": "Annuler",
+      "delete": "Supprimer"
+    },
+    "a11y": {
+      "addWish": "Ajouter un souhait",
+      "markUnbought": "Marquer non-acheté",
+      "markBought": "Marquer acheté"
+    },
+    "editor": {
+      "titleEdit": "Modifier le souhait",
+      "titleNew": "Nouveau souhait",
+      "save": "Enregistrer",
+      "wishLabel": "Souhait",
+      "wishPlaceholder": "Ex : Vélo rouge",
+      "forWho": "Pour qui",
+      "budget": "Budget",
+      "budgetNone": "Aucun",
+      "occasion": "Occasion",
+      "occasionGeneral": "Général",
+      "occasionBirthday": "🎂 Anniversaire",
+      "occasionChristmas": "🎄 Noël",
+      "notesLabel": "Notes (optionnel)",
+      "notesPlaceholder": "Ex : Decathlon, taille 24 pouces"
+    },
+    "addBtn": "+ Ajouter"
+  },
+  "gratitude": {
+    "title": "Gratitude",
+    "toast": {
+      "deleted": "Gratitude supprimée",
+      "saved": "Gratitude enregistrée 🙏"
+    },
+    "tabs": {
+      "today": "Aujourd'hui",
+      "goldenBook": "Livre d'or"
+    },
+    "write": {
+      "editTitle": "Modifier",
+      "writeTitle": "Écrire",
+      "save": "Enregistrer",
+      "prompt": "Qu'est-ce qui vous rend reconnaissant(e) aujourd'hui ?",
+      "placeholder": "Une chose positive de la journée..."
+    },
+    "a11y": {
+      "dictate": "Dicter la gratitude"
+    },
+    "dictateLabel": "Dicter"
+  },
+  "notesScreen": {
+    "title": "Notes & Articles",
+    "alert": {
+      "error": "Erreur",
+      "saveError": "Impossible de sauvegarder la note",
+      "deleteError": "Impossible de supprimer la note"
+    },
+    "a11y": {
+      "noteHint": "Appuyez pour lire, appui long pour modifier",
+      "addNote": "Ajouter une note",
+      "searchNote": "Rechercher une note"
+    },
+    "placeholder": {
+      "search": "Rechercher une note…"
+    },
+    "childOnly": "Cette section est réservée aux adultes",
+    "deleteConfirm": "Supprimer « {{title}} » ?"
+  },
+  "rdvScreen": {
+    "placeholder": {
+      "search": "🔍 Rechercher un rendez-vous..."
+    },
+    "a11y": {
+      "dictaphone": "Ouvrir le dictaphone pour enregistrer les réponses du médecin"
+    },
+    "dictateLabel": "Dicter les réponses"
+  },
+  "settingsScreen": {
+    "title": "Réglages",
+    "labels": {
+      "auto": "Automatique",
+      "dark": "Sombre",
+      "light": "Clair",
+      "notConfigured": "Non configuré",
+      "connected": "Connecté",
+      "disabled": "Désactivé",
+      "enabled": "Activé",
+      "faceId": "Face ID",
+      "touchId": "Touch ID",
+      "inactive": "Inactif"
+    },
+    "sections": {
+      "myAccount": "Mon compte",
+      "experience": "Expérience",
+      "connections": "Connexions",
+      "advanced": "Avancé"
+    },
+    "rows": {
+      "profiles": "Profils famille",
+      "appearance": "Apparence",
+      "notifications": "Notifications",
+      "zen": "Mode zen",
+      "vacation": "Vacances",
+      "gamification": "Gamification",
+      "automations": "Automatisations",
+      "automationsSubtitle": "Recettes → Courses → Stock",
+      "ai": "Intelligence artificielle",
+      "aiConfigured": "Configurée · {{model}}",
+      "aiNotConfigured": "Non configurée",
+      "telegram": "Telegram",
+      "grandparents": "Grands-parents",
+      "grandparentsSubtitle": "Telegram, WhatsApp, iMessage",
+      "auth": "Sécurité",
+      "authEnabled": "Activé",
+      "authEnabledFace": "Activé · Face ID",
+      "authEnabledTouch": "Activé · Touch ID",
+      "parental": "Contrôle parental",
+      "parentalSubtitle": "Visibilité données enfants",
+      "vault": "Vault Obsidian",
+      "help": "Aide et découverte",
+      "helpSubtitle": "Guide, astuces, modèles"
+    },
+    "modalTitles": {
+      "profiles": "Profils famille",
+      "appearance": "Apparence",
+      "notifications": "Notifications",
+      "zen": "Mode zen",
+      "vacation": "Vacances",
+      "gamification": "Gamification",
+      "automations": "Automatisations",
+      "ai": "Intelligence artificielle",
+      "telegram": "Telegram",
+      "grandparents": "Grands-parents",
+      "auth": "Sécurité",
+      "parental": "Contrôle parental",
+      "vault": "Vault Obsidian",
+      "help": "Aide et découverte"
+    },
+    "subtitles": {
+      "notifActive_one": "{{count}} active",
+      "notifActive_other": "{{count}} actives",
+      "vacationActive": "Actif jusqu'au {{date}}",
+      "gamificationLevel": "Niveau {{level}} · {{xp}} XP",
+      "profileCount_one": "{{count}} profil",
+      "profileCount_other": "{{count}} profils"
+    },
+    "appInfo": {
+      "line1": "Family Flow v1.0.0",
+      "line2": "Données locales · Pas de tracking",
+      "line3": "Privacy-first · Offline-first"
+    }
+  },
+  "moodsScreen": {
+    "title": "🌤️ Météo des humeurs",
+    "toast": {
+      "saved": "Humeur enregistrée {{emoji}}",
+      "error": "Impossible d'enregistrer l'humeur"
+    },
+    "tabs": {
+      "today": "Aujourd'hui",
+      "history": "Historique"
+    },
+    "sectionTitle": "Comment tu te sens ?",
+    "a11y": {
+      "moodLevel": "Humeur {{level}} sur 5",
+      "moodLevelFor": "Humeur {{level}} pour {{name}}"
+    },
+    "placeholder": "Bonne journée, fatigué, stressé..."
+  },
+  "compare": {
+    "title": "Comparer",
+    "noChild": "Aucun enfant configuré",
+    "alert": {
+      "soonTitle": "Bientôt",
+      "soonMsg": "Le partage sera disponible prochainement."
+    },
+    "a11y": {
+      "back": "Retour",
+      "share": "Partager la comparaison",
+      "leftPhotoSelected": "Photo de gauche, {{date}}",
+      "leftPhotoEmpty": "Photo de gauche, aucune sélectionnée",
+      "rightPhotoSelected": "Photo de droite, {{date}}",
+      "rightPhotoEmpty": "Photo de droite, aucune sélectionnée",
+      "photoHint": "Appuyez pour sélectionner cette photo",
+      "goToYear": "Aller à l'année {{year}}",
+      "photoDate": "Photo du {{date}}"
+    },
+    "choose": "Choisir",
+    "shareBtn": "📤 Partager"
+  },
+  "anniversairesScreen": {
+    "toast": {
+      "deleted": "Anniversaire supprimé"
+    },
+    "a11y": {
+      "addBirthday": "Ajouter un anniversaire"
+    }
+  },
+  "statsScreen": {
+    "a11y": {
+      "back": "Retour",
+      "prevWeek": "Semaine précédente",
+      "weekLabel": "Semaine du {{label}}",
+      "nextWeek": "Semaine suivante"
+    },
+    "backBtn": "← Retour",
+    "title": "Statistiques",
+    "tasksCompleted": "📋 Tâches complétées",
+    "tasksSummary_one": "{{count}} tâche cette semaine",
+    "tasksSummary_other": "{{count}} tâches cette semaine"
+  },
+  "skillsScreen": {
+    "a11y": {
+      "changeBracket": "Changer la tranche d'âge"
     }
   }
 }

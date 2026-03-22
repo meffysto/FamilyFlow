@@ -36,6 +36,7 @@ import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { DictaphoneRecorder } from '../../components/DictaphoneRecorder';
 import { EmptyState } from '../../components/EmptyState';
+import { useTranslation } from 'react-i18next';
 
 type TabId = 'aujourdhui' | 'livre';
 
@@ -64,6 +65,7 @@ export function computeGratitudeStreak(days: GratitudeDay[], totalProfiles: numb
 }
 
 export default function GratitudeScreen() {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
   const { showToast } = useToast();
   const { profiles, activeProfile, gratitudeDays, addGratitudeEntry, deleteGratitudeEntry, refresh } = useVault();
@@ -119,7 +121,7 @@ export default function GratitudeScreen() {
   const handleDeleteEntry = useCallback(async (entry: GratitudeEntry) => {
     await deleteGratitudeEntry(entry.date, entry.profileId);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    showToast('Gratitude supprimée');
+    showToast(t('gratitude.toast.deleted'));
   }, [deleteGratitudeEntry, showToast]);
 
   const handleOpenWrite = useCallback((existing?: GratitudeEntry) => {
@@ -131,7 +133,7 @@ export default function GratitudeScreen() {
     if (!activeProfile || !writeText.trim()) return;
     await addGratitudeEntry(selectedDate, activeProfile.id, activeProfile.name, writeText.trim());
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    showToast('Gratitude enregistrée 🙏');
+    showToast(t('gratitude.toast.saved'));
     setWriteModal({ visible: false });
     setWriteText('');
   }, [activeProfile, selectedDate, writeText, addGratitudeEntry, showToast]);
@@ -325,7 +327,7 @@ export default function GratitudeScreen() {
                 style={[styles.dictaphoneBtn, { backgroundColor: colors.cardAlt, borderColor: primary }]}
                 onPress={() => setDictaphoneVisible(true)}
                 activeOpacity={0.7}
-                accessibilityLabel="Dicter la gratitude"
+                accessibilityLabel={t('gratitude.a11y.dictate')}
                 accessibilityRole="button"
               >
                 <Text style={styles.dictaphoneBtnEmoji}>🎙️</Text>
@@ -336,7 +338,7 @@ export default function GratitudeScreen() {
               style={[styles.writeInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
               value={writeText}
               onChangeText={setWriteText}
-              placeholder="Une chose positive de la journée..."
+              placeholder={t('gratitude.write.placeholder')}
               placeholderTextColor={colors.textFaint}
               multiline
               autoFocus

@@ -25,6 +25,7 @@ import { formatDateLocalized } from '../../lib/date-locale';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { useTranslation } from 'react-i18next';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const THUMB_SIZE = 52;
@@ -36,6 +37,7 @@ interface DateThumb {
 }
 
 export default function CompareScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { initialDate } = useLocalSearchParams<{ initialDate?: string }>();
   const { profiles, photoDates, getPhotoUri } = useVault();
@@ -207,7 +209,7 @@ export default function CompareScreen() {
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
         <View style={[styles.header, { backgroundColor: colors.bg }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} accessibilityLabel="Retour" accessibilityRole="button">
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} accessibilityLabel={t('compare.a11y.back')} accessibilityRole="button">
             <Text style={[styles.backBtnText, { color: primary }]}>‹</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text }]}>Comparer</Text>
@@ -229,7 +231,7 @@ export default function CompareScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.bg }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} accessibilityLabel="Retour" accessibilityRole="button">
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} accessibilityLabel={t('compare.a11y.back')} accessibilityRole="button">
           <Text style={[styles.backBtnText, { color: primary }]}>‹</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Comparer</Text>
@@ -300,9 +302,9 @@ export default function CompareScreen() {
               ]}
               onPress={() => onPhotoSlotPress('left')}
               activeOpacity={0.8}
-              accessibilityLabel={`Photo de gauche${leftDate ? `, ${formatDateLocalized(leftDate)}` : ', aucune sélectionnée'}`}
+              accessibilityLabel={leftDate ? t('compare.a11y.leftPhotoSelected', { date: formatDateLocalized(leftDate) }) : t('compare.a11y.leftPhotoEmpty')}
               accessibilityRole="button"
-              accessibilityHint="Appuyez pour sélectionner cette photo"
+              accessibilityHint={t('compare.a11y.photoHint')}
             >
               {leftUri ? (
                 <Image
@@ -312,7 +314,7 @@ export default function CompareScreen() {
                 />
               ) : (
                 <View style={[styles.placeholder, { borderColor: colors.border }]}>
-                  <Text style={[styles.placeholderText, { color: colors.textFaint }]}>Choisir</Text>
+                  <Text style={[styles.placeholderText, { color: colors.textFaint }]}>{t('compare.choose')}</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -326,9 +328,9 @@ export default function CompareScreen() {
               ]}
               onPress={() => onPhotoSlotPress('right')}
               activeOpacity={0.8}
-              accessibilityLabel={`Photo de droite${rightDate ? `, ${formatDateLocalized(rightDate)}` : ', aucune sélectionnée'}`}
+              accessibilityLabel={rightDate ? t('compare.a11y.rightPhotoSelected', { date: formatDateLocalized(rightDate) }) : t('compare.a11y.rightPhotoEmpty')}
               accessibilityRole="button"
-              accessibilityHint="Appuyez pour sélectionner cette photo"
+              accessibilityHint={t('compare.a11y.photoHint')}
             >
               {rightUri ? (
                 <Image
@@ -338,7 +340,7 @@ export default function CompareScreen() {
                 />
               ) : (
                 <View style={[styles.placeholder, { borderColor: colors.border }]}>
-                  <Text style={[styles.placeholderText, { color: colors.textFaint }]}>Choisir</Text>
+                  <Text style={[styles.placeholderText, { color: colors.textFaint }]}>{t('compare.choose')}</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -378,7 +380,7 @@ export default function CompareScreen() {
                   style={[styles.yearPill, { backgroundColor: colors.cardAlt }]}
                   onPress={() => scrollToYear(year)}
                   activeOpacity={0.7}
-                  accessibilityLabel={`Aller à l'année ${year}`}
+                  accessibilityLabel={t('compare.a11y.goToYear', { year })}
                   accessibilityRole="button"
                 >
                   <Text style={[styles.yearText, { color: colors.textSub }]}>{year}</Text>
@@ -409,10 +411,10 @@ export default function CompareScreen() {
           <TouchableOpacity
             style={[styles.shareBtn, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}
             onPress={() =>
-              Alert.alert('Bientôt', 'Le partage sera disponible prochainement.')
+              Alert.alert(t('compare.alert.soonTitle'), t('compare.alert.soonMsg'))
             }
             activeOpacity={0.7}
-            accessibilityLabel="Partager la comparaison"
+            accessibilityLabel={t('compare.a11y.share')}
             accessibilityRole="button"
           >
             <Text style={[styles.shareBtnText, { color: colors.textSub }]}>

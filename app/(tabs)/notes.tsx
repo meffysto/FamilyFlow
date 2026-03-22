@@ -25,6 +25,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { useTranslation } from 'react-i18next';
 import { Note, NOTE_CATEGORIES } from '../../lib/types';
 import { formatDateLocalized } from '../../lib/date-locale';
 import { Chip } from '../../components/ui/Chip';
@@ -34,6 +35,7 @@ import { NoteViewer } from '../../components/NoteViewer';
 import { EmptyState } from '../../components/EmptyState';
 
 export default function NotesScreen() {
+  const { t } = useTranslation();
   const { notes, addNote, updateNote, deleteNote, activeProfile, refresh } = useVault();
   const { primary, colors } = useThemeColors();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
@@ -119,7 +121,7 @@ export default function NotesScreen() {
         setEditorVisible(false);
         setEditingNote(null);
       } catch (e: any) {
-        Alert.alert('Erreur', e.message || 'Impossible de sauvegarder la note');
+        Alert.alert(t('notesScreen.alert.error'), e.message || t('notesScreen.alert.saveError'));
       }
     },
     [editingNote, addNote, updateNote]
@@ -135,7 +137,7 @@ export default function NotesScreen() {
         setEditingNote(null);
         setViewingNote(null);
       } catch (e: any) {
-        Alert.alert('Erreur', e.message || 'Impossible de supprimer la note');
+        Alert.alert(t('notesScreen.alert.error'), e.message || t('notesScreen.alert.deleteError'));
       }
     },
     [deleteNote]
@@ -237,7 +239,7 @@ export default function NotesScreen() {
           <TouchableOpacity
             onPress={() => openEditor()}
             style={[styles.addButton, { backgroundColor: primary }]}
-            accessibilityLabel="Ajouter une note"
+            accessibilityLabel={t('notesScreen.a11y.addNote')}
             accessibilityRole="button"
           >
             <Text style={[styles.addButtonText, { color: colors.onPrimary }]}>+</Text>
@@ -254,12 +256,12 @@ export default function NotesScreen() {
               color: colors.text,
             },
           ]}
-          placeholder="Rechercher une note…"
+          placeholder={t('notesScreen.placeholder.search')}
           placeholderTextColor={colors.textFaint}
           value={search}
           onChangeText={setSearch}
           autoCorrect={false}
-          accessibilityLabel="Rechercher une note"
+          accessibilityLabel={t('notesScreen.a11y.searchNote')}
           accessibilityRole="search"
         />
 

@@ -36,6 +36,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { useTranslation } from 'react-i18next';
 import { ModalHeader } from '../../components/ui';
 import { Routine, RoutineProgress } from '../../lib/types';
 import { format } from 'date-fns';
@@ -338,6 +339,7 @@ function RoutinePlayer({
 // ─── Écran principal ──────────────────────────────────────────────────────────
 
 export default function RoutinesScreen() {
+  const { t } = useTranslation();
   const { routines, saveRoutines, activeProfile, vault, notifPrefs, refresh } = useVault();
   const { completeTask } = useGamification({ vault, notifPrefs });
   const { primary, colors } = useThemeColors();
@@ -398,13 +400,13 @@ export default function RoutinesScreen() {
 
       const profileName = activeProfile.name;
       showToast(
-        `${routine.emoji} ${profileName} a terminé la routine ${routine.label} ! +${pointsGained} pts${lootAwarded ? ' 🎁' : ''}`,
+        t('routines.toast.complete', { emoji: routine.emoji, profileName, label: routine.label, points: pointsGained, loot: lootAwarded ? ' 🎁' : '' }),
         'success'
       );
 
       await refresh();
     } catch (e) {
-      showToast('Erreur lors de l\'enregistrement des points', 'error');
+      showToast(t('routines.toast.pointsError'), 'error');
     }
   }, [activeProfile, completeTask, refresh, showToast]);
 
@@ -419,7 +421,7 @@ export default function RoutinesScreen() {
     }
     await saveRoutines(updated);
     setEditorRoutine(undefined);
-    showToast(editorRoutine === null ? 'Routine créée !' : 'Routine modifiée !', 'success');
+    showToast(editorRoutine === null ? t('routines.toast.created') : t('routines.toast.modified'), 'success');
   }, [editorRoutine, routines, saveRoutines, showToast]);
 
   const handleEditorDelete = useCallback(async () => {
@@ -427,17 +429,17 @@ export default function RoutinesScreen() {
     const updated = routines.filter(r => r.id !== editorRoutine.id);
     await saveRoutines(updated);
     setEditorRoutine(undefined);
-    showToast('Routine supprimée', 'success');
+    showToast(t('routines.toast.deleted'), 'success');
   }, [editorRoutine, routines, saveRoutines, showToast]);
 
   const handleResetRoutine = useCallback(async (routineId: string) => {
     Alert.alert(
-      'Réinitialiser',
-      'Remettre cette routine à zéro pour aujourd\'hui ?',
+      t('routines.alert.resetTitle'),
+      t('routines.alert.resetMsg'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('routines.alert.cancel'), style: 'cancel' },
         {
-          text: 'Réinitialiser',
+          text: t('routines.alert.reset'),
           style: 'destructive',
           onPress: async () => {
             setDayProgress(prev => {
@@ -466,7 +468,7 @@ export default function RoutinesScreen() {
           style={[styles.addBtn, { backgroundColor: primary }]}
           onPress={() => setEditorRoutine(null)}
           activeOpacity={0.7}
-          accessibilityLabel="Ajouter une routine"
+          accessibilityLabel={t('routines.a11y.addRoutine')}
           accessibilityRole="button"
         >
           <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>
@@ -502,7 +504,7 @@ export default function RoutinesScreen() {
                   onLongPress={() => handleResetRoutine(routine.id)}
                   activeOpacity={0.7}
                   accessibilityRole="button"
-                  accessibilityLabel={`Routine ${routine.label}, ${doneCount} sur ${totalSteps} étapes`}
+                  accessibilityLabel={t('routines.a11y.routineStatus', { label: routine.label, done: doneCount, total: totalSteps })}
                 >
                   <View style={styles.routineHeader}>
                     <Text style={styles.routineEmoji}>{routine.emoji}</Text>
@@ -521,7 +523,7 @@ export default function RoutinesScreen() {
                       style={[styles.editBtn, { backgroundColor: colors.cardAlt }]}
                       onPress={() => setEditorRoutine(routine)}
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      accessibilityLabel={`Modifier ${routine.label}`}
+                      accessibilityLabel={t('routines.a11y.editRoutine', { label: routine.label })}
                     >
                       <Text style={[styles.editBtnText, { color: colors.textMuted }]}>✏️</Text>
                     </TouchableOpacity>

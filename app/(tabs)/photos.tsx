@@ -59,6 +59,7 @@ import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { getThumbnailUri } from '../../lib/thumbnails';
 import * as FileSystem from 'expo-file-system/legacy';
+import { useTranslation } from 'react-i18next';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const CALENDAR_PADDING = 16;
@@ -126,6 +127,7 @@ function PulsingCamera({ color }: { color: string }) {
 }
 
 export default function PhotosScreen() {
+  const { t } = useTranslation();
   const { profiles, photoDates, addPhoto, getPhotoUri, refresh, isLoading, memories, addMemory, updateMemory } = useVault();
   const { primary, tint, colors } = useThemeColors();
   const insets = useSafeAreaInsets();
@@ -210,7 +212,7 @@ export default function PhotosScreen() {
 
   const pickPhoto = async (date: Date) => {
     if (!selectedEnfant) {
-      Alert.alert('Erreur', 'Aucun enfant sélectionné.');
+      Alert.alert(t('photosScreen.alert.error'), t('photosScreen.alert.noChildSelected'));
       return;
     }
     const dateStr = format(date, 'yyyy-MM-dd');
@@ -221,13 +223,13 @@ export default function PhotosScreen() {
         if (useCamera) {
           const perm = await ImagePicker.requestCameraPermissionsAsync();
           if (perm.status !== 'granted') {
-            Alert.alert('Permission requise', `L'accès à la caméra est nécessaire.`);
+            Alert.alert(t('photosScreen.alert.permissionRequired'), t('photosScreen.alert.cameraAccess'));
             return;
           }
         } else {
           const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
           if (perm.status !== 'granted') {
-            Alert.alert('Permission requise', `L'accès à la galerie est nécessaire.`);
+            Alert.alert(t('photosScreen.alert.permissionRequired'), t('photosScreen.alert.galleryAccess'));
             return;
           }
         }
@@ -247,23 +249,23 @@ export default function PhotosScreen() {
         await addPhoto(enfantName, dateStr, result.assets[0].uri);
         setPhotoCacheBust(prev => prev + 1);
       } catch (e: any) {
-        Alert.alert('Erreur photo', `${useCamera ? 'Caméra' : 'Galerie'} — ${enfantName}\n\n${e?.message || String(e)}`);
+        Alert.alert(t('photosScreen.alert.photoError'), `${useCamera ? 'Caméra' : 'Galerie'} — ${enfantName}\n\n${e?.message || String(e)}`);
       }
     };
 
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
-        { options: ['Annuler', '📷 Appareil photo', '🖼 Galerie'], cancelButtonIndex: 0 },
+        { options: [t('photosScreen.alert.cancel'), t('photosScreen.alert.camera'), t('photosScreen.alert.gallery')], cancelButtonIndex: 0 },
         (buttonIndex) => {
           if (buttonIndex === 1) launchPicker(true);
           if (buttonIndex === 2) launchPicker(false);
         }
       );
     } else {
-      Alert.alert('Photo du jour', 'Choisir une source', [
-        { text: 'Annuler', style: 'cancel' },
-        { text: '📷 Appareil photo', onPress: () => launchPicker(true) },
-        { text: '🖼 Galerie', onPress: () => launchPicker(false) },
+      Alert.alert(t('photosScreen.alert.chooseSource'), t('photosScreen.alert.chooseSourceMsg'), [
+        { text: t('photosScreen.alert.cancel'), style: 'cancel' },
+        { text: t('photosScreen.alert.camera'), onPress: () => launchPicker(true) },
+        { text: t('photosScreen.alert.gallery'), onPress: () => launchPicker(false) },
       ]);
     }
   };
@@ -307,7 +309,7 @@ export default function PhotosScreen() {
                 style={[styles.viewToggle, { backgroundColor: colors.cardAlt }]}
                 onPress={() => router.push('/(tabs)/compare')}
                 activeOpacity={0.7}
-                accessibilityLabel="Comparer des photos"
+                accessibilityLabel={t('photosScreen.a11y.compare')}
                 accessibilityRole="button"
               >
                 <Text style={styles.viewToggleText}>⚖️</Text>
@@ -316,7 +318,7 @@ export default function PhotosScreen() {
                 style={[styles.viewToggle, { backgroundColor: colors.cardAlt }]}
                 onPress={() => setViewMode(v => v === 'calendar' ? 'gallery' : 'calendar')}
                 activeOpacity={0.7}
-                accessibilityLabel={viewMode === 'calendar' ? 'Passer en vue galerie' : 'Passer en vue calendrier'}
+                accessibilityLabel={viewMode === 'calendar' ? t('photosScreen.a11y.switchToGallery') : t('photosScreen.a11y.switchToCalendar')}
                 accessibilityRole="button"
               >
                 <Text style={styles.viewToggleText}>

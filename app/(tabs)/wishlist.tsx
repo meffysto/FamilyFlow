@@ -35,6 +35,7 @@ import type { Segment } from '../../components/ui';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { EmptyState } from '../../components/EmptyState';
 import type { WishlistItem, WishBudget, WishOccasion } from '../../lib/types';
+import { useTranslation } from 'react-i18next';
 
 const BUDGET_OPTIONS: { label: string; value: WishBudget }[] = [
   { label: 'Aucun', value: '' },
@@ -52,6 +53,7 @@ const OCCASION_OPTIONS: { label: string; value: WishOccasion }[] = [
 type OccasionFilter = 'tous' | '🎂' | '🎄';
 
 export default function WishlistScreen() {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
   const { showToast } = useToast();
   const {
@@ -195,24 +197,24 @@ export default function WishlistScreen() {
         occasion: editOccasion,
         notes: editNotes.trim(),
       });
-      showToast('Souhait modifié');
+      showToast(t('wishlist.toast.modified'));
     } else {
       await addWishItem(editText.trim(), editProfile, editBudget, editOccasion, editNotes.trim());
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showToast('Souhait ajouté');
+      showToast(t('wishlist.toast.added'));
     }
     setEditorVisible(false);
   }, [editText, editProfile, editBudget, editOccasion, editNotes, editingItem, updateWishItem, addWishItem, showToast]);
 
   const handleDelete = useCallback(async (item: WishlistItem) => {
-    Alert.alert('Supprimer ce souhait ?', item.text, [
-      { text: 'Annuler', style: 'cancel' },
+    Alert.alert(t('wishlist.alert.deleteTitle'), item.text, [
+      { text: t('wishlist.alert.cancel'), style: 'cancel' },
       {
-        text: 'Supprimer',
+        text: t('wishlist.alert.delete'),
         style: 'destructive',
         onPress: async () => {
           await deleteWishItem(item);
-          showToast('Souhait supprimé');
+          showToast(t('wishlist.toast.deleted'));
         },
       },
     ]);
@@ -222,7 +224,7 @@ export default function WishlistScreen() {
     if (!activeProfile) return;
     await toggleWishBought(item, activeProfile.name);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    showToast(item.bought ? 'Marqué non-acheté' : 'Marqué acheté 🔒');
+    showToast(item.bought ? t('wishlist.toast.markedUnbought') : t('wishlist.toast.markedBought'));
   }, [activeProfile, toggleWishBought, showToast]);
 
   // Icône occasion : bg + emoji
@@ -249,7 +251,7 @@ export default function WishlistScreen() {
           style={[styles.addBtn, { backgroundColor: primary }]}
           onPress={() => openEditor()}
           activeOpacity={0.7}
-          accessibilityLabel="Ajouter un souhait"
+          accessibilityLabel={t('wishlist.a11y.addWish')}
           accessibilityRole="button"
         >
           <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+ Ajouter</Text>
@@ -400,7 +402,7 @@ export default function WishlistScreen() {
                         ]}
                         onPress={() => handleToggleBought(item)}
                         activeOpacity={0.7}
-                        accessibilityLabel={item.bought ? 'Marquer non-acheté' : 'Marquer acheté'}
+                        accessibilityLabel={item.bought ? t('wishlist.a11y.markUnbought') : t('wishlist.a11y.markBought')}
                         accessibilityRole="button"
                       >
                         <Text style={{ fontSize: 16 }}>{item.bought ? '🔒' : '🛒'}</Text>
@@ -444,7 +446,7 @@ export default function WishlistScreen() {
               style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
               value={editText}
               onChangeText={setEditText}
-              placeholder="Ex : Vélo rouge"
+              placeholder={t('wishlist.editor.wishPlaceholder')}
               placeholderTextColor={colors.textFaint}
               autoFocus
             />
@@ -494,7 +496,7 @@ export default function WishlistScreen() {
               style={[styles.input, styles.notesInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
               value={editNotes}
               onChangeText={setEditNotes}
-              placeholder="Ex : Decathlon, taille 24 pouces"
+              placeholder={t('wishlist.editor.notesPlaceholder')}
               placeholderTextColor={colors.textFaint}
               multiline
               textAlignVertical="top"

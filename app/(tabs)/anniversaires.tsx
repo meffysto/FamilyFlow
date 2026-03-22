@@ -23,6 +23,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { useTranslation } from 'react-i18next';
 import { Chip } from '../../components/ui/Chip';
 import { Button } from '../../components/ui/Button';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
@@ -85,6 +86,7 @@ interface SectionData {
 }
 
 export default function AnniversairesScreen() {
+  const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
   const {
@@ -155,7 +157,7 @@ export default function AnniversairesScreen() {
   const handleDelete = useCallback(
     async (name: string) => {
       await removeAnniversary(name);
-      showToast('Anniversaire supprimé');
+      showToast(t('anniversairesScreen.toast.deleted'));
     },
     [removeAnniversary, showToast],
   );
@@ -274,7 +276,7 @@ export default function AnniversairesScreen() {
           style={[styles.addBtn, { backgroundColor: primary }]}
           onPress={handleAdd}
           activeOpacity={0.7}
-          accessibilityLabel="Ajouter un anniversaire"
+          accessibilityLabel={t('anniversairesScreen.a11y.addBirthday')}
           accessibilityRole="button"
         >
           <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+</Text>

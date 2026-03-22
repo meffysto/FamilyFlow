@@ -52,6 +52,7 @@ import { GlassView } from '../../components/ui/GlassView';
 import { SectionErrorBoundary } from '../../components/SectionErrorBoundary';
 import { FontSize, FontWeight } from '../../constants/typography';
 import type { CardTemplateContext } from '../../lib/card-templates';
+import { useTranslation } from 'react-i18next';
 
 // Composants de section dashboard
 import {
@@ -160,6 +161,7 @@ const DEFAULT_SECTIONS = ALL_SECTIONS;
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
   const {
@@ -329,7 +331,7 @@ export default function DashboardScreen() {
   const handleSendRecap = useCallback(async () => {
     const contacts = await loadGrandparentContacts();
     if (contacts.length === 0) {
-      Alert.alert('Aucun contact', 'Configurez vos contacts grands-parents dans Réglages > Grands-parents.');
+      Alert.alert(t('index.alert.noContact'), t('index.alert.noContactMsg'));
       return;
     }
 
@@ -386,14 +388,14 @@ export default function DashboardScreen() {
           }
         }
 
-        showToast('Envoi terminé !');
+        showToast(t('index.toast.sendDone'));
         setIsSendingRecap(false);
       },
     }));
 
     buttons.push({ text: 'Annuler', onPress: async () => {} });
 
-    Alert.alert('Partager aux grands-parents', 'Que souhaitez-vous envoyer ?', buttons);
+    Alert.alert(t('index.alert.shareToGrandparents'), t('index.alert.shareQuestion'), buttons);
   }, [profiles, memories, photoDates, buildRecapData, showToast]);
 
   const handleTaskToggle = useCallback(
@@ -417,7 +419,7 @@ export default function DashboardScreen() {
           }
         }
       } catch (e) {
-        showToast(`Impossible de modifier la tâche : ${e}`, 'error');
+        showToast(t('index.toast.taskError', { error: String(e) }), 'error');
         await refresh();
       }
     },
@@ -797,7 +799,7 @@ export default function DashboardScreen() {
             onPress={() => setProfilePickerVisible(true)}
             style={[styles.avatarBtn, { backgroundColor: tint }]}
             activeOpacity={0.7}
-            accessibilityLabel={`Profil actif : ${activeProfile?.name ?? 'aucun'}. Appuyer pour changer.`}
+            accessibilityLabel={t('index.a11y.activeProfile', { name: activeProfile?.name ?? 'aucun' })}
             accessibilityRole="button"
           >
             <ReactiveAvatar
@@ -816,14 +818,14 @@ export default function DashboardScreen() {
               { color: colors.textSub },
             ]}>
               {isChildMode
-                ? `Salut ${activeProfile?.name ?? ''} ! 🌟`
+                ? t('index.greeting.child', { name: activeProfile?.name ?? '' })
                 : (() => {
                     const h = new Date().getHours();
-                    const name = activeProfile?.name ?? '';
-                    if (h < 6) return `Bonne nuit${name ? ` ${name}` : ''} 🌙`;
-                    if (h < 12) return `Bon matin${name ? ` ${name}` : ''} ☀️`;
-                    if (h < 18) return `Bon après-midi${name ? ` ${name}` : ''} 🌤️`;
-                    return `Bonsoir${name ? ` ${name}` : ''} 🌙`;
+                    const name = activeProfile?.name ? ` ${activeProfile.name}` : '';
+                    if (h < 6) return t('index.greeting.night', { name });
+                    if (h < 12) return t('index.greeting.morning', { name });
+                    if (h < 18) return t('index.greeting.afternoon', { name });
+                    return t('index.greeting.evening', { name });
                   })()}
             </Text>
             <Text style={[styles.dateText, { color: colors.text }]}>{today}</Text>
@@ -834,11 +836,11 @@ export default function DashboardScreen() {
             onPress={() => setSearchVisible(true)}
             style={[styles.headerBtn, { backgroundColor: colors.cardAlt }]}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityLabel="Rechercher dans le vault"
+            accessibilityLabel={t('index.a11y.search')}
             accessibilityRole="search"
           >
             <Text style={styles.headerBtnIcon}>🔍</Text>
-            <Text style={[styles.headerBtnLabel, { color: colors.textMuted }]}>Chercher</Text>
+            <Text style={[styles.headerBtnLabel, { color: colors.textMuted }]}>{t('index.header.search')}</Text>
           </TouchableOpacity>
           {!isChildMode && (
             <TouchableOpacity
@@ -846,11 +848,11 @@ export default function DashboardScreen() {
               style={[styles.headerBtn, { backgroundColor: colors.cardAlt }]}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               disabled={isSendingRecap}
-              accessibilityLabel="Envoyer le récap aux grands-parents"
+              accessibilityLabel={t('index.a11y.sendRecap')}
               accessibilityRole="button"
             >
               <Text style={styles.headerBtnIcon}>{isSendingRecap ? '⏳' : '📤'}</Text>
-              <Text style={[styles.headerBtnLabel, { color: colors.textMuted }]}>Récap GP</Text>
+              <Text style={[styles.headerBtnLabel, { color: colors.textMuted }]}>{t('index.header.recap')}</Text>
             </TouchableOpacity>
           )}
           {!isChildMode && (
@@ -858,11 +860,11 @@ export default function DashboardScreen() {
               onPress={() => setPrefsModalVisible(true)}
               style={[styles.headerBtn, { backgroundColor: colors.cardAlt }]}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              accessibilityLabel="Configurer les sections"
+              accessibilityLabel={t('index.a11y.configureSections')}
               accessibilityRole="button"
             >
               <Text style={styles.headerBtnIcon}>⚙️</Text>
-              <Text style={[styles.headerBtnLabel, { color: colors.textMuted }]}>Sections</Text>
+              <Text style={[styles.headerBtnLabel, { color: colors.textMuted }]}>{t('index.header.sections')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -878,19 +880,19 @@ export default function DashboardScreen() {
       >
         {/* Welcome card when no vault configured */}
         {!isLoading && !vaultPath && (
-          <DashboardCard title="Bienvenue !" icon="👋" color={primary}>
+          <DashboardCard title={t('index.welcome.title')} icon="👋" color={primary}>
             <Text style={[styles.welcomeText, { color: colors.textSub }]}>
-              L'application n'est pas encore configurée.
+              {t('index.welcome.text')}
             </Text>
             <Text style={[styles.welcomeSubText, { color: colors.textMuted }]}>
-              Appuyez sur le bouton ci-dessous pour accéder aux réglages et connecter votre espace familial.
+              {t('index.welcome.subText')}
             </Text>
             <TouchableOpacity
               style={[styles.welcomeBtn, { backgroundColor: primary }]}
               onPress={() => router.push('/(tabs)/settings')}
               activeOpacity={0.8}
             >
-              <Text style={[styles.welcomeBtnText, { color: colors.onPrimary }]}>⚙️  Ouvrir les réglages</Text>
+              <Text style={[styles.welcomeBtnText, { color: colors.onPrimary }]}>{t('index.welcome.openSettings')}</Text>
             </TouchableOpacity>
           </DashboardCard>
         )}
@@ -930,11 +932,11 @@ export default function DashboardScreen() {
                         ? Alert.prompt('Date de naissance', 'AAAA-MM-JJ', (date) => {
                             if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) convertToBorn(p.id, date);
                           }, 'plain-text', format(new Date(), 'yyyy-MM-dd'))
-                        : Alert.alert('Bébé est né ?', 'Allez dans Réglages > Profils pour confirmer la naissance.');
+                        : Alert.alert(t('index.alert.babyBorn'), t('index.alert.babyBornMsg'));
                     }}
                     activeOpacity={0.7}
                   >
-                    <Text style={[styles.pregnancyCtaText, { color: colors.onPrimary }]}>Né(e) !</Text>
+                    <Text style={[styles.pregnancyCtaText, { color: colors.onPrimary }]}>{t('index.pregnancy.born')}</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -951,34 +953,34 @@ export default function DashboardScreen() {
           return (
             <View key={upgrade.profileId} style={[styles.ageUpgradeBanner, { backgroundColor: colors.warningBg, borderColor: primary }]}>
               <Text style={[styles.ageUpgradeTitle, { color: colors.text }]}>
-                {upgrade.childName} a grandi !
+                {t('index.ageUpgrade.title', { name: upgrade.childName })}
               </Text>
               <Text style={[styles.ageUpgradeDesc, { color: colors.textSub }]}>
-                Profil « {catLabels[upgrade.oldCategory]} » → « {catLabels[upgrade.newCategory]} ». Mettre à jour les tâches ?
+                {t('index.ageUpgrade.description', { oldCategory: catLabels[upgrade.oldCategory], newCategory: catLabels[upgrade.newCategory] })}
               </Text>
               <View style={styles.ageUpgradeActions}>
                 <TouchableOpacity
                   style={[styles.ageUpgradeBtn, { backgroundColor: primary }]}
                   onPress={() => {
                     Alert.alert(
-                      'Mettre à jour les tâches ?',
-                      `Les tâches actuelles de ${upgrade.childName} seront remplacées par des tâches adaptées à un profil « ${catLabels[upgrade.newCategory]} ».`,
+                      t('index.alert.updateTasks'),
+                      t('index.alert.updateTasksMsg', { name: upgrade.childName, category: catLabels[upgrade.newCategory] }),
                       [
-                        { text: 'Annuler', style: 'cancel' },
-                        { text: 'Mettre à jour', onPress: () => applyAgeUpgrade(upgrade) },
+                        { text: t('index.alert.cancel'), style: 'cancel' },
+                        { text: t('index.alert.update'), onPress: () => applyAgeUpgrade(upgrade) },
                       ]
                     );
                   }}
                   activeOpacity={0.7}
                 >
-                  <Text style={[styles.ageUpgradeBtnText, { color: colors.onPrimary }]}>Mettre à jour</Text>
+                  <Text style={[styles.ageUpgradeBtnText, { color: colors.onPrimary }]}>{t('index.ageUpgrade.update')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.ageUpgradeDismiss}
                   onPress={() => dismissAgeUpgrade(upgrade.profileId)}
                   activeOpacity={0.7}
                 >
-                  <Text style={[styles.ageUpgradeDismissText, { color: colors.textMuted }]}>Plus tard</Text>
+                  <Text style={[styles.ageUpgradeDismissText, { color: colors.textMuted }]}>{t('index.ageUpgrade.later')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -1084,7 +1086,7 @@ export default function DashboardScreen() {
           onPress={() => setProfilePickerVisible(false)}
         >
           <View style={[styles.pickerCard, { backgroundColor: colors.card }]}>
-            <Text style={[styles.pickerTitle, { color: colors.text }]}>Changer de profil</Text>
+            <Text style={[styles.pickerTitle, { color: colors.text }]}>{t('index.profilePicker.title')}</Text>
             <View style={styles.pickerGrid}>
               {profiles.map((p) => (
                 <TouchableOpacity

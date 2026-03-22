@@ -28,6 +28,7 @@ import { useRefresh } from '../../hooks/useRefresh';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { useTranslation } from 'react-i18next';
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import { Button } from '../../components/ui/Button';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
@@ -38,6 +39,7 @@ const MOOD_LEVELS: MoodLevel[] = [1, 2, 3, 4, 5];
 const HISTORY_DAYS = 30;
 
 export default function MoodsScreen() {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
   const { showToast } = useToast();
   const { profiles, activeProfile, moods, addMood, refresh } = useVault();
@@ -101,10 +103,10 @@ export default function MoodsScreen() {
     try {
       await addMood(noteModal.profileId, noteModal.profileName, noteModal.level, noteText.trim() || undefined);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showToast(`Humeur enregistrée ${MOOD_EMOJIS[noteModal.level]}`, 'success');
+      showToast(t('moodsScreen.toast.saved', { emoji: MOOD_EMOJIS[noteModal.level] }), 'success');
       setNoteModal({ visible: false, level: null, profileId: null, profileName: null });
     } catch {
-      showToast('Impossible d\'enregistrer l\'humeur', 'error');
+      showToast(t('moodsScreen.toast.error'), 'error');
     }
   }, [noteModal.profileId, noteModal.profileName, noteModal.level, noteText, addMood, showToast]);
 
@@ -145,7 +147,7 @@ export default function MoodsScreen() {
                     Shadows.sm,
                   ]}
                   onPress={() => handleSelectMood(level)}
-                  accessibilityLabel={`Humeur ${level} sur 5`}
+                  accessibilityLabel={t('moodsScreen.a11y.moodLevel', { level })}
                   accessibilityRole="button"
                 >
                   <Text style={styles.moodEmoji}>{MOOD_EMOJIS[level]}</Text>
@@ -190,7 +192,7 @@ export default function MoodsScreen() {
                             { backgroundColor: entry?.level === level ? primary + '20' : colors.cardAlt, borderColor: entry?.level === level ? primary : 'transparent' },
                           ]}
                           onPress={() => handleSelectMood(level, p.id, p.name)}
-                          accessibilityLabel={`Humeur ${level} pour ${p.name}`}
+                          accessibilityLabel={t('moodsScreen.a11y.moodLevelFor', { level, name: p.name })}
                         >
                           <Text style={styles.familyMoodEmoji}>{MOOD_EMOJIS[level]}</Text>
                         </TouchableOpacity>
@@ -239,7 +241,7 @@ export default function MoodsScreen() {
             <Text style={[styles.label, { color: colors.textSub }]}>Ajouter une note (optionnel)</Text>
             <TextInput
               style={[styles.input, { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.inputBg }]}
-              placeholder="Bonne journée, fatigué, stressé..."
+              placeholder={t('moodsScreen.placeholder')}
               placeholderTextColor={colors.textMuted}
               value={noteText}
               onChangeText={setNoteText}

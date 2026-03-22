@@ -34,6 +34,7 @@ import { MarkdownText } from '../../components/ui/MarkdownText';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { useTranslation } from 'react-i18next';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -194,6 +195,7 @@ function MiniCalendar({
   primary: string;
   tint: string;
 }) {
+  const { t } = useTranslation();
   const [viewMonth, setViewMonth] = useState(startOfMonth(selectedDate));
 
   const days = useMemo(() => {
@@ -212,13 +214,13 @@ function MiniCalendar({
   return (
     <View style={[calStyles.container, { backgroundColor: colors.card }]}>
       <View style={calStyles.nav}>
-        <TouchableOpacity onPress={() => setViewMonth(subMonths(viewMonth, 1))} style={calStyles.navBtn} accessibilityLabel="Mois précédent" accessibilityRole="button">
+        <TouchableOpacity onPress={() => setViewMonth(subMonths(viewMonth, 1))} style={calStyles.navBtn} accessibilityLabel={t('journal.a11y.prevMonth')} accessibilityRole="button">
           <Text style={[calStyles.navArrow, { color: colors.textMuted }]}>‹</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setViewMonth(startOfMonth(new Date()))} style={calStyles.monthBtn} accessibilityLabel={`${monthLabel}, appuyez pour revenir au mois courant`} accessibilityRole="button">
+        <TouchableOpacity onPress={() => setViewMonth(startOfMonth(new Date()))} style={calStyles.monthBtn} accessibilityLabel={t('journal.a11y.monthAction', { month: monthLabel })} accessibilityRole="button">
           <Text style={[calStyles.monthLabel, { color: colors.text }]}>{monthLabel}</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setViewMonth(addMonths(viewMonth, 1))} style={calStyles.navBtn} accessibilityLabel="Mois suivant" accessibilityRole="button">
+        <TouchableOpacity onPress={() => setViewMonth(addMonths(viewMonth, 1))} style={calStyles.navBtn} accessibilityLabel={t('journal.a11y.nextMonth')} accessibilityRole="button">
           <Text style={[calStyles.navArrow, { color: colors.textMuted }]}>›</Text>
         </TouchableOpacity>
       </View>
@@ -273,6 +275,7 @@ function MiniCalendar({
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function JournalScreen() {
+  const { t } = useTranslation();
   const { vault, profiles, activeProfile } = useVault();
   const { primary, tint, colors } = useThemeColors();
   const { enfant: enfantParam } = useLocalSearchParams<{ enfant?: string }>();
@@ -418,7 +421,7 @@ export default function JournalScreen() {
       // Ajouter la date aux dates disponibles
       setAvailableDates((prev) => new Set([...prev, selectedDateStr]));
     } catch (e) {
-      Alert.alert('Erreur', `Impossible de créer le journal : ${e}`);
+      Alert.alert(t('journal.alert.error'), t('journal.alert.createError', { error: String(e) }));
     } finally {
       setIsCreating(false);
     }
@@ -470,7 +473,7 @@ export default function JournalScreen() {
         );
 
         if (sectionIdx === -1) {
-          Alert.alert('Oups !', `Impossible d'ajouter cette entrée. Le journal du jour semble incomplet.`);
+          Alert.alert(t('journal.alert.oops'), t('journal.alert.addEntryError'));
           return;
         }
 
@@ -499,7 +502,7 @@ export default function JournalScreen() {
       await vault.writeFile(journalPath, newContent);
       setJournalContent(newContent);
     } catch (e) {
-      Alert.alert('Erreur', String(e));
+      Alert.alert(t('journal.alert.error'), String(e));
     }
   };
 
@@ -508,12 +511,12 @@ export default function JournalScreen() {
     closeModal();
 
     Alert.alert(
-      'Supprimer cette entrée ?',
-      'Cette action est irréversible.',
+      t('journal.alert.deleteTitle'),
+      t('journal.alert.deleteMsg'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('journal.alert.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('journal.alert.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -523,7 +526,7 @@ export default function JournalScreen() {
               await vault.writeFile(journalPath, lines.join('\n'));
               setJournalContent(lines.join('\n'));
             } catch (e) {
-              Alert.alert('Erreur', String(e));
+              Alert.alert(t('journal.alert.error'), String(e));
             }
           },
         },
@@ -599,7 +602,7 @@ export default function JournalScreen() {
               <TouchableOpacity
                 style={[styles.sectionEmojiBtn, { borderTopColor: colors.borderLight }]}
                 onPress={() => openAddModal('Observation')}
-                accessibilityLabel="Ajouter une observation"
+                accessibilityLabel={t('journal.a11y.addObservation')}
                 accessibilityRole="button"
               >
                 <Text style={styles.sectionEmojiBtnIcon}>{ENTRY_META.Observation.emoji}</Text>
@@ -676,7 +679,7 @@ export default function JournalScreen() {
             <TouchableOpacity
               style={[styles.sectionEmojiBtn, { borderTopColor: colors.borderLight }]}
               onPress={() => openAddModal(entryType)}
-              accessibilityLabel={`Ajouter dans ${sec.heading}`}
+              accessibilityLabel={t('journal.a11y.addInSection', { section: sec.heading })}
               accessibilityRole="button"
             >
               <Text style={styles.sectionEmojiBtnIcon}>{ENTRY_META[entryType].emoji}</Text>
@@ -711,23 +714,23 @@ export default function JournalScreen() {
 
       {/* Navigation date */}
       <View style={[styles.dateNav, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={navigatePrev} disabled={!hasPrev} style={styles.dateNavBtn} accessibilityLabel="Jour précédent" accessibilityRole="button" accessibilityState={{ disabled: !hasPrev }}>
+        <TouchableOpacity onPress={navigatePrev} disabled={!hasPrev} style={styles.dateNavBtn} accessibilityLabel={t('journal.a11y.prevDay')} accessibilityRole="button" accessibilityState={{ disabled: !hasPrev }}>
           <Text style={[styles.dateNavArrow, { color: hasPrev ? colors.text : colors.textFaint }]}>‹</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setShowCalendar(!showCalendar)} style={styles.dateNavCenter} accessibilityLabel={`${selectedDateDisplay}, appuyez pour ouvrir le calendrier`} accessibilityRole="button">
+        <TouchableOpacity onPress={() => setShowCalendar(!showCalendar)} style={styles.dateNavCenter} accessibilityLabel={t('journal.a11y.dateAction', { date: selectedDateDisplay })} accessibilityRole="button">
           <Text style={[styles.dateNavText, { color: colors.text }]}>
-            {isToday ? "Aujourd'hui" : format(selectedDate, 'dd/MM/yyyy')}
+            {isToday ? t('journal.nav.today') : format(selectedDate, 'dd/MM/yyyy')}
           </Text>
           <Text style={[styles.dateNavSub, { color: colors.textMuted }]}>
             {isToday ? format(selectedDate, 'dd MMMM', { locale: getDateLocale() }) : format(selectedDate, 'EEEE', { locale: getDateLocale() })}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={navigateNext} disabled={!hasNext} style={styles.dateNavBtn} accessibilityLabel="Jour suivant" accessibilityRole="button" accessibilityState={{ disabled: !hasNext }}>
+        <TouchableOpacity onPress={navigateNext} disabled={!hasNext} style={styles.dateNavBtn} accessibilityLabel={t('journal.a11y.nextDay')} accessibilityRole="button" accessibilityState={{ disabled: !hasNext }}>
           <Text style={[styles.dateNavArrow, { color: hasNext ? colors.text : colors.textFaint }]}>›</Text>
         </TouchableOpacity>
         {!isToday && (
-          <TouchableOpacity onPress={() => setSelectedDate(new Date())} style={[styles.todayBtn, { backgroundColor: tint }]} accessibilityLabel="Revenir à aujourd'hui" accessibilityRole="button">
-            <Text style={[styles.todayBtnText, { color: primary }]}>Aujourd'hui</Text>
+          <TouchableOpacity onPress={() => setSelectedDate(new Date())} style={[styles.todayBtn, { backgroundColor: tint }]} accessibilityLabel={t('journal.a11y.backToToday')} accessibilityRole="button">
+            <Text style={[styles.todayBtnText, { color: primary }]}>{t('journal.nav.today')}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -766,7 +769,7 @@ export default function JournalScreen() {
                   style={[styles.createBtn, { backgroundColor: primary }, isCreating && styles.createBtnDisabled]}
                   onPress={createJournal}
                   disabled={isCreating}
-                  accessibilityLabel="Créer le journal du jour"
+                  accessibilityLabel={t('journal.a11y.createJournal')}
                   accessibilityRole="button"
                   accessibilityState={{ disabled: isCreating }}
                 >
@@ -866,21 +869,21 @@ export default function JournalScreen() {
 
             <View style={styles.modalActions}>
               {modal.mode === 'edit' && (
-                <TouchableOpacity style={styles.modalDelete} onPress={deleteEntry} accessibilityLabel="Supprimer cette entrée" accessibilityRole="button">
+                <TouchableOpacity style={styles.modalDelete} onPress={deleteEntry} accessibilityLabel={t('journal.a11y.deleteEntry')} accessibilityRole="button">
                   <Text style={styles.modalDeleteText}>🗑</Text>
                 </TouchableOpacity>
               )}
-              <TouchableOpacity style={[styles.modalCancel, { borderColor: colors.border }]} onPress={closeModal} accessibilityLabel="Annuler" accessibilityRole="button">
-                <Text style={[styles.modalCancelText, { color: colors.textMuted }]}>Annuler</Text>
+              <TouchableOpacity style={[styles.modalCancel, { borderColor: colors.border }]} onPress={closeModal} accessibilityLabel={t('journal.a11y.cancelAction')} accessibilityRole="button">
+                <Text style={[styles.modalCancelText, { color: colors.textMuted }]}>{t('journal.modal.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalConfirm, { backgroundColor: primary }]}
                 onPress={confirmModal}
-                accessibilityLabel={modal.mode === 'edit' ? 'Modifier' : 'Ajouter'}
+                accessibilityLabel={modal.mode === 'edit' ? t('journal.a11y.editAction') : t('journal.a11y.addAction')}
                 accessibilityRole="button"
               >
                 <Text style={styles.modalConfirmText}>
-                  {modal.mode === 'edit' ? 'Modifier' : 'Ajouter'}
+                  {modal.mode === 'edit' ? t('journal.modal.edit') : t('journal.modal.add')}
                 </Text>
               </TouchableOpacity>
             </View>

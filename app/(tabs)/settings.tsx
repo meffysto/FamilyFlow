@@ -34,6 +34,7 @@ import { SettingsHelp } from '../../components/settings/SettingsHelp';
 import { SettingsZen, ZenConfig, DEFAULT_ZEN_CONFIG } from '../../components/settings/SettingsZen';
 import { SettingsAuth } from '../../components/settings/SettingsAuth';
 import { SettingsAutomations } from '../../components/settings/SettingsAutomations';
+import { useTranslation } from 'react-i18next';
 
 const TELEGRAM_TOKEN_KEY = 'telegram_token';
 const TELEGRAM_CHAT_KEY = 'telegram_chat_id';
@@ -46,6 +47,7 @@ type SectionId =
   | 'auth' | 'parental' | 'vault' | 'help';
 
 export default function SettingsScreen() {
+  const { t } = useTranslation();
   const {
     vaultPath, profiles, activeProfile, vault, setVaultPath, setActiveProfile,
     refresh, gamiData, notifPrefs, saveNotifPrefs, updateProfileTheme,
@@ -80,8 +82,8 @@ export default function SettingsScreen() {
   const closeSection = useCallback(() => setActiveSection(null), []);
 
   // Sous-titres dynamiques
-  const darkModeLabel = darkModePreference === 'auto' ? 'Automatique'
-    : darkModePreference === 'dark' ? 'Sombre' : 'Clair';
+  const darkModeLabel = darkModePreference === 'auto' ? t('settingsScreen.labels.auto')
+    : darkModePreference === 'dark' ? t('settingsScreen.labels.dark') : t('settingsScreen.labels.light');
 
   const activeNotifCount = notifPrefs.notifications.filter((n) => n.enabled).length;
 
@@ -89,32 +91,32 @@ export default function SettingsScreen() {
 
   const vaultShort = vaultPath
     ? '.../' + vaultPath.split('/').slice(-2).join('/')
-    : 'Non configuré';
+    : t('settingsScreen.labels.notConfigured');
 
-  const telegramStatus = telegramToken ? 'Connecté' : 'Non configuré';
+  const telegramStatus = telegramToken ? t('settingsScreen.labels.connected') : t('settingsScreen.labels.notConfigured');
 
   const { isConfigured: aiConfigured, model: aiModel } = useAI();
   const { isAuthEnabled: authEnabled, biometryType } = useAuth();
   const authSubtitle = authEnabled
-    ? `Activé${biometryType === 'face' ? ' · Face ID' : biometryType === 'fingerprint' ? ' · Touch ID' : ''}`
-    : 'Désactivé';
+    ? (biometryType === 'face' ? t('settingsScreen.rows.authEnabledFace') : biometryType === 'fingerprint' ? t('settingsScreen.rows.authEnabledTouch') : t('settingsScreen.rows.authEnabled'))
+    : t('settingsScreen.labels.disabled');
 
   // Titre du modal selon la section active
   const sectionTitles: Record<SectionId, string> = {
-    profiles: 'Profils famille',
-    appearance: 'Apparence',
-    notifications: 'Notifications',
-    zen: 'Mode zen',
-    vacation: 'Vacances',
-    gamification: 'Gamification',
-    automations: 'Automatisations',
-    ai: 'Intelligence artificielle',
-    telegram: 'Telegram',
-    grandparents: 'Grands-parents',
-    auth: 'Sécurité',
-    parental: 'Contrôle parental',
-    vault: 'Vault Obsidian',
-    help: 'Aide et découverte',
+    profiles: t('settingsScreen.modalTitles.profiles'),
+    appearance: t('settingsScreen.modalTitles.appearance'),
+    notifications: t('settingsScreen.modalTitles.notifications'),
+    zen: t('settingsScreen.modalTitles.zen'),
+    vacation: t('settingsScreen.modalTitles.vacation'),
+    gamification: t('settingsScreen.modalTitles.gamification'),
+    automations: t('settingsScreen.modalTitles.automations'),
+    ai: t('settingsScreen.modalTitles.ai'),
+    telegram: t('settingsScreen.modalTitles.telegram'),
+    grandparents: t('settingsScreen.modalTitles.grandparents'),
+    auth: t('settingsScreen.modalTitles.auth'),
+    parental: t('settingsScreen.modalTitles.parental'),
+    vault: t('settingsScreen.modalTitles.vault'),
+    help: t('settingsScreen.modalTitles.help'),
   };
 
   return (
@@ -152,7 +154,7 @@ export default function SettingsScreen() {
           <SettingsRow
             emoji="🧘"
             title="Mode zen"
-            subtitle={zenConfig.enabled ? 'Activé' : 'Désactivé'}
+            subtitle={zenConfig.enabled ? t('settingsScreen.labels.enabled') : t('settingsScreen.labels.disabled')}
             onPress={() => setActiveSection('zen')}
           />
         )}
@@ -160,7 +162,7 @@ export default function SettingsScreen() {
           <SettingsRow
             emoji="☀️"
             title="Vacances"
-            subtitle={isVacationActive ? `Actif jusqu'au ${vacationConfig?.endDate ?? ''}` : 'Inactif'}
+            subtitle={isVacationActive ? t('settingsScreen.subtitles.vacationActive', { date: vacationConfig?.endDate ?? '' }) : t('settingsScreen.labels.inactive')}
             onPress={() => setActiveSection('vacation')}
           />
         )}
@@ -188,7 +190,7 @@ export default function SettingsScreen() {
             <SettingsRow
               emoji="🤖"
               title="Intelligence artificielle"
-              subtitle={aiConfigured ? `Configurée · ${aiModel}` : 'Non configurée'}
+              subtitle={aiConfigured ? t('settingsScreen.rows.aiConfigured', { model: aiModel }) : t('settingsScreen.rows.aiNotConfigured')}
               onPress={() => setActiveSection('ai')}
               isFirst
             />

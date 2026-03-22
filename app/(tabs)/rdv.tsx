@@ -49,6 +49,7 @@ import { HELP_CONTENT } from '../../lib/help-content';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { useTranslation } from 'react-i18next';
 
 const CAL_PADDING = 16;
 const DAY_GAP = 4;
@@ -67,6 +68,7 @@ const TYPE_EMOJI: Record<string, string> = {
 };
 
 export default function RDVScreen() {
+  const { t } = useTranslation();
   const { rdvs, addRDV, updateRDV, deleteRDV, activeProfile, profiles } = useVault();
   const { primary, tint, colors } = useThemeColors();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
@@ -279,7 +281,7 @@ export default function RDVScreen() {
               style={[styles.dictaphoneBtn, { backgroundColor: tint, borderColor: primary }]}
               onPress={() => setDictaphoneRDV(rdv)}
               activeOpacity={0.7}
-              accessibilityLabel="Ouvrir le dictaphone pour enregistrer les réponses du médecin"
+              accessibilityLabel={t('rdvScreen.a11y.dictaphone')}
               accessibilityRole="button"
             >
               <Text style={styles.dictaphoneBtnEmoji}>🎙️</Text>
@@ -331,7 +333,7 @@ export default function RDVScreen() {
       <View ref={searchRef} style={[styles.searchContainer, { backgroundColor: colors.card }]}>
         <TextInput
           style={[styles.searchInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
-          placeholder="🔍 Rechercher un rendez-vous..."
+          placeholder={t('rdvScreen.placeholder.search')}
           placeholderTextColor={colors.textMuted}
           value={search}
           onChangeText={setSearch}
