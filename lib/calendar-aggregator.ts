@@ -142,8 +142,17 @@ export function aggregateCalendarEvents(
       if (dates.length === 0 && startDate < today && inRange(today)) {
         dates.push(today);
       }
+      // Occurrences passées non complétées → remonter à aujourd'hui
+      const hasOverdue = dates.some(d => d < today);
+      if (hasOverdue && inRange(today) && !dates.includes(today)) {
+        dates.push(today);
+      }
+      const seen = new Set<string>();
       for (const date of dates) {
-        const isOverdue = date === today && !!task.dueDate && task.dueDate < today && dates.length === 1;
+        if (date < today) continue; // ne pas afficher les dates passées, elles sont remontées
+        if (seen.has(date)) continue;
+        seen.add(date);
+        const isOverdue = date === today && !!task.dueDate && task.dueDate < today;
         events.push({
           id: `task-${task.id}-${date}`,
           date,
