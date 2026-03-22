@@ -538,11 +538,45 @@ export function useVaultInternal(): VaultState {
       ];
 
       const results = await Promise.allSettled([
-        // [0] Tasks
+        // [0] Tasks — avec reset hebdo des sections récurrentes
         (async () => {
+          const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+          const todayStr = format(new Date(), 'yyyy-MM-dd');
+          const RECURRING_SECTIONS = /hebdo|mensuel|tous les|quotid/i;
+
           const results = await Promise.all(taskFiles.map(async (relPath) => {
             try {
-              const content = await vault.readFile(relPath);
+              let content = await vault.readFile(relPath);
+              const lines = content.split('\n');
+              let fileChanged = false;
+              let currentSection = '';
+
+              for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                if (line.startsWith('## ') || line.startsWith('### ')) {
+                  currentSection = line.replace(/^#{2,3}\s+/, '').trim();
+                }
+                if (!RECURRING_SECTIONS.test(currentSection)) continue;
+                const isChecked = /^- \[x\]/i.test(line.trim());
+                if (!isChecked) continue;
+
+                const dateMatch = line.match(/✅\s*(\d{4}-\d{2}-\d{2})/);
+                if (dateMatch) {
+                  const completedDate = new Date(dateMatch[1] + 'T00:00:00');
+                  if (completedDate < weekStart) {
+                    lines[i] = line.replace(/- \[x\]/i, '- [ ]').replace(/\s*✅\s*\d{4}-\d{2}-\d{2}/, '');
+                    fileChanged = true;
+                  }
+                } else {
+                  lines[i] = line.trimEnd() + ` ✅ ${todayStr}`;
+                  fileChanged = true;
+                }
+              }
+
+              if (fileChanged) {
+                content = lines.join('\n');
+                await vault.writeFile(relPath, content);
+              }
               return parseTaskFile(relPath, content);
             } catch (e) { debugErrors.push(`tasks[${relPath}]: ${e}`); return []; }
           }));
