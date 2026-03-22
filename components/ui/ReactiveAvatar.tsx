@@ -100,8 +100,15 @@ export function ReactiveAvatar({ emoji, mood, style }: ReactiveAvatarProps) {
         case 'idle':
           scale.value = withRepeat(
             withSequence(
-              withTiming(1.04, { duration: 1800, easing: Easing.inOut(Easing.ease) }),
-              withTiming(1, { duration: 1800, easing: Easing.inOut(Easing.ease) }),
+              withTiming(1.12, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+              withTiming(0.95, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+            ),
+            -1, true,
+          );
+          translateY.value = withRepeat(
+            withSequence(
+              withTiming(-2, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+              withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
             ),
             -1, true,
           );
