@@ -177,13 +177,13 @@ const menageOrganise: TemplatePack = {
     const vendredi = getNextDayDate(today, nextFriday);
     const samedi = getNextDayDate(today, nextSaturday);
 
-    const content = `## Tous les jours
+    const content = `## Quotidien
 - [ ] Faire les lits 🔁 every day 📅 ${ctx.today}
 - [ ] Ranger la cuisine après les repas 🔁 every day 📅 ${ctx.today}
 - [ ] Lancer/étendre une machine 🔁 every day 📅 ${ctx.today}
 - [ ] 10 minutes de rangement rapide 🔁 every day 📅 ${ctx.today}
 
-## Hebdomadaire
+## Ménage
 - [ ] Aspirer toute la maison 🔁 every week 📅 ${lundi}
 - [ ] Nettoyer les salles de bain 🔁 every week 📅 ${mardi}
 - [ ] Changer les draps 🔁 every week 📅 ${jeudi}
@@ -198,7 +198,7 @@ const menageOrganise: TemplatePack = {
 `;
 
     return [{
-      path: '02 - Maison/Ménage hebdo.md',
+      path: '02 - Maison/Tâches récurrentes.md',
       content,
       append: true,
     }];

@@ -103,7 +103,7 @@ const ALL_SECTIONS: SectionPref[] = [
   { id: 'insights',   label: 'Suggestions',             emoji: '💡', visible: true,  priority: 'high' },
   { id: 'vacation',   label: 'Vacances',               emoji: '☀️', visible: true,  priority: 'high' },
   { id: 'overdue',    label: 'En retard',               emoji: '⚠️', visible: true,  priority: 'high' },
-  { id: 'menage',     label: 'Ménage du jour',         emoji: '🧹', visible: true,  priority: 'high' },
+  { id: 'menage',     label: 'Tâches maison du jour',  emoji: '🏠', visible: true,  priority: 'high' },
   { id: 'meals',      label: 'Repas du jour',           emoji: '🍽️', visible: true,  priority: 'high' },
   { id: 'calendar',   label: 'Calendrier',              emoji: '📆', visible: true,  priority: 'high' },
   // Secondaires — visibles par défaut
@@ -224,7 +224,7 @@ export default function DashboardScreen() {
     if (!vault) return;
     (async () => {
       const keys = {
-        menage: '02 - Maison/Ménage hebdo.md',
+        menage: '02 - Maison/Tâches récurrentes.md',
         meals: '', // vérifié via meals.length ci-dessous
         budget: '05 - Budget/config.md',
         notifications: 'notifications.md',
@@ -430,7 +430,10 @@ export default function DashboardScreen() {
   );
 
   // Données dérivées pour le tri intelligent
-  const pendingMenage = tasks.filter((t) => t.sourceFile.includes('Ménage') && !t.completed);
+  const todayForMaison = new Date().toISOString().slice(0, 10);
+  const pendingMenage = tasks.filter((t) =>
+    t.sourceFile.includes('Maison') && !t.completed && t.dueDate && t.dueDate <= todayForMaison
+  );
   const todayDayName = useMemo(() => {
     const name = format(new Date(), 'EEEE', { locale: fr });
     return name.charAt(0).toUpperCase() + name.slice(1);

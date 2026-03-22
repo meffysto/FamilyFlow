@@ -268,8 +268,10 @@ export function buildMorningDigest(data: {
     lines.push('');
   }
 
-  // Ménage (filtré depuis les tâches par sourceFile)
-  const pendingMenage = data.tasks.filter((t) => t.sourceFile.includes('Ménage') && !t.completed);
+  // Ménage (filtré par section)
+  const pendingMenage = data.tasks.filter((t) =>
+    t.section != null && t.section.toLowerCase().includes('ménage') && !t.completed
+  );
   if (pendingMenage.length > 0) {
     lines.push(`🧹 <b>${pendingMenage.length} tâche(s) ménage</b>`);
     pendingMenage.forEach((t) => lines.push(`  • ${t.text}`));

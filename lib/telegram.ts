@@ -162,7 +162,7 @@ export async function buildAndSendWeeklySummary(data: {
 
   // 3. Agréger les données de la semaine et générer le bilan IA
   const recap = buildWeeklyRecapData(
-    data.tasks, data.tasks.filter(t => t.sourceFile.includes('Ménage')), data.meals, data.moods,
+    data.tasks, data.tasks.filter(t => t.section != null && t.section.toLowerCase().includes('ménage')), data.meals, data.moods,
     data.quotes, data.defis, data.profiles, data.stock,
   );
   const recapText = formatRecapForAI(recap);

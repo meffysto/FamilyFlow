@@ -43,7 +43,7 @@ export interface JournalSummaryEntry {
 
 export interface VaultContext {
   tasks: Task[];
-  /** @deprecated Ménage tasks sont maintenant dans tasks[] avec sourceFile contenant 'Ménage' */
+  /** @deprecated Ménage tasks sont désormais dans tasks[] avec section contenant un jour de semaine */
   menageTasks?: Task[];
   rdvs: RDV[];
   stock: StockItem[];
@@ -116,7 +116,7 @@ function filterByProfile(ctx: VaultContext): VaultContext {
 
   return {
     ...ctx,
-    // Tâches : seulement les siennes + ménage (partagé)
+    // Tâches : seulement les siennes + maison (partagé)
     tasks: ctx.tasks.filter((t) => {
       const fileLower = t.sourceFile.toLowerCase();
       return fileLower.includes(nameLower) || fileLower.includes('maison');
@@ -135,7 +135,7 @@ function filterByProfile(ctx: VaultContext): VaultContext {
     defis: ctx.defis.filter((d) =>
       d.participants.length === 0 || d.participants.includes(id),
     ),
-    // Partagés (pas de filtre) : menageTasks, stock, meals, courses, recipes, profiles
+    // Partagés (pas de filtre) : stock, meals, courses, recipes, profiles
   };
 }
 
@@ -201,7 +201,9 @@ function buildVaultSummary(ctx: VaultContext): VaultSummary {
       pending: ctx.tasks.filter((t) => !t.completed).length,
     },
     menage: {
-      pending: (ctx.menageTasks ?? ctx.tasks.filter(t => t.sourceFile.includes('Ménage'))).filter((t) => !t.completed).length,
+      pending: (ctx.menageTasks ?? ctx.tasks.filter(t =>
+        t.section != null && t.section.toLowerCase().includes('ménage')
+      )).filter((t) => !t.completed).length,
     },
     rdvs: {
       upcoming: ctx.rdvs

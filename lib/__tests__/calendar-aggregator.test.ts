@@ -53,13 +53,13 @@ function makeRDV(overrides: Partial<RDV> = {}): RDV {
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {
     id: 'task-1',
-    text: 'Acheter des couches 📅 2026-03-20',
+    text: 'Acheter des couches 📅 2026-03-28',
     completed: false,
     tags: [],
     mentions: [],
     sourceFile: 'tasks.md',
     lineIndex: 0,
-    dueDate: '2026-03-20',
+    dueDate: '2026-03-28',
     ...overrides,
   };
 }
@@ -344,11 +344,11 @@ describe('aggregateCalendarEvents', () => {
       ...emptyInput(),
       rdvs: [makeRDV({ date_rdv: '2026-03-15', heure: '14:00' })],
       memories: [makeMemory({ date: '2026-03-15' })],
-      tasks: [makeTask({ dueDate: '2026-03-10' })],
+      tasks: [makeTask({ dueDate: '2026-03-25' })],
     };
     const result = aggregateCalendarEvents(input, defaultRange);
-    // Tâche le 10 avant RDV et souvenir le 15
-    expect(result[0].date).toBe('2026-03-10');
+    // RDV le 15 avant tâche le 25
+    expect(result[0].date).toBe('2026-03-15');
     // RDV (avec heure) avant souvenir (sans heure) le même jour
     const march15 = result.filter((e) => e.date === '2026-03-15');
     expect(march15[0].type).toBe('rdv');
@@ -439,12 +439,13 @@ describe('indexByDate', () => {
     const input = {
       ...emptyInput(),
       rdvs: [makeRDV({ date_rdv: '2026-03-15' })],
-      tasks: [makeTask({ dueDate: '2026-03-15' }), makeTask({ id: 'task-2', dueDate: '2026-03-20' })],
+      tasks: [makeTask({ dueDate: '2026-03-25' }), makeTask({ id: 'task-2', dueDate: '2026-03-28' })],
     };
     const events = aggregateCalendarEvents(input, defaultRange);
     const indexed = indexByDate(events);
-    expect(indexed['2026-03-15']).toHaveLength(2);
-    expect(indexed['2026-03-20']).toHaveLength(1);
+    expect(indexed['2026-03-15']).toHaveLength(1); // RDV
+    expect(indexed['2026-03-25']).toHaveLength(1);
+    expect(indexed['2026-03-28']).toHaveLength(1);
     expect(indexed['2026-03-01']).toBeUndefined();
   });
 

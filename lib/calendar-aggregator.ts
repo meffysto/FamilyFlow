@@ -108,13 +108,13 @@ export function aggregateCalendarEvents(
     });
   }
 
-  // Tâches sans dueDate (ménage du jour, récurrentes sans 📅)
+  // Tâches sans dueDate (récurrentes sans 📅, sections ménage)
   const today = format(new Date(), 'yyyy-MM-dd');
   for (const task of input.tasks) {
     if (!task.dueDate && !task.recurrence) {
-      // Tâches ménage + tâches sous sections récurrentes → aujourd'hui
-      const isMenage = task.sourceFile.includes('Ménage');
+      // Tâches sous sections récurrentes ou ménage → aujourd'hui
       const section = (task.section || '').toLowerCase();
+      const isMenage = section.includes('ménage');
       const isRecurringSection = section.includes('hebdo') || section.includes('mensuel') || section.includes('tous les') || section.includes('quotid');
       if ((!isMenage && !isRecurringSection) || task.completed || !inRange(today)) continue;
       events.push({
