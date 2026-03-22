@@ -150,5 +150,191 @@
       "vacation": "☀️ Vacation Checklist",
       "home": "🏠 Home — Tasks"
     }
+  },
+  "budget": {
+    "title": "Budget",
+    "parentOnly": "Parents only",
+    "tabs": {
+      "summary": "Summary",
+      "expenses": "Expenses"
+    },
+    "totalSpent": "Total spent",
+    "outOf": "out of {{amount}}",
+    "month": "Month: {{month}}",
+    "empty": {
+      "title": "No budget yet",
+      "subtitle": "Track your family expenses",
+      "cta": "Add an entry"
+    },
+    "addModal": {
+      "title": "New expense",
+      "category": "Category",
+      "categoryA11y": "Category {{name}}",
+      "amount": "Amount",
+      "amountPlaceholder": "0.00",
+      "amountA11y": "Expense amount",
+      "labelField": "Description",
+      "labelPlaceholder": "E.g.: Grocery store, diapers...",
+      "labelA11y": "Expense description",
+      "date": "Date",
+      "datePlaceholder": "Pick a date",
+      "submit": "Add",
+      "submitA11y": "Add expense",
+      "cancel": "Cancel"
+    },
+    "delete": {
+      "title": "Delete this expense?",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    },
+    "deleteMultiple": {
+      "title": "Delete {{count}} expense(s)?",
+      "totalAmount": "{{amount}} total"
+    },
+    "toast": {
+      "fillRequired": "Please fill in the category, amount and description",
+      "invalidAmount": "Invalid amount",
+      "deleted_one": "{{count}} expense deleted",
+      "deleted_other": "{{count}} expenses deleted",
+      "added_one": "{{count}} expense added",
+      "added_other": "{{count}} expenses added",
+      "scanError": "Error scanning receipt",
+      "configureApi": "Set up your API key in settings"
+    },
+    "scan": {
+      "scanning": "Scanning...",
+      "button": "Scan a receipt",
+      "ticket": "📷 Receipt"
+    },
+    "header": {
+      "addExpense": "+ Expense",
+      "addExpenseA11y": "Add an expense"
+    },
+    "a11y": {
+      "prevMonth": "Previous month",
+      "nextMonth": "Next month"
+    },
+    "selection": {
+      "cancel": "Cancel",
+      "cancelA11y": "Cancel selection",
+      "selected_one": "{{count}} selected",
+      "selected_other": "{{count}} selected",
+      "selectedA11y_one": "{{count}} expense selected",
+      "selectedA11y_other": "{{count}} expenses selected",
+      "delete": "Delete",
+      "deleteA11y_one": "Delete {{count}} expense",
+      "deleteA11y_other": "Delete {{count}} expenses"
+    }
+  },
+  "health": {
+    "screenTitle": "Health",
+    "tabs": {
+      "growth": "Growth",
+      "vaccines": "Vaccines",
+      "info": "Info"
+    },
+    "growthForm": {
+      "newTitle": "New measurement",
+      "editTitle": "Edit measurement",
+      "save": "Save",
+      "date": "Date",
+      "weight": "Weight (kg)",
+      "weightPlaceholder": "E.g.: 12.5",
+      "height": "Height (cm)",
+      "heightPlaceholder": "E.g.: 85",
+      "headCircumference": "Head circumference (cm)",
+      "headPlaceholder": "E.g.: 48",
+      "notes": "Notes",
+      "notesPlaceholder": "Normal, observation...",
+      "deleteBtn": "Delete this measurement"
+    },
+    "vaccineForm": {
+      "title": "New vaccine",
+      "save": "Save",
+      "vaccine": "Vaccine",
+      "vaccinePlaceholder": "Vaccine name",
+      "date": "Date",
+      "dose": "Dose",
+      "dosePlaceholder": "E.g.: 1st dose, Booster...",
+      "notes": "Notes",
+      "notesPlaceholder": "Reaction, observation..."
+    },
+    "infoEditor": {
+      "titlePrefix": "Info",
+      "save": "Save",
+      "bloodType": "Blood type",
+      "bloodTypePlaceholder": "E.g.: A+, O-...",
+      "doctor": "Family doctor",
+      "doctorPlaceholder": "Dr. Smith — 555-0123",
+      "pediatrician": "Pediatrician",
+      "pediatricianPlaceholder": "Dr. Jones — 555-0456",
+      "emergency": "Emergency numbers",
+      "emergencyPlaceholder": "911 / 112",
+      "allergiesSection": "Allergies",
+      "allergiesHint": "One per line",
+      "allergiesPlaceholder": "Peanuts\nPollen",
+      "historySection": "Medical history",
+      "historyHint": "One condition per line",
+      "historyPlaceholder": "Chickenpox (2025-06)\nEar infection (2025-11)",
+      "medicationsSection": "Current medications",
+      "medicationsHint": "One per line",
+      "medicationsPlaceholder": "Vitamin D 1000IU/day"
+    },
+    "toast": {
+      "measureSaved": "Measurement saved",
+      "measureUpdated": "Measurement updated",
+      "measureDeleted": "Measurement deleted",
+      "vaccineSaved": "Vaccine saved",
+      "infoSaved": "Information saved",
+      "error": "Error"
+    },
+    "alert": {
+      "deleteMeasureTitle": "Delete measurement?",
+      "deleteMeasureMsg": "The measurement from {{date}} will be deleted.",
+      "cancel": "Cancel",
+      "delete": "Delete"
+    },
+    "empty": {
+      "title": "No health records",
+      "subtitle": "Add your family's medical information",
+      "add": "Add"
+    },
+    "growth": {
+      "lastMeasure": "Latest measurement",
+      "history": "History",
+      "addMeasure": "+ Measurement",
+      "noMeasures": "No measurements yet. Add the first one!",
+      "tableDate": "Date",
+      "tableWeight": "Weight",
+      "tableHeight": "Height",
+      "tableHead": "HC",
+      "chartWeight": "Weight",
+      "chartHeight": "Height",
+      "chartHead": "Head circ.",
+      "chartGlobal": "Overview",
+      "weightUnit": "Weight (kg)",
+      "heightUnit": "Height (cm)",
+      "headUnit": "Head circumference (cm)"
+    },
+    "vaccines": {
+      "record": "Vaccine record ({{count}})",
+      "addVaccine": "+ Vaccine",
+      "noVaccines": "No vaccines recorded.",
+      "dose_one": "{{count}} dose",
+      "dose_other": "{{count}} doses"
+    },
+    "info": {
+      "medicalRecord": "Medical record",
+      "edit": "Edit",
+      "bloodType": "Blood type",
+      "doctor": "Doctor",
+      "pediatrician": "Pediatrician",
+      "emergency": "Emergency",
+      "allergies": "Allergies",
+      "history": "Medical history",
+      "medications": "Current medications",
+      "notSpecified": "Not specified",
+      "none": "None"
+    }
   }
 }

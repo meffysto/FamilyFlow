@@ -25,6 +25,7 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -77,6 +78,7 @@ function todayISO(): string {
 type TabId = 'resume' | 'list';
 
 export default function BudgetScreen() {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
   const { showToast } = useToast();
   const {
@@ -98,7 +100,7 @@ export default function BudgetScreen() {
     return (
       <SafeAreaView style={[{ flex: 1, backgroundColor: colors.bg, justifyContent: 'center', alignItems: 'center' }]} edges={['top']}>
         <Text style={{ fontSize: 48, marginBottom: 16 }}>🔒</Text>
-        <Text style={{ color: colors.textMuted, fontSize: FontSize.lg }}>Accès réservé aux parents</Text>
+        <Text style={{ color: colors.textMuted, fontSize: FontSize.lg }}>{t('budget.parentOnly')}</Text>
       </SafeAreaView>
     );
   }
@@ -149,16 +151,17 @@ export default function BudgetScreen() {
 
   const handleDeleteSelected = useCallback(() => {
     const count = selectedEntries.size;
+    const totalAmount = formatAmount([...selectedEntries].reduce((sum, li) => {
+      const entry = budgetEntries.find(e => e.lineIndex === li);
+      return sum + (entry?.amount ?? 0);
+    }, 0));
     Alert.alert(
-      `Supprimer ${count} dépense${count > 1 ? 's' : ''} ?`,
-      `${formatAmount([...selectedEntries].reduce((sum, li) => {
-        const entry = budgetEntries.find(e => e.lineIndex === li);
-        return sum + (entry?.amount ?? 0);
-      }, 0))} au total`,
+      t('budget.deleteMultiple.title', { count }),
+      t('budget.deleteMultiple.totalAmount', { amount: totalAmount }),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('budget.delete.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('budget.delete.confirm'),
           style: 'destructive',
           onPress: async () => {
             // Supprimer du plus grand lineIndex au plus petit pour éviter le décalage
@@ -167,7 +170,7 @@ export default function BudgetScreen() {
               await deleteExpense(li);
             }
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            showToast(`${count} dépense${count > 1 ? 's' : ''} supprimée${count > 1 ? 's' : ''}`, 'success');
+            showToast(t('budget.toast.deleted', { count }), 'success');
             cancelSelection();
           },
         },
@@ -195,12 +198,12 @@ export default function BudgetScreen() {
 
   const handleAdd = useCallback(async () => {
     if (!selectedCategory || !amountText.trim() || !labelText.trim()) {
-      showToast('Remplis la catégorie, le montant et le libellé', 'error');
+      showToast(t('budget.toast.fillRequired'), 'error');
       return;
     }
     const amount = parseFloat(amountText.replace(',', '.'));
     if (isNaN(amount) || amount <= 0) {
-      showToast('Montant invalide', 'error');
+      showToast(t('budget.toast.invalidAmount'), 'error');
       return;
     }
 
@@ -217,12 +220,12 @@ export default function BudgetScreen() {
 
   const handleDelete = useCallback((entry: BudgetEntry) => {
     Alert.alert(
-      'Supprimer la dépense ?',
+      t('budget.delete.title'),
       `${entry.label} — ${formatAmount(entry.amount)}`,
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('budget.delete.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('budget.delete.confirm'),
           style: 'destructive',
           onPress: async () => {
             await deleteExpense(entry.lineIndex);
@@ -235,7 +238,7 @@ export default function BudgetScreen() {
 
   const handleScanReceipt = useCallback(async () => {
     if (!aiConfig) {
-      showToast('Configure ta clé API dans les réglages', 'error');
+      showToast(t('budget.toast.configureApi'), 'error');
       return;
     }
     setScanning(true);
@@ -254,7 +257,7 @@ export default function BudgetScreen() {
           break;
       }
     } catch {
-      showToast('Erreur lors du scan', 'error');
+      showToast(t('budget.toast.scanError'), 'error');
     } finally {
       setScanning(false);
     }
@@ -265,7 +268,7 @@ export default function BudgetScreen() {
       await addExpense(item.date, item.category, item.amount, item.label);
     }
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    showToast(`${items.length} dépense${items.length > 1 ? 's' : ''} ajoutée${items.length > 1 ? 's' : ''}`, 'success');
+    showToast(t('budget.toast.added', { count: items.length }), 'success');
     setReceiptReviewVisible(false);
     setReceiptData(null);
   }, [addExpense, showToast]);
@@ -274,7 +277,7 @@ export default function BudgetScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
       <View ref={budgetHeaderRef} style={[styles.header, { backgroundColor: colors.bg }]}>
-        <Text style={[styles.title, { color: colors.text }]}>Budget</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('budget.title')}</Text>
         <View style={styles.headerActions}>
           {aiConfigured && (
             <TouchableOpacity
@@ -282,14 +285,14 @@ export default function BudgetScreen() {
               onPress={handleScanReceipt}
               activeOpacity={0.7}
               disabled={scanning}
-              accessibilityLabel={scanning ? 'Scan en cours' : 'Scanner un ticket de caisse'}
+              accessibilityLabel={scanning ? t('budget.scan.scanning') : t('budget.scan.button')}
               accessibilityRole="button"
               accessibilityState={{ disabled: scanning }}
             >
               {scanning ? (
                 <ActivityIndicator size="small" color={primary} />
               ) : (
-                <Text style={[styles.scanBtnText, { color: primary }]}>📷 Ticket</Text>
+                <Text style={[styles.scanBtnText, { color: primary }]}>{t('budget.scan.ticket')}</Text>
               )}
             </TouchableOpacity>
           )}
@@ -297,21 +300,21 @@ export default function BudgetScreen() {
             style={[styles.addBtn, { backgroundColor: primary }]}
             onPress={() => setAddModalVisible(true)}
             activeOpacity={0.7}
-            accessibilityLabel="Ajouter une dépense"
+            accessibilityLabel={t('budget.header.addExpenseA11y')}
             accessibilityRole="button"
           >
-            <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+ Dépense</Text>
+            <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>{t('budget.header.addExpense')}</Text>
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Month navigation */}
       <View style={[styles.monthNav, { backgroundColor: colors.card }]}>
-        <TouchableOpacity onPress={() => handleMonthChange('prev')} hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }} accessibilityLabel="Mois précédent" accessibilityRole="button">
+        <TouchableOpacity onPress={() => handleMonthChange('prev')} hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }} accessibilityLabel={t('budget.a11y.prevMonth')} accessibilityRole="button">
           <Text style={[styles.monthArrow, { color: primary }]}>{'<'}</Text>
         </TouchableOpacity>
-        <Text style={[styles.monthLabel, { color: colors.text }]} accessibilityLabel={`Mois : ${formatMonthLabel(budgetMonth)}`}>{formatMonthLabel(budgetMonth)}</Text>
-        <TouchableOpacity onPress={() => handleMonthChange('next')} hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }} accessibilityLabel="Mois suivant" accessibilityRole="button">
+        <Text style={[styles.monthLabel, { color: colors.text }]} accessibilityLabel={t('budget.month', { month: formatMonthLabel(budgetMonth) })}>{formatMonthLabel(budgetMonth)}</Text>
+        <TouchableOpacity onPress={() => handleMonthChange('next')} hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }} accessibilityLabel={t('budget.a11y.nextMonth')} accessibilityRole="button">
           <Text style={[styles.monthArrow, { color: primary }]}>{'>'}</Text>
         </TouchableOpacity>
       </View>
@@ -320,8 +323,8 @@ export default function BudgetScreen() {
       <View style={[styles.tabBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <SegmentedControl
           segments={[
-            { id: 'resume', label: 'Résumé' },
-            { id: 'list', label: 'Dépenses' },
+            { id: 'resume', label: t('budget.tabs.summary') },
+            { id: 'list', label: t('budget.tabs.expenses') },
           ]}
           value={tab}
           onChange={(id) => setTab(id as typeof tab)}
@@ -336,12 +339,12 @@ export default function BudgetScreen() {
         >
           {/* Total */}
           <View style={[styles.totalCard, { backgroundColor: colors.card }]}>
-            <Text style={[styles.totalLabel, { color: colors.textMuted }]}>Total dépensé</Text>
+            <Text style={[styles.totalLabel, { color: colors.textMuted }]}>{t('budget.totalSpent')}</Text>
             <Text style={[styles.totalAmount, { color: spent > budgetTotal ? colors.error : colors.text }]}>
               {formatAmount(spent)}
             </Text>
             <Text style={[styles.totalBudget, { color: colors.textMuted }]}>
-              sur {formatAmount(budgetTotal)}
+              {t('budget.outOf', { amount: formatAmount(budgetTotal) })}
             </Text>
             <View style={[styles.totalBar, { backgroundColor: colors.borderLight }]}>
               <View
@@ -393,14 +396,14 @@ export default function BudgetScreen() {
           {/* Barre d'action en mode sélection */}
           {selectionMode && (
             <View style={[styles.selectionBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-              <TouchableOpacity onPress={cancelSelection} hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }} accessibilityLabel="Annuler la sélection" accessibilityRole="button">
-                <Text style={[styles.selectionCancel, { color: primary }]}>Annuler</Text>
+              <TouchableOpacity onPress={cancelSelection} hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }} accessibilityLabel={t('budget.selection.cancelA11y')} accessibilityRole="button">
+                <Text style={[styles.selectionCancel, { color: primary }]}>{t('budget.selection.cancel')}</Text>
               </TouchableOpacity>
-              <Text style={[styles.selectionCount, { color: colors.text }]} accessibilityLabel={`${selectedEntries.size} dépense${selectedEntries.size > 1 ? 's' : ''} sélectionnée${selectedEntries.size > 1 ? 's' : ''}`}>
-                {selectedEntries.size} sélectionnée{selectedEntries.size > 1 ? 's' : ''}
+              <Text style={[styles.selectionCount, { color: colors.text }]} accessibilityLabel={t('budget.selection.selectedA11y', { count: selectedEntries.size })}>
+                {t('budget.selection.selected', { count: selectedEntries.size })}
               </Text>
-              <TouchableOpacity onPress={handleDeleteSelected} accessibilityLabel={`Supprimer ${selectedEntries.size} dépense${selectedEntries.size > 1 ? 's' : ''}`} accessibilityRole="button">
-                <Text style={[styles.selectionDelete, { color: colors.error }]}>Supprimer</Text>
+              <TouchableOpacity onPress={handleDeleteSelected} accessibilityLabel={t('budget.selection.deleteA11y', { count: selectedEntries.size })} accessibilityRole="button">
+                <Text style={[styles.selectionDelete, { color: colors.error }]}>{t('budget.selection.delete')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -412,9 +415,9 @@ export default function BudgetScreen() {
             ListEmptyComponent={
               <EmptyState
                 emoji="💰"
-                title="Aucun budget"
-                subtitle="Suivez vos dépenses familiales"
-                ctaLabel="Ajouter une entrée"
+                title={t('budget.empty.title')}
+                subtitle={t('budget.empty.subtitle')}
+                ctaLabel={t('budget.empty.cta')}
                 onCta={() => setAddModalVisible(true)}
               />
             }
@@ -481,10 +484,10 @@ export default function BudgetScreen() {
           </View>
 
           <ScrollView contentContainerStyle={styles.modalContent}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Nouvelle dépense</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('budget.addModal.title')}</Text>
 
             {/* Category picker */}
-            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>Catégorie</Text>
+            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>{t('budget.addModal.category')}</Text>
             <View style={styles.chipRow}>
               {budgetConfig.categories.map((cat) => {
                 const selected = selectedCategory?.name === cat.name;
@@ -500,7 +503,7 @@ export default function BudgetScreen() {
                     ]}
                     onPress={() => setSelectedCategory(cat)}
                     activeOpacity={0.7}
-                    accessibilityLabel={`Catégorie ${cat.name}`}
+                    accessibilityLabel={t('budget.addModal.categoryA11y', { name: cat.name })}
                     accessibilityRole="tab"
                     accessibilityState={{ selected }}
                   >
@@ -513,51 +516,51 @@ export default function BudgetScreen() {
             </View>
 
             {/* Amount */}
-            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>Montant</Text>
+            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>{t('budget.addModal.amount')}</Text>
             <TextInput
               style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
-              placeholder="0,00"
+              placeholder={t('budget.addModal.amountPlaceholder')}
               placeholderTextColor={colors.textFaint}
               keyboardType="decimal-pad"
               value={amountText}
               onChangeText={setAmountText}
-              accessibilityLabel="Montant de la dépense"
+              accessibilityLabel={t('budget.addModal.amountA11y')}
             />
 
             {/* Label */}
-            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>Libellé</Text>
+            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>{t('budget.addModal.labelField')}</Text>
             <TextInput
               style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
-              placeholder="Ex: Carrefour, couches..."
+              placeholder={t('budget.addModal.labelPlaceholder')}
               placeholderTextColor={colors.textFaint}
               value={labelText}
               onChangeText={setLabelText}
-              accessibilityLabel="Libellé de la dépense"
+              accessibilityLabel={t('budget.addModal.labelA11y')}
             />
 
             {/* Date */}
-            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>Date</Text>
-            <DateInput value={dateText} onChange={setDateText} placeholder="Choisir une date" />
+            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>{t('budget.addModal.date')}</Text>
+            <DateInput value={dateText} onChange={setDateText} placeholder={t('budget.addModal.datePlaceholder')} />
 
             {/* Buttons */}
             <TouchableOpacity
               style={[styles.submitBtn, { backgroundColor: primary }]}
               onPress={handleAdd}
               activeOpacity={0.7}
-              accessibilityLabel="Ajouter la dépense"
+              accessibilityLabel={t('budget.addModal.submitA11y')}
               accessibilityRole="button"
             >
-              <Text style={[styles.submitBtnText, { color: colors.onPrimary }]}>Ajouter</Text>
+              <Text style={[styles.submitBtnText, { color: colors.onPrimary }]}>{t('budget.addModal.submit')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.cancelBtn}
               onPress={() => setAddModalVisible(false)}
               activeOpacity={0.7}
-              accessibilityLabel="Annuler"
+              accessibilityLabel={t('budget.addModal.cancel')}
               accessibilityRole="button"
             >
-              <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>Annuler</Text>
+              <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>{t('budget.addModal.cancel')}</Text>
             </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>

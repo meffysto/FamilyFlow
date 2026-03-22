@@ -150,5 +150,191 @@
       "vacation": "☀️ Checklist Vacances",
       "home": "🏠 Maison — Tâches"
     }
+  },
+  "budget": {
+    "title": "Budget",
+    "parentOnly": "Accès réservé aux parents",
+    "tabs": {
+      "summary": "Résumé",
+      "expenses": "Dépenses"
+    },
+    "totalSpent": "Total dépensé",
+    "outOf": "sur {{amount}}",
+    "month": "Mois : {{month}}",
+    "empty": {
+      "title": "Aucun budget",
+      "subtitle": "Suivez vos dépenses familiales",
+      "cta": "Ajouter une entrée"
+    },
+    "addModal": {
+      "title": "Nouvelle dépense",
+      "category": "Catégorie",
+      "categoryA11y": "Catégorie {{name}}",
+      "amount": "Montant",
+      "amountPlaceholder": "0,00",
+      "amountA11y": "Montant de la dépense",
+      "labelField": "Libellé",
+      "labelPlaceholder": "Ex: Carrefour, couches...",
+      "labelA11y": "Libellé de la dépense",
+      "date": "Date",
+      "datePlaceholder": "Choisir une date",
+      "submit": "Ajouter",
+      "submitA11y": "Ajouter la dépense",
+      "cancel": "Annuler"
+    },
+    "delete": {
+      "title": "Supprimer la dépense ?",
+      "cancel": "Annuler",
+      "confirm": "Supprimer"
+    },
+    "deleteMultiple": {
+      "title": "Supprimer {{count}} dépense(s) ?",
+      "totalAmount": "{{amount}} au total"
+    },
+    "toast": {
+      "fillRequired": "Remplis la catégorie, le montant et le libellé",
+      "invalidAmount": "Montant invalide",
+      "deleted_one": "{{count}} dépense supprimée",
+      "deleted_other": "{{count}} dépenses supprimées",
+      "added_one": "{{count}} dépense ajoutée",
+      "added_other": "{{count}} dépenses ajoutées",
+      "scanError": "Erreur lors du scan",
+      "configureApi": "Configure ta clé API dans les réglages"
+    },
+    "scan": {
+      "scanning": "Scan en cours",
+      "button": "Scanner un ticket de caisse",
+      "ticket": "📷 Ticket"
+    },
+    "header": {
+      "addExpense": "+ Dépense",
+      "addExpenseA11y": "Ajouter une dépense"
+    },
+    "a11y": {
+      "prevMonth": "Mois précédent",
+      "nextMonth": "Mois suivant"
+    },
+    "selection": {
+      "cancel": "Annuler",
+      "cancelA11y": "Annuler la sélection",
+      "selected_one": "{{count}} sélectionnée",
+      "selected_other": "{{count}} sélectionnées",
+      "selectedA11y_one": "{{count}} dépense sélectionnée",
+      "selectedA11y_other": "{{count}} dépenses sélectionnées",
+      "delete": "Supprimer",
+      "deleteA11y_one": "Supprimer {{count}} dépense",
+      "deleteA11y_other": "Supprimer {{count}} dépenses"
+    }
+  },
+  "health": {
+    "screenTitle": "Santé",
+    "tabs": {
+      "growth": "Croissance",
+      "vaccines": "Vaccins",
+      "info": "Infos"
+    },
+    "growthForm": {
+      "newTitle": "Nouvelle mesure",
+      "editTitle": "Modifier la mesure",
+      "save": "Enregistrer",
+      "date": "Date",
+      "weight": "Poids (kg)",
+      "weightPlaceholder": "Ex: 12.5",
+      "height": "Taille (cm)",
+      "heightPlaceholder": "Ex: 85",
+      "headCircumference": "Périmètre crânien (cm)",
+      "headPlaceholder": "Ex: 48",
+      "notes": "Notes",
+      "notesPlaceholder": "RAS, observation...",
+      "deleteBtn": "Supprimer cette mesure"
+    },
+    "vaccineForm": {
+      "title": "Nouveau vaccin",
+      "save": "Enregistrer",
+      "vaccine": "Vaccin",
+      "vaccinePlaceholder": "Nom du vaccin",
+      "date": "Date",
+      "dose": "Dose",
+      "dosePlaceholder": "Ex: 1ère dose, Rappel...",
+      "notes": "Notes",
+      "notesPlaceholder": "Réaction, observation..."
+    },
+    "infoEditor": {
+      "titlePrefix": "Infos",
+      "save": "Enregistrer",
+      "bloodType": "Groupe sanguin",
+      "bloodTypePlaceholder": "Ex: A+, O-...",
+      "doctor": "Médecin traitant",
+      "doctorPlaceholder": "Dr. Martin — 01 23 45 67 89",
+      "pediatrician": "Pédiatre",
+      "pediatricianPlaceholder": "Dr. Dupont — 01 98 76 54 32",
+      "emergency": "Numéros urgences",
+      "emergencyPlaceholder": "15 / 112",
+      "allergiesSection": "Allergies",
+      "allergiesHint": "Une par ligne",
+      "allergiesPlaceholder": "Arachides\nPollen",
+      "historySection": "Antécédents",
+      "historyHint": "Une maladie par ligne",
+      "historyPlaceholder": "Varicelle (2025-06)\nOtite (2025-11)",
+      "medicationsSection": "Médicaments en cours",
+      "medicationsHint": "Un par ligne",
+      "medicationsPlaceholder": "Vitamine D 1000UI/jour"
+    },
+    "toast": {
+      "measureSaved": "Mesure enregistrée",
+      "measureUpdated": "Mesure modifiée",
+      "measureDeleted": "Mesure supprimée",
+      "vaccineSaved": "Vaccin enregistré",
+      "infoSaved": "Informations sauvegardées",
+      "error": "Erreur"
+    },
+    "alert": {
+      "deleteMeasureTitle": "Supprimer la mesure ?",
+      "deleteMeasureMsg": "La mesure du {{date}} sera supprimée.",
+      "cancel": "Annuler",
+      "delete": "Supprimer"
+    },
+    "empty": {
+      "title": "Aucun suivi santé",
+      "subtitle": "Ajoutez les infos médicales de la famille",
+      "add": "Ajouter"
+    },
+    "growth": {
+      "lastMeasure": "Dernière mesure",
+      "history": "Historique",
+      "addMeasure": "+ Mesure",
+      "noMeasures": "Aucune mesure enregistrée. Ajoutez la première !",
+      "tableDate": "Date",
+      "tableWeight": "Poids",
+      "tableHeight": "Taille",
+      "tableHead": "PC",
+      "chartWeight": "Poids",
+      "chartHeight": "Taille",
+      "chartHead": "Périmètre",
+      "chartGlobal": "Vue globale",
+      "weightUnit": "Poids (kg)",
+      "heightUnit": "Taille (cm)",
+      "headUnit": "Périmètre crânien (cm)"
+    },
+    "vaccines": {
+      "record": "Carnet vaccinal ({{count}})",
+      "addVaccine": "+ Vaccin",
+      "noVaccines": "Aucun vaccin enregistré.",
+      "dose_one": "{{count}} dose",
+      "dose_other": "{{count}} doses"
+    },
+    "info": {
+      "medicalRecord": "Fiche médicale",
+      "edit": "Modifier",
+      "bloodType": "Groupe sanguin",
+      "doctor": "Médecin",
+      "pediatrician": "Pédiatre",
+      "emergency": "Urgences",
+      "allergies": "Allergies",
+      "history": "Antécédents",
+      "medications": "Médicaments en cours",
+      "notSpecified": "Non renseigné",
+      "none": "Aucun"
+    }
   }
 }

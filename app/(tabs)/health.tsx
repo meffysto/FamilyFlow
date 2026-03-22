@@ -21,6 +21,7 @@ import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -36,10 +37,10 @@ import { EmptyState } from '../../components/EmptyState';
 
 type TabId = 'croissance' | 'vaccins' | 'infos';
 
-const TABS: { id: TabId; label: string; emoji: string }[] = [
-  { id: 'croissance', label: 'Croissance', emoji: '📏' },
-  { id: 'vaccins', label: 'Vaccins', emoji: '💉' },
-  { id: 'infos', label: 'Infos', emoji: '📋' },
+const TAB_IDS: { id: TabId; emoji: string; labelKey: string }[] = [
+  { id: 'croissance', emoji: '📏', labelKey: 'health.tabs.growth' },
+  { id: 'vaccins', emoji: '💉', labelKey: 'health.tabs.vaccines' },
+  { id: 'infos', emoji: '📋', labelKey: 'health.tabs.info' },
 ];
 
 const formatDateDisplay = formatDateForDisplay;
@@ -53,6 +54,7 @@ function GrowthForm({ onSave, onClose, onDelete, initialEntry }: {
   initialEntry?: GrowthEntry;
 }) {
   const { colors, primary } = useThemeColors();
+  const { t } = useTranslation();
   const isEditing = !!initialEntry;
   const [date, setDate] = useState(initialEntry?.date || new Date().toISOString().slice(0, 10));
   const [poids, setPoids] = useState(initialEntry?.poids != null ? String(initialEntry.poids) : '');
@@ -74,47 +76,47 @@ function GrowthForm({ onSave, onClose, onDelete, initialEntry }: {
 
   return (
     <View style={[formStyles.container, { backgroundColor: colors.bg }]}>
-      <ModalHeader title={isEditing ? 'Modifier la mesure' : 'Nouvelle mesure'} onClose={onClose} rightLabel="Enregistrer" onRight={handleSave} rightDisabled={!canSave} />
+      <ModalHeader title={isEditing ? t('health.growthForm.editTitle') : t('health.growthForm.newTitle')} onClose={onClose} rightLabel={t('health.growthForm.save')} onRight={handleSave} rightDisabled={!canSave} />
       <ScrollView style={formStyles.scroll} contentContainerStyle={formStyles.content}>
-        <Text style={[formStyles.label, { color: colors.textSub }]}>Date</Text>
+        <Text style={[formStyles.label, { color: colors.textSub }]}>{t('health.growthForm.date')}</Text>
         <DateInput value={date} onChange={setDate} />
 
-        <Text style={[formStyles.label, { color: colors.textSub }]}>Poids (kg)</Text>
+        <Text style={[formStyles.label, { color: colors.textSub }]}>{t('health.growthForm.weight')}</Text>
         <TextInput
           style={[formStyles.input, { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
           value={poids}
           onChangeText={setPoids}
-          placeholder="Ex: 12.5"
+          placeholder={t('health.growthForm.weightPlaceholder')}
           placeholderTextColor={colors.textFaint}
           keyboardType="decimal-pad"
         />
 
-        <Text style={[formStyles.label, { color: colors.textSub }]}>Taille (cm)</Text>
+        <Text style={[formStyles.label, { color: colors.textSub }]}>{t('health.growthForm.height')}</Text>
         <TextInput
           style={[formStyles.input, { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
           value={taille}
           onChangeText={setTaille}
-          placeholder="Ex: 85"
+          placeholder={t('health.growthForm.heightPlaceholder')}
           placeholderTextColor={colors.textFaint}
           keyboardType="decimal-pad"
         />
 
-        <Text style={[formStyles.label, { color: colors.textSub }]}>Périmètre crânien (cm)</Text>
+        <Text style={[formStyles.label, { color: colors.textSub }]}>{t('health.growthForm.headCircumference')}</Text>
         <TextInput
           style={[formStyles.input, { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
           value={perimetre}
           onChangeText={setPerimetre}
-          placeholder="Ex: 48"
+          placeholder={t('health.growthForm.headPlaceholder')}
           placeholderTextColor={colors.textFaint}
           keyboardType="decimal-pad"
         />
 
-        <Text style={[formStyles.label, { color: colors.textSub }]}>Notes</Text>
+        <Text style={[formStyles.label, { color: colors.textSub }]}>{t('health.growthForm.notes')}</Text>
         <TextInput
           style={[formStyles.input, { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
           value={note}
           onChangeText={setNote}
-          placeholder="RAS, observation..."
+          placeholder={t('health.growthForm.notesPlaceholder')}
           placeholderTextColor={colors.textFaint}
         />
 
@@ -124,7 +126,7 @@ function GrowthForm({ onSave, onClose, onDelete, initialEntry }: {
             onPress={onDelete}
             activeOpacity={0.7}
           >
-            <Text style={[formStyles.deleteBtnText, { color: colors.error }]}>Supprimer cette mesure</Text>
+            <Text style={[formStyles.deleteBtnText, { color: colors.error }]}>{t('health.growthForm.deleteBtn')}</Text>
           </TouchableOpacity>
         )}
       </ScrollView>
@@ -150,6 +152,7 @@ const COMMON_VACCINES = [
 
 function VaccineForm({ onSave, onClose }: { onSave: (entry: VaccineEntry) => void; onClose: () => void }) {
   const { colors, primary } = useThemeColors();
+  const { t } = useTranslation();
   const [nom, setNom] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [dose, setDose] = useState('');
@@ -168,14 +171,14 @@ function VaccineForm({ onSave, onClose }: { onSave: (entry: VaccineEntry) => voi
 
   return (
     <View style={[formStyles.container, { backgroundColor: colors.bg }]}>
-      <ModalHeader title="Nouveau vaccin" onClose={onClose} rightLabel="Enregistrer" onRight={handleSave} rightDisabled={!canSave} />
+      <ModalHeader title={t('health.vaccineForm.title')} onClose={onClose} rightLabel={t('health.vaccineForm.save')} onRight={handleSave} rightDisabled={!canSave} />
       <ScrollView style={formStyles.scroll} contentContainerStyle={formStyles.content}>
-        <Text style={[formStyles.label, { color: colors.textSub }]}>Vaccin</Text>
+        <Text style={[formStyles.label, { color: colors.textSub }]}>{t('health.vaccineForm.vaccine')}</Text>
         <TextInput
           style={[formStyles.input, { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
           value={nom}
           onChangeText={setNom}
-          placeholder="Nom du vaccin"
+          placeholder={t('health.vaccineForm.vaccinePlaceholder')}
           placeholderTextColor={colors.textFaint}
         />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={formStyles.chips}>
@@ -192,24 +195,24 @@ function VaccineForm({ onSave, onClose }: { onSave: (entry: VaccineEntry) => voi
           ))}
         </ScrollView>
 
-        <Text style={[formStyles.label, { color: colors.textSub }]}>Date</Text>
+        <Text style={[formStyles.label, { color: colors.textSub }]}>{t('health.vaccineForm.date')}</Text>
         <DateInput value={date} onChange={setDate} />
 
-        <Text style={[formStyles.label, { color: colors.textSub }]}>Dose</Text>
+        <Text style={[formStyles.label, { color: colors.textSub }]}>{t('health.vaccineForm.dose')}</Text>
         <TextInput
           style={[formStyles.input, { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
           value={dose}
           onChangeText={setDose}
-          placeholder="Ex: 1ère dose, Rappel..."
+          placeholder={t('health.vaccineForm.dosePlaceholder')}
           placeholderTextColor={colors.textFaint}
         />
 
-        <Text style={[formStyles.label, { color: colors.textSub }]}>Notes</Text>
+        <Text style={[formStyles.label, { color: colors.textSub }]}>{t('health.vaccineForm.notes')}</Text>
         <TextInput
           style={[formStyles.input, { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
           value={note}
           onChangeText={setNote}
-          placeholder="Réaction, observation..."
+          placeholder={t('health.vaccineForm.notesPlaceholder')}
           placeholderTextColor={colors.textFaint}
         />
       </ScrollView>
@@ -229,6 +232,7 @@ function InfoEditor({
   onClose: () => void;
 }) {
   const { colors, primary } = useThemeColors();
+  const { t } = useTranslation();
   const [groupeSanguin, setGroupeSanguin] = useState(record.groupeSanguin || '');
   const [contactMedecin, setContactMedecin] = useState(record.contactMedecin || '');
   const [contactPediatre, setContactPediatre] = useState(record.contactPediatre || '');
@@ -252,75 +256,75 @@ function InfoEditor({
 
   return (
     <View style={[formStyles.container, { backgroundColor: colors.bg }]}>
-      <ModalHeader title={`Infos — ${record.enfant}`} onClose={onClose} rightLabel="Enregistrer" onRight={handleSave} />
+      <ModalHeader title={`${t('health.infoEditor.titlePrefix')} — ${record.enfant}`} onClose={onClose} rightLabel={t('health.infoEditor.save')} onRight={handleSave} />
       <ScrollView style={formStyles.scroll} contentContainerStyle={formStyles.content}>
-        <Text style={[formStyles.label, { color: colors.textSub }]}>Groupe sanguin</Text>
+        <Text style={[formStyles.label, { color: colors.textSub }]}>{t('health.infoEditor.bloodType')}</Text>
         <TextInput
           style={[formStyles.input, { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
           value={groupeSanguin}
           onChangeText={setGroupeSanguin}
-          placeholder="Ex: A+, O-..."
+          placeholder={t('health.infoEditor.bloodTypePlaceholder')}
           placeholderTextColor={colors.textFaint}
         />
 
-        <Text style={[formStyles.label, { color: colors.textSub }]}>Médecin traitant</Text>
+        <Text style={[formStyles.label, { color: colors.textSub }]}>{t('health.infoEditor.doctor')}</Text>
         <TextInput
           style={[formStyles.input, { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
           value={contactMedecin}
           onChangeText={setContactMedecin}
-          placeholder="Dr. Martin — 01 23 45 67 89"
+          placeholder={t('health.infoEditor.doctorPlaceholder')}
           placeholderTextColor={colors.textFaint}
         />
 
-        <Text style={[formStyles.label, { color: colors.textSub }]}>Pédiatre</Text>
+        <Text style={[formStyles.label, { color: colors.textSub }]}>{t('health.infoEditor.pediatrician')}</Text>
         <TextInput
           style={[formStyles.input, { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
           value={contactPediatre}
           onChangeText={setContactPediatre}
-          placeholder="Dr. Dupont — 01 98 76 54 32"
+          placeholder={t('health.infoEditor.pediatricianPlaceholder')}
           placeholderTextColor={colors.textFaint}
         />
 
-        <Text style={[formStyles.label, { color: colors.textSub }]}>Numéros urgences</Text>
+        <Text style={[formStyles.label, { color: colors.textSub }]}>{t('health.infoEditor.emergency')}</Text>
         <TextInput
           style={[formStyles.input, { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
           value={contactUrgences}
           onChangeText={setContactUrgences}
-          placeholder="15 / 112"
+          placeholder={t('health.infoEditor.emergencyPlaceholder')}
           placeholderTextColor={colors.textFaint}
         />
 
-        <Text style={[formStyles.sectionLabel, { color: colors.text }]}>⚠️ Allergies</Text>
-        <Text style={[formStyles.hint, { color: colors.textFaint }]}>Une par ligne</Text>
+        <Text style={[formStyles.sectionLabel, { color: colors.text }]}>{`⚠️ ${t('health.infoEditor.allergiesSection')}`}</Text>
+        <Text style={[formStyles.hint, { color: colors.textFaint }]}>{t('health.infoEditor.allergiesHint')}</Text>
         <TextInput
           style={[formStyles.inputMulti, { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
           value={allergies}
           onChangeText={setAllergies}
-          placeholder="Arachides&#10;Pollen"
+          placeholder={t('health.infoEditor.allergiesPlaceholder')}
           placeholderTextColor={colors.textFaint}
           multiline
           numberOfLines={3}
         />
 
-        <Text style={[formStyles.sectionLabel, { color: colors.text }]}>🏥 Antécédents</Text>
-        <Text style={[formStyles.hint, { color: colors.textFaint }]}>Une maladie par ligne</Text>
+        <Text style={[formStyles.sectionLabel, { color: colors.text }]}>{`🏥 ${t('health.infoEditor.historySection')}`}</Text>
+        <Text style={[formStyles.hint, { color: colors.textFaint }]}>{t('health.infoEditor.historyHint')}</Text>
         <TextInput
           style={[formStyles.inputMulti, { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
           value={antecedents}
           onChangeText={setAntecedents}
-          placeholder="Varicelle (2025-06)&#10;Otite (2025-11)"
+          placeholder={t('health.infoEditor.historyPlaceholder')}
           placeholderTextColor={colors.textFaint}
           multiline
           numberOfLines={3}
         />
 
-        <Text style={[formStyles.sectionLabel, { color: colors.text }]}>💊 Médicaments en cours</Text>
-        <Text style={[formStyles.hint, { color: colors.textFaint }]}>Un par ligne</Text>
+        <Text style={[formStyles.sectionLabel, { color: colors.text }]}>{`💊 ${t('health.infoEditor.medicationsSection')}`}</Text>
+        <Text style={[formStyles.hint, { color: colors.textFaint }]}>{t('health.infoEditor.medicationsHint')}</Text>
         <TextInput
           style={[formStyles.inputMulti, { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
           value={medicaments}
           onChangeText={setMedicaments}
-          placeholder="Vitamine D 1000UI/jour"
+          placeholder={t('health.infoEditor.medicationsPlaceholder')}
           placeholderTextColor={colors.textFaint}
           multiline
           numberOfLines={3}
@@ -336,6 +340,7 @@ export default function HealthScreen() {
   const { profiles, healthRecords, saveHealthRecord, addGrowthEntry, updateGrowthEntry, deleteGrowthEntry, addVaccineEntry, refresh } = useVault();
   const { primary, colors } = useThemeColors();
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
   const enfants = useMemo(() => profiles.filter(p => p.role === 'enfant'), [profiles]);
   const [selectedEnfantId, setSelectedEnfantId] = useState<string>(enfants[0]?.id || '');
@@ -366,10 +371,10 @@ export default function HealthScreen() {
     try {
       await addGrowthEntry(selectedEnfant.name, entry);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showToast('Mesure enregistrée', 'success');
+      showToast(t('health.toast.measureSaved'), 'success');
       setShowGrowthForm(false);
     } catch {
-      showToast('Erreur', 'error');
+      showToast(t('health.toast.error'), 'error');
     }
   }, [selectedEnfant, addGrowthEntry, showToast]);
 
@@ -378,10 +383,10 @@ export default function HealthScreen() {
     try {
       await addVaccineEntry(selectedEnfant.name, entry);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showToast('Vaccin enregistré', 'success');
+      showToast(t('health.toast.vaccineSaved'), 'success');
       setShowVaccineForm(false);
     } catch {
-      showToast('Erreur', 'error');
+      showToast(t('health.toast.error'), 'error');
     }
   }, [selectedEnfant, addVaccineEntry, showToast]);
 
@@ -389,10 +394,10 @@ export default function HealthScreen() {
     try {
       await saveHealthRecord(updated);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showToast('Informations sauvegardées', 'success');
+      showToast(t('health.toast.infoSaved'), 'success');
       setShowInfoEditor(false);
     } catch {
-      showToast('Erreur', 'error');
+      showToast(t('health.toast.error'), 'error');
     }
   }, [saveHealthRecord, showToast]);
 
@@ -404,20 +409,20 @@ export default function HealthScreen() {
     try {
       await updateGrowthEntry(selectedEnfant.name, oldDate, newEntry);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showToast('Mesure modifiée', 'success');
+      showToast(t('health.toast.measureUpdated'), 'success');
       setEditingEntry(null);
     } catch {
-      showToast('Erreur', 'error');
+      showToast(t('health.toast.error'), 'error');
     }
   }, [selectedEnfant, updateGrowthEntry, showToast]);
 
   const handleDeleteGrowth = useCallback(async (date: string) => {
     if (!selectedEnfant) return;
-    Alert.alert('Supprimer la mesure ?', `La mesure du ${formatDateForDisplay(date)} sera supprimée.`, [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: async () => {
+    Alert.alert(t('health.alert.deleteMeasureTitle'), t('health.alert.deleteMeasureMsg', { date: formatDateForDisplay(date) }), [
+      { text: t('health.alert.cancel'), style: 'cancel' },
+      { text: t('health.alert.delete'), style: 'destructive', onPress: async () => {
         await deleteGrowthEntry(selectedEnfant.name, date);
-        showToast('Mesure supprimée', 'success');
+        showToast(t('health.toast.measureDeleted'), 'success');
         setEditingEntry(null);
       }},
     ]);
@@ -427,13 +432,13 @@ export default function HealthScreen() {
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
         <View style={[styles.header, { backgroundColor: colors.bg }]}>
-          <Text style={[styles.title, { color: colors.text }]}>🏥 Santé</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{`🏥 ${t('health.screenTitle')}`}</Text>
         </View>
         <EmptyState
           emoji="🏥"
-          title="Aucun suivi santé"
-          subtitle="Ajoutez les infos médicales de la famille"
-          ctaLabel="Ajouter"
+          title={t('health.empty.title')}
+          subtitle={t('health.empty.subtitle')}
+          ctaLabel={t('health.empty.add')}
           onCta={() => setShowGrowthForm(true)}
         />
       </SafeAreaView>
@@ -443,7 +448,7 @@ export default function HealthScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <View style={[styles.header, { backgroundColor: colors.bg }]}>
-        <Text style={[styles.title, { color: colors.text }]}>🏥 Santé</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{`🏥 ${t('health.screenTitle')}`}</Text>
       </View>
 
       {/* Sélecteur enfant */}
@@ -469,7 +474,7 @@ export default function HealthScreen() {
 
       {/* Onglets */}
       <View style={[styles.tabBar, { borderBottomColor: colors.border }]}>
-        {TABS.map(tab => (
+        {TAB_IDS.map(tab => (
           <TouchableOpacity
             key={tab.id}
             style={[
@@ -479,7 +484,7 @@ export default function HealthScreen() {
             onPress={() => setActiveTab(tab.id)}
           >
             <Text style={[styles.tabText, { color: activeTab === tab.id ? primary : colors.textMuted }]}>
-              {tab.emoji} {tab.label}
+              {tab.emoji} {t(tab.labelKey)}
             </Text>
           </TouchableOpacity>
         ))}
@@ -533,6 +538,7 @@ export default function HealthScreen() {
 
 function CroissanceTab({ record, enfant, onAdd, onEditEntry }: { record: HealthRecord; enfant?: import('../../lib/types').Profile; onAdd: () => void; onEditEntry?: (entry: GrowthEntry) => void }) {
   const { primary, tint, colors } = useThemeColors();
+  const { t } = useTranslation();
   const entries = [...record.croissance].reverse(); // plus récent en premier
   const [chartMetric, setChartMetric] = useState<'weight' | 'height' | 'head' | 'global'>('weight');
 
@@ -552,13 +558,13 @@ function CroissanceTab({ record, enfant, onAdd, onEditEntry }: { record: HealthR
 
   const metricChips = useMemo(() => {
     const chips: { id: 'weight' | 'height' | 'head' | 'global'; label: string }[] = [
-      { id: 'weight', label: 'Poids' },
-      { id: 'height', label: 'Taille' },
+      { id: 'weight', label: t('health.growth.chartWeight') },
+      { id: 'height', label: t('health.growth.chartHeight') },
     ];
-    if (showHead) chips.push({ id: 'head', label: 'Périmètre' });
-    chips.push({ id: 'global', label: 'Vue globale' });
+    if (showHead) chips.push({ id: 'head', label: t('health.growth.chartHead') });
+    chips.push({ id: 'global', label: t('health.growth.chartGlobal') });
     return chips;
-  }, [showHead]);
+  }, [showHead, t]);
 
   // Calculer les deltas
   const getEvolution = (current: number | undefined, previous: number | undefined) => {
@@ -598,16 +604,16 @@ function CroissanceTab({ record, enfant, onAdd, onEditEntry }: { record: HealthR
           {chartMetric === 'global' ? (
             <Animated.View entering={FadeInDown.delay(100)} style={{ gap: Spacing.xl }}>
               <View>
-                <Text style={[styles.miniChartLabel, { color: colors.textSub }]}>Poids (kg)</Text>
+                <Text style={[styles.miniChartLabel, { color: colors.textSub }]}>{t('health.growth.weightUnit')}</Text>
                 <GrowthChart entries={record.croissance} sex={childSex} dateNaissance={enfant.birthdate} metric="weight" height={160} />
               </View>
               <View>
-                <Text style={[styles.miniChartLabel, { color: colors.textSub }]}>Taille (cm)</Text>
+                <Text style={[styles.miniChartLabel, { color: colors.textSub }]}>{t('health.growth.heightUnit')}</Text>
                 <GrowthChart entries={record.croissance} sex={childSex} dateNaissance={enfant.birthdate} metric="height" height={160} />
               </View>
               {showHead && (
                 <View>
-                  <Text style={[styles.miniChartLabel, { color: colors.textSub }]}>Périmètre crânien (cm)</Text>
+                  <Text style={[styles.miniChartLabel, { color: colors.textSub }]}>{t('health.growth.headUnit')}</Text>
                   <GrowthChart entries={record.croissance} sex={childSex} dateNaissance={enfant.birthdate} metric="head" height={160} />
                 </View>
               )}
@@ -633,7 +639,7 @@ function CroissanceTab({ record, enfant, onAdd, onEditEntry }: { record: HealthR
       {/* Résumé dernières mesures */}
       {entries.length > 0 && (
         <Animated.View entering={FadeInDown.delay(200)} style={[styles.summaryCard, { backgroundColor: colors.card }]}>
-          <Text style={[styles.summaryTitle, { color: colors.text }]}>Dernière mesure</Text>
+          <Text style={[styles.summaryTitle, { color: colors.text }]}>{t('health.growth.lastMeasure')}</Text>
           <Text style={[styles.summaryDate, { color: colors.textMuted }]}>
             {formatDateDisplay(entries[0].date)}
           </Text>
@@ -672,26 +678,26 @@ function CroissanceTab({ record, enfant, onAdd, onEditEntry }: { record: HealthR
 
       {/* Historique */}
       <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Historique</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('health.growth.history')}</Text>
         <TouchableOpacity style={[styles.addBtn, { backgroundColor: primary }]} onPress={onAdd} activeOpacity={0.7}>
-          <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+ Mesure</Text>
+          <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>{t('health.growth.addMeasure')}</Text>
         </TouchableOpacity>
       </View>
 
       {entries.length === 0 ? (
         <View style={styles.emptySection}>
           <Text style={[styles.emptySectionText, { color: colors.textMuted }]}>
-            Aucune mesure enregistrée. Ajoutez la première !
+            {t('health.growth.noMeasures')}
           </Text>
         </View>
       ) : (
         <View style={[styles.table, { backgroundColor: colors.card }]}>
           {/* Header */}
           <View style={[styles.tableRow, styles.tableHeader, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.tableCell, styles.tableCellHeader, { color: colors.textMuted }]}>Date</Text>
-            <Text style={[styles.tableCell, styles.tableCellHeader, { color: colors.textMuted }]}>Poids</Text>
-            <Text style={[styles.tableCell, styles.tableCellHeader, { color: colors.textMuted }]}>Taille</Text>
-            <Text style={[styles.tableCell, styles.tableCellHeader, { color: colors.textMuted }]}>PC</Text>
+            <Text style={[styles.tableCell, styles.tableCellHeader, { color: colors.textMuted }]}>{t('health.growth.tableDate')}</Text>
+            <Text style={[styles.tableCell, styles.tableCellHeader, { color: colors.textMuted }]}>{t('health.growth.tableWeight')}</Text>
+            <Text style={[styles.tableCell, styles.tableCellHeader, { color: colors.textMuted }]}>{t('health.growth.tableHeight')}</Text>
+            <Text style={[styles.tableCell, styles.tableCellHeader, { color: colors.textMuted }]}>{t('health.growth.tableHead')}</Text>
           </View>
           {entries.map((entry, i) => (
             <TouchableOpacity
@@ -720,6 +726,7 @@ function CroissanceTab({ record, enfant, onAdd, onEditEntry }: { record: HealthR
 
 function VaccinsTab({ record, onAdd }: { record: HealthRecord; onAdd: () => void }) {
   const { primary, colors } = useThemeColors();
+  const { t } = useTranslation();
 
   // Grouper par nom de vaccin
   const grouped = useMemo(() => {
@@ -736,10 +743,10 @@ function VaccinsTab({ record, onAdd }: { record: HealthRecord; onAdd: () => void
     <View style={styles.tabContent}>
       <View style={styles.sectionHeader}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          Carnet vaccinal ({record.vaccins.length})
+          {t('health.vaccines.record', { count: record.vaccins.length })}
         </Text>
         <TouchableOpacity style={[styles.addBtn, { backgroundColor: primary }]} onPress={onAdd} activeOpacity={0.7}>
-          <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>+ Vaccin</Text>
+          <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>{t('health.vaccines.addVaccine')}</Text>
         </TouchableOpacity>
       </View>
 
