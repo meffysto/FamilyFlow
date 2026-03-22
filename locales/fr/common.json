@@ -1,4 +1,9 @@
 {
+  "errorBoundary": {
+    "title": "Oups, quelque chose a planté",
+    "unknown": "Erreur inconnue",
+    "retry": "Réessayer"
+  },
   "nightMode": {
     "breastfeeding": "Allaitement",
     "bottle": "Biberon",

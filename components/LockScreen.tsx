@@ -263,7 +263,7 @@ export const LockScreen = React.memo(function LockScreen() {
           accessibilityRole="button"
         >
           <Text style={[styles.biometryHintText, { color: primary }]}>
-            Utiliser {biometryLabel}
+            {t('lockScreen.useBiometry', { type: biometryLabel })}
           </Text>
         </TouchableOpacity>
       )}

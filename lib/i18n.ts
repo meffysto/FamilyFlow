@@ -56,7 +56,6 @@ export async function loadSavedLanguage(): Promise<void> {
   } catch {
     // Pas de langue sauvegardée → on garde celle du device
   }
-  // Synchroniser la langue vers les widgets iOS
   refreshWidgetLanguage(i18n.language);
 }
 
@@ -69,7 +68,6 @@ export async function setAppLanguage(lng: 'fr' | 'en' | 'auto'): Promise<void> {
     await SecureStore.setItemAsync(LANGUAGE_KEY, lng);
     await i18n.changeLanguage(lng);
   }
-  // Synchroniser la langue vers les widgets iOS
   refreshWidgetLanguage(i18n.language);
 }
 

@@ -1,4 +1,9 @@
 {
+  "errorBoundary": {
+    "title": "Oops, something crashed",
+    "unknown": "Unknown error",
+    "retry": "Retry"
+  },
   "nightMode": {
     "breastfeeding": "Breastfeeding",
     "bottle": "Bottle",

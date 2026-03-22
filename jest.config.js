@@ -15,5 +15,8 @@ module.exports = {
   moduleNameMapper: {
     '^expo-secure-store$': '<rootDir>/lib/__tests__/__mocks__/expo-secure-store.ts',
     '^expo-localization$': '<rootDir>/lib/__tests__/__mocks__/expo-localization.ts',
+    '^\\.\\./widget-bridge$': '<rootDir>/lib/__tests__/__mocks__/widget-bridge.ts',
+    '^\\.\\./\\.\\./widget-bridge$': '<rootDir>/lib/__tests__/__mocks__/widget-bridge.ts',
+    '^\\./widget-bridge$': '<rootDir>/lib/__tests__/__mocks__/widget-bridge.ts',
   },
 };

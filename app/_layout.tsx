@@ -26,7 +26,7 @@ import { ParentalControlsProvider } from '../contexts/ParentalControlsContext';
 import { HelpProvider } from '../contexts/HelpContext';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { LockScreen } from '../components/LockScreen';
-import { loadSavedLanguage } from '../lib/i18n';
+import i18n, { loadSavedLanguage } from '../lib/i18n';
 
 // ─── Error Boundary ──────────────────────────────────────────────────────────
 
@@ -56,15 +56,15 @@ class AppErrorBoundary extends React.Component<
       return (
         <View style={styles.errorContainer}>
           <Text style={styles.errorEmoji}>😵</Text>
-          <Text style={styles.errorTitle}>Oups, quelque chose a planté</Text>
+          <Text style={styles.errorTitle}>{i18n.t('errorBoundary.title')}</Text>
           <Text style={styles.errorMessage}>
-            {this.state.error?.message ?? 'Erreur inconnue'}
+            {this.state.error?.message ?? i18n.t('errorBoundary.unknown')}
           </Text>
           <TouchableOpacity
             style={styles.errorButton}
             onPress={() => this.setState({ hasError: false, error: undefined })}
           >
-            <Text style={styles.errorButtonText}>Réessayer</Text>
+            <Text style={styles.errorButtonText}>{i18n.t('errorBoundary.retry')}</Text>
           </TouchableOpacity>
         </View>
       );
