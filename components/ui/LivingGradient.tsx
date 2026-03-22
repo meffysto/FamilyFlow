@@ -9,6 +9,7 @@
 import React, { forwardRef, useMemo } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { useThemeColors } from '../../contexts/ThemeContext';
 
 // Palettes par moment de la journée — [couleur haute, couleur basse]
@@ -74,11 +75,16 @@ export const LivingGradient = forwardRef<View, LivingGradientProps>(
     }, [isDark, primary, primaryBlend]);
 
     return (
-      <View ref={ref} style={style}>
+      <View ref={ref} style={[style, { overflow: 'hidden' }]}>
         <LinearGradient
           colors={[...gradientColors]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
+          style={[StyleSheet.absoluteFill, { opacity: 0.55 }]}
+        />
+        <BlurView
+          intensity={30}
+          tint={isDark ? 'dark' : 'light'}
           style={StyleSheet.absoluteFill}
         />
         {children}
