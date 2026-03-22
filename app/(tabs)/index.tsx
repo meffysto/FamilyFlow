@@ -163,7 +163,6 @@ export default function DashboardScreen() {
     isLoading,
     error,
     vaultPath,
-    menageTasks,
     courses,
     stock,
     meals,
@@ -431,7 +430,7 @@ export default function DashboardScreen() {
   );
 
   // Données dérivées pour le tri intelligent
-  const pendingMenage = menageTasks.filter((t) => !t.completed);
+  const pendingMenage = tasks.filter((t) => t.sourceFile.includes('Ménage') && !t.completed);
   const todayDayName = useMemo(() => {
     const name = format(new Date(), 'EEEE', { locale: fr });
     return name.charAt(0).toUpperCase() + name.slice(1);
@@ -466,22 +465,21 @@ export default function DashboardScreen() {
   // Stats semaine (pour tri intelligent)
   const weeklyStatsData = useMemo(() => {
     const weekStart = getWeekStart(new Date());
-    const all = [...tasks, ...menageTasks];
-    const data = aggregateTasksByWeek(all, weekStart);
+    const data = aggregateTasksByWeek(tasks, weekStart);
     const total = data.reduce((s, d) => s + d.value, 0);
     return { data, total };
-  }, [tasks, menageTasks]);
+  }, [tasks]);
 
   // Insights locaux (pour tri intelligent)
   const insights = useMemo(() => {
     const input: InsightInput = {
-      tasks, menageTasks, courses, stock, meals, rdvs,
+      tasks, courses, stock, meals, rdvs,
       profiles, activeProfile, defis, gratitudeDays,
       memories, vacationConfig, isVacationActive,
       gamiData, photoDates, anniversaries, skillTrees,
     };
     return generateInsights(input);
-  }, [tasks, menageTasks, courses, stock, meals, rdvs, profiles, activeProfile,
+  }, [tasks, courses, stock, meals, rdvs, profiles, activeProfile,
     defis, gratitudeDays, memories, vacationConfig, isVacationActive, gamiData, photoDates, anniversaries, skillTrees]);
 
   // Tri intelligent

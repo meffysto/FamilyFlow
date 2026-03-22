@@ -147,7 +147,7 @@ export async function testContact(
   contact: GrandparentContact,
   telegramToken?: string,
 ): Promise<SendResult> {
-  const html = '✅ <b>Family Vault</b> — Connexion réussie ! Vous recevrez les recaps ici. 👴👵';
+  const html = '✅ <b>Family Flow</b> — Connexion réussie ! Vous recevrez les recaps ici. 👴👵';
   return sendViaChannel(contact, html, telegramToken);
 }
 

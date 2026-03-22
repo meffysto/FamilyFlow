@@ -243,7 +243,7 @@ export default function SettingsScreen() {
 
         {/* App info */}
         <View style={styles.appInfo}>
-          <Text style={[styles.appInfoText, { color: colors.textFaint }]}>Family Vault v1.0.0</Text>
+          <Text style={[styles.appInfoText, { color: colors.textFaint }]}>Family Flow v1.0.0</Text>
           <Text style={[styles.appInfoText, { color: colors.textFaint }]}>Données locales · Pas de tracking</Text>
           <Text style={[styles.appInfoText, { color: colors.textFaint }]}>Privacy-first · Offline-first</Text>
         </View>

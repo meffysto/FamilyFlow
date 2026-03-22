@@ -247,7 +247,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticatingRef.current = true;
         const LocalAuth = require('expo-local-authentication');
         const result = await LocalAuth.authenticateAsync({
-          promptMessage: 'Déverrouiller Family Vault',
+          promptMessage: 'Déverrouiller Family Flow',
           cancelLabel: 'Utiliser le PIN',
           disableDeviceFallback: true,
         });

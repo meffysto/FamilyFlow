@@ -86,7 +86,7 @@ export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramTok
               <Text style={[styles.setupText, { color: colors.textSub }]}>
                 1. Ouvrez Telegram et cherchez <Text style={[styles.bold, { color: colors.text }]}>@BotFather</Text>{'\n'}
                 2. Envoyez <Text style={[styles.code, { color: primary, backgroundColor: colors.border }]}>/newbot</Text>{'\n'}
-                3. Choisissez un nom (ex: "Family Vault"){'\n'}
+                3. Choisissez un nom (ex: "Family Flow"){'\n'}
                 4. Choisissez un username (ex: FamilyVaultBot){'\n'}
                 5. BotFather vous donne un <Text style={[styles.bold, { color: colors.text }]}>token</Text> — copiez-le ci-dessous
               </Text>

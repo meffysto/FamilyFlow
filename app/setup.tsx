@@ -298,7 +298,7 @@ export default function SetupScreen() {
         return (
           <View style={s.stepContent}>
             <Text style={s.logo}>🏠</Text>
-            <Text style={[s.appName, { color: primary }]}>Family Vault</Text>
+            <Text style={[s.appName, { color: primary }]}>Family Flow</Text>
             <Text style={ds.tagline}>Votre famille, organisée ensemble</Text>
 
             <View style={s.features}>

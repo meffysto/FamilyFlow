@@ -14,7 +14,6 @@ import type { Task, RDV, StockItem, CourseItem, MealItem, Profile, Defi, Gratitu
 function emptyInput(overrides: Partial<InsightInput> = {}): InsightInput {
   return {
     tasks: [],
-    menageTasks: [],
     courses: [],
     stock: [],
     meals: [],

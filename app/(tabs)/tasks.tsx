@@ -193,7 +193,7 @@ function buildTargetFiles(profiles: Profile[]) {
 }
 
 export default function TasksScreen() {
-  const { tasks, menageTasks, vault, profiles, activeProfile, notifPrefs, toggleTask, addTask, editTask, deleteTask, refresh, isLoading, vacationTasks, vacationConfig, isVacationActive, refreshGamification, secretMissions, completeSecretMission, validateSecretMission } = useVault();
+  const { tasks, vault, profiles, activeProfile, notifPrefs, toggleTask, addTask, editTask, deleteTask, refresh, isLoading, vacationTasks, vacationConfig, isVacationActive, refreshGamification, secretMissions, completeSecretMission, validateSecretMission } = useVault();
   const { completeTask } = useGamification({ vault, notifPrefs });
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
@@ -430,7 +430,7 @@ export default function TasksScreen() {
     if (isVacationActive) {
       result = [...vacationTasks];
     } else {
-      result = [...tasks, ...menageTasks];
+      result = [...tasks];
 
       // Apply filter
       if (filter === 'mes-taches') {
@@ -474,7 +474,7 @@ export default function TasksScreen() {
     );
 
     return { activeTasks: active, completedTasks: completed };
-  }, [tasks, menageTasks, vacationTasks, isVacationActive, filter, search, activeProfile]);
+  }, [tasks, vacationTasks, isVacationActive, filter, search, activeProfile]);
 
   // Group by source file
   const sections: TaskSection[] = useMemo(() => {

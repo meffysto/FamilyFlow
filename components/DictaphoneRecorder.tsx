@@ -258,7 +258,7 @@ export function DictaphoneRecorder({ rdv, context, onResult, onClose }: Dictapho
 
     const vaultCtx: AIVaultContext = {
       tasks: vault.tasks,
-      menageTasks: vault.menageTasks,
+      menageTasks: vault.tasks.filter(t => t.sourceFile.includes('Ménage')),
       rdvs: vault.rdvs,
       stock: vault.stock,
       meals: vault.meals,
