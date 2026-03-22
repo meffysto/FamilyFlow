@@ -11,6 +11,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { FontSize, FontWeight, LineHeight } from '../constants/typography';
 import { Spacing, Radius } from '../constants/spacing';
+import { useTranslation } from 'react-i18next';
 import { Shadows } from '../constants/shadows';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -54,6 +55,7 @@ export function BilanSemaineCard({
   quote,
   onShare,
 }: BilanSemaineCardProps) {
+  const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
 
   return (
@@ -78,7 +80,7 @@ export function BilanSemaineCard({
             <Text style={styles.statEmoji}>✅</Text>
             <Text style={[styles.statValue, { color: primary }]}>{tasksCompleted}</Text>
           </View>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Tâches</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('bilanSemaine.tasks')}</Text>
         </View>
 
         {/* Repas */}
@@ -87,7 +89,7 @@ export function BilanSemaineCard({
             <Text style={styles.statEmoji}>🍽️</Text>
             <Text style={[styles.statValue, { color: primary }]}>{mealsCookedCount}</Text>
           </View>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Repas</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('bilanSemaine.meals')}</Text>
         </View>
 
         {/* Humeur */}
@@ -96,7 +98,7 @@ export function BilanSemaineCard({
             <Text style={styles.statEmoji}>{getMoodEmoji(moodsAverage)}</Text>
             <Text style={[styles.statValue, { color: primary }]}>{getMoodLabel(moodsAverage)}</Text>
           </View>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Humeur</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('bilanSemaine.mood')}</Text>
         </View>
       </Animated.View>
 
@@ -133,10 +135,10 @@ export function BilanSemaineCard({
             style={[styles.shareButton, { backgroundColor: primary }]}
             activeOpacity={0.8}
             accessibilityRole="button"
-            accessibilityLabel="Partager le bilan de la semaine"
+            accessibilityLabel={t('bilanSemaine.shareA11y')}
           >
             <Text style={[styles.shareButtonText, { color: colors.onPrimary }]}>
-              📤 Partager
+              {t('common.share')}
             </Text>
           </TouchableOpacity>
         </Animated.View>

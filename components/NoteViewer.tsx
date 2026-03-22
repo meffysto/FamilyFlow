@@ -17,6 +17,7 @@ import { MarkdownText } from './ui/MarkdownText';
 import { Chip } from './ui/Chip';
 import { FocusReader } from './FocusReader';
 import { formatDateLocalized } from '../lib/date-locale';
+import { useTranslation } from 'react-i18next';
 import type { Note } from '../lib/types';
 
 interface NoteViewerProps {
@@ -32,6 +33,7 @@ export const NoteViewer = React.memo(function NoteViewer({
   onClose,
   onEdit,
 }: NoteViewerProps) {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
   const [showReader, setShowReader] = useState(false);
   const closeReader = useCallback(() => setShowReader(false), []);
@@ -49,7 +51,7 @@ export const NoteViewer = React.memo(function NoteViewer({
             <ModalHeader
               title={note.title}
               onClose={onClose}
-              rightLabel="Modifier"
+              rightLabel={t('noteViewer.edit')}
               onRight={onEdit}
             />
 
@@ -60,10 +62,10 @@ export const NoteViewer = React.memo(function NoteViewer({
                 activeOpacity={0.7}
                 style={[styles.readBtn, { backgroundColor: primary + '15', borderColor: primary + '30' }]}
                 accessibilityRole="button"
-                accessibilityLabel="Mode lecture"
+                accessibilityLabel={t('noteViewer.readingModeA11y')}
               >
                 <Text style={[styles.readBtnText, { color: primary }]}>
-                  Lecture immersive
+                  {t('noteViewer.readingMode')}
                 </Text>
               </TouchableOpacity>
             )}
@@ -85,11 +87,11 @@ export const NoteViewer = React.memo(function NoteViewer({
                 <TouchableOpacity
                   onPress={() => Linking.openURL(note.url!)}
                   accessibilityRole="link"
-                  accessibilityLabel="Voir l'article original"
+                  accessibilityLabel={t('noteViewer.viewOriginalA11y')}
                   style={styles.linkRow}
                 >
                   <Text style={[styles.link, { color: primary }]}>
-                    Voir l'article original
+                    {t('noteViewer.viewOriginal')}
                   </Text>
                 </TouchableOpacity>
               ) : null}

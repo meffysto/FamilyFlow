@@ -27,19 +27,8 @@ import { FontSize, FontWeight } from '../constants/typography';
 import { ModalHeader } from './ui/ModalHeader';
 import { Chip } from './ui/Chip';
 import { Button } from './ui/Button';
+import { useTranslation } from 'react-i18next';
 import type { Anniversary } from '../lib/types';
-
-const CATEGORIES = [
-  { label: 'Famille', emoji: '👨‍👩‍👧‍👦' },
-  { label: 'Ami', emoji: '🤝' },
-  { label: 'Collègue', emoji: '💼' },
-  { label: 'Autre', emoji: '🌟' },
-];
-
-const MONTHS = [
-  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
-];
 
 interface AnniversaryEditorProps {
   visible: boolean;
@@ -57,8 +46,18 @@ export function AnniversaryEditor({
   onDelete,
   existing,
 }: AnniversaryEditorProps) {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
   const { showToast } = useToast();
+
+  const CATEGORIES = [
+    { label: t('anniversaryEditor.categories.family'), emoji: '👨‍👩‍👧‍👦' },
+    { label: t('anniversaryEditor.categories.friend'), emoji: '🤝' },
+    { label: t('anniversaryEditor.categories.colleague'), emoji: '💼' },
+    { label: t('anniversaryEditor.categories.other'), emoji: '🌟' },
+  ];
+
+  const MONTHS: string[] = t('anniversaryEditor.months', { returnObjects: true }) as string[];
 
   const [name, setName] = useState('');
   const [month, setMonth] = useState(1); // 1-indexed
@@ -92,7 +91,7 @@ export function AnniversaryEditor({
 
   const handleSave = useCallback(async () => {
     if (!name.trim()) {
-      showToast('Veuillez saisir un nom', 'error');
+      showToast(t('anniversaryEditor.toast.nameRequired'), 'error');
       return;
     }
     setSaving(true);
@@ -108,10 +107,10 @@ export function AnniversaryEditor({
         notes: notes.trim() || undefined,
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showToast(existing ? 'Anniversaire modifié' : 'Anniversaire ajouté');
+      showToast(existing ? t('anniversaryEditor.toast.updated') : t('anniversaryEditor.toast.added'));
       onClose();
     } catch {
-      showToast('Erreur lors de l\'enregistrement', 'error');
+      showToast(t('anniversaryEditor.toast.saveError'), 'error');
     } finally {
       setSaving(false);
     }
@@ -120,17 +119,17 @@ export function AnniversaryEditor({
   const handleDelete = useCallback(() => {
     if (!onDelete) return;
     Alert.alert(
-      'Supprimer cet anniversaire ?',
-      `L'anniversaire de ${existing?.name} sera supprimé.`,
+      t('anniversaryEditor.alert.deleteTitle'),
+      t('anniversaryEditor.alert.deleteMsg', { name: existing?.name }),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             await onDelete();
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            showToast('Anniversaire supprimé');
+            showToast(t('anniversaryEditor.toast.deleted'));
             onClose();
           },
         },
@@ -147,9 +146,9 @@ export function AnniversaryEditor({
     >
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
         <ModalHeader
-          title={existing ? 'Modifier' : 'Nouvel anniversaire'}
+          title={existing ? t('anniversaryEditor.titleEdit') : t('anniversaryEditor.titleNew')}
           onClose={onClose}
-          rightLabel="Enregistrer"
+          rightLabel={t('anniversaryEditor.save')}
           onRight={handleSave}
           rightDisabled={saving || !name.trim()}
         />
@@ -164,12 +163,12 @@ export function AnniversaryEditor({
           >
             {/* Nom */}
             <View style={styles.field}>
-              <Text style={[styles.label, { color: colors.textMuted }]}>Nom *</Text>
+              <Text style={[styles.label, { color: colors.textMuted }]}>{t('anniversaryEditor.nameLabel')}</Text>
               <TextInput
                 style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
                 value={name}
                 onChangeText={setName}
-                placeholder="Nom de la personne"
+                placeholder={t('anniversaryEditor.namePlaceholder')}
                 placeholderTextColor={colors.textFaint}
                 autoFocus={!existing}
               />
@@ -177,11 +176,11 @@ export function AnniversaryEditor({
 
             {/* Date : Mois + Jour */}
             <View style={styles.field}>
-              <Text style={[styles.label, { color: colors.textMuted }]}>Date d'anniversaire *</Text>
+              <Text style={[styles.label, { color: colors.textMuted }]}>{t('anniversaryEditor.dateLabel')}</Text>
               <View style={styles.dateRow}>
                 {/* Jour */}
                 <View style={styles.dayPicker}>
-                  <Text style={[styles.dateSubLabel, { color: colors.textFaint }]}>Jour</Text>
+                  <Text style={[styles.dateSubLabel, { color: colors.textFaint }]}>{t('anniversaryEditor.dayLabel')}</Text>
                   <View style={[styles.pickerContainer, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
                     <TextInput
                       style={[styles.dateInput, { color: colors.text }]}
@@ -199,7 +198,7 @@ export function AnniversaryEditor({
                 </View>
                 {/* Mois */}
                 <View style={styles.monthPicker}>
-                  <Text style={[styles.dateSubLabel, { color: colors.textFaint }]}>Mois</Text>
+                  <Text style={[styles.dateSubLabel, { color: colors.textFaint }]}>{t('anniversaryEditor.monthLabel')}</Text>
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
@@ -229,12 +228,12 @@ export function AnniversaryEditor({
 
             {/* Année de naissance */}
             <View style={styles.field}>
-              <Text style={[styles.label, { color: colors.textMuted }]}>Année de naissance (optionnel)</Text>
+              <Text style={[styles.label, { color: colors.textMuted }]}>{t('anniversaryEditor.birthYearLabel')}</Text>
               <TextInput
                 style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
                 value={birthYear}
                 onChangeText={setBirthYear}
-                placeholder="Ex : 1990"
+                placeholder={t('anniversaryEditor.birthYearPlaceholder')}
                 placeholderTextColor={colors.textFaint}
                 keyboardType="number-pad"
                 maxLength={4}
@@ -243,7 +242,7 @@ export function AnniversaryEditor({
 
             {/* Catégorie */}
             <View style={styles.field}>
-              <Text style={[styles.label, { color: colors.textMuted }]}>Catégorie</Text>
+              <Text style={[styles.label, { color: colors.textMuted }]}>{t('anniversaryEditor.categoryLabel')}</Text>
               <View style={styles.chipRow}>
                 {CATEGORIES.map((cat) => (
                   <Chip
@@ -263,12 +262,12 @@ export function AnniversaryEditor({
 
             {/* Notes */}
             <View style={styles.field}>
-              <Text style={[styles.label, { color: colors.textMuted }]}>Notes (optionnel)</Text>
+              <Text style={[styles.label, { color: colors.textMuted }]}>{t('anniversaryEditor.notesLabel')}</Text>
               <TextInput
                 style={[styles.inputMulti, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
                 value={notes}
                 onChangeText={setNotes}
-                placeholder="Idées cadeaux, préférences..."
+                placeholder={t('anniversaryEditor.notesPlaceholder')}
                 placeholderTextColor={colors.textFaint}
                 multiline
                 textAlignVertical="top"
@@ -279,7 +278,7 @@ export function AnniversaryEditor({
             {existing && onDelete && (
               <View style={styles.deleteSection}>
                 <Button
-                  label="Supprimer cet anniversaire"
+                  label={t('anniversaryEditor.deleteBtn')}
                   onPress={handleDelete}
                   variant="danger"
                   icon="🗑"

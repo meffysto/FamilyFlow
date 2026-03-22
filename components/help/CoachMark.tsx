@@ -18,6 +18,7 @@ import Animated, {
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { useTranslation } from 'react-i18next';
 import { Shadows } from '../../constants/shadows';
 
 export interface TargetRect {
@@ -61,6 +62,7 @@ export const CoachMark = React.memo(function CoachMark({
   onDismiss,
   buttonLabel,
 }: CoachMarkProps) {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
   const { width: screenWidth } = useWindowDimensions();
   const reduceMotion = useReducedMotion();
@@ -103,7 +105,7 @@ export const CoachMark = React.memo(function CoachMark({
   // Flèche positionnée au centre de la cible
   const arrowLeft = targetCenterX - bubbleLeft - ARROW_SIZE;
 
-  const label = buttonLabel || (step && step.current < step.total ? 'Suivant' : 'Compris !');
+  const label = buttonLabel || (step && step.current < step.total ? t('coachMark.next') : t('coachMark.gotIt'));
 
   return (
     <Animated.View
@@ -149,10 +151,10 @@ export const CoachMark = React.memo(function CoachMark({
           <TouchableOpacity
             onPress={onDismiss}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityLabel="Passer les astuces"
+            accessibilityLabel={t('coachMark.skipA11y')}
             accessibilityRole="button"
           >
-            <Text style={[styles.skipLabel, { color: colors.textMuted }]}>Passer</Text>
+            <Text style={[styles.skipLabel, { color: colors.textMuted }]}>{t('coachMark.skip')}</Text>
           </TouchableOpacity>
 
           <View style={styles.rightFooter}>
@@ -164,7 +166,7 @@ export const CoachMark = React.memo(function CoachMark({
             <TouchableOpacity
               onPress={onNext || onDismiss}
               style={[styles.nextButton, { backgroundColor: primary }]}
-              accessibilityLabel={`${label}${step ? `, étape ${step.current} sur ${step.total}` : ''}`}
+              accessibilityLabel={step ? t('coachMark.stepA11y', { label, current: step.current, total: step.total }) : label}
               accessibilityRole="button"
             >
               <Text style={[styles.nextLabel, { color: colors.onPrimary }]}>{label}</Text>

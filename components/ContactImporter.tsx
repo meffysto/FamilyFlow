@@ -29,6 +29,7 @@ import { FontSize, FontWeight } from '../constants/typography';
 import { Shadows } from '../constants/shadows';
 import { ModalHeader } from './ui/ModalHeader';
 import { Button } from './ui/Button';
+import { useTranslation } from 'react-i18next';
 import type { Anniversary } from '../lib/types';
 
 interface ContactWithBirthday {
@@ -54,6 +55,7 @@ export function ContactImporter({
   onImport,
   existingAnniversaries,
 }: ContactImporterProps) {
+  const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
 
@@ -125,7 +127,7 @@ export function ContactImporter({
         );
         setSelected(initialSelected);
       } catch {
-        showToast('Erreur lors du chargement des contacts', 'error');
+        showToast(t('contactImporter.toast.loadError'), 'error');
       } finally {
         setLoadingContacts(false);
       }
@@ -183,10 +185,10 @@ export function ContactImporter({
 
       await onImport(items);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showToast(`${items.length} anniversaire${items.length > 1 ? 's' : ''} importé${items.length > 1 ? 's' : ''}`);
+      showToast(t('contactImporter.toast.imported', { count: items.length }));
       onClose();
     } catch {
-      showToast('Erreur lors de l\'import', 'error');
+      showToast(t('contactImporter.toast.importError'), 'error');
     } finally {
       setImporting(false);
     }

@@ -23,6 +23,7 @@ import { formatDateLocalized } from '../lib/date-locale';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../constants/typography';
+import { useTranslation } from 'react-i18next';
 import { Shadows } from '../constants/shadows';
 
 interface TaskCardProps {
@@ -74,6 +75,7 @@ export const TaskCard = React.memo(function TaskCard({
   profiles,
   pointsOnComplete,
 }: TaskCardProps) {
+  const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const checkScale = useSharedValue(task.completed ? 1 : 0);
   const textOpacity = useSharedValue(task.completed ? 0.7 : 1);
@@ -120,7 +122,7 @@ export const TaskCard = React.memo(function TaskCard({
       onLongPress={onLongPress}
       activeOpacity={onLongPress ? 0.7 : 1}
       delayLongPress={500}
-      accessibilityLabel={`Tâche : ${task.text}${task.completed ? ', terminée' : ''}${isOverdue ? ', en retard' : ''}`}
+      accessibilityLabel={t('taskCard.a11y', { text: task.text, completed: task.completed ? t('taskCard.completed') : '', overdue: isOverdue ? t('taskCard.overdue') : '' })}
       accessibilityRole="button"
     >
       <View style={styles.checkboxWrapper}>

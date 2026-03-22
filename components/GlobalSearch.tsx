@@ -28,6 +28,7 @@ import { useParentalControls } from '../contexts/ParentalControlsContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
 import { Shadows } from '../constants/shadows';
+import { useTranslation } from 'react-i18next';
 import { MarkdownText } from './ui/MarkdownText';
 
 /** Map type → route de navigation détaillée */
@@ -50,17 +51,17 @@ const ROUTE_PARAMS: Partial<Record<SearchResultType, Record<string, string>>> = 
   course: { tab: 'courses' },
 };
 
-/** Labels français par type */
-const TYPE_LABELS: Record<SearchResultType, string> = {
-  task: 'Tâche',
-  rdv: 'Rendez-vous',
-  recipe: 'Recette',
-  stock: 'Stock',
-  meal: 'Repas',
-  course: 'Course',
-  memory: 'Souvenir',
-  defi: 'Défi',
-  wishlist: 'Souhait',
+/** Type label keys for i18n */
+const TYPE_LABEL_KEYS: Record<SearchResultType, string> = {
+  task: 'globalSearch.typeLabels.task',
+  rdv: 'globalSearch.typeLabels.rdv',
+  recipe: 'globalSearch.typeLabels.recipe',
+  stock: 'globalSearch.typeLabels.stock',
+  meal: 'globalSearch.typeLabels.meal',
+  course: 'globalSearch.typeLabels.course',
+  memory: 'globalSearch.typeLabels.memory',
+  defi: 'globalSearch.typeLabels.defi',
+  wishlist: 'globalSearch.typeLabels.wishlist',
 };
 
 interface GlobalSearchProps {
@@ -69,6 +70,7 @@ interface GlobalSearchProps {
 }
 
 export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose }: GlobalSearchProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { primary, colors } = useThemeColors();
   const vault = useVault();
@@ -193,7 +195,7 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
       onPress={() => handleSelect(item)}
       activeOpacity={0.7}
       accessibilityRole="button"
-      accessibilityLabel={`${TYPE_LABELS[item.type]} : ${item.title}`}
+      accessibilityLabel={`${t(TYPE_LABEL_KEYS[item.type])} : ${item.title}`}
     >
       <Text style={styles.resultIcon}>{item.icon}</Text>
       <View style={styles.resultContent}>
@@ -206,7 +208,7 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
       </View>
       <View style={[styles.typeBadge, { backgroundColor: colors.cardAlt }]}>
         <Text style={[styles.typeLabel, { color: colors.textSub }]}>
-          {TYPE_LABELS[item.type]}
+          {t(TYPE_LABEL_KEYS[item.type])}
         </Text>
       </View>
     </TouchableOpacity>
@@ -232,7 +234,7 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
             <TextInput
               ref={inputRef}
               style={[styles.searchInput, { color: colors.text }]}
-              placeholder="Rechercher partout..."
+              placeholder={t('globalSearch.placeholder')}
               placeholderTextColor={colors.textMuted}
               value={query}
               onChangeText={setQuery}
@@ -240,17 +242,17 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
               autoCorrect={false}
               clearButtonMode="while-editing"
               returnKeyType="search"
-              accessibilityLabel="Rechercher dans le vault"
+              accessibilityLabel={t('globalSearch.searchA11y')}
               accessibilityRole="search"
             />
           </View>
           <TouchableOpacity
             onPress={handleClose}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityLabel="Fermer la recherche"
+            accessibilityLabel={t('globalSearch.closeA11y')}
             accessibilityRole="button"
           >
-            <Text style={[styles.cancelBtn, { color: colors.textSub }]}>Annuler</Text>
+            <Text style={[styles.cancelBtn, { color: colors.textSub }]}>{t('globalSearch.cancel')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -287,7 +289,7 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
                 <ActivityIndicator size="small" color={primary} />
               ) : (
                 <Text style={[styles.aiBtnText, { color: primary }]}>
-                  🤖 Demander à l'IA : "{query.length > 30 ? query.slice(0, 30) + '…' : query}"
+                  {t('globalSearch.askAI', { query: query.length > 30 ? query.slice(0, 30) + '…' : query })}
                 </Text>
               )}
             </TouchableOpacity>
@@ -296,7 +298,7 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
             ) : null}
             {aiAnswer ? (
               <View style={[styles.aiAnswer, Shadows.sm, { backgroundColor: colors.card }]}>
-                <Text style={[styles.aiAnswerLabel, { color: primary }]}>Réponse IA</Text>
+                <Text style={[styles.aiAnswerLabel, { color: primary }]}>{t('globalSearch.aiAnswer')}</Text>
                 <MarkdownText style={{ color: colors.text }}>{aiAnswer}</MarkdownText>
               </View>
             ) : null}
@@ -307,8 +309,8 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
         {query.trim().length < 2 ? (
           <View style={styles.emptyHintContainer}>
             <Text style={[styles.emptyHint, { color: colors.textFaint }]}>
-              Tâches, RDV, recettes, stock, repas, courses, souvenirs, défis, souhaits
-              {ai.isConfigured ? '\n\nOu posez une question à l\'assistant IA' : ''}
+              {t('globalSearch.hint')}
+              {ai.isConfigured ? t('globalSearch.hintWithAI') : ''}
             </Text>
           </View>
         ) : (
@@ -322,12 +324,12 @@ export const GlobalSearch = React.memo(function GlobalSearch({ visible, onClose 
             ListHeaderComponent={
               results.length > 0 ? (
                 <Text style={[styles.resultCount, { color: colors.textFaint }]}>
-                  {results.length} résultat{results.length > 1 ? 's' : ''}
+                  {t('globalSearch.resultCount', { count: results.length })}
                 </Text>
               ) : (
                 <View style={styles.noResults}>
                   <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                    Aucun résultat pour "{query}"
+                    {t('globalSearch.noResults', { query })}
                   </Text>
                 </View>
               )

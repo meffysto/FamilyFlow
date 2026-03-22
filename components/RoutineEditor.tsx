@@ -21,6 +21,7 @@ import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
+import { useTranslation } from 'react-i18next';
 import { ModalHeader } from './ui';
 import { Routine, RoutineStep } from '../lib/types';
 
@@ -34,6 +35,7 @@ interface RoutineEditorProps {
 const EMOJI_SUGGESTIONS = ['☀️', '🌙', '📚', '🏃', '🧹', '🍽️', '🎵', '🛁', '💪', '🧘', '🎒', '⭐'];
 
 export function RoutineEditor({ routine, onSave, onDelete, onClose }: RoutineEditorProps) {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
   const isNew = !routine;
 
@@ -68,11 +70,11 @@ export function RoutineEditor({ routine, onSave, onDelete, onClose }: RoutineEdi
 
   const handleDelete = useCallback(() => {
     Alert.alert(
-      'Supprimer la routine',
-      `Supprimer « ${routine?.label} » ? Cette action est irréversible.`,
+      t('routineEditor.alert.deleteTitle'),
+      t('routineEditor.alert.deleteMsg', { name: routine?.label }),
       [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Supprimer', style: 'destructive', onPress: onDelete },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.delete'), style: 'destructive', onPress: onDelete },
       ]
     );
   }, [routine, onDelete]);
@@ -118,9 +120,9 @@ export function RoutineEditor({ routine, onSave, onDelete, onClose }: RoutineEdi
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ModalHeader
-        title={isNew ? 'Nouvelle routine' : 'Modifier la routine'}
+        title={isNew ? t('routineEditor.titleNew') : t('routineEditor.titleEdit')}
         onClose={onClose}
-        rightLabel="Enregistrer"
+        rightLabel={t('routineEditor.save')}
         onRight={handleSave}
         rightDisabled={!canSave}
       />
@@ -132,7 +134,7 @@ export function RoutineEditor({ routine, onSave, onDelete, onClose }: RoutineEdi
         showsVerticalScrollIndicator={false}
       >
         {/* Emoji */}
-        <Text style={[st.sectionLabel, { color: colors.textMuted }]}>Icône</Text>
+        <Text style={[st.sectionLabel, { color: colors.textMuted }]}>{t('routineEditor.iconLabel')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={st.emojiRow}>
           {EMOJI_SUGGESTIONS.map(e => (
             <TouchableOpacity
@@ -150,12 +152,12 @@ export function RoutineEditor({ routine, onSave, onDelete, onClose }: RoutineEdi
         </ScrollView>
 
         {/* Nom */}
-        <Text style={[st.sectionLabel, { color: colors.textMuted }]}>Nom de la routine</Text>
+        <Text style={[st.sectionLabel, { color: colors.textMuted }]}>{t('routineEditor.nameLabel')}</Text>
         <TextInput
           style={[st.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
           value={label}
           onChangeText={setLabel}
-          placeholder="Ex : Matin, Soir, Après l'école…"
+          placeholder={t('routineEditor.namePlaceholder')}
           placeholderTextColor={colors.textFaint}
           autoFocus={isNew}
         />
@@ -163,9 +165,9 @@ export function RoutineEditor({ routine, onSave, onDelete, onClose }: RoutineEdi
         {/* Mode visuel */}
         <View style={st.visualRow}>
           <View style={{ flex: 1 }}>
-            <Text style={[st.sectionLabel, { color: colors.textMuted, marginTop: 0 }]}>Mode visuel 👶</Text>
+            <Text style={[st.sectionLabel, { color: colors.textMuted, marginTop: 0 }]}>{t('routineEditor.visualMode')}</Text>
             <Text style={[st.visualHint, { color: colors.textFaint }]}>
-              Plein écran avec gros emojis pour les petits (3-7 ans)
+              {t('routineEditor.visualHint')}
             </Text>
           </View>
           <Switch
@@ -177,7 +179,7 @@ export function RoutineEditor({ routine, onSave, onDelete, onClose }: RoutineEdi
         </View>
 
         {/* Étapes */}
-        <Text style={[st.sectionLabel, { color: colors.textMuted }]}>Étapes</Text>
+        <Text style={[st.sectionLabel, { color: colors.textMuted }]}>{t('routineEditor.stepsLabel')}</Text>
         {steps.map((step, i) => (
           <View key={i} style={[st.stepCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={st.stepHeader}>
@@ -204,16 +206,16 @@ export function RoutineEditor({ routine, onSave, onDelete, onClose }: RoutineEdi
               style={[st.stepInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
               value={step.text}
               onChangeText={(t) => updateStepText(i, t)}
-              placeholder={`Étape ${i + 1}…`}
+              placeholder={t('routineEditor.stepPlaceholder', { n: i + 1 })}
               placeholderTextColor={colors.textFaint}
             />
             <View style={st.durationRow}>
-              <Text style={[st.durationLabel, { color: colors.textSub }]}>⏱ Timer (optionnel)</Text>
+              <Text style={[st.durationLabel, { color: colors.textSub }]}>{t('routineEditor.timerLabel')}</Text>
               <TextInput
                 style={[st.durationInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
                 value={step.durationMinutes ? String(step.durationMinutes) : ''}
                 onChangeText={(v) => updateStepDuration(i, v)}
-                placeholder="min"
+                placeholder={t('routineEditor.timerPlaceholder')}
                 placeholderTextColor={colors.textFaint}
                 keyboardType="number-pad"
                 maxLength={3}
@@ -227,7 +229,7 @@ export function RoutineEditor({ routine, onSave, onDelete, onClose }: RoutineEdi
           onPress={addStep}
           activeOpacity={0.7}
         >
-          <Text style={[st.addStepText, { color: primary }]}>+ Ajouter une étape</Text>
+          <Text style={[st.addStepText, { color: primary }]}>{t('routineEditor.addStep')}</Text>
         </TouchableOpacity>
 
         {/* Supprimer */}
@@ -237,7 +239,7 @@ export function RoutineEditor({ routine, onSave, onDelete, onClose }: RoutineEdi
             onPress={handleDelete}
             activeOpacity={0.7}
           >
-            <Text style={[st.deleteBtnText, { color: colors.error }]}>Supprimer cette routine</Text>
+            <Text style={[st.deleteBtnText, { color: colors.error }]}>{t('routineEditor.deleteRoutine')}</Text>
           </TouchableOpacity>
         )}
 

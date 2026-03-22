@@ -32,6 +32,7 @@ import { useToast } from '../contexts/ToastContext';
 import type { AppRecipe, StepToken } from '../lib/cooklang';
 import { formatIngredient, scaleIngredients } from '../lib/cooklang';
 import TimerRing from './TimerRing';
+import { useTranslation } from 'react-i18next';
 import { FontSize, FontWeight } from '../constants/typography';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -75,6 +76,7 @@ function formatTime(secs: number): string {
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClose, onFinish }: RecipeCookingModeProps) {
+  const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
@@ -155,33 +157,35 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
   const showToastRef = useRef(showToast);
   showToastRef.current = showToast;
 
+  const timerFinishedLabel = useCallback((label: string) => t('recipeCookingMode.timerFinished', { label }), [t]);
+
   const createTimerInterval = useCallback((id: string) => {
     const interval = setInterval(() => {
       setTimers((prev) => {
-        const updated = prev.map((t) => {
-          if (t.id !== id || t.paused) return t;
-          if (t.remaining <= 1) {
+        const updated = prev.map((tm) => {
+          if (tm.id !== id || tm.paused) return tm;
+          if (tm.remaining <= 1) {
             clearInterval(interval);
             intervalsRef.current.delete(id);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            showToastRef.current(`⏱️ ${t.label} — Terminé !`, 'success');
+            showToastRef.current(timerFinishedLabel(tm.label), 'success');
             return null;
           }
-          return { ...t, remaining: t.remaining - 1 };
+          return { ...tm, remaining: tm.remaining - 1 };
         }).filter(Boolean) as ActiveTimer[];
         return updated;
       });
     }, 1000);
     intervalsRef.current.set(id, interval);
     return interval;
-  }, []);
+  }, [timerFinishedLabel]);
 
   const scheduleNotification = useCallback(async (label: string, stepIdx: number, seconds: number) => {
     try {
       return await Notifications.scheduleNotificationAsync({
         content: {
-          title: '⏱️ Minuteur terminé !',
-          body: `${label} — Étape ${stepIdx + 1} de ${recipe.title}`,
+          title: t('recipeCookingMode.timerNotifTitle'),
+          body: t('recipeCookingMode.timerNotifBody', { label, step: stepIdx + 1, recipe: recipe.title }),
           sound: true,
         },
         trigger: {
@@ -372,7 +376,7 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
 
           <View style={styles.timerCardInfo}>
             <Text style={[styles.timerLabel, { color: colors.text }]}>{timer.label}</Text>
-            <Text style={[styles.timerStepRef, { color: colors.textMuted }]}>Étape {timer.stepIdx + 1}</Text>
+            <Text style={[styles.timerStepRef, { color: colors.textMuted }]}>{t('recipeCookingMode.timerStep', { n: timer.stepIdx + 1 })}</Text>
           </View>
         </View>
 
@@ -383,7 +387,7 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
             activeOpacity={0.7}
           >
             <Text style={[styles.timerActionText, { color: timer.paused ? colors.success : colors.text }]}>
-              {timer.paused ? '▶ Reprendre' : '⏸ Pause'}
+              {timer.paused ? t('recipeCookingMode.resume') : t('recipeCookingMode.pause')}
             </Text>
           </TouchableOpacity>
 
@@ -392,7 +396,7 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
             onPress={() => addMinute(timer.id)}
             activeOpacity={0.7}
           >
-            <Text style={[styles.timerActionText, { color: colors.text }]}>+1 min</Text>
+            <Text style={[styles.timerActionText, { color: colors.text }]}>{t('recipeCookingMode.addMinute')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -400,7 +404,7 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
             onPress={() => stopTimer(timer.id)}
             activeOpacity={0.7}
           >
-            <Text style={[styles.timerActionText, { color: colors.error }]}>⏹ Stop</Text>
+            <Text style={[styles.timerActionText, { color: colors.error }]}>{t('recipeCookingMode.stop')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -422,7 +426,7 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
               {recipe.title}
             </Text>
             <Text style={[styles.headerSub, { color: colors.textMuted }]}>
-              {doneCount}/{total} étapes · {servings} pers.
+              {t('recipeCookingMode.stepsProgress', { done: doneCount, total, servings })}
             </Text>
           </View>
           <TouchableOpacity
@@ -446,9 +450,9 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
           {/* Step counter */}
           <View style={styles.stepCounter}>
             <View style={[styles.stepBadge, { backgroundColor: primary }]}>
-              <Text style={styles.stepBadgeText}>Étape {currentStep + 1}</Text>
+              <Text style={styles.stepBadgeText}>{t('recipeCookingMode.stepLabel', { n: currentStep + 1 })}</Text>
             </View>
-            <Text style={[styles.stepOf, { color: colors.textMuted }]}>sur {total}</Text>
+            <Text style={[styles.stepOf, { color: colors.textMuted }]}>{t('recipeCookingMode.stepOf', { total })}</Text>
           </View>
 
           {/* Step text */}
@@ -462,7 +466,7 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
           {/* Step ingredients */}
           {stepIngredients.length > 0 && (
             <View style={[styles.stepIngredients, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
-              <Text style={[styles.stepIngredientsTitle, { color: colors.textMuted }]}>Ingrédients de cette étape</Text>
+              <Text style={[styles.stepIngredientsTitle, { color: colors.textMuted }]}>{t('recipeCookingMode.stepIngredients')}</Text>
               {stepIngredients.map((ing, i) => (
                 <Text key={i} style={[styles.stepIngredientItem, { color: colors.text }]}>
                   • {formatIngredient(ing)}
@@ -498,7 +502,7 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
                       {timer.duration} {timer.unit}
                     </Text>
                     {!isRunning && (
-                      <Text style={[styles.timerLaunchHint, { color: colors.textMuted }]}>Lancer</Text>
+                      <Text style={[styles.timerLaunchHint, { color: colors.textMuted }]}>{t('recipeCookingMode.launch')}</Text>
                     )}
                   </TouchableOpacity>
                 );
@@ -517,7 +521,7 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
           {otherTimers.length > 0 && (
             <View style={styles.otherTimersSection}>
               <Text style={[styles.otherTimersTitle, { color: colors.textMuted }]}>
-                Autres minuteurs en cours
+                {t('recipeCookingMode.otherTimers')}
               </Text>
               <View style={styles.miniTimerRow}>
                 {otherTimers.map((t) => renderTimerCard(t, true))}
@@ -537,7 +541,7 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
             activeOpacity={0.7}
           >
             <Text style={[styles.navBtnArrow, { color: colors.text }]}>‹</Text>
-            <Text style={[styles.navBtnLabel, { color: colors.textSub }]}>Précédent</Text>
+            <Text style={[styles.navBtnLabel, { color: colors.textSub }]}>{t('recipeCookingMode.previous')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -546,14 +550,14 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
             activeOpacity={0.8}
           >
             <Text style={styles.navDoneBtnText}>
-              {isStepDone ? '✓ Fait' : 'Valider'}
+              {isStepDone ? t('common.done') : t('common.validate')}
             </Text>
           </TouchableOpacity>
 
           {currentStep < total - 1 ? (
             <TouchableOpacity onPress={goNext} style={styles.navBtn} activeOpacity={0.7}>
               <Text style={[styles.navBtnArrow, { color: colors.text }]}>›</Text>
-              <Text style={[styles.navBtnLabel, { color: colors.textSub }]}>Suivant</Text>
+              <Text style={[styles.navBtnLabel, { color: colors.textSub }]}>{t('recipeCookingMode.next')}</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
@@ -566,7 +570,7 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
               activeOpacity={0.7}
             >
               <Text style={[styles.navBtnArrow, { color: colors.success }]}>✓</Text>
-              <Text style={[styles.navBtnLabel, { color: colors.success }]}>Terminer</Text>
+              <Text style={[styles.navBtnLabel, { color: colors.success }]}>{t('common.finish')}</Text>
             </TouchableOpacity>
           )}
         </View>

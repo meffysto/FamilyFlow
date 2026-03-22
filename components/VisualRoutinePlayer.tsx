@@ -34,6 +34,7 @@ import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
+import { useTranslation } from 'react-i18next';
 import type { Routine, RoutineProgress } from '../lib/types';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -301,6 +302,7 @@ const TimerRing = memo<TimerRingProps>(({ progress, primary, borderColor }) => {
 
 export const VisualRoutinePlayer = memo<VisualRoutinePlayerProps>(
   ({ visible, routine, progress, onStepComplete, onRoutineComplete, onClose }) => {
+    const { t } = useTranslation();
     const { primary, tint, colors } = useThemeColors();
 
     // ── Derived state ──────────────────────────────────────────────────────
@@ -487,7 +489,7 @@ export const VisualRoutinePlayer = memo<VisualRoutinePlayerProps>(
           <Pressable
             onPress={onClose}
             style={[styles.exitButton, { backgroundColor: colors.bg, borderColor: colors.border }]}
-            accessibilityLabel="Fermer la routine"
+            accessibilityLabel={t('visualRoutinePlayer.closeA11y')}
             accessibilityRole="button"
           >
             <Text style={[styles.exitText, { color: colors.textFaint }]}>{'\u2715'}</Text>
@@ -544,7 +546,7 @@ export const VisualRoutinePlayer = memo<VisualRoutinePlayerProps>(
                   </Text>
                   <Pressable onPress={handleSkip} style={styles.skipButton}>
                     <Text style={[styles.skipText, { color: colors.textMuted }]}>
-                      Passer {'\u23ED'}
+                      {t('visualRoutinePlayer.skipTimer')} {'\u23ED'}
                     </Text>
                   </Pressable>
                 </View>
@@ -592,7 +594,7 @@ export const VisualRoutinePlayer = memo<VisualRoutinePlayerProps>(
                 entering={FadeInUp.delay(600).springify().damping(8)}
                 style={[styles.celebrationText, { color: primary }]}
               >
-                Bravo !
+                {t('visualRoutinePlayer.bravo')}
               </Animated.Text>
             </View>
           )}

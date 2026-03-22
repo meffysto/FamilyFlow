@@ -27,6 +27,7 @@ import { useThemeColors } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
 import { renderTemplate, dispatchNotification, buildManualContext } from '../lib/notifications';
 import { FontSize, FontWeight } from '../constants/typography';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   config: NotificationConfig;
@@ -37,6 +38,7 @@ interface Props {
 }
 
 export function NotificationEditor({ config, activeProfile, onSave, onDelete, onClose }: Props) {
+  const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
   const [enabled, setEnabled] = useState(config.enabled);
@@ -82,12 +84,12 @@ export function NotificationEditor({ config, activeProfile, onSave, onDelete, on
 
   const handleReset = useCallback(() => {
     Alert.alert(
-      'Réinitialiser',
-      'Remettre le message par défaut ?',
+      t('notificationEditor.alert.resetTitle'),
+      t('notificationEditor.alert.resetMsg'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Réinitialiser',
+          text: t('notificationEditor.reset'),
           onPress: () => setTemplate(config.defaultTemplate),
         },
       ]
@@ -96,12 +98,12 @@ export function NotificationEditor({ config, activeProfile, onSave, onDelete, on
 
   const handleDelete = useCallback(() => {
     Alert.alert(
-      'Supprimer',
-      `Supprimer la notification "${config.label}" ?`,
+      t('notificationEditor.alert.deleteTitle'),
+      t('notificationEditor.alert.deleteMsg', { label: config.label }),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('notificationEditor.delete'),
           style: 'destructive',
           onPress: () => {
             onDelete?.();
@@ -122,12 +124,12 @@ export function NotificationEditor({ config, activeProfile, onSave, onDelete, on
       };
       const ok = await dispatchNotification(config.id, context, prefs);
       if (ok) {
-        showToast('Notification envoyée sur Telegram !');
+        showToast(t('notificationEditor.toast.sent'));
       } else {
-        showToast('Impossible d\'envoyer la notification', 'error');
+        showToast(t('notificationEditor.toast.sendFailed'), 'error');
       }
     } catch {
-      showToast('Échec de l\'envoi', 'error');
+      showToast(t('notificationEditor.toast.sendError'), 'error');
     } finally {
       setIsSending(false);
     }
@@ -138,14 +140,14 @@ export function NotificationEditor({ config, activeProfile, onSave, onDelete, on
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onClose}>
-          <Text style={[styles.backBtn, { color: primary }]}>← Retour</Text>
+          <Text style={[styles.backBtn, { color: primary }]}>{t('common.back')}</Text>
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.text }]}>{config.emoji} {config.label}</Text>
       </View>
 
       {/* Enable toggle */}
       <View style={[styles.toggleRow, { backgroundColor: colors.cardAlt }]}>
-        <Text style={[styles.toggleLabel, { color: colors.textSub }]}>Activée</Text>
+        <Text style={[styles.toggleLabel, { color: colors.textSub }]}>{t('notificationEditor.enabled')}</Text>
         <Switch
           value={enabled}
           onValueChange={setEnabled}
@@ -158,7 +160,7 @@ export function NotificationEditor({ config, activeProfile, onSave, onDelete, on
       {config.isCustom && (
         <View style={styles.customFields}>
           <View style={styles.fieldRow}>
-            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>Emoji</Text>
+            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>{t('notificationEditor.emoji')}</Text>
             <TextInput
               style={[styles.fieldInput, { width: 60, textAlign: 'center', borderColor: colors.inputBorder, color: colors.text }]}
               value={emoji}
@@ -167,12 +169,12 @@ export function NotificationEditor({ config, activeProfile, onSave, onDelete, on
             />
           </View>
           <View style={styles.fieldRow}>
-            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>Nom</Text>
+            <Text style={[styles.fieldLabel, { color: colors.textSub }]}>{t('notificationEditor.name')}</Text>
             <TextInput
               style={[styles.fieldInput, { flex: 1, borderColor: colors.inputBorder, color: colors.text }]}
               value={label}
               onChangeText={setLabel}
-              placeholder="Nom de la notification"
+              placeholder={t('notificationEditor.namePlaceholder')}
               placeholderTextColor={colors.textFaint}
             />
           </View>
@@ -180,7 +182,7 @@ export function NotificationEditor({ config, activeProfile, onSave, onDelete, on
       )}
 
       {/* Template editor */}
-      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Message</Text>
+      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{t('notificationEditor.message')}</Text>
       <TextInput
         ref={inputRef}
         style={[styles.templateInput, { borderColor: colors.inputBorder, color: colors.text }]}
@@ -188,12 +190,12 @@ export function NotificationEditor({ config, activeProfile, onSave, onDelete, on
         onChangeText={setTemplate}
         multiline
         textAlignVertical="top"
-        placeholder="Écrivez votre message ici..."
+        placeholder={t('notificationEditor.messagePlaceholder')}
         placeholderTextColor={colors.textFaint}
       />
 
       {/* Variable chips */}
-      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Variables disponibles</Text>
+      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{t('notificationEditor.availableVars')}</Text>
       <View style={styles.variablesGrid}>
         {config.availableVariables.map((v) => (
           <TouchableOpacity
@@ -208,7 +210,7 @@ export function NotificationEditor({ config, activeProfile, onSave, onDelete, on
       </View>
 
       {/* Preview */}
-      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Aperçu</Text>
+      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{t('notificationEditor.preview')}</Text>
       <View style={[styles.previewBox, { backgroundColor: colors.bg, borderColor: colors.border }]}>
         <Text style={[styles.previewText, { color: colors.textSub }]}>{preview}</Text>
       </View>
@@ -217,11 +219,11 @@ export function NotificationEditor({ config, activeProfile, onSave, onDelete, on
       <View style={styles.actions}>
         {!config.isCustom && (
           <TouchableOpacity style={[styles.resetBtn, { borderColor: colors.separator }]} onPress={handleReset}>
-            <Text style={[styles.resetBtnText, { color: colors.textMuted }]}>Réinitialiser</Text>
+            <Text style={[styles.resetBtnText, { color: colors.textMuted }]}>{t('notificationEditor.reset')}</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity style={[styles.saveBtn, { backgroundColor: primary }]} onPress={handleSave}>
-          <Text style={[styles.saveBtnText, { color: colors.onPrimary }]}>Sauvegarder</Text>
+          <Text style={[styles.saveBtnText, { color: colors.onPrimary }]}>{t('notificationEditor.save')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -236,11 +238,11 @@ export function NotificationEditor({ config, activeProfile, onSave, onDelete, on
             {isSending ? (
               <ActivityIndicator size="small" color={colors.onPrimary} />
             ) : (
-              <Text style={[styles.sendBtnText, { color: colors.onPrimary }]}>📤 Envoyer maintenant</Text>
+              <Text style={[styles.sendBtnText, { color: colors.onPrimary }]}>{t('notificationEditor.sendNow')}</Text>
             )}
           </TouchableOpacity>
           <TouchableOpacity style={[styles.deleteBtn, { backgroundColor: colors.errorBg, borderColor: colors.error + '40' }]} onPress={handleDelete}>
-            <Text style={[styles.deleteBtnText, { color: colors.error }]}>Supprimer</Text>
+            <Text style={[styles.deleteBtnText, { color: colors.error }]}>{t('notificationEditor.delete')}</Text>
           </TouchableOpacity>
         </View>
       )}

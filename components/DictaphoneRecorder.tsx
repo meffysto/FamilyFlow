@@ -41,6 +41,7 @@ import { summarizeConsultation, summarizeTranscription, type VaultContext as AIV
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../constants/typography';
 import { ModalHeader } from './ui/ModalHeader';
+import { useTranslation } from 'react-i18next';
 import type { RDV } from '../lib/types';
 
 /** Contexte générique pour le dictaphone hors-RDV */
@@ -61,6 +62,7 @@ interface DictaphoneRecorderProps {
 type RecordingState = 'idle' | 'recording' | 'done' | 'summarizing';
 
 export function DictaphoneRecorder({ rdv, context, onResult, onClose }: DictaphoneRecorderProps) {
+  const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const { config, isConfigured } = useAI();
   const vault = useVault();
@@ -165,7 +167,7 @@ export function DictaphoneRecorder({ rdv, context, onResult, onClose }: Dictapho
       return;
     }
     if (event.error !== 'aborted') {
-      showToast(`Erreur reconnaissance : ${event.message}`, 'error');
+      showToast(t('dictaphone.recognitionError', { message: event.message }), 'error');
     }
   });
 
@@ -194,8 +196,8 @@ export function DictaphoneRecorder({ rdv, context, onResult, onClose }: Dictapho
       const permissions = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
       if (!permissions.granted) {
         Alert.alert(
-          'Permissions requises',
-          'Autorisez le micro et la reconnaissance vocale dans les réglages.',
+          t('dictaphone.permissionsRequired'),
+          t('dictaphone.permissionsMsg'),
         );
         return;
       }
@@ -250,7 +252,7 @@ export function DictaphoneRecorder({ rdv, context, onResult, onClose }: Dictapho
 
   const handleSummarize = useCallback(async () => {
     if (!config) {
-      showToast('IA non configurée — ajoutez votre clé API dans les réglages', 'error');
+      showToast(t('dictaphone.aiNotConfigured'), 'error');
       return;
     }
 
@@ -354,7 +356,7 @@ export function DictaphoneRecorder({ rdv, context, onResult, onClose }: Dictapho
               style={[styles.recordBtn, { backgroundColor: colors.error }]}
               onPress={startRecording}
               activeOpacity={0.8}
-              accessibilityLabel="Démarrer l'enregistrement"
+              accessibilityLabel={t('dictaphone.startRecordingA11y')}
               accessibilityRole="button"
             >
               <Text style={styles.recordBtnIcon}>🎙️</Text>
@@ -413,7 +415,7 @@ export function DictaphoneRecorder({ rdv, context, onResult, onClose }: Dictapho
               style={[styles.stopBtn, { backgroundColor: colors.card, borderColor: colors.error }]}
               onPress={stopRecording}
               activeOpacity={0.8}
-              accessibilityLabel="Arrêter l'enregistrement"
+              accessibilityLabel={t('dictaphone.stopRecordingA11y')}
               accessibilityRole="button"
             >
               <View style={[styles.stopIcon, { backgroundColor: colors.error }]} />

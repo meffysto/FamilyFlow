@@ -33,6 +33,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../constants/typography';
 
@@ -183,6 +184,7 @@ export const FocusReader = React.memo(function FocusReader({
   title,
   onClose,
 }: FocusReaderProps) {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
 
   // --- State
@@ -371,7 +373,7 @@ export const FocusReader = React.memo(function FocusReader({
         style={styles.rsvpContainer}
         onLayout={onContentLayout}
         onPress={handleRsvpPress}
-        accessibilityLabel={`Mot ${currentIndex + 1} sur ${totalWords}: ${currentWord}`}
+        accessibilityLabel={t('focusReader.wordA11y', { current: currentIndex + 1, total: totalWords, word: currentWord })}
       >
         <Animated.Text
           style={[
@@ -429,7 +431,7 @@ export const FocusReader = React.memo(function FocusReader({
           {(['small', 'medium', 'large'] as TextSize[]).map((s) => (
             <ModeChip
               key={s}
-              label={s === 'small' ? 'Petit' : s === 'medium' ? 'Moyen' : 'Grand'}
+              label={s === 'small' ? t('focusReader.small') : s === 'medium' ? t('focusReader.medium') : t('focusReader.large')}
               selected={textSize === s}
               onPress={() => { Haptics.selectionAsync(); setTextSize(s); }}
               colors={colors}
@@ -480,7 +482,7 @@ export const FocusReader = React.memo(function FocusReader({
 
       {/* Indicateur vitesse discret */}
       <Text style={[styles.speedLabel, { color: colors.textFaint }]}>
-        {wpm} mots/min
+        {t('focusReader.wordsPerMin', { wpm })}
       </Text>
     </View>
   );
@@ -515,7 +517,7 @@ export const FocusReader = React.memo(function FocusReader({
               onPress={handleClose}
               activeOpacity={0.7}
               accessibilityRole="button"
-              accessibilityLabel="Fermer"
+              accessibilityLabel={t('focusReader.closeA11y')}
               style={styles.closeButton}
             >
               <Text style={[styles.closeIcon, { color: colors.text }]}>✕</Text>
@@ -530,14 +532,14 @@ export const FocusReader = React.memo(function FocusReader({
 
             <View style={styles.modeToggle}>
               <ModeChip
-                label="Guide"
+                label={t('focusReader.guide')}
                 selected={mode === 'guide'}
                 onPress={() => handleModeChange('guide')}
                 colors={colors}
                 primary={primary}
               />
               <ModeChip
-                label="RSVP"
+                label={t('focusReader.rsvp')}
                 selected={mode === 'rsvp'}
                 onPress={() => handleModeChange('rsvp')}
                 colors={colors}

@@ -24,6 +24,7 @@ import { createCustomNotification } from '../lib/notifications';
 import { NotificationEditor } from './NotificationEditor';
 import { FontSize, FontWeight } from '../constants/typography';
 import { Shadows } from '../constants/shadows';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   prefs: NotificationPreferences;
@@ -33,6 +34,7 @@ interface Props {
 }
 
 export function NotificationSettings({ prefs, activeProfile, onSave, onClose }: Props) {
+  const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const [editingNotif, setEditingNotif] = useState<NotificationConfig | null>(null);
   const [showNewCustom, setShowNewCustom] = useState(false);
@@ -82,7 +84,7 @@ export function NotificationSettings({ prefs, activeProfile, onSave, onClose }: 
 
   const handleCreateCustom = useCallback(async () => {
     if (!newLabel.trim()) {
-      Alert.alert('Erreur', 'Le nom est obligatoire.');
+      Alert.alert(t('notificationSettings.alert.errorTitle'), t('notificationSettings.alert.nameRequired'));
       return;
     }
     const custom = createCustomNotification(
@@ -124,7 +126,7 @@ export function NotificationSettings({ prefs, activeProfile, onSave, onClose }: 
         <View>
           <Text style={[styles.title, { color: colors.text }]}>Notifications</Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-            {activeCount} active{activeCount > 1 ? 's' : ''} sur {prefs.notifications.length}
+            {t('notificationSettings.activeCount', { active: activeCount, plural: activeCount > 1 ? 's' : '', total: prefs.notifications.length })}
           </Text>
         </View>
         <TouchableOpacity onPress={onClose}>
@@ -133,7 +135,7 @@ export function NotificationSettings({ prefs, activeProfile, onSave, onClose }: 
       </View>
 
       {/* Built-in notifications */}
-      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>NOTIFICATIONS INTEGRÉES</Text>
+      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{t('notificationSettings.builtinSection')}</Text>
       <View style={[styles.card, { backgroundColor: colors.card }]}>
         {builtins.map((notif, idx) => (
           <TouchableOpacity
@@ -155,7 +157,7 @@ export function NotificationSettings({ prefs, activeProfile, onSave, onClose }: 
       </View>
 
       {/* Custom notifications */}
-      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>NOTIFICATIONS PERSONNALISÉES</Text>
+      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{t('notificationSettings.customSection')}</Text>
       {customs.length > 0 ? (
         <View style={[styles.card, { backgroundColor: colors.card }]}>
           {customs.map((notif, idx) => (
@@ -178,7 +180,7 @@ export function NotificationSettings({ prefs, activeProfile, onSave, onClose }: 
         </View>
       ) : (
         <View style={[styles.emptyCustom, { backgroundColor: colors.card }]}>
-          <Text style={[styles.emptyText, { color: colors.textFaint }]}>Aucune notification personnalisée</Text>
+          <Text style={[styles.emptyText, { color: colors.textFaint }]}>{t('notificationSettings.emptyCustom')}</Text>
         </View>
       )}
 
@@ -187,17 +189,17 @@ export function NotificationSettings({ prefs, activeProfile, onSave, onClose }: 
         style={[styles.addBtn, { backgroundColor: tint, borderColor: primary }]}
         onPress={() => setShowNewCustom(true)}
       >
-        <Text style={[styles.addBtnText, { color: primary }]}>+ Ajouter une notification</Text>
+        <Text style={[styles.addBtnText, { color: primary }]}>{t('notificationSettings.addBtn')}</Text>
       </TouchableOpacity>
 
       {/* New custom modal */}
       <Modal visible={showNewCustom} animationType="fade" transparent>
         <View style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}>
           <View style={[styles.modalCard, { backgroundColor: colors.card }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Nouvelle notification</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('notificationSettings.newModal.title')}</Text>
 
             <View style={styles.modalField}>
-              <Text style={[styles.modalLabel, { color: colors.textMuted }]}>Emoji</Text>
+              <Text style={[styles.modalLabel, { color: colors.textMuted }]}>{t('notificationSettings.newModal.emoji')}</Text>
               <TextInput
                 style={[styles.modalInput, { width: 70, textAlign: 'center', fontSize: FontSize.heading, borderColor: colors.inputBorder, color: colors.text }]}
                 value={newEmoji}
@@ -207,12 +209,12 @@ export function NotificationSettings({ prefs, activeProfile, onSave, onClose }: 
             </View>
 
             <View style={styles.modalField}>
-              <Text style={[styles.modalLabel, { color: colors.textMuted }]}>Nom</Text>
+              <Text style={[styles.modalLabel, { color: colors.textMuted }]}>{t('notificationSettings.newModal.name')}</Text>
               <TextInput
                 style={[styles.modalInput, { borderColor: colors.inputBorder, color: colors.text }]}
                 value={newLabel}
                 onChangeText={setNewLabel}
-                placeholder="Ex: Rappel courses"
+                placeholder={t('notificationSettings.newModal.namePlaceholder')}
                 placeholderTextColor={colors.textFaint}
                 autoFocus
               />
@@ -227,13 +229,13 @@ export function NotificationSettings({ prefs, activeProfile, onSave, onClose }: 
                   setNewEmoji('📌');
                 }}
               >
-                <Text style={[styles.modalCancelText, { color: colors.textMuted }]}>Annuler</Text>
+                <Text style={[styles.modalCancelText, { color: colors.textMuted }]}>{t('notificationSettings.newModal.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalCreateBtn, { backgroundColor: primary }]}
                 onPress={handleCreateCustom}
               >
-                <Text style={[styles.modalCreateText, { color: colors.onPrimary }]}>Créer</Text>
+                <Text style={[styles.modalCreateText, { color: colors.onPrimary }]}>{t('notificationSettings.newModal.create')}</Text>
               </TouchableOpacity>
             </View>
           </View>

@@ -26,6 +26,7 @@ import { MISSION_POOL, getMissionText, getMissionCategoryLabel, type MissionSugg
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
 import { Shadows } from '../constants/shadows';
+import { useTranslation } from 'react-i18next';
 
 interface SecretMissionCreatorProps {
   visible: boolean;
@@ -56,6 +57,7 @@ export const SecretMissionCreator = React.memo(function SecretMissionCreator({
   onClose,
   onCreated,
 }: SecretMissionCreatorProps) {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
   const { profiles, addSecretMission } = useVault();
   const { showToast } = useToast();
@@ -81,7 +83,7 @@ export const SecretMissionCreator = React.memo(function SecretMissionCreator({
     try {
       await addSecretMission(missionText.trim(), selectedChild);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      showToast('Mission envoyée !');
+      showToast(t('secretMissionCreator.toast.sent'));
       // Réinitialiser le formulaire
       setMissionText('');
       setSelectedChild(null);
@@ -110,9 +112,9 @@ export const SecretMissionCreator = React.memo(function SecretMissionCreator({
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.card }]}>
         <View style={[styles.dragHandle, { backgroundColor: colors.separator }]} />
         <ModalHeader
-          title="🕵️ Nouvelle mission secrète"
+          title={t('secretMissionCreator.title')}
           onClose={handleClose}
-          rightLabel={isSaving ? '...' : 'Envoyer'}
+          rightLabel={isSaving ? '...' : t('secretMissionCreator.send')}
           onRight={handleSubmit}
           rightDisabled={!canSubmit}
         />
@@ -125,7 +127,7 @@ export const SecretMissionCreator = React.memo(function SecretMissionCreator({
         >
           {/* Sélecteur de profil enfant */}
           <Text style={[styles.sectionLabel, { color: colors.textSub }]}>
-            👦 Choisir l'enfant
+            {t('secretMissionCreator.chooseChild')}
           </Text>
           <ScrollView
             horizontal
@@ -145,7 +147,7 @@ export const SecretMissionCreator = React.memo(function SecretMissionCreator({
 
           {/* Champ texte libre */}
           <Text style={[styles.sectionLabel, { color: colors.textSub }]}>
-            📝 Texte de la mission
+            {t('secretMissionCreator.missionText')}
           </Text>
           <TextInput
             style={[
@@ -158,7 +160,7 @@ export const SecretMissionCreator = React.memo(function SecretMissionCreator({
             ]}
             value={missionText}
             onChangeText={setMissionText}
-            placeholder="Ex : Ranger ta chambre en secret..."
+            placeholder={t('secretMissionCreator.missionPlaceholder')}
             placeholderTextColor={colors.textFaint}
             multiline
             textAlignVertical="top"
@@ -166,7 +168,7 @@ export const SecretMissionCreator = React.memo(function SecretMissionCreator({
 
           {/* Suggestions groupées par catégorie */}
           <Text style={[styles.sectionLabel, { color: colors.textSub }]}>
-            💡 Suggestions
+            {t('secretMissionCreator.suggestions')}
           </Text>
           {Object.entries(groupedMissions).map(([category, missions]) => {
             const emoji = CATEGORY_EMOJIS[category] ?? '📋';
@@ -224,7 +226,7 @@ export const SecretMissionCreator = React.memo(function SecretMissionCreator({
             onPress={handleSubmit}
             disabled={!canSubmit}
             activeOpacity={0.7}
-            accessibilityLabel="Envoyer la mission"
+            accessibilityLabel={t('secretMissionCreator.sendMissionA11y')}
             accessibilityRole="button"
           >
             <Text
@@ -233,11 +235,11 @@ export const SecretMissionCreator = React.memo(function SecretMissionCreator({
                 { color: canSubmit ? colors.onPrimary : colors.textFaint },
               ]}
             >
-              🕵️ Envoyer la mission
+              {t('secretMissionCreator.sendMission')}
             </Text>
           </TouchableOpacity>
           <Text style={[styles.rewardInfo, { color: colors.textMuted }]}>
-            🎁 L'enfant recevra un coffre Agent Secret (épique minimum) à la validation
+            {t('secretMissionCreator.rewardInfo')}
           </Text>
         </View>
       </SafeAreaView>

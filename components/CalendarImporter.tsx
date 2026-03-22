@@ -30,6 +30,7 @@ import { FontSize, FontWeight } from '../constants/typography';
 import { Shadows } from '../constants/shadows';
 import { ModalHeader } from './ui/ModalHeader';
 import { Button } from './ui/Button';
+import { useTranslation } from 'react-i18next';
 import type { Anniversary } from '../lib/types';
 
 interface CalendarBirthday {
@@ -79,6 +80,7 @@ export function CalendarImporter({
   onImport,
   existingAnniversaries,
 }: CalendarImporterProps) {
+  const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
 
@@ -200,7 +202,7 @@ export function CalendarImporter({
         );
         setSelected(initialSelected);
       } catch {
-        showToast('Erreur lors du chargement du calendrier', 'error');
+        showToast(t('calendarImporter.toast.loadError'), 'error');
       } finally {
         setLoadingEvents(false);
       }
@@ -250,10 +252,10 @@ export function CalendarImporter({
 
       await onImport(items);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showToast(`${items.length} anniversaire${items.length > 1 ? 's' : ''} importé${items.length > 1 ? 's' : ''}`);
+      showToast(t('calendarImporter.toast.imported', { count: items.length }));
       onClose();
     } catch {
-      showToast("Erreur lors de l'import", 'error');
+      showToast(t('calendarImporter.toast.importError'), 'error');
     } finally {
       setImporting(false);
     }

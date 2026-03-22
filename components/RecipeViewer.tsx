@@ -18,6 +18,7 @@ import { useThemeColors } from '../contexts/ThemeContext';
 import type { AppRecipe, AppIngredient } from '../lib/cooklang';
 import { scaleIngredients, formatIngredient, renderStepText } from '../lib/cooklang';
 import RecipeCookingMode from './RecipeCookingMode';
+import { useTranslation } from 'react-i18next';
 import { FontSize, FontWeight } from '../constants/typography';
 
 interface RecipeViewerProps {
@@ -38,6 +39,7 @@ interface RecipeViewerProps {
 }
 
 export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isFavorite, onToggleFavorite, onRename, familySize, onCookingFinished, imageUri, onSaveImage }: RecipeViewerProps) {
+  const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const [servings, setServings] = useState(familySize || recipe.servings || 1);
   const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set());
@@ -75,7 +77,7 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
     if (!onSaveImage) return;
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission refusée', 'Autorisez l\'accès aux photos pour ajouter une image.');
+      Alert.alert(t('recipeViewer.alert.permissionDenied'), t('recipeViewer.alert.permissionDeniedMsg'));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -96,7 +98,7 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
       await onSaveImage(manipulated.uri);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch {
-      Alert.alert('Erreur', 'Impossible de sauvegarder l\'image.');
+      Alert.alert(t('recipeViewer.alert.error'), t('recipeViewer.alert.saveImageError'));
     }
   };
 
@@ -113,7 +115,7 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
             onPress={() => {
               if (!onRename) return;
               Alert.prompt(
-                'Renommer la recette',
+                t('recipeViewer.renameTitle'),
                 '',
                 (text) => { if (text?.trim()) onRename(text.trim()); },
                 'plain-text',
@@ -159,7 +161,7 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
               onPress={handlePickImage}
               activeOpacity={0.7}
             >
-              <Text style={[styles.addImageText, { color: colors.textMuted }]}>Ajouter une photo</Text>
+              <Text style={[styles.addImageText, { color: colors.textMuted }]}>{t('recipeViewer.addPhoto')}</Text>
             </TouchableOpacity>
           ) : null}
 
@@ -167,7 +169,7 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
           <View style={[styles.metaCard, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
             {recipe.servings > 0 && (
               <View style={styles.servingsControl}>
-                <Text style={[styles.metaLabel, { color: colors.textMuted }]}>Portions</Text>
+                <Text style={[styles.metaLabel, { color: colors.textMuted }]}>{t('recipeViewer.portions')}</Text>
                 <View style={styles.servingsRow}>
                   <TouchableOpacity
                     onPress={decrementServings}
@@ -187,13 +189,13 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
             )}
             {recipe.prepTime ? (
               <View style={styles.metaItem}>
-                <Text style={[styles.metaLabel, { color: colors.textMuted }]}>Prep</Text>
+                <Text style={[styles.metaLabel, { color: colors.textMuted }]}>{t('recipeViewer.prep')}</Text>
                 <Text style={[styles.metaValue, { color: colors.text }]}>{recipe.prepTime}</Text>
               </View>
             ) : null}
             {recipe.cookTime ? (
               <View style={styles.metaItem}>
-                <Text style={[styles.metaLabel, { color: colors.textMuted }]}>Cuisson</Text>
+                <Text style={[styles.metaLabel, { color: colors.textMuted }]}>{t('recipeViewer.cooking')}</Text>
                 <Text style={[styles.metaValue, { color: colors.text }]}>{recipe.cookTime}</Text>
               </View>
             ) : null}
@@ -202,7 +204,7 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
           {/* Ingredients */}
           {scaledIngredients.length > 0 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Ingredients</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('recipeViewer.ingredients')}</Text>
               {scaledIngredients.map((ing, i) => {
                 const checked = checkedIngredients.has(i);
                 return (
@@ -239,7 +241,7 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
           {/* Steps */}
           {recipe.steps.length > 0 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Etapes</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('recipeViewer.steps')}</Text>
               {recipe.steps.map((step, i) => (
                 <View key={i} style={[styles.stepRow, { borderBottomColor: colors.borderLight }]}>
                   <View style={[styles.stepNumber, { backgroundColor: primary + '18' }]}>
@@ -287,7 +289,7 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
                 onPress={() => setShowCookingMode(true)}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.addButtonText, { color: colors.onPrimary }]}>🍳 Lancer la recette</Text>
+                <Text style={[styles.addButtonText, { color: colors.onPrimary }]}>{t('recipeViewer.startRecipe')}</Text>
               </TouchableOpacity>
             )}
             {onAddToShoppingList && scaledIngredients.length > 0 && (
@@ -296,7 +298,7 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
                 onPress={() => onAddToShoppingList(scaledIngredients)}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.addButtonText, { color: primary }]}>🛒 Aux courses</Text>
+                <Text style={[styles.addButtonText, { color: primary }]}>{t('recipeViewer.toShoppingList')}</Text>
               </TouchableOpacity>
             )}
           </View>

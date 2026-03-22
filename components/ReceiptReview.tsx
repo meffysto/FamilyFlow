@@ -30,6 +30,7 @@ import { formatDateLocalized } from '../lib/date-locale';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
 import { Shadows } from '../constants/shadows';
+import { useTranslation } from 'react-i18next';
 import type { ReceiptScanResult } from '../lib/ai-service';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -65,6 +66,7 @@ const ItemRow = React.memo(function ItemRow({
   onUpdate,
   onDelete,
 }: ItemRowProps) {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
 
@@ -120,7 +122,7 @@ const ItemRow = React.memo(function ItemRow({
           activeOpacity={0.7}
           accessibilityLabel={`Catégorie : ${item.category}`}
           accessibilityRole="button"
-          accessibilityHint="Appuyer pour changer la catégorie"
+          accessibilityHint={t('receiptReview.categoryHint')}
         >
           <Text style={[styles.categorySelectorText, { color: colors.text }]} numberOfLines={1}>
             {item.category}

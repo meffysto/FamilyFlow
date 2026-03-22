@@ -12,6 +12,7 @@ import { Task } from '../lib/types';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../constants/typography';
+import { useTranslation } from 'react-i18next';
 import { Shadows } from '../constants/shadows';
 
 interface SecretMissionCardProps {
@@ -27,6 +28,7 @@ export const SecretMissionCard = React.memo(function SecretMissionCard({
   onValidate,
   isParent,
 }: SecretMissionCardProps) {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
   const status = mission.secretStatus ?? 'active';
 
@@ -44,7 +46,7 @@ export const SecretMissionCard = React.memo(function SecretMissionCard({
         {/* Badge espion */}
         <View style={[styles.badge, { backgroundColor: colors.warningBg }]}>
           <Text style={[styles.badgeText, { color: colors.warningText }]}>
-            🕵️ Mission secrète
+            {t('secretMissionCard.badge')}
           </Text>
         </View>
 
@@ -56,7 +58,7 @@ export const SecretMissionCard = React.memo(function SecretMissionCard({
         {/* Récompense */}
         {status !== 'validated' && (
           <Text style={[styles.rewardHint, { color: colors.warning }]}>
-            🎁 Récompense : coffre Agent Secret (épique minimum !)
+            {t('secretMissionCard.reward')}
           </Text>
         )}
 
@@ -67,24 +69,24 @@ export const SecretMissionCard = React.memo(function SecretMissionCard({
               style={[styles.actionBtn, { backgroundColor: primary }]}
               onPress={onComplete}
               activeOpacity={0.7}
-              accessibilityLabel="Marquer la mission comme accomplie"
+              accessibilityLabel={t('secretMissionCard.missionCompleteA11y')}
               accessibilityRole="button"
             >
               <Text style={[styles.actionBtnText, { color: colors.onPrimary }]}>
-                Mission accomplie !
+                {t('secretMissionCard.missionComplete')}
               </Text>
             </TouchableOpacity>
           )}
 
           {status === 'active' && isParent && (
             <Text style={[styles.statusText, { color: colors.textMuted }]}>
-              🕵️ En cours...
+              {t('secretMissionCard.inProgress')}
             </Text>
           )}
 
           {status === 'pending' && !isParent && (
             <Text style={[styles.statusText, { color: colors.textMuted }]}>
-              ⏳ En attente de validation...
+              {t('secretMissionCard.pendingValidation')}
             </Text>
           )}
 
@@ -94,22 +96,22 @@ export const SecretMissionCard = React.memo(function SecretMissionCard({
                 style={[styles.actionBtn, { backgroundColor: colors.success }]}
                 onPress={onValidate}
                 activeOpacity={0.7}
-                accessibilityLabel="Valider la mission"
+                accessibilityLabel={t('secretMissionCard.validateA11y')}
                 accessibilityRole="button"
               >
                 <Text style={[styles.actionBtnText, { color: colors.onPrimary }]}>
-                  Valider
+                  {t('secretMissionCard.validate')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.secondaryBtn, { backgroundColor: colors.cardAlt }]}
                 onPress={onComplete}
                 activeOpacity={0.7}
-                accessibilityLabel="Remettre la mission en cours"
+                accessibilityLabel={t('secretMissionCard.notYetA11y')}
                 accessibilityRole="button"
               >
                 <Text style={[styles.secondaryBtnText, { color: colors.textMuted }]}>
-                  Pas encore
+                  {t('secretMissionCard.notYet')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -117,7 +119,7 @@ export const SecretMissionCard = React.memo(function SecretMissionCard({
 
           {status === 'validated' && (
             <Text style={[styles.validatedText, { color: colors.success }]}>
-              ✅ Mission validée ! 🎉
+              {t('secretMissionCard.validated')}
             </Text>
           )}
         </View>

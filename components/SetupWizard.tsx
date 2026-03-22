@@ -126,7 +126,7 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
 
       onComplete(vaultPath);
     } catch (e) {
-      Alert.alert('Erreur', `Impossible de créer le vault : ${e}`);
+      Alert.alert('Erreur', `Impossible de créer les données : ${e}`);
     }
     setIsCreating(false);
   };
@@ -328,7 +328,7 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
             {isCreating ? (
               <ActivityIndicator color={colors.onPrimary} size="small" />
             ) : (
-              <Text style={[styles.navBtnPrimaryText, { color: colors.onPrimary }]}>Créer le vault</Text>
+              <Text style={[styles.navBtnPrimaryText, { color: colors.onPrimary }]}>C'est parti !</Text>
             )}
           </TouchableOpacity>
         )}

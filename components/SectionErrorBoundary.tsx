@@ -12,6 +12,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { FontSize, FontWeight } from '../constants/typography';
 import { Spacing, Radius } from '../constants/spacing';
+import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../contexts/ThemeContext';
 
 interface Props {
@@ -19,6 +20,8 @@ interface Props {
   children: React.ReactNode;
   /** Couleurs injectées par le wrapper fonctionnel */
   _colors?: ReturnType<typeof useThemeColors>['colors'];
+  /** Translation function injectée par le wrapper fonctionnel */
+  _t?: (key: string, opts?: any) => string;
 }
 
 interface State {
@@ -41,18 +44,19 @@ class SectionErrorBoundaryInner extends React.Component<Props, State> {
   render() {
     if (this.state.hasError) {
       const c = this.props._colors;
+      const tr = this.props._t;
       return (
         <View style={[styles.container, c && { backgroundColor: c.overlayLight }]}>
           <Text style={[styles.text, c && { color: c.textFaint }]}>
-            Section « {this.props.name} » indisponible
+            {tr ? tr('sectionError.unavailable', { name: this.props.name }) : `Section « ${this.props.name} » indisponible`}
           </Text>
           <TouchableOpacity
             onPress={() => this.setState({ hasError: false })}
             style={[styles.retry, c && { backgroundColor: c.overlayLight }]}
-            accessibilityLabel={`Réessayer la section ${this.props.name}`}
+            accessibilityLabel={tr ? tr('sectionError.retryA11y', { name: this.props.name }) : `Réessayer la section ${this.props.name}`}
             accessibilityRole="button"
           >
-            <Text style={[styles.retryText, c && { color: c.textMuted }]}>Réessayer</Text>
+            <Text style={[styles.retryText, c && { color: c.textMuted }]}>{tr ? tr('sectionError.retry') : 'Réessayer'}</Text>
           </TouchableOpacity>
         </View>
       );
@@ -62,10 +66,11 @@ class SectionErrorBoundaryInner extends React.Component<Props, State> {
 }
 
 /** Wrapper fonctionnel pour injecter les couleurs du thème */
-export function SectionErrorBoundary({ name, children }: Omit<Props, '_colors'>) {
+export function SectionErrorBoundary({ name, children }: Omit<Props, '_colors' | '_t'>) {
   const { colors } = useThemeColors();
+  const { t } = useTranslation();
   return (
-    <SectionErrorBoundaryInner name={name} _colors={colors}>
+    <SectionErrorBoundaryInner name={name} _colors={colors} _t={t}>
       {children}
     </SectionErrorBoundaryInner>
   );

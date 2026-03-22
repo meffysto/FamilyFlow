@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -23,13 +24,14 @@ export const ModalHeader = React.memo(function ModalHeader({
   rightDisabled = false,
   closeLeft = false,
 }: ModalHeaderProps) {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
 
   const closeButton = (
     <TouchableOpacity
       onPress={onClose}
       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      accessibilityLabel="Fermer"
+      accessibilityLabel={t('common.close')}
       accessibilityRole="button"
     >
       <Text style={[styles.close, { color: colors.textFaint }]}>✕</Text>

@@ -25,6 +25,7 @@ import { VaultManager } from '../lib/vault';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { SetupWizard, PersonInput, ChildInput } from './SetupWizard';
 import { startAccessing } from '../modules/vault-access/src';
+import { useTranslation } from 'react-i18next';
 import { FontSize, FontWeight } from '../constants/typography';
 
 interface VaultPickerProps {
@@ -37,6 +38,7 @@ interface VaultPickerProps {
 }
 
 export function VaultPicker({ currentPath, onPathSelected, onCancel, initialParents, initialChildren }: VaultPickerProps) {
+  const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const [path, setPath] = useState(currentPath ?? '');
   const [isValidating, setIsValidating] = useState(false);
@@ -52,7 +54,7 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
   const syncFromServer = async () => {
     const ip = serverIp.trim();
     if (!ip) {
-      setError('Entrez l\'adresse IP de votre ordinateur (ex: 192.168.1.42)');
+      setError(t('vaultPicker.alert.ipRequired'));
       return;
     }
     const SERVER_URL = `http://${ip}:8765`;
@@ -101,7 +103,7 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
       onPathSelected(localVault);
     } catch (e: any) {
       setSyncProgress('');
-      setError(`Sync échouée : ${e.message}\n\nVérifiez que serve-vault.py tourne sur l'ordinateur et que vous êtes sur le même réseau Wi-Fi.`);
+      setError(t('vaultPicker.alert.syncFailed', { error: e.message }));
     }
   };
 
@@ -119,14 +121,14 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
 
       const granted = await startAccessing(folderUri);
       if (!granted) {
-        setError('Accès refusé au dossier. Réessayez en sélectionnant le dossier.');
+        setError(t('vaultPicker.alert.accessDenied'));
         return;
       }
 
       setWizardTargetPath(folderUri);
       setShowWizard(true);
     } catch (e: any) {
-      setError(`Erreur lors de la sélection : ${e.message}`);
+      setError(t('vaultPicker.alert.selectionError', { error: e.message }));
     }
   };
 
@@ -145,7 +147,7 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
       // Activer l'accès security-scoped + sauvegarder le bookmark
       const granted = await startAccessing(folderUri);
       if (!granted) {
-        setError('Accès refusé au dossier. Réessayez en sélectionnant le dossier.');
+        setError(t('vaultPicker.alert.accessDenied'));
         return;
       }
 
@@ -153,13 +155,13 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
       setError(null);
       onPathSelected(folderUri);
     } catch (e: any) {
-      setError(`Erreur lors de la sélection : ${e.message}`);
+      setError(t('vaultPicker.alert.selectionError', { error: e.message }));
     }
   };
 
   const validate = async (vaultPath: string) => {
     if (!vaultPath.trim()) {
-      setError('Le chemin ne peut pas être vide.');
+      setError(t('vaultPicker.alert.pathEmpty'));
       return;
     }
 
@@ -170,7 +172,7 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
     const isValid = await VaultManager.validate(trimmed);
 
     if (!isValid) {
-      setError(`Dossier introuvable : "${trimmed}"\nVérifiez que le chemin existe et que l'app y a accès.`);
+      setError(t('vaultPicker.alert.pathNotFound', { path: trimmed }));
       setIsValidating(false);
       return;
     }
@@ -184,7 +186,7 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
       // @ts-ignore — SAF is available in legacy API on Android
       const SAF = (FileSystem as any).StorageAccessFramework;
       if (!SAF) {
-        Alert.alert('Non disponible', 'Le sélecteur de dossier n\'est pas disponible.');
+        Alert.alert(t('vaultPicker.alert.unavailable'), t('vaultPicker.alert.unavailableMsg'));
         return;
       }
       const result = await SAF.requestDirectoryPermissionsAsync();
@@ -197,7 +199,7 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
       setError(null);
       onPathSelected(result.directoryUri);
     } catch (e) {
-      Alert.alert('Erreur', `Impossible d'ouvrir le sélecteur : ${e}`);
+      Alert.alert(t('vaultPicker.alert.error'), t('vaultPicker.alert.errorOpenMsg', { error: String(e) }));
     }
   };
 
@@ -228,8 +230,8 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
         style={[styles.createBtn, { backgroundColor: primary }]}
         onPress={() => { setWizardTargetPath(undefined); setShowWizard(true); }}
       >
-        <Text style={styles.createBtnText}>Créer un nouveau vault</Text>
-        <Text style={styles.createBtnSub}>Pas besoin d'Obsidian — tout est créé automatiquement</Text>
+        <Text style={styles.createBtnText}>Créer un nouveau dossier famille</Text>
+        <Text style={styles.createBtnSub}>Tout est créé automatiquement sur votre appareil</Text>
       </TouchableOpacity>
 
       {/* Create in iCloud Drive (iOS only) */}
@@ -269,7 +271,7 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
 
       <View style={styles.separator}>
         <View style={[styles.separatorLine, { backgroundColor: colors.separator }]} />
-        <Text style={[styles.separatorText, { color: colors.textFaint }]}>ou connecter un vault existant</Text>
+        <Text style={[styles.separatorText, { color: colors.textFaint }]}>ou utiliser un dossier existant</Text>
         <View style={[styles.separatorLine, { backgroundColor: colors.separator }]} />
       </View>
 
@@ -279,8 +281,8 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
           style={[styles.pickerBtn, { backgroundColor: colors.infoBg }]}
           onPress={pickFolder}
         >
-          <Text style={[styles.pickerBtnText, { color: colors.info || '#1D4ED8' }]}>Sélectionner le dossier du vault</Text>
-          <Text style={[styles.pickerBtnSub, { color: colors.textMuted }]}>Depuis Fichiers, iCloud, Obsidian...</Text>
+          <Text style={[styles.pickerBtnText, { color: colors.info || '#1D4ED8' }]}>Choisir un dossier</Text>
+          <Text style={[styles.pickerBtnSub, { color: colors.textMuted }]}>Depuis Fichiers, iCloud...</Text>
         </TouchableOpacity>
       )}
 
@@ -290,7 +292,7 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
           style={[styles.pickerBtn, { backgroundColor: colors.infoBg }]}
           onPress={useSAF}
         >
-          <Text style={[styles.pickerBtnText, { color: colors.info || '#1D4ED8' }]}>Sélectionner le dossier du vault</Text>
+          <Text style={[styles.pickerBtnText, { color: colors.info || '#1D4ED8' }]}>Choisir un dossier</Text>
           <Text style={[styles.pickerBtnSub, { color: colors.textMuted }]}>Depuis le stockage, Google Drive, Dropbox...</Text>
         </TouchableOpacity>
       )}
@@ -337,12 +339,12 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
       {/* Desktop: manual path input */}
       {Platform.OS !== 'ios' && Platform.OS !== 'android' && (
         <>
-          <Text style={[styles.label, { color: colors.textSub }]}>Chemin du vault</Text>
+          <Text style={[styles.label, { color: colors.textSub }]}>Emplacement du dossier</Text>
           <TextInput
             style={[styles.input, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }, error ? styles.inputError : null]}
             value={path}
             onChangeText={(t) => { setPath(t); setError(null); }}
-            placeholder="/chemin/vers/mon-vault"
+            placeholder="/chemin/vers/mon-dossier"
             placeholderTextColor={colors.textFaint}
             autoCapitalize="none"
             autoCorrect={false}
@@ -354,7 +356,7 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
             style={[styles.quickFillBtn, { backgroundColor: tint }]}
             onPress={() => { setPath(COFFRE_DEFAULT); setError(null); }}
           >
-            <Text style={[styles.quickFillText, { color: primary }]}>Utiliser le vault coffre</Text>
+            <Text style={[styles.quickFillText, { color: primary }]}>Utiliser le dossier par défaut</Text>
             <Text style={[styles.quickFillSub, { color: colors.textMuted }]}>{COFFRE_DEFAULT}</Text>
           </TouchableOpacity>
         </>

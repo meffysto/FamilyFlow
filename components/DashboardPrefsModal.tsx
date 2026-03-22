@@ -19,6 +19,7 @@ import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
+import { useTranslation } from 'react-i18next';
 import { Shadows } from '../constants/shadows';
 
 export interface SectionPref {
@@ -68,6 +69,7 @@ const DraggableRow = React.memo(function DraggableRow({
   primary,
   tint,
 }: DraggableRowProps) {
+  const { t } = useTranslation();
   const animStyle = useAnimatedStyle(() => {
     // Cet item est en cours de drag
     if (draggedIdx.value === index) {
@@ -130,7 +132,7 @@ const DraggableRow = React.memo(function DraggableRow({
           !section.visible && styles.rowHidden,
           animStyle,
         ]}
-        accessibilityHint="Maintenez appuyé pour réordonner"
+        accessibilityHint={t('dashboardPrefs.reorderHint')}
       >
         <Text style={[styles.dragHandle, { color: colors.textFaint }]}>☰</Text>
         <Text style={styles.rowEmoji}>{section.emoji}</Text>
@@ -160,6 +162,7 @@ const DraggableRow = React.memo(function DraggableRow({
 // ─── Modal principal ──────────────────────────────────────────────────────────
 
 export function DashboardPrefsModal({ sections: initialSections, smartSort: initialSmartSort, onSave, onClose }: Props) {
+  const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const [sections, setSections] = useState<SectionPref[]>(initialSections);
   const [smartSort, setSmartSort] = useState(initialSmartSort);
@@ -215,7 +218,7 @@ export function DashboardPrefsModal({ sections: initialSections, smartSort: init
         </View>
 
         <Text style={[styles.hint, { color: colors.textMuted, borderBottomColor: colors.borderLight }]}>
-          Affichez ou masquez des sections, et maintenez appuyé pour réordonner.
+          {t('dashboardPrefs.hint')}
         </Text>
 
         <View style={[styles.smartSortRow, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>

@@ -23,6 +23,7 @@ import { useThemeColors } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
+import { useTranslation } from 'react-i18next';
 import { Shadows } from '../constants/shadows';
 
 const PIN_LENGTH = 4;
@@ -35,6 +36,7 @@ const KEYPAD_ROWS = [
 ] as const;
 
 export const LockScreen = React.memo(function LockScreen() {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
   const { authenticate, verifyPin, biometryAvailable, biometryType } = useAuth();
   const reduceMotion = useReducedMotion();
@@ -147,7 +149,7 @@ export const LockScreen = React.memo(function LockScreen() {
         <Text style={[styles.lockIcon, { color: primary }]}>🔒</Text>
         <Text style={[styles.title, { color: colors.text }]}>Family Flow</Text>
         <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-          {error ? 'PIN incorrect' : 'Entrez votre PIN'}
+          {error ? t('lockScreen.pinIncorrect') : t('lockScreen.enterPin')}
         </Text>
       </View>
 
@@ -185,7 +187,7 @@ export const LockScreen = React.memo(function LockScreen() {
       {/* Tentatives */}
       {attempts > 2 && (
         <Text style={[styles.attemptsText, { color: colors.error }]}>
-          {attempts} tentatives échouées
+          {t('lockScreen.failedAttempts', { count: attempts })}
         </Text>
       )}
 
@@ -222,7 +224,7 @@ export const LockScreen = React.memo(function LockScreen() {
                     onPress={() => handleKeyPress('del')}
                     activeOpacity={0.6}
                     disabled={pin.length === 0}
-                    accessibilityLabel="Effacer"
+                    accessibilityLabel={t('lockScreen.eraseA11y')}
                     accessibilityRole="button"
                   >
                     <Text style={[styles.keySpecialText, {
@@ -257,7 +259,7 @@ export const LockScreen = React.memo(function LockScreen() {
           style={styles.biometryHint}
           onPress={() => authenticate()}
           activeOpacity={0.7}
-          accessibilityLabel={`Utiliser ${biometryLabel}`}
+          accessibilityLabel={t('lockScreen.useBiometry', { type: biometryLabel })}
           accessibilityRole="button"
         >
           <Text style={[styles.biometryHintText, { color: primary }]}>
