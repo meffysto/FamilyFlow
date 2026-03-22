@@ -42,6 +42,7 @@ import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { Spacing, Radius } from '../../constants/spacing';
 import { Shadows } from '../../constants/shadows';
 import { computeMissingIngredients, computeStockDecrements, resolveStockAction, computeFamilyServings } from '../../lib/auto-courses';
 import { suggestRecipesFromStock } from '../../lib/ai-service';
@@ -2706,7 +2707,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
   },
   importCardLabel: {
-    fontSize: FontSize.xs,
+    fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
     textAlign: 'center',
   },
