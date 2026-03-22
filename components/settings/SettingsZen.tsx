@@ -22,8 +22,8 @@ interface SettingsZenProps {
   onSave: (config: ZenConfig) => Promise<void>;
 }
 
-const ZEN_SECTION_IDS = ['overdue', 'menage', 'photos', 'meals', 'recipes', 'courses', 'rdvs', 'gratitude'] as const;
-const ZEN_EMOJIS: Record<string, string> = { overdue: '⚠️', menage: '🧹', photos: '📸', meals: '🍽️', recipes: '📖', courses: '🛒', rdvs: '📅', gratitude: '🙏' };
+const ZEN_SECTION_IDS = ['overdue', 'menage', 'photos', 'meals', 'courses', 'rdvs', 'gratitude'] as const;
+const ZEN_EMOJIS: Record<string, string> = { overdue: '⚠️', menage: '🧹', photos: '📸', meals: '🍽️', courses: '🛒', rdvs: '📅', gratitude: '🙏' };
 
 export function SettingsZen({ zenConfig, onSave }: SettingsZenProps) {
   const { t } = useTranslation();

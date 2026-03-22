@@ -99,7 +99,7 @@ interface ZenConfig {
 const ZEN_HARDCODED_EXCLUDED = [
   'wishlist', 'anniversaires', 'onThisDay', 'quotes', 'moods', 'lootProgress', 'rewards',
   'weeklyStats', 'leaderboard', 'defis', 'quicknotifs', 'vacation',
-  'nightMode', 'budget', 'insights',
+  'nightMode', 'budget', 'insights', 'calendar', 'bilanSemaine', 'secretMissions',
 ];
 
 function getAllSections(t: (key: string) => string): SectionPref[] {
