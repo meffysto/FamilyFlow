@@ -7,6 +7,7 @@
  * Recettes: Search, category filters, RecipeCard grid, tap → RecipeViewer.
  */
 
+import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
@@ -98,6 +99,7 @@ export default function MealsScreen() {
   const { primary, tint, colors } = useThemeColors();
   const { config: aiConfig, isConfigured: aiConfigured } = useAI();
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
   const { tab: tabParam } = useLocalSearchParams<{ tab?: string }>();
   const [tab, setTab] = useState<Tab>('repas');
@@ -210,13 +212,13 @@ export default function MealsScreen() {
   }, [weekOffset]);
 
   const weekLabel = useMemo(() => {
-    if (isCurrentWeek) return 'Cette semaine';
-    if (weekOffset === 1) return 'Semaine prochaine';
-    if (weekOffset === -1) return 'Semaine dernière';
+    if (isCurrentWeek) return t('meals.week.thisWeek');
+    if (weekOffset === 1) return t('meals.week.nextWeek');
+    if (weekOffset === -1) return t('meals.week.lastWeek');
     const endOfWeek = addWeeks(viewedWeekMonday, 1);
     endOfWeek.setDate(endOfWeek.getDate() - 1);
     return `${format(viewedWeekMonday, 'dd/MM', { locale: fr })} — ${format(endOfWeek, 'dd/MM', { locale: fr })}`;
-  }, [viewedWeekMonday, isCurrentWeek, weekOffset]);
+  }, [viewedWeekMonday, isCurrentWeek, weekOffset, t]);
 
   const goToPrevWeek = useCallback(() => setWeekOffset(w => w - 1), []);
   const goToNextWeek = useCallback(() => setWeekOffset(w => w + 1), []);
@@ -286,13 +288,13 @@ export default function MealsScreen() {
           if (missing.length > 0) {
             const { added } = await mergeCourseIngredients(missing);
             if (added > 0) {
-              showToast(`${added} ingrédient${added > 1 ? 's' : ''} ajouté${added > 1 ? 's' : ''} aux courses`);
+              showToast(t('meals.toast.ingredientsAdded', { count: added }));
             }
           }
         }
       }
     } catch (e) {
-      Alert.alert('Erreur', String(e));
+      Alert.alert(t('meals.alert.error'), String(e));
     }
   };
 
@@ -325,23 +327,23 @@ export default function MealsScreen() {
     const familyServings = computeFamilyServings(profiles);
     const decrements = computeStockDecrements(recipe.ingredients, stock, familyServings, recipe.servings);
     if (decrements.length === 0) {
-      showToast('Stock déjà à jour');
+      showToast(t('meals.alert.stockUpToDate'));
       return;
     }
     Alert.alert(
-      'Marquer comme cuisiné ?',
-      `Le stock sera mis à jour (${decrements.length} produit${decrements.length > 1 ? 's' : ''}).`,
+      t('meals.alert.markCookedTitle'),
+      t('meals.alert.markCookedMessage', { count: decrements.length }),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('meals.alert.cancel'), style: 'cancel' },
         {
-          text: 'Confirmer',
+          text: t('meals.alert.confirm'),
           onPress: async () => {
             setCookingMealId(meal.id);
             try {
               for (const { stockItem, newQuantity } of decrements) {
                 await updateStockQuantity(stockItem.lineIndex, newQuantity);
               }
-              showToast(`Stock mis à jour (${decrements.length} produit${decrements.length > 1 ? 's' : ''})`);
+              showToast(t('meals.toast.stockUpdated', { count: decrements.length }));
               setCookedMealIds(prev => new Set(prev).add(meal.id));
             } finally {
               setCookingMealId(null);
@@ -350,7 +352,7 @@ export default function MealsScreen() {
         },
       ],
     );
-  }, [cookingMealId, resolveRecipe, stock, updateStockQuantity, showToast]);
+  }, [cookingMealId, resolveRecipe, stock, updateStockQuantity, showToast, t]);
 
   // ─── Suggestion IA : que cuisiner avec le stock ? ───────────────
 
@@ -362,12 +364,12 @@ export default function MealsScreen() {
     try {
       const resp = await suggestRecipesFromStock(aiConfig, stock, recipes, profiles);
       if (resp.error) {
-        Alert.alert('Erreur IA', resp.error);
+        Alert.alert(t('meals.alert.aiError'), resp.error);
       } else {
-        Alert.alert('Que cuisiner ce soir ?', resp.text);
+        Alert.alert(t('meals.alert.aiSuggestTitle'), resp.text);
       }
     } catch (e) {
-      Alert.alert('Erreur', String(e));
+      Alert.alert(t('meals.alert.error'), String(e));
     } finally {
       setSuggestingRecipes(false);
     }
@@ -391,7 +393,7 @@ export default function MealsScreen() {
       }
     }
     if (allIngredients.length === 0) {
-      Alert.alert('Aucune recette liée', 'Liez des recettes à vos repas pour générer la liste de courses.');
+      Alert.alert(t('meals.alert.noLinkedRecipes'), t('meals.alert.noLinkedRecipesMsg'));
       return;
     }
 
@@ -406,11 +408,11 @@ export default function MealsScreen() {
     try {
       const { added, merged } = await mergeCourseIngredients(items);
       const parts: string[] = [];
-      if (added > 0) parts.push(`${added} ajouté(s)`);
-      if (merged > 0) parts.push(`${merged} cumulé(s)`);
-      Alert.alert('Liste générée', `${parts.join(', ')} depuis ${linkedRecipeCount} recette(s).`);
+      if (added > 0) parts.push(t('meals.merge.added', { count: added }));
+      if (merged > 0) parts.push(t('meals.merge.merged', { count: merged }));
+      Alert.alert(t('meals.alert.listGenerated'), t('meals.alert.listGeneratedMsg', { details: parts.join(', '), count: linkedRecipeCount, plural: linkedRecipeCount > 1 ? 's' : '' }));
     } catch (e) {
-      Alert.alert('Erreur', String(e));
+      Alert.alert(t('meals.alert.error'), String(e));
     }
   }, [meals, resolveRecipe, mergeCourseIngredients, linkedRecipeCount]);
 
@@ -472,13 +474,13 @@ export default function MealsScreen() {
       }
 
       const msg = incremented
-        ? `${incremented.produit} restocké (+${addQty})`
+        ? t('meals.toast.restocked', { name: incremented.produit, qty: addQty })
         : newItem
-          ? `${newItem.produit} ajouté au stock (${newItem.quantite})`
-          : `${item.text} retiré`;
+          ? t('meals.toast.addedToStock', { name: newItem.produit, qty: newItem.quantite })
+          : t('meals.toast.removedFromList', { name: item.text });
 
       showToast(msg, 'success', {
-        label: 'Annuler',
+        label: t('meals.toast.undo'),
         onPress: async () => {
           try {
             await addCourseItem(item.text, item.section);
@@ -488,30 +490,30 @@ export default function MealsScreen() {
         },
       });
     } catch (e) {
-      Alert.alert('Erreur', String(e));
+      Alert.alert(t('meals.alert.error'), String(e));
     }
-  }, [vault, refresh, stock, updateStockQuantity, addStockItem, removeCourseItem, addCourseItem, showToast]);
+  }, [vault, refresh, stock, updateStockQuantity, addStockItem, removeCourseItem, addCourseItem, showToast, t]);
 
   const handleCourseRemove = useCallback((item: CourseItem) => {
     Alert.alert(
-      'Supprimer',
-      `Retirer « ${item.text} » de la liste ?`,
+      t('meals.alert.removeItemTitle'),
+      t('meals.alert.removeItemMsg', { text: item.text }),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('meals.alert.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('meals.alert.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await removeCourseItem(item.lineIndex);
             } catch (e) {
-              Alert.alert('Erreur', String(e));
+              Alert.alert(t('meals.alert.error'), String(e));
             }
           },
         },
       ],
     );
-  }, [removeCourseItem]);
+  }, [removeCourseItem, t]);
 
   const handleAddCourse = useCallback(async () => {
     const text = newItemText.trim();
@@ -520,9 +522,9 @@ export default function MealsScreen() {
       await addCourseItem(text, selectedSection ?? categorizeIngredient(text));
       setNewItemText('');
     } catch (e) {
-      Alert.alert('Erreur', String(e));
+      Alert.alert(t('meals.alert.error'), String(e));
     }
-  }, [newItemText, selectedSection, addCourseItem]);
+  }, [newItemText, selectedSection, addCourseItem, t]);
 
   const handleChangeCourseCategory = useCallback((item: CourseItem) => {
     setCategoryPickerItem(item);
@@ -539,9 +541,9 @@ export default function MealsScreen() {
       await moveCourseItem(categoryPickerItem.lineIndex, categoryPickerItem.text, newSection);
       setCategoryPickerItem(null);
     } catch (e) {
-      Alert.alert('Erreur', String(e));
+      Alert.alert(t('meals.alert.error'), String(e));
     }
-  }, [categoryPickerItem, moveCourseItem]);
+  }, [categoryPickerItem, moveCourseItem, t]);
 
   const handleAddNewCategory = useCallback(async () => {
     const name = newCategoryName.trim();
@@ -555,9 +557,9 @@ export default function MealsScreen() {
       setNewCategoryEmoji('🏷️');
       setShowEmojiPicker(false);
     } catch (e) {
-      Alert.alert('Erreur', String(e));
+      Alert.alert(t('meals.alert.error'), String(e));
     }
-  }, [newCategoryName, newCategoryEmoji, categoryPickerItem, moveCourseItem]);
+  }, [newCategoryName, newCategoryEmoji, categoryPickerItem, moveCourseItem, t]);
 
   // ─── Recettes logic ─────────────────────────────────────────────
 
@@ -616,35 +618,35 @@ export default function MealsScreen() {
       }));
       const { added, merged } = await mergeCourseIngredients(items);
       const parts: string[] = [];
-      if (added > 0) parts.push(`${added} ajouté(s)`);
-      if (merged > 0) parts.push(`${merged} cumulé(s)`);
-      Alert.alert('Ajouté aux courses', `${parts.join(', ')} dans la liste de courses.`);
+      if (added > 0) parts.push(t('meals.merge.added', { count: added }));
+      if (merged > 0) parts.push(t('meals.merge.merged', { count: merged }));
+      Alert.alert(t('meals.alert.addedToCourses'), t('meals.alert.addedToCoursesMsg', { details: parts.join(', ') }));
       setSelectedRecipe(null);
     } catch (e) {
-      Alert.alert('Erreur', String(e));
+      Alert.alert(t('meals.alert.error'), String(e));
     }
-  }, [mergeCourseIngredients]);
+  }, [mergeCourseIngredients, t]);
 
   const handleDeleteRecipe = useCallback((recipe: Recipe) => {
     Alert.alert(
-      'Supprimer la recette',
-      `Supprimer « ${recipe.title} » ?`,
+      t('meals.alert.deleteRecipeTitle'),
+      t('meals.alert.deleteRecipeMsg', { title: recipe.title }),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('meals.alert.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('meals.alert.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await deleteRecipe(recipe.sourceFile);
             } catch (e) {
-              Alert.alert('Erreur', String(e));
+              Alert.alert(t('meals.alert.error'), String(e));
             }
           },
         },
       ],
     );
-  }, [deleteRecipe]);
+  }, [deleteRecipe, t]);
 
   // ─── Import logic ────────────────────────────────────────────────
 
@@ -663,12 +665,12 @@ export default function MealsScreen() {
         setImportCategory(result.data.tags?.[0] || 'Importées');
       }
     } catch (e) {
-      Alert.alert('Erreur', String(e instanceof Error ? e.message : e));
+      Alert.alert(t('meals.alert.error'), String(e instanceof Error ? e.message : e));
     } finally {
       setImportLoading(false);
       setImportStatus('');
     }
-  }, [importUrl, aiConfig]);
+  }, [importUrl, aiConfig, t]);
 
   const handleImportSave = useCallback(async () => {
     if (!importResult) return;
@@ -716,14 +718,14 @@ export default function MealsScreen() {
 
       await loadRecipes(true);
 
-      Alert.alert('Importée !', `« ${title} » ajoutée dans ${cat}.`);
+      Alert.alert(t('meals.alert.importSuccess'), t('meals.alert.importSuccessMsg', { title, category: cat }));
       setShowImport(false);
       setImportUrl('');
       setImportResult(null);
     } catch (e) {
-      Alert.alert('Erreur', String(e));
+      Alert.alert(t('meals.alert.error'), String(e));
     }
-  }, [importResult, importCategory, vault, refresh, saveRecipeImage]);
+  }, [importResult, importCategory, vault, refresh, saveRecipeImage, t]);
 
   // ─── Photo import logic ───────────────────────────────────────
 
@@ -731,7 +733,7 @@ export default function MealsScreen() {
 
   const handlePhotoImport = useCallback(async () => {
     if (!aiConfig) {
-      Alert.alert('IA non configurée', 'Configurez votre clé API dans les réglages pour utiliser l\'import photo.');
+      Alert.alert(t('meals.alert.aiNotConfigured'), t('meals.alert.aiNotConfiguredMsg'));
       return;
     }
     setPhotoImportLoading(true);
@@ -750,12 +752,12 @@ export default function MealsScreen() {
       }
       setShowImport(true);
     } catch (e) {
-      Alert.alert('Erreur', String(e instanceof Error ? e.message : e));
+      Alert.alert(t('meals.alert.error'), String(e instanceof Error ? e.message : e));
     } finally {
       setPhotoImportLoading(false);
       setImportStatus('');
     }
-  }, [aiConfig]);
+  }, [aiConfig, t]);
 
   // ─── Scanner vault logic ────────────────────────────────────────
 
@@ -765,10 +767,10 @@ export default function MealsScreen() {
       const results = await scanAllCookFiles();
       setScanResults(results);
       if (results.length === 0) {
-        Alert.alert('Aucun résultat', 'Aucun fichier .cook trouvé en dehors du dossier Recettes.');
+        Alert.alert(t('meals.alert.noScanResults'), t('meals.alert.noScanResultsMsg'));
       }
     } catch (e) {
-      Alert.alert('Erreur', String(e));
+      Alert.alert(t('meals.alert.error'), String(e));
     } finally {
       setScanLoading(false);
     }
@@ -779,11 +781,11 @@ export default function MealsScreen() {
     try {
       await moveCookToRecipes(sourcePath, cat);
       setScanResults(prev => prev.filter(r => r.path !== sourcePath));
-      Alert.alert('Déplacée !', `« ${title} » ajoutée dans ${cat}.`);
+      Alert.alert(t('meals.alert.movedSuccess'), t('meals.alert.importSuccessMsg', { title, category: cat }));
     } catch (e) {
-      Alert.alert('Erreur', String(e));
+      Alert.alert(t('meals.alert.error'), String(e));
     }
-  }, [moveCookToRecipes, scanMoveCategory]);
+  }, [moveCookToRecipes, scanMoveCategory, t]);
 
   // ─── Text import logic ──────────────────────────────────────────
 
@@ -803,7 +805,7 @@ export default function MealsScreen() {
         setTextImportCategory(result.data.tags[0]);
       }
     } catch (e) {
-      Alert.alert('Erreur', String(e instanceof Error ? e.message : e));
+      Alert.alert(t('meals.alert.error'), String(e instanceof Error ? e.message : e));
     } finally {
       setImportLoading(false);
     }
@@ -837,14 +839,14 @@ export default function MealsScreen() {
       await vault.ensureDir(`03 - Cuisine/Recettes/${cat}`);
       await vault.writeFile(relPath, cookContent);
       await refresh();
-      Alert.alert('Importée !', `« ${title} » ajoutée dans ${cat}.`);
+      Alert.alert(t('meals.alert.importSuccess'), t('meals.alert.importSuccessMsg', { title, category: cat }));
       setShowTextImport(false);
       setTextImportValue('');
       setTextImportResult(null);
     } catch (e) {
-      Alert.alert('Erreur', String(e));
+      Alert.alert(t('meals.alert.error'), String(e));
     }
-  }, [textImportResult, textImportCategory, vault, refresh]);
+  }, [textImportResult, textImportCategory, vault, refresh, t]);
 
   // ─── Community explore logic ─────────────────────────────────────
 
@@ -858,10 +860,10 @@ export default function MealsScreen() {
       const results = await searchCommunityRecipes(q);
       setExploreResults(results);
       if (results.length === 0) {
-        Alert.alert('Aucun résultat', `Aucune recette trouvée pour « ${q} ».`);
+        Alert.alert(t('meals.alert.noExploreResults'), t('meals.alert.noExploreResultsMsg', { query: q }));
       }
     } catch (e) {
-      Alert.alert('Erreur', String(e));
+      Alert.alert(t('meals.alert.error'), String(e));
     } finally {
       setExploreLoading(false);
     }
@@ -875,7 +877,7 @@ export default function MealsScreen() {
       const translated = await translateCookToFrench(metric, aiConfig);
       setExplorePreview({ id: recipe.id, title: recipe.title, content: translated });
     } catch (e) {
-      Alert.alert('Erreur', String(e instanceof Error ? e.message : e));
+      Alert.alert(t('meals.alert.error'), String(e instanceof Error ? e.message : e));
     } finally {
       setExploreDownloading(null);
     }
@@ -890,21 +892,21 @@ export default function MealsScreen() {
       await vault.ensureDir(`03 - Cuisine/Recettes/${cat}`);
       await vault.writeFile(relPath, explorePreview.content);
       await refresh();
-      Alert.alert('Importée !', `« ${explorePreview.title} » ajoutée dans ${cat}.`);
+      Alert.alert(t('meals.alert.importSuccess'), t('meals.alert.importSuccessMsg', { title: explorePreview.title, category: cat }));
       setExplorePreview(null);
     } catch (e) {
-      Alert.alert('Erreur', String(e));
+      Alert.alert(t('meals.alert.error'), String(e));
     }
-  }, [explorePreview, exploreCategory, vault, refresh]);
+  }, [explorePreview, exploreCategory, vault, refresh, t]);
 
   // ─── Header ──────────────────────────────────────────────────────
 
-  const headerTitle = tab === 'repas' ? '🍽️ Repas' : tab === 'courses' ? '🛒 Courses' : '📖 Recettes';
+  const headerTitle = tab === 'repas' ? t('meals.header.mealsTitle') : tab === 'courses' ? t('meals.header.shoppingTitle') : t('meals.header.recipesTitle');
   const headerStats = tab === 'repas'
-    ? `${filledCount}/${displayedMeals.length} planifiés`
+    ? t('meals.header.mealsStats', { filled: filledCount, total: displayedMeals.length })
     : tab === 'courses'
-      ? `${courseDoneCount}/${courses.length} achetés`
-      : `${recipes.length} recette${recipes.length > 1 ? 's' : ''}`;
+      ? t('meals.header.shoppingStats', { done: courseDoneCount, total: courses.length })
+      : t('meals.header.recipesStats', { count: recipes.length });
 
   // ─── Render ─────────────────────────────────────────────────────
 
@@ -920,9 +922,9 @@ export default function MealsScreen() {
       <View ref={tabBarRef} style={[styles.tabBar, { backgroundColor: colors.card, borderBottomColor: colors.borderLight }]}>
         <SegmentedControl
           segments={[
-            { id: 'repas', label: '🍽️ Repas' },
-            { id: 'courses', label: '🛒 Courses', badge: courses.filter((c) => !c.completed).length || undefined },
-            { id: 'recettes', label: '📖 Recettes', badge: recipes.length || undefined },
+            { id: 'repas', label: t('meals.tabs.meals') },
+            { id: 'courses', label: t('meals.tabs.shopping'), badge: courses.filter((c) => !c.completed).length || undefined },
+            { id: 'recettes', label: t('meals.tabs.recipes'), badge: recipes.length || undefined },
           ]}
           value={tab}
           onChange={(t) => setTab(t as Tab)}
@@ -935,17 +937,17 @@ export default function MealsScreen() {
         <>
         {/* Navigation semaine */}
         <View style={[styles.weekNav, { borderBottomColor: colors.borderLight }]}>
-          <TouchableOpacity onPress={goToPrevWeek} style={styles.weekArrow} activeOpacity={0.6} accessibilityLabel="Semaine précédente" accessibilityRole="button">
+          <TouchableOpacity onPress={goToPrevWeek} style={styles.weekArrow} activeOpacity={0.6} accessibilityLabel={t('meals.week.prevA11y')} accessibilityRole="button">
             <Text style={[styles.weekArrowText, { color: primary }]}>‹</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={goToCurrentWeek} activeOpacity={0.7} accessibilityLabel={`${weekLabel}, appuyez pour revenir à cette semaine`} accessibilityRole="button">
+          <TouchableOpacity onPress={goToCurrentWeek} activeOpacity={0.7} accessibilityLabel={t('meals.week.backA11y', { label: weekLabel })} accessibilityRole="button">
             <Text style={[styles.weekLabel, { color: isCurrentWeek ? colors.text : primary }]}>{weekLabel}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={goToNextWeek}
             style={styles.weekArrow}
             activeOpacity={0.6}
-            accessibilityLabel="Semaine suivante"
+            accessibilityLabel={t('meals.week.nextA11y')}
             accessibilityRole="button"
           >
             <Text style={[styles.weekArrowText, { color: primary }]}>›</Text>
@@ -955,9 +957,9 @@ export default function MealsScreen() {
         {/* Semaine vide (passée sans données) */}
         {!isCurrentWeek && displayedMeals.length === 0 ? (
           <View style={styles.emptyWeek}>
-            <Text style={[styles.emptyWeekText, { color: colors.textMuted }]}>Aucun repas enregistré cette semaine</Text>
+            <Text style={[styles.emptyWeekText, { color: colors.textMuted }]}>{t('meals.week.emptyWeek')}</Text>
             <TouchableOpacity onPress={goToCurrentWeek} style={[styles.backBtn, { backgroundColor: tint }]} activeOpacity={0.7}>
-              <Text style={[styles.backBtnText, { color: primary }]}>Revenir à cette semaine</Text>
+              <Text style={[styles.backBtnText, { color: primary }]}>{t('meals.week.backToThisWeek')}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -975,11 +977,11 @@ export default function MealsScreen() {
               style={[styles.generateBtn, { backgroundColor: tint, borderColor: primary + '30' }]}
               onPress={generateWeeklyShoppingList}
               activeOpacity={0.7}
-              accessibilityLabel={`Générer la liste de courses depuis ${linkedRecipeCount} recette${linkedRecipeCount > 1 ? 's' : ''}`}
+              accessibilityLabel={t('meals.mealPlan.generateA11y', { count: linkedRecipeCount, plural: linkedRecipeCount > 1 ? 's' : '' })}
               accessibilityRole="button"
             >
               <Text style={[styles.generateBtnText, { color: primary }]}>
-                🛒 Générer la liste de courses ({linkedRecipeCount} recette{linkedRecipeCount > 1 ? 's' : ''})
+                {t('meals.mealPlan.generateBtn', { count: linkedRecipeCount, plural: linkedRecipeCount > 1 ? 's' : '' })}
               </Text>
             </TouchableOpacity>
           )}
@@ -991,11 +993,11 @@ export default function MealsScreen() {
               onPress={handleSuggestFromStock}
               disabled={suggestingRecipes}
               activeOpacity={0.7}
-              accessibilityLabel="Suggestions de recettes avec le stock"
+              accessibilityLabel={t('meals.mealPlan.suggestA11y')}
               accessibilityRole="button"
             >
               <Text style={[styles.generateBtnText, { color: primary }]}>
-                {suggestingRecipes ? '...' : '🤖 Que cuisiner ce soir ?'}
+                {suggestingRecipes ? '...' : t('meals.mealPlan.suggestBtn')}
               </Text>
             </TouchableOpacity>
           )}
@@ -1024,13 +1026,13 @@ export default function MealsScreen() {
                   </Text>
                   {isToday && (
                     <View style={[styles.todayBadge, { backgroundColor: tint }]}>
-                      <Text style={[styles.todayBadgeText, { color: primary }]}>Aujourd'hui</Text>
+                      <Text style={[styles.todayBadgeText, { color: primary }]}>{t('meals.week.today')}</Text>
                     </View>
                   )}
                 </View>
 
                 {dayMeals.length === 0 ? (
-                  <Text style={[styles.noMeals, { color: colors.textMuted }]}>Aucun repas configuré</Text>
+                  <Text style={[styles.noMeals, { color: colors.textMuted }]}>{t('meals.mealPlan.noMeals')}</Text>
                 ) : (
                   dayMeals.map((meal) => {
                     const linkedRecipe = resolveRecipe(meal.recipeRef);
@@ -1040,9 +1042,9 @@ export default function MealsScreen() {
                           style={[styles.mealRow, { borderTopColor: colors.cardAlt }]}
                           onPress={weekOffset >= 0 ? () => openEdit(meal) : undefined}
                           activeOpacity={weekOffset >= 0 ? 0.6 : 1}
-                          accessibilityLabel={`${meal.mealType}, ${meal.text || 'pas encore planifié'}${linkedRecipe ? ', recette liée' : ''}`}
+                          accessibilityLabel={meal.text ? (linkedRecipe ? t('meals.mealPlan.mealA11yLinked', { mealType: meal.mealType, text: meal.text }) : t('meals.mealPlan.mealA11y', { mealType: meal.mealType, text: meal.text })) : t('meals.mealPlan.mealA11yEmpty', { mealType: meal.mealType })}
                           accessibilityRole="button"
-                          accessibilityHint={weekOffset >= 0 ? 'Appuyez pour modifier' : undefined}
+                          accessibilityHint={weekOffset >= 0 ? t('meals.mealPlan.tapToEdit') : undefined}
                         >
                           <Text style={styles.mealEmoji}>
                             {MEAL_EMOJI[meal.mealType] ?? '🍴'}
@@ -1050,7 +1052,7 @@ export default function MealsScreen() {
                           <View style={styles.mealInfo}>
                             <Text style={[styles.mealType, { color: colors.textMuted }]}>{meal.mealType}</Text>
                             <Text style={[styles.mealText, { color: colors.text }, !meal.text && [styles.mealTextEmpty, { color: colors.textFaint }]]} numberOfLines={1}>
-                              {meal.text || 'Pas encore planifié'}
+                              {meal.text || t('meals.mealPlan.notPlanned')}
                             </Text>
                             {linkedRecipe && (
                               <View style={styles.mealRecipeMeta}>
@@ -1083,11 +1085,11 @@ export default function MealsScreen() {
                               style={[styles.viewRecipeBtn, { backgroundColor: tint, flex: 1 }]}
                               onPress={() => setSelectedRecipe(linkedRecipe)}
                               activeOpacity={0.7}
-                              accessibilityLabel={`Voir la recette ${linkedRecipe.title}`}
+                              accessibilityLabel={t('meals.mealPlan.viewRecipeA11y', { title: linkedRecipe.title })}
                               accessibilityRole="button"
                             >
                               <Text style={[styles.viewRecipeBtnText, { color: primary }]}>
-                                📖 Voir la recette
+                                {t('meals.mealPlan.viewRecipe')}
                               </Text>
                             </TouchableOpacity>
                             {isCurrentWeek && (
@@ -1099,13 +1101,13 @@ export default function MealsScreen() {
                                 onPress={() => markMealCooked(meal)}
                                 disabled={cookingMealId === meal.id || cookedMealIds.has(meal.id)}
                                 activeOpacity={0.7}
-                                accessibilityLabel={cookedMealIds.has(meal.id) ? `${meal.text} déjà cuisiné` : `Marquer ${meal.text} comme cuisiné`}
+                                accessibilityLabel={cookedMealIds.has(meal.id) ? t('meals.mealPlan.alreadyCooked', { name: meal.text }) : t('meals.mealPlan.markCooked', { name: meal.text })}
                                 accessibilityRole="button"
                               >
                                 <Text style={[styles.viewRecipeBtnText, {
                                   color: cookedMealIds.has(meal.id) ? colors.textMuted : colors.success,
                                 }]}>
-                                  {cookingMealId === meal.id ? '...' : cookedMealIds.has(meal.id) ? 'Cuisiné \u2713' : 'Cuisiné'}
+                                  {cookingMealId === meal.id ? '...' : cookedMealIds.has(meal.id) ? t('meals.mealPlan.cookedDone') : t('meals.mealPlan.cooked')}
                                 </Text>
                               </TouchableOpacity>
                             )}
@@ -1135,8 +1137,8 @@ export default function MealsScreen() {
             {courses.length === 0 ? (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyEmoji}>🛒</Text>
-                <Text style={[styles.emptyText, { color: colors.textSub }]}>La liste de courses est vide</Text>
-                <Text style={[styles.emptyHint, { color: colors.textMuted }]}>Ajoutez des articles ci-dessous</Text>
+                <Text style={[styles.emptyText, { color: colors.textSub }]}>{t('meals.shopping.emptyTitle')}</Text>
+                <Text style={[styles.emptyHint, { color: colors.textMuted }]}>{t('meals.shopping.emptyHint')}</Text>
               </View>
             ) : (
               courseSections.map((section) => {
@@ -1151,7 +1153,7 @@ export default function MealsScreen() {
                           style={styles.courseCheckbox}
                           onPress={() => handleCourseToggle(item)}
                           activeOpacity={0.6}
-                          accessibilityLabel={`${item.text}, ${item.completed ? 'acheté' : 'à acheter'}`}
+                          accessibilityLabel={item.completed ? t('meals.shopping.itemBought', { text: item.text }) : t('meals.shopping.itemToBuy', { text: item.text })}
                           accessibilityRole="checkbox"
                           accessibilityState={{ checked: item.completed }}
                         >
@@ -1179,7 +1181,7 @@ export default function MealsScreen() {
                           onPress={() => handleCourseRemove(item)}
                           activeOpacity={0.6}
                           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                          accessibilityLabel={`Supprimer ${item.text}`}
+                          accessibilityLabel={t('meals.shopping.deleteA11y', { text: item.text })}
                           accessibilityRole="button"
                         >
                           <Text style={[styles.courseRemoveText, { color: colors.textMuted }]}>✕</Text>
@@ -1201,9 +1203,9 @@ export default function MealsScreen() {
                 style={[styles.sectionPickerBtn, { backgroundColor: colors.cardAlt }]}
                 onPress={() => setShowSectionPicker(true)}
                 activeOpacity={0.7}
-                accessibilityLabel={`Catégorie : ${selectedSection ?? 'automatique'}`}
+                accessibilityLabel={selectedSection ? t('meals.shopping.categoryA11y', { name: selectedSection }) : t('meals.shopping.categoryAutoA11y')}
                 accessibilityRole="button"
-                accessibilityHint="Choisir la catégorie de l'article"
+                accessibilityHint={t('meals.shopping.categoryHintA11y')}
               >
                 <Text style={[styles.sectionPickerText, { color: colors.textSub }]} numberOfLines={1}>
                   {selectedSection
@@ -1216,11 +1218,11 @@ export default function MealsScreen() {
                 style={[styles.addInput, { borderColor: colors.borderLight, color: colors.text, backgroundColor: colors.bg }]}
                 value={newItemText}
                 onChangeText={setNewItemText}
-                placeholder="Ajouter un article…"
+                placeholder={t('meals.shopping.addPlaceholder')}
                 placeholderTextColor={colors.textMuted}
                 returnKeyType="send"
                 onSubmitEditing={handleAddCourse}
-                accessibilityLabel="Ajouter un article à la liste de courses"
+                accessibilityLabel={t('meals.shopping.addA11y')}
               />
               <TouchableOpacity
                 style={[
@@ -1231,7 +1233,7 @@ export default function MealsScreen() {
                 onPress={handleAddCourse}
                 disabled={!newItemText.trim()}
                 activeOpacity={0.7}
-                accessibilityLabel="Ajouter l'article"
+                accessibilityLabel={t('meals.shopping.addBtnA11y')}
                 accessibilityRole="button"
                 accessibilityState={{ disabled: !newItemText.trim() }}
               >
@@ -1248,11 +1250,11 @@ export default function MealsScreen() {
               style={[styles.recipeSearchInput, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.borderLight }]}
               value={recipeSearch}
               onChangeText={setRecipeSearch}
-              placeholder="Rechercher une recette…"
+              placeholder={t('meals.recipes.searchPlaceholder')}
               placeholderTextColor={colors.textMuted}
               returnKeyType="search"
               clearButtonMode="while-editing"
-              accessibilityLabel="Rechercher une recette"
+              accessibilityLabel={t('meals.recipes.searchA11y')}
               accessibilityRole="search"
             />
           </View>
@@ -1271,7 +1273,7 @@ export default function MealsScreen() {
               ]}
               onPress={() => { setMealTypeFilter(null); setShowFavoritesOnly(false); }}
               activeOpacity={0.7}
-              accessibilityLabel="Toutes les recettes"
+              accessibilityLabel={t('meals.recipes.allA11y')}
               accessibilityRole="tab"
               accessibilityState={{ selected: mealTypeFilter === null && !showFavoritesOnly }}
             >
@@ -1280,7 +1282,7 @@ export default function MealsScreen() {
                 { color: colors.textSub },
                 mealTypeFilter === null && !showFavoritesOnly && { color: primary, fontWeight: FontWeight.bold },
               ]}>
-                Toutes
+                {t('meals.recipes.allFilter')}
               </Text>
             </TouchableOpacity>
             {activeProfile && (
@@ -1292,7 +1294,7 @@ export default function MealsScreen() {
                 ]}
                 onPress={() => setShowFavoritesOnly(!showFavoritesOnly)}
                 activeOpacity={0.7}
-                accessibilityLabel={`Favoris${profileFavorites.length > 0 ? `, ${profileFavorites.length} recette${profileFavorites.length > 1 ? 's' : ''}` : ''}`}
+                accessibilityLabel={profileFavorites.length > 0 ? t('meals.recipes.favoritesA11y', { count: profileFavorites.length, plural: profileFavorites.length > 1 ? 's' : '' }) : t('meals.recipes.favoritesFilter')}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: showFavoritesOnly }}
               >
@@ -1301,7 +1303,7 @@ export default function MealsScreen() {
                   { color: colors.textSub },
                   showFavoritesOnly && { color: primary, fontWeight: FontWeight.bold },
                 ]}>
-                  {`❤️ Favoris${profileFavorites.length > 0 ? ` (${profileFavorites.length})` : ''}`}
+                  {`${t('meals.recipes.favoritesFilter')}${profileFavorites.length > 0 ? ` (${profileFavorites.length})` : ''}`}
                 </Text>
               </TouchableOpacity>
             )}
@@ -1340,11 +1342,11 @@ export default function MealsScreen() {
             {/* Import methods grid */}
             <View style={styles.importGrid}>
               {[
-                { emoji: '🌐', label: 'URL', onPress: () => setShowImport(true), a11y: 'Importer une recette depuis une URL' },
-                { emoji: '📷', label: photoImportLoading ? (importStatus || 'Import…') : 'Photo', onPress: handlePhotoImport, a11y: 'Importer depuis une photo', disabled: photoImportLoading },
-                { emoji: '📋', label: 'Texte', onPress: () => { setShowTextImport(true); setTextImportValue(''); setTextImportResult(null); }, a11y: 'Coller une recette en texte' },
-                { emoji: '🔍', label: 'Vault', onPress: () => { setShowScanner(true); setScanResults([]); }, a11y: 'Scanner le vault' },
-                { emoji: '🌍', label: 'Communauté', onPress: () => { setShowExplore(true); setExploreQuery(''); setExploreResults([]); setExplorePreview(null); }, a11y: 'Explorer la communauté' },
+                { emoji: '🌐', label: t('meals.import.urlLabel'), onPress: () => setShowImport(true), a11y: t('meals.import.urlA11y') },
+                { emoji: '📷', label: photoImportLoading ? (importStatus || t('meals.import.photoLoading')) : t('meals.import.photoLabel'), onPress: handlePhotoImport, a11y: t('meals.import.photoA11y'), disabled: photoImportLoading },
+                { emoji: '📋', label: t('meals.import.textLabel'), onPress: () => { setShowTextImport(true); setTextImportValue(''); setTextImportResult(null); }, a11y: t('meals.import.textA11y') },
+                { emoji: '🔍', label: t('meals.import.vaultLabel'), onPress: () => { setShowScanner(true); setScanResults([]); }, a11y: t('meals.import.vaultA11y') },
+                { emoji: '🌍', label: t('meals.import.communityLabel'), onPress: () => { setShowExplore(true); setExploreQuery(''); setExploreResults([]); setExplorePreview(null); }, a11y: t('meals.import.communityA11y') },
               ].map((item, i) => (
                 <TouchableOpacity
                   key={i}
@@ -1366,12 +1368,12 @@ export default function MealsScreen() {
               <View style={styles.emptyState}>
                 <Text style={styles.emptyEmoji}>📖</Text>
                 <Text style={[styles.emptyText, { color: colors.textSub }]}>
-                  {recipes.length === 0 ? 'Aucune recette' : 'Aucun résultat'}
+                  {recipes.length === 0 ? t('meals.recipes.emptyNoRecipes') : t('meals.recipes.emptyNoResults')}
                 </Text>
                 <Text style={[styles.emptyHint, { color: colors.textMuted }]}>
                   {recipes.length === 0
-                    ? 'Importez depuis une URL ou ajoutez\ndes fichiers .cook dans le vault'
-                    : 'Essayez un autre mot-clé'}
+                    ? t('meals.recipes.emptyNoRecipesHint')
+                    : t('meals.recipes.emptyNoResultsHint')}
                 </Text>
               </View>
             ) : (
@@ -1419,7 +1421,7 @@ export default function MealsScreen() {
             for (const { stockItem, newQuantity } of decrements) {
               await updateStockQuantity(stockItem.lineIndex, newQuantity);
             }
-            showToast(`Stock mis à jour (${decrements.length} produit${decrements.length > 1 ? 's' : ''})`);
+            showToast(t('meals.toast.stockUpdated', { count: decrements.length }));
           }}
         />
       )}
@@ -1444,7 +1446,7 @@ export default function MealsScreen() {
               style={[styles.modalInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.bg }]}
               value={editText}
               onChangeText={setEditText}
-              placeholder="Ex: Pâtes carbonara"
+              placeholder={t('meals.editModal.placeholder')}
               placeholderTextColor={colors.textMuted}
               autoFocus
               returnKeyType="done"
@@ -1457,7 +1459,7 @@ export default function MealsScreen() {
                 <Text style={[styles.linkedRecipeText, { color: primary }]} numberOfLines={1}>
                   📖 {resolveRecipe(editRecipeRef)?.title ?? editRecipeRef}
                 </Text>
-                <TouchableOpacity onPress={clearRecipeLink} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityLabel="Retirer le lien vers la recette" accessibilityRole="button">
+                <TouchableOpacity onPress={clearRecipeLink} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityLabel={t('meals.editModal.unlinkA11y')} accessibilityRole="button">
                   <Text style={[styles.linkedRecipeRemove, { color: primary }]}>✕</Text>
                 </TouchableOpacity>
               </View>
@@ -1466,11 +1468,11 @@ export default function MealsScreen() {
                 style={[styles.linkRecipeBtn, { borderColor: colors.border }]}
                 onPress={() => setShowRecipePicker(true)}
                 activeOpacity={0.7}
-                accessibilityLabel="Lier une recette à ce repas"
+                accessibilityLabel={t('meals.editModal.linkRecipeA11y')}
                 accessibilityRole="button"
               >
                 <Text style={[styles.linkRecipeBtnText, { color: colors.textSub }]}>
-                  📖 Lier une recette
+                  {t('meals.editModal.linkRecipe')}
                 </Text>
               </TouchableOpacity>
             ) : null}
@@ -1479,18 +1481,18 @@ export default function MealsScreen() {
               <TouchableOpacity
                 style={[styles.modalCancel, { borderColor: colors.border }]}
                 onPress={() => setEditingMeal(null)}
-                accessibilityLabel="Annuler"
+                accessibilityLabel={t('meals.editModal.cancelA11y')}
                 accessibilityRole="button"
               >
-                <Text style={[styles.modalCancelText, { color: colors.textSub }]}>Annuler</Text>
+                <Text style={[styles.modalCancelText, { color: colors.textSub }]}>{t('meals.editModal.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalSave, { backgroundColor: primary }]}
                 onPress={saveEdit}
-                accessibilityLabel="Valider le repas"
+                accessibilityLabel={t('meals.editModal.saveA11y')}
                 accessibilityRole="button"
               >
-                <Text style={[styles.modalSaveText, { color: colors.onPrimary }]}>Valider</Text>
+                <Text style={[styles.modalSaveText, { color: colors.onPrimary }]}>{t('meals.editModal.save')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1512,7 +1514,7 @@ export default function MealsScreen() {
             >
               <Text style={[styles.pickerClose, { color: colors.textMuted }]}>✕</Text>
             </TouchableOpacity>
-            <Text style={[styles.pickerHeaderTitle, { color: colors.text }]}>Choisir une recette</Text>
+            <Text style={[styles.pickerHeaderTitle, { color: colors.text }]}>{t('meals.editModal.pickerTitle')}</Text>
             <View style={{ width: 28 }} />
           </View>
 
@@ -1521,7 +1523,7 @@ export default function MealsScreen() {
               style={[styles.recipeSearchInput, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.borderLight }]}
               value={recipePickerSearch}
               onChangeText={setRecipePickerSearch}
-              placeholder="Rechercher…"
+              placeholder={t('meals.editModal.pickerSearch')}
               placeholderTextColor={colors.textMuted}
               autoFocus
               clearButtonMode="while-editing"
@@ -1552,7 +1554,7 @@ export default function MealsScreen() {
             )}
             ListEmptyComponent={
               <View style={styles.emptyState}>
-                <Text style={[styles.emptyText, { color: colors.textSub }]}>Aucune recette trouvée</Text>
+                <Text style={[styles.emptyText, { color: colors.textSub }]}>{t('meals.recipes.noRecipeFound')}</Text>
               </View>
             }
           />
@@ -1572,7 +1574,7 @@ export default function MealsScreen() {
           onPress={() => setShowSectionPicker(false)}
         >
           <View style={[styles.pickerContent, { backgroundColor: colors.card }]}>
-            <Text style={[styles.pickerTitle, { color: colors.text }]}>Catégorie</Text>
+            <Text style={[styles.pickerTitle, { color: colors.text }]}>{t('meals.shopping.categoryTitle')}</Text>
             {courseSections.map((s) => (
               <TouchableOpacity
                 key={s}
@@ -1615,7 +1617,7 @@ export default function MealsScreen() {
                 { color: colors.textSub },
                 selectedSection === undefined && { color: primary, fontWeight: FontWeight.bold },
               ]}>
-                📋 Fin de liste
+                {t('meals.shopping.endOfList')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -1640,7 +1642,7 @@ export default function MealsScreen() {
               onStartShouldSetResponder={() => true}
             >
               <Text style={[styles.catPickerTitle, { color: colors.text }]}>
-                Catégorie de « {categoryPickerItem?.text} »
+                {t('meals.categoryPicker.title', { item: categoryPickerItem?.text })}
               </Text>
 
               {/* Grille de catégories */}
@@ -1679,7 +1681,7 @@ export default function MealsScreen() {
                   ]}
                   onPress={() => setShowEmojiPicker(!showEmojiPicker)}
                   activeOpacity={0.7}
-                  accessibilityLabel="Choisir un emoji"
+                  accessibilityLabel={t('meals.categoryPicker.emojiA11y')}
                   accessibilityRole="button"
                 >
                   <Text style={styles.catEmojiBtnText}>{newCategoryEmoji}</Text>
@@ -1689,7 +1691,7 @@ export default function MealsScreen() {
                     styles.catNewInput,
                     { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
                   ]}
-                  placeholder="Nouvelle catégorie…"
+                  placeholder={t('meals.categoryPicker.newPlaceholder')}
                   placeholderTextColor={colors.textMuted}
                   value={newCategoryName}
                   onChangeText={setNewCategoryName}
@@ -1709,7 +1711,7 @@ export default function MealsScreen() {
                     styles.catNewBtnText,
                     { color: newCategoryName.trim() ? colors.onPrimary : colors.textMuted },
                   ]}>
-                    Ajouter
+                    {t('meals.categoryPicker.addBtn')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -1753,19 +1755,19 @@ export default function MealsScreen() {
             <TouchableOpacity onPress={() => { setShowImport(false); setImportResult(null); setImportUrl(''); }}>
               <Text style={[styles.pickerClose, { color: colors.textMuted }]}>✕</Text>
             </TouchableOpacity>
-            <Text style={[styles.pickerHeaderTitle, { color: colors.text }]}>Importer une recette</Text>
+            <Text style={[styles.pickerHeaderTitle, { color: colors.text }]}>{t('meals.import.modalTitle')}</Text>
             <View style={{ width: 28 }} />
           </View>
 
           <ScrollView style={styles.scroll} contentContainerStyle={{ padding: 16, gap: 16 }}>
             {/* URL input */}
             <View style={{ gap: 8 }}>
-              <Text style={[styles.importLabel, { color: colors.text }]}>URL de la recette</Text>
+              <Text style={[styles.importLabel, { color: colors.text }]}>{t('meals.import.urlFieldLabel')}</Text>
               <TextInput
                 style={[styles.recipeSearchInput, { backgroundColor: colors.cardAlt, color: colors.text, borderColor: colors.borderLight }]}
                 value={importUrl}
                 onChangeText={setImportUrl}
-                placeholder="https://marmiton.org/recettes/..."
+                placeholder={t('meals.import.urlPlaceholder')}
                 placeholderTextColor={colors.textMuted}
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -1780,7 +1782,7 @@ export default function MealsScreen() {
                 activeOpacity={0.7}
               >
                 <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>
-                  {importLoading ? `⏳ ${importStatus || 'Chargement…'}` : '🔍 Extraire la recette'}
+                  {importLoading ? t('meals.import.fetchLoading', { status: importStatus || t('meals.import.fetchLoadingDefault') }) : t('meals.import.fetchBtn')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1793,31 +1795,31 @@ export default function MealsScreen() {
                 </Text>
                 {importResult.type === 'cook' ? (
                   <Text style={[styles.importPreviewMeta, { color: colors.success }]}>
-                    Fichier .cook prêt (via cook.md)
+                    {t('meals.import.cookReady')}
                   </Text>
                 ) : (
                   <>
                     {(importResult.data.servings || importResult.data.prepTime || importResult.data.cookTime) && (
                       <Text style={[styles.importPreviewMeta, { color: colors.textMuted }]}>
-                        {importResult.data.servings ? `👤 ${importResult.data.servings} pers.` : ''}
-                        {importResult.data.prepTime ? `  ⏱ Prep ${importResult.data.prepTime}` : ''}
-                        {importResult.data.cookTime ? `  🔥 Cuisson ${importResult.data.cookTime}` : ''}
+                        {importResult.data.servings ? t('meals.import.servingsLabel', { count: importResult.data.servings }) : ''}
+                        {importResult.data.prepTime ? `  ${t('meals.import.prepLabel', { time: importResult.data.prepTime })}` : ''}
+                        {importResult.data.cookTime ? `  ${t('meals.import.cookLabel', { time: importResult.data.cookTime })}` : ''}
                       </Text>
                     )}
                     <Text style={[styles.importPreviewMeta, { color: colors.textMuted }]}>
-                      🥕 {importResult.data.ingredients.length} ingrédient{importResult.data.ingredients.length > 1 ? 's' : ''} · {importResult.data.steps.length} étape{importResult.data.steps.length > 1 ? 's' : ''}
+                      {t('meals.import.ingredientsCount', { count: importResult.data.ingredients.length })} · {t('meals.import.stepsCount', { count: importResult.data.steps.length })}
                     </Text>
                   </>
                 )}
 
                 {/* Category input */}
                 <View style={{ marginTop: 12, gap: 6 }}>
-                  <Text style={[styles.importLabel, { color: colors.text }]}>Catégorie</Text>
+                  <Text style={[styles.importLabel, { color: colors.text }]}>{t('meals.import.categoryLabel')}</Text>
                   <TextInput
                     style={[styles.recipeSearchInput, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.borderLight }]}
                     value={importCategory}
                     onChangeText={setImportCategory}
-                    placeholder="Ex: Plats, Desserts, Entrées…"
+                    placeholder={t('meals.import.categoryPlaceholder')}
                     placeholderTextColor={colors.textMuted}
                   />
                 </View>
@@ -1827,7 +1829,7 @@ export default function MealsScreen() {
                   onPress={handleImportSave}
                   activeOpacity={0.7}
                 >
-                  <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>✅ Sauvegarder dans le vault</Text>
+                  <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>{t('meals.import.saveToVault')}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -1847,13 +1849,13 @@ export default function MealsScreen() {
             <TouchableOpacity onPress={() => setShowScanner(false)}>
               <Text style={[styles.pickerClose, { color: colors.textMuted }]}>✕</Text>
             </TouchableOpacity>
-            <Text style={[styles.pickerHeaderTitle, { color: colors.text }]}>Scanner le vault</Text>
+            <Text style={[styles.pickerHeaderTitle, { color: colors.text }]}>{t('meals.scanner.modalTitle')}</Text>
             <View style={{ width: 28 }} />
           </View>
 
           <ScrollView style={styles.scroll} contentContainerStyle={{ padding: 16, gap: 16 }}>
             <Text style={[{ fontSize: FontSize.sm, color: colors.textSub, lineHeight: 20 }]}>
-              Recherche des fichiers .cook en dehors du dossier Recettes pour les importer.
+              {t('meals.scanner.description')}
             </Text>
 
             <TouchableOpacity
@@ -1863,23 +1865,23 @@ export default function MealsScreen() {
               activeOpacity={0.7}
             >
               <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>
-                {scanLoading ? '⏳ Scan en cours…' : '🔍 Lancer le scan'}
+                {scanLoading ? t('meals.scanner.scanLoading') : t('meals.scanner.scanBtn')}
               </Text>
             </TouchableOpacity>
 
             {scanResults.length > 0 && (
               <View style={{ gap: 12 }}>
                 <Text style={[styles.importLabel, { color: colors.text }]}>
-                  {scanResults.length} fichier{scanResults.length > 1 ? 's' : ''} trouvé{scanResults.length > 1 ? 's' : ''}
+                  {t('meals.scanner.filesFound', { count: scanResults.length })}
                 </Text>
 
                 <View style={{ gap: 6 }}>
-                  <Text style={[styles.importLabel, { color: colors.text }]}>Catégorie de destination</Text>
+                  <Text style={[styles.importLabel, { color: colors.text }]}>{t('meals.scanner.destCategory')}</Text>
                   <TextInput
                     style={[styles.recipeSearchInput, { backgroundColor: colors.cardAlt, color: colors.text, borderColor: colors.borderLight }]}
                     value={scanMoveCategory}
                     onChangeText={setScanMoveCategory}
-                    placeholder="Ex: Plats, Desserts…"
+                    placeholder={t('meals.scanner.destPlaceholder')}
                     placeholderTextColor={colors.textMuted}
                   />
                 </View>
@@ -1900,7 +1902,7 @@ export default function MealsScreen() {
                       onPress={() => handleMoveCook(item.path, item.title)}
                       activeOpacity={0.7}
                     >
-                      <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>📂 Déplacer dans Recettes</Text>
+                      <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>{t('meals.scanner.moveBtn')}</Text>
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -1922,7 +1924,7 @@ export default function MealsScreen() {
             <TouchableOpacity onPress={() => { setShowTextImport(false); setTextImportResult(null); }}>
               <Text style={[styles.pickerClose, { color: colors.textMuted }]}>✕</Text>
             </TouchableOpacity>
-            <Text style={[styles.pickerHeaderTitle, { color: colors.text }]}>Coller une recette</Text>
+            <Text style={[styles.pickerHeaderTitle, { color: colors.text }]}>{t('meals.textImport.modalTitle')}</Text>
             <View style={{ width: 28 }} />
           </View>
 
@@ -1938,7 +1940,7 @@ export default function MealsScreen() {
               keyboardDismissMode="interactive"
             >
               <View style={{ gap: 8 }}>
-                <Text style={[styles.importLabel, { color: colors.text }]}>Texte de la recette</Text>
+                <Text style={[styles.importLabel, { color: colors.text }]}>{t('meals.textImport.fieldLabel')}</Text>
                 <TextInput
                   style={[styles.recipeSearchInput, {
                     backgroundColor: colors.cardAlt, color: colors.text, borderColor: colors.borderLight,
@@ -1946,7 +1948,7 @@ export default function MealsScreen() {
                   }]}
                   value={textImportValue}
                   onChangeText={setTextImportValue}
-                  placeholder={'Collez ici le texte brut de la recette\n(copié depuis un mail, un livre, WhatsApp…)'}
+                  placeholder={t('meals.textImport.placeholder')}
                   placeholderTextColor={colors.textMuted}
                   multiline
                 />
@@ -1957,7 +1959,7 @@ export default function MealsScreen() {
                   activeOpacity={0.7}
                 >
                   <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>
-                    {importLoading ? '⏳ Analyse en cours…' : aiConfigured ? '🤖 Convertir avec l\'IA' : '🔍 Analyser le texte'}
+                    {importLoading ? t('meals.textImport.analyzeLoading') : aiConfigured ? t('meals.textImport.convertAI') : t('meals.textImport.analyzeText')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -1969,7 +1971,7 @@ export default function MealsScreen() {
                     {textImportResult.data.title}
                   </Text>
                   <Text style={[styles.importPreviewMeta, { color: colors.success }]}>
-                    Fichier .cook prêt (via IA)
+                    {t('meals.import.cookReadyAI')}
                   </Text>
 
                   <View style={{ marginTop: 8, padding: 10, borderRadius: 8, backgroundColor: colors.bg }}>
@@ -1979,12 +1981,12 @@ export default function MealsScreen() {
                   </View>
 
                   <View style={{ marginTop: 12, gap: 6 }}>
-                    <Text style={[styles.importLabel, { color: colors.text }]}>Catégorie</Text>
+                    <Text style={[styles.importLabel, { color: colors.text }]}>{t('meals.import.categoryLabel')}</Text>
                     <TextInput
                       style={[styles.recipeSearchInput, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.borderLight }]}
                       value={textImportCategory}
                       onChangeText={setTextImportCategory}
-                      placeholder="Ex: Plats, Desserts, Entrées…"
+                      placeholder={t('meals.import.categoryPlaceholder')}
                       placeholderTextColor={colors.textMuted}
                     />
                   </View>
@@ -1994,7 +1996,7 @@ export default function MealsScreen() {
                     onPress={handleTextImportSave}
                     activeOpacity={0.7}
                   >
-                    <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>Sauvegarder dans le vault</Text>
+                    <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>{t('meals.import.saveToVaultNoIcon')}</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -2006,17 +2008,17 @@ export default function MealsScreen() {
                     {textImportResult.data.title}
                   </Text>
                   <Text style={[styles.importPreviewMeta, { color: colors.textMuted }]}>
-                    {textImportResult.data.servings ? `${textImportResult.data.servings} pers.` : ''}
-                    {textImportResult.data.prepTime ? `  Prep ${textImportResult.data.prepTime}` : ''}
-                    {textImportResult.data.cookTime ? `  Cuisson ${textImportResult.data.cookTime}` : ''}
+                    {textImportResult.data.servings ? t('meals.parsedPreview.servings', { count: textImportResult.data.servings }) : ''}
+                    {textImportResult.data.prepTime ? `  ${t('meals.parsedPreview.prep', { time: textImportResult.data.prepTime })}` : ''}
+                    {textImportResult.data.cookTime ? `  ${t('meals.parsedPreview.cook', { time: textImportResult.data.cookTime })}` : ''}
                   </Text>
                   <Text style={[styles.importPreviewMeta, { color: colors.textMuted }]}>
-                    {textImportResult.data.ingredients.length} ingrédient{textImportResult.data.ingredients.length > 1 ? 's' : ''} · {textImportResult.data.steps.length} étape{textImportResult.data.steps.length > 1 ? 's' : ''}
+                    {t('meals.import.ingredientsCount', { count: textImportResult.data.ingredients.length })} · {t('meals.import.stepsCount', { count: textImportResult.data.steps.length })}
                   </Text>
 
                   {textImportResult.data.ingredients.length > 0 && (
                     <View style={{ marginTop: 8, gap: 2 }}>
-                      <Text style={[{ fontSize: FontSize.label, fontWeight: FontWeight.semibold, color: colors.text }]}>Ingrédients :</Text>
+                      <Text style={[{ fontSize: FontSize.label, fontWeight: FontWeight.semibold, color: colors.text }]}>{t('meals.textImport.ingredientsLabel')}</Text>
                       {textImportResult.data.ingredients.map((ing, i) => (
                         <Text key={i} style={[{ fontSize: FontSize.label, color: colors.textSub }]}>- {ing}</Text>
                       ))}
@@ -2025,7 +2027,7 @@ export default function MealsScreen() {
 
                   {textImportResult.data.steps.length > 0 && (
                     <View style={{ marginTop: 8, gap: 2 }}>
-                      <Text style={[{ fontSize: FontSize.label, fontWeight: FontWeight.semibold, color: colors.text }]}>Étapes :</Text>
+                      <Text style={[{ fontSize: FontSize.label, fontWeight: FontWeight.semibold, color: colors.text }]}>{t('meals.textImport.stepsLabel')}</Text>
                       {textImportResult.data.steps.map((step, i) => (
                         <Text key={i} style={[{ fontSize: FontSize.label, color: colors.textSub }]} numberOfLines={2}>
                           {i + 1}. {step}
@@ -2035,12 +2037,12 @@ export default function MealsScreen() {
                   )}
 
                   <View style={{ marginTop: 12, gap: 6 }}>
-                    <Text style={[styles.importLabel, { color: colors.text }]}>Catégorie</Text>
+                    <Text style={[styles.importLabel, { color: colors.text }]}>{t('meals.import.categoryLabel')}</Text>
                     <TextInput
                       style={[styles.recipeSearchInput, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.borderLight }]}
                       value={textImportCategory}
                       onChangeText={setTextImportCategory}
-                      placeholder="Ex: Plats, Desserts, Entrées…"
+                      placeholder={t('meals.import.categoryPlaceholder')}
                       placeholderTextColor={colors.textMuted}
                     />
                   </View>
@@ -2050,7 +2052,7 @@ export default function MealsScreen() {
                     onPress={handleTextImportSave}
                     activeOpacity={0.7}
                   >
-                    <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>Sauvegarder dans le vault</Text>
+                    <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>{t('meals.import.saveToVaultNoIcon')}</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -2071,7 +2073,7 @@ export default function MealsScreen() {
             <TouchableOpacity onPress={() => { setShowExplore(false); setExplorePreview(null); }}>
               <Text style={[styles.pickerClose, { color: colors.textMuted }]}>✕</Text>
             </TouchableOpacity>
-            <Text style={[styles.pickerHeaderTitle, { color: colors.text }]}>Explorer la communauté</Text>
+            <Text style={[styles.pickerHeaderTitle, { color: colors.text }]}>{t('meals.explore.modalTitle')}</Text>
             <View style={{ width: 28 }} />
           </View>
 
@@ -2086,7 +2088,7 @@ export default function MealsScreen() {
                   style={[styles.recipeSearchInput, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.borderLight, flex: 1 }]}
                   value={exploreQuery}
                   onChangeText={setExploreQuery}
-                  placeholder="Ex: pasta, chicken, dessert…"
+                  placeholder={t('meals.explore.searchPlaceholder')}
                   placeholderTextColor={colors.textMuted}
                   autoFocus
                   returnKeyType="search"
@@ -2104,7 +2106,7 @@ export default function MealsScreen() {
                 </TouchableOpacity>
               </View>
               <Text style={{ fontSize: FontSize.caption, color: colors.textMuted, marginTop: 6 }}>
-                Recherche en anglais sur cooklang.org{aiConfig ? ' · traduction auto FR' : ''} · {exploreResults.length > 0 ? `${exploreResults.length} résultat${exploreResults.length > 1 ? 's' : ''}` : '4295+ recettes disponibles'}
+                {t('meals.explore.searchHint')}{aiConfig ? t('meals.explore.autoTranslate') : ''} · {exploreResults.length > 0 ? t('meals.explore.resultsCount', { count: exploreResults.length }) : t('meals.explore.availableRecipes')}
               </Text>
             </View>
 
@@ -2112,7 +2114,7 @@ export default function MealsScreen() {
             {explorePreview ? (
               <ScrollView style={styles.scroll} contentContainerStyle={{ padding: 16, gap: 16 }}>
                 <TouchableOpacity onPress={() => setExplorePreview(null)}>
-                  <Text style={{ fontSize: FontSize.sm, color: primary, fontWeight: FontWeight.semibold }}>← Retour aux résultats</Text>
+                  <Text style={{ fontSize: FontSize.sm, color: primary, fontWeight: FontWeight.semibold }}>{t('meals.explore.backToResults')}</Text>
                 </TouchableOpacity>
 
                 <View style={[styles.importPreview, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
@@ -2120,7 +2122,7 @@ export default function MealsScreen() {
                     {explorePreview.title}
                   </Text>
                   <Text style={[styles.importPreviewMeta, { color: colors.success }]}>
-                    Fichier .cook prêt
+                    {t('meals.import.cookReadyPlain')}
                   </Text>
 
                   {/* Raw preview (first 15 lines) */}
@@ -2132,12 +2134,12 @@ export default function MealsScreen() {
 
                   {/* Category */}
                   <View style={{ marginTop: 12, gap: 6 }}>
-                    <Text style={[styles.importLabel, { color: colors.text }]}>Catégorie</Text>
+                    <Text style={[styles.importLabel, { color: colors.text }]}>{t('meals.import.categoryLabel')}</Text>
                     <TextInput
                       style={[styles.recipeSearchInput, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.borderLight }]}
                       value={exploreCategory}
                       onChangeText={setExploreCategory}
-                      placeholder="Ex: Plats, Desserts, Entrées…"
+                      placeholder={t('meals.import.categoryPlaceholder')}
                       placeholderTextColor={colors.textMuted}
                     />
                   </View>
@@ -2147,7 +2149,7 @@ export default function MealsScreen() {
                     onPress={handleExploreSave}
                     activeOpacity={0.7}
                   >
-                    <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>✅ Importer dans le vault</Text>
+                    <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>{t('meals.import.importToVault')}</Text>
                   </TouchableOpacity>
                 </View>
               </ScrollView>
@@ -2184,10 +2186,10 @@ export default function MealsScreen() {
                     <View style={styles.emptyState}>
                       <Text style={styles.emptyEmoji}>🌍</Text>
                       <Text style={[styles.emptyText, { color: colors.textSub }]}>
-                        Recherchez des recettes
+                        {t('meals.explore.searchEmpty')}
                       </Text>
                       <Text style={[styles.emptyHint, { color: colors.textMuted }]}>
-                        {'Tapez un mot-clé en anglais\n(chicken, pasta, cake, soup…)'}
+                        {t('meals.explore.searchEmptyHint')}
                       </Text>
                     </View>
                   ) : null
