@@ -197,8 +197,10 @@
       "daily": "Chaque jour",
       "weekly": "Chaque semaine",
       "monthly": "Chaque mois",
-      "assignLabel": "👤 Attribuer à",
-      "saveToLabel": "Enregistrer pour"
+      "assignLabel": "👤 Attribuer à (optionnel)",
+      "saveToLabel": "Enregistrer pour",
+      "targetLabel": "📁 Enregistrer pour",
+      "secretMission": "🕵️ Créer une mission secrète"
     },
     "editModal": {
       "title": "Modifier la tâche",
@@ -917,8 +919,43 @@
       }
     }
   },
+  "calendarScreen": {
+    "title": "📆 Calendrier",
+    "tabs": {
+      "month": "Mois",
+      "week": "Semaine"
+    }
+  },
   "dashboard": {
     "seeAll": "Voir tout",
+    "sectionLabels": {
+      "insights": "Suggestions",
+      "vacation": "Vacances",
+      "overdue": "En retard",
+      "menage": "Tâches maison du jour",
+      "meals": "Repas du jour",
+      "calendar": "Calendrier",
+      "courses": "Courses",
+      "rdvs": "Rendez-vous",
+      "photos": "Photo du jour",
+      "budget": "Budget",
+      "weeklyStats": "Stats semaine",
+      "lootProgress": "Progression",
+      "rewards": "Récompenses actives",
+      "defis": "Défis familiaux",
+      "gratitude": "Gratitude",
+      "wishlist": "Souhaits",
+      "anniversaires": "Anniversaires",
+      "onThisDay": "Il y a 1 an\u2026",
+      "quotes": "Mots d'enfants",
+      "moods": "Humeurs",
+      "bilanSemaine": "Bilan de semaine",
+      "secretMissions": "Missions secrètes",
+      "quicknotifs": "Notifications rapides",
+      "recipes": "Idée recette",
+      "nightMode": "Mode nuit bébé",
+      "leaderboard": "Classement"
+    },
     "anniversaires": {
       "title": "Anniversaires",
       "today": "aujourd'hui",

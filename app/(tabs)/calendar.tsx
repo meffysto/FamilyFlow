@@ -28,17 +28,19 @@ import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { EmptyState } from '../../components/EmptyState';
 import { Spacing } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { useTranslation } from 'react-i18next';
 import type { CalendarEvent } from '../../lib/calendar-types';
 
 type ViewMode = 'mois' | 'semaine';
 
-const VIEW_TABS: { id: ViewMode; label: string }[] = [
-  { id: 'mois', label: 'Mois' },
-  { id: 'semaine', label: 'Semaine' },
-];
-
 export default function CalendarScreen() {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
+
+  const VIEW_TABS: { id: ViewMode; label: string }[] = [
+    { id: 'mois', label: t('calendarScreen.tabs.month') },
+    { id: 'semaine', label: t('calendarScreen.tabs.week') },
+  ];
   const { refresh } = useVault();
   const { refreshing, onRefresh } = useRefresh(refresh);
 
@@ -93,7 +95,7 @@ export default function CalendarScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>📆 Calendrier</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('calendarScreen.title')}</Text>
         <TouchableOpacity onPress={goToToday}>
           <Text style={[styles.todayBtn, { color: primary }]}>Aujourd'hui</Text>
         </TouchableOpacity>

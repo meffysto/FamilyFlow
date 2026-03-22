@@ -606,7 +606,7 @@ export default function JournalScreen() {
                 accessibilityRole="button"
               >
                 <Text style={styles.sectionEmojiBtnIcon}>{ENTRY_META.Observation.emoji}</Text>
-                <Text style={[styles.sectionEmojiBtnText, { color: primary }]}>Ajouter</Text>
+                <Text style={[styles.sectionEmojiBtnText, { color: primary }]}>{t('journal.sections.add')}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -683,7 +683,7 @@ export default function JournalScreen() {
               accessibilityRole="button"
             >
               <Text style={styles.sectionEmojiBtnIcon}>{ENTRY_META[entryType].emoji}</Text>
-              <Text style={[styles.sectionEmojiBtnText, { color: primary }]}>Ajouter</Text>
+              <Text style={[styles.sectionEmojiBtnText, { color: primary }]}>{t('journal.sections.add')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -843,7 +843,7 @@ export default function JournalScreen() {
           <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>
               {meta.emoji}{' '}
-              {modal.mode === 'edit' ? `Modifier ${meta.label}` : `Ajouter ${meta.label}`}
+              {modal.mode === 'edit' ? t('journal.modal.editPrefix', { label: meta.label }) : t('journal.modal.addPrefix', { label: meta.label })}
             </Text>
 
             {fieldConfigs.map((field) => (

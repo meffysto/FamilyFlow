@@ -197,8 +197,10 @@
       "daily": "Every day",
       "weekly": "Every week",
       "monthly": "Every month",
-      "assignLabel": "👤 Assign to",
-      "saveToLabel": "Save to"
+      "assignLabel": "👤 Assign to (optional)",
+      "saveToLabel": "Save to",
+      "targetLabel": "📁 Save for",
+      "secretMission": "🕵️ Create a secret mission"
     },
     "editModal": {
       "title": "Edit task",
@@ -917,8 +919,43 @@
       }
     }
   },
+  "calendarScreen": {
+    "title": "📆 Calendar",
+    "tabs": {
+      "month": "Month",
+      "week": "Week"
+    }
+  },
   "dashboard": {
     "seeAll": "See all",
+    "sectionLabels": {
+      "insights": "Suggestions",
+      "vacation": "Vacation",
+      "overdue": "Overdue",
+      "menage": "Housekeeping",
+      "meals": "Today's meals",
+      "calendar": "Calendar",
+      "courses": "Shopping",
+      "rdvs": "Appointments",
+      "photos": "Photo of the day",
+      "budget": "Budget",
+      "weeklyStats": "Weekly stats",
+      "lootProgress": "Progress",
+      "rewards": "Active rewards",
+      "defis": "Family challenges",
+      "gratitude": "Gratitude",
+      "wishlist": "Wishes",
+      "anniversaires": "Birthdays",
+      "onThisDay": "1 year ago\u2026",
+      "quotes": "Kids' quotes",
+      "moods": "Moods",
+      "bilanSemaine": "Weekly recap",
+      "secretMissions": "Secret missions",
+      "quicknotifs": "Quick notifications",
+      "recipes": "Recipe idea",
+      "nightMode": "Baby night mode",
+      "leaderboard": "Leaderboard"
+    },
     "anniversaires": {
       "title": "Birthdays",
       "today": "today",

@@ -780,7 +780,7 @@ export default function TasksScreen() {
 
 
 
-            <Text style={[styles.modalLabel, { color: colors.textSub }]}>👤 Attribuer à (optionnel)</Text>
+            <Text style={[styles.modalLabel, { color: colors.textSub }]}>{t('tasks.addModal.assignLabel')}</Text>
             <View style={styles.targetRow}>
               {profiles.map((p) => (
                 <Chip
@@ -795,7 +795,7 @@ export default function TasksScreen() {
               ))}
             </View>
 
-            <Text style={[styles.modalLabel, { color: colors.textSub }]}>📁 Enregistrer pour</Text>
+            <Text style={[styles.modalLabel, { color: colors.textSub }]}>{t('tasks.addModal.targetLabel')}</Text>
             <View style={styles.targetRow}>
               {targetFiles.map((t) => (
                 <Chip
@@ -816,7 +816,7 @@ export default function TasksScreen() {
                 }}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.secretMissionBtnText, { color: colors.warning }]}>🕵️ Créer une mission secrète</Text>
+                <Text style={[styles.secretMissionBtnText, { color: colors.warning }]}>{t('tasks.addModal.secretMission')}</Text>
               </TouchableOpacity>
             )}
           </ScrollView>
