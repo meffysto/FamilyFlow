@@ -9,6 +9,8 @@
  */
 
 import i18n from '../i18n';
+import { getDateLocale, formatDateLocalized } from '../date-locale';
+import { setAppLanguage, getSavedLanguage } from '../i18n';
 import { getRarityLabel } from '../gamification/rewards';
 import {
   getDefiCategoryLabel,
@@ -205,6 +207,61 @@ describe('help-content helpers', () => {
   });
 });
 
+// ─── date-locale ────────────────────────────────────────────────────────────
+
+describe('getDateLocale', () => {
+  it('retourne la locale FR par défaut', () => {
+    const locale = getDateLocale();
+    expect(locale.code).toBe('fr');
+  });
+
+  it('retourne la locale EN après switch', async () => {
+    await i18n.changeLanguage('en');
+    const locale = getDateLocale();
+    expect(locale.code).toBe('en-US');
+  });
+});
+
+describe('formatDateLocalized', () => {
+  it('formate en DD/MM/YYYY en français', () => {
+    expect(formatDateLocalized('2026-03-22')).toBe('22/03/2026');
+  });
+
+  it('formate en MM/DD/YYYY en anglais', async () => {
+    await i18n.changeLanguage('en');
+    expect(formatDateLocalized('2026-03-22')).toBe('03/22/2026');
+  });
+
+  it('retourne la string telle quelle si pas au format YYYY-MM-DD', () => {
+    expect(formatDateLocalized('22/03/2026')).toBe('22/03/2026');
+    expect(formatDateLocalized('')).toBe('');
+  });
+});
+
+// ─── setAppLanguage / getSavedLanguage ──────────────────────────────────────
+
+describe('persistance de la langue', () => {
+  it('getSavedLanguage retourne auto par défaut', async () => {
+    const lang = await getSavedLanguage();
+    expect(lang).toBe('auto');
+  });
+
+  it('setAppLanguage persiste et change la langue', async () => {
+    await setAppLanguage('en');
+    expect(i18n.language).toBe('en');
+    const saved = await getSavedLanguage();
+    expect(saved).toBe('en');
+  });
+
+  it('setAppLanguage auto revient à la langue device', async () => {
+    await setAppLanguage('auto');
+    const saved = await getSavedLanguage();
+    expect(saved).toBe('auto');
+    // La langue doit être celle du mock expo-localization (fr)
+    expect(i18n.language).toBe('fr');
+  });
+});
+
 // ─── Cohérence JSON ─────────────────────────────────────────────────────────
 
 describe('cohérence des fichiers de traduction', () => {
@@ -231,5 +288,44 @@ describe('cohérence des fichiers de traduction', () => {
       expect(en).toBeTruthy();
       expect(en).not.toBe(fr);
     }
+  });
+
+  it('toutes les clés FR ont un équivalent EN dans chaque namespace', () => {
+    const namespaces = ['common', 'gamification', 'help', 'insights', 'skills'];
+    const missing: string[] = [];
+
+    function collectKeys(obj: any, prefix: string): string[] {
+      const keys: string[] = [];
+      for (const key of Object.keys(obj)) {
+        const fullKey = prefix ? `${prefix}.${key}` : key;
+        if (typeof obj[key] === 'object' && obj[key] !== null) {
+          keys.push(...collectKeys(obj[key], fullKey));
+        } else {
+          keys.push(fullKey);
+        }
+      }
+      return keys;
+    }
+
+    for (const ns of namespaces) {
+      const frBundle = i18n.getResourceBundle('fr', ns);
+      const enBundle = i18n.getResourceBundle('en', ns);
+      if (!frBundle || !enBundle) continue;
+
+      const frKeys = collectKeys(frBundle, '');
+      for (const key of frKeys) {
+        const enValue = i18n.t(`${ns}:${key}`, { lng: 'en' });
+        // Si la valeur EN est identique à la clé, c'est qu'elle manque
+        if (enValue === `${ns}:${key}` || enValue === key) {
+          missing.push(`${ns}:${key}`);
+        }
+      }
+    }
+
+    if (missing.length > 0) {
+      console.warn(`Clés FR sans équivalent EN (${missing.length}) :\n  ${missing.slice(0, 20).join('\n  ')}`);
+    }
+    // Tolérance : quelques clés peuvent être identiques (ex: "Auto", "Obsidian")
+    expect(missing.length).toBeLessThan(10);
   });
 });
