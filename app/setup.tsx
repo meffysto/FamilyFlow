@@ -296,7 +296,7 @@ export default function SetupScreen() {
               {[
                 ['📋', t('setup.features.tasks.title'), t('setup.features.tasks.desc')],
                 ['🎁', t('setup.features.loot.title'), t('setup.features.loot.desc')],
-                ['📝', t('setup.features.obsidian.title'), t('setup.features.obsidian.desc')],
+                ['🔒', t('setup.features.files.title'), t('setup.features.files.desc')],
                 ['📱', t('setup.features.telegram.title'), t('setup.features.telegram.desc')],
               ].map(([icon, title, desc]) => (
                 <View key={title} style={ds.feature}>
