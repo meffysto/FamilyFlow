@@ -42,6 +42,7 @@ import {
 import { Profile, LootBox, LootRarity } from '../../lib/types';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
+import { useTranslation } from 'react-i18next';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { SeasonalBanner } from '../../components/SeasonalBanner';
@@ -53,6 +54,7 @@ export default function LootScreen() {
   const { openLootBox, isProcessing } = useGamification({ vault, notifPrefs });
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [lootOpenerVisible, setLootOpenerVisible] = useState(false);
@@ -84,7 +86,7 @@ export default function LootScreen() {
       await refresh();
       return box;
     } catch (e) {
-      showToast('Impossible d\'ouvrir la récompense', 'error');
+      showToast(t('loot.toast.openError'), 'error');
       return null;
     }
   }, [selectedProfile, gamiData, openLootBox, refresh]);
@@ -117,18 +119,18 @@ export default function LootScreen() {
         {/* Header */}
         <View style={[styles.header, { backgroundColor: primary }]}>
           <View style={styles.headerTop}>
-            <Text style={[styles.title, { color: colors.onPrimary }]}>🎁 Récompenses</Text>
+            <Text style={[styles.title, { color: colors.onPrimary }]}>{t('loot.title')}</Text>
             <TouchableOpacity
               style={styles.dropRatesBtn}
               onPress={() => setShowDropRates(true)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              accessibilityLabel="Voir les probabilités de récompenses"
+              accessibilityLabel={t('loot.a11y.showDropRates')}
               accessibilityRole="button"
             >
               <Text style={styles.dropRatesBtnText}>📊</Text>
             </TouchableOpacity>
           </View>
-          <Text style={[styles.subtitle, { color: tint }]}>Complète des tâches pour gagner des récompenses !</Text>
+          <Text style={[styles.subtitle, { color: tint }]}>{t('loot.subtitle')}</Text>
         </View>
 
         {/* Bandeau événement saisonnier */}
@@ -144,7 +146,7 @@ export default function LootScreen() {
         {!activeEvent && nextEvent && (
           <View style={[styles.nextEventCard, { backgroundColor: colors.cardAlt }]}>
             <Text style={[styles.nextEventText, { color: colors.textSub }]}>
-              {nextEvent.event.emoji} Prochain événement : <Text style={{ fontWeight: FontWeight.bold, color: nextEvent.event.themeColor }}>{nextEvent.event.name}</Text> — dans {nextEvent.daysUntil} jour{nextEvent.daysUntil > 1 ? 's' : ''}
+              {nextEvent.event.emoji} {t('loot.nextEvent')} <Text style={{ fontWeight: FontWeight.bold, color: nextEvent.event.themeColor }}>{nextEvent.event.name}</Text> — {t('loot.nextEventDays', { count: nextEvent.daysUntil })}
             </Text>
           </View>
         )}
@@ -155,20 +157,20 @@ export default function LootScreen() {
             style={[styles.tab, activeTab === 'rewards' && { borderBottomColor: primary, borderBottomWidth: 2 }]}
             onPress={() => setActiveTab('rewards')}
           >
-            <Text style={[styles.tabText, { color: activeTab === 'rewards' ? primary : colors.textMuted }]}>🎁 Récompenses</Text>
+            <Text style={[styles.tabText, { color: activeTab === 'rewards' ? primary : colors.textMuted }]}>{t('loot.tabs.rewards')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tab, activeTab === 'collection' && { borderBottomColor: primary, borderBottomWidth: 2 }]}
             onPress={() => setActiveTab('collection')}
           >
-            <Text style={[styles.tabText, { color: activeTab === 'collection' ? primary : colors.textMuted }]}>🏅 Collection</Text>
+            <Text style={[styles.tabText, { color: activeTab === 'collection' ? primary : colors.textMuted }]}>{t('loot.tabs.collection')}</Text>
           </TouchableOpacity>
         </View>
 
         {activeTab === 'rewards' && <>
         {/* Loot box cards per profile */}
         <View ref={lootSectionRef} style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Tes récompenses à ouvrir</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('loot.sections.rewardsToOpen')}</Text>
           {profiles.map((profile) => (
             <View key={profile.id} style={[styles.lootCard, { backgroundColor: colors.card }]}>
               <View style={styles.lootCardLeft}>
@@ -176,7 +178,7 @@ export default function LootScreen() {
                 <View>
                   <Text style={[styles.lootCardName, { color: colors.text }]}>{profile.name}</Text>
                   <Text style={[styles.lootCardLevel, { color: getLevelTier(profile.level).color }]}>
-                    {getLevelTier(profile.level).emoji} {getLevelTier(profile.level).name} (Nv. {profile.level})
+                    {getLevelTier(profile.level).emoji} {getLevelTier(profile.level).name} ({t('loot.level', { level: profile.level })})
                   </Text>
                 </View>
               </View>
@@ -186,12 +188,12 @@ export default function LootScreen() {
                   style={[styles.openBtn, { backgroundColor: primary }]}
                   onPress={() => handleOpenLoot(profile)}
                   disabled={isProcessing}
-                  accessibilityLabel={`Ouvrir ${profile.lootBoxesAvailable} récompense${profile.lootBoxesAvailable > 1 ? 's' : ''} pour ${profile.name}`}
+                  accessibilityLabel={t(profile.lootBoxesAvailable > 1 ? 'loot.openA11yPlural' : 'loot.openA11y', { count: profile.lootBoxesAvailable, name: profile.name })}
                   accessibilityRole="button"
                 >
                   <Text style={styles.openBtnEmoji}>🎁</Text>
                   <Text style={[styles.openBtnText, { color: colors.onPrimary }]}>
-                    Ouvrir{profile.lootBoxesAvailable > 1 ? ` (×${profile.lootBoxesAvailable})` : ''}
+                    {profile.lootBoxesAvailable > 1 ? t('loot.openBtnMultiple', { count: profile.lootBoxesAvailable }) : t('loot.openBtn')}
                   </Text>
                 </TouchableOpacity>
               ) : (
@@ -208,7 +210,7 @@ export default function LootScreen() {
         {/* Active rewards */}
         {activeRewards.length > 0 && (
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>🏆 Récompenses actives</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('loot.sections.activeRewards')}</Text>
             <View style={[styles.card, { backgroundColor: colors.card }]}>
               {activeRewards.map((reward) => {
                 const ownerProfile = profiles.find((p) => p.id === reward.profileId);
@@ -221,8 +223,8 @@ export default function LootScreen() {
                       </Text>
                       <Text style={[styles.activeRewardLabel, { color: colors.text }]}>{reward.label}</Text>
                       <Text style={[styles.activeRewardMeta, { color: colors.error }]}>
-                        {reward.remainingDays !== undefined && `${reward.remainingDays}j restant${reward.remainingDays > 1 ? 's' : ''}`}
-                        {reward.remainingTasks !== undefined && `${reward.remainingTasks} tâche${reward.remainingTasks > 1 ? 's' : ''} restante${reward.remainingTasks > 1 ? 's' : ''}`}
+                        {reward.remainingDays !== undefined && t('loot.activeRewardDaysRemaining', { count: reward.remainingDays })}
+                        {reward.remainingTasks !== undefined && t('loot.activeRewardTasksRemaining', { count: reward.remainingTasks })}
                       </Text>
                     </View>
                   </View>
@@ -234,7 +236,7 @@ export default function LootScreen() {
 
         {/* Leaderboard */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>🏆 Classement</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('loot.sections.leaderboard')}</Text>
           <View style={[styles.card, { backgroundColor: colors.card }]}>
             <FamilyLeaderboard profiles={leaderboard} />
           </View>
@@ -243,7 +245,7 @@ export default function LootScreen() {
         {/* Recent history */}
         {recentHistory.length > 0 && (
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>📜 Historique récent</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('loot.sections.recentHistory')}</Text>
             <View style={[styles.card, { backgroundColor: colors.card }]}>
               {recentHistory.map((entry, idx) => {
                 const profileObj = profiles.find((p) => p.id === entry.profileId);
@@ -257,7 +259,7 @@ export default function LootScreen() {
                         <Text style={[styles.historyName, { color: colors.textSub }]}>{profileObj?.name ?? entry.profileId}</Text>
                         <View style={[styles.historyTypeBadge, { backgroundColor: isLoot ? colors.infoBg : entry.note.startsWith('Compétence:') ? colors.warningBg : entry.note.startsWith('Défi:') ? colors.infoBg : colors.successBg }]}>
                           <Text style={[styles.historyTypeText, { color: isLoot ? colors.info : entry.note.startsWith('Compétence:') ? colors.warning : entry.note.startsWith('Défi:') ? colors.info : colors.success }]}>
-                            {isLoot ? '🎁 Loot' : entry.note.startsWith('Compétence:') ? '🧠 Compétence' : entry.note.startsWith('Défi:') ? '🎯 Défi' : entry.note.startsWith('Bonus') ? '✨ Bonus' : '📋 Tâche'}
+                            {isLoot ? t('loot.history.loot') : entry.note.startsWith('Compétence:') ? t('loot.history.skill') : entry.note.startsWith('Défi:') ? t('loot.history.challenge') : entry.note.startsWith('Bonus') ? t('loot.history.bonus') : t('loot.history.task')}
                           </Text>
                         </View>
                       </View>
@@ -283,7 +285,7 @@ export default function LootScreen() {
         {activeTab === 'collection' && <>
         {/* Collection de badges — catalogue complet avec découverts/manquants */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>🏅 Collection de badges</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('loot.sections.badgeCollection')}</Text>
           {profiles.map((profile) => {
             // Badges obtenus par ce profil (extraire les emojis uniques)
             const earnedEmojis = new Set(
@@ -351,21 +353,21 @@ export default function LootScreen() {
           <ScrollView contentContainerStyle={styles.drContent}>
             {/* Header */}
             <View style={styles.drHeader}>
-              <Text style={[styles.drTitle, { color: colors.text }]}>📊 Probabilités & Récompenses</Text>
-              <TouchableOpacity onPress={() => setShowDropRates(false)} accessibilityLabel="Fermer" accessibilityRole="button">
+              <Text style={[styles.drTitle, { color: colors.text }]}>{t('loot.dropRates.title')}</Text>
+              <TouchableOpacity onPress={() => setShowDropRates(false)} accessibilityLabel={t('loot.a11y.close')} accessibilityRole="button">
                 <Text style={[styles.drCloseBtn, { color: colors.textFaint }]}>✕</Text>
               </TouchableOpacity>
             </View>
 
             {/* Drop rates table */}
             <View style={[styles.drCard, { backgroundColor: colors.card }]}>
-              <Text style={[styles.drSectionTitle, { color: colors.textSub }]}>Chances d'obtenir chaque rareté</Text>
+              <Text style={[styles.drSectionTitle, { color: colors.textSub }]}>{t('loot.dropRates.chancePerRarity')}</Text>
               {/* Table header */}
               <View style={styles.drTableRow}>
-                <Text style={[styles.drTableCell, styles.drTableHeader, { flex: 2, color: colors.textMuted }]}>Rareté</Text>
-                <Text style={[styles.drTableCell, styles.drTableHeader, { color: colors.textMuted }]}>Enfant</Text>
-                <Text style={[styles.drTableCell, styles.drTableHeader, { color: colors.textMuted }]}>Ado</Text>
-                <Text style={[styles.drTableCell, styles.drTableHeader, { color: colors.textMuted }]}>Adulte</Text>
+                <Text style={[styles.drTableCell, styles.drTableHeader, { flex: 2, color: colors.textMuted }]}>{t('loot.dropRates.rarity')}</Text>
+                <Text style={[styles.drTableCell, styles.drTableHeader, { color: colors.textMuted }]}>{t('loot.dropRates.child')}</Text>
+                <Text style={[styles.drTableCell, styles.drTableHeader, { color: colors.textMuted }]}>{t('loot.dropRates.teen')}</Text>
+                <Text style={[styles.drTableCell, styles.drTableHeader, { color: colors.textMuted }]}>{t('loot.dropRates.adult')}</Text>
               </View>
               {/* Table rows */}
               {(Object.keys(RARITY_COLORS) as LootRarity[]).map((rarity) => (
@@ -385,9 +387,13 @@ export default function LootScreen() {
 
             {/* Pity system */}
             <View style={[styles.drPityBox, { backgroundColor: tint, borderColor: tint }]}>
-              <Text style={[styles.drPityTitle, { color: primary }]}>🎯 Garantie</Text>
+              <Text style={[styles.drPityTitle, { color: primary }]}>{t('loot.pity.title')}</Text>
               <Text style={[styles.drPityText, { color: colors.textSub }]}>
-                Après {PITY_THRESHOLD} récompenses sans obtenir Épique ou mieux, la suivante est <Text style={{ fontWeight: FontWeight.heavy }}>garantie Épique minimum</Text>.
+                {t('loot.pity.description', { threshold: PITY_THRESHOLD }).split('<bold>').map((part, i) => {
+                  if (i === 0) return part;
+                  const [bold, rest] = part.split('</bold>');
+                  return <Text key={i}><Text style={{ fontWeight: FontWeight.heavy }}>{bold}</Text>{rest}</Text>;
+                })}
               </Text>
             </View>
 
@@ -400,7 +406,7 @@ export default function LootScreen() {
                       {activeEvent.emoji} {activeEvent.name}
                     </Text>
                   </View>
-                  <Text style={[styles.drRewardCount, { color: activeEvent.themeColor }]}>20% de chance</Text>
+                  <Text style={[styles.drRewardCount, { color: activeEvent.themeColor }]}>{t('loot.dropRates.chancePercent', { percent: 20 })}</Text>
                 </View>
                 {(Object.entries(activeEvent.rewards) as [LootRarity, typeof REWARDS[LootRarity]][]).map(([rarity, rewards]) =>
                   rewards?.map((reward, idx) => (
@@ -425,7 +431,7 @@ export default function LootScreen() {
                       {RARITY_EMOJIS[rarity]} {getRarityLabel(rarity)}
                     </Text>
                   </View>
-                  <Text style={[styles.drRewardCount, { color: colors.textFaint }]}>{REWARDS[rarity].length} récompenses</Text>
+                  <Text style={[styles.drRewardCount, { color: colors.textFaint }]}>{t('loot.dropRates.rewardCount', { count: REWARDS[rarity].length })}</Text>
                 </View>
                 {REWARDS[rarity].map((reward, idx) => (
                   <View key={idx} style={[styles.drRewardRow, idx < REWARDS[rarity].length - 1 && styles.drRewardRowBorder, idx < REWARDS[rarity].length - 1 && { borderBottomColor: colors.bg }]}>
@@ -443,8 +449,8 @@ export default function LootScreen() {
             ))}
 
             {/* Close button */}
-            <TouchableOpacity style={[styles.drCloseButton, { backgroundColor: primary }]} onPress={() => setShowDropRates(false)} accessibilityLabel="Fermer les probabilités" accessibilityRole="button">
-              <Text style={[styles.drCloseButtonText, { color: colors.onPrimary }]}>Fermer</Text>
+            <TouchableOpacity style={[styles.drCloseButton, { backgroundColor: primary }]} onPress={() => setShowDropRates(false)} accessibilityLabel={t('loot.a11y.closeDropRates')} accessibilityRole="button">
+              <Text style={[styles.drCloseButtonText, { color: colors.onPrimary }]}>{t('loot.dropRates.close')}</Text>
             </TouchableOpacity>
 
             <View style={{ height: 40 }} />

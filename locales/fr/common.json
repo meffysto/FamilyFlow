@@ -546,5 +546,160 @@
       "prep": "Prep {{time}}",
       "cook": "Cuisson {{time}}"
     }
+  },
+  "loot": {
+    "title": "🎁 Récompenses",
+    "subtitle": "Complète des tâches pour gagner des récompenses !",
+    "tabs": {
+      "rewards": "🎁 Récompenses",
+      "collection": "🏅 Collection"
+    },
+    "sections": {
+      "rewardsToOpen": "Tes récompenses à ouvrir",
+      "activeRewards": "🏆 Récompenses actives",
+      "leaderboard": "🏆 Classement",
+      "recentHistory": "📜 Historique récent",
+      "badgeCollection": "🏅 Collection de badges"
+    },
+    "openBtn": "Ouvrir",
+    "openBtnMultiple": "Ouvrir (×{{count}})",
+    "openA11y": "Ouvrir {{count}} récompense pour {{name}}",
+    "openA11yPlural": "Ouvrir {{count}} récompenses pour {{name}}",
+    "level": "Nv. {{level}}",
+    "nextEvent": "Prochain événement :",
+    "nextEventDays_one": "dans {{count}} jour",
+    "nextEventDays_other": "dans {{count}} jours",
+    "activeRewardDaysRemaining_one": "{{count}}j restant",
+    "activeRewardDaysRemaining_other": "{{count}}j restants",
+    "activeRewardTasksRemaining_one": "{{count}} tâche restante",
+    "activeRewardTasksRemaining_other": "{{count}} tâches restantes",
+    "history": {
+      "loot": "🎁 Loot",
+      "skill": "🧠 Compétence",
+      "challenge": "🎯 Défi",
+      "bonus": "✨ Bonus",
+      "task": "📋 Tâche"
+    },
+    "toast": {
+      "openError": "Impossible d'ouvrir la récompense"
+    },
+    "dropRates": {
+      "title": "📊 Probabilités & Récompenses",
+      "chancePerRarity": "Chances d'obtenir chaque rareté",
+      "rarity": "Rareté",
+      "child": "Enfant",
+      "teen": "Ado",
+      "adult": "Adulte",
+      "rewardCount_one": "{{count}} récompense",
+      "rewardCount_other": "{{count}} récompenses",
+      "chancePercent": "{{percent}}% de chance",
+      "close": "Fermer"
+    },
+    "pity": {
+      "title": "🎯 Garantie",
+      "description": "Après {{threshold}} récompenses sans obtenir Épique ou mieux, la suivante est <bold>garantie Épique minimum</bold>."
+    },
+    "a11y": {
+      "showDropRates": "Voir les probabilités de récompenses",
+      "close": "Fermer",
+      "closeDropRates": "Fermer les probabilités"
+    }
+  },
+  "defis": {
+    "screenTitle": "Défis familiaux",
+    "tabs": {
+      "active": "Actifs",
+      "templates": "Templates",
+      "history": "Historique"
+    },
+    "card": {
+      "daysCount": "{{done}}/{{total}} jours",
+      "doneToday": "Fait aujourd'hui",
+      "checkIn": "Check-in",
+      "a11yLabel": "Défi {{title}}, {{done}} sur {{total}} jours, difficulté {{difficulty}}",
+      "a11yHint": "Appuyez pour voir les détails",
+      "checkInA11y": "Check-in pour {{title}}"
+    },
+    "config": {
+      "launchTitle": "Lancer le défi",
+      "newTitle": "Nouveau défi",
+      "create": "Créer",
+      "titleRequired": "Titre requis",
+      "titleRequiredMsg": "Donnez un titre au défi",
+      "titlePlaceholder": "Titre du défi",
+      "titleA11y": "Titre du défi",
+      "descPlaceholder": "Description (optionnel)",
+      "emojiA11y": "Choisir un emoji, actuel : {{emoji}}",
+      "typeLabel": "Type",
+      "typeDaily": "Quotidien",
+      "typeAbstinence": "Abstinence",
+      "typeCumulative": "Cumulatif",
+      "startLabel": "Début",
+      "endLabel": "Fin",
+      "daysHint": "{{count}} jours",
+      "totalGoalLabel": "Objectif total",
+      "totalGoalPlaceholder": "ex: 210",
+      "unitLabel": "Unité",
+      "unitPlaceholder": "min, pas, pages",
+      "difficultyLabel": "Difficulté",
+      "participantsLabel": "Participants (vide = toute la famille)",
+      "rewardTitle": "Récompense estimée",
+      "rewardValue": "{{points}} pts",
+      "rewardWithLootBox_one": "{{points}} pts + {{count}} loot box",
+      "rewardWithLootBox_other": "{{points}} pts + {{count}} loot boxes",
+      "rewardBonusDuration": "Bonus ×1.5 (durée > 14j)"
+    },
+    "detail": {
+      "calendar": "Calendrier",
+      "perParticipant": "Par participant",
+      "daysCompleted_one": "{{count}} jour complété",
+      "daysCompleted_other": "{{count}} jours complétés",
+      "doneToday": "Fait aujourd'hui",
+      "checkInTitle": "Check-in du jour",
+      "valuePlaceholder": "Valeur ({{unit}})",
+      "notePlaceholder": "Note (optionnel)",
+      "done": "Fait",
+      "checkIn": "Check-in",
+      "doneA11y": "{{name}}, déjà fait aujourd'hui",
+      "checkInA11y": "Check-in pour {{name}}",
+      "reportFailure": "Signaler un échec",
+      "reportFailureTitle": "Signaler un échec ?",
+      "reportFailureMsg": "Pour un défi abstinence, un échec met fin au défi.",
+      "validateDefi": "Valider le défi",
+      "validateA11y": "Valider le défi comme réussi",
+      "deleteBtn": "Supprimer",
+      "deleteA11y": "Supprimer le défi"
+    },
+    "alert": {
+      "deleteTitle": "Supprimer ce défi ?",
+      "deleteMsg": "Cette action est irréversible.",
+      "cancel": "Annuler",
+      "confirm": "Confirmer",
+      "delete": "Supprimer"
+    },
+    "toast": {
+      "deleted": "Défi supprimé",
+      "launched": "Défi \"{{title}}\" lancé !",
+      "checkIn": "Check-in {{emoji}} {{title}}",
+      "completed": "Bravo ! Défi \"{{title}}\" réussi ! {{points}} pts + {{lootBoxes}} loot box(es)"
+    },
+    "empty": {
+      "activeTitle": "Aucun défi en cours",
+      "activeSubtitle": "Lancez un défi familial pour motiver tout le monde",
+      "activeCta": "Créer un défi",
+      "historyTitle": "Aucun historique",
+      "historySubtitle": "Les défis terminés ou échoués apparaîtront ici."
+    },
+    "history": {
+      "succeeded": "Réussi",
+      "failed": "Échoué",
+      "a11y": "{{title}}, {{status}}"
+    },
+    "templates": {
+      "customBtn": "+ Créer un défi personnalisé",
+      "customA11y": "Créer un défi personnalisé",
+      "templateA11y": "Template {{title}}, difficulté {{difficulty}}",
+      "templateHint": "Appuyez pour lancer ce défi"
+    }
   }
 }

@@ -54,6 +54,7 @@ import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { useParentalControls } from '../../contexts/ParentalControlsContext';
 import { EmptyState } from '../../components/EmptyState';
+import { useTranslation } from 'react-i18next';
 
 type TabId = 'actifs' | 'templates' | 'historique';
 
@@ -92,6 +93,7 @@ function DefiCard({
   onCheckIn: () => void;
 }) {
   const { primary, colors } = useThemeColors();
+  const { t } = useTranslation();
   const today = new Date().toISOString().slice(0, 10);
 
   const uniqueCompletedDays = new Set(defi.progress.filter((p) => p.completed).map((p) => p.date)).size;
@@ -108,12 +110,12 @@ function DefiCard({
   const diffColor = defi.difficulty === 'facile' ? colors.success : defi.difficulty === 'moyen' ? colors.warning : colors.error;
 
   return (
-    <TouchableOpacity style={[cardStyles.card, { backgroundColor: colors.card }]} onPress={onPress} activeOpacity={0.7} accessibilityLabel={`Défi ${defi.title}, ${uniqueCompletedDays} sur ${defi.targetDays} jours, difficulté ${defi.difficulty}`} accessibilityRole="button" accessibilityHint="Appuyez pour voir les détails">
+    <TouchableOpacity style={[cardStyles.card, { backgroundColor: colors.card }]} onPress={onPress} activeOpacity={0.7} accessibilityLabel={t('defis.card.a11yLabel', { title: defi.title, done: uniqueCompletedDays, total: defi.targetDays, difficulty: getDifficultyLabel(defi.difficulty) })} accessibilityRole="button" accessibilityHint={t('defis.card.a11yHint')}>
       <View style={cardStyles.header}>
         <Text style={cardStyles.emoji}>{defi.emoji}</Text>
         <View style={cardStyles.titleArea}>
           <Text style={[cardStyles.title, { color: colors.text }]} numberOfLines={1}>{defi.title}</Text>
-          <Chip label={defi.difficulty} color={diffColor} size="sm" />
+          <Chip label={getDifficultyLabel(defi.difficulty)} color={diffColor} size="sm" />
         </View>
       </View>
 
@@ -121,7 +123,7 @@ function DefiCard({
 
       <View style={cardStyles.meta}>
         <Text style={[cardStyles.counter, { color: colors.textSub }]}>
-          {uniqueCompletedDays}/{defi.targetDays} jours
+          {t('defis.card.daysCount', { done: uniqueCompletedDays, total: defi.targetDays })}
         </Text>
         <View style={cardStyles.avatars}>
           {participantAvatars.slice(0, 4).map((p) => (
@@ -138,14 +140,14 @@ function DefiCard({
             onCheckIn();
           }}
           activeOpacity={0.7}
-          accessibilityLabel={`Check-in pour ${defi.title}`}
+          accessibilityLabel={t('defis.card.checkInA11y', { title: defi.title })}
           accessibilityRole="button"
         >
-          <Text style={[cardStyles.checkInText, { color: colors.onPrimary }]}>Check-in</Text>
+          <Text style={[cardStyles.checkInText, { color: colors.onPrimary }]}>{t('defis.card.checkIn')}</Text>
         </TouchableOpacity>
       )}
       {allCheckedToday && defi.status === 'active' && (
-        <Text style={[cardStyles.doneToday, { color: colors.success }]}>Fait aujourd'hui</Text>
+        <Text style={[cardStyles.doneToday, { color: colors.success }]}>{t('defis.card.doneToday')}</Text>
       )}
     </TouchableOpacity>
   );
@@ -189,6 +191,7 @@ function DefiConfigModal({
   onClose: () => void;
 }) {
   const { primary, colors } = useThemeColors();
+  const { t } = useTranslation();
 
   const today = new Date().toISOString().slice(0, 10);
   const in7d = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
@@ -210,7 +213,7 @@ function DefiConfigModal({
 
   const handleSave = () => {
     if (!title.trim()) {
-      Alert.alert('Titre requis', 'Donnez un titre au défi');
+      Alert.alert(t('defis.config.titleRequired'), t('defis.config.titleRequiredMsg'));
       return;
     }
     const id = `defi_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`;
@@ -245,9 +248,9 @@ function DefiConfigModal({
   return (
     <SafeAreaView style={[configStyles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <ModalHeader
-        title={template ? 'Lancer le défi' : 'Nouveau défi'}
+        title={template ? t('defis.config.launchTitle') : t('defis.config.newTitle')}
         onClose={onClose}
-        rightLabel="Créer"
+        rightLabel={t('defis.config.create')}
         onRight={handleSave}
       />
       <ScrollView style={configStyles.scroll} contentContainerStyle={configStyles.content}>
@@ -260,7 +263,7 @@ function DefiConfigModal({
               const idx = emojis.indexOf(emoji);
               setEmoji(emojis[(idx + 1) % emojis.length]);
             }}
-            accessibilityLabel={`Choisir un emoji, actuel : ${emoji}`}
+            accessibilityLabel={t('defis.config.emojiA11y', { emoji })}
             accessibilityRole="button"
           >
             <Text style={configStyles.emojiText}>{emoji}</Text>
@@ -269,9 +272,9 @@ function DefiConfigModal({
             style={[configStyles.input, configStyles.titleInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
             value={title}
             onChangeText={setTitle}
-            placeholder="Titre du défi"
+            placeholder={t('defis.config.titlePlaceholder')}
             placeholderTextColor={colors.textFaint}
-            accessibilityLabel="Titre du défi"
+            accessibilityLabel={t('defis.config.titleA11y')}
           />
         </View>
 
@@ -280,18 +283,18 @@ function DefiConfigModal({
           style={[configStyles.input, configStyles.descInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
           value={description}
           onChangeText={setDescription}
-          placeholder="Description (optionnel)"
+          placeholder={t('defis.config.descPlaceholder')}
           placeholderTextColor={colors.textFaint}
           multiline
         />
 
         {/* Type */}
-        <Text style={[configStyles.label, { color: colors.textMuted }]}>Type</Text>
+        <Text style={[configStyles.label, { color: colors.textMuted }]}>{t('defis.config.typeLabel')}</Text>
         <View style={configStyles.chipRow}>
-          {(['daily', 'abstinence', 'cumulative'] as const).map((t) => {
-            const labels: Record<DefiType, string> = { daily: 'Quotidien', abstinence: 'Abstinence', cumulative: 'Cumulatif' };
+          {(['daily', 'abstinence', 'cumulative'] as const).map((dt) => {
+            const labels: Record<DefiType, string> = { daily: t('defis.config.typeDaily'), abstinence: t('defis.config.typeAbstinence'), cumulative: t('defis.config.typeCumulative') };
             return (
-              <Chip key={t} label={labels[t]} color={type === t ? primary : colors.textMuted} onPress={() => setType(t)} />
+              <Chip key={dt} label={labels[dt]} color={type === dt ? primary : colors.textMuted} onPress={() => setType(dt)} />
             );
           })}
         </View>
@@ -299,37 +302,37 @@ function DefiConfigModal({
         {/* Dates */}
         <View style={configStyles.dateRow}>
           <View style={configStyles.dateCol}>
-            <Text style={[configStyles.label, { color: colors.textMuted }]}>Début</Text>
+            <Text style={[configStyles.label, { color: colors.textMuted }]}>{t('defis.config.startLabel')}</Text>
             <DateInput value={startDate} onChange={setStartDate} />
           </View>
           <View style={configStyles.dateCol}>
-            <Text style={[configStyles.label, { color: colors.textMuted }]}>Fin</Text>
+            <Text style={[configStyles.label, { color: colors.textMuted }]}>{t('defis.config.endLabel')}</Text>
             <DateInput value={endDate} onChange={setEndDate} />
           </View>
         </View>
-        <Text style={[configStyles.hint, { color: colors.textFaint }]}>{targetDays} jours</Text>
+        <Text style={[configStyles.hint, { color: colors.textFaint }]}>{t('defis.config.daysHint', { count: targetDays })}</Text>
 
         {/* Métrique (cumulative) */}
         {type === 'cumulative' && (
           <View style={configStyles.dateRow}>
             <View style={configStyles.dateCol}>
-              <Text style={[configStyles.label, { color: colors.textMuted }]}>Objectif total</Text>
+              <Text style={[configStyles.label, { color: colors.textMuted }]}>{t('defis.config.totalGoalLabel')}</Text>
               <TextInput
                 style={[configStyles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
                 value={targetMetric}
                 onChangeText={setTargetMetric}
-                placeholder="ex: 210"
+                placeholder={t('defis.config.totalGoalPlaceholder')}
                 placeholderTextColor={colors.textFaint}
                 keyboardType="numeric"
               />
             </View>
             <View style={configStyles.dateCol}>
-              <Text style={[configStyles.label, { color: colors.textMuted }]}>Unité</Text>
+              <Text style={[configStyles.label, { color: colors.textMuted }]}>{t('defis.config.unitLabel')}</Text>
               <TextInput
                 style={[configStyles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
                 value={metricUnit}
                 onChangeText={setMetricUnit}
-                placeholder="min, pas, pages"
+                placeholder={t('defis.config.unitPlaceholder')}
                 placeholderTextColor={colors.textFaint}
               />
             </View>
@@ -337,18 +340,18 @@ function DefiConfigModal({
         )}
 
         {/* Difficulté */}
-        <Text style={[configStyles.label, { color: colors.textMuted }]}>Difficulté</Text>
+        <Text style={[configStyles.label, { color: colors.textMuted }]}>{t('defis.config.difficultyLabel')}</Text>
         <View style={configStyles.chipRow}>
           {(['facile', 'moyen', 'difficile'] as const).map((d) => {
             const c = d === 'facile' ? colors.success : d === 'moyen' ? colors.warning : colors.error;
             return (
-              <Chip key={d} label={d} color={difficulty === d ? c : colors.textMuted} onPress={() => setDifficulty(d)} />
+              <Chip key={d} label={getDifficultyLabel(d)} color={difficulty === d ? c : colors.textMuted} onPress={() => setDifficulty(d)} />
             );
           })}
         </View>
 
         {/* Participants */}
-        <Text style={[configStyles.label, { color: colors.textMuted }]}>Participants (vide = toute la famille)</Text>
+        <Text style={[configStyles.label, { color: colors.textMuted }]}>{t('defis.config.participantsLabel')}</Text>
         <View style={configStyles.chipRow}>
           {profiles.map((p) => (
             <TouchableOpacity
@@ -370,12 +373,12 @@ function DefiConfigModal({
 
         {/* Aperçu récompense */}
         <View style={[configStyles.rewardPreview, { backgroundColor: colors.cardAlt }]}>
-          <Text style={[configStyles.rewardTitle, { color: colors.text }]}>Récompense estimée</Text>
+          <Text style={[configStyles.rewardTitle, { color: colors.text }]}>{t('defis.config.rewardTitle')}</Text>
           <Text style={[configStyles.rewardValue, { color: primary }]}>
-            {reward} pts{lootBoxes > 0 ? ` + ${lootBoxes} loot box${lootBoxes > 1 ? 'es' : ''}` : ''}
+            {lootBoxes > 0 ? t('defis.config.rewardWithLootBox', { points: reward, count: lootBoxes }) : t('defis.config.rewardValue', { points: reward })}
           </Text>
           {targetDays > 14 && (
-            <Text style={[configStyles.hint, { color: colors.success }]}>Bonus ×1.5 (durée {'>'} 14j)</Text>
+            <Text style={[configStyles.hint, { color: colors.success }]}>{t('defis.config.rewardBonusDuration')}</Text>
           )}
         </View>
       </ScrollView>

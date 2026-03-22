@@ -546,5 +546,160 @@
       "prep": "Prep {{time}}",
       "cook": "Cook {{time}}"
     }
+  },
+  "loot": {
+    "title": "🎁 Rewards",
+    "subtitle": "Complete tasks to earn rewards!",
+    "tabs": {
+      "rewards": "🎁 Rewards",
+      "collection": "🏅 Collection"
+    },
+    "sections": {
+      "rewardsToOpen": "Your rewards to open",
+      "activeRewards": "🏆 Active rewards",
+      "leaderboard": "🏆 Leaderboard",
+      "recentHistory": "📜 Recent history",
+      "badgeCollection": "🏅 Badge collection"
+    },
+    "openBtn": "Open",
+    "openBtnMultiple": "Open (×{{count}})",
+    "openA11y": "Open {{count}} reward for {{name}}",
+    "openA11yPlural": "Open {{count}} rewards for {{name}}",
+    "level": "Lv. {{level}}",
+    "nextEvent": "Next event:",
+    "nextEventDays_one": "in {{count}} day",
+    "nextEventDays_other": "in {{count}} days",
+    "activeRewardDaysRemaining_one": "{{count}}d remaining",
+    "activeRewardDaysRemaining_other": "{{count}}d remaining",
+    "activeRewardTasksRemaining_one": "{{count}} task remaining",
+    "activeRewardTasksRemaining_other": "{{count}} tasks remaining",
+    "history": {
+      "loot": "🎁 Loot",
+      "skill": "🧠 Skill",
+      "challenge": "🎯 Challenge",
+      "bonus": "✨ Bonus",
+      "task": "📋 Task"
+    },
+    "toast": {
+      "openError": "Unable to open reward"
+    },
+    "dropRates": {
+      "title": "📊 Probabilities & Rewards",
+      "chancePerRarity": "Chance of getting each rarity",
+      "rarity": "Rarity",
+      "child": "Child",
+      "teen": "Teen",
+      "adult": "Adult",
+      "rewardCount_one": "{{count}} reward",
+      "rewardCount_other": "{{count}} rewards",
+      "chancePercent": "{{percent}}% chance",
+      "close": "Close"
+    },
+    "pity": {
+      "title": "🎯 Guarantee",
+      "description": "After {{threshold}} rewards without getting Epic or better, the next one is <bold>guaranteed Epic minimum</bold>."
+    },
+    "a11y": {
+      "showDropRates": "View reward probabilities",
+      "close": "Close",
+      "closeDropRates": "Close probabilities"
+    }
+  },
+  "defis": {
+    "screenTitle": "Family challenges",
+    "tabs": {
+      "active": "Active",
+      "templates": "Templates",
+      "history": "History"
+    },
+    "card": {
+      "daysCount": "{{done}}/{{total}} days",
+      "doneToday": "Done today",
+      "checkIn": "Check-in",
+      "a11yLabel": "Challenge {{title}}, {{done}} out of {{total}} days, difficulty {{difficulty}}",
+      "a11yHint": "Tap to view details",
+      "checkInA11y": "Check in for {{title}}"
+    },
+    "config": {
+      "launchTitle": "Launch challenge",
+      "newTitle": "New challenge",
+      "create": "Create",
+      "titleRequired": "Title required",
+      "titleRequiredMsg": "Give the challenge a title",
+      "titlePlaceholder": "Challenge title",
+      "titleA11y": "Challenge title",
+      "descPlaceholder": "Description (optional)",
+      "emojiA11y": "Choose an emoji, current: {{emoji}}",
+      "typeLabel": "Type",
+      "typeDaily": "Daily",
+      "typeAbstinence": "Abstinence",
+      "typeCumulative": "Cumulative",
+      "startLabel": "Start",
+      "endLabel": "End",
+      "daysHint": "{{count}} days",
+      "totalGoalLabel": "Total goal",
+      "totalGoalPlaceholder": "e.g.: 210",
+      "unitLabel": "Unit",
+      "unitPlaceholder": "min, steps, pages",
+      "difficultyLabel": "Difficulty",
+      "participantsLabel": "Participants (empty = whole family)",
+      "rewardTitle": "Estimated reward",
+      "rewardValue": "{{points}} pts",
+      "rewardWithLootBox_one": "{{points}} pts + {{count}} loot box",
+      "rewardWithLootBox_other": "{{points}} pts + {{count}} loot boxes",
+      "rewardBonusDuration": "Bonus ×1.5 (duration > 14d)"
+    },
+    "detail": {
+      "calendar": "Calendar",
+      "perParticipant": "Per participant",
+      "daysCompleted_one": "{{count}} day completed",
+      "daysCompleted_other": "{{count}} days completed",
+      "doneToday": "Done today",
+      "checkInTitle": "Today's check-in",
+      "valuePlaceholder": "Value ({{unit}})",
+      "notePlaceholder": "Note (optional)",
+      "done": "Done",
+      "checkIn": "Check-in",
+      "doneA11y": "{{name}}, already done today",
+      "checkInA11y": "Check in for {{name}}",
+      "reportFailure": "Report a failure",
+      "reportFailureTitle": "Report a failure?",
+      "reportFailureMsg": "For an abstinence challenge, a failure ends the challenge.",
+      "validateDefi": "Validate challenge",
+      "validateA11y": "Validate challenge as succeeded",
+      "deleteBtn": "Delete",
+      "deleteA11y": "Delete challenge"
+    },
+    "alert": {
+      "deleteTitle": "Delete this challenge?",
+      "deleteMsg": "This action is irreversible.",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "delete": "Delete"
+    },
+    "toast": {
+      "deleted": "Challenge deleted",
+      "launched": "Challenge \"{{title}}\" launched!",
+      "checkIn": "Check-in {{emoji}} {{title}}",
+      "completed": "Congrats! Challenge \"{{title}}\" succeeded! {{points}} pts + {{lootBoxes}} loot box(es)"
+    },
+    "empty": {
+      "activeTitle": "No active challenges",
+      "activeSubtitle": "Launch a family challenge to motivate everyone",
+      "activeCta": "Create a challenge",
+      "historyTitle": "No history",
+      "historySubtitle": "Completed or failed challenges will appear here."
+    },
+    "history": {
+      "succeeded": "Succeeded",
+      "failed": "Failed",
+      "a11y": "{{title}}, {{status}}"
+    },
+    "templates": {
+      "customBtn": "+ Create a custom challenge",
+      "customA11y": "Create a custom challenge",
+      "templateA11y": "Template {{title}}, difficulty {{difficulty}}",
+      "templateHint": "Tap to launch this challenge"
+    }
   }
 }
