@@ -240,7 +240,7 @@ export function DashboardPrefsModal({ sections: initialSections, smartSort: init
 
         {smartSort && (
           <Text style={[styles.smartSortNote, { color: colors.textMuted }]}>
-            L'ordre manuel ci-dessous sert de base — le tri intelligent le réajuste selon le contexte.
+            {t('dashboardPrefs.smartSortNote')}
           </Text>
         )}
 

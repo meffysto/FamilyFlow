@@ -2322,6 +2322,14 @@
   },
   "notesScreen": {
     "title": "Notes & Articles",
+    "categories": {
+      "administratif": "📋 Administrative",
+      "sante": "🏥 Health",
+      "ecole": "🎓 School",
+      "finances": "💰 Finances",
+      "articles": "📖 Articles",
+      "divers": "📌 Misc"
+    },
     "alert": {
       "error": "Error",
       "saveError": "Unable to save note",
@@ -2489,6 +2497,10 @@
     "tasksSummary_other": "{{count}} tasks this week"
   },
   "skillsScreen": {
+    "title": "Skills",
+    "completed": "completed",
+    "skillCount": "{{unlocked}} / {{total}} skills",
+    "unlockedCount": "{{unlocked}} / {{total}} unlocked",
     "a11y": {
       "changeBracket": "Change age bracket"
     }

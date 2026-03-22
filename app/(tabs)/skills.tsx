@@ -199,7 +199,7 @@ export default function SkillsScreen() {
       <View ref={headerRef} style={styles.header}>
         <View style={styles.headerRow}>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.title, { color: colors.text }]}>Compétences</Text>
+            <Text style={[styles.title, { color: colors.text }]}>{t('skillsScreen.title')}</Text>
           </View>
           {/* Avatars enfants compacts (si parent avec plusieurs enfants) */}
           {isParent && childProfiles.length > 1 && (
@@ -269,14 +269,14 @@ export default function SkillsScreen() {
                 {progressPercent}%
               </Text>
               <Text style={[styles.ringLabel, { color: colors.textMuted }]}>
-                complété
+                {t('skillsScreen.completed')}
               </Text>
             </View>
           </View>
 
           <View style={styles.progressInfo}>
             <Text style={[styles.progressTitle, { color: colors.text }]}>
-              {unlockedCount} / {totalSkills} compétences
+              {t('skillsScreen.skillCount', { unlocked: unlockedCount, total: totalSkills })}
             </Text>
             {/* Sélecteur tranche d'âge intégré */}
             <TouchableOpacity

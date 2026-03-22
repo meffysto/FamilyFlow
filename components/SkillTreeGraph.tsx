@@ -34,6 +34,7 @@ export function SkillTreeGraph({
 }: SkillTreeGraphProps) {
   const { colors } = useThemeColors();
   const { t: ts } = useTranslation('skills');
+  const { t } = useTranslation();
   const catLabel = (id: string) => ts(`categories.${id}`, { defaultValue: id });
   const skillLabel = (id: string) => ts(`tree.${id}`, { defaultValue: id });
 
@@ -117,7 +118,7 @@ export function SkillTreeGraph({
                 <Text
                   style={[styles.categoryCount, { color: colors.textMuted }]}
                 >
-                  {unlockedCount} / {totalCount} débloquées
+                  {t('skillsScreen.unlockedCount', { unlocked: unlockedCount, total: totalCount })}
                 </Text>
                 {/* Barre de progression */}
                 <View

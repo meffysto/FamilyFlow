@@ -2322,6 +2322,14 @@
   },
   "notesScreen": {
     "title": "Notes & Articles",
+    "categories": {
+      "administratif": "📋 Administratif",
+      "sante": "🏥 Santé",
+      "ecole": "🎓 École",
+      "finances": "💰 Finances",
+      "articles": "📖 Articles",
+      "divers": "📌 Divers"
+    },
     "alert": {
       "error": "Erreur",
       "saveError": "Impossible de sauvegarder la note",
@@ -2489,6 +2497,10 @@
     "tasksSummary_other": "{{count}} tâches cette semaine"
   },
   "skillsScreen": {
+    "title": "Compétences",
+    "completed": "complété",
+    "skillCount": "{{unlocked}} / {{total}} compétences",
+    "unlockedCount": "{{unlocked}} / {{total}} débloquées",
     "a11y": {
       "changeBracket": "Changer la tranche d'âge"
     }

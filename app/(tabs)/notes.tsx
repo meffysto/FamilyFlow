@@ -34,8 +34,21 @@ import { NoteEditor } from '../../components/NoteEditor';
 import { NoteViewer } from '../../components/NoteViewer';
 import { EmptyState } from '../../components/EmptyState';
 
+const CATEGORY_KEY_MAP: Record<string, string> = {
+  '📋 Administratif': 'administratif',
+  '🏥 Santé': 'sante',
+  '🎓 École': 'ecole',
+  '💰 Finances': 'finances',
+  '📖 Articles': 'articles',
+  '📌 Divers': 'divers',
+};
+
 export default function NotesScreen() {
   const { t } = useTranslation();
+  const translateCategory = (cat: string) => {
+    const key = CATEGORY_KEY_MAP[cat];
+    return key ? t(`notesScreen.categories.${key}`) : cat;
+  };
   const { notes, addNote, updateNote, deleteNote, activeProfile, refresh } = useVault();
   const { primary, colors } = useThemeColors();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
@@ -171,7 +184,7 @@ export default function NotesScreen() {
       return (
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-            {item.category}
+            {translateCategory(item.category)}
           </Text>
           <Text style={[styles.sectionCount, { color: colors.textFaint }]}>
             {item.count}
@@ -274,7 +287,7 @@ export default function NotesScreen() {
           contentContainerStyle={styles.chipRow}
           renderItem={({ item: cat }) => (
             <Chip
-              label={cat ?? 'Toutes'}
+              label={cat ? translateCategory(cat) : t('notesScreen.allCategories', { defaultValue: 'All' })}
               selected={selectedCategory === cat}
               onPress={() => setSelectedCategory(cat)}
               size="sm"
