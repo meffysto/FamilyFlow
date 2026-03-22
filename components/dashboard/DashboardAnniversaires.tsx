@@ -14,6 +14,7 @@ import { DashboardCard } from '../DashboardCard';
 import { Spacing } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import type { Anniversary } from '../../lib/types';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 
 interface UpcomingAnniversary {
@@ -50,6 +51,7 @@ function getDaysUntilAnniversary(mmdd: string, now: Date): number {
 }
 
 function DashboardAnniversairesInner(_props: DashboardSectionProps) {
+  const { t } = useTranslation();
   const { colors } = useThemeColors();
   const { anniversaries } = useVault();
 
@@ -97,7 +99,7 @@ function DashboardAnniversairesInner(_props: DashboardSectionProps) {
 
   return (
     <DashboardCard
-      title="Anniversaires"
+      title={t('dashboard.anniversaires.title')}
       icon="🎂"
       count={upcoming.length}
       color="#E11D48"
@@ -107,10 +109,10 @@ function DashboardAnniversairesInner(_props: DashboardSectionProps) {
       {upcoming.map((item) => {
         const isToday = item.daysUntil === 0;
         const label = isToday
-          ? "aujourd'hui"
+          ? t('dashboard.anniversaires.today')
           : item.daysUntil === 1
-            ? 'demain'
-            : `dans ${item.daysUntil} jours`;
+            ? t('dashboard.anniversaires.tomorrow')
+            : t('dashboard.anniversaires.inDays', { count: item.daysUntil });
 
         return (
           <View
@@ -126,11 +128,11 @@ function DashboardAnniversairesInner(_props: DashboardSectionProps) {
               <Text style={[styles.name, { color: colors.text }]}>
                 {isToday ? '🎂 ' : '🎈 '}
                 {item.anniversary.name}
-                {item.age !== null && isToday ? ` — ${item.age} ans` : ''}
+                {item.age !== null && isToday ? ` — ${t('dashboard.anniversaires.yearsOld', { count: item.age })}` : ''}
               </Text>
               <Text style={[styles.meta, { color: isToday ? colors.textSub : colors.textMuted }]}>
                 {label}
-                {item.age !== null && !isToday ? ` (${item.age} ans)` : ''}
+                {item.age !== null && !isToday ? ` (${t('dashboard.anniversaires.yearsOld', { count: item.age })})` : ''}
                 {item.anniversary.category ? ` · ${item.anniversary.category}` : ''}
               </Text>
             </View>

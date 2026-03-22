@@ -12,6 +12,7 @@ import { useCalendarEvents } from '../../hooks/useCalendarEvents';
 import { DashboardCard } from '../DashboardCard';
 import { CalendarEventRow } from '../calendar/CalendarEventRow';
 import type { CalendarEvent } from '../../lib/calendar-types';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Spacing } from '../../constants/spacing';
@@ -19,6 +20,7 @@ import { Spacing } from '../../constants/spacing';
 const PREVIEW_DAYS = 3;
 
 function DashboardCalendarInner(_props: DashboardSectionProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { primary, colors } = useThemeColors();
   // Stabiliser la référence Date pour éviter les re-renders infinis
@@ -33,7 +35,7 @@ function DashboardCalendarInner(_props: DashboardSectionProps) {
       const dateStr = format(d, 'yyyy-MM-dd');
       const events = (eventsByDate[dateStr] ?? []).filter(e => e.type !== 'vacation' && e.type !== 'mood');
       if (events.length > 0) {
-        const label = i === 0 ? "Aujourd'hui" : i === 1 ? 'Demain' : format(d, 'EEEE', { locale: fr });
+        const label = i === 0 ? t('dashboard.calendar.today') : i === 1 ? t('dashboard.calendar.tomorrow') : format(d, 'EEEE', { locale: fr });
         days.push({ date: dateStr, label: label.charAt(0).toUpperCase() + label.slice(1), events });
       }
     }
@@ -47,7 +49,7 @@ function DashboardCalendarInner(_props: DashboardSectionProps) {
   return (
     <DashboardCard
       key="calendar"
-      title="Calendrier"
+      title={t('dashboard.calendar.title')}
       icon="📆"
       count={totalEvents}
       color={primary}

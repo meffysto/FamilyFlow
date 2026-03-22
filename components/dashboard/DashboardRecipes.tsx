@@ -10,6 +10,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
 import type { AppRecipe } from '../../lib/cooklang';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
 
@@ -18,6 +19,7 @@ interface DashboardRecipesProps extends DashboardSectionProps {
 }
 
 function DashboardRecipesInner({ activateCardTemplate, onViewRecipe }: DashboardRecipesProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useThemeColors();
   const { recipes, loadRecipes, isLoading } = useVault();
@@ -26,11 +28,11 @@ function DashboardRecipesInner({ activateCardTemplate, onViewRecipe }: Dashboard
   useEffect(() => { if (!isLoading) loadRecipes(); }, [loadRecipes, isLoading]);
 
   if (recipes.length === 0) return (
-    <DashboardCard key="recipes" title="Idée recette" icon="📖" color={colors.info}>
+    <DashboardCard key="recipes" title={t('dashboard.recipes.title')} icon="📖" color={colors.info}>
       <DashboardEmptyState
-        description="Ajoutez vos recettes favorites au format Cooklang"
+        description={t('dashboard.recipes.emptyDescription')}
         onActivate={() => activateCardTemplate('recipes')}
-        activateLabel="Importer le modèle"
+        activateLabel={t('dashboard.recipes.activateLabel')}
       />
     </DashboardCard>
   );
@@ -40,7 +42,7 @@ function DashboardRecipesInner({ activateCardTemplate, onViewRecipe }: Dashboard
   const suggestedRecipe = recipes[dayOfYear % recipes.length];
 
   return (
-    <DashboardCard key="recipes" title="Idée recette" icon="📖" count={recipes.length} color={colors.info} onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'recettes' } })}>
+    <DashboardCard key="recipes" title={t('dashboard.recipes.title')} icon="📖" count={recipes.length} color={colors.info} onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'recettes' } })}>
       <TouchableOpacity
         style={[styles.recipeSuggestion, { backgroundColor: colors.cardAlt }]}
         onPress={() => onViewRecipe(suggestedRecipe)}
@@ -52,12 +54,12 @@ function DashboardRecipesInner({ activateCardTemplate, onViewRecipe }: Dashboard
           </Text>
           <Text style={[styles.recipeSuggestionMeta, { color: colors.textMuted }]} numberOfLines={1}>
             {suggestedRecipe.category}
-            {suggestedRecipe.servings > 0 ? ` · ${suggestedRecipe.servings} pers.` : ''}
+            {suggestedRecipe.servings > 0 ? ` · ${t('dashboard.recipes.servings', { count: suggestedRecipe.servings })}` : ''}
             {suggestedRecipe.prepTime ? ` · ${suggestedRecipe.prepTime}` : ''}
           </Text>
           {suggestedRecipe.ingredients.length > 0 && (
             <Text style={[styles.recipeSuggestionMeta, { color: colors.textMuted }]} numberOfLines={1}>
-              🥕 {suggestedRecipe.ingredients.length} ingrédient{suggestedRecipe.ingredients.length > 1 ? 's' : ''}
+              {t('dashboard.recipes.ingredients', { count: suggestedRecipe.ingredients.length })}
             </Text>
           )}
         </View>

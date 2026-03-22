@@ -10,10 +10,12 @@ import * as ImagePicker from 'expo-image-picker';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
 
 function DashboardPhotosInner(_props: DashboardSectionProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useThemeColors();
   const { profiles, photoDates, addPhoto } = useVault();
@@ -29,8 +31,8 @@ function DashboardPhotosInner(_props: DashboardSectionProps) {
             const perm = await ImagePicker.requestCameraPermissionsAsync();
             if (perm.status !== 'granted') {
               Alert.alert(
-                'Accès refusé',
-                `L'application n'a pas accès à votre appareil photo.\n\nAllez dans Réglages > Expo Go > Appareil photo pour l'autoriser.`
+                t('dashboard.photos.accessDenied'),
+                t('dashboard.photos.cameraAccessDenied'),
               );
               return;
             }
@@ -38,8 +40,8 @@ function DashboardPhotosInner(_props: DashboardSectionProps) {
             const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (perm.status !== 'granted') {
               Alert.alert(
-                'Accès refusé',
-                `L'application n'a pas accès à vos photos.\n\nAllez dans Réglages > Expo Go > Photos pour l'autoriser.`
+                t('dashboard.photos.accessDenied'),
+                t('dashboard.photos.photoAccessDenied'),
               );
               return;
             }
@@ -60,14 +62,14 @@ function DashboardPhotosInner(_props: DashboardSectionProps) {
           await addPhoto(enfantName, todayStr, result.assets[0].uri);
         } catch (e: any) {
           const msg = e?.message || String(e);
-          Alert.alert('Erreur', `Impossible d'ajouter la photo pour ${enfantName}. Réessayez.`);
+          Alert.alert(t('dashboard.photos.error'), t('dashboard.photos.addError', { name: enfantName }));
         }
       };
 
       if (Platform.OS === 'ios') {
         ActionSheetIOS.showActionSheetWithOptions(
           {
-            options: ['Annuler', '📷 Appareil photo', '🖼 Galerie'],
+            options: [t('dashboard.photos.cancel'), t('dashboard.photos.camera'), t('dashboard.photos.gallery')],
             cancelButtonIndex: 0,
           },
           (buttonIndex) => {
@@ -76,10 +78,10 @@ function DashboardPhotosInner(_props: DashboardSectionProps) {
           }
         );
       } else {
-        Alert.alert('Photo du jour', 'Choisir une source', [
-          { text: 'Annuler', style: 'cancel' },
-          { text: '📷 Appareil photo', onPress: () => launchPicker(true) },
-          { text: '🖼 Galerie', onPress: () => launchPicker(false) },
+        Alert.alert(t('dashboard.photos.chooseSource'), t('dashboard.photos.chooseSourceMsg'), [
+          { text: t('dashboard.photos.cancel'), style: 'cancel' },
+          { text: t('dashboard.photos.camera'), onPress: () => launchPicker(true) },
+          { text: t('dashboard.photos.gallery'), onPress: () => launchPicker(false) },
         ]);
       }
     },
@@ -94,7 +96,7 @@ function DashboardPhotosInner(_props: DashboardSectionProps) {
   }));
 
   return (
-    <DashboardCard key="photos" title="Photo du jour" icon="📸" color="#06B6D4" onPressMore={() => router.push('/(tabs)/photos')}>
+    <DashboardCard key="photos" title={t('dashboard.photos.title')} icon="📸" color="#06B6D4" onPressMore={() => router.push('/(tabs)/photos')}>
       {photoStatus.map((e) => (
         <TouchableOpacity
           key={e.id}
@@ -105,7 +107,7 @@ function DashboardPhotosInner(_props: DashboardSectionProps) {
           <Text style={styles.photoStatusEmoji}>{e.avatar}</Text>
           <View style={styles.photoStatusInfo}>
             <Text style={[styles.photoStatusName, { color: colors.text }]}>{e.name}</Text>
-            {!e.hasPhoto && <Text style={[styles.photoStatusHint, { color: colors.textMuted }]}>Appuyer pour ajouter une photo</Text>}
+            {!e.hasPhoto && <Text style={[styles.photoStatusHint, { color: colors.textMuted }]}>{t('dashboard.photos.tapToAdd')}</Text>}
           </View>
           <Text style={styles.photoStatusIcon}>{e.hasPhoto ? '✅' : '📷'}</Text>
         </TouchableOpacity>

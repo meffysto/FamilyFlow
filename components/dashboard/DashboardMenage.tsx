@@ -10,10 +10,12 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
 import { TaskCard } from '../TaskCard';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionWithTaskToggleProps } from './types';
 import { FontSize } from '../../constants/typography';
 
 function DashboardMenageInner({ vaultFileExists, activateCardTemplate, handleTaskToggle }: DashboardSectionWithTaskToggleProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useThemeColors();
   const { tasks } = useVault();
@@ -24,23 +26,23 @@ function DashboardMenageInner({ vaultFileExists, activateCardTemplate, handleTas
   );
 
   if (!vaultFileExists.menage) return (
-    <DashboardCard key="menage" title="Tâches maison du jour" icon="🏠" color={colors.success}>
+    <DashboardCard key="menage" title={t('dashboard.menage.title')} icon="🏠" color={colors.success}>
       <DashboardEmptyState
-        description="Organisez les tâches de la maison avec des récurrences"
+        description={t('dashboard.menage.emptyDescription')}
         onActivate={() => activateCardTemplate('menage')}
-        activateLabel="Importer le modèle"
+        activateLabel={t('dashboard.menage.activateLabel')}
       />
     </DashboardCard>
   );
 
   if (pendingMaison.length === 0) return (
-    <DashboardCard key="menage" title="Tâches maison du jour" icon="🏠" color={colors.success}>
-      <Text style={[styles.emptyHint, { color: colors.textMuted }]}>Tout est fait pour aujourd'hui ✓</Text>
+    <DashboardCard key="menage" title={t('dashboard.menage.title')} icon="🏠" color={colors.success}>
+      <Text style={[styles.emptyHint, { color: colors.textMuted }]}>{t('dashboard.menage.allDone')}</Text>
     </DashboardCard>
   );
 
   return (
-    <DashboardCard key="menage" title="Tâches maison du jour" icon="🏠" count={pendingMaison.length} color={colors.success} onPressMore={() => router.push({ pathname: '/(tabs)/tasks', params: { filter: 'maison' } })}>
+    <DashboardCard key="menage" title={t('dashboard.menage.title')} icon="🏠" count={pendingMaison.length} color={colors.success} onPressMore={() => router.push({ pathname: '/(tabs)/tasks', params: { filter: 'maison' } })}>
       {pendingMaison.slice(0, 4).map((task) => (
         <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} hideSection compact />
       ))}

@@ -9,10 +9,12 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { isBabyProfile } from '../../lib/types';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
 
 function DashboardNightModeInner(_props: DashboardSectionProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useThemeColors();
   const { profiles } = useVault();
@@ -25,14 +27,14 @@ function DashboardNightModeInner(_props: DashboardSectionProps) {
   if (!isNightTime) return null;
 
   return (
-    <DashboardCard key="nightMode" title="Mode nuit bébé" icon="🌙" color="#B8860B" onPressMore={() => router.push('/(tabs)/night-mode')}>
+    <DashboardCard key="nightMode" title={t('dashboard.nightMode.title')} icon="🌙" color="#B8860B" onPressMore={() => router.push('/(tabs)/night-mode')}>
       <TouchableOpacity
         style={[styles.nightModeBtn, { backgroundColor: colors.cardAlt }]}
         onPress={() => router.push('/(tabs)/night-mode')}
         activeOpacity={0.7}
       >
-        <Text style={[styles.nightModeBtnTitle, { color: colors.text }]}>🌙 Ouvrir le mode nuit</Text>
-        <Text style={[styles.nightModeBtnSub, { color: colors.textMuted }]}>Écran sombre pour les tétées nocturnes</Text>
+        <Text style={[styles.nightModeBtnTitle, { color: colors.text }]}>{t('dashboard.nightMode.openBtn')}</Text>
+        <Text style={[styles.nightModeBtnSub, { color: colors.textMuted }]}>{t('dashboard.nightMode.subtitle')}</Text>
       </TouchableOpacity>
     </DashboardCard>
   );

@@ -9,10 +9,12 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { TaskCard } from '../TaskCard';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionWithTaskToggleProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
 
 function DashboardVacationInner({ handleTaskToggle }: DashboardSectionWithTaskToggleProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useThemeColors();
   const { vacationTasks, vacationConfig, isVacationActive } = useVault();
@@ -28,17 +30,17 @@ function DashboardVacationInner({ handleTaskToggle }: DashboardSectionWithTaskTo
   let vacCountdown: string;
   if (now < start) {
     const days = Math.ceil((start.getTime() - now.getTime()) / 86400000);
-    vacCountdown = `Départ dans ${days} jour${days > 1 ? 's' : ''}`;
+    vacCountdown = t('dashboard.vacation.departureIn', { count: days });
   } else if (now <= end) {
     const days = Math.ceil((end.getTime() - now.getTime()) / 86400000);
-    vacCountdown = days > 0 ? `Retour dans ${days} jour${days > 1 ? 's' : ''}` : 'Dernier jour !';
+    vacCountdown = days > 0 ? t('dashboard.vacation.returnIn', { count: days }) : t('dashboard.vacation.lastDay');
   } else {
-    vacCountdown = 'Terminé';
+    vacCountdown = t('dashboard.vacation.finished');
   }
   const progress = vacTotal > 0 ? vacCompleted / vacTotal : 0;
 
   return (
-    <DashboardCard key="vacation" title="Vacances" icon="☀️" color={colors.warning} onPressMore={() => router.push('/(tabs)/tasks')}>
+    <DashboardCard key="vacation" title={t('dashboard.vacation.title')} icon="☀️" color={colors.warning} onPressMore={() => router.push('/(tabs)/tasks')}>
       <Text style={[styles.vacCountdown, { color: colors.warning }]}>{vacCountdown}</Text>
       <View style={styles.vacProgressRow}>
         <View style={[styles.vacProgressBg, { backgroundColor: colors.borderLight }]}>

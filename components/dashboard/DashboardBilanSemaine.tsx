@@ -15,6 +15,7 @@ import { BilanSemaineCard } from '../BilanSemaineCard';
 import { buildWeeklyRecapData, formatRecapForAI, WeeklyRecapData } from '../../lib/weekly-recap';
 import { generateWeeklyBilan } from '../../lib/ai-service';
 import type { DashboardSectionProps } from './types';
+import { useTranslation } from 'react-i18next';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Spacing, Radius } from '../../constants/spacing';
 
@@ -62,6 +63,7 @@ function formatWeekLabel(start: Date, end: Date): string {
 // ─── Composant ───────────────────────────────────────────────────────────────
 
 function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
+  const { t } = useTranslation();
   const { tasks, meals, moods, quotes, profiles, stock, defis } = useVault();
   const { primary, colors } = useThemeColors();
   const { config, isConfigured } = useAI();
@@ -173,7 +175,7 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
       setState('generated');
     } catch (e) {
       setState('error');
-      setError(e instanceof Error ? e.message : 'Erreur inconnue');
+      setError(e instanceof Error ? e.message : t('dashboard.bilanSemaine.unknownError'));
     }
   }, [config, tasks, meals, moods, quotes, defis, profiles, stock, weekStats]);
 
@@ -202,7 +204,7 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
     // Aperçu compact dans la DashboardCard
     return (
       <DashboardCard
-        title="Bilan de semaine"
+        title={t('dashboard.bilanSemaine.title')}
         icon="📝"
         color={primary}
       >
@@ -215,10 +217,10 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
             style={[styles.actionButton, { backgroundColor: primary }]}
             activeOpacity={0.8}
             accessibilityRole="button"
-            accessibilityLabel="Voir le bilan complet"
+            accessibilityLabel={t('dashboard.bilanSemaine.seeMoreA11y')}
           >
             <Text style={[styles.actionButtonText, { color: colors.onPrimary }]}>
-              Voir plus
+              {t('dashboard.bilanSemaine.seeMore')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -226,10 +228,10 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
             style={[styles.actionButtonOutline, { borderColor: primary }]}
             activeOpacity={0.8}
             accessibilityRole="button"
-            accessibilityLabel="Partager le bilan"
+            accessibilityLabel={t('dashboard.bilanSemaine.shareA11y')}
           >
             <Text style={[styles.actionButtonOutlineText, { color: primary }]}>
-              📤 Partager
+              {t('dashboard.bilanSemaine.share')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -252,7 +254,7 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
             {weekStats.tasksCompleted}
           </Text>
           <Text style={[styles.previewStatLabel, { color: colors.textMuted }]}>
-            tâches
+            {t('dashboard.bilanSemaine.tasks')}
           </Text>
         </View>
         <View style={styles.previewStat}>
@@ -261,7 +263,7 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
             {weekStats.mealsCookedCount}
           </Text>
           <Text style={[styles.previewStatLabel, { color: colors.textMuted }]}>
-            repas
+            {t('dashboard.bilanSemaine.meals')}
           </Text>
         </View>
         <View style={styles.previewStat}>
@@ -270,7 +272,7 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
             {weekStats.moodsAverage !== null ? weekStats.moodsAverage.toFixed(1) : '—'}
           </Text>
           <Text style={[styles.previewStatLabel, { color: colors.textMuted }]}>
-            humeur
+            {t('dashboard.bilanSemaine.mood')}
           </Text>
         </View>
       </View>
@@ -293,24 +295,24 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
           ]}
           activeOpacity={0.8}
           accessibilityRole="button"
-          accessibilityLabel="Générer le bilan de la semaine avec l'IA"
+          accessibilityLabel={t('dashboard.bilanSemaine.generateA11y')}
         >
           {state === 'loading' ? (
             <View style={styles.loadingRow}>
               <ActivityIndicator size="small" color={colors.onPrimary} />
               <Text style={[styles.generateButtonText, { color: colors.onPrimary }]}>
-                Génération en cours…
+                {t('dashboard.bilanSemaine.generating')}
               </Text>
             </View>
           ) : (
             <Text style={[styles.generateButtonText, { color: colors.onPrimary }]}>
-              🤖 Générer le bilan
+              {t('dashboard.bilanSemaine.generateBtn')}
             </Text>
           )}
         </TouchableOpacity>
       ) : (
         <Text style={[styles.configHint, { color: colors.textMuted }]}>
-          Configurez l'IA dans les réglages pour générer le bilan
+          {t('dashboard.bilanSemaine.configHint')}
         </Text>
       )}
     </DashboardCard>

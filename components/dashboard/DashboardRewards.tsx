@@ -8,35 +8,36 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { processActiveRewards } from '../../lib/gamification';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
 
 /** Adapte le label de la récompense pour les enfants */
-function childFriendlyLabel(label: string, isChild: boolean): string {
+function childFriendlyLabel(label: string, isChild: boolean, t: (key: string, opts?: any) => string): string {
   if (!isChild) return label;
-  // Multiplicateur ×2 → "Super pouvoir ×2 actif ! ⚡"
   const multMatch = label.match(/Multiplicateur ×(\d+)/);
-  if (multMatch) return `Super pouvoir ×${multMatch[1]} actif ! ⚡`;
+  if (multMatch) return t('dashboard.rewards.superPower', { mult: multMatch[1] });
   return label;
 }
 
 /** Adapte le texte de durée pour les enfants */
-function childFriendlyMeta(reward: { remainingDays?: number; remainingTasks?: number; expiresAt?: string }, isChild: boolean): string {
+function childFriendlyMeta(reward: { remainingDays?: number; remainingTasks?: number; expiresAt?: string }, isChild: boolean, t: (key: string, opts?: any) => string): string {
   if (reward.remainingDays !== undefined) {
     return isChild
-      ? `Encore ${reward.remainingDays} jour${reward.remainingDays > 1 ? 's' : ''} de magie ! ✨`
-      : `${reward.remainingDays}j restant${reward.remainingDays > 1 ? 's' : ''}`;
+      ? t('dashboard.rewards.daysRemainingChild', { count: reward.remainingDays })
+      : t('dashboard.rewards.daysRemainingAdult', { count: reward.remainingDays });
   }
   if (reward.remainingTasks !== undefined) {
     return isChild
-      ? `Encore ${reward.remainingTasks} tâche${reward.remainingTasks > 1 ? 's' : ''} boostée${reward.remainingTasks > 1 ? 's' : ''} ! 💪`
-      : `${reward.remainingTasks} tâche${reward.remainingTasks > 1 ? 's' : ''} restante${reward.remainingTasks > 1 ? 's' : ''}`;
+      ? t('dashboard.rewards.tasksRemainingChild', { count: reward.remainingTasks })
+      : t('dashboard.rewards.tasksRemainingAdult', { count: reward.remainingTasks });
   }
-  if (reward.expiresAt) return `expire ${reward.expiresAt}`;
+  if (reward.expiresAt) return t('dashboard.rewards.expires', { date: reward.expiresAt });
   return '';
 }
 
 function DashboardRewardsInner({ isChildMode }: DashboardSectionProps) {
+  const { t } = useTranslation();
   const { colors } = useThemeColors();
   const { profiles, gamiData } = useVault();
 
@@ -44,7 +45,7 @@ function DashboardRewardsInner({ isChildMode }: DashboardSectionProps) {
   if (activeRewards.length === 0) return null;
 
   return (
-    <DashboardCard key="rewards" title={isChildMode ? 'Tes pouvoirs actifs !' : 'Récompenses actives'} icon="🏆" color={colors.error}>
+    <DashboardCard key="rewards" title={isChildMode ? t('dashboard.rewards.titleChild') : t('dashboard.rewards.titleAdult')} icon="🏆" color={colors.error}>
       {activeRewards.map((reward) => {
         const ownerProfile = profiles.find((p) => p.id === reward.profileId);
         const typeColor = reward.type === 'vacation' || reward.type === 'crown' || reward.type === 'multiplier' ? colors.error : colors.warning;
@@ -53,10 +54,10 @@ function DashboardRewardsInner({ isChildMode }: DashboardSectionProps) {
             <Text style={styles.activeRewardEmoji}>{reward.emoji}</Text>
             <View style={styles.activeRewardInfo}>
               <Text style={[styles.activeRewardLabel, { color: colors.text }]}>
-                {ownerProfile?.avatar ?? '👤'} {ownerProfile?.name ?? reward.profileId} — {childFriendlyLabel(reward.label, !!isChildMode)}
+                {ownerProfile?.avatar ?? '👤'} {ownerProfile?.name ?? reward.profileId} — {childFriendlyLabel(reward.label, !!isChildMode, t)}
               </Text>
               <Text style={[styles.activeRewardMeta, { color: typeColor }]}>
-                {childFriendlyMeta(reward, !!isChildMode)}
+                {childFriendlyMeta(reward, !!isChildMode, t)}
               </Text>
             </View>
           </View>

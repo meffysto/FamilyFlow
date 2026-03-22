@@ -9,9 +9,11 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { FamilyLeaderboard } from '../FamilyLeaderboard';
 import { buildLeaderboard } from '../../lib/gamification';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 
 function DashboardLeaderboardInner(_props: DashboardSectionProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { primary } = useThemeColors();
   const { profiles, gamiData } = useVault();
@@ -20,7 +22,7 @@ function DashboardLeaderboardInner(_props: DashboardSectionProps) {
   if (leaderboard.length === 0) return null;
 
   return (
-    <DashboardCard key="leaderboard" title="Classement" icon="🏆" color={primary} onPressMore={() => router.push('/(tabs)/loot')}>
+    <DashboardCard key="leaderboard" title={t('dashboard.leaderboard.title')} icon="🏆" color={primary} onPressMore={() => router.push('/(tabs)/loot')}>
       <FamilyLeaderboard profiles={leaderboard} compact />
     </DashboardCard>
   );

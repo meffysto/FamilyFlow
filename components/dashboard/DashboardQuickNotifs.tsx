@@ -11,10 +11,12 @@ import { useToast } from '../../contexts/ToastContext';
 import { DashboardCard } from '../DashboardCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
 import { dispatchNotification, buildManualContext } from '../../lib/notifications';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
 
 function DashboardQuickNotifsInner({ vaultFileExists, activateCardTemplate }: DashboardSectionProps) {
+  const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
   const { notifPrefs, activeProfile } = useVault();
@@ -30,9 +32,9 @@ function DashboardQuickNotifsInner({ vaultFileExists, activateCardTemplate }: Da
       const context = buildManualContext(activeProfile);
       const ok = await dispatchNotification(notifId, context, notifPrefs);
       if (ok) {
-        showToast('Notification envoyée sur Telegram !');
+        showToast(t('dashboard.quickNotifs.sent'));
       } else {
-        showToast('Envoi impossible — vérifiez la configuration', 'error');
+        showToast(t('dashboard.quickNotifs.sendError'), 'error');
       }
     },
     [activeProfile, notifPrefs]
@@ -45,12 +47,12 @@ function DashboardQuickNotifsInner({ vaultFileExists, activateCardTemplate }: Da
   }, []);
 
   return (
-    <DashboardCard key="quicknotifs" title="Notifications rapides" icon="📤" color={primary}>
+    <DashboardCard key="quicknotifs" title={t('dashboard.quickNotifs.title')} icon="📤" color={primary}>
       {!vaultFileExists.notifications ? (
         <DashboardEmptyState
-          description="Envoyez des notifications rapides à la famille en un tap"
+          description={t('dashboard.quickNotifs.emptyDescription')}
           onActivate={() => activateCardTemplate('quicknotifs')}
-          activateLabel="Importer le modèle"
+          activateLabel={t('dashboard.quickNotifs.activateLabel')}
         />
       ) : (
         <View>

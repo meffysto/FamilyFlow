@@ -10,10 +10,12 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { lootProgress, calculateLevel, getLevelTier, getStreakMilestone, POINTS_PER_TASK, getActiveEvent } from '../../lib/gamification';
 import { SeasonalBanner } from '../SeasonalBanner';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
 
 function DashboardLootInner({ isChildMode }: DashboardSectionProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { primary, tint, colors } = useThemeColors();
   const { activeProfile } = useVault();
@@ -29,7 +31,7 @@ function DashboardLootInner({ isChildMode }: DashboardSectionProps) {
   const streakInfo = getStreakMilestone(activeProfile.streak ?? 0);
 
   return (
-    <DashboardCard key="lootProgress" title={isChildMode ? 'Tes points !' : 'Progression'} icon="🎁" color={primary}>
+    <DashboardCard key="lootProgress" title={isChildMode ? t('dashboard.loot.titleChild') : t('dashboard.loot.titleAdult')} icon="🎁" color={primary}>
       {/* Barre de progression vers prochaine loot box */}
       <View style={styles.lootProgressRow}>
         <Text style={[isChildMode ? styles.lootProgressLabelChild : styles.lootProgressLabel, { color: colors.text }]}>
@@ -38,13 +40,13 @@ function DashboardLootInner({ isChildMode }: DashboardSectionProps) {
             : `${tier.emoji} ${tier.name} — ${activeProfile.avatar} ${activeProfile.name}`}
         </Text>
         <Text style={[styles.lootProgressPts, { color: colors.textMuted }]}>
-          Nv. {level}
+          {t('dashboard.loot.level', { level })}
         </Text>
       </View>
       {/* Barre XP vers prochaine loot box */}
       <View style={styles.lootThresholdRow}>
         <Text style={[styles.lootThresholdText, { color: colors.textFaint }]}>
-          {loot.current}/{loot.threshold} pts → prochain cadeau
+          {t('dashboard.loot.threshold', { current: loot.current, threshold: loot.threshold })}
         </Text>
         {streakInfo && (
           <Text style={[styles.lootThresholdText, { color: tier.color }]}>
@@ -60,13 +62,13 @@ function DashboardLootInner({ isChildMode }: DashboardSectionProps) {
           style={[isChildMode ? styles.lootCTAChild : styles.lootCTA, { backgroundColor: tint, borderColor: primary }]}
           onPress={() => router.push('/(tabs)/loot')}
           activeOpacity={0.7}
-          accessibilityLabel="Ouvrir les loot boxes"
+          accessibilityLabel={t('dashboard.loot.openA11y')}
           accessibilityRole="button"
         >
           <Text style={[isChildMode ? styles.lootCTATextChild : styles.lootCTAText, { color: primary }]}>
             {isChildMode
-              ? `🎁 Ouvre ton cadeau ! (${activeProfile.lootBoxesAvailable})`
-              : `🎁 Ouvre ta récompense ! (${activeProfile.lootBoxesAvailable} dispo)`}
+              ? t('dashboard.loot.openChild', { count: activeProfile.lootBoxesAvailable })
+              : t('dashboard.loot.openAdult', { count: activeProfile.lootBoxesAvailable })}
           </Text>
         </TouchableOpacity>
       )}
@@ -77,11 +79,11 @@ function DashboardLootInner({ isChildMode }: DashboardSectionProps) {
           <Text style={[styles.lootHint, { color: colors.textFaint }]}>
             {isChildMode
               ? tasksLeft <= 3
-                ? `Presque ! Plus que ${tasksLeft} tâche${tasksLeft > 1 ? 's' : ''} ! 🔥`
-                : `Encore ~${tasksLeft} tâches avant ton cadeau ! 💪`
+                ? t('dashboard.loot.almostChild', { count: tasksLeft, plural: tasksLeft > 1 ? 's' : '' })
+                : t('dashboard.loot.keepGoingChild', { count: tasksLeft })
               : tasksLeft <= 3
-                ? `Plus que ${tasksLeft} tâche${tasksLeft > 1 ? 's' : ''} avant la loot box ! 🔥`
-                : `~${tasksLeft} tâches avant la prochaine loot box`}
+                ? t('dashboard.loot.almostAdult', { count: tasksLeft, plural: tasksLeft > 1 ? 's' : '' })
+                : t('dashboard.loot.keepGoingAdult', { count: tasksLeft })}
           </Text>
         );
       })()}

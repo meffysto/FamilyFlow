@@ -12,6 +12,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { Spacing } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 
 interface OnThisDayItem {
@@ -23,6 +24,7 @@ interface OnThisDayItem {
 }
 
 function DashboardOnThisDayInner(_props: DashboardSectionProps) {
+  const { t } = useTranslation();
   const { colors } = useThemeColors();
   const { memories, photoDates, profiles } = useVault();
 
@@ -62,7 +64,7 @@ function DashboardOnThisDayInner(_props: DashboardSectionProps) {
 
         results.push({
           emoji: '📸',
-          label: `Photo de ${e.name}`,
+          label: t('dashboard.onThisDay.photoOf', { name: e.name }),
           detail: String(year),
           year,
           yearsAgo: currentYear - year,
@@ -80,7 +82,7 @@ function DashboardOnThisDayInner(_props: DashboardSectionProps) {
 
   return (
     <DashboardCard
-      title="Il y a 1 an…"
+      title={t('dashboard.onThisDay.title')}
       icon="🕰️"
       count={items.length}
       color="#8B5CF6"
@@ -88,9 +90,7 @@ function DashboardOnThisDayInner(_props: DashboardSectionProps) {
       cardId="onThisDay"
     >
       {items.map((item, i) => {
-        const yearsLabel = item.yearsAgo === 1
-          ? 'Il y a 1 an'
-          : `Il y a ${item.yearsAgo} ans`;
+        const yearsLabel = t('dashboard.onThisDay.yearsAgo', { count: item.yearsAgo });
 
         return (
           <View

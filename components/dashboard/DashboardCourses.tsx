@@ -10,6 +10,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { DashboardCard } from '../DashboardCard';
 import { categorizeIngredient } from '../../lib/cooklang';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
 
@@ -21,6 +22,7 @@ function parseCourseInput(text: string): { name: string; quantity: number | null
 }
 
 function DashboardCoursesInner(_props: DashboardSectionProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useThemeColors();
   const { showToast } = useToast();
@@ -43,7 +45,7 @@ function DashboardCoursesInner(_props: DashboardSectionProps) {
   };
 
   return (
-    <DashboardCard key="courses" title="Courses" icon="🛒" count={unchecked.length || undefined} color={colors.warning} onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'courses' } })}>
+    <DashboardCard key="courses" title={t('dashboard.courses.title')} icon="🛒" count={unchecked.length || undefined} color={colors.warning} onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'courses' } })}>
       {topCourses.map((item) => (
         <View key={item.id} style={styles.courseRow}>
           <Text style={[styles.courseBullet, { color: colors.warning }]}>•</Text>
@@ -60,9 +62,9 @@ function DashboardCoursesInner(_props: DashboardSectionProps) {
                 await updateStockQuantity(stockMatch.lineIndex, prevQty + addQty);
               }
 
-              const msg = stockMatch ? `${stockMatch.produit} restocké (+${addQty})` : `${item.text} retiré`;
+              const msg = stockMatch ? t('dashboard.courses.restocked', { name: stockMatch.produit, qty: addQty }) : t('dashboard.courses.removed', { name: item.text });
               showToast(msg, 'success', {
-                label: 'Annuler',
+                label: t('dashboard.courses.undo'),
                 onPress: async () => {
                   try {
                     await addCourseItem(item.text, item.section);
@@ -79,7 +81,7 @@ function DashboardCoursesInner(_props: DashboardSectionProps) {
         </View>
       ))}
       {topCourses.length === 0 && (
-        <Text style={[styles.courseEmpty, { color: colors.textFaint }]}>Liste vide — ajoutez un article ci-dessous</Text>
+        <Text style={[styles.courseEmpty, { color: colors.textFaint }]}>{t('dashboard.courses.emptyList')}</Text>
       )}
       {/* Champ d'ajout rapide */}
       <View style={[styles.courseAddRow, { borderTopColor: colors.borderLight }]}>
@@ -87,7 +89,7 @@ function DashboardCoursesInner(_props: DashboardSectionProps) {
           style={[styles.courseAddInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
           value={newCourseText}
           onChangeText={setNewCourseText}
-          placeholder="Ajouter un article…"
+          placeholder={t('dashboard.courses.addPlaceholder')}
           placeholderTextColor={colors.textFaint}
           returnKeyType="done"
           onSubmitEditing={handleSubmit}
@@ -106,14 +108,14 @@ function DashboardCoursesInner(_props: DashboardSectionProps) {
           style={[styles.clearCoursesBtn, { backgroundColor: colors.errorBg }]}
           onPress={() => {
             const count = courses.filter((c) => c.completed).length;
-            Alert.alert('Vider les cochés', `Supprimer ${count} article${count > 1 ? 's' : ''} coché${count > 1 ? 's' : ''} ?`, [
-              { text: 'Annuler', style: 'cancel' },
-              { text: 'Supprimer', style: 'destructive', onPress: clearCompletedCourses },
+            Alert.alert(t('dashboard.courses.clearCheckedTitle'), t('dashboard.courses.clearCheckedMsg', { count }), [
+              { text: t('dashboard.courses.cancel'), style: 'cancel' },
+              { text: t('dashboard.courses.delete'), style: 'destructive', onPress: clearCompletedCourses },
             ]);
           }}
           activeOpacity={0.7}
         >
-          <Text style={[styles.clearCoursesBtnText, { color: colors.error }]}>🗑 Vider les cochés</Text>
+          <Text style={[styles.clearCoursesBtnText, { color: colors.error }]}>{t('dashboard.courses.clearChecked')}</Text>
         </TouchableOpacity>
       )}
     </DashboardCard>

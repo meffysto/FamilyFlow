@@ -13,9 +13,11 @@ import { DashboardCard } from '../DashboardCard';
 import { MarkdownText } from '../ui/MarkdownText';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 
 function DashboardInsightsInner({ insights: insightsProp }: DashboardSectionProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { primary, colors } = useThemeColors();
   const { showToast } = useToast();
@@ -50,7 +52,7 @@ function DashboardInsightsInner({ insights: insightsProp }: DashboardSectionProp
   };
 
   return (
-    <DashboardCard key="insights" title="Suggestions" icon="💡" count={hasInsights ? insights.length : undefined} color={primary} collapsible cardId="insights">
+    <DashboardCard key="insights" title={t('dashboard.insights.title')} icon="💡" count={hasInsights ? insights.length : undefined} color={primary} collapsible cardId="insights">
       {topInsights.map((insight) => {
         const priorityColor = insight.priority === 'high' ? colors.error
           : insight.priority === 'medium' ? colors.warning
@@ -73,7 +75,7 @@ function DashboardInsightsInner({ insights: insightsProp }: DashboardSectionProp
                   for (const item of items) {
                     await addCourseItem(item.text, item.section);
                   }
-                  showToast(`${items.length} article${items.length > 1 ? 's' : ''} ajouté${items.length > 1 ? 's' : ''} aux courses`);
+                  showToast(t('dashboard.insights.addedToCourses', { count: items.length }));
                 })();
               }
             }}
@@ -105,7 +107,7 @@ function DashboardInsightsInner({ insights: insightsProp }: DashboardSectionProp
                 activeOpacity={0.7}
               >
                 <Text style={[styles.aiRefreshBtnText, { color: primary }]}>
-                  {aiLoading ? '...' : '🔄 Nouvelles suggestions'}
+                  {aiLoading ? '...' : t('dashboard.insights.newSuggestions')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -117,7 +119,7 @@ function DashboardInsightsInner({ insights: insightsProp }: DashboardSectionProp
               activeOpacity={0.7}
             >
               <Text style={[styles.aiRefreshBtnText, { color: primary }]}>
-                {aiLoading ? '⏳ Analyse en cours...' : '🤖 Enrichir avec l\'IA'}
+                {aiLoading ? t('dashboard.insights.aiLoading') : t('dashboard.insights.enrichAI')}
               </Text>
             </TouchableOpacity>
           )}

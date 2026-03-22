@@ -11,10 +11,12 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { DashboardCard } from '../DashboardCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
 
 function DashboardStockInner({ vaultFileExists, activateCardTemplate }: DashboardSectionProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { primary, colors } = useThemeColors();
   const { stock, updateStockQuantity, addCourseItem } = useVault();
@@ -23,17 +25,17 @@ function DashboardStockInner({ vaultFileExists, activateCardTemplate }: Dashboar
   const lowCount = stock.length > 0 ? stock.filter((s) => s.quantite <= s.seuil).length : 0;
 
   if (!vaultFileExists.stock) return (
-    <DashboardCard key="stock" title="Stock & Fournitures" icon="📦" color={colors.success}>
+    <DashboardCard key="stock" title={t('dashboard.stock.title')} icon="📦" color={colors.success}>
       <DashboardEmptyState
-        description="Suivez vos stocks de produits et soyez alerté quand il faut racheter"
+        description={t('dashboard.stock.emptyDescription')}
         onActivate={() => activateCardTemplate('stock')}
-        activateLabel="Importer le modèle"
+        activateLabel={t('dashboard.stock.activateLabel')}
       />
     </DashboardCard>
   );
 
   return (
-    <DashboardCard key="stock" title="Stock & Fournitures" icon="📦" count={lowCount > 0 ? lowCount : undefined} color={lowCount > 0 ? colors.error : colors.success} collapsible cardId="stock">
+    <DashboardCard key="stock" title={t('dashboard.stock.title')} icon="📦" count={lowCount > 0 ? lowCount : undefined} color={lowCount > 0 ? colors.error : colors.success} collapsible cardId="stock">
       {stock.filter((s) => s.quantite <= s.seuil + 1).map((item) => {
         const isLow = item.quantite <= item.seuil;
         const statusColor = isLow ? colors.error : colors.warning;
@@ -42,11 +44,11 @@ function DashboardStockInner({ vaultFileExists, activateCardTemplate }: Dashboar
             <Text style={styles.stockAlertIcon}>{isLow ? '🔴' : '🟡'}</Text>
             <View style={styles.stockInfo}>
               <Text style={[styles.stockName, { color: colors.text }]}>{item.produit}{item.detail ? ` (${item.detail})` : ''}</Text>
-              <Text style={[styles.stockMeta, { color: statusColor }]}>{item.quantite} restant{item.quantite > 1 ? 's' : ''} (seuil: {item.seuil})</Text>
+              <Text style={[styles.stockMeta, { color: statusColor }]}>{t('dashboard.stock.remaining', { count: item.quantite, threshold: item.seuil })}</Text>
             </View>
             <View style={styles.stockBtnGroup}>
               {isLow && (
-                <TouchableOpacity style={[styles.stockCartBtn, { backgroundColor: colors.warningBg, borderColor: colors.warning }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); const detail = item.detail && !/^\d+$/.test(item.detail.trim()) ? ` (${item.detail})` : ''; const qty = item.qteAchat ? ` x${item.qteAchat}` : ''; const n = `${item.produit}${detail}${qty}`; addCourseItem(n, item.section ?? 'Produits bébé'); showToast(`${item.produit} ajouté aux courses`, 'success'); }} activeOpacity={0.6} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
+                <TouchableOpacity style={[styles.stockCartBtn, { backgroundColor: colors.warningBg, borderColor: colors.warning }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); const detail = item.detail && !/^\d+$/.test(item.detail.trim()) ? ` (${item.detail})` : ''; const qty = item.qteAchat ? ` x${item.qteAchat}` : ''; const n = `${item.produit}${detail}${qty}`; addCourseItem(n, item.section ?? 'Produits bébé'); showToast(t('dashboard.stock.addedToCourses', { name: item.produit }), 'success'); }} activeOpacity={0.6} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
                     <Text style={styles.stockCartBtnText}>🛒</Text>
                   </TouchableOpacity>
               )}
@@ -62,7 +64,7 @@ function DashboardStockInner({ vaultFileExists, activateCardTemplate }: Dashboar
         );
       })}
       <TouchableOpacity style={styles.seeAllLink} onPress={() => router.push('/(tabs)/stock')} activeOpacity={0.7}>
-        <Text style={[styles.seeAllText, { color: primary }]}>Gérer le stock →</Text>
+        <Text style={[styles.seeAllText, { color: primary }]}>{t('dashboard.stock.manageStock')}</Text>
       </TouchableOpacity>
     </DashboardCard>
   );

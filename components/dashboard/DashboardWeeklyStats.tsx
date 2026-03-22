@@ -10,10 +10,12 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { BarChart } from '../charts';
 import { aggregateTasksByWeek, getWeekStart } from '../../lib/stats';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 import { FontSize } from '../../constants/typography';
 
 function DashboardWeeklyStatsInner(_props: DashboardSectionProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { primary, colors } = useThemeColors();
   const { tasks } = useVault();
@@ -31,7 +33,7 @@ function DashboardWeeklyStatsInner(_props: DashboardSectionProps) {
   return (
     <DashboardCard
       key="weeklyStats"
-      title="Stats semaine"
+      title={t('dashboard.weeklyStats.title')}
       icon="📊"
       count={weekTotal}
       color={primary}
@@ -39,7 +41,7 @@ function DashboardWeeklyStatsInner(_props: DashboardSectionProps) {
     >
       <BarChart data={weekData} compact showValues={false} barColor={primary} />
       <Text style={[styles.weekStatsSummary, { color: colors.textMuted }]}>
-        {weekTotal} tâche{weekTotal !== 1 ? 's' : ''} cette semaine
+        {t('dashboard.weeklyStats.summary', { count: weekTotal })}
       </Text>
     </DashboardCard>
   );

@@ -11,6 +11,7 @@ import { DashboardCard } from '../DashboardCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
 import { formatDateForDisplay, isRdvUpcoming } from '../../lib/parser';
 import type { RDV } from '../../lib/types';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
 
@@ -19,6 +20,7 @@ interface DashboardRdvsProps extends DashboardSectionProps {
 }
 
 function DashboardRdvsInner({ vaultFileExists, activateCardTemplate, onEditRDV }: DashboardRdvsProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { primary, colors } = useThemeColors();
   const { rdvs } = useVault();
@@ -26,28 +28,28 @@ function DashboardRdvsInner({ vaultFileExists, activateCardTemplate, onEditRDV }
   const upcomingRdvs = rdvs.filter((r) => isRdvUpcoming(r));
 
   if (!vaultFileExists.rdvs) return (
-    <DashboardCard key="rdvs" title="Rendez-vous" icon="📅" color={colors.info}>
+    <DashboardCard key="rdvs" title={t('dashboard.rdvs.title')} icon="📅" color={colors.info}>
       <DashboardEmptyState
-        description="Centralisez les rendez-vous médicaux et administratifs"
+        description={t('dashboard.rdvs.emptyDescription')}
         onActivate={() => activateCardTemplate('rdvs')}
-        activateLabel="Importer le modèle"
+        activateLabel={t('dashboard.rdvs.activateLabel')}
       />
     </DashboardCard>
   );
 
   if (upcomingRdvs.length === 0) return (
-    <DashboardCard key="rdvs" title="Rendez-vous" icon="📅" color={colors.info}>
-      <Text style={[styles.emptyHint, { color: colors.textMuted }]}>Aucun rendez-vous à venir</Text>
+    <DashboardCard key="rdvs" title={t('dashboard.rdvs.title')} icon="📅" color={colors.info}>
+      <Text style={[styles.emptyHint, { color: colors.textMuted }]}>{t('dashboard.rdvs.noUpcoming')}</Text>
       <View style={styles.cardActions}>
         <TouchableOpacity onPress={() => router.push('/(tabs)/rdv')} activeOpacity={0.7}>
-          <Text style={[styles.seeAllText, { color: primary }]}>Voir tout →</Text>
+          <Text style={[styles.seeAllText, { color: primary }]}>{t('dashboard.rdvs.seeAll')}</Text>
         </TouchableOpacity>
       </View>
     </DashboardCard>
   );
 
   return (
-    <DashboardCard key="rdvs" title="Rendez-vous" icon="📅" count={upcomingRdvs.length} color={colors.info}>
+    <DashboardCard key="rdvs" title={t('dashboard.rdvs.title')} icon="📅" count={upcomingRdvs.length} color={colors.info}>
       {upcomingRdvs.slice(0, 3).map((rdv) => (
         <TouchableOpacity key={rdv.sourceFile} style={[styles.rdvRow, { borderLeftColor: colors.info }]} onPress={() => onEditRDV(rdv)} activeOpacity={0.7}>
           <Text style={[styles.rdvDate, { color: colors.info }]}>{formatDateForDisplay(rdv.date_rdv)} {rdv.heure ? `à ${rdv.heure}` : ''}</Text>
@@ -57,7 +59,7 @@ function DashboardRdvsInner({ vaultFileExists, activateCardTemplate, onEditRDV }
       ))}
       <View style={styles.cardActions}>
         <TouchableOpacity onPress={() => router.push('/(tabs)/rdv')} activeOpacity={0.7}>
-          <Text style={[styles.seeAllText, { color: primary }]}>Voir tout →</Text>
+          <Text style={[styles.seeAllText, { color: primary }]}>{t('dashboard.rdvs.seeAll')}</Text>
         </TouchableOpacity>
       </View>
     </DashboardCard>

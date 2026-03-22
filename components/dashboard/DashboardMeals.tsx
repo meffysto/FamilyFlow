@@ -12,6 +12,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
 import type { AppRecipe } from '../../lib/cooklang';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
 
@@ -20,6 +21,7 @@ interface DashboardMealsProps extends DashboardSectionProps {
 }
 
 function DashboardMealsInner({ vaultFileExists, activateCardTemplate, onViewRecipe }: DashboardMealsProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { primary, colors } = useThemeColors();
   const { meals, recipes } = useVault();
@@ -32,23 +34,23 @@ function DashboardMealsInner({ vaultFileExists, activateCardTemplate, onViewReci
   const todayMeals = meals.filter((m) => m.day === todayDayName && m.text.length > 0);
 
   if (!vaultFileExists.meals) return (
-    <DashboardCard key="meals" title="Repas du jour" icon="🍽️" color={primary}>
+    <DashboardCard key="meals" title={t('dashboard.meals.title')} icon="🍽️" color={primary}>
       <DashboardEmptyState
-        description="Planifiez les repas de la semaine pour toute la famille"
+        description={t('dashboard.meals.emptyDescription')}
         onActivate={() => activateCardTemplate('meals')}
-        activateLabel="Importer le modèle"
+        activateLabel={t('dashboard.meals.activateLabel')}
       />
     </DashboardCard>
   );
 
   if (todayMeals.length === 0) return (
-    <DashboardCard key="meals" title="Repas du jour" icon="🍽️" color={primary} onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'repas' } })}>
-      <Text style={[styles.emptyHint, { color: colors.textMuted }]}>Aucun repas planifié aujourd'hui</Text>
+    <DashboardCard key="meals" title={t('dashboard.meals.title')} icon="🍽️" color={primary} onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'repas' } })}>
+      <Text style={[styles.emptyHint, { color: colors.textMuted }]}>{t('dashboard.meals.noMealsToday')}</Text>
     </DashboardCard>
   );
 
   return (
-    <DashboardCard key="meals" title="Repas du jour" icon="🍽️" count={todayMeals.length} color={primary} onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'repas' } })}>
+    <DashboardCard key="meals" title={t('dashboard.meals.title')} icon="🍽️" count={todayMeals.length} color={primary} onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'repas' } })}>
       {todayMeals.map((meal) => {
         const linkedRecipe = meal.recipeRef ? recipes.find(r => {
           const ref = r.sourceFile.replace('03 - Cuisine/Recettes/', '').replace('.cook', '');

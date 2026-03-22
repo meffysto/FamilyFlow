@@ -19,11 +19,13 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { SecretMissionCard } from '../SecretMissionCard';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 import { Spacing } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 
 function DashboardSecretMissionsInner({ isChildMode }: DashboardSectionProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { primary, colors } = useThemeColors();
   const { secretMissions, activeProfile, validateSecretMission, completeSecretMission } = useVault();
@@ -59,10 +61,10 @@ function DashboardSecretMissionsInner({ isChildMode }: DashboardSectionProps) {
         onPress={() => router.push('/(tabs)/tasks')}
         activeOpacity={0.8}
       >
-        <DashboardCard title="Missions secrètes" icon="🕵️" color={colors.warning}>
+        <DashboardCard title={t('dashboard.secretMissions.title')} icon="🕵️" color={colors.warning}>
           <Animated.View style={pulseStyle}>
             <Text style={[styles.childText, { color: colors.text }]}>
-              🕵️ Tu as {myMissions.length} mission{myMissions.length > 1 ? 's' : ''} secrète{myMissions.length > 1 ? 's' : ''} !
+              {t('dashboard.secretMissions.childText', { count: myMissions.length })}
             </Text>
           </Animated.View>
         </DashboardCard>
@@ -77,13 +79,13 @@ function DashboardSecretMissionsInner({ isChildMode }: DashboardSectionProps) {
 
     return (
       <DashboardCard
-        title="Missions secrètes"
+        title={t('dashboard.secretMissions.title')}
         icon="🕵️"
         count={pendingMissions.length}
         color={colors.warning}
       >
         <Text style={[styles.parentSubtitle, { color: colors.textMuted }]}>
-          🕵️ {pendingMissions.length} mission{pendingMissions.length > 1 ? 's' : ''} en attente de validation
+          {t('dashboard.secretMissions.pendingValidation', { count: pendingMissions.length })}
         </Text>
         {pendingMissions.slice(0, 3).map((mission) => (
           <SecretMissionCard
@@ -100,7 +102,7 @@ function DashboardSecretMissionsInner({ isChildMode }: DashboardSectionProps) {
             activeOpacity={0.7}
           >
             <Text style={[styles.seeAllText, { color: primary }]}>
-              +{pendingMissions.length - 3} autre{pendingMissions.length - 3 > 1 ? 's' : ''} →
+              {t('dashboard.secretMissions.seeMore', { count: pendingMissions.length - 3 })}
             </Text>
           </TouchableOpacity>
         )}

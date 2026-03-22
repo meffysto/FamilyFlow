@@ -8,10 +8,12 @@ import { useRouter } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 import { FontSize } from '../../constants/typography';
 
 function DashboardWishlistInner(_props: DashboardSectionProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useThemeColors();
   const { wishlistItems } = useVault();
@@ -19,9 +21,9 @@ function DashboardWishlistInner(_props: DashboardSectionProps) {
   const unbought = wishlistItems.filter((w) => !w.bought).length;
 
   return (
-    <DashboardCard key="wishlist" title="Souhaits" icon="🎁" color={colors.accentPink} onPressMore={() => router.push('/(tabs)/wishlist' as any)}>
+    <DashboardCard key="wishlist" title={t('dashboard.wishlist.title')} icon="🎁" color={colors.accentPink} onPressMore={() => router.push('/(tabs)/wishlist' as any)}>
       <Text style={[styles.defiMeta, { color: colors.textSub }]}>
-        {unbought} idée{unbought !== 1 ? 's' : ''} cadeau
+        {t('dashboard.wishlist.giftIdeas', { count: unbought })}
       </Text>
     </DashboardCard>
   );

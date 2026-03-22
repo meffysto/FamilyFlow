@@ -20,6 +20,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -36,22 +37,10 @@ interface DashboardZenStateProps {
   tomorrow?: TomorrowPreview;
 }
 
-const COMPLETION_MESSAGES = [
-  { title: 'Tout est fait', subtitle: 'Profitez de votre soirée' },
-  { title: 'Journée bouclée', subtitle: 'Rien d\'autre à gérer' },
-  { title: 'Repos mérité', subtitle: 'Vous avez tout accompli' },
-  { title: 'C\'est calme ici', subtitle: 'Et c\'est très bien comme ça' },
-  { title: 'Bravo', subtitle: 'La journée est sous contrôle' },
-  { title: 'Tout est en ordre', subtitle: 'Demain est un autre jour' },
-];
-
-const CHILD_MESSAGES = [
-  { title: 'Super journée !', subtitle: 'Tu as tout fini' },
-  { title: 'Champion !', subtitle: 'Rien d\'autre à faire' },
-  { title: 'Trop fort !', subtitle: 'Profite bien' },
-];
+// Messages are now loaded from i18n: dashboard.zenState.messages / childMessages
 
 function DashboardZenStateInner({ isChildMode, tomorrow }: DashboardZenStateProps) {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
   const { width: screenWidth } = useWindowDimensions();
 
@@ -94,12 +83,13 @@ function DashboardZenStateInner({ isChildMode, tomorrow }: DashboardZenStateProp
 
   // Message du jour (basé sur le jour de l'année)
   const message = useMemo(() => {
-    const messages = isChildMode ? CHILD_MESSAGES : COMPLETION_MESSAGES;
+    const key = isChildMode ? 'dashboard.zenState.childMessages' : 'dashboard.zenState.messages';
+    const messages = t(key, { returnObjects: true }) as { title: string; subtitle: string }[];
     const dayOfYear = Math.floor(
       (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000,
     );
     return messages[dayOfYear % messages.length];
-  }, [isChildMode]);
+  }, [isChildMode, t]);
 
   const circleSize = Math.min(screenWidth * 0.35, 160);
 
@@ -188,12 +178,12 @@ function DashboardZenStateInner({ isChildMode, tomorrow }: DashboardZenStateProp
           entering={FadeIn.duration(600).delay(1200)}
           style={[styles.tomorrowCard, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}
         >
-          <Text style={[styles.tomorrowLabel, { color: colors.textMuted }]}>Demain</Text>
+          <Text style={[styles.tomorrowLabel, { color: colors.textMuted }]}>{t('dashboard.zenState.tomorrow')}</Text>
           <Text style={[styles.tomorrowSummary, { color: colors.textFaint }]}>
             {[
-              tomorrow!.tasks > 0 && `${tomorrow!.tasks} tâche${tomorrow!.tasks > 1 ? 's' : ''}`,
-              tomorrow!.rdvs > 0 && `${tomorrow!.rdvs} RDV`,
-              tomorrow!.meals > 0 && `${tomorrow!.meals} repas`,
+              tomorrow!.tasks > 0 && t('dashboard.zenState.tasks', { count: tomorrow!.tasks }),
+              tomorrow!.rdvs > 0 && t('dashboard.zenState.rdvs', { count: tomorrow!.rdvs }),
+              tomorrow!.meals > 0 && t('dashboard.zenState.meals', { count: tomorrow!.meals }),
             ].filter(Boolean).join(' · ')}
           </Text>
           {tomorrow!.firstRdv && (

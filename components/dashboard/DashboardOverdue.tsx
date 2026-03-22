@@ -9,9 +9,11 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { TaskCard } from '../TaskCard';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionWithTaskToggleProps } from './types';
 
 function DashboardOverdueInner({ handleTaskToggle }: DashboardSectionWithTaskToggleProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useThemeColors();
   const { tasks } = useVault();
@@ -24,7 +26,7 @@ function DashboardOverdueInner({ handleTaskToggle }: DashboardSectionWithTaskTog
   if (overdueTasks.length === 0) return null;
 
   return (
-    <DashboardCard key="overdue" title="En retard" icon="⚠️" count={overdueTasks.length} color={colors.error} onPressMore={() => router.push('/(tabs)/tasks')}>
+    <DashboardCard key="overdue" title={t('dashboard.overdue.title')} icon="⚠️" count={overdueTasks.length} color={colors.error} onPressMore={() => router.push('/(tabs)/tasks')}>
       {overdueTasks.slice(0, 3).map((task) => (
         <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} hideSection compact />
       ))}

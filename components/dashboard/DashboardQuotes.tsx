@@ -8,11 +8,13 @@ import { useRouter } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Spacing } from '../../constants/spacing';
 
 function DashboardQuotesInner(_props: DashboardSectionProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useThemeColors();
   const { quotes } = useVault();
@@ -21,16 +23,16 @@ function DashboardQuotesInner(_props: DashboardSectionProps) {
 
   if (!latest) {
     return (
-      <DashboardCard key="quotes" title="Mots d'enfants" icon="💬" color={colors.info} onPressMore={() => router.push('/(tabs)/quotes' as any)}>
+      <DashboardCard key="quotes" title={t('dashboard.quotes.title')} icon="💬" color={colors.info} onPressMore={() => router.push('/(tabs)/quotes' as any)}>
         <Text style={[styles.empty, { color: colors.textMuted }]}>
-          Notez les perles de vos enfants !
+          {t('dashboard.quotes.empty')}
         </Text>
       </DashboardCard>
     );
   }
 
   return (
-    <DashboardCard key="quotes" title="Mots d'enfants" icon="💬" count={quotes.length} color={colors.info} onPressMore={() => router.push('/(tabs)/quotes' as any)}>
+    <DashboardCard key="quotes" title={t('dashboard.quotes.title')} icon="💬" count={quotes.length} color={colors.info} onPressMore={() => router.push('/(tabs)/quotes' as any)}>
       <Text style={[styles.citation, { color: colors.text }]} numberOfLines={2}>
         « {latest.citation} »
       </Text>

@@ -9,11 +9,13 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { MOOD_EMOJIS } from '../../lib/types';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 import { FontSize } from '../../constants/typography';
 import { Spacing } from '../../constants/spacing';
 
 function DashboardMoodsInner(_props: DashboardSectionProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useThemeColors();
   const { moods, profiles } = useVault();
@@ -30,10 +32,10 @@ function DashboardMoodsInner(_props: DashboardSectionProps) {
   );
 
   return (
-    <DashboardCard key="moods" title="Humeurs" icon="🌤️" color={colors.info} onPressMore={() => router.push('/(tabs)/moods' as any)}>
+    <DashboardCard key="moods" title={t('dashboard.moods.title')} icon="🌤️" color={colors.info} onPressMore={() => router.push('/(tabs)/moods' as any)}>
       {todayMoods.length === 0 ? (
         <Text style={[styles.empty, { color: colors.textMuted }]}>
-          Comment va la famille aujourd'hui ?
+          {t('dashboard.moods.empty')}
         </Text>
       ) : (
         <View style={styles.row}>

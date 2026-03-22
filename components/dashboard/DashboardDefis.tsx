@@ -9,10 +9,12 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { DashboardCard } from '../DashboardCard';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
 
 function DashboardDefisInner(_props: DashboardSectionProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { primary, colors } = useThemeColors();
   const { showToast } = useToast();
@@ -28,7 +30,7 @@ function DashboardDefisInner(_props: DashboardSectionProps) {
   const todayDone = activeProfile ? mainDefi.progress.some((p) => p.date === todayStr2 && p.profileId === activeProfile.id && p.completed) : false;
 
   return (
-    <DashboardCard key="defis" title="Défis familiaux" icon="🏅" count={activeDefis.length} color={colors.warning} onPressMore={() => router.push('/(tabs)/defis')}>
+    <DashboardCard key="defis" title={t('dashboard.defis.title')} icon="🏅" count={activeDefis.length} color={colors.warning} onPressMore={() => router.push('/(tabs)/defis')}>
       <View style={styles.defiRow}>
         <Text style={styles.defiEmoji}>{mainDefi.emoji}</Text>
         <View style={{ flex: 1, gap: 4 }}>
@@ -36,7 +38,7 @@ function DashboardDefisInner(_props: DashboardSectionProps) {
           <View style={[styles.defiProgressBg, { backgroundColor: colors.cardAlt }]}>
             <View style={[styles.defiProgressFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: colors.warning }]} />
           </View>
-          <Text style={[styles.defiMeta, { color: colors.textMuted }]}>{uniqueDays}/{mainDefi.targetDays} jours</Text>
+          <Text style={[styles.defiMeta, { color: colors.textMuted }]}>{uniqueDays}/{mainDefi.targetDays} {t('dashboard.defis.days')}</Text>
         </View>
         {!todayDone && activeProfile && (
           <TouchableOpacity
@@ -54,7 +56,7 @@ function DashboardDefisInner(_props: DashboardSectionProps) {
       </View>
       {activeDefis.length > 1 && (
         <TouchableOpacity onPress={() => router.push('/(tabs)/defis')} activeOpacity={0.7}>
-          <Text style={[styles.seeAllText, { color: primary }]}>+{activeDefis.length - 1} autre{activeDefis.length > 2 ? 's' : ''} →</Text>
+          <Text style={[styles.seeAllText, { color: primary }]}>{t('dashboard.defis.seeMore', { count: activeDefis.length - 1 })}</Text>
         </TouchableOpacity>
       )}
     </DashboardCard>

@@ -10,20 +10,22 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
 import { formatAmount, categoryDisplay, totalSpent, totalBudget } from '../../lib/budget';
+import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
 
 function DashboardBudgetInner({ vaultFileExists, activateCardTemplate }: DashboardSectionProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useThemeColors();
   const { budgetEntries, budgetConfig } = useVault();
 
   if (!vaultFileExists.budget) return (
-    <DashboardCard key="budget" title="Budget du mois" icon="💰" color={colors.success}>
+    <DashboardCard key="budget" title={t('dashboard.budget.title')} icon="💰" color={colors.success}>
       <DashboardEmptyState
-        description="Suivez les dépenses familiales par catégorie avec des plafonds"
+        description={t('dashboard.budget.emptyDescription')}
         onActivate={() => activateCardTemplate('budget')}
-        activateLabel="Importer le modèle"
+        activateLabel={t('dashboard.budget.activateLabel')}
       />
     </DashboardCard>
   );
@@ -43,7 +45,7 @@ function DashboardBudgetInner({ vaultFileExists, activateCardTemplate }: Dashboa
   return (
     <DashboardCard
       key="budget"
-      title="Budget du mois"
+      title={t('dashboard.budget.title')}
       icon="💰"
       count={overCount > 0 ? overCount : undefined}
       color={overCount > 0 ? colors.error : colors.success}
