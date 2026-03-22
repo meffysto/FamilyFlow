@@ -27,6 +27,8 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { LivingGradient } from '../../components/ui/LivingGradient';
+import { ReactiveAvatar, getAvatarMood } from '../../components/ui/ReactiveAvatar';
+import { SeasonalParticles } from '../../components/ui/SeasonalParticles';
 import { DashboardCard } from '../../components/DashboardCard';
 import { RDVEditor } from '../../components/RDVEditor';
 import RecipeViewer from '../../components/RecipeViewer';
@@ -789,6 +791,7 @@ export default function DashboardScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
       <LivingGradient style={[styles.header, { borderBottomColor: colors.separator }]} ref={headerRef}>
+        <SeasonalParticles />
         <View style={styles.headerLeft}>
           <TouchableOpacity
             onPress={() => setProfilePickerVisible(true)}
@@ -797,7 +800,15 @@ export default function DashboardScreen() {
             accessibilityLabel={`Profil actif : ${activeProfile?.name ?? 'aucun'}. Appuyer pour changer.`}
             accessibilityRole="button"
           >
-            <Text style={styles.avatarEmoji}>{activeProfile?.avatar ?? '👤'}</Text>
+            <ReactiveAvatar
+              emoji={activeProfile?.avatar ?? '👤'}
+              mood={getAvatarMood({
+                hour: new Date().getHours(),
+                hasLoot: (activeProfile?.lootBoxesAvailable ?? 0) > 0,
+                allTasksDone: tasks.length > 0 && tasks.filter(t => t.dueDate === todayStr && !t.completed).length === 0,
+                hasOverdue: overdueTasks.length > 0,
+              })}
+            />
           </TouchableOpacity>
           <View style={styles.headerGreeting}>
             <Text style={[

@@ -6,7 +6,8 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Profile } from '../lib/types';
 import { useThemeColors } from '../contexts/ThemeContext';
-import { levelProgress, getLevelTier, LOOT_THRESHOLD } from '../lib/gamification';
+import { levelProgress, getLevelTier, LOOT_THRESHOLD, xpForLevel, calculateLevel } from '../lib/gamification';
+import { LiquidXPBar } from './ui/LiquidXPBar';
 import { FontSize, FontWeight } from '../constants/typography';
 
 interface FamilyLeaderboardProps {
@@ -54,23 +55,23 @@ export function FamilyLeaderboard({ profiles, compact = false }: FamilyLeaderboa
 
               {!compact && (
                 <View style={styles.bars}>
-                  {/* XP bar */}
-                  <View style={styles.barRow}>
-                    <Text style={[styles.barLabel, { color: colors.textFaint }]}>XP</Text>
-                    <View style={[styles.barTrack, { backgroundColor: colors.border }]}>
-                      <View style={[styles.barFill, { backgroundColor: primary, width: `${Math.round(progress * 100)}%` as any }]} />
-                    </View>
-                    <Text style={[styles.barValue, { color: colors.textMuted }]}>{profile.points} pts</Text>
-                  </View>
+                  {/* XP bar — liquide */}
+                  <LiquidXPBar
+                    current={profile.points - xpForLevel(calculateLevel(profile.points) - 1)}
+                    total={xpForLevel(calculateLevel(profile.points)) - xpForLevel(calculateLevel(profile.points) - 1)}
+                    label="⭐ XP"
+                    color={primary}
+                    height={18}
+                  />
 
-                  {/* Loot box progress */}
-                  <View style={styles.barRow}>
-                    <Text style={[styles.barLabel, { color: colors.textFaint }]}>🎁</Text>
-                    <View style={[styles.barTrack, { backgroundColor: colors.border }]}>
-                      <View style={[styles.barFill, { backgroundColor: colors.warning, width: `${Math.round(lootProgress * 100)}%` as any }]} />
-                    </View>
-                    <Text style={[styles.barValue, { color: colors.textMuted }]}>{profile.points % threshold}/{threshold}</Text>
-                  </View>
+                  {/* Loot box progress — liquide */}
+                  <LiquidXPBar
+                    current={profile.points % threshold}
+                    total={threshold}
+                    label="🎁 Prochain loot"
+                    color={colors.warning}
+                    height={14}
+                  />
                 </View>
               )}
 
