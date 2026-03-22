@@ -111,14 +111,14 @@ export default function MoodsScreen() {
   }, [noteModal.profileId, noteModal.profileName, noteModal.level, noteText, addMood, showToast]);
 
   const tabs: { id: TabId; label: string }[] = [
-    { id: 'aujourdhui', label: "Aujourd'hui" },
-    { id: 'historique', label: 'Historique' },
+    { id: 'aujourdhui', label: t('moodsScreen.tabs.today') },
+    { id: 'historique', label: t('moodsScreen.tabs.history') },
   ];
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>🌤️ Météo des humeurs</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('moodsScreen.title')}</Text>
       </View>
 
       <View style={styles.tabBar}>
@@ -134,7 +134,7 @@ export default function MoodsScreen() {
           <>
             {/* Mon humeur */}
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Comment tu te sens ?
+              {t('moodsScreen.sectionTitle')}
             </Text>
 
             <View style={styles.moodRow}>
@@ -157,14 +157,14 @@ export default function MoodsScreen() {
 
             {myMoodToday && (
               <Text style={[styles.myMoodLabel, { color: colors.textSub }]}>
-                Ton humeur : {MOOD_EMOJIS[myMoodToday.level]}
+                {t('moodsScreen.yourMood', { emoji: MOOD_EMOJIS[myMoodToday.level] })}
                 {myMoodToday.note ? ` — ${myMoodToday.note}` : ''}
               </Text>
             )}
 
             {/* Humeurs de la famille */}
             <Text style={[styles.sectionTitle, { color: colors.text, marginTop: Spacing.xl }]}>
-              La famille aujourd'hui
+              {t('moodsScreen.familyToday')}
             </Text>
 
             {moodableProfiles.map(p => {
@@ -236,9 +236,9 @@ export default function MoodsScreen() {
       {/* Modal note */}
       <Modal visible={noteModal.visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setNoteModal({ visible: false, level: null, profileId: null, profileName: null })}>
         <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.bg }]}>
-          <ModalHeader title={noteModal.level ? `${MOOD_EMOJIS[noteModal.level]} Humeur de ${noteModal.profileName || ''}` : 'Humeur'} onClose={() => setNoteModal({ visible: false, level: null, profileId: null, profileName: null })} />
+          <ModalHeader title={noteModal.level ? t('moodsScreen.moodOf', { emoji: MOOD_EMOJIS[noteModal.level], name: noteModal.profileName || '' }) : t('moodsScreen.mood')} onClose={() => setNoteModal({ visible: false, level: null, profileId: null, profileName: null })} />
           <View style={styles.modalContent}>
-            <Text style={[styles.label, { color: colors.textSub }]}>Ajouter une note (optionnel)</Text>
+            <Text style={[styles.label, { color: colors.textSub }]}>{t('moodsScreen.addNote')}</Text>
             <TextInput
               style={[styles.input, { color: colors.text, borderColor: colors.inputBorder, backgroundColor: colors.inputBg }]}
               placeholder={t('moodsScreen.placeholder')}
@@ -247,7 +247,7 @@ export default function MoodsScreen() {
               onChangeText={setNoteText}
             />
             <View style={styles.saveBtn}>
-              <Button label="Enregistrer" onPress={handleSaveMood} variant="primary" />
+              <Button label={t('moodsScreen.save')} onPress={handleSaveMood} variant="primary" />
             </View>
           </View>
         </SafeAreaView>

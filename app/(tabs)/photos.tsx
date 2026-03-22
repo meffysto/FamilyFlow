@@ -66,7 +66,8 @@ const CALENDAR_PADDING = 16;
 const DAY_GAP = 4;
 const CELL_SIZE = Math.floor((SCREEN_WIDTH - CALENDAR_PADDING * 2 - DAY_GAP * 6) / 7);
 
-const WEEKDAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+const WEEKDAY_LABELS_FR = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+const WEEKDAY_LABELS_EN = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 type TabMode = 'photos' | 'souvenirs';
 
@@ -127,7 +128,8 @@ function PulsingCamera({ color }: { color: string }) {
 }
 
 export default function PhotosScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const weekdayLabels = i18n.language === 'en' ? WEEKDAY_LABELS_EN : WEEKDAY_LABELS_FR;
   const { profiles, photoDates, addPhoto, getPhotoUri, refresh, isLoading, memories, addMemory, updateMemory } = useVault();
   const { primary, tint, colors } = useThemeColors();
   const insets = useSafeAreaInsets();
@@ -291,17 +293,17 @@ export default function PhotosScreen() {
   const photoCount = selectedEnfant ? (photoDates[selectedEnfant.id] ?? []).length : 0;
 
   const TYPE_EMOJI = { 'premières-fois': '🌟', 'moment-fort': '💛' };
-  const TYPE_LABEL = { 'premières-fois': 'Première fois', 'moment-fort': 'Moment fort' };
+  const TYPE_LABEL = { 'premières-fois': t('photosScreen.typeLabel.firstTime'), 'moment-fort': t('photosScreen.typeLabel.highlight') };
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <View ref={photoGridRef} style={[styles.header, { backgroundColor: colors.bg }]}>
         <Text style={[styles.title, { color: colors.text }]}>
-          {activeTab === 'photos' ? '📸 Photos' : '🌟 Souvenirs'}
+          {activeTab === 'photos' ? t('photosScreen.title.photos') : t('photosScreen.title.souvenirs')}
         </Text>
         <View style={styles.headerRight}>
           <Text style={[styles.stats, { color: colors.textMuted }]}>
-            {activeTab === 'photos' ? `${photoCount} photos` : `${filteredMemories.length} souvenirs`}
+            {activeTab === 'photos' ? t('photosScreen.stats.photos', { count: photoCount }) : t('photosScreen.stats.souvenirs', { count: filteredMemories.length })}
           </Text>
           {activeTab === 'photos' && (
             <>
@@ -335,8 +337,8 @@ export default function PhotosScreen() {
         {/* Segment control */}
         <SegmentedControl
           segments={[
-            { id: 'photos', label: '📸 Photos' },
-            { id: 'souvenirs', label: '🌟 Souvenirs' },
+            { id: 'photos', label: t('photosScreen.tabs.photos') },
+            { id: 'souvenirs', label: t('photosScreen.tabs.souvenirs') },
           ]}
           value={activeTab}
           onChange={(t) => setActiveTab(t as TabMode)}
@@ -379,7 +381,7 @@ export default function PhotosScreen() {
                   styles.statPillText,
                   { color: photoStats.currentStreak >= 7 ? colors.successText : photoStats.currentStreak === 0 ? colors.warningText : colors.textSub },
                 ]}>
-                  🔥 {photoStats.currentStreak}j
+                  🔥 {t('photosScreen.streak', { count: photoStats.currentStreak })}
                 </Text>
               </View>
               <View style={[styles.statPill, { backgroundColor: colors.cardAlt }]}>
@@ -390,7 +392,7 @@ export default function PhotosScreen() {
               {photoStats.longestStreak > 0 && (
                 <View style={[styles.statPill, { backgroundColor: colors.cardAlt }]}>
                   <Text style={[styles.statPillText, { color: colors.textSub }]}>
-                    🏆 {photoStats.longestStreak}j
+                    🏆 {t('photosScreen.streak', { count: photoStats.longestStreak })}
                   </Text>
                 </View>
               )}
@@ -425,7 +427,7 @@ export default function PhotosScreen() {
 
               {/* Weekday headers */}
               <View style={styles.weekdayRow}>
-                {WEEKDAY_LABELS.map((label, i) => (
+                {weekdayLabels.map((label, i) => (
                   <View key={i} style={styles.weekdayCell}>
                     <Text style={[styles.weekdayText, { color: colors.textFaint }]}>{label}</Text>
                   </View>
@@ -524,8 +526,8 @@ export default function PhotosScreen() {
             {filteredMemories.length === 0 ? (
               <EmptyState
                 emoji="🌟"
-                title="Aucun souvenir enregistré"
-                subtitle="Ajoute les premières fois et moments forts de tes enfants !"
+                title={t('photosScreen.empty.title')}
+                subtitle={t('photosScreen.empty.subtitle')}
               />
             ) : (
               filteredMemories.map((mem, idx) => (

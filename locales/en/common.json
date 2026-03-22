@@ -2146,6 +2146,23 @@
     }
   },
   "photosScreen": {
+    "title": {
+      "photos": "📸 Pictures",
+      "souvenirs": "🌟 Memories"
+    },
+    "tabs": {
+      "photos": "📸 Pictures",
+      "souvenirs": "🌟 Memories"
+    },
+    "typeLabel": {
+      "firstTime": "First time",
+      "highlight": "Highlight"
+    },
+    "empty": {
+      "title": "No memories yet",
+      "subtitle": "Add first times and highlights for your kids!"
+    },
+    "streak": "{{count}}d",
     "alert": {
       "error": "Error",
       "noChildSelected": "No child selected.",
@@ -2229,6 +2246,8 @@
   },
   "gratitude": {
     "title": "Gratitude",
+    "streak": "{{count}}d 🔥",
+    "today": "Today",
     "toast": {
       "deleted": "Gratitude deleted",
       "saved": "Gratitude saved 🙏"
@@ -2237,6 +2256,17 @@
       "today": "Today",
       "goldenBook": "Golden book"
     },
+    "writeBtn": "Write",
+    "editBtn": "Edit",
+    "notWritten": "Not written yet",
+    "empty": {
+      "title": "Nothing yet",
+      "subtitle": "Write down what you're grateful for today",
+      "cta": "Add"
+    },
+    "deleteTitle": "Delete this gratitude?",
+    "deleteMessage": "Delete {{name}}'s entry?",
+    "loadMore": "Load more",
     "write": {
       "editTitle": "Edit",
       "writeTitle": "Write",
@@ -2362,6 +2392,12 @@
       "history": "History"
     },
     "sectionTitle": "How are you feeling?",
+    "yourMood": "Your mood: {{emoji}}",
+    "familyToday": "The family today",
+    "moodOf": "{{emoji}} {{name}}'s mood",
+    "mood": "Mood",
+    "addNote": "Add a note (optional)",
+    "save": "Save",
     "a11y": {
       "moodLevel": "Mood {{level}} out of 5",
       "moodLevelFor": "Mood {{level}} for {{name}}"

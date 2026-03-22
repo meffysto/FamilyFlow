@@ -2146,6 +2146,23 @@
     }
   },
   "photosScreen": {
+    "title": {
+      "photos": "📸 Photos",
+      "souvenirs": "🌟 Souvenirs"
+    },
+    "tabs": {
+      "photos": "📸 Photos",
+      "souvenirs": "🌟 Souvenirs"
+    },
+    "typeLabel": {
+      "firstTime": "Première fois",
+      "highlight": "Moment fort"
+    },
+    "empty": {
+      "title": "Aucun souvenir enregistré",
+      "subtitle": "Ajoute les premières fois et moments forts de tes enfants !"
+    },
+    "streak": "{{count}}j",
     "alert": {
       "error": "Erreur",
       "noChildSelected": "Aucun enfant sélectionné.",
@@ -2229,6 +2246,8 @@
   },
   "gratitude": {
     "title": "Gratitude",
+    "streak": "{{count}}j 🔥",
+    "today": "Aujourd'hui",
     "toast": {
       "deleted": "Gratitude supprimée",
       "saved": "Gratitude enregistrée 🙏"
@@ -2237,6 +2256,17 @@
       "today": "Aujourd'hui",
       "goldenBook": "Livre d'or"
     },
+    "writeBtn": "Écrire",
+    "editBtn": "Modifier",
+    "notWritten": "Pas encore écrit",
+    "empty": {
+      "title": "Rien pour le moment",
+      "subtitle": "Notez ce qui vous rend reconnaissant aujourd'hui",
+      "cta": "Ajouter"
+    },
+    "deleteTitle": "Supprimer cette gratitude ?",
+    "deleteMessage": "Supprimer l'entrée de {{name}} ?",
+    "loadMore": "Charger plus",
     "write": {
       "editTitle": "Modifier",
       "writeTitle": "Écrire",
@@ -2362,6 +2392,12 @@
       "history": "Historique"
     },
     "sectionTitle": "Comment tu te sens ?",
+    "yourMood": "Ton humeur : {{emoji}}",
+    "familyToday": "La famille aujourd'hui",
+    "moodOf": "{{emoji}} Humeur de {{name}}",
+    "mood": "Humeur",
+    "addNote": "Ajouter une note (optionnel)",
+    "save": "Enregistrer",
     "a11y": {
       "moodLevel": "Humeur {{level}} sur 5",
       "moodLevelFor": "Humeur {{level}} pour {{name}}"

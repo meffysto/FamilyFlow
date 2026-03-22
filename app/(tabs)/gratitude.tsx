@@ -140,22 +140,22 @@ export default function GratitudeScreen() {
 
   const dateDisplay = useMemo(() => {
     const d = new Date(selectedDate + 'T12:00:00');
-    if (isToday) return "Aujourd'hui";
+    if (isToday) return t('gratitude.today');
     return format(d, 'EEEE d MMMM yyyy', { locale: getDateLocale() });
   }, [selectedDate, isToday]);
 
   const tabs: { id: TabId; label: string }[] = [
-    { id: 'aujourdhui', label: "Aujourd'hui" },
-    { id: 'livre', label: 'Livre d\'or' },
+    { id: 'aujourdhui', label: t('gratitude.tabs.today') },
+    { id: 'livre', label: t('gratitude.tabs.goldenBook') },
   ];
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <View style={[styles.header, { backgroundColor: colors.bg }]}>
-        <Text style={[styles.title, { color: colors.text }]}>Gratitude</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('gratitude.title')}</Text>
         {streak > 0 && (
           <View style={[styles.streakBadge, { backgroundColor: colors.info + '20' }]}>
-            <Text style={[styles.streakText, { color: colors.info }]}>{streak}j 🔥</Text>
+            <Text style={[styles.streakText, { color: colors.info }]}>{t('gratitude.streak', { count: streak })}</Text>
           </View>
         )}
       </View>
@@ -184,7 +184,7 @@ export default function GratitudeScreen() {
               <Text style={[styles.dateLabel, { color: colors.text }]}>{dateDisplay}</Text>
               {!isToday && (
                 <TouchableOpacity onPress={() => setSelectedDate(todayStr)} activeOpacity={0.7}>
-                  <Text style={[styles.todayLink, { color: primary }]}>Aujourd'hui</Text>
+                  <Text style={[styles.todayLink, { color: primary }]}>{t('gratitude.today')}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -214,7 +214,7 @@ export default function GratitudeScreen() {
                       onPress={() => handleOpenWrite()}
                       activeOpacity={0.7}
                     >
-                      <Text style={[styles.writeBtnText, { color: colors.onPrimary }]}>Écrire</Text>
+                      <Text style={[styles.writeBtnText, { color: colors.onPrimary }]}>{t('gratitude.writeBtn')}</Text>
                     </TouchableOpacity>
                   )}
                   {isActiveUser && entry && (
@@ -223,14 +223,14 @@ export default function GratitudeScreen() {
                       onPress={() => handleOpenWrite(entry)}
                       activeOpacity={0.7}
                     >
-                      <Text style={[styles.editBtnText, { color: primary }]}>Modifier</Text>
+                      <Text style={[styles.editBtnText, { color: primary }]}>{t('gratitude.editBtn')}</Text>
                     </TouchableOpacity>
                   )}
                 </View>
                 {entry ? (
                   <Text style={[styles.entryText, { color: colors.textSub }]}>{entry.text}</Text>
                 ) : (
-                  <Text style={[styles.emptyText, { color: colors.textFaint }]}>Pas encore écrit</Text>
+                  <Text style={[styles.emptyText, { color: colors.textFaint }]}>{t('gratitude.notWritten')}</Text>
                 )}
               </View>
             );
@@ -239,9 +239,9 @@ export default function GratitudeScreen() {
           {gratitudeProfiles.length === 0 && (
             <EmptyState
               emoji="🙏"
-              title="Rien pour le moment"
-              subtitle="Notez ce qui vous rend reconnaissant aujourd'hui"
-              ctaLabel="Ajouter"
+              title={t('gratitude.empty.title')}
+              subtitle={t('gratitude.empty.subtitle')}
+              ctaLabel={t('gratitude.empty.cta')}
               onCta={() => handleOpenWrite()}
             />
           )}
@@ -255,9 +255,9 @@ export default function GratitudeScreen() {
           {bookSections.length === 0 ? (
             <EmptyState
               emoji="🙏"
-              title="Rien pour le moment"
-              subtitle="Notez ce qui vous rend reconnaissant aujourd'hui"
-              ctaLabel="Ajouter"
+              title={t('gratitude.empty.title')}
+              subtitle={t('gratitude.empty.subtitle')}
+              ctaLabel={t('gratitude.empty.cta')}
               onCta={() => { setActiveTab('aujourdhui'); handleOpenWrite(); }}
             />
           ) : (
@@ -272,8 +272,8 @@ export default function GratitudeScreen() {
               renderItem={({ item }) => (
                 <SwipeToDelete
                   onDelete={() => handleDeleteEntry(item)}
-                  confirmTitle="Supprimer cette gratitude ?"
-                  confirmMessage={`Supprimer l'entrée de ${item.profileName} ?`}
+                  confirmTitle={t('gratitude.deleteTitle')}
+                  confirmMessage={t('gratitude.deleteMessage', { name: item.profileName })}
                   hintId="gratitude"
                 >
                   <View style={[styles.bookEntry, { backgroundColor: colors.card }]}>
@@ -295,7 +295,7 @@ export default function GratitudeScreen() {
                     onPress={() => setVisibleCount((c) => c + LOAD_BATCH)}
                     activeOpacity={0.7}
                   >
-                    <Text style={[styles.loadMoreText, { color: primary }]}>Charger plus</Text>
+                    <Text style={[styles.loadMoreText, { color: primary }]}>{t('gratitude.loadMore')}</Text>
                   </TouchableOpacity>
                 ) : null
               }
@@ -313,15 +313,15 @@ export default function GratitudeScreen() {
       >
         <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
           <ModalHeader
-            title={writeModal.existing ? 'Modifier' : 'Écrire'}
+            title={writeModal.existing ? t('gratitude.write.editTitle') : t('gratitude.write.writeTitle')}
             onClose={() => setWriteModal({ visible: false })}
-            rightLabel="Enregistrer"
+            rightLabel={t('gratitude.write.save')}
             onRight={handleSave}
           />
           <View style={styles.writeContent}>
             <View style={styles.promptRow}>
               <Text style={[styles.writePrompt, { color: colors.textMuted, flex: 1 }]}>
-                Qu'est-ce qui vous rend reconnaissant(e) aujourd'hui ?
+                {t('gratitude.write.prompt')}
               </Text>
               <TouchableOpacity
                 style={[styles.dictaphoneBtn, { backgroundColor: colors.cardAlt, borderColor: primary }]}
@@ -331,7 +331,7 @@ export default function GratitudeScreen() {
                 accessibilityRole="button"
               >
                 <Text style={styles.dictaphoneBtnEmoji}>🎙️</Text>
-                <Text style={[styles.dictaphoneBtnText, { color: primary }]}>Dicter</Text>
+                <Text style={[styles.dictaphoneBtnText, { color: primary }]}>{t('gratitude.dictateLabel')}</Text>
               </TouchableOpacity>
             </View>
             <TextInput
