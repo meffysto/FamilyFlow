@@ -12,7 +12,6 @@
  * Sample vault structure (coffre):
  *   01 - Enfants/Maxence/Tâches récurrentes.md
  *   02 - Maison/Liste de courses.md
- *   02 - Maison/Ménage hebdo.md
  *   03 - Journal/YYYY-MM-DD.md
  *   03 - Journal/Maxence/YYYY-MM-DD Maxence.md
  *   04 - Rendez-vous/*.md
@@ -35,7 +34,7 @@ import {
   downloadICloudFiles,
 } from '../modules/vault-access/src';
 import { Profile, Gender } from './types';
-import { format } from 'date-fns';
+import { format, addDays, parseISO } from 'date-fns';
 import { nextOccurrence } from './recurrence';
 import { TEMPLATE_PACKS, TemplateContext } from './vault-templates';
 
@@ -504,7 +503,6 @@ export class VaultManager {
     // --- 02 - Maison ---
     await this._writeIfMissing('02 - Maison/Tâches récurrentes.md', this._maisonTasksContent(today));
     await this._writeIfMissing('02 - Maison/Liste de courses.md', this._coursesContent(ageCategories));
-    await this._writeIfMissing('02 - Maison/Ménage hebdo.md', this._menageContent());
     await this._writeIfMissing('02 - Maison/Repas de la semaine.md', this._mealsContent());
 
     // --- 03 - Journal (dirs only, per child) ---
@@ -684,7 +682,7 @@ export class VaultManager {
       (c) => `- [[01 - Enfants/${c.name}/Tâches récurrentes|${c.name} — Tâches]]`
     ).join('\n');
 
-    return `---\ntags:\n  - dashboard\n---\n# Dashboard Famille\n\n## Enfants\n${childLinks || '*(Pas d\'enfants configurés)*'}\n\n## Maison\n- [[02 - Maison/Ménage hebdo|Ménage hebdo]]\n- [[02 - Maison/Liste de courses|Liste de courses]]\n- [[02 - Maison/Tâches récurrentes|Tâches maison]]\n\n## Rendez-vous\n- [[04 - Rendez-vous|Tous les rendez-vous]]\n`;
+    return `---\ntags:\n  - dashboard\n---\n# Dashboard Famille\n\n## Enfants\n${childLinks || '*(Pas d\'enfants configurés)*'}\n\n## Maison\n- [[02 - Maison/Liste de courses|Liste de courses]]\n- [[02 - Maison/Tâches récurrentes|Tâches maison]]\n\n## Rendez-vous\n- [[04 - Rendez-vous|Tous les rendez-vous]]\n`;
   }
 
   private _childTasksContent(childName: string, today: string, birthdate?: string): string {
@@ -732,7 +730,22 @@ export class VaultManager {
   }
 
   private _maisonTasksContent(today: string): string {
-    return `---\ntags:\n  - taches\n  - maison\n---\n> ← [[00 - Dashboard/Dashboard|Dashboard]]\n\n# Tâches récurrentes — Maison\n\n## Tous les 3 jours\n\n## Hebdomadaire\n\n## Mensuel\n`;
+    const todayDate = parseISO(today);
+    const todayDay = todayDate.getDay(); // 0=Sun, 1=Mon...
+    const nextDay = (targetDay: number): string => {
+      const diff = (targetDay - todayDay + 7) % 7 || 7;
+      return format(addDays(todayDate, diff), 'yyyy-MM-dd');
+    };
+
+    const nLun = nextDay(1);
+    const nMar = nextDay(2);
+    const nMer = nextDay(3);
+    const nJeu = nextDay(4);
+    const nVen = nextDay(5);
+    const nSam = nextDay(6);
+    const nDim = nextDay(0);
+
+    return `---\ntags:\n  - taches\n  - maison\n---\n> ← [[00 - Dashboard/Dashboard|Dashboard]]\n\n# Tâches récurrentes — Maison\n\n## Tous les 3 jours\n\n## Hebdomadaire\n\n## Mensuel\n\n## Ménage hebdomadaire\n\n### Lundi — Cuisine\n- [ ] Nettoyer la cuisine 🔁 every week 📅 ${nLun}\n- [ ] Lave vaisselle 🔁 every week 📅 ${nLun}\n- [ ] Changer les serviettes 🔁 every week 📅 ${nLun}\n\n### Mardi — Salle de bain\n- [ ] Nettoyer lavabo & miroir 🔁 every week 📅 ${nMar}\n- [ ] Nettoyer les toilettes 🔁 every week 📅 ${nMar}\n- [ ] Sortir les poubelles 🔁 every week 📅 ${nMar}\n\n### Mercredi — Cuisine\n- [ ] Nettoyer les plans de travail 🔁 every week 📅 ${nMer}\n- [ ] Nettoyer l'évier 🔁 every week 📅 ${nMer}\n- [ ] Lave vaisselle 🔁 every week 📅 ${nMer}\n\n### Jeudi — Chambres\n- [ ] Changer les draps 🔁 every week 📅 ${nJeu}\n- [ ] Aspirer les chambres 🔁 every week 📅 ${nJeu}\n- [ ] Ranger 🔁 every week 📅 ${nJeu}\n\n### Vendredi — Sols & Courses\n- [ ] Aspirer le salon 🔁 every week 📅 ${nVen}\n- [ ] Passer la serpillière 🔁 every week 📅 ${nVen}\n- [ ] Faire les courses 🔁 every week 📅 ${nVen}\n\n### Samedi — Sols\n- [ ] Aspirer tout le rez-de-chaussée 🔁 every week 📅 ${nSam}\n- [ ] Passer la serpillière 🔁 every week 📅 ${nSam}\n- [ ] Nettoyer les vitres (si nécessaire) 🔁 every week 📅 ${nSam}\n\n### Dimanche — Repos / rattrapage\n- [ ] Rattraper les tâches en retard 🔁 every week 📅 ${nDim}\n- [ ] Préparer la semaine 🔁 every week 📅 ${nDim}\n`;
   }
 
   private _coursesContent(categories: Set<string>): string {
@@ -747,10 +760,6 @@ export class VaultManager {
     }
 
     return `---\ntags:\n  - maison\n  - courses\n---\n> ← [[00 - Dashboard/Dashboard|Dashboard]]\n\n# Liste de courses\n\n## 🥩 Frais\n- [ ] \n\n## 🥦 Fruits & légumes\n- [ ] ${kidSection}\n## 🧴 Hygiène\n- [ ] \n\n## 🏠 Maison\n- [ ] \n\n## 🍞 Épicerie\n- [ ] \n`;
-  }
-
-  private _menageContent(): string {
-    return `---\ntags:\n  - maison\n  - menage\n---\n> ← [[00 - Dashboard/Dashboard|Dashboard]]\n\n# Ménage hebdomadaire\n\n## Lundi — Cuisine\n- [ ] Nettoyer la cuisine\n- [ ] Lave vaisselle\n- [ ] Changer les serviettes\n\n## Mardi — Salle de bain\n- [ ] Nettoyer lavabo & miroir\n- [ ] Nettoyer les toilettes\n- [ ] Sortir les poubelles\n\n## Mercredi — Cuisine\n- [ ] Nettoyer les plans de travail\n- [ ] Nettoyer l'évier\n- [ ] Lave vaisselle\n\n## Jeudi — Chambres\n- [ ] Changer les draps\n- [ ] Aspirer les chambres\n- [ ] Ranger\n\n## Vendredi — Sols & Courses\n- [ ] Aspirer le salon\n- [ ] Passer la serpillière\n- [ ] Faire les courses\n\n## Samedi — Sols\n- [ ] Aspirer tout le rez-de-chaussée\n- [ ] Passer la serpillière\n- [ ] Nettoyer les vitres (si nécessaire)\n\n## Dimanche — Repos / rattrapage\n- [ ] Rattraper les tâches en retard\n- [ ] Préparer la semaine\n`;
   }
 
   private _mealsContent(): string {

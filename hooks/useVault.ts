@@ -10,7 +10,6 @@
  * - 01 - Enfants/Enfant 2/Tâches récurrentes.md
  * - 02 - Maison/Tâches récurrentes.md
  * - 02 - Maison/Liste de courses.md
- * - 02 - Maison/Ménage hebdo.md
  * - 04 - Rendez-vous/*.md
  * - famille.md
  * - gamification.md
@@ -23,7 +22,6 @@ import { VaultManager } from '../lib/vault';
 import { restoreAccess } from '../modules/vault-access/src';
 import {
   parseTaskFile,
-  parseMénage,
   parseRoutines,
   serializeRoutines,
   parseHealthRecord,
@@ -253,7 +251,6 @@ const STATIC_TASK_FILES = [
   '02 - Maison/Tâches récurrentes.md',
 ];
 
-export const MENAGE_FILE = '02 - Maison/Ménage hebdo.md';
 const COURSES_FILE = '02 - Maison/Liste de courses.md';
 const RDV_DIR = '04 - Rendez-vous';
 const RDV_ARCHIVES_DIR = 'Archives/Rendez-vous';
@@ -399,9 +396,7 @@ export function useVaultInternal(): VaultState {
   useEffect(() => { tasksRef.current = tasks; }, [tasks]);
 
   const triggerWidgetRefresh = useCallback(() => {
-    const menageFromTasks = tasksRef.current.filter(t => t.sourceFile === MENAGE_FILE);
-    const nonMenageTasks = tasksRef.current.filter(t => t.sourceFile !== MENAGE_FILE);
-    refreshWidget(mealsRef.current, menageFromTasks, rdvsRef.current, nonMenageTasks);
+    refreshWidget(mealsRef.current, rdvsRef.current, tasksRef.current);
   }, []);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
@@ -583,55 +578,17 @@ export function useVaultInternal(): VaultState {
           return results.flat();
         })(),
 
-        // [1] Ménage — reset hebdo dans le fichier + parse
-        vault.readFile(MENAGE_FILE).then(async (c) => {
-          const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-          const todayStr = format(new Date(), 'yyyy-MM-dd');
-          const lines = c.split('\n');
-          let fileChanged = false;
-
-          for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            const isChecked = /^- \[x\]/i.test(line.trim());
-            if (!isChecked) continue;
-
-            const dateMatch = line.match(/✅\s*(\d{4}-\d{2}-\d{2})/);
-
-            if (dateMatch) {
-              // Date présente — reset si semaine précédente
-              const completedDate = new Date(dateMatch[1] + 'T00:00:00');
-              if (completedDate < weekStart) {
-                lines[i] = line.replace(/- \[x\]/i, '- [ ]').replace(/\s*✅\s*\d{4}-\d{2}-\d{2}/, '');
-                fileChanged = true;
-              }
-            } else {
-              // Pas de date ✅ — ajouter la date d'aujourd'hui pour le tracking
-              lines[i] = line.trimEnd() + ` ✅ ${todayStr}`;
-              fileChanged = true;
-            }
-          }
-
-          if (fileChanged) {
-            const newContent = lines.join('\n');
-            await vault.writeFile(MENAGE_FILE, newContent);
-            return parseMénage(newContent, MENAGE_FILE);
-          }
-          return parseMénage(c, MENAGE_FILE);
-        }).catch((e) => {
-          debugErrors.push(`ménage: ${e}`); return [] as Task[];
-        }),
-
-        // [2] Routines
+        // [1] Routines
         vault.readFile(ROUTINES_FILE).then((c) => parseRoutines(c)).catch((e) => {
           debugErrors.push(`routines: ${e}`); return [] as any[];
         }),
 
-        // [3] Courses
+        // [2] Courses
         vault.readFile(COURSES_FILE).then((c) => parseCourses(c, COURSES_FILE)).catch((e) => {
           debugErrors.push(`courses: ${e}`); return [] as CourseItem[];
         }),
 
-        // [4] Stock
+        // [3] Stock
         vault.readFile(STOCK_FILE).then((c) => ({
           items: parseStock(c),
           sections: parseStockSections(c),
@@ -639,7 +596,7 @@ export function useVaultInternal(): VaultState {
           debugErrors.push(`stock: ${e}`); return { items: [] as StockItem[], sections: [] as string[] };
         }),
 
-        // [5] Meals (fichier par semaine, migration auto depuis l'ancien fichier unique)
+        // [4] Meals (fichier par semaine, migration auto depuis l'ancien fichier unique)
         (async () => {
           const currentFile = mealsFileForWeek();
           if (!(await vault.exists(currentFile))) {
@@ -657,7 +614,7 @@ export function useVaultInternal(): VaultState {
           return parseMeals(c, currentFile);
         })().catch((e) => { debugErrors.push(`meals: ${e}`); return [] as MealItem[]; }),
 
-        // [6] RDVs
+        // [5] RDVs
         (async () => {
           await vault.ensureDir(RDV_DIR);
           const loadedRdvs: RDV[] = [];
@@ -678,7 +635,7 @@ export function useVaultInternal(): VaultState {
           return loadedRdvs;
         })().catch((e) => { debugErrors.push(`rdv: ${e}`); return [] as RDV[]; }),
 
-        // [7] Photos
+        // [6] Photos
         (async () => {
           const photoMap: Record<string, string[]> = {};
           await Promise.all(enfantNames.map(async (name) => {
@@ -691,7 +648,7 @@ export function useVaultInternal(): VaultState {
           return photoMap;
         })().catch((e) => { debugErrors.push(`photos: ${e}`); return {} as Record<string, string[]>; }),
 
-        // [8] Memories/jalons
+        // [7] Memories/jalons
         (async () => {
           const allMemories: Memory[] = [];
           await Promise.all(enfantNames.map(async (name) => {
@@ -708,7 +665,7 @@ export function useVaultInternal(): VaultState {
           return allMemories;
         })().catch(() => [] as Memory[]),
 
-        // [9] Health records
+        // [8] Health records
         Promise.all(
           enfantNames.map(async (name) => {
             const id = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
@@ -719,7 +676,7 @@ export function useVaultInternal(): VaultState {
           })
         ).then((r) => r.filter((x): x is HealthRecord => x !== null)).catch(() => [] as HealthRecord[]),
 
-        // [10] Journal — aujourd'hui + hier seulement au boot
+        // [9] Journal — aujourd'hui + hier seulement au boot
         (async () => {
           const today = new Date();
           const last2 = Array.from({ length: 2 }, (_, i) => {
@@ -742,7 +699,7 @@ export function useVaultInternal(): VaultState {
           return entries;
         })().catch(() => [] as JournalSummaryEntry[]),
 
-        // [11] Défis familiaux
+        // [10] Défis familiaux
         (async () => {
           const defisContent = await vault.readFile(DEFIS_FILE);
           const parsed = parseDefis(defisContent);
@@ -795,16 +752,16 @@ export function useVaultInternal(): VaultState {
           return parsed;
         })().catch(() => [] as any[]),
 
-        // [12] Gratitude
+        // [11] Gratitude
         vault.readFile(GRATITUDE_FILE).then((c) => parseGratitude(c)).catch(() => [] as any[]),
 
-        // [13] Wishlist
+        // [12] Wishlist
         vault.readFile(WISHLIST_FILE).then((c) => parseWishlist(c)).catch(() => [] as any[]),
 
-        // [14] Anniversaires
+        // [13] Anniversaires
         vault.readFile(ANNIVERSAIRES_FILE).then((c) => parseAnniversaries(c)).catch(() => [] as Anniversary[]),
 
-        // [15] Notification preferences
+        // [14] Notification preferences
         (async () => {
           if (await vault.exists(NOTIF_FILE)) {
             const notifContent = await vault.readFile(NOTIF_FILE);
@@ -813,7 +770,7 @@ export function useVaultInternal(): VaultState {
           return getDefaultNotificationPrefs();
         })().catch(() => getDefaultNotificationPrefs()),
 
-        // [16] Vacation mode
+        // [15] Vacation mode
         (async () => {
           const vacRaw = await SecureStore.getItemAsync(VACATION_STORE_KEY);
           let config: VacationConfig | null = null;
@@ -835,7 +792,7 @@ export function useVaultInternal(): VaultState {
           return { config, vacTasks };
         })().catch(() => ({ config: null as VacationConfig | null, vacTasks: [] as Task[] })),
 
-        // [17] Notes & Articles
+        // [16] Notes & Articles
         (async () => {
           await vault.ensureDir(NOTES_DIR);
           const files = await vault.listFilesRecursive(NOTES_DIR, '.md');
@@ -852,13 +809,13 @@ export function useVaultInternal(): VaultState {
           return loaded;
         })().catch(() => [] as Note[]),
 
-        // [18] Mots d'enfants
+        // [17] Mots d'enfants
         vault.readFile(QUOTES_FILE).then((c) => parseQuotes(c)).catch(() => [] as ChildQuote[]),
 
-        // [19] Météo des humeurs
+        // [18] Météo des humeurs
         vault.readFile(MOODS_FILE).then((c) => parseMoods(c)).catch(() => [] as MoodEntry[]),
 
-        // [20] Skill trees (compétences enfants)
+        // [19] Skill trees (compétences enfants)
         (async () => {
           try {
             const files = await vault.listDir(SKILLS_DIR);
@@ -872,7 +829,7 @@ export function useVaultInternal(): VaultState {
           } catch (e) { warnUnexpected('skill-trees', e); return [] as SkillTreeData[]; }
         })(),
 
-        // [21] Missions secrètes
+        // [20] Missions secrètes
         vault.readFile(SECRET_MISSIONS_FILE).then((c) => parseSecretMissions(c)).catch(() => [] as Task[]),
       ]);
 
@@ -881,16 +838,14 @@ export function useVaultInternal(): VaultState {
         r.status === 'fulfilled' ? r.value : fallback;
 
       const tasksResult = val(results[0], [] as Task[]);
-      const menageResult = val(results[1], [] as Task[]);
-      const allTasks = [...tasksResult, ...menageResult];
-      setTasks(allTasks);
-      setRoutines(val(results[2], []));
-      setCourses(val(results[3], []));
-      const stockResult = val(results[4], { items: [] as StockItem[], sections: [] as string[] });
+      setTasks(tasksResult);
+      setRoutines(val(results[1], []));
+      setCourses(val(results[2], []));
+      const stockResult = val(results[3], { items: [] as StockItem[], sections: [] as string[] });
       setStock(stockResult.items);
       setStockSections(stockResult.sections);
-      setMeals(val(results[5], []));
-      const rdvResult = val(results[6], [] as RDV[]);
+      setMeals(val(results[4], []));
+      const rdvResult = val(results[5], [] as RDV[]);
       setRdvs(rdvResult);
       // Planifier toutes les notifications locales
       setupAllNotifications({
@@ -899,26 +854,26 @@ export function useVaultInternal(): VaultState {
         stock: stockResult.items,
         hasGrossesse: profiles.some(p => p.statut === 'grossesse' && p.dateTerme),
       }).catch(() => {});
-      setPhotoDates(val(results[7], {}));
-      setMemories(val(results[8], []));
-      setHealthRecords(val(results[9], []));
-      setJournalStats(val(results[10], []));
-      setDefis(val(results[11], []));
-      setGratitudeDays(val(results[12], []));
-      setWishlistItems(val(results[13], []));
-      setAnniversaries(val(results[14], []));
-      setNotifPrefs(val(results[15], getDefaultNotificationPrefs()));
-      const vacResult = val(results[16], { config: null as VacationConfig | null, vacTasks: [] as Task[] });
+      setPhotoDates(val(results[6], {}));
+      setMemories(val(results[7], []));
+      setHealthRecords(val(results[8], []));
+      setJournalStats(val(results[9], []));
+      setDefis(val(results[10], []));
+      setGratitudeDays(val(results[11], []));
+      setWishlistItems(val(results[12], []));
+      setAnniversaries(val(results[13], []));
+      setNotifPrefs(val(results[14], getDefaultNotificationPrefs()));
+      const vacResult = val(results[15], { config: null as VacationConfig | null, vacTasks: [] as Task[] });
       setVacationConfig(vacResult.config);
       setVacationTasks(vacResult.vacTasks);
-      setNotes(val(results[17], []));
-      setQuotes(val(results[18], []));
-      setMoods(val(results[19], []));
-      setSkillTrees(val(results[20], []));
-      setSecretMissions(val(results[21], []));
+      setNotes(val(results[16], []));
+      setQuotes(val(results[17], []));
+      setMoods(val(results[18], []));
+      setSkillTrees(val(results[19], []));
+      setSecretMissions(val(results[20], []));
 
       // Mettre à jour les widgets iOS
-      refreshWidget(val(results[5], []), val(results[1], []), rdvResult, tasksResult);
+      refreshWidget(val(results[4], []), rdvResult, tasksResult);
       refreshJournalWidget(profiles);
 
       // Sync feedings du widget vers le vault markdown (fire-and-forget)
@@ -930,11 +885,11 @@ export function useVaultInternal(): VaultState {
         const shouldSend = await shouldSendWeeklySummary();
         if (!shouldSend) return;
         buildAndSendWeeklySummary({
-          tasks: [...tasksResult, ...menageResult],
-          meals: val(results[5], [] as MealItem[]),
-          moods: val(results[19], [] as MoodEntry[]),
-          quotes: val(results[18], [] as ChildQuote[]),
-          defis: val(results[11], [] as Defi[]),
+          tasks: tasksResult,
+          meals: val(results[4], [] as MealItem[]),
+          moods: val(results[18], [] as MoodEntry[]),
+          quotes: val(results[17], [] as ChildQuote[]),
+          defis: val(results[10], [] as Defi[]),
           profiles,
           stock: stockResult.items,
         }).catch(() => {});
@@ -1618,10 +1573,6 @@ export function useVaultInternal(): VaultState {
       await vaultRef.current.writeFile(sourceFile, newContent);
       // Re-parser le fichier pour recalculer les lineIndex
       setTasks(prev => {
-        if (sourceFile === MENAGE_FILE) {
-          const otherTasks = prev.filter(t => t.sourceFile !== MENAGE_FILE);
-          return [...otherTasks, ...parseMénage(newContent, MENAGE_FILE)];
-        }
         const updatedTasks = parseTaskFile(sourceFile, newContent);
         const otherTasks = prev.filter(t => t.sourceFile !== sourceFile);
         return [...otherTasks, ...updatedTasks];

@@ -5,14 +5,13 @@
  * - Obsidian Tasks plugin format: - [ ] Text 🔁 every day 📅 YYYY-MM-DD
  * - RDV frontmatter (gray-matter)
  * - Courses checkboxes
- * - Ménage hebdo sections by day
+ * - Ménage hebdomadaire (sections par jour dans Tâches récurrentes)
  * - Journal bébé tables
  * - famille.md / gamification.md custom formats
  */
 
 import matter from 'gray-matter';
-import { format, startOfWeek } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { format } from 'date-fns';
 import {
   Task,
   RDV,
@@ -125,49 +124,9 @@ export function parseTaskFile(relativePath: string, content: string): Task[] {
   return tasks;
 }
 
-/** Parse ménage hebdo tasks for today's day of week.
- *  Les tâches cochées [x] sont considérées comme "à refaire" si
- *  leur date ✅ est antérieure au lundi de la semaine courante
- *  (ou absente). Cela permet le reset hebdomadaire automatique. */
-export function parseMénage(content: string, relativePath: string): Task[] {
-  const today = new Date();
-  const dayName = format(today, 'EEEE', { locale: fr });
-  // Capitalize first letter to match section headers like "Lundi — Cuisine"
-  const dayCapitalized = dayName.charAt(0).toUpperCase() + dayName.slice(1);
-  // Lundi de cette semaine (locale FR = semaine commence lundi)
-  const weekStart = startOfWeek(today, { weekStartsOn: 1 });
-
-  const lines = content.split('\n');
-  const tasks: Task[] = [];
-  let inTodaySection = false;
-  let currentSection: string | undefined;
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    if (line.startsWith('## ') || line.startsWith('### ')) {
-      const sectionName = line.replace(/^#{2,3}\s+/, '').trim();
-      inTodaySection = sectionName.startsWith(dayCapitalized);
-      currentSection = sectionName;
-    }
-    if (inTodaySection) {
-      const task = parseTask(line, i, relativePath, currentSection);
-      if (task) {
-        // Reset hebdo géré en amont (useVault écrit le fichier avant le parse).
-        // Ici on vérifie juste la cohérence pour le state en mémoire.
-        if (task.completed && task.completedDate) {
-          const doneThisWeek = new Date(task.completedDate + 'T00:00:00') >= weekStart;
-          if (!doneThisWeek) {
-            task.completed = false;
-            task.completedDate = undefined;
-          }
-        }
-        tasks.push(task);
-      }
-    }
-  }
-
-  return tasks;
-}
+/** @deprecated parseMénage supprimée — les tâches ménage sont désormais dans
+ *  '02 - Maison/Tâches récurrentes.md' sous la section "Ménage hebdomadaire".
+ *  Utiliser parseTaskFile() + filtrage par section. */
 
 // ─── Frontmatter ────────────────────────────────────────────────────────────
 

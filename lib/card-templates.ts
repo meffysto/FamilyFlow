@@ -28,25 +28,27 @@ const CARD_TEMPLATES: Record<string, CardTemplate> = {
   menage: {
     description: 'Organisez le ménage par jour avec des tâches récurrentes',
     generateFiles: (ctx) => [{
-      path: '02 - Maison/Ménage hebdo.md',
-      content: `## Tous les jours
+      path: '02 - Maison/Tâches récurrentes.md',
+      content: `## Ménage hebdomadaire
+
+### Tous les jours
 - [ ] Faire les lits 🔁 every day 📅 ${ctx.today}
 - [ ] Ranger la cuisine après les repas 🔁 every day 📅 ${ctx.today}
 - [ ] 10 minutes de rangement rapide 🔁 every day 📅 ${ctx.today}
 
-## Lundi
+### Lundi — Ménage général
 - [ ] Aspirer toute la maison 🔁 every week 📅 ${ctx.today}
 
-## Mardi
+### Mardi — Salle de bain
 - [ ] Nettoyer les salles de bain 🔁 every week 📅 ${ctx.today}
 
-## Jeudi
+### Jeudi — Chambre
 - [ ] Changer les draps 🔁 every week 📅 ${ctx.today}
 
-## Vendredi
+### Vendredi — Sols
 - [ ] Serpillière sols durs 🔁 every week 📅 ${ctx.today}
 
-## Samedi
+### Samedi — Courses
 - [ ] Faire les courses 🔁 every week 📅 ${ctx.today}
 `,
     }],

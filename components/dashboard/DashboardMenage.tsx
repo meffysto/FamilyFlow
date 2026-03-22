@@ -18,7 +18,9 @@ function DashboardMenageInner({ vaultFileExists, activateCardTemplate, handleTas
   const { colors } = useThemeColors();
   const { tasks } = useVault();
 
-  const pendingMenage = tasks.filter((t) => t.sourceFile.includes('Ménage') && !t.completed);
+  const isMenageTask = (t: { section?: string }) =>
+    t.section != null && /^(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s/i.test(t.section);
+  const pendingMenage = tasks.filter((t) => isMenageTask(t) && !t.completed);
 
   if (!vaultFileExists.menage) return (
     <DashboardCard key="menage" title="Ménage du jour" icon="🧹" color={colors.success}>

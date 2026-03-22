@@ -224,7 +224,7 @@ export default function DashboardScreen() {
     if (!vault) return;
     (async () => {
       const keys = {
-        menage: '02 - Maison/Ménage hebdo.md',
+        menage: '02 - Maison/Tâches récurrentes.md',
         meals: '', // vérifié via meals.length ci-dessous
         budget: '05 - Budget/config.md',
         notifications: 'notifications.md',
@@ -430,7 +430,9 @@ export default function DashboardScreen() {
   );
 
   // Données dérivées pour le tri intelligent
-  const pendingMenage = tasks.filter((t) => t.sourceFile.includes('Ménage') && !t.completed);
+  const isMenageTask = (t: { section?: string }) =>
+    t.section != null && /^(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s/i.test(t.section);
+  const pendingMenage = tasks.filter((t) => isMenageTask(t) && !t.completed);
   const todayDayName = useMemo(() => {
     const name = format(new Date(), 'EEEE', { locale: fr });
     return name.charAt(0).toUpperCase() + name.slice(1);

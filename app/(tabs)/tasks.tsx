@@ -180,7 +180,6 @@ interface TaskSection {
 // Target files for adding tasks
 const TARGET_FILES = [
   { label: '🏠 Maison', value: '02 - Maison/Tâches récurrentes.md' },
-  { label: '🧹 Ménage', value: '02 - Maison/Ménage hebdo.md' },
 ];
 
 function buildTargetFiles(profiles: Profile[]) {
@@ -978,7 +977,6 @@ export default function TasksScreen() {
 
 function getFileLabel(sourceFile: string): string {
   if (sourceFile.includes('Vacances')) return '☀️ Checklist Vacances';
-  if (sourceFile.includes('Ménage')) return '🏠 Maison — Ménage hebdo';
   if (sourceFile.includes('Maison')) return '🏠 Maison — Tâches';
   // Extract folder name for enfant tasks (e.g. "01 - Enfants/Maxence/..." → "Maxence")
   const parts = sourceFile.split('/');
