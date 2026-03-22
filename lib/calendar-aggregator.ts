@@ -133,15 +133,20 @@ export function aggregateCalendarEvents(
     if (task.recurrence) {
       // Projeter les occurrences dans la plage
       const dates = expandRecurrence(task.dueDate, task.recurrence, range);
+      // Tâche récurrente en retard : ajouter aujourd'hui si aucune occurrence future
+      if (dates.length === 0 && task.dueDate < today && inRange(today)) {
+        dates.push(today);
+      }
       for (const date of dates) {
+        const isOverdue = date === today && task.dueDate < today && dates.length === 1;
         events.push({
           id: `task-${task.id}-${date}`,
           date,
           type: 'task',
           label,
-          sublabel,
+          sublabel: isOverdue ? `⚠️ En retard (${task.dueDate})` : sublabel,
           emoji: EVENT_CONFIG.task.emoji,
-          colorKey: 'warning',
+          colorKey: isOverdue ? 'error' : 'warning',
           route: '/(tabs)/tasks',
           source: task,
         });
