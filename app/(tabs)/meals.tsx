@@ -1337,65 +1337,29 @@ export default function MealsScreen() {
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
             }
           >
-            {/* Import buttons */}
-            <View style={{ gap: 8 }}>
-              <TouchableOpacity
-                style={[styles.importBtn, { backgroundColor: tint, borderColor: primary + '30' }]}
-                onPress={() => setShowImport(true)}
-                activeOpacity={0.7}
-                accessibilityLabel="Importer une recette depuis une URL"
-                accessibilityRole="button"
-              >
-                <Text style={[styles.importBtnText, { color: primary }]}>
-                  🌐 Importer depuis une URL
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.importBtn, { backgroundColor: tint, borderColor: primary + '30' }, photoImportLoading && { opacity: 0.6 }]}
-                onPress={handlePhotoImport}
-                activeOpacity={0.7}
-                disabled={photoImportLoading}
-                accessibilityLabel={photoImportLoading ? 'Import photo en cours' : 'Importer une recette depuis une photo'}
-                accessibilityRole="button"
-                accessibilityState={{ disabled: photoImportLoading }}
-              >
-                <Text style={[styles.importBtnText, { color: primary }]}>
-                  {photoImportLoading ? `📷 ${importStatus || 'Import en cours…'}` : '📷 Importer depuis une photo'}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.importBtn, { backgroundColor: tint, borderColor: primary + '30' }]}
-                onPress={() => { setShowTextImport(true); setTextImportValue(''); setTextImportResult(null); }}
-                activeOpacity={0.7}
-                accessibilityLabel="Coller une recette en texte"
-                accessibilityRole="button"
-              >
-                <Text style={[styles.importBtnText, { color: primary }]}>
-                  📋 Coller une recette (texte)
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.importBtn, { backgroundColor: tint, borderColor: primary + '30' }]}
-                onPress={() => { setShowScanner(true); setScanResults([]); }}
-                activeOpacity={0.7}
-                accessibilityLabel="Scanner le vault pour des fichiers recette"
-                accessibilityRole="button"
-              >
-                <Text style={[styles.importBtnText, { color: primary }]}>
-                  🔍 Scanner le vault
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.importBtn, { backgroundColor: tint, borderColor: primary + '30' }]}
-                onPress={() => { setShowExplore(true); setExploreQuery(''); setExploreResults([]); setExplorePreview(null); }}
-                activeOpacity={0.7}
-                accessibilityLabel="Explorer les recettes de la communauté"
-                accessibilityRole="button"
-              >
-                <Text style={[styles.importBtnText, { color: primary }]}>
-                  🌍 Explorer la communauté
-                </Text>
-              </TouchableOpacity>
+            {/* Import methods grid */}
+            <View style={styles.importGrid}>
+              {[
+                { emoji: '🌐', label: 'URL', onPress: () => setShowImport(true), a11y: 'Importer une recette depuis une URL' },
+                { emoji: '📷', label: photoImportLoading ? (importStatus || 'Import…') : 'Photo', onPress: handlePhotoImport, a11y: 'Importer depuis une photo', disabled: photoImportLoading },
+                { emoji: '📋', label: 'Texte', onPress: () => { setShowTextImport(true); setTextImportValue(''); setTextImportResult(null); }, a11y: 'Coller une recette en texte' },
+                { emoji: '🔍', label: 'Vault', onPress: () => { setShowScanner(true); setScanResults([]); }, a11y: 'Scanner le vault' },
+                { emoji: '🌍', label: 'Communauté', onPress: () => { setShowExplore(true); setExploreQuery(''); setExploreResults([]); setExplorePreview(null); }, a11y: 'Explorer la communauté' },
+              ].map((item, i) => (
+                <TouchableOpacity
+                  key={i}
+                  style={[styles.importCard, { backgroundColor: tint, borderColor: primary + '20' }, item.disabled && { opacity: 0.5 }]}
+                  onPress={item.onPress}
+                  activeOpacity={0.7}
+                  disabled={item.disabled}
+                  accessibilityLabel={item.a11y}
+                  accessibilityRole="button"
+                  accessibilityState={item.disabled ? { disabled: true } : undefined}
+                >
+                  <Text style={styles.importCardEmoji}>{item.emoji}</Text>
+                  <Text style={[styles.importCardLabel, { color: primary }]} numberOfLines={1}>{item.label}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
 
             {filteredRecipes.length === 0 ? (
@@ -2720,16 +2684,29 @@ const styles = StyleSheet.create({
     fontSize: FontSize.label,
     fontWeight: FontWeight.semibold,
   },
-  // Import
-  importBtn: {
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderWidth: 1,
+  // Import grid
+  importGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
   },
-  importBtnText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
+  importCard: {
+    width: '30%' as any,
+    flexGrow: 1,
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xs,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    gap: Spacing.xs,
+  },
+  importCardEmoji: {
+    fontSize: 28,
+  },
+  importCardLabel: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.semibold,
+    textAlign: 'center',
   },
   importLabel: {
     fontSize: FontSize.sm,
