@@ -918,6 +918,7 @@
     }
   },
   "dashboard": {
+    "seeAll": "Voir tout",
     "anniversaires": {
       "title": "Anniversaires",
       "today": "aujourd'hui",

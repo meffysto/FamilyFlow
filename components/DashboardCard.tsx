@@ -7,6 +7,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -58,6 +59,7 @@ export function DashboardCard({
   defaultCollapsed = false,
   glass = true,
 }: DashboardCardProps) {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
   const reduceMotion = useReducedMotion();
   const accentColor = color ?? primary;
@@ -146,10 +148,10 @@ export function DashboardCard({
                 onPressMore();
               }}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              accessibilityLabel={`Voir tout ${title}`}
+              accessibilityLabel={`${t('dashboard.seeAll')} ${title}`}
               accessibilityRole="button"
             >
-              <Text style={[styles.moreLink, { color: accentColor }]}>Voir tout →</Text>
+              <Text style={[styles.moreLink, { color: accentColor }]}>{t('dashboard.seeAll')} →</Text>
             </TouchableOpacity>
           )}
           {collapsible && (

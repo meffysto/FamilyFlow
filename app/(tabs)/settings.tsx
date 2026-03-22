@@ -122,38 +122,38 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-        <Text style={[styles.screenTitle, { color: colors.text }]}>Réglages</Text>
+        <Text style={[styles.screenTitle, { color: colors.text }]}>{t('settingsScreen.title')}</Text>
 
         {/* ── MON COMPTE ── */}
-        <SettingsSectionHeader label="Mon compte" />
+        <SettingsSectionHeader label={t('settingsScreen.sections.myAccount')} />
         <SettingsRow
           emoji="👤"
-          title="Profils famille"
-          subtitle={activeProfile ? `${activeProfile.avatar} ${activeProfile.name} · ${profiles.length} profil${profiles.length > 1 ? 's' : ''}` : `${profiles.length} profil${profiles.length > 1 ? 's' : ''}`}
+          title={t('settingsScreen.rows.profiles')}
+          subtitle={activeProfile ? `${activeProfile.avatar} ${activeProfile.name} · ${t('settingsScreen.subtitles.profileCount', { count: profiles.length })}` : t('settingsScreen.subtitles.profileCount', { count: profiles.length })}
           onPress={() => setActiveSection('profiles')}
           isFirst
         />
         <SettingsRow
           emoji="🎨"
-          title="Apparence"
+          title={t('settingsScreen.rows.appearance')}
           subtitle={darkModeLabel}
           onPress={() => setActiveSection('appearance')}
           isLast
         />
 
         {/* ── EXPÉRIENCE ── */}
-        <SettingsSectionHeader label="Expérience" />
+        <SettingsSectionHeader label={t('settingsScreen.sections.experience')} />
         <SettingsRow
           emoji="🔔"
-          title="Notifications"
-          subtitle={`${activeNotifCount} active${activeNotifCount > 1 ? 's' : ''}`}
+          title={t('settingsScreen.rows.notifications')}
+          subtitle={t('settingsScreen.subtitles.notifActive', { count: activeNotifCount })}
           onPress={() => setActiveSection('notifications')}
           isFirst
         />
         {!isChildMode && (
           <SettingsRow
             emoji="🧘"
-            title="Mode zen"
+            title={t('settingsScreen.rows.zen')}
             subtitle={zenConfig.enabled ? t('settingsScreen.labels.enabled') : t('settingsScreen.labels.disabled')}
             onPress={() => setActiveSection('zen')}
           />
@@ -161,23 +161,23 @@ export default function SettingsScreen() {
         {!isChildMode && (
           <SettingsRow
             emoji="☀️"
-            title="Vacances"
+            title={t('settingsScreen.rows.vacation')}
             subtitle={isVacationActive ? t('settingsScreen.subtitles.vacationActive', { date: vacationConfig?.endDate ?? '' }) : t('settingsScreen.labels.inactive')}
             onPress={() => setActiveSection('vacation')}
           />
         )}
         <SettingsRow
           emoji="🏆"
-          title="Gamification"
-          subtitle={activeProfile ? `Niveau ${level} · ${activeProfile.points ?? 0} XP` : undefined}
+          title={t('settingsScreen.rows.gamification')}
+          subtitle={activeProfile ? t('settingsScreen.subtitles.gamificationLevel', { level, xp: activeProfile.points ?? 0 }) : undefined}
           onPress={() => setActiveSection('gamification')}
           isLast={isChildMode}
         />
         {!isChildMode && (
           <SettingsRow
             emoji="⚙️"
-            title="Automatisations"
-            subtitle="Recettes → Courses → Stock"
+            title={t('settingsScreen.rows.automations')}
+            subtitle={t('settingsScreen.rows.automationsSubtitle')}
             onPress={() => setActiveSection('automations')}
             isLast
           />
@@ -186,24 +186,24 @@ export default function SettingsScreen() {
         {/* ── CONNEXIONS (adultes) ── */}
         {!isChildMode && (
           <>
-            <SettingsSectionHeader label="Connexions" />
+            <SettingsSectionHeader label={t('settingsScreen.sections.connections')} />
             <SettingsRow
               emoji="🤖"
-              title="Intelligence artificielle"
+              title={t('settingsScreen.rows.ai')}
               subtitle={aiConfigured ? t('settingsScreen.rows.aiConfigured', { model: aiModel }) : t('settingsScreen.rows.aiNotConfigured')}
               onPress={() => setActiveSection('ai')}
               isFirst
             />
             <SettingsRow
               emoji="📲"
-              title="Telegram"
+              title={t('settingsScreen.rows.telegram')}
               subtitle={telegramStatus}
               onPress={() => setActiveSection('telegram')}
             />
             <SettingsRow
               emoji="👴"
-              title="Grands-parents"
-              subtitle="Telegram, WhatsApp, iMessage"
+              title={t('settingsScreen.rows.grandparents')}
+              subtitle={t('settingsScreen.rows.grandparentsSubtitle')}
               onPress={() => setActiveSection('grandparents')}
               isLast
             />
@@ -213,30 +213,30 @@ export default function SettingsScreen() {
         {/* ── AVANCÉ (adultes) ── */}
         {!isChildMode && (
           <>
-            <SettingsSectionHeader label="Avancé" />
+            <SettingsSectionHeader label={t('settingsScreen.sections.advanced')} />
             <SettingsRow
               emoji="🛡️"
-              title="Sécurité"
+              title={t('settingsScreen.rows.auth')}
               subtitle={authSubtitle}
               onPress={() => setActiveSection('auth')}
               isFirst
             />
             <SettingsRow
               emoji="🔒"
-              title="Contrôle parental"
-              subtitle="Visibilité données enfants"
+              title={t('settingsScreen.rows.parental')}
+              subtitle={t('settingsScreen.rows.parentalSubtitle')}
               onPress={() => setActiveSection('parental')}
             />
             <SettingsRow
               emoji="📂"
-              title="Vault Obsidian"
+              title={t('settingsScreen.rows.vault')}
               subtitle={vaultShort}
               onPress={() => setActiveSection('vault')}
             />
             <SettingsRow
               emoji="💡"
-              title="Aide et découverte"
-              subtitle="Guide, astuces, modèles"
+              title={t('settingsScreen.rows.help')}
+              subtitle={t('settingsScreen.rows.helpSubtitle')}
               onPress={() => setActiveSection('help')}
               isLast
             />
@@ -245,8 +245,8 @@ export default function SettingsScreen() {
 
         {/* App info */}
         <View style={styles.appInfo}>
-          <Text style={[styles.appInfoText, { color: colors.textFaint }]}>Family Flow v1.0.0</Text>
-          <Text style={[styles.appInfoText, { color: colors.textFaint }]}>Données locales · Pas de tracking</Text>
+          <Text style={[styles.appInfoText, { color: colors.textFaint }]}>{t('settingsScreen.appInfo.line1')}</Text>
+          <Text style={[styles.appInfoText, { color: colors.textFaint }]}>{t('settingsScreen.appInfo.line2')}</Text>
           <Text style={[styles.appInfoText, { color: colors.textFaint }]}>Privacy-first · Offline-first</Text>
         </View>
       </ScrollView>

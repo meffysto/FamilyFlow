@@ -918,6 +918,7 @@
     }
   },
   "dashboard": {
+    "seeAll": "See all",
     "anniversaires": {
       "title": "Birthdays",
       "today": "today",
