@@ -1,6 +1,9 @@
 // =============================================================================
 // Arbre de compétences — données complètes (~180 compétences)
+// Traductions dans locales/{fr,en}/skills.json
 // =============================================================================
+
+import { t } from 'i18next';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -612,6 +615,28 @@ const SKILL_BY_ID = new Map<string, SkillDefinition>(
  */
 export function getSkillById(id: string): SkillDefinition | undefined {
   return SKILL_BY_ID.get(id);
+}
+
+// ─── Helpers i18n ─────────────────────────────────────────────────────────
+
+/** Retourne le label traduit d'une compétence */
+export function getSkillLabel(skill: SkillDefinition): string {
+  return t(`skills:tree.${skill.id}`, { defaultValue: skill.label });
+}
+
+/** Retourne le label traduit d'une catégorie */
+export function getSkillCategoryLabel(category: SkillCategory): string {
+  return t(`skills:categories.${category.id}`, { defaultValue: category.label });
+}
+
+/** Retourne le label traduit d'une tranche d'âge */
+export function getAgeBracketLabel(bracket: AgeBracket): string {
+  return t(`skills:ageBrackets.${bracket.id}.label`, { defaultValue: bracket.label });
+}
+
+/** Retourne le sous-titre traduit d'une tranche d'âge */
+export function getAgeBracketSubtitle(bracket: AgeBracket): string {
+  return t(`skills:ageBrackets.${bracket.id}.subtitle`, { defaultValue: bracket.subtitle });
 }
 
 // ─── Skill state (shared logic) ────────────────────────────────────────────

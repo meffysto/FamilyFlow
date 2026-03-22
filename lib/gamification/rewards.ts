@@ -15,6 +15,7 @@
  */
 
 import * as SecureStore from 'expo-secure-store';
+import { t } from 'i18next';
 import { RewardDefinition, LootRarity, Profile } from '../types';
 
 // ─── Gamification Config (modifiable via réglages) ─────────────────────────────
@@ -153,6 +154,16 @@ export const RARITY_LABELS: Record<LootRarity, string> = {
   légendaire: 'Légendaire',
   mythique: 'MYTHIQUE',
 };
+
+/** Retourne le label traduit d'une rareté (appeler au render, pas au module load) */
+export function getRarityLabel(rarity: LootRarity): string {
+  return t(`gamification:rarity.${rarity}`, { defaultValue: RARITY_LABELS[rarity] });
+}
+
+/** Retourne le texte traduit d'une récompense (appeler au render) */
+export function getRewardText(rarity: LootRarity, index: number, fallback: string): string {
+  return t(`gamification:rewards.${rarity}.${index + 1}`, { defaultValue: fallback });
+}
 
 export const RARITY_EMOJIS: Record<LootRarity, string> = {
   commun: '🩶',

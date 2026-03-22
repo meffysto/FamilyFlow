@@ -36,7 +36,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { LootBox, ProfileTheme } from '../lib/types';
-import { RARITY_COLORS, RARITY_LABELS, RARITY_EMOJIS, SEASONAL_EVENTS } from '../lib/gamification';
+import { RARITY_COLORS, RARITY_EMOJIS, getRarityLabel, SEASONAL_EVENTS } from '../lib/gamification';
 import { getTheme } from '../constants/themes';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { FontSize, FontWeight } from '../constants/typography';
@@ -1153,7 +1153,7 @@ export function LootBoxOpener({
                   ]}
                 >
                   <Text style={styles.rarityText}>
-                    {rarityEmoji} {RARITY_LABELS[result.rarity]}
+                    {rarityEmoji} {getRarityLabel(result.rarity)}
                   </Text>
                 </View>
 

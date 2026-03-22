@@ -1,0 +1,135 @@
+{
+  "coach": {
+    "dashboard": {
+      "1": {
+        "title": "Votre tableau de bord",
+        "body": "Les sections s'adaptent à votre journée. Glissez vers le bas pour actualiser.",
+        "childBody": "Voici ta page principale ! Tout ce qui est important est ici."
+      },
+      "2": {
+        "title": "Ajout rapide",
+        "body": "Ce bouton permet de créer une tâche, un RDV ou une entrée journal en un tap.",
+        "childBody": "Appuie ici pour ajouter quelque chose de nouveau !"
+      },
+      "3": {
+        "title": "Tout le reste",
+        "body": "Repas, stock, budget, routines… Retrouvez toutes les fonctions ici.",
+        "childBody": "Plein d'autres choses à découvrir ici !"
+      }
+    },
+    "tasks": {
+      "1": {
+        "title": "Gérez vos tâches",
+        "body": "Cochez une tâche pour gagner des points. Glissez vers la gauche pour supprimer.",
+        "childBody": "Coche tes missions pour gagner des points !"
+      },
+      "2": {
+        "title": "Filtrez par personne",
+        "body": "Touchez un nom pour voir uniquement ses tâches."
+      }
+    },
+    "rdv": {
+      "1": {
+        "title": "Vos rendez-vous",
+        "body": "Touchez un RDV pour voir les détails, ajouter des questions ou un compte-rendu."
+      },
+      "2": {
+        "title": "Recherche rapide",
+        "body": "Trouvez un rendez-vous par nom de médecin ou spécialité."
+      }
+    },
+    "journal": {
+      "1": {
+        "title": "Journal quotidien",
+        "body": "Sélectionnez un enfant puis remplissez les sections : repas, sommeil, couches, humeur."
+      },
+      "2": {
+        "title": "Suivi rapide",
+        "body": "Chaque section se met à jour instantanément. Les stats se calculent automatiquement."
+      }
+    },
+    "photos": {
+      "1": {
+        "title": "Album familial",
+        "body": "Ajoutez une photo par jour pour créer un album souvenirs. Les photos restent sur votre appareil."
+      }
+    },
+    "meals": {
+      "1": {
+        "title": "Planning repas",
+        "body": "Touchez un créneau (midi/soir) pour ajouter un plat. Les ingrédients s'ajoutent aux courses automatiquement."
+      },
+      "2": {
+        "title": "Depuis les recettes",
+        "body": "Choisissez directement depuis votre livre de recettes pour remplir le planning."
+      }
+    },
+    "stock": {
+      "1": {
+        "title": "Suivi de stock",
+        "body": "Quand le stock passe sous le seuil, l'article est ajouté automatiquement à la liste de courses."
+      }
+    },
+    "budget": {
+      "1": {
+        "title": "Budget mensuel",
+        "body": "Définissez un plafond et suivez les dépenses par catégorie. Le total se met à jour en temps réel."
+      }
+    },
+    "routines": {
+      "1": {
+        "title": "Routines quotidiennes",
+        "body": "Créez des routines matin/soir pour toute la famille. Chaque complétion rapporte des points.",
+        "childBody": "Tes routines du matin et du soir sont ici !"
+      }
+    },
+    "loot": {
+      "1": {
+        "title": "Récompenses",
+        "body": "Complétez des tâches pour gagner des points et débloquer des coffres. Chaque coffre contient une surprise !",
+        "childBody": "Finis tes missions pour ouvrir des coffres surprise !"
+      }
+    },
+    "defis": {
+      "1": {
+        "title": "Défis familiaux",
+        "body": "Lancez des défis à la famille : « 7 jours sans écran », « Ranger sa chambre toute la semaine »…",
+        "childBody": "Relève des défis pour gagner des points bonus !"
+      }
+    },
+    "more": {
+      "1": {
+        "title": "Toutes vos fonctions",
+        "body": "Chaque carte ouvre une section de l'app. Les badges indiquent les actions en attente.",
+        "childBody": "Toutes les fonctions de l'app sont ici !"
+      }
+    },
+    "skills": {
+      "1": {
+        "title": "Arbre de compétences",
+        "body": "Suivez la progression de chaque enfant par catégorie. Les parents valident les compétences acquises.",
+        "childBody": "Regarde toutes tes compétences ! Demande à un parent de valider celles que tu maîtrises."
+      }
+    }
+  },
+  "guide": {
+    "categories": {
+      "quotidien": "Quotidien",
+      "famille": "Famille",
+      "outils": "Outils"
+    },
+    "screens": {
+      "dashboard": { "name": "Tableau de bord", "description": "Votre vue d'ensemble quotidienne" },
+      "tasks": { "name": "Tâches", "description": "Gestion des tâches familiales" },
+      "routines": { "name": "Routines", "description": "Routines matin/soir" },
+      "meals": { "name": "Repas", "description": "Planning des repas de la semaine" },
+      "journal": { "name": "Journal", "description": "Suivi quotidien des enfants" },
+      "rdv": { "name": "Rendez-vous", "description": "RDV médicaux et administratifs" },
+      "photos": { "name": "Photos", "description": "Album photo quotidien" },
+      "defis": { "name": "Défis", "description": "Challenges familiaux" },
+      "stock": { "name": "Stock", "description": "Suivi des fournitures" },
+      "budget": { "name": "Budget", "description": "Gestion du budget familial" },
+      "loot": { "name": "Loot Box", "description": "Système de récompenses" }
+    }
+  }
+}

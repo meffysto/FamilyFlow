@@ -35,6 +35,7 @@ import { VaultManager } from '../lib/vault';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { TEMPLATE_PACKS, DEFAULT_SELECTED_PACKS } from '../lib/vault-templates';
 import { useHelp } from '../contexts/HelpContext';
+import { useTranslation } from 'react-i18next';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../constants/typography';
 import { Shadows } from '../constants/shadows';
@@ -46,22 +47,10 @@ const TOTAL_STEPS = 9;
 // Étapes 2-4 : écrans de présentation des features
 const FIRST_SETUP_STEP = 5; // Première étape de configuration (parents)
 
-const FEATURE_SLIDES = [
-  {
-    emojis: ['🍽️', '🧹', '🛒'],
-    title: 'Votre quotidien, simplifié',
-    subtitle: 'Planifiez les repas, répartissez les tâches, gérez les courses',
-  },
-  {
-    emojis: ['👶', '📅', '💊'],
-    title: 'Suivez la santé de vos enfants',
-    subtitle: 'Biberon, couches, sommeil, rendez-vous — tout est noté',
-  },
-  {
-    emojis: ['🎮', '🏆', '⭐'],
-    title: 'Toute la famille participe',
-    subtitle: 'Chaque membre a son profil, les enfants gagnent des points',
-  },
+const FEATURE_SLIDES_EMOJIS = [
+  ['🍽️', '🧹', '🛒'],
+  ['👶', '📅', '💊'],
+  ['🎮', '🏆', '⭐'],
 ];
 
 interface ParentData {
@@ -80,6 +69,7 @@ export default function SetupScreen() {
   const { setVaultPath } = useVault();
   const { primary, tint, colors } = useThemeColors();
   const { markTemplateInstalled } = useHelp();
+  const { t } = useTranslation();
   const ds = useDynamicStyles(colors, primary);
 
   const [step, setStep] = useState(1);
@@ -217,8 +207,8 @@ export default function SetupScreen() {
       router.replace('/(tabs)' as any);
     } catch (e) {
       Alert.alert(
-        'Erreur',
-        `Impossible de créer le vault :\n${e}\n\nVérifiez les permissions.`
+        t('setup.error.title'),
+        t('setup.error.createFailed', { error: String(e) })
       );
     } finally {
       setIsCreating(false);
@@ -228,7 +218,8 @@ export default function SetupScreen() {
   // --- Render steps ---
   /** Rendu d'un écran de présentation feature (étapes 2, 3, 4) */
   const renderFeatureSlide = (slideIndex: number) => {
-    const slide = FEATURE_SLIDES[slideIndex];
+    const emojis = FEATURE_SLIDES_EMOJIS[slideIndex];
+    const slideNum = slideIndex + 1;
     return (
       <View style={s.stepContent}>
         {/* Bouton Passer en haut à droite */}
@@ -238,7 +229,7 @@ export default function SetupScreen() {
             onPress={skipIntro}
             activeOpacity={0.6}
           >
-            <Text style={[s.skipIntroText, { color: primary }]}>Passer</Text>
+            <Text style={[s.skipIntroText, { color: primary }]}>{t('setup.nav.skip')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -247,7 +238,7 @@ export default function SetupScreen() {
           entering={FadeInDown.delay(100).duration(500).springify()}
           style={s.featureHeroEmojis}
         >
-          {slide.emojis.map((emoji, i) => (
+          {emojis.map((emoji, i) => (
             <Animated.Text
               key={i}
               entering={FadeInDown.delay(200 + i * 120).duration(400).springify()}
@@ -263,7 +254,7 @@ export default function SetupScreen() {
           entering={FadeInDown.delay(500).duration(400)}
           style={[s.featureSlideTitle, { color: colors.text }]}
         >
-          {slide.title}
+          {t(`setup.slides.${slideNum}.title`)}
         </Animated.Text>
 
         {/* Sous-texte */}
@@ -271,12 +262,12 @@ export default function SetupScreen() {
           entering={FadeInDown.delay(600).duration(400)}
           style={[s.featureSlideSubtitle, { color: colors.textMuted }]}
         >
-          {slide.subtitle}
+          {t(`setup.slides.${slideNum}.subtitle`)}
         </Animated.Text>
 
         {/* Dots de pagination */}
         <View style={s.featureDots}>
-          {FEATURE_SLIDES.map((_, i) => (
+          {FEATURE_SLIDES_EMOJIS.map((_, i) => (
             <View
               key={i}
               style={[
@@ -299,14 +290,14 @@ export default function SetupScreen() {
           <View style={s.stepContent}>
             <Text style={s.logo}>🏠</Text>
             <Text style={[s.appName, { color: primary }]}>Family Flow</Text>
-            <Text style={ds.tagline}>Votre famille, organisée ensemble</Text>
+            <Text style={ds.tagline}>{t('setup.tagline')}</Text>
 
             <View style={s.features}>
               {[
-                ['📋', 'Tâches familiales', 'Organisez et complétez vos tâches ensemble'],
-                ['🎁', 'Loot boxes', 'Gagnez des récompenses en accomplissant vos tâches'],
-                ['📝', 'Obsidian', '100% Markdown, compatible avec Obsidian'],
-                ['📱', 'Telegram', 'Notifications via Telegram'],
+                ['📋', t('setup.features.tasks.title'), t('setup.features.tasks.desc')],
+                ['🎁', t('setup.features.loot.title'), t('setup.features.loot.desc')],
+                ['📝', t('setup.features.obsidian.title'), t('setup.features.obsidian.desc')],
+                ['📱', t('setup.features.telegram.title'), t('setup.features.telegram.desc')],
               ].map(([icon, title, desc]) => (
                 <View key={title} style={ds.feature}>
                   <Text style={s.featureIcon}>{icon}</Text>
@@ -331,8 +322,8 @@ export default function SetupScreen() {
       case 5:
         return (
           <View style={s.stepContent}>
-            <Text style={ds.stepTitle}>👨‍👩‍👧‍👦 Les parents</Text>
-            <Text style={ds.stepSubtitle}>Combien de parents dans la famille ?</Text>
+            <Text style={ds.stepTitle}>👨‍👩‍👧‍👦 {t('setup.parents.title')}</Text>
+            <Text style={ds.stepSubtitle}>{t('setup.parents.subtitle')}</Text>
 
             <View style={s.countRow}>
               {[1, 2].map((n) => (
@@ -342,7 +333,7 @@ export default function SetupScreen() {
                   onPress={() => updateParentCount(n)}
                 >
                   <Text style={[ds.countBtnText, parentCount === n && { color: primary }]}>
-                    {n} parent{n > 1 ? 's' : ''}
+                    {t('setup.parents.count', { count: n })}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -350,16 +341,16 @@ export default function SetupScreen() {
 
             {parents.map((parent, i) => (
               <View key={i} style={ds.profileForm}>
-                <Text style={ds.formLabel}>Parent {i + 1}</Text>
+                <Text style={ds.formLabel}>{t('setup.parents.label', { n: i + 1 })}</Text>
                 <TextInput
                   style={ds.input}
-                  placeholder="Prénom"
+                  placeholder={t('setup.parents.placeholder')}
                   placeholderTextColor={colors.textFaint}
                   value={parent.name}
                   onChangeText={(v) => updateParent(i, 'name', v)}
                   autoCapitalize="words"
                 />
-                <Text style={ds.formLabel}>Avatar</Text>
+                <Text style={ds.formLabel}>{t('setup.parents.avatarLabel')}</Text>
                 <View style={s.avatarGrid}>
                   {PARENT_AVATARS.map((emoji) => (
                     <TouchableOpacity
@@ -379,8 +370,8 @@ export default function SetupScreen() {
       case 6:
         return (
           <View style={s.stepContent}>
-            <Text style={ds.stepTitle}>👶 Les enfants</Text>
-            <Text style={ds.stepSubtitle}>Combien d'enfants ?</Text>
+            <Text style={ds.stepTitle}>👶 {t('setup.children.title')}</Text>
+            <Text style={ds.stepSubtitle}>{t('setup.children.subtitle')}</Text>
 
             <View style={s.countRow}>
               {[0, 1, 2, 3, 4].map((n) => (
@@ -398,10 +389,10 @@ export default function SetupScreen() {
 
             {children.map((child, i) => (
               <View key={i} style={ds.profileForm}>
-                <Text style={ds.formLabel}>Enfant {i + 1}</Text>
+                <Text style={ds.formLabel}>{t('setup.children.label', { n: i + 1 })}</Text>
                 <TextInput
                   style={ds.input}
-                  placeholder="Prénom"
+                  placeholder={t('setup.children.placeholder')}
                   placeholderTextColor={colors.textFaint}
                   value={child.name}
                   onChangeText={(v) => updateChild(i, 'name', v)}
@@ -412,7 +403,7 @@ export default function SetupScreen() {
                     ds.input,
                     child.birthdate && !isValidBirthdate(child.birthdate) && ds.inputError,
                   ]}
-                  placeholder="Année (AAAA) ou date complète (AAAA-MM-JJ)"
+                  placeholder={t('setup.children.birthdatePlaceholder')}
                   placeholderTextColor={colors.textFaint}
                   value={child.birthdate}
                   onChangeText={(v) => updateChild(i, 'birthdate', formatBirthdate(v))}
@@ -420,9 +411,9 @@ export default function SetupScreen() {
                   maxLength={10}
                 />
                 <Text style={ds.birthdateHint}>
-                  L'année permet d'adapter les tâches à l'âge (bébé, enfant, ado)
+                  {t('setup.children.birthdateHint')}
                 </Text>
-                <Text style={ds.formLabel}>Avatar</Text>
+                <Text style={ds.formLabel}>{t('setup.parents.avatarLabel')}</Text>
                 <View style={s.avatarGrid}>
                   {CHILD_AVATARS.map((emoji) => (
                     <TouchableOpacity
@@ -440,7 +431,7 @@ export default function SetupScreen() {
             {childCount > 0 && children.some((c) => !c.birthdate) && (
               <View style={ds.ageWarning}>
                 <Text style={ds.ageWarningText}>
-                  Sans année de naissance, les tâches « bébé » seront créées par défaut (biberons, couches…)
+                  {t('setup.children.ageWarning')}
                 </Text>
               </View>
             )}
@@ -448,7 +439,7 @@ export default function SetupScreen() {
             {childCount === 0 && (
               <View style={ds.noChildHint}>
                 <Text style={ds.noChildText}>
-                  Pas de souci ! Vous pourrez ajouter des enfants plus tard dans les réglages.
+                  {t('setup.children.noChildHint')}
                 </Text>
               </View>
             )}
@@ -458,9 +449,9 @@ export default function SetupScreen() {
       case 7:
         return (
           <View style={s.stepContent}>
-            <Text style={ds.stepTitle}>📁 Emplacement du vault</Text>
+            <Text style={ds.stepTitle}>📁 {t('setup.vault.title')}</Text>
             <Text style={ds.stepSubtitle}>
-              Où stocker les données de votre famille ? Choisissez un dossier existant ou un nouveau dossier vide.
+              {t('setup.vault.subtitle')}
             </Text>
             <VaultPicker
               initialParents={parents}
@@ -484,9 +475,9 @@ export default function SetupScreen() {
         );
         return (
           <View style={s.stepContent}>
-            <Text style={ds.stepTitle}>📦 Modèles de départ</Text>
+            <Text style={ds.stepTitle}>📦 {t('setup.templates.title')}</Text>
             <Text style={ds.stepSubtitle}>
-              Choisissez les modèles à installer dans votre vault. Vous pourrez en ajouter d'autres plus tard dans les réglages.
+              {t('setup.templates.subtitle')}
             </Text>
 
             {visiblePacks.map((pack) => {
@@ -518,7 +509,7 @@ export default function SetupScreen() {
               onPress={selectAllPacks}
               activeOpacity={0.6}
             >
-              <Text style={[s.selectAllText, { color: primary }]}>Tout sélectionner</Text>
+              <Text style={[s.selectAllText, { color: primary }]}>{t('setup.templates.selectAll')}</Text>
             </TouchableOpacity>
           </View>
         );
@@ -527,11 +518,11 @@ export default function SetupScreen() {
       case 9:
         return (
           <View style={s.stepContent}>
-            <Text style={ds.stepTitle}>✨ Récapitulatif</Text>
-            <Text style={ds.stepSubtitle}>Voici votre famille :</Text>
+            <Text style={ds.stepTitle}>✨ {t('setup.recap.title')}</Text>
+            <Text style={ds.stepSubtitle}>{t('setup.recap.subtitle')}</Text>
 
             <View style={ds.recapCard}>
-              <Text style={ds.recapSection}>Parents</Text>
+              <Text style={ds.recapSection}>{t('setup.recap.parents')}</Text>
               <View style={s.recapProfiles}>
                 {parents.map((p, i) => (
                   <View key={i} style={s.recapProfile}>
@@ -543,7 +534,7 @@ export default function SetupScreen() {
 
               {children.length > 0 && (
                 <>
-                  <Text style={ds.recapSection}>Enfants</Text>
+                  <Text style={ds.recapSection}>{t('setup.recap.children')}</Text>
                   <View style={s.recapProfiles}>
                     {children.map((c, i) => (
                       <View key={i} style={s.recapProfile}>
@@ -558,12 +549,12 @@ export default function SetupScreen() {
                 </>
               )}
 
-              <Text style={ds.recapSection}>Vault</Text>
+              <Text style={ds.recapSection}>{t('setup.recap.vault')}</Text>
               <Text style={ds.recapPath}>{vaultPath}</Text>
 
               {selectedPacks.size > 0 && (
                 <>
-                  <Text style={ds.recapSection}>Modèles</Text>
+                  <Text style={ds.recapSection}>{t('setup.recap.models')}</Text>
                   <Text style={ds.recapTemplates}>
                     {TEMPLATE_PACKS
                       .filter((p) => selectedPacks.has(p.id))
@@ -575,14 +566,10 @@ export default function SetupScreen() {
             </View>
 
             <View style={[s.createInfo, { backgroundColor: tint }]}>
-              <Text style={ds.createInfoTitle}>Fichiers qui seront créés :</Text>
+              <Text style={ds.createInfoTitle}>{t('setup.recap.filesTitle')}</Text>
               <Text style={ds.createInfoText}>
-                📋 Tâches récurrentes par enfant{'\n'}
-                🧹 Ménage hebdomadaire{'\n'}
-                🛒 Liste de courses{'\n'}
-                📖 Dossiers journaux{'\n'}
-                👨‍👩‍👧 Profils famille + gamification
-                {selectedPacks.size > 0 ? `\n📦 ${selectedPacks.size} modèle${selectedPacks.size > 1 ? 's' : ''} de contenu` : ''}
+                {t('setup.recap.filesDesc')}
+                {selectedPacks.size > 0 ? t('setup.recap.modelCount', { count: selectedPacks.size }) : ''}
               </Text>
             </View>
           </View>
@@ -609,7 +596,7 @@ export default function SetupScreen() {
               }]} />
             </View>
             <Text style={ds.progressText}>
-              Étape {step - FIRST_SETUP_STEP + 1}/{TOTAL_STEPS - FIRST_SETUP_STEP + 1}
+              {t('setup.nav.step', { current: step - FIRST_SETUP_STEP + 1, total: TOTAL_STEPS - FIRST_SETUP_STEP + 1 })}
             </Text>
           </View>
         ) : (
@@ -630,7 +617,7 @@ export default function SetupScreen() {
         <View style={ds.nav}>
           {step > 1 ? (
             <TouchableOpacity style={s.navBack} onPress={goBack}>
-              <Text style={ds.navBackText}>← Retour</Text>
+              <Text style={ds.navBackText}>{t('setup.nav.back')}</Text>
             </TouchableOpacity>
           ) : (
             <View style={s.navSpacer} />
@@ -646,13 +633,13 @@ export default function SetupScreen() {
                   setStep(9);
                 }}
               >
-                <Text style={ds.navSkipText}>Passer</Text>
+                <Text style={ds.navSkipText}>{t('setup.nav.skip')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[s.navNext, { backgroundColor: primary }]}
                 onPress={goNext}
               >
-                <Text style={ds.navNextText}>Suivant →</Text>
+                <Text style={ds.navNextText}>{t('setup.nav.next')}</Text>
               </TouchableOpacity>
             </View>
           ) : step < TOTAL_STEPS ? (
@@ -662,7 +649,7 @@ export default function SetupScreen() {
               disabled={!canGoNext()}
             >
               <Text style={ds.navNextText}>
-                {step === 1 ? 'Commencer' : 'Suivant →'}
+                {step === 1 ? t('setup.nav.start') : t('setup.nav.next')}
               </Text>
             </TouchableOpacity>
           ) : (
@@ -674,7 +661,7 @@ export default function SetupScreen() {
               {isCreating ? (
                 <ActivityIndicator color={colors.onPrimary} size="small" />
               ) : (
-                <Text style={ds.navCreateText}>Créer le vault familial 🚀</Text>
+                <Text style={ds.navCreateText}>{t('setup.nav.create')}</Text>
               )}
             </TouchableOpacity>
           )}

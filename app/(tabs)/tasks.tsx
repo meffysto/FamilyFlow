@@ -47,6 +47,7 @@ import {
   dispatchNotificationAsync,
   buildAllTasksDoneContext,
 } from '../../lib/notifications';
+import { useTranslation } from 'react-i18next';
 import { Task, CourseItem, Profile } from '../../lib/types';
 import { formatDateForDisplay } from '../../lib/parser';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
@@ -61,11 +62,11 @@ interface FilterDef {
 // ─── Météo des tâches (profils enfants) ─────────────────────────────────────
 
 const WEATHER_STAGES = [
-  { threshold: 0,    emoji: '⛈️', label: 'Orage…',           message: 'Allez, on commence !' },
-  { threshold: 0.25, emoji: '🌧️', label: 'Pluie',            message: 'Continue comme ça !' },
-  { threshold: 0.50, emoji: '⛅',  label: 'Nuages',           message: 'Le soleil arrive !' },
-  { threshold: 0.75, emoji: '☀️', label: 'Soleil',            message: 'Presque fini !' },
-  { threshold: 1.00, emoji: '🌈', label: 'Arc-en-ciel !',    message: 'Bravo, tout est fait !' },
+  { threshold: 0,    emoji: '⛈️', labelKey: 'tasks.weather.storm',   messageKey: 'tasks.weather.stormMsg' },
+  { threshold: 0.25, emoji: '🌧️', labelKey: 'tasks.weather.rain',    messageKey: 'tasks.weather.rainMsg' },
+  { threshold: 0.50, emoji: '⛅',  labelKey: 'tasks.weather.clouds',  messageKey: 'tasks.weather.cloudsMsg' },
+  { threshold: 0.75, emoji: '☀️', labelKey: 'tasks.weather.sun',     messageKey: 'tasks.weather.sunMsg' },
+  { threshold: 1.00, emoji: '🌈', labelKey: 'tasks.weather.rainbow', messageKey: 'tasks.weather.rainbowMsg' },
 ];
 
 const WEATHER_COLORS = ['#4B5563', '#6B7280', '#93C5FD', '#FDE68A', '#C4B5FD'];
@@ -78,7 +79,7 @@ function getWeatherStage(progress: number) {
 }
 
 /** Bandeau météo animé pour les enfants */
-function TaskWeather({ completed, total }: { completed: number; total: number }) {
+function TaskWeather({ completed, total, t }: { completed: number; total: number; t: (key: string, opts?: any) => string }) {
   const progress = total > 0 ? completed / total : 0;
   const stageIdx = getWeatherStage(progress);
   const stage = WEATHER_STAGES[stageIdx];
@@ -110,8 +111,8 @@ function TaskWeather({ completed, total }: { completed: number; total: number })
     <Animated.View style={[weatherStyles.container, bgStyle]}>
       <Animated.Text style={[weatherStyles.emoji, emojiStyle]}>{stage.emoji}</Animated.Text>
       <View style={weatherStyles.textCol}>
-        <Text style={weatherStyles.label}>{stage.label}</Text>
-        <Text style={weatherStyles.message}>{stage.message}</Text>
+        <Text style={weatherStyles.label}>{t(stage.labelKey)}</Text>
+        <Text style={weatherStyles.message}>{t(stage.messageKey)}</Text>
       </View>
       <Text style={weatherStyles.count}>{completed}/{total}</Text>
     </Animated.View>
@@ -152,23 +153,25 @@ const weatherStyles = StyleSheet.create({
   },
 });
 
-const STATIC_FILTERS: FilterDef[] = [
-  { id: 'tous', label: 'Tous', emoji: '📋' },
-  { id: 'maison', label: 'Maison', emoji: '🏠' },
+// Les labels sont résolus dynamiquement via t() dans buildFilters
+const STATIC_FILTER_IDS = [
+  { id: 'tous', labelKey: 'tasks.filters.all', emoji: '📋' },
+  { id: 'maison', labelKey: 'tasks.filters.home', emoji: '🏠' },
 ];
 
 /** Build dynamic filters from enfant profiles */
-function buildFilters(profiles: Profile[], activeProfile: Profile | null): FilterDef[] {
+function buildFilters(profiles: Profile[], activeProfile: Profile | null, t: (key: string) => string): FilterDef[] {
   const enfants = profiles.filter((p) => p.role === 'enfant');
   const enfantFilters = enfants.map((p) => ({
     id: `enfant:${p.name}`,
     label: p.name,
     emoji: p.avatar,
   }));
+  const staticFilters = STATIC_FILTER_IDS.map((f) => ({ id: f.id, label: t(f.labelKey), emoji: f.emoji }));
   const mesTaches: FilterDef[] = activeProfile
-    ? [{ id: 'mes-taches', label: 'Mes tâches', emoji: activeProfile.avatar }]
+    ? [{ id: 'mes-taches', label: t('tasks.filters.myTasks'), emoji: activeProfile.avatar }]
     : [];
-  return [STATIC_FILTERS[0], ...mesTaches, ...enfantFilters, ...STATIC_FILTERS.slice(1)];
+  return [staticFilters[0], ...mesTaches, ...enfantFilters, ...staticFilters.slice(1)];
 }
 
 interface TaskSection {
@@ -198,6 +201,7 @@ export default function TasksScreen() {
   const { completeTask } = useGamification({ vault, notifPrefs });
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
   const { filter: filterParam, addNew } = useLocalSearchParams<{ filter?: string; addNew?: string }>();
 
@@ -215,7 +219,7 @@ export default function TasksScreen() {
         { id: 'tous', label: 'Tous', emoji: '☀️' },
       ];
     }
-    return buildFilters(profiles, activeProfile);
+    return buildFilters(profiles, activeProfile, t);
   }, [profiles, activeProfile, isVacationActive]);
   const targetFiles = useMemo(() => buildTargetFiles(profiles), [profiles]);
   const [filter, setFilter] = useState('tous');
@@ -335,11 +339,11 @@ export default function TasksScreen() {
 
   const handleAddTask = useCallback(async () => {
     if (!newTaskText.trim()) {
-      showToast('Le texte de la tâche est obligatoire', 'error');
+      showToast(t('tasks.toast.textRequired'), 'error');
       return;
     }
     if (newTaskDueDate && !/^\d{4}-\d{2}-\d{2}$/.test(newTaskDueDate)) {
-      showToast('Date incorrecte (format : 2026-03-15)', 'error');
+      showToast(t('tasks.toast.invalidDate'), 'error');
       return;
     }
     setIsSaving(true);
@@ -361,22 +365,22 @@ export default function TasksScreen() {
 
   const handleDeleteTask = useCallback(async (task: Task) => {
     if (activeProfile?.role === 'enfant') {
-      showToast('🔒 Seuls les adultes peuvent supprimer des tâches', 'error');
+      showToast(t('tasks.toast.childCantDelete'), 'error');
       return;
     }
     Alert.alert(
-      '🗑️ Supprimer la tâche',
-      `Supprimer « ${task.text} » ?`,
+      t('tasks.delete.title'),
+      t('tasks.delete.message', { name: task.text }),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('tasks.delete.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('tasks.delete.confirm'),
           style: 'destructive',
           onPress: async () => {
             try {
               await deleteTask(task.sourceFile, task.lineIndex);
             } catch (e) {
-              Alert.alert('Erreur', String(e));
+              Alert.alert(t('tasks.delete.error'), String(e));
             }
           },
         },
@@ -386,7 +390,7 @@ export default function TasksScreen() {
 
   const handleOpenEdit = useCallback((task: Task) => {
     if (activeProfile?.role === 'enfant') {
-      showToast('Seuls les adultes peuvent modifier des tâches', 'error');
+      showToast(t('tasks.toast.childCantEdit'), 'error');
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -402,11 +406,11 @@ export default function TasksScreen() {
   const handleEditTask = useCallback(async () => {
     if (!editingTask) return;
     if (!editTaskText.trim()) {
-      showToast('Le texte de la tâche est obligatoire', 'error');
+      showToast(t('tasks.toast.textRequired'), 'error');
       return;
     }
     if (editTaskDueDate && !/^\d{4}-\d{2}-\d{2}$/.test(editTaskDueDate)) {
-      showToast('Date incorrecte (format : 2026-03-15)', 'error');
+      showToast(t('tasks.toast.invalidDate'), 'error');
       return;
     }
     setIsEditSaving(true);
@@ -423,7 +427,7 @@ export default function TasksScreen() {
       });
       setEditModalVisible(false);
       setEditingTask(null);
-      showToast('Tâche modifiée');
+      showToast(t('tasks.toast.edited'));
     } catch (e) {
       showToast(String(e), 'error');
     } finally {
@@ -570,7 +574,7 @@ export default function TasksScreen() {
             <TouchableOpacity
               onPress={() => setOrderModalVisible(true)}
               style={[styles.orderBtn, { backgroundColor: colors.card }]}
-              accessibilityLabel="Réorganiser les catégories"
+              accessibilityLabel={t('tasks.a11y.reorder')}
             >
               <Text style={[styles.orderBtnText, { color: primary }]}>↕️</Text>
             </TouchableOpacity>
@@ -580,7 +584,7 @@ export default function TasksScreen() {
 
       {/* Météo des tâches (enfants uniquement) */}
       {activeProfile?.role === 'enfant' && totalCount > 0 && (
-        <TaskWeather completed={completedCount} total={totalCount} />
+        <TaskWeather completed={completedCount} total={totalCount} t={t} />
       )}
 
       {/* Vacation banner */}
@@ -618,12 +622,12 @@ export default function TasksScreen() {
             <View style={[styles.searchContainer, { backgroundColor: colors.card }]}>
               <TextInput
                 style={[styles.searchInput, { backgroundColor: colors.inputBg, color: colors.text }]}
-                placeholder="Rechercher..."
+                placeholder={t('tasks.search')}
                 placeholderTextColor={colors.textFaint}
                 value={search}
                 onChangeText={setSearch}
                 clearButtonMode="while-editing"
-                accessibilityLabel="Rechercher une tâche"
+                accessibilityLabel={t('tasks.a11y.search')}
                 accessibilityRole="search"
               />
             </View>
@@ -676,7 +680,7 @@ export default function TasksScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
         }
         ListEmptyComponent={
-          <EmptyState emoji="✅" title="Bravo, tout est fait !" subtitle="Profite bien de ton temps libre 🎉" />
+          <EmptyState emoji="✅" title={t('tasks.empty.title')} subtitle={t('tasks.empty.subtitle')} />
         }
         ListFooterComponent={completedTasks.length > 0 ? (
           <View style={styles.completedSection}>
@@ -684,11 +688,11 @@ export default function TasksScreen() {
               style={[styles.toggleCompletedBtn, { backgroundColor: colors.cardAlt }]}
               onPress={() => setShowCompleted(!showCompleted)}
               activeOpacity={0.7}
-              accessibilityLabel={showCompleted ? 'Masquer les terminées' : `Afficher les terminées (${completedTasks.length})`}
+              accessibilityLabel={showCompleted ? t('tasks.a11y.hideCompleted') : t('tasks.a11y.showCompleted', { count: completedTasks.length })}
               accessibilityRole="button"
             >
               <Text style={[styles.toggleCompletedText, { color: colors.textMuted }]}>
-                {showCompleted ? `🔼 Masquer les terminées` : `🔽 Terminées (${completedTasks.length})`}
+                {showCompleted ? t('tasks.completed.hide') : t('tasks.completed.show', { count: completedTasks.length })}
               </Text>
             </TouchableOpacity>
             {showCompleted && completedSections.map((section) => (
@@ -723,7 +727,7 @@ export default function TasksScreen() {
           setAddModalVisible(true);
         }}
         activeOpacity={0.8}
-        accessibilityLabel="Ajouter une tâche"
+        accessibilityLabel={t('tasks.a11y.addTask')}
         accessibilityRole="button"
       >
         <Text style={[styles.fabText, { color: colors.onPrimary }]}>+</Text>
@@ -734,35 +738,35 @@ export default function TasksScreen() {
         <SafeAreaView style={[styles.modalSafe, { backgroundColor: colors.card }]}>
           <View style={[styles.dragHandle, { backgroundColor: colors.separator }]} />
           <ModalHeader
-            title="Nouvelle tâche"
+            title={t('tasks.addModal.title')}
             onClose={() => setAddModalVisible(false)}
-            rightLabel={isSaving ? '…' : 'Ajouter'}
+            rightLabel={isSaving ? '…' : t('tasks.addModal.add')}
             onRight={handleAddTask}
             rightDisabled={isSaving}
           />
 
           <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalContent}>
-            <Text style={[styles.modalLabel, { color: colors.textSub }]}>📝 Tâche *</Text>
+            <Text style={[styles.modalLabel, { color: colors.textSub }]}>{t('tasks.addModal.taskLabel')}</Text>
             <TextInput
               style={[styles.modalInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
               value={newTaskText}
               onChangeText={setNewTaskText}
-              placeholder="Ex: Acheter cadeau anniversaire"
+              placeholder={t('tasks.addModal.placeholder')}
               placeholderTextColor={colors.textFaint}
               autoFocus
               multiline
             />
 
-            <Text style={[styles.modalLabel, { color: colors.textSub }]}>📅 Date d'échéance (optionnel)</Text>
-            <DateInput value={newTaskDueDate} onChange={setNewTaskDueDate} placeholder="Choisir une date" />
+            <Text style={[styles.modalLabel, { color: colors.textSub }]}>{t('tasks.addModal.dueLabel')}</Text>
+            <DateInput value={newTaskDueDate} onChange={setNewTaskDueDate} placeholder={t('tasks.addModal.duePlaceholder')} />
 
-            <Text style={[styles.modalLabel, { color: colors.textSub }]}>🔁 Se répète (optionnel)</Text>
+            <Text style={[styles.modalLabel, { color: colors.textSub }]}>{t('tasks.addModal.recurrenceLabel')}</Text>
             <View style={styles.targetRow}>
               {[
-                { label: 'Aucune', value: '' },
-                { label: 'Chaque jour', value: 'every day' },
-                { label: 'Chaque semaine', value: 'every week' },
-                { label: 'Chaque mois', value: 'every month' },
+                { label: t('tasks.addModal.none'), value: '' },
+                { label: t('tasks.addModal.daily'), value: 'every day' },
+                { label: t('tasks.addModal.weekly'), value: 'every week' },
+                { label: t('tasks.addModal.monthly'), value: 'every month' },
               ].map((opt) => (
                 <Chip
                   key={opt.value}
@@ -830,35 +834,35 @@ export default function TasksScreen() {
         <SafeAreaView style={[styles.modalSafe, { backgroundColor: colors.card }]}>
           <View style={[styles.dragHandle, { backgroundColor: colors.separator }]} />
           <ModalHeader
-            title="Modifier la tâche"
+            title={t('tasks.editModal.title')}
             onClose={() => setEditModalVisible(false)}
-            rightLabel={isEditSaving ? '…' : 'Enregistrer'}
+            rightLabel={isEditSaving ? '…' : t('tasks.editModal.save')}
             onRight={handleEditTask}
             rightDisabled={isEditSaving}
           />
 
           <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalContent}>
-            <Text style={[styles.modalLabel, { color: colors.textSub }]}>Tâche *</Text>
+            <Text style={[styles.modalLabel, { color: colors.textSub }]}>{t('tasks.editModal.taskLabel')}</Text>
             <TextInput
               style={[styles.modalInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
               value={editTaskText}
               onChangeText={setEditTaskText}
-              placeholder="Ex: Acheter cadeau anniversaire"
+              placeholder={t('tasks.addModal.placeholder')}
               placeholderTextColor={colors.textFaint}
               autoFocus
               multiline
             />
 
-            <Text style={[styles.modalLabel, { color: colors.textSub }]}>Date d'échéance (optionnel)</Text>
-            <DateInput value={editTaskDueDate} onChange={setEditTaskDueDate} placeholder="Choisir une date" />
+            <Text style={[styles.modalLabel, { color: colors.textSub }]}>{t('tasks.editModal.dueLabel')}</Text>
+            <DateInput value={editTaskDueDate} onChange={setEditTaskDueDate} placeholder={t('tasks.addModal.duePlaceholder')} />
 
-            <Text style={[styles.modalLabel, { color: colors.textSub }]}>Se répète (optionnel)</Text>
+            <Text style={[styles.modalLabel, { color: colors.textSub }]}>{t('tasks.editModal.recurrenceLabel')}</Text>
             <View style={styles.targetRow}>
               {[
-                { label: 'Aucune', value: '' },
-                { label: 'Chaque jour', value: 'every day' },
-                { label: 'Chaque semaine', value: 'every week' },
-                { label: 'Chaque mois', value: 'every month' },
+                { label: t('tasks.addModal.none'), value: '' },
+                { label: t('tasks.addModal.daily'), value: 'every day' },
+                { label: t('tasks.addModal.weekly'), value: 'every week' },
+                { label: t('tasks.addModal.monthly'), value: 'every month' },
               ].map((opt) => (
                 <Chip
                   key={opt.value}
@@ -870,7 +874,7 @@ export default function TasksScreen() {
               ))}
             </View>
 
-            <Text style={[styles.modalLabel, { color: colors.textSub }]}>👤 Attribuer à</Text>
+            <Text style={[styles.modalLabel, { color: colors.textSub }]}>{t('tasks.editModal.assignLabel')}</Text>
             <View style={styles.targetRow}>
               {profiles.map((p) => (
                 <Chip
@@ -885,7 +889,7 @@ export default function TasksScreen() {
               ))}
             </View>
 
-            <Text style={[styles.modalLabel, { color: colors.textSub }]}>Enregistrer pour</Text>
+            <Text style={[styles.modalLabel, { color: colors.textSub }]}>{t('tasks.editModal.saveToLabel')}</Text>
             <View style={styles.targetRow}>
               {targetFiles.map((t) => (
                 <Chip
@@ -901,10 +905,10 @@ export default function TasksScreen() {
             <TouchableOpacity
               style={[styles.deleteButton, { backgroundColor: colors.errorBg }]}
               onPress={handleDeleteFromEdit}
-              accessibilityLabel="Supprimer cette tâche"
+              accessibilityLabel={t('tasks.a11y.deleteTask')}
               accessibilityRole="button"
             >
-              <Text style={[styles.deleteButtonText, { color: colors.error }]}>Supprimer cette tâche</Text>
+              <Text style={[styles.deleteButtonText, { color: colors.error }]}>{t('tasks.editModal.deleteBtn')}</Text>
             </TouchableOpacity>
           </ScrollView>
         </SafeAreaView>
@@ -913,7 +917,7 @@ export default function TasksScreen() {
       {/* Modal réorganisation des catégories */}
       <Modal visible={orderModalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setOrderModalVisible(false)}>
         <SafeAreaView style={[styles.modalSafe, { backgroundColor: colors.bg }]}>
-          <ModalHeader title="Ordre des catégories" onClose={() => setOrderModalVisible(false)} />
+          <ModalHeader title={t('tasks.orderModal.title')} onClose={() => setOrderModalVisible(false)} />
           <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalContent}>
             {(() => {
               // Construire la liste ordonnée des sections actuelles
@@ -930,14 +934,14 @@ export default function TasksScreen() {
                 <View key={sec.sourceFile} style={[styles.orderRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <View style={styles.orderRowInfo}>
                     <Text style={[styles.orderRowTitle, { color: colors.text }]}>{sec.title}</Text>
-                    <Text style={[styles.orderRowCount, { color: colors.textMuted }]}>{sec.data.length} tâche{sec.data.length > 1 ? 's' : ''}</Text>
+                    <Text style={[styles.orderRowCount, { color: colors.textMuted }]}>{t('tasks.taskCount', { count: sec.data.length })}</Text>
                   </View>
                   <View style={styles.orderRowBtns}>
                     <TouchableOpacity
                       onPress={() => moveSection(idx, -1)}
                       disabled={idx === 0}
                       style={[styles.orderArrowBtn, idx === 0 && { opacity: 0.3 }]}
-                      accessibilityLabel="Monter"
+                      accessibilityLabel={t('tasks.a11y.moveUp')}
                     >
                       <Text style={[styles.orderArrow, { color: primary }]}>▲</Text>
                     </TouchableOpacity>
@@ -945,7 +949,7 @@ export default function TasksScreen() {
                       onPress={() => moveSection(idx, 1)}
                       disabled={idx === sections.length - 1}
                       style={[styles.orderArrowBtn, idx === sections.length - 1 && { opacity: 0.3 }]}
-                      accessibilityLabel="Descendre"
+                      accessibilityLabel={t('tasks.a11y.moveDown')}
                     >
                       <Text style={[styles.orderArrow, { color: primary }]}>▼</Text>
                     </TouchableOpacity>
@@ -977,9 +981,9 @@ export default function TasksScreen() {
   );
 }
 
-function getFileLabel(sourceFile: string): string {
-  if (sourceFile.includes('Vacances')) return '☀️ Checklist Vacances';
-  if (sourceFile.includes('Maison')) return '🏠 Maison — Tâches';
+function getFileLabel(sourceFile: string, t?: (key: string) => string): string {
+  if (sourceFile.includes('Vacances')) return t ? t('tasks.fileLabels.vacation') : '☀️ Checklist Vacances';
+  if (sourceFile.includes('Maison')) return t ? t('tasks.fileLabels.home') : '🏠 Maison — Tâches';
   // Extract folder name for enfant tasks (e.g. "01 - Enfants/Maxence/..." → "Maxence")
   const parts = sourceFile.split('/');
   const fileName = parts.pop()?.replace('.md', '') ?? '';

@@ -42,6 +42,10 @@ import {
   DEFI_CATEGORY_LABELS,
   DEFI_REWARDS,
   computeRewardPoints,
+  getDefiCategoryLabel,
+  getDefiTitle,
+  getDefiDescription,
+  getDifficultyLabel,
   type DefiTemplate,
   type DefiCategory,
 } from '../../constants/defiTemplates';
@@ -809,26 +813,26 @@ export default function DefisScreen() {
             {Array.from(templatesByCategory.entries()).map(([cat, templates]) => (
               <View key={cat}>
                 <Text style={[styles.categoryTitle, { color: colors.textMuted }]}>
-                  {DEFI_CATEGORY_LABELS[cat].emoji} {DEFI_CATEGORY_LABELS[cat].label}
+                  {DEFI_CATEGORY_LABELS[cat].emoji} {getDefiCategoryLabel(cat)}
                 </Text>
-                {templates.map((t) => (
+                {templates.map((tmpl) => (
                   <TouchableOpacity
-                    key={t.id}
+                    key={tmpl.id}
                     style={[styles.templateCard, { backgroundColor: colors.card }]}
-                    onPress={() => setConfigModal({ visible: true, template: t })}
+                    onPress={() => setConfigModal({ visible: true, template: tmpl })}
                     activeOpacity={0.7}
-                    accessibilityLabel={`Template ${t.title}, difficulté ${t.difficulty}`}
+                    accessibilityLabel={`Template ${getDefiTitle(tmpl.id, tmpl.title)}, difficulté ${getDifficultyLabel(tmpl.difficulty)}`}
                     accessibilityRole="button"
                     accessibilityHint="Appuyez pour lancer ce défi"
                   >
-                    <Text style={styles.templateEmoji}>{t.emoji}</Text>
+                    <Text style={styles.templateEmoji}>{tmpl.emoji}</Text>
                     <View style={styles.templateInfo}>
-                      <Text style={[styles.templateTitle, { color: colors.text }]}>{t.title}</Text>
-                      <Text style={[styles.templateDesc, { color: colors.textMuted }]} numberOfLines={1}>{t.description}</Text>
+                      <Text style={[styles.templateTitle, { color: colors.text }]}>{getDefiTitle(tmpl.id, tmpl.title)}</Text>
+                      <Text style={[styles.templateDesc, { color: colors.textMuted }]} numberOfLines={1}>{getDefiDescription(tmpl.id, tmpl.description)}</Text>
                     </View>
                     <Chip
-                      label={t.difficulty}
-                      color={t.difficulty === 'facile' ? colors.success : t.difficulty === 'moyen' ? colors.warning : colors.error}
+                      label={getDifficultyLabel(tmpl.difficulty)}
+                      color={tmpl.difficulty === 'facile' ? colors.success : tmpl.difficulty === 'moyen' ? colors.warning : colors.error}
                       size="sm"
                     />
                   </TouchableOpacity>

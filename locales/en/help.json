@@ -1,0 +1,135 @@
+{
+  "coach": {
+    "dashboard": {
+      "1": {
+        "title": "Your dashboard",
+        "body": "Sections adapt to your day. Pull down to refresh.",
+        "childBody": "This is your main page! Everything important is here."
+      },
+      "2": {
+        "title": "Quick add",
+        "body": "This button lets you create a task, appointment, or journal entry in one tap.",
+        "childBody": "Tap here to add something new!"
+      },
+      "3": {
+        "title": "Everything else",
+        "body": "Meals, pantry, budget, routines… Find all features here.",
+        "childBody": "Lots more to discover here!"
+      }
+    },
+    "tasks": {
+      "1": {
+        "title": "Manage your tasks",
+        "body": "Check off a task to earn points. Swipe left to delete.",
+        "childBody": "Complete your missions to earn points!"
+      },
+      "2": {
+        "title": "Filter by person",
+        "body": "Tap a name to see only their tasks."
+      }
+    },
+    "rdv": {
+      "1": {
+        "title": "Your appointments",
+        "body": "Tap an appointment to view details, add questions, or a summary."
+      },
+      "2": {
+        "title": "Quick search",
+        "body": "Find an appointment by doctor name or specialty."
+      }
+    },
+    "journal": {
+      "1": {
+        "title": "Daily journal",
+        "body": "Select a child then fill in the sections: meals, sleep, diapers, mood."
+      },
+      "2": {
+        "title": "Quick tracking",
+        "body": "Each section updates instantly. Stats are calculated automatically."
+      }
+    },
+    "photos": {
+      "1": {
+        "title": "Family album",
+        "body": "Add a photo each day to build a memory album. Photos stay on your device."
+      }
+    },
+    "meals": {
+      "1": {
+        "title": "Meal planner",
+        "body": "Tap a slot (lunch/dinner) to add a dish. Ingredients are added to the shopping list automatically."
+      },
+      "2": {
+        "title": "From recipes",
+        "body": "Pick directly from your recipe book to fill the planner."
+      }
+    },
+    "stock": {
+      "1": {
+        "title": "Pantry tracker",
+        "body": "When stock drops below the threshold, the item is automatically added to the shopping list."
+      }
+    },
+    "budget": {
+      "1": {
+        "title": "Monthly budget",
+        "body": "Set a spending cap and track expenses by category. The total updates in real time."
+      }
+    },
+    "routines": {
+      "1": {
+        "title": "Daily routines",
+        "body": "Create morning/evening routines for the whole family. Each completion earns points.",
+        "childBody": "Your morning and evening routines are here!"
+      }
+    },
+    "loot": {
+      "1": {
+        "title": "Rewards",
+        "body": "Complete tasks to earn points and unlock chests. Each chest holds a surprise!",
+        "childBody": "Finish your missions to open surprise chests!"
+      }
+    },
+    "defis": {
+      "1": {
+        "title": "Family challenges",
+        "body": "Challenge the family: \"7 days screen-free\", \"Tidy room all week\"…",
+        "childBody": "Take on challenges to earn bonus points!"
+      }
+    },
+    "more": {
+      "1": {
+        "title": "All your features",
+        "body": "Each card opens a section of the app. Badges show pending actions.",
+        "childBody": "All the app's features are here!"
+      }
+    },
+    "skills": {
+      "1": {
+        "title": "Skill tree",
+        "body": "Track each child's progress by category. Parents validate acquired skills.",
+        "childBody": "See all your skills! Ask a parent to validate the ones you've mastered."
+      }
+    }
+  },
+  "guide": {
+    "categories": {
+      "quotidien": "Daily",
+      "famille": "Family",
+      "outils": "Tools"
+    },
+    "screens": {
+      "dashboard": { "name": "Dashboard", "description": "Your daily overview" },
+      "tasks": { "name": "Tasks", "description": "Family task management" },
+      "routines": { "name": "Routines", "description": "Morning/evening routines" },
+      "meals": { "name": "Meals", "description": "Weekly meal planner" },
+      "journal": { "name": "Journal", "description": "Daily child tracking" },
+      "rdv": { "name": "Appointments", "description": "Medical & admin appointments" },
+      "photos": { "name": "Photos", "description": "Daily photo album" },
+      "defis": { "name": "Challenges", "description": "Family challenges" },
+      "stock": { "name": "Pantry", "description": "Supply tracker" },
+      "budget": { "name": "Budget", "description": "Family budget management" },
+      "loot": { "name": "Loot Box", "description": "Reward system" }
+    }
+  }
+}

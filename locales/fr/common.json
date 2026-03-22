@@ -1,0 +1,154 @@
+{
+  "setup": {
+    "tagline": "Votre famille, organisée ensemble",
+    "features": {
+      "tasks": { "title": "Tâches familiales", "desc": "Organisez et complétez vos tâches ensemble" },
+      "loot": { "title": "Loot boxes", "desc": "Gagnez des récompenses en accomplissant vos tâches" },
+      "obsidian": { "title": "Obsidian", "desc": "100% Markdown, compatible avec Obsidian" },
+      "telegram": { "title": "Telegram", "desc": "Notifications via Telegram" }
+    },
+    "slides": {
+      "1": { "title": "Votre quotidien, simplifié", "subtitle": "Planifiez les repas, répartissez les tâches, gérez les courses" },
+      "2": { "title": "Suivez la santé de vos enfants", "subtitle": "Biberon, couches, sommeil, rendez-vous — tout est noté" },
+      "3": { "title": "Toute la famille participe", "subtitle": "Chaque membre a son profil, les enfants gagnent des points" }
+    },
+    "parents": {
+      "title": "Les parents",
+      "subtitle": "Combien de parents dans la famille ?",
+      "count_one": "{{count}} parent",
+      "count_other": "{{count}} parents",
+      "label": "Parent {{n}}",
+      "placeholder": "Prénom",
+      "avatarLabel": "Avatar"
+    },
+    "children": {
+      "title": "Les enfants",
+      "subtitle": "Combien d'enfants ?",
+      "label": "Enfant {{n}}",
+      "placeholder": "Prénom",
+      "birthdatePlaceholder": "Année (AAAA) ou date complète (AAAA-MM-JJ)",
+      "birthdateHint": "L'année permet d'adapter les tâches à l'âge (bébé, enfant, ado)",
+      "ageWarning": "Sans année de naissance, les tâches « bébé » seront créées par défaut (biberons, couches…)",
+      "noChildHint": "Pas de souci ! Vous pourrez ajouter des enfants plus tard dans les réglages."
+    },
+    "vault": {
+      "title": "Emplacement du vault",
+      "subtitle": "Où stocker les données de votre famille ? Choisissez un dossier existant ou un nouveau dossier vide."
+    },
+    "templates": {
+      "title": "Modèles de départ",
+      "subtitle": "Choisissez les modèles à installer dans votre vault. Vous pourrez en ajouter d'autres plus tard dans les réglages.",
+      "selectAll": "Tout sélectionner"
+    },
+    "recap": {
+      "title": "Récapitulatif",
+      "subtitle": "Voici votre famille :",
+      "parents": "Parents",
+      "children": "Enfants",
+      "vault": "Vault",
+      "models": "Modèles",
+      "filesTitle": "Fichiers qui seront créés :",
+      "filesDesc": "📋 Tâches récurrentes par enfant\n🧹 Ménage hebdomadaire\n🛒 Liste de courses\n📖 Dossiers journaux\n👨‍👩‍👧 Profils famille + gamification",
+      "modelCount_one": "\n📦 {{count}} modèle de contenu",
+      "modelCount_other": "\n📦 {{count}} modèles de contenu"
+    },
+    "nav": {
+      "back": "← Retour",
+      "skip": "Passer",
+      "next": "Suivant →",
+      "start": "Commencer",
+      "create": "Créer le vault familial 🚀",
+      "step": "Étape {{current}}/{{total}}"
+    },
+    "error": {
+      "title": "Erreur",
+      "createFailed": "Impossible de créer le vault :\n{{error}}\n\nVérifiez les permissions."
+    }
+  },
+  "tasks": {
+    "weather": {
+      "storm": "Orage…",
+      "stormMsg": "Allez, on commence !",
+      "rain": "Pluie",
+      "rainMsg": "Continue comme ça !",
+      "clouds": "Nuages",
+      "cloudsMsg": "Le soleil arrive !",
+      "sun": "Soleil",
+      "sunMsg": "Presque fini !",
+      "rainbow": "Arc-en-ciel !",
+      "rainbowMsg": "Bravo, tout est fait !"
+    },
+    "filters": {
+      "all": "Tous",
+      "home": "Maison",
+      "myTasks": "Mes tâches"
+    },
+    "empty": {
+      "title": "Bravo, tout est fait !",
+      "subtitle": "Profite bien de ton temps libre 🎉"
+    },
+    "completed": {
+      "hide": "🔼 Masquer les terminées",
+      "show": "🔽 Terminées ({{count}})"
+    },
+    "taskCount_one": "{{count}} tâche",
+    "taskCount_other": "{{count}} tâches",
+    "toast": {
+      "textRequired": "Le texte de la tâche est obligatoire",
+      "invalidDate": "Date incorrecte (format : 2026-03-15)",
+      "edited": "Tâche modifiée",
+      "childCantDelete": "🔒 Seuls les adultes peuvent supprimer des tâches",
+      "childCantEdit": "Seuls les adultes peuvent modifier des tâches"
+    },
+    "delete": {
+      "title": "🗑️ Supprimer la tâche",
+      "message": "Supprimer « {{name}} » ?",
+      "cancel": "Annuler",
+      "confirm": "Supprimer",
+      "error": "Erreur"
+    },
+    "addModal": {
+      "title": "Nouvelle tâche",
+      "add": "Ajouter",
+      "taskLabel": "📝 Tâche *",
+      "placeholder": "Ex: Acheter cadeau anniversaire",
+      "dueLabel": "📅 Date d'échéance (optionnel)",
+      "duePlaceholder": "Choisir une date",
+      "recurrenceLabel": "🔁 Se répète (optionnel)",
+      "none": "Aucune",
+      "daily": "Chaque jour",
+      "weekly": "Chaque semaine",
+      "monthly": "Chaque mois",
+      "assignLabel": "👤 Attribuer à",
+      "saveToLabel": "Enregistrer pour"
+    },
+    "editModal": {
+      "title": "Modifier la tâche",
+      "save": "Enregistrer",
+      "taskLabel": "Tâche *",
+      "dueLabel": "Date d'échéance (optionnel)",
+      "recurrenceLabel": "Se répète (optionnel)",
+      "assignLabel": "👤 Attribuer à",
+      "saveToLabel": "Enregistrer pour",
+      "deleteBtn": "Supprimer cette tâche"
+    },
+    "orderModal": {
+      "title": "Ordre des catégories"
+    },
+    "a11y": {
+      "reorder": "Réorganiser les catégories",
+      "search": "Rechercher une tâche",
+      "addTask": "Ajouter une tâche",
+      "deleteTask": "Supprimer cette tâche",
+      "moveUp": "Monter",
+      "moveDown": "Descendre",
+      "hideCompleted": "Masquer les terminées",
+      "showCompleted": "Afficher les terminées ({{count}})"
+    },
+    "search": "Rechercher...",
+    "fileLabels": {
+      "vacation": "☀️ Checklist Vacances",
+      "home": "🏠 Maison — Tâches"
+    }
+  }
+}

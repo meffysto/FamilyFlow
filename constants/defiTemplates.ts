@@ -2,6 +2,7 @@
  * defiTemplates.ts — Templates de défis familiaux pré-construits
  */
 
+import { t } from 'i18next';
 import type { DefiType } from '../lib/types';
 
 export interface DefiTemplate {
@@ -40,6 +41,26 @@ export const DEFI_REWARDS: Record<'facile' | 'moyen' | 'difficile', { points: nu
 export function computeRewardPoints(difficulty: 'facile' | 'moyen' | 'difficile', targetDays: number): number {
   const base = DEFI_REWARDS[difficulty].points;
   return targetDays > 14 ? Math.round(base * 1.5) : base;
+}
+
+/** Retourne le label traduit d'une catégorie de défi */
+export function getDefiCategoryLabel(category: DefiCategory): string {
+  return t(`gamification:defiCategory.${category}`, { defaultValue: DEFI_CATEGORY_LABELS[category]?.label });
+}
+
+/** Retourne le label traduit d'une difficulté */
+export function getDifficultyLabel(difficulty: 'facile' | 'moyen' | 'difficile'): string {
+  return t(`gamification:difficulty.${difficulty}`, { defaultValue: difficulty });
+}
+
+/** Retourne le titre traduit d'un template de défi */
+export function getDefiTitle(templateId: string, fallback: string): string {
+  return t(`gamification:defis.${templateId}.title`, { defaultValue: fallback });
+}
+
+/** Retourne la description traduite d'un template de défi */
+export function getDefiDescription(templateId: string, fallback: string): string {
+  return t(`gamification:defis.${templateId}.description`, { defaultValue: fallback });
 }
 
 export const DEFI_TEMPLATES: DefiTemplate[] = [

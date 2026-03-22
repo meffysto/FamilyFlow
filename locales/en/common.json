@@ -1,0 +1,154 @@
+{
+  "setup": {
+    "tagline": "Your family, organized together",
+    "features": {
+      "tasks": { "title": "Family tasks", "desc": "Organize and complete tasks together" },
+      "loot": { "title": "Loot boxes", "desc": "Earn rewards by completing your tasks" },
+      "obsidian": { "title": "Obsidian", "desc": "100% Markdown, compatible with Obsidian" },
+      "telegram": { "title": "Telegram", "desc": "Notifications via Telegram" }
+    },
+    "slides": {
+      "1": { "title": "Your daily life, simplified", "subtitle": "Plan meals, share chores, manage shopping" },
+      "2": { "title": "Track your children's health", "subtitle": "Bottles, diapers, sleep, appointments — everything recorded" },
+      "3": { "title": "The whole family joins in", "subtitle": "Each member has a profile, kids earn points" }
+    },
+    "parents": {
+      "title": "Parents",
+      "subtitle": "How many parents in the family?",
+      "count_one": "{{count}} parent",
+      "count_other": "{{count}} parents",
+      "label": "Parent {{n}}",
+      "placeholder": "First name",
+      "avatarLabel": "Avatar"
+    },
+    "children": {
+      "title": "Children",
+      "subtitle": "How many children?",
+      "label": "Child {{n}}",
+      "placeholder": "First name",
+      "birthdatePlaceholder": "Year (YYYY) or full date (YYYY-MM-DD)",
+      "birthdateHint": "The year helps adapt tasks to age (baby, child, teen)",
+      "ageWarning": "Without a birth year, baby tasks will be created by default (bottles, diapers…)",
+      "noChildHint": "No worries! You can add children later in the settings."
+    },
+    "vault": {
+      "title": "Vault location",
+      "subtitle": "Where should your family data be stored? Choose an existing folder or a new empty folder."
+    },
+    "templates": {
+      "title": "Starter templates",
+      "subtitle": "Choose which templates to install in your vault. You can add more later in the settings.",
+      "selectAll": "Select all"
+    },
+    "recap": {
+      "title": "Summary",
+      "subtitle": "Here's your family:",
+      "parents": "Parents",
+      "children": "Children",
+      "vault": "Vault",
+      "models": "Templates",
+      "filesTitle": "Files that will be created:",
+      "filesDesc": "📋 Recurring tasks per child\n🧹 Weekly chores\n🛒 Shopping list\n📖 Journal folders\n👨‍👩‍👧 Family profiles + gamification",
+      "modelCount_one": "\n📦 {{count}} content template",
+      "modelCount_other": "\n📦 {{count}} content templates"
+    },
+    "nav": {
+      "back": "← Back",
+      "skip": "Skip",
+      "next": "Next →",
+      "start": "Get started",
+      "create": "Create family vault 🚀",
+      "step": "Step {{current}}/{{total}}"
+    },
+    "error": {
+      "title": "Error",
+      "createFailed": "Unable to create vault:\n{{error}}\n\nPlease check permissions."
+    }
+  },
+  "tasks": {
+    "weather": {
+      "storm": "Storm…",
+      "stormMsg": "Let's get started!",
+      "rain": "Rain",
+      "rainMsg": "Keep it up!",
+      "clouds": "Clouds",
+      "cloudsMsg": "The sun is coming!",
+      "sun": "Sunshine",
+      "sunMsg": "Almost done!",
+      "rainbow": "Rainbow!",
+      "rainbowMsg": "Well done, all finished!"
+    },
+    "filters": {
+      "all": "All",
+      "home": "Home",
+      "myTasks": "My tasks"
+    },
+    "empty": {
+      "title": "Well done, all finished!",
+      "subtitle": "Enjoy your free time 🎉"
+    },
+    "completed": {
+      "hide": "🔼 Hide completed",
+      "show": "🔽 Completed ({{count}})"
+    },
+    "taskCount_one": "{{count}} task",
+    "taskCount_other": "{{count}} tasks",
+    "toast": {
+      "textRequired": "Task text is required",
+      "invalidDate": "Invalid date (format: 2026-03-15)",
+      "edited": "Task updated",
+      "childCantDelete": "🔒 Only adults can delete tasks",
+      "childCantEdit": "Only adults can edit tasks"
+    },
+    "delete": {
+      "title": "🗑️ Delete task",
+      "message": "Delete \"{{name}}\"?",
+      "cancel": "Cancel",
+      "confirm": "Delete",
+      "error": "Error"
+    },
+    "addModal": {
+      "title": "New task",
+      "add": "Add",
+      "taskLabel": "📝 Task *",
+      "placeholder": "E.g.: Buy birthday gift",
+      "dueLabel": "📅 Due date (optional)",
+      "duePlaceholder": "Pick a date",
+      "recurrenceLabel": "🔁 Repeats (optional)",
+      "none": "None",
+      "daily": "Every day",
+      "weekly": "Every week",
+      "monthly": "Every month",
+      "assignLabel": "👤 Assign to",
+      "saveToLabel": "Save to"
+    },
+    "editModal": {
+      "title": "Edit task",
+      "save": "Save",
+      "taskLabel": "Task *",
+      "dueLabel": "Due date (optional)",
+      "recurrenceLabel": "Repeats (optional)",
+      "assignLabel": "👤 Assign to",
+      "saveToLabel": "Save to",
+      "deleteBtn": "Delete this task"
+    },
+    "orderModal": {
+      "title": "Category order"
+    },
+    "a11y": {
+      "reorder": "Reorder categories",
+      "search": "Search for a task",
+      "addTask": "Add a task",
+      "deleteTask": "Delete this task",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "hideCompleted": "Hide completed",
+      "showCompleted": "Show completed ({{count}})"
+    },
+    "search": "Search...",
+    "fileLabels": {
+      "vacation": "☀️ Vacation Checklist",
+      "home": "🏠 Home — Tasks"
+    }
+  }
+}

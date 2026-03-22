@@ -43,6 +43,8 @@ export {
   RARITY_COLORS,
   RARITY_LABELS,
   RARITY_EMOJIS,
+  getRarityLabel,
+  getRewardText,
 } from './rewards';
 export type { GamificationConfig } from './rewards';
 

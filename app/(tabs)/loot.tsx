@@ -28,8 +28,8 @@ import {
   processActiveRewards,
   getLevelTier,
   RARITY_COLORS,
-  RARITY_LABELS,
   RARITY_EMOJIS,
+  getRarityLabel,
   REWARDS,
   DROP_RATES,
   LOOT_THRESHOLD,
@@ -266,7 +266,7 @@ export default function LootScreen() {
                     <View style={styles.historyPoints}>
                       {isLoot && rarity ? (
                         <Text style={[styles.historyRarity, { color: RARITY_COLORS[rarity as keyof typeof RARITY_COLORS] ?? colors.textFaint }]}>
-                          {RARITY_LABELS[rarity as keyof typeof RARITY_LABELS]}
+                          {getRarityLabel(rarity as LootRarity)}
                         </Text>
                       ) : (
                         <Text style={[styles.historyPts, { color: colors.success }]}>{entry.action} pts</Text>
@@ -373,7 +373,7 @@ export default function LootScreen() {
                   <View style={[styles.drTableCell, { flex: 2, flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
                     <View style={[styles.drDot, { backgroundColor: RARITY_COLORS[rarity] }]} />
                     <Text style={[styles.drRarityLabel, { color: RARITY_COLORS[rarity] }]}>
-                      {RARITY_EMOJIS[rarity]} {RARITY_LABELS[rarity]}
+                      {RARITY_EMOJIS[rarity]} {getRarityLabel(rarity)}
                     </Text>
                   </View>
                   <Text style={[styles.drTableCell, { color: colors.textSub }]}>{Math.round(DROP_RATES.enfant[rarity] * 100)}%</Text>
@@ -408,7 +408,7 @@ export default function LootScreen() {
                       <Text style={styles.drRewardEmoji}>{reward.emoji}</Text>
                       <Text style={[styles.drRewardName, { color: colors.textSub }]}>{reward.reward}</Text>
                       <Text style={[styles.drRewardPts, { color: RARITY_COLORS[rarity as LootRarity] }]}>
-                        {RARITY_LABELS[rarity as LootRarity]}
+                        {getRarityLabel(rarity as LootRarity)}
                       </Text>
                     </View>
                   ))
@@ -422,7 +422,7 @@ export default function LootScreen() {
                 <View style={styles.drRarityHeader}>
                   <View style={[styles.drRarityBadge, { backgroundColor: RARITY_COLORS[rarity] }]}>
                     <Text style={[styles.drRarityBadgeText, { color: colors.onPrimary }]}>
-                      {RARITY_EMOJIS[rarity]} {RARITY_LABELS[rarity]}
+                      {RARITY_EMOJIS[rarity]} {getRarityLabel(rarity)}
                     </Text>
                   </View>
                   <Text style={[styles.drRewardCount, { color: colors.textFaint }]}>{REWARDS[rarity].length} récompenses</Text>

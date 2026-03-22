@@ -22,7 +22,7 @@ import { useThemeColors } from '../contexts/ThemeContext';
 import { useToast } from '../contexts/ToastContext';
 import { ModalHeader } from './ui/ModalHeader';
 import { Chip } from './ui/Chip';
-import { MISSION_POOL, type MissionSuggestion } from '../constants/secret-missions';
+import { MISSION_POOL, getMissionText, getMissionCategoryLabel, type MissionSuggestion } from '../constants/secret-missions';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
 import { Shadows } from '../constants/shadows';
@@ -34,11 +34,11 @@ interface SecretMissionCreatorProps {
 }
 
 /** Emoji par catégorie de mission */
-const CATEGORY_META: Record<string, { label: string; emoji: string }> = {
-  tendresse: { label: 'Tendresse', emoji: '💕' },
-  responsabilité: { label: 'Responsabilité', emoji: '🧹' },
-  créativité: { label: 'Créativité', emoji: '🎨' },
-  entraide: { label: 'Entraide', emoji: '🤝' },
+const CATEGORY_EMOJIS: Record<string, string> = {
+  tendresse: '💕',
+  responsabilité: '🧹',
+  créativité: '🎨',
+  entraide: '🤝',
 };
 
 /** Regroupe les missions par catégorie */
@@ -169,11 +169,11 @@ export const SecretMissionCreator = React.memo(function SecretMissionCreator({
             💡 Suggestions
           </Text>
           {Object.entries(groupedMissions).map(([category, missions]) => {
-            const meta = CATEGORY_META[category] ?? { label: category, emoji: '📋' };
+            const emoji = CATEGORY_EMOJIS[category] ?? '📋';
             return (
               <View key={category} style={styles.categoryBlock}>
                 <Text style={[styles.categoryHeader, { color: colors.textMuted }]}>
-                  {meta.emoji} {meta.label}
+                  {emoji} {getMissionCategoryLabel(category as MissionSuggestion['category'])}
                 </Text>
                 <View style={styles.suggestionsGrid}>
                   {missions.map((m, idx) => (
@@ -182,15 +182,15 @@ export const SecretMissionCreator = React.memo(function SecretMissionCreator({
                       style={[
                         styles.suggestionChip,
                         {
-                          backgroundColor: missionText === m.text
+                          backgroundColor: missionText === getMissionText(m)
                             ? colors.warningBg
                             : colors.cardAlt,
-                          borderColor: missionText === m.text
+                          borderColor: missionText === getMissionText(m)
                             ? colors.warning
                             : colors.border,
                         },
                       ]}
-                      onPress={() => setMissionText(m.text)}
+                      onPress={() => setMissionText(getMissionText(m))}
                       activeOpacity={0.7}
                     >
                       <Text style={styles.suggestionEmoji}>{m.emoji}</Text>
@@ -201,7 +201,7 @@ export const SecretMissionCreator = React.memo(function SecretMissionCreator({
                         ]}
                         numberOfLines={2}
                       >
-                        {m.text}
+                        {getMissionText(m)}
                       </Text>
                     </TouchableOpacity>
                   ))}

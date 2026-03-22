@@ -3,7 +3,10 @@
  *
  * Chaque écran a une liste ordonnée de coach marks (max 3).
  * Le contenu est en français avec accents.
+ * Traductions disponibles dans locales/{fr,en}/help.json.
  */
+
+import { t } from 'i18next';
 
 export interface CoachMarkContent {
   /** Titre court (optionnel) */
@@ -166,6 +169,47 @@ export const HELP_CONTENT: Record<string, CoachMarkContent[]> = {
     },
   ],
 };
+
+// ─── Helpers i18n ───────────────────────────────────────────────────────────
+
+/** Retourne le coach mark traduit pour un écran donné */
+export function getCoachMark(screenId: string, index: number): CoachMarkContent | undefined {
+  const marks = HELP_CONTENT[screenId];
+  if (!marks || !marks[index]) return undefined;
+  const mark = marks[index];
+  const i = index + 1;
+  return {
+    ...mark,
+    title: mark.title ? t(`help:coach.${screenId}.${i}.title`, { defaultValue: mark.title }) : undefined,
+    body: t(`help:coach.${screenId}.${i}.body`, { defaultValue: mark.body }),
+    childBody: mark.childBody ? t(`help:coach.${screenId}.${i}.childBody`, { defaultValue: mark.childBody }) : undefined,
+  };
+}
+
+/** Retourne tous les coach marks traduits pour un écran */
+export function getCoachMarks(screenId: string): CoachMarkContent[] {
+  const marks = HELP_CONTENT[screenId];
+  if (!marks) return [];
+  return marks.map((_, i) => getCoachMark(screenId, i)!);
+}
+
+/** Retourne le nom traduit d'un écran pour le guide */
+export function getScreenName(screenId: string, fallback: string): string {
+  return t(`help:guide.screens.${screenId}.name`, { defaultValue: fallback });
+}
+
+/** Retourne la description traduite d'un écran pour le guide */
+export function getScreenDescription(screenId: string, fallback: string): string {
+  return t(`help:guide.screens.${screenId}.description`, { defaultValue: fallback });
+}
+
+/** Retourne le label traduit d'une catégorie du guide */
+export function getGuideCategoryLabel(category: string): string {
+  const key = category.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return t(`help:guide.categories.${key}`, { defaultValue: category });
+}
+
+// ─── Guide sections ─────────────────────────────────────────────────────────
 
 /** Contenu pour le guide revisitable (HelpModal) */
 export interface HelpGuideSection {

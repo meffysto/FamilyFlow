@@ -1,0 +1,348 @@
+{
+  "rarity": {
+    "commun": "Common",
+    "rare": "Rare",
+    "épique": "Epic",
+    "légendaire": "Legendary",
+    "mythique": "MYTHIC"
+  },
+  "difficulty": {
+    "facile": "Easy",
+    "moyen": "Medium",
+    "difficile": "Hard"
+  },
+  "defiCategory": {
+    "ecrans": "Screens",
+    "cuisine": "Cooking",
+    "lecture": "Reading",
+    "sport": "Sports",
+    "menage": "Chores",
+    "nature": "Nature",
+    "famille": "Family"
+  },
+  "defis": {
+    "ecrans_soiree": {
+      "title": "Screen-free evening",
+      "description": "No screens after 7pm for the duration of the challenge"
+    },
+    "ecrans_weekend": {
+      "title": "Unplugged weekend",
+      "description": "No phone on weekends (except emergencies)"
+    },
+    "cuisine_famille": {
+      "title": "Family cooking",
+      "description": "Cook a family meal together every day"
+    },
+    "cuisine_nouveau": {
+      "title": "New recipe",
+      "description": "Try a brand new recipe each day"
+    },
+    "lecture_30min": {
+      "title": "30 min of reading/day",
+      "description": "Read for at least 30 minutes every day"
+    },
+    "lecture_histoire": {
+      "title": "Bedtime story",
+      "description": "Read a bedtime story to the kids every night"
+    },
+    "sport_marche": {
+      "title": "Daily walk",
+      "description": "Take at least a 30 min family walk"
+    },
+    "sport_10000": {
+      "title": "10,000 steps/day",
+      "description": "Reach 10,000 steps every day"
+    },
+    "menage_ranger": {
+      "title": "Tidy room",
+      "description": "Tidy up your room every morning before leaving"
+    },
+    "nature_sortie": {
+      "title": "Nature outing",
+      "description": "Spend time outdoors every day (park, garden, forest)"
+    },
+    "famille_jeu": {
+      "title": "Board game night",
+      "description": "Play a board game together every evening"
+    },
+    "famille_compliment": {
+      "title": "Compliment of the day",
+      "description": "Each family member gives a compliment to another"
+    },
+    "coop_explorateur_culinaire": {
+      "title": "Culinary explorers",
+      "description": "Cook 5 new recipes as a family this week. Everyone can suggest and help!"
+    },
+    "coop_zero_gaspi": {
+      "title": "Zero waste",
+      "description": "Finish all leftovers in the fridge before buying new food. Goal: 0 food items wasted this week."
+    },
+    "coop_km_famille": {
+      "title": "Family marathon",
+      "description": "Accumulate 42 km of walking/running as a family. Every outing counts!"
+    },
+    "coop_livres": {
+      "title": "Family library",
+      "description": "Read 10 books or stories out loud together. Each book counts for everyone."
+    },
+    "coop_sorties_nature": {
+      "title": "Outdoor adventurers",
+      "description": "Go on 8 nature outings as a family this month (park, forest, beach, garden…)."
+    },
+    "coop_gentillesse": {
+      "title": "Kindness chain",
+      "description": "Do 20 acts of kindness as a family this week. Coffee in bed, a drawing, helping tidy up…"
+    },
+    "coop_ecrans_famille": {
+      "title": "Reconnected evenings",
+      "description": "Spend 5 screen-free evenings as a family this week. Games, conversations, crafts."
+    },
+    "coop_menage_express": {
+      "title": "Cleaning blitz",
+      "description": "Complete 10 express cleaning sessions (15 min timer, everyone pitches in)."
+    },
+    "coop_photo_jour": {
+      "title": "Family photo journal",
+      "description": "Take a family photo every day for 2 weeks. Anyone can be the photographer."
+    },
+    "coop_gratitude_100": {
+      "title": "100 thank-yous",
+      "description": "Write 100 gratitudes as a family in one month. Each member contributes to the shared counter."
+    }
+  },
+  "missions": {
+    "tendresse_1": "Give someone a surprise hug",
+    "tendresse_2": "Say \"I love you\" to every family member",
+    "tendresse_3": "Draw a heart and hide it somewhere",
+    "tendresse_4": "Give a genuine compliment to everyone",
+    "tendresse_5": "Write a little letter or draw something for a parent",
+    "tendresse_6": "Prepare a surprise kiss when someone wakes up",
+    "responsabilite_1": "Secretly tidy up your room",
+    "responsabilite_2": "Set the table without being asked",
+    "responsabilite_3": "Make breakfast for the family",
+    "responsabilite_4": "Water the house plants",
+    "responsabilite_5": "Sort your toys and donate the ones you no longer use",
+    "responsabilite_6": "Empty the dishwasher without being asked",
+    "creativite_1": "Make up a story and tell it to the family",
+    "creativite_2": "Make a drawing to decorate the house",
+    "creativite_3": "Put on a little show (song, dance, magic trick)",
+    "creativite_4": "Write or make up a song",
+    "creativite_5": "Build something with whatever you find at home",
+    "entraide_1": "Help a brother or sister with a chore",
+    "entraide_2": "Offer your help without being asked",
+    "entraide_3": "Share a favorite toy or book",
+    "entraide_4": "Comfort someone who is feeling sad"
+  },
+  "missionCategory": {
+    "tendresse": "Affection",
+    "responsabilité": "Responsibility",
+    "créativité": "Creativity",
+    "entraide": "Helpfulness"
+  },
+  "rewards": {
+    "commun": {
+      "1": "+5 bonus points",
+      "2": "+8 bonus points",
+      "3": "A cookie or snack of your choice",
+      "4": "+15 min screen time",
+      "5": "Pick the dinner music",
+      "6": "Choose your spot on the couch",
+      "7": "Choose tonight's activity",
+      "8": "Teddy Bear Badge",
+      "9": "Rainbow Badge",
+      "10": "Butterfly Badge",
+      "11": "Lucky Clover Badge",
+      "12": "Party Balloon Badge"
+    },
+    "rare": {
+      "1": "+15 bonus points",
+      "2": "Pick what's for dinner tonight!",
+      "3": "Choose the movie tonight",
+      "4": "+30 min screen time",
+      "5": "Swap a chore with someone",
+      "6": "+1 hour of video games",
+      "7": "Rare Unicorn Badge",
+      "8": "Dragon Badge",
+      "9": "Rocket Badge",
+      "10": "Golden Trophy Badge"
+    },
+    "épique": {
+      "1": "+30 bonus points",
+      "2": "Ice cream or dessert outing!",
+      "3": "Unlimited video game night",
+      "4": "Late bedtime: +30 min tonight",
+      "5": "Skip one chore tomorrow (your pick)",
+      "6": "x2 Multiplier (5 tasks)",
+      "7": "Royal Crown Badge",
+      "8": "Shooting Star Badge"
+    },
+    "légendaire": {
+      "1": "x3 Multiplier (10 tasks)!",
+      "2": "Special family outing!",
+      "3": "Breakfast in bed this weekend",
+      "4": "Skip ALL chores tomorrow",
+      "5": "+20 pts for the WHOLE family"
+    },
+    "mythique": {
+      "1": "2 DAYS WITH NO CHORES!",
+      "2": "King/Queen of the week — you pick the menu!",
+      "3": "x5 Multiplier (20 tasks)!!",
+      "4": "Instant double loot box!"
+    }
+  },
+  "seasonal": {
+    "nouvel-an": {
+      "name": "New Year",
+      "rewards": {
+        "commun": {
+          "1": "Fireworks Badge",
+          "2": "+10 happy new year points"
+        },
+        "rare": {
+          "1": "Write family New Year's resolutions together"
+        },
+        "épique": {
+          "1": "Special late bedtime on New Year's Eve"
+        },
+        "légendaire": {
+          "1": "x3 Multiplier (10 tasks) — New Year"
+        }
+      }
+    },
+    "st-valentin": {
+      "name": "Family Valentine's Day",
+      "rewards": {
+        "commun": {
+          "1": "Write a kind note to a family member",
+          "2": "Little Heart Badge"
+        },
+        "rare": {
+          "1": "Family dinner at a restaurant",
+          "2": "Everyone names 3 qualities of another member"
+        },
+        "épique": {
+          "1": "Family Heart Badge"
+        },
+        "légendaire": {
+          "1": "+30 pts for the WHOLE family"
+        }
+      }
+    },
+    "poisson-avril": {
+      "name": "April Fools' Day",
+      "rewards": {
+        "commun": {
+          "1": "Fish Badge"
+        },
+        "rare": {
+          "1": "One free family prank (no payback allowed)"
+        },
+        "épique": {
+          "1": "Parent/kid role swap for 1 hour"
+        }
+      }
+    },
+    "paques": {
+      "name": "Easter",
+      "rewards": {
+        "commun": {
+          "1": "Colorful Egg Badge",
+          "2": "+8 bunny bonus points"
+        },
+        "rare": {
+          "1": "Easter egg hunt organized by the parents",
+          "2": "Spring Blossom Badge"
+        },
+        "épique": {
+          "1": "Golden Chick Badge",
+          "2": "x2 Multiplier (5 tasks) Easter special"
+        },
+        "légendaire": {
+          "1": "Special spring outing (park, zoo...)"
+        }
+      }
+    },
+    "ete": {
+      "name": "Summer",
+      "rewards": {
+        "commun": {
+          "1": "Seashell Badge",
+          "2": "Ice cream of your choice"
+        },
+        "rare": {
+          "1": "Pool or beach outing",
+          "2": "Sunshine Badge"
+        },
+        "épique": {
+          "1": "Activity of your choice (treetop course, kayak...)",
+          "2": "Late bedtime +1 hour"
+        },
+        "légendaire": {
+          "1": "BBQ night + fireworks"
+        },
+        "mythique": {
+          "1": "Rare Summer Pearl Badge"
+        }
+      }
+    },
+    "rentree": {
+      "name": "Back to School",
+      "rewards": {
+        "commun": {
+          "1": "Book Badge",
+          "2": "Pick your snacks for the week"
+        },
+        "rare": {
+          "1": "+15 back-to-school bonus points",
+          "2": "Top of the Class Badge"
+        },
+        "épique": {
+          "1": "+50 welcome-back points"
+        }
+      }
+    },
+    "halloween": {
+      "name": "Halloween",
+      "rewards": {
+        "commun": {
+          "1": "Spiderweb Badge",
+          "2": "Ghost scream at the next meal"
+        },
+        "rare": {
+          "1": "Pick a Halloween movie (age-appropriate)",
+          "2": "Bat Badge"
+        },
+        "épique": {
+          "1": "Family costume party!",
+          "2": "Golden Skull Badge"
+        },
+        "légendaire": {
+          "1": "Haunted house or escape room outing"
+        }
+      }
+    },
+    "noel": {
+      "name": "Christmas",
+      "rewards": {
+        "commun": {
+          "1": "Snowman Badge",
+          "2": "Bake Christmas cookies together"
+        },
+        "rare": {
+          "1": "Write a letter to Santa",
+          "2": "Golden Reindeer Badge"
+        },
+        "épique": {
+          "1": "Open a present early!",
+          "2": "x2 Multiplier (10 tasks) Christmas special"
+        },
+        "légendaire": {
+          "1": "Family trip to the Christmas market"
+        },
+        "mythique": {
+          "1": "Mythic Christmas Tree Badge"
+        }
+      }
+    }
+  }
+}
