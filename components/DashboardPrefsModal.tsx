@@ -224,10 +224,10 @@ export function DashboardPrefsModal({ sections: initialSections, smartSort: init
         <View style={[styles.smartSortRow, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
           <View style={styles.smartSortInfo}>
             <Text style={[styles.smartSortLabel, { color: colors.text }]}>
-              🪄 Tri intelligent
+              {t('dashboardPrefs.smartSort')}
             </Text>
             <Text style={[styles.smartSortDesc, { color: colors.textMuted }]}>
-              Réordonne les cartes selon le contexte (heure, urgences, données disponibles)
+              {t('dashboardPrefs.smartSortDesc')}
             </Text>
           </View>
           <Switch
