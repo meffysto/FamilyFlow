@@ -37,7 +37,10 @@ export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramTok
     setIsTesting(true);
     const ok = await testTelegram(telegramToken.trim(), telegramChatId.trim());
     setIsTesting(false);
-    Alert.alert(ok ? t('settings.telegram.testSuccess') : t('settings.telegram.testFail'), ok ? t('settings.telegram.testSuccessMsg') : t('settings.telegram.testFailMsg'));
+    Alert.alert(
+      ok ? t('settings.telegram.testSuccess') : t('settings.telegram.testFail'),
+      ok ? t('settings.telegram.testSuccessMsg') : t('settings.telegram.testFailMsg'),
+    );
   }, [telegramToken, telegramChatId, t]);
 
   const handleSave = useCallback(async () => {
@@ -84,7 +87,7 @@ export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramTok
           <ModalHeader title={t('settings.telegram.modalTitle')} onClose={() => setShowSetup(false)} />
           <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalContent}>
             <View style={[styles.setupStep, { borderLeftColor: primary, backgroundColor: colors.cardAlt }]}>
-              <Text style={[styles.setupTitle, { color: colors.text }]}>🤖 Étape 1 — Créer le bot</Text>
+              <Text style={[styles.setupTitle, { color: colors.text }]}>{t('settings.telegram.step1Title')}</Text>
               <Text style={[styles.setupText, { color: colors.textSub }]}>
                 1. Ouvrez Telegram et cherchez <Text style={[styles.bold, { color: colors.text }]}>@BotFather</Text>{'\n'}
                 2. Envoyez <Text style={[styles.code, { color: primary, backgroundColor: colors.border }]}>/newbot</Text>{'\n'}
@@ -107,7 +110,7 @@ export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramTok
             />
 
             <View style={[styles.setupStep, { borderLeftColor: primary, backgroundColor: colors.cardAlt }]}>
-              <Text style={[styles.setupTitle, { color: colors.text }]}>🔑 Étape 2 — Trouver votre Chat ID</Text>
+              <Text style={[styles.setupTitle, { color: colors.text }]}>{t('settings.telegram.step2Title')}</Text>
               <Text style={[styles.setupText, { color: colors.textSub }]}>
                 1. Sur Telegram, ouvrez la conversation avec votre bot{'\n'}
                 2. Envoyez-lui un message (ex: "hello"){'\n'}

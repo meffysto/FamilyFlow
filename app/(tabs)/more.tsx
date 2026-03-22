@@ -24,6 +24,7 @@ import { Shadows } from '../../constants/shadows';
 import { isRdvUpcoming } from '../../lib/parser';
 import { totalSpent, totalBudget } from '../../lib/budget';
 import { isBabyProfile } from '../../lib/types';
+import { useTranslation } from 'react-i18next';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 
@@ -40,13 +41,13 @@ interface MenuItem {
   category: 'organisation' | 'sante' | 'souvenirs' | 'jeux' | 'famille' | 'systeme';
 }
 
-const CATEGORY_LABELS = {
-  organisation: 'Organisation',
-  sante: 'Santé & Bien-être',
-  souvenirs: 'Souvenirs & Émotions',
-  jeux: 'Jeux & Progrès',
-  famille: 'Vie de famille',
-  systeme: 'Système',
+const CATEGORY_LABEL_KEYS = {
+  organisation: 'menu.categories.organisation',
+  sante: 'menu.categories.health',
+  souvenirs: 'menu.categories.memories',
+  jeux: 'menu.categories.games',
+  famille: 'menu.categories.family',
+  systeme: 'menu.categories.system',
 } as const;
 
 export default function MoreScreen() {
@@ -54,6 +55,7 @@ export default function MoreScreen() {
   const headerRef = useRef<View>(null);
   const { rdvs, stock, courses, gamiData, budgetEntries, budgetConfig, activeProfile, profiles, defis, wishlistItems, anniversaries, notes } = useVault();
   const { primary, colors } = useThemeColors();
+  const { t } = useTranslation();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
 
   // Préférence vue liste/grille persistée
@@ -96,33 +98,33 @@ export default function MoreScreen() {
 
     return [
       // Organisation
-      { emoji: '🔄', label: 'Routines', route: '/(tabs)/routines', color: colors.info, category: 'organisation' as const },
-      { emoji: '📅', label: 'Rendez-vous', route: '/(tabs)/rdv', badge: upcomingRdvs || undefined, color: colors.info, category: 'organisation' as const },
-      { emoji: '🍽️', label: 'Repas', route: '/(tabs)/meals', color: colors.success, category: 'organisation' as const },
-      { emoji: '📖', label: 'Idées recettes', route: '/(tabs)/meals', params: { tab: 'recettes' }, color: colors.success, category: 'organisation' as const },
-      { emoji: '🛒', label: 'Courses', route: '/(tabs)/meals', params: { tab: 'courses' }, badge: courses.filter((c) => !c.completed).length || undefined, color: colors.success, category: 'organisation' as const },
-      { emoji: '📦', label: 'Stocks & Fournitures', route: '/(tabs)/stock', badge: lowStock || undefined, color: colors.warning, category: 'organisation' as const },
+      { emoji: '🔄', label: t('menu.items.routines'), route: '/(tabs)/routines', color: colors.info, category: 'organisation' as const },
+      { emoji: '📅', label: t('menu.items.appointments'), route: '/(tabs)/rdv', badge: upcomingRdvs || undefined, color: colors.info, category: 'organisation' as const },
+      { emoji: '🍽️', label: t('menu.items.meals'), route: '/(tabs)/meals', color: colors.success, category: 'organisation' as const },
+      { emoji: '📖', label: t('menu.items.recipes'), route: '/(tabs)/meals', params: { tab: 'recettes' }, color: colors.success, category: 'organisation' as const },
+      { emoji: '🛒', label: t('menu.items.shopping'), route: '/(tabs)/meals', params: { tab: 'courses' }, badge: courses.filter((c) => !c.completed).length || undefined, color: colors.success, category: 'organisation' as const },
+      { emoji: '📦', label: t('menu.items.stock'), route: '/(tabs)/stock', badge: lowStock || undefined, color: colors.warning, category: 'organisation' as const },
       // Santé & Bien-être
-      { emoji: '🏥', label: 'Santé', route: '/(tabs)/health', color: colors.error, category: 'sante' as const },
-      { emoji: '🌤️', label: 'Humeurs', route: '/(tabs)/moods', color: '#F59E0B', category: 'sante' as const },
-      ...(hasBaby ? [{ emoji: '🌙', label: 'Mode nuit', route: '/(tabs)/night-mode', color: '#B8860B', category: 'sante' as const }] : []),
-      ...(profiles.some(p => p.statut === 'grossesse') ? [{ emoji: '🤰', label: 'Grossesse', route: '/(tabs)/pregnancy' as const, color: '#EC4899', category: 'sante' as const }] : []),
+      { emoji: '🏥', label: t('menu.items.health'), route: '/(tabs)/health', color: colors.error, category: 'sante' as const },
+      { emoji: '🌤️', label: t('menu.items.moods'), route: '/(tabs)/moods', color: '#F59E0B', category: 'sante' as const },
+      ...(hasBaby ? [{ emoji: '🌙', label: t('menu.items.nightMode'), route: '/(tabs)/night-mode', color: '#B8860B', category: 'sante' as const }] : []),
+      ...(profiles.some(p => p.statut === 'grossesse') ? [{ emoji: '🤰', label: t('menu.items.pregnancy'), route: '/(tabs)/pregnancy' as const, color: '#EC4899', category: 'sante' as const }] : []),
       // Souvenirs & Émotions
-      { emoji: '📸', label: 'Photos', route: '/(tabs)/photos', color: colors.accentPink, category: 'souvenirs' as const },
-      { emoji: '💬', label: 'Mots d\'enfants', route: '/(tabs)/quotes', color: '#06B6D4', category: 'souvenirs' as const },
-      { emoji: '🙏', label: 'Gratitude', route: '/(tabs)/gratitude', color: '#8B5CF6', category: 'souvenirs' as const },
+      { emoji: '📸', label: t('menu.items.photos'), route: '/(tabs)/photos', color: colors.accentPink, category: 'souvenirs' as const },
+      { emoji: '💬', label: t('menu.items.quotes'), route: '/(tabs)/quotes', color: '#06B6D4', category: 'souvenirs' as const },
+      { emoji: '🙏', label: t('menu.items.gratitude'), route: '/(tabs)/gratitude', color: '#8B5CF6', category: 'souvenirs' as const },
       // Jeux & Progrès
-      { emoji: '🌳', label: 'Compétences', route: '/(tabs)/skills', color: '#10B981', category: 'jeux' as const },
-      { emoji: '🎰', label: 'Récompenses', route: '/(tabs)/loot', badge: lootBoxes || undefined, color: '#EC4899', category: 'jeux' as const },
-      { emoji: '🏅', label: 'Défis', route: '/(tabs)/defis', badge: activeDefis || undefined, color: '#F59E0B', category: 'jeux' as const },
+      { emoji: '🌳', label: t('menu.items.skills'), route: '/(tabs)/skills', color: '#10B981', category: 'jeux' as const },
+      { emoji: '🎰', label: t('menu.items.rewards'), route: '/(tabs)/loot', badge: lootBoxes || undefined, color: '#EC4899', category: 'jeux' as const },
+      { emoji: '🏅', label: t('menu.items.challenges'), route: '/(tabs)/defis', badge: activeDefis || undefined, color: '#F59E0B', category: 'jeux' as const },
       // Vie de famille
-      { emoji: '🎂', label: 'Anniversaires', route: '/(tabs)/anniversaires', badge: upcomingBirthdays || undefined, color: '#D946EF', category: 'famille' as const },
-      { emoji: '🎁', label: 'Souhaits', route: '/(tabs)/wishlist', badge: wishlistUnbought || undefined, color: '#E11D48', category: 'famille' as const },
-      { emoji: '💰', label: 'Budget', route: '/(tabs)/budget', badge: totalSpent(budgetEntries) > totalBudget(budgetConfig) ? 1 : undefined, color: '#059669', category: 'famille' as const },
-      { emoji: '📝', label: 'Notes', route: '/(tabs)/notes', badge: notes.length || undefined, color: colors.info, category: 'famille' as const },
-      { emoji: '📊', label: 'Statistiques', route: '/(tabs)/stats', color: colors.info, category: 'famille' as const },
+      { emoji: '🎂', label: t('menu.items.birthdays'), route: '/(tabs)/anniversaires', badge: upcomingBirthdays || undefined, color: '#D946EF', category: 'famille' as const },
+      { emoji: '🎁', label: t('menu.items.wishlist'), route: '/(tabs)/wishlist', badge: wishlistUnbought || undefined, color: '#E11D48', category: 'famille' as const },
+      { emoji: '💰', label: t('menu.items.budget'), route: '/(tabs)/budget', badge: totalSpent(budgetEntries) > totalBudget(budgetConfig) ? 1 : undefined, color: '#059669', category: 'famille' as const },
+      { emoji: '📝', label: t('menu.items.notes'), route: '/(tabs)/notes', badge: notes.length || undefined, color: colors.info, category: 'famille' as const },
+      { emoji: '📊', label: t('menu.items.stats'), route: '/(tabs)/stats', color: colors.info, category: 'famille' as const },
       // Système
-      { emoji: '⚙️', label: 'Réglages', route: '/(tabs)/settings', color: colors.textMuted, category: 'systeme' as const },
+      { emoji: '⚙️', label: t('menu.items.settings'), route: '/(tabs)/settings', color: colors.textMuted, category: 'systeme' as const },
     ];
   }, [rdvs, stock, gamiData, budgetEntries, budgetConfig, colors, profiles, defis, wishlistItems, anniversaries]);
 
@@ -166,7 +168,7 @@ export default function MoreScreen() {
           return (
             <View key={cat} style={styles.section}>
               <Text style={[styles.sectionHeader, { color: colors.textMuted }]}>
-                {CATEGORY_LABELS[cat]}
+                {t(CATEGORY_LABEL_KEYS[cat])}
               </Text>
 
               {viewMode === 'list' ? (

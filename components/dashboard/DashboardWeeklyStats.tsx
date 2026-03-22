@@ -4,13 +4,13 @@
 
 import React, { useMemo } from 'react';
 import { Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { BarChart } from '../charts';
 import { aggregateTasksByWeek, getWeekStart } from '../../lib/stats';
-import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 import { FontSize } from '../../constants/typography';
 

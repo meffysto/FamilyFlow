@@ -7,6 +7,7 @@
 
 import React, { useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -20,7 +21,6 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -38,6 +38,7 @@ interface DashboardZenStateProps {
 }
 
 // Messages are now loaded from i18n: dashboard.zenState.messages / childMessages
+
 
 function DashboardZenStateInner({ isChildMode, tomorrow }: DashboardZenStateProps) {
   const { t } = useTranslation();

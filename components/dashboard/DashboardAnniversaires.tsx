@@ -8,13 +8,13 @@
 
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { Spacing } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import type { Anniversary } from '../../lib/types';
-import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 
 interface UpcomingAnniversary {

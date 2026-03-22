@@ -12,6 +12,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -102,6 +103,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
 }) {
   const { primary, colors, isDark } = useThemeColors();
   const { hasPin, authenticate, verifyPin, biometryAvailable } = useAuth();
+  const { t } = useTranslation();
   const router = useRouter();
   const segments = useSegments();
   const showPicker = profiles.length > 0 && !activeProfile;
@@ -217,35 +219,35 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
         <Tabs.Screen
           name="index"
           options={{
-            title: "Aujourd'hui",
+            title: t('tabs.today'),
             tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="tasks"
           options={{
-            title: 'Tâches',
+            title: t('tabs.tasks'),
             tabBarIcon: ({ focused }) => <TabIcon emoji="📋" focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="journal"
           options={{
-            title: 'Journal',
+            title: t('tabs.journal'),
             tabBarIcon: ({ focused }) => <TabIcon emoji="📖" focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="calendar"
           options={{
-            title: 'Calendrier',
+            title: t('tabs.calendar'),
             tabBarIcon: ({ focused }) => <TabIcon emoji="📆" focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="more"
           options={{
-            title: 'Menu',
+            title: t('tabs.menu'),
             tabBarIcon: ({ focused }) => <TabIcon emoji="🗂️" focused={focused} />,
           }}
         />

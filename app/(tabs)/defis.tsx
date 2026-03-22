@@ -441,6 +441,7 @@ function DefiDetailModal({
   onClose: () => void;
 }) {
   const { primary, colors } = useThemeColors();
+  const { t } = useTranslation();
   const today = new Date().toISOString().slice(0, 10);
   const [checkInValue, setCheckInValue] = useState('');
   const [checkInNote, setCheckInNote] = useState('');
@@ -472,7 +473,7 @@ function DefiDetailModal({
         {/* Progression résumé */}
         <View style={detailStyles.summaryRow}>
           <Text style={[detailStyles.summaryText, { color: colors.text }]}>
-            {uniqueCompletedDays}/{defi.targetDays} jours
+            {t('defis.card.daysCount', { done: uniqueCompletedDays, total: defi.targetDays })}
           </Text>
           {defi.type === 'cumulative' && defi.targetMetric && (
             <Text style={[detailStyles.summaryText, { color: primary }]}>
@@ -483,7 +484,7 @@ function DefiDetailModal({
         <ProgressBar progress={progressRatio} color={primary} />
 
         {/* Grille calendrier */}
-        <Text style={[detailStyles.sectionTitle, { color: colors.textMuted }]}>Calendrier</Text>
+        <Text style={[detailStyles.sectionTitle, { color: colors.textMuted }]}>{t('defis.detail.calendar')}</Text>
         <View style={detailStyles.calendarGrid}>
           {days.map((day) => {
             const dayEntries = defi.progress.filter((p) => p.date === day);
@@ -507,7 +508,7 @@ function DefiDetailModal({
         </View>
 
         {/* Progression par participant */}
-        <Text style={[detailStyles.sectionTitle, { color: colors.textMuted }]}>Par participant</Text>
+        <Text style={[detailStyles.sectionTitle, { color: colors.textMuted }]}>{t('defis.detail.perParticipant')}</Text>
         {participantList.map((p) => {
           const entries = defi.progress.filter((e) => e.profileId === p.id);
           const completed = entries.filter((e) => e.completed).length;
@@ -518,8 +519,8 @@ function DefiDetailModal({
               <View style={detailStyles.participantInfo}>
                 <Text style={[detailStyles.participantName, { color: colors.text }]}>{p.name}</Text>
                 <Text style={[detailStyles.participantMeta, { color: colors.textMuted }]}>
-                  {completed} jour{completed > 1 ? 's' : ''} complété{completed > 1 ? 's' : ''}
-                  {todayDone ? ' · Fait aujourd\'hui' : ''}
+                  {t('defis.detail.daysCompleted', { count: completed })}
+                  {todayDone ? ` · ${t('defis.detail.doneToday')}` : ''}
                 </Text>
               </View>
             </View>
@@ -529,14 +530,14 @@ function DefiDetailModal({
         {/* Formulaire check-in du jour */}
         {defi.status === 'active' && (
           <>
-            <Text style={[detailStyles.sectionTitle, { color: colors.textMuted }]}>Check-in du jour</Text>
+            <Text style={[detailStyles.sectionTitle, { color: colors.textMuted }]}>{t('defis.detail.checkInTitle')}</Text>
             {defi.type === 'cumulative' && (
               <View style={detailStyles.checkInRow}>
                 <TextInput
                   style={[detailStyles.checkInInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
                   value={checkInValue}
                   onChangeText={setCheckInValue}
-                  placeholder={`Valeur (${defi.metricUnit ?? 'unités'})`}
+                  placeholder={t('defis.detail.valuePlaceholder', { unit: defi.metricUnit ?? 'unités' })}
                   placeholderTextColor={colors.textFaint}
                   keyboardType="numeric"
                 />
@@ -546,7 +547,7 @@ function DefiDetailModal({
               style={[detailStyles.checkInInput, detailStyles.noteInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
               value={checkInNote}
               onChangeText={setCheckInNote}
-              placeholder="Note (optionnel)"
+              placeholder={t('defis.detail.notePlaceholder')}
               placeholderTextColor={colors.textFaint}
             />
             <View style={detailStyles.checkInButtons}>
@@ -569,13 +570,13 @@ function DefiDetailModal({
                     }}
                     disabled={todayDone}
                     activeOpacity={0.7}
-                    accessibilityLabel={todayDone ? `${p.name}, déjà fait aujourd'hui` : `Check-in pour ${p.name}`}
+                    accessibilityLabel={todayDone ? t('defis.detail.doneA11y', { name: p.name }) : t('defis.detail.checkInA11y', { name: p.name })}
                     accessibilityRole="button"
                     accessibilityState={{ disabled: todayDone }}
                   >
                     <Text style={detailStyles.checkInBtnAvatar}>{p.avatar}</Text>
                     <Text style={[detailStyles.checkInBtnText, { color: todayDone ? colors.success : colors.onPrimary }]}>
-                      {todayDone ? 'Fait' : 'Check-in'}
+                      {todayDone ? t('defis.detail.done') : t('defis.detail.checkIn')}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -584,13 +585,13 @@ function DefiDetailModal({
             {defi.type === 'abstinence' && (
               <TouchableOpacity
                 style={[detailStyles.failBtn, { backgroundColor: colors.errorBg, borderColor: colors.error }]}
-                accessibilityLabel="Signaler un échec"
+                accessibilityLabel={t('defis.detail.reportFailure')}
                 accessibilityRole="button"
                 onPress={() => {
-                  Alert.alert('Signaler un échec ?', 'Pour un défi abstinence, un échec met fin au défi.', [
-                    { text: 'Annuler', style: 'cancel' },
+                  Alert.alert(t('defis.detail.reportFailureTitle'), t('defis.detail.reportFailureMsg'), [
+                    { text: t('defis.alert.cancel'), style: 'cancel' },
                     {
-                      text: 'Confirmer', style: 'destructive', onPress: () => {
+                      text: t('defis.alert.confirm'), style: 'destructive', onPress: () => {
                         participantList.forEach((p) => onCheckIn(p.id, false));
                       },
                     },
@@ -598,7 +599,7 @@ function DefiDetailModal({
                 }}
                 activeOpacity={0.7}
               >
-                <Text style={[detailStyles.failBtnText, { color: colors.error }]}>Signaler un échec</Text>
+                <Text style={[detailStyles.failBtnText, { color: colors.error }]}>{t('defis.detail.reportFailure')}</Text>
               </TouchableOpacity>
             )}
           </>
@@ -611,25 +612,25 @@ function DefiDetailModal({
               style={[detailStyles.completeBtn, { backgroundColor: colors.success }]}
               onPress={onComplete}
               activeOpacity={0.7}
-              accessibilityLabel="Valider le défi comme réussi"
+              accessibilityLabel={t('defis.detail.validateA11y')}
               accessibilityRole="button"
             >
-              <Text style={[detailStyles.completeBtnText, { color: colors.onPrimary }]}>Valider le défi</Text>
+              <Text style={[detailStyles.completeBtnText, { color: colors.onPrimary }]}>{t('defis.detail.validateDefi')}</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity
             style={[detailStyles.deleteBtn, { backgroundColor: colors.errorBg }]}
             onPress={() => {
-              Alert.alert('Supprimer ce défi ?', 'Cette action est irréversible.', [
-                { text: 'Annuler', style: 'cancel' },
-                { text: 'Supprimer', style: 'destructive', onPress: onDelete },
+              Alert.alert(t('defis.alert.deleteTitle'), t('defis.alert.deleteMsg'), [
+                { text: t('defis.alert.cancel'), style: 'cancel' },
+                { text: t('defis.alert.delete'), style: 'destructive', onPress: onDelete },
               ]);
             }}
             activeOpacity={0.7}
-            accessibilityLabel="Supprimer le défi"
+            accessibilityLabel={t('defis.detail.deleteA11y')}
             accessibilityRole="button"
           >
-            <Text style={[detailStyles.deleteBtnText, { color: colors.error }]}>Supprimer</Text>
+            <Text style={[detailStyles.deleteBtnText, { color: colors.error }]}>{t('defis.detail.deleteBtn')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -697,6 +698,7 @@ const detailStyles = StyleSheet.create({
 
 export default function DefisScreen() {
   const { primary, tint, colors } = useThemeColors();
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const { profiles, defis, createDefi, checkInDefi, completeDefi, deleteDefi, activeProfile, refresh } = useVault();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
@@ -724,7 +726,7 @@ export default function DefisScreen() {
   const handleCreateDefi = useCallback(async (defi: Omit<Defi, 'progress' | 'status'>) => {
     await createDefi(defi);
     setConfigModal({ visible: false });
-    showToast(`Défi "${defi.title}" lancé !`);
+    showToast(t('defis.toast.launched', { title: defi.title }));
   }, [createDefi, showToast]);
 
   const handleCheckIn = useCallback(async (defiId: string, profileId: string, completed: boolean, value?: number, note?: string) => {
@@ -735,20 +737,20 @@ export default function DefisScreen() {
     if (!activeProfile) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     await checkInDefi(defi.id, activeProfile.id, true);
-    showToast(`Check-in ${defi.emoji} ${defi.title}`);
+    showToast(t('defis.toast.checkIn', { emoji: defi.emoji, title: defi.title }));
   }, [activeProfile, checkInDefi, showToast]);
 
   const handleCompleteDefi = useCallback(async (defiId: string) => {
     const defi = defis.find((d) => d.id === defiId);
     await completeDefi(defiId);
     setDetailDefiId(null);
-    showToast(`Bravo ! Défi "${defi?.title}" réussi ! ${defi?.rewardPoints} pts + ${defi?.rewardLootBoxes} loot box(es)`);
+    showToast(t('defis.toast.completed', { title: defi?.title, points: defi?.rewardPoints, lootBoxes: defi?.rewardLootBoxes }));
   }, [completeDefi, defis, showToast]);
 
   const handleDeleteDefi = useCallback(async (defiId: string) => {
     await deleteDefi(defiId);
     setDetailDefiId(null);
-    showToast('Défi supprimé');
+    showToast(t('defis.toast.deleted'));
   }, [deleteDefi, showToast]);
 
   // Grouper les templates par catégorie
@@ -762,15 +764,15 @@ export default function DefisScreen() {
   }, []);
 
   const tabs: { id: TabId; label: string; count?: number }[] = [
-    { id: 'actifs', label: 'Actifs', count: activeDefis.length || undefined },
-    { id: 'templates', label: 'Templates' },
-    { id: 'historique', label: 'Historique', count: historyDefis.length || undefined },
+    { id: 'actifs', label: t('defis.tabs.active'), count: activeDefis.length || undefined },
+    { id: 'templates', label: t('defis.tabs.templates') },
+    { id: 'historique', label: t('defis.tabs.history'), count: historyDefis.length || undefined },
   ];
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <View ref={defisContentRef} style={[styles.header, { backgroundColor: colors.bg }]}>
-        <Text style={[styles.title, { color: colors.text }]}>Défis familiaux</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('defis.screenTitle')}</Text>
       </View>
 
       {/* Onglets */}
@@ -793,9 +795,9 @@ export default function DefisScreen() {
             {activeDefis.length === 0 && (
               <EmptyState
                 emoji="🏆"
-                title="Aucun défi en cours"
-                subtitle="Lancez un défi familial pour motiver tout le monde"
-                ctaLabel="Créer un défi"
+                title={t('defis.empty.activeTitle')}
+                subtitle={t('defis.empty.activeSubtitle')}
+                ctaLabel={t('defis.empty.activeCta')}
                 onCta={() => setConfigModal({ visible: true })}
               />
             )}
@@ -824,9 +826,9 @@ export default function DefisScreen() {
                     style={[styles.templateCard, { backgroundColor: colors.card }]}
                     onPress={() => setConfigModal({ visible: true, template: tmpl })}
                     activeOpacity={0.7}
-                    accessibilityLabel={`Template ${getDefiTitle(tmpl.id, tmpl.title)}, difficulté ${getDifficultyLabel(tmpl.difficulty)}`}
+                    accessibilityLabel={t('defis.templates.templateA11y', { title: getDefiTitle(tmpl.id, tmpl.title), difficulty: getDifficultyLabel(tmpl.difficulty) })}
                     accessibilityRole="button"
-                    accessibilityHint="Appuyez pour lancer ce défi"
+                    accessibilityHint={t('defis.templates.templateHint')}
                   >
                     <Text style={styles.templateEmoji}>{tmpl.emoji}</Text>
                     <View style={styles.templateInfo}>
@@ -847,10 +849,10 @@ export default function DefisScreen() {
               style={[styles.customBtn, { borderColor: primary }]}
               onPress={() => setConfigModal({ visible: true })}
               activeOpacity={0.7}
-              accessibilityLabel="Créer un défi personnalisé"
+              accessibilityLabel={t('defis.templates.customA11y')}
               accessibilityRole="button"
             >
-              <Text style={[styles.customBtnText, { color: primary }]}>+ Créer un défi personnalisé</Text>
+              <Text style={[styles.customBtnText, { color: primary }]}>{t('defis.templates.customBtn')}</Text>
             </TouchableOpacity>
           </>
         )}
@@ -860,9 +862,9 @@ export default function DefisScreen() {
             {historyDefis.length === 0 && (
               <View style={[styles.emptyState, { backgroundColor: colors.card }]}>
                 <Text style={styles.emptyEmoji}>📜</Text>
-                <Text style={[styles.emptyTitle, { color: colors.text }]}>Aucun historique</Text>
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('defis.empty.historyTitle')}</Text>
                 <Text style={[styles.emptyDesc, { color: colors.textMuted }]}>
-                  Les défis terminés ou échoués apparaîtront ici.
+                  {t('defis.empty.historySubtitle')}
                 </Text>
               </View>
             )}
@@ -874,7 +876,7 @@ export default function DefisScreen() {
                   style={[styles.historyCard, { backgroundColor: colors.card }]}
                   onPress={() => setDetailDefiId(d.id)}
                   activeOpacity={0.7}
-                  accessibilityLabel={`${d.title}, ${isCompleted ? 'réussi' : 'échoué'}`}
+                  accessibilityLabel={t('defis.history.a11y', { title: d.title, status: isCompleted ? t('defis.history.succeeded') : t('defis.history.failed') })}
                   accessibilityRole="button"
                 >
                   <Text style={styles.historyEmoji}>{d.emoji}</Text>
@@ -885,7 +887,7 @@ export default function DefisScreen() {
                     </Text>
                   </View>
                   <Chip
-                    label={isCompleted ? 'Réussi' : 'Échoué'}
+                    label={isCompleted ? t('defis.history.succeeded') : t('defis.history.failed')}
                     color={isCompleted ? colors.success : colors.error}
                     size="sm"
                   />

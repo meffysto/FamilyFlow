@@ -4,6 +4,7 @@
 
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -12,7 +13,6 @@ import { DashboardEmptyState } from '../DashboardEmptyState';
 import { isRdvUpcoming } from '../../lib/parser';
 import { formatDateLocalized } from '../../lib/date-locale';
 import type { RDV } from '../../lib/types';
-import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
 

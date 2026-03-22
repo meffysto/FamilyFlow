@@ -7,6 +7,7 @@
 
 import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useAI } from '../../contexts/AIContext';
@@ -15,7 +16,6 @@ import { BilanSemaineCard } from '../BilanSemaineCard';
 import { buildWeeklyRecapData, formatRecapForAI, WeeklyRecapData } from '../../lib/weekly-recap';
 import { generateWeeklyBilan } from '../../lib/ai-service';
 import type { DashboardSectionProps } from './types';
-import { useTranslation } from 'react-i18next';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Spacing, Radius } from '../../constants/spacing';
 
@@ -242,7 +242,7 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
   // ── Rendu état par défaut (idle / loading / error) ──
   return (
     <DashboardCard
-      title="Bilan de semaine"
+      title={t('dashboard.bilanSemaine.title')}
       icon="📝"
       color={primary}
     >

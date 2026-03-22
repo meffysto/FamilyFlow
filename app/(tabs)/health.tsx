@@ -753,7 +753,7 @@ function VaccinsTab({ record, onAdd }: { record: HealthRecord; onAdd: () => void
       {grouped.length === 0 ? (
         <View style={styles.emptySection}>
           <Text style={[styles.emptySectionText, { color: colors.textMuted }]}>
-            Aucun vaccin enregistré.
+            {t('health.vaccines.noVaccines')}
           </Text>
         </View>
       ) : (
@@ -768,7 +768,7 @@ function VaccinsTab({ record, onAdd }: { record: HealthRecord; onAdd: () => void
               <Text style={[styles.vaccineName, { color: colors.text }]}>{nom}</Text>
               <View style={[styles.doseBadge, { backgroundColor: primary + '20' }]}>
                 <Text style={[styles.doseBadgeText, { color: primary }]}>
-                  {entries.length} dose{entries.length > 1 ? 's' : ''}
+                  {t('health.vaccines.dose', { count: entries.length })}
                 </Text>
               </View>
             </View>
@@ -796,6 +796,7 @@ function VaccinsTab({ record, onAdd }: { record: HealthRecord; onAdd: () => void
 
 function InfosTab({ record, onEdit }: { record: HealthRecord; onEdit: () => void }) {
   const { primary, colors } = useThemeColors();
+  const { t } = useTranslation();
 
   const InfoRow = ({ emoji, label, value }: { emoji: string; label: string; value?: string }) => (
     <View style={[styles.infoRow, { borderBottomColor: colors.separator }]}>
@@ -803,7 +804,7 @@ function InfosTab({ record, onEdit }: { record: HealthRecord; onEdit: () => void
       <View style={styles.infoContent}>
         <Text style={[styles.infoLabel, { color: colors.textMuted }]}>{label}</Text>
         <Text style={[styles.infoValue, { color: value ? colors.text : colors.textFaint }]}>
-          {value || 'Non renseigné'}
+          {value || t('health.info.notSpecified')}
         </Text>
       </View>
     </View>
@@ -820,7 +821,7 @@ function InfosTab({ record, onEdit }: { record: HealthRecord; onEdit: () => void
           </View>
         ))
       ) : (
-        <Text style={[styles.infoListEmpty, { color: colors.textFaint }]}>Aucun</Text>
+        <Text style={[styles.infoListEmpty, { color: colors.textFaint }]}>{t('health.info.none')}</Text>
       )}
     </View>
   );
@@ -828,22 +829,22 @@ function InfosTab({ record, onEdit }: { record: HealthRecord; onEdit: () => void
   return (
     <View style={styles.tabContent}>
       <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Fiche médicale</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('health.info.medicalRecord')}</Text>
         <TouchableOpacity style={[styles.addBtn, { backgroundColor: primary }]} onPress={onEdit} activeOpacity={0.7}>
-          <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>Modifier</Text>
+          <Text style={[styles.addBtnText, { color: colors.onPrimary }]}>{t('health.info.edit')}</Text>
         </TouchableOpacity>
       </View>
 
       <Animated.View entering={FadeInDown} style={[styles.infoCard, { backgroundColor: colors.card }]}>
-        <InfoRow emoji="🩸" label="Groupe sanguin" value={record.groupeSanguin} />
-        <InfoRow emoji="👨‍⚕️" label="Médecin" value={record.contactMedecin} />
-        <InfoRow emoji="👶" label="Pédiatre" value={record.contactPediatre} />
-        <InfoRow emoji="🚑" label="Urgences" value={record.contactUrgences} />
+        <InfoRow emoji="🩸" label={t('health.info.bloodType')} value={record.groupeSanguin} />
+        <InfoRow emoji="👨‍⚕️" label={t('health.info.doctor')} value={record.contactMedecin} />
+        <InfoRow emoji="👶" label={t('health.info.pediatrician')} value={record.contactPediatre} />
+        <InfoRow emoji="🚑" label={t('health.info.emergency')} value={record.contactUrgences} />
       </Animated.View>
 
-      <ListSection emoji="⚠️" title="Allergies" items={record.allergies} />
-      <ListSection emoji="🏥" title="Antécédents" items={record.antecedents} />
-      <ListSection emoji="💊" title="Médicaments en cours" items={record.medicamentsEnCours} />
+      <ListSection emoji="⚠️" title={t('health.info.allergies')} items={record.allergies} />
+      <ListSection emoji="🏥" title={t('health.info.history')} items={record.antecedents} />
+      <ListSection emoji="💊" title={t('health.info.medications')} items={record.medicamentsEnCours} />
     </View>
   );
 }

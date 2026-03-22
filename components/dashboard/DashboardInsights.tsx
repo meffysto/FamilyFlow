@@ -4,6 +4,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -13,7 +14,6 @@ import { DashboardCard } from '../DashboardCard';
 import { MarkdownText } from '../ui/MarkdownText';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
-import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 
 function DashboardInsightsInner({ insights: insightsProp }: DashboardSectionProps) {

@@ -4,13 +4,13 @@
 
 import React, { useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, ActionSheetIOS, Alert } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { format } from 'date-fns';
 import * as ImagePicker from 'expo-image-picker';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
-import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
 

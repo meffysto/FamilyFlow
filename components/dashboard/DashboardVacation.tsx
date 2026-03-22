@@ -4,12 +4,12 @@
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
 import { TaskCard } from '../TaskCard';
-import { useTranslation } from 'react-i18next';
 import type { DashboardSectionWithTaskToggleProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
 

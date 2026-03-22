@@ -1,4 +1,45 @@
 {
+  "tabs": {
+    "today": "Aujourd'hui",
+    "tasks": "Tâches",
+    "journal": "Journal",
+    "calendar": "Calendrier",
+    "menu": "Menu"
+  },
+  "menu": {
+    "categories": {
+      "organisation": "Organisation",
+      "health": "Santé & Bien-être",
+      "memories": "Souvenirs & Émotions",
+      "games": "Jeux & Progrès",
+      "family": "Vie de famille",
+      "system": "Système"
+    },
+    "items": {
+      "routines": "Routines",
+      "appointments": "Rendez-vous",
+      "meals": "Repas",
+      "recipes": "Idées recettes",
+      "shopping": "Courses",
+      "stock": "Stocks & Fournitures",
+      "health": "Santé",
+      "moods": "Humeurs",
+      "nightMode": "Mode nuit",
+      "pregnancy": "Grossesse",
+      "photos": "Photos",
+      "quotes": "Mots d'enfants",
+      "gratitude": "Gratitude",
+      "skills": "Compétences",
+      "rewards": "Récompenses",
+      "challenges": "Défis",
+      "birthdays": "Anniversaires",
+      "wishlist": "Souhaits",
+      "budget": "Budget",
+      "notes": "Notes",
+      "stats": "Statistiques",
+      "settings": "Réglages"
+    }
+  },
   "setup": {
     "tagline": "Votre famille, organisée ensemble",
     "features": {

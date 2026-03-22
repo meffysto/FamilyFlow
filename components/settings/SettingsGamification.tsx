@@ -94,7 +94,7 @@ export function SettingsGamification({ vault, gamiData, refresh }: SettingsGamif
           <TextInput
             style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.inputBg }]}
             value={String(config.pointsPerTask)}
-            onChangeText={t => updateField(c => ({ ...c, pointsPerTask: parseNum(t, DEFAULT_GAMI_CONFIG.pointsPerTask) }))}
+            onChangeText={txt => updateField(c => ({ ...c, pointsPerTask: parseNum(txt, DEFAULT_GAMI_CONFIG.pointsPerTask) }))}
             keyboardType="number-pad"
             selectTextOnFocus
           />
@@ -105,7 +105,7 @@ export function SettingsGamification({ vault, gamiData, refresh }: SettingsGamif
           <TextInput
             style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.inputBg }]}
             value={String(config.streakBonus)}
-            onChangeText={t => updateField(c => ({ ...c, streakBonus: parseNum(t, DEFAULT_GAMI_CONFIG.streakBonus) }))}
+            onChangeText={txt => updateField(c => ({ ...c, streakBonus: parseNum(txt, DEFAULT_GAMI_CONFIG.streakBonus) }))}
             keyboardType="number-pad"
             selectTextOnFocus
           />
@@ -124,9 +124,9 @@ export function SettingsGamification({ vault, gamiData, refresh }: SettingsGamif
             <TextInput
               style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.inputBg }]}
               value={String(config.lootThreshold[role])}
-              onChangeText={t => updateField(c => ({
+              onChangeText={txt => updateField(c => ({
                 ...c,
-                lootThreshold: { ...c.lootThreshold, [role]: parseNum(t, DEFAULT_GAMI_CONFIG.lootThreshold[role]) },
+                lootThreshold: { ...c.lootThreshold, [role]: parseNum(txt, DEFAULT_GAMI_CONFIG.lootThreshold[role]) },
               }))}
               keyboardType="number-pad"
               selectTextOnFocus

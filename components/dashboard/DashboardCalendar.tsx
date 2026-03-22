@@ -4,6 +4,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { format, addDays } from 'date-fns';
 import { getDateLocale } from '../../lib/date-locale';
@@ -12,7 +13,6 @@ import { useCalendarEvents } from '../../hooks/useCalendarEvents';
 import { DashboardCard } from '../DashboardCard';
 import { CalendarEventRow } from '../calendar/CalendarEventRow';
 import type { CalendarEvent } from '../../lib/calendar-types';
-import { useTranslation } from 'react-i18next';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Spacing } from '../../constants/spacing';
