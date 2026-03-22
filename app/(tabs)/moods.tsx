@@ -44,7 +44,7 @@ export default function MoodsScreen() {
   const { refreshing, onRefresh } = useRefresh(refresh);
 
   const [activeTab, setActiveTab] = useState<TabId>('aujourdhui');
-  const [noteModal, setNoteModal] = useState<{ visible: boolean; level: MoodLevel | null }>({ visible: false, level: null });
+  const [noteModal, setNoteModal] = useState<{ visible: boolean; level: MoodLevel | null; profileId: string | null; profileName: string | null }>({ visible: false, level: null, profileId: null, profileName: null });
   const [noteText, setNoteText] = useState('');
 
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -81,22 +81,22 @@ export default function MoodsScreen() {
     return days;
   }, [moods]);
 
-  const handleSelectMood = useCallback((level: MoodLevel) => {
+  const handleSelectMood = useCallback((level: MoodLevel, profileId?: string, profileName?: string) => {
     setNoteText('');
-    setNoteModal({ visible: true, level });
-  }, []);
+    setNoteModal({ visible: true, level, profileId: profileId || activeProfile?.id || null, profileName: profileName || activeProfile?.name || null });
+  }, [activeProfile]);
 
   const handleSaveMood = useCallback(async () => {
-    if (!activeProfile || !noteModal.level) return;
+    if (!noteModal.profileId || !noteModal.profileName || !noteModal.level) return;
     try {
-      await addMood(activeProfile.id, activeProfile.name, noteModal.level, noteText.trim() || undefined);
+      await addMood(noteModal.profileId, noteModal.profileName, noteModal.level, noteText.trim() || undefined);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       showToast(`Humeur enregistrée ${MOOD_EMOJIS[noteModal.level]}`, 'success');
-      setNoteModal({ visible: false, level: null });
+      setNoteModal({ visible: false, level: null, profileId: null, profileName: null });
     } catch {
       showToast('Impossible d\'enregistrer l\'humeur', 'error');
     }
-  }, [activeProfile, noteModal.level, noteText, addMood, showToast]);
+  }, [noteModal.profileId, noteModal.profileName, noteModal.level, noteText, addMood, showToast]);
 
   const tabs: { id: TabId; label: string }[] = [
     { id: 'aujourdhui', label: "Aujourd'hui" },
@@ -158,18 +158,32 @@ export default function MoodsScreen() {
             {moodableProfiles.map(p => {
               const entry = todayMoods.find(m => m.profileId === p.id);
               return (
-                <View key={p.id} style={[styles.familyRow, { borderBottomColor: colors.separator }]}>
-                  <Text style={[styles.familyName, { color: colors.text }]}>
-                    {p.avatar} {p.name}
-                  </Text>
-                  <Text style={styles.familyMood}>
-                    {entry ? MOOD_EMOJIS[entry.level] : '—'}
-                  </Text>
-                  {entry?.note ? (
-                    <Text style={[styles.familyNote, { color: colors.textMuted }]} numberOfLines={1}>
-                      {entry.note}
+                <View key={p.id} style={[styles.familyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <View style={styles.familyCardHeader}>
+                    <Text style={[styles.familyName, { color: colors.text }]}>
+                      {p.avatar} {p.name}
                     </Text>
-                  ) : null}
+                    {entry && (
+                      <Text style={[styles.familyNote, { color: colors.textMuted }]} numberOfLines={1}>
+                        {entry.note || ''}
+                      </Text>
+                    )}
+                  </View>
+                  <View style={styles.familyMoodRow}>
+                    {MOOD_LEVELS.map(level => (
+                      <TouchableOpacity
+                        key={level}
+                        style={[
+                          styles.familyMoodBtn,
+                          { backgroundColor: entry?.level === level ? primary + '20' : colors.cardAlt, borderColor: entry?.level === level ? primary : 'transparent' },
+                        ]}
+                        onPress={() => handleSelectMood(level, p.id, p.name)}
+                        accessibilityLabel={`Humeur ${level} pour ${p.name}`}
+                      >
+                        <Text style={styles.familyMoodEmoji}>{MOOD_EMOJIS[level]}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 </View>
               );
             })}
@@ -201,9 +215,9 @@ export default function MoodsScreen() {
       </ScrollView>
 
       {/* Modal note */}
-      <Modal visible={noteModal.visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setNoteModal({ visible: false, level: null })}>
+      <Modal visible={noteModal.visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setNoteModal({ visible: false, level: null, profileId: null, profileName: null })}>
         <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.bg }]}>
-          <ModalHeader title={noteModal.level ? `${MOOD_EMOJIS[noteModal.level]} Ton humeur` : 'Humeur'} onClose={() => setNoteModal({ visible: false, level: null })} />
+          <ModalHeader title={noteModal.level ? `${MOOD_EMOJIS[noteModal.level]} Humeur de ${noteModal.profileName || ''}` : 'Humeur'} onClose={() => setNoteModal({ visible: false, level: null, profileId: null, profileName: null })} />
           <View style={styles.modalContent}>
             <Text style={[styles.label, { color: colors.textSub }]}>Ajouter une note (optionnel)</Text>
             <TextInput
@@ -276,10 +290,36 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     gap: Spacing.sm,
   },
+  familyCard: {
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    padding: Spacing.lg,
+    marginBottom: Spacing.md,
+    gap: Spacing.sm,
+  },
+  familyCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   familyName: {
     fontSize: FontSize.body,
-    fontWeight: FontWeight.medium,
+    fontWeight: FontWeight.semibold,
+  },
+  familyMoodRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: Spacing.sm,
+  },
+  familyMoodBtn: {
     flex: 1,
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.md,
+    borderWidth: 1.5,
+  },
+  familyMoodEmoji: {
+    fontSize: FontSize.heading,
   },
   familyMood: {
     fontSize: 20,
