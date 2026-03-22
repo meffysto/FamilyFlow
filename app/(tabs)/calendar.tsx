@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
   },
   scroll: { flex: 1 },
   scrollContent: {
-    paddingBottom: Spacing['4xl'],
+    paddingBottom: 100,
   },
   monthNav: {
     flexDirection: 'row',

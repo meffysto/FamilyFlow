@@ -99,6 +99,7 @@ export default function MoreScreen() {
       { emoji: '🔄', label: 'Routines', route: '/(tabs)/routines', color: colors.info, category: 'organisation' as const },
       { emoji: '📅', label: 'Rendez-vous', route: '/(tabs)/rdv', badge: upcomingRdvs || undefined, color: colors.info, category: 'organisation' as const },
       { emoji: '🍽️', label: 'Repas', route: '/(tabs)/meals', color: colors.success, category: 'organisation' as const },
+      { emoji: '📖', label: 'Idées recettes', route: '/(tabs)/meals', params: { tab: 'recettes' }, color: colors.success, category: 'organisation' as const },
       { emoji: '🛒', label: 'Courses', route: '/(tabs)/meals', params: { tab: 'courses' }, badge: courses.filter((c) => !c.completed).length || undefined, color: colors.success, category: 'organisation' as const },
       { emoji: '📦', label: 'Stocks & Fournitures', route: '/(tabs)/stock', badge: lowStock || undefined, color: colors.warning, category: 'organisation' as const },
       // Santé & Bien-être
