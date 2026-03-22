@@ -24,6 +24,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring, interpolateColor, useDerivedValue } from 'react-native-reanimated';
 import { useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import * as SecureStore from 'expo-secure-store';
 import { useVault } from '../../contexts/VaultContext';
 import { useGamification } from '../../hooks/useGamification';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -172,6 +173,7 @@ function buildFilters(profiles: Profile[], activeProfile: Profile | null): Filte
 
 interface TaskSection {
   title: string;
+  sourceFile: string;
   data: Task[];
 }
 
@@ -245,6 +247,22 @@ export default function TasksScreen() {
   const [editTaskTarget, setEditTaskTarget] = useState('');
   const [editTaskAssignees, setEditTaskAssignees] = useState<string[]>([]);
   const [isEditSaving, setIsEditSaving] = useState(false);
+
+  // Ordre des sections persisté
+  const SECTION_ORDER_KEY = 'tasks_section_order';
+  const [sectionOrder, setSectionOrder] = useState<string[]>([]);
+  const [orderModalVisible, setOrderModalVisible] = useState(false);
+
+  useEffect(() => {
+    SecureStore.getItemAsync(SECTION_ORDER_KEY).then((v) => {
+      if (v) try { setSectionOrder(JSON.parse(v)); } catch {}
+    });
+  }, []);
+
+  const saveSectionOrder = useCallback((order: string[]) => {
+    setSectionOrder(order);
+    SecureStore.setItemAsync(SECTION_ORDER_KEY, JSON.stringify(order));
+  }, []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -485,8 +503,9 @@ export default function TasksScreen() {
       groups[key].push(task);
     }
 
-    return Object.entries(groups).map(([file, data]) => ({
+    const unsorted = Object.entries(groups).map(([file, data]) => ({
       title: getFileLabel(file),
+      sourceFile: file,
       data: data.sort((a, b) => {
         // Récurrentes en priorité
         const aRec = a.recurrence ? 0 : 1;
@@ -499,7 +518,21 @@ export default function TasksScreen() {
         return 0;
       }),
     }));
-  }, [activeTasks]);
+
+    // Appliquer l'ordre personnalisé
+    if (sectionOrder.length > 0) {
+      unsorted.sort((a, b) => {
+        const ai = sectionOrder.indexOf(a.sourceFile);
+        const bi = sectionOrder.indexOf(b.sourceFile);
+        if (ai === -1 && bi === -1) return 0;
+        if (ai === -1) return 1;
+        if (bi === -1) return 1;
+        return ai - bi;
+      });
+    }
+
+    return unsorted;
+  }, [activeTasks, sectionOrder]);
 
   // Sections terminées groupées par fichier
   const completedSections: TaskSection[] = useMemo(() => {
@@ -511,6 +544,7 @@ export default function TasksScreen() {
     }
     return Object.entries(groups).map(([file, data]) => ({
       title: getFileLabel(file),
+      sourceFile: file,
       data,
     }));
   }, [completedTasks]);
@@ -527,11 +561,22 @@ export default function TasksScreen() {
       {/* Header */}
       <View ref={taskListRef} style={[styles.header, { backgroundColor: colors.bg }]}>
         <Text style={[styles.title, { color: colors.text }]}>{isVacationActive ? '☀️ Vacances' : '📋 Tâches'}</Text>
-        {(activeProfile?.role !== 'enfant') && (
-          <Text style={[styles.stats, { color: colors.textMuted }]}>
-            {completedCount}/{totalCount} terminées
-          </Text>
-        )}
+        <View style={styles.headerRight}>
+          {(activeProfile?.role !== 'enfant') && (
+            <Text style={[styles.stats, { color: colors.textMuted }]}>
+              {completedCount}/{totalCount} terminées
+            </Text>
+          )}
+          {!isVacationActive && sections.length > 1 && (
+            <TouchableOpacity
+              onPress={() => setOrderModalVisible(true)}
+              style={[styles.orderBtn, { backgroundColor: colors.card }]}
+              accessibilityLabel="Réorganiser les catégories"
+            >
+              <Text style={[styles.orderBtnText, { color: primary }]}>↕️</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* Météo des tâches (enfants uniquement) */}
@@ -864,6 +909,53 @@ export default function TasksScreen() {
         </SafeAreaView>
       </Modal>
 
+      {/* Modal réorganisation des catégories */}
+      <Modal visible={orderModalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setOrderModalVisible(false)}>
+        <SafeAreaView style={[styles.modalSafe, { backgroundColor: colors.bg }]}>
+          <ModalHeader title="Ordre des catégories" onClose={() => setOrderModalVisible(false)} />
+          <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalContent}>
+            {(() => {
+              // Construire la liste ordonnée des sections actuelles
+              const currentFiles = sections.map(s => s.sourceFile);
+              const moveSection = (idx: number, dir: -1 | 1) => {
+                const newIdx = idx + dir;
+                if (newIdx < 0 || newIdx >= currentFiles.length) return;
+                const reordered = [...currentFiles];
+                [reordered[idx], reordered[newIdx]] = [reordered[newIdx], reordered[idx]];
+                saveSectionOrder(reordered);
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              };
+              return sections.map((sec, idx) => (
+                <View key={sec.sourceFile} style={[styles.orderRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <View style={styles.orderRowInfo}>
+                    <Text style={[styles.orderRowTitle, { color: colors.text }]}>{sec.title}</Text>
+                    <Text style={[styles.orderRowCount, { color: colors.textMuted }]}>{sec.data.length} tâche{sec.data.length > 1 ? 's' : ''}</Text>
+                  </View>
+                  <View style={styles.orderRowBtns}>
+                    <TouchableOpacity
+                      onPress={() => moveSection(idx, -1)}
+                      disabled={idx === 0}
+                      style={[styles.orderArrowBtn, idx === 0 && { opacity: 0.3 }]}
+                      accessibilityLabel="Monter"
+                    >
+                      <Text style={[styles.orderArrow, { color: primary }]}>▲</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => moveSection(idx, 1)}
+                      disabled={idx === sections.length - 1}
+                      style={[styles.orderArrowBtn, idx === sections.length - 1 && { opacity: 0.3 }]}
+                      accessibilityLabel="Descendre"
+                    >
+                      <Text style={[styles.orderArrow, { color: primary }]}>▼</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ));
+            })()}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
       {/* Célébration journée terminée */}
       <AllDoneOverlay
         visible={showAllDone}
@@ -1062,5 +1154,51 @@ const styles = StyleSheet.create({
   toggleCompletedText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  orderBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.base,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  orderBtnText: {
+    fontSize: FontSize.body,
+  },
+  orderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    padding: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  orderRowInfo: {
+    flex: 1,
+    gap: Spacing.xxs,
+  },
+  orderRowTitle: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+  },
+  orderRowCount: {
+    fontSize: FontSize.caption,
+  },
+  orderRowBtns: {
+    flexDirection: 'column',
+    gap: Spacing.xs,
+  },
+  orderArrowBtn: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xxs,
+  },
+  orderArrow: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
   },
 });
