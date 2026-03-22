@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View, Text } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, Text, ImageBackground } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { FontSize, FontWeight } from '../constants/typography';
@@ -12,9 +12,10 @@ interface RecipeCardProps {
   onLongPress?: () => void;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
+  imageUri?: string | null;
 }
 
-export default function RecipeCard({ recipe, onPress, onLongPress, isFavorite, onToggleFavorite }: RecipeCardProps) {
+export default function RecipeCard({ recipe, onPress, onLongPress, isFavorite, onToggleFavorite, imageUri }: RecipeCardProps) {
   const { primary, colors } = useThemeColors();
 
   const handleToggleFavorite = () => {
@@ -22,9 +23,68 @@ export default function RecipeCard({ recipe, onPress, onLongPress, isFavorite, o
     onToggleFavorite?.();
   };
 
+  const hasImage = !!imageUri;
+
+  // Carte avec image de couverture
+  if (hasImage) {
+    return (
+      <TouchableOpacity
+        style={[styles.card, { borderColor: colors.borderLight }]}
+        onPress={onPress}
+        onLongPress={onLongPress}
+        activeOpacity={0.7}
+      >
+        <ImageBackground
+          source={{ uri: imageUri! }}
+          style={styles.imageCard}
+          imageStyle={styles.imageRounded}
+          resizeMode="cover"
+        >
+          <View style={styles.imageOverlay}>
+            {onToggleFavorite && (
+              <TouchableOpacity
+                style={styles.heartBtn}
+                onPress={handleToggleFavorite}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                activeOpacity={0.6}
+              >
+                <Text style={styles.heartText}>{isFavorite ? '❤️' : '🤍'}</Text>
+              </TouchableOpacity>
+            )}
+            <View style={styles.imageContent}>
+              <Text style={[styles.title, styles.imageTitle]} numberOfLines={2}>
+                {recipe.title}
+              </Text>
+              <View style={styles.metaRow}>
+                {recipe.servings > 0 && (
+                  <View style={[styles.badge, styles.imageBadge]}>
+                    <Text style={[styles.badgeText, { color: '#fff' }]}>
+                      {recipe.servings} pers.
+                    </Text>
+                  </View>
+                )}
+                {recipe.prepTime ? (
+                  <Text style={[styles.metaText, { color: 'rgba(255,255,255,0.85)' }]}>
+                    Prep {recipe.prepTime}
+                  </Text>
+                ) : null}
+                {recipe.cookTime ? (
+                  <Text style={[styles.metaText, { color: 'rgba(255,255,255,0.85)' }]}>
+                    Cuisson {recipe.cookTime}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+          </View>
+        </ImageBackground>
+      </TouchableOpacity>
+    );
+  }
+
+  // Carte texte classique (sans image)
   return (
     <TouchableOpacity
-      style={[styles.card, { backgroundColor: colors.card, borderColor: colors.borderLight }]}
+      style={[styles.card, styles.textCard, { backgroundColor: colors.card, borderColor: colors.borderLight }]}
       onPress={onPress}
       onLongPress={onLongPress}
       activeOpacity={0.7}
@@ -94,15 +154,42 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 16,
-    padding: 14,
     borderWidth: StyleSheet.hairlineWidth,
     ...Shadows.md,
     marginBottom: 12,
+    overflow: 'hidden',
+  },
+  textCard: {
+    padding: 14,
+  },
+  imageCard: {
+    height: 160,
+  },
+  imageRounded: {
+    borderRadius: 16,
+  },
+  imageOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    borderRadius: 16,
+    justifyContent: 'flex-end',
+  },
+  imageContent: {
+    padding: 14,
   },
   title: {
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
     marginBottom: 4,
+  },
+  imageTitle: {
+    color: '#fff',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  imageBadge: {
+    backgroundColor: 'rgba(255,255,255,0.25)',
   },
   category: {
     fontSize: FontSize.caption,
@@ -112,7 +199,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 8,
     flexWrap: 'wrap',
   },
   badge: {

@@ -8,9 +8,12 @@ import {
   Modal,
   Alert,
   TextInput,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useThemeColors } from '../contexts/ThemeContext';
 import type { AppRecipe, AppIngredient } from '../lib/cooklang';
 import { scaleIngredients, formatIngredient, renderStepText } from '../lib/cooklang';
@@ -28,9 +31,13 @@ interface RecipeViewerProps {
   familySize?: number;
   /** Appelé quand la recette est terminée en mode cuisine */
   onCookingFinished?: () => void;
+  /** URI de l'image de couverture (file://) */
+  imageUri?: string | null;
+  /** Callback pour sauvegarder une nouvelle image */
+  onSaveImage?: (imageUri: string) => Promise<void>;
 }
 
-export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isFavorite, onToggleFavorite, onRename, familySize, onCookingFinished }: RecipeViewerProps) {
+export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isFavorite, onToggleFavorite, onRename, familySize, onCookingFinished, imageUri, onSaveImage }: RecipeViewerProps) {
   const { primary, tint, colors } = useThemeColors();
   const [servings, setServings] = useState(familySize || recipe.servings || 1);
   const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set());
@@ -62,6 +69,35 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
 
   const incrementServings = () => {
     setServings(servings + 1);
+  };
+
+  const handlePickImage = async () => {
+    if (!onSaveImage) return;
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission refusée', 'Autorisez l\'accès aux photos pour ajouter une image.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+      allowsEditing: true,
+      aspect: [16, 9],
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+    try {
+      const asset = result.assets[0];
+      const actions: ImageManipulator.Action[] = [];
+      if ((asset.width ?? 0) > 1200) actions.push({ resize: { width: 1200 } });
+      const manipulated = await ImageManipulator.manipulateAsync(asset.uri, actions, {
+        compress: 0.8,
+        format: ImageManipulator.SaveFormat.JPEG,
+      });
+      await onSaveImage(manipulated.uri);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      Alert.alert('Erreur', 'Impossible de sauvegarder l\'image.');
+    }
   };
 
   return (
@@ -112,6 +148,21 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
         </View>
 
         <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent} showsVerticalScrollIndicator={false}>
+          {/* Hero image */}
+          {imageUri ? (
+            <TouchableOpacity onPress={onSaveImage ? handlePickImage : undefined} activeOpacity={onSaveImage ? 0.7 : 1}>
+              <Image source={{ uri: imageUri }} style={styles.heroImage} resizeMode="cover" />
+            </TouchableOpacity>
+          ) : onSaveImage ? (
+            <TouchableOpacity
+              style={[styles.addImageBtn, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}
+              onPress={handlePickImage}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.addImageText, { color: colors.textMuted }]}>Ajouter une photo</Text>
+            </TouchableOpacity>
+          ) : null}
+
           {/* Metadata row */}
           <View style={[styles.metaCard, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
             {recipe.servings > 0 && (
@@ -313,6 +364,25 @@ const styles = StyleSheet.create({
   },
   bodyContent: {
     padding: 16,
+  },
+  heroImage: {
+    width: '100%',
+    height: 220,
+    borderRadius: 16,
+    marginBottom: 16,
+  },
+  addImageBtn: {
+    width: '100%',
+    height: 80,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  addImageText: {
+    fontSize: FontSize.body,
   },
   metaCard: {
     flexDirection: 'row',

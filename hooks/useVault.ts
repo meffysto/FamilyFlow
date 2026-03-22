@@ -179,6 +179,8 @@ export interface VaultState {
   addRecipe: (category: string, data: { title: string; tags?: string[]; servings?: number; prepTime?: string; cookTime?: string; ingredients: { name: string; quantity?: string; unit?: string }[]; steps: string[] }) => Promise<void>;
   deleteRecipe: (sourceFile: string) => Promise<void>;
   renameRecipe: (sourceFile: string, newTitle: string) => Promise<void>;
+  saveRecipeImage: (sourceFile: string, imageUri: string) => Promise<void>;
+  getRecipeImageUri: (sourceFile: string) => string | null;
   /** Scan tout le vault pour des .cook en dehors de 03 - Cuisine/Recettes/ */
   scanAllCookFiles: () => Promise<{ path: string; title: string }[]>;
   /** Déplacer un .cook vers le dossier Recettes */
@@ -1926,6 +1928,32 @@ export function useVaultInternal(): VaultState {
     ));
   }, []);
 
+  const saveRecipeImage = useCallback(async (sourceFile: string, imageUri: string) => {
+    if (!vaultRef.current) return;
+    const vault = vaultRef.current;
+    const imagePath = sourceFile.replace(/\.cook$/, '.jpg');
+    await vault.copyFileToVault(imageUri, imagePath);
+    // Mettre à jour >> image: dans le fichier .cook
+    const content = await vault.readFile(sourceFile);
+    let updated: string;
+    if (/^>> image:.*$/m.test(content)) {
+      updated = content.replace(/^>> image:.*$/m, `>> image: ${imagePath}`);
+    } else if (/^>> title:.*$/m.test(content)) {
+      updated = content.replace(/^>> title:(.*)$/m, `>> title:$1\n>> image: ${imagePath}`);
+    } else {
+      updated = `>> image: ${imagePath}\n\n${content}`;
+    }
+    await vault.writeFile(sourceFile, updated);
+    setRecipes(prev => prev.map(r =>
+      r.sourceFile === sourceFile ? { ...r, image: imagePath } : r
+    ));
+  }, []);
+
+  const getRecipeImageUri = useCallback((sourceFile: string): string | null => {
+    if (!vaultRef.current) return null;
+    return vaultRef.current.getRecipeImageUri(sourceFile);
+  }, []);
+
   /** Scanner tout le vault pour des .cook en dehors du dossier Recettes */
   const scanAllCookFiles = useCallback(async (): Promise<{ path: string; title: string }[]> => {
     if (!vaultRef.current) return [];
@@ -2918,6 +2946,8 @@ export function useVaultInternal(): VaultState {
     addRecipe,
     deleteRecipe,
     renameRecipe,
+    saveRecipeImage,
+    getRecipeImageUri,
     scanAllCookFiles,
     moveCookToRecipes,
     toggleFavorite,
@@ -2995,6 +3025,7 @@ export function useVaultInternal(): VaultState {
     addCourseItem, mergeCourseIngredients, toggleCourseItem, removeCourseItem, moveCourseItem,
     clearCompletedCourses, addMemory, updateMemory, activateVacation,
     deactivateVacation, refreshGamification, addRecipe, deleteRecipe, renameRecipe,
+    saveRecipeImage, getRecipeImageUri,
     loadRecipes, scanAllCookFiles, moveCookToRecipes, toggleFavorite, isFavorite,
     getFavorites, applyAgeUpgrade, dismissAgeUpgrade, addChild, convertToBorn,
     setBudgetMonth, addExpense, deleteExpense, updateBudgetConfig, loadBudgetData,

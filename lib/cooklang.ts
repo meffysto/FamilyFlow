@@ -21,6 +21,8 @@ export interface AppRecipe {
   ingredients: AppIngredient[];
   steps: AppStep[];
   cookware: string[];
+  /** Chemin relatif de l'image de couverture (ex: "03 - Cuisine/Recettes/Plats/Carbonara.jpg") */
+  image?: string;
 }
 
 export interface AppIngredient {
@@ -219,6 +221,7 @@ export function parseRecipe(sourceFile: string, content: string): AppRecipe {
   const servings = parseInt(meta.servings || meta.portions || '4', 10) || 4;
   const prepTime = meta['prep time'] || meta.prepTime || meta['time required'] || '';
   const cookTime = meta['cook time'] || meta.cookTime || meta.cuisson || '';
+  const image = meta.image || undefined;
 
   // Map ingredients — from cooklang inline syntax, or from metadata fallback
   let ingredients: AppIngredient[] = parsed.ingredients.map((ing) => ({
@@ -283,7 +286,7 @@ export function parseRecipe(sourceFile: string, content: string): AppRecipe {
 
   const id = sourceFile.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
 
-  return { id, title, sourceFile, category, tags, servings, prepTime, cookTime, ingredients, steps, cookware };
+  return { id, title, sourceFile, category, tags, servings, prepTime, cookTime, ingredients, steps, cookware, image };
 }
 
 // ─── Unit normalization (EN → FR) ───────────────────────────────────────────
@@ -641,6 +644,7 @@ export function generateCookFile(data: {
   servings?: number;
   prepTime?: string;
   cookTime?: string;
+  image?: string;
   ingredients: { name: string; quantity?: string; unit?: string }[];
   steps: string[];
 }): string {
@@ -652,6 +656,7 @@ export function generateCookFile(data: {
   if (data.servings) lines.push(`>> servings: ${data.servings}`);
   if (data.prepTime) lines.push(`>> prep time: ${data.prepTime}`);
   if (data.cookTime) lines.push(`>> cook time: ${data.cookTime}`);
+  if (data.image) lines.push(`>> image: ${data.image}`);
   if (data.ingredients.length > 0) {
     lines.push(`>> ingredients: ${data.ingredients.map(i => i.name).join(' | ')}`);
   }

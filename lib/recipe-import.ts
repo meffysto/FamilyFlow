@@ -22,6 +22,8 @@ export interface CookImportResult {
   cookContent: string;
   title: string;
   category?: string;
+  /** URL de l'image de couverture extraite de la page source */
+  imageUrl?: string;
 }
 
 /** Result from local heuristic fallback: structured data needing conversion */
@@ -217,6 +219,165 @@ async function convertToCookWithAI(
   return { cookContent, title };
 }
 
+// ─── Cook content cleanup ─────────────────────────────────────────────────
+
+/**
+ * Nettoie le contenu .cook importé :
+ * - Supprime les tags de blog (lignes courtes type "Aout", "Aout 2018", "Pâtes")
+ * - Supprime les descriptions/intro avant les vraies étapes
+ * - Garde uniquement les metadata (>> / ---) et les étapes avec ingrédients
+ */
+export function cleanCookContent(raw: string): { content: string; imageUrl?: string } {
+  // Séparer frontmatter YAML et corps
+  const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+  let metaLines: string[] = [];
+  let bodyText: string;
+  let imageUrl: string | undefined;
+
+  if (fmMatch) {
+    // Convertir frontmatter YAML en >> metadata (whitelist)
+    for (const line of fmMatch[1].split('\n')) {
+      const idx = line.indexOf(':');
+      if (idx > 0) {
+        const key = line.substring(0, idx).trim().toLowerCase();
+        const value = line.substring(idx + 1).trim().replace(/^["']|["']$/g, '');
+        if (!key || !value) continue;
+        if (key === 'image') {
+          // Garder l'URL pour le téléchargement, pas dans les metadata >>
+          imageUrl = value;
+          continue;
+        }
+        if (!isUsefulMetaKey(key)) continue;
+        if (key === 'tags') {
+          const cleaned = cleanTags(value);
+          if (cleaned) metaLines.push(`>> tags: ${cleaned}`);
+        } else {
+          metaLines.push(`>> ${key}: ${value}`);
+        }
+      }
+    }
+    bodyText = fmMatch[2];
+  } else {
+    // Extraire les >> metadata du corps
+    const lines = raw.split('\n');
+    const body: string[] = [];
+    for (const line of lines) {
+      if (/^>>\s*.+:\s*.+/.test(line)) {
+        const key = line.match(/^>>\s*(.+?):/)?.[1]?.trim().toLowerCase() || '';
+        if (key === 'image') {
+          imageUrl = line.match(/^>>\s*image:\s*(.+)/i)?.[1]?.trim();
+          continue;
+        }
+        if (isUsefulMetaKey(key)) {
+          if (key === 'tags') {
+            const val = line.match(/^>>\s*tags:\s*(.+)/i)?.[1] || '';
+            const cleaned = cleanTags(val);
+            if (cleaned) body.push(`>> tags: ${cleaned}`);
+          } else {
+            metaLines.push(line);
+          }
+        }
+      } else {
+        body.push(line);
+      }
+    }
+    bodyText = body.join('\n');
+  }
+
+  // Nettoyer le corps : garder les lignes qui sont des étapes de recette
+  const bodyLines = bodyText.split('\n');
+  const cleaned: string[] = [];
+  let foundStep = false;
+
+  for (const line of bodyLines) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      if (foundStep) cleaned.push('');
+      continue;
+    }
+    // Ligne trop courte sans syntaxe cooklang = probablement un tag ou titre parasite
+    if (!foundStep && trimmed.length < 40 && !trimmed.includes('@') && !trimmed.includes('#') && !trimmed.includes('~')) {
+      continue;
+    }
+    // Lignes avec syntaxe cooklang = étape valide
+    if (trimmed.includes('@') || trimmed.includes('#') || trimmed.includes('~') || trimmed.length >= 40) {
+      foundStep = true;
+      cleaned.push(line);
+    } else if (foundStep) {
+      cleaned.push(line);
+    }
+  }
+
+  // Reconstruire
+  const result = [...metaLines, '', ...cleaned].join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  return { content: result + '\n', imageUrl };
+}
+
+/** Clés de metadata utiles — tout le reste est ignoré */
+function isUsefulMetaKey(key: string): boolean {
+  const keep = ['title', 'servings', 'portions', 'prep time', 'preptime', 'cook time', 'cooktime', 'cuisson', 'tags', 'image'];
+  return keep.includes(key);
+}
+
+/** Nettoyer les tags : garder uniquement les tags culinaires, pas les dates/mois de blog */
+function cleanTags(tagsStr: string): string {
+  const RE_MONTH_DATE = /^(?:janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre|january|february|march|april|may|june|july|august|september|october|november|december)(?:\s+\d{4})?$/i;
+  const RE_YEAR = /^\d{4}$/;
+  const RE_PREF = /^recettes?\s+préférées?\s*\d*$/i;
+  const cleaned = tagsStr.split(',')
+    .map(t => t.trim())
+    .filter(t => t && !RE_MONTH_DATE.test(t) && !RE_YEAR.test(t) && !RE_PREF.test(t));
+  return cleaned.join(', ');
+}
+
+// ─── Image extraction from HTML ───────────────────────────────────────────
+
+/** Extraire l'URL de l'image principale depuis le HTML (og:image, JSON-LD, twitter:image) */
+function extractImageUrl(html: string, baseUrl: string): string | undefined {
+  // 1. Open Graph og:image (2 ordres possibles des attributs)
+  const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+    || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+  if (ogMatch?.[1]) return resolveUrl(ogMatch[1], baseUrl);
+
+  // 2. Schema.org JSON-LD image
+  const ldMatch = html.match(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i);
+  if (ldMatch) {
+    try {
+      const ld = JSON.parse(ldMatch[1]);
+      const img = ld.image || ld.thumbnailUrl;
+      if (typeof img === 'string') return resolveUrl(img, baseUrl);
+      if (Array.isArray(img) && img.length > 0) {
+        const first = typeof img[0] === 'string' ? img[0] : img[0]?.url;
+        if (first) return resolveUrl(first, baseUrl);
+      }
+      if (img?.url) return resolveUrl(img.url, baseUrl);
+    } catch { /* JSON-LD malformé */ }
+  }
+
+  // 3. twitter:image
+  const twitterMatch = html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i);
+  if (twitterMatch?.[1]) return resolveUrl(twitterMatch[1], baseUrl);
+
+  return undefined;
+}
+
+function resolveUrl(url: string, baseUrl: string): string {
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  try { return new URL(url, baseUrl).toString(); } catch { return url; }
+}
+
+/** Extraire l'image depuis une URL de page web (fetch séparé) */
+export async function fetchRecipeImageUrl(pageUrl: string): Promise<string | undefined> {
+  try {
+    const res = await fetch(pageUrl);
+    if (!res.ok) return undefined;
+    const html = await res.text();
+    return extractImageUrl(html, pageUrl);
+  } catch {
+    return undefined;
+  }
+}
+
 // ─── Public API ────────────────────────────────────────────────────────────
 
 /**
@@ -234,6 +395,11 @@ export async function importRecipeFromUrl(
   const cookResult = await importViaCookMd(url, onStatus);
   if (cookResult) {
     if (__DEV__) console.log('[recipe-import] cook.md success:', cookResult.title);
+    // Extraire l'image depuis la page source (fetch séparé car cook.md ne retourne pas d'image)
+    try {
+      cookResult.imageUrl = await fetchRecipeImageUrl(url);
+      if (__DEV__ && cookResult.imageUrl) console.log('[recipe-import] image found:', cookResult.imageUrl);
+    } catch { /* pas grave si on n'arrive pas à récupérer l'image */ }
     return { type: 'cook', data: cookResult };
   }
 
@@ -244,9 +410,11 @@ export async function importRecipeFromUrl(
       const res = await fetch(url);
       if (res.ok) {
         const html = await res.text();
+        const imageUrl = extractImageUrl(html, url);
         const plainText = htmlToPlainText(html);
         if (__DEV__) console.log('[recipe-import] HTML→text length:', plainText.length);
         const result = await convertToCookWithAI(plainText, aiConfig, 'html');
+        result.imageUrl = imageUrl;
         return { type: 'cook', data: result };
       }
     } catch (e) {

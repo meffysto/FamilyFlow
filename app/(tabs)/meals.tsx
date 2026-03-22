@@ -32,8 +32,9 @@ import { MealItem, CourseItem, Recipe } from '../../lib/types';
 import { formatIngredient, aggregateIngredients, categorizeIngredient, scaleIngredients, convertCookToMetric, COURSE_CATEGORIES, type AppIngredient } from '../../lib/cooklang';
 import RecipeCard from '../../components/RecipeCard';
 import RecipeViewer from '../../components/RecipeViewer';
-import { importRecipeFromUrl, importRecipeFromPhoto, convertTextWithAI, parseTextToRecipe, searchCommunityRecipes, downloadCommunityRecipe, translateCookToFrench, type ImportResult, type ImportedRecipe, type CookImportResult, type CommunityRecipe } from '../../lib/recipe-import';
+import { importRecipeFromUrl, importRecipeFromPhoto, convertTextWithAI, parseTextToRecipe, searchCommunityRecipes, downloadCommunityRecipe, translateCookToFrench, cleanCookContent, type ImportResult, type ImportedRecipe, type CookImportResult, type CommunityRecipe } from '../../lib/recipe-import';
 import { generateCookFile } from '../../lib/cooklang';
+import * as FileSystem from 'expo-file-system/legacy';
 import { useAI } from '../../contexts/AIContext';
 import { useToast } from '../../contexts/ToastContext';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
@@ -87,6 +88,7 @@ export default function MealsScreen() {
     addCourseItem, removeCourseItem, moveCourseItem, mergeCourseIngredients,
     stock, updateStockQuantity, addStockItem,
     recipes, loadRecipes, deleteRecipe, renameRecipe,
+    saveRecipeImage, getRecipeImageUri,
     scanAllCookFiles, moveCookToRecipes,
     profiles,
     activeProfile,
@@ -677,9 +679,14 @@ export default function MealsScreen() {
       let cookContent: string;
       let title: string;
 
+      let imageUrl: string | undefined;
+
       if (importResult.type === 'cook') {
-        // cook.md returned a ready .cook file
-        cookContent = importResult.data.cookContent;
+        // cook.md returned a ready .cook file — nettoyer les tags/descriptions parasites
+        const cleaned = cleanCookContent(importResult.data.cookContent);
+        cookContent = cleaned.content;
+        // Image : priorité au frontmatter cook.md, fallback vers og:image
+        imageUrl = cleaned.imageUrl || importResult.data.imageUrl;
         title = importResult.data.title;
       } else {
         // JSON-LD fallback — generate .cook from parsed data
@@ -697,6 +704,16 @@ export default function MealsScreen() {
       const relPath = `03 - Cuisine/Recettes/${cat}/${fileName}.cook`;
       await vault.ensureDir(`03 - Cuisine/Recettes/${cat}`);
       await vault.writeFile(relPath, cookContent);
+      if (imageUrl) {
+        try {
+          const tmpPath = `${FileSystem.cacheDirectory}recipe-import-${Date.now()}.jpg`;
+          const dl = await FileSystem.downloadAsync(imageUrl, tmpPath);
+          if (dl.status === 200) {
+            await saveRecipeImage(relPath, dl.uri);
+          }
+        } catch { /* image optionnelle — on continue sans */ }
+      }
+
       await loadRecipes(true);
 
       Alert.alert('Importée !', `« ${title} » ajoutée dans ${cat}.`);
@@ -706,7 +723,7 @@ export default function MealsScreen() {
     } catch (e) {
       Alert.alert('Erreur', String(e));
     }
-  }, [importResult, importCategory, vault, refresh]);
+  }, [importResult, importCategory, vault, refresh, saveRecipeImage]);
 
   // ─── Photo import logic ───────────────────────────────────────
 
@@ -1402,6 +1419,7 @@ export default function MealsScreen() {
                   onLongPress={() => handleDeleteRecipe(recipe)}
                   isFavorite={activeProfile ? isFavorite(activeProfile.id, recipe.sourceFile) : false}
                   onToggleFavorite={activeProfile ? () => toggleFavorite(activeProfile.id, recipe.sourceFile) : undefined}
+                  imageUri={recipe.image ? getRecipeImageUri(recipe.sourceFile) : null}
                 />
               ))
             )}
@@ -1424,6 +1442,11 @@ export default function MealsScreen() {
             setSelectedRecipe((prev) => prev ? { ...prev, title: newTitle } : null);
           }}
           familySize={profiles.length}
+          imageUri={selectedRecipe.image ? getRecipeImageUri(selectedRecipe.sourceFile) : null}
+          onSaveImage={async (uri) => {
+            await saveRecipeImage(selectedRecipe.sourceFile, uri);
+            setSelectedRecipe((prev) => prev ? { ...prev, image: selectedRecipe.sourceFile.replace(/\.cook$/, '.jpg') } : null);
+          }}
           onCookingFinished={async () => {
             if (!await getAutomationFlag('autoStockDecrementCook')) return;
             const familyServings = computeFamilyServings(profiles);

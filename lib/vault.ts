@@ -245,6 +245,13 @@ export class VaultManager {
     return raw.replace(/ /g, '%20');
   }
 
+  /** Get the file URI for a recipe's cover image (encoded for Image component) */
+  getRecipeImageUri(sourceFile: string): string {
+    const imagePath = sourceFile.replace(/\.cook$/, '.jpg');
+    const raw = this.uri(imagePath);
+    return raw.replace(/ /g, '%20');
+  }
+
   /**
    * Toggle a task checkbox on a specific line.
    *
