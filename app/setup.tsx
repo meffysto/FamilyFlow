@@ -497,8 +497,8 @@ export default function SetupScreen() {
                   </View>
                   <Text style={s.templateEmoji}>{pack.emoji}</Text>
                   <View style={s.templateText}>
-                    <Text style={ds.templateName}>{pack.name}</Text>
-                    <Text style={ds.templateDesc}>{pack.description}</Text>
+                    <Text style={ds.templateName}>{t(`setup.templatePacks.${pack.id}.name`, { defaultValue: pack.name })}</Text>
+                    <Text style={ds.templateDesc}>{t(`setup.templatePacks.${pack.id}.description`, { defaultValue: pack.description })}</Text>
                   </View>
                 </TouchableOpacity>
               );
@@ -558,7 +558,7 @@ export default function SetupScreen() {
                   <Text style={ds.recapTemplates}>
                     {TEMPLATE_PACKS
                       .filter((p) => selectedPacks.has(p.id))
-                      .map((p) => `${p.emoji} ${p.name}`)
+                      .map((p) => `${p.emoji} ${t(`setup.templatePacks.${p.id}.name`, { defaultValue: p.name })}`)
                       .join('\n')}
                   </Text>
                 </>

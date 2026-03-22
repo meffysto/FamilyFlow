@@ -105,6 +105,14 @@
       "subtitle": "Choose which templates to install. You can add more later in the settings.",
       "selectAll": "Select all"
     },
+    "templatePacks": {
+      "courses-essentielles": { "name": "Essential groceries", "description": "A typical weekly shopping list" },
+      "repas-semaine": { "name": "Meal planner", "description": "7 days of balanced meals ready to go" },
+      "menage-organise": { "name": "Organized chores", "description": "Household tasks split by day" },
+      "suivi-medical": { "name": "Health tracker", "description": "Typical appointments and reminders by age" },
+      "routines-enfants": { "name": "Kids' routines", "description": "Morning/evening routines adapted to age" },
+      "budget-familial": { "name": "Family budget", "description": "Spending categories and monthly limits" }
+    },
     "recap": {
       "title": "Summary",
       "subtitle": "Here's your family:",

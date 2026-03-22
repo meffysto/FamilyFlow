@@ -105,6 +105,14 @@
       "subtitle": "Choisissez les modèles à installer. Vous pourrez en ajouter d'autres plus tard dans les réglages.",
       "selectAll": "Tout sélectionner"
     },
+    "templatePacks": {
+      "courses-essentielles": { "name": "Courses essentielles", "description": "Une liste de courses type pour la semaine" },
+      "repas-semaine": { "name": "Planning repas", "description": "7 jours de menus équilibrés prêts à l'emploi" },
+      "menage-organise": { "name": "Ménage organisé", "description": "Répartition des tâches ménagères par jour" },
+      "suivi-medical": { "name": "Suivi médical", "description": "RDV types et rappels selon l'âge" },
+      "routines-enfants": { "name": "Routines enfants", "description": "Routines matin/soir adaptées à l'âge" },
+      "budget-familial": { "name": "Budget familial", "description": "Catégories de dépenses et plafonds mensuels" }
+    },
     "recap": {
       "title": "Récapitulatif",
       "subtitle": "Voici votre famille :",
