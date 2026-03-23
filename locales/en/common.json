@@ -72,15 +72,36 @@
   "setup": {
     "tagline": "Your family, organized together",
     "features": {
-      "tasks": { "title": "Family tasks", "desc": "Organize and complete tasks together" },
-      "loot": { "title": "Rewards", "desc": "Kids earn rewards by completing their tasks" },
-      "files": { "title": "Your data, your device", "desc": "Everything is stored on your phone in simple, readable files" },
-      "telegram": { "title": "Notifications", "desc": "Get reminders via Telegram" }
+      "tasks": {
+        "title": "Family tasks",
+        "desc": "Organize and complete tasks together"
+      },
+      "loot": {
+        "title": "Rewards",
+        "desc": "Kids earn rewards by completing their tasks"
+      },
+      "files": {
+        "title": "Your data, your device",
+        "desc": "Everything is stored on your phone in simple, readable files"
+      },
+      "telegram": {
+        "title": "Notifications",
+        "desc": "Get reminders via Telegram"
+      }
     },
     "slides": {
-      "1": { "title": "Your daily life, simplified", "subtitle": "Plan meals, share chores, manage shopping" },
-      "2": { "title": "Track your children's health", "subtitle": "Bottles, diapers, sleep, appointments — everything recorded" },
-      "3": { "title": "The whole family joins in", "subtitle": "Each member has a profile, kids earn points" }
+      "1": {
+        "title": "Your daily life, simplified",
+        "subtitle": "Plan meals, share chores, manage shopping"
+      },
+      "2": {
+        "title": "Track your children's health",
+        "subtitle": "Bottles, diapers, sleep, appointments — everything recorded"
+      },
+      "3": {
+        "title": "The whole family joins in",
+        "subtitle": "Each member has a profile, kids earn points"
+      }
     },
     "parents": {
       "title": "Parents",
@@ -111,12 +132,30 @@
       "selectAll": "Select all"
     },
     "templatePacks": {
-      "courses-essentielles": { "name": "Essential groceries", "description": "A typical weekly shopping list" },
-      "repas-semaine": { "name": "Meal planner", "description": "7 days of balanced meals ready to go" },
-      "menage-organise": { "name": "Organized chores", "description": "Household tasks split by day" },
-      "suivi-medical": { "name": "Health tracker", "description": "Typical appointments and reminders by age" },
-      "routines-enfants": { "name": "Kids' routines", "description": "Morning/evening routines adapted to age" },
-      "budget-familial": { "name": "Family budget", "description": "Spending categories and monthly limits" }
+      "courses-essentielles": {
+        "name": "Essential groceries",
+        "description": "A typical weekly shopping list"
+      },
+      "repas-semaine": {
+        "name": "Meal planner",
+        "description": "7 days of balanced meals ready to go"
+      },
+      "menage-organise": {
+        "name": "Organized chores",
+        "description": "Household tasks split by day"
+      },
+      "suivi-medical": {
+        "name": "Health tracker",
+        "description": "Typical appointments and reminders by age"
+      },
+      "routines-enfants": {
+        "name": "Kids' routines",
+        "description": "Morning/evening routines adapted to age"
+      },
+      "budget-familial": {
+        "name": "Family budget",
+        "description": "Spending categories and monthly limits"
+      }
     },
     "recap": {
       "title": "Summary",
@@ -236,7 +275,8 @@
     "parentOnly": "Parents only",
     "tabs": {
       "summary": "Summary",
-      "expenses": "Expenses"
+      "expenses": "Expenses",
+      "evolution": "Trends"
     },
     "totalSpent": "Total spent",
     "outOf": "out of {{amount}}",
@@ -304,6 +344,26 @@
       "delete": "Delete",
       "deleteA11y_one": "Delete {{count}} expense",
       "deleteA11y_other": "Delete {{count}} expenses"
+    },
+    "filter": {
+      "search": "Search...",
+      "all": "All",
+      "resultFiltered": "{{filtered}} / {{total}} expenses",
+      "resultAll": "{{count}} expenses",
+      "searchA11y": "Search for an expense",
+      "emptyTitle": "No results",
+      "emptySubtitle": "Try another term or category"
+    },
+    "evolution": {
+      "sixMonths": "6 months",
+      "twelveMonths": "12 months",
+      "loading": "Loading...",
+      "emptyTitle": "Not enough data",
+      "emptySubtitle": "You need at least 2 purchases of the same product to compare",
+      "header": "{{count}} tracked products",
+      "firstPrice": "First price",
+      "lastPrice": "Last price",
+      "purchases": "{{count}} purchases"
     }
   },
   "health": {
@@ -947,7 +1007,7 @@
       "gratitude": "Gratitude",
       "wishlist": "Wishes",
       "anniversaires": "Birthdays",
-      "onThisDay": "1 year ago\u2026",
+      "onThisDay": "1 year ago…",
       "quotes": "Kids' quotes",
       "moods": "Moods",
       "bilanSemaine": "Weekly recap",
@@ -1160,17 +1220,44 @@
     },
     "zenState": {
       "messages": [
-        { "title": "All done", "subtitle": "Enjoy your evening" },
-        { "title": "Day complete", "subtitle": "Nothing else to manage" },
-        { "title": "Well-deserved rest", "subtitle": "You've accomplished everything" },
-        { "title": "It's quiet here", "subtitle": "And that's a great thing" },
-        { "title": "Well done", "subtitle": "The day is under control" },
-        { "title": "Everything in order", "subtitle": "Tomorrow is another day" }
+        {
+          "title": "All done",
+          "subtitle": "Enjoy your evening"
+        },
+        {
+          "title": "Day complete",
+          "subtitle": "Nothing else to manage"
+        },
+        {
+          "title": "Well-deserved rest",
+          "subtitle": "You've accomplished everything"
+        },
+        {
+          "title": "It's quiet here",
+          "subtitle": "And that's a great thing"
+        },
+        {
+          "title": "Well done",
+          "subtitle": "The day is under control"
+        },
+        {
+          "title": "Everything in order",
+          "subtitle": "Tomorrow is another day"
+        }
       ],
       "childMessages": [
-        { "title": "Great day!", "subtitle": "You finished everything" },
-        { "title": "Champion!", "subtitle": "Nothing else to do" },
-        { "title": "Awesome!", "subtitle": "Enjoy yourself" }
+        {
+          "title": "Great day!",
+          "subtitle": "You finished everything"
+        },
+        {
+          "title": "Champion!",
+          "subtitle": "Nothing else to do"
+        },
+        {
+          "title": "Awesome!",
+          "subtitle": "Enjoy yourself"
+        }
       ],
       "tomorrow": "Tomorrow",
       "tasks_one": "{{count}} task",
@@ -1413,14 +1500,38 @@
       "expandA11y": "Show required sections",
       "alwaysVisible": "Always visible",
       "sectionRequiredA11y": "{{label}} required for zen mode",
-      "overdue": { "label": "Overdue tasks", "detail": "No overdue tasks" },
-      "menage": { "label": "Daily housekeeping", "detail": "All housekeeping tasks done" },
-      "photos": { "label": "Photo of the day", "detail": "Photo taken for each child" },
-      "meals": { "label": "Today's meals", "detail": "At least one meal planned" },
-      "recipes": { "label": "Recipe idea", "detail": "Today's meals already planned" },
-      "courses": { "label": "Shopping list", "detail": "Shopping list empty" },
-      "rdvs": { "label": "Appointments", "detail": "No appointments today" },
-      "gratitude": { "label": "Gratitude", "detail": "Today's gratitude completed" }
+      "overdue": {
+        "label": "Overdue tasks",
+        "detail": "No overdue tasks"
+      },
+      "menage": {
+        "label": "Daily housekeeping",
+        "detail": "All housekeeping tasks done"
+      },
+      "photos": {
+        "label": "Photo of the day",
+        "detail": "Photo taken for each child"
+      },
+      "meals": {
+        "label": "Today's meals",
+        "detail": "At least one meal planned"
+      },
+      "recipes": {
+        "label": "Recipe idea",
+        "detail": "Today's meals already planned"
+      },
+      "courses": {
+        "label": "Shopping list",
+        "detail": "Shopping list empty"
+      },
+      "rdvs": {
+        "label": "Appointments",
+        "detail": "No appointments today"
+      },
+      "gratitude": {
+        "label": "Gratitude",
+        "detail": "Today's gratitude completed"
+      }
     },
     "ai": {
       "sectionTitle": "AI Assistant",
@@ -1773,7 +1884,20 @@
     "notesLabel": "Notes (optional)",
     "notesPlaceholder": "Gift ideas, preferences...",
     "deleteBtn": "Delete this birthday",
-    "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+    "months": [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ],
     "categories": {
       "family": "Family",
       "friend": "Friend",

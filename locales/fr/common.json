@@ -72,15 +72,36 @@
   "setup": {
     "tagline": "Votre famille, organisée ensemble",
     "features": {
-      "tasks": { "title": "Tâches familiales", "desc": "Organisez et complétez vos tâches ensemble" },
-      "loot": { "title": "Récompenses", "desc": "Les enfants gagnent des récompenses en accomplissant leurs tâches" },
-      "files": { "title": "Vos données, chez vous", "desc": "Tout est stocké sur votre téléphone dans des fichiers simples et lisibles" },
-      "telegram": { "title": "Notifications", "desc": "Recevez des rappels via Telegram" }
+      "tasks": {
+        "title": "Tâches familiales",
+        "desc": "Organisez et complétez vos tâches ensemble"
+      },
+      "loot": {
+        "title": "Récompenses",
+        "desc": "Les enfants gagnent des récompenses en accomplissant leurs tâches"
+      },
+      "files": {
+        "title": "Vos données, chez vous",
+        "desc": "Tout est stocké sur votre téléphone dans des fichiers simples et lisibles"
+      },
+      "telegram": {
+        "title": "Notifications",
+        "desc": "Recevez des rappels via Telegram"
+      }
     },
     "slides": {
-      "1": { "title": "Votre quotidien, simplifié", "subtitle": "Planifiez les repas, répartissez les tâches, gérez les courses" },
-      "2": { "title": "Suivez la santé de vos enfants", "subtitle": "Biberon, couches, sommeil, rendez-vous — tout est noté" },
-      "3": { "title": "Toute la famille participe", "subtitle": "Chaque membre a son profil, les enfants gagnent des points" }
+      "1": {
+        "title": "Votre quotidien, simplifié",
+        "subtitle": "Planifiez les repas, répartissez les tâches, gérez les courses"
+      },
+      "2": {
+        "title": "Suivez la santé de vos enfants",
+        "subtitle": "Biberon, couches, sommeil, rendez-vous — tout est noté"
+      },
+      "3": {
+        "title": "Toute la famille participe",
+        "subtitle": "Chaque membre a son profil, les enfants gagnent des points"
+      }
     },
     "parents": {
       "title": "Les parents",
@@ -111,12 +132,30 @@
       "selectAll": "Tout sélectionner"
     },
     "templatePacks": {
-      "courses-essentielles": { "name": "Courses essentielles", "description": "Une liste de courses type pour la semaine" },
-      "repas-semaine": { "name": "Planning repas", "description": "7 jours de menus équilibrés prêts à l'emploi" },
-      "menage-organise": { "name": "Ménage organisé", "description": "Répartition des tâches ménagères par jour" },
-      "suivi-medical": { "name": "Suivi médical", "description": "RDV types et rappels selon l'âge" },
-      "routines-enfants": { "name": "Routines enfants", "description": "Routines matin/soir adaptées à l'âge" },
-      "budget-familial": { "name": "Budget familial", "description": "Catégories de dépenses et plafonds mensuels" }
+      "courses-essentielles": {
+        "name": "Courses essentielles",
+        "description": "Une liste de courses type pour la semaine"
+      },
+      "repas-semaine": {
+        "name": "Planning repas",
+        "description": "7 jours de menus équilibrés prêts à l'emploi"
+      },
+      "menage-organise": {
+        "name": "Ménage organisé",
+        "description": "Répartition des tâches ménagères par jour"
+      },
+      "suivi-medical": {
+        "name": "Suivi médical",
+        "description": "RDV types et rappels selon l'âge"
+      },
+      "routines-enfants": {
+        "name": "Routines enfants",
+        "description": "Routines matin/soir adaptées à l'âge"
+      },
+      "budget-familial": {
+        "name": "Budget familial",
+        "description": "Catégories de dépenses et plafonds mensuels"
+      }
     },
     "recap": {
       "title": "Récapitulatif",
@@ -236,7 +275,8 @@
     "parentOnly": "Accès réservé aux parents",
     "tabs": {
       "summary": "Résumé",
-      "expenses": "Dépenses"
+      "expenses": "Dépenses",
+      "evolution": "Évolution"
     },
     "totalSpent": "Total dépensé",
     "outOf": "sur {{amount}}",
@@ -304,6 +344,26 @@
       "delete": "Supprimer",
       "deleteA11y_one": "Supprimer {{count}} dépense",
       "deleteA11y_other": "Supprimer {{count}} dépenses"
+    },
+    "filter": {
+      "search": "Rechercher...",
+      "all": "Toutes",
+      "resultFiltered": "{{filtered}} / {{total}} dépenses",
+      "resultAll": "{{count}} dépenses",
+      "searchA11y": "Rechercher une dépense",
+      "emptyTitle": "Aucun résultat",
+      "emptySubtitle": "Essayez un autre terme ou catégorie"
+    },
+    "evolution": {
+      "sixMonths": "6 mois",
+      "twelveMonths": "12 mois",
+      "loading": "Chargement...",
+      "emptyTitle": "Pas assez de données",
+      "emptySubtitle": "Il faut au moins 2 achats du même produit pour comparer",
+      "header": "{{count}} produits suivis",
+      "firstPrice": "Premier prix",
+      "lastPrice": "Dernier prix",
+      "purchases": "{{count}} achats"
     }
   },
   "health": {
@@ -947,7 +1007,7 @@
       "gratitude": "Gratitude",
       "wishlist": "Souhaits",
       "anniversaires": "Anniversaires",
-      "onThisDay": "Il y a 1 an\u2026",
+      "onThisDay": "Il y a 1 an…",
       "quotes": "Mots d'enfants",
       "moods": "Humeurs",
       "bilanSemaine": "Bilan de semaine",
@@ -1160,17 +1220,44 @@
     },
     "zenState": {
       "messages": [
-        { "title": "Tout est fait", "subtitle": "Profitez de votre soirée" },
-        { "title": "Journée bouclée", "subtitle": "Rien d'autre à gérer" },
-        { "title": "Repos mérité", "subtitle": "Vous avez tout accompli" },
-        { "title": "C'est calme ici", "subtitle": "Et c'est très bien comme ça" },
-        { "title": "Bravo", "subtitle": "La journée est sous contrôle" },
-        { "title": "Tout est en ordre", "subtitle": "Demain est un autre jour" }
+        {
+          "title": "Tout est fait",
+          "subtitle": "Profitez de votre soirée"
+        },
+        {
+          "title": "Journée bouclée",
+          "subtitle": "Rien d'autre à gérer"
+        },
+        {
+          "title": "Repos mérité",
+          "subtitle": "Vous avez tout accompli"
+        },
+        {
+          "title": "C'est calme ici",
+          "subtitle": "Et c'est très bien comme ça"
+        },
+        {
+          "title": "Bravo",
+          "subtitle": "La journée est sous contrôle"
+        },
+        {
+          "title": "Tout est en ordre",
+          "subtitle": "Demain est un autre jour"
+        }
       ],
       "childMessages": [
-        { "title": "Super journée !", "subtitle": "Tu as tout fini" },
-        { "title": "Champion !", "subtitle": "Rien d'autre à faire" },
-        { "title": "Trop fort !", "subtitle": "Profite bien" }
+        {
+          "title": "Super journée !",
+          "subtitle": "Tu as tout fini"
+        },
+        {
+          "title": "Champion !",
+          "subtitle": "Rien d'autre à faire"
+        },
+        {
+          "title": "Trop fort !",
+          "subtitle": "Profite bien"
+        }
       ],
       "tomorrow": "Demain",
       "tasks_one": "{{count}} tâche",
@@ -1413,14 +1500,38 @@
       "expandA11y": "Afficher les sections requises",
       "alwaysVisible": "Toujours visible",
       "sectionRequiredA11y": "{{label}} requis pour le mode zen",
-      "overdue": { "label": "Tâches en retard", "detail": "Aucune tâche en retard" },
-      "menage": { "label": "Ménage du jour", "detail": "Toutes les tâches ménage faites" },
-      "photos": { "label": "Photo du jour", "detail": "Photo prise pour chaque enfant" },
-      "meals": { "label": "Repas du jour", "detail": "Au moins un repas planifié" },
-      "recipes": { "label": "Idée recette", "detail": "Repas du jour déjà planifiés" },
-      "courses": { "label": "Liste de courses", "detail": "Liste de courses vide" },
-      "rdvs": { "label": "Rendez-vous", "detail": "Aucun RDV aujourd'hui" },
-      "gratitude": { "label": "Gratitude", "detail": "Gratitude du jour complétée" }
+      "overdue": {
+        "label": "Tâches en retard",
+        "detail": "Aucune tâche en retard"
+      },
+      "menage": {
+        "label": "Ménage du jour",
+        "detail": "Toutes les tâches ménage faites"
+      },
+      "photos": {
+        "label": "Photo du jour",
+        "detail": "Photo prise pour chaque enfant"
+      },
+      "meals": {
+        "label": "Repas du jour",
+        "detail": "Au moins un repas planifié"
+      },
+      "recipes": {
+        "label": "Idée recette",
+        "detail": "Repas du jour déjà planifiés"
+      },
+      "courses": {
+        "label": "Liste de courses",
+        "detail": "Liste de courses vide"
+      },
+      "rdvs": {
+        "label": "Rendez-vous",
+        "detail": "Aucun RDV aujourd'hui"
+      },
+      "gratitude": {
+        "label": "Gratitude",
+        "detail": "Gratitude du jour complétée"
+      }
     },
     "ai": {
       "sectionTitle": "Assistant IA",
@@ -1773,7 +1884,20 @@
     "notesLabel": "Notes (optionnel)",
     "notesPlaceholder": "Idées cadeaux, préférences...",
     "deleteBtn": "Supprimer cet anniversaire",
-    "months": ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"],
+    "months": [
+      "Janvier",
+      "Février",
+      "Mars",
+      "Avril",
+      "Mai",
+      "Juin",
+      "Juillet",
+      "Août",
+      "Septembre",
+      "Octobre",
+      "Novembre",
+      "Décembre"
+    ],
     "categories": {
       "family": "Famille",
       "friend": "Ami",

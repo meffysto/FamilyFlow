@@ -399,20 +399,20 @@ export default function BudgetScreen() {
         <View style={styles.evoPriceRow}>
           <View style={styles.evoPriceBlock}>
             <Text style={[styles.evoPriceLabel, { color: colors.textFaint }]}>
-              {t('budget.evolution.firstPrice', 'Premier prix')}
+              {t('budget.evolution.firstPrice')}
             </Text>
             <Text style={[styles.evoPrice, { color: colors.textSub }]}>{formatAmount(item.firstPrice)}</Text>
           </View>
           <Text style={[styles.evoArrow, { color: changeColor }]}>{arrow}</Text>
           <View style={[styles.evoPriceBlock, { alignItems: 'flex-end' as const }]}>
             <Text style={[styles.evoPriceLabel, { color: colors.textFaint }]}>
-              {t('budget.evolution.lastPrice', 'Dernier prix')}
+              {t('budget.evolution.lastPrice')}
             </Text>
             <Text style={[styles.evoPrice, { color: colors.text }]}>{formatAmount(item.lastPrice)}</Text>
           </View>
         </View>
         <Text style={[styles.evoMeta, { color: colors.textFaint }]}>
-          {t('budget.evolution.purchases', { count: item.count, defaultValue: '{{count}} achats' })}
+          {t('budget.evolution.purchases', { count: item.count })}
           {' · '}
           {formatDateLocalized(item.firstDate)} → {formatDateLocalized(item.lastDate)}
         </Text>
@@ -472,9 +472,9 @@ export default function BudgetScreen() {
       <View style={[styles.tabBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <SegmentedControl
           segments={[
-            { id: 'resume', label: t('budget.tabs.summary', 'Résumé') },
-            { id: 'list', label: t('budget.tabs.expenses', 'Dépenses') },
-            { id: 'evolution', label: t('budget.tabs.evolution', 'Évolution') },
+            { id: 'resume', label: t('budget.tabs.summary') },
+            { id: 'list', label: t('budget.tabs.expenses') },
+            { id: 'evolution', label: t('budget.tabs.evolution') },
           ]}
           value={tab}
           onChange={(id) => setTab(id as TabId)}
@@ -564,13 +564,13 @@ export default function BudgetScreen() {
               <Text style={[styles.searchIcon, { color: colors.textFaint }]}>🔍</Text>
               <TextInput
                 style={[styles.searchInput, { color: colors.text }]}
-                placeholder={t('budget.filter.search', 'Rechercher...')}
+                placeholder={t('budget.filter.search')}
                 placeholderTextColor={colors.textFaint}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
                 returnKeyType="search"
                 clearButtonMode="while-editing"
-                accessibilityLabel={t('budget.filter.searchA11y', 'Rechercher une dépense')}
+                accessibilityLabel={t('budget.filter.searchA11y')}
               />
             </View>
             <ScrollView
@@ -607,11 +607,9 @@ export default function BudgetScreen() {
                 ? t('budget.filter.resultFiltered', {
                     filtered: filteredEntries.length,
                     total: sortedEntries.length,
-                    defaultValue: '{{filtered}} / {{total}} dépenses',
                   })
                 : t('budget.filter.resultAll', {
                     count: sortedEntries.length,
-                    defaultValue: '{{count}} dépenses',
                   })
               }
             </Text>
@@ -626,8 +624,8 @@ export default function BudgetScreen() {
               isFiltered ? (
                 <EmptyState
                   emoji="🔍"
-                  title={t('budget.filter.emptyTitle', 'Aucun résultat')}
-                  subtitle={t('budget.filter.emptySubtitle', 'Essayez un autre terme ou catégorie')}
+                  title={t('budget.filter.emptyTitle')}
+                  subtitle={t('budget.filter.emptySubtitle')}
                 />
               ) : (
                 <EmptyState
@@ -690,8 +688,8 @@ export default function BudgetScreen() {
           <View style={[styles.evoPeriodRow, { backgroundColor: colors.bg }]}>
             <SegmentedControl
               segments={[
-                { id: '6', label: t('budget.evolution.sixMonths', '6 mois') },
-                { id: '12', label: t('budget.evolution.twelveMonths', '12 mois') },
+                { id: '6', label: t('budget.evolution.sixMonths') },
+                { id: '12', label: t('budget.evolution.twelveMonths') },
               ]}
               value={String(evoMonths)}
               onChange={(id) => setEvoMonths(Number(id) as 6 | 12)}
@@ -703,7 +701,7 @@ export default function BudgetScreen() {
             <View style={styles.evoLoadingContainer}>
               <ActivityIndicator size="large" color={primary} />
               <Text style={[styles.evoLoadingText, { color: colors.textMuted }]}>
-                {t('budget.evolution.loading', 'Chargement...')}
+                {t('budget.evolution.loading')}
               </Text>
             </View>
           ) : (
@@ -715,17 +713,14 @@ export default function BudgetScreen() {
               ListEmptyComponent={
                 <EmptyState
                   emoji="📊"
-                  title={t('budget.evolution.emptyTitle', 'Pas assez de données')}
-                  subtitle={t('budget.evolution.emptySubtitle', 'Il faut au moins 2 achats du même produit pour comparer')}
+                  title={t('budget.evolution.emptyTitle')}
+                  subtitle={t('budget.evolution.emptySubtitle')}
                 />
               }
               ListHeaderComponent={
                 priceEvolutions.length > 0 ? (
                   <Text style={[styles.evoHeaderText, { color: colors.textMuted }]}>
-                    {t('budget.evolution.header', {
-                      count: priceEvolutions.length,
-                      defaultValue: '{{count}} produits suivis',
-                    })}
+                    {t('budget.evolution.header', { count: priceEvolutions.length })}
                   </Text>
                 ) : null
               }
