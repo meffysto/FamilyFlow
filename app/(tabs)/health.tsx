@@ -25,7 +25,7 @@ import { useTranslation } from 'react-i18next';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
-import { Spacing, Radius } from '../../constants/spacing';
+import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { ModalHeader, DateInput } from '../../components/ui';
@@ -493,7 +493,7 @@ export default function HealthScreen() {
       {/* Contenu */}
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, Layout.contentContainer]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
       >
         {activeTab === 'croissance' && (

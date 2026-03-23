@@ -32,6 +32,7 @@ import { NightColors } from '../../constants/nightMode';
 import { isBabyProfile } from '../../lib/types';
 import type { FeedType, BreastSide, NightFeedEntry, Profile } from '../../lib/types';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { Layout } from '../../constants/spacing';
 import {
   startFeedingActivity,
   updateFeedingActivity,
@@ -324,7 +325,7 @@ export default function NightModeScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent}>
+      <ScrollView style={s.scroll} contentContainerStyle={[s.scrollContent, Layout.contentContainer]}>
         {/* ─── État IDLE : sélection type ─── */}
         {state === 'idle' && (
           <View style={s.idleContainer}>

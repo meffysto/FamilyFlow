@@ -6,7 +6,7 @@
  */
 
 import React, { useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, Dimensions, Pressable } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions, Pressable } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -22,7 +22,6 @@ import { FontSize, FontWeight } from '../constants/typography';
 import { Spacing } from '../constants/spacing';
 import { Shadows } from '../constants/shadows';
 
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 const CONFETTI_COUNT = 40;
 const CONFETTI_COLORS = ['#FF6B6B', '#FFD93D', '#6BCB77', '#4D96FF', '#FF6FCF', '#A66CFF', '#FC5185', '#00D2D3'];
 const CONFETTI_SHAPES = ['●', '■', '▲', '★', '♦', '◆'];
@@ -38,10 +37,10 @@ interface ConfettiPiece {
   drift: number;
 }
 
-function generateConfetti(): ConfettiPiece[] {
+function generateConfetti(screenW: number): ConfettiPiece[] {
   return Array.from({ length: CONFETTI_COUNT }, (_, i) => ({
     id: i,
-    x: Math.random() * SCREEN_W,
+    x: Math.random() * screenW,
     color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
     shape: CONFETTI_SHAPES[Math.floor(Math.random() * CONFETTI_SHAPES.length)],
     size: 8 + Math.random() * 12,
@@ -51,7 +50,7 @@ function generateConfetti(): ConfettiPiece[] {
   }));
 }
 
-function ConfettiItem({ piece }: { piece: ConfettiPiece }) {
+function ConfettiItem({ piece, screenH }: { piece: ConfettiPiece; screenH: number }) {
   const translateY = useSharedValue(-40);
   const opacity = useSharedValue(1);
   const rotate = useSharedValue(piece.rotation);
@@ -59,7 +58,7 @@ function ConfettiItem({ piece }: { piece: ConfettiPiece }) {
   useEffect(() => {
     translateY.value = withDelay(
       piece.delay,
-      withTiming(SCREEN_H + 40, { duration: 2200 + Math.random() * 800, easing: Easing.out(Easing.quad) }),
+      withTiming(screenH + 40, { duration: 2200 + Math.random() * 800, easing: Easing.out(Easing.quad) }),
     );
     rotate.value = withDelay(
       piece.delay,
@@ -111,8 +110,9 @@ export function AllDoneOverlay({
   childName,
   onDismiss,
 }: AllDoneOverlayProps) {
+  const { width: screenW, height: screenH } = useWindowDimensions();
   const { primary, colors } = useThemeColors();
-  const confetti = useMemo(() => (visible ? generateConfetti() : []), [visible]);
+  const confetti = useMemo(() => (visible ? generateConfetti(screenW) : []), [visible, screenW]);
 
   const overlayOpacity = useSharedValue(0);
   const cardScale = useSharedValue(0.5);
@@ -168,7 +168,7 @@ export function AllDoneOverlay({
   return (
     <Animated.View style={[styles.overlay, overlayStyle]}>
       {confetti.map((piece) => (
-        <ConfettiItem key={piece.id} piece={piece} />
+        <ConfettiItem key={piece.id} piece={piece} screenH={screenH} />
       ))}
 
       <Pressable style={styles.dismissArea} onPress={onDismiss}>
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   card: {
-    width: SCREEN_W * 0.82,
+    width: '82%',
     borderRadius: 24,
     paddingVertical: Spacing['4xl'],
     paddingHorizontal: Spacing['3xl'],

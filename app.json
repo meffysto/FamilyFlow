@@ -11,7 +11,7 @@
       "backgroundColor": "#F9FAFB"
     },
     "ios": {
-      "supportsTablet": false,
+      "supportsTablet": true,
       "bundleIdentifier": "com.familyvault.dev",
       "appleTeamId": "AKMNXGVVGX",
       "infoPlist": {
@@ -31,7 +31,7 @@
           "tel"
         ]
       },
-      "buildNumber": "12"
+      "buildNumber": "13"
     },
     "android": {
       "adaptiveIcon": {

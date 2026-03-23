@@ -13,7 +13,7 @@ import { useVault, VAULT_PATH_KEY } from '../../contexts/VaultContext';
 import { VaultPicker } from '../../components/VaultPicker';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { ModalHeader } from '../../components/ui/ModalHeader';
-import { Spacing } from '../../constants/spacing';
+import { Spacing, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { calculateLevel } from '../../lib/gamification';
 import { useAI } from '../../contexts/AIContext';
@@ -121,7 +121,7 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+      <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, Layout.contentContainer]}>
         <Text style={[styles.screenTitle, { color: colors.text }]}>{t('settingsScreen.title')}</Text>
 
         {/* ── MON COMPTE ── */}

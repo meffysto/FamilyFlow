@@ -42,7 +42,7 @@ import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { FontSize, FontWeight } from '../../constants/typography';
-import { Spacing, Radius } from '../../constants/spacing';
+import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { Shadows } from '../../constants/shadows';
 import { computeMissingIngredients, computeStockDecrements, resolveStockAction, computeFamilyServings } from '../../lib/auto-courses';
 import { suggestRecipesFromStock } from '../../lib/ai-service';
@@ -982,7 +982,7 @@ export default function MealsScreen() {
         ) : (
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, Layout.contentContainer]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
@@ -1145,7 +1145,7 @@ export default function MealsScreen() {
         <View style={styles.coursesContainer}>
           <ScrollView
             style={styles.scroll}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, Layout.contentContainer]}
             showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />

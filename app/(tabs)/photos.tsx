@@ -19,7 +19,7 @@ import {
   ActionSheetIOS,
   Platform,
   Alert,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -57,14 +57,14 @@ import { MarkdownText } from '../../components/ui/MarkdownText';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { Layout } from '../../constants/spacing';
 import { getThumbnailUri } from '../../lib/thumbnails';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useTranslation } from 'react-i18next';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const CALENDAR_PADDING = 16;
 const DAY_GAP = 4;
-const CELL_SIZE = Math.floor((SCREEN_WIDTH - CALENDAR_PADDING * 2 - DAY_GAP * 6) / 7);
+const MAX_GRID_WIDTH = 700;
 
 const WEEKDAY_LABELS_FR = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 const WEEKDAY_LABELS_EN = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -128,6 +128,9 @@ function PulsingCamera({ color }: { color: string }) {
 }
 
 export default function PhotosScreen() {
+  const { width: screenWidth } = useWindowDimensions();
+  const effectiveWidth = Math.min(screenWidth, MAX_GRID_WIDTH);
+  const CELL_SIZE = Math.floor((effectiveWidth - CALENDAR_PADDING * 2 - DAY_GAP * 6) / 7);
   const { t, i18n } = useTranslation();
   const weekdayLabels = i18n.language === 'en' ? WEEKDAY_LABELS_EN : WEEKDAY_LABELS_FR;
   const { profiles, photoDates, addPhoto, getPhotoUri, refresh, isLoading, memories, addMemory, updateMemory } = useVault();
@@ -402,7 +405,7 @@ export default function PhotosScreen() {
           {viewMode === 'calendar' ? (
             <ScrollView
               style={styles.scroll}
-              contentContainerStyle={styles.scrollContent}
+              contentContainerStyle={[styles.scrollContent, Layout.contentContainer]}
               showsVerticalScrollIndicator={false}
               refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
@@ -428,7 +431,7 @@ export default function PhotosScreen() {
               {/* Weekday headers */}
               <View style={styles.weekdayRow}>
                 {weekdayLabels.map((label, i) => (
-                  <View key={i} style={styles.weekdayCell}>
+                  <View key={i} style={[styles.weekdayCell, { width: CELL_SIZE }]}>
                     <Text style={[styles.weekdayText, { color: colors.textFaint }]}>{label}</Text>
                   </View>
                 ))}
@@ -437,7 +440,7 @@ export default function PhotosScreen() {
               {/* Calendar grid */}
               <View style={styles.calendarGrid}>
                 {calendarDays.padding.map((_, i) => (
-                  <View key={`pad-${i}`} style={styles.dayCell} />
+                  <View key={`pad-${i}`} style={[styles.dayCell, { width: CELL_SIZE, height: CELL_SIZE }]} />
                 ))}
 
                 {calendarDays.days.map((date) => {
@@ -458,7 +461,7 @@ export default function PhotosScreen() {
                       key={dateStr}
                       style={[
                         styles.dayCell,
-                        { backgroundColor: colors.card },
+                        { width: CELL_SIZE, height: CELL_SIZE, backgroundColor: colors.card },
                         today && styles.dayCellToday,
                         today && { borderColor: primary },
                         future && { backgroundColor: colors.cardAlt, opacity: 0.5 },
@@ -517,7 +520,7 @@ export default function PhotosScreen() {
         <>
           <ScrollView
             style={styles.scroll}
-            contentContainerStyle={styles.souvenirContent}
+            contentContainerStyle={[styles.souvenirContent, Layout.contentContainer]}
             showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
@@ -706,11 +709,11 @@ const styles = StyleSheet.create({
   monthArrowText: { fontSize: FontSize.display, fontWeight: FontWeight.normal },
   monthLabel: { fontSize: FontSize.heading, fontWeight: FontWeight.bold },
   weekdayRow: { flexDirection: 'row', gap: DAY_GAP, marginBottom: 8 },
-  weekdayCell: { width: CELL_SIZE, alignItems: 'center' },
+  weekdayCell: { alignItems: 'center' },
   weekdayText: { fontSize: FontSize.caption, fontWeight: FontWeight.semibold },
-  calendarGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: DAY_GAP },
+  calendarGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: DAY_GAP, maxWidth: MAX_GRID_WIDTH, alignSelf: 'center' },
   dayCell: {
-    width: CELL_SIZE, height: CELL_SIZE, borderRadius: 10,
+    borderRadius: 10,
     justifyContent: 'center', alignItems: 'center', overflow: 'hidden',
   },
   dayCellToday: { borderWidth: 2 },

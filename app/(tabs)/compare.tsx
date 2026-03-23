@@ -13,7 +13,7 @@ import {
   TouchableOpacity,
   FlatList,
   Image,
-  Dimensions,
+  useWindowDimensions,
   Alert,
   ListRenderItemInfo,
 } from 'react-native';
@@ -27,9 +27,7 @@ import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { useTranslation } from 'react-i18next';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const THUMB_SIZE = 52;
-const PHOTO_AREA_HEIGHT = SCREEN_WIDTH * 0.65;
 
 interface DateThumb {
   date: string;
@@ -38,10 +36,14 @@ interface DateThumb {
 
 export default function CompareScreen() {
   const { t } = useTranslation();
+  const { width: screenWidth } = useWindowDimensions();
   const router = useRouter();
   const { initialDate } = useLocalSearchParams<{ initialDate?: string }>();
   const { profiles, photoDates, getPhotoUri } = useVault();
   const { primary, tint, colors } = useThemeColors();
+
+  // Hauteur zone photo dynamique selon la largeur ecran
+  const photoAreaHeight = Math.min(screenWidth, 700) * 0.65;
 
   const [selectedEnfantIdx, setSelectedEnfantIdx] = useState(0);
   const [leftDate, setLeftDate] = useState<string | null>(null);
@@ -292,7 +294,7 @@ export default function CompareScreen() {
           </View>
 
           {/* Zone photos côte à côte */}
-          <View style={styles.photoRow}>
+          <View style={[styles.photoRow, { height: photoAreaHeight }]}>
             {/* Photo gauche */}
             <TouchableOpacity
               style={[
@@ -506,7 +508,6 @@ const styles = StyleSheet.create({
   photoRow: {
     flexDirection: 'row',
     gap: Spacing.md,
-    height: PHOTO_AREA_HEIGHT,
   },
   photoSlot: {
     flex: 1,

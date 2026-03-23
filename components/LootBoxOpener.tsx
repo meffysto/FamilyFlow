@@ -19,7 +19,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Modal,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -48,8 +48,6 @@ try {
   // Optional dependency
 }
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
 // ─── Particle System ────────────────────────────────────────────────────────
 
 interface Particle {
@@ -61,11 +59,11 @@ interface Particle {
   delay: number;
 }
 
-function generateParticles(count: number, colors: string[]): Particle[] {
+function generateParticles(count: number, colors: string[], screenW: number, screenH: number): Particle[] {
   return Array.from({ length: count }, (_, i) => ({
     id: i,
-    x: Math.random() * SCREEN_WIDTH,
-    y: Math.random() * SCREEN_HEIGHT * 0.6 + SCREEN_HEIGHT * 0.1,
+    x: Math.random() * screenW,
+    y: Math.random() * screenH * 0.6 + screenH * 0.1,
     size: Math.random() * 6 + 2,
     color: colors[Math.floor(Math.random() * colors.length)],
     delay: Math.random() * 2000,
@@ -605,6 +603,7 @@ export function LootBoxOpener({
   onOpen,
   onClose,
 }: LootBoxOpenerProps) {
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const { colors: { textFaint } } = useThemeColors();
   const reduceMotion = useReducedMotion();
   const theme = getTheme(profileTheme);
@@ -639,7 +638,7 @@ export function LootBoxOpener({
   // ─── Particle data ─────────────────────────────────────────────────────
 
   const [idleParticles] = useState(() =>
-    generateParticles(12, [...theme.confettiColors.slice(0, 3), 'rgba(255,255,255,0.5)']),
+    generateParticles(12, [...theme.confettiColors.slice(0, 3), 'rgba(255,255,255,0.5)'], screenWidth, screenHeight),
   );
   const [revealParticles, setRevealParticles] = useState<Particle[]>([]);
 
@@ -648,8 +647,8 @@ export function LootBoxOpener({
   const [sparkles] = useState(() =>
     Array.from({ length: 8 }, (_, i) => ({
       id: i,
-      x: SCREEN_WIDTH * 0.15 + Math.random() * SCREEN_WIDTH * 0.7,
-      y: SCREEN_HEIGHT * 0.2 + Math.random() * SCREEN_HEIGHT * 0.4,
+      x: screenWidth * 0.15 + Math.random() * screenWidth * 0.7,
+      y: screenHeight * 0.2 + Math.random() * screenHeight * 0.4,
       delay: Math.random() * 1500,
       color: ['#FFD700', '#FFFFFF', '#FDE68A', '#E3350D'][Math.floor(Math.random() * 4)],
     })),
@@ -879,6 +878,8 @@ export function LootBoxOpener({
         boxIsMythique
           ? ['#FFD700', '#EF4444', '#FF6B6B', '#FFFFFF', '#FFA500']
           : [rColor, '#FFFFFF', theme.confettiColors[0]],
+        screenWidth,
+        screenHeight,
       ),
     );
 
@@ -1014,7 +1015,7 @@ export function LootBoxOpener({
               <ConfettiCannon
                 ref={confettiRef2}
                 count={200}
-                origin={{ x: SCREEN_WIDTH + 10, y: 0 }}
+                origin={{ x: screenWidth + 10, y: 0 }}
                 autoStart={false}
                 fadeOut
                 explosionSpeed={350}

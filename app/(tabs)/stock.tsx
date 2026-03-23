@@ -36,7 +36,7 @@ import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
 import { EMPLACEMENTS, SUBCATEGORIES, getEmplacementDisplayLabel, getSubcategoryDisplayLabel } from '../../constants/stock';
 import type { EmplacementId } from '../../constants/stock';
-import { Spacing, Radius } from '../../constants/spacing';
+import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 
@@ -460,7 +460,7 @@ export default function StockScreen() {
       {/* ─── Contenu ───────────────────────────────────────── */}
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, Layout.contentContainer]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
         }

@@ -30,7 +30,7 @@ import { ModalHeader } from '../../components/ui/ModalHeader';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/EmptyState';
 import { DotChart } from '../../components/charts/DotChart';
-import { Spacing, Radius } from '../../constants/spacing';
+import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import type { PregnancyWeekEntry, Profile } from '../../lib/types';
@@ -157,7 +157,7 @@ export default function PregnancyScreen() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, Layout.contentContainer]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
       >
         {/* Carte résumé */}

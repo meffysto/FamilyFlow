@@ -26,7 +26,7 @@ import { CalendarDayDetail } from '../../components/calendar/CalendarDayDetail';
 import { CalendarEventRow } from '../../components/calendar/CalendarEventRow';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { EmptyState } from '../../components/EmptyState';
-import { Spacing } from '../../constants/spacing';
+import { Spacing, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { useTranslation } from 'react-i18next';
 import type { CalendarEvent } from '../../lib/calendar-types';
@@ -112,7 +112,7 @@ export default function CalendarScreen() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, Layout.contentContainer]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
       >
         {viewMode === 'mois' ? (

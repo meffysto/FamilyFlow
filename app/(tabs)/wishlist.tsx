@@ -25,7 +25,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
-import { Spacing, Radius } from '../../constants/spacing';
+import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { ModalHeader } from '../../components/ui/ModalHeader';
@@ -310,7 +310,7 @@ export default function WishlistScreen() {
         <SectionList
           sections={sections}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, Layout.contentContainer]}
           stickySectionHeadersEnabled={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
           renderSectionHeader={({ section }) => {

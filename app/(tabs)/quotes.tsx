@@ -26,7 +26,7 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useRefresh } from '../../hooks/useRefresh';
-import { Spacing, Radius } from '../../constants/spacing';
+import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { ModalHeader } from '../../components/ui/ModalHeader';
@@ -191,7 +191,7 @@ export default function QuotesScreen() {
               {section.title}
             </Text>
           )}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, Layout.contentContainer]}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
           }

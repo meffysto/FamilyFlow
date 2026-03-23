@@ -36,7 +36,7 @@ import { SwipeToDelete } from '../../components/SwipeToDelete';
 import { Chip } from '../../components/ui/Chip';
 import { DateInput } from '../../components/ui/DateInput';
 import { ModalHeader } from '../../components/ui/ModalHeader';
-import { Spacing, Radius } from '../../constants/spacing';
+import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { EmptyState } from '../../components/EmptyState';
@@ -674,7 +674,7 @@ export default function TasksScreen() {
             )}
           </>
         }
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, Layout.contentContainer]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />

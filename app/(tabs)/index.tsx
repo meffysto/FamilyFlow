@@ -51,6 +51,7 @@ import { getFruitForWeek, getSizeForWeek, getFruitLabel } from '../../lib/pregna
 import { GlassView } from '../../components/ui/GlassView';
 import { SectionErrorBoundary } from '../../components/SectionErrorBoundary';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { Layout } from '../../constants/spacing';
 import type { CardTemplateContext } from '../../lib/card-templates';
 import { useTranslation } from 'react-i18next';
 
@@ -872,7 +873,7 @@ export default function DashboardScreen() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, Layout.contentContainer]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />

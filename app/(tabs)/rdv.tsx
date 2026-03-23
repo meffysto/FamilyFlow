@@ -14,7 +14,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
-  Dimensions,
+  useWindowDimensions,
   TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -46,14 +46,14 @@ import { RDV } from '../../lib/types';
 import { useParentalControls } from '../../contexts/ParentalControlsContext';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
-import { Spacing, Radius } from '../../constants/spacing';
+import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { useTranslation } from 'react-i18next';
 
 const CAL_PADDING = 16;
 const DAY_GAP = 4;
-const CELL_SIZE = Math.floor((Dimensions.get('window').width - CAL_PADDING * 2 - DAY_GAP * 6) / 7);
+const MAX_CAL_WIDTH = 700;
 const WEEKDAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
 type ViewMode = 'liste' | 'calendrier';
@@ -69,8 +69,13 @@ const TYPE_EMOJI: Record<string, string> = {
 
 export default function RDVScreen() {
   const { t } = useTranslation();
+  const { width: screenWidth } = useWindowDimensions();
   const { rdvs, addRDV, updateRDV, deleteRDV, activeProfile, profiles } = useVault();
   const { primary, tint, colors } = useThemeColors();
+
+  // Taille cellule calendrier dynamique, contrainte sur tablette
+  const effectiveCalWidth = Math.min(screenWidth, MAX_CAL_WIDTH);
+  const calCellSize = Math.floor((effectiveCalWidth - CAL_PADDING * 2 - DAY_GAP * 6) / 7);
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
   const { isAllowed } = useParentalControls();
 
@@ -342,7 +347,7 @@ export default function RDVScreen() {
       </View>
 
       {viewMode === 'calendrier' ? (
-        <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, { paddingBottom: 90 }]}>
+        <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, Layout.contentContainer, { paddingBottom: 90 }]}>
           <View style={styles.monthNav}>
             <TouchableOpacity style={[styles.monthArrow, { backgroundColor: colors.card }]} onPress={() => setCalMonth((m) => subMonths(m, 1))}>
               <Text style={[styles.monthArrowText, { color: primary }]}>‹</Text>
@@ -354,13 +359,13 @@ export default function RDVScreen() {
               <Text style={[styles.monthArrowText, { color: primary }]}>›</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.weekdayRow}>
+          <View style={[styles.weekdayRow, { maxWidth: MAX_CAL_WIDTH, alignSelf: 'center' as const }]}>
             {WEEKDAY_LABELS.map((l, i) => (
-              <View key={i} style={styles.weekdayCell}><Text style={[styles.weekdayText, { color: colors.textFaint }]}>{l}</Text></View>
+              <View key={i} style={[styles.weekdayCell, { width: calCellSize }]}><Text style={[styles.weekdayText, { color: colors.textFaint }]}>{l}</Text></View>
             ))}
           </View>
-          <View style={styles.calGrid}>
-            {calendarDays.padding.map((_, i) => <View key={`p${i}`} style={styles.calCell} />)}
+          <View style={[styles.calGrid, { maxWidth: MAX_CAL_WIDTH, alignSelf: 'center' as const }]}>
+            {calendarDays.padding.map((_, i) => <View key={`p${i}`} style={[styles.calCell, { width: calCellSize, height: calCellSize }]} />)}
             {calendarDays.days.map((date) => {
               const dateStr = format(date, 'yyyy-MM-dd');
               const dayRdvs = rdvByDate[dateStr] ?? [];
@@ -368,7 +373,7 @@ export default function RDVScreen() {
               return (
                 <TouchableOpacity
                   key={dateStr}
-                  style={[styles.calCell, { backgroundColor: colors.card }, today && { borderWidth: 2, borderColor: primary }]}
+                  style={[styles.calCell, { width: calCellSize, height: calCellSize, backgroundColor: colors.card }, today && { borderWidth: 2, borderColor: primary }]}
                   onPress={() => dayRdvs.length > 0 && setCalDayRdvs({ date: dateStr, rdvs: dayRdvs })}
                   activeOpacity={dayRdvs.length > 0 ? 0.7 : 1}
                 >
@@ -386,7 +391,7 @@ export default function RDVScreen() {
           </View>
         </ScrollView>
       ) : (
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+      <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, Layout.contentContainer]}>
         {/* Upcoming */}
         <View ref={rdvListRef}>
         <Text style={[styles.sectionTitle, { color: colors.textSub }]}>
@@ -630,10 +635,10 @@ const styles = StyleSheet.create({
   monthArrowText: { fontSize: FontSize.display, fontWeight: FontWeight.normal },
   monthLabel: { fontSize: FontSize.heading, fontWeight: FontWeight.bold },
   weekdayRow: { flexDirection: 'row', gap: DAY_GAP, marginBottom: Spacing.md },
-  weekdayCell: { width: CELL_SIZE, alignItems: 'center' },
+  weekdayCell: { alignItems: 'center' },
   weekdayText: { fontSize: FontSize.caption, fontWeight: FontWeight.semibold },
   calGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: DAY_GAP },
-  calCell: { width: CELL_SIZE, height: CELL_SIZE, borderRadius: Radius.base, justifyContent: 'center', alignItems: 'center' },
+  calCell: { borderRadius: Radius.base, justifyContent: 'center', alignItems: 'center' },
   calDayNum: { fontSize: FontSize.label, fontWeight: FontWeight.semibold },
   calDots: { flexDirection: 'row', gap: 2, marginTop: 2 },
   calDot: { width: 5, height: 5, borderRadius: 3 },

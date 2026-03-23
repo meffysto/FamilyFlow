@@ -13,7 +13,7 @@ import {
   TouchableOpacity,
   FlatList,
   Image,
-  Dimensions,
+  useWindowDimensions,
   StatusBar,
   ListRenderItemInfo,
 } from 'react-native';
@@ -33,7 +33,6 @@ import { getDateLocale } from '../lib/date-locale';
 import { FontSize, FontWeight } from '../constants/typography';
 import { useThemeColors } from '../contexts/ThemeContext';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface PhotoItem {
   date: string;
@@ -49,6 +48,7 @@ interface PhotoViewerProps {
 }
 
 export function PhotoViewer({ photos, initialIndex, onClose, onRetake, onCompare }: PhotoViewerProps) {
+  const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
   const { colors } = useThemeColors();
   const flatListRef = useRef<FlatList>(null);
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
@@ -57,6 +57,8 @@ export function PhotoViewer({ photos, initialIndex, onClose, onRetake, onCompare
   // Swipe-down to dismiss
   const translateY = useSharedValue(0);
   const opacity = useSharedValue(1);
+  const screenH = useSharedValue(SCREEN_HEIGHT);
+  screenH.value = SCREEN_HEIGHT;
 
   const panGesture = Gesture.Pan()
     .activeOffsetY([10, 200])
@@ -69,7 +71,7 @@ export function PhotoViewer({ photos, initialIndex, onClose, onRetake, onCompare
     })
     .onEnd((e) => {
       if (e.translationY > 120) {
-        translateY.value = withTiming(SCREEN_HEIGHT, { duration: 250 });
+        translateY.value = withTiming(screenH.value, { duration: 250 });
         opacity.value = withTiming(0, { duration: 250 }, () => {
           runOnJS(onClose)();
         });
@@ -111,21 +113,21 @@ export function PhotoViewer({ photos, initialIndex, onClose, onRetake, onCompare
     <TouchableOpacity
       activeOpacity={1}
       onPress={toggleControls}
-      style={styles.page}
+      style={[styles.page, { width: SCREEN_WIDTH, height: SCREEN_HEIGHT }]}
     >
       <Image
         source={{ uri: item.uri }}
-        style={styles.image}
+        style={[styles.image, { width: SCREEN_WIDTH, height: SCREEN_HEIGHT * 0.75 }]}
         resizeMode="contain"
       />
     </TouchableOpacity>
-  ), [toggleControls]);
+  ), [toggleControls, SCREEN_WIDTH, SCREEN_HEIGHT]);
 
   const getItemLayout = useCallback((_: any, index: number) => ({
     length: SCREEN_WIDTH,
     offset: SCREEN_WIDTH * index,
     index,
-  }), []);
+  }), [SCREEN_WIDTH]);
 
   const keyExtractor = useCallback((item: PhotoItem) => item.date, []);
 
@@ -214,14 +216,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   page: {
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
   },
   image: {
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT * 0.75,
   },
   header: {
     position: 'absolute',

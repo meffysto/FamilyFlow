@@ -15,18 +15,15 @@ import {
   SectionList,
   RefreshControl,
   StyleSheet,
-  Dimensions,
 } from 'react-native';
 import { format, parse } from 'date-fns';
 import { getDateLocale } from '../lib/date-locale';
 import { useThemeColors } from '../contexts/ThemeContext';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import { Spacing } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GRID_GAP = 2;
-const NUM_COLUMNS = 3;
-const CELL_SIZE = Math.floor((SCREEN_WIDTH - GRID_GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS);
 
 interface PhotoGalleryProps {
   photoDates: string[];
@@ -47,9 +44,9 @@ interface GallerySection {
 }
 
 /**
- * Regroupe les dates par mois et les chunk en lignes de 3
+ * Regroupe les dates par mois et les chunk en lignes de numColumns
  */
-function buildSections(photoDates: string[]): GallerySection[] {
+function buildSections(photoDates: string[], numColumns: number): GallerySection[] {
   const sorted = [...photoDates].sort((a, b) => b.localeCompare(a));
 
   const monthMap = new Map<string, string[]>();
@@ -68,8 +65,8 @@ function buildSections(photoDates: string[]): GallerySection[] {
     const title = label.charAt(0).toUpperCase() + label.slice(1);
 
     const rows: string[][] = [];
-    for (let i = 0; i < dates.length; i += NUM_COLUMNS) {
-      rows.push(dates.slice(i, i + NUM_COLUMNS));
+    for (let i = 0; i < dates.length; i += numColumns) {
+      rows.push(dates.slice(i, i + numColumns));
     }
 
     sections.push({ title, data: rows });
@@ -90,10 +87,15 @@ export function PhotoGallery({
   primaryColor,
 }: PhotoGalleryProps) {
   const { colors } = useThemeColors();
+  const { width: screenWidth, photoColumns } = useResponsiveLayout();
 
-  const sections = useMemo(() => buildSections(photoDates), [photoDates]);
+  // Calcul dynamique selon la largeur ecran et le nombre de colonnes
+  const numColumns = photoColumns;
+  const cellSize = Math.floor((screenWidth - GRID_GAP * (numColumns - 1)) / numColumns);
 
-  const ROW_HEIGHT = CELL_SIZE + GRID_GAP;
+  const sections = useMemo(() => buildSections(photoDates, numColumns), [photoDates, numColumns]);
+
+  const ROW_HEIGHT = cellSize + GRID_GAP;
 
   if (photoDates.length === 0) {
     return (
@@ -141,7 +143,7 @@ export function PhotoGallery({
             return (
               <TouchableOpacity
                 key={dateStr}
-                style={styles.cell}
+                style={{ width: cellSize, height: cellSize }}
                 onPress={() => onPhotoPress(dateStr)}
                 activeOpacity={0.8}
               >
@@ -153,9 +155,9 @@ export function PhotoGallery({
               </TouchableOpacity>
             );
           })}
-          {row.length < NUM_COLUMNS &&
-            Array.from({ length: NUM_COLUMNS - row.length }).map((_, i) => (
-              <View key={`empty-${i}`} style={styles.cell} />
+          {row.length < numColumns &&
+            Array.from({ length: numColumns - row.length }).map((_, i) => (
+              <View key={`empty-${i}`} style={{ width: cellSize, height: cellSize }} />
             ))}
         </View>
       )}
@@ -180,10 +182,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: GRID_GAP,
     marginBottom: GRID_GAP,
-  },
-  cell: {
-    width: CELL_SIZE,
-    height: CELL_SIZE,
   },
   cellImage: {
     width: '100%',

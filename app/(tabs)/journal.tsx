@@ -34,6 +34,7 @@ import { MarkdownText } from '../../components/ui/MarkdownText';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { Layout } from '../../constants/spacing';
 import { useTranslation } from 'react-i18next';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -747,7 +748,7 @@ export default function JournalScreen() {
         />
       )}
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+      <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, Layout.contentContainer]}>
         {!journalExists ? (
           <View style={styles.createContainer}>
             <Text style={styles.createEmoji}>{isViewingAdultTab ? (activeProfile?.avatar ?? '📖') : (selectedEnfant?.avatar ?? '👶')}</Text>

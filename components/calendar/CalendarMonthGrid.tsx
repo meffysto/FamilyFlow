@@ -3,7 +3,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import { startOfMonth, endOfMonth, eachDayOfInterval, getDay, format, isToday } from 'date-fns';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import type { CalendarEvent, CalendarEventType } from '../../lib/calendar-types';
@@ -12,7 +12,8 @@ import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 
 const GRID_PADDING = Spacing.lg * 2;
-const CELL_SIZE = Math.floor((Dimensions.get('window').width - GRID_PADDING) / 7);
+// Largeur max pour eviter des cellules trop grandes sur iPad
+const MAX_GRID_WIDTH = 700;
 
 interface CalendarMonthGridProps {
   month: Date;
@@ -25,7 +26,12 @@ interface CalendarMonthGridProps {
 function CalendarMonthGridInner({
   month, eventsByDate, selectedDate, vacationDates, onSelectDate,
 }: CalendarMonthGridProps) {
+  const { width: screenWidth } = useWindowDimensions();
   const { primary, colors } = useThemeColors();
+
+  // Contraindre la largeur effective sur tablette
+  const effectiveWidth = Math.min(screenWidth, MAX_GRID_WIDTH);
+  const cellSize = Math.floor((effectiveWidth - GRID_PADDING) / 7);
 
   const { padding, days } = useMemo(() => {
     const start = startOfMonth(month);
@@ -37,11 +43,11 @@ function CalendarMonthGridInner({
   }, [month]);
 
   return (
-    <View>
+    <View style={{ maxWidth: MAX_GRID_WIDTH, alignSelf: 'center', width: '100%' }}>
       {/* Labels jours */}
       <View style={styles.weekdayRow}>
         {WEEKDAY_LABELS.map((l, i) => (
-          <View key={i} style={styles.cell}>
+          <View key={i} style={[styles.cell, { width: cellSize, height: cellSize }]}>
             <Text style={[styles.weekdayText, { color: colors.textFaint }]}>{l}</Text>
           </View>
         ))}
@@ -49,7 +55,7 @@ function CalendarMonthGridInner({
 
       {/* Grille */}
       <View style={styles.grid}>
-        {padding.map((_, i) => <View key={`p${i}`} style={styles.cell} />)}
+        {padding.map((_, i) => <View key={`p${i}`} style={[styles.cell, { width: cellSize, height: cellSize }]} />)}
         {days.map((date) => {
           const dateStr = format(date, 'yyyy-MM-dd');
           const dayEvents = eventsByDate[dateStr] ?? [];
@@ -68,6 +74,7 @@ function CalendarMonthGridInner({
               key={dateStr}
               style={[
                 styles.cell,
+                { width: cellSize, height: cellSize },
                 { backgroundColor: isVacation ? colors.warningBg : colors.card },
                 today && { borderWidth: 2, borderColor: primary },
                 selected && { backgroundColor: primary + '20' },
@@ -115,8 +122,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
   },
   cell: {
-    width: CELL_SIZE,
-    height: CELL_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: Radius.sm,

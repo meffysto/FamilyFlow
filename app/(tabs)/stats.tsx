@@ -34,7 +34,7 @@ import {
   formatMinutes,
 } from '../../lib/stats';
 import { formatAmount } from '../../lib/budget';
-import { Spacing, Radius } from '../../constants/spacing';
+import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { useTranslation } from 'react-i18next';
@@ -125,7 +125,7 @@ export default function StatsScreen() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, Layout.contentContainer]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
       >
         {isLoading && (

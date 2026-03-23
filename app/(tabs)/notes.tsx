@@ -22,7 +22,7 @@ import { useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
-import { Spacing, Radius } from '../../constants/spacing';
+import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { useTranslation } from 'react-i18next';
@@ -314,7 +314,7 @@ export default function NotesScreen() {
             item.type === 'header' ? `h-${item.category}` : `n-${item.note.sourceFile}`
           }
           renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, Layout.contentContainer]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
         />
       )}

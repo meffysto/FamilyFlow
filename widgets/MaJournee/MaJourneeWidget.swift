@@ -346,6 +346,114 @@ struct MaJourneeMediumView: View {
     }
 }
 
+// MARK: - Large View
+
+struct MaJourneeLargeView: View {
+    let data: WidgetData
+    let lang: WidgetLang
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // En-tête
+            Text(DayStrings.dayOfWeek(data.dayOfWeek, lang))
+                .font(.headline)
+                .fontWeight(.bold)
+                .foregroundStyle(.secondary)
+                .textCase(.uppercase)
+
+            // Repas
+            Link(destination: DeepLink.meals) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Label(MaJourneeStrings.noon(lang), systemImage: "sun.max.fill")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                    Text(data.meals?.dejeuner ?? MaJourneeStrings.notPlanned(lang))
+                        .font(.body)
+                        .fontWeight(.medium)
+                        .foregroundStyle(data.meals?.dejeuner != nil ? .primary : .tertiary)
+                        .lineLimit(2)
+
+                    Label(MaJourneeStrings.evening(lang), systemImage: "moon.fill")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                    Text(data.meals?.diner ?? MaJourneeStrings.notPlanned(lang))
+                        .font(.body)
+                        .fontWeight(.medium)
+                        .foregroundStyle(data.meals?.diner != nil ? .primary : .tertiary)
+                        .lineLimit(2)
+                }
+            }
+
+            Divider()
+
+            // Tâches
+            let tasks = data.pendingTasks
+            let allTasksDone = data.tasksProgress.map { $0.done == $0.total && $0.total > 0 } ?? false
+
+            if let progress = data.tasksProgress, progress.total > 0 {
+                Link(destination: DeepLink.tasks) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 4) {
+                            Image(systemName: allTasksDone ? "checkmark.seal.fill" : "checklist")
+                                .foregroundStyle(allTasksDone ? .green : .orange)
+                            Text(allTasksDone ? MaJourneeStrings.allDone(lang) : MaJourneeStrings.toDo(lang))
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(allTasksDone ? .green : .orange)
+                            Spacer()
+                            Text("\(progress.done)/\(progress.total)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        if !allTasksDone {
+                            ForEach(tasks.prefix(5), id: \.self) { task in
+                                Text("• \(task)")
+                                    .font(.callout)
+                                    .fontWeight(.medium)
+                                    .lineLimit(1)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // RDVs
+            let rdvs = data.upcomingRDVs
+            if !rdvs.isEmpty {
+                Divider()
+
+                Link(destination: DeepLink.rdv) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Label("RDV", systemImage: "calendar")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.blue)
+
+                        ForEach(Array(rdvs.prefix(4).enumerated()), id: \.offset) { _, rdv in
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("\(rdv.date) · \(rdv.heure) — \(rdv.title)")
+                                    .font(.callout)
+                                    .fontWeight(.medium)
+                                    .lineLimit(1)
+                                if let lieu = rdv.lieu, !lieu.isEmpty {
+                                    Text(lieu)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding()
+    }
+}
+
 // MARK: - Entry View
 
 struct MaJourneeEntryView: View {
@@ -359,8 +467,10 @@ struct MaJourneeEntryView: View {
             MaJourneeSmallView(data: entry.data, lang: lang)
         case .systemMedium:
             MaJourneeMediumView(data: entry.data, lang: lang)
+        case .systemLarge:
+            MaJourneeLargeView(data: entry.data, lang: lang)
         default:
-            MaJourneeSmallView(data: entry.data, lang: lang)
+            MaJourneeMediumView(data: entry.data, lang: lang)
         }
     }
 }
@@ -381,6 +491,6 @@ struct MaJourneeWidget: Widget {
         }
         .configurationDisplayName("Ma Journée")
         .description("Repas, tâches et RDV du jour")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }

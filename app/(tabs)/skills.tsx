@@ -17,7 +17,7 @@ import { SkillDetailModal } from '../../components/SkillDetailModal';
 import { CategoryCompleteOverlay } from '../../components/CategoryCompleteOverlay';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
-import { Spacing } from '../../constants/spacing';
+import { Spacing, Layout } from '../../constants/spacing';
 import { useTranslation } from 'react-i18next';
 import { FontSize, FontWeight } from '../../constants/typography';
 import {
@@ -235,7 +235,7 @@ export default function SkillsScreen() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, Layout.contentContainer]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
       >
         {/* Carte de progression avec sélecteur de tranche intégré */}

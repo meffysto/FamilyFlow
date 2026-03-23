@@ -25,7 +25,7 @@ import { getDateLocale } from '../../lib/date-locale';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
-import { Spacing, Radius } from '../../constants/spacing';
+import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import { Shadows } from '../../constants/shadows';
@@ -172,7 +172,7 @@ export default function GratitudeScreen() {
       {activeTab === 'aujourdhui' && (
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, Layout.contentContainer]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
         >
           {/* Navigation date */}
@@ -264,7 +264,7 @@ export default function GratitudeScreen() {
             <SectionList
               sections={bookSections}
               keyExtractor={(item, index) => `${item.date}-${item.profileId}-${index}`}
-              contentContainerStyle={styles.content}
+              contentContainerStyle={[styles.content, Layout.contentContainer]}
               refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
               renderSectionHeader={({ section }) => (
                 <Text style={[styles.sectionDate, { color: colors.textMuted }]}>{section.title}</Text>

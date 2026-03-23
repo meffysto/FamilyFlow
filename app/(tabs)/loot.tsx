@@ -48,6 +48,7 @@ import { HELP_CONTENT } from '../../lib/help-content';
 import { SeasonalBanner } from '../../components/SeasonalBanner';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { Layout } from '../../constants/spacing';
 
 export default function LootScreen() {
   const { profiles, gamiData, notifPrefs, vault, refresh, isLoading } = useVault();
@@ -111,7 +112,7 @@ export default function LootScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, Layout.contentContainer]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
         }

@@ -17,6 +17,8 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { FAB, FABAction } from '../../components/FAB';
+import { TabletSidebar } from '../../components/TabletSidebar';
+import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 
 import { GlassView } from '../../components/ui/GlassView';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -106,6 +108,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
   const { t } = useTranslation();
   const router = useRouter();
   const segments = useSegments();
+  const { isTablet } = useResponsiveLayout();
   const showPicker = profiles.length > 0 && !activeProfile;
 
   // ── PIN parent pour changement de profil enfant → adulte ──
@@ -185,20 +188,24 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
       ];
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, flexDirection: isTablet ? 'row' : 'column' }}>
+      {isTablet && <TabletSidebar />}
+      <View style={{ flex: 1 }}>
       <VacationBanner vacationConfig={vacationConfig} isVacationActive={isVacationActive} />
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarStyle: {
-            position: 'absolute',
-            backgroundColor: 'transparent',
-            borderTopColor: colors.glassBorder,
-            borderTopWidth: StyleSheet.hairlineWidth,
-            paddingBottom: 6,
-            height: 70,
-            elevation: 0,
-          },
+          tabBarStyle: isTablet
+            ? { display: 'none' }
+            : {
+              position: 'absolute',
+              backgroundColor: 'transparent',
+              borderTopColor: colors.glassBorder,
+              borderTopWidth: StyleSheet.hairlineWidth,
+              paddingBottom: 6,
+              height: 70,
+              elevation: 0,
+            },
           tabBarBackground: () => (
             <BlurView
               intensity={60}
@@ -276,6 +283,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
       </Tabs>
 
       {showFAB && <FAB actions={fabActions} />}
+      </View>
 
       {/* Profile picker modal — shown on first launch */}
       <Modal visible={showPicker} animationType="fade" transparent statusBarTranslucent>

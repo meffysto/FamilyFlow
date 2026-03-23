@@ -56,5 +56,17 @@ export const Radius = {
   full: 9999,
 } as const;
 
+/** Contrainte iPad — invisible sur iPhone, centre le contenu sur tablette */
+export const Layout = {
+  /** Largeur max du contenu principal (700px) */
+  maxContentWidth: 700,
+  /** Style à appliquer sur le contentContainerStyle du ScrollView/List principal */
+  contentContainer: {
+    width: '100%' as const,
+    maxWidth: 700,
+    alignSelf: 'center' as const,
+  },
+} as const;
+
 export type SpacingKey = keyof typeof Spacing;
 export type RadiusKey = keyof typeof Radius;

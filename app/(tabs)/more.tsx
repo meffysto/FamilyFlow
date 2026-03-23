@@ -18,7 +18,7 @@ import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
-import { Spacing, Radius } from '../../constants/spacing';
+import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { isRdvUpcoming } from '../../lib/parser';
@@ -161,7 +161,7 @@ export default function MoreScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+      <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, Layout.contentContainer]}>
         {(['organisation', 'sante', 'souvenirs', 'jeux', 'famille', 'systeme'] as const).map((cat) => {
           const catItems = visibleItems.filter((i) => i.category === cat);
           if (catItems.length === 0) return null;

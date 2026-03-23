@@ -52,7 +52,7 @@ import type { BudgetCategory, BudgetEntry } from '../../lib/types';
 import { useParentalControls } from '../../contexts/ParentalControlsContext';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
-import { Spacing, Radius } from '../../constants/spacing';
+import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { SwipeToDelete } from '../../components/SwipeToDelete';
@@ -334,7 +334,7 @@ export default function BudgetScreen() {
       {tab === 'resume' ? (
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, Layout.contentContainer]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
         >
           {/* Total */}
@@ -410,7 +410,7 @@ export default function BudgetScreen() {
           <FlatList
             data={sortedEntries}
             keyExtractor={(item, i) => `${item.date}-${item.lineIndex}-${i}`}
-            contentContainerStyle={styles.content}
+            contentContainerStyle={[styles.content, Layout.contentContainer]}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
             ListEmptyComponent={
               <EmptyState

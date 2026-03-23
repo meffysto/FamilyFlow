@@ -834,6 +834,208 @@ struct JournalBebeMediumView: View {
     }
 }
 
+// MARK: - Large View
+
+struct JournalBebeLargeView: View {
+    let entry: JournalBebeEntry
+
+    private var lang: WidgetLang { entry.lang }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // En-tête
+            HStack(spacing: 4) {
+                Text("👶")
+                    .font(.body)
+                Text(JournalStrings.title(lang))
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+                Spacer()
+                // Stats du jour
+                HStack(spacing: 12) {
+                    Label("\(entry.todayBiberons)", systemImage: "drop.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(.blue)
+                    Label("\(entry.todayTetees)", systemImage: "heart.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(.pink)
+                }
+            }
+
+            Divider()
+
+            // Dernier repas
+            VStack(alignment: .leading, spacing: 4) {
+                Text(JournalStrings.lastMeal(lang))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 6) {
+                    if let type = entry.lastFeedingType {
+                        Text(type == "biberon" ? "🍼" : "🤱")
+                            .font(.body)
+                    }
+                    Text(entry.lastFeedingLabel)
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(entry.lastFeedingType != nil ? .primary : .tertiary)
+                }
+            }
+
+            if entry.isFeeding {
+                Divider()
+
+                // Timer tétée en cours
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(entry.isFeedingPaused ? JournalStrings.feedingPaused(lang) : JournalStrings.feedingActive(lang))
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.pink)
+
+                    if let side = entry.activeFeedingSide {
+                        Text(JournalStrings.sideLabel(side, lang))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    if let start = entry.activeFeedingStart {
+                        Text(timerInterval: start.addingTimeInterval(-Double(entry.accumulatedSeconds))...Date.distantFuture, countsDown: false)
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.pink)
+                            .monospacedDigit()
+                    } else if entry.isFeedingPaused {
+                        let mins = entry.accumulatedSeconds / 60
+                        let secs = entry.accumulatedSeconds % 60
+                        Text("\(mins):\(String(format: "%02d", secs))")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.orange)
+                            .monospacedDigit()
+                    }
+                }
+
+                if #available(iOS 17.0, *) {
+                    HStack(spacing: 10) {
+                        if entry.isFeedingPaused {
+                            Button(intent: ResumeFeedingIntent(side: entry.activeFeedingSide ?? "gauche")) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "play.fill")
+                                    Text(JournalStrings.resume(lang))
+                                        .fontWeight(.medium)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
+                                .background(.green.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
+                                .foregroundStyle(.green)
+                            }
+                            .buttonStyle(.plain)
+                        } else {
+                            Button(intent: PauseFeedingIntent()) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "pause.fill")
+                                    Text("Pause")
+                                        .fontWeight(.medium)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
+                                .background(.orange.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
+                                .foregroundStyle(.orange)
+                            }
+                            .buttonStyle(.plain)
+                        }
+
+                        Button(intent: StopFeedingIntent()) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "stop.circle.fill")
+                                Text(JournalStrings.stop(lang))
+                                    .fontWeight(.medium)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
+                            .background(.red.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
+                            .foregroundStyle(.red)
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    Link(destination: URL(string: "family-vault://open/night-mode?startLive=1")!) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "lock.display")
+                            Text(JournalStrings.screen(lang))
+                                .fontWeight(.medium)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(.purple.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
+                        .foregroundStyle(.purple)
+                    }
+                }
+            } else if #available(iOS 17.0, *) {
+                let childName = entry.data.childName.isEmpty ? JournalStrings.baby(lang) : entry.data.childName
+
+                Divider()
+
+                // Indication du dernier sein
+                if let side = entry.lastSide {
+                    Text(JournalStrings.lastSide(side, lang))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                // Boutons tétée
+                HStack(spacing: 10) {
+                    Button(intent: StartFeedingIntent(side: "gauche", childName: childName)) {
+                        HStack(spacing: 4) {
+                            Text("⬅️")
+                            Text(JournalStrings.left(lang))
+                                .fontWeight(.medium)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(.pink.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
+                        .foregroundStyle(.pink)
+                    }
+                    .buttonStyle(.plain)
+
+                    Button(intent: StartFeedingIntent(side: "droite", childName: childName)) {
+                        HStack(spacing: 4) {
+                            Text(JournalStrings.right(lang))
+                                .fontWeight(.medium)
+                            Text("➡️")
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(.pink.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
+                        .foregroundStyle(.pink)
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                // Bouton biberon
+                Link(destination: URL(string: "family-vault://open/journal?enfant=\(childName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? childName)")!) {
+                    HStack(spacing: 8) {
+                        Text("🍼")
+                            .font(.title3)
+                        Text(JournalStrings.bottle(lang))
+                            .font(.body)
+                            .fontWeight(.medium)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(.blue.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
+                    .foregroundStyle(.blue)
+                }
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding()
+    }
+}
+
 // MARK: - Entry View
 
 struct JournalBebeEntryView: View {
@@ -846,8 +1048,10 @@ struct JournalBebeEntryView: View {
             JournalBebeSmallView(entry: entry)
         case .systemMedium:
             JournalBebeMediumView(entry: entry)
+        case .systemLarge:
+            JournalBebeLargeView(entry: entry)
         default:
-            JournalBebeSmallView(entry: entry)
+            JournalBebeMediumView(entry: entry)
         }
     }
 }
@@ -868,6 +1072,6 @@ struct JournalBebeWidget: Widget {
         }
         .configurationDisplayName("Journal bébé")
         .description("Dernier repas et enregistrement rapide")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }

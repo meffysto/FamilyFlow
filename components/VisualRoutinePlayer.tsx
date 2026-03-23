@@ -8,7 +8,6 @@
 
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Dimensions,
   Modal,
   Pressable,
   StatusBar,
@@ -66,7 +65,6 @@ function formatTimer(seconds: number): string {
 
 const CIRCLE_SIZE = 200;
 const EMOJI_SIZE = 140;
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 const CONFETTI_COUNT = 25;
 const CONFETTI_COLORS_KEYS = ['primary', 'tint', 'success', 'warning'] as const;
 
@@ -693,7 +691,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontWeight: FontWeight.normal,
     textAlign: 'center',
-    maxWidth: SCREEN_W * 0.7,
+    maxWidth: '70%',
   },
   dotsContainer: {
     position: 'absolute',
