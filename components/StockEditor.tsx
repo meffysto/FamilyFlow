@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../contexts/ThemeContext';
-import { useToast } from '../contexts/ToastContext';
+
 import { ModalHeader } from './ui/ModalHeader';
 import { StockItem } from '../lib/types';
 import { EMPLACEMENTS, SUBCATEGORIES, type EmplacementId } from '../constants/stock';
@@ -33,7 +33,6 @@ interface StockEditorProps {
 export function StockEditor({ item, sections, defaultEmplacement, onSave, onDelete, onClose }: StockEditorProps) {
   const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
-  const { showToast } = useToast();
   const isEditing = !!item;
 
   const [produit, setProduit] = useState(item?.produit ?? '');
@@ -46,6 +45,7 @@ export function StockEditor({ item, sections, defaultEmplacement, onSave, onDele
   );
   const [section, setSection] = useState(item?.section ?? '');
   const [isSaving, setIsSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   // Sous-catégories disponibles pour l'emplacement sélectionné
   const availableSubcategories = SUBCATEGORIES[emplacement] ?? [];
@@ -58,12 +58,13 @@ export function StockEditor({ item, sections, defaultEmplacement, onSave, onDele
   };
 
   const handleSave = async () => {
+    setErrorMsg('');
     if (!produit.trim()) {
-      showToast(t('editors.stock.toast.productRequired'), 'error');
+      setErrorMsg(t('editors.stock.toast.productRequired'));
       return;
     }
     if (sectionRequired && !section) {
-      showToast(t('editors.stock.toast.categoryRequired'), 'error');
+      setErrorMsg(t('editors.stock.toast.categoryRequired'));
       return;
     }
 
@@ -80,7 +81,7 @@ export function StockEditor({ item, sections, defaultEmplacement, onSave, onDele
       });
       onClose();
     } catch (e) {
-      showToast(String(e), 'error');
+      setErrorMsg(String(e));
     } finally {
       setIsSaving(false);
     }
@@ -109,6 +110,12 @@ export function StockEditor({ item, sections, defaultEmplacement, onSave, onDele
       />
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+        {errorMsg ? (
+          <View style={[styles.errorBanner, { backgroundColor: colors.errorBg }]}>
+            <Text style={[styles.errorText, { color: colors.error }]}>{errorMsg}</Text>
+          </View>
+        ) : null}
+
         {/* Produit */}
         <Text style={[styles.label, { color: colors.textSub }]}>{t('editors.stock.productLabel')}</Text>
         <TextInput
@@ -238,6 +245,15 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   scroll: { flex: 1 },
   content: { padding: 20, gap: 16, paddingBottom: 40 },
+  errorBanner: {
+    padding: 12,
+    borderRadius: 10,
+  },
+  errorText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+    textAlign: 'center',
+  },
   label: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
