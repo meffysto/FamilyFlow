@@ -138,11 +138,9 @@ export default function BudgetScreen() {
   const [receiptData, setReceiptData] = useState<ReceiptScanResult | null>(null);
   const [receiptReviewVisible, setReceiptReviewVisible] = useState(false);
 
-  // ─── Filtrage liste (Feature 1) ────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
 
-  // ─── Évolution des prix (Feature 2) ────────────────────────────────────────
   const [evoMonths, setEvoMonths] = useState<6 | 12>(6);
   const [evoEntries, setEvoEntries] = useState<BudgetEntry[]>([]);
   const [evoLoading, setEvoLoading] = useState(false);
@@ -210,7 +208,7 @@ export default function BudgetScreen() {
     [budgetEntries]
   );
 
-  // ─── Filtrage des entrées (Feature 1) ──────────────────────────────────────
+  // ─── Filtrage des entrées ──────────────────────────────────────
   const filteredEntries = useMemo(() => {
     let entries = sortedEntries;
     if (filterCategory) {
@@ -225,7 +223,7 @@ export default function BudgetScreen() {
 
   const isFiltered = !!filterCategory || !!searchQuery.trim();
 
-  // ─── Calcul évolution des prix (Feature 2) ────────────────────────────────
+  // ─── Calcul évolution des prix ────────────────────────────────
   const priceEvolutions = useMemo((): PriceEvolution[] => {
     if (evoEntries.length === 0) return [];
 
@@ -294,7 +292,7 @@ export default function BudgetScreen() {
     }).catch(() => {
       if (!cancelled) setEvoLoading(false);
     });
-    return () => { cancelled = true; };
+    return () => { cancelled = true; setEvoEntries([]); };
   }, [tab, evoMonths, loadBudgetMonths]);
 
   const handleMonthChange = useCallback((direction: 'prev' | 'next') => {
@@ -666,7 +664,7 @@ export default function BudgetScreen() {
                         { borderColor: isSelected ? primary : colors.border },
                         isSelected && { backgroundColor: primary },
                       ]}>
-                        {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                        {isSelected && <Text style={[styles.checkmark, { color: colors.onPrimary }]}>✓</Text>}
                       </View>
                     )}
                     <View style={styles.entryLeft}>
@@ -935,7 +933,7 @@ const styles = StyleSheet.create({
   catBar: { height: 6, borderRadius: 3, overflow: 'hidden' },
   catBarFill: { height: '100%', borderRadius: 3 },
 
-  // ─── Filtrage (Feature 1) ─────────────────────────────────────────────────
+  // ─── Filtrage ─────────────────────────────────────────────────
   filterContainer: {
     paddingHorizontal: Spacing['2xl'],
     paddingTop: Spacing.lg,
@@ -1043,9 +1041,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: Spacing.xl,
   },
-  checkmark: { color: '#fff', fontSize: FontSize.sm, fontWeight: FontWeight.bold },
+  checkmark: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
 
-  // ─── Évolution (Feature 2) ────────────────────────────────────────────────
+  // ─── Évolution ────────────────────────────────────────────────
   evoPeriodRow: {
     paddingHorizontal: Spacing['2xl'],
     paddingVertical: Spacing.lg,

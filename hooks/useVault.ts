@@ -2284,20 +2284,15 @@ export function useVaultInternal(): VaultState {
 
   const loadBudgetMonths = useCallback(async (count: number): Promise<BudgetEntry[]> => {
     if (!vaultRef.current) return [];
-    const allEntries: BudgetEntry[] = [];
     const now = new Date();
-    for (let i = 0; i < count; i++) {
+    const months = Array.from({ length: count }, (_, i) => {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      try {
-        const content = await vaultRef.current.readFile(`${BUDGET_DIR}/${m}.md`);
-        const entries = parseBudgetMonth(content);
-        allEntries.push(...entries);
-      } catch {
-        // Mois sans données — ignorer
-      }
-    }
-    return allEntries;
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    });
+    const results = await Promise.allSettled(
+      months.map(m => vaultRef.current!.readFile(`${BUDGET_DIR}/${m}.md`))
+    );
+    return results.flatMap(r => r.status === 'fulfilled' ? parseBudgetMonth(r.value) : []);
   }, []);
 
   const updateBudgetConfig = useCallback(async (config: BudgetConfig) => {
