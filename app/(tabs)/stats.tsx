@@ -27,13 +27,12 @@ import { useStatsData } from '../../hooks/useStatsData';
 import { BarChart, DotChart } from '../../components/charts';
 import {
   aggregateTasksByWeek,
-  aggregateBudgetByMonths,
   aggregateMealFrequency,
   aggregateSleepByDays,
   getWeekStart,
   formatMinutes,
 } from '../../lib/stats';
-import { formatAmount } from '../../lib/budget';
+
 import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -56,7 +55,7 @@ export default function StatsScreen() {
     () => profiles.filter((p) => p.role === 'enfant').map((p) => p.name),
     [profiles],
   );
-  const { sleepByChild, budgetTrend, isLoading } = useStatsData(enfantNames);
+  const { sleepByChild, isLoading } = useStatsData(enfantNames);
 
   const { refreshing, onRefresh } = useRefresh(refresh);
 
@@ -82,22 +81,7 @@ export default function StatsScreen() {
     return `${fmt(currentWeekStart)} — ${fmt(end)}`;
   }, [currentWeekStart]);
 
-  // ── Section 2 : Budget ──
-  const budgetData = useMemo(
-    () => aggregateBudgetByMonths(budgetTrend),
-    [budgetTrend],
-  );
-  const budgetTotal = budgetData.reduce((sum, d) => sum + d.value, 0);
-  const budgetEvolution = useMemo(() => {
-    if (budgetData.length < 2) return null;
-    const last = budgetData[budgetData.length - 1].value;
-    const prev = budgetData[budgetData.length - 2].value;
-    if (prev === 0) return null;
-    const pct = Math.round(((last - prev) / prev) * 100);
-    return pct;
-  }, [budgetData]);
-
-  // ── Section 3 : Repas ──
+  // ── Section 2 : Repas ──
   const mealData = useMemo(() => aggregateMealFrequency(meals), [meals]);
   const topMeal = mealData.length > 0 ? mealData[0] : null;
 
@@ -119,7 +103,7 @@ export default function StatsScreen() {
         <TouchableOpacity onPress={() => router.back()} hitSlop={12} accessibilityLabel={t('statsScreen.a11y.back')} accessibilityRole="button">
           <Text style={[styles.backBtn, { color: primary }]}>{t('statsScreen.backBtn')}</Text>
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>Statistiques</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('statsScreen.title')}</Text>
         <View style={{ width: 60 }} />
       </View>
 
@@ -135,7 +119,7 @@ export default function StatsScreen() {
         {/* ── Tâches complétées / semaine ── */}
         <View style={[styles.card, { backgroundColor: colors.card }, Shadows.sm]}>
           <View style={styles.cardHeader}>
-            <Text style={[styles.cardTitle, { color: colors.text }]}>📋 Tâches complétées</Text>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>{t('statsScreen.tasksTitle')}</Text>
           </View>
           <View style={styles.weekNav}>
             <TouchableOpacity onPress={() => setWeekOffset((o) => o - 1)} hitSlop={8} accessibilityLabel={t('statsScreen.a11y.prevWeek')} accessibilityRole="button">
@@ -159,37 +143,15 @@ export default function StatsScreen() {
           </Text>
         </View>
 
-        {/* ── Budget tendances ── */}
-        {budgetData.length > 0 && (
-          <View style={[styles.card, { backgroundColor: colors.card }, Shadows.sm]}>
-            <Text style={[styles.cardTitle, { color: colors.text }]}>💰 Budget tendances</Text>
-            <BarChart data={budgetData} height={100} barColor={primary} />
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summary, { color: colors.textMuted }]}>
-                Total : {formatAmount(budgetTotal)}
-              </Text>
-              {budgetEvolution !== null && (
-                <Text
-                  style={[
-                    styles.evolution,
-                    { color: budgetEvolution > 0 ? colors.error : colors.success },
-                  ]}
-                >
-                  {budgetEvolution > 0 ? '↑' : '↓'} {Math.abs(budgetEvolution)}%
-                </Text>
-              )}
-            </View>
-          </View>
-        )}
 
         {/* ── Fréquence repas ── */}
         {mealData.length > 0 && (
           <View style={[styles.card, { backgroundColor: colors.card }, Shadows.sm]}>
-            <Text style={[styles.cardTitle, { color: colors.text }]}>🍽️ Repas fréquents</Text>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>{t('statsScreen.mealsTitle')}</Text>
             <BarChart data={mealData} horizontal barColor={colors.info} />
             {topMeal && (
               <Text style={[styles.summary, { color: colors.textMuted }]}>
-                Le plus fréquent : {topMeal.label} ({topMeal.value}×)
+                {t('statsScreen.topMeal', { name: topMeal.label, count: topMeal.value })}
               </Text>
             )}
           </View>
@@ -198,20 +160,20 @@ export default function StatsScreen() {
         {/* ── Sommeil bébé (une courbe par enfant) ── */}
         {sleepPerChild.map(({ name, data, avg }) => (
           <View key={name} style={[styles.card, { backgroundColor: colors.card }, Shadows.sm]}>
-            <Text style={[styles.cardTitle, { color: colors.text }]}>😴 Sommeil — {name}</Text>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>{t('statsScreen.sleepTitle', { name })}</Text>
             <DotChart data={data} height={100} color={primary} formatValue={formatMinutes} />
             <Text style={[styles.summary, { color: colors.textMuted }]}>
-              Moyenne : {formatMinutes(avg)} / jour (30 derniers jours)
+              {t('statsScreen.sleepAvg', { avg: formatMinutes(avg) })}
             </Text>
           </View>
         ))}
 
         {/* État vide */}
-        {!isLoading && budgetData.length === 0 && mealData.length === 0 && sleepPerChild.length === 0 && totalTasks === 0 && (
+        {!isLoading && mealData.length === 0 && sleepPerChild.length === 0 && totalTasks === 0 && (
           <View style={styles.emptyState}>
             <Text style={[styles.emptyEmoji]}>📊</Text>
             <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-              Pas encore de données à afficher.{'\n'}Les statistiques apparaîtront au fil de l'utilisation.
+              {t('statsScreen.empty')}
             </Text>
           </View>
         )}
@@ -278,16 +240,6 @@ const styles = StyleSheet.create({
     fontSize: FontSize.caption,
     fontWeight: FontWeight.medium,
     textAlign: 'center',
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  evolution: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.bold,
   },
   emptyState: {
     alignItems: 'center',

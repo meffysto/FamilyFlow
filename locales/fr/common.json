@@ -2661,7 +2661,13 @@
     "title": "Statistiques",
     "tasksCompleted": "📋 Tâches complétées",
     "tasksSummary_one": "{{count}} tâche cette semaine",
-    "tasksSummary_other": "{{count}} tâches cette semaine"
+    "tasksSummary_other": "{{count}} tâches cette semaine",
+    "tasksTitle": "📋 Tâches complétées",
+    "mealsTitle": "🍽️ Repas fréquents",
+    "topMeal": "Le plus fréquent : {{name}} ({{count}}×)",
+    "sleepTitle": "😴 Sommeil — {{name}}",
+    "sleepAvg": "Moyenne : {{avg}} / jour (30 derniers jours)",
+    "empty": "Pas encore de données à afficher.\nLes statistiques apparaîtront au fil de l'utilisation."
   },
   "skillsScreen": {
     "title": "Compétences",

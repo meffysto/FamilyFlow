@@ -2661,7 +2661,13 @@
     "title": "Statistics",
     "tasksCompleted": "📋 Completed tasks",
     "tasksSummary_one": "{{count}} task this week",
-    "tasksSummary_other": "{{count}} tasks this week"
+    "tasksSummary_other": "{{count}} tasks this week",
+    "tasksTitle": "📋 Completed tasks",
+    "mealsTitle": "🍽️ Frequent meals",
+    "topMeal": "Most frequent: {{name}} ({{count}}×)",
+    "sleepTitle": "😴 Sleep — {{name}}",
+    "sleepAvg": "Average: {{avg}} / day (last 30 days)",
+    "empty": "No data to display yet.\nStatistics will appear as you use the app."
   },
   "skillsScreen": {
     "title": "Skills",
