@@ -226,7 +226,7 @@ export default function StockScreen() {
 
   // ─── Stock bas total ─────────────────────────────────────────────────
   const lowStockCount = useMemo(
-    () => stock.filter((s) => s.quantite <= s.seuil).length,
+    () => stock.filter((s) => s.seuil > 0 && s.quantite <= s.seuil).length,
     [stock]
   );
 
@@ -255,6 +255,7 @@ export default function StockScreen() {
 
   const getStatusColor = useCallback(
     (item: StockItem) => {
+      if (item.seuil === 0) return colors.success;
       if (item.quantite <= item.seuil) return colors.error;
       if (item.quantite <= item.seuil + 1) return colors.warning;
       return colors.success;
@@ -276,7 +277,7 @@ export default function StockScreen() {
   // ─── Rendu d'un item ─────────────────────────────────────────────────
   const renderItem = (item: StockItem, index: number) => {
     const statusColor = getStatusColor(item);
-    const isLow = item.quantite <= item.seuil;
+    const isLow = item.seuil > 0 && item.quantite <= item.seuil;
 
     return (
       <Animated.View key={item.lineIndex} entering={FadeIn.delay(Math.min(index * 40, 300))}>
