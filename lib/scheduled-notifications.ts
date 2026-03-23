@@ -319,7 +319,7 @@ export async function scheduleCoursesAlert(
 
   if (!config.coursesEnabled) return;
 
-  const lowItems = stock.filter(s => s.seuil > 0 && s.quantite <= s.seuil);
+  const lowItems = stock.filter(s => s.tracked !== false && s.seuil > 0 && s.quantite <= s.seuil);
   if (lowItems.length === 0) return;
 
   const body = lowItems.length <= 3

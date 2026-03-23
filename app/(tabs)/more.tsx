@@ -76,7 +76,7 @@ export default function MoreScreen() {
   const items: MenuItem[] = useMemo(() => {
     const upcomingRdvs = rdvs.filter((r) => isRdvUpcoming(r)).length;
     const hasBaby = profiles.some(isBabyProfile);
-    const lowStock = stock.filter((s) => s.seuil > 0 && s.quantite <= s.seuil).length;
+    const lowStock = stock.filter((s) => s.tracked !== false && s.seuil > 0 && s.quantite <= s.seuil).length;
     const lootBoxes = gamiData?.profiles
       ? gamiData.profiles.reduce((sum, p) => sum + (p.lootBoxesAvailable ?? 0), 0)
       : 0;

@@ -172,7 +172,7 @@ function rdvInsights(input: InsightInput, tc: TimeContext): Insight[] {
 
 function stockInsights(input: InsightInput): Insight[] {
   const insights: Insight[] = [];
-  const low = input.stock.filter((s) => s.quantite <= s.seuil && s.seuil > 0);
+  const low = input.stock.filter((s) => s.tracked !== false && s.quantite <= s.seuil && s.seuil > 0);
 
   if (low.length === 0) return insights;
 

@@ -1531,6 +1531,8 @@ export function parseStock(content: string): StockItem[] {
 
     const rawQteAchat = cells[4] ? parseInt(cells[4], 10) : undefined;
     const qteAchat = rawQteAchat && !isNaN(rawQteAchat) ? rawQteAchat : 1;
+    const trackedRaw = cells[5]?.trim().toLowerCase();
+    const tracked = trackedRaw === 'non' || trackedRaw === 'no' ? false : true;
 
     items.push({
       produit,
@@ -1538,6 +1540,7 @@ export function parseStock(content: string): StockItem[] {
       quantite,
       seuil,
       qteAchat,
+      tracked,
       emplacement: currentEmplacement,
       section: currentSection,
       lineIndex: i,
@@ -1551,7 +1554,8 @@ export function parseStock(content: string): StockItem[] {
  * Serialize a stock item as a markdown table row.
  */
 export function serializeStockRow(item: Omit<StockItem, 'lineIndex'>): string {
-  return `| ${item.produit} | ${item.detail ?? ''} | ${item.quantite} | ${item.seuil} | ${item.qteAchat ?? ''} |`;
+  const trackedStr = item.tracked === false ? 'non' : '';
+  return `| ${item.produit} | ${item.detail ?? ''} | ${item.quantite} | ${item.seuil} | ${item.qteAchat ?? ''} | ${trackedStr} |`;
 }
 
 /**

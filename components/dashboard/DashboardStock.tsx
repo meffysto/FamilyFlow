@@ -22,7 +22,7 @@ function DashboardStockInner({ vaultFileExists, activateCardTemplate }: Dashboar
   const { stock, updateStockQuantity, addCourseItem } = useVault();
   const { showToast } = useToast();
 
-  const lowCount = stock.length > 0 ? stock.filter((s) => s.seuil > 0 && s.quantite <= s.seuil).length : 0;
+  const lowCount = stock.length > 0 ? stock.filter((s) => s.tracked !== false && s.seuil > 0 && s.quantite <= s.seuil).length : 0;
 
   if (!vaultFileExists.stock) return (
     <DashboardCard key="stock" title={t('dashboard.stock.title')} icon="📦" color={colors.success}>
@@ -36,8 +36,8 @@ function DashboardStockInner({ vaultFileExists, activateCardTemplate }: Dashboar
 
   return (
     <DashboardCard key="stock" title={t('dashboard.stock.title')} icon="📦" count={lowCount > 0 ? lowCount : undefined} color={lowCount > 0 ? colors.error : colors.success} collapsible cardId="stock">
-      {stock.filter((s) => s.seuil > 0 && s.quantite <= s.seuil + 1).map((item) => {
-        const isLow = item.seuil > 0 && item.quantite <= item.seuil;
+      {stock.filter((s) => s.tracked !== false && s.seuil > 0 && s.quantite <= s.seuil + 1).map((item) => {
+        const isLow = item.tracked !== false && item.seuil > 0 && item.quantite <= item.seuil;
         const statusColor = isLow ? colors.error : colors.warning;
         return (
           <View key={`${item.section}-${item.produit}`} style={styles.stockRow}>

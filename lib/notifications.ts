@@ -302,7 +302,7 @@ export function buildMorningDigest(data: {
   }
 
   // Low stock
-  const lowStock = data.stock.filter((s) => s.seuil > 0 && s.quantite <= s.seuil);
+  const lowStock = data.stock.filter((s) => s.tracked !== false && s.seuil > 0 && s.quantite <= s.seuil);
   if (lowStock.length > 0) {
     lines.push(`📦 <b>${lowStock.length} produit(s) en stock bas</b>`);
     lowStock.forEach((s) => {

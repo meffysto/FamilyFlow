@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   TextInput,
   ScrollView,
+  Switch,
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -44,6 +45,7 @@ export function StockEditor({ item, sections, defaultEmplacement, onSave, onDele
     (item?.emplacement as EmplacementId) ?? defaultEmplacement ?? 'placards'
   );
   const [section, setSection] = useState(item?.section ?? '');
+  const [tracked, setTracked] = useState(item?.tracked !== false);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -76,6 +78,7 @@ export function StockEditor({ item, sections, defaultEmplacement, onSave, onDele
         quantite: parseInt(quantite, 10) || 0,
         seuil: parseInt(seuil, 10) || 1,
         qteAchat: qteAchat ? parseInt(qteAchat, 10) || undefined : undefined,
+        tracked,
         emplacement,
         section: section || undefined,
       });
@@ -190,8 +193,21 @@ export function StockEditor({ item, sections, defaultEmplacement, onSave, onDele
           </>
         )}
 
+        {/* Toggle alertes */}
+        <View style={[styles.trackRow, { backgroundColor: colors.bg, borderColor: colors.inputBorder }]}>
+          <View style={styles.trackInfo}>
+            <Text style={[styles.trackLabel, { color: colors.text }]}>{t('editors.stock.trackedLabel')}</Text>
+            <Text style={[styles.trackHint, { color: colors.textMuted }]}>{t('editors.stock.trackedHint')}</Text>
+          </View>
+          <Switch
+            value={tracked}
+            onValueChange={setTracked}
+            trackColor={{ false: colors.border, true: primary }}
+          />
+        </View>
+
         {/* Numeric fields row */}
-        <View style={styles.numRow}>
+        <View style={[styles.numRow, !tracked && { opacity: 0.4 }]}>
           <View style={styles.numField}>
             <Text style={[styles.label, { color: colors.textSub }]}>{t('editors.stock.quantityLabel')}</Text>
             <TextInput
@@ -279,6 +295,26 @@ const styles = StyleSheet.create({
   chipText: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.medium,
+  },
+  trackRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  trackInfo: {
+    flex: 1,
+    marginRight: 12,
+  },
+  trackLabel: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+  },
+  trackHint: {
+    fontSize: FontSize.caption,
+    marginTop: 2,
   },
   numRow: {
     flexDirection: 'row',

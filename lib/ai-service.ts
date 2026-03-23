@@ -211,7 +211,7 @@ function buildVaultSummary(ctx: VaultContext): VaultSummary {
         .map((r) => `${r.date_rdv} ${r.heure} — ${r.type_rdv} ${r.enfant} (${r.lieu || r.médecin || ''})`),
     },
     stock: {
-      low: ctx.stock.filter((s) => s.seuil > 0 && s.quantite <= s.seuil).map((s) => `${s.produit} (${s.quantite}/${s.seuil})`),
+      low: ctx.stock.filter((s) => s.tracked !== false && s.seuil > 0 && s.quantite <= s.seuil).map((s) => `${s.produit} (${s.quantite}/${s.seuil})`),
     },
     meals: {
       today: ctx.meals

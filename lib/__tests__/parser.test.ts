@@ -540,7 +540,7 @@ describe('serializeStockRow', () => {
       qteAchat: 6,
       emplacement: 'frigo',
     });
-    expect(row).toBe('| Lait | demi-écrémé | 3 | 2 | 6 |');
+    expect(row).toBe('| Lait | demi-écrémé | 3 | 2 | 6 |  |');
   });
 
   it('sérialise une ligne sans détail ni qteAchat', () => {
@@ -550,7 +550,7 @@ describe('serializeStockRow', () => {
       seuil: 1,
       emplacement: 'placards',
     });
-    expect(row).toBe('| Riz |  | 2 | 1 |  |');
+    expect(row).toBe('| Riz |  | 2 | 1 |  |  |');
   });
 });
 

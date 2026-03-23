@@ -929,7 +929,9 @@
       "toast": {
         "productRequired": "Le nom du produit est obligatoire",
         "categoryRequired": "Sélectionne une catégorie"
-      }
+      },
+      "trackedLabel": "🔔 Alertes stock bas",
+      "trackedHint": "Désactivé = pas d'alerte ni de suggestion courses"
     },
     "note": {
       "titleNew": "Nouvelle note",

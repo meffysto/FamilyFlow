@@ -929,7 +929,9 @@
       "toast": {
         "productRequired": "Product name is required",
         "categoryRequired": "Please select a category"
-      }
+      },
+      "trackedLabel": "🔔 Low stock alerts",
+      "trackedHint": "Disabled = no alerts or shopping suggestions"
     },
     "note": {
       "titleNew": "New note",

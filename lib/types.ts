@@ -240,6 +240,7 @@ export interface StockItem {
   quantite: number;
   seuil: number;
   qteAchat?: number;
+  tracked?: boolean;     // alertes stock bas actives (défaut true si absent)
   emplacement: string;  // 'frigo' | 'congelateur' | 'placards' | 'bebe'
   section?: string;      // sous-catégorie dans l'emplacement (e.g. "Couches", "Épicerie")
   lineIndex: number;     // 0-based line index in file (for writes)
