@@ -8,6 +8,8 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
       "backgroundColor": "#F9FAFB"
     },
     "ios": {
@@ -31,7 +33,7 @@
           "tel"
         ]
       },
-      "buildNumber": "13"
+      "buildNumber": "14"
     },
     "android": {
       "adaptiveIcon": {
@@ -54,7 +56,8 @@
         "android.permission.READ_CALENDAR",
         "android.permission.WRITE_CALENDAR"
       ],
-      "package": "com.familyvault.app"
+      "package": "com.familyvault.app",
+      "versionCode": 2
     },
     "web": {
       "favicon": "./assets/favicon.png"

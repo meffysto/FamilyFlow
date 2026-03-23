@@ -567,7 +567,7 @@ export default function TasksScreen() {
         <View style={styles.headerRight}>
           {(activeProfile?.role !== 'enfant') && (
             <Text style={[styles.stats, { color: colors.textMuted }]}>
-              {completedCount}/{totalCount} terminées
+              {totalCount - completedCount} restante{totalCount - completedCount > 1 ? 's' : ''}
             </Text>
           )}
           {!isVacationActive && sections.length > 1 && (
