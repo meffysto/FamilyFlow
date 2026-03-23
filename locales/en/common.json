@@ -268,6 +268,15 @@
     "fileLabels": {
       "vacation": "☀️ Vacation Checklist",
       "home": "🏠 Home — Tasks"
+    },
+    "screenTitle": "📋 Tasks",
+    "vacationTitle": "☀️ Vacation",
+    "remaining": "{{count}} remaining",
+    "remaining_other": "{{count}} remaining",
+    "hint": "💡 Swipe to delete · Long press to edit",
+    "secretMissions": "🕵️ Secret missions",
+    "targetFiles": {
+      "home": "🏠 Home"
     }
   },
   "budget": {

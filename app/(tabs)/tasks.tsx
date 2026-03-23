@@ -180,19 +180,14 @@ interface TaskSection {
   data: Task[];
 }
 
-// Target files for adding tasks
-const TARGET_FILES = [
-  { label: '🏠 Maison', value: '02 - Maison/Tâches récurrentes.md' },
-];
-
-function buildTargetFiles(profiles: Profile[]) {
+function buildTargetFiles(profiles: Profile[], t: (key: string) => string) {
   const enfants = profiles.filter((p) => p.role === 'enfant');
   return [
     ...enfants.map((p) => ({
       label: `${p.avatar} ${p.name}`,
       value: `01 - Enfants/${p.name}/Tâches récurrentes.md`,
     })),
-    ...TARGET_FILES,
+    { label: t('tasks.targetFiles.home'), value: '02 - Maison/Tâches récurrentes.md' },
   ];
 }
 
@@ -221,7 +216,7 @@ export default function TasksScreen() {
     }
     return buildFilters(profiles, activeProfile, t);
   }, [profiles, activeProfile, isVacationActive]);
-  const targetFiles = useMemo(() => buildTargetFiles(profiles), [profiles]);
+  const targetFiles = useMemo(() => buildTargetFiles(profiles, t), [profiles, t]);
   const [filter, setFilter] = useState('tous');
 
   // Apply filter param when navigating from dashboard
@@ -563,11 +558,11 @@ export default function TasksScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
       <View ref={taskListRef} style={[styles.header, { backgroundColor: colors.bg }]}>
-        <Text style={[styles.title, { color: colors.text }]}>{isVacationActive ? '☀️ Vacances' : '📋 Tâches'}</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{isVacationActive ? t('tasks.vacationTitle', '☀️ Vacances') : t('tasks.screenTitle', '📋 Tâches')}</Text>
         <View style={styles.headerRight}>
           {(activeProfile?.role !== 'enfant') && (
             <Text style={[styles.stats, { color: colors.textMuted }]}>
-              {totalCount - completedCount} restante{totalCount - completedCount > 1 ? 's' : ''}
+              {t('tasks.remaining', { count: totalCount - completedCount })}
             </Text>
           )}
           {!isVacationActive && sections.length > 1 && (
@@ -651,14 +646,14 @@ export default function TasksScreen() {
             </View>
             {sections.length > 0 && (
               <View style={[styles.deleteTip, { backgroundColor: colors.warningBg, borderBottomColor: colors.warning }]}>
-                <Text style={[styles.deleteTipText, { color: colors.warningText }]}>💡 Glissez pour supprimer · Appui long pour modifier</Text>
+                <Text style={[styles.deleteTipText, { color: colors.warningText }]}>{t('tasks.hint')}</Text>
               </View>
             )}
             {/* Section missions secrètes */}
             {visibleMissions.length > 0 && (
               <View style={styles.secretMissionsSection}>
                 <View style={styles.sectionHeader}>
-                  <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>🕵️ Missions secrètes</Text>
+                  <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('tasks.secretMissions')}</Text>
                   <Text style={[styles.sectionCount, { color: colors.textFaint }]}>{visibleMissions.length}</Text>
                 </View>
                 {visibleMissions.map((mission) => (
