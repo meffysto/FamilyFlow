@@ -111,10 +111,11 @@ export function TabletSidebar() {
   const categories = ['organisation', 'sante', 'souvenirs', 'jeux', 'famille', 'systeme'];
 
   const navigate = (route: string, params?: Record<string, string>) => {
+    const path = route === 'index' ? '/(tabs)' : `/(tabs)/${route}`;
     if (params) {
-      router.push({ pathname: `/(tabs)/${route}` as any, params });
+      router.navigate({ pathname: path as any, params });
     } else {
-      router.push(`/(tabs)/${route}` as any);
+      router.navigate(path as any);
     }
   };
 
