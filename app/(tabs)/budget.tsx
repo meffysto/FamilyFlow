@@ -686,15 +686,24 @@ export default function BudgetScreen() {
         <>
           {/* Toggle période */}
           <View style={[styles.evoPeriodRow, { backgroundColor: colors.bg }]}>
-            <SegmentedControl
-              segments={[
-                { id: '6', label: t('budget.evolution.sixMonths') },
-                { id: '12', label: t('budget.evolution.twelveMonths') },
-              ]}
-              value={String(evoMonths)}
-              onChange={(id) => setEvoMonths(Number(id) as 6 | 12)}
-              style={{ flex: 1 }}
-            />
+            {([6, 12] as const).map((m) => {
+              const active = evoMonths === m;
+              return (
+                <TouchableOpacity
+                  key={m}
+                  style={[
+                    styles.evoPeriodBtn,
+                    { backgroundColor: active ? primary : colors.card, borderColor: active ? primary : colors.border },
+                  ]}
+                  onPress={() => setEvoMonths(m)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.evoPeriodBtnText, { color: active ? colors.onPrimary : colors.text }]}>
+                    {m === 6 ? t('budget.evolution.sixMonths') : t('budget.evolution.twelveMonths')}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
 
           {evoLoading ? (
@@ -1040,8 +1049,21 @@ const styles = StyleSheet.create({
 
   // ─── Évolution ────────────────────────────────────────────────
   evoPeriodRow: {
+    flexDirection: 'row',
     paddingHorizontal: Spacing['2xl'],
     paddingVertical: Spacing.lg,
+    gap: Spacing.md,
+  },
+  evoPeriodBtn: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius['2xl'],
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  evoPeriodBtnText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
   },
   evoLoadingContainer: {
     flex: 1,
