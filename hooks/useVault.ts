@@ -202,6 +202,7 @@ export interface VaultState {
   deleteExpense: (lineIndex: number) => Promise<void>;
   updateBudgetConfig: (config: BudgetConfig) => Promise<void>;
   loadBudgetData: (month?: string) => Promise<void>;
+  loadBudgetMonths: (count: number) => Promise<BudgetEntry[]>;
   routines: Routine[];
   saveRoutines: (routines: Routine[]) => Promise<void>;
   healthRecords: HealthRecord[];
@@ -2281,6 +2282,24 @@ export function useVaultInternal(): VaultState {
     }
   }, [budgetMonth]);
 
+  const loadBudgetMonths = useCallback(async (count: number): Promise<BudgetEntry[]> => {
+    if (!vaultRef.current) return [];
+    const allEntries: BudgetEntry[] = [];
+    const now = new Date();
+    for (let i = 0; i < count; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      try {
+        const content = await vaultRef.current.readFile(`${BUDGET_DIR}/${m}.md`);
+        const entries = parseBudgetMonth(content);
+        allEntries.push(...entries);
+      } catch {
+        // Mois sans données — ignorer
+      }
+    }
+    return allEntries;
+  }, []);
+
   const updateBudgetConfig = useCallback(async (config: BudgetConfig) => {
     if (!vaultRef.current) return;
     await vaultRef.current.ensureDir(BUDGET_DIR);
@@ -2966,6 +2985,7 @@ export function useVaultInternal(): VaultState {
     deleteExpense,
     updateBudgetConfig,
     loadBudgetData,
+    loadBudgetMonths,
     routines,
     saveRoutines,
     healthRecords,
@@ -3028,7 +3048,7 @@ export function useVaultInternal(): VaultState {
     saveRecipeImage, getRecipeImageUri,
     loadRecipes, scanAllCookFiles, moveCookToRecipes, toggleFavorite, isFavorite,
     getFavorites, applyAgeUpgrade, dismissAgeUpgrade, addChild, convertToBorn,
-    setBudgetMonth, addExpense, deleteExpense, updateBudgetConfig, loadBudgetData,
+    setBudgetMonth, addExpense, deleteExpense, updateBudgetConfig, loadBudgetData, loadBudgetMonths,
     saveRoutines, saveHealthRecord, addGrowthEntry, updateGrowthEntry, deleteGrowthEntry, addVaccineEntry,
     createDefi, checkInDefi, completeDefi, deleteDefi,
     addGratitudeEntry, deleteGratitudeEntry,

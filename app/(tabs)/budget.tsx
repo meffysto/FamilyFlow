@@ -1,10 +1,11 @@
 /**
  * budget.tsx — Suivi du budget familial
  *
- * Trois vues :
+ * Quatre vues :
  * 1. Résumé mensuel (barres de progression par catégorie)
- * 2. Liste des dépenses du mois
- * 3. Modal d'ajout rapide
+ * 2. Liste des dépenses du mois (avec filtrage)
+ * 3. Évolution des prix (comparaison multi-mois)
+ * 4. Modal d'ajout rapide
  *
  * Accessible depuis Menu (more.tsx) et Dashboard card.
  */
@@ -75,7 +76,20 @@ function todayISO(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-type TabId = 'resume' | 'list';
+// ─── Types pour l'onglet évolution ──────────────────────────────────────────
+
+interface PriceEvolution {
+  label: string;
+  category: string;
+  count: number;
+  firstPrice: number;
+  lastPrice: number;
+  firstDate: string;
+  lastDate: string;
+  change: number; // pourcentage
+}
+
+type TabId = 'resume' | 'list' | 'evolution';
 
 export default function BudgetScreen() {
   const { t } = useTranslation();
@@ -86,6 +100,7 @@ export default function BudgetScreen() {
     budgetConfig,
     budgetMonth,
     loadBudgetData,
+    loadBudgetMonths,
     addExpense,
     deleteExpense,
     activeProfile,
@@ -123,6 +138,14 @@ export default function BudgetScreen() {
   const [receiptData, setReceiptData] = useState<ReceiptScanResult | null>(null);
   const [receiptReviewVisible, setReceiptReviewVisible] = useState(false);
 
+  // ─── Filtrage liste (Feature 1) ────────────────────────────────────────────
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterCategory, setFilterCategory] = useState<string | null>(null);
+
+  // ─── Évolution des prix (Feature 2) ────────────────────────────────────────
+  const [evoMonths, setEvoMonths] = useState<6 | 12>(6);
+  const [evoEntries, setEvoEntries] = useState<BudgetEntry[]>([]);
+  const [evoLoading, setEvoLoading] = useState(false);
 
   // Mode sélection multiple (dépenses)
   const [selectionMode, setSelectionMode] = useState(false);
@@ -187,9 +210,92 @@ export default function BudgetScreen() {
     [budgetEntries]
   );
 
+  // ─── Filtrage des entrées (Feature 1) ──────────────────────────────────────
+  const filteredEntries = useMemo(() => {
+    let entries = sortedEntries;
+    if (filterCategory) {
+      entries = entries.filter(e => e.category === filterCategory);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      entries = entries.filter(e => e.label.toLowerCase().includes(q));
+    }
+    return entries;
+  }, [sortedEntries, filterCategory, searchQuery]);
+
+  const isFiltered = !!filterCategory || !!searchQuery.trim();
+
+  // ─── Calcul évolution des prix (Feature 2) ────────────────────────────────
+  const priceEvolutions = useMemo((): PriceEvolution[] => {
+    if (evoEntries.length === 0) return [];
+
+    // Grouper par label normalisé
+    const groups = new Map<string, BudgetEntry[]>();
+    for (const entry of evoEntries) {
+      const key = entry.label.trim().toLowerCase();
+      const existing = groups.get(key) || [];
+      existing.push(entry);
+      groups.set(key, existing);
+    }
+
+    const results: PriceEvolution[] = [];
+    for (const [, entries] of groups) {
+      // Minimum 2 achats pour comparer
+      if (entries.length < 2) continue;
+
+      // Trier par date croissante
+      const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date));
+      const firstPrice = sorted[0].amount;
+      const lastPrice = sorted[sorted.length - 1].amount;
+      const change = firstPrice > 0 ? ((lastPrice - firstPrice) / firstPrice) * 100 : 0;
+
+      // Catégorie la plus fréquente
+      const catCounts = new Map<string, number>();
+      for (const e of entries) {
+        catCounts.set(e.category, (catCounts.get(e.category) || 0) + 1);
+      }
+      let topCat = entries[0].category;
+      let topCount = 0;
+      for (const [cat, count] of catCounts) {
+        if (count > topCount) { topCat = cat; topCount = count; }
+      }
+
+      results.push({
+        label: sorted[0].label, // Garder la casse originale
+        category: topCat,
+        count: entries.length,
+        firstPrice,
+        lastPrice,
+        firstDate: sorted[0].date,
+        lastDate: sorted[sorted.length - 1].date,
+        change,
+      });
+    }
+
+    // Trier par plus grande augmentation en premier
+    results.sort((a, b) => b.change - a.change);
+    return results;
+  }, [evoEntries]);
+
   useEffect(() => {
     loadBudgetData();
   }, []);
+
+  // Charger les données d'évolution quand on arrive sur l'onglet ou change la période
+  useEffect(() => {
+    if (tab !== 'evolution') return;
+    let cancelled = false;
+    setEvoLoading(true);
+    loadBudgetMonths(evoMonths).then(entries => {
+      if (!cancelled) {
+        setEvoEntries(entries);
+        setEvoLoading(false);
+      }
+    }).catch(() => {
+      if (!cancelled) setEvoLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [tab, evoMonths, loadBudgetMonths]);
 
   const handleMonthChange = useCallback((direction: 'prev' | 'next') => {
     const newMonth = direction === 'prev' ? prevMonth(budgetMonth) : nextMonth(budgetMonth);
@@ -273,6 +379,49 @@ export default function BudgetScreen() {
     setReceiptData(null);
   }, [addExpense, showToast]);
 
+  // ─── Rendu onglet évolution ────────────────────────────────────────────────
+
+  const renderEvolutionItem = useCallback(({ item }: { item: PriceEvolution }) => {
+    const arrow = item.change > 1 ? '↗' : item.change < -1 ? '↘' : '→';
+    const changeColor = item.change > 1 ? colors.error : item.change < -1 ? colors.success : colors.textMuted;
+
+    return (
+      <View style={[styles.evoCard, { backgroundColor: colors.card }]}>
+        <View style={styles.evoHeader}>
+          <View style={styles.evoLabelRow}>
+            <Text style={[styles.evoCategory, { color: colors.textMuted }]}>{item.category}</Text>
+            <Text style={[styles.evoLabel, { color: colors.text }]} numberOfLines={1}>{item.label}</Text>
+          </View>
+          <View style={[styles.evoBadge, { backgroundColor: changeColor + '18' }]}>
+            <Text style={[styles.evoBadgeText, { color: changeColor }]}>
+              {arrow} {item.change > 0 ? '+' : ''}{item.change.toFixed(1)}%
+            </Text>
+          </View>
+        </View>
+        <View style={styles.evoPriceRow}>
+          <View style={styles.evoPriceBlock}>
+            <Text style={[styles.evoPriceLabel, { color: colors.textFaint }]}>
+              {t('budget.evolution.firstPrice', 'Premier prix')}
+            </Text>
+            <Text style={[styles.evoPrice, { color: colors.textSub }]}>{formatAmount(item.firstPrice)}</Text>
+          </View>
+          <Text style={[styles.evoArrow, { color: changeColor }]}>{arrow}</Text>
+          <View style={[styles.evoPriceBlock, { alignItems: 'flex-end' as const }]}>
+            <Text style={[styles.evoPriceLabel, { color: colors.textFaint }]}>
+              {t('budget.evolution.lastPrice', 'Dernier prix')}
+            </Text>
+            <Text style={[styles.evoPrice, { color: colors.text }]}>{formatAmount(item.lastPrice)}</Text>
+          </View>
+        </View>
+        <Text style={[styles.evoMeta, { color: colors.textFaint }]}>
+          {t('budget.evolution.purchases', { count: item.count, defaultValue: '{{count}} achats' })}
+          {' · '}
+          {formatDateLocalized(item.firstDate)} → {formatDateLocalized(item.lastDate)}
+        </Text>
+      </View>
+    );
+  }, [colors, t]);
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
@@ -308,26 +457,29 @@ export default function BudgetScreen() {
         </View>
       </View>
 
-      {/* Month navigation */}
-      <View style={[styles.monthNav, { backgroundColor: colors.card }]}>
-        <TouchableOpacity onPress={() => handleMonthChange('prev')} hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }} accessibilityLabel={t('budget.a11y.prevMonth')} accessibilityRole="button">
-          <Text style={[styles.monthArrow, { color: primary }]}>{'<'}</Text>
-        </TouchableOpacity>
-        <Text style={[styles.monthLabel, { color: colors.text }]} accessibilityLabel={t('budget.month', { month: formatMonthLabel(budgetMonth) })}>{formatMonthLabel(budgetMonth)}</Text>
-        <TouchableOpacity onPress={() => handleMonthChange('next')} hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }} accessibilityLabel={t('budget.a11y.nextMonth')} accessibilityRole="button">
-          <Text style={[styles.monthArrow, { color: primary }]}>{'>'}</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Month navigation — masquée sur l'onglet évolution */}
+      {tab !== 'evolution' && (
+        <View style={[styles.monthNav, { backgroundColor: colors.card }]}>
+          <TouchableOpacity onPress={() => handleMonthChange('prev')} hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }} accessibilityLabel={t('budget.a11y.prevMonth')} accessibilityRole="button">
+            <Text style={[styles.monthArrow, { color: primary }]}>{'<'}</Text>
+          </TouchableOpacity>
+          <Text style={[styles.monthLabel, { color: colors.text }]} accessibilityLabel={t('budget.month', { month: formatMonthLabel(budgetMonth) })}>{formatMonthLabel(budgetMonth)}</Text>
+          <TouchableOpacity onPress={() => handleMonthChange('next')} hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }} accessibilityLabel={t('budget.a11y.nextMonth')} accessibilityRole="button">
+            <Text style={[styles.monthArrow, { color: primary }]}>{'>'}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Tabs */}
       <View style={[styles.tabBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <SegmentedControl
           segments={[
-            { id: 'resume', label: t('budget.tabs.summary') },
-            { id: 'list', label: t('budget.tabs.expenses') },
+            { id: 'resume', label: t('budget.tabs.summary', 'Résumé') },
+            { id: 'list', label: t('budget.tabs.expenses', 'Dépenses') },
+            { id: 'evolution', label: t('budget.tabs.evolution', 'Évolution') },
           ]}
           value={tab}
-          onChange={(id) => setTab(id as typeof tab)}
+          onChange={(id) => setTab(id as TabId)}
         />
       </View>
 
@@ -391,7 +543,7 @@ export default function BudgetScreen() {
           })}
           <View style={styles.bottomPad} />
         </ScrollView>
-      ) : (
+      ) : tab === 'list' ? (
         <>
           {/* Barre d'action en mode sélection */}
           {selectionMode && (
@@ -407,19 +559,87 @@ export default function BudgetScreen() {
               </TouchableOpacity>
             </View>
           )}
+
+          {/* Barre de recherche + filtres catégorie */}
+          <View style={[styles.filterContainer, { backgroundColor: colors.bg }]}>
+            <View style={[styles.searchBar, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
+              <Text style={[styles.searchIcon, { color: colors.textFaint }]}>🔍</Text>
+              <TextInput
+                style={[styles.searchInput, { color: colors.text }]}
+                placeholder={t('budget.filter.search', 'Rechercher...')}
+                placeholderTextColor={colors.textFaint}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                returnKeyType="search"
+                clearButtonMode="while-editing"
+                accessibilityLabel={t('budget.filter.searchA11y', 'Rechercher une dépense')}
+              />
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filterChipRow}
+            >
+              {budgetConfig.categories.map((cat) => {
+                const catDisplay = categoryDisplay(cat);
+                const isActive = filterCategory === catDisplay;
+                return (
+                  <TouchableOpacity
+                    key={cat.name}
+                    style={[
+                      styles.chip,
+                      {
+                        backgroundColor: isActive ? primary : colors.cardAlt,
+                        borderColor: isActive ? primary : colors.border,
+                      },
+                    ]}
+                    onPress={() => setFilterCategory(isActive ? null : catDisplay)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.chipText, { color: isActive ? colors.onPrimary : colors.text }]}>
+                      {cat.emoji} {cat.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            {/* Compteur de résultats */}
+            <Text style={[styles.resultCount, { color: colors.textMuted }]}>
+              {isFiltered
+                ? t('budget.filter.resultFiltered', {
+                    filtered: filteredEntries.length,
+                    total: sortedEntries.length,
+                    defaultValue: '{{filtered}} / {{total}} dépenses',
+                  })
+                : t('budget.filter.resultAll', {
+                    count: sortedEntries.length,
+                    defaultValue: '{{count}} dépenses',
+                  })
+              }
+            </Text>
+          </View>
+
           <FlatList
-            data={sortedEntries}
+            data={filteredEntries}
             keyExtractor={(item, i) => `${item.date}-${item.lineIndex}-${i}`}
             contentContainerStyle={[styles.content, Layout.contentContainer]}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
             ListEmptyComponent={
-              <EmptyState
-                emoji="💰"
-                title={t('budget.empty.title')}
-                subtitle={t('budget.empty.subtitle')}
-                ctaLabel={t('budget.empty.cta')}
-                onCta={() => setAddModalVisible(true)}
-              />
+              isFiltered ? (
+                <EmptyState
+                  emoji="🔍"
+                  title={t('budget.filter.emptyTitle', 'Aucun résultat')}
+                  subtitle={t('budget.filter.emptySubtitle', 'Essayez un autre terme ou catégorie')}
+                />
+              ) : (
+                <EmptyState
+                  emoji="💰"
+                  title={t('budget.empty.title')}
+                  subtitle={t('budget.empty.subtitle')}
+                  ctaLabel={t('budget.empty.cta')}
+                  onCta={() => setAddModalVisible(true)}
+                />
+              )
             }
             renderItem={({ item }) => {
               const isSelected = selectedEntries.has(item.lineIndex);
@@ -464,6 +684,56 @@ export default function BudgetScreen() {
               );
             }}
           />
+        </>
+      ) : (
+        /* ─── Onglet Évolution ──────────────────────────────────────────── */
+        <>
+          {/* Toggle période */}
+          <View style={[styles.evoPeriodRow, { backgroundColor: colors.bg }]}>
+            <SegmentedControl
+              segments={[
+                { id: '6', label: t('budget.evolution.sixMonths', '6 mois') },
+                { id: '12', label: t('budget.evolution.twelveMonths', '12 mois') },
+              ]}
+              value={String(evoMonths)}
+              onChange={(id) => setEvoMonths(Number(id) as 6 | 12)}
+              style={{ flex: 1 }}
+            />
+          </View>
+
+          {evoLoading ? (
+            <View style={styles.evoLoadingContainer}>
+              <ActivityIndicator size="large" color={primary} />
+              <Text style={[styles.evoLoadingText, { color: colors.textMuted }]}>
+                {t('budget.evolution.loading', 'Chargement...')}
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={priceEvolutions}
+              keyExtractor={(item, i) => `${item.label}-${i}`}
+              contentContainerStyle={[styles.content, Layout.contentContainer]}
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />}
+              ListEmptyComponent={
+                <EmptyState
+                  emoji="📊"
+                  title={t('budget.evolution.emptyTitle', 'Pas assez de données')}
+                  subtitle={t('budget.evolution.emptySubtitle', 'Il faut au moins 2 achats du même produit pour comparer')}
+                />
+              }
+              ListHeaderComponent={
+                priceEvolutions.length > 0 ? (
+                  <Text style={[styles.evoHeaderText, { color: colors.textMuted }]}>
+                    {t('budget.evolution.header', {
+                      count: priceEvolutions.length,
+                      defaultValue: '{{count}} produits suivis',
+                    })}
+                  </Text>
+                ) : null
+              }
+              renderItem={renderEvolutionItem}
+            />
+          )}
         </>
       )}
 
@@ -665,6 +935,41 @@ const styles = StyleSheet.create({
   catBar: { height: 6, borderRadius: 3, overflow: 'hidden' },
   catBarFill: { height: '100%', borderRadius: 3 },
 
+  // ─── Filtrage (Feature 1) ─────────────────────────────────────────────────
+  filterContainer: {
+    paddingHorizontal: Spacing['2xl'],
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xs,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    paddingHorizontal: Spacing.xl,
+    marginBottom: Spacing.lg,
+  },
+  searchIcon: {
+    fontSize: FontSize.body,
+    marginRight: Spacing.md,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: FontSize.body,
+    paddingVertical: Spacing.lg,
+  },
+  filterChipRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    paddingBottom: Spacing.md,
+  },
+  resultCount: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.medium,
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.xs,
+  },
+
   // Entry list
   entryRow: {
     flexDirection: 'row',
@@ -739,4 +1044,85 @@ const styles = StyleSheet.create({
     marginRight: Spacing.xl,
   },
   checkmark: { color: '#fff', fontSize: FontSize.sm, fontWeight: FontWeight.bold },
+
+  // ─── Évolution (Feature 2) ────────────────────────────────────────────────
+  evoPeriodRow: {
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.lg,
+  },
+  evoLoadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing['6xl'],
+  },
+  evoLoadingText: {
+    fontSize: FontSize.body,
+    marginTop: Spacing.xl,
+  },
+  evoHeaderText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.medium,
+    marginBottom: Spacing.lg,
+  },
+  evoCard: {
+    borderRadius: Radius['lg+'],
+    padding: Spacing['2xl'],
+    marginBottom: Spacing.lg,
+    ...Shadows.xs,
+  },
+  evoHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: Spacing.lg,
+  },
+  evoLabelRow: {
+    flex: 1,
+    marginRight: Spacing.xl,
+  },
+  evoCategory: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.medium,
+    marginBottom: Spacing.xxs,
+  },
+  evoLabel: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+  },
+  evoBadge: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.full,
+  },
+  evoBadgeText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+  },
+  evoPriceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.md,
+  },
+  evoPriceBlock: {
+    flex: 1,
+  },
+  evoPriceLabel: {
+    fontSize: FontSize.caption,
+    marginBottom: Spacing.xxs,
+  },
+  evoPrice: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+  },
+  evoArrow: {
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.bold,
+    marginHorizontal: Spacing.xl,
+  },
+  evoMeta: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.medium,
+  },
 });
