@@ -2667,7 +2667,13 @@
     "topMeal": "Most frequent: {{name}} ({{count}}×)",
     "sleepTitle": "😴 Sleep — {{name}}",
     "sleepAvg": "Average: {{avg}} / day (last 30 days)",
-    "empty": "No data to display yet.\nStatistics will appear as you use the app."
+    "empty": "No data to display yet.\nStatistics will appear as you use the app.",
+    "calendarTitle": "📆 Busiest days",
+    "busiestDay": "Busiest day: {{day}}th ({{count}} events)",
+    "moodTitle": "🌤️ Mood — 30 days",
+    "moodAvg": "Average: {{avg}}/5 {{emoji}}",
+    "stockTitle": "📦 Stock to replenish",
+    "stockSummary": "{{count}} products running low"
   },
   "skillsScreen": {
     "title": "Skills",

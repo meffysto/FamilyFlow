@@ -1,11 +1,13 @@
 /**
  * stats.tsx — Écran Statistiques & Insights
  *
- * 4 sections :
+ * 6 sections :
  * 1. Tâches complétées / semaine (BarChart vertical)
- * 2. Budget tendances 6 mois (BarChart vertical)
- * 3. Fréquence repas (BarChart horizontal)
- * 4. Sommeil bébé 30 jours (DotChart)
+ * 2. Calendrier — jours les plus chargés (BarChart vertical)
+ * 3. Humeurs — tendance 30 jours (DotChart)
+ * 4. Fréquence repas (BarChart horizontal)
+ * 5. Stock — produits à réapprovisionner (BarChart horizontal)
+ * 6. Sommeil bébé 30 jours (DotChart)
  */
 
 import React, { useMemo, useState } from 'react';
@@ -29,6 +31,10 @@ import {
   aggregateTasksByWeek,
   aggregateMealFrequency,
   aggregateSleepByDays,
+  aggregateBusiestDays,
+  aggregateMoodTrend,
+  aggregateStockTurnover,
+  moodAvgEmoji,
   getWeekStart,
   formatMinutes,
 } from '../../lib/stats';
@@ -42,15 +48,10 @@ export default function StatsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { primary, colors } = useThemeColors();
-  const { tasks, meals, profiles, refresh } = useVault();
+  const { tasks, meals, profiles, refresh, rdvs, moods, stock } = useVault();
 
-  // Toutes les tâches (ménage inclus dans tasks via sourceFile)
-  const allTasks = useMemo(
-    () => [...tasks],
-    [tasks],
-  );
+  const allTasks = useMemo(() => [...tasks], [tasks]);
 
-  // Enfants pour le sommeil
   const enfantNames = useMemo(
     () => profiles.filter((p) => p.role === 'enfant').map((p) => p.name),
     [profiles],
@@ -67,7 +68,7 @@ export default function StatsScreen() {
     return ws;
   }, [weekOffset]);
 
-  // ── Section 1 : Tâches / semaine ──
+  // Section 1 : Tâches / semaine
   const taskData = useMemo(
     () => aggregateTasksByWeek(allTasks, currentWeekStart),
     [allTasks, currentWeekStart],
@@ -81,11 +82,30 @@ export default function StatsScreen() {
     return `${fmt(currentWeekStart)} — ${fmt(end)}`;
   }, [currentWeekStart]);
 
-  // ── Section 2 : Repas ──
+  // Section 2 : Calendrier chargé
+  const calendarData = useMemo(
+    () => aggregateBusiestDays(allTasks, rdvs),
+    [allTasks, rdvs],
+  );
+  const busiestDay = calendarData.length > 0
+    ? calendarData.reduce((max, d) => d.value > max.value ? d : max, calendarData[0])
+    : null;
+
+  // Section 3 : Humeurs
+  const moodData = useMemo(() => aggregateMoodTrend(moods), [moods]);
+  const moodValid = moodData.filter((d) => d.value > 0);
+  const moodAvg = moodValid.length > 0
+    ? Math.round((moodValid.reduce((s, d) => s + d.value, 0) / moodValid.length) * 10) / 10
+    : 0;
+
+  // Section 4 : Repas
   const mealData = useMemo(() => aggregateMealFrequency(meals), [meals]);
   const topMeal = mealData.length > 0 ? mealData[0] : null;
 
-  // ── Section 4 : Sommeil (une courbe par enfant) ──
+  // Section 5 : Stock
+  const stockData = useMemo(() => aggregateStockTurnover(stock), [stock]);
+
+  // Section 6 : Sommeil
   const sleepPerChild = useMemo(() => {
     return Object.keys(sleepByChild).map((name) => {
       const data = aggregateSleepByDays(sleepByChild[name]);
@@ -96,6 +116,8 @@ export default function StatsScreen() {
       return { name, data, avg };
     });
   }, [sleepByChild]);
+
+  const hasData = totalTasks > 0 || calendarData.length > 0 || moodValid.length > 0 || mealData.length > 0 || stockData.length > 0 || sleepPerChild.length > 0;
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
@@ -116,7 +138,7 @@ export default function StatsScreen() {
           <ActivityIndicator size="small" color={primary} style={{ marginVertical: Spacing['2xl'] }} />
         )}
 
-        {/* ── Tâches complétées / semaine ── */}
+        {/* Tâches complétées / semaine */}
         <View style={[styles.card, { backgroundColor: colors.card }, Shadows.sm]}>
           <View style={styles.cardHeader}>
             <Text style={[styles.cardTitle, { color: colors.text }]}>{t('statsScreen.tasksTitle')}</Text>
@@ -125,14 +147,13 @@ export default function StatsScreen() {
             <TouchableOpacity onPress={() => setWeekOffset((o) => o - 1)} hitSlop={8} accessibilityLabel={t('statsScreen.a11y.prevWeek')} accessibilityRole="button">
               <Text style={[styles.navBtn, { color: primary }]}>◀</Text>
             </TouchableOpacity>
-            <Text style={[styles.weekLabel, { color: colors.textSub }]} accessibilityLabel={t('statsScreen.a11y.weekLabel', { label: weekLabel })}>{weekLabel}</Text>
+            <Text style={[styles.weekLabel, { color: colors.textSub }]}>{weekLabel}</Text>
             <TouchableOpacity
               onPress={() => setWeekOffset((o) => Math.min(o + 1, 0))}
               hitSlop={8}
               disabled={weekOffset >= 0}
               accessibilityLabel={t('statsScreen.a11y.nextWeek')}
               accessibilityRole="button"
-              accessibilityState={{ disabled: weekOffset >= 0 }}
             >
               <Text style={[styles.navBtn, { color: weekOffset >= 0 ? colors.textFaint : primary }]}>▶</Text>
             </TouchableOpacity>
@@ -143,8 +164,31 @@ export default function StatsScreen() {
           </Text>
         </View>
 
+        {/* Calendrier — jours chargés */}
+        {calendarData.length > 0 && (
+          <View style={[styles.card, { backgroundColor: colors.card }, Shadows.sm]}>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>{t('statsScreen.calendarTitle')}</Text>
+            <BarChart data={calendarData} height={100} barColor={colors.warning} />
+            {busiestDay && (
+              <Text style={[styles.summary, { color: colors.textMuted }]}>
+                {t('statsScreen.busiestDay', { day: busiestDay.label, count: busiestDay.value })}
+              </Text>
+            )}
+          </View>
+        )}
 
-        {/* ── Fréquence repas ── */}
+        {/* Humeurs — tendance 30 jours */}
+        {moodValid.length > 0 && (
+          <View style={[styles.card, { backgroundColor: colors.card }, Shadows.sm]}>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>{t('statsScreen.moodTitle')}</Text>
+            <DotChart data={moodData} height={80} color={colors.warning} formatValue={(v) => v > 0 ? moodAvgEmoji(v) : ''} />
+            <Text style={[styles.summary, { color: colors.textMuted }]}>
+              {t('statsScreen.moodAvg', { avg: moodAvg, emoji: moodAvgEmoji(moodAvg) })}
+            </Text>
+          </View>
+        )}
+
+        {/* Fréquence repas */}
         {mealData.length > 0 && (
           <View style={[styles.card, { backgroundColor: colors.card }, Shadows.sm]}>
             <Text style={[styles.cardTitle, { color: colors.text }]}>{t('statsScreen.mealsTitle')}</Text>
@@ -157,7 +201,18 @@ export default function StatsScreen() {
           </View>
         )}
 
-        {/* ── Sommeil bébé (une courbe par enfant) ── */}
+        {/* Stock — à réapprovisionner */}
+        {stockData.length > 0 && (
+          <View style={[styles.card, { backgroundColor: colors.card }, Shadows.sm]}>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>{t('statsScreen.stockTitle')}</Text>
+            <BarChart data={stockData} horizontal barColor={colors.error} />
+            <Text style={[styles.summary, { color: colors.textMuted }]}>
+              {t('statsScreen.stockSummary', { count: stockData.length })}
+            </Text>
+          </View>
+        )}
+
+        {/* Sommeil bébé */}
         {sleepPerChild.map(({ name, data, avg }) => (
           <View key={name} style={[styles.card, { backgroundColor: colors.card }, Shadows.sm]}>
             <Text style={[styles.cardTitle, { color: colors.text }]}>{t('statsScreen.sleepTitle', { name })}</Text>
@@ -169,7 +224,7 @@ export default function StatsScreen() {
         ))}
 
         {/* État vide */}
-        {!isLoading && mealData.length === 0 && sleepPerChild.length === 0 && totalTasks === 0 && (
+        {!isLoading && !hasData && (
           <View style={styles.emptyState}>
             <Text style={[styles.emptyEmoji]}>📊</Text>
             <Text style={[styles.emptyText, { color: colors.textMuted }]}>

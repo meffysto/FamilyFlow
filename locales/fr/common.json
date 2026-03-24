@@ -2667,7 +2667,13 @@
     "topMeal": "Le plus fréquent : {{name}} ({{count}}×)",
     "sleepTitle": "😴 Sommeil — {{name}}",
     "sleepAvg": "Moyenne : {{avg}} / jour (30 derniers jours)",
-    "empty": "Pas encore de données à afficher.\nLes statistiques apparaîtront au fil de l'utilisation."
+    "empty": "Pas encore de données à afficher.\nLes statistiques apparaîtront au fil de l'utilisation.",
+    "calendarTitle": "📆 Jours les plus chargés",
+    "busiestDay": "Jour le plus chargé : le {{day}} ({{count}} événements)",
+    "moodTitle": "🌤️ Humeurs — 30 jours",
+    "moodAvg": "Moyenne : {{avg}}/5 {{emoji}}",
+    "stockTitle": "📦 Stock à réapprovisionner",
+    "stockSummary": "{{count}} produits en baisse"
   },
   "skillsScreen": {
     "title": "Compétences",
