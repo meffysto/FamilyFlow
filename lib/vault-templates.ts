@@ -6,6 +6,7 @@
  */
 
 import { format, addDays, nextMonday, nextTuesday, nextWednesday, nextThursday, nextFriday, nextSaturday } from 'date-fns';
+import { t } from 'i18next';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -61,44 +62,44 @@ const coursesEssentielles: TemplatePack = {
   description: 'Une liste de courses type pour la semaine',
   generate: (ctx) => {
     const hasBebe = ctx.children.some(c => c.ageCategory === 'bebe');
+    const p = 'setup.templateContent.courses';
 
-    let content = `> [!tip] Astuce
-> Cochez les articles au fur et à mesure en magasin !
+    let content = `> [!tip] ${t(`${p}.tip`)}
 
-## 🥩 Frais
-- [ ] Lait demi-écrémé x2
-- [ ] Yaourts nature x6
-- [ ] Beurre
-- [ ] Œufs x12
-- [ ] Fromage râpé
-- [ ] Jambon
+## 🥩 ${t(`${p}.frais`)}
+- [ ] ${t(`${p}.lait`)}
+- [ ] ${t(`${p}.yaourts`)}
+- [ ] ${t(`${p}.beurre`)}
+- [ ] ${t(`${p}.oeufs`)}
+- [ ] ${t(`${p}.fromageRape`)}
+- [ ] ${t(`${p}.jambon`)}
 
-## 🥦 Fruits & légumes
-- [ ] Pommes (1kg)
-- [ ] Bananes
-- [ ] Carottes (1kg)
-- [ ] Tomates (500g)
-- [ ] Salade
+## 🥦 ${t(`${p}.fruitsLegumes`)}
+- [ ] ${t(`${p}.pommes`)}
+- [ ] ${t(`${p}.bananes`)}
+- [ ] ${t(`${p}.carottes`)}
+- [ ] ${t(`${p}.tomates`)}
+- [ ] ${t(`${p}.salade`)}
 
-## 🍞 Épicerie
-- [ ] Pâtes (500g)
-- [ ] Riz basmati
-- [ ] Huile d'olive
-- [ ] Farine
-- [ ] Sucre
+## 🍞 ${t(`${p}.epicerie`)}
+- [ ] ${t(`${p}.pates`)}
+- [ ] ${t(`${p}.riz`)}
+- [ ] ${t(`${p}.huile`)}
+- [ ] ${t(`${p}.farine`)}
+- [ ] ${t(`${p}.sucre`)}
 
-## 🧴 Hygiène
-- [ ] Savon mains
-- [ ] Papier toilette
-- [ ] Lessive`;
+## 🧴 ${t(`${p}.hygiene`)}
+- [ ] ${t(`${p}.savon`)}
+- [ ] ${t(`${p}.papierToilette`)}
+- [ ] ${t(`${p}.lessive`)}`;
 
     if (hasBebe) {
       content += `
 
-## 👶 Produits bébé
-- [ ] Couches (taille adaptée)
-- [ ] Lingettes
-- [ ] Sérum physiologique`;
+## 👶 ${t(`${p}.produitsBebe`)}
+- [ ] ${t(`${p}.couches`)}
+- [ ] ${t(`${p}.lingettes`)}
+- [ ] ${t(`${p}.serum`)}`;
     }
 
     return [{
@@ -117,42 +118,43 @@ const repasSemaine: TemplatePack = {
   emoji: '🍽️',
   description: '7 jours de menus équilibrés prêts à l\'emploi',
   generate: () => {
-    const content = `# Repas de la semaine
+    const p = 'setup.templateContent.repas';
+    const content = `# ${t(`${p}.title`)}
 
 > [!info] Organisation
-> Préparez les courses le weekend et faites du ==batch cooking== le dimanche pour gagner du temps en semaine.
+> ${t(`${p}.tip`)}
 
-## Lundi
-- Déjeuner: Pâtes bolognaise + salade verte
-- Dîner: Soupe de légumes + pain + fromage
+## ${t(`${p}.lundi`)}
+- ${t(`${p}.dejeuner`)}: ${t(`${p}.lundiDej`)}
+- ${t(`${p}.diner`)}: ${t(`${p}.lundiDin`)}
 
-## Mardi
-- Déjeuner: Poulet rôti + haricots verts + riz
-- Dîner: Omelette + salade composée
+## ${t(`${p}.mardi`)}
+- ${t(`${p}.dejeuner`)}: ${t(`${p}.mardiDej`)}
+- ${t(`${p}.diner`)}: ${t(`${p}.mardiDin`)}
 
-## Mercredi
-- Déjeuner: Poisson pané + purée de pommes de terre
-- Dîner: Pizza maison + crudités
+## ${t(`${p}.mercredi`)}
+- ${t(`${p}.dejeuner`)}: ${t(`${p}.mercrediDej`)}
+- ${t(`${p}.diner`)}: ${t(`${p}.mercrediDin`)}
 
-## Jeudi
-- Déjeuner: Steak haché + frites + salade
-- Dîner: Quiche lorraine + soupe
+## ${t(`${p}.jeudi`)}
+- ${t(`${p}.dejeuner`)}: ${t(`${p}.jeudiDej`)}
+- ${t(`${p}.diner`)}: ${t(`${p}.jeudiDin`)}
 
-## Vendredi
-- Déjeuner: Poisson grillé + ratatouille
-- Dîner: Crêpes salées (jambon-fromage)
+## ${t(`${p}.vendredi`)}
+- ${t(`${p}.dejeuner`)}: ${t(`${p}.vendrediDej`)}
+- ${t(`${p}.diner`)}: ${t(`${p}.vendrediDin`)}
 
 ---
 
-## Samedi
-- Petit-déj: Crêpes + fruits frais
-- Déjeuner: Gratin dauphinois + salade
-- Dîner: Burger maison + frites
+## ${t(`${p}.samedi`)}
+- ${t(`${p}.petitDej`)}: ${t(`${p}.samediPetitDej`)}
+- ${t(`${p}.dejeuner`)}: ${t(`${p}.samediDej`)}
+- ${t(`${p}.diner`)}: ${t(`${p}.samediDin`)}
 
-## Dimanche
-- Petit-déj: Pancakes + sirop d'érable
-- Déjeuner: Rôti de porc + légumes rôtis
-- Dîner: Reste de la semaine ou plateaux-repas devant un film
+## ${t(`${p}.dimanche`)}
+- ${t(`${p}.petitDej`)}: ${t(`${p}.dimanchePetitDej`)}
+- ${t(`${p}.dejeuner`)}: ${t(`${p}.dimancheDej`)}
+- ${t(`${p}.diner`)}: ${t(`${p}.dimancheDin`)}
 `;
 
     return [{
@@ -176,25 +178,26 @@ const menageOrganise: TemplatePack = {
     const jeudi = getNextDayDate(today, nextThursday);
     const vendredi = getNextDayDate(today, nextFriday);
     const samedi = getNextDayDate(today, nextSaturday);
+    const p = 'setup.templateContent.menage';
 
-    const content = `## Quotidien
-- [ ] Faire les lits 🔁 every day 📅 ${ctx.today}
-- [ ] Ranger la cuisine après les repas 🔁 every day 📅 ${ctx.today}
-- [ ] Lancer/étendre une machine 🔁 every day 📅 ${ctx.today}
-- [ ] 10 minutes de rangement rapide 🔁 every day 📅 ${ctx.today}
+    const content = `## ${t(`${p}.quotidien`)}
+- [ ] ${t(`${p}.faireLits`)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.rangerCuisine`)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.machine`)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.rangementRapide`)} 🔁 every day 📅 ${ctx.today}
 
-## Ménage
-- [ ] Aspirer toute la maison 🔁 every week 📅 ${lundi}
-- [ ] Nettoyer les salles de bain 🔁 every week 📅 ${mardi}
-- [ ] Changer les draps 🔁 every week 📅 ${jeudi}
-- [ ] Serpillière sols durs 🔁 every week 📅 ${vendredi}
-- [ ] Faire les courses 🔁 every week 📅 ${samedi}
+## ${t(`${p}.menageHeader`)}
+- [ ] ${t(`${p}.aspirer`)} 🔁 every week 📅 ${lundi}
+- [ ] ${t(`${p}.sallesDeBain`)} 🔁 every week 📅 ${mardi}
+- [ ] ${t(`${p}.draps`)} 🔁 every week 📅 ${jeudi}
+- [ ] ${t(`${p}.serpilliere`)} 🔁 every week 📅 ${vendredi}
+- [ ] ${t(`${p}.courses`)} 🔁 every week 📅 ${samedi}
 
-## Mensuel
-- [ ] Nettoyer le réfrigérateur 🔁 every month 📅 ${ctx.today}
-- [ ] Dépoussiérer les meubles hauts 🔁 every month 📅 ${ctx.today}
-- [ ] Laver les vitres 🔁 every month 📅 ${ctx.today}
-- [ ] Vérifier les stocks ménagers 🔁 every month 📅 ${ctx.today}
+## ${t(`${p}.mensuel`)}
+- [ ] ${t(`${p}.frigo`)} 🔁 every month 📅 ${ctx.today}
+- [ ] ${t(`${p}.poussiere`)} 🔁 every month 📅 ${ctx.today}
+- [ ] ${t(`${p}.vitres`)} 🔁 every month 📅 ${ctx.today}
+- [ ] ${t(`${p}.stocksMenagers`)} 🔁 every month 📅 ${ctx.today}
 `;
 
     return [{
@@ -215,6 +218,7 @@ const suiviMedical: TemplatePack = {
   generate: (ctx) => {
     const files: TemplateFile[] = [];
     const today = new Date(ctx.today + 'T12:00:00');
+    const p = 'setup.templateContent.medical';
 
     // RDV pour chaque enfant, adaptés à l'âge
     for (const child of ctx.children) {
@@ -233,13 +237,13 @@ lieu: ""
 statut: planifié
 ---
 
-## Questions à poser
-- [ ] Courbe de croissance
-- [ ] Vaccins à jour ?
-- [ ] Développement moteur / langage
+## ${t(`${p}.questionsHeader`)}
+- [ ] ${t(`${p}.bebe.courbe`)}
+- [ ] ${t(`${p}.bebe.vaccins`)}
+- [ ] ${t(`${p}.bebe.developpement`)}
 
-## Notes
-> [!note] À compléter après le RDV
+## ${t(`${p}.notesHeader`)}
+> [!note] ${t(`${p}.noteAfterRDV`)}
 `,
         });
         files.push({
@@ -254,14 +258,14 @@ lieu: ""
 statut: planifié
 ---
 
-## Vaccins prévus
-- Rappel selon carnet de santé (2, 4, 11 mois)
+## ${t(`${p}.bebe.vaccinsTitle`)}
+- ${t(`${p}.bebe.vaccinsRappel`)}
 
 > [!warning] Important
-> Apporter le **carnet de santé** au RDV.
+> ${t(`${p}.bebe.vaccinsWarning`)}
 
-## Notes
-> [!note] À compléter après le RDV
+## ${t(`${p}.notesHeader`)}
+> [!note] ${t(`${p}.noteAfterRDV`)}
 `,
         });
       } else if (cat === 'petit') {
@@ -277,13 +281,13 @@ lieu: ""
 statut: planifié
 ---
 
-## Questions à poser
-- [ ] Courbe de croissance
-- [ ] Développement langage / motricité
-- [ ] Vaccins à jour ?
+## ${t(`${p}.questionsHeader`)}
+- [ ] ${t(`${p}.petit.courbe`)}
+- [ ] ${t(`${p}.petit.developpement`)}
+- [ ] ${t(`${p}.petit.vaccins`)}
 
-## Notes
-> [!note] À compléter après le RDV
+## ${t(`${p}.notesHeader`)}
+> [!note] ${t(`${p}.noteAfterRDV`)}
 `,
         });
         files.push({
@@ -298,10 +302,10 @@ lieu: ""
 statut: planifié
 ---
 
-## Notes
-Contrôle semestriel
+## ${t(`${p}.notesHeader`)}
+${t(`${p}.petit.dentiste`)}
 
-> [!note] À compléter après le RDV
+> [!note] ${t(`${p}.noteAfterRDV`)}
 `,
         });
       } else {
@@ -318,12 +322,12 @@ lieu: ""
 statut: planifié
 ---
 
-## Questions à poser
-- [ ] Visite annuelle
-- [ ] Vaccins à jour ?
+## ${t(`${p}.questionsHeader`)}
+- [ ] ${t(`${p}.enfantAdo.visiteAnnuelle`)}
+- [ ] ${t(`${p}.enfantAdo.vaccins`)}
 
-## Notes
-> [!note] À compléter après le RDV
+## ${t(`${p}.notesHeader`)}
+> [!note] ${t(`${p}.noteAfterRDV`)}
 `,
         });
         files.push({
@@ -338,10 +342,10 @@ lieu: ""
 statut: planifié
 ---
 
-## Notes
-Contrôle semestriel
+## ${t(`${p}.notesHeader`)}
+${t(`${p}.enfantAdo.dentiste`)}
 
-> [!note] À compléter après le RDV
+> [!note] ${t(`${p}.noteAfterRDV`)}
 `,
         });
       }
@@ -361,10 +365,10 @@ lieu: ""
 statut: planifié
 ---
 
-## Notes
-Visite annuelle
+## ${t(`${p}.notesHeader`)}
+${t(`${p}.parent.visiteAnnuelle`)}
 
-> [!note] À compléter après le RDV
+> [!note] ${t(`${p}.noteAfterRDV`)}
 `,
       });
       files.push({
@@ -379,10 +383,10 @@ lieu: ""
 statut: planifié
 ---
 
-## Notes
-Contrôle semestriel
+## ${t(`${p}.notesHeader`)}
+${t(`${p}.parent.dentiste`)}
 
-> [!note] À compléter après le RDV
+> [!note] ${t(`${p}.noteAfterRDV`)}
 `,
       });
     }
@@ -410,47 +414,50 @@ const routinesEnfants: TemplatePack = {
         // Les bébés ont déjà des tâches quotidiennes via scaffoldVault, pas de routine formelle
         continue;
       } else if (cat === 'petit') {
-        content = `## Routine matin
-- [ ] Se réveiller et câlin 🔁 every day 📅 ${ctx.today}
-- [ ] Petit-déjeuner 🔁 every day 📅 ${ctx.today}
-- [ ] Brossage de dents 🔁 every day 📅 ${ctx.today}
-- [ ] S'habiller (choisir ses vêtements) 🔁 every day 📅 ${ctx.today}
+        const p = 'setup.templateContent.routinesEnfants';
+        content = `## ${t(`${p}.morningHeader`)}
+- [ ] ${t(`${p}.petit.wakeUp`)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.petit.breakfast`)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.petit.brushTeeth`)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.petit.getDressed`)} 🔁 every day 📅 ${ctx.today}
 
-## Routine soir
-- [ ] Ranger les jouets 🔁 every day 📅 ${ctx.today}
-- [ ] Bain / douche 🔁 every day 📅 ${ctx.today}
-- [ ] Pyjama 🔁 every day 📅 ${ctx.today}
-- [ ] Brossage de dents 🔁 every day 📅 ${ctx.today}
-- [ ] Histoire du soir 🔁 every day 📅 ${ctx.today}
+## ${t(`${p}.eveningHeader`)}
+- [ ] ${t(`${p}.petit.putAwayToys`)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.petit.bath`)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.petit.pajamas`)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.petit.brushTeeth`)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.petit.bedtimeStory`)} 🔁 every day 📅 ${ctx.today}
 `;
       } else if (cat === 'enfant') {
-        content = `## Routine matin
-- [ ] Se lever à l'heure 🔁 every day 📅 ${ctx.today}
-- [ ] Petit-déjeuner 🔁 every day 📅 ${ctx.today}
-- [ ] Brossage de dents 🔁 every day 📅 ${ctx.today}
-- [ ] Préparer le cartable 🔁 every day 📅 ${ctx.today}
-- [ ] Vérifier le goûter 🔁 every day 📅 ${ctx.today}
+        const p = 'setup.templateContent.routinesEnfants';
+        content = `## ${t(`${p}.morningHeader`)}
+- [ ] ${t(`${p}.enfant.getUp`)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.enfant.breakfast`)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.enfant.brushTeeth`)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.enfant.packBag`)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.enfant.checkSnack`)} 🔁 every day 📅 ${ctx.today}
 
-## Routine soir
-- [ ] Goûter + devoirs 🔁 every day 📅 ${ctx.today}
-- [ ] Temps libre / activité 🔁 every day 📅 ${ctx.today}
-- [ ] Douche 🔁 every day 📅 ${ctx.today}
-- [ ] Préparer les affaires du lendemain 🔁 every day 📅 ${ctx.today}
-- [ ] Lecture / temps calme 🔁 every day 📅 ${ctx.today}
+## ${t(`${p}.eveningHeader`)}
+- [ ] ${t(`${p}.enfant.snackHomework`)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.enfant.freeTime`)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.enfant.shower`)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.enfant.prepareTomorrow`)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.enfant.readingQuietTime`)} 🔁 every day 📅 ${ctx.today}
 `;
       } else {
         // ado
-        content = `## Routine matin
-- [ ] Réveil autonome 🔁 every day 📅 ${ctx.today}
-- [ ] Petit-déjeuner 🔁 every day 📅 ${ctx.today}
-- [ ] Hygiène 🔁 every day 📅 ${ctx.today}
-- [ ] Vérifier l'emploi du temps 🔁 every day 📅 ${ctx.today}
+        const p = 'setup.templateContent.routinesEnfants';
+        content = `## ${t(`${p}.morningHeader`)}
+- [ ] ${t(`${p}.ado.wakeUp`)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.ado.breakfast`)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.ado.hygiene`)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.ado.checkSchedule`)} 🔁 every day 📅 ${ctx.today}
 
-## Routine soir
-- [ ] Devoirs / révisions 🔁 every day 📅 ${ctx.today}
-- [ ] Ranger sa chambre 🔁 every day 📅 ${ctx.today}
-- [ ] Préparer ses affaires 🔁 every day 📅 ${ctx.today}
-- [ ] Pas d'écran après 21h 🔁 every day 📅 ${ctx.today}
+## ${t(`${p}.eveningHeader`)}
+- [ ] ${t(`${p}.ado.homework`)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.ado.tidyRoom`)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.ado.prepareThings`)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.ado.noScreens`)} 🔁 every day 📅 ${ctx.today}
 `;
       }
 
@@ -479,48 +486,50 @@ const budgetFamilial: TemplatePack = {
     const mois = today.toLocaleDateString('fr-FR', { month: 'long' });
     const annee = today.getFullYear();
     const moisNum = format(today, 'yyyy-MM');
+    const p = 'setup.templateContent.budget';
 
     // Budget config
     const configContent = `---
 tags:
   - budget
 ---
-# Configuration budget
+# ${t(`${p}.configTitle`)}
 
-> [!info] Plafonds mensuels
-> Modifiez les montants ci-dessous pour les adapter à votre situation.
+> [!info] ${t(`${p}.plafonds`)}
+> ${t(`${p}.plafondsDesc`)}
 
-## Catégories
-- 🛒 Alimentation: 600
-- 🚗 Transport: 200
-- 🏥 Santé: 150
-- 🎉 Loisirs: 200
-- 👶 Enfants: 300
-- 🏠 Maison: 300
-- 🎁 Divers: 250
+## ${t(`${p}.categories`)}
+- 🛒 ${t(`${p}.alimentation`)}: 600
+- 🚗 ${t(`${p}.transport`)}: 200
+- 🏥 ${t(`${p}.sante`)}: 150
+- 🎉 ${t(`${p}.loisirs`)}: 200
+- 👶 ${t(`${p}.enfants`)}: 300
+- 🏠 ${t(`${p}.maison`)}: 300
+- 🎁 ${t(`${p}.divers`)}: 250
 `;
 
     // Budget du mois courant
+    const monthTitle = t(`${p}.monthTitle`, { month: mois.charAt(0).toUpperCase() + mois.slice(1), year: annee });
     const monthContent = `---
 tags:
   - budget
 mois: ${moisNum}
 ---
-# Budget — ${mois.charAt(0).toUpperCase() + mois.slice(1)} ${annee}
+# ${monthTitle}
 
-## 🛒 Alimentation
+## 🛒 ${t(`${p}.alimentation`)}
 
-## 🚗 Transport
+## 🚗 ${t(`${p}.transport`)}
 
-## 🏥 Santé
+## 🏥 ${t(`${p}.sante`)}
 
-## 🎉 Loisirs
+## 🎉 ${t(`${p}.loisirs`)}
 
-## 👶 Enfants
+## 👶 ${t(`${p}.enfants`)}
 
-## 🏠 Maison
+## 🏠 ${t(`${p}.maison`)}
 
-## 🎁 Divers
+## 🎁 ${t(`${p}.divers`)}
 `;
 
     return [
