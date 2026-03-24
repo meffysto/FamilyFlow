@@ -158,7 +158,8 @@ function formatDate(d: string): string {
 
 export async function scheduleRDVAlerts(
   rdvs: RDV[],
-  config: NotifScheduleConfig
+  config: NotifScheduleConfig,
+  lang: string = 'fr'
 ): Promise<number> {
   await cancelByCategory(CAT_RDV_VEILLE);
   await cancelByCategory(CAT_RDV_MATIN);
@@ -178,7 +179,8 @@ export async function scheduleRDVAlerts(
     if (isNaN(year) || isNaN(hour)) continue;
 
     const rdvDate = new Date(year, month - 1, day, hour, minute);
-    const typeLabel = rdv.type_rdv || 'RDV';
+    const isFr = lang === 'fr';
+    const typeLabel = rdv.type_rdv || (isFr ? 'RDV' : 'Appointment');
     const enfantLabel = rdv.enfant ? ` ${rdv.enfant}` : '';
     const lieuLabel = rdv.lieu ? ` — ${rdv.lieu}` : '';
 
@@ -188,8 +190,10 @@ export async function scheduleRDVAlerts(
       await Notifications.scheduleNotificationAsync({
         identifier: `${CAT_RDV_VEILLE}-${rdv.sourceFile}`,
         content: {
-          title: `🏥 Demain : ${typeLabel}${enfantLabel}`,
-          body: `À ${rdv.heure}${lieuLabel}`,
+          title: isFr
+            ? `🏥 Demain : ${typeLabel}${enfantLabel}`
+            : `🏥 Tomorrow: ${typeLabel}${enfantLabel}`,
+          body: isFr ? `À ${rdv.heure}${lieuLabel}` : `At ${rdv.heure}${lieuLabel}`,
           sound: true,
         },
         trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: veilleDate },
@@ -203,8 +207,10 @@ export async function scheduleRDVAlerts(
       await Notifications.scheduleNotificationAsync({
         identifier: `${CAT_RDV_MATIN}-${rdv.sourceFile}`,
         content: {
-          title: `🏥 Aujourd'hui : ${typeLabel}${enfantLabel}`,
-          body: `À ${rdv.heure}${lieuLabel}`,
+          title: isFr
+            ? `🏥 Aujourd'hui : ${typeLabel}${enfantLabel}`
+            : `🏥 Today: ${typeLabel}${enfantLabel}`,
+          body: isFr ? `À ${rdv.heure}${lieuLabel}` : `At ${rdv.heure}${lieuLabel}`,
           sound: true,
         },
         trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: matinDate },
@@ -219,7 +225,9 @@ export async function scheduleRDVAlerts(
         identifier: `${CAT_RDV_AVANT}-${rdv.sourceFile}`,
         content: {
           title: `🏥 ${typeLabel}${enfantLabel}`,
-          body: `Dans ${config.rdvAvantMinutes} min · ${rdv.heure}${lieuLabel}`,
+          body: isFr
+            ? `Dans ${config.rdvAvantMinutes} min · ${rdv.heure}${lieuLabel}`
+            : `In ${config.rdvAvantMinutes} min · ${rdv.heure}${lieuLabel}`,
           sound: true,
         },
         trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: avantDate },
@@ -232,10 +240,16 @@ export async function scheduleRDVAlerts(
 }
 
 // ─── 2. Tâches avec échéance ─────────────────────────────────────────────────
+// Une seule notification groupée par jour (pas une par tâche).
+
+function cleanTaskText(text: string): string {
+  return text.replace(/📅.*$/, '').replace(/#\w+/g, '').trim();
+}
 
 export async function scheduleTaskAlerts(
   tasks: Task[],
-  config: NotifScheduleConfig
+  config: NotifScheduleConfig,
+  lang: string = 'fr'
 ): Promise<number> {
   await cancelByCategory(CAT_TASK);
 
@@ -246,36 +260,50 @@ export async function scheduleTaskAlerts(
 
   const dueTasks = tasks.filter(t => !t.completed && t.dueDate);
 
+  // Regrouper les tâches par date d'échéance
+  const byDate = new Map<string, Task[]>();
   for (const task of dueTasks) {
-    const [year, month, day] = task.dueDate!.split('-').map(Number);
+    if (!byDate.has(task.dueDate!)) byDate.set(task.dueDate!, []);
+    byDate.get(task.dueDate!)!.push(task);
+  }
+
+  const isFr = lang === 'fr';
+
+  for (const [dateStr, dateTasks] of byDate) {
+    const [year, month, day] = dateStr.split('-').map(Number);
     if (isNaN(year)) continue;
 
-    // Jour J
+    const count = dateTasks.length;
+    const title = isFr
+      ? `📋 ${count} tâche${count > 1 ? 's' : ''} à faire aujourd'hui`
+      : `📋 ${count} task${count > 1 ? 's' : ''} due today`;
+    const body = count <= 3
+      ? dateTasks.map(t => cleanTaskText(t.text)).join(', ')
+      : isFr
+        ? `${dateTasks.slice(0, 3).map(t => cleanTaskText(t.text)).join(', ')} et ${count - 3} autre${count - 3 > 1 ? 's' : ''}`
+        : `${dateTasks.slice(0, 3).map(t => cleanTaskText(t.text)).join(', ')} and ${count - 3} more`;
+
+    // Jour J — une seule notif groupée
     const jourJ = new Date(year, month - 1, day, config.taskHour, config.taskMinute);
     if (jourJ > now) {
       await Notifications.scheduleNotificationAsync({
-        identifier: `${CAT_TASK}-${task.id}`,
-        content: {
-          title: '📋 Tâche à faire aujourd\'hui',
-          body: task.text.replace(/📅.*$/, '').replace(/#\w+/g, '').trim(),
-          sound: true,
-        },
+        identifier: `${CAT_TASK}-${dateStr}`,
+        content: { title, body, sound: true },
         trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: jourJ },
       });
       scheduled++;
     }
 
-    // Veille
+    // Veille — une seule notif groupée
     if (config.taskVeille) {
+      const veilleTitle = isFr
+        ? `📋 ${count} tâche${count > 1 ? 's' : ''} demain`
+        : `📋 ${count} task${count > 1 ? 's' : ''} due tomorrow`;
       const veille = new Date(year, month - 1, day - 1, config.rdvVeilleHour, 0);
       if (veille > now) {
         await Notifications.scheduleNotificationAsync({
-          identifier: `${CAT_TASK}-veille-${task.id}`,
-          content: {
-            title: '📋 Tâche demain',
-            body: task.text.replace(/📅.*$/, '').replace(/#\w+/g, '').trim(),
-            sound: true,
-          },
+          identifier: `${CAT_TASK}-veille-${dateStr}`,
+          content: { title: veilleTitle, body, sound: true },
           trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: veille },
         });
         scheduled++;
@@ -288,16 +316,17 @@ export async function scheduleTaskAlerts(
 
 // ─── 3. Ménage hebdomadaire ──────────────────────────────────────────────────
 
-export async function setupMenageReminder(config: NotifScheduleConfig): Promise<void> {
+export async function setupMenageReminder(config: NotifScheduleConfig, lang: string = 'fr'): Promise<void> {
   await cancelByCategory(CAT_MENAGE);
 
   if (!config.menageEnabled) return;
 
+  const isFr = lang === 'fr';
   await Notifications.scheduleNotificationAsync({
     identifier: `${CAT_MENAGE}-weekly`,
     content: {
-      title: '🧹 C\'est le jour du ménage !',
-      body: 'Ouvre Family Flow pour voir les tâches ménage',
+      title: isFr ? '🧹 C\'est le jour du ménage !' : '🧹 Cleaning day!',
+      body: isFr ? 'Ouvre Family Flow pour voir les tâches ménage' : 'Open Family Flow to see your cleaning tasks',
       sound: true,
     },
     trigger: {
@@ -313,7 +342,8 @@ export async function setupMenageReminder(config: NotifScheduleConfig): Promise<
 
 export async function scheduleCoursesAlert(
   stock: StockItem[],
-  config: NotifScheduleConfig
+  config: NotifScheduleConfig,
+  lang: string = 'fr'
 ): Promise<void> {
   await cancelByCategory(CAT_COURSES);
 
@@ -322,14 +352,20 @@ export async function scheduleCoursesAlert(
   const lowItems = stock.filter(s => s.tracked !== false && s.seuil > 0 && s.quantite <= s.seuil);
   if (lowItems.length === 0) return;
 
-  const body = lowItems.length <= 3
+  const isFr = lang === 'fr';
+  const n = lowItems.length;
+  const body = n <= 3
     ? lowItems.map(s => s.produit).join(', ')
-    : `${lowItems.slice(0, 3).map(s => s.produit).join(', ')} et ${lowItems.length - 3} autre${lowItems.length - 3 > 1 ? 's' : ''}`;
+    : isFr
+      ? `${lowItems.slice(0, 3).map(s => s.produit).join(', ')} et ${n - 3} autre${n - 3 > 1 ? 's' : ''}`
+      : `${lowItems.slice(0, 3).map(s => s.produit).join(', ')} and ${n - 3} more`;
 
   await Notifications.scheduleNotificationAsync({
     identifier: `${CAT_COURSES}-daily`,
     content: {
-      title: `🛒 ${lowItems.length} produit${lowItems.length > 1 ? 's' : ''} en stock bas`,
+      title: isFr
+        ? `🛒 ${n} produit${n > 1 ? 's' : ''} en stock bas`
+        : `🛒 ${n} item${n > 1 ? 's' : ''} running low`,
       body,
       sound: true,
     },
@@ -343,16 +379,17 @@ export async function scheduleCoursesAlert(
 
 // ─── 5. Rappel général ───────────────────────────────────────────────────────
 
-export async function setupGeneralReminder(config: NotifScheduleConfig): Promise<void> {
+export async function setupGeneralReminder(config: NotifScheduleConfig, lang: string = 'fr'): Promise<void> {
   await cancelByCategory(CAT_GENERAL);
 
   if (!config.generalEnabled) return;
 
+  const isFr = lang === 'fr';
   await Notifications.scheduleNotificationAsync({
     identifier: `${CAT_GENERAL}-daily`,
     content: {
       title: '📱 Family Flow',
-      body: 'Ouvre l\'app pour voir ton résumé du jour',
+      body: isFr ? 'Ouvre l\'app pour voir ton résumé du jour' : 'Open the app to see your daily summary',
       sound: true,
     },
     trigger: {
@@ -365,16 +402,17 @@ export async function setupGeneralReminder(config: NotifScheduleConfig): Promise
 
 // ─── 6. Grossesse hebdomadaire ───────────────────────────────────────────────
 
-export async function setupGrossesseWeekly(config: NotifScheduleConfig): Promise<void> {
+export async function setupGrossesseWeekly(config: NotifScheduleConfig, lang: string = 'fr'): Promise<void> {
   await cancelByCategory(CAT_GROSSESSE);
 
   if (!config.grossesseEnabled) return;
 
+  const isFr = lang === 'fr';
   await Notifications.scheduleNotificationAsync({
     identifier: `${CAT_GROSSESSE}-weekly`,
     content: {
-      title: '🤰 Suivi grossesse',
-      body: 'Ouvre Family Flow pour envoyer la mise à jour hebdo',
+      title: isFr ? '🤰 Suivi grossesse' : '🤰 Pregnancy tracker',
+      body: isFr ? 'Ouvre Family Flow pour envoyer la mise à jour hebdo' : 'Open Family Flow for your weekly update',
       sound: true,
     },
     trigger: {
@@ -388,22 +426,32 @@ export async function setupGrossesseWeekly(config: NotifScheduleConfig): Promise
 
 // ─── 7. Gratitude quotidienne ────────────────────────────────────────────────
 
-const GRATITUDE_MESSAGES = [
-  { title: '🌙 Moment gratitude', body: 'Prends 1 minute pour noter ce qui t\'a rendu heureux aujourd\'hui' },
-  { title: '✨ Avant de dormir…', body: 'Qu\'est-ce qui t\'a fait sourire aujourd\'hui ?' },
-  { title: '🙏 Gratitude du soir', body: '3 petites choses positives de ta journée ?' },
-  { title: '💛 Un instant pour toi', body: 'Note un moment de bonheur avant de fermer les yeux' },
-  { title: '🌟 Ta dose de gratitude', body: 'De quoi es-tu reconnaissant(e) ce soir ?' },
-];
+const GRATITUDE_MESSAGES: Record<string, Array<{ title: string; body: string }>> = {
+  fr: [
+    { title: '🌙 Moment gratitude', body: 'Prends 1 minute pour noter ce qui t\'a rendu heureux aujourd\'hui' },
+    { title: '✨ Avant de dormir…', body: 'Qu\'est-ce qui t\'a fait sourire aujourd\'hui ?' },
+    { title: '🙏 Gratitude du soir', body: '3 petites choses positives de ta journée ?' },
+    { title: '💛 Un instant pour toi', body: 'Note un moment de bonheur avant de fermer les yeux' },
+    { title: '🌟 Ta dose de gratitude', body: 'De quoi es-tu reconnaissant(e) ce soir ?' },
+  ],
+  en: [
+    { title: '🌙 Gratitude moment', body: 'Take 1 minute to note what made you happy today' },
+    { title: '✨ Before you sleep…', body: 'What made you smile today?' },
+    { title: '🙏 Evening gratitude', body: '3 good things about your day?' },
+    { title: '💛 A moment for you', body: 'Write down a happy moment before closing your eyes' },
+    { title: '🌟 Your daily gratitude', body: 'What are you grateful for tonight?' },
+  ],
+};
 
-export async function setupGratitudeReminder(config: NotifScheduleConfig): Promise<void> {
+export async function setupGratitudeReminder(config: NotifScheduleConfig, lang: string = 'fr'): Promise<void> {
   await cancelByCategory(CAT_GRATITUDE);
 
   if (!config.gratitudeEnabled) return;
 
   // Choisir un message aléatoire basé sur le jour
+  const messages = GRATITUDE_MESSAGES[lang] || GRATITUDE_MESSAGES.fr;
   const dayIndex = new Date().getDay();
-  const msg = GRATITUDE_MESSAGES[dayIndex % GRATITUDE_MESSAGES.length];
+  const msg = messages[dayIndex % messages.length];
 
   await Notifications.scheduleNotificationAsync({
     identifier: `${CAT_GRATITUDE}-daily`,
@@ -422,16 +470,17 @@ export async function setupGratitudeReminder(config: NotifScheduleConfig): Promi
 
 // ─── 8. Résumé hebdo IA ─────────────────────────────────────────────────────
 
-export async function setupWeeklyAISummaryReminder(config: NotifScheduleConfig): Promise<void> {
+export async function setupWeeklyAISummaryReminder(config: NotifScheduleConfig, lang: string = 'fr'): Promise<void> {
   await cancelByCategory(CAT_WEEKLY_AI);
 
   if (!config.weeklyAISummaryEnabled) return;
 
+  const isFr = lang === 'fr';
   await Notifications.scheduleNotificationAsync({
     identifier: `${CAT_WEEKLY_AI}-weekly`,
     content: {
-      title: '📬 Résumé hebdo',
-      body: 'Ouvre Family Flow pour envoyer le digest de la semaine',
+      title: isFr ? '📬 Résumé hebdo' : '📬 Weekly summary',
+      body: isFr ? 'Ouvre Family Flow pour envoyer le digest de la semaine' : 'Open Family Flow to send your weekly digest',
       sound: true,
     },
     trigger: {
@@ -450,6 +499,7 @@ export interface NotifData {
   tasks: Task[];
   stock: StockItem[];
   hasGrossesse: boolean;
+  lang?: string;
 }
 
 /**
@@ -466,16 +516,17 @@ export async function setupAllNotifications(data: NotifData): Promise<{
   }
 
   const config = await loadNotifConfig();
+  const lang = data.lang || 'fr';
 
   await Promise.all([
-    scheduleRDVAlerts(data.rdvs, config),
-    scheduleTaskAlerts(data.tasks, config),
-    setupMenageReminder(config),
-    scheduleCoursesAlert(data.stock, config),
-    setupGeneralReminder(config),
-    data.hasGrossesse ? setupGrossesseWeekly(config) : cancelByCategory(CAT_GROSSESSE),
-    setupGratitudeReminder(config),
-    setupWeeklyAISummaryReminder(config),
+    scheduleRDVAlerts(data.rdvs, config, lang),
+    scheduleTaskAlerts(data.tasks, config, lang),
+    setupMenageReminder(config, lang),
+    scheduleCoursesAlert(data.stock, config, lang),
+    setupGeneralReminder(config, lang),
+    data.hasGrossesse ? setupGrossesseWeekly(config, lang) : cancelByCategory(CAT_GROSSESSE),
+    setupGratitudeReminder(config, lang),
+    setupWeeklyAISummaryReminder(config, lang),
   ]);
 
   return { permitted, config };

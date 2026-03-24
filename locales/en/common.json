@@ -446,7 +446,9 @@
     "empty": {
       "title": "No health records",
       "subtitle": "Add your family's medical information",
-      "add": "Add"
+      "add": "Add",
+      "noChildTitle": "No child profile",
+      "noChildSubtitle": "The health tracker requires a child profile. Add a child in settings to get started."
     },
     "growth": {
       "lastMeasure": "Latest measurement",
@@ -2885,5 +2887,22 @@
     "addFirstPhoto": "Add your first photo of the day!",
     "retake": "📷 Retake",
     "compare": "⚖️ Compare"
+  },
+  "parentalControls": {
+    "title": "Parental controls",
+    "description": "By default, each child only sees their own data. Enable a toggle to give them access to the whole family's data.",
+    "hint": "Adults always see everything, regardless of these settings.",
+    "allowed": "allowed",
+    "restricted": "restricted",
+    "categories": {
+      "rdv": { "label": "Appointments", "desc": "See other children's appointments" },
+      "budget": { "label": "Budget", "desc": "Access the budget screen" },
+      "stock": { "label": "Stock", "desc": "See stock levels" },
+      "defis": { "label": "Challenges", "desc": "See other's challenges" },
+      "wishlist": { "label": "Wishlist", "desc": "See other's wishes" },
+      "souvenirs": { "label": "Memories", "desc": "See other children's memories" },
+      "recherche": { "label": "Search", "desc": "Unfiltered search results" },
+      "gratitude": { "label": "Gratitude", "desc": "See other's gratitude entries" }
+    }
   }
 }

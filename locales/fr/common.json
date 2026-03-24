@@ -446,7 +446,9 @@
     "empty": {
       "title": "Aucun suivi santé",
       "subtitle": "Ajoutez les infos médicales de la famille",
-      "add": "Ajouter"
+      "add": "Ajouter",
+      "noChildTitle": "Pas de profil enfant",
+      "noChildSubtitle": "Le carnet de santé nécessite un profil enfant. Ajoutez un enfant dans les réglages pour commencer."
     },
     "growth": {
       "lastMeasure": "Dernière mesure",
@@ -2885,5 +2887,22 @@
     "addFirstPhoto": "Ajoute ta première photo du jour !",
     "retake": "📷 Reprendre",
     "compare": "⚖️ Comparer"
+  },
+  "parentalControls": {
+    "title": "Contrôle parental",
+    "description": "Par défaut, chaque enfant ne voit que ses propres données. Activez un toggle pour lui donner accès aux données de toute la famille.",
+    "hint": "Les adultes voient toujours tout, quel que soit le réglage.",
+    "allowed": "autorisé",
+    "restricted": "restreint",
+    "categories": {
+      "rdv": { "label": "Rendez-vous", "desc": "Voir les RDV des autres enfants" },
+      "budget": { "label": "Budget", "desc": "Accéder à l'écran budget" },
+      "stock": { "label": "Stock", "desc": "Voir les niveaux de stock" },
+      "defis": { "label": "Défis", "desc": "Voir les défis des autres" },
+      "wishlist": { "label": "Souhaits", "desc": "Voir les souhaits des autres" },
+      "souvenirs": { "label": "Souvenirs", "desc": "Voir les souvenirs des autres enfants" },
+      "recherche": { "label": "Recherche", "desc": "Résultats de recherche non filtrés" },
+      "gratitude": { "label": "Gratitude", "desc": "Voir les gratitudes des autres" }
+    }
   }
 }

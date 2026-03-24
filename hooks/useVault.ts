@@ -88,6 +88,7 @@ import {
   getDefaultNotificationPrefs,
 } from '../lib/notifications';
 import { setupAllNotifications, loadNotifConfig, scheduleRDVAlerts } from '../lib/scheduled-notifications';
+import i18n from '../lib/i18n';
 import { generateThumbnail } from '../lib/thumbnails';
 import { nextOccurrence } from '../lib/recurrence';
 import { format, startOfWeek } from 'date-fns';
@@ -951,6 +952,7 @@ export function useVaultInternal(): VaultState {
         tasks: tasksResult,
         stock: stockResult.items,
         hasGrossesse: profiles.some(p => p.statut === 'grossesse' && p.dateTerme),
+        lang: i18n.language,
       }).catch(() => {});
       setPhotoDates(val(results[6], {}));
       setMemories(val(results[7], []));

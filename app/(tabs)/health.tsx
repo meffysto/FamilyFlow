@@ -436,10 +436,8 @@ export default function HealthScreen() {
         </View>
         <EmptyState
           emoji="🏥"
-          title={t('health.empty.title')}
-          subtitle={t('health.empty.subtitle')}
-          ctaLabel={t('health.empty.add')}
-          onCta={() => setShowGrowthForm(true)}
+          title={t('health.empty.noChildTitle')}
+          subtitle={t('health.empty.noChildSubtitle')}
         />
       </SafeAreaView>
     );

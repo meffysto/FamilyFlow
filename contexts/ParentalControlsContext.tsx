@@ -36,21 +36,21 @@ export interface ParentalControls {
   gratitude: boolean;
 }
 
-/** Libellés et descriptions pour l'UI */
+/** Catégories pour l'UI — les labels sont des clés i18n */
 export const PARENTAL_CATEGORIES: {
   id: ParentalCategory;
-  label: string;
+  labelKey: string;
   emoji: string;
-  description: string;
+  descKey: string;
 }[] = [
-  { id: 'rdv', label: 'Rendez-vous', emoji: '📅', description: 'Voir les RDV des autres enfants' },
-  { id: 'budget', label: 'Budget', emoji: '💰', description: 'Accéder à l\'écran budget' },
-  { id: 'stock', label: 'Stock', emoji: '📦', description: 'Voir les niveaux de stock' },
-  { id: 'defis', label: 'Défis', emoji: '🏅', description: 'Voir les défis des autres' },
-  { id: 'wishlist', label: 'Souhaits', emoji: '🎁', description: 'Voir les souhaits des autres' },
-  { id: 'souvenirs', label: 'Souvenirs', emoji: '📸', description: 'Voir les souvenirs des autres enfants' },
-  { id: 'recherche', label: 'Recherche', emoji: '🔍', description: 'Résultats de recherche non filtrés' },
-  { id: 'gratitude', label: 'Gratitude', emoji: '🙏', description: 'Voir les gratitudes des autres' },
+  { id: 'rdv', labelKey: 'parentalControls.categories.rdv.label', emoji: '📅', descKey: 'parentalControls.categories.rdv.desc' },
+  { id: 'budget', labelKey: 'parentalControls.categories.budget.label', emoji: '💰', descKey: 'parentalControls.categories.budget.desc' },
+  { id: 'stock', labelKey: 'parentalControls.categories.stock.label', emoji: '📦', descKey: 'parentalControls.categories.stock.desc' },
+  { id: 'defis', labelKey: 'parentalControls.categories.defis.label', emoji: '🏅', descKey: 'parentalControls.categories.defis.desc' },
+  { id: 'wishlist', labelKey: 'parentalControls.categories.wishlist.label', emoji: '🎁', descKey: 'parentalControls.categories.wishlist.desc' },
+  { id: 'souvenirs', labelKey: 'parentalControls.categories.souvenirs.label', emoji: '📸', descKey: 'parentalControls.categories.souvenirs.desc' },
+  { id: 'recherche', labelKey: 'parentalControls.categories.recherche.label', emoji: '🔍', descKey: 'parentalControls.categories.recherche.desc' },
+  { id: 'gratitude', labelKey: 'parentalControls.categories.gratitude.label', emoji: '🙏', descKey: 'parentalControls.categories.gratitude.desc' },
 ];
 
 // ─── Defaults ───────────────────────────────────────────────────────────────────
