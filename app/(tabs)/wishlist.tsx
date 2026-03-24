@@ -6,7 +6,7 @@
  * Fichier vault : 05 - Famille/Souhaits.md
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -81,6 +81,7 @@ export default function WishlistScreen() {
 
   const [personFilter, setPersonFilter] = useState<string>('tous');
   const [occasionFilter, setOccasionFilter] = useState<OccasionFilter>('tous');
+  const editorScrollRef = useRef<ScrollView>(null);
   const [editorVisible, setEditorVisible] = useState(params.addNew === '1');
   const [editingItem, setEditingItem] = useState<WishlistItem | null>(null);
 
@@ -470,8 +471,8 @@ export default function WishlistScreen() {
             onRight={handleSave}
             rightDisabled={!editText.trim()}
           />
-          <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.editorContent} keyboardShouldPersistTaps="handled">
+          <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={10}>
+          <ScrollView ref={editorScrollRef} style={{ flex: 1 }} contentContainerStyle={[styles.editorContent, { paddingBottom: 120 }]} keyboardShouldPersistTaps="handled">
             {/* Texte */}
             <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>{t('wishlist.editor.wishLabel')}</Text>
             <TextInput
@@ -545,6 +546,7 @@ export default function WishlistScreen() {
               keyboardType="url"
               autoCapitalize="none"
               autoCorrect={false}
+              onFocus={() => setTimeout(() => editorScrollRef.current?.scrollToEnd({ animated: true }), 300)}
             />
           </ScrollView>
           </KeyboardAvoidingView>
