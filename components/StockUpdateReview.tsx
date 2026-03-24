@@ -16,6 +16,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { ModalHeader } from './ui/ModalHeader';
 import { Button } from './ui/Button';
@@ -72,6 +73,7 @@ const MatchedRow = React.memo(function MatchedRow({
   index,
   onToggle,
 }: MatchedRowProps) {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
 
   return (
@@ -82,7 +84,7 @@ const MatchedRow = React.memo(function MatchedRow({
         style={[styles.row, { backgroundColor: colors.card }, Shadows.sm]}
         onPress={() => onToggle(index)}
         activeOpacity={0.7}
-        accessibilityLabel={`${item.selected ? 'Désélectionner' : 'Sélectionner'} ${item.receiptLabel}`}
+        accessibilityLabel={`${item.selected ? t('stockReview.deselect') : t('stockReview.select')} ${item.receiptLabel}`}
         accessibilityRole="checkbox"
         accessibilityState={{ checked: item.selected }}
       >
@@ -148,6 +150,7 @@ const NewProductRow = React.memo(function NewProductRow({
   onToggle,
   onEmplacementChange,
 }: NewProductRowProps) {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
 
   return (
@@ -158,7 +161,7 @@ const NewProductRow = React.memo(function NewProductRow({
         style={[styles.row, { backgroundColor: colors.card }, Shadows.sm]}
         onPress={() => onToggle(index)}
         activeOpacity={0.7}
-        accessibilityLabel={`${item.selected ? 'Désélectionner' : 'Sélectionner'} ${item.receiptLabel}`}
+        accessibilityLabel={`${item.selected ? t('stockReview.deselect') : t('stockReview.select')} ${item.receiptLabel}`}
         accessibilityRole="checkbox"
         accessibilityState={{ checked: item.selected }}
       >
@@ -205,7 +208,7 @@ const NewProductRow = React.memo(function NewProductRow({
                     ]}
                     onPress={() => onEmplacementChange(index, emp.id)}
                     activeOpacity={0.7}
-                    accessibilityLabel={`Emplacement ${emp.label}`}
+                    accessibilityLabel={t('stockReview.locationA11y', { label: emp.label })}
                     accessibilityRole="radio"
                     accessibilityState={{ selected: isActive }}
                   >
@@ -229,6 +232,7 @@ export function StockUpdateReview({
   onConfirm,
   matches,
 }: StockUpdateReviewProps) {
+  const { t } = useTranslation();
   const { colors } = useThemeColors();
 
   // État local : copie mutable des matches
@@ -327,11 +331,11 @@ export function StockUpdateReview({
           <View style={styles.dragHandleBar}>
             <View style={[styles.dragHandle, { backgroundColor: colors.separator }]} />
           </View>
-          <ModalHeader title="Mettre à jour le stock ?" onClose={onClose} />
+          <ModalHeader title={t('stockReview.title')} onClose={onClose} />
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>📦</Text>
             <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-              Aucun produit à mettre à jour
+              {t('stockReview.empty')}
             </Text>
           </View>
         </View>
@@ -352,7 +356,7 @@ export function StockUpdateReview({
           <View style={[styles.dragHandle, { backgroundColor: colors.separator }]} />
         </View>
 
-        <ModalHeader title="Mettre à jour le stock ?" onClose={onClose} />
+        <ModalHeader title={t('stockReview.title')} onClose={onClose} />
 
         <ScrollView
           style={styles.scroll}
@@ -363,7 +367,7 @@ export function StockUpdateReview({
           {matchedIndices.length > 0 && (
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.textSub }]}>
-                Produits reconnus
+                {t('stockReview.matchedProducts')}
               </Text>
               {matchedIndices.map((globalIdx, listIdx) => (
                 <MatchedRow
@@ -380,10 +384,10 @@ export function StockUpdateReview({
           {newIndices.length > 0 && (
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.textSub }]}>
-                Nouveaux produits
+                {t('stockReview.newProducts')}
               </Text>
               <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
-                Ajouter au suivi du stock ?
+                {t('stockReview.addToStock')}
               </Text>
               {newIndices.map((globalIdx, listIdx) => (
                 <NewProductRow
@@ -412,7 +416,7 @@ export function StockUpdateReview({
         >
           {selectedCount > 0 ? (
             <Button
-              label={`Mettre à jour (${selectedCount} produit${selectedCount > 1 ? 's' : ''})`}
+              label={t('stockReview.update', { count: selectedCount })}
               onPress={handleConfirm}
               variant="primary"
               size="lg"
@@ -420,7 +424,7 @@ export function StockUpdateReview({
             />
           ) : (
             <Button
-              label="Ignorer"
+              label={t('stockReview.skip')}
               onPress={onClose}
               variant="secondary"
               size="lg"

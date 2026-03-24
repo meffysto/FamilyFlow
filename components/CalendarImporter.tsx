@@ -293,7 +293,7 @@ export function CalendarImporter({
             <Text style={[styles.contactName, { color: colors.text }]}>{item.name}</Text>
             <Text style={[styles.contactDate, { color: colors.textMuted }]}>
               {formatDate(item.date)}
-              {item.alreadyImported && '  \u2022  Déjà importé'}
+              {item.alreadyImported && `  \u2022  ${t('calendarImporter.alreadyImported')}`}
             </Text>
           </View>
 
@@ -330,7 +330,7 @@ export function CalendarImporter({
     >
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
         <ModalHeader
-          title="Importer du calendrier"
+          title={t('calendarImporter.title')}
           onClose={onClose}
         />
 
@@ -338,20 +338,20 @@ export function CalendarImporter({
           <View style={styles.centered}>
             <ActivityIndicator size="large" color={primary} />
             <Text style={[styles.loadingText, { color: colors.textMuted }]}>
-              Chargement du calendrier...
+              {t('calendarImporter.loading')}
             </Text>
           </View>
         ) : permissionStatus === 'denied' ? (
           <View style={styles.centered}>
             <Text style={styles.deniedEmoji}>{'🔒'}</Text>
             <Text style={[styles.deniedTitle, { color: colors.text }]}>
-              Accès au calendrier refusé
+              {t('calendarImporter.denied')}
             </Text>
             <Text style={[styles.deniedDesc, { color: colors.textMuted }]}>
-              Pour importer les anniversaires depuis votre calendrier, autorisez l'accès dans les réglages de votre appareil.
+              {t('calendarImporter.deniedDesc')}
             </Text>
             <Button
-              label="Ouvrir les réglages"
+              label={t('calendarImporter.openSettings')}
               onPress={() => Linking.openSettings()}
               variant="secondary"
               icon="⚙️"
@@ -361,10 +361,10 @@ export function CalendarImporter({
           <View style={styles.centered}>
             <Text style={styles.deniedEmoji}>{'📅'}</Text>
             <Text style={[styles.deniedTitle, { color: colors.text }]}>
-              Aucun anniversaire trouvé
+              {t('calendarImporter.noEvents')}
             </Text>
             <Text style={[styles.deniedDesc, { color: colors.textMuted }]}>
-              Aucun événement d'anniversaire trouvé. Vérifiez que vos événements contiennent « Anniversaire » dans le titre, ou que le calendrier natif Anniversaires est activé.
+              {t('calendarImporter.noEventsDesc')}
             </Text>
           </View>
         ) : (
@@ -373,11 +373,11 @@ export function CalendarImporter({
             <View style={[styles.toolbar, { borderBottomColor: colors.border }]}>
               <TouchableOpacity onPress={toggleAll} activeOpacity={0.7}>
                 <Text style={[styles.toggleText, { color: primary }]}>
-                  {selectedCount === selectableCount ? 'Tout désélectionner' : 'Tout sélectionner'}
+                  {selectedCount === selectableCount ? t('calendarImporter.deselectAll') : t('calendarImporter.selectAll')}
                 </Text>
               </TouchableOpacity>
               <Text style={[styles.countText, { color: colors.textMuted }]}>
-                {birthdays.length} anniversaire{birthdays.length > 1 ? 's' : ''}
+                {t('calendarImporter.birthdayCount', { count: birthdays.length })}
               </Text>
             </View>
 
@@ -394,8 +394,8 @@ export function CalendarImporter({
               <Button
                 label={
                   selectedCount === 0
-                    ? 'Sélectionnez des anniversaires'
-                    : `Importer ${selectedCount} anniversaire${selectedCount > 1 ? 's' : ''}`
+                    ? t('calendarImporter.selectBirthdays')
+                    : t('calendarImporter.importCount', { count: selectedCount })
                 }
                 onPress={handleImport}
                 variant="primary"

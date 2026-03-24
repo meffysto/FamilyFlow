@@ -7,6 +7,7 @@
 
 import React, { useCallback, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -42,6 +43,7 @@ const ACTION_OFFSET_RIGHT = (MAIN_SIZE - ACTION_SIZE) / 2;
 const TIMING_CONFIG = { duration: 200, easing: Easing.out(Easing.cubic) };
 
 function FABComponent({ actions }: FABProps) {
+  const { t } = useTranslation();
   const { primary, colors, isDark } = useThemeColors();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
@@ -101,7 +103,7 @@ function FABComponent({ actions }: FABProps) {
           style={[styles.mainButton, { backgroundColor: primary }]}
           onPress={toggle}
           activeOpacity={0.8}
-          accessibilityLabel={open ? 'Fermer le menu d\'ajout rapide' : 'Ajouter'}
+          accessibilityLabel={open ? t('fab.closeMenuA11y') : t('fab.addA11y')}
           accessibilityRole="button"
           accessibilityState={{ expanded: open }}
         >
@@ -130,6 +132,7 @@ function FABActionItem({
   colors: ReturnType<typeof useThemeColors>['colors'];
   onPress: () => void;
 }) {
+  const { t } = useTranslation();
   const FIRST_GAP = 20;
   const offset = FIRST_GAP + index * (ACTION_SIZE + ACTION_GAP) + ACTION_SIZE;
 
@@ -152,7 +155,7 @@ function FABActionItem({
         style={[styles.actionButton, { backgroundColor: primary }]}
         onPress={onPress}
         activeOpacity={0.8}
-        accessibilityLabel={`Ajouter ${action.label}`}
+        accessibilityLabel={t('fab.addItemA11y', { label: action.label })}
         accessibilityRole="button"
       >
         <Text style={styles.actionEmoji}>{action.emoji}</Text>

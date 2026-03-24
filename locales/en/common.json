@@ -180,6 +180,26 @@
     "error": {
       "title": "Error",
       "createFailed": "Unable to set up your data:\n{{error}}\n\nPlease check folder permissions."
+    },
+    "wizard": {
+      "parentsTitle": "Who are the parents?",
+      "parentsDesc": "Add the adults in the family.",
+      "addParent": "+ Add a parent",
+      "childrenTitle": "And the children?",
+      "childrenDesc": "Add your children. Date of birth is optional.",
+      "addChild": "+ Add a child",
+      "noChildHint": "You can always add them later.",
+      "summaryTitle": "Your family",
+      "summaryDesc": "Review the information before creating your space.",
+      "parentsLabel": "Parents",
+      "childrenLabel": "Children",
+      "willCreateLabel": "What will be created",
+      "willCreateDetail": "Recurring tasks, housekeeping, shopping, stock, meals, appointments, photos, memories",
+      "firstNamePlaceholder": "First name",
+      "datePlaceholder": "DD/MM/YYYY",
+      "back": "Back",
+      "letsGo": "Let's go!",
+      "createError": "Unable to create data: {{error}}"
     }
   },
   "tasks": {
@@ -1535,7 +1555,19 @@
       "chatIdLabel": "Chat ID",
       "chatIdA11y": "Telegram Chat ID",
       "groupTip": "For a group: add the bot to the group, send a message, then call getUpdates. The chat ID will be negative.",
-      "saveBtn": "Save"
+      "saveBtn": "Save",
+      "step1Line1": "1. Open Telegram and search for",
+      "step1Line2": "2. Send",
+      "step1Line3": "3. Choose a name (e.g. \"Family Flow\")",
+      "step1Line4": "4. Choose a username (e.g. FamilyVaultBot)",
+      "step1Line5": "5. BotFather gives you a",
+      "step1Line5b": "copy it below",
+      "step2Line1": "1. On Telegram, open the conversation with your bot",
+      "step2Line2": "2. Send it a message (e.g. \"hello\")",
+      "step2Line3": "3. Open this URL in a browser:",
+      "step2UrlPlaceholder": "https://api.telegram.org/bot<YOUR_TOKEN>/getUpdates",
+      "step2Line4": "4. In the JSON, look for",
+      "step2Line5": "5. This number is your"
     },
     "zen": {
       "sectionTitle": "🧘 Zen mode",
@@ -2044,22 +2076,34 @@
     "timerNotifBody": "{{label}} — Step {{step}} of {{recipe}}"
   },
   "vaultPicker": {
-    "createNew": "Create a new vault",
-    "createNewSub": "No need for Obsidian — everything is created automatically",
+    "createNew": "Create a new family folder",
+    "createNewSub": "Everything is created automatically on your device",
     "createICloud": "Create in iCloud Drive",
     "createICloudSub": "Auto-sync between your Apple devices",
     "createAndroid": "Create in Google Drive / Dropbox",
     "createAndroidSub": "Choose a locally synced cloud folder",
+    "orExisting": "or use an existing folder",
     "orConnect": "or connect an existing vault",
+    "chooseFolder": "Choose a folder",
     "selectFolder": "Select vault folder",
+    "fromFilesIos": "From Files, iCloud...",
+    "fromFilesAndroid": "From storage, Google Drive, Dropbox...",
     "selectFolderSubIos": "From Files, iCloud, Obsidian...",
     "selectFolderSubAndroid": "From storage, Google Drive, Dropbox...",
     "ipPlaceholder": "Computer IP (e.g.: 192.168.1.42)",
     "syncFromComputer": "Sync from computer",
+    "syncSubBefore": "Run",
+    "syncSubAfter": "on the PC/Mac",
     "syncSub": "Run python3 serve-vault.py on the PC/Mac",
+    "connecting": "Connecting...",
+    "serverNotFound": "Server not found. Run serve-vault.py on the computer.",
+    "filesSynced": "{{count}} files synced",
+    "folderLocation": "Folder location",
     "pathLabel": "Vault path",
-    "pathPlaceholder": "/path/to/my-vault",
+    "pathPlaceholder": "/path/to/my-folder",
+    "useDefaultFolder": "Use default folder",
     "useVaultCoffre": "Use coffre vault",
+    "cancel": "Cancel",
     "confirm": "Confirm",
     "alert": {
       "unavailable": "Not available",
@@ -2206,7 +2250,21 @@
     "permissionsRequired": "Permissions required",
     "permissionsMsg": "Allow microphone and speech recognition in settings.",
     "doctorNotSpecified": "Doctor not specified",
-    "recognitionError": "Recognition error: {{message}}"
+    "recognitionError": "Recognition error: {{message}}",
+    "errorPrefix": "Error: {{message}}"
+  },
+  "stockReview": {
+    "title": "Update stock?",
+    "empty": "No products to update",
+    "matchedProducts": "Matched products",
+    "newProducts": "New products",
+    "addToStock": "Add to stock tracking?",
+    "update": "Update ({{count}} product)",
+    "update_other": "Update ({{count}} products)",
+    "skip": "Skip",
+    "select": "Select",
+    "deselect": "Deselect",
+    "locationA11y": "Location {{label}}"
   },
   "focusReader": {
     "closeA11y": "Close",
@@ -2251,7 +2309,13 @@
   "taskCard": {
     "a11y": "Task: {{text}}{{completed}}{{overdue}}",
     "completed": ", completed",
-    "overdue": ", overdue"
+    "overdue": ", overdue",
+    "sourceHome": "🏠 Home",
+    "sourceShopping": "🛒 Shopping",
+    "sourceTasks": "📋 Tasks",
+    "recurrenceDaily": "daily",
+    "recurrenceWeekly": "weekly",
+    "recurrenceMonthly": "monthly"
   },
   "receiptReview": {
     "categoryHint": "Tap to change category",
@@ -2904,5 +2968,34 @@
       "recherche": { "label": "Search", "desc": "Unfiltered search results" },
       "gratitude": { "label": "Gratitude", "desc": "See other's gratitude entries" }
     }
+  },
+  "skills": {
+    "detail": {
+      "confirmTitle": "Confirm validation",
+      "confirmMessage": "Confirm validation of this skill? +{{xp}} XP will be awarded.",
+      "unlocked": "Unlocked ✓",
+      "validatedBy": "Validated by {{name}}",
+      "validateSkill": "Validate this skill"
+    }
+  },
+  "seasonalBanner": {
+    "eventActive": "{{name}} event active!",
+    "eventActiveUpper": "{{name}} EVENT ACTIVE!",
+    "rewardsDaysLeft": "Exclusive rewards — {{count}} day(s) left",
+    "rewardsAvailable": "Exclusive rewards available!",
+    "view": "View →"
+  },
+  "swipeToDelete": {
+    "confirmTitle": "Delete?",
+    "deleteAction": "🗑 Delete"
+  },
+  "fab": {
+    "closeMenuA11y": "Close quick add menu",
+    "addA11y": "Add",
+    "addItemA11y": "Add {{label}}"
+  },
+  "helpModal": {
+    "title": "Guide",
+    "itemA11y": "{{name}} — {{description}}. Tap to view and replay tips."
   }
 }

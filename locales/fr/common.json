@@ -180,6 +180,26 @@
     "error": {
       "title": "Erreur",
       "createFailed": "Impossible de créer les données :\n{{error}}\n\nVérifiez les permissions du dossier."
+    },
+    "wizard": {
+      "parentsTitle": "Qui sont les parents ?",
+      "parentsDesc": "Ajoutez les adultes de la famille.",
+      "addParent": "+ Ajouter un parent",
+      "childrenTitle": "Et les enfants ?",
+      "childrenDesc": "Ajoutez vos enfants. La date de naissance est optionnelle.",
+      "addChild": "+ Ajouter un enfant",
+      "noChildHint": "Vous pourrez toujours en ajouter plus tard.",
+      "summaryTitle": "Votre famille",
+      "summaryDesc": "Vérifiez les informations avant de créer votre espace.",
+      "parentsLabel": "Parents",
+      "childrenLabel": "Enfants",
+      "willCreateLabel": "Ce qui sera créé",
+      "willCreateDetail": "Tâches récurrentes, ménage, courses, stock, repas, rendez-vous, photos, souvenirs",
+      "firstNamePlaceholder": "Prénom",
+      "datePlaceholder": "JJ/MM/AAAA",
+      "back": "Retour",
+      "letsGo": "C'est parti !",
+      "createError": "Impossible de créer les données : {{error}}"
     }
   },
   "tasks": {
@@ -1535,7 +1555,19 @@
       "chatIdLabel": "Chat ID",
       "chatIdA11y": "Chat ID Telegram",
       "groupTip": "Pour un groupe : ajoutez le bot au groupe, envoyez un message, puis appelez getUpdates. Le chat ID sera négatif.",
-      "saveBtn": "Sauvegarder"
+      "saveBtn": "Sauvegarder",
+      "step1Line1": "1. Ouvrez Telegram et cherchez",
+      "step1Line2": "2. Envoyez",
+      "step1Line3": "3. Choisissez un nom (ex: \"Family Flow\")",
+      "step1Line4": "4. Choisissez un username (ex: FamilyVaultBot)",
+      "step1Line5": "5. BotFather vous donne un",
+      "step1Line5b": "copiez-le ci-dessous",
+      "step2Line1": "1. Sur Telegram, ouvrez la conversation avec votre bot",
+      "step2Line2": "2. Envoyez-lui un message (ex: \"hello\")",
+      "step2Line3": "3. Ouvrez cette URL dans un navigateur :",
+      "step2UrlPlaceholder": "https://api.telegram.org/bot<VOTRE_TOKEN>/getUpdates",
+      "step2Line4": "4. Dans le JSON, cherchez",
+      "step2Line5": "5. Ce nombre est votre"
     },
     "zen": {
       "sectionTitle": "🧘 Mode zen",
@@ -2044,22 +2076,34 @@
     "timerNotifBody": "{{label}} — Étape {{step}} de {{recipe}}"
   },
   "vaultPicker": {
-    "createNew": "Créer un nouveau vault",
-    "createNewSub": "Pas besoin d'Obsidian — tout est créé automatiquement",
+    "createNew": "Créer un nouveau dossier famille",
+    "createNewSub": "Tout est créé automatiquement sur votre appareil",
     "createICloud": "Créer dans iCloud Drive",
     "createICloudSub": "Sync automatique entre vos appareils Apple",
     "createAndroid": "Créer dans Google Drive / Dropbox",
     "createAndroidSub": "Choisissez un dossier cloud syncé localement",
+    "orExisting": "ou utiliser un dossier existant",
     "orConnect": "ou connecter un vault existant",
+    "chooseFolder": "Choisir un dossier",
     "selectFolder": "Sélectionner le dossier du vault",
+    "fromFilesIos": "Depuis Fichiers, iCloud...",
+    "fromFilesAndroid": "Depuis le stockage, Google Drive, Dropbox...",
     "selectFolderSubIos": "Depuis Fichiers, iCloud, Obsidian...",
     "selectFolderSubAndroid": "Depuis le stockage, Google Drive, Dropbox...",
     "ipPlaceholder": "IP de l'ordinateur (ex: 192.168.1.42)",
     "syncFromComputer": "Sync depuis un ordinateur",
+    "syncSubBefore": "Lancez",
+    "syncSubAfter": "sur le PC/Mac",
     "syncSub": "Lancez python3 serve-vault.py sur le PC/Mac",
+    "connecting": "Connexion...",
+    "serverNotFound": "Serveur non trouvé. Lancez serve-vault.py sur l'ordinateur.",
+    "filesSynced": "{{count}} fichiers synchronisés",
+    "folderLocation": "Emplacement du dossier",
     "pathLabel": "Chemin du vault",
-    "pathPlaceholder": "/chemin/vers/mon-vault",
+    "pathPlaceholder": "/chemin/vers/mon-dossier",
+    "useDefaultFolder": "Utiliser le dossier par défaut",
     "useVaultCoffre": "Utiliser le vault coffre",
+    "cancel": "Annuler",
     "confirm": "Confirmer",
     "alert": {
       "unavailable": "Non disponible",
@@ -2206,7 +2250,21 @@
     "permissionsRequired": "Permissions requises",
     "permissionsMsg": "Autorisez le micro et la reconnaissance vocale dans les réglages.",
     "doctorNotSpecified": "Médecin non renseigné",
-    "recognitionError": "Erreur reconnaissance : {{message}}"
+    "recognitionError": "Erreur reconnaissance : {{message}}",
+    "errorPrefix": "Erreur : {{message}}"
+  },
+  "stockReview": {
+    "title": "Mettre à jour le stock ?",
+    "empty": "Aucun produit à mettre à jour",
+    "matchedProducts": "Produits reconnus",
+    "newProducts": "Nouveaux produits",
+    "addToStock": "Ajouter au suivi du stock ?",
+    "update": "Mettre à jour ({{count}} produit)",
+    "update_other": "Mettre à jour ({{count}} produits)",
+    "skip": "Ignorer",
+    "select": "Sélectionner",
+    "deselect": "Désélectionner",
+    "locationA11y": "Emplacement {{label}}"
   },
   "focusReader": {
     "closeA11y": "Fermer",
@@ -2251,7 +2309,13 @@
   "taskCard": {
     "a11y": "Tâche : {{text}}{{completed}}{{overdue}}",
     "completed": ", terminée",
-    "overdue": ", en retard"
+    "overdue": ", en retard",
+    "sourceHome": "🏠 Maison",
+    "sourceShopping": "🛒 Courses",
+    "sourceTasks": "📋 Tâches",
+    "recurrenceDaily": "quotidien",
+    "recurrenceWeekly": "hebdo",
+    "recurrenceMonthly": "mensuel"
   },
   "receiptReview": {
     "categoryHint": "Appuyer pour changer la catégorie",
@@ -2904,5 +2968,34 @@
       "recherche": { "label": "Recherche", "desc": "Résultats de recherche non filtrés" },
       "gratitude": { "label": "Gratitude", "desc": "Voir les gratitudes des autres" }
     }
+  },
+  "skills": {
+    "detail": {
+      "confirmTitle": "Confirmer la validation",
+      "confirmMessage": "Confirmer la validation de cette compétence ? +{{xp}} XP seront attribués.",
+      "unlocked": "Débloqué ✓",
+      "validatedBy": "Validé par {{name}}",
+      "validateSkill": "Valider cette compétence"
+    }
+  },
+  "seasonalBanner": {
+    "eventActive": "Événement {{name}} actif !",
+    "eventActiveUpper": "ÉVÉNEMENT {{name}} ACTIF !",
+    "rewardsDaysLeft": "Récompenses exclusives — encore {{count}} jour(s)",
+    "rewardsAvailable": "Récompenses exclusives disponibles !",
+    "view": "Voir →"
+  },
+  "swipeToDelete": {
+    "confirmTitle": "Supprimer ?",
+    "deleteAction": "🗑 Supprimer"
+  },
+  "fab": {
+    "closeMenuA11y": "Fermer le menu d'ajout rapide",
+    "addA11y": "Ajouter",
+    "addItemA11y": "Ajouter {{label}}"
+  },
+  "helpModal": {
+    "title": "Guide",
+    "itemA11y": "{{name}} — {{description}}. Touchez pour voir et relancer les astuces."
   }
 }

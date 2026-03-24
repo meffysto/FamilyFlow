@@ -7,6 +7,7 @@
 
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { SeasonalEvent } from '../lib/types';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { Spacing, Radius } from '../constants/spacing';
@@ -21,12 +22,13 @@ interface SeasonalBannerProps {
 
 export function SeasonalBanner({ event, daysLeft, onShowRewards, compact }: SeasonalBannerProps) {
   const { colors } = useThemeColors();
+  const { t } = useTranslation();
 
   if (compact) {
     return (
       <View style={[styles.compact, { backgroundColor: event.themeColor + '20' }]}>
         <Text style={[styles.compactText, { color: event.themeColor }]}>
-          {event.emoji} Événement {event.name} actif !
+          {event.emoji} {t('seasonalBanner.eventActive', { name: event.name })}
         </Text>
       </View>
     );
@@ -36,12 +38,12 @@ export function SeasonalBanner({ event, daysLeft, onShowRewards, compact }: Seas
     <View style={[styles.banner, { backgroundColor: event.themeColor }]}>
       <View style={styles.content}>
         <Text style={[styles.title, { color: colors.onPrimary }]}>
-          {event.emoji} ÉVÉNEMENT {event.name.toUpperCase()} ACTIF !
+          {event.emoji} {t('seasonalBanner.eventActiveUpper', { name: event.name.toUpperCase() })}
         </Text>
         <Text style={[styles.subtitle, { color: colors.onPrimaryMuted }]}>
           {daysLeft != null
-            ? `Récompenses exclusives — encore ${daysLeft} jour${daysLeft > 1 ? 's' : ''}`
-            : 'Récompenses exclusives disponibles !'}
+            ? t('seasonalBanner.rewardsDaysLeft', { count: daysLeft })
+            : t('seasonalBanner.rewardsAvailable')}
         </Text>
       </View>
       {onShowRewards && (
@@ -50,7 +52,7 @@ export function SeasonalBanner({ event, daysLeft, onShowRewards, compact }: Seas
           onPress={onShowRewards}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Text style={[styles.btnText, { color: colors.onPrimary }]}>Voir →</Text>
+          <Text style={[styles.btnText, { color: colors.onPrimary }]}>{t('seasonalBanner.view')}</Text>
         </TouchableOpacity>
       )}
     </View>

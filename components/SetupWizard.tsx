@@ -17,6 +17,7 @@ import {
   ActivityIndicator,
   Platform,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import * as FileSystem from 'expo-file-system/legacy';
 import { VaultManager } from '../lib/vault';
 import { useThemeColors } from '../contexts/ThemeContext';
@@ -47,6 +48,7 @@ const PARENT_AVATARS = ['👨', '👩', '👨‍💻', '👩‍💼', '🧑', '�
 const CHILD_AVATARS = ['👶', '🍼', '👧', '👦', '🧒', '🐣', '🌟'];
 
 export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, initialChildren }: SetupWizardProps) {
+  const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const hasInitialData = !!(initialParents?.length && initialParents.some(p => p.name.trim()));
   const [step, setStep] = useState(hasInitialData ? 2 : 0);
@@ -126,7 +128,7 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
 
       onComplete(vaultPath);
     } catch (e) {
-      Alert.alert('Erreur', `Impossible de créer les données : ${e}`);
+      Alert.alert(t('common.error'), t('setup.wizard.createError', { error: String(e) }));
     }
     setIsCreating(false);
   };
@@ -158,8 +160,8 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
         <TextInput
           style={[styles.nameInput, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.card }]}
           value={person.name}
-          onChangeText={(t) => onUpdate(index, 'name', t)}
-          placeholder="Prénom"
+          onChangeText={(v) => onUpdate(index, 'name', v)}
+          placeholder={t('setup.wizard.firstNamePlaceholder')}
           placeholderTextColor={colors.textFaint}
         />
         {canRemove && (
@@ -191,15 +193,15 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
         <TextInput
           style={[styles.nameInput, { flex: 1, borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.card }]}
           value={child.name}
-          onChangeText={(t) => updateChild(index, 'name', t)}
-          placeholder="Prénom"
+          onChangeText={(v) => updateChild(index, 'name', v)}
+          placeholder={t('setup.wizard.firstNamePlaceholder')}
           placeholderTextColor={colors.textFaint}
         />
         <TextInput
           style={[styles.nameInput, { flex: 1, borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.card }]}
           value={child.birthdate}
-          onChangeText={(t) => updateChild(index, 'birthdate', t)}
-          placeholder="JJ/MM/AAAA"
+          onChangeText={(v) => updateChild(index, 'birthdate', v)}
+          placeholder={t('setup.wizard.datePlaceholder')}
           placeholderTextColor={colors.textFaint}
           keyboardType="numbers-and-punctuation"
         />
@@ -228,14 +230,14 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
       <ScrollView style={styles.scrollContent} contentContainerStyle={styles.scrollInner}>
         {step === 0 && (
           <View style={styles.stepContent}>
-            <Text style={[styles.stepTitle, { color: colors.text }]}>Qui sont les parents ?</Text>
-            <Text style={[styles.stepDesc, { color: colors.textMuted }]}>Ajoutez les adultes de la famille.</Text>
+            <Text style={[styles.stepTitle, { color: colors.text }]}>{t('setup.wizard.parentsTitle')}</Text>
+            <Text style={[styles.stepDesc, { color: colors.textMuted }]}>{t('setup.wizard.parentsDesc')}</Text>
             {parents.map((p, i) =>
               renderPersonRow(p, i, PARENT_AVATARS, updateParent, removeParent, parents.length > 1)
             )}
             {parents.length < 4 && (
               <TouchableOpacity style={[styles.addBtn, { borderColor: primary }]} onPress={addParent}>
-                <Text style={[styles.addBtnText, { color: primary }]}>+ Ajouter un parent</Text>
+                <Text style={[styles.addBtnText, { color: primary }]}>{t('setup.wizard.addParent')}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -243,27 +245,27 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
 
         {step === 1 && (
           <View style={styles.stepContent}>
-            <Text style={[styles.stepTitle, { color: colors.text }]}>Et les enfants ?</Text>
-            <Text style={[styles.stepDesc, { color: colors.textMuted }]}>Ajoutez vos enfants. La date de naissance est optionnelle.</Text>
+            <Text style={[styles.stepTitle, { color: colors.text }]}>{t('setup.wizard.childrenTitle')}</Text>
+            <Text style={[styles.stepDesc, { color: colors.textMuted }]}>{t('setup.wizard.childrenDesc')}</Text>
             {children.map((c, i) => renderChildRow(c, i))}
             {children.length < 6 && (
               <TouchableOpacity style={[styles.addBtn, { borderColor: primary }]} onPress={addChild}>
-                <Text style={[styles.addBtnText, { color: primary }]}>+ Ajouter un enfant</Text>
+                <Text style={[styles.addBtnText, { color: primary }]}>{t('setup.wizard.addChild')}</Text>
               </TouchableOpacity>
             )}
             {children.length === 0 && (
-              <Text style={[styles.noChildHint, { color: colors.textFaint }]}>Vous pourrez toujours en ajouter plus tard.</Text>
+              <Text style={[styles.noChildHint, { color: colors.textFaint }]}>{t('setup.wizard.noChildHint')}</Text>
             )}
           </View>
         )}
 
         {step === 2 && (
           <View style={styles.stepContent}>
-            <Text style={[styles.stepTitle, { color: colors.text }]}>Votre famille</Text>
-            <Text style={[styles.stepDesc, { color: colors.textMuted }]}>Vérifiez les informations avant de créer votre espace.</Text>
+            <Text style={[styles.stepTitle, { color: colors.text }]}>{t('setup.wizard.summaryTitle')}</Text>
+            <Text style={[styles.stepDesc, { color: colors.textMuted }]}>{t('setup.wizard.summaryDesc')}</Text>
 
             <View style={[styles.summaryCard, { backgroundColor: colors.cardAlt }]}>
-              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Parents</Text>
+              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('setup.wizard.parentsLabel')}</Text>
               {parents.map((p, i) => (
                 <Text key={i} style={[styles.summaryItem, { color: colors.text }]}>
                   {p.avatar} {p.name}
@@ -273,7 +275,7 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
 
             {children.filter((c) => c.name.trim()).length > 0 && (
               <View style={[styles.summaryCard, { backgroundColor: colors.cardAlt }]}>
-                <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Enfants</Text>
+                <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('setup.wizard.childrenLabel')}</Text>
                 {children
                   .filter((c) => c.name.trim())
                   .map((c, i) => (
@@ -286,9 +288,9 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
             )}
 
             <View style={[styles.summaryCard, { backgroundColor: colors.cardAlt }]}>
-              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Ce qui sera créé</Text>
+              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('setup.wizard.willCreateLabel')}</Text>
               <Text style={[styles.summaryDetail, { color: colors.textSub }]}>
-                Tâches récurrentes, ménage, courses, stock, repas, rendez-vous, photos, souvenirs
+                {t('setup.wizard.willCreateDetail')}
               </Text>
             </View>
           </View>
@@ -304,7 +306,7 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
             else setStep(step - 1);
           }}
         >
-          <Text style={[styles.navBtnSecondaryText, { color: colors.textMuted }]}>{step === 0 ? 'Annuler' : 'Retour'}</Text>
+          <Text style={[styles.navBtnSecondaryText, { color: colors.textMuted }]}>{step === 0 ? t('common.cancel') : t('setup.wizard.back')}</Text>
         </TouchableOpacity>
 
         {step < 2 ? (
@@ -317,7 +319,7 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
             onPress={() => setStep(step + 1)}
             disabled={!(step === 0 ? canProceedStep0 : canProceedStep1)}
           >
-            <Text style={[styles.navBtnPrimaryText, { color: colors.onPrimary }]}>Suivant</Text>
+            <Text style={[styles.navBtnPrimaryText, { color: colors.onPrimary }]}>{t('common.next')}</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
@@ -328,7 +330,7 @@ export function SetupWizard({ onComplete, onCancel, targetPath, initialParents, 
             {isCreating ? (
               <ActivityIndicator color={colors.onPrimary} size="small" />
             ) : (
-              <Text style={[styles.navBtnPrimaryText, { color: colors.onPrimary }]}>C'est parti !</Text>
+              <Text style={[styles.navBtnPrimaryText, { color: colors.onPrimary }]}>{t('setup.wizard.letsGo')}</Text>
             )}
           </TouchableOpacity>
         )}

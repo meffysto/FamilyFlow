@@ -8,6 +8,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useHelp } from '../../contexts/HelpContext';
@@ -22,6 +23,7 @@ interface HelpModalProps {
 }
 
 export function HelpModal({ onClose }: HelpModalProps) {
+  const { t } = useTranslation();
   const { colors } = useThemeColors();
   const { resetScreen } = useHelp();
   const router = useRouter();
@@ -39,7 +41,7 @@ export function HelpModal({ onClose }: HelpModalProps) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.card }]}>
-      <ModalHeader title="Guide" onClose={onClose} closeLeft />
+      <ModalHeader title={t('helpModal.title')} onClose={onClose} closeLeft />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {HELP_GUIDE_SECTIONS.map((section) => (
           <View key={section.category} style={styles.categoryBlock}>
@@ -65,7 +67,7 @@ export function HelpModal({ onClose }: HelpModalProps) {
                       onPress={() => handleItemPress(item.screenId, item.route)}
                       activeOpacity={0.6}
                       accessibilityRole="button"
-                      accessibilityLabel={`${item.name} — ${item.description}. Touchez pour voir et relancer les astuces.`}
+                      accessibilityLabel={t('helpModal.itemA11y', { name: item.name, description: item.description })}
                     >
                       <Text style={styles.itemEmoji}>{item.emoji}</Text>
                       <View style={styles.itemText}>

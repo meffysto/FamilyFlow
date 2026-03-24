@@ -58,12 +58,12 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
       return;
     }
     const SERVER_URL = `http://${ip}:8765`;
-    setSyncProgress('Connexion...');
+    setSyncProgress(t('vaultPicker.connecting'));
     setError(null);
 
     try {
       const manifestRes = await fetch(`${SERVER_URL}/manifest.json`);
-      if (!manifestRes.ok) throw new Error('Serveur non trouvé. Lancez serve-vault.py sur l\'ordinateur.');
+      if (!manifestRes.ok) throw new Error(t('vaultPicker.serverNotFound'));
       const { files } = await manifestRes.json() as { files: string[] };
 
       const localVault = `${FileSystem.documentDirectory}coffre`;
@@ -94,7 +94,7 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
         downloaded++;
       }
 
-      setSyncProgress(`${downloaded} fichiers synchronisés`);
+      setSyncProgress(t('vaultPicker.filesSynced', { count: downloaded }));
       setPath(localVault);
 
       // Laisser le JS engine respirer avant le rechargement du vault
@@ -230,8 +230,8 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
         style={[styles.createBtn, { backgroundColor: primary }]}
         onPress={() => { setWizardTargetPath(undefined); setShowWizard(true); }}
       >
-        <Text style={styles.createBtnText}>Créer un nouveau dossier famille</Text>
-        <Text style={styles.createBtnSub}>Tout est créé automatiquement sur votre appareil</Text>
+        <Text style={styles.createBtnText}>{t('vaultPicker.createNew')}</Text>
+        <Text style={styles.createBtnSub}>{t('vaultPicker.createNewSub')}</Text>
       </TouchableOpacity>
 
       {/* Create in iCloud Drive (iOS only) */}
@@ -240,8 +240,8 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
           style={[styles.icloudBtn, { backgroundColor: tint }]}
           onPress={createInICloud}
         >
-          <Text style={[styles.icloudBtnText, { color: primary }]}>Créer dans iCloud Drive</Text>
-          <Text style={[styles.icloudBtnSub, { color: colors.textMuted }]}>Sync automatique entre vos appareils Apple</Text>
+          <Text style={[styles.icloudBtnText, { color: primary }]}>{t('vaultPicker.createICloud')}</Text>
+          <Text style={[styles.icloudBtnSub, { color: colors.textMuted }]}>{t('vaultPicker.createICloudSub')}</Text>
         </TouchableOpacity>
       )}
 
@@ -260,18 +260,18 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
               setWizardTargetPath(result.directoryUri);
               setShowWizard(true);
             } catch (e: any) {
-              Alert.alert('Erreur', `${e.message}`);
+              Alert.alert(t('vaultPicker.alert.error'), `${e.message}`);
             }
           }}
         >
-          <Text style={[styles.icloudBtnText, { color: primary }]}>Créer dans Google Drive / Dropbox</Text>
-          <Text style={[styles.icloudBtnSub, { color: colors.textMuted }]}>Choisissez un dossier cloud syncé localement</Text>
+          <Text style={[styles.icloudBtnText, { color: primary }]}>{t('vaultPicker.createAndroid')}</Text>
+          <Text style={[styles.icloudBtnSub, { color: colors.textMuted }]}>{t('vaultPicker.createAndroidSub')}</Text>
         </TouchableOpacity>
       )}
 
       <View style={styles.separator}>
         <View style={[styles.separatorLine, { backgroundColor: colors.separator }]} />
-        <Text style={[styles.separatorText, { color: colors.textFaint }]}>ou utiliser un dossier existant</Text>
+        <Text style={[styles.separatorText, { color: colors.textFaint }]}>{t('vaultPicker.orExisting')}</Text>
         <View style={[styles.separatorLine, { backgroundColor: colors.separator }]} />
       </View>
 
@@ -281,8 +281,8 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
           style={[styles.pickerBtn, { backgroundColor: colors.infoBg }]}
           onPress={pickFolder}
         >
-          <Text style={[styles.pickerBtnText, { color: colors.info || '#1D4ED8' }]}>Choisir un dossier</Text>
-          <Text style={[styles.pickerBtnSub, { color: colors.textMuted }]}>Depuis Fichiers, iCloud...</Text>
+          <Text style={[styles.pickerBtnText, { color: colors.info || '#1D4ED8' }]}>{t('vaultPicker.chooseFolder')}</Text>
+          <Text style={[styles.pickerBtnSub, { color: colors.textMuted }]}>{t('vaultPicker.fromFilesIos')}</Text>
         </TouchableOpacity>
       )}
 
@@ -292,8 +292,8 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
           style={[styles.pickerBtn, { backgroundColor: colors.infoBg }]}
           onPress={useSAF}
         >
-          <Text style={[styles.pickerBtnText, { color: colors.info || '#1D4ED8' }]}>Choisir un dossier</Text>
-          <Text style={[styles.pickerBtnSub, { color: colors.textMuted }]}>Depuis le stockage, Google Drive, Dropbox...</Text>
+          <Text style={[styles.pickerBtnText, { color: colors.info || '#1D4ED8' }]}>{t('vaultPicker.chooseFolder')}</Text>
+          <Text style={[styles.pickerBtnSub, { color: colors.textMuted }]}>{t('vaultPicker.fromFilesAndroid')}</Text>
         </TouchableOpacity>
       )}
 
@@ -303,7 +303,7 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
           style={[styles.ipInput, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }]}
           value={serverIp}
           onChangeText={(t) => { setServerIp(t); setError(null); }}
-          placeholder="IP de l'ordinateur (ex: 192.168.1.42)"
+          placeholder={t('vaultPicker.ipPlaceholder')}
           placeholderTextColor={colors.textFaint}
           autoCapitalize="none"
           autoCorrect={false}
@@ -316,13 +316,13 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
           onPress={syncFromServer}
           disabled={!!syncProgress}
         >
-          <Text style={[styles.syncBtnText, { color: primary }]}>Sync depuis un ordinateur</Text>
+          <Text style={[styles.syncBtnText, { color: primary }]}>{t('vaultPicker.syncFromComputer')}</Text>
           <Text style={[styles.syncBtnSub, { color: colors.textMuted }]}>
-            Lancez{' '}
+            {t('vaultPicker.syncSubBefore')}{' '}
             <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: FontSize.micro }}>
               python3 serve-vault.py
             </Text>
-            {' '}sur le PC/Mac
+            {' '}{t('vaultPicker.syncSubAfter')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -339,12 +339,12 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
       {/* Desktop: manual path input */}
       {Platform.OS !== 'ios' && Platform.OS !== 'android' && (
         <>
-          <Text style={[styles.label, { color: colors.textSub }]}>Emplacement du dossier</Text>
+          <Text style={[styles.label, { color: colors.textSub }]}>{t('vaultPicker.folderLocation')}</Text>
           <TextInput
             style={[styles.input, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }, error ? styles.inputError : null]}
             value={path}
             onChangeText={(t) => { setPath(t); setError(null); }}
-            placeholder="/chemin/vers/mon-dossier"
+            placeholder={t('vaultPicker.pathPlaceholder')}
             placeholderTextColor={colors.textFaint}
             autoCapitalize="none"
             autoCorrect={false}
@@ -356,7 +356,7 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
             style={[styles.quickFillBtn, { backgroundColor: tint }]}
             onPress={() => { setPath(COFFRE_DEFAULT); setError(null); }}
           >
-            <Text style={[styles.quickFillText, { color: primary }]}>Utiliser le dossier par défaut</Text>
+            <Text style={[styles.quickFillText, { color: primary }]}>{t('vaultPicker.useDefaultFolder')}</Text>
             <Text style={[styles.quickFillSub, { color: colors.textMuted }]}>{COFFRE_DEFAULT}</Text>
           </TouchableOpacity>
         </>
@@ -365,7 +365,7 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
       <View style={styles.actions}>
         {onCancel && (
           <TouchableOpacity style={[styles.cancelBtn, { borderColor: colors.separator }]} onPress={onCancel}>
-            <Text style={[styles.cancelText, { color: colors.textMuted }]}>Annuler</Text>
+            <Text style={[styles.cancelText, { color: colors.textMuted }]}>{t('vaultPicker.cancel')}</Text>
           </TouchableOpacity>
         )}
 
@@ -378,7 +378,7 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
             {isValidating ? (
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
-              <Text style={styles.confirmText}>Confirmer</Text>
+              <Text style={styles.confirmText}>{t('vaultPicker.confirm')}</Text>
             )}
           </TouchableOpacity>
         )}

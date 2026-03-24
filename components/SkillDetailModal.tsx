@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal, View, Text, Alert, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { ModalHeader } from './ui/ModalHeader';
 import { Chip, Button } from './ui';
@@ -34,16 +35,17 @@ export function SkillDetailModal({
   onUnlock,
 }: SkillDetailModalProps) {
   const { primary, colors } = useThemeColors();
+  const { t } = useTranslation();
 
   if (!skill) return null;
 
   const handleUnlock = () => {
     Alert.alert(
-      'Confirmer la validation',
-      `Confirmer la validation de cette compétence ? +${skill.xp} XP seront attribués.`,
+      t('skills.detail.confirmTitle'),
+      t('skills.detail.confirmMessage', { xp: skill.xp }),
       [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Valider', onPress: onUnlock },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.validate'), onPress: onUnlock },
       ],
     );
   };
@@ -79,7 +81,7 @@ export function SkillDetailModal({
           {state === 'unlocked' && (
             <View style={styles.unlockedSection}>
               <Chip
-                label="Débloqué ✓"
+                label={t('skills.detail.unlocked')}
                 selected
                 color={colors.success}
               />
@@ -90,7 +92,7 @@ export function SkillDetailModal({
               ) : null}
               {unlockedBy ? (
                 <Text style={[styles.meta, { color: colors.textSub }]}>
-                  Validé par {unlockedBy}
+                  {t('skills.detail.validatedBy', { name: unlockedBy })}
                 </Text>
               ) : null}
             </View>
@@ -100,7 +102,7 @@ export function SkillDetailModal({
           {state === 'unlockable' && onUnlock && (
             <View style={styles.actionSection}>
               <Button
-                label="Valider cette compétence"
+                label={t('skills.detail.validateSkill')}
                 onPress={handleUnlock}
                 size="lg"
                 fullWidth

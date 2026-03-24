@@ -84,7 +84,7 @@ export default function PregnancyScreen() {
     if (!selectedProfile?.dateTerme) return null;
     const daysLeft = Math.ceil((new Date(selectedProfile.dateTerme).getTime() - new Date().getTime()) / 86400000);
     const daysElapsed = 287 - daysLeft;
-    const currentWeek = Math.max(0, Math.floor(daysElapsed / 7));
+    const currentWeek = Math.min(42, Math.max(0, Math.floor(daysElapsed / 7)));
     const progress = Math.min(1, Math.max(0, daysElapsed / 287));
     return { daysLeft, daysElapsed, currentWeek, progress };
   }, [selectedProfile]);

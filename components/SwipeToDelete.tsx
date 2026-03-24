@@ -7,6 +7,7 @@
 
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Alert } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { FontSize, FontWeight } from '../constants/typography';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Animated, {
@@ -42,13 +43,15 @@ interface SwipeToDeleteProps {
 export function SwipeToDelete({
   onDelete,
   children,
-  confirmTitle = 'Supprimer ?',
+  confirmTitle,
   confirmMessage,
   skipConfirm = false,
   disabled = false,
   hintId,
 }: SwipeToDeleteProps) {
   const { colors } = useThemeColors();
+  const { t } = useTranslation();
+  const resolvedTitle = confirmTitle ?? t('swipeToDelete.confirmTitle');
   const reduceMotion = useReducedMotion();
   const swipeableRef = useRef<any>(null);
   const hintX = useSharedValue(0);
@@ -89,18 +92,17 @@ export function SwipeToDelete({
       onDelete();
       return;
     }
-    Alert.alert(confirmTitle, confirmMessage, [
-      { text: 'Annuler', style: 'cancel', onPress: () => swipeableRef.current?.close() },
+    Alert.alert(resolvedTitle, confirmMessage, [
+      { text: t('common.cancel'), style: 'cancel', onPress: () => swipeableRef.current?.close() },
       {
-        text: 'Supprimer',
-        style: 'destructive',
+        text: t('common.delete'), style: 'destructive',
         onPress: () => {
           swipeableRef.current?.close();
           onDelete();
         },
       },
     ]);
-  }, [onDelete, confirmTitle, confirmMessage, skipConfirm]);
+  }, [onDelete, resolvedTitle, confirmMessage, skipConfirm, t]);
 
   const renderRightActions = useCallback(
     (_progress: SharedValue<number>, drag: SharedValue<number>) => {
@@ -137,6 +139,7 @@ function RightAction({
   onPress: () => void;
   colors: any;
 }) {
+  const { t } = useTranslation();
   const animStyle = useAnimatedStyle(() => ({
     opacity: interpolate(drag.value, [0, -80], [0, 1]),
   }));
@@ -144,7 +147,7 @@ function RightAction({
   return (
     <Animated.View style={[styles.rightAction, { backgroundColor: colors.error }, animStyle]}>
       <Text style={[styles.rightActionText, { color: colors.onPrimary }]} onPress={onPress}>
-        🗑 Supprimer
+        {t('swipeToDelete.deleteAction')}
       </Text>
     </Animated.View>
   );

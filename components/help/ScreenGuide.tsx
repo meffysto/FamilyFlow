@@ -14,6 +14,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useHelp } from '../../contexts/HelpContext';
 import { CoachMark, type TargetRect } from './CoachMark';
 import { CoachMarkOverlay } from './CoachMarkOverlay';
@@ -57,6 +58,7 @@ export const ScreenGuide = React.memo(function ScreenGuide({
   targets,
   delay = 600,
 }: ScreenGuideProps) {
+  const { t } = useTranslation();
   const { hasSeenScreen, markScreenSeen, isLoaded } = useHelp();
   const [currentStep, setCurrentStep] = useState(-1); // -1 = pas encore démarré
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
@@ -144,7 +146,7 @@ export const ScreenGuide = React.memo(function ScreenGuide({
         step={{ current: currentStep + 1, total: targets.length }}
         onNext={isLast ? undefined : handleNext}
         onDismiss={isLast ? handleDismiss : handleDismiss}
-        buttonLabel={isLast ? 'Compris !' : 'Suivant'}
+        buttonLabel={isLast ? t('common.gotIt') : t('common.next')}
       />
     </>
   );

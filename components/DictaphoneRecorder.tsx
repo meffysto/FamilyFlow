@@ -220,7 +220,7 @@ export function DictaphoneRecorder({ rdv, context, onResult, onClose }: Dictapho
         volumeChangeEventOptions: { enabled: true, intervalMillis: 300 },
       });
     } catch (e: any) {
-      showToast(`Erreur : ${e?.message ?? String(e)}`, 'error');
+      showToast(t('dictaphone.errorPrefix', { message: e?.message ?? String(e) }), 'error');
       setState('idle');
     }
   }, [startPulse, showToast]);
@@ -320,7 +320,7 @@ export function DictaphoneRecorder({ rdv, context, onResult, onClose }: Dictapho
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.card }]}>
       <ModalHeader
-        title="Dictaphone"
+        title={t('dictaphone.title')}
         onClose={handleClose}
       />
 
@@ -333,7 +333,7 @@ export function DictaphoneRecorder({ rdv, context, onResult, onClose }: Dictapho
             </Text>
             {rdv ? (
               <Text style={[styles.rdvInfoSub, { color: colors.textMuted }]}>
-                {rdv.médecin ? `Dr. ${rdv.médecin}` : 'Médecin non renseigné'}
+                {rdv.médecin ? `Dr. ${rdv.médecin}` : t('dictaphone.doctorNotSpecified')}
               </Text>
             ) : context?.subtitle ? (
               <Text style={[styles.rdvInfoSub, { color: colors.textMuted }]}>
@@ -348,9 +348,9 @@ export function DictaphoneRecorder({ rdv, context, onResult, onClose }: Dictapho
           <View style={styles.idleContainer}>
             <Text style={[styles.instructions, { color: colors.textSub }]}>
               {rdv
-                ? 'Appuyez sur le micro pour enregistrer les réponses du médecin.'
-                : 'Appuyez sur le micro pour dicter votre texte.'}
-              {' '}La transcription se fait en temps réel, sur votre appareil.
+                ? t('dictaphone.instructionRdv')
+                : t('dictaphone.instructionGeneric')}
+              {t('dictaphone.instructionSuffix')}
             </Text>
             <TouchableOpacity
               style={[styles.recordBtn, { backgroundColor: colors.error }]}
@@ -361,11 +361,11 @@ export function DictaphoneRecorder({ rdv, context, onResult, onClose }: Dictapho
             >
               <Text style={styles.recordBtnIcon}>🎙️</Text>
               <Text style={[styles.recordBtnText, { color: colors.onPrimary }]}>
-                Commencer l'enregistrement
+                {t('dictaphone.startRecording')}
               </Text>
             </TouchableOpacity>
             <Text style={[styles.privacyNote, { color: colors.textFaint }]}>
-              🔒 Transcription 100% locale — aucune donnée audio ne quitte votre appareil
+              {t('dictaphone.privacy')}
             </Text>
           </View>
         )}
@@ -403,10 +403,10 @@ export function DictaphoneRecorder({ rdv, context, onResult, onClose }: Dictapho
             {/* Transcription live */}
             <View style={[styles.liveTranscript, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}>
               <Text style={[styles.liveLabel, { color: colors.textMuted }]}>
-                Transcription en cours...
+                {t('dictaphone.transcribing')}
               </Text>
               <Text style={[styles.liveText, { color: colors.text }]}>
-                {transcript || 'En attente de parole...'}
+                {transcript || t('dictaphone.waitingForSpeech')}
               </Text>
             </View>
 
@@ -420,7 +420,7 @@ export function DictaphoneRecorder({ rdv, context, onResult, onClose }: Dictapho
             >
               <View style={[styles.stopIcon, { backgroundColor: colors.error }]} />
               <Text style={[styles.stopBtnText, { color: colors.error }]}>
-                Arrêter
+                {t('dictaphone.stopRecording')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -431,16 +431,16 @@ export function DictaphoneRecorder({ rdv, context, onResult, onClose }: Dictapho
             {/* Durée */}
             <View style={[styles.doneHeader, { backgroundColor: colors.successBg }]}>
               <Text style={[styles.doneHeaderText, { color: colors.successText }]}>
-                Enregistrement terminé — {formatDuration(duration)}
+                {t('dictaphone.recordingDone', { duration: formatDuration(duration) })}
               </Text>
             </View>
 
             {/* Transcription éditable */}
             <Text style={[styles.sectionLabel, { color: colors.textSub }]}>
-              Transcription
+              {t('dictaphone.transcription')}
             </Text>
             <Text style={[styles.sectionHint, { color: colors.textMuted }]}>
-              Vous pouvez corriger le texte avant de le résumer.
+              {t('dictaphone.transcriptionHint')}
             </Text>
             <TextInput
               style={[
@@ -455,7 +455,7 @@ export function DictaphoneRecorder({ rdv, context, onResult, onClose }: Dictapho
               onChangeText={setEditedTranscript}
               multiline
               textAlignVertical="top"
-              placeholder="Transcription vide..."
+              placeholder={t('dictaphone.transcriptionEmpty')}
               placeholderTextColor={colors.textFaint}
             />
 
@@ -463,7 +463,7 @@ export function DictaphoneRecorder({ rdv, context, onResult, onClose }: Dictapho
             {summary ? (
               <>
                 <Text style={[styles.sectionLabel, { color: colors.textSub }]}>
-                  Résumé IA
+                  {t('dictaphone.aiSummary')}
                 </Text>
                 <View style={[styles.summaryBlock, { backgroundColor: colors.infoBg, borderColor: colors.info }]}>
                   <Text style={[styles.summaryText, { color: colors.text }]}>
@@ -476,7 +476,7 @@ export function DictaphoneRecorder({ rdv, context, onResult, onClose }: Dictapho
                   activeOpacity={0.8}
                 >
                   <Text style={[styles.actionBtnText, { color: colors.onPrimary }]}>
-                    Utiliser le résumé
+                    {t('dictaphone.useSummary')}
                   </Text>
                 </TouchableOpacity>
               </>
@@ -499,7 +499,7 @@ export function DictaphoneRecorder({ rdv, context, onResult, onClose }: Dictapho
                     <ActivityIndicator color={colors.onPrimary} size="small" />
                   ) : (
                     <Text style={[styles.actionBtnText, { color: colors.onPrimary }]}>
-                      Résumer avec l'IA
+                      {t('dictaphone.summarize')}
                     </Text>
                   )}
                 </TouchableOpacity>
@@ -511,18 +511,18 @@ export function DictaphoneRecorder({ rdv, context, onResult, onClose }: Dictapho
                 activeOpacity={0.8}
               >
                 <Text style={[styles.actionBtnText, { color: colors.text }]}>
-                  Utiliser le texte brut
+                  {t('dictaphone.useRawText')}
                 </Text>
               </TouchableOpacity>
             </View>
 
             {summary ? (
               <Text style={[styles.privacyNote, { color: colors.textFaint }]}>
-                Ce résumé est généré par IA à titre informatif uniquement et ne constitue pas un avis médical.
+                {t('dictaphone.aiDisclaimer')}
               </Text>
             ) : !isConfigured ? (
               <Text style={[styles.privacyNote, { color: colors.textFaint }]}>
-                Ajoutez une clé API Claude dans les réglages pour activer le résumé IA.
+                {t('dictaphone.addApiKey')}
               </Text>
             ) : null}
 
@@ -540,7 +540,7 @@ export function DictaphoneRecorder({ rdv, context, onResult, onClose }: Dictapho
               activeOpacity={0.7}
             >
               <Text style={[styles.restartBtnText, { color: colors.textMuted }]}>
-                Recommencer l'enregistrement
+                {t('dictaphone.restart')}
               </Text>
             </TouchableOpacity>
           </View>

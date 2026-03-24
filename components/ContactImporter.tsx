@@ -234,7 +234,7 @@ export function ContactImporter({
             <Text style={[styles.contactName, { color: colors.text }]}>{fullName}</Text>
             <Text style={[styles.contactDate, { color: colors.textMuted }]}>
               {formatBirthday(item)}
-              {item.alreadyImported && '  \u2022  Déjà importé'}
+              {item.alreadyImported && `  \u2022  ${t('contactImporter.alreadyImported')}`}
             </Text>
           </View>
 
@@ -271,7 +271,7 @@ export function ContactImporter({
     >
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
         <ModalHeader
-          title="Importer des contacts"
+          title={t('contactImporter.title')}
           onClose={onClose}
         />
 
@@ -279,20 +279,20 @@ export function ContactImporter({
           <View style={styles.centered}>
             <ActivityIndicator size="large" color={primary} />
             <Text style={[styles.loadingText, { color: colors.textMuted }]}>
-              Chargement des contacts...
+              {t('contactImporter.loading')}
             </Text>
           </View>
         ) : permissionStatus === 'denied' ? (
           <View style={styles.centered}>
             <Text style={styles.deniedEmoji}>{'🔒'}</Text>
             <Text style={[styles.deniedTitle, { color: colors.text }]}>
-              Accès aux contacts refusé
+              {t('contactImporter.denied')}
             </Text>
             <Text style={[styles.deniedDesc, { color: colors.textMuted }]}>
-              Pour importer les anniversaires depuis vos contacts, autorisez l'accès dans les réglages de votre appareil.
+              {t('contactImporter.deniedDesc')}
             </Text>
             <Button
-              label="Ouvrir les réglages"
+              label={t('contactImporter.openSettings')}
               onPress={() => Linking.openSettings()}
               variant="secondary"
               icon="⚙️"
@@ -302,10 +302,10 @@ export function ContactImporter({
           <View style={styles.centered}>
             <Text style={styles.deniedEmoji}>{'📇'}</Text>
             <Text style={[styles.deniedTitle, { color: colors.text }]}>
-              Aucun contact avec anniversaire
+              {t('contactImporter.noContacts')}
             </Text>
             <Text style={[styles.deniedDesc, { color: colors.textMuted }]}>
-              Ajoutez des dates d'anniversaire dans votre carnet de contacts pour pouvoir les importer.
+              {t('contactImporter.noContactsDesc')}
             </Text>
           </View>
         ) : (
@@ -314,11 +314,11 @@ export function ContactImporter({
             <View style={[styles.toolbar, { borderBottomColor: colors.border }]}>
               <TouchableOpacity onPress={toggleAll} activeOpacity={0.7}>
                 <Text style={[styles.toggleText, { color: primary }]}>
-                  {selectedCount === selectableCount ? 'Tout désélectionner' : 'Tout sélectionner'}
+                  {selectedCount === selectableCount ? t('contactImporter.deselectAll') : t('contactImporter.selectAll')}
                 </Text>
               </TouchableOpacity>
               <Text style={[styles.countText, { color: colors.textMuted }]}>
-                {contacts.length} contact{contacts.length > 1 ? 's' : ''} avec anniversaire
+                {t('contactImporter.contactCount', { count: contacts.length })}
               </Text>
             </View>
 
@@ -335,8 +335,8 @@ export function ContactImporter({
               <Button
                 label={
                   selectedCount === 0
-                    ? 'Sélectionnez des contacts'
-                    : `Importer ${selectedCount} anniversaire${selectedCount > 1 ? 's' : ''}`
+                    ? t('contactImporter.selectContacts')
+                    : t('contactImporter.importCount', { count: selectedCount })
                 }
                 onPress={handleImport}
                 variant="primary"

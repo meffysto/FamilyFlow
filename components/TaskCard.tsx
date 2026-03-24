@@ -52,7 +52,7 @@ function getTagColor(tag: string): string {
   return TAG_COLORS[tag.toLowerCase()] ?? TAG_COLORS.default;
 }
 
-function getSourceLabel(sourceFile: string, profiles?: Profile[]): string {
+function getSourceLabel(sourceFile: string, profiles: Profile[] | undefined, t: (key: string) => string): string {
   // Chercher un profil enfant dont le nom apparaît dans le chemin du fichier
   if (profiles) {
     const match = profiles.find((p) =>
@@ -60,9 +60,9 @@ function getSourceLabel(sourceFile: string, profiles?: Profile[]): string {
     );
     if (match) return `${match.avatar} ${match.name}`;
   }
-  if (sourceFile.includes('Maison')) return '🏠 Maison';
-  if (sourceFile.includes('courses')) return '🛒 Courses';
-  return '📋 Tâches';
+  if (sourceFile.includes('Maison')) return t('taskCard.sourceHome');
+  if (sourceFile.includes('courses')) return t('taskCard.sourceShopping');
+  return t('taskCard.sourceTasks');
 }
 
 export const TaskCard = React.memo(function TaskCard({
@@ -168,7 +168,7 @@ export const TaskCard = React.memo(function TaskCard({
         <View style={styles.meta}>
           {showSource && (
             <View style={[styles.badge, { backgroundColor: colors.cardAlt }]}>
-              <Text style={[styles.sourceLabel, { color: colors.textMuted }]}>{getSourceLabel(task.sourceFile, profiles)}</Text>
+              <Text style={[styles.sourceLabel, { color: colors.textMuted }]}>{getSourceLabel(task.sourceFile, profiles, t)}</Text>
             </View>
           )}
           {task.section && !showSource && !hideSection && !task.recurrence && (
@@ -186,9 +186,9 @@ export const TaskCard = React.memo(function TaskCard({
           {task.recurrence && (
             <View style={[styles.badge, { backgroundColor: colors.cardAlt }]}>
               <Text style={[styles.recurrenceBadge, { color: colors.textFaint }]}>
-                🔁 {/every\s+day/i.test(task.recurrence) ? 'quotidien'
-                    : /every\s+week/i.test(task.recurrence) ? 'hebdo'
-                    : /every\s+month/i.test(task.recurrence) ? 'mensuel'
+                🔁 {/every\s+day/i.test(task.recurrence) ? t('taskCard.recurrenceDaily')
+                    : /every\s+week/i.test(task.recurrence) ? t('taskCard.recurrenceWeekly')
+                    : /every\s+month/i.test(task.recurrence) ? t('taskCard.recurrenceMonthly')
                     : task.recurrence}
               </Text>
             </View>

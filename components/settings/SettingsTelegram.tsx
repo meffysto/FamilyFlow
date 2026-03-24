@@ -89,11 +89,11 @@ export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramTok
             <View style={[styles.setupStep, { borderLeftColor: primary, backgroundColor: colors.cardAlt }]}>
               <Text style={[styles.setupTitle, { color: colors.text }]}>{t('settings.telegram.step1Title')}</Text>
               <Text style={[styles.setupText, { color: colors.textSub }]}>
-                1. Ouvrez Telegram et cherchez <Text style={[styles.bold, { color: colors.text }]}>@BotFather</Text>{'\n'}
-                2. Envoyez <Text style={[styles.code, { color: primary, backgroundColor: colors.border }]}>/newbot</Text>{'\n'}
-                3. Choisissez un nom (ex: "Family Flow"){'\n'}
-                4. Choisissez un username (ex: FamilyVaultBot){'\n'}
-                5. BotFather vous donne un <Text style={[styles.bold, { color: colors.text }]}>token</Text> — copiez-le ci-dessous
+                {t('settings.telegram.step1Line1')} <Text style={[styles.bold, { color: colors.text }]}>@BotFather</Text>{'\n'}
+                {t('settings.telegram.step1Line2')} <Text style={[styles.code, { color: primary, backgroundColor: colors.border }]}>/newbot</Text>{'\n'}
+                {t('settings.telegram.step1Line3')}{'\n'}
+                {t('settings.telegram.step1Line4')}{'\n'}
+                {t('settings.telegram.step1Line5')} <Text style={[styles.bold, { color: colors.text }]}>token</Text> — {t('settings.telegram.step1Line5b')}
               </Text>
             </View>
 
@@ -112,18 +112,18 @@ export function SettingsTelegram({ telegramToken, telegramChatId, setTelegramTok
             <View style={[styles.setupStep, { borderLeftColor: primary, backgroundColor: colors.cardAlt }]}>
               <Text style={[styles.setupTitle, { color: colors.text }]}>{t('settings.telegram.step2Title')}</Text>
               <Text style={[styles.setupText, { color: colors.textSub }]}>
-                1. Sur Telegram, ouvrez la conversation avec votre bot{'\n'}
-                2. Envoyez-lui un message (ex: "hello"){'\n'}
-                3. Ouvrez cette URL dans un navigateur :{'\n'}
+                {t('settings.telegram.step2Line1')}{'\n'}
+                {t('settings.telegram.step2Line2')}{'\n'}
+                {t('settings.telegram.step2Line3')}{'\n'}
               </Text>
               <Text style={[styles.codeBlock, { backgroundColor: colors.text, color: colors.info }]} selectable>
                 {telegramToken.trim()
                   ? `https://api.telegram.org/bot${telegramToken.trim()}/getUpdates`
-                  : 'https://api.telegram.org/bot<VOTRE_TOKEN>/getUpdates'}
+                  : t('settings.telegram.step2UrlPlaceholder')}
               </Text>
               <Text style={[styles.setupText, { color: colors.textSub }]}>
-                {'\n'}4. Dans le JSON, cherchez <Text style={[styles.code, { color: primary, backgroundColor: colors.border }]}>"chat":{'{'}  "id": 123456789</Text>{'\n'}
-                5. Ce nombre est votre <Text style={[styles.bold, { color: colors.text }]}>Chat ID</Text>
+                {'\n'}{t('settings.telegram.step2Line4')} <Text style={[styles.code, { color: primary, backgroundColor: colors.border }]}>"chat":{'{'}  "id": 123456789</Text>{'\n'}
+                {t('settings.telegram.step2Line5')} <Text style={[styles.bold, { color: colors.text }]}>Chat ID</Text>
               </Text>
             </View>
 
