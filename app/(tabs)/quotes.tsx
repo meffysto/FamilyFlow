@@ -260,7 +260,6 @@ export default function QuotesScreen() {
       {/* Dictaphone — modal séparé (max 1 niveau) */}
       <Modal visible={dictaphoneVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={closeDictaphone}>
         <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.bg }]}>
-          <ModalHeader title={t('quotes.dictation')} onClose={closeDictaphone} />
           <DictaphoneRecorder
             onResult={handleDictaphoneClose}
             onClose={closeDictaphone}
