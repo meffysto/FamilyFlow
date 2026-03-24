@@ -25,7 +25,7 @@ interface OnThisDayItem {
 
 function DashboardOnThisDayInner(_props: DashboardSectionProps) {
   const { t } = useTranslation();
-  const { colors } = useThemeColors();
+  const { colors, primary } = useThemeColors();
   const { memories, photoDates, profiles } = useVault();
 
   const items = useMemo(() => {
@@ -85,7 +85,7 @@ function DashboardOnThisDayInner(_props: DashboardSectionProps) {
       title={t('dashboard.onThisDay.title')}
       icon="🕰️"
       count={items.length}
-      color="#8B5CF6"
+      color={primary}
       collapsible
       cardId="onThisDay"
     >
@@ -95,7 +95,7 @@ function DashboardOnThisDayInner(_props: DashboardSectionProps) {
         return (
           <View
             key={`${item.label}-${item.year}-${i}`}
-            style={[styles.row, { borderLeftColor: '#8B5CF6' }]}
+            style={[styles.row, { borderLeftColor: primary }]}
           >
             <View style={styles.rowContent}>
               <Text style={[styles.title, { color: colors.text }]}>

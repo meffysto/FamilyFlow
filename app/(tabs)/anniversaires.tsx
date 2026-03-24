@@ -480,27 +480,4 @@ const styles = StyleSheet.create({
   countdown: {
     fontSize: FontSize.caption,
   },
-  // Empty state
-  emptyState: {
-    margin: Spacing['2xl'],
-    padding: Spacing['3xl'],
-    borderRadius: Radius.lg,
-    alignItems: 'center',
-    gap: Spacing['2xl'],
-    ...Shadows.sm,
-  },
-  emptyEmoji: { fontSize: 48 },
-  emptyTitle: {
-    fontSize: FontSize.heading,
-    fontWeight: FontWeight.heavy,
-  },
-  emptyDesc: {
-    fontSize: FontSize.body,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  emptyActions: {
-    gap: Spacing.lg,
-    alignItems: 'center',
-  },
 });

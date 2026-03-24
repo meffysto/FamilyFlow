@@ -15,7 +15,6 @@ import Animated, {
   withSpring,
   withSequence,
   Easing,
-  runOnJS,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';

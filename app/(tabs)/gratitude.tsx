@@ -446,16 +446,6 @@ const styles = StyleSheet.create({
   editBtnText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
   entryText: { fontSize: FontSize.body, lineHeight: 22 },
   emptyText: { fontSize: FontSize.body, fontStyle: 'italic' },
-  // Empty state
-  emptyState: {
-    padding: Spacing['3xl'],
-    borderRadius: Radius.lg,
-    alignItems: 'center',
-    gap: Spacing.lg,
-  },
-  emptyEmoji: { fontSize: 48 },
-  emptyTitle: { fontSize: FontSize.heading, fontWeight: FontWeight.heavy },
-  emptyDesc: { fontSize: FontSize.body, textAlign: 'center' },
   // Book (Livre d'or)
   sectionDate: {
     fontSize: FontSize.label,

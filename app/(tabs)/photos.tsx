@@ -480,7 +480,7 @@ export default function PhotosScreen() {
                         { color: colors.textSub },
                         today && { color: primary, fontWeight: FontWeight.heavy },
                         future && { color: colors.textFaint },
-                        hasPhoto && styles.dayNumWithPhoto,
+                        hasPhoto && [styles.dayNumWithPhoto, { color: colors.onPrimary }],
                       ]}>
                         {dayNum}
                       </Text>
@@ -512,7 +512,7 @@ export default function PhotosScreen() {
               onPress={() => pickPhoto(new Date())}
               activeOpacity={0.8}
             >
-              <Text style={styles.fabText}>📷</Text>
+              <Text style={[styles.fabText, { color: colors.onPrimary }]}>📷</Text>
             </TouchableOpacity>
           )}
         </>
@@ -584,7 +584,7 @@ export default function PhotosScreen() {
             onPress={() => { setEditingMemory(null); setMemoryEditorVisible(true); }}
             activeOpacity={0.8}
           >
-            <Text style={styles.fabText}>+</Text>
+            <Text style={[styles.fabText, { color: colors.onPrimary }]}>+</Text>
           </TouchableOpacity>
         </>
       )}
@@ -720,7 +720,7 @@ const styles = StyleSheet.create({
   dayPhoto: { ...StyleSheet.absoluteFillObject, borderRadius: 10 },
   dayNum: { fontSize: FontSize.label, fontWeight: FontWeight.semibold },
   dayNumWithPhoto: {
-    color: '#FFFFFF', fontWeight: FontWeight.heavy,
+    fontWeight: FontWeight.heavy,
     textShadowColor: 'rgba(0,0,0,0.6)',
     textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3,
   },
@@ -731,7 +731,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3,
     shadowRadius: 8, elevation: 8,
   },
-  fabText: { fontSize: FontSize.display, color: '#FFFFFF', fontWeight: FontWeight.bold },
+  fabText: { fontSize: FontSize.display, fontWeight: FontWeight.bold },
   memoryCard: { flexDirection: 'row', gap: 12 },
   memoryLeft: { alignItems: 'center', width: 32 },
   memoryEmoji: { fontSize: FontSize.title },
@@ -750,8 +750,4 @@ const styles = StyleSheet.create({
   memoryTitle: { fontSize: FontSize.body, fontWeight: FontWeight.bold },
   memoryDesc: { fontSize: FontSize.label, fontStyle: 'italic' },
   memoryEnfant: { fontSize: FontSize.code, marginTop: 2 },
-  emptyCard: { borderRadius: 16, padding: 40, alignItems: 'center', gap: 8, marginTop: 20 },
-  emptyEmoji: { fontSize: 40 },
-  emptyText: { fontSize: FontSize.lg, fontWeight: FontWeight.semibold },
-  emptyHint: { fontSize: FontSize.label, textAlign: 'center' },
 });

@@ -260,7 +260,7 @@ function MiniCalendar({
                 style={[
                   calStyles.dayText,
                   { color: hasJournal ? colors.text : colors.textFaint },
-                  isSelected && { color: '#FFFFFF', fontWeight: FontWeight.heavy },
+                  isSelected && { color: colors.onPrimary, fontWeight: FontWeight.heavy },
                   !isSelected && isToday && { color: primary, fontWeight: FontWeight.heavy },
                 ]}
               >
@@ -596,7 +596,7 @@ export default function JournalScreen() {
                   activeOpacity={canEdit ? 0.6 : 1}
                   disabled={!canEdit}
                 >
-                  <Text style={styles.obsNumber}>{oi + 1}.</Text>
+                  <Text style={[styles.obsNumber, { color: primary }]}>{oi + 1}.</Text>
                   <MarkdownText style={{ color: colors.textSub }}>{obs.text}</MarkdownText>
                   {canEdit && <Text style={styles.editHint}>✏️</Text>}
                 </TouchableOpacity>
@@ -781,7 +781,7 @@ export default function JournalScreen() {
                   accessibilityRole="button"
                   accessibilityState={{ disabled: isCreating }}
                 >
-                  <Text style={styles.createBtnText}>
+                  <Text style={[styles.createBtnText, { color: colors.onPrimary }]}>
                     {isCreating ? t('journal.create.creating') : t('journal.create.createBtn')}
                   </Text>
                 </TouchableOpacity>
@@ -791,7 +791,7 @@ export default function JournalScreen() {
         ) : journalContent ? (
           <View ref={firstSectionRef} style={styles.journalContent}>
             {!isViewingAdultTab && hasStats && journalStats && (
-              <View style={[styles.statsBanner, { backgroundColor: colors.card }]}>
+              <View style={[styles.statsBanner, { backgroundColor: colors.card, borderLeftColor: primary }]}>
                 <Text style={[styles.statsBannerTitle, { color: colors.text }]}>{t('journal.stats.title')}</Text>
                 <View style={styles.statsGrid}>
                   {journalStats.biberons > 0 && (
@@ -877,7 +877,7 @@ export default function JournalScreen() {
 
             <View style={styles.modalActions}>
               {modal.mode === 'edit' && (
-                <TouchableOpacity style={styles.modalDelete} onPress={deleteEntry} accessibilityLabel={t('journal.a11y.deleteEntry')} accessibilityRole="button">
+                <TouchableOpacity style={[styles.modalDelete, { backgroundColor: colors.errorBg }]} onPress={deleteEntry} accessibilityLabel={t('journal.a11y.deleteEntry')} accessibilityRole="button">
                   <Text style={styles.modalDeleteText}>🗑</Text>
                 </TouchableOpacity>
               )}
@@ -890,7 +890,7 @@ export default function JournalScreen() {
                 accessibilityLabel={modal.mode === 'edit' ? t('journal.a11y.editAction') : t('journal.a11y.addAction')}
                 accessibilityRole="button"
               >
-                <Text style={styles.modalConfirmText}>
+                <Text style={[styles.modalConfirmText, { color: colors.onPrimary }]}>
                   {modal.mode === 'edit' ? t('journal.modal.edit') : t('journal.modal.add')}
                 </Text>
               </TouchableOpacity>
@@ -951,7 +951,7 @@ const styles = StyleSheet.create({
   createSubtitle: { fontSize: FontSize.sm, textAlign: 'center', lineHeight: 20, maxWidth: 300 },
   createBtn: { paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14, marginTop: 8 },
   createBtnDisabled: { opacity: 0.6 },
-  createBtnText: { color: '#FFFFFF', fontSize: FontSize.lg, fontWeight: FontWeight.bold },
+  createBtnText: { fontSize: FontSize.lg, fontWeight: FontWeight.bold },
 
   journalContent: { gap: 16 },
 
@@ -960,7 +960,6 @@ const styles = StyleSheet.create({
     padding: 14,
     ...Shadows.xs,
     borderLeftWidth: 3,
-    borderLeftColor: '#8B5CF6',
   },
   statsBannerTitle: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, marginBottom: 10 },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
@@ -1006,8 +1005,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10,
     borderBottomWidth: 1, gap: 8,
   },
-  obsNumber: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: '#8B5CF6', width: 24 },
-  obsText: { flex: 1, fontSize: FontSize.sm, lineHeight: 20 },
+  obsNumber: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, width: 24 },
   editHint: { fontSize: FontSize.caption, opacity: 0.3 },
 
   emptySection: { padding: 16, alignItems: 'center' },
@@ -1028,7 +1026,7 @@ const styles = StyleSheet.create({
   },
   modalActions: { flexDirection: 'row', gap: 10, marginTop: 4 },
   modalDelete: {
-    padding: 14, borderRadius: 10, backgroundColor: '#FEE2E2',
+    padding: 14, borderRadius: 10,
     alignItems: 'center', justifyContent: 'center', width: 48,
   },
   modalDeleteText: { fontSize: FontSize.heading },
@@ -1038,7 +1036,7 @@ const styles = StyleSheet.create({
   },
   modalCancelText: { fontSize: FontSize.body, fontWeight: FontWeight.semibold },
   modalConfirm: { flex: 2, padding: 14, borderRadius: 10, alignItems: 'center' },
-  modalConfirmText: { fontSize: FontSize.body, fontWeight: FontWeight.bold, color: '#FFFFFF' },
+  modalConfirmText: { fontSize: FontSize.body, fontWeight: FontWeight.bold },
 });
 
 const calStyles = StyleSheet.create({

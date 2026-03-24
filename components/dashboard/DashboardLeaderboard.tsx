@@ -16,7 +16,7 @@ function DashboardLeaderboardInner(_props: DashboardSectionProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const { primary } = useThemeColors();
-  const { profiles, gamiData } = useVault();
+  const { profiles } = useVault();
 
   const leaderboard = buildLeaderboard(profiles);
   if (leaderboard.length === 0) return null;

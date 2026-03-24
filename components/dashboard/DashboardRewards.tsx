@@ -50,7 +50,7 @@ function DashboardRewardsInner({ isChildMode }: DashboardSectionProps) {
         const ownerProfile = profiles.find((p) => p.id === reward.profileId);
         const typeColor = reward.type === 'vacation' || reward.type === 'crown' || reward.type === 'multiplier' ? colors.error : colors.warning;
         return (
-          <View key={reward.id} style={styles.activeRewardRow}>
+          <View key={reward.id} style={[styles.activeRewardRow, { borderBottomColor: colors.borderLight }]}>
             <Text style={styles.activeRewardEmoji}>{reward.emoji}</Text>
             <View style={styles.activeRewardInfo}>
               <Text style={[styles.activeRewardLabel, { color: colors.text }]}>
@@ -76,7 +76,6 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.06)',
   },
   activeRewardEmoji: {
     fontSize: FontSize.icon,

@@ -102,7 +102,7 @@ function DashboardAnniversairesInner(_props: DashboardSectionProps) {
       title={t('dashboard.anniversaires.title')}
       icon="🎂"
       count={upcoming.length}
-      color="#E11D48"
+      color={colors.accentPink}
       collapsible
       cardId="anniversaires"
     >
@@ -120,7 +120,7 @@ function DashboardAnniversairesInner(_props: DashboardSectionProps) {
             style={[
               styles.row,
               isToday && styles.rowToday,
-              isToday && { backgroundColor: colors.warningBg, borderLeftColor: '#E11D48' },
+              isToday && { backgroundColor: colors.warningBg, borderLeftColor: colors.accentPink },
               !isToday && { borderLeftColor: colors.textMuted },
             ]}
           >

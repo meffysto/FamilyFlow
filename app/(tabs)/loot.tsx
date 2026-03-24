@@ -153,7 +153,7 @@ export default function LootScreen() {
         )}
 
         {/* Onglets internes */}
-        <View style={styles.tabRow}>
+        <View style={[styles.tabRow, { borderBottomColor: colors.borderLight }]}>
           <TouchableOpacity
             style={[styles.tab, activeTab === 'rewards' && { borderBottomColor: primary, borderBottomWidth: 2 }]}
             onPress={() => setActiveTab('rewards')}
@@ -403,7 +403,7 @@ export default function LootScreen() {
               <View style={[styles.drCard, { backgroundColor: activeEvent.themeColor + '15' }]}>
                 <View style={styles.drRarityHeader}>
                   <View style={[styles.drRarityBadge, { backgroundColor: activeEvent.themeColor }]}>
-                    <Text style={[styles.drRarityBadgeText, { color: '#FFFFFF' }]}>
+                    <Text style={[styles.drRarityBadgeText, { color: colors.onPrimary }]}>
                       {activeEvent.emoji} {activeEvent.name}
                     </Text>
                   </View>
@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy, color: '#FFFFFF' },
+  title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
   dropRatesBtn: {
     backgroundColor: 'rgba(255,255,255,0.2)',
     width: 36,
@@ -525,7 +525,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.08)',
   },
   tab: {
     flex: 1,
@@ -575,7 +574,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   openBtnEmoji: { fontSize: FontSize.heading },
-  openBtnText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: '#FFFFFF' },
+  openBtnText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
   noLootBadge: {
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -594,7 +593,7 @@ const styles = StyleSheet.create({
   activeRewardInfo: { flex: 1, gap: 2 },
   activeRewardName: { fontSize: FontSize.label, fontWeight: FontWeight.bold },
   activeRewardLabel: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
-  activeRewardMeta: { fontSize: FontSize.caption, fontWeight: FontWeight.bold, color: '#EF4444' },
+  activeRewardMeta: { fontSize: FontSize.caption, fontWeight: FontWeight.bold },
   // Badges
   badgeGrid: {
     flexDirection: 'row',
@@ -653,7 +652,7 @@ const styles = StyleSheet.create({
   historyTypeText: { fontSize: FontSize.micro, fontWeight: FontWeight.bold },
   historyNote: { fontSize: FontSize.caption },
   historyPoints: { alignItems: 'flex-end' },
-  historyPts: { fontSize: FontSize.label, fontWeight: FontWeight.bold, color: '#059669' },
+  historyPts: { fontSize: FontSize.label, fontWeight: FontWeight.bold },
   historyRarity: { fontSize: FontSize.caption, fontWeight: FontWeight.bold },
   // ─── Drop Rates Modal ─────────────────────────────────────────────────────
   drModal: { flex: 1 },
@@ -713,7 +712,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
   },
-  drRarityBadgeText: { fontSize: FontSize.caption, fontWeight: FontWeight.heavy, color: '#FFFFFF', textTransform: 'uppercase' },
+  drRarityBadgeText: { fontSize: FontSize.caption, fontWeight: FontWeight.heavy, textTransform: 'uppercase' },
   drRewardCount: { fontSize: FontSize.caption, fontWeight: FontWeight.semibold },
   drRewardRow: {
     flexDirection: 'row',
@@ -726,12 +725,12 @@ const styles = StyleSheet.create({
   },
   drRewardEmoji: { fontSize: FontSize.title },
   drRewardName: { flex: 1, fontSize: FontSize.label },
-  drRewardPts: { fontSize: FontSize.caption, fontWeight: FontWeight.bold, color: '#059669' },
+  drRewardPts: { fontSize: FontSize.caption, fontWeight: FontWeight.bold },
   drParentTag: { fontSize: FontSize.sm },
   drCloseButton: {
     borderRadius: 14,
     padding: 16,
     alignItems: 'center',
   },
-  drCloseButtonText: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: '#FFFFFF' },
+  drCloseButtonText: { fontSize: FontSize.lg, fontWeight: FontWeight.bold },
 });

@@ -1155,9 +1155,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarEmoji: {
-    fontSize: FontSize.display,
-  },
   headerGreeting: {
     flex: 1,
   },

@@ -27,7 +27,7 @@ function DashboardNightModeInner(_props: DashboardSectionProps) {
   if (!isNightTime) return null;
 
   return (
-    <DashboardCard key="nightMode" title={t('dashboard.nightMode.title')} icon="🌙" color="#B8860B" onPressMore={() => router.push('/(tabs)/night-mode')}>
+    <DashboardCard key="nightMode" title={t('dashboard.nightMode.title')} icon="🌙" color={colors.warning} onPressMore={() => router.push('/(tabs)/night-mode')}>
       <TouchableOpacity
         style={[styles.nightModeBtn, { backgroundColor: colors.cardAlt }]}
         onPress={() => router.push('/(tabs)/night-mode')}

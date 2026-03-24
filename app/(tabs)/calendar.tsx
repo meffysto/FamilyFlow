@@ -25,7 +25,6 @@ import { CalendarMonthGrid } from '../../components/calendar/CalendarMonthGrid';
 import { CalendarDayDetail } from '../../components/calendar/CalendarDayDetail';
 import { CalendarEventRow } from '../../components/calendar/CalendarEventRow';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
-import { EmptyState } from '../../components/EmptyState';
 import { Spacing, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { useTranslation } from 'react-i18next';

@@ -759,11 +759,6 @@ const styles = StyleSheet.create({
   },
   editBtnText: { fontSize: FontSize.lg },
 
-  // Empty state
-  emptyState: { alignItems: 'center', paddingVertical: 60, gap: Spacing.lg },
-  emptyEmoji: { fontSize: 56 },
-  emptyTitle: { fontSize: FontSize.lg, fontWeight: FontWeight.bold },
-  emptySubtitle: { fontSize: FontSize.sm, textAlign: 'center', paddingHorizontal: Spacing['3xl'] },
 
   // Info
   infoCard: {

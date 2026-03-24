@@ -653,26 +653,6 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.semibold,
     marginTop: Spacing.sm,
   },
-  // Empty state
-  emptyState: {
-    padding: Spacing['3xl'],
-    borderRadius: Radius.lg,
-    alignItems: 'center',
-    gap: Spacing.lg,
-  },
-  emptyEmoji: { fontSize: 48 },
-  emptyTitle: { fontSize: FontSize.heading, fontWeight: FontWeight.heavy },
-  emptyDesc: { fontSize: FontSize.body, textAlign: 'center' },
-  emptyCta: {
-    paddingHorizontal: Spacing['2xl'],
-    paddingVertical: Spacing.xl,
-    borderRadius: Radius.lg,
-    marginTop: Spacing.md,
-  },
-  emptyCtaText: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
-  },
   // Éditeur
   editorContent: {
     flex: 1,
