@@ -322,7 +322,7 @@ export default function StockScreen() {
               onPress={() => handleQuantityChange(item.lineIndex, item.quantite - 1)}
               disabled={item.quantite <= 0}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              accessibilityLabel="Diminuer la quantité"
+              accessibilityLabel={t('stock.a11y.decreaseQty')}
             >
               <Text
                 style={[
@@ -339,7 +339,7 @@ export default function StockScreen() {
               style={[styles.qtyBtn, { backgroundColor: colors.bg }]}
               onPress={() => handleQuantityChange(item.lineIndex, item.quantite + 1)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              accessibilityLabel="Augmenter la quantité"
+              accessibilityLabel={t('stock.a11y.increaseQty')}
             >
               <Text style={[styles.qtyBtnText, { color: colors.textSub }]}>+</Text>
             </TouchableOpacity>
@@ -349,7 +349,7 @@ export default function StockScreen() {
               <TouchableOpacity
                 style={[styles.courseBtn, { backgroundColor: colors.warningBg }]}
                 onPress={() => handleAddToCourses(item)}
-                accessibilityLabel={`Ajouter ${item.produit} aux courses`}
+                accessibilityLabel={t('stock.a11y.addToCourses', { name: item.produit })}
               >
                 <Text style={styles.courseBtnText}>🛒</Text>
               </TouchableOpacity>
@@ -365,7 +365,7 @@ export default function StockScreen() {
       {/* ─── Header ────────────────────────────────────────── */}
       <View ref={stockListRef} style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={[styles.title, { color: colors.text }]}>Stock</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{t('stock.title')}</Text>
           {lowStockCount > 0 && (
             <View style={[styles.lowBadge, { backgroundColor: colors.errorBg }]}>
               <Text style={[styles.lowBadgeText, { color: colors.error }]}>
@@ -378,7 +378,7 @@ export default function StockScreen() {
           style={[styles.addBtn, { backgroundColor: tint, borderColor: primary }]}
           onPress={openCreate}
           accessibilityRole="button"
-          accessibilityLabel="Ajouter un produit"
+          accessibilityLabel={t('stock.a11y.addProduct')}
         >
           <Text style={[styles.addBtnText, { color: primary }]}>+</Text>
         </TouchableOpacity>

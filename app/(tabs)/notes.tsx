@@ -172,7 +172,7 @@ export default function NotesScreen() {
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
         <View style={styles.emptyContainer}>
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-            Cette section est réservée aux adultes
+            {t('notesScreen.childOnly')}
           </Text>
         </View>
       </SafeAreaView>
@@ -197,7 +197,7 @@ export default function NotesScreen() {
     return (
       <SwipeToDelete
         onDelete={() => handleDelete(note)}
-        confirmMessage={`Supprimer « ${note.title} » ?`}
+        confirmMessage={t('notesScreen.deleteConfirm', { title: note.title })}
         hintId="notes"
       >
         <TouchableOpacity
@@ -207,7 +207,7 @@ export default function NotesScreen() {
           activeOpacity={0.7}
           accessibilityLabel={`${note.title}, ${formatDateLocalized(note.created)}${note.url ? ', article web' : ''}`}
           accessibilityRole="button"
-          accessibilityHint="Appuyez pour lire, appui long pour modifier"
+          accessibilityHint={t('notesScreen.a11y.noteHint')}
         >
           <View style={styles.noteHeader}>
             <Text
@@ -248,7 +248,7 @@ export default function NotesScreen() {
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.bg }]}>
         <View style={styles.headerRow}>
-          <Text style={[styles.title, { color: colors.text }]}>Notes & Articles</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{t('notesScreen.title')}</Text>
           <TouchableOpacity
             onPress={() => openEditor()}
             style={[styles.addButton, { backgroundColor: primary }]}
@@ -300,11 +300,11 @@ export default function NotesScreen() {
       {listData.length === 0 ? (
         <EmptyState
           emoji="📝"
-          title={search || selectedCategory ? 'Aucun résultat' : 'Aucune note'}
+          title={search || selectedCategory ? t('notesScreen.empty.noResults') : t('notesScreen.empty.noNotes')}
           subtitle={search || selectedCategory
-            ? 'Essayez un autre filtre'
-            : 'Capturez vos idées et informations'}
-          ctaLabel={search || selectedCategory ? undefined : 'Créer une note'}
+            ? t('notesScreen.empty.tryAnotherFilter')
+            : t('notesScreen.empty.captureIdeas')}
+          ctaLabel={search || selectedCategory ? undefined : t('notesScreen.empty.createNote')}
           onCta={search || selectedCategory ? undefined : () => openEditor()}
         />
       ) : (

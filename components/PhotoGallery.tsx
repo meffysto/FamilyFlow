@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { format, parse } from 'date-fns';
 import { getDateLocale } from '../lib/date-locale';
+import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import { Spacing } from '../constants/spacing';
@@ -86,6 +87,7 @@ export function PhotoGallery({
   refreshing,
   primaryColor,
 }: PhotoGalleryProps) {
+  const { t } = useTranslation();
   const { colors } = useThemeColors();
   const { width: screenWidth, photoColumns } = useResponsiveLayout();
 
@@ -102,10 +104,10 @@ export function PhotoGallery({
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyEmoji}>📷</Text>
         <Text style={[styles.emptyText, { color: colors.textSub }]}>
-          Aucune photo
+          {t('photos.noPhotos')}
         </Text>
         <Text style={[styles.emptyHint, { color: colors.textMuted }]}>
-          Ajoute ta première photo du jour !
+          {t('photos.addFirstPhoto')}
         </Text>
       </View>
     );

@@ -44,20 +44,16 @@ function shouldShowBilan(): boolean {
 }
 
 /** Formatte le label de la semaine : "Semaine du 16 au 22 mars" */
-function formatWeekLabel(start: Date, end: Date): string {
-  const months = [
-    'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
-    'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre',
-  ];
+function formatWeekLabel(start: Date, end: Date, t: (key: string, opts?: Record<string, unknown>) => string): string {
   const startDay = start.getDate();
   const endDay = end.getDate();
-  const startMonth = months[start.getMonth()];
-  const endMonth = months[end.getMonth()];
+  const startMonth = t(`dashboard.bilanSemaine.months.${start.getMonth()}`);
+  const endMonth = t(`dashboard.bilanSemaine.months.${end.getMonth()}`);
 
   if (start.getMonth() === end.getMonth()) {
-    return `Semaine du ${startDay} au ${endDay} ${endMonth}`;
+    return t('dashboard.bilanSemaine.weekLabel', { startDay, endDay, month: endMonth });
   }
-  return `Semaine du ${startDay} ${startMonth} au ${endDay} ${endMonth}`;
+  return t('dashboard.bilanSemaine.weekLabelCrossMonth', { startDay, startMonth, endDay, endMonth });
 }
 
 // ─── Composant ───────────────────────────────────────────────────────────────
@@ -124,7 +120,7 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
     return {
       weekStart,
       weekEnd,
-      weekLabel: formatWeekLabel(weekStart, weekEnd),
+      weekLabel: formatWeekLabel(weekStart, weekEnd, t),
       tasksCompleted: completedTasks,
       mealsCookedCount: weekMeals,
       moodsAverage: moodsAvg,

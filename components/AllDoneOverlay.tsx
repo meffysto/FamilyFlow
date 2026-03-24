@@ -17,6 +17,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { FontSize, FontWeight } from '../constants/typography';
 import { Spacing } from '../constants/spacing';
@@ -110,6 +111,7 @@ export function AllDoneOverlay({
   childName,
   onDismiss,
 }: AllDoneOverlayProps) {
+  const { t } = useTranslation();
   const { width: screenW, height: screenH } = useWindowDimensions();
   const { primary, colors } = useThemeColors();
   const confetti = useMemo(() => (visible ? generateConfetti(screenW) : []), [visible, screenW]);
@@ -162,8 +164,8 @@ export function AllDoneOverlay({
   if (!visible) return null;
 
   const message = childName
-    ? `Bravo ${childName} ! Tu as terminé tes ${taskCount} tâches !`
-    : `Toutes les tâches du jour sont terminées !`;
+    ? t('overlays.allDone.messageChild', { childName, count: taskCount })
+    : t('overlays.allDone.messageGeneric');
 
   return (
     <Animated.View style={[styles.overlay, overlayStyle]}>
@@ -177,7 +179,7 @@ export function AllDoneOverlay({
 
           <Animated.Text style={[styles.emoji, emojiStyle]}>🎉</Animated.Text>
 
-          <Text style={[styles.title, { color: colors.text }]}>Journée terminée !</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{t('overlays.allDone.title')}</Text>
 
           <Text style={[styles.message, { color: colors.textSub }]}>{message}</Text>
 
@@ -185,7 +187,7 @@ export function AllDoneOverlay({
             style={[styles.button, { backgroundColor: primary }]}
             onPress={onDismiss}
           >
-            <Text style={[styles.buttonText, { color: colors.onPrimary }]}>Super ! 🎊</Text>
+            <Text style={[styles.buttonText, { color: colors.onPrimary }]}>{t('overlays.allDone.close')}</Text>
           </Pressable>
         </Animated.View>
       </Pressable>

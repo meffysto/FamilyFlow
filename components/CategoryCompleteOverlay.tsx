@@ -18,6 +18,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { FontSize, FontWeight } from '../constants/typography';
 import { Spacing } from '../constants/spacing';
@@ -113,6 +114,7 @@ export function CategoryCompleteOverlay({
   childName,
   onDismiss,
 }: CategoryCompleteOverlayProps) {
+  const { t } = useTranslation();
   const { width: screenW, height: screenH } = useWindowDimensions();
   const { primary, colors } = useThemeColors();
   const confetti = useMemo(() => (visible ? generateConfetti(screenW) : []), [visible, screenW]);
@@ -181,7 +183,7 @@ export function CategoryCompleteOverlay({
           <Animated.Text style={[styles.emoji, emojiStyle]}>{categoryEmoji}</Animated.Text>
 
           {/* Titre */}
-          <Text style={[styles.title, { color: colors.text }]}>Catégorie complétée !</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{t('overlays.categoryComplete.title')}</Text>
 
           {/* Catégorie */}
           <View style={[styles.badge, { backgroundColor: primary + '20' }]}>
@@ -192,7 +194,7 @@ export function CategoryCompleteOverlay({
 
           {/* Message */}
           <Text style={[styles.message, { color: colors.textSub }]}>
-            Bravo {childName} ! Toutes les compétences de cette catégorie sont débloquées !
+            {t('overlays.categoryComplete.message', { childName })}
           </Text>
 
           {/* Bouton fermer */}
@@ -200,7 +202,7 @@ export function CategoryCompleteOverlay({
             style={[styles.button, { backgroundColor: primary }]}
             onPress={onDismiss}
           >
-            <Text style={[styles.buttonText, { color: colors.onPrimary }]}>Super ! 🎊</Text>
+            <Text style={[styles.buttonText, { color: colors.onPrimary }]}>{t('overlays.categoryComplete.close')}</Text>
           </Pressable>
         </Animated.View>
       </Pressable>

@@ -90,9 +90,9 @@ const ItemRow = React.memo(function ItemRow({
           style={[styles.itemLabel, { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
           value={item.label}
           onChangeText={(text) => onUpdate(index, 'label', text)}
-          placeholder="Libellé"
+          placeholder={t('receiptReview.placeholder.label')}
           placeholderTextColor={colors.textFaint}
-          accessibilityLabel={`Libellé article ${index + 1}`}
+          accessibilityLabel={t('receiptReview.a11y.itemLabel', { index: index + 1 })}
         />
         <TextInput
           style={[styles.itemAmount, { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
@@ -101,13 +101,13 @@ const ItemRow = React.memo(function ItemRow({
           placeholder="0,00"
           placeholderTextColor={colors.textFaint}
           keyboardType="decimal-pad"
-          accessibilityLabel={`Montant article ${index + 1}`}
+          accessibilityLabel={t('receiptReview.a11y.itemAmount', { index: index + 1 })}
         />
         <TouchableOpacity
           onPress={() => onDelete(index)}
           style={[styles.deleteBtn, { backgroundColor: colors.errorBg }]}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityLabel={`Supprimer article ${item.label}`}
+          accessibilityLabel={t('receiptReview.a11y.deleteItem', { label: item.label })}
           accessibilityRole="button"
         >
           <Text style={[styles.deleteBtnText, { color: colors.error }]}>✕</Text>
@@ -120,7 +120,7 @@ const ItemRow = React.memo(function ItemRow({
           style={[styles.categorySelector, { backgroundColor: colors.cardAlt, borderColor: colors.border }]}
           onPress={() => setShowCategoryPicker(!showCategoryPicker)}
           activeOpacity={0.7}
-          accessibilityLabel={`Catégorie : ${item.category}`}
+          accessibilityLabel={t('receiptReview.a11y.category', { category: item.category })}
           accessibilityRole="button"
           accessibilityHint={t('receiptReview.categoryHint')}
         >
@@ -180,6 +180,7 @@ const ItemRow = React.memo(function ItemRow({
 // ─── Composant principal ────────────────────────────────────────────────────
 
 export function ReceiptReview({ visible, onClose, onSave, data, categories }: ReceiptReviewProps) {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
 
   // État local des articles (copie modifiable avec IDs stables)
@@ -251,7 +252,7 @@ export function ReceiptReview({ visible, onClose, onSave, data, categories }: Re
           <View style={[styles.dragHandle, { backgroundColor: colors.separator }]} />
         </View>
 
-        <ModalHeader title="Vérifier le ticket" onClose={onClose} />
+        <ModalHeader title={t('receiptReview.title')} onClose={onClose} />
 
         {data ? (
           <>
@@ -270,14 +271,14 @@ export function ReceiptReview({ visible, onClose, onSave, data, categories }: Re
 
               {/* Liste des articles */}
               <Text style={[styles.sectionTitle, { color: colors.textSub }]}>
-                {items.length} article{items.length !== 1 ? 's' : ''} détecté{items.length !== 1 ? 's' : ''}
+                {t('receiptReview.itemsDetected', { count: items.length })}
               </Text>
 
               {items.length === 0 ? (
                 <View style={styles.emptyContainer}>
                   <Text style={[styles.emptyIcon]}>🧾</Text>
                   <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                    Aucun article détecté
+                    {t('receiptReview.noItems')}
                   </Text>
                 </View>
               ) : (
@@ -297,7 +298,7 @@ export function ReceiptReview({ visible, onClose, onSave, data, categories }: Re
               {items.length > 0 && (
                 <View style={[styles.totalCard, { backgroundColor: colors.card }, Shadows.sm]}>
                   <View style={styles.totalRow}>
-                    <Text style={[styles.totalLabel, { color: colors.textSub }]}>Total calculé</Text>
+                    <Text style={[styles.totalLabel, { color: colors.textSub }]}>{t('receiptReview.computedTotal')}</Text>
                     <Text style={[styles.totalAmount, { color: colors.text }]}>
                       {formatAmount(computedTotal)}
                     </Text>
@@ -305,7 +306,7 @@ export function ReceiptReview({ visible, onClose, onSave, data, categories }: Re
                   {hasDiff && (
                     <View style={styles.totalRow}>
                       <Text style={[styles.totalDetectedLabel, { color: colors.textMuted }]}>
-                        Total ticket
+                        {t('receiptReview.receiptTotal')}
                       </Text>
                       <Text style={[styles.totalDetected, { color: colors.textMuted }]}>
                         {formatAmount(detectedTotal)}
@@ -315,7 +316,7 @@ export function ReceiptReview({ visible, onClose, onSave, data, categories }: Re
                   {hasDiff && (
                     <View style={[styles.diffBadge, { backgroundColor: colors.warningBg }]}>
                       <Text style={[styles.diffText, { color: colors.warningText }]}>
-                        Écart de {formatAmount(totalDiff)}
+                        {t('receiptReview.difference', { amount: formatAmount(totalDiff) })}
                       </Text>
                     </View>
                   )}
@@ -330,7 +331,7 @@ export function ReceiptReview({ visible, onClose, onSave, data, categories }: Re
             {items.length > 0 && (
               <View style={[styles.bottomBar, { backgroundColor: colors.bg, borderTopColor: colors.border }]}>
                 <Button
-                  label="Ajouter tout"
+                  label={t('receiptReview.addAll')}
                   onPress={handleSave}
                   variant="primary"
                   size="lg"

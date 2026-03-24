@@ -86,6 +86,7 @@ async function saveDayProgress(progress: DayProgress): Promise<void> {
 // ─── Timer component ──────────────────────────────────────────────────────────
 
 function Timer({ durationMinutes, onComplete }: { durationMinutes: number; onComplete: () => void }) {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
   const [secondsLeft, setSecondsLeft] = useState(durationMinutes * 60);
   const [isRunning, setIsRunning] = useState(false);
@@ -157,7 +158,7 @@ function Timer({ durationMinutes, onComplete }: { durationMinutes: number; onCom
           activeOpacity={0.7}
         >
           <Text style={[timerStyles.btnText, { color: colors.onPrimary }]}>
-            {isRunning ? '⏸ Pause' : '▶️ Démarrer'}
+            {isRunning ? t('routines.timer.pause') : t('routines.timer.start')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -165,7 +166,7 @@ function Timer({ durationMinutes, onComplete }: { durationMinutes: number; onCom
           onPress={skip}
           activeOpacity={0.7}
         >
-          <Text style={[timerStyles.btnSkipText, { color: colors.textSub }]}>Passer ⏭</Text>
+          <Text style={[timerStyles.btnSkipText, { color: colors.textSub }]}>{t('routines.timer.skip')}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -187,6 +188,7 @@ function RoutinePlayer({
   onClose: () => void;
   onRoutineComplete: () => void;
 }) {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
   const completedSet = new Set(progress.completedSteps);
 
@@ -236,10 +238,10 @@ function RoutinePlayer({
         <View style={playerStyles.doneContainer}>
           <Animated.Text entering={FadeInDown.springify()} style={playerStyles.doneEmoji}>🎉</Animated.Text>
           <Animated.Text entering={FadeInDown.delay(200)} style={[playerStyles.doneTitle, { color: colors.text }]}>
-            Routine terminée !
+            {t('routines.player.routineComplete')}
           </Animated.Text>
           <Animated.Text entering={FadeInDown.delay(400)} style={[playerStyles.doneSubtitle, { color: colors.textSub }]}>
-            Bravo, toutes les étapes sont complétées !
+            {t('routines.player.allStepsComplete')}
           </Animated.Text>
         </View>
       </View>
@@ -261,7 +263,7 @@ function RoutinePlayer({
           />
         </View>
         <Text style={[playerStyles.progressText, { color: colors.textMuted }]}>
-          {doneCount}/{totalSteps} étapes
+          {t('routines.player.stepsProgress', { done: doneCount, total: totalSteps })}
         </Text>
       </View>
 
@@ -272,7 +274,7 @@ function RoutinePlayer({
         style={[playerStyles.stepCard, { backgroundColor: colors.card }]}
       >
         <Text style={[playerStyles.stepNumber, { color: primary }]}>
-          Étape {activeStep + 1}
+          {t('routines.player.stepNumber', { step: activeStep + 1 })}
         </Text>
         <Text style={[playerStyles.stepText, { color: colors.text }]}>
           {step?.text}
@@ -289,7 +291,7 @@ function RoutinePlayer({
             activeOpacity={0.7}
           >
             <Animated.Text style={[checkScale, playerStyles.completeBtnText, { color: isStepDone ? colors.successText : colors.onPrimary }]}>
-              {isStepDone ? '✅ Fait !' : '✓ Terminé'}
+              {isStepDone ? t('routines.player.stepDone') : t('routines.player.stepFinish')}
             </Animated.Text>
           </TouchableOpacity>
         )}
@@ -483,9 +485,9 @@ export default function RoutinesScreen() {
         {routines.length === 0 ? (
           <EmptyState
             emoji="⏰"
-            title="Aucune routine"
-            subtitle="Créez des routines pour structurer la journée"
-            ctaLabel="Créer une routine"
+            title={t('routines.empty.title')}
+            subtitle={t('routines.empty.subtitle')}
+            ctaLabel={t('routines.empty.cta')}
             onCta={() => setEditorRoutine(null)}
           />
         ) : (
@@ -513,10 +515,10 @@ export default function RoutinesScreen() {
                         {routine.label}
                       </Text>
                       <Text style={[styles.routineSteps, { color: colors.textMuted }]}>
-                        {totalSteps} étapes
+                        {t('routines.card.steps', { count: totalSteps })}
                         {routine.steps.some(s => s.durationMinutes) &&
                           ` · ~${routine.steps.reduce((sum, s) => sum + (s.durationMinutes || 0), 0)}min`}
-                        {routine.isVisual && ' · 👶 Visuel'}
+                        {routine.isVisual && ` ${t('routines.card.visual')}`}
                       </Text>
                     </View>
                     <TouchableOpacity
@@ -529,7 +531,7 @@ export default function RoutinesScreen() {
                     </TouchableOpacity>
                     {isComplete ? (
                       <View style={[styles.doneBadge, { backgroundColor: colors.successBg }]}>
-                        <Text style={[styles.doneBadgeText, { color: colors.successText }]}>✅ Fait</Text>
+                        <Text style={[styles.doneBadgeText, { color: colors.successText }]}>{t('routines.card.done')}</Text>
                       </View>
                     ) : doneCount > 0 ? (
                       <View style={[styles.doneBadge, { backgroundColor: primary + '20' }]}>
@@ -601,8 +603,7 @@ export default function RoutinesScreen() {
         {/* Info */}
         <View style={[styles.infoCard, { backgroundColor: colors.cardAlt }]}>
           <Text style={[styles.infoText, { color: colors.textMuted }]}>
-            💡 Appui long sur une routine pour la réinitialiser.
-            Touchez ✏️ pour modifier ou + pour en ajouter une nouvelle.
+            {t('routines.card.hint')}
           </Text>
         </View>
       </ScrollView>

@@ -58,41 +58,45 @@ interface JournalModal {
 
 // ─── Field configs per type ──────────────────────────────────────────────────
 
-const FIELD_CONFIGS: Record<EntryType, FieldConfig[]> = {
-  Biberon: [
-    { key: 'heure', label: 'Heure', placeholder: 'HH:mm (auto si vide)' },
-    { key: 'ml', label: 'Quantité (ml)', placeholder: 'ex: 180', keyboard: 'numeric' },
-    { key: 'notes', label: 'Notes', placeholder: 'Optionnel' },
-  ],
-  Couche: [
-    { key: 'heure', label: 'Heure', placeholder: 'HH:mm (auto si vide)' },
-    { key: 'type', label: 'Type', placeholder: 'Mouillée / Souillée / Mixte' },
-    { key: 'notes', label: 'Notes', placeholder: 'Optionnel' },
-  ],
-  Sieste: [
-    { key: 'debut', label: 'Début', placeholder: 'HH:mm' },
-    { key: 'fin', label: 'Fin', placeholder: 'HH:mm (vide si en cours)' },
-    { key: 'duree', label: 'Durée', placeholder: 'Auto-calculée si début+fin' },
-    { key: 'notes', label: 'Notes', placeholder: 'Optionnel' },
-  ],
-  Observation: [
-    { key: 'text', label: 'Observation', placeholder: 'ex: Très joyeux ce matin, gazouille beaucoup' },
-  ],
-  'Médicament': [
-    { key: 'heure', label: 'Heure', placeholder: 'HH:mm (auto si vide)' },
-    { key: 'medicament', label: 'Médicament', placeholder: 'ex: Doliprane' },
-    { key: 'dose', label: 'Dose', placeholder: 'ex: 2.5 ml' },
-    { key: 'notes', label: 'Notes', placeholder: 'Optionnel' },
-  ],
-};
+function getFieldConfigs(t: (key: string) => string): Record<EntryType, FieldConfig[]> {
+  return {
+    Biberon: [
+      { key: 'heure', label: t('journal.fields.hour'), placeholder: t('journal.fields.hourPlaceholder') },
+      { key: 'ml', label: t('journal.fields.quantityMl'), placeholder: t('journal.fields.quantityMlPlaceholder'), keyboard: 'numeric' },
+      { key: 'notes', label: t('journal.fields.notes'), placeholder: t('journal.fields.notesPlaceholder') },
+    ],
+    Couche: [
+      { key: 'heure', label: t('journal.fields.hour'), placeholder: t('journal.fields.hourPlaceholder') },
+      { key: 'type', label: t('journal.fields.type'), placeholder: t('journal.fields.typePlaceholder') },
+      { key: 'notes', label: t('journal.fields.notes'), placeholder: t('journal.fields.notesPlaceholder') },
+    ],
+    Sieste: [
+      { key: 'debut', label: t('journal.fields.start'), placeholder: t('journal.fields.startPlaceholder') },
+      { key: 'fin', label: t('journal.fields.end'), placeholder: t('journal.fields.endPlaceholder') },
+      { key: 'duree', label: t('journal.fields.duration'), placeholder: t('journal.fields.durationPlaceholder') },
+      { key: 'notes', label: t('journal.fields.notes'), placeholder: t('journal.fields.notesPlaceholder') },
+    ],
+    Observation: [
+      { key: 'text', label: t('journal.fields.observation'), placeholder: t('journal.fields.observationPlaceholder') },
+    ],
+    'Médicament': [
+      { key: 'heure', label: t('journal.fields.hour'), placeholder: t('journal.fields.hourPlaceholder') },
+      { key: 'medicament', label: t('journal.fields.medication'), placeholder: t('journal.fields.medicationPlaceholder') },
+      { key: 'dose', label: t('journal.fields.dose'), placeholder: t('journal.fields.dosePlaceholder') },
+      { key: 'notes', label: t('journal.fields.notes'), placeholder: t('journal.fields.notesPlaceholder') },
+    ],
+  };
+}
 
-const ENTRY_META: Record<EntryType, { emoji: string; label: string }> = {
-  Biberon: { emoji: '🍼', label: 'Biberon' },
-  Couche: { emoji: '🚼', label: 'Couche' },
-  Sieste: { emoji: '😴', label: 'Sieste' },
-  Observation: { emoji: '💬', label: 'Note' },
-  'Médicament': { emoji: '💊', label: 'Médic.' },
-};
+function getEntryMeta(t: (key: string) => string): Record<EntryType, { emoji: string; label: string }> {
+  return {
+    Biberon: { emoji: '🍼', label: t('journal.entryTypes.bottle') },
+    Couche: { emoji: '🚼', label: t('journal.entryTypes.diaper') },
+    Sieste: { emoji: '😴', label: t('journal.entryTypes.nap') },
+    Observation: { emoji: '💬', label: t('journal.entryTypes.note') },
+    'Médicament': { emoji: '💊', label: t('journal.entryTypes.medication') },
+  };
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -226,7 +230,7 @@ function MiniCalendar({
         </TouchableOpacity>
       </View>
       <View style={calStyles.weekdays}>
-        {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => (
+        {[t('journal.weekdays.mon'), t('journal.weekdays.tue'), t('journal.weekdays.wed'), t('journal.weekdays.thu'), t('journal.weekdays.fri'), t('journal.weekdays.sat'), t('journal.weekdays.sun')].map((d, i) => (
           <Text key={i} style={[calStyles.weekday, { color: colors.textFaint }]}>{d}</Text>
         ))}
       </View>
@@ -248,7 +252,7 @@ function MiniCalendar({
               onPress={() => hasJournal && onSelectDate(day)}
               disabled={!hasJournal}
               activeOpacity={0.6}
-              accessibilityLabel={`${day.getDate()} ${format(day, 'MMMM', { locale: getDateLocale() })}${hasJournal ? ', journal disponible' : ''}${isToday ? ", aujourd'hui" : ''}${isSelected ? ', sélectionné' : ''}`}
+              accessibilityLabel={`${day.getDate()} ${format(day, 'MMMM', { locale: getDateLocale() })}${hasJournal ? t('journal.a11y.journalAvailable') : ''}${isToday ? t('journal.a11y.today') : ''}${isSelected ? t('journal.a11y.selected') : ''}`}
               accessibilityRole="button"
               accessibilityState={{ selected: isSelected, disabled: !hasJournal }}
             >
@@ -280,6 +284,9 @@ export default function JournalScreen() {
   const { vault, profiles, activeProfile } = useVault();
   const { primary, tint, colors } = useThemeColors();
   const { enfant: enfantParam } = useLocalSearchParams<{ enfant?: string }>();
+
+  const FIELD_CONFIGS = useMemo(() => getFieldConfigs(t), [t]);
+  const ENTRY_META = useMemo(() => getEntryMeta(t), [t]);
 
   const childSelectorRef = useRef<View>(null);
   const firstSectionRef = useRef<View>(null);
@@ -596,7 +603,7 @@ export default function JournalScreen() {
               ))
             ) : (
               <View style={styles.emptySection}>
-                <Text style={[styles.emptySectionText, { color: colors.textFaint }]}>Aucune observation</Text>
+                <Text style={[styles.emptySectionText, { color: colors.textFaint }]}>{t('journal.sections.noObservation')}</Text>
               </View>
             )}
             {canEdit && (
@@ -620,8 +627,8 @@ export default function JournalScreen() {
       const [header, _separator, ...rows] = tableLines;
       const SHORT_HEADERS: Record<string, string> = { 'Médicament': 'Médic.' };
       const cols = header.split('|').slice(1, -1).map((c) => {
-        const t = c.trim();
-        return SHORT_HEADERS[t] ?? t;
+        const colName = c.trim();
+        return SHORT_HEADERS[colName] ?? colName;
       });
 
       let tableLineIndices: number[] = [];
@@ -672,7 +679,7 @@ export default function JournalScreen() {
             ))}
             {dataRows.length === 0 && (
               <View style={styles.emptySection}>
-                <Text style={[styles.emptySectionText, { color: colors.textFaint }]}>Aucune entrée</Text>
+                <Text style={[styles.emptySectionText, { color: colors.textFaint }]}>{t('journal.sections.noEntry')}</Text>
               </View>
             )}
           </View>
@@ -698,14 +705,14 @@ export default function JournalScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <View style={[styles.header, { backgroundColor: colors.bg }]}>
-        <Text style={[styles.title, { color: colors.text }]}>📖 Journal</Text>
+        <Text style={[styles.title, { color: colors.text }]}>📖 {t('journal.title')}</Text>
       </View>
 
       {/* Onglets enfant / adulte */}
       <View ref={childSelectorRef} style={[styles.tabs, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <SegmentedControl
           segments={[
-            ...(isAdultMode ? [{ id: 'adulte', label: `${activeProfile?.avatar ?? '📖'} Mon journal` }] : []),
+            ...(isAdultMode ? [{ id: 'adulte', label: `${activeProfile?.avatar ?? '📖'} ${t('journal.myJournal')}` }] : []),
             ...enfants.map((e) => ({ id: e.id, label: `${e.avatar} ${e.name}` })),
           ]}
           value={selectedTab}
@@ -785,14 +792,14 @@ export default function JournalScreen() {
           <View ref={firstSectionRef} style={styles.journalContent}>
             {!isViewingAdultTab && hasStats && journalStats && (
               <View style={[styles.statsBanner, { backgroundColor: colors.card }]}>
-                <Text style={[styles.statsBannerTitle, { color: colors.text }]}>📊 Résumé du jour</Text>
+                <Text style={[styles.statsBannerTitle, { color: colors.text }]}>{t('journal.stats.title')}</Text>
                 <View style={styles.statsGrid}>
                   {journalStats.biberons > 0 && (
                     <View style={[styles.statItem, { backgroundColor: colors.cardAlt }]}>
                       <Text style={styles.statEmoji}>🍼</Text>
                       <Text style={[styles.statValue, { color: colors.text }]}>{journalStats.biberons}</Text>
                       <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                        biberon{journalStats.biberons > 1 ? 's' : ''}
+                        {t('journal.stats.bottle', { count: journalStats.biberons })}
                         {journalStats.totalMl > 0 ? ` (${journalStats.totalMl} ml)` : ''}
                       </Text>
                     </View>
@@ -801,14 +808,14 @@ export default function JournalScreen() {
                     <View style={[styles.statItem, { backgroundColor: colors.cardAlt }]}>
                       <Text style={styles.statEmoji}>🤱</Text>
                       <Text style={[styles.statValue, { color: colors.text }]}>{journalStats.tetees}</Text>
-                      <Text style={[styles.statLabel, { color: colors.textMuted }]}>tétée{journalStats.tetees > 1 ? 's' : ''}</Text>
+                      <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('journal.stats.breastfeed', { count: journalStats.tetees })}</Text>
                     </View>
                   )}
                   {journalStats.couches > 0 && (
                     <View style={[styles.statItem, { backgroundColor: colors.cardAlt }]}>
                       <Text style={styles.statEmoji}>🚼</Text>
                       <Text style={[styles.statValue, { color: colors.text }]}>{journalStats.couches}</Text>
-                      <Text style={[styles.statLabel, { color: colors.textMuted }]}>couche{journalStats.couches > 1 ? 's' : ''}</Text>
+                      <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('journal.stats.diaper', { count: journalStats.couches })}</Text>
                     </View>
                   )}
                   {journalStats.sommeilTotal && (

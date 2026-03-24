@@ -162,7 +162,7 @@ function getDefaultSections(t: (key: string) => string, role?: string): SectionP
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
   const {
@@ -343,18 +343,18 @@ export default function DashboardScreen() {
     const actions: RecapAction[] = [];
 
     if (contacts.length === 1) {
-      actions.push({ label: `📤 Recap semaine → ${contacts[0].name}`, type: 'recap', contact: contacts[0] });
-      actions.push({ label: `📊 Bilan du mois → ${contacts[0].name}`, type: 'monthly', contact: contacts[0] });
-      if (hasGrossesse) actions.push({ label: `🤰 Suivi grossesse → ${contacts[0].name}`, type: 'grossesse', contact: contacts[0] });
+      actions.push({ label: t('index.recap.weekTo', { name: contacts[0].name }), type: 'recap', contact: contacts[0] });
+      actions.push({ label: t('index.recap.monthTo', { name: contacts[0].name }), type: 'monthly', contact: contacts[0] });
+      if (hasGrossesse) actions.push({ label: t('index.recap.pregnancyTo', { name: contacts[0].name }), type: 'grossesse', contact: contacts[0] });
     } else {
       // Envoi à tous
-      actions.push({ label: '📤 Recap semaine → Tous', type: 'recap' });
-      actions.push({ label: '📊 Bilan du mois → Tous', type: 'monthly' });
-      if (hasGrossesse) actions.push({ label: '🤰 Suivi grossesse → Tous', type: 'grossesse' });
+      actions.push({ label: t('index.recap.weekAll'), type: 'recap' });
+      actions.push({ label: t('index.recap.monthAll'), type: 'monthly' });
+      if (hasGrossesse) actions.push({ label: t('index.recap.pregnancyAll'), type: 'grossesse' });
       // Envoi individuel
       for (const c of contacts) {
         const meta = CHANNEL_META[c.channel];
-        actions.push({ label: `📤 Semaine → ${meta.emoji} ${c.name}`, type: 'recap', contact: c });
+        actions.push({ label: t('index.recap.weekChannel', { emoji: meta.emoji, name: c.name }), type: 'recap', contact: c });
       }
     }
 
@@ -373,7 +373,7 @@ export default function DashboardScreen() {
           } else if (a.type === 'monthly') {
             const now = new Date();
             const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-            const monthLabel = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+            const monthLabel = now.toLocaleDateString(i18n.language?.startsWith('en') ? 'en-US' : 'fr-FR', { month: 'long', year: 'numeric' });
             const monthMemories = memories.filter((m) => m.date >= monthStart);
             const enfantNames = profiles.filter((p) => p.role === 'enfant').map((p) => p.name);
             let photoCount = 0;
@@ -394,7 +394,7 @@ export default function DashboardScreen() {
       },
     }));
 
-    buttons.push({ text: 'Annuler', onPress: async () => {} });
+    buttons.push({ text: t('index.recap.cancel'), onPress: async () => {} });
 
     Alert.alert(t('index.alert.shareToGrandparents'), t('index.alert.shareQuestion'), buttons);
   }, [profiles, memories, photoDates, buildRecapData, showToast]);
@@ -411,9 +411,9 @@ export default function DashboardScreen() {
             const name = activeProfile.name;
             const taskShort = task.text.length > 25 ? task.text.slice(0, 25) + '…' : task.text;
             if (lootAwarded) {
-              showToast(`${themeEmoji} Bravo ${name} ! ${taskShort} → +${pointsGained} pts + 🎁`);
+              showToast(t('index.toast.taskCompleteLoot', { emoji: themeEmoji, name, task: taskShort, points: pointsGained }));
             } else {
-              showToast(`${themeEmoji} Bravo ${name} ! ${taskShort} → +${pointsGained} pts`);
+              showToast(t('index.toast.taskComplete', { emoji: themeEmoji, name, task: taskShort, points: pointsGained }));
             }
           } catch {
             // Gamification error — non-critical
@@ -915,14 +915,14 @@ export default function DashboardScreen() {
                 <Text style={styles.pregnancyFruit}>{fruitEmoji}</Text>
                 <View style={styles.pregnancyInfo}>
                   <Text style={[styles.pregnancyTitle, { color: colors.text }]} numberOfLines={1}>
-                    {p.name} — SA {weeksElapsed}
+                    {p.name} — {t('index.pregnancy.sa', { weeks: weeksElapsed })}
                   </Text>
                   <Text style={[styles.pregnancySub, { color: colors.textSub }]}>
                     {daysLeft > 0
-                      ? `J-${daysLeft} · ${fruitLabel}${sizeCm > 0 ? ` · ${sizeCm} cm` : ''}`
+                      ? `${t('index.pregnancy.daysLeft', { days: daysLeft })} · ${fruitLabel}${sizeCm > 0 ? ` · ${sizeCm} cm` : ''}`
                       : daysLeft === 0
-                        ? "C'est pour aujourd'hui !"
-                        : `J+${Math.abs(daysLeft)} · terme dépassé`}
+                        ? t('index.pregnancy.today')
+                        : t('index.pregnancy.overdue', { days: Math.abs(daysLeft) })}
                   </Text>
                 </View>
                 {daysLeft <= 28 && (
@@ -930,7 +930,7 @@ export default function DashboardScreen() {
                     style={[styles.pregnancyCta, { backgroundColor: primary }]}
                     onPress={() => {
                       Alert.prompt
-                        ? Alert.prompt('Date de naissance', 'AAAA-MM-JJ', (date) => {
+                        ? Alert.prompt(t('index.pregnancy.birthDateTitle'), t('index.pregnancy.birthDatePlaceholder'), (date) => {
                             if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) convertToBorn(p.id, date);
                           }, 'plain-text', format(new Date(), 'yyyy-MM-dd'))
                         : Alert.alert(t('index.alert.babyBorn'), t('index.alert.babyBornMsg'));
@@ -950,7 +950,7 @@ export default function DashboardScreen() {
         })}
 
         {ageUpgrades.map((upgrade) => {
-          const catLabels: Record<string, string> = { bebe: 'bébé', petit: 'petit enfant', enfant: 'enfant', ado: 'ado' };
+          const catLabels: Record<string, string> = { bebe: t('index.ageUpgrade.catLabels.bebe'), petit: t('index.ageUpgrade.catLabels.petit'), enfant: t('index.ageUpgrade.catLabels.enfant'), ado: t('index.ageUpgrade.catLabels.ado') };
           return (
             <View key={upgrade.profileId} style={[styles.ageUpgradeBanner, { backgroundColor: colors.warningBg, borderColor: primary }]}>
               <Text style={[styles.ageUpgradeTitle, { color: colors.text }]}>

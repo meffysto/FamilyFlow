@@ -30,6 +30,7 @@ import {
 } from 'react-native-gesture-handler';
 import { format } from 'date-fns';
 import { getDateLocale } from '../lib/date-locale';
+import { useTranslation } from 'react-i18next';
 import { FontSize, FontWeight } from '../constants/typography';
 import { useThemeColors } from '../contexts/ThemeContext';
 
@@ -49,6 +50,7 @@ interface PhotoViewerProps {
 
 export function PhotoViewer({ photos, initialIndex, onClose, onRetake, onCompare }: PhotoViewerProps) {
   const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
+  const { t } = useTranslation();
   const { colors } = useThemeColors();
   const flatListRef = useRef<FlatList>(null);
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
@@ -185,7 +187,7 @@ export function PhotoViewer({ photos, initialIndex, onClose, onRetake, onCompare
                   }
                 }}
               >
-                <Text style={[styles.retakeBtnText, { color: colors.onPrimary }]}>📷 Reprendre</Text>
+                <Text style={[styles.retakeBtnText, { color: colors.onPrimary }]}>{t('photos.retake')}</Text>
               </TouchableOpacity>
               {onCompare && (
                 <TouchableOpacity
@@ -197,7 +199,7 @@ export function PhotoViewer({ photos, initialIndex, onClose, onRetake, onCompare
                     }
                   }}
                 >
-                  <Text style={[styles.retakeBtnText, { color: colors.onPrimary }]}>⚖️ Comparer</Text>
+                  <Text style={[styles.retakeBtnText, { color: colors.onPrimary }]}>{t('photos.compare')}</Text>
                 </TouchableOpacity>
               )}
             </View>

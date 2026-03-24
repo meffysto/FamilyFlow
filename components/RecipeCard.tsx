@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View, Text, ImageBackground } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { FontSize, FontWeight } from '../constants/typography';
 import { Shadows } from '../constants/shadows';
@@ -16,6 +17,7 @@ interface RecipeCardProps {
 }
 
 export default function RecipeCard({ recipe, onPress, onLongPress, isFavorite, onToggleFavorite, imageUri }: RecipeCardProps) {
+  const { t } = useTranslation();
   const { primary, colors } = useThemeColors();
 
   const handleToggleFavorite = () => {
@@ -59,18 +61,18 @@ export default function RecipeCard({ recipe, onPress, onLongPress, isFavorite, o
                 {recipe.servings > 0 && (
                   <View style={[styles.badge, styles.imageBadge]}>
                     <Text style={[styles.badgeText, { color: '#fff' }]}>
-                      {recipe.servings} pers.
+                      {t('recipe.servings', { count: recipe.servings })}
                     </Text>
                   </View>
                 )}
                 {recipe.prepTime ? (
                   <Text style={[styles.metaText, { color: 'rgba(255,255,255,0.85)' }]}>
-                    Prep {recipe.prepTime}
+                    {t('recipe.prep', { time: recipe.prepTime })}
                   </Text>
                 ) : null}
                 {recipe.cookTime ? (
                   <Text style={[styles.metaText, { color: 'rgba(255,255,255,0.85)' }]}>
-                    Cuisson {recipe.cookTime}
+                    {t('recipe.cook', { time: recipe.cookTime })}
                   </Text>
                 ) : null}
               </View>
@@ -113,25 +115,25 @@ export default function RecipeCard({ recipe, onPress, onLongPress, isFavorite, o
         {recipe.servings > 0 && (
           <View style={[styles.badge, { backgroundColor: primary + '18' }]}>
             <Text style={[styles.badgeText, { color: primary }]}>
-              {recipe.servings} pers.
+              {t('recipe.servings', { count: recipe.servings })}
             </Text>
           </View>
         )}
         {recipe.prepTime ? (
           <Text style={[styles.metaText, { color: colors.textSub }]}>
-            Prep {recipe.prepTime}
+            {t('recipe.prep', { time: recipe.prepTime })}
           </Text>
         ) : null}
         {recipe.cookTime ? (
           <Text style={[styles.metaText, { color: colors.textSub }]}>
-            Cuisson {recipe.cookTime}
+            {t('recipe.cook', { time: recipe.cookTime })}
           </Text>
         ) : null}
       </View>
 
       {recipe.ingredients.length > 0 && (
         <Text style={[styles.ingredientCount, { color: colors.textMuted }]}>
-          {recipe.ingredients.length} ingredient{recipe.ingredients.length > 1 ? 's' : ''}
+          {t('recipe.ingredients', { count: recipe.ingredients.length })}
         </Text>
       )}
     </TouchableOpacity>

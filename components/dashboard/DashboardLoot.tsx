@@ -50,7 +50,7 @@ function DashboardLootInner({ isChildMode }: DashboardSectionProps) {
         </Text>
         {streakInfo && (
           <Text style={[styles.lootThresholdText, { color: tier.color }]}>
-            {streakInfo.emoji} +{streakInfo.bonus}/tâche
+            {t('dashboard.loot.streakBonus', { emoji: streakInfo.emoji, bonus: streakInfo.bonus })}
           </Text>
         )}
       </View>

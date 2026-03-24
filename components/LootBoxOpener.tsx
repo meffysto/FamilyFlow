@@ -38,6 +38,7 @@ import * as Haptics from 'expo-haptics';
 import { LootBox, ProfileTheme } from '../lib/types';
 import { RARITY_COLORS, RARITY_EMOJIS, getRarityLabel, SEASONAL_EVENTS } from '../lib/gamification';
 import { getTheme } from '../constants/themes';
+import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../contexts/ThemeContext';
 import { FontSize, FontWeight } from '../constants/typography';
 
@@ -603,6 +604,7 @@ export function LootBoxOpener({
   onOpen,
   onClose,
 }: LootBoxOpenerProps) {
+  const { t } = useTranslation();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const { colors: { textFaint } } = useThemeColors();
   const reduceMotion = useReducedMotion();
@@ -1042,7 +1044,7 @@ export function LootBoxOpener({
             <>
               <Text style={styles.title}>{theme.packLabel}</Text>
               <Text style={[styles.subtitle, { color: theme.primary }]}>
-                {lootCount} disponible{lootCount > 1 ? 's' : ''}
+                {t('loot.opener.available', { count: lootCount })}
               </Text>
               <TouchableOpacity onPress={handleOpen} style={styles.chestButton} activeOpacity={0.8}>
                 <View style={styles.packContainer}>
@@ -1052,7 +1054,7 @@ export function LootBoxOpener({
                   </Animated.View>
                 </View>
                 <Text style={[styles.openText, { color: theme.primary }]}>
-                  Appuyer pour ouvrir !
+                  {t('loot.opener.tapToOpen')}
                 </Text>
               </TouchableOpacity>
             </>
@@ -1074,7 +1076,7 @@ export function LootBoxOpener({
               <Animated.View style={packStyle}>
                 <ThemePack themeId={theme.id} tearing />
               </Animated.View>
-              <Text style={styles.spinText}>Ouverture en cours...</Text>
+              <Text style={styles.spinText}>{t('loot.opener.opening')}</Text>
             </View>
           )}
 
@@ -1131,7 +1133,7 @@ export function LootBoxOpener({
                       styles.incredibleText,
                       isMythique && styles.incredibleTextMythique,
                     ]}>
-                      {isMythique ? 'INCROYABLE !' : 'SUPER !'}
+                      {isMythique ? t('loot.opener.incredible') : t('loot.opener.super')}
                     </Text>
                   </View>
                 </Animated.View>
@@ -1163,7 +1165,7 @@ export function LootBoxOpener({
                   const sEvent = result.seasonal ? SEASONAL_EVENTS.find((e) => e.id === result.seasonal) : undefined;
                   return sEvent ? (
                     <Text style={[styles.seasonalTag, { color: sEvent.themeColor }]}>
-                      {sEvent.emoji} Exclusif {sEvent.name}
+                      {t('loot.opener.seasonalExclusive', { emoji: sEvent.emoji, name: sEvent.name })}
                     </Text>
                   ) : null;
                 })()}
@@ -1189,7 +1191,7 @@ export function LootBoxOpener({
                 {/* Bonus points */}
                 {result.bonusPoints > 0 && (
                   <View style={[styles.bonusPill, isMythique && { backgroundColor: '#EF4444' }]}>
-                    <Text style={styles.bonusText}>+{result.bonusPoints} pts bonus !</Text>
+                    <Text style={styles.bonusText}>{t('loot.opener.bonusPoints', { points: result.bonusPoints })}</Text>
                   </View>
                 )}
 
@@ -1197,7 +1199,7 @@ export function LootBoxOpener({
                 {result.requiresParent && (
                   <View style={styles.parentNote}>
                     <Text style={styles.parentNoteText}>
-                      👨‍👩‍👧 À valider par un parent !
+                      👨‍👩‍👧 {t('loot.opener.parentApproval')}
                     </Text>
                   </View>
                 )}
@@ -1206,39 +1208,39 @@ export function LootBoxOpener({
                 {result.multiplier && result.multiplier > 1 && (
                   <View style={[styles.specialNote, isMythique && { backgroundColor: 'rgba(239, 68, 68, 0.3)' }]}>
                     <Text style={styles.specialNoteText}>
-                      ⚡ Multiplicateur ×{result.multiplier} activé pour {result.multiplierTasks ?? 10} tâches !
+                      {t('loot.opener.multiplier', { multiplier: result.multiplier, tasks: result.multiplierTasks ?? 10 })}
                     </Text>
                   </View>
                 )}
 
                 {result.rewardType === 'double_loot' && (
                   <View style={[styles.specialNote, { backgroundColor: 'rgba(239, 68, 68, 0.3)' }]}>
-                    <Text style={styles.specialNoteText}>🎁🎁 +2 loot boxes ajoutées !</Text>
+                    <Text style={styles.specialNoteText}>{t('loot.opener.doubleLoot')}</Text>
                   </View>
                 )}
 
                 {result.rewardType === 'vacation' && (
                   <View style={[styles.specialNote, { backgroundColor: 'rgba(239, 68, 68, 0.3)' }]}>
-                    <Text style={styles.specialNoteText}>🏖️ 2 jours sans tâches activés !</Text>
+                    <Text style={styles.specialNoteText}>{t('loot.opener.vacation')}</Text>
                   </View>
                 )}
 
                 {result.rewardType === 'crown' && (
                   <View style={[styles.specialNote, { backgroundColor: 'rgba(239, 68, 68, 0.3)' }]}>
-                    <Text style={styles.specialNoteText}>👑 Tu choisis le menu toute la semaine !</Text>
+                    <Text style={styles.specialNoteText}>{t('loot.opener.crown')}</Text>
                   </View>
                 )}
 
                 {result.rewardType === 'skip_all' && (
                   <View style={[styles.specialNote, { backgroundColor: 'rgba(245, 158, 11, 0.3)' }]}>
-                    <Text style={styles.specialNoteText}>🧹✨ Toutes les tâches de demain sont annulées !</Text>
+                    <Text style={styles.specialNoteText}>{t('loot.opener.skipAll')}</Text>
                   </View>
                 )}
 
                 {result.rewardType === 'family_bonus' && (
                   <View style={[styles.specialNote, { backgroundColor: 'rgba(245, 158, 11, 0.3)' }]}>
                     <Text style={styles.specialNoteText}>
-                      🌈✨ Toute la famille reçoit +{result.bonusPoints} pts !
+                      {t('loot.opener.familyBonus', { points: result.bonusPoints })}
                     </Text>
                   </View>
                 )}
@@ -1250,7 +1252,7 @@ export function LootBoxOpener({
                 onPress={handleClose}
               >
                 <Text style={styles.closeRewardText}>
-                  {isMythique ? '🔥 Incroyable ! Fermer' : 'Super ! Fermer'}
+                  {isMythique ? t('loot.opener.closeIncredible') : t('loot.opener.closeSuper')}
                 </Text>
               </TouchableOpacity>
             </View>

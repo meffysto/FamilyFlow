@@ -766,6 +766,24 @@
       "showDropRates": "Voir les probabilités de récompenses",
       "close": "Fermer",
       "closeDropRates": "Fermer les probabilités"
+    },
+    "opener": {
+      "available": "{{count}} disponible(s)",
+      "tapToOpen": "Appuyer pour ouvrir !",
+      "opening": "Ouverture en cours...",
+      "incredible": "INCROYABLE !",
+      "super": "SUPER !",
+      "seasonalExclusive": "{{emoji}} Exclusif {{name}}",
+      "bonusPoints": "+{{points}} pts bonus !",
+      "parentApproval": "À valider par un parent !",
+      "multiplier": "⚡ Multiplicateur ×{{multiplier}} activé pour {{tasks}} tâches !",
+      "doubleLoot": "🎁🎁 +2 loot boxes ajoutées !",
+      "vacation": "🏖️ 2 jours sans tâches activés !",
+      "crown": "👑 Tu choisis le menu toute la semaine !",
+      "skipAll": "🧹✨ Toutes les tâches de demain sont annulées !",
+      "familyBonus": "🌈✨ Toute la famille reçoit +{{points}} pts !",
+      "closeIncredible": "🔥 Incroyable ! Fermer",
+      "closeSuper": "Super ! Fermer"
     }
   },
   "defis": {
@@ -1048,7 +1066,23 @@
       "generating": "Génération en cours…",
       "generateBtn": "🤖 Générer le bilan",
       "configHint": "Configurez l'IA dans les réglages pour générer le bilan",
-      "unknownError": "Erreur inconnue"
+      "unknownError": "Erreur inconnue",
+      "weekLabel": "Semaine du {{startDay}} au {{endDay}} {{month}}",
+      "weekLabelCrossMonth": "Semaine du {{startDay}} {{startMonth}} au {{endDay}} {{endMonth}}",
+      "months": {
+        "0": "janvier",
+        "1": "février",
+        "2": "mars",
+        "3": "avril",
+        "4": "mai",
+        "5": "juin",
+        "6": "juillet",
+        "7": "août",
+        "8": "septembre",
+        "9": "octobre",
+        "10": "novembre",
+        "11": "décembre"
+      }
     },
     "budget": {
       "title": "Budget du mois",
@@ -1078,7 +1112,8 @@
       "title": "Défis familiaux",
       "days": "jours",
       "seeMore_one": "+{{count}} autre →",
-      "seeMore_other": "+{{count}} autres →"
+      "seeMore_other": "+{{count}} autres →",
+      "checkinToast": "Check-in {{emoji}} {{title}}"
     },
     "gratitude": {
       "title": "Gratitude",
@@ -1106,7 +1141,8 @@
       "almostChild": "Presque ! Plus que {{count}} tâche{{plural}} ! 🔥",
       "keepGoingChild": "Encore ~{{count}} tâches avant ton cadeau ! 💪",
       "almostAdult": "Plus que {{count}} tâche{{plural}} avant la loot box ! 🔥",
-      "keepGoingAdult": "~{{count}} tâches avant la prochaine loot box"
+      "keepGoingAdult": "~{{count}} tâches avant la prochaine loot box",
+      "streakBonus": "{{emoji}} +{{bonus}}/tâche"
     },
     "meals": {
       "title": "Repas du jour",
@@ -1777,7 +1813,14 @@
       "couches": "Couches",
       "hygieneSoins": "Hygiène & soins",
       "alimentation": "Alimentation"
-    }
+    },
+    "a11y": {
+      "decreaseQty": "Diminuer la quantité",
+      "increaseQty": "Augmenter la quantité",
+      "addToCourses": "Ajouter {{name}} aux courses",
+      "addProduct": "Ajouter un produit"
+    },
+    "title": "Stock"
   },
   "quotes": {
     "title": "💬 Mots d'enfants",
@@ -2207,7 +2250,23 @@
     "overdue": ", en retard"
   },
   "receiptReview": {
-    "categoryHint": "Appuyer pour changer la catégorie"
+    "categoryHint": "Appuyer pour changer la catégorie",
+    "title": "Vérifier le ticket",
+    "placeholder": {
+      "label": "Libellé"
+    },
+    "a11y": {
+      "itemLabel": "Libellé article {{index}}",
+      "itemAmount": "Montant article {{index}}",
+      "deleteItem": "Supprimer article {{label}}",
+      "category": "Catégorie : {{category}}"
+    },
+    "itemsDetected": "{{count}} article(s) détecté(s)",
+    "noItems": "Aucun article détecté",
+    "computedTotal": "Total calculé",
+    "receiptTotal": "Total ticket",
+    "difference": "Écart de {{amount}}",
+    "addAll": "Ajouter tout"
   },
   "index": {
     "alert": {
@@ -2224,7 +2283,9 @@
     },
     "toast": {
       "sendDone": "Envoi terminé !",
-      "taskError": "Impossible de modifier la tâche : {{error}}"
+      "taskError": "Impossible de modifier la tâche : {{error}}",
+      "taskCompleteLoot": "{{emoji}} Bravo {{name}} ! {{task}} → +{{points}} pts + 🎁",
+      "taskComplete": "{{emoji}} Bravo {{name}} ! {{task}} → +{{points}} pts"
     },
     "greeting": {
       "child": "Salut {{name}} ! 🌟",
@@ -2252,16 +2313,38 @@
     },
     "pregnancy": {
       "born": "Né(e) !",
-      "birthDatePrompt": "Date de naissance"
+      "birthDatePrompt": "Date de naissance",
+      "sa": "SA {{weeks}}",
+      "daysLeft": "J-{{days}}",
+      "today": "C'est pour aujourd'hui !",
+      "overdue": "J+{{days}} · terme dépassé",
+      "birthDateTitle": "Date de naissance",
+      "birthDatePlaceholder": "AAAA-MM-JJ"
     },
     "ageUpgrade": {
       "title": "{{name}} a grandi !",
       "description": "Profil « {{oldCategory}} » → « {{newCategory}} ». Mettre à jour les tâches ?",
       "update": "Mettre à jour",
-      "later": "Plus tard"
+      "later": "Plus tard",
+      "catLabels": {
+        "bebe": "bébé",
+        "petit": "petit enfant",
+        "enfant": "enfant",
+        "ado": "ado"
+      }
     },
     "profilePicker": {
       "title": "Changer de profil"
+    },
+    "recap": {
+      "weekTo": "📤 Recap semaine → {{name}}",
+      "monthTo": "📊 Bilan du mois → {{name}}",
+      "pregnancyTo": "🤰 Suivi grossesse → {{name}}",
+      "weekAll": "📤 Recap semaine → Tous",
+      "monthAll": "📊 Bilan du mois → Tous",
+      "pregnancyAll": "🤰 Suivi grossesse → Tous",
+      "weekChannel": "📤 Semaine → {{emoji}} {{name}}",
+      "cancel": "Annuler"
     }
   },
   "journal": {
@@ -2289,7 +2372,10 @@
       "deleteEntry": "Supprimer cette entrée",
       "cancelAction": "Annuler",
       "editAction": "Modifier",
-      "addAction": "Ajouter"
+      "addAction": "Ajouter",
+      "journalAvailable": ", journal disponible",
+      "today": ", aujourd'hui",
+      "selected": ", sélectionné"
     },
     "nav": {
       "today": "Aujourd'hui"
@@ -2304,7 +2390,13 @@
       "createBtn": "📝 Créer le journal du jour"
     },
     "stats": {
-      "title": "📊 Résumé du jour"
+      "title": "📊 Résumé du jour",
+      "bottle_one": "biberon",
+      "bottle_other": "biberons",
+      "breastfeed_one": "tétée",
+      "breastfeed_other": "tétées",
+      "diaper_one": "couche",
+      "diaper_other": "couches"
     },
     "sections": {
       "noObservation": "Aucune observation",
@@ -2317,6 +2409,46 @@
       "edit": "Modifier",
       "add": "Ajouter",
       "cancel": "Annuler"
+    },
+    "title": "Journal",
+    "myJournal": "Mon journal",
+    "weekdays": {
+      "mon": "L",
+      "tue": "M",
+      "wed": "M",
+      "thu": "J",
+      "fri": "V",
+      "sat": "S",
+      "sun": "D"
+    },
+    "fields": {
+      "hour": "Heure",
+      "hourPlaceholder": "HH:mm (auto si vide)",
+      "quantityMl": "Quantité (ml)",
+      "quantityMlPlaceholder": "ex: 180",
+      "notes": "Notes",
+      "notesPlaceholder": "Optionnel",
+      "type": "Type",
+      "typePlaceholder": "Mouillée / Souillée / Mixte",
+      "start": "Début",
+      "startPlaceholder": "HH:mm",
+      "end": "Fin",
+      "endPlaceholder": "HH:mm (vide si en cours)",
+      "duration": "Durée",
+      "durationPlaceholder": "Auto-calculée si début+fin",
+      "observation": "Observation",
+      "observationPlaceholder": "ex: Très joyeux ce matin, gazouille beaucoup",
+      "medication": "Médicament",
+      "medicationPlaceholder": "ex: Doliprane",
+      "dose": "Dose",
+      "dosePlaceholder": "ex: 2.5 ml"
+    },
+    "entryTypes": {
+      "bottle": "Biberon",
+      "diaper": "Couche",
+      "nap": "Sieste",
+      "note": "Note",
+      "medication": "Médic."
     }
   },
   "photosScreen": {
@@ -2380,6 +2512,30 @@
       "addRoutine": "Ajouter une routine",
       "routineStatus": "Routine {{label}}, {{done}} sur {{total}} étapes",
       "editRoutine": "Modifier {{label}}"
+    },
+    "timer": {
+      "pause": "⏸ Pause",
+      "start": "▶️ Démarrer",
+      "skip": "Passer ⏭"
+    },
+    "player": {
+      "routineComplete": "Routine terminée !",
+      "allStepsComplete": "Bravo, toutes les étapes sont complétées !",
+      "stepsProgress": "{{done}}/{{total}} étapes",
+      "stepNumber": "Étape {{step}}",
+      "stepDone": "✅ Fait !",
+      "stepFinish": "✓ Terminé"
+    },
+    "empty": {
+      "title": "Aucune routine",
+      "subtitle": "Créez des routines pour structurer la journée",
+      "cta": "Créer une routine"
+    },
+    "card": {
+      "steps": "{{count}} étapes",
+      "visual": "· 👶 Visuel",
+      "done": "✅ Fait",
+      "hint": "💡 Appui long sur une routine pour la réinitialiser. Touchez ✏️ pour modifier ou + pour en ajouter une nouvelle."
     }
   },
   "wishlist": {
@@ -2492,7 +2648,14 @@
       "search": "Rechercher une note…"
     },
     "childOnly": "Cette section est réservée aux adultes",
-    "deleteConfirm": "Supprimer « {{title}} » ?"
+    "deleteConfirm": "Supprimer « {{title}} » ?",
+    "empty": {
+      "noResults": "Aucun résultat",
+      "noNotes": "Aucune note",
+      "tryAnotherFilter": "Essayez un autre filtre",
+      "captureIdeas": "Capturez vos idées et informations",
+      "createNote": "Créer une note"
+    }
   },
   "rdvScreen": {
     "title": "📅 Rendez-vous",
@@ -2674,7 +2837,15 @@
     "moodAvg": "Moyenne : {{avg}}/5 {{emoji}}",
     "stockTitle": "📦 Stock à réapprovisionner",
     "stockSummary": "{{count}} produits en baisse",
-    "daysShort": ["L", "M", "M", "J", "V", "S", "D"]
+    "daysShort": [
+      "L",
+      "M",
+      "M",
+      "J",
+      "V",
+      "S",
+      "D"
+    ]
   },
   "skillsScreen": {
     "title": "Compétences",
@@ -2684,5 +2855,30 @@
     "a11y": {
       "changeBracket": "Changer la tranche d'âge"
     }
+  },
+  "overlays": {
+    "categoryComplete": {
+      "title": "Catégorie complétée !",
+      "message": "Bravo {{childName}} ! Toutes les compétences de cette catégorie sont débloquées !",
+      "close": "Super ! 🎊"
+    },
+    "allDone": {
+      "messageChild": "Bravo {{childName}} ! Tu as terminé tes {{count}} tâches !",
+      "messageGeneric": "Toutes les tâches du jour sont terminées !",
+      "title": "Journée terminée !",
+      "close": "Super ! 🎊"
+    }
+  },
+  "recipe": {
+    "servings": "{{count}} pers.",
+    "prep": "Prep {{time}}",
+    "cook": "Cuisson {{time}}",
+    "ingredients": "{{count}} ingrédient(s)"
+  },
+  "photos": {
+    "noPhotos": "Aucune photo",
+    "addFirstPhoto": "Ajoute ta première photo du jour !",
+    "retake": "📷 Reprendre",
+    "compare": "⚖️ Comparer"
   }
 }

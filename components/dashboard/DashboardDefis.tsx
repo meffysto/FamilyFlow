@@ -45,7 +45,7 @@ function DashboardDefisInner(_props: DashboardSectionProps) {
             style={[styles.defiCheckBtn, { backgroundColor: colors.warning }]}
             onPress={async () => {
               await checkInDefi(mainDefi.id, activeProfile.id, true);
-              showToast(`Check-in ${mainDefi.emoji} ${mainDefi.title}`);
+              showToast(t('dashboard.defis.checkinToast', { emoji: mainDefi.emoji, title: mainDefi.title }));
             }}
             activeOpacity={0.7}
           >
