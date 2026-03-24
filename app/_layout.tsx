@@ -13,9 +13,7 @@ import React, { useEffect, useState } from 'react';
 import { Redirect, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import * as SecureStore from 'expo-secure-store';
-import { VAULT_PATH_KEY } from '../contexts/VaultContext';
-import { VaultProvider } from '../contexts/VaultContext';
+import { VaultProvider, useVault } from '../contexts/VaultContext';
 import { View, Text, ActivityIndicator, StyleSheet, useColorScheme, TouchableOpacity } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { configureNotifications } from '../lib/scheduled-notifications';
@@ -90,9 +88,19 @@ function AuthLockOverlay() {
 // Un listener manuel ici CONFLIT avec le handler intégré (double navigation).
 // URL format widget : family-vault:///meals → extractExpoPathFromURL → "meals" → (tabs)/meals
 
+// ─── Redirection onboarding ─────────────────────────────────────────────────
+// Doit être DANS le VaultProvider pour réagir quand setVaultPath() est appelé
+// depuis setup.tsx. Sinon hasVault reste false et Redirect boucle vers /setup.
+function VaultRedirect({ langReady }: { langReady: boolean }) {
+  const { vaultPath, isLoading } = useVault();
+  // Attendre que le vault ait fini son init ET que la langue soit chargée
+  if (!langReady || isLoading) return null;
+  if (!vaultPath) return <Redirect href="/setup" />;
+  return null;
+}
+
 export default function RootLayout() {
-  const [isReady, setIsReady] = useState(false);
-  const [hasVault, setHasVault] = useState(false);
+  const [langReady, setLangReady] = useState(false);
   const systemScheme = useColorScheme();
 
   useEffect(() => {
@@ -100,9 +108,7 @@ export default function RootLayout() {
 
     (async () => {
       await loadSavedLanguage();
-      const stored = await SecureStore.getItemAsync(VAULT_PATH_KEY);
-      setHasVault(!!stored);
-      setIsReady(true);
+      setLangReady(true);
     })();
   }, []);
 
@@ -125,8 +131,8 @@ export default function RootLayout() {
                   <Stack.Screen name="setup" />
                   <Stack.Screen name="(tabs)" />
                 </Stack>
-                {isReady && !hasVault && <Redirect href="/setup" />}
-                {!isReady && (
+                <VaultRedirect langReady={langReady} />
+                {!langReady && (
                   <View style={[styles.loading, { backgroundColor: systemScheme === 'dark' ? '#0F172A' : '#F9FAFB' }]} pointerEvents="auto">
                     <ActivityIndicator size="large" color="#7C3AED" />
                   </View>
