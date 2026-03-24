@@ -50,7 +50,14 @@ export default function StatsScreen() {
   const { primary, colors } = useThemeColors();
   const { tasks, meals, profiles, refresh, rdvs, moods, stock } = useVault();
 
-  const allTasks = useMemo(() => [...tasks], [tasks]);
+  // Pas de copie inutile — tasks n'est jamais muté localement
+  const allTasks = tasks;
+
+  // Libellés jours localisés pour les graphes
+  const daysShort = useMemo(
+    () => t('statsScreen.daysShort', { returnObjects: true }) as string[],
+    [t],
+  );
 
   const enfantNames = useMemo(
     () => profiles.filter((p) => p.role === 'enfant').map((p) => p.name),
@@ -70,10 +77,13 @@ export default function StatsScreen() {
 
   // Section 1 : Tâches / semaine
   const taskData = useMemo(
-    () => aggregateTasksByWeek(allTasks, currentWeekStart),
-    [allTasks, currentWeekStart],
+    () => aggregateTasksByWeek(allTasks, currentWeekStart, daysShort),
+    [allTasks, currentWeekStart, daysShort],
   );
-  const totalTasks = taskData.reduce((sum, d) => sum + d.value, 0);
+  const totalTasks = useMemo(
+    () => taskData.reduce((sum, d) => sum + d.value, 0),
+    [taskData],
+  );
   const weekLabel = useMemo(() => {
     const end = new Date(currentWeekStart);
     end.setDate(end.getDate() + 6);
@@ -87,20 +97,26 @@ export default function StatsScreen() {
     () => aggregateBusiestDays(allTasks, rdvs),
     [allTasks, rdvs],
   );
-  const busiestDay = calendarData.length > 0
-    ? calendarData.reduce((max, d) => d.value > max.value ? d : max, calendarData[0])
-    : null;
+  const busiestDay = useMemo(
+    () => calendarData.length > 0
+      ? calendarData.reduce((max, d) => d.value > max.value ? d : max, calendarData[0])
+      : null,
+    [calendarData],
+  );
 
   // Section 3 : Humeurs
   const moodData = useMemo(() => aggregateMoodTrend(moods), [moods]);
-  const moodValid = moodData.filter((d) => d.value > 0);
-  const moodAvg = moodValid.length > 0
-    ? Math.round((moodValid.reduce((s, d) => s + d.value, 0) / moodValid.length) * 10) / 10
-    : 0;
+  const moodValid = useMemo(() => moodData.filter((d) => d.value > 0), [moodData]);
+  const moodAvg = useMemo(
+    () => moodValid.length > 0
+      ? Math.round((moodValid.reduce((s, d) => s + d.value, 0) / moodValid.length) * 10) / 10
+      : 0,
+    [moodValid],
+  );
 
   // Section 4 : Repas
   const mealData = useMemo(() => aggregateMealFrequency(meals), [meals]);
-  const topMeal = mealData.length > 0 ? mealData[0] : null;
+  const topMeal = useMemo(() => mealData.length > 0 ? mealData[0] : null, [mealData]);
 
   // Section 5 : Stock
   const stockData = useMemo(() => aggregateStockTurnover(stock), [stock]);

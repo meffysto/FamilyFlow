@@ -20,8 +20,9 @@ const MOIS_COURTS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', '
 
 /**
  * Tâches complétées par jour sur une semaine (lundi → dimanche)
+ * @param dayLabels — libellés courts des jours (lun→dim), par défaut FR
  */
-export function aggregateTasksByWeek(tasks: Task[], weekStart: Date): DataPoint[] {
+export function aggregateTasksByWeek(tasks: Task[], weekStart: Date, dayLabels = JOURS_COURTS): DataPoint[] {
   const counts = new Array(7).fill(0);
   const startMs = weekStart.getTime();
   const endMs = startMs + 7 * 86400000;
@@ -35,7 +36,7 @@ export function aggregateTasksByWeek(tasks: Task[], weekStart: Date): DataPoint[
     }
   }
 
-  return counts.map((count, i) => ({ label: JOURS_COURTS[i], value: count }));
+  return counts.map((count, i) => ({ label: dayLabels[i], value: count }));
 }
 
 /**
@@ -180,7 +181,7 @@ export function aggregateStockTurnover(stock: StockItem[], topN = 8): DataPoint[
     .filter((s) => s.tracked !== false && s.seuil > 0)
     .map((s) => ({
       label: s.produit.length > 14 ? s.produit.slice(0, 13) + '…' : s.produit,
-      value: s.seuil > 0 ? Math.max(0, s.seuil - s.quantite) : 0,
+      value: Math.max(0, s.seuil - s.quantite),
     }))
     .filter((d) => d.value > 0)
     .sort((a, b) => b.value - a.value)

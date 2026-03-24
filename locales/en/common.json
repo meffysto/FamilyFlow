@@ -2673,7 +2673,8 @@
     "moodTitle": "🌤️ Mood — 30 days",
     "moodAvg": "Average: {{avg}}/5 {{emoji}}",
     "stockTitle": "📦 Stock to replenish",
-    "stockSummary": "{{count}} products running low"
+    "stockSummary": "{{count}} products running low",
+    "daysShort": ["M", "T", "W", "T", "F", "S", "S"]
   },
   "skillsScreen": {
     "title": "Skills",

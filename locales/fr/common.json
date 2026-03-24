@@ -2673,7 +2673,8 @@
     "moodTitle": "🌤️ Humeurs — 30 jours",
     "moodAvg": "Moyenne : {{avg}}/5 {{emoji}}",
     "stockTitle": "📦 Stock à réapprovisionner",
-    "stockSummary": "{{count}} produits en baisse"
+    "stockSummary": "{{count}} produits en baisse",
+    "daysShort": ["L", "M", "M", "J", "V", "S", "D"]
   },
   "skillsScreen": {
     "title": "Compétences",
