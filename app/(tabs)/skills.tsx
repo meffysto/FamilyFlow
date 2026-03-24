@@ -71,6 +71,7 @@ export default function SkillsScreen() {
 
   // Profil enfant sélectionné (le premier par défaut, ou actif si c'est un enfant)
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
+  const [bracketPickerVisible, setBracketPickerVisible] = useState(false);
   const selectedChild = useMemo(() => {
     if (activeProfile && (activeProfile.role === 'enfant' || activeProfile.role === 'ado')) {
       return activeProfile;
@@ -191,8 +192,6 @@ export default function SkillsScreen() {
   const categoryForSkill = selectedSkill
     ? SKILL_CATEGORIES.find((c) => c.id === selectedSkill.categoryId)
     : null;
-
-  const [bracketPickerVisible, setBracketPickerVisible] = useState(false);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>

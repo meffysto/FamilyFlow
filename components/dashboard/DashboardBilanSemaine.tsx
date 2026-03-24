@@ -6,7 +6,7 @@
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Share } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -180,10 +180,19 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
   }, [config, tasks, meals, moods, quotes, defis, profiles, stock, weekStats]);
 
   // Partage du bilan
-  const handleShare = useCallback(() => {
-    // Le partage sera implémenté via le système de partage existant
-    // Pour l'instant, on peut utiliser Share.share() de React Native
-  }, [bilan]);
+  const handleShare = useCallback(async () => {
+    if (!bilan) return;
+    const lines = [
+      `📊 ${bilan.weekLabel}`,
+      '',
+      `✅ ${bilan.tasksCompleted} ${t('dashboard.bilanSemaine.tasks')}`,
+      `🍽️ ${bilan.mealsCookedCount} ${t('dashboard.bilanSemaine.meals')}`,
+      bilan.moodsAverage ? `🌤️ ${t('dashboard.bilanSemaine.mood')}: ${bilan.moodsAverage.toFixed(1)}/5` : '',
+      bilan.quote ? `💬 "${bilan.quote.citation}" — ${bilan.quote.enfant}` : '',
+      bilan.narrative ? `\n${bilan.narrative}` : '',
+    ].filter(Boolean);
+    await Share.share({ message: lines.join('\n') });
+  }, [bilan, t]);
 
   // ── Rendu état "généré" avec la carte complète ──
   if (state === 'generated' && bilan) {

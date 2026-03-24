@@ -342,7 +342,7 @@ export default function HealthScreen() {
   const { showToast } = useToast();
   const { t } = useTranslation();
 
-  const enfants = useMemo(() => profiles.filter(p => p.role === 'enfant'), [profiles]);
+  const enfants = useMemo(() => profiles.filter(p => p.role === 'enfant' || p.role === 'ado'), [profiles]);
   const [selectedEnfantId, setSelectedEnfantId] = useState<string>(enfants[0]?.id || '');
   const [activeTab, setActiveTab] = useState<TabId>('croissance');
   const { refreshing, onRefresh } = useRefresh(refresh);
