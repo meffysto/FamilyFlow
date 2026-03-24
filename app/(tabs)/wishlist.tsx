@@ -13,7 +13,10 @@ import {
   StyleSheet,
   TouchableOpacity,
   SectionList,
+  ScrollView,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
   TextInput,
   Alert,
   RefreshControl,
@@ -467,7 +470,8 @@ export default function WishlistScreen() {
             onRight={handleSave}
             rightDisabled={!editText.trim()}
           />
-          <View style={styles.editorContent}>
+          <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.editorContent} keyboardShouldPersistTaps="handled">
             {/* Texte */}
             <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>{t('wishlist.editor.wishLabel')}</Text>
             <TextInput
@@ -542,7 +546,8 @@ export default function WishlistScreen() {
               autoCapitalize="none"
               autoCorrect={false}
             />
-          </View>
+          </ScrollView>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
