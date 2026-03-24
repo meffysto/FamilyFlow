@@ -497,6 +497,19 @@ export default function WishlistScreen() {
               ))}
             </View>
 
+            {/* URL / Lien */}
+            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>{t('wishlist.editor.urlLabel')}</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
+              value={editUrl}
+              onChangeText={setEditUrl}
+              placeholder={t('wishlist.editor.urlPlaceholder')}
+              placeholderTextColor={colors.textFaint}
+              keyboardType="url"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+
             {/* Budget */}
             <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>{t('wishlist.editor.budget')}</Text>
             <View style={styles.chipRow}>
@@ -535,19 +548,6 @@ export default function WishlistScreen() {
               textAlignVertical="top"
             />
 
-            {/* URL / Lien */}
-            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>{t('wishlist.editor.urlLabel')}</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
-              value={editUrl}
-              onChangeText={setEditUrl}
-              placeholder={t('wishlist.editor.urlPlaceholder')}
-              placeholderTextColor={colors.textFaint}
-              keyboardType="url"
-              autoCapitalize="none"
-              autoCorrect={false}
-              onFocus={() => setTimeout(() => editorScrollRef.current?.scrollToEnd({ animated: true }), 300)}
-            />
           </ScrollView>
           </KeyboardAvoidingView>
         </SafeAreaView>
