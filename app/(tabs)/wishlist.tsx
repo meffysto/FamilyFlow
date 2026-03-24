@@ -17,6 +17,7 @@ import {
   TextInput,
   Alert,
   RefreshControl,
+  Linking,
 } from 'react-native';
 import { useRefresh } from '../../hooks/useRefresh';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -86,6 +87,7 @@ export default function WishlistScreen() {
   const [editBudget, setEditBudget] = useState<WishBudget>('');
   const [editOccasion, setEditOccasion] = useState<WishOccasion>('');
   const [editNotes, setEditNotes] = useState('');
+  const [editUrl, setEditUrl] = useState('');
 
   // Segments personne pour SegmentedControl
   const personSegments = useMemo(() => {
@@ -184,6 +186,7 @@ export default function WishlistScreen() {
       setEditBudget(item.budget);
       setEditOccasion(item.occasion);
       setEditNotes(item.notes);
+      setEditUrl(item.url || '');
     } else {
       setEditingItem(null);
       setEditText('');
@@ -191,6 +194,7 @@ export default function WishlistScreen() {
       setEditBudget('');
       setEditOccasion('');
       setEditNotes('');
+      setEditUrl('');
     }
     setEditorVisible(true);
   }, [activeProfile, profiles]);
@@ -204,15 +208,16 @@ export default function WishlistScreen() {
         budget: editBudget,
         occasion: editOccasion,
         notes: editNotes.trim(),
+        url: editUrl.trim(),
       });
       showToast(t('wishlist.toast.modified'));
     } else {
-      await addWishItem(editText.trim(), editProfile, editBudget, editOccasion, editNotes.trim());
+      await addWishItem(editText.trim(), editProfile, editBudget, editOccasion, editNotes.trim(), editUrl.trim());
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       showToast(t('wishlist.toast.added'));
     }
     setEditorVisible(false);
-  }, [editText, editProfile, editBudget, editOccasion, editNotes, editingItem, updateWishItem, addWishItem, showToast]);
+  }, [editText, editProfile, editBudget, editOccasion, editNotes, editUrl, editingItem, updateWishItem, addWishItem, showToast]);
 
   const handleDelete = useCallback(async (item: WishlistItem) => {
     Alert.alert(t('wishlist.alert.deleteTitle'), item.text, [
@@ -374,16 +379,31 @@ export default function WishlistScreen() {
                     </View>
 
                     <View style={styles.itemContent}>
-                      <Text
-                        style={[
-                          styles.itemText,
-                          { color: colors.text },
-                          item.bought && { textDecorationLine: 'line-through', color: colors.textFaint },
-                        ]}
-                        numberOfLines={1}
-                      >
-                        {item.text}
-                      </Text>
+                      <View style={styles.itemTextRow}>
+                        <Text
+                          style={[
+                            styles.itemText,
+                            { color: colors.text, flex: 1 },
+                            item.bought && { textDecorationLine: 'line-through', color: colors.textFaint },
+                          ]}
+                          numberOfLines={1}
+                        >
+                          {item.text}
+                        </Text>
+                        {item.url ? (
+                          <TouchableOpacity
+                            onPress={(e) => {
+                              e.stopPropagation?.();
+                              Linking.openURL(item.url);
+                            }}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            accessibilityLabel={t('wishlist.openLink')}
+                            accessibilityRole="link"
+                          >
+                            <Text style={[styles.linkIcon, { color: primary }]}>🔗</Text>
+                          </TouchableOpacity>
+                        ) : null}
+                      </View>
                       {item.notes ? (
                         <Text style={[styles.itemNotes, { color: colors.textMuted }]} numberOfLines={1}>
                           {item.notes}
@@ -509,6 +529,19 @@ export default function WishlistScreen() {
               multiline
               textAlignVertical="top"
             />
+
+            {/* URL / Lien */}
+            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>{t('wishlist.editor.urlLabel')}</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
+              value={editUrl}
+              onChangeText={setEditUrl}
+              placeholder={t('wishlist.editor.urlPlaceholder')}
+              placeholderTextColor={colors.textFaint}
+              keyboardType="url"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
           </View>
         </SafeAreaView>
       </Modal>
@@ -629,7 +662,9 @@ const styles = StyleSheet.create({
   },
   wishIconEmoji: { fontSize: 20 },
   itemContent: { flex: 1, gap: Spacing.xs },
+  itemTextRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   itemText: { fontSize: FontSize.body, fontWeight: FontWeight.semibold },
+  linkIcon: { fontSize: 16 },
   itemNotes: { fontSize: FontSize.sm },
   itemBadges: { flexDirection: 'row', gap: Spacing.sm },
   budgetPill: {

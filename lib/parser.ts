@@ -1163,6 +1163,14 @@ export function parseWishlist(content: string): WishlistItem[] {
       notes = notesAndBought.replace(/\|?\s*🔒\s*.+$/, '').trim();
     }
 
+    // Extraire 🔗 URL
+    let url = '';
+    const urlMatch = notes.match(/🔗\s*(https?:\/\/\S+)/);
+    if (urlMatch) {
+      url = urlMatch[1].trim();
+      notes = notes.replace(/🔗\s*https?:\/\/\S+/, '').trim();
+    }
+
     // Normaliser budget
     let budget: WishBudget = '';
     if (budgetRaw.includes('💰💰💰')) budget = '💰💰💰';
@@ -1180,6 +1188,7 @@ export function parseWishlist(content: string): WishlistItem[] {
       budget,
       occasion,
       notes,
+      url,
       bought,
       boughtBy,
       profileName: currentProfile,
@@ -1218,8 +1227,11 @@ export function serializeWishlist(items: WishlistItem[]): string {
       segments.push(item.budget || '');
       segments.push(item.occasion || '');
 
-      // Notes + bought
+      // Notes + URL + bought
       let extra = item.notes || '';
+      if (item.url) {
+        extra = extra ? `${extra} 🔗 ${item.url}` : `🔗 ${item.url}`;
+      }
       if (item.bought && item.boughtBy) {
         extra = extra ? `${extra} | 🔒 ${item.boughtBy}` : `🔒 ${item.boughtBy}`;
       }

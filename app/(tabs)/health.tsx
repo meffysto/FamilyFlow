@@ -739,8 +739,33 @@ function VaccinsTab({ record, onAdd }: { record: HealthRecord; onAdd: () => void
     return Array.from(map.entries());
   }, [record.vaccins]);
 
+  // Prochain vaccin non enregistré
+  const nextMissingVaccine = useMemo(() => {
+    const recordedNames = new Set(record.vaccins.map(v => v.nom));
+    return COMMON_VACCINES.find(v => !recordedNames.has(v)) || null;
+  }, [record.vaccins]);
+
+  const allVaccinesDone = record.vaccins.length > 0 && !nextMissingVaccine;
+
   return (
     <View style={styles.tabContent}>
+      {/* Bannière prochain vaccin */}
+      {(nextMissingVaccine || allVaccinesDone) && (
+        <View style={[
+          styles.vaccineBanner,
+          {
+            backgroundColor: allVaccinesDone ? colors.successBg : colors.warningBg,
+            borderLeftColor: allVaccinesDone ? colors.success : colors.warning,
+          },
+        ]}>
+          <Text style={[styles.vaccineBannerText, { color: colors.text }]} numberOfLines={1}>
+            {allVaccinesDone
+              ? t('health.vaccines.allDone')
+              : t('health.vaccines.nextDue', { name: nextMissingVaccine })}
+          </Text>
+        </View>
+      )}
+
       <View style={styles.sectionHeader}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>
           {t('health.vaccines.record', { count: record.vaccins.length })}
@@ -966,6 +991,22 @@ const styles = StyleSheet.create({
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
     textTransform: 'uppercase',
+  },
+
+  // Bannière prochain vaccin
+  vaccineBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.lg,
+    borderLeftWidth: 3,
+    marginBottom: Spacing.lg,
+  },
+  vaccineBannerText: {
+    flex: 1,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
 
   // Vaccins

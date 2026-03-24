@@ -413,6 +413,7 @@ export interface WishlistItem {
   budget: WishBudget;
   occasion: WishOccasion;
   notes: string;
+  url: string;             // lien produit (Amazon, etc.)
   bought: boolean;
   boughtBy: string;        // profileName du parent qui a acheté
   profileName: string;     // propriétaire du souhait (section ##)

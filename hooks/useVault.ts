@@ -220,7 +220,7 @@ export interface VaultState {
   addGratitudeEntry: (date: string, profileId: string, profileName: string, text: string) => Promise<void>;
   deleteGratitudeEntry: (date: string, profileId: string) => Promise<void>;
   wishlistItems: WishlistItem[];
-  addWishItem: (text: string, profileName: string, budget?: WishBudget, occasion?: WishOccasion, notes?: string) => Promise<void>;
+  addWishItem: (text: string, profileName: string, budget?: WishBudget, occasion?: WishOccasion, notes?: string, url?: string) => Promise<void>;
   updateWishItem: (item: WishlistItem, updates: Partial<WishlistItem>) => Promise<void>;
   deleteWishItem: (item: WishlistItem) => Promise<void>;
   toggleWishBought: (item: WishlistItem, boughtBy: string) => Promise<void>;
@@ -2571,7 +2571,7 @@ export function useVaultInternal(): VaultState {
     }
   }, []);
 
-  const addWishItem = useCallback(async (text: string, profileName: string, budget?: WishBudget, occasion?: WishOccasion, notes?: string) => {
+  const addWishItem = useCallback(async (text: string, profileName: string, budget?: WishBudget, occasion?: WishOccasion, notes?: string, url?: string) => {
     if (!vaultRef.current) return;
     const items = await reloadWishlist();
     const newItem: WishlistItem = {
@@ -2580,6 +2580,7 @@ export function useVaultInternal(): VaultState {
       budget: budget || '',
       occasion: occasion || '',
       notes: notes || '',
+      url: url || '',
       bought: false,
       boughtBy: '',
       profileName,

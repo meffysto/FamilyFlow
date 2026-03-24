@@ -470,7 +470,9 @@
       "addVaccine": "+ Vaccine",
       "noVaccines": "No vaccines recorded.",
       "dose_one": "{{count}} dose",
-      "dose_other": "{{count}} doses"
+      "dose_other": "{{count}} doses",
+      "nextDue": "💉 Next vaccine due: {{name}}",
+      "allDone": "✅ All vaccines up to date"
     },
     "info": {
       "medicalRecord": "Medical record",
@@ -2572,7 +2574,9 @@
       "occasionBirthday": "🎂 Birthday",
       "occasionChristmas": "🎄 Christmas",
       "notesLabel": "Notes (optional)",
-      "notesPlaceholder": "E.g.: Decathlon, size 24 inches"
+      "notesPlaceholder": "E.g.: Decathlon, size 24 inches",
+      "urlLabel": "🔗 Link",
+      "urlPlaceholder": "https://..."
     },
     "addBtn": "+ Add",
     "all": "All",
@@ -2587,7 +2591,8 @@
     "sectionBought_one": "{{count}} bought",
     "sectionBought_other": "{{count}} bought",
     "sectionWish_one": "{{count}} wish",
-    "sectionWish_other": "{{count}} wishes"
+    "sectionWish_other": "{{count}} wishes",
+    "openLink": "Open link"
   },
   "gratitude": {
     "title": "Gratitude",
