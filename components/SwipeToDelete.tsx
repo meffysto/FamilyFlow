@@ -128,7 +128,7 @@ export function SwipeToDelete({
       onSwipeableOpen={(direction) => {
         if (direction === 'right') handleDelete();
       }}
-      overshootRight={false}
+      overshootRight={true}
       rightThreshold={60}
       friction={2}
     >
