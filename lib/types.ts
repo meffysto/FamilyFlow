@@ -76,6 +76,8 @@ export interface Profile {
   dateTerme?: string;        // YYYY-MM-DD expected due date (grossesse only)
   theme?: import('../constants/themes').ProfileTheme;  // visual theme
   treeSpecies?: import('../lib/mascot/types').TreeSpecies; // espèce d'arbre mascotte
+  mascotDecorations: string[];   // IDs des décorations achetées
+  mascotInhabitants: string[];   // IDs des habitants achetés
   points: number;
   level: number;
   streak: number;
@@ -117,6 +119,7 @@ export interface LootBox {
   rewardType?: RewardType;  // type of reward for active rewards
   openedAt?: string;        // ISO timestamp
   seasonal?: string;        // event id si reward saisonnière (ex: 'halloween', 'noel')
+  mascotItemId?: string;    // ID de la décoration/habitant droppé
 }
 
 export interface RewardDefinition {
@@ -127,6 +130,7 @@ export interface RewardDefinition {
   multiplier?: number;
   multiplierTasks?: number;  // how many tasks for multiplier rewards
   rewardType: RewardType;
+  mascotItemId?: string;     // ID de la décoration/habitant pour drops mascotte
 }
 
 export interface GamificationEntry {
@@ -259,7 +263,9 @@ export type RewardType =
   | 'vacation'
   | 'crown'
   | 'family_bonus'
-  | 'double_loot';
+  | 'double_loot'
+  | 'mascot_deco'
+  | 'mascot_hab';
 
 export interface ActiveReward {
   id: string;

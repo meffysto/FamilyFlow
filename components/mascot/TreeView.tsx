@@ -18,6 +18,7 @@ import Svg, {
   LinearGradient,
   Stop,
   Rect,
+  Text as SvgText,
 } from 'react-native-svg';
 import Animated, {
   useSharedValue,
@@ -35,6 +36,8 @@ import {
   type TreeSpecies,
   type TreeStage,
   SPECIES_INFO,
+  DECORATIONS,
+  INHABITANTS,
 } from '../../lib/mascot/types';
 import {
   getTreeStage,
@@ -51,6 +54,8 @@ interface TreeViewProps {
   size?: number;         // largeur/hauteur du viewport (défaut 200)
   showGround?: boolean;  // afficher le sol (défaut true)
   interactive?: boolean; // animations idle (défaut true)
+  decorations?: string[];  // IDs des décorations achetées
+  inhabitants?: string[];  // IDs des habitants achetés
 }
 
 // ── Constantes géométrie ───────────────────────
@@ -62,7 +67,7 @@ const CENTER_X = 100;
 
 // ── Composant principal ────────────────────────
 
-function TreeViewInner({ species, level, size = 200, showGround = true, interactive = true }: TreeViewProps) {
+function TreeViewInner({ species, level, size = 200, showGround = true, interactive = true, decorations = [], inhabitants = [] }: TreeViewProps) {
   const stage = getTreeStage(level);
   const progress = getStageProgress(level);
   const stageIdx = getStageIndex(level);
@@ -194,6 +199,16 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
           )}
 
           {treeElements}
+
+          {/* Décorations achetées */}
+          {decorations.length > 0 && stageIdx >= 1 && (
+            <DecorationOverlay decorationIds={decorations} stageIdx={stageIdx} />
+          )}
+
+          {/* Habitants achetés */}
+          {inhabitants.length > 0 && stageIdx >= 1 && (
+            <InhabitantOverlay inhabitantIds={inhabitants} stageIdx={stageIdx} />
+          )}
         </Svg>
       </Animated.View>
     </View>
@@ -980,5 +995,84 @@ const styles = StyleSheet.create({
     overflow: 'visible',
   },
 });
+
+// ── Positions des décorations sur l'arbre ─────
+
+/** Positions fixes (SVG coords) pour chaque décoration selon son id */
+const DECO_POSITIONS: Record<string, { x: number; y: number; fontSize: number }> = {
+  balancoire:  { x: 150, y: 145, fontSize: 16 },  // branche droite
+  cabane:      { x: 100, y: 75,  fontSize: 18 },   // haut du tronc
+  guirlandes:  { x: 100, y: 110, fontSize: 14 },   // milieu couronne
+  lanterne:    { x: 55,  y: 130, fontSize: 14 },    // branche gauche
+  nid:         { x: 135, y: 95,  fontSize: 14 },    // branche droite haute
+  hamac:       { x: 60,  y: 170, fontSize: 16 },    // entre tronc et sol
+  fontaine:    { x: 155, y: 195, fontSize: 16 },    // au pied
+  couronne:    { x: 100, y: 52,  fontSize: 18 },    // sommet
+};
+
+const HAB_POSITIONS: Record<string, { x: number; y: number; fontSize: number }> = {
+  oiseau:      { x: 140, y: 80,  fontSize: 14 },
+  ecureuil:    { x: 115, y: 150, fontSize: 14 },
+  papillons:   { x: 55,  y: 90,  fontSize: 12 },
+  coccinelle:  { x: 125, y: 130, fontSize: 10 },
+  chat:        { x: 45,  y: 195, fontSize: 16 },
+  hibou:       { x: 70,  y: 85,  fontSize: 14 },
+  fee:         { x: 150, y: 70,  fontSize: 14 },
+  dragon:      { x: 100, y: 45,  fontSize: 18 },
+};
+
+function DecorationOverlay({ decorationIds, stageIdx }: { decorationIds: string[]; stageIdx: number }) {
+  return (
+    <G>
+      {decorationIds.map((id) => {
+        const deco = DECORATIONS.find((d) => d.id === id);
+        if (!deco) return null;
+        const minIdx = ['graine','pousse','arbuste','arbre','majestueux','legendaire'].indexOf(deco.minStage);
+        if (stageIdx < minIdx) return null;
+        const pos = DECO_POSITIONS[id];
+        if (!pos) return null;
+        return (
+          <SvgText
+            key={id}
+            x={pos.x}
+            y={pos.y}
+            fontSize={pos.fontSize}
+            textAnchor="middle"
+            alignmentBaseline="central"
+          >
+            {deco.emoji}
+          </SvgText>
+        );
+      })}
+    </G>
+  );
+}
+
+function InhabitantOverlay({ inhabitantIds, stageIdx }: { inhabitantIds: string[]; stageIdx: number }) {
+  return (
+    <G>
+      {inhabitantIds.map((id) => {
+        const hab = INHABITANTS.find((h) => h.id === id);
+        if (!hab) return null;
+        const minIdx = ['graine','pousse','arbuste','arbre','majestueux','legendaire'].indexOf(hab.minStage);
+        if (stageIdx < minIdx) return null;
+        const pos = HAB_POSITIONS[id];
+        if (!pos) return null;
+        return (
+          <SvgText
+            key={id}
+            x={pos.x}
+            y={pos.y}
+            fontSize={pos.fontSize}
+            textAnchor="middle"
+            alignmentBaseline="central"
+          >
+            {hab.emoji}
+          </SvgText>
+        );
+      })}
+    </G>
+  );
+}
 
 export const TreeView = React.memo(TreeViewInner);

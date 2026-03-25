@@ -71,8 +71,10 @@ import {
   parseSecretMissions,
   serializeSecretMissions,
 } from '../lib/parser';
-import { processActiveRewards, addPoints } from '../lib/gamification';
+import { processActiveRewards, addPoints, calculateLevel } from '../lib/gamification';
 import { XP_PER_BRACKET, getSkillById } from '../lib/gamification/skill-tree';
+import { DECORATIONS, INHABITANTS, TREE_STAGES } from '../lib/mascot/types';
+import { getStageIndex } from '../lib/mascot/engine';
 import { Task, RDV, CourseItem, MealItem, StockItem, Profile, Gender, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, DefiDayEntry, GratitudeDay, WishlistItem, WishBudget, WishOccasion, Anniversary, Note, SkillTreeData, ChildQuote, MoodEntry, MoodLevel } from '../lib/types';
 import {
   parseBudgetConfig,
@@ -148,6 +150,7 @@ export interface VaultState {
   getPhotoUri: (enfantName: string, date: string) => string | null;
   updateProfileTheme: (profileId: string, theme: ProfileTheme) => Promise<void>;
   updateTreeSpecies: (profileId: string, species: string) => Promise<void>;
+  buyMascotItem: (profileId: string, itemId: string, itemType: 'decoration' | 'inhabitant') => Promise<void>;
   updateProfile: (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string; propre?: boolean; gender?: Gender }) => Promise<void>;
   deleteProfile: (profileId: string) => Promise<void>;
   updateStockQuantity: (lineIndex: number, newQuantity: number) => Promise<void>;
@@ -1266,6 +1269,91 @@ export function useVaultInternal(): VaultState {
       throw new Error(`updateTreeSpecies: ${e}`);
     }
   }, []);
+
+  /** Acheter une décoration ou un habitant pour l'arbre mascotte */
+  const buyMascotItem = useCallback(async (profileId: string, itemId: string, itemType: 'decoration' | 'inhabitant') => {
+    if (!vaultRef.current) return;
+
+    const catalog = itemType === 'decoration' ? DECORATIONS : INHABITANTS;
+    const item = catalog.find((d: any) => d.id === itemId);
+    if (!item) throw new Error(`Item ${itemId} non trouvé`);
+
+    const profile = profiles.find((p) => p.id === profileId);
+    if (!profile) throw new Error(`Profil ${profileId} non trouvé`);
+
+    // Vérifier si déjà acheté
+    const owned = itemType === 'decoration' ? profile.mascotDecorations : profile.mascotInhabitants;
+    if (owned.includes(itemId)) throw new Error(`${itemId} déjà acheté`);
+
+    // Vérifier le stade minimum
+    const level = calculateLevel(profile.points);
+    const currentStageIdx = getStageIndex(level);
+    const minStageIdx = TREE_STAGES.findIndex((s: any) => s.stage === item.minStage);
+    if (currentStageIdx < minStageIdx) throw new Error(`Stade insuffisant`);
+
+    // Vérifier les points
+    if (profile.points < item.cost) throw new Error(`Points insuffisants`);
+
+    try {
+      // 1. Déduire les points dans gamification.md
+      const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
+      const gami = parseGamification(gamiContent);
+      const gamiProfile = gami.profiles.find((p) => p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase());
+      if (gamiProfile) {
+        gamiProfile.points -= item.cost;
+        gamiProfile.level = calculateLevel(gamiProfile.points);
+        gami.history.push({
+          profileId,
+          action: `-${item.cost}`,
+          points: -item.cost,
+          note: `${item.emoji} Achat : ${itemId} (${itemType})`,
+          timestamp: new Date().toISOString(),
+        });
+      }
+      await vaultRef.current.writeFile(GAMI_FILE, serializeGamification(gami));
+
+      // 2. Ajouter l'item dans famille.md
+      const content = await vaultRef.current.readFile(FAMILLE_FILE);
+      const lines = content.split('\n');
+      let inSection = false;
+      let fieldLine = -1;
+      let lastPropIdx = -1;
+      const fieldKey = itemType === 'decoration' ? 'mascot_decorations' : 'mascot_inhabitants';
+
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].startsWith('### ')) {
+          if (inSection) break;
+          if (lines[i].replace('### ', '').trim() === profileId) {
+            inSection = true;
+          }
+        } else if (inSection && lines[i].includes(': ')) {
+          lastPropIdx = i;
+          if (lines[i].trim().startsWith(`${fieldKey}:`)) {
+            fieldLine = i;
+          }
+        }
+      }
+
+      const newList = [...owned, itemId];
+      const newValue = `${fieldKey}: ${newList.join(',')}`;
+
+      if (fieldLine >= 0) {
+        lines[fieldLine] = newValue;
+      } else if (lastPropIdx >= 0) {
+        lines.splice(lastPropIdx + 1, 0, newValue);
+      }
+
+      const familleStr = lines.join('\n');
+      await vaultRef.current.writeFile(FAMILLE_FILE, familleStr);
+
+      // 3. Mettre à jour l'état local
+      const gamiStr = serializeGamification(gami);
+      setProfiles(mergeProfiles(familleStr, gamiStr));
+      setGamiData(gami);
+    } catch (e) {
+      throw new Error(`buyMascotItem: ${e}`);
+    }
+  }, [profiles]);
 
   const updateProfile = useCallback(async (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string; propre?: boolean; gender?: Gender }) => {
     if (!vaultRef.current) return;
@@ -3003,6 +3091,7 @@ export function useVaultInternal(): VaultState {
     getPhotoUri,
     updateProfileTheme,
     updateTreeSpecies,
+    buyMascotItem,
     updateProfile,
     deleteProfile,
     updateStockQuantity,
@@ -3111,7 +3200,7 @@ export function useVaultInternal(): VaultState {
     quotes, moods, skillTrees, secretMissions,
     // Callbacks (stables grâce à useCallback)
     refresh, setVaultPath, setActiveProfile, saveNotifPrefs, updateMeal, loadMealsForWeek,
-    addPhoto, getPhotoUri, updateProfileTheme, updateProfile, deleteProfile,
+    addPhoto, getPhotoUri, updateProfileTheme, buyMascotItem, updateProfile, deleteProfile,
     updateStockQuantity, addStockItem, deleteStockItem, updateStockItem,
     toggleTask, addRDV, updateRDV, deleteRDV, addTask, editTask, deleteTask,
     addCourseItem, mergeCourseIngredients, toggleCourseItem, removeCourseItem, moveCourseItem,

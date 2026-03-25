@@ -32,6 +32,8 @@ function makeProfile(name: string, role: Profile['role']): Profile {
     multiplier: 1,
     multiplierRemaining: 0,
     pityCounter: 0,
+    mascotDecorations: [],
+    mascotInhabitants: [],
   };
 }
 

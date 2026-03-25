@@ -3238,6 +3238,28 @@
       "hibou": "Hibou sage",
       "fee": "Fée des bois",
       "dragon": "Dragon légendaire"
+    },
+    "shop": {
+      "title": "Boutique de l'arbre",
+      "decorations": "Décorations",
+      "inhabitants": "Habitants",
+      "buy": "Acheter",
+      "owned": "Acheté",
+      "locked": "Débloqué au stade {{stage}}",
+      "notEnoughPoints": "Points insuffisants",
+      "buyConfirm": "Acheter {{item}} pour {{cost}} pts ?",
+      "buySuccess": "{{item}} acheté ! Il apparaît sur ton arbre.",
+      "points": "{{count}} pts",
+      "yourPoints": "Tes points : {{count}}",
+      "rarity": {
+        "commun": "Commun",
+        "rare": "Rare",
+        "épique": "Épique",
+        "légendaire": "Légendaire"
+      },
+      "emptyDeco": "Aucune décoration disponible à ton stade actuel.",
+      "emptyHab": "Aucun habitant disponible à ton stade actuel.",
+      "lootDrop": "{{item}} trouvé dans la loot box !"
     }
   }
 }

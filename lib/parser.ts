@@ -547,6 +547,12 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'level' 
       const treeSpecies = currentProps.tree_species && validSpecies.has(currentProps.tree_species)
         ? (currentProps.tree_species as Profile['treeSpecies'])
         : undefined;
+      const mascotDecorations = currentProps.mascot_decorations
+        ? currentProps.mascot_decorations.split(',').map((s: string) => s.trim()).filter(Boolean)
+        : [];
+      const mascotInhabitants = currentProps.mascot_inhabitants
+        ? currentProps.mascot_inhabitants.split(',').map((s: string) => s.trim()).filter(Boolean)
+        : [];
       profiles.push({
         id: currentId,
         name: currentProps.name,
@@ -560,6 +566,8 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'level' 
         dateTerme: currentProps.dateTerme,
         theme,
         treeSpecies,
+        mascotDecorations,
+        mascotInhabitants,
       });
     }
   };
@@ -616,6 +624,8 @@ export function parseGamification(content: string): GamificationData {
         name: currentName,
         role: 'adulte',
         avatar: '👤',
+        mascotDecorations: [],
+        mascotInhabitants: [],
         points: parseInt(currentProps.points ?? '0', 10),
         level: parseInt(currentProps.level ?? '1', 10),
         streak: parseInt(currentProps.streak ?? '0', 10),

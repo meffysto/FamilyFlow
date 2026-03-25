@@ -3238,6 +3238,28 @@
       "hibou": "Wise owl",
       "fee": "Forest fairy",
       "dragon": "Legendary dragon"
+    },
+    "shop": {
+      "title": "Tree Shop",
+      "decorations": "Decorations",
+      "inhabitants": "Inhabitants",
+      "buy": "Buy",
+      "owned": "Owned",
+      "locked": "Unlocked at {{stage}} stage",
+      "notEnoughPoints": "Not enough points",
+      "buyConfirm": "Buy {{item}} for {{cost}} pts?",
+      "buySuccess": "{{item}} purchased! It now appears on your tree.",
+      "points": "{{count}} pts",
+      "yourPoints": "Your points: {{count}}",
+      "rarity": {
+        "commun": "Common",
+        "rare": "Rare",
+        "épique": "Epic",
+        "légendaire": "Legendary"
+      },
+      "emptyDeco": "No decorations available at your current stage.",
+      "emptyHab": "No inhabitants available at your current stage.",
+      "lootDrop": "{{item}} found in the loot box!"
     }
   }
 }

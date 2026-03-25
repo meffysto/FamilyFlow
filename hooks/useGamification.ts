@@ -140,6 +140,37 @@ export function useGamification({ vault, notifPrefs, onDataChange }: UseGamifica
 
         await vault.writeFile(GAMI_FILE, serializeGamification(newData));
 
+        // Persister les items mascotte droppés dans famille.md
+        if (box.mascotItemId && (box.rewardType === 'mascot_deco' || box.rewardType === 'mascot_hab')) {
+          try {
+            const familleRaw = await vault.readFile(FAMILLE_FILE);
+            const lines = familleRaw.split('\n');
+            const fieldKey = box.rewardType === 'mascot_deco' ? 'mascot_decorations' : 'mascot_inhabitants';
+            const list = box.rewardType === 'mascot_deco' ? updatedProfile.mascotDecorations : updatedProfile.mascotInhabitants;
+            let inSection = false;
+            let fieldLine = -1;
+            let lastPropIdx = -1;
+
+            for (let i = 0; i < lines.length; i++) {
+              if (lines[i].startsWith('### ')) {
+                if (inSection) break;
+                if (lines[i].replace('### ', '').trim() === profile.id) inSection = true;
+              } else if (inSection && lines[i].includes(': ')) {
+                lastPropIdx = i;
+                if (lines[i].trim().startsWith(`${fieldKey}:`)) fieldLine = i;
+              }
+            }
+
+            const newValue = `${fieldKey}: ${list.join(',')}`;
+            if (fieldLine >= 0) {
+              lines[fieldLine] = newValue;
+            } else if (lastPropIdx >= 0) {
+              lines.splice(lastPropIdx + 1, 0, newValue);
+            }
+            await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
+          } catch {}
+        }
+
         if (onDataChange) {
           const familleContent = await vault.readFile(FAMILLE_FILE);
           const merged = mergeProfiles(familleContent, serializeGamification(newData));

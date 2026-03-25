@@ -91,6 +91,8 @@ function creerProfil(overrides: Partial<Profile> = {}): Profile {
     multiplier: 1,
     multiplierRemaining: 0,
     pityCounter: 0,
+    mascotDecorations: [],
+    mascotInhabitants: [],
     ...overrides,
   };
 }

@@ -177,9 +177,21 @@ export function openLootBox(
 
   // Tenter un drop saisonnier (20% de chance si événement actif)
   const seasonalDraw = trySeasonalDraw(rarity);
-  const rewardDef: RewardDefinition = seasonalDraw
+  let rewardDef: RewardDefinition = seasonalDraw
     ? seasonalDraw.reward
     : REWARDS[rarity][Math.floor(Math.random() * REWARDS[rarity].length)];
+
+  // Si c'est un item mascotte déjà possédé, re-draw un reward non-mascotte
+  if (rewardDef.mascotItemId) {
+    const owned = rewardDef.rewardType === 'mascot_deco'
+      ? profile.mascotDecorations
+      : profile.mascotInhabitants;
+    if (owned.includes(rewardDef.mascotItemId)) {
+      const nonMascot = REWARDS[rarity].filter((r) => !r.mascotItemId);
+      rewardDef = nonMascot[Math.floor(Math.random() * nonMascot.length)];
+    }
+  }
+
   const seasonalEventId = seasonalDraw?.eventId;
 
   const now = new Date().toISOString();
@@ -195,6 +207,7 @@ export function openLootBox(
     rewardType: rewardDef.rewardType,
     openedAt: now,
     seasonal: seasonalEventId,
+    mascotItemId: rewardDef.mascotItemId,
   };
 
   const seasonalTag = seasonalEventId ? ` [${seasonalEventId}]` : '';
@@ -320,6 +333,26 @@ export function openLootBox(
     case 'family_bonus': {
       // family_bonus is handled at the caller level (useGamification)
       // We just mark it so the caller knows to apply it
+      break;
+    }
+    case 'mascot_deco': {
+      // Ajouter la décoration au profil si pas déjà possédée
+      if (rewardDef.mascotItemId && !updatedProfile.mascotDecorations.includes(rewardDef.mascotItemId)) {
+        updatedProfile = {
+          ...updatedProfile,
+          mascotDecorations: [...updatedProfile.mascotDecorations, rewardDef.mascotItemId],
+        };
+      }
+      break;
+    }
+    case 'mascot_hab': {
+      // Ajouter l'habitant au profil si pas déjà possédé
+      if (rewardDef.mascotItemId && !updatedProfile.mascotInhabitants.includes(rewardDef.mascotItemId)) {
+        updatedProfile = {
+          ...updatedProfile,
+          mascotInhabitants: [...updatedProfile.mascotInhabitants, rewardDef.mascotItemId],
+        };
+      }
       break;
     }
     // 'points', 'badge', 'reward' don't create active rewards

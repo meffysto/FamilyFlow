@@ -35,6 +35,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { TreeView } from '../../components/mascot/TreeView';
 import { SpeciesPicker } from '../../components/mascot/SpeciesPicker';
+import { TreeShop } from '../../components/mascot/TreeShop';
 import { calculateLevel, xpForLevel, pointsToNextLevel, getLevelTier } from '../../lib/gamification';
 import {
   getTreeStage,
@@ -59,7 +60,7 @@ export default function TreeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { primary, tint, colors, isDark } = useThemeColors();
-  const { profiles, activeProfile, updateTreeSpecies } = useVault();
+  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem } = useVault();
   const { showToast } = useToast();
 
   // Profil affiché : celui passé en param ou le profil actif
@@ -70,6 +71,7 @@ export default function TreeScreen() {
 
   const [showSpeciesPicker, setShowSpeciesPicker] = useState(false);
   const [selectedProfileForPicker, setSelectedProfileForPicker] = useState<Profile | null>(null);
+  const [showShop, setShowShop] = useState(false);
 
   if (!profile) return null;
 
@@ -111,6 +113,15 @@ export default function TreeScreen() {
     setShowSpeciesPicker(true);
   }, []);
 
+  const handleShopBuy = useCallback(async (itemId: string, itemType: 'decoration' | 'inhabitant') => {
+    if (!profile) return;
+    await buyMascotItem(profile.id, itemId, itemType);
+    const labelKey = itemType === 'decoration'
+      ? `mascot.deco.${itemId}`
+      : `mascot.hab.${itemId}`;
+    showToast(t('mascot.shop.buySuccess', { item: t(labelKey) }));
+  }, [profile, buyMascotItem, showToast, t]);
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
       <ScrollView
@@ -131,7 +142,14 @@ export default function TreeScreen() {
         {/* Arbre principal */}
         <Animated.View entering={FadeIn.duration(600)} style={styles.treeContainer}>
           <View style={[styles.treeBg, { backgroundColor: isDark ? 'rgba(16,32,48,0.4)' : 'rgba(200,230,255,0.3)' }]}>
-            <TreeView species={species} level={level} size={TREE_SIZE} interactive />
+            <TreeView
+              species={species}
+              level={level}
+              size={TREE_SIZE}
+              interactive
+              decorations={profile.mascotDecorations ?? []}
+              inhabitants={profile.mascotInhabitants ?? []}
+            />
           </View>
         </Animated.View>
 
@@ -172,6 +190,17 @@ export default function TreeScreen() {
                 </Text>
               </TouchableOpacity>
             </View>
+
+            {/* Bouton boutique */}
+            <TouchableOpacity
+              style={[styles.shopBtn, { backgroundColor: tint, borderColor: primary }]}
+              onPress={() => setShowShop(true)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.shopBtnText, { color: primary }]}>
+                {'🛒 ' + t('mascot.shop.title')}
+              </Text>
+            </TouchableOpacity>
 
             {/* Barre XP */}
             <View style={styles.xpSection}>
@@ -327,6 +356,23 @@ export default function TreeScreen() {
           onClose={() => setShowSpeciesPicker(false)}
         />
       </Modal>
+
+      {/* Modal boutique */}
+      <Modal
+        visible={showShop}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowShop(false)}
+      >
+        <TreeShop
+          level={level}
+          points={profile.points ?? 0}
+          ownedDecorations={profile.mascotDecorations ?? []}
+          ownedInhabitants={profile.mascotInhabitants ?? []}
+          onBuy={handleShopBuy}
+          onClose={() => setShowShop(false)}
+        />
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -428,6 +474,18 @@ const styles = StyleSheet.create({
   changeSpeciesText: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
+  },
+  shopBtn: {
+    alignSelf: 'center',
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    marginVertical: Spacing.md,
+  },
+  shopBtnText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
   },
   xpSection: {
     marginBottom: Spacing.lg,
