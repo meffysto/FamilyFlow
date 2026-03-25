@@ -253,6 +253,7 @@ export interface VaultState {
   addSecretMission: (text: string, targetProfileId: string) => Promise<void>;
   completeSecretMission: (missionId: string) => Promise<void>;
   validateSecretMission: (missionId: string) => Promise<void>;
+  completeAdventure: (profileId: string, points: number, adventureNote: string) => Promise<void>;
 }
 
 // Static task files (non-enfant)
@@ -3067,6 +3068,29 @@ export function useVaultInternal(): VaultState {
     await vaultRef.current.writeFile(SECRET_MISSIONS_FILE, serialized);
   }, [secretMissions, profiles]);
 
+  // ─── Aventure quotidienne ─────────────────────────────────────────────────
+
+  const completeAdventure = useCallback(async (profileId: string, points: number, adventureNote: string) => {
+    if (!vaultRef.current) return;
+    try {
+      const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
+      const gami = parseGamification(gamiContent);
+      const familleContent = await vaultRef.current.readFile(FAMILLE_FILE);
+      const currentProfiles = mergeProfiles(familleContent, gamiContent);
+      const profile = currentProfiles.find((p) => p.id === profileId);
+      if (profile) {
+        const { profile: updated, entry } = addPoints(profile, points, adventureNote);
+        const newGami = {
+          ...gami,
+          profiles: gami.profiles.map((p) => p.id === profileId ? { ...p, points: updated.points, level: updated.level } : p),
+          history: [...gami.history, entry],
+        };
+        setGamiData(newGami);
+        await vaultRef.current.writeFile(GAMI_FILE, serializeGamification(newGami));
+      }
+    } catch {}
+  }, []);
+
   // Mémoïser la valeur du contexte pour éviter les re-renders en cascade
   const vault = vaultRef.current;
   return useMemo(() => ({
@@ -3193,6 +3217,7 @@ export function useVaultInternal(): VaultState {
     addSecretMission,
     completeSecretMission,
     validateSecretMission,
+    completeAdventure,
   }), [
     // State values (déclenchent un re-render quand ils changent)
     vaultPath, isLoading, error, tasks, courses, stock, meals,
@@ -3220,5 +3245,6 @@ export function useVaultInternal(): VaultState {
     addAnniversary, updateAnniversary, removeAnniversary, importAnniversaries,
     addNote, updateNote, deleteNote, addQuote, deleteQuote, addMood, deleteMood, unlockSkill,
     addSecretMission, completeSecretMission, validateSecretMission,
+    completeAdventure,
   ]);
 }

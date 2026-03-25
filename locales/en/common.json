@@ -3296,6 +3296,129 @@
       "ete": "Summer",
       "automne": "Autumn",
       "hiver": "Winter"
+    },
+    "adventure": {
+      "reward": "+{{points}} points earned!",
+      "tresor_ecureuil": {
+        "title": "A squirrel hid a treasure!",
+        "desc": "A cheeky little squirrel buried something at the foot of your tree…",
+        "choiceA": "Dig it up",
+        "choiceB": "Wave hello",
+        "resultA": "You dug up a shiny pebble! The squirrel looks at you proudly.",
+        "resultB": "The squirrel winks at you and scurries up the branches!"
+      },
+      "tempete": {
+        "title": "A storm is coming!",
+        "desc": "The wind is blowing hard and the branches are shaking. Your tree needs help!",
+        "choiceA": "Protect the tree",
+        "choiceB": "Let it be",
+        "resultA": "You bravely protected your tree! Not a single leaf was lost.",
+        "resultB": "The tree held strong on its own. It's tougher than it looks!"
+      },
+      "voyageur": {
+        "title": "A mysterious traveler",
+        "desc": "A strange character stops by your tree and asks for shelter…",
+        "choiceA": "Welcome them",
+        "choiceB": "Wave hello",
+        "resultA": "The traveler thanked you with a mysterious gift. How generous!",
+        "resultB": "They smiled and continued on their way, whistling a tune."
+      },
+      "lucioles": {
+        "title": "Fireflies are dancing!",
+        "desc": "Tonight, dozens of fireflies light up your tree with a thousand glows.",
+        "choiceA": "Watch",
+        "choiceB": "Take a photo",
+        "resultA": "You spent a magical moment watching them dance.",
+        "resultB": "Great photo! The fireflies posed just for you."
+      },
+      "graine_magique": {
+        "title": "A seed falls from the sky!",
+        "desc": "A glowing seed gently lands at the foot of your tree. It shines!",
+        "choiceA": "Plant it",
+        "choiceB": "Keep it",
+        "resultA": "The seed glows in the soil… something will sprout soon!",
+        "resultB": "You keep the seed in your pocket. It keeps sparkling."
+      },
+      "arc_en_ciel": {
+        "title": "A rainbow appears!",
+        "desc": "After the rain, a beautiful rainbow arches over your tree.",
+        "choiceA": "Draw it",
+        "choiceB": "Make a wish",
+        "resultA": "Your drawing is beautiful! The colors are perfect.",
+        "resultB": "Your wish flies up to the sky… who knows if it'll come true?"
+      },
+      "hibou_sage": {
+        "title": "The wise owl whispers",
+        "desc": "An old owl has landed on a branch and seems to want to tell you something…",
+        "choiceA": "Listen",
+        "choiceB": "Offer a cookie",
+        "resultA": "The owl shared a forest secret. You feel wiser!",
+        "resultB": "The owl loved the cookie! It'll hoot for you tonight."
+      },
+      "tresor_pirate": {
+        "title": "A treasure map!",
+        "desc": "You find an old map stuck between the roots. An X marks a spot…",
+        "choiceA": "Dig",
+        "choiceB": "Decode the map",
+        "resultA": "You found a chest full of golden coins (chocolate ones)!",
+        "resultB": "The map reveals a secret message: 'The adventure is the real treasure.'"
+      },
+      "fee_egaree": {
+        "title": "A lost fairy",
+        "desc": "A tiny sparkling fairy seems lost near your tree.",
+        "choiceA": "Guide her",
+        "choiceB": "Make her a leaf bed",
+        "resultA": "The fairy found her way! She left you some stardust.",
+        "resultB": "The fairy fell peacefully asleep. Tomorrow she'll continue her journey."
+      },
+      "pluie_etoiles": {
+        "title": "Shooting star shower!",
+        "desc": "The sky lights up with shooting stars above your tree. Magical!",
+        "choiceA": "Make a wish",
+        "choiceB": "Collect stardust",
+        "resultA": "Your wish rises to the stars… a shiver of magic runs through you.",
+        "resultB": "You collected sparkling stardust! So precious."
+      },
+      "papillon_geant": {
+        "title": "A giant butterfly!",
+        "desc": "A butterfly with iridescent wings, as big as your hand, lands on your tree.",
+        "choiceA": "Pet it gently",
+        "choiceB": "Admire it",
+        "resultA": "Its wings are soft as silk. It flutters happily!",
+        "resultB": "Its colors shift under your amazed gaze. Stunning."
+      },
+      "concert_oiseaux": {
+        "title": "Morning concert!",
+        "desc": "All the garden birds have gathered for a concert in your tree.",
+        "choiceA": "Listen",
+        "choiceB": "Dance",
+        "resultA": "The melody filled you with joy. What a beautiful way to start the day!",
+        "resultB": "You dance to the songs! Even the birds seem to applaud."
+      },
+      "neige_magique": {
+        "title": "Magic snow!",
+        "desc": "Sparkling snowflakes fall on your tree, even though it's not winter…",
+        "choiceA": "Build a snowman",
+        "choiceB": "Drink hot chocolate",
+        "resultA": "The world's tiniest snowman! It smiles at you.",
+        "resultB": "Mmm… hot chocolate under magic snow, pure bliss."
+      },
+      "champignon_dore": {
+        "title": "A golden mushroom!",
+        "desc": "A glowing mushroom sprouted at the foot of your tree overnight.",
+        "choiceA": "Pick it",
+        "choiceB": "Study it",
+        "resultA": "You picked it! It still glows in your hand. Edible? A mystery…",
+        "resultB": "Fascinating! You discovered it's a very rare species."
+      },
+      "lettre_mysterieuse": {
+        "title": "A mysterious letter",
+        "desc": "A wax-sealed envelope hangs from a branch of your tree.",
+        "choiceA": "Open it",
+        "choiceB": "Keep it sealed",
+        "resultA": "The letter reads: 'Those who care for their tree care for the world.'",
+        "resultB": "You keep the mystery intact. Maybe one day you'll open it…"
+      }
     }
   }
 }

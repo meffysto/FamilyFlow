@@ -3296,6 +3296,129 @@
       "ete": "Été",
       "automne": "Automne",
       "hiver": "Hiver"
+    },
+    "adventure": {
+      "reward": "+{{points}} points gagnés !",
+      "tresor_ecureuil": {
+        "title": "Un écureuil a caché un trésor !",
+        "desc": "Un petit écureuil espiègle a enterré quelque chose au pied de ton arbre…",
+        "choiceA": "Fouiller",
+        "choiceB": "Le saluer",
+        "resultA": "Tu as déterré un caillou brillant ! L'écureuil te regarde avec fierté.",
+        "resultB": "L'écureuil te fait un clin d'œil et file dans les branches !"
+      },
+      "tempete": {
+        "title": "Une tempête approche !",
+        "desc": "Le vent souffle fort et les branches tremblent. Ton arbre a besoin d'aide !",
+        "choiceA": "Protéger l'arbre",
+        "choiceB": "Laisser faire",
+        "resultA": "Tu as protégé ton arbre avec courage ! Pas une feuille de perdue.",
+        "resultB": "L'arbre a tenu bon tout seul. Il est plus fort qu'il n'y paraît !"
+      },
+      "voyageur": {
+        "title": "Un voyageur mystérieux",
+        "desc": "Un étrange personnage s'arrête devant ton arbre et demande l'hospitalité…",
+        "choiceA": "L'accueillir",
+        "choiceB": "Le saluer",
+        "resultA": "Le voyageur t'a remercié avec un cadeau mystérieux. Quelle générosité !",
+        "resultB": "Il t'a souri et a poursuivi sa route en sifflotant."
+      },
+      "lucioles": {
+        "title": "Des lucioles dansent !",
+        "desc": "Ce soir, des dizaines de lucioles illuminent ton arbre de mille feux.",
+        "choiceA": "Observer",
+        "choiceB": "Prendre une photo",
+        "resultA": "Tu as passé un moment magique à les regarder danser.",
+        "resultB": "Belle photo ! Les lucioles ont posé spécialement pour toi."
+      },
+      "graine_magique": {
+        "title": "Une graine tombe du ciel !",
+        "desc": "Une graine lumineuse atterrit doucement au pied de ton arbre. Elle brille !",
+        "choiceA": "La planter",
+        "choiceB": "La garder",
+        "resultA": "La graine brille dans la terre… quelque chose va pousser bientôt !",
+        "resultB": "Tu gardes la graine dans ta poche. Elle continue de scintiller."
+      },
+      "arc_en_ciel": {
+        "title": "Un arc-en-ciel apparaît !",
+        "desc": "Après la pluie, un magnifique arc-en-ciel se dessine au-dessus de ton arbre.",
+        "choiceA": "Le dessiner",
+        "choiceB": "Faire un vœu",
+        "resultA": "Ton dessin est magnifique ! Les couleurs sont parfaites.",
+        "resultB": "Ton vœu s'envole vers le ciel… qui sait s'il se réalisera ?"
+      },
+      "hibou_sage": {
+        "title": "Le hibou sage murmure",
+        "desc": "Un vieux hibou s'est posé sur une branche et semble vouloir te dire quelque chose…",
+        "choiceA": "L'écouter",
+        "choiceB": "Lui offrir un biscuit",
+        "resultA": "Le hibou t'a confié un secret de la forêt. Tu te sens plus sage !",
+        "resultB": "Le hibou a adoré le biscuit ! Il hululera pour toi ce soir."
+      },
+      "tresor_pirate": {
+        "title": "Une carte au trésor !",
+        "desc": "Tu trouves une vieille carte coincée entre les racines. Un X marque un endroit…",
+        "choiceA": "Creuser",
+        "choiceB": "Décoder la carte",
+        "resultA": "Tu as trouvé un coffre rempli de pièces dorées (en chocolat) !",
+        "resultB": "La carte révèle un message secret : « L'aventure est le vrai trésor. »"
+      },
+      "fee_egaree": {
+        "title": "Une fée égarée",
+        "desc": "Une minuscule fée scintillante semble perdue près de ton arbre.",
+        "choiceA": "La guider",
+        "choiceB": "Lui faire un lit de feuilles",
+        "resultA": "La fée a retrouvé son chemin ! Elle t'a laissé de la poussière d'étoiles.",
+        "resultB": "La fée s'est endormie paisiblement. Demain elle reprendra sa route."
+      },
+      "pluie_etoiles": {
+        "title": "Pluie d'étoiles filantes !",
+        "desc": "Le ciel s'illumine d'étoiles filantes au-dessus de ton arbre. Magique !",
+        "choiceA": "Faire un vœu",
+        "choiceB": "Collecter la poussière",
+        "resultA": "Ton vœu monte vers les étoiles… un frisson de magie te parcourt.",
+        "resultB": "Tu as collecté de la poussière d'étoile scintillante ! Précieux."
+      },
+      "papillon_geant": {
+        "title": "Un papillon géant !",
+        "desc": "Un papillon aux ailes irisées, grand comme ta main, se pose sur ton arbre.",
+        "choiceA": "Le caresser",
+        "choiceB": "L'admirer",
+        "resultA": "Ses ailes sont douces comme de la soie. Il bat des ailes de bonheur !",
+        "resultB": "Ses couleurs changent sous ton regard émerveillé. Magnifique."
+      },
+      "concert_oiseaux": {
+        "title": "Concert matinal !",
+        "desc": "Tous les oiseaux du jardin se sont réunis pour un concert dans ton arbre.",
+        "choiceA": "Écouter",
+        "choiceB": "Danser",
+        "resultA": "La mélodie t'a rempli de joie. Quelle belle façon de commencer la journée !",
+        "resultB": "Tu danses sous les chants ! Même les oiseaux semblent applaudir."
+      },
+      "neige_magique": {
+        "title": "Neige magique !",
+        "desc": "Des flocons scintillants tombent sur ton arbre, même si ce n'est pas l'hiver…",
+        "choiceA": "Faire un bonhomme",
+        "choiceB": "Boire un chocolat chaud",
+        "resultA": "Le plus petit bonhomme de neige du monde ! Il te sourit.",
+        "resultB": "Mmm… le chocolat chaud sous la neige magique, un pur bonheur."
+      },
+      "champignon_dore": {
+        "title": "Un champignon doré !",
+        "desc": "Un champignon brillant a poussé au pied de ton arbre pendant la nuit.",
+        "choiceA": "Le cueillir",
+        "choiceB": "L'étudier",
+        "resultA": "Tu l'as cueilli ! Il brille encore dans ta main. Comestible ? Mystère…",
+        "resultB": "Fascinant ! Tu as découvert que c'est une espèce très rare."
+      },
+      "lettre_mysterieuse": {
+        "title": "Une lettre mystérieuse",
+        "desc": "Une enveloppe scellée de cire est accrochée à une branche de ton arbre.",
+        "choiceA": "L'ouvrir",
+        "choiceB": "La garder",
+        "resultA": "La lettre dit : « Celui qui prend soin de son arbre prend soin du monde. »",
+        "resultB": "Tu gardes le mystère intact. Peut-être un jour tu l'ouvriras…"
+      }
     }
   }
 }
