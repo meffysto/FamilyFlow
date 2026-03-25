@@ -18,7 +18,7 @@ import Animated, {
   runOnJS,
   useReducedMotion,
 } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import { hapticsEvolution } from '../../lib/mascot/haptics';
 import { useTranslation } from 'react-i18next';
 
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -155,7 +155,7 @@ export function EvolutionOverlay({
   const dismissOpacity = useSharedValue(0);
 
   const triggerHaptics = useCallback(() => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    hapticsEvolution();
   }, []);
 
   useEffect(() => {

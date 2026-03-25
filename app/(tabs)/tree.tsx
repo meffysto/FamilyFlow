@@ -28,7 +28,7 @@ import Animated, {
   FadeIn,
   FadeInDown,
 } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import { hapticsTreeTap, hapticsSpeciesChange } from '../../lib/mascot/haptics';
 
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -102,7 +102,7 @@ export default function TreeScreen() {
     if (!targetProfile) return;
     try {
       await updateTreeSpecies(targetProfile.id, newSpecies);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      hapticsSpeciesChange();
       showToast(t('mascot.speciesChanged', { species: t(SPECIES_INFO[newSpecies].labelKey) }));
     } catch {
       showToast(t('common.error'), 'error');
@@ -151,7 +151,11 @@ export default function TreeScreen() {
 
         {/* Arbre principal */}
         <Animated.View entering={FadeIn.duration(600)} style={styles.treeContainer}>
-          <View style={[styles.treeBg, { backgroundColor: isDark ? 'rgba(16,32,48,0.4)' : 'rgba(200,230,255,0.3)' }]}>
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={hapticsTreeTap}
+            style={[styles.treeBg, { backgroundColor: isDark ? 'rgba(16,32,48,0.4)' : 'rgba(200,230,255,0.3)' }]}
+          >
             <TreeView
               species={species}
               level={level}
@@ -160,7 +164,7 @@ export default function TreeScreen() {
               decorations={profile.mascotDecorations ?? []}
               inhabitants={profile.mascotInhabitants ?? []}
             />
-          </View>
+          </TouchableOpacity>
         </Animated.View>
 
         {/* Info profil + stade */}

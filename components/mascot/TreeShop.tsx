@@ -18,7 +18,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import { hapticsShopBuy, hapticsShopError } from '../../lib/mascot/haptics';
 
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { TreeView } from './TreeView';
@@ -118,10 +118,10 @@ export function TreeShop({ species, level, points, ownedDecorations, ownedInhabi
     setBuying(item.id);
     try {
       await onBuy(item.id, itemType);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      hapticsShopBuy();
       setSelectedItem(null);
     } catch {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      hapticsShopError();
     }
     setBuying(null);
   }, [tab, onBuy]);
