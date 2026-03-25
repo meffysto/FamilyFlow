@@ -548,8 +548,8 @@
       "emptyTitle": "Not enough data",
       "emptySubtitle": "You need at least 2 purchases of the same product to compare",
       "header": "{{count}} tracked products",
-      "firstPrice": "First price",
-      "lastPrice": "Last price",
+      "avgFirst": "Avg. first",
+      "avgLast": "Avg. recent",
       "purchases": "{{count}} purchases"
     }
   },

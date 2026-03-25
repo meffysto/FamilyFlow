@@ -87,6 +87,7 @@ import {
   serializeNotificationPrefs,
   getDefaultNotificationPrefs,
 } from '../lib/notifications';
+import * as Notifications from 'expo-notifications';
 import { setupAllNotifications, loadNotifConfig, scheduleRDVAlerts } from '../lib/scheduled-notifications';
 import i18n from '../lib/i18n';
 import { generateThumbnail } from '../lib/thumbnails';
@@ -806,7 +807,10 @@ export function useVaultInternal(): VaultState {
           let changed = false;
           const autoCompleted: typeof parsed = [];
           for (const d of parsed) {
-            if (d.status === 'active' && d.endDate < todayStr) {
+            // Jour de grâce (daily/abstinence uniquement) : 1 jour après la fin pour valider
+            const hasGrace = d.type === 'daily' || d.type === 'abstinence';
+            const expiry = hasGrace ? (() => { const g = new Date(d.endDate + 'T12:00:00'); g.setDate(g.getDate() + 1); return g.toISOString().slice(0, 10); })() : d.endDate;
+            if (d.status === 'active' && expiry < todayStr) {
               const uniqueDays = new Set(d.progress.filter((p) => p.completed).map((p) => p.date)).size;
               if (d.type === 'abstinence') {
                 const hasFail = d.progress.some((p) => !p.completed);
@@ -958,7 +962,27 @@ export function useVaultInternal(): VaultState {
       setMemories(val(results[7], []));
       setHealthRecords(val(results[8], []));
       setJournalStats(val(results[9], []));
-      setDefis(val(results[10], []));
+      const newDefis: Defi[] = val(results[10], []);
+      setDefis(prev => {
+        // Détecter les nouveaux défis actifs (arrivés via sync iCloud)
+        if (prev.length > 0) {
+          const prevIds = new Set(prev.map(d => d.id));
+          for (const d of newDefis) {
+            if (d.status === 'active' && !prevIds.has(d.id)) {
+              Notifications.scheduleNotificationAsync({
+                content: {
+                  title: `${d.emoji} Nouveau défi !`,
+                  body: `${d.title} — du ${d.startDate} au ${d.endDate}. Ouvrez l'app pour participer !`,
+                  sound: 'default',
+                  data: { type: 'defi_launched', defiId: d.id },
+                },
+                trigger: null,
+              }).catch(() => {});
+            }
+          }
+        }
+        return newDefis;
+      });
       setGratitudeDays(val(results[11], []));
       setWishlistItems(val(results[12], []));
       setAnniversaries(val(results[13], []));
@@ -2396,12 +2420,15 @@ export function useVaultInternal(): VaultState {
       updated = prev.map((d) => {
         if (d.id !== defiId) return d;
         defiTitle = d.title;
+        // Période de grâce (daily/abstinence) : si le défi est terminé mais encore actif, valider sur endDate
+        const hasGrace = d.type === 'daily' || d.type === 'abstinence';
+        const checkDate = (hasGrace && d.endDate < todayStr && d.status === 'active') ? d.endDate : todayStr;
         // Vérifier si c'est un nouveau check-in (pas un remplacement)
-        const existing = d.progress.find((p) => p.date === todayStr && p.profileId === profileId);
+        const existing = d.progress.find((p) => p.date === checkDate && p.profileId === profileId);
         isNewCheckIn = !existing && completed;
         // Retirer l'entrée existante pour ce profil + date (pour remplacer)
-        const filtered = d.progress.filter((p) => !(p.date === todayStr && p.profileId === profileId));
-        const entry: DefiDayEntry = { date: todayStr, profileId, completed, value, note };
+        const filtered = d.progress.filter((p) => !(p.date === checkDate && p.profileId === profileId));
+        const entry: DefiDayEntry = { date: checkDate, profileId, completed, value, note };
         const newProgress = [...filtered, entry];
 
         // Pour abstinence, un échec = défi raté

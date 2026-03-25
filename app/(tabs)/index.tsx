@@ -203,6 +203,7 @@ export default function DashboardScreen() {
     wishlistItems,
     anniversaries,
     skillTrees,
+    secretMissions,
     setActiveProfile,
   } = useVault();
 
@@ -996,7 +997,11 @@ export default function DashboardScreen() {
         )}
 
         {sortedSections.map((s) => {
-          if (!s.visible) return null;
+          // Forcer l'affichage si contenu actif créé par un autre membre, même si la section est masquée
+          const forceVisible =
+            (s.id === 'defis' && defis.some((d) => d.status === 'active')) ||
+            (s.id === 'secretMissions' && secretMissions.some((m) => m.secretStatus !== 'validated'));
+          if (!s.visible && !forceVisible) return null;
           // Le masquage auto ne s'applique que si la section est visible par défaut
           // (sinon l'utilisateur a explicitement activé la section → on la respecte)
           const defaultPref = getAllSections(t).find((d) => d.id === s.id);

@@ -548,8 +548,8 @@
       "emptyTitle": "Pas assez de données",
       "emptySubtitle": "Il faut au moins 2 achats du même produit pour comparer",
       "header": "{{count}} produits suivis",
-      "firstPrice": "Premier prix",
-      "lastPrice": "Dernier prix",
+      "avgFirst": "Moy. début",
+      "avgLast": "Moy. récent",
       "purchases": "{{count}} achats"
     }
   },

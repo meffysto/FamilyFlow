@@ -439,6 +439,7 @@ export type NotifEvent =
   | 'all_tasks_done'
   | 'leaderboard'
   | 'daily_summary'
+  | 'defi_launched'
   | 'manual';
 
 export interface TemplateVariable {

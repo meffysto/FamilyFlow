@@ -82,8 +82,8 @@ interface PriceEvolution {
   label: string;
   category: string;
   count: number;
-  firstPrice: number;
-  lastPrice: number;
+  avgFirst: number;  // moyenne des premiers achats
+  avgLast: number;   // moyenne des derniers achats
   firstDate: string;
   lastDate: string;
   change: number; // pourcentage
@@ -243,9 +243,11 @@ export default function BudgetScreen() {
 
       // Trier par date croissante
       const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date));
-      const firstPrice = sorted[0].amount;
-      const lastPrice = sorted[sorted.length - 1].amount;
-      const change = firstPrice > 0 ? ((lastPrice - firstPrice) / firstPrice) * 100 : 0;
+      // Moyenne mobile : prendre les N premiers/derniers (N = min(3, moitié des achats))
+      const n = Math.min(3, Math.floor(sorted.length / 2)) || 1;
+      const avgFirst = sorted.slice(0, n).reduce((s, e) => s + e.amount, 0) / n;
+      const avgLast = sorted.slice(-n).reduce((s, e) => s + e.amount, 0) / n;
+      const change = avgFirst > 0 ? ((avgLast - avgFirst) / avgFirst) * 100 : 0;
 
       // Catégorie la plus fréquente
       const catCounts = new Map<string, number>();
@@ -262,8 +264,8 @@ export default function BudgetScreen() {
         label: sorted[0].label, // Garder la casse originale
         category: topCat,
         count: entries.length,
-        firstPrice,
-        lastPrice,
+        avgFirst,
+        avgLast,
         firstDate: sorted[0].date,
         lastDate: sorted[sorted.length - 1].date,
         change,
@@ -399,16 +401,16 @@ export default function BudgetScreen() {
         <View style={styles.evoPriceRow}>
           <View style={styles.evoPriceBlock}>
             <Text style={[styles.evoPriceLabel, { color: colors.textFaint }]}>
-              {t('budget.evolution.firstPrice')}
+              {t('budget.evolution.avgFirst')}
             </Text>
-            <Text style={[styles.evoPrice, { color: colors.textSub }]}>{formatAmount(item.firstPrice)}</Text>
+            <Text style={[styles.evoPrice, { color: colors.textSub }]}>{formatAmount(item.avgFirst)}</Text>
           </View>
           <Text style={[styles.evoArrow, { color: changeColor }]}>{arrow}</Text>
           <View style={[styles.evoPriceBlock, { alignItems: 'flex-end' as const }]}>
             <Text style={[styles.evoPriceLabel, { color: colors.textFaint }]}>
-              {t('budget.evolution.lastPrice')}
+              {t('budget.evolution.avgLast')}
             </Text>
-            <Text style={[styles.evoPrice, { color: colors.text }]}>{formatAmount(item.lastPrice)}</Text>
+            <Text style={[styles.evoPrice, { color: colors.text }]}>{formatAmount(item.avgLast)}</Text>
           </View>
         </View>
         <Text style={[styles.evoMeta, { color: colors.textFaint }]}>

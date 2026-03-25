@@ -15,6 +15,7 @@ import { getDateLocale } from './date-locale';
 import {
   Profile,
   LootBox,
+  Defi,
   NotificationConfig,
   NotificationPreferences,
   NotifEvent,
@@ -62,6 +63,17 @@ const DAILY_SUMMARY_VARS: TemplateVariable[] = [
   { key: 'leaderboard', label: 'Classement', example: '🥇 👨‍💻 Papa — 150 pts' },
 ];
 
+const DEFI_LAUNCHED_VARS: TemplateVariable[] = [
+  { key: 'defi.emoji', label: 'Emoji', example: '🏅' },
+  { key: 'defi.title', label: 'Titre', example: 'Sans écran' },
+  { key: 'defi.type', label: 'Type', example: 'abstinence' },
+  { key: 'defi.startDate', label: 'Date début', example: '24/03/2026' },
+  { key: 'defi.endDate', label: 'Date fin', example: '30/03/2026' },
+  { key: 'defi.targetDays', label: 'Jours cible', example: '7' },
+  { key: 'defi.difficulty', label: 'Difficulté', example: 'moyen' },
+  { key: 'defi.participants', label: 'Participants', example: 'Papa, Lucas' },
+];
+
 const MANUAL_VARS: TemplateVariable[] = [
   { key: 'profile.name', label: 'Nom', example: 'Papa' },
   { key: 'profile.avatar', label: 'Avatar', example: '👨‍💻' },
@@ -85,6 +97,9 @@ const DEFAULT_LEADERBOARD_TEMPLATE =
 
 const DEFAULT_DAILY_SUMMARY_TEMPLATE =
   '📋 <b>Résumé du jour</b>\n\n✅ {{tasks.completedCount}} terminée(s)\n⏳ {{tasks.pendingCount}} restante(s)\n\n{{leaderboard}}';
+
+const DEFAULT_DEFI_LAUNCHED_TEMPLATE =
+  '{{defi.emoji}} <b>Nouveau défi !</b>\n\n🏅 <i>{{defi.title}}</i>\n📅 Du {{defi.startDate}} au {{defi.endDate}} ({{defi.targetDays}} jours)\n👥 {{defi.participants}}\n\nOuvrez l\'app pour participer ! 💪';
 
 export const BUILTIN_NOTIFICATIONS: NotificationConfig[] = [
   {
@@ -140,6 +155,17 @@ export const BUILTIN_NOTIFICATIONS: NotificationConfig[] = [
     defaultTemplate: DEFAULT_DAILY_SUMMARY_TEMPLATE,
     event: 'daily_summary',
     availableVariables: DAILY_SUMMARY_VARS,
+    isCustom: false,
+  },
+  {
+    id: 'defi_launched',
+    label: 'Nouveau défi',
+    emoji: '🏅',
+    enabled: true,
+    template: DEFAULT_DEFI_LAUNCHED_TEMPLATE,
+    defaultTemplate: DEFAULT_DEFI_LAUNCHED_TEMPLATE,
+    event: 'defi_launched',
+    availableVariables: DEFI_LAUNCHED_VARS,
     isCustom: false,
   },
 ];
