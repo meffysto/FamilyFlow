@@ -136,7 +136,7 @@ export interface MascotDecoration {
   labelKey: string;
   emoji: string;
   cost: number;          // prix en points
-  rarity: 'commun' | 'rare' | 'épique' | 'légendaire';
+  rarity: 'commun' | 'rare' | 'épique' | 'légendaire' | 'prestige';
   minStage: TreeStage;   // stade minimum pour débloquer
 }
 
@@ -146,7 +146,7 @@ export interface MascotInhabitant {
   labelKey: string;
   emoji: string;
   cost: number;
-  rarity: 'commun' | 'rare' | 'épique' | 'légendaire';
+  rarity: 'commun' | 'rare' | 'épique' | 'légendaire' | 'prestige';
   minStage: TreeStage;
 }
 
@@ -160,6 +160,8 @@ export const DECORATIONS: MascotDecoration[] = [
   { id: 'hamac',       labelKey: 'mascot.deco.hamac',       emoji: '🛌', cost: 600,  rarity: 'épique',     minStage: 'arbre' },
   { id: 'fontaine',    labelKey: 'mascot.deco.fontaine',    emoji: '⛲', cost: 1000, rarity: 'épique',     minStage: 'majestueux' },
   { id: 'couronne',    labelKey: 'mascot.deco.couronne',    emoji: '👑', cost: 5000, rarity: 'légendaire', minStage: 'legendaire' },
+  { id: 'portail',     labelKey: 'mascot.deco.portail',     emoji: '🌀', cost: 12000, rarity: 'prestige',  minStage: 'majestueux' },
+  { id: 'cristal',     labelKey: 'mascot.deco.cristal',     emoji: '💎', cost: 15000, rarity: 'prestige',  minStage: 'legendaire' },
 ];
 
 /** Catalogue habitants MVP */
@@ -172,4 +174,6 @@ export const INHABITANTS: MascotInhabitant[] = [
   { id: 'hibou',       labelKey: 'mascot.hab.hibou',       emoji: '🦉', cost: 400,  rarity: 'rare',       minStage: 'arbre' },
   { id: 'fee',         labelKey: 'mascot.hab.fee',         emoji: '🧚', cost: 2000, rarity: 'épique',     minStage: 'majestueux' },
   { id: 'dragon',      labelKey: 'mascot.hab.dragon',      emoji: '🐉', cost: 10000, rarity: 'légendaire', minStage: 'legendaire' },
+  { id: 'phoenix',     labelKey: 'mascot.hab.phoenix',     emoji: '🔥', cost: 15000, rarity: 'prestige',  minStage: 'legendaire' },
+  { id: 'licorne',     labelKey: 'mascot.hab.licorne',     emoji: '🦄', cost: 20000, rarity: 'prestige',  minStage: 'legendaire' },
 ];

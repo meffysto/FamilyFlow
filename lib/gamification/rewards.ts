@@ -121,6 +121,10 @@ export const REWARDS: Record<LootRarity, RewardDefinition[]> = {
     { emoji: '👑💎', reward: 'Roi/Reine de la semaine — choisis le menu !', bonusPoints: 0, rewardType: 'crown' },
     { emoji: '⚡⚡⚡', reward: 'Multiplicateur ×5 (20 tâches) !!', bonusPoints: 0, multiplier: 5, multiplierTasks: 20, rewardType: 'multiplier' },
     { emoji: '🎁🎁', reward: 'Double loot box instantanée !', bonusPoints: 0, rewardType: 'double_loot' },
+    { emoji: '🌀', reward: 'Portail magique pour ton arbre', bonusPoints: 0, rewardType: 'mascot_deco', mascotItemId: 'portail' },
+    { emoji: '💎', reward: 'Cristal céleste pour ton arbre', bonusPoints: 0, rewardType: 'mascot_deco', mascotItemId: 'cristal' },
+    { emoji: '🔥', reward: 'Phénix immortel pour ton arbre', bonusPoints: 0, rewardType: 'mascot_hab', mascotItemId: 'phoenix' },
+    { emoji: '🦄', reward: 'Licorne céleste pour ton arbre', bonusPoints: 0, rewardType: 'mascot_hab', mascotItemId: 'licorne' },
   ],
 };
 

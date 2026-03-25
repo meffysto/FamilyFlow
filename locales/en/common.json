@@ -3237,7 +3237,11 @@
       "fontaine": "Fountain",
       "fontaine_desc": "An enchanted fountain at the tree's base. Its gentle murmur soothes all who listen.",
       "couronne": "Golden crown",
-      "couronne_desc": "The royal crown atop the tree. Only the most devoted can obtain it!"
+      "couronne_desc": "The royal crown atop the tree. Only the most devoted can obtain it!",
+      "portail": "Magic portal",
+      "portail_desc": "A shimmering dimensional portal at the base of the tree. Where does it lead? A mystery…",
+      "cristal": "Celestial crystal",
+      "cristal_desc": "A pure, luminous crystal at the very top of the tree. It captures starlight and illuminates the entire garden."
     },
     "hab": {
       "oiseau": "Songbird",
@@ -3255,7 +3259,11 @@
       "fee": "Forest fairy",
       "fee_desc": "A glittering fairy who protects the tree with magic. Leaves a trail of stardust behind.",
       "dragon": "Legendary dragon",
-      "dragon_desc": "A majestic dragon who chose this tree as its domain. Its mere presence inspires awe."
+      "dragon_desc": "A majestic dragon who chose this tree as its domain. Its mere presence inspires awe.",
+      "phoenix": "Immortal phoenix",
+      "phoenix_desc": "An eternal firebird reborn from its ashes. Its warmth protects the tree even in winter.",
+      "licorne": "Celestial unicorn",
+      "licorne_desc": "A luminous unicorn with a starlit coat. Its horn shines with a light that heals and inspires."
     },
     "shop": {
       "title": "Tree Shop",
@@ -3276,7 +3284,8 @@
         "commun": "Common",
         "rare": "Rare",
         "épique": "Epic",
-        "légendaire": "Legendary"
+        "légendaire": "Legendary",
+        "prestige": "Prestige"
       },
       "emptyDeco": "No decorations available at your current stage.",
       "emptyHab": "No inhabitants available at your current stage.",

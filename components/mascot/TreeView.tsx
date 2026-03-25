@@ -1386,7 +1386,7 @@ type SlotDef = {
   dyFactor: number;
   groundRelY?: number;
   baseSize: number;        // taille de référence en px
-  rarity: 'commun' | 'rare' | 'épique' | 'légendaire';
+  rarity: 'commun' | 'rare' | 'épique' | 'légendaire' | 'prestige';
 };
 
 /** Multiplicateur de taille par rareté — les items rares/épiques/légendaires sont plus gros */
@@ -1395,6 +1395,7 @@ const RARITY_SIZE_MULT: Record<string, number> = {
   rare: 1.2,
   'épique': 1.5,
   'légendaire': 2,
+  prestige: 2.3,
 };
 
 /** Multiplicateur de taille par stade — un arbre plus grand = items plus visibles */
@@ -1416,6 +1417,8 @@ const DECO_SLOTS: Record<string, SlotDef> = {
   hamac:       { dxFactor: -0.5,  dyFactor: 0,       groundRelY: -30, baseSize: 18, rarity: 'épique' },
   fontaine:    { dxFactor: 0.8,   dyFactor: 0,       groundRelY: -8,  baseSize: 20, rarity: 'épique' },
   couronne:    { dxFactor: 0,     dyFactor: -0.85,  baseSize: 22, rarity: 'légendaire' },   // sommet de la couronne
+  portail:     { dxFactor: -0.9,  dyFactor: 0,       groundRelY: -15, baseSize: 24, rarity: 'prestige' },  // portail magique à gauche
+  cristal:     { dxFactor: 0,     dyFactor: -0.95,  baseSize: 26, rarity: 'prestige' },   // cristal au sommet absolu
 };
 
 const HAB_SLOTS: Record<string, SlotDef> = {
@@ -1427,6 +1430,8 @@ const HAB_SLOTS: Record<string, SlotDef> = {
   hibou:       { dxFactor: -0.5,  dyFactor: -0.3,   baseSize: 18, rarity: 'rare' },
   fee:         { dxFactor: 0.8,   dyFactor: -0.5,   baseSize: 20, rarity: 'épique' },
   dragon:      { dxFactor: 0,     dyFactor: -0.6,   baseSize: 26, rarity: 'légendaire' },   // dans la couronne, GROS
+  phoenix:     { dxFactor: 0.85,  dyFactor: -0.7,   baseSize: 28, rarity: 'prestige' },   // en vol à droite de la couronne
+  licorne:     { dxFactor: -0.85, dyFactor: 0,       groundRelY: -12, baseSize: 28, rarity: 'prestige' },  // au sol à gauche
 };
 
 /** Ajustements par espèce (offsets additionnels en px) */

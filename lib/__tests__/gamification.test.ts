@@ -159,7 +159,9 @@ describe('REWARDS', () => {
         reward.rewardType === 'vacation' ||
         reward.rewardType === 'crown' ||
         reward.rewardType === 'multiplier' ||
-        reward.rewardType === 'double_loot';
+        reward.rewardType === 'double_loot' ||
+        reward.rewardType === 'mascot_deco' ||
+        reward.rewardType === 'mascot_hab';
       expect(isHighValue).toBe(true);
     }
   });

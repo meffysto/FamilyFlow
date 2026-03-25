@@ -56,6 +56,7 @@ const RARITY_COLORS: Record<string, string> = {
   rare: '#3B82F6',
   'épique': '#8B5CF6',
   'légendaire': '#F59E0B',
+  prestige: '#E91E63',
 };
 
 const RARITY_BG: Record<string, string> = {
@@ -63,6 +64,7 @@ const RARITY_BG: Record<string, string> = {
   rare: 'rgba(59,130,246,0.12)',
   'épique': 'rgba(139,92,246,0.12)',
   'légendaire': 'rgba(245,158,11,0.12)',
+  prestige: 'rgba(233,30,99,0.12)',
 };
 
 const { width: SCREEN_W } = Dimensions.get('window');

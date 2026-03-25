@@ -3237,7 +3237,11 @@
       "fontaine": "Fontaine",
       "fontaine_desc": "Une fontaine enchantée au pied de l'arbre. Son doux murmure apaise tous ceux qui l'écoutent.",
       "couronne": "Couronne dorée",
-      "couronne_desc": "La couronne royale au sommet de l'arbre. Seuls les plus dévoués peuvent l'obtenir !"
+      "couronne_desc": "La couronne royale au sommet de l'arbre. Seuls les plus dévoués peuvent l'obtenir !",
+      "portail": "Portail magique",
+      "portail_desc": "Un portail dimensionnel qui scintille au pied de l'arbre. Où mène-t-il ? Mystère…",
+      "cristal": "Cristal céleste",
+      "cristal_desc": "Un cristal pur et lumineux au sommet de l'arbre. Il capte la lumière des étoiles et illumine tout le jardin."
     },
     "hab": {
       "oiseau": "Oiseau chanteur",
@@ -3255,7 +3259,11 @@
       "fee": "Fée des bois",
       "fee_desc": "Une fée scintillante qui protège l'arbre avec sa magie. Elle laisse une traînée de poussière d'étoiles.",
       "dragon": "Dragon légendaire",
-      "dragon_desc": "Un dragon majestueux qui a choisi cet arbre comme domaine. Sa seule présence inspire le respect."
+      "dragon_desc": "Un dragon majestueux qui a choisi cet arbre comme domaine. Sa seule présence inspire le respect.",
+      "phoenix": "Phénix immortel",
+      "phoenix_desc": "Un oiseau de feu éternel qui renaît de ses cendres. Sa chaleur protège l'arbre même en hiver.",
+      "licorne": "Licorne céleste",
+      "licorne_desc": "Une licorne lumineuse au pelage d'étoiles. Sa corne brille d'une lumière qui guérit et inspire."
     },
     "shop": {
       "title": "Boutique de l'arbre",
@@ -3276,7 +3284,8 @@
         "commun": "Commun",
         "rare": "Rare",
         "épique": "Épique",
-        "légendaire": "Légendaire"
+        "légendaire": "Légendaire",
+        "prestige": "Prestige"
       },
       "emptyDeco": "Aucune décoration disponible à ton stade actuel.",
       "emptyHab": "Aucun habitant disponible à ton stade actuel.",
