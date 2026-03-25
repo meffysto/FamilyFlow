@@ -56,6 +56,7 @@ interface TreeViewProps {
   interactive?: boolean; // animations idle (défaut true)
   decorations?: string[];  // IDs des décorations achetées
   inhabitants?: string[];  // IDs des habitants achetés
+  previewMode?: boolean;   // ignorer le stade minimum (aperçu boutique)
 }
 
 // ── Constantes géométrie ───────────────────────
@@ -67,7 +68,7 @@ const CENTER_X = 100;
 
 // ── Composant principal ────────────────────────
 
-function TreeViewInner({ species, level, size = 200, showGround = true, interactive = true, decorations = [], inhabitants = [] }: TreeViewProps) {
+function TreeViewInner({ species, level, size = 200, showGround = true, interactive = true, decorations = [], inhabitants = [], previewMode = false }: TreeViewProps) {
   const stage = getTreeStage(level);
   const progress = getStageProgress(level);
   const stageIdx = getStageIndex(level);
@@ -201,13 +202,13 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
           {treeElements}
 
           {/* Décorations achetées */}
-          {decorations.length > 0 && stageIdx >= 1 && (
-            <DecorationOverlay decorationIds={decorations} stageIdx={stageIdx} />
+          {decorations.length > 0 && (stageIdx >= 1 || previewMode) && (
+            <DecorationOverlay decorationIds={decorations} stageIdx={stageIdx} previewMode={previewMode} species={species} />
           )}
 
           {/* Habitants achetés */}
-          {inhabitants.length > 0 && stageIdx >= 1 && (
-            <InhabitantOverlay inhabitantIds={inhabitants} stageIdx={stageIdx} />
+          {inhabitants.length > 0 && (stageIdx >= 1 || previewMode) && (
+            <InhabitantOverlay inhabitantIds={inhabitants} stageIdx={stageIdx} previewMode={previewMode} species={species} />
           )}
         </Svg>
       </Animated.View>
@@ -996,41 +997,125 @@ const styles = StyleSheet.create({
   },
 });
 
-// ── Positions des décorations sur l'arbre ─────
+// ── Positions dynamiques des décorations sur l'arbre ─────
 
-/** Positions fixes (SVG coords) pour chaque décoration selon son id */
-const DECO_POSITIONS: Record<string, { x: number; y: number; fontSize: number }> = {
-  balancoire:  { x: 150, y: 145, fontSize: 16 },  // branche droite
-  cabane:      { x: 100, y: 75,  fontSize: 18 },   // haut du tronc
-  guirlandes:  { x: 100, y: 110, fontSize: 14 },   // milieu couronne
-  lanterne:    { x: 55,  y: 130, fontSize: 14 },    // branche gauche
-  nid:         { x: 135, y: 95,  fontSize: 14 },    // branche droite haute
-  hamac:       { x: 60,  y: 170, fontSize: 16 },    // entre tronc et sol
-  fontaine:    { x: 155, y: 195, fontSize: 16 },    // au pied
-  couronne:    { x: 100, y: 52,  fontSize: 18 },    // sommet
+/** Géométrie de base par stade (trunkTop, crownY, crownR) */
+function getTreeGeometry(stageIdx: number): { trunkTop: number; crownY: number; crownR: number } {
+  switch (stageIdx) {
+    case 0: return { trunkTop: 195, crownY: 190, crownR: 8 };   // graine
+    case 1: return { trunkTop: 170, crownY: 165, crownR: 15 };  // pousse
+    case 2: return { trunkTop: 150, crownY: 145, crownR: 32 };  // arbuste
+    case 3: return { trunkTop: 120, crownY: 115, crownR: 42 };  // arbre
+    case 4: return { trunkTop: 105, crownY: 97,  crownR: 52 };  // majestueux
+    case 5: return { trunkTop: 100, crownY: 90,  crownR: 55 };  // légendaire
+    default: return { trunkTop: 120, crownY: 115, crownR: 42 };
+  }
+}
+
+/**
+ * Slots sémantiques pour les décorations.
+ * Chaque slot est décrit en relatif : offsets par rapport à (CENTER_X, crownY, crownR, GROUND_Y).
+ * baseSize = taille de base (sera multipliée par le stade et la rareté).
+ */
+type SlotDef = {
+  dxFactor: number;
+  dyFactor: number;
+  groundRelY?: number;
+  baseSize: number;        // taille de référence en px
+  rarity: 'commun' | 'rare' | 'épique' | 'légendaire';
 };
 
-const HAB_POSITIONS: Record<string, { x: number; y: number; fontSize: number }> = {
-  oiseau:      { x: 140, y: 80,  fontSize: 14 },
-  ecureuil:    { x: 115, y: 150, fontSize: 14 },
-  papillons:   { x: 55,  y: 90,  fontSize: 12 },
-  coccinelle:  { x: 125, y: 130, fontSize: 10 },
-  chat:        { x: 45,  y: 195, fontSize: 16 },
-  hibou:       { x: 70,  y: 85,  fontSize: 14 },
-  fee:         { x: 150, y: 70,  fontSize: 14 },
-  dragon:      { x: 100, y: 45,  fontSize: 18 },
+/** Multiplicateur de taille par rareté — les items rares/épiques/légendaires sont plus gros */
+const RARITY_SIZE_MULT: Record<string, number> = {
+  commun: 1,
+  rare: 1.2,
+  'épique': 1.5,
+  'légendaire': 2,
 };
 
-function DecorationOverlay({ decorationIds, stageIdx }: { decorationIds: string[]; stageIdx: number }) {
+/** Multiplicateur de taille par stade — un arbre plus grand = items plus visibles */
+const STAGE_SIZE_MULT: number[] = [
+  0.5,   // graine
+  0.65,  // pousse
+  0.8,   // arbuste
+  1,     // arbre
+  1.15,  // majestueux
+  1.3,   // légendaire
+];
+
+const DECO_SLOTS: Record<string, SlotDef> = {
+  balancoire:  { dxFactor: 0.85,  dyFactor: 0.5,    baseSize: 18, rarity: 'commun' },     // branche droite basse
+  cabane:      { dxFactor: 0.1,   dyFactor: -0.55,  baseSize: 20, rarity: 'rare' },        // dans la couronne haute
+  guirlandes:  { dxFactor: 0,     dyFactor: 0.1,    baseSize: 16, rarity: 'commun' },      // milieu couronne
+  lanterne:    { dxFactor: -0.75, dyFactor: 0.2,    baseSize: 17, rarity: 'rare' },         // branche gauche
+  nid:         { dxFactor: 0.6,   dyFactor: -0.3,   baseSize: 17, rarity: 'rare' },         // branche droite
+  hamac:       { dxFactor: -0.5,  dyFactor: 0,       groundRelY: -30, baseSize: 18, rarity: 'épique' },
+  fontaine:    { dxFactor: 0.8,   dyFactor: 0,       groundRelY: -8,  baseSize: 20, rarity: 'épique' },
+  couronne:    { dxFactor: 0,     dyFactor: -0.85,  baseSize: 22, rarity: 'légendaire' },   // sommet de la couronne
+};
+
+const HAB_SLOTS: Record<string, SlotDef> = {
+  oiseau:      { dxFactor: 0.7,   dyFactor: -0.35,  baseSize: 16, rarity: 'commun' },
+  ecureuil:    { dxFactor: 0.15,  dyFactor: 0.6,    baseSize: 17, rarity: 'commun' },       // sur le tronc
+  papillons:   { dxFactor: -0.75, dyFactor: -0.45,  baseSize: 15, rarity: 'commun' },
+  coccinelle:  { dxFactor: 0.45,  dyFactor: 0.2,    baseSize: 13, rarity: 'commun' },
+  chat:        { dxFactor: -0.6,  dyFactor: 0,       groundRelY: -8,  baseSize: 20, rarity: 'rare' },
+  hibou:       { dxFactor: -0.5,  dyFactor: -0.3,   baseSize: 18, rarity: 'rare' },
+  fee:         { dxFactor: 0.8,   dyFactor: -0.5,   baseSize: 20, rarity: 'épique' },
+  dragon:      { dxFactor: 0,     dyFactor: -0.6,   baseSize: 26, rarity: 'légendaire' },   // dans la couronne, GROS
+};
+
+/** Ajustements par espèce (offsets additionnels en px) */
+const SPECIES_ADJUSTMENTS: Record<TreeSpecies, { dx: number; dy: number; scale: number }> = {
+  cerisier: { dx: 0, dy: 0, scale: 1 },
+  chene:    { dx: 0, dy: 0, scale: 1.05 },
+  bambou:   { dx: 0, dy: 10, scale: 0.7 },   // bambou est plus étroit, décaler vers le bas
+  oranger:  { dx: 0, dy: 0, scale: 1 },
+  palmier:  { dx: 2, dy: -5, scale: 0.8 },    // palmier décalé légèrement droite, plus serré
+};
+
+function getItemPosition(
+  species: TreeSpecies,
+  stageIdx: number,
+  slot: SlotDef,
+): { x: number; y: number; fontSize: number } {
+  const geo = getTreeGeometry(stageIdx);
+  const adj = SPECIES_ADJUSTMENTS[species];
+
+  // Position Y : soit relative au sol, soit relative à la couronne
+  let y: number;
+  if (slot.groundRelY !== undefined) {
+    y = GROUND_Y + slot.groundRelY;
+  } else {
+    y = geo.crownY + slot.dyFactor * geo.crownR;
+  }
+
+  // Position X : relative au centre + rayon couronne
+  const x = CENTER_X + adj.dx + slot.dxFactor * geo.crownR * adj.scale;
+
+  // Taille proportionnelle : baseSize × rareté × stade
+  const rarityMult = RARITY_SIZE_MULT[slot.rarity] ?? 1;
+  const stageMult = STAGE_SIZE_MULT[Math.min(stageIdx, STAGE_SIZE_MULT.length - 1)];
+  const fontSize = Math.round(slot.baseSize * rarityMult * stageMult);
+
+  return {
+    x: Math.max(10, Math.min(190, x)),   // clamp dans le viewbox
+    y: Math.max(20, Math.min(210, y + adj.dy)),
+    fontSize,
+  };
+}
+
+function DecorationOverlay({ decorationIds, stageIdx, previewMode = false, species }: { decorationIds: string[]; stageIdx: number; previewMode?: boolean; species: TreeSpecies }) {
   return (
     <G>
       {decorationIds.map((id) => {
         const deco = DECORATIONS.find((d) => d.id === id);
         if (!deco) return null;
         const minIdx = ['graine','pousse','arbuste','arbre','majestueux','legendaire'].indexOf(deco.minStage);
-        if (stageIdx < minIdx) return null;
-        const pos = DECO_POSITIONS[id];
-        if (!pos) return null;
+        if (!previewMode && stageIdx < minIdx) return null;
+        const slot = DECO_SLOTS[id];
+        if (!slot) return null;
+        const pos = getItemPosition(species, stageIdx, slot);
         return (
           <SvgText
             key={id}
@@ -1048,16 +1133,17 @@ function DecorationOverlay({ decorationIds, stageIdx }: { decorationIds: string[
   );
 }
 
-function InhabitantOverlay({ inhabitantIds, stageIdx }: { inhabitantIds: string[]; stageIdx: number }) {
+function InhabitantOverlay({ inhabitantIds, stageIdx, previewMode = false, species }: { inhabitantIds: string[]; stageIdx: number; previewMode?: boolean; species: TreeSpecies }) {
   return (
     <G>
       {inhabitantIds.map((id) => {
         const hab = INHABITANTS.find((h) => h.id === id);
         if (!hab) return null;
         const minIdx = ['graine','pousse','arbuste','arbre','majestueux','legendaire'].indexOf(hab.minStage);
-        if (stageIdx < minIdx) return null;
-        const pos = HAB_POSITIONS[id];
-        if (!pos) return null;
+        if (!previewMode && stageIdx < minIdx) return null;
+        const slot = HAB_SLOTS[id];
+        if (!slot) return null;
+        const pos = getItemPosition(species, stageIdx, slot);
         return (
           <SvgText
             key={id}

@@ -365,6 +365,7 @@ export default function TreeScreen() {
         onRequestClose={() => setShowShop(false)}
       >
         <TreeShop
+          species={species}
           level={level}
           points={profile.points ?? 0}
           ownedDecorations={profile.mascotDecorations ?? []}
