@@ -59,6 +59,7 @@
       "quotes": "Mots d'enfants",
       "gratitude": "Gratitude",
       "skills": "Compétences",
+      "tree": "Mon arbre",
       "rewards": "Récompenses",
       "challenges": "Défis",
       "birthdays": "Anniversaires",
@@ -1223,6 +1224,7 @@
       "moods": "Humeurs",
       "bilanSemaine": "Bilan de semaine",
       "secretMissions": "Missions secrètes",
+      "garden": "Jardin familial",
       "quicknotifs": "Notifications rapides",
       "recipes": "Idée recette",
       "nightMode": "Mode nuit bébé",
@@ -3157,5 +3159,85 @@
   "helpModal": {
     "title": "Guide",
     "itemA11y": "{{name}} — {{description}}. Touchez pour voir et relancer les astuces."
+  },
+  "mascot": {
+    "stages": {
+      "graine": "Graine",
+      "graineDesc": "Une petite graine pleine de promesses…",
+      "pousse": "Pousse",
+      "pousseDesc": "Les premières feuilles pointent vers le ciel !",
+      "arbuste": "Arbuste",
+      "arbusteDesc": "Un bel arbuste bien touffu qui prend forme.",
+      "arbre": "Arbre",
+      "arbreDesc": "Un arbre solide avec de belles branches.",
+      "majestueux": "Majestueux",
+      "majestueuxDesc": "Un arbre magnifique, fleurs et oiseaux au rendez-vous !",
+      "legendaire": "Légendaire",
+      "legendaireDesc": "Un arbre doré et lumineux. La légende est née."
+    },
+    "species": {
+      "cerisier": "Cerisier",
+      "cerisierDesc": "Élégant et délicat, le cerisier se pare de magnifiques fleurs roses. Symbole du renouveau et de la beauté éphémère.",
+      "chene": "Chêne",
+      "cheneDesc": "Robuste et majestueux, le chêne symbolise la force et la longévité. Ses glands nourrissent tout l'écosystème.",
+      "bambou": "Bambou",
+      "bambouDesc": "Zen et élancé, le bambou grandit vite et reste toujours vert. Symbole de flexibilité et de résilience.",
+      "oranger": "Oranger",
+      "orangerDesc": "Coloré et généreux, l'oranger offre des fruits juteux et parfumés. Symbole de joie et d'abondance.",
+      "palmier": "Palmier",
+      "palmierDesc": "Exotique et fun, le palmier évoque les vacances et l'aventure. Symbole de liberté et de détente."
+    },
+    "garden": {
+      "title": "Jardin familial",
+      "treeA11y": "Arbre de {{name}}",
+      "choose": "Choisir",
+      "cta": "Voir le jardin",
+      "ctaChild": "Mon arbre !"
+    },
+    "screen": {
+      "title": "Mon arbre",
+      "xpProgress": "Progression XP",
+      "nextEvolution": "Prochaine évolution",
+      "levelsToEvo": "Encore {{count}} niveaux",
+      "maxStage": "Stade légendaire atteint !",
+      "changeSpecies": "Changer",
+      "chooseSpecies": "Choisir",
+      "familyGarden": "Jardin familial",
+      "allStages": "Toutes les évolutions",
+      "stageLevels": "Niv. {{min}}–{{max}}"
+    },
+    "picker": {
+      "title": "Choisis ton arbre",
+      "subtitle": "Chaque espèce a son caractère unique. Tu pourras changer plus tard !",
+      "current": "actuel",
+      "keep": "Garder mon arbre",
+      "confirm": "Choisir le {{species}}"
+    },
+    "speciesChanged": "Ton arbre est maintenant un {{species}} !",
+    "evolution": {
+      "title": "Évolution !",
+      "message": "L'arbre de {{avatar}} {{name}} a évolué en {{stage}} !",
+      "dismiss": "Magnifique !"
+    },
+    "deco": {
+      "balancoire": "Balançoire",
+      "cabane": "Cabane",
+      "guirlandes": "Guirlandes",
+      "lanterne": "Lanterne",
+      "nid": "Nid d'oiseau",
+      "hamac": "Hamac",
+      "fontaine": "Fontaine",
+      "couronne": "Couronne dorée"
+    },
+    "hab": {
+      "oiseau": "Oiseau chanteur",
+      "ecureuil": "Écureuil",
+      "papillons": "Papillons",
+      "coccinelle": "Coccinelle",
+      "chat": "Chat endormi",
+      "hibou": "Hibou sage",
+      "fee": "Fée des bois",
+      "dragon": "Dragon légendaire"
+    }
   }
 }

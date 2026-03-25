@@ -85,6 +85,7 @@ import {
   DashboardZenState,
   DashboardBilanSemaine,
   DashboardSecretMissions,
+  DashboardGarden,
 } from '../../components/dashboard';
 
 const PREFS_KEY = 'dashboard_prefs_v1';
@@ -130,6 +131,7 @@ function getAllSections(t: (key: string) => string): SectionPref[] {
     { id: 'moods',        label: t('dashboard.sectionLabels.moods'),         emoji: '🌤️', visible: false, priority: 'medium' },
     { id: 'bilanSemaine', label: t('dashboard.sectionLabels.bilanSemaine'),  emoji: '📝', visible: true,  priority: 'medium' },
     { id: 'secretMissions', label: t('dashboard.sectionLabels.secretMissions'), emoji: '🕵️', visible: true,  priority: 'high' },
+    { id: 'garden',       label: t('dashboard.sectionLabels.garden'),          emoji: '🌳', visible: true,  priority: 'high' },
 
     { id: 'quicknotifs',label: t('dashboard.sectionLabels.quicknotifs'),     emoji: '📤', visible: false, priority: 'low' },
     { id: 'recipes',    label: t('dashboard.sectionLabels.recipes'),         emoji: '📖', visible: false, priority: 'low' },
@@ -148,6 +150,7 @@ const CHILD_PROMOTED: Record<string, { visible: boolean; priority: 'high' | 'med
   leaderboard: { visible: true, priority: 'high' },
   defis:          { visible: true, priority: 'high' },
   secretMissions: { visible: true, priority: 'high' },
+  garden:         { visible: true, priority: 'high' },
 };
 
 function getDefaultSections(t: (key: string) => string, role?: string): SectionPref[] {
@@ -787,6 +790,7 @@ export default function DashboardScreen() {
       case 'calendar':     return <DashboardCalendar key={id} {...sectionProps} />;
       case 'bilanSemaine': return <DashboardBilanSemaine key={id} {...sectionProps} />;
       case 'secretMissions': return <DashboardSecretMissions key={id} {...sectionProps} />;
+      case 'garden':         return <DashboardGarden key={id} {...sectionProps} />;
       default:             return null;
     }
   };

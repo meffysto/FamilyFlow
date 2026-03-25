@@ -114,7 +114,8 @@ export default function MoreScreen() {
       { emoji: '💬', label: t('menu.items.quotes'), route: '/(tabs)/quotes', color: '#06B6D4', category: 'souvenirs' as const },
       { emoji: '🙏', label: t('menu.items.gratitude'), route: '/(tabs)/gratitude', color: '#8B5CF6', category: 'souvenirs' as const },
       // Jeux & Progrès
-      { emoji: '🌳', label: t('menu.items.skills'), route: '/(tabs)/skills', color: '#10B981', category: 'jeux' as const },
+      { emoji: '🌱', label: t('menu.items.skills'), route: '/(tabs)/skills', color: '#10B981', category: 'jeux' as const },
+      { emoji: '🌳', label: t('menu.items.tree'), route: '/(tabs)/tree' as any, color: '#4ADE80', category: 'jeux' as const },
       { emoji: '🎰', label: t('menu.items.rewards'), route: '/(tabs)/loot', badge: lootBoxes || undefined, color: '#EC4899', category: 'jeux' as const },
       { emoji: '🏅', label: t('menu.items.challenges'), route: '/(tabs)/defis', badge: activeDefis || undefined, color: '#F59E0B', category: 'jeux' as const },
       // Vie de famille

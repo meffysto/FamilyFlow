@@ -543,6 +543,10 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'level' 
         ? (currentProps.ageCategory as Profile['ageCategory'])
         : undefined;
       const statut = currentProps.statut === 'grossesse' ? 'grossesse' as const : undefined;
+      const validSpecies = new Set(['cerisier', 'chene', 'bambou', 'oranger', 'palmier']);
+      const treeSpecies = currentProps.tree_species && validSpecies.has(currentProps.tree_species)
+        ? (currentProps.tree_species as Profile['treeSpecies'])
+        : undefined;
       profiles.push({
         id: currentId,
         name: currentProps.name,
@@ -555,6 +559,7 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'level' 
         statut,
         dateTerme: currentProps.dateTerme,
         theme,
+        treeSpecies,
       });
     }
   };

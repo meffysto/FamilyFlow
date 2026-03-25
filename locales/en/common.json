@@ -59,6 +59,7 @@
       "quotes": "Kids' Quotes",
       "gratitude": "Gratitude",
       "skills": "Skills",
+      "tree": "My tree",
       "rewards": "Rewards",
       "challenges": "Challenges",
       "birthdays": "Birthdays",
@@ -1223,6 +1224,7 @@
       "moods": "Moods",
       "bilanSemaine": "Weekly recap",
       "secretMissions": "Secret missions",
+      "garden": "Family garden",
       "quicknotifs": "Quick notifications",
       "recipes": "Recipe idea",
       "nightMode": "Baby night mode",
@@ -3157,5 +3159,85 @@
   "helpModal": {
     "title": "Guide",
     "itemA11y": "{{name}} — {{description}}. Tap to view and replay tips."
+  },
+  "mascot": {
+    "stages": {
+      "graine": "Seed",
+      "graineDesc": "A tiny seed full of promise…",
+      "pousse": "Sprout",
+      "pousseDesc": "The first leaves are reaching for the sky!",
+      "arbuste": "Bush",
+      "arbusteDesc": "A lovely bushy shrub taking shape.",
+      "arbre": "Tree",
+      "arbreDesc": "A strong tree with beautiful branches.",
+      "majestueux": "Majestic",
+      "majestueuxDesc": "A magnificent tree with flowers and birds!",
+      "legendaire": "Legendary",
+      "legendaireDesc": "A golden, luminous tree. The legend is born."
+    },
+    "species": {
+      "cerisier": "Cherry blossom",
+      "cerisierDesc": "Elegant and delicate, the cherry tree blooms with beautiful pink flowers. A symbol of renewal and fleeting beauty.",
+      "chene": "Oak",
+      "cheneDesc": "Robust and majestic, the oak symbolizes strength and longevity. Its acorns nourish the entire ecosystem.",
+      "bambou": "Bamboo",
+      "bambouDesc": "Zen and slender, bamboo grows fast and stays evergreen. A symbol of flexibility and resilience.",
+      "oranger": "Orange tree",
+      "orangerDesc": "Colorful and generous, the orange tree offers juicy, fragrant fruits. A symbol of joy and abundance.",
+      "palmier": "Palm tree",
+      "palmierDesc": "Exotic and fun, the palm tree evokes vacation and adventure. A symbol of freedom and relaxation."
+    },
+    "garden": {
+      "title": "Family garden",
+      "treeA11y": "{{name}}'s tree",
+      "choose": "Choose",
+      "cta": "View garden",
+      "ctaChild": "My tree!"
+    },
+    "screen": {
+      "title": "My tree",
+      "xpProgress": "XP Progress",
+      "nextEvolution": "Next evolution",
+      "levelsToEvo": "{{count}} more levels",
+      "maxStage": "Legendary stage reached!",
+      "changeSpecies": "Change",
+      "chooseSpecies": "Choose",
+      "familyGarden": "Family garden",
+      "allStages": "All evolutions",
+      "stageLevels": "Lv. {{min}}–{{max}}"
+    },
+    "picker": {
+      "title": "Choose your tree",
+      "subtitle": "Each species has its own unique character. You can change later!",
+      "current": "current",
+      "keep": "Keep my tree",
+      "confirm": "Choose {{species}}"
+    },
+    "speciesChanged": "Your tree is now a {{species}}!",
+    "evolution": {
+      "title": "Evolution!",
+      "message": "{{avatar}} {{name}}'s tree evolved into {{stage}}!",
+      "dismiss": "Amazing!"
+    },
+    "deco": {
+      "balancoire": "Swing",
+      "cabane": "Treehouse",
+      "guirlandes": "Garlands",
+      "lanterne": "Lantern",
+      "nid": "Bird's nest",
+      "hamac": "Hammock",
+      "fontaine": "Fountain",
+      "couronne": "Golden crown"
+    },
+    "hab": {
+      "oiseau": "Songbird",
+      "ecureuil": "Squirrel",
+      "papillons": "Butterflies",
+      "coccinelle": "Ladybug",
+      "chat": "Sleeping cat",
+      "hibou": "Wise owl",
+      "fee": "Forest fairy",
+      "dragon": "Legendary dragon"
+    }
   }
 }

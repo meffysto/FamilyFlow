@@ -147,6 +147,7 @@ export interface VaultState {
   addPhoto: (enfantName: string, date: string, imageUri: string) => Promise<void>;
   getPhotoUri: (enfantName: string, date: string) => string | null;
   updateProfileTheme: (profileId: string, theme: ProfileTheme) => Promise<void>;
+  updateTreeSpecies: (profileId: string, species: string) => Promise<void>;
   updateProfile: (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string; propre?: boolean; gender?: Gender }) => Promise<void>;
   deleteProfile: (profileId: string) => Promise<void>;
   updateStockQuantity: (lineIndex: number, newQuantity: number) => Promise<void>;
@@ -1224,6 +1225,45 @@ export function useVaultInternal(): VaultState {
       );
     } catch (e) {
       throw new Error(`updateProfileTheme: ${e}`);
+    }
+  }, []);
+
+  const updateTreeSpecies = useCallback(async (profileId: string, species: string) => {
+    if (!vaultRef.current) return;
+    try {
+      const content = await vaultRef.current.readFile(FAMILLE_FILE);
+      const lines = content.split('\n');
+      let inSection = false;
+      let speciesLineIdx = -1;
+      let lastPropIdx = -1;
+
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].startsWith('### ')) {
+          if (inSection) break;
+          if (lines[i].replace('### ', '').trim() === profileId) {
+            inSection = true;
+          }
+        } else if (inSection && lines[i].includes(': ')) {
+          lastPropIdx = i;
+          if (lines[i].trim().startsWith('tree_species:')) {
+            speciesLineIdx = i;
+          }
+        }
+      }
+
+      if (speciesLineIdx >= 0) {
+        lines[speciesLineIdx] = `tree_species: ${species}`;
+      } else if (lastPropIdx >= 0) {
+        lines.splice(lastPropIdx + 1, 0, `tree_species: ${species}`);
+      }
+
+      await vaultRef.current.writeFile(FAMILLE_FILE, lines.join('\n'));
+
+      setProfiles((prev) =>
+        prev.map((p) => (p.id === profileId ? { ...p, treeSpecies: species as any } : p))
+      );
+    } catch (e) {
+      throw new Error(`updateTreeSpecies: ${e}`);
     }
   }, []);
 
@@ -2962,6 +3002,7 @@ export function useVaultInternal(): VaultState {
     addPhoto,
     getPhotoUri,
     updateProfileTheme,
+    updateTreeSpecies,
     updateProfile,
     deleteProfile,
     updateStockQuantity,

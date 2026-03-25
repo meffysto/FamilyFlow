@@ -30,5 +30,6 @@ export { DashboardCalendar } from './DashboardCalendar';
 export { DashboardZenState } from './DashboardZenState';
 export { DashboardBilanSemaine } from './DashboardBilanSemaine';
 export { DashboardSecretMissions } from './DashboardSecretMissions';
+export { DashboardGarden } from './DashboardGarden';
 
 export type { DashboardSectionProps, DashboardSectionWithTaskToggleProps } from './types';

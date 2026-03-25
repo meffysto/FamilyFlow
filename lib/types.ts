@@ -75,6 +75,7 @@ export interface Profile {
   statut?: 'grossesse' | 'ne'; // pregnancy mode vs born (absent = born)
   dateTerme?: string;        // YYYY-MM-DD expected due date (grossesse only)
   theme?: import('../constants/themes').ProfileTheme;  // visual theme
+  treeSpecies?: import('../lib/mascot/types').TreeSpecies; // espèce d'arbre mascotte
   points: number;
   level: number;
   streak: number;
