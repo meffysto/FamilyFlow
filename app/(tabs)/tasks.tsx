@@ -599,6 +599,7 @@ export default function TasksScreen() {
           <Animated.View entering={FadeInDown.delay(Math.min(index * 30, 300))}>
             <SwipeToDelete
               onDelete={() => handleDeleteTask(item)}
+              skipConfirm
               disabled={item.completed}
               hintId="tasks"
             >
@@ -700,6 +701,7 @@ export default function TasksScreen() {
                   <View key={item.id} style={{ opacity: 0.6 }}>
                     <SwipeToDelete
                       onDelete={() => handleDeleteTask(item)}
+                      skipConfirm
                       disabled={false}
                       hintId="tasks"
                     >

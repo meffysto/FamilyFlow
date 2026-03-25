@@ -290,6 +290,7 @@ export default function JournalScreen() {
 
   const childSelectorRef = useRef<View>(null);
   const firstSectionRef = useRef<View>(null);
+  const loadVersionRef = useRef(0);
 
   const enfants = useMemo(
     () => profiles.filter((p) => p.role === 'enfant'),
@@ -371,18 +372,33 @@ export default function JournalScreen() {
 
   useEffect(() => { loadAvailableDates(); }, [loadAvailableDates]);
 
+  // Reset immédiat quand on change d'onglet ou de date (évite de voir l'ancien contenu)
+  useEffect(() => {
+    loadVersionRef.current += 1;
+    setJournalContent(null);
+    setJournalExists(false);
+  }, [journalPath]);
+
   const loadJournal = useCallback(async () => {
-    if (!vault || !journalPath) return;
+    if (!vault || !journalPath) {
+      setJournalContent(null);
+      setJournalExists(false);
+      return;
+    }
+    const version = loadVersionRef.current;
     try {
       const exists = await vault.exists(journalPath);
+      if (loadVersionRef.current !== version) return;
       setJournalExists(exists);
       if (exists) {
         const content = await vault.readFile(journalPath);
+        if (loadVersionRef.current !== version) return;
         setJournalContent(content);
       } else {
         setJournalContent(null);
       }
     } catch {
+      if (loadVersionRef.current !== version) return;
       setJournalContent(null);
       setJournalExists(false);
     }

@@ -6,7 +6,7 @@
  */
 
 import React, { useCallback, useRef, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { FontSize, FontWeight } from '../constants/typography';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
@@ -54,6 +54,7 @@ export function SwipeToDelete({
   const resolvedTitle = confirmTitle ?? t('swipeToDelete.confirmTitle');
   const reduceMotion = useReducedMotion();
   const swipeableRef = useRef<any>(null);
+  const deletingRef = useRef(false);
   const hintX = useSharedValue(0);
   const [showHint, setShowHint] = useState(false);
 
@@ -86,18 +87,23 @@ export function SwipeToDelete({
   }));
 
   const handleDelete = useCallback(() => {
+    // Guard contre double déclenchement (onSwipeableOpen + onPress simultanés)
+    if (deletingRef.current) return;
+    deletingRef.current = true;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     if (skipConfirm) {
       swipeableRef.current?.close();
+      deletingRef.current = false;
       onDelete();
       return;
     }
     Alert.alert(resolvedTitle, confirmMessage, [
-      { text: t('common.cancel'), style: 'cancel', onPress: () => swipeableRef.current?.close() },
+      { text: t('common.cancel'), style: 'cancel', onPress: () => { swipeableRef.current?.close(); deletingRef.current = false; } },
       {
         text: t('common.delete'), style: 'destructive',
         onPress: () => {
           swipeableRef.current?.close();
+          deletingRef.current = false;
           onDelete();
         },
       },
@@ -119,6 +125,9 @@ export function SwipeToDelete({
     <ReanimatedSwipeable
       ref={swipeableRef}
       renderRightActions={renderRightActions}
+      onSwipeableOpen={(direction) => {
+        if (direction === 'right') handleDelete();
+      }}
       overshootRight={false}
       rightThreshold={60}
       friction={2}
@@ -145,11 +154,13 @@ function RightAction({
   }));
 
   return (
-    <Animated.View style={[styles.rightAction, { backgroundColor: colors.error }, animStyle]}>
-      <Text style={[styles.rightActionText, { color: colors.onPrimary }]} onPress={onPress}>
-        {t('swipeToDelete.deleteAction')}
-      </Text>
-    </Animated.View>
+    <Pressable onPress={onPress} style={{ flex: 1 }}>
+      <Animated.View style={[styles.rightAction, { backgroundColor: colors.error }, animStyle]}>
+        <Text style={[styles.rightActionText, { color: colors.onPrimary }]}>
+          {t('swipeToDelete.deleteAction')}
+        </Text>
+      </Animated.View>
+    </Pressable>
   );
 }
 

@@ -197,7 +197,7 @@ export default function NotesScreen() {
     return (
       <SwipeToDelete
         onDelete={() => handleDelete(note)}
-        confirmMessage={t('notesScreen.deleteConfirm', { title: note.title })}
+        skipConfirm
         hintId="notes"
       >
         <TouchableOpacity

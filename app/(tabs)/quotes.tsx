@@ -121,7 +121,7 @@ export default function QuotesScreen() {
   );
 
   const renderItem = useCallback(({ item }: { item: ChildQuote }) => (
-    <SwipeToDelete onDelete={() => handleDelete(item)} hintId="quote">
+    <SwipeToDelete onDelete={() => handleDelete(item)} skipConfirm hintId="quote">
       <View style={[styles.card, { backgroundColor: colors.card }, Shadows.sm]}>
         <Text style={[styles.citation, { color: colors.text }]}>
           « {item.citation} »
