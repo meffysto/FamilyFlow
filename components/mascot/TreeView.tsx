@@ -201,6 +201,9 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
             />
           )}
 
+          {/* Habitat (jardin qui évolue avec le stade) */}
+          {showGround && <HabitatLayer stageIdx={stageIdx} season={currentSeason} groundColors={ground} accent={sp.accent} />}
+
           {/* Aura dorée (légendaire) */}
           {visual.hasAura && (
             <Circle cx={CENTER_X} cy={GROUND_Y - 70} r={80} fill="url(#aura)" />
@@ -910,6 +913,235 @@ function SpeciesFruits({ species, speciesType, crownR, crownY, count = 4 }: {
           <Circle cx={x - 1} cy={y - 1} r={r * 0.35} fill={species.accentLight} opacity={0.5} />
         </G>
       ))}
+    </G>
+  );
+}
+
+// ── Habitat (jardin qui grandit) ──────────────
+
+function HabitatLayer({ stageIdx, season, groundColors, accent }: {
+  stageIdx: number;
+  season: Season;
+  groundColors: { top: string; bottom: string };
+  accent: string;
+}) {
+  const isWinter = season === 'hiver';
+  const isAutumn = season === 'automne';
+  const grassColor = isWinter ? '#90A4AE' : isAutumn ? '#A1887F' : groundColors.top;
+  const flowerColors = isWinter
+    ? ['#B0BEC5', '#CFD8DC']
+    : isAutumn
+      ? ['#FF8A65', '#FFB74D', '#D4A373']
+      : ['#F48FB1', '#CE93D8', '#FFF176', '#81D4FA'];
+  const stoneColor = isWinter ? '#B0BEC5' : '#9E9E9E';
+
+  return (
+    <G>
+      {/* ── Stade 0 (graine) : terre nue + cailloux ── */}
+      {stageIdx >= 0 && (
+        <G opacity={0.6}>
+          <Circle cx={CENTER_X - 30} cy={GROUND_Y + 8} r={2.5} fill={stoneColor} />
+          <Circle cx={CENTER_X + 35} cy={GROUND_Y + 10} r={2} fill={stoneColor} opacity={0.7} />
+          <Circle cx={CENTER_X + 22} cy={GROUND_Y + 12} r={1.5} fill={stoneColor} opacity={0.5} />
+        </G>
+      )}
+
+      {/* ── Stade 1 (pousse) : brins d'herbe + champignon ── */}
+      {stageIdx >= 1 && (
+        <G>
+          {/* Brins d'herbe */}
+          {[-45, -35, 40, 50].map((dx, i) => (
+            <Path
+              key={`grass-${i}`}
+              d={`M${CENTER_X + dx} ${GROUND_Y + 3} q${i % 2 === 0 ? 2 : -2} ${-8} ${i % 2 === 0 ? 4 : -3} ${-12}`}
+              stroke={grassColor}
+              strokeWidth={1.5}
+              fill="none"
+              strokeLinecap="round"
+              opacity={0.7}
+            />
+          ))}
+          {/* Champignon */}
+          <G opacity={0.8}>
+            <Path
+              d={`M${CENTER_X + 55} ${GROUND_Y + 5} L${CENTER_X + 55} ${GROUND_Y - 1}`}
+              stroke="#D7CCC8"
+              strokeWidth={2}
+              strokeLinecap="round"
+            />
+            <Ellipse cx={CENTER_X + 55} cy={GROUND_Y - 2} rx={4} ry={3} fill={isWinter ? '#BDBDBD' : '#EF5350'} />
+            {!isWinter && <Circle cx={CENTER_X + 54} cy={GROUND_Y - 3} r={1} fill="#FFFFFF" opacity={0.8} />}
+            {!isWinter && <Circle cx={CENTER_X + 56.5} cy={GROUND_Y - 1.5} r={0.7} fill="#FFFFFF" opacity={0.6} />}
+          </G>
+        </G>
+      )}
+
+      {/* ── Stade 2 (arbuste) : herbe fournie, fleurs au sol, mousse ── */}
+      {stageIdx >= 2 && (
+        <G>
+          {/* Touffes d'herbe */}
+          {[-55, -25, 30, 55].map((dx, i) => (
+            <Ellipse
+              key={`tuft-${i}`}
+              cx={CENTER_X + dx}
+              cy={GROUND_Y + 4}
+              rx={6}
+              ry={3}
+              fill={grassColor}
+              opacity={0.5}
+            />
+          ))}
+          {/* Petites fleurs au sol */}
+          {[-40, -15, 25, 48].map((dx, i) => (
+            <Circle
+              key={`sflower-${i}`}
+              cx={CENTER_X + dx}
+              cy={GROUND_Y + 1 + (i % 2) * 3}
+              r={2}
+              fill={flowerColors[i % flowerColors.length]}
+              opacity={0.75}
+            />
+          ))}
+          {/* Mousse sur les côtés */}
+          <Ellipse cx={CENTER_X - 60} cy={GROUND_Y + 6} rx={8} ry={3} fill={isWinter ? '#78909C' : '#81C784'} opacity={0.4} />
+          <Ellipse cx={CENTER_X + 62} cy={GROUND_Y + 7} rx={7} ry={2.5} fill={isWinter ? '#78909C' : '#66BB6A'} opacity={0.35} />
+        </G>
+      )}
+
+      {/* ── Stade 3 (arbre) : buissons, chemin de pierres, mare ── */}
+      {stageIdx >= 3 && (
+        <G>
+          {/* Buissons latéraux */}
+          <Ellipse cx={CENTER_X - 65} cy={GROUND_Y - 2} rx={12} ry={9} fill={isWinter ? '#78909C' : '#4CAF50'} opacity={0.6} />
+          <Ellipse cx={CENTER_X - 63} cy={GROUND_Y - 4} rx={8} ry={6} fill={isWinter ? '#90A4AE' : '#66BB6A'} opacity={0.5} />
+          <Ellipse cx={CENTER_X + 68} cy={GROUND_Y - 1} rx={10} ry={8} fill={isWinter ? '#78909C' : '#43A047'} opacity={0.55} />
+          <Ellipse cx={CENTER_X + 66} cy={GROUND_Y - 3} rx={7} ry={5.5} fill={isWinter ? '#90A4AE' : '#81C784'} opacity={0.4} />
+          {/* Chemin de pierres */}
+          {[-20, -8, 5, 18].map((dx, i) => (
+            <Ellipse
+              key={`stone-${i}`}
+              cx={CENTER_X + dx}
+              cy={GROUND_Y + 10 + (i % 2) * 3}
+              rx={4 + (i % 2)}
+              ry={2.5}
+              fill={stoneColor}
+              opacity={0.45}
+            />
+          ))}
+          {/* Mare d'eau */}
+          <Ellipse cx={CENTER_X + 50} cy={GROUND_Y + 14} rx={12} ry={5} fill={isWinter ? '#B0BEC5' : '#4FC3F7'} opacity={0.4} />
+          <Ellipse cx={CENTER_X + 48} cy={GROUND_Y + 13} rx={7} ry={3} fill={isWinter ? '#CFD8DC' : '#81D4FA'} opacity={0.3} />
+        </G>
+      )}
+
+      {/* ── Stade 4 (majestueux) : clôture, banc, jardin fleuri ── */}
+      {stageIdx >= 4 && (
+        <G>
+          {/* Clôture en bois */}
+          {[-75, -65, -55, 55, 65, 75].map((dx, i) => (
+            <G key={`fence-${i}`}>
+              <Rect
+                x={CENTER_X + dx - 1.5}
+                y={GROUND_Y - 5}
+                width={3}
+                height={12}
+                rx={1}
+                fill="#8D6E63"
+                opacity={0.6}
+              />
+            </G>
+          ))}
+          {/* Traverses clôture */}
+          <Path d={`M${CENTER_X - 77} ${GROUND_Y - 1} L${CENTER_X - 53} ${GROUND_Y - 1}`} stroke="#8D6E63" strokeWidth={1.5} opacity={0.5} />
+          <Path d={`M${CENTER_X + 53} ${GROUND_Y - 1} L${CENTER_X + 77} ${GROUND_Y - 1}`} stroke="#8D6E63" strokeWidth={1.5} opacity={0.5} />
+          {/* Banc */}
+          <G opacity={0.7}>
+            <Rect x={CENTER_X - 80} y={GROUND_Y - 3} width={14} height={2} rx={1} fill="#A1887F" />
+            <Rect x={CENTER_X - 79} y={GROUND_Y - 1} width={2} height={6} fill="#8D6E63" />
+            <Rect x={CENTER_X - 68} y={GROUND_Y - 1} width={2} height={6} fill="#8D6E63" />
+          </G>
+          {/* Jardin fleuri au sol (plus de fleurs, plus grosses) */}
+          {[-48, -38, -28, 32, 42, 52].map((dx, i) => (
+            <G key={`gflower-${i}`}>
+              <Circle
+                cx={CENTER_X + dx}
+                cy={GROUND_Y - 1 + (i % 3)}
+                r={3}
+                fill={flowerColors[i % flowerColors.length]}
+                opacity={0.8}
+              />
+              <Circle
+                cx={CENTER_X + dx}
+                cy={GROUND_Y - 1 + (i % 3)}
+                r={1.2}
+                fill="#FFF176"
+                opacity={0.6}
+              />
+            </G>
+          ))}
+        </G>
+      )}
+
+      {/* ── Stade 5 (légendaire) : arche, lanternes, ruisseau, pierres lumineuses ── */}
+      {stageIdx >= 5 && (
+        <G>
+          {/* Arche fleurie */}
+          <Path
+            d={`M${CENTER_X - 30} ${GROUND_Y + 2} Q${CENTER_X - 30} ${GROUND_Y - 25} ${CENTER_X} ${GROUND_Y - 28} Q${CENTER_X + 30} ${GROUND_Y - 25} ${CENTER_X + 30} ${GROUND_Y + 2}`}
+            stroke="#8D6E63"
+            strokeWidth={2.5}
+            fill="none"
+            opacity={0.5}
+          />
+          {/* Fleurs sur l'arche */}
+          {[-22, -10, 0, 10, 22].map((dx, i) => (
+            <Circle
+              key={`aflower-${i}`}
+              cx={CENTER_X + dx}
+              cy={GROUND_Y - 24 - Math.abs(dx) * 0.1}
+              r={2.5}
+              fill={flowerColors[i % flowerColors.length]}
+              opacity={0.85}
+            />
+          ))}
+          {/* Lanternes */}
+          {[-70, 72].map((dx, i) => (
+            <G key={`lantern-${i}`} opacity={0.8}>
+              <Path
+                d={`M${CENTER_X + dx} ${GROUND_Y - 8} L${CENTER_X + dx} ${GROUND_Y + 2}`}
+                stroke="#5D4037"
+                strokeWidth={1.5}
+              />
+              <Rect x={CENTER_X + dx - 3} y={GROUND_Y - 13} width={6} height={6} rx={1} fill="#FFE082" opacity={0.9} />
+              <Circle cx={CENTER_X + dx} cy={GROUND_Y - 10} r={2} fill="#FFD54F" opacity={0.6} />
+            </G>
+          ))}
+          {/* Ruisseau */}
+          <Path
+            d={`M${CENTER_X + 80} ${GROUND_Y + 8} Q${CENTER_X + 55} ${GROUND_Y + 15} ${CENTER_X + 30} ${GROUND_Y + 12} Q${CENTER_X + 10} ${GROUND_Y + 10} ${CENTER_X - 10} ${GROUND_Y + 15}`}
+            stroke={isWinter ? '#B0BEC5' : '#42A5F5'}
+            strokeWidth={3}
+            fill="none"
+            opacity={0.4}
+            strokeLinecap="round"
+          />
+          <Path
+            d={`M${CENTER_X + 75} ${GROUND_Y + 9} Q${CENTER_X + 52} ${GROUND_Y + 15} ${CENTER_X + 30} ${GROUND_Y + 13}`}
+            stroke={isWinter ? '#CFD8DC' : '#90CAF9'}
+            strokeWidth={1.5}
+            fill="none"
+            opacity={0.3}
+            strokeLinecap="round"
+          />
+          {/* Pierres lumineuses */}
+          {[-55, -20, 15, 45].map((dx, i) => (
+            <G key={`glow-stone-${i}`}>
+              <Circle cx={CENTER_X + dx} cy={GROUND_Y + 8 + (i % 2) * 4} r={3} fill={stoneColor} opacity={0.5} />
+              <Circle cx={CENTER_X + dx} cy={GROUND_Y + 8 + (i % 2) * 4} r={5} fill="#FFD700" opacity={0.12} />
+            </G>
+          ))}
+        </G>
+      )}
     </G>
   );
 }

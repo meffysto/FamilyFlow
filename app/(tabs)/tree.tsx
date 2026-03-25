@@ -292,7 +292,7 @@ export default function TreeScreen() {
                   ]}
                 >
                   <View style={{ opacity: isReached ? 1 : 0.35 }}>
-                    <TreeView species={species} level={s.minLevel} size={65} showGround={false} interactive={false} />
+                    <TreeView species={species} level={s.minLevel} size={80} showGround interactive={false} />
                   </View>
                   <Text style={[styles.stageSlotName, { color: isCurrent ? sp.accent : isReached ? colors.text : colors.textFaint }]}>
                     {t(s.labelKey)}
@@ -604,10 +604,10 @@ const styles = StyleSheet.create({
   },
   stageSlot: {
     alignItems: 'center',
-    padding: Spacing.lg,
+    padding: Spacing.md,
     borderRadius: Radius.xl,
     borderWidth: StyleSheet.hairlineWidth,
-    minWidth: 90,
+    minWidth: 100,
   },
   stageSlotName: {
     fontSize: FontSize.micro,
