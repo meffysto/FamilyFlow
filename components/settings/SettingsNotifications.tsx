@@ -210,6 +210,16 @@ export function SettingsNotificationsSection({ notifPrefs, saveNotifPrefs, activ
             />
 
             <ToggleItem
+              emoji="🏅"
+              label={t('settings.notifications.defiLabel')}
+              detail={t('settings.notifications.defiDetail')}
+              enabled={config.defiEnabled}
+              onToggle={() => updateConfig({ defiEnabled: !config.defiEnabled })}
+              colors={colors}
+              primary={primary}
+            />
+
+            <ToggleItem
               emoji="📬"
               label={t('settings.notifications.weeklyAILabel')}
               detail={t('settings.notifications.weeklyAIDetail', { hour: pad(config.weeklyAISummaryHour), minute: pad(config.weeklyAISummaryMinute) })}

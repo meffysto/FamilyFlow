@@ -54,6 +54,8 @@ export interface NotifScheduleConfig {
   weeklyAISummaryEnabled: boolean;
   weeklyAISummaryHour: number;   // default 20
   weeklyAISummaryMinute: number; // default 0
+  // Défis — notif locale quand un nouveau défi est détecté (sync)
+  defiEnabled: boolean;
 }
 
 export const DEFAULT_CONFIG: NotifScheduleConfig = {
@@ -86,6 +88,7 @@ export const DEFAULT_CONFIG: NotifScheduleConfig = {
   weeklyAISummaryEnabled: false,
   weeklyAISummaryHour: 20,
   weeklyAISummaryMinute: 0,
+  defiEnabled: true,
 };
 
 const STORAGE_KEY = 'notif_schedule_config_v2';

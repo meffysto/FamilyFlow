@@ -1863,6 +1863,8 @@
       "grossesseDetail": "{{day}} à {{hour}}h{{minute}}",
       "gratitudeLabel": "Gratitude du soir",
       "gratitudeDetail": "Tous les jours à {{hour}}h{{minute}}",
+      "defiLabel": "Nouveau défi",
+      "defiDetail": "Notification quand un défi est lancé par un autre membre",
       "weeklyAILabel": "Résumé hebdo IA",
       "weeklyAIDetail": "Dimanche à {{hour}}h{{minute}} · Telegram · Clé API requise",
       "sendNowLoading": "Envoi en cours...",

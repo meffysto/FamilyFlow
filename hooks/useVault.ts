@@ -967,18 +967,24 @@ export function useVaultInternal(): VaultState {
         // Détecter les nouveaux défis actifs (arrivés via sync iCloud)
         if (prev.length > 0) {
           const prevIds = new Set(prev.map(d => d.id));
-          for (const d of newDefis) {
-            if (d.status === 'active' && !prevIds.has(d.id)) {
-              Notifications.scheduleNotificationAsync({
-                content: {
-                  title: `${d.emoji} Nouveau défi !`,
-                  body: `${d.title} — du ${d.startDate} au ${d.endDate}. Ouvrez l'app pour participer !`,
-                  sound: 'default',
-                  data: { type: 'defi_launched', defiId: d.id },
-                },
-                trigger: null,
-              }).catch(() => {});
-            }
+          const hasNew = newDefis.some(d => d.status === 'active' && !prevIds.has(d.id));
+          if (hasNew) {
+            loadNotifConfig().then(cfg => {
+              if (!cfg.defiEnabled) return;
+              for (const d of newDefis) {
+                if (d.status === 'active' && !prevIds.has(d.id)) {
+                  Notifications.scheduleNotificationAsync({
+                    content: {
+                      title: `${d.emoji} Nouveau défi !`,
+                      body: `${d.title} — du ${d.startDate} au ${d.endDate}. Ouvrez l'app pour participer !`,
+                      sound: 'default',
+                      data: { type: 'defi_launched', defiId: d.id },
+                    },
+                    trigger: null,
+                  }).catch(() => {});
+                }
+              }
+            }).catch(() => {});
           }
         }
         return newDefis;
