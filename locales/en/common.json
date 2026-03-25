@@ -418,7 +418,9 @@
       "assignLabel": "👤 Assign to (optional)",
       "saveToLabel": "Save to",
       "targetLabel": "📁 Save for",
-      "secretMission": "🕵️ Create a secret mission"
+      "secretMission": "🕵️ Create a secret mission",
+      "reminderLabel": "⏰ Reminder (optional)",
+      "reminderPlaceholder": "Pick a time"
     },
     "editModal": {
       "title": "Edit task",

@@ -54,6 +54,7 @@ const TASK_REGEX = /^(\s*)-\s+\[([ xX])\]\s+(.+)$/;
 const DUE_DATE_REGEX = /📅\s*(\d{4}-\d{2}-\d{2})/;
 const COMPLETED_DATE_REGEX = /✅\s*(\d{4}-\d{2}-\d{2})/;
 const RECURRENCE_REGEX = /🔁\s*(every\s+(?:\d+\s+)?(?:day|week|month)s?)/;
+const REMINDER_TIME_REGEX = /⏰\s*(\d{2}:\d{2})/;
 const TAG_REGEX = /#([a-zA-ZÀ-ÿ0-9_-]+)/g;
 const MENTION_REGEX = /@([a-zA-ZÀ-ÿ0-9_-]+)/g;
 
@@ -62,6 +63,7 @@ function stripEmoji(text: string): string {
     .replace(/📅\s*\d{4}-\d{2}-\d{2}/g, '')
     .replace(/🔁\s*every\s+(?:\d+\s+)?(?:day|week|month)s?/g, '')
     .replace(/✅\s*\d{4}-\d{2}-\d{2}/g, '')
+    .replace(/⏰\s*\d{2}:\d{2}/g, '')
     .replace(/\s{2,}/g, ' ')
     .trim();
 }
@@ -81,6 +83,7 @@ export function parseTask(
   const dueMatch = rawText.match(DUE_DATE_REGEX);
   const completedMatch = rawText.match(COMPLETED_DATE_REGEX);
   const recurrenceMatch = rawText.match(RECURRENCE_REGEX);
+  const reminderMatch = rawText.match(REMINDER_TIME_REGEX);
 
   const tags: string[] = [];
   let m: RegExpExecArray | null;
@@ -98,6 +101,7 @@ export function parseTask(
     dueDate: dueMatch?.[1],
     completedDate: completedMatch?.[1],
     recurrence: recurrenceMatch?.[1],
+    reminderTime: reminderMatch?.[1],
     tags,
     mentions,
     sourceFile,

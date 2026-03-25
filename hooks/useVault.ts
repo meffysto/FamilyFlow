@@ -162,8 +162,8 @@ export interface VaultState {
   addRDV: (rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
   updateRDV: (sourceFile: string, rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
   deleteRDV: (sourceFile: string) => Promise<void>;
-  addTask: (text: string, targetFile: string, dueDate?: string, recurrence?: string) => Promise<void>;
-  editTask: (task: Task, updates: { text?: string; dueDate?: string; recurrence?: string; targetFile?: string }) => Promise<void>;
+  addTask: (text: string, targetFile: string, dueDate?: string, recurrence?: string, reminderTime?: string) => Promise<void>;
+  editTask: (task: Task, updates: { text?: string; dueDate?: string; recurrence?: string; reminderTime?: string; targetFile?: string }) => Promise<void>;
   deleteTask: (sourceFile: string, lineIndex: number) => Promise<void>;
   addCourseItem: (text: string, section?: string) => Promise<void>;
   mergeCourseIngredients: (items: { text: string; name: string; quantity: number | null; section: string }[]) => Promise<{ added: number; merged: number }>;
@@ -1721,11 +1721,12 @@ export function useVaultInternal(): VaultState {
     setTimeout(triggerWidgetRefresh, 0);
   }, [triggerWidgetRefresh]);
 
-  const addTask = useCallback(async (text: string, targetFile: string, dueDate?: string, recurrence?: string) => {
+  const addTask = useCallback(async (text: string, targetFile: string, dueDate?: string, recurrence?: string, reminderTime?: string) => {
     if (!vaultRef.current) return;
     let taskText = text;
     if (recurrence) taskText += ` 🔁 ${recurrence}`;
     if (dueDate) taskText += ` 📅 ${dueDate}`;
+    if (reminderTime) taskText += ` ⏰ ${reminderTime}`;
     // Auto-déterminer la section selon la récurrence et le fichier cible
     let section: string | null = null;
     if (recurrence) {
@@ -1746,11 +1747,12 @@ export function useVaultInternal(): VaultState {
     setTimeout(triggerWidgetRefresh, 0);
   }, [triggerWidgetRefresh]);
 
-  const editTask = useCallback(async (task: Task, updates: { text?: string; dueDate?: string; recurrence?: string; targetFile?: string }) => {
+  const editTask = useCallback(async (task: Task, updates: { text?: string; dueDate?: string; recurrence?: string; reminderTime?: string; targetFile?: string }) => {
     if (!vaultRef.current) return;
     const newText = updates.text ?? task.text;
     const newRecurrence = updates.recurrence !== undefined ? updates.recurrence : (task.recurrence ?? '');
     const newDueDate = updates.dueDate !== undefined ? updates.dueDate : (task.dueDate ?? '');
+    const newReminderTime = updates.reminderTime !== undefined ? updates.reminderTime : (task.reminderTime ?? '');
     const newTargetFile = updates.targetFile ?? task.sourceFile;
 
     // Déterminer la section cible selon la récurrence
@@ -1773,6 +1775,7 @@ export function useVaultInternal(): VaultState {
     let taskLine = newText;
     if (newRecurrence) taskLine += ` 🔁 ${newRecurrence}`;
     if (newDueDate) taskLine += ` 📅 ${newDueDate}`;
+    if (newReminderTime) taskLine += ` ⏰ ${newReminderTime}`;
     const fullLine = `- [${task.completed ? 'x' : ' '}] ${taskLine}`;
 
     const fileChanged = newTargetFile !== task.sourceFile;
@@ -1816,7 +1819,7 @@ export function useVaultInternal(): VaultState {
       // Mise à jour optimiste du state local
       setTasks(prev => prev.map(t => {
         if (t.sourceFile !== task.sourceFile || t.lineIndex !== task.lineIndex) return t;
-        return { ...t, text: newText, recurrence: newRecurrence || undefined, dueDate: newDueDate || undefined };
+        return { ...t, text: newText, recurrence: newRecurrence || undefined, dueDate: newDueDate || undefined, reminderTime: newReminderTime || undefined };
       }));
     }
     setTimeout(triggerWidgetRefresh, 0);

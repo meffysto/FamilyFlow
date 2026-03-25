@@ -232,6 +232,7 @@ export default function TasksScreen() {
   const [newTaskText, setNewTaskText] = useState('');
   const [newTaskDueDate, setNewTaskDueDate] = useState('');
   const [newTaskRecurrence, setNewTaskRecurrence] = useState('');
+  const [newTaskReminderTime, setNewTaskReminderTime] = useState('');
   const [newTaskTarget, setNewTaskTarget] = useState(targetFiles[0]?.value ?? '');
   const [newTaskAssignees, setNewTaskAssignees] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -242,6 +243,7 @@ export default function TasksScreen() {
   const [editTaskText, setEditTaskText] = useState('');
   const [editTaskDueDate, setEditTaskDueDate] = useState('');
   const [editTaskRecurrence, setEditTaskRecurrence] = useState('');
+  const [editTaskReminderTime, setEditTaskReminderTime] = useState('');
   const [editTaskTarget, setEditTaskTarget] = useState('');
   const [editTaskAssignees, setEditTaskAssignees] = useState<string[]>([]);
   const [isEditSaving, setIsEditSaving] = useState(false);
@@ -345,10 +347,11 @@ export default function TasksScreen() {
     try {
       const mentions = newTaskAssignees.map((n) => `@${n.replace(/\s+/g, '_')}`).join(' ');
       const fullText = mentions ? `${newTaskText.trim()} ${mentions}` : newTaskText.trim();
-      await addTask(fullText, newTaskTarget, newTaskDueDate || undefined, newTaskRecurrence || undefined);
+      await addTask(fullText, newTaskTarget, newTaskDueDate || undefined, newTaskRecurrence || undefined, newTaskReminderTime || undefined);
       setNewTaskText('');
       setNewTaskDueDate('');
       setNewTaskRecurrence('');
+      setNewTaskReminderTime('');
       setNewTaskAssignees([]);
       setAddModalVisible(false);
     } catch (e) {
@@ -356,7 +359,7 @@ export default function TasksScreen() {
     } finally {
       setIsSaving(false);
     }
-  }, [newTaskText, newTaskDueDate, newTaskRecurrence, newTaskTarget, newTaskAssignees, addTask, showToast]);
+  }, [newTaskText, newTaskDueDate, newTaskRecurrence, newTaskReminderTime, newTaskTarget, newTaskAssignees, addTask, showToast]);
 
   const handleDeleteTask = useCallback(async (task: Task) => {
     if (activeProfile?.role === 'enfant') {
@@ -393,6 +396,7 @@ export default function TasksScreen() {
     setEditTaskText(task.text);
     setEditTaskDueDate(task.dueDate ?? '');
     setEditTaskRecurrence(task.recurrence ?? '');
+    setEditTaskReminderTime(task.reminderTime ?? '');
     setEditTaskTarget(task.sourceFile);
     setEditTaskAssignees(task.mentions ?? []);
     setEditModalVisible(true);
@@ -418,6 +422,7 @@ export default function TasksScreen() {
         text: fullText,
         dueDate: editTaskDueDate || undefined,
         recurrence: editTaskRecurrence || undefined,
+        reminderTime: editTaskReminderTime || undefined,
         targetFile: editTaskTarget || undefined,
       });
       setEditModalVisible(false);
@@ -428,7 +433,7 @@ export default function TasksScreen() {
     } finally {
       setIsEditSaving(false);
     }
-  }, [editingTask, editTaskText, editTaskDueDate, editTaskRecurrence, editTaskTarget, editTaskAssignees, editTask, showToast]);
+  }, [editingTask, editTaskText, editTaskDueDate, editTaskRecurrence, editTaskReminderTime, editTaskTarget, editTaskAssignees, editTask, showToast]);
 
   const handleDeleteFromEdit = useCallback(() => {
     if (!editingTask) return;
@@ -775,7 +780,8 @@ export default function TasksScreen() {
               ))}
             </View>
 
-
+            <Text style={[styles.modalLabel, { color: colors.textSub }]}>{t('tasks.addModal.reminderLabel')}</Text>
+            <DateInput mode="time" value={newTaskReminderTime} onChange={setNewTaskReminderTime} placeholder={t('tasks.addModal.reminderPlaceholder')} />
 
             <Text style={[styles.modalLabel, { color: colors.textSub }]}>{t('tasks.addModal.assignLabel')}</Text>
             <View style={styles.targetRow}>
@@ -870,6 +876,9 @@ export default function TasksScreen() {
                 />
               ))}
             </View>
+
+            <Text style={[styles.modalLabel, { color: colors.textSub }]}>{t('tasks.addModal.reminderLabel')}</Text>
+            <DateInput mode="time" value={editTaskReminderTime} onChange={setEditTaskReminderTime} placeholder={t('tasks.addModal.reminderPlaceholder')} />
 
             <Text style={[styles.modalLabel, { color: colors.textSub }]}>{t('tasks.editModal.assignLabel')}</Text>
             <View style={styles.targetRow}>

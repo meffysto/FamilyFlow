@@ -12,6 +12,7 @@ export interface Task {
   dueDate?: string;       // YYYY-MM-DD from 📅
   recurrence?: string;    // "every day|week|month" from 🔁
   completedDate?: string; // YYYY-MM-DD from ✅
+  reminderTime?: string;  // HH:MM from ⏰
   tags: string[];         // #tag extracted from text
   mentions: string[];     // @user extracted from text
   sourceFile: string;     // relative path in vault

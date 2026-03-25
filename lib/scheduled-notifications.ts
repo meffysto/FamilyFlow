@@ -97,6 +97,7 @@ const CAT_RDV_VEILLE = 'rdv-veille';
 const CAT_RDV_MATIN = 'rdv-matin';
 const CAT_RDV_AVANT = 'rdv-avant';
 const CAT_TASK = 'task-due';
+const CAT_TASK_REMINDER = 'task-reminder';
 const CAT_MENAGE = 'menage-weekly';
 const CAT_COURSES = 'courses-stock';
 const CAT_GENERAL = 'general-daily';
@@ -255,6 +256,7 @@ export async function scheduleTaskAlerts(
   lang: string = 'fr'
 ): Promise<number> {
   await cancelByCategory(CAT_TASK);
+  await cancelByCategory(CAT_TASK_REMINDER);
 
   if (!config.taskEnabled) return 0;
 
@@ -310,6 +312,51 @@ export async function scheduleTaskAlerts(
           trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: veille },
         });
         scheduled++;
+      }
+    }
+  }
+
+  // ── Rappels individuels par tâche (⏰ HH:MM) ──
+  const reminderTasks = tasks.filter(t => !t.completed && t.reminderTime);
+  for (const task of reminderTasks) {
+    const [h, m] = task.reminderTime!.split(':').map(Number);
+    if (isNaN(h) || isNaN(m)) continue;
+
+    const taskName = cleanTaskText(task.text);
+    const title = isFr ? `⏰ Rappel` : `⏰ Reminder`;
+    const body = taskName;
+
+    if (task.recurrence && /every\s+day/i.test(task.recurrence)) {
+      // Récurrente quotidienne → trigger DAILY
+      await Notifications.scheduleNotificationAsync({
+        identifier: `${CAT_TASK_REMINDER}-${task.sourceFile}:${task.lineIndex}`,
+        content: { title, body, sound: true },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: h, minute: m },
+      });
+      scheduled++;
+    } else if (task.recurrence && /every\s+week/i.test(task.recurrence)) {
+      // Récurrente hebdo → trigger WEEKLY (basé sur le jour de dueDate ou aujourd'hui)
+      const refDate = task.dueDate ? new Date(task.dueDate + 'T12:00:00') : new Date();
+      const weekday = refDate.getDay() === 0 ? 7 : refDate.getDay(); // 1=lun..7=dim
+      await Notifications.scheduleNotificationAsync({
+        identifier: `${CAT_TASK_REMINDER}-${task.sourceFile}:${task.lineIndex}`,
+        content: { title, body, sound: true },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, hour: h, minute: m, weekday },
+      });
+      scheduled++;
+    } else if (task.dueDate) {
+      // Tâche non-récurrente avec date → trigger DATE unique
+      const [year, month, day] = task.dueDate.split('-').map(Number);
+      if (!isNaN(year)) {
+        const reminderDate = new Date(year, month - 1, day, h, m);
+        if (reminderDate > now) {
+          await Notifications.scheduleNotificationAsync({
+            identifier: `${CAT_TASK_REMINDER}-${task.sourceFile}:${task.lineIndex}`,
+            content: { title, body, sound: true },
+            trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: reminderDate },
+          });
+          scheduled++;
+        }
       }
     }
   }

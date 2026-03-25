@@ -418,7 +418,9 @@
       "assignLabel": "👤 Attribuer à (optionnel)",
       "saveToLabel": "Enregistrer pour",
       "targetLabel": "📁 Enregistrer pour",
-      "secretMission": "🕵️ Créer une mission secrète"
+      "secretMission": "🕵️ Créer une mission secrète",
+      "reminderLabel": "⏰ Rappel (optionnel)",
+      "reminderPlaceholder": "Choisir une heure"
     },
     "editModal": {
       "title": "Modifier la tâche",
