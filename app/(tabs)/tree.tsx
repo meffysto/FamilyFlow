@@ -47,6 +47,7 @@ import {
   TREE_STAGES,
 } from '../../lib/mascot';
 import { SPECIES_INFO, ALL_SPECIES, type TreeSpecies } from '../../lib/mascot/types';
+import { getCurrentSeason, SEASON_INFO } from '../../lib/mascot/seasons';
 import type { Profile } from '../../lib/types';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../../constants/typography';
@@ -78,6 +79,8 @@ export default function TreeScreen() {
   const species = profile.treeSpecies || 'cerisier';
   const hasChosenSpecies = !!profile.treeSpecies;
   const level = calculateLevel(profile.points ?? 0);
+  const season = getCurrentSeason();
+  const seasonInfo = SEASON_INFO[season];
   const tier = getLevelTier(level);
   const stageInfo = getTreeStageInfo(level);
   const stageProgress = getStageProgress(level);
@@ -137,6 +140,13 @@ export default function TreeScreen() {
             {t('mascot.screen.title')}
           </Text>
           <View style={styles.backBtn} />
+        </View>
+
+        {/* Badge saison */}
+        <View style={[styles.seasonBadge, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
+          <Text style={[styles.seasonText, { color: colors.textSub }]}>
+            {seasonInfo.emoji} {t(seasonInfo.labelKey)}
+          </Text>
         </View>
 
         {/* Arbre principal */}
@@ -404,6 +414,17 @@ const styles = StyleSheet.create({
   title: {
     fontSize: FontSize.heading,
     fontWeight: FontWeight.bold,
+  },
+  seasonBadge: {
+    alignSelf: 'center',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+  },
+  seasonText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
   },
   treeContainer: {
     alignItems: 'center',

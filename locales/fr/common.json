@@ -3281,6 +3281,12 @@
       "emptyDeco": "Aucune décoration disponible à ton stade actuel.",
       "emptyHab": "Aucun habitant disponible à ton stade actuel.",
       "lootDrop": "{{item}} trouvé dans la loot box !"
+    },
+    "season": {
+      "printemps": "Printemps",
+      "ete": "Été",
+      "automne": "Automne",
+      "hiver": "Hiver"
     }
   }
 }

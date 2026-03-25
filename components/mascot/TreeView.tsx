@@ -45,6 +45,14 @@ import {
   getVisualComplexity,
   getStageIndex,
 } from '../../lib/mascot/engine';
+import {
+  type Season,
+  getCurrentSeason,
+  getSeasonalPalette,
+  SKY_COLORS,
+  GROUND_COLORS,
+  SEASONAL_PARTICLES,
+} from '../../lib/mascot/seasons';
 
 // ── Types ──────────────────────────────────────
 
@@ -57,6 +65,7 @@ interface TreeViewProps {
   decorations?: string[];  // IDs des décorations achetées
   inhabitants?: string[];  // IDs des habitants achetés
   previewMode?: boolean;   // ignorer le stade minimum (aperçu boutique)
+  season?: Season;         // forcer une saison (défaut: saison courante)
 }
 
 // ── Constantes géométrie ───────────────────────
@@ -68,12 +77,16 @@ const CENTER_X = 100;
 
 // ── Composant principal ────────────────────────
 
-function TreeViewInner({ species, level, size = 200, showGround = true, interactive = true, decorations = [], inhabitants = [], previewMode = false }: TreeViewProps) {
+function TreeViewInner({ species, level, size = 200, showGround = true, interactive = true, decorations = [], inhabitants = [], previewMode = false, season: seasonProp }: TreeViewProps) {
   const stage = getTreeStage(level);
   const progress = getStageProgress(level);
   const stageIdx = getStageIndex(level);
   const visual = getVisualComplexity(level);
-  const sp = SPECIES_INFO[species];
+  const currentSeason = useMemo(() => seasonProp ?? getCurrentSeason(), [seasonProp]);
+  const sp = useMemo(() => getSeasonalPalette(species, currentSeason), [species, currentSeason]);
+  const sky = SKY_COLORS[currentSeason];
+  const ground = GROUND_COLORS[currentSeason];
+  const seasonParticles = SEASONAL_PARTICLES[currentSeason];
   const reducedMotion = useReducedMotion();
   const animate = interactive && !reducedMotion;
 
@@ -129,6 +142,11 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
 
   return (
     <View style={[styles.container, { width: size, height: size * (VIEWBOX_H / VIEWBOX_W) }]}>
+      {/* Particules saisonnières */}
+      {animate && (
+        <SeasonalParticles particle={seasonParticles} size={size} />
+      )}
+
       {/* Particules animées (stades avancés) */}
       {visual.hasParticles && animate && (
         <FloatingParticles color={sp.particle} count={visual.hasAura ? 12 : 6} size={size} />
@@ -141,15 +159,15 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
           viewBox={`0 0 ${VIEWBOX_W} ${VIEWBOX_H}`}
         >
           <Defs>
-            {/* Gradient ciel */}
+            {/* Gradient ciel (saisonnier) */}
             <LinearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor="#87CEEB" stopOpacity={0.3} />
-              <Stop offset="1" stopColor="#E0F7FA" stopOpacity={0.1} />
+              <Stop offset="0" stopColor={sky.top} stopOpacity={0.3} />
+              <Stop offset="1" stopColor={sky.bottom} stopOpacity={0.1} />
             </LinearGradient>
-            {/* Gradient sol */}
+            {/* Gradient sol (saisonnier) */}
             <LinearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor="#7CB342" />
-              <Stop offset="1" stopColor="#558B2F" />
+              <Stop offset="0" stopColor={ground.top} />
+              <Stop offset="1" stopColor={ground.bottom} />
             </LinearGradient>
             {/* Glow doré pour légendaire */}
             <RadialGradient id="aura" cx="50%" cy="40%" r="50%">
@@ -893,6 +911,120 @@ function SpeciesFruits({ species, speciesType, crownR, crownY, count = 4 }: {
         </G>
       ))}
     </G>
+  );
+}
+
+// ── Particules saisonnières (Reanimated) ──────
+
+function SeasonalParticles({ particle, size }: { particle: typeof SEASONAL_PARTICLES[Season]; size: number }) {
+  return (
+    <View style={[StyleSheet.absoluteFill, styles.particleContainer]} pointerEvents="none">
+      {Array.from({ length: particle.count }).map((_, i) => (
+        <SeasonParticle key={`sp-${i}`} particle={particle} index={i} containerSize={size} />
+      ))}
+    </View>
+  );
+}
+
+function SeasonParticle({ particle, index, containerSize }: { particle: typeof SEASONAL_PARTICLES[Season]; index: number; containerSize: number }) {
+  const reducedMotion = useReducedMotion();
+  const translateY = useSharedValue(0);
+  const translateX = useSharedValue(0);
+  const opacity = useSharedValue(0);
+  const rotation = useSharedValue(0);
+
+  const startX = useMemo(() => (index * 43 + 17) % containerSize, [index, containerSize]);
+  const startY = useMemo(() => {
+    if (particle.direction === 'down') return -10; // commencent en haut
+    return ((index * 61 + 11) % (containerSize * 0.6)) + containerSize * 0.15;
+  }, [index, containerSize, particle.direction]);
+
+  const speedMult = particle.speed === 'slow' ? 1.4 : particle.speed === 'fast' ? 0.7 : 1;
+  const duration = useMemo(() => (4000 + (index % 5) * 800) * speedMult, [index, speedMult]);
+
+  useEffect(() => {
+    if (reducedMotion) return;
+    const delay = index * 600;
+
+    if (particle.direction === 'down') {
+      // Chute (neige, feuilles, pétales)
+      translateY.value = withDelay(delay, withRepeat(
+        withTiming(containerSize * 1.1, { duration, easing: Easing.linear }),
+        -1, false,
+      ));
+      translateX.value = withDelay(delay, withRepeat(
+        withSequence(
+          withTiming(15 + (index % 4) * 5, { duration: duration * 0.4, easing: Easing.inOut(Easing.sin) }),
+          withTiming(-15 - (index % 3) * 5, { duration: duration * 0.4, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0, { duration: duration * 0.2, easing: Easing.inOut(Easing.sin) }),
+        ),
+        -1, false,
+      ));
+    } else {
+      // Flottement (lucioles été)
+      translateY.value = withDelay(delay, withRepeat(
+        withSequence(
+          withTiming(-15 - index * 3, { duration, easing: Easing.inOut(Easing.sin) }),
+          withTiming(10, { duration, easing: Easing.inOut(Easing.sin) }),
+        ),
+        -1, true,
+      ));
+      translateX.value = withDelay(delay, withRepeat(
+        withSequence(
+          withTiming(12 + (index % 3) * 4, { duration: duration * 0.6, easing: Easing.inOut(Easing.sin) }),
+          withTiming(-12 - (index % 3) * 4, { duration: duration * 0.6, easing: Easing.inOut(Easing.sin) }),
+        ),
+        -1, true,
+      ));
+    }
+
+    opacity.value = withDelay(delay, withRepeat(
+      withSequence(
+        withTiming(0.7, { duration: duration * 0.3 }),
+        withTiming(0.3, { duration: duration * 0.7 }),
+      ),
+      -1, true,
+    ));
+
+    rotation.value = withDelay(delay, withRepeat(
+      withTiming(360, { duration: duration * 2, easing: Easing.linear }),
+      -1, false,
+    ));
+  }, [reducedMotion]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: translateY.value },
+      { translateX: translateX.value },
+      { rotate: `${rotation.value}deg` },
+    ],
+    opacity: opacity.value,
+  }));
+
+  return (
+    <Animated.View
+      style={[
+        {
+          position: 'absolute',
+          left: startX,
+          top: startY,
+          width: 14,
+          height: 14,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        animStyle,
+      ]}
+    >
+      <View
+        style={{
+          width: 6,
+          height: 6,
+          borderRadius: 3,
+          backgroundColor: particle.color,
+        }}
+      />
+    </Animated.View>
   );
 }
 

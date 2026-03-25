@@ -3281,6 +3281,12 @@
       "emptyDeco": "No decorations available at your current stage.",
       "emptyHab": "No inhabitants available at your current stage.",
       "lootDrop": "{{item}} found in the loot box!"
+    },
+    "season": {
+      "printemps": "Spring",
+      "ete": "Summer",
+      "automne": "Autumn",
+      "hiver": "Winter"
     }
   }
 }

@@ -5,7 +5,12 @@
  * Les message builders existants (telegram.ts) sont réutilisés.
  */
 
-import RNShare from 'react-native-share';
+import { Platform } from 'react-native';
+
+// react-native-share ne supporte pas le web
+const RNShare = Platform.OS === 'web'
+  ? { open: async (_opts: any) => ({}) }
+  : require('react-native-share').default;
 import * as SecureStore from 'expo-secure-store';
 import { sendTelegram, sendTelegramPhoto, sendTelegramMediaGroup, sendWeeklyRecap } from './telegram';
 
