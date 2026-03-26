@@ -17,7 +17,10 @@ import {
   TouchableOpacity,
   Modal,
   Dimensions,
+  Image,
+  ImageSourcePropType,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -47,7 +50,7 @@ import {
   TREE_STAGES,
 } from '../../lib/mascot';
 import { SPECIES_INFO, ALL_SPECIES, type TreeSpecies } from '../../lib/mascot/types';
-import { getCurrentSeason, SEASON_INFO } from '../../lib/mascot/seasons';
+import { getCurrentSeason, SEASON_INFO, type Season } from '../../lib/mascot/seasons';
 import type { Profile } from '../../lib/types';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../../constants/typography';
@@ -55,6 +58,24 @@ import { Shadows } from '../../constants/shadows';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const TREE_SIZE = Math.min(SCREEN_W * 0.85, 360);
+
+/** Hauteur du conteneur diorama adaptée au stade de l'arbre */
+const DIORAMA_ASPECT = 240 / 200; // viewbox ratio du SVG
+const DIORAMA_HEIGHT_BY_STAGE: Record<number, number> = {
+  0: TREE_SIZE * 0.75,            // graine — compact, cozy
+  1: TREE_SIZE * 0.85,            // pousse — un peu plus grand
+  2: TREE_SIZE * DIORAMA_ASPECT,  // arbuste — ratio naturel
+  3: TREE_SIZE * DIORAMA_ASPECT,  // arbre
+  4: TREE_SIZE * DIORAMA_ASPECT * 1.05, // majestueux — un poil plus
+  5: TREE_SIZE * DIORAMA_ASPECT * 1.1,  // légendaire — max impact
+};
+
+const SEASON_ILLUSTRATIONS: Record<Season, ImageSourcePropType> = {
+  printemps: require('../../assets/illustrations/tree-spring.jpg'),
+  ete: require('../../assets/illustrations/tree-summer.jpg'),
+  automne: require('../../assets/illustrations/tree-autumn.jpg'),
+  hiver: require('../../assets/illustrations/tree-winter.jpg'),
+};
 
 export default function TreeScreen() {
   const { profileId } = useLocalSearchParams<{ profileId?: string }>();
@@ -149,21 +170,57 @@ export default function TreeScreen() {
           </Text>
         </View>
 
-        {/* Arbre principal */}
+        {/* Arbre principal — diorama saisonnier */}
         <Animated.View entering={FadeIn.duration(600)} style={styles.treeContainer}>
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={hapticsTreeTap}
-            style={[styles.treeBg, { backgroundColor: isDark ? 'rgba(16,32,48,0.4)' : 'rgba(200,230,255,0.3)' }]}
+            style={[
+              styles.treeBg,
+              {
+                width: TREE_SIZE + Spacing['3xl'] * 2,
+                height: DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? TREE_SIZE * DIORAMA_ASPECT,
+                backgroundColor: colors.cardAlt,
+              },
+            ]}
           >
-            <TreeView
-              species={species}
-              level={level}
-              size={TREE_SIZE}
-              interactive
-              decorations={profile.mascotDecorations ?? []}
-              inhabitants={profile.mascotInhabitants ?? []}
+            {/* Couche 1 : Illustration saisonnière — positionnée en haut (ciel + horizon)
+                On affiche seulement les 65% supérieurs de l'image via un conteneur clipé,
+                évitant ainsi le sol de l'illustration qui clash avec le sol SVG. */}
+            <View style={styles.illustrationClip}>
+              <Image
+                source={SEASON_ILLUSTRATIONS[season]}
+                style={styles.seasonIllustration}
+                resizeMode="cover"
+              />
+            </View>
+
+            {/* Couche 2 : Gradient de fondu — transition douce illustration → fond neutre
+                Le dégradé part de transparent (en haut de la zone de fondu)
+                vers la couleur de fond du conteneur (en bas). */}
+            <LinearGradient
+              colors={[
+                'transparent',
+                colors.cardAlt + 'BB',
+                colors.cardAlt,
+              ]}
+              locations={[0, 0.4, 1]}
+              style={styles.illustrationFade}
             />
+
+            {/* Couche 3 : Arbre SVG au premier plan — le sol organique SVG
+                se fond naturellement dans le gradient de transition. */}
+            <View style={styles.treeOverlay}>
+              <TreeView
+                species={species}
+                level={level}
+                size={TREE_SIZE}
+                interactive
+                showGround
+                decorations={profile.mascotDecorations ?? []}
+                inhabitants={profile.mascotInhabitants ?? []}
+              />
+            </View>
           </TouchableOpacity>
         </Animated.View>
 
@@ -436,7 +493,35 @@ const styles = StyleSheet.create({
   },
   treeBg: {
     borderRadius: Radius['3xl'],
-    padding: Spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
+  },
+  illustrationClip: {
+    // Occupe les 65% supérieurs du conteneur — on ne montre que le ciel/horizon
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '65%',
+    overflow: 'hidden',
+  },
+  seasonIllustration: {
+    width: '100%',
+    height: '155%', // surdi­mensionné pour que resizeMode="cover" recadre le haut de l'image
+    opacity: 0.65,
+  },
+  illustrationFade: {
+    // Gradient de fondu entre l'illustration (en haut) et le sol SVG (en bas)
+    position: 'absolute',
+    top: '35%',
+    left: 0,
+    right: 0,
+    height: '40%',
+  },
+  treeOverlay: {
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.md,
     alignItems: 'center',
   },
   infoCard: {
