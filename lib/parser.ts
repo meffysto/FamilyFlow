@@ -557,6 +557,14 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
       const mascotInhabitants = currentProps.mascot_inhabitants
         ? currentProps.mascot_inhabitants.split(',').map((s: string) => s.trim()).filter(Boolean)
         : [];
+      // Placements scène : "tree-top:guirlandes,ground-left:oiseau"
+      const mascotPlacements: Record<string, string> = {};
+      if (currentProps.mascot_placements) {
+        currentProps.mascot_placements.split(',').forEach((pair: string) => {
+          const [slotId, itemId] = pair.split(':').map(s => s.trim());
+          if (slotId && itemId) mascotPlacements[slotId] = itemId;
+        });
+      }
       profiles.push({
         id: currentId,
         name: currentProps.name,
@@ -572,6 +580,7 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
         treeSpecies,
         mascotDecorations,
         mascotInhabitants,
+        mascotPlacements,
       });
     }
   };
@@ -630,6 +639,7 @@ export function parseGamification(content: string): GamificationData {
         avatar: '👤',
         mascotDecorations: [],
         mascotInhabitants: [],
+        mascotPlacements: {},
         points: parseInt(currentProps.points ?? '0', 10),
         coins: parseInt(currentProps.coins ?? currentProps.points ?? '0', 10),
         level: parseInt(currentProps.level ?? '1', 10),

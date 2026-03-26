@@ -130,6 +130,31 @@ export interface EvolutionEvent {
   newLevel: number;
 }
 
+/** Zone de la scène pour le placement d'items */
+export type SceneZone = 'tree' | 'ground' | 'sky';
+
+/** Slot de placement sur la scène SVG (viewbox 200×240) */
+export interface SceneSlot {
+  id: string;
+  cx: number;
+  cy: number;
+  zone: SceneZone;
+}
+
+/** 10 emplacements répartis sur toute la scène */
+export const SCENE_SLOTS: SceneSlot[] = [
+  { id: 'tree-top',      cx: 100, cy: 75,  zone: 'tree' },
+  { id: 'tree-left',     cx: 60,  cy: 120, zone: 'tree' },
+  { id: 'tree-right',    cx: 140, cy: 115, zone: 'tree' },
+  { id: 'ground-left',   cx: 30,  cy: 208, zone: 'ground' },
+  { id: 'ground-center', cx: 100, cy: 210, zone: 'ground' },
+  { id: 'ground-right',  cx: 170, cy: 208, zone: 'ground' },
+  { id: 'ground-far-l',  cx: 12,  cy: 215, zone: 'ground' },
+  { id: 'ground-far-r',  cx: 188, cy: 215, zone: 'ground' },
+  { id: 'sky-left',      cx: 30,  cy: 55,  zone: 'sky' },
+  { id: 'sky-right',     cx: 170, cy: 50,  zone: 'sky' },
+];
+
 /** Décoration achetable pour l'arbre */
 export interface MascotDecoration {
   id: string;

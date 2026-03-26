@@ -3215,6 +3215,13 @@
       "keep": "Keep my tree",
       "confirm": "Choose {{species}}"
     },
+    "placement": {
+      "choose": "Choose a spot",
+      "choose_enfant": "Where do you want to put it?"
+    },
+    "placed": "Placed!",
+    "placed_enfant": "Awesome, it's placed!",
+    "decorate": "Decorate",
     "speciesChanged": "Your tree is now a {{species}}!",
     "evolution": {
       "title": "Evolution!",

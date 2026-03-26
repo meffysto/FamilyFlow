@@ -87,6 +87,7 @@ function makeProfile(overrides: Partial<Profile> = {}): Profile {
     pityCounter: 0,
     mascotDecorations: [],
     mascotInhabitants: [],
+    mascotPlacements: {},
     ...overrides,
   };
 }

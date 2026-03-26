@@ -33,6 +33,7 @@ function makeProfile(overrides: Partial<Profile> & { name: string; role: Profile
     pityCounter: 0,
     mascotDecorations: [],
     mascotInhabitants: [],
+    mascotPlacements: {},
     ...overrides,
   };
 }

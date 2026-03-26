@@ -41,6 +41,7 @@ import {
   SPECIES_INFO,
   DECORATIONS,
   INHABITANTS,
+  SCENE_SLOTS,
 } from '../../lib/mascot/types';
 import {
   getTreeStage,
@@ -69,6 +70,9 @@ interface TreeViewProps {
   inhabitants?: string[];  // IDs des habitants achetés
   previewMode?: boolean;   // ignorer le stade minimum (aperçu boutique)
   season?: Season;         // forcer une saison (défaut: saison courante)
+  placements?: Record<string, string>;  // slotId → itemId (items placés sur la scène)
+  placingItem?: string | null;          // itemId en cours de placement (active le mode placement)
+  onSlotSelect?: (slotId: string) => void;  // callback quand l'utilisateur tape un slot
 }
 
 // ── Constantes géométrie ───────────────────────
@@ -80,7 +84,7 @@ const CENTER_X = 100;
 
 // ── Composant principal ────────────────────────
 
-function TreeViewInner({ species, level, size = 200, showGround = true, interactive = true, decorations = [], inhabitants = [], previewMode = false, season: seasonProp }: TreeViewProps) {
+function TreeViewInner({ species, level, size = 200, showGround = true, interactive = true, decorations = [], inhabitants = [], previewMode = false, season: seasonProp, placements = {}, placingItem = null, onSlotSelect }: TreeViewProps) {
   const stage = getTreeStage(level);
   const progress = getStageProgress(level);
   const stageIdx = getStageIndex(level);
@@ -194,10 +198,7 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
             </RadialGradient>
           </Defs>
 
-          {/* Sol — bord organique subtil (le fond vert vient du conteneur parent) */}
-          {showGround && (
-            <OrganicCrown cx={CENTER_X} cy={GROUND_Y + 2} rx={115} ry={12} fill="url(#ground)" opacity={0.5} seed={99} wobble={0.05} />
-          )}
+          {/* Sol géré par le conteneur parent (gradient fond) — pas de sol SVG */}
           {showGround && <HabitatLayer stageIdx={stageIdx} season={currentSeason} groundColors={ground} accent={sp.accent} />}
 
           {/* Arbre + décorations — animés (sway + breathe), pivot au pied */}
@@ -211,13 +212,28 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
 
             {treeElements}
 
-            {decorations.length > 0 && (stageIdx >= 1 || previewMode) && (
-              <DecorationOverlay decorationIds={decorations} stageIdx={stageIdx} previewMode={previewMode} species={species} />
+            {/* Ancien rendu fixe — uniquement en mode preview (boutique) */}
+            {previewMode && decorations.length > 0 && (
+              <DecorationOverlay decorationIds={decorations} stageIdx={stageIdx} previewMode species={species} />
             )}
-            {inhabitants.length > 0 && (stageIdx >= 1 || previewMode) && (
-              <InhabitantOverlay inhabitantIds={inhabitants} stageIdx={stageIdx} previewMode={previewMode} species={species} />
+            {previewMode && inhabitants.length > 0 && (
+              <InhabitantOverlay inhabitantIds={inhabitants} stageIdx={stageIdx} species={species} />
             )}
           </AnimatedG>
+
+          {/* Items placés par l'utilisateur — statiques (pas de sway), rendus seulement en taille réelle */}
+          {showGround && size > 100 && Object.keys(placements).length > 0 && !placingItem && (
+            <PlacedItems placements={placements} />
+          )}
+
+          {/* Mode placement — affiche les 10 slots avec animation pulsante */}
+          {showGround && size > 100 && placingItem && (
+            <PlacementSlots
+              placements={placements}
+              placingItemId={placingItem}
+              onSelect={onSlotSelect}
+            />
+          )}
         </Svg>
       </Animated.View>
     </View>
@@ -1429,6 +1445,99 @@ const styles = StyleSheet.create({
     overflow: 'visible',
   },
 });
+
+// ── Placement système — items placés par l'utilisateur sur des slots ─────
+
+/** Résout un itemId en son emoji (cherche dans décorations ET habitants) */
+function getItemEmoji(itemId: string): string | null {
+  const deco = DECORATIONS.find(d => d.id === itemId);
+  if (deco) return deco.emoji;
+  const hab = INHABITANTS.find(h => h.id === itemId);
+  if (hab) return hab.emoji;
+  return null;
+}
+
+/** Rendu des items placés sur la scène (mode normal, pas de placement en cours) */
+function PlacedItems({ placements }: { placements: Record<string, string> }) {
+  return (
+    <G>
+      {Object.entries(placements).map(([slotId, itemId]) => {
+        const slot = SCENE_SLOTS.find(s => s.id === slotId);
+        const emoji = getItemEmoji(itemId);
+        if (!slot || !emoji) return null;
+        return (
+          <SvgText
+            key={slotId}
+            x={slot.cx}
+            y={slot.cy + 5}
+            fontSize={18}
+            textAnchor="middle"
+          >
+            {emoji}
+          </SvgText>
+        );
+      })}
+    </G>
+  );
+}
+
+/** Rendu des slots en mode placement — cercles pulsants, emoji si occupé */
+function PlacementSlots({
+  placements,
+  placingItemId,
+  onSelect,
+}: {
+  placements: Record<string, string>;
+  placingItemId: string;
+  onSelect?: (slotId: string) => void;
+}) {
+  return (
+    <G>
+      {SCENE_SLOTS.map(slot => {
+        const occupiedItemId = placements[slot.id];
+        const emoji = occupiedItemId ? getItemEmoji(occupiedItemId) : null;
+        const isEmpty = !emoji;
+        return (
+          <G key={slot.id} onPress={() => onSelect?.(slot.id)}>
+            {/* Cercle de fond — zone tactile + indicateur visuel */}
+            <Circle
+              cx={slot.cx}
+              cy={slot.cy}
+              r={14}
+              fill={isEmpty ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.25)'}
+              stroke={isEmpty ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.8)'}
+              strokeWidth={1.5}
+              strokeDasharray={isEmpty ? '4,3' : undefined}
+            />
+            {/* Emoji si le slot est occupé */}
+            {emoji ? (
+              <SvgText
+                x={slot.cx}
+                y={slot.cy + 5}
+                fontSize={16}
+                textAnchor="middle"
+              >
+                {emoji}
+              </SvgText>
+            ) : (
+              /* Indicateur "+" pour les slots vides */
+              <SvgText
+                x={slot.cx}
+                y={slot.cy + 4}
+                fontSize={14}
+                textAnchor="middle"
+                fill="rgba(255,255,255,0.6)"
+                fontWeight="bold"
+              >
+                +
+              </SvgText>
+            )}
+          </G>
+        );
+      })}
+    </G>
+  );
+}
 
 // ── Positions dynamiques des décorations sur l'arbre ─────
 

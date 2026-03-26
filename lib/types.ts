@@ -79,6 +79,7 @@ export interface Profile {
   treeSpecies?: import('../lib/mascot/types').TreeSpecies; // espèce d'arbre mascotte
   mascotDecorations: string[];   // IDs des décorations achetées
   mascotInhabitants: string[];   // IDs des habitants achetés
+  mascotPlacements: Record<string, string>;  // slotId → itemId (placement sur la scène)
   points: number;
   coins: number;            // 🍃 Feuilles — monnaie dépensable (boutique)
   level: number;

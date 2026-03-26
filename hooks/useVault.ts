@@ -151,6 +151,7 @@ export interface VaultState {
   updateProfileTheme: (profileId: string, theme: ProfileTheme) => Promise<void>;
   updateTreeSpecies: (profileId: string, species: string) => Promise<void>;
   buyMascotItem: (profileId: string, itemId: string, itemType: 'decoration' | 'inhabitant') => Promise<void>;
+  placeMascotItem: (profileId: string, slotId: string, itemId: string) => Promise<void>;
   updateProfile: (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string; propre?: boolean; gender?: Gender }) => Promise<void>;
   deleteProfile: (profileId: string) => Promise<void>;
   updateStockQuantity: (lineIndex: number, newQuantity: number) => Promise<void>;
@@ -1354,6 +1355,71 @@ export function useVaultInternal(): VaultState {
       setGamiData(gami);
     } catch (e) {
       throw new Error(`buyMascotItem: ${e}`);
+    }
+  }, [profiles]);
+
+  /** Placer un item acheté sur un slot de la scène */
+  const placeMascotItem = useCallback(async (profileId: string, slotId: string, itemId: string) => {
+    if (!vaultRef.current) return;
+
+    try {
+      const content = await vaultRef.current.readFile(FAMILLE_FILE);
+      const lines = content.split('\n');
+      let inSection = false;
+      let fieldLine = -1;
+      let lastPropIdx = -1;
+      const fieldKey = 'mascot_placements';
+
+      // Récupérer les placements actuels du profil
+      const profile = profiles.find((p) => p.id === profileId);
+      if (!profile) throw new Error(`Profil ${profileId} non trouvé`);
+      const placements = { ...(profile.mascotPlacements ?? {}) };
+
+      // Si l'item est déjà placé ailleurs, le retirer de l'ancien slot
+      for (const [existingSlot, existingItem] of Object.entries(placements)) {
+        if (existingItem === itemId) {
+          delete placements[existingSlot];
+        }
+      }
+
+      // Placer l'item au nouveau slot
+      placements[slotId] = itemId;
+
+      // Sérialiser : "tree-top:guirlandes,ground-left:oiseau"
+      const serialized = Object.entries(placements)
+        .map(([s, i]) => `${s}:${i}`)
+        .join(',');
+      const newValue = `${fieldKey}: ${serialized}`;
+
+      // Trouver la section du profil dans famille.md
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].startsWith('### ')) {
+          if (inSection) break;
+          if (lines[i].replace('### ', '').trim() === profileId) {
+            inSection = true;
+          }
+        } else if (inSection && lines[i].includes(': ')) {
+          lastPropIdx = i;
+          if (lines[i].trim().startsWith(`${fieldKey}:`)) {
+            fieldLine = i;
+          }
+        }
+      }
+
+      if (fieldLine >= 0) {
+        lines[fieldLine] = newValue;
+      } else if (lastPropIdx >= 0) {
+        lines.splice(lastPropIdx + 1, 0, newValue);
+      }
+
+      const familleStr = lines.join('\n');
+      await vaultRef.current.writeFile(FAMILLE_FILE, familleStr);
+
+      // Mettre à jour l'état local
+      const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
+      setProfiles(mergeProfiles(familleStr, gamiContent));
+    } catch (e) {
+      throw new Error(`placeMascotItem: ${e}`);
     }
   }, [profiles]);
 
@@ -3120,6 +3186,7 @@ export function useVaultInternal(): VaultState {
     updateProfileTheme,
     updateTreeSpecies,
     buyMascotItem,
+    placeMascotItem,
     updateProfile,
     deleteProfile,
     updateStockQuantity,
@@ -3229,7 +3296,7 @@ export function useVaultInternal(): VaultState {
     quotes, moods, skillTrees, secretMissions,
     // Callbacks (stables grâce à useCallback)
     refresh, setVaultPath, setActiveProfile, saveNotifPrefs, updateMeal, loadMealsForWeek,
-    addPhoto, getPhotoUri, updateProfileTheme, buyMascotItem, updateProfile, deleteProfile,
+    addPhoto, getPhotoUri, updateProfileTheme, buyMascotItem, placeMascotItem, updateProfile, deleteProfile,
     updateStockQuantity, addStockItem, deleteStockItem, updateStockItem,
     toggleTask, addRDV, updateRDV, deleteRDV, addTask, editTask, deleteTask,
     addCourseItem, mergeCourseIngredients, toggleCourseItem, removeCourseItem, moveCourseItem,

@@ -30,6 +30,7 @@ import Animated, {
   withSpring,
   FadeIn,
   FadeInDown,
+  FadeInUp,
 } from 'react-native-reanimated';
 import { hapticsTreeTap, hapticsSpeciesChange } from '../../lib/mascot/haptics';
 
@@ -49,7 +50,7 @@ import {
   getStageIndex,
   TREE_STAGES,
 } from '../../lib/mascot';
-import { SPECIES_INFO, ALL_SPECIES, type TreeSpecies } from '../../lib/mascot/types';
+import { SPECIES_INFO, ALL_SPECIES, DECORATIONS, INHABITANTS, type TreeSpecies } from '../../lib/mascot/types';
 import { getCurrentSeason, SEASON_INFO, GROUND_COLORS, type Season } from '../../lib/mascot/seasons';
 import type { Profile } from '../../lib/types';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
@@ -81,7 +82,7 @@ export default function TreeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { primary, tint, colors, isDark } = useThemeColors();
-  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem } = useVault();
+  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem } = useVault();
   const { showToast } = useToast();
 
   // Profil affiché : celui passé en param ou le profil actif
@@ -93,6 +94,38 @@ export default function TreeScreen() {
   const [showSpeciesPicker, setShowSpeciesPicker] = useState(false);
   const [selectedProfileForPicker, setSelectedProfileForPicker] = useState<Profile | null>(null);
   const [showShop, setShowShop] = useState(false);
+  const [placingItem, setPlacingItem] = useState<string | null>(null);
+  const [showItemPicker, setShowItemPicker] = useState(false);
+
+  // Liste combinée des items possédés avec leurs infos catalogue
+  const allOwnedItems = useMemo(() => {
+    if (!profile) return [];
+    const decoIds = profile.mascotDecorations ?? [];
+    const habIds = profile.mascotInhabitants ?? [];
+    const items: { id: string; emoji: string }[] = [];
+    for (const id of decoIds) {
+      const cat = DECORATIONS.find(d => d.id === id);
+      if (cat) items.push({ id, emoji: cat.emoji });
+    }
+    for (const id of habIds) {
+      const cat = INHABITANTS.find(h => h.id === id);
+      if (cat) items.push({ id, emoji: cat.emoji });
+    }
+    return items;
+  }, [profile?.mascotDecorations, profile?.mascotInhabitants]);
+
+  // Set des items déjà placés sur un slot
+  const placedItemIds = useMemo(() => {
+    if (!profile) return new Set<string>();
+    return new Set(Object.values(profile.mascotPlacements ?? {}));
+  }, [profile?.mascotPlacements]);
+
+  // Emoji de l'item en cours de placement (pour le bandeau)
+  const placingItemEmoji = useMemo(() => {
+    if (!placingItem) return '';
+    const found = allOwnedItems.find(i => i.id === placingItem);
+    return found?.emoji ?? '';
+  }, [placingItem, allOwnedItems]);
 
   if (!profile) return null;
 
@@ -143,7 +176,30 @@ export default function TreeScreen() {
       ? `mascot.deco.${itemId}`
       : `mascot.hab.${itemId}`;
     showToast(t('mascot.shop.buySuccess', { item: t(labelKey) }));
+    // Fermer la boutique et entrer en mode placement
+    setShowShop(false);
+    setPlacingItem(itemId);
   }, [profile, buyMascotItem, showToast, t]);
+
+  /** Callback quand l'utilisateur sélectionne un slot en mode placement */
+  const handleSlotSelect = useCallback(async (slotId: string) => {
+    if (!placingItem || !profile) return;
+    try {
+      await placeMascotItem(profile.id, slotId, placingItem);
+      showToast(t('mascot.placed'));
+      setPlacingItem(null);
+      // S'il reste des items non placés, rouvrir le picker
+      const updatedPlacements = { ...profile.mascotPlacements, [slotId]: placingItem };
+      const placedSet = new Set(Object.values(updatedPlacements));
+      const allOwned = [...(profile.mascotDecorations ?? []), ...(profile.mascotInhabitants ?? [])];
+      const hasUnplaced = allOwned.some(id => !placedSet.has(id));
+      if (hasUnplaced) {
+        setTimeout(() => setShowItemPicker(true), 400);
+      }
+    } catch {
+      showToast(t('common.error'), 'error');
+    }
+  }, [placingItem, profile, placeMascotItem, showToast, t]);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
@@ -168,6 +224,78 @@ export default function TreeScreen() {
             {seasonInfo.emoji} {t(seasonInfo.labelKey)}
           </Text>
         </View>
+
+        {/* Bandeau mode placement — discret, juste l'emoji + annuler */}
+        {placingItem && (
+          <Animated.View
+            entering={FadeInDown.duration(300)}
+            style={[styles.placementBanner, { backgroundColor: primary + '22', borderColor: primary }]}
+          >
+            <Text style={[styles.placementBannerText, { color: primary }]}>
+              {placingItemEmoji ? `${placingItemEmoji} ` : ''}{t('mascot.placement.choose')}
+            </Text>
+            <TouchableOpacity
+              style={[styles.placementCancelBtn, { borderColor: primary }]}
+              onPress={() => setPlacingItem(null)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.placementCancelText, { color: primary }]}>{'✕'}</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        )}
+
+        {/* Modal sélection d'item à placer */}
+        <Modal
+          visible={showItemPicker}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowItemPicker(false)}
+        >
+          <TouchableOpacity
+            style={styles.pickerOverlay}
+            activeOpacity={1}
+            onPress={() => setShowItemPicker(false)}
+          >
+            <View style={[styles.pickerCard, { backgroundColor: colors.card }, Shadows.lg]}>
+              <Text style={[styles.pickerTitle, { color: colors.text }]}>
+                {t('mascot.placement.choose')}
+              </Text>
+              <View style={styles.pickerGrid}>
+                {allOwnedItems.map(item => {
+                  const isPlaced = placedItemIds.has(item.id);
+                  return (
+                    <TouchableOpacity
+                      key={item.id}
+                      onPress={() => {
+                        setPlacingItem(item.id);
+                        setShowItemPicker(false);
+                      }}
+                      activeOpacity={0.7}
+                      style={[
+                        styles.pickerItem,
+                        { backgroundColor: colors.cardAlt, borderColor: colors.borderLight },
+                      ]}
+                    >
+                      <Text style={styles.pickerEmoji}>{item.emoji}</Text>
+                      {isPlaced && (
+                        <View style={[styles.pickerDot, { backgroundColor: '#4CAF50' }]} />
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowItemPicker(false)}
+                style={[styles.pickerCloseBtn, { borderColor: colors.borderLight }]}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.pickerCloseText, { color: colors.textSub }]}>
+                  {t('mascot.shop.close')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </Modal>
 
         {/* Arbre principal — diorama saisonnier immersif (full-bleed) */}
         <Animated.View entering={FadeIn.duration(600)} style={styles.treeContainer}>
@@ -228,10 +356,15 @@ export default function TreeScreen() {
                 showGround
                 decorations={profile.mascotDecorations ?? []}
                 inhabitants={profile.mascotInhabitants ?? []}
+                placements={profile.mascotPlacements ?? {}}
+                placingItem={placingItem}
+                onSlotSelect={handleSlotSelect}
               />
             </View>
+
           </TouchableOpacity>
         </Animated.View>
+
 
         {/* Transition douce diorama → contenu : gradient sol → fond de page */}
         <LinearGradient
@@ -277,16 +410,30 @@ export default function TreeScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Bouton boutique */}
-            <TouchableOpacity
-              style={[styles.shopBtn, { backgroundColor: tint, borderColor: primary }]}
-              onPress={() => setShowShop(true)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.shopBtnText, { color: primary }]}>
-                {'🛒 ' + t('mascot.shop.title')}
-              </Text>
-            </TouchableOpacity>
+            {/* Boutons boutique + décorer */}
+            <View style={styles.actionBtns}>
+              <TouchableOpacity
+                style={[styles.shopBtn, { backgroundColor: tint, borderColor: primary }]}
+                onPress={() => setShowShop(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.shopBtnText, { color: primary }]}>
+                  {'🛒 ' + t('mascot.shop.title')}
+                </Text>
+              </TouchableOpacity>
+              {/* Bouton décorer : visible si des items sont achetés */}
+              {((profile.mascotDecorations?.length ?? 0) + (profile.mascotInhabitants?.length ?? 0)) > 0 && !placingItem && (
+                <TouchableOpacity
+                  style={[styles.shopBtn, { backgroundColor: tint, borderColor: primary }]}
+                  onPress={() => setShowItemPicker(true)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.shopBtnText, { color: primary }]}>
+                    {t('mascot.decorate')}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
 
             {/* Barre XP */}
             <View style={styles.xpSection}>
@@ -608,13 +755,17 @@ const styles = StyleSheet.create({
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
   },
+  actionBtns: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: Spacing.md,
+    marginVertical: Spacing.md,
+  },
   shopBtn: {
-    alignSelf: 'center',
     paddingHorizontal: Spacing['2xl'],
     paddingVertical: Spacing.md,
     borderRadius: Radius.full,
     borderWidth: 1,
-    marginVertical: Spacing.md,
   },
   shopBtnText: {
     fontSize: FontSize.body,
@@ -735,5 +886,89 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
     marginTop: Spacing.xs,
+  },
+  placementBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    marginVertical: Spacing.sm,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    gap: Spacing.md,
+  },
+  placementBannerText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+  },
+  placementCancelBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  placementCancelText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+  },
+  pickerOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  pickerCard: {
+    borderRadius: Radius['2xl'],
+    padding: Spacing.xl,
+    marginHorizontal: Spacing['2xl'],
+    maxWidth: 320,
+    width: '85%',
+  },
+  pickerTitle: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.semibold,
+    textAlign: 'center',
+    marginBottom: Spacing.lg,
+  },
+  pickerGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  pickerItem: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  pickerEmoji: {
+    fontSize: 28,
+  },
+  pickerDot: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+  },
+  pickerCloseBtn: {
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  pickerCloseText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
   },
 });

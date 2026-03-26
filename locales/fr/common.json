@@ -3215,6 +3215,13 @@
       "keep": "Garder mon arbre",
       "confirm": "Choisir le {{species}}"
     },
+    "placement": {
+      "choose": "Choisis un emplacement",
+      "choose_enfant": "Où tu veux le mettre ?"
+    },
+    "placed": "Placé !",
+    "placed_enfant": "Trop bien, c'est placé !",
+    "decorate": "Décorer",
     "speciesChanged": "Ton arbre est maintenant un {{species}} !",
     "evolution": {
       "title": "Évolution !",
