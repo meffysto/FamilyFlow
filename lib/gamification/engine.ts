@@ -64,6 +64,7 @@ export function addPoints(
 
   const newMultiplierRemaining = Math.max(0, profile.multiplierRemaining - 1);
   const newPoints = profile.points + effectivePoints;
+  const newCoins = (profile.coins ?? 0) + effectivePoints;
   const newLevel = calculateLevel(newPoints);
 
   const entry: GamificationEntry = {
@@ -77,6 +78,7 @@ export function addPoints(
   const updatedProfile: Profile = {
     ...profile,
     points: newPoints,
+    coins: newCoins,
     level: newLevel,
     multiplierRemaining: newMultiplierRemaining,
   };

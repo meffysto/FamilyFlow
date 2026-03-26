@@ -78,6 +78,7 @@ function makeProfile(overrides: Partial<Profile> = {}): Profile {
     role: 'adulte',
     avatar: '👨',
     points: 50,
+    coins: 50,
     level: 1,
     streak: 0,
     lootBoxesAvailable: 0,

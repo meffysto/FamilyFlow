@@ -85,6 +85,7 @@ function creerProfil(overrides: Partial<Profile> = {}): Profile {
     role: 'enfant',
     avatar: '🦊',
     points: 100,
+    coins: 100,
     level: 3,
     streak: 5,
     lootBoxesAvailable: 1,

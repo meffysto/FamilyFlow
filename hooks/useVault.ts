@@ -1292,8 +1292,9 @@ export function useVaultInternal(): VaultState {
     const minStageIdx = TREE_STAGES.findIndex((s: any) => s.stage === item.minStage);
     if (currentStageIdx < minStageIdx) throw new Error(`Stade insuffisant`);
 
-    // Vérifier les points
-    if (profile.points < item.cost) throw new Error(`Points insuffisants`);
+    // Vérifier les feuilles (monnaie dépensable)
+    const currentCoins = profile.coins ?? profile.points;
+    if (currentCoins < item.cost) throw new Error(`Feuilles insuffisantes`);
 
     try {
       // 1. Déduire les points dans gamification.md
@@ -1301,13 +1302,13 @@ export function useVaultInternal(): VaultState {
       const gami = parseGamification(gamiContent);
       const gamiProfile = gami.profiles.find((p) => p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase());
       if (gamiProfile) {
-        gamiProfile.points -= item.cost;
-        gamiProfile.level = calculateLevel(gamiProfile.points);
+        // Déduire les feuilles uniquement — l'XP (points) ne diminue jamais
+        gamiProfile.coins = (gamiProfile.coins ?? gamiProfile.points) - item.cost;
         gami.history.push({
           profileId,
           action: `-${item.cost}`,
           points: -item.cost,
-          note: `${item.emoji} Achat : ${itemId} (${itemType})`,
+          note: `🍃 Achat : ${itemId} (${itemType})`,
           timestamp: new Date().toISOString(),
         });
       }

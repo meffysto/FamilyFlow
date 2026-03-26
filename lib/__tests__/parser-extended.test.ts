@@ -165,8 +165,8 @@ Texte libre
 
 describe('serializeSecretMissions', () => {
   const profiles: Profile[] = [
-    { id: 'lucas', name: 'Lucas', role: 'enfant', avatar: '🧒', points: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0, mascotDecorations: [], mascotInhabitants: [] },
-    { id: 'emma', name: 'Emma', role: 'enfant', avatar: '👧', points: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0, mascotDecorations: [], mascotInhabitants: [] },
+    { id: 'lucas', name: 'Lucas', role: 'enfant', avatar: '🧒', points: 0, coins: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0, mascotDecorations: [], mascotInhabitants: [] },
+    { id: 'emma', name: 'Emma', role: 'enfant', avatar: '👧', points: 0, coins: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0, mascotDecorations: [], mascotInhabitants: [] },
   ];
 
   it('sérialise des missions groupées par profil', () => {

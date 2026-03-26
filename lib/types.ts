@@ -80,6 +80,7 @@ export interface Profile {
   mascotDecorations: string[];   // IDs des décorations achetées
   mascotInhabitants: string[];   // IDs des habitants achetés
   points: number;
+  coins: number;            // 🍃 Feuilles — monnaie dépensable (boutique)
   level: number;
   streak: number;
   lootBoxesAvailable: number;

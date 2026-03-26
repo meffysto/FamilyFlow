@@ -531,8 +531,8 @@ export function serializeMeals(meals: MealItem[]): string {
  * birthdate: 1990-01-01
  * ```
  */
-export function parseFamille(content: string): Omit<Profile, 'points' | 'level' | 'streak' | 'lootBoxesAvailable' | 'multiplier' | 'multiplierRemaining' | 'pityCounter'>[] {
-  const profiles: Omit<Profile, 'points' | 'level' | 'streak' | 'lootBoxesAvailable' | 'multiplier' | 'multiplierRemaining' | 'pityCounter'>[] = [];
+export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' | 'level' | 'streak' | 'lootBoxesAvailable' | 'multiplier' | 'multiplierRemaining' | 'pityCounter'>[] {
+  const profiles: Omit<Profile, 'points' | 'coins' | 'level' | 'streak' | 'lootBoxesAvailable' | 'multiplier' | 'multiplierRemaining' | 'pityCounter'>[] = [];
   const lines = content.split('\n');
   let currentId: string | null = null;
   let currentProps: Record<string, string> = {};
@@ -631,6 +631,7 @@ export function parseGamification(content: string): GamificationData {
         mascotDecorations: [],
         mascotInhabitants: [],
         points: parseInt(currentProps.points ?? '0', 10),
+        coins: parseInt(currentProps.coins ?? currentProps.points ?? '0', 10),
         level: parseInt(currentProps.level ?? '1', 10),
         streak: parseInt(currentProps.streak ?? '0', 10),
         lootBoxesAvailable: parseInt(currentProps.loot_boxes_available ?? '0', 10),
@@ -697,6 +698,7 @@ export function serializeGamification(data: GamificationData): string {
     .map(
       (p) => `## ${p.name}
 points: ${p.points}
+coins: ${p.coins ?? p.points}
 level: ${p.level}
 streak: ${p.streak}
 loot_boxes_available: ${p.lootBoxesAvailable}
@@ -756,6 +758,7 @@ export function mergeProfiles(
     return {
       ...base,
       points: gami?.points ?? 0,
+      coins: gami?.coins ?? gami?.points ?? 0,
       level: gami?.level ?? 1,
       streak: gami?.streak ?? 0,
       lootBoxesAvailable: gami?.lootBoxesAvailable ?? 0,

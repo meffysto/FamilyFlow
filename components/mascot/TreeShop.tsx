@@ -43,7 +43,7 @@ type ShopTab = 'decorations' | 'inhabitants';
 interface TreeShopProps {
   species: TreeSpecies;
   level: number;
-  points: number;
+  coins: number;
   ownedDecorations: string[];
   ownedInhabitants: string[];
   onBuy: (itemId: string, itemType: 'decoration' | 'inhabitant') => Promise<void>;
@@ -73,7 +73,7 @@ const PREVIEW_TREE_SIZE = Math.min(SCREEN_W * 0.55, 220);
 
 // ── Composant ──────────────────────────────────
 
-export function TreeShop({ species, level, points, ownedDecorations, ownedInhabitants, onBuy, onClose }: TreeShopProps) {
+export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabitants, onBuy, onClose }: TreeShopProps) {
   const { t } = useTranslation();
   const tone = useTone();
   const { primary, tint, colors, isDark } = useThemeColors();
@@ -174,7 +174,7 @@ export function TreeShop({ species, level, points, ownedDecorations, ownedInhabi
                 </View>
                 {!owned && (
                   <Text style={[styles.itemCost, { color: colors.textSub }]}>
-                    {t('mascot.shop.points', { count: item.cost })}
+                    {t('mascot.shop.leaves', { count: item.cost })}
                   </Text>
                 )}
               </View>
@@ -210,7 +210,7 @@ export function TreeShop({ species, level, points, ownedDecorations, ownedInhabi
     const owned = ownedList.includes(selectedItem.id);
     const minStageIdx = TREE_STAGES.findIndex((s) => s.stage === selectedItem.minStage);
     const locked = stageIdx < minStageIdx;
-    const canAfford = points >= selectedItem.cost;
+    const canAfford = coins >= selectedItem.cost;
     const rarityColor = RARITY_COLORS[selectedItem.rarity] || RARITY_COLORS.commun;
     const rarityBg = RARITY_BG[selectedItem.rarity] || RARITY_BG.commun;
     const itemType = tab === 'decorations' ? 'decoration' : 'inhabitant';
@@ -315,7 +315,7 @@ export function TreeShop({ species, level, points, ownedDecorations, ownedInhabi
                     <Text style={[styles.detailBuyText, { color: canAfford ? '#FFFFFF' : colors.textMuted }]}>
                       {canAfford
                         ? t('mascot.shop.buyConfirm', { cost: selectedItem.cost, context: tone })
-                        : t('mascot.shop.notEnoughPoints', { context: tone })}
+                        : t('mascot.shop.notEnoughLeaves', { context: tone })}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -353,7 +353,7 @@ export function TreeShop({ species, level, points, ownedDecorations, ownedInhabi
       {/* Points */}
       <View style={[styles.pointsBar, { backgroundColor: tint }]}>
         <Text style={[styles.pointsText, { color: primary }]}>
-          {t('mascot.shop.yourPoints', { count: points, context: tone })}
+          {t('mascot.shop.yourLeaves', { count: coins, context: tone })}
         </Text>
       </View>
 

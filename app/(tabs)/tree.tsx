@@ -438,7 +438,7 @@ export default function TreeScreen() {
         <TreeShop
           species={species}
           level={level}
-          points={profile.points ?? 0}
+          coins={profile.coins ?? profile.points ?? 0}
           ownedDecorations={profile.mascotDecorations ?? []}
           ownedInhabitants={profile.mascotInhabitants ?? []}
           onBuy={handleShopBuy}
