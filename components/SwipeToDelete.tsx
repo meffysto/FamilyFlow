@@ -1,42 +1,46 @@
 /**
- * SwipeToDelete.tsx — Wrapper swipe-to-delete réutilisable
+ * SwipeToDelete.tsx — Swipe-to-delete style Apple Mail
  *
- * Utilise ReanimatedSwipeable (pas Swipeable) pour éviter les conflits.
- * NE PAS utiliser dans un ScrollView (conflit de geste).
+ * Gesture.Pan() custom pour supporter le full-swipe auto-delete.
+ * - Swipe partiel → bouton Supprimer rouge
+ * - Swipe complet (>60% ou vélocité rapide) → suppression directe
+ * - Haptics au passage du seuil
  */
 
 import React, { useCallback, useRef, useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
+import { View, Text, Alert, StyleSheet, LayoutChangeEvent } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { FontSize, FontWeight } from '../constants/typography';
-import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
-  SharedValue,
   useSharedValue,
   useAnimatedStyle,
-  interpolate,
-  withSequence,
+  useAnimatedReaction,
+  withSpring,
   withTiming,
+  withSequence,
   withDelay,
+  runOnJS,
   Easing,
   useReducedMotion,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import * as SecureStore from 'expo-secure-store';
 import { useThemeColors } from '../contexts/ThemeContext';
+import { FontSize, FontWeight } from '../constants/typography';
 
 const SWIPE_HINT_KEY = 'swipe_hint_count';
 const MAX_HINT_COUNT = 3;
+const ACTION_WIDTH = 80;
+const FULL_SWIPE_RATIO = 0.5;
+const VELOCITY_THRESHOLD = -800;
 
 interface SwipeToDeleteProps {
   onDelete: () => void;
   children: React.ReactNode;
   confirmTitle?: string;
   confirmMessage?: string;
-  /** Si true, appelle onDelete directement sans confirmation (utile si onDelete gère déjà sa propre Alert) */
   skipConfirm?: boolean;
   disabled?: boolean;
-  /** Identifiant pour le hint (ex: 'tasks', 'rdv') — un compteur par contexte */
   hintId?: string;
 }
 
@@ -53,12 +57,18 @@ export function SwipeToDelete({
   const { t } = useTranslation();
   const resolvedTitle = confirmTitle ?? t('swipeToDelete.confirmTitle');
   const reduceMotion = useReducedMotion();
-  const swipeableRef = useRef<any>(null);
   const deletingRef = useRef(false);
+
+  // Shared values
+  const translateX = useSharedValue(0);
+  const startX = useSharedValue(0);
+  const rowWidth = useSharedValue(0);
+  const rowHeight = useSharedValue<number | undefined>(undefined);
+  const isOpen = useSharedValue(false);
   const hintX = useSharedValue(0);
   const [showHint, setShowHint] = useState(false);
 
-  // Afficher le hint les 3 premières fois
+  // Hint animation (3 premières fois)
   useEffect(() => {
     if (disabled || !hintId) return;
     (async () => {
@@ -68,7 +78,6 @@ export function SwipeToDelete({
       if (count < MAX_HINT_COUNT) {
         setShowHint(true);
         await SecureStore.setItemAsync(key, String(count + 1));
-        // Animation : glisser légèrement à gauche puis revenir (skip si reduceMotion)
         if (!reduceMotion) {
           hintX.value = withDelay(
             800,
@@ -82,27 +91,45 @@ export function SwipeToDelete({
     })();
   }, [hintId, disabled]);
 
-  const hintStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: hintX.value }],
-  }));
+  // Haptics au seuil de full-swipe
+  const triggerThresholdHaptic = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  }, []);
 
-  const handleDelete = useCallback(() => {
-    // Guard contre double déclenchement (onSwipeableOpen + onPress simultanés)
+  useAnimatedReaction(
+    () => {
+      if (rowWidth.value === 0) return false;
+      return Math.abs(translateX.value) > rowWidth.value * FULL_SWIPE_RATIO;
+    },
+    (passed, prev) => {
+      if (passed && !prev) {
+        runOnJS(triggerThresholdHaptic)();
+      }
+    }
+  );
+
+  // Delete handlers
+  const performDelete = useCallback(() => {
     if (deletingRef.current) return;
     deletingRef.current = true;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     if (skipConfirm) {
-      swipeableRef.current?.close();
       deletingRef.current = false;
       onDelete();
       return;
     }
     Alert.alert(resolvedTitle, confirmMessage, [
-      { text: t('common.cancel'), style: 'cancel', onPress: () => { swipeableRef.current?.close(); deletingRef.current = false; } },
+      {
+        text: t('common.cancel'), style: 'cancel',
+        onPress: () => {
+          deletingRef.current = false;
+          translateX.value = withSpring(0);
+          isOpen.value = false;
+        },
+      },
       {
         text: t('common.delete'), style: 'destructive',
         onPress: () => {
-          swipeableRef.current?.close();
           deletingRef.current = false;
           onDelete();
         },
@@ -110,73 +137,115 @@ export function SwipeToDelete({
     ]);
   }, [onDelete, resolvedTitle, confirmMessage, skipConfirm, t]);
 
-  const renderRightActions = useCallback(
-    (_progress: SharedValue<number>, drag: SharedValue<number>) => {
-      return (
-        <RightAction drag={drag} onPress={handleDelete} colors={colors} />
-      );
-    },
-    [handleDelete, colors]
-  );
+  const performDeleteFromAction = useCallback(() => {
+    performDelete();
+  }, [performDelete]);
+
+  // Gesture
+  const panGesture = Gesture.Pan()
+    .activeOffsetX([-15, 15])
+    .failOffsetY([-10, 10])
+    .onStart(() => {
+      startX.value = translateX.value;
+    })
+    .onUpdate((e) => {
+      const newX = startX.value + e.translationX;
+      // Seulement swipe gauche, avec friction au-delà de ACTION_WIDTH
+      translateX.value = Math.min(0, newX);
+    })
+    .onEnd((e) => {
+      const absX = Math.abs(translateX.value);
+      const threshold = rowWidth.value * FULL_SWIPE_RATIO;
+      const isFastFlick = e.velocityX < VELOCITY_THRESHOLD;
+      const isFullSwipe = absX > threshold || isFastFlick;
+
+      if (isFullSwipe) {
+        // Full swipe → animer hors écran puis supprimer
+        translateX.value = withTiming(-rowWidth.value, { duration: 200 }, () => {
+          runOnJS(performDelete)();
+        });
+        isOpen.value = false;
+      } else if (absX > ACTION_WIDTH / 2) {
+        // Swipe partiel → snap ouvert (montrer bouton)
+        translateX.value = withSpring(-ACTION_WIDTH, { damping: 20, stiffness: 200 });
+        isOpen.value = true;
+      } else {
+        // Pas assez → snap fermé
+        translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
+        isOpen.value = false;
+      }
+    });
+
+  // Tap pour fermer quand ouvert
+  const tapGesture = Gesture.Tap().onEnd(() => {
+    if (isOpen.value) {
+      translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
+      isOpen.value = false;
+    }
+  });
+
+  const composedGesture = Gesture.Race(panGesture, tapGesture);
+
+  // Layout
+  const onLayout = useCallback((e: LayoutChangeEvent) => {
+    rowWidth.value = e.nativeEvent.layout.width;
+    if (rowHeight.value === undefined) {
+      rowHeight.value = e.nativeEvent.layout.height;
+    }
+  }, []);
+
+  // Animated styles
+  const rowStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value + (showHint ? hintX.value : 0) }],
+  }));
+
+  const actionStyle = useAnimatedStyle(() => ({
+    width: Math.abs(Math.min(translateX.value, 0)),
+  }));
+
+  const actionTextOpacity = useAnimatedStyle(() => ({
+    opacity: Math.min(Math.abs(translateX.value) / ACTION_WIDTH, 1),
+  }));
 
   if (disabled) return <>{children}</>;
 
   return (
-    <ReanimatedSwipeable
-      ref={swipeableRef}
-      renderRightActions={renderRightActions}
-      onSwipeableOpen={(direction) => {
-        if (direction === 'right') handleDelete();
-      }}
-      overshootRight={true}
-      rightThreshold={60}
-      friction={2}
-    >
-      <Animated.View style={showHint ? hintStyle : undefined}>
-        {children}
-      </Animated.View>
-    </ReanimatedSwipeable>
-  );
-}
-
-function RightAction({
-  drag,
-  onPress,
-  colors,
-}: {
-  drag: SharedValue<number>;
-  onPress: () => void;
-  colors: any;
-}) {
-  const { t } = useTranslation();
-  const animStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(drag.value, [0, -80], [0, 1]),
-  }));
-
-  return (
-    <Pressable onPress={onPress} style={{ flex: 1 }}>
-      <Animated.View style={[styles.rightAction, { backgroundColor: colors.error }, animStyle]}>
-        <Text style={[styles.rightActionText, { color: colors.onPrimary }]}>
+    <View style={styles.container} onLayout={onLayout}>
+      {/* Fond rouge derrière */}
+      <Animated.View style={[styles.actionContainer, { backgroundColor: colors.error }, actionStyle]}>
+        <Animated.Text style={[styles.actionText, { color: colors.onPrimary }, actionTextOpacity]}
+          onPress={performDeleteFromAction}
+        >
           {t('swipeToDelete.deleteAction')}
-        </Text>
+        </Animated.Text>
       </Animated.View>
-    </Pressable>
+
+      {/* Contenu swipeable */}
+      <GestureDetector gesture={composedGesture}>
+        <Animated.View style={rowStyle}>
+          {children}
+        </Animated.View>
+      </GestureDetector>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  rightAction: {
-    flex: 1,
+  container: {
+    overflow: 'hidden',
+  },
+  actionContainer: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    width: 100,
-    borderRadius: 12,
-    marginLeft: 8,
-    marginBottom: 10,
+    overflow: 'hidden',
   },
-  rightActionText: {
+  actionText: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.bold,
-    textAlign: 'center',
+    paddingHorizontal: 16,
   },
 });
