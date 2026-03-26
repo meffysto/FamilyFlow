@@ -189,16 +189,9 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
             </RadialGradient>
           </Defs>
 
-          {/* Sol */}
+          {/* Sol (organique) */}
           {showGround && (
-            <Ellipse
-              cx={CENTER_X}
-              cy={GROUND_Y + 5}
-              rx={85}
-              ry={15}
-              fill="url(#ground)"
-              opacity={0.8}
-            />
+            <OrganicCrown cx={CENTER_X} cy={GROUND_Y + 5} rx={85} ry={15} fill="url(#ground)" opacity={0.8} seed={99} wobble={0.08} />
           )}
 
           {/* Habitat (jardin qui évolue avec le stade) */}
@@ -234,6 +227,84 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
         </Svg>
       </Animated.View>
     </View>
+  );
+}
+
+// ── Formes organiques (contours irréguliers) ──
+
+/**
+ * Génère un path blob irrégulier autour d'un centre.
+ * seed assure la reproductibilité (même blob pour même paramètres).
+ * wobble contrôle l'amplitude de la déformation (0 = cercle parfait, 1 = très irrégulier).
+ */
+function blobPath(cx: number, cy: number, rx: number, ry: number, seed: number = 0, wobble: number = 0.15, points: number = 8): string {
+  const pts: [number, number][] = [];
+  for (let i = 0; i < points; i++) {
+    const angle = (i / points) * Math.PI * 2;
+    // Pseudo-random offset basé sur seed + index
+    const noise = Math.sin(seed * 13.7 + i * 7.3) * wobble + Math.cos(seed * 5.1 + i * 11.9) * wobble * 0.5;
+    const r = 1 + noise;
+    pts.push([
+      cx + Math.cos(angle) * rx * r,
+      cy + Math.sin(angle) * ry * r,
+    ]);
+  }
+
+  // Cubic bezier smooth entre les points
+  let d = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+  for (let i = 0; i < pts.length; i++) {
+    const curr = pts[i];
+    const next = pts[(i + 1) % pts.length];
+    const prev = pts[(i - 1 + pts.length) % pts.length];
+    const nextNext = pts[(i + 2) % pts.length];
+
+    // Catmull-Rom → cubic bezier control points
+    const cp1x = curr[0] + (next[0] - prev[0]) / 6;
+    const cp1y = curr[1] + (next[1] - prev[1]) / 6;
+    const cp2x = next[0] - (nextNext[0] - curr[0]) / 6;
+    const cp2y = next[1] - (nextNext[1] - curr[1]) / 6;
+
+    d += ` C${cp1x.toFixed(1)} ${cp1y.toFixed(1)} ${cp2x.toFixed(1)} ${cp2y.toFixed(1)} ${next[0].toFixed(1)} ${next[1].toFixed(1)}`;
+  }
+  d += ' Z';
+  return d;
+}
+
+/** Couronne organique — remplace Circle/Ellipse par un blob */
+function OrganicCrown({ cx, cy, rx, ry, fill, opacity = 1, seed = 0, wobble = 0.12 }: {
+  cx: number; cy: number; rx: number; ry: number;
+  fill: string; opacity?: number; seed?: number; wobble?: number;
+}) {
+  const d = useMemo(() => blobPath(cx, cy, rx, ry, seed, wobble, 10), [cx, cy, rx, ry, seed, wobble]);
+  return <Path d={d} fill={fill} opacity={opacity} />;
+}
+
+/** Texture grain — couches semi-transparentes superposées pour donner du relief */
+function CrownTexture({ cx, cy, rx, ry, color, seed = 0 }: {
+  cx: number; cy: number; rx: number; ry: number;
+  color: string; seed?: number;
+}) {
+  const spots = useMemo(() => {
+    const result: { x: number; y: number; r: number; o: number }[] = [];
+    for (let i = 0; i < 6; i++) {
+      const angle = Math.sin(seed * 3.7 + i * 5.3) * Math.PI * 2;
+      const dist = (0.3 + Math.abs(Math.sin(seed * 2.1 + i * 8.7)) * 0.5);
+      result.push({
+        x: cx + Math.cos(angle) * rx * dist,
+        y: cy + Math.sin(angle) * ry * dist,
+        r: rx * (0.08 + Math.abs(Math.cos(seed + i * 3)) * 0.1),
+        o: 0.08 + Math.abs(Math.sin(seed + i * 5)) * 0.12,
+      });
+    }
+    return result;
+  }, [cx, cy, rx, ry, color, seed]);
+
+  return (
+    <G>
+      {spots.map((s, i) => (
+        <Circle key={`tex-${i}`} cx={s.x} cy={s.y} r={s.r} fill={color} opacity={s.o} />
+      ))}
+    </G>
   );
 }
 
@@ -370,13 +441,14 @@ function BushStage({ species, progress, visual }: {
         );
       })}
 
-      {/* Couronne de feuillage */}
-      <Circle cx={CENTER_X} cy={trunkTop} r={crownR} fill="url(#crown)" />
-      <Circle cx={CENTER_X - 8} cy={trunkTop - 5} r={crownR * 0.7} fill={species.leavesLight} opacity={0.3} />
+      {/* Couronne de feuillage (organique) */}
+      <OrganicCrown cx={CENTER_X} cy={trunkTop} rx={crownR} ry={crownR} fill="url(#crown)" seed={1} />
+      <OrganicCrown cx={CENTER_X - 8} cy={trunkTop - 5} rx={crownR * 0.7} ry={crownR * 0.7} fill={species.leavesLight} opacity={0.3} seed={2} />
+      <CrownTexture cx={CENTER_X} cy={trunkTop} rx={crownR} ry={crownR} color={species.leavesDark} seed={3} />
 
-      {/* Petites touffes latérales */}
-      <Ellipse cx={CENTER_X - crownR * 0.6} cy={trunkTop + 8} rx={crownR * 0.5} ry={crownR * 0.4} fill={species.leaves} opacity={0.8} />
-      <Ellipse cx={CENTER_X + crownR * 0.6} cy={trunkTop + 5} rx={crownR * 0.45} ry={crownR * 0.4} fill={species.leavesDark} opacity={0.7} />
+      {/* Petites touffes latérales (organiques) */}
+      <OrganicCrown cx={CENTER_X - crownR * 0.6} cy={trunkTop + 8} rx={crownR * 0.5} ry={crownR * 0.4} fill={species.leaves} opacity={0.8} seed={4} />
+      <OrganicCrown cx={CENTER_X + crownR * 0.6} cy={trunkTop + 5} rx={crownR * 0.45} ry={crownR * 0.4} fill={species.leavesDark} opacity={0.7} seed={5} />
 
       {/* Fleurs (apparaissent avec progression) */}
       {visual.hasFlowers && (
@@ -459,13 +531,14 @@ function TreeStageView({ species, progress, visual, speciesType }: {
         );
       })}
 
-      {/* Couronne principale */}
-      <Ellipse cx={CENTER_X} cy={trunkTop - 5} rx={crownR} ry={crownR * 0.85} fill="url(#crown)" />
+      {/* Couronne principale (organique) */}
+      <OrganicCrown cx={CENTER_X} cy={trunkTop - 5} rx={crownR} ry={crownR * 0.85} fill="url(#crown)" seed={10} />
 
-      {/* Sous-couronnes pour volume */}
-      <Ellipse cx={CENTER_X - crownR * 0.4} cy={trunkTop + 5} rx={crownR * 0.6} ry={crownR * 0.5} fill={species.leaves} opacity={0.7} />
-      <Ellipse cx={CENTER_X + crownR * 0.45} cy={trunkTop} rx={crownR * 0.55} ry={crownR * 0.45} fill={species.leavesDark} opacity={0.6} />
-      <Ellipse cx={CENTER_X} cy={trunkTop - crownR * 0.5} rx={crownR * 0.5} ry={crownR * 0.4} fill={species.leavesLight} opacity={0.4} />
+      {/* Sous-couronnes pour volume (organiques) */}
+      <OrganicCrown cx={CENTER_X - crownR * 0.4} cy={trunkTop + 5} rx={crownR * 0.6} ry={crownR * 0.5} fill={species.leaves} opacity={0.7} seed={11} />
+      <OrganicCrown cx={CENTER_X + crownR * 0.45} cy={trunkTop} rx={crownR * 0.55} ry={crownR * 0.45} fill={species.leavesDark} opacity={0.6} seed={12} />
+      <OrganicCrown cx={CENTER_X} cy={trunkTop - crownR * 0.5} rx={crownR * 0.5} ry={crownR * 0.4} fill={species.leavesLight} opacity={0.4} seed={13} />
+      <CrownTexture cx={CENTER_X} cy={trunkTop - 5} rx={crownR} ry={crownR * 0.85} color={species.leavesDark} seed={14} />
 
       {/* Fleurs/fruits selon espèce */}
       {visual.hasFlowers && <SpeciesAccents species={species} speciesType={speciesType} crownR={crownR} crownY={trunkTop - 5} />}
@@ -545,12 +618,13 @@ function MajesticStage({ species, progress, visual, speciesType }: {
         );
       })}
 
-      {/* Couronne volumineuse multicouche */}
-      <Ellipse cx={CENTER_X} cy={trunkTop - 8} rx={crownR} ry={crownR * 0.8} fill="url(#crown)" />
-      <Ellipse cx={CENTER_X - 20} cy={trunkTop + 5} rx={crownR * 0.55} ry={crownR * 0.45} fill={species.leaves} opacity={0.75} />
-      <Ellipse cx={CENTER_X + 22} cy={trunkTop} rx={crownR * 0.5} ry={crownR * 0.42} fill={species.leavesDark} opacity={0.65} />
-      <Ellipse cx={CENTER_X - 5} cy={trunkTop - crownR * 0.55} rx={crownR * 0.45} ry={crownR * 0.38} fill={species.leavesLight} opacity={0.45} />
-      <Ellipse cx={CENTER_X + 15} cy={trunkTop - crownR * 0.3} rx={crownR * 0.4} ry={crownR * 0.35} fill={species.leavesLight} opacity={0.3} />
+      {/* Couronne volumineuse multicouche (organique) */}
+      <OrganicCrown cx={CENTER_X} cy={trunkTop - 8} rx={crownR} ry={crownR * 0.8} fill="url(#crown)" seed={20} wobble={0.14} />
+      <OrganicCrown cx={CENTER_X - 20} cy={trunkTop + 5} rx={crownR * 0.55} ry={crownR * 0.45} fill={species.leaves} opacity={0.75} seed={21} />
+      <OrganicCrown cx={CENTER_X + 22} cy={trunkTop} rx={crownR * 0.5} ry={crownR * 0.42} fill={species.leavesDark} opacity={0.65} seed={22} />
+      <OrganicCrown cx={CENTER_X - 5} cy={trunkTop - crownR * 0.55} rx={crownR * 0.45} ry={crownR * 0.38} fill={species.leavesLight} opacity={0.45} seed={23} />
+      <OrganicCrown cx={CENTER_X + 15} cy={trunkTop - crownR * 0.3} rx={crownR * 0.4} ry={crownR * 0.35} fill={species.leavesLight} opacity={0.3} seed={24} />
+      <CrownTexture cx={CENTER_X} cy={trunkTop - 8} rx={crownR} ry={crownR * 0.8} color={species.leavesDark} seed={25} />
 
       {/* Fleurs + fruits abondants */}
       <SpeciesAccents species={species} speciesType={speciesType} crownR={crownR} crownY={trunkTop - 8} count={8} />
@@ -625,14 +699,15 @@ function LegendaryStage({ species, progress, visual, speciesType }: {
         );
       })}
 
-      {/* Couronne dorée luxuriante */}
-      <Ellipse cx={CENTER_X} cy={trunkTop - 10} rx={crownR} ry={crownR * 0.82} fill="url(#crown)" />
-      <Ellipse cx={CENTER_X - 22} cy={trunkTop + 5} rx={crownR * 0.5} ry={crownR * 0.42} fill={species.leaves} opacity={0.7} />
-      <Ellipse cx={CENTER_X + 24} cy={trunkTop} rx={crownR * 0.48} ry={crownR * 0.4} fill={species.leavesDark} opacity={0.6} />
-      <Ellipse cx={CENTER_X} cy={trunkTop - crownR * 0.55} rx={crownR * 0.5} ry={crownR * 0.42} fill={species.leavesLight} opacity={0.5} />
+      {/* Couronne dorée luxuriante (organique) */}
+      <OrganicCrown cx={CENTER_X} cy={trunkTop - 10} rx={crownR} ry={crownR * 0.82} fill="url(#crown)" seed={30} wobble={0.13} />
+      <OrganicCrown cx={CENTER_X - 22} cy={trunkTop + 5} rx={crownR * 0.5} ry={crownR * 0.42} fill={species.leaves} opacity={0.7} seed={31} />
+      <OrganicCrown cx={CENTER_X + 24} cy={trunkTop} rx={crownR * 0.48} ry={crownR * 0.4} fill={species.leavesDark} opacity={0.6} seed={32} />
+      <OrganicCrown cx={CENTER_X} cy={trunkTop - crownR * 0.55} rx={crownR * 0.5} ry={crownR * 0.42} fill={species.leavesLight} opacity={0.5} seed={33} />
+      <CrownTexture cx={CENTER_X} cy={trunkTop - 10} rx={crownR} ry={crownR * 0.82} color={species.leavesDark} seed={34} />
 
       {/* Reflet doré sur la couronne */}
-      <Ellipse cx={CENTER_X} cy={trunkTop - 12} rx={crownR * 0.9} ry={crownR * 0.7} fill="#FFD700" opacity={0.1} />
+      <OrganicCrown cx={CENTER_X} cy={trunkTop - 12} rx={crownR * 0.9} ry={crownR * 0.7} fill="#FFD700" opacity={0.1} seed={35} />
 
       {/* Fleurs + fruits dorés */}
       <SpeciesAccents species={species} speciesType={speciesType} crownR={crownR} crownY={trunkTop - 10} count={12} golden />
