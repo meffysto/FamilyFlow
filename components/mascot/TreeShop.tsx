@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   Modal,
   Dimensions,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -27,6 +28,7 @@ import {
   DECORATIONS,
   INHABITANTS,
   TREE_STAGES,
+  ITEM_ILLUSTRATIONS,
   type MascotDecoration,
   type MascotInhabitant,
   type TreeSpecies,
@@ -158,7 +160,11 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
         >
           {/* Emoji + infos */}
           <View style={styles.itemContent}>
-            <Text style={styles.itemEmoji}>{item.emoji}</Text>
+            {ITEM_ILLUSTRATIONS[item.id] ? (
+              <Image source={ITEM_ILLUSTRATIONS[item.id]} style={styles.itemIllustration} />
+            ) : (
+              <Text style={styles.itemEmoji}>{item.emoji}</Text>
+            )}
             <View style={styles.itemInfo}>
               <Text style={[styles.itemName, { color: colors.text }]}>
                 {t(item.labelKey)}
@@ -238,7 +244,11 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
             <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
               {/* Header emoji + nom */}
               <View style={styles.detailHeader}>
-                <Text style={styles.detailEmoji}>{selectedItem.emoji}</Text>
+                {ITEM_ILLUSTRATIONS[selectedItem.id] ? (
+                  <Image source={ITEM_ILLUSTRATIONS[selectedItem.id]} style={styles.detailIllustration} />
+                ) : (
+                  <Text style={styles.detailEmoji}>{selectedItem.emoji}</Text>
+                )}
                 <Text style={[styles.detailName, { color: colors.text }]}>
                   {t(selectedItem.labelKey)}
                 </Text>
@@ -465,6 +475,12 @@ const styles = StyleSheet.create({
     fontSize: 32,
     marginRight: Spacing.md,
   },
+  itemIllustration: {
+    width: 40,
+    height: 40,
+    marginRight: Spacing.md,
+    resizeMode: 'contain',
+  },
   itemInfo: {
     flex: 1,
   },
@@ -537,6 +553,12 @@ const styles = StyleSheet.create({
   detailHeader: {
     alignItems: 'center',
     marginBottom: Spacing.lg,
+  },
+  detailIllustration: {
+    width: 72,
+    height: 72,
+    marginBottom: Spacing.sm,
+    resizeMode: 'contain',
   },
   detailEmoji: {
     fontSize: 56,

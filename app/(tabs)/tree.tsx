@@ -50,7 +50,7 @@ import {
   getStageIndex,
   TREE_STAGES,
 } from '../../lib/mascot';
-import { SPECIES_INFO, ALL_SPECIES, DECORATIONS, INHABITANTS, type TreeSpecies } from '../../lib/mascot/types';
+import { SPECIES_INFO, ALL_SPECIES, DECORATIONS, INHABITANTS, ITEM_ILLUSTRATIONS, type TreeSpecies } from '../../lib/mascot/types';
 import { getCurrentSeason, SEASON_INFO, GROUND_COLORS, type Season } from '../../lib/mascot/seasons';
 import type { Profile } from '../../lib/types';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
@@ -276,7 +276,11 @@ export default function TreeScreen() {
                         { backgroundColor: colors.cardAlt, borderColor: colors.borderLight },
                       ]}
                     >
-                      <Text style={styles.pickerEmoji}>{item.emoji}</Text>
+                      {ITEM_ILLUSTRATIONS[item.id] ? (
+                        <Image source={ITEM_ILLUSTRATIONS[item.id]} style={styles.pickerIllustration} />
+                      ) : (
+                        <Text style={styles.pickerEmoji}>{item.emoji}</Text>
+                      )}
                       {isPlaced && (
                         <View style={[styles.pickerDot, { backgroundColor: '#4CAF50' }]} />
                       )}
@@ -950,6 +954,11 @@ const styles = StyleSheet.create({
   },
   pickerEmoji: {
     fontSize: 28,
+  },
+  pickerIllustration: {
+    width: 40,
+    height: 40,
+    resizeMode: 'contain',
   },
   pickerDot: {
     position: 'absolute',

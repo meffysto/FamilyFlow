@@ -19,6 +19,7 @@ import Svg, {
   Stop,
   Rect,
   Text as SvgText,
+  Image as SvgImage,
 } from 'react-native-svg';
 import Animated, {
   useSharedValue,
@@ -42,6 +43,7 @@ import {
   DECORATIONS,
   INHABITANTS,
   SCENE_SLOTS,
+  ITEM_ILLUSTRATIONS,
 } from '../../lib/mascot/types';
 import {
   getTreeStage,
@@ -1457,6 +1459,9 @@ function getItemEmoji(itemId: string): string | null {
   return null;
 }
 
+/** Taille des illustrations placées sur la scène */
+const PLACED_ITEM_SIZE = 28;
+
 /** Rendu des items placés sur la scène (mode normal, pas de placement en cours) */
 function PlacedItems({ placements }: { placements: Record<string, string> }) {
   return (
@@ -1465,6 +1470,19 @@ function PlacedItems({ placements }: { placements: Record<string, string> }) {
         const slot = SCENE_SLOTS.find(s => s.id === slotId);
         const emoji = getItemEmoji(itemId);
         if (!slot || !emoji) return null;
+        const illustration = ITEM_ILLUSTRATIONS[itemId];
+        if (illustration) {
+          return (
+            <SvgImage
+              key={slotId}
+              href={illustration}
+              x={slot.cx - PLACED_ITEM_SIZE / 2}
+              y={slot.cy - PLACED_ITEM_SIZE / 2}
+              width={PLACED_ITEM_SIZE}
+              height={PLACED_ITEM_SIZE}
+            />
+          );
+        }
         return (
           <SvgText
             key={slotId}
@@ -1509,16 +1527,26 @@ function PlacementSlots({
               strokeWidth={1.5}
               strokeDasharray={isEmpty ? '4,3' : undefined}
             />
-            {/* Emoji si le slot est occupé */}
+            {/* Item si le slot est occupé — illustration ou emoji */}
             {emoji ? (
-              <SvgText
-                x={slot.cx}
-                y={slot.cy + 5}
-                fontSize={16}
-                textAnchor="middle"
-              >
-                {emoji}
-              </SvgText>
+              ITEM_ILLUSTRATIONS[occupiedItemId!] ? (
+                <SvgImage
+                  href={ITEM_ILLUSTRATIONS[occupiedItemId!]}
+                  x={slot.cx - 10}
+                  y={slot.cy - 10}
+                  width={20}
+                  height={20}
+                />
+              ) : (
+                <SvgText
+                  x={slot.cx}
+                  y={slot.cy + 5}
+                  fontSize={16}
+                  textAnchor="middle"
+                >
+                  {emoji}
+                </SvgText>
+              )
             ) : (
               /* Indicateur "+" pour les slots vides */
               <SvgText
@@ -1661,15 +1689,13 @@ function DecorationOverlay({ decorationIds, stageIdx, previewMode = false, speci
         const slot = DECO_SLOTS[id];
         if (!slot) return null;
         const pos = getItemPosition(species, stageIdx, slot);
+        const illustration = ITEM_ILLUSTRATIONS[id];
+        if (illustration) {
+          const s = pos.fontSize * 1.2;
+          return <SvgImage key={id} href={illustration} x={pos.x - s / 2} y={pos.y - s / 2} width={s} height={s} />;
+        }
         return (
-          <SvgText
-            key={id}
-            x={pos.x}
-            y={pos.y}
-            fontSize={pos.fontSize}
-            textAnchor="middle"
-            alignmentBaseline="central"
-          >
+          <SvgText key={id} x={pos.x} y={pos.y} fontSize={pos.fontSize} textAnchor="middle" alignmentBaseline="central">
             {deco.emoji}
           </SvgText>
         );
@@ -1687,15 +1713,13 @@ function InhabitantOverlay({ inhabitantIds, stageIdx, previewMode = false, speci
         const slot = HAB_SLOTS[id];
         if (!slot) return null;
         const pos = getItemPosition(species, stageIdx, slot);
+        const illustration = ITEM_ILLUSTRATIONS[id];
+        if (illustration) {
+          const s = pos.fontSize * 1.2;
+          return <SvgImage key={id} href={illustration} x={pos.x - s / 2} y={pos.y - s / 2} width={s} height={s} />;
+        }
         return (
-          <SvgText
-            key={id}
-            x={pos.x}
-            y={pos.y}
-            fontSize={pos.fontSize}
-            textAnchor="middle"
-            alignmentBaseline="central"
-          >
+          <SvgText key={id} x={pos.x} y={pos.y} fontSize={pos.fontSize} textAnchor="middle" alignmentBaseline="central">
             {hab.emoji}
           </SvgText>
         );

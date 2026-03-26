@@ -175,6 +175,20 @@ export interface MascotInhabitant {
   minStage: TreeStage;
 }
 
+/** Assets illustrés (remplacent les emojis quand disponibles) */
+export const ITEM_ILLUSTRATIONS: Record<string, number> = {
+  guirlandes: require('../../assets/items/guirlandes.png'),
+  cabane:     require('../../assets/items/cabane.png'),
+  balancoire: require('../../assets/items/balancoire.png'),
+  lanterne:   require('../../assets/items/lanterne.png'),
+  nid:        require('../../assets/items/nid.png'),
+  hamac:      require('../../assets/items/hamac.png'),
+  fontaine:   require('../../assets/items/fontaine.png'),
+  couronne:   require('../../assets/items/couronne.png'),
+  portail:    require('../../assets/items/portail.png'),
+  cristal:    require('../../assets/items/cristal.png'),
+};
+
 /** Catalogue décorations MVP */
 export const DECORATIONS: MascotDecoration[] = [
   { id: 'balancoire',  labelKey: 'mascot.deco.balancoire',  emoji: '🪢', cost: 200,  rarity: 'commun',     minStage: 'arbuste' },
