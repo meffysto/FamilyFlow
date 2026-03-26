@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FamilyFlow — Le quotidien familial, sans la charge mentale</title>
-  <meta name="description" content="Une seule app pour toute la famille : courses, tâches, journal bébé, calendrier, recettes, IA, widgets iOS. Privé par design.">
-  <link rel="icon" href="favicon.png" type="image/png">
+  <title>FamilyFlow — Family life, without the mental load</title>
+  <meta name="description" content="One app for the whole family: groceries, tasks, baby journal, calendar, recipes, AI, iOS widgets. Private by design.">
+  <link rel="icon" href="../favicon.png" type="image/png">
 
-  <!-- Fonts: Zodiak (serif, titres) + DM Sans (body) via Fontshare -->
+  <!-- Fonts: Zodiak (serif, titles) + DM Sans (body) via Fontshare -->
   <link href="https://api.fontshare.com/v2/css?f[]=zodiak@400,500,600,700&f[]=dm-sans@400,500,600,700&display=swap" rel="stylesheet">
 
   <style>
@@ -85,6 +85,30 @@
         transform: none;
         transition: none;
       }
+    }
+
+    /* ================================================================
+       LANGUAGE SWITCH
+       ================================================================ */
+    .lang-switch {
+      position: absolute;
+      top: clamp(16px, 2vw, 24px);
+      right: clamp(20px, 5vw, 80px);
+      z-index: 10;
+    }
+    .lang-switch a {
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary);
+      text-decoration: none;
+      padding: 6px 14px;
+      border-radius: 100px;
+      background: rgba(124, 58, 237, 0.08);
+      transition: background 0.2s ease;
+    }
+    .lang-switch a:hover {
+      background: rgba(124, 58, 237, 0.15);
     }
 
     /* ================================================================
@@ -751,28 +775,26 @@
        HERO — App Store style
        ================================================================ -->
   <header class="hero">
-    <div style="position: absolute; top: clamp(16px, 2vw, 24px); right: clamp(20px, 5vw, 80px); z-index: 10;">
-      <a href="en/index.html" style="font-family: var(--font-body); font-size: 14px; font-weight: 600; color: var(--primary); text-decoration: none; padding: 6px 14px; border-radius: 100px; background: rgba(124, 58, 237, 0.08);">&#127468;&#127463; English</a>
-    </div>
+    <div class="lang-switch"><a href="../index.html">&#127467;&#127479; Fran&ccedil;ais</a></div>
     <div class="hero-inner">
       <div class="app-icon reveal">&#x1F3E0;</div>
 
       <h1 class="app-name reveal delay-1">FamilyFlow</h1>
-      <p class="app-subtitle reveal delay-2">Le quotidien familial, sans la charge mentale.</p>
+      <p class="app-subtitle reveal delay-2">Family life, without the mental load.</p>
 
       <div class="app-meta reveal delay-3">
-        <div class="app-meta-item"><strong>Gratuit</strong></div>
+        <div class="app-meta-item"><strong>Free</strong></div>
         <div class="app-meta-item">&#x2022;</div>
         <div class="app-meta-item"><strong>iOS 17+</strong></div>
         <div class="app-meta-item">&#x2022;</div>
         <div class="app-meta-item"><strong>Open source</strong></div>
         <div class="app-meta-item">&#x2022;</div>
-        <div class="app-meta-item"><strong>100% priv&#233;</strong></div>
+        <div class="app-meta-item"><strong>100% private</strong></div>
       </div>
 
       <a href="https://apps.apple.com" class="store-button reveal delay-4" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-        T&#233;l&#233;charger sur l'App Store
+        Download on the App Store
       </a>
     </div>
   </header>
@@ -787,46 +809,46 @@
       <div class="phone-frame reveal">
         <div class="phone-notch"></div>
         <div class="phone-screen">
-          <div class="phone-screen-title">&#x1F3E0; Ma journ&#233;e</div>
+          <div class="phone-screen-title">&#x1F3E0; My Day</div>
           <div class="mock-card">
             <div class="mock-card-icon">&#x1F373;</div>
             <div class="mock-card-text">
-              <strong>D&#233;jeuner</strong>
-              Gratin dauphinois
+              <strong>Lunch</strong>
+              Potato gratin
             </div>
           </div>
           <div class="mock-card mock-card--rose">
             <div class="mock-card-icon">&#x1F4CB;</div>
             <div class="mock-card-text">
-              <strong>3 t&#226;ches</strong>
-              Aspirateur, lessive, courses
+              <strong>3 tasks</strong>
+              Vacuuming, laundry, groceries
             </div>
           </div>
           <div class="mock-card mock-card--mint">
             <div class="mock-card-icon">&#x1F4C5;</div>
             <div class="mock-card-text">
-              <strong>RDV 14h30</strong>
-              P&#233;diatre &#8212; Dr. Martin
+              <strong>Appt. 2:30 PM</strong>
+              Pediatrician &mdash; Dr. Martin
             </div>
           </div>
           <div class="mock-card mock-card--amber">
             <div class="mock-card-icon">&#x1F3C6;</div>
             <div class="mock-card-text">
               <strong>+15 points</strong>
-              Encore 5 pour la loot box !
+              5 more for the loot box!
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Screen 2: Journal b&#233;b&#233; -->
+      <!-- Screen 2: Baby Journal -->
       <div class="phone-frame reveal delay-1">
         <div class="phone-notch"></div>
         <div class="phone-screen">
-          <div class="phone-screen-title">&#x1F37C; Journal b&#233;b&#233;</div>
+          <div class="phone-screen-title">&#x1F37C; Baby Journal</div>
           <div class="mock-timer">
             <div class="mock-timer-time">12:34</div>
-            <div class="mock-timer-label">T&#233;t&#233;e en cours &#8212; c&#244;t&#233; gauche</div>
+            <div class="mock-timer-label">Nursing in progress &mdash; left side</div>
           </div>
           <div class="mock-pill-row">
             <div class="mock-badge">&#x1F7E2; Live Activity</div>
@@ -835,8 +857,8 @@
           <div class="mock-card mock-card--rose">
             <div class="mock-card-icon">&#x1F476;</div>
             <div class="mock-card-text">
-              <strong>Aujourd'hui</strong>
-              3 t&#233;t&#233;es &#183; 2 couches &#183; 1 sieste
+              <strong>Today</strong>
+              3 feedings &#183; 2 diapers &#183; 1 nap
             </div>
           </div>
           <div class="mock-progress">
@@ -845,22 +867,22 @@
         </div>
       </div>
 
-      <!-- Screen 3: Calendrier -->
+      <!-- Screen 3: Calendar -->
       <div class="phone-frame reveal delay-2">
         <div class="phone-notch"></div>
         <div class="phone-screen">
-          <div class="phone-screen-title">&#x1F4C5; Calendrier</div>
+          <div class="phone-screen-title">&#x1F4C5; Calendar</div>
           <div class="mock-card mock-card--blue" style="padding: 10px;">
             <div style="width: 100%;">
-              <div style="font-size: 0.7rem; font-weight: 600; color: var(--text); margin-bottom: 6px; text-align: center;">Mars 2026</div>
+              <div style="font-size: 0.7rem; font-weight: 600; color: var(--text); margin-bottom: 6px; text-align: center;">March 2026</div>
               <div class="mock-calendar-row">
-                <div class="mock-calendar-day">L</div>
                 <div class="mock-calendar-day">M</div>
-                <div class="mock-calendar-day">M</div>
-                <div class="mock-calendar-day">J</div>
-                <div class="mock-calendar-day">V</div>
+                <div class="mock-calendar-day">T</div>
+                <div class="mock-calendar-day">W</div>
+                <div class="mock-calendar-day">T</div>
+                <div class="mock-calendar-day">F</div>
                 <div class="mock-calendar-day">S</div>
-                <div class="mock-calendar-day">D</div>
+                <div class="mock-calendar-day">S</div>
               </div>
               <div class="mock-calendar-row">
                 <div class="mock-calendar-day">16</div>
@@ -876,51 +898,51 @@
           <div class="mock-card">
             <div class="mock-card-icon">&#x1F382;</div>
             <div class="mock-card-text">
-              <strong>Anniversaire Emma</strong>
-              Samedi 22 mars
+              <strong>Emma's Birthday</strong>
+              Saturday, March 22
             </div>
           </div>
           <div class="mock-card mock-card--rose">
             <div class="mock-card-icon">&#x1F3AF;</div>
             <div class="mock-card-text">
-              <strong>D&#233;fi famille</strong>
-              Ranger le garage
+              <strong>Family challenge</strong>
+              Clean the garage
             </div>
           </div>
           <div class="mock-card mock-card--mint">
             <div class="mock-card-icon">&#x1F9D8;</div>
             <div class="mock-card-text">
-              <strong>Humeur du jour</strong>
-              &#x1F60A; Content
+              <strong>Today's mood</strong>
+              &#x1F60A; Happy
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Screen 4: Recettes & Stock -->
+      <!-- Screen 4: Recipes & Stock -->
       <div class="phone-frame reveal delay-3">
         <div class="phone-notch"></div>
         <div class="phone-screen">
-          <div class="phone-screen-title">&#x1F37D;&#xFE0F; Repas & stock</div>
+          <div class="phone-screen-title">&#x1F37D;&#xFE0F; Meals & pantry</div>
           <div class="mock-card">
             <div class="mock-card-icon">&#x1F916;</div>
             <div class="mock-card-text">
-              <strong>Que cuisiner ce soir ?</strong>
-              Bas&#233; sur votre stock
+              <strong>What to cook tonight?</strong>
+              Based on your pantry
             </div>
           </div>
           <div class="mock-card mock-card--amber">
             <div class="mock-card-icon">&#x1F955;</div>
             <div class="mock-card-text">
-              <strong>Stock</strong>
-              Carottes &#215;3, P&#226;tes &#215;2, Cr&#232;me &#215;1
+              <strong>Pantry</strong>
+              Carrots &times;3, Pasta &times;2, Cream &times;1
             </div>
           </div>
           <div class="mock-card mock-card--mint">
             <div class="mock-card-icon">&#x2705;</div>
             <div class="mock-card-text">
-              <strong>Cuisin&#233; !</strong>
-              Stock mis &#224; jour automatiquement
+              <strong>Cooked!</strong>
+              Pantry updated automatically
             </div>
           </div>
           <div class="mock-progress">
@@ -929,16 +951,16 @@
         </div>
       </div>
 
-      <!-- Screen 5: Comp&#233;tences -->
+      <!-- Screen 5: Skills -->
       <div class="phone-frame reveal delay-4">
         <div class="phone-notch"></div>
         <div class="phone-screen">
-          <div class="phone-screen-title">&#x1F3C6; Comp&#233;tences</div>
+          <div class="phone-screen-title">&#x1F3C6; Skills</div>
           <div class="mock-card mock-card--amber">
             <div class="mock-card-icon">&#x1F3C3;</div>
             <div class="mock-card-text">
-              <strong>Motricit&#233;</strong>
-              12/18 comp&#233;tences
+              <strong>Motor skills</strong>
+              12/18 skills
             </div>
           </div>
           <div class="mock-progress">
@@ -947,8 +969,8 @@
           <div class="mock-card mock-card--blue">
             <div class="mock-card-icon">&#x1F4AC;</div>
             <div class="mock-card-text">
-              <strong>Langage</strong>
-              8/15 comp&#233;tences
+              <strong>Language</strong>
+              8/15 skills
             </div>
           </div>
           <div class="mock-progress">
@@ -958,7 +980,7 @@
             <div class="mock-card-icon">&#x1F91D;</div>
             <div class="mock-card-text">
               <strong>Social</strong>
-              5/12 comp&#233;tences
+              5/12 skills
             </div>
           </div>
         </div>
@@ -972,103 +994,103 @@
        ================================================================ -->
   <div class="features-band">
     <div class="section">
-      <div class="section-label reveal">Tout-en-un</div>
-      <h2 class="section-title reveal delay-1">Tout ce dont votre famille a vraiment besoin</h2>
-      <p class="section-subtitle reveal delay-2">Arr&#234;tez de jongler entre 10 apps. FamilyFlow met tout au m&#234;me endroit, en priv&#233;.</p>
+      <div class="section-label reveal">All-in-one</div>
+      <h2 class="section-title reveal delay-1">Everything your family actually needs</h2>
+      <p class="section-subtitle reveal delay-2">Stop juggling 10 apps. FamilyFlow puts it all in one private space.</p>
 
       <div class="features-grid">
         <div class="feature-card reveal">
           <div class="feature-icon feature-icon--purple">&#x1F4CB;</div>
-          <div class="feature-title">T&#226;ches & m&#233;nage</div>
-          <div class="feature-desc">R&#233;currence, gamification avec loot boxes, swipe pour supprimer.</div>
+          <div class="feature-title">Tasks & chores</div>
+          <div class="feature-desc">Recurrence, gamification with loot boxes, swipe to delete.</div>
         </div>
 
         <div class="feature-card reveal delay-1">
           <div class="feature-icon feature-icon--rose">&#x1F37C;</div>
-          <div class="feature-title">Journal b&#233;b&#233;</div>
-          <div class="feature-desc">T&#233;t&#233;es, biberons, couches, sommeil. Timer avec Live Activity sur l'&#233;cran de verrouillage.</div>
+          <div class="feature-title">Baby journal</div>
+          <div class="feature-desc">Nursing, bottles, diapers, sleep. Timer with Live Activity on the lock screen.</div>
         </div>
 
         <div class="feature-card reveal delay-2">
           <div class="feature-icon feature-icon--amber">&#x1F37D;&#xFE0F;</div>
-          <div class="feature-title">Repas & recettes</div>
-          <div class="feature-desc">Planning semaine, import par URL, boucle ferm&#233;e recette &#8594; courses &#8594; stock.</div>
+          <div class="feature-title">Meals & recipes</div>
+          <div class="feature-desc">Weekly planner, import by URL, closed loop: recipe &rarr; groceries &rarr; pantry.</div>
         </div>
 
         <div class="feature-card reveal delay-3">
           <div class="feature-icon feature-icon--blue">&#x1F4C5;</div>
-          <div class="feature-title">Calendrier unifi&#233;</div>
-          <div class="feature-desc">9 sources fusionn&#233;es : RDV, t&#226;ches, anniversaires, repas, vacances, d&#233;fis et plus.</div>
+          <div class="feature-title">Unified calendar</div>
+          <div class="feature-desc">9 merged sources: appointments, tasks, birthdays, meals, vacations, challenges, and more.</div>
         </div>
 
         <div class="feature-card reveal delay-4">
           <div class="feature-icon feature-icon--mint">&#x1F3C6;</div>
-          <div class="feature-title">Arbre de comp&#233;tences</div>
-          <div class="feature-desc">~180 comp&#233;tences de 0 &#224; 18 ans. Motricit&#233;, langage, autonomie, social.</div>
+          <div class="feature-title">Skill tree</div>
+          <div class="feature-desc">~180 skills from 0 to 18 years. Motor, language, independence, social.</div>
         </div>
 
         <div class="feature-card reveal delay-5">
           <div class="feature-icon feature-icon--gray">&#x1F916;</div>
-          <div class="feature-title">Assistant IA</div>
-          <div class="feature-desc">Suggestions repas bas&#233;es sur le stock, briefing RDV. Donn&#233;es anonymis&#233;es.</div>
+          <div class="feature-title">AI assistant</div>
+          <div class="feature-desc">Meal suggestions based on pantry, appointment briefings. Data anonymized.</div>
         </div>
 
         <div class="feature-card reveal">
           <div class="feature-icon feature-icon--rose">&#x1FA7A;</div>
-          <div class="feature-title">Suivi sant&#233;</div>
-          <div class="feature-desc">Vaccins, croissance, carnet de sant&#233;. Journal de grossesse semaine par semaine.</div>
+          <div class="feature-title">Health tracking</div>
+          <div class="feature-desc">Vaccines, growth charts, health record. Week-by-week pregnancy journal.</div>
         </div>
 
         <div class="feature-card reveal delay-1">
           <div class="feature-icon feature-icon--amber">&#x1F4B0;</div>
-          <div class="feature-title">Budget familial</div>
-          <div class="feature-desc">D&#233;penses par cat&#233;gorie, &#233;volution des prix, wishlist avec liens produits.</div>
+          <div class="feature-title">Family budget</div>
+          <div class="feature-desc">Spending by category, price trends, wishlist with product links.</div>
         </div>
 
         <div class="feature-card reveal delay-2">
           <div class="feature-icon feature-icon--blue">&#x1F4F8;</div>
-          <div class="feature-title">Souvenirs</div>
-          <div class="feature-desc">Photos, mots d'enfants, humeurs du jour. Les petits moments qui comptent.</div>
+          <div class="feature-title">Memories</div>
+          <div class="feature-desc">Photos, kids' quotes, daily moods. The small moments that matter.</div>
         </div>
       </div>
     </div>
   </div>
 
   <!-- ================================================================
-       DETAIL: Calendrier unifi&#233;
+       DETAIL: Unified Calendar
        ================================================================ -->
   <div class="detail">
     <div class="detail-text reveal">
-      <div class="section-label">Calendrier</div>
-      <h2 class="section-title">Toute la famille en un coup d'&#339;il</h2>
+      <div class="section-label">Calendar</div>
+      <h2 class="section-title">Your whole family at a glance</h2>
       <ul class="detail-list">
-        <li><strong>9 sources fusionn&#233;es</strong> &#8212; RDV, t&#226;ches, anniversaires, repas, vacances, d&#233;fis, souvenirs, humeurs, mots d'enfants</li>
-        <li><strong>Vue mois + semaine</strong> &#8212; basculez d'un tap</li>
-        <li><strong>Codes couleur</strong> &#8212; chaque type a sa couleur pour une lecture rapide</li>
-        <li><strong>Navigation directe</strong> &#8212; touchez un &#233;v&#233;nement pour y aller</li>
+        <li><strong>9 merged sources</strong> &mdash; Appointments, tasks, birthdays, meals, vacations, challenges, memories, moods, kids' quotes</li>
+        <li><strong>Month + week view</strong> &mdash; switch with a tap</li>
+        <li><strong>Color coded</strong> &mdash; each type has its own color for quick reading</li>
+        <li><strong>Direct navigation</strong> &mdash; tap any event to jump to it</li>
       </ul>
     </div>
     <div class="detail-visual reveal delay-2">
       <div class="visual-block">
         <div class="visual-block-row">
           <div class="visual-block-icon">&#x1F4C5;</div>
-          <div class="visual-block-label">RDV p&#233;diatre</div>
-          <div class="visual-block-badge visual-block-badge--purple">14h30</div>
+          <div class="visual-block-label">Pediatrician appt.</div>
+          <div class="visual-block-badge visual-block-badge--purple">2:30 PM</div>
         </div>
         <div class="visual-block-row">
           <div class="visual-block-icon">&#x1F382;</div>
-          <div class="visual-block-label">Anniversaire Emma</div>
-          <div class="visual-block-badge visual-block-badge--amber">Sam.</div>
+          <div class="visual-block-label">Emma's Birthday</div>
+          <div class="visual-block-badge visual-block-badge--amber">Sat.</div>
         </div>
         <div class="visual-block-row">
           <div class="visual-block-icon">&#x1F37D;&#xFE0F;</div>
-          <div class="visual-block-label">Gratin dauphinois</div>
-          <div class="visual-block-badge visual-block-badge--green">Ce soir</div>
+          <div class="visual-block-label">Potato gratin</div>
+          <div class="visual-block-badge visual-block-badge--green">Tonight</div>
         </div>
         <div class="visual-block-row">
           <div class="visual-block-icon">&#x1F3AF;</div>
-          <div class="visual-block-label">D&#233;fi : ranger garage</div>
-          <div class="visual-block-value">En cours</div>
+          <div class="visual-block-label">Challenge: clean garage</div>
+          <div class="visual-block-value">In progress</div>
         </div>
       </div>
     </div>
@@ -1077,40 +1099,40 @@
   <div class="divider"></div>
 
   <!-- ================================================================
-       DETAIL: Flux recettes → stock
+       DETAIL: Recipe → Pantry flow
        ================================================================ -->
   <div class="detail detail--reverse">
     <div class="detail-text reveal">
-      <div class="section-label">Cuisine</div>
-      <h2 class="section-title">De la recette au stock, automatiquement</h2>
+      <div class="section-label">Cooking</div>
+      <h2 class="section-title">From recipe to pantry, automatically</h2>
       <ul class="detail-list">
-        <li><strong>Planifiez vos repas</strong> &#8212; la liste de courses se g&#233;n&#232;re toute seule</li>
-        <li><strong>Achetez</strong> &#8212; les ingr&#233;dients entrent dans votre stock</li>
-        <li><strong>Cuisinez</strong> &#8212; un tap et le stock est mis &#224; jour</li>
-        <li><strong>&#171; Que cuisiner ? &#187;</strong> &#8212; l'IA sugg&#232;re en fonction de ce qu'il reste</li>
+        <li><strong>Plan your meals</strong> &mdash; the grocery list generates itself</li>
+        <li><strong>Shop</strong> &mdash; ingredients go into your pantry</li>
+        <li><strong>Cook</strong> &mdash; one tap and the pantry updates</li>
+        <li><strong>&ldquo;What to cook?&rdquo;</strong> &mdash; the AI suggests based on what's left</li>
       </ul>
     </div>
     <div class="detail-visual reveal delay-2">
       <div class="visual-block">
         <div class="visual-block-row">
           <div class="visual-block-icon">&#x1F4D6;</div>
-          <div class="visual-block-label">Recette choisie</div>
+          <div class="visual-block-label">Recipe selected</div>
           <div class="visual-block-badge visual-block-badge--purple">&#x2192;</div>
         </div>
         <div class="visual-block-row">
           <div class="visual-block-icon">&#x1F6D2;</div>
-          <div class="visual-block-label">Liste de courses</div>
+          <div class="visual-block-label">Grocery list</div>
           <div class="visual-block-badge visual-block-badge--amber">Auto</div>
         </div>
         <div class="visual-block-row">
           <div class="visual-block-icon">&#x1F4E6;</div>
-          <div class="visual-block-label">Stock mis &#224; jour</div>
+          <div class="visual-block-label">Pantry updated</div>
           <div class="visual-block-badge visual-block-badge--green">&#x2713;</div>
         </div>
         <div class="visual-block-row">
           <div class="visual-block-icon">&#x1F916;</div>
-          <div class="visual-block-label">Suggestion IA</div>
-          <div class="visual-block-value">&#171; Gratin ? &#187;</div>
+          <div class="visual-block-label">AI suggestion</div>
+          <div class="visual-block-value">&ldquo;Gratin?&rdquo;</div>
         </div>
       </div>
     </div>
@@ -1119,29 +1141,29 @@
   <div class="divider"></div>
 
   <!-- ================================================================
-       DETAIL: Arbre de comp&#233;tences
+       DETAIL: Skill Tree
        ================================================================ -->
   <div class="detail">
     <div class="detail-text reveal">
-      <div class="section-label">D&#233;veloppement</div>
-      <h2 class="section-title">Suivez chaque progr&#232;s de votre enfant</h2>
+      <div class="section-label">Development</div>
+      <h2 class="section-title">Track every milestone of your child</h2>
       <ul class="detail-list">
-        <li><strong>8 tranches d'&#226;ge</strong> &#8212; de la naissance &#224; 18 ans</li>
-        <li><strong>~180 comp&#233;tences</strong> &#8212; motricit&#233;, langage, autonomie, social</li>
-        <li><strong>Progression visuelle</strong> &#8212; barres et badges &#224; chaque jalon</li>
-        <li><strong>C&#233;l&#233;brations</strong> &#8212; confettis quand une comp&#233;tence est d&#233;bloqu&#233;e</li>
+        <li><strong>8 age ranges</strong> &mdash; from birth to 18 years</li>
+        <li><strong>~180 skills</strong> &mdash; motor, language, independence, social</li>
+        <li><strong>Visual progress</strong> &mdash; bars and badges at each milestone</li>
+        <li><strong>Celebrations</strong> &mdash; confetti when a skill is unlocked</li>
       </ul>
     </div>
     <div class="detail-visual reveal delay-2">
       <div class="visual-block">
         <div class="visual-block-row">
           <div class="visual-block-icon">&#x1F3C3;</div>
-          <div class="visual-block-label">Motricit&#233;</div>
+          <div class="visual-block-label">Motor skills</div>
           <div class="visual-block-badge visual-block-badge--green">12/18</div>
         </div>
         <div class="visual-block-row">
           <div class="visual-block-icon">&#x1F4AC;</div>
-          <div class="visual-block-label">Langage</div>
+          <div class="visual-block-label">Language</div>
           <div class="visual-block-badge visual-block-badge--amber">8/15</div>
         </div>
         <div class="visual-block-row">
@@ -1151,7 +1173,7 @@
         </div>
         <div class="visual-block-row">
           <div class="visual-block-icon">&#x1F9E9;</div>
-          <div class="visual-block-label">Autonomie</div>
+          <div class="visual-block-label">Independence</div>
           <div class="visual-block-badge visual-block-badge--green">10/14</div>
         </div>
       </div>
@@ -1168,27 +1190,27 @@
       <div class="section-label">iOS</div>
       <h2 class="section-title">Widgets & Live Activities</h2>
       <ul class="detail-list">
-        <li><strong>Widget Ma Journ&#233;e</strong> &#8212; repas, t&#226;ches et RDV d'un coup d'&#339;il</li>
-        <li><strong>Widget Journal b&#233;b&#233;</strong> &#8212; timer t&#233;t&#233;e depuis l'&#233;cran d'accueil</li>
-        <li><strong>Live Activity</strong> &#8212; timer t&#233;t&#233;e sur l'&#233;cran de verrouillage, en temps r&#233;el</li>
-        <li><strong>Deep links</strong> &#8212; chaque bouton ouvre directement le bon &#233;cran</li>
+        <li><strong>My Day widget</strong> &mdash; meals, tasks, and appointments at a glance</li>
+        <li><strong>Baby journal widget</strong> &mdash; nursing timer from the home screen</li>
+        <li><strong>Live Activity</strong> &mdash; nursing timer on the lock screen, in real time</li>
+        <li><strong>Deep links</strong> &mdash; every button opens the right screen directly</li>
       </ul>
     </div>
     <div class="detail-visual reveal delay-2">
       <div class="visual-block">
         <div class="visual-block-row">
           <div class="visual-block-icon">&#x1F4F1;</div>
-          <div class="visual-block-label">Ma Journ&#233;e</div>
+          <div class="visual-block-label">My Day</div>
           <div class="visual-block-badge visual-block-badge--purple">Widget</div>
         </div>
         <div class="visual-block-row">
           <div class="visual-block-icon">&#x1F37C;</div>
-          <div class="visual-block-label">Timer t&#233;t&#233;e</div>
+          <div class="visual-block-label">Nursing timer</div>
           <div class="visual-block-badge visual-block-badge--green">&#x1F7E2; Live</div>
         </div>
         <div class="visual-block-row">
           <div class="visual-block-icon">&#x1F517;</div>
-          <div class="visual-block-label">Deep links natifs</div>
+          <div class="visual-block-label">Native deep links</div>
           <div class="visual-block-badge visual-block-badge--amber">iOS 17+</div>
         </div>
       </div>
@@ -1200,37 +1222,37 @@
        ================================================================ -->
   <div class="privacy-band">
     <div class="section">
-      <div class="section-label reveal">Vie priv&#233;e</div>
-      <h2 class="section-title reveal delay-1">Vos donn&#233;es, votre famille</h2>
-      <p class="section-subtitle reveal delay-2">Aucun compte, aucun serveur, aucun tracking. Vos donn&#233;es ne quittent jamais vos appareils.</p>
+      <div class="section-label reveal">Privacy</div>
+      <h2 class="section-title reveal delay-1">Your data, your family</h2>
+      <p class="section-subtitle reveal delay-2">No accounts. No servers. No tracking. Nothing leaves your devices.</p>
 
       <div class="privacy-grid">
         <div class="privacy-item reveal delay-3">
           <div class="privacy-item-icon">&#x1F4C1;</div>
           <div>
-            <div class="privacy-item-title">Stockage local</div>
-            <div class="privacy-item-desc">Vos fichiers restent sur votre appareil, lisibles et portables</div>
+            <div class="privacy-item-title">Local storage</div>
+            <div class="privacy-item-desc">Your files stay on your device, readable and portable</div>
           </div>
         </div>
         <div class="privacy-item reveal delay-3">
           <div class="privacy-item-icon">&#x2601;&#xFE0F;</div>
           <div>
-            <div class="privacy-item-title">Sync entre appareils</div>
-            <div class="privacy-item-desc">Partagez entre vos appareils Apple, sans serveur tiers</div>
+            <div class="privacy-item-title">Cross-device sync</div>
+            <div class="privacy-item-desc">Share between your Apple devices, no third-party server</div>
           </div>
         </div>
         <div class="privacy-item reveal delay-4">
           <div class="privacy-item-icon">&#x1F6AB;</div>
           <div>
-            <div class="privacy-item-title">Z&#233;ro tracking</div>
-            <div class="privacy-item-desc">Pas d'analytics, pas de cookies, pas de pub</div>
+            <div class="privacy-item-title">Zero tracking</div>
+            <div class="privacy-item-desc">No analytics, no cookies, no ads</div>
           </div>
         </div>
         <div class="privacy-item reveal delay-4">
           <div class="privacy-item-icon">&#x1F916;</div>
           <div>
-            <div class="privacy-item-title">IA anonymis&#233;e</div>
-            <div class="privacy-item-desc">Noms et lieux remplac&#233;s par des pseudonymes avant envoi</div>
+            <div class="privacy-item-title">Anonymized AI</div>
+            <div class="privacy-item-desc">Names and locations replaced with pseudonyms before sending</div>
           </div>
         </div>
       </div>
@@ -1241,12 +1263,12 @@
        CTA
        ================================================================ -->
   <section class="cta-section">
-    <h2 class="cta-title reveal">Moins de charge mentale, plus de temps en famille.</h2>
-    <p class="cta-subtitle reveal delay-1">Gratuit &#183; Sans pub &#183; Sans abonnement</p>
+    <h2 class="cta-title reveal">Less mental load, more family time.</h2>
+    <p class="cta-subtitle reveal delay-1">Free &#183; No ads &#183; No subscription</p>
 
     <a href="https://apps.apple.com" class="store-button reveal delay-2" target="_blank" rel="noopener">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-      T&#233;l&#233;charger sur l'App Store
+      Download on the App Store
     </a>
   </section>
 
@@ -1255,22 +1277,17 @@
        ================================================================ -->
   <footer class="footer">
     <div class="footer-links">
-      <a href="privacy.html">Confidentialit&#233;</a>
+      <a href="privacy.html">Privacy</a>
       <a href="support.html">Support</a>
       <a href="https://github.com/meffysto/FamilyFlow" target="_blank" rel="noopener">GitHub</a>
     </div>
-    <p class="footer-copy">&copy; 2026 FamilyFlow &#8212; Application familiale priv&#233;e</p>
+    <p class="footer-copy">&copy; 2026 FamilyFlow &mdash; Private family app</p>
   </footer>
 
   <!-- ================================================================
        JAVASCRIPT — Scroll reveal animations
        ================================================================ -->
   <script>
-    /* =============================================
-       Intersection Observer for scroll animations.
-       Adds .visible class to .reveal elements
-       when they enter the viewport.
-       ============================================= */
     (function() {
       const observer = new IntersectionObserver(function(entries) {
         entries.forEach(function(entry) {

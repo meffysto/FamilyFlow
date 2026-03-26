@@ -74,6 +74,7 @@
 </head>
 <body>
   <div class="container">
+    <div style="text-align: right; margin-bottom: 8px;"><a href="en/privacy.html" style="font-size: 14px; color: #7C3AED; text-decoration: none; font-weight: 600;">&#127468;&#127463; English</a></div>
     <h1>Politique de confidentialit&eacute;</h1>
     <p class="subtitle">Derni&egrave;re mise &agrave; jour : 19 mars 2026</p>
 
@@ -82,7 +83,7 @@
     </div>
 
     <h2>Donn&eacute;es stock&eacute;es localement</h2>
-    <p>Toutes les donn&eacute;es de l'application sont stock&eacute;es <strong>localement sur votre appareil</strong>, dans votre vault Obsidian :</p>
+    <p>Toutes les donn&eacute;es de l'application sont stock&eacute;es <strong>localement sur votre appareil</strong>, sous forme de fichiers texte :</p>
     <ul>
       <li>Profils famille (noms, avatars, dates de naissance)</li>
       <li>T&acirc;ches et listes de courses</li>
@@ -92,21 +93,21 @@
       <li>Photos, souvenirs et notes</li>
       <li>Points de gamification et historique</li>
     </ul>
-    <p>Les cl&eacute;s API et tokens sont stock&eacute;s dans le <strong>stockage s&eacute;curis&eacute;</strong> de votre appareil (Keychain iOS / Keystore Android), chiffr&eacute; au niveau mat&eacute;riel.</p>
+    <p>Les identifiants de connexion sont stock&eacute;s dans le <strong>stockage s&eacute;curis&eacute;</strong> de votre appareil, chiffr&eacute; au niveau mat&eacute;riel.</p>
 
     <h2>Synchronisation</h2>
-    <p>La synchronisation entre appareils est g&eacute;r&eacute;e par <strong>iCloud Drive</strong>, <strong>Obsidian Sync</strong> ou <strong>Syncthing</strong>, des outils tiers que vous configurez vous-m&ecirc;me. Family Vault ne g&egrave;re pas directement la synchronisation.</p>
+    <p>La synchronisation entre appareils passe par <strong>iCloud Drive</strong> ou d'autres services de synchronisation que vous configurez vous-m&ecirc;me. Family Vault ne g&egrave;re pas directement la synchronisation.</p>
 
     <h2>Assistant IA (fonctionnalit&eacute; optionnelle)</h2>
     <div class="warning">
-      <p>Cette fonctionnalit&eacute; est <strong>d&eacute;sactiv&eacute;e par d&eacute;faut</strong> et n&eacute;cessite que vous fournissiez votre propre cl&eacute; API Anthropic.</p>
+      <p>Cette fonctionnalit&eacute; est <strong>d&eacute;sactiv&eacute;e par d&eacute;faut</strong> et n&eacute;cessite que vous fournissiez votre propre cl&eacute; d'acc&egrave;s.</p>
     </div>
     <p>Si vous activez l'assistant IA :</p>
     <ul>
-      <li>Un <strong>r&eacute;sum&eacute; anonymis&eacute;</strong> de vos donn&eacute;es familiales est envoy&eacute; &agrave; l'API Anthropic (<code>api.anthropic.com</code>) pour r&eacute;pondre &agrave; vos questions</li>
+      <li>Un <strong>r&eacute;sum&eacute; anonymis&eacute;</strong> de vos donn&eacute;es familiales est envoy&eacute; au service d'IA (Anthropic) pour r&eacute;pondre &agrave; vos questions</li>
       <li>Avant envoi, toutes les donn&eacute;es personnelles (noms, m&eacute;decins, lieux, allergies, m&eacute;dicaments) sont <strong>remplac&eacute;es par des pseudonymes</strong>. La correspondance reste uniquement sur votre appareil.</li>
       <li>Les r&eacute;ponses sont d&eacute;-anonymis&eacute;es localement avant affichage</li>
-      <li>La cl&eacute; API est envoy&eacute;e directement depuis votre appareil vers Anthropic (pas de serveur interm&eacute;diaire)</li>
+      <li>La cl&eacute; d'acc&egrave;s est envoy&eacute;e directement depuis votre appareil vers Anthropic (pas de serveur interm&eacute;diaire)</li>
       <li>Anthropic est bas&eacute; aux &Eacute;tats-Unis &mdash; les donn&eacute;es transitent hors de l'Union europ&eacute;enne</li>
     </ul>
     <p>Vous pouvez d&eacute;sactiver cette fonctionnalit&eacute; &agrave; tout moment dans R&eacute;glages &gt; Intelligence artificielle.</p>
@@ -114,8 +115,8 @@
     <h2>Notifications Telegram (fonctionnalit&eacute; optionnelle)</h2>
     <p>Si vous configurez les notifications Telegram :</p>
     <ul>
-      <li>Votre <strong>token de bot</strong> et <strong>chat ID</strong> sont stock&eacute;s dans le stockage s&eacute;curis&eacute; de votre appareil</li>
-      <li>Les messages et photos sont envoy&eacute;s directement &agrave; l'API Telegram (<code>api.telegram.org</code>) depuis votre appareil</li>
+      <li>Vos identifiants Telegram sont stock&eacute;s dans le stockage s&eacute;curis&eacute; de votre appareil</li>
+      <li>Les messages et photos sont envoy&eacute;s directement &agrave; Telegram depuis votre appareil</li>
       <li>Les messages peuvent contenir des noms de membres de la famille et des r&eacute;sum&eacute;s de t&acirc;ches/repas</li>
       <li>Aucun serveur interm&eacute;diaire n'est utilis&eacute;</li>
     </ul>
@@ -142,10 +143,10 @@
     <h2>Vos droits (RGPD)</h2>
     <p>Vos donn&eacute;es &eacute;tant stock&eacute;es localement, vous en avez le contr&ocirc;le total :</p>
     <ul>
-      <li><strong>Acc&egrave;s</strong> : toutes vos donn&eacute;es sont des fichiers Markdown lisibles dans votre vault</li>
+      <li><strong>Acc&egrave;s</strong> : toutes vos donn&eacute;es sont des fichiers texte lisibles sur votre appareil</li>
       <li><strong>Rectification</strong> : vous pouvez modifier vos fichiers directement</li>
       <li><strong>Effacement</strong> : supprimez vos fichiers ou utilisez R&eacute;glages &gt; Supprimer les donn&eacute;es</li>
-      <li><strong>Portabilit&eacute;</strong> : vos donn&eacute;es sont au format Markdown standard, lisible par tout &eacute;diteur</li>
+      <li><strong>Portabilit&eacute;</strong> : vos donn&eacute;es sont dans un format texte standard, lisible par tout &eacute;diteur</li>
     </ul>
     <p>Pour les donn&eacute;es transmises aux services tiers (Anthropic, Telegram), consultez leurs politiques de confidentialit&eacute; respectives.</p>
 
