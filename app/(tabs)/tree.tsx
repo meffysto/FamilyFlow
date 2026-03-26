@@ -50,24 +50,23 @@ import {
   TREE_STAGES,
 } from '../../lib/mascot';
 import { SPECIES_INFO, ALL_SPECIES, type TreeSpecies } from '../../lib/mascot/types';
-import { getCurrentSeason, SEASON_INFO, type Season } from '../../lib/mascot/seasons';
+import { getCurrentSeason, SEASON_INFO, GROUND_COLORS, type Season } from '../../lib/mascot/seasons';
 import type { Profile } from '../../lib/types';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 
-const { width: SCREEN_W } = Dimensions.get('window');
-const TREE_SIZE = Math.min(SCREEN_W * 0.85, 360);
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
+const TREE_SIZE = Math.min(SCREEN_W * 0.9, 400);
 
-/** Hauteur du conteneur diorama adaptée au stade de l'arbre */
-const DIORAMA_ASPECT = 240 / 200; // viewbox ratio du SVG
+/** Hauteur du conteneur diorama — basée sur le viewport pour un rendu immersif */
 const DIORAMA_HEIGHT_BY_STAGE: Record<number, number> = {
-  0: TREE_SIZE * 0.75,            // graine — compact, cozy
-  1: TREE_SIZE * 0.85,            // pousse — un peu plus grand
-  2: TREE_SIZE * DIORAMA_ASPECT,  // arbuste — ratio naturel
-  3: TREE_SIZE * DIORAMA_ASPECT,  // arbre
-  4: TREE_SIZE * DIORAMA_ASPECT * 1.05, // majestueux — un poil plus
-  5: TREE_SIZE * DIORAMA_ASPECT * 1.1,  // légendaire — max impact
+  0: SCREEN_H * 0.50,  // graine — compact
+  1: SCREEN_H * 0.54,  // pousse — un peu plus grand
+  2: SCREEN_H * 0.58,  // arbuste — ratio naturel
+  3: SCREEN_H * 0.60,  // arbre
+  4: SCREEN_H * 0.63,  // majestueux — un poil plus
+  5: SCREEN_H * 0.66,  // légendaire — max impact
 };
 
 const SEASON_ILLUSTRATIONS: Record<Season, ImageSourcePropType> = {
@@ -170,7 +169,7 @@ export default function TreeScreen() {
           </Text>
         </View>
 
-        {/* Arbre principal — diorama saisonnier */}
+        {/* Arbre principal — diorama saisonnier immersif (full-bleed) */}
         <Animated.View entering={FadeIn.duration(600)} style={styles.treeContainer}>
           <TouchableOpacity
             activeOpacity={0.9}
@@ -178,14 +177,23 @@ export default function TreeScreen() {
             style={[
               styles.treeBg,
               {
-                width: TREE_SIZE + Spacing['3xl'] * 2,
-                height: DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? TREE_SIZE * DIORAMA_ASPECT,
-                backgroundColor: colors.cardAlt,
+                height: DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60,
+                /* Marge négative pour compenser le paddingHorizontal du scroll */
+                marginHorizontal: -Spacing['2xl'],
               },
             ]}
           >
+            {/* Couche 0 : Gradient de fond — neutre en haut, couleur sol en bas
+                Remplace le backgroundColor statique pour que les bords latéraux
+                sous le SVG montrent la bonne couleur de sol. */}
+            <LinearGradient
+              colors={[colors.cardAlt, GROUND_COLORS[season].top]}
+              locations={[0.55, 0.85]}
+              style={StyleSheet.absoluteFill}
+            />
+
             {/* Couche 1 : Illustration saisonnière — positionnée en haut (ciel + horizon)
-                On affiche seulement les 65% supérieurs de l'image via un conteneur clipé,
+                On affiche seulement les 70% supérieurs de l'image via un conteneur clipé,
                 évitant ainsi le sol de l'illustration qui clash avec le sol SVG. */}
             <View style={styles.illustrationClip}>
               <Image
@@ -195,16 +203,17 @@ export default function TreeScreen() {
               />
             </View>
 
-            {/* Couche 2 : Gradient de fondu — transition douce illustration → fond neutre
+            {/* Couche 2 : Gradient de fondu — transition douce illustration → sol herbeux
                 Le dégradé part de transparent (en haut de la zone de fondu)
-                vers la couleur de fond du conteneur (en bas). */}
+                vers la couleur du sol saisonnier (en bas). */}
             <LinearGradient
               colors={[
                 'transparent',
-                colors.cardAlt + 'BB',
-                colors.cardAlt,
+                GROUND_COLORS[season].top + '44',
+                GROUND_COLORS[season].top + '99',
+                GROUND_COLORS[season].top,
               ]}
-              locations={[0, 0.4, 1]}
+              locations={[0, 0.4, 0.75, 1]}
               style={styles.illustrationFade}
             />
 
@@ -223,6 +232,12 @@ export default function TreeScreen() {
             </View>
           </TouchableOpacity>
         </Animated.View>
+
+        {/* Transition douce diorama → contenu : gradient sol → fond de page */}
+        <LinearGradient
+          colors={[GROUND_COLORS[season].top, colors.bg]}
+          style={styles.groundTransition}
+        />
 
         {/* Info profil + stade */}
         <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.infoCard}>
@@ -489,27 +504,28 @@ const styles = StyleSheet.create({
   },
   treeContainer: {
     alignItems: 'center',
-    marginVertical: Spacing.lg,
+    marginTop: Spacing.lg,
   },
   treeBg: {
-    borderRadius: Radius['3xl'],
+    // Full-bleed : pas de borderRadius, largeur 100%
+    alignSelf: 'stretch',
     alignItems: 'center',
     justifyContent: 'flex-end',
     overflow: 'hidden',
   },
   illustrationClip: {
-    // Occupe les 65% supérieurs du conteneur — on ne montre que le ciel/horizon
+    // Occupe les 70% supérieurs du conteneur — on ne montre que le ciel/horizon
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: '65%',
+    height: '70%',
     overflow: 'hidden',
   },
   seasonIllustration: {
     width: '100%',
-    height: '155%', // surdi­mensionné pour que resizeMode="cover" recadre le haut de l'image
-    opacity: 0.65,
+    height: '155%', // surdimensionné pour que resizeMode="cover" recadre le haut de l'image
+    opacity: 0.80,
   },
   illustrationFade: {
     // Gradient de fondu entre l'illustration (en haut) et le sol SVG (en bas)
@@ -520,9 +536,15 @@ const styles = StyleSheet.create({
     height: '40%',
   },
   treeOverlay: {
-    paddingHorizontal: Spacing.xl,
+    paddingHorizontal: Spacing.sm,
     paddingBottom: Spacing.md,
     alignItems: 'center',
+  },
+  groundTransition: {
+    // Transition douce du sol vers le fond de page
+    height: 48,
+    marginHorizontal: -Spacing['2xl'],
+    marginTop: -1, // éviter le pixel gap entre diorama et gradient
   },
   infoCard: {
     marginBottom: Spacing['2xl'],

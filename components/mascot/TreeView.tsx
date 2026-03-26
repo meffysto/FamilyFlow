@@ -23,6 +23,7 @@ import Svg, {
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
+  useAnimatedProps,
   withRepeat,
   withSequence,
   withTiming,
@@ -31,6 +32,8 @@ import Animated, {
   useReducedMotion,
 } from 'react-native-reanimated';
 import { useEffect } from 'react';
+
+const AnimatedG = Animated.createAnimatedComponent(G);
 
 import {
   type TreeSpecies,
@@ -114,12 +117,14 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
     );
   }, [animate]);
 
+  // Style pour le conteneur (pas d'animation de transform ici)
   const treeAnimStyle = useAnimatedStyle(() => ({
-    transform: [
-      { rotate: `${sway.value * 1.5}deg` },
-      { scaleX: breathe.value },
-      { scaleY: breathe.value },
-    ],
+    transform: [],
+  }));
+
+  // Props animées pour le <G> SVG interne — pivot au pied de l'arbre
+  const treeGroupProps = useAnimatedProps(() => ({
+    transform: `translate(${CENTER_X}, ${GROUND_Y}) rotate(${sway.value * 1.5}) scale(${breathe.value}) translate(${-CENTER_X}, ${-GROUND_Y})`,
   }));
 
   // ── Rendu par stade ──
@@ -152,7 +157,7 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
         <FloatingParticles color={sp.particle} count={visual.hasAura ? 12 : 6} size={size} />
       )}
 
-      <Animated.View style={[styles.svgWrap, animate ? treeAnimStyle : undefined]}>
+      <Animated.View style={styles.svgWrap}>
         <Svg
           width={size}
           height={size * (VIEWBOX_H / VIEWBOX_W)}
@@ -189,41 +194,30 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
             </RadialGradient>
           </Defs>
 
-          {/* Sol (organique) */}
+          {/* Sol — bord organique subtil (le fond vert vient du conteneur parent) */}
           {showGround && (
-            <OrganicCrown cx={CENTER_X} cy={GROUND_Y + 5} rx={85} ry={15} fill="url(#ground)" opacity={0.8} seed={99} wobble={0.08} />
+            <OrganicCrown cx={CENTER_X} cy={GROUND_Y + 2} rx={115} ry={12} fill="url(#ground)" opacity={0.5} seed={99} wobble={0.05} />
           )}
-
-          {/* Habitat (jardin qui évolue avec le stade) */}
           {showGround && <HabitatLayer stageIdx={stageIdx} season={currentSeason} groundColors={ground} accent={sp.accent} />}
 
-          {/* Aura dorée (légendaire) */}
-          {visual.hasAura && (
-            <Circle cx={CENTER_X} cy={GROUND_Y - 70} r={80} fill="url(#aura)" />
-          )}
+          {/* Arbre + décorations — animés (sway + breathe), pivot au pied */}
+          <AnimatedG animatedProps={animate ? treeGroupProps : undefined}>
+            {visual.hasAura && (
+              <Circle cx={CENTER_X} cy={GROUND_Y - 70} r={80} fill="url(#aura)" />
+            )}
+            {visual.hasGlow && (
+              <Circle cx={CENTER_X} cy={GROUND_Y - 60} r={55} fill={sp.accent} opacity={0.08} />
+            )}
 
-          {/* Glow (majestueux+) */}
-          {visual.hasGlow && (
-            <Circle
-              cx={CENTER_X}
-              cy={GROUND_Y - 60}
-              r={55}
-              fill={sp.accent}
-              opacity={0.08}
-            />
-          )}
+            {treeElements}
 
-          {treeElements}
-
-          {/* Décorations achetées */}
-          {decorations.length > 0 && (stageIdx >= 1 || previewMode) && (
-            <DecorationOverlay decorationIds={decorations} stageIdx={stageIdx} previewMode={previewMode} species={species} />
-          )}
-
-          {/* Habitants achetés */}
-          {inhabitants.length > 0 && (stageIdx >= 1 || previewMode) && (
-            <InhabitantOverlay inhabitantIds={inhabitants} stageIdx={stageIdx} previewMode={previewMode} species={species} />
-          )}
+            {decorations.length > 0 && (stageIdx >= 1 || previewMode) && (
+              <DecorationOverlay decorationIds={decorations} stageIdx={stageIdx} previewMode={previewMode} species={species} />
+            )}
+            {inhabitants.length > 0 && (stageIdx >= 1 || previewMode) && (
+              <InhabitantOverlay inhabitantIds={inhabitants} stageIdx={stageIdx} previewMode={previewMode} species={species} />
+            )}
+          </AnimatedG>
         </Svg>
       </Animated.View>
     </View>
@@ -1555,8 +1549,6 @@ function DecorationOverlay({ decorationIds, stageIdx, previewMode = false, speci
       {decorationIds.map((id) => {
         const deco = DECORATIONS.find((d) => d.id === id);
         if (!deco) return null;
-        const minIdx = ['graine','pousse','arbuste','arbre','majestueux','legendaire'].indexOf(deco.minStage);
-        if (!previewMode && stageIdx < minIdx) return null;
         const slot = DECO_SLOTS[id];
         if (!slot) return null;
         const pos = getItemPosition(species, stageIdx, slot);
@@ -1583,8 +1575,6 @@ function InhabitantOverlay({ inhabitantIds, stageIdx, previewMode = false, speci
       {inhabitantIds.map((id) => {
         const hab = INHABITANTS.find((h) => h.id === id);
         if (!hab) return null;
-        const minIdx = ['graine','pousse','arbuste','arbre','majestueux','legendaire'].indexOf(hab.minStage);
-        if (!previewMode && stageIdx < minIdx) return null;
         const slot = HAB_SLOTS[id];
         if (!slot) return null;
         const pos = getItemPosition(species, stageIdx, slot);
