@@ -20,6 +20,7 @@ import { getTreeStage, getTreeStageInfo } from '../../lib/mascot';
 import { SPECIES_INFO, type TreeSpecies } from '../../lib/mascot/types';
 import { getDailyAdventure, getTodayStr, type Adventure } from '../../lib/mascot/adventures';
 import { hapticsTreeTap } from '../../lib/mascot/haptics';
+import { useTone } from '../../lib/mascot/tone';
 import type { DashboardSectionProps } from './types';
 import type { Profile } from '../../lib/types';
 import { Spacing, Radius } from '../../constants/spacing';
@@ -38,6 +39,7 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
   const { primary, tint, colors } = useThemeColors();
   const { profiles, activeProfile, completeAdventure } = useVault();
   const { showToast } = useToast();
+  const tone = useTone();
 
   // Aventure du jour
   const profileId = activeProfile?.id ?? '';
@@ -146,16 +148,16 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
           <View style={[styles.adventureCard, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}>
             <Text style={styles.adventureEmoji}>{adventure.emoji}</Text>
             <Text style={[styles.adventureTitle, { color: colors.text }]}>
-              {t(adventure.titleKey)}
+              {t(adventure.titleKey, { context: tone })}
             </Text>
             <Text style={[styles.adventureDesc, { color: colors.textSub }]}>
-              {t(adventure.descriptionKey)}
+              {t(adventure.descriptionKey, { context: tone })}
             </Text>
 
             {adventureChoice ? (
               <View style={styles.adventureResult}>
                 <Text style={[styles.adventureResultText, { color: colors.text }]}>
-                  {t(`mascot.adventure.${adventure.id}.result${adventureChoice}`)}
+                  {t(`mascot.adventure.${adventure.id}.result${adventureChoice}`, { context: tone })}
                 </Text>
                 <Text style={[styles.adventureResultPts, { color: primary }]}>
                   +{adventureChoice === 'A' ? adventure.choiceA.points : adventure.choiceB.points} pts

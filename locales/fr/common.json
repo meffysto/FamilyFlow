@@ -3218,8 +3218,11 @@
     "speciesChanged": "Ton arbre est maintenant un {{species}} !",
     "evolution": {
       "title": "Évolution !",
+      "title_enfant": "WOOOW, Évolution !!",
       "message": "L'arbre de {{avatar}} {{name}} a évolué en {{stage}} !",
-      "dismiss": "Magnifique !"
+      "message_enfant": "Trop fort ! Ton arbre est devenu {{stage}} !! {{avatar}}",
+      "dismiss": "Magnifique !",
+      "dismiss_enfant": "Trop cool !!"
     },
     "deco": {
       "balancoire": "Balançoire",
@@ -3267,16 +3270,21 @@
     },
     "shop": {
       "title": "Boutique de l'arbre",
+      "title_enfant": "La boutique magique !",
       "decorations": "Décorations",
       "inhabitants": "Habitants",
       "buy": "Acheter",
       "owned": "Acheté",
       "locked": "Débloqué au stade {{stage}}",
       "notEnoughPoints": "Points insuffisants",
+      "notEnoughPoints_enfant": "Oh non, pas assez de points !",
       "buyConfirm": "Acheter pour {{cost}} pts ?",
+      "buyConfirm_enfant": "Acheter pour {{cost}} pts ? Trop hâte !",
       "buySuccess": "{{item}} acheté ! Il apparaît sur ton arbre.",
+      "buySuccess_enfant": "YEAH ! {{item}} acheté ! Regarde ton arbre !!",
       "points": "{{count}} pts",
       "yourPoints": "Tes points : {{count}}",
+      "yourPoints_enfant": "Tu as {{count}} points !",
       "requiredStage": "Stade requis : {{stage}}",
       "preview": "Aperçu sur l'arbre",
       "close": "Fermer",
@@ -3299,9 +3307,12 @@
     },
     "adventure": {
       "reward": "+{{points}} points gagnés !",
+      "reward_enfant": "SUPER ! +{{points}} points !!",
       "tresor_ecureuil": {
         "title": "Un écureuil a caché un trésor !",
+        "title_enfant": "OH ! Un écureuil a caché un TRÉSOR !!",
         "desc": "Un petit écureuil espiègle a enterré quelque chose au pied de ton arbre…",
+        "desc_enfant": "Un petit écureuil trop mignon a caché un truc au pied de ton arbre ! Qu'est-ce que c'est ?!",
         "choiceA": "Fouiller",
         "choiceB": "Le saluer",
         "resultA": "Tu as déterré un caillou brillant ! L'écureuil te regarde avec fierté.",
@@ -3309,7 +3320,9 @@
       },
       "tempete": {
         "title": "Une tempête approche !",
+        "title_enfant": "ATTENTION ! Grosse tempête !!",
         "desc": "Le vent souffle fort et les branches tremblent. Ton arbre a besoin d'aide !",
+        "desc_enfant": "WHOOOOSH ! Le vent est super fort ! Ton arbre tremble, vite il faut l'aider !",
         "choiceA": "Protéger l'arbre",
         "choiceB": "Laisser faire",
         "resultA": "Tu as protégé ton arbre avec courage ! Pas une feuille de perdue.",
@@ -3333,7 +3346,9 @@
       },
       "graine_magique": {
         "title": "Une graine tombe du ciel !",
+        "title_enfant": "WAOU ! Une graine MAGIQUE tombe du ciel !!",
         "desc": "Une graine lumineuse atterrit doucement au pied de ton arbre. Elle brille !",
+        "desc_enfant": "Une graine toute brillante est tombée du ciel ! Elle brille trop fort, c'est de la MAGIE !",
         "choiceA": "La planter",
         "choiceB": "La garder",
         "resultA": "La graine brille dans la terre… quelque chose va pousser bientôt !",
@@ -3357,7 +3372,9 @@
       },
       "tresor_pirate": {
         "title": "Une carte au trésor !",
+        "title_enfant": "UNE CARTE AU TRÉSOR DE PIRATE !!",
         "desc": "Tu trouves une vieille carte coincée entre les racines. Un X marque un endroit…",
+        "desc_enfant": "Tu trouves une carte de pirate cachée dans les racines !! Y'a un X dessus, c'est sûrement un trésor !",
         "choiceA": "Creuser",
         "choiceB": "Décoder la carte",
         "resultA": "Tu as trouvé un coffre rempli de pièces dorées (en chocolat) !",
@@ -3373,7 +3390,9 @@
       },
       "pluie_etoiles": {
         "title": "Pluie d'étoiles filantes !",
+        "title_enfant": "DES ÉTOILES FILANTES PARTOUT !!",
         "desc": "Le ciel s'illumine d'étoiles filantes au-dessus de ton arbre. Magique !",
+        "desc_enfant": "Le ciel est REMPLI d'étoiles filantes ! C'est trop trop beau au-dessus de ton arbre !",
         "choiceA": "Faire un vœu",
         "choiceB": "Collecter la poussière",
         "resultA": "Ton vœu monte vers les étoiles… un frisson de magie te parcourt.",

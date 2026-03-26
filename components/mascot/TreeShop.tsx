@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { hapticsShopBuy, hapticsShopError } from '../../lib/mascot/haptics';
+import { useTone } from '../../lib/mascot/tone';
 
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { TreeView } from './TreeView';
@@ -74,6 +75,7 @@ const PREVIEW_TREE_SIZE = Math.min(SCREEN_W * 0.55, 220);
 
 export function TreeShop({ species, level, points, ownedDecorations, ownedInhabitants, onBuy, onClose }: TreeShopProps) {
   const { t } = useTranslation();
+  const tone = useTone();
   const { primary, tint, colors, isDark } = useThemeColors();
   const [tab, setTab] = useState<ShopTab>('decorations');
   const [buying, setBuying] = useState<string | null>(null);
@@ -312,8 +314,8 @@ export function TreeShop({ species, level, points, ownedDecorations, ownedInhabi
                   >
                     <Text style={[styles.detailBuyText, { color: canAfford ? '#FFFFFF' : colors.textMuted }]}>
                       {canAfford
-                        ? t('mascot.shop.buyConfirm', { cost: selectedItem.cost })
-                        : t('mascot.shop.notEnoughPoints')}
+                        ? t('mascot.shop.buyConfirm', { cost: selectedItem.cost, context: tone })
+                        : t('mascot.shop.notEnoughPoints', { context: tone })}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -343,7 +345,7 @@ export function TreeShop({ species, level, points, ownedDecorations, ownedInhabi
           <Text style={[styles.closeBtnText, { color: primary }]}>{'←'}</Text>
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.text }]}>
-          {t('mascot.shop.title')}
+          {t('mascot.shop.title', { context: tone })}
         </Text>
         <View style={styles.closeBtn} />
       </View>
@@ -351,7 +353,7 @@ export function TreeShop({ species, level, points, ownedDecorations, ownedInhabi
       {/* Points */}
       <View style={[styles.pointsBar, { backgroundColor: tint }]}>
         <Text style={[styles.pointsText, { color: primary }]}>
-          {t('mascot.shop.yourPoints', { count: points })}
+          {t('mascot.shop.yourPoints', { count: points, context: tone })}
         </Text>
       </View>
 

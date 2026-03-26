@@ -19,6 +19,7 @@ import Animated, {
   useReducedMotion,
 } from 'react-native-reanimated';
 import { hapticsEvolution } from '../../lib/mascot/haptics';
+import { useTone } from '../../lib/mascot/tone';
 import { useTranslation } from 'react-i18next';
 
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -130,6 +131,7 @@ export function EvolutionOverlay({
   onDismiss,
 }: EvolutionOverlayProps) {
   const { t } = useTranslation();
+  const tone = useTone();
   const { width: screenW, height: screenH } = useWindowDimensions();
   const { primary, colors } = useThemeColors();
   const reducedMotion = useReducedMotion();
@@ -264,11 +266,12 @@ export function EvolutionOverlay({
           {/* Texte de félicitations */}
           <Animated.View style={[styles.textContainer, textStyle]}>
             <Text style={styles.evoTitle}>
-              {t('mascot.evolution.title')}
+              {t('mascot.evolution.title', { context: tone })}
             </Text>
             <Text style={styles.evoEmoji}>{sp.emoji}</Text>
             <Text style={styles.evoMessage}>
               {t('mascot.evolution.message', {
+                context: tone,
                 name: profileName,
                 avatar: profileAvatar,
                 stage: t(toInfo.labelKey),
@@ -286,7 +289,7 @@ export function EvolutionOverlay({
               onPress={onDismiss}
             >
               <Text style={styles.dismissText}>
-                {t('mascot.evolution.dismiss')}
+                {t('mascot.evolution.dismiss', { context: tone })}
               </Text>
             </Pressable>
           </Animated.View>
