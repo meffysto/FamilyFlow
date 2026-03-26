@@ -163,6 +163,7 @@ export interface MascotDecoration {
   cost: number;          // prix en points
   rarity: 'commun' | 'rare' | 'épique' | 'légendaire' | 'prestige';
   minStage: TreeStage;   // stade minimum pour débloquer
+  sagaExclusive?: boolean; // true = obtenu uniquement via saga (pas achetable)
 }
 
 /** Habitant achetable pour l'arbre */
@@ -173,6 +174,7 @@ export interface MascotInhabitant {
   cost: number;
   rarity: 'commun' | 'rare' | 'épique' | 'légendaire' | 'prestige';
   minStage: TreeStage;
+  sagaExclusive?: boolean; // true = obtenu uniquement via saga (pas achetable)
 }
 
 /** Assets illustrés (remplacent les emojis quand disponibles) */
@@ -201,6 +203,9 @@ export const DECORATIONS: MascotDecoration[] = [
   { id: 'couronne',    labelKey: 'mascot.deco.couronne',    emoji: '👑', cost: 5000, rarity: 'légendaire', minStage: 'legendaire' },
   { id: 'portail',     labelKey: 'mascot.deco.portail',     emoji: '🌀', cost: 12000, rarity: 'prestige',  minStage: 'majestueux' },
   { id: 'cristal',     labelKey: 'mascot.deco.cristal',     emoji: '💎', cost: 15000, rarity: 'prestige',  minStage: 'legendaire' },
+  // Saga exclusives
+  { id: 'lanterne_argent', labelKey: 'mascot.deco.lanterneArgent', emoji: '🪔', cost: 0, rarity: 'épique',     minStage: 'pousse', sagaExclusive: true },
+  { id: 'masque_ombre',    labelKey: 'mascot.deco.masqueOmbre',    emoji: '🎭', cost: 0, rarity: 'légendaire', minStage: 'pousse', sagaExclusive: true },
 ];
 
 /** Catalogue habitants MVP */
@@ -215,4 +220,7 @@ export const INHABITANTS: MascotInhabitant[] = [
   { id: 'dragon',      labelKey: 'mascot.hab.dragon',      emoji: '🐉', cost: 10000, rarity: 'légendaire', minStage: 'legendaire' },
   { id: 'phoenix',     labelKey: 'mascot.hab.phoenix',     emoji: '🔥', cost: 15000, rarity: 'prestige',  minStage: 'legendaire' },
   { id: 'licorne',     labelKey: 'mascot.hab.licorne',     emoji: '🦄', cost: 20000, rarity: 'prestige',  minStage: 'legendaire' },
+  // Saga exclusives
+  { id: 'esprit_eau',      labelKey: 'mascot.hab.espritEau',      emoji: '💧', cost: 0, rarity: 'épique',     minStage: 'pousse', sagaExclusive: true },
+  { id: 'ancien_gardien',  labelKey: 'mascot.hab.ancienGardien',  emoji: '🌿', cost: 0, rarity: 'légendaire', minStage: 'pousse', sagaExclusive: true },
 ];

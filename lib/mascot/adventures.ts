@@ -26,6 +26,8 @@ export interface AdventureResult {
   profileId: string;
 }
 
+import { simpleHash, formatDateStr } from './utils';
+
 /** Pool d'aventures */
 export const ADVENTURES: Adventure[] = [
   {
@@ -151,31 +153,17 @@ export const ADVENTURES: Adventure[] = [
 ];
 
 /**
- * Hash simple pour générer un index déterministe à partir de date + profileId.
- * Même date + même profil → même aventure.
- */
-function simpleHash(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  return Math.abs(hash);
-}
-
-/**
  * Retourne l'aventure du jour pour un profil donné.
  * Déterministe : même date + même profil → même aventure.
  */
 export function getDailyAdventure(profileId: string, date: Date = new Date()): Adventure {
-  const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  const dateStr = formatDateStr(date);
   const hash = simpleHash(`${dateStr}:${profileId}`);
   const idx = hash % ADVENTURES.length;
   return ADVENTURES[idx];
 }
 
-/** Formate la date du jour en YYYY-MM-DD */
+/** @deprecated Utiliser formatDateStr depuis ./utils */
 export function getTodayStr(date: Date = new Date()): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return formatDateStr(date);
 }

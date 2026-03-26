@@ -8,7 +8,7 @@
  * - Sélecteur d'espèce (si première fois ou via bouton)
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -52,6 +52,9 @@ import {
 } from '../../lib/mascot';
 import { SPECIES_INFO, ALL_SPECIES, DECORATIONS, INHABITANTS, ITEM_ILLUSTRATIONS, type TreeSpecies } from '../../lib/mascot/types';
 import { getCurrentSeason, SEASON_INFO, GROUND_COLORS, type Season } from '../../lib/mascot/seasons';
+import type { SagaProgress } from '../../lib/mascot/sagas-types';
+import { getSagaById } from '../../lib/mascot/sagas-engine';
+import { loadSagaProgress } from '../../lib/mascot/sagas-storage';
 import type { Profile } from '../../lib/types';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../../constants/typography';
@@ -96,6 +99,17 @@ export default function TreeScreen() {
   const [showShop, setShowShop] = useState(false);
   const [placingItem, setPlacingItem] = useState<string | null>(null);
   const [showItemPicker, setShowItemPicker] = useState(false);
+
+  // Saga active — pour bandeau + élément visuel
+  const [sagaProgress, setSagaProgress] = useState<SagaProgress | null>(null);
+  useEffect(() => {
+    if (!profile?.id) return;
+    loadSagaProgress(profile.id).then(p => {
+      if (p && p.status === 'active') setSagaProgress(p);
+      else setSagaProgress(null);
+    });
+  }, [profile?.id]);
+  const activeSaga = sagaProgress ? getSagaById(sagaProgress.sagaId) : null;
 
   // Liste combinée des items possédés avec leurs infos catalogue
   const allOwnedItems = useMemo(() => {
@@ -224,6 +238,21 @@ export default function TreeScreen() {
             {seasonInfo.emoji} {t(seasonInfo.labelKey)}
           </Text>
         </View>
+
+        {/* Bandeau saga active */}
+        {activeSaga && sagaProgress && (
+          <Animated.View entering={FadeIn.duration(300)}>
+            <View style={[styles.seasonBadge, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
+              <Text style={[styles.seasonText, { color: colors.textSub }]}>
+                {t('mascot.saga.banner', {
+                  title: t(activeSaga.titleKey, { context: undefined }),
+                  chapter: sagaProgress.currentChapter,
+                  total: activeSaga.chapters.length,
+                })}
+              </Text>
+            </View>
+          </Animated.View>
+        )}
 
         {/* Bandeau mode placement — discret, juste l'emoji + annuler */}
         {placingItem && (
@@ -364,6 +393,12 @@ export default function TreeScreen() {
                 placingItem={placingItem}
                 onSlotSelect={handleSlotSelect}
               />
+              {/* Élément visuel temporaire de la saga active */}
+              {activeSaga && (
+                <Animated.View entering={FadeIn.duration(500)} style={styles.sagaSceneElement}>
+                  <Text style={styles.sagaSceneEmoji}>{activeSaga.sceneEmoji}</Text>
+                </Animated.View>
+              )}
             </View>
 
           </TouchableOpacity>
@@ -690,6 +725,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingBottom: Spacing.md,
     alignItems: 'center',
+  },
+  sagaSceneElement: {
+    position: 'absolute',
+    bottom: Spacing.lg,
+    left: Spacing.xl,
+    opacity: 0.85,
+  },
+  sagaSceneEmoji: {
+    fontSize: 28,
   },
   groundTransition: {
     // Transition douce du sol vers le fond de page
