@@ -110,6 +110,7 @@ export default function MealsScreen() {
     scanAllCookFiles, moveCookToRecipes,
     profiles,
     activeProfile,
+    healthRecords,
     toggleFavorite, isFavorite, getFavorites,
     refresh, isLoading,
   } = useVault();
@@ -379,7 +380,7 @@ export default function MealsScreen() {
     if (!aiConfig?.apiKey) return;
     setSuggestingRecipes(true);
     try {
-      const resp = await suggestRecipesFromStock(aiConfig, stock, recipes, profiles);
+      const resp = await suggestRecipesFromStock(aiConfig, stock, recipes, profiles, meals, healthRecords);
       if (resp.error) {
         Alert.alert(t('meals.alert.aiError'), resp.error);
       } else {

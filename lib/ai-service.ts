@@ -661,6 +661,8 @@ export async function suggestRecipesFromStock(
   stock: StockItem[],
   recipes: AppRecipe[],
   profiles: Profile[],
+  meals?: MealItem[],
+  healthRecords?: HealthRecord[],
 ): Promise<AIResponse> {
   const available = stock
     .filter(s => s.quantite > 0)
@@ -668,7 +670,7 @@ export async function suggestRecipesFromStock(
     .join(', ');
 
   const recipeList = recipes
-    .slice(0, 50) // limiter pour pas dépasser le contexte
+    .slice(0, 50)
     .map(r => `- ${r.title} (${r.ingredients.map(i => i.name).join(', ')})`)
     .join('\n');
 
@@ -677,14 +679,26 @@ export async function suggestRecipesFromStock(
     .map(p => `${p.name} (${p.role})`)
     .join(', ');
 
-  const systemPrompt = `Tu es un assistant cuisine familial. La famille : ${family}.`;
+  // Repas récents (7 derniers jours) pour éviter les doublons
+  const recentMeals = (meals || [])
+    .filter(m => m.text.trim().length > 0)
+    .map(m => `${m.day} ${m.mealType}: ${m.text}`)
+    .join('\n');
 
-  const messages: AIMessage[] = [
-    {
-      role: 'user',
-      content: `Voici mon stock actuel :\n${available}\n\nVoici mes recettes disponibles :\n${recipeList}\n\nSuggère 2-3 recettes que je peux faire avec ce que j'ai en stock (ou presque). Pour chaque suggestion :\n- Nom de la recette\n- Ce que j'ai déjà\n- Ce qu'il manque éventuellement (1-2 ingrédients max)\n\nFormat court, une recette par paragraphe, emoji en début de ligne. Si aucune recette ne colle, suggère une recette simple faisable avec le stock.`,
-    },
-  ];
+  // Allergies de toute la famille
+  const allergies = (healthRecords || [])
+    .filter(h => h.allergies.length > 0)
+    .map(h => `${h.enfant}: ${h.allergies.join(', ')}`)
+    .join('; ');
+
+  let systemPrompt = `Tu es un assistant cuisine familial. La famille : ${family}.`;
+  if (allergies) systemPrompt += `\n⚠️ Allergies/restrictions : ${allergies}. Ne suggère JAMAIS de recettes contenant ces allergènes.`;
+
+  let userContent = `Voici mon stock actuel :\n${available}\n\nVoici mes recettes disponibles :\n${recipeList}`;
+  if (recentMeals) userContent += `\n\nRepas déjà planifiés cette semaine (évite les doublons) :\n${recentMeals}`;
+  userContent += `\n\nSuggère 2-3 recettes que je peux faire avec ce que j'ai en stock (ou presque). Pour chaque suggestion :\n- Nom de la recette\n- Ce que j'ai déjà\n- Ce qu'il manque éventuellement (1-2 ingrédients max)\n\nFormat court, une recette par paragraphe, emoji en début de ligne. Si aucune recette ne colle, suggère une recette simple faisable avec le stock.`;
+
+  const messages: AIMessage[] = [{ role: 'user', content: userContent }];
 
   return callClaude(config, systemPrompt, messages);
 }
