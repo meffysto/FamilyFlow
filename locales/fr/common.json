@@ -90,64 +90,46 @@
         "desc": "Recevez des rappels via Telegram"
       }
     },
-    "problems": {
-      "1": {
-        "title": "Des post-its partout",
-        "subtitle": "Le RDV chez le pédiatre sur un bout de papier. La liste de courses sur le frigo. Le planning dans un groupe WhatsApp. Rien n'est au même endroit.",
-        "caption": "On a tous vécu ça.",
-        "details": {
-          "1": "Le groupe WhatsApp famille qu'on ne retrouve plus",
-          "2": "Le RDV noté sur un bout de papier… perdu",
-          "3": "La liste de courses éparpillée entre 3 apps"
-        }
-      },
-      "2": {
-        "title": "La charge mentale",
-        "subtitle": "Penser aux vaccins, au renouvellement de la carte d'identité, au cadeau d'anniversaire de samedi, aux courses pour la semaine… Tout repose sur une seule tête.",
-        "caption": "Impossible de tout retenir.",
-        "details": {
-          "1": "Les vaccins à ne pas oublier",
-          "2": "Les anniversaires, cadeaux, invitations",
-          "3": "Les papiers à renouveler au bon moment"
-        }
-      },
-      "3": {
-        "title": "Qui fait quoi ?",
-        "subtitle": "Les tâches s'accumulent, personne ne sait qui devait faire quoi, et à la fin c'est toujours la même personne qui s'en charge.",
-        "caption": "Il faut que ça change.",
-        "details": {
-          "1": "Toujours les mêmes qui font le ménage",
-          "2": "« Je pensais que TU t'en occupais »",
-          "3": "L'impression de tout porter seul(e)"
-        }
+    "painPoints": {
+      "title": "C'est quoi votre casse-tête ?",
+      "subtitle": "Sélectionnez ce qui vous prend le plus de temps au quotidien",
+      "hint": "Sélection multiple — vos choix personnaliseront l'app",
+      "options": {
+        "meals": "Planifier les repas",
+        "chores": "Répartir le ménage",
+        "groceries": "Gérer les courses",
+        "health": "Suivi santé enfants",
+        "routines": "Routines des enfants",
+        "budget": "Budget familial"
       }
     },
-    "slides": {
-      "1": {
-        "title": "Votre quotidien, simplifié",
-        "subtitle": "Planifiez les repas, répartissez les tâches, gérez les courses",
-        "details": {
-          "1": "Planifiez vos repas pour la semaine",
-          "2": "Répartissez les tâches ménagères équitablement",
-          "3": "Gérez les courses et les stocks en un clin d'œil"
-        }
-      },
-      "2": {
-        "title": "Suivez la santé de vos enfants",
-        "subtitle": "Biberon, couches, sommeil, rendez-vous — tout est noté",
-        "details": {
-          "1": "Biberons, couches, sommeil — tout est tracé",
-          "2": "RDV médicaux avec rappels automatiques",
-          "3": "Historique de santé complet par enfant"
-        }
-      },
-      "3": {
-        "title": "Toute la famille participe",
-        "subtitle": "Chaque membre a son profil, les enfants gagnent des points",
-        "details": {
-          "1": "Chaque membre a son profil personnalisé",
-          "2": "Les enfants gagnent des XP et des récompenses",
-          "3": "Des défis familiaux pour motiver tout le monde"
+    "solution": {
+      "title": "Family Flow s'en occupe",
+      "subtitle": "Voici ce qu'on va mettre en place pour vous :",
+      "items": {
+        "meals": {
+          "title": "Planning repas automatique",
+          "desc": "7 jours de menus équilibrés, prêts à l'emploi"
+        },
+        "chores": {
+          "title": "Ménage réparti équitablement",
+          "desc": "Chaque jour, chacun sait ce qu'il a à faire"
+        },
+        "groceries": {
+          "title": "Liste de courses centralisée",
+          "desc": "Fini les 3 apps — tout au même endroit"
+        },
+        "health": {
+          "title": "Suivi santé complet",
+          "desc": "RDV, vaccins, rappels adaptés à l'âge"
+        },
+        "routines": {
+          "title": "Routines matin & soir",
+          "desc": "Adaptées à l'âge, les enfants deviennent autonomes"
+        },
+        "budget": {
+          "title": "Budget familial clair",
+          "desc": "Catégories de dépenses et plafonds mensuels"
         }
       }
     },
@@ -1937,6 +1919,10 @@
       "compatHint": "Les données sont stockées en fichiers .md standard, compatibles avec Obsidian.",
       "syncHint": "Sync multi-appareils : placez le vault dans un dossier Google Drive ou Dropbox syncé localement sur chaque téléphone.",
       "dataSectionTitle": "Données",
+      "replayBtn": "Refaire l'onboarding",
+      "replayTitle": "Refaire l'onboarding ?",
+      "replayMessage": "L'app va revenir à l'écran d'accueil pour refaire la configuration initiale. Vos données ne seront pas supprimées.",
+      "replayConfirm": "Refaire",
       "deleteWarning": "Supprime les préférences locales (clés API, PIN, réglages) et dissocie le vault. Vos fichiers Markdown ne sont pas affectés.",
       "deleteBtn": "Supprimer les données locales",
       "deleteTitle": "Supprimer les données",
