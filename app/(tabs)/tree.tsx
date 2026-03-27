@@ -571,46 +571,6 @@ export default function TreeScreen() {
           </ScrollView>
         </Animated.View>
 
-        {/* Tous les arbres de la famille (sauf le profil courant) */}
-        {profiles.length > 1 && (
-          <Animated.View entering={FadeInDown.delay(400).duration(400)}>
-            <Text style={[styles.familyTitle, { color: colors.text }]}>
-              {t('mascot.screen.familyGarden')}
-            </Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.familyScroll}
-            >
-              {profiles
-                .filter((p: Profile) => p.id !== profile.id)
-                .map((p: Profile) => {
-                  const pSpecies = p.treeSpecies || 'cerisier';
-                  const pLevel = calculateLevel(p.points ?? 0);
-                  const pStage = getTreeStageInfo(pLevel);
-                  const pSp = SPECIES_INFO[pSpecies];
-
-                  return (
-                    <TouchableOpacity
-                      key={p.id}
-                      style={[styles.familySlot, { backgroundColor: colors.card, borderColor: colors.borderLight }, Shadows.sm]}
-                      onPress={() => router.push({ pathname: '/(tabs)/tree' as any, params: { profileId: p.id } })}
-                      activeOpacity={0.7}
-                    >
-                      <TreeView species={pSpecies} level={pLevel} size={80} showGround={false} interactive={false} />
-                      <Text style={[styles.familyName, { color: colors.text }]}>
-                        {p.avatar} {p.name}
-                      </Text>
-                      <Text style={[styles.familyStage, { color: colors.textMuted }]}>
-                        {pSp.emoji} {t(pStage.labelKey)}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-            </ScrollView>
-          </Animated.View>
-        )}
-
         <View style={{ height: 100 }} />
       </ScrollView>
 
@@ -887,26 +847,6 @@ const styles = StyleSheet.create({
     fontSize: FontSize.subtitle,
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.lg,
-  },
-  familyScroll: {
-    gap: Spacing.lg,
-    paddingBottom: Spacing.xl,
-  },
-  familySlot: {
-    alignItems: 'center',
-    padding: Spacing.xl,
-    borderRadius: Radius.xl,
-    borderWidth: StyleSheet.hairlineWidth,
-    minWidth: 110,
-  },
-  familyName: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
-    marginTop: Spacing.sm,
-  },
-  familyStage: {
-    fontSize: FontSize.micro,
-    marginTop: Spacing.xxs,
   },
   stagesScroll: {
     gap: Spacing.md,
