@@ -1663,9 +1663,9 @@ export default function MealsScreen() {
                 {t('meals.categoryPicker.title', { item: categoryPickerItem?.text })}
               </Text>
 
-              {/* Grille de catégories */}
+              {/* Grille de catégories (statiques + custom existantes) */}
               <View style={styles.catGrid}>
-                {COURSE_CATEGORIES.map((cat) => {
+                {[...new Set([...COURSE_CATEGORIES, ...courseSections])].map((cat) => {
                   const isActive = categoryPickerItem?.section === cat;
                   return (
                     <TouchableOpacity
