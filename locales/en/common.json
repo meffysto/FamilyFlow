@@ -90,18 +90,74 @@
         "desc": "Get reminders via Telegram"
       }
     },
+    "problems": {
+      "1": {
+        "title": "Sticky notes everywhere",
+        "subtitle": "The pediatrician appointment on a scrap of paper. The grocery list on the fridge. The schedule in a WhatsApp group. Nothing is in the same place.",
+        "caption": "We've all been there.",
+        "details": {
+          "1": "The family WhatsApp group you can never find",
+          "2": "The appointment scribbled on paper… now lost",
+          "3": "The grocery list scattered across 3 apps"
+        }
+      },
+      "2": {
+        "title": "The mental load",
+        "subtitle": "Remembering vaccinations, renewing IDs, Saturday's birthday gift, this week's groceries… It all rests on one person's shoulders.",
+        "caption": "Impossible to remember it all.",
+        "details": {
+          "1": "Vaccinations you can't afford to forget",
+          "2": "Birthdays, gifts, invitations",
+          "3": "Paperwork to renew at the right time"
+        }
+      },
+      "3": {
+        "title": "Who does what?",
+        "subtitle": "Tasks pile up, nobody knows who was supposed to do what, and in the end it's always the same person handling everything.",
+        "caption": "Time for a change.",
+        "details": {
+          "1": "Always the same person doing the chores",
+          "2": "\"I thought YOU were handling it\"",
+          "3": "The feeling of carrying it all alone"
+        }
+      }
+    },
     "slides": {
       "1": {
         "title": "Your daily life, simplified",
-        "subtitle": "Plan meals, share chores, manage shopping"
+        "subtitle": "Plan meals, share chores, manage shopping",
+        "details": {
+          "1": "Plan your meals for the whole week",
+          "2": "Split household chores fairly",
+          "3": "Manage groceries and stock in a snap"
+        }
       },
       "2": {
         "title": "Track your children's health",
-        "subtitle": "Bottles, diapers, sleep, appointments — everything recorded"
+        "subtitle": "Bottles, diapers, sleep, appointments — everything recorded",
+        "details": {
+          "1": "Bottles, diapers, sleep — all tracked",
+          "2": "Medical appointments with automatic reminders",
+          "3": "Complete health history per child"
+        }
       },
       "3": {
         "title": "The whole family joins in",
-        "subtitle": "Each member has a profile, kids earn points"
+        "subtitle": "Each member has a profile, kids earn points",
+        "details": {
+          "1": "Each member gets a personalized profile",
+          "2": "Kids earn XP and rewards",
+          "3": "Family challenges to motivate everyone"
+        }
+      }
+    },
+    "mascot": {
+      "title": "A tree that grows with you",
+      "subtitle": "Every completed task helps your family tree grow. Unlock decorations, inhabitants, and experience interactive story adventures together.",
+      "features": {
+        "grow": "Watch it evolve from seed to legendary tree",
+        "sagas": "Interactive stories to follow as a family",
+        "rewards": "Earn leaves to customize your garden"
       }
     },
     "parents": {

@@ -2,14 +2,18 @@
  * setup.tsx — Onboarding wizard (multi-step)
  *
  * Step 1: Welcome
- * Step 2: Feature intro — "Votre quotidien, simplifié"
- * Step 3: Feature intro — "Suivez la santé de vos enfants"
- * Step 4: Feature intro — "Toute la famille participe"
- * Step 5: Parents (count + name + avatar)
- * Step 6: Children (count + name + birthdate + avatar)
- * Step 7: Vault path (VaultPicker)
- * Step 8: Template packs (optional)
- * Step 9: Recap + create vault
+ * Step 2: Problem — "Des post-its partout"
+ * Step 3: Problem — "La charge mentale"
+ * Step 4: Problem — "Qui fait quoi ?"
+ * Step 5: Feature intro — "Votre quotidien, simplifié"
+ * Step 6: Feature intro — "Suivez la santé de vos enfants"
+ * Step 7: Feature intro — "Toute la famille participe"
+ * Step 8: Feature — Mascotte arbre + sagas
+ * Step 9: Parents (count + name + avatar)
+ * Step 10: Children (count + name + birthdate + avatar)
+ * Step 11: Vault path (VaultPicker)
+ * Step 12: Template packs (optional)
+ * Step 13: Recap + create vault
  */
 
 import { useState, useCallback, useMemo } from 'react';
@@ -42,16 +46,36 @@ import { Shadows } from '../constants/shadows';
 
 const PARENT_AVATARS = ['👨', '👩', '👨‍💻', '👩‍💻', '🧔', '👱‍♀️', '🧑', '👤'];
 const CHILD_AVATARS = ['👶', '🧒', '👦', '👧', '🍼', '🐣', '🎒', '👼'];
-const TOTAL_STEPS = 9;
+const TOTAL_STEPS = 13;
 
-// Étapes 2-4 : écrans de présentation des features
-const FIRST_SETUP_STEP = 5; // Première étape de configuration (parents)
+// Étapes 2-4 : écrans problème, 5-7 : features, 8 : mascotte
+const FIRST_SETUP_STEP = 9; // Première étape de configuration (parents)
+
+const PROBLEM_SLIDES_EMOJIS = [
+  ['📝', '📌', '🗒️'],
+  ['🧠', '😰', '🤯'],
+  ['🤷', '😤', '♻️'],
+];
+
+const PROBLEM_DETAIL_ICONS = [
+  ['📱', '🗓️', '🛒'],
+  ['💉', '🎂', '📋'],
+  ['🔄', '🤷', '😩'],
+];
 
 const FEATURE_SLIDES_EMOJIS = [
   ['🍽️', '🧹', '🛒'],
   ['👶', '📅', '💊'],
   ['🎮', '🏆', '⭐'],
 ];
+
+const FEATURE_DETAIL_ICONS = [
+  ['🍽️', '🧹', '🛒'],
+  ['👶', '📅', '💊'],
+  ['🎮', '🏆', '⭐'],
+];
+
+const MASCOT_EMOJIS = ['🌱', '🌳', '✨'];
 
 interface ParentData {
   name: string;
@@ -159,17 +183,17 @@ export default function SetupScreen() {
 
   // --- Navigation ---
   const canGoNext = (): boolean => {
-    if (step === 5) return parents.every((p) => p.name.trim().length > 0);
-    if (step === 6) return childCount === 0 || children.every((c) => c.name.trim().length > 0 && isValidBirthdate(c.birthdate));
-    if (step === 7) return vaultPath.length > 0;
+    if (step === 9) return parents.every((p) => p.name.trim().length > 0);
+    if (step === 10) return childCount === 0 || children.every((c) => c.name.trim().length > 0 && isValidBirthdate(c.birthdate));
+    if (step === 11) return vaultPath.length > 0;
     return true;
   };
 
   /** Sauter les écrans d'intro pour aller directement à la config */
   const skipIntro = () => setStep(FIRST_SETUP_STEP);
 
-  /** Est-ce un écran d'intro feature (2, 3, 4) ? */
-  const isFeatureStep = step >= 2 && step <= 4;
+  /** Est-ce un écran d'intro (problèmes 2-4, features 5-7, mascotte 8) ? */
+  const isIntroStep = step >= 2 && step <= 8;
 
   const goNext = () => {
     if (step < TOTAL_STEPS && canGoNext()) setStep(step + 1);
@@ -216,7 +240,99 @@ export default function SetupScreen() {
   }, [vaultPath, parents, children, selectedPacks, setVaultPath, router, markTemplateInstalled]);
 
   // --- Render steps ---
-  /** Rendu d'un écran de présentation feature (étapes 2, 3, 4) */
+
+  /** Rendu d'un écran "problème" (étapes 2, 3, 4) */
+  const renderProblemSlide = (slideIndex: number) => {
+    const emojis = PROBLEM_SLIDES_EMOJIS[slideIndex];
+    const slideNum = slideIndex + 1;
+    return (
+      <View style={s.stepContent}>
+        {/* Bouton Passer en haut à droite */}
+        <View style={s.skipRow}>
+          <TouchableOpacity
+            style={s.skipIntroBtn}
+            onPress={skipIntro}
+            activeOpacity={0.6}
+          >
+            <Text style={[s.skipIntroText, { color: primary }]}>{t('setup.nav.skip')}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Hero emojis */}
+        <Animated.View
+          entering={FadeInDown.delay(100).duration(500).springify()}
+          style={s.featureHeroEmojis}
+        >
+          {emojis.map((emoji, i) => (
+            <Animated.Text
+              key={i}
+              entering={FadeInDown.delay(200 + i * 150).duration(400).springify()}
+              style={s.featureHeroEmoji}
+            >
+              {emoji}
+            </Animated.Text>
+          ))}
+        </Animated.View>
+
+        {/* Titre */}
+        <Animated.Text
+          entering={FadeInDown.delay(500).duration(400)}
+          style={[s.featureSlideTitle, { color: colors.text }]}
+        >
+          {t(`setup.problems.${slideNum}.title`)}
+        </Animated.Text>
+
+        {/* Sous-texte */}
+        <Animated.Text
+          entering={FadeInDown.delay(600).duration(400)}
+          style={[s.problemSlideSubtitle, { color: colors.textMuted }]}
+        >
+          {t(`setup.problems.${slideNum}.subtitle`)}
+        </Animated.Text>
+
+        {/* Caption empathique */}
+        <Animated.Text
+          entering={FadeInUp.delay(800).duration(400)}
+          style={[s.problemCaption, { color: primary }]}
+        >
+          {t(`setup.problems.${slideNum}.caption`)}
+        </Animated.Text>
+
+        {/* Mini detail list */}
+        <View style={s.slideDetails}>
+          {PROBLEM_DETAIL_ICONS[slideIndex].map((icon, i) => (
+            <Animated.View
+              key={i}
+              entering={FadeInUp.delay(900 + i * 100).duration(300)}
+              style={[s.slideDetailRow, { backgroundColor: colors.errorBg }]}
+            >
+              <Text style={s.slideDetailIcon}>{icon}</Text>
+              <Text style={[s.slideDetailText, { color: colors.text }]}>
+                {t(`setup.problems.${slideNum}.details.${i + 1}`)}
+              </Text>
+            </Animated.View>
+          ))}
+        </View>
+
+        {/* Dots de pagination */}
+        <View style={s.featureDots}>
+          {PROBLEM_SLIDES_EMOJIS.map((_, i) => (
+            <View
+              key={i}
+              style={[
+                s.featureDot,
+                i === slideIndex
+                  ? { backgroundColor: colors.error, width: 24 }
+                  : { backgroundColor: colors.border },
+              ]}
+            />
+          ))}
+        </View>
+      </View>
+    );
+  };
+
+  /** Rendu d'un écran de présentation feature (étapes 5, 6, 7) */
   const renderFeatureSlide = (slideIndex: number) => {
     const emojis = FEATURE_SLIDES_EMOJIS[slideIndex];
     const slideNum = slideIndex + 1;
@@ -265,6 +381,22 @@ export default function SetupScreen() {
           {t(`setup.slides.${slideNum}.subtitle`)}
         </Animated.Text>
 
+        {/* Mini detail list */}
+        <View style={s.slideDetails}>
+          {FEATURE_DETAIL_ICONS[slideIndex].map((icon, i) => (
+            <Animated.View
+              key={i}
+              entering={FadeInUp.delay(700 + i * 100).duration(300)}
+              style={[s.slideDetailRow, { backgroundColor: tint }]}
+            >
+              <Text style={s.slideDetailIcon}>{icon}</Text>
+              <Text style={[s.slideDetailText, { color: colors.text }]}>
+                {t(`setup.slides.${slideNum}.details.${i + 1}`)}
+              </Text>
+            </Animated.View>
+          ))}
+        </View>
+
         {/* Dots de pagination */}
         <View style={s.featureDots}>
           {FEATURE_SLIDES_EMOJIS.map((_, i) => (
@@ -277,6 +409,74 @@ export default function SetupScreen() {
                   : { backgroundColor: colors.border },
               ]}
             />
+          ))}
+        </View>
+      </View>
+    );
+  };
+
+  /** Rendu de l'écran mascotte/sagas (étape 8) */
+  const renderMascotSlide = () => {
+    return (
+      <View style={s.stepContent}>
+        {/* Bouton Passer */}
+        <View style={s.skipRow}>
+          <TouchableOpacity
+            style={s.skipIntroBtn}
+            onPress={skipIntro}
+            activeOpacity={0.6}
+          >
+            <Text style={[s.skipIntroText, { color: primary }]}>{t('setup.nav.skip')}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Hero emojis — graine → arbre → étoiles */}
+        <Animated.View
+          entering={FadeInDown.delay(100).duration(500).springify()}
+          style={s.featureHeroEmojis}
+        >
+          {MASCOT_EMOJIS.map((emoji, i) => (
+            <Animated.Text
+              key={i}
+              entering={FadeInDown.delay(200 + i * 200).duration(500).springify()}
+              style={s.featureHeroEmoji}
+            >
+              {emoji}
+            </Animated.Text>
+          ))}
+        </Animated.View>
+
+        {/* Titre */}
+        <Animated.Text
+          entering={FadeInDown.delay(700).duration(400)}
+          style={[s.featureSlideTitle, { color: colors.text }]}
+        >
+          {t('setup.mascot.title')}
+        </Animated.Text>
+
+        {/* Sous-texte */}
+        <Animated.Text
+          entering={FadeInDown.delay(800).duration(400)}
+          style={[s.featureSlideSubtitle, { color: colors.textMuted }]}
+        >
+          {t('setup.mascot.subtitle')}
+        </Animated.Text>
+
+        {/* Mini feature list */}
+        <View style={s.slideDetails}>
+          {(['grow', 'sagas', 'rewards'] as const).map((key, i) => (
+            <Animated.View
+              key={key}
+              entering={FadeInUp.delay(900 + i * 100).duration(300)}
+              style={[s.slideDetailRow, { backgroundColor: tint }]}
+            >
+              <Text style={s.slideDetailIcon}>
+                {key === 'grow' ? '🌿' : key === 'sagas' ? '📖' : '🍃'}
+              </Text>
+              <Text style={[s.slideDetailText, { color: colors.text }]}>
+                {t(`setup.mascot.features.${key}`)}
+              </Text>
+            </Animated.View>
           ))}
         </View>
       </View>
@@ -311,15 +511,27 @@ export default function SetupScreen() {
           </View>
         );
 
-      // Écrans de présentation des features
+      // Écrans problème (2-4)
       case 2:
-        return renderFeatureSlide(0);
+        return renderProblemSlide(0);
       case 3:
-        return renderFeatureSlide(1);
+        return renderProblemSlide(1);
       case 4:
+        return renderProblemSlide(2);
+
+      // Écrans de présentation des features (5-7)
+      case 5:
+        return renderFeatureSlide(0);
+      case 6:
+        return renderFeatureSlide(1);
+      case 7:
         return renderFeatureSlide(2);
 
-      case 5:
+      // Écran mascotte/sagas (8)
+      case 8:
+        return renderMascotSlide();
+
+      case 9:
         return (
           <View style={s.stepContent}>
             <Text style={ds.stepTitle}>👨‍👩‍👧‍👦 {t('setup.parents.title')}</Text>
@@ -367,7 +579,7 @@ export default function SetupScreen() {
           </View>
         );
 
-      case 6:
+      case 10:
         return (
           <View style={s.stepContent}>
             <Text style={ds.stepTitle}>👶 {t('setup.children.title')}</Text>
@@ -446,7 +658,7 @@ export default function SetupScreen() {
           </View>
         );
 
-      case 7:
+      case 11:
         return (
           <View style={s.stepContent}>
             <Text style={ds.stepTitle}>📁 {t('setup.vault.title')}</Text>
@@ -463,13 +675,13 @@ export default function SetupScreen() {
               onPathSelected={(path) => {
                 setVaultPathLocal(path);
                 // Auto-advance to templates step
-                setTimeout(() => setStep(8), 300);
+                setTimeout(() => setStep(12), 300);
               }}
             />
           </View>
         );
 
-      case 8: {
+      case 12: {
         const visiblePacks = TEMPLATE_PACKS.filter(
           (p) => !p.requiresChildren || childCount > 0
         );
@@ -515,7 +727,7 @@ export default function SetupScreen() {
         );
       }
 
-      case 9:
+      case 13:
         return (
           <View style={s.stepContent}>
             <Text style={ds.stepTitle}>✨ {t('setup.recap.title')}</Text>
@@ -623,14 +835,14 @@ export default function SetupScreen() {
             <View style={s.navSpacer} />
           )}
 
-          {step === 8 ? (
+          {step === 12 ? (
             // Template step: "Passer" + "Suivant"
             <View style={s.templateNav}>
               <TouchableOpacity
                 style={s.navSkip}
                 onPress={() => {
                   setSelectedPacks(new Set());
-                  setStep(9);
+                  setStep(13);
                 }}
               >
                 <Text style={ds.navSkipText}>{t('setup.nav.skip')}</Text>
@@ -975,6 +1187,39 @@ const s = StyleSheet.create({
     lineHeight: LineHeight.loose,
     paddingHorizontal: Spacing['2xl'],
     marginBottom: Spacing['5xl'],
+  },
+  problemSlideSubtitle: {
+    fontSize: FontSize.body,
+    textAlign: 'center',
+    lineHeight: LineHeight.loose,
+    paddingHorizontal: Spacing['2xl'],
+    marginBottom: Spacing.lg,
+  },
+  problemCaption: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginBottom: Spacing['3xl'],
+  },
+  slideDetails: {
+    gap: Spacing.lg,
+    paddingHorizontal: Spacing.md,
+  },
+  slideDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xl,
+    borderRadius: Radius.lg,
+    padding: Spacing.xl + 2,
+  },
+  slideDetailIcon: {
+    fontSize: FontSize.title,
+  },
+  slideDetailText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.medium,
+    flex: 1,
   },
   featureDots: {
     flexDirection: 'row',

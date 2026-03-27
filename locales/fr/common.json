@@ -90,18 +90,74 @@
         "desc": "Recevez des rappels via Telegram"
       }
     },
+    "problems": {
+      "1": {
+        "title": "Des post-its partout",
+        "subtitle": "Le RDV chez le pédiatre sur un bout de papier. La liste de courses sur le frigo. Le planning dans un groupe WhatsApp. Rien n'est au même endroit.",
+        "caption": "On a tous vécu ça.",
+        "details": {
+          "1": "Le groupe WhatsApp famille qu'on ne retrouve plus",
+          "2": "Le RDV noté sur un bout de papier… perdu",
+          "3": "La liste de courses éparpillée entre 3 apps"
+        }
+      },
+      "2": {
+        "title": "La charge mentale",
+        "subtitle": "Penser aux vaccins, au renouvellement de la carte d'identité, au cadeau d'anniversaire de samedi, aux courses pour la semaine… Tout repose sur une seule tête.",
+        "caption": "Impossible de tout retenir.",
+        "details": {
+          "1": "Les vaccins à ne pas oublier",
+          "2": "Les anniversaires, cadeaux, invitations",
+          "3": "Les papiers à renouveler au bon moment"
+        }
+      },
+      "3": {
+        "title": "Qui fait quoi ?",
+        "subtitle": "Les tâches s'accumulent, personne ne sait qui devait faire quoi, et à la fin c'est toujours la même personne qui s'en charge.",
+        "caption": "Il faut que ça change.",
+        "details": {
+          "1": "Toujours les mêmes qui font le ménage",
+          "2": "« Je pensais que TU t'en occupais »",
+          "3": "L'impression de tout porter seul(e)"
+        }
+      }
+    },
     "slides": {
       "1": {
         "title": "Votre quotidien, simplifié",
-        "subtitle": "Planifiez les repas, répartissez les tâches, gérez les courses"
+        "subtitle": "Planifiez les repas, répartissez les tâches, gérez les courses",
+        "details": {
+          "1": "Planifiez vos repas pour la semaine",
+          "2": "Répartissez les tâches ménagères équitablement",
+          "3": "Gérez les courses et les stocks en un clin d'œil"
+        }
       },
       "2": {
         "title": "Suivez la santé de vos enfants",
-        "subtitle": "Biberon, couches, sommeil, rendez-vous — tout est noté"
+        "subtitle": "Biberon, couches, sommeil, rendez-vous — tout est noté",
+        "details": {
+          "1": "Biberons, couches, sommeil — tout est tracé",
+          "2": "RDV médicaux avec rappels automatiques",
+          "3": "Historique de santé complet par enfant"
+        }
       },
       "3": {
         "title": "Toute la famille participe",
-        "subtitle": "Chaque membre a son profil, les enfants gagnent des points"
+        "subtitle": "Chaque membre a son profil, les enfants gagnent des points",
+        "details": {
+          "1": "Chaque membre a son profil personnalisé",
+          "2": "Les enfants gagnent des XP et des récompenses",
+          "3": "Des défis familiaux pour motiver tout le monde"
+        }
+      }
+    },
+    "mascot": {
+      "title": "Un arbre qui grandit avec vous",
+      "subtitle": "Chaque tâche accomplie fait pousser votre arbre familial. Débloquez des décorations, des habitants, et vivez des aventures narratives ensemble.",
+      "features": {
+        "grow": "Regardez-le évoluer de graine à arbre légendaire",
+        "sagas": "Des histoires interactives à suivre en famille",
+        "rewards": "Gagnez des feuilles pour personnaliser votre jardin"
       }
     },
     "parents": {
