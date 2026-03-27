@@ -2641,7 +2641,12 @@
       }
     },
     "profilePicker": {
-      "title": "Switch profile"
+      "title": "👋 Who are you?",
+      "subtitle": "Choose your profile to get started",
+      "adult": "Adult",
+      "child": "Child",
+      "pinTitle": "🔒 Parent PIN",
+      "pinSubtitle": "Enter the PIN to access the adult profile"
     },
     "recap": {
       "weekTo": "📤 Weekly recap → {{name}}",
