@@ -770,14 +770,13 @@ export default function SetupScreen() {
             {/* Checklist animée avec loading séquentiel */}
             <View style={s.recapChecklist}>
               {checkItems.map((item, i) => {
-                if (recapProgress < i) return null; // pas encore visible
+                const isVisible = recapProgress >= i;
                 const isDone = recapProgress > i;
                 const isActive = recapProgress === i;
                 return (
-                  <Animated.View
+                  <View
                     key={i}
-                    entering={FadeInUp.delay(100).duration(400).springify()}
-                    style={s.recapCheckItem}
+                    style={[s.recapCheckItem, { opacity: isVisible ? 1 : 0 }]}
                   >
                     <View style={[s.recapCheckIcon, { borderWidth: 2 }, isDone ? { backgroundColor: tint, borderColor: tint } : isActive ? { borderColor: primary, backgroundColor: 'transparent' } : { borderColor: 'transparent' }]}>
                       {isDone ? (
@@ -796,7 +795,7 @@ export default function SetupScreen() {
                         <Text style={[s.recapCheckSub, { color: colors.textFaint }]}>{t('setup.recap.loading')}</Text>
                       ) : null}
                     </View>
-                  </Animated.View>
+                  </View>
                 );
               })}
             </View>
