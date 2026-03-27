@@ -272,12 +272,18 @@ export default function SetupScreen() {
           {t('setup.painPoints.title')}
         </Animated.Text>
 
-        {/* Sous-texte */}
+        {/* Sous-texte + hint */}
         <Animated.Text
           entering={FadeInDown.delay(350).duration(400)}
-          style={[s.featureSlideSubtitle, { color: colors.textMuted }]}
+          style={[s.featureSlideSubtitle, { color: colors.textMuted, marginBottom: 0 }]}
         >
           {t('setup.painPoints.subtitle')}
+        </Animated.Text>
+        <Animated.Text
+          entering={FadeInDown.delay(450).duration(300)}
+          style={[s.painPointHint, { color: colors.textFaint }]}
+        >
+          {t('setup.painPoints.hint')}
         </Animated.Text>
 
         {/* Grille de pain points */}
@@ -287,7 +293,7 @@ export default function SetupScreen() {
             return (
               <Animated.View
                 key={point.id}
-                entering={FadeInUp.delay(450 + i * 80).duration(300).springify()}
+                entering={FadeInUp.delay(500 + i * 80).duration(300).springify()}
               >
                 <TouchableOpacity
                   style={[
@@ -306,14 +312,6 @@ export default function SetupScreen() {
             );
           })}
         </View>
-
-        {/* Hint */}
-        <Animated.Text
-          entering={FadeInUp.delay(900).duration(300)}
-          style={[s.painPointHint, { color: colors.textFaint }]}
-        >
-          {t('setup.painPoints.hint')}
-        </Animated.Text>
       </View>
     );
   };
@@ -1082,14 +1080,14 @@ function useDynamicStyles(colors: ReturnType<typeof useThemeColors>['colors'], p
     painPointChip: {
       flexDirection: 'row' as const,
       alignItems: 'center' as const,
-      gap: Spacing.lg,
+      gap: Spacing.md,
       backgroundColor: colors.card,
       borderRadius: Radius['lg+'],
-      paddingVertical: Spacing.xl,
-      paddingHorizontal: Spacing['2xl'],
+      paddingVertical: Spacing.lg,
+      paddingHorizontal: Spacing.xl,
       borderWidth: 2,
       borderColor: colors.border,
-      minWidth: 140,
+      minWidth: 130,
       ...Shadows.sm,
     },
     painPointLabel: {
@@ -1128,11 +1126,11 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: Spacing.lg,
+    gap: Spacing.md,
     paddingHorizontal: Spacing.md,
   },
   painPointEmoji: {
-    fontSize: 32,
+    fontSize: 28,
   },
   painPointHint: {
     fontSize: FontSize.caption,
