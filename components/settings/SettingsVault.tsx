@@ -18,6 +18,22 @@ export function SettingsVault({ vaultPath, onChangeVault }: SettingsVaultProps) 
   const { t } = useTranslation();
   const { colors } = useThemeColors();
 
+  const handleReplayOnboarding = useCallback(() => {
+    Alert.alert(
+      t('settings.vault.replayTitle'),
+      t('settings.vault.replayMessage'),
+      [
+        { text: t('settings.vault.cancel'), style: 'cancel' },
+        {
+          text: t('settings.vault.replayConfirm'),
+          onPress: async () => {
+            await SecureStore.deleteItemAsync(VAULT_PATH_KEY);
+          },
+        },
+      ],
+    );
+  }, [t]);
+
   const handleDeleteData = useCallback(() => {
     Alert.alert(
       t('settings.vault.deleteTitle'),
@@ -70,6 +86,7 @@ export function SettingsVault({ vaultPath, onChangeVault }: SettingsVaultProps) 
 
       <Text style={[styles.sectionTitle, { color: colors.textMuted, marginTop: Spacing['3xl'] }]}>{t('settings.vault.dataSectionTitle')}</Text>
       <View style={[styles.card, Shadows.sm, { backgroundColor: colors.card }]}>
+        <Button label={t('settings.vault.replayBtn')} onPress={handleReplayOnboarding} variant="secondary" size="sm" fullWidth />
         <View style={[styles.hint, { backgroundColor: colors.warningBg }]}>
           <Text style={[styles.hintText, { color: colors.warningText }]}>
             {t('settings.vault.deleteWarning')}

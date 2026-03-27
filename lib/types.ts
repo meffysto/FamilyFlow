@@ -88,6 +88,8 @@ export interface Profile {
   multiplier: number;       // point multiplier (default 1)
   multiplierRemaining: number; // tasks remaining with multiplier
   pityCounter: number;       // boxes opened without épique+ (pity system)
+  sagaTitle?: string;         // titre temporaire affiché après complétion saga (7 jours)
+  completedSagas?: string[];  // IDs des sagas terminées
 }
 
 /** Détecte un profil bébé : ageCategory === 'bebe' OU birthdate < 2 ans (fallback si ageCategory absent) */

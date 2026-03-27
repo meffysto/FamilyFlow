@@ -72,36 +72,60 @@
   },
   "setup": {
     "tagline": "Votre famille, organisée ensemble",
-    "features": {
-      "tasks": {
-        "title": "Tâches familiales",
-        "desc": "Organisez et complétez vos tâches ensemble"
-      },
-      "loot": {
-        "title": "Récompenses",
-        "desc": "Les enfants gagnent des récompenses en accomplissant leurs tâches"
-      },
-      "files": {
-        "title": "Vos données, chez vous",
-        "desc": "Tout est stocké sur votre téléphone dans des fichiers simples et lisibles"
-      },
-      "telegram": {
-        "title": "Notifications",
-        "desc": "Recevez des rappels via Telegram"
+    "welcome": {
+      "hook": "La charge mentale familiale, c'est épuisant.",
+      "promise": "On est là pour que ça change."
+    },
+    "painPoints": {
+      "title": "C'est quoi votre casse-tête ?",
+      "subtitle": "Sélectionnez ce qui vous prend le plus de temps au quotidien",
+      "hint": "Sélection multiple — vos choix personnaliseront l'app",
+      "options": {
+        "meals": "Planifier les repas",
+        "chores": "Répartir le ménage",
+        "groceries": "Gérer les courses",
+        "health": "Suivi santé enfants",
+        "routines": "Routines des enfants",
+        "budget": "Budget familial"
       }
     },
-    "slides": {
-      "1": {
-        "title": "Votre quotidien, simplifié",
-        "subtitle": "Planifiez les repas, répartissez les tâches, gérez les courses"
-      },
-      "2": {
-        "title": "Suivez la santé de vos enfants",
-        "subtitle": "Biberon, couches, sommeil, rendez-vous — tout est noté"
-      },
-      "3": {
-        "title": "Toute la famille participe",
-        "subtitle": "Chaque membre a son profil, les enfants gagnent des points"
+    "solution": {
+      "title": "Family Flow s'en occupe",
+      "subtitle": "Voici ce qu'on va mettre en place pour vous :",
+      "items": {
+        "meals": {
+          "title": "Planning repas automatique",
+          "desc": "7 jours de menus équilibrés, prêts à l'emploi"
+        },
+        "chores": {
+          "title": "Ménage réparti équitablement",
+          "desc": "Chaque jour, chacun sait ce qu'il a à faire"
+        },
+        "groceries": {
+          "title": "Liste de courses centralisée",
+          "desc": "Fini les 3 apps — tout au même endroit"
+        },
+        "health": {
+          "title": "Suivi santé complet",
+          "desc": "RDV, vaccins, rappels adaptés à l'âge"
+        },
+        "routines": {
+          "title": "Routines matin & soir",
+          "desc": "Adaptées à l'âge, les enfants deviennent autonomes"
+        },
+        "budget": {
+          "title": "Budget familial clair",
+          "desc": "Catégories de dépenses et plafonds mensuels"
+        }
+      }
+    },
+    "mascot": {
+      "title": "Un arbre qui grandit avec vous",
+      "subtitle": "Chaque tâche accomplie fait pousser votre arbre familial. Débloquez des décorations, des habitants, et vivez des aventures narratives ensemble.",
+      "features": {
+        "grow": "Regardez-le évoluer de graine à arbre légendaire",
+        "sagas": "Des histoires interactives à suivre en famille",
+        "rewards": "Gagnez des feuilles pour personnaliser votre jardin"
       }
     },
     "parents": {
@@ -156,6 +180,14 @@
       "budget-familial": {
         "name": "Budget familial",
         "description": "Catégories de dépenses et plafonds mensuels"
+      },
+      "anniversaires": {
+        "name": "Anniversaires",
+        "description": "Pré-remplit les dates d'anniversaire de la famille"
+      },
+      "vie-de-famille": {
+        "name": "Vie de famille",
+        "description": "Exemples pour gratitude, humeurs, mots d'enfants et souhaits"
       }
     },
     "templateContent": {
@@ -261,17 +293,33 @@
         "rangerCuisine": "Ranger la cuisine après les repas",
         "machine": "Lancer/étendre une machine",
         "rangementRapide": "10 minutes de rangement rapide",
-        "menageHeader": "Ménage",
+        "enfantsHeader": "Enfants",
+        "steriliserBiberons": "Stériliser les biberons",
+        "lessivetBebe": "Lessive bébé (linge délicat)",
+        "rangerJouets": "Ranger les jouets avant le soir",
+        "nettoyerJouets": "Nettoyer les jouets et surfaces de jeu",
+        "preparerSacs": "Préparer les sacs d'école",
+        "trierCahiers": "Trier les cahiers et papiers de l'école",
+        "menageHeader": "Ménage hebdomadaire",
         "aspirer": "Aspirer toute la maison",
         "sallesDeBain": "Nettoyer les salles de bain",
         "draps": "Changer les draps",
         "serpilliere": "Serpillière sols durs",
         "courses": "Faire les courses",
+        "poubelles": "Sortir les poubelles / tri sélectif",
         "mensuel": "Mensuel",
         "frigo": "Nettoyer le réfrigérateur",
         "poussiere": "Dépoussiérer les meubles hauts",
         "vitres": "Laver les vitres",
-        "stocksMenagers": "Vérifier les stocks ménagers"
+        "stocksMenagers": "Vérifier les stocks ménagers",
+        "nettoyerFour": "Nettoyer le four et la hotte",
+        "saisonnier": "Saisonnier",
+        "filtreVMC": "Nettoyer les filtres VMC / climatisation",
+        "retournerMatelas": "Retourner les matelas",
+        "nettoyerGouttières": "Nettoyer les gouttières",
+        "detartrerAppareils": "Détartrer bouilloire, cafetière, lave-linge",
+        "purgerRadiateurs": "Purger les radiateurs",
+        "verifierDetecteurs": "Vérifier les détecteurs de fumée"
       },
       "medical": {
         "questionsHeader": "Questions à poser",
@@ -301,6 +349,26 @@
           "dentiste": "Contrôle semestriel"
         }
       },
+      "vieDeFamille": {
+        "gratitude": {
+          "hint": "Ceci est un exemple. Remplacez-le par vos propres gratitudes !",
+          "example": "Reconnaissant pour ce moment en famille ce soir."
+        },
+        "moods": {
+          "hint": "Ceci est un exemple. Ajoutez vos propres humeurs au fil des jours !",
+          "example": "Bonne journée, bien reposé"
+        },
+        "quotes": {
+          "hint": "Ceci est un exemple. Notez les perles de vos enfants ici !",
+          "example": "Pourquoi la lune elle nous suit en voiture ?",
+          "context": "En voiture le soir"
+        },
+        "wishlist": {
+          "hint": "Ceci est un exemple. Ajoutez vos idées cadeaux pour chaque membre !",
+          "exampleParent": "Un bon livre | 20€ | Noël",
+          "exampleChild": "Un vélo | 150€ | Anniversaire"
+        }
+      },
       "budget": {
         "configTitle": "Configuration budget",
         "plafonds": "Plafonds mensuels",
@@ -319,10 +387,13 @@
     "recap": {
       "title": "Récapitulatif",
       "subtitle": "Voici votre famille :",
-      "parents": "Parents",
+      "parents": "Famille",
       "children": "Enfants",
-      "vault": "Dossier",
+      "vault": "Emplacement",
       "models": "Modèles",
+      "loading": "Préparation en cours…",
+      "readyTitle": "Votre famille est prête",
+      "readySub": "Tout est en place. Découvrez votre espace familial.",
       "filesTitle": "Ce qui sera créé :",
       "filesDesc": "📋 Tâches récurrentes par enfant\n🧹 Ménage hebdomadaire\n🛒 Liste de courses\n📖 Dossiers journaux\n👨‍👩‍👧 Profils famille + récompenses",
       "modelCount_one": "\n📦 {{count}} modèle de contenu",
@@ -1837,6 +1908,10 @@
       "compatHint": "Les données sont stockées en fichiers .md standard, compatibles avec Obsidian.",
       "syncHint": "Sync multi-appareils : placez le vault dans un dossier Google Drive ou Dropbox syncé localement sur chaque téléphone.",
       "dataSectionTitle": "Données",
+      "replayBtn": "Refaire l'onboarding",
+      "replayTitle": "Refaire l'onboarding ?",
+      "replayMessage": "L'app va revenir à l'écran d'accueil pour refaire la configuration initiale. Vos données ne seront pas supprimées.",
+      "replayConfirm": "Refaire",
       "deleteWarning": "Supprime les préférences locales (clés API, PIN, réglages) et dissocie le vault. Vos fichiers Markdown ne sont pas affectés.",
       "deleteBtn": "Supprimer les données locales",
       "deleteTitle": "Supprimer les données",
@@ -2566,7 +2641,12 @@
       }
     },
     "profilePicker": {
-      "title": "Changer de profil"
+      "title": "👋 Qui es-tu ?",
+      "subtitle": "Choisis ton profil pour commencer",
+      "adult": "Adulte",
+      "child": "Enfant",
+      "pinTitle": "🔒 PIN parent",
+      "pinSubtitle": "Entre le PIN pour accéder au profil adulte"
     },
     "recap": {
       "weekTo": "📤 Recap semaine → {{name}}",
@@ -3251,7 +3331,11 @@
       "portail": "Portail magique",
       "portail_desc": "Un portail dimensionnel qui scintille au pied de l'arbre. Où mène-t-il ? Mystère…",
       "cristal": "Cristal céleste",
-      "cristal_desc": "Un cristal pur et lumineux au sommet de l'arbre. Il capte la lumière des étoiles et illumine tout le jardin."
+      "cristal_desc": "Un cristal pur et lumineux au sommet de l'arbre. Il capte la lumière des étoiles et illumine tout le jardin.",
+      "lanterneArgent": "Lanterne d'argent",
+      "lanterneArgent_desc": "Une lanterne forgée par un voyageur mystérieux. Sa lumière argentée ne s'éteint jamais.",
+      "masqueOmbre": "Masque d'ombre",
+      "masqueOmbre_desc": "Un masque du Carnaval des Ombres. Il scintille entre lumière et obscurité."
     },
     "hab": {
       "oiseau": "Oiseau chanteur",
@@ -3273,7 +3357,11 @@
       "phoenix": "Phénix immortel",
       "phoenix_desc": "Un oiseau de feu éternel qui renaît de ses cendres. Sa chaleur protège l'arbre même en hiver.",
       "licorne": "Licorne céleste",
-      "licorne_desc": "Une licorne lumineuse au pelage d'étoiles. Sa corne brille d'une lumière qui guérit et inspire."
+      "licorne_desc": "Une licorne lumineuse au pelage d'étoiles. Sa corne brille d'une lumière qui guérit et inspire.",
+      "espritEau": "Esprit de l'eau",
+      "espritEau_desc": "Un esprit aquatique né d'une source cachée. Il fait danser des gouttelettes autour de l'arbre.",
+      "ancienGardien": "Gardien ancien",
+      "ancienGardien_desc": "Un gardien millénaire éveillé par une graine ancestrale. Il veille silencieusement sur le jardin."
     },
     "shop": {
       "title": "Boutique de l'arbre",
@@ -3449,6 +3537,283 @@
         "choiceB": "La garder",
         "resultA": "La lettre dit : « Celui qui prend soin de son arbre prend soin du monde. »",
         "resultB": "Tu gardes le mystère intact. Peut-être un jour tu l'ouvriras…"
+      }
+    },
+    "saga": {
+      "progress": "Chapitre {{current}}/{{total}}",
+      "cliffhanger": "La suite demain…",
+      "cliffhanger_enfant": "La suite demain… ✨",
+      "complete": "Saga terminée !",
+      "complete_enfant": "SAGA TERMINÉE !! 🎉",
+      "rewardTitle": "Récompense exclusive",
+      "rewardTitle_enfant": "RÉCOMPENSE EXCLUSIVE !!",
+      "placeReward": "Placer ma récompense",
+      "placeReward_enfant": "Placer ma récompense ! 🌳",
+      "teaser": "Prochaine saga dans {{days}}j",
+      "teaser_enfant": "Prochaine aventure dans {{days}}j !",
+      "teaserReady": "Nouvelle saga disponible !",
+      "teaserReady_enfant": "NOUVELLE AVENTURE !! 🎉",
+      "banner": "📖 {{title}} — Chapitre {{chapter}}/{{total}}",
+      "sagaOnly": "Saga uniquement",
+      "sagaOnly_enfant": "Récompense de saga !",
+      "traitLabel": {
+        "courage": "Courage",
+        "sagesse": "Sagesse",
+        "générosité": "Générosité",
+        "malice": "Malice",
+        "curiosité": "Curiosité"
+      },
+
+      "voyageur_argent": {
+        "title": "Le Voyageur d'Argent",
+        "title_enfant": "Le Voyageur Mystère !!",
+        "desc": "Un voyageur encapuchonné s'approche de ton arbre…",
+        "desc_enfant": "Un voyageur trop mystérieux arrive près de ton arbre !!",
+        "ch1": {
+          "narrative": "Un voyageur vêtu d'une cape argentée s'arrête au pied de ton arbre. Il semble épuisé par un long voyage et pose son sac avec un soupir.",
+          "narrative_enfant": "Un monsieur avec une cape argentée s'assoit au pied de ton arbre. Il a l'air super fatigué !",
+          "choiceA": "L'inviter à se reposer",
+          "choiceB": "Lui demander d'où il vient",
+          "cliffhanger": "Le voyageur te regarde avec un sourire mystérieux… « Merci. On se revoit demain. »",
+          "cliffhanger_enfant": "Le voyageur te sourit… « Merci ! On se revoit demain, promis ! »"
+        },
+        "ch2": {
+          "narrative": "Le voyageur est encore là ce matin. Il sort un objet brillant de sa sacoche et te le montre.",
+          "narrative_enfant": "Le voyageur est revenu ! Il sort un truc qui brille de son sac !",
+          "narrative_generosity": "Le voyageur t'a préparé un thé chaud pour te remercier de ton hospitalité. Il sort ensuite un objet brillant de sa sacoche.",
+          "narrative_curiosity": "Le voyageur est impressionné par ta curiosité. Il sort un objet brillant de sa sacoche en disant : « Tu mérites de voir ceci. »",
+          "choiceA": "Garder le secret",
+          "choiceB": "Partager avec les voisins",
+          "cliffhanger": "L'objet pulse d'une lueur douce. Le voyageur murmure : « Demain, je te montrerai à quoi il sert… »",
+          "cliffhanger_enfant": "L'objet brille de plus en plus ! « Demain, tu verras ce qu'il fait… »"
+        },
+        "ch3": {
+          "narrative": "Le voyageur te révèle que l'objet est une clé ancienne. Elle ouvre un passage secret dans la forêt, mais le chemin est gardé.",
+          "narrative_enfant": "C'est une CLÉ MAGIQUE ! Elle ouvre un passage secret dans la forêt ! Mais y'a un gardien…",
+          "narrative_sagesse": "Grâce à ta sagesse, le voyageur te confie un second indice : le gardien du passage peut être raisonné.",
+          "narrative_courage": "Ton courage impressionne le voyageur. Il te dit que le gardien respecte ceux qui n'ont pas peur.",
+          "choiceA": "Affronter le gardien",
+          "choiceB": "Négocier avec le gardien",
+          "choiceC": "Offrir un cadeau au gardien",
+          "cliffhanger": "Le gardien vous observe… La décision finale approche.",
+          "cliffhanger_enfant": "Le gardien vous regarde… Qu'est-ce qui va se passer demain ?!"
+        },
+        "ch4": {
+          "narrative": "Le passage s'ouvre. Le voyageur retire sa capuche et révèle son vrai visage : c'est un ancien gardien de la forêt, venu tester ton cœur.",
+          "narrative_enfant": "Le passage s'ouvre ! Et le voyageur enlève sa capuche — c'est un gardien magique de la forêt ! Il voulait voir si tu avais bon cœur !",
+          "narrative_courage": "Le gardien reconnaît ton courage. « Tu n'as jamais reculé. La forêt a besoin de protecteurs comme toi. »",
+          "narrative_sagesse": "Le gardien admire ta sagesse. « Tu as choisi la voie de la raison. La forêt est entre de bonnes mains. »",
+          "narrative_generosity": "Le gardien est ému par ta générosité. « Tu as donné sans compter. La forêt te rendra au centuple. »",
+          "choiceA": "L'accompagner dans la forêt",
+          "choiceB": "Protéger le passage",
+          "cliffhanger": "Le voyageur sourit une dernière fois.",
+          "cliffhanger_enfant": "Le voyageur te fait un GROS sourire !"
+        },
+        "finale": {
+          "generosity": "Le voyageur te remet sa lanterne d'argent. « Ta générosité a illuminé mon chemin. Que cette lanterne illumine le tien. »",
+          "generosity_enfant": "Le voyageur te donne sa SUPER lanterne ! « T'as été trop gentil, cette lanterne est pour toi ! »",
+          "sagesse": "Le voyageur te confie sa lanterne d'argent. « Ta sagesse dépasse ton âge. Cette lumière te guidera toujours. »",
+          "sagesse_enfant": "Le voyageur te donne sa lanterne ! « T'es trop malin, elle est pour toi ! »",
+          "courage": "Le voyageur te tend sa lanterne d'argent. « Ton courage force le respect. Que cette flamme ne s'éteigne jamais. »",
+          "courage_enfant": "Le voyageur te donne sa lanterne ! « T'as été super courageux, bravo !! »",
+          "curiosity": "Le voyageur te laisse sa lanterne d'argent. « Ta curiosité est un trésor. Cette lanterne éclairera tes découvertes. »",
+          "curiosity_enfant": "Le voyageur te donne sa lanterne ! « T'es trop curieux, j'adore ! Elle est pour toi ! »"
+        },
+        "title_generosity": "Le Généreux",
+        "title_generosity_enfant": "Le Super Généreux !",
+        "title_sagesse": "Le Sage",
+        "title_sagesse_enfant": "Le Super Sage !",
+        "title_courage": "Le Courageux",
+        "title_courage_enfant": "Le Super Courageux !",
+        "title_curiosity": "L'Explorateur",
+        "title_curiosity_enfant": "Le Super Explorateur !"
+      },
+
+      "source_cachee": {
+        "title": "La Source Cachée",
+        "title_enfant": "La Source Secrète !!",
+        "desc": "Les racines de ton arbre ont découvert quelque chose sous la terre…",
+        "desc_enfant": "Les racines de ton arbre ont trouvé un TRUC sous la terre !!",
+        "ch1": {
+          "narrative": "En creusant près des racines, tu entends un gargouillis. Il y a de l'eau qui coule quelque part en dessous !",
+          "narrative_enfant": "Tu entends un bruit bizarre sous les racines… Y'a de l'eau là-dessous ! TROP COOL !",
+          "choiceA": "Creuser pour trouver",
+          "choiceB": "Écouter et observer",
+          "cliffhanger": "L'eau semble chanter doucement sous tes pieds… Demain, tu sauras.",
+          "cliffhanger_enfant": "L'eau fait des bruits rigolos sous tes pieds… Demain tu sauras ce que c'est !"
+        },
+        "ch2": {
+          "narrative": "Tu as découvert une source cristalline aux pouvoirs étranges. Les plantes autour poussent deux fois plus vite !",
+          "narrative_enfant": "T'as trouvé une source MAGIQUE ! Les plantes autour poussent SUPER vite !!",
+          "narrative_curiosity": "Ta curiosité a payé ! La source révèle des reflets arc-en-ciel quand on la regarde attentivement.",
+          "narrative_sagesse": "Grâce à ton observation patiente, tu remarques que la source pulse au rythme des saisons.",
+          "choiceA": "Partager l'eau avec le jardin",
+          "choiceB": "Protéger la source en secret",
+          "choiceC": "Étudier ses propriétés",
+          "cliffhanger": "La source brille d'une lueur bleutée au crépuscule… elle cache encore des secrets.",
+          "cliffhanger_enfant": "La source brille en bleu le soir ! Elle a encore des secrets !!"
+        },
+        "ch3": {
+          "narrative": "Un petit être lumineux émerge de la source. C'est un esprit de l'eau, gardien de cette source depuis des siècles.",
+          "narrative_enfant": "Un petit bonhomme en eau sort de la source !! C'est un ESPRIT DE L'EAU !!",
+          "narrative_generosity": "L'esprit de l'eau te remercie d'avoir partagé son eau. Il te fait confiance.",
+          "narrative_curiosity": "L'esprit de l'eau est impressionné par tes découvertes. Il veut te montrer son monde.",
+          "choiceA": "L'accueillir près de l'arbre",
+          "choiceB": "Le protéger dans la source",
+          "cliffhanger": "L'esprit de l'eau danse joyeusement.",
+          "cliffhanger_enfant": "L'esprit de l'eau danse partout, c'est trop beau !"
+        },
+        "finale": {
+          "generosity": "L'esprit de l'eau décide de rester près de ton arbre pour toujours. « Tu as partagé l'eau de la vie. Je partagerai ma magie avec toi. »",
+          "generosity_enfant": "L'esprit de l'eau veut rester avec toi ! « T'as partagé l'eau, je partage ma magie ! »",
+          "curiosity": "L'esprit de l'eau est fasciné par ta soif de savoir. « Un explorateur comme toi mérite un compagnon. Je reste ! »",
+          "curiosity_enfant": "L'esprit de l'eau t'adore ! « T'es trop curieux, je reste avec toi ! »",
+          "sagesse": "L'esprit de l'eau admire ta patience. « Tu as compris le rythme de l'eau. Nous serons amis. »",
+          "sagesse_enfant": "L'esprit de l'eau dit : « T'es trop patient, je t'aime bien ! Je reste ! »"
+        },
+        "title_generosity": "Le Protecteur des Sources",
+        "title_generosity_enfant": "L'Ami de l'Eau !",
+        "title_curiosity": "Le Chercheur d'Eau",
+        "title_curiosity_enfant": "Le Chercheur d'Eau !",
+        "title_sagesse": "Le Gardien des Eaux",
+        "title_sagesse_enfant": "Le Gardien de l'Eau !"
+      },
+
+      "carnaval_ombres": {
+        "title": "Le Carnaval des Ombres",
+        "title_enfant": "Le Carnaval des Ombres !!",
+        "desc": "Quand la nuit tombe, des silhouettes dansent autour de ton arbre…",
+        "desc_enfant": "La nuit, des ombres DANSENT autour de ton arbre !! Trop mystérieux !",
+        "ch1": {
+          "narrative": "À minuit, des créatures d'ombre apparaissent autour de ton arbre. Elles installent des lanternes et de la musique résonne. C'est un carnaval !",
+          "narrative_enfant": "À minuit, des créatures d'ombre arrivent ! Elles mettent des lanternes et de la musique ! C'est un CARNAVAL !!",
+          "choiceA": "Rejoindre la fête",
+          "choiceB": "Observer de loin",
+          "cliffhanger": "La reine des ombres t'a remarqué. Elle s'approche lentement…",
+          "cliffhanger_enfant": "La reine des ombres t'a vu ! Elle vient vers toi…"
+        },
+        "ch2": {
+          "narrative": "La reine des ombres te propose un défi : participer à trois épreuves du carnaval pour gagner un prix légendaire.",
+          "narrative_enfant": "La reine des ombres te dit : « Tu veux jouer à mes 3 épreuves ? Y'a un CADEAU LÉGENDAIRE à gagner ! »",
+          "narrative_courage": "La reine des ombres te salue avec respect. « Un cœur courageux ! Mes épreuves seront dignes de toi. »",
+          "narrative_sagesse": "La reine des ombres t'observe avec intérêt. « Un esprit vif ! Mes épreuves seront subtiles. »",
+          "choiceA": "Porter un masque d'ombre",
+          "choiceB": "Résoudre une énigme",
+          "choiceC": "Danser avec les ombres",
+          "cliffhanger": "La première épreuve est passée. Deux encore… Le carnaval bat son plein.",
+          "cliffhanger_enfant": "Première épreuve RÉUSSIE !! Encore deux… Le carnaval continue !!"
+        },
+        "ch3": {
+          "narrative": "La deuxième épreuve te mène au cœur du carnaval. Les ombres tourbillonnent et la musique devient intense.",
+          "narrative_enfant": "La deuxième épreuve ! Les ombres tourbillonnent et la musique est TROP FORTE !!",
+          "narrative_malice": "Les ombres apprécient ta ruse. Elles te montrent des raccourcis secrets dans le carnaval.",
+          "narrative_courage": "Les ombres admirent ton audace. La foule s'écarte pour te laisser passer.",
+          "choiceA": "Traverser la danse des flammes",
+          "choiceB": "Chanter avec les ombres",
+          "cliffhanger": "La dernière épreuve sera la plus difficile. La reine prépare quelque chose…",
+          "cliffhanger_enfant": "La dernière épreuve arrive !! La reine prépare un GROS truc…"
+        },
+        "ch4": {
+          "narrative": "L'épreuve finale : la reine des ombres te présente un masque. « Celui qui porte ce masque voit la vérité. Es-tu prêt ? »",
+          "narrative_enfant": "L'épreuve finale !! La reine te montre un masque : « Celui qui le met voit la VÉRITÉ ! T'es prêt ? »",
+          "narrative_courage": "La reine te tend le masque avec admiration. « Tu n'as peur de rien. Montre-moi que tu es digne de la vérité. »",
+          "narrative_sagesse": "La reine te présente le masque avec respect. « Ta sagesse te prépare à voir ce que d'autres ne peuvent pas. »",
+          "narrative_malice": "La reine rit doucement. « Tu es malin comme mes ombres. Ce masque est fait pour toi. »",
+          "choiceA": "Mettre le masque au soleil levant",
+          "choiceB": "Mettre le masque au clair de lune",
+          "cliffhanger": "Le masque révèle un monde invisible…",
+          "cliffhanger_enfant": "Le masque montre un MONDE INVISIBLE !!"
+        },
+        "finale": {
+          "courage": "Le masque d'ombre te choisit. La reine déclare : « Tu as le courage de regarder la vérité en face. Ce masque est désormais tien. »",
+          "courage_enfant": "Le masque te choisit !! La reine dit : « T'es TROP courageux, le masque est à toi ! »",
+          "sagesse": "Le masque d'ombre reconnaît ta sagesse. La reine sourit : « Tu comprends l'équilibre entre lumière et ombre. Garde-le précieusement. »",
+          "sagesse_enfant": "Le masque reconnaît que t'es super sage ! La reine : « Tu comprends tout, il est à toi ! »",
+          "malice": "Le masque d'ombre vibre avec ta malice. La reine éclate de rire : « Un digne héritier du carnaval ! Ce masque t'appartient. »",
+          "malice_enfant": "Le masque adore ta malice ! La reine rit : « T'es un vrai champion du carnaval ! Il est à toi ! »"
+        },
+        "title_courage": "Le Brave du Carnaval",
+        "title_courage_enfant": "Le Super Brave !",
+        "title_sagesse": "L'Éclairé des Ombres",
+        "title_sagesse_enfant": "Le Sage des Ombres !",
+        "title_malice": "Le Roi du Carnaval",
+        "title_malice_enfant": "Le Roi du Carnaval !"
+      },
+
+      "graine_anciens": {
+        "title": "La Graine des Anciens",
+        "title_enfant": "La Graine Magique !!",
+        "desc": "Une graine millénaire a été découverte sous les racines de ton arbre…",
+        "desc_enfant": "Une GRAINE SUPER ANCIENNE a été trouvée sous les racines !!",
+        "ch1": {
+          "narrative": "En labourant la terre autour de ton arbre, tu découvres une graine extraordinaire. Elle est dorée et vibre doucement, comme un cœur qui bat.",
+          "narrative_enfant": "Tu trouves une graine DORÉE sous la terre ! Elle vibre comme un petit cœur ! TROP BIZARRE !",
+          "choiceA": "La planter avec soin",
+          "choiceB": "L'examiner de près",
+          "cliffhanger": "La graine pulse d'une lumière chaude dans ta main… Quelque chose va se passer.",
+          "cliffhanger_enfant": "La graine brille dans ta main ! Il va se passer un TRUC !!"
+        },
+        "ch2": {
+          "narrative": "La graine a commencé à germer durant la nuit. Une petite pousse dorée émerge, grandissant à vue d'œil !",
+          "narrative_enfant": "La graine a GERMÉ cette nuit !! Une pousse DORÉE pousse trop vite !!",
+          "narrative_sagesse": "Ta patience a été récompensée. La pousse est vigoureuse et rayonne d'une lumière apaisante.",
+          "narrative_curiosity": "Tes observations ont révélé que la pousse réagit aux sons. Elle danse quand tu lui parles !",
+          "choiceA": "L'arroser avec attention",
+          "choiceB": "Chercher dans les livres anciens",
+          "cliffhanger": "La pousse grandit et des runes lumineuses apparaissent sur ses feuilles…",
+          "cliffhanger_enfant": "La pousse grandit et des DESSINS BRILLANTS apparaissent sur les feuilles !!"
+        },
+        "ch3": {
+          "narrative": "Les runes sur les feuilles racontent une histoire ancienne. Cette graine est la dernière d'un arbre mythique qui protégeait autrefois toute la forêt.",
+          "narrative_enfant": "Les dessins sur les feuilles racontent une histoire ! Cette graine vient d'un ARBRE LÉGENDAIRE qui protégeait toute la forêt !",
+          "narrative_generosity": "La plante semble répondre à ta générosité. Ses racines s'entrelacent avec celles de ton arbre, le renforçant.",
+          "narrative_sagesse": "Grâce à tes recherches, tu comprends que la plante a besoin d'un lien émotionnel pour s'épanouir pleinement.",
+          "choiceA": "Veiller sur elle la nuit",
+          "choiceB": "La laisser au soleil",
+          "choiceC": "Lui chanter une berceuse",
+          "cliffhanger": "La plante commence à briller d'un éclat doré intense. Elle se transforme…",
+          "cliffhanger_enfant": "La plante brille de plus en plus fort !! Elle se TRANSFORME !!"
+        },
+        "ch4": {
+          "narrative": "La plante prend une forme humanoïde. Un visage ancien et bienveillant apparaît dans le feuillage. C'est le Gardien Ancien, l'esprit de l'arbre mythique.",
+          "narrative_enfant": "La plante devient une PERSONNE !! Un visage apparaît dans les feuilles ! C'est le Gardien Ancien, l'esprit du vieil arbre légendaire !!",
+          "narrative_courage": "Le Gardien ouvre les yeux et te dit : « Ton courage a hâté mon éveil. Tu es digne. »",
+          "narrative_sagesse": "Le Gardien s'éveille lentement et murmure : « Ta sagesse m'a nourri. Tu es prêt pour la vérité. »",
+          "narrative_curiosity": "Le Gardien te regarde avec curiosité : « Tu me rappelles ma jeunesse. Toujours à chercher, jamais à reculer. »",
+          "choiceA": "Lui offrir un foyer",
+          "choiceB": "Lui demander ses secrets",
+          "cliffhanger": "Le Gardien Ancien observe ton arbre avec une expression indéchiffrable…",
+          "cliffhanger_enfant": "Le Gardien regarde ton arbre avec des yeux TROP bizarres…"
+        },
+        "ch5": {
+          "narrative": "Le Gardien Ancien pose la main sur ton arbre. Les racines des deux arbres fusionnent. Il te propose un pacte : veiller ensemble sur le jardin pour l'éternité.",
+          "narrative_enfant": "Le Gardien touche ton arbre ! Les racines se MÉLANGENT ! Il veut devenir ton ami pour TOUJOURS et protéger le jardin avec toi !",
+          "narrative_generosity": "Le Gardien est ému par tout ce que tu as donné. « Les racines de la générosité sont les plus profondes. »",
+          "narrative_curiosity": "Le Gardien rit doucement. « Ta curiosité a éveillé des souvenirs que je croyais perdus. »",
+          "narrative_sagesse": "Le Gardien hoche la tête. « Ta sagesse dépasse les âges. Ensemble, nous serons invincibles. »",
+          "choiceA": "Accepter le pacte",
+          "choiceB": "Lui rendre sa liberté",
+          "cliffhanger": "Le Gardien sourit pour la première fois depuis des millénaires.",
+          "cliffhanger_enfant": "Le Gardien sourit ! C'est la première fois depuis SUPER longtemps !"
+        },
+        "finale": {
+          "sagesse": "Le Gardien Ancien s'installe au pied de ton arbre. « Ta sagesse a réveillé ce qui dormait. Je serai ton guide et ton protecteur, comme autrefois. »",
+          "sagesse_enfant": "Le Gardien s'installe chez toi ! « T'es trop sage, je reste pour te protéger ! »",
+          "generosity": "Le Gardien Ancien s'enracine près de ton arbre avec un sourire radieux. « Ta générosité a fait refleurir un monde ancien. Je veille sur toi désormais. »",
+          "generosity_enfant": "Le Gardien s'installe ! « T'es trop gentil, je reste pour TOUJOURS ! »",
+          "curiosity": "Le Gardien Ancien s'éveille pleinement. « Ta curiosité m'a rappelé pourquoi j'aimais ce monde. Explorons-le ensemble. »",
+          "curiosity_enfant": "Le Gardien se réveille ! « T'es trop curieux, j'adore ! On va explorer ensemble ! »",
+          "courage": "Le Gardien Ancien se dresse fièrement. « Ton courage a rallumé ma flamme. Je protégerai cet arbre comme tu l'as fait. »",
+          "courage_enfant": "Le Gardien se lève ! « T'es trop courageux ! On va protéger le jardin ensemble ! »"
+        },
+        "title_sagesse": "Le Sage des Anciens",
+        "title_sagesse_enfant": "L'Ami du Gardien !",
+        "title_generosity": "Le Cœur Généreux",
+        "title_generosity_enfant": "Le Super Généreux !",
+        "title_curiosity": "L'Éveilleur",
+        "title_curiosity_enfant": "Le Réveilleur !",
+        "title_courage": "Le Protecteur",
+        "title_courage_enfant": "Le Super Protecteur !"
       }
     }
   }

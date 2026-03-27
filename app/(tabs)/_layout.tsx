@@ -291,8 +291,8 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
         <View style={pickerStyles.overlay}>
           <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
           <GlassView style={pickerStyles.card} intensity={50} borderRadius={24}>
-            <Text style={[pickerStyles.title, { color: colors.text }]}>👋 Qui es-tu ?</Text>
-            <Text style={[pickerStyles.subtitle, { color: colors.textMuted }]}>Choisis ton profil pour commencer</Text>
+            <Text style={[pickerStyles.title, { color: colors.text }]}>{t('profilePicker.title')}</Text>
+            <Text style={[pickerStyles.subtitle, { color: colors.textMuted }]}>{t('profilePicker.subtitle')}</Text>
 
             <View style={pickerStyles.grid}>
               {profiles.map((p) => (
@@ -305,7 +305,7 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
                   <Text style={pickerStyles.avatar}>{p.avatar}</Text>
                   <Text style={[pickerStyles.name, { color: colors.text }]}>{p.name}</Text>
                   <Text style={[pickerStyles.role, { color: colors.textFaint }]}>
-                    {p.role === 'adulte' ? '👤 Adulte' : '👶 Enfant'}
+                    {p.role === 'adulte' ? `👤 ${t('profilePicker.adult')}` : `👶 ${t('profilePicker.child')}`}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -319,9 +319,9 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
         <View style={pickerStyles.overlay}>
           <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
           <GlassView style={pickerStyles.card} intensity={50} borderRadius={24}>
-            <Text style={[pickerStyles.title, { color: colors.text }]}>🔒 PIN parent</Text>
+            <Text style={[pickerStyles.title, { color: colors.text }]}>{t('profilePicker.pinTitle')}</Text>
             <Text style={[pickerStyles.subtitle, { color: colors.textMuted }]}>
-              Entre le PIN pour accéder au profil adulte
+              {t('profilePicker.pinSubtitle')}
             </Text>
 
             <TextInput

@@ -2,17 +2,17 @@
  * setup.tsx — Onboarding wizard (multi-step)
  *
  * Step 1: Welcome
- * Step 2: Feature intro — "Votre quotidien, simplifié"
- * Step 3: Feature intro — "Suivez la santé de vos enfants"
- * Step 4: Feature intro — "Toute la famille participe"
+ * Step 2: Pain points picker (interactif — "C'est quoi votre casse-tête ?")
+ * Step 3: Réponse personnalisée (solutions ciblées)
+ * Step 4: Mascotte arbre + sagas
  * Step 5: Parents (count + name + avatar)
  * Step 6: Children (count + name + birthdate + avatar)
  * Step 7: Vault path (VaultPicker)
- * Step 8: Template packs (optional)
+ * Step 8: Template packs (pré-cochés selon pain points)
  * Step 9: Recap + create vault
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import {
   View,
@@ -39,19 +39,41 @@ import { useTranslation } from 'react-i18next';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../constants/typography';
 import { Shadows } from '../constants/shadows';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const PARENT_AVATARS = ['👨', '👩', '👨‍💻', '👩‍💻', '🧔', '👱‍♀️', '🧑', '👤'];
 const CHILD_AVATARS = ['👶', '🧒', '👦', '👧', '🍼', '🐣', '🎒', '👼'];
 const TOTAL_STEPS = 9;
 
-// Étapes 2-4 : écrans de présentation des features
-const FIRST_SETUP_STEP = 5; // Première étape de configuration (parents)
+// Première étape de configuration (parents)
+const FIRST_SETUP_STEP = 5;
 
-const FEATURE_SLIDES_EMOJIS = [
-  ['🍽️', '🧹', '🛒'],
-  ['👶', '📅', '💊'],
-  ['🎮', '🏆', '⭐'],
-];
+const MASCOT_EMOJIS = ['🌱', '🌳', '✨'];
+
+/** Gradient positions par étape — le gradient "descend" au fil de l'onboarding */
+const GRADIENT_CONFIG: Record<number, { start: { x: number; y: number }; end: { x: number; y: number }; opacity: number }> = {
+  1: { start: { x: 0.5, y: 0 }, end: { x: 0.5, y: 0.65 }, opacity: 1 },      // Welcome: fort en haut
+  2: { start: { x: 0.3, y: 0 }, end: { x: 0.7, y: 0.55 }, opacity: 0.8 },    // Pain points: décale
+  3: { start: { x: 0.5, y: 0.1 }, end: { x: 0.5, y: 0.6 }, opacity: 0.6 },   // Solution: plus subtil
+  4: { start: { x: 0.5, y: 0.15 }, end: { x: 0.5, y: 0.55 }, opacity: 0.5 }, // Mascotte
+  5: { start: { x: 0.5, y: 0.2 }, end: { x: 0.5, y: 0.5 }, opacity: 0.25 },  // Parents
+  6: { start: { x: 0.5, y: 0.2 }, end: { x: 0.5, y: 0.5 }, opacity: 0.25 },  // Enfants
+  7: { start: { x: 0.5, y: 0.2 }, end: { x: 0.5, y: 0.5 }, opacity: 0.2 },   // Vault
+  8: { start: { x: 0.5, y: 0.2 }, end: { x: 0.5, y: 0.5 }, opacity: 0.2 },   // Templates
+  9: { start: { x: 0.5, y: 0.3 }, end: { x: 0.5, y: 0.7 }, opacity: 0.6 },   // Recap: revient
+};
+
+/** Pain points interactifs — mapping vers template pack IDs */
+const PAIN_POINTS = [
+  { id: 'meals', emoji: '🍽️', packId: 'repas-semaine' },
+  { id: 'chores', emoji: '🧹', packId: 'menage-organise' },
+  { id: 'groceries', emoji: '🛒', packId: 'courses-essentielles' },
+  { id: 'health', emoji: '💊', packId: 'suivi-medical' },
+  { id: 'routines', emoji: '🎒', packId: 'routines-enfants' },
+  { id: 'budget', emoji: '💰', packId: 'budget-familial' },
+] as const;
+
+type PainPointId = typeof PAIN_POINTS[number]['id'];
 
 interface ParentData {
   name: string;
@@ -74,8 +96,35 @@ export default function SetupScreen() {
 
   const [step, setStep] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
+  const [recapProgress, setRecapProgress] = useState(-1); // -1 = pas encore commencé
 
-  // Step 2 — Parents
+  // Animation séquentielle du recap quand on arrive à l'étape 9
+  useEffect(() => {
+    if (step !== 9) { setRecapProgress(-1); return; }
+    const totalItems = 3; // famille, emplacement, modèles
+    let i = 0;
+    setRecapProgress(0);
+    const interval = setInterval(() => {
+      i++;
+      if (i > totalItems) { clearInterval(interval); return; }
+      setRecapProgress(i);
+    }, 800);
+    return () => clearInterval(interval);
+  }, [step]);
+
+  // Step 2 — Pain points
+  const [painPoints, setPainPoints] = useState<Set<PainPointId>>(new Set());
+
+  const togglePainPoint = (id: PainPointId) => {
+    setPainPoints((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  // Step 5 — Parents
   const [parentCount, setParentCount] = useState(2);
   const [parents, setParents] = useState<ParentData[]>([
     { name: '', avatar: '👨' },
@@ -159,6 +208,7 @@ export default function SetupScreen() {
 
   // --- Navigation ---
   const canGoNext = (): boolean => {
+    if (step === 2) return painPoints.size > 0;
     if (step === 5) return parents.every((p) => p.name.trim().length > 0);
     if (step === 6) return childCount === 0 || children.every((c) => c.name.trim().length > 0 && isValidBirthdate(c.birthdate));
     if (step === 7) return vaultPath.length > 0;
@@ -168,11 +218,22 @@ export default function SetupScreen() {
   /** Sauter les écrans d'intro pour aller directement à la config */
   const skipIntro = () => setStep(FIRST_SETUP_STEP);
 
-  /** Est-ce un écran d'intro feature (2, 3, 4) ? */
-  const isFeatureStep = step >= 2 && step <= 4;
+  /** Est-ce un écran d'intro (pain points 2, solution 3, mascotte 4) ? */
+  const isIntroStep = step >= 2 && step <= 4;
 
   const goNext = () => {
-    if (step < TOTAL_STEPS && canGoNext()) setStep(step + 1);
+    if (step < TOTAL_STEPS && canGoNext()) {
+      // Quand on quitte le pain points picker, pré-sélectionner les templates
+      if (step === 2) {
+        const packs = new Set(
+          PAIN_POINTS
+            .filter((p) => painPoints.has(p.id))
+            .map((p) => p.packId)
+        );
+        setSelectedPacks(packs);
+      }
+      setStep(step + 1);
+    }
   };
   const goBack = () => {
     if (step > 1) setStep(step - 1);
@@ -216,13 +277,12 @@ export default function SetupScreen() {
   }, [vaultPath, parents, children, selectedPacks, setVaultPath, router, markTemplateInstalled]);
 
   // --- Render steps ---
-  /** Rendu d'un écran de présentation feature (étapes 2, 3, 4) */
-  const renderFeatureSlide = (slideIndex: number) => {
-    const emojis = FEATURE_SLIDES_EMOJIS[slideIndex];
-    const slideNum = slideIndex + 1;
+
+  /** Étape 2 — Choix interactif des pain points */
+  const renderPainPointPicker = () => {
     return (
       <View style={s.stepContent}>
-        {/* Bouton Passer en haut à droite */}
+        {/* Bouton Passer */}
         <View style={s.skipRow}>
           <TouchableOpacity
             style={s.skipIntroBtn}
@@ -233,15 +293,144 @@ export default function SetupScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Hero emojis */}
+        {/* Titre */}
+        <Animated.Text
+          entering={FadeInDown.delay(200).duration(400)}
+          style={[s.featureSlideTitle, { color: colors.text }]}
+        >
+          {t('setup.painPoints.title')}
+        </Animated.Text>
+
+        {/* Sous-texte + hint */}
+        <Animated.Text
+          entering={FadeInDown.delay(350).duration(400)}
+          style={[s.featureSlideSubtitle, { color: colors.textMuted, marginBottom: 0 }]}
+        >
+          {t('setup.painPoints.subtitle')}
+        </Animated.Text>
+        <Animated.Text
+          entering={FadeInDown.delay(450).duration(300)}
+          style={[s.painPointHint, { color: colors.textFaint }]}
+        >
+          {t('setup.painPoints.hint')}
+        </Animated.Text>
+
+        {/* Grille de pain points */}
+        <View style={s.painPointGrid}>
+          {PAIN_POINTS.map((point, i) => {
+            const isSelected = painPoints.has(point.id);
+            return (
+              <Animated.View
+                key={point.id}
+                entering={FadeInUp.delay(500 + i * 80).duration(300).springify()}
+              >
+                <TouchableOpacity
+                  style={[
+                    ds.painPointChip,
+                    isSelected && { backgroundColor: tint, borderColor: primary },
+                  ]}
+                  onPress={() => togglePainPoint(point.id)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={s.painPointEmoji}>{point.emoji}</Text>
+                  <Text style={[ds.painPointLabel, isSelected && { color: primary }]}>
+                    {t(`setup.painPoints.options.${point.id}`)}
+                  </Text>
+                </TouchableOpacity>
+              </Animated.View>
+            );
+          })}
+        </View>
+      </View>
+    );
+  };
+
+  /** Étape 3 — Réponse personnalisée aux pain points choisis */
+  const renderPersonalizedSolution = () => {
+    const selectedPoints = PAIN_POINTS.filter((p) => painPoints.has(p.id));
+    return (
+      <View style={s.stepContent}>
+        {/* Bouton Passer */}
+        <View style={s.skipRow}>
+          <TouchableOpacity
+            style={s.skipIntroBtn}
+            onPress={skipIntro}
+            activeOpacity={0.6}
+          >
+            <Text style={[s.skipIntroText, { color: primary }]}>{t('setup.nav.skip')}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Titre */}
+        <Animated.Text
+          entering={FadeInDown.delay(200).duration(400)}
+          style={[s.featureSlideTitle, { color: colors.text }]}
+        >
+          {t('setup.solution.title')}
+        </Animated.Text>
+
+        {/* Sous-texte */}
+        <Animated.Text
+          entering={FadeInDown.delay(350).duration(400)}
+          style={[s.featureSlideSubtitle, { color: colors.textMuted }]}
+        >
+          {t('setup.solution.subtitle')}
+        </Animated.Text>
+
+        {/* Solutions ciblées */}
+        <View style={s.slideDetails}>
+          {selectedPoints.map((point, i) => (
+            <Animated.View
+              key={point.id}
+              entering={FadeInUp.delay(450 + i * 120).duration(300).springify()}
+              style={[s.slideDetailRow, { backgroundColor: tint }]}
+            >
+              <Text style={s.slideDetailIcon}>{point.emoji}</Text>
+              <View style={s.solutionTextCol}>
+                <Text style={[s.slideDetailText, { color: colors.text }]}>
+                  {t(`setup.solution.items.${point.id}.title`)}
+                </Text>
+                <Text style={[s.solutionDesc, { color: colors.textMuted }]}>
+                  {t(`setup.solution.items.${point.id}.desc`)}
+                </Text>
+              </View>
+              <Animated.Text
+                entering={FadeInDown.delay(600 + i * 120).duration(200)}
+                style={[s.solutionCheck, { color: primary }]}
+              >
+                ✓
+              </Animated.Text>
+            </Animated.View>
+          ))}
+        </View>
+      </View>
+    );
+  };
+
+  /** Rendu de l'écran mascotte/sagas (étape 4) */
+  const renderMascotSlide = () => {
+    return (
+      <View style={s.stepContent}>
+        {/* Bouton Passer */}
+        <View style={s.skipRow}>
+          <TouchableOpacity
+            style={s.skipIntroBtn}
+            onPress={skipIntro}
+            activeOpacity={0.6}
+          >
+            <Text style={[s.skipIntroText, { color: primary }]}>{t('setup.nav.skip')}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Hero emojis — graine → arbre → étoiles */}
         <Animated.View
           entering={FadeInDown.delay(100).duration(500).springify()}
           style={s.featureHeroEmojis}
         >
-          {emojis.map((emoji, i) => (
+          {MASCOT_EMOJIS.map((emoji, i) => (
             <Animated.Text
               key={i}
-              entering={FadeInDown.delay(200 + i * 120).duration(400).springify()}
+              entering={FadeInDown.delay(200 + i * 200).duration(500).springify()}
               style={s.featureHeroEmoji}
             >
               {emoji}
@@ -251,32 +440,35 @@ export default function SetupScreen() {
 
         {/* Titre */}
         <Animated.Text
-          entering={FadeInDown.delay(500).duration(400)}
+          entering={FadeInDown.delay(700).duration(400)}
           style={[s.featureSlideTitle, { color: colors.text }]}
         >
-          {t(`setup.slides.${slideNum}.title`)}
+          {t('setup.mascot.title')}
         </Animated.Text>
 
         {/* Sous-texte */}
         <Animated.Text
-          entering={FadeInDown.delay(600).duration(400)}
+          entering={FadeInDown.delay(800).duration(400)}
           style={[s.featureSlideSubtitle, { color: colors.textMuted }]}
         >
-          {t(`setup.slides.${slideNum}.subtitle`)}
+          {t('setup.mascot.subtitle')}
         </Animated.Text>
 
-        {/* Dots de pagination */}
-        <View style={s.featureDots}>
-          {FEATURE_SLIDES_EMOJIS.map((_, i) => (
-            <View
-              key={i}
-              style={[
-                s.featureDot,
-                i === slideIndex
-                  ? { backgroundColor: primary, width: 24 }
-                  : { backgroundColor: colors.border },
-              ]}
-            />
+        {/* Mini feature list */}
+        <View style={s.slideDetails}>
+          {(['grow', 'sagas', 'rewards'] as const).map((key, i) => (
+            <Animated.View
+              key={key}
+              entering={FadeInUp.delay(900 + i * 100).duration(300)}
+              style={[s.slideDetailRow, { backgroundColor: tint }]}
+            >
+              <Text style={s.slideDetailIcon}>
+                {key === 'grow' ? '🌿' : key === 'sagas' ? '📖' : '🍃'}
+              </Text>
+              <Text style={[s.slideDetailText, { color: colors.text }]}>
+                {t(`setup.mascot.features.${key}`)}
+              </Text>
+            </Animated.View>
           ))}
         </View>
       </View>
@@ -285,39 +477,82 @@ export default function SetupScreen() {
 
   const renderStep = () => {
     switch (step) {
-      case 1:
+      case 1: {
+        const ORB_ITEMS = [
+          { emoji: '🍽️', label: t('setup.painPoints.options.meals') },
+          { emoji: '🧹', label: t('setup.painPoints.options.chores') },
+          { emoji: '🛒', label: t('setup.painPoints.options.groceries') },
+          { emoji: '💊', label: t('setup.painPoints.options.health') },
+          { emoji: '🎒', label: t('setup.painPoints.options.routines') },
+          { emoji: '💰', label: t('setup.painPoints.options.budget') },
+        ];
+        // 3 colonnes × 2 rangées
         return (
-          <View style={s.stepContent}>
-            <Text style={s.logo}>🏠</Text>
-            <Text style={[s.appName, { color: primary }]}>Family Flow</Text>
-            <Text style={ds.tagline}>{t('setup.tagline')}</Text>
+          <View style={s.welcomeContent}>
+            {/* Header — branding en haut centré */}
+            <Animated.View
+              entering={FadeInDown.delay(200).duration(500)}
+              style={s.welcomeHeader}
+            >
+              <Text style={[s.welcomeAppName, { color: primary }]}>Family Flow</Text>
+              <Text style={[s.welcomeTagline, { color: colors.textMuted }]}>{t('setup.tagline')}</Text>
+            </Animated.View>
 
-            <View style={s.features}>
-              {[
-                ['📋', t('setup.features.tasks.title'), t('setup.features.tasks.desc')],
-                ['🎁', t('setup.features.loot.title'), t('setup.features.loot.desc')],
-                ['🔒', t('setup.features.files.title'), t('setup.features.files.desc')],
-                ['📱', t('setup.features.telegram.title'), t('setup.features.telegram.desc')],
-              ].map(([icon, title, desc]) => (
-                <View key={title} style={ds.feature}>
-                  <Text style={s.featureIcon}>{icon}</Text>
-                  <View style={s.featureText}>
-                    <Text style={ds.featureTitle}>{title}</Text>
-                    <Text style={ds.featureDesc}>{desc}</Text>
-                  </View>
-                </View>
-              ))}
+            {/* Zone centrale — grille emojis + labels */}
+            <View style={s.welcomeTopZone}>
+              <Animated.Text
+                entering={FadeInDown.delay(400).duration(500).springify()}
+                style={s.orbSeedInline}
+              >
+                🌱
+              </Animated.Text>
+              <View style={s.welcomeGrid}>
+                {ORB_ITEMS.map((item, i) => (
+                  <Animated.View
+                    key={i}
+                    entering={FadeInUp.delay(500 + i * 80).duration(400).springify()}
+                    style={s.welcomeGridItem}
+                  >
+                    <Text style={s.welcomeGridEmoji}>{item.emoji}</Text>
+                    <Text style={[s.welcomeGridLabel, { color: primary }]}>{item.label}</Text>
+                  </Animated.View>
+                ))}
+              </View>
             </View>
+
+            {/* Zone basse — hook */}
+            <Animated.View
+              entering={FadeInUp.delay(1000).duration(500)}
+              style={s.welcomeBottomZone}
+            >
+              <Animated.Text
+                entering={FadeInUp.delay(1100).duration(500)}
+                style={[s.welcomeHook, { color: colors.text }]}
+              >
+                {t('setup.welcome.hook')}
+              </Animated.Text>
+              <Animated.Text
+                entering={FadeInUp.delay(1400).duration(500)}
+                style={[s.welcomePromise, { color: primary }]}
+              >
+                {t('setup.welcome.promise')}
+              </Animated.Text>
+            </Animated.View>
           </View>
         );
+      }
 
-      // Écrans de présentation des features
+      // Étape 2 — Pain points interactifs
       case 2:
-        return renderFeatureSlide(0);
+        return renderPainPointPicker();
+
+      // Étape 3 — Réponse personnalisée
       case 3:
-        return renderFeatureSlide(1);
+        return renderPersonalizedSolution();
+
+      // Étape 4 — Mascotte/sagas
       case 4:
-        return renderFeatureSlide(2);
+        return renderMascotSlide();
 
       case 5:
         return (
@@ -515,78 +750,97 @@ export default function SetupScreen() {
         );
       }
 
-      case 9:
+      case 9: {
+        const familySummary = `${parents.length} parent${parents.length > 1 ? 's' : ''}`
+          + (children.length > 0 ? `, ${children.length} enfant${children.length > 1 ? 's' : ''}` : '');
+        const templateNames = TEMPLATE_PACKS
+          .filter((p) => selectedPacks.has(p.id))
+          .map((p) => t(`setup.templatePacks.${p.id}.name`, { defaultValue: p.name }))
+          .join(', ');
+        const checkItems = [
+          { emoji: '👨‍👩‍👧‍👦', label: t('setup.recap.parents'), sub: familySummary },
+          { emoji: '📁', label: t('setup.recap.vault'), sub: undefined },
+          ...(selectedPacks.size > 0 ? [{ emoji: '📦', label: t('setup.recap.models'), sub: templateNames }] : []),
+        ];
+        const allDone = recapProgress >= checkItems.length;
         return (
-          <View style={s.stepContent}>
-            <Text style={ds.stepTitle}>✨ {t('setup.recap.title')}</Text>
-            <Text style={ds.stepSubtitle}>{t('setup.recap.subtitle')}</Text>
+          <View style={s.recapContent}>
+            <View style={s.welcomeSpacer} />
 
-            <View style={ds.recapCard}>
-              <Text style={ds.recapSection}>{t('setup.recap.parents')}</Text>
-              <View style={s.recapProfiles}>
-                {parents.map((p, i) => (
-                  <View key={i} style={s.recapProfile}>
-                    <Text style={s.recapAvatar}>{p.avatar}</Text>
-                    <Text style={ds.recapName}>{p.name}</Text>
+            {/* Checklist animée avec loading séquentiel */}
+            <View style={s.recapChecklist}>
+              {checkItems.map((item, i) => {
+                const isVisible = recapProgress >= i;
+                const isDone = recapProgress > i;
+                const isActive = recapProgress === i;
+                return (
+                  <View
+                    key={i}
+                    style={[s.recapCheckItem, { opacity: isVisible ? 1 : 0 }]}
+                  >
+                    <View style={[s.recapCheckIcon, { borderWidth: 2 }, isDone ? { backgroundColor: colors.successBg, borderColor: colors.successBg } : isActive ? { borderColor: primary, backgroundColor: 'transparent' } : { borderColor: 'transparent' }]}>
+                      {isDone ? (
+                        <Text style={s.recapCheckDone}>✓</Text>
+                      ) : (
+                        <ActivityIndicator size="small" color={primary} />
+                      )}
+                    </View>
+                    <View style={s.recapCheckTextCol}>
+                      <Text style={[s.recapCheckLabel, isDone ? { color: colors.text } : { color: colors.text, fontWeight: FontWeight.bold }]}>
+                        {isDone ? `${item.emoji} ${item.label}` : item.label}
+                      </Text>
+                      {isDone && item.sub ? (
+                        <Text style={[s.recapCheckSub, { color: colors.textFaint }]}>{item.sub}</Text>
+                      ) : isActive ? (
+                        <Text style={[s.recapCheckSub, { color: colors.textFaint }]}>{t('setup.recap.loading')}</Text>
+                      ) : null}
+                    </View>
                   </View>
-                ))}
-              </View>
-
-              {children.length > 0 && (
-                <>
-                  <Text style={ds.recapSection}>{t('setup.recap.children')}</Text>
-                  <View style={s.recapProfiles}>
-                    {children.map((c, i) => (
-                      <View key={i} style={s.recapProfile}>
-                        <Text style={s.recapAvatar}>{c.avatar}</Text>
-                        <Text style={ds.recapName}>{c.name}</Text>
-                        {c.birthdate ? (
-                          <Text style={ds.recapDate}>{c.birthdate}</Text>
-                        ) : null}
-                      </View>
-                    ))}
-                  </View>
-                </>
-              )}
-
-              <Text style={ds.recapSection}>{t('setup.recap.vault')}</Text>
-              <Text style={ds.recapPath}>{vaultPath}</Text>
-
-              {selectedPacks.size > 0 && (
-                <>
-                  <Text style={ds.recapSection}>{t('setup.recap.models')}</Text>
-                  <Text style={ds.recapTemplates}>
-                    {TEMPLATE_PACKS
-                      .filter((p) => selectedPacks.has(p.id))
-                      .map((p) => `${p.emoji} ${t(`setup.templatePacks.${p.id}.name`, { defaultValue: p.name })}`)
-                      .join('\n')}
-                  </Text>
-                </>
-              )}
+                );
+              })}
             </View>
 
-            <View style={[s.createInfo, { backgroundColor: tint }]}>
-              <Text style={ds.createInfoTitle}>{t('setup.recap.filesTitle')}</Text>
-              <Text style={ds.createInfoText}>
-                {t('setup.recap.filesDesc')}
-                {selectedPacks.size > 0 ? t('setup.recap.modelCount', { count: selectedPacks.size }) : ''}
-              </Text>
-            </View>
+            <View style={s.welcomeSpacer} />
+
+            {/* Titre final — apparaît quand tout est chargé */}
+            {allDone && (
+              <Animated.View
+                entering={FadeInUp.delay(200).duration(500)}
+                style={s.recapBottomZone}
+              >
+                <Text style={[s.recapTitle, { color: colors.text }]}>
+                  {t('setup.recap.readyTitle')}
+                </Text>
+                <Text style={[s.recapSub, { color: colors.textMuted }]}>
+                  {t('setup.recap.readySub')}
+                </Text>
+              </Animated.View>
+            )}
           </View>
         );
+      }
 
       default:
         return null;
     }
   };
 
+  const gradientCfg = GRADIENT_CONFIG[step] || GRADIENT_CONFIG[1];
+
   return (
     <SafeAreaView style={ds.safe}>
+      {/* Gradient d'arrière-plan qui bouge selon l'étape */}
+      <LinearGradient
+        colors={[`${tint}`, `${primary}22`, 'transparent']}
+        start={gradientCfg.start}
+        end={gradientCfg.end}
+        style={[s.gradientBg, { opacity: gradientCfg.opacity }]}
+      />
       <KeyboardAvoidingView
         style={s.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        {/* Progress bar — masquée pendant l'intro features, montre uniquement les étapes de config */}
+        {/* Progress bar — masquée pendant l'intro, montre uniquement les étapes de config */}
         {step >= FIRST_SETUP_STEP ? (
           <View style={s.progressContainer}>
             <View style={ds.progressBar}>
@@ -606,7 +860,7 @@ export default function SetupScreen() {
         {/* Scrollable content */}
         <ScrollView
           style={s.scroll}
-          contentContainerStyle={s.scrollContent}
+          contentContainerStyle={[s.scrollContent, (step === 1 || step === 9) && s.scrollContentFlex]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -913,6 +1167,24 @@ function useDynamicStyles(colors: ReturnType<typeof useThemeColors>['colors'], p
       fontWeight: FontWeight.bold,
       color: colors.onPrimary,
     },
+    painPointChip: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      gap: Spacing.md,
+      backgroundColor: colors.card,
+      borderRadius: Radius['lg+'],
+      paddingVertical: Spacing.lg,
+      paddingHorizontal: Spacing.xl,
+      borderWidth: 2,
+      borderColor: colors.border,
+      minWidth: 130,
+      ...Shadows.sm,
+    },
+    painPointLabel: {
+      fontSize: FontSize.body,
+      fontWeight: FontWeight.semibold,
+      color: colors.text,
+    },
   }), [colors, primary]);
 }
 
@@ -921,6 +1193,11 @@ const s = StyleSheet.create({
   flex: { flex: 1 },
   scroll: { flex: 1 },
   scrollContent: { padding: Spacing['4xl'], paddingBottom: Spacing['3xl'] },
+  scrollContentFlex: { flexGrow: 1 },
+  gradientBg: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
+  },
 
   // Progress
   progressContainer: {
@@ -939,7 +1216,38 @@ const s = StyleSheet.create({
   // Step content
   stepContent: { gap: Spacing['2xl'], alignItems: 'stretch' },
 
-  // Feature intro slides (steps 2-4)
+  // Pain point picker (step 2)
+  painPointGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: Spacing.md,
+    paddingHorizontal: Spacing.md,
+  },
+  painPointEmoji: {
+    fontSize: 28,
+  },
+  painPointHint: {
+    fontSize: FontSize.caption,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+
+  // Solution personnalisée (step 3)
+  solutionTextCol: {
+    flex: 1,
+    gap: Spacing.xxs,
+  },
+  solutionDesc: {
+    fontSize: FontSize.label,
+    lineHeight: LineHeight.tight,
+  },
+  solutionCheck: {
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.bold,
+  },
+
+  // Intro slides
   skipRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -976,6 +1284,39 @@ const s = StyleSheet.create({
     paddingHorizontal: Spacing['2xl'],
     marginBottom: Spacing['5xl'],
   },
+  problemSlideSubtitle: {
+    fontSize: FontSize.body,
+    textAlign: 'center',
+    lineHeight: LineHeight.loose,
+    paddingHorizontal: Spacing['2xl'],
+    marginBottom: Spacing.lg,
+  },
+  problemCaption: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginBottom: Spacing['3xl'],
+  },
+  slideDetails: {
+    gap: Spacing.lg,
+    paddingHorizontal: Spacing.md,
+  },
+  slideDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xl,
+    borderRadius: Radius.lg,
+    padding: Spacing.xl + 2,
+  },
+  slideDetailIcon: {
+    fontSize: FontSize.title,
+  },
+  slideDetailText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.medium,
+    flex: 1,
+  },
   featureDots: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -990,11 +1331,87 @@ const s = StyleSheet.create({
   },
 
   // Step 1 — Welcome
-  logo: { fontSize: 64, textAlign: 'center' },
-  appName: { fontSize: FontSize.hero, fontWeight: FontWeight.heavy, textAlign: 'center' },
-  features: { gap: Spacing.lg },
-  featureIcon: { fontSize: FontSize.display },
-  featureText: { flex: 1, gap: Spacing.xxs },
+  welcomeContent: { flex: 1 },
+  welcomeSpacer: { flex: 1 },
+  welcomeHeader: {
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingTop: Spacing.xl,
+  },
+  welcomeTopZone: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing['3xl'],
+  },
+  orbSeedInline: { fontSize: 52 },
+  welcomeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: Spacing['2xl'],
+    paddingHorizontal: Spacing['2xl'],
+  },
+  welcomeGridItem: {
+    alignItems: 'center',
+    gap: Spacing.sm,
+    width: 90,
+  },
+  welcomeGridEmoji: { fontSize: 36 },
+  welcomeGridLabel: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    textAlign: 'center',
+    opacity: 0.6,
+  },
+  welcomeBottomZone: {
+    paddingHorizontal: Spacing['4xl'],
+    paddingBottom: Spacing.md,
+    gap: Spacing.xs,
+  },
+  welcomeAppName: {
+    fontSize: 28,
+    fontWeight: FontWeight.heavy,
+    letterSpacing: -0.5,
+  },
+  welcomeTagline: {
+    fontSize: FontSize.body,
+  },
+  welcomeHook: {
+    fontSize: FontSize.lg,
+    lineHeight: LineHeight.loose,
+  },
+  welcomePromise: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    marginBottom: Spacing.md,
+  },
+  orbContainer: {
+    width: 200,
+    height: 200,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+  },
+  orbSeed: {
+    fontSize: 48,
+    position: 'absolute',
+    top: 76, // (200 - 48) / 2
+    left: 76,
+  },
+  orbEmoji: {
+    fontSize: 32,
+    position: 'absolute',
+    opacity: 0.85,
+  },
+  orbLabel: {
+    position: 'absolute',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    opacity: 0.5,
+    textAlign: 'center',
+    width: 80,
+  },
 
   // Count selector
   countRow: { flexDirection: 'row', justifyContent: 'center', gap: Spacing.lg },
@@ -1010,16 +1427,48 @@ const s = StyleSheet.create({
   selectAllText: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
   templateNav: { flexDirection: 'row', gap: Spacing.xl },
 
-  // Recap
-  recapProfiles: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing['2xl'] },
-  recapProfile: { alignItems: 'center', gap: Spacing.xs },
-  recapAvatar: { fontSize: 40 },
-
-  // Create info
-  createInfo: {
+  // Recap — checklist style
+  recapContent: { flex: 1 },
+  recapChecklist: {
+    gap: Spacing['3xl'],
+    paddingHorizontal: Spacing.md,
+  },
+  recapCheckItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing['2xl'],
+    minHeight: 56,
+  },
+  recapCheckIcon: {
+    width: 44,
+    height: 44,
     borderRadius: Radius.lg,
-    padding: Spacing['2xl'],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recapCheckEmoji: { fontSize: 20 },
+  recapCheckDone: { fontSize: 18, fontWeight: FontWeight.bold, color: '#16a34a' },
+  recapCheckTextCol: { flex: 1, gap: 2 },
+  recapCheckLabel: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+  },
+  recapCheckSub: {
+    fontSize: FontSize.label,
+  },
+  recapBottomZone: {
+    paddingHorizontal: Spacing.md,
     gap: Spacing.sm,
+  },
+  recapTitle: {
+    fontSize: FontSize.display,
+    fontWeight: FontWeight.heavy,
+    letterSpacing: -0.3,
+  },
+  recapSub: {
+    fontSize: FontSize.body,
+    lineHeight: LineHeight.normal,
+    marginBottom: Spacing.lg,
   },
 
   // Bottom nav

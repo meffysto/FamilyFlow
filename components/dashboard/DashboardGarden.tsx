@@ -2,11 +2,12 @@
  * DashboardGarden.tsx — Widget jardin familial
  *
  * Affiche tous les arbres de la famille côte à côte.
+ * Gère les sagas narratives multi-jours ET les aventures one-shot classiques.
  * Tap sur un arbre → écran dédié plein écran.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
@@ -15,47 +16,120 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { DashboardCard } from '../DashboardCard';
 import { TreeView } from '../mascot/TreeView';
-import { calculateLevel, addPoints } from '../../lib/gamification';
-import { getTreeStage, getTreeStageInfo } from '../../lib/mascot';
+import { calculateLevel } from '../../lib/gamification';
+import { getTreeStageInfo } from '../../lib/mascot';
 import { SPECIES_INFO, type TreeSpecies } from '../../lib/mascot/types';
 import { getDailyAdventure, getTodayStr, type Adventure } from '../../lib/mascot/adventures';
 import { hapticsTreeTap } from '../../lib/mascot/haptics';
 import { useTone } from '../../lib/mascot/tone';
+import type { SagaProgress, SagaTrait } from '../../lib/mascot/sagas-types';
+import { createEmptySagaProgress, ALL_TRAITS } from '../../lib/mascot/sagas-types';
+import {
+  shouldStartSaga,
+  getSagaById,
+  getChapterNarrativeKey,
+  getSagaCompletionResult,
+  getNextSagaTeaser,
+  restDaysRemaining,
+  formatDateStr,
+} from '../../lib/mascot/sagas-engine';
+import {
+  loadSagaProgress,
+  saveSagaProgress,
+  loadLastSagaCompletion,
+  saveLastSagaCompletion,
+} from '../../lib/mascot/sagas-storage';
 import type { DashboardSectionProps } from './types';
 import type { Profile } from '../../lib/types';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+import { SecureStoreCompat as SecureStore } from '../../lib/mascot/utils';
 
 const DEFAULT_SPECIES: TreeSpecies = 'cerisier';
-
-const SecureStore = Platform.OS === 'web'
-  ? { getItemAsync: async () => null, setItemAsync: async () => {} }
-  : require('expo-secure-store');
 
 function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const { primary, tint, colors } = useThemeColors();
-  const { profiles, activeProfile, completeAdventure } = useVault();
+  const { profiles, activeProfile, completeAdventure, completeSagaChapter } = useVault();
   const { showToast } = useToast();
   const tone = useTone();
 
-  // Aventure du jour
   const profileId = activeProfile?.id ?? '';
   const today = getTodayStr();
+  const completedSagas = activeProfile?.completedSagas ?? [];
+
+  // ── Aventure one-shot (existant) ──────────────────────────
   const adventure = getDailyAdventure(profileId);
   const [adventureChoice, setAdventureChoice] = useState<'A' | 'B' | null>(null);
-  const [adventureLoading, setAdventureLoading] = useState(true);
 
+  // ── Saga state ────────────────────────────────────────────
+  const [sagaProgress, setSagaProgress] = useState<SagaProgress | null>(null);
+  const [lastCompletion, setLastCompletion] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Dérivé : le chapitre du jour a déjà été fait
+  const sagaChapterDone = sagaProgress?.lastChapterDate === today;
+
+  // Charger état saga + aventure au montage
   useEffect(() => {
     (async () => {
-      const key = `adventure_${profileId}_${today}`;
-      const stored = await SecureStore.getItemAsync(key);
-      if (stored === 'A' || stored === 'B') setAdventureChoice(stored);
-      setAdventureLoading(false);
+      const [progress, lastComp] = await Promise.all([
+        loadSagaProgress(profileId),
+        loadLastSagaCompletion(profileId),
+      ]);
+
+      // Aventure one-shot
+      const advKey = `adventure_${profileId}_${today}`;
+      const storedAdv = await SecureStore.getItemAsync(advKey);
+      if (storedAdv === 'A' || storedAdv === 'B') setAdventureChoice(storedAdv);
+
+      // Saga
+      if (progress && progress.status === 'active') {
+        setSagaProgress(progress);
+
+      } else if (!progress || progress.status === 'completed') {
+        // Vérifier si une nouvelle saga doit démarrer
+        const { start, sagaId } = shouldStartSaga(profileId, completedSagas, lastComp, new Date());
+        if (start && sagaId) {
+          const newProgress = createEmptySagaProgress(sagaId, profileId, today);
+          await saveSagaProgress(newProgress);
+          setSagaProgress(newProgress);
+
+        }
+      }
+
+      setLastCompletion(lastComp);
+      setLoading(false);
     })();
-  }, [profileId, today]);
+  }, [profileId, today, completedSagas.length]);
+
+  // ── Saga courante ─────────────────────────────────────────
+  const activeSaga = sagaProgress ? getSagaById(sagaProgress.sagaId) : null;
+  const currentChapter = activeSaga && sagaProgress
+    ? activeSaga.chapters.find(ch => ch.id === sagaProgress.currentChapter)
+    : null;
+  const isLastChapter = activeSaga && sagaProgress
+    ? sagaProgress.currentChapter >= activeSaga.chapters.length
+    : false;
+  const hasSaga = !!activeSaga && !!sagaProgress && sagaProgress.status === 'active';
+
+  // Narrative adaptée aux traits
+  const narrativeKey = useMemo(() => {
+    if (!currentChapter || !activeSaga || !sagaProgress) return '';
+    return getChapterNarrativeKey(currentChapter, sagaProgress.traits, activeSaga.finale.defaultTrait);
+  }, [currentChapter, activeSaga, sagaProgress]);
+
+  // Traits résumé
+  const traitSummary = useMemo(() => {
+    if (!sagaProgress) return [];
+    return ALL_TRAITS
+      .filter(tr => (sagaProgress.traits[tr] ?? 0) > 0)
+      .map(tr => ({ trait: tr, value: sagaProgress.traits[tr] }));
+  }, [sagaProgress]);
+
+  // ── Handlers ──────────────────────────────────────────────
 
   const handleAdventureChoice = useCallback(async (choice: 'A' | 'B') => {
     const key = `adventure_${profileId}_${today}`;
@@ -67,11 +141,290 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
     showToast(t('mascot.adventure.reward', { points: choiceData.points }));
   }, [profileId, today, adventure, completeAdventure, showToast, t]);
 
+  const handleSagaChoice = useCallback(async (choiceId: string) => {
+    if (!activeSaga || !sagaProgress || !currentChapter) return;
+    const choice = currentChapter.choices.find(c => c.id === choiceId);
+    if (!choice) return;
+
+    hapticsTreeTap();
+
+    // Accumuler les traits
+    const newTraits = { ...sagaProgress.traits };
+    for (const [trait, val] of Object.entries(choice.traits)) {
+      newTraits[trait as SagaTrait] = (newTraits[trait as SagaTrait] ?? 0) + (val ?? 0);
+    }
+
+    // Avancer au chapitre suivant
+    const nextChapter = sagaProgress.currentChapter + 1;
+    const isFinal = nextChapter > activeSaga.chapters.length;
+
+    let updatedProgress: SagaProgress = {
+      ...sagaProgress,
+      currentChapter: nextChapter,
+      choices: { ...sagaProgress.choices, [currentChapter.id]: choiceId },
+      traits: newTraits,
+      lastChapterDate: today,
+      status: isFinal ? 'completed' : 'active',
+    };
+
+    // Un seul appel : XP chapitre + bonus/récompense si finale
+    if (isFinal) {
+      const result = getSagaCompletionResult(activeSaga, { ...updatedProgress, traits: newTraits });
+      await completeSagaChapter(
+        profileId,
+        choice.points + result.bonusXP,
+        `Saga terminée: ${activeSaga.id} ch${currentChapter.id} (${result.dominantTrait})`,
+        { id: result.rewardItemId, type: result.rewardType === 'mascot_deco' ? 'decoration' : 'inhabitant' },
+      );
+      updatedProgress.rewardClaimed = true;
+      await saveLastSagaCompletion(profileId, today);
+      setLastCompletion(today);
+    } else {
+      await completeSagaChapter(profileId, choice.points, `Saga: ${activeSaga.id} ch${currentChapter.id}`);
+    }
+
+    await saveSagaProgress(updatedProgress);
+    setSagaProgress(updatedProgress);
+
+    showToast(t('mascot.adventure.reward', { points: choice.points }));
+  }, [activeSaga, sagaProgress, currentChapter, profileId, today, completeSagaChapter, showToast, t, tone]);
+
   if (!profiles || profiles.length === 0) return null;
 
   const handleTreePress = (profile: Profile) => {
     router.push({ pathname: '/(tabs)/tree' as any, params: { profileId: profile.id } });
   };
+
+  // ── Teaser prochaine saga ─────────────────────────────────
+  const nextSagaTeaser = !hasSaga ? getNextSagaTeaser(profileId, completedSagas) : null;
+  const daysUntilSaga = !hasSaga ? restDaysRemaining(lastCompletion) : 0;
+
+  // ── Rendu ─────────────────────────────────────────────────
+
+  /** Dots de progression saga */
+  const renderSagaDots = () => {
+    if (!activeSaga || !sagaProgress) return null;
+    const total = activeSaga.chapters.length;
+    const current = Math.min(sagaProgress.currentChapter, total);
+    const completed = sagaChapterDone ? current : current - 1;
+    return (
+      <View style={styles.sagaDots}>
+        {Array.from({ length: total }, (_, i) => (
+          <View
+            key={i}
+            style={[
+              styles.sagaDot,
+              {
+                backgroundColor: i < completed
+                  ? primary
+                  : i === completed && sagaChapterDone
+                    ? primary
+                    : colors.borderLight,
+              },
+            ]}
+          />
+        ))}
+      </View>
+    );
+  };
+
+  /** Carte saga (chapitre disponible ou fait) */
+  const renderSagaCard = () => {
+    if (!activeSaga || !sagaProgress) return null;
+
+    // Saga terminée → carte de complétion
+    if (sagaProgress.status === 'completed') {
+      const result = getSagaCompletionResult(activeSaga, sagaProgress);
+      return (
+        <Animated.View entering={FadeInDown.delay(200).duration(300)}>
+          <View style={[styles.adventureCard, { backgroundColor: colors.cardAlt, borderColor: primary }]}>
+            {renderSagaDots()}
+            <Text style={styles.adventureEmoji}>{activeSaga.emoji}</Text>
+            <Text style={[styles.adventureTitle, { color: primary }]}>
+              {t('mascot.saga.complete', { context: tone })}
+            </Text>
+            <Text style={[styles.adventureTitle, { color: colors.text }]}>
+              {t(activeSaga.titleKey, { context: tone })}
+            </Text>
+            <Text style={[styles.adventureDesc, { color: colors.textSub }]}>
+              {t(result.narrativeKey, { context: tone })}
+            </Text>
+            <View style={[styles.sagaReward, { backgroundColor: primary + '15', borderColor: primary + '40' }]}>
+              <Text style={[styles.sagaRewardTitle, { color: primary }]}>
+                {t('mascot.saga.rewardTitle', { context: tone })}
+              </Text>
+              <Text style={[styles.sagaRewardPts, { color: colors.text }]}>
+                +{result.bonusXP} pts
+              </Text>
+              <Text style={[styles.sagaTraitTitle, { color: primary }]}>
+                {t(`mascot.saga.traitLabel.${result.dominantTrait}`)}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.adventureBtn, { backgroundColor: tint, borderColor: primary }]}
+              onPress={() => router.push('/(tabs)/tree' as any)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.adventureBtnText, { color: primary }]}>
+                {t('mascot.saga.placeReward', { context: tone })}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      );
+    }
+
+    // Chapitre déjà fait aujourd'hui → cliffhanger
+    if (sagaChapterDone) {
+      const prevChapter = activeSaga.chapters.find(ch => ch.id === sagaProgress.currentChapter - 1);
+      return (
+        <Animated.View entering={FadeInDown.delay(200).duration(300)}>
+          <View style={[styles.adventureCard, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}>
+            {renderSagaDots()}
+            <Text style={styles.adventureEmoji}>{activeSaga.emoji}</Text>
+            <Text style={[styles.adventureTitle, { color: colors.text }]}>
+              {t(activeSaga.titleKey, { context: tone })}
+            </Text>
+            {prevChapter && (
+              <Text style={[styles.adventureDesc, { color: colors.textSub, fontStyle: 'italic' }]}>
+                {t(prevChapter.cliffhangerKey, { context: tone })}
+              </Text>
+            )}
+            <Text style={[styles.sagaCliffhanger, { color: colors.textMuted }]}>
+              {t('mascot.saga.cliffhanger', { context: tone })}
+            </Text>
+            {traitSummary.length > 0 && (
+              <View style={styles.sagaTraits}>
+                {traitSummary.map(({ trait, value }) => (
+                  <Text key={trait} style={[styles.sagaTraitText, { color: colors.textMuted }]}>
+                    {t(`mascot.saga.traitLabel.${trait}`)} x{value}
+                  </Text>
+                ))}
+              </View>
+            )}
+          </View>
+        </Animated.View>
+      );
+    }
+
+    // Chapitre disponible → afficher narration + choix
+    if (!currentChapter) return null;
+    return (
+      <Animated.View entering={FadeInDown.delay(200).duration(300)}>
+        <View style={[styles.adventureCard, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}>
+          {renderSagaDots()}
+          <Text style={styles.adventureEmoji}>{activeSaga.emoji}</Text>
+          <Text style={[styles.adventureTitle, { color: colors.text }]}>
+            {t(activeSaga.titleKey, { context: tone })}
+          </Text>
+          <Text style={[styles.sagaChapterLabel, { color: colors.textMuted }]}>
+            {t('mascot.saga.progress', { current: sagaProgress.currentChapter, total: activeSaga.chapters.length })}
+          </Text>
+          <Text style={[styles.adventureDesc, { color: colors.textSub }]}>
+            {t(narrativeKey, { context: tone })}
+          </Text>
+
+          {/* Choix */}
+          <View style={styles.adventureChoices}>
+            {currentChapter.choices.map((choice, idx) => (
+              <TouchableOpacity
+                key={choice.id}
+                style={[
+                  styles.adventureBtn,
+                  {
+                    backgroundColor: idx === 0 ? tint : colors.card,
+                    borderColor: idx === 0 ? primary : colors.borderLight,
+                  },
+                ]}
+                onPress={() => handleSagaChoice(choice.id)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.adventureBtnText, { color: idx === 0 ? primary : colors.text }]}>
+                  {choice.emoji} {t(choice.labelKey)}
+                </Text>
+                <Text style={[styles.adventurePts, { color: colors.textMuted }]}>+{choice.points} pts</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Traits accumulés */}
+          {traitSummary.length > 0 && (
+            <View style={styles.sagaTraits}>
+              {traitSummary.map(({ trait, value }) => (
+                <Text key={trait} style={[styles.sagaTraitText, { color: colors.textMuted }]}>
+                  {t(`mascot.saga.traitLabel.${trait}`)} x{value}
+                </Text>
+              ))}
+            </View>
+          )}
+        </View>
+      </Animated.View>
+    );
+  };
+
+  /** Carte aventure one-shot classique (inchangée) */
+  const renderOneShotAdventure = () => (
+    <Animated.View entering={FadeInDown.delay(200).duration(300)}>
+      <View style={[styles.adventureCard, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}>
+        <Text style={styles.adventureEmoji}>{adventure.emoji}</Text>
+        <Text style={[styles.adventureTitle, { color: colors.text }]}>
+          {t(adventure.titleKey, { context: tone })}
+        </Text>
+        <Text style={[styles.adventureDesc, { color: colors.textSub }]}>
+          {t(adventure.descriptionKey, { context: tone })}
+        </Text>
+
+        {adventureChoice ? (
+          <View style={styles.adventureResult}>
+            <Text style={[styles.adventureResultText, { color: colors.text }]}>
+              {t(`mascot.adventure.${adventure.id}.result${adventureChoice}`, { context: tone })}
+            </Text>
+            <Text style={[styles.adventureResultPts, { color: primary }]}>
+              +{adventureChoice === 'A' ? adventure.choiceA.points : adventure.choiceB.points} pts
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.adventureChoices}>
+            <TouchableOpacity
+              style={[styles.adventureBtn, { backgroundColor: tint, borderColor: primary }]}
+              onPress={() => handleAdventureChoice('A')}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.adventureBtnText, { color: primary }]}>
+                {adventure.choiceA.emoji} {t(adventure.choiceA.labelKey)}
+              </Text>
+              <Text style={[styles.adventurePts, { color: colors.textMuted }]}>+{adventure.choiceA.points} pts</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.adventureBtn, { backgroundColor: colors.card, borderColor: colors.borderLight }]}
+              onPress={() => handleAdventureChoice('B')}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.adventureBtnText, { color: colors.text }]}>
+                {adventure.choiceB.emoji} {t(adventure.choiceB.labelKey)}
+              </Text>
+              <Text style={[styles.adventurePts, { color: colors.textMuted }]}>+{adventure.choiceB.points} pts</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+
+      {/* Teaser prochaine saga */}
+      {nextSagaTeaser && (
+        <View style={[styles.sagaTeaser, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
+          <Text style={[styles.sagaTeaserText, { color: colors.textMuted }]}>
+            {nextSagaTeaser.emoji} {daysUntilSaga > 0
+              ? t('mascot.saga.teaser', { days: daysUntilSaga, context: tone })
+              : t('mascot.saga.teaserReady', { context: tone })
+            }
+          </Text>
+          <Text style={[styles.sagaTeaserTitle, { color: colors.textSub }]}>
+            {t(nextSagaTeaser.titleKey, { context: tone })}
+          </Text>
+        </View>
+      )}
+    </Animated.View>
+  );
 
   return (
     <DashboardCard
@@ -99,7 +452,6 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
               accessibilityLabel={t('mascot.garden.treeA11y', { name: profile.name })}
               accessibilityRole="button"
             >
-              {/* Arbre */}
               <View style={styles.treeWrap}>
                 <TreeView
                   species={currentSpecies}
@@ -109,27 +461,15 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
                   interactive
                 />
               </View>
-
-              {/* Nom + avatar */}
               <View style={styles.labelRow}>
                 <Text style={[styles.avatar]}>{profile.avatar}</Text>
-                <Text
-                  style={[styles.name, { color: colors.text }]}
-                  numberOfLines={1}
-                >
+                <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
                   {profile.name}
                 </Text>
               </View>
-
-              {/* Stade */}
-              <Text
-                style={[styles.stage, { color: colors.textMuted }]}
-                numberOfLines={1}
-              >
+              <Text style={[styles.stage, { color: colors.textMuted }]} numberOfLines={1}>
                 {sp.emoji} {t(stageInfo.labelKey)}
               </Text>
-
-              {/* Si pas d'espèce choisie → indication */}
               {!species && (
                 <View style={[styles.chooseBadge, { backgroundColor: tint }]}>
                   <Text style={[styles.chooseText, { color: primary }]}>
@@ -142,53 +482,9 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
         })}
       </View>
 
-      {/* Aventure du jour */}
-      {!adventureLoading && activeProfile && (
-        <Animated.View entering={FadeInDown.delay(200).duration(300)}>
-          <View style={[styles.adventureCard, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}>
-            <Text style={styles.adventureEmoji}>{adventure.emoji}</Text>
-            <Text style={[styles.adventureTitle, { color: colors.text }]}>
-              {t(adventure.titleKey, { context: tone })}
-            </Text>
-            <Text style={[styles.adventureDesc, { color: colors.textSub }]}>
-              {t(adventure.descriptionKey, { context: tone })}
-            </Text>
-
-            {adventureChoice ? (
-              <View style={styles.adventureResult}>
-                <Text style={[styles.adventureResultText, { color: colors.text }]}>
-                  {t(`mascot.adventure.${adventure.id}.result${adventureChoice}`, { context: tone })}
-                </Text>
-                <Text style={[styles.adventureResultPts, { color: primary }]}>
-                  +{adventureChoice === 'A' ? adventure.choiceA.points : adventure.choiceB.points} pts
-                </Text>
-              </View>
-            ) : (
-              <View style={styles.adventureChoices}>
-                <TouchableOpacity
-                  style={[styles.adventureBtn, { backgroundColor: tint, borderColor: primary }]}
-                  onPress={() => handleAdventureChoice('A')}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.adventureBtnText, { color: primary }]}>
-                    {adventure.choiceA.emoji} {t(adventure.choiceA.labelKey)}
-                  </Text>
-                  <Text style={[styles.adventurePts, { color: colors.textMuted }]}>+{adventure.choiceA.points} pts</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.adventureBtn, { backgroundColor: colors.card, borderColor: colors.borderLight }]}
-                  onPress={() => handleAdventureChoice('B')}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.adventureBtnText, { color: colors.text }]}>
-                    {adventure.choiceB.emoji} {t(adventure.choiceB.labelKey)}
-                  </Text>
-                  <Text style={[styles.adventurePts, { color: colors.textMuted }]}>+{adventure.choiceB.points} pts</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        </Animated.View>
+      {/* Aventure ou saga du jour */}
+      {!loading && activeProfile && (
+        hasSaga ? renderSagaCard() : renderOneShotAdventure()
       )}
 
       {/* Lien vers l'écran arbre */}
@@ -276,9 +572,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.sm,
     width: '100%',
+    flexWrap: 'wrap',
   },
   adventureBtn: {
     flex: 1,
+    minWidth: '40%',
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
     borderRadius: Radius.md,
@@ -315,6 +613,74 @@ const styles = StyleSheet.create({
   },
   ctaText: {
     fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+  },
+
+  // ── Saga styles ──────────────────────────────────────────
+  sagaDots: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+    marginBottom: Spacing.sm,
+  },
+  sagaDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  sagaChapterLabel: {
+    fontSize: FontSize.micro,
+    fontWeight: FontWeight.semibold,
+    marginBottom: Spacing.xs,
+  },
+  sagaCliffhanger: {
+    fontSize: FontSize.caption,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: Spacing.xs,
+  },
+  sagaTraits: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
+    justifyContent: 'center',
+  },
+  sagaTraitText: {
+    fontSize: FontSize.micro,
+  },
+  sagaReward: {
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+    gap: Spacing.xxs,
+  },
+  sagaRewardTitle: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
+  },
+  sagaRewardPts: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+  },
+  sagaTraitTitle: {
+    fontSize: FontSize.micro,
+    fontWeight: FontWeight.semibold,
+  },
+  sagaTeaser: {
+    marginTop: Spacing.md,
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    gap: Spacing.xxs,
+  },
+  sagaTeaserText: {
+    fontSize: FontSize.micro,
+  },
+  sagaTeaserTitle: {
+    fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
   },
 });

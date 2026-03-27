@@ -46,66 +46,7 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
 
   const [showWizard, setShowWizard] = useState(false);
   const [wizardTargetPath, setWizardTargetPath] = useState<string | undefined>();
-  const [syncProgress, setSyncProgress] = useState('');
-  const [serverIp, setServerIp] = useState('');
   const COFFRE_DEFAULT = '/Users/USER/Documents/coffre';
-
-  // --- Sync depuis un ordinateur (Python serve-vault.py) ---
-  const syncFromServer = async () => {
-    const ip = serverIp.trim();
-    if (!ip) {
-      setError(t('vaultPicker.alert.ipRequired'));
-      return;
-    }
-    const SERVER_URL = `http://${ip}:8765`;
-    setSyncProgress(t('vaultPicker.connecting'));
-    setError(null);
-
-    try {
-      const manifestRes = await fetch(`${SERVER_URL}/manifest.json`);
-      if (!manifestRes.ok) throw new Error(t('vaultPicker.serverNotFound'));
-      const { files } = await manifestRes.json() as { files: string[] };
-
-      const localVault = `${FileSystem.documentDirectory}coffre`;
-
-      let downloaded = 0;
-      for (const relPath of files) {
-        // Sécurité : rejeter les chemins qui pourraient sortir du vault
-        if (
-          relPath.includes('..') ||
-          relPath.startsWith('/') ||
-          relPath.includes('\0')
-        ) {
-          console.warn(`Chemin ignoré (traversal détecté) : ${relPath}`);
-          continue;
-        }
-        setSyncProgress(`${downloaded + 1}/${files.length} — ${relPath}`);
-
-        const fileUrl = `${SERVER_URL}/file/${encodeURIComponent(relPath)}`;
-        const localPath = `${localVault}/${relPath}`;
-
-        const parentDir = localPath.substring(0, localPath.lastIndexOf('/'));
-        const dirInfo = await FileSystem.getInfoAsync(parentDir);
-        if (!dirInfo.exists) {
-          await FileSystem.makeDirectoryAsync(parentDir, { intermediates: true });
-        }
-
-        await FileSystem.downloadAsync(fileUrl, localPath);
-        downloaded++;
-      }
-
-      setSyncProgress(t('vaultPicker.filesSynced', { count: downloaded }));
-      setPath(localVault);
-
-      // Laisser le JS engine respirer avant le rechargement du vault
-      await new Promise((r) => setTimeout(r, 1500));
-      setSyncProgress('');
-      onPathSelected(localVault);
-    } catch (e: any) {
-      setSyncProgress('');
-      setError(t('vaultPicker.alert.syncFailed', { error: e.message }));
-    }
-  };
 
   // --- iOS: créer un vault dans iCloud Drive via folder picker + SetupWizard ---
   const createInICloud = async () => {
@@ -225,30 +166,21 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
 
   return (
     <View style={styles.container}>
-      {/* Create new vault button (local) */}
-      <TouchableOpacity
-        style={[styles.createBtn, { backgroundColor: primary }]}
-        onPress={() => { setWizardTargetPath(undefined); setShowWizard(true); }}
-      >
-        <Text style={styles.createBtnText}>{t('vaultPicker.createNew')}</Text>
-        <Text style={styles.createBtnSub}>{t('vaultPicker.createNewSub')}</Text>
-      </TouchableOpacity>
-
-      {/* Create in iCloud Drive (iOS only) */}
+      {/* iCloud Drive — primary option (iOS) */}
       {Platform.OS === 'ios' && (
         <TouchableOpacity
-          style={[styles.icloudBtn, { backgroundColor: tint }]}
+          style={[styles.createBtn, { backgroundColor: primary }]}
           onPress={createInICloud}
         >
-          <Text style={[styles.icloudBtnText, { color: primary }]}>{t('vaultPicker.createICloud')}</Text>
-          <Text style={[styles.icloudBtnSub, { color: colors.textMuted }]}>{t('vaultPicker.createICloudSub')}</Text>
+          <Text style={styles.createBtnText}>{t('vaultPicker.createICloud')}</Text>
+          <Text style={styles.createBtnSub}>{t('vaultPicker.createICloudSub')}</Text>
         </TouchableOpacity>
       )}
 
-      {/* Create in cloud folder (Android) */}
+      {/* Google Drive / Dropbox — primary option (Android) */}
       {Platform.OS === 'android' && (
         <TouchableOpacity
-          style={[styles.icloudBtn, { backgroundColor: tint }]}
+          style={[styles.createBtn, { backgroundColor: primary }]}
           onPress={async () => {
             try {
               // @ts-ignore
@@ -264,10 +196,19 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
             }
           }}
         >
-          <Text style={[styles.icloudBtnText, { color: primary }]}>{t('vaultPicker.createAndroid')}</Text>
-          <Text style={[styles.icloudBtnSub, { color: colors.textMuted }]}>{t('vaultPicker.createAndroidSub')}</Text>
+          <Text style={styles.createBtnText}>{t('vaultPicker.createAndroid')}</Text>
+          <Text style={styles.createBtnSub}>{t('vaultPicker.createAndroidSub')}</Text>
         </TouchableOpacity>
       )}
+
+      {/* Create locally — secondary option */}
+      <TouchableOpacity
+        style={[styles.icloudBtn, { backgroundColor: tint }]}
+        onPress={() => { setWizardTargetPath(undefined); setShowWizard(true); }}
+      >
+        <Text style={[styles.icloudBtnText, { color: primary }]}>{t('vaultPicker.createNew')}</Text>
+        <Text style={[styles.icloudBtnSub, { color: colors.textMuted }]}>{t('vaultPicker.createNewSub')}</Text>
+      </TouchableOpacity>
 
       <View style={styles.separator}>
         <View style={[styles.separatorLine, { backgroundColor: colors.separator }]} />
@@ -295,43 +236,6 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
           <Text style={[styles.pickerBtnText, { color: colors.info || '#1D4ED8' }]}>{t('vaultPicker.chooseFolder')}</Text>
           <Text style={[styles.pickerBtnSub, { color: colors.textMuted }]}>{t('vaultPicker.fromFilesAndroid')}</Text>
         </TouchableOpacity>
-      )}
-
-      {/* Sync from any computer */}
-      <View style={styles.syncSection}>
-        <TextInput
-          style={[styles.ipInput, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }]}
-          value={serverIp}
-          onChangeText={(t) => { setServerIp(t); setError(null); }}
-          placeholder={t('vaultPicker.ipPlaceholder')}
-          placeholderTextColor={colors.textFaint}
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="numbers-and-punctuation"
-          returnKeyType="go"
-          onSubmitEditing={syncFromServer}
-        />
-        <TouchableOpacity
-          style={[styles.syncBtn, { backgroundColor: tint }]}
-          onPress={syncFromServer}
-          disabled={!!syncProgress}
-        >
-          <Text style={[styles.syncBtnText, { color: primary }]}>{t('vaultPicker.syncFromComputer')}</Text>
-          <Text style={[styles.syncBtnSub, { color: colors.textMuted }]}>
-            {t('vaultPicker.syncSubBefore')}{' '}
-            <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: FontSize.micro }}>
-              python3 serve-vault.py
-            </Text>
-            {' '}{t('vaultPicker.syncSubAfter')}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {!!syncProgress && (
-        <View style={[styles.progressBox, { backgroundColor: colors.bg }]}>
-          <ActivityIndicator size="small" color={primary} />
-          <Text style={[styles.progressText, { color: colors.textSub }]}>{syncProgress}</Text>
-        </View>
       )}
 
       {error && <Text style={styles.errorText}>{error}</Text>}
@@ -451,38 +355,6 @@ const styles = StyleSheet.create({
     fontSize: FontSize.label,
     color: '#EF4444',
     lineHeight: 18,
-  },
-  syncSection: {
-    gap: 8,
-  },
-  ipInput: {
-    borderWidth: 1.5,
-    borderRadius: 10,
-    padding: 12,
-    fontSize: FontSize.sm,
-  },
-  syncBtn: {
-    borderRadius: 10,
-    padding: 14,
-    gap: 2,
-  },
-  syncBtnText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-  },
-  syncBtnSub: {
-    fontSize: 11,
-  },
-  progressBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    borderRadius: 10,
-    padding: 12,
-  },
-  progressText: {
-    fontSize: FontSize.caption,
-    flex: 1,
   },
   pickerBtn: {
     borderRadius: 10,

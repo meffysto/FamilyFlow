@@ -72,36 +72,60 @@
   },
   "setup": {
     "tagline": "Your family, organized together",
-    "features": {
-      "tasks": {
-        "title": "Family tasks",
-        "desc": "Organize and complete tasks together"
-      },
-      "loot": {
-        "title": "Rewards",
-        "desc": "Kids earn rewards by completing their tasks"
-      },
-      "files": {
-        "title": "Your data, your device",
-        "desc": "Everything is stored on your phone in simple, readable files"
-      },
-      "telegram": {
-        "title": "Notifications",
-        "desc": "Get reminders via Telegram"
+    "welcome": {
+      "hook": "The family mental load is exhausting.",
+      "promise": "We're here to change that."
+    },
+    "painPoints": {
+      "title": "What's your biggest headache?",
+      "subtitle": "Select what takes up most of your time daily",
+      "hint": "Multiple selection — your choices will personalize the app",
+      "options": {
+        "meals": "Meal planning",
+        "chores": "Splitting chores",
+        "groceries": "Managing groceries",
+        "health": "Kids' health tracking",
+        "routines": "Kids' routines",
+        "budget": "Family budget"
       }
     },
-    "slides": {
-      "1": {
-        "title": "Your daily life, simplified",
-        "subtitle": "Plan meals, share chores, manage shopping"
-      },
-      "2": {
-        "title": "Track your children's health",
-        "subtitle": "Bottles, diapers, sleep, appointments — everything recorded"
-      },
-      "3": {
-        "title": "The whole family joins in",
-        "subtitle": "Each member has a profile, kids earn points"
+    "solution": {
+      "title": "Family Flow handles it",
+      "subtitle": "Here's what we'll set up for you:",
+      "items": {
+        "meals": {
+          "title": "Automatic meal planning",
+          "desc": "7 days of balanced meals, ready to go"
+        },
+        "chores": {
+          "title": "Chores split fairly",
+          "desc": "Every day, everyone knows what to do"
+        },
+        "groceries": {
+          "title": "Centralized shopping list",
+          "desc": "No more 3 apps — everything in one place"
+        },
+        "health": {
+          "title": "Complete health tracking",
+          "desc": "Appointments, vaccinations, age-adapted reminders"
+        },
+        "routines": {
+          "title": "Morning & evening routines",
+          "desc": "Age-adapted, kids become independent"
+        },
+        "budget": {
+          "title": "Clear family budget",
+          "desc": "Spending categories and monthly limits"
+        }
+      }
+    },
+    "mascot": {
+      "title": "A tree that grows with you",
+      "subtitle": "Every completed task helps your family tree grow. Unlock decorations, inhabitants, and experience interactive story adventures together.",
+      "features": {
+        "grow": "Watch it evolve from seed to legendary tree",
+        "sagas": "Interactive stories to follow as a family",
+        "rewards": "Earn leaves to customize your garden"
       }
     },
     "parents": {
@@ -156,6 +180,14 @@
       "budget-familial": {
         "name": "Family budget",
         "description": "Spending categories and monthly limits"
+      },
+      "anniversaires": {
+        "name": "Birthdays",
+        "description": "Pre-fills family birthday dates"
+      },
+      "vie-de-famille": {
+        "name": "Family life",
+        "description": "Examples for gratitude, moods, kids' quotes and wishlist"
       }
     },
     "templateContent": {
@@ -261,17 +293,33 @@
         "rangerCuisine": "Clean up the kitchen after meals",
         "machine": "Start/hang laundry",
         "rangementRapide": "10-minute quick tidy",
-        "menageHeader": "Cleaning",
+        "enfantsHeader": "Kids",
+        "steriliserBiberons": "Sterilize bottles",
+        "lessivetBebe": "Baby laundry (delicates)",
+        "rangerJouets": "Put away toys before bedtime",
+        "nettoyerJouets": "Clean toys and play surfaces",
+        "preparerSacs": "Pack school bags",
+        "trierCahiers": "Sort school papers and notebooks",
+        "menageHeader": "Weekly cleaning",
         "aspirer": "Vacuum the whole house",
         "sallesDeBain": "Clean the bathrooms",
         "draps": "Change the sheets",
         "serpilliere": "Mop hard floors",
         "courses": "Do the grocery shopping",
+        "poubelles": "Take out trash / recycling",
         "mensuel": "Monthly",
         "frigo": "Clean the fridge",
         "poussiere": "Dust high furniture",
         "vitres": "Clean the windows",
-        "stocksMenagers": "Check cleaning supplies"
+        "stocksMenagers": "Check cleaning supplies",
+        "nettoyerFour": "Clean the oven and range hood",
+        "saisonnier": "Seasonal",
+        "filtreVMC": "Clean HVAC / air conditioning filters",
+        "retournerMatelas": "Flip the mattresses",
+        "nettoyerGouttières": "Clean the gutters",
+        "detartrerAppareils": "Descale kettle, coffee maker, washing machine",
+        "purgerRadiateurs": "Bleed the radiators",
+        "verifierDetecteurs": "Check smoke detectors"
       },
       "medical": {
         "questionsHeader": "Questions to ask",
@@ -301,6 +349,26 @@
           "dentiste": "Semi-annual checkup"
         }
       },
+      "vieDeFamille": {
+        "gratitude": {
+          "hint": "This is an example. Replace it with your own gratitude entries!",
+          "example": "Grateful for this family moment tonight."
+        },
+        "moods": {
+          "hint": "This is an example. Add your own moods as the days go by!",
+          "example": "Good day, well rested"
+        },
+        "quotes": {
+          "hint": "This is an example. Write down your kids' gems here!",
+          "example": "Why does the moon follow us in the car?",
+          "context": "In the car at night"
+        },
+        "wishlist": {
+          "hint": "This is an example. Add gift ideas for each family member!",
+          "exampleParent": "A good book | $20 | Christmas",
+          "exampleChild": "A bicycle | $150 | Birthday"
+        }
+      },
       "budget": {
         "configTitle": "Budget settings",
         "plafonds": "Monthly limits",
@@ -319,10 +387,13 @@
     "recap": {
       "title": "Summary",
       "subtitle": "Here's your family:",
-      "parents": "Parents",
+      "parents": "Family",
       "children": "Children",
-      "vault": "Folder",
+      "vault": "Location",
       "models": "Templates",
+      "loading": "Setting up…",
+      "readyTitle": "Your family is ready",
+      "readySub": "Everything is set up. Discover your family space.",
       "filesTitle": "What will be created:",
       "filesDesc": "📋 Recurring tasks per child\n🧹 Weekly chores\n🛒 Shopping list\n📖 Journal folders\n👨‍👩‍👧 Family profiles + rewards",
       "modelCount_one": "\n📦 {{count}} content template",
@@ -1837,6 +1908,10 @@
       "compatHint": "Data is stored in standard .md files, compatible with Obsidian.",
       "syncHint": "Multi-device sync: place the vault in a Google Drive or Dropbox folder synced locally on each phone.",
       "dataSectionTitle": "Data",
+      "replayBtn": "Redo onboarding",
+      "replayTitle": "Redo onboarding?",
+      "replayMessage": "The app will return to the welcome screen to redo the initial setup. Your data will not be deleted.",
+      "replayConfirm": "Redo",
       "deleteWarning": "Deletes local preferences (API keys, PIN, settings) and unlinks the vault. Your Markdown files are not affected.",
       "deleteBtn": "Delete local data",
       "deleteTitle": "Delete data",
@@ -2566,7 +2641,12 @@
       }
     },
     "profilePicker": {
-      "title": "Switch profile"
+      "title": "👋 Who are you?",
+      "subtitle": "Choose your profile to get started",
+      "adult": "Adult",
+      "child": "Child",
+      "pinTitle": "🔒 Parent PIN",
+      "pinSubtitle": "Enter the PIN to access the adult profile"
     },
     "recap": {
       "weekTo": "📤 Weekly recap → {{name}}",
@@ -3251,7 +3331,11 @@
       "portail": "Magic portal",
       "portail_desc": "A shimmering dimensional portal at the base of the tree. Where does it lead? A mystery…",
       "cristal": "Celestial crystal",
-      "cristal_desc": "A pure, luminous crystal at the very top of the tree. It captures starlight and illuminates the entire garden."
+      "cristal_desc": "A pure, luminous crystal at the very top of the tree. It captures starlight and illuminates the entire garden.",
+      "lanterneArgent": "Silver lantern",
+      "lanterneArgent_desc": "A lantern forged by a mysterious traveler. Its silver light never goes out.",
+      "masqueOmbre": "Shadow mask",
+      "masqueOmbre_desc": "A mask from the Shadow Carnival. It shimmers between light and darkness."
     },
     "hab": {
       "oiseau": "Songbird",
@@ -3273,7 +3357,11 @@
       "phoenix": "Immortal phoenix",
       "phoenix_desc": "An eternal firebird reborn from its ashes. Its warmth protects the tree even in winter.",
       "licorne": "Celestial unicorn",
-      "licorne_desc": "A luminous unicorn with a starlit coat. Its horn shines with a light that heals and inspires."
+      "licorne_desc": "A luminous unicorn with a starlit coat. Its horn shines with a light that heals and inspires.",
+      "espritEau": "Water spirit",
+      "espritEau_desc": "An aquatic spirit born from a hidden spring. It makes droplets dance around the tree.",
+      "ancienGardien": "Ancient guardian",
+      "ancienGardien_desc": "A millennial guardian awakened by an ancestral seed. It silently watches over the garden."
     },
     "shop": {
       "title": "Tree Shop",
@@ -3449,6 +3537,283 @@
         "choiceB": "Keep it sealed",
         "resultA": "The letter reads: 'Those who care for their tree care for the world.'",
         "resultB": "You keep the mystery intact. Maybe one day you'll open it…"
+      }
+    },
+    "saga": {
+      "progress": "Chapter {{current}}/{{total}}",
+      "cliffhanger": "To be continued…",
+      "cliffhanger_enfant": "To be continued… ✨",
+      "complete": "Saga complete!",
+      "complete_enfant": "SAGA COMPLETE!! 🎉",
+      "rewardTitle": "Exclusive reward",
+      "rewardTitle_enfant": "EXCLUSIVE REWARD!!",
+      "placeReward": "Place my reward",
+      "placeReward_enfant": "Place my reward! 🌳",
+      "teaser": "Next saga in {{days}}d",
+      "teaser_enfant": "Next adventure in {{days}}d!",
+      "teaserReady": "New saga available!",
+      "teaserReady_enfant": "NEW ADVENTURE!! 🎉",
+      "banner": "📖 {{title}} — Chapter {{chapter}}/{{total}}",
+      "sagaOnly": "Saga only",
+      "sagaOnly_enfant": "Saga reward!",
+      "traitLabel": {
+        "courage": "Courage",
+        "sagesse": "Wisdom",
+        "générosité": "Generosity",
+        "malice": "Cunning",
+        "curiosité": "Curiosity"
+      },
+
+      "voyageur_argent": {
+        "title": "The Silver Traveler",
+        "title_enfant": "The Mystery Traveler!!",
+        "desc": "A hooded traveler approaches your tree…",
+        "desc_enfant": "A super mysterious traveler is coming to your tree!!",
+        "ch1": {
+          "narrative": "A traveler in a silver cloak stops at the foot of your tree. He seems exhausted from a long journey and sets down his bag with a sigh.",
+          "narrative_enfant": "A man with a silver cape sits down by your tree. He looks super tired!",
+          "choiceA": "Invite him to rest",
+          "choiceB": "Ask where he's from",
+          "cliffhanger": "The traveler looks at you with a mysterious smile… 'Thank you. See you tomorrow.'",
+          "cliffhanger_enfant": "The traveler smiles… 'Thanks! See you tomorrow, I promise!'"
+        },
+        "ch2": {
+          "narrative": "The traveler is still here this morning. He pulls a shiny object from his satchel and shows it to you.",
+          "narrative_enfant": "The traveler is back! He pulls something shiny from his bag!",
+          "narrative_generosity": "The traveler made you warm tea to thank you for your hospitality. He then pulls a shiny object from his satchel.",
+          "narrative_curiosity": "The traveler is impressed by your curiosity. He pulls a shiny object from his satchel saying: 'You deserve to see this.'",
+          "choiceA": "Keep the secret",
+          "choiceB": "Share with the neighbors",
+          "cliffhanger": "The object pulses with a soft glow. The traveler whispers: 'Tomorrow, I'll show you what it does…'",
+          "cliffhanger_enfant": "The object glows brighter and brighter! 'Tomorrow, you'll see what it does…'"
+        },
+        "ch3": {
+          "narrative": "The traveler reveals the object is an ancient key. It opens a secret passage in the forest, but the path is guarded.",
+          "narrative_enfant": "It's a MAGIC KEY! It opens a secret passage in the forest! But there's a guardian…",
+          "narrative_sagesse": "Thanks to your wisdom, the traveler shares a second clue: the guardian can be reasoned with.",
+          "narrative_courage": "Your courage impresses the traveler. He tells you the guardian respects those who show no fear.",
+          "choiceA": "Face the guardian",
+          "choiceB": "Negotiate with the guardian",
+          "choiceC": "Offer a gift to the guardian",
+          "cliffhanger": "The guardian watches you… The final decision draws near.",
+          "cliffhanger_enfant": "The guardian is watching you… What's gonna happen tomorrow?!"
+        },
+        "ch4": {
+          "narrative": "The passage opens. The traveler lowers his hood, revealing his true face: he is an ancient forest guardian, come to test your heart.",
+          "narrative_enfant": "The passage opens! And the traveler takes off his hood — he's a magical forest guardian! He wanted to see if you have a good heart!",
+          "narrative_courage": "The guardian recognizes your courage. 'You never backed down. The forest needs protectors like you.'",
+          "narrative_sagesse": "The guardian admires your wisdom. 'You chose the path of reason. The forest is in good hands.'",
+          "narrative_generosity": "The guardian is moved by your generosity. 'You gave without counting. The forest will repay you tenfold.'",
+          "choiceA": "Walk with him into the forest",
+          "choiceB": "Guard the passage",
+          "cliffhanger": "The traveler smiles one last time.",
+          "cliffhanger_enfant": "The traveler gives you a BIG smile!"
+        },
+        "finale": {
+          "generosity": "The traveler hands you his silver lantern. 'Your generosity lit my path. May this lantern light yours.'",
+          "generosity_enfant": "The traveler gives you his AWESOME lantern! 'You were so kind, this lantern is for you!'",
+          "sagesse": "The traveler entrusts you with his silver lantern. 'Your wisdom surpasses your age. This light will always guide you.'",
+          "sagesse_enfant": "The traveler gives you his lantern! 'You're so smart, it's yours!'",
+          "courage": "The traveler offers you his silver lantern. 'Your courage commands respect. May this flame never go out.'",
+          "courage_enfant": "The traveler gives you his lantern! 'You were super brave, well done!!'",
+          "curiosity": "The traveler leaves you his silver lantern. 'Your curiosity is a treasure. This lantern will illuminate your discoveries.'",
+          "curiosity_enfant": "The traveler gives you his lantern! 'You're so curious, I love it! It's yours!'"
+        },
+        "title_generosity": "The Generous One",
+        "title_generosity_enfant": "The Super Generous!",
+        "title_sagesse": "The Wise One",
+        "title_sagesse_enfant": "The Super Wise!",
+        "title_courage": "The Brave One",
+        "title_courage_enfant": "The Super Brave!",
+        "title_curiosity": "The Explorer",
+        "title_curiosity_enfant": "The Super Explorer!"
+      },
+
+      "source_cachee": {
+        "title": "The Hidden Spring",
+        "title_enfant": "The Secret Spring!!",
+        "desc": "Your tree's roots discovered something underground…",
+        "desc_enfant": "Your tree's roots found SOMETHING underground!!",
+        "ch1": {
+          "narrative": "Digging near the roots, you hear a gurgling sound. There's water flowing somewhere below!",
+          "narrative_enfant": "You hear a weird noise under the roots… There's water down there! SO COOL!",
+          "choiceA": "Dig to find it",
+          "choiceB": "Listen and observe",
+          "cliffhanger": "The water seems to sing softly beneath your feet… Tomorrow, you'll know.",
+          "cliffhanger_enfant": "The water makes funny sounds under your feet… Tomorrow you'll find out what it is!"
+        },
+        "ch2": {
+          "narrative": "You've discovered a crystal-clear spring with strange powers. The plants around it grow twice as fast!",
+          "narrative_enfant": "You found a MAGIC spring! Plants around it grow SUPER fast!!",
+          "narrative_curiosity": "Your curiosity paid off! The spring reveals rainbow reflections when you look closely.",
+          "narrative_sagesse": "Thanks to your patient observation, you notice the spring pulses with the rhythm of the seasons.",
+          "choiceA": "Share the water with the garden",
+          "choiceB": "Keep the spring secret",
+          "choiceC": "Study its properties",
+          "cliffhanger": "The spring glows blue at dusk… it still hides secrets.",
+          "cliffhanger_enfant": "The spring glows blue at night! It still has secrets!!"
+        },
+        "ch3": {
+          "narrative": "A small luminous being emerges from the spring. It's a water spirit, guardian of this spring for centuries.",
+          "narrative_enfant": "A little water person comes out of the spring!! It's a WATER SPIRIT!!",
+          "narrative_generosity": "The water spirit thanks you for sharing its water. It trusts you.",
+          "narrative_curiosity": "The water spirit is impressed by your discoveries. It wants to show you its world.",
+          "choiceA": "Welcome it near the tree",
+          "choiceB": "Protect it in the spring",
+          "cliffhanger": "The water spirit dances joyfully.",
+          "cliffhanger_enfant": "The water spirit dances everywhere, it's so beautiful!"
+        },
+        "finale": {
+          "generosity": "The water spirit decides to stay near your tree forever. 'You shared the water of life. I'll share my magic with you.'",
+          "generosity_enfant": "The water spirit wants to stay with you! 'You shared the water, I'll share my magic!'",
+          "curiosity": "The water spirit is fascinated by your thirst for knowledge. 'An explorer like you deserves a companion. I'm staying!'",
+          "curiosity_enfant": "The water spirit loves you! 'You're so curious, I'm staying with you!'",
+          "sagesse": "The water spirit admires your patience. 'You understood the rhythm of water. We shall be friends.'",
+          "sagesse_enfant": "The water spirit says: 'You're so patient, I like you! I'm staying!'"
+        },
+        "title_generosity": "Spring Protector",
+        "title_generosity_enfant": "Water Friend!",
+        "title_curiosity": "Water Seeker",
+        "title_curiosity_enfant": "Water Seeker!",
+        "title_sagesse": "Water Guardian",
+        "title_sagesse_enfant": "Water Guardian!"
+      },
+
+      "carnaval_ombres": {
+        "title": "The Shadow Carnival",
+        "title_enfant": "The Shadow Carnival!!",
+        "desc": "When night falls, silhouettes dance around your tree…",
+        "desc_enfant": "At night, shadows DANCE around your tree!! So mysterious!",
+        "ch1": {
+          "narrative": "At midnight, shadow creatures appear around your tree. They hang lanterns and music fills the air. It's a carnival!",
+          "narrative_enfant": "At midnight, shadow creatures show up! They put up lanterns and music! It's a CARNIVAL!!",
+          "choiceA": "Join the party",
+          "choiceB": "Watch from afar",
+          "cliffhanger": "The shadow queen has noticed you. She slowly approaches…",
+          "cliffhanger_enfant": "The shadow queen saw you! She's coming your way…"
+        },
+        "ch2": {
+          "narrative": "The shadow queen proposes a challenge: complete three carnival trials to win a legendary prize.",
+          "narrative_enfant": "The shadow queen says: 'Wanna play my 3 trials? There's a LEGENDARY PRIZE to win!'",
+          "narrative_courage": "The shadow queen bows to you with respect. 'A brave heart! My trials shall be worthy of you.'",
+          "narrative_sagesse": "The shadow queen observes you with interest. 'A sharp mind! My trials shall be subtle.'",
+          "choiceA": "Wear a shadow mask",
+          "choiceB": "Solve a riddle",
+          "choiceC": "Dance with the shadows",
+          "cliffhanger": "First trial passed. Two more to go… The carnival is in full swing.",
+          "cliffhanger_enfant": "First trial PASSED!! Two more to go… The carnival continues!!"
+        },
+        "ch3": {
+          "narrative": "The second trial takes you to the heart of the carnival. Shadows swirl and the music grows intense.",
+          "narrative_enfant": "Second trial! Shadows are spinning and the music is SO LOUD!!",
+          "narrative_malice": "The shadows appreciate your cunning. They show you secret shortcuts through the carnival.",
+          "narrative_courage": "The shadows admire your boldness. The crowd parts to let you through.",
+          "choiceA": "Walk through the flame dance",
+          "choiceB": "Sing with the shadows",
+          "cliffhanger": "The final trial will be the hardest. The queen is preparing something…",
+          "cliffhanger_enfant": "The final trial is coming!! The queen is preparing something BIG…"
+        },
+        "ch4": {
+          "narrative": "The final trial: the shadow queen presents a mask. 'Whoever wears this mask sees the truth. Are you ready?'",
+          "narrative_enfant": "The final trial!! The queen shows you a mask: 'Whoever puts it on sees the TRUTH! Are you ready?'",
+          "narrative_courage": "The queen hands you the mask with admiration. 'You fear nothing. Show me you're worthy of truth.'",
+          "narrative_sagesse": "The queen presents the mask with respect. 'Your wisdom prepares you to see what others cannot.'",
+          "narrative_malice": "The queen laughs softly. 'You're as clever as my shadows. This mask was made for you.'",
+          "choiceA": "Put on the mask at sunrise",
+          "choiceB": "Put on the mask by moonlight",
+          "cliffhanger": "The mask reveals an invisible world…",
+          "cliffhanger_enfant": "The mask shows an INVISIBLE WORLD!!"
+        },
+        "finale": {
+          "courage": "The shadow mask chooses you. The queen declares: 'You have the courage to face the truth. This mask is now yours.'",
+          "courage_enfant": "The mask picks you!! The queen says: 'You're SO brave, the mask is yours!'",
+          "sagesse": "The shadow mask recognizes your wisdom. The queen smiles: 'You understand the balance of light and shadow. Keep it well.'",
+          "sagesse_enfant": "The mask knows you're super wise! The queen: 'You understand everything, it's yours!'",
+          "malice": "The shadow mask resonates with your cunning. The queen laughs: 'A worthy carnival heir! This mask belongs to you.'",
+          "malice_enfant": "The mask loves your cunning! The queen laughs: 'You're a true carnival champion! It's yours!'"
+        },
+        "title_courage": "Carnival Brave",
+        "title_courage_enfant": "The Super Brave!",
+        "title_sagesse": "Shadow Sage",
+        "title_sagesse_enfant": "Shadow Sage!",
+        "title_malice": "Carnival King",
+        "title_malice_enfant": "Carnival King!"
+      },
+
+      "graine_anciens": {
+        "title": "The Seed of the Ancients",
+        "title_enfant": "The Magic Seed!!",
+        "desc": "A millennial seed was discovered beneath your tree's roots…",
+        "desc_enfant": "A SUPER ANCIENT SEED was found under the roots!!",
+        "ch1": {
+          "narrative": "While tending the soil around your tree, you discover an extraordinary seed. It's golden and vibrates gently, like a beating heart.",
+          "narrative_enfant": "You find a GOLDEN seed underground! It vibrates like a tiny heart! SO WEIRD!",
+          "choiceA": "Plant it carefully",
+          "choiceB": "Examine it closely",
+          "cliffhanger": "The seed pulses with warm light in your hand… Something is about to happen.",
+          "cliffhanger_enfant": "The seed glows in your hand! Something is gonna HAPPEN!!"
+        },
+        "ch2": {
+          "narrative": "The seed sprouted overnight. A golden shoot emerges, growing before your eyes!",
+          "narrative_enfant": "The seed SPROUTED overnight!! A GOLDEN shoot is growing super fast!!",
+          "narrative_sagesse": "Your patience was rewarded. The shoot is vigorous and radiates a soothing light.",
+          "narrative_curiosity": "Your observations revealed that the shoot reacts to sounds. It dances when you talk to it!",
+          "choiceA": "Water it attentively",
+          "choiceB": "Research ancient books",
+          "cliffhanger": "The shoot grows and luminous runes appear on its leaves…",
+          "cliffhanger_enfant": "The shoot grows and GLOWING SYMBOLS appear on the leaves!!"
+        },
+        "ch3": {
+          "narrative": "The runes on the leaves tell an ancient story. This seed is the last of a mythical tree that once protected the entire forest.",
+          "narrative_enfant": "The symbols on the leaves tell a story! This seed comes from a LEGENDARY TREE that protected the whole forest!",
+          "narrative_generosity": "The plant seems to respond to your generosity. Its roots intertwine with your tree's, strengthening it.",
+          "narrative_sagesse": "Thanks to your research, you understand the plant needs an emotional bond to fully flourish.",
+          "choiceA": "Watch over it at night",
+          "choiceB": "Let it bask in the sun",
+          "choiceC": "Sing it a lullaby",
+          "cliffhanger": "The plant begins to glow with intense golden light. It's transforming…",
+          "cliffhanger_enfant": "The plant glows brighter and brighter!! It's TRANSFORMING!!"
+        },
+        "ch4": {
+          "narrative": "The plant takes a humanoid form. An ancient, kind face appears in the foliage. It's the Ancient Guardian, spirit of the mythical tree.",
+          "narrative_enfant": "The plant becomes a PERSON!! A face appears in the leaves! It's the Ancient Guardian, spirit of the old legendary tree!!",
+          "narrative_courage": "The Guardian opens his eyes and tells you: 'Your courage hastened my awakening. You are worthy.'",
+          "narrative_sagesse": "The Guardian awakens slowly and whispers: 'Your wisdom nourished me. You are ready for truth.'",
+          "narrative_curiosity": "The Guardian looks at you with curiosity: 'You remind me of my youth. Always seeking, never retreating.'",
+          "choiceA": "Offer him a home",
+          "choiceB": "Ask for his secrets",
+          "cliffhanger": "The Ancient Guardian gazes at your tree with an unreadable expression…",
+          "cliffhanger_enfant": "The Guardian looks at your tree with SUPER weird eyes…"
+        },
+        "ch5": {
+          "narrative": "The Ancient Guardian places his hand on your tree. The roots of both trees merge. He proposes a pact: to watch over the garden together for eternity.",
+          "narrative_enfant": "The Guardian touches your tree! The roots MERGE! He wants to be your friend FOREVER and protect the garden with you!",
+          "narrative_generosity": "The Guardian is moved by everything you've given. 'The roots of generosity run deepest.'",
+          "narrative_curiosity": "The Guardian laughs softly. 'Your curiosity awakened memories I thought were lost.'",
+          "narrative_sagesse": "The Guardian nods. 'Your wisdom transcends the ages. Together, we shall be invincible.'",
+          "choiceA": "Accept the pact",
+          "choiceB": "Set him free",
+          "cliffhanger": "The Guardian smiles for the first time in millennia.",
+          "cliffhanger_enfant": "The Guardian smiles! It's the first time in FOREVER!"
+        },
+        "finale": {
+          "sagesse": "The Ancient Guardian settles at the foot of your tree. 'Your wisdom awakened what slept. I shall be your guide and protector, as in ages past.'",
+          "sagesse_enfant": "The Guardian moves in! 'You're so wise, I'm staying to protect you!'",
+          "generosity": "The Ancient Guardian roots himself near your tree with a radiant smile. 'Your generosity revived an ancient world. I watch over you now.'",
+          "generosity_enfant": "The Guardian moves in! 'You're so kind, I'm staying FOREVER!'",
+          "curiosity": "The Ancient Guardian fully awakens. 'Your curiosity reminded me why I loved this world. Let's explore it together.'",
+          "curiosity_enfant": "The Guardian wakes up! 'You're so curious, I love it! Let's explore together!'",
+          "courage": "The Ancient Guardian stands proudly. 'Your courage reignited my flame. I shall protect this tree as you have.'",
+          "courage_enfant": "The Guardian stands up! 'You're so brave! Let's protect the garden together!'"
+        },
+        "title_sagesse": "Sage of the Ancients",
+        "title_sagesse_enfant": "Guardian's Friend!",
+        "title_generosity": "Generous Heart",
+        "title_generosity_enfant": "The Super Generous!",
+        "title_curiosity": "The Awakener",
+        "title_curiosity_enfant": "The Awakener!",
+        "title_courage": "The Protector",
+        "title_courage_enfant": "The Super Protector!"
       }
     }
   }

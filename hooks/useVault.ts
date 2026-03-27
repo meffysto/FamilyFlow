@@ -255,6 +255,7 @@ export interface VaultState {
   completeSecretMission: (missionId: string) => Promise<void>;
   validateSecretMission: (missionId: string) => Promise<void>;
   completeAdventure: (profileId: string, points: number, adventureNote: string) => Promise<void>;
+  completeSagaChapter: (profileId: string, points: number, sagaNote: string, rewardItem?: { id: string; type: 'decoration' | 'inhabitant' }) => Promise<void>;
 }
 
 // Static task files (non-enfant)
@@ -3135,6 +3136,65 @@ export function useVaultInternal(): VaultState {
     await vaultRef.current.writeFile(SECRET_MISSIONS_FILE, serialized);
   }, [secretMissions, profiles]);
 
+  // ─── Saga narratives — compléter un chapitre ou une saga ──────────────────
+
+  const completeSagaChapter = useCallback(async (
+    profileId: string,
+    points: number,
+    sagaNote: string,
+    rewardItem?: { id: string; type: 'decoration' | 'inhabitant' },
+  ) => {
+    if (!vaultRef.current) return;
+    try {
+      const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
+      const gami = parseGamification(gamiContent);
+      const familleContent = await vaultRef.current.readFile(FAMILLE_FILE);
+      const currentProfiles = mergeProfiles(familleContent, gamiContent);
+      const profile = currentProfiles.find((p) => p.id === profileId);
+      if (!profile) return;
+
+      const { profile: updated, entry } = addPoints(profile, points, sagaNote);
+      const newGami = {
+        ...gami,
+        profiles: gami.profiles.map((p) => p.id === profileId ? { ...p, points: updated.points, level: updated.level } : p),
+        history: [...gami.history, entry],
+      };
+
+      // Si récompense item (saga terminée), l'ajouter au profil (réutilise familleContent)
+      if (rewardItem) {
+        const fieldKey = rewardItem.type === 'decoration' ? 'mascot_decorations' : 'mascot_inhabitants';
+        const lines = familleContent.split('\n');
+        let inSection = false;
+        let fieldLine = -1;
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].match(new RegExp(`^###?\\s+.*${profileId}`, 'i')) || lines[i].match(new RegExp(`^id:\\s*${profileId}`, 'i'))) {
+            inSection = true;
+          } else if (inSection && lines[i].match(/^###?\s+/)) {
+            break;
+          }
+          if (inSection && lines[i].startsWith(`${fieldKey}:`)) {
+            fieldLine = i;
+            break;
+          }
+        }
+        if (fieldLine >= 0) {
+          const current = lines[fieldLine].replace(`${fieldKey}:`, '').trim();
+          const items = current ? current.split(',').map(s => s.trim()) : [];
+          if (!items.includes(rewardItem.id)) {
+            items.push(rewardItem.id);
+            lines[fieldLine] = `${fieldKey}: ${items.join(', ')}`;
+            await vaultRef.current.writeFile(FAMILLE_FILE, lines.join('\n'));
+          }
+        }
+      }
+
+      setGamiData(newGami);
+      await vaultRef.current.writeFile(GAMI_FILE, serializeGamification(newGami));
+    } catch (e) {
+      if (__DEV__) console.warn('[completeSagaChapter]', e);
+    }
+  }, []);
+
   // ─── Aventure quotidienne ─────────────────────────────────────────────────
 
   const completeAdventure = useCallback(async (profileId: string, points: number, adventureNote: string) => {
@@ -3286,6 +3346,7 @@ export function useVaultInternal(): VaultState {
     completeSecretMission,
     validateSecretMission,
     completeAdventure,
+    completeSagaChapter,
   }), [
     // State values (déclenchent un re-render quand ils changent)
     vaultPath, isLoading, error, tasks, courses, stock, meals,
@@ -3313,6 +3374,6 @@ export function useVaultInternal(): VaultState {
     addAnniversary, updateAnniversary, removeAnniversary, importAnniversaries,
     addNote, updateNote, deleteNote, addQuote, deleteQuote, addMood, deleteMood, unlockSkill,
     addSecretMission, completeSecretMission, validateSecretMission,
-    completeAdventure,
+    completeAdventure, completeSagaChapter,
   ]);
 }
