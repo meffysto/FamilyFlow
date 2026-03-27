@@ -1437,6 +1437,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing['2xl'],
+    minHeight: 56,
   },
   recapCheckIcon: {
     width: 44,
