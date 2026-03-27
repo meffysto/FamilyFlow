@@ -39,6 +39,7 @@ import { useTranslation } from 'react-i18next';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../constants/typography';
 import { Shadows } from '../constants/shadows';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const PARENT_AVATARS = ['👨', '👩', '👨‍💻', '👩‍💻', '🧔', '👱‍♀️', '🧑', '👤'];
 const CHILD_AVATARS = ['👶', '🧒', '👦', '👧', '🍼', '🐣', '🎒', '👼'];
@@ -48,6 +49,19 @@ const TOTAL_STEPS = 9;
 const FIRST_SETUP_STEP = 5;
 
 const MASCOT_EMOJIS = ['🌱', '🌳', '✨'];
+
+/** Gradient positions par étape — le gradient "descend" au fil de l'onboarding */
+const GRADIENT_CONFIG: Record<number, { start: { x: number; y: number }; end: { x: number; y: number }; opacity: number }> = {
+  1: { start: { x: 0.5, y: 0 }, end: { x: 0.5, y: 0.65 }, opacity: 1 },      // Welcome: fort en haut
+  2: { start: { x: 0.3, y: 0 }, end: { x: 0.7, y: 0.55 }, opacity: 0.8 },    // Pain points: décale
+  3: { start: { x: 0.5, y: 0.1 }, end: { x: 0.5, y: 0.6 }, opacity: 0.6 },   // Solution: plus subtil
+  4: { start: { x: 0.5, y: 0.15 }, end: { x: 0.5, y: 0.55 }, opacity: 0.5 }, // Mascotte
+  5: { start: { x: 0.5, y: 0.2 }, end: { x: 0.5, y: 0.5 }, opacity: 0.25 },  // Parents
+  6: { start: { x: 0.5, y: 0.2 }, end: { x: 0.5, y: 0.5 }, opacity: 0.25 },  // Enfants
+  7: { start: { x: 0.5, y: 0.2 }, end: { x: 0.5, y: 0.5 }, opacity: 0.2 },   // Vault
+  8: { start: { x: 0.5, y: 0.2 }, end: { x: 0.5, y: 0.5 }, opacity: 0.2 },   // Templates
+  9: { start: { x: 0.5, y: 0.3 }, end: { x: 0.5, y: 0.7 }, opacity: 0.6 },   // Recap: revient
+};
 
 /** Pain points interactifs — mapping vers template pack IDs */
 const PAIN_POINTS = [
@@ -450,56 +464,60 @@ export default function SetupScreen() {
     switch (step) {
       case 1: {
         const ORB_EMOJIS = ['🍽️', '🧹', '🛒', '💊', '🎒', '💰'];
-        const ORB_ANGLES = [270, 330, 30, 150, 210, 90]; // degrés
+        const ORB_ANGLES = [270, 330, 30, 150, 210, 90];
         const ORB_RADIUS = 78;
         const ORB_SIZE = 200;
-        const EMOJI_OFFSET = 16; // demi-taille emoji pour centrer
+        const EMOJI_OFFSET = 16;
         const CENTER = ORB_SIZE / 2 - EMOJI_OFFSET;
         return (
           <View style={s.welcomeContent}>
-            <View style={s.welcomeSpacer} />
-            <Text style={s.logo}>🏠</Text>
-            <Text style={[s.appName, { color: primary }]}>Family Flow</Text>
-            <Text style={ds.tagline}>{t('setup.tagline')}</Text>
-            <View style={s.welcomeSpacer} />
-
-            {/* Orbe : graine + emojis en cercle */}
-            <View style={s.orbContainer}>
-              <Animated.Text
-                entering={FadeInDown.delay(400).duration(500).springify()}
-                style={s.orbSeed}
-              >
-                🌱
-              </Animated.Text>
-              {ORB_EMOJIS.map((emoji, i) => {
-                const angle = (ORB_ANGLES[i] * Math.PI) / 180;
-                const left = CENTER + Math.cos(angle) * ORB_RADIUS;
-                const top = CENTER + Math.sin(angle) * ORB_RADIUS;
-                return (
-                  <Animated.Text
-                    key={i}
-                    entering={FadeInUp.delay(600 + i * 100).duration(400).springify()}
-                    style={[s.orbEmoji, { left, top }]}
-                  >
-                    {emoji}
-                  </Animated.Text>
-                );
-              })}
+            {/* Zone haute — orbe dans le gradient */}
+            <View style={s.welcomeTopZone}>
+              <View style={s.orbContainer}>
+                <Animated.Text
+                  entering={FadeInDown.delay(400).duration(500).springify()}
+                  style={s.orbSeed}
+                >
+                  🌱
+                </Animated.Text>
+                {ORB_EMOJIS.map((emoji, i) => {
+                  const angle = (ORB_ANGLES[i] * Math.PI) / 180;
+                  const left = CENTER + Math.cos(angle) * ORB_RADIUS;
+                  const top = CENTER + Math.sin(angle) * ORB_RADIUS;
+                  return (
+                    <Animated.Text
+                      key={i}
+                      entering={FadeInUp.delay(600 + i * 100).duration(400).springify()}
+                      style={[s.orbEmoji, { left, top }]}
+                    >
+                      {emoji}
+                    </Animated.Text>
+                  );
+                })}
+              </View>
             </View>
 
-            <View style={s.welcomeSpacer} />
-            <Animated.Text
-              entering={FadeInUp.delay(1200).duration(500)}
-              style={[s.welcomeHook, { color: colors.text }]}
+            {/* Zone basse — branding + hook, aligné à gauche */}
+            <Animated.View
+              entering={FadeInUp.delay(800).duration(500)}
+              style={s.welcomeBottomZone}
             >
-              {t('setup.welcome.hook')}
-            </Animated.Text>
-            <Animated.Text
-              entering={FadeInUp.delay(1500).duration(500)}
-              style={[s.welcomePromise, { color: primary }]}
-            >
-              {t('setup.welcome.promise')}
-            </Animated.Text>
+              <Text style={s.welcomeIcon}>🏠</Text>
+              <Text style={[s.welcomeAppName, { color: primary }]}>Family Flow</Text>
+              <Text style={[s.welcomeTagline, { color: colors.textMuted }]}>{t('setup.tagline')}</Text>
+              <Animated.Text
+                entering={FadeInUp.delay(1100).duration(500)}
+                style={[s.welcomeHook, { color: colors.text }]}
+              >
+                {t('setup.welcome.hook')}
+              </Animated.Text>
+              <Animated.Text
+                entering={FadeInUp.delay(1400).duration(500)}
+                style={[s.welcomePromise, { color: primary }]}
+              >
+                {t('setup.welcome.promise')}
+              </Animated.Text>
+            </Animated.View>
           </View>
         );
       }
@@ -712,78 +730,82 @@ export default function SetupScreen() {
         );
       }
 
-      case 9:
+      case 9: {
+        const familySummary = `${parents.length} parent${parents.length > 1 ? 's' : ''}`
+          + (children.length > 0 ? `, ${children.length} enfant${children.length > 1 ? 's' : ''}` : '');
+        const templateNames = TEMPLATE_PACKS
+          .filter((p) => selectedPacks.has(p.id))
+          .map((p) => t(`setup.templatePacks.${p.id}.name`, { defaultValue: p.name }))
+          .join(', ');
+        const checkItems = [
+          { emoji: '👨‍👩‍👧‍👦', label: t('setup.recap.parents'), sub: familySummary },
+          { emoji: '📁', label: t('setup.recap.vault'), sub: undefined },
+          ...(selectedPacks.size > 0 ? [{ emoji: '📦', label: t('setup.recap.models'), sub: templateNames }] : []),
+        ];
         return (
-          <View style={s.stepContent}>
-            <Text style={ds.stepTitle}>✨ {t('setup.recap.title')}</Text>
-            <Text style={ds.stepSubtitle}>{t('setup.recap.subtitle')}</Text>
+          <View style={s.recapContent}>
+            <View style={s.welcomeSpacer} />
 
-            <View style={ds.recapCard}>
-              <Text style={ds.recapSection}>{t('setup.recap.parents')}</Text>
-              <View style={s.recapProfiles}>
-                {parents.map((p, i) => (
-                  <View key={i} style={s.recapProfile}>
-                    <Text style={s.recapAvatar}>{p.avatar}</Text>
-                    <Text style={ds.recapName}>{p.name}</Text>
+            {/* Checklist animée */}
+            <View style={s.recapChecklist}>
+              {checkItems.map((item, i) => (
+                <Animated.View
+                  key={i}
+                  entering={FadeInUp.delay(200 + i * 300).duration(400).springify()}
+                  style={s.recapCheckItem}
+                >
+                  <View style={[s.recapCheckIcon, { backgroundColor: tint }]}>
+                    <Text style={s.recapCheckEmoji}>{item.emoji}</Text>
                   </View>
-                ))}
-              </View>
-
-              {children.length > 0 && (
-                <>
-                  <Text style={ds.recapSection}>{t('setup.recap.children')}</Text>
-                  <View style={s.recapProfiles}>
-                    {children.map((c, i) => (
-                      <View key={i} style={s.recapProfile}>
-                        <Text style={s.recapAvatar}>{c.avatar}</Text>
-                        <Text style={ds.recapName}>{c.name}</Text>
-                        {c.birthdate ? (
-                          <Text style={ds.recapDate}>{c.birthdate}</Text>
-                        ) : null}
-                      </View>
-                    ))}
+                  <View style={s.recapCheckTextCol}>
+                    <Text style={[s.recapCheckLabel, { color: colors.textMuted }]}>{item.label}</Text>
+                    {item.sub ? (
+                      <Text style={[s.recapCheckSub, { color: colors.textFaint }]}>{item.sub}</Text>
+                    ) : null}
                   </View>
-                </>
-              )}
-
-              <Text style={ds.recapSection}>{t('setup.recap.vault')}</Text>
-              <Text style={ds.recapPath}>{vaultPath}</Text>
-
-              {selectedPacks.size > 0 && (
-                <>
-                  <Text style={ds.recapSection}>{t('setup.recap.models')}</Text>
-                  <Text style={ds.recapTemplates}>
-                    {TEMPLATE_PACKS
-                      .filter((p) => selectedPacks.has(p.id))
-                      .map((p) => `${p.emoji} ${t(`setup.templatePacks.${p.id}.name`, { defaultValue: p.name })}`)
-                      .join('\n')}
-                  </Text>
-                </>
-              )}
+                </Animated.View>
+              ))}
             </View>
 
-            <View style={[s.createInfo, { backgroundColor: tint }]}>
-              <Text style={ds.createInfoTitle}>{t('setup.recap.filesTitle')}</Text>
-              <Text style={ds.createInfoText}>
-                {t('setup.recap.filesDesc')}
-                {selectedPacks.size > 0 ? t('setup.recap.modelCount', { count: selectedPacks.size }) : ''}
+            <View style={s.welcomeSpacer} />
+
+            {/* Titre + sous-titre en bas */}
+            <Animated.View
+              entering={FadeInUp.delay(200 + checkItems.length * 300).duration(500)}
+              style={s.recapBottomZone}
+            >
+              <Text style={[s.recapTitle, { color: colors.text }]}>
+                {t('setup.recap.readyTitle')}
               </Text>
-            </View>
+              <Text style={[s.recapSub, { color: colors.textMuted }]}>
+                {t('setup.recap.readySub')}
+              </Text>
+            </Animated.View>
           </View>
         );
+      }
 
       default:
         return null;
     }
   };
 
+  const gradientCfg = GRADIENT_CONFIG[step] || GRADIENT_CONFIG[1];
+
   return (
     <SafeAreaView style={ds.safe}>
+      {/* Gradient d'arrière-plan qui bouge selon l'étape */}
+      <LinearGradient
+        colors={[`${tint}`, `${primary}22`, 'transparent']}
+        start={gradientCfg.start}
+        end={gradientCfg.end}
+        style={[s.gradientBg, { opacity: gradientCfg.opacity }]}
+      />
       <KeyboardAvoidingView
         style={s.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        {/* Progress bar — masquée pendant l'intro features, montre uniquement les étapes de config */}
+        {/* Progress bar — masquée pendant l'intro, montre uniquement les étapes de config */}
         {step >= FIRST_SETUP_STEP ? (
           <View style={s.progressContainer}>
             <View style={ds.progressBar}>
@@ -1136,6 +1158,10 @@ const s = StyleSheet.create({
   flex: { flex: 1 },
   scroll: { flex: 1 },
   scrollContent: { padding: Spacing['4xl'], paddingBottom: Spacing['3xl'] },
+  gradientBg: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
+  },
 
   // Progress
   progressContainer: {
@@ -1269,22 +1295,36 @@ const s = StyleSheet.create({
   },
 
   // Step 1 — Welcome
-  welcomeContent: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.md },
+  welcomeContent: { flex: 1 },
   welcomeSpacer: { flex: 1 },
-  logo: { fontSize: 64, textAlign: 'center' },
-  appName: { fontSize: FontSize.hero, fontWeight: FontWeight.heavy, textAlign: 'center' },
+  welcomeTopZone: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  welcomeBottomZone: {
+    paddingHorizontal: Spacing['4xl'],
+    paddingBottom: Spacing.md,
+    gap: Spacing.xs,
+  },
+  welcomeIcon: { fontSize: 36 },
+  welcomeAppName: {
+    fontSize: 28,
+    fontWeight: FontWeight.heavy,
+    letterSpacing: -0.5,
+  },
+  welcomeTagline: {
+    fontSize: FontSize.body,
+    marginBottom: Spacing.lg,
+  },
   welcomeHook: {
     fontSize: FontSize.lg,
-    textAlign: 'center',
     lineHeight: LineHeight.loose,
-    paddingHorizontal: Spacing['3xl'],
   },
   welcomePromise: {
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
-    textAlign: 'center',
-    paddingHorizontal: Spacing['3xl'],
-    marginBottom: Spacing['4xl'],
+    marginBottom: Spacing.md,
   },
   orbContainer: {
     width: 200,
@@ -1319,16 +1359,46 @@ const s = StyleSheet.create({
   selectAllText: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold },
   templateNav: { flexDirection: 'row', gap: Spacing.xl },
 
-  // Recap
-  recapProfiles: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing['2xl'] },
-  recapProfile: { alignItems: 'center', gap: Spacing.xs },
-  recapAvatar: { fontSize: 40 },
-
-  // Create info
-  createInfo: {
+  // Recap — checklist style
+  recapContent: { flex: 1 },
+  recapChecklist: {
+    gap: Spacing['3xl'],
+    paddingHorizontal: Spacing.md,
+  },
+  recapCheckItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing['2xl'],
+  },
+  recapCheckIcon: {
+    width: 44,
+    height: 44,
     borderRadius: Radius.lg,
-    padding: Spacing['2xl'],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recapCheckEmoji: { fontSize: 20 },
+  recapCheckTextCol: { flex: 1, gap: 2 },
+  recapCheckLabel: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+  },
+  recapCheckSub: {
+    fontSize: FontSize.label,
+  },
+  recapBottomZone: {
+    paddingHorizontal: Spacing.md,
     gap: Spacing.sm,
+  },
+  recapTitle: {
+    fontSize: FontSize.display,
+    fontWeight: FontWeight.heavy,
+    letterSpacing: -0.3,
+  },
+  recapSub: {
+    fontSize: FontSize.body,
+    lineHeight: LineHeight.normal,
+    marginBottom: Spacing.lg,
   },
 
   // Bottom nav
