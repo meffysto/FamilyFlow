@@ -23,6 +23,12 @@ export interface CouchesDetail {
   mixte: number;
 }
 
+export interface MedicationEntry {
+  heure: string;
+  medicament: string;
+  dose: string;
+}
+
 export interface JournalStats {
   biberons: number;
   totalMl: number;
@@ -33,6 +39,7 @@ export interface JournalStats {
   sommeilTotal: string;
   sommeilNuit: string;
   sommeilJour: string;
+  medications: MedicationEntry[];
 }
 
 const EMPTY_COUCHES: CouchesDetail = { total: 0, pipi: 0, selle: 0, mixte: 0 };
@@ -42,6 +49,7 @@ const EMPTY_STATS: JournalStats = {
   totalMl: 0,
   tetees: 0,
   couches: 0,
+  medications: [],
   couchesDetail: { ...EMPTY_COUCHES },
   siestes: [],
   sommeilTotal: '',
@@ -147,7 +155,7 @@ export function parseJournalStats(content: string): JournalStats {
   if (!content) return { ...EMPTY_STATS };
 
   const lines = content.split('\n');
-  const stats: JournalStats = { ...EMPTY_STATS, couchesDetail: { ...EMPTY_COUCHES }, siestes: [] };
+  const stats: JournalStats = { ...EMPTY_STATS, couchesDetail: { ...EMPTY_COUCHES }, siestes: [], medications: [] };
 
   let currentSection = '';
 
@@ -206,6 +214,15 @@ export function parseJournalStats(content: string): JournalStats {
       } else {
         // Type non reconnu → compter comme total seulement
         stats.couchesDetail.pipi++;
+      }
+    }
+
+    // Médicaments section
+    if (currentSection.includes('dicament') || currentSection.includes('soins')) {
+      const [heure, medicament, dose] = cells;
+      if (!heure) continue;
+      if (medicament) {
+        stats.medications.push({ heure, medicament: medicament.trim(), dose: (dose || '').trim() });
       }
     }
 

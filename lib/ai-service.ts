@@ -166,6 +166,9 @@ function buildVaultSummary(ctx: VaultContext): VaultSummary {
       if (s.sommeilTotal) {
         parts.push(`sommeil ${s.sommeilTotal} (nuit ${s.sommeilNuit || '—'}, jour ${s.sommeilJour || '—'})`);
       }
+      if (s.medications && s.medications.length > 0) {
+        parts.push(`médicaments: ${s.medications.map(m => `${m.medicament}${m.dose ? ` (${m.dose})` : ''}`).join(', ')}`);
+      }
       if (parts.length > 0) {
         journalLines.push(`${entry.date} ${entry.enfant} : ${parts.join(' | ')}`);
       }
