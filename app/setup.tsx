@@ -778,16 +778,16 @@ export default function SetupScreen() {
                     key={i}
                     style={[s.recapCheckItem, { opacity: isVisible ? 1 : 0 }]}
                   >
-                    <View style={[s.recapCheckIcon, { borderWidth: 2 }, isDone ? { backgroundColor: tint, borderColor: tint } : isActive ? { borderColor: primary, backgroundColor: 'transparent' } : { borderColor: 'transparent' }]}>
+                    <View style={[s.recapCheckIcon, { borderWidth: 2 }, isDone ? { backgroundColor: colors.successBg, borderColor: colors.successBg } : isActive ? { borderColor: primary, backgroundColor: 'transparent' } : { borderColor: 'transparent' }]}>
                       {isDone ? (
-                        <Text style={s.recapCheckEmoji}>{item.emoji}</Text>
+                        <Text style={s.recapCheckDone}>✓</Text>
                       ) : (
                         <ActivityIndicator size="small" color={primary} />
                       )}
                     </View>
                     <View style={s.recapCheckTextCol}>
-                      <Text style={[s.recapCheckLabel, isDone ? { color: colors.textMuted } : { color: colors.text, fontWeight: FontWeight.bold }]}>
-                        {item.label}
+                      <Text style={[s.recapCheckLabel, isDone ? { color: colors.text } : { color: colors.text, fontWeight: FontWeight.bold }]}>
+                        {isDone ? `${item.emoji} ${item.label}` : item.label}
                       </Text>
                       {isDone && item.sub ? (
                         <Text style={[s.recapCheckSub, { color: colors.textFaint }]}>{item.sub}</Text>
@@ -1447,6 +1447,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   recapCheckEmoji: { fontSize: 20 },
+  recapCheckDone: { fontSize: 18, fontWeight: FontWeight.bold, color: '#16a34a' },
   recapCheckTextCol: { flex: 1, gap: 2 },
   recapCheckLabel: {
     fontSize: FontSize.body,
