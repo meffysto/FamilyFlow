@@ -166,6 +166,12 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
   // ── Mode illustration aquarelle (remplace le SVG procédural) ──
   if (illustration) {
     const imgHeight = size * (VIEWBOX_H / VIEWBOX_W);
+    // L'image occupe 75% du viewport, positionnée pour que la base touche le sol
+    const imgScale = 0.75;
+    const scaledW = size * imgScale;
+    const scaledH = imgHeight * imgScale;
+    const groundRatio = GROUND_Y / VIEWBOX_H; // ~0.83
+    const topOffset = (imgHeight * groundRatio) - scaledH;
     return (
       <View style={[styles.container, { width: size, height: imgHeight }]}>
         {animate && (
@@ -174,10 +180,10 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
         {visual.hasParticles && animate && (
           <FloatingParticles color={sp.particle} count={visual.hasAura ? 12 : 6} size={size} />
         )}
-        <Animated.View style={[styles.svgWrap, treeAnimStyle]}>
+        <Animated.View style={[styles.svgWrap, treeAnimStyle, { position: 'absolute', top: topOffset, left: (size - scaledW) / 2 }]}>
           <Image
             source={illustration}
-            style={{ width: size, height: imgHeight, resizeMode: 'contain' }}
+            style={{ width: scaledW, height: scaledH, resizeMode: 'contain' }}
           />
         </Animated.View>
       </View>
