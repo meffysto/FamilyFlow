@@ -186,6 +186,21 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
             style={{ width: scaledW, height: scaledH, resizeMode: 'contain' }}
           />
         </Animated.View>
+        {/* Overlay SVG pour décorations/habitants/items placés/slots */}
+        {(decorations.length > 0 || inhabitants.length > 0 || Object.keys(placements).length > 0 || placingItem) && (
+          <View style={[StyleSheet.absoluteFill, { zIndex: 2 }]} pointerEvents="box-none">
+            <Svg width={size} height={imgHeight} viewBox={`0 0 ${VIEWBOX_W} ${VIEWBOX_H}`}>
+              <DecorationOverlay decorationIds={decorations} stageIdx={stageIdx} previewMode species={species} />
+              <InhabitantOverlay inhabitantIds={inhabitants} stageIdx={stageIdx} species={species} />
+              {showGround && Object.keys(placements).length > 0 && !placingItem && (
+                <PlacedItems placements={placements} />
+              )}
+              {showGround && placingItem && (
+                <PlacementSlots placements={placements} placingItemId={placingItem} onSelect={onSlotSelect} />
+              )}
+            </Svg>
+          </View>
+        )}
       </View>
     );
   }
