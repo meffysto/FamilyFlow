@@ -7,7 +7,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Image } from 'react-native';
 import Svg, {
   Path,
   Circle,
@@ -84,10 +84,22 @@ const VIEWBOX_H = 240;
 const GROUND_Y = 200;
 const CENTER_X = 100;
 
+// ── Illustrations aquarelle (remplacent le SVG procédural quand disponibles) ──
+
+const TREE_ILLUSTRATIONS: Partial<Record<TreeSpecies, Partial<Record<TreeStage, any>>>> = {
+  cerisier: {
+    graine: require('../../assets/trees/cerisier/stage_1.jpg'),
+    pousse: require('../../assets/trees/cerisier/stage_2.jpg'),
+    arbuste: require('../../assets/trees/cerisier/stage_3.jpg'),
+    arbre: require('../../assets/trees/cerisier/stage_4.jpg'),
+  },
+};
+
 // ── Composant principal ────────────────────────
 
 function TreeViewInner({ species, level, size = 200, showGround = true, interactive = true, decorations = [], inhabitants = [], previewMode = false, season: seasonProp, placements = {}, placingItem = null, onSlotSelect }: TreeViewProps) {
   const stage = getTreeStage(level);
+  const illustration = TREE_ILLUSTRATIONS[species]?.[stage];
   const progress = getStageProgress(level);
   const stageIdx = getStageIndex(level);
   const visual = getVisualComplexity(level);
@@ -150,6 +162,27 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
         return <LegendaryStage species={sp} progress={progress} visual={visual} speciesType={species} />;
     }
   }, [stage, species, level]);
+
+  // ── Mode illustration aquarelle (remplace le SVG procédural) ──
+  if (illustration) {
+    const imgHeight = size * (VIEWBOX_H / VIEWBOX_W);
+    return (
+      <View style={[styles.container, { width: size, height: imgHeight }]}>
+        {animate && (
+          <SeasonalParticles particle={seasonParticles} size={size} />
+        )}
+        {visual.hasParticles && animate && (
+          <FloatingParticles color={sp.particle} count={visual.hasAura ? 12 : 6} size={size} />
+        )}
+        <Animated.View style={[styles.svgWrap, treeAnimStyle]}>
+          <Image
+            source={illustration}
+            style={{ width: size, height: imgHeight, resizeMode: 'contain' }}
+          />
+        </Animated.View>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { width: size, height: size * (VIEWBOX_H / VIEWBOX_W) }]}>
