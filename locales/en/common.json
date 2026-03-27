@@ -72,23 +72,9 @@
   },
   "setup": {
     "tagline": "Your family, organized together",
-    "features": {
-      "tasks": {
-        "title": "Family tasks",
-        "desc": "Organize and complete tasks together"
-      },
-      "loot": {
-        "title": "Rewards",
-        "desc": "Kids earn rewards by completing their tasks"
-      },
-      "files": {
-        "title": "Your data, your device",
-        "desc": "Everything is stored on your phone in simple, readable files"
-      },
-      "telegram": {
-        "title": "Notifications",
-        "desc": "Get reminders via Telegram"
-      }
+    "welcome": {
+      "hook": "The family mental load is exhausting.",
+      "promise": "We're here to change that."
     },
     "painPoints": {
       "title": "What's your biggest headache?",

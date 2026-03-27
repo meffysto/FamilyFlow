@@ -72,23 +72,9 @@
   },
   "setup": {
     "tagline": "Votre famille, organisée ensemble",
-    "features": {
-      "tasks": {
-        "title": "Tâches familiales",
-        "desc": "Organisez et complétez vos tâches ensemble"
-      },
-      "loot": {
-        "title": "Récompenses",
-        "desc": "Les enfants gagnent des récompenses en accomplissant leurs tâches"
-      },
-      "files": {
-        "title": "Vos données, chez vous",
-        "desc": "Tout est stocké sur votre téléphone dans des fichiers simples et lisibles"
-      },
-      "telegram": {
-        "title": "Notifications",
-        "desc": "Recevez des rappels via Telegram"
-      }
+    "welcome": {
+      "hook": "La charge mentale familiale, c'est épuisant.",
+      "promise": "On est là pour que ça change."
     },
     "painPoints": {
       "title": "C'est quoi votre casse-tête ?",

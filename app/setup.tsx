@@ -452,27 +452,24 @@ export default function SetupScreen() {
     switch (step) {
       case 1:
         return (
-          <View style={s.stepContent}>
+          <View style={s.welcomeContent}>
+            <View style={s.welcomeSpacer} />
             <Text style={s.logo}>🏠</Text>
             <Text style={[s.appName, { color: primary }]}>Family Flow</Text>
             <Text style={ds.tagline}>{t('setup.tagline')}</Text>
-
-            <View style={s.features}>
-              {[
-                ['📋', t('setup.features.tasks.title'), t('setup.features.tasks.desc')],
-                ['🎁', t('setup.features.loot.title'), t('setup.features.loot.desc')],
-                ['🔒', t('setup.features.files.title'), t('setup.features.files.desc')],
-                ['📱', t('setup.features.telegram.title'), t('setup.features.telegram.desc')],
-              ].map(([icon, title, desc]) => (
-                <View key={title} style={ds.feature}>
-                  <Text style={s.featureIcon}>{icon}</Text>
-                  <View style={s.featureText}>
-                    <Text style={ds.featureTitle}>{title}</Text>
-                    <Text style={ds.featureDesc}>{desc}</Text>
-                  </View>
-                </View>
-              ))}
-            </View>
+            <View style={s.welcomeSpacer} />
+            <Animated.Text
+              entering={FadeInUp.delay(400).duration(500)}
+              style={[s.welcomeHook, { color: colors.text }]}
+            >
+              {t('setup.welcome.hook')}
+            </Animated.Text>
+            <Animated.Text
+              entering={FadeInUp.delay(700).duration(500)}
+              style={[s.welcomePromise, { color: primary }]}
+            >
+              {t('setup.welcome.promise')}
+            </Animated.Text>
           </View>
         );
 
@@ -1241,11 +1238,23 @@ const s = StyleSheet.create({
   },
 
   // Step 1 — Welcome
+  welcomeContent: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.md },
+  welcomeSpacer: { flex: 1 },
   logo: { fontSize: 64, textAlign: 'center' },
   appName: { fontSize: FontSize.hero, fontWeight: FontWeight.heavy, textAlign: 'center' },
-  features: { gap: Spacing.lg },
-  featureIcon: { fontSize: FontSize.display },
-  featureText: { flex: 1, gap: Spacing.xxs },
+  welcomeHook: {
+    fontSize: FontSize.lg,
+    textAlign: 'center',
+    lineHeight: LineHeight.loose,
+    paddingHorizontal: Spacing['3xl'],
+  },
+  welcomePromise: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    textAlign: 'center',
+    paddingHorizontal: Spacing['3xl'],
+    marginBottom: Spacing['4xl'],
+  },
 
   // Count selector
   countRow: { flexDirection: 'row', justifyContent: 'center', gap: Spacing.lg },
