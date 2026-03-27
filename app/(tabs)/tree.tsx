@@ -40,6 +40,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { TreeView } from '../../components/mascot/TreeView';
 import { SpeciesPicker } from '../../components/mascot/SpeciesPicker';
 import { TreeShop } from '../../components/mascot/TreeShop';
+import { PixelDiorama, PIXEL_SKY, PIXEL_GROUND } from '../../components/mascot/PixelDiorama';
 import { calculateLevel, xpForLevel, pointsToNextLevel, getLevelTier } from '../../lib/gamification';
 import {
   getTreeStage,
@@ -347,42 +348,22 @@ export default function TreeScreen() {
               },
             ]}
           >
-            {/* Couche 0 : Gradient de fond — neutre en haut, couleur sol en bas
-                Remplace le backgroundColor statique pour que les bords latéraux
-                sous le SVG montrent la bonne couleur de sol. */}
+            {/* Couche 0 : Gradient ciel pixel — palette saisonnière */}
             <LinearGradient
-              colors={[colors.cardAlt, GROUND_COLORS[season].top]}
-              locations={[0.55, 0.85]}
+              colors={[PIXEL_SKY[season][0], PIXEL_SKY[season][1], PIXEL_GROUND[season]]}
+              locations={[0, 0.65, 1]}
               style={StyleSheet.absoluteFill}
             />
 
-            {/* Couche 1 : Illustration saisonnière — positionnée en haut (ciel + horizon)
-                On affiche seulement les 70% supérieurs de l'image via un conteneur clipé,
-                évitant ainsi le sol de l'illustration qui clash avec le sol SVG. */}
-            <View style={styles.illustrationClip}>
-              <Image
-                source={SEASON_ILLUSTRATIONS[season]}
-                style={styles.seasonIllustration}
-                resizeMode="cover"
-              />
-            </View>
-
-            {/* Couche 2 : Gradient de fondu — transition douce illustration → sol herbeux
-                Le dégradé part de transparent (en haut de la zone de fondu)
-                vers la couleur du sol saisonnier (en bas). */}
-            <LinearGradient
-              colors={[
-                'transparent',
-                GROUND_COLORS[season].top + '44',
-                GROUND_COLORS[season].top + '99',
-                GROUND_COLORS[season].top,
-              ]}
-              locations={[0, 0.4, 0.75, 1]}
-              style={styles.illustrationFade}
+            {/* Couche 1 : Sol pixel + décorations auto (fleurs, pierres) */}
+            <PixelDiorama
+              season={season}
+              level={level}
+              width={SCREEN_W}
+              groundHeight={90}
             />
 
-            {/* Couche 3 : Arbre SVG au premier plan — le sol organique SVG
-                se fond naturellement dans le gradient de transition. */}
+            {/* Couche 2 : Arbre pixel au premier plan */}
             <View style={styles.treeOverlay}>
               <TreeView
                 species={species}
@@ -410,7 +391,7 @@ export default function TreeScreen() {
 
         {/* Transition douce diorama → contenu : gradient sol → fond de page */}
         <LinearGradient
-          colors={[GROUND_COLORS[season].top, colors.bg]}
+          colors={[PIXEL_GROUND[season], colors.bg]}
           style={styles.groundTransition}
         />
 
