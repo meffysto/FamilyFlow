@@ -2684,11 +2684,12 @@ export function useVaultInternal(): VaultState {
         const currentProfiles = mergeProfiles(familleContent, gamiContent);
         const profile = currentProfiles.find((p) => p.id === profileId);
         if (profile) {
-          const { profile: updated, entry } = addPoints(profile, 3, `Défi: ${defiTitle}`);
+          const { profile: updated, entry, activeRewards: updatedRewards } = addPoints(profile, 3, `Défi: ${defiTitle}`, gami.activeRewards);
           const newGami = {
             ...gami,
-            profiles: gami.profiles.map((p) => p.id === profileId ? { ...p, points: updated.points, level: updated.level } : p),
+            profiles: gami.profiles.map((p) => p.id === profileId ? { ...p, points: updated.points, level: updated.level, multiplierRemaining: updated.multiplierRemaining, multiplier: updated.multiplier } : p),
             history: [...gami.history, entry],
+            activeRewards: updatedRewards ?? gami.activeRewards,
           };
           await vaultRef.current.writeFile(GAMI_FILE, serializeGamification(newGami));
         }
@@ -3100,11 +3101,12 @@ export function useVaultInternal(): VaultState {
     // Award XP via gamification
     const childProfile = gamiData.profiles.find((p) => p.id === childProfileId);
     if (childProfile) {
-      const { profile: updatedProfile, entry } = addPoints(childProfile, xp, `Compétence: ${skill.label}`);
+      const { profile: updatedProfile, entry, activeRewards: updatedRewards } = addPoints(childProfile, xp, `Compétence: ${skill.label}`, gamiData.activeRewards);
       const updatedGami = {
         ...gamiData,
         profiles: gamiData.profiles.map((p) => p.id === childProfileId ? updatedProfile : p),
         history: [...gamiData.history, entry],
+        activeRewards: updatedRewards ?? gamiData.activeRewards,
       };
       setGamiData(updatedGami);
       await vaultRef.current.writeFile('gamification.md', serializeGamification(updatedGami));
@@ -3179,11 +3181,12 @@ export function useVaultInternal(): VaultState {
       const profile = currentProfiles.find((p) => p.id === profileId);
       if (!profile) return;
 
-      const { profile: updated, entry } = addPoints(profile, points, sagaNote);
+      const { profile: updated, entry, activeRewards: updatedRewards } = addPoints(profile, points, sagaNote, gami.activeRewards);
       const newGami = {
         ...gami,
-        profiles: gami.profiles.map((p) => p.id === profileId ? { ...p, points: updated.points, level: updated.level } : p),
+        profiles: gami.profiles.map((p) => p.id === profileId ? { ...p, points: updated.points, level: updated.level, multiplierRemaining: updated.multiplierRemaining, multiplier: updated.multiplier } : p),
         history: [...gami.history, entry],
+        activeRewards: updatedRewards ?? gami.activeRewards,
       };
 
       // Si récompense item (saga terminée), l'ajouter au profil (réutilise familleContent)
@@ -3232,11 +3235,12 @@ export function useVaultInternal(): VaultState {
       const currentProfiles = mergeProfiles(familleContent, gamiContent);
       const profile = currentProfiles.find((p) => p.id === profileId);
       if (profile) {
-        const { profile: updated, entry } = addPoints(profile, points, adventureNote);
+        const { profile: updated, entry, activeRewards: updatedRewards } = addPoints(profile, points, adventureNote, gami.activeRewards);
         const newGami = {
           ...gami,
-          profiles: gami.profiles.map((p) => p.id === profileId ? { ...p, points: updated.points, level: updated.level } : p),
+          profiles: gami.profiles.map((p) => p.id === profileId ? { ...p, points: updated.points, level: updated.level, multiplierRemaining: updated.multiplierRemaining, multiplier: updated.multiplier } : p),
           history: [...gami.history, entry],
+          activeRewards: updatedRewards ?? gami.activeRewards,
         };
         setGamiData(newGami);
         await vaultRef.current.writeFile(GAMI_FILE, serializeGamification(newGami));

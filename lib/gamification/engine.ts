@@ -55,8 +55,9 @@ export function getStreakMilestone(streak: number): { emoji: string; label: stri
 export function addPoints(
   profile: Profile,
   basePoints: number,
-  note: string
-): { profile: Profile; entry: GamificationEntry } {
+  note: string,
+  activeRewards?: ActiveReward[],
+): { profile: Profile; entry: GamificationEntry; activeRewards?: ActiveReward[] } {
   const effectivePoints =
     profile.multiplierRemaining > 0
       ? Math.round(basePoints * profile.multiplier)
@@ -81,9 +82,19 @@ export function addPoints(
     coins: newCoins,
     level: newLevel,
     multiplierRemaining: newMultiplierRemaining,
+    // Nettoyer le multiplier quand il expire
+    ...(newMultiplierRemaining === 0 && profile.multiplierRemaining > 0 ? { multiplier: 1 } : {}),
   };
 
-  return { profile: updatedProfile, entry };
+  // Synchroniser activeRewards.remainingTasks avec le profile
+  const updatedRewards = activeRewards?.map(r => {
+    if (r.type === 'multiplier' && r.profileId === profile.id && profile.multiplierRemaining > 0) {
+      return { ...r, remainingTasks: newMultiplierRemaining };
+    }
+    return r;
+  });
+
+  return { profile: updatedProfile, entry, activeRewards: updatedRewards };
 }
 
 /**
