@@ -450,8 +450,11 @@ export default function SetupScreen() {
     switch (step) {
       case 1: {
         const ORB_EMOJIS = ['🍽️', '🧹', '🛒', '💊', '🎒', '💰'];
-        const ORB_ANGLES = [270, 330, 30, 150, 210, 90]; // degrés, répartis en cercle
-        const ORB_RADIUS = 80;
+        const ORB_ANGLES = [270, 330, 30, 150, 210, 90]; // degrés
+        const ORB_RADIUS = 78;
+        const ORB_SIZE = 200;
+        const EMOJI_OFFSET = 16; // demi-taille emoji pour centrer
+        const CENTER = ORB_SIZE / 2 - EMOJI_OFFSET;
         return (
           <View style={s.welcomeContent}>
             <View style={s.welcomeSpacer} />
@@ -461,31 +464,28 @@ export default function SetupScreen() {
             <View style={s.welcomeSpacer} />
 
             {/* Orbe : graine + emojis en cercle */}
-            <Animated.View
-              entering={FadeInUp.delay(300).duration(600).springify()}
-              style={s.orbContainer}
-            >
+            <View style={s.orbContainer}>
               <Animated.Text
-                entering={FadeInDown.delay(500).duration(500).springify()}
+                entering={FadeInDown.delay(400).duration(500).springify()}
                 style={s.orbSeed}
               >
                 🌱
               </Animated.Text>
               {ORB_EMOJIS.map((emoji, i) => {
                 const angle = (ORB_ANGLES[i] * Math.PI) / 180;
-                const x = Math.cos(angle) * ORB_RADIUS;
-                const y = Math.sin(angle) * ORB_RADIUS;
+                const left = CENTER + Math.cos(angle) * ORB_RADIUS;
+                const top = CENTER + Math.sin(angle) * ORB_RADIUS;
                 return (
                   <Animated.Text
                     key={i}
                     entering={FadeInUp.delay(600 + i * 100).duration(400).springify()}
-                    style={[s.orbEmoji, { transform: [{ translateX: x }, { translateY: y }] }]}
+                    style={[s.orbEmoji, { left, top }]}
                   >
                     {emoji}
                   </Animated.Text>
                 );
               })}
-            </Animated.View>
+            </View>
 
             <View style={s.welcomeSpacer} />
             <Animated.Text
@@ -1296,6 +1296,8 @@ const s = StyleSheet.create({
   orbSeed: {
     fontSize: 48,
     position: 'absolute',
+    top: 76, // (200 - 48) / 2
+    left: 76,
   },
   orbEmoji: {
     fontSize: 28,
