@@ -12,7 +12,7 @@
  * Step 9: Recap + create vault
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'expo-router';
 import {
   View,
@@ -463,35 +463,54 @@ export default function SetupScreen() {
   const renderStep = () => {
     switch (step) {
       case 1: {
-        const ORB_EMOJIS = ['🍽️', '🧹', '🛒', '💊', '🎒', '💰'];
+        const ORB_ITEMS = [
+          { emoji: '🍽️', label: t('setup.painPoints.options.meals') },
+          { emoji: '🧹', label: t('setup.painPoints.options.chores') },
+          { emoji: '🛒', label: t('setup.painPoints.options.groceries') },
+          { emoji: '💊', label: t('setup.painPoints.options.health') },
+          { emoji: '🎒', label: t('setup.painPoints.options.routines') },
+          { emoji: '💰', label: t('setup.painPoints.options.budget') },
+        ];
         const ORB_ANGLES = [270, 330, 30, 150, 210, 90];
-        const ORB_RADIUS = 78;
-        const ORB_SIZE = 200;
+        const ORB_RADIUS = 100;
+        const LABEL_RADIUS = 155;
+        const ORB_SIZE = 260;
         const EMOJI_OFFSET = 16;
+        const LABEL_OFFSET = 40;
         const CENTER = ORB_SIZE / 2 - EMOJI_OFFSET;
+        const LABEL_CENTER = ORB_SIZE / 2 - LABEL_OFFSET;
         return (
           <View style={s.welcomeContent}>
             {/* Zone haute — orbe dans le gradient */}
             <View style={s.welcomeTopZone}>
-              <View style={s.orbContainer}>
+              <View style={[s.orbContainer, { width: ORB_SIZE, height: ORB_SIZE }]}>
                 <Animated.Text
                   entering={FadeInDown.delay(400).duration(500).springify()}
                   style={s.orbSeed}
                 >
                   🌱
                 </Animated.Text>
-                {ORB_EMOJIS.map((emoji, i) => {
+                {ORB_ITEMS.map((item, i) => {
                   const angle = (ORB_ANGLES[i] * Math.PI) / 180;
-                  const left = CENTER + Math.cos(angle) * ORB_RADIUS;
-                  const top = CENTER + Math.sin(angle) * ORB_RADIUS;
+                  const emojiLeft = CENTER + Math.cos(angle) * ORB_RADIUS;
+                  const emojiTop = CENTER + Math.sin(angle) * ORB_RADIUS;
+                  const labelLeft = LABEL_CENTER + Math.cos(angle) * LABEL_RADIUS;
+                  const labelTop = LABEL_CENTER + Math.sin(angle) * LABEL_RADIUS;
                   return (
-                    <Animated.Text
-                      key={i}
-                      entering={FadeInUp.delay(600 + i * 100).duration(400).springify()}
-                      style={[s.orbEmoji, { left, top }]}
-                    >
-                      {emoji}
-                    </Animated.Text>
+                    <React.Fragment key={i}>
+                      <Animated.Text
+                        entering={FadeInUp.delay(600 + i * 100).duration(400).springify()}
+                        style={[s.orbEmoji, { left: emojiLeft, top: emojiTop }]}
+                      >
+                        {item.emoji}
+                      </Animated.Text>
+                      <Animated.Text
+                        entering={FadeInUp.delay(800 + i * 100).duration(400)}
+                        style={[s.orbLabel, { left: labelLeft, top: labelTop, color: primary }]}
+                      >
+                        {item.label}
+                      </Animated.Text>
+                    </React.Fragment>
                   );
                 })}
               </View>
@@ -1341,9 +1360,17 @@ const s = StyleSheet.create({
     left: 76,
   },
   orbEmoji: {
-    fontSize: 28,
+    fontSize: 32,
     position: 'absolute',
-    opacity: 0.8,
+    opacity: 0.85,
+  },
+  orbLabel: {
+    position: 'absolute',
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    opacity: 0.5,
+    textAlign: 'center',
+    width: 80,
   },
 
   // Count selector
