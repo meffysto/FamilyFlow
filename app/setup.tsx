@@ -471,59 +471,45 @@ export default function SetupScreen() {
           { emoji: '🎒', label: t('setup.painPoints.options.routines') },
           { emoji: '💰', label: t('setup.painPoints.options.budget') },
         ];
-        const ORB_ANGLES = [270, 330, 30, 150, 210, 90];
-        const ORB_RADIUS = 100;
-        const LABEL_RADIUS = 155;
-        const ORB_SIZE = 260;
-        const EMOJI_OFFSET = 16;
-        const LABEL_OFFSET = 40;
-        const CENTER = ORB_SIZE / 2 - EMOJI_OFFSET;
-        const LABEL_CENTER = ORB_SIZE / 2 - LABEL_OFFSET;
+        // 3 colonnes × 2 rangées
         return (
           <View style={s.welcomeContent}>
-            {/* Zone haute — orbe dans le gradient */}
+            {/* Header — branding en haut centré */}
+            <Animated.View
+              entering={FadeInDown.delay(200).duration(500)}
+              style={s.welcomeHeader}
+            >
+              <Text style={[s.welcomeAppName, { color: primary }]}>Family Flow</Text>
+              <Text style={[s.welcomeTagline, { color: colors.textMuted }]}>{t('setup.tagline')}</Text>
+            </Animated.View>
+
+            {/* Zone centrale — grille emojis + labels */}
             <View style={s.welcomeTopZone}>
-              <View style={[s.orbContainer, { width: ORB_SIZE, height: ORB_SIZE }]}>
-                <Animated.Text
-                  entering={FadeInDown.delay(400).duration(500).springify()}
-                  style={s.orbSeed}
-                >
-                  🌱
-                </Animated.Text>
-                {ORB_ITEMS.map((item, i) => {
-                  const angle = (ORB_ANGLES[i] * Math.PI) / 180;
-                  const emojiLeft = CENTER + Math.cos(angle) * ORB_RADIUS;
-                  const emojiTop = CENTER + Math.sin(angle) * ORB_RADIUS;
-                  const labelLeft = LABEL_CENTER + Math.cos(angle) * LABEL_RADIUS;
-                  const labelTop = LABEL_CENTER + Math.sin(angle) * LABEL_RADIUS;
-                  return (
-                    <React.Fragment key={i}>
-                      <Animated.Text
-                        entering={FadeInUp.delay(600 + i * 100).duration(400).springify()}
-                        style={[s.orbEmoji, { left: emojiLeft, top: emojiTop }]}
-                      >
-                        {item.emoji}
-                      </Animated.Text>
-                      <Animated.Text
-                        entering={FadeInUp.delay(800 + i * 100).duration(400)}
-                        style={[s.orbLabel, { left: labelLeft, top: labelTop, color: primary }]}
-                      >
-                        {item.label}
-                      </Animated.Text>
-                    </React.Fragment>
-                  );
-                })}
+              <Animated.Text
+                entering={FadeInDown.delay(400).duration(500).springify()}
+                style={s.orbSeedInline}
+              >
+                🌱
+              </Animated.Text>
+              <View style={s.welcomeGrid}>
+                {ORB_ITEMS.map((item, i) => (
+                  <Animated.View
+                    key={i}
+                    entering={FadeInUp.delay(500 + i * 80).duration(400).springify()}
+                    style={s.welcomeGridItem}
+                  >
+                    <Text style={s.welcomeGridEmoji}>{item.emoji}</Text>
+                    <Text style={[s.welcomeGridLabel, { color: primary }]}>{item.label}</Text>
+                  </Animated.View>
+                ))}
               </View>
             </View>
 
-            {/* Zone basse — branding + hook, aligné à gauche */}
+            {/* Zone basse — hook */}
             <Animated.View
-              entering={FadeInUp.delay(800).duration(500)}
+              entering={FadeInUp.delay(1000).duration(500)}
               style={s.welcomeBottomZone}
             >
-              <Text style={s.welcomeIcon}>🏠</Text>
-              <Text style={[s.welcomeAppName, { color: primary }]}>Family Flow</Text>
-              <Text style={[s.welcomeTagline, { color: colors.textMuted }]}>{t('setup.tagline')}</Text>
               <Animated.Text
                 entering={FadeInUp.delay(1100).duration(500)}
                 style={[s.welcomeHook, { color: colors.text }]}
@@ -1317,17 +1303,42 @@ const s = StyleSheet.create({
   // Step 1 — Welcome
   welcomeContent: { flex: 1 },
   welcomeSpacer: { flex: 1 },
+  welcomeHeader: {
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingTop: Spacing.xl,
+  },
   welcomeTopZone: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: Spacing['3xl'],
+  },
+  orbSeedInline: { fontSize: 52 },
+  welcomeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: Spacing['2xl'],
+    paddingHorizontal: Spacing['2xl'],
+  },
+  welcomeGridItem: {
+    alignItems: 'center',
+    gap: Spacing.sm,
+    width: 90,
+  },
+  welcomeGridEmoji: { fontSize: 36 },
+  welcomeGridLabel: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    textAlign: 'center',
+    opacity: 0.6,
   },
   welcomeBottomZone: {
     paddingHorizontal: Spacing['4xl'],
     paddingBottom: Spacing.md,
     gap: Spacing.xs,
   },
-  welcomeIcon: { fontSize: 36 },
   welcomeAppName: {
     fontSize: 28,
     fontWeight: FontWeight.heavy,
@@ -1335,7 +1346,6 @@ const s = StyleSheet.create({
   },
   welcomeTagline: {
     fontSize: FontSize.body,
-    marginBottom: Spacing.lg,
   },
   welcomeHook: {
     fontSize: FontSize.lg,
