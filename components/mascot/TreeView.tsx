@@ -88,10 +88,10 @@ const CENTER_X = 100;
 
 const TREE_ILLUSTRATIONS: Partial<Record<TreeSpecies, Partial<Record<TreeStage, any>>>> = {
   cerisier: {
-    graine: require('../../assets/trees/cerisier/stage_1.jpg'),
-    pousse: require('../../assets/trees/cerisier/stage_2.jpg'),
-    arbuste: require('../../assets/trees/cerisier/stage_3.jpg'),
-    arbre: require('../../assets/trees/cerisier/stage_4.jpg'),
+    graine: require('../../assets/trees/cerisier/stage_1.png'),
+    pousse: require('../../assets/trees/cerisier/stage_2.png'),
+    arbuste: require('../../assets/trees/cerisier/stage_3.png'),
+    arbre: require('../../assets/trees/cerisier/stage_4.png'),
   },
 };
 
