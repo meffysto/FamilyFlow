@@ -825,7 +825,7 @@ export default function SetupScreen() {
         {/* Scrollable content */}
         <ScrollView
           style={s.scroll}
-          contentContainerStyle={s.scrollContent}
+          contentContainerStyle={[s.scrollContent, (step === 1 || step === 9) && s.scrollContentFlex]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -1158,6 +1158,7 @@ const s = StyleSheet.create({
   flex: { flex: 1 },
   scroll: { flex: 1 },
   scrollContent: { padding: Spacing['4xl'], paddingBottom: Spacing['3xl'] },
+  scrollContentFlex: { flexGrow: 1 },
   gradientBg: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 0,
