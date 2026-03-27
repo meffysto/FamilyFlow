@@ -1470,6 +1470,28 @@ export function useVaultInternal(): VaultState {
       const newFamilleContent = lines.join('\n');
       await vaultRef.current.writeFile(FAMILLE_FILE, newFamilleContent);
 
+      // Propager le renommage dans le fichier gamification si le nom a changé
+      if (updates.name) {
+        try {
+          const gamiRaw = await vaultRef.current.readFile(GAMI_FILE);
+          const gamiLines = gamiRaw.split('\n');
+          // Chercher la section ### profileId et mettre à jour le champ name
+          let inGamiSection = false;
+          for (let i = 0; i < gamiLines.length; i++) {
+            if (gamiLines[i].startsWith('### ')) {
+              inGamiSection = gamiLines[i].replace('### ', '').trim() === profileId;
+            }
+            if (inGamiSection && gamiLines[i].trim().startsWith('name:')) {
+              gamiLines[i] = `name: ${updates.name}`;
+              break;
+            }
+          }
+          await vaultRef.current.writeFile(GAMI_FILE, gamiLines.join('\n'));
+        } catch (e) {
+          warnUnexpected('updateProfile-rename-gami', e);
+        }
+      }
+
       // Mise à jour optimiste du state local
       try {
         const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
