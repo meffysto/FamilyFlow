@@ -70,7 +70,7 @@ interface VaultSummary {
   stock: { low: string[] };
   meals: { today: string[] };
   courses: { pending: number; items: string[] };
-  recipes: { count: number };
+  recipes: { count: number; list: string[] };
   memories: { count: number; recent: string[] };
   defis: { active: string[] };
   wishlist: { count: number };
@@ -169,6 +169,9 @@ function buildVaultSummary(ctx: VaultContext): VaultSummary {
       if (s.medications && s.medications.length > 0) {
         parts.push(`médicaments: ${s.medications.map(m => `${m.medicament}${m.dose ? ` (${m.dose})` : ''}`).join(', ')}`);
       }
+      if (s.observations && s.observations.length > 0) {
+        parts.push(`notes: ${s.observations.join('. ')}`);
+      }
       if (parts.length > 0) {
         journalLines.push(`${entry.date} ${entry.enfant} : ${parts.join(' | ')}`);
       }
@@ -225,7 +228,13 @@ function buildVaultSummary(ctx: VaultContext): VaultSummary {
       pending: ctx.courses.filter((c) => !c.completed).length,
       items: ctx.courses.filter((c) => !c.completed).slice(0, 10).map((c) => c.text),
     },
-    recipes: { count: ctx.recipes.length },
+    recipes: {
+      count: ctx.recipes.length,
+      list: ctx.recipes.map(r => {
+        const ingr = r.ingredients.map(i => i.name).join(', ');
+        return `${r.title} (${r.category})${ingr ? ` — ${ingr}` : ''}`;
+      }),
+    },
     memories: {
       count: ctx.memories.length,
       recent: ctx.memories
@@ -279,7 +288,7 @@ Voici l'état actuel de leur organisation familiale :
 
   prompt += `
 **Repas du jour** : ${summary.meals.today.length > 0 ? summary.meals.today.join(', ') : 'Non planifiés'}
-**Recettes** : ${summary.recipes.count} disponibles
+**Recettes** : ${summary.recipes.count} disponibles${summary.recipes.list.length > 0 ? `\n${summary.recipes.list.join('\n')}` : ''}
 **Souvenirs récents** : ${summary.memories.recent.length > 0 ? summary.memories.recent.join(' | ') : 'Aucun'}
 **Défis actifs** : ${summary.defis.active.length > 0 ? summary.defis.active.join(', ') : 'Aucun'}
 **Souhaits** : ${summary.wishlist.count} idées non achetées`;

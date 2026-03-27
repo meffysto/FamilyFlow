@@ -40,6 +40,7 @@ export interface JournalStats {
   sommeilNuit: string;
   sommeilJour: string;
   medications: MedicationEntry[];
+  observations: string[];
 }
 
 const EMPTY_COUCHES: CouchesDetail = { total: 0, pipi: 0, selle: 0, mixte: 0 };
@@ -50,6 +51,7 @@ const EMPTY_STATS: JournalStats = {
   tetees: 0,
   couches: 0,
   medications: [],
+  observations: [],
   couchesDetail: { ...EMPTY_COUCHES },
   siestes: [],
   sommeilTotal: '',
@@ -155,7 +157,7 @@ export function parseJournalStats(content: string): JournalStats {
   if (!content) return { ...EMPTY_STATS };
 
   const lines = content.split('\n');
-  const stats: JournalStats = { ...EMPTY_STATS, couchesDetail: { ...EMPTY_COUCHES }, siestes: [], medications: [] };
+  const stats: JournalStats = { ...EMPTY_STATS, couchesDetail: { ...EMPTY_COUCHES }, siestes: [], medications: [], observations: [] };
 
   let currentSection = '';
 
@@ -165,6 +167,12 @@ export function parseJournalStats(content: string): JournalStats {
     // Track sections
     if (trimmed.startsWith('## ')) {
       currentSection = trimmed.replace('## ', '').toLowerCase();
+      continue;
+    }
+
+    // Observations/Humeur — texte libre (pas de table)
+    if ((currentSection.includes('humeur') || currentSection.includes('observation')) && trimmed.length > 0 && !trimmed.startsWith('|')) {
+      stats.observations.push(trimmed);
       continue;
     }
 
