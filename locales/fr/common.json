@@ -391,6 +391,7 @@
       "children": "Enfants",
       "vault": "Emplacement",
       "models": "Modèles",
+      "loading": "Préparation en cours…",
       "readyTitle": "Votre famille est prête",
       "readySub": "Tout est en place. Découvrez votre espace familial.",
       "filesTitle": "Ce qui sera créé :",

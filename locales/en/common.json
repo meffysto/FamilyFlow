@@ -391,6 +391,7 @@
       "children": "Children",
       "vault": "Location",
       "models": "Templates",
+      "loading": "Setting up…",
       "readyTitle": "Your family is ready",
       "readySub": "Everything is set up. Discover your family space.",
       "filesTitle": "What will be created:",

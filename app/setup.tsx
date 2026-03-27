@@ -12,7 +12,7 @@
  * Step 9: Recap + create vault
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import {
   View,
@@ -96,6 +96,21 @@ export default function SetupScreen() {
 
   const [step, setStep] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
+  const [recapProgress, setRecapProgress] = useState(-1); // -1 = pas encore commencé
+
+  // Animation séquentielle du recap quand on arrive à l'étape 9
+  useEffect(() => {
+    if (step !== 9) { setRecapProgress(-1); return; }
+    const totalItems = 3; // famille, emplacement, modèles
+    let i = 0;
+    setRecapProgress(0);
+    const interval = setInterval(() => {
+      i++;
+      if (i > totalItems) { clearInterval(interval); return; }
+      setRecapProgress(i);
+    }, 800);
+    return () => clearInterval(interval);
+  }, [step]);
 
   // Step 2 — Pain points
   const [painPoints, setPainPoints] = useState<Set<PainPointId>>(new Set());
@@ -747,45 +762,61 @@ export default function SetupScreen() {
           { emoji: '📁', label: t('setup.recap.vault'), sub: undefined },
           ...(selectedPacks.size > 0 ? [{ emoji: '📦', label: t('setup.recap.models'), sub: templateNames }] : []),
         ];
+        const allDone = recapProgress >= checkItems.length;
         return (
           <View style={s.recapContent}>
             <View style={s.welcomeSpacer} />
 
-            {/* Checklist animée */}
+            {/* Checklist animée avec loading séquentiel */}
             <View style={s.recapChecklist}>
-              {checkItems.map((item, i) => (
-                <Animated.View
-                  key={i}
-                  entering={FadeInUp.delay(200 + i * 300).duration(400).springify()}
-                  style={s.recapCheckItem}
-                >
-                  <View style={[s.recapCheckIcon, { backgroundColor: tint }]}>
-                    <Text style={s.recapCheckEmoji}>{item.emoji}</Text>
-                  </View>
-                  <View style={s.recapCheckTextCol}>
-                    <Text style={[s.recapCheckLabel, { color: colors.textMuted }]}>{item.label}</Text>
-                    {item.sub ? (
-                      <Text style={[s.recapCheckSub, { color: colors.textFaint }]}>{item.sub}</Text>
-                    ) : null}
-                  </View>
-                </Animated.View>
-              ))}
+              {checkItems.map((item, i) => {
+                if (recapProgress < i) return null; // pas encore visible
+                const isDone = recapProgress > i;
+                const isActive = recapProgress === i;
+                return (
+                  <Animated.View
+                    key={i}
+                    entering={FadeInUp.delay(100).duration(400).springify()}
+                    style={s.recapCheckItem}
+                  >
+                    <View style={[s.recapCheckIcon, isDone ? { backgroundColor: tint } : isActive ? { borderWidth: 2, borderColor: primary, backgroundColor: 'transparent' } : {}]}>
+                      {isDone ? (
+                        <Text style={s.recapCheckEmoji}>{item.emoji}</Text>
+                      ) : (
+                        <ActivityIndicator size="small" color={primary} />
+                      )}
+                    </View>
+                    <View style={s.recapCheckTextCol}>
+                      <Text style={[s.recapCheckLabel, isDone ? { color: colors.textMuted } : { color: colors.text, fontWeight: FontWeight.bold }]}>
+                        {item.label}
+                      </Text>
+                      {isDone && item.sub ? (
+                        <Text style={[s.recapCheckSub, { color: colors.textFaint }]}>{item.sub}</Text>
+                      ) : isActive ? (
+                        <Text style={[s.recapCheckSub, { color: colors.textFaint }]}>{t('setup.recap.loading')}</Text>
+                      ) : null}
+                    </View>
+                  </Animated.View>
+                );
+              })}
             </View>
 
             <View style={s.welcomeSpacer} />
 
-            {/* Titre + sous-titre en bas */}
-            <Animated.View
-              entering={FadeInUp.delay(200 + checkItems.length * 300).duration(500)}
-              style={s.recapBottomZone}
-            >
-              <Text style={[s.recapTitle, { color: colors.text }]}>
-                {t('setup.recap.readyTitle')}
-              </Text>
-              <Text style={[s.recapSub, { color: colors.textMuted }]}>
-                {t('setup.recap.readySub')}
-              </Text>
-            </Animated.View>
+            {/* Titre final — apparaît quand tout est chargé */}
+            {allDone && (
+              <Animated.View
+                entering={FadeInUp.delay(200).duration(500)}
+                style={s.recapBottomZone}
+              >
+                <Text style={[s.recapTitle, { color: colors.text }]}>
+                  {t('setup.recap.readyTitle')}
+                </Text>
+                <Text style={[s.recapSub, { color: colors.textMuted }]}>
+                  {t('setup.recap.readySub')}
+                </Text>
+              </Animated.View>
+            )}
           </View>
         );
       }
