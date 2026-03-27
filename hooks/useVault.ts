@@ -598,10 +598,22 @@ export function useVaultInternal(): VaultState {
         setProfiles(merged);
         const gami = parseGamification(gamiContent);
 
-        // Clean up expired active rewards
+        // Clean up expired active rewards + sync multiplier remainingTasks
         if (gami.activeRewards?.length > 0) {
-          const cleaned = processActiveRewards(gami.activeRewards);
-          if (cleaned.length !== gami.activeRewards.length) {
+          let cleaned = processActiveRewards(gami.activeRewards);
+          // Sync remainingTasks depuis profile.multiplierRemaining
+          let synced = false;
+          cleaned = cleaned.map(r => {
+            if (r.type === 'multiplier' && r.profileId) {
+              const prof = merged.find(p => p.id === r.profileId);
+              if (prof && r.remainingTasks !== prof.multiplierRemaining) {
+                synced = true;
+                return { ...r, remainingTasks: prof.multiplierRemaining };
+              }
+            }
+            return r;
+          });
+          if (cleaned.length !== gami.activeRewards.length || synced) {
             const updatedGami = { ...gami, activeRewards: cleaned };
             await vault.writeFile(GAMI_FILE, serializeGamification(updatedGami));
             setGamiData(updatedGami);
