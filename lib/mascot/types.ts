@@ -179,6 +179,7 @@ export interface MascotInhabitant {
 
 /** Assets illustrés (remplacent les emojis quand disponibles) */
 export const ITEM_ILLUSTRATIONS: Record<string, number> = {
+  // Anciennes illustrations aquarelle (décorations existantes)
   guirlandes: require('../../assets/items/guirlandes.png'),
   cabane:     require('../../assets/items/cabane.png'),
   balancoire: require('../../assets/items/balancoire.png'),
@@ -189,10 +190,23 @@ export const ITEM_ILLUSTRATIONS: Record<string, number> = {
   couronne:   require('../../assets/items/couronne.png'),
   portail:    require('../../assets/items/portail.png'),
   cristal:    require('../../assets/items/cristal.png'),
+  // Nouvelles décorations pixel (Mana Seed)
+  botte_foin:        require('../../assets/garden/decos/botte_foin.png'),
+  etal_fruits:       require('../../assets/garden/decos/etal_fruits.png'),
+  // Nouveaux habitants pixel (Mana Seed)
+  poussin:   require('../../assets/garden/animals/poussin/idle_1.png'),
+  poulet:    require('../../assets/garden/animals/poulet/idle_1.png'),
+  canard:    require('../../assets/garden/animals/canard/idle_1.png'),
+  cochon:    require('../../assets/garden/animals/cochon/idle_1.png'),
+  vache:     require('../../assets/garden/animals/vache/idle_1.png'),
 };
 
 /** Catalogue décorations MVP */
 export const DECORATIONS: MascotDecoration[] = [
+  // Décorations pixel (Mana Seed)
+  { id: 'botte_foin',   labelKey: 'mascot.deco.botteFoin',   emoji: '🌾', cost: 150,  rarity: 'commun',     minStage: 'pousse' },
+  { id: 'etal_fruits',  labelKey: 'mascot.deco.etalFruits',  emoji: '🍎', cost: 500,  rarity: 'épique',     minStage: 'arbre' },
+  // Décorations aquarelle (existantes)
   { id: 'balancoire',  labelKey: 'mascot.deco.balancoire',  emoji: '🪢', cost: 200,  rarity: 'commun',     minStage: 'arbuste' },
   { id: 'cabane',      labelKey: 'mascot.deco.cabane',      emoji: '🏠', cost: 500,  rarity: 'rare',       minStage: 'arbre' },
   { id: 'guirlandes',  labelKey: 'mascot.deco.guirlandes',  emoji: '🎄', cost: 150,  rarity: 'commun',     minStage: 'pousse' },
@@ -210,12 +224,20 @@ export const DECORATIONS: MascotDecoration[] = [
 
 /** Catalogue habitants MVP */
 export const INHABITANTS: MascotInhabitant[] = [
+  // Animaux pixel (Mana Seed)
+  { id: 'poussin',     labelKey: 'mascot.hab.poussin',     emoji: '🐤', cost: 150,  rarity: 'commun',     minStage: 'pousse' },
+  { id: 'poulet',      labelKey: 'mascot.hab.poulet',      emoji: '🐔', cost: 250,  rarity: 'commun',     minStage: 'arbuste' },
+  { id: 'canard',      labelKey: 'mascot.hab.canard',      emoji: '🦆', cost: 300,  rarity: 'commun',     minStage: 'arbuste' },
+  { id: 'cochon',      labelKey: 'mascot.hab.cochon',      emoji: '🐷', cost: 500,  rarity: 'rare',       minStage: 'arbre' },
+  { id: 'vache',       labelKey: 'mascot.hab.vache',       emoji: '🐄', cost: 800,  rarity: 'rare',       minStage: 'arbre' },
+  // Anciens habitants (existants)
   { id: 'oiseau',      labelKey: 'mascot.hab.oiseau',      emoji: '🐦', cost: 100,  rarity: 'commun',     minStage: 'arbuste' },
   { id: 'ecureuil',    labelKey: 'mascot.hab.ecureuil',    emoji: '🐿️', cost: 250,  rarity: 'commun',     minStage: 'arbuste' },
   { id: 'papillons',   labelKey: 'mascot.hab.papillons',   emoji: '🦋', cost: 200,  rarity: 'commun',     minStage: 'pousse' },
   { id: 'coccinelle',  labelKey: 'mascot.hab.coccinelle',  emoji: '🐞', cost: 150,  rarity: 'commun',     minStage: 'pousse' },
   { id: 'chat',        labelKey: 'mascot.hab.chat',        emoji: '😺', cost: 500,  rarity: 'rare',       minStage: 'arbre' },
   { id: 'hibou',       labelKey: 'mascot.hab.hibou',       emoji: '🦉', cost: 400,  rarity: 'rare',       minStage: 'arbre' },
+  // Fantastiques (emoji — conservés)
   { id: 'fee',         labelKey: 'mascot.hab.fee',         emoji: '🧚', cost: 2000, rarity: 'épique',     minStage: 'majestueux' },
   { id: 'dragon',      labelKey: 'mascot.hab.dragon',      emoji: '🐉', cost: 10000, rarity: 'légendaire', minStage: 'legendaire' },
   { id: 'phoenix',     labelKey: 'mascot.hab.phoenix',     emoji: '🔥', cost: 15000, rarity: 'prestige',  minStage: 'legendaire' },
