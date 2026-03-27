@@ -158,7 +158,7 @@ export default function StockScreen() {
   const { refreshing, onRefresh } = useRefresh(refresh);
 
   const stockListRef = useRef<View>(null);
-  const [selectedEmplacement, setSelectedEmplacement] = useState<EmplacementId>('frigo');
+  const [selectedEmplacement, setSelectedEmplacement] = useState<EmplacementId>('tous');
   const [search, setSearch] = useState('');
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingItem, setEditingItem] = useState<StockItem | undefined>(undefined);
@@ -167,14 +167,14 @@ export default function StockScreen() {
   const countsByEmplacement = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const emp of EMPLACEMENTS) {
-      counts[emp.id] = stock.filter((s) => s.emplacement === emp.id).length;
+      counts[emp.id] = emp.id === 'tous' ? stock.length : stock.filter((s) => s.emplacement === emp.id).length;
     }
     return counts;
   }, [stock]);
 
   // ─── Items filtrés par emplacement + recherche ───────────────────────
   const filteredItems = useMemo(() => {
-    let items = stock.filter((s) => s.emplacement === selectedEmplacement);
+    let items = selectedEmplacement === 'tous' ? [...stock] : stock.filter((s) => s.emplacement === selectedEmplacement);
     if (search.trim()) {
       const q = search.toLowerCase();
       items = items.filter(
@@ -189,34 +189,55 @@ export default function StockScreen() {
 
   // ─── Groupement par section/sous-catégorie ───────────────────────────
   const subcategories = SUBCATEGORIES[selectedEmplacement];
-  const hasSubcategories = subcategories.length > 0;
+  const isTous = selectedEmplacement === 'tous';
+  const hasSubcategories = subcategories.length > 0 || isTous;
 
   const grouped = useMemo(() => {
     if (!hasSubcategories) return null;
     const map = new Map<string, StockItem[]>();
+
+    if (isTous) {
+      // Grouper par emplacement
+      for (const item of filteredItems) {
+        const emp = EMPLACEMENTS.find(e => e.id === item.emplacement);
+        const key = emp ? `${emp.emoji} ${emp.label}` : 'Autre';
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push(item);
+      }
+      // Trier dans l'ordre des emplacements
+      const sorted = new Map<string, StockItem[]>();
+      for (const emp of EMPLACEMENTS) {
+        if (emp.id === 'tous') continue;
+        const key = `${emp.emoji} ${emp.label}`;
+        if (map.has(key)) sorted.set(key, map.get(key)!);
+      }
+      for (const [key, items] of map) {
+        if (!sorted.has(key)) sorted.set(key, items);
+      }
+      for (const [key, items] of sorted) {
+        sorted.set(key, items.sort((a, b) => a.produit.localeCompare(b.produit, 'fr')));
+      }
+      return sorted;
+    }
+
+    // Groupement par sous-catégorie (comportement existant)
     for (const item of filteredItems) {
       const key = item.section ?? 'Autre';
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(item);
     }
-    // Trier les groupes : sous-catégories définies d'abord (dans l'ordre), puis "Autre"
     const sorted = new Map<string, StockItem[]>();
     for (const sub of subcategories) {
       if (map.has(sub)) sorted.set(sub, map.get(sub)!);
     }
-    // Ajouter les groupes restants (non prévus dans les sous-catégories)
     for (const [key, items] of map) {
       if (!sorted.has(key)) sorted.set(key, items);
     }
-    // Trier les items à l'intérieur de chaque groupe par nom
     for (const [key, items] of sorted) {
-      sorted.set(
-        key,
-        items.sort((a, b) => a.produit.localeCompare(b.produit, 'fr'))
-      );
+      sorted.set(key, items.sort((a, b) => a.produit.localeCompare(b.produit, 'fr')));
     }
     return sorted;
-  }, [filteredItems, hasSubcategories, subcategories]);
+  }, [filteredItems, hasSubcategories, subcategories, isTous]);
 
   // Items triés pour liste plate (frigo, congélateur)
   const sortedFlatItems = useMemo(() => {

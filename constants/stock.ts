@@ -3,6 +3,7 @@ import { t } from 'i18next';
 // ─── Stock — Emplacements & sous-catégories ─────────────────────────────────
 
 export const EMPLACEMENTS = [
+  { id: 'tous', label: 'Tous', emoji: '📦' },
   { id: 'frigo', label: 'Frigo', emoji: '🧊' },
   { id: 'congelateur', label: 'Congélateur', emoji: '❄️' },
   { id: 'placards', label: 'Placards', emoji: '🗄️' },
@@ -13,6 +14,7 @@ export type EmplacementId = typeof EMPLACEMENTS[number]['id'];
 
 // Sous-catégories par emplacement (vide = pas de sous-catégories)
 export const SUBCATEGORIES: Record<EmplacementId, string[]> = {
+  tous: [],
   frigo: [],
   congelateur: [],
   placards: ['Épicerie', 'Conserves', 'Boissons', 'Petit-déjeuner', 'Condiments'],
@@ -41,6 +43,7 @@ export function buildSectionHeader(emplacement: EmplacementId, section?: string)
 // ─── Display helpers (traduction) ─────────────────────────────────────────────
 
 const EMPLACEMENT_DISPLAY_KEYS: Record<EmplacementId, string> = {
+  tous: 'stock.emplacements.tous',
   frigo: 'stock.emplacements.frigo',
   congelateur: 'stock.emplacements.congelateur',
   placards: 'stock.emplacements.placards',

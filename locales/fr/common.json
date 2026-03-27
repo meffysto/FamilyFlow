@@ -2074,6 +2074,7 @@
     "productCount_one": "produit",
     "productCount_other": "produits",
     "emplacements": {
+      "tous": "Tous",
       "frigo": "Frigo",
       "congelateur": "Congélateur",
       "placards": "Placards",
