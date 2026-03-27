@@ -94,6 +94,9 @@ export default function TreeScreen() {
     return activeProfile;
   }, [profileId, profiles, activeProfile]);
 
+  // Est-ce qu'on regarde son propre arbre ? (autorise les modifications)
+  const isOwnTree = !profileId || profileId === activeProfile?.id;
+
   const [showSpeciesPicker, setShowSpeciesPicker] = useState(false);
   const [selectedProfileForPicker, setSelectedProfileForPicker] = useState<Profile | null>(null);
   const [showShop, setShowShop] = useState(false);
@@ -438,18 +441,21 @@ export default function TreeScreen() {
                   {t(stageInfo.descriptionKey)}
                 </Text>
               </View>
-              <TouchableOpacity
-                style={[styles.changeSpeciesBtn, { backgroundColor: tint }]}
-                onPress={() => openPickerFor(profile)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.changeSpeciesText, { color: primary }]}>
-                  {hasChosenSpecies ? t('mascot.screen.changeSpecies') : t('mascot.screen.chooseSpecies')}
-                </Text>
-              </TouchableOpacity>
+              {isOwnTree && (
+                <TouchableOpacity
+                  style={[styles.changeSpeciesBtn, { backgroundColor: tint }]}
+                  onPress={() => openPickerFor(profile)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.changeSpeciesText, { color: primary }]}>
+                    {hasChosenSpecies ? t('mascot.screen.changeSpecies') : t('mascot.screen.chooseSpecies')}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
 
-            {/* Boutons boutique + décorer */}
+            {/* Boutons boutique + décorer (uniquement son propre arbre) */}
+            {isOwnTree && (
             <View style={styles.actionBtns}>
               <TouchableOpacity
                 style={[styles.shopBtn, { backgroundColor: tint, borderColor: primary }]}
@@ -473,6 +479,7 @@ export default function TreeScreen() {
                 </TouchableOpacity>
               )}
             </View>
+            )}
 
             {/* Barre XP */}
             <View style={styles.xpSection}>
