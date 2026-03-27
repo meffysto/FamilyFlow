@@ -425,10 +425,10 @@ gardent leurs feuilles — les items sont remplaces par les equivalents pixel.
 | phoenix | — | Supprime (pas de match pixel) |
 | licorne | — | Supprime (pas de match pixel) |
 
-> Note : les items fantastiques (fee, dragon, phoenix, licorne, cristal,
-> couronne) n'ont pas d'equivalent dans les packs Mana Seed fermier.
-> Option : les garder en emoji comme items "magiques" deblocables a haut niveau,
-> ou les supprimer completement pour un univers 100% pixel fermier coherent.
+> Decision : les items fantastiques (fee, dragon, phoenix, licorne, cristal,
+> couronne) sont CONSERVES en emoji comme items "magiques" deblocables a haut
+> niveau. Ils cohabitent avec les sprites pixel fermier — ca cree une
+> progression visuelle : pixel fermier (commun/rare) → emoji magique (epique+).
 
 ### Phase 5 — Polish
 
@@ -486,7 +486,7 @@ gardent leurs feuilles — les items sont remplaces par les equivalents pixel.
 - [ ] Migration anciens achats → nouveaux IDs
 - [ ] TreeShop : affichage sprites dans la boutique
 - [ ] Overlay placement : sprites au lieu d'emojis
-- [ ] Decision : garder ou supprimer les items fantastiques
+- [ ] Conserver items fantastiques (fee, dragon, phoenix, licorne, cristal, couronne) en emoji
 
 ### Phase 5
 - [ ] Animation idle animaux (cycle frames)
