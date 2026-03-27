@@ -8,11 +8,12 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
       "backgroundColor": "#F9FAFB"
     },
     "ios": {
+      "splash": {
+        "backgroundColor": "#F9FAFB"
+      },
       "supportsTablet": true,
       "bundleIdentifier": "com.familyvault.dev",
       "appleTeamId": "AKMNXGVVGX",
@@ -33,9 +34,14 @@
           "tel"
         ]
       },
-      "buildNumber": "14"
+      "buildNumber": "16"
     },
     "android": {
+      "splash": {
+        "image": "./assets/splash-icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#F9FAFB"
+      },
       "adaptiveIcon": {
         "backgroundColor": "#EAECF0",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -57,7 +63,7 @@
         "android.permission.WRITE_CALENDAR"
       ],
       "package": "com.familyvault.app",
-      "versionCode": 2
+      "versionCode": 3
     },
     "web": {
       "favicon": "./assets/favicon.png"
