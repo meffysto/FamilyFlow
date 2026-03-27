@@ -779,7 +779,7 @@ export default function SetupScreen() {
                     entering={FadeInUp.delay(100).duration(400).springify()}
                     style={s.recapCheckItem}
                   >
-                    <View style={[s.recapCheckIcon, isDone ? { backgroundColor: tint } : isActive ? { borderWidth: 2, borderColor: primary, backgroundColor: 'transparent' } : {}]}>
+                    <View style={[s.recapCheckIcon, { borderWidth: 2 }, isDone ? { backgroundColor: tint, borderColor: tint } : isActive ? { borderColor: primary, backgroundColor: 'transparent' } : { borderColor: 'transparent' }]}>
                       {isDone ? (
                         <Text style={s.recapCheckEmoji}>{item.emoji}</Text>
                       ) : (
