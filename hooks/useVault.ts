@@ -1475,18 +1475,22 @@ export function useVaultInternal(): VaultState {
         try {
           const gamiRaw = await vaultRef.current.readFile(GAMI_FILE);
           const gamiLines = gamiRaw.split('\n');
-          // Chercher la section ### profileId et mettre à jour le champ name
-          let inGamiSection = false;
-          for (let i = 0; i < gamiLines.length; i++) {
-            if (gamiLines[i].startsWith('### ')) {
-              inGamiSection = gamiLines[i].replace('### ', '').trim() === profileId;
+          // Trouver l'ancien nom du profil à partir du profileId
+          const oldProfile = profiles.find(p => p.id === profileId);
+          const oldName = oldProfile?.name;
+          if (oldName && oldName !== updates.name) {
+            for (let i = 0; i < gamiLines.length; i++) {
+              // Renommer le header ## AncienNom → ## NouveauNom
+              if (gamiLines[i] === `## ${oldName}`) {
+                gamiLines[i] = `## ${updates.name}`;
+              }
+              // Renommer aussi le champ name: si présent
+              if (gamiLines[i].trim().startsWith('name:') && gamiLines[i].trim() === `name: ${oldName}`) {
+                gamiLines[i] = `name: ${updates.name}`;
+              }
             }
-            if (inGamiSection && gamiLines[i].trim().startsWith('name:')) {
-              gamiLines[i] = `name: ${updates.name}`;
-              break;
-            }
+            await vaultRef.current.writeFile(GAMI_FILE, gamiLines.join('\n'));
           }
-          await vaultRef.current.writeFile(GAMI_FILE, gamiLines.join('\n'));
         } catch (e) {
           warnUnexpected('updateProfile-rename-gami', e);
         }
