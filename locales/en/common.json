@@ -212,6 +212,14 @@
       "budget-familial": {
         "name": "Family budget",
         "description": "Spending categories and monthly limits"
+      },
+      "anniversaires": {
+        "name": "Birthdays",
+        "description": "Pre-fills family birthday dates"
+      },
+      "vie-de-famille": {
+        "name": "Family life",
+        "description": "Examples for gratitude, moods, kids' quotes and wishlist"
       }
     },
     "templateContent": {
@@ -317,17 +325,33 @@
         "rangerCuisine": "Clean up the kitchen after meals",
         "machine": "Start/hang laundry",
         "rangementRapide": "10-minute quick tidy",
-        "menageHeader": "Cleaning",
+        "enfantsHeader": "Kids",
+        "steriliserBiberons": "Sterilize bottles",
+        "lessivetBebe": "Baby laundry (delicates)",
+        "rangerJouets": "Put away toys before bedtime",
+        "nettoyerJouets": "Clean toys and play surfaces",
+        "preparerSacs": "Pack school bags",
+        "trierCahiers": "Sort school papers and notebooks",
+        "menageHeader": "Weekly cleaning",
         "aspirer": "Vacuum the whole house",
         "sallesDeBain": "Clean the bathrooms",
         "draps": "Change the sheets",
         "serpilliere": "Mop hard floors",
         "courses": "Do the grocery shopping",
+        "poubelles": "Take out trash / recycling",
         "mensuel": "Monthly",
         "frigo": "Clean the fridge",
         "poussiere": "Dust high furniture",
         "vitres": "Clean the windows",
-        "stocksMenagers": "Check cleaning supplies"
+        "stocksMenagers": "Check cleaning supplies",
+        "nettoyerFour": "Clean the oven and range hood",
+        "saisonnier": "Seasonal",
+        "filtreVMC": "Clean HVAC / air conditioning filters",
+        "retournerMatelas": "Flip the mattresses",
+        "nettoyerGouttières": "Clean the gutters",
+        "detartrerAppareils": "Descale kettle, coffee maker, washing machine",
+        "purgerRadiateurs": "Bleed the radiators",
+        "verifierDetecteurs": "Check smoke detectors"
       },
       "medical": {
         "questionsHeader": "Questions to ask",
@@ -355,6 +379,26 @@
         "parent": {
           "visiteAnnuelle": "Annual checkup",
           "dentiste": "Semi-annual checkup"
+        }
+      },
+      "vieDeFamille": {
+        "gratitude": {
+          "hint": "This is an example. Replace it with your own gratitude entries!",
+          "example": "Grateful for this family moment tonight."
+        },
+        "moods": {
+          "hint": "This is an example. Add your own moods as the days go by!",
+          "example": "Good day, well rested"
+        },
+        "quotes": {
+          "hint": "This is an example. Write down your kids' gems here!",
+          "example": "Why does the moon follow us in the car?",
+          "context": "In the car at night"
+        },
+        "wishlist": {
+          "hint": "This is an example. Add gift ideas for each family member!",
+          "exampleParent": "A good book | $20 | Christmas",
+          "exampleChild": "A bicycle | $150 | Birthday"
         }
       },
       "budget": {

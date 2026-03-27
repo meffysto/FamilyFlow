@@ -175,29 +175,74 @@ const menageOrganise: TemplatePack = {
     const today = new Date(ctx.today + 'T12:00:00');
     const lundi = getNextDayDate(today, nextMonday);
     const mardi = getNextDayDate(today, nextTuesday);
+    const mercredi = getNextDayDate(today, nextWednesday);
     const jeudi = getNextDayDate(today, nextThursday);
     const vendredi = getNextDayDate(today, nextFriday);
     const samedi = getNextDayDate(today, nextSaturday);
     const p = 'setup.templateContent.menage';
 
-    const content = `## ${t(`${p}.quotidien`)}
-- [ ] ${t(`${p}.faireLits`)} 🔁 every day 📅 ${ctx.today}
-- [ ] ${t(`${p}.rangerCuisine`)} 🔁 every day 📅 ${ctx.today}
-- [ ] ${t(`${p}.machine`)} 🔁 every day 📅 ${ctx.today}
-- [ ] ${t(`${p}.rangementRapide`)} 🔁 every day 📅 ${ctx.today}
+    // Répartition alternée entre les parents
+    const parentNames = ctx.parents.map((p) => p.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-'));
+    const assign = (index: number) => parentNames.length > 1 ? ` @${parentNames[index % parentNames.length]}` : '';
 
+    // Tâches enfants selon les âges présents
+    const hasChildren = ctx.children.length > 0;
+    const ageCategories = new Set(ctx.children.map((c) => c.ageCategory));
+    const hasBaby = ageCategories.has('bebe');
+    const hasSmall = ageCategories.has('petit') || ageCategories.has('enfant');
+    const hasSchool = ageCategories.has('enfant') || ageCategories.has('ado');
+
+    let content = `## ${t(`${p}.quotidien`)}
+- [ ] ${t(`${p}.faireLits`)}${assign(0)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.rangerCuisine`)}${assign(1)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.machine`)}${assign(0)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.rangementRapide`)}${assign(1)} 🔁 every day 📅 ${ctx.today}
+`;
+
+    // Tâches spécifiques enfants
+    if (hasChildren) {
+      content += `\n## ${t(`${p}.enfantsHeader`)}
+`;
+      if (hasBaby) {
+        content += `- [ ] ${t(`${p}.steriliserBiberons`)}${assign(0)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.lessivetBebe`)}${assign(1)} 🔁 every 2 days 📅 ${ctx.today}
+`;
+      }
+      if (hasSmall) {
+        content += `- [ ] ${t(`${p}.rangerJouets`)}${assign(1)} 🔁 every day 📅 ${ctx.today}
+- [ ] ${t(`${p}.nettoyerJouets`)}${assign(0)} 🔁 every week 📅 ${mercredi}
+`;
+      }
+      if (hasSchool) {
+        content += `- [ ] ${t(`${p}.preparerSacs`)}${assign(0)} 🔁 every weekday 📅 ${ctx.today}
+- [ ] ${t(`${p}.trierCahiers`)}${assign(1)} 🔁 every week 📅 ${vendredi}
+`;
+      }
+    }
+
+    content += `
 ## ${t(`${p}.menageHeader`)}
-- [ ] ${t(`${p}.aspirer`)} 🔁 every week 📅 ${lundi}
-- [ ] ${t(`${p}.sallesDeBain`)} 🔁 every week 📅 ${mardi}
-- [ ] ${t(`${p}.draps`)} 🔁 every week 📅 ${jeudi}
-- [ ] ${t(`${p}.serpilliere`)} 🔁 every week 📅 ${vendredi}
-- [ ] ${t(`${p}.courses`)} 🔁 every week 📅 ${samedi}
+- [ ] ${t(`${p}.aspirer`)}${assign(0)} 🔁 every week 📅 ${lundi}
+- [ ] ${t(`${p}.sallesDeBain`)}${assign(1)} 🔁 every week 📅 ${mardi}
+- [ ] ${t(`${p}.draps`)}${assign(0)} 🔁 every week 📅 ${jeudi}
+- [ ] ${t(`${p}.serpilliere`)}${assign(1)} 🔁 every week 📅 ${vendredi}
+- [ ] ${t(`${p}.courses`)}${assign(0)} 🔁 every week 📅 ${samedi}
+- [ ] ${t(`${p}.poubelles`)}${assign(1)} 🔁 every week 📅 ${mardi}
 
 ## ${t(`${p}.mensuel`)}
-- [ ] ${t(`${p}.frigo`)} 🔁 every month 📅 ${ctx.today}
-- [ ] ${t(`${p}.poussiere`)} 🔁 every month 📅 ${ctx.today}
-- [ ] ${t(`${p}.vitres`)} 🔁 every month 📅 ${ctx.today}
-- [ ] ${t(`${p}.stocksMenagers`)} 🔁 every month 📅 ${ctx.today}
+- [ ] ${t(`${p}.frigo`)}${assign(0)} 🔁 every month 📅 ${ctx.today}
+- [ ] ${t(`${p}.poussiere`)}${assign(1)} 🔁 every month 📅 ${ctx.today}
+- [ ] ${t(`${p}.vitres`)}${assign(0)} 🔁 every month 📅 ${ctx.today}
+- [ ] ${t(`${p}.stocksMenagers`)}${assign(1)} 🔁 every month 📅 ${ctx.today}
+- [ ] ${t(`${p}.nettoyerFour`)}${assign(0)} 🔁 every month 📅 ${ctx.today}
+
+## ${t(`${p}.saisonnier`)}
+- [ ] ${t(`${p}.filtreVMC`)} 🔁 every 3 months 📅 ${ctx.today}
+- [ ] ${t(`${p}.retournerMatelas`)} 🔁 every 3 months 📅 ${ctx.today}
+- [ ] ${t(`${p}.nettoyerGouttières`)} 🔁 every 6 months 📅 ${ctx.today}
+- [ ] ${t(`${p}.detartrerAppareils`)} 🔁 every 3 months 📅 ${ctx.today}
+- [ ] ${t(`${p}.purgerRadiateurs`)} 🔁 every year 📅 ${ctx.today}
+- [ ] ${t(`${p}.verifierDetecteurs`)} 🔁 every 6 months 📅 ${ctx.today}
 `;
 
     return [{
@@ -539,15 +584,125 @@ mois: ${moisNum}
   },
 };
 
+// ─── Pack 7 : Anniversaires ─────────────────────────────────────────────────
+
+const anniversaires: TemplatePack = {
+  id: 'anniversaires',
+  name: 'Anniversaires',
+  emoji: '🎂',
+  description: 'Pré-remplit les anniversaires de la famille',
+  generate: (ctx) => {
+    const rows: string[] = [];
+
+    // Enfants avec date de naissance connue
+    for (const child of ctx.children) {
+      if (!child.birthdate) continue;
+      const parsed = new Date(child.birthdate + 'T12:00:00');
+      if (isNaN(parsed.getTime())) continue;
+      const mm = String(parsed.getMonth() + 1).padStart(2, '0');
+      const dd = String(parsed.getDate()).padStart(2, '0');
+      const year = parsed.getFullYear();
+      rows.push(`| ${child.name} | ${mm}-${dd} | ${year} | Famille |  |  |`);
+    }
+
+    // Si aucune date connue, ne rien créer
+    if (rows.length === 0) return [];
+
+    const content = `# Anniversaires
+
+| Nom | Date | Année | Catégorie | Contact ID | Notes |
+|-----|------|-------|-----------|------------|-------|
+${rows.join('\n')}
+`;
+
+    return [{ path: '01 - Famille/Anniversaires.md', content }];
+  },
+};
+
+// ─── Pack 8 : Vie de famille (exemples de départ) ───────────────────────────
+
+const vieDeFamille: TemplatePack = {
+  id: 'vie-de-famille',
+  name: 'Vie de famille',
+  emoji: '💛',
+  description: 'Exemples pour gratitude, humeurs, mots d\'enfants et souhaits',
+  generate: (ctx) => {
+    const files: TemplateFile[] = [];
+    const p = 'setup.templateContent.vieDeFamille';
+    const today = format(new Date(ctx.today + 'T12:00:00'), 'dd/MM/yyyy');
+    const todayIso = ctx.today;
+
+    const parentName = ctx.parents[0]?.name || 'Parent';
+    const childName = ctx.children[0]?.name || '';
+
+    // --- Gratitude ---
+    // Format: H2 = date (DD/MM/YYYY), H3 = 🙏 profil, texte libre
+    const gratitudeContent = `# Gratitude familiale
+
+> ${t(`${p}.gratitude.hint`)}
+
+## ${today}
+
+### 🙏 ${parentName}
+${t(`${p}.gratitude.example`)}
+`;
+    files.push({ path: '06 - Mémoires/Gratitude familiale.md', content: gratitudeContent });
+
+    // --- Humeurs ---
+    // Format: table | Date | Profil | Humeur | Note |
+    const moodsContent = `# Humeurs
+
+> ${t(`${p}.moods.hint`)}
+
+| Date | Profil | Humeur | Note |
+|------|--------|--------|------|
+| ${todayIso} | ${parentName} | 😊 | ${t(`${p}.moods.example`)} |
+`;
+    files.push({ path: '05 - Famille/Humeurs.md', content: moodsContent });
+
+    // --- Mots d'enfants (seulement s'il y a des enfants) ---
+    if (childName) {
+      const quotesContent = `# Mots d'enfants
+
+> ${t(`${p}.quotes.hint`)}
+
+| Date | Enfant | Citation | Contexte |
+|------|--------|----------|----------|
+| ${todayIso} | ${childName} | ${t(`${p}.quotes.example`)} | ${t(`${p}.quotes.context`)} |
+`;
+      files.push({ path: '06 - Mémoires/Mots d\'enfants.md', content: quotesContent });
+    }
+
+    // --- Souhaits ---
+    // Format: H2 = profil, lignes - [ ] texte | budget | occasion
+    let wishlistContent = `# Souhaits & idées cadeaux
+
+> ${t(`${p}.wishlist.hint`)}
+
+## ${parentName}
+- [ ] ${t(`${p}.wishlist.exampleParent`)}
+`;
+    if (childName) {
+      wishlistContent += `\n## ${childName}
+- [ ] ${t(`${p}.wishlist.exampleChild`)}
+`;
+    }
+    files.push({ path: '05 - Famille/Souhaits.md', content: wishlistContent });
+
+    return files;
+  },
+};
+
 // ─── Export ─────────────────────────────────────────────────────────────────
 
 export const TEMPLATE_PACKS: TemplatePack[] = [
   coursesEssentielles,
   repasSemaine,
   menageOrganise,
-  suiviMedical,
   routinesEnfants,
   budgetFamilial,
+  anniversaires,
+  vieDeFamille,
 ];
 
 /** IDs des packs pré-cochés par défaut dans le setup */

@@ -212,6 +212,14 @@
       "budget-familial": {
         "name": "Budget familial",
         "description": "Catégories de dépenses et plafonds mensuels"
+      },
+      "anniversaires": {
+        "name": "Anniversaires",
+        "description": "Pré-remplit les dates d'anniversaire de la famille"
+      },
+      "vie-de-famille": {
+        "name": "Vie de famille",
+        "description": "Exemples pour gratitude, humeurs, mots d'enfants et souhaits"
       }
     },
     "templateContent": {
@@ -317,17 +325,33 @@
         "rangerCuisine": "Ranger la cuisine après les repas",
         "machine": "Lancer/étendre une machine",
         "rangementRapide": "10 minutes de rangement rapide",
-        "menageHeader": "Ménage",
+        "enfantsHeader": "Enfants",
+        "steriliserBiberons": "Stériliser les biberons",
+        "lessivetBebe": "Lessive bébé (linge délicat)",
+        "rangerJouets": "Ranger les jouets avant le soir",
+        "nettoyerJouets": "Nettoyer les jouets et surfaces de jeu",
+        "preparerSacs": "Préparer les sacs d'école",
+        "trierCahiers": "Trier les cahiers et papiers de l'école",
+        "menageHeader": "Ménage hebdomadaire",
         "aspirer": "Aspirer toute la maison",
         "sallesDeBain": "Nettoyer les salles de bain",
         "draps": "Changer les draps",
         "serpilliere": "Serpillière sols durs",
         "courses": "Faire les courses",
+        "poubelles": "Sortir les poubelles / tri sélectif",
         "mensuel": "Mensuel",
         "frigo": "Nettoyer le réfrigérateur",
         "poussiere": "Dépoussiérer les meubles hauts",
         "vitres": "Laver les vitres",
-        "stocksMenagers": "Vérifier les stocks ménagers"
+        "stocksMenagers": "Vérifier les stocks ménagers",
+        "nettoyerFour": "Nettoyer le four et la hotte",
+        "saisonnier": "Saisonnier",
+        "filtreVMC": "Nettoyer les filtres VMC / climatisation",
+        "retournerMatelas": "Retourner les matelas",
+        "nettoyerGouttières": "Nettoyer les gouttières",
+        "detartrerAppareils": "Détartrer bouilloire, cafetière, lave-linge",
+        "purgerRadiateurs": "Purger les radiateurs",
+        "verifierDetecteurs": "Vérifier les détecteurs de fumée"
       },
       "medical": {
         "questionsHeader": "Questions à poser",
@@ -355,6 +379,26 @@
         "parent": {
           "visiteAnnuelle": "Visite annuelle",
           "dentiste": "Contrôle semestriel"
+        }
+      },
+      "vieDeFamille": {
+        "gratitude": {
+          "hint": "Ceci est un exemple. Remplacez-le par vos propres gratitudes !",
+          "example": "Reconnaissant pour ce moment en famille ce soir."
+        },
+        "moods": {
+          "hint": "Ceci est un exemple. Ajoutez vos propres humeurs au fil des jours !",
+          "example": "Bonne journée, bien reposé"
+        },
+        "quotes": {
+          "hint": "Ceci est un exemple. Notez les perles de vos enfants ici !",
+          "example": "Pourquoi la lune elle nous suit en voiture ?",
+          "context": "En voiture le soir"
+        },
+        "wishlist": {
+          "hint": "Ceci est un exemple. Ajoutez vos idées cadeaux pour chaque membre !",
+          "exampleParent": "Un bon livre | 20€ | Noël",
+          "exampleChild": "Un vélo | 150€ | Anniversaire"
         }
       },
       "budget": {
