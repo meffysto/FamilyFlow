@@ -3,116 +3,70 @@
 **Defined:** 2026-03-28
 **Core Value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
 
-## v1 Requirements
+## v1.1 Requirements
 
-Requirements pour ce milestone. Chaque requirement est mappé à une phase du roadmap.
+Requirements for milestone v1.1 — Ferme Enrichie. La ferme est le levier de motivation pour faire les tâches du quotidien.
 
-### Testing
+### Visuels
 
-- [ ] **TEST-01**: Setup jest-expo + @testing-library/react-native avec config fonctionnelle
-- [ ] **TEST-02**: Tests unitaires pour lib/budget.ts (parsing, sérialisation, calculs)
-- [ ] **TEST-03**: Tests unitaires pour lib/mascot/farm-engine.ts (planter, récolter, timers)
-- [ ] **TEST-04**: Tests unitaires pour lib/mascot/sagas-engine.ts (progression, cooldowns)
-- [ ] **TEST-05**: Tests unitaires pour lib/mascot/world-grid.ts (placement, rendu grille)
-- [ ] **TEST-06**: Sentry intégré pour crash reporting en production
-- [ ] **TEST-07**: Tests E2E Maestro pour les 3-5 parcours utilisateur critiques
+- [ ] **VIS-01**: La ferme affiche un cycle jour/nuit avec luminosité et teinte adaptées à l'heure réelle
+- [ ] **VIS-02**: Les cultures ont des sprites pixel améliorés avec au moins 2 frames d'animation par stade de croissance
+- [ ] **VIS-03**: Les animaux ont des sprites pixel améliorés avec animations idle et marche plus fluides
 
-### Code Quality
+### Bâtiments
 
-- [ ] **QUAL-01**: Suppression des fonctions dépréciées dans lib/telegram.ts (5 fonctions)
-- [ ] **QUAL-02**: Suppression de la propriété dépréciée menageTasks et du code de migration associé
-- [x] **QUAL-03**: Remplacement des 228 couleurs hardcodées par tokens sémantiques via useThemeColors()
-- [ ] **QUAL-04**: Correction des 8 assertions `as any` sur les chemins de mutation dans useVault.ts
-- [ ] **QUAL-05**: Setup ESLint avec @typescript-eslint/no-explicit-any
+- [ ] **BAT-01**: L'utilisateur peut construire un bâtiment productif (moulin, serre, étable) sur une parcelle dédiée
+- [ ] **BAT-02**: Les bâtiments génèrent des ressources passivement (une récolte toutes les X heures)
+- [ ] **BAT-03**: Les bâtiments ont au moins 2 niveaux d'amélioration qui augmentent la production
 
-### Architecture
+### Craft
 
-- [ ] **ARCH-01**: Write queue per-file pour les opérations concurrentes sur le vault
+- [ ] **CRA-01**: L'utilisateur peut combiner des récoltes pour créer des items spéciaux (confiture, bouquet, etc.)
+- [ ] **CRA-02**: Les recettes de craft sont visibles dans un catalogue avec les ingrédients requis
+- [ ] **CRA-03**: Les items craftés donnent plus d'XP que les récoltes brutes
 
-### Gamification
+### Progression
 
-- [ ] **GAME-01**: Modèle XP budget pour éviter l'inflation des niveaux
-- [x] **GAME-02**: Événements saisonniers liés au calendrier réel (printemps, été, automne, hiver)
-- [ ] **GAME-03**: Quêtes familiales coopératives (objectifs partagés entre membres)
+- [ ] **PRO-01**: Un arbre de technologies ferme permet de débloquer des améliorations (vitesse pousse, rendement, nouvelles cultures)
+- [ ] **PRO-02**: L'utilisateur peut débloquer de nouvelles zones/parcelles en dépensant des ressources
+- [ ] **PRO-03**: La progression tech est persistée dans le vault et visible sur l'écran arbre
 
-### Ambiance & Retention
+### Social
 
-- [x] **AMB-01**: Ambiance horaire du diorama — particules (rosée matin, lucioles nuit) + tint coloré selon l'heure
-- [x] **AMB-02**: Mutation culture dorée — 3% chance à la plantation, visuel or, récompense x5 à la récolte
-- [x] **AMB-03**: Flammes de streak — affichage visuel animé sous le diorama selon le streak du profil
+- [ ] **SOC-01**: Un membre peut envoyer une récolte ou un item crafté à un autre membre de la famille
+- [ ] **SOC-02**: Le destinataire reçoit une notification et l'item apparaît dans son inventaire
 
-## v2 Requirements
+## Future Requirements
 
-Déférés à un futur milestone. Trackés mais pas dans le roadmap actuel.
+Deferred to future milestones.
 
-### Testing
-
-- **TEST-V2-01**: Tests hooks avec renderHook pour chaque hook domaine extrait
-- **TEST-V2-02**: Coverage report automatisé dans CI
-
-### Architecture
-
-- **ARCH-V2-01**: Optimisation foreground reload (stat/mtime pour skip fichiers inchangés)
-- **ARCH-V2-02**: noUncheckedIndexedAccess progressif par fichier
-- **ARCH-V2-03**: Extraction hooks domaine depuis useVault (budget, recipes, defis, etc.)
-- **ARCH-V2-04**: Split lib/parser.ts en modules par domaine
-- **ARCH-V2-05**: VaultProvider compose les hooks domaine
-- **ARCH-V2-06**: Lazy loading recettes avec cache metadata
-
-### Gamification
-
-- **GAME-V2-01**: Progression idle offline (cultures poussent pendant l'absence)
-- **GAME-V2-02**: Boucle de soin des animaux
-- **GAME-V2-03**: Célébrations milestones de l'arbre
-- **GAME-V2-04**: Système de rareté pour les récoltes
+- **EVT-01**: Événements aléatoires sur la ferme (visiteur mystère, tempête, marché ambulant)
+- **SOC-03**: Visiter la ferme des autres membres en lecture seule
+- **SOC-04**: Classement familial des fermes
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Backend serveur / BDD | L'app reste 100% locale + iCloud |
-| Refonte UI complète | On stabilise, on ne redesign pas |
-| Publication App Store | TestFlight famille pour l'instant |
-| Migration hors Obsidian | Le vault Markdown reste la source de vérité |
-| Accessibilité WCAG | Pas prioritaire pour usage familial privé |
-| Streaks punitives | Recherche montre que c'est nocif pour les enfants |
-| Contenu IA généré par action | Brûle les crédits API pour peu de valeur |
-| Détox E2E | Maestro recommandé pour Expo en 2026 |
-| @shopify/react-native-skia | Uniquement si New Architecture activée — à évaluer plus tard |
-| Refacto god hook useVault | Fonctionne tel quel, seul dev, risque de régression élevé — déféré en v2 |
-| Split parser.ts | Fonctionne tel quel, pas de bénéfice immédiat |
+| Multijoueur temps réel | Pas de backend — tout est local + iCloud |
+| Monnaie achetable (IAP) | App familiale privée, pas de monétisation |
+| PvP / compétition | La ferme est coopérative, pas compétitive |
 
 ## Traceability
 
-Which phases cover which requirements. Updated during roadmap creation.
-
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| TEST-01 | Phase 1 | Pending |
-| TEST-02 | Phase 1 | Pending |
-| TEST-03 | Phase 1 | Pending |
-| TEST-04 | Phase 1 | Pending |
-| TEST-05 | Phase 1 | Pending |
-| TEST-06 | Phase 1 | Pending |
-| TEST-07 | Phase 1 | Pending |
-| QUAL-01 | Phase 1 | Pending |
-| QUAL-02 | Phase 1 | Pending |
-| QUAL-04 | Phase 1 | Pending |
-| QUAL-05 | Phase 1 | Pending |
-| ARCH-01 | Phase 2 | Pending |
-| QUAL-03 | Phase 2 | Complete |
-| GAME-01 | Phase 2 | Pending |
-| GAME-02 | Phase 3 | Complete |
-| GAME-03 | Phase 3 | Pending |
-| AMB-01 | Phase 4 | Complete |
-| AMB-02 | Phase 4 | Complete |
-| AMB-03 | Phase 4 | Complete |
-
-**Coverage:**
-- v1 requirements: 19 total
-- Mapped to phases: 19
-- Unmapped: 0 ✓
-
----
-*Requirements defined: 2026-03-28*
-*Last updated: 2026-03-28 after roadmap simplification — refacto archi déférée en v2*
+| REQ-ID | Phase | Status |
+|--------|-------|--------|
+| VIS-01 | TBD | Pending |
+| VIS-02 | TBD | Pending |
+| VIS-03 | TBD | Pending |
+| BAT-01 | TBD | Pending |
+| BAT-02 | TBD | Pending |
+| BAT-03 | TBD | Pending |
+| CRA-01 | TBD | Pending |
+| CRA-02 | TBD | Pending |
+| CRA-03 | TBD | Pending |
+| PRO-01 | TBD | Pending |
+| PRO-02 | TBD | Pending |
+| PRO-03 | TBD | Pending |
+| SOC-01 | TBD | Pending |
+| SOC-02 | TBD | Pending |
