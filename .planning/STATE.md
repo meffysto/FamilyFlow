@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: verifying
-stopped_at: Completed 05-visuels-ferme/05-03-PLAN.md
-last_updated: "2026-03-28T21:36:27.517Z"
+stopped_at: Phase 6 context gathered
+last_updated: "2026-03-28T22:00:07.079Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 5
@@ -79,6 +79,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T21:19:30.126Z
-Stopped at: Completed 05-visuels-ferme/05-03-PLAN.md
-Resume file: None
+Last session: 2026-03-28T22:00:07.069Z
+Stopped at: Phase 6 context gathered
+Resume file: .planning/phases/06-batiments-productifs/06-CONTEXT.md
