@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 06-02-PLAN.md — ambiance horaire + flammes streak
-last_updated: "2026-03-28T18:07:48.117Z"
+stopped_at: "Completed 06-01: Golden Crop Mutation"
+last_updated: "2026-03-28T18:07:59.851Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 6
@@ -53,6 +53,7 @@ Progress: [░░░░░░░░░░] 0%
 
 *Updated after each plan completion*
 | Phase 06-ambiance-retention P02 | 8 | 2 tasks | 4 files |
+| Phase 06-ambiance-retention P01 | 3 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,8 @@ Recent decisions affecting current work:
 - Init: Ferme/gamification après stabilisation — stabiliser d'abord, enrichir ensuite
 - [Phase 06]: AmbientParticles utilise largeur generique 390 car absoluteFill dans parent de taille connue
 - [Phase 06]: StreakFlames tier calcule dynamiquement depuis STREAK_MILESTONES pour eviter valeurs hardcodees
+- [Phase 06-01]: Couleurs dorées (#FFD700) définies dans StyleSheet comme constantes cosmétiques, pas dans useThemeColors()
+- [Phase 06-01]: CSV backward-compatible sans migration : goldenFlag undefined === '1' est false
 
 ### Roadmap Evolution
 
@@ -90,6 +93,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T18:07:40.132Z
-Stopped at: Completed 06-02-PLAN.md — ambiance horaire + flammes streak
+Last session: 2026-03-28T18:07:59.848Z
+Stopped at: Completed 06-01: Golden Crop Mutation
 Resume file: None
