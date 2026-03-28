@@ -52,6 +52,21 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 - Migration hors Obsidian — le vault Markdown reste la source de vérité
 - Accessibilité complète (WCAG) — pas prioritaire pour usage familial privé
 
+## Current Milestone: v1.1 Ferme Enrichie
+
+**Goal:** Enrichir la ferme pour qu'elle soit un vrai moteur de motivation — plus de profondeur, plus de raisons de revenir faire ses tâches
+
+**Target features:**
+- Cycle jour/nuit sur la ferme
+- Sprites pixel améliorés (cultures + animaux)
+- Bâtiments productifs (moulin, serre, étable)
+- Recettes de craft (combiner récoltes → items spéciaux)
+- Arbre de technologies ferme
+- Zones déblocables
+- Cadeaux entre profils
+
+**Key insight:** La ferme n'est PAS le produit — c'est le levier de motivation pour faire les tâches. Chaque feature doit renforcer la boucle : tâches → XP/récoltes → progression ferme → envie de refaire des tâches.
+
 ## Context
 
 - App en production sur TestFlight pour la famille
@@ -95,4 +110,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 after initialization*
+*Last updated: 2026-03-28 — Milestone v1.1 Ferme Enrichie started*
