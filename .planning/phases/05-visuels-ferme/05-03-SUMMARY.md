@@ -107,6 +107,14 @@ Aucun — npx tsc --noEmit ne produit aucune erreur dans TreeView.tsx. Les erreu
 
 Aucun — pas de service externe. La vérification visuelle finale (Task 3) nécessite un device physique iOS avec `npx expo run:ios --device`.
 
+## Self-Check: PASSED
+
+- FOUND: components/mascot/TreeView.tsx
+- FOUND: .planning/phases/05-visuels-ferme/05-03-SUMMARY.md
+- FOUND commit: 9657439 (Task 1)
+- FOUND commit: 1086477 (Task 2)
+- FOUND commit: dc4cae1 (metadata)
+
 ## Next Phase Readiness
 
 - VIS-03 complété : animaux avec frames idle + walk_down + walk_left directionnels

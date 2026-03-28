@@ -2,7 +2,7 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
-status: verifying
+status: executing
 stopped_at: Completed 06-batiments-productifs 06-01-PLAN.md
 last_updated: "2026-03-28T22:38:45.506Z"
 last_activity: 2026-03-28
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 05 — visuels-ferme
+**Current focus:** Phase 06 — batiments-productifs
 
 ## Current Position
 
-Phase: 06
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-03-28
+Phase: 06 (batiments-productifs) — EXECUTING
+Plan: 1 of 2
+Status: Executing Phase 06
+Last activity: 2026-03-28 -- Phase 06 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
