@@ -281,10 +281,13 @@ export const PLOTS_BY_TREE_STAGE: Record<TreeStage, number> = {
   legendaire: 10,
 };
 
-/** Catalogue des cultures disponibles (4 initiales) */
+/** Catalogue des cultures disponibles (4 initiales)
+ * Design : la carotte est rapide et gratifiante, les cultures avancees
+ * demandent plus mais recompensent mieux. Profit = reward - cost.
+ */
 export const CROP_CATALOG: CropDefinition[] = [
-  { id: 'carrot',     labelKey: 'farm.crop.carrot',     emoji: '🥕', tasksPerStage: 2, harvestReward: 30,  minTreeStage: 'pousse',  cost: 20 },
-  { id: 'wheat',      labelKey: 'farm.crop.wheat',      emoji: '🌾', tasksPerStage: 3, harvestReward: 50,  minTreeStage: 'pousse',  cost: 30 },
-  { id: 'tomato',     labelKey: 'farm.crop.tomato',     emoji: '🍅', tasksPerStage: 3, harvestReward: 60,  minTreeStage: 'arbuste', cost: 40 },
-  { id: 'strawberry', labelKey: 'farm.crop.strawberry', emoji: '🍓', tasksPerStage: 4, harvestReward: 80,  minTreeStage: 'arbre',   cost: 60 },
+  { id: 'carrot',     labelKey: 'farm.crop.carrot',     emoji: '🥕', tasksPerStage: 1, harvestReward: 25,  minTreeStage: 'pousse',  cost: 5  },
+  { id: 'wheat',      labelKey: 'farm.crop.wheat',      emoji: '🌾', tasksPerStage: 1, harvestReward: 40,  minTreeStage: 'pousse',  cost: 10 },
+  { id: 'tomato',     labelKey: 'farm.crop.tomato',     emoji: '🍅', tasksPerStage: 2, harvestReward: 80,  minTreeStage: 'arbuste', cost: 15 },
+  { id: 'strawberry', labelKey: 'farm.crop.strawberry', emoji: '🍓', tasksPerStage: 2, harvestReward: 120, minTreeStage: 'arbre',   cost: 25 },
 ];
