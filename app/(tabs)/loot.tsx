@@ -39,7 +39,7 @@ import {
   getNextEvent,
   SEASONAL_EVENTS,
 } from '../../lib/gamification';
-import { Profile, LootBox, LootRarity } from '../../lib/types';
+import { Profile, LootBox, LootRarity, UsedLoot } from '../../lib/types';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useTranslation } from 'react-i18next';
@@ -49,9 +49,11 @@ import { SeasonalBanner } from '../../components/SeasonalBanner';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 import { Layout } from '../../constants/spacing';
+import * as Haptics from 'expo-haptics';
+import { format } from 'date-fns';
 
 export default function LootScreen() {
-  const { profiles, gamiData, notifPrefs, vault, refresh, isLoading } = useVault();
+  const { profiles, gamiData, activeProfile, markLootUsed, notifPrefs, vault, refresh, isLoading } = useVault();
   const { openLootBox, isProcessing } = useGamification({ vault, notifPrefs });
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
@@ -62,7 +64,8 @@ export default function LootScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const lootSectionRef = useRef<View>(null);
   const [showDropRates, setShowDropRates] = useState(false);
-  const [activeTab, setActiveTab] = useState<'rewards' | 'collection'>('rewards');
+  const [activeTab, setActiveTab] = useState<'rewards' | 'collection' | 'mes-recompenses'>('rewards');
+  const [rewardsSubTab, setRewardsSubTab] = useState<'to-use' | 'used'>('to-use');
   const activeEvent = getActiveEvent();
   const nextEvent = !activeEvent ? getNextEvent() : null;
 
@@ -107,6 +110,24 @@ export default function LootScreen() {
   const recentHistory = (gamiData?.history ?? [])
     .slice(-10)
     .reverse();
+
+  // Loots physiques : entrées d'historique de type loot avec une récompense physique
+  // Une récompense est physique si son note ne contient pas "Badge" et ne commence pas par "+"
+  const earnedPhysicalLoots = (gamiData?.history ?? [])
+    .filter((h) => h.action.startsWith('loot:') && !h.note.includes('Badge') && !h.note.startsWith('+'));
+
+  const usedLoots = gamiData?.usedLoots ?? [];
+  const usedLootIds = new Set(usedLoots.map((u) => u.id));
+
+  // Loots à utiliser (non cochés), identifiés par profileId_timestamp
+  const toUseLoots = earnedPhysicalLoots.filter(
+    (h) => !usedLootIds.has(`${h.profileId}_${h.timestamp}`)
+  );
+
+  // Loots utilisés, triés par usedAt décroissant
+  const usedLootsSorted = [...usedLoots].sort(
+    (a, b) => new Date(b.usedAt).getTime() - new Date(a.usedAt).getTime()
+  );
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
@@ -165,6 +186,14 @@ export default function LootScreen() {
             onPress={() => setActiveTab('collection')}
           >
             <Text style={[styles.tabText, { color: activeTab === 'collection' ? primary : colors.textMuted }]}>{t('loot.tabs.collection')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'mes-recompenses' && { borderBottomColor: primary, borderBottomWidth: 2 }]}
+            onPress={() => setActiveTab('mes-recompenses')}
+          >
+            <Text style={[styles.tabText, { color: activeTab === 'mes-recompenses' ? primary : colors.textMuted }]}>
+              {'Mes récompenses'}{toUseLoots.length > 0 ? ` (${toUseLoots.length})` : ''}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -344,6 +373,98 @@ export default function LootScreen() {
           })}
         </View>
         </>}
+
+        {activeTab === 'mes-recompenses' && (
+          <View style={styles.section}>
+            {/* Sous-onglets : À utiliser / Historique */}
+            <View style={styles.subTabRow}>
+              <TouchableOpacity
+                style={[styles.subTab, { backgroundColor: rewardsSubTab === 'to-use' ? primary : colors.bg }]}
+                onPress={() => setRewardsSubTab('to-use')}
+              >
+                <Text style={[styles.subTabText, { color: rewardsSubTab === 'to-use' ? colors.onPrimary : colors.textMuted }]}>
+                  {'À utiliser'}{toUseLoots.length > 0 ? ` (${toUseLoots.length})` : ''}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.subTab, { backgroundColor: rewardsSubTab === 'used' ? primary : colors.bg }]}
+                onPress={() => setRewardsSubTab('used')}
+              >
+                <Text style={[styles.subTabText, { color: rewardsSubTab === 'used' ? colors.onPrimary : colors.textMuted }]}>
+                  {'Historique'}{usedLootsSorted.length > 0 ? ` (${usedLootsSorted.length})` : ''}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Onglet À utiliser */}
+            {rewardsSubTab === 'to-use' && (
+              toUseLoots.length === 0
+                ? <Text style={[styles.emptyText, { color: colors.textFaint }]}>{'Aucune récompense physique en attente.'}</Text>
+                : toUseLoots.map((loot) => {
+                  const lootId = `${loot.profileId}_${loot.timestamp}`;
+                  const profileObj = profiles.find((p) => p.id === loot.profileId);
+                  const canMark = activeProfile?.role === 'adulte';
+                  // Extraire emoji et label du note (format: "🍪 Un cookie/goûter au choix")
+                  const noteEmoji = loot.note.split(' ')[0] ?? '🎁';
+                  const noteLabel = loot.note.slice(noteEmoji.length).trim() || loot.note;
+                  return (
+                    <View key={lootId} style={[styles.rewardCard, { backgroundColor: colors.card }]}>
+                      <Text style={styles.rewardCardAvatar}>{profileObj?.avatar ?? '👤'}</Text>
+                      <View style={styles.rewardCardInfo}>
+                        <Text style={[styles.rewardCardProfile, { color: colors.textSub }]}>{profileObj?.name ?? loot.profileId}</Text>
+                        <Text style={[styles.rewardCardLabel, { color: colors.text }]}>{noteEmoji} {noteLabel}</Text>
+                      </View>
+                      {canMark ? (
+                        <TouchableOpacity
+                          style={[styles.markBtn, { backgroundColor: colors.success }]}
+                          onPress={async () => {
+                            await markLootUsed({
+                              id: lootId,
+                              profileId: loot.profileId,
+                              emoji: noteEmoji,
+                              label: noteLabel,
+                              earnedAt: loot.timestamp,
+                              usedAt: new Date().toISOString(),
+                            } as UsedLoot);
+                            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                          }}
+                        >
+                          <Text style={[styles.markBtnText, { color: colors.onPrimary }]}>{'✓ Utilisé'}</Text>
+                        </TouchableOpacity>
+                      ) : (
+                        <View style={[styles.markBtn, { backgroundColor: colors.success, opacity: 0.4 }]}>
+                          <Text style={[styles.markBtnText, { color: colors.onPrimary }]}>{'Parent requis'}</Text>
+                        </View>
+                      )}
+                    </View>
+                  );
+                })
+            )}
+
+            {/* Onglet Historique */}
+            {rewardsSubTab === 'used' && (
+              usedLootsSorted.length === 0
+                ? <Text style={[styles.emptyText, { color: colors.textFaint }]}>{'Aucune récompense utilisée pour le moment.'}</Text>
+                : usedLootsSorted.map((usedLoot) => {
+                  const profileObj = profiles.find((p) => p.id === usedLoot.profileId);
+                  const usedAtFormatted = format(new Date(usedLoot.usedAt), 'dd/MM/yyyy');
+                  return (
+                    <View key={usedLoot.id} style={[styles.rewardCard, { backgroundColor: colors.card }]}>
+                      <Text style={styles.rewardCardAvatar}>{profileObj?.avatar ?? '👤'}</Text>
+                      <View style={styles.rewardCardInfo}>
+                        <Text style={[styles.rewardCardProfile, { color: colors.textSub }]}>{profileObj?.name ?? usedLoot.profileId}</Text>
+                        <Text style={[styles.rewardCardLabel, { color: colors.text }]}>{usedLoot.emoji} {usedLoot.label}</Text>
+                      </View>
+                      <View style={[styles.usedBadge, { backgroundColor: colors.successBg }]}>
+                        <Text style={[styles.usedBadgeText, { color: colors.success }]}>{'✓ Utilisé'}</Text>
+                        <Text style={[styles.usedBadgeDate, { color: colors.success }]}>{usedAtFormatted}</Text>
+                      </View>
+                    </View>
+                  );
+                })
+            )}
+          </View>
+        )}
 
         <View style={{ height: 32 }} />
       </ScrollView>
@@ -654,6 +775,64 @@ const styles = StyleSheet.create({
   historyPoints: { alignItems: 'flex-end' },
   historyPts: { fontSize: FontSize.label, fontWeight: FontWeight.bold },
   historyRarity: { fontSize: FontSize.caption, fontWeight: FontWeight.bold },
+  // ─── Mes récompenses ─────────────────────────────────────────────────────
+  subTabRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
+    gap: 8,
+  },
+  subTab: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  subTabText: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.bold,
+  },
+  rewardCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    borderRadius: 14,
+    marginBottom: 8,
+    ...Shadows.sm,
+  },
+  rewardCardAvatar: { fontSize: FontSize.hero },
+  rewardCardInfo: { flex: 1, gap: 2 },
+  rewardCardProfile: { fontSize: FontSize.label, fontWeight: FontWeight.bold },
+  rewardCardLabel: { fontSize: FontSize.sm },
+  markBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  markBtnText: {
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.bold,
+  },
+  usedBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    alignItems: 'center',
+    gap: 2,
+  },
+  usedBadgeText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
+  },
+  usedBadgeDate: {
+    fontSize: FontSize.micro,
+  },
+  emptyText: {
+    fontSize: FontSize.body,
+    textAlign: 'center',
+    paddingVertical: 24,
+  },
   // ─── Drop Rates Modal ─────────────────────────────────────────────────────
   drModal: { flex: 1 },
   drContent: { padding: 20, gap: 16 },
