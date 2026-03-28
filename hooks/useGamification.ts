@@ -14,6 +14,7 @@ import {
   serializeGamification,
   mergeProfiles,
 } from '../lib/parser';
+import { advanceFarmCrops, parseCrops, serializeCrops } from '../lib/mascot/farm-engine';
 import {
   awardTaskCompletion,
   openLootBox as doOpenLootBox,
@@ -40,6 +41,7 @@ interface UseGamificationResult {
     updatedProfile: Profile;
     lootAwarded: boolean;
     pointsGained: number;
+    cropsMatured: string[];  // IDs des cultures pretes a recolter
   }>;
   openLootBox: (profile: Profile, gamiData: GamificationData) => Promise<{
     box: LootBox;
@@ -81,6 +83,38 @@ export function useGamification({ vault, notifPrefs, onDataChange }: UseGamifica
         // Write back to vault
         await vault.writeFile(GAMI_FILE, serializeGamification(newData));
 
+        // Avancer les cultures de la ferme (FIFO)
+        let cropsMatured: string[] = [];
+        const currentCrops = parseCrops(profile.farmCrops ?? '');
+        if (currentCrops.length > 0) {
+          const farmResult = advanceFarmCrops(currentCrops);
+          cropsMatured = farmResult.matured.map(c => c.cropId);
+          // Persister les cultures mises a jour dans famille.md
+          const updatedCropsCSV = serializeCrops(farmResult.crops);
+          const familleContent = await vault.readFile(FAMILLE_FILE);
+          const farmFieldKey = 'farm_crops';
+          const lines = familleContent.split('\n');
+          let inSection = false;
+          let fieldLine = -1;
+          let lastPropIdx = -1;
+          for (let i = 0; i < lines.length; i++) {
+            if (lines[i].startsWith('### ')) {
+              if (inSection) break;
+              if (lines[i].replace('### ', '').trim() === profile.id) inSection = true;
+            } else if (inSection && lines[i].includes(': ')) {
+              lastPropIdx = i;
+              if (lines[i].trim().startsWith(`${farmFieldKey}:`)) fieldLine = i;
+            }
+          }
+          const newValue = `${farmFieldKey}: ${updatedCropsCSV}`;
+          if (fieldLine >= 0) {
+            lines[fieldLine] = newValue;
+          } else if (lastPropIdx >= 0) {
+            lines.splice(lastPropIdx + 1, 0, newValue);
+          }
+          await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
+        }
+
         // Send task completed notification (fire-and-forget)
         dispatchNotificationAsync(
           'task_completed',
@@ -100,6 +134,7 @@ export function useGamification({ vault, notifPrefs, onDataChange }: UseGamifica
           updatedProfile,
           lootAwarded,
           pointsGained: entry.points,
+          cropsMatured,
         };
       } finally {
         setIsProcessing(false);

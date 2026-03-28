@@ -3201,9 +3201,10 @@ export function useVaultInternal(): VaultState {
         activeRewards: updatedRewards ?? gami.activeRewards,
       };
 
-      // Si récompense item (saga terminée), l'ajouter au profil (réutilise familleContent)
+      // Si récompense item (saga terminée), l'ajouter comme item temporaire (7 jours)
       if (rewardItem) {
-        const fieldKey = rewardItem.type === 'decoration' ? 'mascot_decorations' : 'mascot_inhabitants';
+        const { createSagaItem } = require('../lib/types');
+        const sagaItem = createSagaItem(rewardItem.id, rewardItem.type);
         const lines = familleContent.split('\n');
         let inSection = false;
         let fieldLine = -1;
@@ -3213,20 +3214,29 @@ export function useVaultInternal(): VaultState {
           } else if (inSection && lines[i].match(/^###?\s+/)) {
             break;
           }
-          if (inSection && lines[i].startsWith(`${fieldKey}:`)) {
+          if (inSection && lines[i].startsWith('saga_items:')) {
             fieldLine = i;
             break;
           }
         }
+        const entry = `${sagaItem.itemId}|${sagaItem.type}|${sagaItem.expiresAt}`;
         if (fieldLine >= 0) {
-          const current = lines[fieldLine].replace(`${fieldKey}:`, '').trim();
+          const current = lines[fieldLine].replace('saga_items:', '').trim();
           const items = current ? current.split(',').map(s => s.trim()) : [];
-          if (!items.includes(rewardItem.id)) {
-            items.push(rewardItem.id);
-            lines[fieldLine] = `${fieldKey}: ${items.join(', ')}`;
-            await vaultRef.current.writeFile(FAMILLE_FILE, lines.join('\n'));
+          items.push(entry);
+          lines[fieldLine] = `saga_items: ${items.join(', ')}`;
+        } else {
+          // Ajouter le champ saga_items dans la section du profil
+          let lastProp = -1;
+          let inSec = false;
+          for (let i = 0; i < lines.length; i++) {
+            if (lines[i].match(new RegExp(`^###?\\s+.*${profileId}`, 'i')) || lines[i].match(new RegExp(`^id:\\s*${profileId}`, 'i'))) inSec = true;
+            else if (inSec && lines[i].match(/^###?\s+/)) break;
+            if (inSec && lines[i].includes(': ')) lastProp = i;
           }
+          if (lastProp >= 0) lines.splice(lastProp + 1, 0, `saga_items: ${entry}`);
         }
+        await vaultRef.current.writeFile(FAMILLE_FILE, lines.join('\n'));
       }
 
       setGamiData(newGami);

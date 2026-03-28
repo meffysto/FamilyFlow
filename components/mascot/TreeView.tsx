@@ -45,6 +45,8 @@ import {
   SCENE_SLOTS,
   ITEM_ILLUSTRATIONS,
 } from '../../lib/mascot/types';
+import { NativePlacedItems } from './NativePlacedItems';
+import { NativePlacementSlots } from './NativePlacementSlots';
 import {
   getTreeStage,
   getStageProgress,
@@ -84,22 +86,99 @@ const VIEWBOX_H = 240;
 const GROUND_Y = 200;
 const CENTER_X = 100;
 
-// ── Illustrations aquarelle (remplacent le SVG procédural quand disponibles) ──
+// ── Sprites pixel art Mana Seed ──────────────────
 
-const TREE_ILLUSTRATIONS: Partial<Record<TreeSpecies, Partial<Record<TreeStage, any>>>> = {
-  cerisier: {
-    graine: require('../../assets/trees/cerisier/stage_1.png'),
-    pousse: require('../../assets/trees/cerisier/stage_2.png'),
-    arbuste: require('../../assets/trees/cerisier/stage_3.png'),
-    arbre: require('../../assets/trees/cerisier/stage_4.png'),
+/** Mapping espèce → variété fruit tree */
+const SPECIES_TO_FRUIT: Record<TreeSpecies, string> = {
+  cerisier: 'peach',
+  chene:    'apple_red',
+  oranger:  'orange',
+  bambou:   'plum',
+  palmier:  'pear',
+};
+
+/** Mapping stade → taille sprite (1-4). Graine = sprite spécial. */
+const STAGE_TO_SIZE: Record<TreeStage, number> = {
+  graine:     0, // sprite spécial
+  pousse:     1,
+  arbuste:    2,
+  arbre:      3,
+  majestueux: 4,
+  legendaire: 4, // même taille + effets
+};
+
+/** Mapping saison → clé spritesheet */
+const SEASON_TO_KEY: Record<Season, string> = {
+  printemps: 'spring',
+  ete:       'summer',
+  automne:   'autumn',
+  hiver:     'winter',
+};
+
+/** Sprite graine (commun à toutes les espèces) */
+const SEED_SPRITE = require('../../assets/garden/trees/seed.png');
+
+/** Tous les sprites pixel art par espèce, saison et taille */
+type PixelSprites = Record<string, Record<string, Record<number, any>>>;
+const PIXEL_TREE_SPRITES: PixelSprites = {
+  peach: {
+    spring:  { 1: require('../../assets/garden/trees/peach/spring_1.png'), 2: require('../../assets/garden/trees/peach/spring_2.png'), 3: require('../../assets/garden/trees/peach/spring_3.png'), 4: require('../../assets/garden/trees/peach/spring_4.png') },
+    summer:  { 1: require('../../assets/garden/trees/peach/summer_1.png'), 2: require('../../assets/garden/trees/peach/summer_2.png'), 3: require('../../assets/garden/trees/peach/summer_3.png'), 4: require('../../assets/garden/trees/peach/summer_4.png') },
+    autumn:  { 1: require('../../assets/garden/trees/peach/autumn_1.png'), 2: require('../../assets/garden/trees/peach/autumn_2.png'), 3: require('../../assets/garden/trees/peach/autumn_3.png'), 4: require('../../assets/garden/trees/peach/autumn_4.png') },
+    winter:  { 1: require('../../assets/garden/trees/peach/winter_1.png'), 2: require('../../assets/garden/trees/peach/winter_2.png'), 3: require('../../assets/garden/trees/peach/winter_3.png'), 4: require('../../assets/garden/trees/peach/winter_4.png') },
+    shadow:  { 1: require('../../assets/garden/trees/peach/shadow_1.png'), 2: require('../../assets/garden/trees/peach/shadow_2.png'), 3: require('../../assets/garden/trees/peach/shadow_3.png'), 4: require('../../assets/garden/trees/peach/shadow_4.png') },
+  },
+  apple_red: {
+    spring:  { 1: require('../../assets/garden/trees/apple_red/spring_1.png'), 2: require('../../assets/garden/trees/apple_red/spring_2.png'), 3: require('../../assets/garden/trees/apple_red/spring_3.png'), 4: require('../../assets/garden/trees/apple_red/spring_4.png') },
+    summer:  { 1: require('../../assets/garden/trees/apple_red/summer_1.png'), 2: require('../../assets/garden/trees/apple_red/summer_2.png'), 3: require('../../assets/garden/trees/apple_red/summer_3.png'), 4: require('../../assets/garden/trees/apple_red/summer_4.png') },
+    autumn:  { 1: require('../../assets/garden/trees/apple_red/autumn_1.png'), 2: require('../../assets/garden/trees/apple_red/autumn_2.png'), 3: require('../../assets/garden/trees/apple_red/autumn_3.png'), 4: require('../../assets/garden/trees/apple_red/autumn_4.png') },
+    winter:  { 1: require('../../assets/garden/trees/apple_red/winter_1.png'), 2: require('../../assets/garden/trees/apple_red/winter_2.png'), 3: require('../../assets/garden/trees/apple_red/winter_3.png'), 4: require('../../assets/garden/trees/apple_red/winter_4.png') },
+    shadow:  { 1: require('../../assets/garden/trees/apple_red/shadow_1.png'), 2: require('../../assets/garden/trees/apple_red/shadow_2.png'), 3: require('../../assets/garden/trees/apple_red/shadow_3.png'), 4: require('../../assets/garden/trees/apple_red/shadow_4.png') },
+  },
+  orange: {
+    spring:  { 1: require('../../assets/garden/trees/orange/spring_1.png'), 2: require('../../assets/garden/trees/orange/spring_2.png'), 3: require('../../assets/garden/trees/orange/spring_3.png'), 4: require('../../assets/garden/trees/orange/spring_4.png') },
+    summer:  { 1: require('../../assets/garden/trees/orange/summer_1.png'), 2: require('../../assets/garden/trees/orange/summer_2.png'), 3: require('../../assets/garden/trees/orange/summer_3.png'), 4: require('../../assets/garden/trees/orange/summer_4.png') },
+    autumn:  { 1: require('../../assets/garden/trees/orange/autumn_1.png'), 2: require('../../assets/garden/trees/orange/autumn_2.png'), 3: require('../../assets/garden/trees/orange/autumn_3.png'), 4: require('../../assets/garden/trees/orange/autumn_4.png') },
+    winter:  { 1: require('../../assets/garden/trees/orange/winter_1.png'), 2: require('../../assets/garden/trees/orange/winter_2.png'), 3: require('../../assets/garden/trees/orange/winter_3.png'), 4: require('../../assets/garden/trees/orange/winter_4.png') },
+    shadow:  { 1: require('../../assets/garden/trees/orange/shadow_1.png'), 2: require('../../assets/garden/trees/orange/shadow_2.png'), 3: require('../../assets/garden/trees/orange/shadow_3.png'), 4: require('../../assets/garden/trees/orange/shadow_4.png') },
+  },
+  plum: {
+    spring:  { 1: require('../../assets/garden/trees/plum/spring_1.png'), 2: require('../../assets/garden/trees/plum/spring_2.png'), 3: require('../../assets/garden/trees/plum/spring_3.png'), 4: require('../../assets/garden/trees/plum/spring_4.png') },
+    summer:  { 1: require('../../assets/garden/trees/plum/summer_1.png'), 2: require('../../assets/garden/trees/plum/summer_2.png'), 3: require('../../assets/garden/trees/plum/summer_3.png'), 4: require('../../assets/garden/trees/plum/summer_4.png') },
+    autumn:  { 1: require('../../assets/garden/trees/plum/autumn_1.png'), 2: require('../../assets/garden/trees/plum/autumn_2.png'), 3: require('../../assets/garden/trees/plum/autumn_3.png'), 4: require('../../assets/garden/trees/plum/autumn_4.png') },
+    winter:  { 1: require('../../assets/garden/trees/plum/winter_1.png'), 2: require('../../assets/garden/trees/plum/winter_2.png'), 3: require('../../assets/garden/trees/plum/winter_3.png'), 4: require('../../assets/garden/trees/plum/winter_4.png') },
+    shadow:  { 1: require('../../assets/garden/trees/plum/shadow_1.png'), 2: require('../../assets/garden/trees/plum/shadow_2.png'), 3: require('../../assets/garden/trees/plum/shadow_3.png'), 4: require('../../assets/garden/trees/plum/shadow_4.png') },
+  },
+  pear: {
+    spring:  { 1: require('../../assets/garden/trees/pear/spring_1.png'), 2: require('../../assets/garden/trees/pear/spring_2.png'), 3: require('../../assets/garden/trees/pear/spring_3.png'), 4: require('../../assets/garden/trees/pear/spring_4.png') },
+    summer:  { 1: require('../../assets/garden/trees/pear/summer_1.png'), 2: require('../../assets/garden/trees/pear/summer_2.png'), 3: require('../../assets/garden/trees/pear/summer_3.png'), 4: require('../../assets/garden/trees/pear/summer_4.png') },
+    autumn:  { 1: require('../../assets/garden/trees/pear/autumn_1.png'), 2: require('../../assets/garden/trees/pear/autumn_2.png'), 3: require('../../assets/garden/trees/pear/autumn_3.png'), 4: require('../../assets/garden/trees/pear/autumn_4.png') },
+    winter:  { 1: require('../../assets/garden/trees/pear/winter_1.png'), 2: require('../../assets/garden/trees/pear/winter_2.png'), 3: require('../../assets/garden/trees/pear/winter_3.png'), 4: require('../../assets/garden/trees/pear/winter_4.png') },
+    shadow:  { 1: require('../../assets/garden/trees/pear/shadow_1.png'), 2: require('../../assets/garden/trees/pear/shadow_2.png'), 3: require('../../assets/garden/trees/pear/shadow_3.png'), 4: require('../../assets/garden/trees/pear/shadow_4.png') },
   },
 };
+
+/** Résout le sprite pixel pour une espèce + stade + saison */
+function getPixelTreeSprite(species: TreeSpecies, stage: TreeStage, season: Season): any {
+  if (stage === 'graine') return SEED_SPRITE;
+  const fruit = SPECIES_TO_FRUIT[species];
+  const size = STAGE_TO_SIZE[stage];
+  const seasonKey = SEASON_TO_KEY[season];
+  return PIXEL_TREE_SPRITES[fruit]?.[seasonKey]?.[size] ?? null;
+}
+
+/** Résout le sprite ombre correspondant */
+function getPixelShadowSprite(species: TreeSpecies, stage: TreeStage): any {
+  if (stage === 'graine') return null;
+  const fruit = SPECIES_TO_FRUIT[species];
+  const size = STAGE_TO_SIZE[stage];
+  return PIXEL_TREE_SPRITES[fruit]?.shadow?.[size] ?? null;
+}
 
 // ── Composant principal ────────────────────────
 
 function TreeViewInner({ species, level, size = 200, showGround = true, interactive = true, decorations = [], inhabitants = [], previewMode = false, season: seasonProp, placements = {}, placingItem = null, onSlotSelect }: TreeViewProps) {
   const stage = getTreeStage(level);
-  const illustration = TREE_ILLUSTRATIONS[species]?.[stage];
   const progress = getStageProgress(level);
   const stageIdx = getStageIndex(level);
   const visual = getVisualComplexity(level);
@@ -135,7 +214,12 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
     );
   }, [animate]);
 
-  // Style pour le conteneur (pas d'animation de transform ici)
+  // Style animé pour le mode pixel (vue top-down) : léger pulse, pas de sway
+  const pixelAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: breathe.value }],
+  }));
+
+  // Style pour le conteneur SVG fallback (pas d'animation de transform ici)
   const treeAnimStyle = useAnimatedStyle(() => ({
     transform: [],
   }));
@@ -163,44 +247,142 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
     }
   }, [stage, species, level]);
 
-  // ── Mode illustration aquarelle (remplace le SVG procédural) ──
-  if (illustration) {
+  // ── Mode pixel art (sprite Mana Seed) ──
+  const pixelSprite = useMemo(
+    () => getPixelTreeSprite(species, stage, currentSeason),
+    [species, stage, currentSeason],
+  );
+  const shadowSprite = useMemo(
+    () => getPixelShadowSprite(species, stage),
+    [species, stage],
+  );
+  const isLegendary = stage === 'legendaire';
+  const isSeed = stage === 'graine';
+
+  // IDs des animaux pixel (pour les exclure du rendu statique et les animer separement)
+  const pixelAnimalIds = useMemo(() => new Set(Object.keys(ANIMAL_IDLE_FRAMES)), []);
+
+  if (pixelSprite) {
     const imgHeight = size * (VIEWBOX_H / VIEWBOX_W);
-    // L'image occupe 75% du viewport, positionnée pour que la base touche le sol
-    const imgScale = 0.75;
+    // Graine = petite (30%), autres = proportionnel à la taille
+    const imgScale = isSeed ? 0.30 : (0.50 + STAGE_TO_SIZE[stage] * 0.10);
     const scaledW = size * imgScale;
-    const scaledH = imgHeight * imgScale;
-    const groundRatio = GROUND_Y / VIEWBOX_H; // ~0.83
+    // Ratio source pixel art = 3:4 (48x64)
+    const scaledH = isSeed ? scaledW * 2 : scaledW * (64 / 48);
+    const groundRatio = GROUND_Y / VIEWBOX_H;
     const topOffset = (imgHeight * groundRatio) - scaledH;
     return (
       <View style={[styles.container, { width: size, height: imgHeight }]}>
-        {animate && (
-          <SeasonalParticles particle={seasonParticles} size={size} />
+        {/* Pas de SeasonalParticles en mode pixel — elles clashent avec le style */}
+        {/* Effets légendaire uniquement : particules dorées */}
+        {isLegendary && animate && (
+          <FloatingParticles color={sp.particle} count={12} size={size} />
         )}
-        {visual.hasParticles && animate && (
-          <FloatingParticles color={sp.particle} count={visual.hasAura ? 12 : 6} size={size} />
+        {/* Ombre au sol (top-down : centrée sous l'arbre, elliptique) */}
+        {shadowSprite && showGround && (
+          <Animated.View style={[{
+            position: 'absolute',
+            top: imgHeight * groundRatio - scaledH * 0.04,
+            left: (size - scaledW * 0.7) / 2,
+            width: scaledW * 0.7,
+            height: scaledH * 0.12,
+            opacity: 0.25,
+          }, pixelAnimStyle] as any}>
+            <Image
+              source={shadowSprite}
+              style={{ width: '100%', height: '100%' } as any}
+            />
+          </Animated.View>
         )}
-        <Animated.View style={[styles.svgWrap, treeAnimStyle, { position: 'absolute', top: topOffset, left: (size - scaledW) / 2 }]}>
+        {/* Arbre pixel — animation pulse top-down */}
+        <Animated.View style={[styles.svgWrap, pixelAnimStyle, { position: 'absolute', top: topOffset, left: (size - scaledW) / 2 }]}>
+          {isLegendary && (
+            <View style={{
+              position: 'absolute',
+              top: -scaledH * 0.1,
+              left: -scaledW * 0.15,
+              width: scaledW * 1.3,
+              height: scaledH * 1.2,
+              borderRadius: scaledW * 0.5,
+              backgroundColor: sp.accent,
+              opacity: 0.08,
+            }} />
+          )}
           <Image
-            source={illustration}
-            style={{ width: scaledW, height: scaledH, resizeMode: 'contain' }}
+            source={pixelSprite}
+            style={{ width: scaledW, height: scaledH } as any}
           />
         </Animated.View>
-        {/* Overlay SVG pour décorations/habitants/items placés/slots */}
-        {(decorations.length > 0 || inhabitants.length > 0 || Object.keys(placements).length > 0 || placingItem) && (
+        {/* Overlay natif RN pour items placés + slots de placement */}
+        {(Object.keys(placements).length > 0 || placingItem) && (
           <View style={[StyleSheet.absoluteFill, { zIndex: 2 }]} pointerEvents="box-none">
-            <Svg width={size} height={imgHeight} viewBox={`0 0 ${VIEWBOX_W} ${VIEWBOX_H}`}>
-              {previewMode && <DecorationOverlay decorationIds={decorations} stageIdx={stageIdx} previewMode species={species} />}
-              {previewMode && <InhabitantOverlay inhabitantIds={inhabitants} stageIdx={stageIdx} species={species} />}
-              {showGround && Object.keys(placements).length > 0 && !placingItem && (
-                <PlacedItems placements={placements} />
-              )}
-              {showGround && placingItem && (
-                <PlacementSlots placements={placements} placingItemId={placingItem} onSelect={onSlotSelect} />
-              )}
-            </Svg>
+            {showGround && Object.keys(placements).length > 0 && !placingItem && (
+              <NativePlacedItems
+                placements={placements}
+                containerWidth={size}
+                containerHeight={imgHeight}
+                skipIds={pixelAnimalIds}
+              />
+            )}
+            {showGround && placingItem && (
+              <NativePlacementSlots
+                placements={placements}
+                placingItemId={placingItem}
+                containerWidth={size}
+                containerHeight={imgHeight}
+                onSelect={onSlotSelect}
+              />
+            )}
           </View>
         )}
+        {/* Animaux pixel animés (cycle idle natif RN, hors SVG) */}
+        {animate && (() => {
+          // Collecter tous les animaux pixel : depuis inhabitants (previewMode) + depuis placements (slots)
+          const animalIds: { id: string; fromSlot?: string }[] = [];
+          // Animaux dans la liste des habitants (preview boutique)
+          for (const id of inhabitants) {
+            if (ANIMAL_IDLE_FRAMES[id]) animalIds.push({ id });
+          }
+          // Animaux placés sur des slots de scène
+          for (const [slotId, itemId] of Object.entries(placements)) {
+            if (ANIMAL_IDLE_FRAMES[itemId]) animalIds.push({ id: itemId, fromSlot: slotId });
+          }
+          if (animalIds.length === 0) return null;
+          return (
+            <View style={[StyleSheet.absoluteFill, { zIndex: 3 }]} pointerEvents="none">
+              {animalIds.map(({ id, fromSlot }) => {
+                const frames = ANIMAL_IDLE_FRAMES[id]!;
+                let px: number, py: number, s: number;
+                if (fromSlot) {
+                  // Placé sur un slot de scène
+                  const sceneSlot = SCENE_SLOTS.find(sl => sl.id === fromSlot);
+                  if (!sceneSlot) return null;
+                  s = 28;
+                  px = (sceneSlot.cx / VIEWBOX_W) * size;
+                  py = (sceneSlot.cy / VIEWBOX_H) * imgHeight;
+                } else {
+                  // Position par défaut (HAB_SLOTS)
+                  const slot = HAB_SLOTS[id];
+                  if (!slot) return null;
+                  const pos = getItemPosition(species, stageIdx, slot);
+                  s = pos.fontSize * 1.5;
+                  px = (pos.x / VIEWBOX_W) * size;
+                  py = (pos.y / VIEWBOX_H) * imgHeight;
+                }
+                return (
+                  <AnimatedAnimal
+                    key={fromSlot ?? id}
+                    frames={frames}
+                    x={px - s / 2}
+                    y={py - s / 2}
+                    size={s}
+                    animalId={id}
+                  />
+                );
+              })}
+            </View>
+          );
+        })()}
       </View>
     );
   }
@@ -1521,6 +1703,8 @@ function PlacedItems({ placements }: { placements: Record<string, string> }) {
   return (
     <G>
       {Object.entries(placements).map(([slotId, itemId]) => {
+        // Les animaux pixel sont rendus par l'overlay natif animé
+        if (ANIMAL_IDLE_FRAMES[itemId]) return null;
         const slot = SCENE_SLOTS.find(s => s.id === slotId);
         const emoji = getItemEmoji(itemId);
         if (!slot || !emoji) return null;
@@ -1679,19 +1863,29 @@ const DECO_SLOTS: Record<string, SlotDef> = {
   couronne:    { dxFactor: 0,     dyFactor: -0.85,  baseSize: 22, rarity: 'légendaire' },   // sommet de la couronne
   portail:     { dxFactor: -0.9,  dyFactor: 0,       groundRelY: -15, baseSize: 24, rarity: 'prestige' },  // portail magique à gauche
   cristal:     { dxFactor: 0,     dyFactor: -0.95,  baseSize: 26, rarity: 'prestige' },   // cristal au sommet absolu
+  // Nouvelles décos pixel (au sol)
+  botte_foin:  { dxFactor: -0.8,  dyFactor: 0,    groundRelY: -6,  baseSize: 22, rarity: 'commun' },
+  etal_fruits: { dxFactor: 0.85,  dyFactor: 0,    groundRelY: -10, baseSize: 24, rarity: 'épique' },
 };
 
 const HAB_SLOTS: Record<string, SlotDef> = {
+  // Anciens habitants (positionnés dans/sur l'arbre)
   oiseau:      { dxFactor: 0.7,   dyFactor: -0.35,  baseSize: 16, rarity: 'commun' },
-  ecureuil:    { dxFactor: 0.15,  dyFactor: 0.6,    baseSize: 17, rarity: 'commun' },       // sur le tronc
+  ecureuil:    { dxFactor: 0.15,  dyFactor: 0.6,    baseSize: 17, rarity: 'commun' },
   papillons:   { dxFactor: -0.75, dyFactor: -0.45,  baseSize: 15, rarity: 'commun' },
   coccinelle:  { dxFactor: 0.45,  dyFactor: 0.2,    baseSize: 13, rarity: 'commun' },
   chat:        { dxFactor: -0.6,  dyFactor: 0,       groundRelY: -8,  baseSize: 20, rarity: 'rare' },
   hibou:       { dxFactor: -0.5,  dyFactor: -0.3,   baseSize: 18, rarity: 'rare' },
   fee:         { dxFactor: 0.8,   dyFactor: -0.5,   baseSize: 20, rarity: 'épique' },
-  dragon:      { dxFactor: 0,     dyFactor: -0.6,   baseSize: 26, rarity: 'légendaire' },   // dans la couronne, GROS
-  phoenix:     { dxFactor: 0.85,  dyFactor: -0.7,   baseSize: 28, rarity: 'prestige' },   // en vol à droite de la couronne
-  licorne:     { dxFactor: -0.85, dyFactor: 0,       groundRelY: -12, baseSize: 28, rarity: 'prestige' },  // au sol à gauche
+  dragon:      { dxFactor: 0,     dyFactor: -0.6,   baseSize: 26, rarity: 'légendaire' },
+  phoenix:     { dxFactor: 0.85,  dyFactor: -0.7,   baseSize: 28, rarity: 'prestige' },
+  licorne:     { dxFactor: -0.85, dyFactor: 0,       groundRelY: -12, baseSize: 28, rarity: 'prestige' },
+  // Nouveaux animaux pixel (au sol, top-down)
+  poussin:     { dxFactor: 0.6,   dyFactor: 0,    groundRelY: -5,  baseSize: 16, rarity: 'commun' },
+  poulet:      { dxFactor: -0.7,  dyFactor: 0,    groundRelY: -10, baseSize: 20, rarity: 'commun' },
+  canard:      { dxFactor: 0.8,   dyFactor: 0,    groundRelY: -12, baseSize: 20, rarity: 'commun' },
+  cochon:      { dxFactor: -0.85, dyFactor: 0,    groundRelY: -15, baseSize: 22, rarity: 'rare' },
+  vache:       { dxFactor: 0.9,   dyFactor: 0,    groundRelY: -18, baseSize: 26, rarity: 'rare' },
 };
 
 /** Ajustements par espèce (offsets additionnels en px) */
@@ -1758,10 +1952,120 @@ function DecorationOverlay({ decorationIds, stageIdx, previewMode = false, speci
   );
 }
 
+// ── Animaux pixel animés (cycle idle) ──────────
+
+/** Frames idle par animal pixel (2 frames pour le cycle) */
+const ANIMAL_IDLE_FRAMES: Record<string, [any, any]> = {
+  poussin: [require('../../assets/garden/animals/poussin/idle_1.png'), require('../../assets/garden/animals/poussin/idle_2.png')],
+  poulet:  [require('../../assets/garden/animals/poulet/idle_1.png'),  require('../../assets/garden/animals/poulet/idle_2.png')],
+  canard:  [require('../../assets/garden/animals/canard/idle_1.png'),  require('../../assets/garden/animals/canard/idle_2.png')],
+  cochon:  [require('../../assets/garden/animals/cochon/idle_1.png'),  require('../../assets/garden/animals/cochon/idle_2.png')],
+  vache:   [require('../../assets/garden/animals/vache/idle_1.png'),   require('../../assets/garden/animals/vache/idle_2.png')],
+};
+
+/** Walk frames par animal (6 frames direction bas) */
+const ANIMAL_WALK_FRAMES: Record<string, any[]> = {
+  poussin: [
+    require('../../assets/garden/animals/poussin/walk_down_1.png'),
+    require('../../assets/garden/animals/poussin/walk_down_2.png'),
+    require('../../assets/garden/animals/poussin/walk_down_3.png'),
+    require('../../assets/garden/animals/poussin/walk_down_4.png'),
+  ],
+  poulet: [
+    require('../../assets/garden/animals/poulet/walk_down_1.png'),
+    require('../../assets/garden/animals/poulet/walk_down_2.png'),
+    require('../../assets/garden/animals/poulet/walk_down_3.png'),
+    require('../../assets/garden/animals/poulet/walk_down_4.png'),
+  ],
+  canard: [
+    require('../../assets/garden/animals/canard/walk_down_1.png'),
+    require('../../assets/garden/animals/canard/walk_down_2.png'),
+    require('../../assets/garden/animals/canard/walk_down_3.png'),
+    require('../../assets/garden/animals/canard/walk_down_4.png'),
+  ],
+  cochon: [
+    require('../../assets/garden/animals/cochon/walk_down_1.png'),
+    require('../../assets/garden/animals/cochon/walk_down_2.png'),
+    require('../../assets/garden/animals/cochon/walk_down_3.png'),
+    require('../../assets/garden/animals/cochon/walk_down_4.png'),
+  ],
+  vache: [
+    require('../../assets/garden/animals/vache/walk_down_1.png'),
+    require('../../assets/garden/animals/vache/walk_down_2.png'),
+    require('../../assets/garden/animals/vache/walk_down_3.png'),
+    require('../../assets/garden/animals/vache/walk_down_4.png'),
+  ],
+};
+
+/** Animal anime : alterne idle + petite balade aleatoire */
+function AnimatedAnimal({ frames, x, y, size, animalId }: { frames: [any, any]; x: number; y: number; size: number; animalId: string }) {
+  const [frameIdx, setFrameIdx] = React.useState(0);
+  const [isWalking, setIsWalking] = React.useState(false);
+  const offsetX = useSharedValue(0);
+  const offsetY = useSharedValue(0);
+
+  // Cycle idle / walk
+  useEffect(() => {
+    const walkFrames = ANIMAL_WALK_FRAMES[animalId];
+    let walkInterval: ReturnType<typeof setInterval>;
+
+    // Idle frame cycle
+    const idleInterval = setInterval(() => setFrameIdx(f => (f + 1) % 2), 600);
+
+    // Petite balade toutes les 3-6 secondes
+    const startWalk = () => {
+      if (!walkFrames) return;
+      const dx = (Math.random() - 0.5) * 20;
+      const dy = (Math.random() - 0.5) * 12;
+      setIsWalking(true);
+      offsetX.value = withTiming(offsetX.value + dx, { duration: 1500, easing: Easing.inOut(Easing.sin) });
+      offsetY.value = withTiming(offsetY.value + dy, { duration: 1500, easing: Easing.inOut(Easing.sin) });
+      setTimeout(() => setIsWalking(false), 1500);
+    };
+
+    walkInterval = setInterval(startWalk, 3000 + Math.random() * 3000);
+
+    return () => {
+      clearInterval(idleInterval);
+      clearInterval(walkInterval);
+    };
+  }, [animalId]);
+
+  const walkFrames = ANIMAL_WALK_FRAMES[animalId];
+  const [walkFrameIdx, setWalkFrameIdx] = React.useState(0);
+  useEffect(() => {
+    if (!isWalking || !walkFrames) return;
+    const interval = setInterval(() => setWalkFrameIdx(f => (f + 1) % walkFrames.length), 200);
+    return () => clearInterval(interval);
+  }, [isWalking, walkFrames]);
+
+  const moveStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: offsetX.value },
+      { translateY: offsetY.value },
+    ],
+  }));
+
+  const currentFrame = isWalking && walkFrames
+    ? walkFrames[walkFrameIdx]
+    : frames[frameIdx];
+
+  return (
+    <Animated.View style={[{ position: 'absolute', left: x, top: y, width: size, height: size }, moveStyle]}>
+      <Image
+        source={currentFrame}
+        style={{ width: size, height: size } as any}
+      />
+    </Animated.View>
+  );
+}
+
 function InhabitantOverlay({ inhabitantIds, stageIdx, previewMode = false, species }: { inhabitantIds: string[]; stageIdx: number; previewMode?: boolean; species: TreeSpecies }) {
   return (
     <G>
       {inhabitantIds.map((id) => {
+        // Les animaux pixel sont rendus par l'overlay natif animé (AnimatedAnimal), pas ici
+        if (ANIMAL_IDLE_FRAMES[id]) return null;
         const hab = INHABITANTS.find((h) => h.id === id);
         if (!hab) return null;
         const slot = HAB_SLOTS[id];

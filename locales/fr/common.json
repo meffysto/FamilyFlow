@@ -3204,14 +3204,38 @@
     "allowed": "autorisé",
     "restricted": "restreint",
     "categories": {
-      "rdv": { "label": "Rendez-vous", "desc": "Voir les RDV des autres enfants" },
-      "budget": { "label": "Budget", "desc": "Accéder à l'écran budget" },
-      "stock": { "label": "Stock", "desc": "Voir les niveaux de stock" },
-      "defis": { "label": "Défis", "desc": "Voir les défis des autres" },
-      "wishlist": { "label": "Souhaits", "desc": "Voir les souhaits des autres" },
-      "souvenirs": { "label": "Souvenirs", "desc": "Voir les souvenirs des autres enfants" },
-      "recherche": { "label": "Recherche", "desc": "Résultats de recherche non filtrés" },
-      "gratitude": { "label": "Gratitude", "desc": "Voir les gratitudes des autres" }
+      "rdv": {
+        "label": "Rendez-vous",
+        "desc": "Voir les RDV des autres enfants"
+      },
+      "budget": {
+        "label": "Budget",
+        "desc": "Accéder à l'écran budget"
+      },
+      "stock": {
+        "label": "Stock",
+        "desc": "Voir les niveaux de stock"
+      },
+      "defis": {
+        "label": "Défis",
+        "desc": "Voir les défis des autres"
+      },
+      "wishlist": {
+        "label": "Souhaits",
+        "desc": "Voir les souhaits des autres"
+      },
+      "souvenirs": {
+        "label": "Souvenirs",
+        "desc": "Voir les souvenirs des autres enfants"
+      },
+      "recherche": {
+        "label": "Recherche",
+        "desc": "Résultats de recherche non filtrés"
+      },
+      "gratitude": {
+        "label": "Gratitude",
+        "desc": "Voir les gratitudes des autres"
+      }
     }
   },
   "skills": {
@@ -3336,7 +3360,11 @@
       "lanterneArgent": "Lanterne d'argent",
       "lanterneArgent_desc": "Une lanterne forgée par un voyageur mystérieux. Sa lumière argentée ne s'éteint jamais.",
       "masqueOmbre": "Masque d'ombre",
-      "masqueOmbre_desc": "Un masque du Carnaval des Ombres. Il scintille entre lumière et obscurité."
+      "masqueOmbre_desc": "Un masque du Carnaval des Ombres. Il scintille entre lumière et obscurité.",
+      "botteFoin": "Botte de foin",
+      "botteFoin_desc": "Une botte de foin dorée posée au sol. Elle donne un air de ferme chaleureuse au jardin.",
+      "etalFruits": "Étal de fruits",
+      "etalFruits_desc": "Un bel étal en bois rempli de fruits frais. Les visiteurs du jardin se régalent !"
     },
     "hab": {
       "oiseau": "Oiseau chanteur",
@@ -3362,7 +3390,17 @@
       "espritEau": "Esprit de l'eau",
       "espritEau_desc": "Un esprit aquatique né d'une source cachée. Il fait danser des gouttelettes autour de l'arbre.",
       "ancienGardien": "Gardien ancien",
-      "ancienGardien_desc": "Un gardien millénaire éveillé par une graine ancestrale. Il veille silencieusement sur le jardin."
+      "ancienGardien_desc": "Un gardien millénaire éveillé par une graine ancestrale. Il veille silencieusement sur le jardin.",
+      "poussin": "Poussin",
+      "poussin_desc": "Un petit poussin tout jaune qui picore joyeusement le sol. Il suit les plus grands partout !",
+      "poulet": "Poulet",
+      "poulet_desc": "Un poulet fier qui se pavane dans le jardin. Il caquète à chaque bonne nouvelle.",
+      "canard": "Canard",
+      "canard_desc": "Un canard coloré qui se dandine entre les fleurs. Il adore quand il pleut !",
+      "cochon": "Cochon",
+      "cochon_desc": "Un petit cochon rose qui grogne de bonheur. Il retourne la terre pour trouver des truffes.",
+      "vache": "Vache",
+      "vache_desc": "Une vache paisible qui broute au pied de l'arbre. Sa présence apporte calme et sérénité."
     },
     "shop": {
       "title": "Boutique de l'arbre",
@@ -3564,7 +3602,6 @@
         "malice": "Malice",
         "curiosité": "Curiosité"
       },
-
       "voyageur_argent": {
         "title": "Le Voyageur d'Argent",
         "title_enfant": "Le Voyageur Mystère !!",
@@ -3629,7 +3666,6 @@
         "title_curiosity": "L'Explorateur",
         "title_curiosity_enfant": "Le Super Explorateur !"
       },
-
       "source_cachee": {
         "title": "La Source Cachée",
         "title_enfant": "La Source Secrète !!",
@@ -3679,7 +3715,6 @@
         "title_sagesse": "Le Gardien des Eaux",
         "title_sagesse_enfant": "Le Gardien de l'Eau !"
       },
-
       "carnaval_ombres": {
         "title": "Le Carnaval des Ombres",
         "title_enfant": "Le Carnaval des Ombres !!",
@@ -3740,7 +3775,6 @@
         "title_malice": "Le Roi du Carnaval",
         "title_malice_enfant": "Le Roi du Carnaval !"
       },
-
       "graine_anciens": {
         "title": "La Graine des Anciens",
         "title_enfant": "La Graine Magique !!",
@@ -3816,6 +3850,51 @@
         "title_courage": "Le Protecteur",
         "title_courage_enfant": "Le Super Protecteur !"
       }
+    }
+  },
+  "farm": {
+    "seedPicker": "Choisir une graine",
+    "seedPicker_enfant": "Quelle graine tu veux planter ?",
+    "planted": "Planté !",
+    "planted_enfant": "Trop bien, c'est planté !",
+    "harvested": "+{{reward}} 🍃 récolté !",
+    "harvested_enfant": "YEAH ! +{{reward}} 🍃 récolté !!",
+    "notEnoughLeaves": "Pas assez de feuilles 🍃",
+    "cancel": "Annuler",
+    "stats": {
+      "growing": "🌱 {{count}} en cours",
+      "ready": "✨ {{count}} à récolter !"
+    },
+    "crop": {
+      "carrot": "Carotte",
+      "carrot_desc": "Pousse vite, idéale pour débuter. Récolte modeste mais fiable.",
+      "wheat": "Blé",
+      "wheat_desc": "La céréale de base. Pousse vite et rapporte bien.",
+      "tomato": "Tomate",
+      "tomato_desc": "Demande plus de patience mais la récolte est généreuse !",
+      "strawberry": "Fraise",
+      "strawberry_desc": "La culture premium. Longue à pousser mais très rentable.",
+      "potato": "Pomme de terre",
+      "potato_desc": "Robuste et fiable. Pousse vite, nourrit bien.",
+      "corn": "Maïs",
+      "corn_desc": "Grand et doré. Demande de la patience mais rapporte gros !",
+      "pumpkin": "Citrouille",
+      "pumpkin_desc": "La reine du potager. Longue pousse, récompense royale.",
+      "cabbage": "Chou",
+      "cabbage_desc": "Solide et généreux. Un classique du jardin.",
+      "beetroot": "Betterave",
+      "beetroot_desc": "Petite mais colorée. Rapide à faire pousser.",
+      "cucumber": "Concombre",
+      "cucumber_desc": "Frais et croquant. Pousse bien au soleil."
+    },
+    "building": {
+      "poulailler": "Poulailler",
+      "poulailler_desc": "Un poulailler cosy. Produit 10 🍃 par jour automatiquement.",
+      "grange": "Grange",
+      "grange_desc": "Une belle grange en bois. Produit 25 🍃 par jour automatiquement.",
+      "buy": "Construire",
+      "dailyIncome": "+{{amount}} 🍃/jour",
+      "owned": "Construit"
     }
   }
 }

@@ -40,6 +40,10 @@ import { useToast } from '../../contexts/ToastContext';
 import { TreeView } from '../../components/mascot/TreeView';
 import { SpeciesPicker } from '../../components/mascot/SpeciesPicker';
 import { TreeShop } from '../../components/mascot/TreeShop';
+import { PixelDiorama, PIXEL_GROUND, PIXEL_GROUND_DARK } from '../../components/mascot/PixelDiorama';
+import { WorldGridView, FarmStats } from '../../components/mascot/WorldGridView';
+import { useFarm } from '../../hooks/useFarm';
+import { type PlantedCrop, CROP_CATALOG } from '../../lib/mascot/types';
 import { calculateLevel, xpForLevel, pointsToNextLevel, getLevelTier } from '../../lib/gamification';
 import {
   getTreeStage,
@@ -103,6 +107,11 @@ export default function TreeScreen() {
   const [placingItem, setPlacingItem] = useState<string | null>(null);
   const [showItemPicker, setShowItemPicker] = useState(false);
 
+  // Ferme
+  const { plant, harvest, buyBuilding, collectPassiveIncome } = useFarm();
+  const [showSeedPicker, setShowSeedPicker] = useState(false);
+  const [selectedPlotIndex, setSelectedPlotIndex] = useState<number | null>(null);
+
   // Saga active — pour bandeau + élément visuel
   const [sagaProgress, setSagaProgress] = useState<SagaProgress | null>(null);
   useEffect(() => {
@@ -114,22 +123,56 @@ export default function TreeScreen() {
   }, [profile?.id]);
   const activeSaga = sagaProgress ? getSagaById(sagaProgress.sagaId) : null;
 
+  // Collecter le revenu passif des batiments a l'ouverture
+  useEffect(() => {
+    if (!profile?.id) return;
+    collectPassiveIncome(profile.id).then(income => {
+      if (income > 0) {
+        showToast(`🏠 +${income} 🍃`);
+      }
+    });
+  }, [profile?.id]);
+
+  // Notification cultures matures
+  useEffect(() => {
+    if (!profile?.farmCrops) return;
+    const { parseCrops } = require('../../lib/mascot/farm-engine');
+    const crops = parseCrops(profile.farmCrops);
+    const matureCount = crops.filter((c: any) => c.currentStage >= 4).length;
+    if (matureCount > 0) {
+      // On ne montre le toast qu'une fois (pas a chaque re-render)
+    }
+  }, []);
+
+  // Saga items actifs (non expirés)
+  const activeSagaItems = useMemo(() => {
+    if (!profile?.sagaItems) return { decoIds: [] as string[], habIds: [] as string[] };
+    const today = new Date().toISOString().split('T')[0];
+    const active = profile.sagaItems.filter(i => i.expiresAt >= today);
+    return {
+      decoIds: active.filter(i => i.type === 'decoration').map(i => i.itemId),
+      habIds: active.filter(i => i.type === 'inhabitant').map(i => i.itemId),
+    };
+  }, [profile?.sagaItems]);
+
+  // Décorations et habitants combinés (permanents + saga temporaires)
+  const allDecoIds = useMemo(() => [...(profile?.mascotDecorations ?? []), ...activeSagaItems.decoIds], [profile?.mascotDecorations, activeSagaItems.decoIds]);
+  const allHabIds = useMemo(() => [...(profile?.mascotInhabitants ?? []), ...activeSagaItems.habIds], [profile?.mascotInhabitants, activeSagaItems.habIds]);
+
   // Liste combinée des items possédés avec leurs infos catalogue
   const allOwnedItems = useMemo(() => {
     if (!profile) return [];
-    const decoIds = profile.mascotDecorations ?? [];
-    const habIds = profile.mascotInhabitants ?? [];
     const items: { id: string; emoji: string }[] = [];
-    for (const id of decoIds) {
+    for (const id of allDecoIds) {
       const cat = DECORATIONS.find(d => d.id === id);
       if (cat) items.push({ id, emoji: cat.emoji });
     }
-    for (const id of habIds) {
+    for (const id of allHabIds) {
       const cat = INHABITANTS.find(h => h.id === id);
       if (cat) items.push({ id, emoji: cat.emoji });
     }
     return items;
-  }, [profile?.mascotDecorations, profile?.mascotInhabitants]);
+  }, [allDecoIds, allHabIds]);
 
   // Set des items déjà placés sur un slot
   const placedItemIds = useMemo(() => {
@@ -217,6 +260,43 @@ export default function TreeScreen() {
       showToast(t('common.error'), 'error');
     }
   }, [placingItem, profile, placeMascotItem, showToast, t]);
+
+  /** Tap sur une cellule de culture */
+  const handleCropCellPress = useCallback((cellId: string, crop: PlantedCrop | null) => {
+    if (!profile || !isOwnTree) return;
+    // Trouver l'index de la cellule parmi les debloquees
+    const { getUnlockedCropCells } = require('../../lib/mascot/world-grid');
+    const { getTreeStage } = require('../../lib/mascot/engine');
+    const stage = getTreeStage(level);
+    const cells = getUnlockedCropCells(stage);
+    const cellIdx = cells.findIndex((c: any) => c.id === cellId);
+    if (cellIdx < 0) return;
+
+    if (crop && crop.currentStage >= 4) {
+      harvest(profile.id, cellIdx).then((reward) => {
+        if (reward > 0) {
+          showToast(t('farm.harvested', { reward }));
+        }
+      });
+    } else if (!crop) {
+      setSelectedPlotIndex(cellIdx);
+      setShowSeedPicker(true);
+    }
+  }, [profile, isOwnTree, harvest, showToast, level, t]);
+
+  /** Planter une graine sur la parcelle selectionnee */
+  const handleSeedSelect = useCallback(async (cropId: string) => {
+    if (!profile || selectedPlotIndex === null) return;
+    try {
+      await plant(profile.id, selectedPlotIndex, cropId);
+      const cropDef = CROP_CATALOG.find(c => c.id === cropId);
+      showToast(`${cropDef?.emoji ?? '🌱'} ${t('farm.planted')}`);
+    } catch {
+      showToast(t('common.error'), 'error');
+    }
+    setShowSeedPicker(false);
+    setSelectedPlotIndex(null);
+  }, [profile, selectedPlotIndex, plant, showToast, t]);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
@@ -333,6 +413,65 @@ export default function TreeScreen() {
           </TouchableOpacity>
         </Modal>
 
+        {/* Modal choix de graine */}
+        <Modal
+          visible={showSeedPicker}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowSeedPicker(false)}
+        >
+          <TouchableOpacity
+            style={styles.pickerOverlay}
+            activeOpacity={1}
+            onPress={() => setShowSeedPicker(false)}
+          >
+            <View style={[styles.pickerCard, { backgroundColor: colors.card }, Shadows.lg]}>
+              <Text style={[styles.pickerTitle, { color: colors.text }]}>
+                {t('farm.seedPicker')}
+              </Text>
+              <View style={styles.pickerGrid}>
+                {CROP_CATALOG.map(crop => {
+                  const stageOrder = ['graine', 'pousse', 'arbuste', 'arbre', 'majestueux', 'legendaire'];
+                  const unlocked = stageOrder.indexOf(stageInfo.stage) >= stageOrder.indexOf(crop.minTreeStage);
+                  const stageName = t(`mascot.stages.${crop.minTreeStage}`);
+                  return (
+                    <TouchableOpacity
+                      key={crop.id}
+                      onPress={unlocked ? () => handleSeedSelect(crop.id) : undefined}
+                      activeOpacity={unlocked ? 0.7 : 1}
+                      style={[
+                        styles.pickerItem,
+                        { backgroundColor: colors.cardAlt, borderColor: colors.borderLight },
+                        !unlocked && { opacity: 0.4 },
+                      ]}
+                    >
+                      <Text style={styles.pickerEmoji}>{crop.emoji}</Text>
+                      {unlocked ? (
+                        <Text style={{ color: colors.textSub, fontSize: 10, marginTop: 2 }}>
+                          {crop.cost} 🍃
+                        </Text>
+                      ) : (
+                        <Text style={{ color: colors.textMuted, fontSize: 9, marginTop: 2, textAlign: 'center' }}>
+                          🔒 {stageName}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowSeedPicker(false)}
+                style={[styles.pickerCloseBtn, { borderColor: colors.borderLight }]}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.pickerCloseText, { color: colors.textSub }]}>
+                  {t('farm.cancel')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </Modal>
+
         {/* Arbre principal — diorama saisonnier immersif (full-bleed) */}
         <Animated.View entering={FadeIn.duration(600)} style={styles.treeContainer}>
           <TouchableOpacity
@@ -347,42 +486,35 @@ export default function TreeScreen() {
               },
             ]}
           >
-            {/* Couche 0 : Gradient de fond — neutre en haut, couleur sol en bas
-                Remplace le backgroundColor statique pour que les bords latéraux
-                sous le SVG montrent la bonne couleur de sol. */}
+            {/* Couche 0 : Sol top-down — herbe saisonnière plein écran */}
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: PIXEL_GROUND[season] }]} />
+
+            {/* Couche 1 : Texture herbe subtile — variation de teinte */}
             <LinearGradient
-              colors={[colors.cardAlt, GROUND_COLORS[season].top]}
-              locations={[0.55, 0.85]}
+              colors={[PIXEL_GROUND[season] + 'CC', PIXEL_GROUND[season], PIXEL_GROUND_DARK[season]]}
+              locations={[0, 0.5, 1]}
               style={StyleSheet.absoluteFill}
             />
 
-            {/* Couche 1 : Illustration saisonnière — positionnée en haut (ciel + horizon)
-                On affiche seulement les 70% supérieurs de l'image via un conteneur clipé,
-                évitant ainsi le sol de l'illustration qui clash avec le sol SVG. */}
-            <View style={styles.illustrationClip}>
-              <Image
-                source={SEASON_ILLUSTRATIONS[season]}
-                style={styles.seasonIllustration}
-                resizeMode="cover"
-              />
-            </View>
-
-            {/* Couche 2 : Gradient de fondu — transition douce illustration → sol herbeux
-                Le dégradé part de transparent (en haut de la zone de fondu)
-                vers la couleur du sol saisonnier (en bas). */}
-            <LinearGradient
-              colors={[
-                'transparent',
-                GROUND_COLORS[season].top + '44',
-                GROUND_COLORS[season].top + '99',
-                GROUND_COLORS[season].top,
-              ]}
-              locations={[0, 0.4, 0.75, 1]}
-              style={styles.illustrationFade}
+            {/* Couche 2 : Décorations sol (fleurs, pierres) vues du dessus */}
+            <PixelDiorama
+              season={season}
+              level={level}
+              width={SCREEN_W}
+              groundHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
             />
 
-            {/* Couche 3 : Arbre SVG au premier plan — le sol organique SVG
-                se fond naturellement dans le gradient de transition. */}
+            {/* Couche 3 : Grille monde (cultures + batiments) */}
+            <WorldGridView
+              treeStage={stageInfo.stage}
+              farmCropsCSV={profile.farmCrops ?? ''}
+              ownedBuildings={profile.farmBuildings ?? []}
+              containerWidth={SCREEN_W}
+              containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
+              onCropPlotPress={isOwnTree ? handleCropCellPress : undefined}
+            />
+
+            {/* Couche 4 : Arbre pixel au premier plan */}
             <View style={styles.treeOverlay}>
               <TreeView
                 species={species}
@@ -390,8 +522,8 @@ export default function TreeScreen() {
                 size={TREE_SIZE}
                 interactive
                 showGround
-                decorations={profile.mascotDecorations ?? []}
-                inhabitants={profile.mascotInhabitants ?? []}
+                decorations={allDecoIds}
+                inhabitants={allHabIds}
                 placements={profile.mascotPlacements ?? {}}
                 placingItem={placingItem}
                 onSlotSelect={handleSlotSelect}
@@ -410,9 +542,12 @@ export default function TreeScreen() {
 
         {/* Transition douce diorama → contenu : gradient sol → fond de page */}
         <LinearGradient
-          colors={[GROUND_COLORS[season].top, colors.bg]}
+          colors={[PIXEL_GROUND_DARK[season], colors.bg]}
           style={styles.groundTransition}
         />
+
+        {/* Compteur ferme */}
+        <FarmStats farmCropsCSV={profile.farmCrops ?? ''} colors={colors} t={t} />
 
         {/* Info profil + stade */}
         <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.infoCard}>
@@ -467,7 +602,7 @@ export default function TreeScreen() {
                 </Text>
               </TouchableOpacity>
               {/* Bouton décorer : visible si des items sont achetés */}
-              {((profile.mascotDecorations?.length ?? 0) + (profile.mascotInhabitants?.length ?? 0)) > 0 && !placingItem && (
+              {(allDecoIds.length + allHabIds.length) > 0 && !placingItem && (
                 <TouchableOpacity
                   style={[styles.shopBtn, { backgroundColor: tint, borderColor: primary }]}
                   onPress={() => setShowItemPicker(true)}
@@ -607,9 +742,15 @@ export default function TreeScreen() {
           species={species}
           level={level}
           coins={profile.coins ?? profile.points ?? 0}
-          ownedDecorations={profile.mascotDecorations ?? []}
-          ownedInhabitants={profile.mascotInhabitants ?? []}
+          ownedDecorations={allDecoIds}
+          ownedInhabitants={allHabIds}
+          ownedBuildings={profile.farmBuildings ?? []}
           onBuy={handleShopBuy}
+          onBuyBuilding={async (buildingId) => {
+            if (!profile) return;
+            await buyBuilding(profile.id, buildingId);
+            showToast(`🏗️ ${t('farm.building.owned')} !`);
+          }}
           onClose={() => setShowShop(false)}
         />
       </Modal>

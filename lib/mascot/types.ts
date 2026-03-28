@@ -179,6 +179,7 @@ export interface MascotInhabitant {
 
 /** Assets illustrés (remplacent les emojis quand disponibles) */
 export const ITEM_ILLUSTRATIONS: Record<string, number> = {
+  // Anciennes illustrations aquarelle (décorations existantes)
   guirlandes: require('../../assets/items/guirlandes.png'),
   cabane:     require('../../assets/items/cabane.png'),
   balancoire: require('../../assets/items/balancoire.png'),
@@ -189,10 +190,23 @@ export const ITEM_ILLUSTRATIONS: Record<string, number> = {
   couronne:   require('../../assets/items/couronne.png'),
   portail:    require('../../assets/items/portail.png'),
   cristal:    require('../../assets/items/cristal.png'),
+  // Nouvelles décorations pixel (Mana Seed)
+  botte_foin:        require('../../assets/garden/decos/botte_foin.png'),
+  etal_fruits:       require('../../assets/garden/decos/etal_fruits.png'),
+  // Nouveaux habitants pixel (Mana Seed)
+  poussin:   require('../../assets/garden/animals/poussin/idle_1.png'),
+  poulet:    require('../../assets/garden/animals/poulet/idle_1.png'),
+  canard:    require('../../assets/garden/animals/canard/idle_1.png'),
+  cochon:    require('../../assets/garden/animals/cochon/idle_1.png'),
+  vache:     require('../../assets/garden/animals/vache/idle_1.png'),
 };
 
 /** Catalogue décorations MVP */
 export const DECORATIONS: MascotDecoration[] = [
+  // Décorations pixel (Mana Seed)
+  { id: 'botte_foin',   labelKey: 'mascot.deco.botteFoin',   emoji: '🌾', cost: 150,  rarity: 'commun',     minStage: 'pousse' },
+  { id: 'etal_fruits',  labelKey: 'mascot.deco.etalFruits',  emoji: '🍎', cost: 500,  rarity: 'épique',     minStage: 'arbre' },
+  // Décorations aquarelle (existantes)
   { id: 'balancoire',  labelKey: 'mascot.deco.balancoire',  emoji: '🪢', cost: 200,  rarity: 'commun',     minStage: 'arbuste' },
   { id: 'cabane',      labelKey: 'mascot.deco.cabane',      emoji: '🏠', cost: 500,  rarity: 'rare',       minStage: 'arbre' },
   { id: 'guirlandes',  labelKey: 'mascot.deco.guirlandes',  emoji: '🎄', cost: 150,  rarity: 'commun',     minStage: 'pousse' },
@@ -210,12 +224,20 @@ export const DECORATIONS: MascotDecoration[] = [
 
 /** Catalogue habitants MVP */
 export const INHABITANTS: MascotInhabitant[] = [
+  // Animaux pixel (Mana Seed)
+  { id: 'poussin',     labelKey: 'mascot.hab.poussin',     emoji: '🐤', cost: 150,  rarity: 'commun',     minStage: 'pousse' },
+  { id: 'poulet',      labelKey: 'mascot.hab.poulet',      emoji: '🐔', cost: 250,  rarity: 'commun',     minStage: 'arbuste' },
+  { id: 'canard',      labelKey: 'mascot.hab.canard',      emoji: '🦆', cost: 300,  rarity: 'commun',     minStage: 'arbuste' },
+  { id: 'cochon',      labelKey: 'mascot.hab.cochon',      emoji: '🐷', cost: 500,  rarity: 'rare',       minStage: 'arbre' },
+  { id: 'vache',       labelKey: 'mascot.hab.vache',       emoji: '🐄', cost: 800,  rarity: 'rare',       minStage: 'arbre' },
+  // Anciens habitants (existants)
   { id: 'oiseau',      labelKey: 'mascot.hab.oiseau',      emoji: '🐦', cost: 100,  rarity: 'commun',     minStage: 'arbuste' },
   { id: 'ecureuil',    labelKey: 'mascot.hab.ecureuil',    emoji: '🐿️', cost: 250,  rarity: 'commun',     minStage: 'arbuste' },
   { id: 'papillons',   labelKey: 'mascot.hab.papillons',   emoji: '🦋', cost: 200,  rarity: 'commun',     minStage: 'pousse' },
   { id: 'coccinelle',  labelKey: 'mascot.hab.coccinelle',  emoji: '🐞', cost: 150,  rarity: 'commun',     minStage: 'pousse' },
   { id: 'chat',        labelKey: 'mascot.hab.chat',        emoji: '😺', cost: 500,  rarity: 'rare',       minStage: 'arbre' },
   { id: 'hibou',       labelKey: 'mascot.hab.hibou',       emoji: '🦉', cost: 400,  rarity: 'rare',       minStage: 'arbre' },
+  // Fantastiques (emoji — conservés)
   { id: 'fee',         labelKey: 'mascot.hab.fee',         emoji: '🧚', cost: 2000, rarity: 'épique',     minStage: 'majestueux' },
   { id: 'dragon',      labelKey: 'mascot.hab.dragon',      emoji: '🐉', cost: 10000, rarity: 'légendaire', minStage: 'legendaire' },
   { id: 'phoenix',     labelKey: 'mascot.hab.phoenix',     emoji: '🔥', cost: 15000, rarity: 'prestige',  minStage: 'legendaire' },
@@ -223,4 +245,76 @@ export const INHABITANTS: MascotInhabitant[] = [
   // Saga exclusives
   { id: 'esprit_eau',      labelKey: 'mascot.hab.espritEau',      emoji: '💧', cost: 0, rarity: 'épique',     minStage: 'pousse', sagaExclusive: true },
   { id: 'ancien_gardien',  labelKey: 'mascot.hab.ancienGardien',  emoji: '🌿', cost: 0, rarity: 'légendaire', minStage: 'pousse', sagaExclusive: true },
+];
+
+// ─────────────────────────────────────────────
+// Ferme — Types & catalogue cultures
+// ─────────────────────────────────────────────
+
+/** Definition d'une culture (catalogue) */
+export interface CropDefinition {
+  id: string;
+  labelKey: string;
+  emoji: string;
+  tasksPerStage: number;   // taches pour avancer d'un stade de croissance
+  harvestReward: number;   // feuilles gagnees a la recolte
+  minTreeStage: TreeStage; // stade d'arbre minimum pour debloquer
+  cost: number;            // cout en feuilles pour les graines
+}
+
+/** Instance de culture plantee */
+export interface PlantedCrop {
+  cropId: string;
+  plotIndex: number;       // index de la parcelle (0-9)
+  currentStage: number;    // 0 = graine, 4 = pret a recolter
+  tasksCompleted: number;  // taches completees dans le stade actuel
+  plantedAt: string;       // YYYY-MM-DD
+}
+
+/** Nombre de parcelles deblocables par stade d'arbre */
+export const PLOTS_BY_TREE_STAGE: Record<TreeStage, number> = {
+  graine:     0,
+  pousse:     2,
+  arbuste:    4,
+  arbre:      6,
+  majestueux: 8,
+  legendaire: 10,
+};
+
+/** Catalogue des cultures disponibles (4 initiales)
+ * Design : la carotte est rapide et gratifiante, les cultures avancees
+ * demandent plus mais recompensent mieux. Profit = reward - cost.
+ */
+export const CROP_CATALOG: CropDefinition[] = [
+  // Rapides (1 tache/stade = 4 taches pour recolter)
+  { id: 'carrot',     labelKey: 'farm.crop.carrot',     emoji: '🥕', tasksPerStage: 1, harvestReward: 25,  minTreeStage: 'pousse',   cost: 5  },
+  { id: 'wheat',      labelKey: 'farm.crop.wheat',      emoji: '🌾', tasksPerStage: 1, harvestReward: 40,  minTreeStage: 'pousse',   cost: 10 },
+  { id: 'potato',     labelKey: 'farm.crop.potato',     emoji: '🥔', tasksPerStage: 1, harvestReward: 35,  minTreeStage: 'pousse',   cost: 8  },
+  { id: 'beetroot',   labelKey: 'farm.crop.beetroot',   emoji: '🫜', tasksPerStage: 1, harvestReward: 30,  minTreeStage: 'pousse',   cost: 6  },
+  // Moyennes (2 taches/stade = 8 taches)
+  { id: 'tomato',     labelKey: 'farm.crop.tomato',     emoji: '🍅', tasksPerStage: 2, harvestReward: 80,  minTreeStage: 'arbuste',  cost: 15 },
+  { id: 'cabbage',    labelKey: 'farm.crop.cabbage',    emoji: '🥬', tasksPerStage: 2, harvestReward: 70,  minTreeStage: 'arbuste',  cost: 12 },
+  { id: 'cucumber',   labelKey: 'farm.crop.cucumber',   emoji: '🥒', tasksPerStage: 2, harvestReward: 75,  minTreeStage: 'arbuste',  cost: 14 },
+  // Lentes mais rentables (3 taches/stade = 12 taches)
+  { id: 'corn',       labelKey: 'farm.crop.corn',       emoji: '🌽', tasksPerStage: 3, harvestReward: 150, minTreeStage: 'arbre',    cost: 30 },
+  { id: 'strawberry', labelKey: 'farm.crop.strawberry', emoji: '🍓', tasksPerStage: 2, harvestReward: 120, minTreeStage: 'arbre',    cost: 25 },
+  { id: 'pumpkin',    labelKey: 'farm.crop.pumpkin',    emoji: '🎃', tasksPerStage: 3, harvestReward: 200, minTreeStage: 'majestueux', cost: 40 },
+];
+
+// ─────────────────────────────────────────────
+// Ferme — Batiments (bonus passif)
+// ─────────────────────────────────────────────
+
+export interface BuildingDefinition {
+  id: string;
+  labelKey: string;
+  emoji: string;
+  cost: number;            // cout en feuilles
+  dailyIncome: number;     // feuilles/jour
+  minTreeStage: TreeStage;
+}
+
+export const BUILDING_CATALOG: BuildingDefinition[] = [
+  { id: 'poulailler', labelKey: 'farm.building.poulailler', emoji: '🏠', cost: 200,  dailyIncome: 10, minTreeStage: 'arbuste' },
+  { id: 'grange',     labelKey: 'farm.building.grange',     emoji: '🏚️', cost: 500,  dailyIncome: 25, minTreeStage: 'arbre' },
 ];

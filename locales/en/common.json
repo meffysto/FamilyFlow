@@ -3204,14 +3204,38 @@
     "allowed": "allowed",
     "restricted": "restricted",
     "categories": {
-      "rdv": { "label": "Appointments", "desc": "See other children's appointments" },
-      "budget": { "label": "Budget", "desc": "Access the budget screen" },
-      "stock": { "label": "Stock", "desc": "See stock levels" },
-      "defis": { "label": "Challenges", "desc": "See other's challenges" },
-      "wishlist": { "label": "Wishlist", "desc": "See other's wishes" },
-      "souvenirs": { "label": "Memories", "desc": "See other children's memories" },
-      "recherche": { "label": "Search", "desc": "Unfiltered search results" },
-      "gratitude": { "label": "Gratitude", "desc": "See other's gratitude entries" }
+      "rdv": {
+        "label": "Appointments",
+        "desc": "See other children's appointments"
+      },
+      "budget": {
+        "label": "Budget",
+        "desc": "Access the budget screen"
+      },
+      "stock": {
+        "label": "Stock",
+        "desc": "See stock levels"
+      },
+      "defis": {
+        "label": "Challenges",
+        "desc": "See other's challenges"
+      },
+      "wishlist": {
+        "label": "Wishlist",
+        "desc": "See other's wishes"
+      },
+      "souvenirs": {
+        "label": "Memories",
+        "desc": "See other children's memories"
+      },
+      "recherche": {
+        "label": "Search",
+        "desc": "Unfiltered search results"
+      },
+      "gratitude": {
+        "label": "Gratitude",
+        "desc": "See other's gratitude entries"
+      }
     }
   },
   "skills": {
@@ -3336,7 +3360,11 @@
       "lanterneArgent": "Silver lantern",
       "lanterneArgent_desc": "A lantern forged by a mysterious traveler. Its silver light never goes out.",
       "masqueOmbre": "Shadow mask",
-      "masqueOmbre_desc": "A mask from the Shadow Carnival. It shimmers between light and darkness."
+      "masqueOmbre_desc": "A mask from the Shadow Carnival. It shimmers between light and darkness.",
+      "botteFoin": "Hay bale",
+      "botteFoin_desc": "A golden hay bale on the ground. It gives the garden a warm farmhouse feel.",
+      "etalFruits": "Fruit stand",
+      "etalFruits_desc": "A lovely wooden stand filled with fresh fruits. Garden visitors love it!"
     },
     "hab": {
       "oiseau": "Songbird",
@@ -3362,7 +3390,17 @@
       "espritEau": "Water spirit",
       "espritEau_desc": "An aquatic spirit born from a hidden spring. It makes droplets dance around the tree.",
       "ancienGardien": "Ancient guardian",
-      "ancienGardien_desc": "A millennial guardian awakened by an ancestral seed. It silently watches over the garden."
+      "ancienGardien_desc": "A millennial guardian awakened by an ancestral seed. It silently watches over the garden.",
+      "poussin": "Chick",
+      "poussin_desc": "A tiny yellow chick pecking happily at the ground. It follows the bigger ones everywhere!",
+      "poulet": "Chicken",
+      "poulet_desc": "A proud chicken strutting around the garden. It clucks at every good news.",
+      "canard": "Duck",
+      "canard_desc": "A colorful duck waddling between the flowers. It loves rainy days!",
+      "cochon": "Pig",
+      "cochon_desc": "A little pink pig grunting with joy. It digs the soil looking for truffles.",
+      "vache": "Cow",
+      "vache_desc": "A peaceful cow grazing at the foot of the tree. Its presence brings calm and serenity."
     },
     "shop": {
       "title": "Tree Shop",
@@ -3564,7 +3602,6 @@
         "malice": "Cunning",
         "curiosité": "Curiosity"
       },
-
       "voyageur_argent": {
         "title": "The Silver Traveler",
         "title_enfant": "The Mystery Traveler!!",
@@ -3629,7 +3666,6 @@
         "title_curiosity": "The Explorer",
         "title_curiosity_enfant": "The Super Explorer!"
       },
-
       "source_cachee": {
         "title": "The Hidden Spring",
         "title_enfant": "The Secret Spring!!",
@@ -3679,7 +3715,6 @@
         "title_sagesse": "Water Guardian",
         "title_sagesse_enfant": "Water Guardian!"
       },
-
       "carnaval_ombres": {
         "title": "The Shadow Carnival",
         "title_enfant": "The Shadow Carnival!!",
@@ -3740,7 +3775,6 @@
         "title_malice": "Carnival King",
         "title_malice_enfant": "Carnival King!"
       },
-
       "graine_anciens": {
         "title": "The Seed of the Ancients",
         "title_enfant": "The Magic Seed!!",
@@ -3816,6 +3850,51 @@
         "title_courage": "The Protector",
         "title_courage_enfant": "The Super Protector!"
       }
+    }
+  },
+  "farm": {
+    "seedPicker": "Choose a seed",
+    "seedPicker_enfant": "What seed do you want to plant?",
+    "planted": "Planted!",
+    "planted_enfant": "Awesome, it's planted!",
+    "harvested": "+{{reward}} 🍃 harvested!",
+    "harvested_enfant": "YEAH! +{{reward}} 🍃 harvested!!",
+    "notEnoughLeaves": "Not enough leaves 🍃",
+    "cancel": "Cancel",
+    "stats": {
+      "growing": "🌱 {{count}} growing",
+      "ready": "✨ {{count}} ready to harvest!"
+    },
+    "crop": {
+      "carrot": "Carrot",
+      "carrot_desc": "Grows fast, great for beginners. Modest but reliable harvest.",
+      "wheat": "Wheat",
+      "wheat_desc": "The staple crop. Grows fast and pays well.",
+      "tomato": "Tomato",
+      "tomato_desc": "Takes more patience but the harvest is generous!",
+      "strawberry": "Strawberry",
+      "strawberry_desc": "The premium crop. Slow to grow but very profitable.",
+      "potato": "Potato",
+      "potato_desc": "Sturdy and reliable. Grows fast, feeds well.",
+      "corn": "Corn",
+      "corn_desc": "Tall and golden. Takes patience but pays big!",
+      "pumpkin": "Pumpkin",
+      "pumpkin_desc": "The garden queen. Long growth, royal reward.",
+      "cabbage": "Cabbage",
+      "cabbage_desc": "Solid and generous. A garden classic.",
+      "beetroot": "Beetroot",
+      "beetroot_desc": "Small but colorful. Quick to grow.",
+      "cucumber": "Cucumber",
+      "cucumber_desc": "Fresh and crunchy. Grows well in the sun."
+    },
+    "building": {
+      "poulailler": "Chicken Coop",
+      "poulailler_desc": "A cozy chicken coop. Produces 10 🍃 per day automatically.",
+      "grange": "Barn",
+      "grange_desc": "A lovely wooden barn. Produces 25 🍃 per day automatically.",
+      "buy": "Build",
+      "dailyIncome": "+{{amount}} 🍃/day",
+      "owned": "Built"
     }
   }
 }
