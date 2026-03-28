@@ -212,7 +212,12 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
     );
   }, [animate]);
 
-  // Style pour le conteneur (pas d'animation de transform ici)
+  // Style animé pour le mode pixel (vue top-down) : léger pulse, pas de sway
+  const pixelAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: breathe.value }],
+  }));
+
+  // Style pour le conteneur SVG fallback (pas d'animation de transform ici)
   const treeAnimStyle = useAnimatedStyle(() => ({
     transform: [],
   }));
@@ -268,22 +273,24 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
         {isLegendary && animate && (
           <FloatingParticles color={sp.particle} count={12} size={size} />
         )}
-        {/* Ombre au sol */}
+        {/* Ombre au sol (top-down : centrée sous l'arbre, elliptique) */}
         {shadowSprite && showGround && (
-          <Image
-            source={shadowSprite}
-            style={{
-              position: 'absolute',
-              top: imgHeight * groundRatio - scaledH * 0.08,
-              left: (size - scaledW * 0.9) / 2,
-              width: scaledW * 0.9,
-              height: scaledH * 0.15,
-              opacity: 0.3,
-            } as any}
-          />
+          <Animated.View style={[{
+            position: 'absolute',
+            top: imgHeight * groundRatio - scaledH * 0.04,
+            left: (size - scaledW * 0.7) / 2,
+            width: scaledW * 0.7,
+            height: scaledH * 0.12,
+            opacity: 0.25,
+          }, pixelAnimStyle] as any}>
+            <Image
+              source={shadowSprite}
+              style={{ width: '100%', height: '100%' } as any}
+            />
+          </Animated.View>
         )}
-        {/* Arbre pixel — pas de lissage (pixel-perfect) */}
-        <Animated.View style={[styles.svgWrap, treeAnimStyle, { position: 'absolute', top: topOffset, left: (size - scaledW) / 2 }]}>
+        {/* Arbre pixel — animation pulse top-down */}
+        <Animated.View style={[styles.svgWrap, pixelAnimStyle, { position: 'absolute', top: topOffset, left: (size - scaledW) / 2 }]}>
           {isLegendary && (
             <View style={{
               position: 'absolute',
@@ -314,6 +321,30 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
                 <PlacementSlots placements={placements} placingItemId={placingItem} onSelect={onSlotSelect} />
               )}
             </Svg>
+          </View>
+        )}
+        {/* Animaux pixel animés (cycle idle natif RN, hors SVG) */}
+        {inhabitants.length > 0 && animate && (
+          <View style={[StyleSheet.absoluteFill, { zIndex: 3 }]} pointerEvents="none">
+            {inhabitants.map((id) => {
+              const frames = ANIMAL_IDLE_FRAMES[id];
+              if (!frames) return null;
+              const slot = HAB_SLOTS[id];
+              if (!slot) return null;
+              const pos = getItemPosition(species, stageIdx, slot);
+              const s = pos.fontSize * 1.5;
+              const px = (pos.x / VIEWBOX_W) * size;
+              const py = (pos.y / VIEWBOX_H) * imgHeight;
+              return (
+                <AnimatedAnimal
+                  key={id}
+                  frames={frames}
+                  x={px - s / 2}
+                  y={py - s / 2}
+                  size={s}
+                />
+              );
+            })}
           </View>
         )}
       </View>
@@ -1794,19 +1825,29 @@ const DECO_SLOTS: Record<string, SlotDef> = {
   couronne:    { dxFactor: 0,     dyFactor: -0.85,  baseSize: 22, rarity: 'légendaire' },   // sommet de la couronne
   portail:     { dxFactor: -0.9,  dyFactor: 0,       groundRelY: -15, baseSize: 24, rarity: 'prestige' },  // portail magique à gauche
   cristal:     { dxFactor: 0,     dyFactor: -0.95,  baseSize: 26, rarity: 'prestige' },   // cristal au sommet absolu
+  // Nouvelles décos pixel (au sol)
+  botte_foin:  { dxFactor: -0.8,  dyFactor: 0,    groundRelY: -6,  baseSize: 22, rarity: 'commun' },
+  etal_fruits: { dxFactor: 0.85,  dyFactor: 0,    groundRelY: -10, baseSize: 24, rarity: 'épique' },
 };
 
 const HAB_SLOTS: Record<string, SlotDef> = {
+  // Anciens habitants (positionnés dans/sur l'arbre)
   oiseau:      { dxFactor: 0.7,   dyFactor: -0.35,  baseSize: 16, rarity: 'commun' },
-  ecureuil:    { dxFactor: 0.15,  dyFactor: 0.6,    baseSize: 17, rarity: 'commun' },       // sur le tronc
+  ecureuil:    { dxFactor: 0.15,  dyFactor: 0.6,    baseSize: 17, rarity: 'commun' },
   papillons:   { dxFactor: -0.75, dyFactor: -0.45,  baseSize: 15, rarity: 'commun' },
   coccinelle:  { dxFactor: 0.45,  dyFactor: 0.2,    baseSize: 13, rarity: 'commun' },
   chat:        { dxFactor: -0.6,  dyFactor: 0,       groundRelY: -8,  baseSize: 20, rarity: 'rare' },
   hibou:       { dxFactor: -0.5,  dyFactor: -0.3,   baseSize: 18, rarity: 'rare' },
   fee:         { dxFactor: 0.8,   dyFactor: -0.5,   baseSize: 20, rarity: 'épique' },
-  dragon:      { dxFactor: 0,     dyFactor: -0.6,   baseSize: 26, rarity: 'légendaire' },   // dans la couronne, GROS
-  phoenix:     { dxFactor: 0.85,  dyFactor: -0.7,   baseSize: 28, rarity: 'prestige' },   // en vol à droite de la couronne
-  licorne:     { dxFactor: -0.85, dyFactor: 0,       groundRelY: -12, baseSize: 28, rarity: 'prestige' },  // au sol à gauche
+  dragon:      { dxFactor: 0,     dyFactor: -0.6,   baseSize: 26, rarity: 'légendaire' },
+  phoenix:     { dxFactor: 0.85,  dyFactor: -0.7,   baseSize: 28, rarity: 'prestige' },
+  licorne:     { dxFactor: -0.85, dyFactor: 0,       groundRelY: -12, baseSize: 28, rarity: 'prestige' },
+  // Nouveaux animaux pixel (au sol, top-down)
+  poussin:     { dxFactor: 0.6,   dyFactor: 0,    groundRelY: -5,  baseSize: 16, rarity: 'commun' },
+  poulet:      { dxFactor: -0.7,  dyFactor: 0,    groundRelY: -10, baseSize: 20, rarity: 'commun' },
+  canard:      { dxFactor: 0.8,   dyFactor: 0,    groundRelY: -12, baseSize: 20, rarity: 'commun' },
+  cochon:      { dxFactor: -0.85, dyFactor: 0,    groundRelY: -15, baseSize: 22, rarity: 'rare' },
+  vache:       { dxFactor: 0.9,   dyFactor: 0,    groundRelY: -18, baseSize: 26, rarity: 'rare' },
 };
 
 /** Ajustements par espèce (offsets additionnels en px) */
@@ -1870,6 +1911,32 @@ function DecorationOverlay({ decorationIds, stageIdx, previewMode = false, speci
         );
       })}
     </G>
+  );
+}
+
+// ── Animaux pixel animés (cycle idle) ──────────
+
+/** Frames idle par animal pixel (2 frames pour le cycle) */
+const ANIMAL_IDLE_FRAMES: Record<string, [any, any]> = {
+  poussin: [require('../../assets/garden/animals/poussin/idle_1.png'), require('../../assets/garden/animals/poussin/idle_2.png')],
+  poulet:  [require('../../assets/garden/animals/poulet/idle_1.png'),  require('../../assets/garden/animals/poulet/idle_2.png')],
+  canard:  [require('../../assets/garden/animals/canard/idle_1.png'),  require('../../assets/garden/animals/canard/idle_2.png')],
+  cochon:  [require('../../assets/garden/animals/cochon/idle_1.png'),  require('../../assets/garden/animals/cochon/idle_2.png')],
+  vache:   [require('../../assets/garden/animals/vache/idle_1.png'),   require('../../assets/garden/animals/vache/idle_2.png')],
+};
+
+/** Composant animal avec cycle idle (alterne 2 frames) */
+function AnimatedAnimal({ frames, x, y, size }: { frames: [any, any]; x: number; y: number; size: number }) {
+  const [frameIdx, setFrameIdx] = React.useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setFrameIdx(f => (f + 1) % 2), 600);
+    return () => clearInterval(interval);
+  }, []);
+  return (
+    <Image
+      source={frames[frameIdx]}
+      style={{ position: 'absolute', left: x, top: y, width: size, height: size } as any}
+    />
   );
 }
 
