@@ -4,7 +4,6 @@
 // ─────────────────────────────────────────────
 
 export type { ProfileTheme } from '../constants/themes';
-import type { PlacedBuilding, FarmInventory } from './mascot/types';
 
 export interface Task {
   id: string;
@@ -82,8 +81,8 @@ export interface Profile {
   mascotInhabitants: string[];   // IDs des habitants achetés
   mascotPlacements: Record<string, string>;  // slotId → itemId (placement sur la scène)
   farmCrops?: string;             // CSV cultures plantees (plotIndex:cropId:stage:tasks:date)
-  farmBuildings?: PlacedBuilding[];  // Batiments places (format PlacedBuilding[])
-  farmInventory?: FarmInventory;     // Inventaire de ressources (oeufs, lait, farine)
+  farmBuildings?: import('../lib/mascot/types').PlacedBuilding[];  // Batiments places sur la grille
+  farmInventory?: import('../lib/mascot/types').FarmInventory;     // Inventaire ressources (oeuf, lait, farine)
   points: number;
   coins: number;            // 🍃 Feuilles — monnaie dépensable (boutique)
   level: number;

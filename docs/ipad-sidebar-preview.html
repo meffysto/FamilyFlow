@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1194, initial-scale=1">
+<title>Family Vault — iPad Sidebar Preview</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', sans-serif; background: #1a1a2e; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 40px; }
+
+  .device-frame {
+    width: 1194px; height: 834px;
+    background: #000;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    display: flex;
+    position: relative;
+  }
+
+  /* Toggle */
+  .toggle-bar {
+    position: absolute; top: -50px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 8px; z-index: 100;
+  }
+  .toggle-btn {
+    padding: 8px 20px; border-radius: 20px; border: 1px solid #555;
+    background: #2a2a3e; color: #aaa; cursor: pointer; font-size: 14px;
+    transition: all 0.3s;
+  }
+  .toggle-btn.active { background: #6366f1; color: #fff; border-color: #6366f1; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 260px; min-width: 260px;
+    background: #1c1c1e;
+    border-right: 0.5px solid #38383a;
+    display: flex; flex-direction: column;
+    padding-top: 20px;
+    transition: all 0.4s ease;
+  }
+
+  .sidebar-main { padding: 8px; }
+
+  .sidebar-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 8px; cursor: pointer;
+    margin: 1px 0; transition: background 0.2s;
+  }
+  .sidebar-item:hover { background: rgba(99,102,241,0.08); }
+  .sidebar-item.active { background: rgba(99,102,241,0.15); }
+  .sidebar-item .emoji { font-size: 20px; width: 28px; text-align: center; }
+  .sidebar-item .label { flex: 1; font-size: 15px; color: #e5e5ea; font-weight: 500; }
+  .sidebar-item.active .label { color: #818cf8; font-weight: 600; }
+  .sidebar-item.compact { padding: 7px 12px; }
+  .sidebar-item.compact .emoji { font-size: 15px; width: 24px; }
+  .sidebar-item.compact .label { font-size: 13px; }
+
+  .badge {
+    min-width: 20px; height: 20px; border-radius: 10px;
+    background: #6366f1; color: #fff; font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; padding: 0 5px;
+  }
+
+  .separator {
+    height: 0.5px; background: #38383a; margin: 6px 20px;
+  }
+
+  .menu-scroll { flex: 1; overflow-y: auto; padding: 0 8px 20px; }
+  .menu-scroll::-webkit-scrollbar { width: 0; }
+
+  .category { margin-top: 12px; }
+  .category-label {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; color: #8e8e93; padding: 0 12px; margin-bottom: 2px;
+  }
+
+  /* ── CONTENT ── */
+  .content { flex: 1; background: #000; display: flex; flex-direction: column; }
+
+  .content-header {
+    padding: 16px 24px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .content-header h1 { font-size: 28px; font-weight: 700; color: #fff; }
+  .avatar-row { display: flex; gap: 8px; align-items: center; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 18px;
+    background: #2c2c2e; display: flex; align-items: center; justify-content: center;
+    font-size: 20px; cursor: pointer;
+  }
+
+  .content-scroll {
+    flex: 1; overflow-y: auto; padding: 0 24px 24px;
+    max-width: 700px; width: 100%; align-self: center;
+  }
+
+  /* Dashboard cards */
+  .dash-section { margin-bottom: 20px; }
+  .dash-section h2 { font-size: 13px; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+
+  .card {
+    background: #1c1c1e; border-radius: 12px; padding: 16px;
+    margin-bottom: 10px;
+  }
+  .card-row { display: flex; gap: 10px; }
+  .card-row .card { flex: 1; }
+
+  .card-title { font-size: 14px; color: #8e8e93; margin-bottom: 6px; }
+  .card-value { font-size: 22px; font-weight: 700; color: #fff; }
+  .card-sub { font-size: 12px; color: #636366; margin-top: 4px; }
+
+  .task-item {
+    display: flex; align-items: center; gap: 10px; padding: 8px 0;
+    border-bottom: 0.5px solid #2c2c2e;
+  }
+  .task-item:last-child { border-bottom: none; }
+  .task-check {
+    width: 20px; height: 20px; border-radius: 10px;
+    border: 2px solid #48484a; display: flex; align-items: center; justify-content: center;
+  }
+  .task-check.done { background: #34c759; border-color: #34c759; }
+  .task-check.done::after { content: '✓'; color: #fff; font-size: 12px; font-weight: 700; }
+  .task-text { font-size: 14px; color: #e5e5ea; }
+  .task-text.done { color: #636366; text-decoration: line-through; }
+
+  .meal-row { display: flex; gap: 8px; align-items: center; padding: 6px 0; }
+  .meal-label { font-size: 12px; color: #8e8e93; width: 60px; }
+  .meal-value { font-size: 14px; color: #e5e5ea; }
+
+  .event-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+  .event-time { font-size: 12px; color: #818cf8; font-weight: 600; width: 50px; }
+  .event-name { font-size: 14px; color: #e5e5ea; }
+
+  /* ── LIGHT THEME ── */
+  .light .sidebar { background: #f2f2f7; border-right-color: #d1d1d6; }
+  .light .sidebar-item .label { color: #1c1c1e; }
+  .light .sidebar-item.active { background: rgba(99,102,241,0.1); }
+  .light .sidebar-item.active .label { color: #6366f1; }
+  .light .separator { background: #d1d1d6; }
+  .light .category-label { color: #8e8e93; }
+  .light .content { background: #f2f2f7; }
+  .light .content-header h1 { color: #1c1c1e; }
+  .light .card { background: #fff; }
+  .light .card-value { color: #1c1c1e; }
+  .light .task-text { color: #1c1c1e; }
+  .light .task-check { border-color: #c7c7cc; }
+  .light .meal-value { color: #1c1c1e; }
+  .light .event-name { color: #1c1c1e; }
+  .light .task-item { border-bottom-color: #e5e5ea; }
+
+  /* ── COMPARISON: PHONE ── */
+  .phone-frame {
+    display: none;
+    width: 390px; height: 844px;
+    background: #000; border-radius: 44px; overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    flex-direction: column; position: relative;
+  }
+  .phone-frame .content { border-radius: 0; }
+  .phone-frame .content-scroll { padding: 0 16px 100px; }
+
+  .tab-bar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 80px; background: rgba(28,28,30,0.85);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-top: 0.5px solid #38383a;
+    display: flex; justify-content: space-around; align-items: center;
+    padding-bottom: 16px;
+  }
+  .tab-item {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    cursor: pointer;
+  }
+  .tab-item .emoji { font-size: 22px; }
+  .tab-item .tab-label { font-size: 10px; color: #8e8e93; font-weight: 600; }
+  .tab-item.active .tab-label { color: #818cf8; }
+  .tab-item.active .emoji-pill {
+    background: rgba(99,102,241,0.2); border-radius: 14px; padding: 2px 10px;
+  }
+
+  .light .tab-bar { background: rgba(242,242,247,0.85); border-top-color: #d1d1d6; }
+
+  /* View modes */
+  .view-both .device-frame { display: flex; }
+  .view-both .phone-frame { display: flex; }
+  .view-both { gap: 40px; display: flex; flex-wrap: wrap; justify-content: center; }
+
+  .wrapper { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+  .device-label { color: #8e8e93; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+  <div class="toggle-bar">
+    <button class="toggle-btn active" onclick="setTheme('dark')">Dark</button>
+    <button class="toggle-btn" onclick="setTheme('light')">Light</button>
+    <button class="toggle-btn" onclick="togglePhone()">iPhone vs iPad</button>
+  </div>
+
+  <div id="devices" style="display: flex; gap: 40px; flex-wrap: wrap; justify-content: center; align-items: flex-start;">
+
+    <!-- iPad -->
+    <div style="text-align: center;">
+      <div class="device-label" style="margin-bottom: 12px;">iPad Pro 11"</div>
+      <div class="device-frame" id="ipad">
+        <!-- Sidebar -->
+        <div class="sidebar">
+          <div class="sidebar-main">
+            <div class="sidebar-item active">
+              <span class="emoji">🏠</span>
+              <span class="label">Aujourd'hui</span>
+            </div>
+            <div class="sidebar-item">
+              <span class="emoji">📋</span>
+              <span class="label">Tâches</span>
+            </div>
+            <div class="sidebar-item">
+              <span class="emoji">📖</span>
+              <span class="label">Journal</span>
+            </div>
+            <div class="sidebar-item">
+              <span class="emoji">📆</span>
+              <span class="label">Calendrier</span>
+            </div>
+          </div>
+
+          <div class="separator"></div>
+
+          <div class="menu-scroll">
+            <div class="category">
+              <div class="category-label">Organisation</div>
+              <div class="sidebar-item compact">
+                <span class="emoji">🔄</span><span class="label">Routines</span>
+              </div>
+              <div class="sidebar-item compact">
+                <span class="emoji">📅</span><span class="label">Rendez-vous</span>
+                <span class="badge">3</span>
+              </div>
+              <div class="sidebar-item compact">
+                <span class="emoji">🍽️</span><span class="label">Repas</span>
+              </div>
+              <div class="sidebar-item compact">
+                <span class="emoji">📦</span><span class="label">Stock</span>
+                <span class="badge" style="background:#f59e0b">2</span>
+              </div>
+            </div>
+
+            <div class="category">
+              <div class="category-label">Sante & Bien-etre</div>
+              <div class="sidebar-item compact">
+                <span class="emoji">🏥</span><span class="label">Suivi sante</span>
+              </div>
+              <div class="sidebar-item compact">
+                <span class="emoji">🌤️</span><span class="label">Humeurs</span>
+              </div>
+              <div class="sidebar-item compact">
+                <span class="emoji">🌙</span><span class="label">Mode nuit</span>
+              </div>
+            </div>
+
+            <div class="category">
+              <div class="category-label">Souvenirs</div>
+              <div class="sidebar-item compact">
+                <span class="emoji">📸</span><span class="label">Photos</span>
+              </div>
+              <div class="sidebar-item compact">
+                <span class="emoji">💬</span><span class="label">Mots d'enfants</span>
+              </div>
+              <div class="sidebar-item compact">
+                <span class="emoji">🙏</span><span class="label">Gratitude</span>
+              </div>
+            </div>
+
+            <div class="category">
+              <div class="category-label">Jeux & Progres</div>
+              <div class="sidebar-item compact">
+                <span class="emoji">🌳</span><span class="label">Competences</span>
+              </div>
+              <div class="sidebar-item compact">
+                <span class="emoji">🎰</span><span class="label">Recompenses</span>
+                <span class="badge" style="background:#ec4899">5</span>
+              </div>
+              <div class="sidebar-item compact">
+                <span class="emoji">🏅</span><span class="label">Defis</span>
+                <span class="badge" style="background:#f59e0b">2</span>
+              </div>
+            </div>
+
+            <div class="category">
+              <div class="category-label">Famille</div>
+              <div class="sidebar-item compact">
+                <span class="emoji">🎂</span><span class="label">Anniversaires</span>
+                <span class="badge" style="background:#d946ef">1</span>
+              </div>
+              <div class="sidebar-item compact">
+                <span class="emoji">🎁</span><span class="label">Liste de souhaits</span>
+              </div>
+              <div class="sidebar-item compact">
+                <span class="emoji">💰</span><span class="label">Budget</span>
+              </div>
+              <div class="sidebar-item compact">
+                <span class="emoji">📝</span><span class="label">Notes</span>
+              </div>
+              <div class="sidebar-item compact">
+                <span class="emoji">📊</span><span class="label">Statistiques</span>
+              </div>
+            </div>
+
+            <div class="category">
+              <div class="category-label">Systeme</div>
+              <div class="sidebar-item compact">
+                <span class="emoji">⚙️</span><span class="label">Reglages</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+          <div class="content-header">
+            <h1>🏠 Aujourd'hui</h1>
+            <div class="avatar-row">
+              <div class="avatar">👩</div>
+              <div class="avatar" style="border: 2px solid #818cf8;">👨</div>
+              <div class="avatar">👦</div>
+            </div>
+          </div>
+          <div class="content-scroll" id="ipad-scroll">
+            <div class="dash-section">
+              <h2>Repas du jour</h2>
+              <div class="card">
+                <div class="meal-row"><span class="meal-label">Dejeuner</span><span class="meal-value">Poulet roti, haricots verts</span></div>
+                <div class="meal-row"><span class="meal-label">Gouter</span><span class="meal-value">Compote pomme-poire</span></div>
+                <div class="meal-row"><span class="meal-label">Diner</span><span class="meal-value">Soupe de legumes, tartines</span></div>
+              </div>
+            </div>
+
+            <div class="dash-section">
+              <h2>Taches</h2>
+              <div class="card">
+                <div class="task-item"><div class="task-check done"></div><span class="task-text done">Preparer les cartables</span></div>
+                <div class="task-item"><div class="task-check done"></div><span class="task-text done">Courses Monoprix</span></div>
+                <div class="task-item"><div class="task-check"></div><span class="task-text">Prendre RDV dentiste Emma</span></div>
+                <div class="task-item"><div class="task-check"></div><span class="task-text">Signer carnet de Lucas</span></div>
+                <div class="task-item"><div class="task-check"></div><span class="task-text">Commander cadeau anniversaire</span></div>
+              </div>
+            </div>
+
+            <div class="dash-section">
+              <h2>Agenda</h2>
+              <div class="card">
+                <div class="event-item"><span class="event-time">09:30</span><span class="event-name">Pediatre — Emma</span></div>
+                <div class="event-item"><span class="event-time">14:00</span><span class="event-name">Reunion parents d'eleves</span></div>
+                <div class="event-item"><span class="event-time">17:00</span><span class="event-name">Judo Lucas</span></div>
+              </div>
+            </div>
+
+            <div class="dash-section">
+              <div class="card-row">
+                <div class="card">
+                  <div class="card-title">Humeur du jour</div>
+                  <div class="card-value">☀️</div>
+                  <div class="card-sub">Bonne journee !</div>
+                </div>
+                <div class="card">
+                  <div class="card-title">Defi en cours</div>
+                  <div class="card-value">🏅</div>
+                  <div class="card-sub">Ranger sa chambre 5j</div>
+                </div>
+                <div class="card">
+                  <div class="card-title">Loot boxes</div>
+                  <div class="card-value">🎰 5</div>
+                  <div class="card-sub">A ouvrir !</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- iPhone (hidden by default) -->
+    <div id="phone-wrapper" style="text-align: center; display: none;">
+      <div class="device-label" style="margin-bottom: 12px;">iPhone 15</div>
+      <div class="phone-frame" id="phone" style="display: flex;">
+        <div class="content" style="padding-top: 50px;">
+          <div class="content-header">
+            <h1 style="font-size: 24px;">🏠 Aujourd'hui</h1>
+            <div class="avatar-row">
+              <div class="avatar" style="width: 32px; height: 32px; font-size: 17px;">👩</div>
+              <div class="avatar" style="width: 32px; height: 32px; font-size: 17px; border: 2px solid #818cf8;">👨</div>
+              <div class="avatar" style="width: 32px; height: 32px; font-size: 17px;">👦</div>
+            </div>
+          </div>
+          <div class="content-scroll" style="max-width: 100%;">
+            <div class="dash-section">
+              <h2>Repas du jour</h2>
+              <div class="card">
+                <div class="meal-row"><span class="meal-label">Dejeuner</span><span class="meal-value">Poulet roti, haricots verts</span></div>
+                <div class="meal-row"><span class="meal-label">Gouter</span><span class="meal-value">Compote pomme-poire</span></div>
+                <div class="meal-row"><span class="meal-label">Diner</span><span class="meal-value">Soupe de legumes, tartines</span></div>
+              </div>
+            </div>
+            <div class="dash-section">
+              <h2>Taches</h2>
+              <div class="card">
+                <div class="task-item"><div class="task-check done"></div><span class="task-text done">Preparer les cartables</span></div>
+                <div class="task-item"><div class="task-check done"></div><span class="task-text done">Courses Monoprix</span></div>
+                <div class="task-item"><div class="task-check"></div><span class="task-text">Prendre RDV dentiste Emma</span></div>
+                <div class="task-item"><div class="task-check"></div><span class="task-text">Signer carnet de Lucas</span></div>
+              </div>
+            </div>
+            <div class="dash-section">
+              <h2>Agenda</h2>
+              <div class="card">
+                <div class="event-item"><span class="event-time">09:30</span><span class="event-name">Pediatre — Emma</span></div>
+                <div class="event-item"><span class="event-time">14:00</span><span class="event-name">Reunion parents</span></div>
+                <div class="event-item"><span class="event-time">17:00</span><span class="event-name">Judo Lucas</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-bar">
+          <div class="tab-item active">
+            <div class="emoji-pill">🏠</div>
+            <span class="tab-label">Aujourd'hui</span>
+          </div>
+          <div class="tab-item">
+            <div class="emoji-pill">📋</div>
+            <span class="tab-label">Taches</span>
+          </div>
+          <div class="tab-item">
+            <div class="emoji-pill">📖</div>
+            <span class="tab-label">Journal</span>
+          </div>
+          <div class="tab-item">
+            <div class="emoji-pill">📆</div>
+            <span class="tab-label">Calendrier</span>
+          </div>
+          <div class="tab-item">
+            <div class="emoji-pill">🗂️</div>
+            <span class="tab-label">Menu</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function setTheme(theme) {
+  document.querySelectorAll('.device-frame, .phone-frame').forEach(el => {
+    el.classList.toggle('light', theme === 'light');
+  });
+  document.querySelectorAll('.toggle-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.toLowerCase() === theme);
+  });
+}
+
+let phoneVisible = false;
+function togglePhone() {
+  phoneVisible = !phoneVisible;
+  document.getElementById('phone-wrapper').style.display = phoneVisible ? 'block' : 'none';
+  document.querySelectorAll('.toggle-btn')[2].classList.toggle('active', phoneVisible);
+}
+
+// Sidebar click interaction
+document.querySelectorAll('.sidebar-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

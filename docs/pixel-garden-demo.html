@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Family Flow Garden — Asset Pack Demo</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0f0f1a; display:flex; flex-direction:column; align-items:center; min-height:100vh; font-family:'Courier New',monospace; padding:20px; gap:16px; }
+  h1 { color:#c8b88a; font-size:18px; letter-spacing:3px; text-transform:uppercase; }
+  .phone { width:393px; height:780px; border-radius:40px; overflow:hidden; position:relative; box-shadow:0 20px 80px rgba(0,0,0,0.6); border:3px solid #222; }
+  canvas { width:100%; height:100%; image-rendering:pixelated; image-rendering:crisp-edges; }
+  .info { color:#908070; font-size:12px; max-width:400px; text-align:center; line-height:1.6; }
+  .loading { color:#c8b88a; font-size:14px; }
+</style>
+</head>
+<body>
+<h1>Garden Demo — Real Assets</h1>
+<p class="info">Utilise les spritesheets Tiny Garden (kathychow) + Penzilla Farm Animals + arbres proceduraux Stardew-style</p>
+<div class="phone"><canvas id="c"></canvas></div>
+<p class="loading" id="status">Chargement des assets...</p>
+
+<script>
+const W=196, H=390;
+const canvas=document.getElementById('c');
+canvas.width=W; canvas.height=H;
+const ctx=canvas.getContext('2d');
+
+let time=0, particles=[], critters=[];
+
+// Load sprite sheets
+const tilesetImg = new Image();
+const objectsImg = new Image();
+const animalsImg = new Image();
+let loaded = 0;
+
+tilesetImg.onload = objectsImg.onload = animalsImg.onload = () => {
+  loaded++;
+  if(loaded===3) { document.getElementById('status').textContent='Assets charges ! Tap = interaction'; startRender(); }
+};
+tilesetImg.src = 'demo-assets/tileset.png';
+objectsImg.src = 'demo-assets/objects.png';
+animalsImg.src = 'demo-assets/FarmAnimals.png';
+
+// Sprite cutter helper
+function drawSprite(img, sx, sy, sw, sh, dx, dy, dw, dh) {
+  ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw||sw*2, dh||sh*2);
+}
+
+// Seeded random
+function seed(s){return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646;};}
+
+// ─── Main Scene ───────────────────────────────────
+function render() {
+  time += 0.016;
+  ctx.clearRect(0,0,W,H);
+  const gY = 240;
+
+  // ── Sky (hand-painted gradient) ──
+  const skyGrad = ctx.createLinearGradient(0,0,0,gY);
+  skyGrad.addColorStop(0, '#87CEEB');
+  skyGrad.addColorStop(0.4, '#A8D8EA');
+  skyGrad.addColorStop(0.7, '#C8E6C0');
+  skyGrad.addColorStop(1, '#D8ECC8');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0,0,W,gY);
+
+  // ── Distant hills ──
+  ctx.fillStyle = '#90B878';
+  for(let x=0;x<W;x++){
+    const h=22+Math.sin(x*0.03+1)*14+Math.sin(x*0.07)*6;
+    ctx.fillRect(x,gY-35-h,1,h+35);
+  }
+  ctx.fillStyle = '#A0C888';
+  for(let x=0;x<W;x++){
+    const h=15+Math.sin(x*0.05+3)*10+Math.sin(x*0.09)*5;
+    ctx.fillRect(x,gY-20-h,1,h+20);
+  }
+
+  // ── Clouds ──
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  [[time*2.5,30,20],[time*1.8+90,50,15],[time*1.2+160,70,22]].forEach(([xb,cy,cw])=>{
+    const cx=((xb)%(W+50))-25;
+    for(let y=0;y<5;y++){
+      const ind=y===0||y===4?4:y===1||y===3?2:0;
+      ctx.fillRect(Math.floor(cx)+ind,cy+y,cw-ind*2,1);
+    }
+  });
+
+  // ── Sun ──
+  const sx=160, sy=25+Math.sin(time*0.3)*2;
+  for(let r=15;r>0;r--){ctx.fillStyle=`rgba(255,220,100,${0.1*(1-r/15)})`;ctx.beginPath();ctx.arc(sx,sy,r,0,Math.PI*2);ctx.fill();}
+  ctx.fillStyle='#FFE070';ctx.fillRect(sx-4,sy-4,8,8);
+  ctx.fillStyle='#FFF0A0';ctx.fillRect(sx-2,sy-2,4,4);
+
+  // ── Ground using tileset ──
+  // Grass tiles from tileset (16x16 tiles, first row)
+  // Draw grass from tileset sprite
+  for(let y=gY;y<gY+30;y+=16){
+    for(let x=0;x<W;x+=16){
+      // Green grass tile from tileset (position 0,0 is grass)
+      drawSprite(tilesetImg, 0, 0, 16, 16, x, y, 16, 16);
+    }
+  }
+  // Dirt below
+  for(let y=gY+30;y<H-50;y+=16){
+    for(let x=0;x<W;x+=16){
+      // Brown tile from tileset (position 0,16 is dirt)
+      drawSprite(tilesetImg, 0, 16, 16, 16, x, y, 16, 16);
+    }
+  }
+
+  // ── Water pond from tileset (bottom right area) ──
+  // Use blue water tiles from tileset
+  const pondX=140, pondY=gY+5;
+  drawSprite(tilesetImg, 80, 16, 32, 32, pondX, pondY, 32, 32);
+  // Shimmer
+  const shimmer=0.2+0.15*Math.sin(time*2.5);
+  ctx.fillStyle=`rgba(180,230,255,${shimmer})`;
+  ctx.fillRect(pondX+8,pondY+8,8,4);
+
+  // ── Flowers from objects spritesheet ──
+  // objects.png has rows of 16x16 flowers
+  const flowerPositions = [
+    {sx:0,sy:0, x:15,y:gY-8},    // red gem flower
+    {sx:16,sy:0, x:30,y:gY-6},   // orange flower
+    {sx:32,sy:0, x:50,y:gY-7},   // yellow flower
+    {sx:48,sy:0, x:165,y:gY-8},  // green flower
+    {sx:0,sy:16, x:175,y:gY-6},  // blue flower
+    {sx:16,sy:16, x:60,y:gY-5},  // purple flower
+    {sx:32,sy:16, x:125,y:gY-7}, // pink flower
+    {sx:48,sy:16, x:8,y:gY-4},   // teal flower
+    // Row 3-4: more flowers
+    {sx:0,sy:32, x:70,y:gY-6},
+    {sx:16,sy:32, x:110,y:gY-8},
+    {sx:32,sy:32, x:85,y:gY-5},
+    // Row 5-6: tall flowers
+    {sx:0,sy:64, x:40,y:gY-12},
+    {sx:16,sy:64, x:155,y:gY-10},
+    {sx:32,sy:64, x:95,y:gY-11},
+    {sx:48,sy:64, x:135,y:gY-12},
+  ];
+  flowerPositions.forEach(f=>{
+    // Slight sway for tall flowers
+    const sway = f.sy >= 64 ? Math.sin(time*1.5+f.x)*1 : 0;
+    drawSprite(objectsImg, f.sx, f.sy, 16, 16, f.x+sway, f.y, 16, 16);
+  });
+
+  // ── Tree from tileset (the big tree) ──
+  // The tileset has a tree at around x:272 area
+  // Let's draw our own procedural tree with tileset colors
+  const treeX = W/2, treeY = gY-5;
+  const sway = Math.sin(time*0.8)*1.5;
+
+  // Trunk (from tileset brown tones)
+  ctx.fillStyle = '#6B4226';
+  ctx.fillRect(treeX-4, treeY-45, 8, 45);
+  ctx.fillStyle = '#8B6240';
+  ctx.fillRect(treeX-3, treeY-44, 3, 43);
+  ctx.fillStyle = '#4A2E1A';
+  ctx.fillRect(treeX+1, treeY-44, 3, 43);
+  // Roots
+  ctx.fillStyle = '#5A3A1A';
+  ctx.fillRect(treeX-8, treeY-3, 4, 4);
+  ctx.fillRect(treeX+5, treeY-3, 4, 4);
+
+  // Canopy (lush, layered, cherry blossom)
+  const drawCanopyBlob = (cx,cy,rx,ry,col) => {
+    ctx.fillStyle=col;
+    for(let y=-ry;y<=ry;y++){
+      const hw=Math.floor(rx*Math.sqrt(1-(y*y)/(ry*ry)));
+      ctx.fillRect(Math.floor(cx-hw+sway*(1-((cy-treeY+70)/70))),Math.floor(cy+y),hw*2,1);
+    }
+  };
+  // Shadow layer
+  drawCanopyBlob(treeX,treeY-65,32,22,'#C45A72');
+  drawCanopyBlob(treeX-8,treeY-58,20,16,'#C45A72');
+  drawCanopyBlob(treeX+10,treeY-60,18,14,'#C45A72');
+  // Main canopy
+  drawCanopyBlob(treeX,treeY-68,30,20,'#E8A0B0');
+  drawCanopyBlob(treeX-10,treeY-60,18,14,'#D4788E');
+  drawCanopyBlob(treeX+12,treeY-62,16,13,'#D4788E');
+  drawCanopyBlob(treeX-5,treeY-75,15,10,'#F0C0CC');
+  drawCanopyBlob(treeX+8,treeY-72,14,10,'#E8A0B0');
+  // Highlights
+  drawCanopyBlob(treeX-3,treeY-78,10,7,'#FFD4DE');
+  drawCanopyBlob(treeX+5,treeY-70,8,6,'#FFF0F2');
+  // Flower dots
+  const rn=seed(77);
+  for(let i=0;i<20;i++){
+    const fx=treeX-25+rn()*50+sway*0.5;
+    const fy=treeY-85+rn()*35;
+    ctx.fillStyle=rn()>0.5?'#FFFFFF':'#FFE0E8';
+    ctx.fillRect(Math.floor(fx),Math.floor(fy),2,2);
+  }
+
+  // ── Shadow under tree ──
+  ctx.fillStyle='rgba(0,0,0,0.08)';
+  for(let i=0;i<4;i++)ctx.fillRect(treeX-25+i,gY+i,50-i*2,1);
+
+  // ── Animals from FarmAnimals spritesheet ──
+  // Small animals walking around
+  // Chicken (row 5-ish in the spritesheet, ~32x32 each)
+  // The spritesheet has 8 cols, animals are ~32x32
+  const animalFrame = Math.floor(time*2)%2;
+
+  // Chicken - bottom rows of spritesheet
+  // Row 6 (y=160): small birds, each ~16x16 in last rows
+  // Let's place a chicken near the left
+  const chickenX = 25 + Math.sin(time*0.5)*10;
+  const chickenY = gY + 5;
+  // Duck/chicken from sprite (approximate position in spritesheet: row 5, col 4-5)
+  drawSprite(animalsImg, 96, 128, 32, 32, chickenX, chickenY-16, 16, 16);
+
+  // Rabbit on the right
+  const rabbitX = 160 + Math.cos(time*0.3)*8;
+  const rabbitY = gY + 8;
+  // Small animal from sprite
+  drawSprite(animalsImg, 128, 128, 32, 32, rabbitX, rabbitY-14, 14, 14);
+
+  // Sheep in background
+  drawSprite(animalsImg, 0, 96, 32, 32, 10, gY-18, 20, 20);
+
+  // ── House from tileset ──
+  // The tileset has a red house shape
+  drawSprite(tilesetImg, 320, 0, 32, 48, 2, gY-42, 32, 48);
+
+  // ── Fence ──
+  ctx.fillStyle='#8A6840';
+  for(let i=0;i<4;i++){
+    const fx=42+i*8;
+    ctx.fillRect(fx,gY-10,2,12);
+    ctx.fillRect(fx-1,gY-8,4,2);
+    ctx.fillRect(fx-1,gY-2,4,2);
+  }
+  // Horizontal bar
+  ctx.fillStyle='#A08860';
+  ctx.fillRect(40,gY-7,34,2);
+  ctx.fillRect(40,gY-1,34,2);
+
+  // ── Falling petals ──
+  if(Math.random()<0.12){
+    particles.push({
+      x:treeX-30+Math.random()*60,
+      y:treeY-80+Math.random()*20,
+      vx:0.3+Math.random()*0.5,
+      vy:0.4+Math.random()*0.3,
+      life:1,
+      col:['#FFB7C5','#FFD4DE','#FFF0F2'][Math.floor(Math.random()*3)]
+    });
+  }
+  particles=particles.filter(p=>{
+    p.x+=p.vx+Math.sin(time*2+p.x)*0.3;
+    p.y+=p.vy;
+    p.life-=0.006;
+    if(p.life<=0||p.y>gY+10)return false;
+    ctx.globalAlpha=p.life*0.8;
+    ctx.fillStyle=p.col;
+    ctx.fillRect(Math.floor(p.x),Math.floor(p.y),2,2);
+    ctx.globalAlpha=1;
+    return true;
+  });
+
+  // ── Butterflies ──
+  if(critters.length<3&&Math.random()<0.008){
+    critters.push({x:Math.random()*W,y:gY-20-Math.random()*60,vx:(Math.random()-0.5)*0.6,vy:(Math.random()-0.5)*0.3,life:400,col:['#FFA040','#FF6080','#60A0FF','#80FF60'][Math.floor(Math.random()*4)]});
+  }
+  critters=critters.filter(c=>{
+    c.x+=c.vx+Math.sin(time*2)*0.4;
+    c.y+=c.vy+Math.cos(time*1.8)*0.3;
+    c.life--;
+    if(c.life<=0||c.x<-10||c.x>W+10)return false;
+    const wf=Math.sin(time*14)*2;
+    ctx.fillStyle=c.col;
+    ctx.fillRect(Math.floor(c.x)-2,Math.floor(c.y),2,Math.max(1,Math.floor(2+wf)));
+    ctx.fillRect(Math.floor(c.x)+1,Math.floor(c.y),2,Math.max(1,Math.floor(2+wf)));
+    ctx.fillStyle='#302020';
+    ctx.fillRect(Math.floor(c.x),Math.floor(c.y),1,2);
+    return true;
+  });
+
+  // ── Fireflies (evening glow) ──
+  for(let i=0;i<4;i++){
+    const fx=40+seed(i*7+33)()*120;
+    const fy=gY-60+seed(i*13+77)()*40;
+    const b=0.2+0.5*(0.5+0.5*Math.sin(time*3+i*2.1));
+    ctx.fillStyle=`rgba(255,230,100,${b*0.15})`;
+    ctx.beginPath();ctx.arc(fx+Math.sin(time+i)*8,fy+Math.cos(time*0.7+i)*5,4,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=`rgba(255,240,150,${b})`;
+    ctx.fillRect(Math.floor(fx+Math.sin(time+i)*8),Math.floor(fy+Math.cos(time*0.7+i)*5),2,2);
+  }
+
+  // ── Info bar ──
+  const by=H-52;
+  ctx.fillStyle='rgba(20,18,30,0.82)';
+  rRect(8,by,W-16,44,8);
+  ctx.fillStyle='#f0e8d8';ctx.font='bold 7px Courier New';ctx.fillText('Julie',28,by+15);
+  ctx.fillStyle='#908878';ctx.font='5px Courier New';ctx.fillText('Cerisier - Arbuste  Nv.12',28,by+25);
+  // XP bar
+  ctx.fillStyle='rgba(255,255,255,0.1)';
+  ctx.fillRect(28,by+30,W-80,5);
+  ctx.fillStyle='#FFD860';
+  ctx.fillRect(28,by+30,60,5);
+  ctx.fillStyle='#a09080';ctx.font='5px Courier New';ctx.fillText('480/800 XP',W-68,by+35);
+  // Avatar
+  ctx.fillStyle='#F0D0A0';ctx.fillRect(14,by+10,8,7);
+  ctx.fillStyle='#805030';ctx.fillRect(14,by+6,8,5);
+  ctx.fillStyle='#FFA060';ctx.fillRect(14,by+16,8,4);
+
+  requestAnimationFrame(render);
+}
+
+function rRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.fill();}
+
+function startRender(){ requestAnimationFrame(render); }
+</script>
+</body>
+</html>

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Avatar Réactif — Aperçu</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #111; color: #fff;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 32px 16px;
+  }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  .sub { color: #888; font-size: 13px; margin-bottom: 28px; }
+
+  .phone {
+    width: 375px;
+    border-radius: 44px; overflow: hidden;
+    border: 3px solid #333; background: #F3F4F6;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+  .notch { width: 130px; height: 32px; background: #000; border-radius: 0 0 18px 18px; margin: 0 auto; }
+
+  .header {
+    padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: linear-gradient(135deg, #0EA5E9, #8B5CF6);
+    border-bottom: 0.5px solid rgba(0,0,0,0.1);
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .avatar-btn {
+    width: 48px; height: 48px; border-radius: 24px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.25);
+    position: relative;
+  }
+  .avatar-emoji {
+    display: inline-block;
+    transform-origin: center bottom;
+  }
+
+  .greeting-text { font-size: 12px; color: rgba(255,255,255,0.8); font-weight: 500; }
+  .date-text { font-size: 16px; font-weight: 800; color: #fff; }
+
+  .content { padding: 16px; }
+  .card {
+    background: #fff; border-radius: 14px; padding: 14px; margin-bottom: 10px;
+    border: 1px solid #E5E7EB;
+  }
+  .card-t { font-weight: 700; font-size: 13px; color: #111827; margin-bottom: 4px; }
+  .card-b { font-size: 11px; color: #6B7280; }
+
+  /* Scenario selector */
+  .scenarios {
+    display: flex; gap: 8px; margin-top: 24px; flex-wrap: wrap; justify-content: center;
+    max-width: 500px;
+  }
+  .scenario-btn {
+    padding: 8px 16px; border-radius: 12px; border: 2px solid #333;
+    background: #1a1a1a; color: #aaa; cursor: pointer; font-size: 13px;
+    transition: all 0.2s;
+  }
+  .scenario-btn.active { border-color: #8B5CF6; color: #fff; background: #222; }
+  .scenario-btn:hover { border-color: #555; }
+
+  .desc {
+    margin-top: 16px; color: #888; font-size: 12px; text-align: center;
+    max-width: 420px; line-height: 1.6;
+  }
+  .desc code {
+    background: #222; padding: 2px 6px; border-radius: 4px; color: #A78BFA;
+    font-size: 11px;
+  }
+
+  /* ── Animations ── */
+
+  /* Idle: légère respiration */
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  /* Loot dispo: sautille */
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    20% { transform: translateY(-6px) rotate(-3deg); }
+    40% { transform: translateY(0) rotate(0deg); }
+    55% { transform: translateY(-3px) rotate(2deg); }
+    70% { transform: translateY(0) rotate(0deg); }
+  }
+
+  /* Toutes tâches finies: danse */
+  @keyframes celebrate {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    15% { transform: rotate(-12deg) scale(1.1); }
+    30% { transform: rotate(12deg) scale(1.15); }
+    45% { transform: rotate(-8deg) scale(1.1); }
+    60% { transform: rotate(8deg) scale(1.05); }
+    75% { transform: rotate(-4deg) scale(1); }
+  }
+
+  /* Nuit: dort (bascule lentement) */
+  @keyframes sleep {
+    0%, 100% { transform: rotate(-8deg) scale(0.95); }
+    50% { transform: rotate(-12deg) scale(0.92); }
+  }
+
+  /* Tâches en retard: tremble */
+  @keyframes worry {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-2px); }
+    40% { transform: translateX(2px); }
+    60% { transform: translateX(-1.5px); }
+    80% { transform: translateX(1.5px); }
+  }
+
+  /* Matin: s'étire */
+  @keyframes stretch {
+    0%, 100% { transform: scaleY(1) scaleX(1); }
+    30% { transform: scaleY(1.15) scaleX(0.92); }
+    60% { transform: scaleY(0.95) scaleX(1.05); }
+  }
+
+  .anim-breathe  .avatar-emoji { animation: breathe 3s ease-in-out infinite; }
+  .anim-bounce   .avatar-emoji { animation: bounce 1.2s ease-in-out infinite; }
+  .anim-celebrate .avatar-emoji { animation: celebrate 0.8s ease-in-out infinite; }
+  .anim-sleep    .avatar-emoji { animation: sleep 3s ease-in-out infinite; }
+  .anim-worry    .avatar-emoji { animation: worry 0.4s ease-in-out infinite; }
+  .anim-stretch  .avatar-emoji { animation: stretch 2s ease-in-out infinite; }
+
+  /* Zzz pour le sommeil */
+  .zzz {
+    position: absolute; top: -4px; right: -6px;
+    font-size: 14px; opacity: 0;
+    animation: none;
+  }
+  .anim-sleep .zzz {
+    animation: floatZzz 2.5s ease-in-out infinite;
+  }
+  @keyframes floatZzz {
+    0% { opacity: 0; transform: translateY(0) scale(0.7); }
+    30% { opacity: 1; transform: translateY(-8px) scale(1); }
+    100% { opacity: 0; transform: translateY(-18px) scale(0.5); }
+  }
+
+  /* Sparkle pour celebrate */
+  .sparkle {
+    position: absolute; font-size: 10px; opacity: 0;
+  }
+  .sparkle-1 { top: -6px; left: -4px; }
+  .sparkle-2 { top: -4px; right: -6px; }
+  .sparkle-3 { bottom: 0; right: -8px; }
+  .anim-celebrate .sparkle {
+    animation: sparkle 0.8s ease-in-out infinite;
+  }
+  .anim-celebrate .sparkle-2 { animation-delay: 0.25s; }
+  .anim-celebrate .sparkle-3 { animation-delay: 0.5s; }
+  @keyframes sparkle {
+    0%, 100% { opacity: 0; transform: scale(0); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+
+  /* Exclamation pour loot */
+  .loot-badge {
+    position: absolute; top: -4px; right: -6px;
+    font-size: 12px; opacity: 0;
+  }
+  .anim-bounce .loot-badge {
+    opacity: 1;
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+  }
+</style>
+</head>
+<body>
+
+<h1>Avatar Réactif</h1>
+<p class="sub">L'avatar réagit au contexte — clique un scénario</p>
+
+<div class="phone" id="phone">
+  <div class="notch"></div>
+  <div class="header">
+    <div class="header-left">
+      <div class="avatar-btn" id="avatarBtn">
+        <span class="avatar-emoji" id="avatarEmoji">🧒</span>
+        <span class="zzz">💤</span>
+        <span class="sparkle sparkle-1">✨</span>
+        <span class="sparkle sparkle-2">⭐</span>
+        <span class="sparkle sparkle-3">✨</span>
+        <span class="loot-badge">🎁</span>
+      </div>
+      <div>
+        <div class="greeting-text" id="greetingText">Bon après-midi Lucas 🌤️</div>
+        <div class="date-text">22 Mars 2026</div>
+      </div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card" id="card1"><div class="card-t" id="cardTitle1">📋 Tâches</div><div class="card-b" id="cardBody1">3 en attente</div></div>
+    <div class="card" id="card2"><div class="card-t" id="cardTitle2">🎁 Loot</div><div class="card-b" id="cardBody2">0 boîte disponible</div></div>
+    <div class="card"><div class="card-t">🍽️ Repas</div><div class="card-b">Pâtes carbonara</div></div>
+  </div>
+</div>
+
+<div class="scenarios" id="scenarios"></div>
+<p class="desc" id="desc"></p>
+
+<script>
+const scenarios = [
+  {
+    id: 'idle',
+    label: '😌 Normal',
+    anim: 'anim-breathe',
+    greeting: 'Bon après-midi Lucas 🌤️',
+    card1: { t: '📋 Tâches', b: '3 en attente, 1 terminée' },
+    card2: { t: '🎁 Loot', b: '0 boîte disponible' },
+    desc: 'Rien de spécial — l\'avatar respire doucement. <code>withRepeat(withSequence(scale 1→1.05→1), -1)</code>',
+  },
+  {
+    id: 'loot',
+    label: '🎁 Loot dispo',
+    anim: 'anim-bounce',
+    greeting: 'Bon après-midi Lucas 🌤️',
+    card1: { t: '📋 Tâches', b: '2 en attente' },
+    card2: { t: '🎁 Loot', b: '2 boîtes disponibles !' },
+    desc: 'Loot box disponible — l\'avatar sautille pour attirer l\'attention. <code>withRepeat(withSequence(translateY 0→-6→0), -1)</code>',
+  },
+  {
+    id: 'alldone',
+    label: '🎉 Tout fini',
+    anim: 'anim-celebrate',
+    greeting: 'Bon après-midi Lucas 🌤️',
+    card1: { t: '📋 Tâches', b: '✅ Toutes terminées !' },
+    card2: { t: '🎁 Loot', b: '1 boîte gagnée !' },
+    desc: 'Toutes les tâches sont finies — l\'avatar danse avec des sparkles. <code>withRepeat(withSequence(rotate ±12°, scale 1→1.15), -1)</code>',
+  },
+  {
+    id: 'night',
+    label: '🌙 Nuit',
+    anim: 'anim-sleep',
+    greeting: 'Bonne nuit Lucas 🌙',
+    card1: { t: '📋 Demain', b: '2 tâches prévues' },
+    card2: { t: '🎁 Loot', b: '0 boîte disponible' },
+    desc: 'Il est tard (22h-5h) — l\'avatar dort avec des 💤. <code>withRepeat(withSequence(rotate -8°→-12°, scale 0.92→0.95), -1)</code>',
+  },
+  {
+    id: 'overdue',
+    label: '⚠️ Retard',
+    anim: 'anim-worry',
+    greeting: 'Bon après-midi Lucas 🌤️',
+    card1: { t: '⚠️ Tâches', b: '3 en retard !' },
+    card2: { t: '🎁 Loot', b: '0 boîte disponible' },
+    desc: 'Des tâches sont en retard — l\'avatar tremble légèrement d\'inquiétude. <code>withRepeat(withSequence(translateX ±2px), -1)</code>',
+  },
+  {
+    id: 'morning',
+    label: '☀️ Matin',
+    anim: 'anim-stretch',
+    greeting: 'Bon matin Lucas ☀️',
+    card1: { t: '📋 Tâches', b: '4 pour aujourd\'hui' },
+    card2: { t: '🎁 Loot', b: '0 boîte disponible' },
+    desc: 'Début de journée (5h-8h) — l\'avatar s\'étire. <code>withRepeat(withSequence(scaleY 1→1.15→0.95), -1)</code>',
+  },
+];
+
+let active = 'idle';
+
+function render() {
+  const s = scenarios.find(x => x.id === active);
+
+  // Remove all anim classes
+  const avatarBtn = document.getElementById('avatarBtn');
+  avatarBtn.className = 'avatar-btn ' + s.anim;
+
+  document.getElementById('greetingText').textContent = s.greeting;
+  document.getElementById('cardTitle1').textContent = s.card1.t;
+  document.getElementById('cardBody1').textContent = s.card1.b;
+  document.getElementById('cardTitle2').textContent = s.card2.t;
+  document.getElementById('cardBody2').textContent = s.card2.b;
+  document.getElementById('desc').innerHTML = s.desc;
+
+  // Update header gradient for night
+  const header = document.querySelector('.header');
+  header.style.background = s.id === 'night'
+    ? 'linear-gradient(135deg, #6366F1, #1E293B)'
+    : s.id === 'morning'
+    ? 'linear-gradient(135deg, #3B82F6, #F59E0B)'
+    : 'linear-gradient(135deg, #0EA5E9, #8B5CF6)';
+
+  document.getElementById('scenarios').innerHTML = scenarios.map(sc =>
+    `<button class="scenario-btn ${sc.id === active ? 'active' : ''}"
+      onclick="active='${sc.id}'; render();">${sc.label}</button>`
+  ).join('');
+}
+
+render();
+</script>
+</body>
+</html>

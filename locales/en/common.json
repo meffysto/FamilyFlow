@@ -3889,34 +3889,33 @@
     },
     "building": {
       "poulailler": "Chicken Coop",
-      "poulailler_desc": "A cozy chicken coop. Produces 10 🍃 per day automatically.",
+      "poulailler_desc": "A cozy chicken coop. Produces eggs automatically.",
       "grange": "Barn",
-      "grange_desc": "A lovely wooden barn. Produces 25 🍃 per day automatically.",
-      "moulin": "Mill",
-      "moulin_desc": "A rustic mill. Produces flour every few hours.",
+      "grange_desc": "A lovely wooden barn. Produces milk automatically.",
+      "moulin": "Windmill",
+      "moulin_desc": "A windmill. Produces flour automatically.",
       "buy": "Build",
       "dailyIncome": "+{{amount}} 🍃/day",
       "owned": "Built",
-      "level": "Level {{level}}",
-      "production": "Produces: {{resource}}",
-      "frequency": "Every {{hours}}h",
-      "pending": "{{count}} to collect",
-      "collect": "Collect",
-      "upgrade": "Upgrade",
-      "upgradeTo": "Upgrade to Lv {{level}}",
+      "construct": "Build",
+      "constructTitle": "Build a building",
+      "noAvailable": "No buildings available",
+      "unlockedAt": "Unlock at stage {{stage}}",
       "cost": "{{cost}} 🍃",
+      "frequency": "1 {{resource}} every {{hours}}h",
+      "level": "Lv. {{level}}",
       "maxLevel": "Max level",
-      "build": "Build",
-      "empty": "Empty slot",
-      "locked": "Unlock at {{stage}} stage"
-    },
-    "resource": {
-      "oeuf": "egg",
-      "lait": "milk",
-      "farine": "flour"
-    },
-    "inventory": {
-      "title": "Inventory"
+      "upgrade": "Upgrade to Lv {{level}}",
+      "upgradeCost": "{{cost}} 🍃",
+      "collect": "Collect {{count}} {{resource}}",
+      "noPending": "Nothing to collect",
+      "pendingCount": "{{count}} available",
+      "resource": {
+        "oeuf": "egg",
+        "oeufs": "eggs",
+        "lait": "milk",
+        "farine": "flour"
+      }
     },
     "weeklyGoal": {
       "title": "Weekly Goal",

@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pixel Tree — Full Scene Preview</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0f0f23;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    font-family: -apple-system, system-ui, sans-serif;
+    padding: 20px;
+    gap: 16px;
+  }
+  h1 { color: #e0c4d8; font-size: 20px; letter-spacing: 2px; }
+
+  /* Phone frame */
+  .phone {
+    width: 393px;
+    height: 750px;
+    border-radius: 40px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  /* Scene canvas */
+  .scene {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    image-rendering: pixelated;
+  }
+
+  /* Sky gradient */
+  .sky {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 55%;
+    background: linear-gradient(180deg, #87CEEB 0%, #B8E4F0 40%, #E8F5E9 100%);
+  }
+
+  /* Clouds */
+  .cloud {
+    position: absolute;
+    display: flex;
+    gap: 0;
+    animation: drift linear infinite;
+    opacity: 0.7;
+  }
+  .cloud-px {
+    width: 8px;
+    height: 8px;
+    background: white;
+  }
+  @keyframes drift {
+    0% { transform: translateX(-100px); }
+    100% { transform: translateX(450px); }
+  }
+
+  /* Sun */
+  .sun {
+    position: absolute;
+    top: 40px;
+    right: 50px;
+    width: 40px;
+    height: 40px;
+    background: #FFD54F;
+    border-radius: 4px;
+    box-shadow: 0 0 20px #FFD54F88, 0 0 40px #FFD54F44;
+    animation: sunPulse 3s ease-in-out infinite;
+  }
+  @keyframes sunPulse {
+    0%, 100% { box-shadow: 0 0 20px #FFD54F88, 0 0 40px #FFD54F44; }
+    50% { box-shadow: 0 0 30px #FFD54FAA, 0 0 60px #FFD54F66; }
+  }
+
+  /* Ground layers */
+  .ground {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 50%;
+  }
+  .grass-layer {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 60%;
+    background: linear-gradient(180deg, #66BB6A 0%, #4CAF50 30%, #388E3C 100%);
+  }
+  .dirt-layer {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 40%;
+    background: linear-gradient(180deg, #5D4037 0%, #4E342E 50%, #3E2723 100%);
+  }
+  /* Grass texture pixels */
+  .grass-detail {
+    position: absolute;
+    display: flex;
+    flex-wrap: wrap;
+    top: 0; left: 0; right: 0;
+    height: 8px;
+  }
+  .grass-blade {
+    width: 4px;
+    height: 8px;
+    background: #81C784;
+  }
+
+  /* Tree container */
+  .tree-wrap {
+    position: absolute;
+    bottom: 48%;
+    left: 50%;
+    transform: translateX(-50%);
+    transform-origin: bottom center;
+    animation: treeSway 4s ease-in-out infinite;
+    z-index: 10;
+  }
+  @keyframes treeSway {
+    0%, 100% { transform: translateX(-50%) rotate(0deg); }
+    25% { transform: translateX(-50%) rotate(0.8deg); }
+    75% { transform: translateX(-50%) rotate(-0.8deg); }
+  }
+
+  .pixel-grid {
+    display: grid;
+    gap: 0;
+  }
+  .px {
+    aspect-ratio: 1;
+  }
+
+  /* Decorations */
+  .deco {
+    position: absolute;
+    z-index: 5;
+    image-rendering: pixelated;
+  }
+  .deco-grid {
+    display: grid;
+    gap: 0;
+  }
+
+  /* Falling petals */
+  .petal {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    animation: petalFall linear infinite;
+    z-index: 15;
+    opacity: 0.8;
+  }
+  @keyframes petalFall {
+    0% { transform: translateY(0) translateX(0) rotate(0); opacity: 0; }
+    10% { opacity: 0.8; }
+    100% { transform: translateY(350px) translateX(40px) rotate(720deg); opacity: 0; }
+  }
+
+  /* Fireflies */
+  .firefly {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: #FFD54F;
+    border-radius: 50%;
+    animation: fireflyFloat 5s ease-in-out infinite;
+    z-index: 12;
+    box-shadow: 0 0 6px #FFD54F;
+  }
+  @keyframes fireflyFloat {
+    0%, 100% { transform: translate(0, 0); opacity: 0.3; }
+    25% { transform: translate(15px, -20px); opacity: 1; }
+    50% { transform: translate(-10px, -10px); opacity: 0.5; }
+    75% { transform: translate(20px, -25px); opacity: 0.9; }
+  }
+
+  /* Butterfly */
+  .butterfly {
+    position: absolute;
+    z-index: 12;
+    animation: butterflyPath 8s ease-in-out infinite;
+  }
+  @keyframes butterflyPath {
+    0% { transform: translate(0, 0); }
+    25% { transform: translate(40px, -30px); }
+    50% { transform: translate(80px, -10px); }
+    75% { transform: translate(40px, -40px); }
+    100% { transform: translate(0, 0); }
+  }
+  .wing {
+    display: inline-block;
+    width: 6px;
+    height: 8px;
+    border-radius: 3px;
+    animation: wingFlap 0.3s ease-in-out infinite alternate;
+  }
+  .wing-l { background: #FFB74D; transform-origin: right center; }
+  .wing-r { background: #FFA726; transform-origin: left center; }
+  @keyframes wingFlap {
+    0% { transform: scaleX(1); }
+    100% { transform: scaleX(0.3); }
+  }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .btn {
+    background: #252547;
+    color: #b0a0c0;
+    border: 1px solid #3a3a5c;
+    padding: 6px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+  }
+  .btn:hover { background: #3a3a5c; }
+  .btn.active { background: #7c3aed; border-color: #9b6aed; color: white; }
+
+  /* Info bar */
+  .info-bar {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 20;
+    color: white;
+  }
+  .info-avatar { font-size: 28px; }
+  .info-text { flex: 1; }
+  .info-name { font-weight: 700; font-size: 15px; }
+  .info-stage { font-size: 12px; color: #b0b0b0; }
+  .info-xp {
+    background: rgba(255,255,255,0.15);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: #FFD54F;
+    font-weight: 600;
+  }
+
+  /* Stars at night (for legendary) */
+  .star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle 2s ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Scene Preview</h1>
+
+<div class="controls" id="stage-controls">
+  <button class="btn active" onclick="setStage(0)">1. Graine</button>
+  <button class="btn" onclick="setStage(1)">2. Pousse</button>
+  <button class="btn" onclick="setStage(2)">3. Arbuste</button>
+  <button class="btn" onclick="setStage(3)">4. Arbre</button>
+  <button class="btn" onclick="setStage(4)">5. Majestueux</button>
+  <button class="btn" onclick="setStage(5)">6. Legendaire</button>
+</div>
+<div class="controls" id="species-controls">
+  <button class="btn active" onclick="setSpecies('cherry')">Cerisier</button>
+  <button class="btn" onclick="setSpecies('oak')">Chene</button>
+  <button class="btn" onclick="setSpecies('bamboo')">Bambou</button>
+  <button class="btn" onclick="setSpecies('orange')">Oranger</button>
+  <button class="btn" onclick="setSpecies('palm')">Palmier</button>
+</div>
+
+<div class="phone" id="phone"></div>
+
+<script>
+const PX = 5;
+let currentStage = 0;
+let currentSpecies = 'cherry';
+
+const SPECIES = {
+  cherry: { leaf1: '#FFB7C5', leaf2: '#FF8FAB', leafLight: '#FFD4DE', flower: '#FFFFFF', trunk: '#8B6F47', trunkDark: '#6B4F37', trunkLight: '#A08060', legendary: '#FFD4DE', legendaryGlow: '#FF69B4', petal: '#FFB7C5' },
+  oak: { leaf1: '#4CAF50', leaf2: '#2E7D32', leafLight: '#81C784', flower: '#8BC34A', trunk: '#6B4226', trunkDark: '#4A2E1A', trunkLight: '#8B6240', legendary: '#C8E6C9', legendaryGlow: '#00E676', petal: '#81C784' },
+  bamboo: { leaf1: '#A5D6A7', leaf2: '#66BB6A', leafLight: '#C8E6C9', flower: '#E8F5E9', trunk: '#7CB342', trunkDark: '#558B2F', trunkLight: '#9CCC65', legendary: '#E8F5E9', legendaryGlow: '#00E5FF', petal: '#A5D6A7' },
+  orange: { leaf1: '#388E3C', leaf2: '#2E7D32', leafLight: '#66BB6A', flower: '#FF9800', trunk: '#795548', trunkDark: '#5D4037', trunkLight: '#8D6E63', legendary: '#FFE0B2', legendaryGlow: '#FF6D00', petal: '#FFA726' },
+  palm: { leaf1: '#2E7D32', leaf2: '#1B5E20', leafLight: '#4CAF50', flower: '#FFF9C4', trunk: '#A1887F', trunkDark: '#795548', trunkLight: '#BCAAA4', legendary: '#B2DFDB', legendaryGlow: '#00BFA5', petal: '#80CBC4' },
+};
+
+const STAGE_INFO = [
+  { label: 'Graine', levels: '1-3', xp: '0/50' },
+  { label: 'Pousse', levels: '4-7', xp: '120/200' },
+  { label: 'Arbuste', levels: '8-18', xp: '480/800' },
+  { label: 'Arbre', levels: '19-32', xp: '1800/3000' },
+  { label: 'Majestueux', levels: '33-40', xp: '5200/8000' },
+  { label: 'Legendaire', levels: '41-50', xp: '12500/15000' },
+];
+
+const TREES = [
+  // Graine
+  [
+    '___H___',
+    '__H1H__',
+    '__H1___',
+    '___T___',
+    '__DTD__',
+    '_DTTD_',
+    '__DDD__',
+  ],
+  // Pousse
+  [
+    '___F1____',
+    '__1F11___',
+    '_11F1H___',
+    '__111____',
+    '___T_1F__',
+    '___T_11__',
+    '___T_____',
+    '___T_____',
+    '__DTD____',
+    '__DDD____',
+  ],
+  // Arbuste
+  [
+    '____F1F____',
+    '___12F21___',
+    '__1F1121F__',
+    '_1211F112__',
+    '__1F12F1___',
+    '___1T11____',
+    '____T______',
+    '___1T1_____',
+    '__12T21____',
+    '___DTD_____',
+    '___DDD_____',
+    '____D______',
+  ],
+  // Arbre
+  [
+    '_____F1F_____',
+    '___F12F21F___',
+    '__1F211121___',
+    '_12F1F1F12F__',
+    '_1211211121__',
+    '__F12F1F21F__',
+    '___121T121___',
+    '____1T1T_____',
+    '_____TT______',
+    '____TLLT_____',
+    '___TLLLT_____',
+    '____TLT______',
+    '____TTT______',
+    '___DTTD______',
+    '___DDDD______',
+    '____DD_______',
+  ],
+  // Majestueux
+  [
+    '______F1F1F______',
+    '____F12FF21F_____',
+    '___1F2111121F____',
+    '__12F1F1F1F12F___',
+    '_F121121112112___',
+    '_1F12F1F1F21F1F__',
+    '__121211121121___',
+    '___F12F1F12F_____',
+    '____1211121______',
+    '_____1T1T1_______',
+    '______TTT________',
+    '_____TLLLT_______',
+    '____TLLLLT_______',
+    '_____TLLT________',
+    '______TT_________',
+    '_____DTTTD_______',
+    '____DDDDDD_______',
+    '_____DDDD________',
+  ],
+  // Legendaire
+  [
+    '______WGFGW_______',
+    '____WGFGFGFGW_____',
+    '___GF1G1G1GFG_____',
+    '__WGFG1F1GFGW_____',
+    '_GF1GFGFGFG1FGW___',
+    '_WG1G1G1G1G1GFG___',
+    '__GFG1GFGFG1GFW___',
+    '___WG1GFG1GFGW____',
+    '____GF1G1GFG______',
+    '_____G1T1G________',
+    '______TTT_________',
+    '_____TLLLT________',
+    '____TLWWLLT_______',
+    '_____TWWLT________',
+    '______TWT_________',
+    '_____DTWWTD_______',
+    '____DDDWDDD_______',
+    '_____DDDDD________',
+    '______DDD_________',
+  ],
+];
+
+// Decorations pixel art
+const DECOS = {
+  mushroom: {
+    grid: ['_RR_','RRRR','_WW_','_WW_'],
+    colors: { R: '#E53935', W: '#FAFAFA', _: 'transparent' },
+  },
+  flower1: {
+    grid: ['_Y_','YPY','_Y_','_G_','_G_'],
+    colors: { Y: '#FFD54F', P: '#FF8A80', G: '#66BB6A', _: 'transparent' },
+  },
+  flower2: {
+    grid: ['_B_','BYB','_B_','_G_'],
+    colors: { B: '#CE93D8', Y: '#FFF176', G: '#66BB6A', _: 'transparent' },
+  },
+  rock: {
+    grid: ['__GG_','_GGGG','GGLGG','_GGG_'],
+    colors: { G: '#9E9E9E', L: '#BDBDBD', _: 'transparent' },
+  },
+  fence: {
+    grid: ['B_B_B','BBBBB','B_B_B'],
+    colors: { B: '#A1887F', _: 'transparent' },
+  },
+  lantern: {
+    grid: ['_MM_','MOOM','MOOM','_MM_','_SS_','_SS_','_SS_'],
+    colors: { M: '#424242', O: '#FFD54F', S: '#795548', _: 'transparent' },
+  },
+  birdhouse: {
+    grid: ['__R__','_RRR_','RRRRR','WW_WW','WW_WW','_WWW_'],
+    colors: { R: '#E53935', W: '#8D6E63', _: 'transparent' },
+  },
+  bench: {
+    grid: ['BBBBBB','B____B','_B__B_'],
+    colors: { B: '#8D6E63', _: 'transparent' },
+  },
+};
+
+function colorMap(sp) {
+  return {
+    '_': 'transparent', 'T': sp.trunk, 'D': sp.trunkDark, 'L': sp.trunkLight,
+    '1': sp.leaf1, '2': sp.leaf2, 'H': sp.leafLight, 'F': sp.flower,
+    'G': sp.legendary, 'W': sp.legendaryGlow,
+  };
+}
+
+function renderPixelGrid(grid, colors, pixelSize) {
+  const div = document.createElement('div');
+  div.className = 'deco-grid';
+  div.style.gridTemplateColumns = `repeat(${grid[0].length}, ${pixelSize}px)`;
+  grid.forEach(row => {
+    [...row].forEach(ch => {
+      const p = document.createElement('div');
+      p.style.width = pixelSize + 'px';
+      p.style.height = pixelSize + 'px';
+      p.style.backgroundColor = colors[ch] || 'transparent';
+      div.appendChild(p);
+    });
+  });
+  return div;
+}
+
+function renderScene() {
+  const sp = SPECIES[currentSpecies];
+  const cm = colorMap(sp);
+  const tree = TREES[currentStage];
+  const info = STAGE_INFO[currentStage];
+  const isLegendary = currentStage === 5;
+
+  const phone = document.getElementById('phone');
+  phone.innerHTML = '';
+
+  const scene = document.createElement('div');
+  scene.className = 'scene';
+
+  // Sky
+  const sky = document.createElement('div');
+  sky.className = 'sky';
+  if (isLegendary) {
+    sky.style.background = 'linear-gradient(180deg, #1a1a3e 0%, #2d1b4e 40%, #4a2a5e 70%, #E8F5E9 100%)';
+    // Stars
+    for (let i = 0; i < 15; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      star.style.left = Math.random() * 100 + '%';
+      star.style.top = Math.random() * 60 + '%';
+      star.style.animationDelay = Math.random() * 3 + 's';
+      sky.appendChild(star);
+    }
+  }
+  scene.appendChild(sky);
+
+  // Sun (not for legendary)
+  if (!isLegendary) {
+    const sun = document.createElement('div');
+    sun.className = 'sun';
+    scene.appendChild(sun);
+  }
+
+  // Clouds
+  for (let i = 0; i < 3; i++) {
+    const cloud = document.createElement('div');
+    cloud.className = 'cloud';
+    cloud.style.top = (30 + i * 40) + 'px';
+    cloud.style.animationDuration = (15 + i * 5) + 's';
+    cloud.style.animationDelay = (i * 3) + 's';
+    const widths = [5, 7, 4];
+    for (let c = 0; c < widths[i]; c++) {
+      const cp = document.createElement('div');
+      cp.className = 'cloud-px';
+      cp.style.opacity = isLegendary ? '0.2' : '0.5';
+      cloud.appendChild(cp);
+    }
+    scene.appendChild(cloud);
+  }
+
+  // Ground
+  const ground = document.createElement('div');
+  ground.className = 'ground';
+  const grass = document.createElement('div');
+  grass.className = 'grass-layer';
+  const dirt = document.createElement('div');
+  dirt.className = 'dirt-layer';
+  // Grass blades
+  const grassDetail = document.createElement('div');
+  grassDetail.className = 'grass-detail';
+  for (let i = 0; i < 100; i++) {
+    const blade = document.createElement('div');
+    blade.className = 'grass-blade';
+    blade.style.backgroundColor = Math.random() > 0.5 ? '#81C784' : '#A5D6A7';
+    blade.style.height = (4 + Math.random() * 6) + 'px';
+    grassDetail.appendChild(blade);
+  }
+  grass.appendChild(grassDetail);
+  ground.appendChild(grass);
+  ground.appendChild(dirt);
+  scene.appendChild(ground);
+
+  // Decorations (positioned around the tree)
+  const decoPositions = [
+    { id: 'mushroom', left: '8%', bottom: '46%', size: 5 },
+    { id: 'flower1', left: '15%', bottom: '44%', size: 4 },
+    { id: 'flower2', left: '78%', bottom: '45%', size: 4 },
+    { id: 'rock', left: '70%', bottom: '42%', size: 4 },
+    { id: 'lantern', left: '85%', bottom: '46%', size: 4 },
+    { id: 'flower1', left: '25%', bottom: '38%', size: 3 },
+    { id: 'bench', left: '5%', bottom: '36%', size: 4 },
+  ];
+  // Show more decos at higher stages
+  const maxDecos = Math.min(decoPositions.length, currentStage + 2);
+  for (let i = 0; i < maxDecos; i++) {
+    const dp = decoPositions[i];
+    const deco = DECOS[dp.id];
+    const el = document.createElement('div');
+    el.className = 'deco';
+    el.style.left = dp.left;
+    el.style.bottom = dp.bottom;
+    el.appendChild(renderPixelGrid(deco.grid, deco.colors, dp.size));
+    scene.appendChild(el);
+  }
+
+  // Birdhouse at stage 4+
+  if (currentStage >= 3) {
+    const bh = document.createElement('div');
+    bh.className = 'deco';
+    bh.style.right = '12%';
+    bh.style.bottom = '52%';
+    bh.appendChild(renderPixelGrid(DECOS.birdhouse.grid, DECOS.birdhouse.colors, 4));
+    scene.appendChild(bh);
+  }
+
+  // Tree
+  const treeWrap = document.createElement('div');
+  treeWrap.className = 'tree-wrap';
+  if (isLegendary) treeWrap.style.animation = 'treeSway 4s ease-in-out infinite';
+
+  const cols = tree[0].length;
+  const treeGrid = document.createElement('div');
+  treeGrid.className = 'pixel-grid';
+  treeGrid.style.gridTemplateColumns = `repeat(${cols}, ${PX}px)`;
+  tree.forEach(row => {
+    [...row].forEach(ch => {
+      const p = document.createElement('div');
+      p.className = 'px';
+      p.style.width = PX + 'px';
+      p.style.height = PX + 'px';
+      p.style.backgroundColor = cm[ch] || 'transparent';
+      if (isLegendary && (ch === 'G' || ch === 'W')) {
+        p.style.boxShadow = `0 0 4px ${sp.legendaryGlow}66`;
+      }
+      treeGrid.appendChild(p);
+    });
+  });
+  treeWrap.appendChild(treeGrid);
+  scene.appendChild(treeWrap);
+
+  // Petals (stage 2+)
+  if (currentStage >= 1) {
+    const count = currentStage >= 4 ? 12 : currentStage >= 2 ? 6 : 3;
+    for (let i = 0; i < count; i++) {
+      const petal = document.createElement('div');
+      petal.className = 'petal';
+      petal.style.backgroundColor = sp.petal;
+      petal.style.left = (20 + Math.random() * 60) + '%';
+      petal.style.top = (10 + Math.random() * 20) + '%';
+      petal.style.animationDuration = (3 + Math.random() * 4) + 's';
+      petal.style.animationDelay = Math.random() * 5 + 's';
+      petal.style.width = (3 + Math.random() * 3) + 'px';
+      petal.style.height = petal.style.width;
+      scene.appendChild(petal);
+    }
+  }
+
+  // Fireflies (stage 4+)
+  if (currentStage >= 3) {
+    const count = isLegendary ? 10 : 4;
+    for (let i = 0; i < count; i++) {
+      const ff = document.createElement('div');
+      ff.className = 'firefly';
+      ff.style.left = (25 + Math.random() * 50) + '%';
+      ff.style.top = (15 + Math.random() * 35) + '%';
+      ff.style.animationDelay = Math.random() * 5 + 's';
+      ff.style.animationDuration = (4 + Math.random() * 3) + 's';
+      if (isLegendary) {
+        ff.style.backgroundColor = sp.legendaryGlow;
+        ff.style.boxShadow = `0 0 8px ${sp.legendaryGlow}`;
+      }
+      scene.appendChild(ff);
+    }
+  }
+
+  // Butterfly (stage 3+)
+  if (currentStage >= 2) {
+    const bf = document.createElement('div');
+    bf.className = 'butterfly';
+    bf.style.left = '30%';
+    bf.style.top = '25%';
+    bf.innerHTML = '<span class="wing wing-l"></span><span class="wing wing-r"></span>';
+    scene.appendChild(bf);
+  }
+
+  // Info bar
+  const infoBar = document.createElement('div');
+  infoBar.className = 'info-bar';
+  infoBar.innerHTML = `
+    <span class="info-avatar">👩</span>
+    <div class="info-text">
+      <div class="info-name">Julie</div>
+      <div class="info-stage">Cerisier — ${info.label}</div>
+    </div>
+    <div class="info-xp">${info.xp} XP</div>
+  `;
+  scene.appendChild(infoBar);
+
+  phone.appendChild(scene);
+}
+
+function setStage(i) {
+  currentStage = i;
+  document.querySelectorAll('#stage-controls .btn').forEach((b, idx) => b.classList.toggle('active', idx === i));
+  renderScene();
+}
+function setSpecies(s) {
+  currentSpecies = s;
+  document.querySelectorAll('#species-controls .btn').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase().startsWith(s.slice(0,3))));
+  renderScene();
+}
+
+renderScene();
+</script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "name": "video",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts FamilyFlowPromo out/promo.mp4",
+    "render:v1": "remotion render src/index.ts Video1-TaskLoot out/v1-task-loot.mp4",
+    "render:v2": "remotion render src/index.ts Video2-RecipeFlow out/v2-recipe-flow.mp4",
+    "render:v3": "remotion render src/index.ts Video3-GrowingTree out/v3-growing-tree.mp4",
+    "render:v4": "remotion render src/index.ts Video4-DayLife out/v4-day-life.mp4",
+    "render:v5": "remotion render src/index.ts Video5-Competition out/v5-competition.mp4",
+    "render:all": "npm run render:v1 && npm run render:v2 && npm run render:v3 && npm run render:v4 && npm run render:v5"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.441",
+    "@remotion/google-fonts": "^4.0.441",
+    "@remotion/transitions": "4.0.441",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "remotion": "^4.0.441"
+  }
+}

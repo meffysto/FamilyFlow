@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iPad Screenshot — Tâches</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #2c2c2e; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif; }
+  .controls { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: #1c1c1e; border-bottom: 1px solid #38383a; padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
+  .controls button { background: #818cf8; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .controls button:hover { background: #6366f1; }
+  .controls span { color: #8e8e93; font-size: 13px; }
+  .screenshot-wrapper { padding-top: 60px; transform-origin: top left; }
+  .screenshot { width: 1024px; height: 1366px; background: #000; display: flex; overflow: hidden; }
+  .sidebar { width: 260px; background: #1c1c1e; border-right: 1px solid #38383a; display: flex; flex-direction: column; flex-shrink: 0; padding: 20px 0; overflow: hidden; }
+  .sidebar-brand { padding: 0 16px 16px; font-size: 20px; font-weight: 700; color: #e5e5ea; letter-spacing: -0.3px; }
+  .sidebar-main { padding: 0 10px; margin-bottom: 12px; }
+  .sidebar-item { display: flex; align-items: center; padding: 9px 12px; border-radius: 8px; font-size: 15px; color: #e5e5ea; margin-bottom: 2px; position: relative; }
+  .sidebar-item.active { background: rgba(129,140,248,0.15); color: #818cf8; font-weight: 600; }
+  .sidebar-item .icon { margin-right: 10px; font-size: 16px; }
+  .sidebar-item .badge { position: absolute; right: 10px; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 10px; }
+  .badge-indigo { background: rgba(129,140,248,0.2); color: #818cf8; }
+  .badge-amber { background: rgba(245,158,11,0.2); color: #f59e0b; }
+  .badge-pink { background: rgba(236,72,153,0.2); color: #ec4899; }
+  .badge-purple { background: rgba(168,85,247,0.2); color: #a855f7; }
+  .sidebar-sep { height: 1px; background: #38383a; margin: 8px 16px; }
+  .sidebar-scroll { flex: 1; overflow: hidden; padding: 0 10px; }
+  .sidebar-cat { font-size: 10px; font-weight: 700; color: #636366; letter-spacing: 0.8px; text-transform: uppercase; padding: 10px 12px 4px; }
+  .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .header { padding: 20px 28px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #38383a; }
+  .header-title { font-size: 28px; font-weight: 700; color: #e5e5ea; }
+  .header-sub { font-size: 14px; color: #8e8e93; }
+  .main { flex: 1; padding: 24px 28px; overflow: hidden; }
+  .main-inner { max-width: 700px; margin: 0 auto; }
+
+  .segmented { display: flex; background: #2c2c2e; border-radius: 8px; padding: 3px; margin-bottom: 20px; width: fit-content; }
+  .seg-btn { padding: 7px 18px; border-radius: 6px; font-size: 13px; font-weight: 500; color: #8e8e93; }
+  .seg-btn.active { background: #818cf8; color: #fff; }
+
+  .card { background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 10px; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .section-title { font-size: 15px; font-weight: 600; color: #e5e5ea; }
+  .section-count { font-size: 12px; color: #8e8e93; background: #2c2c2e; padding: 2px 8px; border-radius: 10px; }
+  .task-row { display: flex; align-items: center; padding: 8px 0; gap: 10px; border-bottom: 1px solid #38383a; }
+  .task-row:last-child { border-bottom: none; }
+  .task-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #38383a; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+  .task-check.done { background: #34c759; border-color: #34c759; color: #fff; }
+  .task-text { font-size: 14px; color: #e5e5ea; }
+  .task-text.done { text-decoration: line-through; color: #636366; }
+</style>
+</head>
+<body>
+<div class="controls">
+  <button onclick="capture()">Télécharger PNG (2048x2732)</button>
+  <span>1024x1366 → export 2x</span>
+</div>
+<div class="screenshot-wrapper">
+<div class="screenshot" id="capture">
+  <div class="sidebar">
+    <div class="sidebar-brand">FamilyFlow</div>
+    <div class="sidebar-main">
+      <div class="sidebar-item"><span class="icon">🏠</span>Aujourd'hui</div>
+      <div class="sidebar-item active"><span class="icon">📋</span>Tâches</div>
+      <div class="sidebar-item"><span class="icon">📖</span>Journal</div>
+      <div class="sidebar-item"><span class="icon">📆</span>Calendrier</div>
+    </div>
+    <div class="sidebar-sep"></div>
+    <div class="sidebar-scroll">
+      <div class="sidebar-cat">Organisation</div>
+      <div class="sidebar-item"><span class="icon">🔄</span>Routines</div>
+      <div class="sidebar-item"><span class="icon">📅</span>Rendez-vous<span class="badge badge-indigo">3</span></div>
+      <div class="sidebar-item"><span class="icon">🍽️</span>Repas</div>
+      <div class="sidebar-item"><span class="icon">📦</span>Stock<span class="badge badge-amber">2</span></div>
+      <div class="sidebar-cat">Santé</div>
+      <div class="sidebar-item"><span class="icon">🏥</span>Suivi santé</div>
+      <div class="sidebar-item"><span class="icon">🌤️</span>Humeurs</div>
+      <div class="sidebar-item"><span class="icon">🌙</span>Mode nuit</div>
+      <div class="sidebar-cat">Souvenirs</div>
+      <div class="sidebar-item"><span class="icon">📸</span>Photos</div>
+      <div class="sidebar-item"><span class="icon">💬</span>Mots d'enfants</div>
+      <div class="sidebar-item"><span class="icon">🙏</span>Gratitude</div>
+      <div class="sidebar-cat">Jeux</div>
+      <div class="sidebar-item"><span class="icon">🌳</span>Compétences</div>
+      <div class="sidebar-item"><span class="icon">🎰</span>Récompenses<span class="badge badge-pink">5</span></div>
+      <div class="sidebar-item"><span class="icon">🏅</span>Défis<span class="badge badge-amber">2</span></div>
+      <div class="sidebar-cat">Famille</div>
+      <div class="sidebar-item"><span class="icon">🎂</span>Anniversaires<span class="badge badge-purple">1</span></div>
+      <div class="sidebar-item"><span class="icon">🎁</span>Souhaits</div>
+      <div class="sidebar-item"><span class="icon">💰</span>Budget</div>
+      <div class="sidebar-item"><span class="icon">📝</span>Notes</div>
+      <div class="sidebar-item"><span class="icon">📊</span>Stats</div>
+      <div class="sidebar-cat">Système</div>
+      <div class="sidebar-item"><span class="icon">⚙️</span>Réglages</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="header">
+      <div class="header-title">📋 Tâches</div>
+      <div class="header-sub">3 restantes</div>
+    </div>
+    <div class="main">
+      <div class="main-inner">
+        <div class="segmented">
+          <div class="seg-btn active">Aujourd'hui</div>
+          <div class="seg-btn">Semaine</div>
+          <div class="seg-btn">Toutes</div>
+        </div>
+
+        <div class="card">
+          <div class="section-header">
+            <div class="section-title">🏠 Maison</div>
+            <div class="section-count">3</div>
+          </div>
+          <div class="task-row"><div class="task-check done">✓</div><span class="task-text done">Préparer les cartables</span></div>
+          <div class="task-row"><div class="task-check done">✓</div><span class="task-text done">Courses Monoprix</span></div>
+          <div class="task-row"><div class="task-check"></div><span class="task-text">Ranger le garage</span></div>
+        </div>
+
+        <div class="card">
+          <div class="section-header">
+            <div class="section-title">👶 Enfants</div>
+            <div class="section-count">2</div>
+          </div>
+          <div class="task-row"><div class="task-check"></div><span class="task-text">RDV dentiste Emma</span></div>
+          <div class="task-row"><div class="task-check"></div><span class="task-text">Signer carnet Lucas</span></div>
+        </div>
+
+        <div class="card">
+          <div class="section-header">
+            <div class="section-title">📋 Administratif</div>
+            <div class="section-count">2</div>
+          </div>
+          <div class="task-row"><div class="task-check done">✓</div><span class="task-text done">Payer facture électricité</span></div>
+          <div class="task-row"><div class="task-check"></div><span class="task-text">Commander cadeau anniversaire</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+function rescale() {
+  var w = document.querySelector('.screenshot-wrapper');
+  var s = Math.min(window.innerWidth / 1024, (window.innerHeight - 60) / 1366);
+  w.style.transform = 'scale(' + s + ')';
+  w.style.transformOrigin = 'top left';
+  document.body.style.height = (1366 * s + 60) + 'px';
+}
+window.addEventListener('resize', rescale);
+rescale();
+
+async function capture() {
+  var el = document.getElementById('capture');
+  var canvas = await html2canvas(el, { scale: 2, width: 1024, height: 1366, backgroundColor: '#000000', useCORS: true });
+  var link = document.createElement('a');
+  link.download = 'tasks.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+</script>
+</body>
+</html>

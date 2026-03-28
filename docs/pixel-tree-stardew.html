@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pixel Tree — Stardew Valley Style v2</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0f0f1a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Courier New', monospace;
+    padding: 20px;
+    gap: 16px;
+  }
+  h1 { color: #c8b88a; font-size: 18px; letter-spacing: 3px; text-transform: uppercase; }
+  .controls { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .btn {
+    background: #2a2a3d; color: #a09080; border: 2px solid #3d3d52;
+    padding: 5px 12px; border-radius: 4px; cursor: pointer;
+    font-size: 11px; font-family: 'Courier New', monospace;
+    text-transform: uppercase; letter-spacing: 1px; transition: all 0.15s;
+  }
+  .btn:hover { background: #3d3d52; color: #d0c0b0; }
+  .btn.active { background: #5c4a2a; border-color: #8c7a4a; color: #f0e0c0; }
+  .phone {
+    width: 393px; height: 780px; border-radius: 40px;
+    overflow: hidden; position: relative;
+    box-shadow: 0 20px 80px rgba(0,0,0,0.6); border: 3px solid #222;
+  }
+  canvas { width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; }
+</style>
+</head>
+<body>
+<h1>Family Flow Garden</h1>
+<div class="controls" id="stage-controls">
+  <button class="btn active" onclick="setStage(0)">Graine</button>
+  <button class="btn" onclick="setStage(1)">Pousse</button>
+  <button class="btn" onclick="setStage(2)">Arbuste</button>
+  <button class="btn" onclick="setStage(3)">Arbre</button>
+  <button class="btn" onclick="setStage(4)">Majestueux</button>
+  <button class="btn" onclick="setStage(5)">Legendaire</button>
+</div>
+<div class="controls" id="species-controls">
+  <button class="btn active" onclick="setSp('cherry')">Cerisier</button>
+  <button class="btn" onclick="setSp('oak')">Chene</button>
+  <button class="btn" onclick="setSp('bamboo')">Bambou</button>
+  <button class="btn" onclick="setSp('orange')">Oranger</button>
+  <button class="btn" onclick="setSp('palm')">Palmier</button>
+</div>
+<div class="phone"><canvas id="c"></canvas></div>
+
+<script>
+const W = 196, H = 390;
+const canvas = document.getElementById('c');
+canvas.width = W; canvas.height = H;
+const ctx = canvas.getContext('2d');
+
+let stage = 0, species = 'cherry', time = 0;
+let particles = [], fireflies = [], critters = [];
+
+// ─── Species palettes ─────────────────────────────
+const SP = {
+  cherry: { leaves:['#e8a0b0','#d4788e','#c45a72','#f0c0cc'], flowers:['#fff0f2','#ffe0e8','#ffd0d8'], trunk:['#7a5c3a','#5e4428','#9a7c5a','#4a3420'], fruit:'#ff8090', petal:'#ffb0c0', glow:'#ff80a0' },
+  oak: { leaves:['#5a8a3a','#4a7a2a','#3a6a1a','#7aaa5a'], flowers:['#8aba5a','#6a9a3a'], trunk:['#6a4a2a','#4a3018','#8a6a4a','#3a2010'], fruit:'#8a6a2a', petal:'#80b060', glow:'#40e060' },
+  bamboo: { leaves:['#8ac06a','#6aaa4a','#5a9a3a','#aad08a'], flowers:['#d0e8c0','#c0d8a0'], trunk:['#6a9a3a','#5a8a2a','#8ab05a','#4a7a1a'], fruit:'#c0d8a0', petal:'#a0d080', glow:'#40e0d0' },
+  orange: { leaves:['#4a8a3a','#3a7a2a','#2a6a1a','#6aaa5a'], flowers:['#ffa030','#ff8010','#ffb050'], trunk:['#6a4830','#4a3020','#8a6848','#3a2010'], fruit:'#ff8800', petal:'#ffa040', glow:'#ff6000' },
+  palm: { leaves:['#3a8a3a','#2a7a2a','#4a9a4a','#5aaa5a'], flowers:['#f0e8b0','#e0d8a0'], trunk:['#9a8068','#7a6048','#b0a088','#6a5038'], fruit:'#8a6a3a', petal:'#70c0a0', glow:'#00c0a0' },
+};
+
+// ─── Trees ────────────────────────────────────────
+const TREES = [
+  { w:9, h:11, data:`
+    000100000
+    001310000
+    001310000
+    000130000
+    000160000
+    000060000
+    000760000
+    007668000
+    006776000
+    007770000
+    000700000
+  `},
+  { w:11, h:15, data:`
+    00000510000
+    00015131000
+    00135513000
+    01531131500
+    00131310000
+    00013100000
+    00005160000
+    00001060000
+    00000600000
+    00000600000
+    00000600000
+    00007680000
+    00076760000
+    00077700000
+    00007000000
+  `},
+  { w:15, h:17, data:`
+    000005150000000
+    000513151500000
+    005131513150000
+    051351531315000
+    513151351315000
+    135315135131500
+    051315131350000
+    005135153100000
+    000131613100000
+    000015161500000
+    000001610000000
+    000013160000000
+    000131361000000
+    000016160000000
+    000076860000000
+    000077700000000
+    000007000000000
+  `},
+  { w:19, h:23, data:`
+    0000000515000000000
+    0000051315150000000
+    0000513531531500000
+    0005135153151350000
+    0051315315135131000
+    0513513515351315000
+    5135315135131531500
+    0513153151353150000
+    0051315131513100000
+    0005135316315000000
+    0000513163150000000
+    0000013161300000000
+    0000001661000000000
+    0000000660000000000
+    0000006886000000000
+    0000068886000000000
+    0000068860000000000
+    0000006860000000000
+    0000006660000000000
+    0000076860000000000
+    0000077760000000000
+    0000007700000000000
+    0000000700000000000
+  `},
+  { w:23, h:27, data:`
+    00000000515150000000000
+    00000051395315000000000
+    00000513951535150000000
+    00005139515391315000000
+    00051395153153151500000
+    00519351539513531500000
+    05139515351395135150000
+    51395315139513151315000
+    05135153159351531315000
+    00513951315315135131500
+    00051315395135315135000
+    00005139531531395100000
+    00000513153135150000000
+    00000051316315000000000
+    00000001316100000000000
+    00000000166100000000000
+    00000001666000000000000
+    00000006886000000000000
+    00000068888600000000000
+    00000688886000000000000
+    00000068886000000000000
+    00000006860000000000000
+    00000076866000000000000
+    00000777776000000000000
+    00000077770000000000000
+    00000007700000000000000
+    00000000700000000000000
+  `},
+  { w:25, h:29, data:`
+    000000000A5A5A0000000000
+    0000000A51A5A15A00000000
+    000000A513A5A315A0000000
+    00000A5135A9A5315A000000
+    0000A51395A5A93151A00000
+    000A513951A5A153151A0000
+    00A5139515A5A5135151A000
+    0A513951351A5135131A0000
+    A51395135195A315135A0000
+    0A5139531519A531531A0000
+    00A51395315A5A935131A000
+    000A5135195A5A1531A00000
+    0000A5139531A315A0000000
+    00000A513153A15A00000000
+    000000A51316A1A000000000
+    0000000A1316A00000000000
+    00000000A66A000000000000
+    000000001661000000000000
+    000000006886000000000000
+    0000000688886000000000000
+    000000688A886000000000000
+    00000068A8A86000000000000
+    0000000688860000000000000
+    0000000768660000000000000
+    000000077776000000000000
+    0000000A7770000000000000
+    000000077700000000000000
+    0000000070000000000000
+    0000000070000000000000
+  `},
+];
+
+function parseTree(t) { return { w: t.w, h: t.data.trim().split('\n').map(r=>r.trim()).length, rows: t.data.trim().split('\n').map(r=>r.trim()) }; }
+function treeColor(ch, sp) {
+  switch(ch) {
+    case '1': return sp.leaves[0]; case '2': return sp.leaves[1];
+    case '3': return sp.leaves[2]; case '4': return sp.leaves[3]||sp.leaves[0];
+    case '5': return sp.flowers[0]; case '6': return sp.trunk[0];
+    case '7': return sp.trunk[1]; case '8': return sp.trunk[2];
+    case '9': return sp.fruit; case 'A': return sp.glow; default: return null;
+  }
+}
+
+// ─── Pixel decorations ────────────────────────────
+function D(data) { return data; }
+const DECOS = {
+  // Watering can (for seed stage!)
+  wateringcan: D([
+    [0,0,'#6090c0',0,0,0,0],
+    [0,'#6090c0','#80b0e0','#6090c0',0,0,0],
+    [0,'#6090c0','#80b0e0','#6090c0','#6090c0','#6090c0',0],
+    ['#5080b0','#6090c0','#6090c0','#6090c0',0,'#6090c0','#5080b0'],
+    [0,'#5080b0','#5080b0','#5080b0',0,0,0],
+  ]),
+  // Water drops
+  waterdrop: D([
+    [0,'#80c0f0',0],
+    ['#80c0f0','#a0d8ff','#80c0f0'],
+    [0,'#80c0f0',0],
+  ]),
+  // Butterfly
+  butterfly: D([
+    ['#ffa040',0,'#ffa040'],
+    ['#ff8020','#402010','#ff8020'],
+    ['#ffa040',0,'#ffa040'],
+  ]),
+  // Ladybug
+  ladybug: D([
+    [0,'#e02020','#e02020',0],
+    ['#e02020','#101010','#101010','#e02020'],
+    ['#e02020','#e02020','#e02020','#e02020'],
+    [0,'#c01010','#c01010',0],
+  ]),
+  // Snail
+  snail: D([
+    [0,0,'#a08060',0],
+    [0,'#a08060','#c0a080','#a08060'],
+    ['#d0c0a0','#a08060','#a08060','#a08060'],
+    ['#c0b090','#d0c0a0',0,0],
+  ]),
+  // Frog
+  frog: D([
+    ['#40a040',0,0,'#40a040'],
+    ['#60c060','#40a040','#40a040','#60c060'],
+    [0,'#50b050','#50b050',0],
+    [0,'#40a040','#40a040',0],
+  ]),
+  // Wild flower (daisy)
+  daisy: D([
+    [0,'#fff8e0',0],
+    ['#fff8e0','#ffe040','#fff8e0'],
+    [0,'#fff8e0',0],
+    [0,'#5a8a3a',0],
+    [0,'#5a8a3a',0],
+  ]),
+  // Wild flower (violet)
+  violet: D([
+    [0,'#a060c0',0],
+    ['#a060c0','#e0c0ff','#a060c0'],
+    [0,'#a060c0',0],
+    [0,'#4a7a2a',0],
+    [0,'#4a7a2a',0],
+  ]),
+  // Wild flower (blue)
+  blueflower: D([
+    [0,'#5080c0',0],
+    ['#5080c0','#90b8e8','#5080c0'],
+    [0,'#5080c0',0],
+    [0,'#4a7a2a',0],
+  ]),
+  // Tall grass tuft
+  tallgrass: D([
+    [0,'#6aaa4a',0,'#7aba5a',0],
+    ['#5a9a3a','#6aaa4a','#5a9a3a','#6aaa4a','#7aba5a'],
+    ['#5a9a3a','#6aaa4a','#5a9a3a','#6aaa4a','#5a9a3a'],
+  ]),
+  // Pond (small)
+  pond: D([
+    [0,0,'#3a80b0','#3a80b0','#3a80b0',0,0],
+    [0,'#3a80b0','#5098c0','#60a8d0','#5098c0','#3a80b0',0],
+    ['#3a80b0','#5098c0','#70b8e0','#80c8f0','#70b8e0','#5098c0','#3a80b0'],
+    ['#3a80b0','#5098c0','#60a8d0','#70b8e0','#60a8d0','#5098c0','#3a80b0'],
+    [0,'#3a80b0','#5098c0','#5098c0','#5098c0','#3a80b0',0],
+    [0,0,'#3a80b0','#3a80b0','#3a80b0',0,0],
+  ]),
+  // Wooden sign
+  sign: D([
+    ['#8a6840','#8a6840','#8a6840','#8a6840','#8a6840','#8a6840','#8a6840'],
+    ['#7a5830','#a08860','#a08860','#a08860','#a08860','#a08860','#7a5830'],
+    ['#7a5830','#a08860','#c0a878','#c0a878','#c0a878','#a08860','#7a5830'],
+    ['#8a6840','#8a6840','#8a6840','#8a6840','#8a6840','#8a6840','#8a6840'],
+    [0,0,0,'#5a4020',0,0,0],
+    [0,0,0,'#5a4020',0,0,0],
+    [0,0,0,'#5a4020',0,0,0],
+  ]),
+  // Mushroom red
+  mushroom: D([
+    [0,'#c03020','#c03020',0],
+    ['#c03020','#f0e0d0','#c03020','#c03020'],
+    [0,'#e8d8c0','#e8d8c0',0],
+    [0,'#e8d8c0','#e8d8c0',0],
+  ]),
+  // Fence
+  fence: D([
+    [0,'#8a6840',0],
+    ['#8a6840','#a08860','#8a6840'],
+    ['#7a5830','#8a6840','#7a5830'],
+    ['#7a5830','#8a6840','#7a5830'],
+    ['#7a5830','#8a6840','#7a5830'],
+    ['#6a4820','#7a5830','#6a4820'],
+  ]),
+  // Lantern
+  lantern: D([
+    [0,'#3a3a3a',0],
+    ['#3a3a3a','#ffa030','#3a3a3a'],
+    ['#3a3a3a','#ffb040','#3a3a3a'],
+    [0,'#3a3a3a',0],
+    [0,'#5a4030',0],
+    [0,'#5a4030',0],
+    [0,'#5a4030',0],
+  ]),
+  // House
+  house: D([
+    [0,0,0,'#8a3020','#a04030','#8a3020',0,0,0],
+    [0,0,'#8a3020','#a04030','#b05040','#a04030','#8a3020',0,0],
+    [0,'#8a3020','#a04030','#a04030','#b05040','#a04030','#a04030','#8a3020',0],
+    ['#d8c8a0','#d8c8a0','#d8c8a0','#d8c8a0','#d8c8a0','#d8c8a0','#d8c8a0','#d8c8a0','#d8c8a0'],
+    ['#c8b890','#c8b890','#5888a8','#c8b890','#c8b890','#c8b890','#5888a8','#c8b890','#c8b890'],
+    ['#c8b890','#c8b890','#5888a8','#c8b890','#c8b890','#c8b890','#5888a8','#c8b890','#c8b890'],
+    ['#a09070','#a09070','#a09070','#6a4830','#6a4830','#6a4830','#a09070','#a09070','#a09070'],
+  ]),
+  // Well
+  well: D([
+    [0,'#6a6a6a','#6a6a6a','#6a6a6a','#6a6a6a','#6a6a6a',0],
+    ['#5a5a5a',0,0,'#7a7a7a',0,0,'#5a5a5a'],
+    ['#5a5a5a',0,'#4a8ac0','#3a7ab0','#4a8ac0',0,'#5a5a5a'],
+    ['#6a6a6a','#5a5a5a','#5a5a5a','#5a5a5a','#5a5a5a','#5a5a5a','#6a6a6a'],
+    [0,'#4a4a4a','#4a4a4a','#4a4a4a','#4a4a4a','#4a4a4a',0],
+  ]),
+  // Rainbow (arc)
+  rainbow: 'special_rainbow',
+};
+
+// Decorations per stage — early stages are LIVELY
+const SCENE_DECOS = [
+  // Stage 0: Graine — cosy & inviting
+  [
+    { id:'wateringcan', x:115, y:240 },
+    { id:'waterdrop', x:105, y:236 },
+    { id:'waterdrop', x:110, y:232 },
+    { id:'sign', x:15, y:238 },
+    { id:'daisy', x:40, y:241 },
+    { id:'violet', x:55, y:243 },
+    { id:'blueflower', x:160, y:243 },
+    { id:'daisy', x:170, y:240 },
+    { id:'tallgrass', x:5, y:243 },
+    { id:'tallgrass', x:175, y:243 },
+    { id:'pond', x:145, y:258 },
+    { id:'ladybug', x:70, y:244 },
+    { id:'snail', x:135, y:246 },
+    { id:'rainbow', x:0, y:0 },
+  ],
+  // Stage 1: Pousse — more life
+  [
+    { id:'wateringcan', x:120, y:237 },
+    { id:'sign', x:12, y:238 },
+    { id:'daisy', x:35, y:241 },
+    { id:'violet', x:50, y:243 },
+    { id:'blueflower', x:65, y:242 },
+    { id:'daisy', x:155, y:241 },
+    { id:'violet', x:168, y:243 },
+    { id:'tallgrass', x:5, y:243 },
+    { id:'tallgrass', x:140, y:243 },
+    { id:'tallgrass', x:180, y:243 },
+    { id:'pond', x:145, y:258 },
+    { id:'ladybug', x:78, y:243 },
+    { id:'frog', x:140, y:255 },
+    { id:'mushroom', x:30, y:243 },
+    { id:'rainbow', x:0, y:0 },
+  ],
+  // Stage 2: Arbuste
+  [
+    { id:'sign', x:10, y:238 },
+    { id:'daisy', x:28, y:241 },
+    { id:'violet', x:42, y:243 },
+    { id:'blueflower', x:160, y:242 },
+    { id:'daisy', x:172, y:240 },
+    { id:'tallgrass', x:3, y:243 },
+    { id:'tallgrass', x:175, y:243 },
+    { id:'pond', x:150, y:258 },
+    { id:'mushroom', x:25, y:243 },
+    { id:'mushroom', x:168, y:243 },
+    { id:'fence', x:52, y:239 },
+    { id:'fence', x:58, y:239 },
+    { id:'lantern', x:62, y:236 },
+    { id:'frog', x:148, y:255 },
+    { id:'snail', x:130, y:246 },
+  ],
+  // Stage 3: Arbre
+  [
+    { id:'sign', x:8, y:238 },
+    { id:'fence', x:35, y:239 },
+    { id:'fence', x:41, y:239 },
+    { id:'fence', x:47, y:239 },
+    { id:'lantern', x:52, y:234 },
+    { id:'daisy', x:60, y:243 },
+    { id:'violet', x:155, y:243 },
+    { id:'blueflower', x:168, y:242 },
+    { id:'tallgrass', x:3, y:243 },
+    { id:'tallgrass', x:178, y:243 },
+    { id:'pond', x:150, y:258 },
+    { id:'mushroom', x:22, y:243 },
+    { id:'frog', x:148, y:255 },
+    { id:'lantern', x:170, y:234 },
+  ],
+  // Stage 4: Majestueux
+  [
+    { id:'house', x:8, y:234 },
+    { id:'fence', x:50, y:239 },
+    { id:'fence', x:56, y:239 },
+    { id:'fence', x:62, y:239 },
+    { id:'lantern', x:67, y:234 },
+    { id:'well', x:155, y:250 },
+    { id:'daisy', x:148, y:243 },
+    { id:'violet', x:175, y:243 },
+    { id:'tallgrass', x:3, y:243 },
+    { id:'tallgrass', x:180, y:243 },
+    { id:'mushroom', x:40, y:243 },
+    { id:'lantern', x:175, y:234 },
+    { id:'pond', x:10, y:262 },
+  ],
+  // Stage 5: Legendaire — magical
+  [
+    { id:'house', x:6, y:232 },
+    { id:'fence', x:48, y:237 },
+    { id:'fence', x:54, y:237 },
+    { id:'fence', x:60, y:237 },
+    { id:'fence', x:66, y:237 },
+    { id:'lantern', x:44, y:230 },
+    { id:'lantern', x:72, y:230 },
+    { id:'well', x:155, y:248 },
+    { id:'daisy', x:140, y:241 },
+    { id:'violet', x:148, y:241 },
+    { id:'blueflower', x:175, y:241 },
+    { id:'daisy', x:182, y:239 },
+    { id:'tallgrass', x:3, y:241 },
+    { id:'tallgrass', x:135, y:241 },
+    { id:'tallgrass', x:185, y:241 },
+    { id:'mushroom', x:38, y:241 },
+    { id:'mushroom', x:170, y:241 },
+    { id:'pond', x:8, y:260 },
+  ],
+];
+
+// ─── Helpers ──────────────────────────────────────
+function seeded(s){return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646;};}
+function lerpC(a,b,t){return a.map((v,i)=>Math.round(v+(b[i]-v)*t));}
+
+function drawGrad(y0,y1,stops){
+  for(let y=y0;y<y1;y++){
+    const t=(y-y0)/(y1-y0);let c;
+    for(let i=0;i<stops.length-1;i++){
+      if(t>=stops[i].p&&t<=stops[i+1].p){
+        const lt=(t-stops[i].p)/(stops[i+1].p-stops[i].p);
+        c=lerpC(stops[i].c,stops[i+1].c,lt);break;
+      }
+    }
+    if(!c)c=stops[stops.length-1].c;
+    ctx.fillStyle=`rgb(${c[0]},${c[1]},${c[2]})`;
+    ctx.fillRect(0,y,W,1);
+  }
+}
+
+function drawDeco(d){
+  if(d.id==='rainbow')return; // special
+  const def=DECOS[d.id]; if(!def||def==='special_rainbow')return;
+  const PX=2;
+  def.forEach((row,y)=>{
+    row.forEach((col,x)=>{
+      if(!col)return;
+      ctx.fillStyle=col;
+      ctx.fillRect(d.x+x*PX,d.y+y*PX,PX,PX);
+    });
+  });
+}
+
+function drawRainbow(){
+  const cx=W/2, cy=100, r=70;
+  const colors=['#ff4040','#ff8040','#ffff40','#40ff40','#4040ff','#8040ff'];
+  colors.forEach((c,i)=>{
+    ctx.strokeStyle=c;
+    ctx.globalAlpha=0.12;
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.arc(cx,cy,r+i*3,-Math.PI,-0.05);
+    ctx.stroke();
+  });
+  ctx.globalAlpha=1;
+}
+
+// ─── Main render loop ─────────────────────────────
+function render(){
+  time+=0.016;
+  ctx.clearRect(0,0,W,H);
+  const isNight=stage===5, gY=245, sp=SP[species];
+
+  // Sky
+  const skyS=isNight
+    ?[{p:0,c:[15,15,40]},{p:0.3,c:[25,20,55]},{p:0.7,c:[40,35,65]},{p:1,c:[55,50,70]}]
+    :[{p:0,c:[130,185,225]},{p:0.35,c:[165,210,238]},{p:0.7,c:[195,225,205]},{p:1,c:[215,232,198]}];
+  drawGrad(0,gY,skyS);
+
+  // Stars
+  if(isNight){const rn=seeded(42);for(let i=0;i<50;i++){const sx=rn()*W,sy=rn()*gY*0.55,b=0.2+0.8*(0.5+0.5*Math.sin(time*2+i*1.7)),sz=rn()>0.85?2:1;ctx.fillStyle=`rgba(255,255,240,${b})`;ctx.fillRect(Math.floor(sx),Math.floor(sy),sz,sz);}}
+
+  // Sun/Moon
+  if(!isNight){
+    const sx=160,sy=28+Math.sin(time*0.3)*2;
+    for(let r=18;r>0;r--){ctx.fillStyle=`rgba(255,220,100,${0.12*(1-r/18)})`;ctx.beginPath();ctx.arc(sx,sy,r,0,Math.PI*2);ctx.fill();}
+    ctx.fillStyle='#ffe070';ctx.fillRect(sx-4,sy-4,8,8);
+    ctx.fillStyle='#fff0a0';ctx.fillRect(sx-2,sy-2,4,4);
+  } else {
+    const mx=155,my=32;
+    ctx.fillStyle='#d8e0e8';ctx.fillRect(mx-4,my-4,8,8);
+    ctx.fillStyle='#b8c0c8';ctx.fillRect(mx-2,my-1,3,3);
+    for(let r=12;r>4;r--){ctx.fillStyle=`rgba(200,210,230,${0.025})`;ctx.beginPath();ctx.arc(mx,my,r,0,Math.PI*2);ctx.fill();}
+  }
+
+  // Hills (depth)
+  const h2c=isNight?[35,40,55]:[125,160,120];
+  const h1c=isNight?[42,48,62]:[145,175,135];
+  for(let x=0;x<W;x++){const h=28+Math.sin(x*0.025+1)*18+Math.sin(x*0.06)*8;ctx.fillStyle=`rgb(${h2c[0]},${h2c[1]},${h2c[2]})`;ctx.fillRect(x,gY-48-h,1,h+48);}
+  for(let x=0;x<W;x++){const h=18+Math.sin(x*0.04+3)*14+Math.sin(x*0.08+1)*6;ctx.fillStyle=`rgb(${h1c[0]},${h1c[1]},${h1c[2]})`;ctx.fillRect(x,gY-28-h,1,h+28);}
+
+  // Clouds
+  if(!isNight){
+    [[time*3,38,16],[time*2+80,62,12],[time*1.5+150,82,18]].forEach(([xBase,cy,cw])=>{
+      const cx=((xBase)%(W+40))-20;
+      ctx.fillStyle='rgba(255,255,255,0.45)';
+      for(let y=0;y<4;y++){const ind=y===0||y===3?3:y===1||y===2?1:0;ctx.fillRect(Math.floor(cx)+ind,cy+y,cw-ind*2,1);}
+    });
+  }
+
+  // Rainbow (stages 0-1 for kids!)
+  const hasRainbow = SCENE_DECOS[stage].some(d=>d.id==='rainbow');
+  if(hasRainbow && !isNight) drawRainbow();
+
+  // Ground — grass
+  const gc=isNight?['#2a4a2a','#1a3a1a','#2a5a2a']:['#5a9a3a','#4a8a2a','#6aaa4a','#5a9a3a'];
+  const rn=seeded(123);
+  for(let y=gY;y<gY+22;y++)for(let x=0;x<W;x++){ctx.fillStyle=gc[Math.floor(rn()*gc.length)];ctx.fillRect(x,y,1,1);}
+  // Grass blades
+  const bc=isNight?['#3a6a3a','#2a5a2a']:['#7aba5a','#8aca6a','#6aaa4a'];
+  const br=seeded(456);
+  for(let i=0;i<80;i++){const bx=Math.floor(br()*W),bh=2+Math.floor(br()*4);ctx.fillStyle=bc[Math.floor(br()*bc.length)];ctx.fillRect(bx,gY-bh,1,bh);}
+  // Dirt
+  const dc=isNight?['#2a1a10','#3a2a18']:['#6a4a30','#5a3a20','#7a5a40'];
+  for(let y=gY+22;y<H-55;y++)for(let x=0;x<W;x++){ctx.fillStyle=dc[Math.floor(rn()*dc.length)];ctx.fillRect(x,y,1,1);}
+
+  // Decorations behind tree
+  const decos=SCENE_DECOS[stage]||[];
+  decos.filter(d=>d.x<W/2-15).forEach(d=>drawDeco(d));
+
+  // Tree
+  const tree=parseTree(TREES[stage]);
+  const PX=2;
+  const treeX=Math.floor(W/2-(tree.w*PX)/2);
+  const treeY=gY-tree.h*PX+4;
+  const sway=Math.sin(time*0.8)*(stage>=3?1.5:0.8);
+  for(let y=0;y<tree.h;y++){
+    const row=tree.rows[y];
+    const sf=1-(y/tree.h);
+    for(let x=0;x<row.length;x++){
+      const ch=row[x];if(ch==='0')continue;
+      const col=treeColor(ch,sp);if(!col)continue;
+      ctx.fillStyle=col;
+      const px=Math.floor(treeX+x*PX+sway*sf);
+      ctx.fillRect(px,treeY+y*PX,PX,PX);
+      if(ch==='A'&&stage===5){
+        const g=0.3+0.2*Math.sin(time*3+x+y);
+        ctx.fillStyle=`rgba(255,255,200,${g})`;
+        ctx.fillRect(px-1,treeY+y*PX-1,PX+2,PX+2);
+      }
+    }
+  }
+
+  // Shadow
+  const sw=tree.w*PX+8+stage*4;
+  ctx.fillStyle=`rgba(0,0,0,${isNight?0.15:0.08})`;
+  for(let i=0;i<3;i++)ctx.fillRect(Math.floor(W/2-sw/2+i),gY+1+i,sw-i*2,1);
+
+  // Decorations in front
+  decos.filter(d=>d.x>=W/2-15).forEach(d=>drawDeco(d));
+
+  // Pond shimmer
+  decos.filter(d=>d.id==='pond').forEach(d=>{
+    const shimmer=0.3+0.15*Math.sin(time*2);
+    ctx.fillStyle=`rgba(160,220,255,${shimmer})`;
+    ctx.fillRect(d.x+4,d.y+4,4,2);
+  });
+
+  // Lantern glow
+  decos.filter(d=>d.id==='lantern').forEach(d=>{
+    const g=0.08+0.04*Math.sin(time*3);
+    for(let r=10;r>0;r--){ctx.fillStyle=`rgba(255,180,60,${g*(1-r/10)})`;ctx.beginPath();ctx.arc(d.x+3,d.y+5,r,0,Math.PI*2);ctx.fill();}
+  });
+
+  // Particles
+  const rate=stage>=4?0.18:stage>=2?0.1:stage>=1?0.05:0.02;
+  if(Math.random()<rate){
+    particles.push({x:W/2-25+Math.random()*50,y:gY-45-Math.random()*60,vx:0.2+Math.random()*0.4,vy:0.3+Math.random()*0.3,life:1,size:1+Math.floor(Math.random()*2),color:sp.petal,rot:Math.random()*6.28,rs:(Math.random()-0.5)*0.1});
+  }
+  particles=particles.filter(p=>{
+    p.x+=p.vx+Math.sin(time*2+p.rot)*0.3;p.y+=p.vy;p.rot+=p.rs;p.life-=0.005;
+    if(p.life<=0||p.y>gY+8)return false;
+    ctx.globalAlpha=p.life*0.7;ctx.fillStyle=p.color;ctx.fillRect(Math.floor(p.x),Math.floor(p.y),p.size,p.size);ctx.globalAlpha=1;
+    return true;
+  });
+
+  // Fireflies
+  if(stage>=3){
+    const mx=stage===5?10:4;
+    if(fireflies.length<mx&&Math.random()<0.02)fireflies.push({x:30+Math.random()*(W-60),y:gY-30-Math.random()*80,ph:Math.random()*6.28,sp:0.5+Math.random()*0.5});
+    fireflies=fireflies.filter(f=>{
+      f.x+=Math.sin(time*f.sp+f.ph)*0.4;f.y+=Math.cos(time*f.sp*0.7+f.ph)*0.3;
+      const b=0.4+0.6*(0.5+0.5*Math.sin(time*3+f.ph));
+      const col=isNight?sp.glow:'#ffe060';
+      ctx.fillStyle=col+Math.floor(b*40).toString(16).padStart(2,'0');
+      ctx.beginPath();ctx.arc(f.x,f.y,3,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle=col+Math.floor(b*255).toString(16).padStart(2,'0');
+      ctx.fillRect(Math.floor(f.x),Math.floor(f.y),2,2);
+      return f.y>gY-120&&f.y<gY;
+    });
+  }
+
+  // Critters (butterfly, ladybug movement)
+  if(critters.length<2&&Math.random()<0.005){
+    critters.push({type:Math.random()>0.5?'butterfly':'ladybug',x:Math.random()*W,y:gY-10-Math.random()*50,vx:(Math.random()-0.5)*0.8,vy:(Math.random()-0.5)*0.3,life:300+Math.random()*200});
+  }
+  critters=critters.filter(c=>{
+    c.x+=c.vx+Math.sin(time*2)*0.3;c.y+=c.vy+Math.cos(time*1.5)*0.2;c.life--;
+    if(c.life<=0||c.x<-10||c.x>W+10)return false;
+    if(c.type==='butterfly'){
+      const wingF=Math.sin(time*12)*0.5;
+      ctx.fillStyle='#ffa040';ctx.fillRect(Math.floor(c.x)-2,Math.floor(c.y),2,Math.floor(2+wingF));
+      ctx.fillStyle='#ff8020';ctx.fillRect(Math.floor(c.x)+1,Math.floor(c.y),2,Math.floor(2+wingF));
+      ctx.fillStyle='#402820';ctx.fillRect(Math.floor(c.x),Math.floor(c.y),1,2);
+    } else {
+      ctx.fillStyle='#e02020';ctx.fillRect(Math.floor(c.x),Math.floor(c.y),3,2);
+      ctx.fillStyle='#101010';ctx.fillRect(Math.floor(c.x)+1,Math.floor(c.y),1,2);
+    }
+    return true;
+  });
+
+  // Info bar
+  const by=H-52;
+  ctx.fillStyle='rgba(20,18,30,0.8)';
+  ctx.beginPath();ctx.moveTo(12,by);ctx.lineTo(W-12,by);ctx.quadraticCurveTo(W-8,by,W-8,by+4);ctx.lineTo(W-8,by+40);ctx.quadraticCurveTo(W-8,by+44,W-12,by+44);ctx.lineTo(12,by+44);ctx.quadraticCurveTo(8,by+44,8,by+40);ctx.lineTo(8,by+4);ctx.quadraticCurveTo(8,by,12,by);ctx.fill();
+  // Avatar pixels
+  ctx.fillStyle='#f0d0a0';ctx.fillRect(16,by+12,6,6);
+  ctx.fillStyle='#805030';ctx.fillRect(16,by+8,6,5);
+  ctx.fillStyle='#ffa060';ctx.fillRect(16,by+17,6,3);
+  // Text
+  ctx.fillStyle='#f0e8d8';ctx.font='bold 7px Courier New';ctx.fillText('Julie',28,by+16);
+  ctx.fillStyle='#908878';ctx.font='5px Courier New';
+  const sn={cherry:'Cerisier',oak:'Chene',bamboo:'Bambou',orange:'Oranger',palm:'Palmier'}[species];
+  ctx.fillText(`${sn} - ${STAGE_INFO[stage].label}`,28,by+26);
+  // XP
+  ctx.fillStyle='rgba(255,220,100,0.18)';
+  ctx.fillRect(W-52,by+10,38,14);
+  ctx.fillStyle='#ffd860';ctx.font='bold 6px Courier New';ctx.fillText(STAGE_INFO[stage].xp,W-50,by+20);
+
+  requestAnimationFrame(render);
+}
+
+const STAGE_INFO=[{label:'Graine',xp:'0/50'},{label:'Pousse',xp:'120/200'},{label:'Arbuste',xp:'480/800'},{label:'Arbre',xp:'1.8k/3k'},{label:'Majestueux',xp:'5.2k/8k'},{label:'Legendaire',xp:'12k/15k'}];
+
+function setStage(i){stage=i;particles=[];fireflies=[];critters=[];document.querySelectorAll('#stage-controls .btn').forEach((b,idx)=>b.classList.toggle('active',idx===i));}
+function setSp(s){species=s;particles=[];const names={cherry:'cerisier',oak:'chene',bamboo:'bambou',orange:'oranger',palm:'palmier'};document.querySelectorAll('#species-controls .btn').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase()===names[s]));}
+
+render();
+</script>
+</body>
+</html>

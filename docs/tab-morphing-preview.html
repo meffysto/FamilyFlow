@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tab Morphing — Aperçu</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #111; color: #fff;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 32px 16px; min-height: 100vh;
+  }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  .sub { color: #888; font-size: 13px; margin-bottom: 32px; }
+
+  .phone {
+    width: 375px; height: 720px;
+    border-radius: 44px; overflow: hidden;
+    border: 3px solid #333; background: #F3F4F6;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    position: relative;
+    display: flex; flex-direction: column;
+  }
+  .notch { width: 130px; height: 32px; background: #000; border-radius: 0 0 18px 18px; margin: 0 auto; }
+
+  .screen { flex: 1; display: flex; align-items: center; justify-content: center; }
+  .screen-label { font-size: 48px; text-align: center; }
+  .screen-name { font-size: 18px; font-weight: 700; color: #374151; margin-top: 8px; text-align: center; }
+
+  /* Tab bar */
+  .tab-bar {
+    height: 75px;
+    display: flex; align-items: flex-start; justify-content: space-around;
+    padding: 8px 12px 0;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 0.5px solid rgba(0,0,0,0.1);
+    position: relative;
+  }
+
+  .tab {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    cursor: pointer; position: relative;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    width: 64px;
+    transition: transform 0.1s ease;
+  }
+  .tab:active { transform: scale(0.92); }
+
+  .tab-icon {
+    font-size: 24px;
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    width: 44px; height: 32px;
+  }
+  .tab.active .tab-icon {
+    transform: scale(1.2) translateY(-2px);
+  }
+
+  /* Pill background behind active icon */
+  .tab-pill {
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    transform: scale(0);
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+                background-color 0.3s ease;
+    z-index: -1;
+  }
+  .tab.active .tab-pill {
+    transform: scale(1);
+  }
+
+  .tab-label {
+    font-size: 10px; font-weight: 600;
+    transition: color 0.25s ease, opacity 0.25s ease;
+    opacity: 0.5;
+  }
+  .tab.active .tab-label {
+    opacity: 1;
+  }
+
+  /* Bounce dot */
+  .bounce-dot {
+    width: 4px; height: 4px; border-radius: 2px;
+    position: absolute; top: -2px; left: 50%; margin-left: -2px;
+    transform: scale(0);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .tab.active .bounce-dot {
+    transform: scale(1);
+  }
+
+  /* Theme selector */
+  .controls { margin-top: 24px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .ctrl-btn {
+    padding: 6px 14px; border-radius: 10px; border: 2px solid #333;
+    background: #1a1a1a; color: #aaa; cursor: pointer; font-size: 13px;
+    transition: all 0.2s;
+  }
+  .ctrl-btn.active { border-color: var(--clr); color: #fff; background: #222; }
+
+  .note { color: #666; font-size: 11px; margin-top: 16px; max-width: 400px; text-align: center; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<h1>Tab Bar Morphing</h1>
+<p class="sub">Clique sur les onglets pour voir l'animation</p>
+
+<div class="phone">
+  <div class="notch"></div>
+  <div class="screen">
+    <div>
+      <div class="screen-label" id="screenEmoji">🏠</div>
+      <div class="screen-name" id="screenName">Aujourd'hui</div>
+    </div>
+  </div>
+  <div class="tab-bar" id="tabBar"></div>
+</div>
+
+<div class="controls" id="controls"></div>
+<p class="note">
+  En React Native : <code>useSharedValue</code> + <code>withSpring</code> pour le bounce,
+  <code>useAnimatedStyle</code> pour le scale + translateY.
+  Le pill utilise la couleur <code>tint</code> du thème actif.
+</p>
+
+<script>
+const tabs = [
+  { id: 'home',     emoji: '🏠', label: "Aujourd'hui" },
+  { id: 'tasks',    emoji: '📋', label: 'Tâches' },
+  { id: 'journal',  emoji: '📖', label: 'Journal' },
+  { id: 'calendar', emoji: '📆', label: 'Calendrier' },
+  { id: 'menu',     emoji: '🗂️', label: 'Menu' },
+];
+
+const themes = {
+  default:  { label: '💜 Défaut',   primary: '#8B5CF6', tint: '#EDE9FE' },
+  voitures: { label: '🏎️ Voitures', primary: '#DC2626', tint: '#FEE2E2' },
+  nature:   { label: '🌿 Nature',   primary: '#059669', tint: '#D1FAE5' },
+  licorne:  { label: '🦄 Licorne',  primary: '#EC4899', tint: '#FCE7F3' },
+  espace:   { label: '🚀 Espace',   primary: '#6366F1', tint: '#EDE9FE' },
+  pokemon:  { label: '⚡ Pokémon',  primary: '#EAB308', tint: '#FEF9C3' },
+};
+
+let activeTab = 'home';
+let activeTheme = 'default';
+
+function render() {
+  const th = themes[activeTheme];
+
+  // Tab bar
+  const bar = document.getElementById('tabBar');
+  bar.innerHTML = tabs.map(t => `
+    <div class="tab ${t.id === activeTab ? 'active' : ''}" onclick="switchTab('${t.id}')">
+      <div class="tab-icon">
+        <div class="tab-pill" style="background: ${th.tint}"></div>
+        <span>${t.emoji}</span>
+        <div class="bounce-dot" style="background: ${th.primary}"></div>
+      </div>
+      <span class="tab-label" style="color: ${t.id === activeTab ? th.primary : '#6B7280'}">${t.label}</span>
+    </div>
+  `).join('');
+
+  // Screen content
+  const active = tabs.find(t => t.id === activeTab);
+  document.getElementById('screenEmoji').textContent = active.emoji;
+  document.getElementById('screenName').textContent = active.label;
+
+  // Theme controls
+  document.getElementById('controls').innerHTML = Object.entries(themes).map(([k, v]) =>
+    `<button class="ctrl-btn ${k === activeTheme ? 'active' : ''}"
+      style="--clr: ${v.primary}"
+      onclick="activeTheme='${k}'; render();">${v.label}</button>`
+  ).join('');
+}
+
+function switchTab(id) {
+  if (id === activeTab) return;
+  activeTab = id;
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iPad Screenshot — Photos</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #2c2c2e; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif; }
+  .controls { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: #1c1c1e; border-bottom: 1px solid #38383a; padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
+  .controls button { background: #818cf8; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .controls button:hover { background: #6366f1; }
+  .controls span { color: #8e8e93; font-size: 13px; }
+  .screenshot-wrapper { padding-top: 60px; transform-origin: top left; }
+  .screenshot { width: 1024px; height: 1366px; background: #000; display: flex; overflow: hidden; }
+  .sidebar { width: 260px; background: #1c1c1e; border-right: 1px solid #38383a; display: flex; flex-direction: column; flex-shrink: 0; padding: 20px 0; overflow: hidden; }
+  .sidebar-brand { padding: 0 16px 16px; font-size: 20px; font-weight: 700; color: #e5e5ea; letter-spacing: -0.3px; }
+  .sidebar-main { padding: 0 10px; margin-bottom: 12px; }
+  .sidebar-item { display: flex; align-items: center; padding: 9px 12px; border-radius: 8px; font-size: 15px; color: #e5e5ea; margin-bottom: 2px; position: relative; }
+  .sidebar-item.active { background: rgba(129,140,248,0.15); color: #818cf8; font-weight: 600; }
+  .sidebar-item .icon { margin-right: 10px; font-size: 16px; }
+  .sidebar-item .badge { position: absolute; right: 10px; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 10px; }
+  .badge-indigo { background: rgba(129,140,248,0.2); color: #818cf8; }
+  .badge-amber { background: rgba(245,158,11,0.2); color: #f59e0b; }
+  .badge-pink { background: rgba(236,72,153,0.2); color: #ec4899; }
+  .badge-purple { background: rgba(168,85,247,0.2); color: #a855f7; }
+  .sidebar-sep { height: 1px; background: #38383a; margin: 8px 16px; }
+  .sidebar-scroll { flex: 1; overflow: hidden; padding: 0 10px; }
+  .sidebar-cat { font-size: 10px; font-weight: 700; color: #636366; letter-spacing: 0.8px; text-transform: uppercase; padding: 10px 12px 4px; }
+  .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .header { padding: 20px 28px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #38383a; }
+  .header-title { font-size: 28px; font-weight: 700; color: #e5e5ea; }
+  .pills { display: flex; gap: 8px; }
+  .pill { padding: 5px 14px; border-radius: 16px; font-size: 13px; font-weight: 500; color: #8e8e93; background: #2c2c2e; }
+  .pill.active { background: rgba(129,140,248,0.2); color: #818cf8; font-weight: 600; }
+  .main { flex: 1; padding: 24px 28px; overflow: hidden; }
+  .main-inner { max-width: 700px; margin: 0 auto; }
+
+  .month-nav { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 20px; }
+  .month-nav .arrow { font-size: 18px; color: #818cf8; }
+  .month-nav .label { font-size: 18px; font-weight: 600; color: #e5e5ea; }
+
+  .photo-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .photo-header { text-align: center; font-size: 12px; font-weight: 600; color: #636366; padding: 4px 0 8px; }
+  .photo-cell { aspect-ratio: 1; border-radius: 8px; position: relative; display: flex; align-items: center; justify-content: center; }
+  .photo-cell.has-photo { overflow: hidden; }
+  .photo-cell .day-num { position: absolute; bottom: 3px; right: 5px; font-size: 10px; color: rgba(255,255,255,0.7); font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.5); z-index: 2; }
+  .photo-cell.empty { background: #1c1c1e; }
+  .photo-cell.empty .day-num { color: #636366; text-shadow: none; }
+  .photo-cell.today { outline: 2px solid #818cf8; outline-offset: -1px; }
+  .photo-cell.outside { background: transparent; }
+  .photo-cell.outside .day-num { color: #38383a; }
+  .photo-cell .gradient { position: absolute; inset: 0; border-radius: 8px; }
+
+  .g1 .gradient { background: linear-gradient(135deg, #f97316, #ef4444); }
+  .g2 .gradient { background: linear-gradient(135deg, #818cf8, #6366f1); }
+  .g3 .gradient { background: linear-gradient(135deg, #34c759, #10b981); }
+  .g4 .gradient { background: linear-gradient(135deg, #f59e0b, #f97316); }
+  .g5 .gradient { background: linear-gradient(135deg, #ec4899, #a855f7); }
+  .g6 .gradient { background: linear-gradient(135deg, #06b6d4, #818cf8); }
+  .g7 .gradient { background: linear-gradient(135deg, #f43f5e, #ec4899); }
+  .g8 .gradient { background: linear-gradient(135deg, #eab308, #34c759); }
+  .g9 .gradient { background: linear-gradient(135deg, #a855f7, #6366f1); }
+  .g10 .gradient { background: linear-gradient(135deg, #14b8a6, #06b6d4); }
+  .g11 .gradient { background: linear-gradient(135deg, #f97316, #eab308); }
+  .g12 .gradient { background: linear-gradient(135deg, #818cf8, #ec4899); }
+  .g13 .gradient { background: linear-gradient(135deg, #34c759, #06b6d4); }
+  .g14 .gradient { background: linear-gradient(135deg, #ef4444, #f97316); }
+  .g15 .gradient { background: linear-gradient(135deg, #a855f7, #ec4899); }
+  .g16 .gradient { background: linear-gradient(135deg, #06b6d4, #34c759); }
+  .g17 .gradient { background: linear-gradient(135deg, #eab308, #f97316); }
+  .g18 .gradient { background: linear-gradient(135deg, #ec4899, #f43f5e); }
+  .g19 .gradient { background: linear-gradient(135deg, #6366f1, #818cf8); }
+  .g20 .gradient { background: linear-gradient(135deg, #34c759, #eab308); }
+  .g21 .gradient { background: linear-gradient(135deg, #f97316, #a855f7); }
+  .g22 .gradient { background: linear-gradient(135deg, #06b6d4, #6366f1); }
+</style>
+</head>
+<body>
+<div class="controls">
+  <button onclick="capture()">Télécharger PNG (2048x2732)</button>
+  <span>1024x1366 → export 2x</span>
+</div>
+<div class="screenshot-wrapper">
+<div class="screenshot" id="capture">
+  <div class="sidebar">
+    <div class="sidebar-brand">FamilyFlow</div>
+    <div class="sidebar-main">
+      <div class="sidebar-item"><span class="icon">🏠</span>Aujourd'hui</div>
+      <div class="sidebar-item"><span class="icon">📋</span>Tâches</div>
+      <div class="sidebar-item"><span class="icon">📖</span>Journal</div>
+      <div class="sidebar-item"><span class="icon">📆</span>Calendrier</div>
+    </div>
+    <div class="sidebar-sep"></div>
+    <div class="sidebar-scroll">
+      <div class="sidebar-cat">Organisation</div>
+      <div class="sidebar-item"><span class="icon">🔄</span>Routines</div>
+      <div class="sidebar-item"><span class="icon">📅</span>Rendez-vous<span class="badge badge-indigo">3</span></div>
+      <div class="sidebar-item"><span class="icon">🍽️</span>Repas</div>
+      <div class="sidebar-item"><span class="icon">📦</span>Stock<span class="badge badge-amber">2</span></div>
+      <div class="sidebar-cat">Santé</div>
+      <div class="sidebar-item"><span class="icon">🏥</span>Suivi santé</div>
+      <div class="sidebar-item"><span class="icon">🌤️</span>Humeurs</div>
+      <div class="sidebar-item"><span class="icon">🌙</span>Mode nuit</div>
+      <div class="sidebar-cat">Souvenirs</div>
+      <div class="sidebar-item active"><span class="icon">📸</span>Photos</div>
+      <div class="sidebar-item"><span class="icon">💬</span>Mots d'enfants</div>
+      <div class="sidebar-item"><span class="icon">🙏</span>Gratitude</div>
+      <div class="sidebar-cat">Jeux</div>
+      <div class="sidebar-item"><span class="icon">🌳</span>Compétences</div>
+      <div class="sidebar-item"><span class="icon">🎰</span>Récompenses<span class="badge badge-pink">5</span></div>
+      <div class="sidebar-item"><span class="icon">🏅</span>Défis<span class="badge badge-amber">2</span></div>
+      <div class="sidebar-cat">Famille</div>
+      <div class="sidebar-item"><span class="icon">🎂</span>Anniversaires<span class="badge badge-purple">1</span></div>
+      <div class="sidebar-item"><span class="icon">🎁</span>Souhaits</div>
+      <div class="sidebar-item"><span class="icon">💰</span>Budget</div>
+      <div class="sidebar-item"><span class="icon">📝</span>Notes</div>
+      <div class="sidebar-item"><span class="icon">📊</span>Stats</div>
+      <div class="sidebar-cat">Système</div>
+      <div class="sidebar-item"><span class="icon">⚙️</span>Réglages</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="header">
+      <div class="header-title">📸 Photos</div>
+      <div class="pills">
+        <div class="pill active">Emma</div>
+        <div class="pill">Lucas</div>
+      </div>
+    </div>
+    <div class="main">
+      <div class="main-inner">
+        <div class="month-nav">
+          <span class="arrow">&#8249;</span>
+          <span class="label">Mars 2026</span>
+          <span class="arrow">&#8250;</span>
+        </div>
+
+        <div class="photo-grid">
+          <!-- Headers -->
+          <div class="photo-header">L</div><div class="photo-header">M</div><div class="photo-header">M</div><div class="photo-header">J</div><div class="photo-header">V</div><div class="photo-header">S</div><div class="photo-header">D</div>
+
+          <!-- Week 1: Feb 23-28 then March 1 -->
+          <div class="photo-cell outside"><span class="day-num">23</span></div>
+          <div class="photo-cell outside"><span class="day-num">24</span></div>
+          <div class="photo-cell outside"><span class="day-num">25</span></div>
+          <div class="photo-cell outside"><span class="day-num">26</span></div>
+          <div class="photo-cell outside"><span class="day-num">27</span></div>
+          <div class="photo-cell outside"><span class="day-num">28</span></div>
+          <div class="photo-cell has-photo g1"><div class="gradient"></div><span class="day-num">1</span></div>
+
+          <!-- Week 2 -->
+          <div class="photo-cell has-photo g2"><div class="gradient"></div><span class="day-num">2</span></div>
+          <div class="photo-cell has-photo g3"><div class="gradient"></div><span class="day-num">3</span></div>
+          <div class="photo-cell has-photo g4"><div class="gradient"></div><span class="day-num">4</span></div>
+          <div class="photo-cell has-photo g5"><div class="gradient"></div><span class="day-num">5</span></div>
+          <div class="photo-cell has-photo g6"><div class="gradient"></div><span class="day-num">6</span></div>
+          <div class="photo-cell has-photo g7"><div class="gradient"></div><span class="day-num">7</span></div>
+          <div class="photo-cell has-photo g8"><div class="gradient"></div><span class="day-num">8</span></div>
+
+          <!-- Week 3 -->
+          <div class="photo-cell has-photo g9"><div class="gradient"></div><span class="day-num">9</span></div>
+          <div class="photo-cell has-photo g10"><div class="gradient"></div><span class="day-num">10</span></div>
+          <div class="photo-cell has-photo g11"><div class="gradient"></div><span class="day-num">11</span></div>
+          <div class="photo-cell has-photo g12"><div class="gradient"></div><span class="day-num">12</span></div>
+          <div class="photo-cell has-photo g13"><div class="gradient"></div><span class="day-num">13</span></div>
+          <div class="photo-cell has-photo g14"><div class="gradient"></div><span class="day-num">14</span></div>
+          <div class="photo-cell has-photo g15"><div class="gradient"></div><span class="day-num">15</span></div>
+
+          <!-- Week 4 -->
+          <div class="photo-cell has-photo g16"><div class="gradient"></div><span class="day-num">16</span></div>
+          <div class="photo-cell has-photo g17"><div class="gradient"></div><span class="day-num">17</span></div>
+          <div class="photo-cell has-photo g18"><div class="gradient"></div><span class="day-num">18</span></div>
+          <div class="photo-cell has-photo g19"><div class="gradient"></div><span class="day-num">19</span></div>
+          <div class="photo-cell has-photo g20"><div class="gradient"></div><span class="day-num">20</span></div>
+          <div class="photo-cell has-photo g21"><div class="gradient"></div><span class="day-num">21</span></div>
+          <div class="photo-cell has-photo g22"><div class="gradient"></div><span class="day-num">22</span></div>
+
+          <!-- Week 5 -->
+          <div class="photo-cell today empty"><span class="day-num">23</span></div>
+          <div class="photo-cell empty"><span class="day-num">24</span></div>
+          <div class="photo-cell empty"><span class="day-num">25</span></div>
+          <div class="photo-cell empty"><span class="day-num">26</span></div>
+          <div class="photo-cell empty"><span class="day-num">27</span></div>
+          <div class="photo-cell empty"><span class="day-num">28</span></div>
+          <div class="photo-cell empty"><span class="day-num">29</span></div>
+
+          <!-- Week 6 -->
+          <div class="photo-cell empty"><span class="day-num">30</span></div>
+          <div class="photo-cell empty"><span class="day-num">31</span></div>
+          <div class="photo-cell outside"><span class="day-num">1</span></div>
+          <div class="photo-cell outside"><span class="day-num">2</span></div>
+          <div class="photo-cell outside"><span class="day-num">3</span></div>
+          <div class="photo-cell outside"><span class="day-num">4</span></div>
+          <div class="photo-cell outside"><span class="day-num">5</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+function rescale() {
+  var w = document.querySelector('.screenshot-wrapper');
+  var s = Math.min(window.innerWidth / 1024, (window.innerHeight - 60) / 1366);
+  w.style.transform = 'scale(' + s + ')';
+  w.style.transformOrigin = 'top left';
+  document.body.style.height = (1366 * s + 60) + 'px';
+}
+window.addEventListener('resize', rescale);
+rescale();
+
+async function capture() {
+  var el = document.getElementById('capture');
+  var canvas = await html2canvas(el, { scale: 2, width: 1024, height: 1366, backgroundColor: '#000000', useCORS: true });
+  var link = document.createElement('a');
+  link.download = 'photos.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+</script>
+</body>
+</html>

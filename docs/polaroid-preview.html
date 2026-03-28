@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polaroid — Aperçu</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #111; color: #fff;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 32px 16px; min-height: 100vh;
+  }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  .sub { color: #888; font-size: 13px; margin-bottom: 28px; }
+
+  .phone {
+    width: 375px; height: 700px;
+    border-radius: 44px; overflow: hidden;
+    border: 3px solid #333; background: #F3F4F6;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    display: flex; flex-direction: column;
+  }
+  .notch { width: 130px; height: 32px; background: #000; border-radius: 0 0 18px 18px; margin: 0 auto; flex-shrink: 0; }
+
+  .header {
+    padding: 12px 16px;
+    display: flex; align-items: center; gap: 12px;
+    background: linear-gradient(135deg, #0EA5E9, #8B5CF6);
+    flex-shrink: 0;
+  }
+  .header-title { font-size: 16px; font-weight: 800; color: #fff; }
+
+  .gallery {
+    flex: 1; padding: 12px;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px; align-content: start;
+    overflow-y: auto;
+  }
+  .thumb {
+    aspect-ratio: 1;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.15s ease;
+  }
+  .thumb:active { transform: scale(0.95); }
+  .thumb img {
+    width: 100%; height: 100%; object-fit: cover;
+  }
+  .thumb-label {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 6px 8px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.6));
+    font-size: 10px; color: #fff; font-weight: 600;
+  }
+
+  /* ── Polaroid overlay ── */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100;
+    pointer-events: none;
+    transition: background 0.4s ease;
+  }
+  .overlay.open {
+    pointer-events: all;
+    background: rgba(0,0,0,0.85);
+  }
+
+  .polaroid {
+    width: 300px;
+    background: #FAFAF8;
+    padding: 16px 16px 48px;
+    border-radius: 4px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.05);
+    transform: scale(0.3) rotate(-8deg);
+    opacity: 0;
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+                opacity 0.3s ease;
+    cursor: pointer;
+    position: relative;
+  }
+  .overlay.open .polaroid {
+    transform: scale(1) rotate(-2deg);
+    opacity: 1;
+  }
+
+  .polaroid-frame {
+    width: 100%; aspect-ratio: 1;
+    background: #E8E4DF;
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .polaroid-img {
+    width: 100%; height: 100%; object-fit: cover;
+    opacity: 0;
+    filter: saturate(0) brightness(1.8) contrast(0.5);
+    transition: opacity 2.5s ease, filter 3s ease;
+  }
+  .polaroid-img.developing {
+    opacity: 1;
+    filter: saturate(1.1) brightness(1) contrast(1);
+  }
+
+  /* Flash blanc initial */
+  .polaroid-flash {
+    position: absolute; inset: 0;
+    background: #fff;
+    opacity: 0;
+    pointer-events: none;
+    border-radius: 2px;
+  }
+  .polaroid-flash.fire {
+    animation: flash 0.8s ease-out;
+  }
+  @keyframes flash {
+    0% { opacity: 0.95; }
+    100% { opacity: 0; }
+  }
+
+  /* Shimmer pendant développement */
+  .polaroid-shimmer {
+    position: absolute; inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 30%,
+      rgba(255,255,255,0.3) 45%,
+      rgba(255,255,255,0.5) 50%,
+      rgba(255,255,255,0.3) 55%,
+      transparent 70%
+    );
+    background-size: 250% 100%;
+    opacity: 0;
+    pointer-events: none;
+    border-radius: 2px;
+  }
+  .polaroid-shimmer.active {
+    opacity: 1;
+    animation: shimmer 2s ease-in-out 2;
+  }
+  @keyframes shimmer {
+    0% { background-position: 150% 0; }
+    100% { background-position: -50% 0; }
+  }
+
+  .polaroid-caption {
+    position: absolute; bottom: 8px; left: 0; right: 0;
+    text-align: center;
+    font-family: 'Marker Felt', 'Comic Sans MS', cursive;
+    font-size: 14px; color: #555;
+    opacity: 0;
+    transition: opacity 0.8s ease 2.5s;
+  }
+  .polaroid-caption.show { opacity: 1; }
+
+  .polaroid-date {
+    position: absolute; bottom: 14px; right: 18px;
+    font-size: 9px; color: #999; font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.8s ease 2.8s;
+  }
+  .polaroid-date.show { opacity: 1; }
+
+  .hint {
+    color: #555; font-size: 11px; margin-top: 20px; text-align: center;
+  }
+
+  .desc {
+    margin-top: 16px; color: #888; font-size: 12px; text-align: center;
+    max-width: 420px; line-height: 1.6;
+  }
+  .desc code {
+    background: #222; padding: 2px 6px; border-radius: 4px; color: #A78BFA; font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Effet Polaroid</h1>
+<p class="sub">Clique sur une photo pour voir le développement</p>
+
+<div class="phone">
+  <div class="notch"></div>
+  <div class="header">
+    <span style="font-size: 20px;">📸</span>
+    <span class="header-title">Souvenirs</span>
+  </div>
+  <div class="gallery" id="gallery"></div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeOverlay()">
+  <div class="polaroid" onclick="event.stopPropagation()">
+    <div class="polaroid-frame">
+      <img class="polaroid-img" id="polaroidImg" src="">
+      <div class="polaroid-flash" id="flash"></div>
+      <div class="polaroid-shimmer" id="shimmer"></div>
+    </div>
+    <div class="polaroid-caption" id="caption"></div>
+    <div class="polaroid-date" id="dateLabel"></div>
+  </div>
+</div>
+
+<p class="hint">Clique hors de la photo pour fermer</p>
+
+<p class="desc">
+  En React Native : <code>Haptics.impact(Heavy)</code> au clic,
+  <code>withTiming(opacity 0→1, 2500ms)</code> pour le fade,
+  <code>withTiming(saturate 0→1.1, 3000ms)</code> pour la couleur.
+  Le shimmer = un <code>LinearGradient</code> animé en <code>translateX</code>.
+</p>
+
+<script>
+// Unsplash photos (petit format pour le chargement)
+const photos = [
+  { url: 'https://picsum.photos/seed/family1/400/400', caption: 'Premier jour de plage', date: '12 juil. 2025' },
+  { url: 'https://picsum.photos/seed/family2/400/400', caption: 'Anniversaire Emma', date: '3 mars 2026' },
+  { url: 'https://picsum.photos/seed/family3/400/400', caption: 'Balade en forêt', date: '15 oct. 2025' },
+  { url: 'https://picsum.photos/seed/family4/400/400', caption: 'Noël en famille', date: '25 déc. 2025' },
+  { url: 'https://picsum.photos/seed/family5/400/400', caption: 'Premiers pas !', date: '8 janv. 2026' },
+  { url: 'https://picsum.photos/seed/family6/400/400', caption: 'Pique-nique au parc', date: '20 fév. 2026' },
+];
+
+// Render gallery
+const gallery = document.getElementById('gallery');
+gallery.innerHTML = photos.map((p, i) => `
+  <div class="thumb" onclick="openPhoto(${i})">
+    <img src="${p.url}" alt="${p.caption}" loading="lazy">
+    <div class="thumb-label">${p.caption}</div>
+  </div>
+`).join('');
+
+function openPhoto(idx) {
+  const p = photos[idx];
+  const overlay = document.getElementById('overlay');
+  const img = document.getElementById('polaroidImg');
+  const flash = document.getElementById('flash');
+  const shimmer = document.getElementById('shimmer');
+  const caption = document.getElementById('caption');
+  const dateLabel = document.getElementById('dateLabel');
+
+  // Reset
+  img.classList.remove('developing');
+  flash.classList.remove('fire');
+  shimmer.classList.remove('active');
+  caption.classList.remove('show');
+  dateLabel.classList.remove('show');
+
+  img.src = p.url;
+  caption.textContent = p.caption;
+  dateLabel.textContent = p.date;
+
+  // Open
+  overlay.classList.add('open');
+
+  // Sequence : flash → shimmer → develop
+  requestAnimationFrame(() => {
+    // Flash immédiat (simule le "clic" haptic)
+    flash.classList.add('fire');
+
+    // Shimmer commence après 300ms
+    setTimeout(() => {
+      shimmer.classList.add('active');
+    }, 300);
+
+    // Image commence à se développer après 500ms
+    setTimeout(() => {
+      img.classList.add('developing');
+    }, 500);
+
+    // Caption apparaît (géré par le CSS transition-delay 2.5s)
+    caption.classList.add('show');
+    dateLabel.classList.add('show');
+  });
+}
+
+function closeOverlay() {
+  const overlay = document.getElementById('overlay');
+  overlay.classList.remove('open');
+}
+</script>
+</body>
+</html>

@@ -310,74 +310,90 @@ export const CROP_CATALOG: CropDefinition[] = [
 ];
 
 // ─────────────────────────────────────────────
-// Ferme — Batiments (bonus passif)
+// Ferme — Batiments productifs (ressources)
 // ─────────────────────────────────────────────
 
+/** Types de ressources produites par les batiments */
 export type ResourceType = 'oeuf' | 'lait' | 'farine';
 
+/** Inventaire ressources de la ferme */
 export interface FarmInventory {
   oeuf: number;
   lait: number;
   farine: number;
 }
 
-export interface BuildingTier {
-  level: number;
-  productionRateHours: number;
-  upgradeCoins: number;
-  spriteSuffix: string;  // '_1', '_2', '_3' — pour BUILDING_SPRITES lookup
+/** Batiment place sur la grille */
+export interface PlacedBuilding {
+  buildingId: string;     // ref dans BUILDING_CATALOG
+  cellId: string;         // id de la cellule (b0, b1, b2)
+  level: number;          // niveau actuel (1-3)
+  lastCollectAt: string;  // ISO string de la derniere collecte
 }
 
-export interface PlacedBuilding {
-  buildingId: string;
-  cellId: string;
+/** Palier d'amelioration d'un batiment */
+export interface BuildingTier {
   level: number;
-  lastCollectAt: string;  // ISO datetime YYYY-MM-DDTHH:mm
+  productionRateHours: number;  // une ressource produite toutes les N heures
+  upgradeCoins: number;         // cout en feuilles pour ameliorer vers ce niveau
+  spriteSuffix: string;         // suffixe sprite (ex: "_lv1", "_lv2")
 }
 
 export interface BuildingDefinition {
   id: string;
   labelKey: string;
   emoji: string;
-  cost: number;            // cout en feuilles
-  dailyIncome: number;     // @deprecated — utiliser tiers[0].productionRateHours
+  cost: number;            // cout en feuilles (niveau 1)
+  dailyIncome: number;     // feuilles/jour (pour compatibilite collectPassiveIncome)
   minTreeStage: TreeStage;
   resourceType: ResourceType;
   tiers: BuildingTier[];
 }
 
-/** Batiments : revenu passif supplementaire (20-30% du revenu actif).
- * ROI long = investissement strategique, pas de remplacement du farming.
+/** Batiments : revenu passif en ressources (oeuf, lait, farine).
+ * 3 niveaux d'amelioration par batiment.
  */
 export const BUILDING_CATALOG: BuildingDefinition[] = [
   {
-    id: 'poulailler', labelKey: 'farm.building.poulailler', emoji: '🐔',
-    cost: 300, dailyIncome: 5, minTreeStage: 'arbuste',
+    id: 'poulailler',
+    labelKey: 'farm.building.poulailler',
+    emoji: '🐔',
+    cost: 300,
+    dailyIncome: 5,
+    minTreeStage: 'arbuste',
     resourceType: 'oeuf',
     tiers: [
-      { level: 1, productionRateHours: 6, upgradeCoins: 0, spriteSuffix: '_1' },
-      { level: 2, productionRateHours: 4, upgradeCoins: 500, spriteSuffix: '_2' },
-      { level: 3, productionRateHours: 3, upgradeCoins: 1000, spriteSuffix: '_3' },
+      { level: 1, productionRateHours: 8,  upgradeCoins: 0,   spriteSuffix: '' },
+      { level: 2, productionRateHours: 6,  upgradeCoins: 500, spriteSuffix: '_lv2' },
+      { level: 3, productionRateHours: 4,  upgradeCoins: 1200, spriteSuffix: '_lv3' },
     ],
   },
   {
-    id: 'grange', labelKey: 'farm.building.grange', emoji: '🐄',
-    cost: 800, dailyIncome: 8, minTreeStage: 'arbre',
+    id: 'grange',
+    labelKey: 'farm.building.grange',
+    emoji: '🏚️',
+    cost: 800,
+    dailyIncome: 8,
+    minTreeStage: 'arbre',
     resourceType: 'lait',
     tiers: [
-      { level: 1, productionRateHours: 8, upgradeCoins: 0, spriteSuffix: '_1' },
-      { level: 2, productionRateHours: 6, upgradeCoins: 1200, spriteSuffix: '_2' },
-      { level: 3, productionRateHours: 4, upgradeCoins: 2000, spriteSuffix: '_3' },
+      { level: 1, productionRateHours: 10, upgradeCoins: 0,    spriteSuffix: '' },
+      { level: 2, productionRateHours: 7,  upgradeCoins: 800,  spriteSuffix: '_lv2' },
+      { level: 3, productionRateHours: 5,  upgradeCoins: 2000, spriteSuffix: '_lv3' },
     ],
   },
   {
-    id: 'moulin', labelKey: 'farm.building.moulin', emoji: '🌾',
-    cost: 1200, dailyIncome: 0, minTreeStage: 'majestueux',
+    id: 'moulin',
+    labelKey: 'farm.building.moulin',
+    emoji: '⚙️',
+    cost: 1500,
+    dailyIncome: 12,
+    minTreeStage: 'majestueux',
     resourceType: 'farine',
     tiers: [
-      { level: 1, productionRateHours: 8, upgradeCoins: 0, spriteSuffix: '_1' },
-      { level: 2, productionRateHours: 6, upgradeCoins: 1800, spriteSuffix: '_2' },
-      { level: 3, productionRateHours: 4, upgradeCoins: 3000, spriteSuffix: '_3' },
+      { level: 1, productionRateHours: 12, upgradeCoins: 0,    spriteSuffix: '' },
+      { level: 2, productionRateHours: 8,  upgradeCoins: 1500, spriteSuffix: '_lv2' },
+      { level: 3, productionRateHours: 5,  upgradeCoins: 3000, spriteSuffix: '_lv3' },
     ],
   },
 ];

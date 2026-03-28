@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
-status: executing
-stopped_at: Completed 06-batiments-productifs 06-01-PLAN.md
-last_updated: "2026-03-28T22:38:45.506Z"
+status: verifying
+stopped_at: Completed 06-02-PLAN.md tasks 1-2, checkpoint task 3 pending human-verify
+last_updated: "2026-03-28T22:53:30.808Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 5
@@ -51,6 +51,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 05-visuels-ferme P05-02 | 3 | 2 tasks | 103 files |
 | Phase 05-visuels-ferme P03 | 15 | 3 tasks | 1 files |
 | Phase 06-batiments-productifs P01 | 25 | 2 tasks | 11 files |
+| Phase 06-batiments-productifs P02 | 10min | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,7 @@ Recent decisions affecting current work:
 - [Phase 06-batiments-productifs]: MAX_PENDING=3 plafond production idle — evite accumulation infinie si utilisateur absent plusieurs jours
 - [Phase 06-batiments-productifs]: buildingId:cellId:level:lastCollectAt — format CSV identique au pattern farm-engine pour coherence
 - [Phase 06-batiments-productifs]: Migration backward-compatible parseBuildings() : detecte ancien format string seul et nouveau CSV avec colons
+- [Phase 06-02]: TreeShop garde string[] via .map(b => b.buildingId) pour retrocompat sans modifier TreeShop
 
 ### Pending Todos
 
@@ -83,6 +85,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T22:38:45.503Z
-Stopped at: Completed 06-batiments-productifs 06-01-PLAN.md
+Last session: 2026-03-28T22:53:30.806Z
+Stopped at: Completed 06-02-PLAN.md tasks 1-2, checkpoint task 3 pending human-verify
 Resume file: None

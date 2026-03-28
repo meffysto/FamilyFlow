@@ -1,26 +1,25 @@
-// ─────────────────────────────────────────────
-// Ferme — Mapping sprites batiments par niveau
-// ─────────────────────────────────────────────
-//
-// Les sprites de niveau 2 et 3 seront remplacés par des sprites pixel-art
-// generés dans le style Mana Seed (D-15). En attendant, chaque niveau
-// utilise le meme asset comme placeholder.
-// ─────────────────────────────────────────────
+/**
+ * building-sprites.ts — Mapping sprites batiments par niveau
+ *
+ * Tous les niveaux utilisent le meme sprite PNG pour l'instant
+ * (les sprites _lv2/_lv3 seront ajoutes quand les assets seront disponibles).
+ */
 
-export const BUILDING_SPRITES: Record<string, Record<number, ReturnType<typeof require>>> = {
+/** Sprites par batimentId -> niveau -> source image */
+export const BUILDING_SPRITES: Record<string, Record<number, any>> = {
   poulailler: {
     1: require('../../assets/buildings/poulailler.png'),
-    2: require('../../assets/buildings/poulailler.png'),  // placeholder — a remplacer par sprite niveau 2
-    3: require('../../assets/buildings/poulailler.png'),  // placeholder — a remplacer par sprite niveau 3
+    2: require('../../assets/buildings/poulailler.png'),
+    3: require('../../assets/buildings/poulailler.png'),
   },
   grange: {
     1: require('../../assets/buildings/grange.png'),
-    2: require('../../assets/buildings/grange.png'),  // placeholder — a remplacer par sprite niveau 2
-    3: require('../../assets/buildings/grange.png'),  // placeholder — a remplacer par sprite niveau 3
+    2: require('../../assets/buildings/grange.png'),
+    3: require('../../assets/buildings/grange.png'),
   },
   moulin: {
     1: require('../../assets/buildings/moulin.png'),
-    2: require('../../assets/buildings/moulin.png'),  // placeholder — a remplacer par sprite niveau 2
-    3: require('../../assets/buildings/moulin.png'),  // placeholder — a remplacer par sprite niveau 3
+    2: require('../../assets/buildings/moulin.png'),
+    3: require('../../assets/buildings/moulin.png'),
   },
 };

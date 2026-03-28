@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Family Flow — Mana Seed Forest Demo</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:#0f0f1a;display:flex;flex-direction:column;align-items:center;min-height:100vh;font-family:'Courier New',monospace;padding:20px;gap:12px;}
+  h1{color:#c8b88a;font-size:16px;letter-spacing:2px;text-transform:uppercase;}
+  .controls{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+  .btn{background:#2a2a3d;color:#a09080;border:2px solid #3d3d52;padding:5px 12px;border-radius:4px;cursor:pointer;font-size:11px;font-family:'Courier New',monospace;text-transform:uppercase;letter-spacing:1px;}
+  .btn:hover{background:#3d3d52;}
+  .btn.active{background:#5c4a2a;border-color:#8c7a4a;color:#f0e0c0;}
+  .phone{width:393px;height:780px;border-radius:40px;overflow:hidden;box-shadow:0 20px 80px rgba(0,0,0,0.6);border:3px solid #222;}
+  canvas{width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges;}
+  .info{color:#706060;font-size:11px;max-width:400px;text-align:center;line-height:1.5;}
+</style>
+</head>
+<body>
+<h1>Mana Seed Forest + Garden</h1>
+<div class="controls">
+  <button class="btn active" onclick="setSeason('spring')">Printemps</button>
+  <button class="btn" onclick="setSeason('summer')">Ete</button>
+</div>
+<div class="phone"><canvas id="c"></canvas></div>
+<p class="info">Tilesets: Mana Seed Seasonal Forest (Seliel) + Tiny Garden (kathychow) + Penzilla Animals</p>
+
+<script>
+const W=196,H=390;
+const canvas=document.getElementById('c');
+canvas.width=W;canvas.height=H;
+const ctx=canvas.getContext('2d');
+
+let time=0,season='spring',particles=[],critters=[];
+const imgs={};
+let loaded=0;
+const toLoad=['spring','summer','objects','tileset','animals','waterfall'];
+
+function loadImg(name,src){
+  imgs[name]=new Image();
+  imgs[name].onload=()=>{loaded++;if(loaded===toLoad.length)requestAnimationFrame(render);};
+  imgs[name].onerror=()=>{loaded++;if(loaded===toLoad.length)requestAnimationFrame(render);};
+  imgs[name].src=src;
+}
+loadImg('spring','demo-assets/spring.png');
+loadImg('summer','demo-assets/summer.png');
+loadImg('objects','demo-assets/objects.png');
+loadImg('tileset','demo-assets/tileset.png');
+loadImg('animals','demo-assets/FarmAnimals.png');
+loadImg('waterfall','demo-assets/waterfall.png');
+
+// Tile size in the Mana Seed spritesheet (16x16 tiles)
+const T=16;
+
+// Spring tileset tile map (approximate positions from the 256x256 spritesheet)
+// Row 0: grass variants, Row 1: more grass + dirt, Row 2-6: cliff/stone, etc.
+// We'll pick specific tiles for our scene
+
+function tile(season,tx,ty,dx,dy,s){
+  const sheet=imgs[season];
+  if(!sheet)return;
+  ctx.drawImage(sheet,tx*T,ty*T,T,T,dx,dy,s||T,s||T);
+}
+
+function seed(s){return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646;};}
+
+function render(){
+  time+=0.016;
+  ctx.clearRect(0,0,W,H);
+  const ss=imgs[season];
+  if(!ss)return requestAnimationFrame(render);
+
+  const gY=235;
+
+  // ── Sky ──
+  const skyColors=season==='spring'
+    ?[{p:0,c:'#88C8E8'},{p:0.5,c:'#A8D8F0'},{p:1,c:'#D0E8D0'}]
+    :[{p:0,c:'#60B0D8'},{p:0.5,c:'#80C8E0'},{p:1,c:'#B0D8A0'}];
+  const grad=ctx.createLinearGradient(0,0,0,gY-30);
+  skyColors.forEach(s=>grad.addColorStop(s.p,s.c));
+  ctx.fillStyle=grad;
+  ctx.fillRect(0,0,W,gY-30);
+
+  // ── Clouds ──
+  ctx.fillStyle='rgba(255,255,255,0.4)';
+  [[time*2,25,22],[time*1.5+70,45,16],[time*1+140,60,20]].forEach(([xb,cy,cw])=>{
+    const cx=((xb)%(W+50))-25;
+    for(let y=0;y<5;y++){const ind=y===0||y===4?4:y===1||y===3?2:0;ctx.fillRect(Math.floor(cx)+ind,cy+y,cw-ind*2,1);}
+  });
+
+  // ── Sun ──
+  const sx=155,sy=22+Math.sin(time*0.3)*2;
+  for(let r=12;r>0;r--){ctx.fillStyle=`rgba(255,220,100,${0.08*(1-r/12)})`;ctx.beginPath();ctx.arc(sx,sy,r,0,Math.PI*2);ctx.fill();}
+  ctx.fillStyle='#FFE070';ctx.fillRect(sx-3,sy-3,6,6);
+
+  // ── Background hills (procedural, matching tileset palette) ──
+  const hillCol1=season==='spring'?'#6A9A50':'#5A8A40';
+  const hillCol2=season==='spring'?'#80AA60':'#70A050';
+  for(let x=0;x<W;x++){
+    const h1=18+Math.sin(x*0.03+1)*12+Math.sin(x*0.07)*5;
+    ctx.fillStyle=hillCol1;ctx.fillRect(x,gY-38-h1,1,h1+10);
+  }
+  for(let x=0;x<W;x++){
+    const h2=12+Math.sin(x*0.05+3)*8+Math.sin(x*0.09)*4;
+    ctx.fillStyle=hillCol2;ctx.fillRect(x,gY-28-h2,1,h2+10);
+  }
+
+  // ── Ground — use grass tiles from tileset ──
+  // Mana seed row 0: grass variants
+  const rn=seed(222);
+  for(let y=gY-28;y<gY+24;y+=T){
+    for(let x=0;x<W;x+=T){
+      const variant=Math.floor(rn()*3);
+      tile(season,variant,0,x,y,T);
+    }
+  }
+
+  // ── Path (dirt tiles) ──
+  // Row 1 has dirt-like tiles
+  for(let x=60;x<140;x+=T){
+    tile(season,3,1,x,gY+2,T);
+  }
+
+  // ── Stone cliff accent ──
+  // Use cliff tiles for a raised area
+  for(let x=0;x<40;x+=T){
+    tile(season,0,4,x,gY-28,T);
+    tile(season,0,5,x,gY-12,T);
+  }
+
+  // ── Water area (right side) ──
+  // Row 8-9 might have water tiles
+  ctx.fillStyle=season==='spring'?'#5898C0':'#4888B0';
+  ctx.fillRect(150,gY+2,46,30);
+  ctx.fillStyle=season==='spring'?'#68A8D0':'#5898C0';
+  ctx.fillRect(152,gY+4,42,26);
+  // Water shimmer
+  const sh=0.15+0.1*Math.sin(time*2.5);
+  ctx.fillStyle=`rgba(180,230,255,${sh})`;
+  ctx.fillRect(156,gY+10,12,3);
+  ctx.fillRect(170,gY+16,8,2);
+  // Water edge tiles
+  ctx.fillStyle=season==='spring'?'#4A8A50':'#3A7A40';
+  for(let x=148;x<198;x+=4){
+    ctx.fillRect(x,gY,4,3);
+  }
+
+  // ── Flowers from Tiny Garden objects ──
+  const flowers=[
+    {sx:0,sy:0,x:20,y:gY-14}, {sx:16,sy:0,x:45,y:gY-12},
+    {sx:32,sy:0,x:70,y:gY-10}, {sx:48,sy:0,x:130,y:gY-13},
+    {sx:0,sy:16,x:140,y:gY-11}, {sx:16,sy:16,x:55,y:gY-9},
+    {sx:0,sy:64,x:35,y:gY-16}, {sx:16,sy:64,x:115,y:gY-14},
+    {sx:32,sy:64,x:85,y:gY-15}, {sx:48,sy:64,x:145,y:gY-16},
+    {sx:32,sy:16,x:100,y:gY-11}, {sx:48,sy:16,x:8,y:gY-10},
+    {sx:0,sy:32,x:60,y:gY-9}, {sx:16,sy:32,x:122,y:gY-12},
+  ];
+  flowers.forEach(f=>{
+    const sway=f.sy>=64?Math.sin(time*1.5+f.x)*0.8:0;
+    ctx.drawImage(imgs.objects,f.sx,f.sy,16,16,f.x+sway,f.y,8,8);
+  });
+
+  // ── Tree from Mana Seed spritesheet ──
+  const treeX=W/2, treeBaseY=gY-4;
+
+  // Shadow under tree
+  ctx.fillStyle='rgba(0,0,0,0.06)';
+  for(let i=0;i<4;i++)ctx.fillRect(treeX-24+i,treeBaseY+2+i,48-i*2,1);
+
+  // The tree in the spring tileset — adjusted coordinates and size
+  const treeW=48, treeH=64;
+  const treeSpriteX=208, treeSpriteY=0;
+  const scale=1.2;
+  const sway=Math.sin(time*0.7)*0.8;
+  ctx.save();
+  ctx.translate(treeX, treeBaseY);
+  ctx.rotate(sway * 0.01); // subtle sway
+  ctx.drawImage(imgs[season], treeSpriteX, treeSpriteY, treeW, treeH, -treeW*scale/2, -treeH*scale+8, treeW*scale, treeH*scale);
+  ctx.restore();
+
+  // ── Animals ──
+  // Chicken walking
+  const chickenX=25+Math.sin(time*0.4)*12;
+  ctx.drawImage(imgs.animals,96,128,32,32,chickenX,gY-2,10,10);
+  // Duck near water
+  ctx.drawImage(imgs.animals,128,128,32,32,148,gY+4,10,10);
+  // Sheep background
+  ctx.drawImage(imgs.animals,0,96,32,32,8,gY-18,14,14);
+
+  // ── Fence ──
+  ctx.fillStyle='#8A6840';
+  for(let i=0;i<5;i++){
+    const fx=48+i*7;
+    ctx.fillRect(fx,gY-12,2,14);
+    ctx.fillRect(fx-1,gY-10,4,2);
+    ctx.fillRect(fx-1,gY-4,4,2);
+  }
+  ctx.fillStyle='#A08860';
+  ctx.fillRect(46,gY-9,38,2);
+  ctx.fillRect(46,gY-3,38,2);
+
+  // ── Lantern ──
+  const lx=90,ly=gY-16;
+  ctx.fillStyle='#3A3A3A';ctx.fillRect(lx,ly,3,2);ctx.fillRect(lx-1,ly+2,5,4);ctx.fillRect(lx,ly+6,3,8);
+  ctx.fillStyle='#FFA030';ctx.fillRect(lx,ly+3,3,2);
+  // Glow
+  const lg=0.06+0.03*Math.sin(time*3);
+  for(let r=8;r>0;r--){ctx.fillStyle=`rgba(255,180,60,${lg*(1-r/8)})`;ctx.beginPath();ctx.arc(lx+1.5,ly+4,r,0,Math.PI*2);ctx.fill();}
+
+  // ── Dirt below ground ──
+  ctx.fillStyle='#5A3A20';
+  ctx.fillRect(0,gY+24,W,H-gY-24-50);
+  ctx.fillStyle='#4A2A18';
+  ctx.fillRect(0,gY+40,W,H-gY-40-50);
+  // Dirt texture
+  const dr=seed(888);
+  for(let i=0;i<20;i++){
+    ctx.fillStyle='#6A4A30';
+    ctx.fillRect(Math.floor(dr()*W),gY+26+Math.floor(dr()*30),2,1);
+  }
+
+  // ── Petals ──
+  if(Math.random()<0.1){
+    particles.push({x:treeX-28+Math.random()*56,y:treeBaseY-85+Math.random()*20,vx:0.25+Math.random()*0.4,vy:0.35+Math.random()*0.25,life:1,col:['#FFB7C5','#FFD4DE','#FFF0F2'][Math.floor(Math.random()*3)]});
+  }
+  particles=particles.filter(p=>{
+    p.x+=p.vx+Math.sin(time*2+p.x*0.1)*0.3;p.y+=p.vy;p.life-=0.005;
+    if(p.life<=0||p.y>gY+8)return false;
+    ctx.globalAlpha=p.life*0.75;ctx.fillStyle=p.col;ctx.fillRect(Math.floor(p.x),Math.floor(p.y),2,2);ctx.globalAlpha=1;
+    return true;
+  });
+
+  // ── Butterflies ──
+  if(critters.length<3&&Math.random()<0.006){
+    critters.push({x:20+Math.random()*(W-40),y:gY-30-Math.random()*50,vx:(Math.random()-0.5)*0.5,vy:(Math.random()-0.5)*0.3,life:350,col:['#FFA040','#FF6080','#60A0FF','#A060E0'][Math.floor(Math.random()*4)]});
+  }
+  critters=critters.filter(c=>{
+    c.x+=c.vx+Math.sin(time*1.8+c.x)*0.35;c.y+=c.vy+Math.cos(time*1.4)*0.25;c.life--;
+    if(c.life<=0||c.x<-5||c.x>W+5)return false;
+    const wf=Math.sin(time*14)*1.5;
+    ctx.fillStyle=c.col;
+    ctx.fillRect(Math.floor(c.x)-2,Math.floor(c.y),2,Math.max(1,Math.floor(2+wf)));
+    ctx.fillRect(Math.floor(c.x)+1,Math.floor(c.y),2,Math.max(1,Math.floor(2+wf)));
+    ctx.fillStyle='#302020';
+    ctx.fillRect(Math.floor(c.x),Math.floor(c.y),1,2);
+    return true;
+  });
+
+  // ── Fireflies ──
+  for(let i=0;i<5;i++){
+    const sr=seed(i*17+33);
+    const fx=30+sr()*140+Math.sin(time*0.5+i*2)*8;
+    const fy=gY-50+sr()*30+Math.cos(time*0.6+i*1.5)*5;
+    const b=0.15+0.4*(0.5+0.5*Math.sin(time*2.5+i*1.8));
+    ctx.fillStyle=`rgba(255,230,100,${b*0.12})`;
+    ctx.beginPath();ctx.arc(fx,fy,4,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=`rgba(255,240,150,${b})`;
+    ctx.fillRect(Math.floor(fx),Math.floor(fy),2,2);
+  }
+
+  // ── Info bar ──
+  const by=H-50;
+  ctx.fillStyle='rgba(15,15,25,0.85)';
+  rRect(8,by,W-16,42,8);
+  ctx.fillStyle='#F0D0A0';ctx.fillRect(14,by+10,6,6);
+  ctx.fillStyle='#805030';ctx.fillRect(14,by+6,6,5);
+  ctx.fillStyle='#FFA060';ctx.fillRect(14,by+15,6,3);
+  ctx.fillStyle='#f0e8d8';ctx.font='bold 7px Courier New';ctx.fillText('Julie',26,by+14);
+  ctx.fillStyle='#908878';ctx.font='5px Courier New';ctx.fillText('Cerisier - Arbuste  Nv.12',26,by+24);
+  ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fillRect(26,by+28,W-76,4);
+  ctx.fillStyle='#FFD860';ctx.fillRect(26,by+28,55,4);
+  ctx.fillStyle='#a09080';ctx.font='5px Courier New';ctx.fillText('480/800',W-56,by+32);
+
+  requestAnimationFrame(render);
+}
+
+function rRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.fill();}
+
+function setSeason(s){season=s;particles=[];critters=[];document.querySelectorAll('.btn').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(s.slice(0,3))));}
+</script>
+</body>
+</html>

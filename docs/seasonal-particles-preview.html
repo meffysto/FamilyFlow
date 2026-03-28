@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Particules Saisonnières — Aperçu</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #111; color: #fff;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 32px 16px;
+  }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  .sub { color: #888; font-size: 13px; margin-bottom: 28px; }
+
+  .phone {
+    width: 375px; height: 680px;
+    border-radius: 44px; overflow: hidden;
+    border: 3px solid #333; background: #F3F4F6;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    display: flex; flex-direction: column;
+  }
+  .notch { width: 130px; height: 32px; background: #000; border-radius: 0 0 18px 18px; margin: 0 auto; flex-shrink: 0; }
+
+  /* Header + particle zone */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .header {
+    padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: relative; z-index: 2;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .avatar {
+    width: 44px; height: 44px; border-radius: 22px;
+    background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.25);
+    display: flex; align-items: center; justify-content: center; font-size: 24px;
+  }
+  .greeting { font-size: 11px; color: rgba(255,255,255,0.8); font-weight: 500; }
+  .date { font-size: 15px; font-weight: 800; color: #fff; }
+  .search-pill {
+    padding: 5px 10px; border-radius: 10px;
+    background: rgba(255,255,255,0.2); backdrop-filter: blur(6px);
+    font-size: 10px; color: rgba(255,255,255,0.85);
+    border: 1px solid rgba(255,255,255,0.25);
+  }
+
+  /* Particle canvas */
+  .particle-layer {
+    position: absolute; inset: 0;
+    z-index: 1; pointer-events: none;
+    overflow: hidden;
+  }
+  .particle {
+    position: absolute;
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  .content { padding: 12px 16px; flex: 1; overflow-y: auto; }
+  .card {
+    background: #fff; border-radius: 14px; padding: 14px; margin-bottom: 10px;
+    border: 1px solid #E5E7EB;
+  }
+  .card-t { font-weight: 700; font-size: 13px; color: #111827; margin-bottom: 4px; }
+  .card-b { font-size: 11px; color: #6B7280; }
+
+  .controls {
+    display: flex; gap: 8px; margin-top: 24px; flex-wrap: wrap; justify-content: center;
+  }
+  .ctrl-btn {
+    padding: 10px 18px; border-radius: 12px; border: 2px solid #333;
+    background: #1a1a1a; color: #aaa; cursor: pointer; font-size: 14px;
+    transition: all 0.2s; font-weight: 600;
+  }
+  .ctrl-btn.active { border-color: var(--ac); color: #fff; background: #222; }
+  .ctrl-btn:hover { border-color: #555; }
+
+  .desc {
+    margin-top: 16px; color: #888; font-size: 12px; text-align: center;
+    max-width: 440px; line-height: 1.6;
+  }
+  .desc code {
+    background: #222; padding: 2px 6px; border-radius: 4px; color: #A78BFA; font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Particules Saisonnières</h1>
+<p class="sub">Change de saison pour voir les particules flotter derrière le header</p>
+
+<div class="phone">
+  <div class="notch"></div>
+  <div class="hero" id="hero">
+    <div class="particle-layer" id="particleLayer"></div>
+    <div class="header" id="header">
+      <div class="header-left">
+        <div class="avatar">🧒</div>
+        <div>
+          <div class="greeting" id="greetingText">Bon après-midi Lucas 🌤️</div>
+          <div class="date" id="dateText">22 Mars 2026</div>
+        </div>
+      </div>
+      <div class="search-pill">🔍 Chercher</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card"><div class="card-t">📋 Tâches du jour</div><div class="card-b">3 en attente, 1 terminée</div></div>
+    <div class="card"><div class="card-t">🍽️ Repas</div><div class="card-b">Pâtes carbonara</div></div>
+    <div class="card"><div class="card-t">📅 RDV</div><div class="card-b">Pédiatre 14h30</div></div>
+    <div class="card"><div class="card-t">⭐ Progression</div><div class="card-b">Niveau 4 — 320/500 XP</div></div>
+    <div class="card"><div class="card-t">💬 Mot du jour</div><div class="card-b">"Maman, les nuages c'est du coton ?" — Emma</div></div>
+  </div>
+</div>
+
+<div class="controls" id="controls"></div>
+
+<p class="desc">
+  En React Native : 6-8 <code>Animated.Text</code> positionnés en absolute,
+  chacun animé avec <code>withRepeat(withTiming(...))</code> sur translateX/Y/rotate.
+  Durées longues (8-15s), décalées pour un mouvement organique.
+  Calculé une seule fois au mount, zéro re-render.
+</p>
+
+<script>
+const seasons = {
+  winter: {
+    label: '❄️ Hiver',
+    gradient: ['#818CF8', '#1E293B'],
+    greeting: 'Bon après-midi Lucas 🌤️',
+    date: '15 Janvier 2026',
+    color: '#ac',
+    particles: [
+      { char: '❄', size: 16 },
+      { char: '❄️', size: 12 },
+      { char: '❄', size: 14 },
+      { char: '✦', size: 8 },
+      { char: '❄', size: 10 },
+      { char: '❄️', size: 16 },
+      { char: '✧', size: 7 },
+    ],
+    particleStyle: { opacity: 0.5, color: '#fff' },
+    animType: 'fall', // tombe doucement
+  },
+  spring: {
+    label: '🌸 Printemps',
+    gradient: ['#E879A8', '#F59E0B'],
+    greeting: 'Bon matin Lucas ☀️',
+    date: '22 Mars 2026',
+    particles: [
+      { char: '🌸', size: 14 },
+      { char: '🩷', size: 10 },
+      { char: '🌸', size: 16 },
+      { char: '✿', size: 11 },
+      { char: '🌸', size: 12 },
+      { char: '❀', size: 9 },
+      { char: '🩷', size: 13 },
+    ],
+    particleStyle: { opacity: 0.55 },
+    animType: 'flutter', // flotte en tourbillonnant
+  },
+  summer: {
+    label: '☀️ Été',
+    gradient: ['#F97316', '#EC4899'],
+    greeting: 'Bon après-midi Lucas 🌤️',
+    date: '14 Juillet 2026',
+    particles: [
+      { char: '✦', size: 6 },
+      { char: '✧', size: 5 },
+      { char: '·', size: 10 },
+      { char: '✦', size: 7 },
+      { char: '✧', size: 4 },
+      { char: '·', size: 8 },
+      { char: '✦', size: 5 },
+      { char: '✧', size: 6 },
+    ],
+    particleStyle: { opacity: 0.6, color: '#FEF3C7' },
+    animType: 'glow', // pulse lent (lucioles)
+  },
+  autumn: {
+    label: '🍂 Automne',
+    gradient: ['#F59E0B', '#9A3412'],
+    greeting: 'Bonsoir Lucas 🌙',
+    date: '15 Octobre 2026',
+    particles: [
+      { char: '🍂', size: 14 },
+      { char: '🍁', size: 16 },
+      { char: '🍂', size: 12 },
+      { char: '🍁', size: 10 },
+      { char: '🍂', size: 15 },
+      { char: '🍁', size: 13 },
+    ],
+    particleStyle: { opacity: 0.5 },
+    animType: 'fall', // tombe en tournant
+  },
+};
+
+let activeSeason = 'spring'; // mars = printemps
+let animFrameId = null;
+let particles = [];
+
+function renderControls() {
+  document.getElementById('controls').innerHTML = Object.entries(seasons).map(([k, s]) =>
+    `<button class="ctrl-btn ${k === activeSeason ? 'active' : ''}"
+      style="--ac: ${s.gradient[0]}"
+      onclick="switchSeason('${k}')">${s.label}</button>`
+  ).join('');
+}
+
+function switchSeason(key) {
+  activeSeason = key;
+  renderControls();
+  applyseason();
+}
+
+function applyseason() {
+  const s = seasons[activeSeason];
+
+  // Gradient
+  document.getElementById('hero').style.background =
+    `linear-gradient(135deg, ${s.gradient[0]}, ${s.gradient[1]})`;
+
+  // Text
+  document.getElementById('greetingText').textContent = s.greeting;
+  document.getElementById('dateText').textContent = s.date;
+
+  // Particles
+  spawnParticles(s);
+}
+
+function spawnParticles(s) {
+  const layer = document.getElementById('particleLayer');
+  layer.innerHTML = '';
+  if (animFrameId) cancelAnimationFrame(animFrameId);
+  particles = [];
+
+  const W = 375;
+  const H = 76; // header height approx
+
+  s.particles.forEach((p, i) => {
+    const el = document.createElement('div');
+    el.className = 'particle';
+    el.textContent = p.char;
+    el.style.fontSize = p.size + 'px';
+    if (s.particleStyle.color) el.style.color = s.particleStyle.color;
+    el.style.opacity = s.particleStyle.opacity || 0.5;
+    layer.appendChild(el);
+
+    // Random start position
+    const startX = Math.random() * W;
+    const startY = Math.random() * H;
+    const speed = 0.15 + Math.random() * 0.25; // very slow
+    const phase = Math.random() * Math.PI * 2;
+    const wobbleAmp = 15 + Math.random() * 25;
+    const wobbleFreq = 0.0005 + Math.random() * 0.001;
+    const rotSpeed = (Math.random() - 0.5) * 0.02;
+    const fallSpeed = s.animType === 'glow' ? 0 : (0.08 + Math.random() * 0.15);
+    const pulseSpeed = 0.001 + Math.random() * 0.002;
+
+    particles.push({
+      el, startX, startY, speed, phase,
+      wobbleAmp, wobbleFreq, rotSpeed, fallSpeed,
+      pulseSpeed,
+      x: startX, y: startY, rot: Math.random() * 360,
+      t: Math.random() * 10000,
+      type: s.animType,
+      baseOpacity: s.particleStyle.opacity || 0.5,
+    });
+  });
+
+  animate();
+}
+
+function animate() {
+  const H = 76;
+  const W = 375;
+
+  particles.forEach(p => {
+    p.t += 16;
+
+    if (p.type === 'fall') {
+      // Drift down + wobble
+      p.y += p.fallSpeed;
+      p.x = p.startX + Math.sin(p.t * p.wobbleFreq + p.phase) * p.wobbleAmp;
+      p.rot += p.rotSpeed * 16;
+      if (p.y > H + 10) { p.y = -15; p.startX = Math.random() * W; }
+    } else if (p.type === 'flutter') {
+      // Float + figure-8 pattern
+      p.x = p.startX + Math.sin(p.t * p.wobbleFreq + p.phase) * p.wobbleAmp;
+      p.y = p.startY + Math.cos(p.t * p.wobbleFreq * 0.7 + p.phase) * 12;
+      p.rot += p.rotSpeed * 16;
+      // Wrap horizontally
+      if (p.x > W + 10) p.startX -= W + 20;
+      if (p.x < -10) p.startX += W + 20;
+    } else if (p.type === 'glow') {
+      // Fireflies: drift slowly + pulse opacity
+      p.x = p.startX + Math.sin(p.t * 0.0003 + p.phase) * 30;
+      p.y = p.startY + Math.cos(p.t * 0.0004 + p.phase) * 15;
+      const glow = 0.15 + Math.abs(Math.sin(p.t * p.pulseSpeed)) * 0.6;
+      p.el.style.opacity = glow;
+      // Subtle size pulse
+      const s = 0.8 + Math.abs(Math.sin(p.t * p.pulseSpeed)) * 0.5;
+      p.el.style.transform = `translate(${p.x}px, ${p.y}px) scale(${s})`;
+      return; // skip normal transform
+    }
+
+    p.el.style.transform = `translate(${p.x}px, ${p.y}px) rotate(${p.rot}deg)`;
+  });
+
+  animFrameId = requestAnimationFrame(animate);
+}
+
+renderControls();
+applyseason();
+</script>
+</body>
+</html>

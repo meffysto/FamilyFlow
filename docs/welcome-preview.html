@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome Screen Preview</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1a2e;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', system-ui, sans-serif;
+  }
+
+  .phone {
+    width: 393px;
+    height: 852px;
+    background: #f9fafb;
+    border-radius: 48px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 25px 80px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Dynamic island */
+  .phone::before {
+    content: '';
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 126px;
+    height: 36px;
+    background: #000;
+    border-radius: 20px;
+    z-index: 10;
+  }
+
+  .screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 32px 32px;
+    gap: 8px;
+  }
+
+  .spacer { flex: 1; }
+
+  .logo { font-size: 64px; text-align: center; }
+  .app-name {
+    font-size: 36px;
+    font-weight: 800;
+    color: #7c3aed;
+    text-align: center;
+  }
+  .tagline {
+    font-size: 17px;
+    color: #6b7280;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  /* Emojis en arc autour de la graine */
+  .orb-container {
+    position: relative;
+    width: 220px;
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .seed {
+    font-size: 48px;
+    animation: pulse 2.5s ease-in-out infinite;
+    z-index: 2;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.85; }
+  }
+
+  .orb-emoji {
+    position: absolute;
+    font-size: 32px;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  /* Position en arc (demi-cercle supérieur + côtés) */
+  .orb-emoji:nth-child(2) { top: 8px; left: 50%; transform: translateX(-50%); animation-delay: 0s; }
+  .orb-emoji:nth-child(3) { top: 30px; right: 12px; animation-delay: 0.5s; }
+  .orb-emoji:nth-child(4) { top: 50%; right: -4px; transform: translateY(-50%); animation-delay: 1s; }
+  .orb-emoji:nth-child(5) { top: 50%; left: -4px; transform: translateY(-50%); animation-delay: 1.5s; }
+  .orb-emoji:nth-child(6) { top: 30px; left: 12px; animation-delay: 2s; }
+  .orb-emoji:nth-child(7) { bottom: 8px; left: 50%; transform: translateX(-50%); animation-delay: 2.5s; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); opacity: 0.7; }
+    50% { transform: translateY(-6px); opacity: 1; }
+  }
+  /* Preserve individual positions for nth-child transforms */
+  .orb-emoji:nth-child(2) { animation: float-center 3s ease-in-out infinite 0s; }
+  .orb-emoji:nth-child(7) { animation: float-center 3s ease-in-out infinite 2.5s; }
+  @keyframes float-center {
+    0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.7; }
+    50% { transform: translateX(-50%) translateY(-6px); opacity: 1; }
+  }
+  .orb-emoji:nth-child(4) { animation: float-right 3s ease-in-out infinite 1s; }
+  .orb-emoji:nth-child(5) { animation: float-left 3s ease-in-out infinite 1.5s; }
+  @keyframes float-right {
+    0%, 100% { transform: translateY(-50%); opacity: 0.7; }
+    50% { transform: translateY(calc(-50% - 6px)); opacity: 1; }
+  }
+  @keyframes float-left {
+    0%, 100% { transform: translateY(-50%); opacity: 0.7; }
+    50% { transform: translateY(calc(-50% - 6px)); opacity: 1; }
+  }
+
+  .hook {
+    font-size: 17px;
+    color: #111827;
+    text-align: center;
+    line-height: 1.6;
+    padding: 0 16px;
+  }
+  .promise {
+    font-size: 17px;
+    font-weight: 700;
+    color: #7c3aed;
+    text-align: center;
+    padding: 0 16px;
+    margin-bottom: 24px;
+  }
+
+  /* Bottom nav */
+  .nav {
+    padding: 16px 24px 36px;
+    border-top: 1px solid #e5e7eb;
+    background: #fff;
+    display: flex;
+    justify-content: flex-end;
+  }
+  .btn {
+    background: #7c3aed;
+    color: white;
+    font-size: 17px;
+    font-weight: 700;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 14px;
+    cursor: pointer;
+  }
+
+  /* Dark mode toggle */
+  .toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  /* Dark mode */
+  body.dark .phone { background: #111827; }
+  body.dark .tagline { color: #9ca3af; }
+  body.dark .hook { color: #f3f4f6; }
+  body.dark .nav { background: #1f2937; border-top-color: #374151; }
+</style>
+</head>
+<body>
+  <button class="toggle" onclick="document.body.classList.toggle('dark')">🌙 Dark mode</button>
+
+  <div class="phone">
+    <div class="screen">
+      <div class="spacer"></div>
+
+      <div class="logo">🏠</div>
+      <div class="app-name">Family Flow</div>
+      <div class="tagline">Votre famille, organisée ensemble</div>
+
+      <div class="spacer"></div>
+
+      <div class="orb-container">
+        <div class="seed">🌱</div>
+        <span class="orb-emoji">🍽️</span>
+        <span class="orb-emoji">🧹</span>
+        <span class="orb-emoji">🛒</span>
+        <span class="orb-emoji">💊</span>
+        <span class="orb-emoji">🎒</span>
+        <span class="orb-emoji">💰</span>
+      </div>
+
+      <div class="spacer"></div>
+
+      <div class="hook">La charge mentale familiale, c'est épuisant.</div>
+      <div class="promise">On est là pour que ça change.</div>
+    </div>
+
+    <div class="nav">
+      <button class="btn">Commencer</button>
+    </div>
+  </div>
+</body>
+</html>

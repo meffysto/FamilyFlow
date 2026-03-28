@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pixel Tree — Cherry Blossom 6 Stages</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1a2e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    font-family: -apple-system, system-ui, sans-serif;
+    padding: 40px 20px;
+    gap: 20px;
+  }
+  h1 { color: #e0c4d8; font-size: 24px; letter-spacing: 2px; }
+  .stages {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    justify-content: center;
+    max-width: 900px;
+  }
+  .stage-card {
+    background: #252547;
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    min-width: 250px;
+    border: 1px solid #3a3a5c;
+  }
+  .stage-label {
+    color: #b0a0c0;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .level-range {
+    color: #706080;
+    font-size: 11px;
+  }
+  .pixel-grid {
+    display: grid;
+    gap: 0px;
+    image-rendering: pixelated;
+  }
+  .pixel {
+    aspect-ratio: 1;
+  }
+
+  /* Animation idle — sway */
+  @keyframes sway {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(1deg); }
+    75% { transform: rotate(-1deg); }
+  }
+  .tree-container {
+    animation: sway 4s ease-in-out infinite;
+    transform-origin: bottom center;
+    position: relative;
+  }
+
+  /* Falling petals */
+  .petals-container {
+    position: absolute;
+    top: 0;
+    left: -20px;
+    right: -20px;
+    bottom: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .petal {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: #ffb7c5;
+    border-radius: 50%;
+    animation: fall linear infinite;
+    opacity: 0.8;
+  }
+  @keyframes fall {
+    0% { transform: translateY(-10px) translateX(0) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.8; }
+    90% { opacity: 0.6; }
+    100% { transform: translateY(200px) translateX(30px) rotate(360deg); opacity: 0; }
+  }
+
+  /* Glow for legendary */
+  @keyframes glow {
+    0%, 100% { filter: drop-shadow(0 0 4px rgba(255,183,197,0.3)); }
+    50% { filter: drop-shadow(0 0 12px rgba(255,183,197,0.7)); }
+  }
+  .legendary { animation: glow 2s ease-in-out infinite, sway 4s ease-in-out infinite; }
+
+  /* Sparkle for legendary */
+  .sparkle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: #fff;
+    border-radius: 50%;
+    animation: sparkle 1.5s ease-in-out infinite;
+  }
+  @keyframes sparkle {
+    0%, 100% { opacity: 0; transform: scale(0); }
+    50% { opacity: 1; transform: scale(1.5); }
+  }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .btn {
+    background: #3a3a5c;
+    color: #e0c4d8;
+    border: 1px solid #5a5a7c;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .btn:hover { background: #4a4a6c; }
+  .btn.active { background: #7c3aed; border-color: #9b6aed; color: white; }
+
+  /* Ground */
+  .ground {
+    display: flex;
+    gap: 0;
+  }
+  .ground-pixel {
+    width: 6px;
+    height: 6px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Cerisier Pixel Art</h1>
+
+<div class="controls" id="species-controls">
+  <button class="btn active" onclick="setSpecies('cherry')">Cherry Blossom</button>
+  <button class="btn" onclick="setSpecies('oak')">Oak</button>
+  <button class="btn" onclick="setSpecies('bamboo')">Bamboo</button>
+  <button class="btn" onclick="setSpecies('orange')">Orange</button>
+  <button class="btn" onclick="setSpecies('palm')">Palm</button>
+</div>
+
+<div class="stages" id="stages"></div>
+
+<script>
+const PIXEL = 6;
+
+const SPECIES = {
+  cherry: {
+    name: 'Cerisier',
+    trunk: '#8B6F47',
+    trunkDark: '#6B4F37',
+    trunkLight: '#A08060',
+    leaf1: '#FFB7C5',
+    leaf2: '#FF8FAB',
+    leaf3: '#FF6B8A',
+    leafLight: '#FFD4DE',
+    flower: '#FFFFFF',
+    flowerCenter: '#FFD700',
+    legendary: '#FFD4DE',
+    legendaryGlow: '#FF69B4',
+  },
+  oak: {
+    name: 'Chene',
+    trunk: '#6B4226',
+    trunkDark: '#4A2E1A',
+    trunkLight: '#8B6240',
+    leaf1: '#4CAF50',
+    leaf2: '#2E7D32',
+    leaf3: '#1B5E20',
+    leafLight: '#81C784',
+    flower: '#8BC34A',
+    flowerCenter: '#FDD835',
+    legendary: '#C8E6C9',
+    legendaryGlow: '#00E676',
+  },
+  bamboo: {
+    name: 'Bambou',
+    trunk: '#7CB342',
+    trunkDark: '#558B2F',
+    trunkLight: '#9CCC65',
+    leaf1: '#A5D6A7',
+    leaf2: '#66BB6A',
+    leaf3: '#43A047',
+    leafLight: '#C8E6C9',
+    flower: '#E8F5E9',
+    flowerCenter: '#DCEDC8',
+    legendary: '#E8F5E9',
+    legendaryGlow: '#00E5FF',
+  },
+  orange: {
+    name: 'Oranger',
+    trunk: '#795548',
+    trunkDark: '#5D4037',
+    trunkLight: '#8D6E63',
+    leaf1: '#388E3C',
+    leaf2: '#2E7D32',
+    leaf3: '#1B5E20',
+    leafLight: '#66BB6A',
+    flower: '#FF9800',
+    flowerCenter: '#F57F17',
+    legendary: '#FFE0B2',
+    legendaryGlow: '#FF6D00',
+  },
+  palm: {
+    name: 'Palmier',
+    trunk: '#A1887F',
+    trunkDark: '#795548',
+    trunkLight: '#BCAAA4',
+    leaf1: '#2E7D32',
+    leaf2: '#1B5E20',
+    leaf3: '#388E3C',
+    leafLight: '#4CAF50',
+    flower: '#FFF9C4',
+    flowerCenter: '#8D6E63',
+    legendary: '#B2DFDB',
+    legendaryGlow: '#00BFA5',
+  }
+};
+
+let currentSpecies = 'cherry';
+
+function setSpecies(s) {
+  currentSpecies = s;
+  document.querySelectorAll('#species-controls .btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  renderAll();
+}
+
+// Each stage is a 2D array of color keys
+// _ = empty, T = trunk, D = trunkDark, L = trunkLight, 1 = leaf1, 2 = leaf2, 3 = leaf3, H = leafLight, F = flower, C = flowerCenter, G = legendary, W = legendaryGlow
+
+const STAGES = [
+  // Stage 1: Graine (5x7)
+  {
+    label: 'Graine', levels: '1-3',
+    grid: [
+      '___H___',
+      '__H1H__',
+      '__H1___',
+      '___T___',
+      '__DTD__',
+      '_DTTD_',
+      '__DDD__',
+    ]
+  },
+  // Stage 2: Pousse (7x10)
+  {
+    label: 'Pousse', levels: '4-7',
+    grid: [
+      '___F1____',
+      '__1F11___',
+      '_11F1H___',
+      '__111____',
+      '___T_1F__',
+      '___T_11__',
+      '___T_____',
+      '___T_____',
+      '__DTD____',
+      '__DDD____',
+    ]
+  },
+  // Stage 3: Arbuste (11x12)
+  {
+    label: 'Arbuste', levels: '8-18',
+    grid: [
+      '____F1F____',
+      '___12F21___',
+      '__1F1121F__',
+      '_1211F112__',
+      '__1F12F1___',
+      '___1T11____',
+      '____T______',
+      '___1T1_____',
+      '__12T21____',
+      '___DTD_____',
+      '___DDD_____',
+      '____D______',
+    ]
+  },
+  // Stage 4: Arbre (13x16)
+  {
+    label: 'Arbre', levels: '19-32',
+    grid: [
+      '_____F1F_____',
+      '___F12F21F___',
+      '__1F211121___',
+      '_12F1F1F12F__',
+      '_1211211121__',
+      '__F12F1F21F__',
+      '___121T121___',
+      '____1T1T_____',
+      '_____TT______',
+      '____TLLT_____',
+      '___TLLLT_____',
+      '____TLT______',
+      '____TTT______',
+      '___DTTD______',
+      '___DDDD______',
+      '____DD_______',
+    ]
+  },
+  // Stage 5: Majestueux (17x18)
+  {
+    label: 'Majestueux', levels: '33-40',
+    grid: [
+      '______F1F1F______',
+      '____F12FF21F_____',
+      '___1F2111121F____',
+      '__12F1F1F1F12F___',
+      '_F121121112112___',
+      '_1F12F1F1F21F1F__',
+      '__121211121121___',
+      '___F12F1F12F_____',
+      '____1211121______',
+      '_____1T1T1_______',
+      '______TTT________',
+      '_____TLLLT_______',
+      '____TLLLLT_______',
+      '_____TLLT________',
+      '______TT_________',
+      '_____DTTTD_______',
+      '____DDDDDD_______',
+      '_____DDDD________',
+    ]
+  },
+  // Stage 6: Legendaire (19x20)
+  {
+    label: 'Legendaire', levels: '41-50',
+    grid: [
+      '______WGFGW_______',
+      '____WGFGFGFGW_____',
+      '___GF1G1G1GFG_____',
+      '__WGFG1F1GFGW_____',
+      '_GF1GFGFGFG1FGW___',
+      '_WG1G1G1G1G1GFG___',
+      '__GFG1GFGFG1GFW___',
+      '___WG1GFG1GFGW____',
+      '____GF1G1GFG______',
+      '_____G1T1G________',
+      '______TTT_________',
+      '_____TLLLT________',
+      '____TLWWLLT_______',
+      '_____TWWLT________',
+      '______TWT_________',
+      '_____DTWWTD_______',
+      '____DDDWDDD_______',
+      '_____DDDDD________',
+      '______DDD_________',
+    ]
+  },
+];
+
+const COLOR_MAP = (sp) => ({
+  '_': 'transparent',
+  'T': sp.trunk,
+  'D': sp.trunkDark,
+  'L': sp.trunkLight,
+  '1': sp.leaf1,
+  '2': sp.leaf2,
+  '3': sp.leaf3,
+  'H': sp.leafLight,
+  'F': sp.flower,
+  'C': sp.flowerCenter,
+  'G': sp.legendary,
+  'W': sp.legendaryGlow,
+});
+
+function renderTree(stage, sp, stageIdx) {
+  const colors = COLOR_MAP(sp);
+  const cols = stage.grid[0].length;
+  const rows = stage.grid.length;
+
+  const card = document.createElement('div');
+  card.className = 'stage-card';
+
+  const label = document.createElement('div');
+  label.className = 'stage-label';
+  label.textContent = `${stageIdx + 1}. ${stage.label}`;
+  card.appendChild(label);
+
+  const levels = document.createElement('div');
+  levels.className = 'level-range';
+  levels.textContent = `Niveaux ${stage.levels}`;
+  card.appendChild(levels);
+
+  const container = document.createElement('div');
+  container.className = stageIdx === 5 ? 'tree-container legendary' : 'tree-container';
+  container.style.position = 'relative';
+
+  const grid = document.createElement('div');
+  grid.className = 'pixel-grid';
+  grid.style.gridTemplateColumns = `repeat(${cols}, ${PIXEL}px)`;
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const px = document.createElement('div');
+      px.className = 'pixel';
+      px.style.width = PIXEL + 'px';
+      px.style.height = PIXEL + 'px';
+      px.style.backgroundColor = colors[stage.grid[r][c]] || 'transparent';
+      grid.appendChild(px);
+    }
+  }
+
+  container.appendChild(grid);
+
+  // Petals for stages 3+
+  if (stageIdx >= 2) {
+    const petals = document.createElement('div');
+    petals.className = 'petals-container';
+    const petalCount = stageIdx >= 4 ? 8 : 4;
+    for (let i = 0; i < petalCount; i++) {
+      const p = document.createElement('div');
+      p.className = 'petal';
+      p.style.left = (Math.random() * (cols * PIXEL + 40)) + 'px';
+      p.style.animationDuration = (2 + Math.random() * 3) + 's';
+      p.style.animationDelay = (Math.random() * 3) + 's';
+      p.style.background = sp.leaf1;
+      petals.appendChild(p);
+    }
+    container.appendChild(petals);
+  }
+
+  // Sparkles for legendary
+  if (stageIdx === 5) {
+    for (let i = 0; i < 6; i++) {
+      const s = document.createElement('div');
+      s.className = 'sparkle';
+      s.style.left = (Math.random() * cols * PIXEL) + 'px';
+      s.style.top = (Math.random() * rows * PIXEL * 0.6) + 'px';
+      s.style.animationDelay = (Math.random() * 2) + 's';
+      container.appendChild(s);
+    }
+  }
+
+  card.appendChild(container);
+
+  // Ground
+  const ground = document.createElement('div');
+  ground.className = 'ground';
+  for (let i = 0; i < cols + 4; i++) {
+    const g = document.createElement('div');
+    g.className = 'ground-pixel';
+    g.style.backgroundColor = Math.random() > 0.3 ? '#4CAF50' : '#388E3C';
+    ground.appendChild(g);
+  }
+  card.appendChild(ground);
+
+  return card;
+}
+
+function renderAll() {
+  const sp = SPECIES[currentSpecies];
+  const container = document.getElementById('stages');
+  container.innerHTML = '';
+  STAGES.forEach((stage, i) => {
+    container.appendChild(renderTree(stage, sp, i));
+  });
+}
+
+renderAll();
+</script>
+</body>
+</html>
