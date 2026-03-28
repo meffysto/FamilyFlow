@@ -42,6 +42,12 @@ Requirements pour ce milestone. Chaque requirement est mappé à une phase du ro
 - [ ] **GAME-02**: Événements saisonniers liés au calendrier réel (printemps, été, automne, hiver)
 - [ ] **GAME-03**: Quêtes familiales coopératives (objectifs partagés entre membres)
 
+### Ambiance & Retention
+
+- [ ] **AMB-01**: Ambiance horaire du diorama — particules (rosée matin, lucioles nuit) + tint coloré selon l'heure
+- [ ] **AMB-02**: Mutation culture dorée — 3% chance à la plantation, visuel or, récompense x5 à la récolte
+- [ ] **AMB-03**: Flammes de streak — affichage visuel animé sous le diorama selon le streak du profil
+
 ## v2 Requirements
 
 Déférés à un futur milestone. Trackés mais pas dans le roadmap actuel.
@@ -106,12 +112,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ARCH-06 | Phase 5 | Pending |
 | ARCH-07 | Phase 5 | Pending |
 | ARCH-08 | Phase 5 | Pending |
+| AMB-01 | Phase 6 | Pending |
+| AMB-02 | Phase 6 | Pending |
+| AMB-03 | Phase 6 | Pending |
 
 **Coverage:**
-- v1 requirements: 21 total
-- Mapped to phases: 21
-- Unmapped: 0 ✓
+- v1 requirements: 24 total
+- Mapped to phases: 24
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-28*
-*Last updated: 2026-03-28 after roadmap creation — traceability complete*
+*Last updated: 2026-03-28 after Phase 6 planning — AMB-01, AMB-02, AMB-03 added*

@@ -17,6 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 3: Write Concurrency + XP Model** - Write queue par fichier, modèle XP budget
 - [ ] **Phase 4: Gamification Enrichment** - Événements saisonniers et quêtes familiales coopératives
 - [ ] **Phase 5: Architecture Completion** - Extraction hooks restants, split parser, VaultProvider composer
+- [ ] **Phase 6: Ambiance + Retention** - Ambiance horaire, mutation dorée, flammes de streak
 
 ## Phase Details
 
@@ -74,10 +75,26 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. `useVault()` retourne le même contrat de type qu'avant — aucun composant consommateur n'a été modifié
 **Plans**: TBD
 
+### Phase 6: Ambiance + Retention
+**Goal**: L'ecran arbre reagit au moment de la journee avec des particules ambiantes (rosee le matin, lucioles la nuit), les cultures ont une mutation doree rare (3%, recompense x5), et les flammes de streak recompensent visuellement l'engagement quotidien
+**Depends on**: Phase 5
+**Requirements**: AMB-01, AMB-02, AMB-03
+**Success Criteria** (what must be TRUE):
+  1. Le diorama affiche des particules ambiantes correspondant a l'heure reelle (rosee matin, lucioles nuit) sans action manuelle
+  2. plantCrop() a 3% de chance de creer une culture doree, visible par un liseré or, avec recompense x5 a la recolte
+  3. Les flammes de streak s'affichent sous le diorama quand le streak >= 2, avec intensite croissante par palier (2+, 7+, 14+, 30+)
+  4. Toutes les animations respectent useReducedMotion et se desactivent si l'utilisateur a active Reduce Motion
+  5. `npx tsc --noEmit` passe sans nouvelles erreurs
+**Plans:** 2 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Mutation culture doree (types + farm-engine + FarmPlots visuel)
+- [ ] 06-02-PLAN.md — Ambiance horaire + flammes de streak (ambiance.ts + composants + integration tree.tsx)
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -86,3 +103,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 3. Write Concurrency + XP Model | 0/TBD | Not started | - |
 | 4. Gamification Enrichment | 0/TBD | Not started | - |
 | 5. Architecture Completion | 0/TBD | Not started | - |
+| 6. Ambiance + Retention | 0/2 | Not started | - |
