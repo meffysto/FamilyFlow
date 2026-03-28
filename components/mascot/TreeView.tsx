@@ -380,6 +380,7 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
                     y={py - s / 2}
                     size={s}
                     animalId={id}
+                    containerWidth={size}
                   />
                 );
               })}
@@ -2005,7 +2006,7 @@ const THOUGHT_BUBBLES_IDLE = ['ZzZ', '?', '...', '♪', '!', '✨'];
 const THOUGHT_BUBBLES_NIGHT = ['💤', '🌙', 'ZzZ'];
 
 /** Animal anime : idle + balade + bulles de pensee */
-function AnimatedAnimal({ frames, x, y, size, animalId }: { frames: [any, any]; x: number; y: number; size: number; animalId: string }) {
+function AnimatedAnimal({ frames, x, y, size, animalId, containerWidth }: { frames: [any, any]; x: number; y: number; size: number; animalId: string; containerWidth: number }) {
   const [frameIdx, setFrameIdx] = React.useState(0);
   const [isWalking, setIsWalking] = React.useState(false);
   const [bubble, setBubble] = React.useState<string | null>(null);
@@ -2090,7 +2091,7 @@ function AnimatedAnimal({ frames, x, y, size, animalId }: { frames: [any, any]; 
         <View style={{
           position: 'absolute',
           top: -18,
-          left: size / 2 - 14,
+          left: Math.max(-x, Math.min(size / 2 - 14, containerWidth - x - 28)),
           backgroundColor: 'rgba(255,255,255,0.9)',
           borderRadius: 10,
           paddingHorizontal: 5,
