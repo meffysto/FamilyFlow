@@ -85,7 +85,6 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
     try {
       const vaultCtx: AIVaultContext = {
         tasks: vault.tasks,
-        menageTasks: vault.tasks.filter(t => t.section != null && t.section.toLowerCase().includes('ménage')),
         rdvs: vault.rdvs,
         stock: vault.stock,
         meals: vault.meals,

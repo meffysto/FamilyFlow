@@ -37,6 +37,11 @@ import {
   type TreeSpecies,
 } from '../../lib/mascot/types';
 import { getStageIndex } from '../../lib/mascot/engine';
+
+const BUILDING_SPRITES: Record<string, any> = {
+  poulailler: require('../../assets/buildings/poulailler.png'),
+  grange: require('../../assets/buildings/grange.png'),
+};
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -435,7 +440,10 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
                   disabled={owned || locked || !canAfford || buying === building.id}
                 >
                   <View style={styles.itemContent}>
-                    <Text style={styles.itemEmoji}>{building.emoji}</Text>
+                    {BUILDING_SPRITES[building.id]
+                      ? <Image source={BUILDING_SPRITES[building.id]} style={{ width: 32, height: 32 }} />
+                      : <Text style={styles.itemEmoji}>{building.emoji}</Text>
+                    }
                     <View style={styles.itemInfo}>
                       <Text style={[styles.itemName, { color: colors.text }]}>
                         {t(building.labelKey)}
@@ -611,6 +619,15 @@ const styles = StyleSheet.create({
   lockedText: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.medium,
+  },
+  costBadge: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.full,
+  },
+  costText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
   },
   chevron: {
     fontSize: FontSize.title,

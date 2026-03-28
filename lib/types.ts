@@ -80,8 +80,8 @@ export interface Profile {
   mascotDecorations: string[];   // IDs des décorations achetées
   mascotInhabitants: string[];   // IDs des habitants achetés
   mascotPlacements: Record<string, string>;  // slotId → itemId (placement sur la scène)
-  farmCrops: string;             // CSV cultures plantees (plotIndex:cropId:stage:tasks:date)
-  farmBuildings: string[];       // IDs des batiments construits
+  farmCrops?: string;             // CSV cultures plantees (plotIndex:cropId:stage:tasks:date)
+  farmBuildings?: string[];       // IDs des batiments construits
   points: number;
   coins: number;            // 🍃 Feuilles — monnaie dépensable (boutique)
   level: number;

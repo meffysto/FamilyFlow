@@ -25,6 +25,11 @@ import {
   type WorldCell,
 } from '../../lib/mascot/world-grid';
 import { type PlantedCrop, type TreeStage, CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
+
+const BUILDING_SPRITES: Record<string, any> = {
+  poulailler: require('../../assets/buildings/poulailler.png'),
+  grange: require('../../assets/buildings/grange.png'),
+};
 import { parseCrops, hasCropSeasonalBonus } from '../../lib/mascot/farm-engine';
 import { CROP_SPRITES } from '../../lib/mascot/crop-sprites';
 
@@ -179,7 +184,7 @@ function BuildingCell({ cell, buildingId, containerWidth, containerHeight }: {
 
   return (
     <View style={[styles.buildingCell, { position: 'absolute', left, top, width: size, height: size }]}>
-      <Text style={styles.buildingEmoji}>{building.emoji}</Text>
+      <Image source={BUILDING_SPRITES[building.id]} style={styles.buildingSprite} />
       <Text style={styles.buildingIncome}>+{building.dailyIncome}🍃</Text>
     </View>
   );
@@ -308,5 +313,6 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(139, 92, 246, 0.3)',
   },
   buildingEmoji: { fontSize: 28 },
+  buildingSprite: { width: 32, height: 32 },
   buildingIncome: { fontSize: 10, color: '#4ADE80', fontWeight: '600', marginTop: 2 },
 });
