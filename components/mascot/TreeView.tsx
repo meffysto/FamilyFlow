@@ -1967,37 +1967,107 @@ const ANIMAL_IDLE_FRAMES: Record<string, [any, any]> = {
   vache:   [require('../../assets/garden/animals/vache/idle_1.png'),   require('../../assets/garden/animals/vache/idle_2.png')],
 };
 
-/** Walk frames par animal (6 frames direction bas) */
+/** Walk frames par animal (direction bas) */
 const ANIMAL_WALK_FRAMES: Record<string, any[]> = {
   poussin: [
     require('../../assets/garden/animals/poussin/walk_down_1.png'),
     require('../../assets/garden/animals/poussin/walk_down_2.png'),
     require('../../assets/garden/animals/poussin/walk_down_3.png'),
     require('../../assets/garden/animals/poussin/walk_down_4.png'),
+    require('../../assets/garden/animals/poussin/walk_down_5.png'),
+    require('../../assets/garden/animals/poussin/walk_down_6.png'),
+    require('../../assets/garden/animals/poussin/walk_down_7.png'),
+    require('../../assets/garden/animals/poussin/walk_down_8.png'),
   ],
   poulet: [
     require('../../assets/garden/animals/poulet/walk_down_1.png'),
     require('../../assets/garden/animals/poulet/walk_down_2.png'),
     require('../../assets/garden/animals/poulet/walk_down_3.png'),
     require('../../assets/garden/animals/poulet/walk_down_4.png'),
+    require('../../assets/garden/animals/poulet/walk_down_5.png'),
+    require('../../assets/garden/animals/poulet/walk_down_6.png'),
+    require('../../assets/garden/animals/poulet/walk_down_7.png'),
+    require('../../assets/garden/animals/poulet/walk_down_8.png'),
   ],
   canard: [
     require('../../assets/garden/animals/canard/walk_down_1.png'),
     require('../../assets/garden/animals/canard/walk_down_2.png'),
     require('../../assets/garden/animals/canard/walk_down_3.png'),
     require('../../assets/garden/animals/canard/walk_down_4.png'),
+    require('../../assets/garden/animals/canard/walk_down_5.png'),
+    require('../../assets/garden/animals/canard/walk_down_6.png'),
   ],
   cochon: [
     require('../../assets/garden/animals/cochon/walk_down_1.png'),
     require('../../assets/garden/animals/cochon/walk_down_2.png'),
     require('../../assets/garden/animals/cochon/walk_down_3.png'),
     require('../../assets/garden/animals/cochon/walk_down_4.png'),
+    require('../../assets/garden/animals/cochon/walk_down_5.png'),
+    require('../../assets/garden/animals/cochon/walk_down_6.png'),
+    require('../../assets/garden/animals/cochon/walk_down_7.png'),
+    require('../../assets/garden/animals/cochon/walk_down_8.png'),
   ],
   vache: [
     require('../../assets/garden/animals/vache/walk_down_1.png'),
     require('../../assets/garden/animals/vache/walk_down_2.png'),
     require('../../assets/garden/animals/vache/walk_down_3.png'),
     require('../../assets/garden/animals/vache/walk_down_4.png'),
+    require('../../assets/garden/animals/vache/walk_down_5.png'),
+    require('../../assets/garden/animals/vache/walk_down_6.png'),
+    require('../../assets/garden/animals/vache/walk_down_7.png'),
+    require('../../assets/garden/animals/vache/walk_down_8.png'),
+  ],
+};
+
+/** Walk frames par animal (direction gauche — scaleX: -1 pour droite) */
+const ANIMAL_WALK_LEFT_FRAMES: Record<string, any[]> = {
+  poussin: [
+    require('../../assets/garden/animals/poussin/walk_left_1.png'),
+    require('../../assets/garden/animals/poussin/walk_left_2.png'),
+    require('../../assets/garden/animals/poussin/walk_left_3.png'),
+    require('../../assets/garden/animals/poussin/walk_left_4.png'),
+    require('../../assets/garden/animals/poussin/walk_left_5.png'),
+    require('../../assets/garden/animals/poussin/walk_left_6.png'),
+    require('../../assets/garden/animals/poussin/walk_left_7.png'),
+    require('../../assets/garden/animals/poussin/walk_left_8.png'),
+  ],
+  poulet: [
+    require('../../assets/garden/animals/poulet/walk_left_1.png'),
+    require('../../assets/garden/animals/poulet/walk_left_2.png'),
+    require('../../assets/garden/animals/poulet/walk_left_3.png'),
+    require('../../assets/garden/animals/poulet/walk_left_4.png'),
+    require('../../assets/garden/animals/poulet/walk_left_5.png'),
+    require('../../assets/garden/animals/poulet/walk_left_6.png'),
+    require('../../assets/garden/animals/poulet/walk_left_7.png'),
+    require('../../assets/garden/animals/poulet/walk_left_8.png'),
+  ],
+  canard: [
+    require('../../assets/garden/animals/canard/walk_left_1.png'),
+    require('../../assets/garden/animals/canard/walk_left_2.png'),
+    require('../../assets/garden/animals/canard/walk_left_3.png'),
+    require('../../assets/garden/animals/canard/walk_left_4.png'),
+    require('../../assets/garden/animals/canard/walk_left_5.png'),
+    require('../../assets/garden/animals/canard/walk_left_6.png'),
+  ],
+  cochon: [
+    require('../../assets/garden/animals/cochon/walk_left_1.png'),
+    require('../../assets/garden/animals/cochon/walk_left_2.png'),
+    require('../../assets/garden/animals/cochon/walk_left_3.png'),
+    require('../../assets/garden/animals/cochon/walk_left_4.png'),
+    require('../../assets/garden/animals/cochon/walk_left_5.png'),
+    require('../../assets/garden/animals/cochon/walk_left_6.png'),
+    require('../../assets/garden/animals/cochon/walk_left_7.png'),
+    require('../../assets/garden/animals/cochon/walk_left_8.png'),
+  ],
+  vache: [
+    require('../../assets/garden/animals/vache/walk_left_1.png'),
+    require('../../assets/garden/animals/vache/walk_left_2.png'),
+    require('../../assets/garden/animals/vache/walk_left_3.png'),
+    require('../../assets/garden/animals/vache/walk_left_4.png'),
+    require('../../assets/garden/animals/vache/walk_left_5.png'),
+    require('../../assets/garden/animals/vache/walk_left_6.png'),
+    require('../../assets/garden/animals/vache/walk_left_7.png'),
+    require('../../assets/garden/animals/vache/walk_left_8.png'),
   ],
 };
 
@@ -2010,6 +2080,8 @@ function AnimatedAnimal({ frames, x, y, size, animalId, containerWidth }: { fram
   const [frameIdx, setFrameIdx] = React.useState(0);
   const [isWalking, setIsWalking] = React.useState(false);
   const [bubble, setBubble] = React.useState<string | null>(null);
+  const [lastDx, setLastDx] = React.useState(0);
+  const [lastDy, setLastDy] = React.useState(0);
   const offsetX = useSharedValue(0);
   const offsetY = useSharedValue(0);
   const mounted = React.useRef(true);
@@ -2031,6 +2103,8 @@ function AnimatedAnimal({ frames, x, y, size, animalId, containerWidth }: { fram
       if (!walkFrames || !mounted.current) return;
       const dx = (Math.random() - 0.5) * 20;
       const dy = (Math.random() - 0.5) * 12;
+      setLastDx(dx);
+      setLastDy(dy);
       setIsWalking(true);
       offsetX.value = withTiming(offsetX.value + dx, { duration: 1500, easing: Easing.inOut(Easing.sin) });
       offsetY.value = withTiming(offsetY.value + dy, { duration: 1500, easing: Easing.inOut(Easing.sin) });
@@ -2061,13 +2135,16 @@ function AnimatedAnimal({ frames, x, y, size, animalId, containerWidth }: { fram
     };
   }, [animalId]);
 
-  const walkFrames = ANIMAL_WALK_FRAMES[animalId];
+  const walkDownFrames = ANIMAL_WALK_FRAMES[animalId];
+  const walkLeftFrames = ANIMAL_WALK_LEFT_FRAMES[animalId];
   const [walkFrameIdx, setWalkFrameIdx] = React.useState(0);
+  const isHorizontal = Math.abs(lastDx) > Math.abs(lastDy);
+  const activeWalkFrames = isWalking && isHorizontal && walkLeftFrames ? walkLeftFrames : walkDownFrames;
   useEffect(() => {
-    if (!isWalking || !walkFrames) return;
-    const interval = setInterval(() => setWalkFrameIdx(f => (f + 1) % walkFrames.length), 200);
+    if (!isWalking || !activeWalkFrames) return;
+    const interval = setInterval(() => setWalkFrameIdx(f => (f + 1) % activeWalkFrames.length), 200);
     return () => clearInterval(interval);
-  }, [isWalking, walkFrames]);
+  }, [isWalking, activeWalkFrames]);
 
   const moveStyle = useAnimatedStyle(() => ({
     transform: [
@@ -2076,15 +2153,19 @@ function AnimatedAnimal({ frames, x, y, size, animalId, containerWidth }: { fram
     ],
   }));
 
-  const currentFrame = isWalking && walkFrames
-    ? walkFrames[walkFrameIdx]
+  const currentFrame = isWalking && activeWalkFrames
+    ? activeWalkFrames[walkFrameIdx % activeWalkFrames.length]
     : frames[frameIdx];
+  const flipX = isWalking && isHorizontal && lastDx > 0;
 
   return (
     <Animated.View style={[{ position: 'absolute', left: x, top: y, width: size, height: size }, moveStyle]}>
       <Image
         source={currentFrame}
-        style={{ width: size, height: size } as any}
+        style={[
+          { width: size, height: size },
+          flipX ? { transform: [{ scaleX: -1 }] } : {},
+        ] as any}
       />
       {/* Bulle de pensee */}
       {bubble != null && (
