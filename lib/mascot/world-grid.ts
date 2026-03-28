@@ -60,7 +60,7 @@ export const WORLD_GRID: WorldCell[] = [
   { id: 'c14', col: 4, row: 3, x: 0.75, y: 0.82, cellType: 'crop',     unlockOrder: 17, size: 'small' },
   { id: 'b1',  col: 5, row: 3, x: 0.90, y: 0.82, cellType: 'building', unlockOrder: 18, size: 'large' },
   // Slot b2 — moulin (stade majestueux)
-  { id: 'b2',  col: 2, row: 2, x: 0.42, y: 0.58, cellType: 'building', unlockOrder: 19, size: 'large' },
+  { id: 'b2',  col: 0, row: 2, x: 0.10, y: 0.82, cellType: 'building', unlockOrder: 19, size: 'large' },
 ];
 
 /** Cellules de culture uniquement, triees par ordre de deblocage */

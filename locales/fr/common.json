@@ -3919,9 +3919,9 @@
     },
     "weeklyGoal": {
       "title": "Objectif de la semaine",
-      "progress": "Encore {{remaining}} taches pour gagner {{reward}} 🍃",
-      "complete": "Bravo ! +{{reward}} 🍃 gagne !",
-      "hint": "Complete des taches pour remplir la barre !"
+      "progress": "Encore {{remaining}} tâches pour gagner {{reward}} 🍃",
+      "complete": "Bravo ! +{{reward}} 🍃 gagné !",
+      "hint": "Complète des tâches pour remplir la barre !"
     },
     "seasonal": {
       "bonus": "☀️ En saison — pousse x2 !",

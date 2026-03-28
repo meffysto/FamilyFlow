@@ -5,9 +5,9 @@
  * Compte les taches completees cette semaine depuis l'historique gamification.
  */
 
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
 import { Spacing, Radius } from '../../constants/spacing';
 import { Shadows } from '../../constants/shadows';
 
@@ -21,11 +21,17 @@ interface WeeklyGoalProps {
 }
 
 export function WeeklyGoal({ weeklyTaskCount, colors, t }: WeeklyGoalProps) {
+  const [dismissed, setDismissed] = useState(false);
   const progress = Math.min(1, weeklyTaskCount / WEEKLY_TARGET);
   const isComplete = weeklyTaskCount >= WEEKLY_TARGET;
 
+  const handleDismiss = useCallback(() => setDismissed(true), []);
+
+  if (dismissed) return null;
+
   return (
-    <Animated.View entering={FadeInDown.delay(300).duration(400)}>
+    <Animated.View entering={FadeInDown.delay(300).duration(400)} exiting={FadeOut.duration(300)}>
+      <TouchableOpacity activeOpacity={0.8} onPress={handleDismiss}>
       <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.borderLight }, Shadows.sm]}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.text }]}>
@@ -58,6 +64,7 @@ export function WeeklyGoal({ weeklyTaskCount, colors, t }: WeeklyGoalProps) {
           {t('farm.weeklyGoal.hint')}
         </Text>
       </View>
+      </TouchableOpacity>
     </Animated.View>
   );
 }
