@@ -19,11 +19,11 @@ Requirements pour ce milestone. Chaque requirement est mappé à une phase du ro
 
 ### Code Quality
 
-- [ ] **QUAL-01**: Suppression des fonctions dépréciées dans lib/telegram.ts (5 fonctions)
-- [ ] **QUAL-02**: Suppression de la propriété dépréciée menageTasks et du code de migration associé
+- [x] **QUAL-01**: Suppression des fonctions dépréciées dans lib/telegram.ts (5 fonctions)
+- [x] **QUAL-02**: Suppression de la propriété dépréciée menageTasks et du code de migration associé
 - [ ] **QUAL-03**: Remplacement des 228 couleurs hardcodées par tokens sémantiques via useThemeColors()
-- [ ] **QUAL-04**: Correction des 8 assertions `as any` sur les chemins de mutation dans useVault.ts
-- [ ] **QUAL-05**: Setup ESLint avec @typescript-eslint/no-explicit-any
+- [x] **QUAL-04**: Correction des 8 assertions `as any` sur les chemins de mutation dans useVault.ts
+- [x] **QUAL-05**: Setup ESLint avec @typescript-eslint/no-explicit-any
 
 ### Architecture
 
@@ -95,10 +95,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-05 | Phase 1 | Pending |
 | TEST-06 | Phase 1 | Pending |
 | TEST-07 | Phase 1 | Pending |
-| QUAL-01 | Phase 1 | Pending |
-| QUAL-02 | Phase 1 | Pending |
-| QUAL-04 | Phase 1 | Pending |
-| QUAL-05 | Phase 1 | Pending |
+| QUAL-01 | Phase 1 | Complete |
+| QUAL-02 | Phase 1 | Complete |
+| QUAL-04 | Phase 1 | Complete |
+| QUAL-05 | Phase 1 | Complete |
 | ARCH-01 | Phase 2 | Pending |
 | QUAL-03 | Phase 2 | Pending |
 | GAME-01 | Phase 2 | Pending |

@@ -29,11 +29,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Les 5 fonctions dépréciées de lib/telegram.ts et la propriété menageTasks sont absentes du codebase
   4. `npx tsc --noEmit` ne rapporte aucune assertion `as any` sur les chemins de mutation dans useVault.ts
   5. ESLint avec `@typescript-eslint/no-explicit-any` est configuré et tourne sans erreur bloquante
-**Plans:** 1/4 plans executed
+**Plans:** 2/4 plans executed
 
 Plans:
 - [ ] 01-01-PLAN.md — Tests unitaires pour les 4 modules critiques (budget, farm-engine, sagas-engine, world-grid)
-- [ ] 01-02-PLAN.md — Nettoyage code mort + correction as any + ESLint
+- [x] 01-02-PLAN.md — Nettoyage code mort + correction as any + ESLint
 - [x] 01-03-PLAN.md — Integration Sentry crash reporting
 - [ ] 01-04-PLAN.md — Flows E2E Maestro (3 parcours critiques)
 
@@ -81,7 +81,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Safety Net | 1/4 | In Progress|  |
+| 1. Safety Net | 2/4 | In Progress|  |
 | 2. Write Safety + Couleurs | 0/TBD | Not started | - |
 | 3. Gamification | 0/TBD | Not started | - |
 | 4. Ambiance + Retention | 2/2 | Complete   | 2026-03-28 |

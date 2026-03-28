@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Checkpoint 01-03: Task 2 awaiting Sentry DSN configuration"
-last_updated: "2026-03-28T18:48:28.148Z"
-last_activity: 2026-03-28 -- Phase 01 execution started
+stopped_at: "Completed 01-02: Nettoyage code mort + as any + ESLint"
+last_updated: "2026-03-28T18:52:27.153Z"
+last_activity: 2026-03-28
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 4
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 ## Current Position
 
 Phase: 01 (Safety Net) — EXECUTING
-Plan: 1 of 4
-Status: Executing Phase 01
-Last activity: 2026-03-28 -- Phase 01 execution started
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-03-28
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -54,6 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 06-ambiance-retention P02 | 8 | 2 tasks | 4 files |
 | Phase 06-ambiance-retention P01 | 3 | 2 tasks | 3 files |
+| Phase 01-safety-net P02 | 6 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,8 @@ Recent decisions affecting current work:
 - [Phase 06-01]: CSV backward-compatible sans migration : goldenFlag undefined === '1' est false
 - [Phase 01-03]: Sentry désactivé en __DEV__ pour éviter le bruit en développement local
 - [Phase 01-03]: tracesSampleRate 0.2 (20%) — limite le quota Sentry sans perdre la visibilité
+- [Phase 01-02]: GratitudeDay (pas GratitudeEntry) est le type de retour de parseGratitude
+- [Phase 01-02]: ESLint v9 flat config en CommonJS car le projet n'a pas type:module
 
 ### Roadmap Evolution
 
@@ -95,6 +98,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T18:48:24.053Z
-Stopped at: Checkpoint 01-03: Task 2 awaiting Sentry DSN configuration
+Last session: 2026-03-28T18:52:27.146Z
+Stopped at: Completed 01-02: Nettoyage code mort + as any + ESLint
 Resume file: None
