@@ -2011,47 +2011,52 @@ function AnimatedAnimal({ frames, x, y, size, animalId }: { frames: [any, any]; 
   const [bubble, setBubble] = React.useState<string | null>(null);
   const offsetX = useSharedValue(0);
   const offsetY = useSharedValue(0);
-  const bubbleOpacity = useSharedValue(0);
+  const mounted = React.useRef(true);
 
   // Cycle idle / walk / thought bubbles
   useEffect(() => {
+    mounted.current = true;
     const walkFrames = ANIMAL_WALK_FRAMES[animalId];
     let walkInterval: ReturnType<typeof setInterval>;
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
 
     // Idle frame cycle
-    const idleInterval = setInterval(() => setFrameIdx(f => (f + 1) % 2), 600);
+    const idleInterval = setInterval(() => {
+      if (mounted.current) setFrameIdx(f => (f + 1) % 2);
+    }, 600);
 
     // Petite balade toutes les 3-6 secondes
     const startWalk = () => {
-      if (!walkFrames) return;
+      if (!walkFrames || !mounted.current) return;
       const dx = (Math.random() - 0.5) * 20;
       const dy = (Math.random() - 0.5) * 12;
       setIsWalking(true);
       offsetX.value = withTiming(offsetX.value + dx, { duration: 1500, easing: Easing.inOut(Easing.sin) });
       offsetY.value = withTiming(offsetY.value + dy, { duration: 1500, easing: Easing.inOut(Easing.sin) });
-      setTimeout(() => setIsWalking(false), 1500);
+      timeouts.push(setTimeout(() => { if (mounted.current) setIsWalking(false); }, 1500));
     };
 
     walkInterval = setInterval(startWalk, 3000 + Math.random() * 3000);
 
     // Thought bubbles toutes les 15-30s
     const bubbleInterval = setInterval(() => {
+      if (!mounted.current) return;
       const hour = new Date().getHours();
       const isNight = hour >= 21 || hour < 6;
       const pool = isNight ? THOUGHT_BUBBLES_NIGHT : THOUGHT_BUBBLES_IDLE;
       const content = pool[Math.floor(Math.random() * pool.length)];
       setBubble(content);
-      bubbleOpacity.value = withTiming(1, { duration: 300 });
-      setTimeout(() => {
-        bubbleOpacity.value = withTiming(0, { duration: 500 });
-        setTimeout(() => setBubble(null), 500);
-      }, 3000);
+      timeouts.push(setTimeout(() => {
+        if (mounted.current) setBubble(null);
+      }, 3500));
     }, 15000 + Math.random() * 15000);
 
     return () => {
+      mounted.current = false;
       clearInterval(idleInterval);
       clearInterval(walkInterval);
       clearInterval(bubbleInterval);
+      timeouts.forEach(t => clearTimeout(t));
     };
   }, [animalId]);
 
@@ -2070,10 +2075,6 @@ function AnimatedAnimal({ frames, x, y, size, animalId }: { frames: [any, any]; 
     ],
   }));
 
-  const bubbleStyle = useAnimatedStyle(() => ({
-    opacity: bubbleOpacity.value,
-  }));
-
   const currentFrame = isWalking && walkFrames
     ? walkFrames[walkFrameIdx]
     : frames[frameIdx];
@@ -2085,8 +2086,8 @@ function AnimatedAnimal({ frames, x, y, size, animalId }: { frames: [any, any]; 
         style={{ width: size, height: size } as any}
       />
       {/* Bulle de pensee */}
-      {bubble && (
-        <Animated.View style={[{
+      {bubble != null && (
+        <View style={{
           position: 'absolute',
           top: -18,
           left: size / 2 - 14,
@@ -2096,9 +2097,9 @@ function AnimatedAnimal({ frames, x, y, size, animalId }: { frames: [any, any]; 
           paddingVertical: 2,
           minWidth: 28,
           alignItems: 'center',
-        }, bubbleStyle]}>
+        }}>
           <Text style={{ fontSize: 11, textAlign: 'center' }}>{bubble}</Text>
-        </Animated.View>
+        </View>
       )}
     </Animated.View>
   );
