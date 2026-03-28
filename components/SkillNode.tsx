@@ -110,7 +110,7 @@ export function SkillNode({ label, emoji, categoryColor, state, xp, onPress }: S
         return {
           backgroundColor: colors.cardAlt,
           borderWidth: 2,
-          borderColor: '#475569',
+          borderColor: colors.separator,
           opacity: 0.5,
         };
     }
@@ -127,7 +127,7 @@ export function SkillNode({ label, emoji, categoryColor, state, xp, onPress }: S
     switch (state) {
       case 'unlocked':
         return (
-          <Text style={[styles.xpText, { color: '#10B981' }]}>
+          <Text style={[styles.xpText, { color: colors.success }]}>
             {'⚡ +'}{xp}{' XP · Débloqué'}
           </Text>
         );
@@ -139,7 +139,7 @@ export function SkillNode({ label, emoji, categoryColor, state, xp, onPress }: S
         );
       case 'locked':
         return (
-          <Text style={[styles.xpText, { color: '#475569' }]}>
+          <Text style={[styles.xpText, { color: colors.textMuted }]}>
             {'+'}{xp}{' XP'}
           </Text>
         );
@@ -153,7 +153,7 @@ export function SkillNode({ label, emoji, categoryColor, state, xp, onPress }: S
       case 'unlockable':
         return colors.text;
       case 'locked':
-        return '#475569';
+        return colors.textMuted;
     }
   };
 
@@ -188,8 +188,8 @@ export function SkillNode({ label, emoji, categoryColor, state, xp, onPress }: S
 
         {/* Badge check vert pour l'état débloqué */}
         {state === 'unlocked' && (
-          <View style={styles.checkBadge}>
-            <Text style={styles.checkText}>{'✓'}</Text>
+          <View style={[styles.checkBadge, { backgroundColor: colors.success }]}>
+            <Text style={[styles.checkText, { color: colors.onPrimary }]}>{'✓'}</Text>
           </View>
         )}
       </Animated.View>
@@ -263,12 +263,10 @@ const styles = StyleSheet.create({
     width: BADGE_SIZE,
     height: BADGE_SIZE,
     borderRadius: BADGE_SIZE / 2,
-    backgroundColor: '#10B981',
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkText: {
-    color: '#FFFFFF',
     fontSize: FontSize.caption,
     fontWeight: FontWeight.bold,
     lineHeight: 14,
