@@ -538,9 +538,7 @@ export default function TreeScreen() {
 
         {/* Arbre principal — diorama saisonnier immersif (full-bleed) */}
         <Animated.View entering={FadeIn.duration(600)} style={styles.treeContainer}>
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={hapticsTreeTap}
+          <View
             style={[
               styles.treeBg,
               {
@@ -579,7 +577,7 @@ export default function TreeScreen() {
             />
 
             {/* Couche ambiance : particules horaires + tint */}
-            <View style={{ ...StyleSheet.absoluteFillObject, zIndex: 5 }}>
+            <View style={{ ...StyleSheet.absoluteFillObject, zIndex: 5 }} pointerEvents="none">
               <AmbientParticles containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60} />
             </View>
 
@@ -619,7 +617,7 @@ export default function TreeScreen() {
               )}
             </View>
 
-          </TouchableOpacity>
+          </View>
         </Animated.View>
 
 
