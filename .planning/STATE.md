@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: verifying
-stopped_at: Phase 6 context gathered
-last_updated: "2026-03-28T22:00:07.079Z"
+stopped_at: Completed 06-02-PLAN.md tasks 1-2, checkpoint task 3 pending human-verify
+last_updated: "2026-03-28T22:53:30.808Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 7
+  completed_plans: 6
   percent: 0
 ---
 
@@ -50,6 +50,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 05-visuels-ferme P01 | 2 | 1 tasks | 1 files |
 | Phase 05-visuels-ferme P05-02 | 3 | 2 tasks | 103 files |
 | Phase 05-visuels-ferme P03 | 15 | 3 tasks | 1 files |
+| Phase 06-batiments-productifs P02 | 10min | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -67,6 +68,9 @@ Recent decisions affecting current work:
 - [Phase 05-visuels-ferme]: Frame B generee programmatiquement (decalage 1px) depuis frame A Mana Seed — corn->cornyellow, potato->potatobrown
 - [Phase 05-03]: isHorizontal = Math.abs(lastDx) > Math.abs(lastDy) pour selectionner frames walk_left vs walk_down dans AnimatedAnimal
 - [Phase 05-03]: scaleX: -1 applique sur Image uniquement (pas Animated.View) pour flip directionnel sans affecter la bulle de pensee
+- [Phase 06-02]: Plan 01 (couche donnees) non execute — cree inline comme deviation Rule 3 (bloquant)
+- [Phase 06-02]: parseBuildings() backward-compat: gere string[], CSV simple 'poulailler,grange', et nouveau format 'buildingId:cellId:level:ISO'
+- [Phase 06-02]: TreeShop garde string[] via .map(b => b.buildingId) pour retrocompat sans modifier TreeShop
 
 ### Pending Todos
 
@@ -79,6 +83,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T22:00:07.069Z
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-batiments-productifs/06-CONTEXT.md
+Last session: 2026-03-28T22:53:30.806Z
+Stopped at: Completed 06-02-PLAN.md tasks 1-2, checkpoint task 3 pending human-verify
+Resume file: None
