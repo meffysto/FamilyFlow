@@ -32,7 +32,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans:** 2/4 plans executed
 
 Plans:
-- [ ] 01-01-PLAN.md — Tests unitaires pour les 4 modules critiques (budget, farm-engine, sagas-engine, world-grid)
+- [x] 01-01-PLAN.md — Tests unitaires pour les 4 modules critiques (budget, farm-engine, sagas-engine, world-grid)
 - [x] 01-02-PLAN.md — Nettoyage code mort + correction as any + ESLint
 - [x] 01-03-PLAN.md — Integration Sentry crash reporting
 - [ ] 01-04-PLAN.md — Flows E2E Maestro (3 parcours critiques)

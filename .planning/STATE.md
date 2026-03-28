@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Completed 01-02: Nettoyage code mort + as any + ESLint"
-last_updated: "2026-03-28T18:52:27.153Z"
+stopped_at: "Completed 01-01: Setup Tests"
+last_updated: "2026-03-28T18:54:40.499Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 4
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 ## Current Position
 
 Phase: 01 (Safety Net) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-03-28
 
@@ -55,6 +55,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06-ambiance-retention P02 | 8 | 2 tasks | 4 files |
 | Phase 06-ambiance-retention P01 | 3 | 2 tasks | 3 files |
 | Phase 01-safety-net P02 | 6 | 2 tasks | 5 files |
+| Phase 01-safety-net P01 | 6 | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,9 @@ Recent decisions affecting current work:
 - [Phase 01-03]: tracesSampleRate 0.2 (20%) — limite le quota Sentry sans perdre la visibilité
 - [Phase 01-02]: GratitudeDay (pas GratitudeEntry) est le type de retour de parseGratitude
 - [Phase 01-02]: ESLint v9 flat config en CommonJS car le projet n'a pas type:module
+- [Phase 01-01]: jest-expo installe sans remplacer ts-jest — modules cibles sont du TS pur sans React
+- [Phase 01-01]: Mock PNG dans jest.config.js moduleNameMapper pour resoudre SyntaxError require png en node env
+- [Phase 01-01]: Mock react-native minimal Platform.OS pour lib/mascot/utils.ts dans tests node
 
 ### Roadmap Evolution
 
@@ -98,6 +102,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T18:52:27.146Z
-Stopped at: Completed 01-02: Nettoyage code mort + as any + ESLint
+Last session: 2026-03-28T18:54:40.496Z
+Stopped at: Completed 01-01: Setup Tests
 Resume file: None
