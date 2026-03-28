@@ -104,7 +104,7 @@ export function LiquidXPBar({ current, total, label, color, height = 22 }: Liqui
 
         {/* Texte centré */}
         <View style={styles.textContainer}>
-          <Text style={[styles.barText, { fontSize: height * 0.5 }]}>
+          <Text style={[styles.barText, { fontSize: height * 0.5, color: colors.onPrimary }]}>
             {current} / {total}
           </Text>
         </View>
@@ -158,7 +158,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   barText: {
-    color: '#fff',
     fontWeight: FontWeight.heavy,
     textShadowColor: 'rgba(0,0,0,0.25)',
     textShadowOffset: { width: 0, height: 1 },

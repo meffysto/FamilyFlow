@@ -172,7 +172,7 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
           style={[styles.createBtn, { backgroundColor: primary }]}
           onPress={createInICloud}
         >
-          <Text style={styles.createBtnText}>{t('vaultPicker.createICloud')}</Text>
+          <Text style={[styles.createBtnText, { color: colors.onPrimary }]}>{t('vaultPicker.createICloud')}</Text>
           <Text style={styles.createBtnSub}>{t('vaultPicker.createICloudSub')}</Text>
         </TouchableOpacity>
       )}
@@ -196,7 +196,7 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
             }
           }}
         >
-          <Text style={styles.createBtnText}>{t('vaultPicker.createAndroid')}</Text>
+          <Text style={[styles.createBtnText, { color: colors.onPrimary }]}>{t('vaultPicker.createAndroid')}</Text>
           <Text style={styles.createBtnSub}>{t('vaultPicker.createAndroidSub')}</Text>
         </TouchableOpacity>
       )}
@@ -238,14 +238,14 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
         </TouchableOpacity>
       )}
 
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {error && <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>}
 
       {/* Desktop: manual path input */}
       {Platform.OS !== 'ios' && Platform.OS !== 'android' && (
         <>
           <Text style={[styles.label, { color: colors.textSub }]}>{t('vaultPicker.folderLocation')}</Text>
           <TextInput
-            style={[styles.input, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }, error ? styles.inputError : null]}
+            style={[styles.input, { borderColor: colors.inputBorder, color: colors.text, backgroundColor: colors.inputBg }, error ? { borderColor: colors.error } : null]}
             value={path}
             onChangeText={(t) => { setPath(t); setError(null); }}
             placeholder={t('vaultPicker.pathPlaceholder')}
@@ -275,14 +275,14 @@ export function VaultPicker({ currentPath, onPathSelected, onCancel, initialPare
 
         {Platform.OS !== 'ios' && Platform.OS !== 'android' && (
           <TouchableOpacity
-            style={[styles.confirmBtn, { backgroundColor: primary }, isValidating && styles.confirmBtnDisabled]}
+            style={[styles.confirmBtn, { backgroundColor: isValidating ? primary + '99' : primary }]}
             onPress={() => validate(path)}
             disabled={isValidating}
           >
             {isValidating ? (
-              <ActivityIndicator color="#FFFFFF" size="small" />
+              <ActivityIndicator color={colors.onPrimary} size="small" />
             ) : (
-              <Text style={styles.confirmText}>{t('vaultPicker.confirm')}</Text>
+              <Text style={[styles.confirmText, { color: colors.onPrimary }]}>{t('vaultPicker.confirm')}</Text>
             )}
           </TouchableOpacity>
         )}
@@ -304,7 +304,6 @@ const styles = StyleSheet.create({
   createBtnText: {
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
-    color: '#FFFFFF',
   },
   createBtnSub: {
     fontSize: FontSize.caption,
@@ -348,12 +347,9 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     minHeight: 60,
   },
-  inputError: {
-    borderColor: '#EF4444',
-  },
+  inputError: {},
   errorText: {
     fontSize: FontSize.label,
-    color: '#EF4444',
     lineHeight: 18,
   },
   pickerBtn: {
@@ -403,12 +399,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
   },
-  confirmBtnDisabled: {
-    backgroundColor: '#A78BFA',
-  },
+  confirmBtnDisabled: {},
   confirmText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
-    color: '#FFFFFF',
   },
 });

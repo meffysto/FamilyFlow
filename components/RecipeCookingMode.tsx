@@ -450,7 +450,7 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
           {/* Step counter */}
           <View style={styles.stepCounter}>
             <View style={[styles.stepBadge, { backgroundColor: primary }]}>
-              <Text style={styles.stepBadgeText}>{t('recipeCookingMode.stepLabel', { n: currentStep + 1 })}</Text>
+              <Text style={[styles.stepBadgeText, { color: colors.onPrimary }]}>{t('recipeCookingMode.stepLabel', { n: currentStep + 1 })}</Text>
             </View>
             <Text style={[styles.stepOf, { color: colors.textMuted }]}>{t('recipeCookingMode.stepOf', { total })}</Text>
           </View>
@@ -549,7 +549,7 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
             style={[styles.navDoneBtn, { backgroundColor: isStepDone ? colors.success : primary }]}
             activeOpacity={0.8}
           >
-            <Text style={styles.navDoneBtnText}>
+            <Text style={[styles.navDoneBtnText, { color: colors.onPrimary }]}>
               {isStepDone ? t('common.done') : t('common.validate')}
             </Text>
           </TouchableOpacity>
@@ -608,7 +608,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 20,
   },
   stepBadge: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20 },
-  stepBadgeText: { color: '#FFFFFF', fontSize: FontSize.sm, fontWeight: FontWeight.bold },
+  stepBadgeText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
   stepOf: { fontSize: FontSize.sm },
   stepBody: { marginBottom: 24 },
   stepText: { fontSize: FontSize.title, lineHeight: 30, fontWeight: FontWeight.normal },
@@ -683,5 +683,5 @@ const styles = StyleSheet.create({
   navDoneBtn: {
     flex: 2, paddingVertical: 14, borderRadius: 14, alignItems: 'center',
   },
-  navDoneBtnText: { color: '#FFFFFF', fontSize: FontSize.lg, fontWeight: FontWeight.bold },
+  navDoneBtnText: { fontSize: FontSize.lg, fontWeight: FontWeight.bold },
 });
