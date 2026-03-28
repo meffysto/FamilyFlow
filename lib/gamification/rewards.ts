@@ -130,9 +130,11 @@ export const REWARDS: Record<LootRarity, RewardDefinition[]> = {
 
 // ─── Drop Rates ───────────────────────────────────────────────────────────────
 
+/** Drop rates ajustees : enfants plus genereux (mythique 2%, legendaire 6%)
+ * pour que l'evenement "unicorn" arrive ~1 fois par trimestre scolaire. */
 export const DROP_RATES: Record<Profile['role'], Record<LootRarity, number>> = {
-  enfant: { commun: 0.50, rare: 0.30, épique: 0.14, légendaire: 0.05, mythique: 0.01 },
-  ado:    { commun: 0.52, rare: 0.29, épique: 0.13, légendaire: 0.05, mythique: 0.01 },
+  enfant: { commun: 0.45, rare: 0.32, épique: 0.15, légendaire: 0.06, mythique: 0.02 },
+  ado:    { commun: 0.48, rare: 0.30, épique: 0.14, légendaire: 0.06, mythique: 0.02 },
   adulte: { commun: 0.55, rare: 0.28, épique: 0.12, légendaire: 0.04, mythique: 0.01 },
 };
 

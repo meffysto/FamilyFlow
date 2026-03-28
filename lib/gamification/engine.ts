@@ -113,15 +113,22 @@ export function awardTaskCompletion(
 
   const { profile: updated, entry } = addPoints(profile, total, `Tâche: ${taskNote}`);
 
+  // Bonus feuilles ferme : +3 feuilles par tache (pas de XP, juste de la monnaie)
+  const FARM_LEAF_BONUS = 3;
+  const withFarmBonus: Profile = {
+    ...updated,
+    coins: (updated.coins ?? 0) + FARM_LEAF_BONUS,
+  };
+
   // Check if loot box threshold crossed
   const threshold = config.lootThreshold[profile.role] ?? LOOT_THRESHOLD[profile.role];
   const previousBoxes = Math.floor(profile.points / threshold);
-  const newBoxes = Math.floor(updated.points / threshold);
+  const newBoxes = Math.floor(withFarmBonus.points / threshold);
   const lootAwarded = newBoxes > previousBoxes;
 
   const finalProfile: Profile = {
-    ...updated,
-    lootBoxesAvailable: updated.lootBoxesAvailable + (lootAwarded ? newBoxes - previousBoxes : 0),
+    ...withFarmBonus,
+    lootBoxesAvailable: withFarmBonus.lootBoxesAvailable + (lootAwarded ? newBoxes - previousBoxes : 0),
   };
 
   return { profile: finalProfile, entry, lootAwarded };

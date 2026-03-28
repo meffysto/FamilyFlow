@@ -25,13 +25,17 @@ export interface TreeStageInfo {
 }
 
 /** Les 6 stades avec leurs plages de niveaux */
+/** Stades redistributes pour une progression gratifiante :
+ * Premiere evolution a ~11 jours, ferme a ~11 jours,
+ * arbuste a ~2 mois, arbre a ~6 mois, legendaire a ~2 ans.
+ */
 export const TREE_STAGES: TreeStageInfo[] = [
-  { stage: 'graine',      minLevel: 1,  maxLevel: 3,  labelKey: 'mascot.stages.graine',      descriptionKey: 'mascot.stages.graineDesc' },
-  { stage: 'pousse',      minLevel: 4,  maxLevel: 7,  labelKey: 'mascot.stages.pousse',      descriptionKey: 'mascot.stages.pousseDesc' },
-  { stage: 'arbuste',     minLevel: 8,  maxLevel: 18, labelKey: 'mascot.stages.arbuste',     descriptionKey: 'mascot.stages.arbusteDesc' },
-  { stage: 'arbre',       minLevel: 19, maxLevel: 32, labelKey: 'mascot.stages.arbre',       descriptionKey: 'mascot.stages.arbreDesc' },
-  { stage: 'majestueux',  minLevel: 33, maxLevel: 40, labelKey: 'mascot.stages.majestueux',  descriptionKey: 'mascot.stages.majestueuxDesc' },
-  { stage: 'legendaire',  minLevel: 41, maxLevel: 50, labelKey: 'mascot.stages.legendaire',  descriptionKey: 'mascot.stages.legendaireDesc' },
+  { stage: 'graine',      minLevel: 1,  maxLevel: 2,  labelKey: 'mascot.stages.graine',      descriptionKey: 'mascot.stages.graineDesc' },
+  { stage: 'pousse',      minLevel: 3,  maxLevel: 5,  labelKey: 'mascot.stages.pousse',      descriptionKey: 'mascot.stages.pousseDesc' },
+  { stage: 'arbuste',     minLevel: 6,  maxLevel: 10, labelKey: 'mascot.stages.arbuste',     descriptionKey: 'mascot.stages.arbusteDesc' },
+  { stage: 'arbre',       minLevel: 11, maxLevel: 18, labelKey: 'mascot.stages.arbre',       descriptionKey: 'mascot.stages.arbreDesc' },
+  { stage: 'majestueux',  minLevel: 19, maxLevel: 30, labelKey: 'mascot.stages.majestueux',  descriptionKey: 'mascot.stages.majestueuxDesc' },
+  { stage: 'legendaire',  minLevel: 31, maxLevel: 50, labelKey: 'mascot.stages.legendaire',  descriptionKey: 'mascot.stages.legendaireDesc' },
 ];
 
 /** Informations visuelles d'une espèce */
@@ -271,14 +275,17 @@ export interface PlantedCrop {
   plantedAt: string;       // YYYY-MM-DD
 }
 
-/** Nombre de parcelles deblocables par stade d'arbre */
+/** Nombre de parcelles deblocables par stade d'arbre.
+ * Progression plus rapide : ferme des le stade pousse (niv 3),
+ * nouvelles parcelles regulieres pour maintenir l'engagement.
+ */
 export const PLOTS_BY_TREE_STAGE: Record<TreeStage, number> = {
   graine:     0,
-  pousse:     2,
-  arbuste:    4,
-  arbre:      6,
-  majestueux: 8,
-  legendaire: 10,
+  pousse:     3,
+  arbuste:    5,
+  arbre:      7,
+  majestueux: 9,
+  legendaire: 12,
 };
 
 /** Catalogue des cultures disponibles (4 initiales)
@@ -314,7 +321,10 @@ export interface BuildingDefinition {
   minTreeStage: TreeStage;
 }
 
+/** Batiments : revenu passif supplementaire (20-30% du revenu actif).
+ * ROI long = investissement strategique, pas de remplacement du farming.
+ */
 export const BUILDING_CATALOG: BuildingDefinition[] = [
-  { id: 'poulailler', labelKey: 'farm.building.poulailler', emoji: '🏠', cost: 200,  dailyIncome: 10, minTreeStage: 'arbuste' },
-  { id: 'grange',     labelKey: 'farm.building.grange',     emoji: '🏚️', cost: 500,  dailyIncome: 25, minTreeStage: 'arbre' },
+  { id: 'poulailler', labelKey: 'farm.building.poulailler', emoji: '🏠', cost: 300,  dailyIncome: 5,  minTreeStage: 'arbuste' },
+  { id: 'grange',     labelKey: 'farm.building.grange',     emoji: '🏚️', cost: 800,  dailyIncome: 8,  minTreeStage: 'arbre' },
 ];
