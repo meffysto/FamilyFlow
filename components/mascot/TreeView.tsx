@@ -45,6 +45,8 @@ import {
   SCENE_SLOTS,
   ITEM_ILLUSTRATIONS,
 } from '../../lib/mascot/types';
+import { NativePlacedItems } from './NativePlacedItems';
+import { NativePlacementSlots } from './NativePlacementSlots';
 import {
   getTreeStage,
   getStageProgress,
@@ -257,6 +259,9 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
   const isLegendary = stage === 'legendaire';
   const isSeed = stage === 'graine';
 
+  // IDs des animaux pixel (pour les exclure du rendu statique et les animer separement)
+  const pixelAnimalIds = useMemo(() => new Set(Object.keys(ANIMAL_IDLE_FRAMES)), []);
+
   if (pixelSprite) {
     const imgHeight = size * (VIEWBOX_H / VIEWBOX_W);
     // Graine = petite (30%), autres = proportionnel à la taille
@@ -308,19 +313,26 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
             style={{ width: scaledW, height: scaledH } as any}
           />
         </Animated.View>
-        {/* Overlay SVG pour décorations/habitants/items placés/slots */}
-        {(decorations.length > 0 || inhabitants.length > 0 || Object.keys(placements).length > 0 || placingItem) && (
+        {/* Overlay natif RN pour items placés + slots de placement */}
+        {(Object.keys(placements).length > 0 || placingItem) && (
           <View style={[StyleSheet.absoluteFill, { zIndex: 2 }]} pointerEvents="box-none">
-            <Svg width={size} height={imgHeight} viewBox={`0 0 ${VIEWBOX_W} ${VIEWBOX_H}`}>
-              {previewMode && <DecorationOverlay decorationIds={decorations} stageIdx={stageIdx} previewMode species={species} />}
-              {previewMode && <InhabitantOverlay inhabitantIds={inhabitants} stageIdx={stageIdx} species={species} />}
-              {showGround && Object.keys(placements).length > 0 && !placingItem && (
-                <PlacedItems placements={placements} />
-              )}
-              {showGround && placingItem && (
-                <PlacementSlots placements={placements} placingItemId={placingItem} onSelect={onSlotSelect} />
-              )}
-            </Svg>
+            {showGround && Object.keys(placements).length > 0 && !placingItem && (
+              <NativePlacedItems
+                placements={placements}
+                containerWidth={size}
+                containerHeight={imgHeight}
+                skipIds={pixelAnimalIds}
+              />
+            )}
+            {showGround && placingItem && (
+              <NativePlacementSlots
+                placements={placements}
+                placingItemId={placingItem}
+                containerWidth={size}
+                containerHeight={imgHeight}
+                onSelect={onSlotSelect}
+              />
+            )}
           </View>
         )}
         {/* Animaux pixel animés (cycle idle natif RN, hors SVG) */}
