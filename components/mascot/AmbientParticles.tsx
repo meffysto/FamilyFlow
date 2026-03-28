@@ -7,11 +7,14 @@
  * - Nuit (21h-04h59) : lucioles vert-jaune pulsantes
  * - Jour (09h-18h59) : rien
  *
+ * Re-evalue le slot toutes les 60 secondes et anime la transition de couleur
+ * overlay avec withTiming(2000) pour un fondu progressif.
+ *
  * Respecte useReducedMotion — desactive les animations si Reduce Motion est active.
  * pointerEvents="none" pour ne pas intercepter les touches.
  */
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -34,6 +37,18 @@ interface ParticleProps {
   index: number;
   containerHeight: number;
   containerWidth: number;
+}
+
+/** Parse une couleur rgba(...) en composantes numeriques */
+function parseRgba(color: string): { r: number; g: number; b: number; a: number } {
+  const match = color.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+))?\s*\)/);
+  if (!match) return { r: 0, g: 0, b: 0, a: 0 };
+  return {
+    r: parseInt(match[1], 10),
+    g: parseInt(match[2], 10),
+    b: parseInt(match[3], 10),
+    a: match[4] !== undefined ? parseFloat(match[4]) : 1,
+  };
 }
 
 function AmbientParticle({ config, index, containerHeight, containerWidth }: ParticleProps) {
@@ -162,31 +177,59 @@ function AmbientParticle({ config, index, containerHeight, containerWidth }: Par
 }
 
 export function AmbientParticles({ containerHeight }: AmbientParticlesProps) {
-  const timeSlot = useMemo(() => getTimeSlot(), []);
+  const [timeSlot, setTimeSlot] = useState(() => getTimeSlot());
   const config = AMBIENT_CONFIGS[timeSlot];
   const reducedMotion = useReducedMotion();
 
   // Largeur approximative — utilise une valeur generique car on est absoluteFill
   const containerWidth = 390;
 
-  if (config === null) {
-    return null;
-  }
+  // Re-polling toutes les 60 secondes pour detecter les changements de slot horaire
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newSlot = getTimeSlot();
+      setTimeSlot(prev => prev === newSlot ? prev : newSlot);
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Shared values pour l'overlay anime (R, G, B, A)
+  const overlayR = useSharedValue(0);
+  const overlayG = useSharedValue(0);
+  const overlayB = useSharedValue(0);
+  const overlayA = useSharedValue(0);
+
+  // Animer la transition de couleur quand le slot change
+  useEffect(() => {
+    const overlay = config?.colorOverlay ?? null;
+    const target = overlay ? parseRgba(overlay) : { r: 0, g: 0, b: 0, a: 0 };
+    const duration = 2000;
+
+    if (reducedMotion) {
+      // Transition instantanee si Reduce Motion est active
+      overlayR.value = target.r;
+      overlayG.value = target.g;
+      overlayB.value = target.b;
+      overlayA.value = target.a;
+    } else {
+      overlayR.value = withTiming(target.r, { duration });
+      overlayG.value = withTiming(target.g, { duration });
+      overlayB.value = withTiming(target.b, { duration });
+      overlayA.value = withTiming(target.a, { duration });
+    }
+  }, [timeSlot, reducedMotion]);
+
+  const overlayAnimStyle = useAnimatedStyle(() => ({
+    backgroundColor: `rgba(${Math.round(overlayR.value)}, ${Math.round(overlayG.value)}, ${Math.round(overlayB.value)}, ${overlayA.value})`,
+  }));
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      {/* Tint colore subtil selon le moment */}
-      {config.colorOverlay && (
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: config.colorOverlay },
-          ]}
-        />
-      )}
+      {/* Tint colore anime — toujours rendu, opacite 0 pour le slot jour */}
+      <Animated.View style={[StyleSheet.absoluteFill, overlayAnimStyle]} />
 
-      {/* Particules animees — desactivees si Reduce Motion */}
-      {!reducedMotion &&
+      {/* Particules animees — desactivees si Reduce Motion ou slot jour */}
+      {!reducedMotion && config !== null &&
         Array.from({ length: config.particleCount }).map((_, i) => (
           <AmbientParticle
             key={`ap-${i}`}
