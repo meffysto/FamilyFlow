@@ -567,6 +567,9 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
       }
       // Cultures ferme
       const farmCrops = currentProps.farm_crops ?? '';
+      const farmBuildings = currentProps.farm_buildings
+        ? currentProps.farm_buildings.split(',').map((s: string) => s.trim()).filter(Boolean)
+        : [];
       profiles.push({
         id: currentId,
         name: currentProps.name,
@@ -584,6 +587,7 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
         mascotInhabitants,
         mascotPlacements,
         farmCrops,
+        farmBuildings,
       });
     }
   };

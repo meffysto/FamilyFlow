@@ -24,6 +24,7 @@ import { useTone } from '../../lib/mascot/tone';
 
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { TreeView } from './TreeView';
+import { MiniDiorama } from './MiniDiorama';
 import {
   DECORATIONS,
   INHABITANTS,
@@ -289,15 +290,13 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
                   ? `${t('mascot.shop.preview')} (${t(TREE_STAGES[minStageIdx].labelKey)})`
                   : t('mascot.shop.preview')}
               </Text>
-              <View style={[styles.detailPreview, { backgroundColor: '#5A8C32' }]}>
-                <TreeView
+              <View style={styles.detailPreview}>
+                <MiniDiorama
                   species={species}
                   level={locked ? TREE_STAGES[minStageIdx].minLevel : level}
                   size={PREVIEW_TREE_SIZE}
-                  interactive={false}
                   decorations={previewDecos}
                   inhabitants={previewHabs}
-                  placements={{}}
                 />
               </View>
 

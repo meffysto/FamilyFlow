@@ -108,7 +108,7 @@ export default function TreeScreen() {
   const [showItemPicker, setShowItemPicker] = useState(false);
 
   // Ferme
-  const { plant, harvest } = useFarm();
+  const { plant, harvest, buyBuilding } = useFarm();
   const [showSeedPicker, setShowSeedPicker] = useState(false);
   const [selectedPlotIndex, setSelectedPlotIndex] = useState<number | null>(null);
 
@@ -716,7 +716,13 @@ export default function TreeScreen() {
           coins={profile.coins ?? profile.points ?? 0}
           ownedDecorations={allDecoIds}
           ownedInhabitants={allHabIds}
+          ownedBuildings={profile.farmBuildings ?? []}
           onBuy={handleShopBuy}
+          onBuyBuilding={async (buildingId) => {
+            if (!profile) return;
+            await buyBuilding(profile.id, buildingId);
+            showToast(`🏗️ ${t('farm.building.owned')} !`);
+          }}
           onClose={() => setShowShop(false)}
         />
       </Modal>

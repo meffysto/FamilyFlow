@@ -7,7 +7,7 @@
 import { useCallback } from 'react';
 import { useVault } from '../contexts/VaultContext';
 import { plantCrop, harvestCrop, parseCrops, serializeCrops } from '../lib/mascot/farm-engine';
-import { CROP_CATALOG } from '../lib/mascot/types';
+import { CROP_CATALOG, BUILDING_CATALOG } from '../lib/mascot/types';
 import { parseGamification, serializeGamification } from '../lib/parser';
 
 const FAMILLE_FILE = 'famille.md';
@@ -129,5 +129,48 @@ export function useFarm() {
     return result.reward;
   }, [profiles, writeFarmCrops, addCoins, refresh]);
 
-  return { plant, harvest };
+  /** Acheter un batiment */
+  const buyBuilding = useCallback(async (profileId: string, buildingId: string) => {
+    const profile = profiles?.find(p => p.id === profileId);
+    if (!profile) return;
+
+    const building = BUILDING_CATALOG.find(b => b.id === buildingId);
+    if (!building) return;
+
+    if ((profile.farmBuildings ?? []).includes(buildingId)) return; // deja construit
+    if ((profile.coins ?? 0) < building.cost) throw new Error('Pas assez de feuilles');
+
+    // Ecrire farm_buildings dans famille.md
+    if (!vault) return;
+    const content = await vault.readFile(FAMILLE_FILE);
+    const lines = content.split('\n');
+    let inSection = false;
+    let fieldLine = -1;
+    let lastPropIdx = -1;
+    const fieldKey = 'farm_buildings';
+    const newList = [...(profile.farmBuildings ?? []), buildingId];
+
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].startsWith('### ')) {
+        if (inSection) break;
+        if (lines[i].replace('### ', '').trim() === profileId) inSection = true;
+      } else if (inSection && lines[i].includes(': ')) {
+        lastPropIdx = i;
+        if (lines[i].trim().startsWith(`${fieldKey}:`)) fieldLine = i;
+      }
+    }
+
+    const newValue = `${fieldKey}: ${newList.join(',')}`;
+    if (fieldLine >= 0) {
+      lines[fieldLine] = newValue;
+    } else if (lastPropIdx >= 0) {
+      lines.splice(lastPropIdx + 1, 0, newValue);
+    }
+
+    await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
+    await deductCoins(profileId, building.cost, `🏗️ Construction : ${buildingId}`);
+    await refresh();
+  }, [profiles, vault, deductCoins, refresh]);
+
+  return { plant, harvest, buyBuilding };
 }
