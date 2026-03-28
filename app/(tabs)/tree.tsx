@@ -42,9 +42,11 @@ import { SpeciesPicker } from '../../components/mascot/SpeciesPicker';
 import { TreeShop } from '../../components/mascot/TreeShop';
 import { PixelDiorama, PIXEL_GROUND, PIXEL_GROUND_DARK } from '../../components/mascot/PixelDiorama';
 import { WorldGridView, FarmStats } from '../../components/mascot/WorldGridView';
+import { BuildingShopSheet } from '../../components/mascot/BuildingShopSheet';
+import { BuildingDetailSheet } from '../../components/mascot/BuildingDetailSheet';
 import { WeeklyGoal, countWeeklyTasks } from '../../components/mascot/WeeklyGoal';
 import { useFarm } from '../../hooks/useFarm';
-import { type PlantedCrop, CROP_CATALOG } from '../../lib/mascot/types';
+import { type PlantedCrop, type PlacedBuilding, CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
 import { hasCropSeasonalBonus, parseCrops } from '../../lib/mascot/farm-engine';
 import { getUnlockedCropCells } from '../../lib/mascot/world-grid';
 import { HarvestBurst, CROP_COLORS } from '../../components/mascot/HarvestBurst';
@@ -161,11 +163,17 @@ export default function TreeScreen() {
   const [showItemPicker, setShowItemPicker] = useState(false);
 
   // Ferme
-  const { plant, harvest, buyBuilding, collectPassiveIncome } = useFarm();
+  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome } = useFarm();
   const [showSeedPicker, setShowSeedPicker] = useState(false);
   const [selectedPlotIndex, setSelectedPlotIndex] = useState<number | null>(null);
   const [harvestBurst, setHarvestBurst] = useState<{ x: number; y: number; reward: number; cropId: string } | null>(null);
   const [whisperInfo, setWhisperInfo] = useState<{ cellId: string; stage: number; cropId: string } | null>(null);
+
+  // Batiments productifs
+  const [showBuildingShop, setShowBuildingShop] = useState(false);
+  const [showBuildingDetail, setShowBuildingDetail] = useState(false);
+  const [selectedBuildingCellId, setSelectedBuildingCellId] = useState<string | null>(null);
+  const [selectedBuilding, setSelectedBuilding] = useState<PlacedBuilding | null>(null);
 
   // Saga active — pour bandeau + élément visuel
   const [sagaProgress, setSagaProgress] = useState<SagaProgress | null>(null);
@@ -181,11 +189,12 @@ export default function TreeScreen() {
   // Collecter le revenu passif des batiments a l'ouverture
   useEffect(() => {
     if (!profile?.id) return;
-    collectPassiveIncome(profile.id).then(income => {
-      if (income > 0) {
-        showToast(`🏠 +${income} 🍃`);
+    collectPassiveIncome(profile.id).then(totalCollected => {
+      if (totalCollected > 0) {
+        showToast(`🏠 +${totalCollected} ressources collectees`);
       }
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id]);
 
   // Notification cultures matures
@@ -356,6 +365,67 @@ export default function TreeScreen() {
     setShowSeedPicker(false);
     setSelectedPlotIndex(null);
   }, [profile, selectedPlotIndex, plant, showToast, t]);
+
+  /** Tap sur une cellule batiment */
+  const handleBuildingCellPress = useCallback((cellId: string, building: PlacedBuilding | null) => {
+    if (!isOwnTree) return;
+    if (building) {
+      setSelectedBuilding(building);
+      setSelectedBuildingCellId(cellId);
+      setShowBuildingDetail(true);
+    } else {
+      setSelectedBuildingCellId(cellId);
+      setShowBuildingShop(true);
+    }
+  }, [isOwnTree]);
+
+  /** Construire un batiment */
+  const handleBuildBuilding = useCallback(async (buildingId: string) => {
+    if (!profile?.id || !selectedBuildingCellId) return;
+    try {
+      await buyBuilding(profile.id, buildingId, selectedBuildingCellId);
+      const def = BUILDING_CATALOG.find(b => b.id === buildingId);
+      showToast(`🏗️ ${def?.emoji ?? ''} Construit !`);
+      setShowBuildingShop(false);
+    } catch (e: any) {
+      showToast(`❌ ${e.message}`);
+    }
+  }, [profile?.id, selectedBuildingCellId, buyBuilding, showToast]);
+
+  /** Collecter les ressources d'un batiment */
+  const handleCollectBuilding = useCallback(async () => {
+    if (!profile?.id || !selectedBuildingCellId) return;
+    const collected = await collectBuildingResources(profile.id, selectedBuildingCellId);
+    if (collected > 0) {
+      const def = BUILDING_CATALOG.find(b => b.id === selectedBuilding?.buildingId);
+      const resourceEmoji = def?.resourceType === 'oeuf' ? '🥚' : def?.resourceType === 'lait' ? '🥛' : '🌾';
+      showToast(`${resourceEmoji} +${collected} ${def?.resourceType ?? ''}`);
+      // Re-fetch le building a jour depuis le profil mis a jour
+      const updatedProfile = profiles?.find((p: Profile) => p.id === profile.id);
+      const updatedBuilding = (updatedProfile?.farmBuildings ?? []).find(
+        (b: PlacedBuilding) => b.cellId === selectedBuildingCellId,
+      ) ?? null;
+      setSelectedBuilding(updatedBuilding);
+    }
+  }, [profile?.id, selectedBuildingCellId, selectedBuilding, collectBuildingResources, profiles, showToast]);
+
+  /** Ameliorer un batiment */
+  const handleUpgradeBuilding = useCallback(async () => {
+    if (!profile?.id || !selectedBuildingCellId) return;
+    try {
+      await upgradeBuildingAction(profile.id, selectedBuildingCellId);
+      const updatedProfile = profiles?.find((p: Profile) => p.id === profile.id);
+      const updatedBuilding = (updatedProfile?.farmBuildings ?? []).find(
+        (b: PlacedBuilding) => b.cellId === selectedBuildingCellId,
+      ) ?? null;
+      if (updatedBuilding) {
+        setSelectedBuilding(updatedBuilding);
+        showToast(`⬆️ Ameliore au Niv ${updatedBuilding.level} !`);
+      }
+    } catch (e: any) {
+      showToast(`❌ ${e.message}`);
+    }
+  }, [profile?.id, selectedBuildingCellId, upgradeBuildingAction, profiles, showToast]);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
@@ -576,6 +646,7 @@ export default function TreeScreen() {
               containerWidth={SCREEN_W}
               containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
               onCropPlotPress={isOwnTree ? handleCropCellPress : undefined}
+              onBuildingCellPress={isOwnTree ? handleBuildingCellPress : undefined}
             />
 
             {/* Couche saisonnières : particules emoji selon la saison */}
@@ -847,16 +918,35 @@ export default function TreeScreen() {
           coins={profile.coins ?? profile.points ?? 0}
           ownedDecorations={allDecoIds}
           ownedInhabitants={allHabIds}
-          ownedBuildings={profile.farmBuildings ?? []}
+          ownedBuildings={(profile.farmBuildings ?? []).map((b: any) => (typeof b === 'string' ? b : b.buildingId))}
           onBuy={handleShopBuy}
-          onBuyBuilding={async (buildingId) => {
-            if (!profile) return;
-            await buyBuilding(profile.id, buildingId);
-            showToast(`🏗️ ${t('farm.building.owned')} !`);
-          }}
+          onBuyBuilding={undefined}
           onClose={() => setShowShop(false)}
         />
       </Modal>
+
+      {/* Bottom sheet construction batiment */}
+      <BuildingShopSheet
+        visible={showBuildingShop}
+        cellId={selectedBuildingCellId ?? ''}
+        treeStage={stageInfo.stage}
+        coins={profile.coins ?? 0}
+        ownedBuildings={profile.farmBuildings ?? []}
+        onBuild={handleBuildBuilding}
+        onClose={() => setShowBuildingShop(false)}
+      />
+
+      {/* Bottom sheet detail batiment */}
+      {selectedBuilding && (
+        <BuildingDetailSheet
+          visible={showBuildingDetail}
+          building={selectedBuilding}
+          coins={profile.coins ?? 0}
+          onCollect={handleCollectBuilding}
+          onUpgrade={handleUpgradeBuilding}
+          onClose={() => { setShowBuildingDetail(false); setSelectedBuilding(null); }}
+        />
+      )}
     </SafeAreaView>
   );
 }
