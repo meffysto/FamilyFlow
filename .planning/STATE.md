@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: "Completed 06-01: Golden Crop Mutation"
-last_updated: "2026-03-28T18:12:44.798Z"
-last_activity: 2026-03-28
+status: executing
+stopped_at: "Checkpoint 01-03: Task 2 awaiting Sentry DSN configuration"
+last_updated: "2026-03-28T18:48:28.148Z"
+last_activity: 2026-03-28 -- Phase 01 execution started
 progress:
-  total_phases: 6
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_phases: 4
+  completed_phases: 0
+  total_plans: 4
+  completed_plans: 1
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 06 — Ambiance + Retention
+**Current focus:** Phase 01 — Safety Net
 
 ## Current Position
 
-Phase: 06
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-03-28
+Phase: 01 (Safety Net) — EXECUTING
+Plan: 1 of 4
+Status: Executing Phase 01
+Last activity: 2026-03-28 -- Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -69,6 +69,8 @@ Recent decisions affecting current work:
 - [Phase 06]: StreakFlames tier calcule dynamiquement depuis STREAK_MILESTONES pour eviter valeurs hardcodees
 - [Phase 06-01]: Couleurs dorées (#FFD700) définies dans StyleSheet comme constantes cosmétiques, pas dans useThemeColors()
 - [Phase 06-01]: CSV backward-compatible sans migration : goldenFlag undefined === '1' est false
+- [Phase 01-03]: Sentry désactivé en __DEV__ pour éviter le bruit en développement local
+- [Phase 01-03]: tracesSampleRate 0.2 (20%) — limite le quota Sentry sans perdre la visibilité
 
 ### Roadmap Evolution
 
@@ -93,6 +95,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T18:07:59.848Z
-Stopped at: Completed 06-01: Golden Crop Mutation
+Last session: 2026-03-28T18:48:24.053Z
+Stopped at: Checkpoint 01-03: Task 2 awaiting Sentry DSN configuration
 Resume file: None
