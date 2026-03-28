@@ -31,7 +31,7 @@ export function WeeklyGoal({ weeklyTaskCount, colors, t }: WeeklyGoalProps) {
           <Text style={[styles.title, { color: colors.text }]}>
             {isComplete ? '🎉' : '🎯'} {t('farm.weeklyGoal.title')}
           </Text>
-          <Text style={[styles.count, { color: isComplete ? '#4ADE80' : colors.textSub }]}>
+          <Text style={[styles.count, { color: isComplete ? colors.success : colors.textSub }]}>
             {weeklyTaskCount}/{WEEKLY_TARGET}
           </Text>
         </View>
@@ -43,13 +43,13 @@ export function WeeklyGoal({ weeklyTaskCount, colors, t }: WeeklyGoalProps) {
               styles.progressFill,
               {
                 width: `${progress * 100}%`,
-                backgroundColor: isComplete ? '#4ADE80' : '#3B82F6',
+                backgroundColor: isComplete ? colors.success : colors.info,
               },
             ]}
           />
         </View>
 
-        <Text style={[styles.subtitle, { color: isComplete ? '#4ADE80' : colors.textMuted }]}>
+        <Text style={[styles.subtitle, { color: isComplete ? colors.success : colors.textMuted }]}>
           {isComplete
             ? t('farm.weeklyGoal.complete', { reward: WEEKLY_REWARD })
             : t('farm.weeklyGoal.progress', { remaining: WEEKLY_TARGET - weeklyTaskCount, reward: WEEKLY_REWARD })}

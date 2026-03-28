@@ -96,6 +96,7 @@ function CropWhisper({ whisperInfo, stageInfo, stageIdx }: {
   stageInfo: any;
   stageIdx: number;
 }) {
+  const { colors } = useThemeColors();
   const cells = getUnlockedCropCells(stageInfo.stage);
   const cell = cells.find((c: any) => c.id === whisperInfo.cellId);
   if (!cell) return null;
@@ -130,7 +131,7 @@ function CropWhisper({ whisperInfo, stageInfo, stageIdx }: {
         zIndex: 20,
       }}
     >
-      <Text style={{ color: '#FFF', fontSize: 11, textAlign: 'center' }}>{msg}</Text>
+      <Text style={{ color: colors.onPrimary, fontSize: 11, textAlign: 'center' }}>{msg}</Text>
     </Animated.View>
   );
 }

@@ -325,7 +325,7 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
                     disabled={!canAfford || buying === selectedItem.id}
                     activeOpacity={0.7}
                   >
-                    <Text style={[styles.detailBuyText, { color: canAfford ? '#FFFFFF' : colors.textMuted }]}>
+                    <Text style={[styles.detailBuyText, { color: canAfford ? colors.onPrimary : colors.textMuted }]}>
                       {canAfford
                         ? t('mascot.shop.buyConfirm', { cost: selectedItem.cost, context: tone })
                         : t('mascot.shop.notEnoughLeaves', { context: tone })}
@@ -415,7 +415,7 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
                 <TouchableOpacity
                   style={[
                     styles.itemCard,
-                    { backgroundColor: colors.card, borderColor: owned ? '#F59E0B' : colors.borderLight },
+                    { backgroundColor: colors.card, borderColor: owned ? colors.warning : colors.borderLight },
                     owned && { borderWidth: 2, opacity: 0.7 },
                     Shadows.sm,
                   ]}
@@ -444,7 +444,7 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
                         {t(`${building.labelKey}_desc`)}
                       </Text>
                       <View style={styles.itemMeta}>
-                        <Text style={{ color: '#4ADE80', fontSize: 12, fontWeight: '600' }}>
+                        <Text style={{ color: colors.success, fontSize: 12, fontWeight: '600' }}>
                           {t('farm.building.dailyIncome', { amount: building.dailyIncome })}
                         </Text>
                       </View>
