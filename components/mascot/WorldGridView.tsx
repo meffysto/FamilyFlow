@@ -5,7 +5,7 @@
  * Remplace FarmPlots avec un systeme extensible.
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Image, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -15,6 +15,7 @@ import Animated, {
   withTiming,
   withSpring,
   Easing,
+  useReducedMotion,
 } from 'react-native-reanimated';
 import {
   WORLD_GRID,
@@ -53,6 +54,16 @@ function CropCell({ cell, crop, cropDef, isMature, containerWidth, containerHeig
   const growScaleX = useSharedValue(1);
   const growScaleY = useSharedValue(1);
   const prevStage = React.useRef(crop?.currentStage ?? -1);
+
+  // Frame swap animation (VIS-02) — balancement doux ~800ms
+  const reducedMotion = useReducedMotion();
+  const [frameIdx, setFrameIdx] = useState(0);
+
+  useEffect(() => {
+    if (reducedMotion || !crop) return;
+    const timer = setInterval(() => setFrameIdx(i => 1 - i), 800);
+    return () => clearInterval(timer);
+  }, [reducedMotion, crop?.cropId]);
 
   // Pulse mature
   useEffect(() => {
@@ -112,14 +123,18 @@ function CropCell({ cell, crop, cropDef, isMature, containerWidth, containerHeig
 
         {crop && cropDef ? (
           <View style={styles.cropContainer}>
-            {CROP_SPRITES[crop.cropId]?.[crop.currentStage] ? (
-              <Image
-                source={CROP_SPRITES[crop.cropId][crop.currentStage]}
-                style={styles.cropSprite as any}
-              />
-            ) : (
-              <Text style={styles.cropEmoji}>{cropDef.emoji}</Text>
-            )}
+            {(() => {
+              const frames = CROP_SPRITES[crop.cropId]?.[crop.currentStage];
+              const spriteSource = frames ? frames[frameIdx] : null;
+              return spriteSource ? (
+                <Image
+                  source={spriteSource}
+                  style={styles.cropSprite as any}
+                />
+              ) : (
+                <Text style={styles.cropEmoji}>{cropDef.emoji}</Text>
+              );
+            })()}
             {/* Badge saisonnier */}
             {hasCropSeasonalBonus(crop.cropId) && crop.currentStage < 4 && (
               <Text style={styles.seasonBadge}>☀️x2</Text>

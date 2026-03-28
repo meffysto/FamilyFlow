@@ -89,7 +89,7 @@ function FarmPlot({ pos, crop, cropDef, isMature, containerWidth, containerHeigh
           <View style={styles.cropContainer}>
             {CROP_SPRITES[crop.cropId]?.[crop.currentStage] ? (
               <Image
-                source={CROP_SPRITES[crop.cropId][crop.currentStage]}
+                source={CROP_SPRITES[crop.cropId][crop.currentStage][0]}
                 style={styles.cropSprite as any}
               />
             ) : (
