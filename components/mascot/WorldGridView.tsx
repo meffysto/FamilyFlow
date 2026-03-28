@@ -216,7 +216,7 @@ function BuildingCell({ cell, placedBuilding, pendingCount, containerWidth, cont
             )}
           </>
         ) : (
-          <Text style={styles.emptyBuildingPlus}>🏗️</Text>
+          <Text style={styles.emptyBuildingPlus}>{'⚒'}</Text>
         )}
       </TouchableOpacity>
     </Animated.View>
@@ -373,7 +373,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   emptyBuildingPlus: {
-    fontSize: 24,
+    fontSize: 18,
     textAlign: 'center',
+    opacity: 0.7,
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 1,
   },
 });

@@ -44,7 +44,6 @@ export const WORLD_GRID: WorldCell[] = [
   // cols 2-3, row 1 = ARBRE
   { id: 'c6',  col: 4, row: 1, x: 0.75, y: 0.35, cellType: 'crop',     unlockOrder: 7,  size: 'small' },
   { id: 'c7',  col: 5, row: 1, x: 0.90, y: 0.32, cellType: 'crop',     unlockOrder: 3,  size: 'small' },
-  { id: 'b2',  col: 5, row: 1, x: 0.90, y: 0.32, cellType: 'building', unlockOrder: 19, size: 'large' },
 
   // Row 2 — milieu bas (arbre au centre)
   { id: 'c8',  col: 0, row: 2, x: 0.10, y: 0.58, cellType: 'crop',     unlockOrder: 10, size: 'small' },
