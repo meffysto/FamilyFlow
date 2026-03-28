@@ -23,7 +23,7 @@ import {
   type WorldCell,
 } from '../../lib/mascot/world-grid';
 import { type PlantedCrop, type TreeStage, CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
-import { parseCrops } from '../../lib/mascot/farm-engine';
+import { parseCrops, hasCropSeasonalBonus } from '../../lib/mascot/farm-engine';
 import { CROP_SPRITES } from '../../lib/mascot/crop-sprites';
 
 interface WorldGridViewProps {
@@ -90,6 +90,10 @@ function CropCell({ cell, crop, cropDef, isMature, containerWidth, containerHeig
               />
             ) : (
               <Text style={styles.cropEmoji}>{cropDef.emoji}</Text>
+            )}
+            {/* Badge saisonnier */}
+            {hasCropSeasonalBonus(crop.cropId) && crop.currentStage < 4 && (
+              <Text style={styles.seasonBadge}>☀️x2</Text>
             )}
             <View style={styles.stageRow}>
               {Array.from({ length: 4 }).map((_, i) => (
@@ -244,6 +248,7 @@ const styles = StyleSheet.create({
   cropContainer: { alignItems: 'center', justifyContent: 'center' },
   cropSprite: { width: 36, height: 44 },
   cropEmoji: { fontSize: 24, textAlign: 'center' },
+  seasonBadge: { fontSize: 8, position: 'absolute', top: -2, right: -4 },
   stageRow: { flexDirection: 'row', gap: 3, marginTop: 2 },
   stageDot: { width: 5, height: 5, borderRadius: 3 },
   stageDotFilled: { backgroundColor: '#4ADE80' },

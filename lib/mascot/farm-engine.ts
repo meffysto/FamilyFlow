@@ -3,8 +3,25 @@
 // ─────────────────────────────────────────────
 
 import { type TreeStage, type PlantedCrop, type CropDefinition, CROP_CATALOG, PLOTS_BY_TREE_STAGE } from './types';
+import { getCurrentSeason, type Season } from './seasons';
 
 const MAX_CROP_STAGE = 4;
+
+/** Bonus saisonnier : certaines cultures poussent plus vite selon la saison.
+ * Retourne le nombre de points bonus (0 = pas de bonus, 1 = double avancement).
+ */
+export const SEASONAL_CROP_BONUS: Record<Season, string[]> = {
+  printemps: ['carrot', 'potato', 'cabbage', 'beetroot'],  // legumes de printemps
+  ete:       ['tomato', 'cucumber', 'corn', 'strawberry'],  // fruits d'ete
+  automne:   ['pumpkin', 'wheat', 'beetroot'],               // recoltes d'automne
+  hiver:     [],                                              // pas de bonus en hiver
+};
+
+/** Verifie si une culture a un bonus saisonnier actif */
+export function hasCropSeasonalBonus(cropId: string): boolean {
+  const season = getCurrentSeason();
+  return SEASONAL_CROP_BONUS[season]?.includes(cropId) ?? false;
+}
 
 /** Nombre de parcelles deblocables pour un stade d'arbre */
 export function getUnlockedPlotCount(treeStage: TreeStage): number {
@@ -57,7 +74,9 @@ export function advanceFarmCrops(
   const cropDef = CROP_CATALOG.find(c => c.id === target.cropId);
   if (!cropDef) return { crops, matured: [] };
 
-  target.tasksCompleted += 1;
+  // Bonus saisonnier : +2 au lieu de +1 si la culture est en saison
+  const seasonBonus = hasCropSeasonalBonus(target.cropId) ? 2 : 1;
+  target.tasksCompleted += seasonBonus;
   const matured: PlantedCrop[] = [];
 
   // Avancer d'un stade si assez de taches

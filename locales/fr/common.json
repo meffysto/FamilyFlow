@@ -3895,6 +3895,19 @@
       "buy": "Construire",
       "dailyIncome": "+{{amount}} 🍃/jour",
       "owned": "Construit"
-    }
+    },
+    "weeklyGoal": {
+      "title": "Objectif de la semaine",
+      "progress": "Encore {{remaining}} taches pour gagner {{reward}} 🍃",
+      "complete": "Bravo ! +{{reward}} 🍃 gagne !"
+    },
+    "seasonal": {
+      "bonus": "☀️ En saison — pousse x2 !",
+      "spring": "Cultures de printemps",
+      "summer": "Cultures d'ete",
+      "autumn": "Cultures d'automne",
+      "winter": "Pas de bonus en hiver"
+    },
+    "seedDrop": "Graines gratuites !"
   }
 }

@@ -77,6 +77,8 @@ export const REWARDS: Record<LootRarity, RewardDefinition[]> = {
     { emoji: '🦋', reward: 'Badge Papillon', bonusPoints: 0, rewardType: 'badge' },
     { emoji: '🍀', reward: 'Badge Trèfle Chanceux', bonusPoints: 0, rewardType: 'badge' },
     { emoji: '🎈', reward: 'Badge Ballon Festif', bonusPoints: 0, rewardType: 'badge' },
+    { emoji: '🥕', reward: 'Graines de carotte gratuites !', bonusPoints: 0, rewardType: 'farm_seed', mascotItemId: 'carrot' },
+    { emoji: '🥔', reward: 'Graines de patate gratuites !', bonusPoints: 0, rewardType: 'farm_seed', mascotItemId: 'potato' },
   ],
   rare: [
     { emoji: '💫', reward: '+15 points bonus', bonusPoints: 15, rewardType: 'points' },
@@ -87,6 +89,8 @@ export const REWARDS: Record<LootRarity, RewardDefinition[]> = {
     { emoji: '🦋', reward: 'Papillons pour ton arbre', bonusPoints: 0, rewardType: 'mascot_hab', mascotItemId: 'papillons' },
     { emoji: '🎄', reward: 'Guirlandes pour ton arbre', bonusPoints: 0, rewardType: 'mascot_deco', mascotItemId: 'guirlandes' },
     { emoji: '🐦', reward: 'Oiseau pour ton arbre', bonusPoints: 0, rewardType: 'mascot_hab', mascotItemId: 'oiseau' },
+    { emoji: '🌾', reward: 'Graines de blé gratuites !', bonusPoints: 0, rewardType: 'farm_seed', mascotItemId: 'wheat' },
+    { emoji: '🍅', reward: 'Graines de tomate gratuites !', bonusPoints: 0, rewardType: 'farm_seed', mascotItemId: 'tomato' },
     { emoji: '🧹', reward: 'Échange une tâche avec quelqu\'un', bonusPoints: 0, rewardType: 'reward' },
     { emoji: '🎮', reward: '+1h de jeux vidéo', bonusPoints: 0, requiresParent: true, rewardType: 'reward' },
     { emoji: '🦄', reward: 'Badge Licorne Rare', bonusPoints: 0, rewardType: 'badge' },

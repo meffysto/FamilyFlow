@@ -42,6 +42,7 @@ import { SpeciesPicker } from '../../components/mascot/SpeciesPicker';
 import { TreeShop } from '../../components/mascot/TreeShop';
 import { PixelDiorama, PIXEL_GROUND, PIXEL_GROUND_DARK } from '../../components/mascot/PixelDiorama';
 import { WorldGridView, FarmStats } from '../../components/mascot/WorldGridView';
+import { WeeklyGoal, countWeeklyTasks } from '../../components/mascot/WeeklyGoal';
 import { useFarm } from '../../hooks/useFarm';
 import { type PlantedCrop, CROP_CATALOG } from '../../lib/mascot/types';
 import { calculateLevel, xpForLevel, pointsToNextLevel, getLevelTier } from '../../lib/gamification';
@@ -89,7 +90,7 @@ export default function TreeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { primary, tint, colors, isDark } = useThemeColors();
-  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem } = useVault();
+  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem, gamiData } = useVault();
   const { showToast } = useToast();
 
   // Profil affiché : celui passé en param ou le profil actif
@@ -548,6 +549,15 @@ export default function TreeScreen() {
 
         {/* Compteur ferme */}
         <FarmStats farmCropsCSV={profile.farmCrops ?? ''} colors={colors} t={t} />
+
+        {/* Objectif hebdomadaire */}
+        {gamiData && profile && (
+          <WeeklyGoal
+            weeklyTaskCount={countWeeklyTasks(gamiData.history ?? [], profile.id)}
+            colors={colors}
+            t={t}
+          />
+        )}
 
         {/* Info profil + stade */}
         <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.infoCard}>

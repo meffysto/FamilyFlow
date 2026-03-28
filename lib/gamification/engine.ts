@@ -368,6 +368,12 @@ export function openLootBox(
       }
       break;
     }
+    case 'farm_seed': {
+      // Graines gratuites : planter directement sur la premiere parcelle vide
+      // Le handler dans l'UI se chargera de planter (via le toast + callback)
+      // On stocke juste le cropId dans le box pour que l'UI sache quoi planter
+      break;
+    }
     // 'points', 'badge', 'reward' don't create active rewards
     default:
       break;

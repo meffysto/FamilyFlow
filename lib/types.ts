@@ -295,7 +295,8 @@ export type RewardType =
   | 'family_bonus'
   | 'double_loot'
   | 'mascot_deco'
-  | 'mascot_hab';
+  | 'mascot_hab'
+  | 'farm_seed';
 
 export interface ActiveReward {
   id: string;

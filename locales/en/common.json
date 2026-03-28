@@ -3895,6 +3895,19 @@
       "buy": "Build",
       "dailyIncome": "+{{amount}} 🍃/day",
       "owned": "Built"
-    }
+    },
+    "weeklyGoal": {
+      "title": "Weekly Goal",
+      "progress": "{{remaining}} more tasks to earn {{reward}} 🍃",
+      "complete": "Well done! +{{reward}} 🍃 earned!"
+    },
+    "seasonal": {
+      "bonus": "☀️ In season — grows x2!",
+      "spring": "Spring crops",
+      "summer": "Summer crops",
+      "autumn": "Autumn crops",
+      "winter": "No bonus in winter"
+    },
+    "seedDrop": "Free seeds!"
   }
 }
