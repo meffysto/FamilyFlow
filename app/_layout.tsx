@@ -9,6 +9,15 @@
  * expo-router puisse appliquer l'initialState des deep links (widget).
  */
 
+import * as Sentry from '@sentry/react-native';
+
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  tracesSampleRate: 0.2,
+  enabled: !__DEV__,
+  environment: __DEV__ ? 'development' : 'production',
+});
+
 import React, { useEffect, useState } from 'react';
 import { Redirect, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -99,7 +108,7 @@ function VaultRedirect({ langReady }: { langReady: boolean }) {
   return null;
 }
 
-export default function RootLayout() {
+function RootLayout() {
   const [langReady, setLangReady] = useState(false);
   const systemScheme = useColorScheme();
 
@@ -150,6 +159,8 @@ export default function RootLayout() {
     </AppErrorBoundary>
   );
 }
+
+export default Sentry.wrap(RootLayout);
 
 const styles = StyleSheet.create({
   loading: {
