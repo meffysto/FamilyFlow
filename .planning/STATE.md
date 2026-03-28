@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: "Completed 03-01: Particules Saisonnières Diorama"
-last_updated: "2026-03-28T20:09:12.525Z"
-last_activity: 2026-03-28
+status: executing
+stopped_at: "Checkpoint 02-03: Awaiting visual dark mode verification"
+last_updated: "2026-03-28T20:04:55.606Z"
+last_activity: 2026-03-28 -- Phase 03 execution started
 progress:
   total_phases: 4
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 1
+  completed_phases: 2
+  total_plans: 8
+  completed_plans: 7
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 06 — Ambiance + Retention
+**Current focus:** Phase 03 — Gamification
 
 ## Current Position
 
-Phase: 06
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-03-28
+Phase: 03 (Gamification) — EXECUTING
+Plan: 1 of 1
+Status: Executing Phase 03
+Last activity: 2026-03-28 -- Phase 03 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -54,7 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 06-ambiance-retention P02 | 8 | 2 tasks | 4 files |
 | Phase 06-ambiance-retention P01 | 3 | 2 tasks | 3 files |
-| Phase 03-gamification P01 | 10 | 2 tasks | 2 files |
+| Phase 02 P03 | 15 | 1 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -70,8 +70,7 @@ Recent decisions affecting current work:
 - [Phase 06]: StreakFlames tier calcule dynamiquement depuis STREAK_MILESTONES pour eviter valeurs hardcodees
 - [Phase 06-01]: Couleurs dorées (#FFD700) définies dans StyleSheet comme constantes cosmétiques, pas dans useThemeColors()
 - [Phase 06-01]: CSV backward-compatible sans migration : goldenFlag undefined === '1' est false
-- [Phase 03-01]: containerWidth=390 pour SeasonalParticles: cohérence avec AmbientParticles (même convention absoluteFill)
-- [Phase 03-01]: zIndex:4 pour particules saisonnières < zIndex:5 horaires — séparation visuelle claire
+- [Phase 02]: CropWhisper (composant standalone) appelle useThemeColors() directement plutôt que de recevoir colors en prop
 
 ### Roadmap Evolution
 
@@ -96,6 +95,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T20:09:12.522Z
-Stopped at: Completed 03-01: Particules Saisonnières Diorama
+Last session: 2026-03-28T19:40:46.812Z
+Stopped at: Checkpoint 02-03: Awaiting visual dark mode verification
 Resume file: None
