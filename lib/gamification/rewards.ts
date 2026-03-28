@@ -191,3 +191,44 @@ export const RARITY_EMOJIS: Record<LootRarity, string> = {
   légendaire: '🧡',
   mythique: '❤️',
 };
+
+// --- XP Budget Model -----------------------------------------------------------
+/**
+ * XP Budget Model
+ *
+ * Formule de niveau : xpForLevel(n) = 50n^2 + 50n
+ * Base XP par tache : POINTS_PER_TASK = 10
+ * Bonus streak : +5 (2j), +10 (7j), +15 (14j), +25 (30j)
+ *
+ * Scenario annee scolaire (baseline) :
+ *   3 taches/jour x 5 jours/semaine x 36 semaines = 540 taches/an
+ *
+ * Progression annuelle :
+ *   Sans streak  : ~5 400 XP -> Niveau ~10
+ *   Streak max   : ~18 900 XP -> Niveau ~19
+ *
+ * Regle pour nouvelles sources de recompense :
+ *   Exprimer en "equivalents taches" par rapport a POINTS_PER_TASK.
+ *   - Completion aventure quotidienne = 1 equivalent (10 pts)
+ *   - Chapitre saga = 3 equivalents (30 pts)
+ *   - Defi complete = configurable, defaut 50 pts (5 taches)
+ *
+ * Pacing loot box (enfant) :
+ *   Seuil 50 pts = 5 taches par box = ~108 boxes/an (sans streak)
+ *   Intentionnellement genereux pour les enfants.
+ *
+ * IMPORTANT: Ne PAS modifier xpForLevel() ni POINTS_PER_TASK sans migration.
+ * Les niveaux existants sont calcules en temps reel depuis les points bruts.
+ */
+export const XP_BUDGET = {
+  /** Taches estimees par jour (scenario baseline) */
+  tasksPerDayBudget: 3,
+  /** Jours par semaine (hors week-end) */
+  daysPerWeekBudget: 5,
+  /** Semaines dans une annee scolaire */
+  weeksPerYearBudget: 36,
+  /** XP annuel approximatif sans streak (3 * 5 * 36 * 10) */
+  baselineYearlyXP: 5400,
+  /** Fourchette de niveau cible apres 1 annee scolaire [min, max] */
+  targetLevelRange: [10, 19] as [number, number],
+} as const;
