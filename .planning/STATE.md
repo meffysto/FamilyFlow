@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
-status: verifying
+status: executing
 stopped_at: Completed 06-02-PLAN.md tasks 1-2, checkpoint task 3 pending human-verify
-last_updated: "2026-03-28T22:53:30.808Z"
+last_updated: "2026-03-28T23:06:29.641Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 7
-  completed_plans: 6
+  total_plans: 5
+  completed_plans: 5
   percent: 0
 ---
 
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 
 ## Current Position
 
-Phase: 06 (batiments-productifs) — EXECUTING
-Plan: 1 of 2
+Phase: 7
+Plan: Not started
 Status: Executing Phase 06
-Last activity: 2026-03-28 -- Phase 06 execution started
+Last activity: 2026-03-28
 
 Progress: [░░░░░░░░░░] 0%
 
