@@ -390,96 +390,6 @@ const VACATION_TEMPLATE = `# Checklist Vacances
 - [ ] Déballer et ranger les valises
 `;
 
-// --- Migration ménage hebdo → tâches récurrentes (one-time, idempotente) ---
-const MENAGE_FILE = '02 - Maison/Ménage hebdo.md';
-const TACHES_RECURRENTES_FILE = '02 - Maison/Tâches récurrentes.md';
-
-const DAY_MAP: Record<string, number> = {
-  'lundi': 1, 'mardi': 2, 'mercredi': 3, 'jeudi': 4,
-  'vendredi': 5, 'samedi': 6, 'dimanche': 0,
-};
-
-/** Calcule la prochaine occurrence d'un jour de la semaine (jamais aujourd'hui) */
-function nextWeekday(targetDay: number): string {
-  const today = new Date();
-  const todayDay = today.getDay();
-  const diff = (targetDay - todayDay + 7) % 7 || 7;
-  const next = new Date(today);
-  next.setDate(today.getDate() + diff);
-  return format(next, 'yyyy-MM-dd');
-}
-
-async function migrateMenageToTasks(vault: VaultManager): Promise<{ migrated: number; skipped: number }> {
-  // Vérifier si le fichier ménage existe
-  if (!(await vault.exists(MENAGE_FILE))) {
-    return { migrated: 0, skipped: 0 };
-  }
-
-  // Vérifier idempotence : si la section existe déjà, on skip
-  let tachesContent = '';
-  try {
-    tachesContent = await vault.readFile(TACHES_RECURRENTES_FILE);
-  } catch {
-    // Le fichier n'existe pas encore, on le créera
-  }
-  if (tachesContent.includes('## Ménage')) {
-    return { migrated: 0, skipped: 0 };
-  }
-
-  // Lire et parser le fichier ménage
-  const menageContent = await vault.readFile(MENAGE_FILE);
-  const lines = menageContent.split('\n');
-
-  let migrated = 0;
-  let skipped = 0;
-  let currentDayNum: number | null = null;
-  const allTasks: string[] = [];
-
-  for (const line of lines) {
-    // Détecter les sections ## Lundi — ..., ## Mardi — ..., etc.
-    const sectionMatch = line.match(/^##\s+(\w+)/);
-    if (sectionMatch) {
-      const dayName = sectionMatch[1].toLowerCase();
-      if (dayName in DAY_MAP) {
-        currentDayNum = DAY_MAP[dayName];
-        continue;
-      }
-    }
-
-    // Détecter les tâches (cochées ou non)
-    const taskMatch = line.match(/^- \[[ xX]\]\s+(.+)/);
-    if (taskMatch && currentDayNum !== null) {
-      // Nettoyer : retirer ✅ et date de complétion
-      let taskText = taskMatch[1]
-        .replace(/\s*✅\s*\d{4}-\d{2}-\d{2}/, '')
-        .replace(/\s*✅/, '')
-        .trim();
-
-      if (!taskText) {
-        skipped++;
-        continue;
-      }
-
-      const nextDate = nextWeekday(currentDayNum);
-      allTasks.push(`- [ ] ${taskText} 🔁 every week 📅 ${nextDate}`);
-      migrated++;
-    }
-  }
-
-  if (migrated === 0) {
-    return { migrated: 0, skipped };
-  }
-
-  // Construire la nouvelle section (toutes les tâches sous ## Ménage)
-  const newSection = ['', '## Ménage', ...allTasks, ''];
-
-  // Ajouter à la fin du fichier tâches récurrentes
-  const updatedContent = tachesContent.trimEnd() + '\n' + newSection.join('\n');
-  await vault.writeFile(TACHES_RECURRENTES_FILE, updatedContent);
-
-  return { migrated, skipped };
-}
-
 export function useVaultInternal(): VaultState {
   const [vaultPath, setVaultPathState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -581,11 +491,6 @@ export function useVaultInternal(): VaultState {
     const debugErrors: string[] = [];
 
     try {
-      // Migration ménage → tâches récurrentes (one-time, idempotente)
-      try {
-        await migrateMenageToTasks(vault);
-      } catch { /* migration optionnelle, on ignore les erreurs */ }
-
       // Load profiles first (needed for dynamic task file paths)
       let familleContent = '';
       let gamiContent = '';

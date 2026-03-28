@@ -43,8 +43,6 @@ export interface JournalSummaryEntry {
 
 export interface VaultContext {
   tasks: Task[];
-  /** @deprecated Ménage tasks sont désormais dans tasks[] avec section contenant un jour de semaine */
-  menageTasks?: Task[];
   rdvs: RDV[];
   stock: StockItem[];
   meals: MealItem[];
@@ -207,9 +205,9 @@ function buildVaultSummary(ctx: VaultContext): VaultSummary {
       pending: ctx.tasks.filter((t) => !t.completed).length,
     },
     menage: {
-      pending: (ctx.menageTasks ?? ctx.tasks.filter(t =>
-        t.section != null && t.section.toLowerCase().includes('ménage')
-      )).filter((t) => !t.completed).length,
+      pending: ctx.tasks.filter(t =>
+        t.section != null && t.section.toLowerCase().includes('ménage') && !t.completed
+      ).length,
     },
     rdvs: {
       upcoming: ctx.rdvs
