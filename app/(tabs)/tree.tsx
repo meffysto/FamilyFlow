@@ -42,6 +42,8 @@ import { SpeciesPicker } from '../../components/mascot/SpeciesPicker';
 import { TreeShop } from '../../components/mascot/TreeShop';
 import { PixelDiorama, PIXEL_GROUND, PIXEL_GROUND_DARK } from '../../components/mascot/PixelDiorama';
 import { FarmPlots } from '../../components/mascot/FarmPlots';
+import { useFarm } from '../../hooks/useFarm';
+import { type PlantedCrop, CROP_CATALOG } from '../../lib/mascot/types';
 import { calculateLevel, xpForLevel, pointsToNextLevel, getLevelTier } from '../../lib/gamification';
 import {
   getTreeStage,
@@ -104,6 +106,11 @@ export default function TreeScreen() {
   const [showShop, setShowShop] = useState(false);
   const [placingItem, setPlacingItem] = useState<string | null>(null);
   const [showItemPicker, setShowItemPicker] = useState(false);
+
+  // Ferme
+  const { plant, harvest } = useFarm();
+  const [showSeedPicker, setShowSeedPicker] = useState(false);
+  const [selectedPlotIndex, setSelectedPlotIndex] = useState<number | null>(null);
 
   // Saga active — pour bandeau + élément visuel
   const [sagaProgress, setSagaProgress] = useState<SagaProgress | null>(null);
@@ -233,6 +240,37 @@ export default function TreeScreen() {
     }
   }, [placingItem, profile, placeMascotItem, showToast, t]);
 
+  /** Tap sur une parcelle de ferme */
+  const handlePlotPress = useCallback((plotIndex: number, crop: PlantedCrop | null) => {
+    if (!profile || !isOwnTree) return;
+    if (crop && crop.currentStage >= 4) {
+      // Recolter
+      harvest(profile.id, plotIndex).then((reward) => {
+        if (reward > 0) {
+          showToast(`+${reward} 🍃`);
+        }
+      });
+    } else if (!crop) {
+      // Ouvrir le picker de graines
+      setSelectedPlotIndex(plotIndex);
+      setShowSeedPicker(true);
+    }
+  }, [profile, isOwnTree, harvest, showToast]);
+
+  /** Planter une graine sur la parcelle selectionnee */
+  const handleSeedSelect = useCallback(async (cropId: string) => {
+    if (!profile || selectedPlotIndex === null) return;
+    try {
+      await plant(profile.id, selectedPlotIndex, cropId);
+      const cropDef = CROP_CATALOG.find(c => c.id === cropId);
+      showToast(`${cropDef?.emoji ?? '🌱'} Plante !`);
+    } catch {
+      showToast(t('common.error'), 'error');
+    }
+    setShowSeedPicker(false);
+    setSelectedPlotIndex(null);
+  }, [profile, selectedPlotIndex, plant, showToast, t]);
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
       <ScrollView
@@ -348,6 +386,58 @@ export default function TreeScreen() {
           </TouchableOpacity>
         </Modal>
 
+        {/* Modal choix de graine */}
+        <Modal
+          visible={showSeedPicker}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowSeedPicker(false)}
+        >
+          <TouchableOpacity
+            style={styles.pickerOverlay}
+            activeOpacity={1}
+            onPress={() => setShowSeedPicker(false)}
+          >
+            <View style={[styles.pickerCard, { backgroundColor: colors.card }, Shadows.lg]}>
+              <Text style={[styles.pickerTitle, { color: colors.text }]}>
+                Choisir une graine
+              </Text>
+              <View style={styles.pickerGrid}>
+                {CROP_CATALOG
+                  .filter(c => {
+                    const stageOrder = ['graine', 'pousse', 'arbuste', 'arbre', 'majestueux', 'legendaire'];
+                    return stageOrder.indexOf(stageInfo.stage) >= stageOrder.indexOf(c.minTreeStage);
+                  })
+                  .map(crop => (
+                  <TouchableOpacity
+                    key={crop.id}
+                    onPress={() => handleSeedSelect(crop.id)}
+                    activeOpacity={0.7}
+                    style={[
+                      styles.pickerItem,
+                      { backgroundColor: colors.cardAlt, borderColor: colors.borderLight },
+                    ]}
+                  >
+                    <Text style={styles.pickerEmoji}>{crop.emoji}</Text>
+                    <Text style={[{ color: colors.textSub, fontSize: 10, marginTop: 2 }]}>
+                      {crop.cost} 🍃
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowSeedPicker(false)}
+                style={[styles.pickerCloseBtn, { borderColor: colors.borderLight }]}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.pickerCloseText, { color: colors.textSub }]}>
+                  Annuler
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </Modal>
+
         {/* Arbre principal — diorama saisonnier immersif (full-bleed) */}
         <Animated.View entering={FadeIn.duration(600)} style={styles.treeContainer}>
           <TouchableOpacity
@@ -386,6 +476,7 @@ export default function TreeScreen() {
               farmCropsCSV={profile.farmCrops ?? ''}
               containerWidth={SCREEN_W}
               containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
+              onPlotPress={isOwnTree ? handlePlotPress : undefined}
             />
 
             {/* Couche 4 : Arbre pixel au premier plan */}

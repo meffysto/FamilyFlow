@@ -10,6 +10,7 @@ import { View, Image, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { FARM_GRID, PLOT_SIZE } from '../../lib/mascot/farm-grid';
 import { type PlantedCrop, type TreeStage, PLOTS_BY_TREE_STAGE, CROP_CATALOG } from '../../lib/mascot/types';
 import { parseCrops } from '../../lib/mascot/farm-engine';
+import { CROP_SPRITES } from '../../lib/mascot/crop-sprites';
 
 interface FarmPlotsProps {
   treeStage: TreeStage;
@@ -49,9 +50,16 @@ export function FarmPlots({ treeStage, farmCropsCSV, containerWidth, containerHe
             <Image source={DIRT_SPRITE} style={styles.dirtBg as any} />
 
             {crop && cropDef ? (
-              // Culture plantee — emoji au stade actuel
+              // Culture plantee — sprite pixel au stade actuel
               <View style={[styles.cropContainer, isMature && styles.matureCrop]}>
-                <Text style={styles.cropEmoji}>{cropDef.emoji}</Text>
+                {CROP_SPRITES[crop.cropId]?.[crop.currentStage] ? (
+                  <Image
+                    source={CROP_SPRITES[crop.cropId][crop.currentStage]}
+                    style={styles.cropSprite as any}
+                  />
+                ) : (
+                  <Text style={styles.cropEmoji}>{cropDef.emoji}</Text>
+                )}
                 {/* Indicateur de stade : petits points */}
                 <View style={styles.stageRow}>
                   {Array.from({ length: 5 }).map((_, i) => (
@@ -97,6 +105,10 @@ const styles = StyleSheet.create({
   },
   matureCrop: {
     // Lueur subtile quand la culture est prete
+  },
+  cropSprite: {
+    width: 32,
+    height: 40,
   },
   cropEmoji: {
     fontSize: 22,
