@@ -324,29 +324,52 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
           </View>
         )}
         {/* Animaux pixel animés (cycle idle natif RN, hors SVG) */}
-        {inhabitants.length > 0 && animate && (
-          <View style={[StyleSheet.absoluteFill, { zIndex: 3 }]} pointerEvents="none">
-            {inhabitants.map((id) => {
-              const frames = ANIMAL_IDLE_FRAMES[id];
-              if (!frames) return null;
-              const slot = HAB_SLOTS[id];
-              if (!slot) return null;
-              const pos = getItemPosition(species, stageIdx, slot);
-              const s = pos.fontSize * 1.5;
-              const px = (pos.x / VIEWBOX_W) * size;
-              const py = (pos.y / VIEWBOX_H) * imgHeight;
-              return (
-                <AnimatedAnimal
-                  key={id}
-                  frames={frames}
-                  x={px - s / 2}
-                  y={py - s / 2}
-                  size={s}
-                />
-              );
-            })}
-          </View>
-        )}
+        {animate && (() => {
+          // Collecter tous les animaux pixel : depuis inhabitants (previewMode) + depuis placements (slots)
+          const animalIds: { id: string; fromSlot?: string }[] = [];
+          // Animaux dans la liste des habitants (preview boutique)
+          for (const id of inhabitants) {
+            if (ANIMAL_IDLE_FRAMES[id]) animalIds.push({ id });
+          }
+          // Animaux placés sur des slots de scène
+          for (const [slotId, itemId] of Object.entries(placements)) {
+            if (ANIMAL_IDLE_FRAMES[itemId]) animalIds.push({ id: itemId, fromSlot: slotId });
+          }
+          if (animalIds.length === 0) return null;
+          return (
+            <View style={[StyleSheet.absoluteFill, { zIndex: 3 }]} pointerEvents="none">
+              {animalIds.map(({ id, fromSlot }) => {
+                const frames = ANIMAL_IDLE_FRAMES[id]!;
+                let px: number, py: number, s: number;
+                if (fromSlot) {
+                  // Placé sur un slot de scène
+                  const sceneSlot = SCENE_SLOTS.find(sl => sl.id === fromSlot);
+                  if (!sceneSlot) return null;
+                  s = 28;
+                  px = (sceneSlot.cx / VIEWBOX_W) * size;
+                  py = (sceneSlot.cy / VIEWBOX_H) * imgHeight;
+                } else {
+                  // Position par défaut (HAB_SLOTS)
+                  const slot = HAB_SLOTS[id];
+                  if (!slot) return null;
+                  const pos = getItemPosition(species, stageIdx, slot);
+                  s = pos.fontSize * 1.5;
+                  px = (pos.x / VIEWBOX_W) * size;
+                  py = (pos.y / VIEWBOX_H) * imgHeight;
+                }
+                return (
+                  <AnimatedAnimal
+                    key={fromSlot ?? id}
+                    frames={frames}
+                    x={px - s / 2}
+                    y={py - s / 2}
+                    size={s}
+                  />
+                );
+              })}
+            </View>
+          );
+        })()}
       </View>
     );
   }
@@ -1667,6 +1690,8 @@ function PlacedItems({ placements }: { placements: Record<string, string> }) {
   return (
     <G>
       {Object.entries(placements).map(([slotId, itemId]) => {
+        // Les animaux pixel sont rendus par l'overlay natif animé
+        if (ANIMAL_IDLE_FRAMES[itemId]) return null;
         const slot = SCENE_SLOTS.find(s => s.id === slotId);
         const emoji = getItemEmoji(itemId);
         if (!slot || !emoji) return null;
@@ -1944,6 +1969,8 @@ function InhabitantOverlay({ inhabitantIds, stageIdx, previewMode = false, speci
   return (
     <G>
       {inhabitantIds.map((id) => {
+        // Les animaux pixel sont rendus par l'overlay natif animé (AnimatedAnimal), pas ici
+        if (ANIMAL_IDLE_FRAMES[id]) return null;
         const hab = INHABITANTS.find((h) => h.id === id);
         if (!hab) return null;
         const slot = HAB_SLOTS[id];
