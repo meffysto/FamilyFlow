@@ -41,6 +41,7 @@ import { TreeView } from '../../components/mascot/TreeView';
 import { SpeciesPicker } from '../../components/mascot/SpeciesPicker';
 import { TreeShop } from '../../components/mascot/TreeShop';
 import { PixelDiorama, PIXEL_GROUND, PIXEL_GROUND_DARK } from '../../components/mascot/PixelDiorama';
+import { FarmPlots } from '../../components/mascot/FarmPlots';
 import { calculateLevel, xpForLevel, pointsToNextLevel, getLevelTier } from '../../lib/gamification';
 import {
   getTreeStage,
@@ -379,7 +380,15 @@ export default function TreeScreen() {
               groundHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
             />
 
-            {/* Couche 3 : Arbre pixel au premier plan */}
+            {/* Couche 3 : Parcelles de culture */}
+            <FarmPlots
+              treeStage={stageInfo.stage}
+              farmCropsCSV={profile.farmCrops ?? ''}
+              containerWidth={SCREEN_W}
+              containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
+            />
+
+            {/* Couche 4 : Arbre pixel au premier plan */}
             <View style={styles.treeOverlay}>
               <TreeView
                 species={species}

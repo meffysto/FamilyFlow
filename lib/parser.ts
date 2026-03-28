@@ -565,6 +565,8 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
           if (slotId && itemId) mascotPlacements[slotId] = itemId;
         });
       }
+      // Cultures ferme
+      const farmCrops = currentProps.farm_crops ?? '';
       profiles.push({
         id: currentId,
         name: currentProps.name,
@@ -581,6 +583,7 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
         mascotDecorations,
         mascotInhabitants,
         mascotPlacements,
+        farmCrops,
       });
     }
   };

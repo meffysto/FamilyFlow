@@ -246,3 +246,45 @@ export const INHABITANTS: MascotInhabitant[] = [
   { id: 'esprit_eau',      labelKey: 'mascot.hab.espritEau',      emoji: '💧', cost: 0, rarity: 'épique',     minStage: 'pousse', sagaExclusive: true },
   { id: 'ancien_gardien',  labelKey: 'mascot.hab.ancienGardien',  emoji: '🌿', cost: 0, rarity: 'légendaire', minStage: 'pousse', sagaExclusive: true },
 ];
+
+// ─────────────────────────────────────────────
+// Ferme — Types & catalogue cultures
+// ─────────────────────────────────────────────
+
+/** Definition d'une culture (catalogue) */
+export interface CropDefinition {
+  id: string;
+  labelKey: string;
+  emoji: string;
+  tasksPerStage: number;   // taches pour avancer d'un stade de croissance
+  harvestReward: number;   // feuilles gagnees a la recolte
+  minTreeStage: TreeStage; // stade d'arbre minimum pour debloquer
+  cost: number;            // cout en feuilles pour les graines
+}
+
+/** Instance de culture plantee */
+export interface PlantedCrop {
+  cropId: string;
+  plotIndex: number;       // index de la parcelle (0-9)
+  currentStage: number;    // 0 = graine, 4 = pret a recolter
+  tasksCompleted: number;  // taches completees dans le stade actuel
+  plantedAt: string;       // YYYY-MM-DD
+}
+
+/** Nombre de parcelles deblocables par stade d'arbre */
+export const PLOTS_BY_TREE_STAGE: Record<TreeStage, number> = {
+  graine:     0,
+  pousse:     2,
+  arbuste:    4,
+  arbre:      6,
+  majestueux: 8,
+  legendaire: 10,
+};
+
+/** Catalogue des cultures disponibles (4 initiales) */
+export const CROP_CATALOG: CropDefinition[] = [
+  { id: 'carrot',     labelKey: 'farm.crop.carrot',     emoji: '🥕', tasksPerStage: 2, harvestReward: 30,  minTreeStage: 'pousse',  cost: 20 },
+  { id: 'wheat',      labelKey: 'farm.crop.wheat',      emoji: '🌾', tasksPerStage: 3, harvestReward: 50,  minTreeStage: 'pousse',  cost: 30 },
+  { id: 'tomato',     labelKey: 'farm.crop.tomato',     emoji: '🍅', tasksPerStage: 3, harvestReward: 60,  minTreeStage: 'arbuste', cost: 40 },
+  { id: 'strawberry', labelKey: 'farm.crop.strawberry', emoji: '🍓', tasksPerStage: 4, harvestReward: 80,  minTreeStage: 'arbre',   cost: 60 },
+];
