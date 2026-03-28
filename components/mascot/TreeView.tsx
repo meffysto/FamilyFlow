@@ -7,7 +7,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import Svg, {
   Path,
   Circle,
