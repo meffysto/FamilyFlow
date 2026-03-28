@@ -41,9 +41,29 @@ import { TEMPLATE_PACKS, TemplateContext } from './vault-templates';
 export class VaultManager {
   vaultPath: string;
 
+  /** Queue d'ecritures par fichier pour prevenir les races read-modify-write */
+  private _writeQueues = new Map<string, Promise<void>>();
+
   constructor(vaultPath: string) {
     // Normalize: remove trailing slash
     this.vaultPath = vaultPath.replace(/\/$/, '');
+  }
+
+  /**
+   * Serialise les ecritures sur un meme fichier.
+   * Chaque nouvelle operation attend la fin de la precedente sur le meme path.
+   * Le finally nettoie la Map quand la chaine est terminee.
+   */
+  private enqueueWrite(relativePath: string, fn: () => Promise<void>): Promise<void> {
+    const prev = this._writeQueues.get(relativePath) ?? Promise.resolve();
+    const next = prev.then(() => fn()).finally(() => {
+      // Nettoyer la Map seulement si c'est bien ce Promise qui est en tete
+      if (this._writeQueues.get(relativePath) === next) {
+        this._writeQueues.delete(relativePath);
+      }
+    });
+    this._writeQueues.set(relativePath, next);
+    return next;
   }
 
   /** Absolute URI for a relative vault path */
@@ -87,6 +107,11 @@ export class VaultManager {
 
   /** Write a file (creates if missing, overwrites if exists) */
   async writeFile(relativePath: string, content: string): Promise<void> {
+    return this.enqueueWrite(relativePath, () => this._writeFileDirect(relativePath, content));
+  }
+
+  /** Implementation directe de l'ecriture (sans queue) — utiliser uniquement via enqueueWrite */
+  private async _writeFileDirect(relativePath: string, content: string): Promise<void> {
     const uri = this.uri(relativePath);
     // On iOS, use NSFileCoordinator for file provider compatibility (Obsidian, iCloud…)
     // Falls back to expo-file-system if native module unavailable (Expo Go)
@@ -267,42 +292,44 @@ export class VaultManager {
     lineIndex: number,
     completed: boolean
   ): Promise<void> {
-    const content = await this.readFile(relativePath);
-    const lines = content.split('\n');
-    if (lineIndex >= lines.length) return;
+    return this.enqueueWrite(relativePath, async () => {
+      const content = await this.readFile(relativePath);
+      const lines = content.split('\n');
+      if (lineIndex >= lines.length) return;
 
-    const today = format(new Date(), 'yyyy-MM-dd');
-    let line = lines[lineIndex];
+      const today = format(new Date(), 'yyyy-MM-dd');
+      let line = lines[lineIndex];
 
-    if (completed) {
-      // Check if this is a recurring task
-      const recurrenceMatch = line.match(/🔁\s*(every\s+(?:\d+\s+)?(?:day|week|month)s?)/);
-      const dueDateMatch = line.match(/📅\s*(\d{4}-\d{2}-\d{2})/);
+      if (completed) {
+        // Check if this is a recurring task
+        const recurrenceMatch = line.match(/🔁\s*(every\s+(?:\d+\s+)?(?:day|week|month)s?)/);
+        const dueDateMatch = line.match(/📅\s*(\d{4}-\d{2}-\d{2})/);
 
-      if (recurrenceMatch && dueDateMatch) {
-        // Recurring task: advance the date, keep unchecked
-        const currentDate = dueDateMatch[1];
-        const recurrence = recurrenceMatch[1];
-        const newDate = nextOccurrence(currentDate, recurrence);
-        line = line.replace(/📅\s*\d{4}-\d{2}-\d{2}/, `📅 ${newDate}`);
-        // Ensure it stays unchecked (in case it was somehow checked)
-        line = line.replace(/- \[x\]/i, '- [ ]');
-        // Remove any completion date
-        line = line.replace(/\s*✅\s*\d{4}-\d{2}-\d{2}/, '');
-      } else {
-        // Non-recurring: mark completed
-        line = line.replace(/- \[ \]/, '- [x]');
-        if (!line.includes('✅')) {
-          line = line.trimEnd() + ` ✅ ${today}`;
+        if (recurrenceMatch && dueDateMatch) {
+          // Recurring task: advance the date, keep unchecked
+          const currentDate = dueDateMatch[1];
+          const recurrence = recurrenceMatch[1];
+          const newDate = nextOccurrence(currentDate, recurrence);
+          line = line.replace(/📅\s*\d{4}-\d{2}-\d{2}/, `📅 ${newDate}`);
+          // Ensure it stays unchecked (in case it was somehow checked)
+          line = line.replace(/- \[x\]/i, '- [ ]');
+          // Remove any completion date
+          line = line.replace(/\s*✅\s*\d{4}-\d{2}-\d{2}/, '');
+        } else {
+          // Non-recurring: mark completed
+          line = line.replace(/- \[ \]/, '- [x]');
+          if (!line.includes('✅')) {
+            line = line.trimEnd() + ` ✅ ${today}`;
+          }
         }
+      } else {
+        line = line.replace(/- \[x\]/i, '- [ ]');
+        line = line.replace(/\s*✅\s*\d{4}-\d{2}-\d{2}/, '');
       }
-    } else {
-      line = line.replace(/- \[x\]/i, '- [ ]');
-      line = line.replace(/\s*✅\s*\d{4}-\d{2}-\d{2}/, '');
-    }
 
-    lines[lineIndex] = line;
-    await this.writeFile(relativePath, lines.join('\n'));
+      lines[lineIndex] = line;
+      await this._writeFileDirect(relativePath, lines.join('\n'));
+    });
   }
 
   /**
@@ -314,44 +341,46 @@ export class VaultManager {
     section: string | null,
     taskText: string
   ): Promise<void> {
-    const content = await this.readFile(relativePath);
-    const lines = content.split('\n');
-    const taskLine = `- [ ] ${taskText}`;
+    return this.enqueueWrite(relativePath, async () => {
+      const content = await this.readFile(relativePath);
+      const lines = content.split('\n');
+      const taskLine = `- [ ] ${taskText}`;
 
-    if (!section) {
-      lines.push(taskLine);
-      await this.writeFile(relativePath, lines.join('\n'));
-      return;
-    }
-
-    let sectionStart = -1;
-    for (let i = 0; i < lines.length; i++) {
-      if (
-        (lines[i].startsWith('## ') || lines[i].startsWith('### ')) &&
-        lines[i].includes(section)
-      ) {
-        sectionStart = i;
-        break;
+      if (!section) {
+        lines.push(taskLine);
+        await this._writeFileDirect(relativePath, lines.join('\n'));
+        return;
       }
-    }
 
-    if (sectionStart === -1) {
-      // Section inexistante → la créer en fin de fichier
-      lines.push('', `## ${section}`, taskLine);
-      await this.writeFile(relativePath, lines.join('\n'));
-      return;
-    } else {
-      let insertAt = lines.length;
-      for (let i = sectionStart + 1; i < lines.length; i++) {
-        if (lines[i].startsWith('## ') || lines[i].startsWith('### ')) {
-          insertAt = i;
+      let sectionStart = -1;
+      for (let i = 0; i < lines.length; i++) {
+        if (
+          (lines[i].startsWith('## ') || lines[i].startsWith('### ')) &&
+          lines[i].includes(section)
+        ) {
+          sectionStart = i;
           break;
         }
       }
-      lines.splice(insertAt, 0, taskLine);
-    }
 
-    await this.writeFile(relativePath, lines.join('\n'));
+      if (sectionStart === -1) {
+        // Section inexistante → la créer en fin de fichier
+        lines.push('', `## ${section}`, taskLine);
+        await this._writeFileDirect(relativePath, lines.join('\n'));
+        return;
+      } else {
+        let insertAt = lines.length;
+        for (let i = sectionStart + 1; i < lines.length; i++) {
+          if (lines[i].startsWith('## ') || lines[i].startsWith('### ')) {
+            insertAt = i;
+            break;
+          }
+        }
+        lines.splice(insertAt, 0, taskLine);
+      }
+
+      await this._writeFileDirect(relativePath, lines.join('\n'));
+    });
   }
 
   /**
