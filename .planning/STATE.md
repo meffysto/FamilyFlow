@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: "Completed 06-01: Golden Crop Mutation"
-last_updated: "2026-03-28T18:12:44.798Z"
+stopped_at: "Checkpoint 02-03: Awaiting visual dark mode verification"
+last_updated: "2026-03-28T19:40:53.734Z"
 last_activity: 2026-03-28
 progress:
-  total_phases: 6
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_phases: 4
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
   percent: 0
 ---
 
@@ -54,6 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 06-ambiance-retention P02 | 8 | 2 tasks | 4 files |
 | Phase 06-ambiance-retention P01 | 3 | 2 tasks | 3 files |
+| Phase 02 P03 | 15 | 1 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,7 @@ Recent decisions affecting current work:
 - [Phase 06]: StreakFlames tier calcule dynamiquement depuis STREAK_MILESTONES pour eviter valeurs hardcodees
 - [Phase 06-01]: Couleurs dorées (#FFD700) définies dans StyleSheet comme constantes cosmétiques, pas dans useThemeColors()
 - [Phase 06-01]: CSV backward-compatible sans migration : goldenFlag undefined === '1' est false
+- [Phase 02]: CropWhisper (composant standalone) appelle useThemeColors() directement plutôt que de recevoir colors en prop
 
 ### Roadmap Evolution
 
@@ -93,6 +95,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T18:07:59.848Z
-Stopped at: Completed 06-01: Golden Crop Mutation
+Last session: 2026-03-28T19:40:46.812Z
+Stopped at: Checkpoint 02-03: Awaiting visual dark mode verification
 Resume file: None

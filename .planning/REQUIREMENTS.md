@@ -21,7 +21,7 @@ Requirements pour ce milestone. Chaque requirement est mappé à une phase du ro
 
 - [ ] **QUAL-01**: Suppression des fonctions dépréciées dans lib/telegram.ts (5 fonctions)
 - [ ] **QUAL-02**: Suppression de la propriété dépréciée menageTasks et du code de migration associé
-- [ ] **QUAL-03**: Remplacement des 228 couleurs hardcodées par tokens sémantiques via useThemeColors()
+- [x] **QUAL-03**: Remplacement des 228 couleurs hardcodées par tokens sémantiques via useThemeColors()
 - [ ] **QUAL-04**: Correction des 8 assertions `as any` sur les chemins de mutation dans useVault.ts
 - [ ] **QUAL-05**: Setup ESLint avec @typescript-eslint/no-explicit-any
 
@@ -100,7 +100,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | QUAL-04 | Phase 1 | Pending |
 | QUAL-05 | Phase 1 | Pending |
 | ARCH-01 | Phase 2 | Pending |
-| QUAL-03 | Phase 2 | Pending |
+| QUAL-03 | Phase 2 | Complete |
 | GAME-01 | Phase 2 | Pending |
 | GAME-02 | Phase 3 | Pending |
 | GAME-03 | Phase 3 | Pending |
