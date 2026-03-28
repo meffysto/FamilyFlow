@@ -87,7 +87,7 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
 
   // Trier : disponibles d'abord, puis verrouillés, puis achetés
   const sortedDecorations = useMemo(() => {
-    return [...DECORATIONS].sort((a, b) => {
+    return [...DECORATIONS].filter(d => !d.sagaExclusive).sort((a, b) => {
       const aOwned = ownedDecorations.includes(a.id);
       const bOwned = ownedDecorations.includes(b.id);
       if (aOwned !== bOwned) return aOwned ? 1 : -1;
@@ -101,7 +101,7 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
   }, [stageIdx, ownedDecorations]);
 
   const sortedInhabitants = useMemo(() => {
-    return [...INHABITANTS].sort((a, b) => {
+    return [...INHABITANTS].filter(h => !h.sagaExclusive).sort((a, b) => {
       const aOwned = ownedInhabitants.includes(a.id);
       const bOwned = ownedInhabitants.includes(b.id);
       if (aOwned !== bOwned) return aOwned ? 1 : -1;
