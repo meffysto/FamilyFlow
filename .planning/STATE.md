@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.1
-milestone_name: ferme-enrichie
-status: roadmap-created
-stopped_at: ""
-last_updated: "2026-03-28"
-last_activity: 2026-03-28
+milestone_name: Ferme Enrichie
+status: planning
+stopped_at: Phase 5 context gathered
+last_updated: "2026-03-28T20:39:32.653Z"
+last_activity: 2026-03-28 — Roadmap v1.1 créé (5 phases, 14 requirements)
 progress:
   total_phases: 5
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  completed_phases: 1
+  total_plans: 2
+  completed_plans: 2
   percent: 0
 ---
 
@@ -70,6 +70,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28
-Stopped at: Roadmap v1.1 créé — 5 phases (5-9), 14 requirements couverts
-Resume file: None
+Last session: 2026-03-28T20:39:32.650Z
+Stopped at: Phase 5 context gathered
+Resume file: .planning/phases/05-visuels-ferme/05-CONTEXT.md
