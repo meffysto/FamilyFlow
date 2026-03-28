@@ -61,7 +61,11 @@ Plans:
   1. L'interface ferme affiche des visuels saisonniers correspondant à la saison réelle sans action manuelle
   2. Une quête familiale peut être démarrée, progressée par n'importe quel membre, et complétée avec récompense distribuée
   3. Toutes les récompenses passent par constants/rewards.ts — aucune valeur XP inline
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Particules saisonnieres dans le diorama ferme (SeasonalParticles)
+- [ ] 03-02-PLAN.md — Quetes familiales cooperatives (types + logique + UI defis)
 
 ### Phase 4: Ambiance + Retention
 **Goal**: L'ecran arbre reagit au moment de la journee avec des particules ambiantes (rosee le matin, lucioles la nuit), les cultures ont une mutation doree rare (3%, recompense x5), et les flammes de streak recompensent visuellement l'engagement quotidien
@@ -88,5 +92,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Safety Net | 2/4 | In Progress|  |
 | 2. Write Safety + Couleurs | 0/3 | Not started | - |
-| 3. Gamification | 0/TBD | Not started | - |
+| 3. Gamification | 0/2 | Not started | - |
 | 4. Ambiance + Retention | 2/2 | Complete   | 2026-03-28 |
