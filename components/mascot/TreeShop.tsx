@@ -29,6 +29,8 @@ import {
   INHABITANTS,
   TREE_STAGES,
   ITEM_ILLUSTRATIONS,
+  BUILDING_CATALOG,
+  type BuildingDefinition,
   type MascotDecoration,
   type MascotInhabitant,
   type TreeSpecies,
@@ -40,7 +42,7 @@ import { Shadows } from '../../constants/shadows';
 
 // ── Types ──────────────────────────────────────
 
-type ShopTab = 'decorations' | 'inhabitants';
+type ShopTab = 'decorations' | 'inhabitants' | 'buildings';
 
 interface TreeShopProps {
   species: TreeSpecies;
@@ -48,7 +50,9 @@ interface TreeShopProps {
   coins: number;
   ownedDecorations: string[];
   ownedInhabitants: string[];
+  ownedBuildings?: string[];
   onBuy: (itemId: string, itemType: 'decoration' | 'inhabitant') => Promise<void>;
+  onBuyBuilding?: (buildingId: string) => Promise<void>;
   onClose: () => void;
 }
 
@@ -75,7 +79,7 @@ const PREVIEW_TREE_SIZE = Math.min(SCREEN_W * 0.55, 220);
 
 // ── Composant ──────────────────────────────────
 
-export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabitants, onBuy, onClose }: TreeShopProps) {
+export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabitants, ownedBuildings = [], onBuy, onBuyBuilding, onClose }: TreeShopProps) {
   const { t } = useTranslation();
   const tone = useTone();
   const { primary, tint, colors, isDark } = useThemeColors();
@@ -285,7 +289,7 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
                   ? `${t('mascot.shop.preview')} (${t(TREE_STAGES[minStageIdx].labelKey)})`
                   : t('mascot.shop.preview')}
               </Text>
-              <View style={[styles.detailPreview, { backgroundColor: isDark ? 'rgba(16,32,48,0.4)' : 'rgba(200,230,255,0.3)' }]}>
+              <View style={[styles.detailPreview, { backgroundColor: '#5A8C32' }]}>
                 <TreeView
                   species={species}
                   level={locked ? TREE_STAGES[minStageIdx].minLevel : level}
@@ -293,7 +297,7 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
                   interactive={false}
                   decorations={previewDecos}
                   inhabitants={previewHabs}
-                  previewMode
+                  placements={{}}
                 />
               </View>
 
@@ -385,6 +389,14 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
             {t('mascot.shop.inhabitants')}
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, tab === 'buildings' && { borderBottomColor: primary, borderBottomWidth: 2 }]}
+          onPress={() => setTab('buildings')}
+        >
+          <Text style={[styles.tabText, { color: tab === 'buildings' ? primary : colors.textMuted }]}>
+            {t('farm.building.buy') ?? 'Bâtiments'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* Liste */}
@@ -392,7 +404,79 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
       >
-        {items.map((item, idx) => renderItem(item, idx))}
+        {tab === 'buildings' ? (
+          BUILDING_CATALOG.map((building, idx) => {
+            const owned = ownedBuildings.includes(building.id);
+            const minStageIdx = TREE_STAGES.findIndex(s => s.stage === building.minTreeStage);
+            const locked = stageIdx < minStageIdx;
+            const canAfford = coins >= building.cost;
+
+            return (
+              <Animated.View key={building.id} entering={FadeInDown.delay(idx * 60).duration(300)}>
+                <TouchableOpacity
+                  style={[
+                    styles.itemCard,
+                    { backgroundColor: colors.card, borderColor: owned ? '#F59E0B' : colors.borderLight },
+                    owned && { borderWidth: 2, opacity: 0.7 },
+                    Shadows.sm,
+                  ]}
+                  onPress={() => {
+                    if (!owned && !locked && canAfford && onBuyBuilding) {
+                      setBuying(building.id);
+                      onBuyBuilding(building.id).then(() => {
+                        hapticsShopBuy();
+                        setBuying(null);
+                      }).catch(() => {
+                        hapticsShopError();
+                        setBuying(null);
+                      });
+                    }
+                  }}
+                  activeOpacity={0.7}
+                  disabled={owned || locked || !canAfford || buying === building.id}
+                >
+                  <View style={styles.itemContent}>
+                    <Text style={styles.itemEmoji}>{building.emoji}</Text>
+                    <View style={styles.itemInfo}>
+                      <Text style={[styles.itemName, { color: colors.text }]}>
+                        {t(building.labelKey)}
+                      </Text>
+                      <Text style={[styles.itemDesc, { color: colors.textMuted }]} numberOfLines={1}>
+                        {t(`${building.labelKey}_desc`)}
+                      </Text>
+                      <View style={styles.itemMeta}>
+                        <Text style={{ color: '#4ADE80', fontSize: 12, fontWeight: '600' }}>
+                          {t('farm.building.dailyIncome', { amount: building.dailyIncome })}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                  {owned ? (
+                    <View style={[styles.ownedBadge, { backgroundColor: tint }]}>
+                      <Text style={[styles.ownedText, { color: primary }]}>
+                        {t('farm.building.owned')}
+                      </Text>
+                    </View>
+                  ) : locked ? (
+                    <View style={[styles.lockedBadge, { backgroundColor: colors.cardAlt }]}>
+                      <Text style={[styles.lockedText, { color: colors.textMuted }]}>
+                        🔒 {t(TREE_STAGES[minStageIdx].labelKey)}
+                      </Text>
+                    </View>
+                  ) : (
+                    <View style={[styles.costBadge, { backgroundColor: canAfford ? tint : colors.cardAlt }]}>
+                      <Text style={[styles.costText, { color: canAfford ? primary : colors.textMuted }]}>
+                        {building.cost} 🍃
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </Animated.View>
+            );
+          })
+        ) : (
+          items.map((item, idx) => renderItem(item, idx))
+        )}
         <View style={{ height: 40 }} />
       </ScrollView>
 
