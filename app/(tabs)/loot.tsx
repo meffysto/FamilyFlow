@@ -192,7 +192,7 @@ export default function LootScreen() {
             onPress={() => setActiveTab('mes-recompenses')}
           >
             <Text style={[styles.tabText, { color: activeTab === 'mes-recompenses' ? primary : colors.textMuted }]}>
-              {'Mes récompenses'}{toUseLoots.length > 0 ? ` (${toUseLoots.length})` : ''}
+              {'Cadeaux'}{toUseLoots.length > 0 ? ` (${toUseLoots.length})` : ''}
             </Text>
           </TouchableOpacity>
         </View>
@@ -657,6 +657,7 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
+    textAlign: 'center',
   },
   section: { marginBottom: 16, gap: 8 },
   sectionTitle: {
@@ -775,7 +776,7 @@ const styles = StyleSheet.create({
   historyPoints: { alignItems: 'flex-end' },
   historyPts: { fontSize: FontSize.label, fontWeight: FontWeight.bold },
   historyRarity: { fontSize: FontSize.caption, fontWeight: FontWeight.bold },
-  // ─── Mes récompenses ─────────────────────────────────────────────────────
+  // ─── Cadeaux ────────────────────────────────────────────────────────────
   subTabRow: {
     flexDirection: 'row',
     marginBottom: 8,

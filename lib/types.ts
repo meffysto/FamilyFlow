@@ -184,7 +184,7 @@ export interface GamificationData {
   profiles: Profile[];
   history: GamificationEntry[];
   activeRewards: ActiveReward[];
-  usedLoots: UsedLoot[];
+  usedLoots?: UsedLoot[];
 }
 
 // ─── Recipes (Cooklang) ─────────────────────────────────────────────────────

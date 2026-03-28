@@ -970,8 +970,8 @@
     "title": "🎁 Rewards",
     "subtitle": "Complete tasks to earn rewards!",
     "tabs": {
-      "rewards": "🎁 Rewards",
-      "collection": "🏅 Collection"
+      "rewards": "Rewards",
+      "collection": "Collection"
     },
     "sections": {
       "rewardsToOpen": "Your rewards to open",

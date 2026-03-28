@@ -1,207 +1,289 @@
 # Codebase Structure
 
-**Analysis Date:** 2026-03-07
+**Analysis Date:** 2026-03-28
 
 ## Directory Layout
 
 ```
 family-vault/
-├── app/                     # Expo Router screens and layouts
-│   ├── _layout.tsx          # Root layout — vault check + notification setup
-│   ├── setup.tsx            # Onboarding wizard (5 steps)
-│   └── (tabs)/              # Tab-navigated screens
-│       ├── _layout.tsx      # Tab bar config + ThemeProvider + profile picker
-│       ├── index.tsx        # Dashboard (visible tab)
-│       ├── tasks.tsx        # Task management (visible tab)
-│       ├── journal.tsx      # Baby journal (visible tab)
-│       ├── photos.tsx       # Photo timeline (visible tab)
-│       ├── more.tsx         # More menu (visible tab)
-│       ├── meals.tsx        # Weekly meal planner (hidden tab)
-│       ├── loot.tsx         # Loot box opener (hidden tab)
-│       ├── rdv.tsx          # Appointments (hidden tab)
-│       ├── settings.tsx     # App settings (hidden tab)
-│       └── stock.tsx        # Baby stock levels (hidden tab)
-├── components/              # Reusable UI components
-│   ├── DashboardCard.tsx
-│   ├── FamilyLeaderboard.tsx
-│   ├── LootBoxOpener.tsx
-│   ├── MemoryEditor.tsx
-│   ├── NotificationEditor.tsx
-│   ├── NotificationSettings.tsx
-│   ├── RDVEditor.tsx
-│   ├── StockEditor.tsx
-│   ├── TaskCard.tsx
-│   └── VaultPicker.tsx
-├── contexts/                # React contexts
-│   └── ThemeContext.tsx     # Global theme colors (primary, tint)
-├── hooks/                   # React hooks (state + side effects)
-│   ├── useVault.ts          # Master state hook — all vault data + mutations
-│   └── useGamification.ts   # Points, loot boxes, streaks
-├── lib/                     # Core domain logic (pure functions + classes)
-│   ├── types.ts             # All TypeScript types/interfaces
-│   ├── vault.ts             # VaultManager class (filesystem I/O)
-│   ├── parser.ts            # Markdown parse + serialize functions
-│   ├── gamification.ts      # Points engine, loot system
-│   ├── notifications.ts     # Telegram notification dispatch + templates
-│   ├── telegram.ts          # Raw Telegram API client
-│   ├── scheduled-notifications.ts  # Local push notification scheduling
-│   ├── recurrence.ts        # Task recurrence date calculation
-│   └── journal-stats.ts     # Journal statistics helpers
-├── constants/               # Static config and lookup tables
-│   ├── themes.ts            # ProfileTheme definitions + getTheme()
-│   └── rewards.ts           # Loot reward drop tables
-├── assets/                  # Static assets bundled with the app
-├── docs/                    # Project documentation
-├── .planning/               # GSD planning files (not shipped)
-│   └── codebase/            # Codebase analysis documents
-├── index.ts                 # App entry point (re-exports expo-router/entry)
-├── app.json                 # Expo app config
-├── eas.json                 # EAS Build profiles
-├── tsconfig.json            # TypeScript compiler options
-├── babel.config.js          # Babel preset config
-├── expo-env.d.ts            # Expo environment type declarations
-├── serve-vault.py           # Dev utility: local HTTP server for vault sync
-└── package.json             # Dependencies and scripts
+├── app/                    # Expo Router screens (file-based routing)
+│   ├── _layout.tsx         # Root layout (provider hierarchy)
+│   ├── setup.tsx           # Onboarding wizard (47KB)
+│   ├── +native-intent.ts   # Deep link handler
+│   └── (tabs)/             # Tab navigator
+│       ├── _layout.tsx     # Tab bar config + profile picker
+│       ├── index.tsx       # Dashboard (55KB)
+│       ├── tasks.tsx       # Task management (45KB)
+│       ├── journal.tsx     # Baby journal (47KB)
+│       ├── calendar.tsx    # Calendar view
+│       ├── more.tsx        # Feature menu hub
+│       └── [19 hidden screens].tsx
+├── components/             # Reusable UI components
+│   ├── ui/                 # Design system primitives
+│   ├── dashboard/          # Dashboard section cards (34 components)
+│   ├── mascot/             # Tree mascot system (TreeView, shop, farm)
+│   ├── calendar/           # Calendar sub-components
+│   ├── charts/             # BarChart, DotChart
+│   ├── growth/             # Growth chart + legend
+│   ├── help/               # Coach marks + help modals
+│   ├── settings/           # Settings sub-screens (17 components)
+│   └── [48 standalone components]
+├── contexts/               # React Context providers
+│   ├── VaultContext.tsx     # Central data context (thin wrapper)
+│   ├── ThemeContext.tsx     # Colors, dark mode, profile themes
+│   ├── AuthContext.tsx      # Biometric + PIN authentication
+│   ├── AIContext.tsx        # Claude API integration
+│   ├── HelpContext.tsx      # Coach marks state
+│   ├── ParentalControlsContext.tsx
+│   └── ToastContext.tsx     # Toast notification system
+├── hooks/                  # Custom React hooks
+│   ├── useVault.ts         # Main state hook (140KB, ~80 actions)
+│   ├── useGamification.ts  # XP/level/reward logic
+│   ├── useFarm.ts          # Farm mini-game state
+│   ├── useCalendarEvents.ts
+│   ├── useStatsData.ts
+│   ├── useAnimConfig.ts
+│   ├── useResponsiveLayout.ts
+│   └── useRefresh.ts
+├── lib/                    # Core logic (no React)
+│   ├── parser.ts           # Markdown parser/serializer (76KB)
+│   ├── vault.ts            # VaultManager class (37KB)
+│   ├── types.ts            # All TypeScript interfaces (19KB)
+│   ├── ai-service.ts       # Claude API client (32KB)
+│   ├── gamification/       # XP engine, rewards, skill tree, seasonal
+│   ├── mascot/             # Tree mascot engine, sagas, farm, types
+│   ├── cooklang.ts         # .cook recipe parser (30KB)
+│   ├── search.ts           # Multi-type search (20KB)
+│   ├── insights.ts         # Deterministic suggestions (24KB)
+│   ├── notifications.ts    # Notification preferences
+│   ├── scheduled-notifications.ts  # Notification scheduling
+│   ├── calendar-aggregator.ts
+│   ├── recipe-import.ts    # Recipe import logic
+│   ├── telegram.ts         # Telegram bot integration
+│   ├── i18n.ts             # Internationalization setup
+│   ├── budget.ts           # Budget parsing
+│   ├── growth-data.ts      # WHO growth curves
+│   ├── __tests__/          # Unit tests (Jest)
+│   └── [20+ utility modules]
+├── constants/              # Static config and design tokens
+│   ├── colors.ts           # LightColors, DarkColors (semantic)
+│   ├── themes.ts           # 9 profile themes
+│   ├── typography.ts       # FontSize, FontWeight, LineHeight
+│   ├── spacing.ts          # Spacing (xxs-6xl), Radius (xs-full)
+│   ├── shadows.ts          # Shadow tokens (xs/sm/md/lg/xl)
+│   ├── stock.ts            # Stock categories/emplacements
+│   ├── defiTemplates.ts    # Challenge templates
+│   ├── secret-missions.ts  # Secret mission definitions
+│   └── nightMode.ts        # Night mode config
+├── modules/                # Native modules (Expo Modules)
+│   └── vault-access/       # iOS NSFileCoordinator bridge
+│       ├── ios/            # Swift implementation
+│       ├── android/        # Kotlin stub
+│       └── src/            # JS interface
+├── locales/                # Translation files
+│   ├── fr/                 # French (primary): common, gamification, help, insights, skills
+│   └── en/                 # English: common, gamification, help, insights, skills
+├── assets/                 # Static assets
+│   ├── garden/             # Garden/farm sprites
+│   ├── illustrations/      # App illustrations
+│   ├── items/              # Mascot items
+│   ├── trees/              # Tree species assets
+│   └── [app icons, splash]
+├── widgets/                # Home screen widgets
+│   ├── android/            # Android widget implementation
+│   └── MaJournee/          # iOS widget (Swift)
+├── plugins/                # Expo config plugins
+│   ├── remove-push-entitlement.js
+│   └── with-widget.js      # Widget build config
+├── scripts/                # Build/asset scripts
+│   ├── slice-crops.mjs     # Sprite slicing
+│   └── slice-sprites.mjs
+├── patches/                # patch-package patches
+├── ai/                     # AI research/prompts
+├── docs/                   # HTML previews and promo assets
+├── index.ts                # App entry (widget handler + expo-router)
+├── app.json                # Expo config
+├── package.json            # Dependencies
+├── tsconfig.json           # TypeScript config
+├── babel.config.js         # Babel config
+└── jest.config.js          # Jest config
 ```
 
 ## Directory Purposes
 
 **`app/`:**
-- Purpose: All routable screens, following Expo Router file-system convention
-- Contains: Layout files (`_layout.tsx`), screen files, route groups
-- Key files: `_layout.tsx` (root guard), `setup.tsx` (onboarding)
-
-**`app/(tabs)/`:**
-- Purpose: All tab-navigated screens; 5 visible + 5 hidden (navigated via `router.push`)
-- Contains: One `.tsx` file per screen
-- Key files: `_layout.tsx` (tab shell + ThemeProvider), `index.tsx` (dashboard), `settings.tsx` (all configuration)
+- Purpose: All screens via expo-router file-based routing
+- Contains: `.tsx` files where each file = one route
+- Key files: `_layout.tsx` (root providers), `(tabs)/_layout.tsx` (tab bar), `(tabs)/index.tsx` (dashboard)
+- Pattern: Screens are large self-contained files (20-55KB each) with inline styles
 
 **`components/`:**
-- Purpose: Reusable UI components shared across multiple screens
-- Contains: Editor modals, display cards, specialized pickers
-- Key files: `VaultPicker.tsx` (folder selection UI), `LootBoxOpener.tsx` (animated reward reveal), `TaskCard.tsx` (task row with swipe actions)
+- Purpose: Shared UI components used across screens
+- Contains: 48 standalone components + 8 subdirectories with grouped components
+- Key subdirs: `ui/` (design system), `dashboard/` (34 dashboard cards), `mascot/` (tree system), `settings/` (17 setting panels)
+- Barrel exports: `components/ui/index.ts`, `components/dashboard/index.ts`
 
 **`contexts/`:**
-- Purpose: React context providers for cross-cutting UI state
-- Contains: `ThemeContext.tsx` only
-- Key files: `ThemeContext.tsx` — exports `ThemeProvider` and `useThemeColors()`
+- Purpose: React Context providers for cross-cutting state
+- Contains: 7 providers, each managing one concern
+- Key file: `VaultContext.tsx` (thin wrapper around `useVaultInternal()`)
 
 **`hooks/`:**
-- Purpose: Stateful React hooks; bridge between screens and the library layer
-- Key files: `useVault.ts` — the single source of truth for all app data; exports `VaultState` interface and `VAULT_PATH_KEY` / `ACTIVE_PROFILE_KEY` constants
+- Purpose: Stateful logic encapsulated as custom hooks
+- Contains: 8 hooks
+- Key file: `useVault.ts` (140KB) -- the single source of truth for all vault data
 
 **`lib/`:**
-- Purpose: Framework-independent domain logic, usable outside React
-- Contains: Classes, pure functions, type definitions
-- Key files: `types.ts` (all interfaces — read first), `vault.ts` (VaultManager), `parser.ts` (all MD parsing/serialization)
+- Purpose: Pure logic with no React dependencies (parsers, engines, services)
+- Contains: 36 modules + 3 subdirectories
+- Key files: `parser.ts` (76KB, all Markdown parsing), `vault.ts` (37KB, file operations), `types.ts` (19KB, all interfaces)
 
 **`constants/`:**
-- Purpose: Static data that never changes at runtime
-- Key files: `themes.ts` — exports `THEMES`, `THEME_LIST`, `VALID_THEMES`, `getTheme()`; `rewards.ts` — loot drop rate tables
+- Purpose: Static configuration, design tokens, template data
+- Contains: 9 files of constants
+- Key files: `colors.ts` (semantic color tokens), `themes.ts` (profile themes), `spacing.ts` + `typography.ts` + `shadows.ts` (design tokens)
+
+**`modules/vault-access/`:**
+- Purpose: Native bridge for iOS NSFileCoordinator (iCloud file locking)
+- Contains: Swift iOS implementation, Kotlin Android stub, JS interface
+- Pattern: Expo Module API
 
 ## Key File Locations
 
 **Entry Points:**
-- `index.ts`: App entry, re-exports `expo-router/entry`
-- `app/_layout.tsx`: Root navigation guard and notification bootstrap
-- `app/setup.tsx`: First-run onboarding wizard
+- `index.ts`: App entry -- registers Android widget, imports expo-router
+- `app/_layout.tsx`: Root layout -- provider hierarchy, error boundary, auth lock
+- `app/(tabs)/_layout.tsx`: Tab navigator with 5 visible + 19 hidden screens
+- `app/setup.tsx`: Onboarding wizard (vault picker, profile creation)
 
 **Configuration:**
-- `app.json`: Expo app metadata, bundle ID, permissions declarations
-- `eas.json`: EAS Build profiles (development, preview, production)
-- `tsconfig.json`: TypeScript compiler options
-- `babel.config.js`: Babel preset (`babel-preset-expo`)
+- `app.json`: Expo config (plugins, permissions, scheme, icons)
+- `tsconfig.json`: TypeScript config
+- `babel.config.js`: Babel with expo preset
+- `jest.config.js`: Jest config with ts-jest
+- `eas.json`: EAS Build config
 
 **Core Logic:**
-- `lib/types.ts`: All domain types — start here when adding new data structures
-- `lib/vault.ts`: `VaultManager` class — all filesystem reads/writes go through here
-- `lib/parser.ts`: All Markdown parse and serialize functions
-- `lib/gamification.ts`: Points, loot, streaks logic
+- `hooks/useVault.ts`: ALL app state + 80+ mutation actions (140KB)
+- `lib/parser.ts`: Markdown/YAML bidirectional parsing (76KB)
+- `lib/vault.ts`: VaultManager file system abstraction (37KB)
+- `lib/types.ts`: All TypeScript type definitions (19KB)
+- `lib/gamification/engine.ts`: XP, levels, rewards engine
+- `lib/mascot/engine.ts`: Tree mascot logic
+- `lib/ai-service.ts`: Claude API direct fetch client
 
-**State:**
-- `hooks/useVault.ts`: Master hook — exposes `VaultState` interface with all data and mutation methods
-- `hooks/useGamification.ts`: Gamification actions (`completeTask`, `openLootBox`)
+**Design System:**
+- `constants/colors.ts`: `LightColors` and `DarkColors` objects
+- `constants/themes.ts`: 9 profile themes with primary/tint colors
+- `constants/typography.ts`: `FontSize`, `FontWeight`, `LineHeight`
+- `constants/spacing.ts`: `Spacing` (xxs through 6xl), `Radius` (xs through full)
+- `constants/shadows.ts`: `Shadow` tokens
+- `components/ui/index.ts`: Barrel export for UI primitives
 
-**Theming:**
-- `constants/themes.ts`: Theme definitions and `getTheme()` helper
-- `contexts/ThemeContext.tsx`: `useThemeColors()` — use this in every screen and component
+**Testing:**
+- `lib/__tests__/`: Unit tests
+- `jest.config.js`: Jest config
 
 ## Naming Conventions
 
 **Files:**
-- Screen files: `camelCase.tsx` (e.g. `tasks.tsx`, `journal.tsx`)
-- Component files: `PascalCase.tsx` (e.g. `TaskCard.tsx`, `RDVEditor.tsx`)
-- Hook files: `useCamelCase.ts` (e.g. `useVault.ts`, `useGamification.ts`)
-- Library files: `camelCase.ts` or `kebab-case.ts` (e.g. `vault.ts`, `scheduled-notifications.ts`)
-- Context files: `PascalCaseContext.tsx` (e.g. `ThemeContext.tsx`)
+- Screens: `kebab-case.tsx` (e.g., `night-mode.tsx`)
+- Components: `PascalCase.tsx` (e.g., `TaskCard.tsx`, `DashboardMeals.tsx`)
+- Hooks: `camelCase.ts` with `use` prefix (e.g., `useVault.ts`, `useFarm.ts`)
+- Lib modules: `kebab-case.ts` (e.g., `ai-service.ts`, `calendar-aggregator.ts`)
+- Constants: `kebab-case.ts` (e.g., `secret-missions.ts`)
+- Context providers: `PascalCase.tsx` with `Context` suffix (e.g., `ThemeContext.tsx`)
 
-**Exports:**
-- Screens: default export only (required by Expo Router)
-- Components: named exports (e.g. `export function TaskCard(...)`)
-- Hooks: named exports (e.g. `export function useVault()`)
-- Library functions: named exports
-- Types/interfaces: named exports from `lib/types.ts`
+**Directories:**
+- Lowercase with hyphens: `vault-access/`, `__tests__/`
+- Expo router groups: Parenthesized `(tabs)/`
+
+**Dashboard components:** Always prefixed `Dashboard` + feature name (e.g., `DashboardMeals.tsx`, `DashboardBudget.tsx`)
+
+**Settings components:** Always prefixed `Settings` + feature name (e.g., `SettingsAuth.tsx`, `SettingsProfiles.tsx`)
 
 ## Where to Add New Code
 
-**New screen:**
-- Add `.tsx` file to `app/(tabs)/`
-- Register in `app/(tabs)/_layout.tsx` — use `options={{ href: null }}` for hidden screens
-- Consume data via `useVault()` and colors via `useThemeColors()`
+**New Screen:**
+- Create `app/(tabs)/my-screen.tsx`
+- Add `<Tabs.Screen name="my-screen" options={{ href: null }} />` in `app/(tabs)/_layout.tsx` (hidden screen) or with tab icon (visible tab)
+- Access via `router.push('/my-screen')` from the `more.tsx` menu or other screens
 
-**New reusable UI component:**
-- Add `PascalCase.tsx` to `components/`
-- Always use `useThemeColors()` for accent colors — never hardcode hex values
+**New Vault Data Type:**
+1. Add TypeScript interface in `lib/types.ts`
+2. Add `parse*` and `serialize*` functions in `lib/parser.ts`
+3. Add state + actions in `hooks/useVault.ts` (inside `useVaultInternal()`)
+4. The `VaultState` interface in `hooks/useVault.ts` exposes it to all screens
 
-**New domain type:**
-- Add interface or type to `lib/types.ts` and export from the same file
+**New Dashboard Section:**
+- Create `components/dashboard/DashboardMyFeature.tsx`
+- Export from `components/dashboard/index.ts`
+- Add to dashboard render in `app/(tabs)/index.tsx`
+- Follow pattern: receive `DashboardSectionProps` (or `DashboardSectionWithTaskToggleProps`)
 
-**New vault data source (new `.md` file):**
-1. Add file path constant near top of `hooks/useVault.ts`
-2. Add parse call inside `loadVaultData()` in `hooks/useVault.ts`
-3. Add parser function in `lib/parser.ts`
-4. Add serializer function in `lib/parser.ts` if writes are needed
-5. Expose via `VaultState` interface in `hooks/useVault.ts`
+**New UI Component:**
+- Create `components/ui/MyComponent.tsx`
+- Export from `components/ui/index.ts`
+- Use `useThemeColors()` for all colors, `Spacing`/`FontSize` tokens for layout
 
-**New gamification logic:**
-- Add pure function to `lib/gamification.ts`
-- Wire into `hooks/useGamification.ts` if it requires async operations or state
+**New Settings Panel:**
+- Create `components/settings/SettingsMyFeature.tsx`
+- Import in `app/(tabs)/settings.tsx`
 
-**New Telegram notification type:**
-- Add `NotifEvent` variant to `lib/types.ts`
-- Add variable constants and context builder in `lib/notifications.ts`
-- Add default config entry in `getDefaultNotificationPrefs()` in `lib/notifications.ts`
+**New Constant/Config:**
+- Add file to `constants/` following `kebab-case.ts` convention
 
-**New profile theme:**
-- Add entry to `THEMES` record in `constants/themes.ts`
-- Add variant to `ProfileTheme` union type in `constants/themes.ts`
+**New Hook:**
+- Add to `hooks/` with `use` prefix
+- If it manages vault data, integrate into `useVaultInternal()` instead of creating a standalone hook
 
-**Shared date/string utilities:**
-- Date helpers: add to `lib/parser.ts` (already contains `formatDateForDisplay`)
-- Recurrence logic: add to `lib/recurrence.ts`
+**New Translation:**
+- Add keys to `locales/fr/common.json` and `locales/en/common.json`
+- Or to domain-specific files (gamification, help, insights, skills)
+
+**New Gamification Feature:**
+- Logic in `lib/gamification/`
+- Mascot/tree features in `lib/mascot/`
+- UI in `components/mascot/`
 
 ## Special Directories
 
-**`.planning/`:**
-- Purpose: GSD planning documents (phases, codebase analysis)
+**`modules/vault-access/`:**
+- Purpose: Native Expo module for iOS NSFileCoordinator
+- Generated: Partially (native build artifacts)
+- Committed: Yes (source code)
+
+**`patches/`:**
+- Purpose: patch-package patches for dependencies
+- Generated: No (manually created)
+- Committed: Yes
+- Applied: Automatically via `postinstall` script
+
+**`docs/`:**
+- Purpose: HTML previews and promo assets (not shipped in app)
+- Generated: No
+- Committed: Yes (but not in production builds)
+
+**`widgets/`:**
+- Purpose: iOS (SwiftUI) and Android home screen widgets
+- Contains: `MaJournee/` (iOS widget), `android/` (Android widget)
+- Committed: Yes
+
+**`dist/`:**
+- Purpose: Build output
+- Generated: Yes
+- Committed: No (should be in .gitignore)
+
+**`ai/`:**
+- Purpose: AI research notes and prompts
 - Generated: No
 - Committed: Yes
 
-**`.expo/`:**
-- Purpose: Expo build cache and generated type files (`expo-env.d.ts` template)
-- Generated: Yes
-- Committed: No (in `.gitignore`)
-
-**`dist/`:**
-- Purpose: Production web/native build output
-- Generated: Yes
-- Committed: No
-
-**`assets/`:**
-- Purpose: Static assets bundled with the app (icons, splash screens, images)
-- Generated: No
+**`.planning/`:**
+- Purpose: GSD planning documents
+- Generated: By planning tools
 - Committed: Yes
 
 ---
 
-*Structure analysis: 2026-03-07*
+*Structure analysis: 2026-03-28*

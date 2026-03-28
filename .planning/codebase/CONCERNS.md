@@ -1,197 +1,209 @@
 # Codebase Concerns
 
-**Analysis Date:** 2026-03-07
+**Analysis Date:** 2026-03-28
 
 ## Tech Debt
 
-**Hardcoded placeholder credentials in VaultPicker:**
-- Issue: `COFFRE_DEFAULT = '/Users/USER/Documents/coffre'` and `MAC_SERVER = 'http://YOUR_MAC_IP:8765'` are literal placeholder strings that ship in production UI — clicking the quick-fill button pre-fills a broken path for any real user.
-- Files: `components/VaultPicker.tsx` (lines 38–39)
-- Impact: Misleading UX for new users; pressing "Utiliser le vault coffre" sets a path that will never validate.
-- Fix approach: Remove the quick-fill button entirely or gate it behind a dev-only flag (`__DEV__`).
+**God Hook: `hooks/useVault.ts` (3431 lines)**
+- Issue: Single hook manages ALL vault state, data loading, and 80+ CRUD operations. The `useMemo` dependency array at the end (lines 3402-3430) lists ~90 items. Every re-render risks massive object recreation.
+- Files: `hooks/useVault.ts`, `contexts/VaultContext.tsx`
+- Impact: Any change to vault logic risks regressions across the entire app. Adding new features requires modifying this single file. The `loadVaultData` function (lines 578-960+) loads 16+ data sources in a single `Promise.allSettled` call.
+- Fix approach: Split into domain-specific hooks (useRecipes, useBudget, useTasks, useMeals, etc.) each managing their own state slice. VaultContext can compose these hooks. Start with the most independent domains (budget, recipes, defis).
 
-**Legacy expo-file-system API pinned by comment:**
-- Issue: `import * as FileSystem from 'expo-file-system/legacy'` in both `lib/vault.ts` and `components/VaultPicker.tsx`. Comment acknowledges this is a compatibility workaround.
-- Files: `lib/vault.ts` (line 24), `components/VaultPicker.tsx` (line 20)
-- Impact: Will break when `expo-file-system` v56+ drops the `/legacy` export. Already causing `@ts-ignore` usage on the Android SAF path.
-- Fix approach: Migrate to the new `File`/`Directory` API introduced in expo-file-system v55.
+**Monolithic Parser: `lib/parser.ts` (2398 lines)**
+- Issue: Single file handles parsing/serialization for 20+ vault file formats (tasks, RDVs, courses, meals, stock, profiles, gamification, defis, gratitude, wishlist, anniversaries, notes, quotes, moods, secrets, skills, pregnancy, memories). Adding new formats keeps inflating this file.
+- Files: `lib/parser.ts`
+- Impact: Hard to test individual parsers in isolation. High risk of regex collisions between formats.
+- Fix approach: Split into `lib/parsers/tasks.ts`, `lib/parsers/meals.ts`, etc. with a barrel re-export from `lib/parsers/index.ts` for backward compatibility.
 
-**Android SAF access uses `@ts-ignore` + unsafe cast:**
-- Issue: `// @ts-ignore — SAF is available in legacy API on Android` followed by `(FileSystem as any).StorageAccessFramework` — no type safety, will silently fail if API changes.
-- Files: `components/VaultPicker.tsx` (lines 163–164)
-- Impact: Android vault selection has no type guard; runtime crash possible if API shape changes.
-- Fix approach: Type the SAF API properly or use expo-file-system's typed StorageAccessFramework export.
+**Duplicate API Call Infrastructure**
+- Issue: `lib/ai-service.ts` and `lib/recipe-import.ts` both implement independent `fetch()` calls to `https://api.anthropic.com/v1/messages` with duplicated header construction, error handling, and retry logic. The `anthropic-dangerous-direct-browser-access` header appears in both files.
+- Files: `lib/ai-service.ts` (lines 370-430), `lib/recipe-import.ts` (lines 132-200, 550-560, 628-635)
+- Impact: Bug fixes or API version updates must be applied in multiple places. Different error handling behavior across API callers.
+- Fix approach: Extract a shared `lib/claude-api.ts` client that both modules import. Centralize the `callClaude()` function from `lib/ai-service.ts`.
 
-**Deprecated Telegram helper functions still in codebase:**
-- Issue: `formatTaskCompletedMessage`, `formatLootBoxMessage`, `formatAllTasksDoneMessage`, `formatLeaderboardMessage`, `formatDailySummaryMessage` are all marked `@deprecated` but remain in `lib/telegram.ts`. They duplicate the functionality in `lib/notifications.ts`.
-- Files: `lib/telegram.ts` (lines 49–110)
-- Impact: Dead code increases bundle size; new contributors may use deprecated functions instead of the dispatcher.
-- Fix approach: Remove all `@deprecated` functions and verify no remaining call sites.
+**Hardcoded Hex Colors (228 occurrences across 21 component files)**
+- Issue: Despite CLAUDE.md explicitly requiring `useThemeColors()` / `colors.*`, many components use hardcoded hex colors. Worst offenders: `components/LootBoxOpener.tsx` (100 occurrences), `components/mascot/TreeView.tsx` (47), `components/VaultPicker.tsx` (8), `components/growth/GrowthChart.tsx` (8).
+- Files: `components/LootBoxOpener.tsx`, `components/mascot/TreeView.tsx`, `components/VaultPicker.tsx`, `components/SkillNode.tsx`, `components/growth/GrowthChart.tsx`, `components/growth/GrowthLegend.tsx`, `components/mascot/TreeShop.tsx`, `components/mascot/PixelDiorama.tsx`, `components/ui/LivingGradient.tsx`, `components/TaskCard.tsx`
+- Impact: Dark mode and theme switching render inconsistent colors in these components. Visual glitches for users who change themes.
+- Fix approach: Audit each file, replace hardcoded hex values with semantic color tokens from `constants/colors.ts` accessed via `useThemeColors()`. Some decorative/SVG colors (confetti, growth chart reference bands) may legitimately be hardcoded.
 
-**MEALS_TEMPLATE duplicated in useVault and vault.ts:**
-- Issue: The meals template string is defined as a constant in `hooks/useVault.ts` (lines 109–140) AND generated via `_mealsContent()` in `lib/vault.ts` (lines 414–447). They are not identical — the template in `vault.ts` includes no blank lines between days.
-- Files: `hooks/useVault.ts` (line 109), `lib/vault.ts` (line 414)
-- Impact: Auto-created `Repas de la semaine.md` differs depending on whether it was created via `scaffoldVault` or via the auto-creation path in `loadVaultData`.
-- Fix approach: Extract a single `MEALS_TEMPLATE` constant to `lib/vault.ts` and import it in `hooks/useVault.ts`.
+**Deprecated Functions Still Present in `lib/telegram.ts`**
+- Issue: Five functions are marked `@deprecated` (lines 49-99): `formatTaskCompletedMessage`, `formatLootBoxMessage`, `formatAllTasksDoneMessage`, `formatLeaderboardMessage`, `formatDailySummaryMessage`. They were replaced by `dispatchNotification` but remain in the codebase.
+- Files: `lib/telegram.ts`
+- Impact: Dead code increases bundle size and confusion.
+- Fix approach: Verify no callers remain, then delete the deprecated functions.
 
-**Profile ID generation duplicated in 4 places:**
-- Issue: The slug pattern `name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-')` appears in `lib/vault.ts`, `hooks/useVault.ts`, `app/(tabs)/index.tsx`, and `lib/parser.ts`. Any change to the ID algorithm requires changes in all 4 places.
-- Files: `lib/vault.ts` (lines 305, 317, 394), `hooks/useVault.ts` (lines 349, 365, 470, 868), `app/(tabs)/index.tsx` (line 117)
-- Impact: Risk of ID mismatch if one copy diverges; photo lookup uses a different code path than profile resolution.
-- Fix approach: Extract a `toProfileId(name: string): string` utility to `lib/parser.ts` or a new `lib/utils.ts`, use it everywhere.
+**Deprecated `menageTasks` Property in AI Context**
+- Issue: `lib/ai-service.ts` line 46 marks `menageTasks` as deprecated in the `VaultContext` interface. The menage migration happened long ago (migration code still in `hooks/useVault.ts` lines 411-480).
+- Files: `lib/ai-service.ts`, `hooks/useVault.ts`
+- Impact: Confusing API surface for the AI context builder.
+- Fix approach: Remove `menageTasks` from the interface and clean up migration code if confirmed all vaults have migrated.
 
-**`ado` role type defined but never used:**
-- Issue: `Profile.role` accepts `'enfant' | 'ado' | 'adulte'` but `'ado'` is never produced by `parseFamille`, never handled in any UI branch, and has no special behavior in gamification (`LOOT_THRESHOLD`, `DROP_RATES` only have `enfant`/`adulte` keys).
-- Files: `lib/types.ts` (line 55), `lib/gamification.ts` (constants reference only `enfant`/`adulte`)
-- Impact: Any profile with `role: ado` silently falls through to `adulte` thresholds in gamification; gamification writes would produce a profile with `role: adulte` on the next `parseGamification` call.
-- Fix approach: Either implement `ado` support fully or remove it from the union type.
-
----
+**`any` Type Usage in `hooks/useVault.ts`**
+- Issue: Several places use `as any` type assertions or `[] as any[]` fallbacks instead of proper types (lines 702, 875, 878, 881, 1281, 1293, 1704, 2609).
+- Files: `hooks/useVault.ts`
+- Impact: Bypasses TypeScript safety, can hide bugs. Especially risky in the gamification and health record update paths.
+- Fix approach: Replace `as any[]` catch fallbacks with properly typed empty arrays. Fix the type assertions where possible.
 
 ## Known Bugs
 
-**Photo retake uses `setTimeout` to defer picker after modal close:**
-- Symptoms: When tapping "Reprendre" in the fullscreen photo modal in `photos.tsx`, the modal closes and then the photo picker opens after a 600ms delay. If the user navigates away within that window, the picker still opens.
-- Files: `app/(tabs)/photos.tsx` (line 426)
-- Trigger: Tap any calendar photo → tap "Reprendre"
-- Workaround: None; the 600ms delay is the only guard.
+**Pre-existing TypeScript Errors**
+- Symptoms: `npx tsc --noEmit` reports errors in three files. These are documented in CLAUDE.md as intentionally ignored.
+- Files: `components/MemoryEditor.tsx`, `lib/cooklang.ts`, `hooks/useVault.ts`
+- Trigger: Running TypeScript compiler check
+- Workaround: Errors are ignored per project convention. The app compiles and runs correctly via Expo/Metro bundler.
 
-**RDV rename creates duplicate file before deleting old one:**
-- Symptoms: In `updateRDV`, if the filename changes (new date/type/enfant), the code writes to the old path first (line 760), then writes to the new path (line 763), then deletes the old path. Two writes happen; if the delete fails, both files exist with the same content.
-- Files: `hooks/useVault.ts` (lines 759–766)
-- Trigger: Edit a RDV and change date, type, or enfant name.
-- Workaround: Manual deletion in the vault.
-
-**`busyRef` guard only prevents AppState reload, not concurrent writes:**
-- Symptoms: `busyRef.current = true` in `addPhoto` blocks the 1-second-delayed AppState reload, but multiple calls to `addPhoto` simultaneously are not blocked from each other, and other mutations (`toggleTask`, `updateStockQuantity`) never check `busyRef`. A race condition is possible when adding a photo while other writes are in flight.
-- Files: `hooks/useVault.ts` (line 464), `lib/vault.ts` (lines 59–70)
-- Trigger: Rapid interactions while a photo is being saved.
-- Workaround: None.
-
-**`clearCompletedCourses` removes manually-typed `[X]` items:**
-- Symptoms: `lines.filter((l) => !l.match(/^-\s+\[x\]/i))` correctly handles case-insensitive matching. However, any `- [X]` items hand-typed in Obsidian will be removed on next clear — even if the user did not intend them as "checked" items in the app context.
-- Files: `hooks/useVault.ts` (line 828)
-- Impact: Low; behaves as expected for app-managed items but may surprise users who edit the vault directly.
-
----
+**`@ts-ignore` Usage for SAF API**
+- Symptoms: Two `@ts-ignore` suppressions for Android SAF (Storage Access Framework) API calls that TypeScript cannot type-check.
+- Files: `components/VaultPicker.tsx` (lines 127, 186)
+- Trigger: Android vault folder picker flow
+- Workaround: Suppressions are appropriate here since SAF is a platform-specific legacy API.
 
 ## Security Considerations
 
-**Telegram Bot Token transmitted as URL path segment:**
-- Risk: The token is passed in plaintext as part of the URL (`/bot${token}/sendMessage`), meaning any network proxy or log will capture it. There is no rate limiting or token rotation strategy.
-- Files: `lib/telegram.ts` (line 26)
-- Current mitigation: Token stored in SecureStore (iOS Keychain / Android Keystore); HTTPS to Telegram API.
-- Recommendations: Accept current risk as it matches Telegram's own bot model; document that the token should be treated as a secret and rotated if compromised.
+**API Key Stored in SecureStore (Acceptable Risk)**
+- Risk: Claude API key is stored in `expo-secure-store` on-device. If device is compromised, key is extractable.
+- Files: `contexts/AIContext.tsx` (line 16: `API_KEY_STORAGE = 'ai_api_key'`), `lib/telegram.ts` (line 120)
+- Current mitigation: SecureStore uses iOS Keychain / Android EncryptedSharedPreferences. Key is user-provided and optional.
+- Recommendations: This is the standard approach for React Native. No action needed.
 
-**Vault path stored in SecureStore (wrong tool for non-secret data):**
-- Risk: `expo-secure-store` has a 2048-byte value size limit. Long paths near the limit may silently truncate on some platforms, resulting in a broken vault path that fails silently on startup.
-- Files: `hooks/useVault.ts` (line 414), `app/_layout.tsx` (line 27)
-- Current mitigation: None.
-- Recommendations: Use `AsyncStorage` for non-secret data like vault path; reserve `SecureStore` for the Telegram token and chat IDs.
+**Direct API Calls with `anthropic-dangerous-direct-browser-access` Header**
+- Risk: The app calls Claude's API directly from the client with the `anthropic-dangerous-direct-browser-access` header. This bypasses the recommended server-side proxy pattern. The API key is exposed in HTTP requests.
+- Files: `lib/ai-service.ts` (line 414), `lib/recipe-import.ts` (lines 193, 556, 632)
+- Current mitigation: Data anonymization before sending (see `lib/anonymizer.ts`). API key stored in SecureStore.
+- Recommendations: For a personal/family app this is acceptable. If distribution widens, consider a proxy backend to avoid exposing user API keys in network traffic.
 
-**Mac sync server downloads files over plain HTTP without integrity check:**
-- Risk: `VaultPicker.syncFromMac()` downloads the entire vault over `http://YOUR_MAC_IP:8765` with no TLS and no file hash verification. A MITM on the local network could inject arbitrary markdown content into the vault.
-- Files: `components/VaultPicker.tsx` (lines 41–85)
-- Current mitigation: Only used on local network (Wi-Fi) with a hardcoded IP.
-- Recommendations: Add a simple manifest hash check, or document the network trust assumption explicitly.
+**Custom SHA-256 Implementation for PIN Hashing**
+- Risk: `contexts/AuthContext.tsx` implements SHA-256 from scratch in pure JavaScript (lines 20-84) instead of using a crypto library. While functionally correct for local PIN hashing, custom crypto implementations are generally discouraged.
+- Files: `contexts/AuthContext.tsx`
+- Current mitigation: Used only for local PIN verification (never transmitted). Salt is a fixed string `family-vault-pin:`.
+- Recommendations: The fixed salt means all users with the same PIN get the same hash. Consider using `expo-crypto` for SHA-256 if available, or at minimum use a per-device random salt stored alongside the hash.
 
-**RDV filenames not sanitized against path traversal:**
-- Risk: `rdvFileName()` builds a filename from `rdv.type_rdv` and `rdv.enfant` without sanitizing slashes, dots, or other filesystem-unsafe characters. A `type_rdv` value of `../../etc/passwd` would produce a path traversal in `writeFile`.
-- Files: `lib/parser.ts` (lines 337–340), `hooks/useVault.ts` (lines 731–737)
-- Current mitigation: None; `RDVEditor.tsx` uses free-text input for `type_rdv`.
-- Recommendations: Sanitize filename components — strip `/`, `..`, and other special characters before constructing the write path.
-
----
+**Path Traversal Protection**
+- Risk: `lib/vault.ts` validates relative paths (lines 51-57) to prevent directory traversal attacks.
+- Files: `lib/vault.ts`
+- Current mitigation: Rejects paths containing `..`, starting with `/`, or containing null bytes.
+- Recommendations: Protection is adequate.
 
 ## Performance Bottlenecks
 
-**`loadVaultData` reads all files sequentially on every refresh:**
-- Problem: The entire vault is reloaded from disk on every `refresh()` call, every `AppState` foreground event, and after most mutation operations. All file reads are sequential (`await` in loops), not parallelized.
-- Files: `hooks/useVault.ts` (lines 203–404)
-- Cause: `for...of` loops with `await` inside for tasks, RDVs, photos, and memories.
-- Improvement path: Parallelize independent reads with `Promise.all`. Consider caching parsed state and only re-reading files that have changed by tracking modification timestamps via `FileSystem.getInfoAsync`.
+**Full Vault Reload on Every Foreground Event**
+- Problem: `hooks/useVault.ts` (lines 564-576) reloads ALL vault data every time the app returns to foreground, with only a 1-second delay as debounce.
+- Files: `hooks/useVault.ts`
+- Cause: No file-level change detection. Every foreground event triggers 16+ file reads and parsing operations.
+- Improvement path: Implement file modification time checking (stat before read). Only re-parse files that changed. For iCloud Drive vaults, this could also reduce network reads.
 
-**`listMarkdownFiles` makes individual `getInfoAsync` calls per directory entry:**
-- Problem: For each non-dotfile entry in a directory, `listMarkdownFiles` calls `getInfoAsync` to check if it is a directory. For a vault with many files this becomes O(n) separate filesystem calls.
-- Files: `lib/vault.ts` (lines 110–126)
-- Cause: No batch stat API available in expo-file-system legacy API.
-- Improvement path: Migrate to the new `Directory` API which provides `isDirectory` on entries, or limit recursion depth to a known maximum.
+**Massive `useMemo` in useVaultInternal**
+- Problem: The return value `useMemo` at lines 3260-3430 has ~90 dependencies. React must shallow-compare all 90 values on every render to determine if the memo is stale.
+- Files: `hooks/useVault.ts`
+- Cause: All vault state lives in one hook.
+- Improvement path: Splitting into domain hooks would naturally reduce dependency array sizes.
 
-**Photo URI lookup recreates the URI string on every render:**
-- Problem: `getPhotoUri` is called per calendar cell during render of the photos screen (31+ cells per month). Each call encodes spaces. No memoization is applied at the call site.
-- Files: `app/(tabs)/photos.tsx` (line 295), `lib/vault.ts` (lines 158–162)
-- Cause: `getPhotoUri` is a method call inside the render loop without caching.
-- Improvement path: Pre-compute URIs in a `useMemo` keyed on `photoDates` and `selectedEnfantIdx`.
-
----
+**Synchronous Parsing in loadVaultData**
+- Problem: `loadVaultData` reads and parses all vault files synchronously within `Promise.allSettled`. For large vaults with many recipes, RDVs, or journal entries, this blocks the JS thread.
+- Files: `hooks/useVault.ts` (lines 578-960+)
+- Cause: Markdown parsing (especially regex-heavy `lib/parser.ts`) is CPU-bound.
+- Improvement path: Consider lazy loading for less critical data (recipes, archived RDVs, historical journal entries). Load only current week's data at boot.
 
 ## Fragile Areas
 
-**Line-index-based file mutation strategy:**
-- Files: `lib/vault.ts` (`toggleTask`, `appendTask`), `hooks/useVault.ts` (`updateStockQuantity`, `deleteTask`, `removeCourseItem`, `deleteStockItem`)
-- Why fragile: All write operations use a `lineIndex` captured at parse time. If the file is modified externally (by Obsidian on the desktop) between a parse and a write, the lineIndex is stale and the wrong line gets modified or deleted. There is no optimistic lock or re-read-before-write.
-- Safe modification: Always call `refresh()` before performing edits initiated from long-lived state (e.g., after returning from background). The `busyRef` guard helps only for the `addPhoto` path.
-- Test coverage: None.
+**Markdown Parser Regex Dependencies**
+- Files: `lib/parser.ts` (lines 52-59)
+- Why fragile: The parser relies on specific emoji markers (due date, recurrence, completed date, reminder time) and precise markdown formatting. If Obsidian changes its task format or users manually edit files with slight variations, parsing silently fails.
+- Safe modification: Always add new regex patterns alongside existing ones, never replace. Test with `lib/__tests__/parser.test.ts` and `lib/__tests__/parser-extended.test.ts`.
+- Test coverage: Good coverage for parsing (parser.test.ts: 18.9K, parser-extended.test.ts: 35K). But no integration tests for the full load-parse-serialize roundtrip.
 
-**`parseGamification` profile ID derivation differs from `parseFamille`:**
-- Files: `lib/parser.ts` (lines 539–553 for gamification, lines 472–508 for famille)
-- Why fragile: `parseGamification` creates IDs via `currentName.toLowerCase().replace(/\s+/g, '')` (no accent removal), while `parseFamille` uses the `### id` header directly. `mergeProfiles` reconciles with `g.name.toLowerCase().replace(/\s+/g, '') === base.id.toLowerCase()`. If a profile name has accents (e.g., "Léa"), the gamification ID would be `léa` but the famille ID would be `lea` — the merge fails silently, producing default points/level values.
-- Safe modification: Add a test case for accented profile names before relying on gamification data for them.
-- Test coverage: None.
+**Cooklang Parser (Hermes-safe Reimplementation)**
+- Files: `lib/cooklang.ts` (672 lines)
+- Why fragile: Custom reimplementation of the Cooklang parser because the official `@cooklang/cooklang-ts` uses Unicode regex properties unsupported by Hermes. Any Cooklang spec changes require manual updates.
+- Safe modification: Test with `lib/__tests__/cooklang.test.ts` (13.9K).
+- Test coverage: Adequate for the parser itself.
 
-**Notification template serialization breaks on templates containing `: ` (colon-space):**
-- Files: `lib/notifications.ts` (lines 418–432, 458–485)
-- Why fragile: Templates are stored in `notifications.md` as `template: <value>`. The parser splits on the first `: ` occurrence via `line.indexOf(': ')`. A custom template containing HTML like `Total : <b>{{profile.points}}</b>` with a literal ` : ` in the value would have the value truncated at the first colon-space on re-parse.
-- Safe modification: Do not include literal ` : ` in custom notification templates. Existing defaults happen to be safe.
-- Test coverage: None.
+**Gamification Points Flow**
+- Files: `hooks/useVault.ts`, `lib/gamification/engine.ts`, `lib/parser.ts`
+- Why fragile: Points are added by reading `gamification.md`, mutating in memory, then serializing back. Multiple rapid actions (completing tasks quickly) could cause race conditions if the file hasn't been re-read between writes.
+- Safe modification: Always use the `busyRef` guard. Test gamification changes with `lib/__tests__/gamification.test.ts`.
+- Test coverage: Engine logic well tested (27.9K test file). Integration with vault file I/O is not tested.
 
-**Memory (Jalons) entries inserted at section top regardless of date order:**
-- Files: `lib/parser.ts` (`insertJalonInContent`, lines 908–940)
-- Why fragile: New memories are inserted immediately after the section header, not sorted by date. If a user adds an older memory after a newer one, the timeline in the `.md` file will be unsorted. The display in `photos.tsx` sorts by date in memory, but the underlying file will be disordered, breaking Obsidian-side chronological reading.
-- Safe modification: Insert at the chronologically correct position, or document that file ordering may not match display order.
-- Test coverage: None.
-
----
+**Vault File Write Concurrency**
+- Files: `hooks/useVault.ts`, `lib/vault.ts`
+- Why fragile: Multiple CRUD operations can fire in rapid succession (e.g., completing several tasks). Each reads the current file, mutates, and writes back. No file-level locking beyond the `busyRef` boolean (which only guards `loadVaultData`, not individual writes).
+- Safe modification: Ensure all write operations read the latest file state before modifying. Avoid caching file contents across operations.
+- Test coverage: None for concurrent write scenarios.
 
 ## Scaling Limits
 
-**Gamification history capped at 100 entries, breaking long-streak calculation:**
-- Current capacity: Last 100 gamification history entries are kept (`data.history.slice(-100)` in `serializeGamification`).
-- Limit: `calculateStreak` iterates history entries to count consecutive days. The 100-entry cap means streaks beyond approximately 3 months of daily activity may be miscalculated as older entries are pruned.
-- Files: `lib/parser.ts` (line 630), `lib/gamification.ts` (lines 369–391)
-- Scaling path: Persist the current streak value directly on the profile section in `gamification.md` and only recalculate from history on an explicit reset, rather than deriving it from the rolling log.
+**Single-File State Storage**
+- Current capacity: All gamification data, family profiles, and configs live in individual markdown files.
+- Limit: As history grows (gamification entries, completed defis, journal stats), files become large and parsing slows.
+- Scaling path: Implement archival for old gamification history. Consider date-based file splitting for journal entries (already done) and budget entries (already done by month).
 
-**Weekly recap silently ignores photo batch failures beyond the first:**
-- Current capacity: `sendWeeklyRecap` batches photos in groups of 10 via `sendTelegramMediaGroup`. The return value of `sendTelegramMediaGroup` for batches 2+ is not checked.
-- Limit: If any photo batch beyond the first fails, the caller receives `true` and the error is invisible to the user.
-- Files: `lib/telegram.ts` (lines 273–277)
-- Scaling path: Collect results from all batch calls and report partial failures to the user in the Alert.
-
----
+**Recipe Loading**
+- Current capacity: All `.cook` files are loaded and parsed on `loadRecipes()`.
+- Limit: With 100+ recipes, initial load time becomes noticeable.
+- Scaling path: Implement lazy loading with metadata cache (title + category only), full parse on demand.
 
 ## Dependencies at Risk
 
-**`gray-matter` partially broken with manual fallback already in place:**
-- Risk: `parseFrontmatter` in `lib/parser.ts` (lines 180–195) explicitly catches errors from `gray-matter` and falls back to a manual parser. This means gray-matter is partially broken in the React Native environment yet still ships in the bundle.
-- Impact: Any gray-matter regression or update could silently change which code path handles parsing. Both parsers producing different results for the same input is possible.
-- Migration plan: Remove `gray-matter` entirely and use only the manual parser, which is already proven in production. This reduces bundle size and eliminates the dual-path ambiguity.
+**`expo-document-picker` Patched**
+- Risk: A patch exists at `patches/expo-document-picker+14.0.8.patch`. Patches can break on dependency upgrades.
+- Impact: Vault folder selection on both platforms depends on this patch.
+- Migration plan: Check if the patch fix has been upstreamed in newer expo-document-picker versions before upgrading.
 
-**`@types/react` pinned to `~18.3.0` while `react` is `19.1.0`:**
-- Risk: React 19 ships its own types inside the `react` package. Having a separate `@types/react` at 18.x may conflict or produce incorrect type errors for React 19 APIs.
-- Files: `package.json` (devDependencies)
-- Impact: TypeScript false positives or missed type errors for React 19-specific patterns.
-- Migration plan: Remove `@types/react` from devDependencies (React 19 ships its own types) or update to `@types/react@^19`.
+**`react-native-confetti-cannon` (v1.5.2)**
+- Risk: Small community package, last npm publish may be stale. Used for loot box animations.
+- Impact: If it breaks with a React Native upgrade, loot box opening animation fails.
+- Migration plan: The package is simple enough to vendor or replace with a Reanimated-based implementation.
 
----
+## Missing Critical Features
+
+**No Test Suite for Components**
+- Problem: All 13 test files live in `lib/__tests__/` and test only library/utility logic. Zero component tests exist. No React Native Testing Library or Detox setup.
+- Blocks: Cannot verify UI behavior changes automatically. Every UI change requires manual testing.
+
+**No Error Reporting in Production**
+- Problem: Errors are caught with `console.warn` in dev mode only (`if (__DEV__)`). No crash reporting service (Sentry, Bugsnag) is integrated.
+- Blocks: Cannot detect or diagnose production crashes.
+
+**`eslint-disable` Without Explanation**
+- Problem: `hooks/useCalendarEvents.ts` line 65 disables `react-hooks/exhaustive-deps` without documenting why the dependency was intentionally excluded.
+- Files: `hooks/useCalendarEvents.ts`
 
 ## Test Coverage Gaps
 
-**No tests exist in the project:**
-- What's not tested: All parsing logic (`lib/parser.ts`), all gamification logic (`lib/gamification.ts`), recurrence calculation (`lib/recurrence.ts`), Telegram message builders (`lib/telegram.ts`), notification template rendering (`lib/notifications.ts`), all vault mutation operations (`hooks/useVault.ts`).
-- Files: Entire `lib/` and `hooks/` directories — zero test files outside `node_modules/`.
-- Risk: Regressions in any parser, mutation, or gamification function go undetected until they break the UI. The `manualParseFrontmatter` fallback, the `mergeProfiles` accent-handling logic, and the line-index-based write operations are particularly high-risk without tests.
-- Priority: High for `lib/parser.ts` (parseTask, parseGamification, mergeProfiles), `lib/recurrence.ts` (nextOccurrence edge cases for far-past dates), and mutation operations in `hooks/useVault.ts` (toggleTask, updateStockQuantity, deleteTask).
+**No Tests for hooks/**
+- What's not tested: `hooks/useVault.ts` (3431 lines), `hooks/useGamification.ts`, `hooks/useFarm.ts`, `hooks/useCalendarEvents.ts`, `hooks/useResponsiveLayout.ts`
+- Files: All files in `hooks/`
+- Risk: The most critical piece of the app (vault state management) has zero automated tests. Regressions in data loading, saving, or migration code go undetected.
+- Priority: High
+
+**No Tests for Mascot/Farm System**
+- What's not tested: `lib/mascot/farm-engine.ts`, `lib/mascot/world-grid.ts`, `lib/mascot/sagas-engine.ts` (only `lib/__tests__/mascot-engine.test.ts` covers `lib/mascot/engine.ts`)
+- Files: `lib/mascot/farm-engine.ts`, `lib/mascot/world-grid.ts`, `lib/mascot/sagas-engine.ts`, `lib/mascot/sagas-content.ts`
+- Risk: Farm planting/harvesting logic, world grid rendering logic, and saga progression could break silently.
+- Priority: Medium
+
+**No Tests for Budget System**
+- What's not tested: `lib/budget.ts` (parsing/serialization of budget config and monthly entries)
+- Files: `lib/budget.ts`
+- Risk: Budget calculation errors could go unnoticed.
+- Priority: Medium
+
+**No Tests for Recipe Import Pipeline**
+- What's not tested: `lib/recipe-import.ts` (URL fetching, HTML-to-text conversion, cook.md integration, AI conversion)
+- Files: `lib/recipe-import.ts`
+- Risk: Recipe import from URLs could silently fail with format changes.
+- Priority: Low
+
+## Accessibility Gaps
+
+**Limited Accessibility Coverage**
+- Problem: Only 51 component files contain any accessibility props (`accessibilityLabel`, `accessibilityRole`, etc.) out of 90+ total components. Many interactive elements (especially in mascot/tree views, loot box opener, settings screens) lack screen reader support.
+- Files: Most files in `components/mascot/`, `components/dashboard/`, `components/charts/`
+- Impact: App is not usable with VoiceOver/TalkBack for visually impaired users.
+- Priority: Low (family app with known users), but would block any public distribution.
 
 ---
 
-*Concerns audit: 2026-03-07*
+*Concerns audit: 2026-03-28*

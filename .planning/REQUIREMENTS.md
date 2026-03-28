@@ -28,13 +28,6 @@ Requirements pour ce milestone. Chaque requirement est mappé à une phase du ro
 ### Architecture
 
 - [ ] **ARCH-01**: Write queue per-file pour les opérations concurrentes sur le vault
-- [ ] **ARCH-02**: Extraction de useBudget depuis useVault (premier hook domaine)
-- [ ] **ARCH-03**: Extraction de useRecipes depuis useVault
-- [ ] **ARCH-04**: Extraction de useDefis depuis useVault
-- [ ] **ARCH-05**: Extraction des hooks domaine restants (tasks, journal, calendar, profiles, etc.)
-- [ ] **ARCH-06**: Split lib/parser.ts en modules par domaine (lib/parsers/*.ts)
-- [ ] **ARCH-07**: VaultProvider compose les hooks domaine, useVault() API inchangée
-- [ ] **ARCH-08**: Lazy loading recettes avec cache metadata
 
 ### Gamification
 
@@ -61,6 +54,10 @@ Déférés à un futur milestone. Trackés mais pas dans le roadmap actuel.
 
 - **ARCH-V2-01**: Optimisation foreground reload (stat/mtime pour skip fichiers inchangés)
 - **ARCH-V2-02**: noUncheckedIndexedAccess progressif par fichier
+- **ARCH-V2-03**: Extraction hooks domaine depuis useVault (budget, recipes, defis, etc.)
+- **ARCH-V2-04**: Split lib/parser.ts en modules par domaine
+- **ARCH-V2-05**: VaultProvider compose les hooks domaine
+- **ARCH-V2-06**: Lazy loading recettes avec cache metadata
 
 ### Gamification
 
@@ -82,6 +79,8 @@ Déférés à un futur milestone. Trackés mais pas dans le roadmap actuel.
 | Contenu IA généré par action | Brûle les crédits API pour peu de valeur |
 | Détox E2E | Maestro recommandé pour Expo en 2026 |
 | @shopify/react-native-skia | Uniquement si New Architecture activée — à évaluer plus tard |
+| Refacto god hook useVault | Fonctionne tel quel, seul dev, risque de régression élevé — déféré en v2 |
+| Split parser.ts | Fonctionne tel quel, pas de bénéfice immédiat |
 
 ## Traceability
 
@@ -100,27 +99,20 @@ Which phases cover which requirements. Updated during roadmap creation.
 | QUAL-02 | Phase 1 | Pending |
 | QUAL-04 | Phase 1 | Pending |
 | QUAL-05 | Phase 1 | Pending |
+| ARCH-01 | Phase 2 | Pending |
 | QUAL-03 | Phase 2 | Pending |
-| ARCH-02 | Phase 2 | Pending |
-| ARCH-03 | Phase 2 | Pending |
-| ARCH-04 | Phase 2 | Pending |
-| ARCH-01 | Phase 3 | Pending |
-| GAME-01 | Phase 3 | Pending |
-| GAME-02 | Phase 4 | Pending |
-| GAME-03 | Phase 4 | Pending |
-| ARCH-05 | Phase 5 | Pending |
-| ARCH-06 | Phase 5 | Pending |
-| ARCH-07 | Phase 5 | Pending |
-| ARCH-08 | Phase 5 | Pending |
-| AMB-01 | Phase 6 | Complete |
-| AMB-02 | Phase 6 | Complete |
-| AMB-03 | Phase 6 | Complete |
+| GAME-01 | Phase 2 | Pending |
+| GAME-02 | Phase 3 | Pending |
+| GAME-03 | Phase 3 | Pending |
+| AMB-01 | Phase 4 | Complete |
+| AMB-02 | Phase 4 | Complete |
+| AMB-03 | Phase 4 | Complete |
 
 **Coverage:**
-- v1 requirements: 24 total
-- Mapped to phases: 24
-- Unmapped: 0
+- v1 requirements: 19 total
+- Mapped to phases: 19
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-28*
-*Last updated: 2026-03-28 after Phase 6 planning — AMB-01, AMB-02, AMB-03 added*
+*Last updated: 2026-03-28 after roadmap simplification — refacto archi déférée en v2*
