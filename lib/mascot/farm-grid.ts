@@ -33,4 +33,4 @@ export const FARM_GRID: GridPosition[] = [
 ];
 
 /** Taille d'une parcelle en px (cote du carre) */
-export const PLOT_SIZE = 44;
+export const PLOT_SIZE = 52;

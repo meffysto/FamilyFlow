@@ -41,7 +41,7 @@ import { TreeView } from '../../components/mascot/TreeView';
 import { SpeciesPicker } from '../../components/mascot/SpeciesPicker';
 import { TreeShop } from '../../components/mascot/TreeShop';
 import { PixelDiorama, PIXEL_GROUND, PIXEL_GROUND_DARK } from '../../components/mascot/PixelDiorama';
-import { FarmPlots } from '../../components/mascot/FarmPlots';
+import { FarmPlots, FarmStats } from '../../components/mascot/FarmPlots';
 import { useFarm } from '../../hooks/useFarm';
 import { type PlantedCrop, CROP_CATALOG } from '../../lib/mascot/types';
 import { calculateLevel, xpForLevel, pointsToNextLevel, getLevelTier } from '../../lib/gamification';
@@ -517,6 +517,9 @@ export default function TreeScreen() {
           colors={[PIXEL_GROUND_DARK[season], colors.bg]}
           style={styles.groundTransition}
         />
+
+        {/* Compteur ferme */}
+        <FarmStats farmCropsCSV={profile.farmCrops ?? ''} colors={colors} />
 
         {/* Info profil + stade */}
         <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.infoCard}>
