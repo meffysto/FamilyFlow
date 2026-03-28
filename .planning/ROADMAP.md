@@ -105,7 +105,11 @@ Plans:
   2. Un bâtiment placé génère automatiquement une ressource toutes les X heures — visible dans l'inventaire sans replanter
   3. Un bâtiment peut être amélioré au moins 2 fois, chaque niveau augmentant visiblement la production affichée
   4. Les ressources produites sont persistées dans le vault et survivent à un redémarrage de l'app
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Types etendus + building-engine + migration parser + useFarm
+- [ ] 06-02-PLAN.md — UI batiments (WorldGridView, bottom sheets, integration tree.tsx)
 
 #### Phase 7: Craft
 **Goal**: Les récoltes brutes peuvent être combinées en items spéciaux via des recettes, offrant plus de valeur XP et une boucle de progression plus riche
@@ -152,7 +156,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 3. Gamification | v1.0 | 2/2 | Complete | 2026-03-28 |
 | 4. Ambiance + Retention | v1.0 | 2/2 | Complete | 2026-03-28 |
 | 5. Visuels Ferme | v1.1 | 3/3 | Complete   | 2026-03-28 |
-| 6. Bâtiments Productifs | v1.1 | 0/TBD | Not started | - |
+| 6. Bâtiments Productifs | v1.1 | 0/2 | Planned | - |
 | 7. Craft | v1.1 | 0/TBD | Not started | - |
 | 8. Progression Ferme | v1.1 | 0/TBD | Not started | - |
 | 9. Cadeaux Familiaux | v1.1 | 0/TBD | Not started | - |
