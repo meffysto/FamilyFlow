@@ -172,5 +172,70 @@ export function useFarm() {
     await refresh();
   }, [profiles, vault, deductCoins, refresh]);
 
-  return { plant, harvest, buyBuilding };
+  /** Collecter le revenu passif des batiments (appele a l'ouverture de l'ecran) */
+  const collectPassiveIncome = useCallback(async (profileId: string): Promise<number> => {
+    const profile = profiles?.find(p => p.id === profileId);
+    if (!profile || !vault) return 0;
+
+    const buildings = profile.farmBuildings ?? [];
+    if (buildings.length === 0) return 0;
+
+    // Calculer le revenu journalier total
+    let dailyTotal = 0;
+    for (const bid of buildings) {
+      const def = BUILDING_CATALOG.find(b => b.id === bid);
+      if (def) dailyTotal += def.dailyIncome;
+    }
+    if (dailyTotal === 0) return 0;
+
+    // Lire la date du dernier collecte
+    const content = await vault.readFile(FAMILLE_FILE);
+    const lines = content.split('\n');
+    let inSection = false;
+    let lastCollectLine = -1;
+    let lastPropIdx = -1;
+    let lastCollectDate = '';
+
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].startsWith('### ')) {
+        if (inSection) break;
+        if (lines[i].replace('### ', '').trim() === profileId) inSection = true;
+      } else if (inSection && lines[i].includes(': ')) {
+        lastPropIdx = i;
+        if (lines[i].trim().startsWith('farm_last_collect:')) {
+          lastCollectLine = i;
+          lastCollectDate = lines[i].split(':').slice(1).join(':').trim();
+        }
+      }
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    if (lastCollectDate === today) return 0; // deja collecte aujourd'hui
+
+    // Calculer les jours ecoules
+    let days = 1;
+    if (lastCollectDate) {
+      const diff = Date.now() - new Date(lastCollectDate).getTime();
+      days = Math.max(1, Math.min(7, Math.floor(diff / 86400000))); // max 7 jours de rattrapage
+    }
+
+    const totalIncome = dailyTotal * days;
+
+    // Mettre a jour la date de collecte
+    const newValue = `farm_last_collect: ${today}`;
+    if (lastCollectLine >= 0) {
+      lines[lastCollectLine] = newValue;
+    } else if (lastPropIdx >= 0) {
+      lines.splice(lastPropIdx + 1, 0, newValue);
+    }
+    await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
+
+    // Ajouter les feuilles
+    await addCoins(profileId, totalIncome, `🏠 Revenu batiments (${days}j)`);
+    await refresh();
+
+    return totalIncome;
+  }, [profiles, vault, addCoins, refresh]);
+
+  return { plant, harvest, buyBuilding, collectPassiveIncome };
 }

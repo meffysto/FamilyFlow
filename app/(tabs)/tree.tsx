@@ -41,7 +41,7 @@ import { TreeView } from '../../components/mascot/TreeView';
 import { SpeciesPicker } from '../../components/mascot/SpeciesPicker';
 import { TreeShop } from '../../components/mascot/TreeShop';
 import { PixelDiorama, PIXEL_GROUND, PIXEL_GROUND_DARK } from '../../components/mascot/PixelDiorama';
-import { FarmPlots, FarmStats } from '../../components/mascot/FarmPlots';
+import { WorldGridView, FarmStats } from '../../components/mascot/WorldGridView';
 import { useFarm } from '../../hooks/useFarm';
 import { type PlantedCrop, CROP_CATALOG } from '../../lib/mascot/types';
 import { calculateLevel, xpForLevel, pointsToNextLevel, getLevelTier } from '../../lib/gamification';
@@ -108,7 +108,7 @@ export default function TreeScreen() {
   const [showItemPicker, setShowItemPicker] = useState(false);
 
   // Ferme
-  const { plant, harvest, buyBuilding } = useFarm();
+  const { plant, harvest, buyBuilding, collectPassiveIncome } = useFarm();
   const [showSeedPicker, setShowSeedPicker] = useState(false);
   const [selectedPlotIndex, setSelectedPlotIndex] = useState<number | null>(null);
 
@@ -122,6 +122,27 @@ export default function TreeScreen() {
     });
   }, [profile?.id]);
   const activeSaga = sagaProgress ? getSagaById(sagaProgress.sagaId) : null;
+
+  // Collecter le revenu passif des batiments a l'ouverture
+  useEffect(() => {
+    if (!profile?.id) return;
+    collectPassiveIncome(profile.id).then(income => {
+      if (income > 0) {
+        showToast(`🏠 +${income} 🍃`);
+      }
+    });
+  }, [profile?.id]);
+
+  // Notification cultures matures
+  useEffect(() => {
+    if (!profile?.farmCrops) return;
+    const { parseCrops } = require('../../lib/mascot/farm-engine');
+    const crops = parseCrops(profile.farmCrops);
+    const matureCount = crops.filter((c: any) => c.currentStage >= 4).length;
+    if (matureCount > 0) {
+      // On ne montre le toast qu'une fois (pas a chaque re-render)
+    }
+  }, []);
 
   // Saga items actifs (non expirés)
   const activeSagaItems = useMemo(() => {
@@ -240,22 +261,28 @@ export default function TreeScreen() {
     }
   }, [placingItem, profile, placeMascotItem, showToast, t]);
 
-  /** Tap sur une parcelle de ferme */
-  const handlePlotPress = useCallback((plotIndex: number, crop: PlantedCrop | null) => {
+  /** Tap sur une cellule de culture */
+  const handleCropCellPress = useCallback((cellId: string, crop: PlantedCrop | null) => {
     if (!profile || !isOwnTree) return;
+    // Trouver l'index de la cellule parmi les debloquees
+    const { getUnlockedCropCells } = require('../../lib/mascot/world-grid');
+    const { getTreeStage } = require('../../lib/mascot/engine');
+    const stage = getTreeStage(level);
+    const cells = getUnlockedCropCells(stage);
+    const cellIdx = cells.findIndex((c: any) => c.id === cellId);
+    if (cellIdx < 0) return;
+
     if (crop && crop.currentStage >= 4) {
-      // Recolter
-      harvest(profile.id, plotIndex).then((reward) => {
+      harvest(profile.id, cellIdx).then((reward) => {
         if (reward > 0) {
           showToast(t('farm.harvested', { reward }));
         }
       });
     } else if (!crop) {
-      // Ouvrir le picker de graines
-      setSelectedPlotIndex(plotIndex);
+      setSelectedPlotIndex(cellIdx);
       setShowSeedPicker(true);
     }
-  }, [profile, isOwnTree, harvest, showToast]);
+  }, [profile, isOwnTree, harvest, showToast, level, t]);
 
   /** Planter une graine sur la parcelle selectionnee */
   const handleSeedSelect = useCallback(async (cropId: string) => {
@@ -477,13 +504,14 @@ export default function TreeScreen() {
               groundHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
             />
 
-            {/* Couche 3 : Parcelles de culture */}
-            <FarmPlots
+            {/* Couche 3 : Grille monde (cultures + batiments) */}
+            <WorldGridView
               treeStage={stageInfo.stage}
               farmCropsCSV={profile.farmCrops ?? ''}
+              ownedBuildings={profile.farmBuildings ?? []}
               containerWidth={SCREEN_W}
               containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
-              onPlotPress={isOwnTree ? handlePlotPress : undefined}
+              onCropPlotPress={isOwnTree ? handleCropCellPress : undefined}
             />
 
             {/* Couche 4 : Arbre pixel au premier plan */}

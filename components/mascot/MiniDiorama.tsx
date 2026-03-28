@@ -10,7 +10,7 @@ import { View, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { TreeView } from './TreeView';
 import { PixelDiorama, PIXEL_GROUND, PIXEL_GROUND_DARK } from './PixelDiorama';
-import { FarmPlots } from './FarmPlots';
+import { WorldGridView } from './WorldGridView';
 import { type TreeSpecies, type TreeStage } from '../../lib/mascot/types';
 import { getCurrentSeason } from '../../lib/mascot/seasons';
 import { getTreeStage } from '../../lib/mascot/engine';
@@ -46,10 +46,11 @@ export function MiniDiorama({ species, level, size, decorations = [], inhabitant
         groundHeight={height}
       />
 
-      {/* Parcelles */}
-      <FarmPlots
+      {/* Grille monde */}
+      <WorldGridView
         treeStage={treeStage}
         farmCropsCSV={farmCropsCSV}
+        ownedBuildings={[]}
         containerWidth={size}
         containerHeight={height}
       />
