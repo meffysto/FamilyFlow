@@ -247,7 +247,7 @@ export default function TreeScreen() {
       // Recolter
       harvest(profile.id, plotIndex).then((reward) => {
         if (reward > 0) {
-          showToast(`+${reward} 🍃`);
+          showToast(t('farm.harvested', { reward }));
         }
       });
     } else if (!crop) {
@@ -263,7 +263,7 @@ export default function TreeScreen() {
     try {
       await plant(profile.id, selectedPlotIndex, cropId);
       const cropDef = CROP_CATALOG.find(c => c.id === cropId);
-      showToast(`${cropDef?.emoji ?? '🌱'} Plante !`);
+      showToast(`${cropDef?.emoji ?? '🌱'} ${t('farm.planted')}`);
     } catch {
       showToast(t('common.error'), 'error');
     }
@@ -400,7 +400,7 @@ export default function TreeScreen() {
           >
             <View style={[styles.pickerCard, { backgroundColor: colors.card }, Shadows.lg]}>
               <Text style={[styles.pickerTitle, { color: colors.text }]}>
-                Choisir une graine
+                {t('farm.seedPicker')}
               </Text>
               <View style={styles.pickerGrid}>
                 {CROP_CATALOG.map(crop => {
@@ -438,7 +438,7 @@ export default function TreeScreen() {
                 activeOpacity={0.7}
               >
                 <Text style={[styles.pickerCloseText, { color: colors.textSub }]}>
-                  Annuler
+                  {t('farm.cancel')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -519,7 +519,7 @@ export default function TreeScreen() {
         />
 
         {/* Compteur ferme */}
-        <FarmStats farmCropsCSV={profile.farmCrops ?? ''} colors={colors} />
+        <FarmStats farmCropsCSV={profile.farmCrops ?? ''} colors={colors} t={t} />
 
         {/* Info profil + stade */}
         <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.infoCard}>

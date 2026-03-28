@@ -143,7 +143,7 @@ export function FarmPlots({ treeStage, farmCropsCSV, containerWidth, containerHe
 }
 
 /** Compteur ferme (a afficher sous le diorama) */
-export function FarmStats({ farmCropsCSV, colors }: { farmCropsCSV: string; colors: any }) {
+export function FarmStats({ farmCropsCSV, colors, t }: { farmCropsCSV: string; colors: any; t: (key: string, opts?: any) => string }) {
   const crops = parseCrops(farmCropsCSV);
   if (crops.length === 0) return null;
 
@@ -154,12 +154,12 @@ export function FarmStats({ farmCropsCSV, colors }: { farmCropsCSV: string; colo
     <View style={statsStyles.container}>
       {growingCount > 0 && (
         <Text style={[statsStyles.text, { color: colors.textSub }]}>
-          🌱 {growingCount} en cours
+          {t('farm.stats.growing', { count: growingCount })}
         </Text>
       )}
       {matureCount > 0 && (
         <Text style={[statsStyles.text, { color: '#4ADE80' }]}>
-          ✨ {matureCount} a recolter !
+          {t('farm.stats.ready', { count: matureCount })}
         </Text>
       )}
     </View>

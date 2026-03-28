@@ -3204,14 +3204,38 @@
     "allowed": "allowed",
     "restricted": "restricted",
     "categories": {
-      "rdv": { "label": "Appointments", "desc": "See other children's appointments" },
-      "budget": { "label": "Budget", "desc": "Access the budget screen" },
-      "stock": { "label": "Stock", "desc": "See stock levels" },
-      "defis": { "label": "Challenges", "desc": "See other's challenges" },
-      "wishlist": { "label": "Wishlist", "desc": "See other's wishes" },
-      "souvenirs": { "label": "Memories", "desc": "See other children's memories" },
-      "recherche": { "label": "Search", "desc": "Unfiltered search results" },
-      "gratitude": { "label": "Gratitude", "desc": "See other's gratitude entries" }
+      "rdv": {
+        "label": "Appointments",
+        "desc": "See other children's appointments"
+      },
+      "budget": {
+        "label": "Budget",
+        "desc": "Access the budget screen"
+      },
+      "stock": {
+        "label": "Stock",
+        "desc": "See stock levels"
+      },
+      "defis": {
+        "label": "Challenges",
+        "desc": "See other's challenges"
+      },
+      "wishlist": {
+        "label": "Wishlist",
+        "desc": "See other's wishes"
+      },
+      "souvenirs": {
+        "label": "Memories",
+        "desc": "See other children's memories"
+      },
+      "recherche": {
+        "label": "Search",
+        "desc": "Unfiltered search results"
+      },
+      "gratitude": {
+        "label": "Gratitude",
+        "desc": "See other's gratitude entries"
+      }
     }
   },
   "skills": {
@@ -3578,7 +3602,6 @@
         "malice": "Cunning",
         "curiosité": "Curiosity"
       },
-
       "voyageur_argent": {
         "title": "The Silver Traveler",
         "title_enfant": "The Mystery Traveler!!",
@@ -3643,7 +3666,6 @@
         "title_curiosity": "The Explorer",
         "title_curiosity_enfant": "The Super Explorer!"
       },
-
       "source_cachee": {
         "title": "The Hidden Spring",
         "title_enfant": "The Secret Spring!!",
@@ -3693,7 +3715,6 @@
         "title_sagesse": "Water Guardian",
         "title_sagesse_enfant": "Water Guardian!"
       },
-
       "carnaval_ombres": {
         "title": "The Shadow Carnival",
         "title_enfant": "The Shadow Carnival!!",
@@ -3754,7 +3775,6 @@
         "title_malice": "Carnival King",
         "title_malice_enfant": "Carnival King!"
       },
-
       "graine_anciens": {
         "title": "The Seed of the Ancients",
         "title_enfant": "The Magic Seed!!",
@@ -3830,6 +3850,30 @@
         "title_courage": "The Protector",
         "title_courage_enfant": "The Super Protector!"
       }
+    }
+  },
+  "farm": {
+    "seedPicker": "Choose a seed",
+    "seedPicker_enfant": "What seed do you want to plant?",
+    "planted": "Planted!",
+    "planted_enfant": "Awesome, it's planted!",
+    "harvested": "+{{reward}} 🍃 harvested!",
+    "harvested_enfant": "YEAH! +{{reward}} 🍃 harvested!!",
+    "notEnoughLeaves": "Not enough leaves 🍃",
+    "cancel": "Cancel",
+    "stats": {
+      "growing": "🌱 {{count}} growing",
+      "ready": "✨ {{count}} ready to harvest!"
+    },
+    "crop": {
+      "carrot": "Carrot",
+      "carrot_desc": "Grows fast, great for beginners. Modest but reliable harvest.",
+      "wheat": "Wheat",
+      "wheat_desc": "The staple crop. Grows fast and pays well.",
+      "tomato": "Tomato",
+      "tomato_desc": "Takes more patience but the harvest is generous!",
+      "strawberry": "Strawberry",
+      "strawberry_desc": "The premium crop. Slow to grow but very profitable."
     }
   }
 }
