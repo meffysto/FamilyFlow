@@ -46,7 +46,12 @@ Plans:
   2. Le mode nuit n'affiche plus de couleurs hardcodées — tous les éléments structurels suivent le thème
   3. Un modèle XP budget est documenté dans constants/rewards.ts avec des valeurs calibrées
   4. Toute nouvelle source de récompense passe par constants/rewards.ts
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Write queue per-file dans VaultManager + modele XP budget
+- [ ] 02-02-PLAN.md — Migration couleurs ecrans (app/) et composants high-priority
+- [ ] 02-03-PLAN.md — Migration couleurs composants restants + verification visuelle mode nuit
 
 ### Phase 3: Gamification
 **Goal**: La ferme a des événements saisonniers liés au vrai calendrier et des quêtes familiales coopératives donnent un objectif partagé
@@ -82,6 +87,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Safety Net | 2/4 | In Progress|  |
-| 2. Write Safety + Couleurs | 0/TBD | Not started | - |
+| 2. Write Safety + Couleurs | 0/3 | Not started | - |
 | 3. Gamification | 0/TBD | Not started | - |
 | 4. Ambiance + Retention | 2/2 | Complete   | 2026-03-28 |
