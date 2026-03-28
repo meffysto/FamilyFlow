@@ -49,6 +49,7 @@ import { hasCropSeasonalBonus, parseCrops } from '../../lib/mascot/farm-engine';
 import { getUnlockedCropCells } from '../../lib/mascot/world-grid';
 import { HarvestBurst, CROP_COLORS } from '../../components/mascot/HarvestBurst';
 import { AmbientParticles } from '../../components/mascot/AmbientParticles';
+import { SeasonalParticles } from '../../components/mascot/SeasonalParticles';
 import { StreakFlames } from '../../components/mascot/StreakFlames';
 import { calculateLevel, xpForLevel, pointsToNextLevel, getLevelTier } from '../../lib/gamification';
 import {
@@ -575,6 +576,14 @@ export default function TreeScreen() {
               containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
               onCropPlotPress={isOwnTree ? handleCropCellPress : undefined}
             />
+
+            {/* Couche saisonnières : particules emoji selon la saison */}
+            <View style={{ ...StyleSheet.absoluteFillObject, zIndex: 4 }} pointerEvents="none">
+              <SeasonalParticles
+                season={season}
+                containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
+              />
+            </View>
 
             {/* Couche ambiance : particules horaires + tint */}
             <View style={{ ...StyleSheet.absoluteFillObject, zIndex: 5 }} pointerEvents="none">
