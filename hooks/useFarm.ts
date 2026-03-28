@@ -8,6 +8,16 @@ import { useCallback } from 'react';
 import { useVault } from '../contexts/VaultContext';
 import { plantCrop, harvestCrop, parseCrops, serializeCrops } from '../lib/mascot/farm-engine';
 import { CROP_CATALOG, BUILDING_CATALOG } from '../lib/mascot/types';
+import {
+  constructBuilding,
+  upgradeBuilding,
+  collectBuilding,
+  serializeBuildings,
+  parseBuildings,
+  serializeInventory,
+  parseInventory,
+} from '../lib/mascot/building-engine';
+import type { PlacedBuilding, FarmInventory } from '../lib/mascot/types';
 import { parseGamification, serializeGamification } from '../lib/parser';
 
 const FAMILLE_FILE = 'famille.md';
@@ -129,26 +139,14 @@ export function useFarm() {
     return result.reward;
   }, [profiles, writeFarmCrops, addCoins, refresh]);
 
-  /** Acheter un batiment */
-  const buyBuilding = useCallback(async (profileId: string, buildingId: string) => {
-    const profile = profiles?.find(p => p.id === profileId);
-    if (!profile) return;
-
-    const building = BUILDING_CATALOG.find(b => b.id === buildingId);
-    if (!building) return;
-
-    if ((profile.farmBuildings ?? []).includes(buildingId)) return; // deja construit
-    if ((profile.coins ?? 0) < building.cost) throw new Error('Pas assez de feuilles');
-
-    // Ecrire farm_buildings dans famille.md
+  /** Ecrire un champ string dans la section d'un profil dans famille.md */
+  const writeProfileField = useCallback(async (profileId: string, fieldKey: string, value: string) => {
     if (!vault) return;
     const content = await vault.readFile(FAMILLE_FILE);
     const lines = content.split('\n');
     let inSection = false;
     let fieldLine = -1;
     let lastPropIdx = -1;
-    const fieldKey = 'farm_buildings';
-    const newList = [...(profile.farmBuildings ?? []), buildingId];
 
     for (let i = 0; i < lines.length; i++) {
       if (lines[i].startsWith('### ')) {
@@ -160,7 +158,7 @@ export function useFarm() {
       }
     }
 
-    const newValue = `${fieldKey}: ${newList.join(',')}`;
+    const newValue = `${fieldKey}: ${value}`;
     if (fieldLine >= 0) {
       lines[fieldLine] = newValue;
     } else if (lastPropIdx >= 0) {
@@ -168,74 +166,95 @@ export function useFarm() {
     }
 
     await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
+  }, [vault]);
+
+  /** Construire un batiment sur une cellule (nouveau systeme PlacedBuilding) */
+  const buyBuilding = useCallback(async (profileId: string, buildingId: string, cellId: string) => {
+    const profile = profiles?.find(p => p.id === profileId);
+    if (!profile) return;
+
+    const building = BUILDING_CATALOG.find(b => b.id === buildingId);
+    if (!building) return;
+
+    const currentBuildings = parseBuildings(profile.farmBuildings as any);
+    if (currentBuildings.some(b => b.buildingId === buildingId)) return; // deja construit
+    if ((profile.coins ?? 0) < building.cost) throw new Error('Pas assez de feuilles');
+
+    const newBuildings = constructBuilding(currentBuildings, buildingId, cellId);
+    await writeProfileField(profileId, 'farm_buildings', serializeBuildings(newBuildings));
     await deductCoins(profileId, building.cost, `🏗️ Construction : ${buildingId}`);
     await refresh();
-  }, [profiles, vault, deductCoins, refresh]);
+  }, [profiles, writeProfileField, deductCoins, refresh]);
 
-  /** Collecter le revenu passif des batiments (appele a l'ouverture de l'ecran) */
+  /** Ameliorer un batiment */
+  const upgradeBuildingAction = useCallback(async (profileId: string, cellId: string): Promise<void> => {
+    const profile = profiles?.find(p => p.id === profileId);
+    if (!profile || !vault) return;
+
+    const currentBuildings = parseBuildings(profile.farmBuildings as any);
+    const building = currentBuildings.find(b => b.cellId === cellId);
+    if (!building) return;
+
+    const def = BUILDING_CATALOG.find(d => d.id === building.buildingId);
+    if (!def) return;
+
+    const upgradeCost = def.tiers[building.level]?.upgradeCoins ?? 0;
+    if (upgradeCost === 0) throw new Error('Niveau maximum atteint');
+    if ((profile.coins ?? 0) < upgradeCost) throw new Error('Pas assez de feuilles');
+
+    const newBuildings = upgradeBuilding(currentBuildings, cellId);
+    await writeProfileField(profileId, 'farm_buildings', serializeBuildings(newBuildings));
+    await deductCoins(profileId, upgradeCost, `⬆️ Amelioration : ${building.buildingId}`);
+    await refresh();
+  }, [profiles, vault, writeProfileField, deductCoins, refresh]);
+
+  /** Collecter les ressources d'un batiment specifique */
+  const collectBuildingResources = useCallback(async (profileId: string, cellId: string): Promise<number> => {
+    const profile = profiles?.find(p => p.id === profileId);
+    if (!profile || !vault) return 0;
+
+    const currentBuildings = parseBuildings(profile.farmBuildings as any);
+    const currentInventory: FarmInventory = profile.farmInventory ?? { oeuf: 0, lait: 0, farine: 0 };
+
+    const result = collectBuilding(currentBuildings, currentInventory, cellId);
+    if (result.collected === 0) return 0;
+
+    await writeProfileField(profileId, 'farm_buildings', serializeBuildings(result.buildings));
+    await writeProfileField(profileId, 'farm_inventory', serializeInventory(result.inventory));
+    await refresh();
+    return result.collected;
+  }, [profiles, vault, writeProfileField, refresh]);
+
+  /** Collecter le revenu passif de tous les batiments (appele a l'ouverture de l'ecran) */
   const collectPassiveIncome = useCallback(async (profileId: string): Promise<number> => {
     const profile = profiles?.find(p => p.id === profileId);
     if (!profile || !vault) return 0;
 
-    const buildings = profile.farmBuildings ?? [];
-    if (buildings.length === 0) return 0;
+    const placedBuildings = parseBuildings(profile.farmBuildings as any);
+    if (placedBuildings.length === 0) return 0;
 
-    // Calculer le revenu journalier total
-    let dailyTotal = 0;
-    for (const bid of buildings) {
-      const def = BUILDING_CATALOG.find(b => b.id === bid);
-      if (def) dailyTotal += def.dailyIncome;
-    }
-    if (dailyTotal === 0) return 0;
+    let totalCollected = 0;
+    let currentBuildings = placedBuildings;
+    const currentInventory: FarmInventory = profile.farmInventory ?? { oeuf: 0, lait: 0, farine: 0 };
+    let updatedInventory = { ...currentInventory };
 
-    // Lire la date du dernier collecte
-    const content = await vault.readFile(FAMILLE_FILE);
-    const lines = content.split('\n');
-    let inSection = false;
-    let lastCollectLine = -1;
-    let lastPropIdx = -1;
-    let lastCollectDate = '';
-
-    for (let i = 0; i < lines.length; i++) {
-      if (lines[i].startsWith('### ')) {
-        if (inSection) break;
-        if (lines[i].replace('### ', '').trim() === profileId) inSection = true;
-      } else if (inSection && lines[i].includes(': ')) {
-        lastPropIdx = i;
-        if (lines[i].trim().startsWith('farm_last_collect:')) {
-          lastCollectLine = i;
-          lastCollectDate = lines[i].split(':').slice(1).join(':').trim();
-        }
+    for (const building of placedBuildings) {
+      const result = collectBuilding(currentBuildings, updatedInventory, building.cellId);
+      if (result.collected > 0) {
+        totalCollected += result.collected;
+        currentBuildings = result.buildings;
+        updatedInventory = result.inventory;
       }
     }
 
-    const today = new Date().toISOString().slice(0, 10);
-    if (lastCollectDate === today) return 0; // deja collecte aujourd'hui
+    if (totalCollected === 0) return 0;
 
-    // Calculer les jours ecoules
-    let days = 1;
-    if (lastCollectDate) {
-      const diff = Date.now() - new Date(lastCollectDate).getTime();
-      days = Math.max(1, Math.min(7, Math.floor(diff / 86400000))); // max 7 jours de rattrapage
-    }
-
-    const totalIncome = dailyTotal * days;
-
-    // Mettre a jour la date de collecte
-    const newValue = `farm_last_collect: ${today}`;
-    if (lastCollectLine >= 0) {
-      lines[lastCollectLine] = newValue;
-    } else if (lastPropIdx >= 0) {
-      lines.splice(lastPropIdx + 1, 0, newValue);
-    }
-    await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
-
-    // Ajouter les feuilles
-    await addCoins(profileId, totalIncome, `🏠 Revenu batiments (${days}j)`);
+    await writeProfileField(profileId, 'farm_buildings', serializeBuildings(currentBuildings));
+    await writeProfileField(profileId, 'farm_inventory', serializeInventory(updatedInventory));
     await refresh();
 
-    return totalIncome;
-  }, [profiles, vault, addCoins, refresh]);
+    return totalCollected;
+  }, [profiles, vault, writeProfileField, refresh]);
 
-  return { plant, harvest, buyBuilding, collectPassiveIncome };
+  return { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome };
 }

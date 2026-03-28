@@ -1,0 +1,309 @@
+/**
+ * BuildingDetailSheet.tsx — Bottom sheet detail/collecte/amelioration d'un batiment
+ *
+ * S'ouvre quand l'utilisateur tape sur un batiment place sur la grille.
+ * Affiche le detail du batiment, permet la collecte et l'amelioration.
+ */
+
+import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Modal,
+  Image,
+  ScrollView,
+} from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
+import { useThemeColors } from '../../contexts/ThemeContext';
+import { BUILDING_CATALOG, type PlacedBuilding } from '../../lib/mascot/types';
+import { BUILDING_SPRITES } from '../../lib/mascot/building-sprites';
+import { getPendingResources, getUpgradeCost, canUpgrade } from '../../lib/mascot/building-engine';
+import { Spacing, Radius } from '../../constants/spacing';
+import { FontSize, FontWeight } from '../../constants/typography';
+import { Shadows } from '../../constants/shadows';
+
+// ── Props ────────────────────────────────────────────────────────
+
+interface BuildingDetailSheetProps {
+  visible: boolean;
+  building: PlacedBuilding;
+  coins: number;
+  onCollect: () => void;
+  onUpgrade: () => void;
+  onClose: () => void;
+}
+
+// ── Composant ────────────────────────────────────────────────────
+
+export function BuildingDetailSheet({
+  visible,
+  building,
+  coins,
+  onCollect,
+  onUpgrade,
+  onClose,
+}: BuildingDetailSheetProps) {
+  const { t } = useTranslation();
+  const { colors, primary } = useThemeColors();
+
+  const def = BUILDING_CATALOG.find(d => d.id === building.buildingId);
+  if (!def) return null;
+
+  const tier = def.tiers[building.level - 1];
+  const pendingCount = getPendingResources(building);
+  const upgradable = canUpgrade(building);
+  const upgradeCost = getUpgradeCost(building);
+  const nextTier = upgradable ? def.tiers[building.level] : null;
+  const sprite = BUILDING_SPRITES[building.buildingId]?.[building.level];
+
+  const resourceLabel = t(`farm.building.resource.${def.resourceType}`);
+  const resourceEmoji = def.resourceType === 'oeuf' ? '🥚' : def.resourceType === 'lait' ? '🥛' : '🌾';
+
+  const handleCollect = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    onCollect();
+  };
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
+      <View style={styles.overlay}>
+        <TouchableOpacity style={styles.overlayBg} activeOpacity={1} onPress={onClose} />
+        <View style={[styles.sheet, { backgroundColor: colors.card }]}>
+          {/* Handle */}
+          <View style={[styles.handle, { backgroundColor: colors.borderLight }]} />
+
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={[styles.title, { color: colors.text }]}>
+              {def.emoji} {t(def.labelKey)} — {t('farm.building.level', { level: building.level })}
+            </Text>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
+              <Text style={[styles.closeBtnText, { color: colors.textSub }]}>{'✕'}</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView
+            contentContainerStyle={styles.content}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Sprite */}
+            <View style={styles.spriteContainer}>
+              {sprite ? (
+                <Image source={sprite} style={styles.sprite} />
+              ) : (
+                <Text style={styles.spriteEmoji}>{def.emoji}</Text>
+              )}
+            </View>
+
+            {/* Section production */}
+            <View style={[styles.section, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                Production
+              </Text>
+              <Text style={[styles.sectionDetail, { color: colors.textSub }]}>
+                {resourceEmoji} {t('farm.building.frequency', {
+                  resource: resourceLabel,
+                  hours: tier?.productionRateHours ?? '?',
+                })}
+              </Text>
+            </View>
+
+            {/* Section collecte */}
+            <View style={[styles.section, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                {pendingCount > 0
+                  ? t('farm.building.pendingCount', { count: pendingCount })
+                  : t('farm.building.noPending')}
+              </Text>
+              <TouchableOpacity
+                onPress={pendingCount > 0 ? handleCollect : undefined}
+                activeOpacity={pendingCount > 0 ? 0.7 : 1}
+                style={[
+                  styles.collectBtn,
+                  {
+                    backgroundColor: pendingCount > 0 ? '#4ADE80' : colors.borderLight,
+                  },
+                ]}
+              >
+                <Text style={[
+                  styles.collectBtnText,
+                  { color: pendingCount > 0 ? '#FFFFFF' : colors.textMuted },
+                ]}>
+                  {pendingCount > 0
+                    ? t('farm.building.collect', { count: pendingCount, resource: resourceLabel })
+                    : t('farm.building.noPending')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Section amelioration */}
+            <View style={[styles.section, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}>
+              {upgradable && nextTier ? (
+                <>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                    Amelioration
+                  </Text>
+                  <Text style={[styles.sectionDetail, { color: colors.textSub }]}>
+                    {t('farm.building.frequency', {
+                      resource: resourceLabel,
+                      hours: nextTier.productionRateHours,
+                    })}
+                  </Text>
+                  <Text style={[styles.sectionDetail, { color: coins >= upgradeCost ? '#4ADE80' : colors.textMuted }]}>
+                    {t('farm.building.upgradeCost', { cost: upgradeCost })}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={coins >= upgradeCost ? onUpgrade : undefined}
+                    activeOpacity={coins >= upgradeCost ? 0.7 : 1}
+                    style={[
+                      styles.upgradeBtn,
+                      {
+                        backgroundColor: coins >= upgradeCost ? primary : colors.borderLight,
+                      },
+                    ]}
+                  >
+                    <Text style={[
+                      styles.upgradeBtnText,
+                      { color: coins >= upgradeCost ? '#FFFFFF' : colors.textMuted },
+                    ]}>
+                      {t('farm.building.upgrade', { level: building.level + 1 })}
+                    </Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <View style={styles.maxLevelRow}>
+                  <Text style={[styles.maxLevelBadge, { backgroundColor: '#FFD700', color: '#7B5300' }]}>
+                    {t('farm.building.maxLevel')}
+                  </Text>
+                  <Text style={[styles.sectionDetail, { color: colors.textSub }]}>
+                    {t('farm.building.frequency', {
+                      resource: resourceLabel,
+                      hours: tier?.productionRateHours ?? '?',
+                    })}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  overlayBg: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  sheet: {
+    borderTopLeftRadius: Radius.xl,
+    borderTopRightRadius: Radius.xl,
+    paddingBottom: Spacing['5xl'],
+    maxHeight: '80%',
+    ...Shadows.lg,
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.lg,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing['2xl'],
+    marginBottom: Spacing.xl,
+  },
+  title: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    flex: 1,
+    marginRight: Spacing.md,
+  },
+  closeBtn: {
+    padding: Spacing.md,
+  },
+  closeBtnText: {
+    fontSize: FontSize.lg,
+  },
+  content: {
+    paddingHorizontal: Spacing['2xl'],
+    paddingBottom: Spacing['3xl'],
+    gap: Spacing.xl,
+  },
+  spriteContainer: {
+    alignItems: 'center',
+    paddingVertical: Spacing['2xl'],
+  },
+  sprite: {
+    width: 72,
+    height: 72,
+    resizeMode: 'contain',
+  },
+  spriteEmoji: {
+    fontSize: 56,
+  },
+  section: {
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    padding: Spacing['2xl'],
+    gap: Spacing.md,
+  },
+  sectionTitle: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+  },
+  sectionDetail: {
+    fontSize: FontSize.sm,
+  },
+  collectBtn: {
+    borderRadius: Radius.md,
+    paddingVertical: Spacing.lg,
+    alignItems: 'center',
+    marginTop: Spacing.md,
+  },
+  collectBtnText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+  },
+  upgradeBtn: {
+    borderRadius: Radius.md,
+    paddingVertical: Spacing.lg,
+    alignItems: 'center',
+    marginTop: Spacing.md,
+  },
+  upgradeBtnText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+  },
+  maxLevelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xl,
+  },
+  maxLevelBadge: {
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.full,
+    fontSize: FontSize.label,
+    fontWeight: FontWeight.bold,
+    overflow: 'hidden',
+  },
+});

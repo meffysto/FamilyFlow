@@ -3889,12 +3889,33 @@
     },
     "building": {
       "poulailler": "Poulailler",
-      "poulailler_desc": "Un poulailler cosy. Produit 10 🍃 par jour automatiquement.",
+      "poulailler_desc": "Un poulailler cosy. Produit des oeufs automatiquement.",
       "grange": "Grange",
-      "grange_desc": "Une belle grange en bois. Produit 25 🍃 par jour automatiquement.",
+      "grange_desc": "Une belle grange en bois. Produit du lait automatiquement.",
+      "moulin": "Moulin",
+      "moulin_desc": "Un moulin a vent. Produit de la farine automatiquement.",
       "buy": "Construire",
       "dailyIncome": "+{{amount}} 🍃/jour",
-      "owned": "Construit"
+      "owned": "Construit",
+      "construct": "Construire",
+      "constructTitle": "Construire un batiment",
+      "noAvailable": "Aucun batiment disponible",
+      "unlockedAt": "Debloquer au stade {{stage}}",
+      "cost": "{{cost}} 🍃",
+      "frequency": "1 {{resource}} toutes les {{hours}}h",
+      "level": "Niv. {{level}}",
+      "maxLevel": "Niveau max",
+      "upgrade": "Ameliorer au Niv {{level}}",
+      "upgradeCost": "{{cost}} 🍃",
+      "collect": "Collecter {{count}} {{resource}}",
+      "noPending": "Rien a collecter",
+      "pendingCount": "{{count}} disponible",
+      "resource": {
+        "oeuf": "oeuf",
+        "oeufs": "oeufs",
+        "lait": "lait",
+        "farine": "farine"
+      }
     },
     "weeklyGoal": {
       "title": "Objectif de la semaine",

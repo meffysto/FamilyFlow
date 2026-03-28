@@ -24,22 +24,20 @@ import {
   BUILDING_CELLS,
   type WorldCell,
 } from '../../lib/mascot/world-grid';
-import { type PlantedCrop, type TreeStage, CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
-
-const BUILDING_SPRITES: Record<string, any> = {
-  poulailler: require('../../assets/buildings/poulailler.png'),
-  grange: require('../../assets/buildings/grange.png'),
-};
+import { type PlantedCrop, type TreeStage, type PlacedBuilding, CROP_CATALOG } from '../../lib/mascot/types';
+import { BUILDING_SPRITES } from '../../lib/mascot/building-sprites';
+import { getPendingResources } from '../../lib/mascot/building-engine';
 import { parseCrops, hasCropSeasonalBonus } from '../../lib/mascot/farm-engine';
 import { CROP_SPRITES } from '../../lib/mascot/crop-sprites';
 
 interface WorldGridViewProps {
   treeStage: TreeStage;
   farmCropsCSV: string;
-  ownedBuildings: string[];
+  ownedBuildings: PlacedBuilding[];
   containerWidth: number;
   containerHeight: number;
   onCropPlotPress?: (cellId: string, crop: PlantedCrop | null) => void;
+  onBuildingCellPress?: (cellId: string, building: PlacedBuilding | null) => void;
 }
 
 const DIRT_SPRITE = require('../../assets/garden/ground/dirt_patch.png');
@@ -168,25 +166,60 @@ function CropCell({ cell, crop, cropDef, isMature, containerWidth, containerHeig
 
 // ── Cellule batiment ──
 
-function BuildingCell({ cell, buildingId, containerWidth, containerHeight }: {
+function BuildingCell({ cell, placedBuilding, pendingCount, containerWidth, containerHeight, onPress }: {
   cell: WorldCell;
-  buildingId: string | null;
+  placedBuilding: PlacedBuilding | null;
+  pendingCount: number;
   containerWidth: number;
   containerHeight: number;
+  onPress: () => void;
 }) {
-  if (!buildingId) return null;
-  const building = BUILDING_CATALOG.find(b => b.id === buildingId);
-  if (!building) return null;
+  const pulse = useSharedValue(1);
+  const reducedMotion = useReducedMotion();
+
+  useEffect(() => {
+    if (!reducedMotion && pendingCount > 0) {
+      pulse.value = withRepeat(
+        withSequence(
+          withTiming(1.08, { duration: 800, easing: Easing.inOut(Easing.sin) }),
+          withTiming(1, { duration: 800, easing: Easing.inOut(Easing.sin) }),
+        ),
+        -1, true,
+      );
+    } else {
+      pulse.value = withTiming(1, { duration: 300 });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reducedMotion, pendingCount > 0]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulse.value }],
+  }));
 
   const size = CELL_SIZES[cell.size];
   const left = cell.x * containerWidth - size / 2;
   const top = cell.y * containerHeight - size / 2;
 
   return (
-    <View style={[styles.buildingCell, { position: 'absolute', left, top, width: size, height: size }]}>
-      <Image source={BUILDING_SPRITES[building.id]} style={styles.buildingSprite} />
-      <Text style={styles.buildingIncome}>+{building.dailyIncome}🍃</Text>
-    </View>
+    <Animated.View style={[{ position: 'absolute', left, top, width: size, height: size }, animStyle]}>
+      <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={styles.buildingCell}>
+        {placedBuilding ? (
+          <>
+            <Image
+              source={BUILDING_SPRITES[placedBuilding.buildingId]?.[placedBuilding.level]}
+              style={styles.buildingSprite}
+            />
+            {pendingCount > 0 && (
+              <View style={styles.pendingBadge}>
+                <Text style={styles.pendingBadgeText}>{pendingCount}</Text>
+              </View>
+            )}
+          </>
+        ) : (
+          <Text style={styles.emptyBuildingPlus}>🏗️</Text>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
   );
 }
 
@@ -199,6 +232,7 @@ export function WorldGridView({
   containerWidth,
   containerHeight,
   onCropPlotPress,
+  onBuildingCellPress,
 }: WorldGridViewProps) {
   const unlockedCrops = getUnlockedCropCells(treeStage);
   const crops = parseCrops(farmCropsCSV);
@@ -228,15 +262,21 @@ export function WorldGridView({
       })}
 
       {/* Cellules de batiment */}
-      {BUILDING_CELLS.map((cell, idx) => (
-        <BuildingCell
-          key={cell.id}
-          cell={cell}
-          buildingId={ownedBuildings[idx] ?? null}
-          containerWidth={containerWidth}
-          containerHeight={containerHeight}
-        />
-      ))}
+      {BUILDING_CELLS.map(cell => {
+        const placedBuilding = ownedBuildings.find(b => b.cellId === cell.id) ?? null;
+        const pendingCount = placedBuilding ? getPendingResources(placedBuilding) : 0;
+        return (
+          <BuildingCell
+            key={cell.id}
+            cell={cell}
+            placedBuilding={placedBuilding}
+            pendingCount={pendingCount}
+            containerWidth={containerWidth}
+            containerHeight={containerHeight}
+            onPress={() => onBuildingCellPress?.(cell.id, placedBuilding)}
+          />
+        );
+      })}
     </View>
   );
 }
@@ -315,4 +355,25 @@ const styles = StyleSheet.create({
   buildingEmoji: { fontSize: 28 },
   buildingSprite: { width: 32, height: 32 },
   buildingIncome: { fontSize: 10, color: '#4ADE80', fontWeight: '600', marginTop: 2 },
+  pendingBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#EF4444',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  pendingBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  emptyBuildingPlus: {
+    fontSize: 24,
+    textAlign: 'center',
+  },
 });
