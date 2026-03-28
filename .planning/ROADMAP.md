@@ -12,9 +12,9 @@ Ce milestone stabilise l'app TestFlight (tests, nettoyage, write safety) puis en
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Safety Net** - Tests critiques, Sentry, nettoyage code mort, types `any`, ESLint
-- [ ] **Phase 2: Write Safety + Couleurs** - Write queue par fichier, couleurs hardcodées → tokens, XP budget model
-- [ ] **Phase 3: Gamification** - Événements saisonniers et quêtes familiales coopératives
+- [x] **Phase 1: Safety Net** - Tests critiques, Sentry, nettoyage code mort, types `any`, ESLint (completed 2026-03-28)
+- [x] **Phase 2: Write Safety + Couleurs** - Write queue par fichier, couleurs hardcodées → tokens, XP budget model (completed 2026-03-28)
+- [x] **Phase 3: Gamification** - Particules saisonnières dans le diorama (completed 2026-03-28)
 - [x] **Phase 4: Ambiance + Retention** - Ambiance horaire, mutation dorée, flammes de streak (completed 2026-03-28)
 
 ## Phase Details
@@ -90,7 +90,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Safety Net | 2/4 | In Progress|  |
-| 2. Write Safety + Couleurs | 0/3 | Not started | - |
-| 3. Gamification | 0/2 | Not started | - |
-| 4. Ambiance + Retention | 2/2 | Complete   | 2026-03-28 |
+| 1. Safety Net | 4/4 | Complete | 2026-03-28 |
+| 2. Write Safety + Couleurs | 3/3 | Complete | 2026-03-28 |
+| 3. Gamification | 1/1 | Complete | 2026-03-28 |
+| 4. Ambiance + Retention | 2/2 | Complete | 2026-03-28 |
