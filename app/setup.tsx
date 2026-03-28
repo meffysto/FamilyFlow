@@ -780,7 +780,7 @@ export default function SetupScreen() {
                   >
                     <View style={[s.recapCheckIcon, { borderWidth: 2 }, isDone ? { backgroundColor: colors.successBg, borderColor: colors.successBg } : isActive ? { borderColor: primary, backgroundColor: 'transparent' } : { borderColor: 'transparent' }]}>
                       {isDone ? (
-                        <Text style={s.recapCheckDone}>✓</Text>
+                        <Text style={[s.recapCheckDone, { color: colors.success }]}>✓</Text>
                       ) : (
                         <ActivityIndicator size="small" color={primary} />
                       )}
@@ -1447,7 +1447,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   recapCheckEmoji: { fontSize: 20 },
-  recapCheckDone: { fontSize: 18, fontWeight: FontWeight.bold, color: '#16a34a' },
+  recapCheckDone: { fontSize: 18, fontWeight: FontWeight.bold },
   recapCheckTextCol: { flex: 1, gap: 2 },
   recapCheckLabel: {
     fontSize: FontSize.body,

@@ -80,6 +80,7 @@ function getWeatherStage(progress: number) {
 
 /** Bandeau météo animé pour les enfants */
 function TaskWeather({ completed, total, t }: { completed: number; total: number; t: (key: string, opts?: any) => string }) {
+  const { colors } = useThemeColors();
   const progress = total > 0 ? completed / total : 0;
   const stageIdx = getWeatherStage(progress);
   const stage = WEATHER_STAGES[stageIdx];
@@ -111,10 +112,10 @@ function TaskWeather({ completed, total, t }: { completed: number; total: number
     <Animated.View style={[weatherStyles.container, bgStyle]}>
       <Animated.Text style={[weatherStyles.emoji, emojiStyle]}>{stage.emoji}</Animated.Text>
       <View style={weatherStyles.textCol}>
-        <Text style={weatherStyles.label}>{t(stage.labelKey)}</Text>
-        <Text style={weatherStyles.message}>{t(stage.messageKey)}</Text>
+        <Text style={[weatherStyles.label, { color: colors.text }]}>{t(stage.labelKey)}</Text>
+        <Text style={[weatherStyles.message, { color: colors.textSub }]}>{t(stage.messageKey)}</Text>
       </View>
-      <Text style={weatherStyles.count}>{completed}/{total}</Text>
+      <Text style={[weatherStyles.count, { color: colors.textMuted }]}>{completed}/{total}</Text>
     </Animated.View>
   );
 }
@@ -139,17 +140,14 @@ const weatherStyles = StyleSheet.create({
   label: {
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
-    color: '#1F2937',
   },
   message: {
     fontSize: FontSize.label,
-    color: '#374151',
     marginTop: 2,
   },
   count: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.semibold,
-    color: '#4B5563',
   },
 });
 
