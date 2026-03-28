@@ -89,7 +89,12 @@ Plans:
   2. Chaque culture affiche au moins 2 frames d'animation distinctes par stade de croissance — l'animation est perceptible
   3. Les animaux ont une animation idle visible et une animation de marche différenciée — ils paraissent vivants au repos
   4. `npx tsc --noEmit` passe sans nouvelles erreurs
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Transition animee cycle jour/nuit dans AmbientParticles (VIS-01)
+- [ ] 05-02-PLAN.md — Assets Mana Seed cultures + animation 2-frames CropCell (VIS-02)
+- [ ] 05-03-PLAN.md — Assets Mana Seed animaux + direction marche walk_left (VIS-03)
 
 #### Phase 6: Bâtiments Productifs
 **Goal**: L'utilisateur peut construire des bâtiments sur la ferme qui génèrent des ressources passives, créant une raison de revenir régulièrement
@@ -146,7 +151,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 2. Write Safety + Couleurs | v1.0 | 3/3 | Complete | 2026-03-28 |
 | 3. Gamification | v1.0 | 2/2 | Complete | 2026-03-28 |
 | 4. Ambiance + Retention | v1.0 | 2/2 | Complete | 2026-03-28 |
-| 5. Visuels Ferme | v1.1 | 0/TBD | Not started | - |
+| 5. Visuels Ferme | v1.1 | 0/3 | Planning complete | - |
 | 6. Bâtiments Productifs | v1.1 | 0/TBD | Not started | - |
 | 7. Craft | v1.1 | 0/TBD | Not started | - |
 | 8. Progression Ferme | v1.1 | 0/TBD | Not started | - |
