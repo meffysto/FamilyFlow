@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
-status: planning
-stopped_at: Phase 5 context gathered
-last_updated: "2026-03-28T20:39:32.653Z"
-last_activity: 2026-03-28 — Roadmap v1.1 créé (5 phases, 14 requirements)
+status: executing
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-03-28T21:02:31.287Z"
+last_activity: 2026-03-28
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 5
+  completed_plans: 3
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 5 — Visuels Ferme (prêt à planifier)
+**Current focus:** Phase 05 — visuels-ferme
 
 ## Current Position
 
-Phase: 5 of 9 (Visuels Ferme)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-03-28 — Roadmap v1.1 créé (5 phases, 14 requirements)
+Phase: 05 (visuels-ferme) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-03-28
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -47,6 +47,7 @@ Progress: [░░░░░░░░░░] 0%
 | - | - | - | - |
 
 *Updated after each plan completion*
+| Phase 05-visuels-ferme P01 | 2 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -58,6 +59,8 @@ Recent decisions affecting current work:
 - [Init v1.1]: La ferme est le levier de motivation, pas le produit — chaque feature doit renforcer tâches → XP/récoltes → progression ferme → envie de refaire
 - [Phase 4]: AmbientParticles utilise largeur generique 390 car absoluteFill dans parent de taille connue
 - [Phase 4]: Couleurs dorées (#FFD700) définies dans StyleSheet comme constantes cosmétiques, pas dans useThemeColors()
+- [Phase 05-01]: Animer overlay RGBA via 4 shared values separees (pas interpolation string) pour compatibilite worklets Reanimated
+- [Phase 05-01]: Toujours rendre Animated.View overlay (jamais return null quand config null) — fondu entrant/sortant fluide pour slot jour
 
 ### Pending Todos
 
@@ -70,6 +73,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T20:39:32.650Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-visuels-ferme/05-CONTEXT.md
+Last session: 2026-03-28T21:02:31.284Z
+Stopped at: Completed 05-01-PLAN.md
+Resume file: None
