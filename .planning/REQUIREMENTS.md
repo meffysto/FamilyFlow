@@ -15,9 +15,9 @@ Requirements for milestone v1.1 — Ferme Enrichie. La ferme est le levier de mo
 
 ### Bâtiments
 
-- [ ] **BAT-01**: L'utilisateur peut construire un bâtiment productif (moulin, serre, étable) sur une parcelle dédiée
-- [ ] **BAT-02**: Les bâtiments génèrent des ressources passivement (une récolte toutes les X heures)
-- [ ] **BAT-03**: Les bâtiments ont au moins 2 niveaux d'amélioration qui augmentent la production
+- [x] **BAT-01**: L'utilisateur peut construire un bâtiment productif (moulin, serre, étable) sur une parcelle dédiée
+- [x] **BAT-02**: Les bâtiments génèrent des ressources passivement (une récolte toutes les X heures)
+- [x] **BAT-03**: Les bâtiments ont au moins 2 niveaux d'amélioration qui augmentent la production
 
 ### Craft
 
@@ -59,9 +59,9 @@ Deferred to future milestones.
 | VIS-01 | Phase 5 | Complete |
 | VIS-02 | Phase 5 | Complete |
 | VIS-03 | Phase 5 | Complete |
-| BAT-01 | Phase 6 | Pending |
-| BAT-02 | Phase 6 | Pending |
-| BAT-03 | Phase 6 | Pending |
+| BAT-01 | Phase 6 | Complete |
+| BAT-02 | Phase 6 | Complete |
+| BAT-03 | Phase 6 | Complete |
 | CRA-01 | Phase 7 | Pending |
 | CRA-02 | Phase 7 | Pending |
 | CRA-03 | Phase 7 | Pending |

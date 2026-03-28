@@ -108,8 +108,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Types etendus + building-engine + migration parser + useFarm
-- [ ] 06-02-PLAN.md — UI batiments (WorldGridView, bottom sheets, integration tree.tsx)
+- [x] 06-01-PLAN.md — Types etendus + building-engine + migration parser + useFarm
+- [x] 06-02-PLAN.md — UI batiments (WorldGridView, bottom sheets, integration tree.tsx)
 
 #### Phase 7: Craft
 **Goal**: Les récoltes brutes peuvent être combinées en items spéciaux via des recettes, offrant plus de valeur XP et une boucle de progression plus riche
