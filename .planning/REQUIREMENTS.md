@@ -83,13 +83,35 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| *(populated by roadmapper)* | | |
+| TEST-01 | Phase 1 | Pending |
+| TEST-02 | Phase 1 | Pending |
+| TEST-03 | Phase 1 | Pending |
+| TEST-04 | Phase 1 | Pending |
+| TEST-05 | Phase 1 | Pending |
+| TEST-06 | Phase 1 | Pending |
+| TEST-07 | Phase 1 | Pending |
+| QUAL-01 | Phase 1 | Pending |
+| QUAL-02 | Phase 1 | Pending |
+| QUAL-04 | Phase 1 | Pending |
+| QUAL-05 | Phase 1 | Pending |
+| QUAL-03 | Phase 2 | Pending |
+| ARCH-02 | Phase 2 | Pending |
+| ARCH-03 | Phase 2 | Pending |
+| ARCH-04 | Phase 2 | Pending |
+| ARCH-01 | Phase 3 | Pending |
+| GAME-01 | Phase 3 | Pending |
+| GAME-02 | Phase 4 | Pending |
+| GAME-03 | Phase 4 | Pending |
+| ARCH-05 | Phase 5 | Pending |
+| ARCH-06 | Phase 5 | Pending |
+| ARCH-07 | Phase 5 | Pending |
+| ARCH-08 | Phase 5 | Pending |
 
 **Coverage:**
 - v1 requirements: 21 total
-- Mapped to phases: 0
-- Unmapped: 21 ⚠️
+- Mapped to phases: 21
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-28*
-*Last updated: 2026-03-28 after initial definition*
+*Last updated: 2026-03-28 after roadmap creation — traceability complete*
