@@ -47,6 +47,7 @@ import {
   isValidGender,
 } from './types';
 import { VALID_THEMES, type ProfileTheme } from '../constants/themes';
+import { parseBuildings, parseInventory } from './mascot/building-engine';
 import { parseEmplacementFromHeader, LEGACY_BEBE_SECTIONS, type EmplacementId } from '../constants/stock';
 
 // ─── Task parsing ───────────────────────────────────────────────────────────
@@ -568,9 +569,8 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
       }
       // Cultures ferme
       const farmCrops = currentProps.farm_crops ?? '';
-      const farmBuildings = currentProps.farm_buildings
-        ? currentProps.farm_buildings.split(',').map((s: string) => s.trim()).filter(Boolean)
-        : [];
+      const farmBuildings = parseBuildings(currentProps.farm_buildings ?? '');
+      const farmInventory = parseInventory(currentProps.farm_inventory ?? '');
       profiles.push({
         id: currentId,
         name: currentProps.name,
@@ -589,6 +589,7 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
         mascotPlacements,
         farmCrops,
         farmBuildings,
+        farmInventory,
       });
     }
   };

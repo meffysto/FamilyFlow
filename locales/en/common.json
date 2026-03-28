@@ -3892,9 +3892,31 @@
       "poulailler_desc": "A cozy chicken coop. Produces 10 🍃 per day automatically.",
       "grange": "Barn",
       "grange_desc": "A lovely wooden barn. Produces 25 🍃 per day automatically.",
+      "moulin": "Mill",
+      "moulin_desc": "A rustic mill. Produces flour every few hours.",
       "buy": "Build",
       "dailyIncome": "+{{amount}} 🍃/day",
-      "owned": "Built"
+      "owned": "Built",
+      "level": "Level {{level}}",
+      "production": "Produces: {{resource}}",
+      "frequency": "Every {{hours}}h",
+      "pending": "{{count}} to collect",
+      "collect": "Collect",
+      "upgrade": "Upgrade",
+      "upgradeTo": "Upgrade to Lv {{level}}",
+      "cost": "{{cost}} 🍃",
+      "maxLevel": "Max level",
+      "build": "Build",
+      "empty": "Empty slot",
+      "locked": "Unlock at {{stage}} stage"
+    },
+    "resource": {
+      "oeuf": "egg",
+      "lait": "milk",
+      "farine": "flour"
+    },
+    "inventory": {
+      "title": "Inventory"
     },
     "weeklyGoal": {
       "title": "Weekly Goal",

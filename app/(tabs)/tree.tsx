@@ -849,9 +849,9 @@ export default function TreeScreen() {
           ownedInhabitants={allHabIds}
           ownedBuildings={profile.farmBuildings ?? []}
           onBuy={handleShopBuy}
-          onBuyBuilding={async (buildingId) => {
+          onBuyBuilding={async (buildingId, cellId) => {
             if (!profile) return;
-            await buyBuilding(profile.id, buildingId);
+            await buyBuilding(profile.id, buildingId, cellId);
             showToast(`🏗️ ${t('farm.building.owned')} !`);
           }}
           onClose={() => setShowShop(false)}
