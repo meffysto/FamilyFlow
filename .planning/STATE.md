@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 Phase: 1 of 5 (Safety Net)
 Plan: 0 of TBD in current phase
 Status: Ready to plan
-Last activity: 2026-03-28 — Roadmap créé, requirements mappés (21/21)
+Last activity: 2026-03-28 - Completed quick task 260328-ps4: Dots croissance marron + tooltips clamp bords ecran
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -55,6 +55,12 @@ None yet.
 - Phase 3 (write queue): Le pattern async mutex pour expo-file-system sur iOS avec NSFileCoordinator n'est pas spécifié. Besoin d'un spike 2-4h avant de figer l'API shape en phase de planning.
 - Phase 4 (idle progression): La formule de progression idle doit être calibrée contre le modèle XP budget établi en Phase 3. Ne pas finaliser les valeurs avant que Phase 3 soit complète.
 - Phase 4 (Skia): Si les animations animaux ou le rendu farm tiles demande Skia, vérifier `newArchEnabled: true` dans app.json avant que la phase commence.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260328-ps4 | Dots croissance marron + tooltips clamp bords ecran | 2026-03-28 | 6951e8d | [260328-ps4-dots-croissance-marron-tooltips-clamp-bo](./quick/260328-ps4-dots-croissance-marron-tooltips-clamp-bo/) |
 
 ## Session Continuity
 
