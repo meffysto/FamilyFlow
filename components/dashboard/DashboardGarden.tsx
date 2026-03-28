@@ -482,10 +482,8 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
         })}
       </View>
 
-      {/* Aventure ou saga du jour */}
-      {!loading && activeProfile && (
-        hasSaga ? renderSagaCard() : renderOneShotAdventure()
-      )}
+      {/* Saga du jour */}
+      {!loading && activeProfile && hasSaga && renderSagaCard()}
 
       {/* Lien vers l'écran arbre */}
       <TouchableOpacity

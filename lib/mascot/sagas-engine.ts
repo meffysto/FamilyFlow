@@ -102,8 +102,8 @@ export function getSagaCompletionResult(
 
 // ── Sélection quotidienne ────────────────────
 
-/** Nombre de jours de repos entre deux sagas */
-const REST_DAYS_BETWEEN_SAGAS = 2;
+/** Nombre de jours de repos entre deux sagas (0 = enchaînement direct) */
+const REST_DAYS_BETWEEN_SAGAS = 0;
 
 /**
  * Calcule le nombre de jours depuis une date de référence.
