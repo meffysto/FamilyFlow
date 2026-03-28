@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   stageDotFilled: {
-    backgroundColor: '#4ADE80',
+    backgroundColor: '#8B6914',
   },
   stageDotMature: {
     backgroundColor: '#FFD700',

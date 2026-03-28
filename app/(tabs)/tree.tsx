@@ -107,8 +107,12 @@ function CropWhisper({ whisperInfo, stageInfo, stageIdx }: {
   const msg = hasCropSeasonalBonus(whisperInfo.cropId)
     ? '☀️ Le soleil m\'aide !'
     : whispers[Math.min(whisperInfo.stage, 3)];
-  const wx = cell.x * SCREEN_W - 60;
-  const wy = cell.y * (DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60) - 40;
+  const TOOLTIP_W = 140;
+  const TOOLTIP_H = 28;
+  const rawWx = cell.x * SCREEN_W - TOOLTIP_W / 2;
+  const rawWy = cell.y * (DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60) - TOOLTIP_H - 12;
+  const wx = Math.max(4, Math.min(rawWx, SCREEN_W - TOOLTIP_W - 4));
+  const wy = Math.max(4, rawWy);
 
   return (
     <Animated.View
