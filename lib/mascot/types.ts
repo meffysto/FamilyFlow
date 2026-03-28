@@ -273,6 +273,7 @@ export interface PlantedCrop {
   currentStage: number;    // 0 = graine, 4 = pret a recolter
   tasksCompleted: number;  // taches completees dans le stade actuel
   plantedAt: string;       // YYYY-MM-DD
+  isGolden?: boolean;      // mutation doree — 3% chance a la plantation
 }
 
 /** Nombre de parcelles deblocables par stade d'arbre.
