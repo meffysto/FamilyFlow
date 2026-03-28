@@ -49,9 +49,9 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Write queue per-file dans VaultManager + modele XP budget
+- [x] 02-01-PLAN.md — Write queue per-file dans VaultManager + modele XP budget
 - [ ] 02-02-PLAN.md — Migration couleurs ecrans (app/) et composants high-priority
-- [ ] 02-03-PLAN.md — Migration couleurs composants restants + verification visuelle mode nuit
+- [x] 02-03-PLAN.md — Migration couleurs composants restants + verification visuelle mode nuit
 
 ### Phase 3: Gamification
 **Goal**: La ferme a des événements saisonniers liés au vrai calendrier et des quêtes familiales coopératives donnent un objectif partagé

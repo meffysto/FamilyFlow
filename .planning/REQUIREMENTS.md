@@ -27,11 +27,11 @@ Requirements pour ce milestone. Chaque requirement est mappé à une phase du ro
 
 ### Architecture
 
-- [ ] **ARCH-01**: Write queue per-file pour les opérations concurrentes sur le vault
+- [x] **ARCH-01**: Write queue per-file pour les opérations concurrentes sur le vault
 
 ### Gamification
 
-- [ ] **GAME-01**: Modèle XP budget pour éviter l'inflation des niveaux
+- [x] **GAME-01**: Modèle XP budget pour éviter l'inflation des niveaux
 - [ ] **GAME-02**: Événements saisonniers liés au calendrier réel (printemps, été, automne, hiver)
 - [ ] **GAME-03**: Quêtes familiales coopératives (objectifs partagés entre membres)
 
@@ -99,9 +99,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | QUAL-02 | Phase 1 | Complete |
 | QUAL-04 | Phase 1 | Complete |
 | QUAL-05 | Phase 1 | Complete |
-| ARCH-01 | Phase 2 | Pending |
+| ARCH-01 | Phase 2 | Complete |
 | QUAL-03 | Phase 2 | Pending |
-| GAME-01 | Phase 2 | Pending |
+| GAME-01 | Phase 2 | Complete |
 | GAME-02 | Phase 3 | Pending |
 | GAME-03 | Phase 3 | Pending |
 | AMB-01 | Phase 4 | Complete |

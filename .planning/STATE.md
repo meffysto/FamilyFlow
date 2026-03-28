@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Checkpoint 01-04: Awaiting Maestro validation on device"
-last_updated: "2026-03-28T19:18:21.697Z"
+stopped_at: Completed 02-write-safety-couleurs/02-01-PLAN.md
+last_updated: "2026-03-28T19:42:32.018Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 7
+  completed_plans: 6
   percent: 0
 ---
 
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 01 — Safety Net
+**Current focus:** Phase 02 — Write Safety + Couleurs
 
 ## Current Position
 
-Phase: 2
-Plan: Not started
+Phase: 02 (Write Safety + Couleurs) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
 Last activity: 2026-03-28
 
@@ -57,6 +57,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-safety-net P02 | 6 | 2 tasks | 5 files |
 | Phase 01-safety-net P01 | 6 | 3 tasks | 8 files |
 | Phase 01-safety-net P04 | 15 | 1 tasks | 4 files |
+| Phase 02-write-safety-couleurs P01 | 4 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,9 @@ Recent decisions affecting current work:
 - [Phase 01-01]: Mock react-native minimal Platform.OS pour lib/mascot/utils.ts dans tests node
 - [Phase 01-04]: Flows Maestro utilisent labels visibles (Aujourd'hui, Tâches, Menu) plutôt que testID — sélecteurs stables sans modifier le code source
 - [Phase 01-04]: meal-planning utilise runFlow conditionnel — l'écran repas est href:null accessible via Menu tab
+- [Phase 02-01]: diagnostics: false dans jest.config.js pour permettre aux tests d'importer vault.ts malgre l'erreur pre-existante scaffoldVault
+- [Phase 02-01]: enqueueWrite utilise finally avec comparaison du Promise courant pour nettoyer la Map sans supprimer une entree plus recente
+- [Phase 02-01]: XP_BUDGET exprime les valeurs en constantes numeriques as const — importable sans side effects pour calibrer les nouvelles sources XP
 
 ### Roadmap Evolution
 
@@ -105,6 +109,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T19:15:57.322Z
-Stopped at: Checkpoint 01-04: Awaiting Maestro validation on device
+Last session: 2026-03-28T19:42:32.015Z
+Stopped at: Completed 02-write-safety-couleurs/02-01-PLAN.md
 Resume file: None
