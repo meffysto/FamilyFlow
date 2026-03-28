@@ -43,6 +43,7 @@ import {
   PregnancyWeekEntry,
   SkillTreeData,
   SkillUnlock,
+  UsedLoot,
   isValidGender,
 } from './types';
 import { VALID_THEMES, type ProfileTheme } from '../constants/themes';
@@ -629,13 +630,15 @@ export function parseGamification(content: string): GamificationData {
   const profiles: Profile[] = [];
   const history: GamificationEntry[] = [];
   const activeRewards: ActiveReward[] = [];
+  const usedLoots: UsedLoot[] = [];
 
   let currentName: string | null = null;
   let currentProps: Record<string, string> = {};
   let inHistory = false;
   let inActiveRewards = false;
+  let inUsedLoots = false;
 
-  const RESERVED_SECTIONS = ['Journal des gains', 'Récompenses actives'];
+  const RESERVED_SECTIONS = ['Journal des gains', 'Récompenses actives', 'Récompenses utilisées'];
 
   const flush = () => {
     if (currentName && !RESERVED_SECTIONS.includes(currentName)) {
@@ -666,6 +669,7 @@ export function parseGamification(content: string): GamificationData {
       currentProps = {};
       inHistory = currentName === 'Journal des gains';
       inActiveRewards = currentName === 'Récompenses actives';
+      inUsedLoots = currentName === 'Récompenses utilisées';
     } else if (inHistory && line.startsWith('- ')) {
       // Format: - 2026-03-06T10:30:00Z | Papa | +10 | Tâche: Ménage cuisine
       const parts = line.slice(2).split(' | ');
@@ -694,7 +698,20 @@ export function parseGamification(content: string): GamificationData {
           remainingTasks: parts[7]?.trim() ? parseInt(parts[7].trim(), 10) : undefined,
         });
       }
-    } else if (currentName && !inHistory && !inActiveRewards && line.includes(': ')) {
+    } else if (inUsedLoots && line.startsWith('- ')) {
+      // Format: - {id} | {profileId} | {emoji} | {label} | {usedAt} | {earnedAt}
+      const parts = line.slice(2).split(' | ');
+      if (parts.length >= 6) {
+        usedLoots.push({
+          id: parts[0].trim(),
+          profileId: parts[1].trim(),
+          emoji: parts[2].trim(),
+          label: parts[3].trim(),
+          usedAt: parts[4].trim(),
+          earnedAt: parts[5].trim(),
+        });
+      }
+    } else if (currentName && !inHistory && !inActiveRewards && !inUsedLoots && line.includes(': ')) {
       const colonIdx = line.indexOf(': ');
       const key = line.slice(0, colonIdx).trim();
       const val = line.slice(colonIdx + 2).trim();
@@ -703,7 +720,7 @@ export function parseGamification(content: string): GamificationData {
   }
   flush();
 
-  return { profiles, history, activeRewards };
+  return { profiles, history, activeRewards, usedLoots };
 }
 
 /**
@@ -740,6 +757,13 @@ pity_counter: ${p.pityCounter ?? 0}`
     )
     .join('\n');
 
+  const usedLootLines = (data.usedLoots ?? [])
+    .map(
+      (u) =>
+        `- ${u.id} | ${u.profileId} | ${u.emoji} | ${u.label} | ${u.usedAt} | ${u.earnedAt}`
+    )
+    .join('\n');
+
   return `---
 tags:
   - gamification
@@ -752,6 +776,9 @@ ${profileSections}
 
 ## Récompenses actives
 ${activeRewardLines}
+
+## Récompenses utilisées
+${usedLootLines}
 
 ## Journal des gains
 ${historyLines}

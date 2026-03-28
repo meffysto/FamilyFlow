@@ -75,7 +75,7 @@ import { processActiveRewards, addPoints, calculateLevel } from '../lib/gamifica
 import { XP_PER_BRACKET, getSkillById } from '../lib/gamification/skill-tree';
 import { DECORATIONS, INHABITANTS, TREE_STAGES } from '../lib/mascot/types';
 import { getStageIndex } from '../lib/mascot/engine';
-import { Task, RDV, CourseItem, MealItem, StockItem, Profile, Gender, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, DefiDayEntry, GratitudeDay, WishlistItem, WishBudget, WishOccasion, Anniversary, Note, SkillTreeData, ChildQuote, MoodEntry, MoodLevel } from '../lib/types';
+import { Task, RDV, CourseItem, MealItem, StockItem, Profile, Gender, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, DefiDayEntry, GratitudeDay, WishlistItem, WishBudget, WishOccasion, Anniversary, Note, SkillTreeData, ChildQuote, MoodEntry, MoodLevel, UsedLoot } from '../lib/types';
 import {
   parseBudgetConfig,
   parseBudgetMonth,
@@ -256,6 +256,7 @@ export interface VaultState {
   validateSecretMission: (missionId: string) => Promise<void>;
   completeAdventure: (profileId: string, points: number, adventureNote: string) => Promise<void>;
   completeSagaChapter: (profileId: string, points: number, sagaNote: string, rewardItem?: { id: string; type: 'decoration' | 'inhabitant' }) => Promise<void>;
+  markLootUsed: (loot: UsedLoot) => Promise<void>;
 }
 
 // Static task files (non-enfant)
@@ -3270,6 +3271,16 @@ export function useVaultInternal(): VaultState {
     } catch {}
   }, []);
 
+  const markLootUsed = useCallback(async (loot: UsedLoot) => {
+    if (!vaultRef.current || !gamiData) return;
+    const updated: GamificationData = {
+      ...gamiData,
+      usedLoots: [...(gamiData.usedLoots ?? []), loot],
+    };
+    await vaultRef.current.writeFile(GAMI_FILE, serializeGamification(updated));
+    setGamiData(updated);
+  }, [gamiData]);
+
   // Mémoïser la valeur du contexte pour éviter les re-renders en cascade
   const vault = vaultRef.current;
   return useMemo(() => ({
@@ -3399,6 +3410,7 @@ export function useVaultInternal(): VaultState {
     validateSecretMission,
     completeAdventure,
     completeSagaChapter,
+    markLootUsed,
   }), [
     // State values (déclenchent un re-render quand ils changent)
     vaultPath, isLoading, error, tasks, courses, stock, meals,
@@ -3426,6 +3438,6 @@ export function useVaultInternal(): VaultState {
     addAnniversary, updateAnniversary, removeAnniversary, importAnniversaries,
     addNote, updateNote, deleteNote, addQuote, deleteQuote, addMood, deleteMood, unlockSkill,
     addSecretMission, completeSecretMission, validateSecretMission,
-    completeAdventure, completeSagaChapter,
+    completeAdventure, completeSagaChapter, markLootUsed,
   ]);
 }

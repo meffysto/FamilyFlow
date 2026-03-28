@@ -171,10 +171,20 @@ export interface GamificationEntry {
   timestamp: string;        // ISO string
 }
 
+export interface UsedLoot {
+  id: string;          // unique : `${profileId}_${timestamp}` du loot entry original
+  profileId: string;
+  emoji: string;
+  label: string;
+  earnedAt: string;    // timestamp ISO original (de GamificationEntry)
+  usedAt: string;      // timestamp ISO quand marqué utilisé
+}
+
 export interface GamificationData {
   profiles: Profile[];
   history: GamificationEntry[];
   activeRewards: ActiveReward[];
+  usedLoots: UsedLoot[];
 }
 
 // ─── Recipes (Cooklang) ─────────────────────────────────────────────────────
