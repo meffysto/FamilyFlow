@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: executing
-stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-03-28T21:02:31.287Z"
+stopped_at: Completed 05-visuels-ferme/05-02-PLAN.md
+last_updated: "2026-03-28T21:06:33.390Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 5
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 ## Current Position
 
 Phase: 05 (visuels-ferme) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-03-28
 
@@ -48,6 +48,7 @@ Progress: [░░░░░░░░░░] 0%
 
 *Updated after each plan completion*
 | Phase 05-visuels-ferme P01 | 2 | 1 tasks | 1 files |
+| Phase 05-visuels-ferme P05-02 | 3 | 2 tasks | 103 files |
 
 ## Accumulated Context
 
@@ -61,6 +62,8 @@ Recent decisions affecting current work:
 - [Phase 4]: Couleurs dorées (#FFD700) définies dans StyleSheet comme constantes cosmétiques, pas dans useThemeColors()
 - [Phase 05-01]: Animer overlay RGBA via 4 shared values separees (pas interpolation string) pour compatibilite worklets Reanimated
 - [Phase 05-01]: Toujours rendre Animated.View overlay (jamais return null quand config null) — fondu entrant/sortant fluide pour slot jour
+- [Phase 05-visuels-ferme]: CROP_SPRITES restructure en tuples [frameA, frameB] — pattern frame swap 800ms via setInterval + useState dans CropCell
+- [Phase 05-visuels-ferme]: Frame B generee programmatiquement (decalage 1px) depuis frame A Mana Seed — corn->cornyellow, potato->potatobrown
 
 ### Pending Todos
 
@@ -73,6 +76,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T21:02:31.284Z
-Stopped at: Completed 05-01-PLAN.md
+Last session: 2026-03-28T21:06:33.388Z
+Stopped at: Completed 05-visuels-ferme/05-02-PLAN.md
 Resume file: None
