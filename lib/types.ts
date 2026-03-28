@@ -89,7 +89,30 @@ export interface Profile {
   multiplierRemaining: number; // tasks remaining with multiplier
   pityCounter: number;       // boxes opened without épique+ (pity system)
   sagaTitle?: string;         // titre temporaire affiché après complétion saga (7 jours)
+  sagaItems?: SagaItem[];     // items temporaires obtenus via sagas (expirent après 7 jours)
   completedSagas?: string[];  // IDs des sagas terminées
+}
+
+/** Item temporaire obtenu via saga */
+export interface SagaItem {
+  itemId: string;            // ID de la décoration ou habitant
+  type: 'decoration' | 'inhabitant';
+  expiresAt: string;         // YYYY-MM-DD (date d'expiration)
+}
+
+const SAGA_ITEM_DURATION_DAYS = 7;
+
+/** Crée un SagaItem expirant dans 7 jours */
+export function createSagaItem(itemId: string, type: 'decoration' | 'inhabitant'): SagaItem {
+  const expires = new Date();
+  expires.setDate(expires.getDate() + SAGA_ITEM_DURATION_DAYS);
+  return { itemId, type, expiresAt: expires.toISOString().split('T')[0] };
+}
+
+/** Filtre les saga items expirés */
+export function filterActiveSagaItems(items: SagaItem[]): SagaItem[] {
+  const today = new Date().toISOString().split('T')[0];
+  return items.filter(i => i.expiresAt >= today);
 }
 
 /** Détecte un profil bébé : ageCategory === 'bebe' OU birthdate < 2 ans (fallback si ageCategory absent) */

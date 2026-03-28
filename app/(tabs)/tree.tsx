@@ -115,22 +115,35 @@ export default function TreeScreen() {
   }, [profile?.id]);
   const activeSaga = sagaProgress ? getSagaById(sagaProgress.sagaId) : null;
 
+  // Saga items actifs (non expirés)
+  const activeSagaItems = useMemo(() => {
+    if (!profile?.sagaItems) return { decoIds: [] as string[], habIds: [] as string[] };
+    const today = new Date().toISOString().split('T')[0];
+    const active = profile.sagaItems.filter(i => i.expiresAt >= today);
+    return {
+      decoIds: active.filter(i => i.type === 'decoration').map(i => i.itemId),
+      habIds: active.filter(i => i.type === 'inhabitant').map(i => i.itemId),
+    };
+  }, [profile?.sagaItems]);
+
+  // Décorations et habitants combinés (permanents + saga temporaires)
+  const allDecoIds = useMemo(() => [...(profile?.mascotDecorations ?? []), ...activeSagaItems.decoIds], [profile?.mascotDecorations, activeSagaItems.decoIds]);
+  const allHabIds = useMemo(() => [...(profile?.mascotInhabitants ?? []), ...activeSagaItems.habIds], [profile?.mascotInhabitants, activeSagaItems.habIds]);
+
   // Liste combinée des items possédés avec leurs infos catalogue
   const allOwnedItems = useMemo(() => {
     if (!profile) return [];
-    const decoIds = profile.mascotDecorations ?? [];
-    const habIds = profile.mascotInhabitants ?? [];
     const items: { id: string; emoji: string }[] = [];
-    for (const id of decoIds) {
+    for (const id of allDecoIds) {
       const cat = DECORATIONS.find(d => d.id === id);
       if (cat) items.push({ id, emoji: cat.emoji });
     }
-    for (const id of habIds) {
+    for (const id of allHabIds) {
       const cat = INHABITANTS.find(h => h.id === id);
       if (cat) items.push({ id, emoji: cat.emoji });
     }
     return items;
-  }, [profile?.mascotDecorations, profile?.mascotInhabitants]);
+  }, [allDecoIds, allHabIds]);
 
   // Set des items déjà placés sur un slot
   const placedItemIds = useMemo(() => {
@@ -374,8 +387,8 @@ export default function TreeScreen() {
                 size={TREE_SIZE}
                 interactive
                 showGround
-                decorations={profile.mascotDecorations ?? []}
-                inhabitants={profile.mascotInhabitants ?? []}
+                decorations={allDecoIds}
+                inhabitants={allHabIds}
                 placements={profile.mascotPlacements ?? {}}
                 placingItem={placingItem}
                 onSlotSelect={handleSlotSelect}
@@ -451,7 +464,7 @@ export default function TreeScreen() {
                 </Text>
               </TouchableOpacity>
               {/* Bouton décorer : visible si des items sont achetés */}
-              {((profile.mascotDecorations?.length ?? 0) + (profile.mascotInhabitants?.length ?? 0)) > 0 && !placingItem && (
+              {(allDecoIds.length + allHabIds.length) > 0 && !placingItem && (
                 <TouchableOpacity
                   style={[styles.shopBtn, { backgroundColor: tint, borderColor: primary }]}
                   onPress={() => setShowItemPicker(true)}
@@ -591,8 +604,8 @@ export default function TreeScreen() {
           species={species}
           level={level}
           coins={profile.coins ?? profile.points ?? 0}
-          ownedDecorations={profile.mascotDecorations ?? []}
-          ownedInhabitants={profile.mascotInhabitants ?? []}
+          ownedDecorations={allDecoIds}
+          ownedInhabitants={allHabIds}
           onBuy={handleShopBuy}
           onClose={() => setShowShop(false)}
         />
