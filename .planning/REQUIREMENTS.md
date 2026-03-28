@@ -56,17 +56,17 @@ Deferred to future milestones.
 
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| VIS-01 | TBD | Pending |
-| VIS-02 | TBD | Pending |
-| VIS-03 | TBD | Pending |
-| BAT-01 | TBD | Pending |
-| BAT-02 | TBD | Pending |
-| BAT-03 | TBD | Pending |
-| CRA-01 | TBD | Pending |
-| CRA-02 | TBD | Pending |
-| CRA-03 | TBD | Pending |
-| PRO-01 | TBD | Pending |
-| PRO-02 | TBD | Pending |
-| PRO-03 | TBD | Pending |
-| SOC-01 | TBD | Pending |
-| SOC-02 | TBD | Pending |
+| VIS-01 | Phase 5 | Pending |
+| VIS-02 | Phase 5 | Pending |
+| VIS-03 | Phase 5 | Pending |
+| BAT-01 | Phase 6 | Pending |
+| BAT-02 | Phase 6 | Pending |
+| BAT-03 | Phase 6 | Pending |
+| CRA-01 | Phase 7 | Pending |
+| CRA-02 | Phase 7 | Pending |
+| CRA-03 | Phase 7 | Pending |
+| PRO-01 | Phase 8 | Pending |
+| PRO-02 | Phase 8 | Pending |
+| PRO-03 | Phase 8 | Pending |
+| SOC-01 | Phase 9 | Pending |
+| SOC-02 | Phase 9 | Pending |

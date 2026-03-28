@@ -1,23 +1,14 @@
 # Roadmap: FamilyFlow
 
-## Overview
+## Milestones
 
-Ce milestone stabilise l'app TestFlight (tests, nettoyage, write safety) puis enrichit la gamification. Pas de refacto archi — le god hook fonctionne et on est seul dev. Chaque phase est non-cassante et déployable sur TestFlight.
+- ✅ **v1.0 Stabilisation** - Phases 1-4 (shipped 2026-03-28)
+- 🚧 **v1.1 Ferme Enrichie** - Phases 5-9 (in progress)
 
 ## Phases
 
-**Phase Numbering:**
-- Integer phases (1, 2, 3): Planned milestone work
-- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
-
-Decimal phases appear between their surrounding integers in numeric order.
-
-- [x] **Phase 1: Safety Net** - Tests critiques, Sentry, nettoyage code mort, types `any`, ESLint (completed 2026-03-28)
-- [x] **Phase 2: Write Safety + Couleurs** - Write queue par fichier, couleurs hardcodées → tokens, XP budget model (completed 2026-03-28)
-- [x] **Phase 3: Gamification** - Particules saisonnières dans le diorama (completed 2026-03-28)
-- [x] **Phase 4: Ambiance + Retention** - Ambiance horaire, mutation dorée, flammes de streak (completed 2026-03-28)
-
-## Phase Details
+<details>
+<summary>✅ v1.0 Stabilisation (Phases 1-4) - SHIPPED 2026-03-28</summary>
 
 ### Phase 1: Safety Net
 **Goal**: Le codebase a un filet de sécurité — tests sur les modules critiques, visibilité sur les crashes production, et code mort éliminé
@@ -29,7 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Les 5 fonctions dépréciées de lib/telegram.ts et la propriété menageTasks sont absentes du codebase
   4. `npx tsc --noEmit` ne rapporte aucune assertion `as any` sur les chemins de mutation dans useVault.ts
   5. ESLint avec `@typescript-eslint/no-explicit-any` est configuré et tourne sans erreur bloquante
-**Plans:** 2/4 plans executed
+**Plans:** 4/4 plans executed
 
 Plans:
 - [x] 01-01-PLAN.md — Tests unitaires pour les 4 modules critiques (budget, farm-engine, sagas-engine, world-grid)
@@ -46,11 +37,11 @@ Plans:
   2. Le mode nuit n'affiche plus de couleurs hardcodées — tous les éléments structurels suivent le thème
   3. Un modèle XP budget est documenté dans constants/rewards.ts avec des valeurs calibrées
   4. Toute nouvelle source de récompense passe par constants/rewards.ts
-**Plans:** 3 plans
+**Plans:** 3/3 plans
 
 Plans:
 - [x] 02-01-PLAN.md — Write queue per-file dans VaultManager + modele XP budget
-- [ ] 02-02-PLAN.md — Migration couleurs ecrans (app/) et composants high-priority
+- [x] 02-02-PLAN.md — Migration couleurs ecrans (app/) et composants high-priority
 - [x] 02-03-PLAN.md — Migration couleurs composants restants + verification visuelle mode nuit
 
 ### Phase 3: Gamification
@@ -61,11 +52,11 @@ Plans:
   1. L'interface ferme affiche des visuels saisonniers correspondant à la saison réelle sans action manuelle
   2. Une quête familiale peut être démarrée, progressée par n'importe quel membre, et complétée avec récompense distribuée
   3. Toutes les récompenses passent par constants/rewards.ts — aucune valeur XP inline
-**Plans:** 2 plans
+**Plans:** 2/2 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Particules saisonnieres dans le diorama ferme (SeasonalParticles)
-- [ ] 03-02-PLAN.md — Quetes familiales cooperatives (types + logique + UI defis)
+- [x] 03-01-PLAN.md — Particules saisonnieres dans le diorama ferme (SeasonalParticles)
+- [x] 03-02-PLAN.md — Quetes familiales cooperatives (types + logique + UI defis)
 
 ### Phase 4: Ambiance + Retention
 **Goal**: L'ecran arbre reagit au moment de la journee avec des particules ambiantes (rosee le matin, lucioles la nuit), les cultures ont une mutation doree rare (3%, recompense x5), et les flammes de streak recompensent visuellement l'engagement quotidien
@@ -83,14 +74,80 @@ Plans:
 - [x] 06-01-PLAN.md — Mutation culture doree (types + farm-engine + FarmPlots visuel)
 - [x] 06-02-PLAN.md — Ambiance horaire + flammes de streak (ambiance.ts + composants + integration tree.tsx)
 
+</details>
+
+### 🚧 v1.1 Ferme Enrichie (In Progress)
+
+**Milestone Goal:** Enrichir la ferme pour qu'elle soit un vrai moteur de motivation — plus de profondeur, plus de raisons de revenir faire ses tâches. La ferme est le levier de motivation, pas le produit lui-même.
+
+#### Phase 5: Visuels Ferme
+**Goal**: La ferme est visuellement vivante — cycle jour/nuit cohérent avec l'heure réelle et sprites améliorés pour les cultures et animaux
+**Depends on**: Phase 4
+**Requirements**: VIS-01, VIS-02, VIS-03
+**Success Criteria** (what must be TRUE):
+  1. L'écran ferme adapte automatiquement sa luminosité et teinte selon l'heure réelle (clair le jour, tamisé la nuit) sans action manuelle
+  2. Chaque culture affiche au moins 2 frames d'animation distinctes par stade de croissance — l'animation est perceptible
+  3. Les animaux ont une animation idle visible et une animation de marche différenciée — ils paraissent vivants au repos
+  4. `npx tsc --noEmit` passe sans nouvelles erreurs
+**Plans**: TBD
+
+#### Phase 6: Bâtiments Productifs
+**Goal**: L'utilisateur peut construire des bâtiments sur la ferme qui génèrent des ressources passives, créant une raison de revenir régulièrement
+**Depends on**: Phase 5
+**Requirements**: BAT-01, BAT-02, BAT-03
+**Success Criteria** (what must be TRUE):
+  1. L'utilisateur peut placer un bâtiment (moulin, serre, étable) sur une parcelle dédiée et le voir apparaître sur la ferme
+  2. Un bâtiment placé génère automatiquement une ressource toutes les X heures — visible dans l'inventaire sans replanter
+  3. Un bâtiment peut être amélioré au moins 2 fois, chaque niveau augmentant visiblement la production affichée
+  4. Les ressources produites sont persistées dans le vault et survivent à un redémarrage de l'app
+**Plans**: TBD
+
+#### Phase 7: Craft
+**Goal**: Les récoltes brutes peuvent être combinées en items spéciaux via des recettes, offrant plus de valeur XP et une boucle de progression plus riche
+**Depends on**: Phase 6
+**Requirements**: CRA-01, CRA-02, CRA-03
+**Success Criteria** (what must be TRUE):
+  1. L'utilisateur peut combiner des récoltes pour créer un item spécial (ex : confiture, bouquet) via une interface de craft
+  2. Un catalogue liste toutes les recettes disponibles avec les ingrédients exacts requis — l'utilisateur sait quoi cultiver
+  3. Un item crafté attribue plus d'XP qu'une récolte brute équivalente — la différence est visible dans le résumé de récompense
+  4. Les items craftés sont persistés dans le vault et apparaissent dans l'inventaire du profil
+**Plans**: TBD
+
+#### Phase 8: Progression Ferme
+**Goal**: Un arbre de technologies ferme débloque des améliorations et de nouvelles zones, donnant une direction claire à la progression long terme
+**Depends on**: Phase 7
+**Requirements**: PRO-01, PRO-02, PRO-03
+**Success Criteria** (what must be TRUE):
+  1. L'écran arbre de technologies affiche les noeuds de progression ferme disponibles, débloqués, et verrouillés avec leurs coûts
+  2. Débloquer un noeud tech produit un effet observable (vitesse de pousse augmentée, nouvelle culture disponible, rendement amélioré)
+  3. L'utilisateur peut dépenser des ressources pour débloquer une nouvelle zone/parcelle — la zone apparaît sur la ferme
+  4. La progression tech est persistée dans le vault — les déblocages survivent à un redémarrage
+**Plans**: TBD
+
+#### Phase 9: Cadeaux Familiaux
+**Goal**: Les membres de la famille peuvent s'envoyer des récoltes et items craftés, renforçant la dimension coopérative et la motivation partagée
+**Depends on**: Phase 8
+**Requirements**: SOC-01, SOC-02
+**Success Criteria** (what must be TRUE):
+  1. Un membre peut sélectionner une récolte ou un item crafté depuis son inventaire et l'envoyer à un autre profil familial
+  2. Le destinataire reçoit une notification locale indiquant qui lui a envoyé quoi
+  3. L'item envoyé apparaît dans l'inventaire du destinataire sans action supplémentaire de l'expéditeur
+  4. L'item est retiré de l'inventaire de l'expéditeur au moment de l'envoi — pas de duplication possible
+**Plans**: TBD
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9
 
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 1. Safety Net | 4/4 | Complete | 2026-03-28 |
-| 2. Write Safety + Couleurs | 3/3 | Complete | 2026-03-28 |
-| 3. Gamification | 1/1 | Complete | 2026-03-28 |
-| 4. Ambiance + Retention | 2/2 | Complete | 2026-03-28 |
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
+| 1. Safety Net | v1.0 | 4/4 | Complete | 2026-03-28 |
+| 2. Write Safety + Couleurs | v1.0 | 3/3 | Complete | 2026-03-28 |
+| 3. Gamification | v1.0 | 2/2 | Complete | 2026-03-28 |
+| 4. Ambiance + Retention | v1.0 | 2/2 | Complete | 2026-03-28 |
+| 5. Visuels Ferme | v1.1 | 0/TBD | Not started | - |
+| 6. Bâtiments Productifs | v1.1 | 0/TBD | Not started | - |
+| 7. Craft | v1.1 | 0/TBD | Not started | - |
+| 8. Progression Ferme | v1.1 | 0/TBD | Not started | - |
+| 9. Cadeaux Familiaux | v1.1 | 0/TBD | Not started | - |
