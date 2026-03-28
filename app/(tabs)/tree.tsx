@@ -88,6 +88,47 @@ const SEASON_ILLUSTRATIONS: Record<Season, ImageSourcePropType> = {
   hiver: require('../../assets/illustrations/tree-winter.jpg'),
 };
 
+/** Tooltip whisper quand on tap une culture en croissance */
+function CropWhisper({ whisperInfo, stageInfo, stageIdx }: {
+  whisperInfo: { cellId: string; stage: number; cropId: string };
+  stageInfo: any;
+  stageIdx: number;
+}) {
+  const cells = getUnlockedCropCells(stageInfo.stage);
+  const cell = cells.find((c: any) => c.id === whisperInfo.cellId);
+  if (!cell) return null;
+
+  const whispers = [
+    '🌱 Je pousse, je pousse...',
+    '🌿 Patience, ça vient !',
+    '💪 Bientôt prêt !',
+    '✨ Encore un petit effort !',
+  ];
+  const msg = hasCropSeasonalBonus(whisperInfo.cropId)
+    ? '☀️ Le soleil m\'aide !'
+    : whispers[Math.min(whisperInfo.stage, 3)];
+  const wx = cell.x * SCREEN_W - 60;
+  const wy = cell.y * (DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60) - 40;
+
+  return (
+    <Animated.View
+      entering={FadeIn.duration(200)}
+      style={{
+        position: 'absolute',
+        left: wx,
+        top: wy,
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+        zIndex: 20,
+      }}
+    >
+      <Text style={{ color: '#FFF', fontSize: 11, textAlign: 'center' }}>{msg}</Text>
+    </Animated.View>
+  );
+}
+
 export default function TreeScreen() {
   const { profileId } = useLocalSearchParams<{ profileId?: string }>();
   const router = useRouter();
@@ -543,39 +584,7 @@ export default function TreeScreen() {
             )}
 
             {/* Crop Whisper tooltip */}
-            {whisperInfo && (() => {
-              const cells = getUnlockedCropCells(stageInfo.stage);
-              const cell = cells.find((c: any) => c.id === whisperInfo.cellId);
-              if (!cell) return null;
-              const whispers = [
-                '🌱 Je pousse, je pousse...',
-                '🌿 Patience, ça vient !',
-                '💪 Bientôt prêt !',
-                '✨ Encore un petit effort !',
-              ];
-              const msg = hasCropSeasonalBonus(whisperInfo.cropId)
-                ? '☀️ Le soleil m\'aide !'
-                : whispers[Math.min(whisperInfo.stage, 3)];
-              const wx = cell.x * SCREEN_W - 60;
-              const wy = cell.y * (DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60) - 40;
-              return (
-                <Animated.View
-                  entering={FadeIn.duration(200)}
-                  style={{
-                    position: 'absolute',
-                    left: wx,
-                    top: wy,
-                    backgroundColor: 'rgba(0,0,0,0.7)',
-                    paddingHorizontal: 8,
-                    paddingVertical: 4,
-                    borderRadius: 8,
-                    zIndex: 20,
-                  }}
-                >
-                  <Text style={{ color: '#FFF', fontSize: 11, textAlign: 'center' }}>{msg}</Text>
-                </Animated.View>
-              );
-            })()}
+            {whisperInfo && <CropWhisper whisperInfo={whisperInfo} stageInfo={stageInfo} stageIdx={stageIdx} />
 
             {/* Couche 4 : Arbre pixel au premier plan */}
             <View style={styles.treeOverlay}>
