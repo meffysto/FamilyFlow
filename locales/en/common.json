@@ -3899,7 +3899,8 @@
     "weeklyGoal": {
       "title": "Weekly Goal",
       "progress": "{{remaining}} more tasks to earn {{reward}} 🍃",
-      "complete": "Well done! +{{reward}} 🍃 earned!"
+      "complete": "Well done! +{{reward}} 🍃 earned!",
+      "hint": "Complete tasks to fill the bar!"
     },
     "seasonal": {
       "bonus": "☀️ In season — grows x2!",

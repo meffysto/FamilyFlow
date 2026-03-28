@@ -54,6 +54,9 @@ export function WeeklyGoal({ weeklyTaskCount, colors, t }: WeeklyGoalProps) {
             ? t('farm.weeklyGoal.complete', { reward: WEEKLY_REWARD })
             : t('farm.weeklyGoal.progress', { remaining: WEEKLY_TARGET - weeklyTaskCount, reward: WEEKLY_REWARD })}
         </Text>
+        <Text style={[styles.hint, { color: colors.textFaint }]}>
+          {t('farm.weeklyGoal.hint')}
+        </Text>
       </View>
     </Animated.View>
   );
@@ -111,5 +114,9 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 12,
+  },
+  hint: {
+    fontSize: 11,
+    marginTop: 2,
   },
 });

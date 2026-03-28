@@ -337,15 +337,18 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
         )}
         {/* Animaux pixel animés (cycle idle natif RN, hors SVG) */}
         {animate && (() => {
-          // Collecter tous les animaux pixel : depuis inhabitants (previewMode) + depuis placements (slots)
+          // Collecter les animaux pixel — eviter les doublons
           const animalIds: { id: string; fromSlot?: string }[] = [];
-          // Animaux dans la liste des habitants (preview boutique)
-          for (const id of inhabitants) {
-            if (ANIMAL_IDLE_FRAMES[id]) animalIds.push({ id });
-          }
-          // Animaux placés sur des slots de scène
+          const placedAnimalIds = new Set(
+            Object.values(placements).filter(itemId => ANIMAL_IDLE_FRAMES[itemId])
+          );
+          // Animaux places sur des slots de scene (prioritaire)
           for (const [slotId, itemId] of Object.entries(placements)) {
             if (ANIMAL_IDLE_FRAMES[itemId]) animalIds.push({ id: itemId, fromSlot: slotId });
+          }
+          // Animaux dans la liste des habitants SEULEMENT s'ils ne sont pas deja places
+          for (const id of inhabitants) {
+            if (ANIMAL_IDLE_FRAMES[id] && !placedAnimalIds.has(id)) animalIds.push({ id });
           }
           if (animalIds.length === 0) return null;
           return (

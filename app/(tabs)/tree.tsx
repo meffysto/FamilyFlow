@@ -45,6 +45,7 @@ import { WorldGridView, FarmStats } from '../../components/mascot/WorldGridView'
 import { WeeklyGoal, countWeeklyTasks } from '../../components/mascot/WeeklyGoal';
 import { useFarm } from '../../hooks/useFarm';
 import { type PlantedCrop, CROP_CATALOG } from '../../lib/mascot/types';
+import { hasCropSeasonalBonus } from '../../lib/mascot/farm-engine';
 import { calculateLevel, xpForLevel, pointsToNextLevel, getLevelTier } from '../../lib/gamification';
 import {
   getTreeStage,
@@ -448,9 +449,16 @@ export default function TreeScreen() {
                     >
                       <Text style={styles.pickerEmoji}>{crop.emoji}</Text>
                       {unlocked ? (
-                        <Text style={{ color: colors.textSub, fontSize: 10, marginTop: 2 }}>
-                          {crop.cost} 🍃
-                        </Text>
+                        <>
+                          <Text style={{ color: colors.textSub, fontSize: 10, marginTop: 2 }}>
+                            {crop.cost} 🍃 → {crop.harvestReward} 🍃
+                          </Text>
+                          {hasCropSeasonalBonus(crop.id) && (
+                            <Text style={{ color: '#F59E0B', fontSize: 9, fontWeight: '600' }}>
+                              ☀️ x2
+                            </Text>
+                          )}
+                        </>
                       ) : (
                         <Text style={{ color: colors.textMuted, fontSize: 9, marginTop: 2, textAlign: 'center' }}>
                           🔒 {stageName}
