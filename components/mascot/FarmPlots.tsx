@@ -76,8 +76,14 @@ function FarmPlot({ pos, crop, cropDef, isMature, containerWidth, containerHeigh
         {/* Fond terre */}
         <Image source={DIRT_SPRITE} style={styles.dirtBg as any} />
 
-        {/* Lueur mature */}
-        {isMature && <View style={styles.matureGlow} />}
+        {/* Lueur mature ou dorée */}
+        {isMature && !crop?.isGolden && <View style={styles.matureGlow} />}
+        {crop?.isGolden && (
+          <View style={[
+            styles.goldenGlow,
+            !isMature && styles.goldenGlowGrowing,
+          ]} />
+        )}
 
         {crop && cropDef ? (
           <View style={styles.cropContainer}>
@@ -202,6 +208,25 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#4ADE80',
     backgroundColor: 'rgba(74, 222, 128, 0.1)',
+  },
+  goldenGlow: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+  },
+  goldenGlowGrowing: {
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+    backgroundColor: 'rgba(255, 215, 0, 0.05)',
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
   },
   cropContainer: {
     alignItems: 'center',
