@@ -7,6 +7,12 @@ import { getCurrentSeason, type Season } from './seasons';
 
 const MAX_CROP_STAGE = 4;
 
+/** Probabilite de mutation doree a la plantation */
+export const GOLDEN_CROP_CHANCE = 0.03;
+
+/** Multiplicateur de recompense pour les cultures dorees */
+export const GOLDEN_HARVEST_MULTIPLIER = 5;
+
 /** Bonus saisonnier : certaines cultures poussent plus vite selon la saison.
  * Retourne le nombre de points bonus (0 = pas de bonus, 1 = double avancement).
  */
@@ -47,6 +53,7 @@ export function plantCrop(
       currentStage: 0,
       tasksCompleted: 0,
       plantedAt: new Date().toISOString().slice(0, 10),
+      isGolden: Math.random() < GOLDEN_CROP_CHANCE,
     },
   ];
 }
@@ -106,7 +113,8 @@ export function harvestCrop(
   }
 
   const cropDef = CROP_CATALOG.find(c => c.id === crop.cropId);
-  const reward = cropDef?.harvestReward ?? 0;
+  const baseReward = cropDef?.harvestReward ?? 0;
+  const reward = crop.isGolden ? baseReward * GOLDEN_HARVEST_MULTIPLIER : baseReward;
 
   return {
     crops: crops.filter(c => c.plotIndex !== plotIndex),
@@ -117,7 +125,7 @@ export function harvestCrop(
 /** Serialiser les cultures en CSV compact pour le markdown */
 export function serializeCrops(crops: PlantedCrop[]): string {
   return crops
-    .map(c => `${c.plotIndex}:${c.cropId}:${c.currentStage}:${c.tasksCompleted}:${c.plantedAt}`)
+    .map(c => `${c.plotIndex}:${c.cropId}:${c.currentStage}:${c.tasksCompleted}:${c.plantedAt}:${c.isGolden ? '1' : ''}`)
     .join(',');
 }
 
@@ -125,13 +133,14 @@ export function serializeCrops(crops: PlantedCrop[]): string {
 export function parseCrops(csv: string): PlantedCrop[] {
   if (!csv || csv.trim() === '') return [];
   return csv.split(',').map(entry => {
-    const [plotIndex, cropId, currentStage, tasksCompleted, plantedAt] = entry.split(':');
+    const [plotIndex, cropId, currentStage, tasksCompleted, plantedAt, goldenFlag] = entry.split(':');
     return {
       plotIndex: parseInt(plotIndex, 10),
       cropId,
       currentStage: parseInt(currentStage, 10),
       tasksCompleted: parseInt(tasksCompleted, 10),
       plantedAt: plantedAt || new Date().toISOString().slice(0, 10),
+      isGolden: goldenFlag === '1',
     };
   }).filter(c => !isNaN(c.plotIndex) && c.cropId);
 }
