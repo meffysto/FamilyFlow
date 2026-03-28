@@ -1,15 +1,17 @@
 /**
  * useFarm.ts — Hook pour la gestion de la ferme (planter, recolter)
  *
- * Lit/ecrit farm_crops dans famille.md via le vault.
+ * Lit/ecrit farm_crops dans famille.md et deduit les feuilles dans gamification.md.
  */
 
 import { useCallback } from 'react';
 import { useVault } from '../contexts/VaultContext';
 import { plantCrop, harvestCrop, parseCrops, serializeCrops } from '../lib/mascot/farm-engine';
 import { CROP_CATALOG } from '../lib/mascot/types';
+import { parseGamification, serializeGamification } from '../lib/parser';
 
 const FAMILLE_FILE = 'famille.md';
+const GAMI_FILE = 'gamification.md';
 
 export function useFarm() {
   const { vault, profiles, refresh } = useVault();
@@ -42,8 +44,51 @@ export function useFarm() {
     }
 
     await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
-    await refresh();
-  }, [vault, refresh]);
+  }, [vault]);
+
+  /** Deduire des feuilles dans gamification.md */
+  const deductCoins = useCallback(async (profileId: string, amount: number, note: string) => {
+    if (!vault || amount <= 0) return;
+    const gamiContent = await vault.readFile(GAMI_FILE);
+    const gami = parseGamification(gamiContent);
+    const gamiProfile = gami.profiles.find(
+      (p: any) => p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase()
+    );
+    if (!gamiProfile) return;
+
+    gamiProfile.coins = (gamiProfile.coins ?? gamiProfile.points) - amount;
+    gami.history.push({
+      profileId,
+      action: `-${amount}`,
+      points: -amount,
+      note,
+      timestamp: new Date().toISOString(),
+    });
+
+    await vault.writeFile(GAMI_FILE, serializeGamification(gami));
+  }, [vault]);
+
+  /** Ajouter des feuilles dans gamification.md */
+  const addCoins = useCallback(async (profileId: string, amount: number, note: string) => {
+    if (!vault || amount <= 0) return;
+    const gamiContent = await vault.readFile(GAMI_FILE);
+    const gami = parseGamification(gamiContent);
+    const gamiProfile = gami.profiles.find(
+      (p: any) => p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase()
+    );
+    if (!gamiProfile) return;
+
+    gamiProfile.coins = (gamiProfile.coins ?? gamiProfile.points) + amount;
+    gami.history.push({
+      profileId,
+      action: `+${amount}`,
+      points: amount,
+      note,
+      timestamp: new Date().toISOString(),
+    });
+
+    await vault.writeFile(GAMI_FILE, serializeGamification(gami));
+  }, [vault]);
 
   /** Planter une culture sur une parcelle */
   const plant = useCallback(async (profileId: string, plotIndex: number, cropId: string) => {
@@ -53,13 +98,19 @@ export function useFarm() {
     const cropDef = CROP_CATALOG.find(c => c.id === cropId);
     if (!cropDef) return;
 
+    // Verifier les feuilles
+    const coins = profile.coins ?? 0;
+    if (coins < cropDef.cost) throw new Error('Pas assez de feuilles');
+
     const currentCrops = parseCrops(profile.farmCrops ?? '');
     const newCrops = plantCrop(currentCrops, plotIndex, cropId);
+    if (newCrops.length === currentCrops.length) return;
 
-    if (newCrops.length === currentCrops.length) return; // parcelle deja occupee
-
+    // Ecrire les cultures + deduire les feuilles
     await writeFarmCrops(profileId, serializeCrops(newCrops));
-  }, [profiles, writeFarmCrops]);
+    await deductCoins(profileId, cropDef.cost, `🌱 Graine : ${cropId}`);
+    await refresh();
+  }, [profiles, writeFarmCrops, deductCoins, refresh]);
 
   /** Recolter une culture mature */
   const harvest = useCallback(async (profileId: string, plotIndex: number) => {
@@ -68,12 +119,15 @@ export function useFarm() {
 
     const currentCrops = parseCrops(profile.farmCrops ?? '');
     const result = harvestCrop(currentCrops, plotIndex);
+    if (result.reward === 0) return 0;
 
-    if (result.reward === 0) return 0; // pas mature
-
+    // Supprimer la culture + ajouter les feuilles
     await writeFarmCrops(profileId, serializeCrops(result.crops));
+    const crop = currentCrops.find(c => c.plotIndex === plotIndex);
+    await addCoins(profileId, result.reward, `🌾 Recolte : ${crop?.cropId ?? '?'}`);
+    await refresh();
     return result.reward;
-  }, [profiles, writeFarmCrops]);
+  }, [profiles, writeFarmCrops, addCoins, refresh]);
 
   return { plant, harvest };
 }
