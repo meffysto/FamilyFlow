@@ -9,7 +9,7 @@ import { useVault } from '../contexts/VaultContext';
 import { plantCrop, harvestCrop, parseCrops, serializeCrops } from '../lib/mascot/farm-engine';
 import { CROP_CATALOG } from '../lib/mascot/types';
 
-const FAMILLE_FILE = '01 - Famille/famille.md';
+const FAMILLE_FILE = 'famille.md';
 
 export function useFarm() {
   const { vault, profiles, refresh } = useVault();
