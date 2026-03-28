@@ -46,6 +46,10 @@ Recent decisions affecting current work:
 - Init: Refacto progressive du hook — splitter useVault en hooks domaine progressivement plutôt que big bang
 - Init: Ferme/gamification après stabilisation — stabiliser d'abord, enrichir ensuite
 
+### Roadmap Evolution
+
+- Phase 6 added: Ambiance + Retention — Time-of-Day Ambiance, Golden Crop Mutation, Streak Flames
+
 ### Pending Todos
 
 None yet.
@@ -61,9 +65,10 @@ None yet.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260328-ps4 | Dots croissance marron + tooltips clamp bords ecran | 2026-03-28 | 6951e8d | [260328-ps4-dots-croissance-marron-tooltips-clamp-bo](./quick/260328-ps4-dots-croissance-marron-tooltips-clamp-bo/) |
+| 260328-py4 | Écran Mes récompenses — loots réels avec suivi parent | 2026-03-28 | 90ea420 | [260328-py4-ecran-mes-recompenses-loots-reels-avec-o](./quick/260328-py4-ecran-mes-recompenses-loots-reels-avec-o/) |
 
 ## Session Continuity
 
 Last session: 2026-03-28
-Stopped at: Roadmap créé et fichiers écrits (.planning/ROADMAP.md, .planning/STATE.md, .planning/REQUIREMENTS.md traceability)
+Stopped at: Completed quick task 260328-py4: Écran Mes récompenses — loots réels avec suivi parent
 Resume file: None
