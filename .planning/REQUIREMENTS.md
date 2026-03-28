@@ -15,7 +15,7 @@ Requirements pour ce milestone. Chaque requirement est mappé à une phase du ro
 - [x] **TEST-04**: Tests unitaires pour lib/mascot/sagas-engine.ts (progression, cooldowns)
 - [x] **TEST-05**: Tests unitaires pour lib/mascot/world-grid.ts (placement, rendu grille)
 - [ ] **TEST-06**: Sentry intégré pour crash reporting en production
-- [ ] **TEST-07**: Tests E2E Maestro pour les 3-5 parcours utilisateur critiques
+- [x] **TEST-07**: Tests E2E Maestro pour les 3-5 parcours utilisateur critiques
 
 ### Code Quality
 
@@ -94,7 +94,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-04 | Phase 1 | Complete |
 | TEST-05 | Phase 1 | Complete |
 | TEST-06 | Phase 1 | Pending |
-| TEST-07 | Phase 1 | Pending |
+| TEST-07 | Phase 1 | Complete |
 | QUAL-01 | Phase 1 | Complete |
 | QUAL-02 | Phase 1 | Complete |
 | QUAL-04 | Phase 1 | Complete |

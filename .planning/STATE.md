@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Completed 01-01: Setup Tests"
-last_updated: "2026-03-28T18:54:40.499Z"
+stopped_at: "Checkpoint 01-04: Awaiting Maestro validation on device"
+last_updated: "2026-03-28T19:15:57.325Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 ## Current Position
 
 Phase: 01 (Safety Net) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-03-28
 
@@ -56,6 +56,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06-ambiance-retention P01 | 3 | 2 tasks | 3 files |
 | Phase 01-safety-net P02 | 6 | 2 tasks | 5 files |
 | Phase 01-safety-net P01 | 6 | 3 tasks | 8 files |
+| Phase 01-safety-net P04 | 15 | 1 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,8 @@ Recent decisions affecting current work:
 - [Phase 01-01]: jest-expo installe sans remplacer ts-jest — modules cibles sont du TS pur sans React
 - [Phase 01-01]: Mock PNG dans jest.config.js moduleNameMapper pour resoudre SyntaxError require png en node env
 - [Phase 01-01]: Mock react-native minimal Platform.OS pour lib/mascot/utils.ts dans tests node
+- [Phase 01-04]: Flows Maestro utilisent labels visibles (Aujourd'hui, Tâches, Menu) plutôt que testID — sélecteurs stables sans modifier le code source
+- [Phase 01-04]: meal-planning utilise runFlow conditionnel — l'écran repas est href:null accessible via Menu tab
 
 ### Roadmap Evolution
 
@@ -102,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T18:54:40.496Z
-Stopped at: Completed 01-01: Setup Tests
+Last session: 2026-03-28T19:15:57.322Z
+Stopped at: Checkpoint 01-04: Awaiting Maestro validation on device
 Resume file: None
