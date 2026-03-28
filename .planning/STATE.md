@@ -1,3 +1,19 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: verifying
+stopped_at: Completed 06-02-PLAN.md — ambiance horaire + flammes streak
+last_updated: "2026-03-28T18:07:48.117Z"
+last_activity: 2026-03-28
+progress:
+  total_phases: 6
+  completed_phases: 1
+  total_plans: 2
+  completed_plans: 2
+  percent: 0
+---
+
 # Project State
 
 ## Project Reference
@@ -5,20 +21,21 @@
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 1 — Safety Net
+**Current focus:** Phase 06 — Ambiance + Retention
 
 ## Current Position
 
-Phase: 1 of 5 (Safety Net)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-03-28 - Completed quick task 260328-ps4: Dots croissance marron + tooltips clamp bords ecran
+Phase: 06 (Ambiance + Retention) — EXECUTING
+Plan: 2 of 2
+Status: Phase complete — ready for verification
+Last activity: 2026-03-28
 
 Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 0
 - Average duration: -
 - Total execution time: 0 hours
@@ -30,10 +47,12 @@ Progress: [░░░░░░░░░░] 0%
 | - | - | - | - |
 
 **Recent Trend:**
+
 - Last 5 plans: -
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 06-ambiance-retention P02 | 8 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -45,6 +64,8 @@ Recent decisions affecting current work:
 - Init: Nettoyage avant refacto — tests + nettoyage créent le filet de sécurité pour refactorer sans risque
 - Init: Refacto progressive du hook — splitter useVault en hooks domaine progressivement plutôt que big bang
 - Init: Ferme/gamification après stabilisation — stabiliser d'abord, enrichir ensuite
+- [Phase 06]: AmbientParticles utilise largeur generique 390 car absoluteFill dans parent de taille connue
+- [Phase 06]: StreakFlames tier calcule dynamiquement depuis STREAK_MILESTONES pour eviter valeurs hardcodees
 
 ### Roadmap Evolution
 
@@ -69,6 +90,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28
-Stopped at: Completed quick task 260328-py4: Écran Mes récompenses — loots réels avec suivi parent
+Last session: 2026-03-28T18:07:40.132Z
+Stopped at: Completed 06-02-PLAN.md — ambiance horaire + flammes streak
 Resume file: None

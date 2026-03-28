@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 3: Write Concurrency + XP Model** - Write queue par fichier, modèle XP budget
 - [ ] **Phase 4: Gamification Enrichment** - Événements saisonniers et quêtes familiales coopératives
 - [ ] **Phase 5: Architecture Completion** - Extraction hooks restants, split parser, VaultProvider composer
-- [ ] **Phase 6: Ambiance + Retention** - Ambiance horaire, mutation dorée, flammes de streak
+- [x] **Phase 6: Ambiance + Retention** - Ambiance horaire, mutation dorée, flammes de streak (completed 2026-03-28)
 
 ## Phase Details
 
@@ -85,11 +85,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Les flammes de streak s'affichent sous le diorama quand le streak >= 2, avec intensite croissante par palier (2+, 7+, 14+, 30+)
   4. Toutes les animations respectent useReducedMotion et se desactivent si l'utilisateur a active Reduce Motion
   5. `npx tsc --noEmit` passe sans nouvelles erreurs
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 06-01-PLAN.md — Mutation culture doree (types + farm-engine + FarmPlots visuel)
-- [ ] 06-02-PLAN.md — Ambiance horaire + flammes de streak (ambiance.ts + composants + integration tree.tsx)
+- [x] 06-01-PLAN.md — Mutation culture doree (types + farm-engine + FarmPlots visuel)
+- [x] 06-02-PLAN.md — Ambiance horaire + flammes de streak (ambiance.ts + composants + integration tree.tsx)
 
 ## Progress
 
@@ -103,4 +103,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. Write Concurrency + XP Model | 0/TBD | Not started | - |
 | 4. Gamification Enrichment | 0/TBD | Not started | - |
 | 5. Architecture Completion | 0/TBD | Not started | - |
-| 6. Ambiance + Retention | 0/2 | Not started | - |
+| 6. Ambiance + Retention | 2/2 | Complete   | 2026-03-28 |

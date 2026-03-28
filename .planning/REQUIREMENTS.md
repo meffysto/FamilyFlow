@@ -44,9 +44,9 @@ Requirements pour ce milestone. Chaque requirement est mappé à une phase du ro
 
 ### Ambiance & Retention
 
-- [ ] **AMB-01**: Ambiance horaire du diorama — particules (rosée matin, lucioles nuit) + tint coloré selon l'heure
+- [x] **AMB-01**: Ambiance horaire du diorama — particules (rosée matin, lucioles nuit) + tint coloré selon l'heure
 - [ ] **AMB-02**: Mutation culture dorée — 3% chance à la plantation, visuel or, récompense x5 à la récolte
-- [ ] **AMB-03**: Flammes de streak — affichage visuel animé sous le diorama selon le streak du profil
+- [x] **AMB-03**: Flammes de streak — affichage visuel animé sous le diorama selon le streak du profil
 
 ## v2 Requirements
 
@@ -112,9 +112,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ARCH-06 | Phase 5 | Pending |
 | ARCH-07 | Phase 5 | Pending |
 | ARCH-08 | Phase 5 | Pending |
-| AMB-01 | Phase 6 | Pending |
+| AMB-01 | Phase 6 | Complete |
 | AMB-02 | Phase 6 | Pending |
-| AMB-03 | Phase 6 | Pending |
+| AMB-03 | Phase 6 | Complete |
 
 **Coverage:**
 - v1 requirements: 24 total
