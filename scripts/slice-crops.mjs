@@ -72,10 +72,18 @@ const SHEET_A = join(DOWNLOADS, '20.02a - Farming Crops #1 3.1', 'farming crops 
 // Row 0: Beetroot, Row 1: Cabbage, Row 2: Carrot, etc.
 
 const CROPS_TO_EXTRACT = {
-  carrot:     { row: 2 },   // cell 19 → roughly row 2
-  wheat:      { row: 9 },   // cell 89 / 9 ≈ row 9
-  tomato:     { row: 8 },   // cell 79 / 9 ≈ row 8
-  strawberry: { row: 12 },  // 13th crop in list (0-indexed = row 12)
+  // Existantes
+  carrot:     { row: 2 },
+  wheat:      { row: 9 },
+  tomato:     { row: 8 },
+  strawberry: { row: 12 },
+  // Nouvelles
+  potato:     { row: 5 },   // Brown Potato
+  corn:       { row: 3 },   // Yellow Corn
+  pumpkin:    { row: 14 },  // Pumpkin
+  cabbage:    { row: 1 },   // Cabbage
+  beetroot:   { row: 0 },   // Beetroot
+  cucumber:   { row: 10 },  // Cucumber
 };
 
 async function sliceCrops() {

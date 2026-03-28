@@ -286,8 +286,35 @@ export const PLOTS_BY_TREE_STAGE: Record<TreeStage, number> = {
  * demandent plus mais recompensent mieux. Profit = reward - cost.
  */
 export const CROP_CATALOG: CropDefinition[] = [
-  { id: 'carrot',     labelKey: 'farm.crop.carrot',     emoji: '🥕', tasksPerStage: 1, harvestReward: 25,  minTreeStage: 'pousse',  cost: 5  },
-  { id: 'wheat',      labelKey: 'farm.crop.wheat',      emoji: '🌾', tasksPerStage: 1, harvestReward: 40,  minTreeStage: 'pousse',  cost: 10 },
-  { id: 'tomato',     labelKey: 'farm.crop.tomato',     emoji: '🍅', tasksPerStage: 2, harvestReward: 80,  minTreeStage: 'arbuste', cost: 15 },
-  { id: 'strawberry', labelKey: 'farm.crop.strawberry', emoji: '🍓', tasksPerStage: 2, harvestReward: 120, minTreeStage: 'arbre',   cost: 25 },
+  // Rapides (1 tache/stade = 4 taches pour recolter)
+  { id: 'carrot',     labelKey: 'farm.crop.carrot',     emoji: '🥕', tasksPerStage: 1, harvestReward: 25,  minTreeStage: 'pousse',   cost: 5  },
+  { id: 'wheat',      labelKey: 'farm.crop.wheat',      emoji: '🌾', tasksPerStage: 1, harvestReward: 40,  minTreeStage: 'pousse',   cost: 10 },
+  { id: 'potato',     labelKey: 'farm.crop.potato',     emoji: '🥔', tasksPerStage: 1, harvestReward: 35,  minTreeStage: 'pousse',   cost: 8  },
+  { id: 'beetroot',   labelKey: 'farm.crop.beetroot',   emoji: '🫜', tasksPerStage: 1, harvestReward: 30,  minTreeStage: 'pousse',   cost: 6  },
+  // Moyennes (2 taches/stade = 8 taches)
+  { id: 'tomato',     labelKey: 'farm.crop.tomato',     emoji: '🍅', tasksPerStage: 2, harvestReward: 80,  minTreeStage: 'arbuste',  cost: 15 },
+  { id: 'cabbage',    labelKey: 'farm.crop.cabbage',    emoji: '🥬', tasksPerStage: 2, harvestReward: 70,  minTreeStage: 'arbuste',  cost: 12 },
+  { id: 'cucumber',   labelKey: 'farm.crop.cucumber',   emoji: '🥒', tasksPerStage: 2, harvestReward: 75,  minTreeStage: 'arbuste',  cost: 14 },
+  // Lentes mais rentables (3 taches/stade = 12 taches)
+  { id: 'corn',       labelKey: 'farm.crop.corn',       emoji: '🌽', tasksPerStage: 3, harvestReward: 150, minTreeStage: 'arbre',    cost: 30 },
+  { id: 'strawberry', labelKey: 'farm.crop.strawberry', emoji: '🍓', tasksPerStage: 2, harvestReward: 120, minTreeStage: 'arbre',    cost: 25 },
+  { id: 'pumpkin',    labelKey: 'farm.crop.pumpkin',    emoji: '🎃', tasksPerStage: 3, harvestReward: 200, minTreeStage: 'majestueux', cost: 40 },
+];
+
+// ─────────────────────────────────────────────
+// Ferme — Batiments (bonus passif)
+// ─────────────────────────────────────────────
+
+export interface BuildingDefinition {
+  id: string;
+  labelKey: string;
+  emoji: string;
+  cost: number;            // cout en feuilles
+  dailyIncome: number;     // feuilles/jour
+  minTreeStage: TreeStage;
+}
+
+export const BUILDING_CATALOG: BuildingDefinition[] = [
+  { id: 'poulailler', labelKey: 'farm.building.poulailler', emoji: '🏠', cost: 200,  dailyIncome: 10, minTreeStage: 'arbuste' },
+  { id: 'grange',     labelKey: 'farm.building.grange',     emoji: '🏚️', cost: 500,  dailyIncome: 25, minTreeStage: 'arbre' },
 ];

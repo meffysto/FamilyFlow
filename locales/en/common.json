@@ -3873,7 +3873,28 @@
       "tomato": "Tomato",
       "tomato_desc": "Takes more patience but the harvest is generous!",
       "strawberry": "Strawberry",
-      "strawberry_desc": "The premium crop. Slow to grow but very profitable."
+      "strawberry_desc": "The premium crop. Slow to grow but very profitable.",
+      "potato": "Potato",
+      "potato_desc": "Sturdy and reliable. Grows fast, feeds well.",
+      "corn": "Corn",
+      "corn_desc": "Tall and golden. Takes patience but pays big!",
+      "pumpkin": "Pumpkin",
+      "pumpkin_desc": "The garden queen. Long growth, royal reward.",
+      "cabbage": "Cabbage",
+      "cabbage_desc": "Solid and generous. A garden classic.",
+      "beetroot": "Beetroot",
+      "beetroot_desc": "Small but colorful. Quick to grow.",
+      "cucumber": "Cucumber",
+      "cucumber_desc": "Fresh and crunchy. Grows well in the sun."
+    },
+    "building": {
+      "poulailler": "Chicken Coop",
+      "poulailler_desc": "A cozy chicken coop. Produces 10 🍃 per day automatically.",
+      "grange": "Barn",
+      "grange_desc": "A lovely wooden barn. Produces 25 🍃 per day automatically.",
+      "buy": "Build",
+      "dailyIncome": "+{{amount}} 🍃/day",
+      "owned": "Built"
     }
   }
 }

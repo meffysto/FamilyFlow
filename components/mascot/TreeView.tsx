@@ -376,6 +376,7 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
                     x={px - s / 2}
                     y={py - s / 2}
                     size={s}
+                    animalId={id}
                   />
                 );
               })}
@@ -1962,18 +1963,100 @@ const ANIMAL_IDLE_FRAMES: Record<string, [any, any]> = {
   vache:   [require('../../assets/garden/animals/vache/idle_1.png'),   require('../../assets/garden/animals/vache/idle_2.png')],
 };
 
-/** Composant animal avec cycle idle (alterne 2 frames) */
-function AnimatedAnimal({ frames, x, y, size }: { frames: [any, any]; x: number; y: number; size: number }) {
+/** Walk frames par animal (6 frames direction bas) */
+const ANIMAL_WALK_FRAMES: Record<string, any[]> = {
+  poussin: [
+    require('../../assets/garden/animals/poussin/walk_down_1.png'),
+    require('../../assets/garden/animals/poussin/walk_down_2.png'),
+    require('../../assets/garden/animals/poussin/walk_down_3.png'),
+    require('../../assets/garden/animals/poussin/walk_down_4.png'),
+  ],
+  poulet: [
+    require('../../assets/garden/animals/poulet/walk_down_1.png'),
+    require('../../assets/garden/animals/poulet/walk_down_2.png'),
+    require('../../assets/garden/animals/poulet/walk_down_3.png'),
+    require('../../assets/garden/animals/poulet/walk_down_4.png'),
+  ],
+  canard: [
+    require('../../assets/garden/animals/canard/walk_down_1.png'),
+    require('../../assets/garden/animals/canard/walk_down_2.png'),
+    require('../../assets/garden/animals/canard/walk_down_3.png'),
+    require('../../assets/garden/animals/canard/walk_down_4.png'),
+  ],
+  cochon: [
+    require('../../assets/garden/animals/cochon/walk_down_1.png'),
+    require('../../assets/garden/animals/cochon/walk_down_2.png'),
+    require('../../assets/garden/animals/cochon/walk_down_3.png'),
+    require('../../assets/garden/animals/cochon/walk_down_4.png'),
+  ],
+  vache: [
+    require('../../assets/garden/animals/vache/walk_down_1.png'),
+    require('../../assets/garden/animals/vache/walk_down_2.png'),
+    require('../../assets/garden/animals/vache/walk_down_3.png'),
+    require('../../assets/garden/animals/vache/walk_down_4.png'),
+  ],
+};
+
+/** Animal anime : alterne idle + petite balade aleatoire */
+function AnimatedAnimal({ frames, x, y, size, animalId }: { frames: [any, any]; x: number; y: number; size: number; animalId: string }) {
   const [frameIdx, setFrameIdx] = React.useState(0);
+  const [isWalking, setIsWalking] = React.useState(false);
+  const offsetX = useSharedValue(0);
+  const offsetY = useSharedValue(0);
+
+  // Cycle idle / walk
   useEffect(() => {
-    const interval = setInterval(() => setFrameIdx(f => (f + 1) % 2), 600);
+    const walkFrames = ANIMAL_WALK_FRAMES[animalId];
+    let walkInterval: ReturnType<typeof setInterval>;
+
+    // Idle frame cycle
+    const idleInterval = setInterval(() => setFrameIdx(f => (f + 1) % 2), 600);
+
+    // Petite balade toutes les 3-6 secondes
+    const startWalk = () => {
+      if (!walkFrames) return;
+      const dx = (Math.random() - 0.5) * 20;
+      const dy = (Math.random() - 0.5) * 12;
+      setIsWalking(true);
+      offsetX.value = withTiming(offsetX.value + dx, { duration: 1500, easing: Easing.inOut(Easing.sin) });
+      offsetY.value = withTiming(offsetY.value + dy, { duration: 1500, easing: Easing.inOut(Easing.sin) });
+      setTimeout(() => setIsWalking(false), 1500);
+    };
+
+    walkInterval = setInterval(startWalk, 3000 + Math.random() * 3000);
+
+    return () => {
+      clearInterval(idleInterval);
+      clearInterval(walkInterval);
+    };
+  }, [animalId]);
+
+  const walkFrames = ANIMAL_WALK_FRAMES[animalId];
+  const [walkFrameIdx, setWalkFrameIdx] = React.useState(0);
+  useEffect(() => {
+    if (!isWalking || !walkFrames) return;
+    const interval = setInterval(() => setWalkFrameIdx(f => (f + 1) % walkFrames.length), 200);
     return () => clearInterval(interval);
-  }, []);
+  }, [isWalking, walkFrames]);
+
+  const moveStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: offsetX.value },
+      { translateY: offsetY.value },
+    ],
+  }));
+
+  const currentFrame = isWalking && walkFrames
+    ? walkFrames[walkFrameIdx]
+    : frames[frameIdx];
+
   return (
-    <Image
-      source={frames[frameIdx]}
-      style={{ position: 'absolute', left: x, top: y, width: size, height: size } as any}
-    />
+    <Animated.View style={[{ position: 'absolute', left: x, top: y, width: size, height: size }, moveStyle]}>
+      <Image
+        source={currentFrame}
+        style={{ width: size, height: size } as any}
+      />
+    </Animated.View>
   );
 }
 

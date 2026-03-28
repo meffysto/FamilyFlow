@@ -3873,7 +3873,28 @@
       "tomato": "Tomate",
       "tomato_desc": "Demande plus de patience mais la récolte est généreuse !",
       "strawberry": "Fraise",
-      "strawberry_desc": "La culture premium. Longue à pousser mais très rentable."
+      "strawberry_desc": "La culture premium. Longue à pousser mais très rentable.",
+      "potato": "Pomme de terre",
+      "potato_desc": "Robuste et fiable. Pousse vite, nourrit bien.",
+      "corn": "Maïs",
+      "corn_desc": "Grand et doré. Demande de la patience mais rapporte gros !",
+      "pumpkin": "Citrouille",
+      "pumpkin_desc": "La reine du potager. Longue pousse, récompense royale.",
+      "cabbage": "Chou",
+      "cabbage_desc": "Solide et généreux. Un classique du jardin.",
+      "beetroot": "Betterave",
+      "beetroot_desc": "Petite mais colorée. Rapide à faire pousser.",
+      "cucumber": "Concombre",
+      "cucumber_desc": "Frais et croquant. Pousse bien au soleil."
+    },
+    "building": {
+      "poulailler": "Poulailler",
+      "poulailler_desc": "Un poulailler cosy. Produit 10 🍃 par jour automatiquement.",
+      "grange": "Grange",
+      "grange_desc": "Une belle grange en bois. Produit 25 🍃 par jour automatiquement.",
+      "buy": "Construire",
+      "dailyIncome": "+{{amount}} 🍃/jour",
+      "owned": "Construit"
     }
   }
 }
