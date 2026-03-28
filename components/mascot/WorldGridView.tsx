@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   seasonBadge: { fontSize: 8, position: 'absolute', top: -2, right: -4 },
   stageRow: { flexDirection: 'row', gap: 3, marginTop: 2 },
   stageDot: { width: 5, height: 5, borderRadius: 3 },
-  stageDotFilled: { backgroundColor: '#4ADE80' },
+  stageDotFilled: { backgroundColor: '#8B6914' },
   stageDotMature: { backgroundColor: '#FFD700' },
   stageDotEmpty: { backgroundColor: 'rgba(255,255,255,0.3)' },
   emptyPlus: { color: 'rgba(255,255,255,0.5)', fontSize: 20, fontWeight: 'bold' },
