@@ -24,19 +24,15 @@ import {
   BUILDING_CELLS,
   type WorldCell,
 } from '../../lib/mascot/world-grid';
-import { type PlantedCrop, type TreeStage, CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
-
-const BUILDING_SPRITES: Record<string, any> = {
-  poulailler: require('../../assets/buildings/poulailler.png'),
-  grange: require('../../assets/buildings/grange.png'),
-};
+import { type PlantedCrop, type TreeStage, type PlacedBuilding, CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
+import { BUILDING_SPRITES } from '../../lib/mascot/building-sprites';
 import { parseCrops, hasCropSeasonalBonus } from '../../lib/mascot/farm-engine';
 import { CROP_SPRITES } from '../../lib/mascot/crop-sprites';
 
 interface WorldGridViewProps {
   treeStage: TreeStage;
   farmCropsCSV: string;
-  ownedBuildings: string[];
+  ownedBuildings: PlacedBuilding[];
   containerWidth: number;
   containerHeight: number;
   onCropPlotPress?: (cellId: string, crop: PlantedCrop | null) => void;
@@ -168,23 +164,26 @@ function CropCell({ cell, crop, cropDef, isMature, containerWidth, containerHeig
 
 // ── Cellule batiment ──
 
-function BuildingCell({ cell, buildingId, containerWidth, containerHeight }: {
+function BuildingCell({ cell, placedBuilding, containerWidth, containerHeight }: {
   cell: WorldCell;
-  buildingId: string | null;
+  placedBuilding: PlacedBuilding | null;
   containerWidth: number;
   containerHeight: number;
 }) {
-  if (!buildingId) return null;
-  const building = BUILDING_CATALOG.find(b => b.id === buildingId);
+  if (!placedBuilding) return null;
+  const building = BUILDING_CATALOG.find(b => b.id === placedBuilding.buildingId);
   if (!building) return null;
 
   const size = CELL_SIZES[cell.size];
   const left = cell.x * containerWidth - size / 2;
   const top = cell.y * containerHeight - size / 2;
 
+  const spriteSource = BUILDING_SPRITES[building.id]?.[placedBuilding.level]
+    ?? BUILDING_SPRITES[building.id]?.[1];
+
   return (
     <View style={[styles.buildingCell, { position: 'absolute', left, top, width: size, height: size }]}>
-      <Image source={BUILDING_SPRITES[building.id]} style={styles.buildingSprite} />
+      <Image source={spriteSource} style={styles.buildingSprite} />
       <Text style={styles.buildingIncome}>+{building.dailyIncome}🍃</Text>
     </View>
   );
@@ -228,11 +227,11 @@ export function WorldGridView({
       })}
 
       {/* Cellules de batiment */}
-      {BUILDING_CELLS.map((cell, idx) => (
+      {BUILDING_CELLS.map((cell) => (
         <BuildingCell
           key={cell.id}
           cell={cell}
-          buildingId={ownedBuildings[idx] ?? null}
+          placedBuilding={ownedBuildings.find(b => b.cellId === cell.id) ?? null}
           containerWidth={containerWidth}
           containerHeight={containerHeight}
         />

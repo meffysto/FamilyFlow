@@ -313,19 +313,71 @@ export const CROP_CATALOG: CropDefinition[] = [
 // Ferme — Batiments (bonus passif)
 // ─────────────────────────────────────────────
 
+export type ResourceType = 'oeuf' | 'lait' | 'farine';
+
+export interface FarmInventory {
+  oeuf: number;
+  lait: number;
+  farine: number;
+}
+
+export interface BuildingTier {
+  level: number;
+  productionRateHours: number;
+  upgradeCoins: number;
+  spriteSuffix: string;  // '_1', '_2', '_3' — pour BUILDING_SPRITES lookup
+}
+
+export interface PlacedBuilding {
+  buildingId: string;
+  cellId: string;
+  level: number;
+  lastCollectAt: string;  // ISO datetime YYYY-MM-DDTHH:mm
+}
+
 export interface BuildingDefinition {
   id: string;
   labelKey: string;
   emoji: string;
   cost: number;            // cout en feuilles
-  dailyIncome: number;     // feuilles/jour
+  dailyIncome: number;     // @deprecated — utiliser tiers[0].productionRateHours
   minTreeStage: TreeStage;
+  resourceType: ResourceType;
+  tiers: BuildingTier[];
 }
 
 /** Batiments : revenu passif supplementaire (20-30% du revenu actif).
  * ROI long = investissement strategique, pas de remplacement du farming.
  */
 export const BUILDING_CATALOG: BuildingDefinition[] = [
-  { id: 'poulailler', labelKey: 'farm.building.poulailler', emoji: '🏠', cost: 300,  dailyIncome: 5,  minTreeStage: 'arbuste' },
-  { id: 'grange',     labelKey: 'farm.building.grange',     emoji: '🏚️', cost: 800,  dailyIncome: 8,  minTreeStage: 'arbre' },
+  {
+    id: 'poulailler', labelKey: 'farm.building.poulailler', emoji: '🐔',
+    cost: 300, dailyIncome: 5, minTreeStage: 'arbuste',
+    resourceType: 'oeuf',
+    tiers: [
+      { level: 1, productionRateHours: 6, upgradeCoins: 0, spriteSuffix: '_1' },
+      { level: 2, productionRateHours: 4, upgradeCoins: 500, spriteSuffix: '_2' },
+      { level: 3, productionRateHours: 3, upgradeCoins: 1000, spriteSuffix: '_3' },
+    ],
+  },
+  {
+    id: 'grange', labelKey: 'farm.building.grange', emoji: '🐄',
+    cost: 800, dailyIncome: 8, minTreeStage: 'arbre',
+    resourceType: 'lait',
+    tiers: [
+      { level: 1, productionRateHours: 8, upgradeCoins: 0, spriteSuffix: '_1' },
+      { level: 2, productionRateHours: 6, upgradeCoins: 1200, spriteSuffix: '_2' },
+      { level: 3, productionRateHours: 4, upgradeCoins: 2000, spriteSuffix: '_3' },
+    ],
+  },
+  {
+    id: 'moulin', labelKey: 'farm.building.moulin', emoji: '🌾',
+    cost: 1200, dailyIncome: 0, minTreeStage: 'majestueux',
+    resourceType: 'farine',
+    tiers: [
+      { level: 1, productionRateHours: 8, upgradeCoins: 0, spriteSuffix: '_1' },
+      { level: 2, productionRateHours: 6, upgradeCoins: 1800, spriteSuffix: '_2' },
+      { level: 3, productionRateHours: 4, upgradeCoins: 3000, spriteSuffix: '_3' },
+    ],
+  },
 ];

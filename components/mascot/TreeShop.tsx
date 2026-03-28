@@ -35,8 +35,10 @@ import {
   type MascotDecoration,
   type MascotInhabitant,
   type TreeSpecies,
+  type PlacedBuilding,
 } from '../../lib/mascot/types';
 import { getStageIndex } from '../../lib/mascot/engine';
+import { BUILDING_CELLS } from '../../lib/mascot/world-grid';
 
 const BUILDING_SPRITES: Record<string, any> = {
   poulailler: require('../../assets/buildings/poulailler.png'),
@@ -56,9 +58,9 @@ interface TreeShopProps {
   coins: number;
   ownedDecorations: string[];
   ownedInhabitants: string[];
-  ownedBuildings?: string[];
+  ownedBuildings?: PlacedBuilding[];
   onBuy: (itemId: string, itemType: 'decoration' | 'inhabitant') => Promise<void>;
-  onBuyBuilding?: (buildingId: string) => Promise<void>;
+  onBuyBuilding?: (buildingId: string, cellId: string) => Promise<void>;
   onClose: () => void;
 }
 
@@ -410,7 +412,7 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
       >
         {tab === 'buildings' ? (
           BUILDING_CATALOG.map((building, idx) => {
-            const owned = ownedBuildings.includes(building.id);
+            const owned = (ownedBuildings ?? []).some(b => b.buildingId === building.id);
             const minStageIdx = TREE_STAGES.findIndex(s => s.stage === building.minTreeStage);
             const locked = stageIdx < minStageIdx;
             const canAfford = coins >= building.cost;
@@ -426,8 +428,12 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
                   ]}
                   onPress={() => {
                     if (!owned && !locked && canAfford && onBuyBuilding) {
+                      // Trouver la prochaine cellule libre
+                      const occupiedCells = (ownedBuildings ?? []).map(b => b.cellId);
+                      const freeCell = BUILDING_CELLS.find(c => !occupiedCells.includes(c.id));
+                      if (!freeCell) return; // toutes les cellules sont occupees
                       setBuying(building.id);
-                      onBuyBuilding(building.id).then(() => {
+                      onBuyBuilding(building.id, freeCell.id).then(() => {
                         hapticsShopBuy();
                         setBuying(null);
                       }).catch(() => {
