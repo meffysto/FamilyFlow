@@ -2000,14 +2000,20 @@ const ANIMAL_WALK_FRAMES: Record<string, any[]> = {
   ],
 };
 
-/** Animal anime : alterne idle + petite balade aleatoire */
+/** Bulles de pensee des animaux */
+const THOUGHT_BUBBLES_IDLE = ['ZzZ', '?', '...', '♪', '!', '✨'];
+const THOUGHT_BUBBLES_NIGHT = ['💤', '🌙', 'ZzZ'];
+
+/** Animal anime : idle + balade + bulles de pensee */
 function AnimatedAnimal({ frames, x, y, size, animalId }: { frames: [any, any]; x: number; y: number; size: number; animalId: string }) {
   const [frameIdx, setFrameIdx] = React.useState(0);
   const [isWalking, setIsWalking] = React.useState(false);
+  const [bubble, setBubble] = React.useState<string | null>(null);
   const offsetX = useSharedValue(0);
   const offsetY = useSharedValue(0);
+  const bubbleOpacity = useSharedValue(0);
 
-  // Cycle idle / walk
+  // Cycle idle / walk / thought bubbles
   useEffect(() => {
     const walkFrames = ANIMAL_WALK_FRAMES[animalId];
     let walkInterval: ReturnType<typeof setInterval>;
@@ -2028,9 +2034,24 @@ function AnimatedAnimal({ frames, x, y, size, animalId }: { frames: [any, any]; 
 
     walkInterval = setInterval(startWalk, 3000 + Math.random() * 3000);
 
+    // Thought bubbles toutes les 15-30s
+    const bubbleInterval = setInterval(() => {
+      const hour = new Date().getHours();
+      const isNight = hour >= 21 || hour < 6;
+      const pool = isNight ? THOUGHT_BUBBLES_NIGHT : THOUGHT_BUBBLES_IDLE;
+      const content = pool[Math.floor(Math.random() * pool.length)];
+      setBubble(content);
+      bubbleOpacity.value = withTiming(1, { duration: 300 });
+      setTimeout(() => {
+        bubbleOpacity.value = withTiming(0, { duration: 500 });
+        setTimeout(() => setBubble(null), 500);
+      }, 3000);
+    }, 15000 + Math.random() * 15000);
+
     return () => {
       clearInterval(idleInterval);
       clearInterval(walkInterval);
+      clearInterval(bubbleInterval);
     };
   }, [animalId]);
 
@@ -2049,6 +2070,10 @@ function AnimatedAnimal({ frames, x, y, size, animalId }: { frames: [any, any]; 
     ],
   }));
 
+  const bubbleStyle = useAnimatedStyle(() => ({
+    opacity: bubbleOpacity.value,
+  }));
+
   const currentFrame = isWalking && walkFrames
     ? walkFrames[walkFrameIdx]
     : frames[frameIdx];
@@ -2059,6 +2084,22 @@ function AnimatedAnimal({ frames, x, y, size, animalId }: { frames: [any, any]; 
         source={currentFrame}
         style={{ width: size, height: size } as any}
       />
+      {/* Bulle de pensee */}
+      {bubble && (
+        <Animated.View style={[{
+          position: 'absolute',
+          top: -18,
+          left: size / 2 - 14,
+          backgroundColor: 'rgba(255,255,255,0.9)',
+          borderRadius: 10,
+          paddingHorizontal: 5,
+          paddingVertical: 2,
+          minWidth: 28,
+          alignItems: 'center',
+        }, bubbleStyle]}>
+          <Text style={{ fontSize: 11, textAlign: 'center' }}>{bubble}</Text>
+        </Animated.View>
+      )}
     </Animated.View>
   );
 }

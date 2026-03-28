@@ -13,6 +13,7 @@ import Animated, {
   withRepeat,
   withSequence,
   withTiming,
+  withSpring,
   Easing,
 } from 'react-native-reanimated';
 import {
@@ -49,6 +50,11 @@ function CropCell({ cell, crop, cropDef, isMature, containerWidth, containerHeig
   onPress: () => void;
 }) {
   const pulse = useSharedValue(1);
+  const growScaleX = useSharedValue(1);
+  const growScaleY = useSharedValue(1);
+  const prevStage = React.useRef(crop?.currentStage ?? -1);
+
+  // Pulse mature
   useEffect(() => {
     if (isMature) {
       pulse.value = withRepeat(
@@ -63,8 +69,31 @@ function CropCell({ cell, crop, cropDef, isMature, containerWidth, containerHeig
     }
   }, [isMature]);
 
+  // Growth wiggle quand le stade change
+  useEffect(() => {
+    const currentStage = crop?.currentStage ?? -1;
+    if (prevStage.current >= 0 && currentStage > prevStage.current && currentStage < 4) {
+      // Squash → spring up → settle
+      growScaleX.value = withSequence(
+        withTiming(1.25, { duration: 100 }),
+        withSpring(0.95, { damping: 8, stiffness: 200 }),
+        withSpring(1, { damping: 12, stiffness: 150 }),
+      );
+      growScaleY.value = withSequence(
+        withTiming(0.7, { duration: 100 }),
+        withSpring(1.1, { damping: 8, stiffness: 200 }),
+        withSpring(1, { damping: 12, stiffness: 150 }),
+      );
+    }
+    prevStage.current = currentStage;
+  }, [crop?.currentStage]);
+
   const animStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulse.value }],
+    transform: [
+      { scale: pulse.value },
+      { scaleX: growScaleX.value },
+      { scaleY: growScaleY.value },
+    ],
   }));
 
   const size = CELL_SIZES[cell.size];

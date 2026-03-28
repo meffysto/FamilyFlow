@@ -45,7 +45,8 @@ import { WorldGridView, FarmStats } from '../../components/mascot/WorldGridView'
 import { WeeklyGoal, countWeeklyTasks } from '../../components/mascot/WeeklyGoal';
 import { useFarm } from '../../hooks/useFarm';
 import { type PlantedCrop, CROP_CATALOG } from '../../lib/mascot/types';
-import { hasCropSeasonalBonus } from '../../lib/mascot/farm-engine';
+import { hasCropSeasonalBonus, parseCrops } from '../../lib/mascot/farm-engine';
+import { HarvestBurst, CROP_COLORS } from '../../components/mascot/HarvestBurst';
 import { calculateLevel, xpForLevel, pointsToNextLevel, getLevelTier } from '../../lib/gamification';
 import {
   getTreeStage,
@@ -113,6 +114,8 @@ export default function TreeScreen() {
   const { plant, harvest, buyBuilding, collectPassiveIncome } = useFarm();
   const [showSeedPicker, setShowSeedPicker] = useState(false);
   const [selectedPlotIndex, setSelectedPlotIndex] = useState<number | null>(null);
+  const [harvestBurst, setHarvestBurst] = useState<{ x: number; y: number; reward: number; cropId: string } | null>(null);
+  const [whisperInfo, setWhisperInfo] = useState<{ cellId: string; stage: number; cropId: string } | null>(null);
 
   // Saga active — pour bandeau + élément visuel
   const [sagaProgress, setSagaProgress] = useState<SagaProgress | null>(null);
@@ -275,16 +278,25 @@ export default function TreeScreen() {
     if (cellIdx < 0) return;
 
     if (crop && crop.currentStage >= 4) {
+      // Recolte avec burst anime
+      const cell = cells[cellIdx];
+      const burstX = cell.x * SCREEN_W;
+      const burstY = cell.y * (DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60);
+      const cropDef = CROP_CATALOG.find(c => c.id === crop.cropId);
       harvest(profile.id, cellIdx).then((reward) => {
         if (reward > 0) {
-          showToast(t('farm.harvested', { reward }));
+          setHarvestBurst({ x: burstX, y: burstY, reward, cropId: crop.cropId });
         }
       });
-    } else if (!crop) {
+    } else if (crop) {
+      // Whisper sur culture en croissance
+      setWhisperInfo({ cellId, stage: crop.currentStage, cropId: crop.cropId });
+      setTimeout(() => setWhisperInfo(null), 2500);
+    } else {
       setSelectedPlotIndex(cellIdx);
       setShowSeedPicker(true);
     }
-  }, [profile, isOwnTree, harvest, showToast, level, t]);
+  }, [profile, isOwnTree, harvest, level, stageIdx]);
 
   /** Planter une graine sur la parcelle selectionnee */
   const handleSeedSelect = useCallback(async (cropId: string) => {
@@ -522,6 +534,55 @@ export default function TreeScreen() {
               containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
               onCropPlotPress={isOwnTree ? handleCropCellPress : undefined}
             />
+
+            {/* Harvest Burst animation */}
+            {harvestBurst && (
+              <HarvestBurst
+                x={harvestBurst.x}
+                y={harvestBurst.y}
+                reward={harvestBurst.reward}
+                cropColor={CROP_COLORS[harvestBurst.cropId] ?? '#FFD700'}
+                onComplete={() => setHarvestBurst(null)}
+              />
+            )}
+
+            {/* Crop Whisper tooltip */}
+            {whisperInfo && (() => {
+              const { getUnlockedCropCells } = require('../../lib/mascot/world-grid');
+              const { getTreeStage } = require('../../lib/mascot/engine');
+              const treeStage = getTreeStage(level);
+              const cells = getUnlockedCropCells(treeStage);
+              const cell = cells.find((c: any) => c.id === whisperInfo.cellId);
+              if (!cell) return null;
+              const whispers = [
+                '🌱 Je pousse, je pousse...',
+                '🌿 Patience, ça vient !',
+                '💪 Bientôt prêt !',
+                '✨ Encore un petit effort !',
+              ];
+              const msg = hasCropSeasonalBonus(whisperInfo.cropId)
+                ? '☀️ Le soleil m\'aide !'
+                : whispers[Math.min(whisperInfo.stage, 3)];
+              const wx = cell.x * SCREEN_W - 60;
+              const wy = cell.y * (DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60) - 40;
+              return (
+                <Animated.View
+                  entering={FadeIn.duration(200)}
+                  style={{
+                    position: 'absolute',
+                    left: wx,
+                    top: wy,
+                    backgroundColor: 'rgba(0,0,0,0.7)',
+                    paddingHorizontal: 8,
+                    paddingVertical: 4,
+                    borderRadius: 8,
+                    zIndex: 20,
+                  }}
+                >
+                  <Text style={{ color: '#FFF', fontSize: 11, textAlign: 'center' }}>{msg}</Text>
+                </Animated.View>
+              );
+            })()}
 
             {/* Couche 4 : Arbre pixel au premier plan */}
             <View style={styles.treeOverlay}>
