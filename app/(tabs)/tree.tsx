@@ -46,6 +46,7 @@ import { WeeklyGoal, countWeeklyTasks } from '../../components/mascot/WeeklyGoal
 import { useFarm } from '../../hooks/useFarm';
 import { type PlantedCrop, CROP_CATALOG } from '../../lib/mascot/types';
 import { hasCropSeasonalBonus, parseCrops } from '../../lib/mascot/farm-engine';
+import { getUnlockedCropCells } from '../../lib/mascot/world-grid';
 import { HarvestBurst, CROP_COLORS } from '../../components/mascot/HarvestBurst';
 import { calculateLevel, xpForLevel, pointsToNextLevel, getLevelTier } from '../../lib/gamification';
 import {
@@ -141,11 +142,10 @@ export default function TreeScreen() {
   // Notification cultures matures
   useEffect(() => {
     if (!profile?.farmCrops) return;
-    const { parseCrops } = require('../../lib/mascot/farm-engine');
     const crops = parseCrops(profile.farmCrops);
     const matureCount = crops.filter((c: any) => c.currentStage >= 4).length;
     if (matureCount > 0) {
-      // On ne montre le toast qu'une fois (pas a chaque re-render)
+      showToast(`✨ ${matureCount} culture${matureCount > 1 ? 's' : ''} a recolter !`);
     }
   }, []);
 
@@ -269,11 +269,7 @@ export default function TreeScreen() {
   /** Tap sur une cellule de culture */
   const handleCropCellPress = useCallback((cellId: string, crop: PlantedCrop | null) => {
     if (!profile || !isOwnTree) return;
-    // Trouver l'index de la cellule parmi les debloquees
-    const { getUnlockedCropCells } = require('../../lib/mascot/world-grid');
-    const { getTreeStage } = require('../../lib/mascot/engine');
-    const stage = getTreeStage(level);
-    const cells = getUnlockedCropCells(stage);
+    const cells = getUnlockedCropCells(stageInfo.stage);
     const cellIdx = cells.findIndex((c: any) => c.id === cellId);
     if (cellIdx < 0) return;
 
@@ -548,10 +544,7 @@ export default function TreeScreen() {
 
             {/* Crop Whisper tooltip */}
             {whisperInfo && (() => {
-              const { getUnlockedCropCells } = require('../../lib/mascot/world-grid');
-              const { getTreeStage } = require('../../lib/mascot/engine');
-              const treeStage = getTreeStage(level);
-              const cells = getUnlockedCropCells(treeStage);
+              const cells = getUnlockedCropCells(stageInfo.stage);
               const cell = cells.find((c: any) => c.id === whisperInfo.cellId);
               if (!cell) return null;
               const whispers = [
