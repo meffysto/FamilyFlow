@@ -149,7 +149,7 @@ export function TabletSidebar() {
         </Text>
         {item.badge ? (
           <View style={[styles.badge, { backgroundColor: primary }]}>
-            <Text style={styles.badgeText}>{item.badge}</Text>
+            <Text style={[styles.badgeText, { color: colors.onPrimary }]}>{item.badge}</Text>
           </View>
         ) : null}
       </TouchableOpacity>
@@ -274,6 +274,5 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: FontSize.micro,
     fontWeight: FontWeight.heavy,
-    color: '#fff',
   },
 });

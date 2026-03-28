@@ -249,7 +249,7 @@ export function ContactImporter({
                 },
               ]}
             >
-              {isSelected && <Text style={styles.checkmark}>{'✓'}</Text>}
+              {isSelected && <Text style={[styles.checkmark, { color: colors.onPrimary }]}>{'✓'}</Text>}
             </View>
           ) : (
             <View style={[styles.importedBadge, { backgroundColor: colors.successBg }]}>
@@ -441,7 +441,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   checkmark: {
-    color: '#FFFFFF',
     fontSize: FontSize.sm,
     fontWeight: FontWeight.heavy,
   },

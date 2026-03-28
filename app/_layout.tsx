@@ -34,6 +34,7 @@ import { HelpProvider } from '../contexts/HelpContext';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { LockScreen } from '../components/LockScreen';
 import i18n, { loadSavedLanguage } from '../lib/i18n';
+import { LightColors, DarkColors } from '../constants/colors';
 
 // ─── Error Boundary ──────────────────────────────────────────────────────────
 
@@ -142,7 +143,7 @@ function RootLayout() {
                 </Stack>
                 <VaultRedirect langReady={langReady} />
                 {!langReady && (
-                  <View style={[styles.loading, { backgroundColor: systemScheme === 'dark' ? '#0F172A' : '#F9FAFB' }]} pointerEvents="auto">
+                  <View style={[styles.loading, { backgroundColor: systemScheme === 'dark' ? DarkColors.bg : LightColors.cardAlt }]} pointerEvents="auto">
                     <ActivityIndicator size="large" color="#7C3AED" />
                   </View>
                 )}
@@ -174,7 +175,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 32,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: LightColors.cardAlt,
   },
   errorEmoji: {
     fontSize: 64,
@@ -183,13 +184,13 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1F2937',
+    color: LightColors.textSub,
     marginBottom: 8,
     textAlign: 'center',
   },
   errorMessage: {
     fontSize: 14,
-    color: '#6B7280',
+    color: LightColors.textMuted,
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 20,
@@ -201,7 +202,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   errorButtonText: {
-    color: '#FFFFFF',
+    color: LightColors.onPrimary,
     fontSize: 16,
     fontWeight: '600',
   },

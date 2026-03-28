@@ -54,13 +54,13 @@ export default function RecipeCard({ recipe, onPress, onLongPress, isFavorite, o
               </TouchableOpacity>
             )}
             <View style={styles.imageContent}>
-              <Text style={[styles.title, styles.imageTitle]} numberOfLines={2}>
+              <Text style={[styles.title, styles.imageTitle, { color: colors.onPrimary }]} numberOfLines={2}>
                 {recipe.title}
               </Text>
               <View style={styles.metaRow}>
                 {recipe.servings > 0 && (
                   <View style={[styles.badge, styles.imageBadge]}>
-                    <Text style={[styles.badgeText, { color: '#fff' }]}>
+                    <Text style={[styles.badgeText, { color: colors.onPrimary }]}>
                       {t('recipe.servings', { count: recipe.servings })}
                     </Text>
                   </View>
@@ -185,7 +185,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   imageTitle: {
-    color: '#fff',
     textShadowColor: 'rgba(0,0,0,0.5)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,

@@ -200,7 +200,7 @@ export default function MoreScreen() {
                       <View style={styles.rowRight}>
                         {item.badge ? (
                           <View style={[styles.badge, { backgroundColor: item.color }]}>
-                            <Text style={styles.badgeText}>{item.badge}</Text>
+                            <Text style={[styles.badgeText, { color: colors.onPrimary }]}>{item.badge}</Text>
                           </View>
                         ) : null}
                         <Text style={[styles.chevron, { color: colors.textFaint }]}>›</Text>
@@ -227,7 +227,7 @@ export default function MoreScreen() {
                       <Text style={[styles.cardLabel, { color: colors.textSub }]}>{item.label}</Text>
                       {item.badge ? (
                         <View style={[styles.cardBadge, { backgroundColor: item.color }]}>
-                          <Text style={styles.badgeText}>{item.badge}</Text>
+                          <Text style={[styles.badgeText, { color: colors.onPrimary }]}>{item.badge}</Text>
                         </View>
                       ) : null}
                     </TouchableOpacity>
@@ -375,6 +375,5 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: FontSize.code,
     fontWeight: FontWeight.heavy,
-    color: '#fff',
   },
 });

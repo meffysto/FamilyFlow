@@ -9,29 +9,29 @@ Requirements pour ce milestone. Chaque requirement est mappé à une phase du ro
 
 ### Testing
 
-- [x] **TEST-01**: Setup jest-expo + @testing-library/react-native avec config fonctionnelle
-- [x] **TEST-02**: Tests unitaires pour lib/budget.ts (parsing, sérialisation, calculs)
-- [x] **TEST-03**: Tests unitaires pour lib/mascot/farm-engine.ts (planter, récolter, timers)
-- [x] **TEST-04**: Tests unitaires pour lib/mascot/sagas-engine.ts (progression, cooldowns)
-- [x] **TEST-05**: Tests unitaires pour lib/mascot/world-grid.ts (placement, rendu grille)
+- [ ] **TEST-01**: Setup jest-expo + @testing-library/react-native avec config fonctionnelle
+- [ ] **TEST-02**: Tests unitaires pour lib/budget.ts (parsing, sérialisation, calculs)
+- [ ] **TEST-03**: Tests unitaires pour lib/mascot/farm-engine.ts (planter, récolter, timers)
+- [ ] **TEST-04**: Tests unitaires pour lib/mascot/sagas-engine.ts (progression, cooldowns)
+- [ ] **TEST-05**: Tests unitaires pour lib/mascot/world-grid.ts (placement, rendu grille)
 - [ ] **TEST-06**: Sentry intégré pour crash reporting en production
-- [x] **TEST-07**: Tests E2E Maestro pour les 3-5 parcours utilisateur critiques
+- [ ] **TEST-07**: Tests E2E Maestro pour les 3-5 parcours utilisateur critiques
 
 ### Code Quality
 
-- [x] **QUAL-01**: Suppression des fonctions dépréciées dans lib/telegram.ts (5 fonctions)
-- [x] **QUAL-02**: Suppression de la propriété dépréciée menageTasks et du code de migration associé
-- [ ] **QUAL-03**: Remplacement des 228 couleurs hardcodées par tokens sémantiques via useThemeColors()
-- [x] **QUAL-04**: Correction des 8 assertions `as any` sur les chemins de mutation dans useVault.ts
-- [x] **QUAL-05**: Setup ESLint avec @typescript-eslint/no-explicit-any
+- [ ] **QUAL-01**: Suppression des fonctions dépréciées dans lib/telegram.ts (5 fonctions)
+- [ ] **QUAL-02**: Suppression de la propriété dépréciée menageTasks et du code de migration associé
+- [x] **QUAL-03**: Remplacement des 228 couleurs hardcodées par tokens sémantiques via useThemeColors()
+- [ ] **QUAL-04**: Correction des 8 assertions `as any` sur les chemins de mutation dans useVault.ts
+- [ ] **QUAL-05**: Setup ESLint avec @typescript-eslint/no-explicit-any
 
 ### Architecture
 
-- [x] **ARCH-01**: Write queue per-file pour les opérations concurrentes sur le vault
+- [ ] **ARCH-01**: Write queue per-file pour les opérations concurrentes sur le vault
 
 ### Gamification
 
-- [x] **GAME-01**: Modèle XP budget pour éviter l'inflation des niveaux
+- [ ] **GAME-01**: Modèle XP budget pour éviter l'inflation des niveaux
 - [ ] **GAME-02**: Événements saisonniers liés au calendrier réel (printemps, été, automne, hiver)
 - [ ] **GAME-03**: Quêtes familiales coopératives (objectifs partagés entre membres)
 
@@ -88,20 +88,20 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TEST-01 | Phase 1 | Complete |
-| TEST-02 | Phase 1 | Complete |
-| TEST-03 | Phase 1 | Complete |
-| TEST-04 | Phase 1 | Complete |
-| TEST-05 | Phase 1 | Complete |
+| TEST-01 | Phase 1 | Pending |
+| TEST-02 | Phase 1 | Pending |
+| TEST-03 | Phase 1 | Pending |
+| TEST-04 | Phase 1 | Pending |
+| TEST-05 | Phase 1 | Pending |
 | TEST-06 | Phase 1 | Pending |
-| TEST-07 | Phase 1 | Complete |
-| QUAL-01 | Phase 1 | Complete |
-| QUAL-02 | Phase 1 | Complete |
-| QUAL-04 | Phase 1 | Complete |
-| QUAL-05 | Phase 1 | Complete |
-| ARCH-01 | Phase 2 | Complete |
-| QUAL-03 | Phase 2 | Pending |
-| GAME-01 | Phase 2 | Complete |
+| TEST-07 | Phase 1 | Pending |
+| QUAL-01 | Phase 1 | Pending |
+| QUAL-02 | Phase 1 | Pending |
+| QUAL-04 | Phase 1 | Pending |
+| QUAL-05 | Phase 1 | Pending |
+| ARCH-01 | Phase 2 | Pending |
+| QUAL-03 | Phase 2 | Complete |
+| GAME-01 | Phase 2 | Pending |
 | GAME-02 | Phase 3 | Pending |
 | GAME-03 | Phase 3 | Pending |
 | AMB-01 | Phase 4 | Complete |
