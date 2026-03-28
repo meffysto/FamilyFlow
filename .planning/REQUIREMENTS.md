@@ -32,7 +32,7 @@ Requirements pour ce milestone. Chaque requirement est mappé à une phase du ro
 ### Gamification
 
 - [ ] **GAME-01**: Modèle XP budget pour éviter l'inflation des niveaux
-- [ ] **GAME-02**: Événements saisonniers liés au calendrier réel (printemps, été, automne, hiver)
+- [x] **GAME-02**: Événements saisonniers liés au calendrier réel (printemps, été, automne, hiver)
 - [ ] **GAME-03**: Quêtes familiales coopératives (objectifs partagés entre membres)
 
 ### Ambiance & Retention
@@ -102,7 +102,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ARCH-01 | Phase 2 | Pending |
 | QUAL-03 | Phase 2 | Complete |
 | GAME-01 | Phase 2 | Pending |
-| GAME-02 | Phase 3 | Pending |
+| GAME-02 | Phase 3 | Complete |
 | GAME-03 | Phase 3 | Pending |
 | AMB-01 | Phase 4 | Complete |
 | AMB-02 | Phase 4 | Complete |
