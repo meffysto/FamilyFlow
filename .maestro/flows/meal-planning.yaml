@@ -1,0 +1,30 @@
+# Flow E2E : Planification des repas — parcours repas
+# Valide la navigation depuis le dashboard vers l'écran repas
+# via l'onglet Menu, et que l'écran s'affiche correctement.
+
+appId: com.familyvault.dev
+---
+- launchApp
+# Naviguer vers l'onglet Menu (qui donne accès aux repas)
+- tapOn:
+    text: "Menu"
+# Vérifier que l'onglet Menu est affiché
+- assertVisible:
+    text: "Menu"
+# Rechercher et taper sur l'option Repas dans le menu
+- runFlow:
+    when:
+      visible:
+        text: "Repas"
+    commands:
+      - tapOn:
+          text: "Repas"
+      # Vérifier que l'écran repas est visible
+      - assertVisible:
+          text: "Repas"
+      # Retourner à l'accueil
+      - tapOn:
+          text: "Aujourd'hui"
+# Vérifier que le dashboard est accessible après navigation
+- assertVisible:
+    text: "Aujourd'hui"

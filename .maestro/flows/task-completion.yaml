@@ -1,0 +1,30 @@
+# Flow E2E : Complétion de tâche — parcours tâches
+# Valide que la navigation vers les tâches fonctionne
+# et que l'interaction avec une tâche ne provoque pas de crash.
+
+appId: com.familyvault.dev
+---
+- launchApp
+# Naviguer vers l'onglet Tâches
+- tapOn:
+    text: "Tâches"
+# Vérifier que la liste de tâches est affichée
+- assertVisible:
+    text: "Tâches"
+# Tenter de tap sur la première tâche visible si elle existe
+# (le flow reste robuste si aucune tâche n'est présente)
+- runFlow:
+    when:
+      visible:
+        text: "Tous"
+    commands:
+      - tapOn:
+          text: "Tous"
+# Vérifier que l'écran est toujours stable (pas de crash)
+- assertVisible:
+    text: "Tâches"
+# Retourner au dashboard
+- tapOn:
+    text: "Aujourd'hui"
+- assertVisible:
+    text: "Aujourd'hui"

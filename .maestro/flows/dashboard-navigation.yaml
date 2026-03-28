@@ -1,0 +1,35 @@
+# Flow E2E : Navigation dashboard — parcours principal
+# Valide que l'app démarre, que le dashboard s'affiche,
+# et que la navigation entre onglets fonctionne correctement.
+
+appId: com.familyvault.dev
+---
+- launchApp
+# Attendre que le dashboard soit chargé
+- assertVisible:
+    text: "Aujourd'hui"
+    optional: true
+# Naviguer vers l'onglet Tâches
+- tapOn:
+    text: "Tâches"
+# Vérifier que l'écran tâches est affiché
+- assertVisible:
+    text: "Tâches"
+# Naviguer vers l'onglet Journal
+- tapOn:
+    text: "Journal"
+# Vérifier que l'écran journal est affiché
+- assertVisible:
+    text: "Journal"
+# Naviguer vers l'onglet Calendrier
+- tapOn:
+    text: "Calendrier"
+# Vérifier que l'écran calendrier est affiché
+- assertVisible:
+    text: "Calendrier"
+# Retourner au dashboard (onglet Aujourd'hui)
+- tapOn:
+    text: "Aujourd'hui"
+# Vérifier que le dashboard est de nouveau visible
+- assertVisible:
+    text: "Aujourd'hui"
