@@ -3336,7 +3336,11 @@
       "lanterneArgent": "Silver lantern",
       "lanterneArgent_desc": "A lantern forged by a mysterious traveler. Its silver light never goes out.",
       "masqueOmbre": "Shadow mask",
-      "masqueOmbre_desc": "A mask from the Shadow Carnival. It shimmers between light and darkness."
+      "masqueOmbre_desc": "A mask from the Shadow Carnival. It shimmers between light and darkness.",
+      "botteFoin": "Hay bale",
+      "botteFoin_desc": "A golden hay bale on the ground. It gives the garden a warm farmhouse feel.",
+      "etalFruits": "Fruit stand",
+      "etalFruits_desc": "A lovely wooden stand filled with fresh fruits. Garden visitors love it!"
     },
     "hab": {
       "oiseau": "Songbird",
@@ -3362,7 +3366,17 @@
       "espritEau": "Water spirit",
       "espritEau_desc": "An aquatic spirit born from a hidden spring. It makes droplets dance around the tree.",
       "ancienGardien": "Ancient guardian",
-      "ancienGardien_desc": "A millennial guardian awakened by an ancestral seed. It silently watches over the garden."
+      "ancienGardien_desc": "A millennial guardian awakened by an ancestral seed. It silently watches over the garden.",
+      "poussin": "Chick",
+      "poussin_desc": "A tiny yellow chick pecking happily at the ground. It follows the bigger ones everywhere!",
+      "poulet": "Chicken",
+      "poulet_desc": "A proud chicken strutting around the garden. It clucks at every good news.",
+      "canard": "Duck",
+      "canard_desc": "A colorful duck waddling between the flowers. It loves rainy days!",
+      "cochon": "Pig",
+      "cochon_desc": "A little pink pig grunting with joy. It digs the soil looking for truffles.",
+      "vache": "Cow",
+      "vache_desc": "A peaceful cow grazing at the foot of the tree. Its presence brings calm and serenity."
     },
     "shop": {
       "title": "Tree Shop",

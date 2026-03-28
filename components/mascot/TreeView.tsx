@@ -263,15 +263,10 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
     const topOffset = (imgHeight * groundRatio) - scaledH;
     return (
       <View style={[styles.container, { width: size, height: imgHeight }]}>
-        {animate && (
-          <SeasonalParticles particle={seasonParticles} size={size} />
-        )}
-        {/* Effets légendaire : particules + lueur */}
-        {isLegendary && visual.hasParticles && animate && (
+        {/* Pas de SeasonalParticles en mode pixel — elles clashent avec le style */}
+        {/* Effets légendaire uniquement : particules dorées */}
+        {isLegendary && animate && (
           <FloatingParticles color={sp.particle} count={12} size={size} />
-        )}
-        {visual.hasParticles && !isLegendary && animate && (
-          <FloatingParticles color={sp.particle} count={6} size={size} />
         )}
         {/* Ombre au sol */}
         {shadowSprite && showGround && (

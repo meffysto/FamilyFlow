@@ -1,122 +1,96 @@
 /**
- * PixelDiorama.tsx — Fond pixel art saisonnier pour le jardin
+ * PixelDiorama.tsx — Fond pixel art top-down pour le jardin
  *
- * Remplace les JPEG aquarelle par un diorama composé de :
- * - Gradient ciel saisonnier
- * - Bande de sol pixel
- * - Décorations auto-placées selon le niveau (fleurs, pierres, champignons)
+ * Vue 3/4 isométrique (style Stardew Valley) :
+ * - Sol herbeux plein écran
+ * - Plantes et fleurs auto-placées selon le niveau
  */
 
 import React, { useMemo } from 'react';
 import { View, Image, StyleSheet } from 'react-native';
 import type { Season } from '../../lib/mascot/seasons';
 
-// ── Couleurs ciel par saison (palette pixel-friendly) ──
+// ── Couleurs sol par saison ──
 
-const PIXEL_SKY: Record<Season, [string, string]> = {
-  printemps: ['#87CEEB', '#B8E6B8'],   // bleu clair → vert pastel
-  ete:       ['#5DADE2', '#F9E79F'],    // bleu vif → jaune chaud
-  automne:   ['#D4A574', '#E8B87A'],    // brun doré → ambre
-  hiver:     ['#B0C4DE', '#E8E8F0'],    // gris bleuté → blanc neige
+export const PIXEL_GROUND: Record<Season, string> = {
+  printemps: '#5A8C32',
+  ete:       '#6B9E3A',
+  automne:   '#7A6B3A',
+  hiver:     '#C8D0C8',
 };
 
-const PIXEL_GROUND: Record<Season, string> = {
-  printemps: '#6B8E23',  // vert herbe
-  ete:       '#7CCD7C',  // vert vif
-  automne:   '#8B7355',  // terre brune
-  hiver:     '#D3D3D3',  // gris neige
+export const PIXEL_GROUND_DARK: Record<Season, string> = {
+  printemps: '#3D6B1E',
+  ete:       '#4A7A28',
+  automne:   '#5A4A28',
+  hiver:     '#A0A8A0',
 };
 
-// ── Décorations auto : fleurs du Tiny Garden ──
+// ── Décorations sol — uniquement les vrais sprites plantes/fleurs ──
 
 type GroundDeco = {
   source: any;
-  x: number;       // % de la largeur (0-1)
-  y: number;       // % depuis le haut du sol (0-1)
-  size: number;    // px
+  x: number;
+  y: number;
+  size: number;
   minLevel: number;
 };
 
-// Fleurs sélectionnées depuis les sprites Tiny Garden (row, col)
-const GROUND_FLOWERS: GroundDeco[] = [
-  // Fleurs simples (apparaissent tôt)
-  { source: require('../../assets/garden/ground/flower_0_0.png'), x: 0.08, y: 0.15, size: 28, minLevel: 1 },
-  { source: require('../../assets/garden/ground/flower_0_2.png'), x: 0.88, y: 0.25, size: 28, minLevel: 1 },
-  { source: require('../../assets/garden/ground/flower_1_1.png'), x: 0.18, y: 0.55, size: 24, minLevel: 3 },
-  { source: require('../../assets/garden/ground/flower_1_4.png'), x: 0.78, y: 0.40, size: 24, minLevel: 3 },
+const GROUND_DECOS: GroundDeco[] = [
+  // Petites herbes (niveaux bas)
+  { source: require('../../assets/garden/ground/flower_3_0.png'), x: 0.07, y: 0.15, size: 32, minLevel: 1 },  // pousse verte
+  { source: require('../../assets/garden/ground/flower_3_1.png'), x: 0.91, y: 0.82, size: 30, minLevel: 1 },  // herbe haute
+  { source: require('../../assets/garden/ground/flower_3_3.png'), x: 0.88, y: 0.20, size: 34, minLevel: 2 },  // buisson
+  { source: require('../../assets/garden/ground/flower_3_0.png'), x: 0.10, y: 0.75, size: 28, minLevel: 3 },  // pousse
 
-  // Fleurs moyennes (progression)
-  { source: require('../../assets/garden/ground/flower_2_0.png'), x: 0.35, y: 0.65, size: 30, minLevel: 6 },
-  { source: require('../../assets/garden/ground/flower_2_3.png'), x: 0.62, y: 0.20, size: 30, minLevel: 6 },
-  { source: require('../../assets/garden/ground/flower_3_1.png'), x: 0.05, y: 0.70, size: 26, minLevel: 10 },
-  { source: require('../../assets/garden/ground/flower_3_5.png'), x: 0.92, y: 0.60, size: 26, minLevel: 10 },
+  // Petites fleurs colorées (niveaux moyens)
+  { source: require('../../assets/garden/ground/flower_6_2.png'), x: 0.06, y: 0.40, size: 36, minLevel: 5 },  // fleurs bleues
+  { source: require('../../assets/garden/ground/flower_6_0.png'), x: 0.92, y: 0.50, size: 34, minLevel: 5 },  // rose rouge
+  { source: require('../../assets/garden/ground/flower_6_3.png'), x: 0.85, y: 0.35, size: 36, minLevel: 8 },  // fleurs jaunes
+  { source: require('../../assets/garden/ground/flower_4_6.png'), x: 0.08, y: 0.58, size: 30, minLevel: 8 },  // fleur violette
 
-  // Fleurs élaborées (haut niveau)
-  { source: require('../../assets/garden/ground/flower_4_2.png'), x: 0.25, y: 0.30, size: 32, minLevel: 15 },
-  { source: require('../../assets/garden/ground/flower_4_6.png'), x: 0.72, y: 0.70, size: 32, minLevel: 15 },
-  { source: require('../../assets/garden/ground/flower_5_0.png'), x: 0.50, y: 0.80, size: 34, minLevel: 20 },
-  { source: require('../../assets/garden/ground/flower_5_4.png'), x: 0.15, y: 0.45, size: 34, minLevel: 25 },
+  // Grandes fleurs (progression avancée)
+  { source: require('../../assets/garden/ground/flower_7_2.png'), x: 0.12, y: 0.25, size: 40, minLevel: 12 }, // fleur bleue sur tige
+  { source: require('../../assets/garden/ground/flower_7_3.png'), x: 0.88, y: 0.65, size: 40, minLevel: 12 }, // fleur jaune sur tige
+  { source: require('../../assets/garden/ground/flower_7_0.png'), x: 0.06, y: 0.88, size: 42, minLevel: 15 }, // grosse rose
+  { source: require('../../assets/garden/ground/flower_7_4.png'), x: 0.92, y: 0.88, size: 42, minLevel: 15 }, // grosse fleur bleue
+  { source: require('../../assets/garden/ground/flower_7_5.png'), x: 0.14, y: 0.50, size: 38, minLevel: 20 }, // iris violet
+  { source: require('../../assets/garden/ground/flower_5_0.png'), x: 0.86, y: 0.12, size: 38, minLevel: 20 }, // plante tropicale
+
+  // Cactus / buisson décoratif (haut niveau)
+  { source: require('../../assets/garden/ground/flower_3_4.png'), x: 0.05, y: 0.65, size: 36, minLevel: 25 }, // cactus
+  { source: require('../../assets/garden/ground/flower_5_4.png'), x: 0.93, y: 0.40, size: 44, minLevel: 30 }, // petit arbre
 ];
 
 interface PixelDioramaProps {
   season: Season;
   level: number;
   width: number;
-  groundHeight?: number; // hauteur de la bande de sol (défaut 80)
+  groundHeight: number;
 }
 
-export function PixelDiorama({ season, level, width, groundHeight = 80 }: PixelDioramaProps) {
-  const skyColors = PIXEL_SKY[season];
-  const groundColor = PIXEL_GROUND[season];
-
+export function PixelDiorama({ season, level, width, groundHeight }: PixelDioramaProps) {
   const visibleDecos = useMemo(
-    () => GROUND_FLOWERS.filter(d => level >= d.minLevel),
+    () => GROUND_DECOS.filter(d => level >= d.minLevel),
     [level],
   );
 
   return (
-    <View style={[styles.ground, { width, height: groundHeight, backgroundColor: groundColor }]} pointerEvents="none">
-      {/* Bord supérieur : transition douce sky → sol */}
-      <View style={[styles.groundEdge, { backgroundColor: groundColor + '88' }]} />
-
-      {/* Décorations auto */}
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
       {visibleDecos.map((deco, i) => (
         <Image
           key={i}
           source={deco.source}
-          style={[
-            styles.groundItem,
-            {
-              left: deco.x * width - deco.size / 2,
-              top: deco.y * groundHeight - deco.size / 2,
-              width: deco.size,
-              height: deco.size,
-            },
-          ] as any}
+          style={{
+            position: 'absolute',
+            left: deco.x * width - deco.size / 2,
+            top: deco.y * groundHeight - deco.size / 2,
+            width: deco.size,
+            height: deco.size,
+            opacity: 0.8,
+          } as any}
         />
       ))}
     </View>
   );
 }
-
-/** Couleurs de ciel exportées pour le gradient parent */
-export { PIXEL_SKY, PIXEL_GROUND };
-
-const styles = StyleSheet.create({
-  ground: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    overflow: 'hidden',
-  },
-  groundEdge: {
-    position: 'absolute',
-    top: -4,
-    left: 0,
-    right: 0,
-    height: 8,
-  },
-  groundItem: {
-    position: 'absolute',
-  },
-});

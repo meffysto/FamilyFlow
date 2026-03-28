@@ -3336,7 +3336,11 @@
       "lanterneArgent": "Lanterne d'argent",
       "lanterneArgent_desc": "Une lanterne forgée par un voyageur mystérieux. Sa lumière argentée ne s'éteint jamais.",
       "masqueOmbre": "Masque d'ombre",
-      "masqueOmbre_desc": "Un masque du Carnaval des Ombres. Il scintille entre lumière et obscurité."
+      "masqueOmbre_desc": "Un masque du Carnaval des Ombres. Il scintille entre lumière et obscurité.",
+      "botteFoin": "Botte de foin",
+      "botteFoin_desc": "Une botte de foin dorée posée au sol. Elle donne un air de ferme chaleureuse au jardin.",
+      "etalFruits": "Étal de fruits",
+      "etalFruits_desc": "Un bel étal en bois rempli de fruits frais. Les visiteurs du jardin se régalent !"
     },
     "hab": {
       "oiseau": "Oiseau chanteur",
@@ -3362,7 +3366,17 @@
       "espritEau": "Esprit de l'eau",
       "espritEau_desc": "Un esprit aquatique né d'une source cachée. Il fait danser des gouttelettes autour de l'arbre.",
       "ancienGardien": "Gardien ancien",
-      "ancienGardien_desc": "Un gardien millénaire éveillé par une graine ancestrale. Il veille silencieusement sur le jardin."
+      "ancienGardien_desc": "Un gardien millénaire éveillé par une graine ancestrale. Il veille silencieusement sur le jardin.",
+      "poussin": "Poussin",
+      "poussin_desc": "Un petit poussin tout jaune qui picore joyeusement le sol. Il suit les plus grands partout !",
+      "poulet": "Poulet",
+      "poulet_desc": "Un poulet fier qui se pavane dans le jardin. Il caquète à chaque bonne nouvelle.",
+      "canard": "Canard",
+      "canard_desc": "Un canard coloré qui se dandine entre les fleurs. Il adore quand il pleut !",
+      "cochon": "Cochon",
+      "cochon_desc": "Un petit cochon rose qui grogne de bonheur. Il retourne la terre pour trouver des truffes.",
+      "vache": "Vache",
+      "vache_desc": "Une vache paisible qui broute au pied de l'arbre. Sa présence apporte calme et sérénité."
     },
     "shop": {
       "title": "Boutique de l'arbre",

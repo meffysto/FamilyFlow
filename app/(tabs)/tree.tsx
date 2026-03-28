@@ -40,7 +40,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { TreeView } from '../../components/mascot/TreeView';
 import { SpeciesPicker } from '../../components/mascot/SpeciesPicker';
 import { TreeShop } from '../../components/mascot/TreeShop';
-import { PixelDiorama, PIXEL_SKY, PIXEL_GROUND } from '../../components/mascot/PixelDiorama';
+import { PixelDiorama, PIXEL_GROUND, PIXEL_GROUND_DARK } from '../../components/mascot/PixelDiorama';
 import { calculateLevel, xpForLevel, pointsToNextLevel, getLevelTier } from '../../lib/gamification';
 import {
   getTreeStage,
@@ -348,22 +348,25 @@ export default function TreeScreen() {
               },
             ]}
           >
-            {/* Couche 0 : Gradient ciel pixel — palette saisonnière */}
+            {/* Couche 0 : Sol top-down — herbe saisonnière plein écran */}
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: PIXEL_GROUND[season] }]} />
+
+            {/* Couche 1 : Texture herbe subtile — variation de teinte */}
             <LinearGradient
-              colors={[PIXEL_SKY[season][0], PIXEL_SKY[season][1], PIXEL_GROUND[season]]}
-              locations={[0, 0.65, 1]}
+              colors={[PIXEL_GROUND[season] + 'CC', PIXEL_GROUND[season], PIXEL_GROUND_DARK[season]]}
+              locations={[0, 0.5, 1]}
               style={StyleSheet.absoluteFill}
             />
 
-            {/* Couche 1 : Sol pixel + décorations auto (fleurs, pierres) */}
+            {/* Couche 2 : Décorations sol (fleurs, pierres) vues du dessus */}
             <PixelDiorama
               season={season}
               level={level}
               width={SCREEN_W}
-              groundHeight={90}
+              groundHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
             />
 
-            {/* Couche 2 : Arbre pixel au premier plan */}
+            {/* Couche 3 : Arbre pixel au premier plan */}
             <View style={styles.treeOverlay}>
               <TreeView
                 species={species}
@@ -391,7 +394,7 @@ export default function TreeScreen() {
 
         {/* Transition douce diorama → contenu : gradient sol → fond de page */}
         <LinearGradient
-          colors={[PIXEL_GROUND[season], colors.bg]}
+          colors={[PIXEL_GROUND_DARK[season], colors.bg]}
           style={styles.groundTransition}
         />
 
