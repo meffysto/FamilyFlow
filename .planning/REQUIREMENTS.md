@@ -11,7 +11,7 @@ Requirements for milestone v1.1 — Ferme Enrichie. La ferme est le levier de mo
 
 - [x] **VIS-01**: La ferme affiche un cycle jour/nuit avec luminosité et teinte adaptées à l'heure réelle
 - [x] **VIS-02**: Les cultures ont des sprites pixel améliorés avec au moins 2 frames d'animation par stade de croissance
-- [ ] **VIS-03**: Les animaux ont des sprites pixel améliorés avec animations idle et marche plus fluides
+- [x] **VIS-03**: Les animaux ont des sprites pixel améliorés avec animations idle et marche plus fluides
 
 ### Bâtiments
 
@@ -58,7 +58,7 @@ Deferred to future milestones.
 |--------|-------|--------|
 | VIS-01 | Phase 5 | Complete |
 | VIS-02 | Phase 5 | Complete |
-| VIS-03 | Phase 5 | Pending |
+| VIS-03 | Phase 5 | Complete |
 | BAT-01 | Phase 6 | Pending |
 | BAT-02 | Phase 6 | Pending |
 | BAT-03 | Phase 6 | Pending |
