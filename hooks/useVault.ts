@@ -73,7 +73,7 @@ import {
 } from '../lib/parser';
 import { processActiveRewards, addPoints, calculateLevel } from '../lib/gamification';
 import { XP_PER_BRACKET, getSkillById } from '../lib/gamification/skill-tree';
-import { DECORATIONS, INHABITANTS, TREE_STAGES } from '../lib/mascot/types';
+import { DECORATIONS, INHABITANTS, TREE_STAGES, type TreeSpecies } from '../lib/mascot/types';
 import { getStageIndex } from '../lib/mascot/engine';
 import { Task, RDV, CourseItem, MealItem, StockItem, Profile, Gender, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, DefiDayEntry, GratitudeDay, WishlistItem, WishBudget, WishOccasion, Anniversary, Note, SkillTreeData, ChildQuote, MoodEntry, MoodLevel, UsedLoot } from '../lib/types';
 import {
@@ -604,8 +604,8 @@ export function useVaultInternal(): VaultState {
         })(),
 
         // [1] Routines
-        vault.readFile(ROUTINES_FILE).then((c) => parseRoutines(c)).catch((e) => {
-          debugErrors.push(`routines: ${e}`); return [] as any[];
+        vault.readFile(ROUTINES_FILE).then((c) => parseRoutines(c)).catch((e): Routine[] => {
+          debugErrors.push(`routines: ${e}`); return [];
         }),
 
         // [2] Courses
@@ -778,13 +778,13 @@ export function useVaultInternal(): VaultState {
             }
           }
           return parsed;
-        })().catch(() => [] as any[]),
+        })().catch((): Defi[] => []),
 
         // [11] Gratitude
-        vault.readFile(GRATITUDE_FILE).then((c) => parseGratitude(c)).catch(() => [] as any[]),
+        vault.readFile(GRATITUDE_FILE).then((c) => parseGratitude(c)).catch((): GratitudeDay[] => []),
 
         // [12] Wishlist
-        vault.readFile(WISHLIST_FILE).then((c) => parseWishlist(c)).catch(() => [] as any[]),
+        vault.readFile(WISHLIST_FILE).then((c) => parseWishlist(c)).catch((): WishlistItem[] => []),
 
         // [13] Anniversaires
         vault.readFile(ANNIVERSAIRES_FILE).then((c) => parseAnniversaries(c)).catch(() => [] as Anniversary[]),
@@ -1184,7 +1184,7 @@ export function useVaultInternal(): VaultState {
       await vaultRef.current.writeFile(FAMILLE_FILE, lines.join('\n'));
 
       setProfiles((prev) =>
-        prev.map((p) => (p.id === profileId ? { ...p, treeSpecies: species as any } : p))
+        prev.map((p) => (p.id === profileId ? { ...p, treeSpecies: species as TreeSpecies } : p))
       );
     } catch (e) {
       throw new Error(`updateTreeSpecies: ${e}`);
@@ -1606,9 +1606,8 @@ export function useVaultInternal(): VaultState {
         await vaultRef.current.writeFile(STOCK_FILE, lines.join('\n'));
 
         // Réinsérer dans la bonne section via addStockItem
-        const updated = { ...current, ...updates };
-        delete (updated as any).lineIndex;
-        await addStockItem(updated);
+        const { lineIndex: _, ...updatedClean } = { ...current, ...updates };
+        await addStockItem(updatedClean);
         return; // addStockItem fait déjà le reload
       }
 
