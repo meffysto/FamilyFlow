@@ -48,6 +48,8 @@ import { type PlantedCrop, CROP_CATALOG } from '../../lib/mascot/types';
 import { hasCropSeasonalBonus, parseCrops } from '../../lib/mascot/farm-engine';
 import { getUnlockedCropCells } from '../../lib/mascot/world-grid';
 import { HarvestBurst, CROP_COLORS } from '../../components/mascot/HarvestBurst';
+import { AmbientParticles } from '../../components/mascot/AmbientParticles';
+import { StreakFlames } from '../../components/mascot/StreakFlames';
 import { calculateLevel, xpForLevel, pointsToNextLevel, getLevelTier } from '../../lib/gamification';
 import {
   getTreeStage,
@@ -576,6 +578,11 @@ export default function TreeScreen() {
               onCropPlotPress={isOwnTree ? handleCropCellPress : undefined}
             />
 
+            {/* Couche ambiance : particules horaires + tint */}
+            <View style={{ ...StyleSheet.absoluteFillObject, zIndex: 5 }}>
+              <AmbientParticles containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60} />
+            </View>
+
             {/* Harvest Burst animation */}
             {harvestBurst && (
               <HarvestBurst
@@ -624,6 +631,9 @@ export default function TreeScreen() {
 
         {/* Compteur ferme */}
         <FarmStats farmCropsCSV={profile.farmCrops ?? ''} colors={colors} t={t} />
+
+        {/* Flammes de streak */}
+        {profile && <StreakFlames streak={profile.streak ?? 0} />}
 
         {/* Objectif hebdomadaire */}
         {gamiData && profile && (
