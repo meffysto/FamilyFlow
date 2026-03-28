@@ -62,12 +62,12 @@ export function FarmPlots({ treeStage, farmCropsCSV, containerWidth, containerHe
                 )}
                 {/* Indicateur de stade : petits points */}
                 <View style={styles.stageRow}>
-                  {Array.from({ length: 5 }).map((_, i) => (
+                  {Array.from({ length: 4 }).map((_, i) => (
                     <View
                       key={i}
                       style={[
                         styles.stageDot,
-                        i <= crop.currentStage ? styles.stageDotFilled : styles.stageDotEmpty,
+                        i < crop.currentStage ? styles.stageDotFilled : styles.stageDotEmpty,
                       ]}
                     />
                   ))}
