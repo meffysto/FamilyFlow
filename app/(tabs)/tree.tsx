@@ -403,27 +403,34 @@ export default function TreeScreen() {
                 Choisir une graine
               </Text>
               <View style={styles.pickerGrid}>
-                {CROP_CATALOG
-                  .filter(c => {
-                    const stageOrder = ['graine', 'pousse', 'arbuste', 'arbre', 'majestueux', 'legendaire'];
-                    return stageOrder.indexOf(stageInfo.stage) >= stageOrder.indexOf(c.minTreeStage);
-                  })
-                  .map(crop => (
-                  <TouchableOpacity
-                    key={crop.id}
-                    onPress={() => handleSeedSelect(crop.id)}
-                    activeOpacity={0.7}
-                    style={[
-                      styles.pickerItem,
-                      { backgroundColor: colors.cardAlt, borderColor: colors.borderLight },
-                    ]}
-                  >
-                    <Text style={styles.pickerEmoji}>{crop.emoji}</Text>
-                    <Text style={[{ color: colors.textSub, fontSize: 10, marginTop: 2 }]}>
-                      {crop.cost} 🍃
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                {CROP_CATALOG.map(crop => {
+                  const stageOrder = ['graine', 'pousse', 'arbuste', 'arbre', 'majestueux', 'legendaire'];
+                  const unlocked = stageOrder.indexOf(stageInfo.stage) >= stageOrder.indexOf(crop.minTreeStage);
+                  const stageName = t(`mascot.stages.${crop.minTreeStage}`);
+                  return (
+                    <TouchableOpacity
+                      key={crop.id}
+                      onPress={unlocked ? () => handleSeedSelect(crop.id) : undefined}
+                      activeOpacity={unlocked ? 0.7 : 1}
+                      style={[
+                        styles.pickerItem,
+                        { backgroundColor: colors.cardAlt, borderColor: colors.borderLight },
+                        !unlocked && { opacity: 0.4 },
+                      ]}
+                    >
+                      <Text style={styles.pickerEmoji}>{crop.emoji}</Text>
+                      {unlocked ? (
+                        <Text style={{ color: colors.textSub, fontSize: 10, marginTop: 2 }}>
+                          {crop.cost} 🍃
+                        </Text>
+                      ) : (
+                        <Text style={{ color: colors.textMuted, fontSize: 9, marginTop: 2, textAlign: 'center' }}>
+                          🔒 {stageName}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
               <TouchableOpacity
                 onPress={() => setShowSeedPicker(false)}
