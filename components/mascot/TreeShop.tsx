@@ -43,6 +43,7 @@ import { BUILDING_CELLS } from '../../lib/mascot/world-grid';
 const BUILDING_SPRITES: Record<string, any> = {
   poulailler: require('../../assets/buildings/poulailler.png'),
   grange: require('../../assets/buildings/grange.png'),
+  moulin: require('../../assets/buildings/moulin.png'),
 };
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';

@@ -19,7 +19,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { BUILDING_CATALOG, TREE_STAGES, type TreeStage, type PlacedBuilding } from '../../lib/mascot/types';
-import { BUILDING_SPRITES } from '../../lib/mascot/building-sprites';
+// Sprites inline pour garantir resolution Metro
+const SHOP_SPRITES: Record<string, any> = {
+  poulailler: require('../../assets/buildings/poulailler.png'),
+  grange: require('../../assets/buildings/grange.png'),
+  moulin: require('../../assets/buildings/moulin.png'),
+};
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -114,7 +119,7 @@ export function BuildingShopSheet({
             {availableBuildings.map(def => {
               const tier0 = def.tiers[0];
               const canAfford = coins >= def.cost;
-              const sprite = BUILDING_SPRITES[def.id]?.[1];
+              const sprite = SHOP_SPRITES[def.id];
 
               return (
                 <View
@@ -181,7 +186,11 @@ export function BuildingShopSheet({
                   ]}
                 >
                   <View style={styles.spriteBox}>
-                    <Text style={styles.spriteEmoji}>{def.emoji}</Text>
+                    {SHOP_SPRITES[def.id] ? (
+                      <Image source={SHOP_SPRITES[def.id]} style={[styles.sprite, { opacity: 0.5 }]} />
+                    ) : (
+                      <Text style={styles.spriteEmoji}>{def.emoji}</Text>
+                    )}
                   </View>
                   <View style={styles.infoBox}>
                     <Text style={[styles.buildingName, { color: colors.text }]}>
