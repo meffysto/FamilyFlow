@@ -584,7 +584,7 @@ export default function TreeScreen() {
             )}
 
             {/* Crop Whisper tooltip */}
-            {whisperInfo && <CropWhisper whisperInfo={whisperInfo} stageInfo={stageInfo} stageIdx={stageIdx} />
+            {whisperInfo && <CropWhisper whisperInfo={whisperInfo} stageInfo={stageInfo} stageIdx={stageIdx} />}
 
             {/* Couche 4 : Arbre pixel au premier plan */}
             <View style={styles.treeOverlay}>
