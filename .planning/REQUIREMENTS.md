@@ -9,11 +9,11 @@ Requirements pour ce milestone. Chaque requirement est mappé à une phase du ro
 
 ### Testing
 
-- [ ] **TEST-01**: Setup jest-expo + @testing-library/react-native avec config fonctionnelle
-- [ ] **TEST-02**: Tests unitaires pour lib/budget.ts (parsing, sérialisation, calculs)
-- [ ] **TEST-03**: Tests unitaires pour lib/mascot/farm-engine.ts (planter, récolter, timers)
-- [ ] **TEST-04**: Tests unitaires pour lib/mascot/sagas-engine.ts (progression, cooldowns)
-- [ ] **TEST-05**: Tests unitaires pour lib/mascot/world-grid.ts (placement, rendu grille)
+- [x] **TEST-01**: Setup jest-expo + @testing-library/react-native avec config fonctionnelle
+- [x] **TEST-02**: Tests unitaires pour lib/budget.ts (parsing, sérialisation, calculs)
+- [x] **TEST-03**: Tests unitaires pour lib/mascot/farm-engine.ts (planter, récolter, timers)
+- [x] **TEST-04**: Tests unitaires pour lib/mascot/sagas-engine.ts (progression, cooldowns)
+- [x] **TEST-05**: Tests unitaires pour lib/mascot/world-grid.ts (placement, rendu grille)
 - [ ] **TEST-06**: Sentry intégré pour crash reporting en production
 - [ ] **TEST-07**: Tests E2E Maestro pour les 3-5 parcours utilisateur critiques
 
@@ -88,11 +88,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TEST-01 | Phase 1 | Pending |
-| TEST-02 | Phase 1 | Pending |
-| TEST-03 | Phase 1 | Pending |
-| TEST-04 | Phase 1 | Pending |
-| TEST-05 | Phase 1 | Pending |
+| TEST-01 | Phase 1 | Complete |
+| TEST-02 | Phase 1 | Complete |
+| TEST-03 | Phase 1 | Complete |
+| TEST-04 | Phase 1 | Complete |
+| TEST-05 | Phase 1 | Complete |
 | TEST-06 | Phase 1 | Pending |
 | TEST-07 | Phase 1 | Pending |
 | QUAL-01 | Phase 1 | Complete |
