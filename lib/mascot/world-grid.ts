@@ -20,47 +20,52 @@ export interface WorldCell {
 }
 
 /**
- * Grille 6x4 — le centre (cols 2-3, rows 1-2) est reserve a l'arbre.
- * 20 cellules utilisables autour.
+ * Grille monde — layout ferme organisee
+ *
+ * 3 rangees de 5 cultures centrees en haut (potager).
+ * Arbre au centre-bas. Batiments a droite au niveau de l'arbre.
+ * Decos en bas.
  *
  * Layout :
- *   [d0] [c0] [c1] [c2] [c3] [d1]     <- row 0 (haut)
- *   [c4] [c5] [ARBRE    ] [c6] [c7]    <- row 1
- *   [c8] [c9] [ARBRE    ] [c10][b0]    <- row 2
- *   [d2] [c11][c12][c13] [c14][b1]     <- row 3 (bas)
+ *   [c0] [c1] [c2] [c3] [c4]            <- potager rang 1
+ *   [c5] [c6] [c7] [c8] [c9]            <- potager rang 2
+ *   [c10][c11][c12][c13][c14]            <- potager rang 3
+ *                                 [b0]   <- batiment 1
+ *         [ARBRE centre]         [b1]   <- batiment 2
+ *   [d0]        [d1]             [b2]   <- decos + batiment 3
  */
 export const WORLD_GRID: WorldCell[] = [
-  // Row 0 — haut
-  { id: 'd0',  col: 0, row: 0, x: 0.08, y: 0.08, cellType: 'deco',     unlockOrder: 99, size: 'small' },
-  { id: 'c0',  col: 1, row: 0, x: 0.25, y: 0.10, cellType: 'crop',     unlockOrder: 4,  size: 'small' },
-  { id: 'c1',  col: 2, row: 0, x: 0.42, y: 0.08, cellType: 'crop',     unlockOrder: 8,  size: 'small' },
-  { id: 'c2',  col: 3, row: 0, x: 0.58, y: 0.08, cellType: 'crop',     unlockOrder: 9,  size: 'small' },
-  { id: 'c3',  col: 4, row: 0, x: 0.75, y: 0.10, cellType: 'crop',     unlockOrder: 5,  size: 'small' },
-  { id: 'd1',  col: 5, row: 0, x: 0.92, y: 0.08, cellType: 'deco',     unlockOrder: 99, size: 'small' },
+  // Potager — 3 rangees de 5, centrees (x: 0.14 a 0.70)
+  // Deblocage du centre vers l'exterieur pour un look naturel
+  // Rangee 1 (y = 0.05)
+  { id: 'c0',  col: 0, row: 0, x: 0.14, y: 0.05, cellType: 'crop',     unlockOrder: 5,  size: 'small' },
+  { id: 'c1',  col: 1, row: 0, x: 0.28, y: 0.05, cellType: 'crop',     unlockOrder: 3,  size: 'small' },
+  { id: 'c2',  col: 2, row: 0, x: 0.42, y: 0.05, cellType: 'crop',     unlockOrder: 1,  size: 'small' },
+  { id: 'c3',  col: 3, row: 0, x: 0.56, y: 0.05, cellType: 'crop',     unlockOrder: 4,  size: 'small' },
+  { id: 'c4',  col: 4, row: 0, x: 0.70, y: 0.05, cellType: 'crop',     unlockOrder: 6,  size: 'small' },
 
-  // Row 1 — milieu haut (arbre au centre)
-  { id: 'c4',  col: 0, row: 1, x: 0.10, y: 0.32, cellType: 'crop',     unlockOrder: 2,  size: 'small' },
-  { id: 'c5',  col: 1, row: 1, x: 0.25, y: 0.35, cellType: 'crop',     unlockOrder: 6,  size: 'small' },
-  // cols 2-3, row 1 = ARBRE
-  { id: 'c6',  col: 4, row: 1, x: 0.75, y: 0.35, cellType: 'crop',     unlockOrder: 7,  size: 'small' },
-  { id: 'c7',  col: 5, row: 1, x: 0.90, y: 0.32, cellType: 'crop',     unlockOrder: 3,  size: 'small' },
+  // Rangee 2 (y = 0.17)
+  { id: 'c5',  col: 0, row: 1, x: 0.14, y: 0.17, cellType: 'crop',     unlockOrder: 10, size: 'small' },
+  { id: 'c6',  col: 1, row: 1, x: 0.28, y: 0.17, cellType: 'crop',     unlockOrder: 7,  size: 'small' },
+  { id: 'c7',  col: 2, row: 1, x: 0.42, y: 0.17, cellType: 'crop',     unlockOrder: 2,  size: 'small' },
+  { id: 'c8',  col: 3, row: 1, x: 0.56, y: 0.17, cellType: 'crop',     unlockOrder: 8,  size: 'small' },
+  { id: 'c9',  col: 4, row: 1, x: 0.70, y: 0.17, cellType: 'crop',     unlockOrder: 11, size: 'small' },
 
-  // Row 2 — milieu bas (arbre au centre)
-  { id: 'c8',  col: 0, row: 2, x: 0.10, y: 0.58, cellType: 'crop',     unlockOrder: 10, size: 'small' },
-  { id: 'c9',  col: 1, row: 2, x: 0.25, y: 0.60, cellType: 'crop',     unlockOrder: 11, size: 'small' },
-  // cols 2-3, row 2 = ARBRE
-  { id: 'c10', col: 4, row: 2, x: 0.75, y: 0.60, cellType: 'crop',     unlockOrder: 12, size: 'small' },
-  { id: 'b0',  col: 5, row: 2, x: 0.90, y: 0.58, cellType: 'building', unlockOrder: 13, size: 'large' },
+  // Rangee 3 (y = 0.29)
+  { id: 'c10', col: 0, row: 2, x: 0.14, y: 0.29, cellType: 'crop',     unlockOrder: 14, size: 'small' },
+  { id: 'c11', col: 1, row: 2, x: 0.28, y: 0.29, cellType: 'crop',     unlockOrder: 12, size: 'small' },
+  { id: 'c12', col: 2, row: 2, x: 0.42, y: 0.29, cellType: 'crop',     unlockOrder: 9,  size: 'small' },
+  { id: 'c13', col: 3, row: 2, x: 0.56, y: 0.29, cellType: 'crop',     unlockOrder: 13, size: 'small' },
+  { id: 'c14', col: 4, row: 2, x: 0.70, y: 0.29, cellType: 'crop',     unlockOrder: 15, size: 'small' },
 
-  // Row 3 — bas
-  { id: 'd2',  col: 0, row: 3, x: 0.08, y: 0.82, cellType: 'deco',     unlockOrder: 99, size: 'small' },
-  { id: 'c11', col: 1, row: 3, x: 0.22, y: 0.82, cellType: 'crop',     unlockOrder: 14, size: 'small' },
-  { id: 'c12', col: 2, row: 3, x: 0.38, y: 0.85, cellType: 'crop',     unlockOrder: 15, size: 'small' },
-  { id: 'c13', col: 3, row: 3, x: 0.58, y: 0.85, cellType: 'crop',     unlockOrder: 16, size: 'small' },
-  { id: 'c14', col: 4, row: 3, x: 0.75, y: 0.82, cellType: 'crop',     unlockOrder: 17, size: 'small' },
-  { id: 'b1',  col: 5, row: 3, x: 0.90, y: 0.82, cellType: 'building', unlockOrder: 18, size: 'large' },
-  // Slot b2 — moulin (stade majestueux)
-  { id: 'b2',  col: 0, row: 2, x: 0.10, y: 0.82, cellType: 'building', unlockOrder: 19, size: 'large' },
+  // Decos — bas gauche
+  { id: 'd0',  col: 0, row: 4, x: 0.12, y: 0.88, cellType: 'deco',     unlockOrder: 99, size: 'small' },
+  { id: 'd1',  col: 2, row: 4, x: 0.42, y: 0.90, cellType: 'deco',     unlockOrder: 99, size: 'small' },
+
+  // Batiments — colonne droite (x = 0.86)
+  { id: 'b0',  col: 5, row: 2, x: 0.86, y: 0.42, cellType: 'building', unlockOrder: 16, size: 'large' },
+  { id: 'b1',  col: 5, row: 3, x: 0.86, y: 0.58, cellType: 'building', unlockOrder: 17, size: 'large' },
+  { id: 'b2',  col: 5, row: 4, x: 0.86, y: 0.74, cellType: 'building', unlockOrder: 18, size: 'large' },
 ];
 
 /** Cellules de culture uniquement, triees par ordre de deblocage */
