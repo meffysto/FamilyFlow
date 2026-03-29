@@ -154,8 +154,8 @@ function TechNodeView({
         </Text>
 
         {/* Cout ou statut */}
-        {status === 'unlockable' && (
-          <Text style={[styles.nodeCost, { color: primary }]}>
+        {status !== 'unlocked' && (
+          <Text style={[styles.nodeCost, { color: status === 'unlockable' ? primary : colors.textMuted }]}>
             {node.cost} 🍃
           </Text>
         )}
