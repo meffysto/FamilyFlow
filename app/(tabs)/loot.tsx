@@ -112,9 +112,9 @@ export default function LootScreen() {
     .reverse();
 
   // Loots physiques : entrées d'historique de type loot avec une récompense physique
-  // Une récompense est physique si son note ne contient pas "Badge" et ne commence pas par "+"
+  // Une récompense est physique : pas un badge, pas des points bonus, pas des graines/déco/habitant (appliqués automatiquement)
   const earnedPhysicalLoots = (gamiData?.history ?? [])
-    .filter((h) => h.action.startsWith('loot:') && !h.note.includes('Badge') && !h.note.startsWith('+'));
+    .filter((h) => h.action.startsWith('loot:') && !h.note.includes('Badge') && !h.note.includes('points bonus') && !h.note.startsWith('+'));
 
   const usedLoots = gamiData?.usedLoots ?? [];
   const usedLootIds = new Set(usedLoots.map((u) => u.id));
