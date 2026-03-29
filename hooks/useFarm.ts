@@ -176,7 +176,7 @@ export function useFarm() {
     const building = BUILDING_CATALOG.find(b => b.id === buildingId);
     if (!building) return;
 
-    const currentBuildings = parseBuildings(profile.farmBuildings as any);
+    const currentBuildings = (profile.farmBuildings ?? []);
     if (currentBuildings.some(b => b.buildingId === buildingId)) return; // deja construit
     if ((profile.coins ?? 0) < building.cost) throw new Error('Pas assez de feuilles');
 
@@ -191,7 +191,7 @@ export function useFarm() {
     const profile = profiles?.find(p => p.id === profileId);
     if (!profile || !vault) return;
 
-    const currentBuildings = parseBuildings(profile.farmBuildings as any);
+    const currentBuildings = (profile.farmBuildings ?? []);
     const building = currentBuildings.find(b => b.cellId === cellId);
     if (!building) return;
 
@@ -213,7 +213,7 @@ export function useFarm() {
     const profile = profiles?.find(p => p.id === profileId);
     if (!profile || !vault) return 0;
 
-    const currentBuildings = parseBuildings(profile.farmBuildings as any);
+    const currentBuildings = profile.farmBuildings ?? [];
     const currentInventory: FarmInventory = profile.farmInventory ?? { oeuf: 0, lait: 0, farine: 0 };
 
     const result = collectBuilding(currentBuildings, currentInventory, cellId);
@@ -230,7 +230,7 @@ export function useFarm() {
     const profile = profiles?.find(p => p.id === profileId);
     if (!profile || !vault) return 0;
 
-    const placedBuildings = parseBuildings(profile.farmBuildings as any);
+    const placedBuildings = (profile.farmBuildings ?? []);
     if (placedBuildings.length === 0) return 0;
 
     let totalCollected = 0;
