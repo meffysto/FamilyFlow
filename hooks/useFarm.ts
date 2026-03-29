@@ -288,6 +288,10 @@ export function useFarm() {
       farm_inventory: serializeInventory(result.farmInv),
       farm_crafted_items: serializeCraftedItems(updatedCraftedItems),
     });
+    // Bonus XP pour le craft
+    if (recipe.xpBonus > 0) {
+      await addCoins(profileId, recipe.xpBonus, `✨ Bonus craft : ${recipeId}`);
+    }
     await refresh();
     return result.item;
   }, [vault, writeProfileFields, refresh]);

@@ -181,6 +181,7 @@ export function CraftSheet({
                     </Text>
                     <Text style={[styles.recipeSellValue, { color: colors.textSub }]}>
                       {t('craft.valeurVente', { amount: recipe.sellValue })}
+                      {recipe.xpBonus > 0 ? `  +${recipe.xpBonus} XP` : ''}
                     </Text>
                   </View>
                 </View>
@@ -343,7 +344,7 @@ export function CraftSheet({
                 {t(recipe.labelKey)}
               </Text>
               <Text style={[styles.inventoryQty, { color: colors.textSub }]}>
-                x{count} — {recipe.sellValue} 🍃/{t('craft.vendre').toLowerCase()}
+                x{count} — {recipe.sellValue} 🍃 + {recipe.xpBonus} XP
               </Text>
             </View>
             <TouchableOpacity
