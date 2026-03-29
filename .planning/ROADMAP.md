@@ -141,6 +141,16 @@ Plans:
 - [x] 08-01-PLAN.md — Tech tree engine + types + bonus integration farm/building/world-grid + persistence parser/useFarm + i18n
 - [x] 08-02-PLAN.md — TechTreeSheet UI + parcelles extension WorldGridView + integration tree.tsx + verification visuelle
 
+### Phase 08.1: Split Gamification Par Profil (INSERTED)
+
+**Goal:** Chaque profil a son propre fichier gamification (gami-{id}.md) pour éliminer les conflits d'écriture multi-device via iCloud
+**Requirements**: ARCH-02
+**Depends on:** Phase 8
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 08.1 to break down)
+
 #### Phase 9: Cadeaux Familiaux
 **Goal**: Les membres de la famille peuvent s'envoyer des récoltes et items craftés, renforçant la dimension coopérative et la motivation partagée
 **Depends on**: Phase 8

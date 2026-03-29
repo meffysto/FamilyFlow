@@ -58,6 +58,10 @@ Progress: [░░░░░░░░░░] 0%
 
 ## Accumulated Context
 
+### Roadmap Evolution
+
+- Phase 08.1 inserted after Phase 8: Split Gamification Par Profil — un fichier gami par profil pour éliminer conflits multi-device iCloud (URGENT)
+
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.

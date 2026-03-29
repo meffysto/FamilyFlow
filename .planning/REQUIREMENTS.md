@@ -31,6 +31,10 @@ Requirements for milestone v1.1 — Ferme Enrichie. La ferme est le levier de mo
 - [x] **PRO-02**: L'utilisateur peut débloquer de nouvelles zones/parcelles en dépensant des ressources
 - [x] **PRO-03**: La progression tech est persistée dans le vault et visible sur l'écran arbre
 
+### Architecture
+
+- [ ] **ARCH-02**: Chaque profil a son propre fichier gamification (gami-{id}.md) pour éviter les conflits d'écriture multi-device iCloud
+
 ### Social
 
 - [ ] **SOC-01**: Un membre peut envoyer une récolte ou un item crafté à un autre membre de la famille
