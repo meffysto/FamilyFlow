@@ -404,12 +404,9 @@ export default function TreeScreen() {
       const def = building ? BUILDING_CATALOG.find(d => d.id === building.buildingId) : null;
       const resourceEmoji = def?.resourceType === 'oeuf' ? '🥚' : def?.resourceType === 'lait' ? '🥛' : '🌾';
       showToast(`${resourceEmoji} +${collected} ${def?.resourceType ?? ''}`);
-      // Re-fetch le building a jour
-      const updatedProfile = profiles?.find((p: Profile) => p.id === profile.id);
-      const updatedBuilding = (updatedProfile?.farmBuildings ?? []).find(
-        (b: PlacedBuilding) => b.cellId === cellId,
-      ) ?? null;
-      setSelectedBuilding(updatedBuilding);
+      // Fermer la modal — les profiles stale dans la closure ne reflètent pas le refresh
+      setShowBuildingDetail(false);
+      setSelectedBuilding(null);
     }
   }, [profile?.id, collectBuildingResources, profiles, showToast]);
 
