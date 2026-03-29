@@ -123,7 +123,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 07-01-PLAN.md — Types craft + craft-engine + refactoring harvestCrop inventaire + parser + useFarm
+- [x] 07-01-PLAN.md — Types craft + craft-engine + refactoring harvestCrop inventaire + parser + useFarm
 - [ ] 07-02-PLAN.md — CraftSheet UI (Atelier bottom sheet) + integration tree.tsx + i18n
 
 #### Phase 8: Progression Ferme

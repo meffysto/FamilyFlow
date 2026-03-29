@@ -21,9 +21,9 @@ Requirements for milestone v1.1 — Ferme Enrichie. La ferme est le levier de mo
 
 ### Craft
 
-- [ ] **CRA-01**: L'utilisateur peut combiner des récoltes pour créer des items spéciaux (confiture, bouquet, etc.)
-- [ ] **CRA-02**: Les recettes de craft sont visibles dans un catalogue avec les ingrédients requis
-- [ ] **CRA-03**: Les items craftés donnent plus d'XP que les récoltes brutes
+- [x] **CRA-01**: L'utilisateur peut combiner des récoltes pour créer des items spéciaux (confiture, bouquet, etc.)
+- [x] **CRA-02**: Les recettes de craft sont visibles dans un catalogue avec les ingrédients requis
+- [x] **CRA-03**: Les items craftés donnent plus d'XP que les récoltes brutes
 
 ### Progression
 
@@ -62,9 +62,9 @@ Deferred to future milestones.
 | BAT-01 | Phase 6 | Complete |
 | BAT-02 | Phase 6 | Complete |
 | BAT-03 | Phase 6 | Complete |
-| CRA-01 | Phase 7 | Pending |
-| CRA-02 | Phase 7 | Pending |
-| CRA-03 | Phase 7 | Pending |
+| CRA-01 | Phase 7 | Complete |
+| CRA-02 | Phase 7 | Complete |
+| CRA-03 | Phase 7 | Complete |
 | PRO-01 | Phase 8 | Pending |
 | PRO-02 | Phase 8 | Pending |
 | PRO-03 | Phase 8 | Pending |

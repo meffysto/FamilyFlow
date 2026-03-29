@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: executing
-stopped_at: Phase 7 context gathered
-last_updated: "2026-03-29T19:21:42.747Z"
-last_activity: 2026-03-28
+stopped_at: Completed 07-01-PLAN.md
+last_updated: "2026-03-29T19:43:14.718Z"
+last_activity: 2026-03-29
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 7
+  completed_plans: 6
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 06 — batiments-productifs
+**Current focus:** Phase 07 — craft
 
 ## Current Position
 
-Phase: 7
-Plan: Not started
-Status: Executing Phase 06
-Last activity: 2026-03-28
+Phase: 07 (craft) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-03-29
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 05-visuels-ferme P03 | 15 | 3 tasks | 1 files |
 | Phase 06-batiments-productifs P01 | 25 | 2 tasks | 11 files |
 | Phase 06-batiments-productifs P02 | 10min | 2 tasks | 12 files |
+| Phase 07-craft P01 | 5min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,8 @@ Recent decisions affecting current work:
 - [Phase 06-batiments-productifs]: buildingId:cellId:level:lastCollectAt — format CSV identique au pattern farm-engine pour coherence
 - [Phase 06-batiments-productifs]: Migration backward-compatible parseBuildings() : detecte ancien format string seul et nouveau CSV avec colons
 - [Phase 06-02]: TreeShop garde string[] via .map(b => b.buildingId) pour retrocompat sans modifier TreeShop
+- [Phase 07-craft]: harvestCrop ne donne plus de feuilles directement — les recoltes vont en inventaire pour permettre craft ou vente
+- [Phase 07-craft]: writeProfileFields() atomique pour ecrire plusieurs champs famille.md en une seule operation (evite race conditions)
 
 ### Pending Todos
 
@@ -85,6 +88,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T19:21:42.741Z
-Stopped at: Phase 7 context gathered
-Resume file: .planning/phases/07-craft/07-CONTEXT.md
+Last session: 2026-03-29T19:43:14.715Z
+Stopped at: Completed 07-01-PLAN.md
+Resume file: None
