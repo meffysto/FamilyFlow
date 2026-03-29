@@ -725,5 +725,6 @@ export function updateProfileInData(
     ),
     history: [...data.history, ...newEntries],
     activeRewards: data.activeRewards ?? [],
+    usedLoots: data.usedLoots ?? [],
   };
 }
