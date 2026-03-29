@@ -320,31 +320,7 @@ export default function TreeScreen() {
 
   /** Callback quand l'utilisateur sélectionne un slot en mode placement */
   const handleSlotSelect = useCallback(async (slotId: string) => {
-    if (!profile) return;
-
-    // Si pas en mode placement, vérifier si le slot a un item → proposer de retirer
-    if (!placingItem) {
-      const currentItem = profile.mascotPlacements?.[slotId];
-      if (currentItem) {
-        Alert.alert(
-          t('mascot.placement.removeTitle'),
-          t('mascot.placement.removeMessage'),
-          [
-            { text: t('common.cancel'), style: 'cancel' },
-            {
-              text: t('mascot.placement.remove'),
-              style: 'destructive',
-              onPress: async () => {
-                await unplaceMascotItem(profile.id, slotId);
-                showToast(t('mascot.placement.removed'));
-              },
-            },
-          ],
-        );
-      }
-      return;
-    }
-
+    if (!placingItem || !profile) return;
     try {
       await placeMascotItem(profile.id, slotId, placingItem);
       showToast(t('mascot.placed'));
@@ -551,14 +527,23 @@ export default function TreeScreen() {
                   return (
                     <TouchableOpacity
                       key={item.id}
-                      onPress={() => {
-                        setPlacingItem(item.id);
-                        setShowItemPicker(false);
+                      onPress={async () => {
+                        if (isPlaced && profile) {
+                          // Retirer l'item placé
+                          const slot = Object.entries(profile.mascotPlacements ?? {}).find(([, v]) => v === item.id)?.[0];
+                          if (slot) {
+                            await unplaceMascotItem(profile.id, slot);
+                            showToast(t('mascot.placement.removed'));
+                          }
+                        } else {
+                          setPlacingItem(item.id);
+                          setShowItemPicker(false);
+                        }
                       }}
                       activeOpacity={0.7}
                       style={[
                         styles.pickerItem,
-                        { backgroundColor: colors.cardAlt, borderColor: colors.borderLight },
+                        { backgroundColor: colors.cardAlt, borderColor: isPlaced ? colors.error : colors.borderLight },
                       ]}
                     >
                       {ITEM_ILLUSTRATIONS[item.id] ? (
@@ -567,7 +552,7 @@ export default function TreeScreen() {
                         <Text style={styles.pickerEmoji}>{item.emoji}</Text>
                       )}
                       {isPlaced && (
-                        <View style={[styles.pickerDot, { backgroundColor: '#4CAF50' }]} />
+                        <Text style={styles.pickerRemoveLabel}>{'✕'}</Text>
                       )}
                     </TouchableOpacity>
                   );
@@ -1403,6 +1388,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     resizeMode: 'contain',
+  },
+  pickerRemoveLabel: {
+    position: 'absolute',
+    top: 2,
+    right: 4,
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: '#EF4444',
   },
   pickerDot: {
     position: 'absolute',
