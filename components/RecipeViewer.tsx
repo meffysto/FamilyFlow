@@ -10,7 +10,7 @@ import {
   TextInput,
   Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -40,6 +40,7 @@ interface RecipeViewerProps {
 
 export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isFavorite, onToggleFavorite, onRename, familySize, onCookingFinished, imageUri, onSaveImage }: RecipeViewerProps) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const { primary, tint, colors } = useThemeColors();
   const [servings, setServings] = useState(familySize || recipe.servings || 1);
   const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set());
@@ -104,7 +105,7 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
 
   return (
     <Modal visible animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
+      <View style={[styles.container, { backgroundColor: colors.bg, paddingTop: Math.max(insets.top, 12) }]}>
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: colors.borderLight }]}>
           <TouchableOpacity onPress={onClose} style={styles.closeBtn} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
@@ -305,7 +306,7 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
 
           <View style={styles.bottomSpacer} />
         </ScrollView>
-      </SafeAreaView>
+      </View>
 
       {/* Cooking mode */}
       {showCookingMode && (
