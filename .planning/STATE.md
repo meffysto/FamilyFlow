@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
-status: verifying
-stopped_at: Phase 8 context gathered
-last_updated: "2026-03-29T20:24:49.780Z"
+status: executing
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-03-29T20:39:28.553Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 9
+  completed_plans: 8
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 07 — craft
+**Current focus:** Phase 08 — progression-ferme
 
 ## Current Position
 
-Phase: 8
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 08 (progression-ferme) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-03-29
 
 Progress: [░░░░░░░░░░] 0%
@@ -54,6 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06-batiments-productifs P02 | 10min | 2 tasks | 12 files |
 | Phase 07-craft P01 | 5min | 2 tasks | 9 files |
 | Phase 07-craft P02 | 15min | 2 tasks | 6 files |
+| Phase 08 P01 | 5min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,8 @@ Recent decisions affecting current work:
 - [Phase 07-craft]: writeProfileFields() atomique pour ecrire plusieurs champs famille.md en une seule operation (evite race conditions)
 - [Phase 07-craft]: CraftSheet suit le pattern TreeShop (Modal pageSheet + tabs Chip) pour coherence UI
 - [Phase 07-craft]: Valeurs craft reequilibrees : gateau 580, omelette 520, ressources batiments augmentees
+- [Phase 08]: TechBonuses passe en parametre optionnel pour backward-compatibility
+- [Phase 08]: Coins pour unlockTech lus depuis profiles context (merge gami) pas parseFamille
 
 ### Pending Todos
 
@@ -91,6 +94,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T20:24:49.777Z
-Stopped at: Phase 8 context gathered
-Resume file: .planning/phases/08-progression-ferme/08-CONTEXT.md
+Last session: 2026-03-29T20:39:28.549Z
+Stopped at: Completed 08-01-PLAN.md
+Resume file: None

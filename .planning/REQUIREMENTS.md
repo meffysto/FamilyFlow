@@ -27,9 +27,9 @@ Requirements for milestone v1.1 — Ferme Enrichie. La ferme est le levier de mo
 
 ### Progression
 
-- [ ] **PRO-01**: Un arbre de technologies ferme permet de débloquer des améliorations (vitesse pousse, rendement, nouvelles cultures)
-- [ ] **PRO-02**: L'utilisateur peut débloquer de nouvelles zones/parcelles en dépensant des ressources
-- [ ] **PRO-03**: La progression tech est persistée dans le vault et visible sur l'écran arbre
+- [x] **PRO-01**: Un arbre de technologies ferme permet de débloquer des améliorations (vitesse pousse, rendement, nouvelles cultures)
+- [x] **PRO-02**: L'utilisateur peut débloquer de nouvelles zones/parcelles en dépensant des ressources
+- [x] **PRO-03**: La progression tech est persistée dans le vault et visible sur l'écran arbre
 
 ### Social
 
@@ -65,8 +65,8 @@ Deferred to future milestones.
 | CRA-01 | Phase 7 | Complete |
 | CRA-02 | Phase 7 | Complete |
 | CRA-03 | Phase 7 | Complete |
-| PRO-01 | Phase 8 | Pending |
-| PRO-02 | Phase 8 | Pending |
-| PRO-03 | Phase 8 | Pending |
+| PRO-01 | Phase 8 | Complete |
+| PRO-02 | Phase 8 | Complete |
+| PRO-03 | Phase 8 | Complete |
 | SOC-01 | Phase 9 | Pending |
 | SOC-02 | Phase 9 | Pending |
