@@ -97,6 +97,11 @@ export async function buildAndSendWeeklySummary(data: {
   const chatId = await SecureStore.getItemAsync(TELEGRAM_CHAT_KEY_T);
   if (!token || !chatId) return { sent: false, error: 'Telegram non configuré' };
 
+  // 2.5. Marquer comme envoyé AVANT l'envoi pour éviter les doublons
+  // (si l'app refresh 2x rapidement, le 2e appel verra déjà lastSent)
+  const todayStr = new Date().toISOString().slice(0, 10);
+  await SecureStore.setItemAsync(WEEKLY_SUMMARY_LAST_SENT_KEY, todayStr);
+
   // 3. Agréger les données de la semaine et générer le bilan IA
   const recap = buildWeeklyRecapData(
     data.tasks, data.tasks.filter(t => t.section != null && t.section.toLowerCase().includes('ménage')), data.meals, data.moods,
@@ -112,10 +117,6 @@ export async function buildAndSendWeeklySummary(data: {
   const header = '📬 <b>Bilan de semaine — Family Vault</b>\n\n';
   const ok = await sendTelegram(token, chatId, header + response.text);
   if (!ok) return { sent: false, error: 'Échec envoi Telegram' };
-
-  // 5. Marquer comme envoyé
-  const todayStr = new Date().toISOString().slice(0, 10);
-  await SecureStore.setItemAsync(WEEKLY_SUMMARY_LAST_SENT_KEY, todayStr);
 
   return { sent: true };
 }
