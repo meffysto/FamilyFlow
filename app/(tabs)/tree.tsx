@@ -1391,8 +1391,8 @@ const styles = StyleSheet.create({
   },
   pickerRemoveLabel: {
     position: 'absolute',
-    top: 2,
-    right: 4,
+    top: -6,
+    right: -4,
     fontSize: 14,
     fontWeight: '700' as const,
     color: '#EF4444',
