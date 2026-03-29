@@ -228,7 +228,12 @@ export function useFarm() {
     // Utiliser le champ parse du profile si disponible
     const currentHarvestInv = profile.harvestInventory ?? harvestInv;
     const updatedHarvestInv = { ...currentHarvestInv };
-    updatedHarvestInv[result.harvestedCropId] = (updatedHarvestInv[result.harvestedCropId] ?? 0) + 1;
+    // Parcelle geante (c20) = double recolte — elle est toujours en dernière position
+    const profileTech = getTechBonuses(profile.farmTech ?? []);
+    const isLarge = profileTech.hasLargeCropCell &&
+      plotIndex >= 15 + profileTech.extraCropCells;
+    const harvestQty = isLarge ? 2 : 1;
+    updatedHarvestInv[result.harvestedCropId] = (updatedHarvestInv[result.harvestedCropId] ?? 0) + harvestQty;
 
     // Ecrire farm_crops + farm_harvest_inventory en une seule operation
     await writeProfileFields(profileId, {

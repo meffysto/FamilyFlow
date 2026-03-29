@@ -108,6 +108,14 @@ export const EXPANSION_BUILDING_CELL: WorldCell =
 export const EXPANSION_LARGE_CROP_CELL: WorldCell =
   { id: 'c20', col: 2, row: 3, x: 0.42, y: 0.53, cellType: 'crop', unlockOrder: 26, size: 'large' };
 
+/** Verifie si un plotIndex correspond a la parcelle geante (double recolte) */
+export function isLargeCropPlot(plotIndex: number, treeStage: TreeStage, techBonuses: TechBonuses): boolean {
+  if (!techBonuses.hasLargeCropCell) return false;
+  const cells = getExpandedCropCells(treeStage, techBonuses);
+  const cell = cells[plotIndex];
+  return cell?.id === EXPANSION_LARGE_CROP_CELL.id;
+}
+
 /** Retourne les cellules crop debloquees + les extensions tech actives */
 export function getExpandedCropCells(treeStage: TreeStage, techBonuses: TechBonuses): WorldCell[] {
   const baseCells = getUnlockedCropCells(treeStage);
