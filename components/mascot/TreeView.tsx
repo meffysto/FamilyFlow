@@ -352,7 +352,7 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
           }
           if (animalIds.length === 0) return null;
           return (
-            <View style={[StyleSheet.absoluteFill, { zIndex: 3 }]} pointerEvents="none">
+            <View style={[StyleSheet.absoluteFill, { zIndex: 10 }]} pointerEvents="none">
               {animalIds.map(({ id, fromSlot }) => {
                 const frames = ANIMAL_IDLE_FRAMES[id]!;
                 let px: number, py: number, s: number;
