@@ -370,7 +370,7 @@ export default function TreeScreen() {
       setSelectedPlotIndex(cellIdx);
       setShowSeedPicker(true);
     }
-  }, [profile, isOwnTree, harvest, level, stageIdx]);
+  }, [profile, isOwnTree, harvest, level, stageIdx, techBonuses, stageInfo.stage]);
 
   /** Planter une graine sur la parcelle selectionnee */
   const handleSeedSelect = useCallback(async (cropId: string) => {
