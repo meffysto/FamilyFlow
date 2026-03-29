@@ -1117,6 +1117,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingBottom: Spacing.md,
     alignItems: 'center',
+    zIndex: 2,
   },
   sagaSceneElement: {
     position: 'absolute',
