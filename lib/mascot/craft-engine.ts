@@ -15,9 +15,9 @@ import { GOLDEN_HARVEST_MULTIPLIER } from './farm-engine';
 // ── Valeurs de base des ressources batiment (pour calcul sellValue) ──
 
 export const BUILDING_RESOURCE_VALUE: Record<ResourceType, number> = {
-  oeuf: 30,
-  lait: 50,
-  farine: 40,
+  oeuf: 80,
+  lait: 100,
+  farine: 90,
 };
 
 // ── Catalogue de recettes ────────────────────────────────────────────
@@ -43,7 +43,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
       { itemId: 'strawberry', quantity: 1, source: 'crop' },
     ],
     xpBonus: 30,
-    sellValue: 380, // (40+30+120) x 2
+    sellValue: 580, // (90+80+120) x 2
   },
   {
     id: 'omelette',
@@ -54,7 +54,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
       { itemId: 'tomato', quantity: 1, source: 'crop' },
     ],
     xpBonus: 15,
-    sellValue: 280, // (30+30+80) x 2
+    sellValue: 520, // (80+80+80) x 2
   },
   {
     id: 'bouquet',

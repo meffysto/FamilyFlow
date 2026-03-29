@@ -142,14 +142,14 @@ describe('sellCraftedItem', () => {
     expect(sellCraftedItem(recipe)).toBe(480);
   });
 
-  it('retourne sellValue de la recette gateau (380)', () => {
+  it('retourne sellValue de la recette gateau (580)', () => {
     const recipe = CRAFT_RECIPES.find(r => r.id === 'gateau')!;
-    expect(sellCraftedItem(recipe)).toBe(380);
+    expect(sellCraftedItem(recipe)).toBe(580);
   });
 
-  it('retourne sellValue de la recette omelette (280)', () => {
+  it('retourne sellValue de la recette omelette (520)', () => {
     const recipe = CRAFT_RECIPES.find(r => r.id === 'omelette')!;
-    expect(sellCraftedItem(recipe)).toBe(280);
+    expect(sellCraftedItem(recipe)).toBe(520);
   });
 
   it('retourne sellValue de la recette bouquet (190)', () => {

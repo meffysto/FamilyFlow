@@ -1165,13 +1165,14 @@ const styles = StyleSheet.create({
   },
   actionBtns: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: Spacing.md,
+    gap: Spacing.sm,
     marginVertical: Spacing.md,
   },
   shopBtn: {
-    paddingHorizontal: Spacing['2xl'],
-    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
     borderRadius: Radius.full,
     borderWidth: 1,
   },

@@ -3955,24 +3955,24 @@
   "craft": {
     "atelier": "Atelier",
     "catalogue": "Recettes",
-    "mesCreations": "Mes creations",
+    "mesCreations": "Mes créations",
     "inventaire": "Inventaire",
     "crafter": "Crafter",
     "vendre": "Vendre",
-    "ingredients": "Ingredients",
+    "ingredients": "Ingrédients",
     "manque": "Manque",
     "disponible": "Disponible",
     "aucuneRecette": "Aucune recette disponible",
-    "aucunItem": "Aucun item crafte",
-    "aucuneRecolte": "Aucune recolte en stock",
-    "craftReussi": "{{emoji}} {{name}} crafte !",
+    "aucunItem": "Aucun item crafté",
+    "aucuneRecolte": "Aucune récolte en stock",
+    "craftReussi": "{{emoji}} {{name}} crafté !",
     "venteReussie": "+{{amount}} 🍃",
     "valeurVente": "Vente : {{amount}} 🍃",
     "recipe": {
       "confiture": "Confiture de fraises",
-      "gateau": "Gateau fermier",
-      "omelette": "Omelette fermiere",
-      "bouquet": "Bouquet champetre"
+      "gateau": "Gâteau fermier",
+      "omelette": "Omelette fermière",
+      "bouquet": "Bouquet champêtre"
     }
   }
 }
