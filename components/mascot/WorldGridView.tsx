@@ -155,6 +155,11 @@ function CropCell({ cell, crop, cropDef, isMature, containerWidth, containerHeig
                 />
               ))}
             </View>
+            {!isMature && (
+              <Text style={styles.taskCount}>
+                {crop.tasksCompleted}/{cropDef.tasksPerStage}
+              </Text>
+            )}
           </View>
         ) : (
           <Text style={styles.emptyPlus}>+</Text>
@@ -343,6 +348,7 @@ const styles = StyleSheet.create({
   stageDotFilled: { backgroundColor: '#8B6914' },
   stageDotMature: { backgroundColor: '#FFD700' },
   stageDotEmpty: { backgroundColor: 'rgba(255,255,255,0.3)' },
+  taskCount: { color: 'rgba(255,255,255,0.8)', fontSize: 8, fontWeight: '600' as const, marginTop: 1, textAlign: 'center' as const },
   emptyPlus: { color: 'rgba(255,255,255,0.5)', fontSize: 20, fontWeight: 'bold' },
   buildingCell: {
     justifyContent: 'center',
