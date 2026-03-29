@@ -34,6 +34,7 @@ import {
   unlockTechNode,
   canUnlockTech,
   serializeTechs,
+  getTechBonuses,
 } from '../lib/mascot/tech-engine';
 import { parseGamification, serializeGamification, parseFamille } from '../lib/parser';
 
@@ -384,7 +385,8 @@ export function useFarm() {
     const currentBuildings = profile.farmBuildings ?? [];
     const currentInventory: FarmInventory = profile.farmInventory ?? { oeuf: 0, lait: 0, farine: 0 };
 
-    const result = collectBuilding(currentBuildings, currentInventory, cellId);
+    const profileTechBonuses = getTechBonuses(profile.farmTech ?? []);
+    const result = collectBuilding(currentBuildings, currentInventory, cellId, new Date(), profileTechBonuses);
     if (result.collected === 0) return 0;
 
     // Ecrire les 2 champs en une seule operation pour eviter les race conditions
@@ -441,8 +443,9 @@ export function useFarm() {
     const currentInventory: FarmInventory = profile.farmInventory ?? { oeuf: 0, lait: 0, farine: 0 };
     let updatedInventory = { ...currentInventory };
 
+    const passiveTechBonuses = getTechBonuses(profile.farmTech ?? []);
     for (const building of placedBuildings) {
-      const result = collectBuilding(currentBuildings, updatedInventory, building.cellId);
+      const result = collectBuilding(currentBuildings, updatedInventory, building.cellId, new Date(), passiveTechBonuses);
       if (result.collected > 0) {
         totalCollected += result.collected;
         currentBuildings = result.buildings;

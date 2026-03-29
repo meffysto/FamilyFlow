@@ -130,8 +130,8 @@ function TechNodeView({
               {node.emoji}
             </Text>
             {status === 'unlocked' && (
-              <View style={styles.checkOverlay}>
-                <Text style={styles.checkText}>{'✓'}</Text>
+              <View style={[styles.checkOverlay, { backgroundColor: colors.success }]}>
+                <Text style={[styles.checkText, { color: colors.card }]}>{'✓'}</Text>
               </View>
             )}
             {status === 'locked' && (
@@ -440,12 +440,12 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#4ADE80',
+    // backgroundColor set inline via colors.success
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkText: {
-    color: '#FFFFFF',
+    // color set inline via colors.card
     fontSize: 12,
     fontWeight: FontWeight.bold,
   },

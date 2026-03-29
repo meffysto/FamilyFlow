@@ -579,7 +579,7 @@ export default function TreeScreen() {
               contentContainerStyle={styles.seedSheetContent}
               showsVerticalScrollIndicator={false}
             >
-              {CROP_CATALOG.map(crop => {
+              {getAvailableCrops(stageInfo.stage, profile?.farmTech ?? []).map(crop => {
                 const stageOrder = ['graine', 'pousse', 'arbuste', 'arbre', 'majestueux', 'legendaire'];
                 const unlocked = stageOrder.indexOf(stageInfo.stage) >= stageOrder.indexOf(crop.minTreeStage);
                 const stageName = t(`mascot.stages.${crop.minTreeStage}`);

@@ -15,6 +15,7 @@ import {
   mergeProfiles,
 } from '../lib/parser';
 import { advanceFarmCrops, parseCrops, serializeCrops } from '../lib/mascot/farm-engine';
+import { getTechBonuses } from '../lib/mascot/tech-engine';
 import {
   awardTaskCompletion,
   openLootBox as doOpenLootBox,
@@ -87,7 +88,8 @@ export function useGamification({ vault, notifPrefs, onDataChange }: UseGamifica
         let cropsMatured: string[] = [];
         const currentCrops = parseCrops(profile.farmCrops ?? '');
         if (currentCrops.length > 0) {
-          const farmResult = advanceFarmCrops(currentCrops);
+          const profileTechBonuses = getTechBonuses(profile.farmTech ?? []);
+          const farmResult = advanceFarmCrops(currentCrops, profileTechBonuses);
           cropsMatured = farmResult.matured.map(c => c.cropId);
           // Persister les cultures mises a jour dans famille.md
           const updatedCropsCSV = serializeCrops(farmResult.crops);
