@@ -22,8 +22,12 @@ import {
   CELL_SIZES,
   getUnlockedCropCells,
   BUILDING_CELLS,
+  EXPANSION_CROP_CELLS,
+  EXPANSION_BUILDING_CELL,
+  EXPANSION_LARGE_CROP_CELL,
   type WorldCell,
 } from '../../lib/mascot/world-grid';
+import { type TechBonuses } from '../../lib/mascot/tech-engine';
 import { type PlantedCrop, type TreeStage, type PlacedBuilding, CROP_CATALOG } from '../../lib/mascot/types';
 import { BUILDING_SPRITES } from '../../lib/mascot/building-sprites';
 import { getPendingResources } from '../../lib/mascot/building-engine';
@@ -36,6 +40,7 @@ interface WorldGridViewProps {
   ownedBuildings: PlacedBuilding[];
   containerWidth: number;
   containerHeight: number;
+  techBonuses?: TechBonuses;
   onCropPlotPress?: (cellId: string, crop: PlantedCrop | null) => void;
   onBuildingCellPress?: (cellId: string, building: PlacedBuilding | null) => void;
 }
@@ -228,6 +233,38 @@ function BuildingCell({ cell, placedBuilding, pendingCount, containerWidth, cont
   );
 }
 
+// ── Cellule verrouillee (expansion) ──
+
+function LockedExpansionCell({ cell, cellType, containerWidth, containerHeight }: {
+  cell: WorldCell;
+  cellType: 'crop' | 'building';
+  containerWidth: number;
+  containerHeight: number;
+}) {
+  const scale = useSharedValue(0);
+  React.useEffect(() => {
+    scale.value = withSpring(1, { damping: 10, stiffness: 150 });
+  }, []);
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const size = CELL_SIZES[cell.size];
+  const left = cell.x * containerWidth - size / 2;
+  const top = cell.y * containerHeight - size / 2;
+
+  return (
+    <Animated.View style={[{ position: 'absolute', left, top, width: size, height: size }, animStyle]}>
+      <View style={[
+        styles.lockedCell,
+        cellType === 'building' && styles.lockedBuildingCell,
+      ]}>
+        <Text style={styles.lockEmoji}>{'🔒'}</Text>
+      </View>
+    </Animated.View>
+  );
+}
+
 // ── Grille monde ──
 
 export function WorldGridView({
@@ -236,11 +273,22 @@ export function WorldGridView({
   ownedBuildings,
   containerWidth,
   containerHeight,
+  techBonuses,
   onCropPlotPress,
   onBuildingCellPress,
 }: WorldGridViewProps) {
   const unlockedCrops = getUnlockedCropCells(treeStage);
   const crops = parseCrops(farmCropsCSV);
+
+  // Calcul des cellules d'expansion
+  const expansionCropsUnlocked = techBonuses ? techBonuses.extraCropCells > 0 : false;
+  const expansionBuildingUnlocked = techBonuses ? techBonuses.extraBuildingCells > 0 : false;
+  const largeCropUnlocked = techBonuses ? techBonuses.hasLargeCropCell : false;
+
+  // Les cellules d'expansion a rendre (debloquees)
+  const unlockedExpansionCrops = expansionCropsUnlocked
+    ? EXPANSION_CROP_CELLS.slice(0, techBonuses!.extraCropCells)
+    : [];
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
@@ -266,6 +314,72 @@ export function WorldGridView({
         );
       })}
 
+      {/* Cellules d'expansion culture — debloquees */}
+      {unlockedExpansionCrops.map(cell => {
+        const allExpandedCells = [...unlockedCrops, ...unlockedExpansionCrops];
+        const cellIdx = allExpandedCells.indexOf(cell);
+        const crop = crops.find(c => c.plotIndex === cellIdx) ?? null;
+        const cropDef = crop ? (CROP_CATALOG.find(c => c.id === crop.cropId) ?? null) : null;
+        const isMature = !!crop && crop.currentStage >= 4;
+
+        return (
+          <CropCell
+            key={cell.id}
+            cell={cell}
+            crop={crop}
+            cropDef={cropDef}
+            isMature={isMature}
+            containerWidth={containerWidth}
+            containerHeight={containerHeight}
+            onPress={() => onCropPlotPress?.(cell.id, crop)}
+          />
+        );
+      })}
+
+      {/* Cellules d'expansion culture — verrouilees */}
+      {!expansionCropsUnlocked && techBonuses !== undefined && EXPANSION_CROP_CELLS.map(cell => (
+        <LockedExpansionCell
+          key={cell.id}
+          cell={cell}
+          cellType="crop"
+          containerWidth={containerWidth}
+          containerHeight={containerHeight}
+        />
+      ))}
+
+      {/* Parcelle geante — debloquee */}
+      {largeCropUnlocked && (() => {
+        const cell = EXPANSION_LARGE_CROP_CELL;
+        const allExpandedCells = [...unlockedCrops, ...unlockedExpansionCrops, cell];
+        const cellIdx = allExpandedCells.indexOf(cell);
+        const crop = crops.find(c => c.plotIndex === cellIdx) ?? null;
+        const cropDef = crop ? (CROP_CATALOG.find(c => c.id === crop.cropId) ?? null) : null;
+        const isMature = !!crop && crop.currentStage >= 4;
+
+        return (
+          <CropCell
+            key={cell.id}
+            cell={cell}
+            crop={crop}
+            cropDef={cropDef}
+            isMature={isMature}
+            containerWidth={containerWidth}
+            containerHeight={containerHeight}
+            onPress={() => onCropPlotPress?.(cell.id, crop)}
+          />
+        );
+      })()}
+
+      {/* Parcelle geante — verrouillee */}
+      {!largeCropUnlocked && techBonuses !== undefined && (
+        <LockedExpansionCell
+          cell={EXPANSION_LARGE_CROP_CELL}
+          cellType="crop"
+          containerWidth={containerWidth}
+          containerHeight={containerHeight}
+        />
+      )}
+
       {/* Cellules de batiment */}
       {BUILDING_CELLS.map(cell => {
         const placedBuilding = ownedBuildings.find(b => b.cellId === cell.id) ?? null;
@@ -282,6 +396,34 @@ export function WorldGridView({
           />
         );
       })}
+
+      {/* Cellule batiment expansion — debloquee */}
+      {expansionBuildingUnlocked && (() => {
+        const cell = EXPANSION_BUILDING_CELL;
+        const placedBuilding = ownedBuildings.find(b => b.cellId === cell.id) ?? null;
+        const pendingCount = placedBuilding ? getPendingResources(placedBuilding) : 0;
+        return (
+          <BuildingCell
+            key={cell.id}
+            cell={cell}
+            placedBuilding={placedBuilding}
+            pendingCount={pendingCount}
+            containerWidth={containerWidth}
+            containerHeight={containerHeight}
+            onPress={() => onBuildingCellPress?.(cell.id, placedBuilding)}
+          />
+        );
+      })()}
+
+      {/* Cellule batiment expansion — verrouillee */}
+      {!expansionBuildingUnlocked && techBonuses !== undefined && (
+        <LockedExpansionCell
+          cell={EXPANSION_BUILDING_CELL}
+          cellType="building"
+          containerWidth={containerWidth}
+          containerHeight={containerHeight}
+        />
+      )}
     </View>
   );
 }
@@ -386,5 +528,24 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,0.5)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 1,
+  },
+  lockedCell: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+    borderStyle: 'dashed',
+  },
+  lockedBuildingCell: {
+    borderRadius: 10,
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+    borderColor: 'rgba(139, 92, 246, 0.2)',
+  },
+  lockEmoji: {
+    fontSize: 16,
+    opacity: 0.7,
   },
 });
