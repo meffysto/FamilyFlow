@@ -1886,7 +1886,7 @@ const HAB_SLOTS: Record<string, SlotDef> = {
   licorne:     { dxFactor: -0.85, dyFactor: 0,       groundRelY: -12, baseSize: 28, rarity: 'prestige' },
   // Nouveaux animaux pixel (au sol, top-down)
   poussin:     { dxFactor: 0.6,   dyFactor: 0,    groundRelY: -5,  baseSize: 16, rarity: 'commun' },
-  poulet:      { dxFactor: -0.7,  dyFactor: 0,    groundRelY: -10, baseSize: 20, rarity: 'commun' },
+  poulet:      { dxFactor: -0.7,  dyFactor: 0,    groundRelY: -14, baseSize: 28, rarity: 'commun' },
   canard:      { dxFactor: 0.8,   dyFactor: 0,    groundRelY: -12, baseSize: 20, rarity: 'commun' },
   cochon:      { dxFactor: -0.85, dyFactor: 0,    groundRelY: -15, baseSize: 22, rarity: 'rare' },
   vache:       { dxFactor: 0.9,   dyFactor: 0,    groundRelY: -18, baseSize: 26, rarity: 'rare' },
