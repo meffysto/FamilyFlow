@@ -353,6 +353,39 @@ export interface BuildingDefinition {
 /** Batiments : revenu passif en ressources (oeuf, lait, farine).
  * 3 niveaux d'amelioration par batiment.
  */
+// ─────────────────────────────────────────────
+// Craft — Types & catalogue recettes
+// ─────────────────────────────────────────────
+
+/** Ingredient pour une recette de craft */
+export interface CraftIngredient {
+  itemId: string;           // cropId (ex: 'strawberry') ou resourceType (ex: 'oeuf')
+  quantity: number;
+  source: 'crop' | 'building';  // d'ou vient l'ingredient
+}
+
+/** Recette de craft */
+export interface CraftRecipe {
+  id: string;
+  labelKey: string;
+  emoji: string;
+  ingredients: CraftIngredient[];
+  xpBonus: number;          // XP supplementaire au craft
+  sellValue: number;         // feuilles obtenues a la vente (= sum harvestReward x2)
+}
+
+/** Item crafte en inventaire */
+export interface CraftedItem {
+  recipeId: string;
+  craftedAt: string;         // ISO date string
+  isGolden?: boolean;        // true si tous les ingredients etaient golden
+}
+
+/** Inventaire des recoltes brutes (cultures recoltees non vendues) */
+export interface HarvestInventory {
+  [cropId: string]: number;  // ex: { strawberry: 3, wheat: 1 }
+}
+
 export const BUILDING_CATALOG: BuildingDefinition[] = [
   {
     id: 'poulailler',
