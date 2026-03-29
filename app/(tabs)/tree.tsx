@@ -395,30 +395,32 @@ export default function TreeScreen() {
   }, [profile?.id, selectedBuildingCellId, buyBuilding, showToast]);
 
   /** Collecter les ressources d'un batiment */
-  const handleCollectBuilding = useCallback(async () => {
-    if (!profile?.id || !selectedBuildingCellId) return;
-    const collected = await collectBuildingResources(profile.id, selectedBuildingCellId);
+  const handleCollectBuilding = useCallback(async (cellId: string) => {
+    if (!profile?.id) return;
+    const collected = await collectBuildingResources(profile.id, cellId);
     if (collected > 0) {
-      const def = BUILDING_CATALOG.find(b => b.id === selectedBuilding?.buildingId);
+      const building = (profiles?.find((p: Profile) => p.id === profile.id)?.farmBuildings ?? [])
+        .find((b: PlacedBuilding) => b.cellId === cellId);
+      const def = building ? BUILDING_CATALOG.find(d => d.id === building.buildingId) : null;
       const resourceEmoji = def?.resourceType === 'oeuf' ? '🥚' : def?.resourceType === 'lait' ? '🥛' : '🌾';
       showToast(`${resourceEmoji} +${collected} ${def?.resourceType ?? ''}`);
-      // Re-fetch le building a jour depuis le profil mis a jour
+      // Re-fetch le building a jour
       const updatedProfile = profiles?.find((p: Profile) => p.id === profile.id);
       const updatedBuilding = (updatedProfile?.farmBuildings ?? []).find(
-        (b: PlacedBuilding) => b.cellId === selectedBuildingCellId,
+        (b: PlacedBuilding) => b.cellId === cellId,
       ) ?? null;
       setSelectedBuilding(updatedBuilding);
     }
-  }, [profile?.id, selectedBuildingCellId, selectedBuilding, collectBuildingResources, profiles, showToast]);
+  }, [profile?.id, collectBuildingResources, profiles, showToast]);
 
   /** Ameliorer un batiment */
-  const handleUpgradeBuilding = useCallback(async () => {
-    if (!profile?.id || !selectedBuildingCellId) return;
+  const handleUpgradeBuilding = useCallback(async (cellId: string) => {
+    if (!profile?.id) return;
     try {
-      await upgradeBuildingAction(profile.id, selectedBuildingCellId);
+      await upgradeBuildingAction(profile.id, cellId);
       const updatedProfile = profiles?.find((p: Profile) => p.id === profile.id);
       const updatedBuilding = (updatedProfile?.farmBuildings ?? []).find(
-        (b: PlacedBuilding) => b.cellId === selectedBuildingCellId,
+        (b: PlacedBuilding) => b.cellId === cellId,
       ) ?? null;
       if (updatedBuilding) {
         setSelectedBuilding(updatedBuilding);
@@ -427,7 +429,7 @@ export default function TreeScreen() {
     } catch (e: any) {
       showToast(`❌ ${e.message}`);
     }
-  }, [profile?.id, selectedBuildingCellId, upgradeBuildingAction, profiles, showToast]);
+  }, [profile?.id, upgradeBuildingAction, profiles, showToast]);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>

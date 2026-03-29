@@ -31,8 +31,8 @@ interface BuildingDetailSheetProps {
   visible: boolean;
   building: PlacedBuilding;
   coins: number;
-  onCollect: () => void;
-  onUpgrade: () => void;
+  onCollect: (cellId: string) => void;
+  onUpgrade: (cellId: string) => void;
   onClose: () => void;
 }
 
@@ -64,7 +64,7 @@ export function BuildingDetailSheet({
 
   const handleCollect = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    onCollect();
+    onCollect(building.cellId);
   };
 
   return (
@@ -162,7 +162,7 @@ export function BuildingDetailSheet({
                     {t('farm.building.upgradeCost', { cost: upgradeCost })}
                   </Text>
                   <TouchableOpacity
-                    onPress={coins >= upgradeCost ? onUpgrade : undefined}
+                    onPress={coins >= upgradeCost ? () => onUpgrade(building.cellId) : undefined}
                     activeOpacity={coins >= upgradeCost ? 0.7 : 1}
                     style={[
                       styles.upgradeBtn,
