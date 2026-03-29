@@ -104,8 +104,8 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
   };
 
   return (
-    <Modal visible animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <View style={[styles.container, { backgroundColor: colors.bg, paddingTop: Math.max(insets.top, 12) }]}>
+    <Modal visible animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose} statusBarTranslucent>
+      <View style={[styles.container, { backgroundColor: colors.bg, paddingTop: Math.max(insets.top, 54) }]}>
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: colors.borderLight }]}>
           <TouchableOpacity onPress={onClose} style={styles.closeBtn} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
