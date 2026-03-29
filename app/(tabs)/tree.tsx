@@ -340,7 +340,10 @@ export default function TreeScreen() {
   /** Tap sur une cellule de culture */
   const handleCropCellPress = useCallback((cellId: string, crop: PlantedCrop | null) => {
     if (!profile || !isOwnTree) return;
-    const cells = getUnlockedCropCells(stageInfo.stage);
+    // Inclure les parcelles d'expansion tech dans la recherche
+    const cells = techBonuses
+      ? getExpandedCropCells(stageInfo.stage, techBonuses)
+      : getUnlockedCropCells(stageInfo.stage);
     const cellIdx = cells.findIndex((c: any) => c.id === cellId);
     if (cellIdx < 0) return;
 
