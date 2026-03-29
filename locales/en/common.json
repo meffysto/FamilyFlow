@@ -3905,7 +3905,9 @@
       "beetroot": "Beetroot",
       "beetroot_desc": "Small but colorful. Quick to grow.",
       "cucumber": "Cucumber",
-      "cucumber_desc": "Fresh and crunchy. Grows well in the sun."
+      "cucumber_desc": "Fresh and crunchy. Grows well in the sun.",
+      "sunflower": "Sunflower",
+      "sunflower_desc": "Bright and precious. Unlocked via Culture tech."
     },
     "building": {
       "poulailler": "Chicken Coop",
@@ -3974,5 +3976,39 @@
       "omelette": "Farm Omelette",
       "bouquet": "Country Bouquet"
     }
+  },
+  "tech": {
+    "title": "Technologies",
+    "branch_culture": "Culture",
+    "branch_elevage": "Livestock",
+    "branch_expansion": "Expansion",
+    "culture-1": "Natural Fertilizer",
+    "culture-1_desc": "Crops grow faster (-1 task per stage)",
+    "culture-2": "Abundant Harvest",
+    "culture-2_desc": "Harvests yield 25% more",
+    "culture-3": "Sunflower",
+    "culture-3_desc": "Unlock sunflower crop",
+    "culture-4": "Master Gardener",
+    "culture-4_desc": "Harvests yield 50% more in total",
+    "elevage-1": "Optimal Feed",
+    "elevage-1_desc": "Buildings produce 25% faster",
+    "elevage-2": "Expanded Barn",
+    "elevage-2_desc": "Storage capacity doubled",
+    "elevage-3": "Honey Hive",
+    "elevage-3_desc": "Unlock honey production",
+    "expansion-1": "New Garden",
+    "expansion-1_desc": "5 new crop plots",
+    "expansion-2": "Extra Workshop",
+    "expansion-2_desc": "1 new building plot",
+    "expansion-3": "Mega Plot",
+    "expansion-3_desc": "Unlock a large crop plot",
+    "unlock": "Unlock",
+    "unlocked": "Unlocked",
+    "locked": "Locked",
+    "requires": "Requires: {{name}}",
+    "cost": "{{amount}} leaves",
+    "not_enough_coins": "Not enough leaves",
+    "confirm_title": "Unlock {{name}}?",
+    "confirm_message": "Cost: {{cost}} leaves\n\nEffect: {{effect}}"
   }
 }

@@ -575,6 +575,8 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
       const farmInventory = parseInventory(currentProps.farm_inventory);
       const harvestInventory = parseHarvestInventory(currentProps.farm_harvest_inventory);
       const craftedItems = parseCraftedItems(currentProps.farm_crafted_items);
+      const farmTechRaw = currentProps.farm_tech ?? '';
+      const farmTech = farmTechRaw ? farmTechRaw.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
       profiles.push({
         id: currentId,
         name: currentProps.name,
@@ -596,6 +598,7 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
         farmInventory,
         harvestInventory,
         craftedItems,
+        farmTech,
       });
     }
   };

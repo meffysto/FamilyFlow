@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────
 
 import { type TreeStage, PLOTS_BY_TREE_STAGE } from './types';
+import { type TechBonuses } from './tech-engine';
 
 /** Type de contenu autorise dans une cellule */
 export type CellType = 'crop' | 'building' | 'deco' | 'any';
@@ -86,6 +87,52 @@ export const DECO_CELLS = WORLD_GRID
 export function getUnlockedCropCells(treeStage: TreeStage): WorldCell[] {
   const count = PLOTS_BY_TREE_STAGE[treeStage] ?? 0;
   return CROP_CELLS.slice(0, count);
+}
+
+// ── Cellules d'extension (tech tree) ──────────────────────────
+
+/** Cellules de la rangee 4 — debloquees par tech expansion-1 */
+export const EXPANSION_CROP_CELLS: WorldCell[] = [
+  { id: 'c15', col: 0, row: 3, x: 0.14, y: 0.41, cellType: 'crop', unlockOrder: 20, size: 'small' },
+  { id: 'c16', col: 1, row: 3, x: 0.28, y: 0.41, cellType: 'crop', unlockOrder: 21, size: 'small' },
+  { id: 'c17', col: 2, row: 3, x: 0.42, y: 0.41, cellType: 'crop', unlockOrder: 22, size: 'small' },
+  { id: 'c18', col: 3, row: 3, x: 0.56, y: 0.41, cellType: 'crop', unlockOrder: 23, size: 'small' },
+  { id: 'c19', col: 4, row: 3, x: 0.70, y: 0.41, cellType: 'crop', unlockOrder: 24, size: 'small' },
+];
+
+/** Cellule building supplementaire — debloquee par tech expansion-2 */
+export const EXPANSION_BUILDING_CELL: WorldCell =
+  { id: 'b3', col: 5, row: 5, x: 0.86, y: 0.90, cellType: 'building', unlockOrder: 25, size: 'large' };
+
+/** Parcelle geante crop — debloquee par tech expansion-3 */
+export const EXPANSION_LARGE_CROP_CELL: WorldCell =
+  { id: 'c20', col: 2, row: 3, x: 0.42, y: 0.53, cellType: 'crop', unlockOrder: 26, size: 'large' };
+
+/** Retourne les cellules crop debloquees + les extensions tech actives */
+export function getExpandedCropCells(treeStage: TreeStage, techBonuses: TechBonuses): WorldCell[] {
+  const baseCells = getUnlockedCropCells(treeStage);
+  const expanded = [...baseCells];
+
+  if (techBonuses.extraCropCells > 0) {
+    expanded.push(...EXPANSION_CROP_CELLS.slice(0, techBonuses.extraCropCells));
+  }
+
+  if (techBonuses.hasLargeCropCell) {
+    expanded.push(EXPANSION_LARGE_CROP_CELL);
+  }
+
+  return expanded;
+}
+
+/** Retourne les cellules building + les extensions tech actives */
+export function getExpandedBuildingCells(techBonuses: TechBonuses): WorldCell[] {
+  const baseCells = [...BUILDING_CELLS];
+
+  if (techBonuses.extraBuildingCells > 0) {
+    baseCells.push(EXPANSION_BUILDING_CELL);
+  }
+
+  return baseCells;
 }
 
 /** Taille de rendu d'une cellule */

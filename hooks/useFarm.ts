@@ -29,6 +29,12 @@ import {
   serializeCraftedItems,
   parseCraftedItems,
 } from '../lib/mascot/craft-engine';
+import {
+  TECH_TREE,
+  unlockTechNode,
+  canUnlockTech,
+  serializeTechs,
+} from '../lib/mascot/tech-engine';
 import { parseGamification, serializeGamification, parseFamille } from '../lib/parser';
 
 const FAMILLE_FILE = 'famille.md';
@@ -453,6 +459,34 @@ export function useFarm() {
     return totalCollected;
   }, [profiles, vault, writeProfileField, refresh]);
 
+  /** Debloquer un noeud tech en depensant des feuilles */
+  const unlockTech = useCallback(async (profileId: string, techId: string): Promise<boolean> => {
+    if (!vault) return false;
+
+    // Lire frais pour les techs depuis famille.md
+    const content = await vault.readFile(FAMILLE_FILE);
+    const freshProfiles = parseFamille(content);
+    const familleProfile = freshProfiles.find(p => p.id === profileId);
+    if (!familleProfile) return false;
+
+    // Coins depuis le contexte profiles (merge gami)
+    const fullProfile = profiles?.find(p => p.id === profileId);
+    const coins = fullProfile?.coins ?? 0;
+
+    const currentTechs = familleProfile.farmTech ?? [];
+    const node = TECH_TREE.find(n => n.id === techId);
+    if (!node) return false;
+
+    const check = canUnlockTech(techId, currentTechs, coins);
+    if (!check.canUnlock) throw new Error(check.reason ?? 'Impossible de debloquer');
+
+    const newTechs = unlockTechNode(currentTechs, techId);
+    await writeProfileField(profileId, 'farm_tech', serializeTechs(newTechs));
+    await deductCoins(profileId, node.cost, `🔬 Tech : ${techId}`);
+    await refresh();
+    return true;
+  }, [vault, profiles, writeProfileField, deductCoins, refresh]);
+
   return {
     plant,
     harvest,
@@ -463,5 +497,6 @@ export function useFarm() {
     craft,
     sellHarvest,
     sellCrafted,
+    unlockTech,
   };
 }

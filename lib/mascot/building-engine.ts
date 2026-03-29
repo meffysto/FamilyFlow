@@ -11,6 +11,7 @@ import {
   type FarmInventory,
   type BuildingTier,
 } from './types';
+import { type TechBonuses } from './tech-engine';
 
 /** Nombre maximum de ressources en attente par batiment */
 export const MAX_PENDING = 3;
@@ -127,21 +128,25 @@ export function upgradeBuilding(
   });
 }
 
-/** Calculer le nombre de ressources en attente (clampe a MAX_PENDING) */
+/** Calculer le nombre de ressources en attente (clampe a MAX_PENDING ou bonus tech) */
 export function getPendingResources(
   building: PlacedBuilding,
   now: Date = new Date(),
+  techBonuses?: TechBonuses,
 ): number {
   const def = BUILDING_CATALOG.find(d => d.id === building.buildingId);
   if (!def) return 0;
   const tier = def.tiers[building.level - 1];
   if (!tier) return 0;
 
+  const effectiveRate = tier.productionRateHours * (techBonuses?.productionIntervalMultiplier ?? 1.0);
+  const effectiveMaxPending = Math.floor(MAX_PENDING * (techBonuses?.buildingCapacityMultiplier ?? 1));
+
   const lastCollect = new Date(building.lastCollectAt);
   const elapsedMs = now.getTime() - lastCollect.getTime();
-  const rateMs = tier.productionRateHours * 3600 * 1000;
+  const rateMs = effectiveRate * 3600 * 1000;
   const produced = Math.floor(elapsedMs / rateMs);
-  return Math.min(produced, MAX_PENDING);
+  return Math.min(produced, effectiveMaxPending);
 }
 
 /** Collecter les ressources disponibles d'un batiment */
@@ -150,6 +155,7 @@ export function collectBuilding(
   inventory: FarmInventory,
   cellId: string,
   now: Date = new Date(),
+  techBonuses?: TechBonuses,
 ): { buildings: PlacedBuilding[]; inventory: FarmInventory; collected: number } {
   const building = buildings.find(b => b.cellId === cellId);
   if (!building) return { buildings, inventory, collected: 0 };
@@ -157,18 +163,20 @@ export function collectBuilding(
   const def = BUILDING_CATALOG.find(d => d.id === building.buildingId);
   if (!def) return { buildings, inventory, collected: 0 };
 
-  const pending = getPendingResources(building, now);
+  const pending = getPendingResources(building, now, techBonuses);
   if (pending === 0) return { buildings, inventory, collected: 0 };
 
   // Mettre a jour lastCollectAt — avancer au moment de la derniere unite produite
-  // Si le cap MAX_PENDING a ete atteint, repartir de maintenant pour eviter l'accumulation infinie
+  // Si le cap a ete atteint, repartir de maintenant pour eviter l'accumulation infinie
   const tier = def.tiers[building.level - 1];
-  const rateMs = tier.productionRateHours * 3600 * 1000;
+  const effectiveRate = tier.productionRateHours * (techBonuses?.productionIntervalMultiplier ?? 1.0);
+  const effectiveMaxPending = Math.floor(MAX_PENDING * (techBonuses?.buildingCapacityMultiplier ?? 1));
+  const rateMs = effectiveRate * 3600 * 1000;
   const lastCollect = new Date(building.lastCollectAt);
   const elapsedMs = now.getTime() - lastCollect.getTime();
   const totalProduced = Math.floor(elapsedMs / rateMs);
   // Si on a atteint le cap, repartir de maintenant (pas d'accumulation retro)
-  const newLastCollect = totalProduced >= MAX_PENDING
+  const newLastCollect = totalProduced >= effectiveMaxPending
     ? now
     : new Date(lastCollect.getTime() + pending * rateMs);
 

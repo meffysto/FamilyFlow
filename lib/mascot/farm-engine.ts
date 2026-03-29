@@ -4,6 +4,7 @@
 
 import { type TreeStage, type PlantedCrop, type CropDefinition, CROP_CATALOG, PLOTS_BY_TREE_STAGE } from './types';
 import { getCurrentSeason, type Season } from './seasons';
+import { type TechBonuses } from './tech-engine';
 
 const MAX_CROP_STAGE = 4;
 
@@ -62,9 +63,11 @@ export function plantCrop(
  * Avancer les cultures apres une tache completee.
  * Regle FIFO : la culture la plus ancienne non-mature recoit le point.
  * Retourne le nouveau state + les cultures devenues matures.
+ * Si techBonuses est fourni, applique la reduction de tasksPerStage.
  */
 export function advanceFarmCrops(
   crops: PlantedCrop[],
+  techBonuses?: TechBonuses,
 ): { crops: PlantedCrop[]; matured: PlantedCrop[] } {
   if (crops.length === 0) return { crops, matured: [] };
 
@@ -86,8 +89,9 @@ export function advanceFarmCrops(
   target.tasksCompleted += seasonBonus;
   const matured: PlantedCrop[] = [];
 
-  // Avancer d'un stade si assez de taches
-  if (target.tasksCompleted >= cropDef.tasksPerStage) {
+  // Avancer d'un stade si assez de taches (bonus tech reduit le seuil)
+  const effectiveTasksPerStage = Math.max(1, cropDef.tasksPerStage - (techBonuses?.tasksPerStageReduction ?? 0));
+  if (target.tasksCompleted >= effectiveTasksPerStage) {
     target.currentStage += 1;
     target.tasksCompleted = 0;
     if (target.currentStage >= MAX_CROP_STAGE) {
@@ -141,4 +145,28 @@ export function parseCrops(csv: string): PlantedCrop[] {
       isGolden: goldenFlag === '1',
     };
   }).filter(c => !isNaN(c.plotIndex) && c.cropId);
+}
+
+/** Calculer la recompense effective d'une recolte avec bonus tech */
+export function getEffectiveHarvestReward(cropId: string, techBonuses: TechBonuses): number {
+  const cropDef = CROP_CATALOG.find(c => c.id === cropId);
+  if (!cropDef) return 0;
+  return Math.round(cropDef.harvestReward * techBonuses.harvestRewardMultiplier);
+}
+
+/** Retourne les cultures disponibles selon le stade d'arbre et les techs debloquees */
+export function getAvailableCrops(treeStage: TreeStage, unlockedTechs: string[]): CropDefinition[] {
+  const stageOrder: TreeStage[] = ['graine', 'pousse', 'arbuste', 'arbre', 'majestueux', 'legendaire'];
+  const currentIdx = stageOrder.indexOf(treeStage);
+
+  return CROP_CATALOG.filter(crop => {
+    // Verifier le stade d'arbre minimum
+    const requiredIdx = stageOrder.indexOf(crop.minTreeStage);
+    if (requiredIdx > currentIdx) return false;
+
+    // Verifier la tech requise si presente
+    if (crop.techRequired && !unlockedTechs.includes(crop.techRequired)) return false;
+
+    return true;
+  });
 }

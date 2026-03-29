@@ -85,6 +85,7 @@ export interface Profile {
   farmInventory?: import('../lib/mascot/types').FarmInventory;     // Inventaire ressources (oeuf, lait, farine)
   harvestInventory?: import('../lib/mascot/types').HarvestInventory;  // Recoltes brutes en stock
   craftedItems?: import('../lib/mascot/types').CraftedItem[];         // Items craftes en inventaire
+  farmTech?: string[];    // IDs des noeuds tech debloques
   points: number;
   coins: number;            // 🍃 Feuilles — monnaie dépensable (boutique)
   level: number;

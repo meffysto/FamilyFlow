@@ -3905,7 +3905,9 @@
       "beetroot": "Betterave",
       "beetroot_desc": "Petite mais colorée. Rapide à faire pousser.",
       "cucumber": "Concombre",
-      "cucumber_desc": "Frais et croquant. Pousse bien au soleil."
+      "cucumber_desc": "Frais et croquant. Pousse bien au soleil.",
+      "sunflower": "Tournesol",
+      "sunflower_desc": "Lumineux et precieux. Debloque via la tech Culture."
     },
     "building": {
       "poulailler": "Poulailler",
@@ -3974,5 +3976,39 @@
       "omelette": "Omelette fermière",
       "bouquet": "Bouquet champêtre"
     }
+  },
+  "tech": {
+    "title": "Technologies",
+    "branch_culture": "Culture",
+    "branch_elevage": "Elevage",
+    "branch_expansion": "Expansion",
+    "culture-1": "Engrais naturel",
+    "culture-1_desc": "Les cultures poussent plus vite (-1 tache par stade)",
+    "culture-2": "Recolte abondante",
+    "culture-2_desc": "Les recoltes rapportent 25% de plus",
+    "culture-3": "Tournesol",
+    "culture-3_desc": "Debloque la culture du tournesol",
+    "culture-4": "Maitre jardinier",
+    "culture-4_desc": "Les recoltes rapportent 50% de plus au total",
+    "elevage-1": "Alimentation optimale",
+    "elevage-1_desc": "Les batiments produisent 25% plus vite",
+    "elevage-2": "Grange agrandie",
+    "elevage-2_desc": "Capacite de stockage doublee",
+    "elevage-3": "Ruche a miel",
+    "elevage-3_desc": "Debloque la production de miel",
+    "expansion-1": "Nouveau potager",
+    "expansion-1_desc": "5 nouvelles parcelles de culture",
+    "expansion-2": "Atelier supplementaire",
+    "expansion-2_desc": "1 nouvelle parcelle pour batiment",
+    "expansion-3": "Mega parcelle",
+    "expansion-3_desc": "Debloque une parcelle geante",
+    "unlock": "Debloquer",
+    "unlocked": "Debloque",
+    "locked": "Verrouille",
+    "requires": "Necessite : {{name}}",
+    "cost": "{{amount}} feuilles",
+    "not_enough_coins": "Pas assez de feuilles",
+    "confirm_title": "Debloquer {{name}} ?",
+    "confirm_message": "Cout : {{cost}} feuilles\n\nEffet : {{effect}}"
   }
 }
