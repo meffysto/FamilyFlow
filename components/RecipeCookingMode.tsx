@@ -19,7 +19,7 @@ import {
   ScrollView,
   Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -79,6 +79,7 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
   const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
+  const insets = useSafeAreaInsets();
   const [currentStep, setCurrentStep] = useState(0);
   const [checkedSteps, setCheckedSteps] = useState<Set<number>>(new Set());
   const [timers, setTimers] = useState<ActiveTimer[]>([]);
@@ -414,8 +415,8 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
   // ─── Render ─────────────────────────────────────────────────────
 
   return (
-    <Modal visible animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
+    <Modal visible animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose} statusBarTranslucent>
+      <View style={[styles.container, { backgroundColor: colors.bg, paddingTop: Math.max(insets.top, 54) }]}>
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: colors.borderLight }]}>
           <TouchableOpacity onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
@@ -574,7 +575,7 @@ export default function RecipeCookingMode({ recipe, scaleFactor, servings, onClo
             </TouchableOpacity>
           )}
         </View>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }
