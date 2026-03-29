@@ -3338,7 +3338,11 @@
     },
     "placement": {
       "choose": "Choose a spot",
-      "choose_enfant": "Where do you want to put it?"
+      "choose_enfant": "Where do you want to put it?",
+      "removeTitle": "Remove decoration?",
+      "removeMessage": "The item will be removed from this spot but stays in your inventory.",
+      "remove": "Remove",
+      "removed": "Decoration removed"
     },
     "placed": "Placed!",
     "placed_enfant": "Awesome, it's placed!",

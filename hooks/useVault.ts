@@ -152,6 +152,7 @@ export interface VaultState {
   updateTreeSpecies: (profileId: string, species: string) => Promise<void>;
   buyMascotItem: (profileId: string, itemId: string, itemType: 'decoration' | 'inhabitant') => Promise<void>;
   placeMascotItem: (profileId: string, slotId: string, itemId: string) => Promise<void>;
+  unplaceMascotItem: (profileId: string, slotId: string) => Promise<void>;
   updateProfile: (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string; propre?: boolean; gender?: Gender }) => Promise<void>;
   deleteProfile: (profileId: string) => Promise<void>;
   updateStockQuantity: (lineIndex: number, newQuantity: number) => Promise<void>;
@@ -1339,6 +1340,60 @@ export function useVaultInternal(): VaultState {
       setProfiles(mergeProfiles(familleStr, gamiContent));
     } catch (e) {
       throw new Error(`placeMascotItem: ${e}`);
+    }
+  }, [profiles]);
+
+  /** Retirer un item placé (décoration ou habitant) de son slot */
+  const unplaceMascotItem = useCallback(async (profileId: string, slotId: string) => {
+    if (!vaultRef.current) return;
+
+    try {
+      const content = await vaultRef.current.readFile(FAMILLE_FILE);
+      const lines = content.split('\n');
+      let inSection = false;
+      let fieldLine = -1;
+      let lastPropIdx = -1;
+      const fieldKey = 'mascot_placements';
+
+      const profile = profiles.find((p) => p.id === profileId);
+      if (!profile) throw new Error(`Profil ${profileId} non trouvé`);
+      const placements = { ...(profile.mascotPlacements ?? {}) };
+
+      if (!placements[slotId]) return; // rien à retirer
+      delete placements[slotId];
+
+      const serialized = Object.entries(placements)
+        .map(([s, i]) => `${s}:${i}`)
+        .join(',');
+      const newValue = `${fieldKey}: ${serialized}`;
+
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].startsWith('### ')) {
+          if (inSection) break;
+          if (lines[i].replace('### ', '').trim() === profileId) {
+            inSection = true;
+          }
+        } else if (inSection && lines[i].includes(': ')) {
+          lastPropIdx = i;
+          if (lines[i].trim().startsWith(`${fieldKey}:`)) {
+            fieldLine = i;
+          }
+        }
+      }
+
+      if (fieldLine >= 0) {
+        lines[fieldLine] = newValue;
+      } else if (lastPropIdx >= 0) {
+        lines.splice(lastPropIdx + 1, 0, newValue);
+      }
+
+      const familleStr = lines.join('\n');
+      await vaultRef.current.writeFile(FAMILLE_FILE, familleStr);
+
+      const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
+      setProfiles(mergeProfiles(familleStr, gamiContent));
+    } catch (e) {
+      throw new Error(`unplaceMascotItem: ${e}`);
     }
   }, [profiles]);
 
@@ -3214,6 +3269,7 @@ export function useVaultInternal(): VaultState {
     updateTreeSpecies,
     buyMascotItem,
     placeMascotItem,
+    unplaceMascotItem,
     updateProfile,
     deleteProfile,
     updateStockQuantity,
@@ -3325,7 +3381,7 @@ export function useVaultInternal(): VaultState {
     quotes, moods, skillTrees, secretMissions,
     // Callbacks (stables grâce à useCallback)
     refresh, setVaultPath, setActiveProfile, saveNotifPrefs, updateMeal, loadMealsForWeek,
-    addPhoto, getPhotoUri, updateProfileTheme, buyMascotItem, placeMascotItem, updateProfile, deleteProfile,
+    addPhoto, getPhotoUri, updateProfileTheme, buyMascotItem, placeMascotItem, unplaceMascotItem, updateProfile, deleteProfile,
     updateStockQuantity, addStockItem, deleteStockItem, updateStockItem,
     toggleTask, addRDV, updateRDV, deleteRDV, addTask, editTask, deleteTask,
     addCourseItem, mergeCourseIngredients, toggleCourseItem, removeCourseItem, moveCourseItem,

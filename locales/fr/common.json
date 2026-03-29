@@ -3338,7 +3338,11 @@
     },
     "placement": {
       "choose": "Choisis un emplacement",
-      "choose_enfant": "Où tu veux le mettre ?"
+      "choose_enfant": "Où tu veux le mettre ?",
+      "removeTitle": "Retirer la décoration ?",
+      "removeMessage": "L'item sera retiré de cet emplacement mais restera dans ton inventaire.",
+      "remove": "Retirer",
+      "removed": "Décoration retirée"
     },
     "placed": "Placé !",
     "placed_enfant": "Trop bien, c'est placé !",

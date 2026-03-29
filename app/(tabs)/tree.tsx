@@ -19,6 +19,7 @@ import {
   Dimensions,
   Image,
   ImageSourcePropType,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -148,7 +149,7 @@ export default function TreeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { primary, tint, colors, isDark } = useThemeColors();
-  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem, gamiData } = useVault();
+  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem, unplaceMascotItem, gamiData } = useVault();
   const { showToast } = useToast();
 
   // Profil affiché : celui passé en param ou le profil actif
@@ -319,7 +320,31 @@ export default function TreeScreen() {
 
   /** Callback quand l'utilisateur sélectionne un slot en mode placement */
   const handleSlotSelect = useCallback(async (slotId: string) => {
-    if (!placingItem || !profile) return;
+    if (!profile) return;
+
+    // Si pas en mode placement, vérifier si le slot a un item → proposer de retirer
+    if (!placingItem) {
+      const currentItem = profile.mascotPlacements?.[slotId];
+      if (currentItem) {
+        Alert.alert(
+          t('mascot.placement.removeTitle'),
+          t('mascot.placement.removeMessage'),
+          [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+              text: t('mascot.placement.remove'),
+              style: 'destructive',
+              onPress: async () => {
+                await unplaceMascotItem(profile.id, slotId);
+                showToast(t('mascot.placement.removed'));
+              },
+            },
+          ],
+        );
+      }
+      return;
+    }
+
     try {
       await placeMascotItem(profile.id, slotId, placingItem);
       showToast(t('mascot.placed'));
@@ -335,7 +360,7 @@ export default function TreeScreen() {
     } catch {
       showToast(t('common.error'), 'error');
     }
-  }, [placingItem, profile, placeMascotItem, showToast, t]);
+  }, [placingItem, profile, placeMascotItem, unplaceMascotItem, showToast, t]);
 
   /** Tap sur une cellule de culture */
   const handleCropCellPress = useCallback((cellId: string, crop: PlantedCrop | null) => {
