@@ -1026,6 +1026,7 @@ export default function TreeScreen() {
         unlockedTechs={profile?.farmTech ?? []}
         coins={profile?.coins ?? 0}
         onUnlock={(techId) => unlockTech(profile!.id, techId)}
+        onMessage={(text, type) => showToast(text, type)}
       />
 
       {/* Bottom sheet construction batiment */}

@@ -29,7 +29,6 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 
 import { useThemeColors } from '../../contexts/ThemeContext';
-import { useToast } from '../../contexts/ToastContext';
 import {
   TECH_TREE,
   canUnlockTech,
@@ -49,6 +48,7 @@ interface TechTreeSheetProps {
   unlockedTechs: string[];
   coins: number;
   onUnlock: (techId: string) => Promise<boolean>;
+  onMessage?: (text: string, type?: 'success' | 'error') => void;
 }
 
 type NodeStatus = 'unlocked' | 'unlockable' | 'locked';
@@ -191,10 +191,10 @@ export function TechTreeSheet({
   unlockedTechs,
   coins,
   onUnlock,
+  onMessage,
 }: TechTreeSheetProps) {
   const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
-  const { showToast } = useToast();
 
   // Grouper les noeuds par branche
   const branchNodes = useMemo(() => {
@@ -229,7 +229,7 @@ export function TechTreeSheet({
       const status = getNodeStatus(node);
 
       if (status === 'unlocked') {
-        showToast(`${node.emoji} ${t('tech.unlocked')}`);
+        onMessage?.(`${node.emoji} ${t('tech.unlocked')}`);
         return;
       }
 
@@ -241,7 +241,7 @@ export function TechTreeSheet({
           const msg = reqNode
             ? t('tech.requires', { name: t(reqNode.labelKey) })
             : result.reason;
-          showToast(`🔒 ${msg}`);
+          onMessage?.(`🔒 ${msg}`);
         }
         return;
       }
@@ -264,16 +264,16 @@ export function TechTreeSheet({
                 if (Platform.OS !== 'web') {
                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                 }
-                showToast(`${node.emoji} ${t(node.labelKey)} ${t('tech.unlocked')} !`);
+                onMessage?.(`${node.emoji} ${t(node.labelKey)} ${t('tech.unlocked')} !`);
               } else {
-                showToast(t('tech.not_enough_coins'), 'error');
+                onMessage?.(t('tech.not_enough_coins'), 'error');
               }
             },
           },
         ],
       );
     },
-    [getNodeStatus, unlockedTechs, coins, onUnlock, showToast, t],
+    [getNodeStatus, unlockedTechs, coins, onUnlock, onMessage, t],
   );
 
   return (
