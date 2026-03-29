@@ -579,9 +579,11 @@ export default function TreeScreen() {
               contentContainerStyle={styles.seedSheetContent}
               showsVerticalScrollIndicator={false}
             >
-              {getAvailableCrops(stageInfo.stage, profile?.farmTech ?? []).map(crop => {
+              {CROP_CATALOG.map(crop => {
                 const stageOrder = ['graine', 'pousse', 'arbuste', 'arbre', 'majestueux', 'legendaire'];
-                const unlocked = stageOrder.indexOf(stageInfo.stage) >= stageOrder.indexOf(crop.minTreeStage);
+                const stageUnlocked = stageOrder.indexOf(stageInfo.stage) >= stageOrder.indexOf(crop.minTreeStage);
+                const availableCrops = getAvailableCrops(stageInfo.stage, profile?.farmTech ?? []);
+                const unlocked = stageUnlocked && availableCrops.some(c => c.id === crop.id);
                 const stageName = t(`mascot.stages.${crop.minTreeStage}`);
                 const isSeasonal = hasCropSeasonalBonus(crop.id);
                 const totalTasks = crop.tasksPerStage * 4;
