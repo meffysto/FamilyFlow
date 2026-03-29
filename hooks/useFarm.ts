@@ -18,7 +18,7 @@ import {
   parseInventory,
 } from '../lib/mascot/building-engine';
 import type { PlacedBuilding, FarmInventory } from '../lib/mascot/types';
-import { parseGamification, serializeGamification } from '../lib/parser';
+import { parseGamification, serializeGamification, parseFamille } from '../lib/parser';
 
 const FAMILLE_FILE = 'famille.md';
 const GAMI_FILE = 'gamification.md';
@@ -210,8 +210,13 @@ export function useFarm() {
 
   /** Collecter les ressources d'un batiment specifique */
   const collectBuildingResources = useCallback(async (profileId: string, cellId: string): Promise<number> => {
-    const profile = profiles?.find(p => p.id === profileId);
-    if (!profile || !vault) return 0;
+    if (!vault) return 0;
+
+    // Lire depuis le fichier pour eviter les stale closures
+    const content = await vault.readFile(FAMILLE_FILE);
+    const freshProfiles = parseFamille(content);
+    const profile = freshProfiles.find(p => p.id === profileId);
+    if (!profile) return 0;
 
     const currentBuildings = profile.farmBuildings ?? [];
     const currentInventory: FarmInventory = profile.farmInventory ?? { oeuf: 0, lait: 0, farine: 0 };
@@ -223,7 +228,7 @@ export function useFarm() {
     await writeProfileField(profileId, 'farm_inventory', serializeInventory(result.inventory));
     await refresh();
     return result.collected;
-  }, [profiles, vault, writeProfileField, refresh]);
+  }, [vault, writeProfileField, refresh]);
 
   /** Collecter le revenu passif de tous les batiments (appele a l'ouverture de l'ecran) */
   const collectPassiveIncome = useCallback(async (profileId: string): Promise<number> => {
