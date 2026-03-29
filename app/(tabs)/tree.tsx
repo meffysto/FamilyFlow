@@ -44,12 +44,14 @@ import { PixelDiorama, PIXEL_GROUND, PIXEL_GROUND_DARK } from '../../components/
 import { WorldGridView, FarmStats } from '../../components/mascot/WorldGridView';
 import { BuildingShopSheet } from '../../components/mascot/BuildingShopSheet';
 import { CraftSheet } from '../../components/mascot/CraftSheet';
+import { TechTreeSheet } from '../../components/mascot/TechTreeSheet';
 import { BuildingDetailSheet } from '../../components/mascot/BuildingDetailSheet';
 import { WeeklyGoal, countWeeklyTasks } from '../../components/mascot/WeeklyGoal';
 import { useFarm } from '../../hooks/useFarm';
 import { type PlantedCrop, type PlacedBuilding, CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
-import { hasCropSeasonalBonus, parseCrops } from '../../lib/mascot/farm-engine';
-import { getUnlockedCropCells } from '../../lib/mascot/world-grid';
+import { hasCropSeasonalBonus, parseCrops, getAvailableCrops } from '../../lib/mascot/farm-engine';
+import { getUnlockedCropCells, getExpandedCropCells } from '../../lib/mascot/world-grid';
+import { getTechBonuses } from '../../lib/mascot/tech-engine';
 import { HarvestBurst, CROP_COLORS } from '../../components/mascot/HarvestBurst';
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import { AmbientParticles } from '../../components/mascot/AmbientParticles';
@@ -165,7 +167,7 @@ export default function TreeScreen() {
   const [showItemPicker, setShowItemPicker] = useState(false);
 
   // Ferme
-  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted } = useFarm();
+  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech } = useFarm();
   const [showSeedPicker, setShowSeedPicker] = useState(false);
   const [selectedPlotIndex, setSelectedPlotIndex] = useState<number | null>(null);
   const [harvestBurst, setHarvestBurst] = useState<{ x: number; y: number; reward: number; cropId: string } | null>(null);
@@ -173,6 +175,12 @@ export default function TreeScreen() {
 
   // Craft
   const [showCraftSheet, setShowCraftSheet] = useState(false);
+
+  // Tech tree
+  const [showTechTree, setShowTechTree] = useState(false);
+  const techBonuses = useMemo(() => {
+    return getTechBonuses(profile?.farmTech ?? []);
+  }, [profile?.farmTech]);
 
   // Batiments productifs
   const [showBuildingShop, setShowBuildingShop] = useState(false);
@@ -680,6 +688,7 @@ export default function TreeScreen() {
               ownedBuildings={profile.farmBuildings ?? []}
               containerWidth={SCREEN_W}
               containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
+              techBonuses={techBonuses}
               onCropPlotPress={isOwnTree ? handleCropCellPress : undefined}
               onBuildingCellPress={isOwnTree ? handleBuildingCellPress : undefined}
             />
@@ -818,6 +827,16 @@ export default function TreeScreen() {
               >
                 <Text style={[styles.shopBtnText, { color: primary }]}>
                   {'🔨 ' + t('craft.atelier')}
+                </Text>
+              </TouchableOpacity>
+              {/* Bouton Progression tech */}
+              <TouchableOpacity
+                style={[styles.shopBtn, { backgroundColor: tint, borderColor: primary }]}
+                onPress={() => setShowTechTree(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.shopBtnText, { color: primary }]}>
+                  {'🔬 ' + t('tech.title')}
                 </Text>
               </TouchableOpacity>
               {/* Bouton décorer : visible si des items sont achetés */}
@@ -982,6 +1001,16 @@ export default function TreeScreen() {
         onCraft={(recipeId) => craft(profile!.id, recipeId)}
         onSellHarvest={(cropId) => sellHarvest(profile!.id, cropId)}
         onSellCrafted={(recipeId) => sellCrafted(profile!.id, recipeId)}
+      />
+
+      {/* Tech tree progression */}
+      <TechTreeSheet
+        visible={showTechTree}
+        onClose={() => setShowTechTree(false)}
+        profileId={profile?.id ?? ''}
+        unlockedTechs={profile?.farmTech ?? []}
+        coins={profile?.coins ?? 0}
+        onUnlock={(techId) => unlockTech(profile!.id, techId)}
       />
 
       {/* Bottom sheet construction batiment */}
