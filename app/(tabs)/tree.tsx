@@ -724,7 +724,7 @@ export default function TreeScreen() {
             {whisperInfo && <CropWhisper whisperInfo={whisperInfo} stageInfo={stageInfo} stageIdx={stageIdx} />}
 
             {/* Couche 4 : Arbre pixel au premier plan */}
-            <View style={styles.treeOverlay}>
+            <View style={styles.treeOverlay} pointerEvents="box-none">
               <TreeView
                 species={species}
                 level={level}
