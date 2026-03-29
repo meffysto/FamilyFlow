@@ -224,11 +224,46 @@ export function useFarm() {
     const result = collectBuilding(currentBuildings, currentInventory, cellId);
     if (result.collected === 0) return 0;
 
-    await writeProfileField(profileId, 'farm_buildings', serializeBuildings(result.buildings));
-    await writeProfileField(profileId, 'farm_inventory', serializeInventory(result.inventory));
+    // Ecrire les 2 champs en une seule operation pour eviter les race conditions
+    const lines = content.split('\n');
+    let inSection = false;
+    let buildingsLine = -1;
+    let inventoryLine = -1;
+    let lastPropIdx = -1;
+
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].startsWith('### ')) {
+        if (inSection) break;
+        if (lines[i].replace('### ', '').trim() === profileId) inSection = true;
+      } else if (inSection && lines[i].includes(': ')) {
+        lastPropIdx = i;
+        if (lines[i].trim().startsWith('farm_buildings:')) buildingsLine = i;
+        if (lines[i].trim().startsWith('farm_inventory:')) inventoryLine = i;
+      }
+    }
+
+    const buildingsValue = `farm_buildings: ${serializeBuildings(result.buildings)}`;
+    const inventoryValue = `farm_inventory: ${serializeInventory(result.inventory)}`;
+
+    if (buildingsLine >= 0) {
+      lines[buildingsLine] = buildingsValue;
+    } else if (lastPropIdx >= 0) {
+      lines.splice(lastPropIdx + 1, 0, buildingsValue);
+      lastPropIdx++;
+      // Recalculer inventoryLine si il etait apres l'insertion
+      if (inventoryLine > lastPropIdx) inventoryLine++;
+    }
+
+    if (inventoryLine >= 0) {
+      lines[inventoryLine] = inventoryValue;
+    } else if (lastPropIdx >= 0) {
+      lines.splice(lastPropIdx + 1, 0, inventoryValue);
+    }
+
+    await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
     await refresh();
     return result.collected;
-  }, [vault, writeProfileField, refresh]);
+  }, [vault, refresh]);
 
   /** Collecter le revenu passif de tous les batiments (appele a l'ouverture de l'ecran) */
   const collectPassiveIncome = useCallback(async (profileId: string): Promise<number> => {
