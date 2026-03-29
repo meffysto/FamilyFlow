@@ -106,7 +106,7 @@ export const EXPANSION_BUILDING_CELL: WorldCell =
 
 /** Parcelle geante crop — debloquee par tech expansion-3 */
 export const EXPANSION_LARGE_CROP_CELL: WorldCell =
-  { id: 'c20', col: 2, row: 3, x: 0.42, y: 0.53, cellType: 'crop', unlockOrder: 26, size: 'large' };
+  { id: 'c20', col: 0, row: 5, x: 0.14, y: 0.77, cellType: 'crop', unlockOrder: 26, size: 'large' };
 
 /** Verifie si un plotIndex correspond a la parcelle geante (double recolte) */
 export function isLargeCropPlot(plotIndex: number, treeStage: TreeStage, techBonuses: TechBonuses): boolean {
