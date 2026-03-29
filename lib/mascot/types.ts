@@ -264,6 +264,7 @@ export interface CropDefinition {
   harvestReward: number;   // feuilles gagnees a la recolte
   minTreeStage: TreeStage; // stade d'arbre minimum pour debloquer
   cost: number;            // cout en feuilles pour les graines
+  techRequired?: string;   // id du noeud tech requis pour debloquer (optionnel)
 }
 
 /** Instance de culture plantee */
@@ -307,6 +308,8 @@ export const CROP_CATALOG: CropDefinition[] = [
   { id: 'corn',       labelKey: 'farm.crop.corn',       emoji: '🌽', tasksPerStage: 3, harvestReward: 150, minTreeStage: 'arbre',    cost: 30 },
   { id: 'strawberry', labelKey: 'farm.crop.strawberry', emoji: '🍓', tasksPerStage: 2, harvestReward: 120, minTreeStage: 'arbre',    cost: 25 },
   { id: 'pumpkin',    labelKey: 'farm.crop.pumpkin',    emoji: '🎃', tasksPerStage: 3, harvestReward: 200, minTreeStage: 'majestueux', cost: 40 },
+  // Debloquee par tech culture-3
+  { id: 'sunflower',  labelKey: 'farm.crop.sunflower',  emoji: '🌻', tasksPerStage: 2, harvestReward: 100, minTreeStage: 'pousse', cost: 20, techRequired: 'culture-3' },
 ];
 
 // ─────────────────────────────────────────────
