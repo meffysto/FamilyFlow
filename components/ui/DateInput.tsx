@@ -100,10 +100,10 @@ export function DateInput({ value, onChange, placeholder = 'Choisir une date', m
           <View style={styles.iosOverlay}>
             <View style={[styles.iosSheet, { backgroundColor: colors.card }]}>
               <View style={styles.iosHeader}>
-                <TouchableOpacity onPress={() => setShowPicker(false)}>
+                <TouchableOpacity onPress={() => setShowPicker(false)} style={styles.iosHeaderBtn} hitSlop={{ top: 12, bottom: 12, left: 16, right: 16 }}>
                   <Text style={[styles.iosCancel, { color: colors.textMuted }]}>Annuler</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={handleConfirm}>
+                <TouchableOpacity onPress={handleConfirm} style={styles.iosHeaderBtn} hitSlop={{ top: 12, bottom: 12, left: 16, right: 16 }}>
                   <Text style={[styles.iosConfirm, { color: primary }]}>OK</Text>
                 </TouchableOpacity>
               </View>
@@ -156,7 +156,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
+  },
+  iosHeaderBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
   },
   iosCancel: {
     fontSize: FontSize.lg,
