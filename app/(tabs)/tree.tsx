@@ -340,6 +340,8 @@ export default function TreeScreen() {
       harvest(profile.id, cellIdx).then((reward) => {
         if (reward > 0) {
           setHarvestBurst({ x: burstX, y: burstY, reward, cropId: crop.cropId });
+          const emoji = cropDef?.emoji ?? '🌾';
+          showToast(`${emoji} +${reward} 🍃 récolté !`);
         }
       });
     } else if (crop) {
