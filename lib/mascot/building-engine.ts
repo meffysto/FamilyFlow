@@ -160,11 +160,17 @@ export function collectBuilding(
   const pending = getPendingResources(building, now);
   if (pending === 0) return { buildings, inventory, collected: 0 };
 
-  // Mettre a jour lastCollectAt — reculer proportionnellement aux unites collectees
+  // Mettre a jour lastCollectAt — avancer au moment de la derniere unite produite
+  // Si le cap MAX_PENDING a ete atteint, repartir de maintenant pour eviter l'accumulation infinie
   const tier = def.tiers[building.level - 1];
   const rateMs = tier.productionRateHours * 3600 * 1000;
   const lastCollect = new Date(building.lastCollectAt);
-  const newLastCollect = new Date(lastCollect.getTime() + pending * rateMs);
+  const elapsedMs = now.getTime() - lastCollect.getTime();
+  const totalProduced = Math.floor(elapsedMs / rateMs);
+  // Si on a atteint le cap, repartir de maintenant (pas d'accumulation retro)
+  const newLastCollect = totalProduced >= MAX_PENDING
+    ? now
+    : new Date(lastCollect.getTime() + pending * rateMs);
 
   const updatedBuildings = buildings.map(b =>
     b.cellId === cellId ? { ...b, lastCollectAt: newLastCollect.toISOString() } : b,
