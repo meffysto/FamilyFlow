@@ -50,6 +50,7 @@ import { type PlantedCrop, type PlacedBuilding, CROP_CATALOG, BUILDING_CATALOG }
 import { hasCropSeasonalBonus, parseCrops } from '../../lib/mascot/farm-engine';
 import { getUnlockedCropCells } from '../../lib/mascot/world-grid';
 import { HarvestBurst, CROP_COLORS } from '../../components/mascot/HarvestBurst';
+import { ModalHeader } from '../../components/ui/ModalHeader';
 import { AmbientParticles } from '../../components/mascot/AmbientParticles';
 import { SeasonalParticles } from '../../components/mascot/SeasonalParticles';
 import { StreakFlames } from '../../components/mascot/StreakFlames';
@@ -543,70 +544,97 @@ export default function TreeScreen() {
           </TouchableOpacity>
         </Modal>
 
-        {/* Modal choix de graine */}
+        {/* Modal choix de graine — pageSheet */}
         <Modal
           visible={showSeedPicker}
-          transparent
-          animationType="fade"
+          animationType="slide"
+          presentationStyle="pageSheet"
           onRequestClose={() => setShowSeedPicker(false)}
         >
-          <TouchableOpacity
-            style={styles.pickerOverlay}
-            activeOpacity={1}
-            onPress={() => setShowSeedPicker(false)}
-          >
-            <View style={[styles.pickerCard, { backgroundColor: colors.card }, Shadows.lg]}>
-              <Text style={[styles.pickerTitle, { color: colors.text }]}>
-                {t('farm.seedPicker')}
-              </Text>
-              <View style={styles.pickerGrid}>
-                {CROP_CATALOG.map(crop => {
-                  const stageOrder = ['graine', 'pousse', 'arbuste', 'arbre', 'majestueux', 'legendaire'];
-                  const unlocked = stageOrder.indexOf(stageInfo.stage) >= stageOrder.indexOf(crop.minTreeStage);
-                  const stageName = t(`mascot.stages.${crop.minTreeStage}`);
-                  return (
-                    <TouchableOpacity
-                      key={crop.id}
-                      onPress={unlocked ? () => handleSeedSelect(crop.id) : undefined}
-                      activeOpacity={unlocked ? 0.7 : 1}
-                      style={[
-                        styles.pickerItem,
-                        { backgroundColor: colors.cardAlt, borderColor: colors.borderLight },
-                        !unlocked && { opacity: 0.4 },
-                      ]}
-                    >
-                      <Text style={styles.pickerEmoji}>{crop.emoji}</Text>
-                      {unlocked ? (
-                        <>
-                          <Text style={{ color: colors.textSub, fontSize: 10, marginTop: 2 }}>
+          <View style={[styles.seedSheetContainer, { backgroundColor: colors.bg }]}>
+            <ModalHeader
+              title={t('farm.seedPicker')}
+              onClose={() => setShowSeedPicker(false)}
+              closeLeft
+            />
+            <ScrollView
+              style={styles.seedSheetScroll}
+              contentContainerStyle={styles.seedSheetContent}
+              showsVerticalScrollIndicator={false}
+            >
+              {CROP_CATALOG.map(crop => {
+                const stageOrder = ['graine', 'pousse', 'arbuste', 'arbre', 'majestueux', 'legendaire'];
+                const unlocked = stageOrder.indexOf(stageInfo.stage) >= stageOrder.indexOf(crop.minTreeStage);
+                const stageName = t(`mascot.stages.${crop.minTreeStage}`);
+                const isSeasonal = hasCropSeasonalBonus(crop.id);
+                const totalTasks = crop.tasksPerStage * 4;
+                const effectiveTasks = isSeasonal ? Math.ceil(totalTasks / 2) : totalTasks;
+                const canAfford = (profile?.coins ?? 0) >= crop.cost;
+                return (
+                  <TouchableOpacity
+                    key={crop.id}
+                    onPress={unlocked && canAfford ? () => handleSeedSelect(crop.id) : undefined}
+                    activeOpacity={unlocked && canAfford ? 0.7 : 1}
+                    style={[
+                      styles.seedRow,
+                      { backgroundColor: colors.cardAlt, borderColor: isSeasonal ? '#F59E0B' : colors.borderLight },
+                      isSeasonal && { borderWidth: 1.5 },
+                      !unlocked && { opacity: 0.4 },
+                    ]}
+                  >
+                    <Text style={styles.seedRowEmoji}>{crop.emoji}</Text>
+                    {unlocked ? (
+                      <View style={styles.seedRowInfo}>
+                        <View style={styles.seedRowHeader}>
+                          <Text style={[styles.seedRowName, { color: colors.text }]}>
+                            {t(`farm.crop.${crop.id}`)}
+                          </Text>
+                          {isSeasonal && (
+                            <View style={styles.seedSeasonBadge}>
+                              <Text style={styles.seedSeasonBadgeText}>
+                                {t('farm.inSeason')}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                        <Text style={[styles.seedRowDesc, { color: colors.textMuted }]} numberOfLines={2}>
+                          {t(`farm.crop.${crop.id}_desc`)}
+                        </Text>
+                        <View style={styles.seedRowStats}>
+                          <Text style={[styles.seedRowStat, { color: colors.textSub }]}>
+                            {t('farm.taskCount', { count: effectiveTasks })}
+                            {isSeasonal && (
+                              <Text style={{ color: '#F59E0B', fontWeight: FontWeight.semibold }}>
+                                {' '}({t('farm.seasonSpeed', { normal: totalTasks })})
+                              </Text>
+                            )}
+                          </Text>
+                          <Text style={[styles.seedRowStat, { color: colors.textSub }]}>
                             {crop.cost} 🍃 → {crop.harvestReward} 🍃
                           </Text>
-                          {hasCropSeasonalBonus(crop.id) && (
-                            <Text style={{ color: '#F59E0B', fontSize: 9, fontWeight: '600' }}>
-                              ☀️ x2
-                            </Text>
-                          )}
-                        </>
-                      ) : (
-                        <Text style={{ color: colors.textMuted, fontSize: 9, marginTop: 2, textAlign: 'center' }}>
-                          🔒 {stageName}
+                        </View>
+                        {!canAfford && (
+                          <Text style={[styles.seedRowWarn, { color: colors.error }]}>
+                            {t('farm.notEnoughLeaves')}
+                          </Text>
+                        )}
+                      </View>
+                    ) : (
+                      <View style={styles.seedRowInfo}>
+                        <Text style={[styles.seedRowName, { color: colors.textMuted }]}>
+                          {t(`farm.crop.${crop.id}`)}
                         </Text>
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-              <TouchableOpacity
-                onPress={() => setShowSeedPicker(false)}
-                style={[styles.pickerCloseBtn, { borderColor: colors.borderLight }]}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.pickerCloseText, { color: colors.textSub }]}>
-                  {t('farm.cancel')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
+                        <Text style={{ color: colors.textMuted, fontSize: FontSize.caption }}>
+                          🔒 {t('farm.unlocksAt', { stage: stageName })}
+                        </Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+              <View style={{ height: Spacing['3xl'] }} />
+            </ScrollView>
+          </View>
         </Modal>
 
         {/* Arbre principal — diorama saisonnier immersif (full-bleed) */}
@@ -1305,5 +1333,68 @@ const styles = StyleSheet.create({
   pickerCloseText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
+  },
+  // Seed picker — pageSheet
+  seedSheetContainer: {
+    flex: 1,
+  },
+  seedSheetScroll: {
+    flex: 1,
+  },
+  seedSheetContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.sm,
+    gap: Spacing.sm,
+  },
+  seedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.md,
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    gap: Spacing.md,
+  },
+  seedRowEmoji: {
+    fontSize: 32,
+  },
+  seedRowInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  seedRowHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  seedRowName: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+  },
+  seedSeasonBadge: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 1,
+    borderRadius: Radius.sm,
+  },
+  seedSeasonBadgeText: {
+    fontSize: FontSize.micro,
+    fontWeight: FontWeight.semibold,
+    color: '#B45309',
+  },
+  seedRowDesc: {
+    fontSize: FontSize.caption,
+  },
+  seedRowStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 2,
+  },
+  seedRowStat: {
+    fontSize: FontSize.caption,
+  },
+  seedRowWarn: {
+    fontSize: FontSize.micro,
+    fontWeight: FontWeight.medium,
+    marginTop: 2,
   },
 });

@@ -59,11 +59,17 @@ const WEEKDAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 type ViewMode = 'liste' | 'calendrier';
 
 const TYPE_EMOJI: Record<string, string> = {
+  // Médical
   pédiatre: '👨‍⚕️',
   vaccin: '💉',
   pmi: '🏥',
   dentiste: '🦷',
   urgences: '🚑',
+  // Vie courante
+  école: '🏫',
+  activité: '⚽',
+  administratif: '🏛️',
+  social: '👥',
   autre: '📋',
 };
 

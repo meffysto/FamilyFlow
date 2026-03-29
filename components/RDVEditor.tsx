@@ -33,14 +33,54 @@ import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
 import { useTranslation } from 'react-i18next';
 
-const TYPE_KEYS: { key: string; value: string }[] = [
-  { key: 'pediatrician', value: 'pédiatre' },
-  { key: 'vaccine', value: 'vaccin' },
-  { key: 'pmi', value: 'pmi' },
-  { key: 'dentist', value: 'dentiste' },
-  { key: 'emergency', value: 'urgences' },
-  { key: 'other', value: 'autre' },
+const TYPE_KEYS: { key: string; value: string; category: 'medical' | 'life' }[] = [
+  // Médical
+  { key: 'pediatrician', value: 'pédiatre', category: 'medical' },
+  { key: 'vaccine', value: 'vaccin', category: 'medical' },
+  { key: 'pmi', value: 'pmi', category: 'medical' },
+  { key: 'dentist', value: 'dentiste', category: 'medical' },
+  { key: 'emergency', value: 'urgences', category: 'medical' },
+  // Vie courante
+  { key: 'school', value: 'école', category: 'life' },
+  { key: 'activity', value: 'activité', category: 'life' },
+  { key: 'admin', value: 'administratif', category: 'life' },
+  { key: 'social', value: 'social', category: 'life' },
+  { key: 'other', value: 'autre', category: 'life' },
 ];
+
+const MEDICAL_TYPES = new Set(TYPE_KEYS.filter(t => t.category === 'medical').map(t => t.value));
+
+/** Label adaptatif pour le champ "contact" selon le type de RDV */
+function getContactLabelKey(type: string): string {
+  if (MEDICAL_TYPES.has(type)) return 'editors.rdv.doctorLabel';
+  if (type === 'école') return 'editors.rdv.teacherLabel';
+  if (type === 'activité') return 'editors.rdv.coachLabel';
+  return 'editors.rdv.contactLabel';
+}
+
+function getContactPlaceholderKey(type: string): string {
+  if (MEDICAL_TYPES.has(type)) return 'editors.rdv.doctorPlaceholder';
+  if (type === 'école') return 'editors.rdv.teacherPlaceholder';
+  if (type === 'activité') return 'editors.rdv.coachPlaceholder';
+  return 'editors.rdv.contactPlaceholder';
+}
+
+function getQuestionsLabelKey(type: string): string {
+  if (MEDICAL_TYPES.has(type)) return 'editors.rdv.questionsLabel';
+  if (type === 'administratif') return 'editors.rdv.questionsLabelAdmin';
+  return 'editors.rdv.questionsLabelGeneric';
+}
+
+function getQuestionsHintKey(type: string): string {
+  if (MEDICAL_TYPES.has(type)) return 'editors.rdv.questionsHint';
+  if (type === 'administratif') return 'editors.rdv.questionsHintAdmin';
+  return 'editors.rdv.questionsHintGeneric';
+}
+
+/** L'IA peut preparer des questions pour ces types */
+function canPrepareWithAI(type: string): boolean {
+  return type !== 'social';
+}
 
 interface RDVEditorProps {
   rdv?: RDV; // if provided, we're editing
@@ -193,8 +233,20 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
 
         {/* Type */}
         <Text style={[styles.label, { color: colors.textSub }]}>{t('editors.rdv.typeLabel')}</Text>
+        <Text style={[styles.typeCategoryLabel, { color: colors.textMuted }]}>{t('editors.rdv.typeCategoryMedical')}</Text>
         <View style={styles.chipRow}>
-          {TYPE_KEYS.map((opt) => (
+          {TYPE_KEYS.filter(tk => tk.category === 'medical').map((opt) => (
+            <Chip
+              key={opt.value}
+              label={t(`editors.rdv.typeOptions.${opt.key}`)}
+              selected={typeRdv === opt.value}
+              onPress={() => setTypeRdv(opt.value)}
+            />
+          ))}
+        </View>
+        <Text style={[styles.typeCategoryLabel, { color: colors.textMuted }]}>{t('editors.rdv.typeCategoryLife')}</Text>
+        <View style={styles.chipRow}>
+          {TYPE_KEYS.filter(tk => tk.category === 'life').map((opt) => (
             <Chip
               key={opt.value}
               label={t(`editors.rdv.typeOptions.${opt.key}`)}
@@ -217,13 +269,13 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
           ))}
         </View>
 
-        {/* Médecin */}
-        <Text style={[styles.label, { color: colors.textSub }]}>{t('editors.rdv.doctorLabel')}</Text>
+        {/* Contact (médecin / enseignant / responsable / contact) */}
+        <Text style={[styles.label, { color: colors.textSub }]}>{t(getContactLabelKey(typeRdv))}</Text>
         <TextInput
           style={inputStyle}
           value={médecin}
           onChangeText={setMédecin}
-          placeholder={t('editors.rdv.doctorPlaceholder')}
+          placeholder={t(getContactPlaceholderKey(typeRdv))}
           placeholderTextColor={colors.textFaint}
         />
 
@@ -240,12 +292,12 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
 
         {/* Questions à poser */}
         <View style={[styles.sectionDivider, { backgroundColor: colors.border }]} />
-        <Text style={[styles.sectionLabel, { color: colors.textSub }]}>{t('editors.rdv.questionsLabel')}</Text>
+        <Text style={[styles.sectionLabel, { color: colors.textSub }]}>{t(getQuestionsLabelKey(typeRdv))}</Text>
         <Text style={[styles.sectionHint, { color: colors.textMuted }]}>
-          {t('editors.rdv.questionsHint')}
+          {t(getQuestionsHintKey(typeRdv))}
         </Text>
 
-        {aiConfigured && (
+        {aiConfigured && canPrepareWithAI(typeRdv) && (
           <TouchableOpacity
             style={[styles.briefingBtn, { backgroundColor: tint, borderColor: primary }]}
             onPress={handleBriefing}
@@ -401,6 +453,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.md,
+  },
+  typeCategoryLabel: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.medium,
+    marginTop: Spacing.xs,
   },
   deleteBtn: {
     padding: 14,

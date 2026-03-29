@@ -523,7 +523,9 @@ Règles :
   return { text: deanonymize(resp.text, anonMap) };
 }
 
-/** Génère un briefing de préparation avant un RDV médical */
+const MEDICAL_RDV_TYPES = new Set(['pédiatre', 'vaccin', 'pmi', 'dentiste', 'urgences']);
+
+/** Génère un briefing de préparation avant un RDV (médical ou vie courante) */
 export async function generateRDVBriefing(
   config: AIConfig,
   rdv: { type_rdv: string; enfant: string; médecin: string; date_rdv: string },
@@ -538,36 +540,36 @@ export async function generateRDVBriefing(
   );
 
   const anonEnfant = anonymize(rdv.enfant, anonMap);
-  const anonMedecin = anonymize(rdv.médecin, anonMap);
-
-  // Construire le contexte santé
-  const healthRecord = vaultCtx.healthRecords?.find(h => h.enfant === rdv.enfant);
-  let healthContext = '';
-  if (healthRecord) {
-    const lastGrowth = healthRecord.croissance.slice(-1)[0];
-    const recentVaccins = healthRecord.vaccins.slice(-5);
-    const parts: string[] = [];
-    if (healthRecord.allergies.length > 0) parts.push(`Allergies : ${healthRecord.allergies.join(', ')}`);
-    if (healthRecord.medicamentsEnCours.length > 0) parts.push(`Médicaments en cours : ${healthRecord.medicamentsEnCours.join(', ')}`);
-    if (lastGrowth) parts.push(`Dernière mesure : ${lastGrowth.date} — ${lastGrowth.poids ? lastGrowth.poids + ' kg' : ''} ${lastGrowth.taille ? lastGrowth.taille + ' cm' : ''}`);
-    if (recentVaccins.length > 0) parts.push(`Derniers vaccins : ${recentVaccins.map(v => `${v.nom} (${v.date})`).join(', ')}`);
-    if (healthRecord.antecedents.length > 0) parts.push(`Antécédents : ${healthRecord.antecedents.join(', ')}`);
-    healthContext = anonymize(parts.join('\n'), anonMap);
-  }
+  const anonContact = anonymize(rdv.médecin, anonMap);
+  const isMedical = MEDICAL_RDV_TYPES.has(rdv.type_rdv);
 
   const enfantProfile = vaultCtx.profiles.find(p => p.name === rdv.enfant);
   const ageInfo = enfantProfile?.birthdate ? `Date de naissance : ${enfantProfile.birthdate}` : '';
 
-  const systemPrompt = `Tu es un assistant qui aide les parents à préparer un rendez-vous médical.
-Tu génères une liste de questions pertinentes à poser au médecin, basée sur le type de RDV, l'âge de l'enfant et son dossier santé.
+  let contextBlock = '';
+  let roleDescription = '';
+  let rulesBlock = '';
+  let userMessage = '';
 
-Rendez-vous : ${rdv.type_rdv} pour ${anonEnfant} avec ${anonMedecin}
-Date : ${rdv.date_rdv}
-${ageInfo ? anonymize(ageInfo, anonMap) : ''}
+  if (isMedical) {
+    // Contexte santé pour les RDV médicaux
+    const healthRecord = vaultCtx.healthRecords?.find(h => h.enfant === rdv.enfant);
+    if (healthRecord) {
+      const lastGrowth = healthRecord.croissance.slice(-1)[0];
+      const recentVaccins = healthRecord.vaccins.slice(-5);
+      const parts: string[] = [];
+      if (healthRecord.allergies.length > 0) parts.push(`Allergies : ${healthRecord.allergies.join(', ')}`);
+      if (healthRecord.medicamentsEnCours.length > 0) parts.push(`Médicaments en cours : ${healthRecord.medicamentsEnCours.join(', ')}`);
+      if (lastGrowth) parts.push(`Dernière mesure : ${lastGrowth.date} — ${lastGrowth.poids ? lastGrowth.poids + ' kg' : ''} ${lastGrowth.taille ? lastGrowth.taille + ' cm' : ''}`);
+      if (recentVaccins.length > 0) parts.push(`Derniers vaccins : ${recentVaccins.map(v => `${v.nom} (${v.date})`).join(', ')}`);
+      if (healthRecord.antecedents.length > 0) parts.push(`Antécédents : ${healthRecord.antecedents.join(', ')}`);
+      contextBlock = `Dossier santé :\n${anonymize(parts.join('\n'), anonMap)}`;
+    } else {
+      contextBlock = 'Pas de dossier santé disponible.';
+    }
 
-${healthContext ? `Dossier santé :\n${healthContext}` : 'Pas de dossier santé disponible.'}
-
-Règles :
+    roleDescription = 'Tu es un assistant qui aide les parents à préparer un rendez-vous médical.\nTu génères une liste de questions pertinentes à poser au médecin, basée sur le type de RDV, l\'âge de l\'enfant et son dossier santé.';
+    rulesBlock = `Règles :
 - Génère 5 à 8 questions pertinentes, numérotées
 - Adapte les questions au type de RDV et à l'âge de l'enfant
 - Inclus des rappels si des vaccins semblent en retard
@@ -575,9 +577,57 @@ Règles :
 - Sois concis, pratique, en français
 - Les noms utilisés sont des pseudonymes — utilise-les tels quels
 - Maximum 200 mots`;
+    userMessage = 'Prépare-moi pour ce rendez-vous médical.';
+  } else if (rdv.type_rdv === 'école') {
+    roleDescription = 'Tu es un assistant qui aide les parents à préparer une réunion scolaire (parents/profs, conseil de classe, etc.).\nTu génères une liste de questions et points à aborder avec l\'enseignant.';
+    rulesBlock = `Règles :
+- Génère 5 à 8 questions/points pertinents, numérotés
+- Adapte au niveau scolaire de l'enfant selon son âge
+- Couvre : résultats, comportement, intégration sociale, points forts/à améliorer, devoirs
+- Sois concis, pratique, en français
+- Les noms utilisés sont des pseudonymes — utilise-les tels quels
+- Maximum 200 mots`;
+    userMessage = 'Prépare-moi pour cette réunion scolaire.';
+  } else if (rdv.type_rdv === 'activité') {
+    roleDescription = 'Tu es un assistant qui aide les parents à préparer un rendez-vous lié à une activité extra-scolaire (sport, musique, danse, etc.).\nTu génères une liste de points à aborder avec le responsable.';
+    rulesBlock = `Règles :
+- Génère 4 à 6 points pertinents, numérotés
+- Couvre : progression, planning, équipement nécessaire, objectifs, comportement en groupe
+- Sois concis, pratique, en français
+- Les noms utilisés sont des pseudonymes — utilise-les tels quels
+- Maximum 150 mots`;
+    userMessage = 'Prépare-moi pour ce rendez-vous d\'activité.';
+  } else if (rdv.type_rdv === 'administratif') {
+    roleDescription = 'Tu es un assistant qui aide les parents à préparer un rendez-vous administratif (mairie, CAF, assurance, mutuelle, etc.).\nTu génères une liste de documents à préparer et points à vérifier.';
+    rulesBlock = `Règles :
+- Génère 5 à 8 points pertinents, numérotés
+- Couvre : documents à apporter, questions à poser, pièces justificatives, délais, démarches à prévoir
+- Sois concis, pratique, en français
+- Les noms utilisés sont des pseudonymes — utilise-les tels quels
+- Maximum 200 mots`;
+    userMessage = 'Prépare-moi pour ce rendez-vous administratif.';
+  } else {
+    roleDescription = 'Tu es un assistant qui aide les parents à préparer un rendez-vous.\nTu génères une liste de points à aborder ou questions à poser.';
+    rulesBlock = `Règles :
+- Génère 4 à 6 points pertinents, numérotés
+- Sois concis, pratique, en français
+- Les noms utilisés sont des pseudonymes — utilise-les tels quels
+- Maximum 150 mots`;
+    userMessage = 'Prépare-moi pour ce rendez-vous.';
+  }
+
+  const systemPrompt = `${roleDescription}
+
+Rendez-vous : ${rdv.type_rdv} pour ${anonEnfant} avec ${anonContact}
+Date : ${rdv.date_rdv}
+${ageInfo ? anonymize(ageInfo, anonMap) : ''}
+
+${contextBlock}
+
+${rulesBlock}`;
 
   const messages: AIMessage[] = [
-    { role: 'user', content: 'Prépare-moi pour ce rendez-vous médical.' },
+    { role: 'user', content: userMessage },
   ];
 
   const haikiConfig = { ...config, model: 'claude-haiku-4-5-20251001' };
