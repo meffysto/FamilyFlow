@@ -83,6 +83,8 @@ export interface Profile {
   farmCrops?: string;             // CSV cultures plantees (plotIndex:cropId:stage:tasks:date)
   farmBuildings?: import('../lib/mascot/types').PlacedBuilding[];  // Batiments places sur la grille
   farmInventory?: import('../lib/mascot/types').FarmInventory;     // Inventaire ressources (oeuf, lait, farine)
+  harvestInventory?: import('../lib/mascot/types').HarvestInventory;  // Recoltes brutes en stock
+  craftedItems?: import('../lib/mascot/types').CraftedItem[];         // Items craftes en inventaire
   points: number;
   coins: number;            // 🍃 Feuilles — monnaie dépensable (boutique)
   level: number;

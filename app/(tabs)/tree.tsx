@@ -164,7 +164,7 @@ export default function TreeScreen() {
   const [showItemPicker, setShowItemPicker] = useState(false);
 
   // Ferme
-  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome } = useFarm();
+  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted } = useFarm();
   const [showSeedPicker, setShowSeedPicker] = useState(false);
   const [selectedPlotIndex, setSelectedPlotIndex] = useState<number | null>(null);
   const [harvestBurst, setHarvestBurst] = useState<{ x: number; y: number; reward: number; cropId: string } | null>(null);
@@ -338,11 +338,13 @@ export default function TreeScreen() {
       const burstX = cell.x * SCREEN_W;
       const burstY = cell.y * (DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60);
       const cropDef = CROP_CATALOG.find(c => c.id === crop.cropId);
-      harvest(profile.id, cellIdx).then((reward) => {
-        if (reward > 0) {
-          setHarvestBurst({ x: burstX, y: burstY, reward, cropId: crop.cropId });
-          const emoji = cropDef?.emoji ?? '🌾';
-          showToast(`${emoji} +${reward} 🍃 récolté !`);
+      harvest(profile.id, cellIdx).then((result) => {
+        if (result) {
+          const harvestedCropDef = CROP_CATALOG.find(c => c.id === result.cropId);
+          const displayReward = harvestedCropDef?.harvestReward ?? 0;
+          setHarvestBurst({ x: burstX, y: burstY, reward: displayReward, cropId: result.cropId });
+          const emoji = harvestedCropDef?.emoji ?? '🌾';
+          showToast(`${emoji} ${result.cropId} récolté !`);
         }
       });
     } else if (crop) {

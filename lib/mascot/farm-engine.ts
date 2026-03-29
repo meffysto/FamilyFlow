@@ -101,24 +101,22 @@ export function advanceFarmCrops(
 
 /**
  * Recolter une culture mature.
- * Retourne les cultures mises a jour (sans la recoltee) + la recompense.
+ * Retourne les cultures mises a jour (sans la recoltee) + l'id de la culture recoltee.
+ * Le reward n'est plus calcule ici — c'est le caller qui decide (inventaire ou vente directe).
  */
 export function harvestCrop(
   crops: PlantedCrop[],
   plotIndex: number,
-): { crops: PlantedCrop[]; reward: number } {
+): { crops: PlantedCrop[]; harvestedCropId: string | null; isGolden: boolean } {
   const crop = crops.find(c => c.plotIndex === plotIndex);
   if (!crop || crop.currentStage < MAX_CROP_STAGE) {
-    return { crops, reward: 0 };
+    return { crops, harvestedCropId: null, isGolden: false };
   }
-
-  const cropDef = CROP_CATALOG.find(c => c.id === crop.cropId);
-  const baseReward = cropDef?.harvestReward ?? 0;
-  const reward = crop.isGolden ? baseReward * GOLDEN_HARVEST_MULTIPLIER : baseReward;
 
   return {
     crops: crops.filter(c => c.plotIndex !== plotIndex),
-    reward,
+    harvestedCropId: crop.cropId,
+    isGolden: crop.isGolden ?? false,
   };
 }
 

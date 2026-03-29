@@ -49,6 +49,7 @@ import {
 import { VALID_THEMES, type ProfileTheme } from '../constants/themes';
 import { parseEmplacementFromHeader, LEGACY_BEBE_SECTIONS, type EmplacementId } from '../constants/stock';
 import { parseBuildings, parseInventory } from './mascot/building-engine';
+import { parseHarvestInventory, parseCraftedItems } from './mascot/craft-engine';
 
 // ─── Task parsing ───────────────────────────────────────────────────────────
 
@@ -572,6 +573,8 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
       // Migration backward-compatible : ancien format CSV simple → nouveau format PlacedBuilding
       const farmBuildings = parseBuildings(currentProps.farm_buildings);
       const farmInventory = parseInventory(currentProps.farm_inventory);
+      const harvestInventory = parseHarvestInventory(currentProps.farm_harvest_inventory);
+      const craftedItems = parseCraftedItems(currentProps.farm_crafted_items);
       profiles.push({
         id: currentId,
         name: currentProps.name,
@@ -591,6 +594,8 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
         farmCrops,
         farmBuildings,
         farmInventory,
+        harvestInventory,
+        craftedItems,
       });
     }
   };

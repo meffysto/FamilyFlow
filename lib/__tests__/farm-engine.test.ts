@@ -139,21 +139,23 @@ describe('advanceFarmCrops', () => {
 // ─── harvestCrop ─────────────────────────────────────────────────────────────
 
 describe('harvestCrop', () => {
-  it('récolte une culture mature et retourne sa récompense', () => {
+  it('récolte une culture mature et retourne le cropId', () => {
     const crops: PlantedCrop[] = [
       { cropId: 'carrot', plotIndex: 0, currentStage: 4, tasksCompleted: 0, plantedAt: '2026-01-01' },
     ];
     const result = harvestCrop(crops, 0);
     expect(result.crops).toHaveLength(0);
-    expect(result.reward).toBe(25); // harvestReward carrot = 25
+    expect(result.harvestedCropId).toBe('carrot');
+    expect(result.isGolden).toBe(false);
   });
 
-  it('retourne reward * GOLDEN_HARVEST_MULTIPLIER pour une culture dorée', () => {
+  it('retourne isGolden=true pour une culture dorée', () => {
     const crops: PlantedCrop[] = [
       { cropId: 'carrot', plotIndex: 0, currentStage: 4, tasksCompleted: 0, plantedAt: '2026-01-01', isGolden: true },
     ];
     const result = harvestCrop(crops, 0);
-    expect(result.reward).toBe(25 * GOLDEN_HARVEST_MULTIPLIER); // 25 * 5 = 125
+    expect(result.harvestedCropId).toBe('carrot');
+    expect(result.isGolden).toBe(true);
   });
 
   it('ne récolte pas une culture non-mature (stade < 4)', () => {
@@ -162,12 +164,12 @@ describe('harvestCrop', () => {
     ];
     const result = harvestCrop(crops, 0);
     expect(result.crops).toHaveLength(1); // culture conservée
-    expect(result.reward).toBe(0);
+    expect(result.harvestedCropId).toBeNull();
   });
 
-  it('retourne reward=0 si la parcelle est vide', () => {
+  it('retourne harvestedCropId=null si la parcelle est vide', () => {
     const result = harvestCrop([], 0);
-    expect(result.reward).toBe(0);
+    expect(result.harvestedCropId).toBeNull();
   });
 });
 
