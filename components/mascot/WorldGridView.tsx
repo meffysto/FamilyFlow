@@ -291,7 +291,7 @@ export function WorldGridView({
     : [];
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+    <View style={[StyleSheet.absoluteFill, { zIndex: 3 }]} pointerEvents="box-none">
       {/* Cellules de culture debloquees */}
       {unlockedCrops.map(cell => {
         // Mapper l'ancien plotIndex sur le cellId

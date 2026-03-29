@@ -686,6 +686,18 @@ export default function TreeScreen() {
               groundHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
             />
 
+            {/* Couche 3 : Grille monde (cultures + batiments) */}
+            <WorldGridView
+              treeStage={stageInfo.stage}
+              farmCropsCSV={profile.farmCrops ?? ''}
+              ownedBuildings={profile.farmBuildings ?? []}
+              containerWidth={SCREEN_W}
+              containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
+              techBonuses={techBonuses}
+              onCropPlotPress={isOwnTree ? handleCropCellPress : undefined}
+              onBuildingCellPress={isOwnTree ? handleBuildingCellPress : undefined}
+            />
+
             {/* Couche saisonnières : particules emoji selon la saison */}
             <View style={{ ...StyleSheet.absoluteFillObject, zIndex: 4 }} pointerEvents="none">
               <SeasonalParticles
@@ -699,7 +711,21 @@ export default function TreeScreen() {
               <AmbientParticles containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60} />
             </View>
 
-            {/* Couche 3 : Arbre pixel + animaux */}
+            {/* Harvest Burst animation */}
+            {harvestBurst && (
+              <HarvestBurst
+                x={harvestBurst.x}
+                y={harvestBurst.y}
+                reward={harvestBurst.reward}
+                cropColor={CROP_COLORS[harvestBurst.cropId] ?? '#FFD700'}
+                onComplete={() => setHarvestBurst(null)}
+              />
+            )}
+
+            {/* Crop Whisper tooltip */}
+            {whisperInfo && <CropWhisper whisperInfo={whisperInfo} stageInfo={stageInfo} stageIdx={stageIdx} />}
+
+            {/* Couche 4 : Arbre pixel au premier plan */}
             <View style={styles.treeOverlay} pointerEvents="box-none">
               <TreeView
                 species={species}
@@ -720,32 +746,6 @@ export default function TreeScreen() {
                 </Animated.View>
               )}
             </View>
-
-            {/* Couche 5 : Grille monde (cultures + batiments) — au-dessus du tree pour les taps */}
-            <WorldGridView
-              treeStage={stageInfo.stage}
-              farmCropsCSV={profile.farmCrops ?? ''}
-              ownedBuildings={profile.farmBuildings ?? []}
-              containerWidth={SCREEN_W}
-              containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
-              techBonuses={techBonuses}
-              onCropPlotPress={isOwnTree ? handleCropCellPress : undefined}
-              onBuildingCellPress={isOwnTree ? handleBuildingCellPress : undefined}
-            />
-
-            {/* Harvest Burst animation */}
-            {harvestBurst && (
-              <HarvestBurst
-                x={harvestBurst.x}
-                y={harvestBurst.y}
-                reward={harvestBurst.reward}
-                cropColor={CROP_COLORS[harvestBurst.cropId] ?? '#FFD700'}
-                onComplete={() => setHarvestBurst(null)}
-              />
-            )}
-
-            {/* Crop Whisper tooltip */}
-            {whisperInfo && <CropWhisper whisperInfo={whisperInfo} stageInfo={stageInfo} stageIdx={stageIdx} />}
 
           </View>
         </Animated.View>
@@ -1119,6 +1119,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingBottom: Spacing.md,
     alignItems: 'center',
+    zIndex: 2,
   },
   sagaSceneElement: {
     position: 'absolute',
