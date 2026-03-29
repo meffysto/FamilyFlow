@@ -146,10 +146,11 @@ Plans:
 **Goal:** Chaque profil a son propre fichier gamification (gami-{id}.md) pour éliminer les conflits d'écriture multi-device via iCloud
 **Requirements**: ARCH-02
 **Depends on:** Phase 8
-**Plans:** 0 plans
+**Plans:** 2 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 08.1 to break down)
+- [ ] 08.1-01-PLAN.md — Migrer vault.ts, useFarm, useGamification, SettingsGamification vers gami-{id}.md per-profil
+- [ ] 08.1-02-PLAN.md — Migrer useVault.ts (27 sites) + migration automatique gamification.md + merged read
 
 #### Phase 9: Cadeaux Familiaux
 **Goal**: Les membres de la famille peuvent s'envoyer des récoltes et items craftés, renforçant la dimension coopérative et la motivation partagée
@@ -177,4 +178,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 6. Bâtiments Productifs | v1.1 | 0/2 | Planned | - |
 | 7. Craft | v1.1 | 2/2 | Complete   | 2026-03-29 |
 | 8. Progression Ferme | v1.1 | 0/2 | Planned | - |
+| 8.1 Split Gamification | v1.1 | 0/2 | Planned | - |
 | 9. Cadeaux Familiaux | v1.1 | 0/TBD | Not started | - |
