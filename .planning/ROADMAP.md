@@ -120,11 +120,11 @@ Plans:
   2. Un catalogue liste toutes les recettes disponibles avec les ingrédients exacts requis — l'utilisateur sait quoi cultiver
   3. Un item crafté attribue plus d'XP qu'une récolte brute équivalente — la différence est visible dans le résumé de récompense
   4. Les items craftés sont persistés dans le vault et apparaissent dans l'inventaire du profil
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 07-01-PLAN.md — Types craft + craft-engine + refactoring harvestCrop inventaire + parser + useFarm
-- [ ] 07-02-PLAN.md — CraftSheet UI (Atelier bottom sheet) + integration tree.tsx + i18n
+- [x] 07-02-PLAN.md — CraftSheet UI (Atelier bottom sheet) + integration tree.tsx + i18n
 
 #### Phase 8: Progression Ferme
 **Goal**: Un arbre de technologies ferme débloque des améliorations et de nouvelles zones, donnant une direction claire à la progression long terme
@@ -161,6 +161,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 4. Ambiance + Retention | v1.0 | 2/2 | Complete | 2026-03-28 |
 | 5. Visuels Ferme | v1.1 | 3/3 | Complete   | 2026-03-28 |
 | 6. Bâtiments Productifs | v1.1 | 0/2 | Planned | - |
-| 7. Craft | v1.1 | 0/2 | Planned | - |
+| 7. Craft | v1.1 | 2/2 | Complete   | 2026-03-29 |
 | 8. Progression Ferme | v1.1 | 0/TBD | Not started | - |
 | 9. Cadeaux Familiaux | v1.1 | 0/TBD | Not started | - |

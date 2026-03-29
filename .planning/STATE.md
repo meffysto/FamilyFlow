@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
-status: executing
-stopped_at: Completed 07-01-PLAN.md
-last_updated: "2026-03-29T19:43:14.718Z"
+status: verifying
+stopped_at: Completed 07-02-PLAN.md
+last_updated: "2026-03-29T20:11:13.209Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 7
-  completed_plans: 6
+  completed_plans: 7
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 
 Phase: 07 (craft) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-29
 
 Progress: [░░░░░░░░░░] 0%
@@ -53,6 +53,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06-batiments-productifs P01 | 25 | 2 tasks | 11 files |
 | Phase 06-batiments-productifs P02 | 10min | 2 tasks | 12 files |
 | Phase 07-craft P01 | 5min | 2 tasks | 9 files |
+| Phase 07-craft P02 | 15min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,8 @@ Recent decisions affecting current work:
 - [Phase 06-02]: TreeShop garde string[] via .map(b => b.buildingId) pour retrocompat sans modifier TreeShop
 - [Phase 07-craft]: harvestCrop ne donne plus de feuilles directement — les recoltes vont en inventaire pour permettre craft ou vente
 - [Phase 07-craft]: writeProfileFields() atomique pour ecrire plusieurs champs famille.md en une seule operation (evite race conditions)
+- [Phase 07-craft]: CraftSheet suit le pattern TreeShop (Modal pageSheet + tabs Chip) pour coherence UI
+- [Phase 07-craft]: Valeurs craft reequilibrees : gateau 580, omelette 520, ressources batiments augmentees
 
 ### Pending Todos
 
@@ -88,6 +91,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T19:43:14.715Z
-Stopped at: Completed 07-01-PLAN.md
+Last session: 2026-03-29T20:11:13.206Z
+Stopped at: Completed 07-02-PLAN.md
 Resume file: None
