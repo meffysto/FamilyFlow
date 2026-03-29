@@ -38,56 +38,56 @@ export const TECH_TREE: TechNode[] = [
   {
     id: 'culture-1', branch: 'culture', order: 1,
     labelKey: 'tech.culture-1', descriptionKey: 'tech.culture-1_desc',
-    emoji: '🧪', cost: 100, requires: null,
+    emoji: '🧪', cost: 750, requires: null,
   },
   {
     id: 'culture-2', branch: 'culture', order: 2,
     labelKey: 'tech.culture-2', descriptionKey: 'tech.culture-2_desc',
-    emoji: '🌾', cost: 250, requires: 'culture-1',
+    emoji: '🌾', cost: 2000, requires: 'culture-1',
   },
   {
     id: 'culture-3', branch: 'culture', order: 3,
     labelKey: 'tech.culture-3', descriptionKey: 'tech.culture-3_desc',
-    emoji: '🌻', cost: 500, requires: 'culture-2',
+    emoji: '🌻', cost: 4000, requires: 'culture-2',
   },
   {
     id: 'culture-4', branch: 'culture', order: 4,
     labelKey: 'tech.culture-4', descriptionKey: 'tech.culture-4_desc',
-    emoji: '👑', cost: 1000, requires: 'culture-3',
+    emoji: '👑', cost: 7500, requires: 'culture-3',
   },
 
   // Branche Elevage — production batiments
   {
     id: 'elevage-1', branch: 'elevage', order: 1,
     labelKey: 'tech.elevage-1', descriptionKey: 'tech.elevage-1_desc',
-    emoji: '🌿', cost: 100, requires: null,
+    emoji: '🌿', cost: 750, requires: null,
   },
   {
     id: 'elevage-2', branch: 'elevage', order: 2,
     labelKey: 'tech.elevage-2', descriptionKey: 'tech.elevage-2_desc',
-    emoji: '🏠', cost: 250, requires: 'elevage-1',
+    emoji: '🏠', cost: 2000, requires: 'elevage-1',
   },
   {
     id: 'elevage-3', branch: 'elevage', order: 3,
     labelKey: 'tech.elevage-3', descriptionKey: 'tech.elevage-3_desc',
-    emoji: '🍯', cost: 500, requires: 'elevage-2',
+    emoji: '🍯', cost: 5000, requires: 'elevage-2',
   },
 
   // Branche Expansion — nouvelles parcelles
   {
     id: 'expansion-1', branch: 'expansion', order: 1,
     labelKey: 'tech.expansion-1', descriptionKey: 'tech.expansion-1_desc',
-    emoji: '🏗️', cost: 100, requires: null,
+    emoji: '🔨', cost: 1000, requires: null,
   },
   {
     id: 'expansion-2', branch: 'expansion', order: 2,
     labelKey: 'tech.expansion-2', descriptionKey: 'tech.expansion-2_desc',
-    emoji: '🔨', cost: 250, requires: 'expansion-1',
+    emoji: '🏗️', cost: 3000, requires: 'expansion-1',
   },
   {
     id: 'expansion-3', branch: 'expansion', order: 3,
     labelKey: 'tech.expansion-3', descriptionKey: 'tech.expansion-3_desc',
-    emoji: '⭐', cost: 500, requires: 'expansion-2',
+    emoji: '⭐', cost: 7500, requires: 'expansion-2',
   },
 ];
 
@@ -186,10 +186,10 @@ export function getTechBonuses(unlockedTechs: string[]): TechBonuses {
 
       // Expansion
       case 'expansion-1':
-        bonuses.extraCropCells = 5;
+        bonuses.extraBuildingCells = 1;
         break;
       case 'expansion-2':
-        bonuses.extraBuildingCells = 1;
+        bonuses.extraCropCells = 5;
         break;
       case 'expansion-3':
         bonuses.hasLargeCropCell = true;
