@@ -3951,5 +3951,28 @@
       "winter": "Pas de bonus en hiver"
     },
     "seedDrop": "Graines gratuites !"
+  },
+  "craft": {
+    "atelier": "Atelier",
+    "catalogue": "Recettes",
+    "mesCreations": "Mes creations",
+    "inventaire": "Inventaire",
+    "crafter": "Crafter",
+    "vendre": "Vendre",
+    "ingredients": "Ingredients",
+    "manque": "Manque",
+    "disponible": "Disponible",
+    "aucuneRecette": "Aucune recette disponible",
+    "aucunItem": "Aucun item crafte",
+    "aucuneRecolte": "Aucune recolte en stock",
+    "craftReussi": "{{emoji}} {{name}} crafte !",
+    "venteReussie": "+{{amount}} 🍃",
+    "valeurVente": "Vente : {{amount}} 🍃",
+    "recipe": {
+      "confiture": "Confiture de fraises",
+      "gateau": "Gateau fermier",
+      "omelette": "Omelette fermiere",
+      "bouquet": "Bouquet champetre"
+    }
   }
 }

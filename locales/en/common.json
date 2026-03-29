@@ -3951,5 +3951,28 @@
       "winter": "No bonus in winter"
     },
     "seedDrop": "Free seeds!"
+  },
+  "craft": {
+    "atelier": "Workshop",
+    "catalogue": "Recipes",
+    "mesCreations": "My Creations",
+    "inventaire": "Inventory",
+    "crafter": "Craft",
+    "vendre": "Sell",
+    "ingredients": "Ingredients",
+    "manque": "Missing",
+    "disponible": "Available",
+    "aucuneRecette": "No recipe available",
+    "aucunItem": "No crafted item",
+    "aucuneRecolte": "No harvest in stock",
+    "craftReussi": "{{emoji}} {{name}} crafted!",
+    "venteReussie": "+{{amount}} 🍃",
+    "valeurVente": "Sell: {{amount}} 🍃",
+    "recipe": {
+      "confiture": "Strawberry Jam",
+      "gateau": "Farm Cake",
+      "omelette": "Farm Omelette",
+      "bouquet": "Country Bouquet"
+    }
   }
 }

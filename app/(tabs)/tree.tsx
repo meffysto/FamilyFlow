@@ -43,6 +43,7 @@ import { TreeShop } from '../../components/mascot/TreeShop';
 import { PixelDiorama, PIXEL_GROUND, PIXEL_GROUND_DARK } from '../../components/mascot/PixelDiorama';
 import { WorldGridView, FarmStats } from '../../components/mascot/WorldGridView';
 import { BuildingShopSheet } from '../../components/mascot/BuildingShopSheet';
+import { CraftSheet } from '../../components/mascot/CraftSheet';
 import { BuildingDetailSheet } from '../../components/mascot/BuildingDetailSheet';
 import { WeeklyGoal, countWeeklyTasks } from '../../components/mascot/WeeklyGoal';
 import { useFarm } from '../../hooks/useFarm';
@@ -169,6 +170,9 @@ export default function TreeScreen() {
   const [selectedPlotIndex, setSelectedPlotIndex] = useState<number | null>(null);
   const [harvestBurst, setHarvestBurst] = useState<{ x: number; y: number; reward: number; cropId: string } | null>(null);
   const [whisperInfo, setWhisperInfo] = useState<{ cellId: string; stage: number; cropId: string } | null>(null);
+
+  // Craft
+  const [showCraftSheet, setShowCraftSheet] = useState(false);
 
   // Batiments productifs
   const [showBuildingShop, setShowBuildingShop] = useState(false);
@@ -806,6 +810,16 @@ export default function TreeScreen() {
                   {'🛒 ' + t('mascot.shop.title')}
                 </Text>
               </TouchableOpacity>
+              {/* Bouton Atelier craft */}
+              <TouchableOpacity
+                style={[styles.shopBtn, { backgroundColor: tint, borderColor: primary }]}
+                onPress={() => setShowCraftSheet(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.shopBtnText, { color: primary }]}>
+                  {'🔨 ' + t('craft.atelier')}
+                </Text>
+              </TouchableOpacity>
               {/* Bouton décorer : visible si des items sont achetés */}
               {(allDecoIds.length + allHabIds.length) > 0 && !placingItem && (
                 <TouchableOpacity
@@ -955,6 +969,20 @@ export default function TreeScreen() {
           onClose={() => setShowShop(false)}
         />
       </Modal>
+
+      {/* Atelier craft */}
+      <CraftSheet
+        visible={showCraftSheet}
+        onClose={() => setShowCraftSheet(false)}
+        profileId={profile?.id ?? ''}
+        coins={profile?.coins ?? 0}
+        harvestInventory={profile?.harvestInventory ?? {}}
+        farmInventory={profile?.farmInventory ?? { oeuf: 0, lait: 0, farine: 0 }}
+        craftedItems={profile?.craftedItems ?? []}
+        onCraft={(recipeId) => craft(profile!.id, recipeId)}
+        onSellHarvest={(cropId) => sellHarvest(profile!.id, cropId)}
+        onSellCrafted={(recipeId) => sellCrafted(profile!.id, recipeId)}
+      />
 
       {/* Bottom sheet construction batiment */}
       <BuildingShopSheet
