@@ -50,6 +50,7 @@ import { VALID_THEMES, type ProfileTheme } from '../constants/themes';
 import { parseEmplacementFromHeader, LEGACY_BEBE_SECTIONS, type EmplacementId } from '../constants/stock';
 import { parseBuildings, parseInventory } from './mascot/building-engine';
 import { parseHarvestInventory, parseCraftedItems } from './mascot/craft-engine';
+import type { CompanionData, CompanionSpecies, CompanionMood } from './mascot/companion-types';
 
 // ─── Task parsing ───────────────────────────────────────────────────────────
 
@@ -524,6 +525,37 @@ export function serializeMeals(meals: MealItem[]): string {
 // ─── famille.md ─────────────────────────────────────────────────────────────
 
 /**
+ * Parse le champ companion d'un profil famille.md.
+ * Format CSV : "activeSpecies:name:unlocked1|unlocked2:mood"
+ * Exemple : "chat:Mimi:chat|lapin:content"
+ * Retourne null si la valeur est vide ou invalide.
+ */
+export function parseCompanion(raw: string | undefined): CompanionData | null {
+  if (!raw || !raw.trim()) return null;
+  const parts = raw.trim().split(':');
+  if (parts.length < 2) return null;
+  const activeSpecies = parts[0] as CompanionSpecies;
+  const name = parts[1] || '';
+  const unlockedRaw = parts[2] || activeSpecies;
+  const mood = (parts[3] as CompanionMood) || 'content';
+  return {
+    activeSpecies,
+    name,
+    unlockedSpecies: unlockedRaw.split('|') as CompanionSpecies[],
+    mood,
+  };
+}
+
+/**
+ * Sérialise un CompanionData en chaîne CSV pour famille.md.
+ * Format : "activeSpecies:name:unlocked1|unlocked2:mood"
+ */
+export function serializeCompanion(data: CompanionData): string {
+  const unlocked = data.unlockedSpecies.join('|');
+  return `${data.activeSpecies}:${data.name}:${unlocked}:${data.mood}`;
+}
+
+/**
  * Parse famille.md custom format:
  *
  * ```
@@ -577,6 +609,8 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
       const craftedItems = parseCraftedItems(currentProps.farm_crafted_items);
       const farmTechRaw = currentProps.farm_tech ?? '';
       const farmTech = farmTechRaw ? farmTechRaw.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+      // Compagnon mascotte — backward-compatible : undefined si absent du fichier
+      const companion = parseCompanion(currentProps.companion);
       profiles.push({
         id: currentId,
         name: currentProps.name,
@@ -599,6 +633,7 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
         harvestInventory,
         craftedItems,
         farmTech,
+        ...(companion !== null ? { companion } : {}),
       });
     }
   };
