@@ -8,7 +8,7 @@
  * - Sélecteur d'espèce (si première fois ou via bouton)
  */
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ import {
   ImageSourcePropType,
   Alert,
 } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -51,7 +52,18 @@ import { WeeklyGoal, countWeeklyTasks } from '../../components/mascot/WeeklyGoal
 import { useFarm } from '../../hooks/useFarm';
 import { SunriseReport, type SunriseResource } from '../../components/mascot/SunriseReport';
 import { BadgesSheet } from '../../components/mascot/BadgesSheet';
+import { CompanionPicker } from '../../components/mascot/CompanionPicker';
 import { getPendingResources } from '../../lib/mascot/building-engine';
+import {
+  COMPANION_UNLOCK_LEVEL,
+  type CompanionData,
+  type CompanionSpecies,
+} from '../../lib/mascot/companion-types';
+import {
+  getCompanionStage,
+  getCompanionMood,
+  pickCompanionMessage,
+} from '../../lib/mascot/companion-engine';
 import * as SecureStore from 'expo-secure-store';
 import { type PlantedCrop, type PlacedBuilding, CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
 import { hasCropSeasonalBonus, parseCrops, getAvailableCrops } from '../../lib/mascot/farm-engine';
@@ -159,7 +171,7 @@ export default function TreeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { primary, tint, colors, isDark } = useThemeColors();
-  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem, unplaceMascotItem, gamiData } = useVault();
+  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem, unplaceMascotItem, gamiData, setCompanion } = useVault();
   const { showToast } = useToast();
 
   // Profil affiché : celui passé en param ou le profil actif
@@ -202,6 +214,11 @@ export default function TreeScreen() {
     return getTechBonuses(profile?.farmTech ?? []);
   }, [profile?.farmTech]);
 
+  // Compagnon mascotte
+  const [showCompanionPicker, setShowCompanionPicker] = useState(false);
+  const [companionMessage, setCompanionMessage] = useState<string | null>(null);
+  const companionPickerShownRef = useRef(false);
+
   // Batiments productifs
   const [showBuildingShop, setShowBuildingShop] = useState(false);
   const [showBuildingDetail, setShowBuildingDetail] = useState(false);
@@ -218,6 +235,85 @@ export default function TreeScreen() {
     });
   }, [profile?.id]);
   const activeSaga = sagaProgress ? getSagaById(sagaProgress.sagaId) : null;
+
+  // Compagnon — données et logique
+  const companion = activeProfile?.companion ?? null;
+
+  const recentTasksCount = useMemo(() => {
+    if (!gamiData || !activeProfile) return 0;
+    const today = new Date().toISOString().slice(0, 10);
+    return (gamiData.history ?? []).filter(
+      (e: any) => e.profileId === activeProfile.id && e.timestamp?.slice(0, 10) === today
+    ).length;
+  }, [gamiData, activeProfile]);
+
+  const hoursSinceLastActivity = useMemo(() => {
+    if (!gamiData || !activeProfile) return 0;
+    const history = (gamiData.history ?? []).filter((e: any) => e.profileId === activeProfile.id);
+    if (history.length === 0) return 0;
+    const lastEntry = history[history.length - 1];
+    if (!lastEntry.timestamp) return 0;
+    const diffMs = Date.now() - new Date(lastEntry.timestamp).getTime();
+    return diffMs / (1000 * 60 * 60);
+  }, [gamiData, activeProfile]);
+
+  const companionStage = companion && activeProfile ? getCompanionStage(calculateLevel(activeProfile.points ?? 0)) : undefined;
+  const companionMood = companion ? getCompanionMood(recentTasksCount, hoursSinceLastActivity) : undefined;
+
+  // Déclencher le picker au niveau COMPANION_UNLOCK_LEVEL sans compagnon (par session)
+  useEffect(() => {
+    if (!activeProfile || companionPickerShownRef.current) return;
+    if (calculateLevel(activeProfile.points ?? 0) >= COMPANION_UNLOCK_LEVEL && !activeProfile.companion) {
+      companionPickerShownRef.current = true;
+      setShowCompanionPicker(true);
+    }
+  }, [activeProfile?.id]);
+
+  // Handler de sélection du compagnon
+  const handleCompanionSelect = useCallback(async (species: CompanionSpecies, name: string) => {
+    if (!activeProfile) return;
+    const newCompanion: CompanionData = {
+      activeSpecies: species,
+      name,
+      unlockedSpecies: [species],
+      mood: 'content',
+    };
+    await setCompanion(activeProfile.id, newCompanion);
+    setShowCompanionPicker(false);
+  }, [activeProfile, setCompanion]);
+
+  // Handler tap sur le compagnon — affiche message greeting
+  const handleCompanionTap = useCallback(() => {
+    if (!companion || !activeProfile) return;
+    const context = {
+      profileName: activeProfile.name,
+      companionName: companion.name,
+      companionSpecies: companion.activeSpecies,
+      tasksToday: recentTasksCount,
+      streak: activeProfile.streak ?? 0,
+      level: calculateLevel(activeProfile.points ?? 0),
+    };
+    const msgKey = pickCompanionMessage('greeting', context);
+    setCompanionMessage(t(msgKey, context));
+    setTimeout(() => setCompanionMessage(null), 4000);
+  }, [companion, activeProfile, recentTasksCount, t]);
+
+  // Message de bienvenue au focus
+  useFocusEffect(useCallback(() => {
+    if (!companion || !activeProfile) return;
+    const context = {
+      profileName: activeProfile.name,
+      companionName: companion.name,
+      companionSpecies: companion.activeSpecies,
+      tasksToday: recentTasksCount,
+      streak: activeProfile.streak ?? 0,
+      level: calculateLevel(activeProfile.points ?? 0),
+    };
+    const msgKey = pickCompanionMessage('greeting', context);
+    setCompanionMessage(t(msgKey, context));
+    const timer = setTimeout(() => setCompanionMessage(null), 4000);
+    return () => clearTimeout(timer);
+  }, [companion?.activeSpecies, activeProfile?.id]));
 
   // Collecter le revenu passif des batiments a l'ouverture + sunrise report
   useEffect(() => {
@@ -821,8 +917,6 @@ export default function TreeScreen() {
 
             {/* Couche 4 : Arbre pixel au premier plan */}
             <View style={styles.treeOverlay} pointerEvents="box-none">
-              {/* TODO: Zone compagnon animal — sera rendu ici a cote de l'arbre */}
-              {/* <PetCompanion pet={profile.pet} position={{ x: 0.3, y: 0.7 }} /> */}
               <TreeView
                 species={species}
                 level={level}
@@ -834,6 +928,11 @@ export default function TreeScreen() {
                 placements={profile.mascotPlacements ?? {}}
                 placingItem={placingItem}
                 onSlotSelect={handleSlotSelect}
+                companion={companion}
+                companionStage={companionStage}
+                companionMood={companionMood}
+                companionMessage={companionMessage}
+                onCompanionTap={handleCompanionTap}
               />
               {/* Élément visuel temporaire de la saga active */}
               {activeSaga && (
@@ -912,6 +1011,18 @@ export default function TreeScreen() {
                   {'Badges'}
                 </Text>
               </TouchableOpacity>
+              {companion && (
+                <TouchableOpacity
+                  style={[styles.toolBtn, { backgroundColor: tint, borderColor: primary }]}
+                  onPress={() => setShowCompanionPicker(true)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.toolBtnIcon}>{'🐾'}</Text>
+                  <Text style={[styles.toolBtnLabel, { color: primary }]}>
+                    {companion.name}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
             )}
 
@@ -1073,6 +1184,15 @@ export default function TreeScreen() {
         onClose={() => setShowBadges(false)}
         profile={profile}
         gamiData={gamiData ?? { profiles: [], history: [], activeRewards: [] }}
+      />
+
+      {/* Modal compagnon — choix initial ou switch */}
+      <CompanionPicker
+        visible={showCompanionPicker}
+        onClose={() => setShowCompanionPicker(false)}
+        onSelect={handleCompanionSelect}
+        unlockedSpecies={companion?.unlockedSpecies ?? []}
+        isInitialChoice={!companion}
       />
 
       {/* Rapport du matin */}

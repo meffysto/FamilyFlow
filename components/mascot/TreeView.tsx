@@ -45,6 +45,8 @@ import {
   SCENE_SLOTS,
   ITEM_ILLUSTRATIONS,
 } from '../../lib/mascot/types';
+import { CompanionSlot } from './CompanionSlot';
+import type { CompanionData, CompanionStage, CompanionMood } from '../../lib/mascot/companion-types';
 import { NativePlacedItems } from './NativePlacedItems';
 import { NativePlacementSlots } from './NativePlacementSlots';
 import {
@@ -77,6 +79,12 @@ interface TreeViewProps {
   placements?: Record<string, string>;  // slotId → itemId (items placés sur la scène)
   placingItem?: string | null;          // itemId en cours de placement (active le mode placement)
   onSlotSelect?: (slotId: string) => void;  // callback quand l'utilisateur tape un slot
+  // Compagnon mascotte
+  companion?: CompanionData | null;
+  companionStage?: CompanionStage;
+  companionMood?: CompanionMood;
+  companionMessage?: string | null;
+  onCompanionTap?: () => void;
 }
 
 // ── Constantes géométrie ───────────────────────
@@ -177,7 +185,7 @@ function getPixelShadowSprite(species: TreeSpecies, stage: TreeStage): any {
 
 // ── Composant principal ────────────────────────
 
-function TreeViewInner({ species, level, size = 200, showGround = true, interactive = true, decorations = [], inhabitants = [], previewMode = false, season: seasonProp, placements = {}, placingItem = null, onSlotSelect }: TreeViewProps) {
+function TreeViewInner({ species, level, size = 200, showGround = true, interactive = true, decorations = [], inhabitants = [], previewMode = false, season: seasonProp, placements = {}, placingItem = null, onSlotSelect, companion = null, companionStage = 'bebe', companionMood = 'content', companionMessage = null, onCompanionTap }: TreeViewProps) {
   const stage = getTreeStage(level);
   const progress = getStageProgress(level);
   const stageIdx = getStageIndex(level);
@@ -387,6 +395,21 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
             </View>
           );
         })()}
+        {/* Compagnon mascotte — rendu après les inhabitants pour apparaître au premier plan */}
+        {companion && animate && (
+          <View style={[StyleSheet.absoluteFill, { zIndex: 15 }]} pointerEvents="box-none">
+            <CompanionSlot
+              species={companion.activeSpecies}
+              stage={companionStage}
+              mood={companionMood}
+              name={companion.name}
+              message={companionMessage}
+              onTap={onCompanionTap ?? (() => {})}
+              containerWidth={size}
+              containerHeight={imgHeight}
+            />
+          </View>
+        )}
       </View>
     );
   }
