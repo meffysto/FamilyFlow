@@ -213,7 +213,10 @@ function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, containerW
 
   return (
     <Animated.View style={[{ position: 'absolute', left, top, width: size, height: size }, animStyle]}>
-      <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={styles.buildingCell}>
+      <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={[
+        styles.buildingCell,
+        placedBuilding && styles.buildingCellPlaced,
+      ]}>
         {placedBuilding ? (
           <>
             <Image
@@ -518,6 +521,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1.5,
     borderColor: 'rgba(139, 92, 246, 0.3)',
+  },
+  buildingCellPlaced: {
+    backgroundColor: 'transparent',
+    borderColor: 'transparent',
+    borderWidth: 0,
   },
   buildingEmoji: { fontSize: 28 },
   buildingSprite: { width: 32, height: 32 },
