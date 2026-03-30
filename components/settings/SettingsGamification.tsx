@@ -60,14 +60,18 @@ export function SettingsGamification({ vault, gamiData, refresh }: SettingsGamif
           style: 'destructive',
           onPress: async () => {
             if (!vault || !gamiData) return;
-            const resetData = {
-              profiles: gamiData.profiles.map((p: any) => ({
+            // Reset per-profile : ecrire un fichier gami-{id}.md vide pour chaque profil
+            for (const p of gamiData.profiles) {
+              const resetProfile = {
                 ...p, points: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0,
-              })),
-              history: [],
-              activeRewards: [],
-            };
-            await vault.writeFile('gamification.md', serializeGamification(resetData));
+              };
+              const singleResetData = {
+                profiles: [resetProfile],
+                history: [],
+                activeRewards: [],
+              };
+              await vault.writeFile(`gami-${p.id}.md`, serializeGamification(singleResetData));
+            }
             await refresh();
             Alert.alert(t('settings.gamification.resetDone'));
           },

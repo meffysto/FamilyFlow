@@ -51,7 +51,11 @@ interface UseGamificationResult {
   isProcessing: boolean;
 }
 
-const GAMI_FILE = 'gamification.md';
+/** Helper : retourne le chemin du fichier gamification per-profil */
+function gamiFile(profileId: string): string {
+  return `gami-${profileId}.md`;
+}
+
 const FAMILLE_FILE = 'famille.md';
 
 export function useGamification({ vault, notifPrefs, onDataChange }: UseGamificationArgs): UseGamificationResult {
@@ -66,8 +70,9 @@ export function useGamification({ vault, notifPrefs, onDataChange }: UseGamifica
       setIsProcessing(true);
 
       try {
-        // Read current gamification data
-        const gamiContent = await vault.readFile(GAMI_FILE);
+        // Read current gamification data (fichier per-profil)
+        const file = gamiFile(profile.id);
+        const gamiContent = await vault.readFile(file).catch(() => '');
         const gamiData = parseGamification(gamiContent);
 
         // Update streak before awarding points (so streak bonus applies correctly)
@@ -80,8 +85,16 @@ export function useGamification({ vault, notifPrefs, onDataChange }: UseGamifica
         // Update data
         const newData = updateProfileInData(gamiData, updatedProfile, [entry]);
 
-        // Write back to vault
-        await vault.writeFile(GAMI_FILE, serializeGamification(newData));
+        // Filtrer pour n'ecrire que les donnees de ce profil
+        const singleData = {
+          profiles: newData.profiles.filter((p: Profile) => p.id === profile.id),
+          history: newData.history.filter((e: any) => e.profileId === profile.id),
+          activeRewards: (newData.activeRewards ?? []).filter((r: any) => r.profileId === profile.id),
+          usedLoots: (newData.usedLoots ?? []).filter((u: any) => u.profileId === profile.id),
+        };
+
+        // Write back to vault (fichier per-profil)
+        await vault.writeFile(file, serializeGamification(singleData));
 
         // Avancer les cultures de la ferme (FIFO)
         let cropsMatured: string[] = [];
@@ -125,7 +138,7 @@ export function useGamification({ vault, notifPrefs, onDataChange }: UseGamifica
         // Notify parent if needed
         if (onDataChange) {
           const familleContent = await vault.readFile(FAMILLE_FILE);
-          const gamiUpdatedContent = serializeGamification(newData);
+          const gamiUpdatedContent = serializeGamification(singleData);
           const merged = mergeProfiles(familleContent, gamiUpdatedContent);
           onDataChange(merged);
         }
@@ -173,7 +186,15 @@ export function useGamification({ vault, notifPrefs, onDataChange }: UseGamifica
           newData = withBonus;
         }
 
-        await vault.writeFile(GAMI_FILE, serializeGamification(newData));
+        // Ecrire uniquement les donnees du profil actif dans son fichier per-profil
+        const file = gamiFile(profile.id);
+        const singleData = {
+          profiles: newData.profiles.filter((p: Profile) => p.id === profile.id),
+          history: newData.history.filter((e: any) => e.profileId === profile.id),
+          activeRewards: (newData.activeRewards ?? []).filter((r: any) => r.profileId === profile.id),
+          usedLoots: (newData.usedLoots ?? []).filter((u: any) => u.profileId === profile.id),
+        };
+        await vault.writeFile(file, serializeGamification(singleData));
 
         // Persister les items mascotte droppés dans famille.md
         if (box.mascotItemId && (box.rewardType === 'mascot_deco' || box.rewardType === 'mascot_hab')) {
@@ -208,7 +229,7 @@ export function useGamification({ vault, notifPrefs, onDataChange }: UseGamifica
 
         if (onDataChange) {
           const familleContent = await vault.readFile(FAMILLE_FILE);
-          const merged = mergeProfiles(familleContent, serializeGamification(newData));
+          const merged = mergeProfiles(familleContent, serializeGamification(singleData));
           onDataChange(merged);
         }
 
