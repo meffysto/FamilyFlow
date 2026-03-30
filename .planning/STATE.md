@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: executing
-stopped_at: Completed 10-compagnon-mascotte-10-01-PLAN.md
-last_updated: "2026-03-30T20:41:06.041Z"
+stopped_at: Completed 10-compagnon-mascotte-10-02-PLAN.md
+last_updated: "2026-03-30T20:50:08.289Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 15
-  completed_plans: 12
+  completed_plans: 13
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 ## Current Position
 
 Phase: 10 (compagnon-mascotte) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-03-30
 
@@ -55,6 +55,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 08.1-split-gamification-par-profil P01 | 15min | 2 tasks | 4 files |
 | Phase 08.1-split-gamification-par-profil P02 | 25min | 2 tasks | 1 files |
 | Phase 10-compagnon-mascotte P01 | 10min | 2 tasks | 35 files |
+| Phase 10-compagnon-mascotte P02 | 15min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,8 @@ Recent decisions affecting current work:
 - [Phase 10-compagnon-mascotte]: getCompanionMood accepte currentHour optionnel pour testabilite (evite test fragile selon heure execution)
 - [Phase 10-compagnon-mascotte]: COMPANION_STAGES: bebe 1-5, jeune 6-10, adulte 11+ (meme pattern que TREE_STAGES)
 - [Phase 10-compagnon-mascotte]: 5 especes compagnon: chat/chien/lapin initial, renard rare, herisson epique (per D-01 et D-03)
+- [Phase 10-compagnon-mascotte]: parseCompanion retourne null (pas undefined) — les composants testent profile.companion != null pour coherence
+- [Phase 10-compagnon-mascotte]: openLootBox companion: pattern identique mascot_deco (ecriture directe vault) sans passer par setCompanion pour eviter les appels imbriques
 
 ### Pending Todos
 
@@ -107,6 +110,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T20:41:06.038Z
-Stopped at: Completed 10-compagnon-mascotte-10-01-PLAN.md
+Last session: 2026-03-30T20:50:08.286Z
+Stopped at: Completed 10-compagnon-mascotte-10-02-PLAN.md
 Resume file: None

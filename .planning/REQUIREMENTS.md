@@ -46,8 +46,8 @@ Requirements for milestone v1.1 -- Ferme Enrichie. La ferme est le levier de mot
 - [x] **COMP-02**: Le compagnon evolue visuellement en 3 stades (bebe, jeune, adulte) lies au niveau XP du profil
 - [x] **COMP-03**: Le compagnon a un systeme d'humeur (content, endormi, excite, triste) et reagit au tap avec animation + haptic
 - [x] **COMP-04**: Le compagnon affiche des messages contextuels (predefinies i18n + IA optionnelle Claude Haiku)
-- [ ] **COMP-05**: De nouveaux compagnons sont debloquables via lootbox (rarites rare/epique)
-- [ ] **COMP-06**: Le compagnon actif donne un bonus passif +5% XP
+- [x] **COMP-05**: De nouveaux compagnons sont debloquables via lootbox (rarites rare/epique)
+- [x] **COMP-06**: Le compagnon actif donne un bonus passif +5% XP
 - [ ] **COMP-07**: Le compagnon sert d'avatar de profil dans la tab bar et le selecteur de profil
 - [ ] **COMP-08**: Le compagnon affiche des bulles d'emotion sur les evenements de l'app (tache completee, lootbox, level up)
 
@@ -89,7 +89,7 @@ Deferred to future milestones.
 | COMP-02 | Phase 10 | Complete |
 | COMP-03 | Phase 10 | Complete |
 | COMP-04 | Phase 10 | Complete |
-| COMP-05 | Phase 10 | Pending |
-| COMP-06 | Phase 10 | Pending |
+| COMP-05 | Phase 10 | Complete |
+| COMP-06 | Phase 10 | Complete |
 | COMP-07 | Phase 10 | Pending |
 | COMP-08 | Phase 10 | Pending |

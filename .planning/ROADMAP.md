@@ -175,11 +175,11 @@ Plans:
   5. Le compagnon actif donne un bonus passif +5% XP
   6. Le compagnon sert d'avatar de profil dans la tab bar et le selecteur de profil
   7. `npx tsc --noEmit` passe sans nouvelles erreurs
-**Plans:** 1/4 plans executed
+**Plans:** 2/4 plans executed
 
 Plans:
 - [x] 10-01-PLAN.md — Types + companion-engine + sprites placeholder + i18n
-- [ ] 10-02-PLAN.md — Parser companion + hooks useVault/useGamification + rewards lootbox
+- [x] 10-02-PLAN.md — Parser companion + hooks useVault/useGamification + rewards lootbox
 - [ ] 10-03-PLAN.md — CompanionSlot + CompanionPicker + integration TreeView/tree.tsx
 - [ ] 10-04-PLAN.md — Messages IA contextuels + CompanionAvatarMini + integration _layout.tsx
 
@@ -200,4 +200,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 8. Progression Ferme | v1.1 | 0/2 | Planned | - |
 | 8.1 Split Gamification | v1.1 | 2/2 | Complete   | 2026-03-30 |
 | 9. Cadeaux Familiaux | v1.1 | 0/TBD | Not started | - |
-| 10. Compagnon Mascotte | v1.1 | 1/4 | In Progress|  |
+| 10. Compagnon Mascotte | v1.1 | 2/4 | In Progress|  |
