@@ -22,16 +22,24 @@ import type { HarvestInventory, FarmInventory, CraftRecipe } from '../mascot/typ
 // ─── CRAFT_RECIPES ────────────────────────────────────────────────────────────
 
 describe('CRAFT_RECIPES', () => {
-  it('contient exactement 4 recettes', () => {
-    expect(CRAFT_RECIPES).toHaveLength(4);
+  it('contient exactement 12 recettes', () => {
+    expect(CRAFT_RECIPES).toHaveLength(12);
   });
 
-  it('contient confiture, gateau, omelette, bouquet', () => {
+  it('contient toutes les recettes attendues', () => {
     const ids = CRAFT_RECIPES.map(r => r.id);
-    expect(ids).toContain('confiture');
-    expect(ids).toContain('gateau');
-    expect(ids).toContain('omelette');
+    expect(ids).toContain('soupe');
     expect(ids).toContain('bouquet');
+    expect(ids).toContain('crepe');
+    expect(ids).toContain('fromage');
+    expect(ids).toContain('gratin');
+    expect(ids).toContain('omelette');
+    expect(ids).toContain('pain');
+    expect(ids).toContain('confiture');
+    expect(ids).toContain('popcorn');
+    expect(ids).toContain('gateau');
+    expect(ids).toContain('soupe_citrouille');
+    expect(ids).toContain('tarte_citrouille');
   });
 
   it('chaque recette a un sellValue positif', () => {

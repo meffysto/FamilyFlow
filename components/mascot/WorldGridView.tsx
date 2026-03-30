@@ -28,7 +28,7 @@ import {
   type WorldCell,
 } from '../../lib/mascot/world-grid';
 import { type TechBonuses } from '../../lib/mascot/tech-engine';
-import { type PlantedCrop, type TreeStage, type PlacedBuilding, CROP_CATALOG } from '../../lib/mascot/types';
+import { type PlantedCrop, type TreeStage, type PlacedBuilding, CROP_CATALOG, BUILDING_CATALOG, TREE_STAGES } from '../../lib/mascot/types';
 import { BUILDING_SPRITES } from '../../lib/mascot/building-sprites';
 import { getPendingResources } from '../../lib/mascot/building-engine';
 import { parseCrops, hasCropSeasonalBonus } from '../../lib/mascot/farm-engine';
@@ -176,10 +176,11 @@ function CropCell({ cell, crop, cropDef, isMature, containerWidth, containerHeig
 
 // ── Cellule batiment ──
 
-function BuildingCell({ cell, placedBuilding, pendingCount, containerWidth, containerHeight, onPress }: {
+function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, containerWidth, containerHeight, onPress }: {
   cell: WorldCell;
   placedBuilding: PlacedBuilding | null;
   pendingCount: number;
+  canBuild: boolean;
   containerWidth: number;
   containerHeight: number;
   onPress: () => void;
@@ -226,7 +227,14 @@ function BuildingCell({ cell, placedBuilding, pendingCount, containerWidth, cont
             )}
           </>
         ) : (
-          <Text style={styles.emptyBuildingPlus}>{'⚒'}</Text>
+          <>
+            <Text style={styles.emptyBuildingPlus}>{'⚒'}</Text>
+            {canBuild && (
+              <View style={styles.canBuildBadge}>
+                <Text style={styles.canBuildBadgeText}>{'!'}</Text>
+              </View>
+            )}
+          </>
         )}
       </TouchableOpacity>
     </Animated.View>
@@ -279,6 +287,15 @@ export function WorldGridView({
 }: WorldGridViewProps) {
   const unlockedCrops = getUnlockedCropCells(treeStage);
   const crops = parseCrops(farmCropsCSV);
+
+  // Peut-on construire un batiment sur une cellule vide ?
+  const stageOrder = TREE_STAGES.map(s => s.stage);
+  const currentStageIdx = stageOrder.indexOf(treeStage);
+  const placedIds = ownedBuildings.map(b => b.buildingId);
+  const canBuildOnEmpty = BUILDING_CATALOG.some(def => {
+    const requiredIdx = stageOrder.indexOf(def.minTreeStage);
+    return requiredIdx <= currentStageIdx && !placedIds.includes(def.id);
+  });
 
   // Calcul des cellules d'expansion
   const expansionCropsUnlocked = techBonuses ? techBonuses.extraCropCells > 0 : false;
@@ -390,6 +407,7 @@ export function WorldGridView({
             cell={cell}
             placedBuilding={placedBuilding}
             pendingCount={pendingCount}
+            canBuild={!placedBuilding && canBuildOnEmpty}
             containerWidth={containerWidth}
             containerHeight={containerHeight}
             onPress={() => onBuildingCellPress?.(cell.id, placedBuilding)}
@@ -408,6 +426,7 @@ export function WorldGridView({
             cell={cell}
             placedBuilding={placedBuilding}
             pendingCount={pendingCount}
+            canBuild={!placedBuilding && canBuildOnEmpty}
             containerWidth={containerWidth}
             containerHeight={containerHeight}
             onPress={() => onBuildingCellPress?.(cell.id, placedBuilding)}
@@ -528,6 +547,22 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,0.5)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 1,
+  },
+  canBuildBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#4ADE80',
+    borderRadius: 10,
+    width: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  canBuildBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: 'bold',
   },
   lockedCell: {
     flex: 1,

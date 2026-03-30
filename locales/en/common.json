@@ -3975,10 +3975,18 @@
     "venteReussie": "+{{amount}} 🍃",
     "valeurVente": "Sell: {{amount}} 🍃",
     "recipe": {
-      "confiture": "Strawberry Jam",
-      "gateau": "Farm Cake",
+      "soupe": "Garden Soup",
+      "bouquet": "Country Bouquet",
+      "crepe": "Farm Crêpe",
+      "fromage": "Fresh Cheese",
+      "gratin": "Potato Gratin",
       "omelette": "Farm Omelette",
-      "bouquet": "Country Bouquet"
+      "pain": "Country Bread",
+      "confiture": "Strawberry Jam",
+      "popcorn": "Popcorn",
+      "gateau": "Farm Cake",
+      "soupe_citrouille": "Pumpkin Soup",
+      "tarte_citrouille": "Pumpkin Pie"
     }
   },
   "tech": {

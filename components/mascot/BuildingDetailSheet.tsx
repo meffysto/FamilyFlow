@@ -20,7 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { BUILDING_CATALOG, type PlacedBuilding } from '../../lib/mascot/types';
 import { BUILDING_SPRITES } from '../../lib/mascot/building-sprites';
-import { getPendingResources, getUpgradeCost, canUpgrade } from '../../lib/mascot/building-engine';
+import { getPendingResources, getUpgradeCost, canUpgrade, getMinutesUntilNext } from '../../lib/mascot/building-engine';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -61,6 +61,17 @@ export function BuildingDetailSheet({
 
   const resourceLabel = t(`farm.building.resource.${def.resourceType}`);
   const resourceEmoji = def.resourceType === 'oeuf' ? '🥚' : def.resourceType === 'lait' ? '🥛' : '🌾';
+  const minutesUntilNext = getMinutesUntilNext(building);
+  const totalMinutes = (tier?.productionRateHours ?? 1) * 60;
+  const elapsedMinutes = totalMinutes - minutesUntilNext;
+  const progressRatio = minutesUntilNext === 0 ? 1 : Math.max(0, Math.min(1, elapsedMinutes / totalMinutes));
+  const hoursLeft = Math.floor(minutesUntilNext / 60);
+  const minsLeft = minutesUntilNext % 60;
+  const timerLabel = minutesUntilNext === 0
+    ? null
+    : hoursLeft > 0
+      ? `${hoursLeft}h${minsLeft > 0 ? `${String(minsLeft).padStart(2, '0')}` : ''}`
+      : `${minsLeft}min`;
 
   const handleCollect = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -115,6 +126,20 @@ export function BuildingDetailSheet({
                   hours: tier?.productionRateHours ?? '?',
                 })}
               </Text>
+              {timerLabel ? (
+                <>
+                  <View style={styles.progressBarBg}>
+                    <View style={[styles.progressBarFill, { width: `${Math.round(progressRatio * 100)}%`, backgroundColor: primary }]} />
+                  </View>
+                  <Text style={[styles.sectionDetail, { color: primary }]}>
+                    {'⏳ '}{t('farm.building.nextIn', { time: timerLabel, defaultValue: `Prochain ${resourceLabel} dans ${timerLabel}` })}
+                  </Text>
+                </>
+              ) : pendingCount > 0 ? null : (
+                <View style={styles.progressBarBg}>
+                  <View style={[styles.progressBarFill, { width: '100%', backgroundColor: '#4ADE80' }]} />
+                </View>
+              )}
             </View>
 
             {/* Section collecte */}
@@ -292,6 +317,16 @@ const styles = StyleSheet.create({
   upgradeBtnText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
+  },
+  progressBarBg: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(0,0,0,0.08)',
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: 6,
+    borderRadius: 3,
   },
   maxLevelRow: {
     flexDirection: 'row',

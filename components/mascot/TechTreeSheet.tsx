@@ -5,7 +5,7 @@
  * interactifs : debloque, debloquable, verrouille. Confirmation par Alert.
  */
 
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -25,6 +25,7 @@ import Animated, {
   withTiming,
   Easing,
   FadeInDown,
+  FadeOutUp,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
@@ -153,6 +154,14 @@ function TechNodeView({
           {t(node.labelKey)}
         </Text>
 
+        {/* Description de l'effet — toujours visible */}
+        <Text
+          style={[styles.nodeDesc, { color: colors.textSub }]}
+          numberOfLines={3}
+        >
+          {t(node.descriptionKey)}
+        </Text>
+
         {/* Cout ou statut */}
         {status !== 'unlocked' && (
           <Text style={[styles.nodeCost, { color: status === 'unlockable' ? primary : colors.textMuted }]}>
@@ -176,7 +185,11 @@ function TechNodeView({
 
       {/* Ligne de connexion vers le noeud suivant */}
       {!isLast && (
-        <View style={[styles.connectorLine, { backgroundColor: colors.borderLight }]} />
+        <View style={[
+          styles.connectorLine,
+          { backgroundColor: status === 'unlocked' ? colors.success : colors.borderLight },
+          status === 'unlocked' && { width: 3 },
+        ]} />
       )}
     </View>
   );
@@ -195,6 +208,14 @@ export function TechTreeSheet({
 }: TechTreeSheetProps) {
   const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
+  const [feedback, setFeedback] = useState<{ emoji: string; text: string; type: 'success' | 'info' | 'error' } | null>(null);
+  const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showFeedback = useCallback((emoji: string, text: string, type: 'success' | 'info' | 'error' = 'info') => {
+    if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
+    setFeedback({ emoji, text, type });
+    feedbackTimer.current = setTimeout(() => setFeedback(null), 3500);
+  }, []);
 
   // Grouper les noeuds par branche
   const branchNodes = useMemo(() => {
@@ -229,19 +250,18 @@ export function TechTreeSheet({
       const status = getNodeStatus(node);
 
       if (status === 'unlocked') {
-        onMessage?.(`${node.emoji} ${t('tech.unlocked')}`);
+        showFeedback(node.emoji, t(node.descriptionKey), 'info');
         return;
       }
 
       if (status === 'locked') {
         const result = canUnlockTech(node.id, unlockedTechs, coins);
         if (result.reason) {
-          // Traduire la raison si c'est un prerequis
           const reqNode = node.requires ? TECH_TREE.find(n => n.id === node.requires) : null;
           const msg = reqNode
             ? t('tech.requires', { name: t(reqNode.labelKey) })
             : result.reason;
-          onMessage?.(`🔒 ${msg}`);
+          showFeedback('🔒', msg, 'error');
         }
         return;
       }
@@ -264,9 +284,9 @@ export function TechTreeSheet({
                 if (Platform.OS !== 'web') {
                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                 }
-                onMessage?.(`${node.emoji} ${t(node.labelKey)} ${t('tech.unlocked')} !`);
+                showFeedback(node.emoji, `${t(node.labelKey)} — ${t(node.descriptionKey)}`, 'success');
               } else {
-                onMessage?.(t('tech.not_enough_coins'), 'error');
+                showFeedback('❌', t('tech.not_enough_coins'), 'error');
               }
             },
           },
@@ -301,6 +321,30 @@ export function TechTreeSheet({
             {coins} 🍃
           </Text>
         </View>
+
+        {/* Bandeau feedback inline */}
+        {feedback && (
+          <Animated.View
+            entering={FadeInDown.duration(250)}
+            exiting={FadeOutUp.duration(200)}
+            style={[
+              styles.feedbackBanner,
+              {
+                backgroundColor: feedback.type === 'success' ? '#4ADE80'
+                  : feedback.type === 'error' ? '#FCA5A5'
+                  : tint,
+              },
+            ]}
+          >
+            <Text style={styles.feedbackEmoji}>{feedback.emoji}</Text>
+            <Text style={[
+              styles.feedbackText,
+              { color: feedback.type === 'success' ? '#065F46' : feedback.type === 'error' ? '#7F1D1D' : colors.text },
+            ]} numberOfLines={2}>
+              {feedback.text}
+            </Text>
+          </Animated.View>
+        )}
 
         {/* 3 branches cote a cote */}
         <ScrollView
@@ -383,6 +427,24 @@ const styles = StyleSheet.create({
     fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
   },
+  feedbackBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.md,
+    gap: Spacing.sm,
+  },
+  feedbackEmoji: {
+    fontSize: 20,
+  },
+  feedbackText: {
+    flex: 1,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
+  },
   branchesContainer: {
     paddingHorizontal: Spacing.sm,
     paddingTop: Spacing.lg,
@@ -462,7 +524,14 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.medium,
     textAlign: 'center',
     marginTop: Spacing.xxs,
-    width: 80,
+    width: 90,
+  },
+  nodeDesc: {
+    fontSize: FontSize.micro,
+    textAlign: 'center',
+    marginTop: 2,
+    width: 90,
+    lineHeight: 13,
   },
   nodeCost: {
     fontSize: FontSize.caption,

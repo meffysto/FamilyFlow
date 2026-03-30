@@ -49,6 +49,9 @@ import { TechTreeSheet } from '../../components/mascot/TechTreeSheet';
 import { BuildingDetailSheet } from '../../components/mascot/BuildingDetailSheet';
 import { WeeklyGoal, countWeeklyTasks } from '../../components/mascot/WeeklyGoal';
 import { useFarm } from '../../hooks/useFarm';
+import { SunriseReport, type SunriseResource } from '../../components/mascot/SunriseReport';
+import { getPendingResources } from '../../lib/mascot/building-engine';
+import * as SecureStore from 'expo-secure-store';
 import { type PlantedCrop, type PlacedBuilding, CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
 import { hasCropSeasonalBonus, parseCrops, getAvailableCrops } from '../../lib/mascot/farm-engine';
 import { getUnlockedCropCells, getExpandedCropCells } from '../../lib/mascot/world-grid';
@@ -109,14 +112,16 @@ function CropWhisper({ whisperInfo, stageInfo, stageIdx }: {
   const cell = cells.find((c: any) => c.id === whisperInfo.cellId);
   if (!cell) return null;
 
+  const cropDef = CROP_CATALOG.find(c => c.id === whisperInfo.cropId);
+  const cropEmoji = cropDef?.emoji ?? '🌱';
   const whispers = [
-    '🌱 Je pousse, je pousse...',
-    '🌿 Patience, ça vient !',
-    '💪 Bientôt prêt !',
-    '✨ Encore un petit effort !',
+    `${cropEmoji} Je pousse, je pousse...`,
+    `${cropEmoji} Patience, ça vient !`,
+    `${cropEmoji} Bientôt prêt !`,
+    `${cropEmoji} Encore un petit effort !`,
   ];
   const msg = hasCropSeasonalBonus(whisperInfo.cropId)
-    ? '☀️ Le soleil m\'aide !'
+    ? `${cropEmoji} Pousse 2× plus vite cette saison !`
     : whispers[Math.min(whisperInfo.stage, 3)];
   const TOOLTIP_W = 140;
   const TOOLTIP_H = 28;
@@ -172,6 +177,14 @@ export default function TreeScreen() {
   const [showSeedPicker, setShowSeedPicker] = useState(false);
   const [selectedPlotIndex, setSelectedPlotIndex] = useState<number | null>(null);
   const [harvestBurst, setHarvestBurst] = useState<{ x: number; y: number; reward: number; cropId: string } | null>(null);
+
+  // Sunrise report
+  const [sunriseData, setSunriseData] = useState<{
+    resources: SunriseResource[];
+    totalCollected: number;
+    yesterdayTasks: number;
+    hasBonus: boolean;
+  } | null>(null);
   const [whisperInfo, setWhisperInfo] = useState<{ cellId: string; stage: number; cropId: string } | null>(null);
 
   // Craft
@@ -200,14 +213,61 @@ export default function TreeScreen() {
   }, [profile?.id]);
   const activeSaga = sagaProgress ? getSagaById(sagaProgress.sagaId) : null;
 
-  // Collecter le revenu passif des batiments a l'ouverture
+  // Collecter le revenu passif des batiments a l'ouverture + sunrise report
   useEffect(() => {
     if (!profile?.id) return;
-    collectPassiveIncome(profile.id).then(totalCollected => {
-      if (totalCollected > 0) {
-        showToast(`🏠 +${totalCollected} ressources collectees`);
+    const buildings = profile.farmBuildings ?? [];
+    if (buildings.length === 0) return;
+
+    (async () => {
+      // Verifier si absence > 8h
+      const SUNRISE_KEY = 'sunrise_last_shown';
+      const lastShown = await SecureStore.getItemAsync(SUNRISE_KEY);
+      const now = Date.now();
+      const eightHoursMs = 8 * 60 * 60 * 1000;
+      const lastTs = lastShown ? parseInt(lastShown, 10) : 0;
+      const longAbsence = (now - lastTs) > eightHoursMs;
+
+      // Calculer le detail par ressource AVANT la collecte
+      const techBonuses = getTechBonuses(profile.farmTech ?? []);
+      const resourceMap: Record<string, { emoji: string; label: string; qty: number }> = {};
+      for (const b of buildings) {
+        const pending = getPendingResources(b, new Date(), techBonuses);
+        if (pending <= 0) continue;
+        const def = BUILDING_CATALOG.find(d => d.id === b.buildingId);
+        if (!def) continue;
+        const key = def.resourceType;
+        const emoji = key === 'oeuf' ? '🥚' : key === 'lait' ? '🥛' : '🌾';
+        if (!resourceMap[key]) resourceMap[key] = { emoji, label: key === 'oeuf' ? 'Oeufs' : key === 'lait' ? 'Lait' : 'Farine', qty: 0 };
+        resourceMap[key].qty += pending;
       }
-    });
+
+      // Collecter
+      const totalCollected = await collectPassiveIncome(profile.id);
+      if (totalCollected === 0) return;
+
+      // Compter les taches d'hier
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().slice(0, 10);
+      const yesterdayTasks = gamiData?.history?.filter(
+        e => e.profileId === profile.id && e.timestamp?.slice(0, 10) === yesterdayStr
+      ).length ?? 0;
+      const hasBonus = yesterdayTasks >= 3;
+
+      if (longAbsence) {
+        const resources: SunriseResource[] = Object.values(resourceMap).map(r => ({
+          emoji: r.emoji,
+          label: r.label,
+          quantity: hasBonus ? Math.ceil(r.qty * 1.5) : r.qty,
+        }));
+        const displayTotal = hasBonus ? Math.ceil(totalCollected * 1.5) : totalCollected;
+        setSunriseData({ resources, totalCollected: displayTotal, yesterdayTasks, hasBonus });
+        await SecureStore.setItemAsync(SUNRISE_KEY, String(now));
+      } else {
+        showToast(`🏠 +${totalCollected} ressources collect\u00E9es`);
+      }
+    })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id]);
 
@@ -1051,6 +1111,17 @@ export default function TreeScreen() {
           onClose={() => { setShowBuildingDetail(false); setSelectedBuilding(null); }}
         />
       )}
+
+      {/* Rapport du matin */}
+      <SunriseReport
+        visible={sunriseData !== null}
+        profileName={profile.name}
+        resources={sunriseData?.resources ?? []}
+        totalCollected={sunriseData?.totalCollected ?? 0}
+        yesterdayTasks={sunriseData?.yesterdayTasks ?? 0}
+        hasBonus={sunriseData?.hasBonus ?? false}
+        onDismiss={() => setSunriseData(null)}
+      />
     </SafeAreaView>
   );
 }

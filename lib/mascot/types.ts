@@ -396,7 +396,7 @@ export const BUILDING_CATALOG: BuildingDefinition[] = [
     emoji: '🐔',
     cost: 300,
     dailyIncome: 5,
-    minTreeStage: 'arbuste',
+    minTreeStage: 'pousse',
     resourceType: 'oeuf',
     tiers: [
       { level: 1, productionRateHours: 8,  upgradeCoins: 0,   spriteSuffix: '' },
@@ -410,7 +410,7 @@ export const BUILDING_CATALOG: BuildingDefinition[] = [
     emoji: '🏚️',
     cost: 800,
     dailyIncome: 8,
-    minTreeStage: 'arbre',
+    minTreeStage: 'arbuste',
     resourceType: 'lait',
     tiers: [
       { level: 1, productionRateHours: 10, upgradeCoins: 0,    spriteSuffix: '' },
@@ -424,7 +424,7 @@ export const BUILDING_CATALOG: BuildingDefinition[] = [
     emoji: '⚙️',
     cost: 1500,
     dailyIncome: 12,
-    minTreeStage: 'majestueux',
+    minTreeStage: 'arbre',
     resourceType: 'farine',
     tiers: [
       { level: 1, productionRateHours: 12, upgradeCoins: 0,    spriteSuffix: '' },

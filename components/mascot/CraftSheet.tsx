@@ -89,10 +89,10 @@ export function CraftSheet({
   const [crafting, setCrafting] = useState<string | null>(null);
   const [selling, setSelling] = useState<string | null>(null);
 
-  // Animation scale pour feedback craft
-  const craftScale = useSharedValue(1);
-  const craftAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: craftScale.value }],
+  // Animation bounce sur le bouton craft
+  const craftBtnScale = useSharedValue(1);
+  const craftBtnAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: craftBtnScale.value }],
   }));
 
   // ── Handlers ──────────────────────────────────
@@ -102,10 +102,10 @@ export function CraftSheet({
     try {
       const result = await onCraft(recipe.id);
       if (result) {
-        // Animation scale burst
-        craftScale.value = withSequence(
-          withSpring(1.3, { damping: 6, stiffness: 200 }),
-          withSpring(1, { damping: 10, stiffness: 180 }),
+        // Petit bounce sur le bouton
+        craftBtnScale.value = withSequence(
+          withSpring(0.85, { damping: 8, stiffness: 300 }),
+          withSpring(1, { damping: 6, stiffness: 200 }),
         );
         if (Platform.OS !== 'web') {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -116,7 +116,7 @@ export function CraftSheet({
       showToast(t('common.error'), 'error');
     }
     setCrafting(null);
-  }, [onCraft, craftScale, showToast, t]);
+  }, [onCraft, craftBtnScale, showToast, t]);
 
   const handleSellHarvest = useCallback(async (cropId: string) => {
     setSelling(cropId);
@@ -163,7 +163,6 @@ export function CraftSheet({
         const craftable = canCraft(recipe, harvestInventory, farmInventory);
         return (
           <Animated.View key={recipe.id} entering={FadeInDown.delay(idx * 60).duration(300)}>
-            <Animated.View style={crafting === recipe.id ? craftAnimStyle : undefined}>
               <View
                 style={[
                   styles.recipeCard,
@@ -206,43 +205,58 @@ export function CraftSheet({
                       ? (cropDef ? t(cropDef.labelKey) : ing.itemId)
                       : t(`farm.building.resource.${ing.itemId}`);
 
+                    // Hint pour ingrédients manquants
+                    const hint = !enough
+                      ? ing.source === 'crop'
+                        ? t('craft.hintPlant', { name, defaultValue: `Plante ${name} sur une parcelle` })
+                        : t('craft.hintBuilding', { name, defaultValue: `Produit par un bâtiment` })
+                      : null;
+
                     return (
-                      <View key={ing.itemId} style={styles.ingredientRow}>
-                        <Text style={styles.ingredientEmoji}>{emoji}</Text>
-                        <Text style={[styles.ingredientName, { color: colors.textSub }]}>
-                          {name}
-                        </Text>
-                        <Text style={[
-                          styles.ingredientQty,
-                          { color: enough ? colors.success : colors.error },
-                        ]}>
-                          {have}/{ing.quantity}
-                        </Text>
+                      <View key={ing.itemId} style={styles.ingredientBlock}>
+                        <View style={styles.ingredientRow}>
+                          <Text style={styles.ingredientEmoji}>{emoji}</Text>
+                          <Text style={[styles.ingredientName, { color: colors.textSub }]}>
+                            {name}
+                          </Text>
+                          <Text style={[
+                            styles.ingredientQty,
+                            { color: enough ? colors.success : colors.error },
+                          ]}>
+                            {have}/{ing.quantity}
+                          </Text>
+                        </View>
+                        {hint && (
+                          <Text style={[styles.ingredientHint, { color: colors.textMuted }]}>
+                            {'💡 '}{hint}
+                          </Text>
+                        )}
                       </View>
                     );
                   })}
                 </View>
 
                 {/* Bouton crafter */}
-                <TouchableOpacity
-                  style={[
-                    styles.craftBtn,
-                    { backgroundColor: craftable ? primary : colors.cardAlt },
-                    crafting === recipe.id && { opacity: 0.5 },
-                  ]}
-                  onPress={craftable ? () => handleCraft(recipe) : undefined}
-                  disabled={!craftable || crafting === recipe.id}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[
-                    styles.craftBtnText,
-                    { color: craftable ? colors.onPrimary : colors.textMuted },
-                  ]}>
-                    {t('craft.crafter')}
-                  </Text>
-                </TouchableOpacity>
+                <Animated.View style={crafting === recipe.id ? craftBtnAnimStyle : undefined}>
+                  <TouchableOpacity
+                    style={[
+                      styles.craftBtn,
+                      { backgroundColor: craftable ? primary : colors.cardAlt },
+                      crafting === recipe.id && { opacity: 0.5 },
+                    ]}
+                    onPress={craftable ? () => handleCraft(recipe) : undefined}
+                    disabled={!craftable || crafting === recipe.id}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[
+                      styles.craftBtnText,
+                      { color: craftable ? colors.onPrimary : colors.textMuted },
+                    ]}>
+                      {t('craft.crafter')}
+                    </Text>
+                  </TouchableOpacity>
+                </Animated.View>
               </View>
-            </Animated.View>
           </Animated.View>
         );
       })}
@@ -261,11 +275,28 @@ export function CraftSheet({
       });
   }, [harvestInventory]);
 
+  const resourceEntries = useMemo(() => {
+    return (Object.entries(farmInventory) as [string, number][])
+      .filter(([, qty]) => qty > 0)
+      .map(([resourceId, qty]) => ({
+        resourceId,
+        qty,
+        emoji: RESOURCE_EMOJI[resourceId] ?? '?',
+        labelKey: `farm.building.resource.${resourceId}`,
+      }));
+  }, [farmInventory]);
+
   const renderInventaire = () => (
     <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
-      {harvestEntries.length === 0 && (
+      {harvestEntries.length === 0 && resourceEntries.length === 0 && (
         <Text style={[styles.emptyText, { color: colors.textMuted }]}>
           {t('craft.aucuneRecolte')}
+        </Text>
+      )}
+      {/* Récoltes */}
+      {harvestEntries.length > 0 && (
+        <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+          {t('craft.recoltes', '🌱 Récoltes')}
         </Text>
       )}
       {harvestEntries.map(({ cropId, qty, cropDef }, idx) => (
@@ -300,6 +331,33 @@ export function CraftSheet({
                 {t('craft.vendre')}
               </Text>
             </TouchableOpacity>
+          </View>
+        </Animated.View>
+      ))}
+      {/* Ressources bâtiments */}
+      {resourceEntries.length > 0 && (
+        <Text style={[styles.sectionLabel, { color: colors.textMuted, marginTop: harvestEntries.length > 0 ? Spacing.lg : 0 }]}>
+          {t('craft.ressources', '🏠 Ressources')}
+        </Text>
+      )}
+      {resourceEntries.map(({ resourceId, qty, emoji, labelKey }, idx) => (
+        <Animated.View key={resourceId} entering={FadeInDown.delay((harvestEntries.length + idx) * 60).duration(300)}>
+          <View
+            style={[
+              styles.inventoryRow,
+              { backgroundColor: colors.card, borderColor: colors.borderLight },
+              Shadows.sm,
+            ]}
+          >
+            <Text style={styles.inventoryEmoji}>{emoji}</Text>
+            <View style={styles.inventoryInfo}>
+              <Text style={[styles.inventoryName, { color: colors.text }]}>
+                {t(labelKey)}
+              </Text>
+              <Text style={[styles.inventoryQty, { color: colors.textSub }]}>
+                x{qty}
+              </Text>
+            </View>
           </View>
         </Animated.View>
       ))}
@@ -530,10 +588,17 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginBottom: Spacing.sm,
   },
+  ingredientBlock: {
+    paddingVertical: Spacing.xs,
+  },
   ingredientRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: Spacing.xs,
+  },
+  ingredientHint: {
+    fontSize: FontSize.micro,
+    marginLeft: 28,
+    marginTop: 2,
   },
   ingredientEmoji: {
     fontSize: 18,
@@ -590,5 +655,12 @@ const styles = StyleSheet.create({
   sellBtnText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
+  },
+  sectionLabel: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: Spacing.sm,
   },
 });

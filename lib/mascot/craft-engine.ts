@@ -23,6 +23,86 @@ export const BUILDING_RESOURCE_VALUE: Record<ResourceType, number> = {
 // ── Catalogue de recettes ────────────────────────────────────────────
 
 export const CRAFT_RECIPES: CraftRecipe[] = [
+  // ── Pousse (niv 3-5) — crops de base + poulailler ──
+  {
+    id: 'soupe',
+    labelKey: 'craft.recipe.soupe',
+    emoji: '🥣',
+    ingredients: [
+      { itemId: 'carrot', quantity: 1, source: 'crop' },
+      { itemId: 'potato', quantity: 1, source: 'crop' },
+    ],
+    xpBonus: 5,
+    sellValue: 120, // (25+35) x 2
+  },
+  {
+    id: 'bouquet',
+    labelKey: 'craft.recipe.bouquet',
+    emoji: '💐',
+    ingredients: [
+      { itemId: 'cabbage', quantity: 1, source: 'crop' },
+      { itemId: 'carrot', quantity: 1, source: 'crop' },
+    ],
+    xpBonus: 10,
+    sellValue: 190, // (70+25) x 2
+  },
+  {
+    id: 'crepe',
+    labelKey: 'craft.recipe.crepe',
+    emoji: '🥞',
+    ingredients: [
+      { itemId: 'oeuf', quantity: 1, source: 'building' },
+      { itemId: 'wheat', quantity: 1, source: 'crop' },
+    ],
+    xpBonus: 10,
+    sellValue: 240, // (80+40) x 2
+  },
+  // ── Arbuste (niv 6-10) — grange + tomate/chou/concombre ──
+  {
+    id: 'fromage',
+    labelKey: 'craft.recipe.fromage',
+    emoji: '🧀',
+    ingredients: [
+      { itemId: 'lait', quantity: 2, source: 'building' },
+    ],
+    xpBonus: 15,
+    sellValue: 400, // (100+100) x 2
+  },
+  {
+    id: 'gratin',
+    labelKey: 'craft.recipe.gratin',
+    emoji: '🫕',
+    ingredients: [
+      { itemId: 'lait', quantity: 1, source: 'building' },
+      { itemId: 'potato', quantity: 1, source: 'crop' },
+      { itemId: 'oeuf', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 15,
+    sellValue: 430, // (100+35+80) x 2
+  },
+  {
+    id: 'omelette',
+    labelKey: 'craft.recipe.omelette',
+    emoji: '🍳',
+    ingredients: [
+      { itemId: 'oeuf', quantity: 2, source: 'building' },
+      { itemId: 'tomato', quantity: 1, source: 'crop' },
+    ],
+    xpBonus: 15,
+    sellValue: 520, // (80+80+80) x 2
+  },
+  // ── Arbre (niv 11-18) — moulin + maïs/fraise ──
+  {
+    id: 'pain',
+    labelKey: 'craft.recipe.pain',
+    emoji: '🍞',
+    ingredients: [
+      { itemId: 'farine', quantity: 2, source: 'building' },
+      { itemId: 'wheat', quantity: 1, source: 'crop' },
+    ],
+    xpBonus: 15,
+    sellValue: 440, // (90+90+40) x 2
+  },
   {
     id: 'confiture',
     labelKey: 'craft.recipe.confiture',
@@ -32,6 +112,16 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     ],
     xpBonus: 20,
     sellValue: 480, // (120+120) x 2
+  },
+  {
+    id: 'popcorn',
+    labelKey: 'craft.recipe.popcorn',
+    emoji: '🍿',
+    ingredients: [
+      { itemId: 'corn', quantity: 2, source: 'crop' },
+    ],
+    xpBonus: 20,
+    sellValue: 600, // (150+150) x 2
   },
   {
     id: 'gateau',
@@ -45,27 +135,29 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     xpBonus: 30,
     sellValue: 580, // (90+80+120) x 2
   },
+  // ── Majestueux (niv 19+) — citrouille ──
   {
-    id: 'omelette',
-    labelKey: 'craft.recipe.omelette',
-    emoji: '🍳',
+    id: 'soupe_citrouille',
+    labelKey: 'craft.recipe.soupe_citrouille',
+    emoji: '🎃',
     ingredients: [
-      { itemId: 'oeuf', quantity: 2, source: 'building' },
-      { itemId: 'tomato', quantity: 1, source: 'crop' },
+      { itemId: 'pumpkin', quantity: 1, source: 'crop' },
+      { itemId: 'lait', quantity: 1, source: 'building' },
     ],
-    xpBonus: 15,
-    sellValue: 520, // (80+80+80) x 2
+    xpBonus: 25,
+    sellValue: 600, // (200+100) x 2
   },
   {
-    id: 'bouquet',
-    labelKey: 'craft.recipe.bouquet',
-    emoji: '💐',
+    id: 'tarte_citrouille',
+    labelKey: 'craft.recipe.tarte_citrouille',
+    emoji: '🥧',
     ingredients: [
-      { itemId: 'cabbage', quantity: 1, source: 'crop' },
-      { itemId: 'carrot', quantity: 1, source: 'crop' },
+      { itemId: 'pumpkin', quantity: 1, source: 'crop' },
+      { itemId: 'farine', quantity: 1, source: 'building' },
+      { itemId: 'oeuf', quantity: 1, source: 'building' },
     ],
-    xpBonus: 10,
-    sellValue: 190, // (70+25) x 2
+    xpBonus: 35,
+    sellValue: 740, // (200+90+80) x 2
   },
 ];
 

@@ -176,13 +176,14 @@ export function BuildingShopSheet({
             {/* Batiments verrouilles */}
             {lockedBuildings.map(def => {
               const stageName = t(`mascot.stages.${def.minTreeStage}`);
+              const tier0 = def.tiers[0];
               return (
                 <View
                   key={def.id}
                   style={[
                     styles.buildingRow,
                     styles.lockedRow,
-                    { backgroundColor: colors.cardAlt, borderColor: colors.borderLight, opacity: 0.5 },
+                    { backgroundColor: colors.cardAlt, borderColor: colors.borderLight, opacity: 0.6 },
                   ]}
                 >
                   <View style={styles.spriteBox}>
@@ -195,6 +196,15 @@ export function BuildingShopSheet({
                   <View style={styles.infoBox}>
                     <Text style={[styles.buildingName, { color: colors.text }]}>
                       {t(def.labelKey)}
+                    </Text>
+                    <Text style={[styles.buildingDetail, { color: colors.textSub }]}>
+                      {t('farm.building.frequency', {
+                        resource: t(`farm.building.resource.${def.resourceType}`),
+                        hours: tier0.productionRateHours,
+                      })}
+                    </Text>
+                    <Text style={[styles.buildingCost, { color: colors.textMuted }]}>
+                      {def.cost} 🍃
                     </Text>
                     <Text style={[styles.buildingDetail, { color: colors.textMuted }]}>
                       🔒 {t('farm.building.unlockedAt', { stage: stageName })}

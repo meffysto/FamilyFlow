@@ -3975,10 +3975,18 @@
     "venteReussie": "+{{amount}} 🍃",
     "valeurVente": "Vente : {{amount}} 🍃",
     "recipe": {
-      "confiture": "Confiture de fraises",
-      "gateau": "Gâteau fermier",
+      "soupe": "Soupe du potager",
+      "bouquet": "Bouquet champêtre",
+      "crepe": "Crêpe fermière",
+      "fromage": "Fromage frais",
+      "gratin": "Gratin dauphinois",
       "omelette": "Omelette fermière",
-      "bouquet": "Bouquet champêtre"
+      "pain": "Pain de campagne",
+      "confiture": "Confiture de fraises",
+      "popcorn": "Pop-corn",
+      "gateau": "Gâteau fermier",
+      "soupe_citrouille": "Soupe de citrouille",
+      "tarte_citrouille": "Tarte à la citrouille"
     }
   },
   "tech": {

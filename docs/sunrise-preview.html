@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sunrise Report Preview</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  .card {
+    background: linear-gradient(135deg, #FFF7ED, #FEF3C7, #FFFBEB);
+    border-radius: 20px;
+    padding: 32px 24px;
+    max-width: 340px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: slideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(40px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  @keyframes fadeLeft {
+    from { transform: translateX(-20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .sun {
+    font-size: 48px;
+    margin-bottom: 12px;
+    animation: fadeIn 0.4s 0.2s both;
+  }
+
+  .greeting {
+    font-size: 22px;
+    font-weight: 700;
+    color: #92400E;
+    margin-bottom: 4px;
+    animation: fadeIn 0.3s 0.3s both;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: #A16207;
+    margin-bottom: 20px;
+    animation: fadeIn 0.3s 0.45s both;
+  }
+
+  .resource-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .resource-row {
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,0.6);
+    padding: 12px 16px;
+    border-radius: 10px;
+    animation: fadeLeft 0.3s both;
+  }
+  .resource-row:nth-child(1) { animation-delay: 0.6s; }
+  .resource-row:nth-child(2) { animation-delay: 0.75s; }
+  .resource-row:nth-child(3) { animation-delay: 0.9s; }
+
+  .resource-emoji {
+    font-size: 24px;
+    width: 36px;
+    flex-shrink: 0;
+  }
+
+  .resource-label {
+    flex: 1;
+    text-align: left;
+    font-size: 16px;
+    font-weight: 500;
+    color: #78350F;
+  }
+
+  .resource-qty {
+    font-size: 18px;
+    font-weight: 700;
+    color: #92400E;
+  }
+
+  .bonus-box {
+    background: rgba(74,222,128,0.2);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    animation: fadeIn 0.4s 1.05s both;
+  }
+
+  .bonus-text {
+    font-size: 13px;
+    color: #065F46;
+  }
+
+  .bonus-highlight {
+    font-size: 16px;
+    font-weight: 700;
+    color: #059669;
+    margin-top: 2px;
+  }
+
+  .total {
+    font-size: 16px;
+    font-weight: 600;
+    color: #92400E;
+    margin-bottom: 20px;
+    animation: fadeIn 0.4s 1.2s both;
+  }
+
+  .dismiss {
+    font-size: 13px;
+    color: #B45309;
+    opacity: 0.6;
+    animation: fadeIn 0.3s 1.4s both;
+  }
+
+  /* Version sans bonus */
+  .no-bonus .bonus-box { display: none; }
+
+  /* Toggle */
+  .toggle-bar {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+  }
+  .toggle-btn {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: rgba(255,255,255,0.9);
+    color: #78350F;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .toggle-btn.active {
+    background: #92400E;
+    color: white;
+  }
+</style>
+</head>
+<body>
+
+<div class="toggle-bar">
+  <button class="toggle-btn active" onclick="showVariant('bonus')">Avec bonus</button>
+  <button class="toggle-btn" onclick="showVariant('nobonus')">Sans bonus</button>
+  <button class="toggle-btn" onclick="replay()">Rejouer anim</button>
+</div>
+
+<div class="card" id="card">
+  <div class="sun">☀️</div>
+  <div class="greeting">Bonjour Lucas !</div>
+  <div class="subtitle">Pendant ton absence, ta ferme a produit&nbsp;:</div>
+
+  <div class="resource-list">
+    <div class="resource-row">
+      <span class="resource-emoji">🥚</span>
+      <span class="resource-label">Oeufs</span>
+      <span class="resource-qty" id="egg-qty">x5</span>
+    </div>
+    <div class="resource-row">
+      <span class="resource-emoji">🥛</span>
+      <span class="resource-label">Lait</span>
+      <span class="resource-qty" id="milk-qty">x3</span>
+    </div>
+    <div class="resource-row">
+      <span class="resource-emoji">🌾</span>
+      <span class="resource-label">Farine</span>
+      <span class="resource-qty" id="flour-qty">x2</span>
+    </div>
+  </div>
+
+  <div class="bonus-box" id="bonus-box">
+    <div class="bonus-text">Hier&nbsp;: 5 t&acirc;ches</div>
+    <div class="bonus-highlight">Bonus r&eacute;colte &times;1.5&nbsp;!</div>
+  </div>
+
+  <div class="total" id="total-text">+15 ressources collect&eacute;es</div>
+  <div class="dismiss">Touche pour continuer</div>
+</div>
+
+<script>
+function showVariant(variant) {
+  const btns = document.querySelectorAll('.toggle-btn');
+  btns.forEach(b => b.classList.remove('active'));
+
+  if (variant === 'bonus') {
+    btns[0].classList.add('active');
+    document.getElementById('bonus-box').style.display = '';
+    document.getElementById('egg-qty').textContent = 'x5';
+    document.getElementById('milk-qty').textContent = 'x3';
+    document.getElementById('flour-qty').textContent = 'x2';
+    document.getElementById('total-text').textContent = '+15 ressources collect&eacute;es';
+  } else {
+    btns[1].classList.add('active');
+    document.getElementById('bonus-box').style.display = 'none';
+    document.getElementById('egg-qty').textContent = 'x3';
+    document.getElementById('milk-qty').textContent = 'x2';
+    document.getElementById('flour-qty').textContent = 'x1';
+    document.getElementById('total-text').textContent = '+6 ressources collect&eacute;es';
+  }
+}
+
+function replay() {
+  const card = document.getElementById('card');
+  card.style.animation = 'none';
+  card.offsetHeight; // force reflow
+  card.style.animation = '';
+
+  // Re-trigger all child animations
+  const animated = card.querySelectorAll('.sun, .greeting, .subtitle, .resource-row, .bonus-box, .total, .dismiss');
+  animated.forEach(el => {
+    el.style.animation = 'none';
+    el.offsetHeight;
+    el.style.animation = '';
+  });
+}
+</script>
+
+</body>
+</html>

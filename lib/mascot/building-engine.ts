@@ -149,6 +149,31 @@ export function getPendingResources(
   return Math.min(produced, effectiveMaxPending);
 }
 
+/** Minutes restantes avant la prochaine ressource produite. 0 si déjà disponible ou cap atteint. */
+export function getMinutesUntilNext(
+  building: PlacedBuilding,
+  now: Date = new Date(),
+  techBonuses?: TechBonuses,
+): number {
+  const def = BUILDING_CATALOG.find(d => d.id === building.buildingId);
+  if (!def) return 0;
+  const tier = def.tiers[building.level - 1];
+  if (!tier) return 0;
+
+  const effectiveRate = tier.productionRateHours * (techBonuses?.productionIntervalMultiplier ?? 1.0);
+  const effectiveMaxPending = Math.floor(MAX_PENDING * (techBonuses?.buildingCapacityMultiplier ?? 1));
+
+  const lastCollect = new Date(building.lastCollectAt);
+  const elapsedMs = now.getTime() - lastCollect.getTime();
+  const rateMs = effectiveRate * 3600 * 1000;
+  const produced = Math.floor(elapsedMs / rateMs);
+
+  if (produced >= effectiveMaxPending) return 0; // cap atteint
+  const nextAt = (produced + 1) * rateMs;
+  const remainingMs = nextAt - elapsedMs;
+  return Math.max(0, Math.ceil(remainingMs / 60000));
+}
+
 /** Collecter les ressources disponibles d'un batiment */
 export function collectBuilding(
   buildings: PlacedBuilding[],
