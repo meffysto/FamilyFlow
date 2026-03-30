@@ -166,7 +166,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -180,3 +180,12 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 8. Progression Ferme | v1.1 | 0/2 | Planned | - |
 | 8.1 Split Gamification | v1.1 | 2/2 | Complete   | 2026-03-30 |
 | 9. Cadeaux Familiaux | v1.1 | 0/TBD | Not started | - |
+| 10. Compagnon Mascotte | v1.1 | 0/TBD | Not started | - |
+
+#### Phase 10: Compagnon Mascotte
+**Goal**: Un compagnon interactif (animal/créature) vit dans la scène de l'arbre et devient la mascotte de l'app — lié au système de gamification (lootboxes, XP, ferme), il évolue, a une personnalité, et peut apparaître partout dans l'app
+**Depends on**: Phase 9
+**Requirements**: TBD
+**Success Criteria** (what must be TRUE):
+  1. TBD (after discuss-phase)
+**Plans**: TBD

@@ -57,6 +57,9 @@ Progress: [░░░░░░░░░░] 0%
 
 ## Accumulated Context
 
+### Roadmap Evolution
+- Phase 10 added: Compagnon Mascotte — compagnon interactif lié à la gamification, vit dans l'arbre, mascotte de l'app
+
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
