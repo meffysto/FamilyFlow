@@ -33,7 +33,7 @@ Requirements for milestone v1.1 — Ferme Enrichie. La ferme est le levier de mo
 
 ### Architecture
 
-- [ ] **ARCH-02**: Chaque profil a son propre fichier gamification (gami-{id}.md) pour éviter les conflits d'écriture multi-device iCloud
+- [x] **ARCH-02**: Chaque profil a son propre fichier gamification (gami-{id}.md) pour éviter les conflits d'écriture multi-device iCloud
 
 ### Social
 

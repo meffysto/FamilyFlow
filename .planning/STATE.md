@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: executing
-stopped_at: Completed 08.1-split-gamification-par-profil Plan 01
-last_updated: "2026-03-30T07:09:52.921Z"
+stopped_at: Completed 08.1-split-gamification-par-profil Plan 02
+last_updated: "2026-03-30T07:23:27.241Z"
 last_activity: 2026-03-28
 progress:
-  total_phases: 5
-  completed_phases: 2
-  total_plans: 7
-  completed_plans: 5
+  total_phases: 6
+  completed_phases: 5
+  total_plans: 11
+  completed_plans: 11
   percent: 0
 ---
 
@@ -53,6 +53,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06-batiments-productifs P01 | 25 | 2 tasks | 11 files |
 | Phase 06-batiments-productifs P02 | 10min | 2 tasks | 12 files |
 | Phase 08.1-split-gamification-par-profil P01 | 15min | 2 tasks | 4 files |
+| Phase 08.1-split-gamification-par-profil P02 | 25min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,9 @@ Recent decisions affecting current work:
 - [Phase 08.1-01]: gamiFile() défini localement dans chaque fichier modifié pour éviter la dépendance circulaire lib/vault.ts <-> hooks
 - [Phase 08.1-01]: gamification.md non supprimé en phase 08.1-01 — migration backward-compatible (split legacy file) dans Plan 02
 - [Phase 08.1-01]: openLootBox écrit uniquement le profil actif en gami-{id}.md — family_bonus multi-profil traité dans useVault.ts Plan 02
+- [Phase 08.1-02]: migrateGamification() lit gamification.md mais ne l'écrit jamais — backward-compatible pour devices existants
+- [Phase 08.1-02]: Merge partiel setGamiData(prev => ...) pour mutations single-profil — ne remplace pas l'état global entier
+- [Phase 08.1-02]: updateProfile : fichier gami-{profileId}.md reste au même chemin lors renommage — l'ID est stable
 
 ### Pending Todos
 
@@ -89,6 +93,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T07:09:52.918Z
-Stopped at: Completed 08.1-split-gamification-par-profil Plan 01
+Last session: 2026-03-30T07:23:27.238Z
+Stopped at: Completed 08.1-split-gamification-par-profil Plan 02
 Resume file: None
