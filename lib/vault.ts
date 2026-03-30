@@ -38,6 +38,11 @@ import { format, addDays, parseISO } from 'date-fns';
 import { nextOccurrence } from './recurrence';
 import { TEMPLATE_PACKS, TemplateContext } from './vault-templates';
 
+/** Helper : retourne le chemin du fichier gamification per-profil */
+function gamiFile(profileId: string): string {
+  return `gami-${profileId}.md`;
+}
+
 export class VaultManager {
   vaultPath: string;
 
@@ -402,16 +407,12 @@ export class VaultManager {
       await this.writeFile('famille.md', familleContent);
     }
 
-    if (!(await this.exists('gamification.md'))) {
-      const profileSections = profiles
-        .map(
-          (p) =>
-            `## ${p.name}\npoints: 0\nlevel: 1\nstreak: 0\nloot_boxes_available: 0\nmultiplier: 1\nmultiplier_remaining: 0`
-        )
-        .join('\n\n');
-
-      const gamiContent = `---\ntags:\n  - gamification\n---\n# Gamification\n\n<!-- Family Vault — historique des points et loot boxes. -->\n\n${profileSections}\n\n## Journal des gains\n`;
-      await this.writeFile('gamification.md', gamiContent);
+    // Ecrire un fichier gami-{id}.md per-profil (nouvelles installations)
+    for (const p of profiles) {
+      if (!(await this.exists(gamiFile(p.id)))) {
+        const singleGamiContent = `---\ntags:\n  - gamification\n---\n# Gamification\n\n<!-- Family Vault — historique des points et loot boxes. -->\n\n## ${p.name}\npoints: 0\nlevel: 1\nstreak: 0\nloot_boxes_available: 0\nmultiplier: 1\nmultiplier_remaining: 0\n\n## Journal des gains\n`;
+        await this.writeFile(gamiFile(p.id), singleGamiContent);
+      }
     }
   }
 
@@ -598,18 +599,9 @@ export class VaultManager {
     }${child.dateTerme ? `\ndateTerme: ${child.dateTerme}` : ''}\n`;
     await this.writeFile('famille.md', familleContent.trimEnd() + '\n' + profileSection);
 
-    // 2. Append to gamification.md
-    const gamiContent = await this.readFile('gamification.md');
-    const gamiSection = `\n## ${child.name}\npoints: 0\nlevel: 1\nstreak: 0\nloot_boxes_available: 0\nmultiplier: 1\nmultiplier_remaining: 0\n`;
-    // Insert before "## Journal des gains" if it exists
-    const journalIdx = gamiContent.indexOf('## Journal des gains');
-    if (journalIdx > 0) {
-      const before = gamiContent.slice(0, journalIdx);
-      const after = gamiContent.slice(journalIdx);
-      await this.writeFile('gamification.md', before.trimEnd() + '\n' + gamiSection + '\n' + after);
-    } else {
-      await this.writeFile('gamification.md', gamiContent.trimEnd() + '\n' + gamiSection);
-    }
+    // 2. Creer un fichier gami-{id}.md pour le nouveau profil
+    const newChildGamiContent = `---\ntags:\n  - gamification\n---\n# Gamification\n\n<!-- Family Vault — historique des points et loot boxes. -->\n\n## ${child.name}\npoints: 0\nlevel: 1\nstreak: 0\nloot_boxes_available: 0\nmultiplier: 1\nmultiplier_remaining: 0\n\n## Journal des gains\n`;
+    await this.writeFile(gamiFile(id), newChildGamiContent);
 
     // 3. Create child files
     const dir = `01 - Enfants/${child.name}`;

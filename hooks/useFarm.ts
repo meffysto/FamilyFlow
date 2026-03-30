@@ -39,7 +39,11 @@ import {
 import { parseGamification, serializeGamification, parseFamille } from '../lib/parser';
 
 const FAMILLE_FILE = 'famille.md';
-const GAMI_FILE = 'gamification.md';
+
+/** Helper : retourne le chemin du fichier gamification per-profil */
+function gamiFile(profileId: string): string {
+  return `gami-${profileId}.md`;
+}
 
 export function useFarm() {
   const { vault, profiles, refresh } = useVault();
@@ -74,10 +78,11 @@ export function useFarm() {
     await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
   }, [vault]);
 
-  /** Deduire des feuilles dans gamification.md */
+  /** Deduire des feuilles dans gami-{profileId}.md */
   const deductCoins = useCallback(async (profileId: string, amount: number, note: string) => {
     if (!vault || amount <= 0) return;
-    const gamiContent = await vault.readFile(GAMI_FILE);
+    const file = gamiFile(profileId);
+    const gamiContent = await vault.readFile(file).catch(() => '');
     const gami = parseGamification(gamiContent);
     const gamiProfile = gami.profiles.find(
       (p: any) => p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase()
@@ -85,21 +90,28 @@ export function useFarm() {
     if (!gamiProfile) return;
 
     gamiProfile.coins = (gamiProfile.coins ?? gamiProfile.points) - amount;
-    gami.history.push({
+    const newEntry = {
       profileId,
       action: `-${amount}`,
       points: -amount,
       note,
       timestamp: new Date().toISOString(),
-    });
+    };
+    const singleData = {
+      profiles: [gamiProfile],
+      history: [...gami.history.filter((e: any) => e.profileId === profileId), newEntry],
+      activeRewards: (gami.activeRewards ?? []).filter((r: any) => r.profileId === profileId),
+      usedLoots: (gami.usedLoots ?? []).filter((u: any) => u.profileId === profileId),
+    };
 
-    await vault.writeFile(GAMI_FILE, serializeGamification(gami));
+    await vault.writeFile(file, serializeGamification(singleData));
   }, [vault]);
 
-  /** Ajouter des feuilles dans gamification.md */
+  /** Ajouter des feuilles dans gami-{profileId}.md */
   const addCoins = useCallback(async (profileId: string, amount: number, note: string) => {
     if (!vault || amount <= 0) return;
-    const gamiContent = await vault.readFile(GAMI_FILE);
+    const file = gamiFile(profileId);
+    const gamiContent = await vault.readFile(file).catch(() => '');
     const gami = parseGamification(gamiContent);
     const gamiProfile = gami.profiles.find(
       (p: any) => p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase()
@@ -107,15 +119,21 @@ export function useFarm() {
     if (!gamiProfile) return;
 
     gamiProfile.coins = (gamiProfile.coins ?? gamiProfile.points) + amount;
-    gami.history.push({
+    const newEntry = {
       profileId,
       action: `+${amount}`,
       points: amount,
       note,
       timestamp: new Date().toISOString(),
-    });
+    };
+    const singleData = {
+      profiles: [gamiProfile],
+      history: [...gami.history.filter((e: any) => e.profileId === profileId), newEntry],
+      activeRewards: (gami.activeRewards ?? []).filter((r: any) => r.profileId === profileId),
+      usedLoots: (gami.usedLoots ?? []).filter((u: any) => u.profileId === profileId),
+    };
 
-    await vault.writeFile(GAMI_FILE, serializeGamification(gami));
+    await vault.writeFile(file, serializeGamification(singleData));
   }, [vault]);
 
   /** Ecrire un champ string dans la section d'un profil dans famille.md */
