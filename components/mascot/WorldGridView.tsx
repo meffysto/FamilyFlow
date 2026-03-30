@@ -49,6 +49,16 @@ const DIRT_SPRITE = require('../../assets/garden/ground/dirt_patch.png');
 
 // ── Cellule culture ──
 
+const CROP_WHISPERS = [
+  'Je pousse !',
+  'Patience...',
+  'Bientôt !',
+  '💤',
+  '☀️',
+  '💧',
+  '🌱',
+];
+
 function CropCell({ cell, crop, cropDef, isMature, containerWidth, containerHeight, onPress }: {
   cell: WorldCell;
   crop: PlantedCrop | null;
@@ -62,6 +72,7 @@ function CropCell({ cell, crop, cropDef, isMature, containerWidth, containerHeig
   const growScaleX = useSharedValue(1);
   const growScaleY = useSharedValue(1);
   const prevStage = React.useRef(crop?.currentStage ?? -1);
+  const [bubble, setBubble] = useState<string | null>(null);
 
   // Frame swap animation (VIS-02) — balancement doux ~800ms
   const reducedMotion = useReducedMotion();
@@ -72,6 +83,24 @@ function CropCell({ cell, crop, cropDef, isMature, containerWidth, containerHeig
     const timer = setInterval(() => setFrameIdx(i => 1 - i), 800);
     return () => clearInterval(timer);
   }, [reducedMotion, crop?.cropId]);
+
+  // Auto-whisper périodique (comme les habitants)
+  useEffect(() => {
+    if (!crop || isMature) return;
+    // Délai initial aléatoire pour désynchroniser les bulles entre cellules
+    const initialDelay = 5000 + Math.random() * 15000;
+    let interval: ReturnType<typeof setInterval>;
+    const timeout = setTimeout(() => {
+      const show = () => {
+        const msg = CROP_WHISPERS[Math.floor(Math.random() * CROP_WHISPERS.length)];
+        setBubble(msg);
+        setTimeout(() => setBubble(null), 2500);
+      };
+      show();
+      interval = setInterval(show, 15000 + Math.random() * 20000);
+    }, initialDelay);
+    return () => { clearTimeout(timeout); clearInterval(interval); };
+  }, [crop?.cropId, isMature]);
 
   // Pulse mature
   useEffect(() => {
@@ -170,6 +199,12 @@ function CropCell({ cell, crop, cropDef, isMature, containerWidth, containerHeig
           <Text style={styles.emptyPlus}>+</Text>
         )}
       </TouchableOpacity>
+      {/* Bulle whisper auto */}
+      {bubble != null && (
+        <View style={styles.cropBubble}>
+          <Text style={styles.cropBubbleText}>{bubble}</Text>
+        </View>
+      )}
     </Animated.View>
   );
 }
@@ -514,6 +549,20 @@ const styles = StyleSheet.create({
   stageDotEmpty: { backgroundColor: 'rgba(255,255,255,0.3)' },
   taskCount: { color: 'rgba(255,255,255,0.8)', fontSize: 8, fontWeight: '600' as const, marginTop: 1, textAlign: 'center' as const },
   emptyPlus: { color: 'rgba(255,255,255,0.5)', fontSize: 20, fontWeight: 'bold' },
+  cropBubble: {
+    position: 'absolute',
+    top: -20,
+    left: '50%' as any,
+    transform: [{ translateX: -20 }],
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    minWidth: 40,
+    alignItems: 'center' as const,
+    zIndex: 15,
+  },
+  cropBubbleText: { fontSize: 10, textAlign: 'center' as const, color: '#1F2937' },
   buildingCell: {
     justifyContent: 'center',
     alignItems: 'center',

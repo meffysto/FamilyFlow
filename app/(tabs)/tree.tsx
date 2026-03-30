@@ -103,29 +103,27 @@ const SEASON_ILLUSTRATIONS: Record<Season, ImageSourcePropType> = {
 };
 
 /** Tooltip whisper quand on tap une culture en croissance */
-function CropWhisper({ whisperInfo, stageInfo, stageIdx }: {
-  whisperInfo: { cellId: string; stage: number; cropId: string };
+/** Tooltip info quand on tap une culture en croissance — emoji + nom + tâches restantes */
+function CropTooltip({ tooltipInfo, stageInfo, stageIdx }: {
+  tooltipInfo: { cellId: string; cropId: string; tasksCompleted: number };
   stageInfo: any;
   stageIdx: number;
 }) {
   const { colors } = useThemeColors();
+  const { t } = useTranslation();
   const cells = getUnlockedCropCells(stageInfo.stage);
-  const cell = cells.find((c: any) => c.id === whisperInfo.cellId);
+  const cell = cells.find((c: any) => c.id === tooltipInfo.cellId);
   if (!cell) return null;
 
-  const cropDef = CROP_CATALOG.find(c => c.id === whisperInfo.cropId);
-  const cropEmoji = cropDef?.emoji ?? '🌱';
-  const whispers = [
-    `${cropEmoji} Je pousse, je pousse...`,
-    `${cropEmoji} Patience, ça vient !`,
-    `${cropEmoji} Bientôt prêt !`,
-    `${cropEmoji} Encore un petit effort !`,
-  ];
-  const msg = hasCropSeasonalBonus(whisperInfo.cropId)
-    ? `${cropEmoji} Pousse 2× plus vite cette saison !`
-    : whispers[Math.min(whisperInfo.stage, 3)];
-  const TOOLTIP_W = 140;
-  const TOOLTIP_H = 28;
+  const cropDef = CROP_CATALOG.find(c => c.id === tooltipInfo.cropId);
+  if (!cropDef) return null;
+  const cropEmoji = cropDef.emoji;
+  const cropName = t(`farm.crop.${cropDef.id}`);
+  const totalTasks = cropDef.tasksPerStage * 4;
+  const remaining = totalTasks - tooltipInfo.tasksCompleted;
+
+  const TOOLTIP_W = 160;
+  const TOOLTIP_H = 44;
   const rawWx = cell.x * SCREEN_W - TOOLTIP_W / 2;
   const rawWy = cell.y * (DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60) - TOOLTIP_H - 12;
   const wx = Math.max(4, Math.min(rawWx, SCREEN_W - TOOLTIP_W - 4));
@@ -138,14 +136,20 @@ function CropWhisper({ whisperInfo, stageInfo, stageIdx }: {
         position: 'absolute',
         left: wx,
         top: wy,
-        backgroundColor: 'rgba(0,0,0,0.7)',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 8,
+        backgroundColor: 'rgba(0,0,0,0.8)',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 10,
         zIndex: 20,
+        alignItems: 'center',
       }}
     >
-      <Text style={{ color: colors.onPrimary, fontSize: 11, textAlign: 'center' }}>{msg}</Text>
+      <Text style={{ color: colors.onPrimary, fontSize: 13, fontWeight: '600', textAlign: 'center' }}>
+        {cropEmoji} {cropName}
+      </Text>
+      <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, textAlign: 'center', marginTop: 2 }}>
+        {remaining > 0 ? t('farm.tasksRemaining', { count: remaining }) : t('farm.readyToHarvest')}
+      </Text>
     </Animated.View>
   );
 }
@@ -186,7 +190,7 @@ export default function TreeScreen() {
     yesterdayTasks: number;
     hasBonus: boolean;
   } | null>(null);
-  const [whisperInfo, setWhisperInfo] = useState<{ cellId: string; stage: number; cropId: string } | null>(null);
+  const [tooltipInfo, setTooltipInfo] = useState<{ cellId: string; cropId: string; tasksCompleted: number } | null>(null);
 
   // Craft
   const [showCraftSheet, setShowCraftSheet] = useState(false);
@@ -432,9 +436,12 @@ export default function TreeScreen() {
         }
       });
     } else if (crop) {
-      // Whisper sur culture en croissance
-      setWhisperInfo({ cellId, stage: crop.currentStage, cropId: crop.cropId });
-      setTimeout(() => setWhisperInfo(null), 2500);
+      // Tooltip info sur culture en croissance
+      const cropDef = CROP_CATALOG.find(c => c.id === crop.cropId);
+      const stagesDone = crop.currentStage;
+      const totalCompleted = stagesDone * (cropDef?.tasksPerStage ?? 0) + crop.tasksCompleted;
+      setTooltipInfo({ cellId, cropId: crop.cropId, tasksCompleted: totalCompleted });
+      setTimeout(() => setTooltipInfo(null), 3000);
     } else {
       setSelectedPlotIndex(cellIdx);
       setShowSeedPicker(true);
@@ -516,9 +523,9 @@ export default function TreeScreen() {
   }, [profile?.id, upgradeBuildingAction, profiles, showToast]);
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: PIXEL_GROUND[season] }]}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
         {/* HUD ferme — fixe au-dessus du diorama */}
-        <View style={[styles.farmHud, { backgroundColor: PIXEL_GROUND[season] }]}>
+        <View style={[styles.farmHud, { backgroundColor: colors.bg }]}>
           <View style={styles.hudContent}>
             <View style={styles.hudItem}>
               <Text style={styles.hudEmoji}>{'🍃'}</Text>
@@ -804,8 +811,8 @@ export default function TreeScreen() {
               />
             )}
 
-            {/* Crop Whisper tooltip */}
-            {whisperInfo && <CropWhisper whisperInfo={whisperInfo} stageInfo={stageInfo} stageIdx={stageIdx} />}
+            {/* Tooltip info culture */}
+            {tooltipInfo && <CropTooltip tooltipInfo={tooltipInfo} stageInfo={stageInfo} stageIdx={stageIdx} />}
 
             {/* Couche 4 : Arbre pixel au premier plan */}
             <View style={styles.treeOverlay} pointerEvents="box-none">

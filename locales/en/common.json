@@ -3884,6 +3884,9 @@
     "seasonSpeed": "instead of {{normal}}",
     "inSeason": "In season ☀️",
     "unlocksAt": "Unlocks at {{stage}} stage",
+    "tasksRemaining_one": "{{count}} task left",
+    "tasksRemaining_other": "{{count}} tasks left",
+    "readyToHarvest": "Ready to harvest!",
     "cancel": "Cancel",
     "stats": {
       "growing": "🌱 {{count}} growing",
