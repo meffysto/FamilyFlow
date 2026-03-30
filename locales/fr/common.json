@@ -4045,5 +4045,77 @@
     "not_enough_coins": "Pas assez de feuilles",
     "confirm_title": "Debloquer {{name}} ?",
     "confirm_message": "Cout : {{cost}} feuilles\n\nEffet : {{effect}}"
+  },
+  "companion": {
+    "stage": {
+      "bebe": "Bebe",
+      "jeune": "Jeune",
+      "adulte": "Adulte"
+    },
+    "mood": {
+      "content": "Content",
+      "endormi": "Endormi",
+      "excite": "Excite",
+      "triste": "Triste"
+    },
+    "species": {
+      "chat": "Chat",
+      "chien": "Chien",
+      "lapin": "Lapin",
+      "renard": "Renard",
+      "herisson": "Herisson"
+    },
+    "speciesDesc": {
+      "chat": "Un chat calin et curieux",
+      "chien": "Un chien fidele et joyeux",
+      "lapin": "Un lapin doux et malicieux",
+      "renard": "Un renard ruse et elegant",
+      "herisson": "Un herisson timide et attachant"
+    },
+    "picker": {
+      "title": "Choisis ton compagnon !",
+      "subtitle": "Il t'accompagnera dans toutes tes aventures",
+      "nameLabel": "Donne-lui un nom",
+      "namePlaceholder": "Ex: Minou, Rex, Filou...",
+      "confirm": "C'est parti !",
+      "switchTitle": "Changer de compagnon",
+      "locked": "Debloquer via lootbox"
+    },
+    "bonus": {
+      "xp": "+5% XP",
+      "active": "Bonus compagnon actif"
+    },
+    "msg": {
+      "taskDone": {
+        "1": "Bravo {{profileName}} ! Bien joue !",
+        "2": "Encore une tache de moins ! {{companionName}} est fier de toi !",
+        "3": "Super travail ! {{companionName}} sautille de joie !"
+      },
+      "loot": {
+        "1": "Oooh un coffre ! {{companionName}} a hate de voir ce qu'il y a dedans !",
+        "2": "{{companionName}} renifle le coffre avec curiosite..."
+      },
+      "levelUp": {
+        "1": "Level up ! {{companionName}} fait la fete !",
+        "2": "Nouveau niveau ! {{companionName}} est impressionne !"
+      },
+      "greeting": {
+        "1": "Salut {{profileName}} ! {{companionName}} t'attendait !",
+        "2": "Content de te revoir ! {{companionName}} remue la queue !",
+        "3": "{{companionName}} te fait un grand sourire !"
+      },
+      "streak": {
+        "1": "{{streak}} jours d'affilee ! {{companionName}} n'en revient pas !",
+        "2": "Quelle serie ! {{companionName}} est hyper motive !"
+      },
+      "harvest": {
+        "1": "Belle recolte ! {{companionName}} renifle les cultures...",
+        "2": "Miam ! {{companionName}} regarde la recolte avec envie !"
+      },
+      "craft": {
+        "1": "{{companionName}} observe l'atelier avec fascination !",
+        "2": "Bien joue l'artisan ! {{companionName}} est impressionne !"
+      }
+    }
   }
 }

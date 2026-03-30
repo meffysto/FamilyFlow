@@ -4045,5 +4045,77 @@
     "not_enough_coins": "Not enough leaves",
     "confirm_title": "Unlock {{name}}?",
     "confirm_message": "Cost: {{cost}} leaves\n\nEffect: {{effect}}"
+  },
+  "companion": {
+    "stage": {
+      "bebe": "Baby",
+      "jeune": "Young",
+      "adulte": "Adult"
+    },
+    "mood": {
+      "content": "Happy",
+      "endormi": "Sleepy",
+      "excite": "Excited",
+      "triste": "Sad"
+    },
+    "species": {
+      "chat": "Cat",
+      "chien": "Dog",
+      "lapin": "Rabbit",
+      "renard": "Fox",
+      "herisson": "Hedgehog"
+    },
+    "speciesDesc": {
+      "chat": "A cuddly and curious cat",
+      "chien": "A loyal and happy dog",
+      "lapin": "A sweet and mischievous rabbit",
+      "renard": "A clever and elegant fox",
+      "herisson": "A shy and adorable hedgehog"
+    },
+    "picker": {
+      "title": "Choose your companion!",
+      "subtitle": "They'll join you in all your adventures",
+      "nameLabel": "Give them a name",
+      "namePlaceholder": "E.g.: Whiskers, Buddy, Foxy...",
+      "confirm": "Let's go!",
+      "switchTitle": "Switch companion",
+      "locked": "Unlock via lootbox"
+    },
+    "bonus": {
+      "xp": "+5% XP",
+      "active": "Companion bonus active"
+    },
+    "msg": {
+      "taskDone": {
+        "1": "Well done {{profileName}}!",
+        "2": "Another task done! {{companionName}} is proud of you!",
+        "3": "Great work! {{companionName}} jumps for joy!"
+      },
+      "loot": {
+        "1": "Oooh a chest! {{companionName}} can't wait to see inside!",
+        "2": "{{companionName}} sniffs the chest curiously..."
+      },
+      "levelUp": {
+        "1": "Level up! {{companionName}} celebrates!",
+        "2": "New level! {{companionName}} is impressed!"
+      },
+      "greeting": {
+        "1": "Hi {{profileName}}! {{companionName}} was waiting for you!",
+        "2": "Welcome back! {{companionName}} wags their tail!",
+        "3": "{{companionName}} gives you a big smile!"
+      },
+      "streak": {
+        "1": "{{streak}} days in a row! {{companionName}} can't believe it!",
+        "2": "What a streak! {{companionName}} is super motivated!"
+      },
+      "harvest": {
+        "1": "Nice harvest! {{companionName}} sniffs the crops...",
+        "2": "Yum! {{companionName}} eyes the harvest hungrily!"
+      },
+      "craft": {
+        "1": "{{companionName}} watches the workshop in awe!",
+        "2": "Great crafting! {{companionName}} is impressed!"
+      }
+    }
   }
 }
