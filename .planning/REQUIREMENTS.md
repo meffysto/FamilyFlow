@@ -1,50 +1,61 @@
 # Requirements: FamilyFlow
 
 **Defined:** 2026-03-28
-**Core Value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
+**Core Value:** L'app doit rester fiable et stable pour un usage quotidien familial -- les donnees ne doivent jamais etre perdues ou corrompues, et les features existantes ne doivent pas regresser.
 
 ## v1.1 Requirements
 
-Requirements for milestone v1.1 — Ferme Enrichie. La ferme est le levier de motivation pour faire les tâches du quotidien.
+Requirements for milestone v1.1 -- Ferme Enrichie. La ferme est le levier de motivation pour faire les taches du quotidien.
 
 ### Visuels
 
-- [x] **VIS-01**: La ferme affiche un cycle jour/nuit avec luminosité et teinte adaptées à l'heure réelle
-- [x] **VIS-02**: Les cultures ont des sprites pixel améliorés avec au moins 2 frames d'animation par stade de croissance
-- [x] **VIS-03**: Les animaux ont des sprites pixel améliorés avec animations idle et marche plus fluides
+- [x] **VIS-01**: La ferme affiche un cycle jour/nuit avec luminosite et teinte adaptees a l'heure reelle
+- [x] **VIS-02**: Les cultures ont des sprites pixel ameliores avec au moins 2 frames d'animation par stade de croissance
+- [x] **VIS-03**: Les animaux ont des sprites pixel ameliores avec animations idle et marche plus fluides
 
-### Bâtiments
+### Batiments
 
-- [x] **BAT-01**: L'utilisateur peut construire un bâtiment productif (moulin, serre, étable) sur une parcelle dédiée
-- [x] **BAT-02**: Les bâtiments génèrent des ressources passivement (une récolte toutes les X heures)
-- [x] **BAT-03**: Les bâtiments ont au moins 2 niveaux d'amélioration qui augmentent la production
+- [x] **BAT-01**: L'utilisateur peut construire un batiment productif (moulin, serre, etable) sur une parcelle dediee
+- [x] **BAT-02**: Les batiments generent des ressources passivement (une recolte toutes les X heures)
+- [x] **BAT-03**: Les batiments ont au moins 2 niveaux d'amelioration qui augmentent la production
 
 ### Craft
 
-- [x] **CRA-01**: L'utilisateur peut combiner des récoltes pour créer des items spéciaux (confiture, bouquet, etc.)
-- [x] **CRA-02**: Les recettes de craft sont visibles dans un catalogue avec les ingrédients requis
-- [x] **CRA-03**: Les items craftés donnent plus d'XP que les récoltes brutes
+- [x] **CRA-01**: L'utilisateur peut combiner des recoltes pour creer des items speciaux (confiture, bouquet, etc.)
+- [x] **CRA-02**: Les recettes de craft sont visibles dans un catalogue avec les ingredients requis
+- [x] **CRA-03**: Les items craftes donnent plus d'XP que les recoltes brutes
 
 ### Progression
 
-- [x] **PRO-01**: Un arbre de technologies ferme permet de débloquer des améliorations (vitesse pousse, rendement, nouvelles cultures)
-- [x] **PRO-02**: L'utilisateur peut débloquer de nouvelles zones/parcelles en dépensant des ressources
-- [x] **PRO-03**: La progression tech est persistée dans le vault et visible sur l'écran arbre
+- [x] **PRO-01**: Un arbre de technologies ferme permet de debloquer des ameliorations (vitesse pousse, rendement, nouvelles cultures)
+- [x] **PRO-02**: L'utilisateur peut debloquer de nouvelles zones/parcelles en depensant des ressources
+- [x] **PRO-03**: La progression tech est persistee dans le vault et visible sur l'ecran arbre
 
 ### Architecture
 
-- [x] **ARCH-02**: Chaque profil a son propre fichier gamification (gami-{id}.md) pour éviter les conflits d'écriture multi-device iCloud
+- [x] **ARCH-02**: Chaque profil a son propre fichier gamification (gami-{id}.md) pour eviter les conflits d'ecriture multi-device iCloud
 
 ### Social
 
-- [ ] **SOC-01**: Un membre peut envoyer une récolte ou un item crafté à un autre membre de la famille
-- [ ] **SOC-02**: Le destinataire reçoit une notification et l'item apparaît dans son inventaire
+- [ ] **SOC-01**: Un membre peut envoyer une recolte ou un item crafte a un autre membre de la famille
+- [ ] **SOC-02**: Le destinataire recoit une notification et l'item apparait dans son inventaire
+
+### Compagnon Mascotte
+
+- [ ] **COMP-01**: L'utilisateur peut choisir un compagnon parmi 5 especes (chat, chien, lapin, renard, herisson) a partir du niveau 5
+- [ ] **COMP-02**: Le compagnon evolue visuellement en 3 stades (bebe, jeune, adulte) lies au niveau XP du profil
+- [ ] **COMP-03**: Le compagnon a un systeme d'humeur (content, endormi, excite, triste) et reagit au tap avec animation + haptic
+- [ ] **COMP-04**: Le compagnon affiche des messages contextuels (predefinies i18n + IA optionnelle Claude Haiku)
+- [ ] **COMP-05**: De nouveaux compagnons sont debloquables via lootbox (rarites rare/epique)
+- [ ] **COMP-06**: Le compagnon actif donne un bonus passif +5% XP
+- [ ] **COMP-07**: Le compagnon sert d'avatar de profil dans la tab bar et le selecteur de profil
+- [ ] **COMP-08**: Le compagnon affiche des bulles d'emotion sur les evenements de l'app (tache completee, lootbox, level up)
 
 ## Future Requirements
 
 Deferred to future milestones.
 
-- **EVT-01**: Événements aléatoires sur la ferme (visiteur mystère, tempête, marché ambulant)
+- **EVT-01**: Evenements aleatoires sur la ferme (visiteur mystere, tempete, marche ambulant)
 - **SOC-03**: Visiter la ferme des autres membres en lecture seule
 - **SOC-04**: Classement familial des fermes
 
@@ -52,9 +63,9 @@ Deferred to future milestones.
 
 | Feature | Reason |
 |---------|--------|
-| Multijoueur temps réel | Pas de backend — tout est local + iCloud |
-| Monnaie achetable (IAP) | App familiale privée, pas de monétisation |
-| PvP / compétition | La ferme est coopérative, pas compétitive |
+| Multijoueur temps reel | Pas de backend -- tout est local + iCloud |
+| Monnaie achetable (IAP) | App familiale privee, pas de monetisation |
+| PvP / competition | La ferme est cooperative, pas competitive |
 
 ## Traceability
 
@@ -74,3 +85,11 @@ Deferred to future milestones.
 | PRO-03 | Phase 8 | Complete |
 | SOC-01 | Phase 9 | Pending |
 | SOC-02 | Phase 9 | Pending |
+| COMP-01 | Phase 10 | Pending |
+| COMP-02 | Phase 10 | Pending |
+| COMP-03 | Phase 10 | Pending |
+| COMP-04 | Phase 10 | Pending |
+| COMP-05 | Phase 10 | Pending |
+| COMP-06 | Phase 10 | Pending |
+| COMP-07 | Phase 10 | Pending |
+| COMP-08 | Phase 10 | Pending |

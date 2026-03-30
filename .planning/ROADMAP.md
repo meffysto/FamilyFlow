@@ -163,6 +163,26 @@ Plans:
   4. L'item est retiré de l'inventaire de l'expéditeur au moment de l'envoi — pas de duplication possible
 **Plans**: TBD
 
+#### Phase 10: Compagnon Mascotte
+**Goal**: Un compagnon interactif (animal mignon) vit dans la scene de l'arbre, lie au systeme de gamification (lootboxes, XP), evolue visuellement avec le niveau, a un nom et une humeur, affiche des messages contextuels, et sert d'avatar de profil
+**Depends on**: Phase 9
+**Requirements**: COMP-01, COMP-02, COMP-03, COMP-04, COMP-05, COMP-06, COMP-07, COMP-08
+**Success Criteria** (what must be TRUE):
+  1. L'utilisateur peut choisir un compagnon parmi 5 especes au niveau 5, le nommer, et le voir apparaitre sur l'ecran arbre
+  2. Le compagnon evolue visuellement en 3 stades (bebe, jeune, adulte) lies au niveau XP du profil
+  3. Le compagnon reagit au tap (animation saut + haptic) et affiche des messages contextuels sur les actions recentes
+  4. De nouveaux compagnons sont debloquables via lootbox (rarites rare/epique)
+  5. Le compagnon actif donne un bonus passif +5% XP
+  6. Le compagnon sert d'avatar de profil dans la tab bar et le selecteur de profil
+  7. `npx tsc --noEmit` passe sans nouvelles erreurs
+**Plans:** 4 plans
+
+Plans:
+- [ ] 10-01-PLAN.md — Types + companion-engine + sprites placeholder + i18n
+- [ ] 10-02-PLAN.md — Parser companion + hooks useVault/useGamification + rewards lootbox
+- [ ] 10-03-PLAN.md — CompanionSlot + CompanionPicker + integration TreeView/tree.tsx
+- [ ] 10-04-PLAN.md — Messages IA contextuels + CompanionAvatarMini + integration _layout.tsx
+
 ## Progress
 
 **Execution Order:**
@@ -180,12 +200,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 8. Progression Ferme | v1.1 | 0/2 | Planned | - |
 | 8.1 Split Gamification | v1.1 | 2/2 | Complete   | 2026-03-30 |
 | 9. Cadeaux Familiaux | v1.1 | 0/TBD | Not started | - |
-| 10. Compagnon Mascotte | v1.1 | 0/TBD | Not started | - |
-
-#### Phase 10: Compagnon Mascotte
-**Goal**: Un compagnon interactif (animal/créature) vit dans la scène de l'arbre et devient la mascotte de l'app — lié au système de gamification (lootboxes, XP, ferme), il évolue, a une personnalité, et peut apparaître partout dans l'app
-**Depends on**: Phase 9
-**Requirements**: TBD
-**Success Criteria** (what must be TRUE):
-  1. TBD (after discuss-phase)
-**Plans**: TBD
+| 10. Compagnon Mascotte | v1.1 | 0/4 | Planned | - |
