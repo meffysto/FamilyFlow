@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: executing
-stopped_at: Completed 10-compagnon-mascotte-10-02-PLAN.md
-last_updated: "2026-03-30T20:50:08.289Z"
+stopped_at: Checkpoint human-verify 10-03 Task 3
+last_updated: "2026-03-30T21:01:19.238Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 15
-  completed_plans: 13
+  completed_plans: 14
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 ## Current Position
 
 Phase: 10 (compagnon-mascotte) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-03-30
 
@@ -56,6 +56,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 08.1-split-gamification-par-profil P02 | 25min | 2 tasks | 1 files |
 | Phase 10-compagnon-mascotte P01 | 10min | 2 tasks | 35 files |
 | Phase 10-compagnon-mascotte P02 | 15min | 2 tasks | 4 files |
+| Phase 10-compagnon-mascotte P03 | 20min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,8 @@ Recent decisions affecting current work:
 - [Phase 10-compagnon-mascotte]: 5 especes compagnon: chat/chien/lapin initial, renard rare, herisson epique (per D-01 et D-03)
 - [Phase 10-compagnon-mascotte]: parseCompanion retourne null (pas undefined) — les composants testent profile.companion != null pour coherence
 - [Phase 10-compagnon-mascotte]: openLootBox companion: pattern identique mascot_deco (ecriture directe vault) sans passer par setCompanion pour eviter les appels imbriques
+- [Phase 10-compagnon-mascotte]: CompanionSlot position cx:85 cy:205 dans viewbox 200x240 — distinct des HAB_SLOTS existants
+- [Phase 10-compagnon-mascotte]: companionPickerShownRef pour gate le déclenchement du picker par session — évite annoyance répétitive
 
 ### Pending Todos
 
@@ -110,6 +113,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T20:50:08.286Z
-Stopped at: Completed 10-compagnon-mascotte-10-02-PLAN.md
+Last session: 2026-03-30T21:01:19.235Z
+Stopped at: Checkpoint human-verify 10-03 Task 3
 Resume file: None
