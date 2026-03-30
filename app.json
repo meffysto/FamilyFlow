@@ -34,7 +34,7 @@
           "tel"
         ]
       },
-      "buildNumber": "17"
+      "buildNumber": "18"
     },
     "android": {
       "splash": {
@@ -63,7 +63,7 @@
         "android.permission.WRITE_CALENDAR"
       ],
       "package": "com.familyvault.app",
-      "versionCode": 3
+      "versionCode": 5
     },
     "web": {
       "favicon": "./assets/favicon.png"

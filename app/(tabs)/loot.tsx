@@ -214,6 +214,13 @@ export default function LootScreen() {
               </View>
 
               {profile.lootBoxesAvailable > 0 ? (
+                activeProfile?.role === 'adulte' && profile.role === 'adulte' && profile.id !== activeProfile?.id ? (
+                  <View style={[styles.noLootBadge, { backgroundColor: colors.bg }]}>
+                    <Text style={[styles.noLootText, { color: colors.textFaint }]}>
+                      {profile.lootBoxesAvailable} 🎁
+                    </Text>
+                  </View>
+                ) : (
                 <TouchableOpacity
                   style={[styles.openBtn, { backgroundColor: primary }]}
                   onPress={() => handleOpenLoot(profile)}
@@ -226,6 +233,7 @@ export default function LootScreen() {
                     {profile.lootBoxesAvailable > 1 ? t('loot.openBtnMultiple', { count: profile.lootBoxesAvailable }) : t('loot.openBtn')}
                   </Text>
                 </TouchableOpacity>
+                )
               ) : (
                 <View style={[styles.noLootBadge, { backgroundColor: colors.bg }]}>
                   <Text style={[styles.noLootText, { color: colors.textFaint }]}>
