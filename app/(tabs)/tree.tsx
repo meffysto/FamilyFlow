@@ -42,7 +42,7 @@ import { TreeView } from '../../components/mascot/TreeView';
 import { SpeciesPicker } from '../../components/mascot/SpeciesPicker';
 import { TreeShop } from '../../components/mascot/TreeShop';
 import { PixelDiorama, PIXEL_GROUND, PIXEL_GROUND_DARK } from '../../components/mascot/PixelDiorama';
-import { WorldGridView, FarmStats } from '../../components/mascot/WorldGridView';
+import { WorldGridView } from '../../components/mascot/WorldGridView';
 import { BuildingShopSheet } from '../../components/mascot/BuildingShopSheet';
 import { CraftSheet } from '../../components/mascot/CraftSheet';
 import { TechTreeSheet } from '../../components/mascot/TechTreeSheet';
@@ -61,7 +61,7 @@ import { HarvestBurst, CROP_COLORS } from '../../components/mascot/HarvestBurst'
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import { AmbientParticles } from '../../components/mascot/AmbientParticles';
 import { SeasonalParticles } from '../../components/mascot/SeasonalParticles';
-import { StreakFlames } from '../../components/mascot/StreakFlames';
+// StreakFlames supprime — infos dans le HUD
 import { calculateLevel, xpForLevel, pointsToNextLevel, getLevelTier } from '../../lib/gamification';
 import {
   getTreeStage,
@@ -83,7 +83,7 @@ import { FontSize, FontWeight, LineHeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
-const TREE_SIZE = Math.min(SCREEN_W * 0.9, 400);
+const TREE_SIZE = Math.min(SCREEN_W * 0.65, 280);
 
 /** Hauteur du conteneur diorama — basée sur le viewport pour un rendu immersif */
 const DIORAMA_HEIGHT_BY_STAGE: Record<number, number> = {
@@ -326,6 +326,12 @@ export default function TreeScreen() {
     return found?.emoji ?? '';
   }, [placingItem, allOwnedItems]);
 
+  // Nombre de cultures en croissance (pour le HUD)
+  const growingCount = useMemo(() => {
+    const crops = parseCrops(profile?.farmCrops ?? '');
+    return crops.filter(c => c.currentStage < 4).length;
+  }, [profile?.farmCrops]);
+
   if (!profile) return null;
 
   const species = profile.treeSpecies || 'cerisier';
@@ -515,23 +521,6 @@ export default function TreeScreen() {
         contentContainerStyle={[styles.scroll, Layout.contentContainer]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Text style={[styles.backText, { color: primary }]}>{'←'}</Text>
-          </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text }]}>
-            {t('mascot.screen.title')}
-          </Text>
-          <View style={styles.backBtn} />
-        </View>
-
-        {/* Badge saison */}
-        <View style={[styles.seasonBadge, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
-          <Text style={[styles.seasonText, { color: colors.textSub }]}>
-            {seasonInfo.emoji} {t(seasonInfo.labelKey)}
-          </Text>
-        </View>
 
         {/* Bandeau saga active */}
         {activeSaga && sagaProgress && (
@@ -740,6 +729,32 @@ export default function TreeScreen() {
               },
             ]}
           >
+            {/* HUD ferme */}
+            <View style={styles.farmHud}>
+              <LinearGradient
+                colors={['rgba(0,0,0,0.5)', 'rgba(0,0,0,0)']}
+                style={StyleSheet.absoluteFill}
+              />
+              <View style={styles.hudContent}>
+                <View style={styles.hudItem}>
+                  <Text style={styles.hudEmoji}>{'🍃'}</Text>
+                  <Text style={styles.hudValue}>{profile.coins ?? 0}</Text>
+                </View>
+                <View style={styles.hudItem}>
+                  <Text style={styles.hudEmoji}>{'🔥'}</Text>
+                  <Text style={styles.hudValue}>{profile.streak ?? 0}</Text>
+                </View>
+                <View style={styles.hudItem}>
+                  <Text style={styles.hudEmoji}>{'🌿'}</Text>
+                  <Text style={styles.hudValue}>{growingCount}</Text>
+                </View>
+                <View style={styles.hudItem}>
+                  <Text style={styles.hudEmoji}>{seasonInfo.emoji}</Text>
+                  <Text style={styles.hudValue}>{t(seasonInfo.labelKey)}</Text>
+                </View>
+              </View>
+            </View>
+
             {/* Couche 0 : Sol top-down — herbe saisonnière plein écran */}
             <View style={[StyleSheet.absoluteFill, { backgroundColor: PIXEL_GROUND[season] }]} />
 
@@ -799,6 +814,8 @@ export default function TreeScreen() {
 
             {/* Couche 4 : Arbre pixel au premier plan */}
             <View style={styles.treeOverlay} pointerEvents="box-none">
+              {/* TODO: Zone compagnon animal — sera rendu ici a cote de l'arbre */}
+              {/* <PetCompanion pet={profile.pet} position={{ x: 0.3, y: 0.7 }} /> */}
               <TreeView
                 species={species}
                 level={level}
@@ -829,11 +846,6 @@ export default function TreeScreen() {
           style={styles.groundTransition}
         />
 
-        {/* Compteur ferme */}
-        <FarmStats farmCropsCSV={profile.farmCrops ?? ''} colors={colors} t={t} />
-
-        {/* Flammes de streak */}
-        {profile && <StreakFlames streak={profile.streak ?? 0} />}
 
         {/* Objectif hebdomadaire */}
         {gamiData && profile && (
@@ -999,45 +1011,6 @@ export default function TreeScreen() {
           </View>
         </Animated.View>
 
-        {/* Aperçu des 6 stades */}
-        <Animated.View entering={FadeInDown.delay(350).duration(400)}>
-          <Text style={[styles.familyTitle, { color: colors.text }]}>
-            {t('mascot.screen.allStages')}
-          </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.stagesScroll}
-          >
-            {TREE_STAGES.map((s, idx) => {
-              const isCurrent = s.stage === stageInfo.stage;
-              const isReached = stageIdx >= idx;
-              return (
-                <View
-                  key={s.stage}
-                  style={[
-                    styles.stageSlot,
-                    { backgroundColor: colors.card, borderColor: isCurrent ? sp.accent : colors.borderLight },
-                    isCurrent && { borderWidth: 2 },
-                  ]}
-                >
-                  <View style={{ opacity: isReached ? 1 : 0.35 }}>
-                    <TreeView species={species} level={s.minLevel} size={80} showGround interactive={false} />
-                  </View>
-                  <Text style={[styles.stageSlotName, { color: isCurrent ? sp.accent : isReached ? colors.text : colors.textFaint }]}>
-                    {t(s.labelKey)}
-                  </Text>
-                  <Text style={[styles.stageSlotLevels, { color: colors.textMuted }]}>
-                    {t('mascot.screen.stageLevels', { min: s.minLevel, max: s.maxLevel })}
-                  </Text>
-                  {isCurrent && (
-                    <View style={[styles.currentDot, { backgroundColor: sp.accent }]} />
-                  )}
-                </View>
-              );
-            })}
-          </ScrollView>
-        </Animated.View>
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -1195,6 +1168,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
     overflow: 'hidden',
+  },
+  farmHud: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    paddingTop: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    overflow: 'hidden',
+  },
+  hudContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  hudItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xxs,
+  },
+  hudEmoji: {
+    fontSize: 14,
+  },
+  hudValue: {
+    color: '#fff',
+    fontSize: FontSize.sm,
+    fontWeight: '600' as const,
   },
   illustrationClip: {
     // Occupe les 70% supérieurs du conteneur — on ne montre que le ciel/horizon
