@@ -86,6 +86,7 @@ export interface Profile {
   harvestInventory?: import('../lib/mascot/types').HarvestInventory;  // Recoltes brutes en stock
   craftedItems?: import('../lib/mascot/types').CraftedItem[];         // Items craftes en inventaire
   farmTech?: string[];    // IDs des noeuds tech debloques
+  companion?: import('./mascot/companion-types').CompanionData | null; // Compagnon actif du profil
   points: number;
   coins: number;            // 🍃 Feuilles — monnaie dépensable (boutique)
   level: number;
@@ -310,7 +311,8 @@ export type RewardType =
   | 'double_loot'
   | 'mascot_deco'
   | 'mascot_hab'
-  | 'farm_seed';
+  | 'farm_seed'
+  | 'companion';
 
 export interface ActiveReward {
   id: string;
