@@ -3989,6 +3989,26 @@
       "tarte_citrouille": "Pumpkin Pie"
     }
   },
+  "badges": {
+    "title": "Badges",
+    "earned": "{{count}} / {{total}} badges earned",
+    "jardinier": "Little Gardener",
+    "jardinier_desc": "Harvest crops",
+    "cuistot": "Apprentice Chef",
+    "cuistot_desc": "Craft recipes",
+    "animaux": "Animal Friend",
+    "animaux_desc": "Collect resources",
+    "regulier": "Super Regular",
+    "regulier_desc": "Keep your streak going",
+    "batisseur": "Master Builder",
+    "batisseur_desc": "Build and upgrade",
+    "savant": "Mad Scientist",
+    "savant_desc": "Unlock technologies",
+    "assidu": "Task Champion",
+    "assidu_desc": "Complete tasks",
+    "explorateur": "Great Explorer",
+    "explorateur_desc": "Reach new levels"
+  },
   "tech": {
     "title": "Technologies",
     "branch_culture": "Culture",

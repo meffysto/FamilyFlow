@@ -3989,6 +3989,26 @@
       "tarte_citrouille": "Tarte à la citrouille"
     }
   },
+  "badges": {
+    "title": "Badges",
+    "earned": "{{count}} / {{total}} badges obtenus",
+    "jardinier": "Petit Jardinier",
+    "jardinier_desc": "R\u00e9colter des cultures",
+    "cuistot": "Apprenti Cuistot",
+    "cuistot_desc": "Pr\u00e9parer des recettes",
+    "animaux": "Ami des Animaux",
+    "animaux_desc": "Collecter des ressources",
+    "regulier": "Super R\u00e9gulier",
+    "regulier_desc": "Maintenir son streak",
+    "batisseur": "Grand B\u00e2tisseur",
+    "batisseur_desc": "Construire et am\u00e9liorer",
+    "savant": "Savant Fou",
+    "savant_desc": "D\u00e9bloquer des technologies",
+    "assidu": "Champion des T\u00e2ches",
+    "assidu_desc": "Compl\u00e9ter des t\u00e2ches",
+    "explorateur": "Grand Explorateur",
+    "explorateur_desc": "Atteindre des niveaux"
+  },
   "tech": {
     "title": "Technologies",
     "branch_culture": "Culture",

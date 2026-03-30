@@ -50,6 +50,7 @@ import { BuildingDetailSheet } from '../../components/mascot/BuildingDetailSheet
 import { WeeklyGoal, countWeeklyTasks } from '../../components/mascot/WeeklyGoal';
 import { useFarm } from '../../hooks/useFarm';
 import { SunriseReport, type SunriseResource } from '../../components/mascot/SunriseReport';
+import { BadgesSheet } from '../../components/mascot/BadgesSheet';
 import { getPendingResources } from '../../lib/mascot/building-engine';
 import * as SecureStore from 'expo-secure-store';
 import { type PlantedCrop, type PlacedBuilding, CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
@@ -192,6 +193,7 @@ export default function TreeScreen() {
 
   // Tech tree
   const [showTechTree, setShowTechTree] = useState(false);
+  const [showBadges, setShowBadges] = useState(false);
   const techBonuses = useMemo(() => {
     return getTechBonuses(profile?.farmTech ?? []);
   }, [profile?.farmTech]);
@@ -882,50 +884,61 @@ export default function TreeScreen() {
               )}
             </View>
 
-            {/* Boutons boutique + décorer (uniquement son propre arbre) */}
+            {/* Barre d'outils compacte (uniquement son propre arbre) */}
             {isOwnTree && (
-            <View style={styles.actionBtns}>
+            <View style={styles.toolbar}>
               <TouchableOpacity
-                style={[styles.shopBtn, { backgroundColor: tint, borderColor: primary }]}
+                style={[styles.toolBtn, { backgroundColor: tint, borderColor: primary }]}
                 onPress={() => setShowShop(true)}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.shopBtnText, { color: primary }]}>
-                  {'🛒 ' + t('mascot.shop.title')}
+                <Text style={styles.toolBtnIcon}>{'🛒'}</Text>
+                <Text style={[styles.toolBtnLabel, { color: primary }]}>
+                  {t('mascot.shop.shortTitle', 'Boutique')}
                 </Text>
               </TouchableOpacity>
-              {/* Bouton Atelier craft */}
               <TouchableOpacity
-                style={[styles.shopBtn, { backgroundColor: tint, borderColor: primary }]}
+                style={[styles.toolBtn, { backgroundColor: tint, borderColor: primary }]}
                 onPress={() => setShowCraftSheet(true)}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.shopBtnText, { color: primary }]}>
-                  {'🔨 ' + t('craft.atelier')}
+                <Text style={styles.toolBtnIcon}>{'🔨'}</Text>
+                <Text style={[styles.toolBtnLabel, { color: primary }]}>
+                  {t('craft.atelier')}
                 </Text>
               </TouchableOpacity>
-              {/* Bouton Progression tech */}
               <TouchableOpacity
-                style={[styles.shopBtn, { backgroundColor: tint, borderColor: primary }]}
+                style={[styles.toolBtn, { backgroundColor: tint, borderColor: primary }]}
                 onPress={() => setShowTechTree(true)}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.shopBtnText, { color: primary }]}>
-                  {'🔬 ' + t('tech.title')}
+                <Text style={styles.toolBtnIcon}>{'🔬'}</Text>
+                <Text style={[styles.toolBtnLabel, { color: primary }]}>
+                  {'Techs'}
                 </Text>
               </TouchableOpacity>
-              {/* Bouton décorer : visible si des items sont achetés */}
               {(allDecoIds.length + allHabIds.length) > 0 && !placingItem && (
                 <TouchableOpacity
-                  style={[styles.shopBtn, { backgroundColor: tint, borderColor: primary }]}
+                  style={[styles.toolBtn, { backgroundColor: tint, borderColor: primary }]}
                   onPress={() => setShowItemPicker(true)}
                   activeOpacity={0.7}
                 >
-                  <Text style={[styles.shopBtnText, { color: primary }]}>
-                    {t('mascot.decorate')}
+                  <Text style={styles.toolBtnIcon}>{'🎨'}</Text>
+                  <Text style={[styles.toolBtnLabel, { color: primary }]}>
+                    {t('mascot.shortDecorate', 'D\u00E9corer')}
                   </Text>
                 </TouchableOpacity>
               )}
+              <TouchableOpacity
+                style={[styles.toolBtn, { backgroundColor: tint, borderColor: primary }]}
+                onPress={() => setShowBadges(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.toolBtnIcon}>{'🏅'}</Text>
+                <Text style={[styles.toolBtnLabel, { color: primary }]}>
+                  {'Badges'}
+                </Text>
+              </TouchableOpacity>
             </View>
             )}
 
@@ -1112,6 +1125,14 @@ export default function TreeScreen() {
         />
       )}
 
+      {/* Badges */}
+      <BadgesSheet
+        visible={showBadges}
+        onClose={() => setShowBadges(false)}
+        profile={profile}
+        gamiData={gamiData ?? { profiles: [], history: [], activeRewards: [] }}
+      />
+
       {/* Rapport du matin */}
       <SunriseReport
         visible={sunriseData !== null}
@@ -1279,22 +1300,30 @@ const styles = StyleSheet.create({
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
   },
-  actionBtns: {
+  toolbar: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     justifyContent: 'center',
     gap: Spacing.sm,
     marginVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
   },
-  shopBtn: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
+  toolBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: Radius.lg,
     borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
   },
-  shopBtnText: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
+  toolBtnIcon: {
+    fontSize: 20,
+    lineHeight: 24,
+  },
+  toolBtnLabel: {
+    fontSize: 9,
+    fontWeight: FontWeight.semibold,
+    lineHeight: 11,
   },
   xpSection: {
     marginBottom: Spacing.lg,
