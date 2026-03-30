@@ -269,7 +269,35 @@ const COURSES_FILE = '02 - Maison/Liste de courses.md';
 const RDV_DIR = '04 - Rendez-vous';
 const RDV_ARCHIVES_DIR = 'Archives/Rendez-vous';
 const FAMILLE_FILE = 'famille.md';
-const GAMI_FILE = 'gamification.md';
+/** Retourne le chemin du fichier gamification per-profil */
+function gamiFile(profileId: string): string {
+  return `gami-${profileId}.md`;
+}
+/** Migration one-shot : si gamification.md existe et qu'un profil n'a pas encore son gami-{id}.md, le créer */
+async function migrateGamification(vault: VaultManager, profiles: { id: string }[]): Promise<void> {
+  const legacyExists = await vault.exists('gamification.md');
+  if (!legacyExists) return;
+  const checks = await Promise.all(
+    profiles.map(async p => ({ id: p.id, exists: await vault.exists(gamiFile(p.id)) }))
+  );
+  const needsMigration = checks.some(c => !c.exists);
+  if (!needsMigration) return;
+  const legacyContent = await vault.readFile('gamification.md');
+  const legacyData = parseGamification(legacyContent);
+  for (const check of checks) {
+    if (check.exists) continue;
+    const prof = legacyData.profiles.find(p => p.id === check.id);
+    if (!prof) continue;
+    const singleData = {
+      profiles: [prof],
+      history: legacyData.history.filter(e => e.profileId === check.id),
+      activeRewards: (legacyData.activeRewards ?? []).filter(r => r.profileId === check.id),
+      usedLoots: (legacyData.usedLoots ?? []).filter(u => u.profileId === check.id),
+    };
+    await vault.writeFile(gamiFile(check.id), serializeGamification(singleData));
+  }
+  // NE PAS supprimer gamification.md — le garder comme backup
+}
 const MEALS_DIR = '02 - Maison';
 /** Retourne le chemin du fichier repas pour la semaine contenant `date` (lundi = début de semaine) */
 function mealsFileForWeek(date: Date = new Date()): string {
@@ -498,12 +526,39 @@ export function useVaultInternal(): VaultState {
       let enfantNames: string[] = [];
       try {
         familleContent = await vault.readFile(FAMILLE_FILE);
-        gamiContent = await vault.readFile(GAMI_FILE);
         const baseProfiles = parseFamille(familleContent);
         enfantNames = baseProfiles.filter((p) => p.role === 'enfant').map((p) => p.name);
+
+        // Migration one-shot depuis gamification.md → gami-{id}.md
+        await migrateGamification(vault, baseProfiles);
+
+        // Lecture multi-fichier per-profil + merge en mémoire
+        const gamiFileResults = await Promise.allSettled(
+          baseProfiles.map(p => vault.readFile(gamiFile(p.id)))
+        );
+        const mergedProfiles: any[] = [];
+        const mergedHistory: any[] = [];
+        const mergedActiveRewards: any[] = [];
+        const mergedUsedLoots: any[] = [];
+        for (let i = 0; i < baseProfiles.length; i++) {
+          const result = gamiFileResults[i];
+          const content = result.status === 'fulfilled' ? result.value : '';
+          if (!content) continue;
+          const g = parseGamification(content);
+          mergedProfiles.push(...g.profiles);
+          mergedHistory.push(...g.history);
+          mergedActiveRewards.push(...(g.activeRewards ?? []));
+          mergedUsedLoots.push(...(g.usedLoots ?? []));
+        }
+        const gami: GamificationData = {
+          profiles: mergedProfiles,
+          history: mergedHistory,
+          activeRewards: mergedActiveRewards,
+          usedLoots: mergedUsedLoots,
+        };
+        gamiContent = serializeGamification(gami);
         const merged = mergeProfiles(familleContent, gamiContent);
         setProfiles(merged);
-        const gami = parseGamification(gamiContent);
 
         // Clean up expired active rewards + sync multiplier remainingTasks
         if (gami.activeRewards?.length > 0) {
@@ -522,7 +577,20 @@ export function useVaultInternal(): VaultState {
           });
           if (cleaned.length !== gami.activeRewards.length || synced) {
             const updatedGami = { ...gami, activeRewards: cleaned };
-            await vault.writeFile(GAMI_FILE, serializeGamification(updatedGami));
+            // Écrire per-profil les activeRewards nettoyées
+            for (const p of baseProfiles) {
+              const file = gamiFile(p.id);
+              const existingContent = await vault.readFile(file).catch(() => '');
+              if (!existingContent) continue;
+              const existing = parseGamification(existingContent);
+              const singleData: GamificationData = {
+                profiles: existing.profiles,
+                history: existing.history,
+                activeRewards: cleaned.filter(r => r.profileId === p.id),
+                usedLoots: existing.usedLoots ?? [],
+              };
+              await vault.writeFile(file, serializeGamification(singleData));
+            }
             setGamiData(updatedGami);
           } else {
             setGamiData(gami);
@@ -2288,10 +2356,33 @@ export function useVaultInternal(): VaultState {
     if (!vaultRef.current) return;
     try {
       const familleContent = await vaultRef.current.readFile(FAMILLE_FILE);
-      const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
+      const baseProfiles = parseFamille(familleContent);
+      const gamiFileResults = await Promise.allSettled(
+        baseProfiles.map(p => vaultRef.current!.readFile(gamiFile(p.id)))
+      );
+      const mergedProfiles: any[] = [];
+      const mergedHistory: any[] = [];
+      const mergedActiveRewards: any[] = [];
+      const mergedUsedLoots: any[] = [];
+      for (let i = 0; i < baseProfiles.length; i++) {
+        const result = gamiFileResults[i];
+        const content = result.status === 'fulfilled' ? result.value : '';
+        if (!content) continue;
+        const g = parseGamification(content);
+        mergedProfiles.push(...g.profiles);
+        mergedHistory.push(...g.history);
+        mergedActiveRewards.push(...(g.activeRewards ?? []));
+        mergedUsedLoots.push(...(g.usedLoots ?? []));
+      }
+      const gami: GamificationData = {
+        profiles: mergedProfiles,
+        history: mergedHistory,
+        activeRewards: mergedActiveRewards,
+        usedLoots: mergedUsedLoots,
+      };
+      const gamiContent = serializeGamification(gami);
       const merged = mergeProfiles(familleContent, gamiContent);
       setProfiles(merged);
-      const gami = parseGamification(gamiContent);
       setGamiData(gami);
     } catch (e) {
       warnUnexpected('refreshGamification', e);
