@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: executing
-stopped_at: Phase 10 context gathered
-last_updated: "2026-03-30T20:09:47.171Z"
-last_activity: "2026-03-30 - Completed quick task 260330-t4b: Refonte layout écran ferme Option B"
+stopped_at: Completed 10-compagnon-mascotte-10-01-PLAN.md
+last_updated: "2026-03-30T20:41:06.041Z"
+last_activity: 2026-03-30
 progress:
   total_phases: 7
   completed_phases: 5
-  total_plans: 11
-  completed_plans: 11
+  total_plans: 15
+  completed_plans: 12
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 06 — batiments-productifs
+**Current focus:** Phase 10 — compagnon-mascotte
 
 ## Current Position
 
-Phase: 9
-Plan: Not started
-Status: Executing Phase 06
-Last activity: 2026-03-30 - Completed quick task 260330-t4b: Refonte layout écran ferme Option B
+Phase: 10 (compagnon-mascotte) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-03-30
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -54,6 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06-batiments-productifs P02 | 10min | 2 tasks | 12 files |
 | Phase 08.1-split-gamification-par-profil P01 | 15min | 2 tasks | 4 files |
 | Phase 08.1-split-gamification-par-profil P02 | 25min | 2 tasks | 1 files |
+| Phase 10-compagnon-mascotte P01 | 10min | 2 tasks | 35 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,9 @@ Recent decisions affecting current work:
 - [Phase 08.1-02]: migrateGamification() lit gamification.md mais ne l'écrit jamais — backward-compatible pour devices existants
 - [Phase 08.1-02]: Merge partiel setGamiData(prev => ...) pour mutations single-profil — ne remplace pas l'état global entier
 - [Phase 08.1-02]: updateProfile : fichier gami-{profileId}.md reste au même chemin lors renommage — l'ID est stable
+- [Phase 10-compagnon-mascotte]: getCompanionMood accepte currentHour optionnel pour testabilite (evite test fragile selon heure execution)
+- [Phase 10-compagnon-mascotte]: COMPANION_STAGES: bebe 1-5, jeune 6-10, adulte 11+ (meme pattern que TREE_STAGES)
+- [Phase 10-compagnon-mascotte]: 5 especes compagnon: chat/chien/lapin initial, renard rare, herisson epique (per D-01 et D-03)
 
 ### Pending Todos
 
@@ -103,6 +107,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T20:09:47.165Z
-Stopped at: Phase 10 context gathered
-Resume file: .planning/phases/10-compagnon-mascotte/10-CONTEXT.md
+Last session: 2026-03-30T20:41:06.038Z
+Stopped at: Completed 10-compagnon-mascotte-10-01-PLAN.md
+Resume file: None

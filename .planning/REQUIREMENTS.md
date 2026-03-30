@@ -42,10 +42,10 @@ Requirements for milestone v1.1 -- Ferme Enrichie. La ferme est le levier de mot
 
 ### Compagnon Mascotte
 
-- [ ] **COMP-01**: L'utilisateur peut choisir un compagnon parmi 5 especes (chat, chien, lapin, renard, herisson) a partir du niveau 5
-- [ ] **COMP-02**: Le compagnon evolue visuellement en 3 stades (bebe, jeune, adulte) lies au niveau XP du profil
-- [ ] **COMP-03**: Le compagnon a un systeme d'humeur (content, endormi, excite, triste) et reagit au tap avec animation + haptic
-- [ ] **COMP-04**: Le compagnon affiche des messages contextuels (predefinies i18n + IA optionnelle Claude Haiku)
+- [x] **COMP-01**: L'utilisateur peut choisir un compagnon parmi 5 especes (chat, chien, lapin, renard, herisson) a partir du niveau 5
+- [x] **COMP-02**: Le compagnon evolue visuellement en 3 stades (bebe, jeune, adulte) lies au niveau XP du profil
+- [x] **COMP-03**: Le compagnon a un systeme d'humeur (content, endormi, excite, triste) et reagit au tap avec animation + haptic
+- [x] **COMP-04**: Le compagnon affiche des messages contextuels (predefinies i18n + IA optionnelle Claude Haiku)
 - [ ] **COMP-05**: De nouveaux compagnons sont debloquables via lootbox (rarites rare/epique)
 - [ ] **COMP-06**: Le compagnon actif donne un bonus passif +5% XP
 - [ ] **COMP-07**: Le compagnon sert d'avatar de profil dans la tab bar et le selecteur de profil
@@ -85,10 +85,10 @@ Deferred to future milestones.
 | PRO-03 | Phase 8 | Complete |
 | SOC-01 | Phase 9 | Pending |
 | SOC-02 | Phase 9 | Pending |
-| COMP-01 | Phase 10 | Pending |
-| COMP-02 | Phase 10 | Pending |
-| COMP-03 | Phase 10 | Pending |
-| COMP-04 | Phase 10 | Pending |
+| COMP-01 | Phase 10 | Complete |
+| COMP-02 | Phase 10 | Complete |
+| COMP-03 | Phase 10 | Complete |
+| COMP-04 | Phase 10 | Complete |
 | COMP-05 | Phase 10 | Pending |
 | COMP-06 | Phase 10 | Pending |
 | COMP-07 | Phase 10 | Pending |
