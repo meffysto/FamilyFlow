@@ -139,7 +139,10 @@
         }
       ],
       "expo-localization",
-      "@sentry/react-native/expo"
+      ["@sentry/react-native/expo", {
+        "organization": "no-72d",
+        "project": "react-native"
+      }]
     ],
     "experiments": {
       "typedRoutes": true

@@ -87,12 +87,12 @@ const TREE_SIZE = Math.min(SCREEN_W * 0.65, 280);
 
 /** Hauteur du conteneur diorama — basée sur le viewport pour un rendu immersif */
 const DIORAMA_HEIGHT_BY_STAGE: Record<number, number> = {
-  0: SCREEN_H * 0.50,  // graine — compact
-  1: SCREEN_H * 0.54,  // pousse — un peu plus grand
-  2: SCREEN_H * 0.58,  // arbuste — ratio naturel
-  3: SCREEN_H * 0.60,  // arbre
-  4: SCREEN_H * 0.63,  // majestueux — un poil plus
-  5: SCREEN_H * 0.66,  // légendaire — max impact
+  0: SCREEN_H * 0.62,  // graine — compact
+  1: SCREEN_H * 0.66,  // pousse — un peu plus grand
+  2: SCREEN_H * 0.70,  // arbuste — ratio naturel
+  3: SCREEN_H * 0.72,  // arbre
+  4: SCREEN_H * 0.75,  // majestueux — un poil plus
+  5: SCREEN_H * 0.78,  // légendaire — max impact
 };
 
 const SEASON_ILLUSTRATIONS: Record<Season, ImageSourcePropType> = {
@@ -516,7 +516,28 @@ export default function TreeScreen() {
   }, [profile?.id, upgradeBuildingAction, profiles, showToast]);
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: PIXEL_GROUND[season] }]}>
+        {/* HUD ferme — fixe au-dessus du diorama */}
+        <View style={[styles.farmHud, { backgroundColor: PIXEL_GROUND[season] }]}>
+          <View style={styles.hudContent}>
+            <View style={styles.hudItem}>
+              <Text style={styles.hudEmoji}>{'🍃'}</Text>
+              <Text style={styles.hudValue}>{profile.coins ?? 0}</Text>
+            </View>
+            <View style={styles.hudItem}>
+              <Text style={styles.hudEmoji}>{'🔥'}</Text>
+              <Text style={styles.hudValue}>{profile.streak ?? 0}</Text>
+            </View>
+            <View style={styles.hudItem}>
+              <Text style={styles.hudEmoji}>{'🌿'}</Text>
+              <Text style={styles.hudValue}>{growingCount}</Text>
+            </View>
+            <View style={styles.hudItem}>
+              <Text style={styles.hudEmoji}>{seasonInfo.emoji}</Text>
+              <Text style={styles.hudValue}>{t(seasonInfo.labelKey)}</Text>
+            </View>
+          </View>
+        </View>
       <ScrollView
         contentContainerStyle={[styles.scroll, Layout.contentContainer]}
         showsVerticalScrollIndicator={false}
@@ -729,32 +750,6 @@ export default function TreeScreen() {
               },
             ]}
           >
-            {/* HUD ferme */}
-            <View style={styles.farmHud}>
-              <LinearGradient
-                colors={['rgba(0,0,0,0.5)', 'rgba(0,0,0,0)']}
-                style={StyleSheet.absoluteFill}
-              />
-              <View style={styles.hudContent}>
-                <View style={styles.hudItem}>
-                  <Text style={styles.hudEmoji}>{'🍃'}</Text>
-                  <Text style={styles.hudValue}>{profile.coins ?? 0}</Text>
-                </View>
-                <View style={styles.hudItem}>
-                  <Text style={styles.hudEmoji}>{'🔥'}</Text>
-                  <Text style={styles.hudValue}>{profile.streak ?? 0}</Text>
-                </View>
-                <View style={styles.hudItem}>
-                  <Text style={styles.hudEmoji}>{'🌿'}</Text>
-                  <Text style={styles.hudValue}>{growingCount}</Text>
-                </View>
-                <View style={styles.hudItem}>
-                  <Text style={styles.hudEmoji}>{seasonInfo.emoji}</Text>
-                  <Text style={styles.hudValue}>{t(seasonInfo.labelKey)}</Text>
-                </View>
-              </View>
-            </View>
-
             {/* Couche 0 : Sol top-down — herbe saisonnière plein écran */}
             <View style={[StyleSheet.absoluteFill, { backgroundColor: PIXEL_GROUND[season] }]} />
 
@@ -847,55 +842,9 @@ export default function TreeScreen() {
         />
 
 
-        {/* Objectif hebdomadaire */}
-        {gamiData && profile && (
-          <WeeklyGoal
-            weeklyTaskCount={countWeeklyTasks(gamiData.history ?? [], profile.id)}
-            colors={colors}
-            t={t}
-          />
-        )}
-
         {/* Info profil + stade */}
         <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.infoCard}>
           <View style={[styles.infoContainer, { backgroundColor: colors.card, borderColor: colors.borderLight }, Shadows.md]}>
-            {/* Avatar + nom + tier */}
-            <View style={styles.profileRow}>
-              <Text style={styles.profileAvatar}>{profile.avatar}</Text>
-              <View style={styles.profileInfo}>
-                <Text style={[styles.profileName, { color: colors.text }]}>{profile.name}</Text>
-                <Text style={[styles.tierLabel, { color: tier.color }]}>
-                  {tier.emoji} {tier.name} — {t('dashboard.loot.level', { level })}
-                </Text>
-              </View>
-            </View>
-
-            {/* Espèce + stade */}
-            <View style={[styles.speciesRow, { borderTopColor: colors.borderLight }]}>
-              <View style={styles.speciesInfo}>
-                <Text style={[styles.speciesLabel, { color: colors.textSub }]}>
-                  {sp.emoji} {t(sp.labelKey)}
-                </Text>
-                <Text style={[styles.stageLabel, { color: colors.text }]}>
-                  {t(stageInfo.labelKey)}
-                </Text>
-                <Text style={[styles.stageDesc, { color: colors.textMuted }]}>
-                  {t(stageInfo.descriptionKey)}
-                </Text>
-              </View>
-              {isOwnTree && (
-                <TouchableOpacity
-                  style={[styles.changeSpeciesBtn, { backgroundColor: tint }]}
-                  onPress={() => openPickerFor(profile)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.changeSpeciesText, { color: primary }]}>
-                    {hasChosenSpecies ? t('mascot.screen.changeSpecies') : t('mascot.screen.chooseSpecies')}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
             {/* Barre d'outils compacte (uniquement son propre arbre) */}
             {isOwnTree && (
             <View style={styles.toolbar}>
@@ -1011,6 +960,14 @@ export default function TreeScreen() {
           </View>
         </Animated.View>
 
+        {/* Objectif hebdomadaire */}
+        {gamiData && profile && (
+          <WeeklyGoal
+            weeklyTaskCount={countWeeklyTasks(gamiData.history ?? [], profile.id)}
+            colors={colors}
+            t={t}
+          />
+        )}
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -1170,14 +1127,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   farmHud: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-    paddingTop: Spacing.md,
+    paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.lg,
-    overflow: 'hidden',
   },
   hudContent: {
     flexDirection: 'row',

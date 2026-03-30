@@ -20,7 +20,10 @@
     },
     "production": {
       "autoIncrement": true,
-      "credentialsSource": "remote"
+      "credentialsSource": "remote",
+      "env": {
+        "EXPO_PUBLIC_SENTRY_DSN": "https://35ec8aa68c232e25c643c77255e32eb9@o4511135016157184.ingest.de.sentry.io/4511135026118736"
+      }
     }
   },
   "submit": {
