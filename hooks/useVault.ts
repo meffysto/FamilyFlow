@@ -70,7 +70,9 @@ import {
   SECRET_MISSIONS_FILE,
   parseSecretMissions,
   serializeSecretMissions,
+  serializeCompanion,
 } from '../lib/parser';
+import type { CompanionData, CompanionSpecies } from '../lib/mascot/companion-types';
 import { processActiveRewards, addPoints, calculateLevel } from '../lib/gamification';
 import { XP_PER_BRACKET, getSkillById } from '../lib/gamification/skill-tree';
 import { DECORATIONS, INHABITANTS, TREE_STAGES, type TreeSpecies } from '../lib/mascot/types';
@@ -258,6 +260,8 @@ export interface VaultState {
   completeAdventure: (profileId: string, points: number, adventureNote: string) => Promise<void>;
   completeSagaChapter: (profileId: string, points: number, sagaNote: string, rewardItem?: { id: string; type: 'decoration' | 'inhabitant' }) => Promise<void>;
   markLootUsed: (loot: UsedLoot) => Promise<void>;
+  setCompanion: (profileId: string, companion: CompanionData) => Promise<void>;
+  unlockCompanion: (profileId: string, speciesId: CompanionSpecies) => Promise<void>;
 }
 
 // Static task files (non-enfant)
@@ -3539,6 +3543,62 @@ export function useVaultInternal(): VaultState {
     } catch {}
   }, []);
 
+  // ─── Compagnon mascotte ───────────────────────────────────────────────────
+
+  /** Persiste les données compagnon dans la section profileId de famille.md */
+  const setCompanion = useCallback(async (profileId: string, companion: CompanionData) => {
+    if (!vaultRef.current) return;
+    try {
+      const content = await vaultRef.current.readFile(FAMILLE_FILE);
+      const lines = content.split('\n');
+      let inSection = false;
+      let fieldLine = -1;
+      let lastPropIdx = -1;
+      const fieldKey = 'companion';
+
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].startsWith('### ')) {
+          if (inSection) break;
+          if (lines[i].replace('### ', '').trim() === profileId) inSection = true;
+        } else if (inSection && lines[i].includes(': ')) {
+          lastPropIdx = i;
+          if (lines[i].trim().startsWith(`${fieldKey}:`)) fieldLine = i;
+        }
+      }
+
+      const newValue = `${fieldKey}: ${serializeCompanion(companion)}`;
+      if (fieldLine >= 0) {
+        lines[fieldLine] = newValue;
+      } else if (lastPropIdx >= 0) {
+        lines.splice(lastPropIdx + 1, 0, newValue);
+      }
+
+      await vaultRef.current.writeFile(FAMILLE_FILE, lines.join('\n'));
+      await refresh();
+    } catch (e) {
+      if (__DEV__) console.warn('[setCompanion]', e);
+    }
+  }, [refresh]);
+
+  /** Ajoute une espèce à unlockedSpecies du profil (si compagnon actif et espèce pas encore débloquée) */
+  const unlockCompanion = useCallback(async (profileId: string, speciesId: CompanionSpecies) => {
+    if (!vaultRef.current) return;
+    try {
+      const familleContent = await vaultRef.current.readFile(FAMILLE_FILE);
+      const currentProfiles = parseFamille(familleContent);
+      const profile = currentProfiles.find((p) => p.id === profileId);
+      if (!profile || !profile.companion) return;
+      if (profile.companion.unlockedSpecies.includes(speciesId)) return;
+      const updatedCompanion: CompanionData = {
+        ...profile.companion,
+        unlockedSpecies: [...profile.companion.unlockedSpecies, speciesId],
+      };
+      await setCompanion(profileId, updatedCompanion);
+    } catch (e) {
+      if (__DEV__) console.warn('[unlockCompanion]', e);
+    }
+  }, [setCompanion]);
+
   const markLootUsed = useCallback(async (loot: UsedLoot) => {
     if (!vaultRef.current || !gamiData) return;
     const updated: GamificationData = {
@@ -3691,6 +3751,8 @@ export function useVaultInternal(): VaultState {
     completeAdventure,
     completeSagaChapter,
     markLootUsed,
+    setCompanion,
+    unlockCompanion,
   }), [
     // State values (déclenchent un re-render quand ils changent)
     vaultPath, isLoading, error, tasks, courses, stock, meals,
@@ -3719,5 +3781,6 @@ export function useVaultInternal(): VaultState {
     addNote, updateNote, deleteNote, addQuote, deleteQuote, addMood, deleteMood, unlockSkill,
     addSecretMission, completeSecretMission, validateSecretMission,
     completeAdventure, completeSagaChapter, markLootUsed,
+    setCompanion, unlockCompanion,
   ]);
 }

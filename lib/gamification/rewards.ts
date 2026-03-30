@@ -97,6 +97,9 @@ export const REWARDS: Record<LootRarity, RewardDefinition[]> = {
     { emoji: '🐉', reward: 'Badge Dragon', bonusPoints: 0, rewardType: 'badge' },
     { emoji: '🚀', reward: 'Badge Fusée', bonusPoints: 0, rewardType: 'badge' },
     { emoji: '🏆', reward: 'Badge Trophée d\'Or', bonusPoints: 5, rewardType: 'badge' },
+    { emoji: '🐱', reward: 'Compagnon Chat !', bonusPoints: 0, rewardType: 'companion', mascotItemId: 'chat' },
+    { emoji: '🐶', reward: 'Compagnon Chien !', bonusPoints: 0, rewardType: 'companion', mascotItemId: 'chien' },
+    { emoji: '🐰', reward: 'Compagnon Lapin !', bonusPoints: 0, rewardType: 'companion', mascotItemId: 'lapin' },
   ],
   épique: [
     { emoji: '💎', reward: '+30 points bonus', bonusPoints: 30, rewardType: 'points' },
@@ -112,6 +115,8 @@ export const REWARDS: Record<LootRarity, RewardDefinition[]> = {
     { emoji: '🛌', reward: 'Hamac pour ton arbre', bonusPoints: 0, rewardType: 'mascot_deco', mascotItemId: 'hamac' },
     { emoji: '😺', reward: 'Chat pour ton arbre', bonusPoints: 0, rewardType: 'mascot_hab', mascotItemId: 'chat' },
     { emoji: '🦉', reward: 'Hibou pour ton arbre', bonusPoints: 0, rewardType: 'mascot_hab', mascotItemId: 'hibou' },
+    { emoji: '🦊', reward: 'Compagnon Renard !', bonusPoints: 0, rewardType: 'companion', mascotItemId: 'renard' },
+    { emoji: '🦔', reward: 'Compagnon Herisson !', bonusPoints: 0, rewardType: 'companion', mascotItemId: 'herisson' },
   ],
   légendaire: [
     { emoji: '⚡⚡', reward: 'Multiplicateur ×3 (10 tâches) !', bonusPoints: 0, multiplier: 3, multiplierTasks: 10, rewardType: 'multiplier' },

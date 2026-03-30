@@ -16,6 +16,9 @@ import {
 } from '../lib/parser';
 import { advanceFarmCrops, parseCrops, serializeCrops } from '../lib/mascot/farm-engine';
 import { getTechBonuses } from '../lib/mascot/tech-engine';
+import { getCompanionXpBonus } from '../lib/mascot/companion-engine';
+import { parseFamille, serializeCompanion } from '../lib/parser';
+import type { CompanionSpecies } from '../lib/mascot/companion-types';
 import {
   awardTaskCompletion,
   openLootBox as doOpenLootBox,
@@ -81,7 +84,21 @@ export function useGamification({ vault, notifPrefs, onDataChange }: UseGamifica
         const profileWithStreak: Profile = { ...profile, streak: currentStreak + 1 };
 
         // Calculate new points (uses updated streak for bonus)
-        const { profile: updatedProfile, entry, lootAwarded } = awardTaskCompletion(profileWithStreak, taskText);
+        // Bonus compagnon +5% XP (per D-09)
+        const companionBonus = getCompanionXpBonus(profileWithStreak.companion);
+        const profileWithCompanionBonus: Profile = companionBonus !== 1.0
+          ? { ...profileWithStreak, points: Math.round(profileWithStreak.points) }
+          : profileWithStreak;
+        const { profile: updatedProfileRaw, entry: entryRaw, lootAwarded } = awardTaskCompletion(profileWithCompanionBonus, taskText);
+        // Appliquer le bonus compagnon sur les points gagnés (delta)
+        const basePointsGained = updatedProfileRaw.points - profileWithCompanionBonus.points;
+        const bonusPoints = companionBonus !== 1.0 ? Math.round(basePointsGained * companionBonus) - basePointsGained : 0;
+        const updatedProfile: Profile = bonusPoints > 0
+          ? { ...updatedProfileRaw, points: updatedProfileRaw.points + bonusPoints }
+          : updatedProfileRaw;
+        const entry = bonusPoints > 0
+          ? { ...entryRaw, points: entryRaw.points + bonusPoints }
+          : entryRaw;
 
         // Update data
         const newData = updateProfileInData(gamiData, updatedProfile, [entry]);
@@ -226,6 +243,45 @@ export function useGamification({ vault, notifPrefs, onDataChange }: UseGamifica
               lines.splice(lastPropIdx + 1, 0, newValue);
             }
             await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
+          } catch {}
+        }
+
+        // Débloquer le compagnon droppé via lootbox
+        if (box.mascotItemId && box.rewardType === 'companion') {
+          try {
+            const speciesId = box.mascotItemId as CompanionSpecies;
+            const familleRaw = await vault.readFile(FAMILLE_FILE);
+            const currentProfiles = parseFamille(familleRaw);
+            const currentProfile = currentProfiles.find((p) => p.id === profile.id);
+            if (currentProfile?.companion) {
+              // Ajouter l'espèce à unlockedSpecies si pas encore débloquée
+              if (!currentProfile.companion.unlockedSpecies.includes(speciesId)) {
+                const updatedCompanion = {
+                  ...currentProfile.companion,
+                  unlockedSpecies: [...currentProfile.companion.unlockedSpecies, speciesId],
+                };
+                const lines = familleRaw.split('\n');
+                let inSection = false;
+                let fieldLine = -1;
+                let lastPropIdx = -1;
+                for (let i = 0; i < lines.length; i++) {
+                  if (lines[i].startsWith('### ')) {
+                    if (inSection) break;
+                    if (lines[i].replace('### ', '').trim() === profile.id) inSection = true;
+                  } else if (inSection && lines[i].includes(': ')) {
+                    lastPropIdx = i;
+                    if (lines[i].trim().startsWith('companion:')) fieldLine = i;
+                  }
+                }
+                const newValue = `companion: ${serializeCompanion(updatedCompanion)}`;
+                if (fieldLine >= 0) {
+                  lines[fieldLine] = newValue;
+                } else if (lastPropIdx >= 0) {
+                  lines.splice(lastPropIdx + 1, 0, newValue);
+                }
+                await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
+              }
+            }
           } catch {}
         }
 
