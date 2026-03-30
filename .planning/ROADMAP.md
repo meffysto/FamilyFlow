@@ -146,7 +146,7 @@ Plans:
 **Goal:** Chaque profil a son propre fichier gamification (gami-{id}.md) pour éliminer les conflits d'écriture multi-device via iCloud
 **Requirements**: ARCH-02
 **Depends on:** Phase 8
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 08.1-01-PLAN.md — Migrer vault.ts, useFarm, useGamification, SettingsGamification vers gami-{id}.md per-profil
