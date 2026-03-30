@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 Phase: 9
 Plan: Not started
 Status: Executing Phase 06
-Last activity: 2026-03-30
+Last activity: 2026-03-30 - Completed quick task 260330-t4b: Refonte layout écran ferme Option B
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -90,6 +90,12 @@ None yet.
 
 - Phase 6 (bâtiments): La formule de progression idle (ressources/heure) doit être calibrée contre le modèle XP budget de Phase 2. Ne pas finaliser les valeurs avant planning.
 - Phase 8 (tech tree): Vérifier si l'écran arbre existant (app/(tabs)/tree.tsx) peut accueillir la progression ferme ou si un onglet dédié est nécessaire.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260330-t4b | Refonte layout écran ferme Option B | 2026-03-30 | 149d6d1 | [260330-t4b-refonte-layout-cran-ferme-option-b](./quick/260330-t4b-refonte-layout-cran-ferme-option-b/) |
 
 ## Session Continuity
 
