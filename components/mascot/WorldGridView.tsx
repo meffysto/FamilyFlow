@@ -279,20 +279,25 @@ function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, containerW
   );
 }
 
-// ── Cellule verrouillee (expansion) ──
+// ── Cellule prochaine extension (un seul slot visible) ──
 
-function LockedExpansionCell({ cell, cellType, containerWidth, containerHeight }: {
+function NextExpansionCell({ cell, containerWidth, containerHeight }: {
   cell: WorldCell;
-  cellType: 'crop' | 'building';
   containerWidth: number;
   containerHeight: number;
 }) {
-  const scale = useSharedValue(0);
+  const pulse = useSharedValue(0.6);
   React.useEffect(() => {
-    scale.value = withSpring(1, { damping: 10, stiffness: 150 });
+    pulse.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.sin) }),
+        withTiming(0.6, { duration: 1500, easing: Easing.inOut(Easing.sin) }),
+      ),
+      -1, true,
+    );
   }, []);
   const animStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    opacity: pulse.value,
   }));
 
   const size = CELL_SIZES[cell.size];
@@ -301,11 +306,8 @@ function LockedExpansionCell({ cell, cellType, containerWidth, containerHeight }
 
   return (
     <Animated.View style={[{ position: 'absolute', left, top, width: size, height: size }, animStyle]}>
-      <View style={[
-        styles.lockedCell,
-        cellType === 'building' && styles.lockedBuildingCell,
-      ]}>
-        <Text style={styles.lockEmoji}>{'🔒'}</Text>
+      <View style={styles.nextExpansionCell}>
+        <Text style={styles.nextExpansionPlus}>+</Text>
       </View>
     </Animated.View>
   );
@@ -391,16 +393,14 @@ export function WorldGridView({
         );
       })}
 
-      {/* Cellules d'expansion culture — verrouilees */}
-      {!expansionCropsUnlocked && techBonuses !== undefined && EXPANSION_CROP_CELLS.map(cell => (
-        <LockedExpansionCell
-          key={cell.id}
-          cell={cell}
-          cellType="crop"
+      {/* Prochaine parcelle d'expansion (une seule) */}
+      {!expansionCropsUnlocked && techBonuses !== undefined && EXPANSION_CROP_CELLS.length > 0 && (
+        <NextExpansionCell
+          cell={EXPANSION_CROP_CELLS[0]}
           containerWidth={containerWidth}
           containerHeight={containerHeight}
         />
-      ))}
+      )}
 
       {/* Parcelle geante — debloquee */}
       {largeCropUnlocked && (() => {
@@ -425,15 +425,7 @@ export function WorldGridView({
         );
       })()}
 
-      {/* Parcelle geante — verrouillee */}
-      {!largeCropUnlocked && techBonuses !== undefined && (
-        <LockedExpansionCell
-          cell={EXPANSION_LARGE_CROP_CELL}
-          cellType="crop"
-          containerWidth={containerWidth}
-          containerHeight={containerHeight}
-        />
-      )}
+      {/* Parcelle géante — masquée tant que non débloquée */}
 
       {/* Cellules de batiment */}
       {BUILDING_CELLS.map(cell => {
@@ -472,11 +464,10 @@ export function WorldGridView({
         );
       })()}
 
-      {/* Cellule batiment expansion — verrouillee */}
+      {/* Prochain emplacement bâtiment expansion (un seul) */}
       {!expansionBuildingUnlocked && techBonuses !== undefined && (
-        <LockedExpansionCell
+        <NextExpansionCell
           cell={EXPANSION_BUILDING_CELL}
-          cellType="building"
           containerWidth={containerWidth}
           containerHeight={containerHeight}
         />
@@ -621,23 +612,18 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: 'bold',
   },
-  lockedCell: {
+  nextExpansionCell: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 8,
-    backgroundColor: 'rgba(0,0,0,0.25)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.2)',
     borderStyle: 'dashed',
   },
-  lockedBuildingCell: {
-    borderRadius: 10,
-    backgroundColor: 'rgba(139, 92, 246, 0.1)',
-    borderColor: 'rgba(139, 92, 246, 0.2)',
-  },
-  lockEmoji: {
-    fontSize: 16,
-    opacity: 0.7,
+  nextExpansionPlus: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'rgba(255,255,255,0.3)',
   },
 });

@@ -231,7 +231,12 @@ export default function TreeScreen() {
       const lastShown = await SecureStore.getItemAsync(SUNRISE_KEY);
       const now = Date.now();
       const eightHoursMs = 8 * 60 * 60 * 1000;
-      const lastTs = lastShown ? parseInt(lastShown, 10) : 0;
+      // Première ouverture : initialiser le timestamp sans afficher le popup
+      if (!lastShown) {
+        await SecureStore.setItemAsync(SUNRISE_KEY, String(now));
+        return;
+      }
+      const lastTs = parseInt(lastShown, 10);
       const longAbsence = (now - lastTs) > eightHoursMs;
 
       // Calculer le detail par ressource AVANT la collecte

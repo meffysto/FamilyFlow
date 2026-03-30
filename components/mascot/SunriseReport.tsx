@@ -12,7 +12,7 @@ import Animated, {
   FadeIn,
   FadeInLeft,
   FadeInUp,
-  SlideInDown,
+  ZoomIn,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Spacing, Radius } from '../../constants/spacing';
@@ -64,7 +64,7 @@ export function SunriseReport({
     >
       <TouchableWithoutFeedback onPress={onDismiss}>
         <Animated.View entering={FadeIn.duration(400)} style={styles.overlay}>
-          <Animated.View entering={SlideInDown.duration(500).springify().damping(14)} style={styles.cardWrapper}>
+          <Animated.View entering={ZoomIn.duration(400).springify().damping(16).stiffness(120)} style={styles.cardWrapper}>
             <LinearGradient
               colors={['#FFF7ED', '#FEF3C7', '#FFFBEB']}
               start={{ x: 0, y: 0 }}
