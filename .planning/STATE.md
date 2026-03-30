@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: executing
-stopped_at: Completed 08-01-PLAN.md
-last_updated: "2026-03-30T07:00:27.317Z"
-last_activity: 2026-03-30 -- Phase 08.1 execution started
+stopped_at: Completed 08.1-split-gamification-par-profil Plan 02
+last_updated: "2026-03-30T07:23:27.241Z"
+last_activity: 2026-03-28
 progress:
   total_phases: 6
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 11
-  completed_plans: 9
+  completed_plans: 11
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 08.1 — split-gamification-par-profil
+**Current focus:** Phase 06 — batiments-productifs
 
 ## Current Position
 
-Phase: 08.1 (split-gamification-par-profil) — EXECUTING
-Plan: 1 of 2
-Status: Executing Phase 08.1
-Last activity: 2026-03-30 -- Phase 08.1 execution started
+Phase: 7
+Plan: Not started
+Status: Executing Phase 06
+Last activity: 2026-03-28
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -52,15 +52,10 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 05-visuels-ferme P03 | 15 | 3 tasks | 1 files |
 | Phase 06-batiments-productifs P01 | 25 | 2 tasks | 11 files |
 | Phase 06-batiments-productifs P02 | 10min | 2 tasks | 12 files |
-| Phase 07-craft P01 | 5min | 2 tasks | 9 files |
-| Phase 07-craft P02 | 15min | 2 tasks | 6 files |
-| Phase 08 P01 | 5min | 2 tasks | 10 files |
+| Phase 08.1-split-gamification-par-profil P01 | 15min | 2 tasks | 4 files |
+| Phase 08.1-split-gamification-par-profil P02 | 25min | 2 tasks | 1 files |
 
 ## Accumulated Context
-
-### Roadmap Evolution
-
-- Phase 08.1 inserted after Phase 8: Split Gamification Par Profil — un fichier gami par profil pour éliminer conflits multi-device iCloud (URGENT)
 
 ### Decisions
 
@@ -80,12 +75,12 @@ Recent decisions affecting current work:
 - [Phase 06-batiments-productifs]: buildingId:cellId:level:lastCollectAt — format CSV identique au pattern farm-engine pour coherence
 - [Phase 06-batiments-productifs]: Migration backward-compatible parseBuildings() : detecte ancien format string seul et nouveau CSV avec colons
 - [Phase 06-02]: TreeShop garde string[] via .map(b => b.buildingId) pour retrocompat sans modifier TreeShop
-- [Phase 07-craft]: harvestCrop ne donne plus de feuilles directement — les recoltes vont en inventaire pour permettre craft ou vente
-- [Phase 07-craft]: writeProfileFields() atomique pour ecrire plusieurs champs famille.md en une seule operation (evite race conditions)
-- [Phase 07-craft]: CraftSheet suit le pattern TreeShop (Modal pageSheet + tabs Chip) pour coherence UI
-- [Phase 07-craft]: Valeurs craft reequilibrees : gateau 580, omelette 520, ressources batiments augmentees
-- [Phase 08]: TechBonuses passe en parametre optionnel pour backward-compatibility
-- [Phase 08]: Coins pour unlockTech lus depuis profiles context (merge gami) pas parseFamille
+- [Phase 08.1-01]: gamiFile() défini localement dans chaque fichier modifié pour éviter la dépendance circulaire lib/vault.ts <-> hooks
+- [Phase 08.1-01]: gamification.md non supprimé en phase 08.1-01 — migration backward-compatible (split legacy file) dans Plan 02
+- [Phase 08.1-01]: openLootBox écrit uniquement le profil actif en gami-{id}.md — family_bonus multi-profil traité dans useVault.ts Plan 02
+- [Phase 08.1-02]: migrateGamification() lit gamification.md mais ne l'écrit jamais — backward-compatible pour devices existants
+- [Phase 08.1-02]: Merge partiel setGamiData(prev => ...) pour mutations single-profil — ne remplace pas l'état global entier
+- [Phase 08.1-02]: updateProfile : fichier gami-{profileId}.md reste au même chemin lors renommage — l'ID est stable
 
 ### Pending Todos
 
@@ -98,6 +93,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T20:39:28.549Z
-Stopped at: Completed 08-01-PLAN.md
+Last session: 2026-03-30T07:23:27.238Z
+Stopped at: Completed 08.1-split-gamification-par-profil Plan 02
 Resume file: None

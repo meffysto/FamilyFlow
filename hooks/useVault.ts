@@ -269,7 +269,35 @@ const COURSES_FILE = '02 - Maison/Liste de courses.md';
 const RDV_DIR = '04 - Rendez-vous';
 const RDV_ARCHIVES_DIR = 'Archives/Rendez-vous';
 const FAMILLE_FILE = 'famille.md';
-const GAMI_FILE = 'gamification.md';
+/** Retourne le chemin du fichier gamification per-profil */
+function gamiFile(profileId: string): string {
+  return `gami-${profileId}.md`;
+}
+/** Migration one-shot : si gamification.md existe et qu'un profil n'a pas encore son gami-{id}.md, le créer */
+async function migrateGamification(vault: VaultManager, profiles: { id: string }[]): Promise<void> {
+  const legacyExists = await vault.exists('gamification.md');
+  if (!legacyExists) return;
+  const checks = await Promise.all(
+    profiles.map(async p => ({ id: p.id, exists: await vault.exists(gamiFile(p.id)) }))
+  );
+  const needsMigration = checks.some(c => !c.exists);
+  if (!needsMigration) return;
+  const legacyContent = await vault.readFile('gamification.md');
+  const legacyData = parseGamification(legacyContent);
+  for (const check of checks) {
+    if (check.exists) continue;
+    const prof = legacyData.profiles.find(p => p.id === check.id);
+    if (!prof) continue;
+    const singleData = {
+      profiles: [prof],
+      history: legacyData.history.filter(e => e.profileId === check.id),
+      activeRewards: (legacyData.activeRewards ?? []).filter(r => r.profileId === check.id),
+      usedLoots: (legacyData.usedLoots ?? []).filter(u => u.profileId === check.id),
+    };
+    await vault.writeFile(gamiFile(check.id), serializeGamification(singleData));
+  }
+  // NE PAS supprimer gamification.md — le garder comme backup
+}
 const MEALS_DIR = '02 - Maison';
 /** Retourne le chemin du fichier repas pour la semaine contenant `date` (lundi = début de semaine) */
 function mealsFileForWeek(date: Date = new Date()): string {
@@ -498,12 +526,39 @@ export function useVaultInternal(): VaultState {
       let enfantNames: string[] = [];
       try {
         familleContent = await vault.readFile(FAMILLE_FILE);
-        gamiContent = await vault.readFile(GAMI_FILE);
         const baseProfiles = parseFamille(familleContent);
         enfantNames = baseProfiles.filter((p) => p.role === 'enfant').map((p) => p.name);
+
+        // Migration one-shot depuis gamification.md → gami-{id}.md
+        await migrateGamification(vault, baseProfiles);
+
+        // Lecture multi-fichier per-profil + merge en mémoire
+        const gamiFileResults = await Promise.allSettled(
+          baseProfiles.map(p => vault.readFile(gamiFile(p.id)))
+        );
+        const mergedProfiles: any[] = [];
+        const mergedHistory: any[] = [];
+        const mergedActiveRewards: any[] = [];
+        const mergedUsedLoots: any[] = [];
+        for (let i = 0; i < baseProfiles.length; i++) {
+          const result = gamiFileResults[i];
+          const content = result.status === 'fulfilled' ? result.value : '';
+          if (!content) continue;
+          const g = parseGamification(content);
+          mergedProfiles.push(...g.profiles);
+          mergedHistory.push(...g.history);
+          mergedActiveRewards.push(...(g.activeRewards ?? []));
+          mergedUsedLoots.push(...(g.usedLoots ?? []));
+        }
+        const gami: GamificationData = {
+          profiles: mergedProfiles,
+          history: mergedHistory,
+          activeRewards: mergedActiveRewards,
+          usedLoots: mergedUsedLoots,
+        };
+        gamiContent = serializeGamification(gami);
         const merged = mergeProfiles(familleContent, gamiContent);
         setProfiles(merged);
-        const gami = parseGamification(gamiContent);
 
         // Clean up expired active rewards + sync multiplier remainingTasks
         if (gami.activeRewards?.length > 0) {
@@ -522,7 +577,20 @@ export function useVaultInternal(): VaultState {
           });
           if (cleaned.length !== gami.activeRewards.length || synced) {
             const updatedGami = { ...gami, activeRewards: cleaned };
-            await vault.writeFile(GAMI_FILE, serializeGamification(updatedGami));
+            // Écrire per-profil les activeRewards nettoyées
+            for (const p of baseProfiles) {
+              const file = gamiFile(p.id);
+              const existingContent = await vault.readFile(file).catch(() => '');
+              if (!existingContent) continue;
+              const existing = parseGamification(existingContent);
+              const singleData: GamificationData = {
+                profiles: existing.profiles,
+                history: existing.history,
+                activeRewards: cleaned.filter(r => r.profileId === p.id),
+                usedLoots: existing.usedLoots ?? [],
+              };
+              await vault.writeFile(file, serializeGamification(singleData));
+            }
             setGamiData(updatedGami);
           } else {
             setGamiData(gami);
@@ -771,8 +839,23 @@ export function useVaultInternal(): VaultState {
                     }
                   }
                 }
+                // Écrire per-profil
+                const allBaseProfiles = parseFamille(familleContent);
+                for (const bp of allBaseProfiles) {
+                  const file = gamiFile(bp.id);
+                  const profContent = await vault.readFile(file).catch(() => '');
+                  if (!profContent) continue;
+                  const profGami = parseGamification(profContent);
+                  const updatedProf = gami.profiles.find(p => p.id === bp.id || p.name.toLowerCase().replace(/\s+/g, '') === bp.id);
+                  const singleData: GamificationData = {
+                    profiles: updatedProf ? [updatedProf] : profGami.profiles,
+                    history: gami.history.filter(e => e.profileId === bp.id),
+                    activeRewards: (gami.activeRewards ?? []).filter(r => r.profileId === bp.id),
+                    usedLoots: (gami.usedLoots ?? []).filter(u => u.profileId === bp.id),
+                  };
+                  await vault.writeFile(file, serializeGamification(singleData));
+                }
                 const gamiStr = serializeGamification(gami);
-                await vault.writeFile(GAMI_FILE, gamiStr);
                 setProfiles(mergeProfiles(familleContent, gamiStr));
                 setGamiData(gami);
               } catch (e) { warnUnexpected('defis-gamification', e); }
@@ -1218,10 +1301,11 @@ export function useVaultInternal(): VaultState {
     if (currentCoins < item.cost) throw new Error(`Feuilles insuffisantes`);
 
     try {
-      // 1. Déduire les points dans gamification.md
-      const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
+      // 1. Déduire les points dans gami-{profileId}.md
+      const file = gamiFile(profileId);
+      const gamiContent = await vaultRef.current.readFile(file).catch(() => '');
       const gami = parseGamification(gamiContent);
-      const gamiProfile = gami.profiles.find((p) => p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase());
+      const gamiProfile = gami.profiles.find((p) => p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase());
       if (gamiProfile) {
         // Déduire les feuilles uniquement — l'XP (points) ne diminue jamais
         gamiProfile.coins = (gamiProfile.coins ?? gamiProfile.points) - item.cost;
@@ -1233,7 +1317,13 @@ export function useVaultInternal(): VaultState {
           timestamp: new Date().toISOString(),
         });
       }
-      await vaultRef.current.writeFile(GAMI_FILE, serializeGamification(gami));
+      const singleData: GamificationData = {
+        profiles: gami.profiles.filter(p => p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase()),
+        history: gami.history.filter(e => e.profileId === profileId),
+        activeRewards: (gami.activeRewards ?? []).filter(r => r.profileId === profileId),
+        usedLoots: (gami.usedLoots ?? []).filter(u => u.profileId === profileId),
+      };
+      await vaultRef.current.writeFile(file, serializeGamification(singleData));
 
       // 2. Ajouter l'item dans famille.md
       const content = await vaultRef.current.readFile(FAMILLE_FILE);
@@ -1269,10 +1359,40 @@ export function useVaultInternal(): VaultState {
       const familleStr = lines.join('\n');
       await vaultRef.current.writeFile(FAMILLE_FILE, familleStr);
 
-      // 3. Mettre à jour l'état local
-      const gamiStr = serializeGamification(gami);
-      setProfiles(mergeProfiles(familleStr, gamiStr));
-      setGamiData(gami);
+      // 3. Mettre à jour l'état local (merge partiel du profil modifié)
+      const updatedGamiProfile = gami.profiles.find(p => p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase());
+      setGamiData(prev => {
+        if (!prev || !updatedGamiProfile) return prev;
+        return {
+          ...prev,
+          profiles: prev.profiles.map(p => (p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase()) ? updatedGamiProfile : p),
+          history: [...prev.history, ...gami.history.filter(e => e.profileId === profileId && !prev.history.some(h => h.timestamp === e.timestamp))],
+        };
+      });
+      // Recharger les profils depuis famille.md mis à jour (décoration ajoutée)
+      // Utilise le gamiData actuel comme base pour ne pas écraser les autres profils
+      setProfiles(prev => {
+        const parsed = parseFamille(familleStr);
+        return parsed.map(base => {
+          const existing = prev.find(p => p.id === base.id);
+          if (!existing) return { ...base, points: 0, coins: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0 };
+          // Pour le profil modifié, mettre à jour les coins
+          if (base.id === profileId || base.id.toLowerCase() === profileId.toLowerCase()) {
+            return {
+              ...base,
+              points: existing.points,
+              coins: updatedGamiProfile ? (updatedGamiProfile.coins ?? updatedGamiProfile.points) : existing.coins,
+              level: existing.level,
+              streak: existing.streak,
+              lootBoxesAvailable: existing.lootBoxesAvailable,
+              multiplier: existing.multiplier,
+              multiplierRemaining: existing.multiplierRemaining,
+              pityCounter: existing.pityCounter,
+            };
+          }
+          return { ...base, points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
+        });
+      });
     } catch (e) {
       throw new Error(`buyMascotItem: ${e}`);
     }
@@ -1335,9 +1455,15 @@ export function useVaultInternal(): VaultState {
       const familleStr = lines.join('\n');
       await vaultRef.current.writeFile(FAMILLE_FILE, familleStr);
 
-      // Mettre à jour l'état local
-      const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
-      setProfiles(mergeProfiles(familleStr, gamiContent));
+      // Mettre à jour l'état local (merge partiel : seuls les placements ont changé dans famille.md)
+      setProfiles(prev => {
+        const parsed = parseFamille(familleStr);
+        return parsed.map(base => {
+          const existing = prev.find(p => p.id === base.id);
+          if (!existing) return { ...base, points: 0, coins: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0 };
+          return { ...base, points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
+        });
+      });
     } catch (e) {
       throw new Error(`placeMascotItem: ${e}`);
     }
@@ -1390,8 +1516,15 @@ export function useVaultInternal(): VaultState {
       const familleStr = lines.join('\n');
       await vaultRef.current.writeFile(FAMILLE_FILE, familleStr);
 
-      const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
-      setProfiles(mergeProfiles(familleStr, gamiContent));
+      // Mettre à jour l'état local (merge partiel : seuls les placements ont changé)
+      setProfiles(prev => {
+        const parsed = parseFamille(familleStr);
+        return parsed.map(base => {
+          const existing = prev.find(p => p.id === base.id);
+          if (!existing) return { ...base, points: 0, coins: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0 };
+          return { ...base, points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
+        });
+      });
     } catch (e) {
       throw new Error(`unplaceMascotItem: ${e}`);
     }
@@ -1443,26 +1576,30 @@ export function useVaultInternal(): VaultState {
       const newFamilleContent = lines.join('\n');
       await vaultRef.current.writeFile(FAMILLE_FILE, newFamilleContent);
 
-      // Propager le renommage dans le fichier gamification si le nom a changé
+      // Propager le renommage dans gami-{profileId}.md si le nom a changé
+      // (l'ID du profil reste stable — seul le contenu interne change, pas le nom du fichier)
       if (updates.name) {
         try {
-          const gamiRaw = await vaultRef.current.readFile(GAMI_FILE);
-          const gamiLines = gamiRaw.split('\n');
-          // Trouver l'ancien nom du profil à partir du profileId
-          const oldProfile = profiles.find(p => p.id === profileId);
-          const oldName = oldProfile?.name;
-          if (oldName && oldName !== updates.name) {
-            for (let i = 0; i < gamiLines.length; i++) {
-              // Renommer le header ## AncienNom → ## NouveauNom
-              if (gamiLines[i] === `## ${oldName}`) {
-                gamiLines[i] = `## ${updates.name}`;
+          const file = gamiFile(profileId);
+          const gamiRaw = await vaultRef.current.readFile(file).catch(() => '');
+          if (gamiRaw) {
+            const gamiLines = gamiRaw.split('\n');
+            // Trouver l'ancien nom du profil à partir du profileId
+            const oldProfile = profiles.find(p => p.id === profileId);
+            const oldName = oldProfile?.name;
+            if (oldName && oldName !== updates.name) {
+              for (let i = 0; i < gamiLines.length; i++) {
+                // Renommer le header ## AncienNom → ## NouveauNom
+                if (gamiLines[i] === `## ${oldName}`) {
+                  gamiLines[i] = `## ${updates.name}`;
+                }
+                // Renommer aussi le champ name: si présent
+                if (gamiLines[i].trim().startsWith('name:') && gamiLines[i].trim() === `name: ${oldName}`) {
+                  gamiLines[i] = `name: ${updates.name}`;
+                }
               }
-              // Renommer aussi le champ name: si présent
-              if (gamiLines[i].trim().startsWith('name:') && gamiLines[i].trim() === `name: ${oldName}`) {
-                gamiLines[i] = `name: ${updates.name}`;
-              }
+              await vaultRef.current.writeFile(file, gamiLines.join('\n'));
             }
-            await vaultRef.current.writeFile(GAMI_FILE, gamiLines.join('\n'));
           }
         } catch (e) {
           warnUnexpected('updateProfile-rename-gami', e);
@@ -1471,8 +1608,32 @@ export function useVaultInternal(): VaultState {
 
       // Mise à jour optimiste du state local
       try {
-        const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
-        setProfiles(mergeProfiles(newFamilleContent, gamiContent));
+        const file = gamiFile(profileId);
+        const profGamiContent = await vaultRef.current.readFile(file).catch(() => '');
+        // Mise à jour partielle : seul le profil modifié change
+        setProfiles(prev => {
+          const parsed = parseFamille(newFamilleContent);
+          return parsed.map(base => {
+            const existing = prev.find(p => p.id === base.id);
+            if (!existing) return { ...base, points: 0, coins: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0 };
+            if (base.id === profileId && profGamiContent) {
+              const profGami = parseGamification(profGamiContent);
+              const gamiProf = profGami.profiles[0];
+              return {
+                ...base,
+                points: gamiProf?.points ?? existing.points,
+                coins: gamiProf?.coins ?? gamiProf?.points ?? existing.coins,
+                level: gamiProf?.level ?? existing.level,
+                streak: gamiProf?.streak ?? existing.streak,
+                lootBoxesAvailable: gamiProf?.lootBoxesAvailable ?? existing.lootBoxesAvailable,
+                multiplier: gamiProf?.multiplier ?? existing.multiplier,
+                multiplierRemaining: gamiProf?.multiplierRemaining ?? existing.multiplierRemaining,
+                pityCounter: gamiProf?.pityCounter ?? existing.pityCounter,
+              };
+            }
+            return { ...base, points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
+          });
+        });
       } catch (e) {
         warnUnexpected('updateProfile-optimistic', e);
         setProfiles(prev => prev.map(p => p.id === profileId ? { ...p, ...updates } : p));
@@ -2288,10 +2449,33 @@ export function useVaultInternal(): VaultState {
     if (!vaultRef.current) return;
     try {
       const familleContent = await vaultRef.current.readFile(FAMILLE_FILE);
-      const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
+      const baseProfiles = parseFamille(familleContent);
+      const gamiFileResults = await Promise.allSettled(
+        baseProfiles.map(p => vaultRef.current!.readFile(gamiFile(p.id)))
+      );
+      const mergedProfiles: any[] = [];
+      const mergedHistory: any[] = [];
+      const mergedActiveRewards: any[] = [];
+      const mergedUsedLoots: any[] = [];
+      for (let i = 0; i < baseProfiles.length; i++) {
+        const result = gamiFileResults[i];
+        const content = result.status === 'fulfilled' ? result.value : '';
+        if (!content) continue;
+        const g = parseGamification(content);
+        mergedProfiles.push(...g.profiles);
+        mergedHistory.push(...g.history);
+        mergedActiveRewards.push(...(g.activeRewards ?? []));
+        mergedUsedLoots.push(...(g.usedLoots ?? []));
+      }
+      const gami: GamificationData = {
+        profiles: mergedProfiles,
+        history: mergedHistory,
+        activeRewards: mergedActiveRewards,
+        usedLoots: mergedUsedLoots,
+      };
+      const gamiContent = serializeGamification(gami);
       const merged = mergeProfiles(familleContent, gamiContent);
       setProfiles(merged);
-      const gami = parseGamification(gamiContent);
       setGamiData(gami);
     } catch (e) {
       warnUnexpected('refreshGamification', e);
@@ -2384,8 +2568,15 @@ export function useVaultInternal(): VaultState {
     // Mise à jour optimiste des profils (ageCategory mis à jour)
     try {
       const newFamilleContent = lines.join('\n');
-      const gamiContent = await vault.readFile(GAMI_FILE);
-      setProfiles(mergeProfiles(newFamilleContent, gamiContent));
+      // Merge partiel : les données gami n'ont pas changé
+      setProfiles(prev => {
+        const parsed = parseFamille(newFamilleContent);
+        return parsed.map(base => {
+          const existing = prev.find(p => p.id === base.id);
+          if (!existing) return { ...base, points: 0, coins: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0 };
+          return { ...base, points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
+        });
+      });
     } catch (e) {
       warnUnexpected('applyAgeUpgrade-optimistic', e);
       setProfiles(prev => prev.map(p =>
@@ -2416,10 +2607,26 @@ export function useVaultInternal(): VaultState {
     // Mise à jour optimiste des profils et gamification
     try {
       const familleContent = await vaultRef.current.readFile(FAMILLE_FILE);
-      const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
-      const merged = mergeProfiles(familleContent, gamiContent);
+      const allProfs = parseFamille(familleContent);
+      const gamiFileResults = await Promise.allSettled(allProfs.map(p => vaultRef.current!.readFile(gamiFile(p.id))));
+      const mergedGamiProfiles: any[] = [];
+      const mergedGamiHistory: any[] = [];
+      const mergedGamiActiveRewards: any[] = [];
+      const mergedGamiUsedLoots: any[] = [];
+      for (let i = 0; i < allProfs.length; i++) {
+        const r = gamiFileResults[i];
+        const c = r.status === 'fulfilled' ? r.value : '';
+        if (!c) continue;
+        const g = parseGamification(c);
+        mergedGamiProfiles.push(...g.profiles);
+        mergedGamiHistory.push(...g.history);
+        mergedGamiActiveRewards.push(...(g.activeRewards ?? []));
+        mergedGamiUsedLoots.push(...(g.usedLoots ?? []));
+      }
+      const mergedGami: GamificationData = { profiles: mergedGamiProfiles, history: mergedGamiHistory, activeRewards: mergedGamiActiveRewards, usedLoots: mergedGamiUsedLoots };
+      const merged = mergeProfiles(familleContent, serializeGamification(mergedGami));
       setProfiles(merged);
-      setGamiData(parseGamification(gamiContent));
+      setGamiData(mergedGami);
     } catch (e) { warnUnexpected('addChild-optimistic', e); }
   }, []);
 
@@ -2430,8 +2637,15 @@ export function useVaultInternal(): VaultState {
     // Mise à jour optimiste des profils
     try {
       const familleContent = await vaultRef.current.readFile(FAMILLE_FILE);
-      const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
-      setProfiles(mergeProfiles(familleContent, gamiContent));
+      // Merge partiel : gami non modifié, seule famille.md a changé (birthdate)
+      setProfiles(prev => {
+        const parsed = parseFamille(familleContent);
+        return parsed.map(base => {
+          const existing = prev.find(p => p.id === base.id);
+          if (!existing) return { ...base, points: 0, coins: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0 };
+          return { ...base, points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
+        });
+      });
     } catch (e) { warnUnexpected('convertToBorn-optimistic', e); }
   }, []);
 
@@ -2650,7 +2864,8 @@ export function useVaultInternal(): VaultState {
     // Mini-points (+3) pour chaque check-in réussi d'un défi
     if (isNewCheckIn && completed) {
       try {
-        const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
+        const file = gamiFile(profileId);
+        const gamiContent = await vaultRef.current.readFile(file).catch(() => '');
         const gami = parseGamification(gamiContent);
         const familleContent = await vaultRef.current.readFile(FAMILLE_FILE);
         const currentProfiles = mergeProfiles(familleContent, gamiContent);
@@ -2659,11 +2874,17 @@ export function useVaultInternal(): VaultState {
           const { profile: updated, entry, activeRewards: updatedRewards } = addPoints(profile, 3, `Défi: ${defiTitle}`, gami.activeRewards);
           const newGami = {
             ...gami,
-            profiles: gami.profiles.map((p) => p.id === profileId ? { ...p, points: updated.points, level: updated.level, multiplierRemaining: updated.multiplierRemaining, multiplier: updated.multiplier } : p),
+            profiles: gami.profiles.map((p) => (p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase()) ? { ...p, points: updated.points, level: updated.level, multiplierRemaining: updated.multiplierRemaining, multiplier: updated.multiplier } : p),
             history: [...gami.history, entry],
             activeRewards: updatedRewards ?? gami.activeRewards,
           };
-          await vaultRef.current.writeFile(GAMI_FILE, serializeGamification(newGami));
+          const singleData: GamificationData = {
+            profiles: newGami.profiles.filter(p => p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase()),
+            history: newGami.history.filter(e => e.profileId === profileId),
+            activeRewards: (newGami.activeRewards ?? []).filter(r => r.profileId === profileId),
+            usedLoots: (newGami.usedLoots ?? []).filter(u => u.profileId === profileId),
+          };
+          await vaultRef.current.writeFile(file, serializeGamification(singleData));
         }
       } catch {}
     }
@@ -2684,38 +2905,79 @@ export function useVaultInternal(): VaultState {
 
     await vaultRef.current.writeFile(DEFIS_FILE, serializeDefis(updated));
 
-    // Distribuer les récompenses via gamification
+    // Distribuer les récompenses via gamification (per-profil)
     try {
-      const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
-      const gami = parseGamification(gamiContent);
       const familleContent = await vaultRef.current.readFile(FAMILLE_FILE);
-      const currentProfiles = mergeProfiles(familleContent, gamiContent);
+      const allBaseProfiles = parseFamille(familleContent);
       const participantIds = defi.participants.length > 0
         ? defi.participants
-        : currentProfiles.map((p) => p.id);
+        : allBaseProfiles.map((p) => p.id);
 
+      // Lire et mettre à jour chaque fichier per-profil concerné
+      const updatedGamiByProfile: Record<string, GamificationData> = {};
       for (const pid of participantIds) {
-        const matchProfile = currentProfiles.find((p) => p.id === pid);
+        const file = gamiFile(pid);
+        const profContent = await vaultRef.current.readFile(file).catch(() => '');
+        const profGami = parseGamification(profContent);
+        const matchProfile = allBaseProfiles.find((p) => p.id === pid);
         const gamiName = matchProfile?.name;
         const profile = gamiName
-          ? gami.profiles.find((p) => p.name === gamiName)
-          : gami.profiles.find((p) => p.name.toLowerCase().replace(/\s+/g, '') === pid);
+          ? profGami.profiles.find((p) => p.name === gamiName)
+          : profGami.profiles.find((p) => p.name.toLowerCase().replace(/\s+/g, '') === pid);
         if (profile) {
           profile.points += defi.rewardPoints;
           profile.lootBoxesAvailable += defi.rewardLootBoxes;
-          gami.history.push({
+          profGami.history.push({
             profileId: pid,
             action: `+${defi.rewardPoints}`,
             points: defi.rewardPoints,
             note: `Défi: ${defi.title}`,
             timestamp: new Date().toISOString(),
           });
+          const singleData: GamificationData = {
+            profiles: profGami.profiles,
+            history: profGami.history,
+            activeRewards: profGami.activeRewards ?? [],
+            usedLoots: profGami.usedLoots ?? [],
+          };
+          await vaultRef.current.writeFile(file, serializeGamification(singleData));
+          updatedGamiByProfile[pid] = singleData;
         }
       }
-      const gamiStr = serializeGamification(gami);
-      await vaultRef.current.writeFile(GAMI_FILE, gamiStr);
-      setProfiles(mergeProfiles(familleContent, gamiStr));
-      setGamiData(gami);
+
+      // Mettre à jour le state global (merge partiel)
+      setGamiData(prev => {
+        if (!prev) return prev;
+        const newProfiles = prev.profiles.map(p => {
+          const updated = updatedGamiByProfile[p.id]?.profiles[0];
+          return updated ? { ...p, points: updated.points, lootBoxesAvailable: updated.lootBoxesAvailable } : p;
+        });
+        const newHistory = [...prev.history];
+        for (const pid of participantIds) {
+          const added = updatedGamiByProfile[pid]?.history.filter(e => e.profileId === pid && !prev.history.some(h => h.timestamp === e.timestamp)) ?? [];
+          newHistory.push(...added);
+        }
+        return { ...prev, profiles: newProfiles, history: newHistory };
+      });
+      setProfiles(prev => {
+        const parsed = parseFamille(familleContent);
+        return parsed.map(base => {
+          const existing = prev.find(p => p.id === base.id);
+          if (!existing) return { ...base, points: 0, coins: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0 };
+          const updatedProf = updatedGamiByProfile[base.id]?.profiles[0];
+          return {
+            ...base,
+            points: updatedProf?.points ?? existing.points,
+            coins: updatedProf?.coins ?? updatedProf?.points ?? existing.coins,
+            level: updatedProf?.level ?? existing.level,
+            streak: existing.streak,
+            lootBoxesAvailable: updatedProf?.lootBoxesAvailable ?? existing.lootBoxesAvailable,
+            multiplier: existing.multiplier,
+            multiplierRemaining: existing.multiplierRemaining,
+            pityCounter: existing.pityCounter,
+          };
+        });
+      });
     } catch (e) {
       warnUnexpected('completeDefi-gamification', e);
     }
@@ -3070,18 +3332,31 @@ export function useVaultInternal(): VaultState {
       return [...prev, updated];
     });
 
-    // Award XP via gamification
+    // Award XP via gamification (per-profil)
     const childProfile = gamiData.profiles.find((p) => p.id === childProfileId);
     if (childProfile) {
       const { profile: updatedProfile, entry, activeRewards: updatedRewards } = addPoints(childProfile, xp, `Compétence: ${skill.label}`, gamiData.activeRewards);
-      const updatedGami = {
-        ...gamiData,
-        profiles: gamiData.profiles.map((p) => p.id === childProfileId ? updatedProfile : p),
-        history: [...gamiData.history, entry],
-        activeRewards: updatedRewards ?? gamiData.activeRewards,
+      // Merge partiel dans le state global
+      setGamiData(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          profiles: prev.profiles.map((p) => p.id === childProfileId ? updatedProfile : p),
+          history: [...prev.history, entry],
+          activeRewards: updatedRewards ?? prev.activeRewards,
+        };
+      });
+      // Écrire uniquement le fichier per-profil de l'enfant concerné
+      const file = gamiFile(childProfileId);
+      const existingContent = await vaultRef.current.readFile(file).catch(() => '');
+      const existingGami = parseGamification(existingContent);
+      const singleData: GamificationData = {
+        profiles: existingGami.profiles.map(p => (p.id === childProfileId || p.name.toLowerCase().replace(/\s+/g, '') === childProfileId.toLowerCase()) ? updatedProfile : p),
+        history: [...existingGami.history, entry],
+        activeRewards: updatedRewards ? updatedRewards.filter(r => r.profileId === childProfileId) : (existingGami.activeRewards ?? []),
+        usedLoots: existingGami.usedLoots ?? [],
       };
-      setGamiData(updatedGami);
-      await vaultRef.current.writeFile('gamification.md', serializeGamification(updatedGami));
+      await vaultRef.current.writeFile(file, serializeGamification(singleData));
     }
   }, [gamiData, profiles, skillTrees, activeProfileId]);
 
@@ -3146,7 +3421,8 @@ export function useVaultInternal(): VaultState {
   ) => {
     if (!vaultRef.current) return;
     try {
-      const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
+      const file = gamiFile(profileId);
+      const gamiContent = await vaultRef.current.readFile(file).catch(() => '');
       const gami = parseGamification(gamiContent);
       const familleContent = await vaultRef.current.readFile(FAMILLE_FILE);
       const currentProfiles = mergeProfiles(familleContent, gamiContent);
@@ -3156,7 +3432,7 @@ export function useVaultInternal(): VaultState {
       const { profile: updated, entry, activeRewards: updatedRewards } = addPoints(profile, points, sagaNote, gami.activeRewards);
       const newGami = {
         ...gami,
-        profiles: gami.profiles.map((p) => p.id === profileId ? { ...p, points: updated.points, level: updated.level, multiplierRemaining: updated.multiplierRemaining, multiplier: updated.multiplier } : p),
+        profiles: gami.profiles.map((p) => (p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase()) ? { ...p, points: updated.points, level: updated.level, multiplierRemaining: updated.multiplierRemaining, multiplier: updated.multiplier } : p),
         history: [...gami.history, entry],
         activeRewards: updatedRewards ?? gami.activeRewards,
       };
@@ -3199,8 +3475,24 @@ export function useVaultInternal(): VaultState {
         await vaultRef.current.writeFile(FAMILLE_FILE, lines.join('\n'));
       }
 
-      setGamiData(newGami);
-      await vaultRef.current.writeFile(GAMI_FILE, serializeGamification(newGami));
+      const singleData: GamificationData = {
+        profiles: newGami.profiles.filter(p => p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase()),
+        history: newGami.history.filter(e => e.profileId === profileId),
+        activeRewards: (newGami.activeRewards ?? []).filter(r => r.profileId === profileId),
+        usedLoots: (newGami.usedLoots ?? []).filter(u => u.profileId === profileId),
+      };
+      // Merge partiel dans le state global
+      setGamiData(prev => {
+        if (!prev) return prev;
+        const updatedProf = singleData.profiles[0];
+        return {
+          ...prev,
+          profiles: updatedProf ? prev.profiles.map(p => (p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase()) ? updatedProf : p) : prev.profiles,
+          history: [...prev.history, ...singleData.history.filter(e => !prev.history.some(h => h.timestamp === e.timestamp))],
+          activeRewards: newGami.activeRewards ?? prev.activeRewards,
+        };
+      });
+      await vaultRef.current.writeFile(gamiFile(profileId), serializeGamification(singleData));
     } catch (e) {
       if (__DEV__) console.warn('[completeSagaChapter]', e);
     }
@@ -3211,7 +3503,8 @@ export function useVaultInternal(): VaultState {
   const completeAdventure = useCallback(async (profileId: string, points: number, adventureNote: string) => {
     if (!vaultRef.current) return;
     try {
-      const gamiContent = await vaultRef.current.readFile(GAMI_FILE);
+      const file = gamiFile(profileId);
+      const gamiContent = await vaultRef.current.readFile(file).catch(() => '');
       const gami = parseGamification(gamiContent);
       const familleContent = await vaultRef.current.readFile(FAMILLE_FILE);
       const currentProfiles = mergeProfiles(familleContent, gamiContent);
@@ -3220,12 +3513,28 @@ export function useVaultInternal(): VaultState {
         const { profile: updated, entry, activeRewards: updatedRewards } = addPoints(profile, points, adventureNote, gami.activeRewards);
         const newGami = {
           ...gami,
-          profiles: gami.profiles.map((p) => p.id === profileId ? { ...p, points: updated.points, level: updated.level, multiplierRemaining: updated.multiplierRemaining, multiplier: updated.multiplier } : p),
+          profiles: gami.profiles.map((p) => (p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase()) ? { ...p, points: updated.points, level: updated.level, multiplierRemaining: updated.multiplierRemaining, multiplier: updated.multiplier } : p),
           history: [...gami.history, entry],
           activeRewards: updatedRewards ?? gami.activeRewards,
         };
-        setGamiData(newGami);
-        await vaultRef.current.writeFile(GAMI_FILE, serializeGamification(newGami));
+        const singleData: GamificationData = {
+          profiles: newGami.profiles.filter(p => p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase()),
+          history: newGami.history.filter(e => e.profileId === profileId),
+          activeRewards: (newGami.activeRewards ?? []).filter(r => r.profileId === profileId),
+          usedLoots: (newGami.usedLoots ?? []).filter(u => u.profileId === profileId),
+        };
+        // Merge partiel dans le state global
+        setGamiData(prev => {
+          if (!prev) return prev;
+          const updatedProf = singleData.profiles[0];
+          return {
+            ...prev,
+            profiles: updatedProf ? prev.profiles.map(p => (p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase()) ? updatedProf : p) : prev.profiles,
+            history: [...prev.history, ...singleData.history.filter(e => !prev.history.some(h => h.timestamp === e.timestamp))],
+            activeRewards: newGami.activeRewards ?? prev.activeRewards,
+          };
+        });
+        await vaultRef.current.writeFile(file, serializeGamification(singleData));
       }
     } catch {}
   }, []);
@@ -3236,8 +3545,19 @@ export function useVaultInternal(): VaultState {
       ...gamiData,
       usedLoots: [...(gamiData.usedLoots ?? []), loot],
     };
-    await vaultRef.current.writeFile(GAMI_FILE, serializeGamification(updated));
     setGamiData(updated);
+    // Écrire uniquement dans le fichier per-profil du propriétaire du loot
+    const profileId = loot.profileId;
+    const file = gamiFile(profileId);
+    const existingContent = await vaultRef.current.readFile(file).catch(() => '');
+    const existingGami = parseGamification(existingContent);
+    const singleData: GamificationData = {
+      profiles: existingGami.profiles,
+      history: existingGami.history,
+      activeRewards: existingGami.activeRewards ?? [],
+      usedLoots: [...(existingGami.usedLoots ?? []), loot],
+    };
+    await vaultRef.current.writeFile(file, serializeGamification(singleData));
   }, [gamiData]);
 
   // Mémoïser la valeur du contexte pour éviter les re-renders en cascade
