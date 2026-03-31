@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 Phase: 10 (compagnon-mascotte) — EXECUTING
 Plan: 4 of 4
 Status: Ready to execute
-Last activity: 2026-03-31 - Completed quick task 260331-jro: PressableScale + DashboardCard
+Last activity: 2026-03-31 - Completed quick task 260331-jzy: Prop tinted DashboardCard
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -111,6 +111,7 @@ None yet.
 |---|-------------|------|--------|-----------|
 | 260330-t4b | Refonte layout écran ferme Option B | 2026-03-30 | 149d6d1 | [260330-t4b-refonte-layout-cran-ferme-option-b](./quick/260330-t4b-refonte-layout-cran-ferme-option-b/) |
 | 260331-jro | Créer composant PressableScale + appliquer sur DashboardCard | 2026-03-31 | 103da8c | [260331-jro-cr-er-composant-pressablescale-appliquer](./quick/260331-jro-cr-er-composant-pressablescale-appliquer/) |
+| 260331-jzy | Ajouter prop tinted sur DashboardCard pour fond subtil coloré par section | 2026-03-31 | 3549bab | [260331-jzy-ajouter-prop-tinted-sur-dashboardcard-po](./quick/260331-jzy-ajouter-prop-tinted-sur-dashboardcard-po/) |
 
 ## Session Continuity
 
