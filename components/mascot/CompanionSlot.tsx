@@ -89,6 +89,8 @@ const COMPANION_WALK_DOWN: Partial<Record<CompanionSpecies, Partial<Record<Compa
       require('../../assets/garden/animals/lapin/bebe/walk_down_2.png'),
       require('../../assets/garden/animals/lapin/bebe/walk_down_3.png'),
       require('../../assets/garden/animals/lapin/bebe/walk_down_4.png'),
+      require('../../assets/garden/animals/lapin/bebe/walk_down_5.png'),
+      require('../../assets/garden/animals/lapin/bebe/walk_down_6.png'),
     ],
   },
 };
@@ -100,6 +102,8 @@ const COMPANION_WALK_LEFT: Partial<Record<CompanionSpecies, Partial<Record<Compa
       require('../../assets/garden/animals/lapin/bebe/walk_left_2.png'),
       require('../../assets/garden/animals/lapin/bebe/walk_left_3.png'),
       require('../../assets/garden/animals/lapin/bebe/walk_left_4.png'),
+      require('../../assets/garden/animals/lapin/bebe/walk_left_5.png'),
+      require('../../assets/garden/animals/lapin/bebe/walk_left_6.png'),
     ],
   },
 };
