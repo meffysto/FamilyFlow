@@ -126,13 +126,27 @@ function buildCompanionPrompt(event: CompanionEvent, ctx: CompanionMessageContex
   return `Tu es ${ctx.companionName}, un ${ctx.companionSpecies} mignon et attachant. ${eventDescriptions[event]}. Réponds en UNE phrase courte, encourageante et mignonne (max 80 caractères). Pas d'emoji. Tutoie ${ctx.profileName}.`;
 }
 
+// ── Cache messages IA ────────────────────────────────
+
+const AI_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
+interface AICacheEntry {
+  message: string;
+  event: CompanionEvent;
+  cacheKey: string;
+  timestamp: number;
+}
+
+let aiMessageCache: AICacheEntry | null = null;
+
+/** Clé de cache basée sur le contexte — change si l'activité change */
+function buildCacheKey(event: CompanionEvent, ctx: CompanionMessageContext): string {
+  return `${ctx.profileName}:${ctx.companionName}:${event}:${ctx.tasksToday}:${ctx.streak}:${ctx.level}`;
+}
+
 /**
  * Génère un message compagnon hybride : tente l'IA Haiku, fallback sur prédéfinis.
- *
- * @param event - L'événement déclenchant le message
- * @param context - Le contexte du message (profil, compagnon, statistiques)
- * @param aiCall - Callback d'appel IA (null si pas de clé API configurée)
- * @returns La clé i18n (fallback) ou le texte IA brut
+ * Cache le message IA pendant 30min — ne refait un appel que si le contexte change.
  */
 export async function generateCompanionAIMessage(
   event: CompanionEvent,
@@ -142,13 +156,31 @@ export async function generateCompanionAIMessage(
   const fallbackKey = pickCompanionMessage(event, context);
   if (!aiCall) return fallbackKey;
 
+  const cacheKey = buildCacheKey(event, context);
+
+  // Cache hit — même contexte et pas expiré
+  if (
+    aiMessageCache &&
+    aiMessageCache.cacheKey === cacheKey &&
+    Date.now() - aiMessageCache.timestamp < AI_CACHE_TTL_MS
+  ) {
+    return aiMessageCache.message;
+  }
+
   try {
     const prompt = buildCompanionPrompt(event, context);
     const result = await Promise.race([
       aiCall(prompt),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
     ]);
-    return result || fallbackKey;
+    const message = result || fallbackKey;
+
+    // Stocker en cache seulement si c'est un message IA (pas le fallback)
+    if (result) {
+      aiMessageCache = { message, event, cacheKey, timestamp: Date.now() };
+    }
+
+    return message;
   } catch {
     return fallbackKey;
   }

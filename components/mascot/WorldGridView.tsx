@@ -568,7 +568,7 @@ const styles = StyleSheet.create({
     borderWidth: 0,
   },
   buildingEmoji: { fontSize: 28 },
-  buildingSprite: { width: 32, height: 32 },
+  buildingSprite: { width: 44, height: 44 },
   buildingIncome: { fontSize: 10, color: '#4ADE80', fontWeight: '600', marginTop: 2 },
   pendingBadge: {
     position: 'absolute',

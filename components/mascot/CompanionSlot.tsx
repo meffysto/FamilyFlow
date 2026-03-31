@@ -13,6 +13,7 @@ import Animated, {
   withSpring,
   withSequence,
   withTiming,
+  Easing,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { ImpactFeedbackStyle } from 'expo-haptics';
@@ -21,18 +22,31 @@ import { FontSize, FontWeight } from '../../constants/typography';
 import { Spacing, Radius } from '../../constants/spacing';
 import type { CompanionSpecies, CompanionStage, CompanionMood } from '../../lib/mascot/companion-types';
 
-// ── Constantes géométrie viewbox ──────────────────────
-
-/** Dimensions viewbox SVG de la scène arbre */
-const VIEWBOX_W = 200;
-const VIEWBOX_H = 240;
-
-/** Position du compagnon dans le viewbox — distinct des HAB_SLOTS existants */
-const COMPANION_CX = 45;
-const COMPANION_CY = 175;
+// ── Constantes géométrie ──────────────────────────────
 
 /** Taille du sprite du compagnon (logical pixels) */
 const COMPANION_SIZE = 32;
+
+/**
+ * Points d'intérêt en coordonnées fractionnelles (0-1) du container diorama.
+ * Basés sur les positions réelles de WorldGridView (world-grid.ts).
+ */
+const WAYPOINTS = [
+  { fx: 0.20, fy: 0.72, label: 'home' },        // position de repos (gauche de l'arbre)
+  { fx: 0.28, fy: 0.08, label: 'crops-r1-c1' },  // culture rangée 1
+  { fx: 0.42, fy: 0.08, label: 'crops-r1-c2' },  // culture rangée 1 centre
+  { fx: 0.56, fy: 0.08, label: 'crops-r1-c3' },  // culture rangée 1 droite
+  { fx: 0.28, fy: 0.20, label: 'crops-r2-c1' },  // culture rangée 2
+  { fx: 0.56, fy: 0.20, label: 'crops-r2-c3' },  // culture rangée 2 droite
+  { fx: 0.42, fy: 0.32, label: 'crops-r3' },      // culture rangée 3 centre
+  { fx: 0.82, fy: 0.45, label: 'building-1' },    // bâtiment 1 (x=0.86)
+  { fx: 0.82, fy: 0.60, label: 'building-2' },    // bâtiment 2
+  { fx: 0.50, fy: 0.75, label: 'tree' },           // au pied de l'arbre
+  { fx: 0.10, fy: 0.50, label: 'left-field' },    // côté gauche
+  { fx: 0.35, fy: 0.50, label: 'center' },        // centre de la scène
+];
+
+const HOME_IDX = 0;
 
 // ── Sprites Mana Seed ─────────────────────────────────
 
@@ -61,6 +75,32 @@ const COMPANION_SPRITES: Record<CompanionSpecies, Record<CompanionStage, { idle_
     bebe:   { idle_1: require('../../assets/garden/animals/herisson/bebe/idle_1.png'),   idle_2: require('../../assets/garden/animals/herisson/bebe/idle_2.png') },
     jeune:  { idle_1: require('../../assets/garden/animals/herisson/jeune/idle_1.png'),  idle_2: require('../../assets/garden/animals/herisson/jeune/idle_2.png') },
     adulte: { idle_1: require('../../assets/garden/animals/herisson/adulte/idle_1.png'), idle_2: require('../../assets/garden/animals/herisson/adulte/idle_2.png') },
+  },
+};
+
+// ── Walk sprites (4 frames par direction) ────────────
+// Pour l'instant seul le lapin bébé a des vrais sprites de marche.
+// Les autres espèces/stades fallback sur idle frame swap.
+
+const COMPANION_WALK_DOWN: Partial<Record<CompanionSpecies, Partial<Record<CompanionStage, any[]>>>> = {
+  lapin: {
+    bebe: [
+      require('../../assets/garden/animals/lapin/bebe/walk_down_1.png'),
+      require('../../assets/garden/animals/lapin/bebe/walk_down_2.png'),
+      require('../../assets/garden/animals/lapin/bebe/walk_down_3.png'),
+      require('../../assets/garden/animals/lapin/bebe/walk_down_4.png'),
+    ],
+  },
+};
+
+const COMPANION_WALK_LEFT: Partial<Record<CompanionSpecies, Partial<Record<CompanionStage, any[]>>>> = {
+  lapin: {
+    bebe: [
+      require('../../assets/garden/animals/lapin/bebe/walk_left_1.png'),
+      require('../../assets/garden/animals/lapin/bebe/walk_left_2.png'),
+      require('../../assets/garden/animals/lapin/bebe/walk_left_3.png'),
+      require('../../assets/garden/animals/lapin/bebe/walk_left_4.png'),
+    ],
   },
 };
 
@@ -99,29 +139,89 @@ export const CompanionSlot = React.memo(function CompanionSlot({
 }: CompanionSlotProps) {
   const { colors } = useThemeColors();
   const [frameIdx, setFrameIdx] = useState(0);
-  const [bubbleOpacity, setBubbleOpacity] = useState(0);
+  const [facingLeft, setFacingLeft] = useState(false);
+  const [isWalking, setIsWalking] = useState(false);
+  const [isHorizontal, setIsHorizontal] = useState(false);
+  const [walkFrameIdx, setWalkFrameIdx] = useState(0);
+  const currentFx = React.useRef(WAYPOINTS[HOME_IDX].fx);
+  const currentFy = React.useRef(WAYPOINTS[HOME_IDX].fy);
 
-  // Animation idle — frame swap toutes les 800ms
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setFrameIdx(f => (f + 1) % 2);
-    }, 800);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Bulle de message — apparait + disparait
-  useEffect(() => {
-    if (!message) {
-      setBubbleOpacity(0);
-      return;
-    }
-    setBubbleOpacity(1);
-  }, [message]);
-
-  // Valeurs animées pour le tap
+  // Valeurs animées
   const jumpY = useSharedValue(0);
   const scale = useSharedValue(1);
   const bubbleAnim = useSharedValue(0);
+  const posX = useSharedValue(0);
+  const posY = useSharedValue(0);
+
+  // Frame swap idle — plus rapide en marchant (300ms) qu'au repos (800ms)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFrameIdx(f => (f + 1) % 2);
+    }, isWalking ? 300 : 800);
+    return () => clearInterval(interval);
+  }, [isWalking]);
+
+  // Walk frame cycle (pour les sprites de marche)
+  useEffect(() => {
+    if (!isWalking) { setWalkFrameIdx(0); return; }
+    const interval = setInterval(() => {
+      setWalkFrameIdx(f => (f + 1) % 4);
+    }, 200);
+    return () => clearInterval(interval);
+  }, [isWalking]);
+
+  // Balade entre waypoints — va vers un point d'intérêt, pause, puis un autre
+  useEffect(() => {
+    let mounted = true;
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+    let lastIdx = HOME_IDX;
+
+    const walkToNext = () => {
+      if (!mounted) return;
+      // Choisir un waypoint différent du dernier
+      let nextIdx: number;
+      do {
+        nextIdx = Math.floor(Math.random() * WAYPOINTS.length);
+      } while (nextIdx === lastIdx);
+      lastIdx = nextIdx;
+
+      const target = WAYPOINTS[nextIdx];
+      const dfx = target.fx - currentFx.current;
+      const dfy = target.fy - currentFy.current;
+      const dist = Math.sqrt(dfx * dfx + dfy * dfy);
+      // Durée proportionnelle à la distance (2s min, 4s max)
+      const duration = Math.max(2000, Math.min(4000, dist * 6000));
+
+      setFacingLeft(dfx < 0);
+      setIsHorizontal(Math.abs(dfx) > Math.abs(dfy));
+      setIsWalking(true);
+
+      const homeFx = WAYPOINTS[HOME_IDX].fx;
+      const homeFy = WAYPOINTS[HOME_IDX].fy;
+      posX.value = withTiming((target.fx - homeFx) * containerWidth, { duration, easing: Easing.inOut(Easing.sin) });
+      posY.value = withTiming((target.fy - homeFy) * containerHeight, { duration, easing: Easing.inOut(Easing.sin) });
+      currentFx.current = target.fx;
+      currentFy.current = target.fy;
+
+      // Arrêter la marche à l'arrivée
+      const stopWalk = setTimeout(() => { if (mounted) setIsWalking(false); }, duration);
+      timeouts.push(stopWalk);
+
+      // Pause au waypoint (3-6s) puis bouger à nouveau
+      const pause = 3000 + Math.random() * 3000;
+      const t = setTimeout(walkToNext, duration + pause);
+      timeouts.push(t);
+    };
+
+    // Premier déplacement après 3s
+    const initial = setTimeout(walkToNext, 3000);
+    timeouts.push(initial);
+
+    return () => {
+      mounted = false;
+      timeouts.forEach(t => clearTimeout(t));
+    };
+  }, [containerWidth, containerHeight]);
 
   // Animer la bulle de message
   useEffect(() => {
@@ -145,7 +245,15 @@ export const CompanionSlot = React.memo(function CompanionSlot({
     onTap();
   }, [onTap, jumpY, scale]);
 
-  // Styles animés
+  // Style de déplacement (balade entre waypoints)
+  const moveStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: posX.value },
+      { translateY: posY.value },
+    ],
+  }));
+
+  // Style du sprite (saut + flip directionnel)
   const companionAnimStyle = useAnimatedStyle(() => ({
     transform: [
       { translateY: jumpY.value },
@@ -160,24 +268,43 @@ export const CompanionSlot = React.memo(function CompanionSlot({
     ],
   }));
 
-  // Position pixel dans le container
-  const px = (COMPANION_CX / VIEWBOX_W) * containerWidth;
-  const py = (COMPANION_CY / VIEWBOX_H) * containerHeight;
+  // Position pixel dans le container (point de repos)
+  const home = WAYPOINTS[HOME_IDX];
+  const px = home.fx * containerWidth;
+  const py = home.fy * containerHeight;
 
-  // Sprite courant
+  // Sprite courant — walk frames si disponibles, sinon idle
   const sprites = COMPANION_SPRITES[species][stage];
-  const currentSprite = frameIdx === 0 ? sprites.idle_1 : sprites.idle_2;
+  const walkDownFrames = COMPANION_WALK_DOWN[species]?.[stage];
+  const walkLeftFrames = COMPANION_WALK_LEFT[species]?.[stage];
+
+  let currentSprite: any;
+  let flipX = false;
+
+  if (isWalking && isHorizontal && walkLeftFrames) {
+    // Marche latérale — walk_left, flip pour walk_right
+    currentSprite = walkLeftFrames[walkFrameIdx % walkLeftFrames.length];
+    flipX = !facingLeft; // walk_left sprites = vers la gauche, flip si va à droite
+  } else if (isWalking && !isHorizontal && walkDownFrames) {
+    // Marche verticale — walk_down
+    currentSprite = walkDownFrames[walkFrameIdx % walkDownFrames.length];
+  } else {
+    // Idle ou pas de walk sprites
+    currentSprite = frameIdx === 0 ? sprites.idle_1 : sprites.idle_2;
+    flipX = isWalking && facingLeft; // fallback flip en marchant sans walk sprites
+  }
 
   const hasMessage = !!message;
 
   return (
-    <View
+    <Animated.View
       style={[
         styles.slot,
         {
           left: px - COMPANION_SIZE / 2,
           top: py - COMPANION_SIZE / 2,
         },
+        moveStyle,
       ]}
       pointerEvents="box-none"
     >
@@ -211,12 +338,12 @@ export const CompanionSlot = React.memo(function CompanionSlot({
         <Animated.View style={companionAnimStyle}>
           <Image
             source={currentSprite}
-            style={styles.sprite}
+            style={[styles.sprite, flipX && { transform: [{ scaleX: -1 }] }]}
             resizeMode="contain"
           />
         </Animated.View>
       </Pressable>
-    </View>
+    </Animated.View>
   );
 });
 

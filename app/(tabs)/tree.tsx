@@ -55,6 +55,7 @@ import { useFarm } from '../../hooks/useFarm';
 import { SunriseReport, type SunriseResource } from '../../components/mascot/SunriseReport';
 import { BadgesSheet } from '../../components/mascot/BadgesSheet';
 import { CompanionPicker } from '../../components/mascot/CompanionPicker';
+import { CompanionSlot } from '../../components/mascot/CompanionSlot';
 import { getPendingResources } from '../../lib/mascot/building-engine';
 import {
   COMPANION_UNLOCK_LEVEL,
@@ -922,6 +923,22 @@ export default function TreeScreen() {
               onCropPlotPress={isOwnTree ? handleCropCellPress : undefined}
               onBuildingCellPress={isOwnTree ? handleBuildingCellPress : undefined}
             />
+
+            {/* Couche 3.5 : Compagnon mascotte — se balade sur toute la scène */}
+            {companion && (
+              <View style={{ ...StyleSheet.absoluteFillObject, zIndex: 3 }} pointerEvents="box-none">
+                <CompanionSlot
+                  species={companion.activeSpecies}
+                  stage={companionStage ?? 'bebe'}
+                  mood={companionMood ?? 'content'}
+                  name={companion.name}
+                  message={companionMessage}
+                  onTap={handleCompanionTap}
+                  containerWidth={SCREEN_W}
+                  containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
+                />
+              </View>
+            )}
 
             {/* Couche saisonnières : particules emoji selon la saison */}
             <View style={{ ...StyleSheet.absoluteFillObject, zIndex: 4 }} pointerEvents="none">

@@ -28,6 +28,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { LivingGradient } from '../../components/ui/LivingGradient';
 import { ReactiveAvatar, getAvatarMood } from '../../components/ui/ReactiveAvatar';
+import { CompanionAvatarMini } from '../../components/mascot/CompanionAvatarMini';
 import { SeasonalParticles } from '../../components/ui/SeasonalParticles';
 import { DashboardCard } from '../../components/DashboardCard';
 import { RDVEditor } from '../../components/RDVEditor';
@@ -801,23 +802,33 @@ export default function DashboardScreen() {
       <LivingGradient style={[styles.header, { borderBottomColor: colors.separator }]} ref={headerRef}>
         <SeasonalParticles />
         <View style={styles.headerLeft}>
-          <TouchableOpacity
-            onPress={() => setProfilePickerVisible(true)}
-            style={[styles.avatarBtn, { backgroundColor: tint }]}
-            activeOpacity={0.7}
-            accessibilityLabel={t('index.a11y.activeProfile', { name: activeProfile?.name ?? 'aucun' })}
-            accessibilityRole="button"
-          >
-            <ReactiveAvatar
-              emoji={activeProfile?.avatar ?? '👤'}
-              mood={getAvatarMood({
-                hour: new Date().getHours(),
-                hasLoot: (activeProfile?.lootBoxesAvailable ?? 0) > 0,
-                allTasksDone: tasks.length > 0 && tasks.filter(t => t.dueDate === todayStr && !t.completed).length === 0,
-                hasOverdue: overdueTasks.length > 0,
-              })}
-            />
-          </TouchableOpacity>
+          <View style={styles.avatarWithCompanion}>
+            <TouchableOpacity
+              onPress={() => setProfilePickerVisible(true)}
+              style={[styles.avatarBtn, { backgroundColor: tint }]}
+              activeOpacity={0.7}
+              accessibilityLabel={t('index.a11y.activeProfile', { name: activeProfile?.name ?? 'aucun' })}
+              accessibilityRole="button"
+            >
+              <ReactiveAvatar
+                emoji={activeProfile?.avatar ?? '👤'}
+                mood={getAvatarMood({
+                  hour: new Date().getHours(),
+                  hasLoot: (activeProfile?.lootBoxesAvailable ?? 0) > 0,
+                  allTasksDone: tasks.length > 0 && tasks.filter(t => t.dueDate === todayStr && !t.completed).length === 0,
+                  hasOverdue: overdueTasks.length > 0,
+                })}
+              />
+            </TouchableOpacity>
+            {activeProfile?.companion && (
+              <CompanionAvatarMini
+                companion={activeProfile.companion}
+                level={activeProfile.level}
+                fallbackEmoji=""
+                size={18}
+              />
+            )}
+          </View>
           <View style={styles.headerGreeting}>
             <Text style={[
               isChildMode ? styles.greetingChild : styles.greeting,
@@ -1156,6 +1167,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  avatarWithCompanion: {
+    alignItems: 'center',
+    gap: 2,
   },
   avatarBtn: {
     width: 36,
