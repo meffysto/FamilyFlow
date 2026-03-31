@@ -83,6 +83,26 @@ const COMPANION_SPRITES: Record<CompanionSpecies, Record<CompanionStage, { idle_
 // Les autres espèces/stades fallback sur idle frame swap.
 
 const COMPANION_WALK_DOWN: Partial<Record<CompanionSpecies, Partial<Record<CompanionStage, any[]>>>> = {
+  chat: {
+    bebe: [
+      require('../../assets/garden/animals/chat/bebe/walk_down_1.png'),
+      require('../../assets/garden/animals/chat/bebe/walk_down_2.png'),
+      require('../../assets/garden/animals/chat/bebe/walk_down_3.png'),
+      require('../../assets/garden/animals/chat/bebe/walk_down_4.png'),
+      require('../../assets/garden/animals/chat/bebe/walk_down_5.png'),
+      require('../../assets/garden/animals/chat/bebe/walk_down_6.png'),
+    ],
+  },
+  chien: {
+    bebe: [
+      require('../../assets/garden/animals/chien/bebe/walk_down_1.png'),
+      require('../../assets/garden/animals/chien/bebe/walk_down_2.png'),
+      require('../../assets/garden/animals/chien/bebe/walk_down_3.png'),
+      require('../../assets/garden/animals/chien/bebe/walk_down_4.png'),
+      require('../../assets/garden/animals/chien/bebe/walk_down_5.png'),
+      require('../../assets/garden/animals/chien/bebe/walk_down_6.png'),
+    ],
+  },
   lapin: {
     bebe: [
       require('../../assets/garden/animals/lapin/bebe/walk_down_1.png'),
@@ -95,7 +115,60 @@ const COMPANION_WALK_DOWN: Partial<Record<CompanionSpecies, Partial<Record<Compa
   },
 };
 
+const COMPANION_WALK_UP: Partial<Record<CompanionSpecies, Partial<Record<CompanionStage, any[]>>>> = {
+  chat: {
+    bebe: [
+      require('../../assets/garden/animals/chat/bebe/walk_up_1.png'),
+      require('../../assets/garden/animals/chat/bebe/walk_up_2.png'),
+      require('../../assets/garden/animals/chat/bebe/walk_up_3.png'),
+      require('../../assets/garden/animals/chat/bebe/walk_up_4.png'),
+      require('../../assets/garden/animals/chat/bebe/walk_up_5.png'),
+      require('../../assets/garden/animals/chat/bebe/walk_up_6.png'),
+    ],
+  },
+  chien: {
+    bebe: [
+      require('../../assets/garden/animals/chien/bebe/walk_up_1.png'),
+      require('../../assets/garden/animals/chien/bebe/walk_up_2.png'),
+      require('../../assets/garden/animals/chien/bebe/walk_up_3.png'),
+      require('../../assets/garden/animals/chien/bebe/walk_up_4.png'),
+      require('../../assets/garden/animals/chien/bebe/walk_up_5.png'),
+      require('../../assets/garden/animals/chien/bebe/walk_up_6.png'),
+    ],
+  },
+  lapin: {
+    bebe: [
+      require('../../assets/garden/animals/lapin/bebe/walk_up_1.png'),
+      require('../../assets/garden/animals/lapin/bebe/walk_up_2.png'),
+      require('../../assets/garden/animals/lapin/bebe/walk_up_3.png'),
+      require('../../assets/garden/animals/lapin/bebe/walk_up_4.png'),
+      require('../../assets/garden/animals/lapin/bebe/walk_up_5.png'),
+      require('../../assets/garden/animals/lapin/bebe/walk_up_6.png'),
+    ],
+  },
+};
+
 const COMPANION_WALK_LEFT: Partial<Record<CompanionSpecies, Partial<Record<CompanionStage, any[]>>>> = {
+  chat: {
+    bebe: [
+      require('../../assets/garden/animals/chat/bebe/walk_left_1.png'),
+      require('../../assets/garden/animals/chat/bebe/walk_left_2.png'),
+      require('../../assets/garden/animals/chat/bebe/walk_left_3.png'),
+      require('../../assets/garden/animals/chat/bebe/walk_left_4.png'),
+      require('../../assets/garden/animals/chat/bebe/walk_left_5.png'),
+      require('../../assets/garden/animals/chat/bebe/walk_left_6.png'),
+    ],
+  },
+  chien: {
+    bebe: [
+      require('../../assets/garden/animals/chien/bebe/walk_left_1.png'),
+      require('../../assets/garden/animals/chien/bebe/walk_left_2.png'),
+      require('../../assets/garden/animals/chien/bebe/walk_left_3.png'),
+      require('../../assets/garden/animals/chien/bebe/walk_left_4.png'),
+      require('../../assets/garden/animals/chien/bebe/walk_left_5.png'),
+      require('../../assets/garden/animals/chien/bebe/walk_left_6.png'),
+    ],
+  },
   lapin: {
     bebe: [
       require('../../assets/garden/animals/lapin/bebe/walk_left_1.png'),
@@ -146,6 +219,7 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   const [facingLeft, setFacingLeft] = useState(false);
   const [isWalking, setIsWalking] = useState(false);
   const [isHorizontal, setIsHorizontal] = useState(false);
+  const [goingUp, setGoingUp] = useState(false);
   const [walkFrameIdx, setWalkFrameIdx] = useState(0);
   const currentFx = React.useRef(WAYPOINTS[HOME_IDX].fx);
   const currentFy = React.useRef(WAYPOINTS[HOME_IDX].fy);
@@ -169,8 +243,8 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   useEffect(() => {
     if (!isWalking) { setWalkFrameIdx(0); return; }
     const interval = setInterval(() => {
-      setWalkFrameIdx(f => (f + 1) % 4);
-    }, 200);
+      setWalkFrameIdx(f => (f + 1) % 6);
+    }, 150);
     return () => clearInterval(interval);
   }, [isWalking]);
 
@@ -193,10 +267,11 @@ export const CompanionSlot = React.memo(function CompanionSlot({
       const dfx = target.fx - currentFx.current;
       const dfy = target.fy - currentFy.current;
       const dist = Math.sqrt(dfx * dfx + dfy * dfy);
-      // Durée proportionnelle à la distance (2s min, 4s max)
-      const duration = Math.max(2000, Math.min(4000, dist * 6000));
+      // Durée proportionnelle à la distance (4s min, 8s max) — marche tranquille
+      const duration = Math.max(4000, Math.min(8000, dist * 14000));
 
       setFacingLeft(dfx < 0);
+      setGoingUp(dfy < 0);
       setIsHorizontal(Math.abs(dfx) > Math.abs(dfy));
       setIsWalking(true);
 
@@ -211,8 +286,8 @@ export const CompanionSlot = React.memo(function CompanionSlot({
       const stopWalk = setTimeout(() => { if (mounted) setIsWalking(false); }, duration);
       timeouts.push(stopWalk);
 
-      // Pause au waypoint (3-6s) puis bouger à nouveau
-      const pause = 3000 + Math.random() * 3000;
+      // Pause au waypoint (5-10s) puis bouger à nouveau
+      const pause = 5000 + Math.random() * 5000;
       const t = setTimeout(walkToNext, duration + pause);
       timeouts.push(t);
     };
@@ -239,11 +314,11 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   const handleTap = useCallback(() => {
     Haptics.impactAsync(ImpactFeedbackStyle.Medium);
     jumpY.value = withSequence(
-      withSpring(-20, { damping: 6, stiffness: 400 }),
+      withSpring(-8, { damping: 8, stiffness: 300 }),
       withSpring(0, { damping: 10, stiffness: 180 }),
     );
     scale.value = withSequence(
-      withSpring(1.3, { damping: 6, stiffness: 300 }),
+      withSpring(1.1, { damping: 8, stiffness: 300 }),
       withSpring(1.0, { damping: 10, stiffness: 180 }),
     );
     onTap();
@@ -280,6 +355,7 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   // Sprite courant — walk frames si disponibles, sinon idle
   const sprites = COMPANION_SPRITES[species][stage];
   const walkDownFrames = COMPANION_WALK_DOWN[species]?.[stage];
+  const walkUpFrames = COMPANION_WALK_UP[species]?.[stage];
   const walkLeftFrames = COMPANION_WALK_LEFT[species]?.[stage];
 
   let currentSprite: any;
@@ -288,10 +364,17 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   if (isWalking && isHorizontal && walkLeftFrames) {
     // Marche latérale — walk_left, flip pour walk_right
     currentSprite = walkLeftFrames[walkFrameIdx % walkLeftFrames.length];
-    flipX = !facingLeft; // walk_left sprites = vers la gauche, flip si va à droite
-  } else if (isWalking && !isHorizontal && walkDownFrames) {
-    // Marche verticale — walk_down
+    flipX = !facingLeft;
+  } else if (isWalking && !isHorizontal && goingUp && walkUpFrames) {
+    // Marche vers le haut — walk_up (dos)
+    currentSprite = walkUpFrames[walkFrameIdx % walkUpFrames.length];
+  } else if (isWalking && !isHorizontal && !goingUp && walkDownFrames) {
+    // Marche vers le bas — walk_down (face)
     currentSprite = walkDownFrames[walkFrameIdx % walkDownFrames.length];
+  } else if (isWalking && walkLeftFrames) {
+    // Fallback diagonal → walk_left avec flip
+    currentSprite = walkLeftFrames[walkFrameIdx % walkLeftFrames.length];
+    flipX = !facingLeft;
   } else {
     // Idle ou pas de walk sprites
     currentSprite = frameIdx === 0 ? sprites.idle_1 : sprites.idle_2;

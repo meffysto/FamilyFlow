@@ -369,9 +369,18 @@ export function openLootBox(
       break;
     }
     case 'farm_seed': {
-      // Graines gratuites : planter directement sur la premiere parcelle vide
-      // Le handler dans l'UI se chargera de planter (via le toast + callback)
-      // On stocke juste le cropId dans le box pour que l'UI sache quoi planter
+      // Ajouter la graine à l'inventaire de récoltes du profil
+      const cropId = rewardDef.mascotItemId;
+      if (cropId) {
+        const currentHarvest = updatedProfile.harvestInventory ?? {};
+        updatedProfile = {
+          ...updatedProfile,
+          harvestInventory: {
+            ...currentHarvest,
+            [cropId]: (currentHarvest[cropId] ?? 0) + 1,
+          },
+        };
+      }
       break;
     }
     // 'points', 'badge', 'reward' don't create active rewards
