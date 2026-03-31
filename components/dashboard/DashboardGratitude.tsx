@@ -32,7 +32,7 @@ function DashboardGratitudeInner(_props: DashboardSectionProps) {
   const gratitudeStreak = useMemo(() => computeGratitudeStreak(gratitudeDays, gratitudeProfiles.length), [gratitudeDays, gratitudeProfiles.length]);
 
   return (
-    <DashboardCard key="gratitude" title={t('dashboard.gratitude.title')} icon="🙏" color={colors.info} onPressMore={() => router.push('/(tabs)/gratitude')}>
+    <DashboardCard key="gratitude" title={t('dashboard.gratitude.title')} icon="🙏" color={colors.info} tinted onPressMore={() => router.push('/(tabs)/gratitude')}>
       <Text style={[styles.defiMeta, { color: colors.textSub }]}>
         {t('dashboard.gratitude.todayCount', { done: todayCount, total: gratitudeProfiles.length })}
         {gratitudeStreak > 0 ? ` · ${gratitudeStreak}j 🔥` : ''}

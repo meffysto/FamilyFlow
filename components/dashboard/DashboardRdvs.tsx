@@ -29,7 +29,7 @@ function DashboardRdvsInner({ vaultFileExists, activateCardTemplate, onEditRDV }
   const upcomingRdvs = rdvs.filter((r) => isRdvUpcoming(r));
 
   if (!vaultFileExists.rdvs) return (
-    <DashboardCard key="rdvs" title={t('dashboard.rdvs.title')} icon="📅" color={colors.info}>
+    <DashboardCard key="rdvs" title={t('dashboard.rdvs.title')} icon="📅" color={colors.info} tinted>
       <DashboardEmptyState
         description={t('dashboard.rdvs.emptyDescription')}
         onActivate={() => activateCardTemplate('rdvs')}
@@ -39,7 +39,7 @@ function DashboardRdvsInner({ vaultFileExists, activateCardTemplate, onEditRDV }
   );
 
   if (upcomingRdvs.length === 0) return (
-    <DashboardCard key="rdvs" title={t('dashboard.rdvs.title')} icon="📅" color={colors.info}>
+    <DashboardCard key="rdvs" title={t('dashboard.rdvs.title')} icon="📅" color={colors.info} tinted>
       <Text style={[styles.emptyHint, { color: colors.textMuted }]}>{t('dashboard.rdvs.noUpcoming')}</Text>
       <View style={styles.cardActions}>
         <TouchableOpacity onPress={() => router.push('/(tabs)/rdv')} activeOpacity={0.7}>
@@ -50,7 +50,7 @@ function DashboardRdvsInner({ vaultFileExists, activateCardTemplate, onEditRDV }
   );
 
   return (
-    <DashboardCard key="rdvs" title={t('dashboard.rdvs.title')} icon="📅" count={upcomingRdvs.length} color={colors.info}>
+    <DashboardCard key="rdvs" title={t('dashboard.rdvs.title')} icon="📅" count={upcomingRdvs.length} color={colors.info} tinted>
       {upcomingRdvs.slice(0, 3).map((rdv) => (
         <TouchableOpacity key={rdv.sourceFile} style={[styles.rdvRow, { borderLeftColor: colors.info }]} onPress={() => onEditRDV(rdv)} activeOpacity={0.7}>
           <Text style={[styles.rdvDate, { color: colors.info }]}>{formatDateLocalized(rdv.date_rdv)} {rdv.heure ? `à ${rdv.heure}` : ''}</Text>

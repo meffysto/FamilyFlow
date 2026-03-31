@@ -26,7 +26,7 @@ function DashboardOverdueInner({ handleTaskToggle }: DashboardSectionWithTaskTog
   if (overdueTasks.length === 0) return null;
 
   return (
-    <DashboardCard key="overdue" title={t('dashboard.overdue.title')} icon="⚠️" count={overdueTasks.length} color={colors.error} onPressMore={() => router.push('/(tabs)/tasks')}>
+    <DashboardCard key="overdue" title={t('dashboard.overdue.title')} icon="⚠️" count={overdueTasks.length} color={colors.error} tinted onPressMore={() => router.push('/(tabs)/tasks')}>
       {overdueTasks.slice(0, 3).map((task) => (
         <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} hideSection compact />
       ))}
