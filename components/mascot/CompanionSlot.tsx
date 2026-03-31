@@ -29,7 +29,7 @@ const VIEWBOX_H = 240;
 
 /** Position du compagnon dans le viewbox — distinct des HAB_SLOTS existants */
 const COMPANION_CX = 85;
-const COMPANION_CY = 205;
+const COMPANION_CY = 160;
 
 /** Taille du sprite du compagnon (logical pixels) */
 const COMPANION_SIZE = 32;

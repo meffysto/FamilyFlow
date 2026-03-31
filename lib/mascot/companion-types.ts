@@ -57,7 +57,7 @@ export interface CompanionMessageContext {
 }
 
 /** Niveau requis pour débloquer le système compagnon */
-export const COMPANION_UNLOCK_LEVEL = 5;
+export const COMPANION_UNLOCK_LEVEL = 1;
 
 /** Bonus XP apporté par la présence d'un compagnon actif (+5%) */
 export const COMPANION_XP_BONUS = 1.05;
