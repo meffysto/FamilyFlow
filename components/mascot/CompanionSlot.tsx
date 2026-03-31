@@ -25,7 +25,7 @@ import type { CompanionSpecies, CompanionStage, CompanionMood } from '../../lib/
 // ── Constantes géométrie ──────────────────────────────
 
 /** Taille du sprite du compagnon (logical pixels) */
-const COMPANION_SIZE = 32;
+const COMPANION_SIZE = 48;
 
 /**
  * Points d'intérêt en coordonnées fractionnelles (0-1) du container diorama.
@@ -103,6 +103,18 @@ const COMPANION_WALK_DOWN: Partial<Record<CompanionSpecies, Partial<Record<Compa
       require('../../assets/garden/animals/chien/bebe/walk_down_6.png'),
     ],
   },
+  renard: {
+    bebe: [
+      require('../../assets/garden/animals/renard/bebe/walk_down_1.png'),
+      require('../../assets/garden/animals/renard/bebe/walk_down_2.png'),
+      require('../../assets/garden/animals/renard/bebe/walk_down_3.png'),
+      require('../../assets/garden/animals/renard/bebe/walk_down_4.png'),
+      require('../../assets/garden/animals/renard/bebe/walk_down_5.png'),
+      require('../../assets/garden/animals/renard/bebe/walk_down_6.png'),
+      require('../../assets/garden/animals/renard/bebe/walk_down_7.png'),
+      require('../../assets/garden/animals/renard/bebe/walk_down_8.png'),
+    ],
+  },
   lapin: {
     bebe: [
       require('../../assets/garden/animals/lapin/bebe/walk_down_1.png'),
@@ -136,6 +148,18 @@ const COMPANION_WALK_UP: Partial<Record<CompanionSpecies, Partial<Record<Compani
       require('../../assets/garden/animals/chien/bebe/walk_up_6.png'),
     ],
   },
+  renard: {
+    bebe: [
+      require('../../assets/garden/animals/renard/bebe/walk_up_1.png'),
+      require('../../assets/garden/animals/renard/bebe/walk_up_2.png'),
+      require('../../assets/garden/animals/renard/bebe/walk_up_3.png'),
+      require('../../assets/garden/animals/renard/bebe/walk_up_4.png'),
+      require('../../assets/garden/animals/renard/bebe/walk_up_5.png'),
+      require('../../assets/garden/animals/renard/bebe/walk_up_6.png'),
+      require('../../assets/garden/animals/renard/bebe/walk_up_7.png'),
+      require('../../assets/garden/animals/renard/bebe/walk_up_8.png'),
+    ],
+  },
   lapin: {
     bebe: [
       require('../../assets/garden/animals/lapin/bebe/walk_up_1.png'),
@@ -167,6 +191,18 @@ const COMPANION_WALK_LEFT: Partial<Record<CompanionSpecies, Partial<Record<Compa
       require('../../assets/garden/animals/chien/bebe/walk_left_4.png'),
       require('../../assets/garden/animals/chien/bebe/walk_left_5.png'),
       require('../../assets/garden/animals/chien/bebe/walk_left_6.png'),
+    ],
+  },
+  renard: {
+    bebe: [
+      require('../../assets/garden/animals/renard/bebe/walk_left_1.png'),
+      require('../../assets/garden/animals/renard/bebe/walk_left_2.png'),
+      require('../../assets/garden/animals/renard/bebe/walk_left_3.png'),
+      require('../../assets/garden/animals/renard/bebe/walk_left_4.png'),
+      require('../../assets/garden/animals/renard/bebe/walk_left_5.png'),
+      require('../../assets/garden/animals/renard/bebe/walk_left_6.png'),
+      require('../../assets/garden/animals/renard/bebe/walk_left_7.png'),
+      require('../../assets/garden/animals/renard/bebe/walk_left_8.png'),
     ],
   },
   lapin: {
@@ -451,6 +487,8 @@ const styles = StyleSheet.create({
     left: '50%',
     transform: [{ translateX: -80 }],
     width: 160,
+    zIndex: 999,
+    elevation: 999,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: Radius.lg,

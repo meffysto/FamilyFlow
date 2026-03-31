@@ -54,10 +54,10 @@ export interface SeasonalParticle {
 
 /** Particules ambiantes par saison */
 export const SEASONAL_PARTICLES: Record<Season, SeasonalParticle> = {
-  printemps: { emoji: '🌸', color: '#FFB7C5', count: 6, speed: 'slow', direction: 'down' },
-  ete:       { emoji: '✨', color: '#FFE082', count: 4, speed: 'slow', direction: 'float' },
-  automne:   { emoji: '🍂', color: '#D4A373', count: 8, speed: 'normal', direction: 'down' },
-  hiver:     { emoji: '❄️', color: '#E3F2FD', count: 10, speed: 'slow', direction: 'down' },
+  printemps: { emoji: '🌸', color: '#FFB7C5', count: 3, speed: 'slow', direction: 'down' },
+  ete:       { emoji: '✨', color: '#FFE082', count: 2, speed: 'slow', direction: 'float' },
+  automne:   { emoji: '🍂', color: '#D4A373', count: 3, speed: 'slow', direction: 'down' },
+  hiver:     { emoji: '❄️', color: '#E3F2FD', count: 4, speed: 'slow', direction: 'down' },
 };
 
 // ── Palettes saisonnières par espèce ──────────

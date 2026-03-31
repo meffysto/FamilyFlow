@@ -41,9 +41,9 @@ interface SeasonalParticleItemProps {
 }
 
 const SPEED_DURATION: Record<SeasonalParticle['speed'], number> = {
-  slow: 5000,
-  normal: 3500,
-  fast: 2000,
+  slow: 12000,
+  normal: 8000,
+  fast: 5000,
 };
 
 function SeasonalParticleItem({ config, index, containerHeight, containerWidth }: SeasonalParticleItemProps) {
@@ -63,7 +63,7 @@ function SeasonalParticleItem({ config, index, containerHeight, containerWidth }
     if (reducedMotion) return;
 
     const duration = SPEED_DURATION[config.speed];
-    const delay = index * 500;
+    const delay = index * 4000 + Math.random() * 3000;
 
     if (config.direction === 'down') {
       // Chute saisonnière
@@ -114,16 +114,17 @@ function SeasonalParticleItem({ config, index, containerHeight, containerWidth }
       );
     }
 
-    // Opacity pulse entre 0.7 et 0.2
+    // Fade in → visible → fade out → longue pause invisible
     opacity.value = withDelay(
       delay,
       withRepeat(
         withSequence(
-          withTiming(0.7, { duration: duration * 0.4 }),
-          withTiming(0.2, { duration: duration * 0.6 }),
+          withTiming(0.5, { duration: 2000, easing: Easing.in(Easing.ease) }),    // fade in
+          withTiming(0.5, { duration: duration * 0.3 }),                            // visible
+          withTiming(0, { duration: 2000, easing: Easing.out(Easing.ease) }),       // fade out
+          withTiming(0, { duration: duration * 0.7 }),                              // invisible longtemps
         ),
         -1,
-        true,
       ),
     );
   }, [reducedMotion]);

@@ -140,10 +140,15 @@ function CropTooltip({ tooltipInfo, stageInfo, stageIdx }: {
 
   const TOOLTIP_W = 160;
   const TOOLTIP_H = 44;
+  const dioH = DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60;
+  const cellPy = cell.y * dioH;
   const rawWx = cell.x * SCREEN_W - TOOLTIP_W / 2;
-  const rawWy = cell.y * (DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60) - TOOLTIP_H - 12;
+  // Si le tooltip au-dessus serait croppé (trop haut), l'afficher en dessous de la cellule
+  const aboveY = cellPy - TOOLTIP_H - 12;
+  const belowY = cellPy + 40;
+  const rawWy = aboveY < 40 ? belowY : aboveY;
   const wx = Math.max(4, Math.min(rawWx, SCREEN_W - TOOLTIP_W - 4));
-  const wy = Math.max(4, rawWy);
+  const wy = rawWy;
 
   return (
     <Animated.View
@@ -926,7 +931,7 @@ export default function TreeScreen() {
 
             {/* Couche 3.5 : Compagnon mascotte — se balade sur toute la scène */}
             {companion && (
-              <View style={{ ...StyleSheet.absoluteFillObject, zIndex: 3 }} pointerEvents="box-none">
+              <View style={{ ...StyleSheet.absoluteFillObject, zIndex: companionMessage ? 20 : 3 }} pointerEvents="box-none">
                 <CompanionSlot
                   species={companion.activeSpecies}
                   stage={companionStage ?? 'bebe'}

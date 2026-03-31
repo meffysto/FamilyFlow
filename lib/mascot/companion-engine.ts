@@ -16,10 +16,8 @@ import {
  * Retourne le stade du compagnon pour un niveau donné.
  * Miroir exact de getTreeStage() dans engine.ts.
  */
-export function getCompanionStage(level: number): CompanionStage {
-  for (let i = COMPANION_STAGES.length - 1; i >= 0; i--) {
-    if (level >= COMPANION_STAGES[i].minLevel) return COMPANION_STAGES[i].stage;
-  }
+export function getCompanionStage(_level: number): CompanionStage {
+  // TODO: réactiver l'évolution quand les sprites jeune/adulte seront prêts
   return 'bebe';
 }
 
