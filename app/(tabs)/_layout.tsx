@@ -21,6 +21,7 @@ import { TabletSidebar } from '../../components/TabletSidebar';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 
 import { GlassView } from '../../components/ui/GlassView';
+import { CompanionAvatarMini } from '../../components/mascot/CompanionAvatarMini';
 import { FontSize, FontWeight } from '../../constants/typography';
 
 const SPRING_CONFIG = { damping: 10, stiffness: 180 };
@@ -302,7 +303,12 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
                   onPress={() => handleProfileSelect(p.id)}
                   activeOpacity={0.7}
                 >
-                  <Text style={pickerStyles.avatar}>{p.avatar}</Text>
+                  <CompanionAvatarMini
+                    companion={p.companion}
+                    level={p.level}
+                    fallbackEmoji={p.avatar}
+                    size={40}
+                  />
                   <Text style={[pickerStyles.name, { color: colors.text }]}>{p.name}</Text>
                   <Text style={[pickerStyles.role, { color: colors.textFaint }]}>
                     {p.role === 'adulte' ? `👤 ${t('profilePicker.adult')}` : `👶 ${t('profilePicker.child')}`}
