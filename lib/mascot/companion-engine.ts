@@ -107,3 +107,49 @@ export function pickCompanionMessage(
   const idx = Math.floor(Math.random() * templates.length);
   return templates[idx];
 }
+
+/**
+ * Construit un prompt court (<200 tokens) pour Claude Haiku.
+ * Instructions en français car l'app est en français.
+ */
+function buildCompanionPrompt(event: CompanionEvent, ctx: CompanionMessageContext): string {
+  const eventDescriptions: Record<CompanionEvent, string> = {
+    task_completed: `${ctx.profileName} vient de completer une tache`,
+    loot_opened: `${ctx.profileName} vient d'ouvrir un coffre a butin`,
+    level_up: `${ctx.profileName} vient de monter au niveau ${ctx.level}`,
+    greeting: `${ctx.profileName} vient d'arriver sur l'ecran de son arbre`,
+    streak_milestone: `${ctx.profileName} a un streak de ${ctx.streak} jours`,
+    harvest: `${ctx.profileName} vient de recolter sur sa ferme`,
+    craft: `${ctx.profileName} vient de creer un objet dans son atelier`,
+  };
+
+  return `Tu es ${ctx.companionName}, un ${ctx.companionSpecies} mignon et attachant. ${eventDescriptions[event]}. Reponds en UNE phrase courte, encourageante et mignonne (max 80 caracteres). Pas d'emoji. Tutoie ${ctx.profileName}.`;
+}
+
+/**
+ * Génère un message compagnon hybride : tente l'IA Haiku, fallback sur prédéfinis.
+ *
+ * @param event - L'événement déclenchant le message
+ * @param context - Le contexte du message (profil, compagnon, statistiques)
+ * @param aiCall - Callback d'appel IA (null si pas de clé API configurée)
+ * @returns La clé i18n (fallback) ou le texte IA brut
+ */
+export async function generateCompanionAIMessage(
+  event: CompanionEvent,
+  context: CompanionMessageContext,
+  aiCall: ((prompt: string) => Promise<string>) | null,
+): Promise<string> {
+  const fallbackKey = pickCompanionMessage(event, context);
+  if (!aiCall) return fallbackKey;
+
+  try {
+    const prompt = buildCompanionPrompt(event, context);
+    const result = await Promise.race([
+      aiCall(prompt),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
+    ]);
+    return result || fallbackKey;
+  } catch {
+    return fallbackKey;
+  }
+}

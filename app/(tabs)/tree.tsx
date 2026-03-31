@@ -39,6 +39,8 @@ import { hapticsTreeTap, hapticsSpeciesChange } from '../../lib/mascot/haptics';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
+import { useAI } from '../../contexts/AIContext';
+import { callCompanionMessage } from '../../lib/ai-service';
 import { TreeView } from '../../components/mascot/TreeView';
 import { SpeciesPicker } from '../../components/mascot/SpeciesPicker';
 import { TreeShop } from '../../components/mascot/TreeShop';
@@ -63,6 +65,7 @@ import {
   getCompanionStage,
   getCompanionMood,
   pickCompanionMessage,
+  generateCompanionAIMessage,
 } from '../../lib/mascot/companion-engine';
 import * as SecureStore from 'expo-secure-store';
 import { type PlantedCrop, type PlacedBuilding, CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
@@ -173,6 +176,7 @@ export default function TreeScreen() {
   const { primary, tint, colors, isDark } = useThemeColors();
   const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem, unplaceMascotItem, gamiData, setCompanion } = useVault();
   const { showToast } = useToast();
+  const { config: aiConfig } = useAI();
 
   // Profil affiché : celui passé en param ou le profil actif
   const profile = useMemo(() => {
@@ -260,6 +264,14 @@ export default function TreeScreen() {
   const companionStage = companion && activeProfile ? getCompanionStage(calculateLevel(activeProfile.points ?? 0)) : undefined;
   const companionMood = companion ? getCompanionMood(recentTasksCount, hoursSinceLastActivity) : undefined;
 
+  // Callback d'appel IA pour les messages compagnon — null si pas de clé API
+  const aiCall = useMemo(() => {
+    if (!aiConfig?.apiKey) return null;
+    return async (prompt: string): Promise<string> => {
+      return callCompanionMessage(aiConfig, prompt);
+    };
+  }, [aiConfig?.apiKey]);
+
   // Déclencher le picker au niveau COMPANION_UNLOCK_LEVEL sans compagnon (par session)
   useEffect(() => {
     if (!activeProfile || companionPickerShownRef.current) return;
@@ -298,22 +310,43 @@ export default function TreeScreen() {
     setTimeout(() => setCompanionMessage(null), 4000);
   }, [companion, activeProfile, recentTasksCount, t]);
 
-  // Message de bienvenue au focus
+  // Message de bienvenue au focus — choisit l'événement selon l'activité récente
   useFocusEffect(useCallback(() => {
     if (!companion || !activeProfile) return;
+    const level = calculateLevel(activeProfile.points ?? 0);
     const context = {
       profileName: activeProfile.name,
       companionName: companion.name,
       companionSpecies: companion.activeSpecies,
       tasksToday: recentTasksCount,
       streak: activeProfile.streak ?? 0,
-      level: calculateLevel(activeProfile.points ?? 0),
+      level,
     };
-    const msgKey = pickCompanionMessage('greeting', context);
-    setCompanionMessage(t(msgKey, context));
-    const timer = setTimeout(() => setCompanionMessage(null), 4000);
+
+    // Choisir l'événement le plus pertinent selon l'activité récente
+    let event: import('../../lib/mascot/companion-types').CompanionEvent = 'greeting';
+    if (recentTasksCount >= 5) {
+      event = 'task_completed';
+    } else if ((activeProfile.streak ?? 0) > 0 && recentTasksCount > 0) {
+      event = 'streak_milestone';
+    }
+
+    // Afficher immédiatement un message prédéfini (instantané)
+    const fallbackKey = pickCompanionMessage(event, context);
+    setCompanionMessage(t(fallbackKey, context));
+
+    const timer = setTimeout(() => setCompanionMessage(null), 5000);
+
+    // Tenter un message IA (async, remplace si réussi avant timeout)
+    if (aiCall) {
+      generateCompanionAIMessage(event, context, aiCall).then(msg => {
+        const isI18nKey = msg.startsWith('companion.msg.');
+        setCompanionMessage(isI18nKey ? t(msg, context) : msg);
+      });
+    }
+
     return () => clearTimeout(timer);
-  }, [companion?.activeSpecies, activeProfile?.id]));
+  }, [companion?.activeSpecies, activeProfile?.id, recentTasksCount, aiCall]));
 
   // Collecter le revenu passif des batiments a l'ouverture + sunrise report
   useEffect(() => {
@@ -326,14 +359,14 @@ export default function TreeScreen() {
       const SUNRISE_KEY = 'sunrise_last_shown';
       const lastShown = await SecureStore.getItemAsync(SUNRISE_KEY);
       const now = Date.now();
-      const eightHoursMs = 8 * 60 * 60 * 1000;
+      const absenceThresholdMs = 6 * 60 * 60 * 1000;
       // Première ouverture : initialiser le timestamp sans afficher le popup
       if (!lastShown) {
         await SecureStore.setItemAsync(SUNRISE_KEY, String(now));
         return;
       }
       const lastTs = parseInt(lastShown, 10);
-      const longAbsence = (now - lastTs) > eightHoursMs;
+      const longAbsence = (now - lastTs) > absenceThresholdMs;
 
       // Calculer le detail par ressource AVANT la collecte
       const techBonuses = getTechBonuses(profile.farmTech ?? []);

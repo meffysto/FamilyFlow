@@ -875,3 +875,25 @@ export async function generateWeeklyBilan(
 
   return { text: resp.text };
 }
+
+// ─── Message compagnon mascotte ─────────────────────────────────────────────────
+
+/**
+ * Appelle Claude Haiku pour générer un message court du compagnon mascotte.
+ * Utilisé par companion-engine.ts via un callback depuis tree.tsx.
+ *
+ * @param config - Config IA (apiKey + model)
+ * @param prompt - Prompt court généré par buildCompanionPrompt
+ * @returns Le texte généré ou une chaîne vide en cas d'erreur
+ */
+export async function callCompanionMessage(config: AIConfig, prompt: string): Promise<string> {
+  const haikuConfig = { ...config, model: 'claude-haiku-4-5-20251001' };
+  const resp = await callClaude(
+    haikuConfig,
+    'Tu es un compagnon animal mignon et attachant dans une application familiale.',
+    [{ role: 'user', content: prompt }],
+    100,
+  );
+  if (resp.error || !resp.text) return '';
+  return resp.text.trim();
+}
