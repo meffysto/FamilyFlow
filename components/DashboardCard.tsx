@@ -23,6 +23,7 @@ import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
 import { Shadows } from '../constants/shadows';
 import { GlassView } from './ui/GlassView';
+import { PressableScale } from './ui/PressableScale';
 
 interface DashboardCardProps {
   title: string;
@@ -180,7 +181,7 @@ export function DashboardCard({
   };
 
   if (glass) {
-    return (
+    const glassCard = (
       <GlassView
         style={[styles.card, style]}
         intensity={35}
@@ -190,9 +191,17 @@ export function DashboardCard({
         {cardContent}
       </GlassView>
     );
+    if (onPressMore) {
+      return (
+        <PressableScale onPress={onPressMore}>
+          {glassCard}
+        </PressableScale>
+      );
+    }
+    return glassCard;
   }
 
-  return (
+  const plainCard = (
     <View
       style={[styles.card, Shadows.md, { backgroundColor: colors.card }, style]}
       {...a11yProps}
@@ -200,6 +209,15 @@ export function DashboardCard({
       {cardContent}
     </View>
   );
+
+  if (onPressMore) {
+    return (
+      <PressableScale onPress={onPressMore}>
+        {plainCard}
+      </PressableScale>
+    );
+  }
+  return plainCard;
 }
 
 const styles = StyleSheet.create({
