@@ -25,6 +25,14 @@ import { Shadows } from '../constants/shadows';
 import { GlassView } from './ui/GlassView';
 import { PressableScale } from './ui/PressableScale';
 
+function hexToRgba(hex: string, alpha: number): string {
+  if (hex.startsWith('rgb')) return hex.replace(/[\d.]+\)$/, `${alpha})`);
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
 interface DashboardCardProps {
   title: string;
   icon?: string;
@@ -41,6 +49,8 @@ interface DashboardCardProps {
   defaultCollapsed?: boolean;
   /** Effet Liquid Glass (fond translucide + blur). Default: false */
   glass?: boolean;
+  /** Fond subtil coloré basé sur color. Default: false */
+  tinted?: boolean;
 }
 
 const STORAGE_PREFIX = 'dashboard_collapsed_';
@@ -59,11 +69,13 @@ export function DashboardCard({
   cardId,
   defaultCollapsed = false,
   glass = true,
+  tinted = false,
 }: DashboardCardProps) {
   const { t } = useTranslation();
-  const { primary, colors } = useThemeColors();
+  const { primary, colors, isDark } = useThemeColors();
   const reduceMotion = useReducedMotion();
   const accentColor = color ?? primary;
+  const tintBg = tinted && accentColor ? hexToRgba(accentColor, isDark ? 0.10 : 0.06) : undefined;
   const badgeScale = useSharedValue(reduceMotion ? 1 : 0);
 
   // -- Collapse state --
@@ -188,6 +200,7 @@ export function DashboardCard({
         borderRadius={Radius.xl}
         {...a11yProps}
       >
+        {tintBg && <View style={[StyleSheet.absoluteFill, { backgroundColor: tintBg, borderRadius: Radius.xl }]} />}
         {cardContent}
       </GlassView>
     );
@@ -206,6 +219,7 @@ export function DashboardCard({
       style={[styles.card, Shadows.md, { backgroundColor: colors.card }, style]}
       {...a11yProps}
     >
+      {tintBg && <View style={[StyleSheet.absoluteFill, { backgroundColor: tintBg, borderRadius: Radius.xl }]} />}
       {cardContent}
     </View>
   );
@@ -225,6 +239,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.xl,
     padding: Spacing['2xl'] + 2, // 18px
     marginBottom: Spacing['lg+' as keyof typeof Spacing] ?? 14,
+    overflow: 'hidden',
   },
   header: {
     flexDirection: 'row',
