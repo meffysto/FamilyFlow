@@ -28,8 +28,8 @@ const VIEWBOX_W = 200;
 const VIEWBOX_H = 240;
 
 /** Position du compagnon dans le viewbox — distinct des HAB_SLOTS existants */
-const COMPANION_CX = 85;
-const COMPANION_CY = 160;
+const COMPANION_CX = 45;
+const COMPANION_CY = 175;
 
 /** Taille du sprite du compagnon (logical pixels) */
 const COMPANION_SIZE = 32;
@@ -193,7 +193,7 @@ export const CompanionSlot = React.memo(function CompanionSlot({
             bubbleAnimStyle,
           ]}
         >
-          <Text style={[styles.messageText, { color: colors.text }]} numberOfLines={3}>
+          <Text style={[styles.messageText, { color: colors.text }]} numberOfLines={5}>
             {message}
           </Text>
         </Animated.View>
@@ -235,10 +235,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: COMPANION_SIZE + 4,
     left: '50%',
-    transform: [{ translateX: -60 }],
-    width: 120,
+    transform: [{ translateX: -80 }],
+    width: 160,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
+    paddingVertical: Spacing.sm,
     borderRadius: Radius.lg,
     borderWidth: 1,
     // Ombre legere

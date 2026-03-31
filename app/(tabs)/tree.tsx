@@ -331,21 +331,23 @@ export default function TreeScreen() {
       event = 'streak_milestone';
     }
 
-    // Afficher immédiatement un message prédéfini (instantané)
-    const fallbackKey = pickCompanionMessage(event, context);
-    setCompanionMessage(t(fallbackKey, context));
+    // Délai avant d'afficher le message — laisser le temps à l'écran de s'afficher
+    const delayTimer = setTimeout(() => {
+      const fallbackKey = pickCompanionMessage(event, context);
+      setCompanionMessage(t(fallbackKey, context));
 
-    const timer = setTimeout(() => setCompanionMessage(null), 5000);
+      // Tenter un message IA (async, remplace si réussi)
+      if (aiCall) {
+        generateCompanionAIMessage(event, context, aiCall).then(msg => {
+          const isI18nKey = msg.startsWith('companion.msg.');
+          setCompanionMessage(isI18nKey ? t(msg, context) : msg);
+        });
+      }
+    }, 1500);
 
-    // Tenter un message IA (async, remplace si réussi avant timeout)
-    if (aiCall) {
-      generateCompanionAIMessage(event, context, aiCall).then(msg => {
-        const isI18nKey = msg.startsWith('companion.msg.');
-        setCompanionMessage(isI18nKey ? t(msg, context) : msg);
-      });
-    }
+    const hideTimer = setTimeout(() => setCompanionMessage(null), 6500);
 
-    return () => clearTimeout(timer);
+    return () => { clearTimeout(delayTimer); clearTimeout(hideTimer); };
   }, [companion?.activeSpecies, activeProfile?.id, recentTasksCount, aiCall]));
 
   // Collecter le revenu passif des batiments a l'ouverture + sunrise report
@@ -663,19 +665,19 @@ export default function TreeScreen() {
           <View style={styles.hudContent}>
             <View style={styles.hudItem}>
               <Text style={styles.hudEmoji}>{'🍃'}</Text>
-              <Text style={styles.hudValue}>{profile.coins ?? 0}</Text>
+              <Text style={[styles.hudValue, { color: colors.text }]}>{profile.coins ?? 0}</Text>
             </View>
             <View style={styles.hudItem}>
               <Text style={styles.hudEmoji}>{'🔥'}</Text>
-              <Text style={styles.hudValue}>{profile.streak ?? 0}</Text>
+              <Text style={[styles.hudValue, { color: colors.text }]}>{profile.streak ?? 0}</Text>
             </View>
             <View style={styles.hudItem}>
               <Text style={styles.hudEmoji}>{'🌿'}</Text>
-              <Text style={styles.hudValue}>{growingCount}</Text>
+              <Text style={[styles.hudValue, { color: colors.text }]}>{growingCount}</Text>
             </View>
             <View style={styles.hudItem}>
               <Text style={styles.hudEmoji}>{seasonInfo.emoji}</Text>
-              <Text style={styles.hudValue}>{t(seasonInfo.labelKey)}</Text>
+              <Text style={[styles.hudValue, { color: colors.text }]}>{t(seasonInfo.labelKey)}</Text>
             </View>
           </View>
         </View>
@@ -1309,7 +1311,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   hudValue: {
-    color: '#fff',
     fontSize: FontSize.sm,
     fontWeight: '600' as const,
   },

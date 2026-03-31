@@ -114,16 +114,16 @@ export function pickCompanionMessage(
  */
 function buildCompanionPrompt(event: CompanionEvent, ctx: CompanionMessageContext): string {
   const eventDescriptions: Record<CompanionEvent, string> = {
-    task_completed: `${ctx.profileName} vient de completer une tache`,
-    loot_opened: `${ctx.profileName} vient d'ouvrir un coffre a butin`,
+    task_completed: `${ctx.profileName} vient de compléter une tâche`,
+    loot_opened: `${ctx.profileName} vient d'ouvrir un coffre à butin`,
     level_up: `${ctx.profileName} vient de monter au niveau ${ctx.level}`,
-    greeting: `${ctx.profileName} vient d'arriver sur l'ecran de son arbre`,
+    greeting: `${ctx.profileName} vient d'arriver sur l'écran de son arbre`,
     streak_milestone: `${ctx.profileName} a un streak de ${ctx.streak} jours`,
-    harvest: `${ctx.profileName} vient de recolter sur sa ferme`,
-    craft: `${ctx.profileName} vient de creer un objet dans son atelier`,
+    harvest: `${ctx.profileName} vient de récolter sur sa ferme`,
+    craft: `${ctx.profileName} vient de créer un objet dans son atelier`,
   };
 
-  return `Tu es ${ctx.companionName}, un ${ctx.companionSpecies} mignon et attachant. ${eventDescriptions[event]}. Reponds en UNE phrase courte, encourageante et mignonne (max 80 caracteres). Pas d'emoji. Tutoie ${ctx.profileName}.`;
+  return `Tu es ${ctx.companionName}, un ${ctx.companionSpecies} mignon et attachant. ${eventDescriptions[event]}. Réponds en UNE phrase courte, encourageante et mignonne (max 80 caractères). Pas d'emoji. Tutoie ${ctx.profileName}.`;
 }
 
 /**

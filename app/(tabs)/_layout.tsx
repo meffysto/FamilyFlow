@@ -296,7 +296,8 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
             <Text style={[pickerStyles.subtitle, { color: colors.textMuted }]}>{t('profilePicker.subtitle')}</Text>
 
             <View style={pickerStyles.grid}>
-              {profiles.map((p) => (
+              {profiles.map((p) => {
+                return (
                 <TouchableOpacity
                   key={p.id}
                   style={[pickerStyles.profileBtn, { backgroundColor: colors.glassBg, borderColor: colors.glassBorder }]}
@@ -314,7 +315,8 @@ function ThemedTabsContent({ profiles, activeProfile, setActiveProfile, vacation
                     {p.role === 'adulte' ? `👤 ${t('profilePicker.adult')}` : `👶 ${t('profilePicker.child')}`}
                   </Text>
                 </TouchableOpacity>
-              ))}
+                );
+              })}
             </View>
           </GlassView>
         </View>

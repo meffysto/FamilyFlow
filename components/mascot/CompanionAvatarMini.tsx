@@ -56,6 +56,15 @@ interface CompanionAvatarMiniProps {
 
 // ─── Composant ───────────────────────────────────────────────────────────────────
 
+/** Emoji de fallback par espèce — utilisé tant que les vrais sprites ne sont pas fournis */
+const SPECIES_EMOJI: Record<CompanionSpecies, string> = {
+  chat: '🐱',
+  chien: '🐶',
+  lapin: '🐰',
+  renard: '🦊',
+  herisson: '🦔',
+};
+
 export const CompanionAvatarMini = React.memo(function CompanionAvatarMini({
   companion,
   level,
@@ -66,18 +75,8 @@ export const CompanionAvatarMini = React.memo(function CompanionAvatarMini({
     return <Text style={{ fontSize: size * 0.8 }}>{fallbackEmoji}</Text>;
   }
 
-  const stage = getCompanionStage(level);
-  const sprite = AVATAR_SPRITES[companion.activeSpecies]?.[stage];
-
-  if (!sprite) {
-    return <Text style={{ fontSize: size * 0.8 }}>{fallbackEmoji}</Text>;
-  }
-
-  return (
-    <Image
-      source={sprite}
-      style={{ width: size, height: size }}
-      resizeMode="contain"
-    />
-  );
+  // Utiliser l'emoji de l'espèce comme avatar — les sprites placeholder sont trop petits
+  const speciesKey = companion.activeSpecies.toLowerCase() as CompanionSpecies;
+  const emoji = SPECIES_EMOJI[speciesKey] ?? fallbackEmoji;
+  return <Text style={{ fontSize: size * 0.8 }}>{emoji}</Text>;
 });
