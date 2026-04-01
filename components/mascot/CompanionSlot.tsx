@@ -35,37 +35,57 @@ const COMPANION_SIZE = 48;
  * pause = durée d'arrêt à ce point (ms). 0 = passage sans arrêt.
  */
 const PATROL_ROUTE: { fx: number; fy: number; label: string; pause: number }[] = [
-  // — Repos près de l'arbre (départ) —
-  { fx: 0.28, fy: 0.58, label: 'home',           pause: 4000 },
+  // ══ Départ : sur le chemin, au centre ══
+  { fx: 0.42, fy: 0.55, label: 'home',             pause: 3000 },
 
-  // — Monter le chemin beige vers le potager —
-  { fx: 0.44, fy: 0.50, label: 'path-center',    pause: 0 },
-  { fx: 0.44, fy: 0.38, label: 'path-top',       pause: 800 },
+  // ══ 1. Monter le chemin vers le potager ══
+  { fx: 0.42, fy: 0.45, label: 'path-up-1',        pause: 0 },
+  { fx: 0.42, fy: 0.38, label: 'path-potager',     pause: 500 },
 
-  // — Patrouille du potager (zig-zag rang 3 → 1) —
-  { fx: 0.28, fy: 0.29, label: 'crops-r3-left',  pause: 2000 },
-  { fx: 0.56, fy: 0.29, label: 'crops-r3-right', pause: 1500 },
-  { fx: 0.42, fy: 0.17, label: 'crops-r2-mid',   pause: 2000 },
-  { fx: 0.14, fy: 0.05, label: 'crops-r1-left',  pause: 1500 },
-  { fx: 0.70, fy: 0.05, label: 'crops-r1-right', pause: 2000 },
+  // ══ 2. Entrer dans le potager (zig-zag rang 3 → 1) ══
+  { fx: 0.28, fy: 0.23, label: 'crops-r3-left',    pause: 2000 },
+  { fx: 0.56, fy: 0.23, label: 'crops-r3-right',   pause: 1500 },
+  { fx: 0.42, fy: 0.14, label: 'crops-r2-mid',     pause: 2000 },
+  { fx: 0.14, fy: 0.05, label: 'crops-r1-left',    pause: 1500 },
+  { fx: 0.70, fy: 0.05, label: 'crops-r1-right',   pause: 2000 },
 
-  // — Redescendre vers le chemin —
-  { fx: 0.44, fy: 0.17, label: 'crops-exit',     pause: 0 },
-  { fx: 0.44, fy: 0.38, label: 'path-junction',  pause: 800 },
+  // ══ 3. Sortir du potager par le chemin ══
+  { fx: 0.42, fy: 0.14, label: 'crops-exit-1',     pause: 0 },
+  { fx: 0.42, fy: 0.38, label: 'crops-exit-2',     pause: 500 },
 
-  // — Bifurquer vers les bâtiments (droite) —
-  { fx: 0.65, fy: 0.42, label: 'path-to-build',  pause: 0 },
-  { fx: 0.82, fy: 0.42, label: 'building-1',     pause: 3000 },
-  { fx: 0.82, fy: 0.62, label: 'building-2',     pause: 2500 },
-  { fx: 0.82, fy: 0.78, label: 'building-3',     pause: 2000 },
+  // ══ 4. Descendre au croisement, puis tourner vers les bâtiments ══
+  { fx: 0.42, fy: 0.45, label: 'path-junction',    pause: 300 },
+  { fx: 0.55, fy: 0.45, label: 'path-to-build-1',  pause: 0 },
+  { fx: 0.70, fy: 0.45, label: 'path-to-build-2',  pause: 0 },
+  { fx: 0.85, fy: 0.45, label: 'path-to-build-3',  pause: 0 },
 
-  // — Retour au chemin central —
-  { fx: 0.65, fy: 0.55, label: 'build-exit',     pause: 0 },
-  { fx: 0.44, fy: 0.55, label: 'path-mid',       pause: 800 },
+  // ══ 5. Visiter les bâtiments (longer la zone pavée) ══
+  { fx: 0.90, fy: 0.45, label: 'building-entry',   pause: 0 },
+  { fx: 0.90, fy: 0.52, label: 'building-1',       pause: 3000 },
+  { fx: 0.90, fy: 0.62, label: 'building-2',       pause: 2500 },
+  { fx: 0.90, fy: 0.78, label: 'building-3',       pause: 2000 },
 
-  // — Descendre vers l'arbre —
-  { fx: 0.44, fy: 0.70, label: 'path-tree',      pause: 1000 },
-  { fx: 0.35, fy: 0.75, label: 'near-tree',      pause: 3000 },
+  // ══ 6. Retour : remonter les bâtiments, puis chemin horizontal ══
+  { fx: 0.90, fy: 0.45, label: 'build-return-0',   pause: 0 },
+  { fx: 0.70, fy: 0.45, label: 'build-return-1',   pause: 0 },
+  { fx: 0.42, fy: 0.45, label: 'build-return-2',   pause: 800 },
+
+  // ══ 7. Descendre le chemin vertical ══
+  { fx: 0.42, fy: 0.55, label: 'path-mid',         pause: 500 },
+  { fx: 0.42, fy: 0.65, label: 'path-down-1',      pause: 300 },
+
+  // ══ 8. Tourner à gauche vers le lac (rester sur le chemin) ══
+  { fx: 0.30, fy: 0.65, label: 'path-lake-1',      pause: 0 },
+  { fx: 0.17, fy: 0.65, label: 'path-lake-2',      pause: 300 },
+  { fx: 0.17, fy: 0.75, label: 'path-lake-3',      pause: 0 },
+
+  // ══ 9. Contempler le lac ══
+  { fx: 0.17, fy: 0.80, label: 'lake-shore',       pause: 4000 },
+
+  // ══ 10. Retour vers le chemin principal ══
+  { fx: 0.17, fy: 0.65, label: 'lake-return-1',    pause: 0 },
+  { fx: 0.42, fy: 0.65, label: 'lake-return-2',    pause: 0 },
+  { fx: 0.42, fy: 0.55, label: 'lake-return-3',    pause: 500 },
 ];
 
 const HOME_IDX = 0;
@@ -265,6 +285,9 @@ interface CompanionSlotProps {
   containerWidth: number;
   containerHeight: number;
   harvestables?: HarvestableInfo[];  // crops prêtes à récolter
+  plantedCropYs?: number[];         // positions Y des rangées avec cultures plantées
+  builtBuildingYs?: number[];       // positions Y des bâtiments construits
+  hasLake?: boolean;                // true si le lac est visible (stade >= pousse)
 }
 
 // ── Composant ─────────────────────────────────────────
@@ -279,6 +302,9 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   containerWidth,
   containerHeight,
   harvestables = [],
+  plantedCropYs = [],
+  builtBuildingYs = [],
+  hasLake = true,
 }: CompanionSlotProps) {
   const { colors } = useThemeColors();
   const [frameIdx, setFrameIdx] = useState(0);
@@ -287,8 +313,8 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   const [isHorizontal, setIsHorizontal] = useState(false);
   const [goingUp, setGoingUp] = useState(false);
   const [walkFrameIdx, setWalkFrameIdx] = useState(0);
-  const currentFx = React.useRef(PATROL_ROUTE[HOME_IDX].fx);
-  const currentFy = React.useRef(PATROL_ROUTE[HOME_IDX].fy);
+  const currentFx = React.useRef(0.42);
+  const currentFy = React.useRef(0.55);
 
   // Valeurs animées
   const jumpY = useSharedValue(0);
@@ -319,7 +345,80 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   const harvestablesRef = React.useRef(harvestables);
   useEffect(() => { harvestablesRef.current = harvestables; }, [harvestables]);
 
-  // Patrouille séquentielle — suit le circuit PATROL_ROUTE en boucle
+  // Construire la route dynamique selon l'état réel de la ferme
+  const activeRoute = React.useMemo(() => {
+    type WP = { fx: number; fy: number; label: string; pause: number };
+    const route: WP[] = [];
+
+    // Toujours : point de départ sur le chemin
+    route.push({ fx: 0.42, fy: 0.55, label: 'home', pause: 3000 });
+
+    // ── Potager : ne visiter que les rangées avec des crops ──
+    // Rangées possibles : y=0.05 (r1), y=0.14 (r2), y=0.23 (r3), y=0.32 (r4 expansion)
+    const cropYsSorted = [...plantedCropYs].sort((a, b) => b - a); // du bas vers le haut
+    if (cropYsSorted.length > 0) {
+      // Monter vers le potager via le chemin
+      route.push({ fx: 0.42, fy: 0.45, label: 'path-up-1', pause: 0 });
+      route.push({ fx: 0.42, fy: 0.38, label: 'path-potager', pause: 500 });
+
+      // Visiter chaque rangée occupée — passer ENTRE les lignes (fy + 0.04)
+      // pour ne jamais marcher sur les crops
+      let goLeft = true;
+      for (const fy of cropYsSorted) {
+        const walkY = fy + 0.04; // entre cette rangée et la suivante
+        if (goLeft) {
+          route.push({ fx: 0.14, fy: walkY, label: `crops-${fy}-left`, pause: 1500 });
+          route.push({ fx: 0.70, fy: walkY, label: `crops-${fy}-right`, pause: 1500 });
+        } else {
+          route.push({ fx: 0.70, fy: walkY, label: `crops-${fy}-right`, pause: 1500 });
+          route.push({ fx: 0.14, fy: walkY, label: `crops-${fy}-left`, pause: 1500 });
+        }
+        goLeft = !goLeft;
+      }
+
+      // Redescendre vers le chemin (passer par le centre)
+      route.push({ fx: 0.42, fy: 0.36, label: 'crops-exit-1', pause: 0 });
+      route.push({ fx: 0.42, fy: 0.38, label: 'crops-exit-2', pause: 500 });
+    }
+
+    // ── Bâtiments : ne visiter que ceux construits ──
+    const buildYsSorted = [...builtBuildingYs].sort((a, b) => a - b); // du haut vers le bas
+    if (buildYsSorted.length > 0) {
+      route.push({ fx: 0.42, fy: 0.45, label: 'path-junction', pause: 300 });
+      route.push({ fx: 0.55, fy: 0.45, label: 'path-to-build-1', pause: 0 });
+      route.push({ fx: 0.70, fy: 0.45, label: 'path-to-build-2', pause: 0 });
+      route.push({ fx: 0.85, fy: 0.45, label: 'path-to-build-3', pause: 0 });
+      route.push({ fx: 0.90, fy: 0.45, label: 'building-entry', pause: 0 });
+
+      // Descendre seulement jusqu'au dernier bâtiment construit
+      for (let i = 0; i < buildYsSorted.length; i++) {
+        route.push({ fx: 0.90, fy: buildYsSorted[i], label: `building-${i}`, pause: 2500 });
+      }
+
+      // Remonter et retour
+      route.push({ fx: 0.90, fy: 0.45, label: 'build-return-0', pause: 0 });
+      route.push({ fx: 0.70, fy: 0.45, label: 'build-return-1', pause: 0 });
+      route.push({ fx: 0.42, fy: 0.45, label: 'build-return-2', pause: 800 });
+    }
+
+    // Retour au centre du chemin
+    route.push({ fx: 0.42, fy: 0.55, label: 'path-mid', pause: 500 });
+
+    // ── Lac ──
+    if (hasLake) {
+      route.push({ fx: 0.42, fy: 0.65, label: 'path-down-1', pause: 300 });
+      route.push({ fx: 0.30, fy: 0.65, label: 'path-lake-1', pause: 0 });
+      route.push({ fx: 0.17, fy: 0.65, label: 'path-lake-2', pause: 300 });
+      route.push({ fx: 0.17, fy: 0.74, label: 'lake-shore', pause: 4000 });
+      route.push({ fx: 0.17, fy: 0.65, label: 'lake-return-1', pause: 0 });
+      route.push({ fx: 0.42, fy: 0.65, label: 'lake-return-2', pause: 0 });
+      route.push({ fx: 0.42, fy: 0.55, label: 'lake-return-3', pause: 500 });
+    }
+
+    return route;
+  }, [plantedCropYs, builtBuildingYs, hasLake]);
+
+  // Patrouille séquentielle — suit la route active en boucle
   useEffect(() => {
     let mounted = true;
     const timeouts: ReturnType<typeof setTimeout>[] = [];
@@ -337,8 +436,8 @@ export const CompanionSlot = React.memo(function CompanionSlot({
       setIsHorizontal(Math.abs(dfx) > Math.abs(dfy));
       setIsWalking(true);
 
-      const homeFx = PATROL_ROUTE[HOME_IDX].fx;
-      const homeFy = PATROL_ROUTE[HOME_IDX].fy;
+      const homeFx = activeRoute[HOME_IDX].fx;
+      const homeFy = activeRoute[HOME_IDX].fy;
       posX.value = withTiming((targetFx - homeFx) * containerWidth, { duration, easing: Easing.inOut(Easing.sin) });
       posY.value = withTiming((targetFy - homeFy) * containerHeight, { duration, easing: Easing.inOut(Easing.sin) });
       currentFx.current = targetFx;
@@ -356,7 +455,7 @@ export const CompanionSlot = React.memo(function CompanionSlot({
     const walkNext = () => {
       if (!mounted) return;
 
-      const step = PATROL_ROUTE[routeIdx];
+      const step = activeRoute[routeIdx];
 
       // Détour récolte — une seule fois par cycle, quand on passe dans le potager
       const readyCrops = harvestablesRef.current;
@@ -387,7 +486,7 @@ export const CompanionSlot = React.memo(function CompanionSlot({
       if (step.label === 'home') visitedHarvestThisCycle = false;
 
       // Prochain point (boucle)
-      routeIdx = (routeIdx + 1) % PATROL_ROUTE.length;
+      routeIdx = (routeIdx + 1) % activeRoute.length;
 
       const t = setTimeout(walkNext, duration + step.pause);
       timeouts.push(t);
@@ -401,7 +500,7 @@ export const CompanionSlot = React.memo(function CompanionSlot({
       mounted = false;
       timeouts.forEach(t => clearTimeout(t));
     };
-  }, [containerWidth, containerHeight]);
+  }, [containerWidth, containerHeight, activeRoute]);
 
   // Animer la bulle de message ou harvest hint
   useEffect(() => {
@@ -449,7 +548,7 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   }));
 
   // Position pixel dans le container (point de repos)
-  const home = PATROL_ROUTE[HOME_IDX];
+  const home = activeRoute[HOME_IDX];
   const px = home.fx * containerWidth;
   const py = home.fy * containerHeight;
 

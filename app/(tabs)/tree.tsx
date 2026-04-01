@@ -75,7 +75,7 @@ import {
 import * as SecureStore from 'expo-secure-store';
 import { type PlantedCrop, type PlacedBuilding, CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
 import { hasCropSeasonalBonus, parseCrops, getAvailableCrops } from '../../lib/mascot/farm-engine';
-import { getUnlockedCropCells, getExpandedCropCells } from '../../lib/mascot/world-grid';
+import { getUnlockedCropCells, getExpandedCropCells, BUILDING_CELLS, EXPANSION_BUILDING_CELL } from '../../lib/mascot/world-grid';
 import { getTechBonuses } from '../../lib/mascot/tech-engine';
 import { HarvestBurst, CROP_COLORS } from '../../components/mascot/HarvestBurst';
 import { ModalHeader } from '../../components/ui/ModalHeader';
@@ -1095,6 +1095,22 @@ export default function TreeScreen() {
                   containerWidth={SCREEN_W}
                   containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
                   harvestables={harvestables}
+                  plantedCropYs={(() => {
+                    const crops = parseCrops(profile.farmCrops ?? '');
+                    const allCells = getExpandedCropCells(stageInfo.stage, techBonuses);
+                    const ys = new Set<number>();
+                    crops.forEach(c => {
+                      const cell = allCells[c.plotIndex];
+                      if (cell) ys.add(cell.y);
+                    });
+                    return [...ys];
+                  })()}
+                  builtBuildingYs={(profile.farmBuildings ?? []).map(b => {
+                    const cells = [...BUILDING_CELLS, EXPANSION_BUILDING_CELL];
+                    const cell = cells.find(c => c.id === b.cellId);
+                    return cell?.y ?? 0;
+                  }).filter(y => y > 0)}
+                  hasLake={stageIdx >= 1}
                 />
               </View>
             )}

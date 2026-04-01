@@ -45,28 +45,28 @@ export const WORLD_GRID: WorldCell[] = [
   { id: 'c3',  col: 3, row: 0, x: 0.56, y: 0.05, cellType: 'crop',     unlockOrder: 4,  size: 'small' },
   { id: 'c4',  col: 4, row: 0, x: 0.70, y: 0.05, cellType: 'crop',     unlockOrder: 6,  size: 'small' },
 
-  // Rangee 2 (y = 0.17)
-  { id: 'c5',  col: 0, row: 1, x: 0.14, y: 0.17, cellType: 'crop',     unlockOrder: 10, size: 'small' },
-  { id: 'c6',  col: 1, row: 1, x: 0.28, y: 0.17, cellType: 'crop',     unlockOrder: 7,  size: 'small' },
-  { id: 'c7',  col: 2, row: 1, x: 0.42, y: 0.17, cellType: 'crop',     unlockOrder: 2,  size: 'small' },
-  { id: 'c8',  col: 3, row: 1, x: 0.56, y: 0.17, cellType: 'crop',     unlockOrder: 8,  size: 'small' },
-  { id: 'c9',  col: 4, row: 1, x: 0.70, y: 0.17, cellType: 'crop',     unlockOrder: 11, size: 'small' },
+  // Rangee 2 (y = 0.14)
+  { id: 'c5',  col: 0, row: 1, x: 0.14, y: 0.14, cellType: 'crop',     unlockOrder: 10, size: 'small' },
+  { id: 'c6',  col: 1, row: 1, x: 0.28, y: 0.14, cellType: 'crop',     unlockOrder: 7,  size: 'small' },
+  { id: 'c7',  col: 2, row: 1, x: 0.42, y: 0.14, cellType: 'crop',     unlockOrder: 2,  size: 'small' },
+  { id: 'c8',  col: 3, row: 1, x: 0.56, y: 0.14, cellType: 'crop',     unlockOrder: 8,  size: 'small' },
+  { id: 'c9',  col: 4, row: 1, x: 0.70, y: 0.14, cellType: 'crop',     unlockOrder: 11, size: 'small' },
 
-  // Rangee 3 (y = 0.29)
-  { id: 'c10', col: 0, row: 2, x: 0.14, y: 0.29, cellType: 'crop',     unlockOrder: 14, size: 'small' },
-  { id: 'c11', col: 1, row: 2, x: 0.28, y: 0.29, cellType: 'crop',     unlockOrder: 12, size: 'small' },
-  { id: 'c12', col: 2, row: 2, x: 0.42, y: 0.29, cellType: 'crop',     unlockOrder: 9,  size: 'small' },
-  { id: 'c13', col: 3, row: 2, x: 0.56, y: 0.29, cellType: 'crop',     unlockOrder: 13, size: 'small' },
-  { id: 'c14', col: 4, row: 2, x: 0.70, y: 0.29, cellType: 'crop',     unlockOrder: 15, size: 'small' },
+  // Rangee 3 (y = 0.23)
+  { id: 'c10', col: 0, row: 2, x: 0.14, y: 0.23, cellType: 'crop',     unlockOrder: 14, size: 'small' },
+  { id: 'c11', col: 1, row: 2, x: 0.28, y: 0.23, cellType: 'crop',     unlockOrder: 12, size: 'small' },
+  { id: 'c12', col: 2, row: 2, x: 0.42, y: 0.23, cellType: 'crop',     unlockOrder: 9,  size: 'small' },
+  { id: 'c13', col: 3, row: 2, x: 0.56, y: 0.23, cellType: 'crop',     unlockOrder: 13, size: 'small' },
+  { id: 'c14', col: 4, row: 2, x: 0.70, y: 0.23, cellType: 'crop',     unlockOrder: 15, size: 'small' },
 
   // Decos — bas gauche
   { id: 'd0',  col: 0, row: 4, x: 0.12, y: 0.88, cellType: 'deco',     unlockOrder: 99, size: 'small' },
   { id: 'd1',  col: 2, row: 4, x: 0.42, y: 0.90, cellType: 'deco',     unlockOrder: 99, size: 'small' },
 
-  // Batiments — colonne droite (x = 0.86)
-  { id: 'b0',  col: 5, row: 2, x: 0.86, y: 0.42, cellType: 'building', unlockOrder: 16, size: 'large' },
-  { id: 'b1',  col: 5, row: 3, x: 0.86, y: 0.62, cellType: 'building', unlockOrder: 17, size: 'large' },
-  { id: 'b2',  col: 5, row: 4, x: 0.86, y: 0.78, cellType: 'building', unlockOrder: 18, size: 'large' },
+  // Batiments — colonne droite (x = 0.94)
+  { id: 'b0',  col: 5, row: 2, x: 0.94, y: 0.42, cellType: 'building', unlockOrder: 16, size: 'large' },
+  { id: 'b1',  col: 5, row: 3, x: 0.94, y: 0.62, cellType: 'building', unlockOrder: 17, size: 'large' },
+  { id: 'b2',  col: 5, row: 4, x: 0.94, y: 0.78, cellType: 'building', unlockOrder: 18, size: 'large' },
 ];
 
 /** Cellules de culture uniquement, triees par ordre de deblocage */
@@ -93,20 +93,20 @@ export function getUnlockedCropCells(treeStage: TreeStage): WorldCell[] {
 
 /** Cellules de la rangee 4 — debloquees par tech expansion-1 */
 export const EXPANSION_CROP_CELLS: WorldCell[] = [
-  { id: 'c15', col: 0, row: 3, x: 0.14, y: 0.41, cellType: 'crop', unlockOrder: 20, size: 'small' },
-  { id: 'c16', col: 1, row: 3, x: 0.28, y: 0.41, cellType: 'crop', unlockOrder: 21, size: 'small' },
-  { id: 'c17', col: 2, row: 3, x: 0.42, y: 0.41, cellType: 'crop', unlockOrder: 22, size: 'small' },
-  { id: 'c18', col: 3, row: 3, x: 0.56, y: 0.41, cellType: 'crop', unlockOrder: 23, size: 'small' },
-  { id: 'c19', col: 4, row: 3, x: 0.70, y: 0.41, cellType: 'crop', unlockOrder: 24, size: 'small' },
+  { id: 'c15', col: 0, row: 3, x: 0.14, y: 0.32, cellType: 'crop', unlockOrder: 20, size: 'small' },
+  { id: 'c16', col: 1, row: 3, x: 0.28, y: 0.32, cellType: 'crop', unlockOrder: 21, size: 'small' },
+  { id: 'c17', col: 2, row: 3, x: 0.42, y: 0.32, cellType: 'crop', unlockOrder: 22, size: 'small' },
+  { id: 'c18', col: 3, row: 3, x: 0.56, y: 0.32, cellType: 'crop', unlockOrder: 23, size: 'small' },
+  { id: 'c19', col: 4, row: 3, x: 0.70, y: 0.32, cellType: 'crop', unlockOrder: 24, size: 'small' },
 ];
 
 /** Cellule building supplementaire — debloquee par tech expansion-2 */
 export const EXPANSION_BUILDING_CELL: WorldCell =
-  { id: 'b3', col: 5, row: 5, x: 0.86, y: 0.90, cellType: 'building', unlockOrder: 25, size: 'large' };
+  { id: 'b3', col: 5, row: 5, x: 0.94, y: 0.90, cellType: 'building', unlockOrder: 25, size: 'large' };
 
 /** Parcelle geante crop — debloquee par tech expansion-3 */
 export const EXPANSION_LARGE_CROP_CELL: WorldCell =
-  { id: 'c20', col: 0, row: 5, x: 0.14, y: 0.77, cellType: 'crop', unlockOrder: 26, size: 'large' };
+  { id: 'c20', col: 0, row: 5, x: 0.14, y: 0.55, cellType: 'crop', unlockOrder: 26, size: 'large' };
 
 /** Verifie si un plotIndex correspond a la parcelle geante (double recolte) */
 export function isLargeCropPlot(plotIndex: number, treeStage: TreeStage, techBonuses: TechBonuses): boolean {
