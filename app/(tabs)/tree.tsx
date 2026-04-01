@@ -1423,6 +1423,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingBottom: Spacing.md,
     alignItems: 'center',
+    marginLeft: '30%',
   },
   sagaSceneElement: {
     position: 'absolute',
