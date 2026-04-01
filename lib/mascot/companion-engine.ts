@@ -429,18 +429,21 @@ export interface ProactiveContext {
  * Retourne l'événement proactif ou null si aucun message n'est pertinent.
  */
 export function detectProactiveEvent(ctx: ProactiveContext): CompanionEvent | null {
-  // Retour après longue absence (>24h)
+  // Retour après longue absence (>24h) — toujours prioritaire
   if (ctx.hoursSinceLastVisit > 24) return 'comeback';
 
-  // Message matinal (première visite du jour, entre 6h et 11h)
-  if (ctx.isFirstVisitToday && ctx.currentHour >= 6 && ctx.currentHour <= 11) {
+  // Les autres proactifs ne se déclenchent qu'à la première visite du jour
+  if (!ctx.isFirstVisitToday) return null;
+
+  // Message matinal (entre 6h et 11h)
+  if (ctx.currentHour >= 6 && ctx.currentHour <= 11) {
     return 'morning_greeting';
   }
 
   // Milestone familial
   if (ctx.familyMilestone) return 'family_milestone';
 
-  // Célébration (streak remarquable)
+  // Célébration (streak remarquable — multiple de 7)
   if (ctx.streak > 0 && ctx.streak % 7 === 0) return 'celebration';
 
   // Rappel doux l'après-midi (pas de tâches faites et il y en a à faire)

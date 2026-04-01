@@ -257,16 +257,21 @@ describe('detectProactiveEvent', () => {
     expect(detectProactiveEvent(baseCtx)).toBeNull();
   });
 
-  it('retourne celebration si streak multiple de 7', () => {
-    expect(detectProactiveEvent({ ...baseCtx, streak: 14 })).toBe('celebration');
+  it('retourne celebration si streak multiple de 7 à la première visite (hors matin)', () => {
+    expect(detectProactiveEvent({ ...baseCtx, streak: 14, isFirstVisitToday: true, currentHour: 13 })).toBe('celebration');
   });
 
-  it('retourne gentle_nudge l\'après-midi sans tâches faites', () => {
+  it('retourne null si streak multiple de 7 mais pas première visite', () => {
+    expect(detectProactiveEvent({ ...baseCtx, streak: 14, isFirstVisitToday: false })).toBeNull();
+  });
+
+  it('retourne gentle_nudge l\'après-midi sans tâches faites (première visite)', () => {
     expect(detectProactiveEvent({
       ...baseCtx,
       currentHour: 15,
       tasksToday: 0,
       totalTasksToday: 3,
+      isFirstVisitToday: true,
     })).toBe('gentle_nudge');
   });
 });
