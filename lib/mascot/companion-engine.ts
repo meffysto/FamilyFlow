@@ -112,16 +112,34 @@ export function pickCompanionMessage(
  */
 function buildCompanionPrompt(event: CompanionEvent, ctx: CompanionMessageContext): string {
   const eventDescriptions: Record<CompanionEvent, string> = {
-    task_completed: `${ctx.profileName} vient de compléter une tâche`,
+    task_completed: `${ctx.profileName} vient de compléter des tâches`,
     loot_opened: `${ctx.profileName} vient d'ouvrir un coffre à butin`,
     level_up: `${ctx.profileName} vient de monter au niveau ${ctx.level}`,
     greeting: `${ctx.profileName} vient d'arriver sur l'écran de son arbre`,
-    streak_milestone: `${ctx.profileName} a un streak de ${ctx.streak} jours`,
+    streak_milestone: `${ctx.profileName} est régulier dans ses tâches ces derniers jours`,
     harvest: `${ctx.profileName} vient de récolter sur sa ferme`,
     craft: `${ctx.profileName} vient de créer un objet dans son atelier`,
   };
 
-  return `Tu es ${ctx.companionName}, un ${ctx.companionSpecies} mignon et attachant. ${eventDescriptions[event]}. Réponds en UNE phrase courte, encourageante et mignonne (max 80 caractères). Pas d'emoji. Tutoie ${ctx.profileName}.`;
+  // Enrichir avec les tâches récentes
+  let taskContext = '';
+  if (ctx.recentTasks && ctx.recentTasks.length > 0) {
+    taskContext = ` Tâches terminées aujourd'hui : ${ctx.recentTasks.join(', ')}.`;
+  }
+
+  // Enrichir avec le prochain RDV
+  let rdvContext = '';
+  if (ctx.nextRdv) {
+    rdvContext = ` Prochain rendez-vous : "${ctx.nextRdv.title}" le ${ctx.nextRdv.date}.`;
+  }
+
+  // Enrichir avec les repas du jour
+  let mealsContext = '';
+  if (ctx.todayMeals && ctx.todayMeals.length > 0) {
+    mealsContext = ` Au menu aujourd'hui : ${ctx.todayMeals.join(', ')}.`;
+  }
+
+  return `Tu es ${ctx.companionName}, un ${ctx.companionSpecies} adorable qui fait partie de la famille de ${ctx.profileName}. ${eventDescriptions[event]}.${taskContext}${rdvContext}${mealsContext} Tu connais bien ${ctx.profileName} et tu vis avec la famille. Réponds en 1-2 phrases courtes, chaleureuses et personnalisées (max 120 caractères). Mentionne une tâche, le rdv ou le repas si pertinent. Pas d'emoji. Tutoie ${ctx.profileName}.`;
 }
 
 // ── Cache messages IA ────────────────────────────────

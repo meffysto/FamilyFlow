@@ -56,6 +56,7 @@ import { SunriseReport, type SunriseResource } from '../../components/mascot/Sun
 import { BadgesSheet } from '../../components/mascot/BadgesSheet';
 import { CompanionPicker } from '../../components/mascot/CompanionPicker';
 import { CompanionSlot } from '../../components/mascot/CompanionSlot';
+import { buildAnonymizationMap, anonymize, deanonymize } from '../../lib/anonymizer';
 import { getPendingResources } from '../../lib/mascot/building-engine';
 import {
   COMPANION_UNLOCK_LEVEL,
@@ -95,20 +96,30 @@ import { getSagaById } from '../../lib/mascot/sagas-engine';
 import { loadSagaProgress } from '../../lib/mascot/sagas-storage';
 import type { Profile } from '../../lib/types';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
+
 import { FontSize, FontWeight, LineHeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
+
+// Terrain tileset images (pré-rendues par saison)
+const TERRAIN_IMAGES: Record<Season, any> = {
+  printemps: require('../../assets/terrain/ground_printemps.png'),
+  ete: require('../../assets/terrain/ground_ete.png'),
+  automne: require('../../assets/terrain/ground_automne.png'),
+  hiver: require('../../assets/terrain/ground_hiver.png'),
+};
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 const TREE_SIZE = Math.min(SCREEN_W * 0.65, 280);
 
-/** Hauteur du conteneur diorama — basée sur le viewport pour un rendu immersif */
+/** Hauteur du conteneur diorama — calée sur le ratio 2:1 du tileset terrain (800×1600) */
+const TERRAIN_HEIGHT = SCREEN_W * 2;
 const DIORAMA_HEIGHT_BY_STAGE: Record<number, number> = {
-  0: SCREEN_H * 0.62,  // graine — compact
-  1: SCREEN_H * 0.66,  // pousse — un peu plus grand
-  2: SCREEN_H * 0.70,  // arbuste — ratio naturel
-  3: SCREEN_H * 0.72,  // arbre
-  4: SCREEN_H * 0.75,  // majestueux — un poil plus
-  5: SCREEN_H * 0.78,  // légendaire — max impact
+  0: TERRAIN_HEIGHT,  // graine
+  1: TERRAIN_HEIGHT,  // pousse
+  2: TERRAIN_HEIGHT,  // arbuste
+  3: TERRAIN_HEIGHT,  // arbre
+  4: TERRAIN_HEIGHT,  // majestueux
+  5: TERRAIN_HEIGHT,  // légendaire
 };
 
 const SEASON_ILLUSTRATIONS: Record<Season, ImageSourcePropType> = {
@@ -145,8 +156,8 @@ function CropTooltip({ tooltipInfo, stageInfo, stageIdx }: {
   const rawWx = cell.x * SCREEN_W - TOOLTIP_W / 2;
   // Si le tooltip au-dessus serait croppé (trop haut), l'afficher en dessous de la cellule
   const aboveY = cellPy - TOOLTIP_H - 12;
-  const belowY = cellPy + 40;
-  const rawWy = aboveY < 40 ? belowY : aboveY;
+  const belowY = cellPy + 55;
+  const rawWy = aboveY < 80 ? belowY : aboveY;
   const wx = Math.max(4, Math.min(rawWx, SCREEN_W - TOOLTIP_W - 4));
   const wy = rawWy;
 
@@ -180,7 +191,7 @@ export default function TreeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { primary, tint, colors, isDark } = useThemeColors();
-  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem, unplaceMascotItem, gamiData, setCompanion } = useVault();
+  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem, unplaceMascotItem, gamiData, setCompanion, tasks, rdvs, meals } = useVault();
   const { showToast } = useToast();
   const { config: aiConfig } = useAI();
 
@@ -270,13 +281,46 @@ export default function TreeScreen() {
   const companionStage = companion && activeProfile ? getCompanionStage(calculateLevel(activeProfile.points ?? 0)) : undefined;
   const companionMood = companion ? getCompanionMood(recentTasksCount, hoursSinceLastActivity) : undefined;
 
+  // Contexte enrichi pour les messages IA du compagnon
+  const recentCompletedTasks = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return tasks
+      .filter(t => t.completed && t.dueDate === today)
+      .slice(-3)
+      .map(t => t.text);
+  }, [tasks]);
+
+  const todayMeals = useMemo(() => {
+    const days = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+    const today = days[new Date().getDay()];
+    return meals
+      .filter(m => m.day === today && m.text.trim())
+      .map(m => `${m.mealType}: ${m.text}`);
+  }, [meals]);
+
+  const nextRdv = useMemo(() => {
+    const now = new Date();
+    const upcoming = rdvs
+      .filter(r => new Date(r.date_rdv) >= now)
+      .sort((a, b) => new Date(a.date_rdv).getTime() - new Date(b.date_rdv).getTime());
+    if (upcoming.length === 0) return null;
+    const r = upcoming[0];
+    return { title: r.title, date: r.date_rdv };
+  }, [rdvs]);
+
   // Callback d'appel IA pour les messages compagnon — null si pas de clé API
+  const anonMap = useMemo(() => {
+    return buildAnonymizationMap(profiles, rdvs, undefined, undefined, tasks);
+  }, [profiles, rdvs, tasks]);
+
   const aiCall = useMemo(() => {
     if (!aiConfig?.apiKey) return null;
     return async (prompt: string): Promise<string> => {
-      return callCompanionMessage(aiConfig, prompt);
+      const anonPrompt = anonymize(prompt, anonMap);
+      const response = await callCompanionMessage(aiConfig, anonPrompt);
+      return deanonymize(response, anonMap);
     };
-  }, [aiConfig?.apiKey]);
+  }, [aiConfig?.apiKey, anonMap]);
 
   // Déclencher le picker au niveau COMPANION_UNLOCK_LEVEL sans compagnon (par session)
   useEffect(() => {
@@ -325,8 +369,11 @@ export default function TreeScreen() {
       companionName: companion.name,
       companionSpecies: companion.activeSpecies,
       tasksToday: recentTasksCount,
-      streak: activeProfile.streak ?? 0,
+      streak: 0,
       level,
+      recentTasks: recentCompletedTasks,
+      nextRdv,
+      todayMeals,
     };
 
     // Choisir l'événement le plus pertinent selon l'activité récente
@@ -351,7 +398,7 @@ export default function TreeScreen() {
       }
     }, 1500);
 
-    const hideTimer = setTimeout(() => setCompanionMessage(null), 6500);
+    const hideTimer = setTimeout(() => setCompanionMessage(null), 8000);
 
     return () => { clearTimeout(delayTimer); clearTimeout(hideTimer); };
   }, [companion?.activeSpecies, activeProfile?.id, recentTasksCount, aiCall]));
@@ -487,6 +534,22 @@ export default function TreeScreen() {
   const seasonInfo = SEASON_INFO[season];
   const tier = getLevelTier(level);
   const stageInfo = getTreeStageInfo(level);
+
+  // Crops prêtes à récolter — positions pour le compagnon
+  const harvestables = useMemo(() => {
+    const crops = parseCrops(profile?.farmCrops ?? '');
+    const cells = getUnlockedCropCells(stageInfo.stage);
+    return crops
+      .filter(c => c.currentStage >= 4)
+      .map(c => {
+        const cell = cells.find(cl => cl.unlockOrder === c.plotIndex || cells.indexOf(cl) === c.plotIndex);
+        if (!cell) return null;
+        const cropDef = CROP_CATALOG.find(cd => cd.id === c.cropId);
+        return { fx: cell.x, fy: cell.y, cropName: cropDef?.emoji ? `${cropDef.emoji} ${t(`farm.crop.${c.cropId}`)}` : c.cropId };
+      })
+      .filter(Boolean) as { fx: number; fy: number; cropName: string }[];
+  }, [profile?.farmCrops, stageInfo.stage, t]);
+
   const stageProgress = getStageProgress(level);
   const nextEvoLevel = getNextEvolutionLevel(level);
   const levelsLeft = levelsUntilEvolution(level);
@@ -667,7 +730,7 @@ export default function TreeScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
         {/* HUD ferme — fixe au-dessus du diorama */}
-        <View style={[styles.farmHud, { backgroundColor: colors.bg }]}>
+        <View style={[styles.farmHud, { backgroundColor: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.7)' }]}>
           <View style={styles.hudContent}>
             <View style={styles.hudItem}>
               <Text style={styles.hudEmoji}>{'🍃'}</Text>
@@ -899,23 +962,19 @@ export default function TreeScreen() {
               },
             ]}
           >
-            {/* Couche 0 : Sol top-down — herbe saisonnière plein écran */}
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: PIXEL_GROUND[season] }]} />
+            {/* Conteneur clippé pour le terrain (empêche l'image de déborder) */}
+            <View style={[StyleSheet.absoluteFill, { overflow: 'hidden' }]}>
+              {/* Couche 0 : Sol tileset pixel art — terrain saisonnier */}
+              <Image
+                source={TERRAIN_IMAGES[season]}
+                style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]}
+                resizeMode="cover"
+              />
+              {/* Couche 0.5 : Fallback couleur sous le terrain (bords) */}
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: PIXEL_GROUND[season], zIndex: -1 }]} />
+            </View>
 
-            {/* Couche 1 : Texture herbe subtile — variation de teinte */}
-            <LinearGradient
-              colors={[PIXEL_GROUND[season] + 'CC', PIXEL_GROUND[season], PIXEL_GROUND_DARK[season]]}
-              locations={[0, 0.5, 1]}
-              style={StyleSheet.absoluteFill}
-            />
-
-            {/* Couche 2 : Décorations sol (fleurs, pierres) vues du dessus */}
-            <PixelDiorama
-              season={season}
-              level={level}
-              width={SCREEN_W}
-              groundHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
-            />
+            {/* Couche 2 : Décorations sol désactivées — le terrain tileset les remplace */}
 
             {/* Couche 3 : Grille monde (cultures + batiments) */}
             <WorldGridView
@@ -941,6 +1000,7 @@ export default function TreeScreen() {
                   onTap={handleCompanionTap}
                   containerWidth={SCREEN_W}
                   containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
+                  harvestables={harvestables}
                 />
               </View>
             )}
@@ -1313,7 +1373,8 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    overflow: 'hidden',
+    // overflow visible pour que les tooltips/bulles companion ne soient pas clippés
+    overflow: 'visible',
   },
   farmHud: {
     paddingVertical: Spacing.sm,

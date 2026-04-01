@@ -172,10 +172,7 @@ function CropCell({ cell, crop, cropDef, isMature, containerWidth, containerHeig
                 <Text style={styles.cropEmoji}>{cropDef.emoji}</Text>
               );
             })()}
-            {/* Badge saisonnier */}
-            {hasCropSeasonalBonus(crop.cropId) && crop.currentStage < 4 && (
-              <Text style={styles.seasonBadge}>☀️x2</Text>
-            )}
+            {/* Badge saisonnier masqué — le terrain tileset suffit */}
             <View style={styles.stageRow}>
               {Array.from({ length: 4 }).map((_, i) => (
                 <View

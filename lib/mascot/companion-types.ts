@@ -54,6 +54,9 @@ export interface CompanionMessageContext {
   streak: number;
   level: number;
   lastAction?: string;
+  recentTasks?: string[];       // noms des dernières tâches complétées aujourd'hui
+  nextRdv?: { title: string; date: string } | null;  // prochain RDV à venir
+  todayMeals?: string[];        // repas planifiés aujourd'hui (ex: "Pâtes carbonara")
 }
 
 /** Niveau requis pour débloquer le système compagnon */

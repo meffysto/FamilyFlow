@@ -7,7 +7,7 @@
 
 import { useCallback } from 'react';
 import { useVault } from '../contexts/VaultContext';
-import { plantCrop, harvestCrop, parseCrops, serializeCrops } from '../lib/mascot/farm-engine';
+import { plantCrop, harvestCrop, parseCrops, serializeCrops, getEffectiveHarvestReward } from '../lib/mascot/farm-engine';
 import { CROP_CATALOG, BUILDING_CATALOG } from '../lib/mascot/types';
 import type { PlacedBuilding, FarmInventory, CraftedItem } from '../lib/mascot/types';
 import {
@@ -280,7 +280,8 @@ export function useFarm() {
     const updatedInv = { ...harvestInv };
     updatedInv[cropId] = updatedInv[cropId] - 1;
 
-    const reward = sellRawHarvestFn(cropId);
+    const profileTechBonuses = getTechBonuses(profile.farmTech ?? []);
+    const reward = getEffectiveHarvestReward(cropId, profileTechBonuses);
     if (reward <= 0) return 0;
 
     await writeProfileField(profileId, 'farm_harvest_inventory', serializeHarvestInventory(updatedInv));

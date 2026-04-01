@@ -65,8 +65,8 @@ export const WORLD_GRID: WorldCell[] = [
 
   // Batiments — colonne droite (x = 0.86)
   { id: 'b0',  col: 5, row: 2, x: 0.86, y: 0.42, cellType: 'building', unlockOrder: 16, size: 'large' },
-  { id: 'b1',  col: 5, row: 3, x: 0.86, y: 0.58, cellType: 'building', unlockOrder: 17, size: 'large' },
-  { id: 'b2',  col: 5, row: 4, x: 0.86, y: 0.74, cellType: 'building', unlockOrder: 18, size: 'large' },
+  { id: 'b1',  col: 5, row: 3, x: 0.86, y: 0.62, cellType: 'building', unlockOrder: 17, size: 'large' },
+  { id: 'b2',  col: 5, row: 4, x: 0.86, y: 0.78, cellType: 'building', unlockOrder: 18, size: 'large' },
 ];
 
 /** Cellules de culture uniquement, triees par ordre de deblocage */

@@ -227,6 +227,12 @@ const MOOD_EMOJI: Record<CompanionMood, string> = {
 
 // ── Props ─────────────────────────────────────────────
 
+interface HarvestableInfo {
+  fx: number;  // position fractionnelle X de la crop
+  fy: number;  // position fractionnelle Y de la crop
+  cropName: string;
+}
+
 interface CompanionSlotProps {
   species: CompanionSpecies;
   stage: CompanionStage;
@@ -236,6 +242,7 @@ interface CompanionSlotProps {
   onTap: () => void;
   containerWidth: number;
   containerHeight: number;
+  harvestables?: HarvestableInfo[];  // crops prêtes à récolter
 }
 
 // ── Composant ─────────────────────────────────────────
@@ -249,6 +256,7 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   onTap,
   containerWidth,
   containerHeight,
+  harvestables = [],
 }: CompanionSlotProps) {
   const { colors } = useThemeColors();
   const [frameIdx, setFrameIdx] = useState(0);
@@ -284,26 +292,22 @@ export const CompanionSlot = React.memo(function CompanionSlot({
     return () => clearInterval(interval);
   }, [isWalking]);
 
-  // Balade entre waypoints — va vers un point d'intérêt, pause, puis un autre
+  // Message de récolte autonome (pas le message IA — celui-ci vient du compagnon lui-même)
+  const [harvestHint, setHarvestHint] = useState<string | null>(null);
+  const harvestablesRef = React.useRef(harvestables);
+  useEffect(() => { harvestablesRef.current = harvestables; }, [harvestables]);
+
+  // Balade entre waypoints — priorise les crops prêtes à récolter
   useEffect(() => {
     let mounted = true;
     const timeouts: ReturnType<typeof setTimeout>[] = [];
     let lastIdx = HOME_IDX;
+    let visitedHarvest = false; // une visite harvest par cycle
 
-    const walkToNext = () => {
-      if (!mounted) return;
-      // Choisir un waypoint différent du dernier
-      let nextIdx: number;
-      do {
-        nextIdx = Math.floor(Math.random() * WAYPOINTS.length);
-      } while (nextIdx === lastIdx);
-      lastIdx = nextIdx;
-
-      const target = WAYPOINTS[nextIdx];
-      const dfx = target.fx - currentFx.current;
-      const dfy = target.fy - currentFy.current;
+    const walkTo = (targetFx: number, targetFy: number, onArrive?: () => void) => {
+      const dfx = targetFx - currentFx.current;
+      const dfy = targetFy - currentFy.current;
       const dist = Math.sqrt(dfx * dfx + dfy * dfy);
-      // Durée proportionnelle à la distance (4s min, 8s max) — marche tranquille
       const duration = Math.max(4000, Math.min(8000, dist * 14000));
 
       setFacingLeft(dfx < 0);
@@ -313,16 +317,54 @@ export const CompanionSlot = React.memo(function CompanionSlot({
 
       const homeFx = WAYPOINTS[HOME_IDX].fx;
       const homeFy = WAYPOINTS[HOME_IDX].fy;
-      posX.value = withTiming((target.fx - homeFx) * containerWidth, { duration, easing: Easing.inOut(Easing.sin) });
-      posY.value = withTiming((target.fy - homeFy) * containerHeight, { duration, easing: Easing.inOut(Easing.sin) });
-      currentFx.current = target.fx;
-      currentFy.current = target.fy;
+      posX.value = withTiming((targetFx - homeFx) * containerWidth, { duration, easing: Easing.inOut(Easing.sin) });
+      posY.value = withTiming((targetFy - homeFy) * containerHeight, { duration, easing: Easing.inOut(Easing.sin) });
+      currentFx.current = targetFx;
+      currentFy.current = targetFy;
 
-      // Arrêter la marche à l'arrivée
-      const stopWalk = setTimeout(() => { if (mounted) setIsWalking(false); }, duration);
+      const stopWalk = setTimeout(() => {
+        if (mounted) setIsWalking(false);
+        onArrive?.();
+      }, duration);
       timeouts.push(stopWalk);
 
-      // Pause au waypoint (5-10s) puis bouger à nouveau
+      return duration;
+    };
+
+    const walkToNext = () => {
+      if (!mounted) return;
+
+      // 30% de chance d'aller vers une crop prête (si disponible et pas déjà fait ce cycle)
+      const readyCrops = harvestablesRef.current;
+      if (readyCrops.length > 0 && !visitedHarvest && Math.random() < 0.3) {
+        visitedHarvest = true;
+        const crop = readyCrops[Math.floor(Math.random() * readyCrops.length)];
+        const duration = walkTo(crop.fx, crop.fy, () => {
+          if (mounted && !message) {
+            setHarvestHint(crop.cropName);
+            const hideHint = setTimeout(() => { if (mounted) setHarvestHint(null); }, 4000);
+            timeouts.push(hideHint);
+          }
+        });
+        const pause = 6000 + Math.random() * 4000;
+        const t = setTimeout(walkToNext, duration + pause);
+        timeouts.push(t);
+        return;
+      }
+
+      // Sinon balade normale
+      let nextIdx: number;
+      do {
+        nextIdx = Math.floor(Math.random() * WAYPOINTS.length);
+      } while (nextIdx === lastIdx);
+      lastIdx = nextIdx;
+
+      const target = WAYPOINTS[nextIdx];
+      const duration = walkTo(target.fx, target.fy);
+
+      // Reset le cycle harvest après retour home
+      if (nextIdx === HOME_IDX) visitedHarvest = false;
+
       const pause = 5000 + Math.random() * 5000;
       const t = setTimeout(walkToNext, duration + pause);
       timeouts.push(t);
@@ -338,14 +380,14 @@ export const CompanionSlot = React.memo(function CompanionSlot({
     };
   }, [containerWidth, containerHeight]);
 
-  // Animer la bulle de message
+  // Animer la bulle de message ou harvest hint
   useEffect(() => {
-    if (message) {
+    if (message || harvestHint) {
       bubbleAnim.value = withTiming(1, { duration: 200 });
     } else {
       bubbleAnim.value = withTiming(0, { duration: 500 });
     }
-  }, [message]);
+  }, [message, harvestHint]);
 
   const handleTap = useCallback(() => {
     Haptics.impactAsync(ImpactFeedbackStyle.Medium);
@@ -418,6 +460,8 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   }
 
   const hasMessage = !!message;
+  const displayText = message || (harvestHint ? `🌾 ${harvestHint} est prêt !` : null);
+  const showBubble = !!displayText;
 
   return (
     <Animated.View
@@ -431,26 +475,40 @@ export const CompanionSlot = React.memo(function CompanionSlot({
       ]}
       pointerEvents="box-none"
     >
-      {/* Bulle de message contextuel */}
-      {hasMessage && (
-        <Animated.View
-          style={[
-            styles.messageBubble,
-            {
-              backgroundColor: colors.card,
-              borderColor: colors.border,
-            },
-            bubbleAnimStyle,
-          ]}
-        >
-          <Text style={[styles.messageText, { color: colors.text }]} numberOfLines={5}>
-            {message}
-          </Text>
-        </Animated.View>
-      )}
+      {/* Bulle de message (IA, harvest hint, ou contextuel) */}
+      {showBubble && (() => {
+        const BUBBLE_W = 200;
+        const bubbleLeft = px - BUBBLE_W / 2;
+        const bubbleRight = bubbleLeft + BUBBLE_W;
+        const margin = 8;
+        // Recaler si la bulle déborde à droite ou à gauche
+        let offsetX = -BUBBLE_W / 2;
+        if (bubbleRight > containerWidth - margin) {
+          offsetX = -(BUBBLE_W - (containerWidth - px - margin));
+        } else if (bubbleLeft < margin) {
+          offsetX = -(px - margin);
+        }
+        return (
+          <Animated.View
+            style={[
+              styles.messageBubble,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                transform: [{ translateX: offsetX }],
+              },
+              bubbleAnimStyle,
+            ]}
+          >
+            <Text style={[styles.messageText, { color: colors.text }]} numberOfLines={5}>
+              {displayText}
+            </Text>
+          </Animated.View>
+        );
+      })()}
 
-      {/* Emoji d'humeur (quand pas de message) */}
-      {!hasMessage && (
+      {/* Emoji d'humeur (quand pas de bulle) */}
+      {!showBubble && (
         <View style={styles.moodBubble}>
           <Text style={styles.moodEmoji}>{MOOD_EMOJI[mood]}</Text>
         </View>
@@ -485,10 +543,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: COMPANION_SIZE + 4,
     left: '50%',
-    transform: [{ translateX: -80 }],
-    width: 160,
-    zIndex: 999,
-    elevation: 999,
+    width: 200,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: Radius.lg,
