@@ -23,7 +23,7 @@ function DashboardQuotesInner(_props: DashboardSectionProps) {
 
   if (!latest) {
     return (
-      <DashboardCard key="quotes" title={t('dashboard.quotes.title')} icon="💬" color={colors.info} onPressMore={() => router.push('/(tabs)/quotes' as any)}>
+      <DashboardCard key="quotes" title={t('dashboard.quotes.title')} icon="💬" color={colors.catSouvenirs} tinted onPressMore={() => router.push('/(tabs)/quotes' as any)}>
         <Text style={[styles.empty, { color: colors.textMuted }]}>
           {t('dashboard.quotes.empty')}
         </Text>
@@ -32,7 +32,7 @@ function DashboardQuotesInner(_props: DashboardSectionProps) {
   }
 
   return (
-    <DashboardCard key="quotes" title={t('dashboard.quotes.title')} icon="💬" count={quotes.length} color={colors.info} onPressMore={() => router.push('/(tabs)/quotes' as any)}>
+    <DashboardCard key="quotes" title={t('dashboard.quotes.title')} icon="💬" count={quotes.length} color={colors.catSouvenirs} tinted onPressMore={() => router.push('/(tabs)/quotes' as any)}>
       <Text style={[styles.citation, { color: colors.text }]} numberOfLines={2}>
         « {latest.citation} »
       </Text>

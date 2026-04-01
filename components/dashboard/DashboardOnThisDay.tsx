@@ -85,7 +85,8 @@ function DashboardOnThisDayInner(_props: DashboardSectionProps) {
       title={t('dashboard.onThisDay.title')}
       icon="🕰️"
       count={items.length}
-      color={primary}
+      color={colors.catSouvenirs}
+      tinted
       collapsible
       cardId="onThisDay"
     >

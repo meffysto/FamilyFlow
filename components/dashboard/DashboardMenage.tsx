@@ -26,7 +26,7 @@ function DashboardMenageInner({ vaultFileExists, activateCardTemplate, handleTas
   );
 
   if (!vaultFileExists.menage) return (
-    <DashboardCard key="menage" title={t('dashboard.menage.title')} icon="🏠" color={colors.success} tinted>
+    <DashboardCard key="menage" title={t('dashboard.menage.title')} icon="🏠" color={colors.catOrganisation} tinted>
       <DashboardEmptyState
         description={t('dashboard.menage.emptyDescription')}
         onActivate={() => activateCardTemplate('menage')}
@@ -36,13 +36,13 @@ function DashboardMenageInner({ vaultFileExists, activateCardTemplate, handleTas
   );
 
   if (pendingMaison.length === 0) return (
-    <DashboardCard key="menage" title={t('dashboard.menage.title')} icon="🏠" color={colors.success} tinted>
+    <DashboardCard key="menage" title={t('dashboard.menage.title')} icon="🏠" color={colors.catOrganisation} tinted>
       <Text style={[styles.emptyHint, { color: colors.textMuted }]}>{t('dashboard.menage.allDone')}</Text>
     </DashboardCard>
   );
 
   return (
-    <DashboardCard key="menage" title={t('dashboard.menage.title')} icon="🏠" count={pendingMaison.length} color={colors.success} tinted onPressMore={() => router.push({ pathname: '/(tabs)/tasks', params: { filter: 'maison' } })}>
+    <DashboardCard key="menage" title={t('dashboard.menage.title')} icon="🏠" count={pendingMaison.length} color={colors.catOrganisation} tinted onPressMore={() => router.push({ pathname: '/(tabs)/tasks', params: { filter: 'maison' } })}>
       {pendingMaison.slice(0, 4).map((task) => (
         <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} hideSection compact />
       ))}

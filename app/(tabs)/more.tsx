@@ -1,8 +1,9 @@
 /**
- * more.tsx — Menu "Plus" avec toggle liste groupée / grille
+ * more.tsx — Menu "Plus" premium avec toggle liste / grille
  *
- * Hub pour les features secondaires, organisé en sections.
- * L'utilisateur peut basculer entre vue liste (iOS Settings) et vue grille (cartes).
+ * Design chaleureux harmonisé avec l'écran Aujourd'hui :
+ * gradients doux par section, glassmorphism, rows individuels
+ * avec relief, PressableScale + haptic.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -10,7 +11,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +18,7 @@ import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
+import { PressableScale } from '../../components/ui';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -50,15 +51,34 @@ const CATEGORY_LABEL_KEYS = {
   systeme: 'menu.categories.system',
 } as const;
 
+const CATEGORY_EMOJIS = {
+  organisation: '📋',
+  sante: '💜',
+  souvenirs: '✨',
+  jeux: '🎮',
+  famille: '👨‍👩‍👧‍👦',
+  systeme: '⚙️',
+} as const;
+
+type CategoryKey = keyof typeof CATEGORY_LABEL_KEYS;
+
+const CATEGORY_ACCENT_KEYS: Record<CategoryKey, 'catOrganisation' | 'catSante' | 'catSouvenirs' | 'catJeux' | 'catFamille' | 'catSysteme'> = {
+  organisation: 'catOrganisation',
+  sante: 'catSante',
+  souvenirs: 'catSouvenirs',
+  jeux: 'catJeux',
+  famille: 'catFamille',
+  systeme: 'catSysteme',
+};
+
 export default function MoreScreen() {
   const router = useRouter();
   const headerRef = useRef<View>(null);
   const { rdvs, stock, courses, gamiData, budgetEntries, budgetConfig, activeProfile, profiles, defis, wishlistItems, anniversaries, notes } = useVault();
-  const { primary, colors } = useThemeColors();
+  const { primary, colors, isDark } = useThemeColors();
   const { t } = useTranslation();
   const isChildMode = activeProfile?.role === 'enfant' || activeProfile?.role === 'ado';
 
-  // Préférence vue liste/grille persistée
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   useEffect(() => {
     SecureStore.getItemAsync(VIEW_PREF_KEY).then((v) => {
@@ -97,35 +117,35 @@ export default function MoreScreen() {
     }).length;
 
     return [
-      // Organisation
-      { emoji: '🔄', label: t('menu.items.routines'), route: '/(tabs)/routines', color: colors.info, category: 'organisation' as const },
-      { emoji: '📅', label: t('menu.items.appointments'), route: '/(tabs)/rdv', badge: upcomingRdvs || undefined, color: colors.info, category: 'organisation' as const },
-      { emoji: '🍽️', label: t('menu.items.meals'), route: '/(tabs)/meals', color: colors.success, category: 'organisation' as const },
-      { emoji: '📖', label: t('menu.items.recipes'), route: '/(tabs)/meals', params: { tab: 'recettes' }, color: colors.success, category: 'organisation' as const },
-      { emoji: '🛒', label: t('menu.items.shopping'), route: '/(tabs)/meals', params: { tab: 'courses' }, badge: courses.filter((c) => !c.completed).length || undefined, color: colors.success, category: 'organisation' as const },
-      { emoji: '📦', label: t('menu.items.stock'), route: '/(tabs)/stock', badge: lowStock || undefined, color: colors.warning, category: 'organisation' as const },
-      // Santé & Bien-être
-      { emoji: '🏥', label: t('menu.items.health'), route: '/(tabs)/health', color: colors.error, category: 'sante' as const },
-      { emoji: '🌤️', label: t('menu.items.moods'), route: '/(tabs)/moods', color: '#F59E0B', category: 'sante' as const },
-      ...(hasBaby ? [{ emoji: '🌙', label: t('menu.items.nightMode'), route: '/(tabs)/night-mode', color: '#B8860B', category: 'sante' as const }] : []),
-      ...(profiles.some(p => p.statut === 'grossesse') ? [{ emoji: '🤰', label: t('menu.items.pregnancy'), route: '/(tabs)/pregnancy' as const, color: '#EC4899', category: 'sante' as const }] : []),
-      // Souvenirs & Émotions
-      { emoji: '📸', label: t('menu.items.photos'), route: '/(tabs)/photos', color: colors.accentPink, category: 'souvenirs' as const },
-      { emoji: '💬', label: t('menu.items.quotes'), route: '/(tabs)/quotes', color: '#06B6D4', category: 'souvenirs' as const },
-      { emoji: '🙏', label: t('menu.items.gratitude'), route: '/(tabs)/gratitude', color: '#8B5CF6', category: 'souvenirs' as const },
-      // Jeux & Progrès
-      { emoji: '🌱', label: t('menu.items.skills'), route: '/(tabs)/skills', color: '#10B981', category: 'jeux' as const },
-      { emoji: '🌳', label: t('menu.items.tree'), route: '/(tabs)/tree' as any, color: '#4ADE80', category: 'jeux' as const },
-      { emoji: '🎰', label: t('menu.items.rewards'), route: '/(tabs)/loot', badge: lootBoxes || undefined, color: '#EC4899', category: 'jeux' as const },
-      { emoji: '🏅', label: t('menu.items.challenges'), route: '/(tabs)/defis', badge: activeDefis || undefined, color: '#F59E0B', category: 'jeux' as const },
-      // Vie de famille
-      { emoji: '🎂', label: t('menu.items.birthdays'), route: '/(tabs)/anniversaires', badge: upcomingBirthdays || undefined, color: '#D946EF', category: 'famille' as const },
-      { emoji: '🎁', label: t('menu.items.wishlist'), route: '/(tabs)/wishlist', badge: wishlistUnbought || undefined, color: '#E11D48', category: 'famille' as const },
-      { emoji: '💰', label: t('menu.items.budget'), route: '/(tabs)/budget', badge: totalSpent(budgetEntries) > totalBudget(budgetConfig) ? 1 : undefined, color: '#059669', category: 'famille' as const },
-      { emoji: '📝', label: t('menu.items.notes'), route: '/(tabs)/notes', badge: notes.length || undefined, color: colors.info, category: 'famille' as const },
-      { emoji: '📊', label: t('menu.items.stats'), route: '/(tabs)/stats', color: colors.info, category: 'famille' as const },
-      // Système
-      { emoji: '⚙️', label: t('menu.items.settings'), route: '/(tabs)/settings', color: colors.textMuted, category: 'systeme' as const },
+      // Organisation — teal
+      { emoji: '🔄', label: t('menu.items.routines'), route: '/(tabs)/routines', color: colors.catOrganisation, category: 'organisation' as const },
+      { emoji: '📅', label: t('menu.items.appointments'), route: '/(tabs)/rdv', badge: upcomingRdvs || undefined, color: colors.catOrganisation, category: 'organisation' as const },
+      { emoji: '🍽️', label: t('menu.items.meals'), route: '/(tabs)/meals', color: colors.catOrganisation, category: 'organisation' as const },
+      { emoji: '📖', label: t('menu.items.recipes'), route: '/(tabs)/meals', params: { tab: 'recettes' }, color: colors.catOrganisation, category: 'organisation' as const },
+      { emoji: '🛒', label: t('menu.items.shopping'), route: '/(tabs)/meals', params: { tab: 'courses' }, badge: courses.filter((c) => !c.completed).length || undefined, color: colors.catOrganisation, category: 'organisation' as const },
+      { emoji: '📦', label: t('menu.items.stock'), route: '/(tabs)/stock', badge: lowStock || undefined, color: colors.catOrganisation, category: 'organisation' as const },
+      // Santé & Bien-être — violet
+      { emoji: '🏥', label: t('menu.items.health'), route: '/(tabs)/health', color: colors.catSante, category: 'sante' as const },
+      { emoji: '🌤️', label: t('menu.items.moods'), route: '/(tabs)/moods', color: colors.catSante, category: 'sante' as const },
+      ...(hasBaby ? [{ emoji: '🌙', label: t('menu.items.nightMode'), route: '/(tabs)/night-mode', color: colors.catSante, category: 'sante' as const }] : []),
+      ...(profiles.some(p => p.statut === 'grossesse') ? [{ emoji: '🤰', label: t('menu.items.pregnancy'), route: '/(tabs)/pregnancy' as const, color: colors.catSante, category: 'sante' as const }] : []),
+      // Souvenirs & Émotions — orange doré
+      { emoji: '📸', label: t('menu.items.photos'), route: '/(tabs)/photos', color: colors.catSouvenirs, category: 'souvenirs' as const },
+      { emoji: '💬', label: t('menu.items.quotes'), route: '/(tabs)/quotes', color: colors.catSouvenirs, category: 'souvenirs' as const },
+      { emoji: '🙏', label: t('menu.items.gratitude'), route: '/(tabs)/gratitude', color: colors.catSouvenirs, category: 'souvenirs' as const },
+      // Jeux & Progrès — vert
+      { emoji: '🌱', label: t('menu.items.skills'), route: '/(tabs)/skills', color: colors.catJeux, category: 'jeux' as const },
+      { emoji: '🌳', label: t('menu.items.tree'), route: '/(tabs)/tree' as any, color: colors.catJeux, category: 'jeux' as const },
+      { emoji: '🎰', label: t('menu.items.rewards'), route: '/(tabs)/loot', badge: lootBoxes || undefined, color: colors.catJeux, category: 'jeux' as const },
+      { emoji: '🏅', label: t('menu.items.challenges'), route: '/(tabs)/defis', badge: activeDefis || undefined, color: colors.catJeux, category: 'jeux' as const },
+      // Vie de famille — rose
+      { emoji: '🎂', label: t('menu.items.birthdays'), route: '/(tabs)/anniversaires', badge: upcomingBirthdays || undefined, color: colors.catFamille, category: 'famille' as const },
+      { emoji: '🎁', label: t('menu.items.wishlist'), route: '/(tabs)/wishlist', badge: wishlistUnbought || undefined, color: colors.catFamille, category: 'famille' as const },
+      { emoji: '💰', label: t('menu.items.budget'), route: '/(tabs)/budget', badge: totalSpent(budgetEntries) > totalBudget(budgetConfig) ? 1 : undefined, color: colors.catFamille, category: 'famille' as const },
+      { emoji: '📝', label: t('menu.items.notes'), route: '/(tabs)/notes', badge: notes.length || undefined, color: colors.catFamille, category: 'famille' as const },
+      { emoji: '📊', label: t('menu.items.stats'), route: '/(tabs)/stats', color: colors.catFamille, category: 'famille' as const },
+      // Système — gris
+      { emoji: '⚙️', label: t('menu.items.settings'), route: '/(tabs)/settings', color: colors.catSysteme, category: 'systeme' as const },
     ];
   }, [rdvs, stock, gamiData, budgetEntries, budgetConfig, colors, profiles, defis, wishlistItems, anniversaries, t]);
 
@@ -141,14 +161,16 @@ export default function MoreScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
+      {/* ── Header ── */}
       <View ref={headerRef} style={styles.header}>
         <Text style={[styles.title, { color: colors.text }]}>Menu</Text>
-        <TouchableOpacity
-          style={[styles.viewToggle, { backgroundColor: colors.card }]}
+        <PressableScale
           onPress={toggleView}
-          activeOpacity={0.7}
-          accessibilityLabel={viewMode === 'list' ? 'Passer en vue grille' : 'Passer en vue liste'}
-          accessibilityRole="button"
+          style={[styles.viewToggle, {
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+          }]}
+          scaleValue={0.93}
         >
           <Text style={[
             styles.viewToggleIcon,
@@ -159,78 +181,106 @@ export default function MoreScreen() {
             styles.viewToggleIcon,
             { color: viewMode === 'grid' ? primary : colors.textFaint },
           ]}>⊞</Text>
-        </TouchableOpacity>
+        </PressableScale>
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, Layout.contentContainer]}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[styles.content, Layout.contentContainer]}
+        showsVerticalScrollIndicator={false}
+      >
         {(['organisation', 'sante', 'souvenirs', 'jeux', 'famille', 'systeme'] as const).map((cat) => {
           const catItems = visibleItems.filter((i) => i.category === cat);
           if (catItems.length === 0) return null;
+          const accentColor = colors[CATEGORY_ACCENT_KEYS[cat]];
+
           return (
             <View key={cat} style={styles.section}>
-              <Text style={[styles.sectionHeader, { color: colors.textMuted }]}>
-                {t(CATEGORY_LABEL_KEYS[cat])}
-              </Text>
+              {/* ── Section header simple ── */}
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionEmoji}>{CATEGORY_EMOJIS[cat]}</Text>
+                <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+                  {t(CATEGORY_LABEL_KEYS[cat])}
+                </Text>
+              </View>
 
               {viewMode === 'list' ? (
-                /* ── Vue liste groupée (iOS Settings) ── */
-                <View style={[styles.group, { backgroundColor: colors.card }]}>
-                  {catItems.map((item, index) => (
-                    <TouchableOpacity
+                /* ── Vue liste : rows individuels avec relief ── */
+                <View style={styles.listContainer}>
+                  {catItems.map((item) => (
+                    <PressableScale
                       key={item.label}
-                      style={[
-                        styles.row,
-                        index < catItems.length - 1 && {
-                          borderBottomWidth: StyleSheet.hairlineWidth,
-                          borderBottomColor: colors.border,
-                        },
-                      ]}
                       onPress={() => onItemPress(item)}
-                      activeOpacity={0.6}
-                      accessibilityLabel={`${item.label}${item.badge ? `, ${item.badge} élément${item.badge > 1 ? 's' : ''}` : ''}`}
-                      accessibilityRole="button"
-                      accessibilityHint={`Ouvrir ${item.label}`}
+                      scaleValue={0.97}
                     >
-                      <View style={[styles.listIcon, { backgroundColor: item.color + '18' }]}>
-                        <Text style={styles.listEmoji}>{item.emoji}</Text>
+                      <View
+                        style={[styles.row, {
+                          backgroundColor: colors.card,
+                          borderColor: accentColor + (isDark ? '20' : '18'),
+                        }]}
+                        accessibilityLabel={`${item.label}${item.badge ? `, ${item.badge} élément${item.badge > 1 ? 's' : ''}` : ''}`}
+                        accessibilityRole="button"
+                      >
+                        {/* Fond teinté catégorie (comme DashboardCard tinted) */}
+                        <View style={[StyleSheet.absoluteFill, {
+                          backgroundColor: accentColor + (isDark ? '1A' : '0F'),
+                          borderRadius: Radius.xl,
+                        }]} />
+
+                        {/* Icône avec teinte plus saturée */}
+                        <View style={[styles.listIcon, { backgroundColor: accentColor + (isDark ? '25' : '1A') }]}>
+                          <Text style={styles.listEmoji}>{item.emoji}</Text>
+                        </View>
+
+                        {/* Label */}
+                        <View style={styles.labelContainer}>
+                          <Text style={[styles.rowLabel, { color: colors.text }]} numberOfLines={1}>
+                            {item.label}
+                          </Text>
+                        </View>
+
+                        {/* Badge + chevron */}
+                        <View style={styles.rowRight}>
+                          {item.badge ? (
+                            <View style={[styles.badge, { backgroundColor: accentColor }]}>
+                              <Text style={styles.badgeText}>{item.badge}</Text>
+                            </View>
+                          ) : null}
+                          <Text style={[styles.chevron, { color: colors.textFaint }]}>›</Text>
+                        </View>
                       </View>
-                      <Text style={[styles.rowLabel, { color: colors.text }]} numberOfLines={1}>
-                        {item.label}
-                      </Text>
-                      <View style={styles.rowRight}>
-                        {item.badge ? (
-                          <View style={[styles.badge, { backgroundColor: item.color }]}>
-                            <Text style={[styles.badgeText, { color: colors.onPrimary }]}>{item.badge}</Text>
-                          </View>
-                        ) : null}
-                        <Text style={[styles.chevron, { color: colors.textFaint }]}>›</Text>
-                      </View>
-                    </TouchableOpacity>
+                    </PressableScale>
                   ))}
                 </View>
               ) : (
-                /* ── Vue grille (cartes) ── */
+                /* ── Vue grille ── */
                 <View style={styles.grid}>
                   {catItems.map((item) => (
-                    <TouchableOpacity
+                    <PressableScale
                       key={item.label}
-                      style={[styles.card, { backgroundColor: colors.card }]}
                       onPress={() => onItemPress(item)}
-                      activeOpacity={0.7}
-                      accessibilityLabel={`${item.label}${item.badge ? `, ${item.badge} élément${item.badge > 1 ? 's' : ''}` : ''}`}
-                      accessibilityRole="button"
-                      accessibilityHint={`Ouvrir ${item.label}`}
+                      scaleValue={0.95}
+                      style={styles.gridPressable}
                     >
-                      <View style={[styles.gridIcon, { backgroundColor: item.color + '20' }]}>
-                        <Text style={styles.gridEmoji}>{item.emoji}</Text>
-                      </View>
-                      <Text style={[styles.cardLabel, { color: colors.textSub }]}>{item.label}</Text>
-                      {item.badge ? (
-                        <View style={[styles.cardBadge, { backgroundColor: item.color }]}>
-                          <Text style={[styles.badgeText, { color: colors.onPrimary }]}>{item.badge}</Text>
+                      <View
+                        style={[styles.gridCard, {
+                          backgroundColor: colors.card,
+                          borderColor: colors.border,
+                        }]}
+                        accessibilityLabel={`${item.label}${item.badge ? `, ${item.badge} élément${item.badge > 1 ? 's' : ''}` : ''}`}
+                        accessibilityRole="button"
+                      >
+                        <View style={[styles.gridIcon, { backgroundColor: accentColor + '15' }]}>
+                          <Text style={styles.gridEmoji}>{item.emoji}</Text>
                         </View>
-                      ) : null}
-                    </TouchableOpacity>
+                        <Text style={[styles.gridLabel, { color: colors.textSub }]}>{item.label}</Text>
+                        {item.badge ? (
+                          <View style={[styles.gridBadge, { backgroundColor: accentColor }]}>
+                            <Text style={styles.badgeText}>{item.badge}</Text>
+                          </View>
+                        ) : null}
+                      </View>
+                    </PressableScale>
                   ))}
                 </View>
               )}
@@ -251,20 +301,29 @@ export default function MoreScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
+
+  // ── Header ──
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing['3xl'],
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing['2xl'],
   },
-  title: { fontSize: FontSize.titleLg, fontWeight: FontWeight.heavy },
+  title: {
+    fontSize: FontSize.display,
+    fontWeight: FontWeight.heavy,
+    letterSpacing: -0.5,
+  },
   viewToggle: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
+    borderRadius: Radius.base,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    ...Shadows.xs,
   },
   viewToggleIcon: {
     fontSize: FontSize.lg,
@@ -275,105 +334,136 @@ const styles = StyleSheet.create({
     width: StyleSheet.hairlineWidth,
     height: 18,
   },
+
+  // ── Scroll ──
   scroll: { flex: 1 },
-  content: { paddingHorizontal: Spacing.lg, paddingBottom: 100 },
-  section: {
-    marginTop: Spacing.xl,
+  content: {
+    paddingHorizontal: Spacing['2xl'],
+    paddingBottom: 120,
   },
+
+  // ── Section ──
+  section: {
+    marginTop: Spacing['3xl'],
+  },
+
+  // ── Section header ──
   sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.xs,
+    gap: Spacing.sm,
+  },
+  sectionEmoji: {
+    fontSize: FontSize.body,
+  },
+  sectionLabel: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: Spacing.sm,
-    paddingHorizontal: Spacing.md,
+    letterSpacing: 0.6,
   },
-  // ── Liste ──
-  group: {
-    borderRadius: Radius.lg,
-    overflow: 'hidden',
+
+  // ── Vue liste : rows individuels ──
+  listContainer: {
+    gap: Spacing.md,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.md,
-    minHeight: 48,
+    paddingVertical: Spacing.xl,
+    paddingHorizontal: Spacing['2xl'],
+    borderRadius: Radius.xl,
+    borderWidth: StyleSheet.hairlineWidth,
+    minHeight: 64,
+    overflow: 'hidden',
+    ...Shadows.md,
   },
   listIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: Radius.sm,
+    width: 50,
+    height: 50,
+    borderRadius: Radius['lg+' as keyof typeof Radius] ?? 14,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: Spacing['2xl'],
+  },
+  listEmoji: {
+    fontSize: FontSize.display,
+  },
+  labelContainer: {
+    flex: 1,
     marginRight: Spacing.md,
   },
-  listEmoji: { fontSize: FontSize.body },
   rowLabel: {
-    flex: 1,
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.medium,
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.semibold,
   },
   rowRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
   chevron: {
-    fontSize: FontSize.title,
+    fontSize: FontSize.titleLg,
     fontWeight: FontWeight.normal,
-    marginLeft: Spacing.xs,
   },
-  // ── Grille ──
+
+  // ── Vue grille ──
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.md,
+    gap: Spacing.xl,
   },
-  card: {
+  gridPressable: {
     width: '47%',
-    borderRadius: Radius.lg,
-    padding: Spacing.xl,
+  },
+  gridCard: {
+    borderRadius: Radius.xl,
+    padding: Spacing['2xl'],
     alignItems: 'center',
     gap: Spacing.md,
-    ...Shadows.sm,
-    position: 'relative',
+    borderWidth: StyleSheet.hairlineWidth,
+    ...Shadows.md,
+    position: 'relative' as const,
   },
   gridIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: Radius.full,
+    width: 56,
+    height: 56,
+    borderRadius: Radius.xl,
     alignItems: 'center',
     justifyContent: 'center',
   },
   gridEmoji: { fontSize: FontSize.icon },
-  cardLabel: {
+  gridLabel: {
     fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    textAlign: 'center',
+    fontWeight: FontWeight.semibold,
+    textAlign: 'center' as const,
   },
-  cardBadge: {
-    position: 'absolute',
+  gridBadge: {
+    position: 'absolute' as const,
     top: Spacing.md,
     right: Spacing.md,
     minWidth: 22,
     height: 22,
     borderRadius: Radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
     paddingHorizontal: Spacing.sm,
   },
+
   // ── Commun ──
   badge: {
-    minWidth: 22,
-    height: 22,
+    minWidth: 24,
+    height: 24,
     borderRadius: Radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
     paddingHorizontal: Spacing.sm,
   },
   badgeText: {
     fontSize: FontSize.code,
     fontWeight: FontWeight.heavy,
+    color: '#FFFFFF',
   },
 });

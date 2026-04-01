@@ -211,7 +211,8 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
       <DashboardCard
         title={t('dashboard.bilanSemaine.title')}
         icon="📝"
-        color={primary}
+        color={colors.catSouvenirs}
+        tinted
       >
         <Text style={[styles.previewText, { color: colors.text }]} numberOfLines={3}>
           {bilan.narrative.slice(0, 100)}…
@@ -249,7 +250,8 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
     <DashboardCard
       title={t('dashboard.bilanSemaine.title')}
       icon="📝"
-      color={primary}
+      color={colors.catSouvenirs}
+      tinted
     >
       {/* Aperçu des stats */}
       <View style={styles.previewStats}>

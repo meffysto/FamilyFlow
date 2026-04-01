@@ -25,7 +25,7 @@ function DashboardStockInner({ vaultFileExists, activateCardTemplate }: Dashboar
   const lowCount = stock.length > 0 ? stock.filter((s) => s.tracked !== false && s.seuil > 0 && s.quantite <= s.seuil).length : 0;
 
   if (!vaultFileExists.stock) return (
-    <DashboardCard key="stock" title={t('dashboard.stock.title')} icon="📦" color={colors.success}>
+    <DashboardCard key="stock" title={t('dashboard.stock.title')} icon="📦" color={colors.catOrganisation} tinted>
       <DashboardEmptyState
         description={t('dashboard.stock.emptyDescription')}
         onActivate={() => activateCardTemplate('stock')}
@@ -35,7 +35,7 @@ function DashboardStockInner({ vaultFileExists, activateCardTemplate }: Dashboar
   );
 
   return (
-    <DashboardCard key="stock" title={t('dashboard.stock.title')} icon="📦" count={lowCount > 0 ? lowCount : undefined} color={lowCount > 0 ? colors.error : colors.success} collapsible cardId="stock">
+    <DashboardCard key="stock" title={t('dashboard.stock.title')} icon="📦" count={lowCount > 0 ? lowCount : undefined} color={colors.catOrganisation} tinted collapsible cardId="stock">
       {stock.filter((s) => s.tracked !== false && s.seuil > 0 && s.quantite <= s.seuil + 1).map((item) => {
         const isLow = item.tracked !== false && item.seuil > 0 && item.quantite <= item.seuil;
         const statusColor = isLow ? colors.error : colors.warning;

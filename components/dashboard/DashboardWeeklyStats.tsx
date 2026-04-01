@@ -36,7 +36,8 @@ function DashboardWeeklyStatsInner(_props: DashboardSectionProps) {
       title={t('dashboard.weeklyStats.title')}
       icon="📊"
       count={weekTotal}
-      color={primary}
+      color={colors.catJeux}
+      tinted
       onPressMore={() => router.push('/(tabs)/stats')}
     >
       <BarChart data={weekData} compact showValues={false} barColor={primary} />

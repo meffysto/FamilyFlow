@@ -45,7 +45,7 @@ function DashboardCoursesInner(_props: DashboardSectionProps) {
   };
 
   return (
-    <DashboardCard key="courses" title={t('dashboard.courses.title')} icon="🛒" count={unchecked.length || undefined} color={colors.warning} tinted onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'courses' } })}>
+    <DashboardCard key="courses" title={t('dashboard.courses.title')} icon="🛒" count={unchecked.length || undefined} color={colors.catOrganisation} tinted onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'courses' } })}>
       {topCourses.map((item) => (
         <View key={item.id} style={styles.courseRow}>
           <Text style={[styles.courseBullet, { color: colors.warning }]}>•</Text>

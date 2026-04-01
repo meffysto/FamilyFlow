@@ -102,7 +102,7 @@ function DashboardAnniversairesInner(_props: DashboardSectionProps) {
       title={t('dashboard.anniversaires.title')}
       icon="🎂"
       count={upcoming.length}
-      color={colors.accentPink}
+      color={colors.catFamille}
       tinted
       collapsible
       cardId="anniversaires"

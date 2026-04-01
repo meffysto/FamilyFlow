@@ -5,25 +5,25 @@
  */
 
 export const LightColors = {
-  // Backgrounds
-  bg:          '#F3F4F6',
+  // Backgrounds — sable clair chaleureux (bon contraste avec cartes blanches)
+  bg:          '#EDEAE4',
   card:        '#FFFFFF',
-  cardAlt:     '#F9FAFB',
+  cardAlt:     '#F9F8F5',
   // Text
-  text:        '#111827',
-  textSub:     '#374151',
+  text:        '#1A1A2E',
+  textSub:     '#3D3D56',
   textMuted:   '#6B7280',
   textFaint:   '#9CA3AF',
   // Borders & separators
-  border:      '#E5E7EB',
-  borderLight: '#F3F4F6',
-  separator:   '#D1D5DB',
+  border:      '#DDD8D0',
+  borderLight: '#EDE9E3',
+  separator:   '#D0CBC3',
   // Inputs
-  inputBg:     '#F9FAFB',
-  inputBorder: '#D1D5DB',
+  inputBg:     '#F9F8F5',
+  inputBorder: '#D0CBC3',
   // Tab bar
   tabBar:      '#FFFFFF',
-  tabBarBorder:'#E5E7EB',
+  tabBarBorder:'#DDD8D0',
   tabBarOff:   '#6B7280',
   // Status — error
   error:       '#EF4444',
@@ -58,24 +58,39 @@ export const LightColors = {
   glassBg:     'rgba(255,255,255,0.65)',
   glassBorder: 'rgba(255,255,255,0.45)',
   glassShadow: 'rgba(0,0,0,0.08)',
+  // ── Couleurs d'accent par catégorie (partagées menu + dashboard) ──
+  catOrganisation:       '#0D9488',  // teal
+  catSante:              '#9333EA',  // violet
+  catSouvenirs:          '#E87B35',  // orange doré
+  catJeux:               '#16A34A',  // vert
+  catFamille:            '#DB2777',  // rose
+  catSysteme:            '#6B7280',  // gris neutre
+  // Gradients par section (menu)
+  gradientOrganisation:  ['#E0F7F4', '#D4F1EC'] as readonly [string, string],
+  gradientSante:         ['#F3E8F9', '#EDDFFA'] as readonly [string, string],
+  gradientSouvenirs:     ['#FFF0E0', '#FDEBD2'] as readonly [string, string],
+  gradientJeux:          ['#E8F5E9', '#DEF0DF'] as readonly [string, string],
+  gradientFamille:       ['#FDE8F0', '#FAE0EA'] as readonly [string, string],
+  gradientSysteme:       ['#F0EEF6', '#EAE8F2'] as readonly [string, string],
 };
 
 export const DarkColors: typeof LightColors = {
-  bg:          '#0F172A',
-  card:        '#1E293B',
-  cardAlt:     '#1E293B',
-  text:        '#F1F5F9',
-  textSub:     '#CBD5E1',
-  textMuted:   '#94A3B8',
-  textFaint:   '#64748B',
-  border:      '#334155',
-  borderLight: '#1E293B',
-  separator:   '#475569',
-  inputBg:     '#0F172A',
-  inputBorder: '#475569',
-  tabBar:      '#1E293B',
-  tabBarBorder:'#334155',
-  tabBarOff:   '#94A3B8',
+  // Backgrounds — noir chaud (pas de bleu froid)
+  bg:          '#12151A',
+  card:        '#1C1F28',
+  cardAlt:     '#1C1F28',
+  text:        '#F0EDE8',
+  textSub:     '#C8C4BC',
+  textMuted:   '#8A8680',
+  textFaint:   '#5C5955',
+  border:      '#2A2D35',
+  borderLight: '#1C1F28',
+  separator:   '#3A3D45',
+  inputBg:     '#12151A',
+  inputBorder: '#3A3D45',
+  tabBar:      '#1C1F28',
+  tabBarBorder:'#2A2D35',
+  tabBarOff:   '#8A8680',
   // Status — error
   error:       '#F87171',
   errorBg:     '#7F1D1D',
@@ -106,9 +121,23 @@ export const DarkColors: typeof LightColors = {
   overlayLight:'rgba(0,0,0,0.6)',
   switchOff:   '#334155',
   // Glass / Liquid Glass
-  glassBg:     'rgba(30,41,59,0.55)',
-  glassBorder: 'rgba(148,163,184,0.25)',
-  glassShadow: 'rgba(0,0,0,0.25)',
+  glassBg:     'rgba(28,31,40,0.65)',
+  glassBorder: 'rgba(138,134,128,0.2)',
+  glassShadow: 'rgba(0,0,0,0.3)',
+  // ── Couleurs d'accent par catégorie (partagées menu + dashboard) ──
+  catOrganisation:       '#2DD4BF',  // teal clair
+  catSante:              '#A78BFA',  // violet clair
+  catSouvenirs:          '#FBBF24',  // doré
+  catJeux:               '#4ADE80',  // vert clair
+  catFamille:            '#F472B6',  // rose clair
+  catSysteme:            '#8A8680',  // gris chaud
+  // Gradients par section (menu) — tons assombris chaleureux
+  gradientOrganisation:  ['#162A28', '#1A2E2C'] as readonly [string, string],
+  gradientSante:         ['#231A2D', '#271E30'] as readonly [string, string],
+  gradientSouvenirs:     ['#2A2218', '#2E251A'] as readonly [string, string],
+  gradientJeux:          ['#1A2A1C', '#1E2E1F'] as readonly [string, string],
+  gradientFamille:       ['#2A1A22', '#2E1E26'] as readonly [string, string],
+  gradientSysteme:       ['#1E1E24', '#222228'] as readonly [string, string],
 };
 
 export type AppColors = typeof LightColors;

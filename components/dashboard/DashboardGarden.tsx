@@ -430,7 +430,8 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
     <DashboardCard
       title={t('mascot.garden.title')}
       icon="🌳"
-      color="#4ADE80"
+      color={colors.catJeux}
+      tinted
       collapsible
       cardId="garden"
     >

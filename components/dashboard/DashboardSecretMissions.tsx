@@ -61,7 +61,7 @@ function DashboardSecretMissionsInner({ isChildMode }: DashboardSectionProps) {
         onPress={() => router.push('/(tabs)/tasks')}
         activeOpacity={0.8}
       >
-        <DashboardCard title={t('dashboard.secretMissions.title')} icon="🕵️" color={colors.warning}>
+        <DashboardCard title={t('dashboard.secretMissions.title')} icon="🕵️" color={colors.catJeux} tinted>
           <Animated.View style={pulseStyle}>
             <Text style={[styles.childText, { color: colors.text }]}>
               {t('dashboard.secretMissions.childText', { count: myMissions.length })}
@@ -82,7 +82,8 @@ function DashboardSecretMissionsInner({ isChildMode }: DashboardSectionProps) {
         title={t('dashboard.secretMissions.title')}
         icon="🕵️"
         count={pendingMissions.length}
-        color={colors.warning}
+        color={colors.catJeux}
+        tinted
       >
         <Text style={[styles.parentSubtitle, { color: colors.textMuted }]}>
           {t('dashboard.secretMissions.pendingValidation', { count: pendingMissions.length })}

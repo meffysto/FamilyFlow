@@ -21,7 +21,7 @@ function DashboardBudgetInner({ vaultFileExists, activateCardTemplate }: Dashboa
   const { budgetEntries, budgetConfig } = useVault();
 
   if (!vaultFileExists.budget) return (
-    <DashboardCard key="budget" title={t('dashboard.budget.title')} icon="💰" color={colors.success} tinted>
+    <DashboardCard key="budget" title={t('dashboard.budget.title')} icon="💰" color={colors.catFamille} tinted>
       <DashboardEmptyState
         description={t('dashboard.budget.emptyDescription')}
         onActivate={() => activateCardTemplate('budget')}
@@ -48,7 +48,7 @@ function DashboardBudgetInner({ vaultFileExists, activateCardTemplate }: Dashboa
       title={t('dashboard.budget.title')}
       icon="💰"
       count={overCount > 0 ? overCount : undefined}
-      color={overCount > 0 ? colors.error : colors.success}
+      color={colors.catFamille}
       tinted
       onPressMore={() => router.push('/(tabs)/budget')}
     >

@@ -32,7 +32,7 @@ function DashboardMoodsInner(_props: DashboardSectionProps) {
   );
 
   return (
-    <DashboardCard key="moods" title={t('dashboard.moods.title')} icon="🌤️" color={colors.info} onPressMore={() => router.push('/(tabs)/moods' as any)}>
+    <DashboardCard key="moods" title={t('dashboard.moods.title')} icon="🌤️" color={colors.catSante} tinted onPressMore={() => router.push('/(tabs)/moods' as any)}>
       {todayMoods.length === 0 ? (
         <Text style={[styles.empty, { color: colors.textMuted }]}>
           {t('dashboard.moods.empty')}

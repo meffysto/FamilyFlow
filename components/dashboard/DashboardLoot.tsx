@@ -31,7 +31,7 @@ function DashboardLootInner({ isChildMode }: DashboardSectionProps) {
   const streakInfo = getStreakMilestone(activeProfile.streak ?? 0);
 
   return (
-    <DashboardCard key="lootProgress" title={isChildMode ? t('dashboard.loot.titleChild') : t('dashboard.loot.titleAdult')} icon="🎁" color={primary}>
+    <DashboardCard key="lootProgress" title={isChildMode ? t('dashboard.loot.titleChild') : t('dashboard.loot.titleAdult')} icon="🎁" color={colors.catJeux} tinted>
       {/* Barre de progression vers prochaine loot box */}
       <View style={styles.lootProgressRow}>
         <Text style={[isChildMode ? styles.lootProgressLabelChild : styles.lootProgressLabel, { color: colors.text }]}>

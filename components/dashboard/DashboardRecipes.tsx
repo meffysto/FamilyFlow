@@ -28,7 +28,7 @@ function DashboardRecipesInner({ activateCardTemplate, onViewRecipe }: Dashboard
   useEffect(() => { if (!isLoading) loadRecipes(); }, [loadRecipes, isLoading]);
 
   if (recipes.length === 0) return (
-    <DashboardCard key="recipes" title={t('dashboard.recipes.title')} icon="📖" color={colors.info}>
+    <DashboardCard key="recipes" title={t('dashboard.recipes.title')} icon="📖" color={colors.catOrganisation} tinted>
       <DashboardEmptyState
         description={t('dashboard.recipes.emptyDescription')}
         onActivate={() => activateCardTemplate('recipes')}
@@ -42,7 +42,7 @@ function DashboardRecipesInner({ activateCardTemplate, onViewRecipe }: Dashboard
   const suggestedRecipe = recipes[dayOfYear % recipes.length];
 
   return (
-    <DashboardCard key="recipes" title={t('dashboard.recipes.title')} icon="📖" count={recipes.length} color={colors.info} onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'recettes' } })}>
+    <DashboardCard key="recipes" title={t('dashboard.recipes.title')} icon="📖" count={recipes.length} color={colors.catOrganisation} tinted onPressMore={() => router.push({ pathname: '/(tabs)/meals', params: { tab: 'recettes' } })}>
       <TouchableOpacity
         style={[styles.recipeSuggestion, { backgroundColor: colors.cardAlt }]}
         onPress={() => onViewRecipe(suggestedRecipe)}

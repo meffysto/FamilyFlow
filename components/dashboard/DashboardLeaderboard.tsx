@@ -15,14 +15,14 @@ import type { DashboardSectionProps } from './types';
 function DashboardLeaderboardInner(_props: DashboardSectionProps) {
   const { t } = useTranslation();
   const router = useRouter();
-  const { primary } = useThemeColors();
+  const { primary, colors } = useThemeColors();
   const { profiles } = useVault();
 
   const leaderboard = buildLeaderboard(profiles);
   if (leaderboard.length === 0) return null;
 
   return (
-    <DashboardCard key="leaderboard" title={t('dashboard.leaderboard.title')} icon="🏆" color={primary} onPressMore={() => router.push('/(tabs)/loot')}>
+    <DashboardCard key="leaderboard" title={t('dashboard.leaderboard.title')} icon="🏆" color={colors.catJeux} tinted onPressMore={() => router.push('/(tabs)/loot')}>
       <FamilyLeaderboard profiles={leaderboard} compact />
     </DashboardCard>
   );

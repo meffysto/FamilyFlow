@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FamilyFlow — Menu Comparatif A vs B</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    padding: 40px 20px;
+    background: #d5d0c8;
+    min-height: 100vh;
+    flex-wrap: wrap;
+  }
+
+  .variant { display: flex; flex-direction: column; align-items: center; }
+
+  .variant-label {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    color: #666;
+  }
+
+  .variant-desc {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 16px;
+    text-align: center;
+    max-width: 360px;
+    line-height: 1.5;
+  }
+
+  .phone {
+    width: 393px;
+    height: 852px;
+    border-radius: 50px;
+    overflow: hidden;
+    position: relative;
+    background: #EDEAE4;
+    box-shadow: 0 25px 80px rgba(0,0,0,0.3), 0 0 0 2px #1a1a1a;
+  }
+
+  .dynamic-island {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 126px;
+    height: 36px;
+    border-radius: 20px;
+    background: #000;
+    z-index: 10;
+  }
+
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 28px 0;
+    height: 54px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1A1A2E;
+  }
+
+  .screen {
+    height: calc(100% - 88px);
+    overflow-y: auto;
+    padding-bottom: 20px;
+  }
+  .screen::-webkit-scrollbar { display: none; }
+
+  /* ── Header ── */
+  .menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 20px 14px;
+  }
+  .menu-title {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #1A1A2E;
+  }
+  .view-toggle {
+    display: flex;
+    align-items: center;
+    border-radius: 10px;
+    padding: 4px 8px;
+    font-size: 16px;
+    background: #fff;
+    border: 0.5px solid #DDD8D0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .view-toggle .active { color: #7C3AED; }
+  .view-toggle .inactive { color: #9CA3AF; }
+  .toggle-sep { width: 1px; height: 18px; background: #DDD8D0; margin: 0 2px; }
+
+  .section { margin-top: 20px; }
+
+  /* ── Shared row base ── */
+  .list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 16px;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: 16px;
+    min-height: 64px;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+    border: 0.5px solid #DDD8D0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .row:active { transform: scale(0.97); }
+
+  .row-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+
+  .row-label {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1A1A2E;
+    margin-right: 8px;
+  }
+
+  .row-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .badge {
+    min-width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #fff;
+  }
+
+  .chevron { font-size: 22px; font-weight: 300; color: #9CA3AF; }
+
+  /* ── Tab bar ── */
+  .tab-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 88px;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    padding-top: 8px;
+    border-top: 0.5px solid #DDD8D0;
+    background: #fff;
+  }
+  .tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 10px;
+    color: #6B7280;
+  }
+  .tab.active { color: #7C3AED; }
+  .tab-icon { font-size: 22px; }
+
+  /* ══════════════════════════════════════════
+     VARIANTE A — Fond teinté par row (comme DashboardCard)
+     ══════════════════════════════════════════ */
+
+  /* Section headers minimalistes */
+  .variant-a .section-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 4px;
+    margin-bottom: 8px;
+    margin-left: 16px;
+  }
+  .variant-a .section-emoji { font-size: 15px; }
+  .variant-a .section-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #6B7280;
+  }
+
+  /* Chaque row a un fond teinté */
+  .variant-a .cat-organisation .row { background: rgba(13,148,136,0.06); }
+  .variant-a .cat-sante .row        { background: rgba(147,51,234,0.06); }
+  .variant-a .cat-souvenirs .row    { background: rgba(232,123,53,0.06); }
+  .variant-a .cat-jeux .row         { background: rgba(22,163,74,0.06); }
+  .variant-a .cat-famille .row      { background: rgba(219,39,119,0.06); }
+  .variant-a .cat-systeme .row      { background: rgba(107,114,128,0.06); }
+
+  /* Icônes un poil plus saturées */
+  .variant-a .cat-organisation .row-icon { background: rgba(13,148,136,0.12); }
+  .variant-a .cat-sante .row-icon        { background: rgba(147,51,234,0.12); }
+  .variant-a .cat-souvenirs .row-icon    { background: rgba(232,123,53,0.12); }
+  .variant-a .cat-jeux .row-icon         { background: rgba(22,163,74,0.12); }
+  .variant-a .cat-famille .row-icon      { background: rgba(219,39,119,0.12); }
+  .variant-a .cat-systeme .row-icon      { background: rgba(107,114,128,0.12); }
+
+  /* Badges */
+  .variant-a .cat-organisation .badge { background: #0D9488; }
+  .variant-a .cat-sante .badge        { background: #9333EA; }
+  .variant-a .cat-souvenirs .badge    { background: #E87B35; }
+  .variant-a .cat-jeux .badge         { background: #16A34A; }
+  .variant-a .cat-famille .badge      { background: #DB2777; }
+
+  /* ══════════════════════════════════════════
+     VARIANTE B — Barre section marquée + rows blancs
+     ══════════════════════════════════════════ */
+
+  /* Barre section colorée */
+  .variant-b .section-band {
+    margin: 0 16px 10px;
+    padding: 14px 18px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .variant-b .section-band::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.12;
+    border-radius: 14px;
+  }
+
+  .variant-b .band-emoji { font-size: 18px; position: relative; z-index: 1; }
+  .variant-b .band-label {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    position: relative;
+    z-index: 1;
+    flex: 1;
+  }
+  .variant-b .band-count {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 8px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Organisation — teal */
+  .variant-b .cat-organisation .section-band {
+    background: linear-gradient(135deg, #CCFBF1 0%, #B2F5EA 40%, #E0F7F4 100%);
+    border: 1px solid rgba(13,148,136,0.15);
+  }
+  .variant-b .cat-organisation .band-label { color: #0D9488; }
+  .variant-b .cat-organisation .band-count { background: rgba(13,148,136,0.12); color: #0D9488; }
+
+  /* Santé — violet */
+  .variant-b .cat-sante .section-band {
+    background: linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 40%, #F3E8F9 100%);
+    border: 1px solid rgba(147,51,234,0.15);
+  }
+  .variant-b .cat-sante .band-label { color: #7C3AED; }
+  .variant-b .cat-sante .band-count { background: rgba(147,51,234,0.12); color: #7C3AED; }
+
+  /* Souvenirs — orange doré */
+  .variant-b .cat-souvenirs .section-band {
+    background: linear-gradient(135deg, #FFF3E0 0%, #FFE8CC 40%, #FFF0E0 100%);
+    border: 1px solid rgba(232,123,53,0.15);
+  }
+  .variant-b .cat-souvenirs .band-label { color: #C2650A; }
+  .variant-b .cat-souvenirs .band-count { background: rgba(232,123,53,0.12); color: #C2650A; }
+
+  /* Jeux — vert */
+  .variant-b .cat-jeux .section-band {
+    background: linear-gradient(135deg, #DCFCE7 0%, #BBF7D0 40%, #E8F5E9 100%);
+    border: 1px solid rgba(22,163,74,0.15);
+  }
+  .variant-b .cat-jeux .band-label { color: #16A34A; }
+  .variant-b .cat-jeux .band-count { background: rgba(22,163,74,0.12); color: #16A34A; }
+
+  /* Famille — rose */
+  .variant-b .cat-famille .section-band {
+    background: linear-gradient(135deg, #FCE7F3 0%, #FBCFE8 40%, #FDE8F0 100%);
+    border: 1px solid rgba(219,39,119,0.15);
+  }
+  .variant-b .cat-famille .band-label { color: #BE185D; }
+  .variant-b .cat-famille .band-count { background: rgba(219,39,119,0.12); color: #BE185D; }
+
+  /* Système — gris */
+  .variant-b .cat-systeme .section-band {
+    background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 40%, #F0EEF6 100%);
+    border: 1px solid rgba(107,114,128,0.15);
+  }
+  .variant-b .cat-systeme .band-label { color: #4B5563; }
+  .variant-b .cat-systeme .band-count { background: rgba(107,114,128,0.12); color: #4B5563; }
+
+  /* Rows blancs neutres */
+  .variant-b .row { background: #FFFFFF; }
+  .variant-b .row-icon { background: rgba(0,0,0,0.04); }
+
+  /* Badges reprennent la couleur section */
+  .variant-b .cat-organisation .badge { background: #0D9488; }
+  .variant-b .cat-sante .badge        { background: #9333EA; }
+  .variant-b .cat-souvenirs .badge    { background: #E87B35; }
+  .variant-b .cat-jeux .badge         { background: #16A34A; }
+  .variant-b .cat-famille .badge      { background: #DB2777; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════ VARIANTE A ════════════════ -->
+<div class="variant variant-a">
+  <div class="variant-label">Variante A</div>
+  <div class="variant-desc">Fond teinté par carte (comme DashboardCard tinted).<br>Chaque row prend la couleur de sa catégorie.</div>
+  <div class="phone">
+    <div class="dynamic-island"></div>
+    <div class="status-bar"><span>9:41</span><span>🔋</span></div>
+    <div class="screen">
+      <div class="menu-header">
+        <div class="menu-title">Menu</div>
+        <div class="view-toggle"><span class="active">☰</span><div class="toggle-sep"></div><span class="inactive">⊞</span></div>
+      </div>
+
+      <div class="section cat-organisation">
+        <div class="section-header"><span class="section-emoji">📋</span><span class="section-label">Organisation</span></div>
+        <div class="list-container">
+          <div class="row"><div class="row-icon">🔄</div><span class="row-label">Routines</span><div class="row-right"><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">📅</div><span class="row-label">Rendez-vous</span><div class="row-right"><div class="badge">3</div><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">🍽️</div><span class="row-label">Repas</span><div class="row-right"><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">📖</div><span class="row-label">Recettes</span><div class="row-right"><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">🛒</div><span class="row-label">Courses</span><div class="row-right"><div class="badge">5</div><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">📦</div><span class="row-label">Stock</span><div class="row-right"><div class="badge">2</div><span class="chevron">›</span></div></div>
+        </div>
+      </div>
+
+      <div class="section cat-sante">
+        <div class="section-header"><span class="section-emoji">💜</span><span class="section-label">Sante & Bien-etre</span></div>
+        <div class="list-container">
+          <div class="row"><div class="row-icon">🏥</div><span class="row-label">Santé</span><div class="row-right"><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">🌤️</div><span class="row-label">Humeurs</span><div class="row-right"><span class="chevron">›</span></div></div>
+        </div>
+      </div>
+
+      <div class="section cat-souvenirs">
+        <div class="section-header"><span class="section-emoji">✨</span><span class="section-label">Souvenirs & Emotions</span></div>
+        <div class="list-container">
+          <div class="row"><div class="row-icon">📸</div><span class="row-label">Photos</span><div class="row-right"><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">💬</div><span class="row-label">Citations</span><div class="row-right"><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">🙏</div><span class="row-label">Gratitude</span><div class="row-right"><span class="chevron">›</span></div></div>
+        </div>
+      </div>
+
+      <div class="section cat-jeux">
+        <div class="section-header"><span class="section-emoji">🎮</span><span class="section-label">Jeux & Progres</span></div>
+        <div class="list-container">
+          <div class="row"><div class="row-icon">🌱</div><span class="row-label">Compétences</span><div class="row-right"><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">🌳</div><span class="row-label">Arbre familial</span><div class="row-right"><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">🎰</div><span class="row-label">Récompenses</span><div class="row-right"><div class="badge">1</div><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">🏅</div><span class="row-label">Défis</span><div class="row-right"><div class="badge">2</div><span class="chevron">›</span></div></div>
+        </div>
+      </div>
+
+      <div class="section cat-famille">
+        <div class="section-header"><span class="section-emoji">👨‍👩‍👧‍👦</span><span class="section-label">Vie de famille</span></div>
+        <div class="list-container">
+          <div class="row"><div class="row-icon">🎂</div><span class="row-label">Anniversaires</span><div class="row-right"><div class="badge">1</div><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">🎁</div><span class="row-label">Liste de souhaits</span><div class="row-right"><div class="badge">4</div><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">💰</div><span class="row-label">Budget</span><div class="row-right"><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">📝</div><span class="row-label">Notes</span><div class="row-right"><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">📊</div><span class="row-label">Statistiques</span><div class="row-right"><span class="chevron">›</span></div></div>
+        </div>
+      </div>
+
+      <div class="section cat-systeme">
+        <div class="section-header"><span class="section-emoji">⚙️</span><span class="section-label">Systeme</span></div>
+        <div class="list-container">
+          <div class="row"><div class="row-icon">⚙️</div><span class="row-label">Réglages</span><div class="row-right"><span class="chevron">›</span></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab"><span class="tab-icon">🏠</span><span>Aujourd'hui</span></div>
+      <div class="tab"><span class="tab-icon">✅</span><span>Tâches</span></div>
+      <div class="tab"><span class="tab-icon">📓</span><span>Journal</span></div>
+      <div class="tab"><span class="tab-icon">📅</span><span>Calendrier</span></div>
+      <div class="tab active"><span class="tab-icon">📦</span><span>Menu</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ VARIANTE B ════════════════ -->
+<div class="variant variant-b">
+  <div class="variant-label">Variante B</div>
+  <div class="variant-desc">Barre section colorée marquée (gradient pastel saturé).<br>Rows blancs neutres en dessous.</div>
+  <div class="phone">
+    <div class="dynamic-island"></div>
+    <div class="status-bar"><span>9:41</span><span>🔋</span></div>
+    <div class="screen">
+      <div class="menu-header">
+        <div class="menu-title">Menu</div>
+        <div class="view-toggle"><span class="active">☰</span><div class="toggle-sep"></div><span class="inactive">⊞</span></div>
+      </div>
+
+      <div class="section cat-organisation">
+        <div class="section-band">
+          <span class="band-emoji">📋</span>
+          <span class="band-label">Organisation</span>
+          <span class="band-count">6</span>
+        </div>
+        <div class="list-container">
+          <div class="row"><div class="row-icon">🔄</div><span class="row-label">Routines</span><div class="row-right"><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">📅</div><span class="row-label">Rendez-vous</span><div class="row-right"><div class="badge">3</div><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">🍽️</div><span class="row-label">Repas</span><div class="row-right"><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">📖</div><span class="row-label">Recettes</span><div class="row-right"><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">🛒</div><span class="row-label">Courses</span><div class="row-right"><div class="badge">5</div><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">📦</div><span class="row-label">Stock</span><div class="row-right"><div class="badge">2</div><span class="chevron">›</span></div></div>
+        </div>
+      </div>
+
+      <div class="section cat-sante">
+        <div class="section-band">
+          <span class="band-emoji">💜</span>
+          <span class="band-label">Santé & Bien-être</span>
+          <span class="band-count">2</span>
+        </div>
+        <div class="list-container">
+          <div class="row"><div class="row-icon">🏥</div><span class="row-label">Santé</span><div class="row-right"><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">🌤️</div><span class="row-label">Humeurs</span><div class="row-right"><span class="chevron">›</span></div></div>
+        </div>
+      </div>
+
+      <div class="section cat-souvenirs">
+        <div class="section-band">
+          <span class="band-emoji">✨</span>
+          <span class="band-label">Souvenirs & Émotions</span>
+          <span class="band-count">3</span>
+        </div>
+        <div class="list-container">
+          <div class="row"><div class="row-icon">📸</div><span class="row-label">Photos</span><div class="row-right"><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">💬</div><span class="row-label">Citations</span><div class="row-right"><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">🙏</div><span class="row-label">Gratitude</span><div class="row-right"><span class="chevron">›</span></div></div>
+        </div>
+      </div>
+
+      <div class="section cat-jeux">
+        <div class="section-band">
+          <span class="band-emoji">🎮</span>
+          <span class="band-label">Jeux & Progrès</span>
+          <span class="band-count">4</span>
+        </div>
+        <div class="list-container">
+          <div class="row"><div class="row-icon">🌱</div><span class="row-label">Compétences</span><div class="row-right"><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">🌳</div><span class="row-label">Arbre familial</span><div class="row-right"><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">🎰</div><span class="row-label">Récompenses</span><div class="row-right"><div class="badge">1</div><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">🏅</div><span class="row-label">Défis</span><div class="row-right"><div class="badge">2</div><span class="chevron">›</span></div></div>
+        </div>
+      </div>
+
+      <div class="section cat-famille">
+        <div class="section-band">
+          <span class="band-emoji">👨‍👩‍👧‍👦</span>
+          <span class="band-label">Vie de famille</span>
+          <span class="band-count">5</span>
+        </div>
+        <div class="list-container">
+          <div class="row"><div class="row-icon">🎂</div><span class="row-label">Anniversaires</span><div class="row-right"><div class="badge">1</div><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">🎁</div><span class="row-label">Liste de souhaits</span><div class="row-right"><div class="badge">4</div><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">💰</div><span class="row-label">Budget</span><div class="row-right"><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">📝</div><span class="row-label">Notes</span><div class="row-right"><span class="chevron">›</span></div></div>
+          <div class="row"><div class="row-icon">📊</div><span class="row-label">Statistiques</span><div class="row-right"><span class="chevron">›</span></div></div>
+        </div>
+      </div>
+
+      <div class="section cat-systeme">
+        <div class="section-band">
+          <span class="band-emoji">⚙️</span>
+          <span class="band-label">Système</span>
+          <span class="band-count">1</span>
+        </div>
+        <div class="list-container">
+          <div class="row"><div class="row-icon">⚙️</div><span class="row-label">Réglages</span><div class="row-right"><span class="chevron">›</span></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab"><span class="tab-icon">🏠</span><span>Aujourd'hui</span></div>
+      <div class="tab"><span class="tab-icon">✅</span><span>Tâches</span></div>
+      <div class="tab"><span class="tab-icon">📓</span><span>Journal</span></div>
+      <div class="tab"><span class="tab-icon">📅</span><span>Calendrier</span></div>
+      <div class="tab active"><span class="tab-icon">📦</span><span>Menu</span></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -96,7 +96,7 @@ function DashboardPhotosInner(_props: DashboardSectionProps) {
   }));
 
   return (
-    <DashboardCard key="photos" title={t('dashboard.photos.title')} icon="📸" color={colors.info} onPressMore={() => router.push('/(tabs)/photos')}>
+    <DashboardCard key="photos" title={t('dashboard.photos.title')} icon="📸" color={colors.catSouvenirs} tinted onPressMore={() => router.push('/(tabs)/photos')}>
       {photoStatus.map((e) => (
         <TouchableOpacity
           key={e.id}

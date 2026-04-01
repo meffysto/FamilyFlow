@@ -40,7 +40,7 @@ function DashboardVacationInner({ handleTaskToggle }: DashboardSectionWithTaskTo
   const progress = vacTotal > 0 ? vacCompleted / vacTotal : 0;
 
   return (
-    <DashboardCard key="vacation" title={t('dashboard.vacation.title')} icon="☀️" color={colors.warning} onPressMore={() => router.push('/(tabs)/tasks')}>
+    <DashboardCard key="vacation" title={t('dashboard.vacation.title')} icon="☀️" color={colors.catSysteme} tinted onPressMore={() => router.push('/(tabs)/tasks')}>
       <Text style={[styles.vacCountdown, { color: colors.warning }]}>{vacCountdown}</Text>
       <View style={styles.vacProgressRow}>
         <View style={[styles.vacProgressBg, { backgroundColor: colors.borderLight }]}>

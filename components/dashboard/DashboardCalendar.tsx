@@ -52,7 +52,8 @@ function DashboardCalendarInner(_props: DashboardSectionProps) {
       title={t('dashboard.calendar.title')}
       icon="📆"
       count={totalEvents}
-      color={primary}
+      color={colors.catOrganisation}
+      tinted
       onPressMore={() => router.push('/(tabs)/calendar' as any)}
     >
       {previewDays.map(day => (
