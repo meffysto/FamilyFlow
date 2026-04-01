@@ -203,6 +203,17 @@ export const ITEM_ILLUSTRATIONS: Record<string, number> = {
   canard:    require('../../assets/garden/animals/canard/idle_1.png'),
   cochon:    require('../../assets/garden/animals/cochon/idle_1.png'),
   vache:     require('../../assets/garden/animals/vache/idle_1.png'),
+  // Habitants pixel (PixelLab)
+  oiseau:     require('../../assets/garden/animals/oiseau/idle_1.png'),
+  ecureuil:   require('../../assets/garden/animals/ecureuil/idle_1.png'),
+  papillons:  require('../../assets/garden/animals/papillons/idle_1.png'),
+  coccinelle: require('../../assets/garden/animals/coccinelle/idle_1.png'),
+  hibou:      require('../../assets/garden/animals/hibou/idle_1.png'),
+  chat:       require('../../assets/garden/animals/chat/idle_1.png'),
+  fee:        require('../../assets/garden/animals/fee/idle_1.png'),
+  dragon:     require('../../assets/garden/animals/dragon/idle_1.png'),
+  phoenix:    require('../../assets/garden/animals/phoenix/idle_1.png'),
+  licorne:    require('../../assets/garden/animals/licorne/idle_1.png'),
 };
 
 /** Catalogue décorations MVP */
@@ -234,14 +245,14 @@ export const INHABITANTS: MascotInhabitant[] = [
   { id: 'canard',      labelKey: 'mascot.hab.canard',      emoji: '🦆', cost: 300,  rarity: 'commun',     minStage: 'arbuste' },
   { id: 'cochon',      labelKey: 'mascot.hab.cochon',      emoji: '🐷', cost: 500,  rarity: 'rare',       minStage: 'arbre' },
   { id: 'vache',       labelKey: 'mascot.hab.vache',       emoji: '🐄', cost: 800,  rarity: 'rare',       minStage: 'arbre' },
-  // Anciens habitants (existants)
+  // Habitants pixel (PixelLab)
   { id: 'oiseau',      labelKey: 'mascot.hab.oiseau',      emoji: '🐦', cost: 100,  rarity: 'commun',     minStage: 'arbuste' },
   { id: 'ecureuil',    labelKey: 'mascot.hab.ecureuil',    emoji: '🐿️', cost: 250,  rarity: 'commun',     minStage: 'arbuste' },
   { id: 'papillons',   labelKey: 'mascot.hab.papillons',   emoji: '🦋', cost: 200,  rarity: 'commun',     minStage: 'pousse' },
   { id: 'coccinelle',  labelKey: 'mascot.hab.coccinelle',  emoji: '🐞', cost: 150,  rarity: 'commun',     minStage: 'pousse' },
   { id: 'chat',        labelKey: 'mascot.hab.chat',        emoji: '😺', cost: 500,  rarity: 'rare',       minStage: 'arbre' },
   { id: 'hibou',       labelKey: 'mascot.hab.hibou',       emoji: '🦉', cost: 400,  rarity: 'rare',       minStage: 'arbre' },
-  // Fantastiques (emoji — conservés)
+  // Fantastiques pixel (PixelLab)
   { id: 'fee',         labelKey: 'mascot.hab.fee',         emoji: '🧚', cost: 2000, rarity: 'épique',     minStage: 'majestueux' },
   { id: 'dragon',      labelKey: 'mascot.hab.dragon',      emoji: '🐉', cost: 10000, rarity: 'légendaire', minStage: 'legendaire' },
   { id: 'phoenix',     labelKey: 'mascot.hab.phoenix',     emoji: '🔥', cost: 15000, rarity: 'prestige',  minStage: 'legendaire' },

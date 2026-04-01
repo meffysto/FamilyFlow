@@ -13,7 +13,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Modal,
-  Dimensions,
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -24,7 +23,7 @@ import { useTone } from '../../lib/mascot/tone';
 
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { TreeView } from './TreeView';
-import { MiniDiorama } from './MiniDiorama';
+
 import {
   DECORATIONS,
   INHABITANTS,
@@ -82,9 +81,6 @@ const RARITY_BG: Record<string, string> = {
   'légendaire': 'rgba(245,158,11,0.12)',
   prestige: 'rgba(233,30,99,0.12)',
 };
-
-const { width: SCREEN_W } = Dimensions.get('window');
-const PREVIEW_TREE_SIZE = Math.min(SCREEN_W * 0.55, 220);
 
 // ── Composant ──────────────────────────────────
 
@@ -232,15 +228,6 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
     const canAfford = coins >= selectedItem.cost;
     const rarityColor = RARITY_COLORS[selectedItem.rarity] || RARITY_COLORS.commun;
     const rarityBg = RARITY_BG[selectedItem.rarity] || RARITY_BG.commun;
-    const itemType = tab === 'decorations' ? 'decoration' : 'inhabitant';
-
-    // Simuler l'arbre avec cet item ajouté
-    const previewDecos = itemType === 'decoration'
-      ? [...ownedDecorations, ...(owned ? [] : [selectedItem.id])]
-      : ownedDecorations;
-    const previewHabs = itemType === 'inhabitant'
-      ? [...ownedInhabitants, ...(owned ? [] : [selectedItem.id])]
-      : ownedInhabitants;
 
     return (
       <Modal
@@ -292,20 +279,17 @@ export function TreeShop({ species, level, coins, ownedDecorations, ownedInhabit
                 </View>
               </View>
 
-              {/* Aperçu arbre — au stade requis si pas encore atteint */}
-              <Text style={[styles.detailPreviewTitle, { color: colors.textSub }]}>
-                {locked
-                  ? `${t('mascot.shop.preview')} (${t(TREE_STAGES[minStageIdx].labelKey)})`
-                  : t('mascot.shop.preview')}
-              </Text>
-              <View style={styles.detailPreview}>
-                <MiniDiorama
-                  species={species}
-                  level={locked ? TREE_STAGES[minStageIdx].minLevel : level}
-                  size={PREVIEW_TREE_SIZE}
-                  decorations={previewDecos}
-                  inhabitants={previewHabs}
-                />
+              {/* Aperçu objet agrandi */}
+              <View style={[styles.detailPreview, { backgroundColor: colors.cardAlt }]}>
+                {ITEM_ILLUSTRATIONS[selectedItem.id] ? (
+                  <Image
+                    source={ITEM_ILLUSTRATIONS[selectedItem.id]}
+                    style={styles.detailPreviewImage}
+                    resizeMode="contain"
+                  />
+                ) : (
+                  <Text style={styles.detailPreviewEmoji}>{selectedItem.emoji}</Text>
+                )}
               </View>
 
               {/* Boutons */}
@@ -703,19 +687,19 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
   },
-  detailPreviewTitle: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
-    textAlign: 'center',
-    marginBottom: Spacing.sm,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
   detailPreview: {
     alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: Radius.xl,
-    paddingVertical: Spacing.lg,
+    paddingVertical: Spacing['2xl'],
     marginBottom: Spacing.xl,
+  },
+  detailPreviewImage: {
+    width: 96,
+    height: 96,
+  },
+  detailPreviewEmoji: {
+    fontSize: 72,
   },
   detailActions: {
     gap: Spacing.md,
