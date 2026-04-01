@@ -4115,6 +4115,55 @@
       "craft": {
         "1": "{{companionName}} watches the workshop in awe!",
         "2": "Great crafting! {{companionName}} is impressed!"
+      },
+      "routine": {
+        "1": "Routine done! {{companionName}} is proud of you!",
+        "2": "All done! {{companionName}} nods approvingly."
+      },
+      "budget": {
+        "1": "{{companionName}} noticed a budget update!",
+        "2": "Great budget tracking! {{companionName}} congratulates you."
+      },
+      "meal": {
+        "1": "Meals are planned! {{companionName}} is already hungry.",
+        "2": "Nice planning! {{companionName}} approves the menu."
+      },
+      "gratitude": {
+        "1": "{{companionName}} is touched by your gratitude.",
+        "2": "Taking time to be thankful is beautiful. {{companionName}} smiles."
+      },
+      "photo": {
+        "1": "A new memory! {{companionName}} wants to see the photo.",
+        "2": "{{companionName}} loves when you capture moments."
+      },
+      "defi": {
+        "1": "Challenge completed! {{companionName}} is impressed!",
+        "2": "Way to go! {{companionName}} celebrates!"
+      },
+      "milestone": {
+        "1": "Something special is coming! {{companionName}} is excited.",
+        "2": "{{companionName}} can't wait for this family event!"
+      },
+      "recap": {
+        "1": "Time for the recap! {{companionName}} prepared a summary.",
+        "2": "What a week! {{companionName}} wants to review it with you."
+      },
+      "morning": {
+        "1": "Good morning {{profileName}}! {{companionName}} is ready for the day!",
+        "2": "Hello! {{companionName}} has a busy schedule for you!",
+        "3": "Have a great day {{profileName}}! {{companionName}} is in a good mood."
+      },
+      "nudge": {
+        "1": "Hey {{profileName}}, there are still things to do today...",
+        "2": "{{companionName}} gently reminds you of today's tasks."
+      },
+      "comeback": {
+        "1": "{{profileName}}! It's been a while! {{companionName}} looked everywhere for you!",
+        "2": "You're back! {{companionName}} is so happy to see you!"
+      },
+      "celebration": {
+        "1": "{{streak}} days in a row! {{companionName}} does a victory dance!",
+        "2": "Amazing streak! {{companionName}} is over the moon!"
       }
     }
   }

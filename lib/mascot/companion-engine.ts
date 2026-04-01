@@ -5,6 +5,7 @@
 import {
   COMPANION_STAGES,
   COMPANION_XP_BONUS,
+  SPECIES_PERSONALITY,
   type CompanionData,
   type CompanionEvent,
   type CompanionMood,
@@ -12,53 +13,103 @@ import {
   type CompanionStage,
 } from './companion-types';
 
+// ── Évolution ────────────────────────────────────────────
+
 /**
  * Retourne le stade du compagnon pour un niveau donné.
- * Miroir exact de getTreeStage() dans engine.ts.
+ * bebe: 1-5, jeune: 6-10, adulte: 11+
  */
-export function getCompanionStage(_level: number): CompanionStage {
-  // TODO: réactiver l'évolution quand les sprites jeune/adulte seront prêts
+export function getCompanionStage(level: number): CompanionStage {
+  for (const info of COMPANION_STAGES) {
+    if (level >= info.minLevel && level <= info.maxLevel) {
+      return info.stage;
+    }
+  }
   return 'bebe';
 }
 
+// ── Mood dynamique ──────────────────────────────────────
+
 /**
- * Retourne l'humeur du compagnon selon l'activité récente.
+ * Contexte étendu pour le calcul de mood multi-facteurs.
+ * Les champs optionnels permettent un calcul plus riche.
+ */
+export interface MoodContext {
+  recentTasksCompleted: number;
+  hoursSinceLastActivity: number;
+  currentHour?: number;
+  streak?: number;
+  hasGratitudeToday?: boolean;
+  hasOverdueTasks?: boolean;
+  daysWithoutInteraction?: number;
+}
+
+/**
+ * Score pondéré de mood. Retourne un score numérique
+ * et le mood correspondant.
  *
- * Logique (per D-07) :
- * - >48h inactif → 'triste'
- * - >=5 tâches récentes → 'excite' (prioritaire sur nuit)
- * - heure 22h-7h inclus → 'endormi'
- * - sinon → 'content'
- *
- * @param recentTasksCompleted - Nombre de tâches complétées récemment (aujourd'hui)
- * @param hoursSinceLastActivity - Heures écoulées depuis la dernière activité
- * @param currentHour - Heure actuelle (0-23), optionnel pour la testabilité. Défaut: new Date().getHours()
+ * Facteurs positifs: tâches faites, streak, gratitude
+ * Facteurs négatifs: inactivité, tâches en retard
+ */
+export function computeMoodScore(ctx: MoodContext): { mood: CompanionMood; score: number } {
+  const hour = ctx.currentHour !== undefined ? ctx.currentHour : new Date().getHours();
+
+  // Cas spéciaux absolus
+  if (ctx.hoursSinceLastActivity > 48) return { mood: 'triste', score: -10 };
+
+  let score = 0;
+
+  // Facteurs positifs
+  score += Math.min(ctx.recentTasksCompleted * 2, 10);    // max +10 pour 5+ tâches
+  if (ctx.streak && ctx.streak >= 3) score += 3;           // streak bonus
+  if (ctx.streak && ctx.streak >= 7) score += 2;           // streak élevé
+  if (ctx.hasGratitudeToday) score += 2;                   // gratitude du jour
+
+  // Facteurs négatifs
+  if (ctx.hasOverdueTasks) score -= 3;                     // tâches en retard
+  if (ctx.hoursSinceLastActivity > 24) score -= 4;         // >24h sans activité
+
+  // Déterminer le mood selon le score
+  let mood: CompanionMood;
+  if (score >= 8) {
+    mood = 'excite';
+  } else if (score <= -3) {
+    mood = 'triste';
+  } else if (hour >= 22 || hour <= 7) {
+    mood = 'endormi';
+  } else {
+    mood = 'content';
+  }
+
+  return { mood, score };
+}
+
+/**
+ * Retourne l'humeur du compagnon — API rétrocompatible.
+ * Utilise computeMoodScore en interne.
  */
 export function getCompanionMood(
   recentTasksCompleted: number,
   hoursSinceLastActivity: number,
   currentHour?: number,
 ): CompanionMood {
-  if (hoursSinceLastActivity > 48) return 'triste';
-  if (recentTasksCompleted >= 5) return 'excite';
-  const hour = currentHour !== undefined ? currentHour : new Date().getHours();
-  if (hour >= 22 || hour <= 7) return 'endormi';
-  return 'content';
+  return computeMoodScore({ recentTasksCompleted, hoursSinceLastActivity, currentHour }).mood;
 }
 
 /**
  * Retourne le multiplicateur de bonus XP du compagnon.
- * +5% si un compagnon est actif (per D-09), sinon 1.0.
+ * +5% si un compagnon est actif, sinon 1.0.
  */
 export function getCompanionXpBonus(companion: CompanionData | null | undefined): number {
   if (!companion) return 1.0;
   return COMPANION_XP_BONUS;
 }
 
+// ── Templates de messages ────────────────────────────────
+
 /**
- * Templates de messages i18n par événement compagnon.
+ * Templates i18n par événement compagnon.
  * Format des clés: 'companion.msg.{event}.{n}'
- * (per D-12/D-13 — 3-5 clés par événement)
  */
 export const MESSAGE_TEMPLATES: Record<CompanionEvent, string[]> = {
   task_completed: [
@@ -91,60 +142,165 @@ export const MESSAGE_TEMPLATES: Record<CompanionEvent, string[]> = {
     'companion.msg.craft.1',
     'companion.msg.craft.2',
   ],
+  routine_completed: [
+    'companion.msg.routine.1',
+    'companion.msg.routine.2',
+  ],
+  budget_alert: [
+    'companion.msg.budget.1',
+    'companion.msg.budget.2',
+  ],
+  meal_planned: [
+    'companion.msg.meal.1',
+    'companion.msg.meal.2',
+  ],
+  gratitude_written: [
+    'companion.msg.gratitude.1',
+    'companion.msg.gratitude.2',
+  ],
+  photo_added: [
+    'companion.msg.photo.1',
+    'companion.msg.photo.2',
+  ],
+  defi_completed: [
+    'companion.msg.defi.1',
+    'companion.msg.defi.2',
+  ],
+  family_milestone: [
+    'companion.msg.milestone.1',
+    'companion.msg.milestone.2',
+  ],
+  weekly_recap: [
+    'companion.msg.recap.1',
+    'companion.msg.recap.2',
+  ],
+  // Messages proactifs
+  morning_greeting: [
+    'companion.msg.morning.1',
+    'companion.msg.morning.2',
+    'companion.msg.morning.3',
+  ],
+  gentle_nudge: [
+    'companion.msg.nudge.1',
+    'companion.msg.nudge.2',
+  ],
+  comeback: [
+    'companion.msg.comeback.1',
+    'companion.msg.comeback.2',
+  ],
+  celebration: [
+    'companion.msg.celebration.1',
+    'companion.msg.celebration.2',
+  ],
 };
 
 /**
  * Sélectionne aléatoirement une clé i18n du pool pour l'événement donné.
- * Retourne la clé i18n — le composant appelant devra appeler t() pour la résolution.
  */
 export function pickCompanionMessage(
   event: CompanionEvent,
   _context: CompanionMessageContext,
 ): string {
   const templates = MESSAGE_TEMPLATES[event];
+  if (!templates || templates.length === 0) {
+    return MESSAGE_TEMPLATES.greeting[0];
+  }
   const idx = Math.floor(Math.random() * templates.length);
   return templates[idx];
 }
 
+// ── Prompt IA avec personnalité ─────────────────────────
+
 /**
- * Construit un prompt court (<200 tokens) pour Claude Haiku.
- * Instructions en français car l'app est en français.
+ * Construit le prompt pour Claude Haiku avec personnalité espèce,
+ * mémoire courte et contexte enrichi.
  */
 function buildCompanionPrompt(event: CompanionEvent, ctx: CompanionMessageContext): string {
+  const personality = SPECIES_PERSONALITY[ctx.companionSpecies];
+
   const eventDescriptions: Record<CompanionEvent, string> = {
     task_completed: `${ctx.profileName} vient de compléter des tâches`,
     loot_opened: `${ctx.profileName} vient d'ouvrir un coffre à butin`,
     level_up: `${ctx.profileName} vient de monter au niveau ${ctx.level}`,
     greeting: `${ctx.profileName} vient d'arriver sur l'écran de son arbre`,
-    streak_milestone: `${ctx.profileName} est régulier dans ses tâches ces derniers jours`,
+    streak_milestone: `${ctx.profileName} est régulier dans ses tâches (${ctx.streak} jours d'affilée)`,
     harvest: `${ctx.profileName} vient de récolter sur sa ferme`,
     craft: `${ctx.profileName} vient de créer un objet dans son atelier`,
+    routine_completed: `${ctx.profileName} a terminé sa routine`,
+    budget_alert: `${ctx.profileName} a un événement budget`,
+    meal_planned: `${ctx.profileName} a planifié les repas`,
+    gratitude_written: `${ctx.profileName} vient d'écrire dans son journal de gratitude`,
+    photo_added: `${ctx.profileName} a ajouté un nouveau souvenir photo`,
+    defi_completed: `${ctx.profileName} a relevé un défi familial`,
+    family_milestone: `Un événement familial important approche`,
+    weekly_recap: `C'est le moment du bilan de la semaine`,
+    morning_greeting: `${ctx.profileName} commence sa journée`,
+    gentle_nudge: `${ctx.profileName} n'a pas encore fait certaines choses aujourd'hui`,
+    comeback: `${ctx.profileName} revient après une absence`,
+    celebration: `Il y a quelque chose à fêter pour la famille`,
   };
 
-  // Enrichir avec les tâches récentes
+  // Contexte conditionnel — n'injecter que ce qui est pertinent à l'événement
+  const taskEvents: CompanionEvent[] = ['task_completed', 'streak_milestone', 'gentle_nudge', 'morning_greeting', 'weekly_recap'];
+  const mealEvents: CompanionEvent[] = ['meal_planned', 'morning_greeting'];
+  const rdvEvents: CompanionEvent[] = ['greeting', 'morning_greeting', 'weekly_recap'];
+
   let taskContext = '';
-  if (ctx.recentTasks && ctx.recentTasks.length > 0) {
+  if (taskEvents.includes(event) && ctx.recentTasks && ctx.recentTasks.length > 0) {
     taskContext = ` Tâches terminées aujourd'hui : ${ctx.recentTasks.join(', ')}.`;
   }
 
-  // Enrichir avec le prochain RDV
   let rdvContext = '';
-  if (ctx.nextRdv) {
+  if (rdvEvents.includes(event) && ctx.nextRdv) {
     rdvContext = ` Prochain rendez-vous : "${ctx.nextRdv.title}" le ${ctx.nextRdv.date}.`;
   }
 
-  // Enrichir avec les repas du jour
   let mealsContext = '';
-  if (ctx.todayMeals && ctx.todayMeals.length > 0) {
+  if (mealEvents.includes(event) && ctx.todayMeals && ctx.todayMeals.length > 0) {
     mealsContext = ` Au menu aujourd'hui : ${ctx.todayMeals.join(', ')}.`;
   }
 
-  return `Tu es ${ctx.companionName}, un ${ctx.companionSpecies} adorable qui fait partie de la famille de ${ctx.profileName}. ${eventDescriptions[event]}.${taskContext}${rdvContext}${mealsContext} Tu connais bien ${ctx.profileName} et tu vis avec la famille. Réponds en 1-2 phrases courtes, chaleureuses et personnalisées (max 120 caractères). Mentionne une tâche, le rdv ou le repas si pertinent. Pas d'emoji. Tutoie ${ctx.profileName}.`;
+  // Mémoire courte — anti-répétition stricte
+  let memoryContext = '';
+  if (ctx.recentMessages && ctx.recentMessages.length > 0) {
+    memoryContext = ` INTERDIT de répéter ou paraphraser ces messages déjà dits : ${ctx.recentMessages.map(m => `"${m}"`).join(', ')}. Dis quelque chose de complètement différent.`;
+  }
+
+  return [
+    `Tu es ${ctx.companionName}, un ${ctx.companionSpecies} compagnon.`,
+    `Ton caractère : ${personality.tone}. Traits : ${personality.traits.join(', ')}.`,
+    `Particularité : ${personality.quirk}.`,
+    `${eventDescriptions[event]}.`,
+    taskContext,
+    rdvContext,
+    mealsContext,
+    memoryContext,
+    `Réponds en 1-2 phrases courtes et personnalisées (max 120 caractères).`,
+    `Pas d'emoji. Tutoie ${ctx.profileName}. Concentre-toi sur l'événement, pas sur le contexte annexe.`,
+  ].filter(Boolean).join(' ');
 }
 
-// ── Cache messages IA ────────────────────────────────
+// ── Cache intelligent + budget quotidien ────────────────
 
-const AI_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+/** Nombre max d'appels IA par jour par profil */
+const DAILY_AI_BUDGET = 15;
+
+/** TTL du cache par catégorie d'événement (ms) */
+const CACHE_TTL: Partial<Record<CompanionEvent, number>> = {
+  greeting:         4 * 60 * 60 * 1000,  // 4h — un seul appel IA par demi-journée
+  task_completed:   45 * 60 * 1000,       // 45min — ~1 appel toutes les 3 tâches
+  harvest:          2 * 60 * 60 * 1000,   // 2h — template suffit la plupart du temps
+  craft:            2 * 60 * 60 * 1000,   // 2h
+  gentle_nudge:     4 * 60 * 60 * 1000,   // 4h
+};
+const DEFAULT_CACHE_TTL = 30 * 60 * 1000; // 30min par défaut
+
+/** Événements toujours prioritaires pour l'IA (rares, méritent un message unique) */
+const ALWAYS_AI_EVENTS: CompanionEvent[] = [
+  'level_up', 'streak_milestone', 'defi_completed',
+  'family_milestone', 'weekly_recap', 'comeback',
+  'morning_greeting', 'celebration',
+];
 
 interface AICacheEntry {
   message: string;
@@ -153,16 +309,57 @@ interface AICacheEntry {
   timestamp: number;
 }
 
-let aiMessageCache: AICacheEntry | null = null;
+interface DailyBudget {
+  date: string;  // YYYY-MM-DD
+  count: number;
+}
 
-/** Clé de cache basée sur le contexte — change si l'activité change */
+let aiMessageCache = new Map<string, AICacheEntry>();
+let dailyBudget: DailyBudget = { date: '', count: 0 };
+
+/** Retourne le nombre d'appels IA restants aujourd'hui */
+export function getRemainingAIBudget(): number {
+  const today = new Date().toISOString().slice(0, 10);
+  if (dailyBudget.date !== today) return DAILY_AI_BUDGET;
+  return Math.max(0, DAILY_AI_BUDGET - dailyBudget.count);
+}
+
+/** Clé de cache basée sur le contexte + slot horaire pour varier */
 function buildCacheKey(event: CompanionEvent, ctx: CompanionMessageContext): string {
-  return `${ctx.profileName}:${ctx.companionName}:${event}:${ctx.tasksToday}:${ctx.streak}:${ctx.level}`;
+  // Slot horaire de 2h → force un nouveau message IA toutes les 2h même contexte identique
+  const hourSlot = Math.floor(new Date().getHours() / 2);
+  return `${ctx.profileName}:${ctx.companionSpecies}:${event}:${ctx.tasksToday}:${ctx.streak}:${ctx.level}:${hourSlot}`;
+}
+
+/** Vérifie si un événement devrait utiliser l'IA (budget + priorité) */
+function shouldUseAI(event: CompanionEvent): boolean {
+  const today = new Date().toISOString().slice(0, 10);
+  if (dailyBudget.date !== today) {
+    dailyBudget = { date: today, count: 0 };
+  }
+
+  // Événements prioritaires consomment toujours le budget
+  if (ALWAYS_AI_EVENTS.includes(event)) {
+    return dailyBudget.count < DAILY_AI_BUDGET;
+  }
+
+  // Événements courants — ne pas dépasser 80% du budget
+  return dailyBudget.count < Math.floor(DAILY_AI_BUDGET * 0.8);
+}
+
+/** Incrémente le compteur de budget quotidien */
+function consumeAIBudget(): void {
+  const today = new Date().toISOString().slice(0, 10);
+  if (dailyBudget.date !== today) {
+    dailyBudget = { date: today, count: 1 };
+  } else {
+    dailyBudget.count++;
+  }
 }
 
 /**
- * Génère un message compagnon hybride : tente l'IA Haiku, fallback sur prédéfinis.
- * Cache le message IA pendant 30min — ne refait un appel que si le contexte change.
+ * Génère un message compagnon hybride : tente l'IA, fallback sur templates.
+ * Cache intelligent par événement + budget quotidien limité.
  */
 export async function generateCompanionAIMessage(
   event: CompanionEvent,
@@ -173,14 +370,17 @@ export async function generateCompanionAIMessage(
   if (!aiCall) return fallbackKey;
 
   const cacheKey = buildCacheKey(event, context);
+  const ttl = CACHE_TTL[event] ?? DEFAULT_CACHE_TTL;
 
-  // Cache hit — même contexte et pas expiré
-  if (
-    aiMessageCache &&
-    aiMessageCache.cacheKey === cacheKey &&
-    Date.now() - aiMessageCache.timestamp < AI_CACHE_TTL_MS
-  ) {
-    return aiMessageCache.message;
+  // Cache hit
+  const cached = aiMessageCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < ttl) {
+    return cached.message;
+  }
+
+  // Vérifier le budget
+  if (!shouldUseAI(event)) {
+    return fallbackKey;
   }
 
   try {
@@ -191,13 +391,74 @@ export async function generateCompanionAIMessage(
     ]);
     const message = result || fallbackKey;
 
-    // Stocker en cache seulement si c'est un message IA (pas le fallback)
     if (result) {
-      aiMessageCache = { message, event, cacheKey, timestamp: Date.now() };
+      aiMessageCache.set(cacheKey, { message, event, cacheKey, timestamp: Date.now() });
+      consumeAIBudget();
+
+      // Limiter la taille du cache (garder les 20 plus récentes)
+      if (aiMessageCache.size > 20) {
+        const oldest = [...aiMessageCache.entries()]
+          .sort((a, b) => a[1].timestamp - b[1].timestamp)[0];
+        if (oldest) aiMessageCache.delete(oldest[0]);
+      }
     }
 
     return message;
   } catch {
     return fallbackKey;
   }
+}
+
+// ── Messages proactifs ──────────────────────────────────
+
+/** Contexte pour la détection de messages proactifs */
+export interface ProactiveContext {
+  hoursSinceLastVisit: number;
+  currentHour: number;
+  tasksToday: number;
+  totalTasksToday: number;  // tâches totales (faites + à faire)
+  streak: number;
+  hasGratitudeToday: boolean;
+  hasMealsPlanned: boolean;
+  isFirstVisitToday: boolean;
+  familyMilestone?: string;  // ex: "Anniversaire d'Emma dans 2 jours"
+}
+
+/**
+ * Détecte le message proactif le plus pertinent selon le contexte.
+ * Retourne l'événement proactif ou null si aucun message n'est pertinent.
+ */
+export function detectProactiveEvent(ctx: ProactiveContext): CompanionEvent | null {
+  // Retour après longue absence (>24h)
+  if (ctx.hoursSinceLastVisit > 24) return 'comeback';
+
+  // Message matinal (première visite du jour, entre 6h et 11h)
+  if (ctx.isFirstVisitToday && ctx.currentHour >= 6 && ctx.currentHour <= 11) {
+    return 'morning_greeting';
+  }
+
+  // Milestone familial
+  if (ctx.familyMilestone) return 'family_milestone';
+
+  // Célébration (streak remarquable)
+  if (ctx.streak > 0 && ctx.streak % 7 === 0) return 'celebration';
+
+  // Rappel doux l'après-midi (pas de tâches faites et il y en a à faire)
+  if (
+    ctx.currentHour >= 14 &&
+    ctx.currentHour <= 19 &&
+    ctx.tasksToday === 0 &&
+    ctx.totalTasksToday > 0
+  ) {
+    return 'gentle_nudge';
+  }
+
+  return null;
+}
+
+// ── Reset (pour les tests) ──────────────────────────────
+
+export function _resetCacheForTests(): void {
+  aiMessageCache = new Map();
+  dailyBudget = { date: '', count: 0 };
 }

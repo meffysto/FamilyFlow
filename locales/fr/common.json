@@ -4115,6 +4115,55 @@
       "craft": {
         "1": "{{companionName}} observe l'atelier avec fascination !",
         "2": "Bien joue l'artisan ! {{companionName}} est impressionne !"
+      },
+      "routine": {
+        "1": "Routine bouclée ! {{companionName}} est fier de toi !",
+        "2": "Tout est fait ! {{companionName}} approuve d'un hochement de tête."
+      },
+      "budget": {
+        "1": "{{companionName}} a remarqué un changement dans le budget !",
+        "2": "Bon suivi du budget ! {{companionName}} te félicite."
+      },
+      "meal": {
+        "1": "Les repas sont prévus ! {{companionName}} a déjà faim.",
+        "2": "Bonne organisation ! {{companionName}} approuve le menu."
+      },
+      "gratitude": {
+        "1": "{{companionName}} est touché par ta gratitude.",
+        "2": "C'est beau de prendre le temps de dire merci. {{companionName}} sourit."
+      },
+      "photo": {
+        "1": "Un nouveau souvenir ! {{companionName}} veut voir la photo.",
+        "2": "{{companionName}} adore quand tu captures des moments."
+      },
+      "defi": {
+        "1": "Défi relevé ! {{companionName}} est impressionné !",
+        "2": "Bravo le challenge ! {{companionName}} fait la fête !"
+      },
+      "milestone": {
+        "1": "Un moment important approche ! {{companionName}} est tout excité.",
+        "2": "{{companionName}} a hâte pour cet événement familial !"
+      },
+      "recap": {
+        "1": "C'est l'heure du bilan ! {{companionName}} a préparé un résumé.",
+        "2": "Quelle semaine ! {{companionName}} veut faire le point avec toi."
+      },
+      "morning": {
+        "1": "Bonjour {{profileName}} ! {{companionName}} est prêt pour la journée !",
+        "2": "Hello ! {{companionName}} t'a préparé un programme chargé !",
+        "3": "Bonne journée {{profileName}} ! {{companionName}} est de bonne humeur."
+      },
+      "nudge": {
+        "1": "Hé {{profileName}}, il reste des choses à faire aujourd'hui...",
+        "2": "{{companionName}} te rappelle gentiment tes tâches du jour."
+      },
+      "comeback": {
+        "1": "{{profileName}} ! Ça faisait longtemps ! {{companionName}} t'a cherché partout !",
+        "2": "Te revoilà ! {{companionName}} est tellement content de te revoir !"
+      },
+      "celebration": {
+        "1": "{{streak}} jours d'affilée ! {{companionName}} fait la danse de la victoire !",
+        "2": "Incroyable série ! {{companionName}} est aux anges !"
       }
     }
   }

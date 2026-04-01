@@ -28,22 +28,44 @@ import type { CompanionSpecies, CompanionStage, CompanionMood } from '../../lib/
 const COMPANION_SIZE = 48;
 
 /**
- * Points d'intérêt en coordonnées fractionnelles (0-1) du container diorama.
- * Basés sur les positions réelles de WorldGridView (world-grid.ts).
+ * Circuit de patrouille séquentiel aligné sur le chemin beige du tileset.
+ * Le compagnon suit ce circuit en boucle :
+ *   repos → chemin ↑ → potager (zig-zag) → chemin ↓ → bâtiments → chemin → arbre → repos
+ *
+ * pause = durée d'arrêt à ce point (ms). 0 = passage sans arrêt.
  */
-const WAYPOINTS = [
-  { fx: 0.20, fy: 0.72, label: 'home' },        // position de repos (gauche de l'arbre)
-  { fx: 0.28, fy: 0.08, label: 'crops-r1-c1' },  // culture rangée 1
-  { fx: 0.42, fy: 0.08, label: 'crops-r1-c2' },  // culture rangée 1 centre
-  { fx: 0.56, fy: 0.08, label: 'crops-r1-c3' },  // culture rangée 1 droite
-  { fx: 0.28, fy: 0.20, label: 'crops-r2-c1' },  // culture rangée 2
-  { fx: 0.56, fy: 0.20, label: 'crops-r2-c3' },  // culture rangée 2 droite
-  { fx: 0.42, fy: 0.32, label: 'crops-r3' },      // culture rangée 3 centre
-  { fx: 0.82, fy: 0.45, label: 'building-1' },    // bâtiment 1 (x=0.86)
-  { fx: 0.82, fy: 0.60, label: 'building-2' },    // bâtiment 2
-  { fx: 0.50, fy: 0.75, label: 'tree' },           // au pied de l'arbre
-  { fx: 0.10, fy: 0.50, label: 'left-field' },    // côté gauche
-  { fx: 0.35, fy: 0.50, label: 'center' },        // centre de la scène
+const PATROL_ROUTE: { fx: number; fy: number; label: string; pause: number }[] = [
+  // — Repos près de l'arbre (départ) —
+  { fx: 0.28, fy: 0.58, label: 'home',           pause: 4000 },
+
+  // — Monter le chemin beige vers le potager —
+  { fx: 0.44, fy: 0.50, label: 'path-center',    pause: 0 },
+  { fx: 0.44, fy: 0.38, label: 'path-top',       pause: 800 },
+
+  // — Patrouille du potager (zig-zag rang 3 → 1) —
+  { fx: 0.28, fy: 0.29, label: 'crops-r3-left',  pause: 2000 },
+  { fx: 0.56, fy: 0.29, label: 'crops-r3-right', pause: 1500 },
+  { fx: 0.42, fy: 0.17, label: 'crops-r2-mid',   pause: 2000 },
+  { fx: 0.14, fy: 0.05, label: 'crops-r1-left',  pause: 1500 },
+  { fx: 0.70, fy: 0.05, label: 'crops-r1-right', pause: 2000 },
+
+  // — Redescendre vers le chemin —
+  { fx: 0.44, fy: 0.17, label: 'crops-exit',     pause: 0 },
+  { fx: 0.44, fy: 0.38, label: 'path-junction',  pause: 800 },
+
+  // — Bifurquer vers les bâtiments (droite) —
+  { fx: 0.65, fy: 0.42, label: 'path-to-build',  pause: 0 },
+  { fx: 0.82, fy: 0.42, label: 'building-1',     pause: 3000 },
+  { fx: 0.82, fy: 0.62, label: 'building-2',     pause: 2500 },
+  { fx: 0.82, fy: 0.78, label: 'building-3',     pause: 2000 },
+
+  // — Retour au chemin central —
+  { fx: 0.65, fy: 0.55, label: 'build-exit',     pause: 0 },
+  { fx: 0.44, fy: 0.55, label: 'path-mid',       pause: 800 },
+
+  // — Descendre vers l'arbre —
+  { fx: 0.44, fy: 0.70, label: 'path-tree',      pause: 1000 },
+  { fx: 0.35, fy: 0.75, label: 'near-tree',      pause: 3000 },
 ];
 
 const HOME_IDX = 0;
@@ -265,8 +287,8 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   const [isHorizontal, setIsHorizontal] = useState(false);
   const [goingUp, setGoingUp] = useState(false);
   const [walkFrameIdx, setWalkFrameIdx] = useState(0);
-  const currentFx = React.useRef(WAYPOINTS[HOME_IDX].fx);
-  const currentFy = React.useRef(WAYPOINTS[HOME_IDX].fy);
+  const currentFx = React.useRef(PATROL_ROUTE[HOME_IDX].fx);
+  const currentFy = React.useRef(PATROL_ROUTE[HOME_IDX].fy);
 
   // Valeurs animées
   const jumpY = useSharedValue(0);
@@ -297,26 +319,26 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   const harvestablesRef = React.useRef(harvestables);
   useEffect(() => { harvestablesRef.current = harvestables; }, [harvestables]);
 
-  // Balade entre waypoints — priorise les crops prêtes à récolter
+  // Patrouille séquentielle — suit le circuit PATROL_ROUTE en boucle
   useEffect(() => {
     let mounted = true;
     const timeouts: ReturnType<typeof setTimeout>[] = [];
-    let lastIdx = HOME_IDX;
-    let visitedHarvest = false; // une visite harvest par cycle
+    let routeIdx = 0;
+    let visitedHarvestThisCycle = false;
 
     const walkTo = (targetFx: number, targetFy: number, onArrive?: () => void) => {
       const dfx = targetFx - currentFx.current;
       const dfy = targetFy - currentFy.current;
       const dist = Math.sqrt(dfx * dfx + dfy * dfy);
-      const duration = Math.max(4000, Math.min(8000, dist * 14000));
+      const duration = Math.max(2000, Math.min(8000, dist * 14000));
 
-      setFacingLeft(dfx < 0);
-      setGoingUp(dfy < 0);
+      setFacingLeft(dfx < -0.02);
+      setGoingUp(dfy < -0.02);
       setIsHorizontal(Math.abs(dfx) > Math.abs(dfy));
       setIsWalking(true);
 
-      const homeFx = WAYPOINTS[HOME_IDX].fx;
-      const homeFy = WAYPOINTS[HOME_IDX].fy;
+      const homeFx = PATROL_ROUTE[HOME_IDX].fx;
+      const homeFy = PATROL_ROUTE[HOME_IDX].fy;
       posX.value = withTiming((targetFx - homeFx) * containerWidth, { duration, easing: Easing.inOut(Easing.sin) });
       posY.value = withTiming((targetFy - homeFy) * containerHeight, { duration, easing: Easing.inOut(Easing.sin) });
       currentFx.current = targetFx;
@@ -331,13 +353,19 @@ export const CompanionSlot = React.memo(function CompanionSlot({
       return duration;
     };
 
-    const walkToNext = () => {
+    const walkNext = () => {
       if (!mounted) return;
 
-      // 30% de chance d'aller vers une crop prête (si disponible et pas déjà fait ce cycle)
+      const step = PATROL_ROUTE[routeIdx];
+
+      // Détour récolte — une seule fois par cycle, quand on passe dans le potager
       const readyCrops = harvestablesRef.current;
-      if (readyCrops.length > 0 && !visitedHarvest && Math.random() < 0.3) {
-        visitedHarvest = true;
+      if (
+        readyCrops.length > 0 &&
+        !visitedHarvestThisCycle &&
+        step.label.startsWith('crops-')
+      ) {
+        visitedHarvestThisCycle = true;
         const crop = readyCrops[Math.floor(Math.random() * readyCrops.length)];
         const duration = walkTo(crop.fx, crop.fy, () => {
           if (mounted && !message) {
@@ -346,32 +374,27 @@ export const CompanionSlot = React.memo(function CompanionSlot({
             timeouts.push(hideHint);
           }
         });
-        const pause = 6000 + Math.random() * 4000;
-        const t = setTimeout(walkToNext, duration + pause);
+        // Après le détour, continuer le circuit normal (sans avancer routeIdx)
+        const t = setTimeout(walkNext, duration + 4000);
         timeouts.push(t);
         return;
       }
 
-      // Sinon balade normale
-      let nextIdx: number;
-      do {
-        nextIdx = Math.floor(Math.random() * WAYPOINTS.length);
-      } while (nextIdx === lastIdx);
-      lastIdx = nextIdx;
+      // Avancer au point suivant du circuit
+      const duration = walkTo(step.fx, step.fy);
 
-      const target = WAYPOINTS[nextIdx];
-      const duration = walkTo(target.fx, target.fy);
+      // Reset le cycle harvest quand on revient au home
+      if (step.label === 'home') visitedHarvestThisCycle = false;
 
-      // Reset le cycle harvest après retour home
-      if (nextIdx === HOME_IDX) visitedHarvest = false;
+      // Prochain point (boucle)
+      routeIdx = (routeIdx + 1) % PATROL_ROUTE.length;
 
-      const pause = 5000 + Math.random() * 5000;
-      const t = setTimeout(walkToNext, duration + pause);
+      const t = setTimeout(walkNext, duration + step.pause);
       timeouts.push(t);
     };
 
     // Premier déplacement après 3s
-    const initial = setTimeout(walkToNext, 3000);
+    const initial = setTimeout(walkNext, 3000);
     timeouts.push(initial);
 
     return () => {
@@ -426,7 +449,7 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   }));
 
   // Position pixel dans le container (point de repos)
-  const home = WAYPOINTS[HOME_IDX];
+  const home = PATROL_ROUTE[HOME_IDX];
   const px = home.fx * containerWidth;
   const py = home.fy * containerHeight;
 
@@ -507,8 +530,8 @@ export const CompanionSlot = React.memo(function CompanionSlot({
         );
       })()}
 
-      {/* Emoji d'humeur (quand pas de bulle) */}
-      {!showBubble && (
+      {/* Emoji d'humeur — seulement à l'arrêt, pas en marchant */}
+      {!showBubble && !isWalking && (
         <View style={styles.moodBubble}>
           <Text style={styles.moodEmoji}>{MOOD_EMOJI[mood]}</Text>
         </View>

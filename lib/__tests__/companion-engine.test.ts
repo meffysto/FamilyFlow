@@ -1,6 +1,5 @@
 /**
  * companion-engine.test.ts — Tests du moteur compagnon
- * TDD: ces tests sont écrits avant l'implémentation
  */
 
 import {
@@ -9,14 +8,24 @@ import {
   getCompanionXpBonus,
   pickCompanionMessage,
   MESSAGE_TEMPLATES,
+  computeMoodScore,
+  detectProactiveEvent,
+  generateCompanionAIMessage,
+  getRemainingAIBudget,
+  _resetCacheForTests,
 } from '../mascot/companion-engine';
 import {
   COMPANION_STAGES,
   COMPANION_SPECIES_CATALOG,
   COMPANION_UNLOCK_LEVEL,
   COMPANION_XP_BONUS,
+  SPECIES_PERSONALITY,
   type CompanionData,
 } from '../mascot/companion-types';
+
+beforeEach(() => {
+  _resetCacheForTests();
+});
 
 // ─── getCompanionStage ────────────────────────────────────────────────────────
 
@@ -51,11 +60,10 @@ describe('getCompanionStage', () => {
   });
 });
 
-// ─── getCompanionMood ────────────────────────────────────────────────────────
+// ─── getCompanionMood (API rétrocompatible) ─────────────────────────────────
 
 describe('getCompanionMood', () => {
   it('retourne triste si inactif depuis plus de 48h', () => {
-    // 0 taches, 50 heures depuis dernière activité
     expect(getCompanionMood(0, 50)).toBe('triste');
   });
 
@@ -64,7 +72,6 @@ describe('getCompanionMood', () => {
   });
 
   it('retourne content si actif (peu de taches, heure diurne)', () => {
-    // 0 taches, 1h depuis activite (diurne — heure passee via currentHour=10)
     expect(getCompanionMood(0, 1, 10)).toBe('content');
   });
 
@@ -84,8 +91,61 @@ describe('getCompanionMood', () => {
   });
 
   it('retourne excite prioritaire sur nuit si 5+ taches', () => {
-    // 5 taches meme en nuit → excite (la recompense prime)
     expect(getCompanionMood(5, 1, 23)).toBe('excite');
+  });
+});
+
+// ─── computeMoodScore (mood dynamique) ──────────────────────────────────────
+
+describe('computeMoodScore', () => {
+  it('retourne excite avec score élevé quand beaucoup de tâches + streak', () => {
+    const result = computeMoodScore({
+      recentTasksCompleted: 5,
+      hoursSinceLastActivity: 1,
+      currentHour: 10,
+      streak: 7,
+    });
+    expect(result.mood).toBe('excite');
+    expect(result.score).toBeGreaterThanOrEqual(8);
+  });
+
+  it('retourne triste si >48h inactif (cas absolu)', () => {
+    const result = computeMoodScore({
+      recentTasksCompleted: 0,
+      hoursSinceLastActivity: 50,
+      currentHour: 10,
+    });
+    expect(result.mood).toBe('triste');
+  });
+
+  it('bonus gratitude augmente le score', () => {
+    const sans = computeMoodScore({
+      recentTasksCompleted: 3,
+      hoursSinceLastActivity: 1,
+      currentHour: 10,
+    });
+    const avec = computeMoodScore({
+      recentTasksCompleted: 3,
+      hoursSinceLastActivity: 1,
+      currentHour: 10,
+      hasGratitudeToday: true,
+    });
+    expect(avec.score).toBeGreaterThan(sans.score);
+  });
+
+  it('tâches en retard diminuent le score', () => {
+    const sans = computeMoodScore({
+      recentTasksCompleted: 2,
+      hoursSinceLastActivity: 1,
+      currentHour: 10,
+    });
+    const avec = computeMoodScore({
+      recentTasksCompleted: 2,
+      hoursSinceLastActivity: 1,
+      currentHour: 10,
+      hasOverdueTasks: true,
+    });
+    expect(avec.score).toBeLessThan(sans.score);
   });
 });
 
@@ -152,13 +212,147 @@ describe('pickCompanionMessage', () => {
     const msg = pickCompanionMessage('task_completed', context);
     expect(msg).toMatch(/^companion\.msg\./);
   });
+
+  it('retourne une string non-vide pour les nouveaux événements', () => {
+    const newEvents = [
+      'routine_completed', 'budget_alert', 'meal_planned',
+      'gratitude_written', 'photo_added', 'defi_completed',
+      'family_milestone', 'weekly_recap', 'morning_greeting',
+      'gentle_nudge', 'comeback', 'celebration',
+    ] as const;
+    for (const event of newEvents) {
+      const msg = pickCompanionMessage(event, context);
+      expect(msg).toMatch(/^companion\.msg\./);
+    }
+  });
+});
+
+// ─── detectProactiveEvent ───────────────────────────────────────────────────
+
+describe('detectProactiveEvent', () => {
+  const baseCtx = {
+    hoursSinceLastVisit: 2,
+    currentHour: 10,
+    tasksToday: 3,
+    totalTasksToday: 5,
+    streak: 3,
+    hasGratitudeToday: false,
+    hasMealsPlanned: true,
+    isFirstVisitToday: false,
+  };
+
+  it('retourne comeback si >24h absence', () => {
+    expect(detectProactiveEvent({ ...baseCtx, hoursSinceLastVisit: 30 })).toBe('comeback');
+  });
+
+  it('retourne morning_greeting le matin à la première visite', () => {
+    expect(detectProactiveEvent({
+      ...baseCtx,
+      isFirstVisitToday: true,
+      currentHour: 8,
+    })).toBe('morning_greeting');
+  });
+
+  it('retourne null si rien de spécial', () => {
+    expect(detectProactiveEvent(baseCtx)).toBeNull();
+  });
+
+  it('retourne celebration si streak multiple de 7', () => {
+    expect(detectProactiveEvent({ ...baseCtx, streak: 14 })).toBe('celebration');
+  });
+
+  it('retourne gentle_nudge l\'après-midi sans tâches faites', () => {
+    expect(detectProactiveEvent({
+      ...baseCtx,
+      currentHour: 15,
+      tasksToday: 0,
+      totalTasksToday: 3,
+    })).toBe('gentle_nudge');
+  });
+});
+
+// ─── Cache intelligent + budget ─────────────────────────────────────────────
+
+describe('cache intelligent et budget', () => {
+  it('budget commence à DAILY_AI_BUDGET', () => {
+    expect(getRemainingAIBudget()).toBe(15);
+  });
+
+  it('utilise le cache au second appel même contexte', async () => {
+    let callCount = 0;
+    const mockAI = async () => { callCount++; return 'Message IA'; };
+    const ctx = {
+      profileName: 'Lucas',
+      companionName: 'Minou',
+      companionSpecies: 'chat' as const,
+      tasksToday: 3,
+      streak: 5,
+      level: 10,
+    };
+
+    const msg1 = await generateCompanionAIMessage('greeting', ctx, mockAI);
+    const msg2 = await generateCompanionAIMessage('greeting', ctx, mockAI);
+
+    expect(msg1).toBe('Message IA');
+    expect(msg2).toBe('Message IA');
+    expect(callCount).toBe(1); // un seul appel IA
+  });
+
+  it('retourne fallback si aiCall est null', async () => {
+    const ctx = {
+      profileName: 'Lucas',
+      companionName: 'Minou',
+      companionSpecies: 'chat' as const,
+      tasksToday: 3,
+      streak: 5,
+      level: 10,
+    };
+
+    const msg = await generateCompanionAIMessage('greeting', ctx, null);
+    expect(msg).toMatch(/^companion\.msg\./);
+  });
+
+  it('retourne fallback si IA échoue', async () => {
+    const mockAI = async () => { throw new Error('API down'); };
+    const ctx = {
+      profileName: 'Lucas',
+      companionName: 'Minou',
+      companionSpecies: 'chat' as const,
+      tasksToday: 3,
+      streak: 5,
+      level: 10,
+    };
+
+    const msg = await generateCompanionAIMessage('greeting', ctx, mockAI);
+    expect(msg).toMatch(/^companion\.msg\./);
+  });
+});
+
+// ─── Personnalité par espèce ────────────────────────────────────────────────
+
+describe('personnalité par espèce', () => {
+  it('chaque espèce a une personnalité définie', () => {
+    const species = ['chat', 'chien', 'lapin', 'renard', 'herisson'] as const;
+    for (const s of species) {
+      const p = SPECIES_PERSONALITY[s];
+      expect(p.tone).toBeTruthy();
+      expect(p.traits.length).toBeGreaterThanOrEqual(2);
+      expect(p.quirk).toBeTruthy();
+    }
+  });
+
+  it('les personnalités sont toutes différentes', () => {
+    const tones = Object.values(SPECIES_PERSONALITY).map(p => p.tone);
+    const unique = new Set(tones);
+    expect(unique.size).toBe(tones.length);
+  });
 });
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
 
 describe('constantes compagnon', () => {
-  it('COMPANION_UNLOCK_LEVEL === 5', () => {
-    expect(COMPANION_UNLOCK_LEVEL).toBe(5);
+  it('COMPANION_UNLOCK_LEVEL === 1', () => {
+    expect(COMPANION_UNLOCK_LEVEL).toBe(1);
   });
 
   it('COMPANION_XP_BONUS === 1.05', () => {
@@ -189,9 +383,24 @@ describe('constantes compagnon', () => {
     expect(ids).toContain('herisson');
   });
 
-  it('MESSAGE_TEMPLATES couvre tous les evenements', () => {
+  it('MESSAGE_TEMPLATES couvre tous les evenements de base', () => {
     const events = ['task_completed', 'loot_opened', 'level_up', 'greeting', 'streak_milestone', 'harvest', 'craft'];
     events.forEach(evt => {
+      expect(MESSAGE_TEMPLATES).toHaveProperty(evt);
+      const templates = MESSAGE_TEMPLATES[evt as keyof typeof MESSAGE_TEMPLATES];
+      expect(Array.isArray(templates)).toBe(true);
+      expect(templates.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  it('MESSAGE_TEMPLATES couvre les nouveaux evenements', () => {
+    const newEvents = [
+      'routine_completed', 'budget_alert', 'meal_planned',
+      'gratitude_written', 'photo_added', 'defi_completed',
+      'family_milestone', 'weekly_recap', 'morning_greeting',
+      'gentle_nudge', 'comeback', 'celebration',
+    ];
+    newEvents.forEach(evt => {
       expect(MESSAGE_TEMPLATES).toHaveProperty(evt);
       const templates = MESSAGE_TEMPLATES[evt as keyof typeof MESSAGE_TEMPLATES];
       expect(Array.isArray(templates)).toBe(true);

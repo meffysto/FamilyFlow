@@ -890,7 +890,7 @@ export async function callCompanionMessage(config: AIConfig, prompt: string): Pr
   const haikuConfig = { ...config, model: 'claude-haiku-4-5-20251001' };
   const resp = await callClaude(
     haikuConfig,
-    'Tu es un compagnon animal mignon et attachant dans une application familiale.',
+    'Tu es un compagnon animal dans une application familiale. Adapte ta personnalité selon les instructions du prompt. Sois concis, chaleureux et naturel.',
     [{ role: 'user', content: prompt }],
     100,
   );

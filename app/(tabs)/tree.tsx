@@ -44,8 +44,9 @@ import { callCompanionMessage } from '../../lib/ai-service';
 import { TreeView } from '../../components/mascot/TreeView';
 import { SpeciesPicker } from '../../components/mascot/SpeciesPicker';
 import { TreeShop } from '../../components/mascot/TreeShop';
-import { PixelDiorama, PIXEL_GROUND, PIXEL_GROUND_DARK } from '../../components/mascot/PixelDiorama';
+import { PIXEL_GROUND_DARK } from '../../components/mascot/PixelDiorama';
 import { WorldGridView } from '../../components/mascot/WorldGridView';
+import { TileMapRenderer, GRASS_TILE_IMAGE } from '../../components/mascot/TileMapRenderer';
 import { BuildingShopSheet } from '../../components/mascot/BuildingShopSheet';
 import { CraftSheet } from '../../components/mascot/CraftSheet';
 import { TechTreeSheet } from '../../components/mascot/TechTreeSheet';
@@ -68,6 +69,8 @@ import {
   getCompanionMood,
   pickCompanionMessage,
   generateCompanionAIMessage,
+  detectProactiveEvent,
+  computeMoodScore,
 } from '../../lib/mascot/companion-engine';
 import * as SecureStore from 'expo-secure-store';
 import { type PlantedCrop, type PlacedBuilding, CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
@@ -279,7 +282,12 @@ export default function TreeScreen() {
   }, [gamiData, activeProfile]);
 
   const companionStage = companion && activeProfile ? getCompanionStage(calculateLevel(activeProfile.points ?? 0)) : undefined;
-  const companionMood = companion ? getCompanionMood(recentTasksCount, hoursSinceLastActivity) : undefined;
+  const companionMoodResult = companion ? computeMoodScore({
+    recentTasksCompleted: recentTasksCount,
+    hoursSinceLastActivity,
+    streak: activeProfile?.streak ?? 0,
+  }) : undefined;
+  const companionMood = companionMoodResult?.mood;
 
   // Contexte enrichi pour les messages IA du compagnon
   const recentCompletedTasks = useMemo(() => {
@@ -344,6 +352,36 @@ export default function TreeScreen() {
     setShowCompanionPicker(false);
   }, [activeProfile, setCompanion]);
 
+  // Refs stables pour éviter les boucles de re-render
+  const companionRef = useRef(companion);
+  useEffect(() => { companionRef.current = companion; }, [companion]);
+  const activeProfileRef = useRef(activeProfile);
+  useEffect(() => { activeProfileRef.current = activeProfile; }, [activeProfile]);
+  const recentTasksCountRef = useRef(recentTasksCount);
+  useEffect(() => { recentTasksCountRef.current = recentTasksCount; }, [recentTasksCount]);
+
+  // Sauvegarder un message dans la mémoire courte du compagnon (via refs pour éviter les boucles)
+  const saveToMemory = useCallback((msg: string) => {
+    const comp = companionRef.current;
+    const prof = activeProfileRef.current;
+    if (!comp || !prof || msg.startsWith('companion.msg.')) return;
+    const recent = comp.recentMessages ?? [];
+    // Pas de doublon avec le dernier message
+    if (recent.length > 0 && recent[recent.length - 1] === msg) return;
+    const updated = [...recent, msg].slice(-3);
+    setCompanion(prof.id, { ...comp, recentMessages: updated });
+  }, [setCompanion]);
+
+  // Afficher un message compagnon (template ou IA) et le persister en mémoire
+  const showCompanionMsg = useCallback((msg: string, context: any, duration = 8000) => {
+    const isI18nKey = msg.startsWith('companion.msg.');
+    const displayMsg = isI18nKey ? String(t(msg, context)) : msg;
+    setCompanionMessage(displayMsg);
+    if (!isI18nKey) saveToMemory(displayMsg);
+    const timer = setTimeout(() => setCompanionMessage(null), duration);
+    return timer;
+  }, [t, saveToMemory]);
+
   // Handler tap sur le compagnon — affiche message greeting
   const handleCompanionTap = useCallback(() => {
     if (!companion || !activeProfile) return;
@@ -354,46 +392,96 @@ export default function TreeScreen() {
       tasksToday: recentTasksCount,
       streak: activeProfile.streak ?? 0,
       level: calculateLevel(activeProfile.points ?? 0),
+      recentMessages: companion.recentMessages,
     };
     const msgKey = pickCompanionMessage('greeting', context);
     setCompanionMessage(t(msgKey, context));
-    setTimeout(() => setCompanionMessage(null), 4000);
-  }, [companion, activeProfile, recentTasksCount, t]);
 
-  // Message de bienvenue au focus — choisit l'événement selon l'activité récente
+    // Tenter un message IA au tap aussi
+    if (aiCall) {
+      generateCompanionAIMessage('greeting', context, aiCall).then(msg => {
+        showCompanionMsg(msg, context, 4000);
+      });
+    }
+
+    setTimeout(() => setCompanionMessage(null), 4000);
+  }, [companion, activeProfile, recentTasksCount, t, aiCall, showCompanionMsg]);
+
+  // Compter les tâches totales du jour (faites + à faire)
+  const totalTasksToday = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return tasks.filter(t => t.dueDate === today).length;
+  }, [tasks]);
+
+  // Dernière visite (pour détecter première visite du jour et absence)
+  const lastVisitRef = useRef<string | null>(null);
+
+  // Cooldown pour éviter le spam de messages au focus
+  const lastFocusMessageRef = useRef<number>(0);
+
+  // Message de bienvenue au focus — une seule fois par visite, cooldown 5min
   useFocusEffect(useCallback(() => {
-    if (!companion || !activeProfile) return;
-    const level = calculateLevel(activeProfile.points ?? 0);
+    const now = Date.now();
+    const comp = companionRef.current;
+    const prof = activeProfileRef.current;
+    if (!comp || !prof) return;
+
+    // Cooldown 20s entre deux messages automatiques
+    if (now - lastFocusMessageRef.current < 20 * 1000) return;
+    lastFocusMessageRef.current = now;
+
+    const level = calculateLevel(prof.points ?? 0);
     const context = {
-      profileName: activeProfile.name,
-      companionName: companion.name,
-      companionSpecies: companion.activeSpecies,
-      tasksToday: recentTasksCount,
-      streak: 0,
+      profileName: prof.name,
+      companionName: comp.name,
+      companionSpecies: comp.activeSpecies,
+      tasksToday: recentTasksCountRef.current,
+      streak: prof.streak ?? 0,
       level,
       recentTasks: recentCompletedTasks,
       nextRdv,
       todayMeals,
+      recentMessages: comp.recentMessages,
     };
 
-    // Choisir l'événement le plus pertinent selon l'activité récente
-    let event: import('../../lib/mascot/companion-types').CompanionEvent = 'greeting';
-    if (recentTasksCount >= 5) {
-      event = 'task_completed';
-    } else if ((activeProfile.streak ?? 0) > 0 && recentTasksCount > 0) {
-      event = 'streak_milestone';
+    const today = new Date().toISOString().slice(0, 10);
+    const isFirstVisitToday = lastVisitRef.current !== today;
+    lastVisitRef.current = today;
+
+    // Détection proactive — prioritaire sur le greeting classique
+    const proactiveEvent = detectProactiveEvent({
+      hoursSinceLastVisit: hoursSinceLastActivity,
+      currentHour: new Date().getHours(),
+      tasksToday: recentTasksCountRef.current,
+      totalTasksToday,
+      streak: prof.streak ?? 0,
+      hasGratitudeToday: false,
+      hasMealsPlanned: (todayMeals?.length ?? 0) > 0,
+      isFirstVisitToday,
+    });
+
+    // Choisir l'événement le plus pertinent
+    let event: import('../../lib/mascot/companion-types').CompanionEvent =
+      proactiveEvent ?? 'greeting';
+
+    // Fallback sur événements classiques si pas de proactif
+    if (!proactiveEvent) {
+      if (recentTasksCountRef.current >= 5) {
+        event = 'task_completed';
+      } else if ((prof.streak ?? 0) > 0 && recentTasksCountRef.current > 0) {
+        event = 'streak_milestone';
+      }
     }
 
-    // Délai avant d'afficher le message — laisser le temps à l'écran de s'afficher
+    // Délai avant d'afficher le message
     const delayTimer = setTimeout(() => {
       const fallbackKey = pickCompanionMessage(event, context);
-      setCompanionMessage(t(fallbackKey, context));
+      setCompanionMessage(String(t(fallbackKey, context)));
 
       // Tenter un message IA (async, remplace si réussi)
       if (aiCall) {
         generateCompanionAIMessage(event, context, aiCall).then(msg => {
-          const isI18nKey = msg.startsWith('companion.msg.');
-          setCompanionMessage(isI18nKey ? t(msg, context) : msg);
+          showCompanionMsg(msg, context);
         });
       }
     }, 1500);
@@ -401,7 +489,8 @@ export default function TreeScreen() {
     const hideTimer = setTimeout(() => setCompanionMessage(null), 8000);
 
     return () => { clearTimeout(delayTimer); clearTimeout(hideTimer); };
-  }, [companion?.activeSpecies, activeProfile?.id, recentTasksCount, aiCall]));
+  // Dépendances stables uniquement — les refs capturent le reste
+  }, [aiCall]));
 
   // Collecter le revenu passif des batiments a l'ouverture + sunrise report
   useEffect(() => {
@@ -964,14 +1053,19 @@ export default function TreeScreen() {
           >
             {/* Conteneur clippé pour le terrain (empêche l'image de déborder) */}
             <View style={[StyleSheet.absoluteFill, { overflow: 'hidden' }]}>
-              {/* Couche 0 : Sol tileset pixel art — terrain saisonnier */}
+              {/* Couche 0 : Fond herbe — tile foncée du tileset repetee */}
               <Image
-                source={TERRAIN_IMAGES[season]}
+                source={GRASS_TILE_IMAGE}
                 style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]}
-                resizeMode="cover"
+                resizeMode="repeat"
               />
-              {/* Couche 0.5 : Fallback couleur sous le terrain (bords) */}
-              <View style={[StyleSheet.absoluteFill, { backgroundColor: PIXEL_GROUND[season], zIndex: -1 }]} />
+              {/* Couche 1 : Tilemap Wang — transitions terrain */}
+              <TileMapRenderer
+                treeStage={stageInfo.stage}
+                containerWidth={SCREEN_W}
+                containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
+                season={season}
+              />
             </View>
 
             {/* Couche 2 : Décorations sol désactivées — le terrain tileset les remplace */}

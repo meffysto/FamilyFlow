@@ -19,7 +19,21 @@ export type CompanionEvent =
   | 'greeting'
   | 'streak_milestone'
   | 'harvest'
-  | 'craft';
+  | 'craft'
+  // Événements enrichis
+  | 'routine_completed'
+  | 'budget_alert'
+  | 'meal_planned'
+  | 'gratitude_written'
+  | 'photo_added'
+  | 'defi_completed'
+  | 'family_milestone'
+  | 'weekly_recap'
+  // Messages proactifs
+  | 'morning_greeting'
+  | 'gentle_nudge'
+  | 'comeback'
+  | 'celebration';
 
 /** Données persistées du compagnon dans le profil */
 export interface CompanionData {
@@ -27,6 +41,7 @@ export interface CompanionData {
   name: string;
   unlockedSpecies: CompanionSpecies[];
   mood: CompanionMood;
+  recentMessages?: string[];  // 3 derniers messages (mémoire courte)
 }
 
 /** Mapping stade → plage de niveaux */
@@ -57,7 +72,44 @@ export interface CompanionMessageContext {
   recentTasks?: string[];       // noms des dernières tâches complétées aujourd'hui
   nextRdv?: { title: string; date: string } | null;  // prochain RDV à venir
   todayMeals?: string[];        // repas planifiés aujourd'hui (ex: "Pâtes carbonara")
+  recentMessages?: string[];    // 3 derniers messages du compagnon (mémoire courte)
 }
+
+/** Personnalité propre à chaque espèce de compagnon */
+export interface CompanionPersonality {
+  tone: string;       // description du ton pour le prompt IA
+  traits: string[];   // traits de caractère
+  quirk: string;      // particularité comportementale unique
+}
+
+/** Personnalités par espèce — injectées dans le prompt IA */
+export const SPECIES_PERSONALITY: Record<CompanionSpecies, CompanionPersonality> = {
+  chat: {
+    tone: 'nonchalant et un peu moqueur, mais affectueux au fond',
+    traits: ['indépendant', 'curieux', 'joueur'],
+    quirk: 'fait parfois des remarques ironiques ou parle de siestes',
+  },
+  chien: {
+    tone: 'enthousiaste et loyal, débordant de joie',
+    traits: ['fidèle', 'énergique', 'protecteur'],
+    quirk: 'célèbre chaque petite victoire comme un exploit énorme',
+  },
+  lapin: {
+    tone: 'doux et timide, toujours encourageant',
+    traits: ['calme', 'attentionné', 'sensible'],
+    quirk: 'fait souvent référence à la nature, aux saisons ou au jardin',
+  },
+  renard: {
+    tone: 'malin et stratégique, donne des astuces',
+    traits: ['rusé', 'observateur', 'complice'],
+    quirk: 'propose des stratégies ou remarque des détails que les autres manquent',
+  },
+  herisson: {
+    tone: 'sage et philosophe, parle avec douceur',
+    traits: ['patient', 'réfléchi', 'bienveillant'],
+    quirk: 'partage parfois de petites sagesses ou métaphores sur la vie',
+  },
+};
 
 /** Niveau requis pour débloquer le système compagnon */
 export const COMPANION_UNLOCK_LEVEL = 1;
