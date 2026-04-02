@@ -1,4 +1,13 @@
 {
+  "mascot": {
+    "saga": {
+      "indicator": {
+        "waiting": "Un visiteur attend pres de ton arbre",
+        "done": "Suite de la saga demain...",
+        "progress": "Chapitre {{current}}/{{total}} — {{title}}"
+      }
+    }
+  },
   "rarity": {
     "commun": "Commun",
     "rare": "Rare",
