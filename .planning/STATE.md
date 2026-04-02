@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
-status: executing
-stopped_at: Completed 11-sagas-immersives/11-01-PLAN.md
-last_updated: "2026-04-02T23:11:24.820Z"
+status: verifying
+stopped_at: Completed 11-sagas-immersives/11-02-PLAN.md
+last_updated: "2026-04-02T23:18:37.801Z"
 last_activity: 2026-04-02
 progress:
   total_phases: 8
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 18
-  completed_plans: 16
+  completed_plans: 17
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 
 Phase: 11 (sagas-immersives) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-02
 
 Progress: [░░░░░░░░░░] 0%
@@ -59,6 +59,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 10-compagnon-mascotte P03 | 20min | 2 tasks | 4 files |
 | Phase 11-sagas-immersives P03 | 4min | 1 tasks | 1 files |
 | Phase 11-sagas-immersives P01 | 4min | 2 tasks | 11 files |
+| Phase 11-sagas-immersives P02 | 3min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -101,6 +102,8 @@ Recent decisions affecting current work:
 - [Phase 11-sagas-immersives]: Sprites placeholder 48x48 PNG créés (PixelLab non accessible) — TODO remplacement par vrais sprites pixel art voyageur
 - [Phase 11-sagas-immersives]: shouldDepart déclenche départ uniquement si state === idle — évite interruption animation de réaction en cours (SAG-04 correctness)
 - [Phase 11-sagas-immersives]: Tint couleur saga implémenté comme overlay View (opacity 0.15) plutôt que tintColor sur Image — plus fiable cross-platform
+- [Phase 11-sagas-immersives]: reactionForChoice utilise trait dominant du choice.traits pour mapper joy/surprise/mystery — fallback par index si aucun trait
+- [Phase 11-sagas-immersives]: VisitorSlot en couche 3.6 avec zIndex conditionnel (20 si showSagaEvent, 3 sinon) pour éviter superposition sur dialogue saga
 
 ### Pending Todos
 
@@ -126,6 +129,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-02T23:11:24.817Z
-Stopped at: Completed 11-sagas-immersives/11-01-PLAN.md
+Last session: 2026-04-02T23:18:37.799Z
+Stopped at: Completed 11-sagas-immersives/11-02-PLAN.md
 Resume file: None
