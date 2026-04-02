@@ -389,6 +389,9 @@ export interface CraftIngredient {
   source: 'crop' | 'building';  // d'ou vient l'ingredient
 }
 
+/** Ordre canonique des stades d'arbre (utilise pour comparaisons et groupements) */
+export const TREE_STAGE_ORDER: TreeStage[] = ['graine', 'pousse', 'arbuste', 'arbre', 'majestueux', 'legendaire'];
+
 /** Recette de craft */
 export interface CraftRecipe {
   id: string;
@@ -397,6 +400,7 @@ export interface CraftRecipe {
   ingredients: CraftIngredient[];
   xpBonus: number;          // XP supplementaire au craft
   sellValue: number;         // feuilles obtenues a la vente (= sum harvestReward x2)
+  minTreeStage: TreeStage;  // stade d'arbre minimum pour debloquer la recette
 }
 
 /** Item crafte en inventaire */

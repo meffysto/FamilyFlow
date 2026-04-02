@@ -36,6 +36,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     ],
     xpBonus: 5,
     sellValue: 120, // (25+35) x 2
+    minTreeStage: 'pousse',
   },
   {
     id: 'bouquet',
@@ -47,6 +48,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     ],
     xpBonus: 10,
     sellValue: 190, // (70+25) x 2
+    minTreeStage: 'pousse',
   },
   {
     id: 'crepe',
@@ -58,6 +60,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     ],
     xpBonus: 10,
     sellValue: 240, // (80+40) x 2
+    minTreeStage: 'pousse',
   },
   // ── Arbuste (niv 6-10) — grange + tomate/chou/concombre ──
   {
@@ -69,6 +72,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     ],
     xpBonus: 15,
     sellValue: 400, // (100+100) x 2
+    minTreeStage: 'arbuste',
   },
   {
     id: 'gratin',
@@ -81,6 +85,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     ],
     xpBonus: 15,
     sellValue: 430, // (100+35+80) x 2
+    minTreeStage: 'arbuste',
   },
   {
     id: 'omelette',
@@ -92,76 +97,8 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     ],
     xpBonus: 15,
     sellValue: 520, // (80+80+80) x 2
+    minTreeStage: 'arbuste',
   },
-  // ── Arbre (niv 11-18) — moulin + maïs/fraise ──
-  {
-    id: 'pain',
-    labelKey: 'craft.recipe.pain',
-    emoji: '🍞',
-    ingredients: [
-      { itemId: 'farine', quantity: 2, source: 'building' },
-      { itemId: 'wheat', quantity: 1, source: 'crop' },
-    ],
-    xpBonus: 15,
-    sellValue: 440, // (90+90+40) x 2
-  },
-  {
-    id: 'confiture',
-    labelKey: 'craft.recipe.confiture',
-    emoji: '🍓',
-    ingredients: [
-      { itemId: 'strawberry', quantity: 2, source: 'crop' },
-    ],
-    xpBonus: 20,
-    sellValue: 480, // (120+120) x 2
-  },
-  {
-    id: 'popcorn',
-    labelKey: 'craft.recipe.popcorn',
-    emoji: '🍿',
-    ingredients: [
-      { itemId: 'corn', quantity: 2, source: 'crop' },
-    ],
-    xpBonus: 20,
-    sellValue: 600, // (150+150) x 2
-  },
-  {
-    id: 'gateau',
-    labelKey: 'craft.recipe.gateau',
-    emoji: '🎂',
-    ingredients: [
-      { itemId: 'farine', quantity: 1, source: 'building' },
-      { itemId: 'oeuf', quantity: 1, source: 'building' },
-      { itemId: 'strawberry', quantity: 1, source: 'crop' },
-    ],
-    xpBonus: 30,
-    sellValue: 580, // (90+80+120) x 2
-  },
-  // ── Majestueux (niv 19+) — citrouille ──
-  {
-    id: 'soupe_citrouille',
-    labelKey: 'craft.recipe.soupe_citrouille',
-    emoji: '🎃',
-    ingredients: [
-      { itemId: 'pumpkin', quantity: 1, source: 'crop' },
-      { itemId: 'lait', quantity: 1, source: 'building' },
-    ],
-    xpBonus: 25,
-    sellValue: 600, // (200+100) x 2
-  },
-  {
-    id: 'tarte_citrouille',
-    labelKey: 'craft.recipe.tarte_citrouille',
-    emoji: '🥧',
-    ingredients: [
-      { itemId: 'pumpkin', quantity: 1, source: 'crop' },
-      { itemId: 'farine', quantity: 1, source: 'building' },
-      { itemId: 'oeuf', quantity: 1, source: 'building' },
-    ],
-    xpBonus: 35,
-    sellValue: 740, // (200+90+80) x 2
-  },
-  // ── Majestueux+ — recettes miel (ruche) ──
   {
     id: 'hydromel',
     labelKey: 'craft.recipe.hydromel',
@@ -171,6 +108,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     ],
     xpBonus: 30,
     sellValue: 720, // (120x3) x 2
+    minTreeStage: 'arbuste',
   },
   {
     id: 'nougat',
@@ -183,6 +121,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     ],
     xpBonus: 35,
     sellValue: 580, // (120+80+90) x 2
+    minTreeStage: 'arbuste',
   },
   {
     id: 'pain_epices',
@@ -194,8 +133,8 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     ],
     xpBonus: 30,
     sellValue: 600, // (120+90+90) x 2
+    minTreeStage: 'arbuste',
   },
-  // ── Recettes haut niveau — graines rares ──
   {
     id: 'parfum_orchidee',
     labelKey: 'craft.recipe.parfum_orchidee',
@@ -206,6 +145,55 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     ],
     xpBonus: 50,
     sellValue: 1200, // (300x2 + 120) x ~1.7
+    minTreeStage: 'arbuste',
+  },
+  // ── Arbre (niv 11-18) — moulin + maïs/fraise ──
+  {
+    id: 'pain',
+    labelKey: 'craft.recipe.pain',
+    emoji: '🍞',
+    ingredients: [
+      { itemId: 'farine', quantity: 2, source: 'building' },
+      { itemId: 'wheat', quantity: 1, source: 'crop' },
+    ],
+    xpBonus: 15,
+    sellValue: 440, // (90+90+40) x 2
+    minTreeStage: 'arbre',
+  },
+  {
+    id: 'confiture',
+    labelKey: 'craft.recipe.confiture',
+    emoji: '🍓',
+    ingredients: [
+      { itemId: 'strawberry', quantity: 2, source: 'crop' },
+    ],
+    xpBonus: 20,
+    sellValue: 480, // (120+120) x 2
+    minTreeStage: 'arbre',
+  },
+  {
+    id: 'popcorn',
+    labelKey: 'craft.recipe.popcorn',
+    emoji: '🍿',
+    ingredients: [
+      { itemId: 'corn', quantity: 2, source: 'crop' },
+    ],
+    xpBonus: 20,
+    sellValue: 600, // (150+150) x 2
+    minTreeStage: 'arbre',
+  },
+  {
+    id: 'gateau',
+    labelKey: 'craft.recipe.gateau',
+    emoji: '🎂',
+    ingredients: [
+      { itemId: 'farine', quantity: 1, source: 'building' },
+      { itemId: 'oeuf', quantity: 1, source: 'building' },
+      { itemId: 'strawberry', quantity: 1, source: 'crop' },
+    ],
+    xpBonus: 30,
+    sellValue: 580, // (90+80+120) x 2
+    minTreeStage: 'arbre',
   },
   {
     id: 'confiture_royale',
@@ -218,6 +206,33 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     ],
     xpBonus: 60,
     sellValue: 1500, // (500+120+120) x ~2
+    minTreeStage: 'arbre',
+  },
+  // ── Majestueux (niv 19+) — citrouille ──
+  {
+    id: 'soupe_citrouille',
+    labelKey: 'craft.recipe.soupe_citrouille',
+    emoji: '🎃',
+    ingredients: [
+      { itemId: 'pumpkin', quantity: 1, source: 'crop' },
+      { itemId: 'lait', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 25,
+    sellValue: 600, // (200+100) x 2
+    minTreeStage: 'majestueux',
+  },
+  {
+    id: 'tarte_citrouille',
+    labelKey: 'craft.recipe.tarte_citrouille',
+    emoji: '🥧',
+    ingredients: [
+      { itemId: 'pumpkin', quantity: 1, source: 'crop' },
+      { itemId: 'farine', quantity: 1, source: 'building' },
+      { itemId: 'oeuf', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 35,
+    sellValue: 740, // (200+90+80) x 2
+    minTreeStage: 'majestueux',
   },
   {
     id: 'risotto_truffe',
@@ -230,6 +245,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     ],
     xpBonus: 80,
     sellValue: 2000, // (800+90+100) x ~2
+    minTreeStage: 'majestueux',
   },
 ];
 
