@@ -73,6 +73,10 @@ export interface CompanionMessageContext {
   nextRdv?: { title: string; date: string } | null;  // prochain RDV à venir
   todayMeals?: string[];        // repas planifiés aujourd'hui (ex: "Pâtes carbonara")
   recentMessages?: string[];    // 3 derniers messages du compagnon (mémoire courte)
+  mood?: CompanionMood;          // humeur actuelle du compagnon
+  moodScore?: number;            // score numérique de mood
+  pendingTasks?: string[];       // tâches à faire aujourd'hui (pas encore complétées)
+  timeOfDay?: 'matin' | 'apres-midi' | 'soir' | 'nuit';
 }
 
 /** Personnalité propre à chaque espèce de compagnon */

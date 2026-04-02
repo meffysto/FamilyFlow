@@ -218,11 +218,39 @@ export function pickCompanionMessage(
 function buildCompanionPrompt(event: CompanionEvent, ctx: CompanionMessageContext): string {
   const personality = SPECIES_PERSONALITY[ctx.companionSpecies];
 
+  // Description d'événement enrichie avec le contexte réel
+  const morningDesc = () => {
+    const parts = [`${ctx.profileName} commence sa journée`];
+    if (ctx.pendingTasks && ctx.pendingTasks.length > 0) {
+      parts.push(`avec ${ctx.pendingTasks.length} tâche${ctx.pendingTasks.length > 1 ? 's' : ''} à faire`);
+      if (ctx.pendingTasks.length <= 3) parts.push(`(${ctx.pendingTasks.join(', ')})`);
+    }
+    if (ctx.streak && ctx.streak > 1) parts.push(`— série de ${ctx.streak} jours`);
+    return parts.join(' ');
+  };
+
+  const greetingDesc = () => {
+    const tod = ctx.timeOfDay ?? 'matin';
+    const base = tod === 'soir' ? `${ctx.profileName} passe en soirée`
+      : tod === 'apres-midi' ? `${ctx.profileName} revient cet après-midi`
+      : tod === 'nuit' ? `${ctx.profileName} est encore là en pleine nuit`
+      : `${ctx.profileName} vient d'arriver sur l'écran de son arbre`;
+    return base;
+  };
+
+  const nudgeDesc = () => {
+    if (ctx.pendingTasks && ctx.pendingTasks.length > 0) {
+      const sample = ctx.pendingTasks.slice(0, 2).join(' et ');
+      return `${ctx.profileName} n'a pas encore fait ${sample} aujourd'hui`;
+    }
+    return `${ctx.profileName} n'a pas encore fait certaines choses aujourd'hui`;
+  };
+
   const eventDescriptions: Record<CompanionEvent, string> = {
-    task_completed: `${ctx.profileName} vient de compléter des tâches`,
+    task_completed: `${ctx.profileName} vient de compléter des tâches (${ctx.tasksToday} aujourd'hui)`,
     loot_opened: `${ctx.profileName} vient d'ouvrir un coffre à butin`,
-    level_up: `${ctx.profileName} vient de monter au niveau ${ctx.level}`,
-    greeting: `${ctx.profileName} vient d'arriver sur l'écran de son arbre`,
+    level_up: `${ctx.profileName} vient de monter au niveau ${ctx.level} !`,
+    greeting: greetingDesc(),
     streak_milestone: `${ctx.profileName} est régulier dans ses tâches (${ctx.streak} jours d'affilée)`,
     harvest: `${ctx.profileName} vient de récolter sur sa ferme`,
     craft: `${ctx.profileName} vient de créer un objet dans son atelier`,
@@ -234,8 +262,8 @@ function buildCompanionPrompt(event: CompanionEvent, ctx: CompanionMessageContex
     defi_completed: `${ctx.profileName} a relevé un défi familial`,
     family_milestone: `Un événement familial important approche`,
     weekly_recap: `C'est le moment du bilan de la semaine`,
-    morning_greeting: `${ctx.profileName} commence sa journée`,
-    gentle_nudge: `${ctx.profileName} n'a pas encore fait certaines choses aujourd'hui`,
+    morning_greeting: morningDesc(),
+    gentle_nudge: nudgeDesc(),
     comeback: `${ctx.profileName} revient après une absence`,
     celebration: `Il y a quelque chose à fêter pour la famille`,
   };
@@ -260,6 +288,18 @@ function buildCompanionPrompt(event: CompanionEvent, ctx: CompanionMessageContex
     mealsContext = ` Au menu aujourd'hui : ${ctx.todayMeals.join(', ')}.`;
   }
 
+  // Mood du compagnon — influence le ton du message
+  let moodContext = '';
+  if (ctx.mood) {
+    const moodDesc: Record<string, string> = {
+      excite: 'Tu es surexcité et très fier',
+      content: 'Tu es de bonne humeur',
+      triste: 'Tu es un peu inquiet, ça fait longtemps',
+      endormi: 'Tu es somnolent mais content de voir ton ami',
+    };
+    moodContext = ` ${moodDesc[ctx.mood] ?? ''}.`;
+  }
+
   // Mémoire courte — anti-répétition stricte
   let memoryContext = '';
   if (ctx.recentMessages && ctx.recentMessages.length > 0) {
@@ -268,12 +308,13 @@ function buildCompanionPrompt(event: CompanionEvent, ctx: CompanionMessageContex
 
   return [
     `Ton nom : ${ctx.companionName}. Ton style : ${personality.tone}. ${personality.quirk}.`,
+    moodContext,
     `${eventDescriptions[event]}.`,
     taskContext,
     rdvContext,
     mealsContext,
     memoryContext,
-    `Réponds en 1 phrase courte à ${ctx.profileName}. Tutoie. Pas d'emoji. Pas de présentation.`,
+    `Réponds en 1 phrase courte et naturelle à ${ctx.profileName}. Tutoie. Pas d'emoji. Pas de guillemets. Pas de présentation. Varie ton vocabulaire.`,
   ].filter(Boolean).join(' ');
 }
 
@@ -284,11 +325,13 @@ const DAILY_AI_BUDGET = 15;
 
 /** TTL du cache par catégorie d'événement (ms) */
 const CACHE_TTL: Partial<Record<CompanionEvent, number>> = {
-  greeting:         4 * 60 * 60 * 1000,  // 4h — un seul appel IA par demi-journée
-  task_completed:   45 * 60 * 1000,       // 45min — ~1 appel toutes les 3 tâches
-  harvest:          2 * 60 * 60 * 1000,   // 2h — template suffit la plupart du temps
-  craft:            2 * 60 * 60 * 1000,   // 2h
-  gentle_nudge:     4 * 60 * 60 * 1000,   // 4h
+  greeting:           4 * 60 * 60 * 1000,  // 4h — un seul appel IA par demi-journée
+  morning_greeting:  10 * 60 * 60 * 1000,  // 10h — un seul message matinal par jour
+  task_completed:    45 * 60 * 1000,       // 45min — ~1 appel toutes les 3 tâches
+  harvest:            2 * 60 * 60 * 1000,  // 2h — template suffit la plupart du temps
+  craft:              2 * 60 * 60 * 1000,  // 2h
+  gentle_nudge:       4 * 60 * 60 * 1000,  // 4h
+  comeback:           8 * 60 * 60 * 1000,  // 8h
 };
 const DEFAULT_CACHE_TTL = 30 * 60 * 1000; // 30min par défaut
 
@@ -325,7 +368,8 @@ export function getRemainingAIBudget(): number {
 function buildCacheKey(event: CompanionEvent, ctx: CompanionMessageContext): string {
   // Slot horaire de 2h → force un nouveau message IA toutes les 2h même contexte identique
   const hourSlot = Math.floor(new Date().getHours() / 2);
-  return `${ctx.profileName}:${ctx.companionSpecies}:${event}:${ctx.tasksToday}:${ctx.streak}:${ctx.level}:${hourSlot}`;
+  const mood = ctx.mood ?? 'content';
+  return `${ctx.profileName}:${ctx.companionSpecies}:${event}:${ctx.tasksToday}:${ctx.streak}:${ctx.level}:${mood}:${hourSlot}`;
 }
 
 /** Vérifie si un événement devrait utiliser l'IA (budget + priorité) */
