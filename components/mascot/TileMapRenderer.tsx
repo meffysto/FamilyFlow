@@ -160,10 +160,11 @@ const FISH_DECOS = {
   rack_with_fish: require('../../assets/garden/decos/fish_obj_3_0.png'),
   fish_trap: require('../../assets/garden/decos/fish_obj_4_0.png'),
   fish_koi_frames: [
-    require('../../assets/garden/decos/fish_koi_1.png'),
-    require('../../assets/garden/decos/fish_koi_2.png'),
-    require('../../assets/garden/decos/fish_koi_3.png'),
-    require('../../assets/garden/decos/fish_koi_4.png'),
+    require('../../assets/garden/decos/fish_koi_anim_1.png'),
+    require('../../assets/garden/decos/fish_koi_anim_2.png'),
+    require('../../assets/garden/decos/fish_koi_anim_3.png'),
+    require('../../assets/garden/decos/fish_koi_anim_4.png'),
+    require('../../assets/garden/decos/fish_koi_anim_5.png'),
   ] as const,
 };
 
