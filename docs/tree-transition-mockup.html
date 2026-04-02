@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FamilyFlow — Transition diorama/interface</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0a0a14;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 28px;
+    padding: 40px 20px 60px;
+    min-height: 100vh;
+    flex-wrap: wrap;
+  }
+
+  .col { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+
+  .label {
+    text-align: center;
+    color: #6b7280;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+
+  /* ── Phone ── */
+  .phone {
+    width: 340px;
+    height: 720px;
+    background: #111827;
+    border-radius: 40px;
+    border: 7px solid #1f2937;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.7);
+    display: flex;
+    flex-direction: column;
+  }
+  .phone::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 90px; height: 24px;
+    background: #1f2937;
+    border-radius: 0 0 14px 14px;
+    z-index: 20;
+  }
+
+  /* ── Status bar ── */
+  .sb {
+    padding: 10px 16px 4px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 11px; font-weight: 700; color: white;
+    background: rgba(0,0,0,0.5); position: relative; z-index: 5;
+  }
+  .sb-r { display: flex; gap: 5px; align-items: center; }
+
+  /* ── Coin bar ── */
+  .coins {
+    background: rgba(0,0,0,0.45);
+    padding: 5px 14px;
+    display: flex; align-items: center; gap: 14px;
+    font-size: 12px; font-weight: 700; color: white;
+    position: absolute; top: 38px; left: 0; right: 0; z-index: 5;
+  }
+  .coins-season { margin-left: auto; }
+
+  /* ── Diorama ── */
+  .diorama {
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .diorama-bg {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, #1a3a1a 0%, #2d5a2d 50%, #3D6B1E 100%);
+  }
+  .diorama-water {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 88px;
+    background: linear-gradient(180deg, #1a4a8a, #1e5cb0);
+    opacity: 0.85;
+  }
+  .diorama-tree { font-size: 64px; position: relative; z-index: 2; margin-top: 16px; }
+  .diorama-floor {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 28px;
+    background: #3D6B1E;
+  }
+
+  /* ── Scroll area ── */
+  .scroll { flex: 1; overflow-y: auto; padding: 12px 12px 20px; }
+  .scroll::-webkit-scrollbar { display: none; }
+
+  /* ── Cards communes ── */
+  .action-card {
+    background: #1e2a3a;
+    border-radius: 16px;
+    border: 1px solid #2d3f55;
+    padding: 10px 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+  }
+  .action-row {
+    display: flex; flex-direction: row;
+    justify-content: space-between;
+  }
+  .action-item {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; gap: 3px; padding: 5px 2px;
+  }
+  .action-icon { font-size: 20px; line-height: 24px; }
+  .action-lbl { font-size: 9px; font-weight: 600; color: #6b7280; }
+
+  .prog-card {
+    background: #1e2a3a;
+    border-radius: 16px;
+    border: 1px solid #2d3f55;
+    padding: 12px 14px;
+    margin-top: 7px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+  }
+  .prog-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .prog-title { font-size: 13px; font-weight: 700; color: #e5e7eb; }
+  .prog-xp { font-size: 11px; color: #6b7280; }
+  .xp-bar { height: 7px; border-radius: 4px; background: #2d3f55; overflow: hidden; margin-bottom: 7px; }
+  .xp-fill { height: 100%; background: #3b9bd5; border-radius: 4px; width: 24%; }
+  .evo-line { display: flex; align-items: center; gap: 6px; }
+  .evo-txt { font-size: 11px; color: #9ca3af; flex-shrink: 0; }
+  .evo-bar { flex: 1; height: 3px; border-radius: 2px; background: #2d3f55; overflow: hidden; }
+  .evo-fill { height: 100%; background: #f97316; border-radius: 2px; width: 80%; }
+  .evo-hint { font-size: 11px; color: #4b5563; flex-shrink: 0; }
+
+  .weekly {
+    background: #1a2e1a; border-radius: 14px; border: 1px solid #2d5a2d;
+    padding: 10px 12px; margin-top: 7px;
+  }
+  .weekly-h { display: flex; justify-content: space-between; margin-bottom: 5px; }
+  .weekly-t { font-size: 12px; font-weight: 700; color: #e5e7eb; }
+  .weekly-n { font-size: 12px; font-weight: 800; color: #4ade80; }
+  .weekly-bar { height: 5px; border-radius: 3px; background: #1a3a1a; overflow: hidden; margin-bottom: 5px; }
+  .weekly-fill { height: 100%; background: #22c55e; border-radius: 3px; }
+  .weekly-sub { font-size: 10px; color: #4ade80; font-weight: 600; }
+
+  /* ════════════════════════ */
+  /* Avant — gradient 48px   */
+  /* ════════════════════════ */
+  .grad-transition {
+    height: 48px;
+    background: linear-gradient(180deg, #3D6B1E, #111827);
+    flex-shrink: 0;
+  }
+
+  /* ════════════════════════ */
+  /* A — coins arrondis       */
+  /* ════════════════════════ */
+  .diorama-rounded {
+    border-bottom-left-radius: 28px;
+    border-bottom-right-radius: 28px;
+  }
+  /* Petite ombre portée sous le diorama */
+  .diorama-shadow {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ════════════════════════ */
+  /* B — card chevauchante    */
+  /* ════════════════════════ */
+  .overlap-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 12px 20px;
+    margin-top: -22px;
+    position: relative;
+    z-index: 3;
+  }
+  .overlap-scroll::-webkit-scrollbar { display: none; }
+
+  /* ════════════════════════ */
+  /* C — coins + overlap      */
+  /* ════════════════════════ */
+  /* (combinaison des deux)  */
+
+  /* ── Annotation ── */
+  .note {
+    background: rgba(59,130,246,0.08);
+    border: 1px solid rgba(59,130,246,0.25);
+    border-radius: 10px;
+    padding: 10px 13px;
+    font-size: 11px;
+    color: #93c5fd;
+    line-height: 1.65;
+    max-width: 340px;
+  }
+  .note strong { color: #e5e7eb; display: block; font-size: 12px; margin-bottom: 5px; }
+  .pro { color: #4ade80; }
+  .con { color: #f87171; }
+  .neu { color: #fbbf24; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ -->
+<!-- AVANT              -->
+<!-- ═══════════════════ -->
+<div class="col">
+  <div class="label">❌ Avant — gradient 48px</div>
+  <div class="phone">
+    <div class="sb"><span>23:05</span><div class="sb-r">📶🔋</div></div>
+    <div class="coins">
+      <span>🍃 507</span><span>🔥 2</span><span>🍃 3</span>
+      <span class="coins-season">🌸 Printemps</span>
+    </div>
+    <div class="diorama" style="height:240px">
+      <div class="diorama-bg"></div>
+      <div class="diorama-water"></div>
+      <div class="diorama-tree">🌿</div>
+      <div class="diorama-floor"></div>
+    </div>
+    <!-- Gradient artificiel -->
+    <div class="grad-transition"></div>
+    <div class="scroll">
+      <div class="action-card">
+        <div class="action-row">
+          <div class="action-item"><span class="action-icon">🛒</span><span class="action-lbl">Boutique</span></div>
+          <div class="action-item"><span class="action-icon">🔨</span><span class="action-lbl">Atelier</span></div>
+          <div class="action-item"><span class="action-icon">🔬</span><span class="action-lbl">Techs</span></div>
+          <div class="action-item"><span class="action-icon">🎨</span><span class="action-lbl">Décorer</span></div>
+          <div class="action-item"><span class="action-icon">🏅</span><span class="action-lbl">Badges</span></div>
+          <div class="action-item"><span class="action-icon">🐾</span><span class="action-lbl">Ted</span></div>
+        </div>
+      </div>
+      <div class="prog-card">
+        <div class="prog-header"><span class="prog-title">🌿 Pousse · niveau 5</span><span class="prog-xp">121/500 XP</span></div>
+        <div class="xp-bar"><div class="xp-fill"></div></div>
+        <div class="evo-line"><span class="evo-txt">→ Arbuste</span><div class="evo-bar"><div class="evo-fill"></div></div><span class="evo-hint">1 niveau</span></div>
+      </div>
+      <div class="weekly"><div class="weekly-h"><span class="weekly-t">🎉 Objectif semaine</span><span class="weekly-n">24/15</span></div><div class="weekly-bar"><div class="weekly-fill" style="width:100%"></div></div><div class="weekly-sub">+50 🍃 gagné !</div></div>
+    </div>
+  </div>
+  <div class="note">
+    <strong>Problème</strong>
+    <span class="con">· Gradient artificiel, trop long (48px)</span><br>
+    <span class="con">· Couleur hardcodée par saison</span><br>
+    <span class="con">· Visuellement "collé" entre deux zones</span>
+  </div>
+</div>
+
+<!-- ═══════════════════ -->
+<!-- A — coins arrondis -->
+<!-- ═══════════════════ -->
+<div class="col">
+  <div class="label">A — Coins arrondis bas</div>
+  <div class="phone">
+    <div class="sb"><span>23:05</span><div class="sb-r">📶🔋</div></div>
+    <div class="coins">
+      <span>🍃 507</span><span>🔥 2</span><span>🍃 3</span>
+      <span class="coins-season">🌸 Printemps</span>
+    </div>
+    <!-- Diorama avec coins arrondis bas + ombre -->
+    <div class="diorama diorama-rounded diorama-shadow" style="height:240px">
+      <div class="diorama-bg" style="border-bottom-left-radius:28px;border-bottom-right-radius:28px"></div>
+      <div class="diorama-water"></div>
+      <div class="diorama-tree">🌿</div>
+      <div class="diorama-floor" style="border-bottom-left-radius:28px;border-bottom-right-radius:28px"></div>
+    </div>
+    <!-- Aucun gradient — fond direct -->
+    <div class="scroll" style="padding-top:14px">
+      <div class="action-card">
+        <div class="action-row">
+          <div class="action-item"><span class="action-icon">🛒</span><span class="action-lbl">Boutique</span></div>
+          <div class="action-item"><span class="action-icon">🔨</span><span class="action-lbl">Atelier</span></div>
+          <div class="action-item"><span class="action-icon">🔬</span><span class="action-lbl">Techs</span></div>
+          <div class="action-item"><span class="action-icon">🎨</span><span class="action-lbl">Décorer</span></div>
+          <div class="action-item"><span class="action-icon">🏅</span><span class="action-lbl">Badges</span></div>
+          <div class="action-item"><span class="action-icon">🐾</span><span class="action-lbl">Ted</span></div>
+        </div>
+      </div>
+      <div class="prog-card">
+        <div class="prog-header"><span class="prog-title">🌿 Pousse · niveau 5</span><span class="prog-xp">121/500 XP</span></div>
+        <div class="xp-bar"><div class="xp-fill"></div></div>
+        <div class="evo-line"><span class="evo-txt">→ Arbuste</span><div class="evo-bar"><div class="evo-fill"></div></div><span class="evo-hint">1 niveau</span></div>
+      </div>
+      <div class="weekly"><div class="weekly-h"><span class="weekly-t">🎉 Objectif semaine</span><span class="weekly-n">24/15</span></div><div class="weekly-bar"><div class="weekly-fill" style="width:100%"></div></div><div class="weekly-sub">+50 🍃 gagné !</div></div>
+    </div>
+  </div>
+  <div class="note">
+    <strong>A — Coins arrondis</strong>
+    <span class="pro">· Le diorama devient une "fenêtre" encadrée</span><br>
+    <span class="pro">· Aucun gradient ni couleur hardcodée</span><br>
+    <span class="pro">· Simple à implémenter (2 lignes)</span><br>
+    <span class="neu">· La coupure est nette mais propre</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════ -->
+<!-- B — Card chevauchante  -->
+<!-- ═══════════════════════ -->
+<div class="col">
+  <div class="label">B — Card qui chevauche</div>
+  <div class="phone">
+    <div class="sb"><span>23:05</span><div class="sb-r">📶🔋</div></div>
+    <div class="coins">
+      <span>🍃 507</span><span>🔥 2</span><span>🍃 3</span>
+      <span class="coins-season">🌸 Printemps</span>
+    </div>
+    <!-- Diorama normal, pas de gradient -->
+    <div class="diorama" style="height:256px">
+      <div class="diorama-bg"></div>
+      <div class="diorama-water"></div>
+      <div class="diorama-tree">🌿</div>
+      <div class="diorama-floor"></div>
+    </div>
+    <!-- Cards remontent sur le diorama -->
+    <div class="overlap-scroll">
+      <div class="action-card" style="box-shadow:0 -4px 20px rgba(0,0,0,0.4)">
+        <div class="action-row">
+          <div class="action-item"><span class="action-icon">🛒</span><span class="action-lbl">Boutique</span></div>
+          <div class="action-item"><span class="action-icon">🔨</span><span class="action-lbl">Atelier</span></div>
+          <div class="action-item"><span class="action-icon">🔬</span><span class="action-lbl">Techs</span></div>
+          <div class="action-item"><span class="action-icon">🎨</span><span class="action-lbl">Décorer</span></div>
+          <div class="action-item"><span class="action-icon">🏅</span><span class="action-lbl">Badges</span></div>
+          <div class="action-item"><span class="action-icon">🐾</span><span class="action-lbl">Ted</span></div>
+        </div>
+      </div>
+      <div class="prog-card">
+        <div class="prog-header"><span class="prog-title">🌿 Pousse · niveau 5</span><span class="prog-xp">121/500 XP</span></div>
+        <div class="xp-bar"><div class="xp-fill"></div></div>
+        <div class="evo-line"><span class="evo-txt">→ Arbuste</span><div class="evo-bar"><div class="evo-fill"></div></div><span class="evo-hint">1 niveau</span></div>
+      </div>
+      <div class="weekly"><div class="weekly-h"><span class="weekly-t">🎉 Objectif semaine</span><span class="weekly-n">24/15</span></div><div class="weekly-bar"><div class="weekly-fill" style="width:100%"></div></div><div class="weekly-sub">+50 🍃 gagné !</div></div>
+    </div>
+  </div>
+  <div class="note">
+    <strong>B — Chevauchement (Hay Day style)</strong>
+    <span class="pro">· Donne de la profondeur — le monde "continue" derrière</span><br>
+    <span class="pro">· Aucun gradient, aucun artifice</span><br>
+    <span class="pro">· Plus de diorama visible = plus immersif</span><br>
+    <span class="neu">· marginTop: -22 sur la ScrollView</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ -->
+<!-- C — Coins + chevauchement  -->
+<!-- ═══════════════════════════ -->
+<div class="col">
+  <div class="label">✨ C — Coins arrondis + overlap</div>
+  <div class="phone">
+    <div class="sb"><span>23:05</span><div class="sb-r">📶🔋</div></div>
+    <div class="coins">
+      <span>🍃 507</span><span>🔥 2</span><span>🍃 3</span>
+      <span class="coins-season">🌸 Printemps</span>
+    </div>
+    <!-- Diorama arrondi bas + overflow hidden -->
+    <div class="diorama diorama-rounded diorama-shadow" style="height:256px">
+      <div class="diorama-bg" style="border-bottom-left-radius:28px;border-bottom-right-radius:28px"></div>
+      <div class="diorama-water"></div>
+      <div class="diorama-tree">🌿</div>
+      <div class="diorama-floor" style="border-bottom-left-radius:28px;border-bottom-right-radius:28px"></div>
+    </div>
+    <!-- Cards chevauchent + coins = séparation naturelle -->
+    <div class="overlap-scroll">
+      <div class="action-card" style="box-shadow:0 -2px 16px rgba(0,0,0,0.35)">
+        <div class="action-row">
+          <div class="action-item"><span class="action-icon">🛒</span><span class="action-lbl">Boutique</span></div>
+          <div class="action-item"><span class="action-icon">🔨</span><span class="action-lbl">Atelier</span></div>
+          <div class="action-item"><span class="action-icon">🔬</span><span class="action-lbl">Techs</span></div>
+          <div class="action-item"><span class="action-icon">🎨</span><span class="action-lbl">Décorer</span></div>
+          <div class="action-item"><span class="action-icon">🏅</span><span class="action-lbl">Badges</span></div>
+          <div class="action-item"><span class="action-icon">🐾</span><span class="action-lbl">Ted</span></div>
+        </div>
+      </div>
+      <div class="prog-card">
+        <div class="prog-header"><span class="prog-title">🌿 Pousse · niveau 5</span><span class="prog-xp">121/500 XP</span></div>
+        <div class="xp-bar"><div class="xp-fill"></div></div>
+        <div class="evo-line"><span class="evo-txt">→ Arbuste</span><div class="evo-bar"><div class="evo-fill"></div></div><span class="evo-hint">1 niveau</span></div>
+      </div>
+      <div class="weekly"><div class="weekly-h"><span class="weekly-t">🎉 Objectif semaine</span><span class="weekly-n">24/15</span></div><div class="weekly-bar"><div class="weekly-fill" style="width:100%"></div></div><div class="weekly-sub">+50 🍃 gagné !</div></div>
+    </div>
+  </div>
+  <div class="note">
+    <strong>C — Coins arrondis + chevauchement ⭐</strong>
+    <span class="pro">· Diorama encadré ET cartes qui émergent dessous</span><br>
+    <span class="pro">· Effet de profondeur maximal, aucun gradient</span><br>
+    <span class="pro">· Le monde pixel art reste visible en arrière-plan</span><br>
+    <span class="pro">· Zéro couleur hardcodée, zéro saison-dépendant</span>
+  </div>
+</div>
+
+</body>
+</html>

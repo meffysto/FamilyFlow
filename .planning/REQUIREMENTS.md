@@ -49,7 +49,7 @@ Requirements for milestone v1.1 -- Ferme Enrichie. La ferme est le levier de mot
 - [x] **COMP-05**: De nouveaux compagnons sont debloquables via lootbox (rarites rare/epique)
 - [x] **COMP-06**: Le compagnon actif donne un bonus passif +5% XP
 - [ ] **COMP-07**: Le compagnon sert d'avatar de profil dans la tab bar et le selecteur de profil
-- [ ] **COMP-08**: Le compagnon affiche des bulles d'emotion sur les evenements de l'app (tache completee, lootbox, level up)
+- [x] **COMP-08**: Le compagnon affiche des bulles d'emotion sur les evenements de l'app (tache completee, lootbox, level up)
 
 ## Future Requirements
 
@@ -92,4 +92,4 @@ Deferred to future milestones.
 | COMP-05 | Phase 10 | Complete |
 | COMP-06 | Phase 10 | Complete |
 | COMP-07 | Phase 10 | Pending |
-| COMP-08 | Phase 10 | Pending |
+| COMP-08 | Phase 10 | Complete |

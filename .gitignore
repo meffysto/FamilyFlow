@@ -46,3 +46,17 @@ yarn-error.*
 
 # Native module build artifacts
 **/android/build/
+
+# IDE & tooling
+.agents/
+.claude/worktrees/
+.kiro/
+.mcp.json
+skills-lock.json
+
+# Build artifacts
+*.ipa
+build-*.ipa
+
+# gnhf session memory
+notes.md

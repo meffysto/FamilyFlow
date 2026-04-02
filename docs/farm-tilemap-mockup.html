@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farm Tilemap Mockup — Stardew Upgrade</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #1a1a2e; color: #eee; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+h1 { font-size: 18px; margin-bottom: 8px; color: #7CB342; }
+.controls { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; justify-content: center; }
+.controls button { padding: 6px 14px; border: 2px solid #555; background: #2a2a3e; color: #eee; cursor: pointer; border-radius: 6px; font-family: inherit; font-size: 13px; }
+.controls button.active { border-color: #7CB342; background: #3a4a2e; color: #7CB342; }
+.phone-frame { width: 390px; height: 780px; border: 3px solid #444; border-radius: 24px; overflow: hidden; position: relative; background: #5A8C32; }
+.grid-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+.tile { position: absolute; border: 1px solid rgba(255,255,255,0.05); }
+.tile.farmland { background: #5C3A1E; }
+.tile.dirt { background: #8B7355; }
+.tile.water { background: #4A90D9; }
+.tile.cobblestone { background: #6B6B7B; }
+.tile.grass { background: transparent; }
+/* Wang tile transitions — simulated with border radius */
+.tile.farmland { background: repeating-linear-gradient(0deg, #5C3A1E 0px, #4A2E15 3px, #5C3A1E 6px); }
+.tile.water { background: linear-gradient(135deg, #4A90D9, #5BA0E9, #4A90D9); }
+.tile.cobblestone { background: repeating-conic-gradient(#6B6B7B 0% 25%, #5A5A6A 0% 50%) 0 0 / 8px 8px; }
+
+/* Decorations */
+.deco { position: absolute; display: flex; align-items: center; justify-content: center; font-size: 10px; text-align: center; pointer-events: none; }
+.deco.tree { font-size: 28px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); }
+.deco.fence { background: #8B6914; height: 4px; border-radius: 1px; }
+.deco.gate { border: 2px solid #8B6914; background: rgba(139,105,20,0.3); border-radius: 3px; }
+.deco.object { font-size: 20px; }
+
+/* World grid cells */
+.crop-cell { position: absolute; width: 40px; height: 40px; border: 2px dashed rgba(255,255,100,0.4); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: rgba(255,255,100,0.7); }
+.crop-cell.unlocked { border-color: rgba(255,255,100,0.7); background: rgba(255,255,100,0.08); }
+.building-cell { position: absolute; width: 52px; height: 52px; border: 2px dashed rgba(200,150,255,0.4); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: rgba(200,150,255,0.7); }
+.building-cell.unlocked { border-color: rgba(200,150,255,0.7); background: rgba(200,150,255,0.08); }
+
+/* Main tree */
+.main-tree { position: absolute; font-size: 48px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); z-index: 10; }
+
+/* Legend */
+.legend { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; justify-content: center; font-size: 12px; }
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-swatch { width: 16px; height: 16px; border-radius: 3px; border: 1px solid #555; }
+
+/* Transition overlay */
+.transition-edge { position: absolute; pointer-events: none; }
+</style>
+</head>
+<body>
+
+<h1>Farm Tilemap Mockup</h1>
+
+<div class="controls">
+  <button class="active" onclick="setStage(0)">Graine</button>
+  <button onclick="setStage(1)">Pousse</button>
+  <button onclick="setStage(2)">Arbuste</button>
+  <button onclick="setStage(3)">Arbre</button>
+  <button onclick="setStage(4)">Majestueux</button>
+  <button onclick="setStage(5)">Legendaire</button>
+</div>
+
+<div class="phone-frame" id="farm">
+  <!-- Tiles, decos, and cells rendered by JS -->
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-swatch" style="background:#5A8C32"></div> Herbe</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#5C3A1E"></div> Terre labouree</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#8B7355"></div> Chemin</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#4A90D9"></div> Eau</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#6B6B7B"></div> Paves</div>
+  <div class="legend-item"><div class="legend-swatch" style="border:2px dashed rgba(255,255,100,0.7);background:transparent"></div> Culture</div>
+  <div class="legend-item"><div class="legend-swatch" style="border:2px dashed rgba(200,150,255,0.7);background:transparent"></div> Batiment</div>
+</div>
+
+<script>
+const COLS = 12, ROWS = 20;
+const W = 390, H = 780;
+const cellW = W / COLS, cellH = H / ROWS;
+
+const STAGES = ['graine', 'pousse', 'arbuste', 'arbre', 'majestueux', 'legendaire'];
+const PLOTS_BY_STAGE = [0, 3, 5, 7, 9, 12];
+
+// Crop cells from world-grid.ts
+const CROP_CELLS = [
+  { id:'c2', x:0.42, y:0.05, order:1 }, { id:'c7', x:0.42, y:0.17, order:2 },
+  { id:'c1', x:0.28, y:0.05, order:3 }, { id:'c3', x:0.56, y:0.05, order:4 },
+  { id:'c0', x:0.14, y:0.05, order:5 }, { id:'c4', x:0.70, y:0.05, order:6 },
+  { id:'c6', x:0.28, y:0.17, order:7 }, { id:'c8', x:0.56, y:0.17, order:8 },
+  { id:'c12',x:0.42, y:0.29, order:9 }, { id:'c5', x:0.14, y:0.17, order:10 },
+  { id:'c9', x:0.70, y:0.17, order:11}, { id:'c11',x:0.28, y:0.29, order:12},
+  { id:'c13',x:0.56, y:0.29, order:13}, { id:'c10',x:0.14, y:0.29, order:14},
+  { id:'c14',x:0.70, y:0.29, order:15},
+];
+const EXP_CROPS = [
+  { id:'c15', x:0.14, y:0.41 }, { id:'c16', x:0.28, y:0.41 },
+  { id:'c17', x:0.42, y:0.41 }, { id:'c18', x:0.56, y:0.41 },
+  { id:'c19', x:0.70, y:0.41 },
+];
+const LARGE_CROP = { id:'c20', x:0.14, y:0.77 };
+const BUILDINGS = [
+  { id:'b0', x:0.86, y:0.42, order:16 },
+  { id:'b1', x:0.86, y:0.62, order:17 },
+  { id:'b2', x:0.86, y:0.78, order:18 },
+];
+const EXP_BUILDING = { id:'b3', x:0.86, y:0.90 };
+
+function emptyGrid() {
+  return Array.from({length: ROWS+1}, () => Array(COLS+1).fill(false));
+}
+function fillRect(g, x1, y1, x2, y2) {
+  for (let y=y1; y<=y2 && y<g.length; y++)
+    for (let x=x1; x<=x2 && x<g[0].length; x++)
+      g[y][x] = true;
+}
+
+function buildMap(stageIdx) {
+  const dirt = emptyGrid(), farmland = emptyGrid(), water = emptyGrid(), cobble = emptyGrid();
+
+  // Chemin vertical central — cols 5-6, du potager vers le bas
+  fillRect(dirt, 5, 6, 6, ROWS);
+
+  // Chemin horizontal — centre vers batiments (rows 8-9)
+  fillRect(dirt, 6, 8, 10, 9);
+
+  // Chemin vers mare
+  if (stageIdx >= 2) fillRect(dirt, 3, 13, 4, 15);
+
+  // Potager gauche (cols 1-5) et droite (cols 6-9) du chemin
+  fillRect(farmland, 1, 0, 5, 7);
+  fillRect(farmland, 6, 0, 9, 7);
+
+  // Paves batiments
+  fillRect(cobble, 10, 7, 12, 16);
+
+  // Mare
+  if (stageIdx >= 2) fillRect(water, 1, 15, 4, 18);
+
+  // Expansion potager (gauche et droite du chemin)
+  if (stageIdx >= 3) {
+    fillRect(farmland, 1, 7, 4, 9);
+    fillRect(farmland, 7, 7, 9, 9);
+  }
+
+  // Large crop
+  if (stageIdx >= 4) fillRect(farmland, 1, 14, 3, 16);
+
+  // Nettoyage — chemin coupe le farmland
+  for (let y=0; y<=ROWS; y++)
+    for (let x=0; x<=COLS; x++)
+      if (dirt[y][x]) farmland[y][x] = false;
+
+  return { dirt, farmland, water, cobble };
+}
+
+function getDecos(stageIdx) {
+  const d = [];
+  // Trees
+  if (stageIdx >= 1) {
+    d.push({ emoji:'🍎', x:0.05, y:0.45, size:28 });
+    d.push({ emoji:'🍑', x:0.06, y:0.60, size:26 });
+  }
+  if (stageIdx >= 2) {
+    d.push({ emoji:'🍊', x:0.05, y:0.75, size:26 });
+    d.push({ emoji:'🍐', x:0.96, y:0.50, size:24 });
+  }
+  if (stageIdx >= 3) {
+    d.push({ emoji:'🫐', x:0.96, y:0.68, size:24 });
+  }
+  // Fences — bordure basse potager, split par le chemin central
+  if (stageIdx >= 1) {
+    // Gauche du chemin (x 0.10-0.38)
+    for (let i=0; i<3; i++) {
+      d.push({ type:'fence', x: 0.10+i*0.11, y:0.35, w:32, h:4 });
+    }
+    // Droite du chemin (x 0.54-0.76)
+    for (let i=0; i<3; i++) {
+      d.push({ type:'fence', x: 0.54+i*0.11, y:0.35, w:32, h:4 });
+    }
+    d.push({ type:'gate', x:0.46, y:0.35, w:20, h:16 });
+  }
+  // Scarecrow
+  if (stageIdx >= 2) d.push({ emoji:'🧑‍🌾', x:0.78, y:0.18, size:22 });
+  // Objects
+  if (stageIdx >= 2) {
+    d.push({ emoji:'🛢️', x:0.82, y:0.48, size:16 });
+    d.push({ emoji:'📦', x:0.78, y:0.50, size:14 });
+  }
+  // Well
+  if (stageIdx >= 3) d.push({ emoji:'⛲', x:0.80, y:0.70, size:22 });
+  // Windmill
+  if (stageIdx >= 4) d.push({ emoji:'🏗️', x:0.90, y:0.32, size:28 });
+  // Bridge
+  if (stageIdx >= 2) d.push({ emoji:'🌉', x:0.22, y:0.70, size:20 });
+  // Sign
+  if (stageIdx >= 1) d.push({ emoji:'🪧', x:0.42, y:0.95, size:16 });
+  // Bench
+  if (stageIdx >= 3) d.push({ emoji:'🪑', x:0.18, y:0.90, size:16 });
+  // Torches — le long du chemin central (cols 5-6, x ~0.42-0.50)
+  if (stageIdx >= 4) {
+    d.push({ emoji:'🔥', x:0.40, y:0.42, size:14 });
+    d.push({ emoji:'🔥', x:0.53, y:0.42, size:14 });
+    d.push({ emoji:'🔥', x:0.40, y:0.55, size:14 });
+    d.push({ emoji:'🔥', x:0.53, y:0.55, size:14 });
+  }
+  return d;
+}
+
+let currentStage = 0;
+
+function render(stageIdx) {
+  const farm = document.getElementById('farm');
+  farm.innerHTML = '';
+
+  const map = buildMap(stageIdx);
+  const layers = [
+    { grid: map.farmland, cls: 'farmland' },
+    { grid: map.dirt, cls: 'dirt' },
+    { grid: map.cobble, cls: 'cobblestone' },
+    { grid: map.water, cls: 'water' },
+  ];
+
+  // Render tiles
+  for (const layer of layers) {
+    for (let row = 0; row < ROWS; row++) {
+      for (let col = 0; col < COLS; col++) {
+        const nw = layer.grid[row][col];
+        const ne = layer.grid[row][col+1];
+        const sw = layer.grid[row+1][col];
+        const se = layer.grid[row+1][col+1];
+        if (!nw && !ne && !sw && !se) continue;
+
+        const el = document.createElement('div');
+        el.className = 'tile ' + layer.cls;
+        el.style.left = (col * cellW) + 'px';
+        el.style.top = (row * cellH) + 'px';
+        el.style.width = cellW + 'px';
+        el.style.height = cellH + 'px';
+
+        // Simulate Wang transitions with opacity for partial tiles
+        const count = [nw,ne,sw,se].filter(Boolean).length;
+        if (count < 4) {
+          el.style.opacity = 0.5 + count * 0.125;
+          // Border radius on grass-facing corners
+          const r = '8px';
+          el.style.borderRadius = [
+            !nw ? r : '0', !ne ? r : '0', !se ? r : '0', !sw ? r : '0'
+          ].join(' ');
+        }
+
+        farm.appendChild(el);
+      }
+    }
+  }
+
+  // Crop cells
+  const numPlots = PLOTS_BY_STAGE[stageIdx] ?? 0;
+  CROP_CELLS.forEach((c, i) => {
+    const unlocked = i < numPlots;
+    const el = document.createElement('div');
+    el.className = 'crop-cell' + (unlocked ? ' unlocked' : '');
+    el.style.left = (c.x * W - 20) + 'px';
+    el.style.top = (c.y * H - 20) + 'px';
+    el.textContent = unlocked ? (c.id + '\n🌱') : c.id;
+    if (!unlocked) el.style.opacity = '0.3';
+    farm.appendChild(el);
+  });
+
+  // Expansion crops
+  if (stageIdx >= 3) {
+    EXP_CROPS.forEach(c => {
+      const el = document.createElement('div');
+      el.className = 'crop-cell unlocked';
+      el.style.left = (c.x * W - 20) + 'px';
+      el.style.top = (c.y * H - 20) + 'px';
+      el.textContent = c.id + '\n🌾';
+      el.style.borderColor = 'rgba(100,255,100,0.5)';
+      farm.appendChild(el);
+    });
+  }
+
+  // Large crop
+  if (stageIdx >= 4) {
+    const el = document.createElement('div');
+    el.className = 'crop-cell unlocked';
+    el.style.left = (LARGE_CROP.x * W - 26) + 'px';
+    el.style.top = (LARGE_CROP.y * H - 26) + 'px';
+    el.style.width = '52px';
+    el.style.height = '52px';
+    el.textContent = 'c20\n🎃';
+    el.style.borderColor = 'rgba(255,200,100,0.7)';
+    farm.appendChild(el);
+  }
+
+  // Buildings
+  BUILDINGS.forEach(b => {
+    const el = document.createElement('div');
+    el.className = 'building-cell unlocked';
+    el.style.left = (b.x * W - 26) + 'px';
+    el.style.top = (b.y * H - 26) + 'px';
+    el.textContent = b.id + '\n🏠';
+    farm.appendChild(el);
+  });
+
+  // Expansion building
+  if (stageIdx >= 4) {
+    const el = document.createElement('div');
+    el.className = 'building-cell unlocked';
+    el.style.left = (EXP_BUILDING.x * W - 26) + 'px';
+    el.style.top = (EXP_BUILDING.y * H - 26) + 'px';
+    el.textContent = 'b3\n🏗️';
+    el.style.borderColor = 'rgba(100,255,200,0.5)';
+    farm.appendChild(el);
+  }
+
+  // Main tree
+  const tree = document.createElement('div');
+  tree.className = 'main-tree';
+  tree.style.left = (0.50 * W - 24) + 'px';
+  tree.style.top = (0.55 * H - 24) + 'px';
+  const treeEmojis = ['🌰', '🌱', '🌿', '🌳', '🌲', '✨🌳✨'];
+  tree.textContent = treeEmojis[stageIdx];
+  farm.appendChild(tree);
+
+  // Decorations
+  const decos = getDecos(stageIdx);
+  decos.forEach(d => {
+    const el = document.createElement('div');
+    if (d.type === 'fence') {
+      el.className = 'deco fence';
+      el.style.left = (d.x * W - d.w/2) + 'px';
+      el.style.top = (d.y * H - d.h/2) + 'px';
+      el.style.width = d.w + 'px';
+      el.style.height = d.h + 'px';
+    } else if (d.type === 'gate') {
+      el.className = 'deco gate';
+      el.style.left = (d.x * W - d.w/2) + 'px';
+      el.style.top = (d.y * H - d.h/2) + 'px';
+      el.style.width = d.w + 'px';
+      el.style.height = d.h + 'px';
+    } else {
+      el.className = 'deco object';
+      el.style.left = (d.x * W - d.size/2) + 'px';
+      el.style.top = (d.y * H - d.size/2) + 'px';
+      el.style.fontSize = d.size + 'px';
+      el.textContent = d.emoji;
+    }
+    farm.appendChild(el);
+  });
+}
+
+function setStage(idx) {
+  currentStage = idx;
+  document.querySelectorAll('.controls button').forEach((b, i) => {
+    b.classList.toggle('active', i === idx);
+  });
+  render(idx);
+}
+
+render(0);
+</script>
+</body>
+</html>

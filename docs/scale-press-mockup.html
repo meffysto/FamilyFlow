@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FamilyFlow — Scale on Press + Cartes différenciées</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #F3F4F6;
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    padding: 32px 16px;
+    min-height: 100vh;
+  }
+
+  .phone {
+    width: 390px;
+    min-height: 780px;
+    background: #F3F4F6;
+    border-radius: 44px;
+    border: 8px solid #1a1a1a;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.15);
+    flex-shrink: 0;
+  }
+
+  .phone::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 126px;
+    height: 34px;
+    background: #1a1a1a;
+    border-radius: 0 0 20px 20px;
+    z-index: 10;
+  }
+
+  .screen {
+    padding: 54px 16px 16px;
+    overflow-y: auto;
+    height: 100%;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 0 4px;
+  }
+
+  .header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: #111827;
+  }
+
+  .header .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8B5CF6, #6D28D9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 16px;
+  }
+
+  .label {
+    text-align: center;
+    font-size: 13px;
+    color: #6B7280;
+    margin-bottom: 12px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  /* ── Cards ── */
+
+  .card {
+    background: #FFFFFF;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: transform 0.15s cubic-bezier(0.2, 0, 0.2, 1),
+                box-shadow 0.15s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ── Scale on press ── */
+  .card:active {
+    transform: scale(0.97);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+  /* Spring-back effect */
+  .card {
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.2s ease;
+  }
+
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title .icon {
+    font-size: 18px;
+  }
+
+  .card-sub {
+    font-size: 13px;
+    color: #6B7280;
+    line-height: 1.5;
+  }
+
+  /* ── Variantes de cartes (AVANT = toutes identiques) ── */
+
+  .card.plain {
+    border-left: 3px solid #8B5CF6;
+  }
+
+  /* ── Variantes de cartes (APRÈS = différenciées) ── */
+
+  /* En retard */
+  .card.overdue {
+    background: linear-gradient(135deg, #FFF5F5 0%, #FFFFFF 60%);
+    border-left: 3px solid #EF4444;
+  }
+  .card.overdue .card-title { color: #991B1B; }
+  .card.overdue .badge {
+    background: #FEE2E2;
+    color: #991B1B;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 99px;
+    margin-left: auto;
+  }
+
+  /* Tâches du jour */
+  .card.tasks {
+    background: #FFFFFF;
+    border-left: 3px solid #10B981;
+  }
+  .card.tasks .checkbox {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #10B981;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+    flex-shrink: 0;
+  }
+  .card.tasks .checkbox.done {
+    background: #10B981;
+    color: white;
+    font-size: 12px;
+  }
+  .card.tasks .task-row {
+    display: flex;
+    align-items: center;
+    padding: 4px 0;
+  }
+  .card.tasks .task-row.completed {
+    opacity: 0.5;
+    text-decoration: line-through;
+  }
+  .card.tasks .task-text {
+    font-size: 14px;
+    color: #374151;
+  }
+
+  /* Gratitude */
+  .card.gratitude {
+    background: linear-gradient(135deg, #FFFBEB 0%, #FFFFFF 70%);
+    border-left: 3px solid #F59E0B;
+  }
+  .card.gratitude .quote {
+    font-style: italic;
+    color: #92400E;
+    font-size: 14px;
+    line-height: 1.6;
+    padding-left: 12px;
+    border-left: 2px solid #FCD34D;
+  }
+
+  /* Repas */
+  .card.meals {
+    background: linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 70%);
+    border-left: 3px solid #22C55E;
+  }
+  .card.meals .meal-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 0;
+  }
+  .card.meals .meal-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #6B7280;
+    text-transform: uppercase;
+    width: 36px;
+  }
+  .card.meals .meal-value {
+    font-size: 14px;
+    color: #374151;
+  }
+
+  /* RDV */
+  .card.rdv {
+    background: linear-gradient(135deg, #EFF6FF 0%, #FFFFFF 70%);
+    border-left: 3px solid #3B82F6;
+  }
+  .card.rdv .time-badge {
+    background: #DBEAFE;
+    color: #1E40AF;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+
+  /* Gamification / XP */
+  .card.xp {
+    background: linear-gradient(135deg, #F5F3FF 0%, #FFFFFF 70%);
+    border-left: 3px solid #8B5CF6;
+  }
+  .card.xp .xp-bar {
+    height: 8px;
+    background: #EDE9FE;
+    border-radius: 99px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .card.xp .xp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #8B5CF6, #A78BFA);
+    border-radius: 99px;
+    width: 65%;
+    transition: width 1s ease;
+  }
+
+  /* ── Comparison layout ── */
+
+  .comparison {
+    display: flex;
+    gap: 48px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .column-label {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 16px;
+    padding: 6px 20px;
+    border-radius: 99px;
+  }
+
+  .column-label.before {
+    background: #FEE2E2;
+    color: #991B1B;
+  }
+
+  .column-label.after {
+    background: #D1FAE5;
+    color: #15803D;
+  }
+
+  /* ── Hint bubble ── */
+
+  .hint {
+    text-align: center;
+    margin: 20px 0 8px;
+    font-size: 13px;
+    color: #8B5CF6;
+    font-weight: 500;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    body { flex-direction: column; align-items: center; gap: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="column">
+  <div class="column-label before">Avant</div>
+  <div class="phone">
+    <div class="screen">
+      <div class="header">
+        <h1>Bonjour Lucas</h1>
+        <div class="avatar">L</div>
+      </div>
+
+      <p class="hint">👆 Appuie sur les cartes !</p>
+
+      <div class="card plain">
+        <div class="card-title"><span class="icon">⚠️</span> En retard</div>
+        <div class="card-sub">3 tâches en retard depuis hier</div>
+      </div>
+
+      <div class="card plain">
+        <div class="card-title"><span class="icon">✅</span> Tâches du jour</div>
+        <div class="card-sub">4 tâches · 1 complétée</div>
+      </div>
+
+      <div class="card plain">
+        <div class="card-title"><span class="icon">🙏</span> Gratitude</div>
+        <div class="card-sub">« Je suis reconnaissant pour cette belle journée en famille »</div>
+      </div>
+
+      <div class="card plain">
+        <div class="card-title"><span class="icon">🍽️</span> Repas du jour</div>
+        <div class="card-sub">Midi : Poulet rôti · Soir : Soupe maison</div>
+      </div>
+
+      <div class="card plain">
+        <div class="card-title"><span class="icon">📅</span> Prochain RDV</div>
+        <div class="card-sub">Dentiste — 14h30</div>
+      </div>
+
+      <div class="card plain">
+        <div class="card-title"><span class="icon">⭐</span> Niveau 12</div>
+        <div class="card-sub">650 / 1000 XP</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="column">
+  <div class="column-label after">Après</div>
+  <div class="phone">
+    <div class="screen">
+      <div class="header">
+        <h1>Bonjour Lucas</h1>
+        <div class="avatar">L</div>
+      </div>
+
+      <p class="hint">👆 Appuie sur les cartes !</p>
+
+      <!-- En retard — rouge -->
+      <div class="card overdue">
+        <div class="card-title">
+          <span class="icon">⚠️</span> En retard
+          <span class="badge">3</span>
+        </div>
+        <div class="card-sub">Sortir les poubelles · Courses · Ménage salon</div>
+      </div>
+
+      <!-- Tâches — vert avec checkboxes -->
+      <div class="card tasks">
+        <div class="card-title"><span class="icon">✅</span> Tâches du jour</div>
+        <div class="task-row completed">
+          <div class="checkbox done">✓</div>
+          <span class="task-text">Préparer les sacs d'école</span>
+        </div>
+        <div class="task-row">
+          <div class="checkbox"></div>
+          <span class="task-text">Appeler le plombier</span>
+        </div>
+        <div class="task-row">
+          <div class="checkbox"></div>
+          <span class="task-text">Lancer une machine</span>
+        </div>
+        <div class="task-row">
+          <div class="checkbox"></div>
+          <span class="task-text">Ranger le garage</span>
+        </div>
+      </div>
+
+      <!-- Gratitude — doré -->
+      <div class="card gratitude">
+        <div class="card-title"><span class="icon">🙏</span> Gratitude</div>
+        <div class="quote">Je suis reconnaissant pour cette belle journée en famille au parc.</div>
+      </div>
+
+      <!-- Repas — vert clair -->
+      <div class="card meals">
+        <div class="card-title"><span class="icon">🍽️</span> Repas du jour</div>
+        <div class="meal-row">
+          <span class="meal-label">Midi</span>
+          <span class="meal-value">Poulet rôti, haricots verts</span>
+        </div>
+        <div class="meal-row">
+          <span class="meal-label">Soir</span>
+          <span class="meal-value">Soupe maison, tartines</span>
+        </div>
+      </div>
+
+      <!-- RDV — bleu -->
+      <div class="card rdv">
+        <div class="card-title">
+          <span class="icon">📅</span> Prochain RDV
+          <span class="time-badge" style="margin-left:auto">14h30</span>
+        </div>
+        <div class="card-sub">Dentiste — Dr Martin</div>
+      </div>
+
+      <!-- XP — violet -->
+      <div class="card xp">
+        <div class="card-title"><span class="icon">⭐</span> Niveau 12 — 650 / 1000 XP</div>
+        <div class="xp-bar"><div class="xp-fill"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

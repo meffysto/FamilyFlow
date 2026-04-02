@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Tree Layout — 2 Options</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', sans-serif;
+    background: #f5f5f5;
+    padding: 20px;
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  h2 {
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .phone {
+    width: 375px;
+    height: 812px;
+    background: #fff;
+    border-radius: 44px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  /* ── Shared base styles ── */
+
+  .status-bar {
+    height: 54px;
+    background: linear-gradient(180deg, #C8E6C0 0%, #D4EDCF 100%);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 6px;
+    font-size: 13px;
+    color: #4A6741;
+  }
+
+  .farm-header {
+    background: linear-gradient(180deg, #D4EDCF 0%, #E8F5E3 40%, #fff 100%);
+    text-align: center;
+    padding: 8px 16px 12px;
+  }
+  .farm-header .crops { font-size: 14px; color: #5A7A52; }
+  .farm-header .streak { font-size: 24px; margin-top: 2px; }
+
+  .weekly-goal {
+    margin: 0 16px;
+    background: #FAFAFA;
+    border-radius: 12px;
+    padding: 12px 16px;
+    border: 1px solid #E5E7EB;
+  }
+  .weekly-goal .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1F2937;
+  }
+  .weekly-goal .bar {
+    height: 6px;
+    background: #E5E7EB;
+    border-radius: 3px;
+    margin-top: 6px;
+    overflow: hidden;
+  }
+  .weekly-goal .bar-fill {
+    height: 100%;
+    width: 20%;
+    background: #3B82F6;
+    border-radius: 3px;
+  }
+  .weekly-goal .sub {
+    font-size: 12px;
+    color: #9CA3AF;
+    margin-top: 4px;
+  }
+
+  .profile-card {
+    margin: 12px 16px;
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #F3F4F6;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    overflow: hidden;
+  }
+
+  .profile-header {
+    display: flex;
+    align-items: center;
+    padding: 16px 16px 0;
+    gap: 12px;
+  }
+  .avatar {
+    width: 44px;
+    height: 44px;
+    background: #F3F4F6;
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+  }
+  .profile-name { font-size: 17px; font-weight: 700; color: #1F2937; }
+  .profile-level { font-size: 13px; color: #EC4899; font-weight: 600; }
+
+  .tree-info {
+    padding: 12px 16px 0;
+    font-size: 13px;
+    color: #6B7280;
+  }
+  .tree-info .stage { font-size: 16px; font-weight: 700; color: #1F2937; margin-top: 2px; }
+  .tree-info .desc { font-size: 12px; color: #9CA3AF; margin-top: 2px; }
+  .tree-info .change-btn {
+    position: absolute;
+    right: 32px;
+    margin-top: -32px;
+    font-size: 13px;
+    color: #EC4899;
+    border: 1px solid #FBCFE8;
+    padding: 4px 14px;
+    border-radius: 16px;
+    background: #FDF2F8;
+  }
+
+  .xp-section {
+    padding: 12px 16px 16px;
+  }
+  .xp-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #9CA3AF;
+    margin-bottom: 4px;
+  }
+  .xp-bar {
+    height: 8px;
+    background: #E5E7EB;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .xp-fill {
+    height: 100%;
+    width: 64%;
+    background: linear-gradient(90deg, #3B82F6, #60A5FA);
+    border-radius: 4px;
+  }
+
+  .evolution-row {
+    padding: 0 16px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+  .evo-tree {
+    text-align: center;
+    font-size: 11px;
+    color: #6B7280;
+  }
+  .evo-tree .icon { font-size: 36px; }
+  .evo-arrow { font-size: 18px; color: #D1D5DB; }
+  .evo-sub { font-size: 11px; color: #EC4899; margin-top: 2px; }
+  .evo-bar {
+    height: 4px;
+    background: #E5E7EB;
+    border-radius: 2px;
+    margin: 0 16px 16px;
+    overflow: hidden;
+  }
+  .evo-bar-fill { height: 100%; width: 40%; background: #F97316; border-radius: 2px; }
+
+  /* ── Tab bar ── */
+  .tab-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 84px;
+    background: #fff;
+    border-top: 1px solid #E5E7EB;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-around;
+    padding-top: 8px;
+  }
+  .tab-item {
+    text-align: center;
+    font-size: 10px;
+    color: #9CA3AF;
+  }
+  .tab-item .icon { font-size: 22px; margin-bottom: 2px; }
+
+  /* ════════════════════════════════════════════
+     OPTION A — Barre d'outils compacte (icones)
+     ════════════════════════════════════════════ */
+
+  .toolbar-a {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 16px;
+    flex-wrap: wrap;
+  }
+  .toolbar-a .tool-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border: 1px solid #FBCFE8;
+    background: #FDF2F8;
+  }
+  .toolbar-a .tool-btn .icon { font-size: 20px; line-height: 1; }
+  .toolbar-a .tool-btn .label {
+    font-size: 9px;
+    font-weight: 600;
+    color: #BE185D;
+    line-height: 1;
+  }
+  .toolbar-a .tool-btn.badge-dot::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 10px;
+    height: 10px;
+    background: #4ADE80;
+    border-radius: 5px;
+    border: 2px solid #fff;
+  }
+  .toolbar-a .tool-btn { position: relative; }
+
+  /* ════════════════════════════════════════════
+     OPTION B — Menu contextuel flottant (FAB)
+     ════════════════════════════════════════════ */
+
+  .fab-container {
+    position: absolute;
+    right: 20px;
+    bottom: 104px;
+    z-index: 10;
+  }
+  .fab-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 28px;
+    background: linear-gradient(135deg, #EC4899, #F472B6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(236, 72, 153, 0.4);
+    cursor: pointer;
+  }
+  .fab-btn .icon { font-size: 24px; filter: brightness(10); }
+
+  .fab-menu {
+    position: absolute;
+    bottom: 68px;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  .fab-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-direction: row-reverse;
+  }
+  .fab-menu-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  }
+  .fab-menu-label {
+    background: #fff;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1F2937;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    white-space: nowrap;
+  }
+
+  /* B - buttons row (compact, no outline, inside card) */
+  .inline-actions-b {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 10px 16px 4px;
+  }
+  .inline-action-b {
+    text-align: center;
+  }
+  .inline-action-b .icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: #F3F4F6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    margin: 0 auto 3px;
+  }
+  .inline-action-b .label {
+    font-size: 10px;
+    color: #6B7280;
+    font-weight: 500;
+  }
+
+  .section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1F2937;
+    padding: 16px 16px 8px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ OPTION A ═══════════ -->
+<div>
+  <h2>Option A — Barre d'outils dans la card</h2>
+  <div class="phone">
+    <div class="status-bar">19:54</div>
+    <div class="farm-header">
+      <div class="crops">🌿 3 en cours</div>
+      <div class="streak">🔥</div>
+    </div>
+    <div class="weekly-goal">
+      <div class="top"><span>🎯 Objectif de la semaine</span><span>3/15</span></div>
+      <div class="bar"><div class="bar-fill"></div></div>
+      <div class="sub">Encore 12 t&acirc;ches pour gagner 50 🍃</div>
+    </div>
+
+    <div class="profile-card">
+      <div class="profile-header">
+        <div class="avatar">🐼</div>
+        <div>
+          <div class="profile-name">Lucas</div>
+          <div class="profile-level">🧭 Aventurier &mdash; Nv. 4</div>
+        </div>
+      </div>
+
+      <div class="tree-info">
+        <div>🍊 Oranger</div>
+        <div class="stage">Pousse</div>
+        <div class="desc">Les premi&egrave;res feuilles pointent vers le ciel&nbsp;!</div>
+        <span class="change-btn">Changer</span>
+      </div>
+
+      <!-- TOOLBAR A : grille d'icones compacte -->
+      <div class="toolbar-a">
+        <div class="tool-btn">
+          <span class="icon">🛒</span>
+          <span class="label">Boutique</span>
+        </div>
+        <div class="tool-btn">
+          <span class="icon">🔨</span>
+          <span class="label">Atelier</span>
+        </div>
+        <div class="tool-btn">
+          <span class="icon">🔬</span>
+          <span class="label">Techs</span>
+        </div>
+        <div class="tool-btn">
+          <span class="icon">🎨</span>
+          <span class="label">D&eacute;corer</span>
+        </div>
+        <div class="tool-btn">
+          <span class="icon">🏅</span>
+          <span class="label">Badges</span>
+        </div>
+      </div>
+
+      <div class="xp-section">
+        <div class="xp-labels"><span>Progression XP</span><span>257 / 400 XP</span></div>
+        <div class="xp-bar"><div class="xp-fill"></div></div>
+      </div>
+
+      <div class="evolution-row">
+        <div class="evo-tree"><div class="icon">🌱</div>Pousse</div>
+        <div class="evo-arrow">&rarr;</div>
+        <div class="evo-tree"><div class="icon">🌳</div>Arbuste</div>
+      </div>
+      <div style="text-align:center; margin-top:-8px;"><span class="evo-sub">Encore 2 niveaux</span></div>
+      <div class="evo-bar"><div class="evo-bar-fill"></div></div>
+    </div>
+
+    <div class="tab-bar">
+      <div class="tab-item"><div class="icon">🏠</div>Aujourd'hui</div>
+      <div class="tab-item"><div class="icon">📋</div>T&acirc;ches</div>
+      <div class="tab-item"><div class="icon">📓</div>Journal</div>
+      <div class="tab-item"><div class="icon">📅</div>Calendrier</div>
+      <div class="tab-item"><div class="icon">📦</div>Menu</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ OPTION B ═══════════ -->
+<div>
+  <h2>Option B — Actions discr&egrave;tes + FAB flottant</h2>
+  <div class="phone">
+    <div class="status-bar">19:54</div>
+    <div class="farm-header">
+      <div class="crops">🌿 3 en cours</div>
+      <div class="streak">🔥</div>
+    </div>
+    <div class="weekly-goal">
+      <div class="top"><span>🎯 Objectif de la semaine</span><span>3/15</span></div>
+      <div class="bar"><div class="bar-fill"></div></div>
+      <div class="sub">Encore 12 t&acirc;ches pour gagner 50 🍃</div>
+    </div>
+
+    <div class="profile-card">
+      <div class="profile-header">
+        <div class="avatar">🐼</div>
+        <div>
+          <div class="profile-name">Lucas</div>
+          <div class="profile-level">🧭 Aventurier &mdash; Nv. 4</div>
+        </div>
+      </div>
+
+      <div class="tree-info">
+        <div>🍊 Oranger</div>
+        <div class="stage">Pousse</div>
+        <div class="desc">Les premi&egrave;res feuilles pointent vers le ciel&nbsp;!</div>
+        <span class="change-btn">Changer</span>
+      </div>
+
+      <!-- Actions discrètes : icones rondes grises, pas de bordure -->
+      <div class="inline-actions-b">
+        <div class="inline-action-b">
+          <div class="icon">🛒</div>
+          <div class="label">Boutique</div>
+        </div>
+        <div class="inline-action-b">
+          <div class="icon">🔨</div>
+          <div class="label">Atelier</div>
+        </div>
+        <div class="inline-action-b">
+          <div class="icon">🔬</div>
+          <div class="label">Techs</div>
+        </div>
+        <div class="inline-action-b">
+          <div class="icon">🎨</div>
+          <div class="label">D&eacute;corer</div>
+        </div>
+        <div class="inline-action-b">
+          <div class="icon">🏅</div>
+          <div class="label">Badges</div>
+        </div>
+      </div>
+
+      <div class="xp-section">
+        <div class="xp-labels"><span>Progression XP</span><span>257 / 400 XP</span></div>
+        <div class="xp-bar"><div class="xp-fill"></div></div>
+      </div>
+
+      <div class="evolution-row">
+        <div class="evo-tree"><div class="icon">🌱</div>Pousse</div>
+        <div class="evo-arrow">&rarr;</div>
+        <div class="evo-tree"><div class="icon">🌳</div>Arbuste</div>
+      </div>
+      <div style="text-align:center; margin-top:-8px;"><span class="evo-sub">Encore 2 niveaux</span></div>
+      <div class="evo-bar"><div class="evo-bar-fill"></div></div>
+    </div>
+
+    <!-- FAB flottant -->
+    <div class="fab-container">
+      <div class="fab-menu">
+        <div class="fab-menu-item">
+          <div class="fab-menu-icon">🛒</div>
+          <div class="fab-menu-label">Boutique</div>
+        </div>
+        <div class="fab-menu-item">
+          <div class="fab-menu-icon">🔨</div>
+          <div class="fab-menu-label">Atelier</div>
+        </div>
+        <div class="fab-menu-item">
+          <div class="fab-menu-icon">🔬</div>
+          <div class="fab-menu-label">Technologies</div>
+        </div>
+        <div class="fab-menu-item">
+          <div class="fab-menu-icon">🎨</div>
+          <div class="fab-menu-label">D&eacute;corer</div>
+        </div>
+        <div class="fab-menu-item">
+          <div class="fab-menu-icon">🏅</div>
+          <div class="fab-menu-label">Badges</div>
+        </div>
+      </div>
+      <div class="fab-btn"><span class="icon">⚡</span></div>
+    </div>
+
+    <div class="tab-bar">
+      <div class="tab-item"><div class="icon">🏠</div>Aujourd'hui</div>
+      <div class="tab-item"><div class="icon">📋</div>T&acirc;ches</div>
+      <div class="tab-item"><div class="icon">📓</div>Journal</div>
+      <div class="tab-item"><div class="icon">📅</div>Calendrier</div>
+      <div class="tab-item"><div class="icon">📦</div>Menu</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

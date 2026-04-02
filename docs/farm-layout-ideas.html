@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Farm Layout — Vue Top-Down</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', sans-serif;
+    background: #1a1a2e;
+    padding: 20px 10px;
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .column { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  h2 {
+    text-align: center; font-size: 12px; color: #aaa;
+    text-transform: uppercase; letter-spacing: 1px; max-width: 280px;
+  }
+  h2 em { display: block; font-style: normal; color: #666; font-size: 10px; margin-top: 4px; }
+
+  .phone {
+    width: 280px; height: 606px;
+    background: #fff; border-radius: 36px;
+    overflow: hidden; position: relative; flex-shrink: 0;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+  }
+
+  /* ── Tab bar ── */
+  .tab-bar {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 56px;
+    background: #fff; border-top: 1px solid #E5E7EB;
+    display: flex; align-items: flex-start; justify-content: space-around; padding-top: 6px;
+  }
+  .tab-item { text-align: center; font-size: 8px; color: #9CA3AF; }
+  .tab-item .icon { font-size: 16px; margin-bottom: 1px; }
+
+  /* ── Diorama top-down ── */
+  .diorama {
+    position: relative; overflow: hidden;
+    image-rendering: pixelated;
+  }
+  .diorama-ground {
+    position: absolute; inset: 0;
+  }
+
+  /* Grille de parcelles (vue dessus) */
+  .plot {
+    position: absolute;
+    width: 28px; height: 28px;
+    background: #8B6914;
+    border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+  }
+  .plot.empty {
+    background: #6B5A10;
+    opacity: 0.5;
+  }
+  .plot.empty::after {
+    content: '+'; color: rgba(255,255,255,0.4); font-size: 14px; font-weight: bold;
+  }
+
+  /* Batiments */
+  .bldg {
+    position: absolute;
+    width: 36px; height: 36px;
+    background: #D4A574;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    border: 1px solid #B8956A;
+  }
+
+  /* Arbre */
+  .tree-elem {
+    position: absolute;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* Pet */
+  .pet {
+    position: absolute; font-size: 18px;
+    animation: petWalk 3s ease-in-out infinite alternate;
+  }
+  @keyframes petWalk {
+    0% { transform: translate(0, 0) scaleX(1); }
+    50% { transform: translate(8px, -3px) scaleX(1); }
+    100% { transform: translate(-4px, 2px) scaleX(-1); }
+  }
+  .pet-bubble {
+    position: absolute;
+    background: rgba(255,255,255,0.9);
+    padding: 2px 6px; border-radius: 8px;
+    font-size: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  /* Herbe pixel */
+  .grass {
+    position: absolute; font-size: 8px; opacity: 0.4;
+  }
+
+  /* Banniere HUD */
+  .hud {
+    position: absolute; top: 0; left: 0; right: 0;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 10px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, transparent 100%);
+    font-size: 10px; color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  }
+
+  /* Info card */
+  .info-card {
+    margin: 0 10px; background: #fff;
+    border-radius: 12px; border: 1px solid #F3F4F6;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    padding: 10px 12px;
+  }
+  .profile-row { display: flex; align-items: center; gap: 8px; }
+  .avatar-sm { font-size: 20px; }
+  .name-sm { font-size: 13px; font-weight: 700; color: #1F2937; }
+  .level-sm { font-size: 10px; color: #EC4899; font-weight: 600; }
+  .xp-mini { height: 4px; background: #E5E7EB; border-radius: 2px; overflow: hidden; margin: 4px 0; }
+  .xp-mini-fill { height: 100%; width: 64%; background: #3B82F6; border-radius: 2px; }
+
+  .toolbar-mini {
+    display: flex; justify-content: center; gap: 4px; margin-top: 6px;
+  }
+  .tool-mini {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: #FDF2F8; border: 1px solid #FBCFE8;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 14px; gap: 1px;
+  }
+  .tool-mini .lbl { font-size: 6px; color: #BE185D; font-weight: 600; }
+
+  /* Pet card */
+  .pet-card {
+    margin: 6px 10px; display: flex; align-items: center; gap: 8px;
+    background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px;
+    padding: 8px 10px;
+  }
+  .pet-card .emoji { font-size: 24px; }
+  .pet-card .name { font-size: 11px; font-weight: 700; color: #92400E; }
+  .pet-card .mood { font-size: 9px; color: #A16207; }
+  .mood-bar { height: 4px; width: 50px; background: #E5E7EB; border-radius: 2px; margin-top: 2px; overflow: hidden; }
+  .mood-fill { height: 100%; width: 75%; background: #4ADE80; border-radius: 2px; }
+
+  .scroll-hint { text-align: center; font-size: 8px; color: #D1D5DB; padding: 4px; }
+
+  /* Zone tabs */
+  .zone-tabs {
+    display: flex; background: #F9FAFB; border-bottom: 1px solid #E5E7EB;
+  }
+  .zone-tab {
+    flex: 1; text-align: center; padding: 5px 0;
+    font-size: 10px; color: #9CA3AF; font-weight: 600;
+  }
+  .zone-tab.active { color: #EC4899; border-bottom: 2px solid #EC4899; }
+
+  /* Inventaire mini */
+  .inv-row {
+    display: flex; gap: 4px; padding: 4px 10px;
+  }
+  .inv-item {
+    flex: 1; text-align: center; background: #F0FDF4; border-radius: 6px; padding: 4px 2px;
+  }
+  .inv-item .e { font-size: 14px; }
+  .inv-item .q { font-size: 9px; font-weight: 600; color: #065F46; }
+</style>
+</head>
+<body>
+
+<!-- ═══════ A — Arbre miniature + ferme etendue ═══════ -->
+<div class="column">
+  <h2>
+    A — Arbre miniature dans un coin
+    <em>L'arbre retrecit et se place en haut a gauche. La ferme occupe tout le reste. Le pet se balade sur la grille. Profil + toolbar en dessous.</em>
+  </h2>
+  <div class="phone">
+    <div class="diorama" style="height:340px;">
+      <div class="diorama-ground" style="background:#5A8C32;"></div>
+
+      <!-- Herbe texture -->
+      <div class="grass" style="left:5%;top:15%;">~</div>
+      <div class="grass" style="left:25%;top:55%;">~</div>
+      <div class="grass" style="left:60%;top:70%;">~</div>
+      <div class="grass" style="left:80%;top:25%;">~</div>
+      <div class="grass" style="left:45%;top:85%;">~</div>
+
+      <!-- Arbre petit, coin haut-gauche -->
+      <div class="tree-elem" style="left:4%; top:6%; font-size:36px; opacity:0.9;">🌳</div>
+
+      <!-- 3x5 parcelles (centrees, occupent plus d'espace) -->
+      <!-- Rangee 1 -->
+      <div class="plot" style="left:22%; top:8%;">🥕</div>
+      <div class="plot" style="left:35%; top:8%;">🍅</div>
+      <div class="plot" style="left:48%; top:8%;">🌾</div>
+      <div class="plot" style="left:61%; top:8%;">🥔</div>
+      <div class="plot" style="left:74%; top:8%;">🌽</div>
+      <!-- Rangee 2 -->
+      <div class="plot" style="left:22%; top:22%;">🫜</div>
+      <div class="plot" style="left:35%; top:22%;">🥒</div>
+      <div class="plot" style="left:48%; top:22%;">🥬</div>
+      <div class="plot empty" style="left:61%; top:22%;"></div>
+      <div class="plot empty" style="left:74%; top:22%;"></div>
+      <!-- Rangee 3 -->
+      <div class="plot empty" style="left:22%; top:36%;"></div>
+      <div class="plot empty" style="left:35%; top:36%;"></div>
+      <div class="plot empty" style="left:48%; top:36%;"></div>
+      <div class="plot empty" style="left:61%; top:36%;"></div>
+      <div class="plot empty" style="left:74%; top:36%;"></div>
+
+      <!-- Batiments a droite, plus bas -->
+      <div class="bldg" style="right:6%; top:50%;">🐔</div>
+      <div class="bldg" style="right:6%; top:66%;">🏚️</div>
+      <div class="bldg" style="right:6%; top:82%;">⚙️</div>
+
+      <!-- Pet qui se balade -->
+      <div class="pet" style="left:15%; top:60%;">🐕</div>
+      <div class="pet-bubble" style="left:12%; top:53%;">😊</div>
+
+      <!-- Decos -->
+      <div style="position:absolute; left:6%; bottom:10%; font-size:14px;">🌾</div>
+      <div style="position:absolute; left:38%; bottom:6%; font-size:14px;">🪹</div>
+
+      <!-- HUD -->
+      <div class="hud">
+        <span>🌿 5 en cours</span>
+        <span>🔥 5j</span>
+        <span>320 🍃</span>
+      </div>
+    </div>
+
+    <div class="info-card" style="margin-top:4px;">
+      <div class="profile-row">
+        <span class="avatar-sm">🐼</span>
+        <div style="flex:1;">
+          <div class="name-sm">Lucas <span class="level-sm">Nv. 4 &middot; Pousse</span></div>
+        </div>
+      </div>
+      <div class="xp-mini"><div class="xp-mini-fill"></div></div>
+      <div class="toolbar-mini">
+        <div class="tool-mini">🛒<span class="lbl">Shop</span></div>
+        <div class="tool-mini">🔨<span class="lbl">Craft</span></div>
+        <div class="tool-mini">🔬<span class="lbl">Tech</span></div>
+        <div class="tool-mini">🎨<span class="lbl">Deco</span></div>
+        <div class="tool-mini">🏅<span class="lbl">Badge</span></div>
+      </div>
+    </div>
+
+    <div class="scroll-hint">&darr; Compagnon, evolutions, objectif</div>
+
+    <div class="tab-bar">
+      <div class="tab-item"><div class="icon">🏠</div>Home</div>
+      <div class="tab-item"><div class="icon">📋</div>T&acirc;ches</div>
+      <div class="tab-item"><div class="icon">📓</div>Journal</div>
+      <div class="tab-item"><div class="icon">📅</div>Cal.</div>
+      <div class="tab-item"><div class="icon">📦</div>Menu</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ B — Arbre integre au centre, ferme autour ═══════ -->
+<div class="column">
+  <h2>
+    B — Arbre au centre, ferme autour
+    <em>L'arbre reste au milieu mais plus petit. Les parcelles l'entourent. Les batiments en bas. Le pet tourne autour de l'arbre. Tout est dans le diorama.</em>
+  </h2>
+  <div class="phone">
+    <div class="diorama" style="height:340px;">
+      <div class="diorama-ground" style="background:#5A8C32;"></div>
+
+      <div class="grass" style="left:8%;top:20%;">~</div>
+      <div class="grass" style="left:70%;top:35%;">~</div>
+      <div class="grass" style="left:20%;top:80%;">~</div>
+
+      <!-- Parcelles en arc autour de l'arbre -->
+      <!-- Arc haut -->
+      <div class="plot" style="left:16%; top:6%;">🥕</div>
+      <div class="plot" style="left:32%; top:4%;">🍅</div>
+      <div class="plot" style="left:48%; top:3%;">🌾</div>
+      <div class="plot" style="left:64%; top:4%;">🥔</div>
+      <div class="plot" style="left:80%; top:6%;">🌽</div>
+      <!-- Arc milieu-gauche -->
+      <div class="plot" style="left:6%; top:22%;">🫜</div>
+      <div class="plot" style="left:6%; top:38%;">🥒</div>
+      <!-- Arc milieu-droit -->
+      <div class="plot" style="right:6%; top:22%;">🥬</div>
+      <div class="plot empty" style="right:6%; top:38%;"></div>
+
+      <!-- Arbre au centre (moyen) -->
+      <div class="tree-elem" style="left:50%; top:28%; transform:translateX(-50%); font-size:48px;">🌳</div>
+
+      <!-- Decos pres de l'arbre -->
+      <div style="position:absolute; left:30%; top:42%; font-size:12px;">🌸</div>
+      <div style="position:absolute; right:28%; top:45%; font-size:12px;">🐦</div>
+
+      <!-- Pet qui tourne -->
+      <div class="pet" style="left:32%; top:55%;">🐕</div>
+      <div class="pet-bubble" style="left:30%; top:48%;">😊</div>
+
+      <!-- Batiments en bas -->
+      <div class="bldg" style="left:12%; bottom:10%;">🐔</div>
+      <div class="bldg" style="left:42%; bottom:8%;">🏚️</div>
+      <div class="bldg" style="left:72%; bottom:10%;">⚙️</div>
+
+      <div class="hud">
+        <span>🌿 5</span>
+        <span>🔥 5j</span>
+        <span>320 🍃</span>
+      </div>
+    </div>
+
+    <div class="info-card" style="margin-top:4px;">
+      <div class="profile-row">
+        <span class="avatar-sm">🐼</span>
+        <div style="flex:1;">
+          <div class="name-sm">Lucas <span class="level-sm">Nv. 4 &middot; Pousse</span></div>
+        </div>
+      </div>
+      <div class="xp-mini"><div class="xp-mini-fill"></div></div>
+      <div class="toolbar-mini">
+        <div class="tool-mini">🛒<span class="lbl">Shop</span></div>
+        <div class="tool-mini">🔨<span class="lbl">Craft</span></div>
+        <div class="tool-mini">🔬<span class="lbl">Tech</span></div>
+        <div class="tool-mini">🎨<span class="lbl">Deco</span></div>
+        <div class="tool-mini">🏅<span class="lbl">Badge</span></div>
+      </div>
+    </div>
+
+    <div class="pet-card">
+      <div class="emoji">🐕</div>
+      <div style="flex:1;">
+        <div class="name">Cookie</div>
+        <div class="mood">Content !</div>
+        <div class="mood-bar"><div class="mood-fill"></div></div>
+      </div>
+      <div style="font-size:18px;">😊</div>
+    </div>
+
+    <div class="tab-bar">
+      <div class="tab-item"><div class="icon">🏠</div>Home</div>
+      <div class="tab-item"><div class="icon">📋</div>T&acirc;ches</div>
+      <div class="tab-item"><div class="icon">📓</div>Journal</div>
+      <div class="tab-item"><div class="icon">📅</div>Cal.</div>
+      <div class="tab-item"><div class="icon">📦</div>Menu</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ C — Onglets Ferme / Arbre / Pet ═══════ -->
+<div class="column">
+  <h2>
+    C — Zones par onglets
+    <em>Onglets en haut : Ferme (diorama full), Arbre (arbre grand + decos), Pet (compagnon). Chaque zone a tout l'espace. Inventaire visible.</em>
+  </h2>
+  <div class="phone">
+    <!-- Header compact -->
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:#F9FAFB; border-bottom:1px solid #E5E7EB;">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span style="font-size:16px;">🐼</span>
+        <span style="font-size:11px; font-weight:700; color:#1F2937;">Lucas</span>
+        <span style="font-size:9px; color:#EC4899; font-weight:600;">Nv.4</span>
+      </div>
+      <div style="display:flex; gap:8px; font-size:10px; color:#6B7280;">
+        <span>320 🍃</span>
+        <span>🔥 5</span>
+      </div>
+    </div>
+
+    <div class="zone-tabs">
+      <div class="zone-tab active">🌿 Ferme</div>
+      <div class="zone-tab">🌳 Arbre</div>
+      <div class="zone-tab">🐕 Cookie</div>
+    </div>
+
+    <div class="diorama" style="height:280px;">
+      <div class="diorama-ground" style="background:#5A8C32;"></div>
+
+      <div class="grass" style="left:10%;top:30%;">~</div>
+      <div class="grass" style="left:55%;top:65%;">~</div>
+      <div class="grass" style="left:80%;top:45%;">~</div>
+
+      <!-- Pas d'arbre ici — il est dans son onglet -->
+
+      <!-- Parcelles (grille plus aeree, plus grosses) -->
+      <div class="plot" style="width:32px;height:32px;font-size:18px; left:8%; top:6%;">🥕</div>
+      <div class="plot" style="width:32px;height:32px;font-size:18px; left:24%; top:6%;">🍅</div>
+      <div class="plot" style="width:32px;height:32px;font-size:18px; left:40%; top:6%;">🌾</div>
+      <div class="plot" style="width:32px;height:32px;font-size:18px; left:56%; top:6%;">🥔</div>
+      <div class="plot" style="width:32px;height:32px;font-size:18px; left:72%; top:6%;">🌽</div>
+
+      <div class="plot" style="width:32px;height:32px;font-size:18px; left:8%; top:24%;">🫜</div>
+      <div class="plot" style="width:32px;height:32px;font-size:18px; left:24%; top:24%;">🥒</div>
+      <div class="plot" style="width:32px;height:32px;font-size:18px; left:40%; top:24%;">🥬</div>
+      <div class="plot empty" style="width:32px;height:32px; left:56%; top:24%;"></div>
+      <div class="plot empty" style="width:32px;height:32px; left:72%; top:24%;"></div>
+
+      <!-- Batiments plus gros, en bas -->
+      <div class="bldg" style="width:42px;height:42px;font-size:26px; left:10%; bottom:12%;">🐔</div>
+      <div class="bldg" style="width:42px;height:42px;font-size:26px; left:38%; bottom:10%;">🏚️</div>
+      <div class="bldg" style="width:42px;height:42px;font-size:26px; left:66%; bottom:12%;">⚙️</div>
+
+      <!-- Pet -->
+      <div class="pet" style="left:50%; top:48%;">🐕</div>
+
+      <div class="hud">
+        <span>🌿 5 en cours</span>
+        <span>🎯 3/15</span>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div style="display:flex; justify-content:center; gap:4px; padding:4px 10px; background:#FAFAFA; border-bottom:1px solid #E5E7EB;">
+      <div class="tool-mini">🛒<span class="lbl">Shop</span></div>
+      <div class="tool-mini">🔨<span class="lbl">Craft</span></div>
+      <div class="tool-mini">🔬<span class="lbl">Tech</span></div>
+      <div class="tool-mini">🎨<span class="lbl">Deco</span></div>
+      <div class="tool-mini">🏅<span class="lbl">Badge</span></div>
+    </div>
+
+    <!-- Inventaire rapide -->
+    <div class="inv-row">
+      <div class="inv-item"><div class="e">🥚</div><div class="q">x3</div></div>
+      <div class="inv-item"><div class="e">🥛</div><div class="q">x2</div></div>
+      <div class="inv-item"><div class="e">🌾</div><div class="q">x1</div></div>
+      <div class="inv-item" style="background:#FFFBEB;"><div class="e">🍅</div><div class="q">x4</div></div>
+      <div class="inv-item" style="background:#FFFBEB;"><div class="e">🥕</div><div class="q">x2</div></div>
+    </div>
+
+    <div class="tab-bar">
+      <div class="tab-item"><div class="icon">🏠</div>Home</div>
+      <div class="tab-item"><div class="icon">📋</div>T&acirc;ches</div>
+      <div class="tab-item"><div class="icon">📓</div>Journal</div>
+      <div class="tab-item"><div class="icon">📅</div>Cal.</div>
+      <div class="tab-item"><div class="icon">📦</div>Menu</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

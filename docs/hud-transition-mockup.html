@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FamilyFlow — HUD transition mockup</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0a0a14;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 28px;
+    padding: 40px 20px 60px;
+    min-height: 100vh;
+    flex-wrap: wrap;
+  }
+
+  .col { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+
+  .label {
+    text-align: center;
+    color: #6b7280;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+
+  /* ── Phone ── */
+  .phone {
+    width: 340px;
+    height: 720px;
+    border-radius: 40px;
+    border: 7px solid #1f2937;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.7);
+    display: flex;
+    flex-direction: column;
+    background: #111827;
+  }
+  .phone::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 90px; height: 24px;
+    background: #1f2937;
+    border-radius: 0 0 14px 14px;
+    z-index: 20;
+  }
+
+  /* ── Status bar ── */
+  .sb {
+    padding: 10px 16px 4px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 11px; font-weight: 700; color: white;
+    position: relative; z-index: 5;
+    flex-shrink: 0;
+  }
+  .sb-r { display: flex; gap: 5px; align-items: center; }
+
+  /* ── Pixel world (diorama simulé) ── */
+  .world {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #2d5a1e;
+  }
+
+  /* Grille pixel art simulée */
+  .world-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.04) 0px, rgba(0,0,0,0.04) 16px, transparent 16px, transparent 32px),
+      repeating-linear-gradient(90deg, rgba(0,0,0,0.04) 0px, rgba(0,0,0,0.04) 16px, transparent 16px, transparent 32px),
+      linear-gradient(180deg, #3a7a28 0%, #2d6020 40%, #4a8c2a 60%, #3d7525 100%);
+  }
+  /* Chemin en terre */
+  .world-path {
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    top: 30%;
+    background: repeating-linear-gradient(180deg, #8b6914 0, #8b6914 14px, #7a5c10 14px, #7a5c10 28px);
+    opacity: 0.9;
+  }
+  /* Eau */
+  .world-water {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 80px; height: 90px;
+    background: linear-gradient(180deg, #2a6eb0, #1a5a9a);
+    opacity: 0.85;
+  }
+  /* Bâtiment */
+  .world-building {
+    position: absolute;
+    top: 18%; right: 14%;
+    font-size: 38px;
+    filter: drop-shadow(2px 3px 4px rgba(0,0,0,0.5));
+  }
+  .world-tree1 { position: absolute; top: 25%; left: 8%; font-size: 30px; }
+  .world-tree2 { position: absolute; top: 10%; left: 22%; font-size: 26px; }
+  .world-char  { position: absolute; top: 38%; left: 28%; font-size: 26px; }
+  .world-scarecrow { position: absolute; top: 20%; right: 32%; font-size: 28px; filter: drop-shadow(1px 2px 3px rgba(0,0,0,0.4)); }
+  /* Crop plots */
+  .crop { position: absolute; font-size: 20px; background: rgba(0,0,0,0.25); border-radius: 4px; padding: 4px; }
+
+  /* ── Bottom panel ── */
+  .bottom-panel {
+    flex-shrink: 0;
+    padding: 0 12px 16px;
+    background: #111827;
+  }
+
+  /* ── Cards communes ── */
+  .action-card {
+    background: #1e2a3a;
+    border-radius: 16px;
+    border: 1px solid #2d3f55;
+    padding: 10px 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+    margin-bottom: 7px;
+  }
+  .action-row {
+    display: flex; flex-direction: row;
+    justify-content: space-between;
+  }
+  .action-item {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; gap: 3px; padding: 5px 2px;
+  }
+  .action-icon { font-size: 20px; line-height: 24px; }
+  .action-lbl { font-size: 9px; font-weight: 600; color: #6b7280; }
+
+  .prog-card {
+    background: #1e2a3a;
+    border-radius: 16px;
+    border: 1px solid #2d3f55;
+    padding: 12px 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+  }
+  .prog-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .prog-title { font-size: 13px; font-weight: 700; color: #e5e7eb; }
+  .prog-xp { font-size: 11px; color: #6b7280; }
+  .xp-bar { height: 7px; border-radius: 4px; background: #2d3f55; overflow: hidden; margin-bottom: 7px; }
+  .xp-fill { height: 100%; background: #3b9bd5; border-radius: 4px; width: 24%; }
+  .evo-line { display: flex; align-items: center; gap: 6px; }
+  .evo-txt { font-size: 11px; color: #9ca3af; flex-shrink: 0; }
+  .evo-bar { flex: 1; height: 3px; border-radius: 2px; background: #2d3f55; overflow: hidden; }
+  .evo-fill { height: 100%; background: #f97316; border-radius: 2px; width: 80%; }
+  .evo-hint { font-size: 11px; color: #4b5563; flex-shrink: 0; }
+
+  /* ── Annotation ── */
+  .note {
+    background: rgba(59,130,246,0.08);
+    border: 1px solid rgba(59,130,246,0.25);
+    border-radius: 10px;
+    padding: 10px 13px;
+    font-size: 11px;
+    color: #93c5fd;
+    line-height: 1.65;
+    max-width: 340px;
+  }
+  .note strong { color: #e5e7eb; display: block; font-size: 12px; margin-bottom: 5px; }
+  .pro { color: #4ade80; }
+  .con { color: #f87171; }
+  .neu { color: #fbbf24; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ -->
+<!-- AVANT              -->
+<!-- ═══════════════════ -->
+<div class="col">
+  <div class="label">❌ Avant — HUD fond opaque</div>
+  <div class="phone">
+    <!-- Status bar opaque -->
+    <div class="sb" style="background:#000;">
+      <span>23:44</span><div class="sb-r">📶🔋</div>
+    </div>
+    <!-- HUD fond noir plein -->
+    <div style="background:#000; padding:5px 14px; display:flex; align-items:center; gap:14px; font-size:12px; font-weight:700; color:white; flex-shrink:0;">
+      <span>🍃 507</span><span>🔥 2</span><span>🍃 3</span>
+      <span style="margin-left:auto">🌸 Printemps</span>
+    </div>
+    <!-- Monde pixel -->
+    <div class="world">
+      <div class="world-bg"></div>
+      <div class="world-path"></div>
+      <div class="world-water"></div>
+      <div class="world-building">🏠</div>
+      <div class="world-tree1">🌳</div>
+      <div class="world-tree2">🌲</div>
+      <div class="world-char">🧑‍🌾</div>
+      <div class="world-scarecrow">🧟</div>
+      <div class="crop" style="top:15%;left:18%">🌱</div>
+      <div class="crop" style="top:15%;left:38%">🌿</div>
+    </div>
+    <!-- Bottom panel -->
+    <div class="bottom-panel" style="margin-top:-22px; position:relative; z-index:10;">
+      <div class="action-card" style="box-shadow:0 -2px 16px rgba(0,0,0,0.35)">
+        <div class="action-row">
+          <div class="action-item"><span class="action-icon">🛒</span><span class="action-lbl">Boutique</span></div>
+          <div class="action-item"><span class="action-icon">🔨</span><span class="action-lbl">Atelier</span></div>
+          <div class="action-item"><span class="action-icon">🔬</span><span class="action-lbl">Techs</span></div>
+          <div class="action-item"><span class="action-icon">🎨</span><span class="action-lbl">Décorer</span></div>
+          <div class="action-item"><span class="action-icon">🏅</span><span class="action-lbl">Badges</span></div>
+          <div class="action-item"><span class="action-icon">🐾</span><span class="action-lbl">Ted</span></div>
+        </div>
+      </div>
+      <div class="prog-card">
+        <div class="prog-header"><span class="prog-title">🌿 Pousse · niveau 5</span><span class="prog-xp">121/500 XP</span></div>
+        <div class="xp-bar"><div class="xp-fill"></div></div>
+        <div class="evo-line"><span class="evo-txt">→ Arbuste</span><div class="evo-bar"><div class="evo-fill"></div></div><span class="evo-hint">1 niveau</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="note">
+    <strong>Problème</strong>
+    <span class="con">· Fond noir opaque = mur entre HUD et monde</span><br>
+    <span class="con">· Coupure visuelle dure — pas immersif</span><br>
+    <span class="con">· Le jeu "commence" trop bas</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ -->
+<!-- A — HUD flottant semi-transparent  -->
+<!-- ═══════════════════════════════════ -->
+<div class="col">
+  <div class="label">A — HUD flottant (transparent)</div>
+  <div class="phone" style="background:#2d5a1e;">
+    <!-- Status bar transparente flottante -->
+    <div class="sb" style="position:absolute; top:0; left:0; right:0; background:linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0) 100%); z-index:10; padding-bottom:28px;">
+      <span>23:44</span><div class="sb-r">📶🔋</div>
+    </div>
+    <!-- HUD flottant absolument positionné -->
+    <div style="position:absolute; top:38px; left:0; right:0; z-index:10;
+                background:rgba(0,0,0,0.45); backdrop-filter:blur(4px);
+                padding:6px 14px;
+                display:flex; align-items:center; gap:14px;
+                font-size:12px; font-weight:700; color:white;">
+      <span>🍃 507</span><span>🔥 2</span><span>🍃 3</span>
+      <span style="margin-left:auto">🌸 Printemps</span>
+    </div>
+    <!-- Monde pixel FULL HEIGHT -->
+    <div class="world" style="flex:1; position:relative;">
+      <div class="world-bg"></div>
+      <div class="world-path"></div>
+      <div class="world-water"></div>
+      <div class="world-building">🏠</div>
+      <div class="world-tree1">🌳</div>
+      <div class="world-tree2">🌲</div>
+      <div class="world-char">🧑‍🌾</div>
+      <div class="world-scarecrow">🧟</div>
+      <div class="crop" style="top:15%;left:18%">🌱</div>
+      <div class="crop" style="top:15%;left:38%">🌿</div>
+    </div>
+    <!-- Bottom panel -->
+    <div class="bottom-panel" style="margin-top:-22px; position:relative; z-index:10;">
+      <div class="action-card" style="box-shadow:0 -2px 16px rgba(0,0,0,0.35)">
+        <div class="action-row">
+          <div class="action-item"><span class="action-icon">🛒</span><span class="action-lbl">Boutique</span></div>
+          <div class="action-item"><span class="action-icon">🔨</span><span class="action-lbl">Atelier</span></div>
+          <div class="action-item"><span class="action-icon">🔬</span><span class="action-lbl">Techs</span></div>
+          <div class="action-item"><span class="action-icon">🎨</span><span class="action-lbl">Décorer</span></div>
+          <div class="action-item"><span class="action-icon">🏅</span><span class="action-lbl">Badges</span></div>
+          <div class="action-item"><span class="action-icon">🐾</span><span class="action-lbl">Ted</span></div>
+        </div>
+      </div>
+      <div class="prog-card">
+        <div class="prog-header"><span class="prog-title">🌿 Pousse · niveau 5</span><span class="prog-xp">121/500 XP</span></div>
+        <div class="xp-bar"><div class="xp-fill"></div></div>
+        <div class="evo-line"><span class="evo-txt">→ Arbuste</span><div class="evo-bar"><div class="evo-fill"></div></div><span class="evo-hint">1 niveau</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="note">
+    <strong>A — HUD flottant</strong>
+    <span class="pro">· Le monde occupe tout l'écran dès le haut</span><br>
+    <span class="pro">· HUD semi-transparent — pas de mur visuel</span><br>
+    <span class="pro">· Immersif — style Zelda/Stardew overlay</span><br>
+    <span class="neu">· backdrop-filter blur = léger perf cost iOS</span><br>
+    <span class="neu">· Lisibilité texte HUD dépend du fond pixel</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ -->
+<!-- B — Coins arrondis bas HUD    -->
+<!-- ══════════════════════════════ -->
+<div class="col">
+  <div class="label">B — Coins arrondis bas HUD</div>
+  <div class="phone">
+    <!-- Status bar + HUD regroupés, coins arrondis bas -->
+    <div style="background:#111; border-bottom-left-radius:24px; border-bottom-right-radius:24px;
+                box-shadow: 0 6px 18px rgba(0,0,0,0.55);
+                position:relative; z-index:5; flex-shrink:0;">
+      <div class="sb">
+        <span>23:44</span><div class="sb-r">📶🔋</div>
+      </div>
+      <div style="padding:5px 14px 10px; display:flex; align-items:center; gap:14px; font-size:12px; font-weight:700; color:white;">
+        <span>🍃 507</span><span>🔥 2</span><span>🍃 3</span>
+        <span style="margin-left:auto">🌸 Printemps</span>
+      </div>
+    </div>
+    <!-- Monde pixel -->
+    <div class="world" style="flex:1;">
+      <div class="world-bg"></div>
+      <div class="world-path"></div>
+      <div class="world-water"></div>
+      <div class="world-building">🏠</div>
+      <div class="world-tree1">🌳</div>
+      <div class="world-tree2">🌲</div>
+      <div class="world-char">🧑‍🌾</div>
+      <div class="world-scarecrow">🧟</div>
+      <div class="crop" style="top:15%;left:18%">🌱</div>
+      <div class="crop" style="top:15%;left:38%">🌿</div>
+    </div>
+    <!-- Bottom panel -->
+    <div class="bottom-panel" style="margin-top:-22px; position:relative; z-index:10;">
+      <div class="action-card" style="box-shadow:0 -2px 16px rgba(0,0,0,0.35)">
+        <div class="action-row">
+          <div class="action-item"><span class="action-icon">🛒</span><span class="action-lbl">Boutique</span></div>
+          <div class="action-item"><span class="action-icon">🔨</span><span class="action-lbl">Atelier</span></div>
+          <div class="action-item"><span class="action-icon">🔬</span><span class="action-lbl">Techs</span></div>
+          <div class="action-item"><span class="action-icon">🎨</span><span class="action-lbl">Décorer</span></div>
+          <div class="action-item"><span class="action-icon">🏅</span><span class="action-lbl">Badges</span></div>
+          <div class="action-item"><span class="action-icon">🐾</span><span class="action-lbl">Ted</span></div>
+        </div>
+      </div>
+      <div class="prog-card">
+        <div class="prog-header"><span class="prog-title">🌿 Pousse · niveau 5</span><span class="prog-xp">121/500 XP</span></div>
+        <div class="xp-bar"><div class="xp-fill"></div></div>
+        <div class="evo-line"><span class="evo-txt">→ Arbuste</span><div class="evo-bar"><div class="evo-fill"></div></div><span class="evo-hint">1 niveau</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="note">
+    <strong>B — Coins arrondis bas</strong>
+    <span class="pro">· HUD devient une "capsule" UI encadrée</span><br>
+    <span class="pro">· Symétrie avec coins arrondis bas du diorama</span><br>
+    <span class="pro">· Simple — 2 lignes, zéro perf cost</span><br>
+    <span class="pro">· Lisibilité parfaite (fond opaque conservé)</span><br>
+    <span class="neu">· Transition encore présente mais adoucie</span>
+  </div>
+</div>
+
+</body>
+</html>
