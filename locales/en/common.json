@@ -4000,6 +4000,13 @@
     "craftReussi": "{{emoji}} {{name}} crafted!",
     "venteReussie": "+{{amount}} 🍃",
     "valeurVente": "Sell: {{amount}} 🍃",
+    "filtreToutes": "All",
+    "filtreDisponibles": "Available ({{count}})",
+    "sectionLocked": "Unlocks at {{stage}} stage",
+    "detailTitle": "Details",
+    "hintPlant": "Plant {{name}} on a plot",
+    "hintBuilding": "Produced by {{name}}",
+    "niveauRequis": "lvl {{level}}+",
     "recipe": {
       "soupe": "Garden Soup",
       "bouquet": "Country Bouquet",

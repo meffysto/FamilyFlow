@@ -4000,6 +4000,13 @@
     "craftReussi": "{{emoji}} {{name}} crafté !",
     "venteReussie": "+{{amount}} 🍃",
     "valeurVente": "Vente : {{amount}} 🍃",
+    "filtreToutes": "Tout",
+    "filtreDisponibles": "Disponibles ({{count}})",
+    "sectionLocked": "Débloqué au stade {{stage}}",
+    "detailTitle": "Détails",
+    "hintPlant": "Plante {{name}} sur une parcelle",
+    "hintBuilding": "Produit par {{name}}",
+    "niveauRequis": "niv. {{level}}+",
     "recipe": {
       "soupe": "Soupe du potager",
       "bouquet": "Bouquet champêtre",

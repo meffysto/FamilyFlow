@@ -2,7 +2,8 @@
  * CraftSheet.tsx — Atelier de craft (bottom sheet)
  *
  * 3 onglets : Recettes (catalogue), Inventaire (recoltes brutes), Mes creations.
- * Permet de crafter des items a partir d'ingredients, et de vendre items ou recoltes.
+ * Catalogue : grille 2 colonnes groupee par stade d'arbre, avec filtre Tout/Disponibles,
+ * sections verrouillee/grisees, et mini-modal detail au tap.
  */
 
 import React, { useState, useMemo, useCallback } from 'react';
@@ -35,6 +36,9 @@ import {
 import {
   CROP_CATALOG,
   BUILDING_CATALOG,
+  TREE_STAGES,
+  TREE_STAGE_ORDER,
+  type TreeStage,
   type CraftRecipe,
   type CraftedItem,
   type HarvestInventory,
@@ -47,6 +51,7 @@ import { Shadows } from '../../constants/shadows';
 // ── Types ──────────────────────────────────────
 
 type CraftTab = 'catalogue' | 'inventaire' | 'creations';
+type FilterMode = 'all' | 'craftable';
 
 interface CraftSheetProps {
   visible: boolean;
@@ -56,6 +61,7 @@ interface CraftSheetProps {
   harvestInventory: HarvestInventory;
   farmInventory: FarmInventory;
   craftedItems: CraftedItem[];
+  treeStage: TreeStage;
   onCraft: (recipeId: string) => Promise<CraftedItem | null>;
   onSellHarvest: (cropId: string) => Promise<number>;
   onSellCrafted: (recipeId: string) => Promise<number>;
@@ -70,6 +76,17 @@ const RESOURCE_EMOJI: Record<string, string> = {
   miel: '🍯',
 };
 
+// ── Emojis par stade ─────────────────────────────────
+
+const STAGE_EMOJI: Record<TreeStage, string> = {
+  graine:     '🌱',
+  pousse:     '🌿',
+  arbuste:    '🌳',
+  arbre:      '🏔️',
+  majestueux: '👑',
+  legendaire: '⭐',
+};
+
 // ── Composant principal ──────────────────────────────
 
 export function CraftSheet({
@@ -80,6 +97,7 @@ export function CraftSheet({
   harvestInventory,
   farmInventory,
   craftedItems,
+  treeStage,
   onCraft,
   onSellHarvest,
   onSellCrafted,
@@ -90,6 +108,8 @@ export function CraftSheet({
   const [tab, setTab] = useState<CraftTab>('catalogue');
   const [crafting, setCrafting] = useState<string | null>(null);
   const [selling, setSelling] = useState<string | null>(null);
+  const [filterMode, setFilterMode] = useState<FilterMode>('all');
+  const [selectedRecipe, setSelectedRecipe] = useState<CraftRecipe | null>(null);
 
   // Animation bounce sur le bouton craft
   const craftBtnScale = useSharedValue(1);
@@ -104,7 +124,6 @@ export function CraftSheet({
     try {
       const result = await onCraft(recipe.id);
       if (result) {
-        // Petit bounce sur le bouton
         craftBtnScale.value = withSequence(
           withSpring(0.85, { damping: 8, stiffness: 300 }),
           withSpring(1, { damping: 6, stiffness: 200 }),
@@ -152,131 +171,317 @@ export function CraftSheet({
     setSelling(null);
   }, [onSellCrafted, showToast, t]);
 
-  // ── Tab : Catalogue (Recettes) ────────────────
+  // ── Compteur recettes craftables ──────────────
 
-  const sortedRecipes = useMemo(() => {
-    return [...CRAFT_RECIPES].sort((a, b) => {
-      const aCraftable = canCraft(a, harvestInventory, farmInventory) ? 1 : 0;
-      const bCraftable = canCraft(b, harvestInventory, farmInventory) ? 1 : 0;
-      if (bCraftable !== aCraftable) return bCraftable - aCraftable;
-      return a.sellValue - b.sellValue;
-    });
+  const craftableCount = useMemo(() => {
+    return CRAFT_RECIPES.filter(r => canCraft(r, harvestInventory, farmInventory)).length;
   }, [harvestInventory, farmInventory]);
 
+  // ── Groupement par stade ──────────────────────
+
+  const groupedByStage = useMemo(() => {
+    const currentStageIdx = TREE_STAGE_ORDER.indexOf(treeStage);
+    return TREE_STAGE_ORDER.map((stage) => {
+      const stageInfo = TREE_STAGES.find(s => s.stage === stage)!;
+      const stageIdx = TREE_STAGE_ORDER.indexOf(stage);
+      const locked = stageIdx > currentStageIdx;
+      const allStageRecipes = CRAFT_RECIPES.filter(r => r.minTreeStage === stage);
+      if (allStageRecipes.length === 0) return null;
+      const recipes = filterMode === 'craftable' && !locked
+        ? allStageRecipes.filter(r => canCraft(r, harvestInventory, farmInventory))
+        : allStageRecipes;
+      // Toujours inclure les stades qui ont des recettes (meme si filtre vide)
+      return { stage, stageInfo, recipes, locked, totalCount: allStageRecipes.length };
+    }).filter(Boolean) as Array<{
+      stage: TreeStage;
+      stageInfo: typeof TREE_STAGES[0];
+      recipes: CraftRecipe[];
+      locked: boolean;
+      totalCount: number;
+    }>;
+  }, [treeStage, filterMode, harvestInventory, farmInventory]);
+
+  // ── Tab : Catalogue (Recettes) ────────────────
+
   const renderCatalogue = () => (
-    <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
-      {sortedRecipes.length === 0 && (
-        <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-          {t('craft.aucuneRecette')}
-        </Text>
-      )}
-      {sortedRecipes.map((recipe, idx) => {
-        const craftable = canCraft(recipe, harvestInventory, farmInventory);
-        return (
-          <Animated.View key={recipe.id} entering={FadeInDown.delay(idx * 60).duration(300)}>
-              <View
-                style={[
-                  styles.recipeCard,
-                  { backgroundColor: colors.card, borderColor: craftable ? colors.success : colors.borderLight },
-                  craftable && { borderWidth: 1.5 },
-                  Shadows.sm,
-                ]}
-              >
-                {/* Header recette */}
-                <View style={styles.recipeHeader}>
-                  <Text style={styles.recipeEmoji}>{recipe.emoji}</Text>
-                  <View style={styles.recipeInfo}>
-                    <Text style={[styles.recipeName, { color: colors.text }]}>
-                      {t(recipe.labelKey)}
-                    </Text>
-                    <Text style={[styles.recipeSellValue, { color: colors.textSub }]}>
-                      {t('craft.valeurVente', { amount: recipe.sellValue })}
-                      {recipe.xpBonus > 0 ? `  +${recipe.xpBonus} XP` : ''}
-                    </Text>
-                  </View>
-                </View>
+    <View style={{ flex: 1 }}>
+      {/* Chips filtre */}
+      <View style={styles.catChipRow}>
+        <TouchableOpacity
+          style={[
+            styles.catChip,
+            filterMode === 'all'
+              ? { backgroundColor: primary }
+              : { backgroundColor: tint },
+          ]}
+          onPress={() => setFilterMode('all')}
+          activeOpacity={0.7}
+        >
+          <Text style={[
+            styles.catChipText,
+            { color: filterMode === 'all' ? colors.onPrimary : primary },
+          ]}>
+            {t('craft.filtreToutes')}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.catChip,
+            filterMode === 'craftable'
+              ? { backgroundColor: primary }
+              : { backgroundColor: tint },
+          ]}
+          onPress={() => setFilterMode('craftable')}
+          activeOpacity={0.7}
+        >
+          <Text style={[
+            styles.catChipText,
+            { color: filterMode === 'craftable' ? colors.onPrimary : primary },
+          ]}>
+            {t('craft.filtreDisponibles', { count: craftableCount })}
+          </Text>
+        </TouchableOpacity>
+      </View>
 
-                {/* Liste ingredients */}
-                <View style={styles.ingredientsList}>
-                  <Text style={[styles.ingredientsTitle, { color: colors.textMuted }]}>
-                    {t('craft.ingredients')}
-                  </Text>
-                  {recipe.ingredients.map((ing) => {
-                    const have = ing.source === 'crop'
-                      ? (harvestInventory[ing.itemId] ?? 0)
-                      : (farmInventory[ing.itemId as keyof FarmInventory] ?? 0);
-                    const enough = have >= ing.quantity;
-                    const cropDef = ing.source === 'crop'
-                      ? CROP_CATALOG.find(c => c.id === ing.itemId)
-                      : null;
-                    const emoji = ing.source === 'crop'
-                      ? (cropDef?.emoji ?? '?')
-                      : (RESOURCE_EMOJI[ing.itemId] ?? '?');
-                    const name = ing.source === 'crop'
-                      ? (cropDef ? t(cropDef.labelKey) : ing.itemId)
-                      : t(`farm.building.resource.${ing.itemId}`);
+      <ScrollView
+        contentContainerStyle={styles.catScrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {groupedByStage.map(({ stage, stageInfo, recipes, locked, totalCount }) => (
+          <View key={stage}>
+            {/* Header de section stade */}
+            <View style={[styles.catSectionHeader, { backgroundColor: colors.bg }]}>
+              <Text style={styles.catSectionEmoji}>
+                {locked ? '🔒' : STAGE_EMOJI[stage]}
+              </Text>
+              <Text style={[styles.catSectionLabel, { color: colors.text }]}>
+                {t(stageInfo.labelKey)}
+              </Text>
+              <Text style={[styles.catSectionLevel, { color: colors.textMuted }]}>
+                {' '}{t('craft.niveauRequis', { level: stageInfo.minLevel })}
+              </Text>
+              <View style={styles.catSectionSpacer} />
+              <View style={[styles.catSectionBadge, { backgroundColor: tint }]}>
+                <Text style={[styles.catSectionBadgeText, { color: primary }]}>
+                  {filterMode === 'craftable' && !locked ? recipes.length : totalCount}
+                </Text>
+              </View>
+            </View>
 
-                    // Hint pour ingrédients manquants
-                    const hint = !enough
-                      ? ing.source === 'crop'
-                        ? t('craft.hintPlant', { name, defaultValue: `Plante ${name} sur une parcelle` })
-                        : (() => {
-                            const bld = BUILDING_CATALOG.find(b => b.resourceType === ing.itemId);
-                            const bldName = bld ? t(bld.labelKey) : t('craft.hintBuildingGeneric', 'un bâtiment');
-                            return t('craft.hintBuilding', { name: bldName, defaultValue: `Produit par ${bldName}` });
-                          })()
-                      : null;
-
-                    return (
-                      <View key={ing.itemId} style={styles.ingredientBlock}>
-                        <View style={styles.ingredientRow}>
-                          <Text style={styles.ingredientEmoji}>{emoji}</Text>
-                          <Text style={[styles.ingredientName, { color: colors.textSub }]}>
-                            {name}
-                          </Text>
-                          <Text style={[
-                            styles.ingredientQty,
-                            { color: enough ? colors.success : colors.error },
-                          ]}>
-                            {have}/{ing.quantity}
-                          </Text>
-                        </View>
-                        {hint && (
-                          <Text style={[styles.ingredientHint, { color: colors.textMuted }]}>
-                            {'💡 '}{hint}
-                          </Text>
+            {/* Grille 2 colonnes */}
+            <View style={styles.catGrid}>
+              {recipes.map((recipe, idx) => {
+                const craftable = !locked && canCraft(recipe, harvestInventory, farmInventory);
+                return (
+                  <Animated.View
+                    key={recipe.id}
+                    entering={FadeInDown.delay(idx * 40).duration(250)}
+                    style={styles.catCardWrapper}
+                  >
+                    <TouchableOpacity
+                      style={[
+                        styles.catCard,
+                        { backgroundColor: colors.card },
+                        craftable && { borderColor: colors.success, borderWidth: 1.5 },
+                        !craftable && !locked && { borderColor: colors.borderLight, borderWidth: StyleSheet.hairlineWidth },
+                        locked && { opacity: 0.5, borderColor: colors.borderLight, borderWidth: StyleSheet.hairlineWidth },
+                        Shadows.sm,
+                      ]}
+                      onPress={locked ? undefined : () => setSelectedRecipe(recipe)}
+                      activeOpacity={locked ? 1 : 0.7}
+                      disabled={locked}
+                    >
+                      {/* Emoji + badge craftable */}
+                      <View style={styles.catCardEmojiRow}>
+                        <Text style={styles.catCardEmoji}>{recipe.emoji}</Text>
+                        {craftable && (
+                          <View style={[styles.catCraftableBadge, { backgroundColor: colors.success }]}>
+                            <Text style={styles.catCraftableBadgeText}>{'✓'}</Text>
+                          </View>
+                        )}
+                        {locked && (
+                          <View style={styles.catLockOverlay}>
+                            <Text style={styles.catLockBadge}>{'🔒'}</Text>
+                          </View>
                         )}
                       </View>
-                    );
-                  })}
-                </View>
 
-                {/* Bouton crafter */}
-                <Animated.View style={crafting === recipe.id ? craftBtnAnimStyle : undefined}>
-                  <TouchableOpacity
-                    style={[
-                      styles.craftBtn,
-                      { backgroundColor: craftable ? primary : colors.cardAlt },
-                      crafting === recipe.id && { opacity: 0.5 },
-                    ]}
-                    onPress={craftable ? () => handleCraft(recipe) : undefined}
-                    disabled={!craftable || crafting === recipe.id}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[
-                      styles.craftBtnText,
-                      { color: craftable ? colors.onPrimary : colors.textMuted },
-                    ]}>
-                      {t('craft.crafter')}
-                    </Text>
-                  </TouchableOpacity>
-                </Animated.View>
-              </View>
-          </Animated.View>
-        );
-      })}
-      <View style={{ height: Spacing['3xl'] }} />
-    </ScrollView>
+                      {/* Nom */}
+                      <Text
+                        style={[styles.catCardName, { color: colors.text }]}
+                        numberOfLines={1}
+                      >
+                        {t(recipe.labelKey)}
+                      </Text>
+
+                      {/* Valeur + XP */}
+                      <Text style={[styles.catCardValue, { color: colors.textMuted }]}>
+                        {recipe.sellValue}{' 🍃 +'}{recipe.xpBonus}{'XP'}
+                      </Text>
+
+                      {/* Dots ingredients */}
+                      <View style={styles.catDotRow}>
+                        {recipe.ingredients.map((ing) => {
+                          const have = ing.source === 'crop'
+                            ? (harvestInventory[ing.itemId] ?? 0)
+                            : (farmInventory[ing.itemId as keyof FarmInventory] ?? 0);
+                          const enough = have >= ing.quantity;
+                          return Array.from({ length: ing.quantity }).map((_, dotIdx) => (
+                            <View
+                              key={`${ing.itemId}-${dotIdx}`}
+                              style={[
+                                styles.catDot,
+                                { backgroundColor: enough ? colors.success : colors.error },
+                              ]}
+                            />
+                          ));
+                        })}
+                      </View>
+                    </TouchableOpacity>
+                  </Animated.View>
+                );
+              })}
+              {/* Remplissage si nombre impair */}
+              {recipes.length % 2 !== 0 && <View style={styles.catCardWrapper} />}
+            </View>
+          </View>
+        ))}
+        <View style={{ height: Spacing['3xl'] }} />
+      </ScrollView>
+
+      {/* Mini-modal detail recette */}
+      {selectedRecipe !== null && (
+        <Modal
+          transparent
+          animationType="fade"
+          visible={selectedRecipe !== null}
+          onRequestClose={() => setSelectedRecipe(null)}
+        >
+          <TouchableOpacity
+            style={styles.catModalOverlay}
+            activeOpacity={1}
+            onPress={() => setSelectedRecipe(null)}
+          >
+            <TouchableOpacity
+              style={[styles.catModalContent, { backgroundColor: colors.card }, Shadows.lg]}
+              activeOpacity={1}
+              onPress={() => { /* empêche la fermeture au tap sur le contenu */ }}
+            >
+              {/* Bouton fermer */}
+              <TouchableOpacity
+                style={styles.catModalClose}
+                onPress={() => setSelectedRecipe(null)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.catModalCloseText, { color: colors.textMuted }]}>{'✕'}</Text>
+              </TouchableOpacity>
+
+              {/* Header */}
+              <Text style={styles.catModalEmoji}>{selectedRecipe.emoji}</Text>
+              <Text style={[styles.catModalTitle, { color: colors.text }]}>
+                {t(selectedRecipe.labelKey)}
+              </Text>
+              <Text style={[styles.catModalValue, { color: colors.textSub }]}>
+                {t('craft.valeurVente', { amount: selectedRecipe.sellValue })}
+                {selectedRecipe.xpBonus > 0 ? `  +${selectedRecipe.xpBonus} XP` : ''}
+              </Text>
+
+              {/* Ingredients */}
+              <ScrollView style={styles.catModalIngList} showsVerticalScrollIndicator={false}>
+                <Text style={[styles.ingredientsTitle, { color: colors.textMuted }]}>
+                  {t('craft.ingredients')}
+                </Text>
+                {selectedRecipe.ingredients.map((ing) => {
+                  const have = ing.source === 'crop'
+                    ? (harvestInventory[ing.itemId] ?? 0)
+                    : (farmInventory[ing.itemId as keyof FarmInventory] ?? 0);
+                  const enough = have >= ing.quantity;
+                  const cropDef = ing.source === 'crop'
+                    ? CROP_CATALOG.find(c => c.id === ing.itemId)
+                    : null;
+                  const emoji = ing.source === 'crop'
+                    ? (cropDef?.emoji ?? '?')
+                    : (RESOURCE_EMOJI[ing.itemId] ?? '?');
+                  const name = ing.source === 'crop'
+                    ? (cropDef ? t(cropDef.labelKey) : ing.itemId)
+                    : t(`farm.building.resource.${ing.itemId}`);
+
+                  const hint = !enough
+                    ? ing.source === 'crop'
+                      ? t('craft.hintPlant', { name })
+                      : (() => {
+                          const bld = BUILDING_CATALOG.find(b => b.resourceType === ing.itemId);
+                          const bldName = bld ? t(bld.labelKey) : t('craft.hintBuildingGeneric', 'un bâtiment');
+                          return t('craft.hintBuilding', { name: bldName });
+                        })()
+                    : null;
+
+                  return (
+                    <View key={ing.itemId} style={styles.ingredientBlock}>
+                      <View style={styles.ingredientRow}>
+                        <Text style={styles.ingredientEmoji}>{emoji}</Text>
+                        <Text style={[styles.ingredientName, { color: colors.textSub }]}>
+                          {name}
+                        </Text>
+                        <Text style={[
+                          styles.ingredientQty,
+                          { color: enough ? colors.success : colors.error },
+                        ]}>
+                          {have}/{ing.quantity}
+                        </Text>
+                      </View>
+                      {hint && (
+                        <Text style={[styles.ingredientHint, { color: colors.textMuted }]}>
+                          {'💡 '}{hint}
+                        </Text>
+                      )}
+                    </View>
+                  );
+                })}
+              </ScrollView>
+
+              {/* Bouton Crafter */}
+              <Animated.View style={crafting === selectedRecipe.id ? craftBtnAnimStyle : undefined}>
+                <TouchableOpacity
+                  style={[
+                    styles.craftBtn,
+                    {
+                      backgroundColor: canCraft(selectedRecipe, harvestInventory, farmInventory)
+                        ? primary
+                        : colors.cardAlt,
+                    },
+                    crafting === selectedRecipe.id && { opacity: 0.5 },
+                  ]}
+                  onPress={canCraft(selectedRecipe, harvestInventory, farmInventory)
+                    ? async () => {
+                        const r = selectedRecipe;
+                        setSelectedRecipe(null);
+                        await handleCraft(r);
+                      }
+                    : undefined}
+                  disabled={
+                    !canCraft(selectedRecipe, harvestInventory, farmInventory) ||
+                    crafting === selectedRecipe.id
+                  }
+                  activeOpacity={0.7}
+                >
+                  <Text style={[
+                    styles.craftBtnText,
+                    {
+                      color: canCraft(selectedRecipe, harvestInventory, farmInventory)
+                        ? colors.onPrimary
+                        : colors.textMuted,
+                    },
+                  ]}>
+                    {t('craft.crafter')}
+                  </Text>
+                </TouchableOpacity>
+              </Animated.View>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </Modal>
+      )}
+    </View>
   );
 
   // ── Tab : Inventaire (recoltes brutes) ────────
@@ -566,7 +771,178 @@ const styles = StyleSheet.create({
     marginTop: Spacing['3xl'],
   },
 
-  // ── Catalogue ──
+  // ── Catalogue — chips filtre ──
+  catChipRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+  },
+  catChip: {
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.full,
+  },
+  catChipText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+  },
+
+  // ── Catalogue — scroll ──
+  catScrollContent: {
+    paddingBottom: Spacing['3xl'],
+  },
+
+  // ── Catalogue — header de section ──
+  catSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+  },
+  catSectionEmoji: {
+    fontSize: FontSize.body,
+    marginRight: Spacing.xs,
+  },
+  catSectionLabel: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+  },
+  catSectionLevel: {
+    fontSize: FontSize.caption,
+  },
+  catSectionSpacer: {
+    flex: 1,
+  },
+  catSectionBadge: {
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    minWidth: 24,
+    alignItems: 'center',
+  },
+  catSectionBadgeText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
+  },
+
+  // ── Catalogue — grille ──
+  catGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.md,
+  },
+  catCardWrapper: {
+    width: '48%',
+    marginHorizontal: '1%',
+    marginBottom: Spacing.sm,
+  },
+  catCard: {
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+  },
+
+  // ── Catalogue — carte ──
+  catCardEmojiRow: {
+    position: 'relative',
+    alignSelf: 'flex-start',
+    marginBottom: Spacing.xs,
+  },
+  catCardEmoji: {
+    fontSize: 32,
+  },
+  catCraftableBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -8,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  catCraftableBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: FontWeight.bold,
+  },
+  catLockOverlay: {
+    position: 'absolute',
+    top: 0,
+    right: -4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  catLockBadge: {
+    fontSize: 14,
+  },
+  catCardName: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+    marginBottom: 2,
+  },
+  catCardValue: {
+    fontSize: FontSize.micro,
+    marginBottom: Spacing.xs,
+  },
+  catDotRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+  },
+  catDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+
+  // ── Catalogue — modal detail ──
+  catModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  catModalContent: {
+    width: '85%',
+    maxHeight: '60%',
+    borderRadius: Radius.xl,
+    padding: Spacing.xl,
+  },
+  catModalClose: {
+    position: 'absolute',
+    top: Spacing.md,
+    right: Spacing.md,
+    padding: Spacing.sm,
+    zIndex: 1,
+  },
+  catModalCloseText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+  },
+  catModalEmoji: {
+    fontSize: 48,
+    textAlign: 'center',
+    marginBottom: Spacing.sm,
+  },
+  catModalTitle: {
+    fontSize: FontSize.titleLg,
+    fontWeight: FontWeight.bold,
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  catModalValue: {
+    fontSize: FontSize.caption,
+    textAlign: 'center',
+    marginBottom: Spacing.md,
+  },
+  catModalIngList: {
+    maxHeight: 200,
+    marginBottom: Spacing.md,
+  },
+
+  // ── Catalogue existant (recipeCard conservé pour compatibilité) ──
   recipeCard: {
     borderRadius: Radius.lg,
     borderWidth: StyleSheet.hairlineWidth,

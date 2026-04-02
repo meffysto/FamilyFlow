@@ -1497,6 +1497,7 @@ export default function TreeScreen() {
         harvestInventory={profile?.harvestInventory ?? {}}
         farmInventory={profile?.farmInventory ?? { oeuf: 0, lait: 0, farine: 0, miel: 0 }}
         craftedItems={profile?.craftedItems ?? []}
+        treeStage={stageInfo.stage}
         onCraft={async (recipeId) => {
           const result = await craft(profile!.id, recipeId);
           if (result) triggerActionMsg('craft');
