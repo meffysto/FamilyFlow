@@ -53,10 +53,10 @@ Requirements for milestone v1.1 -- Ferme Enrichie. La ferme est le levier de mot
 
 ### Sagas Immersives
 
-- [ ] **SAG-01**: Un personnage visiteur pixel (genere via PixelLab) apparait dans la scene de l'arbre quand une saga est active, avec animation d'arrivee
+- [x] **SAG-01**: Un personnage visiteur pixel (genere via PixelLab) apparait dans la scene de l'arbre quand une saga est active, avec animation d'arrivee
 - [ ] **SAG-02**: Taper sur le visiteur ouvre un dialogue narratif interactif avec les choix de la saga (style RPG/Animal Crossing)
 - [x] **SAG-03**: Le dashboard affiche un indicateur texte compact de la saga en cours (plus de boutons/carte dediee)
-- [ ] **SAG-04**: Le visiteur a des animations de reaction (joie, surprise, mystere) et un depart anime apres completion de saga
+- [x] **SAG-04**: Le visiteur a des animations de reaction (joie, surprise, mystere) et un depart anime apres completion de saga
 
 ## Future Requirements
 

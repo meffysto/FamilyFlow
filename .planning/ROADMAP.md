@@ -193,10 +193,10 @@ Plans:
   3. Le dashboard ne montre plus les boutons de saga — juste un petit texte indicateur de l'étape en cours et un lien vers l'arbre
   4. Le visiteur a des animations de réaction aux choix (joie, surprise, mystère) et une animation de départ après complétion
   5. `npx tsc --noEmit` passe sans nouvelles erreurs
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
-- [ ] 11-01-PLAN.md — Sprites voyageur PixelLab + composant VisitorSlot animations + i18n
+- [x] 11-01-PLAN.md — Sprites voyageur PixelLab + composant VisitorSlot animations + i18n
 - [ ] 11-02-PLAN.md — Refactoring SagaWorldEvent portrait sprite + integration tree.tsx orchestration
 - [x] 11-03-PLAN.md — DashboardGarden indicateur texte inline (suppression carte saga)
 
@@ -218,4 +218,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 8.1 Split Gamification | v1.1 | 2/2 | Complete   | 2026-03-30 |
 | 9. Cadeaux Familiaux | v1.1 | 0/TBD | Not started | - |
 | 10. Compagnon Mascotte | v1.1 | 3/4 | In Progress|  |
-| 11. Sagas Immersives | v1.1 | 1/3 | In Progress|  |
+| 11. Sagas Immersives | v1.1 | 2/3 | In Progress|  |
