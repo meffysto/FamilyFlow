@@ -19,11 +19,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { BUILDING_CATALOG, TREE_STAGES, type TreeStage, type PlacedBuilding } from '../../lib/mascot/types';
-// Sprites inline pour garantir resolution Metro
+// Sprites inline pour garantir resolution Metro (niveau 1 pour l'aperçu boutique)
 const SHOP_SPRITES: Record<string, any> = {
-  poulailler: require('../../assets/buildings/poulailler.png'),
-  grange: require('../../assets/buildings/grange.png'),
-  moulin: require('../../assets/buildings/moulin.png'),
+  poulailler: require('../../assets/buildings/poulailler_lv1.png'),
+  grange: require('../../assets/buildings/grange_lv1.png'),
+  moulin: require('../../assets/buildings/moulin_lv1.png'),
 };
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
