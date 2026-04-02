@@ -99,6 +99,8 @@ import { getSagaById, getSagaCompletionResult } from '../../lib/mascot/sagas-eng
 import { loadSagaProgress, saveSagaProgress, saveLastSagaCompletion } from '../../lib/mascot/sagas-storage';
 import { getTodayStr } from '../../lib/mascot/adventures';
 import { SagaWorldEvent } from '../../components/mascot/SagaWorldEvent';
+import { VisitorSlot } from '../../components/mascot/VisitorSlot';
+import type { ReactionType } from '../../components/mascot/VisitorSlot';
 import type { Profile } from '../../lib/types';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
 
@@ -137,6 +139,9 @@ const SEASON_ILLUSTRATIONS: Record<Season, ImageSourcePropType> = {
 const STAGE_EMOJI: Record<TreeStage, string> = {
   graine: '🌱', pousse: '🌿', arbuste: '🌿', arbre: '🌳', majestueux: '👑', legendaire: '⭐',
 };
+
+/** Sprite idle du visiteur saga pour le portrait dans SagaWorldEvent */
+const VISITOR_IDLE_FRAME = require('../../assets/garden/animals/voyageur/idle_1.png');
 
 /** Tooltip whisper quand on tap une culture en croissance */
 /** Tooltip info quand on tap une culture en croissance — emoji + nom + tâches restantes */
@@ -263,6 +268,9 @@ export default function TreeScreen() {
   // Saga active — pour l'expérience immersive dans le diorama
   const [sagaProgress, setSagaProgress] = useState<SagaProgress | null>(null);
   const [showSagaEvent, setShowSagaEvent] = useState(false);
+  // Orchestration visiteur saga : départ après réaction aux choix (SAG-04)
+  const [visitorShouldDepart, setVisitorShouldDepart] = useState(false);
+  const [visitorReaction, setVisitorReaction] = useState<ReactionType | undefined>(undefined);
   const today = getTodayStr();
 
   useEffect(() => {
@@ -271,6 +279,9 @@ export default function TreeScreen() {
       if (p && p.status === 'active') setSagaProgress(p);
       else setSagaProgress(null);
     });
+    // Reset des states visiteur quand le profil change
+    setVisitorShouldDepart(false);
+    setVisitorReaction(undefined);
   }, [profile?.id]);
 
   const activeSaga = sagaProgress ? getSagaById(sagaProgress.sagaId) : null;
@@ -1015,6 +1026,25 @@ export default function TreeScreen() {
     showToast(t('mascot.adventure.reward', { points }));
   }, [sagaProgress, activeSaga, profile, today, completeSagaChapter, showToast, t]);
 
+  /** Callback réaction aux choix saga — stocke le type de réaction pour le VisitorSlot (SAG-04) */
+  const handleChoiceReaction = useCallback((reaction: ReactionType) => {
+    setVisitorReaction(reaction);
+  }, []);
+
+  /**
+   * onDismiss modifié — ferme le dialogue saga.
+   * Si une réaction est en cours (visitorReaction est set), le départ sera déclenché par
+   * onReactionComplete du VisitorSlot après la fin de l'animation de réaction.
+   * Si pas de réaction (joueur ferme sans choisir), déclencher le départ directement.
+   */
+  const handleSagaDismiss = useCallback(() => {
+    setShowSagaEvent(false);
+    if (!visitorReaction) {
+      setVisitorShouldDepart(true);
+    }
+    // Si visitorReaction est déjà set, onReactionComplete fera setVisitorShouldDepart(true)
+  }, [visitorReaction]);
+
   return (
     <View style={[styles.safe, { backgroundColor: colors.bg }]}>
       <ScrollView
@@ -1345,6 +1375,30 @@ export default function TreeScreen() {
               </View>
             )}
 
+            {/* Couche 3.6 : Visiteur saga — apparaît quand un chapitre est disponible */}
+            {sagaChapterAvailable && isOwnTree && sagaProgress && (
+              <View style={{ ...StyleSheet.absoluteFillObject, zIndex: showSagaEvent ? 20 : 3 }} pointerEvents="box-none">
+                <VisitorSlot
+                  visible={sagaChapterAvailable && !showSagaEvent}
+                  sagaId={sagaProgress.sagaId}
+                  containerWidth={SCREEN_W}
+                  containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
+                  onTap={() => {
+                    hapticsTreeTap();
+                    setShowSagaEvent(true);
+                  }}
+                  shouldDepart={visitorShouldDepart}
+                  isLastChapter={activeSaga ? sagaProgress.currentChapter >= activeSaga.chapters.length : false}
+                  onDepartComplete={() => setVisitorShouldDepart(false)}
+                  reactionType={visitorReaction}
+                  onReactionComplete={() => {
+                    setVisitorReaction(undefined);
+                    setVisitorShouldDepart(true);
+                  }}
+                />
+              </View>
+            )}
+
             {/* Couche saisonnières : particules emoji selon la saison */}
             <View style={{ ...StyleSheet.absoluteFillObject, zIndex: 4 }} pointerEvents="none">
               <SeasonalParticles
@@ -1399,35 +1453,13 @@ export default function TreeScreen() {
                 sagaProgress={sagaProgress}
                 containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
                 onChapterComplete={handleSagaChapterComplete}
-                onDismiss={() => setShowSagaEvent(false)}
+                onDismiss={handleSagaDismiss}
+                visitorIdleFrame={VISITOR_IDLE_FRAME}
+                onChoiceReaction={handleChoiceReaction}
               />
             )}
 
-            {/* Bouton "Saga en attente" — coin bas-droite, visible quand chapitre dispo */}
-            {sagaChapterAvailable && !showSagaEvent && isOwnTree && activeSaga && (
-              <Animated.View
-                entering={FadeIn.duration(400)}
-                style={[styles.sagaPendingBtn, { bottom: Spacing['3xl'], right: Spacing['2xl'] }]}
-                pointerEvents="box-none"
-              >
-                <TouchableOpacity
-                  style={[
-                    styles.sagaPendingTouch,
-                    { backgroundColor: primary + 'DD', borderColor: primary },
-                  ]}
-                  onPress={() => {
-                    hapticsTreeTap();
-                    setShowSagaEvent(true);
-                  }}
-                  activeOpacity={0.82}
-                >
-                  <Text style={styles.sagaPendingEmoji}>{activeSaga.sceneEmoji}</Text>
-                  <Text style={[styles.sagaPendingText, { color: colors.onPrimary }]}>
-                    {t('mascot.saga.pendingInTree', 'Saga en attente')}
-                  </Text>
-                </TouchableOpacity>
-              </Animated.View>
-            )}
+            {/* Bouton saga supprimé — le tap sur le VisitorSlot dans la couche 3.6 le remplace */}
 
           </View>
         </Animated.View>
