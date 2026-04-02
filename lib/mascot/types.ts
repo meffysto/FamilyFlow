@@ -145,16 +145,19 @@ export interface SceneSlot {
   zone: SceneZone;
 }
 
-/** 10 emplacements répartis sur toute la scène */
+/** 10 emplacements répartis sur les zones d'herbe (viewbox 200×240) */
 export const SCENE_SLOTS: SceneSlot[] = [
+  // Arbre (décorations dans/sur l'arbre)
   { id: 'tree-top',      cx: 100, cy: 75,  zone: 'tree' },
   { id: 'tree-left',     cx: 60,  cy: 120, zone: 'tree' },
   { id: 'tree-right',    cx: 140, cy: 115, zone: 'tree' },
-  { id: 'ground-left',   cx: 30,  cy: 208, zone: 'ground' },
-  { id: 'ground-center', cx: 100, cy: 210, zone: 'ground' },
-  { id: 'ground-right',  cx: 170, cy: 208, zone: 'ground' },
-  { id: 'ground-far-l',  cx: 12,  cy: 215, zone: 'ground' },
-  { id: 'ground-far-r',  cx: 188, cy: 215, zone: 'ground' },
+  // Sol — zones d'herbe (hors chemin, hors eau, hors pavés)
+  { id: 'ground-left',   cx: 24,  cy: 120, zone: 'ground' },  // herbe gauche milieu
+  { id: 'ground-center', cx: 50,  cy: 140, zone: 'ground' },  // herbe centre-gauche
+  { id: 'ground-right',  cx: 140, cy: 140, zone: 'ground' },  // herbe centre-droit
+  { id: 'ground-far-l',  cx: 16,  cy: 160, zone: 'ground' },  // herbe gauche bas (berge lac)
+  { id: 'ground-far-r',  cx: 150, cy: 170, zone: 'ground' },  // herbe droite bas
+  // Ciel
   { id: 'sky-left',      cx: 30,  cy: 55,  zone: 'sky' },
   { id: 'sky-right',     cx: 170, cy: 50,  zone: 'sky' },
 ];
