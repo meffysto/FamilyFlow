@@ -161,8 +161,9 @@ const FISH_DECOS = {
   fish_trap: require('../../assets/garden/decos/fish_obj_4_0.png'),
   fish_koi_frames: [
     require('../../assets/garden/decos/fish_koi_1.png'),
-    require('../../assets/garden/decos/fish_koi_2.png'),
-    require('../../assets/garden/decos/fish_koi_3.png'),
+    require('../../assets/garden/decos/fish_koi_4.png'),
+    require('../../assets/garden/decos/fish_koi_6.png'),
+    require('../../assets/garden/decos/fish_koi_4.png'),
   ] as const,
 };
 
@@ -458,25 +459,26 @@ const FISH_WAYPOINTS = [
   { x: 0.06, y: 0.94 },
   { x: 0.04, y: 0.88 },
 ];
-const FISH_SIZE = 24;
-const FISH_STEP_MS = 3000;
-const FISH_FRAME_MS = 400;
+const FISH_SIZE = 32;
+const FISH_STEP_MS = 3500;
+const FISH_FRAME_MS = 350;
+const FISH_FRAMES = FISH_DECOS.fish_koi_frames;
 
 function SwimmingFish({ containerWidth, containerHeight }: { containerWidth: number; containerHeight: number }) {
   const posX = useSharedValue(FISH_WAYPOINTS[0].x * containerWidth);
   const posY = useSharedValue(FISH_WAYPOINTS[0].y * containerHeight);
-  const scaleX = useSharedValue(1);
+  const rotation = useSharedValue(0);
   const [frameIdx, setFrameIdx] = useState(0);
 
-  // Cycle des frames de nage (queue gauche → droit → queue droite → droit)
+  // Cycle des frames de nage
   useEffect(() => {
     const interval = setInterval(() => {
-      setFrameIdx(prev => (prev + 1) % 3);
+      setFrameIdx(prev => (prev + 1) % FISH_FRAMES.length);
     }, FISH_FRAME_MS);
     return () => clearInterval(interval);
   }, []);
 
-  // Animation de deplacement dans le lac
+  // Animation de deplacement + rotation vers la direction
   useEffect(() => {
     const points = FISH_WAYPOINTS.map(p => ({
       x: p.x * containerWidth,
@@ -485,16 +487,19 @@ function SwimmingFish({ containerWidth, containerHeight }: { containerWidth: num
 
     const stepsX: number[] = [];
     const stepsY: number[] = [];
-    const flips: number[] = [];
+    const rotations: number[] = [];
     for (let i = 1; i <= points.length; i++) {
       const target = points[i % points.length];
       const prev = points[(i - 1) % points.length];
       stepsX.push(target.x);
       stepsY.push(target.y);
-      flips.push(target.x < prev.x ? -1 : 1);
+      // Angle vers la cible (le sprite pointe vers le bas par defaut → offset -PI/2)
+      const angle = Math.atan2(target.y - prev.y, target.x - prev.x) - Math.PI / 2;
+      rotations.push(angle);
     }
 
     const timingConfig = { duration: FISH_STEP_MS, easing: Easing.inOut(Easing.sin) };
+    const rotConfig = { duration: FISH_STEP_MS * 0.3, easing: Easing.inOut(Easing.sin) };
 
     posX.value = withDelay(500, withRepeat(
       withSequence(...stepsX.map(x => withTiming(x, timingConfig))),
@@ -504,8 +509,8 @@ function SwimmingFish({ containerWidth, containerHeight }: { containerWidth: num
       withSequence(...stepsY.map(y => withTiming(y, timingConfig))),
       -1,
     ));
-    scaleX.value = withDelay(500, withRepeat(
-      withSequence(...flips.map(s => withTiming(s, { duration: FISH_STEP_MS }))),
+    rotation.value = withDelay(500, withRepeat(
+      withSequence(...rotations.map(r => withTiming(r, rotConfig))),
       -1,
     ));
   }, [containerWidth, containerHeight]);
@@ -516,13 +521,13 @@ function SwimmingFish({ containerWidth, containerHeight }: { containerWidth: num
     top: posY.value - FISH_SIZE / 2,
     width: FISH_SIZE,
     height: FISH_SIZE,
-    transform: [{ scaleX: scaleX.value }],
+    transform: [{ rotate: `${rotation.value}rad` }],
   }));
 
   return (
     <Animated.View style={animStyle}>
       <Image
-        source={FISH_DECOS.fish_koi_frames[frameIdx]}
+        source={FISH_FRAMES[frameIdx]}
         style={{ width: FISH_SIZE, height: FISH_SIZE }}
         resizeMode="contain"
       />
