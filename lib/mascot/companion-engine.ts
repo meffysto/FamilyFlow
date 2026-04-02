@@ -267,16 +267,13 @@ function buildCompanionPrompt(event: CompanionEvent, ctx: CompanionMessageContex
   }
 
   return [
-    `Tu es ${ctx.companionName}, un ${ctx.companionSpecies} compagnon.`,
-    `Ton caractère : ${personality.tone}. Traits : ${personality.traits.join(', ')}.`,
-    `Particularité : ${personality.quirk}.`,
+    `Ton nom : ${ctx.companionName}. Ton style : ${personality.tone}. ${personality.quirk}.`,
     `${eventDescriptions[event]}.`,
     taskContext,
     rdvContext,
     mealsContext,
     memoryContext,
-    `Réponds en 1-2 phrases courtes et personnalisées (max 120 caractères).`,
-    `Pas d'emoji. Tutoie ${ctx.profileName}. Concentre-toi sur l'événement, pas sur le contexte annexe.`,
+    `Réponds en 1 phrase courte à ${ctx.profileName}. Tutoie. Pas d'emoji. Pas de présentation.`,
   ].filter(Boolean).join(' ');
 }
 

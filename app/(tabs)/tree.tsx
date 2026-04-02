@@ -376,14 +376,18 @@ export default function TreeScreen() {
     setCompanion(prof.id, { ...comp, recentMessages: updated });
   }, [setCompanion]);
 
+  // Timer unique pour éviter les races de timers entre fallback et IA
+  const msgTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Afficher un message compagnon (template ou IA) et le persister en mémoire
   const showCompanionMsg = useCallback((msg: string, context: any, duration = 8000) => {
+    // Annuler tout timer précédent pour éviter les races
+    if (msgTimerRef.current) clearTimeout(msgTimerRef.current);
     const isI18nKey = msg.startsWith('companion.msg.');
     const displayMsg = isI18nKey ? String(t(msg, context)) : msg;
     setCompanionMessage(displayMsg);
     if (!isI18nKey) saveToMemory(displayMsg);
-    const timer = setTimeout(() => setCompanionMessage(null), duration);
-    return timer;
+    msgTimerRef.current = setTimeout(() => setCompanionMessage(null), duration);
   }, [t, saveToMemory]);
 
   // Handler tap sur le compagnon — affiche message greeting
@@ -396,20 +400,22 @@ export default function TreeScreen() {
       tasksToday: recentTasksCount,
       streak: activeProfile.streak ?? 0,
       level: calculateLevel(activeProfile.points ?? 0),
+      recentTasks: recentCompletedTasks,
+      nextRdv,
+      todayMeals,
       recentMessages: companion.recentMessages,
     };
-    const msgKey = pickCompanionMessage('greeting', context);
-    setCompanionMessage(t(msgKey, context));
 
-    // Tenter un message IA au tap aussi
+    // Afficher le template immédiatement comme fallback
+    showCompanionMsg(pickCompanionMessage('greeting', context), context, 4000);
+
+    // Tenter un message IA au tap (remplace le fallback si réussi)
     if (aiCall) {
       generateCompanionAIMessage('greeting', context, aiCall).then(msg => {
         showCompanionMsg(msg, context, 4000);
       });
     }
-
-    setTimeout(() => setCompanionMessage(null), 4000);
-  }, [companion, activeProfile, recentTasksCount, t, aiCall, showCompanionMsg]);
+  }, [companion, activeProfile, recentTasksCount, recentCompletedTasks, nextRdv, todayMeals, aiCall, showCompanionMsg]);
 
   // Compter les tâches totales du jour (faites + à faire)
   const totalTasksToday = useMemo(() => {
@@ -422,6 +428,39 @@ export default function TreeScreen() {
 
   // Cooldown pour éviter le spam de messages au focus
   const lastFocusMessageRef = useRef<number>(0);
+
+  // Cooldown pour les messages d'action (harvest, craft) — 60s entre deux
+  const lastActionMsgRef = useRef<number>(0);
+
+  /** Déclenche un message compagnon pour un événement d'action (avec cooldown) */
+  const triggerActionMsg = useCallback((event: import('../../lib/mascot/companion-types').CompanionEvent) => {
+    const now = Date.now();
+    if (now - lastActionMsgRef.current < 60_000) return;
+    const comp = companionRef.current;
+    const prof = activeProfileRef.current;
+    if (!comp || !prof) return;
+    lastActionMsgRef.current = now;
+
+    const context: import('../../lib/mascot/companion-types').CompanionMessageContext = {
+      profileName: prof.name,
+      companionName: comp.name,
+      companionSpecies: comp.activeSpecies,
+      tasksToday: recentTasksCountRef.current,
+      streak: prof.streak ?? 0,
+      level: calculateLevel(prof.points ?? 0),
+      recentMessages: comp.recentMessages,
+    };
+
+    // Fallback template immédiat
+    showCompanionMsg(pickCompanionMessage(event, context), context, 5000);
+
+    // Tenter IA (remplace si réussi)
+    if (aiCall) {
+      generateCompanionAIMessage(event, context, aiCall).then(msg => {
+        showCompanionMsg(msg, context, 5000);
+      });
+    }
+  }, [aiCall, showCompanionMsg]);
 
   // Message de bienvenue au focus — une seule fois par visite, cooldown 5min
   useFocusEffect(useCallback(() => {
@@ -479,10 +518,10 @@ export default function TreeScreen() {
 
     // Délai avant d'afficher le message
     const delayTimer = setTimeout(() => {
-      const fallbackKey = pickCompanionMessage(event, context);
-      setCompanionMessage(String(t(fallbackKey, context)));
+      // Afficher le template comme fallback immédiat
+      showCompanionMsg(pickCompanionMessage(event, context), context);
 
-      // Tenter un message IA (async, remplace si réussi)
+      // Tenter un message IA (async, remplace le fallback si réussi)
       if (aiCall) {
         generateCompanionAIMessage(event, context, aiCall).then(msg => {
           showCompanionMsg(msg, context);
@@ -490,9 +529,7 @@ export default function TreeScreen() {
       }
     }, 1500);
 
-    const hideTimer = setTimeout(() => setCompanionMessage(null), 8000);
-
-    return () => { clearTimeout(delayTimer); clearTimeout(hideTimer); };
+    return () => { clearTimeout(delayTimer); };
   // Dépendances stables uniquement — les refs capturent le reste
   }, [aiCall]));
 
@@ -643,6 +680,27 @@ export default function TreeScreen() {
       .filter(Boolean) as { fx: number; fy: number; cropName: string }[];
   }, [profile?.farmCrops, stageInfo.stage, t]);
 
+  // Positions Y des rangées cultivées — mémoïsé pour ne pas reset la patrouille du compagnon
+  const plantedCropYs = useMemo(() => {
+    const crops = parseCrops(profile?.farmCrops ?? '');
+    const allCells = getExpandedCropCells(stageInfo.stage, techBonuses);
+    const ys = new Set<number>();
+    crops.forEach(c => {
+      const cell = allCells[c.plotIndex];
+      if (cell) ys.add(cell.y);
+    });
+    return [...ys];
+  }, [profile?.farmCrops, stageInfo.stage, techBonuses]);
+
+  // Positions Y des bâtiments construits — mémoïsé pour ne pas reset la patrouille du compagnon
+  const builtBuildingYs = useMemo(() => {
+    return (profile?.farmBuildings ?? []).map(b => {
+      const cells = [...BUILDING_CELLS, EXPANSION_BUILDING_CELL];
+      const cell = cells.find(c => c.id === b.cellId);
+      return cell?.y ?? 0;
+    }).filter(y => y > 0);
+  }, [profile?.farmBuildings]);
+
   const stageProgress = getStageProgress(level);
   const nextEvoLevel = getNextEvolutionLevel(level);
   const levelsLeft = levelsUntilEvolution(level);
@@ -731,6 +789,7 @@ export default function TreeScreen() {
           setHarvestBurst({ x: burstX, y: burstY, reward: displayReward, cropId: result.cropId });
           const emoji = harvestedCropDef?.emoji ?? '🌾';
           showToast(`${emoji} ${result.cropId} récolté !`);
+          triggerActionMsg('harvest');
         }
       });
     } else if (crop) {
@@ -745,7 +804,7 @@ export default function TreeScreen() {
       setSelectedPlotIndex(cellIdx);
       setShowSeedPicker(true);
     }
-  }, [profile, isOwnTree, harvest, level, stageIdx, techBonuses, stageInfo.stage]);
+  }, [profile, isOwnTree, harvest, level, stageIdx, techBonuses, stageInfo.stage, triggerActionMsg]);
 
   /** Planter une graine sur la parcelle selectionnee */
   const handleSeedSelect = useCallback(async (cropId: string) => {
@@ -1101,21 +1160,8 @@ export default function TreeScreen() {
                   containerWidth={SCREEN_W}
                   containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
                   harvestables={harvestables}
-                  plantedCropYs={(() => {
-                    const crops = parseCrops(profile.farmCrops ?? '');
-                    const allCells = getExpandedCropCells(stageInfo.stage, techBonuses);
-                    const ys = new Set<number>();
-                    crops.forEach(c => {
-                      const cell = allCells[c.plotIndex];
-                      if (cell) ys.add(cell.y);
-                    });
-                    return [...ys];
-                  })()}
-                  builtBuildingYs={(profile.farmBuildings ?? []).map(b => {
-                    const cells = [...BUILDING_CELLS, EXPANSION_BUILDING_CELL];
-                    const cell = cells.find(c => c.id === b.cellId);
-                    return cell?.y ?? 0;
-                  }).filter(y => y > 0)}
+                  plantedCropYs={plantedCropYs}
+                  builtBuildingYs={builtBuildingYs}
                   hasLake={stageIdx >= 1}
                 />
               </View>
@@ -1372,7 +1418,11 @@ export default function TreeScreen() {
         harvestInventory={profile?.harvestInventory ?? {}}
         farmInventory={profile?.farmInventory ?? { oeuf: 0, lait: 0, farine: 0 }}
         craftedItems={profile?.craftedItems ?? []}
-        onCraft={(recipeId) => craft(profile!.id, recipeId)}
+        onCraft={async (recipeId) => {
+          const result = await craft(profile!.id, recipeId);
+          if (result) triggerActionMsg('craft');
+          return result;
+        }}
         onSellHarvest={(cropId) => sellHarvest(profile!.id, cropId)}
         onSellCrafted={(recipeId) => sellCrafted(profile!.id, recipeId)}
         techBonuses={techBonuses}
