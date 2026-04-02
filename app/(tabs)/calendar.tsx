@@ -13,8 +13,10 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { format, addMonths, subMonths } from 'date-fns';
 import { getDateLocale } from '../../lib/date-locale';
 import { useVault } from '../../contexts/VaultContext';
@@ -25,6 +27,8 @@ import { CalendarMonthGrid } from '../../components/calendar/CalendarMonthGrid';
 import { CalendarDayDetail } from '../../components/calendar/CalendarDayDetail';
 import { CalendarEventRow } from '../../components/calendar/CalendarEventRow';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
+import { FAB } from '../../components/FAB';
+import { RDVEditor } from '../../components/RDVEditor';
 import { Spacing, Layout } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { useTranslation } from 'react-i18next';
@@ -40,8 +44,10 @@ export default function CalendarScreen() {
     { id: 'mois', label: t('calendarScreen.tabs.month') },
     { id: 'semaine', label: t('calendarScreen.tabs.week') },
   ];
-  const { refresh } = useVault();
+  const { refresh, addRDV, deleteRDV, profiles, activeProfile } = useVault();
   const { refreshing, onRefresh } = useRefresh(refresh);
+  const router = useRouter();
+  const [showRDVEditor, setShowRDVEditor] = useState(false);
 
   const [viewMode, setViewMode] = useState<ViewMode>('mois');
   const [currentMonth, setCurrentMonth] = useState(() => new Date());
@@ -90,7 +96,13 @@ export default function CalendarScreen() {
     return days;
   }, [selectedDate]);
 
+  const fabActions = useMemo(() => [
+    { id: 'rdv', emoji: '📅', label: 'RDV', onPress: () => setShowRDVEditor(true) },
+    { id: 'tache', emoji: '✅', label: 'Tâche', onPress: () => router.push('/(tabs)/tasks') },
+  ], [router]);
+
   return (
+    <View style={{ flex: 1 }}>
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
@@ -215,6 +227,25 @@ export default function CalendarScreen() {
         <View style={{ height: Spacing['4xl'] }} />
       </ScrollView>
     </SafeAreaView>
+    <FAB actions={fabActions} />
+    <Modal
+      visible={showRDVEditor}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={() => setShowRDVEditor(false)}
+    >
+      <RDVEditor
+        profiles={profiles}
+        initialDate={selectedDate ?? undefined}
+        onSave={async (data) => {
+          await addRDV(data);
+          await refresh();
+          setShowRDVEditor(false);
+        }}
+        onClose={() => setShowRDVEditor(false)}
+      />
+    </Modal>
+    </View>
   );
 }
 

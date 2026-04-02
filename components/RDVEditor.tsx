@@ -86,12 +86,14 @@ interface RDVEditorProps {
   rdv?: RDV; // if provided, we're editing
   /** Profils enfants pour le sélecteur d'enfant */
   profiles?: Profile[];
+  /** Date pré-remplie pour la création rapide (format YYYY-MM-DD) */
+  initialDate?: string;
   onSave: (rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
   onDelete?: () => void;
   onClose: () => void;
 }
 
-export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEditorProps) {
+export function RDVEditor({ rdv, profiles, initialDate, onSave, onDelete, onClose }: RDVEditorProps) {
   const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
@@ -106,7 +108,7 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
   const defaultEnfant = rdv?.enfant ?? enfantOptions[0] ?? '';
 
   // Stocké en ISO (YYYY-MM-DD), affiché via DateInput natif
-  const [dateRdv, setDateRdv] = useState(rdv?.date_rdv ?? '');
+  const [dateRdv, setDateRdv] = useState(rdv?.date_rdv ?? initialDate ?? '');
   const [heure, setHeure] = useState(rdv?.heure ?? '');
   const [typeRdv, setTypeRdv] = useState(rdv?.type_rdv ?? 'pédiatre');
   const [enfant, setEnfant] = useState(defaultEnfant);
