@@ -94,7 +94,7 @@ import {
   getStageIndex,
   TREE_STAGES,
 } from '../../lib/mascot';
-import { SPECIES_INFO, ALL_SPECIES, DECORATIONS, INHABITANTS, ITEM_ILLUSTRATIONS, type TreeSpecies } from '../../lib/mascot/types';
+import { SPECIES_INFO, ALL_SPECIES, DECORATIONS, INHABITANTS, ITEM_ILLUSTRATIONS, type TreeSpecies, type TreeStage } from '../../lib/mascot/types';
 import { getCurrentSeason, SEASON_INFO, GROUND_COLORS, type Season } from '../../lib/mascot/seasons';
 import type { SagaProgress } from '../../lib/mascot/sagas-types';
 import { getSagaById } from '../../lib/mascot/sagas-engine';
@@ -132,6 +132,10 @@ const SEASON_ILLUSTRATIONS: Record<Season, ImageSourcePropType> = {
   ete: require('../../assets/illustrations/tree-summer.jpg'),
   automne: require('../../assets/illustrations/tree-autumn.jpg'),
   hiver: require('../../assets/illustrations/tree-winter.jpg'),
+};
+
+const STAGE_EMOJI: Record<TreeStage, string> = {
+  graine: '🌱', pousse: '🌿', arbuste: '🌿', arbre: '🌳', majestueux: '👑', legendaire: '⭐',
 };
 
 /** Tooltip whisper quand on tap une culture en croissance */
@@ -367,14 +371,15 @@ export default function TreeScreen() {
   useEffect(() => { recentTasksCountRef.current = recentTasksCount; }, [recentTasksCount]);
 
   // Sauvegarder un message dans la mémoire courte du compagnon (via refs pour éviter les boucles)
+  // Sauvegarde TOUS les messages (IA et templates traduits) pour l'anti-répétition
   const saveToMemory = useCallback((msg: string) => {
     const comp = companionRef.current;
     const prof = activeProfileRef.current;
-    if (!comp || !prof || msg.startsWith('companion.msg.')) return;
+    if (!comp || !prof || !msg) return;
     const recent = comp.recentMessages ?? [];
     // Pas de doublon avec le dernier message
     if (recent.length > 0 && recent[recent.length - 1] === msg) return;
-    const updated = [...recent, msg].slice(-3);
+    const updated = [...recent, msg].slice(-5);
     setCompanion(prof.id, { ...comp, recentMessages: updated });
   }, [setCompanion]);
 
@@ -388,14 +393,38 @@ export default function TreeScreen() {
     const isI18nKey = msg.startsWith('companion.msg.');
     const displayMsg = isI18nKey ? String(t(msg, context)) : msg;
     setCompanionMessage(displayMsg);
-    if (!isI18nKey) saveToMemory(displayMsg);
+    // Sauvegarder TOUS les messages affichés (traduits) pour l'anti-répétition
+    saveToMemory(displayMsg);
     msgTimerRef.current = setTimeout(() => setCompanionMessage(null), duration);
   }, [t, saveToMemory]);
+
+  // Tâches en attente aujourd'hui (pas encore complétées)
+  const pendingTasksToday = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return tasks
+      .filter(t => !t.completed && t.dueDate === today)
+      .slice(0, 5)
+      .map(t => t.text);
+  }, [tasks]);
+
+  // Moment de la journée pour le contexte compagnon
+  const timeOfDay = useMemo((): 'matin' | 'apres-midi' | 'soir' | 'nuit' => {
+    const h = new Date().getHours();
+    if (h >= 6 && h < 12) return 'matin';
+    if (h >= 12 && h < 18) return 'apres-midi';
+    if (h >= 18 && h < 23) return 'soir';
+    return 'nuit';
+  }, []);
 
   // Handler tap sur le compagnon — affiche message greeting
   const handleCompanionTap = useCallback(() => {
     if (!companion || !activeProfile) return;
-    const context = {
+    const moodResult = computeMoodScore({
+      recentTasksCompleted: recentTasksCount,
+      hoursSinceLastActivity,
+      streak: activeProfile.streak ?? 0,
+    });
+    const context: import('../../lib/mascot/companion-types').CompanionMessageContext = {
       profileName: activeProfile.name,
       companionName: companion.name,
       companionSpecies: companion.activeSpecies,
@@ -406,6 +435,10 @@ export default function TreeScreen() {
       nextRdv,
       todayMeals,
       recentMessages: companion.recentMessages,
+      mood: moodResult.mood,
+      moodScore: moodResult.score,
+      pendingTasks: pendingTasksToday,
+      timeOfDay,
     };
 
     // Afficher le template immédiatement comme fallback
@@ -417,7 +450,7 @@ export default function TreeScreen() {
         showCompanionMsg(msg, context, 4000);
       });
     }
-  }, [companion, activeProfile, recentTasksCount, recentCompletedTasks, nextRdv, todayMeals, aiCall, showCompanionMsg]);
+  }, [companion, activeProfile, recentTasksCount, recentCompletedTasks, nextRdv, todayMeals, aiCall, showCompanionMsg, hoursSinceLastActivity, pendingTasksToday, timeOfDay]);
 
   // Compter les tâches totales du jour (faites + à faire)
   const totalTasksToday = useMemo(() => {
@@ -426,7 +459,15 @@ export default function TreeScreen() {
   }, [tasks]);
 
   // Dernière visite (pour détecter première visite du jour et absence)
+  // Persisté en SecureStore pour survivre aux redémarrages app
   const lastVisitRef = useRef<string | null>(null);
+  const lastVisitLoadedRef = useRef(false);
+  useEffect(() => {
+    SecureStore.getItemAsync('companion_last_visit').then(val => {
+      lastVisitRef.current = val;
+      lastVisitLoadedRef.current = true;
+    });
+  }, []);
 
   // Cooldown pour éviter le spam de messages au focus
   const lastFocusMessageRef = useRef<number>(0);
@@ -443,6 +484,11 @@ export default function TreeScreen() {
     if (!comp || !prof) return;
     lastActionMsgRef.current = now;
 
+    const moodResult = computeMoodScore({
+      recentTasksCompleted: recentTasksCountRef.current,
+      hoursSinceLastActivity,
+      streak: prof.streak ?? 0,
+    });
     const context: import('../../lib/mascot/companion-types').CompanionMessageContext = {
       profileName: prof.name,
       companionName: comp.name,
@@ -451,6 +497,9 @@ export default function TreeScreen() {
       streak: prof.streak ?? 0,
       level: calculateLevel(prof.points ?? 0),
       recentMessages: comp.recentMessages,
+      mood: moodResult.mood,
+      moodScore: moodResult.score,
+      timeOfDay,
     };
 
     // Fallback template immédiat
@@ -462,21 +511,30 @@ export default function TreeScreen() {
         showCompanionMsg(msg, context, 5000);
       });
     }
-  }, [aiCall, showCompanionMsg]);
+  }, [aiCall, showCompanionMsg, hoursSinceLastActivity, timeOfDay]);
 
-  // Message de bienvenue au focus — une seule fois par visite, cooldown 5min
+  // Message de bienvenue au focus — une seule fois par visite, cooldown 20s
   useFocusEffect(useCallback(() => {
     const now = Date.now();
     const comp = companionRef.current;
     const prof = activeProfileRef.current;
     if (!comp || !prof) return;
 
+    // Attendre que lastVisit soit chargé depuis SecureStore
+    if (!lastVisitLoadedRef.current) return;
+
     // Cooldown 20s entre deux messages automatiques
     if (now - lastFocusMessageRef.current < 20 * 1000) return;
     lastFocusMessageRef.current = now;
 
     const level = calculateLevel(prof.points ?? 0);
-    const context = {
+    const moodResult = computeMoodScore({
+      recentTasksCompleted: recentTasksCountRef.current,
+      hoursSinceLastActivity,
+      streak: prof.streak ?? 0,
+    });
+
+    const context: import('../../lib/mascot/companion-types').CompanionMessageContext = {
       profileName: prof.name,
       companionName: comp.name,
       companionSpecies: comp.activeSpecies,
@@ -487,11 +545,17 @@ export default function TreeScreen() {
       nextRdv,
       todayMeals,
       recentMessages: comp.recentMessages,
+      mood: moodResult.mood,
+      moodScore: moodResult.score,
+      pendingTasks: pendingTasksToday,
+      timeOfDay,
     };
 
     const today = new Date().toISOString().slice(0, 10);
     const isFirstVisitToday = lastVisitRef.current !== today;
     lastVisitRef.current = today;
+    // Persister en SecureStore pour survivre aux redémarrages
+    SecureStore.setItemAsync('companion_last_visit', today).catch(() => {});
 
     // Détection proactive — prioritaire sur le greeting classique
     const proactiveEvent = detectProactiveEvent({
@@ -1311,132 +1375,79 @@ export default function TreeScreen() {
         />
 
 
-        {/* Info profil + stade */}
-        <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.infoCard}>
-          <View style={[styles.infoContainer, { backgroundColor: colors.card, borderColor: colors.borderLight }, Shadows.md]}>
-            {/* Barre d'outils compacte (uniquement son propre arbre) */}
-            {isOwnTree && (
-            <View style={styles.toolbar}>
-              <TouchableOpacity
-                style={[styles.toolBtn, { backgroundColor: tint, borderColor: primary }]}
-                onPress={() => setShowShop(true)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.toolBtnIcon}>{'🛒'}</Text>
-                <Text style={[styles.toolBtnLabel, { color: primary }]}>
-                  {t('mascot.shop.shortTitle', 'Boutique')}
-                </Text>
+        {/* Carte 1 — Actions */}
+        {isOwnTree && (
+        <Animated.View entering={FadeInDown.delay(200).duration(400)}>
+          <View style={[styles.actionCard, { backgroundColor: colors.card, borderColor: colors.borderLight }, Shadows.sm]}>
+            <View style={styles.actionRow}>
+              <TouchableOpacity style={styles.actionItem} onPress={() => setShowShop(true)} activeOpacity={0.7}>
+                <Text style={styles.actionItemIcon}>{'🛒'}</Text>
+                <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>{t('mascot.shop.shortTitle', 'Boutique')}</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.toolBtn, { backgroundColor: tint, borderColor: primary }]}
-                onPress={() => setShowCraftSheet(true)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.toolBtnIcon}>{'🔨'}</Text>
-                <Text style={[styles.toolBtnLabel, { color: primary }]}>
-                  {t('craft.atelier')}
-                </Text>
+              <TouchableOpacity style={styles.actionItem} onPress={() => setShowCraftSheet(true)} activeOpacity={0.7}>
+                <Text style={styles.actionItemIcon}>{'🔨'}</Text>
+                <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>{t('craft.atelier')}</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.toolBtn, { backgroundColor: tint, borderColor: primary }]}
-                onPress={() => setShowTechTree(true)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.toolBtnIcon}>{'🔬'}</Text>
-                <Text style={[styles.toolBtnLabel, { color: primary }]}>
-                  {'Techs'}
-                </Text>
+              <TouchableOpacity style={styles.actionItem} onPress={() => setShowTechTree(true)} activeOpacity={0.7}>
+                <Text style={styles.actionItemIcon}>{'🔬'}</Text>
+                <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>{'Techs'}</Text>
               </TouchableOpacity>
               {(allDecoIds.length + allHabIds.length) > 0 && !placingItem && (
-                <TouchableOpacity
-                  style={[styles.toolBtn, { backgroundColor: tint, borderColor: primary }]}
-                  onPress={() => setShowItemPicker(true)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.toolBtnIcon}>{'🎨'}</Text>
-                  <Text style={[styles.toolBtnLabel, { color: primary }]}>
-                    {t('mascot.shortDecorate', 'D\u00E9corer')}
-                  </Text>
+                <TouchableOpacity style={styles.actionItem} onPress={() => setShowItemPicker(true)} activeOpacity={0.7}>
+                  <Text style={styles.actionItemIcon}>{'🎨'}</Text>
+                  <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>{t('mascot.shortDecorate', 'Décorer')}</Text>
                 </TouchableOpacity>
               )}
-              <TouchableOpacity
-                style={[styles.toolBtn, { backgroundColor: tint, borderColor: primary }]}
-                onPress={() => setShowBadges(true)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.toolBtnIcon}>{'🏅'}</Text>
-                <Text style={[styles.toolBtnLabel, { color: primary }]}>
-                  {'Badges'}
-                </Text>
+              <TouchableOpacity style={styles.actionItem} onPress={() => setShowBadges(true)} activeOpacity={0.7}>
+                <Text style={styles.actionItemIcon}>{'🏅'}</Text>
+                <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>{'Badges'}</Text>
               </TouchableOpacity>
               {companion && (
-                <TouchableOpacity
-                  style={[styles.toolBtn, { backgroundColor: tint, borderColor: primary }]}
-                  onPress={() => setShowCompanionPicker(true)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.toolBtnIcon}>{'🐾'}</Text>
-                  <Text style={[styles.toolBtnLabel, { color: primary }]}>
-                    {companion.name}
-                  </Text>
+                <TouchableOpacity style={styles.actionItem} onPress={() => setShowCompanionPicker(true)} activeOpacity={0.7}>
+                  <Text style={styles.actionItemIcon}>{'🐾'}</Text>
+                  <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>{companion.name}</Text>
                 </TouchableOpacity>
               )}
             </View>
-            )}
+          </View>
+        </Animated.View>
+        )}
 
-            {/* Barre XP */}
-            <View style={styles.xpSection}>
-              <View style={styles.xpHeader}>
-                <Text style={[styles.xpLabel, { color: colors.textSub }]}>
-                  {t('mascot.screen.xpProgress')}
-                </Text>
-                <Text style={[styles.xpValue, { color: colors.textMuted }]}>
-                  {xpInLevel} / {xpNeeded} XP
-                </Text>
-              </View>
-              <View style={[styles.xpBar, { backgroundColor: colors.cardAlt }]}>
-                <View style={[styles.xpFill, { width: `${Math.round(xpPercent * 100)}%`, backgroundColor: tier.color }]} />
-              </View>
+        {/* Carte 2 — Progression */}
+        <Animated.View entering={FadeInDown.delay(300).duration(400)}>
+          <View style={[styles.progressCard, { backgroundColor: colors.card, borderColor: colors.borderLight }, Shadows.sm, isOwnTree ? { marginTop: Spacing.sm } : undefined]}>
+            {/* Header : stade + XP */}
+            <View style={styles.progressHeader}>
+              <Text style={[styles.progressTitle, { color: colors.text }]}>
+                {STAGE_EMOJI[stageInfo.stage]} {t(stageInfo.labelKey)} · {t('mascot.screen.level')} {level}
+              </Text>
+              <Text style={[styles.progressXp, { color: colors.textMuted }]}>
+                {xpInLevel} / {xpNeeded} XP
+              </Text>
             </View>
 
-            {/* Progression vers évolution */}
-            {nextEvoLevel !== null && (
-              <View style={[styles.evoSection, { borderTopColor: colors.borderLight }]}>
-                <Text style={[styles.evoTitle, { color: colors.textSub }]}>
-                  {t('mascot.screen.nextEvolution')}
+            {/* Barre XP */}
+            <View style={[styles.progressBar, { backgroundColor: colors.cardAlt }]}>
+              <View style={[styles.progressFill, { width: `${Math.round(xpPercent * 100)}%`, backgroundColor: tier.color }]} />
+            </View>
+
+            {/* Ligne evolution */}
+            {nextEvoLevel !== null ? (
+              <View style={styles.evoLine}>
+                <Text style={[styles.evoLineText, { color: colors.textSub }]}>
+                  → {t(TREE_STAGES[stageIdx + 1]?.labelKey || stageInfo.labelKey)}
                 </Text>
-                <View style={styles.evoRow}>
-                  <View style={styles.evoStage}>
-                    <TreeView species={species} level={level} size={70} showGround={false} interactive={false} />
-                    <Text style={[styles.evoStageName, { color: colors.text }]}>
-                      {t(stageInfo.labelKey)}
-                    </Text>
-                  </View>
-                  <Text style={[styles.evoArrow, { color: colors.textFaint }]}>→</Text>
-                  <View style={styles.evoStage}>
-                    <TreeView species={species} level={nextEvoLevel} size={70} showGround={false} interactive={false} />
-                    <Text style={[styles.evoStageName, { color: colors.textMuted }]}>
-                      {t(TREE_STAGES[stageIdx + 1]?.labelKey || stageInfo.labelKey)}
-                    </Text>
-                  </View>
+                <View style={[styles.evoLineBar, { backgroundColor: colors.cardAlt }]}>
+                  <View style={[styles.evoLineFill, { width: `${Math.round(stageProgress * 100)}%`, backgroundColor: sp.accent }]} />
                 </View>
-                <Text style={[styles.evoHint, { color: colors.textFaint }]}>
+                <Text style={[styles.evoLineHint, { color: colors.textFaint }]}>
                   {t('mascot.screen.levelsToEvo', { count: levelsLeft })}
                 </Text>
-                {/* Barre progression évolution */}
-                <View style={[styles.xpBar, { backgroundColor: colors.cardAlt, marginTop: Spacing.sm }]}>
-                  <View style={[styles.xpFill, { width: `${Math.round(stageProgress * 100)}%`, backgroundColor: sp.accent }]} />
-                </View>
               </View>
-            )}
-
-            {/* Stade max atteint */}
-            {nextEvoLevel === null && (
-              <View style={[styles.evoSection, { borderTopColor: colors.borderLight }]}>
-                <Text style={[styles.maxStage, { color: '#FFD700' }]}>
-                  {t('mascot.screen.maxStage')}
-                </Text>
-              </View>
+            ) : (
+              <Text style={{ color: '#FFD700', fontWeight: FontWeight.bold, textAlign: 'center', marginTop: Spacing.xs }}>
+                {t('mascot.screen.maxStage')}
+              </Text>
             )}
           </View>
         </Animated.View>
@@ -1692,13 +1703,79 @@ const styles = StyleSheet.create({
     marginHorizontal: -Spacing['2xl'],
     marginTop: -1, // éviter le pixel gap entre diorama et gradient
   },
-  infoCard: {
+  actionCard: {
+    borderRadius: Radius.xl,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  actionRow: {
+    flexDirection: 'row',
+  },
+  actionItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  actionItemIcon: {
+    fontSize: 22,
+    lineHeight: 28,
+  },
+  actionItemLabel: {
+    fontSize: 10,
+    fontWeight: FontWeight.semibold,
+  },
+  progressCard: {
+    borderRadius: Radius.xl,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 14,
     marginBottom: Spacing['2xl'],
   },
-  infoContainer: {
-    borderRadius: Radius.xl,
-    padding: Spacing['2xl'],
-    borderWidth: StyleSheet.hairlineWidth,
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  progressTitle: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+  },
+  progressXp: {
+    fontSize: FontSize.caption,
+  },
+  progressBar: {
+    height: 8,
+    borderRadius: Radius.full,
+    overflow: 'hidden',
+    marginBottom: Spacing.sm,
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: Radius.full,
+  },
+  evoLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.xs,
+  },
+  evoLineText: {
+    fontSize: FontSize.caption,
+    flexShrink: 0,
+  },
+  evoLineBar: {
+    flex: 1,
+    height: 4,
+    borderRadius: Radius.full,
+    overflow: 'hidden',
+  },
+  evoLineFill: {
+    height: '100%',
+  },
+  evoLineHint: {
+    fontSize: FontSize.caption,
+    flexShrink: 0,
   },
   profileRow: {
     flexDirection: 'row',
@@ -1753,95 +1830,6 @@ const styles = StyleSheet.create({
   changeSpeciesText: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
-  },
-  toolbar: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    marginVertical: Spacing.md,
-    paddingHorizontal: Spacing.md,
-  },
-  toolBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
-  },
-  toolBtnIcon: {
-    fontSize: 20,
-    lineHeight: 24,
-  },
-  toolBtnLabel: {
-    fontSize: 9,
-    fontWeight: FontWeight.semibold,
-    lineHeight: 11,
-  },
-  xpSection: {
-    marginBottom: Spacing.lg,
-  },
-  xpHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.sm,
-  },
-  xpLabel: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.medium,
-  },
-  xpValue: {
-    fontSize: FontSize.caption,
-  },
-  xpBar: {
-    height: 8,
-    borderRadius: Radius.full,
-    overflow: 'hidden',
-  },
-  xpFill: {
-    height: '100%',
-    borderRadius: Radius.full,
-  },
-  evoSection: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingTop: Spacing.xl,
-  },
-  evoTitle: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.medium,
-    marginBottom: Spacing.md,
-  },
-  evoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.xl,
-    marginBottom: Spacing.sm,
-  },
-  evoStage: {
-    alignItems: 'center',
-  },
-  evoEmoji: {
-    fontSize: FontSize.display,
-  },
-  evoStageName: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.medium,
-    marginTop: Spacing.xxs,
-  },
-  evoArrow: {
-    fontSize: FontSize.title,
-    fontWeight: FontWeight.bold,
-  },
-  evoHint: {
-    fontSize: FontSize.caption,
-    textAlign: 'center',
-  },
-  maxStage: {
-    fontSize: FontSize.subtitle,
-    fontWeight: FontWeight.bold,
-    textAlign: 'center',
   },
   familyTitle: {
     fontSize: FontSize.subtitle,
