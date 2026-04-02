@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: executing
-stopped_at: Checkpoint human-verify 10-03 Task 3
-last_updated: "2026-03-30T21:01:19.238Z"
-last_activity: 2026-03-30
+stopped_at: "Completed quick task 260402-x63: HUD flottant absolute sur ecran tree"
+last_updated: "2026-04-02T22:17:24.758Z"
+last_activity: "2026-04-02 - Completed quick task 260402-wrf: Mockup C — diorama arrondi + ombre + chevauchement cartes (écran arbre)"
 progress:
   total_phases: 7
   completed_phases: 5
@@ -119,6 +119,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-02T00:00:00.000Z
-Stopped at: Completed quick task 260402-wum: FAB calendrier — ajout rapide RDV et tache
+Last session: 2026-04-02T22:17:24.749Z
+Stopped at: Completed quick task 260402-x63: HUD flottant absolute sur ecran tree
 Resume file: None
