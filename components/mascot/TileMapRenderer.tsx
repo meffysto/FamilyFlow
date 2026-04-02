@@ -161,8 +161,8 @@ const FISH_DECOS = {
   fish_trap: require('../../assets/garden/decos/fish_obj_4_0.png'),
   fish_koi_frames: [
     require('../../assets/garden/decos/fish_koi_1.png'),
-    require('../../assets/garden/decos/fish_koi_4.png'),
-    require('../../assets/garden/decos/fish_koi_6.png'),
+    require('../../assets/garden/decos/fish_koi_2.png'),
+    require('../../assets/garden/decos/fish_koi_3.png'),
     require('../../assets/garden/decos/fish_koi_4.png'),
   ] as const,
 };
@@ -467,7 +467,6 @@ const FISH_FRAMES = FISH_DECOS.fish_koi_frames;
 function SwimmingFish({ containerWidth, containerHeight }: { containerWidth: number; containerHeight: number }) {
   const posX = useSharedValue(FISH_WAYPOINTS[0].x * containerWidth);
   const posY = useSharedValue(FISH_WAYPOINTS[0].y * containerHeight);
-  const rotation = useSharedValue(0);
   const [frameIdx, setFrameIdx] = useState(0);
 
   // Cycle des frames de nage
@@ -478,7 +477,7 @@ function SwimmingFish({ containerWidth, containerHeight }: { containerWidth: num
     return () => clearInterval(interval);
   }, []);
 
-  // Animation de deplacement + rotation vers la direction
+  // Animation de deplacement dans le lac
   useEffect(() => {
     const points = FISH_WAYPOINTS.map(p => ({
       x: p.x * containerWidth,
@@ -487,19 +486,12 @@ function SwimmingFish({ containerWidth, containerHeight }: { containerWidth: num
 
     const stepsX: number[] = [];
     const stepsY: number[] = [];
-    const rotations: number[] = [];
     for (let i = 1; i <= points.length; i++) {
-      const target = points[i % points.length];
-      const prev = points[(i - 1) % points.length];
-      stepsX.push(target.x);
-      stepsY.push(target.y);
-      // Angle vers la cible (le sprite pointe vers le bas par defaut → offset -PI/2)
-      const angle = Math.atan2(target.y - prev.y, target.x - prev.x) - Math.PI / 2;
-      rotations.push(angle);
+      stepsX.push(points[i % points.length].x);
+      stepsY.push(points[i % points.length].y);
     }
 
     const timingConfig = { duration: FISH_STEP_MS, easing: Easing.inOut(Easing.sin) };
-    const rotConfig = { duration: FISH_STEP_MS * 0.3, easing: Easing.inOut(Easing.sin) };
 
     posX.value = withDelay(500, withRepeat(
       withSequence(...stepsX.map(x => withTiming(x, timingConfig))),
@@ -507,10 +499,6 @@ function SwimmingFish({ containerWidth, containerHeight }: { containerWidth: num
     ));
     posY.value = withDelay(500, withRepeat(
       withSequence(...stepsY.map(y => withTiming(y, timingConfig))),
-      -1,
-    ));
-    rotation.value = withDelay(500, withRepeat(
-      withSequence(...rotations.map(r => withTiming(r, rotConfig))),
       -1,
     ));
   }, [containerWidth, containerHeight]);
@@ -521,7 +509,6 @@ function SwimmingFish({ containerWidth, containerHeight }: { containerWidth: num
     top: posY.value - FISH_SIZE / 2,
     width: FISH_SIZE,
     height: FISH_SIZE,
-    transform: [{ rotate: `${rotation.value}rad` }],
   }));
 
   return (
