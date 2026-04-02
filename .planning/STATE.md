@@ -116,9 +116,10 @@ None yet.
 | 260402-wbr | Refonte bottom panel ecran arbre — 2 cartes Actions + Progression | 2026-04-02 | 8b503a3 | [260402-wbr-refonte-bottom-panel-cran-arbre-option-c](./quick/260402-wbr-refonte-bottom-panel-cran-arbre-option-c/) |
 | 260402-wrf | Mockup C — diorama arrondi + ombre + chevauchement cartes (ecran arbre) | 2026-04-02 | bae5fd5 | [260402-wrf-impl-menter-le-mockup-c-sur-l-cran-tree-](./quick/260402-wrf-impl-menter-le-mockup-c-sur-l-cran-tree-/) |
 | 260402-wum | FAB calendrier — ajout rapide RDV et tache | 2026-04-02 | d006704 | [260402-wum-fab-calendrier-ajout-rapide-rdv-et-t-che](./quick/260402-wum-fab-calendrier-ajout-rapide-rdv-et-t-che/) |
+| 260402-x63 | HUD flottant option A — position absolute + fond semi-transparent (écran tree) | 2026-04-02 | e3ae5ec | [260402-x63-hud-flottant-option-a-sur-l-cran-tree-re](./quick/260402-x63-hud-flottant-option-a-sur-l-cran-tree-re/) |
 
 ## Session Continuity
 
-Last session: 2026-04-02T22:17:24.749Z
-Stopped at: Completed quick task 260402-x63: HUD flottant absolute sur ecran tree
+Last session: 2026-04-02T00:00:00.000Z
+Stopped at: Completed quick task 260402-x63: HUD flottant option A — position absolute + fond semi-transparent (écran tree)
 Resume file: None
