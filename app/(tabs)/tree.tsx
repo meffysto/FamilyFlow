@@ -22,7 +22,6 @@ import {
   Alert,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -44,7 +43,6 @@ import { callCompanionMessage } from '../../lib/ai-service';
 import { TreeView } from '../../components/mascot/TreeView';
 import { SpeciesPicker } from '../../components/mascot/SpeciesPicker';
 import { TreeShop } from '../../components/mascot/TreeShop';
-import { PIXEL_GROUND_DARK } from '../../components/mascot/PixelDiorama';
 import { WorldGridView } from '../../components/mascot/WorldGridView';
 import { TileMapRenderer, GRASS_TILE_IMAGE } from '../../components/mascot/TileMapRenderer';
 import { BuildingShopSheet } from '../../components/mascot/BuildingShopSheet';
@@ -1260,7 +1258,7 @@ export default function TreeScreen() {
             ]}
           >
             {/* Conteneur clippé pour le terrain (empêche l'image de déborder) */}
-            <View style={[StyleSheet.absoluteFill, { overflow: 'hidden' }]}>
+            <View style={[StyleSheet.absoluteFill, { overflow: 'hidden', borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }]}>
               {/* Couche 0 : Fond herbe — tile foncée du tileset repetee */}
               <Image
                 source={GRASS_TILE_IMAGE}
@@ -1368,16 +1366,9 @@ export default function TreeScreen() {
         </Animated.View>
 
 
-        {/* Transition douce diorama → contenu : gradient sol → fond de page */}
-        <LinearGradient
-          colors={[PIXEL_GROUND_DARK[season], colors.bg]}
-          style={styles.groundTransition}
-        />
-
-
         {/* Carte 1 — Actions */}
         {isOwnTree && (
-        <Animated.View entering={FadeInDown.delay(200).duration(400)}>
+        <Animated.View entering={FadeInDown.delay(200).duration(400)} style={{ marginTop: -22, zIndex: 10, position: 'relative' }}>
           <View style={[styles.actionCard, { backgroundColor: colors.card, borderColor: colors.borderLight }, Shadows.sm]}>
             <View style={styles.actionRow}>
               <TouchableOpacity style={styles.actionItem} onPress={() => setShowShop(true)} activeOpacity={0.7}>
@@ -1414,8 +1405,8 @@ export default function TreeScreen() {
         )}
 
         {/* Carte 2 — Progression */}
-        <Animated.View entering={FadeInDown.delay(300).duration(400)}>
-          <View style={[styles.progressCard, { backgroundColor: colors.card, borderColor: colors.borderLight }, Shadows.sm, isOwnTree ? { marginTop: Spacing.sm } : undefined]}>
+        <Animated.View entering={FadeInDown.delay(300).duration(400)} style={isOwnTree ? { marginTop: Spacing.sm } : { marginTop: -22, zIndex: 10, position: 'relative' }}>
+          <View style={[styles.progressCard, { backgroundColor: colors.card, borderColor: colors.borderLight }, Shadows.sm]}>
             {/* Header : stade + XP */}
             <View style={styles.progressHeader}>
               <Text style={[styles.progressTitle, { color: colors.text }]}>
@@ -1632,12 +1623,20 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
   treeBg: {
-    // Full-bleed : pas de borderRadius, largeur 100%
     alignSelf: 'stretch',
     alignItems: 'center',
     justifyContent: 'flex-end',
     // overflow visible pour que les tooltips/bulles companion ne soient pas clippés
     overflow: 'visible',
+    // Coins arrondis bas — mockup C
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    // Ombre portée visible sous le diorama
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
   },
   farmHud: {
     paddingVertical: Spacing.sm,
@@ -1696,12 +1695,6 @@ const styles = StyleSheet.create({
   },
   sagaSceneEmoji: {
     fontSize: 28,
-  },
-  groundTransition: {
-    // Transition douce du sol vers le fond de page
-    height: 48,
-    marginHorizontal: -Spacing['2xl'],
-    marginTop: -1, // éviter le pixel gap entre diorama et gradient
   },
   actionCard: {
     borderRadius: Radius.xl,
