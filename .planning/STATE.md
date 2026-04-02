@@ -114,9 +114,10 @@ None yet.
 | 260331-jzy | Ajouter prop tinted sur DashboardCard pour fond subtil coloré par section | 2026-03-31 | 3549bab | [260331-jzy-ajouter-prop-tinted-sur-dashboardcard-po](./quick/260331-jzy-ajouter-prop-tinted-sur-dashboardcard-po/) |
 | 260402-vpb | Refonte catalogue CraftSheet en grille par stade + mini-modal | 2026-04-02 | a802822 | [260402-vpb-refonte-catalogue-recettes-craftsheet-gr](./quick/260402-vpb-refonte-catalogue-recettes-craftsheet-gr/) |
 | 260402-wbr | Refonte bottom panel ecran arbre — 2 cartes Actions + Progression | 2026-04-02 | 8b503a3 | [260402-wbr-refonte-bottom-panel-cran-arbre-option-c](./quick/260402-wbr-refonte-bottom-panel-cran-arbre-option-c/) |
+| 260402-wrf | Mockup C — diorama arrondi + ombre + chevauchement cartes (ecran arbre) | 2026-04-02 | bae5fd5 | [260402-wrf-impl-menter-le-mockup-c-sur-l-cran-tree-](./quick/260402-wrf-impl-menter-le-mockup-c-sur-l-cran-tree-/) |
 
 ## Session Continuity
 
 Last session: 2026-04-02T00:00:00.000Z
-Stopped at: Completed quick task 260402-wbr: Refonte bottom panel ecran arbre — 2 cartes Actions + Progression
+Stopped at: Completed quick task 260402-wrf: Mockup C — diorama arrondi + ombre + chevauchement cartes (ecran arbre)
 Resume file: None
