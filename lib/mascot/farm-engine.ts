@@ -180,12 +180,69 @@ export function rollHarvestEvent(): HarvestEvent | null {
   return HARVEST_EVENTS[2];
 }
 
+// ─────────────────────────────────────────────
+// Graines rares — Systeme de drop a la recolte
+// ─────────────────────────────────────────────
+
+/** Resultat d'un drop de graine rare */
+export interface RareSeedDrop {
+  seedId: string;   // id de la culture rare obtenue
+  emoji: string;    // emoji pour l'affichage
+  labelKey: string; // cle i18n
+}
+
+/** Regle de drop : quelles recoltes peuvent donner quelle graine rare */
+interface SeedDropRule {
+  sourceCropIds: string[] | '*';  // '*' = n'importe quelle culture
+  seedId: string;
+  chance: number;  // probabilite (0.08 = 8%)
+}
+
+/** Table de drop des graines rares */
+export const RARE_SEED_DROP_RULES: SeedDropRule[] = [
+  // Recolte arbuste+ → orchidee (8%)
+  { sourceCropIds: ['tomato', 'cabbage', 'cucumber', 'corn', 'strawberry', 'pumpkin', 'sunflower'], seedId: 'orchidee', chance: 0.08 },
+  // Recolte arbre+ → rose doree (8%)
+  { sourceCropIds: ['corn', 'strawberry', 'pumpkin'], seedId: 'rose_doree', chance: 0.08 },
+  // Recolte citrouille/tournesol → truffe (8%)
+  { sourceCropIds: ['pumpkin', 'sunflower'], seedId: 'truffe', chance: 0.08 },
+  // Recolte n'importe quoi → fruit du dragon (2%)
+  { sourceCropIds: '*', seedId: 'fruit_dragon', chance: 0.02 },
+];
+
+/** Tente d'obtenir une graine rare apres une recolte.
+ * Parcourt les regles dans l'ordre et retourne le premier drop reussi (ou null).
+ */
+export function rollSeedDrop(harvestedCropId: string): RareSeedDrop | null {
+  for (const rule of RARE_SEED_DROP_RULES) {
+    // Verifier si la culture source est eligible
+    if (rule.sourceCropIds !== '*' && !rule.sourceCropIds.includes(harvestedCropId)) continue;
+    // Ne pas dropper une graine rare a partir d'une culture rare elle-meme
+    const harvestedDef = CROP_CATALOG.find(c => c.id === harvestedCropId);
+    if (harvestedDef?.dropOnly) continue;
+    // Lancer le de
+    if (Math.random() < rule.chance) {
+      const seedDef = CROP_CATALOG.find(c => c.id === rule.seedId);
+      if (!seedDef) continue;
+      return {
+        seedId: rule.seedId,
+        emoji: seedDef.emoji,
+        labelKey: seedDef.labelKey,
+      };
+    }
+  }
+  return null;
+}
+
 /** Retourne les cultures disponibles selon le stade d'arbre et les techs debloquees */
 export function getAvailableCrops(treeStage: TreeStage, unlockedTechs: string[]): CropDefinition[] {
   const stageOrder: TreeStage[] = ['graine', 'pousse', 'arbuste', 'arbre', 'majestueux', 'legendaire'];
   const currentIdx = stageOrder.indexOf(treeStage);
 
   return CROP_CATALOG.filter(crop => {
+    // Exclure les cultures dropOnly (graines rares) — elles ne sont pas achetables
+    if (crop.dropOnly) return false;
+
     // Verifier le stade d'arbre minimum
     const requiredIdx = stageOrder.indexOf(crop.minTreeStage);
     if (requiredIdx > currentIdx) return false;

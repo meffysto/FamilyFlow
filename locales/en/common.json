@@ -3920,7 +3920,15 @@
       "cucumber": "Cucumber",
       "cucumber_desc": "Fresh and crunchy. Grows well in the sun.",
       "sunflower": "Sunflower",
-      "sunflower_desc": "Bright and precious. Unlocked via Culture tech."
+      "sunflower_desc": "Bright and precious. Unlocked via Culture tech.",
+      "orchidee": "Orchid",
+      "orchidee_desc": "A rare and delicate flower. Obtained by drop at harvest.",
+      "rose_doree": "Golden Rose",
+      "rose_doree_desc": "A sparkling rose. Very rare and very precious.",
+      "truffe": "Truffle",
+      "truffe_desc": "A legendary mushroom. Long growth, exceptional reward.",
+      "fruit_dragon": "Dragon Fruit",
+      "fruit_dragon_desc": "A mythical fruit. Very rare, found in any harvest."
     },
     "building": {
       "poulailler": "Chicken Coop",
@@ -3969,7 +3977,12 @@
       "autumn": "Autumn crops",
       "winter": "No bonus in winter"
     },
-    "seedDrop": "Free seeds!"
+    "seedDrop": "Free seeds!",
+    "rareSeedsTitle": "Rare seeds",
+    "rare": "Rare",
+    "rareFree": "Free",
+    "regularSeeds": "Regular seeds",
+    "rareSeedDrop": "{{emoji}} Rare seed obtained: {{name}}!"
   },
   "craft": {
     "atelier": "Workshop",
@@ -4002,7 +4015,10 @@
       "tarte_citrouille": "Pumpkin Pie",
       "hydromel": "Mead",
       "nougat": "Nougat",
-      "pain_epices": "Gingerbread"
+      "pain_epices": "Gingerbread",
+      "parfum_orchidee": "Orchid Perfume",
+      "confiture_royale": "Royal Jam",
+      "risotto_truffe": "Truffle Risotto"
     }
   },
   "badges": {

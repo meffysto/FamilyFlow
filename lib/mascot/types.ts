@@ -279,6 +279,7 @@ export interface CropDefinition {
   minTreeStage: TreeStage; // stade d'arbre minimum pour debloquer
   cost: number;            // cout en feuilles pour les graines
   techRequired?: string;   // id du noeud tech requis pour debloquer (optionnel)
+  dropOnly?: boolean;      // true = graine rare, obtenue uniquement par drop (pas achetable)
 }
 
 /** Instance de culture plantee */
@@ -324,6 +325,11 @@ export const CROP_CATALOG: CropDefinition[] = [
   { id: 'pumpkin',    labelKey: 'farm.crop.pumpkin',    emoji: '🎃', tasksPerStage: 3, harvestReward: 200, minTreeStage: 'majestueux', cost: 40 },
   // Debloquee par tech culture-3
   { id: 'sunflower',  labelKey: 'farm.crop.sunflower',  emoji: '🌻', tasksPerStage: 2, harvestReward: 100, minTreeStage: 'pousse', cost: 20, techRequired: 'culture-3' },
+  // Graines rares (dropOnly — obtenues uniquement par drop a la recolte)
+  { id: 'orchidee',       labelKey: 'farm.crop.orchidee',       emoji: '🪻', tasksPerStage: 3, harvestReward: 300, minTreeStage: 'arbuste',    cost: 0, dropOnly: true },
+  { id: 'rose_doree',     labelKey: 'farm.crop.rose_doree',     emoji: '🌹', tasksPerStage: 4, harvestReward: 500, minTreeStage: 'arbre',      cost: 0, dropOnly: true },
+  { id: 'truffe',         labelKey: 'farm.crop.truffe',         emoji: '🍄', tasksPerStage: 5, harvestReward: 800, minTreeStage: 'majestueux', cost: 0, dropOnly: true },
+  { id: 'fruit_dragon',   labelKey: 'farm.crop.fruit_dragon',   emoji: '🐉', tasksPerStage: 4, harvestReward: 600, minTreeStage: 'arbre',      cost: 0, dropOnly: true },
 ];
 
 // ─────────────────────────────────────────────
@@ -403,6 +409,11 @@ export interface CraftedItem {
 /** Inventaire des recoltes brutes (cultures recoltees non vendues) */
 export interface HarvestInventory {
   [cropId: string]: number;  // ex: { strawberry: 3, wheat: 1 }
+}
+
+/** Inventaire des graines rares (obtenues par drop a la recolte) */
+export interface RareSeedInventory {
+  [cropId: string]: number;  // ex: { orchidee: 1, truffe: 2 }
 }
 
 export const BUILDING_CATALOG: BuildingDefinition[] = [

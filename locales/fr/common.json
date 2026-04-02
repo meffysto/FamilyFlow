@@ -3920,7 +3920,15 @@
       "cucumber": "Concombre",
       "cucumber_desc": "Frais et croquant. Pousse bien au soleil.",
       "sunflower": "Tournesol",
-      "sunflower_desc": "Lumineux et precieux. Debloque via la tech Culture."
+      "sunflower_desc": "Lumineux et precieux. Debloque via la tech Culture.",
+      "orchidee": "Orchidée",
+      "orchidee_desc": "Fleur rare et délicate. Obtenue par drop à la récolte.",
+      "rose_doree": "Rose dorée",
+      "rose_doree_desc": "Une rose étincelante. Très rare et très précieuse.",
+      "truffe": "Truffe",
+      "truffe_desc": "Champignon légendaire. Longue pousse, récompense exceptionnelle.",
+      "fruit_dragon": "Fruit du dragon",
+      "fruit_dragon_desc": "Fruit mythique. Très rare, trouvé dans n'importe quelle récolte."
     },
     "building": {
       "poulailler": "Poulailler",
@@ -3969,7 +3977,12 @@
       "autumn": "Cultures d'automne",
       "winter": "Pas de bonus en hiver"
     },
-    "seedDrop": "Graines gratuites !"
+    "seedDrop": "Graines gratuites !",
+    "rareSeedsTitle": "Graines rares",
+    "rare": "Rare",
+    "rareFree": "Gratuit",
+    "regularSeeds": "Graines classiques",
+    "rareSeedDrop": "{{emoji}} Graine rare obtenue : {{name}} !"
   },
   "craft": {
     "atelier": "Atelier",
@@ -4002,7 +4015,10 @@
       "tarte_citrouille": "Tarte à la citrouille",
       "hydromel": "Hydromel",
       "nougat": "Nougat",
-      "pain_epices": "Pain d'épices"
+      "pain_epices": "Pain d'épices",
+      "parfum_orchidee": "Parfum d'orchidée",
+      "confiture_royale": "Confiture royale",
+      "risotto_truffe": "Risotto de truffe"
     }
   },
   "badges": {

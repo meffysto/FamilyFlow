@@ -795,6 +795,12 @@ export default function TreeScreen() {
           setHarvestBurst({ x: burstX, y: burstY, reward: displayReward, cropId: result.cropId });
           const emoji = harvestedCropDef?.emoji ?? '🌾';
           showToast(`${emoji} ${result.cropId} récolté !`);
+          // Toast spécial graine rare avec délai pour ne pas masquer le toast récolte
+          if (result.seedDrop) {
+            setTimeout(() => {
+              showToast(`🌟 ${result.seedDrop!.emoji} Graine rare trouvée : ${t(result.seedDrop!.labelKey)} !`);
+            }, 1500);
+          }
           if (result.harvestEvent) {
             setHarvestEvent(result.harvestEvent);
           }
@@ -1035,7 +1041,71 @@ export default function TreeScreen() {
               contentContainerStyle={styles.seedSheetContent}
               showsVerticalScrollIndicator={false}
             >
-              {CROP_CATALOG.map(crop => {
+              {/* ── Graines rares possedees ── */}
+              {(() => {
+                const rareSeeds = profile?.farmRareSeeds ?? {};
+                const ownedRareSeeds = CROP_CATALOG.filter(c => c.dropOnly && (rareSeeds[c.id] ?? 0) > 0);
+                if (ownedRareSeeds.length === 0) return null;
+                return (
+                  <>
+                    <Text style={[styles.seedSectionTitle, { color: primary }]}>
+                      {t('farm.rareSeedsTitle')} ✨
+                    </Text>
+                    {ownedRareSeeds.map(crop => {
+                      const qty = rareSeeds[crop.id] ?? 0;
+                      const effectiveTasksPerStage = Math.max(1, crop.tasksPerStage - (techBonuses?.tasksPerStageReduction ?? 0));
+                      const totalTasks = effectiveTasksPerStage * 4;
+                      return (
+                        <TouchableOpacity
+                          key={crop.id}
+                          onPress={() => handleSeedSelect(crop.id)}
+                          activeOpacity={0.7}
+                          style={[
+                            styles.seedRow,
+                            { backgroundColor: colors.cardAlt, borderColor: primary, borderWidth: 1.5 },
+                          ]}
+                        >
+                          <View>
+                            <Text style={styles.seedRowEmoji}>{crop.emoji}</Text>
+                            <View style={[styles.rareSeedBadge, { backgroundColor: primary }]}>
+                              <Text style={styles.rareSeedBadgeText}>x{qty}</Text>
+                            </View>
+                          </View>
+                          <View style={styles.seedRowInfo}>
+                            <View style={styles.seedRowHeader}>
+                              <Text style={[styles.seedRowName, { color: colors.text }]}>
+                                {t(`farm.crop.${crop.id}`)}
+                              </Text>
+                              <View style={[styles.seedSeasonBadge, { backgroundColor: primary + '22' }]}>
+                                <Text style={[styles.seedSeasonBadgeText, { color: primary }]}>
+                                  {t('farm.rare')}
+                                </Text>
+                              </View>
+                            </View>
+                            <Text style={[styles.seedRowDesc, { color: colors.textMuted }]} numberOfLines={2}>
+                              {t(`farm.crop.${crop.id}_desc`)}
+                            </Text>
+                            <View style={styles.seedRowStats}>
+                              <Text style={[styles.seedRowStat, { color: colors.textSub }]}>
+                                {t('farm.taskCount', { count: totalTasks })}
+                              </Text>
+                              <Text style={[styles.seedRowStat, { color: colors.textSub }]}>
+                                {t('farm.rareFree')} → {crop.harvestReward} 🍃
+                              </Text>
+                            </View>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                    <View style={{ height: Spacing.md }} />
+                    <Text style={[styles.seedSectionTitle, { color: colors.textSub }]}>
+                      {t('farm.regularSeeds')}
+                    </Text>
+                  </>
+                );
+              })()}
+              {/* ── Graines normales (achetables) ── */}
+              {CROP_CATALOG.filter(c => !c.dropOnly).map(crop => {
                 const stageOrder = ['graine', 'pousse', 'arbuste', 'arbre', 'majestueux', 'legendaire'];
                 const stageUnlocked = stageOrder.indexOf(stageInfo.stage) >= stageOrder.indexOf(crop.minTreeStage);
                 const availableCrops = getAvailableCrops(stageInfo.stage, profile?.farmTech ?? []);
@@ -1923,6 +1993,27 @@ const styles = StyleSheet.create({
   },
   seedRowEmoji: {
     fontSize: 32,
+  },
+  seedSectionTitle: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+    marginBottom: Spacing.xs,
+  },
+  rareSeedBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -8,
+    borderRadius: Radius.full,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  rareSeedBadgeText: {
+    color: '#fff',
+    fontSize: FontSize.micro,
+    fontWeight: FontWeight.bold,
   },
   seedRowInfo: {
     flex: 1,

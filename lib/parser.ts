@@ -49,7 +49,7 @@ import {
 import { VALID_THEMES, type ProfileTheme } from '../constants/themes';
 import { parseEmplacementFromHeader, LEGACY_BEBE_SECTIONS, type EmplacementId } from '../constants/stock';
 import { parseBuildings, parseInventory } from './mascot/building-engine';
-import { parseHarvestInventory, parseCraftedItems } from './mascot/craft-engine';
+import { parseHarvestInventory, parseCraftedItems, parseRareSeeds } from './mascot/craft-engine';
 import type { CompanionData, CompanionSpecies, CompanionMood } from './mascot/companion-types';
 
 // ─── Task parsing ───────────────────────────────────────────────────────────
@@ -609,6 +609,7 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
       const craftedItems = parseCraftedItems(currentProps.farm_crafted_items);
       const farmTechRaw = currentProps.farm_tech ?? '';
       const farmTech = farmTechRaw ? farmTechRaw.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+      const farmRareSeeds = parseRareSeeds(currentProps.farm_rare_seeds);
       // Compagnon mascotte — backward-compatible : undefined si absent du fichier
       const companion = parseCompanion(currentProps.companion);
       profiles.push({
@@ -633,6 +634,7 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
         harvestInventory,
         craftedItems,
         farmTech,
+        farmRareSeeds,
         ...(companion !== null ? { companion } : {}),
       });
     }

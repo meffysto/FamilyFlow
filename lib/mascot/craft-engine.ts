@@ -9,6 +9,7 @@ import {
   type HarvestInventory,
   type FarmInventory,
   type ResourceType,
+  type RareSeedInventory,
 } from './types';
 import { GOLDEN_HARVEST_MULTIPLIER } from './farm-engine';
 
@@ -194,6 +195,42 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     xpBonus: 30,
     sellValue: 600, // (120+90+90) x 2
   },
+  // ── Recettes haut niveau — graines rares ──
+  {
+    id: 'parfum_orchidee',
+    labelKey: 'craft.recipe.parfum_orchidee',
+    emoji: '🪻',
+    ingredients: [
+      { itemId: 'orchidee', quantity: 2, source: 'crop' },
+      { itemId: 'miel', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 50,
+    sellValue: 1200, // (300x2 + 120) x ~1.7
+  },
+  {
+    id: 'confiture_royale',
+    labelKey: 'craft.recipe.confiture_royale',
+    emoji: '🌹',
+    ingredients: [
+      { itemId: 'rose_doree', quantity: 1, source: 'crop' },
+      { itemId: 'strawberry', quantity: 1, source: 'crop' },
+      { itemId: 'miel', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 60,
+    sellValue: 1500, // (500+120+120) x ~2
+  },
+  {
+    id: 'risotto_truffe',
+    labelKey: 'craft.recipe.risotto_truffe',
+    emoji: '🍄',
+    ingredients: [
+      { itemId: 'truffe', quantity: 1, source: 'crop' },
+      { itemId: 'farine', quantity: 1, source: 'building' },
+      { itemId: 'lait', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 80,
+    sellValue: 2000, // (800+90+100) x ~2
+  },
 ];
 
 // ── Fonctions metier ─────────────────────────────────────────────────
@@ -302,4 +339,30 @@ export function parseCraftedItems(csv: string | undefined): CraftedItem[] {
     if (!recipeId || !craftedAt) return null;
     return { recipeId, craftedAt } as CraftedItem;
   }).filter((item): item is CraftedItem => item !== null);
+}
+
+// ── Graines rares — Serialisation / Parsing ─────────────────────────
+
+/** Serialiser l'inventaire graines rares en CSV "orchidee:1,truffe:2" */
+export function serializeRareSeeds(inv: RareSeedInventory): string {
+  return Object.entries(inv)
+    .filter(([, qty]) => qty > 0)
+    .map(([cropId, qty]) => `${cropId}:${qty}`)
+    .join(',');
+}
+
+/** Parser l'inventaire graines rares depuis CSV */
+export function parseRareSeeds(csv: string | undefined): RareSeedInventory {
+  const inv: RareSeedInventory = {};
+  if (!csv || csv.trim() === '') return inv;
+  for (const entry of csv.split(',')) {
+    const [cropId, val] = entry.trim().split(':');
+    if (cropId && val) {
+      const qty = parseInt(val, 10);
+      if (!isNaN(qty) && qty > 0) {
+        inv[cropId] = qty;
+      }
+    }
+  }
+  return inv;
 }
