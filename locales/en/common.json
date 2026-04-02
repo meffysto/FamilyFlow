@@ -3617,6 +3617,8 @@
       "banner": "📖 {{title}} — Chapter {{chapter}}/{{total}}",
       "sagaOnly": "Saga only",
       "sagaOnly_enfant": "Saga reward!",
+      "waitingInTree": "Awaiting in the Tree",
+      "pendingInTree": "Pending saga",
       "traitLabel": {
         "courage": "Courage",
         "sagesse": "Wisdom",

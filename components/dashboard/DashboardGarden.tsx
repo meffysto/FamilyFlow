@@ -22,22 +22,19 @@ import { SPECIES_INFO, type TreeSpecies } from '../../lib/mascot/types';
 import { getDailyAdventure, getTodayStr, type Adventure } from '../../lib/mascot/adventures';
 import { hapticsTreeTap } from '../../lib/mascot/haptics';
 import { useTone } from '../../lib/mascot/tone';
-import type { SagaProgress, SagaTrait } from '../../lib/mascot/sagas-types';
+import type { SagaProgress } from '../../lib/mascot/sagas-types';
 import { createEmptySagaProgress, ALL_TRAITS } from '../../lib/mascot/sagas-types';
 import {
   shouldStartSaga,
   getSagaById,
-  getChapterNarrativeKey,
   getSagaCompletionResult,
   getNextSagaTeaser,
   restDaysRemaining,
-  formatDateStr,
 } from '../../lib/mascot/sagas-engine';
 import {
   loadSagaProgress,
   saveSagaProgress,
   loadLastSagaCompletion,
-  saveLastSagaCompletion,
 } from '../../lib/mascot/sagas-storage';
 import type { DashboardSectionProps } from './types';
 import type { Profile } from '../../lib/types';
@@ -52,7 +49,7 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const { primary, tint, colors } = useThemeColors();
-  const { profiles, activeProfile, completeAdventure, completeSagaChapter } = useVault();
+  const { profiles, activeProfile, completeAdventure } = useVault();
   const { showToast } = useToast();
   const tone = useTone();
 
@@ -115,12 +112,6 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
     : false;
   const hasSaga = !!activeSaga && !!sagaProgress && sagaProgress.status === 'active';
 
-  // Narrative adaptée aux traits
-  const narrativeKey = useMemo(() => {
-    if (!currentChapter || !activeSaga || !sagaProgress) return '';
-    return getChapterNarrativeKey(currentChapter, sagaProgress.traits, activeSaga.finale.defaultTrait);
-  }, [currentChapter, activeSaga, sagaProgress]);
-
   // Traits résumé
   const traitSummary = useMemo(() => {
     if (!sagaProgress) return [];
@@ -140,54 +131,6 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
     await completeAdventure(profileId, choiceData.points, `Aventure: ${adventure.id}`);
     showToast(t('mascot.adventure.reward', { points: choiceData.points }));
   }, [profileId, today, adventure, completeAdventure, showToast, t]);
-
-  const handleSagaChoice = useCallback(async (choiceId: string) => {
-    if (!activeSaga || !sagaProgress || !currentChapter) return;
-    const choice = currentChapter.choices.find(c => c.id === choiceId);
-    if (!choice) return;
-
-    hapticsTreeTap();
-
-    // Accumuler les traits
-    const newTraits = { ...sagaProgress.traits };
-    for (const [trait, val] of Object.entries(choice.traits)) {
-      newTraits[trait as SagaTrait] = (newTraits[trait as SagaTrait] ?? 0) + (val ?? 0);
-    }
-
-    // Avancer au chapitre suivant
-    const nextChapter = sagaProgress.currentChapter + 1;
-    const isFinal = nextChapter > activeSaga.chapters.length;
-
-    let updatedProgress: SagaProgress = {
-      ...sagaProgress,
-      currentChapter: nextChapter,
-      choices: { ...sagaProgress.choices, [currentChapter.id]: choiceId },
-      traits: newTraits,
-      lastChapterDate: today,
-      status: isFinal ? 'completed' : 'active',
-    };
-
-    // Un seul appel : XP chapitre + bonus/récompense si finale
-    if (isFinal) {
-      const result = getSagaCompletionResult(activeSaga, { ...updatedProgress, traits: newTraits });
-      await completeSagaChapter(
-        profileId,
-        choice.points + result.bonusXP,
-        `Saga terminée: ${activeSaga.id} ch${currentChapter.id} (${result.dominantTrait})`,
-        { id: result.rewardItemId, type: result.rewardType === 'mascot_deco' ? 'decoration' : 'inhabitant' },
-      );
-      updatedProgress.rewardClaimed = true;
-      await saveLastSagaCompletion(profileId, today);
-      setLastCompletion(today);
-    } else {
-      await completeSagaChapter(profileId, choice.points, `Saga: ${activeSaga.id} ch${currentChapter.id}`);
-    }
-
-    await saveSagaProgress(updatedProgress);
-    setSagaProgress(updatedProgress);
-
-    showToast(t('mascot.adventure.reward', { points: choice.points }));
-  }, [activeSaga, sagaProgress, currentChapter, profileId, today, completeSagaChapter, showToast, t, tone]);
 
   if (!profiles || profiles.length === 0) return null;
 
@@ -307,56 +250,30 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
       );
     }
 
-    // Chapitre disponible → afficher narration + choix
+    // Chapitre disponible → indicateur discret uniquement (l'interaction se fait dans l'Arbre)
     if (!currentChapter) return null;
     return (
       <Animated.View entering={FadeInDown.delay(200).duration(300)}>
-        <View style={[styles.adventureCard, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}>
+        <View style={[styles.sagaIndicator, { backgroundColor: colors.cardAlt, borderColor: primary + '40' }]}>
           {renderSagaDots()}
           <Text style={styles.adventureEmoji}>{activeSaga.emoji}</Text>
           <Text style={[styles.adventureTitle, { color: colors.text }]}>
             {t(activeSaga.titleKey, { context: tone })}
           </Text>
-          <Text style={[styles.sagaChapterLabel, { color: colors.textMuted }]}>
+          <Text style={[styles.sagaWaitingLabel, { color: colors.textMuted }]}>
             {t('mascot.saga.progress', { current: sagaProgress.currentChapter, total: activeSaga.chapters.length })}
+            {' · '}
+            {t('mascot.saga.waitingInTree')}
           </Text>
-          <Text style={[styles.adventureDesc, { color: colors.textSub }]}>
-            {t(narrativeKey, { context: tone })}
-          </Text>
-
-          {/* Choix */}
-          <View style={styles.adventureChoices}>
-            {currentChapter.choices.map((choice, idx) => (
-              <TouchableOpacity
-                key={choice.id}
-                style={[
-                  styles.adventureBtn,
-                  {
-                    backgroundColor: idx === 0 ? tint : colors.card,
-                    borderColor: idx === 0 ? primary : colors.borderLight,
-                  },
-                ]}
-                onPress={() => handleSagaChoice(choice.id)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.adventureBtnText, { color: idx === 0 ? primary : colors.text }]}>
-                  {choice.emoji} {t(choice.labelKey)}
-                </Text>
-                <Text style={[styles.adventurePts, { color: colors.textMuted }]}>+{choice.points} pts</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Traits accumulés */}
-          {traitSummary.length > 0 && (
-            <View style={styles.sagaTraits}>
-              {traitSummary.map(({ trait, value }) => (
-                <Text key={trait} style={[styles.sagaTraitText, { color: colors.textMuted }]}>
-                  {t(`mascot.saga.traitLabel.${trait}`)} x{value}
-                </Text>
-              ))}
-            </View>
-          )}
+          <TouchableOpacity
+            style={[styles.adventureBtn, { backgroundColor: tint, borderColor: primary, marginTop: Spacing.sm }]}
+            onPress={() => router.push('/(tabs)/tree' as any)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.adventureBtnText, { color: primary }]}>
+              {'🌳 '}{t('mascot.garden.cta')}
+            </Text>
+          </TouchableOpacity>
         </View>
       </Animated.View>
     );
@@ -666,6 +583,21 @@ const styles = StyleSheet.create({
   sagaTraitTitle: {
     fontSize: FontSize.micro,
     fontWeight: FontWeight.semibold,
+  },
+  // Indicateur saga discret (chapitre disponible — interaction dans l'Arbre)
+  sagaIndicator: {
+    marginTop: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.lg,
+    borderRadius: Radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+  },
+  sagaWaitingLabel: {
+    fontSize: FontSize.caption,
+    textAlign: 'center',
+    marginBottom: Spacing.sm,
+    lineHeight: 18,
   },
   sagaTeaser: {
     marginTop: Spacing.md,

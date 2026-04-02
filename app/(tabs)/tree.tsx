@@ -94,9 +94,11 @@ import {
 } from '../../lib/mascot';
 import { SPECIES_INFO, ALL_SPECIES, DECORATIONS, INHABITANTS, ITEM_ILLUSTRATIONS, type TreeSpecies, type TreeStage } from '../../lib/mascot/types';
 import { getCurrentSeason, SEASON_INFO, GROUND_COLORS, type Season } from '../../lib/mascot/seasons';
-import type { SagaProgress } from '../../lib/mascot/sagas-types';
-import { getSagaById } from '../../lib/mascot/sagas-engine';
-import { loadSagaProgress } from '../../lib/mascot/sagas-storage';
+import type { SagaProgress, SagaTrait } from '../../lib/mascot/sagas-types';
+import { getSagaById, getSagaCompletionResult } from '../../lib/mascot/sagas-engine';
+import { loadSagaProgress, saveSagaProgress, saveLastSagaCompletion } from '../../lib/mascot/sagas-storage';
+import { getTodayStr } from '../../lib/mascot/adventures';
+import { SagaWorldEvent } from '../../components/mascot/SagaWorldEvent';
 import type { Profile } from '../../lib/types';
 import { Spacing, Radius, Layout } from '../../constants/spacing';
 
@@ -203,7 +205,7 @@ export default function TreeScreen() {
   const { t } = useTranslation();
   const { primary, tint, colors, isDark } = useThemeColors();
   const insets = useSafeAreaInsets();
-  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem, unplaceMascotItem, gamiData, setCompanion, tasks, rdvs, meals } = useVault();
+  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem, unplaceMascotItem, gamiData, setCompanion, tasks, rdvs, meals, completeSagaChapter } = useVault();
   const { showToast } = useToast();
   const { config: aiConfig } = useAI();
 
@@ -258,8 +260,11 @@ export default function TreeScreen() {
   const [selectedBuildingCellId, setSelectedBuildingCellId] = useState<string | null>(null);
   const [selectedBuilding, setSelectedBuilding] = useState<PlacedBuilding | null>(null);
 
-  // Saga active — pour bandeau + élément visuel
+  // Saga active — pour l'expérience immersive dans le diorama
   const [sagaProgress, setSagaProgress] = useState<SagaProgress | null>(null);
+  const [showSagaEvent, setShowSagaEvent] = useState(false);
+  const today = getTodayStr();
+
   useEffect(() => {
     if (!profile?.id) return;
     loadSagaProgress(profile.id).then(p => {
@@ -267,7 +272,12 @@ export default function TreeScreen() {
       else setSagaProgress(null);
     });
   }, [profile?.id]);
+
   const activeSaga = sagaProgress ? getSagaById(sagaProgress.sagaId) : null;
+  // Chapitre du jour déjà joué ?
+  const sagaChapterDone = sagaProgress?.lastChapterDate === today;
+  // Un chapitre est disponible (pas encore joué aujourd'hui)
+  const sagaChapterAvailable = !!sagaProgress && sagaProgress.status === 'active' && !sagaChapterDone;
 
   // Compagnon — données et logique
   const companion = activeProfile?.companion ?? null;
@@ -958,6 +968,53 @@ export default function TreeScreen() {
     }
   }, [profile?.id, upgradeBuildingAction, profiles, showToast]);
 
+  /** Complétion d'un chapitre saga depuis le diorama */
+  const handleSagaChapterComplete = useCallback(async (
+    choiceId: string,
+    points: number,
+    sagaNote: string,
+    rewardItem?: { id: string; type: 'decoration' | 'inhabitant' },
+  ) => {
+    if (!sagaProgress || !activeSaga || !profile) return;
+
+    const currentChapter = activeSaga.chapters.find(ch => ch.id === sagaProgress.currentChapter);
+    if (!currentChapter) return;
+
+    const choice = currentChapter.choices.find(c => c.id === choiceId);
+    if (!choice) return;
+
+    // Accumuler les traits
+    const newTraits = { ...sagaProgress.traits };
+    for (const [trait, val] of Object.entries(choice.traits)) {
+      newTraits[trait as SagaTrait] = (newTraits[trait as SagaTrait] ?? 0) + (val ?? 0);
+    }
+
+    const nextChapterNum = sagaProgress.currentChapter + 1;
+    const isFinal = nextChapterNum > activeSaga.chapters.length;
+
+    const updatedProgress: SagaProgress = {
+      ...sagaProgress,
+      currentChapter: nextChapterNum,
+      choices: { ...sagaProgress.choices, [currentChapter.id]: choiceId },
+      traits: newTraits,
+      lastChapterDate: today,
+      status: isFinal ? 'completed' : 'active',
+      rewardClaimed: isFinal ? true : sagaProgress.rewardClaimed,
+    };
+
+    // XP + récompense via VaultContext
+    await completeSagaChapter(profile.id, points, sagaNote, rewardItem);
+
+    if (isFinal) {
+      await saveLastSagaCompletion(profile.id, today);
+    }
+
+    await saveSagaProgress(updatedProgress);
+    setSagaProgress(updatedProgress);
+
+    showToast(t('mascot.adventure.reward', { points }));
+  }, [sagaProgress, activeSaga, profile, today, completeSagaChapter, showToast, t]);
+
   return (
     <View style={[styles.safe, { backgroundColor: colors.bg }]}>
       <ScrollView
@@ -1334,13 +1391,44 @@ export default function TreeScreen() {
                 companionMessage={companionMessage}
                 onCompanionTap={handleCompanionTap}
               />
-              {/* Élément visuel temporaire de la saga active */}
-              {activeSaga && (
-                <Animated.View entering={FadeIn.duration(500)} style={styles.sagaSceneElement}>
-                  <Text style={styles.sagaSceneEmoji}>{activeSaga.sceneEmoji}</Text>
-                </Animated.View>
-              )}
             </View>
+
+            {/* Couche 5 : Expérience immersive saga (absolute overlay, zIndex 15) */}
+            {showSagaEvent && sagaProgress && profile && sagaChapterAvailable && (
+              <SagaWorldEvent
+                sagaProgress={sagaProgress}
+                profile={profile}
+                containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
+                onChapterComplete={handleSagaChapterComplete}
+                onDismiss={() => setShowSagaEvent(false)}
+              />
+            )}
+
+            {/* Bouton "Saga en attente" — coin bas-droite, visible quand chapitre dispo */}
+            {sagaChapterAvailable && !showSagaEvent && isOwnTree && activeSaga && (
+              <Animated.View
+                entering={FadeIn.duration(400)}
+                style={[styles.sagaPendingBtn, { bottom: Spacing['3xl'], right: Spacing['2xl'] }]}
+                pointerEvents="box-none"
+              >
+                <TouchableOpacity
+                  style={[
+                    styles.sagaPendingTouch,
+                    { backgroundColor: primary + 'DD', borderColor: primary },
+                  ]}
+                  onPress={() => {
+                    hapticsTreeTap();
+                    setShowSagaEvent(true);
+                  }}
+                  activeOpacity={0.82}
+                >
+                  <Text style={styles.sagaPendingEmoji}>{activeSaga.sceneEmoji}</Text>
+                  <Text style={[styles.sagaPendingText, { color: colors.onPrimary }]}>
+                    {t('mascot.saga.pendingInTree', 'Saga en attente')}
+                  </Text>
+                </TouchableOpacity>
+              </Animated.View>
+            )}
 
           </View>
         </Animated.View>
@@ -1699,14 +1787,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: '30%',
   },
-  sagaSceneElement: {
+  sagaPendingBtn: {
     position: 'absolute',
-    bottom: Spacing.lg,
-    left: Spacing.xl,
-    opacity: 0.85,
+    zIndex: 12,
   },
-  sagaSceneEmoji: {
-    fontSize: 28,
+  sagaPendingTouch: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+  },
+  sagaPendingEmoji: {
+    fontSize: FontSize.body,
+  },
+  sagaPendingText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
   },
   actionCard: {
     borderRadius: Radius.xl,
