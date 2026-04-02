@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 Phase: 10 (compagnon-mascotte) — EXECUTING
 Plan: 4 of 4
 Status: Ready to execute
-Last activity: 2026-04-02 - Completed quick task 260402-wbr: Refonte bottom panel écran arbre — 2 cartes Actions + Progression
+Last activity: 2026-04-02 - Completed quick task 260402-wrf: Mockup C — diorama arrondi + ombre + chevauchement cartes (écran arbre)
 
 Progress: [░░░░░░░░░░] 0%
 
