@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 Phase: 10 (compagnon-mascotte) — EXECUTING
 Plan: 4 of 4
 Status: Ready to execute
-Last activity: 2026-03-31 - Completed quick task 260331-jzy: Prop tinted DashboardCard
+Last activity: 2026-04-02 - Completed quick task 260402-vpb: Refonte catalogue recettes CraftSheet — grille par stade arbre
 
 Progress: [░░░░░░░░░░] 0%
 
