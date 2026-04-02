@@ -352,9 +352,7 @@ export class VaultManager {
       const taskLine = `- [ ] ${taskText}`;
 
       if (!section) {
-        lines.push(taskLine);
-        await this._writeFileDirect(relativePath, lines.join('\n'));
-        return;
+        section = 'À faire';
       }
 
       let sectionStart = -1;

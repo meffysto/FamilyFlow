@@ -255,6 +255,13 @@ export function RDVEditor({ rdv, profiles, onSave, onDelete, onClose }: RDVEdito
             />
           ))}
         </View>
+        <TextInput
+          style={inputStyle}
+          value={TYPE_KEYS.some(tk => tk.value === typeRdv) ? '' : typeRdv}
+          onChangeText={setTypeRdv}
+          placeholder={t('editors.rdv.typeCustomPlaceholder')}
+          placeholderTextColor={colors.textFaint}
+        />
 
         {/* Enfant */}
         <Text style={[styles.label, { color: colors.textSub }]}>{t('editors.rdv.childLabel')}</Text>
