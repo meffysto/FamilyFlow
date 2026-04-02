@@ -183,6 +183,18 @@ Plans:
 - [x] 10-03-PLAN.md — CompanionSlot + CompanionPicker + integration TreeView/tree.tsx
 - [ ] 10-04-PLAN.md — Messages IA contextuels + CompanionAvatarMini + integration _layout.tsx
 
+#### Phase 11: Sagas Immersives
+**Goal**: Les sagas ne sont plus des boutons dans le dashboard — un personnage visiteur pixel apparaît dans la scène de l'arbre pour raconter son histoire de manière immersive (style Animal Crossing/Stardew Valley), avec des dialogues interactifs et des animations d'arrivée/départ
+**Depends on**: Phase 10
+**Requirements**: SAG-01, SAG-02, SAG-03, SAG-04
+**Success Criteria** (what must be TRUE):
+  1. Quand une saga est active, un personnage visiteur pixel (généré via PixelLab) apparaît dans la scène de l'arbre avec une animation d'arrivée
+  2. Taper sur le visiteur ouvre un dialogue narratif avec les choix de la saga — le joueur fait son choix via cette interaction
+  3. Le dashboard ne montre plus les boutons de saga — juste un petit texte indicateur de l'étape en cours et un lien vers l'arbre
+  4. Le visiteur a des animations de réaction aux choix (joie, surprise, mystère) et une animation de départ après complétion
+  5. `npx tsc --noEmit` passe sans nouvelles erreurs
+**Plans**: TBD
+
 ## Progress
 
 **Execution Order:**
@@ -201,3 +213,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 8.1 Split Gamification | v1.1 | 2/2 | Complete   | 2026-03-30 |
 | 9. Cadeaux Familiaux | v1.1 | 0/TBD | Not started | - |
 | 10. Compagnon Mascotte | v1.1 | 3/4 | In Progress|  |
+| 11. Sagas Immersives | v1.1 | 0/TBD | Not started | - |

@@ -51,6 +51,13 @@ Requirements for milestone v1.1 -- Ferme Enrichie. La ferme est le levier de mot
 - [ ] **COMP-07**: Le compagnon sert d'avatar de profil dans la tab bar et le selecteur de profil
 - [x] **COMP-08**: Le compagnon affiche des bulles d'emotion sur les evenements de l'app (tache completee, lootbox, level up)
 
+### Sagas Immersives
+
+- [ ] **SAG-01**: Un personnage visiteur pixel (genere via PixelLab) apparait dans la scene de l'arbre quand une saga est active, avec animation d'arrivee
+- [ ] **SAG-02**: Taper sur le visiteur ouvre un dialogue narratif interactif avec les choix de la saga (style RPG/Animal Crossing)
+- [ ] **SAG-03**: Le dashboard affiche un indicateur texte compact de la saga en cours (plus de boutons/carte dediee)
+- [ ] **SAG-04**: Le visiteur a des animations de reaction (joie, surprise, mystere) et un depart anime apres completion de saga
+
 ## Future Requirements
 
 Deferred to future milestones.
