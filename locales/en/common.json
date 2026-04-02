@@ -3320,9 +3320,10 @@
     },
     "screen": {
       "title": "My tree",
+      "level": "level",
       "xpProgress": "XP Progress",
       "nextEvolution": "Next evolution",
-      "levelsToEvo": "{{count}} more levels",
+      "levelsToEvo": "{{count}} level left",
       "maxStage": "Legendary stage reached!",
       "changeSpecies": "Change",
       "chooseSpecies": "Choose",

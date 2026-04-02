@@ -3320,9 +3320,10 @@
     },
     "screen": {
       "title": "Mon arbre",
+      "level": "niveau",
       "xpProgress": "Progression XP",
       "nextEvolution": "Prochaine évolution",
-      "levelsToEvo": "Encore {{count}} niveaux",
+      "levelsToEvo": "encore {{count}} niveau",
       "maxStage": "Stade légendaire atteint !",
       "changeSpecies": "Changer",
       "chooseSpecies": "Choisir",
