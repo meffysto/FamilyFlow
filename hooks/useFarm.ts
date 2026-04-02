@@ -7,7 +7,7 @@
 
 import { useCallback } from 'react';
 import { useVault } from '../contexts/VaultContext';
-import { plantCrop, harvestCrop, parseCrops, serializeCrops, getEffectiveHarvestReward, rollHarvestEvent, type HarvestEvent } from '../lib/mascot/farm-engine';
+import { plantCrop, harvestCrop, parseCrops, serializeCrops, getEffectiveHarvestReward, rollHarvestEvent, rollSeedDrop, type HarvestEvent, type RareSeedDrop } from '../lib/mascot/farm-engine';
 import { CROP_CATALOG, BUILDING_CATALOG } from '../lib/mascot/types';
 import type { PlacedBuilding, FarmInventory, CraftedItem } from '../lib/mascot/types';
 import { isLargeCropPlot } from '../lib/mascot/world-grid';
@@ -30,6 +30,8 @@ import {
   parseHarvestInventory,
   serializeCraftedItems,
   parseCraftedItems,
+  serializeRareSeeds,
+  parseRareSeeds,
 } from '../lib/mascot/craft-engine';
 import {
   TECH_TREE,
@@ -46,11 +48,63 @@ const FAMILLE_FILE = 'famille.md';
 // pour eviter les race conditions (read-modify-write concurrent)
 let _familleWriteQueue: Promise<void> = Promise.resolve();
 
-function enqueueWrite(fn: () => Promise<void>): Promise<void> {
+function enqueueWrite<T = void>(fn: () => Promise<T>): Promise<T> {
   const next = _familleWriteQueue.then(fn);
-  // Absorbe les rejets sur la queue pour ne pas bloquer les prochaines operations
-  _familleWriteQueue = next.catch(() => {});
-  return next; // Propage l'erreur a l'appelant
+  _familleWriteQueue = next.then(() => {}, () => {});
+  return next;
+}
+
+function patchProfileField(lines: string[], profileId: string, fieldKey: string, value: string): void {
+  let inSection = false;
+  let fieldLine = -1;
+  let lastPropIdx = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].startsWith('### ')) {
+      if (inSection) break;
+      if (lines[i].replace('### ', '').trim() === profileId) inSection = true;
+    } else if (inSection && lines[i].includes(': ')) {
+      lastPropIdx = i;
+      if (lines[i].trim().startsWith(`${fieldKey}:`)) fieldLine = i;
+    }
+  }
+
+  const newValue = `${fieldKey}: ${value}`;
+  if (fieldLine >= 0) {
+    lines[fieldLine] = newValue;
+  } else if (lastPropIdx >= 0) {
+    lines.splice(lastPropIdx + 1, 0, newValue);
+  }
+}
+
+function patchProfileFields(lines: string[], profileId: string, fields: Record<string, string>): void {
+  let inSection = false;
+  let lastPropIdx = -1;
+  const fieldLines: Record<string, number> = {};
+
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].startsWith('### ')) {
+      if (inSection) break;
+      if (lines[i].replace('### ', '').trim() === profileId) inSection = true;
+    } else if (inSection && lines[i].includes(': ')) {
+      lastPropIdx = i;
+      for (const key of Object.keys(fields)) {
+        if (lines[i].trim().startsWith(`${key}:`)) fieldLines[key] = i;
+      }
+    }
+  }
+
+  for (const [key, lineIdx] of Object.entries(fieldLines)) {
+    lines[lineIdx] = `${key}: ${fields[key]}`;
+  }
+
+  let insertOffset = 0;
+  for (const [key, value] of Object.entries(fields)) {
+    if (fieldLines[key] === undefined && lastPropIdx >= 0) {
+      lines.splice(lastPropIdx + 1 + insertOffset, 0, `${key}: ${value}`);
+      insertOffset++;
+    }
+  }
 }
 
 /** Helper : retourne le chemin du fichier gamification per-profil */
@@ -60,38 +114,6 @@ function gamiFile(profileId: string): string {
 
 export function useFarm() {
   const { vault, profiles, refresh } = useVault();
-
-  /** Ecrire farm_crops dans la section du profil */
-  const writeFarmCrops = useCallback(async (profileId: string, cropsCSV: string) => {
-    if (!vault) return;
-    return enqueueWrite(async () => {
-      const content = await vault.readFile(FAMILLE_FILE);
-      const lines = content.split('\n');
-      let inSection = false;
-      let fieldLine = -1;
-      let lastPropIdx = -1;
-      const fieldKey = 'farm_crops';
-
-      for (let i = 0; i < lines.length; i++) {
-        if (lines[i].startsWith('### ')) {
-          if (inSection) break;
-          if (lines[i].replace('### ', '').trim() === profileId) inSection = true;
-        } else if (inSection && lines[i].includes(': ')) {
-          lastPropIdx = i;
-          if (lines[i].trim().startsWith(`${fieldKey}:`)) fieldLine = i;
-        }
-      }
-
-      const newValue = `${fieldKey}: ${cropsCSV}`;
-      if (fieldLine >= 0) {
-        lines[fieldLine] = newValue;
-      } else if (lastPropIdx >= 0) {
-        lines.splice(lastPropIdx + 1, 0, newValue);
-      }
-
-      await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
-    });
-  }, [vault]);
 
   /** Deduire des feuilles dans gami-{profileId}.md */
   const deductCoins = useCallback(async (profileId: string, amount: number, note: string) => {
@@ -151,104 +173,76 @@ export function useFarm() {
     await vault.writeFile(file, serializeGamification(singleData));
   }, [vault]);
 
-  /** Ecrire un champ string dans la section d'un profil dans famille.md */
   const writeProfileField = useCallback(async (profileId: string, fieldKey: string, value: string) => {
     if (!vault) return;
     return enqueueWrite(async () => {
-      const content = await vault.readFile(FAMILLE_FILE);
-      const lines = content.split('\n');
-      let inSection = false;
-      let fieldLine = -1;
-      let lastPropIdx = -1;
-
-      for (let i = 0; i < lines.length; i++) {
-        if (lines[i].startsWith('### ')) {
-          if (inSection) break;
-          if (lines[i].replace('### ', '').trim() === profileId) inSection = true;
-        } else if (inSection && lines[i].includes(': ')) {
-          lastPropIdx = i;
-          if (lines[i].trim().startsWith(`${fieldKey}:`)) fieldLine = i;
-        }
-      }
-
-      const newValue = `${fieldKey}: ${value}`;
-      if (fieldLine >= 0) {
-        lines[fieldLine] = newValue;
-      } else if (lastPropIdx >= 0) {
-        lines.splice(lastPropIdx + 1, 0, newValue);
-      }
-
+      const lines = (await vault.readFile(FAMILLE_FILE)).split('\n');
+      patchProfileField(lines, profileId, fieldKey, value);
       await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
     });
   }, [vault]);
 
-  /** Ecrire plusieurs champs en une seule operation atomique (evite les race conditions) */
   const writeProfileFields = useCallback(async (profileId: string, fields: Record<string, string>) => {
     if (!vault) return;
     return enqueueWrite(async () => {
-      const content = await vault.readFile(FAMILLE_FILE);
-      const lines = content.split('\n');
-      let inSection = false;
-      let lastPropIdx = -1;
-      const fieldLines: Record<string, number> = {};
-
-      for (let i = 0; i < lines.length; i++) {
-        if (lines[i].startsWith('### ')) {
-          if (inSection) break;
-          if (lines[i].replace('### ', '').trim() === profileId) inSection = true;
-        } else if (inSection && lines[i].includes(': ')) {
-          lastPropIdx = i;
-          for (const key of Object.keys(fields)) {
-            if (lines[i].trim().startsWith(`${key}:`)) fieldLines[key] = i;
-          }
-        }
-      }
-
-      // Mettre a jour les champs existants
-      for (const [key, lineIdx] of Object.entries(fieldLines)) {
-        lines[lineIdx] = `${key}: ${fields[key]}`;
-      }
-
-      // Ajouter les champs manquants apres la derniere propriete
-      let insertOffset = 0;
-      for (const [key, value] of Object.entries(fields)) {
-        if (fieldLines[key] === undefined && lastPropIdx >= 0) {
-          lines.splice(lastPropIdx + 1 + insertOffset, 0, `${key}: ${value}`);
-          insertOffset++;
-        }
-      }
-
+      const lines = (await vault.readFile(FAMILLE_FILE)).split('\n');
+      patchProfileFields(lines, profileId, fields);
       await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
     });
   }, [vault]);
 
   /** Planter une culture sur une parcelle */
   const plant = useCallback(async (profileId: string, plotIndex: number, cropId: string) => {
+    if (!vault) return;
     const profile = profiles?.find(p => p.id === profileId);
     if (!profile) return;
 
     const cropDef = CROP_CATALOG.find(c => c.id === cropId);
     if (!cropDef) return;
 
-    // Verifier les feuilles
-    const coins = profile.coins ?? 0;
-    if (coins < cropDef.cost) throw new Error('Pas assez de feuilles');
+    const isRareSeed = cropDef.dropOnly === true;
 
-    const currentCrops = parseCrops(profile.farmCrops ?? '');
+    if (isRareSeed) {
+      // Verifier le stock de graines rares
+      const rareSeeds = profile.farmRareSeeds ?? {};
+      if ((rareSeeds[cropId] ?? 0) <= 0) throw new Error('Pas de graine rare disponible');
+    } else {
+      // Verifier les feuilles
+      const coins = profile.coins ?? 0;
+      if (coins < cropDef.cost) throw new Error('Pas assez de feuilles');
+    }
+
+
+    const content = await vault.readFile(FAMILLE_FILE);
+    const freshProfiles = parseFamille(content);
+    const freshProfile = freshProfiles.find(p => p.id === profileId);
+    if (!freshProfile) return;
+
+    const currentCrops = parseCrops(freshProfile.farmCrops ?? '');
     const newCrops = plantCrop(currentCrops, plotIndex, cropId);
     if (newCrops.length === currentCrops.length) return;
 
-    // Ecrire les cultures + deduire les feuilles
-    await writeFarmCrops(profileId, serializeCrops(newCrops));
-    await deductCoins(profileId, cropDef.cost, `🌱 Graine : ${cropId}`);
+    if (isRareSeed) {
+      // Consommer la graine rare du stock
+      const currentRareSeeds = freshProfile.farmRareSeeds ?? {};
+      const updatedRareSeeds = { ...currentRareSeeds };
+      updatedRareSeeds[cropId] = (updatedRareSeeds[cropId] ?? 0) - 1;
+      await writeProfileFields(profileId, {
+        farm_crops: serializeCrops(newCrops),
+        farm_rare_seeds: serializeRareSeeds(updatedRareSeeds),
+      });
+    } else {
+      await writeProfileField(profileId, 'farm_crops', serializeCrops(newCrops));
+      await deductCoins(profileId, cropDef.cost, `🌱 Graine : ${cropId}`);
+    }
     await refresh();
-  }, [profiles, writeFarmCrops, deductCoins, refresh]);
+  }, [vault, profiles, writeProfileField, writeProfileFields, deductCoins, refresh]);
 
   /** Recolter une culture mature — stocke en inventaire au lieu de donner des feuilles */
-  const harvest = useCallback(async (profileId: string, plotIndex: number): Promise<{ cropId: string; isGolden: boolean; harvestEvent: HarvestEvent | null } | null> => {
+  const harvest = useCallback(async (profileId: string, plotIndex: number): Promise<{ cropId: string; isGolden: boolean; harvestEvent: HarvestEvent | null; seedDrop: RareSeedDrop | null } | null> => {
     if (!vault) return null;
 
-    // Lire frais pour eviter les stale closures
+
     const content = await vault.readFile(FAMILLE_FILE);
     const freshProfiles = parseFamille(content);
     const profile = freshProfiles.find(p => p.id === profileId);
@@ -277,21 +271,35 @@ export function useFarm() {
     const finalQty = harvestEvent ? Math.max(0, Math.round(harvestQty * harvestEvent.modifier)) : harvestQty;
     updatedHarvestInv[result.harvestedCropId] = (updatedHarvestInv[result.harvestedCropId] ?? 0) + finalQty;
 
-    // Ecrire farm_crops + farm_harvest_inventory en une seule operation
-    await writeProfileFields(profileId, {
+    // Tenter un drop de graine rare
+    const seedDrop = rollSeedDrop(result.harvestedCropId);
+
+    // Preparer les champs a ecrire
+    const fieldsToWrite: Record<string, string> = {
       farm_crops: serializeCrops(result.crops),
       farm_harvest_inventory: serializeHarvestInventory(updatedHarvestInv),
-    });
+    };
+
+    // Si drop de graine rare, ajouter au stock
+    if (seedDrop) {
+      const currentRareSeeds = profile.farmRareSeeds ?? {};
+      const updatedRareSeeds = { ...currentRareSeeds };
+      updatedRareSeeds[seedDrop.seedId] = (updatedRareSeeds[seedDrop.seedId] ?? 0) + 1;
+      fieldsToWrite.farm_rare_seeds = serializeRareSeeds(updatedRareSeeds);
+    }
+
+    // Ecrire tous les champs en une seule operation
+    await writeProfileFields(profileId, fieldsToWrite);
     await refresh();
 
-    return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent };
+    return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop };
   }, [vault, writeProfileFields, refresh]);
 
   /** Vendre une recolte brute depuis l'inventaire */
   const sellHarvest = useCallback(async (profileId: string, cropId: string): Promise<number> => {
     if (!vault) return 0;
 
-    // Lire frais
+
     const content = await vault.readFile(FAMILLE_FILE);
     const freshProfiles = parseFamille(content);
     const profile = freshProfiles.find(p => p.id === profileId);
@@ -317,7 +325,7 @@ export function useFarm() {
   const craft = useCallback(async (profileId: string, recipeId: string): Promise<CraftedItem | null> => {
     if (!vault) return null;
 
-    // Lire frais
+
     const content = await vault.readFile(FAMILLE_FILE);
     const freshProfiles = parseFamille(content);
     const profile = freshProfiles.find(p => p.id === profileId);
@@ -336,7 +344,7 @@ export function useFarm() {
     const craftedItems = profile.craftedItems ?? [];
     const updatedCraftedItems = [...craftedItems, result.item];
 
-    // Ecrire les 3 champs en une seule operation
+
     await writeProfileFields(profileId, {
       farm_harvest_inventory: serializeHarvestInventory(result.harvestInv),
       farm_inventory: serializeInventory(result.farmInv),
@@ -354,7 +362,7 @@ export function useFarm() {
   const sellCrafted = useCallback(async (profileId: string, recipeId: string): Promise<number> => {
     if (!vault) return 0;
 
-    // Lire frais
+
     const content = await vault.readFile(FAMILLE_FILE);
     const freshProfiles = parseFamille(content);
     const profile = freshProfiles.find(p => p.id === profileId);
@@ -401,23 +409,18 @@ export function useFarm() {
   const upgradeBuildingAction = useCallback(async (profileId: string, cellId: string): Promise<void> => {
     if (!vault) return;
 
-    let upgradeCost = 0;
-    let buildingId = '';
-    let didUpgrade = false;
-
-    await enqueueWrite(async () => {
-      // Lire frais depuis le disque pour eviter les stale closures
+    const result = await enqueueWrite(async () => {
       const content = await vault.readFile(FAMILLE_FILE);
       const freshProfiles = parseFamille(content);
       const freshProfile = freshProfiles.find(p => p.id === profileId);
-      if (!freshProfile) return;
+      if (!freshProfile) return null;
 
       const currentBuildings = freshProfile.farmBuildings ?? [];
       const building = currentBuildings.find(b => b.cellId === cellId);
-      if (!building) return;
+      if (!building) return null;
 
       const def = BUILDING_CATALOG.find(d => d.id === building.buildingId);
-      if (!def) return;
+      if (!def) return null;
 
       const cost = def.tiers[building.level]?.upgradeCoins ?? 0;
       if (cost === 0) throw new Error('Niveau maximum atteint');
@@ -426,38 +429,14 @@ export function useFarm() {
       const profileCtx = profiles?.find(p => p.id === profileId);
       if ((profileCtx?.coins ?? 0) < cost) throw new Error('Pas assez de feuilles');
 
-      const newBuildings = upgradeBuilding(currentBuildings, cellId);
-
       const lines = content.split('\n');
-      let inSection = false;
-      let fieldLine = -1;
-      let lastPropIdx = -1;
-
-      for (let i = 0; i < lines.length; i++) {
-        if (lines[i].startsWith('### ')) {
-          if (inSection) break;
-          if (lines[i].replace('### ', '').trim() === profileId) inSection = true;
-        } else if (inSection && lines[i].includes(': ')) {
-          lastPropIdx = i;
-          if (lines[i].trim().startsWith('farm_buildings:')) fieldLine = i;
-        }
-      }
-
-      const newValue = `farm_buildings: ${serializeBuildings(newBuildings)}`;
-      if (fieldLine >= 0) {
-        lines[fieldLine] = newValue;
-      } else if (lastPropIdx >= 0) {
-        lines.splice(lastPropIdx + 1, 0, newValue);
-      }
-
+      patchProfileField(lines, profileId, 'farm_buildings', serializeBuildings(upgradeBuilding(currentBuildings, cellId)));
       await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
-      upgradeCost = cost;
-      buildingId = building.buildingId;
-      didUpgrade = true;
+      return { cost, buildingId: building.buildingId };
     });
 
-    if (didUpgrade) {
-      await deductCoins(profileId, upgradeCost, `⬆️ Amelioration : ${buildingId}`);
+    if (result) {
+      await deductCoins(profileId, result.cost, `⬆️ Amelioration : ${result.buildingId}`);
       await refresh();
     }
   }, [profiles, vault, deductCoins, refresh]);
@@ -466,58 +445,26 @@ export function useFarm() {
   const collectBuildingResources = useCallback(async (profileId: string, cellId: string): Promise<number> => {
     if (!vault) return 0;
 
-    let collected = 0;
-    await enqueueWrite(async () => {
-      // Lire depuis le fichier pour eviter les stale closures
+    const collected = await enqueueWrite(async () => {
       const content = await vault.readFile(FAMILLE_FILE);
       const freshProfiles = parseFamille(content);
       const profile = freshProfiles.find(p => p.id === profileId);
-      if (!profile) return;
+      if (!profile) return 0;
 
       const currentBuildings = profile.farmBuildings ?? [];
       const currentInventory: FarmInventory = profile.farmInventory ?? { oeuf: 0, lait: 0, farine: 0, miel: 0 };
 
       const profileTechBonuses = getTechBonuses(profile.farmTech ?? []);
       const result = collectBuilding(currentBuildings, currentInventory, cellId, new Date(), profileTechBonuses);
-      if (result.collected === 0) return;
+      if (result.collected === 0) return 0;
 
-      // Ecrire les 2 champs en une seule operation atomique
       const lines = content.split('\n');
-      let inSection = false;
-      let buildingsLine = -1;
-      let inventoryLine = -1;
-      let lastPropIdx = -1;
-
-      for (let i = 0; i < lines.length; i++) {
-        if (lines[i].startsWith('### ')) {
-          if (inSection) break;
-          if (lines[i].replace('### ', '').trim() === profileId) inSection = true;
-        } else if (inSection && lines[i].includes(': ')) {
-          lastPropIdx = i;
-          if (lines[i].trim().startsWith('farm_buildings:')) buildingsLine = i;
-          if (lines[i].trim().startsWith('farm_inventory:')) inventoryLine = i;
-        }
-      }
-
-      const buildingsValue = `farm_buildings: ${serializeBuildings(result.buildings)}`;
-      const inventoryValue = `farm_inventory: ${serializeInventory(result.inventory)}`;
-
-      if (buildingsLine >= 0) {
-        lines[buildingsLine] = buildingsValue;
-      } else if (lastPropIdx >= 0) {
-        lines.splice(lastPropIdx + 1, 0, buildingsValue);
-        lastPropIdx++;
-        if (inventoryLine > lastPropIdx) inventoryLine++;
-      }
-
-      if (inventoryLine >= 0) {
-        lines[inventoryLine] = inventoryValue;
-      } else if (lastPropIdx >= 0) {
-        lines.splice(lastPropIdx + 1, 0, inventoryValue);
-      }
-
+      patchProfileFields(lines, profileId, {
+        farm_buildings: serializeBuildings(result.buildings),
+        farm_inventory: serializeInventory(result.inventory),
+      });
       await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
-      collected = result.collected;
+      return result.collected;
     });
 
     if (collected > 0) await refresh();
@@ -528,69 +475,39 @@ export function useFarm() {
   const collectPassiveIncome = useCallback(async (profileId: string): Promise<number> => {
     if (!vault) return 0;
 
-    let totalCollected = 0;
-    await enqueueWrite(async () => {
-      // Lire frais depuis le disque pour eviter les stale closures
+    const totalCollected = await enqueueWrite(async () => {
       const content = await vault.readFile(FAMILLE_FILE);
       const freshProfiles = parseFamille(content);
       const profile = freshProfiles.find(p => p.id === profileId);
-      if (!profile) return;
+      if (!profile) return 0;
 
       const placedBuildings = profile.farmBuildings ?? [];
-      if (placedBuildings.length === 0) return;
+      if (placedBuildings.length === 0) return 0;
 
       let currentBuildings = placedBuildings;
       const currentInventory: FarmInventory = profile.farmInventory ?? { oeuf: 0, lait: 0, farine: 0, miel: 0 };
       let updatedInventory = { ...currentInventory };
+      let total = 0;
 
       const passiveTechBonuses = getTechBonuses(profile.farmTech ?? []);
       for (const building of placedBuildings) {
         const result = collectBuilding(currentBuildings, updatedInventory, building.cellId, new Date(), passiveTechBonuses);
         if (result.collected > 0) {
-          totalCollected += result.collected;
+          total += result.collected;
           currentBuildings = result.buildings;
           updatedInventory = result.inventory;
         }
       }
 
-      if (totalCollected === 0) return;
+      if (total === 0) return 0;
 
-      // Ecrire les 2 champs en une seule operation atomique
       const lines = content.split('\n');
-      let inSection = false;
-      let buildingsLine = -1;
-      let inventoryLine = -1;
-      let lastPropIdx = -1;
-
-      for (let i = 0; i < lines.length; i++) {
-        if (lines[i].startsWith('### ')) {
-          if (inSection) break;
-          if (lines[i].replace('### ', '').trim() === profileId) inSection = true;
-        } else if (inSection && lines[i].includes(': ')) {
-          lastPropIdx = i;
-          if (lines[i].trim().startsWith('farm_buildings:')) buildingsLine = i;
-          if (lines[i].trim().startsWith('farm_inventory:')) inventoryLine = i;
-        }
-      }
-
-      const buildingsValue = `farm_buildings: ${serializeBuildings(currentBuildings)}`;
-      const inventoryValue = `farm_inventory: ${serializeInventory(updatedInventory)}`;
-
-      if (buildingsLine >= 0) {
-        lines[buildingsLine] = buildingsValue;
-      } else if (lastPropIdx >= 0) {
-        lines.splice(lastPropIdx + 1, 0, buildingsValue);
-        lastPropIdx++;
-        if (inventoryLine > lastPropIdx) inventoryLine++;
-      }
-
-      if (inventoryLine >= 0) {
-        lines[inventoryLine] = inventoryValue;
-      } else if (lastPropIdx >= 0) {
-        lines.splice(lastPropIdx + 1, 0, inventoryValue);
-      }
-
+      patchProfileFields(lines, profileId, {
+        farm_buildings: serializeBuildings(currentBuildings),
+        farm_inventory: serializeInventory(updatedInventory),
+      });
       await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
+      return total;
     });
 
     if (totalCollected > 0) await refresh();
@@ -601,7 +518,7 @@ export function useFarm() {
   const unlockTech = useCallback(async (profileId: string, techId: string): Promise<boolean> => {
     if (!vault) return false;
 
-    // Lire frais pour les techs depuis famille.md
+
     const content = await vault.readFile(FAMILLE_FILE);
     const freshProfiles = parseFamille(content);
     const familleProfile = freshProfiles.find(p => p.id === profileId);
