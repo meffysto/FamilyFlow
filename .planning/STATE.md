@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: executing
-stopped_at: Phase 11 context gathered
-last_updated: "2026-04-02T22:37:18.005Z"
-last_activity: "2026-04-02 - Completed quick task 260402-wrf: Mockup C — diorama arrondi + ombre + chevauchement cartes (écran arbre)"
+stopped_at: Completed 11-03-PLAN.md
+last_updated: "2026-04-02T23:10:35.103Z"
+last_activity: 2026-04-02
 progress:
   total_phases: 8
   completed_phases: 5
-  total_plans: 15
-  completed_plans: 14
+  total_plans: 18
+  completed_plans: 15
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 10 — compagnon-mascotte
+**Current focus:** Phase 11 — sagas-immersives
 
 ## Current Position
 
-Phase: 10 (compagnon-mascotte) — EXECUTING
-Plan: 4 of 4
+Phase: 11 (sagas-immersives) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-04-02 - Completed quick task 260402-wrf: Mockup C — diorama arrondi + ombre + chevauchement cartes (écran arbre)
+Last activity: 2026-04-02
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -57,6 +57,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 10-compagnon-mascotte P01 | 10min | 2 tasks | 35 files |
 | Phase 10-compagnon-mascotte P02 | 15min | 2 tasks | 4 files |
 | Phase 10-compagnon-mascotte P03 | 20min | 2 tasks | 4 files |
+| Phase 11-sagas-immersives P03 | 4min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -95,6 +96,7 @@ Recent decisions affecting current work:
 - [Phase 10-compagnon-mascotte]: openLootBox companion: pattern identique mascot_deco (ecriture directe vault) sans passer par setCompanion pour eviter les appels imbriques
 - [Phase 10-compagnon-mascotte]: CompanionSlot position cx:85 cy:205 dans viewbox 200x240 — distinct des HAB_SLOTS existants
 - [Phase 10-compagnon-mascotte]: companionPickerShownRef pour gate le déclenchement du picker par session — évite annoyance répétitive
+- [Phase 11-sagas-immersives]: Dashboard saga: indicateur texte inline remplace carte saga volumineuse — curiosite + redirection vers arbre
 
 ### Pending Todos
 
@@ -120,6 +122,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-02T22:37:18.001Z
-Stopped at: Phase 11 context gathered
-Resume file: .planning/phases/11-sagas-immersives/11-CONTEXT.md
+Last session: 2026-04-02T23:10:35.101Z
+Stopped at: Completed 11-03-PLAN.md
+Resume file: None
