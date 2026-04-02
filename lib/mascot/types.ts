@@ -156,7 +156,7 @@ export const SCENE_SLOTS: SceneSlot[] = [
   { id: 'ground-center', cx: 50,  cy: 140, zone: 'ground' },  // herbe centre-gauche
   { id: 'ground-right',  cx: 140, cy: 140, zone: 'ground' },  // herbe centre-droit
   { id: 'ground-far-l',  cx: 16,  cy: 160, zone: 'ground' },  // herbe gauche bas (berge lac)
-  { id: 'ground-far-r',  cx: 150, cy: 170, zone: 'ground' },  // herbe droite bas
+  { id: 'ground-far-r',  cx: 120, cy: 150, zone: 'ground' },  // herbe centre-droit bas
   // Ciel
   { id: 'sky-left',      cx: 30,  cy: 55,  zone: 'sky' },
   { id: 'sky-right',     cx: 170, cy: 50,  zone: 'sky' },
