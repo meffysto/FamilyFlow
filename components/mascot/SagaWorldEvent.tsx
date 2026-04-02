@@ -10,7 +10,7 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, ImageSourcePropType, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
   Easing,
   runOnJS,
@@ -25,6 +25,7 @@ import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 
 import { useThemeColors } from '../../contexts/ThemeContext';
+import type { ReactionType } from './VisitorSlot';
 import type { SagaProgress, SagaTrait } from '../../lib/mascot/sagas-types';
 import {
   getChapterNarrativeKey,
@@ -55,15 +56,45 @@ export interface SagaWorldEventProps {
     rewardItem?: { id: string; type: 'decoration' | 'inhabitant' },
   ) => Promise<void>;
   onDismiss: () => void;
+  /** Sprite idle du visiteur — remplace le spiritGlow emoji si fourni */
+  visitorIdleFrame?: ImageSourcePropType;
+  /** Callback appelé quand le joueur sélectionne un choix — permet au VisitorSlot de jouer une animation de réaction */
+  onChoiceReaction?: (reactionType: ReactionType) => void;
 }
 
 // ─── Composant ────────────────────────────────────────────────
+
+// ─── Helper : mapping choix → type de réaction ────────────
+
+/**
+ * Détermine le type de réaction du visiteur selon le trait dominant du choix.
+ * - courage, générosité, créativité → joie
+ * - curiosité, sagesse → surprise
+ * - malice, patience → mystère
+ * Fallback par index si aucun trait n'est identifiable.
+ */
+function reactionForChoice(choiceIndex: number, traits?: Partial<Record<string, number>>): ReactionType {
+  if (traits) {
+    const dominantTrait = Object.entries(traits)
+      .filter(([, v]) => (v ?? 0) > 0)
+      .sort(([, a], [, b]) => (b ?? 0) - (a ?? 0))[0]?.[0];
+    if (dominantTrait) {
+      if (['courage', 'générosité', 'humor', 'creativity'].includes(dominantTrait)) return 'joy';
+      if (['curiosité', 'sagesse', 'curiosity', 'wisdom', 'observation'].includes(dominantTrait)) return 'surprise';
+      return 'mystery'; // malice, patience, intuition, resilience, etc.
+    }
+  }
+  // Fallback par index
+  return choiceIndex === 0 ? 'joy' : choiceIndex === 1 ? 'surprise' : 'mystery';
+}
 
 export function SagaWorldEvent({
   sagaProgress,
   containerHeight,
   onChapterComplete,
   onDismiss,
+  visitorIdleFrame,
+  onChoiceReaction,
 }: SagaWorldEventProps) {
   const { t } = useTranslation();
   const { primary, colors, isDark } = useThemeColors();
@@ -254,6 +285,10 @@ export function SagaWorldEvent({
     if (!choice) return;
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    // Notifier le VisitorSlot du type de réaction avant la transition (SAG-04)
+    onChoiceReaction?.(reactionForChoice(idx, choice.traits));
+
     setSelectedChoiceId(choiceId);
     setPhase('chosen');
 
@@ -423,20 +458,30 @@ export function SagaWorldEvent({
         pointerEvents="none"
       />
 
-      {/* ── Esprit narratif (centré, haut du diorama) ─────────── */}
+      {/* ── Portrait visiteur ou esprit narratif (centré, haut du diorama) ─── */}
       <Animated.View style={[styles.spiritWrapper, spiritStyle]} pointerEvents="none">
-        <View
-          style={[
-            styles.spiritGlow,
-            {
-              borderColor: primary + '70',
-              backgroundColor: primary + '18',
-              shadowColor: primary,
-            },
-          ]}
-        >
-          <Text style={styles.spiritEmoji}>{activeSaga.sceneEmoji}</Text>
-        </View>
+        {visitorIdleFrame ? (
+          <View style={styles.visitorPortrait}>
+            <Image
+              source={visitorIdleFrame}
+              style={{ width: 72, height: 72 }}
+              resizeMode="contain"
+            />
+          </View>
+        ) : (
+          <View
+            style={[
+              styles.spiritGlow,
+              {
+                borderColor: primary + '70',
+                backgroundColor: primary + '18',
+                shadowColor: primary,
+              },
+            ]}
+          >
+            <Text style={styles.spiritEmoji}>{activeSaga.sceneEmoji}</Text>
+          </View>
+        )}
       </Animated.View>
 
       {/* ── Bulle narrative / cliffhanger / finale ──────────────── */}
@@ -571,6 +616,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
+  },
+  visitorPortrait: {
+    width: 72,
+    height: 72,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   spiritGlow: {
     width: 72,
