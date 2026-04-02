@@ -13,8 +13,17 @@
  * 6. Decorations (arbres fruitiers, clotures, objets)
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState, useRef } from 'react';
 import { View, Image, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withRepeat,
+  withSequence,
+  withDelay,
+  Easing,
+} from 'react-native-reanimated';
 import type { Season } from '../../lib/mascot/seasons';
 import type { TreeStage } from '../../lib/mascot/types';
 
@@ -150,6 +159,11 @@ const FISH_DECOS = {
   drying_rack: require('../../assets/garden/decos/fish_obj_2_0.png'),
   rack_with_fish: require('../../assets/garden/decos/fish_obj_3_0.png'),
   fish_trap: require('../../assets/garden/decos/fish_obj_4_0.png'),
+  fish_koi_frames: [
+    require('../../assets/garden/decos/fish_koi_1.png'),
+    require('../../assets/garden/decos/fish_koi_2.png'),
+    require('../../assets/garden/decos/fish_koi_3.png'),
+  ] as const,
 };
 
 // Sprites de sol existants (Mana Seed) pour la vegetation
@@ -300,24 +314,15 @@ function getFarmDecos(season: Season, stageIdx: number): FarmDeco[] {
   // ── Peche — decorations sur la berge du lac (pas dans l'eau) ──
   // Lac = cols 0-3, rows 16-19 → x < 0.33, y > 0.80
   // Berge = juste au-dessus/droite du lac
-  // Cannes a peche — berge droite du lac, a cote du pont
-  if (stageIdx >= 2) {
-    decos.push({ source: FISH_DECOS.fishing_rods, x: 0.35, y: 0.72, w: 44, h: 44, minStage: 2, fixed: true });
-    // Sechoir a poissons — berge haute du lac
-    decos.push({ source: FISH_DECOS.drying_rack, x: 0.10, y: 0.64, w: 42, h: 42, minStage: 2, fixed: true });
-  }
-  if (stageIdx >= 3) {
-    // Tonneau a poissons — en bas a droite du lac
-    decos.push({ source: FISH_DECOS.fish_barrel, x: 0.38, y: 0.84, w: 38, h: 38, minStage: 3, fixed: true });
-    // Sechoir garni — berge haute
-    decos.push({ source: FISH_DECOS.rack_with_fish, x: 0.28, y: 0.62, w: 40, h: 40, minStage: 3, fixed: true });
-  }
-  if (stageIdx >= 4) {
-    // Nasse — bas du lac
-    decos.push({ source: FISH_DECOS.fish_trap, x: 0.34, y: 0.90, w: 36, h: 36, minStage: 4, fixed: true });
-    // Trophee — haut gauche
-    decos.push({ source: FISH_DECOS.fish_trophy, x: 0.06, y: 0.60, w: 34, h: 34, minStage: 4, fixed: true });
-  }
+  // Cannes a peche — berge droite du lac
+  decos.push({ source: FISH_DECOS.fishing_rods, x: 0.35, y: 0.72, w: 44, h: 44, minStage: 0, fixed: true });
+  // Tonneau a poissons — en bas a droite du lac
+  decos.push({ source: FISH_DECOS.fish_barrel, x: 0.38, y: 0.84, w: 38, h: 38, minStage: 0, fixed: true });
+  // Nasse — decalee a droite
+  decos.push({ source: FISH_DECOS.fish_trap, x: 0.40, y: 0.90, w: 36, h: 36, minStage: 0, fixed: true });
+  // Trophee — haut gauche berge
+  decos.push({ source: FISH_DECOS.fish_trophy, x: 0.06, y: 0.60, w: 34, h: 34, minStage: 0, fixed: true });
+  // Poisson koi : rendu séparément en animé (voir SwimmingFish)
 
   // ── Panneau — entree de la ferme (bas centre) ──
   if (stageIdx >= 1) {
@@ -441,6 +446,88 @@ interface TileMapRendererProps {
   containerWidth: number;
   containerHeight: number;
   season: Season;
+}
+
+// ── Poisson koi anime — nage en boucle dans le lac avec cycle de frames ──
+
+const FISH_WAYPOINTS = [
+  { x: 0.08, y: 0.84 },
+  { x: 0.20, y: 0.88 },
+  { x: 0.25, y: 0.92 },
+  { x: 0.18, y: 0.96 },
+  { x: 0.06, y: 0.94 },
+  { x: 0.04, y: 0.88 },
+];
+const FISH_SIZE = 24;
+const FISH_STEP_MS = 3000;
+const FISH_FRAME_MS = 400;
+
+function SwimmingFish({ containerWidth, containerHeight }: { containerWidth: number; containerHeight: number }) {
+  const posX = useSharedValue(FISH_WAYPOINTS[0].x * containerWidth);
+  const posY = useSharedValue(FISH_WAYPOINTS[0].y * containerHeight);
+  const scaleX = useSharedValue(1);
+  const [frameIdx, setFrameIdx] = useState(0);
+
+  // Cycle des frames de nage (queue gauche → droit → queue droite → droit)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFrameIdx(prev => (prev + 1) % 3);
+    }, FISH_FRAME_MS);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Animation de deplacement dans le lac
+  useEffect(() => {
+    const points = FISH_WAYPOINTS.map(p => ({
+      x: p.x * containerWidth,
+      y: p.y * containerHeight,
+    }));
+
+    const stepsX: number[] = [];
+    const stepsY: number[] = [];
+    const flips: number[] = [];
+    for (let i = 1; i <= points.length; i++) {
+      const target = points[i % points.length];
+      const prev = points[(i - 1) % points.length];
+      stepsX.push(target.x);
+      stepsY.push(target.y);
+      flips.push(target.x < prev.x ? -1 : 1);
+    }
+
+    const timingConfig = { duration: FISH_STEP_MS, easing: Easing.inOut(Easing.sin) };
+
+    posX.value = withDelay(500, withRepeat(
+      withSequence(...stepsX.map(x => withTiming(x, timingConfig))),
+      -1,
+    ));
+    posY.value = withDelay(500, withRepeat(
+      withSequence(...stepsY.map(y => withTiming(y, timingConfig))),
+      -1,
+    ));
+    scaleX.value = withDelay(500, withRepeat(
+      withSequence(...flips.map(s => withTiming(s, { duration: FISH_STEP_MS }))),
+      -1,
+    ));
+  }, [containerWidth, containerHeight]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    position: 'absolute' as const,
+    left: posX.value - FISH_SIZE / 2,
+    top: posY.value - FISH_SIZE / 2,
+    width: FISH_SIZE,
+    height: FISH_SIZE,
+    transform: [{ scaleX: scaleX.value }],
+  }));
+
+  return (
+    <Animated.View style={animStyle}>
+      <Image
+        source={FISH_DECOS.fish_koi_frames[frameIdx]}
+        style={{ width: FISH_SIZE, height: FISH_SIZE }}
+        resizeMode="contain"
+      />
+    </Animated.View>
+  );
 }
 
 export function TileMapRenderer({
@@ -568,6 +655,11 @@ export function TileMapRenderer({
           </View>
         );
       })}
+
+      {/* Poisson koi anime dans le lac */}
+      {stageIdx >= 1 && (
+        <SwimmingFish containerWidth={containerWidth} containerHeight={containerHeight} />
+      )}
 
       {/* Couche decorations (arbres, clotures, objets) */}
       {decos.map((deco, i) => (
