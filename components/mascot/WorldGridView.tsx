@@ -427,7 +427,7 @@ export function WorldGridView({
       {/* Cellules de batiment */}
       {BUILDING_CELLS.map(cell => {
         const placedBuilding = ownedBuildings.find(b => b.cellId === cell.id) ?? null;
-        const pendingCount = placedBuilding ? getPendingResources(placedBuilding) : 0;
+        const pendingCount = placedBuilding ? getPendingResources(placedBuilding, new Date(), techBonuses) : 0;
         return (
           <BuildingCell
             key={cell.id}
@@ -446,7 +446,7 @@ export function WorldGridView({
       {expansionBuildingUnlocked && (() => {
         const cell = EXPANSION_BUILDING_CELL;
         const placedBuilding = ownedBuildings.find(b => b.cellId === cell.id) ?? null;
-        const pendingCount = placedBuilding ? getPendingResources(placedBuilding) : 0;
+        const pendingCount = placedBuilding ? getPendingResources(placedBuilding, new Date(), techBonuses) : 0;
         return (
           <BuildingCell
             key={cell.id}

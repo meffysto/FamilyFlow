@@ -21,6 +21,7 @@ import { useThemeColors } from '../../contexts/ThemeContext';
 import { BUILDING_CATALOG, type PlacedBuilding } from '../../lib/mascot/types';
 import { BUILDING_SPRITES } from '../../lib/mascot/building-sprites';
 import { getPendingResources, getUpgradeCost, canUpgrade, getMinutesUntilNext } from '../../lib/mascot/building-engine';
+import type { TechBonuses } from '../../lib/mascot/tech-engine';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -31,6 +32,7 @@ interface BuildingDetailSheetProps {
   visible: boolean;
   building: PlacedBuilding;
   coins: number;
+  techBonuses?: TechBonuses;
   onCollect: (cellId: string) => void;
   onUpgrade: (cellId: string) => void;
   onClose: () => void;
@@ -42,6 +44,7 @@ export function BuildingDetailSheet({
   visible,
   building,
   coins,
+  techBonuses,
   onCollect,
   onUpgrade,
   onClose,
@@ -53,7 +56,7 @@ export function BuildingDetailSheet({
   if (!def) return null;
 
   const tier = def.tiers[building.level - 1];
-  const pendingCount = getPendingResources(building);
+  const pendingCount = getPendingResources(building, new Date(), techBonuses);
   const upgradable = canUpgrade(building);
   const upgradeCost = getUpgradeCost(building);
   const nextTier = upgradable ? def.tiers[building.level] : null;
@@ -61,8 +64,9 @@ export function BuildingDetailSheet({
 
   const resourceLabel = t(`farm.building.resource.${def.resourceType}`);
   const resourceEmoji = def.resourceType === 'oeuf' ? '🥚' : def.resourceType === 'lait' ? '🥛' : '🌾';
-  const minutesUntilNext = getMinutesUntilNext(building);
-  const totalMinutes = (tier?.productionRateHours ?? 1) * 60;
+  const effectiveRateHours = (tier?.productionRateHours ?? 1) * (techBonuses?.productionIntervalMultiplier ?? 1.0);
+  const minutesUntilNext = getMinutesUntilNext(building, new Date(), techBonuses);
+  const totalMinutes = effectiveRateHours * 60;
   const elapsedMinutes = totalMinutes - minutesUntilNext;
   const progressRatio = minutesUntilNext === 0 ? 1 : Math.max(0, Math.min(1, elapsedMinutes / totalMinutes));
   const hoursLeft = Math.floor(minutesUntilNext / 60);
@@ -123,7 +127,7 @@ export function BuildingDetailSheet({
               <Text style={[styles.sectionDetail, { color: colors.textSub }]}>
                 {resourceEmoji} {t('farm.building.frequency', {
                   resource: resourceLabel,
-                  hours: tier?.productionRateHours ?? '?',
+                  hours: Math.round(effectiveRateHours * 10) / 10,
                 })}
               </Text>
               {timerLabel ? (
@@ -180,7 +184,7 @@ export function BuildingDetailSheet({
                   <Text style={[styles.sectionDetail, { color: colors.textSub }]}>
                     {t('farm.building.frequency', {
                       resource: resourceLabel,
-                      hours: nextTier.productionRateHours,
+                      hours: Math.round(nextTier.productionRateHours * (techBonuses?.productionIntervalMultiplier ?? 1.0) * 10) / 10,
                     })}
                   </Text>
                   <Text style={[styles.sectionDetail, { color: coins >= upgradeCost ? '#4ADE80' : colors.textMuted }]}>
@@ -212,7 +216,7 @@ export function BuildingDetailSheet({
                   <Text style={[styles.sectionDetail, { color: colors.textSub }]}>
                     {t('farm.building.frequency', {
                       resource: resourceLabel,
-                      hours: tier?.productionRateHours ?? '?',
+                      hours: Math.round(effectiveRateHours * 10) / 10,
                     })}
                   </Text>
                 </View>

@@ -76,7 +76,7 @@ import * as SecureStore from 'expo-secure-store';
 import { type PlantedCrop, type PlacedBuilding, CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
 import { hasCropSeasonalBonus, parseCrops, getAvailableCrops } from '../../lib/mascot/farm-engine';
 import { getUnlockedCropCells, getExpandedCropCells, BUILDING_CELLS, EXPANSION_BUILDING_CELL } from '../../lib/mascot/world-grid';
-import { getTechBonuses } from '../../lib/mascot/tech-engine';
+import { getTechBonuses, type TechBonuses } from '../../lib/mascot/tech-engine';
 import { HarvestBurst, CROP_COLORS } from '../../components/mascot/HarvestBurst';
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import { AmbientParticles } from '../../components/mascot/AmbientParticles';
@@ -134,10 +134,11 @@ const SEASON_ILLUSTRATIONS: Record<Season, ImageSourcePropType> = {
 
 /** Tooltip whisper quand on tap une culture en croissance */
 /** Tooltip info quand on tap une culture en croissance — emoji + nom + tâches restantes */
-function CropTooltip({ tooltipInfo, stageInfo, stageIdx }: {
+function CropTooltip({ tooltipInfo, stageInfo, stageIdx, techBonuses }: {
   tooltipInfo: { cellId: string; cropId: string; tasksCompleted: number };
   stageInfo: any;
   stageIdx: number;
+  techBonuses?: TechBonuses;
 }) {
   const { colors } = useThemeColors();
   const { t } = useTranslation();
@@ -149,8 +150,11 @@ function CropTooltip({ tooltipInfo, stageInfo, stageIdx }: {
   if (!cropDef) return null;
   const cropEmoji = cropDef.emoji;
   const cropName = t(`farm.crop.${cropDef.id}`);
-  const totalTasks = cropDef.tasksPerStage * 4;
-  const remaining = totalTasks - tooltipInfo.tasksCompleted;
+  const effectiveTasksPerStage = Math.max(1, cropDef.tasksPerStage - (techBonuses?.tasksPerStageReduction ?? 0));
+  const totalPoints = effectiveTasksPerStage * 4;
+  const isSeasonal = hasCropSeasonalBonus(cropDef.id);
+  const pointsRemaining = Math.max(0, totalPoints - tooltipInfo.tasksCompleted);
+  const remaining = isSeasonal ? Math.ceil(pointsRemaining / 2) : pointsRemaining;
 
   const TOOLTIP_W = 160;
   const TOOLTIP_H = 44;
@@ -733,7 +737,8 @@ export default function TreeScreen() {
       // Tooltip info sur culture en croissance
       const cropDef = CROP_CATALOG.find(c => c.id === crop.cropId);
       const stagesDone = crop.currentStage;
-      const totalCompleted = stagesDone * (cropDef?.tasksPerStage ?? 0) + crop.tasksCompleted;
+      const effectiveTpS = Math.max(1, (cropDef?.tasksPerStage ?? 0) - (techBonuses?.tasksPerStageReduction ?? 0));
+      const totalCompleted = stagesDone * effectiveTpS + crop.tasksCompleted;
       setTooltipInfo({ cellId, cropId: crop.cropId, tasksCompleted: totalCompleted });
       setTimeout(() => setTooltipInfo(null), 3000);
     } else {
@@ -969,7 +974,8 @@ export default function TreeScreen() {
                 const unlocked = stageUnlocked && availableCrops.some(c => c.id === crop.id);
                 const stageName = t(`mascot.stages.${crop.minTreeStage}`);
                 const isSeasonal = hasCropSeasonalBonus(crop.id);
-                const totalTasks = crop.tasksPerStage * 4;
+                const effectiveTasksPerStage = Math.max(1, crop.tasksPerStage - (techBonuses?.tasksPerStageReduction ?? 0));
+                const totalTasks = effectiveTasksPerStage * 4;
                 const effectiveTasks = isSeasonal ? Math.ceil(totalTasks / 2) : totalTasks;
                 const canAfford = (profile?.coins ?? 0) >= crop.cost;
                 return (
@@ -1140,7 +1146,7 @@ export default function TreeScreen() {
             )}
 
             {/* Tooltip info culture */}
-            {tooltipInfo && <CropTooltip tooltipInfo={tooltipInfo} stageInfo={stageInfo} stageIdx={stageIdx} />}
+            {tooltipInfo && <CropTooltip tooltipInfo={tooltipInfo} stageInfo={stageInfo} stageIdx={stageIdx} techBonuses={techBonuses} />}
 
             {/* Couche 4 : Arbre pixel au premier plan */}
             <View style={styles.treeOverlay} pointerEvents="box-none">
@@ -1369,6 +1375,7 @@ export default function TreeScreen() {
         onCraft={(recipeId) => craft(profile!.id, recipeId)}
         onSellHarvest={(cropId) => sellHarvest(profile!.id, cropId)}
         onSellCrafted={(recipeId) => sellCrafted(profile!.id, recipeId)}
+        techBonuses={techBonuses}
       />
 
       {/* Tech tree progression */}
@@ -1399,6 +1406,7 @@ export default function TreeScreen() {
           visible={showBuildingDetail}
           building={selectedBuilding}
           coins={profile.coins ?? 0}
+          techBonuses={techBonuses}
           onCollect={handleCollectBuilding}
           onUpgrade={handleUpgradeBuilding}
           onClose={() => { setShowBuildingDetail(false); setSelectedBuilding(null); }}
