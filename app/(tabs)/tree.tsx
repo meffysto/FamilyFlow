@@ -959,7 +959,7 @@ export default function TreeScreen() {
   }, [profile?.id, upgradeBuildingAction, profiles, showToast]);
 
   return (
-    <View style={styles.safe}>
+    <View style={[styles.safe, { backgroundColor: colors.bg }]}>
       <ScrollView
         contentContainerStyle={[styles.scroll, Layout.contentContainer, { paddingTop: insets.top + 44 }]}
         showsVerticalScrollIndicator={false}
