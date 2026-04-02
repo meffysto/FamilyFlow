@@ -3924,6 +3924,8 @@
       "grange_desc": "A lovely wooden barn. Produces milk automatically.",
       "moulin": "Windmill",
       "moulin_desc": "A windmill. Produces flour automatically.",
+      "ruche": "Beehive",
+      "ruche_desc": "A buzzing beehive. Produces honey automatically.",
       "buy": "Build",
       "dailyIncome": "+{{amount}} 🍃/day",
       "owned": "Built",
@@ -3931,6 +3933,7 @@
       "constructTitle": "Build a building",
       "noAvailable": "No buildings available",
       "unlockedAt": "Unlock at stage {{stage}}",
+      "unlockedByTech": "Requires tech {{tech}}",
       "cost": "{{cost}} 🍃",
       "frequency": "1 {{resource}} every {{hours}}h",
       "level": "Lv. {{level}}",
@@ -3944,7 +3947,8 @@
         "oeuf": "egg",
         "oeufs": "eggs",
         "lait": "milk",
-        "farine": "flour"
+        "farine": "flour",
+        "miel": "honey"
       }
     },
     "weeklyGoal": {
@@ -3990,7 +3994,10 @@
       "popcorn": "Popcorn",
       "gateau": "Farm Cake",
       "soupe_citrouille": "Pumpkin Soup",
-      "tarte_citrouille": "Pumpkin Pie"
+      "tarte_citrouille": "Pumpkin Pie",
+      "hydromel": "Mead",
+      "nougat": "Nougat",
+      "pain_epices": "Gingerbread"
     }
   },
   "badges": {

@@ -1416,7 +1416,7 @@ export default function TreeScreen() {
         profileId={profile?.id ?? ''}
         coins={profile?.coins ?? 0}
         harvestInventory={profile?.harvestInventory ?? {}}
-        farmInventory={profile?.farmInventory ?? { oeuf: 0, lait: 0, farine: 0 }}
+        farmInventory={profile?.farmInventory ?? { oeuf: 0, lait: 0, farine: 0, miel: 0 }}
         craftedItems={profile?.craftedItems ?? []}
         onCraft={async (recipeId) => {
           const result = await craft(profile!.id, recipeId);
@@ -1445,6 +1445,7 @@ export default function TreeScreen() {
         treeStage={stageInfo.stage}
         coins={profile.coins ?? 0}
         ownedBuildings={profile.farmBuildings ?? []}
+        unlockedTechs={profile.farmTech ?? []}
         onBuild={handleBuildBuilding}
         onClose={() => setShowBuildingShop(false)}
       />

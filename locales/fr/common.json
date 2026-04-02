@@ -3924,6 +3924,8 @@
       "grange_desc": "Une belle grange en bois. Produit du lait automatiquement.",
       "moulin": "Moulin",
       "moulin_desc": "Un moulin a vent. Produit de la farine automatiquement.",
+      "ruche": "Ruche",
+      "ruche_desc": "Une ruche bourdonnante. Produit du miel automatiquement.",
       "buy": "Construire",
       "dailyIncome": "+{{amount}} 🍃/jour",
       "owned": "Construit",
@@ -3931,6 +3933,7 @@
       "constructTitle": "Construire un batiment",
       "noAvailable": "Aucun batiment disponible",
       "unlockedAt": "Debloquer au stade {{stage}}",
+      "unlockedByTech": "Necessite la tech {{tech}}",
       "cost": "{{cost}} 🍃",
       "frequency": "1 {{resource}} toutes les {{hours}}h",
       "level": "Niv. {{level}}",
@@ -3944,7 +3947,8 @@
         "oeuf": "oeuf",
         "oeufs": "oeufs",
         "lait": "lait",
-        "farine": "farine"
+        "farine": "farine",
+        "miel": "miel"
       }
     },
     "weeklyGoal": {
@@ -3990,7 +3994,10 @@
       "popcorn": "Pop-corn",
       "gateau": "Gâteau fermier",
       "soupe_citrouille": "Soupe de citrouille",
-      "tarte_citrouille": "Tarte à la citrouille"
+      "tarte_citrouille": "Tarte à la citrouille",
+      "hydromel": "Hydromel",
+      "nougat": "Nougat",
+      "pain_epices": "Pain d'épices"
     }
   },
   "badges": {

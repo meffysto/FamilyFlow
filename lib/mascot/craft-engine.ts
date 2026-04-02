@@ -18,6 +18,7 @@ export const BUILDING_RESOURCE_VALUE: Record<ResourceType, number> = {
   oeuf: 80,
   lait: 100,
   farine: 90,
+  miel: 120,
 };
 
 // ── Catalogue de recettes ────────────────────────────────────────────
@@ -158,6 +159,40 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     ],
     xpBonus: 35,
     sellValue: 740, // (200+90+80) x 2
+  },
+  // ── Majestueux+ — recettes miel (ruche) ──
+  {
+    id: 'hydromel',
+    labelKey: 'craft.recipe.hydromel',
+    emoji: '🍯',
+    ingredients: [
+      { itemId: 'miel', quantity: 3, source: 'building' },
+    ],
+    xpBonus: 30,
+    sellValue: 720, // (120x3) x 2
+  },
+  {
+    id: 'nougat',
+    labelKey: 'craft.recipe.nougat',
+    emoji: '🍬',
+    ingredients: [
+      { itemId: 'miel', quantity: 1, source: 'building' },
+      { itemId: 'oeuf', quantity: 1, source: 'building' },
+      { itemId: 'farine', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 35,
+    sellValue: 580, // (120+80+90) x 2
+  },
+  {
+    id: 'pain_epices',
+    labelKey: 'craft.recipe.pain_epices',
+    emoji: '🍪',
+    ingredients: [
+      { itemId: 'miel', quantity: 1, source: 'building' },
+      { itemId: 'farine', quantity: 2, source: 'building' },
+    ],
+    xpBonus: 30,
+    sellValue: 600, // (120+90+90) x 2
   },
 ];
 

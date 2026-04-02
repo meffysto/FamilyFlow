@@ -10,6 +10,8 @@ import { useVault } from '../contexts/VaultContext';
 import { plantCrop, harvestCrop, parseCrops, serializeCrops, getEffectiveHarvestReward } from '../lib/mascot/farm-engine';
 import { CROP_CATALOG, BUILDING_CATALOG } from '../lib/mascot/types';
 import type { PlacedBuilding, FarmInventory, CraftedItem } from '../lib/mascot/types';
+import { isLargeCropPlot } from '../lib/mascot/world-grid';
+import { getTreeStageInfo } from '../lib/mascot/engine';
 import {
   constructBuilding,
   upgradeBuilding,
@@ -246,10 +248,11 @@ export function useFarm() {
     // Utiliser le champ parse du profile si disponible
     const currentHarvestInv = profile.harvestInventory ?? harvestInv;
     const updatedHarvestInv = { ...currentHarvestInv };
-    // Parcelle geante (c20) = double recolte — elle est toujours en dernière position
+    // Parcelle geante (c20) = double recolte
     const profileTech = getTechBonuses(profile.farmTech ?? []);
-    const isLarge = profileTech.hasLargeCropCell &&
-      plotIndex >= 15 + profileTech.extraCropCells;
+    const vaultProfile = profiles.find(p => p.id === profileId);
+    const treeStage = getTreeStageInfo(vaultProfile?.level ?? 1).stage;
+    const isLarge = isLargeCropPlot(plotIndex, treeStage, profileTech);
     const baseQty = isLarge ? 2 : 1;
     const bonusDrop = profileTech.bonusHarvestChance > 0 && Math.random() < profileTech.bonusHarvestChance ? 1 : 0;
     const harvestQty = baseQty + bonusDrop;
@@ -305,7 +308,7 @@ export function useFarm() {
     if (!recipe) return null;
 
     const harvestInv = profile.harvestInventory ?? {};
-    const farmInv: FarmInventory = profile.farmInventory ?? { oeuf: 0, lait: 0, farine: 0 };
+    const farmInv: FarmInventory = profile.farmInventory ?? { oeuf: 0, lait: 0, farine: 0, miel: 0 };
 
     const result = craftItemFn(recipe, harvestInv, farmInv);
     if (!result) throw new Error('Ingredients insuffisants');
@@ -408,7 +411,7 @@ export function useFarm() {
     if (!profile) return 0;
 
     const currentBuildings = profile.farmBuildings ?? [];
-    const currentInventory: FarmInventory = profile.farmInventory ?? { oeuf: 0, lait: 0, farine: 0 };
+    const currentInventory: FarmInventory = profile.farmInventory ?? { oeuf: 0, lait: 0, farine: 0, miel: 0 };
 
     const profileTechBonuses = getTechBonuses(profile.farmTech ?? []);
     const result = collectBuilding(currentBuildings, currentInventory, cellId, new Date(), profileTechBonuses);
@@ -465,7 +468,7 @@ export function useFarm() {
 
     let totalCollected = 0;
     let currentBuildings = placedBuildings;
-    const currentInventory: FarmInventory = profile.farmInventory ?? { oeuf: 0, lait: 0, farine: 0 };
+    const currentInventory: FarmInventory = profile.farmInventory ?? { oeuf: 0, lait: 0, farine: 0, miel: 0 };
     let updatedInventory = { ...currentInventory };
 
     const passiveTechBonuses = getTechBonuses(profile.farmTech ?? []);

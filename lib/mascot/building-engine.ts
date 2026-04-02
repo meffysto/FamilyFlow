@@ -72,16 +72,16 @@ export function parseBuildings(csv: string | string[] | undefined): PlacedBuildi
 
 /** Serialiser l'inventaire en CSV "oeuf:N,lait:N,farine:N" */
 export function serializeInventory(inventory: FarmInventory): string {
-  return `oeuf:${inventory.oeuf},lait:${inventory.lait},farine:${inventory.farine}`;
+  return `oeuf:${inventory.oeuf},lait:${inventory.lait},farine:${inventory.farine},miel:${inventory.miel}`;
 }
 
 /** Parser l'inventaire depuis CSV */
 export function parseInventory(csv: string | undefined): FarmInventory {
-  const inv: FarmInventory = { oeuf: 0, lait: 0, farine: 0 };
+  const inv: FarmInventory = { oeuf: 0, lait: 0, farine: 0, miel: 0 };
   if (!csv) return inv;
   for (const entry of csv.split(',')) {
     const [key, val] = entry.trim().split(':');
-    if (key === 'oeuf' || key === 'lait' || key === 'farine') {
+    if (key === 'oeuf' || key === 'lait' || key === 'farine' || key === 'miel') {
       inv[key] = parseInt(val, 10) || 0;
     }
   }

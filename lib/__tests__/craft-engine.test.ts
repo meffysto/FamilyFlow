@@ -55,28 +55,28 @@ describe('canCraft', () => {
   it('retourne true si ingredients suffisants (confiture = 2 strawberry)', () => {
     const recipe = CRAFT_RECIPES.find(r => r.id === 'confiture')!;
     const harvestInv: HarvestInventory = { strawberry: 2 };
-    const farmInv: FarmInventory = { oeuf: 0, lait: 0, farine: 0 };
+    const farmInv: FarmInventory = { oeuf: 0, lait: 0, farine: 0, miel: 0 };
     expect(canCraft(recipe, harvestInv, farmInv)).toBe(true);
   });
 
   it('retourne false si ingredients insuffisants', () => {
     const recipe = CRAFT_RECIPES.find(r => r.id === 'confiture')!;
     const harvestInv: HarvestInventory = { strawberry: 1 };
-    const farmInv: FarmInventory = { oeuf: 0, lait: 0, farine: 0 };
+    const farmInv: FarmInventory = { oeuf: 0, lait: 0, farine: 0, miel: 0 };
     expect(canCraft(recipe, harvestInv, farmInv)).toBe(false);
   });
 
   it('verifie les ressources building (gateau a besoin de farine + oeuf)', () => {
     const recipe = CRAFT_RECIPES.find(r => r.id === 'gateau')!;
     const harvestInv: HarvestInventory = { strawberry: 1 };
-    const farmInv: FarmInventory = { oeuf: 1, lait: 0, farine: 1 };
+    const farmInv: FarmInventory = { oeuf: 1, lait: 0, farine: 1, miel: 0 };
     expect(canCraft(recipe, harvestInv, farmInv)).toBe(true);
   });
 
   it('retourne false si ressource building manquante', () => {
     const recipe = CRAFT_RECIPES.find(r => r.id === 'gateau')!;
     const harvestInv: HarvestInventory = { strawberry: 1 };
-    const farmInv: FarmInventory = { oeuf: 0, lait: 0, farine: 1 };
+    const farmInv: FarmInventory = { oeuf: 0, lait: 0, farine: 1, miel: 0 };
     expect(canCraft(recipe, harvestInv, farmInv)).toBe(false);
   });
 });
@@ -87,7 +87,7 @@ describe('craftItem', () => {
   it('retourne item crafte + deduit ingredients (confiture)', () => {
     const recipe = CRAFT_RECIPES.find(r => r.id === 'confiture')!;
     const harvestInv: HarvestInventory = { strawberry: 3 };
-    const farmInv: FarmInventory = { oeuf: 0, lait: 0, farine: 0 };
+    const farmInv: FarmInventory = { oeuf: 0, lait: 0, farine: 0, miel: 0 };
 
     const result = craftItem(recipe, harvestInv, farmInv);
     expect(result).not.toBeNull();
@@ -99,7 +99,7 @@ describe('craftItem', () => {
   it('retourne null si ingredients insuffisants', () => {
     const recipe = CRAFT_RECIPES.find(r => r.id === 'confiture')!;
     const harvestInv: HarvestInventory = { strawberry: 1 };
-    const farmInv: FarmInventory = { oeuf: 0, lait: 0, farine: 0 };
+    const farmInv: FarmInventory = { oeuf: 0, lait: 0, farine: 0, miel: 0 };
 
     const result = craftItem(recipe, harvestInv, farmInv);
     expect(result).toBeNull();
@@ -108,7 +108,7 @@ describe('craftItem', () => {
   it('ne modifie pas les inventaires si ingredients insuffisants', () => {
     const recipe = CRAFT_RECIPES.find(r => r.id === 'confiture')!;
     const harvestInv: HarvestInventory = { strawberry: 1 };
-    const farmInv: FarmInventory = { oeuf: 2, lait: 3, farine: 1 };
+    const farmInv: FarmInventory = { oeuf: 2, lait: 3, farine: 1, miel: 0 };
 
     craftItem(recipe, harvestInv, farmInv);
     // Originaux non mutes
@@ -119,7 +119,7 @@ describe('craftItem', () => {
   it('deduit les ressources building (gateau)', () => {
     const recipe = CRAFT_RECIPES.find(r => r.id === 'gateau')!;
     const harvestInv: HarvestInventory = { strawberry: 2 };
-    const farmInv: FarmInventory = { oeuf: 3, lait: 0, farine: 2 };
+    const farmInv: FarmInventory = { oeuf: 3, lait: 0, farine: 2, miel: 0 };
 
     const result = craftItem(recipe, harvestInv, farmInv);
     expect(result).not.toBeNull();
@@ -132,7 +132,7 @@ describe('craftItem', () => {
   it('deduit les ingredients crop et building (omelette)', () => {
     const recipe = CRAFT_RECIPES.find(r => r.id === 'omelette')!;
     const harvestInv: HarvestInventory = { tomato: 1 };
-    const farmInv: FarmInventory = { oeuf: 2, lait: 0, farine: 0 };
+    const farmInv: FarmInventory = { oeuf: 2, lait: 0, farine: 0, miel: 0 };
 
     const result = craftItem(recipe, harvestInv, farmInv);
     expect(result).not.toBeNull();

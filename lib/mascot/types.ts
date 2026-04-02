@@ -331,13 +331,14 @@ export const CROP_CATALOG: CropDefinition[] = [
 // ─────────────────────────────────────────────
 
 /** Types de ressources produites par les batiments */
-export type ResourceType = 'oeuf' | 'lait' | 'farine';
+export type ResourceType = 'oeuf' | 'lait' | 'farine' | 'miel';
 
 /** Inventaire ressources de la ferme */
 export interface FarmInventory {
   oeuf: number;
   lait: number;
   farine: number;
+  miel: number;
 }
 
 /** Batiment place sur la grille */
@@ -365,6 +366,7 @@ export interface BuildingDefinition {
   minTreeStage: TreeStage;
   resourceType: ResourceType;
   tiers: BuildingTier[];
+  techRequired?: string;   // id du noeud tech requis pour debloquer (optionnel)
 }
 
 /** Batiments : revenu passif en ressources (oeuf, lait, farine).
@@ -444,6 +446,21 @@ export const BUILDING_CATALOG: BuildingDefinition[] = [
       { level: 1, productionRateHours: 12, upgradeCoins: 0,    spriteSuffix: '' },
       { level: 2, productionRateHours: 8,  upgradeCoins: 1500, spriteSuffix: '_lv2' },
       { level: 3, productionRateHours: 5,  upgradeCoins: 3000, spriteSuffix: '_lv3' },
+    ],
+  },
+  {
+    id: 'ruche',
+    labelKey: 'farm.building.ruche',
+    emoji: '🐝',
+    cost: 2000,
+    dailyIncome: 10,
+    minTreeStage: 'pousse',
+    resourceType: 'miel',
+    techRequired: 'elevage-3',
+    tiers: [
+      { level: 1, productionRateHours: 12, upgradeCoins: 0,    spriteSuffix: '' },
+      { level: 2, productionRateHours: 8,  upgradeCoins: 2000, spriteSuffix: '_lv2' },
+      { level: 3, productionRateHours: 5,  upgradeCoins: 4000, spriteSuffix: '_lv3' },
     ],
   },
 ];

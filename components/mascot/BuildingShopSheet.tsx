@@ -19,11 +19,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { BUILDING_CATALOG, TREE_STAGES, type TreeStage, type PlacedBuilding } from '../../lib/mascot/types';
+import { TECH_TREE } from '../../lib/mascot/tech-engine';
 // Sprites inline pour garantir resolution Metro (niveau 1 pour l'aperçu boutique)
 const SHOP_SPRITES: Record<string, any> = {
   poulailler: require('../../assets/buildings/poulailler_lv1.png'),
   grange: require('../../assets/buildings/grange_lv1.png'),
   moulin: require('../../assets/buildings/moulin_lv1.png'),
+  ruche: require('../../assets/buildings/ruche_lv1.png'),
 };
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -37,6 +39,7 @@ interface BuildingShopSheetProps {
   treeStage: TreeStage;
   coins: number;
   ownedBuildings: PlacedBuilding[];
+  unlockedTechs: string[];
   onBuild: (buildingId: string) => void;
   onClose: () => void;
 }
@@ -57,6 +60,7 @@ export function BuildingShopSheet({
   treeStage,
   coins,
   ownedBuildings,
+  unlockedTechs,
   onBuild,
   onClose,
 }: BuildingShopSheetProps) {
@@ -70,17 +74,21 @@ export function BuildingShopSheet({
     const ownedIds = new Set(ownedBuildings.map(b => b.buildingId));
     return BUILDING_CATALOG.filter(def => {
       const minIdx = stageIndex(def.minTreeStage);
-      return minIdx <= currentStageIdx && !ownedIds.has(def.id);
+      const stageOk = minIdx <= currentStageIdx;
+      const techOk = !def.techRequired || unlockedTechs.includes(def.techRequired);
+      return stageOk && techOk && !ownedIds.has(def.id);
     });
-  }, [ownedBuildings, currentStageIdx]);
+  }, [ownedBuildings, currentStageIdx, unlockedTechs]);
 
   const lockedBuildings = useMemo(() => {
     const ownedIds = new Set(ownedBuildings.map(b => b.buildingId));
     return BUILDING_CATALOG.filter(def => {
       const minIdx = stageIndex(def.minTreeStage);
-      return minIdx > currentStageIdx && !ownedIds.has(def.id);
+      const stageOk = minIdx <= currentStageIdx;
+      const techOk = !def.techRequired || unlockedTechs.includes(def.techRequired);
+      return (!stageOk || !techOk) && !ownedIds.has(def.id);
     });
-  }, [ownedBuildings, currentStageIdx]);
+  }, [ownedBuildings, currentStageIdx, unlockedTechs]);
 
   return (
     <Modal
@@ -175,8 +183,12 @@ export function BuildingShopSheet({
 
             {/* Batiments verrouilles */}
             {lockedBuildings.map(def => {
-              const stageName = t(`mascot.stages.${def.minTreeStage}`);
               const tier0 = def.tiers[0];
+              const stageOk = stageIndex(def.minTreeStage) <= currentStageIdx;
+              const techNode = def.techRequired ? TECH_TREE.find(n => n.id === def.techRequired) : null;
+              const lockReason = def.techRequired && !unlockedTechs.includes(def.techRequired) && techNode
+                ? t('farm.building.unlockedByTech', { tech: t(`tech.${techNode.id}`) })
+                : t('farm.building.unlockedAt', { stage: t(`mascot.stages.${def.minTreeStage}`) });
               return (
                 <View
                   key={def.id}
@@ -207,7 +219,7 @@ export function BuildingShopSheet({
                       {def.cost} 🍃
                     </Text>
                     <Text style={[styles.buildingDetail, { color: colors.textMuted }]}>
-                      🔒 {t('farm.building.unlockedAt', { stage: stageName })}
+                      🔒 {lockReason}
                     </Text>
                   </View>
                 </View>

@@ -409,16 +409,23 @@ export function WorldGridView({
         const isMature = !!crop && crop.currentStage >= 4;
 
         return (
-          <CropCell
-            key={cell.id}
-            cell={cell}
-            crop={crop}
-            cropDef={cropDef}
-            isMature={isMature}
-            containerWidth={containerWidth}
-            containerHeight={containerHeight}
-            onPress={() => onCropPlotPress?.(cell.id, crop)}
-          />
+          <View key={cell.id}>
+            <CropCell
+              cell={cell}
+              crop={crop}
+              cropDef={cropDef}
+              isMature={isMature}
+              containerWidth={containerWidth}
+              containerHeight={containerHeight}
+              onPress={() => onCropPlotPress?.(cell.id, crop)}
+            />
+            <View style={[styles.largeBadge, {
+              left: cell.x * containerWidth - CELL_SIZES.large / 2 + CELL_SIZES.large - 18,
+              top: cell.y * containerHeight - CELL_SIZES.large / 2 - 4,
+            }]}>
+              <Text style={styles.largeBadgeText}>x2</Text>
+            </View>
+          </View>
         );
       })()}
 
@@ -622,5 +629,18 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: 'rgba(255,255,255,0.3)',
+  },
+  largeBadge: {
+    position: 'absolute',
+    backgroundColor: '#FFD700',
+    borderRadius: 8,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    zIndex: 10,
+  },
+  largeBadgeText: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#5D4037',
   },
 });

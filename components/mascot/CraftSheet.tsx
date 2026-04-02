@@ -34,6 +34,7 @@ import {
 } from '../../lib/mascot/craft-engine';
 import {
   CROP_CATALOG,
+  BUILDING_CATALOG,
   type CraftRecipe,
   type CraftedItem,
   type HarvestInventory,
@@ -66,6 +67,7 @@ const RESOURCE_EMOJI: Record<string, string> = {
   oeuf: '🥚',
   lait: '🥛',
   farine: '🌾',
+  miel: '🍯',
 };
 
 // ── Composant principal ──────────────────────────────
@@ -152,14 +154,23 @@ export function CraftSheet({
 
   // ── Tab : Catalogue (Recettes) ────────────────
 
+  const sortedRecipes = useMemo(() => {
+    return [...CRAFT_RECIPES].sort((a, b) => {
+      const aCraftable = canCraft(a, harvestInventory, farmInventory) ? 1 : 0;
+      const bCraftable = canCraft(b, harvestInventory, farmInventory) ? 1 : 0;
+      if (bCraftable !== aCraftable) return bCraftable - aCraftable;
+      return a.sellValue - b.sellValue;
+    });
+  }, [harvestInventory, farmInventory]);
+
   const renderCatalogue = () => (
     <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
-      {CRAFT_RECIPES.length === 0 && (
+      {sortedRecipes.length === 0 && (
         <Text style={[styles.emptyText, { color: colors.textMuted }]}>
           {t('craft.aucuneRecette')}
         </Text>
       )}
-      {CRAFT_RECIPES.map((recipe, idx) => {
+      {sortedRecipes.map((recipe, idx) => {
         const craftable = canCraft(recipe, harvestInventory, farmInventory);
         return (
           <Animated.View key={recipe.id} entering={FadeInDown.delay(idx * 60).duration(300)}>
@@ -209,7 +220,11 @@ export function CraftSheet({
                     const hint = !enough
                       ? ing.source === 'crop'
                         ? t('craft.hintPlant', { name, defaultValue: `Plante ${name} sur une parcelle` })
-                        : t('craft.hintBuilding', { name, defaultValue: `Produit par un bâtiment` })
+                        : (() => {
+                            const bld = BUILDING_CATALOG.find(b => b.resourceType === ing.itemId);
+                            const bldName = bld ? t(bld.labelKey) : t('craft.hintBuildingGeneric', 'un bâtiment');
+                            return t('craft.hintBuilding', { name: bldName, defaultValue: `Produit par ${bldName}` });
+                          })()
                       : null;
 
                     return (
