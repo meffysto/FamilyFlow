@@ -20,7 +20,7 @@ export interface TechNode {
 /** Bonus agrages de tous les noeuds tech debloques */
 export interface TechBonuses {
   tasksPerStageReduction: number;       // reduction du tasksPerStage (0 ou 1)
-  harvestRewardMultiplier: number;      // multiplicateur recolte (1.0 = pas de bonus, 1.25 = +25%)
+  bonusHarvestChance: number;           // chance de recolte double (0.0 = jamais, 0.25 = 25%, 0.5 = 50%)
   newCrops: string[];                   // IDs des cultures debloquees par tech
   productionIntervalMultiplier: number; // multiplicateur intervalle batiments (1.0 = normal, 0.75 = -25%)
   buildingCapacityMultiplier: number;   // multiplicateur capacite stockage (1 ou 2)
@@ -147,7 +147,7 @@ export function serializeTechs(techs: string[]): string {
 export function getTechBonuses(unlockedTechs: string[]): TechBonuses {
   const bonuses: TechBonuses = {
     tasksPerStageReduction: 0,
-    harvestRewardMultiplier: 1.0,
+    bonusHarvestChance: 0,
     newCrops: [],
     productionIntervalMultiplier: 1.0,
     buildingCapacityMultiplier: 1,
@@ -164,13 +164,13 @@ export function getTechBonuses(unlockedTechs: string[]): TechBonuses {
         bonuses.tasksPerStageReduction = 1;
         break;
       case 'culture-2':
-        bonuses.harvestRewardMultiplier = 1.25;
+        bonuses.bonusHarvestChance = 0.25;
         break;
       case 'culture-3':
         bonuses.newCrops.push('sunflower');
         break;
       case 'culture-4':
-        bonuses.harvestRewardMultiplier = 1.5;
+        bonuses.bonusHarvestChance = 0.5;
         break;
 
       // Elevage

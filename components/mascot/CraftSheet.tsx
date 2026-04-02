@@ -39,7 +39,6 @@ import {
   type HarvestInventory,
   type FarmInventory,
 } from '../../lib/mascot/types';
-import type { TechBonuses } from '../../lib/mascot/tech-engine';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -59,7 +58,6 @@ interface CraftSheetProps {
   onCraft: (recipeId: string) => Promise<CraftedItem | null>;
   onSellHarvest: (cropId: string) => Promise<number>;
   onSellCrafted: (recipeId: string) => Promise<number>;
-  techBonuses?: TechBonuses;
 }
 
 // ── Noms de ressources batiment ──────────────────────
@@ -83,7 +81,6 @@ export function CraftSheet({
   onCraft,
   onSellHarvest,
   onSellCrafted,
-  techBonuses,
 }: CraftSheetProps) {
   const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
@@ -317,7 +314,7 @@ export function CraftSheet({
                 {cropDef ? t(cropDef.labelKey) : cropId}
               </Text>
               <Text style={[styles.inventoryQty, { color: colors.textSub }]}>
-                x{qty} — {Math.round((cropDef?.harvestReward ?? 0) * (techBonuses?.harvestRewardMultiplier ?? 1.0))} 🍃/{t('craft.vendre').toLowerCase()}
+                x{qty} — {cropDef?.harvestReward ?? 0} 🍃/{t('craft.vendre').toLowerCase()}
               </Text>
             </View>
             <TouchableOpacity

@@ -1425,7 +1425,6 @@ export default function TreeScreen() {
         }}
         onSellHarvest={(cropId) => sellHarvest(profile!.id, cropId)}
         onSellCrafted={(recipeId) => sellCrafted(profile!.id, recipeId)}
-        techBonuses={techBonuses}
       />
 
       {/* Tech tree progression */}

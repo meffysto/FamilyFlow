@@ -147,11 +147,11 @@ export function parseCrops(csv: string): PlantedCrop[] {
   }).filter(c => !isNaN(c.plotIndex) && c.cropId);
 }
 
-/** Calculer la recompense effective d'une recolte avec bonus tech */
-export function getEffectiveHarvestReward(cropId: string, techBonuses: TechBonuses): number {
+/** Calculer la recompense d'une recolte (prix brut, pas de multiplicateur tech) */
+export function getEffectiveHarvestReward(cropId: string): number {
   const cropDef = CROP_CATALOG.find(c => c.id === cropId);
   if (!cropDef) return 0;
-  return Math.round(cropDef.harvestReward * techBonuses.harvestRewardMultiplier);
+  return cropDef.harvestReward;
 }
 
 /** Retourne les cultures disponibles selon le stade d'arbre et les techs debloquees */

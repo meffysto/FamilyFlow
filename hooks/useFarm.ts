@@ -250,7 +250,9 @@ export function useFarm() {
     const profileTech = getTechBonuses(profile.farmTech ?? []);
     const isLarge = profileTech.hasLargeCropCell &&
       plotIndex >= 15 + profileTech.extraCropCells;
-    const harvestQty = isLarge ? 2 : 1;
+    const baseQty = isLarge ? 2 : 1;
+    const bonusDrop = profileTech.bonusHarvestChance > 0 && Math.random() < profileTech.bonusHarvestChance ? 1 : 0;
+    const harvestQty = baseQty + bonusDrop;
     updatedHarvestInv[result.harvestedCropId] = (updatedHarvestInv[result.harvestedCropId] ?? 0) + harvestQty;
 
     // Ecrire farm_crops + farm_harvest_inventory en une seule operation
@@ -280,8 +282,7 @@ export function useFarm() {
     const updatedInv = { ...harvestInv };
     updatedInv[cropId] = updatedInv[cropId] - 1;
 
-    const profileTechBonuses = getTechBonuses(profile.farmTech ?? []);
-    const reward = getEffectiveHarvestReward(cropId, profileTechBonuses);
+    const reward = getEffectiveHarvestReward(cropId);
     if (reward <= 0) return 0;
 
     await writeProfileField(profileId, 'farm_harvest_inventory', serializeHarvestInventory(updatedInv));
