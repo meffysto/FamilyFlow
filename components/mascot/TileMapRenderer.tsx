@@ -297,24 +297,26 @@ function getFarmDecos(season: Season, stageIdx: number): FarmDeco[] {
     decos.push({ source: FARM_OBJECTS.bridge, x: 0.22, y: 0.70, w: 48, h: 24, minStage: 2, fixed: true });
   }
 
-  // ── Peche — decorations autour du lac ──
+  // ── Peche — decorations sur la berge du lac (pas dans l'eau) ──
+  // Lac = cols 0-3, rows 16-19 → x < 0.33, y > 0.80
+  // Berge = juste au-dessus/droite du lac
   if (stageIdx >= 2) {
-    // Cannes a peche posees pres du pont
-    decos.push({ source: FISH_DECOS.fishing_rods, x: 0.30, y: 0.72, w: 24, h: 24, minStage: 2, fixed: true });
-    // Sechoir a poissons sur la rive
-    decos.push({ source: FISH_DECOS.drying_rack, x: 0.08, y: 0.68, w: 26, h: 26, minStage: 2, fixed: true });
+    // Cannes a peche posees sur la berge droite du lac
+    decos.push({ source: FISH_DECOS.fishing_rods, x: 0.36, y: 0.78, w: 40, h: 40, minStage: 2, fixed: true });
+    // Sechoir a poissons vide sur la berge haute
+    decos.push({ source: FISH_DECOS.drying_rack, x: 0.15, y: 0.66, w: 38, h: 38, minStage: 2, fixed: true });
   }
   if (stageIdx >= 3) {
-    // Tonneau a poissons au bord du lac
-    decos.push({ source: FISH_DECOS.fish_barrel, x: 0.32, y: 0.80, w: 24, h: 24, minStage: 3, fixed: true });
-    // Sechoir avec poissons accroches
-    decos.push({ source: FISH_DECOS.rack_with_fish, x: 0.12, y: 0.62, w: 26, h: 26, minStage: 3, fixed: true });
+    // Tonneau a poissons sur la berge droite
+    decos.push({ source: FISH_DECOS.fish_barrel, x: 0.38, y: 0.86, w: 36, h: 36, minStage: 3, fixed: true });
+    // Sechoir garni sur la berge haute
+    decos.push({ source: FISH_DECOS.rack_with_fish, x: 0.28, y: 0.64, w: 38, h: 38, minStage: 3, fixed: true });
   }
   if (stageIdx >= 4) {
-    // Nasse/casier a poissons
-    decos.push({ source: FISH_DECOS.fish_trap, x: 0.05, y: 0.76, w: 22, h: 22, minStage: 4, fixed: true });
-    // Trophee poisson sur un poteau
-    decos.push({ source: FISH_DECOS.fish_trophy, x: 0.28, y: 0.66, w: 20, h: 20, minStage: 4, fixed: true });
+    // Nasse/casier pres de l'eau
+    decos.push({ source: FISH_DECOS.fish_trap, x: 0.34, y: 0.92, w: 34, h: 34, minStage: 4, fixed: true });
+    // Trophee poisson sur la berge
+    decos.push({ source: FISH_DECOS.fish_trophy, x: 0.08, y: 0.62, w: 32, h: 32, minStage: 4, fixed: true });
   }
 
   // ── Panneau — entree de la ferme (bas centre) ──
