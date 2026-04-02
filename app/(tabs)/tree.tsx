@@ -22,7 +22,7 @@ import {
   Alert,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import Animated, {
@@ -202,6 +202,7 @@ export default function TreeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { primary, tint, colors, isDark } = useThemeColors();
+  const insets = useSafeAreaInsets();
   const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem, unplaceMascotItem, gamiData, setCompanion, tasks, rdvs, meals } = useVault();
   const { showToast } = useToast();
   const { config: aiConfig } = useAI();
@@ -958,30 +959,9 @@ export default function TreeScreen() {
   }, [profile?.id, upgradeBuildingAction, profiles, showToast]);
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
-        {/* HUD ferme — fixe au-dessus du diorama */}
-        <View style={[styles.farmHud, { backgroundColor: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.7)' }]}>
-          <View style={styles.hudContent}>
-            <View style={styles.hudItem}>
-              <Text style={styles.hudEmoji}>{'🍃'}</Text>
-              <Text style={[styles.hudValue, { color: colors.text }]}>{profile.coins ?? 0}</Text>
-            </View>
-            <View style={styles.hudItem}>
-              <Text style={styles.hudEmoji}>{'🔥'}</Text>
-              <Text style={[styles.hudValue, { color: colors.text }]}>{profile.streak ?? 0}</Text>
-            </View>
-            <View style={styles.hudItem}>
-              <Text style={styles.hudEmoji}>{'🌿'}</Text>
-              <Text style={[styles.hudValue, { color: colors.text }]}>{growingCount}</Text>
-            </View>
-            <View style={styles.hudItem}>
-              <Text style={styles.hudEmoji}>{seasonInfo.emoji}</Text>
-              <Text style={[styles.hudValue, { color: colors.text }]}>{t(seasonInfo.labelKey)}</Text>
-            </View>
-          </View>
-        </View>
+    <View style={styles.safe}>
       <ScrollView
-        contentContainerStyle={[styles.scroll, Layout.contentContainer]}
+        contentContainerStyle={[styles.scroll, Layout.contentContainer, { paddingTop: insets.top + 44 }]}
         showsVerticalScrollIndicator={false}
       >
 
@@ -1455,6 +1435,38 @@ export default function TreeScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
 
+      {/* HUD ferme — flottant par-dessus le diorama */}
+      <View style={[
+        styles.farmHud,
+        {
+          position: 'absolute',
+          top: insets.top,
+          left: 0,
+          right: 0,
+          zIndex: 10,
+          backgroundColor: isDark ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.7)',
+        },
+      ]}>
+        <View style={styles.hudContent}>
+          <View style={styles.hudItem}>
+            <Text style={styles.hudEmoji}>{'🍃'}</Text>
+            <Text style={[styles.hudValue, { color: colors.text }]}>{profile.coins ?? 0}</Text>
+          </View>
+          <View style={styles.hudItem}>
+            <Text style={styles.hudEmoji}>{'🔥'}</Text>
+            <Text style={[styles.hudValue, { color: colors.text }]}>{profile.streak ?? 0}</Text>
+          </View>
+          <View style={styles.hudItem}>
+            <Text style={styles.hudEmoji}>{'🌿'}</Text>
+            <Text style={[styles.hudValue, { color: colors.text }]}>{growingCount}</Text>
+          </View>
+          <View style={styles.hudItem}>
+            <Text style={styles.hudEmoji}>{seasonInfo.emoji}</Text>
+            <Text style={[styles.hudValue, { color: colors.text }]}>{t(seasonInfo.labelKey)}</Text>
+          </View>
+        </View>
+      </View>
+
       {/* Modal sélecteur d'espèce */}
       <Modal
         visible={showSpeciesPicker}
@@ -1576,7 +1588,7 @@ export default function TreeScreen() {
         event={harvestEvent}
         onDismiss={() => setHarvestEvent(null)}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
