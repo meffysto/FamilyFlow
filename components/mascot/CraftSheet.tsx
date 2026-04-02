@@ -319,22 +319,35 @@ export function CraftSheet({
                         {recipe.sellValue}{' 🍃 +'}{recipe.xpBonus}{'XP'}
                       </Text>
 
-                      {/* Dots ingredients */}
+                      {/* Emojis ingredients */}
                       <View style={styles.catDotRow}>
                         {recipe.ingredients.map((ing) => {
                           const have = ing.source === 'crop'
                             ? (harvestInventory[ing.itemId] ?? 0)
                             : (farmInventory[ing.itemId as keyof FarmInventory] ?? 0);
                           const enough = have >= ing.quantity;
-                          return Array.from({ length: ing.quantity }).map((_, dotIdx) => (
+                          const cropDef = ing.source === 'crop'
+                            ? CROP_CATALOG.find(c => c.id === ing.itemId)
+                            : null;
+                          const emoji = ing.source === 'crop'
+                            ? (cropDef?.emoji ?? '?')
+                            : (RESOURCE_EMOJI[ing.itemId] ?? '?');
+                          return (
                             <View
-                              key={`${ing.itemId}-${dotIdx}`}
+                              key={ing.itemId}
                               style={[
-                                styles.catDot,
-                                { backgroundColor: enough ? colors.success : colors.error },
+                                styles.catIngBadge,
+                                { backgroundColor: enough ? colors.successBg : colors.errorBg },
                               ]}
-                            />
-                          ));
+                            >
+                              <Text style={styles.catIngEmoji}>{emoji}</Text>
+                              {ing.quantity > 1 && (
+                                <Text style={[styles.catIngQty, { color: enough ? colors.success : colors.error }]}>
+                                  {ing.quantity}
+                                </Text>
+                              )}
+                            </View>
+                          );
                         })}
                       </View>
                     </TouchableOpacity>
@@ -889,12 +902,24 @@ const styles = StyleSheet.create({
   catDotRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.xs,
+    gap: 3,
   },
-  catDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+  catIngBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: Radius.sm,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    gap: 2,
+  },
+  catIngEmoji: {
+    fontSize: 13,
+    lineHeight: 16,
+  },
+  catIngQty: {
+    fontSize: FontSize.micro,
+    fontWeight: FontWeight.bold,
+    lineHeight: 16,
   },
 
   // ── Catalogue — modal detail ──
