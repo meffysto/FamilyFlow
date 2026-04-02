@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: executing
-stopped_at: "Completed quick task 260402-x63: HUD flottant absolute sur ecran tree"
-last_updated: "2026-04-02T22:17:24.758Z"
+stopped_at: Phase 11 context gathered
+last_updated: "2026-04-02T22:37:18.005Z"
 last_activity: "2026-04-02 - Completed quick task 260402-wrf: Mockup C — diorama arrondi + ombre + chevauchement cartes (écran arbre)"
 progress:
-  total_phases: 7
+  total_phases: 8
   completed_phases: 5
   total_plans: 15
   completed_plans: 14
@@ -120,6 +120,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-02T00:00:00.000Z
-Stopped at: Completed quick task 260402-x63: HUD flottant option A — position absolute + fond semi-transparent (écran tree)
-Resume file: None
+Last session: 2026-04-02T22:37:18.001Z
+Stopped at: Phase 11 context gathered
+Resume file: .planning/phases/11-sagas-immersives/11-CONTEXT.md
