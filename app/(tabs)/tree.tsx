@@ -78,6 +78,8 @@ import { hasCropSeasonalBonus, parseCrops, getAvailableCrops } from '../../lib/m
 import { getUnlockedCropCells, getExpandedCropCells, BUILDING_CELLS, EXPANSION_BUILDING_CELL } from '../../lib/mascot/world-grid';
 import { getTechBonuses, type TechBonuses } from '../../lib/mascot/tech-engine';
 import { HarvestBurst, CROP_COLORS } from '../../components/mascot/HarvestBurst';
+import { HarvestEventOverlay } from '../../components/mascot/HarvestEventOverlay';
+import type { HarvestEvent } from '../../lib/mascot/farm-engine';
 import { ModalHeader } from '../../components/ui/ModalHeader';
 import { AmbientParticles } from '../../components/mascot/AmbientParticles';
 import { SeasonalParticles } from '../../components/mascot/SeasonalParticles';
@@ -222,6 +224,7 @@ export default function TreeScreen() {
   const [showSeedPicker, setShowSeedPicker] = useState(false);
   const [selectedPlotIndex, setSelectedPlotIndex] = useState<number | null>(null);
   const [harvestBurst, setHarvestBurst] = useState<{ x: number; y: number; reward: number; cropId: string } | null>(null);
+  const [harvestEvent, setHarvestEvent] = useState<HarvestEvent | null>(null);
 
   // Sunrise report
   const [sunriseData, setSunriseData] = useState<{
@@ -790,7 +793,7 @@ export default function TreeScreen() {
           const emoji = harvestedCropDef?.emoji ?? '🌾';
           showToast(`${emoji} ${result.cropId} récolté !`);
           if (result.harvestEvent) {
-            showToast(`${result.harvestEvent.emoji} ${t(result.harvestEvent.labelKey)}`, result.harvestEvent.modifier > 1 ? 'success' : 'error');
+            setHarvestEvent(result.harvestEvent);
           }
           triggerActionMsg('harvest');
         }
@@ -1492,6 +1495,10 @@ export default function TreeScreen() {
         yesterdayTasks={sunriseData?.yesterdayTasks ?? 0}
         hasBonus={sunriseData?.hasBonus ?? false}
         onDismiss={() => setSunriseData(null)}
+      />
+      <HarvestEventOverlay
+        event={harvestEvent}
+        onDismiss={() => setHarvestEvent(null)}
       />
     </SafeAreaView>
   );
