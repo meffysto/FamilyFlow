@@ -164,7 +164,7 @@ export interface HarvestEvent {
   emoji: string;
 }
 
-const HARVEST_EVENTS: HarvestEvent[] = [
+export const HARVEST_EVENTS: HarvestEvent[] = [
   { type: 'insectes', modifier: 0, labelKey: 'farm.event.insectes', emoji: '🐛' },
   { type: 'pluie_doree', modifier: 3, labelKey: 'farm.event.pluie_doree', emoji: '🌧️' },
   { type: 'mutation_rare', modifier: 2, labelKey: 'farm.event.mutation_rare', emoji: '✨' },

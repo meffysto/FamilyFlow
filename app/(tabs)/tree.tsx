@@ -225,7 +225,6 @@ export default function TreeScreen() {
   const [selectedPlotIndex, setSelectedPlotIndex] = useState<number | null>(null);
   const [harvestBurst, setHarvestBurst] = useState<{ x: number; y: number; reward: number; cropId: string } | null>(null);
   const [harvestEvent, setHarvestEvent] = useState<HarvestEvent | null>(null);
-
   // Sunrise report
   const [sunriseData, setSunriseData] = useState<{
     resources: SunriseResource[];
@@ -565,8 +564,9 @@ export default function TreeScreen() {
         const def = BUILDING_CATALOG.find(d => d.id === b.buildingId);
         if (!def) continue;
         const key = def.resourceType;
-        const emoji = key === 'oeuf' ? '🥚' : key === 'lait' ? '🥛' : '🌾';
-        if (!resourceMap[key]) resourceMap[key] = { emoji, label: key === 'oeuf' ? 'Oeufs' : key === 'lait' ? 'Lait' : 'Farine', qty: 0 };
+        const emoji = key === 'oeuf' ? '🥚' : key === 'lait' ? '🥛' : key === 'miel' ? '🍯' : '🌾';
+        const label = key === 'oeuf' ? 'Oeufs' : key === 'lait' ? 'Lait' : key === 'miel' ? 'Miel' : 'Farine';
+        if (!resourceMap[key]) resourceMap[key] = { emoji, label, qty: 0 };
         resourceMap[key].qty += pending;
       }
 
@@ -593,7 +593,10 @@ export default function TreeScreen() {
         setSunriseData({ resources, totalCollected: displayTotal, yesterdayTasks, hasBonus });
         await SecureStore.setItemAsync(SUNRISE_KEY, String(now));
       } else {
-        showToast(`🏠 +${totalCollected} ressources collect\u00E9es`);
+        const detail = Object.values(resourceMap)
+          .map(r => `${r.emoji} ${r.qty} ${r.label}`)
+          .join(' · ');
+        showToast(`🏠 ${detail}`);
       }
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
