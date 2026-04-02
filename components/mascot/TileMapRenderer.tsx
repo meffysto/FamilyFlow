@@ -140,6 +140,18 @@ const FARM_OBJECTS = {
   torch: require('../../assets/garden/decos/farm/torch.png'),
 };
 
+// Sprites de peche Mana Seed — autour du lac
+const FISH_DECOS = {
+  fishing_rods: require('../../assets/garden/decos/fish_main_0_0.png'),
+  fish_barrel: require('../../assets/garden/decos/fish_main_1_0.png'),
+  fish_crate: require('../../assets/garden/decos/fish_main_2_0.png'),
+  fish_trophy: require('../../assets/garden/decos/fish_obj_0_0.png'),
+  dried_fish: require('../../assets/garden/decos/fish_obj_1_0.png'),
+  drying_rack: require('../../assets/garden/decos/fish_obj_2_0.png'),
+  rack_with_fish: require('../../assets/garden/decos/fish_obj_3_0.png'),
+  fish_trap: require('../../assets/garden/decos/fish_obj_4_0.png'),
+};
+
 // Sprites de sol existants (Mana Seed) pour la vegetation
 const GROUND = {
   grass1: require('../../assets/garden/ground/grass_tuft_1.png'),
@@ -283,6 +295,26 @@ function getFarmDecos(season: Season, stageIdx: number): FarmDeco[] {
   // ── Pont — au-dessus du lac ──
   if (stageIdx >= 2) {
     decos.push({ source: FARM_OBJECTS.bridge, x: 0.22, y: 0.70, w: 48, h: 24, minStage: 2, fixed: true });
+  }
+
+  // ── Peche — decorations autour du lac ──
+  if (stageIdx >= 2) {
+    // Cannes a peche posees pres du pont
+    decos.push({ source: FISH_DECOS.fishing_rods, x: 0.30, y: 0.72, w: 24, h: 24, minStage: 2, fixed: true });
+    // Sechoir a poissons sur la rive
+    decos.push({ source: FISH_DECOS.drying_rack, x: 0.08, y: 0.68, w: 26, h: 26, minStage: 2, fixed: true });
+  }
+  if (stageIdx >= 3) {
+    // Tonneau a poissons au bord du lac
+    decos.push({ source: FISH_DECOS.fish_barrel, x: 0.32, y: 0.80, w: 24, h: 24, minStage: 3, fixed: true });
+    // Sechoir avec poissons accroches
+    decos.push({ source: FISH_DECOS.rack_with_fish, x: 0.12, y: 0.62, w: 26, h: 26, minStage: 3, fixed: true });
+  }
+  if (stageIdx >= 4) {
+    // Nasse/casier a poissons
+    decos.push({ source: FISH_DECOS.fish_trap, x: 0.05, y: 0.76, w: 22, h: 22, minStage: 4, fixed: true });
+    // Trophee poisson sur un poteau
+    decos.push({ source: FISH_DECOS.fish_trophy, x: 0.28, y: 0.66, w: 20, h: 20, minStage: 4, fixed: true });
   }
 
   // ── Panneau — entree de la ferme (bas centre) ──
