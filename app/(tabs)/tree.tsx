@@ -789,6 +789,9 @@ export default function TreeScreen() {
           setHarvestBurst({ x: burstX, y: burstY, reward: displayReward, cropId: result.cropId });
           const emoji = harvestedCropDef?.emoji ?? '🌾';
           showToast(`${emoji} ${result.cropId} récolté !`);
+          if (result.harvestEvent) {
+            showToast(`${result.harvestEvent.emoji} ${t(result.harvestEvent.labelKey)}`, result.harvestEvent.modifier > 1 ? 'success' : 'error');
+          }
           triggerActionMsg('harvest');
         }
       });

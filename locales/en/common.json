@@ -3889,6 +3889,11 @@
     "tasksRemaining_other": "{{count}} tasks left",
     "readyToHarvest": "Ready to harvest!",
     "cancel": "Cancel",
+    "event": {
+      "insectes": "Bug invasion! Harvest lost...",
+      "pluie_doree": "Golden rain! Triple harvest!",
+      "mutation_rare": "Rare mutation! Double harvest!"
+    },
     "stats": {
       "growing": "🌱 {{count}} growing",
       "ready": "✨ {{count}} ready to harvest!"

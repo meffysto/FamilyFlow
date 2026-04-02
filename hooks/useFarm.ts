@@ -7,7 +7,7 @@
 
 import { useCallback } from 'react';
 import { useVault } from '../contexts/VaultContext';
-import { plantCrop, harvestCrop, parseCrops, serializeCrops, getEffectiveHarvestReward } from '../lib/mascot/farm-engine';
+import { plantCrop, harvestCrop, parseCrops, serializeCrops, getEffectiveHarvestReward, rollHarvestEvent, type HarvestEvent } from '../lib/mascot/farm-engine';
 import { CROP_CATALOG, BUILDING_CATALOG } from '../lib/mascot/types';
 import type { PlacedBuilding, FarmInventory, CraftedItem } from '../lib/mascot/types';
 import { isLargeCropPlot } from '../lib/mascot/world-grid';
@@ -228,7 +228,7 @@ export function useFarm() {
   }, [profiles, writeFarmCrops, deductCoins, refresh]);
 
   /** Recolter une culture mature — stocke en inventaire au lieu de donner des feuilles */
-  const harvest = useCallback(async (profileId: string, plotIndex: number): Promise<{ cropId: string; isGolden: boolean } | null> => {
+  const harvest = useCallback(async (profileId: string, plotIndex: number): Promise<{ cropId: string; isGolden: boolean; harvestEvent: HarvestEvent | null } | null> => {
     if (!vault) return null;
 
     // Lire frais pour eviter les stale closures
@@ -256,7 +256,9 @@ export function useFarm() {
     const baseQty = isLarge ? 2 : 1;
     const bonusDrop = profileTech.bonusHarvestChance > 0 && Math.random() < profileTech.bonusHarvestChance ? 1 : 0;
     const harvestQty = baseQty + bonusDrop;
-    updatedHarvestInv[result.harvestedCropId] = (updatedHarvestInv[result.harvestedCropId] ?? 0) + harvestQty;
+    const harvestEvent = rollHarvestEvent();
+    const finalQty = harvestEvent ? Math.max(0, Math.round(harvestQty * harvestEvent.modifier)) : harvestQty;
+    updatedHarvestInv[result.harvestedCropId] = (updatedHarvestInv[result.harvestedCropId] ?? 0) + finalQty;
 
     // Ecrire farm_crops + farm_harvest_inventory en une seule operation
     await writeProfileFields(profileId, {
@@ -265,7 +267,7 @@ export function useFarm() {
     });
     await refresh();
 
-    return { cropId: result.harvestedCropId, isGolden: result.isGolden };
+    return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent };
   }, [vault, writeProfileFields, refresh]);
 
   /** Vendre une recolte brute depuis l'inventaire */

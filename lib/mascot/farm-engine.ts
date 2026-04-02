@@ -154,6 +154,32 @@ export function getEffectiveHarvestReward(cropId: string): number {
   return cropDef.harvestReward;
 }
 
+/** Types d'evenements aleatoires a la recolte */
+export type HarvestEventType = 'insectes' | 'pluie_doree' | 'mutation_rare';
+
+export interface HarvestEvent {
+  type: HarvestEventType;
+  modifier: number; // multiplicateur sur la quantite recoltee (0 = perte, 3 = triple)
+  labelKey: string; // cle i18n pour le message
+  emoji: string;
+}
+
+const HARVEST_EVENTS: HarvestEvent[] = [
+  { type: 'insectes', modifier: 0, labelKey: 'farm.event.insectes', emoji: '🐛' },
+  { type: 'pluie_doree', modifier: 3, labelKey: 'farm.event.pluie_doree', emoji: '🌧️' },
+  { type: 'mutation_rare', modifier: 2, labelKey: 'farm.event.mutation_rare', emoji: '✨' },
+];
+
+/** Tente de declencher un evenement aleatoire (5% de chance) */
+export function rollHarvestEvent(): HarvestEvent | null {
+  if (Math.random() >= 0.05) return null;
+  // Ponderation : insectes 40%, pluie doree 35%, mutation 25%
+  const roll = Math.random();
+  if (roll < 0.4) return HARVEST_EVENTS[0];
+  if (roll < 0.75) return HARVEST_EVENTS[1];
+  return HARVEST_EVENTS[2];
+}
+
 /** Retourne les cultures disponibles selon le stade d'arbre et les techs debloquees */
 export function getAvailableCrops(treeStage: TreeStage, unlockedTechs: string[]): CropDefinition[] {
   const stageOrder: TreeStage[] = ['graine', 'pousse', 'arbuste', 'arbre', 'majestueux', 'legendaire'];
