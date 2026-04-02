@@ -1397,7 +1397,6 @@ export default function TreeScreen() {
             {showSagaEvent && sagaProgress && profile && (
               <SagaWorldEvent
                 sagaProgress={sagaProgress}
-                profile={profile}
                 containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
                 onChapterComplete={handleSagaChapterComplete}
                 onDismiss={() => setShowSagaEvent(false)}

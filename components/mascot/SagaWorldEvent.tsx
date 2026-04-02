@@ -34,8 +34,6 @@ import {
 import { Radius, Spacing } from '../../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
-import type { Profile } from '../../lib/types';
-
 // ─── Types ────────────────────────────────────────────────────
 
 type Phase =
@@ -49,7 +47,6 @@ type Phase =
 
 export interface SagaWorldEventProps {
   sagaProgress: SagaProgress;
-  profile: Profile;
   containerHeight: number;
   onChapterComplete: (
     choiceId: string,
@@ -158,8 +155,6 @@ export function SagaWorldEvent({
   // ── Textes dérivés ───────────────────────────────────────────
   const narrativeText   = narrativeKey ? t(narrativeKey) : '';
   const cliffhangerText = currentChapter ? t(currentChapter.cliffhangerKey) : '';
-  const isLastChapter   = activeSaga ? sagaProgress.currentChapter >= activeSaga.chapters.length : false;
-
   // Trait gagné par le choix sélectionné
   const gainedTrait = selectedChoiceId && currentChapter
     ? (Object.entries(
