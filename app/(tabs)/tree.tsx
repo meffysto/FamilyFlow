@@ -1394,7 +1394,7 @@ export default function TreeScreen() {
             </View>
 
             {/* Couche 5 : Expérience immersive saga (absolute overlay, zIndex 15) */}
-            {showSagaEvent && sagaProgress && profile && sagaChapterAvailable && (
+            {showSagaEvent && sagaProgress && profile && (
               <SagaWorldEvent
                 sagaProgress={sagaProgress}
                 profile={profile}

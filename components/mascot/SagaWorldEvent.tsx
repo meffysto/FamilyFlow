@@ -70,6 +70,7 @@ export function SagaWorldEvent({
 }: SagaWorldEventProps) {
   const { t } = useTranslation();
   const { primary, colors, isDark } = useThemeColors();
+  const vignetteColor = colors.overlayLight;
 
   // Dériver les données saga (fait avant tout hook)
   const activeSaga = getSagaById(sagaProgress.sagaId);
@@ -422,7 +423,10 @@ export function SagaWorldEvent({
       pointerEvents="box-none"
     >
       {/* ── Vignette sombre animée ─────────────────────────────── */}
-      <Animated.View style={[styles.vignette, vignetteStyle]} pointerEvents="none" />
+      <Animated.View
+        style={[styles.vignette, { backgroundColor: vignetteColor }, vignetteStyle]}
+        pointerEvents="none"
+      />
 
       {/* ── Esprit narratif (centré, haut du diorama) ─────────── */}
       <Animated.View style={[styles.spiritWrapper, spiritStyle]} pointerEvents="none">
@@ -562,8 +566,7 @@ const styles = StyleSheet.create({
   // Vignette sombre sur les bords
   vignette: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.38)',
-    borderRadius: 28,
+    borderRadius: Radius['3xl'],
   },
 
   // Esprit narratif
