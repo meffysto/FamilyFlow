@@ -219,3 +219,13 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 9. Cadeaux Familiaux | v1.1 | 0/TBD | Not started | - |
 | 10. Compagnon Mascotte | v1.1 | 3/4 | In Progress|  |
 | 11. Sagas Immersives | v1.1 | 3/3 | Complete    | 2026-04-03 |
+
+### Phase 12: Templates onboarding vivants — contenu personnalisé et complet
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 11
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 12 to break down)

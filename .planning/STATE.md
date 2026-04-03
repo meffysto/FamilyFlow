@@ -66,6 +66,7 @@ Progress: [░░░░░░░░░░] 0%
 ### Roadmap Evolution
 
 - Phase 10 added: Compagnon Mascotte — compagnon interactif lié à la gamification, vit dans l'arbre, mascotte de l'app
+- Phase 12 added: Templates onboarding vivants — contenu personnalisé et complet
 
 ### Decisions
 
