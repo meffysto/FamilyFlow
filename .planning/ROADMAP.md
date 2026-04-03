@@ -218,4 +218,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 8.1 Split Gamification | v1.1 | 2/2 | Complete   | 2026-03-30 |
 | 9. Cadeaux Familiaux | v1.1 | 0/TBD | Not started | - |
 | 10. Compagnon Mascotte | v1.1 | 3/4 | In Progress|  |
-| 11. Sagas Immersives | v1.1 | 3/3 | Complete   | 2026-04-02 |
+| 11. Sagas Immersives | v1.1 | 3/3 | Complete    | 2026-04-03 |
