@@ -3457,73 +3457,78 @@ export function useVaultInternal(): VaultState {
         activeRewards: updatedRewards ?? gami.activeRewards,
       };
 
-      // Si récompense item (saga terminée), l'ajouter comme item temporaire (7 jours)
-      if (rewardItem) {
-        const { createSagaItem } = require('../lib/types');
-        const sagaItem = createSagaItem(rewardItem.id, rewardItem.type);
-        const lines = familleContent.split('\n');
-        let inSection = false;
-        let fieldLine = -1;
-        for (let i = 0; i < lines.length; i++) {
-          if (lines[i].match(new RegExp(`^###?\\s+.*${profileId}`, 'i')) || lines[i].match(new RegExp(`^id:\\s*${profileId}`, 'i'))) {
-            inSection = true;
-          } else if (inSection && lines[i].match(/^###?\s+/)) {
-            break;
-          }
-          if (inSection && lines[i].startsWith('saga_items:')) {
-            fieldLine = i;
-            break;
-          }
-        }
-        const entry = `${sagaItem.itemId}|${sagaItem.type}|${sagaItem.expiresAt}`;
-        if (fieldLine >= 0) {
-          const current = lines[fieldLine].replace('saga_items:', '').trim();
-          const items = current ? current.split(',').map(s => s.trim()) : [];
-          items.push(entry);
-          lines[fieldLine] = `saga_items: ${items.join(', ')}`;
-        } else {
-          // Ajouter le champ saga_items dans la section du profil
-          let lastProp = -1;
-          let inSec = false;
-          for (let i = 0; i < lines.length; i++) {
-            if (lines[i].match(new RegExp(`^###?\\s+.*${profileId}`, 'i')) || lines[i].match(new RegExp(`^id:\\s*${profileId}`, 'i'))) inSec = true;
-            else if (inSec && lines[i].match(/^###?\s+/)) break;
-            if (inSec && lines[i].includes(': ')) lastProp = i;
-          }
-          if (lastProp >= 0) lines.splice(lastProp + 1, 0, `saga_items: ${entry}`);
-        }
-        await vaultRef.current.writeFile(FAMILLE_FILE, lines.join('\n'));
-      }
+      // Si récompense item ou récolte bonus → atomic write dans famille.md via la queue
+      if (rewardItem || bonusCropId) {
+        await enqueueWrite(async () => {
+          const famContent = await vaultRef.current!.readFile(FAMILLE_FILE);
+          const lines = famContent.split('\n');
 
-      // Récolte bonus saga → ajouter à l'inventaire de récoltes
-      if (bonusCropId) {
-        const famContent = await vaultRef.current.readFile(FAMILLE_FILE);
-        const famLines = famContent.split('\n');
-        let inSec = false;
-        let harvestLine = -1;
-        let lastProp = -1;
-        for (let i = 0; i < famLines.length; i++) {
-          if (famLines[i].match(new RegExp(`^###?\\s+.*${profileId}`, 'i')) || famLines[i].match(new RegExp(`^id:\\s*${profileId}`, 'i'))) inSec = true;
-          else if (inSec && famLines[i].match(/^###?\s+/)) break;
-          if (inSec && famLines[i].startsWith('farm_harvest_inventory:')) { harvestLine = i; break; }
-          if (inSec && famLines[i].includes(': ')) lastProp = i;
-        }
-        if (harvestLine >= 0) {
-          const current = famLines[harvestLine].replace('farm_harvest_inventory:', '').trim();
-          const entries = current ? current.split(',').map(s => s.trim()) : [];
-          const existing = entries.find(e => e.startsWith(bonusCropId + ':'));
-          if (existing) {
-            const qty = parseInt(existing.split(':')[1] ?? '0', 10) + 1;
-            const idx = entries.indexOf(existing);
-            entries[idx] = `${bonusCropId}:${qty}`;
-          } else {
-            entries.push(`${bonusCropId}:1`);
+          // Bloc 1: saga_items (récompense item saga terminée)
+          if (rewardItem) {
+            const { createSagaItem } = require('../lib/types');
+            const sagaItem = createSagaItem(rewardItem.id, rewardItem.type);
+            let inSection = false;
+            let fieldLine = -1;
+            for (let i = 0; i < lines.length; i++) {
+              if (lines[i].match(new RegExp(`^###?\\s+.*${profileId}`, 'i')) || lines[i].match(new RegExp(`^id:\\s*${profileId}`, 'i'))) {
+                inSection = true;
+              } else if (inSection && lines[i].match(/^###?\s+/)) {
+                break;
+              }
+              if (inSection && lines[i].startsWith('saga_items:')) {
+                fieldLine = i;
+                break;
+              }
+            }
+            const itemEntry = `${sagaItem.itemId}|${sagaItem.type}|${sagaItem.expiresAt}`;
+            if (fieldLine >= 0) {
+              const current = lines[fieldLine].replace('saga_items:', '').trim();
+              const items = current ? current.split(',').map(s => s.trim()) : [];
+              items.push(itemEntry);
+              lines[fieldLine] = `saga_items: ${items.join(', ')}`;
+            } else {
+              // Ajouter le champ saga_items dans la section du profil
+              let lastProp = -1;
+              let inSec = false;
+              for (let i = 0; i < lines.length; i++) {
+                if (lines[i].match(new RegExp(`^###?\\s+.*${profileId}`, 'i')) || lines[i].match(new RegExp(`^id:\\s*${profileId}`, 'i'))) inSec = true;
+                else if (inSec && lines[i].match(/^###?\s+/)) break;
+                if (inSec && lines[i].includes(': ')) lastProp = i;
+              }
+              if (lastProp >= 0) lines.splice(lastProp + 1, 0, `saga_items: ${itemEntry}`);
+            }
           }
-          famLines[harvestLine] = `farm_harvest_inventory: ${entries.join(',')}`;
-        } else if (lastProp >= 0) {
-          famLines.splice(lastProp + 1, 0, `farm_harvest_inventory: ${bonusCropId}:1`);
-        }
-        await vaultRef.current.writeFile(FAMILLE_FILE, famLines.join('\n'));
+
+          // Bloc 2: farm_harvest_inventory (récolte bonus saga)
+          if (bonusCropId) {
+            let inSec = false;
+            let harvestLine = -1;
+            let lastProp = -1;
+            for (let i = 0; i < lines.length; i++) {
+              if (lines[i].match(new RegExp(`^###?\\s+.*${profileId}`, 'i')) || lines[i].match(new RegExp(`^id:\\s*${profileId}`, 'i'))) inSec = true;
+              else if (inSec && lines[i].match(/^###?\s+/)) break;
+              if (inSec && lines[i].startsWith('farm_harvest_inventory:')) { harvestLine = i; break; }
+              if (inSec && lines[i].includes(': ')) lastProp = i;
+            }
+            if (harvestLine >= 0) {
+              const current = lines[harvestLine].replace('farm_harvest_inventory:', '').trim();
+              const entries = current ? current.split(',').map(s => s.trim()) : [];
+              const existing = entries.find(e => e.startsWith(bonusCropId + ':'));
+              if (existing) {
+                const qty = parseInt(existing.split(':')[1] ?? '0', 10) + 1;
+                const idx = entries.indexOf(existing);
+                entries[idx] = `${bonusCropId}:${qty}`;
+              } else {
+                entries.push(`${bonusCropId}:1`);
+              }
+              lines[harvestLine] = `farm_harvest_inventory: ${entries.join(',')}`;
+            } else if (lastProp >= 0) {
+              lines.splice(lastProp + 1, 0, `farm_harvest_inventory: ${bonusCropId}:1`);
+            }
+          }
+
+          await vaultRef.current!.writeFile(FAMILLE_FILE, lines.join('\n'));
+        });
       }
 
       const singleData: GamificationData = {
