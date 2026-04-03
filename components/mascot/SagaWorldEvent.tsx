@@ -26,7 +26,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useThemeColors } from '../../contexts/ThemeContext';
 import type { ReactionType } from './VisitorSlot';
-import type { SagaProgress, SagaTrait, SagaCompletionResult } from '../../lib/mascot/sagas-types';
+import type { Saga, SagaProgress, SagaTrait, SagaCompletionResult } from '../../lib/mascot/sagas-types';
 import {
   getChapterNarrativeKey,
   getSagaById,
@@ -62,6 +62,8 @@ export interface SagaWorldEventProps {
   visitorIdleFrame?: ImageSourcePropType;
   /** Callback appelé quand le joueur sélectionne un choix — permet au VisitorSlot de jouer une animation de réaction */
   onChoiceReaction?: (reactionType: ReactionType) => void;
+  /** Saga fournie directement — bypass getSagaById() (utilisé par les événements saisonniers) */
+  overrideSaga?: Saga;
 }
 
 // ─── Composant ────────────────────────────────────────────────
@@ -97,13 +99,14 @@ export function SagaWorldEvent({
   onDismiss,
   visitorIdleFrame,
   onChoiceReaction,
+  overrideSaga,
 }: SagaWorldEventProps) {
   const { t } = useTranslation();
   const { primary, colors, isDark } = useThemeColors();
   const vignetteColor = colors.overlayLight;
 
   // Dériver les données saga (fait avant tout hook)
-  const activeSaga = getSagaById(sagaProgress.sagaId);
+  const activeSaga = overrideSaga ?? getSagaById(sagaProgress.sagaId);
   const currentChapter = activeSaga?.chapters.find(ch => ch.id === sagaProgress.currentChapter) ?? null;
   const narrativeKey = activeSaga && currentChapter
     ? getChapterNarrativeKey(currentChapter, sagaProgress.traits, activeSaga.finale.defaultTrait)

@@ -52,6 +52,10 @@ export interface VisitorSlotProps {
   reactionType?: ReactionType;
   /** Callback appelé après la fin de l'animation de réaction */
   onReactionComplete?: () => void;
+  /** Position X cible en fraction du container (défaut: 0.72 côté droit pour saga) */
+  targetFX?: number;
+  /** Position Y cible en fraction du container (défaut: 0.62) */
+  targetFY?: number;
 }
 
 type VisitorState = 'entering' | 'idle' | 'reacting' | 'departing' | 'departed';
@@ -161,6 +165,8 @@ export function VisitorSlot({
   onDepartComplete,
   reactionType,
   onReactionComplete,
+  targetFX: propTargetFX,
+  targetFY: propTargetFY,
 }: VisitorSlotProps) {
   const { primary, colors } = useThemeColors();
   const sprites = SAGA_SPRITES[sagaId] ?? DEFAULT_SPRITES;
@@ -178,8 +184,8 @@ export function VisitorSlot({
   const mounted = useRef(true);
 
   // ── Positions calculées ───────────────────────────
-  const TARGET_X = containerWidth * TARGET_FX;
-  const TARGET_Y = containerHeight * TARGET_FY;
+  const TARGET_X = containerWidth * (propTargetFX ?? TARGET_FX);
+  const TARGET_Y = containerHeight * (propTargetFY ?? TARGET_FY);
   const ENTRY_X = containerWidth * 1.15;
   const DEPART_X = containerWidth * 1.20;
 

@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
-status: verifying
+status: executing
 stopped_at: Completed 13-evenements-saisonniers/13-01-PLAN.md
 last_updated: "2026-04-03T18:32:49.536Z"
 last_activity: "2026-04-03 - Completed quick task 260403-q6y: Fix race condition famille.md writes (enqueueWrite partagée)"
 progress:
   total_phases: 9
   completed_phases: 6
-  total_plans: 20
+  total_plans: 22
   completed_plans: 17
   percent: 0
 ---
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 11 — sagas-immersives
+**Current focus:** Phase 13 — evenements-saisonniers
 
 ## Current Position
 
-Phase: 11
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-03 - Completed quick task 260403-q6y: Fix race condition famille.md writes (enqueueWrite partagée)
+Phase: 13 (evenements-saisonniers) — EXECUTING
+Plan: 1 of 2
+Status: Executing Phase 13
+Last activity: 2026-04-03 -- Phase 13 execution started
 
 Progress: [░░░░░░░░░░] 0%
 

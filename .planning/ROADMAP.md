@@ -220,7 +220,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 10. Compagnon Mascotte | v1.1 | 3/4 | In Progress|  |
 | 11. Sagas Immersives | v1.1 | 3/3 | Complete    | 2026-04-03 |
 | 12. Templates Onboarding | v1.1 | 0/2 | Not started | - |
-| 13. Événements Saisonniers | v1.1 | 0/2 | Planned | - |
+| 13. Événements Saisonniers | v1.1 | 1/2 | In Progress | - |
 
 ### Phase 12: Templates onboarding vivants — contenu personnalisé et complet
 
@@ -246,7 +246,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 13-01-PLAN.md — Types + engine + storage + contenu narratif i18n (8 événements)
+- [x] 13-01-PLAN.md — Types + engine + storage + contenu narratif i18n (8 événements)
 - [ ] 13-02-PLAN.md — VisitorSlot/SagaWorldEvent props + câblage tree.tsx visiteur événementiel
 
 Canonical refs: `lib/gamification/seasonal.ts`, `lib/gamification/seasonal-rewards.ts`, `lib/mascot/sagas-engine.ts`, `lib/mascot/sagas-content.ts`, `components/mascot/VisitorSlot.tsx`
