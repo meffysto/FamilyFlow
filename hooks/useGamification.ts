@@ -33,6 +33,7 @@ import {
   buildLootBoxContext,
 } from '../lib/notifications';
 import { Profile, LootBox, GamificationData, NotificationPreferences } from '../lib/types';
+import { enqueueWrite, patchProfileField } from '../lib/famille-queue';
 
 interface UseGamificationArgs {
   vault: VaultManager | null;
@@ -123,28 +124,12 @@ export function useGamification({ vault, notifPrefs, onDataChange }: UseGamifica
           cropsMatured = farmResult.matured.map(c => c.cropId);
           // Persister les cultures mises a jour dans famille.md
           const updatedCropsCSV = serializeCrops(farmResult.crops);
-          const familleContent = await vault.readFile(FAMILLE_FILE);
-          const farmFieldKey = 'farm_crops';
-          const lines = familleContent.split('\n');
-          let inSection = false;
-          let fieldLine = -1;
-          let lastPropIdx = -1;
-          for (let i = 0; i < lines.length; i++) {
-            if (lines[i].startsWith('### ')) {
-              if (inSection) break;
-              if (lines[i].replace('### ', '').trim() === profile.id) inSection = true;
-            } else if (inSection && lines[i].includes(': ')) {
-              lastPropIdx = i;
-              if (lines[i].trim().startsWith(`${farmFieldKey}:`)) fieldLine = i;
-            }
-          }
-          const newValue = `${farmFieldKey}: ${updatedCropsCSV}`;
-          if (fieldLine >= 0) {
-            lines[fieldLine] = newValue;
-          } else if (lastPropIdx >= 0) {
-            lines.splice(lastPropIdx + 1, 0, newValue);
-          }
-          await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
+          await enqueueWrite(async () => {
+            const familleContent = await vault.readFile(FAMILLE_FILE);
+            const lines = familleContent.split('\n');
+            patchProfileField(lines, profile.id, 'farm_crops', updatedCropsCSV);
+            await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
+          });
         }
 
         // Send task completed notification (fire-and-forget)
@@ -218,31 +203,14 @@ export function useGamification({ vault, notifPrefs, onDataChange }: UseGamifica
         // Persister les items mascotte droppés dans famille.md
         if (box.mascotItemId && (box.rewardType === 'mascot_deco' || box.rewardType === 'mascot_hab')) {
           try {
-            const familleRaw = await vault.readFile(FAMILLE_FILE);
-            const lines = familleRaw.split('\n');
             const fieldKey = box.rewardType === 'mascot_deco' ? 'mascot_decorations' : 'mascot_inhabitants';
             const list = box.rewardType === 'mascot_deco' ? updatedProfile.mascotDecorations : updatedProfile.mascotInhabitants;
-            let inSection = false;
-            let fieldLine = -1;
-            let lastPropIdx = -1;
-
-            for (let i = 0; i < lines.length; i++) {
-              if (lines[i].startsWith('### ')) {
-                if (inSection) break;
-                if (lines[i].replace('### ', '').trim() === profile.id) inSection = true;
-              } else if (inSection && lines[i].includes(': ')) {
-                lastPropIdx = i;
-                if (lines[i].trim().startsWith(`${fieldKey}:`)) fieldLine = i;
-              }
-            }
-
-            const newValue = `${fieldKey}: ${list.join(',')}`;
-            if (fieldLine >= 0) {
-              lines[fieldLine] = newValue;
-            } else if (lastPropIdx >= 0) {
-              lines.splice(lastPropIdx + 1, 0, newValue);
-            }
-            await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
+            await enqueueWrite(async () => {
+              const familleRaw = await vault.readFile(FAMILLE_FILE);
+              const lines = familleRaw.split('\n');
+              patchProfileField(lines, profile.id, fieldKey, list.join(','));
+              await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
+            });
           } catch {}
         }
 
@@ -250,38 +218,23 @@ export function useGamification({ vault, notifPrefs, onDataChange }: UseGamifica
         if (box.mascotItemId && box.rewardType === 'companion') {
           try {
             const speciesId = box.mascotItemId as CompanionSpecies;
-            const familleRaw = await vault.readFile(FAMILLE_FILE);
-            const currentProfiles = parseFamille(familleRaw);
-            const currentProfile = currentProfiles.find((p) => p.id === profile.id);
-            if (currentProfile?.companion) {
-              // Ajouter l'espèce à unlockedSpecies si pas encore débloquée
-              if (!currentProfile.companion.unlockedSpecies.includes(speciesId)) {
-                const updatedCompanion = {
-                  ...currentProfile.companion,
-                  unlockedSpecies: [...currentProfile.companion.unlockedSpecies, speciesId],
-                };
-                const lines = familleRaw.split('\n');
-                let inSection = false;
-                let fieldLine = -1;
-                let lastPropIdx = -1;
-                for (let i = 0; i < lines.length; i++) {
-                  if (lines[i].startsWith('### ')) {
-                    if (inSection) break;
-                    if (lines[i].replace('### ', '').trim() === profile.id) inSection = true;
-                  } else if (inSection && lines[i].includes(': ')) {
-                    lastPropIdx = i;
-                    if (lines[i].trim().startsWith('companion:')) fieldLine = i;
-                  }
+            await enqueueWrite(async () => {
+              const familleRaw = await vault.readFile(FAMILLE_FILE);
+              const currentProfiles = parseFamille(familleRaw);
+              const currentProfile = currentProfiles.find((p) => p.id === profile.id);
+              if (currentProfile?.companion) {
+                // Ajouter l'espèce à unlockedSpecies si pas encore débloquée
+                if (!currentProfile.companion.unlockedSpecies.includes(speciesId)) {
+                  const updatedCompanion = {
+                    ...currentProfile.companion,
+                    unlockedSpecies: [...currentProfile.companion.unlockedSpecies, speciesId],
+                  };
+                  const lines = familleRaw.split('\n');
+                  patchProfileField(lines, profile.id, 'companion', serializeCompanion(updatedCompanion));
+                  await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
                 }
-                const newValue = `companion: ${serializeCompanion(updatedCompanion)}`;
-                if (fieldLine >= 0) {
-                  lines[fieldLine] = newValue;
-                } else if (lastPropIdx >= 0) {
-                  lines.splice(lastPropIdx + 1, 0, newValue);
-                }
-                await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
               }
-            }
+            });
           } catch {}
         }
 
