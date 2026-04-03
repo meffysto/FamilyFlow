@@ -1558,30 +1558,6 @@ export default function TreeScreen() {
           />
         )}
 
-        {/* Debug saga — DEV only */}
-        {__DEV__ && (
-          <TouchableOpacity
-            style={{ margin: 16, padding: 12, backgroundColor: colors.card, borderRadius: 8, borderWidth: 1, borderColor: colors.borderLight }}
-            onPress={async () => {
-              if (!profile?.id) return;
-              await clearSagaProgress(profile.id);
-              const saga = getNextSagaForProfile(profile.id, []);
-              if (saga) {
-                const fresh = createEmptySagaProgress(saga.id, profile.id, today);
-                await saveSagaProgress(fresh);
-                setSagaProgress(fresh);
-                setVisitorShouldDepart(false);
-                setVisitorReaction(undefined);
-              }
-              Alert.alert('Saga reset', 'Nouvelle saga lancée — le visiteur devrait apparaître.');
-            }}
-          >
-            <Text style={{ color: colors.textMuted, fontSize: 12, textAlign: 'center' }}>
-              {'🔧 [DEV] Reset saga → relancer visiteur'}
-            </Text>
-          </TouchableOpacity>
-        )}
-
         <View style={{ height: 100 }} />
       </ScrollView>
 
@@ -1848,26 +1824,6 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.md,
     alignItems: 'center',
     marginLeft: '30%',
-  },
-  sagaPendingBtn: {
-    position: 'absolute',
-    zIndex: 12,
-  },
-  sagaPendingTouch: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xl,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-  },
-  sagaPendingEmoji: {
-    fontSize: FontSize.body,
-  },
-  sagaPendingText: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
   },
   actionCard: {
     borderRadius: Radius.xl,
