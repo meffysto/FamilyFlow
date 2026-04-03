@@ -97,6 +97,7 @@ import i18n from '../lib/i18n';
 import { generateThumbnail } from '../lib/thumbnails';
 import { nextOccurrence } from '../lib/recurrence';
 import { format, startOfWeek } from 'date-fns';
+import { enqueueWrite } from '../lib/famille-queue';
 import { parseJournalStats } from '../lib/journal-stats';
 import type { JournalSummaryEntry } from '../lib/ai-service';
 import { refreshWidget, refreshJournalWidget } from '../lib/widget-bridge';
@@ -1202,81 +1203,85 @@ export function useVaultInternal(): VaultState {
 
   const updateProfileTheme = useCallback(async (profileId: string, theme: ProfileTheme) => {
     if (!vaultRef.current) return;
-    try {
-      const content = await vaultRef.current.readFile(FAMILLE_FILE);
-      const lines = content.split('\n');
-      let inSection = false;
-      let themeLineIdx = -1;
-      let lastPropIdx = -1;
+    return enqueueWrite(async () => {
+      try {
+        const content = await vaultRef.current!.readFile(FAMILLE_FILE);
+        const lines = content.split('\n');
+        let inSection = false;
+        let themeLineIdx = -1;
+        let lastPropIdx = -1;
 
-      for (let i = 0; i < lines.length; i++) {
-        if (lines[i].startsWith('### ')) {
-          if (inSection) break; // hit next section, stop
-          if (lines[i].replace('### ', '').trim() === profileId) {
-            inSection = true;
-          }
-        } else if (inSection && lines[i].includes(': ')) {
-          lastPropIdx = i;
-          if (lines[i].trim().startsWith('theme:')) {
-            themeLineIdx = i;
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].startsWith('### ')) {
+            if (inSection) break; // hit next section, stop
+            if (lines[i].replace('### ', '').trim() === profileId) {
+              inSection = true;
+            }
+          } else if (inSection && lines[i].includes(': ')) {
+            lastPropIdx = i;
+            if (lines[i].trim().startsWith('theme:')) {
+              themeLineIdx = i;
+            }
           }
         }
+
+        if (themeLineIdx >= 0) {
+          lines[themeLineIdx] = `theme: ${theme}`;
+        } else if (lastPropIdx >= 0) {
+          lines.splice(lastPropIdx + 1, 0, `theme: ${theme}`);
+        }
+
+        await vaultRef.current!.writeFile(FAMILLE_FILE, lines.join('\n'));
+
+        // Update local profile state
+        setProfiles((prev) =>
+          prev.map((p) => (p.id === profileId ? { ...p, theme } : p))
+        );
+      } catch (e) {
+        throw new Error(`updateProfileTheme: ${e}`);
       }
-
-      if (themeLineIdx >= 0) {
-        lines[themeLineIdx] = `theme: ${theme}`;
-      } else if (lastPropIdx >= 0) {
-        lines.splice(lastPropIdx + 1, 0, `theme: ${theme}`);
-      }
-
-      await vaultRef.current.writeFile(FAMILLE_FILE, lines.join('\n'));
-
-      // Update local profile state
-      setProfiles((prev) =>
-        prev.map((p) => (p.id === profileId ? { ...p, theme } : p))
-      );
-    } catch (e) {
-      throw new Error(`updateProfileTheme: ${e}`);
-    }
+    });
   }, []);
 
   const updateTreeSpecies = useCallback(async (profileId: string, species: string) => {
     if (!vaultRef.current) return;
-    try {
-      const content = await vaultRef.current.readFile(FAMILLE_FILE);
-      const lines = content.split('\n');
-      let inSection = false;
-      let speciesLineIdx = -1;
-      let lastPropIdx = -1;
+    return enqueueWrite(async () => {
+      try {
+        const content = await vaultRef.current!.readFile(FAMILLE_FILE);
+        const lines = content.split('\n');
+        let inSection = false;
+        let speciesLineIdx = -1;
+        let lastPropIdx = -1;
 
-      for (let i = 0; i < lines.length; i++) {
-        if (lines[i].startsWith('### ')) {
-          if (inSection) break;
-          if (lines[i].replace('### ', '').trim() === profileId) {
-            inSection = true;
-          }
-        } else if (inSection && lines[i].includes(': ')) {
-          lastPropIdx = i;
-          if (lines[i].trim().startsWith('tree_species:')) {
-            speciesLineIdx = i;
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].startsWith('### ')) {
+            if (inSection) break;
+            if (lines[i].replace('### ', '').trim() === profileId) {
+              inSection = true;
+            }
+          } else if (inSection && lines[i].includes(': ')) {
+            lastPropIdx = i;
+            if (lines[i].trim().startsWith('tree_species:')) {
+              speciesLineIdx = i;
+            }
           }
         }
+
+        if (speciesLineIdx >= 0) {
+          lines[speciesLineIdx] = `tree_species: ${species}`;
+        } else if (lastPropIdx >= 0) {
+          lines.splice(lastPropIdx + 1, 0, `tree_species: ${species}`);
+        }
+
+        await vaultRef.current!.writeFile(FAMILLE_FILE, lines.join('\n'));
+
+        setProfiles((prev) =>
+          prev.map((p) => (p.id === profileId ? { ...p, treeSpecies: species as TreeSpecies } : p))
+        );
+      } catch (e) {
+        throw new Error(`updateTreeSpecies: ${e}`);
       }
-
-      if (speciesLineIdx >= 0) {
-        lines[speciesLineIdx] = `tree_species: ${species}`;
-      } else if (lastPropIdx >= 0) {
-        lines.splice(lastPropIdx + 1, 0, `tree_species: ${species}`);
-      }
-
-      await vaultRef.current.writeFile(FAMILLE_FILE, lines.join('\n'));
-
-      setProfiles((prev) =>
-        prev.map((p) => (p.id === profileId ? { ...p, treeSpecies: species as TreeSpecies } : p))
-      );
-    } catch (e) {
-      throw new Error(`updateTreeSpecies: ${e}`);
-    }
+    });
   }, []);
 
   /** Acheter une décoration ou un habitant pour l'arbre mascotte */
@@ -1329,42 +1334,71 @@ export function useVaultInternal(): VaultState {
       };
       await vaultRef.current.writeFile(file, serializeGamification(singleData));
 
-      // 2. Ajouter l'item dans famille.md
-      const content = await vaultRef.current.readFile(FAMILLE_FILE);
-      const lines = content.split('\n');
-      let inSection = false;
-      let fieldLine = -1;
-      let lastPropIdx = -1;
-      const fieldKey = itemType === 'decoration' ? 'mascot_decorations' : 'mascot_inhabitants';
+      // 3. Référence au profil gami mis à jour (définie avant enqueueWrite pour closure)
+      const updatedGamiProfile = gami.profiles.find(p => p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase());
 
-      for (let i = 0; i < lines.length; i++) {
-        if (lines[i].startsWith('### ')) {
-          if (inSection) break;
-          if (lines[i].replace('### ', '').trim() === profileId) {
-            inSection = true;
-          }
-        } else if (inSection && lines[i].includes(': ')) {
-          lastPropIdx = i;
-          if (lines[i].trim().startsWith(`${fieldKey}:`)) {
-            fieldLine = i;
+      // 2. Ajouter l'item dans famille.md (dans la queue partagée)
+      await enqueueWrite(async () => {
+        const content = await vaultRef.current!.readFile(FAMILLE_FILE);
+        const lines = content.split('\n');
+        let inSection = false;
+        let fieldLine = -1;
+        let lastPropIdx = -1;
+        const fieldKey = itemType === 'decoration' ? 'mascot_decorations' : 'mascot_inhabitants';
+
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].startsWith('### ')) {
+            if (inSection) break;
+            if (lines[i].replace('### ', '').trim() === profileId) {
+              inSection = true;
+            }
+          } else if (inSection && lines[i].includes(': ')) {
+            lastPropIdx = i;
+            if (lines[i].trim().startsWith(`${fieldKey}:`)) {
+              fieldLine = i;
+            }
           }
         }
-      }
 
-      const newList = [...owned, itemId];
-      const newValue = `${fieldKey}: ${newList.join(',')}`;
+        const newList = [...owned, itemId];
+        const newValue = `${fieldKey}: ${newList.join(',')}`;
 
-      if (fieldLine >= 0) {
-        lines[fieldLine] = newValue;
-      } else if (lastPropIdx >= 0) {
-        lines.splice(lastPropIdx + 1, 0, newValue);
-      }
+        if (fieldLine >= 0) {
+          lines[fieldLine] = newValue;
+        } else if (lastPropIdx >= 0) {
+          lines.splice(lastPropIdx + 1, 0, newValue);
+        }
 
-      const familleStr = lines.join('\n');
-      await vaultRef.current.writeFile(FAMILLE_FILE, familleStr);
+        const familleStr = lines.join('\n');
+        await vaultRef.current!.writeFile(FAMILLE_FILE, familleStr);
 
-      // 3. Mettre à jour l'état local (merge partiel du profil modifié)
-      const updatedGamiProfile = gami.profiles.find(p => p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase());
+        // Recharger les profils depuis famille.md mis à jour (décoration ajoutée)
+        // Utilise le gamiData actuel comme base pour ne pas écraser les autres profils
+        setProfiles(prev => {
+          const parsed = parseFamille(familleStr);
+          return parsed.map(base => {
+            const existing = prev.find(p => p.id === base.id);
+            if (!existing) return { ...base, points: 0, coins: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0 };
+            // Pour le profil modifié, mettre à jour les coins
+            if (base.id === profileId || base.id.toLowerCase() === profileId.toLowerCase()) {
+              return {
+                ...base,
+                points: existing.points,
+                coins: updatedGamiProfile ? (updatedGamiProfile.coins ?? updatedGamiProfile.points) : existing.coins,
+                level: existing.level,
+                streak: existing.streak,
+                lootBoxesAvailable: existing.lootBoxesAvailable,
+                multiplier: existing.multiplier,
+                multiplierRemaining: existing.multiplierRemaining,
+                pityCounter: existing.pityCounter,
+              };
+            }
+            return { ...base, points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
+          });
+        });
+      });
+
+      // Mettre à jour l'état gami (hors queue — fichier différent)
       setGamiData(prev => {
         if (!prev || !updatedGamiProfile) return prev;
         return {
@@ -1372,30 +1406,6 @@ export function useVaultInternal(): VaultState {
           profiles: prev.profiles.map(p => (p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase()) ? updatedGamiProfile : p),
           history: [...prev.history, ...gami.history.filter(e => e.profileId === profileId && !prev.history.some(h => h.timestamp === e.timestamp))],
         };
-      });
-      // Recharger les profils depuis famille.md mis à jour (décoration ajoutée)
-      // Utilise le gamiData actuel comme base pour ne pas écraser les autres profils
-      setProfiles(prev => {
-        const parsed = parseFamille(familleStr);
-        return parsed.map(base => {
-          const existing = prev.find(p => p.id === base.id);
-          if (!existing) return { ...base, points: 0, coins: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0 };
-          // Pour le profil modifié, mettre à jour les coins
-          if (base.id === profileId || base.id.toLowerCase() === profileId.toLowerCase()) {
-            return {
-              ...base,
-              points: existing.points,
-              coins: updatedGamiProfile ? (updatedGamiProfile.coins ?? updatedGamiProfile.points) : existing.coins,
-              level: existing.level,
-              streak: existing.streak,
-              lootBoxesAvailable: existing.lootBoxesAvailable,
-              multiplier: existing.multiplier,
-              multiplierRemaining: existing.multiplierRemaining,
-              pityCounter: existing.pityCounter,
-            };
-          }
-          return { ...base, points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
-        });
       });
     } catch (e) {
       throw new Error(`buyMascotItem: ${e}`);
@@ -1406,132 +1416,137 @@ export function useVaultInternal(): VaultState {
   const placeMascotItem = useCallback(async (profileId: string, slotId: string, itemId: string) => {
     if (!vaultRef.current) return;
 
-    try {
-      const content = await vaultRef.current.readFile(FAMILLE_FILE);
-      const lines = content.split('\n');
-      let inSection = false;
-      let fieldLine = -1;
-      let lastPropIdx = -1;
-      const fieldKey = 'mascot_placements';
+    const profile = profiles.find((p) => p.id === profileId);
+    if (!profile) throw new Error(`Profil ${profileId} non trouvé`);
 
-      // Récupérer les placements actuels du profil
-      const profile = profiles.find((p) => p.id === profileId);
-      if (!profile) throw new Error(`Profil ${profileId} non trouvé`);
-      const placements = { ...(profile.mascotPlacements ?? {}) };
+    return enqueueWrite(async () => {
+      try {
+        const content = await vaultRef.current!.readFile(FAMILLE_FILE);
+        const lines = content.split('\n');
+        let inSection = false;
+        let fieldLine = -1;
+        let lastPropIdx = -1;
+        const fieldKey = 'mascot_placements';
 
-      // Si l'item est déjà placé ailleurs, le retirer de l'ancien slot
-      for (const [existingSlot, existingItem] of Object.entries(placements)) {
-        if (existingItem === itemId) {
-          delete placements[existingSlot];
-        }
-      }
+        // Récupérer les placements actuels du profil
+        const placements = { ...(profile.mascotPlacements ?? {}) };
 
-      // Placer l'item au nouveau slot
-      placements[slotId] = itemId;
-
-      // Sérialiser : "tree-top:guirlandes,ground-left:oiseau"
-      const serialized = Object.entries(placements)
-        .map(([s, i]) => `${s}:${i}`)
-        .join(',');
-      const newValue = `${fieldKey}: ${serialized}`;
-
-      // Trouver la section du profil dans famille.md
-      for (let i = 0; i < lines.length; i++) {
-        if (lines[i].startsWith('### ')) {
-          if (inSection) break;
-          if (lines[i].replace('### ', '').trim() === profileId) {
-            inSection = true;
-          }
-        } else if (inSection && lines[i].includes(': ')) {
-          lastPropIdx = i;
-          if (lines[i].trim().startsWith(`${fieldKey}:`)) {
-            fieldLine = i;
+        // Si l'item est déjà placé ailleurs, le retirer de l'ancien slot
+        for (const [existingSlot, existingItem] of Object.entries(placements)) {
+          if (existingItem === itemId) {
+            delete placements[existingSlot];
           }
         }
-      }
 
-      if (fieldLine >= 0) {
-        lines[fieldLine] = newValue;
-      } else if (lastPropIdx >= 0) {
-        lines.splice(lastPropIdx + 1, 0, newValue);
-      }
+        // Placer l'item au nouveau slot
+        placements[slotId] = itemId;
 
-      const familleStr = lines.join('\n');
-      await vaultRef.current.writeFile(FAMILLE_FILE, familleStr);
+        // Sérialiser : "tree-top:guirlandes,ground-left:oiseau"
+        const serialized = Object.entries(placements)
+          .map(([s, i]) => `${s}:${i}`)
+          .join(',');
+        const newValue = `${fieldKey}: ${serialized}`;
 
-      // Mettre à jour l'état local (merge partiel : seuls les placements ont changé dans famille.md)
-      setProfiles(prev => {
-        const parsed = parseFamille(familleStr);
-        return parsed.map(base => {
-          const existing = prev.find(p => p.id === base.id);
-          if (!existing) return { ...base, points: 0, coins: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0 };
-          return { ...base, points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
+        // Trouver la section du profil dans famille.md
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].startsWith('### ')) {
+            if (inSection) break;
+            if (lines[i].replace('### ', '').trim() === profileId) {
+              inSection = true;
+            }
+          } else if (inSection && lines[i].includes(': ')) {
+            lastPropIdx = i;
+            if (lines[i].trim().startsWith(`${fieldKey}:`)) {
+              fieldLine = i;
+            }
+          }
+        }
+
+        if (fieldLine >= 0) {
+          lines[fieldLine] = newValue;
+        } else if (lastPropIdx >= 0) {
+          lines.splice(lastPropIdx + 1, 0, newValue);
+        }
+
+        const familleStr = lines.join('\n');
+        await vaultRef.current!.writeFile(FAMILLE_FILE, familleStr);
+
+        // Mettre à jour l'état local (merge partiel : seuls les placements ont changé dans famille.md)
+        setProfiles(prev => {
+          const parsed = parseFamille(familleStr);
+          return parsed.map(base => {
+            const existing = prev.find(p => p.id === base.id);
+            if (!existing) return { ...base, points: 0, coins: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0 };
+            return { ...base, points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
+          });
         });
-      });
-    } catch (e) {
-      throw new Error(`placeMascotItem: ${e}`);
-    }
+      } catch (e) {
+        throw new Error(`placeMascotItem: ${e}`);
+      }
+    });
   }, [profiles]);
 
   /** Retirer un item placé (décoration ou habitant) de son slot */
   const unplaceMascotItem = useCallback(async (profileId: string, slotId: string) => {
     if (!vaultRef.current) return;
 
-    try {
-      const content = await vaultRef.current.readFile(FAMILLE_FILE);
-      const lines = content.split('\n');
-      let inSection = false;
-      let fieldLine = -1;
-      let lastPropIdx = -1;
-      const fieldKey = 'mascot_placements';
+    const profile = profiles.find((p) => p.id === profileId);
+    if (!profile) throw new Error(`Profil ${profileId} non trouvé`);
+    const placements = { ...(profile.mascotPlacements ?? {}) };
+    if (!placements[slotId]) return; // rien à retirer
 
-      const profile = profiles.find((p) => p.id === profileId);
-      if (!profile) throw new Error(`Profil ${profileId} non trouvé`);
-      const placements = { ...(profile.mascotPlacements ?? {}) };
+    return enqueueWrite(async () => {
+      try {
+        const content = await vaultRef.current!.readFile(FAMILLE_FILE);
+        const lines = content.split('\n');
+        let inSection = false;
+        let fieldLine = -1;
+        let lastPropIdx = -1;
+        const fieldKey = 'mascot_placements';
 
-      if (!placements[slotId]) return; // rien à retirer
-      delete placements[slotId];
+        delete placements[slotId];
 
-      const serialized = Object.entries(placements)
-        .map(([s, i]) => `${s}:${i}`)
-        .join(',');
-      const newValue = `${fieldKey}: ${serialized}`;
+        const serialized = Object.entries(placements)
+          .map(([s, i]) => `${s}:${i}`)
+          .join(',');
+        const newValue = `${fieldKey}: ${serialized}`;
 
-      for (let i = 0; i < lines.length; i++) {
-        if (lines[i].startsWith('### ')) {
-          if (inSection) break;
-          if (lines[i].replace('### ', '').trim() === profileId) {
-            inSection = true;
-          }
-        } else if (inSection && lines[i].includes(': ')) {
-          lastPropIdx = i;
-          if (lines[i].trim().startsWith(`${fieldKey}:`)) {
-            fieldLine = i;
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].startsWith('### ')) {
+            if (inSection) break;
+            if (lines[i].replace('### ', '').trim() === profileId) {
+              inSection = true;
+            }
+          } else if (inSection && lines[i].includes(': ')) {
+            lastPropIdx = i;
+            if (lines[i].trim().startsWith(`${fieldKey}:`)) {
+              fieldLine = i;
+            }
           }
         }
-      }
 
-      if (fieldLine >= 0) {
-        lines[fieldLine] = newValue;
-      } else if (lastPropIdx >= 0) {
-        lines.splice(lastPropIdx + 1, 0, newValue);
-      }
+        if (fieldLine >= 0) {
+          lines[fieldLine] = newValue;
+        } else if (lastPropIdx >= 0) {
+          lines.splice(lastPropIdx + 1, 0, newValue);
+        }
 
-      const familleStr = lines.join('\n');
-      await vaultRef.current.writeFile(FAMILLE_FILE, familleStr);
+        const familleStr = lines.join('\n');
+        await vaultRef.current!.writeFile(FAMILLE_FILE, familleStr);
 
-      // Mettre à jour l'état local (merge partiel : seuls les placements ont changé)
-      setProfiles(prev => {
-        const parsed = parseFamille(familleStr);
-        return parsed.map(base => {
-          const existing = prev.find(p => p.id === base.id);
-          if (!existing) return { ...base, points: 0, coins: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0 };
-          return { ...base, points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
+        // Mettre à jour l'état local (merge partiel : seuls les placements ont changé)
+        setProfiles(prev => {
+          const parsed = parseFamille(familleStr);
+          return parsed.map(base => {
+            const existing = prev.find(p => p.id === base.id);
+            if (!existing) return { ...base, points: 0, coins: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0 };
+            return { ...base, points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
+          });
         });
-      });
-    } catch (e) {
-      throw new Error(`unplaceMascotItem: ${e}`);
-    }
+      } catch (e) {
+        throw new Error(`unplaceMascotItem: ${e}`);
+      }
+    });
   }, [profiles]);
 
   const updateProfile = useCallback(async (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string; propre?: boolean; gender?: Gender }) => {
