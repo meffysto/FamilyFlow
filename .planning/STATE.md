@@ -126,9 +126,10 @@ None yet.
 | 260402-wrf | Mockup C — diorama arrondi + ombre + chevauchement cartes (ecran arbre) | 2026-04-02 | bae5fd5 | [260402-wrf-impl-menter-le-mockup-c-sur-l-cran-tree-](./quick/260402-wrf-impl-menter-le-mockup-c-sur-l-cran-tree-/) |
 | 260402-wum | FAB calendrier — ajout rapide RDV et tache | 2026-04-02 | d006704 | [260402-wum-fab-calendrier-ajout-rapide-rdv-et-t-che](./quick/260402-wum-fab-calendrier-ajout-rapide-rdv-et-t-che/) |
 | 260402-x63 | HUD flottant option A — position absolute + fond semi-transparent (écran tree) | 2026-04-02 | e3ae5ec | [260402-x63-hud-flottant-option-a-sur-l-cran-tree-re](./quick/260402-x63-hud-flottant-option-a-sur-l-cran-tree-re/) |
+| 260403-kjz | Supprimer le code debug saga dans tree.tsx | 2026-04-03 | 659a064 | [260403-kjz-supprimer-le-code-debug-saga-dans-tree-t](./quick/260403-kjz-supprimer-le-code-debug-saga-dans-tree-t/) |
 
 ## Session Continuity
 
-Last session: 2026-04-02T23:18:37.799Z
-Stopped at: Completed 11-sagas-immersives/11-02-PLAN.md
+Last session: 2026-04-03T00:00:00.000Z
+Stopped at: Completed quick/260403-kjz-PLAN.md
 Resume file: None
