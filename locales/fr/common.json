@@ -3987,7 +3987,9 @@
     "rare": "Rare",
     "rareFree": "Gratuit",
     "regularSeeds": "Graines classiques",
-    "rareSeedDrop": "{{emoji}} Graine rare obtenue : {{name}} !"
+    "rareSeedDrop": "{{emoji}} Graine rare obtenue : {{name}} !",
+    "rareSeedDropHint": "Chance d'obtenir en récoltant : {{sources}} ({{pct}}%)",
+    "rareSeedDropHintAny": "Chance d'obtenir lors de n'importe quelle récolte (2%)"
   },
   "craft": {
     "atelier": "Atelier",

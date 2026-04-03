@@ -3987,7 +3987,9 @@
     "rare": "Rare",
     "rareFree": "Free",
     "regularSeeds": "Regular seeds",
-    "rareSeedDrop": "{{emoji}} Rare seed obtained: {{name}}!"
+    "rareSeedDrop": "{{emoji}} Rare seed obtained: {{name}}!",
+    "rareSeedDropHint": "Drop chance when harvesting: {{sources}} ({{pct}}%)",
+    "rareSeedDropHintAny": "Drop chance in any harvest (2%)"
   },
   "craft": {
     "atelier": "Workshop",
