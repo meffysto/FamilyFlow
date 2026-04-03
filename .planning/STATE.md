@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: verifying
-stopped_at: Completed 11-sagas-immersives/11-02-PLAN.md
-last_updated: "2026-04-03T06:50:49.242Z"
-last_activity: 2026-04-03
+stopped_at: Phase 13 context gathered
+last_updated: "2026-04-03T17:59:55.215Z"
+last_activity: "2026-04-03 - Completed quick task 260403-q6y: Fix race condition famille.md writes (enqueueWrite partagée)"
 progress:
-  total_phases: 8
+  total_phases: 10
   completed_phases: 6
-  total_plans: 18
+  total_plans: 20
   completed_plans: 17
   percent: 0
 ---
@@ -133,6 +133,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-03T17:18:10Z
-Stopped at: Completed quick/260403-qoo-PLAN.md
-Resume file: None
+Last session: 2026-04-03T17:59:55.206Z
+Stopped at: Phase 13 context gathered
+Resume file: .planning/phases/13-evenements-saisonniers/13-CONTEXT.md
