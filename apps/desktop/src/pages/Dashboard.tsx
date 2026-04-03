@@ -210,11 +210,11 @@ export default function Dashboard() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <TaskCheck task={task} onToggle={handleToggle} />
                     <div>
-                      <div style={{ fontSize: 'var(--font-body)', fontWeight: 500, color: 'var(--text)' }}>
+                      <div style={{ fontSize: 'var(--font-size-body)', fontWeight: 500, color: 'var(--text)' }}>
                         {task.text}
                       </div>
                       {task.dueDate && (
-                        <span style={{ fontSize: 'var(--font-caption)', color: 'var(--error)' }}>
+                        <span style={{ fontSize: 'var(--font-size-caption)', color: 'var(--error)' }}>
                           📅 {formatShortDate(task.dueDate)}
                         </span>
                       )}
@@ -238,7 +238,7 @@ export default function Dashboard() {
           {pendingTasks.length === 0 ? (
             <div className="empty-section">
               <span style={{ fontSize: 28, opacity: 0.6 }}>✅</span>
-              <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)', marginTop: 4 }}>
+              <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-muted)', marginTop: 4 }}>
                 Aucune tâche en attente
               </p>
             </div>
@@ -257,7 +257,7 @@ export default function Dashboard() {
                   <TaskCheck task={task} onToggle={handleToggle} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{
-                      fontSize: 'var(--font-body)',
+                      fontSize: 'var(--font-size-body)',
                       color: 'var(--text)',
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
@@ -277,7 +277,7 @@ export default function Dashboard() {
                       {task.mentions?.map((a) => (
                         <Badge key={a} variant="info" size="sm">@{a}</Badge>
                       ))}
-                      <span style={{ fontSize: 'var(--font-micro)', color: 'var(--text-faint)' }}>
+                      <span style={{ fontSize: 'var(--font-size-micro)', color: 'var(--text-faint)' }}>
                         {labelFromPath(task.sourceFile)}
                       </span>
                     </div>
@@ -285,7 +285,7 @@ export default function Dashboard() {
                 </div>
               ))}
               {pendingTasks.length > 8 && (
-                <p style={{ fontSize: 'var(--font-caption)', color: 'var(--text-muted)', paddingLeft: 30 }}>
+                <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-muted)', paddingLeft: 30 }}>
                   +{pendingTasks.length - 8} autres tâches
                 </p>
               )}
@@ -305,14 +305,14 @@ export default function Dashboard() {
           {todayRdvs.length === 0 && upcomingRdvs.length === 0 ? (
             <div className="empty-section">
               <span style={{ fontSize: 28, opacity: 0.6 }}>📅</span>
-              <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)', marginTop: 4 }}>
+              <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-muted)', marginTop: 4 }}>
                 Pas de rendez-vous à venir
               </p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {todayRdvs.length > 0 && (
-                <p style={{ fontSize: 'var(--font-caption)', fontWeight: 600, color: 'var(--cat-sante)', marginBottom: 2 }}>
+                <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 600, color: 'var(--cat-sante)', marginBottom: 2 }}>
                   Aujourd'hui
                 </p>
               )}
@@ -321,7 +321,7 @@ export default function Dashboard() {
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span>{RDV_TYPE_EMOJI[rdv.type_rdv] || '📋'}</span>
-                      <strong style={{ fontSize: 'var(--font-body)' }}>
+                      <strong style={{ fontSize: 'var(--font-size-body)' }}>
                         {rdv.heure && `${rdv.heure} — `}{rdv.title}
                       </strong>
                       {rdv.enfant && (
@@ -329,7 +329,7 @@ export default function Dashboard() {
                       )}
                     </div>
                     {rdv.médecin && (
-                      <p style={{ fontSize: 'var(--font-caption)', color: 'var(--text-muted)', marginTop: 2 }}>
+                      <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-muted)', marginTop: 2 }}>
                         👨‍⚕️ {rdv.médecin}
                       </p>
                     )}
@@ -338,18 +338,18 @@ export default function Dashboard() {
               ))}
               {upcomingRdvs.length > 0 && (
                 <>
-                  <p style={{ fontSize: 'var(--font-caption)', fontWeight: 600, color: 'var(--text-muted)', marginTop: 8, marginBottom: 2 }}>
+                  <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 600, color: 'var(--text-muted)', marginTop: 8, marginBottom: 2 }}>
                     À venir
                   </p>
                   {upcomingRdvs.map((rdv) => (
                     <AccentRow key={rdv.sourceFile} accentColor="var(--info)">
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ fontSize: 'var(--font-caption)', fontWeight: 600, color: 'var(--info)' }}>
+                          <span style={{ fontSize: 'var(--font-size-caption)', fontWeight: 600, color: 'var(--info)' }}>
                             {formatShortDate(rdv.date_rdv)}
                           </span>
                           <span>{RDV_TYPE_EMOJI[rdv.type_rdv] || '📋'}</span>
-                          <span style={{ fontSize: 'var(--font-body)' }}>{rdv.title}</span>
+                          <span style={{ fontSize: 'var(--font-size-body)' }}>{rdv.title}</span>
                           {rdv.enfant && (
                             <Badge variant="info" size="sm">{rdv.enfant}</Badge>
                           )}
@@ -374,7 +374,7 @@ export default function Dashboard() {
           {todayMeals.length === 0 ? (
             <div className="empty-section">
               <span style={{ fontSize: 28, opacity: 0.6 }}>🍳</span>
-              <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)', marginTop: 4 }}>
+              <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-muted)', marginTop: 4 }}>
                 Menu non planifié
               </p>
             </div>
@@ -387,14 +387,14 @@ export default function Dashboard() {
                   </span>
                   <div>
                     <div style={{
-                      fontSize: 'var(--font-caption)',
+                      fontSize: 'var(--font-size-caption)',
                       fontWeight: 600,
                       textTransform: 'uppercase',
                       color: 'var(--text-muted)',
                     }}>
                       {meal.mealType}
                     </div>
-                    <div style={{ fontSize: 'var(--font-body)', fontWeight: 500, color: 'var(--text)' }}>
+                    <div style={{ fontSize: 'var(--font-size-body)', fontWeight: 500, color: 'var(--text)' }}>
                       {meal.text || 'Non planifié'}
                     </div>
                   </div>
@@ -417,21 +417,21 @@ export default function Dashboard() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               {pendingCourses.slice(0, 5).map((item, i) => (
                 <div key={i} style={{
-                  fontSize: 'var(--font-body)',
+                  fontSize: 'var(--font-size-body)',
                   color: 'var(--text)',
                   padding: '3px 0',
                   borderBottom: '1px solid var(--border-light)',
                 }}>
                   • {item.text}
                   {item.section && (
-                    <span style={{ fontSize: 'var(--font-micro)', color: 'var(--text-faint)', marginLeft: 6 }}>
+                    <span style={{ fontSize: 'var(--font-size-micro)', color: 'var(--text-faint)', marginLeft: 6 }}>
                       {item.section}
                     </span>
                   )}
                 </div>
               ))}
               {pendingCourses.length > 5 && (
-                <p style={{ fontSize: 'var(--font-caption)', color: 'var(--text-muted)' }}>
+                <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-muted)' }}>
                   +{pendingCourses.length - 5} autres articles
                 </p>
               )}
@@ -452,10 +452,10 @@ export default function Dashboard() {
               {nextAnniversaries.map((a, i) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' }}>
                   <div>
-                    <div style={{ fontSize: 'var(--font-body)', fontWeight: 600, color: 'var(--text)' }}>
+                    <div style={{ fontSize: 'var(--font-size-body)', fontWeight: 600, color: 'var(--text)' }}>
                       {a.name}
                     </div>
-                    <div style={{ fontSize: 'var(--font-caption)', color: 'var(--text-muted)' }}>
+                    <div style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-muted)' }}>
                       {a.date}
                       {a.nextAge != null && ` — ${a.nextAge} ans`}
                     </div>
@@ -494,14 +494,14 @@ export default function Dashboard() {
                 borderRadius: 'var(--radius-md)',
               }}>
                 <div style={{
-                  fontSize: 'var(--font-display)',
+                  fontSize: 'var(--font-size-display)',
                   fontWeight: 700,
                   color: stat.color,
                 }}>
                   {stat.value}
                 </div>
                 <div style={{
-                  fontSize: 'var(--font-caption)',
+                  fontSize: 'var(--font-size-caption)',
                   color: 'var(--text-muted)',
                   marginTop: 2,
                 }}>

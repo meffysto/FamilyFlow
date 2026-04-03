@@ -220,7 +220,7 @@ const DayCard = memo(function DayCard({ jour, isToday, meals, onSaveMeal }: DayC
   return (
     <GlassCard
       tinted={isToday}
-      accentColor="var(--accent)"
+      accentColor="var(--primary)"
     >
       <div className="meals-day-header">
         <span className="meals-day-name">{jour}</span>

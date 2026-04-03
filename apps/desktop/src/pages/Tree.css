@@ -703,7 +703,7 @@
   gap: 6px;
   padding: 10px 12px;
   border-radius: var(--radius-md);
-  background: var(--bg-secondary);
+  background: var(--card-alt);
   border: 1px solid var(--border);
   color: var(--text);
   font-size: var(--font-size-label);
@@ -1089,7 +1089,7 @@
 .tree-modal-tier-chip {
   font-size: 10px;
   color: var(--text-sub);
-  background: var(--bg-secondary);
+  background: var(--card-alt);
   border: 1px solid var(--border);
   border-radius: var(--radius-full);
   padding: 1px 8px;

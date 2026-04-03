@@ -34,9 +34,9 @@ export function SegmentedControl({ options, value, onChange }: SegmentedControlP
       style={{
         position: 'relative',
         display: 'inline-flex',
-        background: 'var(--bg-primary)',
+        background: 'var(--card-alt)',
         border: '1px solid var(--border)',
-        borderRadius: 8,
+        borderRadius: 'var(--radius-md)',
         padding: 3,
         gap: 0,
       }}
@@ -51,8 +51,9 @@ export function SegmentedControl({ options, value, onChange }: SegmentedControlP
             left: indicator.left,
             width: indicator.width,
             height: 'calc(100% - 6px)',
-            background: 'var(--accent)',
-            borderRadius: 6,
+            background: 'var(--card)',
+            borderRadius: 'var(--radius-sm)',
+            boxShadow: 'var(--shadow-xs)',
             transition: 'left 200ms ease, width 200ms ease',
           }}
         />
@@ -75,11 +76,11 @@ export function SegmentedControl({ options, value, onChange }: SegmentedControlP
               padding: '6px 14px',
               background: 'none',
               border: 'none',
-              borderRadius: 6,
+              borderRadius: 'var(--radius-sm)',
               cursor: 'pointer',
-              fontSize: 12,
-              fontWeight: isActive ? 600 : 400,
-              color: isActive ? 'white' : 'var(--text-secondary)',
+              fontSize: 'var(--font-size-caption)',
+              fontWeight: isActive ? 700 : 400,
+              color: isActive ? 'var(--text)' : 'var(--text-muted)',
               fontFamily: 'inherit',
               transition: 'color 150ms ease',
               whiteSpace: 'nowrap',
@@ -91,13 +92,13 @@ export function SegmentedControl({ options, value, onChange }: SegmentedControlP
             {option.badge !== undefined && (
               <span
                 style={{
-                  fontSize: 10,
+                  fontSize: 'var(--font-size-micro)',
                   fontWeight: 700,
                   lineHeight: 1.3,
                   padding: '1px 5px',
-                  borderRadius: 8,
-                  background: isActive ? 'rgba(255,255,255,0.25)' : 'var(--border)',
-                  color: isActive ? 'white' : 'var(--text-secondary)',
+                  borderRadius: 'var(--radius-full)',
+                  background: isActive ? 'var(--primary)' : 'var(--card-alt)',
+                  color: isActive ? 'var(--on-primary)' : 'var(--text-muted)',
                   transition: 'background 150ms ease, color 150ms ease',
                 }}
               >

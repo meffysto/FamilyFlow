@@ -43,12 +43,17 @@ export function GlassCard({
   return (
     <div
       style={{
-        background: tinted && accentColor
-          ? `color-mix(in srgb, ${accentColor} 6%, var(--bg-secondary))`
-          : 'var(--bg-secondary)',
-        border: '1px solid var(--border)',
-        borderRadius: 'var(--radius)',
+        position: 'relative',
         overflow: 'hidden',
+        borderRadius: 'var(--radius-xl)',
+        border: '0.5px solid var(--glass-border)',
+        background: tinted && accentColor
+          ? `linear-gradient(135deg, color-mix(in srgb, ${accentColor} 6%, var(--glass-bg)), var(--glass-bg) 60%)`
+          : 'var(--glass-bg)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        boxShadow: '0 4px 12px var(--glass-shadow)',
+        transition: 'box-shadow 200ms ease, transform 200ms ease',
       }}
     >
       {hasHeader && (
@@ -56,25 +61,26 @@ export function GlassCard({
           style={{
             display: 'flex',
             alignItems: 'center',
-            padding: '12px 16px',
-            borderBottom: collapsed ? 'none' : '1px solid var(--border)',
-            gap: 8,
+            padding: '14px 18px',
+            borderBottom: collapsed ? 'none' : '1px solid var(--border-light)',
+            gap: 10,
             cursor: isCollapsible ? 'pointer' : 'default',
             userSelect: 'none',
           }}
           onClick={isCollapsible ? onToggle : undefined}
         >
           {icon && (
-            <span style={{ fontSize: 16, lineHeight: 1 }}>{icon}</span>
+            <span style={{ fontSize: 17, lineHeight: 1 }}>{icon}</span>
           )}
 
           {title && (
             <span
               style={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: 'var(--text-primary)',
+                fontSize: 'var(--font-size-subtitle)',
+                fontWeight: 700,
+                color: 'var(--text)',
                 flex: 1,
+                lineHeight: 1.2,
               }}
             >
               {title}
@@ -84,13 +90,15 @@ export function GlassCard({
           {count !== undefined && (
             <span
               style={{
-                fontSize: 11,
+                fontSize: 'var(--font-size-label)',
                 fontWeight: 700,
-                color: 'white',
-                background: accentColor ?? 'var(--accent)',
-                borderRadius: 10,
-                padding: '2px 7px',
-                lineHeight: 1.4,
+                color: 'var(--on-primary)',
+                background: accentColor ?? 'var(--primary)',
+                borderRadius: 'var(--radius-base)',
+                padding: '3px 8px',
+                lineHeight: 1,
+                minWidth: 22,
+                textAlign: 'center',
               }}
             >
               {count}
@@ -104,10 +112,12 @@ export function GlassCard({
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                fontSize: 12,
-                color: accentColor ?? 'var(--accent)',
+                fontSize: 'var(--font-size-sm)',
+                color: accentColor ?? 'var(--primary)',
                 padding: 0,
-                fontWeight: 500,
+                fontWeight: 600,
+                fontFamily: 'inherit',
+                transition: 'opacity 100ms ease',
               }}
             >
               {linkText}
@@ -118,7 +128,7 @@ export function GlassCard({
             <span
               style={{
                 fontSize: 12,
-                color: 'var(--text-secondary)',
+                color: 'var(--text-faint)',
                 display: 'inline-block',
                 transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
                 transition: 'transform 300ms ease',
@@ -141,7 +151,7 @@ export function GlassCard({
           transition: isCollapsible ? 'max-height 300ms ease, opacity 300ms ease' : 'none',
         }}
       >
-        <div ref={bodyRef} style={{ padding: '12px 16px' }}>
+        <div ref={bodyRef} style={{ padding: '14px 18px' }}>
           {children}
         </div>
       </div>

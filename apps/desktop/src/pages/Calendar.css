@@ -69,14 +69,14 @@
 .rdv-title {
   font-size: 13px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .rdv-title--muted {
-  color: var(--text-secondary);
+  color: var(--text-muted);
   opacity: 0.8;
 }
 
@@ -92,7 +92,7 @@
   align-items: center;
   gap: 3px;
   font-size: 12px;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   white-space: nowrap;
 }
 
@@ -107,7 +107,7 @@
   background: transparent;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-size: 12px;
   font-weight: 500;
   font-family: inherit;
@@ -117,7 +117,7 @@
 }
 
 .calendar-past-toggle:hover {
-  background: var(--bg-secondary);
+  background: var(--card-alt);
 }
 
 /* ── Empty state ─────────────────────────────────────────────────────────── */
@@ -139,7 +139,7 @@
 
 .calendar-empty-text {
   font-size: 13px;
-  color: var(--text-secondary);
+  color: var(--text-muted);
 }
 
 /* ── Calendar grid view ─────────────────────────────────────────────────── */
@@ -160,8 +160,8 @@
   height: 32px;
   border-radius: 6px;
   border: 1px solid var(--border);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  background: var(--card-alt);
+  color: var(--text);
   font-size: 14px;
   cursor: pointer;
   transition: background 150ms;
@@ -176,7 +176,7 @@
 .calendar-month-label {
   font-size: 15px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text);
   text-transform: capitalize;
   letter-spacing: -0.2px;
 }
@@ -193,7 +193,7 @@
   text-align: center;
   font-size: 11px;
   font-weight: 700;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   padding: 6px 0 4px;
@@ -218,7 +218,7 @@
   transition: background 150ms, border-color 150ms;
   min-height: 40px;
   position: relative;
-  background: var(--bg-secondary);
+  background: var(--card-alt);
 }
 
 .calendar-cell--other-month {
@@ -227,13 +227,13 @@
 }
 
 .calendar-cell--other-month .calendar-day-number {
-  color: var(--text-secondary);
+  color: var(--text-muted);
   opacity: 0.35;
 }
 
 .calendar-cell--today {
   border-color: var(--cat-sante);
-  background: color-mix(in srgb, var(--cat-sante) 8%, var(--bg-secondary));
+  background: color-mix(in srgb, var(--cat-sante) 8%, var(--card-alt));
 }
 
 .calendar-cell--today .calendar-day-number {
@@ -250,14 +250,14 @@
 }
 
 .calendar-cell--selected {
-  background: color-mix(in srgb, var(--accent) 12%, var(--bg-secondary));
-  border-color: var(--accent);
+  background: color-mix(in srgb, var(--primary) 12%, var(--card-alt));
+  border-color: var(--primary);
 }
 
 .calendar-day-number {
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--text);
   line-height: 1;
 }
 
@@ -303,7 +303,7 @@
 .calendar-day-detail-title {
   font-size: 13px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text);
   text-transform: capitalize;
   margin-bottom: 4px;
 }
@@ -335,7 +335,7 @@
 .form-label {
   font-size: 12px;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-muted);
 }
 
 .form-required {
@@ -345,11 +345,11 @@
 
 .form-input {
   padding: 8px 10px;
-  background: var(--bg-primary);
+  background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font-size: 13px;
-  color: var(--text-primary);
+  color: var(--text);
   font-family: inherit;
   outline: none;
   transition: border-color 150ms;
@@ -361,11 +361,11 @@
 
 .form-select {
   padding: 8px 10px;
-  background: var(--bg-primary);
+  background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font-size: 13px;
-  color: var(--text-primary);
+  color: var(--text);
   font-family: inherit;
   outline: none;
   cursor: pointer;

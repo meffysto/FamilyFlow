@@ -29,7 +29,7 @@
   border-radius: 6px;
   border: 1px solid var(--border);
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-size: 14px;
   cursor: pointer;
   transition: background 150ms, color 150ms;
@@ -43,14 +43,14 @@
 }
 
 .meals-week-nav-btn:not(:disabled):hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  background: var(--card-alt);
+  color: var(--text);
 }
 
 .meals-week-label {
   font-size: 13px;
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--text);
   white-space: nowrap;
   min-width: 120px;
   text-align: center;
@@ -75,7 +75,7 @@
 .meals-day-name {
   font-size: 13px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text);
   flex: 1;
 }
 
@@ -99,11 +99,11 @@
 }
 
 .meals-meal-row:hover {
-  background: var(--bg-primary);
+  background: var(--bg);
 }
 
 .meals-meal-row--editing {
-  background: var(--bg-primary);
+  background: var(--bg);
   cursor: default;
 }
 
@@ -120,7 +120,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   width: 68px;
   flex-shrink: 0;
 }
@@ -128,14 +128,14 @@
 .meals-meal-text {
   flex: 1;
   font-size: 13px;
-  color: var(--text-primary);
+  color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .meals-meal-text--empty {
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-style: italic;
 }
 
@@ -144,19 +144,19 @@
 .meals-meal-input {
   flex: 1;
   padding: 4px 8px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--accent);
+  background: var(--card-alt);
+  border: 1px solid var(--primary);
   border-radius: 5px;
   font-size: 13px;
-  color: var(--text-primary);
+  color: var(--text);
   font-family: inherit;
   outline: none;
   min-width: 0;
 }
 
 .meals-meal-input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 20%, transparent);
 }
 
 /* ── Courses tab ─────────────────────────────────────────────────────────── */
@@ -171,11 +171,11 @@
 
 .meals-courses-stat {
   font-size: 13px;
-  color: var(--text-secondary);
+  color: var(--text-muted);
 }
 
 .meals-courses-stat strong {
-  color: var(--text-primary);
+  color: var(--text);
   font-weight: 600;
 }
 
@@ -198,7 +198,7 @@
 }
 
 .meals-course-section-header:hover {
-  background: var(--bg-secondary);
+  background: var(--card-alt);
 }
 
 .meals-course-section-label {
@@ -206,18 +206,18 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   flex: 1;
 }
 
 .meals-course-section-count {
   font-size: 11px;
-  color: var(--text-secondary);
+  color: var(--text-muted);
 }
 
 .meals-course-section-chevron {
   font-size: 11px;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   transition: transform 250ms ease;
   display: inline-block;
 }
@@ -247,7 +247,7 @@
 }
 
 .meals-course-item:hover {
-  background: var(--bg-primary);
+  background: var(--bg);
 }
 
 .meals-course-checkbox {
@@ -267,12 +267,12 @@
 }
 
 .meals-course-checkbox:hover {
-  border-color: var(--accent);
+  border-color: var(--primary);
 }
 
 .meals-course-checkbox--checked {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--primary);
+  border-color: var(--primary);
 }
 
 .meals-course-checkbox-mark {
@@ -285,12 +285,12 @@
 .meals-course-text {
   flex: 1;
   font-size: 13px;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .meals-course-text--done {
   text-decoration: line-through;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   opacity: 0.65;
 }
 
@@ -307,11 +307,11 @@
 .meals-add-input {
   flex: 1;
   padding: 7px 12px;
-  background: var(--bg-primary);
+  background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font-size: 13px;
-  color: var(--text-primary);
+  color: var(--text);
   font-family: inherit;
   outline: none;
   transition: border-color 150ms;
@@ -319,11 +319,11 @@
 }
 
 .meals-add-input:focus {
-  border-color: var(--accent);
+  border-color: var(--primary);
 }
 
 .meals-add-input::placeholder {
-  color: var(--text-secondary);
+  color: var(--text-muted);
 }
 
 /* ── Empty + loading states ──────────────────────────────────────────────── */
@@ -333,7 +333,7 @@
   align-items: center;
   justify-content: center;
   padding: 32px;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-size: 13px;
   gap: 8px;
 }

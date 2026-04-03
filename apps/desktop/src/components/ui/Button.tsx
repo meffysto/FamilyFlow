@@ -16,31 +16,31 @@ interface ButtonProps {
 
 const VARIANT_STYLES: Record<ButtonVariant, React.CSSProperties> = {
   primary: {
-    background: 'var(--accent)',
-    color: 'white',
+    background: 'var(--primary)',
+    color: 'var(--on-primary)',
     border: '1px solid transparent',
   },
   secondary: {
-    background: 'var(--bg-secondary)',
-    color: 'var(--text-primary)',
-    border: '1px solid var(--border)',
+    background: 'var(--tint)',
+    color: 'var(--primary)',
+    border: '1px solid transparent',
   },
   danger: {
-    background: 'transparent',
-    color: '#e53e3e',
-    border: '1px solid #e53e3e',
+    background: 'var(--error-bg)',
+    color: 'var(--error)',
+    border: '1px solid transparent',
   },
   ghost: {
     background: 'transparent',
-    color: 'var(--text-secondary)',
+    color: 'var(--text-muted)',
     border: '1px solid transparent',
   },
 };
 
 const SIZE_STYLES: Record<ButtonSize, React.CSSProperties> = {
-  sm: { padding: '5px 10px', fontSize: 12, borderRadius: 6 },
-  md: { padding: '8px 16px', fontSize: 13, borderRadius: 'var(--radius)' },
-  lg: { padding: '11px 22px', fontSize: 15, borderRadius: 'var(--radius)' },
+  sm: { padding: '6px 12px', fontSize: 'var(--font-size-sm)', borderRadius: 'var(--radius-sm)' },
+  md: { padding: '8px 16px', fontSize: 'var(--font-size-body)', borderRadius: 'var(--radius-md)' },
+  lg: { padding: '12px 20px', fontSize: 'var(--font-size-lg)', borderRadius: 'var(--radius-md)' },
 };
 
 export function Button({
@@ -66,7 +66,7 @@ export function Button({
         fontWeight: 600,
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.5 : 1,
-        transition: 'background 0.15s, opacity 0.15s, border-color 0.15s',
+        transition: 'filter 120ms ease, opacity 120ms ease, transform 80ms ease',
         fontFamily: 'inherit',
         lineHeight: 1.2,
         ...VARIANT_STYLES[variant],

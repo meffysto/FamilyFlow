@@ -13,14 +13,14 @@ export function EmptyState({ message, icon }: EmptyStateProps) {
         justifyContent: 'center',
         gap: 10,
         padding: '32px 16px',
-        color: 'var(--text-secondary)',
+        color: 'var(--text-muted)',
         textAlign: 'center',
       }}
     >
       {icon && (
         <span style={{ fontSize: 32, lineHeight: 1, opacity: 0.6 }}>{icon}</span>
       )}
-      <p style={{ fontSize: 13, lineHeight: 1.5, margin: 0 }}>{message}</p>
+      <p style={{ fontSize: 'var(--font-size-label)', lineHeight: 1.5, margin: 0 }}>{message}</p>
     </div>
   );
 }

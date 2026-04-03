@@ -20,13 +20,13 @@ export const AccentRow = React.memo(function AccentRow({
         gap: 12,
         padding: '10px 12px',
         borderLeft: `3px solid ${accentColor}`,
-        borderRadius: '0 6px 6px 0',
+        borderRadius: '0 var(--radius-sm) var(--radius-sm) 0',
         background: 'transparent',
         cursor: onClick ? 'pointer' : 'default',
-        transition: 'background 0.15s',
+        transition: 'background 150ms ease',
       }}
       onMouseEnter={(e) => {
-        if (onClick) (e.currentTarget as HTMLDivElement).style.background = 'var(--border)';
+        if (onClick) (e.currentTarget as HTMLDivElement).style.background = 'var(--card-alt)';
       }}
       onMouseLeave={(e) => {
         (e.currentTarget as HTMLDivElement).style.background = 'transparent';

@@ -29,7 +29,6 @@ export function Modal({ isOpen, onClose, title, children, width = 'md' }: ModalP
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Prevent scroll lock interference — desktop app has overflow:hidden anyway
   useEffect(() => {
     if (isOpen) panelRef.current?.focus();
   }, [isOpen]);
@@ -49,7 +48,6 @@ export function Modal({ isOpen, onClose, title, children, width = 'md' }: ModalP
         alignItems: 'center',
         justifyContent: 'center',
         padding: 24,
-        // Fade in/out
         opacity: isOpen ? 1 : 0,
         pointerEvents: isOpen ? 'all' : 'none',
         transition: 'opacity 200ms ease',
@@ -61,7 +59,7 @@ export function Modal({ isOpen, onClose, title, children, width = 'md' }: ModalP
         style={{
           position: 'absolute',
           inset: 0,
-          background: 'rgba(0,0,0,0.55)',
+          background: 'var(--overlay)',
           backdropFilter: 'blur(4px)',
           WebkitBackdropFilter: 'blur(4px)',
         }}
@@ -78,12 +76,11 @@ export function Modal({ isOpen, onClose, title, children, width = 'md' }: ModalP
           maxHeight: 'calc(100vh - 48px)',
           display: 'flex',
           flexDirection: 'column',
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--border)',
-          borderRadius: 12,
-          boxShadow: '0 24px 64px rgba(0,0,0,0.35)',
+          background: 'var(--card)',
+          border: '0.5px solid var(--glass-border)',
+          borderRadius: 'var(--radius-xl)',
+          boxShadow: 'var(--shadow-xl)',
           outline: 'none',
-          // Scale in/out
           transform: isOpen ? 'scale(1)' : 'scale(0.95)',
           transition: 'transform 200ms ease, opacity 200ms ease',
           overflow: 'hidden',
@@ -96,11 +93,15 @@ export function Modal({ isOpen, onClose, title, children, width = 'md' }: ModalP
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '16px 20px',
-            borderBottom: '1px solid var(--border)',
+            borderBottom: '1px solid var(--separator)',
             flexShrink: 0,
           }}
         >
-          <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
+          <span style={{
+            fontSize: 'var(--font-size-heading)',
+            fontWeight: 800,
+            color: 'var(--text)',
+          }}>
             {title}
           </span>
           <button
@@ -110,13 +111,22 @@ export function Modal({ isOpen, onClose, title, children, width = 'md' }: ModalP
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: 'var(--text-secondary)',
+              color: 'var(--text-faint)',
               fontSize: 18,
               lineHeight: 1,
-              padding: '2px 4px',
-              borderRadius: 4,
+              padding: '4px 6px',
+              borderRadius: 'var(--radius-full)',
               display: 'flex',
               alignItems: 'center',
+              transition: 'background 150ms ease, color 150ms ease',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = 'var(--card-alt)';
+              (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = 'none';
+              (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-faint)';
             }}
           >
             ✕
@@ -124,7 +134,7 @@ export function Modal({ isOpen, onClose, title, children, width = 'md' }: ModalP
         </div>
 
         {/* Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
           {children}
         </div>
       </div>

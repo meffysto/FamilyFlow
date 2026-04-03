@@ -100,7 +100,7 @@ function WelcomeScreen({ onVaultPicked }: { onVaultPicked: (path: string) => voi
         <div className="welcome-logo">🌳</div>
         <h1>FamilyFlow</h1>
         <p>Ouvre ton vault Obsidian pour commencer</p>
-        <button className="btn-primary" onClick={handlePick}>
+        <button className="btn-welcome" onClick={handlePick}>
           Sélectionner le vault
         </button>
       </div>
