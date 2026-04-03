@@ -5,8 +5,8 @@
  * Chaque ligne ouvre un modal pageSheet avec le composant existant.
  */
 
-import { useCallback, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Modal } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
 import { useVault, VAULT_PATH_KEY } from '../../contexts/VaultContext';
@@ -34,6 +34,7 @@ import { SettingsHelp } from '../../components/settings/SettingsHelp';
 import { SettingsZen, ZenConfig, DEFAULT_ZEN_CONFIG } from '../../components/settings/SettingsZen';
 import { SettingsAuth } from '../../components/settings/SettingsAuth';
 import { SettingsAutomations } from '../../components/settings/SettingsAutomations';
+import { SettingsGamiAdmin } from '../../components/settings/SettingsGamiAdmin';
 import { useTranslation } from 'react-i18next';
 
 const TELEGRAM_TOKEN_KEY = 'telegram_token';
@@ -44,7 +45,8 @@ type SectionId =
   | 'profiles' | 'appearance'
   | 'notifications' | 'zen' | 'vacation' | 'gamification' | 'automations'
   | 'ai' | 'telegram' | 'grandparents'
-  | 'auth' | 'parental' | 'vault' | 'help';
+  | 'auth' | 'parental' | 'vault' | 'help'
+  | 'gami-admin';
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
@@ -60,6 +62,9 @@ export default function SettingsScreen() {
 
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
   const [showVaultPicker, setShowVaultPicker] = useState(false);
+  const [adminUnlocked, setAdminUnlocked] = useState(false);
+  const tapCountRef = useRef(0);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [telegramToken, setTelegramToken] = useState('');
   const [telegramChatId, setTelegramChatId] = useState('');
   const [zenConfig, setZenConfig] = useState<ZenConfig>(DEFAULT_ZEN_CONFIG);
@@ -117,6 +122,7 @@ export default function SettingsScreen() {
     parental: t('settingsScreen.modalTitles.parental'),
     vault: t('settingsScreen.modalTitles.vault'),
     help: t('settingsScreen.modalTitles.help'),
+    'gami-admin': 'Admin Gamification',
   };
 
   return (
@@ -243,12 +249,40 @@ export default function SettingsScreen() {
           </>
         )}
 
+        {/* Admin caché — tap 5x sur la version */}
+        {adminUnlocked && !isChildMode && (
+          <>
+            <SettingsSectionHeader label="Debug" />
+            <SettingsRow
+              emoji="🛠️"
+              title="Admin Gamification"
+              subtitle="Modifier les données brutes"
+              onPress={() => setActiveSection('gami-admin')}
+              isFirst
+              isLast
+            />
+          </>
+        )}
+
         {/* App info */}
-        <View style={styles.appInfo}>
+        <TouchableOpacity
+          style={styles.appInfo}
+          activeOpacity={0.8}
+          onPress={() => {
+            tapCountRef.current += 1;
+            if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+            if (tapCountRef.current >= 5) {
+              tapCountRef.current = 0;
+              setAdminUnlocked(prev => !prev);
+            } else {
+              tapTimerRef.current = setTimeout(() => { tapCountRef.current = 0; }, 1500);
+            }
+          }}
+        >
           <Text style={[styles.appInfoText, { color: colors.textFaint }]}>{t('settingsScreen.appInfo.line1')}</Text>
           <Text style={[styles.appInfoText, { color: colors.textFaint }]}>{t('settingsScreen.appInfo.line2')}</Text>
           <Text style={[styles.appInfoText, { color: colors.textFaint }]}>Privacy-first · Offline-first</Text>
-        </View>
+        </TouchableOpacity>
       </ScrollView>
 
       {/* ── Modal unique pour le contenu de la section active ── */}
@@ -325,6 +359,9 @@ export default function SettingsScreen() {
               }} />
             )}
             {activeSection === 'help' && <SettingsHelp />}
+            {activeSection === 'gami-admin' && (
+              <SettingsGamiAdmin vault={vault} profiles={profiles} gamiData={gamiData} refresh={refresh} />
+            )}
           </ScrollView>
         </SafeAreaView>
       </Modal>
