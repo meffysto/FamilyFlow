@@ -141,7 +141,13 @@ const STAGE_EMOJI: Record<TreeStage, string> = {
 };
 
 /** Sprite idle du visiteur saga pour le portrait dans SagaWorldEvent */
-const VISITOR_IDLE_FRAME = require('../../assets/garden/animals/voyageur/idle_1.png');
+const VISITOR_IDLE_FRAMES: Record<string, number> = {
+  voyageur_argent: require('../../assets/garden/animals/voyageur/idle_1.png'),
+  source_cachee: require('../../assets/garden/animals/esprit_eau/idle_1.png'),
+  carnaval_ombres: require('../../assets/garden/animals/masque_ombre/idle_1.png'),
+  graine_anciens: require('../../assets/garden/animals/ancien_gardien/idle_1.png'),
+};
+const DEFAULT_VISITOR_IDLE = VISITOR_IDLE_FRAMES.voyageur_argent;
 
 /** Tooltip whisper quand on tap une culture en croissance */
 /** Tooltip info quand on tap une culture en croissance — emoji + nom + tâches restantes */
@@ -1455,7 +1461,7 @@ export default function TreeScreen() {
                 containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
                 onChapterComplete={handleSagaChapterComplete}
                 onDismiss={handleSagaDismiss}
-                visitorIdleFrame={VISITOR_IDLE_FRAME}
+                visitorIdleFrame={VISITOR_IDLE_FRAMES[sagaProgress?.sagaId ?? ''] ?? DEFAULT_VISITOR_IDLE}
                 onChoiceReaction={handleChoiceReaction}
               />
             )}

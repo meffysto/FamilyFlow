@@ -8,8 +8,9 @@
  * réagit au tap (haptic + saut), joue des animations de réaction aux choix saga,
  * puis repart vers la droite (normal ou dramatique si dernier chapitre).
  *
- * TODO: Remplacer les sprites placeholder par de vrais sprites PixelLab pixel art
- *       (style top-down RPG Mana Seed, 48x48 RGBA, voyageur capuche gris + détails ambrés)
+ * Chaque saga a son propre personnage visiteur pixel art (PixelLab) :
+ *   voyageur_argent → voyageur encapuchonné bleu, source_cachee → esprit eau,
+ *   carnaval_ombres → masqué violet, graine_anciens → vieux sage vert
  */
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -83,23 +84,69 @@ const SAGA_TINT: Record<string, string> = {
   'forest-whisper': '#90B880',
 };
 
-// ── Sprites ───────────────────────────────────────────
+// ── Sprites par saga ─────────────────────────────────
 
-const IDLE_FRAMES = [
-  // TODO: Remplacer par vrais sprites PixelLab
-  require('../../assets/garden/animals/voyageur/idle_1.png'),
-  require('../../assets/garden/animals/voyageur/idle_2.png'),
-];
+const SAGA_SPRITES: Record<string, { idle: number[]; walk: number[] }> = {
+  voyageur_argent: {
+    idle: [
+      require('../../assets/garden/animals/voyageur/idle_1.png'),
+      require('../../assets/garden/animals/voyageur/idle_2.png'),
+    ],
+    walk: [
+      require('../../assets/garden/animals/voyageur/walk_left_1.png'),
+      require('../../assets/garden/animals/voyageur/walk_left_2.png'),
+      require('../../assets/garden/animals/voyageur/walk_left_3.png'),
+      require('../../assets/garden/animals/voyageur/walk_left_4.png'),
+      require('../../assets/garden/animals/voyageur/walk_left_5.png'),
+      require('../../assets/garden/animals/voyageur/walk_left_6.png'),
+    ],
+  },
+  source_cachee: {
+    idle: [
+      require('../../assets/garden/animals/esprit_eau/idle_1.png'),
+      require('../../assets/garden/animals/esprit_eau/idle_2.png'),
+    ],
+    walk: [
+      require('../../assets/garden/animals/esprit_eau/walk_left_1.png'),
+      require('../../assets/garden/animals/esprit_eau/walk_left_2.png'),
+      require('../../assets/garden/animals/esprit_eau/walk_left_3.png'),
+      require('../../assets/garden/animals/esprit_eau/walk_left_4.png'),
+      require('../../assets/garden/animals/esprit_eau/walk_left_5.png'),
+      require('../../assets/garden/animals/esprit_eau/walk_left_6.png'),
+    ],
+  },
+  carnaval_ombres: {
+    idle: [
+      require('../../assets/garden/animals/masque_ombre/idle_1.png'),
+      require('../../assets/garden/animals/masque_ombre/idle_2.png'),
+    ],
+    walk: [
+      require('../../assets/garden/animals/masque_ombre/walk_left_1.png'),
+      require('../../assets/garden/animals/masque_ombre/walk_left_2.png'),
+      require('../../assets/garden/animals/masque_ombre/walk_left_3.png'),
+      require('../../assets/garden/animals/masque_ombre/walk_left_4.png'),
+      require('../../assets/garden/animals/masque_ombre/walk_left_5.png'),
+      require('../../assets/garden/animals/masque_ombre/walk_left_6.png'),
+    ],
+  },
+  graine_anciens: {
+    idle: [
+      require('../../assets/garden/animals/ancien_gardien/idle_1.png'),
+      require('../../assets/garden/animals/ancien_gardien/idle_2.png'),
+    ],
+    walk: [
+      require('../../assets/garden/animals/ancien_gardien/walk_left_1.png'),
+      require('../../assets/garden/animals/ancien_gardien/walk_left_2.png'),
+      require('../../assets/garden/animals/ancien_gardien/walk_left_3.png'),
+      require('../../assets/garden/animals/ancien_gardien/walk_left_4.png'),
+      require('../../assets/garden/animals/ancien_gardien/walk_left_5.png'),
+      require('../../assets/garden/animals/ancien_gardien/walk_left_6.png'),
+    ],
+  },
+};
 
-const WALK_FRAMES = [
-  // TODO: Remplacer par vrais sprites PixelLab
-  require('../../assets/garden/animals/voyageur/walk_left_1.png'),
-  require('../../assets/garden/animals/voyageur/walk_left_2.png'),
-  require('../../assets/garden/animals/voyageur/walk_left_3.png'),
-  require('../../assets/garden/animals/voyageur/walk_left_4.png'),
-  require('../../assets/garden/animals/voyageur/walk_left_5.png'),
-  require('../../assets/garden/animals/voyageur/walk_left_6.png'),
-];
+// Fallback sur le voyageur si sagaId inconnu
+const DEFAULT_SPRITES = SAGA_SPRITES.voyageur_argent;
 
 // ── Composant principal ───────────────────────────────
 
@@ -116,6 +163,9 @@ export function VisitorSlot({
   onReactionComplete,
 }: VisitorSlotProps) {
   const { primary, colors } = useThemeColors();
+  const sprites = SAGA_SPRITES[sagaId] ?? DEFAULT_SPRITES;
+  const IDLE_FRAMES = sprites.idle;
+  const WALK_FRAMES = sprites.walk;
 
   // ── État machine ──────────────────────────────────
   const [state, setState] = useState<VisitorState>('entering');
