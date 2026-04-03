@@ -129,9 +129,10 @@ None yet.
 | 260402-x63 | HUD flottant option A — position absolute + fond semi-transparent (écran tree) | 2026-04-02 | e3ae5ec | [260402-x63-hud-flottant-option-a-sur-l-cran-tree-re](./quick/260402-x63-hud-flottant-option-a-sur-l-cran-tree-re/) |
 | 260403-kjz | Supprimer le code debug saga dans tree.tsx | 2026-04-03 | 659a064 | [260403-kjz-supprimer-le-code-debug-saga-dans-tree-t](./quick/260403-kjz-supprimer-le-code-debug-saga-dans-tree-t/) |
 | 260403-q6y | Fix race condition sur les écritures famille.md (useFarm + useVault) | 2026-04-03 | a62b191 | [260403-q6y-fix-race-condition-on-famille-md-writes-](./quick/260403-q6y-fix-race-condition-on-famille-md-writes-/) |
+| 260403-qoo | Wrapper completeTask/openLootBox/completeSagaChapter famille.md via enqueueWrite | 2026-04-03 | 72db03b | [260403-qoo-wrapper-completetask-openlootbox-complet](./quick/260403-qoo-wrapper-completetask-openlootbox-complet/) |
 
 ## Session Continuity
 
-Last session: 2026-04-03T00:00:00.000Z
-Stopped at: Completed quick/260403-q6y-PLAN.md
+Last session: 2026-04-03T17:18:10Z
+Stopped at: Completed quick/260403-qoo-PLAN.md
 Resume file: None
