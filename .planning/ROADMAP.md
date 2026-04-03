@@ -222,10 +222,11 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 ### Phase 12: Templates onboarding vivants — contenu personnalisé et complet
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**Goal:** Les 8 packs de templates d'onboarding génèrent du contenu riche et personnalisé dès le premier jour — petit-déjeuner en semaine, exemples budget réalistes, famille élargie dans les anniversaires, et 2 nouveaux packs (stock maison + défis de lancement)
+**Requirements**: TMPL-01, TMPL-02, TMPL-03, TMPL-04, TMPL-05, TMPL-06, TMPL-07, TMPL-08
 **Depends on:** Phase 11
-**Plans:** 0 plans
+**Plans:** 2 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 12 to break down)
+- [ ] 12-01-PLAN.md — Enrichir 5 packs existants (repas, budget, anniversaires, vie-de-famille, medical) + i18n FR/EN
+- [ ] 12-02-PLAN.md — Ajouter 2 nouveaux packs (stock-initial, defis-lancement) + i18n FR/EN
