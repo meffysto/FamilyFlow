@@ -41,71 +41,9 @@ import {
   getTechBonuses,
 } from '../lib/mascot/tech-engine';
 import { parseGamification, serializeGamification, parseFamille } from '../lib/parser';
+import { enqueueWrite, patchProfileField, patchProfileFields } from '../lib/famille-queue';
 
 const FAMILLE_FILE = 'famille.md';
-
-// File-level write queue — serialise toutes les ecritures sur famille.md
-// pour eviter les race conditions (read-modify-write concurrent)
-let _familleWriteQueue: Promise<void> = Promise.resolve();
-
-function enqueueWrite<T = void>(fn: () => Promise<T>): Promise<T> {
-  const next = _familleWriteQueue.then(fn);
-  _familleWriteQueue = next.then(() => {}, () => {});
-  return next;
-}
-
-function patchProfileField(lines: string[], profileId: string, fieldKey: string, value: string): void {
-  let inSection = false;
-  let fieldLine = -1;
-  let lastPropIdx = -1;
-
-  for (let i = 0; i < lines.length; i++) {
-    if (lines[i].startsWith('### ')) {
-      if (inSection) break;
-      if (lines[i].replace('### ', '').trim() === profileId) inSection = true;
-    } else if (inSection && lines[i].includes(': ')) {
-      lastPropIdx = i;
-      if (lines[i].trim().startsWith(`${fieldKey}:`)) fieldLine = i;
-    }
-  }
-
-  const newValue = `${fieldKey}: ${value}`;
-  if (fieldLine >= 0) {
-    lines[fieldLine] = newValue;
-  } else if (lastPropIdx >= 0) {
-    lines.splice(lastPropIdx + 1, 0, newValue);
-  }
-}
-
-function patchProfileFields(lines: string[], profileId: string, fields: Record<string, string>): void {
-  let inSection = false;
-  let lastPropIdx = -1;
-  const fieldLines: Record<string, number> = {};
-
-  for (let i = 0; i < lines.length; i++) {
-    if (lines[i].startsWith('### ')) {
-      if (inSection) break;
-      if (lines[i].replace('### ', '').trim() === profileId) inSection = true;
-    } else if (inSection && lines[i].includes(': ')) {
-      lastPropIdx = i;
-      for (const key of Object.keys(fields)) {
-        if (lines[i].trim().startsWith(`${key}:`)) fieldLines[key] = i;
-      }
-    }
-  }
-
-  for (const [key, lineIdx] of Object.entries(fieldLines)) {
-    lines[lineIdx] = `${key}: ${fields[key]}`;
-  }
-
-  let insertOffset = 0;
-  for (const [key, value] of Object.entries(fields)) {
-    if (fieldLines[key] === undefined && lastPropIdx >= 0) {
-      lines.splice(lastPropIdx + 1 + insertOffset, 0, `${key}: ${value}`);
-      insertOffset++;
-    }
-  }
-}
 
 /** Helper : retourne le chemin du fichier gamification per-profil */
 function gamiFile(profileId: string): string {
