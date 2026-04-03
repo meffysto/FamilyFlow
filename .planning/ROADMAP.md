@@ -219,6 +219,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 9. Cadeaux Familiaux | v1.1 | 0/TBD | Not started | - |
 | 10. Compagnon Mascotte | v1.1 | 3/4 | In Progress|  |
 | 11. Sagas Immersives | v1.1 | 3/3 | Complete    | 2026-04-03 |
+| 12. Templates Onboarding | v1.1 | 0/2 | Not started | - |
+| 13. Événements Saisonniers | v1.1 | 0/TBD | Not started | - |
 
 ### Phase 12: Templates onboarding vivants — contenu personnalisé et complet
 
@@ -230,3 +232,16 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 Plans:
 - [ ] 12-01-PLAN.md — Enrichir 5 packs existants (repas, budget, anniversaires, vie-de-famille, medical) + i18n FR/EN
 - [ ] 12-02-PLAN.md — Ajouter 2 nouveaux packs (stock-initial, defis-lancement) + i18n FR/EN
+
+#### Phase 13: Événements Saisonniers
+**Goal**: Quand un événement saisonnier est actif (Pâques, Halloween, Noël...), un personnage visiteur thématique apparaît dans la scène ferme/arbre — même pattern que les sagas immersives (tap → dialogue → choix → récompenses loot saisonnières) mais déclenché par le calendrier au lieu du cycle saga
+**Depends on**: Phase 11
+**Requirements**: EVT-01, EVT-02, EVT-03
+**Success Criteria** (what must be TRUE):
+  1. Quand un événement saisonnier est actif (date calendrier), un personnage visiteur thématique pixel apparaît dans la scène de l'arbre avec une animation d'arrivée
+  2. Taper sur le visiteur ouvre un dialogue narratif thématique avec choix — même UX que les sagas (VisitorSlot, SagaWorldEvent)
+  3. Compléter l'interaction donne des récompenses loot box saisonnières (même pool que `trySeasonalDraw()` mais garanti, pas 20% chance)
+  4. Chaque événement est indépendant — ajouter un nouvel événement = ajouter un contenu sans modifier le moteur
+  5. `npx tsc --noEmit` passe sans nouvelles erreurs
+**Plans:** TBD
+Canonical refs: `lib/gamification/seasonal.ts`, `lib/gamification/seasonal-rewards.ts`, `lib/mascot/sagas-engine.ts`, `lib/mascot/sagas-content.ts`, `components/mascot/VisitorSlot.tsx`
