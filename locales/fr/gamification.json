@@ -6,6 +6,79 @@
         "done": "Suite de la saga demain...",
         "progress": "Chapitre {{current}}/{{total}} — {{title}}"
       }
+    },
+    "event": {
+      "nouvel-an": {
+        "title": "Visite du Lutin de Minuit",
+        "visitor_name": "Lutin de Minuit",
+        "narrative": "Un lutin pétillant surgit dans la nuit, son chapeau constellé d'étoiles et les bras chargés de confettis dorés !",
+        "choiceA": "🎉 Lancer les confettis avec lui",
+        "choiceB": "✨ Faire un vœu secret",
+        "choiceC": "🥂 Porter un toast à la famille",
+        "cliffhanger": "Le lutin disparaît dans un nuage de paillettes en laissant une surprise derrière lui..."
+      },
+      "st-valentin": {
+        "title": "Visite de Cupidon",
+        "visitor_name": "Cupidon",
+        "narrative": "Cupidon atterrit doucement près de ton arbre, son arc en bandoulière et un carquois plein de flèches dorées !",
+        "choiceA": "💌 Écrire un mot doux pour quelqu'un",
+        "choiceB": "🌹 Décorer l'arbre de roses",
+        "cliffhanger": "Cupidon repart en souriant, une petite flèche plantée dans l'arbre en signe de bonne fortune..."
+      },
+      "poisson-avril": {
+        "title": "Visite du Poisson Magique",
+        "visitor_name": "Poisson Magique",
+        "narrative": "Un poisson arc-en-ciel surgit en bondissant, les écailles qui brillent et un grand sourire espiègle sur le museau !",
+        "choiceA": "😄 Inventer une farce rigolote",
+        "choiceB": "🤫 Observer sans se trahir",
+        "choiceC": "🐟 Accepter d'être poissé avec le sourire",
+        "cliffhanger": "Le poisson replonge dans les fleurs en laissant une petite trace scintillante..."
+      },
+      "paques": {
+        "title": "Visite du Lapin de Pâques",
+        "visitor_name": "Lapin de Pâques",
+        "narrative": "Un lapin coloré bondit vers toi, les oreilles dressées et un panier d'œufs sous le bras !",
+        "choiceA": "🥚 Chercher les œufs cachés",
+        "choiceB": "🌸 Décorer l'arbre de fleurs",
+        "choiceC": "🍫 Partager le chocolat",
+        "cliffhanger": "Le lapin s'éloigne en sautillant, laissant quelques pépites dorées..."
+      },
+      "ete": {
+        "title": "Visite du Crabe Voyageur",
+        "visitor_name": "Crabe Voyageur",
+        "narrative": "Un petit crabe orange débarque en traînant un sac rempli de coquillages et de sable chaud !",
+        "choiceA": "🏖️ Construire un château de sable",
+        "choiceB": "🌊 Plonger dans les vagues",
+        "choiceC": "🍦 Partager une glace au soleil",
+        "cliffhanger": "Le crabe repart en faisant de petits signes de ses pinces, une coquille en cadeau..."
+      },
+      "rentree": {
+        "title": "Visite du Hibou Savant",
+        "visitor_name": "Hibou Savant",
+        "narrative": "Un hibou à lunettes se pose sur une branche, un carnet sous l'aile et l'air très sérieux mais bienveillant !",
+        "choiceA": "📚 Ouvrir un nouveau livre avec lui",
+        "choiceB": "✏️ Écrire ses objectifs de l'année",
+        "choiceC": "🎒 Préparer son cartable en chantant",
+        "cliffhanger": "Le hibou hoche la tête avec sagesse et repart silencieusement vers la forêt..."
+      },
+      "halloween": {
+        "title": "Visite du Fantôme Farceur",
+        "visitor_name": "Fantôme Farceur",
+        "narrative": "Un fantôme rigolo tourbillonne dans les airs, son drap blanc constellé de citrouilles et les yeux pétillants de malice !",
+        "choiceA": "👻 Faire peur ensemble",
+        "choiceB": "🕯️ Allumer des citrouilles",
+        "choiceC": "🍬 Distribuer des bonbons",
+        "cliffhanger": "Le fantôme s'envole en pouffant, laissant tomber quelques bonbons enchantés..."
+      },
+      "noel": {
+        "title": "Visite du Père Noël",
+        "visitor_name": "Père Noël",
+        "narrative": "Ho ho ho ! Le Père Noël arrive en soufflant dans le vent glacé, sa hotte bien remplie et les joues rouges de froid !",
+        "choiceA": "🎁 L'aider à distribuer les cadeaux",
+        "choiceB": "⛄ Construire un bonhomme de neige",
+        "choiceC": "🍪 Lui offrir des cookies et du lait chaud",
+        "cliffhanger": "Le Père Noël repart vers les étoiles en souhaitant joyeux Noël à toute la famille..."
+      }
     }
   },
   "rarity": {
