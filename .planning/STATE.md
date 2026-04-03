@@ -4,7 +4,7 @@ milestone: v1.1
 milestone_name: Ferme Enrichie
 status: executing
 stopped_at: Completed 13-evenements-saisonniers/13-02-PLAN.md
-last_updated: "2026-04-03T18:42:06.120Z"
+last_updated: "2026-04-03T18:47:04.976Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 10
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 
 ## Current Position
 
-Phase: 13 (evenements-saisonniers) — EXECUTING
-Plan: 2 of 2
+Phase: 13
+Plan: Not started
 Status: Ready to execute
 Last activity: 2026-04-03
 
