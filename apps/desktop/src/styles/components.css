@@ -1,0 +1,482 @@
+/* =============================================================================
+   FAMILYFLOW DESKTOP — REUSABLE COMPONENT CLASSES
+   Mirrors the mobile component language from components/ui/ and dashboard cards.
+   Composed via class names — no JavaScript required for basic states.
+   ============================================================================= */
+
+/* =============================================================================
+   GLASS CARD
+   Signature frosted-glass surface — equivalent to the mobile card style used
+   throughout dashboard sections (TreeView, TaskCard, RDVCard, etc.)
+   ============================================================================= */
+
+.glass-card {
+  position:       relative;
+  overflow:       hidden;
+  padding:        18px;
+  border-radius:  var(--radius-xl);             /* 16px */
+  border:         0.5px solid var(--glass-border);
+  background:     var(--glass-bg);
+  backdrop-filter:         blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:     0 4px 12px var(--glass-shadow);
+  transition:     box-shadow 200ms ease, transform 200ms ease;
+}
+
+/* Tinted variant — adds a brand-colored wash over the glass surface */
+.glass-card.tinted {
+  background-image: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--primary) 6%, transparent),
+    transparent 60%
+  );
+}
+
+/* Hover lift effect for interactive cards */
+.glass-card.interactive {
+  cursor: pointer;
+}
+
+.glass-card.interactive:hover {
+  box-shadow: 0 8px 20px var(--glass-shadow);
+  transform:  translateY(-1px);
+}
+
+/* =============================================================================
+   CARD HEADER
+   Used inside .glass-card to produce the title row with count badge and link
+   ============================================================================= */
+
+.card-header {
+  display:         flex;
+  flex-direction:  row;
+  align-items:     center;
+  justify-content: space-between;
+  gap:             var(--space-md); /* 8px */
+  margin-bottom:   14px;
+}
+
+.card-title {
+  font-size:   var(--font-size-subtitle); /* 17px */
+  font-weight: var(--font-weight-bold);  /* 700 */
+  color:       var(--text);
+  line-height: 1.2;
+  flex:        1 1 auto;
+  min-width:   0;
+  white-space: nowrap;
+  overflow:    hidden;
+  text-overflow: ellipsis;
+}
+
+/* Numeric count pill — primary background */
+.card-count {
+  display:         inline-flex;
+  align-items:     center;
+  justify-content: center;
+  min-width:       22px;
+  padding:         3px 8px;
+  border-radius:   var(--radius-base); /* 10px */
+  background:      var(--primary);
+  color:           var(--on-primary);
+  font-size:       var(--font-size-label); /* 13px */
+  font-weight:     var(--font-weight-bold);
+  line-height:     1;
+  flex-shrink:     0;
+}
+
+/* "Voir tout" / action link in header */
+.card-link {
+  font-size:   var(--font-size-sm);      /* 14px */
+  font-weight: var(--font-weight-semibold);
+  color:       var(--primary);
+  cursor:      pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+  transition:  opacity 100ms ease;
+}
+
+.card-link:hover {
+  text-decoration: underline;
+}
+
+/* =============================================================================
+   BUTTONS
+   Maps to components/ui/Button.tsx — btn, btn-primary, btn-secondary, etc.
+   ============================================================================= */
+
+.btn {
+  display:         inline-flex;
+  align-items:     center;
+  justify-content: center;
+  gap:             var(--space-xs);
+  font-family:     inherit;
+  font-weight:     var(--font-weight-semibold);
+  line-height:     1;
+  white-space:     nowrap;
+  text-decoration: none;
+  border:          none;
+  border-radius:   var(--radius-md); /* 8px */
+  cursor:          pointer;
+  transition:      filter 120ms ease, opacity 120ms ease, transform 80ms ease;
+  user-select:     none;
+}
+
+/* Variants */
+.btn-primary {
+  background: var(--primary);
+  color:      var(--on-primary);
+}
+
+.btn-secondary {
+  background: var(--tint);
+  color:      var(--primary);
+}
+
+.btn-danger {
+  background: var(--error-bg);
+  color:      var(--error);
+}
+
+.btn-ghost {
+  background: transparent;
+  color:      var(--text-muted);
+}
+
+/* Sizes */
+.btn-sm {
+  padding:   6px 12px;
+  font-size: var(--font-size-sm); /* 14px */
+}
+
+.btn-md {
+  padding:   10px 16px;
+  font-size: var(--font-size-body); /* 15px */
+}
+
+.btn-lg {
+  padding:   12px 20px;
+  font-size: var(--font-size-lg); /* 16px */
+}
+
+/* States */
+.btn:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+.btn:active:not(:disabled) {
+  opacity:   0.7;
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  opacity:        0.5;
+  cursor:         not-allowed;
+  pointer-events: none;
+}
+
+.btn:focus-visible {
+  outline:        2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* =============================================================================
+   CHIP
+   Filter/selection pill — maps to components/ui/Chip.tsx
+   ============================================================================= */
+
+.chip {
+  display:         inline-flex;
+  align-items:     center;
+  justify-content: center;
+  gap:             var(--space-xs);
+  padding:         6px 16px;
+  border-radius:   var(--radius-full); /* pill */
+  border:          1px solid var(--border);
+  background:      var(--card-alt);
+  color:           var(--text-sub);
+  font-size:       var(--font-size-body); /* 15px */
+  font-weight:     var(--font-weight-normal);
+  cursor:          pointer;
+  white-space:     nowrap;
+  user-select:     none;
+  transition:      background 150ms ease, border-color 150ms ease,
+                   color 150ms ease, font-weight 150ms ease;
+}
+
+.chip:hover {
+  border-color: var(--text-faint);
+  background:   var(--card);
+}
+
+/* Selected state */
+.chip.selected,
+.chip[aria-selected='true'] {
+  background:    var(--tint);
+  border-color:  var(--primary);
+  color:         var(--primary);
+  font-weight:   var(--font-weight-bold);
+}
+
+/* =============================================================================
+   BADGE
+   Inline status labels — maps to components/ui/Badge.tsx
+   ============================================================================= */
+
+.badge {
+  display:       inline-flex;
+  align-items:   center;
+  gap:           3px;
+  border-radius: var(--radius-xs); /* 4px */
+  font-weight:   var(--font-weight-semibold);
+  line-height:   1;
+  white-space:   nowrap;
+}
+
+/* Size variants */
+.badge-sm {
+  padding:   2px 4px;
+  font-size: var(--font-size-micro); /* 10px */
+}
+
+.badge-md {
+  padding:   4px 8px;
+  font-size: var(--font-size-caption); /* 12px */
+}
+
+/* Color variants */
+.badge-default {
+  background: var(--card-alt);
+  color:      var(--text-muted);
+}
+
+.badge-success {
+  background: var(--success-bg);
+  color:      var(--success-text);
+}
+
+.badge-warning {
+  background: var(--warning-bg);
+  color:      var(--warning-text);
+}
+
+.badge-error {
+  background: var(--error-bg);
+  color:      var(--error-text);
+}
+
+.badge-info {
+  background: var(--info-bg);
+  color:      var(--info);
+}
+
+.badge-primary {
+  background: var(--tint);
+  color:      var(--primary);
+}
+
+/* =============================================================================
+   ACCENT ROW
+   Left-border pattern for list items — RDV cards, insight list, quote entries.
+   Callers set --accent-color on the element for per-item colour control.
+   ============================================================================= */
+
+.accent-row {
+  border-left:   3px solid var(--accent-color, var(--primary));
+  padding-left:  10px;
+  padding-block: var(--space-md); /* 8px top + bottom */
+  transition:    border-color 150ms ease;
+}
+
+/* =============================================================================
+   MODAL HEADER
+   Full-width header used inside panel/modal/sheet components.
+   Maps to components/ui/ModalHeader.tsx
+   ============================================================================= */
+
+.modal-header {
+  position:      relative;
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  width:         100%;
+  padding:       20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header-title {
+  font-size:   var(--font-size-heading); /* 18px */
+  font-weight: var(--font-weight-heavy); /* 800 */
+  color:       var(--text);
+  text-align:  center;
+}
+
+/* Close / dismiss button — positioned absolutely to the right */
+.modal-header-close {
+  position:        absolute;
+  right:           16px;
+  top:             50%;
+  transform:       translateY(-50%);
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  width:           32px;
+  height:          32px;
+  border-radius:   var(--radius-full);
+  color:           var(--text-faint);
+  background:      transparent;
+  border:          none;
+  cursor:          pointer;
+  transition:      background 150ms ease, color 150ms ease;
+}
+
+.modal-header-close:hover {
+  background: var(--card-alt);
+  color:      var(--text-muted);
+}
+
+/* =============================================================================
+   EMPTY STATE
+   Centered placeholder when a list or section has no data
+   ============================================================================= */
+
+.empty-state {
+  display:     flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap:         var(--space-sm);
+  padding:     16px;
+  color:       var(--text-muted);
+  font-size:   var(--font-size-label); /* 13px */
+  font-style:  italic;
+  text-align:  center;
+  min-height:  80px;
+}
+
+.empty-state-icon {
+  font-size:    var(--font-size-display); /* 24px */
+  line-height:  1;
+  margin-bottom: var(--space-xs);
+}
+
+/* =============================================================================
+   FORM GROUP
+   Label + input + error helper text — shared input container pattern
+   ============================================================================= */
+
+.form-group {
+  display:       flex;
+  flex-direction: column;
+  gap:           var(--space-xs);
+}
+
+.form-label {
+  font-size:   var(--font-size-label); /* 13px */
+  font-weight: var(--font-weight-medium);
+  color:       var(--text-sub);
+}
+
+.form-input {
+  width:         100%;
+  padding:       var(--space-xl) var(--space-2xl); /* 12px 16px */
+  background:    var(--input-bg);
+  border:        1px solid var(--input-border);
+  border-radius: var(--radius-md);
+  color:         var(--text);
+  font-size:     var(--font-size-body);
+  transition:    border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.form-input:focus {
+  border-color: var(--primary);
+  box-shadow:   0 0 0 3px color-mix(in srgb, var(--primary) 15%, transparent);
+}
+
+.form-error {
+  font-size:  var(--font-size-caption); /* 12px */
+  color:      var(--error);
+  font-weight: var(--font-weight-medium);
+}
+
+.form-hint {
+  font-size: var(--font-size-caption);
+  color:     var(--text-faint);
+}
+
+/* =============================================================================
+   DIVIDER
+   Thin separator with optional label — used between list sections
+   ============================================================================= */
+
+.divider {
+  display:     flex;
+  align-items: center;
+  gap:         var(--space-md);
+  color:       var(--text-faint);
+  font-size:   var(--font-size-caption);
+}
+
+.divider::before,
+.divider::after {
+  content:    '';
+  flex:       1;
+  height:     1px;
+  background: var(--separator);
+}
+
+/* =============================================================================
+   SKELETON LOADER
+   Loading placeholder shimmer — equivalent to mobile skeleton screens
+   ============================================================================= */
+
+@keyframes skeleton-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+.skeleton {
+  border-radius: var(--radius-md);
+  background:    linear-gradient(
+    90deg,
+    var(--card-alt)  25%,
+    var(--border)    50%,
+    var(--card-alt)  75%
+  );
+  background-size: 200% 100%;
+  animation:       skeleton-shimmer 1.4s ease infinite;
+}
+
+.skeleton-text {
+  height:  14px;
+  width:   100%;
+}
+
+.skeleton-circle {
+  border-radius: var(--radius-full);
+}
+
+/* =============================================================================
+   TOAST / NOTIFICATION
+   Spring-animated notification — matches ToastContext mobile behaviour
+   ============================================================================= */
+
+.toast {
+  display:       flex;
+  align-items:   center;
+  gap:           var(--space-xl);
+  padding:       var(--space-xl) var(--space-2xl);
+  border-radius: var(--radius-lg);
+  background:    var(--card);
+  border:        1px solid var(--border);
+  box-shadow:    var(--shadow-lg);
+  font-size:     var(--font-size-body);
+  font-weight:   var(--font-weight-medium);
+  color:         var(--text);
+  max-width:     360px;
+  pointer-events: auto;
+}
+
+.toast-success { border-left: 3px solid var(--success); }
+.toast-warning { border-left: 3px solid var(--warning); }
+.toast-error   { border-left: 3px solid var(--error);   }
+.toast-info    { border-left: 3px solid var(--primary); }

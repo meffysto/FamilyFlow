@@ -1,0 +1,303 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Challenges page styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Active badge in title ──────────────────────────────────────────────── */
+
+.challenges-active-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  background: var(--cat-jeux);
+  color: white;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-bold);
+  padding: 0 6px;
+  margin-left: 10px;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+/* ── Stats row ──────────────────────────────────────────────────────────── */
+
+.challenge-stats {
+  display: flex;
+  align-items: center;
+  padding: 14px 20px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+}
+
+.challenge-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  padding: 0 12px;
+}
+
+.challenge-stat-divider {
+  width: 1px;
+  height: 32px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.challenge-stat-value {
+  font-size: var(--font-size-subtitle);
+  font-weight: var(--font-weight-bold);
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.challenge-stat-label {
+  font-size: var(--font-size-caption);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ── Filter bar ─────────────────────────────────────────────────────────── */
+
+.challenges-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+/* ── Défi list ──────────────────────────────────────────────────────────── */
+
+.defi-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Défi card ──────────────────────────────────────────────────────────── */
+
+.defi-card {
+  padding: 14px 16px;
+  border-left: 3px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--bg) 50%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: background 150ms;
+}
+
+.defi-card:hover {
+  background: color-mix(in srgb, var(--primary) 4%, transparent);
+}
+
+.defi-card--muted {
+  opacity: 0.65;
+}
+
+/* ── Card header ────────────────────────────────────────────────────────── */
+
+.defi-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.defi-card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.defi-card-title {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.defi-card-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.defi-card-desc {
+  font-size: var(--font-size-label);
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* ── Type badge ─────────────────────────────────────────────────────────── */
+
+.defi-type-badge {
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-bold);
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+/* ── Status dot ─────────────────────────────────────────────────────────── */
+
+.defi-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.defi-status-dot--active {
+  background: var(--success);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+}
+
+.defi-status-dot--completed {
+  background: var(--text-faint);
+}
+
+.defi-status-dot--abandoned {
+  background: var(--error);
+}
+
+/* ── Progress bar ───────────────────────────────────────────────────────── */
+
+.defi-card-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.defi-progress-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.defi-progress-track {
+  flex: 1;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--border);
+  overflow: hidden;
+}
+
+.defi-progress-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 400ms ease;
+}
+
+.defi-progress-pct {
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-muted);
+  white-space: nowrap;
+  min-width: 36px;
+  text-align: right;
+}
+
+.defi-days-label {
+  font-size: var(--font-size-caption);
+  color: var(--text-faint);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Card footer ────────────────────────────────────────────────────────── */
+
+.defi-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ── Participants ───────────────────────────────────────────────────────── */
+
+.defi-participants {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.defi-participant-pill {
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-semibold);
+  color: var(--primary);
+  background: var(--tint);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+/* ── Reward ─────────────────────────────────────────────────────────────── */
+
+.defi-reward {
+  font-size: var(--font-size-caption);
+  color: var(--warning-text);
+  background: var(--warning-bg);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+/* ── Dates ──────────────────────────────────────────────────────────────── */
+
+.defi-dates {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.defi-date {
+  font-size: var(--font-size-caption);
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+/* ── Empty state ────────────────────────────────────────────────────────── */
+
+.challenges-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  gap: 10px;
+}
+
+.challenges-empty-icon {
+  font-size: 32px;
+  opacity: 0.5;
+}
+
+.challenges-empty-text {
+  font-size: var(--font-size-body);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.challenges-empty-hint {
+  font-size: var(--font-size-caption);
+  color: var(--text-faint);
+  text-align: center;
+}

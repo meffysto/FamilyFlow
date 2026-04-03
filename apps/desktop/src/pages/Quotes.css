@@ -1,0 +1,172 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Quotes (Mots d'enfants) page styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Count badge in title ───────────────────────────────────────────────── */
+
+.quotes-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: var(--cat-famille);
+  color: white;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-bold);
+  padding: 0 7px;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+/* ── Toolbar ────────────────────────────────────────────────────────────── */
+
+.quotes-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.quotes-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.quotes-search {
+  width: 280px;
+  flex-shrink: 0;
+}
+
+/* ── Quote grid ─────────────────────────────────────────────────────────── */
+
+.quotes-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Quote card ─────────────────────────────────────────────────────────── */
+
+.quote-card {
+  display: flex;
+  gap: 0;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--cat-famille) 4%, transparent);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  transition: background 150ms, box-shadow 150ms;
+}
+
+.quote-card:hover {
+  background: color-mix(in srgb, var(--cat-famille) 8%, transparent);
+  box-shadow: var(--shadow-sm);
+}
+
+.quote-card-accent {
+  width: 4px;
+  flex-shrink: 0;
+  background: var(--cat-famille);
+  border-radius: 0;
+}
+
+.quote-card-body {
+  flex: 1;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.quote-card-text {
+  font-size: var(--font-size-body);
+  font-style: italic;
+  color: var(--text);
+  line-height: 1.6;
+  font-weight: var(--font-weight-normal);
+}
+
+.quote-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.quote-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quote-card-child {
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-bold);
+  color: var(--cat-famille);
+  background: color-mix(in srgb, var(--cat-famille) 12%, transparent);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+.quote-card-date {
+  font-size: var(--font-size-caption);
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.quote-card-context {
+  font-size: var(--font-size-caption);
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── Empty state ────────────────────────────────────────────────────────── */
+
+.quotes-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  gap: 8px;
+}
+
+.quotes-empty-icon {
+  font-size: 32px;
+  opacity: 0.45;
+}
+
+.quotes-empty-text {
+  font-size: var(--font-size-body);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.quotes-empty-hint {
+  font-size: var(--font-size-caption);
+  color: var(--text-faint);
+  text-align: center;
+}
+
+/* ── Form ───────────────────────────────────────────────────────────────── */
+
+.quote-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.quote-textarea {
+  resize: vertical;
+  min-height: 96px;
+  font-family: inherit;
+}

@@ -71,5 +71,9 @@
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.57.2"
   },
-  "private": true
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ]
 }

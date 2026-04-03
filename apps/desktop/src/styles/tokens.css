@@ -1,0 +1,227 @@
+/* =============================================================================
+   FAMILYFLOW DESKTOP — DESIGN TOKENS
+   Mirror of the React Native mobile token system (constants/colors.ts,
+   constants/spacing.ts, constants/typography.ts, constants/shadows.ts)
+   ============================================================================= */
+
+/* =============================================================================
+   LIGHT MODE — DEFAULT
+   ============================================================================= */
+
+:root {
+  /* ---------------------------------------------------------------------------
+     SURFACE COLORS
+     Background layers from deepest (bg) to highest elevation (card)
+  --------------------------------------------------------------------------- */
+  --bg:         #EDEAE4; /* warm sand — app background */
+  --card:       #FFFFFF; /* elevated card surface */
+  --card-alt:   #F9F8F5; /* slightly warm card variant */
+
+  /* ---------------------------------------------------------------------------
+     TEXT COLORS
+     Semantic hierarchy: text → textSub → textMuted → textFaint
+  --------------------------------------------------------------------------- */
+  --text:        #1A1A2E; /* primary body text */
+  --text-sub:    #3D3D56; /* secondary / supporting text */
+  --text-muted:  #6B7280; /* placeholder / de-emphasized */
+  --text-faint:  #9CA3AF; /* ghost / disabled text */
+
+  /* ---------------------------------------------------------------------------
+     BORDER & SEPARATOR
+  --------------------------------------------------------------------------- */
+  --border:        #DDD8D0;
+  --border-light:  #EDE9E3;
+  --separator:     #D0CBC3;
+
+  /* ---------------------------------------------------------------------------
+     FORM INPUTS
+  --------------------------------------------------------------------------- */
+  --input-bg:      #F9F8F5;
+  --input-border:  #D0CBC3;
+
+  /* ---------------------------------------------------------------------------
+     SEMANTIC STATUS COLORS
+  --------------------------------------------------------------------------- */
+  --error:        #EF4444;
+  --error-bg:     #FEE2E2;
+  --error-text:   #991B1B;
+
+  --warning:      #F59E0B;
+  --warning-bg:   #FEF3C7;
+  --warning-text: #92400E;
+
+  --success:      #10B981;
+  --success-bg:   #D1FAE5;
+  --success-text: #15803D;
+
+  --info:         #8B5CF6;
+  --info-bg:      #EDE9FE;
+
+  /* ---------------------------------------------------------------------------
+     ON-COLOR TEXT
+  --------------------------------------------------------------------------- */
+  --on-primary: #FFFFFF;
+
+  /* ---------------------------------------------------------------------------
+     GLASSMORPHISM
+     Frosted-glass card overlay system
+  --------------------------------------------------------------------------- */
+  --glass-bg:      rgba(255, 255, 255, 0.65);
+  --glass-border:  rgba(255, 255, 255, 0.45);
+  --glass-shadow:  rgba(0, 0, 0, 0.08);
+
+  /* ---------------------------------------------------------------------------
+     OVERLAY
+  --------------------------------------------------------------------------- */
+  --overlay: rgba(0, 0, 0, 0.5);
+
+  /* ---------------------------------------------------------------------------
+     CATEGORY ACCENT COLORS
+     Semantic domain colours for task / insight categories
+  --------------------------------------------------------------------------- */
+  --cat-organisation: #0D9488; /* teal */
+  --cat-sante:        #9333EA; /* purple */
+  --cat-souvenirs:    #E87B35; /* amber-orange */
+  --cat-jeux:         #16A34A; /* green */
+  --cat-famille:      #DB2777; /* pink */
+  --cat-systeme:      #6B7280; /* neutral gray */
+
+  /* ---------------------------------------------------------------------------
+     PROFILE THEME — DYNAMIC
+     Overridden at runtime via JavaScript (see ThemeContext equivalent).
+     Default: violet / purple theme.
+  --------------------------------------------------------------------------- */
+  --primary: #7C3AED;
+  --tint:    #EDE9FE;
+
+  /* ---------------------------------------------------------------------------
+     SPACING SCALE
+     Maps to constants/spacing.ts — Spacing enum (base unit: 2px)
+  --------------------------------------------------------------------------- */
+  --space-xxs: 2px;
+  --space-xs:  4px;
+  --space-sm:  6px;
+  --space-md:  8px;
+  --space-lg:  10px;
+  --space-xl:  12px;
+  --space-2xl: 16px;
+  --space-3xl: 20px;
+  --space-4xl: 24px;
+  --space-5xl: 32px;
+  --space-6xl: 48px;
+
+  /* ---------------------------------------------------------------------------
+     BORDER RADIUS SCALE
+     Maps to constants/spacing.ts — Radius enum
+  --------------------------------------------------------------------------- */
+  --radius-xxs:     2px;
+  --radius-xs:      4px;
+  --radius-sm:      6px;
+  --radius-md:      8px;
+  --radius-base:    10px;
+  --radius-lg:      12px;
+  --radius-lg-plus: 14px;
+  --radius-xl:      16px;
+  --radius-2xl:     20px;
+  --radius-3xl:     24px;
+  --radius-full:    9999px;
+
+  /* ---------------------------------------------------------------------------
+     TYPOGRAPHY SCALE
+     Maps to constants/typography.ts — FontSize enum (all in px)
+  --------------------------------------------------------------------------- */
+  --font-size-micro:    10px;
+  --font-size-code:     11px;
+  --font-size-caption:  12px;
+  --font-size-label:    13px;
+  --font-size-sm:       14px;
+  --font-size-body:     15px;
+  --font-size-lg:       16px;
+  --font-size-subtitle: 17px;
+  --font-size-heading:  18px;
+  --font-size-title:    20px;
+  --font-size-title-lg: 22px;
+  --font-size-display:  24px;
+  --font-size-icon:     28px;
+  --font-size-hero:     32px;
+
+  /* ---------------------------------------------------------------------------
+     FONT WEIGHTS
+     Maps to constants/typography.ts — FontWeight enum
+  --------------------------------------------------------------------------- */
+  --font-weight-normal:   400;
+  --font-weight-medium:   500;
+  --font-weight-semibold: 600;
+  --font-weight-bold:     700;
+  --font-weight-heavy:    800;
+
+  /* ---------------------------------------------------------------------------
+     SHADOW SCALE
+     Maps to constants/shadows.ts — Shadow tokens
+  --------------------------------------------------------------------------- */
+  --shadow-xs: 0 1px 3px  rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 4px  rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 2px 8px  rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 8px 24px rgba(0, 0, 0, 0.20);
+}
+
+/* =============================================================================
+   DARK MODE
+   Matches mobile DarkColors from constants/colors.ts
+   ============================================================================= */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Surfaces */
+    --bg:       #12151A;
+    --card:     #1C1F28;
+    --card-alt: #1C1F28;
+
+    /* Text */
+    --text:       #F0EDE8;
+    --text-sub:   #C8C4BC;
+    --text-muted: #8A8680;
+    --text-faint: #5C5955;
+
+    /* Borders */
+    --border:       #2A2D35;
+    --border-light: #2A2D35;
+    --separator:    #3A3D45;
+
+    /* Inputs */
+    --input-bg:     #1C1F28;
+    --input-border: #2A2D35;
+
+    /* Glassmorphism */
+    --glass-bg:     rgba(28, 31, 40, 0.65);
+    --glass-border: rgba(138, 134, 128, 0.2);
+    --glass-shadow: rgba(0, 0, 0, 0.3);
+
+    /* Category colors — brightened for dark backgrounds */
+    --cat-organisation: #2DD4BF;
+    --cat-sante:        #A78BFA;
+    --cat-souvenirs:    #FBBF24;
+    --cat-jeux:         #4ADE80;
+    --cat-famille:      #F472B6;
+    /* catSysteme stays neutral, no dark override needed */
+
+    /* Profile theme tint darkens on dark mode */
+    --tint: #2A1A4B;
+
+    /* Shadows stay the same token names — they adapt naturally on dark bg */
+    --shadow-xs: 0 1px 3px  rgba(0, 0, 0, 0.20);
+    --shadow-sm: 0 1px 4px  rgba(0, 0, 0, 0.25);
+    --shadow-md: 0 2px 8px  rgba(0, 0, 0, 0.30);
+    --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.40);
+    --shadow-xl: 0 8px 24px rgba(0, 0, 0, 0.50);
+  }
+}
+
+/* =============================================================================
+   THEME APPLICATION HELPER
+   Used by ThemeContext equivalent in Tauri — apply via JS:
+
+     document.documentElement.style.setProperty('--primary', '#DB2777');
+     document.documentElement.style.setProperty('--tint', '#FCE7F3');
+   ============================================================================= */

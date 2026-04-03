@@ -1,0 +1,315 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Moods page styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Average badge ──────────────────────────────────────────────────────── */
+
+.mood-avg-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-label);
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+.mood-avg-emoji {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.mood-avg-value {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-bold);
+}
+
+/* ── Timeline ───────────────────────────────────────────────────────────── */
+
+.mood-timeline {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.mood-timeline::-webkit-scrollbar {
+  height: 4px;
+}
+
+.mood-timeline::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: var(--radius-full);
+}
+
+.mood-timeline-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px 6px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  min-width: 44px;
+  flex-shrink: 0;
+  border: 1.5px solid transparent;
+  transition: background 120ms, border-color 120ms;
+  user-select: none;
+}
+
+.mood-timeline-cell:hover {
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
+}
+
+.mood-timeline-cell--today {
+  border-color: var(--primary);
+  background: var(--tint);
+}
+
+.mood-timeline-cell--empty {
+  opacity: 0.5;
+}
+
+.mood-timeline-cell--empty:hover {
+  opacity: 1;
+}
+
+.mood-timeline-date {
+  font-size: var(--font-size-micro);
+  color: var(--text-muted);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
+.mood-timeline-cell--today .mood-timeline-date {
+  color: var(--primary);
+  font-weight: var(--font-weight-bold);
+}
+
+.mood-timeline-emoji {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.mood-timeline-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  margin: 8px 0;
+}
+
+/* ── Bar chart ──────────────────────────────────────────────────────────── */
+
+.mood-chart {
+  display: flex;
+  gap: 8px;
+  height: 120px;
+  align-items: flex-end;
+}
+
+.mood-chart-bars {
+  flex: 1;
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+  height: 100%;
+}
+
+.mood-chart-bar-wrap {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  height: 100%;
+  cursor: default;
+}
+
+.mood-chart-bar-track {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  background: color-mix(in srgb, var(--border) 30%, transparent);
+  border-radius: var(--radius-xs) var(--radius-xs) 0 0;
+  overflow: hidden;
+}
+
+.mood-chart-bar-fill {
+  width: 100%;
+  border-radius: var(--radius-xs) var(--radius-xs) 0 0;
+  transition: height 400ms ease;
+  min-height: 4px;
+}
+
+.mood-chart-y-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  padding: 0 0 2px;
+}
+
+.mood-chart-y-label {
+  font-size: var(--font-size-micro);
+  color: var(--text-faint);
+  font-weight: var(--font-weight-medium);
+  text-align: right;
+  width: 12px;
+  line-height: 1;
+}
+
+/* ── Recent entry list ──────────────────────────────────────────────────── */
+
+.mood-entry-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mood-entry-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 6px 10px 12px;
+  border-left: 3px solid var(--border);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  cursor: pointer;
+  transition: background 120ms;
+}
+
+.mood-entry-row:hover {
+  background: color-mix(in srgb, var(--primary) 4%, transparent);
+}
+
+.mood-entry-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.mood-entry-emoji {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.mood-entry-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.mood-entry-date {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text);
+}
+
+.mood-entry-level {
+  font-size: var(--font-size-caption);
+  color: var(--text-muted);
+}
+
+.mood-entry-note {
+  flex: 1;
+  font-size: var(--font-size-label);
+  color: var(--text-sub);
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* ── Empty state ────────────────────────────────────────────────────────── */
+
+.mood-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  gap: 8px;
+}
+
+.mood-empty-icon {
+  font-size: 32px;
+  opacity: 0.45;
+}
+
+.mood-empty-text {
+  font-size: var(--font-size-body);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.mood-empty-hint {
+  font-size: var(--font-size-caption);
+  color: var(--text-faint);
+  text-align: center;
+}
+
+/* ── Form ───────────────────────────────────────────────────────────────── */
+
+.mood-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mood-level-picker {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.mood-level-btn {
+  flex: 1;
+  min-width: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 150ms, background 150ms, transform 80ms;
+  font-family: inherit;
+  user-select: none;
+}
+
+.mood-level-btn:hover {
+  border-color: var(--mood-color, var(--primary));
+  background: color-mix(in srgb, var(--mood-color, var(--primary)) 8%, transparent);
+  transform: translateY(-1px);
+}
+
+.mood-level-btn--selected {
+  border-color: var(--mood-color, var(--primary));
+  background: color-mix(in srgb, var(--mood-color, var(--primary)) 14%, transparent);
+}
+
+.mood-level-emoji {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.mood-level-label {
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.mood-textarea {
+  resize: vertical;
+  min-height: 72px;
+  font-family: inherit;
+}

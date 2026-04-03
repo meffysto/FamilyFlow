@@ -1,0 +1,411 @@
+/* =============================================================================
+   FAMILYFLOW DESKTOP — LAYOUT SYSTEM
+   Desktop-specific structural layout. Sidebar + main content shell that adapts
+   to the mobile tab-based navigation metaphor in a persistent sidebar pattern.
+   ============================================================================= */
+
+/* =============================================================================
+   APP ROOT LAYOUT
+   CSS Grid: fixed 240px sidebar + fluid main content, full viewport height.
+   ============================================================================= */
+
+.app-layout {
+  display:               grid;
+  grid-template-columns: 240px 1fr;
+  grid-template-rows:    1fr;
+  height:                100vh;
+  overflow:              hidden;
+}
+
+/* =============================================================================
+   SIDEBAR
+   Maps to the mobile tab bar + profile header. Persistent navigation column.
+   ============================================================================= */
+
+.sidebar {
+  grid-column: 1;
+  display:     flex;
+  flex-direction: column;
+  height:      100vh;
+  overflow-y:  auto;
+  overflow-x:  hidden;
+  background:  var(--card);
+  border-right: 1px solid var(--border);
+}
+
+/* ---------------------------------------------------------------------------
+   Sidebar Header — app name + active profile avatar pill
+--------------------------------------------------------------------------- */
+
+.sidebar-header {
+  display:         flex;
+  flex-direction:  row;
+  align-items:     center;
+  gap:             var(--space-md); /* 8px */
+  padding:         20px 16px;
+  flex-shrink:     0;
+  /* Draggable title bar region for native window drag on macOS */
+  -webkit-app-region: drag;
+}
+
+/* Profile avatar circle */
+.sidebar-avatar {
+  width:           28px;
+  height:          28px;
+  border-radius:   var(--radius-full);
+  background:      var(--tint);
+  color:           var(--primary);
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  font-size:       var(--font-size-label); /* 13px */
+  font-weight:     var(--font-weight-bold);
+  flex-shrink:     0;
+  overflow:        hidden;
+  -webkit-app-region: no-drag;
+}
+
+.sidebar-avatar img {
+  width:      100%;
+  height:     100%;
+  object-fit: cover;
+}
+
+.sidebar-app-name {
+  font-size:    var(--font-size-title-lg); /* 22px */
+  font-weight:  var(--font-weight-bold);
+  color:        var(--text);
+  line-height:  1;
+  -webkit-app-region: no-drag;
+}
+
+/* ---------------------------------------------------------------------------
+   Sidebar Navigation — maps to mobile tab routes + hidden screens
+--------------------------------------------------------------------------- */
+
+.sidebar-nav {
+  flex:       1 1 auto;
+  padding:    var(--space-md) var(--space-md); /* 8px */
+  display:    flex;
+  flex-direction: column;
+  gap:        2px;
+  overflow-y: auto;
+}
+
+/* Section label above a group of nav items */
+.sidebar-section-label {
+  padding:     8px 16px 4px;
+  font-size:   var(--font-size-caption); /* 12px */
+  font-weight: var(--font-weight-semibold);
+  color:       var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+/* Individual nav row */
+.sidebar-nav-item {
+  display:         flex;
+  flex-direction:  row;
+  align-items:     center;
+  padding:         8px 16px;
+  border-radius:   var(--radius-md); /* 8px */
+  font-size:       var(--font-size-body); /* 15px */
+  font-weight:     var(--font-weight-normal);
+  color:           var(--text-sub);
+  cursor:          pointer;
+  user-select:     none;
+  transition:      background 150ms ease, color 150ms ease;
+  gap:             0; /* icon handles its own margin */
+  text-decoration: none;
+  border:          none;
+  background:      none;
+  width:           100%;
+  text-align:      left;
+}
+
+.sidebar-nav-item:hover {
+  background: var(--card-alt);
+  color:      var(--text);
+}
+
+/* Active / selected route */
+.sidebar-nav-item.active,
+.sidebar-nav-item[aria-current='page'] {
+  background:  var(--tint);
+  color:       var(--primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Icon cell — fixed width keeps labels aligned */
+.sidebar-nav-item .nav-icon {
+  width:       24px;
+  text-align:  center;
+  flex-shrink: 0;
+  margin-right: 10px;
+  font-size:   var(--font-size-lg); /* 16px */
+  line-height: 1;
+}
+
+/* Optional badge count on nav items (notification dots) */
+.sidebar-nav-item .nav-badge {
+  margin-left: auto;
+  min-width:   18px;
+  height:      18px;
+  border-radius: var(--radius-full);
+  background:  var(--primary);
+  color:       var(--on-primary);
+  font-size:   var(--font-size-micro); /* 10px */
+  font-weight: var(--font-weight-bold);
+  display:     flex;
+  align-items: center;
+  justify-content: center;
+  padding:     0 5px;
+}
+
+/* ---------------------------------------------------------------------------
+   Sidebar Footer — version, profile switcher, settings
+--------------------------------------------------------------------------- */
+
+.sidebar-footer {
+  margin-top:   auto;
+  padding:      16px;
+  border-top:   1px solid var(--separator);
+  font-size:    var(--font-size-caption); /* 12px */
+  color:        var(--text-faint);
+  flex-shrink:  0;
+  display:      flex;
+  flex-direction: column;
+  gap:          var(--space-xs);
+}
+
+/* =============================================================================
+   MAIN CONTENT AREA
+   Scrollable content region — all page views render here.
+   ============================================================================= */
+
+.main-content {
+  grid-column: 2;
+  height:      100vh;
+  overflow-y:  auto;
+  overflow-x:  hidden;
+  background:  var(--bg);
+  padding:     24px 32px;
+  display:     flex;
+  flex-direction: column;
+}
+
+/* ---------------------------------------------------------------------------
+   Page Header — title row with optional actions (maps to mobile screen headers)
+--------------------------------------------------------------------------- */
+
+.page-header {
+  display:         flex;
+  flex-direction:  row;
+  align-items:     center;
+  justify-content: space-between;
+  margin-bottom:   24px;
+  gap:             var(--space-2xl);
+  flex-shrink:     0;
+}
+
+/* Left cluster: title + subtitle stacked */
+.page-header-left {
+  display:    flex;
+  flex-direction: column;
+  gap:        2px;
+  min-width:  0;
+}
+
+.page-title {
+  font-size:    var(--font-size-title); /* 20px */
+  font-weight:  var(--font-weight-bold);
+  color:        var(--text);
+  line-height:  1.2;
+  white-space:  nowrap;
+  overflow:     hidden;
+  text-overflow: ellipsis;
+}
+
+.page-subtitle {
+  font-size:  var(--font-size-label); /* 13px */
+  color:      var(--text-muted);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+/* Right cluster: action buttons */
+.page-header-actions {
+  display:     flex;
+  align-items: center;
+  gap:         var(--space-md);
+  flex-shrink: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   Content Grid
+   Max-width container that centres wide content and provides a card grid
+--------------------------------------------------------------------------- */
+
+.content-grid {
+  max-width:  900px;
+  width:      100%;
+  display:    flex;
+  flex-direction: column;
+  gap:        var(--space-2xl); /* 16px between sections */
+}
+
+/* Two-column card grid for dashboard sections */
+.content-grid-2col {
+  display:               grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap:                   var(--space-2xl); /* 16px */
+}
+
+/* Three-column grid for wider views */
+.content-grid-3col {
+  display:               grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:                   var(--space-2xl);
+}
+
+/* Single full-width column (default) */
+.content-grid-1col {
+  display:        flex;
+  flex-direction: column;
+  gap:            var(--space-2xl);
+}
+
+/* =============================================================================
+   PANEL / DETAIL SIDEBAR
+   Optional third column for detail views — hidden by default, revealed via JS
+   ============================================================================= */
+
+.app-layout.with-panel {
+  grid-template-columns: 240px 1fr 360px;
+}
+
+.detail-panel {
+  display:      flex;
+  flex-direction: column;
+  height:       100vh;
+  overflow-y:   auto;
+  background:   var(--card);
+  border-left:  1px solid var(--border);
+}
+
+.detail-panel-header {
+  padding:      20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink:  0;
+}
+
+.detail-panel-body {
+  flex:       1 1 auto;
+  overflow-y: auto;
+  padding:    var(--space-4xl);
+}
+
+/* =============================================================================
+   TOOLBAR / FILTER BAR
+   Horizontal control strip below page header — search, filters, sort
+   ============================================================================= */
+
+.toolbar {
+  display:     flex;
+  flex-direction: row;
+  align-items: center;
+  gap:         var(--space-md);
+  margin-bottom: var(--space-2xl);
+  flex-wrap:   wrap;
+}
+
+.toolbar-search {
+  flex:        1 1 200px;
+  max-width:   320px;
+  position:    relative;
+}
+
+.toolbar-search input {
+  width:          100%;
+  padding:        var(--space-md) var(--space-2xl);
+  padding-left:   36px; /* room for search icon */
+  border-radius:  var(--radius-full);
+}
+
+.toolbar-search-icon {
+  position:  absolute;
+  left:      12px;
+  top:       50%;
+  transform: translateY(-50%);
+  color:     var(--text-faint);
+  font-size: var(--font-size-body);
+  pointer-events: none;
+}
+
+.toolbar-chips {
+  display:  flex;
+  flex-direction: row;
+  gap:      var(--space-xs);
+  flex-wrap: wrap;
+}
+
+/* =============================================================================
+   RESPONSIVE ADJUSTMENTS
+   Compact layout for smaller desktop windows (< 1100px)
+   ============================================================================= */
+
+@media (max-width: 1100px) {
+  .app-layout {
+    grid-template-columns: 200px 1fr;
+  }
+
+  .main-content {
+    padding: 20px 24px;
+  }
+
+  .content-grid-3col {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 800px) {
+  /* Collapse sidebar to icon-only rail */
+  .app-layout {
+    grid-template-columns: 56px 1fr;
+  }
+
+  .sidebar-app-name,
+  .sidebar-section-label,
+  .sidebar-nav-item .nav-label,
+  .sidebar-footer {
+    display: none;
+  }
+
+  .sidebar-nav-item {
+    padding:         10px;
+    justify-content: center;
+  }
+
+  .sidebar-nav-item .nav-icon {
+    margin-right: 0;
+    width:        auto;
+  }
+
+  .sidebar-avatar {
+    margin-right: 0;
+  }
+
+  .sidebar-header {
+    justify-content: center;
+    padding:         16px 8px;
+  }
+
+  .content-grid-2col,
+  .content-grid-3col {
+    grid-template-columns: 1fr;
+  }
+
+  .main-content {
+    padding: 16px;
+  }
+}

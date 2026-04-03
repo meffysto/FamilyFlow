@@ -1,0 +1,307 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Settings page styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Page shell ─────────────────────────────────────────────────────────── */
+
+.settings-page {
+  max-width: 640px;
+}
+
+.settings-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xl); /* 16px */
+}
+
+/* ── Shared hints / notes ───────────────────────────────────────────────── */
+
+.settings-section-hint {
+  font-size: var(--font-size-caption); /* 12px */
+  color: var(--text-muted);
+  margin-bottom: var(--space-xl); /* 12px */
+  line-height: 1.4;
+}
+
+.settings-section-note {
+  font-size: var(--font-size-caption);
+  color: var(--text-faint);
+  margin-top: var(--space-xl);
+  line-height: 1.4;
+}
+
+.settings-empty-hint {
+  font-size: var(--font-size-body);
+  color: var(--text-muted);
+  padding: var(--space-3xl) 0;
+  text-align: center;
+}
+
+/* ── Profile list ───────────────────────────────────────────────────────── */
+
+.settings-profile-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settings-profile-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xl); /* 12px */
+  padding: 10px 12px;
+  border-radius: var(--radius-md); /* 8px */
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 150ms ease, border-color 150ms ease;
+  width: 100%;
+  font-family: inherit;
+}
+
+.settings-profile-row:hover {
+  background: var(--card-alt);
+}
+
+.settings-profile-row--active {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 6%, var(--card-alt));
+}
+
+.settings-profile-avatar {
+  font-size: 32px;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 40px;
+  text-align: center;
+}
+
+.settings-profile-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.settings-profile-name {
+  font-size: var(--font-size-body); /* 15px */
+  font-weight: var(--font-weight-semibold);
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.settings-profile-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md); /* 8px */
+}
+
+.settings-profile-level {
+  font-size: var(--font-size-caption); /* 12px */
+  color: var(--text-faint);
+  font-weight: var(--font-weight-medium);
+}
+
+.settings-profile-check {
+  flex-shrink: 0;
+  width: 24px;
+  text-align: center;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  color: var(--primary);
+  line-height: 1;
+}
+
+/* ── Theme grid ─────────────────────────────────────────────────────────── */
+
+.settings-theme-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xl); /* 12px */
+  align-items: center;
+}
+
+.settings-theme-circle {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.settings-theme-circle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.settings-theme-circle--active {
+  border-color: white;
+  box-shadow:
+    0 0 0 2px var(--primary),
+    0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.settings-theme-check {
+  color: white;
+  font-size: var(--font-size-body); /* 15px */
+  font-weight: var(--font-weight-heavy);
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Appearance ─────────────────────────────────────────────────────────── */
+
+.settings-appearance-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2xl);
+  flex-wrap: wrap;
+}
+
+.settings-appearance-label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.settings-label-text {
+  font-size: var(--font-size-body); /* 15px */
+  font-weight: var(--font-weight-medium);
+  color: var(--text);
+}
+
+/* ── Vault section ──────────────────────────────────────────────────────── */
+
+.settings-vault-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl); /* 12px */
+}
+
+.settings-stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+.settings-stat-label {
+  font-size: var(--font-size-label); /* 13px */
+  color: var(--text-muted);
+}
+
+.settings-stat-value {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text);
+}
+
+.settings-vault-path-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 4px;
+}
+
+.settings-vault-path-label {
+  font-size: var(--font-size-caption); /* 12px */
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.settings-vault-path {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Menlo', monospace;
+  font-size: var(--font-size-caption); /* 12px */
+  color: var(--text-sub);
+  background: var(--card-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm); /* 6px */
+  padding: 6px 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.settings-vault-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md); /* 8px */
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+
+.settings-vault-note {
+  font-size: var(--font-size-caption); /* 12px */
+  color: var(--text-faint);
+  font-style: italic;
+  line-height: 1.5;
+  padding-top: var(--space-xs);
+  border-top: 1px solid var(--separator);
+}
+
+/* ── A propos ───────────────────────────────────────────────────────────── */
+
+.settings-about-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl); /* 12px */
+}
+
+.settings-about-app {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xl);
+}
+
+.settings-about-logo {
+  font-size: 36px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.settings-about-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.settings-about-name {
+  font-size: var(--font-size-heading); /* 18px */
+  font-weight: var(--font-weight-bold);
+  color: var(--text);
+}
+
+.settings-about-version {
+  font-size: var(--font-size-caption); /* 12px */
+  color: var(--text-muted);
+}
+
+.settings-about-tagline {
+  font-size: var(--font-size-label); /* 13px */
+  font-weight: var(--font-weight-medium);
+  color: var(--primary);
+  line-height: 1.4;
+}
+
+.settings-about-tech {
+  font-size: var(--font-size-caption); /* 12px */
+  color: var(--text-faint);
+  line-height: 1.4;
+}

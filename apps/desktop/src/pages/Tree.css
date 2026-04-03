@@ -1,0 +1,1130 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Tree / Diorama page styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Page layout ──────────────────────────────────────────────────────────── */
+
+.tree-page {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  height: calc(100vh - 48px);
+  overflow: hidden;
+  padding: 0;
+}
+
+/* ── Left: diorama panel ──────────────────────────────────────────────────── */
+
+.tree-diorama-panel {
+  flex: 0 0 60%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.tree-diorama-container {
+  position: relative;
+  /* Maintain the 12×20 grid aspect ratio (3:5 = 0.6) */
+  aspect-ratio: 3 / 5;
+  max-height: calc(100vh - 80px);
+  max-width: min(100%, calc((100vh - 80px) * 3 / 5));
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2px solid var(--border);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.15),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+/* ── Layer 1: Base grass tile — CSS background-repeat ─────────────────────── */
+
+.tree-terrain-grass {
+  position: absolute;
+  inset: 0;
+  /* Repeating 32×32 grass tile — pixelated for crisp pixel art */
+  background-image: url(/assets/terrain/tilesets/grass_tile.png);
+  background-repeat: repeat;
+  /* Size must match Wang tile cell size: containerW/12 × containerH/20
+     Using calc() isn't possible for bg-size with container queries,
+     so we use a percentage: 1/12 = 8.333% wide, 1/20 = 5% tall */
+  background-size: 8.3333% 5%;
+  image-rendering: pixelated;
+  z-index: 0;
+}
+
+/* ── Layers 2–5: Wang tilemap (farmland, dirt, water, cobblestone) ─────────── */
+
+.tree-tilemap-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ── Layer 6: Ground decorations (grass tufts, rocks, flowers, bushes) ────── */
+
+.tree-decorations-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* ── Season illustration overlay — atmosphere only, top 50% ──────────────── */
+
+.tree-illustration-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  overflow: hidden;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.tree-illustration {
+  width: 100%;
+  height: 200%;
+  object-fit: cover;
+  object-position: center top;
+  /* Reduced opacity: adds atmosphere without hiding pixel art terrain */
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.tree-illustration-fade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60%;
+  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.0) 60%, rgba(0, 0, 0, 0.0));
+  pointer-events: none;
+}
+
+/* ── Particle layer ───────────────────────────────────────────────────────── */
+
+.tree-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 10;
+}
+
+.tree-particle {
+  position: absolute;
+  top: -20px;
+  border-radius: 50%;
+  opacity: 0;
+  animation: particle-fall linear infinite;
+}
+
+@keyframes particle-fall {
+  0%   { transform: translateY(-20px) rotate(0deg); opacity: 0; }
+  8%   { opacity: 0.85; }
+  88%  { opacity: 0.55; }
+  100% { transform: translateY(110%) rotate(360deg); opacity: 0; }
+}
+
+/* Summer fireflies float up */
+.tree-particle--float {
+  animation-name: particle-float;
+}
+
+@keyframes particle-float {
+  0%   { transform: translateY(0) scale(0.6); opacity: 0; }
+  20%  { opacity: 0.9; transform: translateY(-15%) scale(1); }
+  80%  { opacity: 0.5; }
+  100% { transform: translateY(-80%) scale(0.4); opacity: 0; }
+}
+
+/* ── Tree sprite (z-index: 5 — above tilemap and decorations) ─────────────── */
+
+.tree-sprite-group {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  z-index: 5;
+  align-items: center;
+  transform-origin: bottom center;
+}
+
+.tree-shadow {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  image-rendering: pixelated;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.tree-sprite {
+  image-rendering: pixelated;
+  animation: tree-breathe 3s ease-in-out infinite;
+  transform-origin: bottom center;
+  display: block;
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes tree-breathe {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.02); }
+}
+
+/* ── Farm crops grid ──────────────────────────────────────────────────────── */
+
+.tree-farm-grid {
+  position: absolute;
+  display: grid;
+  gap: 4px;
+  z-index: 5;
+}
+
+.tree-crop-slot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tree-crop-empty {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 50% 40%,
+    rgba(101, 67, 33, 0.35) 0%,
+    rgba(101, 67, 33, 0.10) 70%,
+    transparent 100%
+  );
+  border: 1px dashed rgba(101, 67, 33, 0.25);
+}
+
+.tree-crop-img {
+  image-rendering: pixelated;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  animation: crop-sway 2.5s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+.tree-crop-img--b {
+  animation-delay: -1.25s;
+}
+
+.tree-crop-img--golden {
+  filter: sepia(0.4) saturate(2) hue-rotate(10deg);
+}
+
+@keyframes crop-sway {
+  0%, 100% { transform: rotate(0deg); }
+  25%       { transform: rotate(1.5deg); }
+  75%       { transform: rotate(-1.5deg); }
+}
+
+/* ── Buildings ────────────────────────────────────────────────────────────── */
+
+.tree-building {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  z-index: 5;
+  align-items: center;
+  gap: 2px;
+}
+
+.tree-building-img {
+  image-rendering: pixelated;
+  display: block;
+  animation: building-pulse 4s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+@keyframes building-pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.04); }
+}
+
+.tree-building-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 4px;
+  padding: 1px 4px;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  letter-spacing: 0.2px;
+}
+
+/* ── Animals / inhabitants ────────────────────────────────────────────────── */
+
+.tree-animal {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 5;
+}
+
+.tree-animal-img {
+  image-rendering: pixelated;
+  display: block;
+}
+
+.tree-animal-img--b {
+  display: none;
+}
+
+.tree-animal--frame-b .tree-animal-img--a {
+  display: none;
+}
+
+.tree-animal--frame-b .tree-animal-img--b {
+  display: block;
+}
+
+/* ── Seed fallback ────────────────────────────────────────────────────────── */
+
+.tree-seed-fallback {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  animation: tree-breathe 3s ease-in-out infinite;
+  transform-origin: bottom center;
+  z-index: 5;
+}
+
+.tree-seed-emoji {
+  font-size: 64px;
+  line-height: 1;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+}
+
+.tree-seed-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 6px;
+  padding: 2px 8px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+/* ── Right: info panel ────────────────────────────────────────────────────── */
+
+.tree-info-panel {
+  flex: 0 0 40%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 16px 16px 0;
+  overflow-y: auto;
+}
+
+/* ── Profile tree card ────────────────────────────────────────────────────── */
+
+.tree-profile-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tree-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tree-species-emoji {
+  font-size: 32px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.tree-species-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tree-species-name {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  color: var(--text);
+  text-transform: capitalize;
+}
+
+.tree-stage-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--tint);
+  border: 1px solid var(--primary);
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-semibold);
+  color: var(--primary);
+  width: fit-content;
+}
+
+.tree-level-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tree-level-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 35%, transparent);
+}
+
+.tree-level-number {
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-heavy);
+  line-height: 1;
+}
+
+.tree-level-label {
+  font-size: 9px;
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.85;
+}
+
+.tree-xp-block {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tree-xp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tree-xp-label {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-muted);
+}
+
+.tree-xp-value {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-sub);
+}
+
+.tree-xp-track {
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--border);
+  overflow: hidden;
+}
+
+.tree-xp-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, var(--primary), color-mix(in srgb, var(--primary) 60%, #fff 40%));
+  transition: width 600ms ease;
+}
+
+.tree-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.tree-stat-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 6px;
+  border-radius: var(--radius-md);
+  background: var(--card-alt);
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
+.tree-stat-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.tree-stat-val {
+  font-size: var(--font-size-subtitle);
+  font-weight: var(--font-weight-bold);
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.tree-stat-lbl {
+  font-size: var(--font-size-micro);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ── Farm status card ─────────────────────────────────────────────────────── */
+
+.tree-farm-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tree-farm-summary {
+  font-size: var(--font-size-caption);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.tree-crop-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tree-crop-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tree-crop-icon-img {
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.tree-crop-icon-emoji {
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.tree-crop-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.tree-crop-name {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-medium);
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tree-crop-progress-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.tree-crop-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--primary);
+  transition: width 400ms ease;
+}
+
+.tree-crop-progress-fill--mature {
+  background: #22c55e;
+}
+
+.tree-crop-pct {
+  font-size: var(--font-size-micro);
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tree-crop-pct--mature {
+  color: #22c55e;
+  font-weight: var(--font-weight-bold);
+}
+
+.tree-buildings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tree-building-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tree-building-img-sm {
+  width: 28px;
+  height: 28px;
+  image-rendering: pixelated;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.tree-building-emoji {
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.tree-building-name {
+  flex: 1;
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-medium);
+  color: var(--text);
+}
+
+.tree-building-level {
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-bold);
+  color: var(--primary);
+  background: var(--tint);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-full);
+  padding: 1px 7px;
+  white-space: nowrap;
+}
+
+.tree-farm-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 0;
+}
+
+.tree-farm-empty-icon {
+  font-size: 28px;
+  opacity: 0.4;
+}
+
+.tree-farm-empty-text {
+  font-size: var(--font-size-caption);
+  color: var(--text-faint);
+  text-align: center;
+  font-style: italic;
+}
+
+/* ── Inhabitants card ─────────────────────────────────────────────────────── */
+
+.tree-inhabitants-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tree-inhabitants-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tree-inhabitant-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--card-alt);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.tree-inhabitant-img {
+  image-rendering: pixelated;
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.tree-inhabitant-emoji {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.tree-inhabitants-empty {
+  font-size: var(--font-size-caption);
+  color: var(--text-faint);
+  font-style: italic;
+  padding: 8px 0;
+}
+
+/* ── Actions row ──────────────────────────────────────────────────────────── */
+
+.tree-actions-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.tree-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-semibold);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 150ms, border-color 150ms, transform 100ms;
+}
+
+.tree-action-btn:hover {
+  background: var(--card-alt);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.tree-action-btn:active {
+  transform: scale(0.97);
+}
+
+.tree-action-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* ── No profile ───────────────────────────────────────────────────────────── */
+
+.tree-no-profile {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 24px;
+  color: var(--text-muted);
+  font-size: var(--font-size-body);
+}
+
+.tree-no-profile-icon {
+  font-size: 48px;
+  opacity: 0.4;
+}
+
+.tree-no-profile-hint {
+  font-size: var(--font-size-caption);
+  color: var(--text-faint);
+  text-align: center;
+}
+
+/* ── Toast ────────────────────────────────────────────────────────────────── */
+
+.tree-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: rgba(30, 30, 30, 0.92);
+  color: #fff;
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-medium);
+  padding: 10px 20px;
+  border-radius: var(--radius-full);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms ease, transform 200ms ease;
+  white-space: nowrap;
+  z-index: 9999;
+}
+
+.tree-toast--visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── Clickable crop slots ─────────────────────────────────────────────────── */
+
+.tree-crop-slot--clickable {
+  border-radius: 8px;
+  transition: transform 120ms ease, filter 120ms ease;
+}
+
+.tree-crop-slot--clickable:hover {
+  transform: scale(1.12);
+  filter: brightness(1.15);
+}
+
+.tree-crop-slot--clickable:active {
+  transform: scale(1.06);
+}
+
+/* ── Clickable buildings ──────────────────────────────────────────────────── */
+
+.tree-building--clickable {
+  transition: transform 120ms ease, filter 120ms ease;
+}
+
+.tree-building--clickable:hover {
+  transform: scale(1.08) translateY(-2px);
+  filter: brightness(1.12);
+}
+
+.tree-building--clickable:active {
+  transform: scale(1.04);
+}
+
+/* ── Crop info modal content ──────────────────────────────────────────────── */
+
+.tree-modal-crop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  padding: 8px 0;
+}
+
+.tree-modal-crop-emoji {
+  font-size: 52px;
+  line-height: 1;
+}
+
+.tree-modal-crop-body {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text);
+  margin: 0;
+}
+
+.tree-modal-crop-hint {
+  font-size: var(--font-size-label);
+  color: var(--text-muted);
+  margin: 0;
+  font-style: italic;
+}
+
+.tree-modal-crop-progress {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.tree-modal-progress-track {
+  width: 100%;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--border);
+  overflow: hidden;
+}
+
+.tree-modal-progress-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, var(--primary), color-mix(in srgb, var(--primary) 60%, #fff 40%));
+  transition: width 400ms ease;
+}
+
+.tree-modal-progress-label {
+  font-size: var(--font-size-label);
+  color: var(--text-sub);
+}
+
+.tree-modal-crop-golden {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-semibold);
+  color: #f59e0b;
+  margin: 0;
+  padding: 6px 12px;
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.tree-modal-crop-seasonal {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-semibold);
+  color: #22c55e;
+  margin: 0;
+  padding: 6px 12px;
+  background: rgba(34, 197, 94, 0.1);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.tree-modal-mobile-tip {
+  font-size: var(--font-size-caption);
+  color: var(--text-faint);
+  margin: 8px 0 0;
+  font-style: italic;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  width: 100%;
+  text-align: center;
+}
+
+/* ── Building info modal content ──────────────────────────────────────────── */
+
+.tree-modal-building {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tree-modal-building-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tree-modal-building-emoji {
+  font-size: 40px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.tree-modal-building-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.tree-modal-building-name {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  color: var(--text);
+  text-transform: capitalize;
+}
+
+.tree-modal-building-level {
+  font-size: var(--font-size-label);
+  color: var(--text-muted);
+}
+
+.tree-modal-building-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--card-alt);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.tree-modal-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.tree-modal-stat-label {
+  font-size: var(--font-size-label);
+  color: var(--text-muted);
+}
+
+.tree-modal-stat-value {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text);
+  text-align: right;
+}
+
+.tree-modal-stat-value--ready {
+  color: #22c55e;
+}
+
+/* ── Catalog modal content (seeds + buildings) ────────────────────────────── */
+
+.tree-modal-catalog {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tree-modal-catalog-note {
+  font-size: var(--font-size-caption);
+  color: var(--text-muted);
+  margin: 0;
+  font-style: italic;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tree-modal-catalog-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tree-modal-catalog-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--card-alt);
+  border: 1px solid var(--border);
+  transition: border-color 150ms;
+}
+
+.tree-modal-catalog-item--locked {
+  opacity: 0.45;
+}
+
+.tree-modal-catalog-emoji {
+  font-size: 28px;
+  line-height: 1;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.tree-modal-catalog-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.tree-modal-catalog-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tree-modal-catalog-name {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text);
+  text-transform: capitalize;
+}
+
+.tree-modal-catalog-badge {
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+.tree-modal-catalog-badge--seasonal {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.tree-modal-catalog-badge--rare {
+  background: rgba(139, 92, 246, 0.15);
+  color: #a78bfa;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.tree-modal-catalog-badge--locked {
+  background: rgba(107, 114, 128, 0.15);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.tree-modal-catalog-badge--available {
+  background: rgba(var(--primary-rgb, 99, 102, 241), 0.1);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+
+.tree-modal-catalog-meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: var(--font-size-micro);
+  color: var(--text-muted);
+}
+
+.tree-modal-building-tiers {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.tree-modal-tier-chip {
+  font-size: 10px;
+  color: var(--text-sub);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 1px 8px;
+  white-space: nowrap;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .tree-page {
+    flex-direction: column;
+    height: auto;
+    overflow: auto;
+  }
+
+  .tree-diorama-panel {
+    flex: none;
+    width: 100%;
+    padding: 16px 16px 8px;
+  }
+
+  .tree-diorama-container {
+    /* On small screens, relax to 3:4 to give more width */
+    aspect-ratio: 3 / 4;
+    max-width: 100%;
+    max-height: none;
+  }
+
+  .tree-info-panel {
+    flex: none;
+    padding: 0 16px 16px;
+    overflow: visible;
+  }
+
+  .tree-actions-row {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

@@ -1,0 +1,357 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Wishlist page styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Stats bar ──────────────────────────────────────────────────────────── */
+
+.wish-stats-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 14px 20px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+}
+
+.wish-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  padding: 0 12px;
+}
+
+.wish-stat-divider {
+  width: 1px;
+  height: 32px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.wish-stat-value {
+  font-size: var(--font-size-subtitle);
+  font-weight: var(--font-weight-bold);
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.wish-stat-value--remaining {
+  color: var(--primary);
+}
+
+.wish-stat-label {
+  font-size: var(--font-size-caption);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ── Filter bar ─────────────────────────────────────────────────────────── */
+
+.wishlist-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.wishlist-chip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.wishlist-chip-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 2px;
+}
+
+.wish-group-toggle {
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  transition: background 150ms, border-color 150ms, color 150ms;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.wish-group-toggle:hover {
+  background: var(--card);
+  color: var(--text);
+}
+
+.wish-group-toggle--active {
+  background: var(--tint);
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* ── Wish list ──────────────────────────────────────────────────────────── */
+
+.wish-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* ── Wish row ───────────────────────────────────────────────────────────── */
+
+.wish-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px;
+  border-radius: var(--radius-sm);
+  transition: background 120ms;
+}
+
+.wish-row:hover {
+  background: color-mix(in srgb, var(--primary) 4%, transparent);
+}
+
+.wish-row--done {
+  opacity: 0.55;
+}
+
+/* ── Wish checkbox ──────────────────────────────────────────────────────── */
+
+.wish-checkbox {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: border-color 200ms, background 200ms;
+}
+
+.wish-checkbox:hover {
+  border-color: var(--primary);
+  background: var(--tint);
+}
+
+.wish-checkbox--checked {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.wish-checkbox-mark {
+  color: white;
+  font-size: 11px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.wish-checkbox:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Row body ───────────────────────────────────────────────────────────── */
+
+.wish-row-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wish-row-text {
+  font-size: var(--font-size-body);
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wish-row-text--done {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.wish-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* ── Enfant pill ────────────────────────────────────────────────────────── */
+
+.wish-enfant-pill {
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-semibold);
+  color: var(--primary);
+  background: var(--tint);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+/* ── Stars ──────────────────────────────────────────────────────────────── */
+
+.wish-stars {
+  font-size: 11px;
+  color: var(--warning);
+  letter-spacing: -1px;
+}
+
+/* ── Notes ──────────────────────────────────────────────────────────────── */
+
+.wish-notes {
+  font-size: var(--font-size-caption);
+  color: var(--text-muted);
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+/* ── Row right ──────────────────────────────────────────────────────────── */
+
+.wish-row-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.wish-price {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-sub);
+  white-space: nowrap;
+}
+
+.wish-link-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  text-decoration: none;
+  transition: background 120ms, color 120ms;
+  flex-shrink: 0;
+}
+
+.wish-link-btn:hover {
+  background: var(--tint);
+  color: var(--primary);
+  text-decoration: none;
+}
+
+/* ── Section divider ────────────────────────────────────────────────────── */
+
+.wish-section-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.wish-section-divider::before,
+.wish-section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--separator);
+}
+
+/* ── Occasion section header ────────────────────────────────────────────── */
+
+.wish-occasion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 4px;
+  margin-bottom: 4px;
+}
+
+.wish-occasion-label {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+}
+
+.wish-occasion-count {
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-faint);
+  background: var(--card-alt);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+/* ── Empty state ────────────────────────────────────────────────────────── */
+
+.wish-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  gap: 10px;
+}
+
+.wish-empty-icon {
+  font-size: 32px;
+  opacity: 0.5;
+}
+
+.wish-empty-text {
+  font-size: var(--font-size-body);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ── Add modal form ─────────────────────────────────────────────────────── */
+
+.wish-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.wish-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 72px;
+  font-family: inherit;
+}

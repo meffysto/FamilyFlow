@@ -1,0 +1,298 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Tasks page styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Filter bar ─────────────────────────────────────────────────────────── */
+
+.tasks-filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.tasks-chip-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tasks-chip-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+/* ── Task group ─────────────────────────────────────────────────────────── */
+
+.task-group {
+  margin-bottom: 8px;
+}
+
+.task-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 4px;
+  margin-bottom: 4px;
+}
+
+.task-group-label {
+  font-size: var(--font-label);
+  font-weight: var(--weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.task-group-count {
+  font-size: var(--font-caption);
+  font-weight: var(--weight-semibold);
+  color: var(--text-faint);
+  background: var(--card-alt);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.task-group-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ── Task checkbox ──────────────────────────────────────────────────────── */
+
+.task-checkbox {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 200ms ease;
+}
+
+.task-checkbox:hover {
+  border-color: var(--primary);
+  background: var(--tint);
+}
+
+.task-checkbox--checked {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.task-checkbox-mark {
+  color: var(--on-primary);
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.task-checkbox:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Task row ───────────────────────────────────────────────────────────── */
+
+.task-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  flex-wrap: wrap;
+}
+
+.task-row-recurrence {
+  font-size: var(--font-caption);
+  color: var(--text-faint);
+}
+
+.task-row-assignees {
+  display: flex;
+  gap: 4px;
+}
+
+.task-assignee-pill {
+  font-size: var(--font-micro);
+  font-weight: var(--weight-semibold);
+  color: var(--primary);
+  background: var(--tint);
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+}
+
+.task-points-badge {
+  font-size: var(--font-micro);
+  font-weight: var(--weight-bold);
+  color: var(--warning-text);
+  background: var(--warning-bg);
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+}
+
+/* ── Overdue section ────────────────────────────────────────────────────── */
+
+.overdue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ── Empty state ────────────────────────────────────────────────────────── */
+
+.tasks-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+}
+
+.tasks-empty-icon {
+  font-size: 32px;
+  opacity: 0.6;
+  margin-bottom: 8px;
+}
+
+.tasks-empty-text {
+  font-size: var(--font-body);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.tasks-empty-hint {
+  font-size: var(--font-caption);
+  color: var(--text-faint);
+  text-align: center;
+  margin-top: 4px;
+}
+
+/* ── Completed tasks toggle ─────────────────────────────────────────────── */
+
+.tasks-completed-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  margin-top: 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: background 150ms;
+}
+
+.tasks-completed-toggle:hover {
+  background: var(--card-alt);
+}
+
+/* ── Add task form ──────────────────────────────────────────────────────── */
+
+.add-task-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-label {
+  font-size: var(--font-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text-sub);
+}
+
+.form-required {
+  color: var(--error);
+}
+
+.form-input {
+  padding: 8px 12px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-body);
+  color: var(--text);
+  outline: none;
+  transition: border-color 150ms;
+}
+
+.form-input:focus {
+  border-color: var(--primary);
+}
+
+.form-input--date {
+  max-width: 200px;
+}
+
+.form-select {
+  padding: 8px 12px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-body);
+  color: var(--text);
+  outline: none;
+  cursor: pointer;
+}
+
+.form-select:focus {
+  border-color: var(--primary);
+}
+
+.form-hint {
+  font-size: var(--font-caption);
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+.form-assignees {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.form-assignee-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.form-assignee-checkbox {
+  accent-color: var(--primary);
+}
+
+.form-assignee-name {
+  font-size: var(--font-sm);
+  color: var(--text-sub);
+}
+
+.form-error {
+  font-size: var(--font-sm);
+  color: var(--error);
+  font-weight: var(--weight-medium);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}

@@ -1,0 +1,399 @@
+/* =============================================================================
+   CALENDAR PAGE STYLES
+   Rendez-vous list + month calendar grid for the FamilyFlow desktop app.
+   ============================================================================= */
+
+/* ── Page toolbar ────────────────────────────────────────────────────────── */
+
+.calendar-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.calendar-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ── Search bar ─────────────────────────────────────────────────────────── */
+
+.calendar-search {
+  max-width: 320px;
+  margin-bottom: 16px;
+}
+
+/* ── RDV sections ───────────────────────────────────────────────────────── */
+
+.calendar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+/* ── RDV row layout ─────────────────────────────────────────────────────── */
+
+.rdv-row-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.rdv-row-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rdv-date {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cat-sante);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.rdv-date--muted {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.rdv-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rdv-title--muted {
+  color: var(--text-secondary);
+  opacity: 0.8;
+}
+
+.rdv-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.rdv-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* ── Passés toggle button ───────────────────────────────────────────────── */
+
+.calendar-past-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  margin-top: 4px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 150ms;
+  user-select: none;
+}
+
+.calendar-past-toggle:hover {
+  background: var(--bg-secondary);
+}
+
+/* ── Empty state ─────────────────────────────────────────────────────────── */
+
+.calendar-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  text-align: center;
+  gap: 6px;
+}
+
+.calendar-empty-icon {
+  font-size: 28px;
+  opacity: 0.45;
+}
+
+.calendar-empty-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* ── Calendar grid view ─────────────────────────────────────────────────── */
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.calendar-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 150ms;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+
+.calendar-nav-btn:hover {
+  background: var(--border);
+}
+
+.calendar-month-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: capitalize;
+  letter-spacing: -0.2px;
+}
+
+/* Weekday header row */
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.calendar-weekday {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 6px 0 4px;
+}
+
+/* Day grid */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.calendar-cell {
+  aspect-ratio: 1 / 1;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 2px 3px;
+  cursor: default;
+  transition: background 150ms, border-color 150ms;
+  min-height: 40px;
+  position: relative;
+  background: var(--bg-secondary);
+}
+
+.calendar-cell--other-month {
+  background: transparent;
+  border-color: transparent;
+}
+
+.calendar-cell--other-month .calendar-day-number {
+  color: var(--text-secondary);
+  opacity: 0.35;
+}
+
+.calendar-cell--today {
+  border-color: var(--cat-sante);
+  background: color-mix(in srgb, var(--cat-sante) 8%, var(--bg-secondary));
+}
+
+.calendar-cell--today .calendar-day-number {
+  color: var(--cat-sante);
+  font-weight: 700;
+}
+
+.calendar-cell--has-rdv {
+  cursor: pointer;
+}
+
+.calendar-cell--has-rdv:hover {
+  background: var(--border);
+}
+
+.calendar-cell--selected {
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg-secondary));
+  border-color: var(--accent);
+}
+
+.calendar-day-number {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+/* RDV dots row */
+.calendar-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  margin-top: 3px;
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+.calendar-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.calendar-dot--planifie {
+  background: var(--cat-sante);
+}
+
+.calendar-dot--fait {
+  background: var(--success, #10B981);
+}
+
+.calendar-dot--annule {
+  background: var(--error, #EF4444);
+}
+
+/* ── Selected day RDV list ──────────────────────────────────────────────── */
+
+.calendar-day-detail {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.calendar-day-detail-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: capitalize;
+  margin-bottom: 4px;
+}
+
+/* ── Add RDV form ───────────────────────────────────────────────────────── */
+
+.add-rdv-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-field--full {
+  grid-column: 1 / -1;
+}
+
+.form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.form-required {
+  color: var(--error, #EF4444);
+  margin-left: 2px;
+}
+
+.form-input {
+  padding: 8px 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--text-primary);
+  font-family: inherit;
+  outline: none;
+  transition: border-color 150ms;
+}
+
+.form-input:focus {
+  border-color: var(--cat-sante);
+}
+
+.form-select {
+  padding: 8px 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--text-primary);
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 150ms;
+}
+
+.form-select:focus {
+  border-color: var(--cat-sante);
+}
+
+.form-error {
+  font-size: 12px;
+  color: var(--error, #EF4444);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+
+/* ── Muted row overlay for passés ───────────────────────────────────────── */
+
+.rdv-row--past {
+  opacity: 0.7;
+}

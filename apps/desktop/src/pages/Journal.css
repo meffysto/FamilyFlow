@@ -1,0 +1,425 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Journal bébé — page styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── No-children state ───────────────────────────────────────────────────── */
+
+.journal-no-children {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  gap: 10px;
+}
+
+.journal-no-children-icon {
+  font-size: 48px;
+  opacity: 0.4;
+}
+
+.journal-no-children-text {
+  font-size: var(--font-size-title, 16px);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.journal-no-children-hint {
+  font-size: var(--font-size-body, 13px);
+  color: var(--text-secondary);
+  text-align: center;
+  max-width: 340px;
+}
+
+/* ── Single-child label ──────────────────────────────────────────────────── */
+
+.journal-single-child {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 6px 0;
+}
+
+/* ── Date navigation bar ─────────────────────────────────────────────────── */
+
+.journal-date-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 10px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 8px);
+}
+
+.journal-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--text-primary);
+  line-height: 1;
+  flex-shrink: 0;
+  transition: background 0.15s, opacity 0.15s;
+  font-family: inherit;
+}
+
+.journal-nav-btn:hover:not(:disabled) {
+  background: var(--bg-secondary);
+}
+
+.journal-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.journal-date-center {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  justify-content: center;
+}
+
+.journal-date-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: capitalize;
+}
+
+.journal-today-btn {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-radius: 5px;
+  padding: 3px 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+  line-height: 1.4;
+}
+
+.journal-today-btn:hover {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+/* ── Loading ─────────────────────────────────────────────────────────────── */
+
+.journal-loading {
+  text-align: center;
+  padding: 48px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+/* ── Empty day state ─────────────────────────────────────────────────────── */
+
+.journal-empty-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  gap: 10px;
+}
+
+.journal-empty-avatar {
+  font-size: 56px;
+  line-height: 1;
+  opacity: 0.5;
+}
+
+.journal-empty-day-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.journal-empty-day-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+/* ── Stats banner ────────────────────────────────────────────────────────── */
+
+.journal-stats-banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 8px);
+  margin-bottom: 16px;
+}
+
+.journal-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+}
+
+.journal-stat-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.journal-stat-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.journal-stat-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* ── Content layout ──────────────────────────────────────────────────────── */
+
+.journal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Section card ────────────────────────────────────────────────────────── */
+
+.journal-section-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 8px);
+  overflow: hidden;
+}
+
+.journal-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.journal-section-title-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.journal-section-icon {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.journal-section-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.journal-section-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 10px;
+  line-height: 1.4;
+}
+
+.journal-add-btn {
+  font-size: 11px;
+  font-weight: 600;
+  background: none;
+  border: 1px solid;
+  border-radius: 5px;
+  padding: 4px 9px;
+  cursor: pointer;
+  font-family: inherit;
+  opacity: 0.85;
+  transition: opacity 0.15s, background 0.15s;
+  line-height: 1.4;
+}
+
+.journal-add-btn:hover {
+  opacity: 1;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.journal-section-body {
+  padding: 12px 16px;
+}
+
+/* ── Table ───────────────────────────────────────────────────────────────── */
+
+.journal-table-wrapper {
+  overflow-x: auto;
+  /* thin scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.journal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.journal-table th {
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 4px 8px 6px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.journal-table td {
+  padding: 6px 8px;
+  color: var(--text-primary);
+  font-size: 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+  vertical-align: top;
+}
+
+.journal-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.journal-table tbody tr:hover td {
+  background: color-mix(in srgb, var(--accent) 4%, transparent);
+}
+
+/* ── Empty inline ────────────────────────────────────────────────────────── */
+
+.journal-empty {
+  padding: 12px 0;
+}
+
+.journal-empty-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* ── Observations ────────────────────────────────────────────────────────── */
+
+.journal-obs-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.journal-obs-list {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.journal-obs-list li {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.journal-obs-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.journal-obs-textarea {
+  width: 100%;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  resize: vertical;
+  line-height: 1.6;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.journal-obs-textarea:focus {
+  border-color: var(--accent);
+}
+
+.journal-obs-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ── Modal form ──────────────────────────────────────────────────────────── */
+
+.journal-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.journal-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.journal-form-row label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.journal-input,
+.journal-select {
+  width: 100%;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.journal-input:focus,
+.journal-select:focus {
+  border-color: var(--accent);
+}
+
+.journal-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}

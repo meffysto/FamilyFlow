@@ -1,0 +1,236 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Gratitude page styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Header badge ───────────────────────────────────────────────────────── */
+
+.gratitude-days-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: var(--cat-souvenirs);
+  color: white;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-bold);
+  padding: 0 7px;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+/* ── Heatmap ────────────────────────────────────────────────────────────── */
+
+.gratitude-heatmap {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.gratitude-heatmap::-webkit-scrollbar {
+  height: 4px;
+}
+
+.gratitude-heatmap::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: var(--radius-full);
+}
+
+.gratitude-heatmap-month {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 168px;
+  flex: 1;
+}
+
+.gratitude-heatmap-month-label {
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-muted);
+  text-transform: capitalize;
+  margin-bottom: 2px;
+}
+
+.gratitude-heatmap-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.gratitude-heatmap-weekday {
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-faint);
+  text-align: center;
+  line-height: 1;
+}
+
+.gratitude-heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.gratitude-heatmap-cell {
+  aspect-ratio: 1;
+  border-radius: var(--radius-xs);
+  background: var(--border);
+  transition: transform 100ms;
+  cursor: default;
+}
+
+.gratitude-heatmap-cell--empty {
+  background: transparent;
+}
+
+.gratitude-heatmap-cell--today {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+.gratitude-heatmap-cell:hover:not(.gratitude-heatmap-cell--empty) {
+  transform: scale(1.15);
+}
+
+/* ── Legend ─────────────────────────────────────────────────────────────── */
+
+.gratitude-heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  justify-content: flex-end;
+}
+
+.gratitude-heatmap-legend-label {
+  font-size: var(--font-size-micro);
+  color: var(--text-faint);
+}
+
+.gratitude-heatmap-legend-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-xxs);
+}
+
+/* ── Day list ───────────────────────────────────────────────────────────── */
+
+.gratitude-day-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Day block ──────────────────────────────────────────────────────────── */
+
+.gratitude-day {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gratitude-day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.gratitude-day-date {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-sub);
+  text-transform: capitalize;
+}
+
+.gratitude-day-count {
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-bold);
+  color: white;
+  background: var(--cat-souvenirs);
+  border-radius: var(--radius-full);
+  padding: 2px 7px;
+  line-height: 1.4;
+}
+
+/* ── Entry list ─────────────────────────────────────────────────────────── */
+
+.gratitude-entry-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gratitude-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.gratitude-profile-badge {
+  flex-shrink: 0;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-bold);
+  color: var(--cat-souvenirs);
+  background: color-mix(in srgb, var(--cat-souvenirs) 12%, transparent);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  line-height: 1.5;
+}
+
+.gratitude-entry-text {
+  font-size: var(--font-size-body);
+  color: var(--text);
+  line-height: 1.5;
+  flex: 1;
+}
+
+/* ── Empty state ────────────────────────────────────────────────────────── */
+
+.gratitude-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  gap: 8px;
+}
+
+.gratitude-empty-icon {
+  font-size: 32px;
+  opacity: 0.45;
+}
+
+.gratitude-empty-text {
+  font-size: var(--font-size-body);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.gratitude-empty-hint {
+  font-size: var(--font-size-caption);
+  color: var(--text-faint);
+  text-align: center;
+}
+
+/* ── Form ───────────────────────────────────────────────────────────────── */
+
+.gratitude-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.gratitude-textarea {
+  resize: vertical;
+  min-height: 96px;
+  font-family: inherit;
+}
