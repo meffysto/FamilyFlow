@@ -98,6 +98,11 @@ import { createEmptySagaProgress, type SagaProgress, type SagaTrait } from '../.
 import { getSagaById, getSagaCompletionResult, getNextSagaForProfile } from '../../lib/mascot/sagas-engine';
 import { loadSagaProgress, saveSagaProgress, saveLastSagaCompletion, clearSagaProgress } from '../../lib/mascot/sagas-storage';
 import { getTodayStr } from '../../lib/mascot/adventures';
+import type { SeasonalEventProgress } from '../../lib/mascot/seasonal-events-types';
+import { getVisibleEventId, buildSeasonalEventAsSaga, drawGuaranteedSeasonalReward, SEASONAL_EVENT_BONUS_XP } from '../../lib/mascot/seasonal-events-engine';
+import { loadEventProgressList, saveEventProgress } from '../../lib/mascot/seasonal-events-storage';
+import { getEventContent } from '../../lib/mascot/seasonal-events-content';
+import { getActiveEvent } from '../../lib/gamification/seasonal';
 import { SagaWorldEvent } from '../../components/mascot/SagaWorldEvent';
 import { VisitorSlot } from '../../components/mascot/VisitorSlot';
 import type { ReactionType } from '../../components/mascot/VisitorSlot';
@@ -279,6 +284,13 @@ export default function TreeScreen() {
   const [visitorReaction, setVisitorReaction] = useState<ReactionType | undefined>(undefined);
   const today = getTodayStr();
 
+  // ── État visiteur événement saisonnier ──
+  const [eventProgressList, setEventProgressList] = useState<SeasonalEventProgress[]>([]);
+  const [eventProgressLoaded, setEventProgressLoaded] = useState(false);
+  const [showEventDialogue, setShowEventDialogue] = useState(false);
+  const [eventVisitorShouldDepart, setEventVisitorShouldDepart] = useState(false);
+  const [eventVisitorReaction, setEventVisitorReaction] = useState<ReactionType | undefined>(undefined);
+
   useEffect(() => {
     if (!profile?.id) return;
     loadSagaProgress(profile.id).then(p => {
@@ -290,11 +302,27 @@ export default function TreeScreen() {
     setVisitorReaction(undefined);
   }, [profile?.id]);
 
+  useEffect(() => {
+    if (!profile?.id) return;
+    loadEventProgressList(profile.id).then(list => {
+      setEventProgressList(list);
+      setEventProgressLoaded(true);
+    });
+    setEventVisitorShouldDepart(false);
+    setEventVisitorReaction(undefined);
+  }, [profile?.id]);
+
   const activeSaga = sagaProgress ? getSagaById(sagaProgress.sagaId) : null;
   // Chapitre du jour déjà joué ?
   const sagaChapterDone = sagaProgress?.lastChapterDate === today;
   // Un chapitre est disponible (pas encore joué aujourd'hui)
   const sagaChapterAvailable = !!sagaProgress && sagaProgress.status === 'active' && !sagaChapterDone;
+
+  // Événement saisonnier actif non complété
+  const activeEventId = eventProgressLoaded
+    ? getVisibleEventId(eventProgressList, profile?.id ?? '', new Date())
+    : null;
+  const activeEventContent = activeEventId ? getEventContent(activeEventId) : undefined;
 
   // Compagnon — données et logique
   const companion = activeProfile?.companion ?? null;
@@ -1052,6 +1080,54 @@ export default function TreeScreen() {
     // Si visitorReaction est déjà set, onReactionComplete fera setVisitorShouldDepart(true)
   }, [visitorReaction]);
 
+  /** Complétion du dialogue événement saisonnier */
+  const handleEventComplete = useCallback(async (
+    choiceId: string,
+    points: number,
+    _sagaNote: string,
+  ) => {
+    if (!profile?.id || !activeEventId || !activeEventContent) return;
+
+    // 1. Récompense garantie selon l'index du choix
+    const activeEvent = getActiveEvent();
+    if (activeEvent) {
+      const choiceIndex = activeEventContent.chapter.choices.findIndex(c => c.id === choiceId);
+      const { reward } = drawGuaranteedSeasonalReward(activeEvent, choiceIndex >= 0 ? choiceIndex : 0);
+
+      // Ajouter les bonus points de la récompense si applicable
+      const bonusPoints = reward.bonusPoints ?? 0;
+      const totalPoints = points + SEASONAL_EVENT_BONUS_XP + bonusPoints;
+
+      // 2. Ajouter XP via completeSagaChapter (géré proprement par la queue d'écriture)
+      const eventNote = `Événement saisonnier: ${activeEventId}`;
+      await completeSagaChapter(profile.id, totalPoints, eventNote);
+    } else {
+      // Événement introuvable — ajouter au moins les points de base + bonus XP
+      const totalPoints = points + SEASONAL_EVENT_BONUS_XP;
+      const eventNote = `Événement saisonnier: ${activeEventId}`;
+      await completeSagaChapter(profile.id, totalPoints, eventNote);
+    }
+
+    // 3. Persister la complétion (empêche réapparition D-08)
+    const progress: SeasonalEventProgress = {
+      eventId: activeEventId,
+      year: new Date().getFullYear(),
+      profileId: profile.id,
+      completed: true,
+      completedAt: new Date().toISOString().slice(0, 10),
+      choiceId,
+    };
+    await saveEventProgress(progress);
+    setEventProgressList(prev => [
+      ...prev.filter(p => !(p.eventId === activeEventId && p.year === progress.year)),
+      progress,
+    ]);
+
+    // 4. Déclencher le départ du visiteur
+    setEventVisitorShouldDepart(true);
+    showToast(t('mascot.adventure.reward', { points: points + SEASONAL_EVENT_BONUS_XP }));
+  }, [profile?.id, activeEventId, activeEventContent, completeSagaChapter, showToast, t]);
+
   return (
     <View style={[styles.safe, { backgroundColor: colors.bg }]}>
       <ScrollView
@@ -1448,7 +1524,10 @@ export default function TreeScreen() {
 
             {/* Couche 3.6 : Visiteur saga — apparaît quand un chapitre est disponible */}
             {sagaChapterAvailable && isOwnTree && sagaProgress && (
-              <View style={{ ...StyleSheet.absoluteFillObject, zIndex: showSagaEvent ? 20 : 3 }} pointerEvents="box-none">
+              <View
+                style={{ ...StyleSheet.absoluteFillObject, zIndex: showSagaEvent ? 20 : 3 }}
+                pointerEvents={showEventDialogue ? 'none' : 'box-none'}
+              >
                 <VisitorSlot
                   visible={sagaChapterAvailable && !showSagaEvent}
                   sagaId={sagaProgress.sagaId}
@@ -1466,6 +1545,32 @@ export default function TreeScreen() {
                     setVisitorReaction(undefined);
                     setVisitorShouldDepart(true);
                   }}
+                />
+              </View>
+            )}
+
+            {/* Couche 3.7 : Visiteur événement saisonnier — côté gauche du diorama */}
+            {activeEventId && activeEventContent && isOwnTree && (
+              <View
+                style={{ ...StyleSheet.absoluteFillObject, zIndex: showEventDialogue ? 20 : 3 }}
+                pointerEvents={showSagaEvent ? 'none' : 'box-none'}
+              >
+                <VisitorSlot
+                  visible={!!activeEventId && !showEventDialogue}
+                  sagaId={activeEventId}
+                  containerWidth={SCREEN_W}
+                  containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
+                  targetFX={0.28}
+                  targetFY={0.62}
+                  onTap={() => {
+                    hapticsTreeTap();
+                    setShowEventDialogue(true);
+                  }}
+                  shouldDepart={eventVisitorShouldDepart}
+                  isLastChapter={true}
+                  onDepartComplete={() => setEventVisitorShouldDepart(false)}
+                  reactionType={eventVisitorReaction}
+                  onReactionComplete={() => setEventVisitorReaction(undefined)}
                 />
               </View>
             )}
@@ -1529,6 +1634,22 @@ export default function TreeScreen() {
                 onChoiceReaction={handleChoiceReaction}
               />
             )}
+
+            {/* Couche 5.1 : Dialogue événement saisonnier (absolute overlay, zIndex 15) */}
+            {showEventDialogue && activeEventContent && profile && (() => {
+              const { saga, progress } = buildSeasonalEventAsSaga(activeEventContent, profile.id);
+              return (
+                <SagaWorldEvent
+                  sagaProgress={progress}
+                  containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
+                  overrideSaga={saga}
+                  onChapterComplete={handleEventComplete}
+                  onDismiss={() => setShowEventDialogue(false)}
+                  visitorIdleFrame={require('../../assets/garden/animals/voyageur/idle_1.png')}
+                  onChoiceReaction={(reaction) => setEventVisitorReaction(reaction)}
+                />
+              );
+            })()}
 
             {/* Bouton saga supprimé — le tap sur le VisitorSlot dans la couche 3.6 le remplace */}
 
