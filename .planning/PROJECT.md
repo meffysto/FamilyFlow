@@ -110,4 +110,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-30 — Phase 08.1 complete: gamification split per-profil (gami-{id}.md)*
+*Last updated: 2026-04-03 — Phase 13 complete: événements saisonniers (moteur + câblage UI)*
