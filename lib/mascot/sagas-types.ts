@@ -67,6 +67,13 @@ export interface SagaProgress {
   rewardClaimed: boolean;
 }
 
+/** Récolte bonus obtenue à la fin d'une saga */
+export interface SagaBonusCrop {
+  cropId: string;
+  emoji: string;
+  labelKey: string;
+}
+
 /** Résultat de complétion d'une saga */
 export interface SagaCompletionResult {
   dominantTrait: SagaTrait;
@@ -75,6 +82,7 @@ export interface SagaCompletionResult {
   bonusXP: number;
   titleKey: string;
   narrativeKey: string;
+  bonusCrop: SagaBonusCrop;
 }
 
 /** Crée un SagaProgress initial vide */

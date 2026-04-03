@@ -8,10 +8,12 @@ import type {
   SagaTrait,
   SagaChapter,
   SagaCompletionResult,
+  SagaBonusCrop,
 } from './sagas-types';
 import { ALL_TRAITS } from './sagas-types';
 import { SAGAS } from './sagas-content';
 import { simpleHash } from './utils';
+import { CROP_CATALOG } from './types';
 
 // Re-export pour les consommateurs existants
 export { formatDateStr } from './utils';
@@ -62,6 +64,52 @@ export function getChapterNarrativeKey(
 
 // ── Complétion de saga ───────────────────────
 
+// ── Récolte bonus par difficulté de saga ────
+
+type CropTier = 'rapid' | 'medium' | 'slow' | 'rare';
+
+const CROP_TIERS: Record<CropTier, string[]> = {
+  rapid: CROP_CATALOG.filter(c => c.tasksPerStage === 1 && !c.dropOnly).map(c => c.id),
+  medium: CROP_CATALOG.filter(c => c.tasksPerStage === 2 && !c.dropOnly).map(c => c.id),
+  slow: CROP_CATALOG.filter(c => c.tasksPerStage === 3 && !c.dropOnly).map(c => c.id),
+  rare: CROP_CATALOG.filter(c => c.dropOnly === true).map(c => c.id),
+};
+
+/** Taux de drop par nombre de chapitres [rapid, medium, slow, rare] */
+const DROP_RATES_BY_CHAPTERS: Record<number, number[]> = {
+  3: [50, 35, 15, 0],
+  4: [30, 40, 25, 5],
+  5: [15, 30, 35, 20],
+};
+
+/**
+ * Tire une récolte mature bonus selon la difficulté de la saga.
+ * Plus la saga est longue, meilleures sont les chances de drop rare.
+ */
+export function rollSagaBonusCrop(chapterCount: number): SagaBonusCrop {
+  const rates = DROP_RATES_BY_CHAPTERS[chapterCount] ?? DROP_RATES_BY_CHAPTERS[4]!;
+  const roll = Math.random() * 100;
+
+  let tier: CropTier;
+  if (roll < rates[0]) tier = 'rapid';
+  else if (roll < rates[0] + rates[1]) tier = 'medium';
+  else if (roll < rates[0] + rates[1] + rates[2]) tier = 'slow';
+  else tier = 'rare';
+
+  // Fallback si le tier rare est à 0% ou vide
+  const pool = CROP_TIERS[tier];
+  if (!pool || pool.length === 0) {
+    const fallback = CROP_TIERS.medium;
+    const cropId = fallback[Math.floor(Math.random() * fallback.length)];
+    const crop = CROP_CATALOG.find(c => c.id === cropId)!;
+    return { cropId: crop.id, emoji: crop.emoji, labelKey: crop.labelKey };
+  }
+
+  const cropId = pool[Math.floor(Math.random() * pool.length)];
+  const crop = CROP_CATALOG.find(c => c.id === cropId)!;
+  return { cropId: crop.id, emoji: crop.emoji, labelKey: crop.labelKey };
+}
+
 /**
  * Calcule le résultat final d'une saga complétée.
  */
@@ -76,6 +124,8 @@ export function getSagaCompletionResult(
     saga.finale.variants[dominant] ??
     saga.finale.variants[saga.finale.defaultTrait];
 
+  const bonusCrop = rollSagaBonusCrop(saga.chapters.length);
+
   if (!variant) {
     // Fallback absolu : première variante disponible
     const firstKey = Object.keys(saga.finale.variants)[0] as SagaTrait;
@@ -87,6 +137,7 @@ export function getSagaCompletionResult(
       bonusXP: fallback.bonusXP,
       titleKey: fallback.titleKey,
       narrativeKey: fallback.narrativeKey,
+      bonusCrop,
     };
   }
 
@@ -97,6 +148,7 @@ export function getSagaCompletionResult(
     bonusXP: variant.bonusXP,
     titleKey: variant.titleKey,
     narrativeKey: variant.narrativeKey,
+    bonusCrop,
   };
 }
 

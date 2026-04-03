@@ -3608,6 +3608,8 @@
       "complete_enfant": "SAGA TERMINÉE !! 🎉",
       "rewardTitle": "Récompense exclusive",
       "rewardTitle_enfant": "RÉCOMPENSE EXCLUSIVE !!",
+      "bonusCrop": "Récolte bonus",
+      "bonusCrop_enfant": "RÉCOLTE BONUS !! 🌾",
       "placeReward": "Placer ma récompense",
       "placeReward_enfant": "Placer ma récompense ! 🌳",
       "teaser": "Prochaine saga dans {{days}}j",

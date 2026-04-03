@@ -258,7 +258,7 @@ export interface VaultState {
   completeSecretMission: (missionId: string) => Promise<void>;
   validateSecretMission: (missionId: string) => Promise<void>;
   completeAdventure: (profileId: string, points: number, adventureNote: string) => Promise<void>;
-  completeSagaChapter: (profileId: string, points: number, sagaNote: string, rewardItem?: { id: string; type: 'decoration' | 'inhabitant' }) => Promise<void>;
+  completeSagaChapter: (profileId: string, points: number, sagaNote: string, rewardItem?: { id: string; type: 'decoration' | 'inhabitant' }, bonusCropId?: string) => Promise<void>;
   markLootUsed: (loot: UsedLoot) => Promise<void>;
   setCompanion: (profileId: string, companion: CompanionData) => Promise<void>;
   unlockCompanion: (profileId: string, speciesId: CompanionSpecies) => Promise<void>;
@@ -3422,6 +3422,7 @@ export function useVaultInternal(): VaultState {
     points: number,
     sagaNote: string,
     rewardItem?: { id: string; type: 'decoration' | 'inhabitant' },
+    bonusCropId?: string,
   ) => {
     if (!vaultRef.current) return;
     try {
@@ -3477,6 +3478,37 @@ export function useVaultInternal(): VaultState {
           if (lastProp >= 0) lines.splice(lastProp + 1, 0, `saga_items: ${entry}`);
         }
         await vaultRef.current.writeFile(FAMILLE_FILE, lines.join('\n'));
+      }
+
+      // Récolte bonus saga → ajouter à l'inventaire de récoltes
+      if (bonusCropId) {
+        const famContent = await vaultRef.current.readFile(FAMILLE_FILE);
+        const famLines = famContent.split('\n');
+        let inSec = false;
+        let harvestLine = -1;
+        let lastProp = -1;
+        for (let i = 0; i < famLines.length; i++) {
+          if (famLines[i].match(new RegExp(`^###?\\s+.*${profileId}`, 'i')) || famLines[i].match(new RegExp(`^id:\\s*${profileId}`, 'i'))) inSec = true;
+          else if (inSec && famLines[i].match(/^###?\s+/)) break;
+          if (inSec && famLines[i].startsWith('farm_harvest_inventory:')) { harvestLine = i; break; }
+          if (inSec && famLines[i].includes(': ')) lastProp = i;
+        }
+        if (harvestLine >= 0) {
+          const current = famLines[harvestLine].replace('farm_harvest_inventory:', '').trim();
+          const entries = current ? current.split(',').map(s => s.trim()) : [];
+          const existing = entries.find(e => e.startsWith(bonusCropId + ':'));
+          if (existing) {
+            const qty = parseInt(existing.split(':')[1] ?? '0', 10) + 1;
+            const idx = entries.indexOf(existing);
+            entries[idx] = `${bonusCropId}:${qty}`;
+          } else {
+            entries.push(`${bonusCropId}:1`);
+          }
+          famLines[harvestLine] = `farm_harvest_inventory: ${entries.join(',')}`;
+        } else if (lastProp >= 0) {
+          famLines.splice(lastProp + 1, 0, `farm_harvest_inventory: ${bonusCropId}:1`);
+        }
+        await vaultRef.current.writeFile(FAMILLE_FILE, famLines.join('\n'));
       }
 
       const singleData: GamificationData = {

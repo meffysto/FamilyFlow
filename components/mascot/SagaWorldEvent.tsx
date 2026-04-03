@@ -26,12 +26,13 @@ import { useTranslation } from 'react-i18next';
 
 import { useThemeColors } from '../../contexts/ThemeContext';
 import type { ReactionType } from './VisitorSlot';
-import type { SagaProgress, SagaTrait } from '../../lib/mascot/sagas-types';
+import type { SagaProgress, SagaTrait, SagaCompletionResult } from '../../lib/mascot/sagas-types';
 import {
   getChapterNarrativeKey,
   getSagaById,
   getSagaCompletionResult,
 } from '../../lib/mascot/sagas-engine';
+import { ITEM_ILLUSTRATIONS, DECORATIONS, INHABITANTS } from '../../lib/mascot/types';
 import { Radius, Spacing } from '../../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../../constants/typography';
 import { Shadows } from '../../constants/shadows';
@@ -54,6 +55,7 @@ export interface SagaWorldEventProps {
     points: number,
     sagaNote: string,
     rewardItem?: { id: string; type: 'decoration' | 'inhabitant' },
+    bonusCropId?: string,
   ) => Promise<void>;
   onDismiss: () => void;
   /** Sprite idle du visiteur — remplace le spiritGlow emoji si fourni */
@@ -118,6 +120,14 @@ export function SagaWorldEvent({
   const traitFlashOpacity = useSharedValue(0);
   const traitFlashScale   = useSharedValue(0.8);
 
+  // Reward reveal (finale)
+  const rewardCardOpacity = useSharedValue(0);
+  const rewardCardScale   = useSharedValue(0.5);
+  const rewardCardTransY  = useSharedValue(40);
+  const cropCardOpacity   = useSharedValue(0);
+  const cropCardScale     = useSharedValue(0.5);
+  const cropCardTransY    = useSharedValue(40);
+
   // 3 cartes de choix (max 3 options)
   const c0TransY = useSharedValue(80);  const c1TransY = useSharedValue(80);  const c2TransY = useSharedValue(80);
   const c0Opacity = useSharedValue(0);  const c1Opacity = useSharedValue(0);  const c2Opacity = useSharedValue(0);
@@ -144,6 +154,16 @@ export function SagaWorldEvent({
   const traitStyle = useAnimatedStyle(() => ({
     opacity: traitFlashOpacity.value,
     transform: [{ scale: traitFlashScale.value }],
+  }));
+
+  const rewardCardStyle = useAnimatedStyle(() => ({
+    opacity: rewardCardOpacity.value,
+    transform: [{ scale: rewardCardScale.value }, { translateY: rewardCardTransY.value }],
+  }));
+
+  const cropCardStyle = useAnimatedStyle(() => ({
+    opacity: cropCardOpacity.value,
+    transform: [{ scale: cropCardScale.value }, { translateY: cropCardTransY.value }],
   }));
 
   // Styles cartes de choix
@@ -173,6 +193,7 @@ export function SagaWorldEvent({
   const [finaleChars, setFinaleChars]       = useState(0);
   const [selectedChoiceId, setSelectedChoiceId] = useState<string | null>(null);
   const [isCompleting, setIsCompleting]     = useState(false);
+  const [completionResult, setCompletionResult] = useState<SagaCompletionResult | null>(null);
 
   const typeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -203,6 +224,8 @@ export function SagaWorldEvent({
     c1Opacity.value = withTiming(0, { duration: 300 });
     c2Opacity.value = withTiming(0, { duration: 300 });
     traitFlashOpacity.value = withTiming(0, { duration: 300 });
+    rewardCardOpacity.value = withTiming(0, { duration: 400 });
+    cropCardOpacity.value   = withTiming(0, { duration: 400 });
     setTimeout(onDismiss, 600);
   }, [onDismiss]);
 
@@ -334,6 +357,7 @@ export function SagaWorldEvent({
     let rewardItem: { id: string; type: 'decoration' | 'inhabitant' } | undefined;
     let totalPoints = choice.points;
     let sagaNote = `Saga: ${activeSaga.id} ch${currentChapter.id}`;
+    let finalResult: SagaCompletionResult | null = null;
 
     if (isFinal) {
       const updatedProgress = {
@@ -343,17 +367,18 @@ export function SagaWorldEvent({
         traits: newTraits,
         status: 'completed' as const,
       };
-      const result = getSagaCompletionResult(activeSaga, updatedProgress);
-      totalPoints += result.bonusXP;
-      sagaNote = `Saga terminée: ${activeSaga.id} ch${currentChapter.id} (${result.dominantTrait})`;
+      finalResult = getSagaCompletionResult(activeSaga, updatedProgress);
+      setCompletionResult(finalResult);
+      totalPoints += finalResult.bonusXP;
+      sagaNote = `Saga terminée: ${activeSaga.id} ch${currentChapter.id} (${finalResult.dominantTrait})`;
       rewardItem = {
-        id: result.rewardItemId,
-        type: result.rewardType === 'mascot_deco' ? 'decoration' : 'inhabitant',
+        id: finalResult.rewardItemId,
+        type: finalResult.rewardType === 'mascot_deco' ? 'decoration' : 'inhabitant',
       };
     }
 
     try {
-      await onChapterComplete(choiceId, totalPoints, sagaNote, rewardItem);
+      await onChapterComplete(choiceId, totalPoints, sagaNote, rewardItem, finalResult?.bonusCrop.cropId);
     } catch {
       // Non-critique
     }
@@ -392,27 +417,49 @@ export function SagaWorldEvent({
     };
   }, [phase, cliffhangerText]);
 
-  // ── Phase finale ──────────────────────────────────────────────
+  // ── Phase finale — Reveal des récompenses ──────────────────────
   useEffect(() => {
-    if (phase !== 'finale_reveal' || !activeSaga) return;
+    if (phase !== 'finale_reveal' || !activeSaga || !completionResult) return;
 
-    // Reset bulle
+    // Reset bulle + reward cards
     bubbleOpacity.value = 0;
     bubbleTransY.value  = 20;
+    rewardCardOpacity.value = 0;
+    rewardCardScale.value   = 0.5;
+    rewardCardTransY.value  = 40;
+    cropCardOpacity.value   = 0;
+    cropCardScale.value     = 0.5;
+    cropCardTransY.value    = 40;
 
     // L'esprit s'élève et grossit
     spiritY.value     = withSpring(-70, { damping: 9, stiffness: 90 });
     spiritScale.value = withSpring(1.6, { damping: 8, stiffness: 80 });
 
-    // Texte finale après 1.4s
+    // 1. Titre "Saga terminée" en typewriter (1.4s delay)
     const t1 = setTimeout(() => {
       bubbleOpacity.value = withTiming(1, { duration: 450 });
       bubbleTransY.value  = withSpring(0, { damping: 14, stiffness: 180 });
 
       const finaleMsg = t('mascot.saga.complete');
       startTypewriter(finaleMsg, setFinaleChars, () => {
-        // Dismiss après lecture
-        setTimeout(animateDismiss, 2800);
+        // 2. Carte récompense item (0.6s après titre)
+        setTimeout(() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          rewardCardOpacity.value = withTiming(1, { duration: 400 });
+          rewardCardScale.value   = withSpring(1, { damping: 12, stiffness: 180 });
+          rewardCardTransY.value  = withSpring(0, { damping: 14, stiffness: 200 });
+
+          // 3. Carte récolte bonus (0.5s après item)
+          setTimeout(() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            cropCardOpacity.value = withTiming(1, { duration: 400 });
+            cropCardScale.value   = withSpring(1, { damping: 12, stiffness: 180 });
+            cropCardTransY.value  = withSpring(0, { damping: 14, stiffness: 200 });
+
+            // Dismiss après lecture des récompenses
+            setTimeout(animateDismiss, 3500);
+          }, 500);
+        }, 600);
       });
     }, 1400);
 
@@ -420,7 +467,7 @@ export function SagaWorldEvent({
       clearTimeout(t1);
       clearTypeTimer();
     };
-  }, [phase, activeSaga]);
+  }, [phase, activeSaga, completionResult]);
 
   // Cleanup
   useEffect(() => () => clearTypeTimer(), []);
@@ -516,12 +563,9 @@ export function SagaWorldEvent({
               </Text>
             )}
             {phase === 'finale_reveal' && (
-              <>
-                <Text style={[styles.finaleTitle, { color: primary }]}>
-                  {displayFinale}
-                </Text>
-                <Text style={[styles.finaleEmoji]}>{'✨'}</Text>
-              </>
+              <Text style={[styles.finaleTitle, { color: primary }]}>
+                {displayFinale}
+              </Text>
             )}
           </View>
         </Animated.View>
@@ -536,6 +580,61 @@ export function SagaWorldEvent({
             </Text>
           </View>
         </Animated.View>
+      )}
+
+      {/* ── Cartes récompenses (finale) ─────────────────────────── */}
+      {phase === 'finale_reveal' && completionResult && (
+        <View style={styles.rewardsWrapper} pointerEvents="none">
+          {/* Carte item exclusif */}
+          <Animated.View style={rewardCardStyle}>
+            <View style={[
+              styles.rewardCard,
+              {
+                backgroundColor: isDark ? colors.card + 'F5' : colors.bg + 'FA',
+                borderColor: primary + '50',
+              },
+              Shadows.lg,
+            ]}>
+              {ITEM_ILLUSTRATIONS[completionResult.rewardItemId] ? (
+                <Image
+                  source={ITEM_ILLUSTRATIONS[completionResult.rewardItemId]}
+                  style={styles.rewardIllustration}
+                  resizeMode="contain"
+                />
+              ) : (
+                <Text style={styles.rewardEmoji}>
+                  {[...DECORATIONS, ...INHABITANTS].find(d => d.id === completionResult.rewardItemId)?.emoji ?? '🎁'}
+                </Text>
+              )}
+              <Text style={[styles.rewardLabel, { color: colors.text }]}>
+                {t([...DECORATIONS, ...INHABITANTS].find(d => d.id === completionResult.rewardItemId)?.labelKey ?? '')}
+              </Text>
+              <Text style={[styles.rewardRarity, { color: primary }]}>
+                {[...DECORATIONS, ...INHABITANTS].find(d => d.id === completionResult.rewardItemId)?.rarity ?? ''}
+              </Text>
+            </View>
+          </Animated.View>
+
+          {/* Carte récolte bonus */}
+          <Animated.View style={cropCardStyle}>
+            <View style={[
+              styles.rewardCard,
+              {
+                backgroundColor: isDark ? colors.card + 'F5' : colors.bg + 'FA',
+                borderColor: '#FFD700' + '60',
+              },
+              Shadows.md,
+            ]}>
+              <Text style={styles.cropEmoji}>{completionResult.bonusCrop.emoji}</Text>
+              <Text style={[styles.rewardLabel, { color: colors.text }]}>
+                {t(completionResult.bonusCrop.labelKey)}
+              </Text>
+              <Text style={[styles.rewardRarity, { color: '#FFD700' }]}>
+                {t('mascot.saga.bonusCrop')}
+              </Text>
+            </View>
+          </Animated.View>
+        </View>
       )}
 
       {/* ── Cartes de choix ──────────────────────────────────────── */}
@@ -671,9 +770,49 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: Spacing.xs,
   },
-  finaleEmoji: {
-    fontSize: FontSize.icon,
+  // Cartes récompenses (finale)
+  rewardsWrapper: {
+    position: 'absolute',
+    bottom: Spacing['4xl'],
+    left: Spacing.xl,
+    right: Spacing.xl,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: Spacing.lg,
+  },
+  rewardCard: {
+    alignItems: 'center',
+    paddingVertical: Spacing.xl,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.xl,
+    borderWidth: 1.5,
+    minWidth: 120,
+    maxWidth: 150,
+  },
+  rewardIllustration: {
+    width: 56,
+    height: 56,
+    marginBottom: Spacing.sm,
+  },
+  rewardEmoji: {
+    fontSize: 40,
+    marginBottom: Spacing.sm,
+  },
+  cropEmoji: {
+    fontSize: 40,
+    marginBottom: Spacing.sm,
+  },
+  rewardLabel: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
     textAlign: 'center',
+    marginBottom: Spacing.xxs,
+  },
+  rewardRarity: {
+    fontSize: FontSize.micro,
+    fontWeight: FontWeight.bold,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 1,
   },
 
   // Flash trait

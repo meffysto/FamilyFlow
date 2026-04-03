@@ -3608,6 +3608,8 @@
       "complete_enfant": "SAGA COMPLETE!! 🎉",
       "rewardTitle": "Exclusive reward",
       "rewardTitle_enfant": "EXCLUSIVE REWARD!!",
+      "bonusCrop": "Bonus harvest",
+      "bonusCrop_enfant": "BONUS HARVEST!! 🌾",
       "placeReward": "Place my reward",
       "placeReward_enfant": "Place my reward! 🌳",
       "teaser": "Next saga in {{days}}d",

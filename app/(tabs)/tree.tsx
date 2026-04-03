@@ -94,9 +94,9 @@ import {
 } from '../../lib/mascot';
 import { SPECIES_INFO, ALL_SPECIES, DECORATIONS, INHABITANTS, ITEM_ILLUSTRATIONS, type TreeSpecies, type TreeStage } from '../../lib/mascot/types';
 import { getCurrentSeason, SEASON_INFO, GROUND_COLORS, type Season } from '../../lib/mascot/seasons';
-import type { SagaProgress, SagaTrait } from '../../lib/mascot/sagas-types';
-import { getSagaById, getSagaCompletionResult } from '../../lib/mascot/sagas-engine';
-import { loadSagaProgress, saveSagaProgress, saveLastSagaCompletion } from '../../lib/mascot/sagas-storage';
+import { createEmptySagaProgress, type SagaProgress, type SagaTrait } from '../../lib/mascot/sagas-types';
+import { getSagaById, getSagaCompletionResult, getNextSagaForProfile } from '../../lib/mascot/sagas-engine';
+import { loadSagaProgress, saveSagaProgress, saveLastSagaCompletion, clearSagaProgress } from '../../lib/mascot/sagas-storage';
 import { getTodayStr } from '../../lib/mascot/adventures';
 import { SagaWorldEvent } from '../../components/mascot/SagaWorldEvent';
 import { VisitorSlot } from '../../components/mascot/VisitorSlot';
@@ -985,6 +985,7 @@ export default function TreeScreen() {
     points: number,
     sagaNote: string,
     rewardItem?: { id: string; type: 'decoration' | 'inhabitant' },
+    bonusCropId?: string,
   ) => {
     if (!sagaProgress || !activeSaga || !profile) return;
 
@@ -1014,7 +1015,7 @@ export default function TreeScreen() {
     };
 
     // XP + récompense via VaultContext
-    await completeSagaChapter(profile.id, points, sagaNote, rewardItem);
+    await completeSagaChapter(profile.id, points, sagaNote, rewardItem, bonusCropId);
 
     if (isFinal) {
       await saveLastSagaCompletion(profile.id, today);
@@ -1549,6 +1550,30 @@ export default function TreeScreen() {
             colors={colors}
             t={t}
           />
+        )}
+
+        {/* Debug saga — DEV only */}
+        {__DEV__ && (
+          <TouchableOpacity
+            style={{ margin: 16, padding: 12, backgroundColor: colors.card, borderRadius: 8, borderWidth: 1, borderColor: colors.borderLight }}
+            onPress={async () => {
+              if (!profile?.id) return;
+              await clearSagaProgress(profile.id);
+              const saga = getNextSagaForProfile(profile.id, []);
+              if (saga) {
+                const fresh = createEmptySagaProgress(saga.id, profile.id, today);
+                await saveSagaProgress(fresh);
+                setSagaProgress(fresh);
+                setVisitorShouldDepart(false);
+                setVisitorReaction(undefined);
+              }
+              Alert.alert('Saga reset', 'Nouvelle saga lancée — le visiteur devrait apparaître.');
+            }}
+          >
+            <Text style={{ color: colors.textMuted, fontSize: 12, textAlign: 'center' }}>
+              {'🔧 [DEV] Reset saga → relancer visiteur'}
+            </Text>
+          </TouchableOpacity>
         )}
 
         <View style={{ height: 100 }} />
