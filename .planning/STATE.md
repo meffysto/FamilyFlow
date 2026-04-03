@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: executing
-stopped_at: Completed 13-evenements-saisonniers/13-01-PLAN.md
-last_updated: "2026-04-03T18:32:49.536Z"
-last_activity: "2026-04-03 - Completed quick task 260403-q6y: Fix race condition famille.md writes (enqueueWrite partagée)"
+stopped_at: Completed 13-evenements-saisonniers/13-02-PLAN.md
+last_updated: "2026-04-03T18:42:06.120Z"
+last_activity: 2026-04-03
 progress:
-  total_phases: 9
-  completed_phases: 6
+  total_phases: 10
+  completed_phases: 7
   total_plans: 22
-  completed_plans: 17
+  completed_plans: 19
   percent: 0
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 ## Current Position
 
 Phase: 13 (evenements-saisonniers) — EXECUTING
-Plan: 1 of 2
-Status: Executing Phase 13
-Last activity: 2026-04-03 -- Phase 13 execution started
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-04-03
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -61,6 +61,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 11-sagas-immersives P01 | 4min | 2 tasks | 11 files |
 | Phase 11-sagas-immersives P02 | 3min | 2 tasks | 2 files |
 | Phase 13-evenements-saisonniers P01 | 4min | 2 tasks | 6 files |
+| Phase 13-evenements-saisonniers P02 | 8min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -109,6 +110,9 @@ Recent decisions affecting current work:
 - [Phase 13-01]: SeasonalEventProgress utilise clé composite eventId+year — évite marquage complété inter-annuel
 - [Phase 13-01]: drawGuaranteedSeasonalReward descend en cascade (épique→rare→commun) — jamais null
 - [Phase 13-01]: buildSeasonalEventAsSaga produit finale.variants={} pour compatibilité SagaWorldEvent sans modification
+- [Phase 13-02]: handleEventComplete réutilise completeSagaChapter pour les XP — réutilise la queue d'écriture enqueueWrite existante
+- [Phase 13-02]: overrideSaga prop sur SagaWorldEvent — 2 modifications minimales, bypass getSagaById pour sagas synthétiques d'événements
+- [Phase 13-02]: pointerEvents mutuellement exclusifs entre visiteur saga (droite) et visiteur événement (gauche) — coexistence sans conflit
 
 ### Pending Todos
 
@@ -137,6 +141,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-03T18:32:49.533Z
-Stopped at: Completed 13-evenements-saisonniers/13-01-PLAN.md
+Last session: 2026-04-03T18:42:06.117Z
+Stopped at: Completed 13-evenements-saisonniers/13-02-PLAN.md
 Resume file: None
