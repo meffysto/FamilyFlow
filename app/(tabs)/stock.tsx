@@ -487,6 +487,7 @@ export default function StockScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
         }
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
       >
         {/* Liste plate (Frigo, Congélateur) */}
         {!hasSubcategories && sortedFlatItems.length > 0 && (
