@@ -30,7 +30,7 @@ export interface AmbiantConfig {
 export const AMBIENT_CONFIGS: Record<TimeSlot, AmbiantConfig | null> = {
   matin: {
     particleColor: '#C8E6FF',
-    particleCount: 7,
+    particleCount: 4,
     particleSize: 3,
     direction: 'down',
     opacity: 0.45,
@@ -40,7 +40,7 @@ export const AMBIENT_CONFIGS: Record<TimeSlot, AmbiantConfig | null> = {
   jour: null,
   soir: {
     particleColor: '#FFD59E',
-    particleCount: 4,
+    particleCount: 3,
     particleSize: 4,
     direction: 'float',
     opacity: 0.35,
@@ -49,7 +49,7 @@ export const AMBIENT_CONFIGS: Record<TimeSlot, AmbiantConfig | null> = {
   },
   nuit: {
     particleColor: '#AAFF66',
-    particleCount: 6,
+    particleCount: 3,
     particleSize: 5,
     direction: 'float',
     opacity: 0.70,
