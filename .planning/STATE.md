@@ -150,5 +150,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-04-04T12:42:22.287Z
-Stopped at: Completed quick task 260404-kbd: Systeme hybride ferme — plot principal vitesse pleine + indicateur visuel
+Stopped at: Completed quick task 260404-kdk: rééquilibrer recettes ferme prix et ingrédients
 Resume file: None
