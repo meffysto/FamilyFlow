@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: executing
-stopped_at: Completed 13-evenements-saisonniers/13-02-PLAN.md
-last_updated: "2026-04-03T18:47:04.976Z"
-last_activity: 2026-04-04 - Completed quick task 260404-j7v: Fix complet système usure ferme — overlay orange, blocage plant, repair handlers, bouton toit
+stopped_at: "Completed quick task 260404-kbd: Systeme hybride ferme — plot principal vitesse pleine + indicateur visuel"
+last_updated: "2026-04-04T12:42:26.702Z"
+last_activity: 2026-04-03
 progress:
   total_phases: 10
   completed_phases: 7
@@ -113,6 +113,7 @@ Recent decisions affecting current work:
 - [Phase 13-02]: handleEventComplete réutilise completeSagaChapter pour les XP — réutilise la queue d'écriture enqueueWrite existante
 - [Phase 13-02]: overrideSaga prop sur SagaWorldEvent — 2 modifications minimales, bypass getSagaById pour sagas synthétiques d'événements
 - [Phase 13-02]: pointerEvents mutuellement exclusifs entre visiteur saga (droite) et visiteur événement (gauche) — coexistence sans conflit
+- [Phase 260404-kbd]: advanceFarmCrops hybride: boucle tous crops non-matures, plot principal vitesse pleine, autres demi-vitesse (seasonBonus*0.5)
 
 ### Pending Todos
 
@@ -146,6 +147,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T00:00:00.000Z
-Stopped at: Completed 13-evenements-saisonniers/13-02-PLAN.md
+Last session: 2026-04-04T12:42:22.287Z
+Stopped at: Completed quick task 260404-kbd: Systeme hybride ferme — plot principal vitesse pleine + indicateur visuel
 Resume file: None
