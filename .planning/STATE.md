@@ -145,6 +145,7 @@ None yet.
 | 260404-ips | Optimiser writes farm/gami et créer refreshFarm(profileId) | 2026-04-04 | 2411250 | [260404-ips-optimiser-writes-farm-gami-et-cr-er-refr](./quick/260404-ips-optimiser-writes-farm-gami-et-cr-er-refr/) |
 | 260404-j7v | Fix complet système usure ferme — overlay orange, blocage plant, repair handlers, bouton toit | 2026-04-04 | 544e4c9 | [260404-j7v-fix-complet-syst-me-usure-ferme-overlay-](./quick/260404-j7v-fix-complet-syst-me-usure-ferme-overlay-/) |
 | 260404-kbd | Système hybride ferme — plot principal vitesse pleine, autres demi-vitesse + indicateur visuel | 2026-04-04 | 22ac20e | [260404-kbd-syst-me-hybride-ferme-plot-principal-vit](./quick/260404-kbd-syst-me-hybride-ferme-plot-principal-vit/) |
+| 260404-kdk | Rééquilibrer recettes ferme — 2 ingrédients + 17 prix de vente | 2026-04-04 | 6dad909 | [260404-kdk-r-quilibrer-recettes-ferme-prix-et-ingr-](./quick/260404-kdk-r-quilibrer-recettes-ferme-prix-et-ingr-/) |
 
 ## Session Continuity
 
