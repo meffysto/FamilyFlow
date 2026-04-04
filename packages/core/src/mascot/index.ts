@@ -15,6 +15,7 @@ export * from './sagas-engine';
 export * from './building-engine';
 export * from './craft-engine';
 export * from './farm-engine';
+export * from './wear-engine';
 export * from './farm-grid';
 export * from './farm-map';
 export * from './world-grid';
