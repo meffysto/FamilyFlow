@@ -3876,6 +3876,79 @@
         "title_courage": "The Protector",
         "title_courage_enfant": "The Super Protector!"
       }
+    },
+    "event": {
+      "nouvel-an": {
+        "title": "Visit from the Midnight Elf",
+        "visitor_name": "Midnight Elf",
+        "narrative": "A sparkling elf bursts into the night, his star-studded hat and arms full of golden confetti!",
+        "choiceA": "🎉 Toss confetti together",
+        "choiceB": "✨ Make a secret wish",
+        "choiceC": "🥂 Toast the family",
+        "cliffhanger": "The elf vanishes in a cloud of glitter, leaving a surprise behind..."
+      },
+      "st-valentin": {
+        "title": "Visit from Cupid",
+        "visitor_name": "Cupid",
+        "narrative": "Cupid lands softly near your tree, bow slung over one shoulder and a quiver full of golden arrows!",
+        "choiceA": "💌 Write a sweet note for someone",
+        "choiceB": "🌹 Decorate the tree with roses",
+        "cliffhanger": "Cupid flies off smiling, leaving a small arrow in the tree as a sign of good fortune..."
+      },
+      "poisson-avril": {
+        "title": "Visit from the Magic Fish",
+        "visitor_name": "Magic Fish",
+        "narrative": "A rainbow fish leaps out of nowhere, scales shimmering and a big mischievous grin on its face!",
+        "choiceA": "😄 Cook up a funny prank",
+        "choiceB": "🤫 Watch without giving yourself away",
+        "choiceC": "🐟 Get pranked and laugh it off",
+        "cliffhanger": "The fish dives back into the flowers, leaving a sparkling trail behind..."
+      },
+      "paques": {
+        "title": "Visit from the Easter Bunny",
+        "visitor_name": "Easter Bunny",
+        "narrative": "A colorful bunny hops toward you, ears perked up and a basket of eggs under one arm!",
+        "choiceA": "🥚 Search for hidden eggs",
+        "choiceB": "🌸 Decorate the tree with flowers",
+        "choiceC": "🍫 Share the chocolate",
+        "cliffhanger": "The bunny hops away, leaving a few golden nuggets behind..."
+      },
+      "ete": {
+        "title": "Visit from the Wandering Crab",
+        "visitor_name": "Wandering Crab",
+        "narrative": "A little orange crab arrives dragging a bag full of seashells and warm sand!",
+        "choiceA": "🏖️ Build a sandcastle",
+        "choiceB": "🌊 Dive into the waves",
+        "choiceC": "🍦 Share an ice cream in the sun",
+        "cliffhanger": "The crab scuttles away, waving its claws and leaving a shell as a gift..."
+      },
+      "rentree": {
+        "title": "Visit from the Wise Owl",
+        "visitor_name": "Wise Owl",
+        "narrative": "A bespectacled owl perches on a branch, notebook under its wing, looking very serious but kind!",
+        "choiceA": "📚 Open a new book together",
+        "choiceB": "✏️ Write down your goals for the year",
+        "choiceC": "🎒 Pack your backpack with a song",
+        "cliffhanger": "The owl nods wisely and silently glides back toward the forest..."
+      },
+      "halloween": {
+        "title": "Visit from the Prankster Ghost",
+        "visitor_name": "Prankster Ghost",
+        "narrative": "A jolly ghost swirls through the air, its white sheet dotted with pumpkins and eyes full of mischief!",
+        "choiceA": "👻 Scare people together",
+        "choiceB": "🕯️ Light up the pumpkins",
+        "choiceC": "🍬 Hand out trick-or-treat candy",
+        "cliffhanger": "The ghost floats away giggling, dropping a few enchanted candies behind..."
+      },
+      "noel": {
+        "title": "Visit from Santa Claus",
+        "visitor_name": "Santa Claus",
+        "narrative": "Ho ho ho! Santa arrives on an icy gust of wind, his sack brimming with gifts and cheeks rosy from the cold!",
+        "choiceA": "🎁 Help deliver the presents",
+        "choiceB": "⛄ Build a snowman",
+        "choiceC": "🍪 Offer cookies and warm milk",
+        "cliffhanger": "Santa soars back to the stars, wishing the whole family a very merry Christmas..."
+      }
     }
   },
   "farm": {

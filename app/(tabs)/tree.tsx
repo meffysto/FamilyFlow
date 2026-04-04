@@ -319,9 +319,10 @@ export default function TreeScreen() {
   const sagaChapterAvailable = !!sagaProgress && sagaProgress.status === 'active' && !sagaChapterDone;
 
   // Événement saisonnier actif non complété
-  const activeEventId = eventProgressLoaded
-    ? getVisibleEventId(eventProgressList, profile?.id ?? '', new Date())
-    : null;
+  const [devEventOverride, setDevEventOverride] = useState<string | null>(null);
+  const activeEventId = (__DEV__ && devEventOverride)
+    ? devEventOverride
+    : (eventProgressLoaded ? getVisibleEventId(eventProgressList, profile?.id ?? '', new Date()) : null);
   const activeEventContent = activeEventId ? getEventContent(activeEventId) : undefined;
 
   // Compagnon — données et logique
@@ -1674,6 +1675,16 @@ export default function TreeScreen() {
                 <Text style={styles.actionItemIcon}>{'🔬'}</Text>
                 <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>{'Techs'}</Text>
               </TouchableOpacity>
+              {__DEV__ && (
+                <TouchableOpacity
+                  style={[styles.actionItem, devEventOverride ? { opacity: 0.5 } : null]}
+                  onPress={() => setDevEventOverride(prev => prev ? null : 'poisson-avril')}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.actionItemIcon}>{'🐟'}</Text>
+                  <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>{'DEV'}</Text>
+                </TouchableOpacity>
+              )}
               {(allDecoIds.length + allHabIds.length) > 0 && !placingItem && (
                 <TouchableOpacity style={styles.actionItem} onPress={() => setShowItemPicker(true)} activeOpacity={0.7}>
                   <Text style={styles.actionItemIcon}>{'🎨'}</Text>
