@@ -3467,8 +3467,8 @@
       "hiver": "Winter"
     },
     "adventure": {
-      "reward": "+{{points}} points earned!",
-      "reward_enfant": "AWESOME! +{{points}} points!!",
+      "reward": "+{{points}} XP earned!",
+      "reward_enfant": "AWESOME! +{{points}} XP!!",
       "tresor_ecureuil": {
         "title": "A squirrel hid a treasure!",
         "title_enfant": "OMG! A squirrel hid a TREASURE!!",

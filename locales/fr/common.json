@@ -3467,8 +3467,8 @@
       "hiver": "Hiver"
     },
     "adventure": {
-      "reward": "+{{points}} points gagnés !",
-      "reward_enfant": "SUPER ! +{{points}} points !!",
+      "reward": "+{{points}} XP gagnés !",
+      "reward_enfant": "SUPER ! +{{points}} XP !!",
       "tresor_ecureuil": {
         "title": "Un écureuil a caché un trésor !",
         "title_enfant": "OH ! Un écureuil a caché un TRÉSOR !!",
