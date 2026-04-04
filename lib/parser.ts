@@ -45,13 +45,15 @@ import {
   SkillUnlock,
   UsedLoot,
   isValidGender,
+  FarmProfileData,
 } from './types';
 import { VALID_THEMES, type ProfileTheme } from '../constants/themes';
 import { parseEmplacementFromHeader, LEGACY_BEBE_SECTIONS, type EmplacementId } from '../constants/stock';
-import { parseBuildings, parseInventory } from './mascot/building-engine';
-import { parseHarvestInventory, parseCraftedItems, parseRareSeeds } from './mascot/craft-engine';
-import { parseWearEvents } from './mascot/wear-engine';
+import { parseBuildings, parseInventory, serializeBuildings, serializeInventory } from './mascot/building-engine';
+import { parseHarvestInventory, parseCraftedItems, parseRareSeeds, serializeHarvestInventory, serializeCraftedItems, serializeRareSeeds } from './mascot/craft-engine';
+import { parseWearEvents, serializeWearEvents } from './mascot/wear-engine';
 import type { CompanionData, CompanionSpecies, CompanionMood } from './mascot/companion-types';
+import type { TreeSpecies } from './mascot/types';
 
 // ─── Task parsing ───────────────────────────────────────────────────────────
 
@@ -556,6 +558,100 @@ export function serializeCompanion(data: CompanionData): string {
   return `${data.activeSpecies}:${data.name}:${unlocked}:${data.mood}`;
 }
 
+// ─── farm-{profileId}.md ────────────────────────────────────────────────────
+
+/**
+ * Parse le fichier farm-{profileId}.md.
+ * Format : # Farm — {name}\n\nkey: value\nkey: value\n...
+ * Un seul profil par fichier (pas de sections ### ).
+ */
+export function parseFarmProfile(content: string): FarmProfileData {
+  const lines = content.split('\n');
+  const props: Record<string, string> = {};
+  for (const line of lines) {
+    if (line.startsWith('#')) continue;
+    if (!line.includes(': ')) continue;
+    const colonIdx = line.indexOf(': ');
+    const key = line.slice(0, colonIdx).trim();
+    const val = line.slice(colonIdx + 2).trim();
+    if (key && val) props[key] = val;
+  }
+
+  const validSpecies = new Set(['cerisier', 'chene', 'bambou', 'oranger', 'palmier']);
+  const treeSpecies = props.tree_species && validSpecies.has(props.tree_species)
+    ? (props.tree_species as TreeSpecies)
+    : undefined;
+
+  const mascotDecorations = props.mascot_decorations
+    ? props.mascot_decorations.split(',').map((s) => s.trim()).filter(Boolean)
+    : [];
+  const mascotInhabitants = props.mascot_inhabitants
+    ? props.mascot_inhabitants.split(',').map((s) => s.trim()).filter(Boolean)
+    : [];
+  const mascotPlacements: Record<string, string> = {};
+  if (props.mascot_placements) {
+    props.mascot_placements.split(',').forEach((pair) => {
+      const [slotId, itemId] = pair.split(':').map((s) => s.trim());
+      if (slotId && itemId) mascotPlacements[slotId] = itemId;
+    });
+  }
+
+  const farmTech = props.farm_tech
+    ? props.farm_tech.split(',').map((s) => s.trim()).filter(Boolean)
+    : [];
+
+  return {
+    treeSpecies,
+    mascotDecorations,
+    mascotInhabitants,
+    mascotPlacements,
+    farmCrops: props.farm_crops ?? '',
+    farmBuildings: parseBuildings(props.farm_buildings),
+    farmInventory: parseInventory(props.farm_inventory),
+    harvestInventory: parseHarvestInventory(props.farm_harvest_inventory),
+    craftedItems: parseCraftedItems(props.farm_crafted_items),
+    farmTech,
+    farmRareSeeds: parseRareSeeds(props.farm_rare_seeds),
+    wearEvents: parseWearEvents(props.wear_events),
+    companion: parseCompanion(props.companion),
+  };
+}
+
+/**
+ * Sérialise les données ferme d'un profil en Markdown pour farm-{profileId}.md.
+ * Format : # Farm — {profileName}\n\n{key: value lines}
+ * Ne sérialise que les champs non-vides.
+ */
+export function serializeFarmProfile(profileName: string, data: FarmProfileData): string {
+  const lines: string[] = [`# Farm — ${profileName}`, ''];
+
+  if (data.treeSpecies) lines.push(`tree_species: ${data.treeSpecies}`);
+  if (data.mascotDecorations.length > 0) lines.push(`mascot_decorations: ${data.mascotDecorations.join(',')}`);
+  if (data.mascotInhabitants.length > 0) lines.push(`mascot_inhabitants: ${data.mascotInhabitants.join(',')}`);
+  const placementsStr = Object.entries(data.mascotPlacements ?? {}).map(([s, i]) => `${s}:${i}`).join(',');
+  if (placementsStr) lines.push(`mascot_placements: ${placementsStr}`);
+  if (data.farmCrops) lines.push(`farm_crops: ${data.farmCrops}`);
+  if (data.farmBuildings && data.farmBuildings.length > 0) lines.push(`farm_buildings: ${serializeBuildings(data.farmBuildings)}`);
+  if (data.farmInventory) {
+    const invStr = serializeInventory(data.farmInventory);
+    if (invStr) lines.push(`farm_inventory: ${invStr}`);
+  }
+  if (data.harvestInventory) {
+    const harvestStr = serializeHarvestInventory(data.harvestInventory);
+    if (harvestStr) lines.push(`farm_harvest_inventory: ${harvestStr}`);
+  }
+  if (data.craftedItems && data.craftedItems.length > 0) lines.push(`farm_crafted_items: ${serializeCraftedItems(data.craftedItems)}`);
+  if (data.farmTech && data.farmTech.length > 0) lines.push(`farm_tech: ${data.farmTech.join(',')}`);
+  if (data.farmRareSeeds) {
+    const seedsStr = serializeRareSeeds(data.farmRareSeeds);
+    if (seedsStr) lines.push(`farm_rare_seeds: ${seedsStr}`);
+  }
+  if (data.wearEvents && data.wearEvents.length > 0) lines.push(`wear_events: ${serializeWearEvents(data.wearEvents)}`);
+  if (data.companion) lines.push(`companion: ${serializeCompanion(data.companion)}`);
+
+  return lines.join('\n') + '\n';
+}
+
 /**
  * Parse famille.md custom format:
  *
@@ -583,38 +679,6 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
         ? (currentProps.ageCategory as Profile['ageCategory'])
         : undefined;
       const statut = currentProps.statut === 'grossesse' ? 'grossesse' as const : undefined;
-      const validSpecies = new Set(['cerisier', 'chene', 'bambou', 'oranger', 'palmier']);
-      const treeSpecies = currentProps.tree_species && validSpecies.has(currentProps.tree_species)
-        ? (currentProps.tree_species as Profile['treeSpecies'])
-        : undefined;
-      const mascotDecorations = currentProps.mascot_decorations
-        ? currentProps.mascot_decorations.split(',').map((s: string) => s.trim()).filter(Boolean)
-        : [];
-      const mascotInhabitants = currentProps.mascot_inhabitants
-        ? currentProps.mascot_inhabitants.split(',').map((s: string) => s.trim()).filter(Boolean)
-        : [];
-      // Placements scène : "tree-top:guirlandes,ground-left:oiseau"
-      const mascotPlacements: Record<string, string> = {};
-      if (currentProps.mascot_placements) {
-        currentProps.mascot_placements.split(',').forEach((pair: string) => {
-          const [slotId, itemId] = pair.split(':').map(s => s.trim());
-          if (slotId && itemId) mascotPlacements[slotId] = itemId;
-        });
-      }
-      // Cultures ferme
-      const farmCrops = currentProps.farm_crops ?? '';
-      // Migration backward-compatible : ancien format CSV simple → nouveau format PlacedBuilding
-      const farmBuildings = parseBuildings(currentProps.farm_buildings);
-      const farmInventory = parseInventory(currentProps.farm_inventory);
-      const harvestInventory = parseHarvestInventory(currentProps.farm_harvest_inventory);
-      const craftedItems = parseCraftedItems(currentProps.farm_crafted_items);
-      const farmTechRaw = currentProps.farm_tech ?? '';
-      const farmTech = farmTechRaw ? farmTechRaw.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
-      const farmRareSeeds = parseRareSeeds(currentProps.farm_rare_seeds);
-      // Evenements d'usure ferme
-      const wearEvents = parseWearEvents(currentProps.wear_events);
-      // Compagnon mascotte — backward-compatible : undefined si absent du fichier
-      const companion = parseCompanion(currentProps.companion);
       profiles.push({
         id: currentId,
         name: currentProps.name,
@@ -627,19 +691,19 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
         statut,
         dateTerme: currentProps.dateTerme,
         theme,
-        treeSpecies,
-        mascotDecorations,
-        mascotInhabitants,
-        mascotPlacements,
-        farmCrops,
-        farmBuildings,
-        farmInventory,
-        harvestInventory,
-        craftedItems,
-        farmTech,
-        farmRareSeeds,
-        wearEvents,
-        ...(companion !== null ? { companion } : {}),
+        // Farm/mascot/companion fields live in farm-{profileId}.md — defaults here
+        treeSpecies: undefined,
+        mascotDecorations: [],
+        mascotInhabitants: [],
+        mascotPlacements: {},
+        farmCrops: '',
+        farmBuildings: undefined,
+        farmInventory: undefined,
+        harvestInventory: undefined,
+        craftedItems: undefined,
+        farmTech: undefined,
+        farmRareSeeds: undefined,
+        wearEvents: undefined,
       });
     }
   };

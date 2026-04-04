@@ -557,3 +557,22 @@ export interface Note {
   content: string;        // corps markdown
   sourceFile: string;     // chemin relatif vault
 }
+
+// ─── Farm profile data (farm-{profileId}.md) ─────────────────────────────────
+
+/** Données ferme/mascot/compagnon per-profil — stockées dans farm-{profileId}.md */
+export interface FarmProfileData {
+  treeSpecies?: import('../lib/mascot/types').TreeSpecies;
+  mascotDecorations: string[];
+  mascotInhabitants: string[];
+  mascotPlacements: Record<string, string>;
+  farmCrops?: string;
+  farmBuildings?: import('../lib/mascot/types').PlacedBuilding[];
+  farmInventory?: import('../lib/mascot/types').FarmInventory;
+  harvestInventory?: import('../lib/mascot/types').HarvestInventory;
+  craftedItems?: import('../lib/mascot/types').CraftedItem[];
+  farmTech?: string[];
+  farmRareSeeds?: import('../lib/mascot/types').RareSeedInventory;
+  wearEvents?: import('./mascot/wear-engine').WearEvent[];
+  companion?: import('./mascot/companion-types').CompanionData | null;
+}
