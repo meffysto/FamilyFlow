@@ -16,6 +16,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useVaultAnniversaires } from './useVaultAnniversaires';
 import { AppState, AppStateStatus } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { VaultManager } from '../lib/vault';
@@ -52,7 +53,6 @@ import {
   serializeWishlist,
   ANNIVERSAIRES_FILE,
   parseAnniversaries,
-  serializeAnniversaries,
   NOTES_DIR,
   parseNote,
   serializeNote,
@@ -527,7 +527,6 @@ export function useVaultInternal(): VaultState {
   const [defis, setDefis] = useState<Defi[]>([]);
   const [gratitudeDays, setGratitudeDays] = useState<GratitudeDay[]>([]);
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
-  const [anniversaries, setAnniversaries] = useState<Anniversary[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [quotes, setQuotes] = useState<ChildQuote[]>([]);
   const [moods, setMoods] = useState<MoodEntry[]>([]);
@@ -535,6 +534,17 @@ export function useVaultInternal(): VaultState {
   const [secretMissions, setSecretMissions] = useState<Task[]>([]);
   const vaultRef = useRef<VaultManager | null>(null);
   const busyRef = useRef(false); // Guard against AppState race condition
+
+  // ─── Hooks domaine ─────────────────────────────────────────────────────────
+  const {
+    anniversaries,
+    setAnniversaries,
+    addAnniversary,
+    updateAnniversary,
+    removeAnniversary,
+    importAnniversaries,
+    resetAnniversaires,
+  } = useVaultAnniversaires(vaultRef);
 
   // Load vault path + active profile from SecureStore on mount
   useEffect(() => {
@@ -1152,13 +1162,14 @@ export function useVaultInternal(): VaultState {
     recipesLoadedRef.current = false;
     setBudgetEntries([]);
     setBudgetConfig(DEFAULT_BUDGET_CONFIG);
+    resetAnniversaires();
     setVaultPathState(path);
     const vault = new VaultManager(path);
     vaultRef.current = vault;
     setIsLoading(true);
     await loadVaultData(vault);
     setIsLoading(false);
-  }, [loadVaultData]);
+  }, [loadVaultData, resetAnniversaires]);
 
   // Lazy-load recettes (appelé quand on accède à l'écran recettes/meals)
   const recipesLoadedRef = useRef(false);
@@ -3174,67 +3185,6 @@ export function useVaultInternal(): VaultState {
     await vaultRef.current.writeFile(WISHLIST_FILE, serializeWishlist(items));
     setWishlistItems(parseWishlist(await vaultRef.current.readFile(WISHLIST_FILE)));
   }, [reloadWishlist]);
-
-  // ─── Anniversaires CRUD ──────────────────────────────────────────────────
-
-  const reloadAnniversaries = useCallback(async (): Promise<Anniversary[]> => {
-    if (!vaultRef.current) return [];
-    try {
-      const content = await vaultRef.current.readFile(ANNIVERSAIRES_FILE);
-      return parseAnniversaries(content);
-    } catch (e) {
-      warnUnexpected('reloadAnniversaries', e);
-      return [];
-    }
-  }, []);
-
-  const addAnniversary = useCallback(async (anniversary: Omit<Anniversary, 'sourceFile'>) => {
-    if (!vaultRef.current) return;
-    const items = await reloadAnniversaries();
-    items.push({ ...anniversary, sourceFile: ANNIVERSAIRES_FILE });
-    await vaultRef.current.writeFile(ANNIVERSAIRES_FILE, serializeAnniversaries(items));
-    setAnniversaries(parseAnniversaries(await vaultRef.current.readFile(ANNIVERSAIRES_FILE)));
-  }, [reloadAnniversaries]);
-
-  const updateAnniversary = useCallback(async (oldName: string, anniversary: Omit<Anniversary, 'sourceFile'>) => {
-    if (!vaultRef.current) return;
-    const items = await reloadAnniversaries();
-    const idx = items.findIndex((a) => a.name === oldName);
-    if (idx === -1) return;
-    items[idx] = { ...anniversary, sourceFile: ANNIVERSAIRES_FILE };
-    await vaultRef.current.writeFile(ANNIVERSAIRES_FILE, serializeAnniversaries(items));
-    setAnniversaries(parseAnniversaries(await vaultRef.current.readFile(ANNIVERSAIRES_FILE)));
-  }, [reloadAnniversaries]);
-
-  const removeAnniversary = useCallback(async (name: string) => {
-    if (!vaultRef.current) return;
-    const items = await reloadAnniversaries();
-    const filtered = items.filter((a) => a.name !== name);
-    await vaultRef.current.writeFile(ANNIVERSAIRES_FILE, serializeAnniversaries(filtered));
-    setAnniversaries(parseAnniversaries(await vaultRef.current.readFile(ANNIVERSAIRES_FILE)));
-  }, [reloadAnniversaries]);
-
-  const importAnniversaries = useCallback(async (newItems: Omit<Anniversary, 'sourceFile'>[]) => {
-    if (!vaultRef.current) return;
-    const existing = await reloadAnniversaries();
-    // Merge : skip les doublons par contactId (si présent), sinon par nom+date
-    const existingContactIds = new Set(existing.filter((a) => a.contactId).map((a) => a.contactId));
-    const existingKeys = new Set(existing.map((a) => `${a.name}|${a.date}`));
-
-    for (const item of newItems) {
-      // Skip si contactId déjà présent
-      if (item.contactId && existingContactIds.has(item.contactId)) continue;
-      // Skip si même nom+date
-      if (existingKeys.has(`${item.name}|${item.date}`)) continue;
-
-      existing.push({ ...item, sourceFile: ANNIVERSAIRES_FILE });
-      if (item.contactId) existingContactIds.add(item.contactId);
-      existingKeys.add(`${item.name}|${item.date}`);
-    }
-
-    await vaultRef.current.writeFile(ANNIVERSAIRES_FILE, serializeAnniversaries(existing));
-    setAnniversaries(parseAnniversaries(await vaultRef.current.readFile(ANNIVERSAIRES_FILE)));
-  }, [reloadAnniversaries]);
 
   // ─── Notes & Articles CRUD ──────────────────────────────────────────────────
 
