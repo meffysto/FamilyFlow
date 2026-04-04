@@ -36,9 +36,13 @@ interface RecipeViewerProps {
   imageUri?: string | null;
   /** Callback pour sauvegarder une nouvelle image */
   onSaveImage?: (imageUri: string) => Promise<void>;
+  /** Callback pour changer la catégorie de la recette */
+  onChangeCategory?: (newCategory: string) => void;
+  /** Liste des catégories existantes pour le picker */
+  availableCategories?: string[];
 }
 
-export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isFavorite, onToggleFavorite, onRename, familySize, onCookingFinished, imageUri, onSaveImage }: RecipeViewerProps) {
+export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isFavorite, onToggleFavorite, onRename, familySize, onCookingFinished, imageUri, onSaveImage, onChangeCategory, availableCategories }: RecipeViewerProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { primary, tint, colors } = useThemeColors();
@@ -131,7 +135,33 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
               {onRename ? <Text style={[styles.editIcon, { color: colors.textFaint }]}> ✏️</Text> : null}
             </Text>
             {recipe.category ? (
-              <Text style={[styles.category, { color: colors.textMuted }]}>{recipe.category}</Text>
+              <TouchableOpacity
+                disabled={!onChangeCategory}
+                activeOpacity={onChangeCategory ? 0.6 : 1}
+                onPress={() => {
+                  if (!onChangeCategory || !availableCategories?.length) return;
+                  const others = availableCategories.filter(c => c !== recipe.category);
+                  if (others.length === 0) return;
+                  Alert.alert(
+                    'Changer de catégorie',
+                    `Catégorie actuelle : ${recipe.category}`,
+                    [
+                      ...others.map(cat => ({
+                        text: cat,
+                        onPress: () => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          onChangeCategory(cat);
+                        },
+                      })),
+                      { text: 'Annuler', style: 'cancel' as const },
+                    ],
+                  );
+                }}
+              >
+                <Text style={[styles.category, { color: colors.textMuted }]}>
+                  {recipe.category}{onChangeCategory ? ' 📁' : ''}
+                </Text>
+              </TouchableOpacity>
             ) : null}
           </TouchableOpacity>
           {onToggleFavorite ? (

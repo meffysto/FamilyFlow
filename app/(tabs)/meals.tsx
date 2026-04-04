@@ -107,7 +107,7 @@ export default function MealsScreen() {
     stock, updateStockQuantity, addStockItem,
     recipes, loadRecipes, deleteRecipe, renameRecipe,
     saveRecipeImage, getRecipeImageUri,
-    scanAllCookFiles, moveCookToRecipes,
+    scanAllCookFiles, moveCookToRecipes, moveRecipeCategory,
     profiles,
     activeProfile,
     healthRecords,
@@ -594,6 +594,10 @@ export default function MealsScreen() {
     if (!activeProfile) return [] as string[];
     return getFavorites(activeProfile.id);
   }, [activeProfile, getFavorites]);
+
+  const recipeCategories = useMemo(() => {
+    return [...new Set(recipes.map(r => r.category).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
+  }, [recipes]);
 
   const filteredRecipes = useMemo(() => {
     let result = recipes;
@@ -1441,6 +1445,15 @@ export default function MealsScreen() {
             }
             showToast(t('meals.toast.stockUpdated', { count: decrements.length }));
           }}
+          onChangeCategory={async (newCategory) => {
+            await moveRecipeCategory(selectedRecipe.sourceFile, newCategory);
+            setSelectedRecipe((prev) => prev ? {
+              ...prev,
+              category: newCategory,
+              sourceFile: prev.sourceFile.replace(/\/[^/]+\/([^/]+)$/, `/${newCategory}/$1`),
+            } : null);
+          }}
+          availableCategories={recipeCategories}
         />
       )}
 
