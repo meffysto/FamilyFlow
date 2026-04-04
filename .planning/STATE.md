@@ -159,6 +159,7 @@ None yet.
 | 260404-l62 | Bouton skip tâches récurrentes sans gamification | 2026-04-04 | 1ab57c1 | [260404-l62-bouton-skip-taches-recurrentes-sans-gami](./quick/260404-l62-bouton-skip-taches-recurrentes-sans-gami/) |
 | 260404-quw | Fix long-press not working on inventory items (CraftSheet) | 2026-04-04 | ae62fc6 | [260404-quw-fix-long-press-not-working-on-inventory-](./quick/260404-quw-fix-long-press-not-working-on-inventory-/) |
 | 260404-qvz | Fix OOM crash TreeScreen — timer global, lazy-load images saison, reduire particules | 2026-04-04 | cd8307e | [260404-qvz-fix-oom-crash-treescreen-timer-global-la](./quick/260404-qvz-fix-oom-crash-treescreen-timer-global-la/) |
+| 260404-rfs | Bouton Offrir visible sur items inventaire + Mes créations (remplace long-press) | 2026-04-04 | 19f051b | [260404-rfs-remplacer-long-press-cadeau-par-bouton-o](./quick/260404-rfs-remplacer-long-press-cadeau-par-bouton-o/) |
 
 ## Session Continuity
 
