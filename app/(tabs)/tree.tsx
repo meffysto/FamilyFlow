@@ -763,7 +763,7 @@ export default function TreeScreen() {
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayStr = yesterday.toISOString().slice(0, 10);
       const yesterdayTasks = gamiData?.history?.filter(
-        e => e.profileId === profile.id && e.timestamp?.slice(0, 10) === yesterdayStr
+        e => e.profileId === profile.id && e.timestamp?.slice(0, 10) === yesterdayStr && e.note?.startsWith('Tâche:')
       ).length ?? 0;
       const hasBonus = yesterdayTasks >= 3;
 
