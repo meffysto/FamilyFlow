@@ -49,6 +49,7 @@ interface WorldGridViewProps {
   onBuildingCellPress?: (cellId: string, building: PlacedBuilding | null) => void;
   onRepairWeed?: (plotIndex: number) => void;
   onRepairPest?: (cellId: string) => void;
+  onRepairFence?: (plotIndex: number) => void;
 }
 
 const DIRT_SPRITE = require('../../assets/garden/ground/dirt_patch.png');
@@ -65,7 +66,7 @@ const CROP_WHISPERS = [
   '🌱',
 ];
 
-function CropCell({ cell, crop, cropDef, isMature, plotIndex, wearEffects, containerWidth, containerHeight, onPress, onRepairWeed }: {
+function CropCell({ cell, crop, cropDef, isMature, plotIndex, wearEffects, containerWidth, containerHeight, onPress, onRepairWeed, onRepairFence }: {
   cell: WorldCell;
   crop: PlantedCrop | null;
   cropDef: typeof CROP_CATALOG[0] | null;
@@ -76,6 +77,7 @@ function CropCell({ cell, crop, cropDef, isMature, plotIndex, wearEffects, conta
   containerHeight: number;
   onPress: () => void;
   onRepairWeed?: (plotIndex: number) => void;
+  onRepairFence?: (plotIndex: number) => void;
 }) {
   const pulse = useSharedValue(1);
   const growScaleX = useSharedValue(1);
@@ -161,7 +163,9 @@ function CropCell({ cell, crop, cropDef, isMature, plotIndex, wearEffects, conta
   const top = cell.y * containerHeight - size / 2;
 
   const handleCropCellPress = () => {
-    if (hasWeeds && !isBlocked && !crop && onRepairWeed) {
+    if (isBlocked && onRepairFence) {
+      onRepairFence(plotIndex);
+    } else if (hasWeeds && !crop && onRepairWeed) {
       onRepairWeed(plotIndex);
     } else {
       onPress();
@@ -223,8 +227,8 @@ function CropCell({ cell, crop, cropDef, isMature, plotIndex, wearEffects, conta
           </View>
         )}
 
-        {/* Overlay mauvaises herbes */}
-        {hasWeeds && !isBlocked && (
+        {/* Overlay mauvaises herbes — uniquement parcelles vides */}
+        {hasWeeds && !isBlocked && !crop && (
           <View style={styles.weedsOverlay}>
             <Text style={styles.weedsIcon}>{'🌿'}</Text>
           </View>
@@ -575,6 +579,7 @@ export function WorldGridView({
   onBuildingCellPress,
   onRepairWeed,
   onRepairPest,
+  onRepairFence,
 }: WorldGridViewProps) {
   const unlockedCrops = getUnlockedCropCells(treeStage);
   const crops = parseCrops(farmCropsCSV);
@@ -621,6 +626,7 @@ export function WorldGridView({
             containerHeight={containerHeight}
             onPress={() => onCropPlotPress?.(cell.id, crop)}
             onRepairWeed={onRepairWeed}
+            onRepairFence={onRepairFence}
           />
         );
       })}
@@ -646,6 +652,7 @@ export function WorldGridView({
             containerHeight={containerHeight}
             onPress={() => onCropPlotPress?.(cell.id, crop)}
             onRepairWeed={onRepairWeed}
+            onRepairFence={onRepairFence}
           />
         );
       })}
@@ -681,6 +688,7 @@ export function WorldGridView({
               containerHeight={containerHeight}
               onPress={() => onCropPlotPress?.(cell.id, crop)}
               onRepairWeed={onRepairWeed}
+            onRepairFence={onRepairFence}
             />
             <View style={[styles.largeBadge, {
               left: cell.x * containerWidth - CELL_SIZES.large / 2 + CELL_SIZES.large - 18,
@@ -988,8 +996,8 @@ const styles = StyleSheet.create({
   },
   idleChickenSprite: {
     position: 'absolute',
-    width: 16,
-    height: 16,
+    width: 24,
+    height: 24,
   },
   idleGrangePos: {
     bottom: 2,

@@ -566,6 +566,21 @@ export function useFarm() {
       }
     }
 
+    // Cooldown 24h : ne pas generer de nouveaux evenements si le dernier check est recent
+    const lastGenerated = currentEvents
+      .filter(e => !e.repairedAt)
+      .map(e => new Date(e.startedAt).getTime())
+      .sort((a, b) => b - a)[0];
+    if (lastGenerated && now.getTime() - lastGenerated < 8 * 60 * 60 * 1000) {
+      // Juste nettoyer les anciens evenements si necessaire
+      const cleaned = cleanupOldEvents(currentEvents, now);
+      if (cleaned.length !== currentEvents.length) {
+        await writeProfileField(profileId, 'wear_events', serializeWearEvents(cleaned));
+        await refreshFarm(profileId);
+      }
+      return [];
+    }
+
     const newEvents = checkWearEvents(currentEvents, crops, buildings, totalPlots, fullBuildingSince, now);
     if (newEvents.length === 0) {
       // Juste nettoyer les anciens evenements si necessaire

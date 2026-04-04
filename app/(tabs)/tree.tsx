@@ -987,6 +987,30 @@ export default function TreeScreen() {
     }
   }, [isOwnTree]);
 
+  /** Réparer une clôture cassée sur une parcelle */
+  const handleRepairFence = useCallback(async (plotIndex: number) => {
+    if (!profile) return;
+    const events = getWearEvents(profile.id);
+    const event = events.find(e => e.type === 'broken_fence' && e.targetId === String(plotIndex) && !e.repairedAt);
+    if (!event) return;
+    const cost = 15;
+    Alert.alert(
+      t('farm.wear.broken_fence_title', { defaultValue: 'Clôture cassée' }),
+      t('farm.wear.broken_fence_confirm', { cost, defaultValue: `Réparer pour ${cost} 🍃 ?` }),
+      [
+        { text: t('common.cancel', { defaultValue: 'Annuler' }), style: 'cancel' },
+        {
+          text: t('farm.wear.repair_btn', { cost, defaultValue: `Réparer (${cost} 🍃)` }),
+          onPress: async () => {
+            const ok = await repairWear(profile.id, event.id);
+            if (ok) showToast(t('farm.wear.repaired', { defaultValue: 'Réparé !' }));
+            else showToast(t('farm.wear.not_enough', { defaultValue: 'Pas assez de feuilles' }), 'error');
+          },
+        },
+      ],
+    );
+  }, [profile, getWearEvents, repairWear, showToast, t]);
+
   /** Réparer les mauvaises herbes sur une parcelle */
   const handleRepairWeed = useCallback(async (plotIndex: number) => {
     if (!profile) return;
@@ -1554,6 +1578,7 @@ export default function TreeScreen() {
               onBuildingCellPress={isOwnTree ? handleBuildingCellPress : undefined}
               onRepairWeed={isOwnTree ? handleRepairWeed : undefined}
               onRepairPest={isOwnTree ? handleRepairPest : undefined}
+              onRepairFence={isOwnTree ? handleRepairFence : undefined}
             />
 
             {/* Couche 3.5 : Compagnon mascotte — se balade sur toute la scène */}
