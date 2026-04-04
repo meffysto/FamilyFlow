@@ -13,6 +13,7 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  Pressable,
   Modal,
   Platform,
 } from 'react-native';
@@ -548,7 +549,7 @@ export function CraftSheet({
         const cropName = cropDef ? t(cropDef.labelKey) : cropId;
         return (
           <Animated.View key={cropId} entering={FadeInDown.delay(idx * 60).duration(300)}>
-            <TouchableOpacity
+            <Pressable
               style={[
                 styles.inventoryRow,
                 { backgroundColor: colors.card, borderColor: colors.borderLight },
@@ -556,7 +557,6 @@ export function CraftSheet({
               ]}
               onLongPress={() => onOfferItem?.('harvest', cropId, qty, cropName)}
               delayLongPress={400}
-              activeOpacity={1}
             >
               <Text style={styles.inventoryEmoji}>{cropDef?.emoji ?? '?'}</Text>
               <View style={styles.inventoryInfo}>
@@ -581,7 +581,7 @@ export function CraftSheet({
                   {t('craft.vendre')}
                 </Text>
               </TouchableOpacity>
-            </TouchableOpacity>
+            </Pressable>
           </Animated.View>
         );
       })}
@@ -595,7 +595,7 @@ export function CraftSheet({
         const resName = t(labelKey);
         return (
           <Animated.View key={resourceId} entering={FadeInDown.delay((harvestEntries.length + idx) * 60).duration(300)}>
-            <TouchableOpacity
+            <Pressable
               style={[
                 styles.inventoryRow,
                 { backgroundColor: colors.card, borderColor: colors.borderLight },
@@ -603,7 +603,6 @@ export function CraftSheet({
               ]}
               onLongPress={() => onOfferItem?.('building_resource', resourceId, qty, resName)}
               delayLongPress={400}
-              activeOpacity={1}
             >
               <Text style={styles.inventoryEmoji}>{emoji}</Text>
               <View style={styles.inventoryInfo}>
@@ -614,7 +613,7 @@ export function CraftSheet({
                   x{qty}
                 </Text>
               </View>
-            </TouchableOpacity>
+            </Pressable>
           </Animated.View>
         );
       })}
@@ -683,7 +682,7 @@ export function CraftSheet({
         const recipeName = t(recipe.labelKey);
         return (
           <Animated.View key={recipe.id} entering={FadeInDown.delay(idx * 60).duration(300)}>
-            <TouchableOpacity
+            <Pressable
               style={[
                 styles.inventoryRow,
                 { backgroundColor: colors.card, borderColor: colors.borderLight },
@@ -691,7 +690,6 @@ export function CraftSheet({
               ]}
               onLongPress={() => onOfferItem?.('crafted', recipe.id, count, recipeName)}
               delayLongPress={400}
-              activeOpacity={1}
             >
               <Text style={styles.inventoryEmoji}>{recipe.emoji}</Text>
               <View style={styles.inventoryInfo}>
@@ -716,7 +714,7 @@ export function CraftSheet({
                   {t('craft.vendre')}
                 </Text>
               </TouchableOpacity>
-            </TouchableOpacity>
+            </Pressable>
           </Animated.View>
         );
       })}
