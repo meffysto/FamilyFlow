@@ -4034,6 +4034,8 @@
       "collect": "Collect {{count}} {{resource}}",
       "noPending": "Nothing to collect",
       "pendingCount": "{{count}} available",
+      "pendingOf": "{{count}} / {{max}} {{resource}} pending",
+      "storageFull": "Storage full!",
       "resource": {
         "oeuf": "egg",
         "oeufs": "eggs",
@@ -4062,7 +4064,23 @@
     "regularSeeds": "Regular seeds",
     "rareSeedDrop": "{{emoji}} Rare seed obtained: {{name}}!",
     "rareSeedDropHint": "Drop chance when harvesting: {{sources}} ({{pct}}%)",
-    "rareSeedDropHintAny": "Drop chance in any harvest (2%)"
+    "rareSeedDropHintAny": "Drop chance in any harvest (2%)",
+    "wear": {
+      "brokenFence": "Broken fence",
+      "brokenFenceDesc": "A fence is broken! This plot is unusable.",
+      "damagedRoof": "Damaged roof",
+      "damagedRoofDesc": "The {{building}} roof is damaged. Production halved.",
+      "weeds": "Weeds",
+      "weedsDesc": "Weeds have overtaken this plot.",
+      "pests": "Pests",
+      "pestsDesc": "Pests are eating the {{building}} supplies!",
+      "repair": "Repair ({{cost}} 🍃)",
+      "repairFree": "Pull out",
+      "repairPests": "Collect to chase away",
+      "repaired": "Repaired!",
+      "notEnoughCoins": "Not enough leaves",
+      "newEvent": "Oh no! {{description}}"
+    }
   },
   "craft": {
     "atelier": "Workshop",
@@ -4280,6 +4298,31 @@
       "celebration": {
         "1": "{{streak}} days in a row! {{companionName}} does a victory dance!",
         "2": "Amazing streak! {{companionName}} is over the moon!"
+      },
+      "buildingFull": {
+        "1": "The building is overflowing! {{companionName}} says you need to collect everything!",
+        "2": "No more room! {{companionName}} suggests checking the farm."
+      },
+      "fenceBroken": {
+        "1": "Oh no, the fence is broken! {{companionName}} is worried about the animals...",
+        "2": "{{companionName}} spotted a damaged fence. It needs fixing!"
+      },
+      "roofDamaged": {
+        "1": "The roof took a hit... {{companionName}} looks at the damage with concern.",
+        "2": "Ouch, a damaged roof! {{companionName}} suggests repairing it quickly."
+      },
+      "weedsGrowing": {
+        "1": "Weeds are growing everywhere! {{companionName}} wrinkles their nose.",
+        "2": "{{companionName}} spotted invasive weeds on the plot..."
+      },
+      "pestsAttacking": {
+        "1": "Pests! {{companionName}} caught them nibbling the supplies!",
+        "2": "Watch out {{profileName}}, {{companionName}} spotted critters lurking on the farm!"
+      },
+      "wearRepaired": {
+        "1": "Nicely repaired! {{companionName}} inspects the work and approves.",
+        "2": "The farm is in better shape! {{companionName}} is relieved.",
+        "3": "Good job {{profileName}}! {{companionName}} is glad everything is fixed."
       }
     }
   }

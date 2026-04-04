@@ -33,7 +33,14 @@ export type CompanionEvent =
   | 'morning_greeting'
   | 'gentle_nudge'
   | 'comeback'
-  | 'celebration';
+  | 'celebration'
+  // Événements d'usure & bâtiments
+  | 'building_full'
+  | 'fence_broken'
+  | 'roof_damaged'
+  | 'weeds_growing'
+  | 'pests_attacking'
+  | 'wear_repaired';
 
 /** Données persistées du compagnon dans le profil */
 export interface CompanionData {

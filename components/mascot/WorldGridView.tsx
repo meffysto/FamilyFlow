@@ -33,6 +33,9 @@ import { BUILDING_SPRITES } from '../../lib/mascot/building-sprites';
 import { getPendingResources } from '../../lib/mascot/building-engine';
 import { parseCrops, hasCropSeasonalBonus } from '../../lib/mascot/farm-engine';
 import { CROP_SPRITES } from '../../lib/mascot/crop-sprites';
+import { type WearEffects } from '../../lib/mascot/wear-engine';
+import { Spacing } from '../../constants/spacing';
+import { FontSize } from '../../constants/typography';
 
 interface WorldGridViewProps {
   treeStage: TreeStage;
@@ -41,6 +44,7 @@ interface WorldGridViewProps {
   containerWidth: number;
   containerHeight: number;
   techBonuses?: TechBonuses;
+  wearEffects?: WearEffects;
   onCropPlotPress?: (cellId: string, crop: PlantedCrop | null) => void;
   onBuildingCellPress?: (cellId: string, building: PlacedBuilding | null) => void;
 }
@@ -59,11 +63,13 @@ const CROP_WHISPERS = [
   '🌱',
 ];
 
-function CropCell({ cell, crop, cropDef, isMature, containerWidth, containerHeight, onPress }: {
+function CropCell({ cell, crop, cropDef, isMature, plotIndex, wearEffects, containerWidth, containerHeight, onPress }: {
   cell: WorldCell;
   crop: PlantedCrop | null;
   cropDef: typeof CROP_CATALOG[0] | null;
   isMature: boolean;
+  plotIndex: number;
+  wearEffects?: WearEffects;
   containerWidth: number;
   containerHeight: number;
   onPress: () => void;
@@ -144,6 +150,9 @@ function CropCell({ cell, crop, cropDef, isMature, containerWidth, containerHeig
     ],
   }));
 
+  const isBlocked = wearEffects?.blockedPlots.includes(plotIndex) ?? false;
+  const hasWeeds = wearEffects?.weedyPlots.includes(plotIndex) ?? false;
+
   const size = CELL_SIZES[cell.size];
   const left = cell.x * containerWidth - size / 2;
   const top = cell.y * containerHeight - size / 2;
@@ -195,6 +204,20 @@ function CropCell({ cell, crop, cropDef, isMature, containerWidth, containerHeig
         ) : (
           <Text style={styles.emptyPlus}>+</Text>
         )}
+
+        {/* Overlay clôture cassée */}
+        {isBlocked && (
+          <View style={styles.blockedOverlay}>
+            <Text style={styles.blockedIcon}>{'🔨'}</Text>
+          </View>
+        )}
+
+        {/* Overlay mauvaises herbes */}
+        {hasWeeds && !isBlocked && (
+          <View style={styles.weedsOverlay}>
+            <Text style={styles.weedsIcon}>{'🌿'}</Text>
+          </View>
+        )}
       </TouchableOpacity>
       {/* Bulle whisper auto */}
       {bubble != null && (
@@ -206,19 +229,201 @@ function CropCell({ cell, crop, cropDef, isMature, containerWidth, containerHeig
   );
 }
 
+// ── Animations idle batiments ──
+
+const PENDING_RESOURCE_EMOJI: Record<string, string> = {
+  poulailler: '🥚',
+  grange: '🥛',
+  moulin: '🌾',
+  ruche: '🍯',
+};
+
+const BuildingIdleAnim = React.memo(function BuildingIdleAnim({ buildingId, pendingCount }: {
+  buildingId: string;
+  pendingCount: number;
+}) {
+  const reducedMotion = useReducedMotion();
+
+  // Poulailler — poule qui picore (bob vertical)
+  const chickenY = useSharedValue(0);
+  // Grange — vache qui remue (rotation)
+  const cowRotate = useSharedValue(0);
+  // Moulin — ailes qui tournent (rotation continue)
+  const millRotate = useSharedValue(0);
+  // Ruche — abeilles oscillantes
+  const bee1Phase = useSharedValue(0);
+  const bee2Phase = useSharedValue(0);
+  // Ressource en attente — scintillement
+  const pendingOpacity = useSharedValue(0.7);
+
+  useEffect(() => {
+    if (reducedMotion) return;
+
+    if (buildingId === 'poulailler') {
+      chickenY.value = withRepeat(
+        withSequence(
+          withTiming(-3, { duration: 300, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0, { duration: 300, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0, { duration: 1400 }),
+        ),
+        -1, false,
+      );
+    } else if (buildingId === 'grange') {
+      cowRotate.value = withRepeat(
+        withSequence(
+          withTiming(-5, { duration: 750, easing: Easing.inOut(Easing.sin) }),
+          withTiming(5, { duration: 750, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0, { duration: 750, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0, { duration: 750 }),
+        ),
+        -1, false,
+      );
+    } else if (buildingId === 'moulin') {
+      millRotate.value = withRepeat(
+        withTiming(360, { duration: 4000, easing: Easing.linear }),
+        -1, false,
+      );
+    } else if (buildingId === 'ruche') {
+      bee1Phase.value = withRepeat(
+        withTiming(2 * Math.PI, { duration: 3000, easing: Easing.linear }),
+        -1, false,
+      );
+      bee2Phase.value = withRepeat(
+        withTiming(2 * Math.PI, { duration: 3500, easing: Easing.linear }),
+        -1, false,
+      );
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reducedMotion, buildingId]);
+
+  // Scintillement ressource en attente
+  useEffect(() => {
+    if (reducedMotion) return;
+    if (pendingCount > 0) {
+      pendingOpacity.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 600, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0.7, { duration: 600, easing: Easing.inOut(Easing.sin) }),
+        ),
+        -1, true,
+      );
+    } else {
+      pendingOpacity.value = 0.7;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reducedMotion, pendingCount > 0]);
+
+  const chickenStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: chickenY.value }],
+  }));
+
+  const cowStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${cowRotate.value}deg` }],
+  }));
+
+  const millStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${millRotate.value}deg` }],
+  }));
+
+  const bee1Style = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: Math.cos(bee1Phase.value) * 14 },
+      { translateY: Math.sin(bee1Phase.value) * 10 },
+    ],
+  }));
+
+  const bee2Style = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: Math.cos(bee2Phase.value + Math.PI) * 12 },
+      { translateY: Math.sin(bee2Phase.value + Math.PI) * 8 },
+    ],
+  }));
+
+  const pendingStyle = useAnimatedStyle(() => ({
+    opacity: pendingOpacity.value,
+  }));
+
+  if (reducedMotion) return null;
+
+  const pendingEmoji = PENDING_RESOURCE_EMOJI[buildingId];
+
+  return (
+    <>
+      {/* Animation idle par type */}
+      {buildingId === 'poulailler' && (
+        <Animated.Text style={[styles.idleEmoji, styles.idlePoulaillerPos, chickenStyle]}>
+          🐔
+        </Animated.Text>
+      )}
+      {buildingId === 'grange' && (
+        <Animated.Text style={[styles.idleEmoji, styles.idleGrangePos, cowStyle]}>
+          🐄
+        </Animated.Text>
+      )}
+      {buildingId === 'moulin' && (
+        <Animated.Text style={[styles.idleEmojiMill, styles.idleMoulinPos, millStyle]}>
+          ✦
+        </Animated.Text>
+      )}
+      {buildingId === 'ruche' && (
+        <>
+          <Animated.Text style={[styles.idleEmojiBee, styles.idleRucheCenter, bee1Style]}>
+            🐝
+          </Animated.Text>
+          <Animated.Text style={[styles.idleEmojiBee, styles.idleRucheCenter, bee2Style]}>
+            🐝
+          </Animated.Text>
+        </>
+      )}
+
+      {/* Ressource en attente — scintillement */}
+      {pendingCount > 0 && pendingEmoji && (
+        <Animated.Text style={[styles.pendingResourceEmoji, pendingStyle]}>
+          {pendingEmoji}
+        </Animated.Text>
+      )}
+    </>
+  );
+});
+
 // ── Cellule batiment ──
 
-function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, containerWidth, containerHeight, onPress }: {
+function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, wearEffects, containerWidth, containerHeight, onPress }: {
   cell: WorldCell;
   placedBuilding: PlacedBuilding | null;
   pendingCount: number;
   canBuild: boolean;
+  wearEffects?: WearEffects;
   containerWidth: number;
   containerHeight: number;
   onPress: () => void;
 }) {
   const pulse = useSharedValue(1);
   const reducedMotion = useReducedMotion();
+
+  const isDamaged = wearEffects?.damagedBuildings.includes(cell.id) ?? false;
+  const hasPests = wearEffects?.pestBuildings.includes(cell.id) ?? false;
+
+  // Animation wiggle pour les nuisibles
+  const pestWiggle = useSharedValue(0);
+  useEffect(() => {
+    if (hasPests && !reducedMotion) {
+      pestWiggle.value = withRepeat(
+        withSequence(
+          withTiming(-2, { duration: 150, easing: Easing.inOut(Easing.sin) }),
+          withTiming(2, { duration: 150, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0, { duration: 150, easing: Easing.inOut(Easing.sin) }),
+        ),
+        -1, false,
+      );
+    } else {
+      pestWiggle.value = withTiming(0, { duration: 100 });
+    }
+  }, [hasPests, reducedMotion]);
+
+  const pestAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: pestWiggle.value }],
+  }));
 
   useEffect(() => {
     if (!reducedMotion && pendingCount > 0) {
@@ -255,10 +460,35 @@ function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, containerW
               source={BUILDING_SPRITES[placedBuilding.buildingId]?.[placedBuilding.level]}
               style={styles.buildingSprite}
             />
+            <BuildingIdleAnim
+              buildingId={placedBuilding.buildingId}
+              pendingCount={pendingCount}
+            />
             {pendingCount > 0 && (
               <View style={styles.pendingBadge}>
                 <Text style={styles.pendingBadgeText}>{pendingCount}</Text>
               </View>
+            )}
+            {/* Badge toit endommagé */}
+            {isDamaged && (
+              <View style={styles.damagedBadge}>
+                <Text style={styles.damagedBadgeIcon}>{'⚠️'}</Text>
+                <Text style={styles.damagedBadgeLabel}>{'-50%'}</Text>
+              </View>
+            )}
+            {/* Nuisibles animés */}
+            {hasPests && (
+              <>
+                <Animated.View style={[styles.pestIcon, styles.pestIconTopLeft, pestAnimStyle]}>
+                  <Text style={styles.pestEmoji}>{'🐛'}</Text>
+                </Animated.View>
+                <Animated.View style={[styles.pestIcon, styles.pestIconBottomRight, pestAnimStyle]}>
+                  <Text style={styles.pestEmoji}>{'🐛'}</Text>
+                </Animated.View>
+                <Animated.View style={[styles.pestIcon, styles.pestIconTopRight, pestAnimStyle]}>
+                  <Text style={styles.pestEmoji}>{'🐛'}</Text>
+                </Animated.View>
+              </>
             )}
           </>
         ) : (
@@ -319,6 +549,7 @@ export function WorldGridView({
   containerWidth,
   containerHeight,
   techBonuses,
+  wearEffects,
   onCropPlotPress,
   onBuildingCellPress,
 }: WorldGridViewProps) {
@@ -361,6 +592,8 @@ export function WorldGridView({
             crop={crop}
             cropDef={cropDef}
             isMature={isMature}
+            plotIndex={cellIdx}
+            wearEffects={wearEffects}
             containerWidth={containerWidth}
             containerHeight={containerHeight}
             onPress={() => onCropPlotPress?.(cell.id, crop)}
@@ -383,6 +616,8 @@ export function WorldGridView({
             crop={crop}
             cropDef={cropDef}
             isMature={isMature}
+            plotIndex={cellIdx}
+            wearEffects={wearEffects}
             containerWidth={containerWidth}
             containerHeight={containerHeight}
             onPress={() => onCropPlotPress?.(cell.id, crop)}
@@ -415,6 +650,8 @@ export function WorldGridView({
               crop={crop}
               cropDef={cropDef}
               isMature={isMature}
+              plotIndex={cellIdx}
+              wearEffects={wearEffects}
               containerWidth={containerWidth}
               containerHeight={containerHeight}
               onPress={() => onCropPlotPress?.(cell.id, crop)}
@@ -442,6 +679,7 @@ export function WorldGridView({
             placedBuilding={placedBuilding}
             pendingCount={pendingCount}
             canBuild={!placedBuilding && canBuildOnEmpty}
+            wearEffects={wearEffects}
             containerWidth={containerWidth}
             containerHeight={containerHeight}
             onPress={() => onBuildingCellPress?.(cell.id, placedBuilding)}
@@ -461,6 +699,7 @@ export function WorldGridView({
             placedBuilding={placedBuilding}
             pendingCount={pendingCount}
             canBuild={!placedBuilding && canBuildOnEmpty}
+            wearEffects={wearEffects}
             containerWidth={containerWidth}
             containerHeight={containerHeight}
             onPress={() => onBuildingCellPress?.(cell.id, placedBuilding)}
@@ -642,5 +881,111 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '900',
     color: '#5D4037',
+  },
+  // ── Overlays d'usure — CropCell ──
+  blockedOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(239, 68, 68, 0.3)',
+    borderRadius: Spacing.md,
+    borderWidth: 1.5,
+    borderColor: 'rgba(239, 68, 68, 0.6)',
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  blockedIcon: {
+    fontSize: FontSize.title,
+  },
+  weedsOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(34, 197, 94, 0.2)',
+    borderRadius: Spacing.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  weedsIcon: {
+    fontSize: FontSize.subtitle,
+  },
+  // ── Overlays d'usure — BuildingCell ──
+  damagedBadge: {
+    position: 'absolute',
+    bottom: -Spacing.xs,
+    left: -Spacing.xs,
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  damagedBadgeIcon: {
+    fontSize: FontSize.sm,
+  },
+  damagedBadgeLabel: {
+    fontSize: FontSize.micro,
+    fontWeight: '700' as const,
+    color: '#EF4444',
+  },
+  pestIcon: {
+    position: 'absolute',
+    zIndex: 10,
+  },
+  pestIconTopLeft: {
+    top: -Spacing.xs,
+    left: -Spacing.sm,
+  },
+  pestIconBottomRight: {
+    bottom: -Spacing.xs,
+    right: -Spacing.sm,
+  },
+  pestIconTopRight: {
+    top: Spacing.md,
+    right: -Spacing.md,
+  },
+  pestEmoji: {
+    fontSize: FontSize.caption,
+  },
+  // ── Idle anim styles ──
+  idleEmoji: {
+    position: 'absolute',
+    fontSize: 12,
+  },
+  idlePoulaillerPos: {
+    bottom: 2,
+    left: 2,
+  },
+  idleGrangePos: {
+    bottom: 2,
+    right: 2,
+  },
+  idleEmojiMill: {
+    position: 'absolute',
+    fontSize: 14,
+    color: '#FFD700',
+  },
+  idleMoulinPos: {
+    top: 2,
+    alignSelf: 'center',
+    left: 24,
+  },
+  idleEmojiBee: {
+    position: 'absolute',
+    fontSize: 12,
+  },
+  idleRucheCenter: {
+    top: 20,
+    left: 20,
+  },
+  pendingResourceEmoji: {
+    position: 'absolute',
+    top: -14,
+    alignSelf: 'center',
+    fontSize: 16,
+    textAlign: 'center' as const,
+    left: 22,
   },
 });

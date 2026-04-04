@@ -20,7 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { BUILDING_CATALOG, type PlacedBuilding } from '../../lib/mascot/types';
 import { BUILDING_SPRITES } from '../../lib/mascot/building-sprites';
-import { getPendingResources, getUpgradeCost, canUpgrade, getMinutesUntilNext } from '../../lib/mascot/building-engine';
+import { getPendingResources, getUpgradeCost, canUpgrade, getMinutesUntilNext, MAX_PENDING } from '../../lib/mascot/building-engine';
 import type { TechBonuses } from '../../lib/mascot/tech-engine';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -57,6 +57,8 @@ export function BuildingDetailSheet({
 
   const tier = def.tiers[building.level - 1];
   const pendingCount = getPendingResources(building, new Date(), techBonuses);
+  const effectiveMaxPending = Math.floor(MAX_PENDING * (techBonuses?.buildingCapacityMultiplier ?? 1));
+  const isFull = pendingCount >= effectiveMaxPending;
   const upgradable = canUpgrade(building);
   const upgradeCost = getUpgradeCost(building);
   const nextTier = upgradable ? def.tiers[building.level] : null;
@@ -147,12 +149,17 @@ export function BuildingDetailSheet({
             </View>
 
             {/* Section collecte */}
-            <View style={[styles.section, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}>
+            <View style={[styles.section, { backgroundColor: colors.cardAlt, borderColor: isFull ? '#F59E0B' : colors.borderLight }]}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
                 {pendingCount > 0
-                  ? t('farm.building.pendingCount', { count: pendingCount })
+                  ? t('farm.building.pendingOf', { count: pendingCount, max: effectiveMaxPending, resource: resourceLabel })
                   : t('farm.building.noPending')}
               </Text>
+              {isFull && (
+                <Text style={{ color: '#F59E0B', fontSize: FontSize.sm, fontWeight: FontWeight.semibold }}>
+                  {t('farm.building.storageFull')}
+                </Text>
+              )}
               <TouchableOpacity
                 onPress={pendingCount > 0 ? handleCollect : undefined}
                 activeOpacity={pendingCount > 0 ? 0.7 : 1}

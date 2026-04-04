@@ -192,6 +192,32 @@ export const MESSAGE_TEMPLATES: Record<CompanionEvent, string[]> = {
     'companion.msg.celebration.1',
     'companion.msg.celebration.2',
   ],
+  // Événements d'usure & bâtiments
+  building_full: [
+    'companion.msg.buildingFull.1',
+    'companion.msg.buildingFull.2',
+  ],
+  fence_broken: [
+    'companion.msg.fenceBroken.1',
+    'companion.msg.fenceBroken.2',
+  ],
+  roof_damaged: [
+    'companion.msg.roofDamaged.1',
+    'companion.msg.roofDamaged.2',
+  ],
+  weeds_growing: [
+    'companion.msg.weedsGrowing.1',
+    'companion.msg.weedsGrowing.2',
+  ],
+  pests_attacking: [
+    'companion.msg.pestsAttacking.1',
+    'companion.msg.pestsAttacking.2',
+  ],
+  wear_repaired: [
+    'companion.msg.wearRepaired.1',
+    'companion.msg.wearRepaired.2',
+    'companion.msg.wearRepaired.3',
+  ],
 };
 
 /**
@@ -266,6 +292,13 @@ function buildCompanionPrompt(event: CompanionEvent, ctx: CompanionMessageContex
     gentle_nudge: nudgeDesc(),
     comeback: `${ctx.profileName} revient après une absence`,
     celebration: `Il y a quelque chose à fêter pour la famille`,
+    // Événements d'usure & bâtiments
+    building_full: `Un bâtiment de la ferme de ${ctx.profileName} est plein à craquer`,
+    fence_broken: `Une clôture de la ferme de ${ctx.profileName} vient de se casser`,
+    roof_damaged: `Le toit d'un bâtiment de la ferme de ${ctx.profileName} est endommagé`,
+    weeds_growing: `Des mauvaises herbes poussent sur la ferme de ${ctx.profileName}`,
+    pests_attacking: `Des nuisibles attaquent la ferme de ${ctx.profileName}`,
+    wear_repaired: `${ctx.profileName} vient de réparer quelque chose sur la ferme`,
   };
 
   // Contexte conditionnel — n'injecter que ce qui est pertinent à l'événement

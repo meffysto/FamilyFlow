@@ -923,7 +923,7 @@ export default function TreeScreen() {
       const burstX = cell.x * SCREEN_W;
       const burstY = cell.y * (DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60);
       const cropDef = CROP_CATALOG.find(c => c.id === crop.cropId);
-      harvest(profile.id, cellIdx).then((result) => {
+      harvest(profile.id, crop.plotIndex).then((result) => {
         if (result) {
           const harvestedCropDef = CROP_CATALOG.find(c => c.id === result.cropId);
           const displayReward = harvestedCropDef?.harvestReward ?? 0;

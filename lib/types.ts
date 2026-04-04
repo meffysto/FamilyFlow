@@ -87,6 +87,7 @@ export interface Profile {
   craftedItems?: import('../lib/mascot/types').CraftedItem[];         // Items craftes en inventaire
   farmTech?: string[];    // IDs des noeuds tech debloques
   farmRareSeeds?: import('../lib/mascot/types').RareSeedInventory;  // Graines rares en stock
+  wearEvents?: import('./mascot/wear-engine').WearEvent[];          // Evenements d'usure ferme
   companion?: import('./mascot/companion-types').CompanionData | null; // Compagnon actif du profil
   points: number;
   coins: number;            // 🍃 Feuilles — monnaie dépensable (boutique)

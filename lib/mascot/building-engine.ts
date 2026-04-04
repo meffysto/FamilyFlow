@@ -12,6 +12,7 @@ import {
   type BuildingTier,
 } from './types';
 import { type TechBonuses } from './tech-engine';
+import { type WearEffects } from './wear-engine';
 
 /** Nombre maximum de ressources en attente par batiment */
 export const MAX_PENDING = 3;
@@ -133,13 +134,16 @@ export function getPendingResources(
   building: PlacedBuilding,
   now: Date = new Date(),
   techBonuses?: TechBonuses,
+  wearEffects?: WearEffects,
 ): number {
   const def = BUILDING_CATALOG.find(d => d.id === building.buildingId);
   if (!def) return 0;
   const tier = def.tiers[building.level - 1];
   if (!tier) return 0;
 
-  const effectiveRate = tier.productionRateHours * (techBonuses?.productionIntervalMultiplier ?? 1.0);
+  // Toit endommage = production 2x plus lente (intervalle double)
+  const wearMultiplier = wearEffects?.damagedBuildings.includes(building.cellId) ? 2 : 1;
+  const effectiveRate = tier.productionRateHours * (techBonuses?.productionIntervalMultiplier ?? 1.0) * wearMultiplier;
   const effectiveMaxPending = Math.floor(MAX_PENDING * (techBonuses?.buildingCapacityMultiplier ?? 1));
 
   const lastCollect = new Date(building.lastCollectAt);
@@ -154,13 +158,16 @@ export function getMinutesUntilNext(
   building: PlacedBuilding,
   now: Date = new Date(),
   techBonuses?: TechBonuses,
+  wearEffects?: WearEffects,
 ): number {
   const def = BUILDING_CATALOG.find(d => d.id === building.buildingId);
   if (!def) return 0;
   const tier = def.tiers[building.level - 1];
   if (!tier) return 0;
 
-  const effectiveRate = tier.productionRateHours * (techBonuses?.productionIntervalMultiplier ?? 1.0);
+  // Toit endommage = production 2x plus lente (intervalle double)
+  const wearMultiplier = wearEffects?.damagedBuildings.includes(building.cellId) ? 2 : 1;
+  const effectiveRate = tier.productionRateHours * (techBonuses?.productionIntervalMultiplier ?? 1.0) * wearMultiplier;
   const effectiveMaxPending = Math.floor(MAX_PENDING * (techBonuses?.buildingCapacityMultiplier ?? 1));
 
   const lastCollect = new Date(building.lastCollectAt);
@@ -181,6 +188,7 @@ export function collectBuilding(
   cellId: string,
   now: Date = new Date(),
   techBonuses?: TechBonuses,
+  wearEffects?: WearEffects,
 ): { buildings: PlacedBuilding[]; inventory: FarmInventory; collected: number } {
   const building = buildings.find(b => b.cellId === cellId);
   if (!building) return { buildings, inventory, collected: 0 };
@@ -188,7 +196,7 @@ export function collectBuilding(
   const def = BUILDING_CATALOG.find(d => d.id === building.buildingId);
   if (!def) return { buildings, inventory, collected: 0 };
 
-  const pending = getPendingResources(building, now, techBonuses);
+  const pending = getPendingResources(building, now, techBonuses, wearEffects);
   if (pending === 0) return { buildings, inventory, collected: 0 };
 
   // Mettre a jour lastCollectAt — avancer au moment de la derniere unite produite

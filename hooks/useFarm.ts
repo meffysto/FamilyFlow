@@ -5,9 +5,9 @@
  * et deduit/ajoute les feuilles dans gamification.md.
  */
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useVault } from '../contexts/VaultContext';
-import { plantCrop, harvestCrop, parseCrops, serializeCrops, getEffectiveHarvestReward, rollHarvestEvent, rollSeedDrop, type HarvestEvent, type RareSeedDrop } from '../lib/mascot/farm-engine';
+import { plantCrop, harvestCrop, parseCrops, serializeCrops, getEffectiveHarvestReward, rollHarvestEvent, rollSeedDrop, getUnlockedPlotCount, type HarvestEvent, type RareSeedDrop } from '../lib/mascot/farm-engine';
 import { CROP_CATALOG, BUILDING_CATALOG } from '../lib/mascot/types';
 import type { PlacedBuilding, FarmInventory, CraftedItem } from '../lib/mascot/types';
 import { isLargeCropPlot } from '../lib/mascot/world-grid';
@@ -20,6 +20,8 @@ import {
   parseBuildings,
   serializeInventory,
   parseInventory,
+  getPendingResources,
+  MAX_PENDING,
 } from '../lib/mascot/building-engine';
 import {
   CRAFT_RECIPES,
@@ -40,6 +42,15 @@ import {
   serializeTechs,
   getTechBonuses,
 } from '../lib/mascot/tech-engine';
+import {
+  checkWearEvents,
+  repairWearEvent,
+  getActiveWearEffects,
+  serializeWearEvents,
+  cleanupOldEvents,
+  type WearEvent,
+  type WearEffects,
+} from '../lib/mascot/wear-engine';
 import { parseGamification, serializeGamification, parseFamille } from '../lib/parser';
 import { enqueueWrite, patchProfileField, patchProfileFields } from '../lib/famille-queue';
 
@@ -480,6 +491,96 @@ export function useFarm() {
     return true;
   }, [vault, profiles, writeProfileField, deductCoins, refresh]);
 
+  /** Verifier et generer de nouveaux evenements d'usure (appele a l'ouverture) */
+  const checkWear = useCallback(async (profileId: string): Promise<WearEvent[]> => {
+    if (!vault) return [];
+
+    const content = await vault.readFile(FAMILLE_FILE);
+    const freshProfiles = parseFamille(content);
+    const profile = freshProfiles.find(p => p.id === profileId);
+    if (!profile) return [];
+
+    const currentEvents = profile.wearEvents ?? [];
+    const crops = parseCrops(profile.farmCrops ?? '');
+    const buildings = profile.farmBuildings ?? [];
+    const vaultProfile = profiles?.find(p => p.id === profileId);
+    const treeStage = getTreeStageInfo(vaultProfile?.level ?? 1).stage;
+    const totalPlots = getUnlockedPlotCount(treeStage);
+    const profileTech = getTechBonuses(profile.farmTech ?? []);
+    const now = new Date();
+
+    // Calculer fullBuildingSince : heuristique basee sur le remplissage des batiments
+    const fullBuildingSince: Record<string, string> = {};
+    for (const b of buildings) {
+      const effectiveMaxPending = Math.floor(MAX_PENDING * (profileTech?.buildingCapacityMultiplier ?? 1));
+      const pending = getPendingResources(b, now, profileTech);
+      if (pending >= effectiveMaxPending) {
+        const def = BUILDING_CATALOG.find(d => d.id === b.buildingId);
+        if (def) {
+          const tier = def.tiers[b.level - 1];
+          if (tier) {
+            const effectiveRate = tier.productionRateHours * (profileTech?.productionIntervalMultiplier ?? 1.0);
+            const rateMs = effectiveRate * 3600 * 1000;
+            const fullSinceMs = new Date(b.lastCollectAt).getTime() + effectiveMaxPending * rateMs;
+            fullBuildingSince[b.cellId] = new Date(fullSinceMs).toISOString();
+          }
+        }
+      }
+    }
+
+    const newEvents = checkWearEvents(currentEvents, crops, buildings, totalPlots, fullBuildingSince, now);
+    if (newEvents.length === 0) {
+      // Juste nettoyer les anciens evenements si necessaire
+      const cleaned = cleanupOldEvents(currentEvents, now);
+      if (cleaned.length !== currentEvents.length) {
+        await writeProfileField(profileId, 'wear_events', serializeWearEvents(cleaned));
+        await refresh();
+      }
+      return [];
+    }
+
+    const merged = cleanupOldEvents([...currentEvents, ...newEvents], now);
+    await writeProfileField(profileId, 'wear_events', serializeWearEvents(merged));
+    await refresh();
+    return newEvents;
+  }, [vault, profiles, writeProfileField, refresh]);
+
+  /** Reparer un evenement d'usure (deduit les feuilles) */
+  const repairWear = useCallback(async (profileId: string, eventId: string): Promise<boolean> => {
+    if (!vault) return false;
+
+    const content = await vault.readFile(FAMILLE_FILE);
+    const freshProfiles = parseFamille(content);
+    const profile = freshProfiles.find(p => p.id === profileId);
+    if (!profile) return false;
+
+    const currentEvents = profile.wearEvents ?? [];
+    const vaultProfile = profiles?.find(p => p.id === profileId);
+    const coins = vaultProfile?.coins ?? 0;
+
+    const result = repairWearEvent(currentEvents, eventId, coins);
+    if (!result) return false;
+
+    await writeProfileField(profileId, 'wear_events', serializeWearEvents(result.events));
+    if (result.cost > 0) {
+      await deductCoins(profileId, result.cost, `🔧 Reparation usure`);
+    }
+    await refresh();
+    return true;
+  }, [vault, profiles, writeProfileField, deductCoins, refresh]);
+
+  /** Effets d'usure actifs pour le profil courant (memoises) */
+  const getWearEffects = useCallback((profileId: string): WearEffects => {
+    const profile = profiles?.find(p => p.id === profileId);
+    return getActiveWearEffects(profile?.wearEvents ?? []);
+  }, [profiles]);
+
+  /** Evenements d'usure bruts pour le profil courant */
+  const getWearEvents = useCallback((profileId: string): WearEvent[] => {
+    const profile = profiles?.find(p => p.id === profileId);
+    return profile?.wearEvents ?? [];
+  }, [profiles]);
+
   return {
     plant,
     harvest,
@@ -491,5 +592,9 @@ export function useFarm() {
     sellHarvest,
     sellCrafted,
     unlockTech,
+    checkWear,
+    repairWear,
+    getWearEffects,
+    getWearEvents,
   };
 }

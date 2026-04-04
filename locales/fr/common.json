@@ -4034,6 +4034,8 @@
       "collect": "Collecter {{count}} {{resource}}",
       "noPending": "Rien a collecter",
       "pendingCount": "{{count}} disponible",
+      "pendingOf": "{{count}} / {{max}} {{resource}} en attente",
+      "storageFull": "Stockage plein !",
       "resource": {
         "oeuf": "oeuf",
         "oeufs": "oeufs",
@@ -4062,7 +4064,23 @@
     "regularSeeds": "Graines classiques",
     "rareSeedDrop": "{{emoji}} Graine rare obtenue : {{name}} !",
     "rareSeedDropHint": "Chance d'obtenir en récoltant : {{sources}} ({{pct}}%)",
-    "rareSeedDropHintAny": "Chance d'obtenir lors de n'importe quelle récolte (2%)"
+    "rareSeedDropHintAny": "Chance d'obtenir lors de n'importe quelle récolte (2%)",
+    "wear": {
+      "brokenFence": "Clôture cassée",
+      "brokenFenceDesc": "Une clôture est cassée ! Cette parcelle est inutilisable.",
+      "damagedRoof": "Toit endommagé",
+      "damagedRoofDesc": "Le toit du {{building}} est abîmé. Production réduite de moitié.",
+      "weeds": "Mauvaises herbes",
+      "weedsDesc": "Des mauvaises herbes ont envahi cette parcelle.",
+      "pests": "Nuisibles",
+      "pestsDesc": "Des nuisibles grignotent les stocks du {{building}} !",
+      "repair": "Réparer ({{cost}} 🍃)",
+      "repairFree": "Arracher",
+      "repairPests": "Collecter pour chasser",
+      "repaired": "Réparé !",
+      "notEnoughCoins": "Pas assez de feuilles",
+      "newEvent": "Oh non ! {{description}}"
+    }
   },
   "craft": {
     "atelier": "Atelier",
@@ -4280,6 +4298,31 @@
       "celebration": {
         "1": "{{streak}} jours d'affilée ! {{companionName}} fait la danse de la victoire !",
         "2": "Incroyable série ! {{companionName}} est aux anges !"
+      },
+      "buildingFull": {
+        "1": "Le bâtiment déborde ! {{companionName}} dit qu'il faut vite aller chercher tout ça !",
+        "2": "Plus de place ! {{companionName}} te conseille de faire un tour à la ferme."
+      },
+      "fenceBroken": {
+        "1": "Oh non, la clôture est cassée ! {{companionName}} s'inquiète pour les animaux...",
+        "2": "{{companionName}} a repéré une clôture en mauvais état. Il faudrait la réparer !"
+      },
+      "roofDamaged": {
+        "1": "Le toit a pris un coup... {{companionName}} regarde les dégâts avec inquiétude.",
+        "2": "Aïe, un toit endommagé ! {{companionName}} te suggère de le réparer vite."
+      },
+      "weedsGrowing": {
+        "1": "Des mauvaises herbes poussent partout ! {{companionName}} fronce le nez.",
+        "2": "{{companionName}} a vu des herbes envahissantes sur la parcelle..."
+      },
+      "pestsAttacking": {
+        "1": "Des nuisibles ! {{companionName}} les a repérés en train de grignoter les stocks !",
+        "2": "Attention {{profileName}}, {{companionName}} a vu des bestioles rôder sur la ferme !"
+      },
+      "wearRepaired": {
+        "1": "Bien réparé ! {{companionName}} inspecte le travail et approuve.",
+        "2": "La ferme est en meilleur état ! {{companionName}} est rassuré.",
+        "3": "Bon boulot {{profileName}} ! {{companionName}} est content que tout soit réparé."
       }
     }
   }

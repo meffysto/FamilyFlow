@@ -5,6 +5,7 @@
 import { type TreeStage, type PlantedCrop, type CropDefinition, CROP_CATALOG, PLOTS_BY_TREE_STAGE } from './types';
 import { getCurrentSeason, type Season } from './seasons';
 import { type TechBonuses } from './tech-engine';
+import { type WearEffects } from './wear-engine';
 
 const MAX_CROP_STAGE = 4;
 
@@ -40,7 +41,12 @@ export function plantCrop(
   crops: PlantedCrop[],
   plotIndex: number,
   cropId: string,
+  wearEffects?: WearEffects,
 ): PlantedCrop[] {
+  // Verifier que la parcelle n'est pas bloquee par une cloture cassee
+  if (wearEffects?.blockedPlots.includes(plotIndex)) {
+    throw new Error('Parcelle bloquée par une clôture cassée');
+  }
   // Verifier que la parcelle est vide
   if (crops.some(c => c.plotIndex === plotIndex)) return crops;
   // Verifier que la culture existe
