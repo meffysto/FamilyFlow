@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 Phase: 10
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-04
+Last activity: 2026-04-04 - Completed quick task 260404-quw: Fix long-press inventory CraftSheet
 
 Progress: [░░░░░░░░░░] 0%
 
