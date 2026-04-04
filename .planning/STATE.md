@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: verifying
-stopped_at: Completed 09-02-PLAN.md — cadeaux familiaux UI complète
-last_updated: "2026-04-04T17:10:40.987Z"
-last_activity: 2026-04-04
+stopped_at: Completed quick-260404-qvz — fix OOM crash TreeScreen timer global + reduction particules
+last_updated: "2026-04-04T17:28:22.722Z"
+last_activity: "2026-04-04 - Completed quick task 260404-quw: Fix long-press inventory CraftSheet"
 progress:
   total_phases: 10
   completed_phases: 9
@@ -64,6 +64,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 13-evenements-saisonniers P02 | 8min | 2 tasks | 3 files |
 | Phase 09-cadeaux-familiaux P01 | 4min | 2 tasks | 7 files |
 | Phase 09-cadeaux-familiaux P02 | 10min | 2 tasks | 6 files |
+| Phase quick-260404-qvz P01 | 15min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -121,6 +122,7 @@ Recent decisions affecting current work:
 - [Phase 09-cadeaux-familiaux]: NotifEvent etendu avec 'gift_received' pour eviter le cast 'as NotifEvent'
 - [Phase 09-cadeaux-familiaux]: receiveGifts appelé dans useEffect [profile.id] dans tree.tsx — une seule detection par profil
 - [Phase 09-cadeaux-familiaux]: claim-first : deleteFile pending AVANT addGiftToInventory pour eviter double-consommation
+- [Phase quick-260404-qvz]: Timer global WorldGridView: sharedFrameIdx + whisperCellId au niveau parent eliminent ~40 setInterval locaux CropCell
 
 ### Pending Todos
 
@@ -159,6 +161,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T17:03:30.614Z
-Stopped at: Completed 09-02-PLAN.md — cadeaux familiaux UI complète
+Last session: 2026-04-04T17:28:13.563Z
+Stopped at: Completed quick-260404-qvz — fix OOM crash TreeScreen timer global + reduction particules
 Resume file: None
