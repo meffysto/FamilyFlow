@@ -353,5 +353,18 @@
         }
       }
     }
-  }
+  },
+  "gift_send_title": "Send a gift",
+  "gift_select_recipient": "Choose recipient",
+  "gift_select_quantity": "Quantity",
+  "gift_send_button": "Send",
+  "gift_sent_success": "Gift sent to {{name}}!",
+  "gift_sent_limit": "You've reached the 5 gifts per day limit",
+  "gift_received_title": "Gift received!",
+  "gift_received_message": "{{sender}} sent you {{quantity}}x {{item}}!",
+  "gift_history_title": "Recent gifts",
+  "gift_history_sent": "Sent to {{name}}",
+  "gift_history_received": "Received from {{name}}",
+  "gift_not_enough": "You don't have enough {{item}}",
+  "gift_offer": "Gift"
 }

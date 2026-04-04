@@ -168,6 +168,17 @@ export const BUILTIN_NOTIFICATIONS: NotificationConfig[] = [
     availableVariables: DEFI_LAUNCHED_VARS,
     isCustom: false,
   },
+  {
+    id: 'gift_received',
+    label: 'Cadeau recu',
+    emoji: '🎁',
+    enabled: true,
+    template: '{{sender}} t\'a envoye {{item}} !',
+    defaultTemplate: '{{sender}} t\'a envoye {{item}} !',
+    event: 'gift_received',
+    availableVariables: [],
+    isCustom: false,
+  },
 ];
 
 // ─── Template rendering ─────────────────────────────────────────────────────

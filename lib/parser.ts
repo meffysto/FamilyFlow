@@ -614,6 +614,8 @@ export function parseFarmProfile(content: string): FarmProfileData {
     farmRareSeeds: parseRareSeeds(props.farm_rare_seeds),
     wearEvents: parseWearEvents(props.wear_events),
     companion: parseCompanion(props.companion),
+    giftHistory: props.gift_history,
+    giftsSentToday: props.gifts_sent_today,
   };
 }
 
@@ -648,6 +650,8 @@ export function serializeFarmProfile(profileName: string, data: FarmProfileData)
   }
   if (data.wearEvents && data.wearEvents.length > 0) lines.push(`wear_events: ${serializeWearEvents(data.wearEvents)}`);
   if (data.companion) lines.push(`companion: ${serializeCompanion(data.companion)}`);
+  if (data.giftHistory) lines.push(`gift_history: ${data.giftHistory}`);
+  if (data.giftsSentToday) lines.push(`gifts_sent_today: ${data.giftsSentToday}`);
 
   return lines.join('\n') + '\n';
 }

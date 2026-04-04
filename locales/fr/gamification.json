@@ -353,5 +353,18 @@
         }
       }
     }
-  }
+  },
+  "gift_send_title": "Offrir un cadeau",
+  "gift_select_recipient": "Choisir le destinataire",
+  "gift_select_quantity": "Quantite",
+  "gift_send_button": "Envoyer",
+  "gift_sent_success": "Cadeau envoye a {{name}} !",
+  "gift_sent_limit": "Tu as atteint la limite de 5 cadeaux aujourd'hui",
+  "gift_received_title": "Cadeau recu !",
+  "gift_received_message": "{{sender}} t'a envoye {{quantity}}x {{item}} !",
+  "gift_history_title": "Cadeaux recents",
+  "gift_history_sent": "Envoye a {{name}}",
+  "gift_history_received": "Recu de {{name}}",
+  "gift_not_enough": "Tu n'as pas assez de {{item}}",
+  "gift_offer": "Offrir"
 }

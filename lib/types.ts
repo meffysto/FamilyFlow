@@ -496,6 +496,7 @@ export type NotifEvent =
   | 'leaderboard'
   | 'daily_summary'
   | 'defi_launched'
+  | 'gift_received'
   | 'manual';
 
 export interface TemplateVariable {
@@ -575,4 +576,6 @@ export interface FarmProfileData {
   farmRareSeeds?: import('../lib/mascot/types').RareSeedInventory;
   wearEvents?: import('./mascot/wear-engine').WearEvent[];
   companion?: import('./mascot/companion-types').CompanionData | null;
+  giftHistory?: string; // CSV pipe-separe des 10 derniers echanges
+  giftsSentToday?: string; // format "count|YYYY-MM-DD" anti-abus
 }
