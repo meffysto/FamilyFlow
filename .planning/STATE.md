@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 Phase: 13
 Plan: Not started
 Status: Ready to execute
-Last activity: 2026-04-03
+Last activity: 2026-04-04 - Completed quick task 260404-kbd: système hybride ferme plot principal vitesse pleine + indicateur visuel
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -144,6 +144,7 @@ None yet.
 | 260404-i3r | Remplacer l'emoji animé du poulailler par sprite PNG Animated.Image | 2026-04-04 | c9bfd75 | [260404-i3r-remplacer-l-emoji-anim-du-poullailler-da](./quick/260404-i3r-remplacer-l-emoji-anim-du-poullailler-da/) |
 | 260404-ips | Optimiser writes farm/gami et créer refreshFarm(profileId) | 2026-04-04 | 2411250 | [260404-ips-optimiser-writes-farm-gami-et-cr-er-refr](./quick/260404-ips-optimiser-writes-farm-gami-et-cr-er-refr/) |
 | 260404-j7v | Fix complet système usure ferme — overlay orange, blocage plant, repair handlers, bouton toit | 2026-04-04 | 544e4c9 | [260404-j7v-fix-complet-syst-me-usure-ferme-overlay-](./quick/260404-j7v-fix-complet-syst-me-usure-ferme-overlay-/) |
+| 260404-kbd | Système hybride ferme — plot principal vitesse pleine, autres demi-vitesse + indicateur visuel | 2026-04-04 | 22ac20e | [260404-kbd-syst-me-hybride-ferme-plot-principal-vit](./quick/260404-kbd-syst-me-hybride-ferme-plot-principal-vit/) |
 
 ## Session Continuity
 
