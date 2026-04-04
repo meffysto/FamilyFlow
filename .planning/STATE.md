@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 Phase: 10
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-04 - Completed quick task 260404-quw: Fix long-press inventory CraftSheet
+Last activity: 2026-04-04 - Completed quick task 260404-qvz: Fix OOM crash TreeScreen
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -158,6 +158,7 @@ None yet.
 | 260404-kvd | fix crop texte contexte quotes — retirer numberOfLines={2} sur le texte date/contexte dans renderItem | 2026-04-04 | e6ca0ac | [260404-kvd-fix-crop-texte-contexte-quotes-retirer-n](./quick/260404-kvd-fix-crop-texte-contexte-quotes-retirer-n/) |
 | 260404-l62 | Bouton skip tâches récurrentes sans gamification | 2026-04-04 | 1ab57c1 | [260404-l62-bouton-skip-taches-recurrentes-sans-gami](./quick/260404-l62-bouton-skip-taches-recurrentes-sans-gami/) |
 | 260404-quw | Fix long-press not working on inventory items (CraftSheet) | 2026-04-04 | ae62fc6 | [260404-quw-fix-long-press-not-working-on-inventory-](./quick/260404-quw-fix-long-press-not-working-on-inventory-/) |
+| 260404-qvz | Fix OOM crash TreeScreen — timer global, lazy-load images saison, reduire particules | 2026-04-04 | cd8307e | [260404-qvz-fix-oom-crash-treescreen-timer-global-la](./quick/260404-qvz-fix-oom-crash-treescreen-timer-global-la/) |
 
 ## Session Continuity
 
