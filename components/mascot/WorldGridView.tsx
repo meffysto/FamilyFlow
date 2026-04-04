@@ -5,7 +5,7 @@
  * Remplace FarmPlots avec un systeme extensible.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Image, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -66,7 +66,7 @@ const CROP_WHISPERS = [
   '🌱',
 ];
 
-function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, wearEffects, containerWidth, containerHeight, onPress, onRepairWeed, onRepairFence }: {
+function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, wearEffects, containerWidth, containerHeight, frameIdx, whisperCellId, onPress, onRepairWeed, onRepairFence }: {
   cell: WorldCell;
   crop: PlantedCrop | null;
   cropDef: typeof CROP_CATALOG[0] | null;
@@ -76,6 +76,8 @@ function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, wearEf
   wearEffects?: WearEffects;
   containerWidth: number;
   containerHeight: number;
+  frameIdx: number;
+  whisperCellId: string | null;
   onPress: () => void;
   onRepairWeed?: (plotIndex: number) => void;
   onRepairFence?: (plotIndex: number) => void;
@@ -84,35 +86,12 @@ function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, wearEf
   const growScaleX = useSharedValue(1);
   const growScaleY = useSharedValue(1);
   const prevStage = React.useRef(crop?.currentStage ?? -1);
-  const [bubble, setBubble] = useState<string | null>(null);
 
-  // Frame swap animation (VIS-02) — balancement doux ~800ms
-  const reducedMotion = useReducedMotion();
-  const [frameIdx, setFrameIdx] = useState(0);
-
-  useEffect(() => {
-    if (reducedMotion || !crop) return;
-    const timer = setInterval(() => setFrameIdx(i => 1 - i), 800);
-    return () => clearInterval(timer);
-  }, [reducedMotion, crop?.cropId]);
-
-  // Auto-whisper périodique (comme les habitants)
-  useEffect(() => {
-    if (!crop || isMature) return;
-    // Délai initial aléatoire pour désynchroniser les bulles entre cellules
-    const initialDelay = 5000 + Math.random() * 15000;
-    let interval: ReturnType<typeof setInterval>;
-    const timeout = setTimeout(() => {
-      const show = () => {
-        const msg = CROP_WHISPERS[Math.floor(Math.random() * CROP_WHISPERS.length)];
-        setBubble(msg);
-        setTimeout(() => setBubble(null), 2500);
-      };
-      show();
-      interval = setInterval(show, 15000 + Math.random() * 20000);
-    }, initialDelay);
-    return () => { clearTimeout(timeout); clearInterval(interval); };
-  }, [crop?.cropId, isMature]);
+  // Bulle whisper derivee depuis le timer global parent
+  const bubble = useMemo(() => {
+    if (whisperCellId !== cell.id) return null;
+    return CROP_WHISPERS[Math.floor(Math.random() * CROP_WHISPERS.length)];
+  }, [whisperCellId, cell.id]);
 
   // Pulse mature
   useEffect(() => {
@@ -586,6 +565,42 @@ export function WorldGridView({
   const crops = parseCrops(farmCropsCSV);
   const mainPlotIndex = getMainPlotIndex(crops);
 
+  // Timer global frame swap — 1 seul setInterval au lieu de 2×N
+  const reducedMotion = useReducedMotion();
+  const [sharedFrameIdx, setSharedFrameIdx] = useState(0);
+  useEffect(() => {
+    if (reducedMotion) return;
+    const timer = setInterval(() => setSharedFrameIdx(i => 1 - i), 800);
+    return () => clearInterval(timer);
+  }, [reducedMotion]);
+
+  // Timer global whisper — 1 seul setInterval pour toutes les crops
+  const [whisperCellId, setWhisperCellId] = useState<string | null>(null);
+  const allCropCells = useMemo(() => {
+    const expansion = techBonuses && techBonuses.extraCropCells > 0
+      ? EXPANSION_CROP_CELLS.slice(0, techBonuses.extraCropCells)
+      : [];
+    return [...unlockedCrops, ...expansion];
+  }, [unlockedCrops, techBonuses]);
+
+  const farmCropsCSVRef = React.useRef(farmCropsCSV);
+  farmCropsCSVRef.current = farmCropsCSV;
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const currentCrops = parseCrops(farmCropsCSVRef.current);
+      const nonMature = allCropCells.filter((_cell, idx) => {
+        const crop = currentCrops.find(c => c.plotIndex === idx);
+        return crop && crop.currentStage < 4;
+      });
+      if (nonMature.length === 0) return;
+      const pick = nonMature[Math.floor(Math.random() * nonMature.length)];
+      setWhisperCellId(pick.id);
+      setTimeout(() => setWhisperCellId(null), 2500);
+    }, 18000);
+    return () => clearInterval(timer);
+  }, [allCropCells]);
+
   // Peut-on construire un batiment sur une cellule vide ?
   const stageOrder = TREE_STAGES.map(s => s.stage);
   const currentStageIdx = stageOrder.indexOf(treeStage);
@@ -627,6 +642,8 @@ export function WorldGridView({
             wearEffects={wearEffects}
             containerWidth={containerWidth}
             containerHeight={containerHeight}
+            frameIdx={sharedFrameIdx}
+            whisperCellId={whisperCellId}
             onPress={() => onCropPlotPress?.(cell.id, crop)}
             onRepairWeed={onRepairWeed}
             onRepairFence={onRepairFence}
@@ -654,6 +671,8 @@ export function WorldGridView({
             wearEffects={wearEffects}
             containerWidth={containerWidth}
             containerHeight={containerHeight}
+            frameIdx={sharedFrameIdx}
+            whisperCellId={whisperCellId}
             onPress={() => onCropPlotPress?.(cell.id, crop)}
             onRepairWeed={onRepairWeed}
             onRepairFence={onRepairFence}
@@ -686,13 +705,16 @@ export function WorldGridView({
               crop={crop}
               cropDef={cropDef}
               isMature={isMature}
+              isMainPlot={!isMature && cellIdx === mainPlotIndex}
               plotIndex={cellIdx}
               wearEffects={wearEffects}
               containerWidth={containerWidth}
               containerHeight={containerHeight}
+              frameIdx={sharedFrameIdx}
+              whisperCellId={whisperCellId}
               onPress={() => onCropPlotPress?.(cell.id, crop)}
               onRepairWeed={onRepairWeed}
-            onRepairFence={onRepairFence}
+              onRepairFence={onRepairFence}
             />
             <View style={[styles.largeBadge, {
               left: cell.x * containerWidth - CELL_SIZES.large / 2 + CELL_SIZES.large - 18,
