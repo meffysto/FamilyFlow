@@ -19,7 +19,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { FARM_GRID, PLOT_SIZE } from '../../lib/mascot/farm-grid';
 import { type PlantedCrop, type TreeStage, PLOTS_BY_TREE_STAGE, CROP_CATALOG } from '../../lib/mascot/types';
-import { parseCrops } from '../../lib/mascot/farm-engine';
+import { parseCrops, getMainPlotIndex } from '../../lib/mascot/farm-engine';
 import { CROP_SPRITES } from '../../lib/mascot/crop-sprites';
 
 interface FarmPlotsProps {
@@ -34,11 +34,12 @@ const DIRT_SPRITE = require('../../assets/garden/ground/dirt_patch.png');
 const PLOT_RENDER_SIZE = 52; // plus grand que l'ancien 44
 
 /** Parcelle individuelle avec animation */
-function FarmPlot({ pos, crop, cropDef, isMature, containerWidth, containerHeight, onPress }: {
+function FarmPlot({ pos, crop, cropDef, isMature, isMainPlot, containerWidth, containerHeight, onPress }: {
   pos: { index: number; x: number; y: number };
   crop: PlantedCrop | null;
   cropDef: typeof CROP_CATALOG[0] | null;
   isMature: boolean;
+  isMainPlot: boolean;
   containerWidth: number;
   containerHeight: number;
   onPress: () => void;
@@ -75,6 +76,14 @@ function FarmPlot({ pos, crop, cropDef, isMature, containerWidth, containerHeigh
       >
         {/* Fond terre */}
         <Image source={DIRT_SPRITE} style={styles.dirtBg as any} />
+
+        {/* Indicateur plot principal (FIFO) */}
+        {isMainPlot && (
+          <>
+            <View style={styles.mainPlotBorder} />
+            <Text style={styles.mainPlotBadge}>⚡</Text>
+          </>
+        )}
 
         {/* Lueur mature ou dorée */}
         {isMature && !crop?.isGolden && <View style={styles.matureGlow} />}
@@ -123,6 +132,7 @@ export function FarmPlots({ treeStage, farmCropsCSV, containerWidth, containerHe
   if (unlockedCount === 0) return null;
 
   const crops = parseCrops(farmCropsCSV);
+  const mainPlotIndex = getMainPlotIndex(crops);
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
@@ -138,6 +148,7 @@ export function FarmPlots({ treeStage, farmCropsCSV, containerWidth, containerHe
             crop={crop}
             cropDef={cropDef}
             isMature={isMature}
+            isMainPlot={crop !== null && !isMature && crop.plotIndex === mainPlotIndex}
             containerWidth={containerWidth}
             containerHeight={containerHeight}
             onPress={() => onPlotPress?.(pos.index, crop)}
@@ -263,5 +274,21 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.5)',
     fontSize: 20,
     fontWeight: 'bold',
+  },
+  mainPlotBorder: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#60A5FA',
+    backgroundColor: 'rgba(96, 165, 250, 0.08)',
+  },
+  mainPlotBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    fontSize: 10,
+    zIndex: 10,
   },
 });
