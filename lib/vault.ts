@@ -338,6 +338,53 @@ export class VaultManager {
   }
 
   /**
+   * Skip a task — avances the due date without awarding gamification points.
+   *
+   * Recurring tasks (🔁): advance to next occurrence, keep unchecked.
+   * Non-recurring tasks with date: push to tomorrow.
+   * Tasks without date: no-op.
+   */
+  async skipTask(
+    relativePath: string,
+    lineIndex: number
+  ): Promise<void> {
+    return this.enqueueWrite(relativePath, async () => {
+      const content = await this.readFile(relativePath);
+      const lines = content.split('\n');
+      if (lineIndex >= lines.length) return;
+
+      let line = lines[lineIndex];
+
+      const recurrenceMatch = line.match(/🔁\s*(every\s+(?:\d+\s+)?(?:day|week|month)s?)/);
+      const dueDateMatch = line.match(/📅\s*(\d{4}-\d{2}-\d{2})/);
+
+      if (!dueDateMatch) return; // Pas de date → no-op
+
+      const currentDate = dueDateMatch[1];
+
+      if (recurrenceMatch && dueDateMatch) {
+        // Tâche récurrente : avancer à la prochaine occurrence
+        const recurrence = recurrenceMatch[1];
+        const newDate = nextOccurrence(currentDate, recurrence);
+        line = line.replace(/📅\s*\d{4}-\d{2}-\d{2}/, `📅 ${newDate}`);
+        // Garder non-cochée, retirer éventuelle date de complétion
+        line = line.replace(/- \[x\]/i, '- [ ]');
+        line = line.replace(/\s*✅\s*\d{4}-\d{2}-\d{2}/, '');
+      } else {
+        // Tâche non-récurrente : reporter au lendemain
+        const tomorrow = format(addDays(parseISO(currentDate), 1), 'yyyy-MM-dd');
+        line = line.replace(/📅\s*\d{4}-\d{2}-\d{2}/, `📅 ${tomorrow}`);
+        // Garder non-cochée au cas où
+        line = line.replace(/- \[x\]/i, '- [ ]');
+        line = line.replace(/\s*✅\s*\d{4}-\d{2}-\d{2}/, '');
+      }
+
+      lines[lineIndex] = line;
+      await this._writeFileDirect(relativePath, lines.join('\n'));
+    });
+  }
+
+  /**
    * Append a new task to a specific section in a file.
    * If section not found, appends at end of file.
    */
