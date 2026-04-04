@@ -20,6 +20,7 @@ import { Shadows } from '../../constants/shadows';
 import { calculateLevel } from '../../lib/gamification';
 import { serializeBuildings, serializeInventory } from '../../lib/mascot/building-engine';
 import { serializeHarvestInventory, serializeRareSeeds } from '../../lib/mascot/craft-engine';
+import { TECH_TREE } from '../../lib/mascot/tech-engine';
 import { enqueueWrite, patchProfileFields } from '../../lib/famille-queue';
 import type { Profile, GamificationData } from '../../lib/types';
 import type { FarmInventory, PlacedBuilding } from '../../lib/mascot/types';
@@ -106,6 +107,11 @@ function ProfileCard({
     Object.fromEntries(Object.entries(rareSeeds).map(([k, v]) => [k, String(v)]))
   );
 
+  // Technologies ferme
+  const [unlockedTechs, setUnlockedTechs] = useState<Set<string>>(
+    new Set(profile.farmTech ?? [])
+  );
+
   const level = calculateLevel(parseInt(points, 10) || 0);
 
   const handleSave = useCallback(async () => {
@@ -160,6 +166,8 @@ function ProfileCard({
         if (n > 0) updatedSeeds[k] = n;
       }
 
+      const updatedTech = Array.from(unlockedTechs).join(',');
+
       await enqueueWrite(async () => {
         const content = await vault.readFile('famille.md');
         const lines = content.split('\n');
@@ -168,6 +176,7 @@ function ProfileCard({
           farm_inventory: serializeInventory(updatedInventory),
           farm_harvest_inventory: serializeHarvestInventory(updatedHarvest),
           farm_rare_seeds: serializeRareSeeds(updatedSeeds),
+          farm_tech: updatedTech,
         });
         await vault.writeFile('famille.md', lines.join('\n'));
       });
@@ -180,7 +189,7 @@ function ProfileCard({
   }, [
     vault, profile, gamiData, points, coins, streak, lootBoxes,
     multiplier, multiplierRemaining, pityCounter, buildings,
-    buildingLevels, oeuf, lait, farine, miel, harvests, seeds, refresh,
+    buildingLevels, oeuf, lait, farine, miel, harvests, seeds, unlockedTechs, refresh,
   ]);
 
   return (
@@ -271,6 +280,34 @@ function ProfileCard({
               ))}
             </>
           )}
+
+          {/* ── Technologies ferme ── */}
+          <Text style={[styles.sectionLabel, { color: primary }]}>Technologies</Text>
+          {TECH_TREE.map(node => {
+            const unlocked = unlockedTechs.has(node.id);
+            return (
+              <TouchableOpacity
+                key={node.id}
+                style={styles.techRow}
+                onPress={() => {
+                  setUnlockedTechs(prev => {
+                    const next = new Set(prev);
+                    if (next.has(node.id)) next.delete(node.id);
+                    else next.add(node.id);
+                    return next;
+                  });
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.techToggle, { color: unlocked ? '#22c55e' : colors.textFaint }]}>
+                  {unlocked ? '✅' : '⬜'}
+                </Text>
+                <Text style={[styles.techLabel, { color: unlocked ? colors.text : colors.textMuted }]}>
+                  {node.emoji} {node.id} ({node.branch} {node.order}) — {node.cost} 🍃
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
 
           <View style={styles.saveBtn}>
             <Button label="Sauvegarder" onPress={handleSave} />
@@ -381,6 +418,19 @@ const styles = StyleSheet.create({
   },
   saveBtn: {
     marginTop: Spacing.lg,
+  },
+  techRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.xs,
+    gap: Spacing.sm,
+  },
+  techToggle: {
+    fontSize: FontSize.body,
+  },
+  techLabel: {
+    fontSize: FontSize.label,
+    flex: 1,
   },
   empty: {
     padding: Spacing['2xl'],
