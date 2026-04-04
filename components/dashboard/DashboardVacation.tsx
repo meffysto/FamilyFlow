@@ -13,7 +13,7 @@ import { TaskCard } from '../TaskCard';
 import type { DashboardSectionWithTaskToggleProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
 
-function DashboardVacationInner({ handleTaskToggle }: DashboardSectionWithTaskToggleProps) {
+function DashboardVacationInner({ handleTaskToggle, handleTaskSkip }: DashboardSectionWithTaskToggleProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useThemeColors();
@@ -49,7 +49,7 @@ function DashboardVacationInner({ handleTaskToggle }: DashboardSectionWithTaskTo
         <Text style={[styles.vacProgressText, { color: colors.textMuted }]}>{vacCompleted}/{vacTotal}</Text>
       </View>
       {vacIncomplete.map((task) => (
-        <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} />
+        <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} onSkip={handleTaskSkip} />
       ))}
     </DashboardCard>
   );

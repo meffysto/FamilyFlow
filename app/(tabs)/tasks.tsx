@@ -190,7 +190,7 @@ function buildTargetFiles(profiles: Profile[], t: (key: string) => string) {
 }
 
 export default function TasksScreen() {
-  const { tasks, vault, profiles, activeProfile, notifPrefs, toggleTask, addTask, editTask, deleteTask, refresh, isLoading, vacationTasks, vacationConfig, isVacationActive, refreshGamification, secretMissions, completeSecretMission, validateSecretMission } = useVault();
+  const { tasks, vault, profiles, activeProfile, notifPrefs, toggleTask, skipTask, addTask, editTask, deleteTask, refresh, isLoading, vacationTasks, vacationConfig, isVacationActive, refreshGamification, secretMissions, completeSecretMission, validateSecretMission } = useVault();
   const { completeTask } = useGamification({ vault, notifPrefs });
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
@@ -331,6 +331,16 @@ export default function TasksScreen() {
     },
     [toggleTask, activeProfile, profiles, tasks, completeTask, refresh, notifPrefs, refreshGamification, showToast]
   );
+
+  const handleTaskSkip = useCallback(async (task: Task) => {
+    try {
+      await skipTask(task);
+      const msg = task.recurrence ? t('taskCard.skipped') : t('taskCard.skippedTomorrow');
+      showToast(`⏭️ ${msg}`);
+    } catch (e) {
+      showToast(String(e), 'error');
+    }
+  }, [skipTask, showToast, t]);
 
   const handleAddTask = useCallback(async () => {
     if (!newTaskText.trim()) {
@@ -606,7 +616,7 @@ export default function TasksScreen() {
               disabled={item.completed}
               hintId="tasks"
             >
-              <TaskCard task={item} onToggle={handleTaskToggle} onLongPress={() => handleOpenEdit(item)} pointsOnComplete={isChildMode ? POINTS_PER_TASK : undefined} />
+              <TaskCard task={item} onToggle={handleTaskToggle} onSkip={handleTaskSkip} onLongPress={() => handleOpenEdit(item)} pointsOnComplete={isChildMode ? POINTS_PER_TASK : undefined} />
             </SwipeToDelete>
           </Animated.View>
         )}
@@ -708,7 +718,7 @@ export default function TasksScreen() {
                       disabled={false}
                       hintId="tasks"
                     >
-                      <TaskCard task={item} onToggle={handleTaskToggle} onLongPress={() => handleOpenEdit(item)} pointsOnComplete={isChildMode ? POINTS_PER_TASK : undefined} />
+                      <TaskCard task={item} onToggle={handleTaskToggle} onSkip={handleTaskSkip} onLongPress={() => handleOpenEdit(item)} pointsOnComplete={isChildMode ? POINTS_PER_TASK : undefined} />
                     </SwipeToDelete>
                   </View>
                 ))}

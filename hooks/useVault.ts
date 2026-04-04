@@ -99,7 +99,7 @@ import { setupAllNotifications, loadNotifConfig, scheduleRDVAlerts } from '../li
 import i18n from '../lib/i18n';
 import { generateThumbnail } from '../lib/thumbnails';
 import { nextOccurrence } from '../lib/recurrence';
-import { format, startOfWeek } from 'date-fns';
+import { format, startOfWeek, addDays, parseISO } from 'date-fns';
 import { enqueueWrite } from '../lib/famille-queue';
 import { parseJournalStats } from '../lib/journal-stats';
 import type { JournalSummaryEntry } from '../lib/ai-service';
@@ -167,6 +167,7 @@ export interface VaultState {
   updateStockItem: (lineIndex: number, updates: Partial<StockItem>) => Promise<void>;
   stockSections: string[];
   toggleTask: (task: Task, completed: boolean) => Promise<void>;
+  skipTask: (task: Task) => Promise<void>;
   addRDV: (rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
   updateRDV: (sourceFile: string, rdv: Omit<RDV, 'sourceFile' | 'title'>) => Promise<void>;
   deleteRDV: (sourceFile: string) => Promise<void>;
@@ -1847,6 +1848,35 @@ export function useVaultInternal(): VaultState {
 
     // No background loadVaultData — optimistic state is authoritative.
     // Next foreground event will fully sync.
+  }, [triggerWidgetRefresh]);
+
+  /**
+   * Skip task — avance la date sans déclencher de gamification.
+   * Tâche récurrente : prochaine occurrence. Non-récurrente : lendemain.
+   */
+  const skipTask = useCallback(async (task: Task) => {
+    if (!vaultRef.current) return;
+
+    // 1. Écriture fichier
+    await vaultRef.current.skipTask(task.sourceFile, task.lineIndex);
+
+    // 2. Mise à jour optimiste de l'état
+    const updateTask = (t: Task): Task => {
+      if (t.id !== task.id) return t;
+      if (t.recurrence && t.dueDate) {
+        const newDate = nextOccurrence(t.dueDate, t.recurrence);
+        return { ...t, dueDate: newDate, completed: false };
+      }
+      if (t.dueDate) {
+        const newDate = format(addDays(parseISO(t.dueDate), 1), 'yyyy-MM-dd');
+        return { ...t, dueDate: newDate, completed: false };
+      }
+      return t;
+    };
+
+    setTasks(prev => prev.map(updateTask));
+    setVacationTasks(prev => prev.map(updateTask));
+    setTimeout(triggerWidgetRefresh, 0);
   }, [triggerWidgetRefresh]);
 
   const addRDV = useCallback(async (rdv: Omit<RDV, 'sourceFile' | 'title'>) => {
@@ -3635,6 +3665,7 @@ export function useVaultInternal(): VaultState {
     updateStockItem,
     stockSections,
     toggleTask,
+    skipTask,
     addRDV,
     updateRDV,
     deleteRDV,
@@ -3743,7 +3774,7 @@ export function useVaultInternal(): VaultState {
     refresh, setVaultPath, setActiveProfile, saveNotifPrefs, updateMeal, loadMealsForWeek,
     addPhoto, getPhotoUri, updateProfileTheme, buyMascotItem, placeMascotItem, unplaceMascotItem, updateProfile, deleteProfile,
     updateStockQuantity, addStockItem, deleteStockItem, updateStockItem,
-    toggleTask, addRDV, updateRDV, deleteRDV, addTask, editTask, deleteTask,
+    toggleTask, skipTask, addRDV, updateRDV, deleteRDV, addTask, editTask, deleteTask,
     addCourseItem, mergeCourseIngredients, toggleCourseItem, removeCourseItem, moveCourseItem,
     clearCompletedCourses, addMemory, updateMemory, activateVacation,
     deactivateVacation, refreshGamification, refreshFarm, addRecipe, deleteRecipe, renameRecipe,

@@ -2572,7 +2572,10 @@
     "sourceTasks": "📋 Tâches",
     "recurrenceDaily": "quotidien",
     "recurrenceWeekly": "hebdo",
-    "recurrenceMonthly": "mensuel"
+    "recurrenceMonthly": "mensuel",
+    "skip": "Passer",
+    "skipped": "Tâche reportée",
+    "skippedTomorrow": "Reportée à demain"
   },
   "receiptReview": {
     "categoryHint": "Appuyer pour changer la catégorie",
