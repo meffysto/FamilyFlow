@@ -139,9 +139,10 @@ None yet.
 | 260403-q6y | Fix race condition sur les écritures famille.md (useFarm + useVault) | 2026-04-03 | a62b191 | [260403-q6y-fix-race-condition-on-famille-md-writes-](./quick/260403-q6y-fix-race-condition-on-famille-md-writes-/) |
 | 260403-qoo | Wrapper completeTask/openLootBox/completeSagaChapter famille.md via enqueueWrite | 2026-04-03 | 72db03b | [260403-qoo-wrapper-completetask-openlootbox-complet](./quick/260403-qoo-wrapper-completetask-openlootbox-complet/) |
 | 260404-hfb | Ajouter deux recettes craft tournesol (huile_tournesol + brioche_tournesol) | 2026-04-04 | 039e7b5 | [260404-hfb-ajouter-deux-recettes-craft-tournesol-da](./quick/260404-hfb-ajouter-deux-recettes-craft-tournesol-da/) |
+| 260404-h6l | Extraire données farm/mascot/companion de famille.md vers farm-{profileId}.md | 2026-04-04 | c146f70 | [260404-h6l-extraire-donn-es-farm-mascot-companion-d](./quick/260404-h6l-extraire-donn-es-farm-mascot-companion-d/) |
 
 ## Session Continuity
 
-Last session: 2026-04-03T18:42:06.117Z
+Last session: 2026-04-04T00:00:00.000Z
 Stopped at: Completed 13-evenements-saisonniers/13-02-PLAN.md
 Resume file: None
