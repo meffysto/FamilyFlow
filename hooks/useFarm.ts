@@ -119,7 +119,7 @@ function applyFarmField(data: FarmProfileData, fieldKey: string, value: string):
 }
 
 export function useFarm() {
-  const { vault, profiles, refresh } = useVault();
+  const { vault, profiles, refreshFarm, refreshGamification } = useVault();
 
   /** Deduire des feuilles dans gami-{profileId}.md */
   const deductCoins = useCallback(async (profileId: string, amount: number, note: string) => {
@@ -243,8 +243,9 @@ export function useFarm() {
       await writeProfileField(profileId, 'farm_crops', serializeCrops(newCrops));
       await deductCoins(profileId, cropDef.cost, `🌱 Graine : ${cropId}`);
     }
-    await refresh();
-  }, [vault, profiles, writeProfileField, writeProfileFields, deductCoins, refresh]);
+    await refreshFarm(profileId);
+    await refreshGamification();
+  }, [vault, profiles, writeProfileField, writeProfileFields, deductCoins, refreshFarm, refreshGamification]);
 
   /** Recolter une culture mature — stocke en inventaire au lieu de donner des feuilles */
   const harvest = useCallback(async (profileId: string, plotIndex: number): Promise<{ cropId: string; isGolden: boolean; harvestEvent: HarvestEvent | null; seedDrop: RareSeedDrop | null } | null> => {
@@ -292,10 +293,10 @@ export function useFarm() {
 
     // Ecrire tous les champs en une seule operation
     await writeProfileFields(profileId, fieldsToWrite);
-    await refresh();
+    await refreshFarm(profileId);
 
     return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop };
-  }, [vault, writeProfileFields, refresh]);
+  }, [vault, writeProfileFields, refreshFarm]);
 
   /** Vendre une recolte brute depuis l'inventaire */
   const sellHarvest = useCallback(async (profileId: string, cropId: string): Promise<number> => {
@@ -317,9 +318,10 @@ export function useFarm() {
 
     await writeProfileField(profileId, 'farm_harvest_inventory', serializeHarvestInventory(updatedInv));
     await addCoins(profileId, reward, `🍃 Vente recolte : ${cropId}`);
-    await refresh();
+    await refreshFarm(profileId);
+    await refreshGamification();
     return reward;
-  }, [vault, writeProfileField, addCoins, refresh]);
+  }, [vault, writeProfileField, addCoins, refreshFarm, refreshGamification]);
 
   /** Crafter un item a partir des ingredients */
   const craft = useCallback(async (profileId: string, recipeId: string): Promise<CraftedItem | null> => {
@@ -352,9 +354,10 @@ export function useFarm() {
     if (recipe.xpBonus > 0) {
       await addCoins(profileId, recipe.xpBonus, `✨ Bonus craft : ${recipeId}`);
     }
-    await refresh();
+    await refreshFarm(profileId);
+    await refreshGamification();
     return result.item;
-  }, [vault, writeProfileFields, refresh]);
+  }, [vault, writeProfileFields, refreshFarm, refreshGamification]);
 
   /** Vendre un item crafte */
   const sellCrafted = useCallback(async (profileId: string, recipeId: string): Promise<number> => {
@@ -379,9 +382,10 @@ export function useFarm() {
 
     await writeProfileField(profileId, 'farm_crafted_items', serializeCraftedItems(updatedItems));
     await addCoins(profileId, sellValue, `🎁 Vente craft : ${recipeId}`);
-    await refresh();
+    await refreshFarm(profileId);
+    await refreshGamification();
     return sellValue;
-  }, [vault, writeProfileField, addCoins, refresh]);
+  }, [vault, writeProfileField, addCoins, refreshFarm, refreshGamification]);
 
   /** Construire un batiment sur une cellule (nouveau systeme PlacedBuilding) */
   const buyBuilding = useCallback(async (profileId: string, buildingId: string, cellId: string) => {
@@ -398,8 +402,9 @@ export function useFarm() {
     const newBuildings = constructBuilding(currentBuildings, buildingId, cellId);
     await writeProfileField(profileId, 'farm_buildings', serializeBuildings(newBuildings));
     await deductCoins(profileId, building.cost, `🏗️ Construction : ${buildingId}`);
-    await refresh();
-  }, [profiles, writeProfileField, deductCoins, refresh]);
+    await refreshFarm(profileId);
+    await refreshGamification();
+  }, [profiles, writeProfileField, deductCoins, refreshFarm, refreshGamification]);
 
   /** Ameliorer un batiment */
   const upgradeBuildingAction = useCallback(async (profileId: string, cellId: string): Promise<void> => {
@@ -428,8 +433,9 @@ export function useFarm() {
     await vault.writeFile(file, serializeFarmProfile(profileName, newFarm));
 
     await deductCoins(profileId, cost, `⬆️ Amelioration : ${building.buildingId}`);
-    await refresh();
-  }, [profiles, vault, deductCoins, refresh]);
+    await refreshFarm(profileId);
+    await refreshGamification();
+  }, [profiles, vault, deductCoins, refreshFarm, refreshGamification]);
 
   /** Collecter les ressources d'un batiment specifique */
   const collectBuildingResources = useCallback(async (profileId: string, cellId: string): Promise<number> => {
@@ -450,9 +456,9 @@ export function useFarm() {
     const newFarm = { ...profile, farmBuildings: result.buildings, farmInventory: result.inventory };
     await vault.writeFile(file, serializeFarmProfile(profileName, newFarm));
 
-    await refresh();
+    await refreshFarm(profileId);
     return result.collected;
-  }, [vault, profiles, refresh]);
+  }, [vault, profiles, refreshFarm]);
 
   /** Collecter le revenu passif de tous les batiments (appele a l'ouverture de l'ecran) */
   const collectPassiveIncome = useCallback(async (profileId: string): Promise<number> => {
@@ -486,9 +492,9 @@ export function useFarm() {
     const newFarm = { ...profile, farmBuildings: currentBuildings, farmInventory: updatedInventory };
     await vault.writeFile(file, serializeFarmProfile(profileName, newFarm));
 
-    await refresh();
+    await refreshFarm(profileId);
     return total;
-  }, [vault, profiles, refresh]);
+  }, [vault, profiles, refreshFarm]);
 
   /** Debloquer un noeud tech en depensant des feuilles */
   const unlockTech = useCallback(async (profileId: string, techId: string): Promise<boolean> => {
@@ -512,9 +518,10 @@ export function useFarm() {
     const newTechs = unlockTechNode(currentTechs, techId);
     await writeProfileField(profileId, 'farm_tech', serializeTechs(newTechs));
     await deductCoins(profileId, node.cost, `🔬 Tech : ${techId}`);
-    await refresh();
+    await refreshFarm(profileId);
+    await refreshGamification();
     return true;
-  }, [vault, profiles, writeProfileField, deductCoins, refresh]);
+  }, [vault, profiles, writeProfileField, deductCoins, refreshFarm, refreshGamification]);
 
   /** Verifier et generer de nouveaux evenements d'usure (appele a l'ouverture) */
   const checkWear = useCallback(async (profileId: string): Promise<WearEvent[]> => {
@@ -557,16 +564,16 @@ export function useFarm() {
       const cleaned = cleanupOldEvents(currentEvents, now);
       if (cleaned.length !== currentEvents.length) {
         await writeProfileField(profileId, 'wear_events', serializeWearEvents(cleaned));
-        await refresh();
+        await refreshFarm(profileId);
       }
       return [];
     }
 
     const merged = cleanupOldEvents([...currentEvents, ...newEvents], now);
     await writeProfileField(profileId, 'wear_events', serializeWearEvents(merged));
-    await refresh();
+    await refreshFarm(profileId);
     return newEvents;
-  }, [vault, profiles, writeProfileField, refresh]);
+  }, [vault, profiles, writeProfileField, refreshFarm]);
 
   /** Reparer un evenement d'usure (deduit les feuilles) */
   const repairWear = useCallback(async (profileId: string, eventId: string): Promise<boolean> => {
@@ -586,9 +593,10 @@ export function useFarm() {
     if (result.cost > 0) {
       await deductCoins(profileId, result.cost, `🔧 Reparation usure`);
     }
-    await refresh();
+    await refreshFarm(profileId);
+    await refreshGamification();
     return true;
-  }, [vault, profiles, writeProfileField, deductCoins, refresh]);
+  }, [vault, profiles, writeProfileField, deductCoins, refreshFarm, refreshGamification]);
 
   /** Effets d'usure actifs pour le profil courant (memoises) */
   const getWearEffects = useCallback((profileId: string): WearEffects => {

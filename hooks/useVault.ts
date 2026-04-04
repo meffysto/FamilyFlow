@@ -188,6 +188,7 @@ export interface VaultState {
   activateVacation: (startDate: string, endDate: string) => Promise<void>;
   deactivateVacation: () => Promise<void>;
   refreshGamification: () => Promise<void>;
+  refreshFarm: (profileId: string) => Promise<void>;
   recipes: Recipe[];
   loadRecipes: (force?: boolean) => Promise<void>;
   addRecipe: (category: string, data: { title: string; tags?: string[]; servings?: number; prepTime?: string; cookTime?: string; ingredients: { name: string; quantity?: string; unit?: string }[]; steps: string[] }) => Promise<void>;
@@ -2450,6 +2451,19 @@ export function useVaultInternal(): VaultState {
     }
   }, []);
 
+  const refreshFarm = useCallback(async (profileId: string) => {
+    if (!vaultRef.current) return;
+    try {
+      const content = await vaultRef.current.readFile(farmFile(profileId));
+      const farmData = parseFarmProfile(content);
+      setProfiles(prev => prev.map(p =>
+        p.id === profileId ? { ...p, ...farmData } : p
+      ));
+    } catch (e) {
+      warnUnexpected('refreshFarm', e);
+    }
+  }, []);
+
   const activateVacation = useCallback(async (startDate: string, endDate: string) => {
     const config: VacationConfig = { active: true, startDate, endDate };
     await SecureStore.setItemAsync(VACATION_STORE_KEY, JSON.stringify(config));
@@ -3642,6 +3656,7 @@ export function useVaultInternal(): VaultState {
     activateVacation,
     deactivateVacation,
     refreshGamification,
+    refreshFarm,
     recipes,
     loadRecipes,
     addRecipe,
@@ -3731,7 +3746,7 @@ export function useVaultInternal(): VaultState {
     toggleTask, addRDV, updateRDV, deleteRDV, addTask, editTask, deleteTask,
     addCourseItem, mergeCourseIngredients, toggleCourseItem, removeCourseItem, moveCourseItem,
     clearCompletedCourses, addMemory, updateMemory, activateVacation,
-    deactivateVacation, refreshGamification, addRecipe, deleteRecipe, renameRecipe,
+    deactivateVacation, refreshGamification, refreshFarm, addRecipe, deleteRecipe, renameRecipe,
     saveRecipeImage, getRecipeImageUri,
     loadRecipes, scanAllCookFiles, moveCookToRecipes, toggleFavorite, isFavorite,
     getFavorites, applyAgeUpgrade, dismissAgeUpgrade, addChild, convertToBorn,
