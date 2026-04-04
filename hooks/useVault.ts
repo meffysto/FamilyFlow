@@ -201,6 +201,8 @@ export interface VaultState {
   scanAllCookFiles: () => Promise<{ path: string; title: string }[]>;
   /** Déplacer un .cook vers le dossier Recettes */
   moveCookToRecipes: (sourcePath: string, category: string) => Promise<void>;
+  /** Déplacer une recette vers une autre catégorie */
+  moveRecipeCategory: (sourceFile: string, newCategory: string) => Promise<void>;
   // Recipe favorites per profile
   toggleFavorite: (profileId: string, recipePath: string) => Promise<void>;
   isFavorite: (profileId: string, recipePath: string) => boolean;
@@ -2391,6 +2393,45 @@ export function useVaultInternal(): VaultState {
     }
   }, [loadRecipes]);
 
+  /** Déplacer une recette vers une autre catégorie */
+  const moveRecipeCategory = useCallback(async (sourceFile: string, newCategory: string) => {
+    if (!vaultRef.current) return;
+    const vault = vaultRef.current;
+    const content = await vault.readFile(sourceFile);
+    const parts = sourceFile.split('/');
+    const fileName = parts[parts.length - 1]; // ex: "Poulet-Basquaise.cook"
+    const destPath = `${RECIPES_DIR}/${newCategory}/${fileName}`;
+    // Vérifier que source != dest
+    if (sourceFile === destPath) return;
+    await vault.ensureDir(`${RECIPES_DIR}/${newCategory}`);
+    await vault.writeFile(destPath, content);
+    await vault.deleteFile(sourceFile);
+    // Déplacer aussi l'image .jpg si elle existe
+    try {
+      const oldImagePath = sourceFile.replace(/\.cook$/, '.jpg');
+      const newImagePath = destPath.replace(/\.cook$/, '.jpg');
+      const oldImageUri = vault.getRecipeImageUri(sourceFile);
+      await vault.ensureDir(`${RECIPES_DIR}/${newCategory}`);
+      await vault.copyFileToVault(oldImageUri, newImagePath);
+      await vault.deleteFile(oldImagePath);
+    } catch {
+      // Pas d'image ou déplacement échoué — ignorer silencieusement
+    }
+    // Mise à jour optimiste du state
+    try {
+      const recipe = parseRecipe(destPath, content);
+      if (recipe) {
+        setRecipes(prev => prev.map(r =>
+          r.sourceFile === sourceFile ? recipe : r,
+        ).sort((a, b) => a.title.localeCompare(b.title, 'fr')));
+      }
+    } catch (e) {
+      warnUnexpected('moveRecipeCategory-optimistic', e);
+      recipesLoadedRef.current = false;
+      await loadRecipes(true);
+    }
+  }, [loadRecipes]);
+
   // ─── Recipe Favorites (per-profile, persisted in SecureStore) ────────────
 
   const FAVORITES_KEY_PREFIX = 'recipe_favorites_';
@@ -3697,6 +3738,7 @@ export function useVaultInternal(): VaultState {
     getRecipeImageUri,
     scanAllCookFiles,
     moveCookToRecipes,
+    moveRecipeCategory,
     toggleFavorite,
     isFavorite,
     getFavorites,
@@ -3779,7 +3821,7 @@ export function useVaultInternal(): VaultState {
     clearCompletedCourses, addMemory, updateMemory, activateVacation,
     deactivateVacation, refreshGamification, refreshFarm, addRecipe, deleteRecipe, renameRecipe,
     saveRecipeImage, getRecipeImageUri,
-    loadRecipes, scanAllCookFiles, moveCookToRecipes, toggleFavorite, isFavorite,
+    loadRecipes, scanAllCookFiles, moveCookToRecipes, moveRecipeCategory, toggleFavorite, isFavorite,
     getFavorites, applyAgeUpgrade, dismissAgeUpgrade, addChild, convertToBorn,
     setBudgetMonth, addExpense, deleteExpense, updateBudgetConfig, loadBudgetData, loadBudgetMonths,
     saveRoutines, saveHealthRecord, addGrowthEntry, updateGrowthEntry, deleteGrowthEntry, addVaccineEntry,
