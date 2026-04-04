@@ -50,7 +50,6 @@ import {
   serializeGratitude,
   WISHLIST_FILE,
   parseWishlist,
-  serializeWishlist,
   ANNIVERSAIRES_FILE,
   parseAnniversaries,
   serializeAnniversaries,
@@ -98,6 +97,7 @@ import { syncWidgetFeedingsToVault } from '../lib/widget-sync';
 import { shouldSendWeeklySummary, buildAndSendWeeklySummary } from '../lib/telegram';
 import { buildSectionHeader, type EmplacementId } from '../constants/stock';
 import { useVaultNotes } from './useVaultNotes';
+import { useVaultWishlist } from './useVaultWishlist';
 
 export const VAULT_PATH_KEY = 'vault_path';
 export const ACTIVE_PROFILE_KEY = 'active_profile_id';
@@ -512,7 +512,6 @@ export function useVaultInternal(): VaultState {
   const [journalStats, setJournalStats] = useState<JournalSummaryEntry[]>([]);
   const [defis, setDefis] = useState<Defi[]>([]);
   const [gratitudeDays, setGratitudeDays] = useState<GratitudeDay[]>([]);
-  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [quotes, setQuotes] = useState<ChildQuote[]>([]);
   const [moods, setMoods] = useState<MoodEntry[]>([]);
   const [skillTrees, setSkillTrees] = useState<SkillTreeData[]>([]);
@@ -535,6 +534,17 @@ export function useVaultInternal(): VaultState {
     importAnniversaries,
     resetAnniversaires,
   } = useVaultAnniversaires(vaultRef);
+
+  // ─── Sous-hooks par domaine ───────────────────────────────────────────────
+  const {
+    wishlistItems,
+    setWishlistItems,
+    addWishItem,
+    updateWishItem,
+    deleteWishItem,
+    toggleWishBought,
+    resetWishlist,
+  } = useVaultWishlist(vaultRef);
 
   // Load vault path + active profile from SecureStore on mount
   useEffect(() => {
@@ -1139,6 +1149,7 @@ export function useVaultInternal(): VaultState {
     resetBudget();
     notesHook.resetNotes();
     resetAnniversaires();
+    resetWishlist();
     setVaultPathState(path);
     const vault = new VaultManager(path);
     vaultRef.current = vault;
@@ -2997,75 +3008,7 @@ export function useVaultInternal(): VaultState {
     setGratitudeDays(days);
   }, []);
 
-  // ─── Wishlist CRUD ────────────────────────────────────────────────────────
-
-  const reloadWishlist = useCallback(async (): Promise<WishlistItem[]> => {
-    if (!vaultRef.current) return [];
-    try {
-      const content = await vaultRef.current.readFile(WISHLIST_FILE);
-      return parseWishlist(content);
-    } catch (e) {
-      warnUnexpected('reloadWishlist', e);
-      return [];
-    }
-  }, []);
-
-  const addWishItem = useCallback(async (text: string, profileName: string, budget?: WishBudget, occasion?: WishOccasion, notes?: string, url?: string) => {
-    if (!vaultRef.current) return;
-    const items = await reloadWishlist();
-    const newItem: WishlistItem = {
-      id: `wish_${Date.now()}`,
-      text,
-      budget: budget || '',
-      occasion: occasion || '',
-      notes: notes || '',
-      url: url || '',
-      bought: false,
-      boughtBy: '',
-      profileName,
-      sourceFile: WISHLIST_FILE,
-      lineIndex: -1,
-    };
-    items.push(newItem);
-    await vaultRef.current.writeFile(WISHLIST_FILE, serializeWishlist(items));
-    setWishlistItems(parseWishlist(await vaultRef.current.readFile(WISHLIST_FILE)));
-  }, [reloadWishlist]);
-
-  const updateWishItem = useCallback(async (item: WishlistItem, updates: Partial<WishlistItem>) => {
-    if (!vaultRef.current) return;
-    const items = await reloadWishlist();
-    const idx = items.findIndex((w) => w.lineIndex === item.lineIndex && w.profileName === item.profileName);
-    if (idx === -1) return;
-    items[idx] = { ...items[idx], ...updates };
-    await vaultRef.current.writeFile(WISHLIST_FILE, serializeWishlist(items));
-    setWishlistItems(parseWishlist(await vaultRef.current.readFile(WISHLIST_FILE)));
-  }, [reloadWishlist]);
-
-  const deleteWishItem = useCallback(async (item: WishlistItem) => {
-    if (!vaultRef.current) return;
-    const items = await reloadWishlist();
-    const filtered = items.filter((w) => !(w.lineIndex === item.lineIndex && w.profileName === item.profileName));
-    await vaultRef.current.writeFile(WISHLIST_FILE, serializeWishlist(filtered));
-    setWishlistItems(parseWishlist(await vaultRef.current.readFile(WISHLIST_FILE)));
-  }, [reloadWishlist]);
-
-  const toggleWishBought = useCallback(async (item: WishlistItem, boughtBy: string) => {
-    if (!vaultRef.current) return;
-    const items = await reloadWishlist();
-    const idx = items.findIndex((w) => w.lineIndex === item.lineIndex && w.profileName === item.profileName);
-    if (idx === -1) return;
-    if (items[idx].bought) {
-      items[idx].bought = false;
-      items[idx].boughtBy = '';
-    } else {
-      items[idx].bought = true;
-      items[idx].boughtBy = boughtBy;
-    }
-    await vaultRef.current.writeFile(WISHLIST_FILE, serializeWishlist(items));
-    setWishlistItems(parseWishlist(await vaultRef.current.readFile(WISHLIST_FILE)));
-  }, [reloadWishlist]);
-
-  // Anniversaires et Notes délégués aux hooks extraits (useVaultAnniversaires, useVaultNotes)
+  // Wishlist, Anniversaires et Notes délégués aux hooks extraits
 
   // ─── Mots d'enfants CRUD ─────────────────────────────────────────────────
 
