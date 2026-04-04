@@ -5,7 +5,7 @@ milestone_name: Ferme Enrichie
 status: executing
 stopped_at: "Completed quick task 260404-kvd: fix troncature texte contexte citations"
 last_updated: "2026-04-04T13:03:59.717Z"
-last_activity: "2026-04-04 - Completed quick task 260404-kbd: système hybride ferme plot principal vitesse pleine + indicateur visuel"
+last_activity: "2026-04-04 - Completed quick task 260404-kvd: fix crop texte contexte quotes — retirer numberOfLines={2}"
 progress:
   total_phases: 10
   completed_phases: 7
@@ -146,6 +146,7 @@ None yet.
 | 260404-j7v | Fix complet système usure ferme — overlay orange, blocage plant, repair handlers, bouton toit | 2026-04-04 | 544e4c9 | [260404-j7v-fix-complet-syst-me-usure-ferme-overlay-](./quick/260404-j7v-fix-complet-syst-me-usure-ferme-overlay-/) |
 | 260404-kbd | Système hybride ferme — plot principal vitesse pleine, autres demi-vitesse + indicateur visuel | 2026-04-04 | 22ac20e | [260404-kbd-syst-me-hybride-ferme-plot-principal-vit](./quick/260404-kbd-syst-me-hybride-ferme-plot-principal-vit/) |
 | 260404-kdk | Rééquilibrer recettes ferme — 2 ingrédients + 17 prix de vente | 2026-04-04 | 6dad909 | [260404-kdk-r-quilibrer-recettes-ferme-prix-et-ingr-](./quick/260404-kdk-r-quilibrer-recettes-ferme-prix-et-ingr-/) |
+| 260404-kvd | fix crop texte contexte quotes — retirer numberOfLines={2} sur le texte date/contexte dans renderItem | 2026-04-04 | e6ca0ac | [260404-kvd-fix-crop-texte-contexte-quotes-retirer-n](./quick/260404-kvd-fix-crop-texte-contexte-quotes-retirer-n/) |
 
 ## Session Continuity
 
