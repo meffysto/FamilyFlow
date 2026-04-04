@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: verifying
-stopped_at: Completed quick-260404-qvz — fix OOM crash TreeScreen timer global + reduction particules
-last_updated: "2026-04-04T17:28:22.722Z"
-last_activity: "2026-04-04 - Completed quick task 260404-quw: Fix long-press inventory CraftSheet"
+stopped_at: Completed quick-260405-0u3 — extraction domaine Budget de useVault.ts vers useVaultBudget.ts
+last_updated: "2026-04-04T22:42:46.371Z"
+last_activity: "2026-04-04 - Completed quick task 260404-qvz: Fix OOM crash TreeScreen"
 progress:
   total_phases: 10
   completed_phases: 9
@@ -65,6 +65,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 09-cadeaux-familiaux P01 | 4min | 2 tasks | 7 files |
 | Phase 09-cadeaux-familiaux P02 | 10min | 2 tasks | 6 files |
 | Phase quick-260404-qvz P01 | 15min | 2 tasks | 2 files |
+| Phase quick-260405-0u3 P01 | 8min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -164,6 +165,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T22:06:47Z
-Stopped at: Completed quick-260404-xbu — changer catégorie recette depuis RecipeViewer
+Last session: 2026-04-04T22:42:42.519Z
+Stopped at: Completed quick-260405-0u3 — extraction domaine Budget de useVault.ts vers useVaultBudget.ts
 Resume file: None
