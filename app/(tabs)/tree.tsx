@@ -154,6 +154,18 @@ const VISITOR_IDLE_FRAMES: Record<string, number> = {
 };
 const DEFAULT_VISITOR_IDLE = VISITOR_IDLE_FRAMES.voyageur_argent;
 
+/** Sprite idle des visiteurs saisonniers — eventId → sprite */
+const SEASONAL_VISITOR_IDLE: Record<string, number> = {
+  'nouvel-an': require('../../assets/garden/animals/lutin_minuit/idle_1.png'),
+  'st-valentin': require('../../assets/garden/animals/cupidon/idle_1.png'),
+  'poisson-avril': require('../../assets/garden/animals/poisson_magique/idle_1.png'),
+  'paques': require('../../assets/garden/animals/lapin_paques/idle_1.png'),
+  'ete': require('../../assets/garden/animals/crabe_voyageur/idle_1.png'),
+  'rentree': require('../../assets/garden/animals/hibou/idle_1.png'),
+  'halloween': require('../../assets/garden/animals/fantome_farceur/idle_1.png'),
+  'noel': require('../../assets/garden/animals/voyageur/idle_1.png'),
+};
+
 /** Tooltip whisper quand on tap une culture en croissance */
 /** Tooltip info quand on tap une culture en croissance — emoji + nom + tâches restantes */
 function CropTooltip({ tooltipInfo, stageInfo, stageIdx, techBonuses }: {
@@ -241,7 +253,7 @@ export default function TreeScreen() {
   const [showItemPicker, setShowItemPicker] = useState(false);
 
   // Ferme
-  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech } = useFarm();
+  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects } = useFarm();
   const [showSeedPicker, setShowSeedPicker] = useState(false);
   const [selectedPlotIndex, setSelectedPlotIndex] = useState<number | null>(null);
   const [harvestBurst, setHarvestBurst] = useState<{ x: number; y: number; reward: number; cropId: string } | null>(null);
@@ -691,6 +703,10 @@ export default function TreeScreen() {
 
       // Collecter
       const totalCollected = await collectPassiveIncome(profile.id);
+
+      // Vérifier l'usure de la ferme (clôtures, toits, herbes, nuisibles)
+      await checkWear(profile.id);
+
       if (totalCollected === 0) return;
 
       // Compter les taches d'hier
@@ -1499,6 +1515,7 @@ export default function TreeScreen() {
               containerWidth={SCREEN_W}
               containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
               techBonuses={techBonuses}
+              wearEffects={profile ? getWearEffects(profile.id) : undefined}
               onCropPlotPress={isOwnTree ? handleCropCellPress : undefined}
               onBuildingCellPress={isOwnTree ? handleBuildingCellPress : undefined}
             />
@@ -1646,7 +1663,7 @@ export default function TreeScreen() {
                   overrideSaga={saga}
                   onChapterComplete={handleEventComplete}
                   onDismiss={() => setShowEventDialogue(false)}
-                  visitorIdleFrame={require('../../assets/garden/animals/voyageur/idle_1.png')}
+                  visitorIdleFrame={SEASONAL_VISITOR_IDLE[activeEventContent.eventId] ?? DEFAULT_VISITOR_IDLE}
                   onChoiceReaction={(reaction) => setEventVisitorReaction(reaction)}
                 />
               );
