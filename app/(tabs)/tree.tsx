@@ -39,6 +39,7 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useAI } from '../../contexts/AIContext';
+import { useHelp } from '../../contexts/HelpContext';
 import { callCompanionMessage } from '../../lib/ai-service';
 import { TreeView } from '../../components/mascot/TreeView';
 import { SpeciesPicker } from '../../components/mascot/SpeciesPicker';
@@ -227,6 +228,48 @@ function CropTooltip({ tooltipInfo, stageInfo, stageIdx, techBonuses }: {
   );
 }
 
+/** Banniere hint one-shot ferme — s'affiche la premiere visite, dismiss via useHelp */
+function FarmHintBanner({ onDismiss }: { onDismiss: () => void }) {
+  const { primary, colors } = useThemeColors();
+  return (
+    <Animated.View
+      entering={FadeInUp.delay(800).duration(500).springify()}
+      style={{
+        position: 'absolute',
+        bottom: Spacing.lg,
+        left: Spacing.md,
+        right: Spacing.md,
+        zIndex: 25,
+        backgroundColor: colors.card,
+        borderRadius: Radius.lg,
+        padding: Spacing.md,
+        ...Shadows.md,
+        borderWidth: 1,
+        borderColor: colors.borderLight,
+      }}
+    >
+      <Text style={{ fontSize: FontSize.sm, color: colors.text, marginBottom: Spacing.xs, lineHeight: FontSize.sm * 1.5 }}>
+        {'🌱 Complète des tâches pour faire pousser tes cultures ! Le plot avec les points bleus avance en priorité.'}
+      </Text>
+      <TouchableOpacity
+        onPress={onDismiss}
+        activeOpacity={0.7}
+        style={{
+          alignSelf: 'flex-end',
+          paddingVertical: Spacing.xxs,
+          paddingHorizontal: Spacing.sm,
+          backgroundColor: primary + '20',
+          borderRadius: Radius.md,
+        }}
+      >
+        <Text style={{ fontSize: FontSize.caption, color: primary, fontWeight: '600' }}>
+          {"J'ai compris"}
+        </Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
 export default function TreeScreen() {
   const { profileId } = useLocalSearchParams<{ profileId?: string }>();
   const router = useRouter();
@@ -236,6 +279,8 @@ export default function TreeScreen() {
   const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem, unplaceMascotItem, gamiData, setCompanion, tasks, rdvs, meals, completeSagaChapter } = useVault();
   const { showToast } = useToast();
   const { config: aiConfig } = useAI();
+  const { hasSeenScreen, markScreenSeen, isLoaded: helpLoaded } = useHelp();
+  const showFarmHint = helpLoaded && !hasSeenScreen('farm');
 
   // Profil affiché : celui passé en param ou le profil actif
   const profile = useMemo(() => {
@@ -1731,6 +1776,11 @@ export default function TreeScreen() {
             })()}
 
             {/* Bouton saga supprimé — le tap sur le VisitorSlot dans la couche 3.6 le remplace */}
+
+            {/* Couche 6 : Hint one-shot ferme */}
+            {showFarmHint && (
+              <FarmHintBanner onDismiss={() => markScreenSeen('farm')} />
+            )}
 
           </View>
         </Animated.View>

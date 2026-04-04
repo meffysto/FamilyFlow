@@ -77,14 +77,6 @@ function FarmPlot({ pos, crop, cropDef, isMature, isMainPlot, containerWidth, co
         {/* Fond terre */}
         <Image source={DIRT_SPRITE} style={styles.dirtBg as any} />
 
-        {/* Indicateur plot principal (FIFO) */}
-        {isMainPlot && (
-          <>
-            <View style={styles.mainPlotBorder} />
-            <Text style={styles.mainPlotBadge}>⚡</Text>
-          </>
-        )}
-
         {/* Lueur mature ou dorée */}
         {isMature && !crop?.isGolden && <View style={styles.matureGlow} />}
         {crop?.isGolden && (
@@ -112,7 +104,7 @@ function FarmPlot({ pos, crop, cropDef, isMature, isMainPlot, containerWidth, co
                   style={[
                     styles.stageDot,
                     i < crop.currentStage
-                      ? (isMature ? styles.stageDotMature : styles.stageDotFilled)
+                      ? (isMature ? styles.stageDotMature : (isMainPlot ? styles.stageDotMain : styles.stageDotFilled))
                       : styles.stageDotEmpty,
                   ]}
                 />
@@ -155,6 +147,7 @@ export function FarmPlots({ treeStage, farmCropsCSV, containerWidth, containerHe
           />
         );
       })}
+
     </View>
   );
 }
@@ -264,6 +257,9 @@ const styles = StyleSheet.create({
   stageDotFilled: {
     backgroundColor: '#8B6914',
   },
+  stageDotMain: {
+    backgroundColor: '#60A5FA',
+  },
   stageDotMature: {
     backgroundColor: '#FFD700',
   },
@@ -275,20 +271,5 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
   },
-  mainPlotBorder: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#60A5FA',
-    backgroundColor: 'rgba(96, 165, 250, 0.08)',
-  },
-  mainPlotBadge: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    fontSize: 10,
-    zIndex: 10,
-  },
+
 });

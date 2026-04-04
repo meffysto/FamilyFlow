@@ -31,7 +31,7 @@ import { type TechBonuses } from '../../lib/mascot/tech-engine';
 import { type PlantedCrop, type TreeStage, type PlacedBuilding, CROP_CATALOG, BUILDING_CATALOG, TREE_STAGES } from '../../lib/mascot/types';
 import { BUILDING_SPRITES } from '../../lib/mascot/building-sprites';
 import { getPendingResources } from '../../lib/mascot/building-engine';
-import { parseCrops, hasCropSeasonalBonus } from '../../lib/mascot/farm-engine';
+import { parseCrops, hasCropSeasonalBonus, getMainPlotIndex } from '../../lib/mascot/farm-engine';
 import { CROP_SPRITES } from '../../lib/mascot/crop-sprites';
 import { type WearEffects } from '../../lib/mascot/wear-engine';
 import { Spacing } from '../../constants/spacing';
@@ -66,11 +66,12 @@ const CROP_WHISPERS = [
   '🌱',
 ];
 
-function CropCell({ cell, crop, cropDef, isMature, plotIndex, wearEffects, containerWidth, containerHeight, onPress, onRepairWeed, onRepairFence }: {
+function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, wearEffects, containerWidth, containerHeight, onPress, onRepairWeed, onRepairFence }: {
   cell: WorldCell;
   crop: PlantedCrop | null;
   cropDef: typeof CROP_CATALOG[0] | null;
   isMature: boolean;
+  isMainPlot: boolean;
   plotIndex: number;
   wearEffects?: WearEffects;
   containerWidth: number;
@@ -204,7 +205,7 @@ function CropCell({ cell, crop, cropDef, isMature, plotIndex, wearEffects, conta
                   style={[
                     styles.stageDot,
                     i < crop.currentStage
-                      ? (isMature ? styles.stageDotMature : styles.stageDotFilled)
+                      ? (isMature ? styles.stageDotMature : (isMainPlot ? styles.stageDotMain : styles.stageDotFilled))
                       : styles.stageDotEmpty,
                   ]}
                 />
@@ -583,6 +584,7 @@ export function WorldGridView({
 }: WorldGridViewProps) {
   const unlockedCrops = getUnlockedCropCells(treeStage);
   const crops = parseCrops(farmCropsCSV);
+  const mainPlotIndex = getMainPlotIndex(crops);
 
   // Peut-on construire un batiment sur une cellule vide ?
   const stageOrder = TREE_STAGES.map(s => s.stage);
@@ -620,6 +622,7 @@ export function WorldGridView({
             crop={crop}
             cropDef={cropDef}
             isMature={isMature}
+            isMainPlot={!isMature && cellIdx === mainPlotIndex}
             plotIndex={cellIdx}
             wearEffects={wearEffects}
             containerWidth={containerWidth}
@@ -646,6 +649,7 @@ export function WorldGridView({
             crop={crop}
             cropDef={cropDef}
             isMature={isMature}
+            isMainPlot={!isMature && cellIdx === mainPlotIndex}
             plotIndex={cellIdx}
             wearEffects={wearEffects}
             containerWidth={containerWidth}
@@ -815,6 +819,7 @@ const styles = StyleSheet.create({
   stageRow: { flexDirection: 'row', gap: 3, marginTop: 2 },
   stageDot: { width: 5, height: 5, borderRadius: 3 },
   stageDotFilled: { backgroundColor: '#8B6914' },
+  stageDotMain: { backgroundColor: '#60A5FA' },
   stageDotMature: { backgroundColor: '#FFD700' },
   stageDotEmpty: { backgroundColor: 'rgba(255,255,255,0.3)' },
   taskCount: { color: 'rgba(255,255,255,0.8)', fontSize: 8, fontWeight: '600' as const, marginTop: 1, textAlign: 'center' as const },
