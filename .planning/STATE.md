@@ -140,6 +140,7 @@ None yet.
 | 260403-qoo | Wrapper completeTask/openLootBox/completeSagaChapter famille.md via enqueueWrite | 2026-04-03 | 72db03b | [260403-qoo-wrapper-completetask-openlootbox-complet](./quick/260403-qoo-wrapper-completetask-openlootbox-complet/) |
 | 260404-hfb | Ajouter deux recettes craft tournesol (huile_tournesol + brioche_tournesol) | 2026-04-04 | 039e7b5 | [260404-hfb-ajouter-deux-recettes-craft-tournesol-da](./quick/260404-hfb-ajouter-deux-recettes-craft-tournesol-da/) |
 | 260404-h6l | Extraire données farm/mascot/companion de famille.md vers farm-{profileId}.md | 2026-04-04 | c146f70 | [260404-h6l-extraire-donn-es-farm-mascot-companion-d](./quick/260404-h6l-extraire-donn-es-farm-mascot-companion-d/) |
+| 260404-i3r | Remplacer l'emoji animé du poulailler par sprite PNG Animated.Image | 2026-04-04 | c9bfd75 | [260404-i3r-remplacer-l-emoji-anim-du-poullailler-da](./quick/260404-i3r-remplacer-l-emoji-anim-du-poullailler-da/) |
 
 ## Session Continuity
 
