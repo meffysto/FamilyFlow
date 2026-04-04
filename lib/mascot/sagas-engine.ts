@@ -128,10 +128,22 @@ export function getSagaCompletionResult(
 
   if (!variant) {
     // Fallback absolu : première variante disponible
-    const firstKey = Object.keys(saga.finale.variants)[0] as SagaTrait;
-    const fallback = saga.finale.variants[firstKey]!;
+    const firstKey = Object.keys(saga.finale.variants)[0] as SagaTrait | undefined;
+    const fallback = firstKey ? saga.finale.variants[firstKey] : undefined;
+    if (!fallback) {
+      // Saga sans variants (ex: événement saisonnier) — retour neutre
+      return {
+        dominantTrait: dominant,
+        rewardItemId: '',
+        rewardType: 'mascot_deco' as const,
+        bonusXP: 0,
+        titleKey: '',
+        narrativeKey: '',
+        bonusCrop,
+      };
+    }
     return {
-      dominantTrait: firstKey,
+      dominantTrait: firstKey!,
       rewardItemId: fallback.rewardItemId,
       rewardType: fallback.rewardType,
       bonusXP: fallback.bonusXP,
