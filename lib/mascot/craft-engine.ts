@@ -35,7 +35,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
       { itemId: 'potato', quantity: 1, source: 'crop' },
     ],
     xpBonus: 5,
-    sellValue: 120, // (25+35) x 2
+    sellValue: 150, // (25+35) x 2.5
     minTreeStage: 'pousse',
   },
   {
@@ -47,7 +47,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
       { itemId: 'carrot', quantity: 1, source: 'crop' },
     ],
     xpBonus: 10,
-    sellValue: 190, // (70+25) x 2
+    sellValue: 200, // (70+25) x 2.1
     minTreeStage: 'pousse',
   },
   {
@@ -59,7 +59,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
       { itemId: 'wheat', quantity: 1, source: 'crop' },
     ],
     xpBonus: 10,
-    sellValue: 240, // (80+40) x 2
+    sellValue: 220, // (80+40) x 1.8
     minTreeStage: 'pousse',
   },
   // ── Arbuste (niv 6-10) — grange + tomate/chou/concombre ──
@@ -68,10 +68,10 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     labelKey: 'craft.recipe.fromage',
     emoji: '🧀',
     ingredients: [
-      { itemId: 'lait', quantity: 2, source: 'building' },
+      { itemId: 'lait', quantity: 3, source: 'building' },
     ],
     xpBonus: 15,
-    sellValue: 400, // (100+100) x 2
+    sellValue: 480, // (100+100+100) x 1.6
     minTreeStage: 'arbuste',
   },
   {
@@ -84,7 +84,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
       { itemId: 'oeuf', quantity: 1, source: 'building' },
     ],
     xpBonus: 15,
-    sellValue: 430, // (100+35+80) x 2
+    sellValue: 440, // (100+35+80) x 2.0
     minTreeStage: 'arbuste',
   },
   {
@@ -96,7 +96,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
       { itemId: 'tomato', quantity: 1, source: 'crop' },
     ],
     xpBonus: 15,
-    sellValue: 520, // (80+80+80) x 2
+    sellValue: 440, // (80+80+80) x 1.8
     minTreeStage: 'arbuste',
   },
   {
@@ -107,7 +107,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
       { itemId: 'miel', quantity: 3, source: 'building' },
     ],
     xpBonus: 30,
-    sellValue: 720, // (120x3) x 2
+    sellValue: 660, // (120x3) x 1.8
     minTreeStage: 'arbuste',
   },
   {
@@ -115,12 +115,12 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     labelKey: 'craft.recipe.nougat',
     emoji: '🍬',
     ingredients: [
-      { itemId: 'miel', quantity: 1, source: 'building' },
+      { itemId: 'miel', quantity: 2, source: 'building' },
       { itemId: 'oeuf', quantity: 1, source: 'building' },
       { itemId: 'farine', quantity: 1, source: 'building' },
     ],
     xpBonus: 35,
-    sellValue: 580, // (120+80+90) x 2
+    sellValue: 760, // (120+120+80+90) x 1.85
     minTreeStage: 'arbuste',
   },
   {
@@ -132,7 +132,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
       { itemId: 'farine', quantity: 2, source: 'building' },
     ],
     xpBonus: 30,
-    sellValue: 600, // (120+90+90) x 2
+    sellValue: 560, // (120+90+90) x 1.9
     minTreeStage: 'arbuste',
   },
   {
@@ -157,7 +157,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
       { itemId: 'wheat', quantity: 1, source: 'crop' },
     ],
     xpBonus: 15,
-    sellValue: 440, // (90+90+40) x 2
+    sellValue: 480, // (90+90+40) x 2.2
     minTreeStage: 'arbre',
   },
   {
@@ -168,7 +168,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
       { itemId: 'strawberry', quantity: 2, source: 'crop' },
     ],
     xpBonus: 20,
-    sellValue: 480, // (120+120) x 2
+    sellValue: 460, // (120+120) x 1.9
     minTreeStage: 'arbre',
   },
   {
@@ -179,7 +179,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
       { itemId: 'corn', quantity: 2, source: 'crop' },
     ],
     xpBonus: 20,
-    sellValue: 600, // (150+150) x 2
+    sellValue: 540, // (150+150) x 1.8
     minTreeStage: 'arbre',
   },
   {
@@ -190,7 +190,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
       { itemId: 'sunflower', quantity: 2, source: 'crop' },
     ],
     xpBonus: 20,
-    sellValue: 400, // (100+100) x 2
+    sellValue: 500, // (100+100) x 2.5
     minTreeStage: 'arbre',
   },
   {
@@ -202,7 +202,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
       { itemId: 'farine', quantity: 1, source: 'building' },
     ],
     xpBonus: 25,
-    sellValue: 380, // (100+90) x 2
+    sellValue: 440, // (100+90) x 2.3
     minTreeStage: 'arbre',
   },
   {
@@ -215,7 +215,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
       { itemId: 'strawberry', quantity: 1, source: 'crop' },
     ],
     xpBonus: 30,
-    sellValue: 580, // (90+80+120) x 2
+    sellValue: 540, // (90+80+120) x 1.9
     minTreeStage: 'arbre',
   },
   {
@@ -241,7 +241,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
       { itemId: 'lait', quantity: 1, source: 'building' },
     ],
     xpBonus: 25,
-    sellValue: 600, // (200+100) x 2
+    sellValue: 560, // (200+100) x 1.9
     minTreeStage: 'majestueux',
   },
   {
@@ -254,7 +254,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
       { itemId: 'oeuf', quantity: 1, source: 'building' },
     ],
     xpBonus: 35,
-    sellValue: 740, // (200+90+80) x 2
+    sellValue: 700, // (200+90+80) x 1.9
     minTreeStage: 'majestueux',
   },
   {
