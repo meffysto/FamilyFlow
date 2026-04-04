@@ -5,7 +5,7 @@ milestone_name: Ferme Enrichie
 status: executing
 stopped_at: Completed 13-evenements-saisonniers/13-02-PLAN.md
 last_updated: "2026-04-03T18:47:04.976Z"
-last_activity: 2026-04-04 - Completed quick task 260404-ips: Optimiser writes farm/gami et créer refreshFarm(profileId)
+last_activity: 2026-04-04 - Completed quick task 260404-j7v: Fix complet système usure ferme — overlay orange, blocage plant, repair handlers, bouton toit
 progress:
   total_phases: 10
   completed_phases: 7
@@ -142,6 +142,7 @@ None yet.
 | 260404-h6l | Extraire données farm/mascot/companion de famille.md vers farm-{profileId}.md | 2026-04-04 | c146f70 | [260404-h6l-extraire-donn-es-farm-mascot-companion-d](./quick/260404-h6l-extraire-donn-es-farm-mascot-companion-d/) |
 | 260404-i3r | Remplacer l'emoji animé du poulailler par sprite PNG Animated.Image | 2026-04-04 | c9bfd75 | [260404-i3r-remplacer-l-emoji-anim-du-poullailler-da](./quick/260404-i3r-remplacer-l-emoji-anim-du-poullailler-da/) |
 | 260404-ips | Optimiser writes farm/gami et créer refreshFarm(profileId) | 2026-04-04 | 2411250 | [260404-ips-optimiser-writes-farm-gami-et-cr-er-refr](./quick/260404-ips-optimiser-writes-farm-gami-et-cr-er-refr/) |
+| 260404-j7v | Fix complet système usure ferme — overlay orange, blocage plant, repair handlers, bouton toit | 2026-04-04 | 544e4c9 | [260404-j7v-fix-complet-syst-me-usure-ferme-overlay-](./quick/260404-j7v-fix-complet-syst-me-usure-ferme-overlay-/) |
 
 ## Session Continuity
 
