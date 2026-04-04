@@ -253,7 +253,7 @@ export default function TreeScreen() {
   const [showItemPicker, setShowItemPicker] = useState(false);
 
   // Ferme
-  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects } = useFarm();
+  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects, getWearEvents } = useFarm();
   const [showSeedPicker, setShowSeedPicker] = useState(false);
   const [selectedPlotIndex, setSelectedPlotIndex] = useState<number | null>(null);
   const [harvestBurst, setHarvestBurst] = useState<{ x: number; y: number; reward: number; cropId: string } | null>(null);
@@ -703,7 +703,13 @@ export default function TreeScreen() {
       const totalCollected = await collectPassiveIncome(profile.id);
 
       // Vérifier l'usure de la ferme (clôtures, toits, herbes, nuisibles)
-      await checkWear(profile.id);
+      const newWearEvents = await checkWear(profile.id);
+      for (const ev of newWearEvents) {
+        if (ev.type === 'broken_fence') showToast(t('farm.wear.brokenFence'), 'error');
+        else if (ev.type === 'damaged_roof') showToast(t('farm.wear.damagedRoof'), 'error');
+        else if (ev.type === 'weeds') showToast(t('farm.wear.weeds'), 'info');
+        else if (ev.type === 'pests') showToast(t('farm.wear.pests'), 'info');
+      }
 
       if (totalCollected === 0) return;
 
@@ -980,6 +986,36 @@ export default function TreeScreen() {
       setShowBuildingShop(true);
     }
   }, [isOwnTree]);
+
+  /** Réparer les mauvaises herbes sur une parcelle */
+  const handleRepairWeed = useCallback(async (plotIndex: number) => {
+    if (!profile) return;
+    const events = getWearEvents(profile.id);
+    const event = events.find(e => e.type === 'weeds' && e.targetId === String(plotIndex) && !e.repairedAt);
+    if (!event) return;
+    const ok = await repairWear(profile.id, event.id);
+    if (ok) showToast(t('farm.wear.repaired'));
+  }, [profile, getWearEvents, repairWear, showToast, t]);
+
+  /** Réparer les nuisibles sur un bâtiment */
+  const handleRepairPest = useCallback(async (cellId: string) => {
+    if (!profile) return;
+    const events = getWearEvents(profile.id);
+    const event = events.find(e => e.type === 'pests' && e.targetId === cellId && !e.repairedAt);
+    if (!event) return;
+    const ok = await repairWear(profile.id, event.id);
+    if (ok) showToast(t('farm.wear.repaired'));
+  }, [profile, getWearEvents, repairWear, showToast, t]);
+
+  /** Réparer le toit du bâtiment sélectionné */
+  const handleRepairRoof = useCallback(async () => {
+    if (!profile || !selectedBuildingCellId) return;
+    const events = getWearEvents(profile.id);
+    const event = events.find(e => e.type === 'damaged_roof' && e.targetId === selectedBuildingCellId && !e.repairedAt);
+    if (!event) return;
+    const ok = await repairWear(profile.id, event.id);
+    if (ok) showToast(t('farm.wear.repaired'));
+  }, [profile, selectedBuildingCellId, getWearEvents, repairWear, showToast, t]);
 
   /** Construire un batiment */
   const handleBuildBuilding = useCallback(async (buildingId: string) => {
@@ -1516,6 +1552,8 @@ export default function TreeScreen() {
               wearEffects={profile ? getWearEffects(profile.id) : undefined}
               onCropPlotPress={isOwnTree ? handleCropCellPress : undefined}
               onBuildingCellPress={isOwnTree ? handleBuildingCellPress : undefined}
+              onRepairWeed={isOwnTree ? handleRepairWeed : undefined}
+              onRepairPest={isOwnTree ? handleRepairPest : undefined}
             />
 
             {/* Couche 3.5 : Compagnon mascotte — se balade sur toute la scène */}
@@ -1888,8 +1926,10 @@ export default function TreeScreen() {
           building={selectedBuilding}
           coins={profile.coins ?? 0}
           techBonuses={techBonuses}
+          isDamaged={selectedBuildingCellId ? (getWearEffects(profile.id).damagedBuildings.includes(selectedBuildingCellId)) : false}
           onCollect={handleCollectBuilding}
           onUpgrade={handleUpgradeBuilding}
+          onRepairRoof={handleRepairRoof}
           onClose={() => { setShowBuildingDetail(false); setSelectedBuilding(null); }}
         />
       )}

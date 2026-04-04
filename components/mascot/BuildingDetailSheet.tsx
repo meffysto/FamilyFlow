@@ -33,8 +33,10 @@ interface BuildingDetailSheetProps {
   building: PlacedBuilding;
   coins: number;
   techBonuses?: TechBonuses;
+  isDamaged?: boolean;
   onCollect: (cellId: string) => void;
   onUpgrade: (cellId: string) => void;
+  onRepairRoof?: () => void;
   onClose: () => void;
 }
 
@@ -45,8 +47,10 @@ export function BuildingDetailSheet({
   building,
   coins,
   techBonuses,
+  isDamaged,
   onCollect,
   onUpgrade,
+  onRepairRoof,
   onClose,
 }: BuildingDetailSheetProps) {
   const { t } = useTranslation();
@@ -180,6 +184,22 @@ export function BuildingDetailSheet({
                 </Text>
               </TouchableOpacity>
             </View>
+
+            {/* Section réparation toit — visible uniquement si endommagé */}
+            {isDamaged && onRepairRoof && (
+              <TouchableOpacity
+                style={[styles.repairBtn]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  onRepairRoof();
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.repairBtnText}>
+                  {t('farm.wear.repair', { cost: 25 })}
+                </Text>
+              </TouchableOpacity>
+            )}
 
             {/* Section amelioration */}
             <View style={[styles.section, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}>
@@ -328,6 +348,18 @@ const styles = StyleSheet.create({
   upgradeBtnText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
+  },
+  repairBtn: {
+    borderRadius: Radius.md,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing['2xl'],
+    alignItems: 'center',
+    backgroundColor: '#FF9800',
+  },
+  repairBtnText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    color: '#FFFFFF',
   },
   progressBarBg: {
     height: 6,
