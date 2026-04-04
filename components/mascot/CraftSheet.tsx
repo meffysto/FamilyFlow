@@ -16,6 +16,7 @@ import {
   Modal,
   Platform,
 } from 'react-native';
+import { format, parseISO } from 'date-fns';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import Animated, {
@@ -33,6 +34,8 @@ import {
   CRAFT_RECIPES,
   canCraft,
 } from '../../lib/mascot/craft-engine';
+import { parseGiftHistory } from '../../lib/mascot/gift-engine';
+import type { GiftHistoryEntry } from '../../lib/mascot/gift-engine';
 import {
   CROP_CATALOG,
   BUILDING_CATALOG,
@@ -65,6 +68,8 @@ interface CraftSheetProps {
   onCraft: (recipeId: string) => Promise<CraftedItem | null>;
   onSellHarvest: (cropId: string) => Promise<number>;
   onSellCrafted: (recipeId: string) => Promise<number>;
+  onOfferItem?: (itemType: string, itemId: string, maxQty: number, itemName: string) => void;
+  giftHistory?: string;
 }
 
 // ── Noms de ressources batiment ──────────────────────
@@ -101,6 +106,8 @@ export function CraftSheet({
   onCraft,
   onSellHarvest,
   onSellCrafted,
+  onOfferItem,
+  giftHistory,
 }: CraftSheetProps) {
   const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
@@ -519,6 +526,11 @@ export function CraftSheet({
       }));
   }, [farmInventory]);
 
+  // Historique cadeaux
+  const giftHistoryEntries = useMemo((): GiftHistoryEntry[] => {
+    return parseGiftHistory(giftHistory);
+  }, [giftHistory]);
+
   const renderInventaire = () => (
     <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
       {harvestEntries.length === 0 && resourceEntries.length === 0 && (
@@ -532,68 +544,115 @@ export function CraftSheet({
           {t('craft.recoltes', '🌱 Récoltes')}
         </Text>
       )}
-      {harvestEntries.map(({ cropId, qty, cropDef }, idx) => (
-        <Animated.View key={cropId} entering={FadeInDown.delay(idx * 60).duration(300)}>
-          <View
-            style={[
-              styles.inventoryRow,
-              { backgroundColor: colors.card, borderColor: colors.borderLight },
-              Shadows.sm,
-            ]}
-          >
-            <Text style={styles.inventoryEmoji}>{cropDef?.emoji ?? '?'}</Text>
-            <View style={styles.inventoryInfo}>
-              <Text style={[styles.inventoryName, { color: colors.text }]}>
-                {cropDef ? t(cropDef.labelKey) : cropId}
-              </Text>
-              <Text style={[styles.inventoryQty, { color: colors.textSub }]}>
-                x{qty} — {cropDef?.harvestReward ?? 0} 🍃/{t('craft.vendre').toLowerCase()}
-              </Text>
-            </View>
+      {harvestEntries.map(({ cropId, qty, cropDef }, idx) => {
+        const cropName = cropDef ? t(cropDef.labelKey) : cropId;
+        return (
+          <Animated.View key={cropId} entering={FadeInDown.delay(idx * 60).duration(300)}>
             <TouchableOpacity
               style={[
-                styles.sellBtn,
-                { backgroundColor: tint, borderColor: primary },
-                selling === cropId && { opacity: 0.5 },
+                styles.inventoryRow,
+                { backgroundColor: colors.card, borderColor: colors.borderLight },
+                Shadows.sm,
               ]}
-              onPress={() => handleSellHarvest(cropId)}
-              disabled={selling === cropId}
-              activeOpacity={0.7}
+              onLongPress={() => onOfferItem?.('harvest', cropId, qty, cropName)}
+              delayLongPress={400}
+              activeOpacity={1}
             >
-              <Text style={[styles.sellBtnText, { color: primary }]}>
-                {t('craft.vendre')}
-              </Text>
+              <Text style={styles.inventoryEmoji}>{cropDef?.emoji ?? '?'}</Text>
+              <View style={styles.inventoryInfo}>
+                <Text style={[styles.inventoryName, { color: colors.text }]}>
+                  {cropName}
+                </Text>
+                <Text style={[styles.inventoryQty, { color: colors.textSub }]}>
+                  x{qty} — {cropDef?.harvestReward ?? 0} 🍃/{t('craft.vendre').toLowerCase()}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={[
+                  styles.sellBtn,
+                  { backgroundColor: tint, borderColor: primary },
+                  selling === cropId && { opacity: 0.5 },
+                ]}
+                onPress={() => handleSellHarvest(cropId)}
+                disabled={selling === cropId}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.sellBtnText, { color: primary }]}>
+                  {t('craft.vendre')}
+                </Text>
+              </TouchableOpacity>
             </TouchableOpacity>
-          </View>
-        </Animated.View>
-      ))}
+          </Animated.View>
+        );
+      })}
       {/* Ressources bâtiments */}
       {resourceEntries.length > 0 && (
         <Text style={[styles.sectionLabel, { color: colors.textMuted, marginTop: harvestEntries.length > 0 ? Spacing.lg : 0 }]}>
           {t('craft.ressources', '🏠 Ressources')}
         </Text>
       )}
-      {resourceEntries.map(({ resourceId, qty, emoji, labelKey }, idx) => (
-        <Animated.View key={resourceId} entering={FadeInDown.delay((harvestEntries.length + idx) * 60).duration(300)}>
-          <View
-            style={[
-              styles.inventoryRow,
-              { backgroundColor: colors.card, borderColor: colors.borderLight },
-              Shadows.sm,
-            ]}
-          >
-            <Text style={styles.inventoryEmoji}>{emoji}</Text>
-            <View style={styles.inventoryInfo}>
-              <Text style={[styles.inventoryName, { color: colors.text }]}>
-                {t(labelKey)}
-              </Text>
-              <Text style={[styles.inventoryQty, { color: colors.textSub }]}>
-                x{qty}
-              </Text>
-            </View>
-          </View>
-        </Animated.View>
-      ))}
+      {resourceEntries.map(({ resourceId, qty, emoji, labelKey }, idx) => {
+        const resName = t(labelKey);
+        return (
+          <Animated.View key={resourceId} entering={FadeInDown.delay((harvestEntries.length + idx) * 60).duration(300)}>
+            <TouchableOpacity
+              style={[
+                styles.inventoryRow,
+                { backgroundColor: colors.card, borderColor: colors.borderLight },
+                Shadows.sm,
+              ]}
+              onLongPress={() => onOfferItem?.('building_resource', resourceId, qty, resName)}
+              delayLongPress={400}
+              activeOpacity={1}
+            >
+              <Text style={styles.inventoryEmoji}>{emoji}</Text>
+              <View style={styles.inventoryInfo}>
+                <Text style={[styles.inventoryName, { color: colors.text }]}>
+                  {resName}
+                </Text>
+                <Text style={[styles.inventoryQty, { color: colors.textSub }]}>
+                  x{qty}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
+        );
+      })}
+      {/* Historique cadeaux */}
+      {giftHistoryEntries.length > 0 && (
+        <>
+          <Text style={[styles.sectionLabel, { color: colors.textMuted, marginTop: Spacing.xl }]}>
+            {t('gamification:gift_history_title')}
+          </Text>
+          {giftHistoryEntries.map((entry, idx) => {
+            let dateStr = '';
+            try {
+              dateStr = format(parseISO(entry.date), 'dd/MM/yyyy');
+            } catch {
+              dateStr = entry.date.slice(0, 10);
+            }
+            const isReceived = entry.direction === 'received';
+            return (
+              <Animated.View key={idx} entering={FadeInDown.delay(idx * 40).duration(250)}>
+                <View style={[styles.giftHistoryRow, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}>
+                  <Text style={styles.giftHistoryIcon}>{isReceived ? '📥' : '📤'}</Text>
+                  <View style={styles.giftHistoryInfo}>
+                    <Text style={[styles.giftHistoryItem, { color: colors.text }]} numberOfLines={1}>
+                      {entry.itemId}{' x'}{entry.quantity}
+                    </Text>
+                    <Text style={[styles.giftHistoryMeta, { color: colors.textMuted }]} numberOfLines={1}>
+                      {isReceived
+                        ? t('gamification:gift_history_received', { name: entry.fromId })
+                        : t('gamification:gift_history_sent', { name: entry.toId })
+                      }{' · '}{dateStr}
+                    </Text>
+                  </View>
+                </View>
+              </Animated.View>
+            );
+          })}
+        </>
+      )}
       <View style={{ height: Spacing['3xl'] }} />
     </ScrollView>
   );
@@ -620,41 +679,47 @@ export function CraftSheet({
           {t('craft.aucunItem')}
         </Text>
       )}
-      {craftedGroups.map(({ recipe, count }, idx) => (
-        <Animated.View key={recipe.id} entering={FadeInDown.delay(idx * 60).duration(300)}>
-          <View
-            style={[
-              styles.inventoryRow,
-              { backgroundColor: colors.card, borderColor: colors.borderLight },
-              Shadows.sm,
-            ]}
-          >
-            <Text style={styles.inventoryEmoji}>{recipe.emoji}</Text>
-            <View style={styles.inventoryInfo}>
-              <Text style={[styles.inventoryName, { color: colors.text }]}>
-                {t(recipe.labelKey)}
-              </Text>
-              <Text style={[styles.inventoryQty, { color: colors.textSub }]}>
-                x{count} — {recipe.sellValue} 🍃 + {recipe.xpBonus} XP
-              </Text>
-            </View>
+      {craftedGroups.map(({ recipe, count }, idx) => {
+        const recipeName = t(recipe.labelKey);
+        return (
+          <Animated.View key={recipe.id} entering={FadeInDown.delay(idx * 60).duration(300)}>
             <TouchableOpacity
               style={[
-                styles.sellBtn,
-                { backgroundColor: tint, borderColor: primary },
-                selling === recipe.id && { opacity: 0.5 },
+                styles.inventoryRow,
+                { backgroundColor: colors.card, borderColor: colors.borderLight },
+                Shadows.sm,
               ]}
-              onPress={() => handleSellCrafted(recipe.id)}
-              disabled={selling === recipe.id}
-              activeOpacity={0.7}
+              onLongPress={() => onOfferItem?.('crafted', recipe.id, count, recipeName)}
+              delayLongPress={400}
+              activeOpacity={1}
             >
-              <Text style={[styles.sellBtnText, { color: primary }]}>
-                {t('craft.vendre')}
-              </Text>
+              <Text style={styles.inventoryEmoji}>{recipe.emoji}</Text>
+              <View style={styles.inventoryInfo}>
+                <Text style={[styles.inventoryName, { color: colors.text }]}>
+                  {recipeName}
+                </Text>
+                <Text style={[styles.inventoryQty, { color: colors.textSub }]}>
+                  x{count} — {recipe.sellValue} 🍃 + {recipe.xpBonus} XP
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={[
+                  styles.sellBtn,
+                  { backgroundColor: tint, borderColor: primary },
+                  selling === recipe.id && { opacity: 0.5 },
+                ]}
+                onPress={() => handleSellCrafted(recipe.id)}
+                disabled={selling === recipe.id}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.sellBtnText, { color: primary }]}>
+                  {t('craft.vendre')}
+                </Text>
+              </TouchableOpacity>
             </TouchableOpacity>
-          </View>
-        </Animated.View>
-      ))}
+          </Animated.View>
+        );
+      })}
       <View style={{ height: Spacing['3xl'] }} />
     </ScrollView>
   );
@@ -1078,5 +1143,28 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: Spacing.sm,
+  },
+  giftHistoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.sm,
+    borderRadius: Radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginBottom: Spacing.xs,
+    gap: Spacing.sm,
+  },
+  giftHistoryIcon: {
+    fontSize: 18,
+  },
+  giftHistoryInfo: {
+    flex: 1,
+  },
+  giftHistoryItem: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+  },
+  giftHistoryMeta: {
+    fontSize: FontSize.caption,
+    marginTop: 2,
   },
 });

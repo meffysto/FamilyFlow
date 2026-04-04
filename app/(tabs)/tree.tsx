@@ -48,6 +48,8 @@ import { WorldGridView } from '../../components/mascot/WorldGridView';
 import { TileMapRenderer, GRASS_TILE_IMAGE } from '../../components/mascot/TileMapRenderer';
 import { BuildingShopSheet } from '../../components/mascot/BuildingShopSheet';
 import { CraftSheet } from '../../components/mascot/CraftSheet';
+import { GiftSenderSheet } from '../../components/mascot/GiftSenderSheet';
+import { GiftReceiptModal } from '../../components/mascot/GiftReceiptModal';
 import { TechTreeSheet } from '../../components/mascot/TechTreeSheet';
 import { BuildingDetailSheet } from '../../components/mascot/BuildingDetailSheet';
 import { WeeklyGoal, countWeeklyTasks } from '../../components/mascot/WeeklyGoal';
@@ -73,6 +75,7 @@ import {
 } from '../../lib/mascot/companion-engine';
 import * as SecureStore from 'expo-secure-store';
 import { type PlantedCrop, type PlacedBuilding, CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
+import type { GiftEntry } from '../../lib/mascot/gift-engine';
 import { hasCropSeasonalBonus, parseCrops, getAvailableCrops, RARE_SEED_DROP_RULES } from '../../lib/mascot/farm-engine';
 import { getUnlockedCropCells, getExpandedCropCells, BUILDING_CELLS, EXPANSION_BUILDING_CELL } from '../../lib/mascot/world-grid';
 import { getTechBonuses, type TechBonuses } from '../../lib/mascot/tech-engine';
@@ -298,7 +301,7 @@ export default function TreeScreen() {
   const [showItemPicker, setShowItemPicker] = useState(false);
 
   // Ferme
-  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects, getWearEvents } = useFarm();
+  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects, getWearEvents, sendGift, receiveGifts } = useFarm();
   const [showSeedPicker, setShowSeedPicker] = useState(false);
   const [selectedPlotIndex, setSelectedPlotIndex] = useState<number | null>(null);
   const [harvestBurst, setHarvestBurst] = useState<{ x: number; y: number; reward: number; cropId: string } | null>(null);
@@ -314,6 +317,11 @@ export default function TreeScreen() {
 
   // Craft
   const [showCraftSheet, setShowCraftSheet] = useState(false);
+
+  // Cadeaux — envoi
+  const [giftOffer, setGiftOffer] = useState<{ itemType: string; itemId: string; maxQty: number; itemName: string } | null>(null);
+  // Cadeaux — reception
+  const [pendingGiftsToShow, setPendingGiftsToShow] = useState<GiftEntry[]>([]);
 
   // Tech tree
   const [showTechTree, setShowTechTree] = useState(false);
@@ -349,6 +357,15 @@ export default function TreeScreen() {
   const [showEventDialogue, setShowEventDialogue] = useState(false);
   const [eventVisitorShouldDepart, setEventVisitorShouldDepart] = useState(false);
   const [eventVisitorReaction, setEventVisitorReaction] = useState<ReactionType | undefined>(undefined);
+
+  // Detection cadeaux en attente au changement de profil
+  useEffect(() => {
+    if (!profile?.id) return;
+    receiveGifts(profile.id).then(received => {
+      if (received.length > 0) setPendingGiftsToShow(received);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.id]);
 
   useEffect(() => {
     if (!profile?.id) return;
@@ -1969,6 +1986,39 @@ export default function TreeScreen() {
         }}
         onSellHarvest={(cropId) => sellHarvest(profile!.id, cropId)}
         onSellCrafted={(recipeId) => sellCrafted(profile!.id, recipeId)}
+        onOfferItem={(itemType, itemId, maxQty, itemName) => setGiftOffer({ itemType, itemId, maxQty, itemName })}
+        giftHistory={profile?.giftHistory}
+      />
+
+      {/* Offrir un cadeau — GiftSenderSheet */}
+      <GiftSenderSheet
+        visible={!!giftOffer}
+        onClose={() => setGiftOffer(null)}
+        itemType={(giftOffer?.itemType ?? 'harvest') as 'harvest' | 'rare_seed' | 'crafted' | 'building_resource'}
+        itemId={giftOffer?.itemId ?? ''}
+        itemName={giftOffer?.itemName ?? ''}
+        maxQuantity={giftOffer?.maxQty ?? 1}
+        profiles={profiles.filter((p: Profile) => p.id !== activeProfile?.id)}
+        onSend={async (recipientId, qty) => {
+          const recipient = profiles.find((p: Profile) => p.id === recipientId);
+          const result = await sendGift(
+            activeProfile!.id,
+            recipientId,
+            recipient?.name ?? '',
+            (giftOffer?.itemType ?? 'harvest') as 'harvest' | 'rare_seed' | 'crafted' | 'building_resource',
+            giftOffer?.itemId ?? '',
+            qty,
+          );
+          if (result.success) setGiftOffer(null);
+          return result;
+        }}
+      />
+
+      {/* Reception cadeau — GiftReceiptModal */}
+      <GiftReceiptModal
+        visible={pendingGiftsToShow.length > 0}
+        gifts={pendingGiftsToShow}
+        onDone={() => setPendingGiftsToShow([])}
       />
 
       {/* Tech tree progression */}

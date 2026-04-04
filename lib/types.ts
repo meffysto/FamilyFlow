@@ -89,6 +89,8 @@ export interface Profile {
   farmRareSeeds?: import('../lib/mascot/types').RareSeedInventory;  // Graines rares en stock
   wearEvents?: import('./mascot/wear-engine').WearEvent[];          // Evenements d'usure ferme
   companion?: import('./mascot/companion-types').CompanionData | null; // Compagnon actif du profil
+  giftHistory?: string;       // CSV historique cadeaux (pipe-separe, 10 derniers)
+  giftsSentToday?: string;    // Anti-abus format "count|YYYY-MM-DD"
   points: number;
   coins: number;            // 🍃 Feuilles — monnaie dépensable (boutique)
   level: number;
