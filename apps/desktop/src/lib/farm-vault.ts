@@ -11,7 +11,11 @@ import {
   serializeBuildings, parseBuildings, serializeInventory, parseInventory,
   getEffectiveHarvestReward, sellRawHarvest,
   BUILDING_CATALOG,
+  parseWearEvents, serializeWearEvents, checkWearEvents,
+  repairWearEvent, getActiveWearEffects, cleanupOldEvents,
+  REPAIR_COSTS,
   type PlantedCrop, type PlacedBuilding, type FarmInventory,
+  type WearEvent, type WearEffects,
 } from '@family-vault/core';
 
 type ReadFn = (path: string) => Promise<string>;
@@ -195,11 +199,14 @@ export async function plantCropInVault(
   profileId: string, profileName: string,
   plotIndex: number, cropId: string, cost: number,
 ): Promise<void> {
-  // 1. Update famille.md — farm_crops
+  // 1. Update famille.md — farm_crops (with wear effects check)
   const famille = await readFile('famille.md');
   const cropsCSV = readProfileField(famille, profileId, 'farm_crops');
   const crops = cropsCSV ? parseCrops(cropsCSV) : [];
-  const newCrops = plantCrop(crops, plotIndex, cropId);
+  const wearCSV = readProfileField(famille, profileId, 'wear_events');
+  const wearEvents = parseWearEvents(wearCSV);
+  const wearEffects = getActiveWearEffects(wearEvents);
+  const newCrops = plantCrop(crops, plotIndex, cropId, wearEffects);
   const updated = patchProfileField(famille, profileId, 'farm_crops', serializeCrops(newCrops));
   await writeFile('famille.md', updated);
 
@@ -367,4 +374,67 @@ export async function upgradeBuildingInVault(
       await writeFile(gamiPath, newGami);
     } catch { /* */ }
   }
+}
+
+// ─── Wear system operations ───────────────────────────────────────────────
+
+export async function checkWearInVault(
+  readFile: ReadFn, writeFile: WriteFn,
+  profileId: string,
+  crops: PlantedCrop[],
+  buildings: PlacedBuilding[],
+  totalPlots: number,
+): Promise<WearEffects> {
+  const famille = await readFile('famille.md');
+  const wearCSV = readProfileField(famille, profileId, 'wear_events');
+  let events = parseWearEvents(wearCSV);
+
+  // Nettoyage des anciens evenements repares
+  events = cleanupOldEvents(events);
+
+  // Verifier si nouveaux evenements d'usure (fullBuildingSince simplifie)
+  const newEvents = checkWearEvents(events, crops, buildings, totalPlots, {});
+  if (newEvents.length > 0) {
+    events = [...events, ...newEvents];
+    const updated = patchProfileField(famille, profileId, 'wear_events', serializeWearEvents(events));
+    await writeFile('famille.md', updated);
+  }
+
+  return getActiveWearEffects(events);
+}
+
+export async function repairWearInVault(
+  readFile: ReadFn, writeFile: WriteFn,
+  profileId: string, profileName: string,
+  eventId: string,
+): Promise<number> {
+  const famille = await readFile('famille.md');
+  const wearCSV = readProfileField(famille, profileId, 'wear_events');
+  const events = parseWearEvents(wearCSV);
+
+  // Lire les coins
+  const gamiPath = `gami-${profileId}.md`;
+  let gami: string;
+  try {
+    gami = await readFile(gamiPath);
+  } catch {
+    throw new Error('Fichier gamification introuvable');
+  }
+  const coins = readCoins(gami, profileName);
+
+  const result = repairWearEvent(events, eventId, coins);
+  if (!result) throw new Error('Réparation impossible (pas assez de pièces ou événement introuvable)');
+
+  // Ecrire les events mis a jour
+  const updatedFamille = patchProfileField(famille, profileId, 'wear_events', serializeWearEvents(result.events));
+  await writeFile('famille.md', updatedFamille);
+
+  // Deduire le cout
+  if (result.cost > 0) {
+    let newGami = updateCoins(gami, profileName, -result.cost);
+    newGami = addGamiHistory(newGami, profileId, 'wear_repair', `🔧 Réparation (-${result.cost} pièces)`);
+    await writeFile(gamiPath, newGami);
+  }
+
+  return result.cost;
 }

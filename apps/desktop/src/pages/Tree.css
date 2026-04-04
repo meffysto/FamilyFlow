@@ -1096,6 +1096,67 @@
   white-space: nowrap;
 }
 
+/* ── Wear overlays ───────────────────────────────────────────────────────── */
+
+.wear-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  z-index: 6;
+  cursor: pointer;
+}
+
+.wear-overlay--fence {
+  background: rgba(255, 165, 0, 0.3);
+  border: 2px solid rgba(255, 140, 0, 0.6);
+}
+
+.wear-overlay--weeds {
+  background: rgba(76, 175, 80, 0.25);
+  border: 2px solid rgba(76, 175, 80, 0.5);
+}
+
+.wear-overlay--roof {
+  background: rgba(255, 87, 34, 0.3);
+  border: 2px solid rgba(255, 87, 34, 0.5);
+}
+
+.wear-overlay--pests {
+  background: rgba(139, 69, 19, 0.3);
+  border: 2px solid rgba(139, 69, 19, 0.5);
+}
+
+.wear-repair-btn {
+  background: rgba(255, 255, 255, 0.85);
+  color: #333;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  padding: 1px 6px;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  line-height: 1.4;
+  font-family: inherit;
+}
+
+.wear-repair-btn:hover {
+  background: rgba(255, 255, 255, 1);
+}
+
+/* ── Main plot FIFO indicator ────────────────────────────────────────────── */
+
+.main-plot-indicator {
+  border: 2px solid gold !important;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+  border-radius: 8px;
+}
+
 /* ── Responsive ───────────────────────────────────────────────────────────── */
 
 @media (max-width: 900px) {

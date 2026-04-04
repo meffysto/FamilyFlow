@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 Phase: 10
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-04 - Completed quick task 260404-qvz: Fix OOM crash TreeScreen
+Last activity: 2026-04-05 - Completed quick task 260405-0wx: Repliquer changements ferme mobile sur desktop
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -124,6 +124,7 @@ Recent decisions affecting current work:
 - [Phase 09-cadeaux-familiaux]: receiveGifts appelé dans useEffect [profile.id] dans tree.tsx — une seule detection par profil
 - [Phase 09-cadeaux-familiaux]: claim-first : deleteFile pending AVANT addGiftToInventory pour eviter double-consommation
 - [Phase quick-260404-qvz]: Timer global WorldGridView: sharedFrameIdx + whisperCellId au niveau parent eliminent ~40 setInterval locaux CropCell
+- [Phase quick-260405-0wx]: wear-engine.ts copie directement du mobile (fichier pur, pas de dependance React) — checkWearInVault simplifie fullBuildingSince a {}
 
 ### Pending Todos
 
@@ -162,9 +163,10 @@ None yet.
 | 260404-qvz | Fix OOM crash TreeScreen — timer global, lazy-load images saison, reduire particules | 2026-04-04 | cd8307e | [260404-qvz-fix-oom-crash-treescreen-timer-global-la](./quick/260404-qvz-fix-oom-crash-treescreen-timer-global-la/) |
 | 260404-rfs | Bouton Offrir visible sur items inventaire + Mes créations (remplace long-press) | 2026-04-04 | 19f051b | [260404-rfs-remplacer-long-press-cadeau-par-bouton-o](./quick/260404-rfs-remplacer-long-press-cadeau-par-bouton-o/) |
 | 260404-xbu | Permettre de changer la catégorie d'une recette depuis RecipeViewer | 2026-04-04 | 3b314e0 | [260404-xbu-permettre-de-changer-la-cat-gorie-d-une-](./quick/260404-xbu-permettre-de-changer-la-cat-gorie-d-une-/) |
+| 260405-0wx | Répliquer changements ferme mobile sur desktop (wear + FIFO) | 2026-04-05 | 85ee148 | [260405-0wx-r-pliquer-changements-ferme-mobile-sur-d](./quick/260405-0wx-r-pliquer-changements-ferme-mobile-sur-d/) |
 
 ## Session Continuity
 
 Last session: 2026-04-04T22:42:42.519Z
-Stopped at: Completed quick-260405-0u3 — extraction domaine Budget de useVault.ts vers useVaultBudget.ts
+Stopped at: Completed quick-260405-0wx — repliquer changements ferme mobile sur desktop
 Resume file: None

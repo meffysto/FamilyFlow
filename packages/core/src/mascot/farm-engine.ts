@@ -5,6 +5,7 @@
 import { type TreeStage, type PlantedCrop, type CropDefinition, CROP_CATALOG, PLOTS_BY_TREE_STAGE } from './types';
 import { getCurrentSeason, type Season } from './seasons';
 import { type TechBonuses } from './tech-engine';
+import { type WearEffects } from './wear-engine';
 
 const MAX_CROP_STAGE = 4;
 
@@ -40,7 +41,12 @@ export function plantCrop(
   crops: PlantedCrop[],
   plotIndex: number,
   cropId: string,
+  wearEffects?: WearEffects,
 ): PlantedCrop[] {
+  // Verifier que la parcelle n'est pas bloquee par une cloture cassee
+  if (wearEffects?.blockedPlots.includes(plotIndex)) {
+    throw new Error('Parcelle bloquée par une clôture cassée');
+  }
   // Verifier que la parcelle est vide
   if (crops.some(c => c.plotIndex === plotIndex)) return crops;
   // Verifier que la culture existe
@@ -61,7 +67,8 @@ export function plantCrop(
 
 /**
  * Avancer les cultures apres une tache completee.
- * Regle FIFO : la culture la plus ancienne non-mature recoit le point.
+ * Systeme hybride FIFO : le plot principal (le plus ancien non-mature) avance a vitesse pleine,
+ * les autres plots non-matures avancent a demi-vitesse (seasonBonus * 0.5).
  * Retourne le nouveau state + les cultures devenues matures.
  * Si techBonuses est fourni, applique la reduction de tasksPerStage.
  */
@@ -76,31 +83,56 @@ export function advanceFarmCrops(
     (a, b) => a.plantedAt.localeCompare(b.plantedAt) || a.plotIndex - b.plotIndex,
   );
 
-  // Trouver la premiere culture non-mature
+  // Trouver l'index du plot principal (premier non-mature)
   const targetIdx = sorted.findIndex(c => c.currentStage < MAX_CROP_STAGE);
   if (targetIdx < 0) return { crops, matured: [] }; // toutes matures
 
-  const target = { ...sorted[targetIdx] };
-  const cropDef = CROP_CATALOG.find(c => c.id === target.cropId);
-  if (!cropDef) return { crops, matured: [] };
-
-  // Bonus saisonnier : +2 au lieu de +1 si la culture est en saison
-  const seasonBonus = hasCropSeasonalBonus(target.cropId) ? 2 : 1;
-  target.tasksCompleted += seasonBonus;
   const matured: PlantedCrop[] = [];
 
-  // Avancer d'un stade si assez de taches (bonus tech reduit le seuil)
-  const effectiveTasksPerStage = Math.max(1, cropDef.tasksPerStage - (techBonuses?.tasksPerStageReduction ?? 0));
-  if (target.tasksCompleted >= effectiveTasksPerStage) {
-    target.currentStage += 1;
-    target.tasksCompleted = 0;
-    if (target.currentStage >= MAX_CROP_STAGE) {
-      matured.push(target);
+  // Avancer TOUS les crops non-matures
+  for (let i = 0; i < sorted.length; i++) {
+    const crop = sorted[i];
+    if (crop.currentStage >= MAX_CROP_STAGE) continue; // deja mature
+
+    const cropDef = CROP_CATALOG.find(c => c.id === crop.cropId);
+    if (!cropDef) continue;
+
+    const updated = { ...crop };
+
+    // Bonus saisonnier base sur la culture courante
+    const seasonBonus = hasCropSeasonalBonus(updated.cropId) ? 2 : 1;
+
+    // Plot principal : vitesse pleine ; autres plots : demi-vitesse
+    const increment = i === targetIdx ? seasonBonus : seasonBonus * 0.5;
+    updated.tasksCompleted += increment;
+
+    // Avancer d'un stade si assez de taches (bonus tech reduit le seuil)
+    const effectiveTasksPerStage = Math.max(1, cropDef.tasksPerStage - (techBonuses?.tasksPerStageReduction ?? 0));
+    if (updated.tasksCompleted >= effectiveTasksPerStage) {
+      updated.currentStage += 1;
+      updated.tasksCompleted = 0;
+      if (updated.currentStage >= MAX_CROP_STAGE) {
+        matured.push(updated);
+      }
     }
+
+    sorted[i] = updated;
   }
 
-  sorted[targetIdx] = target;
   return { crops: sorted, matured };
+}
+
+/**
+ * Retourne le plotIndex du crop le plus ancien non-mature (plot principal FIFO),
+ * ou null si tous les crops sont matures ou si la liste est vide.
+ */
+export function getMainPlotIndex(crops: PlantedCrop[]): number | null {
+  if (crops.length === 0) return null;
+  const sorted = [...crops].sort(
+    (a, b) => a.plantedAt.localeCompare(b.plantedAt) || a.plotIndex - b.plotIndex,
+  );
+  const target = sorted.find(c => c.currentStage < 4);
+  return target ? target.plotIndex : null;
 }
 
 /**
@@ -140,7 +172,7 @@ export function parseCrops(csv: string): PlantedCrop[] {
       plotIndex: parseInt(plotIndex, 10),
       cropId,
       currentStage: parseInt(currentStage, 10),
-      tasksCompleted: parseInt(tasksCompleted, 10),
+      tasksCompleted: parseFloat(tasksCompleted),
       plantedAt: plantedAt || new Date().toISOString().slice(0, 10),
       isGolden: goldenFlag === '1',
     };
