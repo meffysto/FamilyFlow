@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
-status: executing
-stopped_at: Completed 09-01-PLAN.md — gift engine moteur pur
-last_updated: "2026-04-04T16:52:35.704Z"
+status: verifying
+stopped_at: Completed 09-02-PLAN.md — cadeaux familiaux UI complète
+last_updated: "2026-04-04T17:03:30.618Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 10
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 24
-  completed_plans: 21
+  completed_plans: 22
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 
 Phase: 09 (cadeaux-familiaux) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-04
 
 Progress: [░░░░░░░░░░] 0%
@@ -63,6 +63,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 13-evenements-saisonniers P01 | 4min | 2 tasks | 6 files |
 | Phase 13-evenements-saisonniers P02 | 8min | 2 tasks | 3 files |
 | Phase 09-cadeaux-familiaux P01 | 4min | 2 tasks | 7 files |
+| Phase 09-cadeaux-familiaux P02 | 10min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -118,6 +119,8 @@ Recent decisions affecting current work:
 - [Phase 09-cadeaux-familiaux]: parsePendingGifts utilise gray-matter defensive (?? []) — coherent avec parseCompanion
 - [Phase 09-cadeaux-familiaux]: addGiftToInventory type=crafted ajoute toujours un nouvel item — simplifie le transfert sans ambiguité
 - [Phase 09-cadeaux-familiaux]: NotifEvent etendu avec 'gift_received' pour eviter le cast 'as NotifEvent'
+- [Phase 09-cadeaux-familiaux]: receiveGifts appelé dans useEffect [profile.id] dans tree.tsx — une seule detection par profil
+- [Phase 09-cadeaux-familiaux]: claim-first : deleteFile pending AVANT addGiftToInventory pour eviter double-consommation
 
 ### Pending Todos
 
@@ -155,6 +158,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T16:52:35.700Z
-Stopped at: Completed 09-01-PLAN.md — gift engine moteur pur
+Last session: 2026-04-04T17:03:30.614Z
+Stopped at: Completed 09-02-PLAN.md — cadeaux familiaux UI complète
 Resume file: None

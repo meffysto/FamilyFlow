@@ -161,11 +161,11 @@ Plans:
   2. Le destinataire reçoit une notification locale indiquant qui lui a envoyé quoi
   3. L'item envoyé apparaît dans l'inventaire du destinataire sans action supplémentaire de l'expéditeur
   4. L'item est retiré de l'inventaire de l'expéditeur au moment de l'envoi — pas de duplication possible
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 09-01-PLAN.md — Gift engine + types + parser farm-{id}.md + notification template + i18n FR/EN
-- [ ] 09-02-PLAN.md — sendGift/receiveGifts useFarm + GiftSenderSheet + GiftReceiptModal + CraftSheet long-press + tree.tsx cablage
+- [x] 09-02-PLAN.md — sendGift/receiveGifts useFarm + GiftSenderSheet + GiftReceiptModal + CraftSheet long-press + tree.tsx cablage
 
 #### Phase 10: Compagnon Mascotte
 **Goal**: Un compagnon interactif (animal mignon) vit dans la scene de l'arbre, lie au systeme de gamification (lootboxes, XP), evolue visuellement avec le niveau, a un nom et une humeur, affiche des messages contextuels, et sert d'avatar de profil
@@ -220,7 +220,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 7. Craft | v1.1 | 2/2 | Complete   | 2026-03-29 |
 | 8. Progression Ferme | v1.1 | 0/2 | Planned | - |
 | 8.1 Split Gamification | v1.1 | 2/2 | Complete   | 2026-03-30 |
-| 9. Cadeaux Familiaux | v1.1 | 0/2 | Planned | - |
+| 9. Cadeaux Familiaux | v1.1 | 2/2 | Complete   | 2026-04-04 |
 | 10. Compagnon Mascotte | v1.1 | 3/4 | In Progress|  |
 | 11. Sagas Immersives | v1.1 | 3/3 | Complete    | 2026-04-03 |
 | 12. Templates Onboarding | v1.1 | 0/2 | Not started | - |
