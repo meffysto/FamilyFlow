@@ -351,9 +351,10 @@ const BuildingIdleAnim = React.memo(function BuildingIdleAnim({ buildingId, pend
     <>
       {/* Animation idle par type */}
       {buildingId === 'poulailler' && (
-        <Animated.Text style={[styles.idleEmoji, styles.idlePoulaillerPos, chickenStyle]}>
-          🐔
-        </Animated.Text>
+        <Animated.Image
+          source={require('../../assets/garden/buildings/poulailler/idle_south.png')}
+          style={[styles.idleChickenSprite, styles.idlePoulaillerPos, chickenStyle]}
+        />
       )}
       {buildingId === 'grange' && (
         <Animated.Text style={[styles.idleEmoji, styles.idleGrangePos, cowStyle]}>
@@ -957,6 +958,11 @@ const styles = StyleSheet.create({
   idlePoulaillerPos: {
     bottom: 2,
     left: 2,
+  },
+  idleChickenSprite: {
+    position: 'absolute',
+    width: 16,
+    height: 16,
   },
   idleGrangePos: {
     bottom: 2,
