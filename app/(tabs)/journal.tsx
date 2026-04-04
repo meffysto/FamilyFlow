@@ -22,7 +22,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, isToday as isTodayFn } from 'date-fns';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, isToday as isTodayFn, isFuture } from 'date-fns';
 import { getDateLocale } from '../../lib/date-locale';
 import { useVault } from '../../contexts/VaultContext';
 import { todayJournalPath, journalPathForDate, generateJournalTemplate, todayAdultJournalPath, adultJournalPathForDate, generateAdultJournalTemplate } from '../../lib/parser';
@@ -241,6 +241,7 @@ function MiniCalendar({
           const hasJournal = availableDates.has(dateStr);
           const isSelected = isSameDay(day, selectedDate);
           const isToday = isTodayFn(day);
+          const isFutureDay = isFuture(day) && !isToday;
           return (
             <TouchableOpacity
               key={dateStr}
@@ -249,17 +250,17 @@ function MiniCalendar({
                 isSelected && { backgroundColor: primary },
                 !isSelected && isToday && { backgroundColor: tint },
               ]}
-              onPress={() => hasJournal && onSelectDate(day)}
-              disabled={!hasJournal}
+              onPress={() => !isFutureDay && onSelectDate(day)}
+              disabled={isFutureDay}
               activeOpacity={0.6}
               accessibilityLabel={`${day.getDate()} ${format(day, 'MMMM', { locale: getDateLocale() })}${hasJournal ? t('journal.a11y.journalAvailable') : ''}${isToday ? t('journal.a11y.today') : ''}${isSelected ? t('journal.a11y.selected') : ''}`}
               accessibilityRole="button"
-              accessibilityState={{ selected: isSelected, disabled: !hasJournal }}
+              accessibilityState={{ selected: isSelected, disabled: isFutureDay }}
             >
               <Text
                 style={[
                   calStyles.dayText,
-                  { color: hasJournal ? colors.text : colors.textFaint },
+                  { color: isFutureDay ? colors.textFaint : hasJournal ? colors.text : colors.textMuted },
                   isSelected && { color: colors.onPrimary, fontWeight: FontWeight.heavy },
                   !isSelected && isToday && { color: primary, fontWeight: FontWeight.heavy },
                 ]}
