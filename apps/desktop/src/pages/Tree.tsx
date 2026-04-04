@@ -34,11 +34,19 @@ import {
   TIER_EMOJI,
   type BuildingDefinition,
   type CropDefinition,
+  getMainPlotIndex,
+  getActiveWearEffects,
+  parseWearEvents,
+  REPAIR_COSTS,
+  type WearEffects,
+  type WearEvent,
+  type WearEventType,
 } from '@family-vault/core';
 import type { Profile } from '@family-vault/core';
 import {
   plantCropInVault, harvestCropInVault, sellHarvestInVault,
   collectBuildingInVault, buyBuildingInVault, upgradeBuildingInVault,
+  checkWearInVault, repairWearInVault,
 } from '../lib/farm-vault';
 import './Tree.css';
 
@@ -529,9 +537,13 @@ interface FarmCropsProps {
   crops: PlantedCrop[];
   plotCount: number;
   onCropClick: (plotIndex: number, crop: PlantedCrop | undefined) => void;
+  wearEffects: WearEffects;
+  mainPlotIdx: number | null;
+  wearEvents: WearEvent[];
+  onRepairWear?: (eventId: string) => void;
 }
 
-const FarmCrops = memo(function FarmCrops({ crops, plotCount, onCropClick }: FarmCropsProps) {
+const FarmCrops = memo(function FarmCrops({ crops, plotCount, onCropClick, wearEffects, mainPlotIdx, wearEvents, onRepairWear }: FarmCropsProps) {
   const [frameB, setFrameB] = useState(false);
 
   useEffect(() => {
@@ -549,11 +561,14 @@ const FarmCrops = memo(function FarmCrops({ crops, plotCount, onCropClick }: Far
     <>
       {unlockedCells.map((cell, i) => {
         const crop = crops.find((c) => c.plotIndex === i);
+        const isBlocked = wearEffects.blockedPlots.includes(i);
+        const isWeedy = wearEffects.weedyPlots.includes(i);
+        const isMainPlot = i === mainPlotIdx && crop && crop.currentStage < 4;
 
         return (
           <button
             key={cell.id}
-            className="tree-crop-slot tree-crop-slot--clickable"
+            className={`tree-crop-slot tree-crop-slot--clickable${isMainPlot ? ' main-plot-indicator' : ''}`}
             style={{
               position: 'absolute',
               left: `calc(${cell.x * 100}% - ${slotPx / 2}px)`,
@@ -564,11 +579,12 @@ const FarmCrops = memo(function FarmCrops({ crops, plotCount, onCropClick }: Far
               background: 'none',
               border: 'none',
               padding: 0,
-              cursor: 'pointer',
+              cursor: isBlocked ? 'not-allowed' : 'pointer',
             }}
-            aria-label={crop ? `${crop.cropId} — stade ${crop.currentStage}/4` : 'Parcelle vide'}
-            onClick={() => onCropClick(i, crop)}
+            aria-label={crop ? `${crop.cropId} — stade ${crop.currentStage}/4` : isBlocked ? 'Parcelle bloquée' : 'Parcelle vide'}
+            onClick={() => !isBlocked && onCropClick(i, crop)}
             type="button"
+            disabled={isBlocked && !crop}
           >
             {crop ? (
               <img
@@ -578,6 +594,30 @@ const FarmCrops = memo(function FarmCrops({ crops, plotCount, onCropClick }: Far
               />
             ) : (
               <div className="tree-crop-empty" />
+            )}
+            {isBlocked && (
+              <div className="wear-overlay wear-overlay--fence" onClick={(e) => {
+                e.stopPropagation();
+                const evt = wearEvents.find(ev => ev.type === 'broken_fence' && ev.targetId === String(i) && !ev.repairedAt);
+                if (evt) onRepairWear?.(evt.id);
+              }}>
+                <span style={{ fontSize: 14 }}>🚧</span>
+                <button className="wear-repair-btn" type="button">
+                  Reparer ({REPAIR_COSTS.broken_fence} 🍃)
+                </button>
+              </div>
+            )}
+            {isWeedy && !isBlocked && (
+              <div className="wear-overlay wear-overlay--weeds" onClick={(e) => {
+                e.stopPropagation();
+                const evt = wearEvents.find(ev => ev.type === 'weeds' && ev.targetId === String(i) && !ev.repairedAt);
+                if (evt) onRepairWear?.(evt.id);
+              }}>
+                <span style={{ fontSize: 12 }}>🌿</span>
+                <button className="wear-repair-btn" type="button">
+                  Desherber
+                </button>
+              </div>
             )}
           </button>
         );
@@ -593,9 +633,12 @@ const FarmCrops = memo(function FarmCrops({ crops, plotCount, onCropClick }: Far
 interface BuildingLayerProps {
   buildings: PlacedBuilding[];
   onBuildingClick: (building: PlacedBuilding, def: BuildingDefinition | undefined) => void;
+  wearEffects: WearEffects;
+  wearEvents: WearEvent[];
+  onRepairWear?: (eventId: string) => void;
 }
 
-const BuildingLayer = memo(function BuildingLayer({ buildings, onBuildingClick }: BuildingLayerProps) {
+const BuildingLayer = memo(function BuildingLayer({ buildings, onBuildingClick, wearEffects, wearEvents, onRepairWear }: BuildingLayerProps) {
   if (buildings.length === 0) return null;
 
   const buildingSize = 64;
@@ -608,6 +651,8 @@ const BuildingLayer = memo(function BuildingLayer({ buildings, onBuildingClick }
         if (!cell) return null;
         const def = BUILDING_CATALOG.find((d) => d.id === b.buildingId);
         const imgSrc = `/assets/buildings/${b.buildingId}_lv${b.level}.png`;
+        const isDamaged = wearEffects.damagedBuildings.includes(b.cellId);
+        const hasPests = wearEffects.pestBuildings.includes(b.cellId);
 
         return (
           <button
@@ -638,6 +683,30 @@ const BuildingLayer = memo(function BuildingLayer({ buildings, onBuildingClick }
               <span className="tree-building-label">
                 {def.emoji} niv.{b.level}
               </span>
+            )}
+            {isDamaged && (
+              <div className="wear-overlay wear-overlay--roof" onClick={(e) => {
+                e.stopPropagation();
+                const evt = wearEvents.find(ev => ev.type === 'damaged_roof' && ev.targetId === b.cellId && !ev.repairedAt);
+                if (evt) onRepairWear?.(evt.id);
+              }}>
+                <span style={{ fontSize: 14 }}>🔨</span>
+                <button className="wear-repair-btn" type="button">
+                  Reparer ({REPAIR_COSTS.damaged_roof} 🍃)
+                </button>
+              </div>
+            )}
+            {hasPests && !isDamaged && (
+              <div className="wear-overlay wear-overlay--pests" onClick={(e) => {
+                e.stopPropagation();
+                const evt = wearEvents.find(ev => ev.type === 'pests' && ev.targetId === b.cellId && !ev.repairedAt);
+                if (evt) onRepairWear?.(evt.id);
+              }}>
+                <span style={{ fontSize: 14 }}>🐛</span>
+                <button className="wear-repair-btn" type="button">
+                  Chasser
+                </button>
+              </div>
             )}
           </button>
         );
@@ -714,9 +783,13 @@ interface DiaoramaProps {
   plotCount: number;
   onCropClick: (plotIndex: number, crop: PlantedCrop | undefined) => void;
   onBuildingClick: (building: PlacedBuilding, def: BuildingDefinition | undefined) => void;
+  wearEffects: WearEffects;
+  wearEvents: WearEvent[];
+  mainPlotIdx: number | null;
+  onRepairWear?: (eventId: string) => void;
 }
 
-const Diorama = memo(function Diorama({ profile, season, crops, plotCount, onCropClick, onBuildingClick }: DiaoramaProps) {
+const Diorama = memo(function Diorama({ profile, season, crops, plotCount, onCropClick, onBuildingClick, wearEffects, wearEvents, mainPlotIdx, onRepairWear }: DiaoramaProps) {
   const species: TreeSpecies = profile.treeSpecies ?? 'cerisier';
   const level = profile.level ?? 1;
   const stage = getTreeStage(level);
@@ -804,10 +877,10 @@ const Diorama = memo(function Diorama({ profile, season, crops, plotCount, onCro
       <TreeSprite species={species} stage={stage} season={season} />
 
       {/* Layer 8: Farm crops */}
-      <FarmCrops crops={crops} plotCount={plotCount} onCropClick={onCropClick} />
+      <FarmCrops crops={crops} plotCount={plotCount} onCropClick={onCropClick} wearEffects={wearEffects} mainPlotIdx={mainPlotIdx} wearEvents={wearEvents} onRepairWear={onRepairWear} />
 
       {/* Layer 9: Buildings */}
-      <BuildingLayer buildings={buildings} onBuildingClick={onBuildingClick} />
+      <BuildingLayer buildings={buildings} onBuildingClick={onBuildingClick} wearEffects={wearEffects} wearEvents={wearEvents} onRepairWear={onRepairWear} />
 
       {/* Layer 10: Animals */}
       <AnimalLayer inhabitants={inhabitants} />
@@ -1745,6 +1818,76 @@ export default function Tree() {
   // Badges modal
   const [badgesOpen, setBadgesOpen] = useState(false);
 
+  // Wear system state
+  const [wearEffects, setWearEffects] = useState<WearEffects>({ blockedPlots: [], damagedBuildings: [], weedyPlots: [], pestBuildings: [] });
+  const [wearEvents, setWearEvents] = useState<WearEvent[]>([]);
+  const [mainPlotIdx, setMainPlotIdx] = useState<number | null>(null);
+  const wearCheckedRef = useRef(false);
+
+  // ── Wear effects computation ─────────────────────────────────────────────
+  useEffect(() => {
+    if (!activeProfile) return;
+
+    // Compute mainPlotIdx
+    setMainPlotIdx(getMainPlotIndex(crops));
+  }, [activeProfile, crops]);
+
+  // Read wear events from vault and check for new ones (once per session)
+  useEffect(() => {
+    if (!activeProfile || !readFile || !writeFile) return;
+
+    const loadWearState = async () => {
+      try {
+        const famille = await readFile('famille.md');
+        // Read wear_events field from profile section
+        const lines = famille.split('\n');
+        const header = `### ${activeProfile.id}`;
+        let inSection = false;
+        let wearCSV = '';
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed.toLowerCase() === header.toLowerCase()) { inSection = true; continue; }
+          if (inSection && trimmed.startsWith('### ')) break;
+          if (inSection && trimmed.startsWith('wear_events:')) {
+            wearCSV = trimmed.slice('wear_events:'.length).trim();
+            break;
+          }
+        }
+        const events = parseWearEvents(wearCSV);
+        setWearEvents(events);
+        setWearEffects(getActiveWearEffects(events));
+      } catch { /* non-critical */ }
+    };
+
+    loadWearState();
+
+    // Check for new wear events once per session
+    if (!wearCheckedRef.current) {
+      wearCheckedRef.current = true;
+      checkWearInVault(readFile, writeFile, activeProfile.id, crops, buildings, plotCount)
+        .then((effects) => {
+          setWearEffects(effects);
+          // Re-read events after check
+          readFile('famille.md').then(famille => {
+            const lines = famille.split('\n');
+            const header = `### ${activeProfile.id}`;
+            let inSection = false;
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (trimmed.toLowerCase() === header.toLowerCase()) { inSection = true; continue; }
+              if (inSection && trimmed.startsWith('### ')) break;
+              if (inSection && trimmed.startsWith('wear_events:')) {
+                const csv = trimmed.slice('wear_events:'.length).trim();
+                setWearEvents(parseWearEvents(csv));
+                break;
+              }
+            }
+          }).catch(() => { /* ignore */ });
+        })
+        .catch(() => { /* non-critical */ });
+    }
+  }, [activeProfile, crops, buildings, plotCount, readFile, writeFile]);
+
   // ── Seed picker state ────────────────────────────────────────────────────
 
   const [seedPickerPlot, setSeedPickerPlot] = useState<number | null>(null);
@@ -1840,6 +1983,20 @@ export default function Tree() {
     setSeedCatalogOpen(true);
   }, []);
 
+  const handleRepairWear = useCallback(async (eventId: string) => {
+    if (!activeProfile) return;
+    setBusy(true);
+    try {
+      const cost = await repairWearInVault(readFile, writeFile, activeProfile.id, activeProfile.name, eventId);
+      await refresh();
+      showToast(cost > 0 ? `🔧 Réparé ! (-${cost} pièces)` : '🔧 Nettoyé !');
+    } catch (e: any) {
+      showToast(`Erreur: ${e.message}`);
+    } finally {
+      setBusy(false);
+    }
+  }, [activeProfile, readFile, writeFile, refresh, showToast]);
+
   return (
     <div className="tree-page">
       {/* Left: diorama */}
@@ -1852,6 +2009,10 @@ export default function Tree() {
             plotCount={plotCount}
             onCropClick={handleCropClick}
             onBuildingClick={handleBuildingClick}
+            wearEffects={wearEffects}
+            wearEvents={wearEvents}
+            mainPlotIdx={mainPlotIdx}
+            onRepairWear={handleRepairWear}
           />
         ) : (
           <div
