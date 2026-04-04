@@ -130,7 +130,7 @@ export default function QuotesScreen() {
           <Text style={[styles.enfant, { color: primary }]} numberOfLines={1}>
             {item.enfant}
           </Text>
-          <Text style={[styles.date, { color: colors.textMuted }]} numberOfLines={2}>
+          <Text style={[styles.date, { color: colors.textMuted }]}>
             {formatDateLocalized(item.date)}
             {item.contexte ? ` · ${item.contexte}` : ''}
           </Text>
