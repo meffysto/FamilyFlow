@@ -20,6 +20,7 @@ import {
   Image,
   ImageSourcePropType,
   Alert,
+  AppState,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -358,14 +359,31 @@ export default function TreeScreen() {
   const [eventVisitorShouldDepart, setEventVisitorShouldDepart] = useState(false);
   const [eventVisitorReaction, setEventVisitorReaction] = useState<ReactionType | undefined>(undefined);
 
-  // Detection cadeaux en attente au changement de profil
-  useEffect(() => {
+  // Detection cadeaux en attente — au mount, retour foreground, et focus tab
+  const checkPendingGifts = useCallback(() => {
     if (!profile?.id) return;
     receiveGifts(profile.id).then(received => {
-      if (received.length > 0) setPendingGiftsToShow(received);
+      if (received.length > 0) {
+        const enriched = received.map(g => ({
+          ...g,
+          sender_avatar: profiles.find((p: Profile) => p.id === g.sender_id)?.avatar ?? '🎁',
+        }));
+        setPendingGiftsToShow(enriched);
+      }
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.id]);
+  }, [profile?.id, receiveGifts]);
+
+  useEffect(() => {
+    checkPendingGifts();
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') checkPendingGifts();
+    });
+    return () => sub.remove();
+  }, [checkPendingGifts]);
+
+  useFocusEffect(useCallback(() => {
+    checkPendingGifts();
+  }, [checkPendingGifts]));
 
   useEffect(() => {
     if (!profile?.id) return;
@@ -1986,7 +2004,10 @@ export default function TreeScreen() {
         }}
         onSellHarvest={(cropId) => sellHarvest(profile!.id, cropId)}
         onSellCrafted={(recipeId) => sellCrafted(profile!.id, recipeId)}
-        onOfferItem={(itemType, itemId, maxQty, itemName) => setGiftOffer({ itemType, itemId, maxQty, itemName })}
+        onOfferItem={(itemType, itemId, maxQty, itemName) => {
+          setShowCraftSheet(false);
+          setGiftOffer({ itemType, itemId, maxQty, itemName });
+        }}
         giftHistory={profile?.giftHistory}
       />
 

@@ -678,7 +678,7 @@ export function useFarm() {
     const gift: GiftEntry = {
       sender_id: senderId,
       sender_name: senderProfile?.name ?? senderId,
-      sender_avatar: senderProfile?.avatar ?? '🎁',
+      sender_avatar: '',
       item_type: itemType,
       item_id: itemId,
       quantity,
@@ -728,6 +728,7 @@ export function useFarm() {
     if (!pendingContent) return [];
 
     const pending = parsePendingGifts(pendingContent);
+    if (pending.gifts.length === 0) return [];
     if (pending.gifts.length === 0) return [];
 
     // 1. CLAIM FIRST — supprimer le fichier pending AVANT d'appliquer (evite double-consommation)

@@ -49,21 +49,64 @@ export function parsePendingGifts(content: string): PendingGifts {
   if (!content || content.trim() === '') {
     return { gifts: [] };
   }
+  // Try JSON first (new format)
   try {
-    const parsed = matter(content);
-    const gifts: GiftEntry[] = Array.isArray(parsed.data?.gifts) ? parsed.data.gifts : [];
+    const gifts: GiftEntry[] = JSON.parse(content);
+    return { gifts: Array.isArray(gifts) ? gifts : [] };
+  } catch {
+    // noop
+  }
+  // Fallback: parse YAML frontmatter manually (Hermes-safe, no gray-matter)
+  try {
+    const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
+    if (!fmMatch) return { gifts: [] };
+    const yaml = fmMatch[1];
+    const gifts: GiftEntry[] = [];
+    let current: Record<string, string> = {};
+    for (const line of yaml.split('\n')) {
+      if (line.match(/^\s+-\s+\w+:/)) {
+        // New item — flush previous
+        if (current.sender_id) gifts.push(yamlObjToGift(current));
+        current = {};
+        const [k, v] = splitYamlKV(line.replace(/^\s+-\s+/, ''));
+        if (k) current[k] = v;
+      } else if (line.match(/^\s+\w+:/) && Object.keys(current).length > 0) {
+        const [k, v] = splitYamlKV(line.trim());
+        if (k) current[k] = v;
+      }
+    }
+    if (current.sender_id) gifts.push(yamlObjToGift(current));
     return { gifts };
   } catch {
     return { gifts: [] };
   }
 }
 
+function splitYamlKV(line: string): [string, string] {
+  const idx = line.indexOf(':');
+  if (idx < 0) return ['', ''];
+  const k = line.slice(0, idx).trim();
+  const v = line.slice(idx + 1).trim().replace(/^['"]|['"]$/g, '');
+  return [k, v];
+}
+
+function yamlObjToGift(obj: Record<string, string>): GiftEntry {
+  return {
+    sender_id: obj.sender_id ?? '',
+    sender_name: obj.sender_name ?? '',
+    sender_avatar: obj.sender_avatar ?? '',
+    item_type: (obj.item_type ?? 'harvest') as GiftEntry['item_type'],
+    item_id: obj.item_id ?? '',
+    quantity: parseInt(obj.quantity ?? '1', 10) || 1,
+    sent_at: obj.sent_at ?? '',
+  };
+}
+
 /**
- * Serialise une liste de GiftEntry en string Markdown avec frontmatter YAML.
- * Produit un fichier parsable par parsePendingGifts.
+ * Serialise une liste de GiftEntry en JSON (Hermes-safe).
  */
 export function serializePendingGifts(gifts: GiftEntry[]): string {
-  return matter.stringify('', { gifts });
+  return JSON.stringify(gifts);
 }
 
 // ── Anti-abus journalier ──────────────────────────────────────────────────────
