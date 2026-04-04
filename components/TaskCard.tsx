@@ -29,6 +29,7 @@ import { Shadows } from '../constants/shadows';
 interface TaskCardProps {
   task: Task;
   onToggle: (task: Task, completed: boolean) => void;
+  onSkip?: (task: Task) => void;
   onLongPress?: () => void;
   showSource?: boolean;
   hideSection?: boolean;
@@ -68,6 +69,7 @@ function getSourceLabel(sourceFile: string, profiles: Profile[] | undefined, t: 
 export const TaskCard = React.memo(function TaskCard({
   task,
   onToggle,
+  onSkip,
   onLongPress,
   showSource = false,
   hideSection = false,
@@ -105,6 +107,13 @@ export const TaskCard = React.memo(function TaskCard({
     }
     onToggle(task, !task.completed);
   }, [task, onToggle, pointsOnComplete]);
+
+  const handleSkip = useCallback(() => {
+    Haptics.selectionAsync();
+    onSkip?.(task);
+  }, [task, onSkip]);
+
+  const showSkip = !!onSkip && !!task.dueDate && !task.completed;
 
   const isOverdue =
     !task.completed &&
@@ -166,6 +175,17 @@ export const TaskCard = React.memo(function TaskCard({
         </Animated.Text>
 
         <View style={styles.meta}>
+          {showSkip && (
+            <TouchableOpacity
+              onPress={handleSkip}
+              style={[styles.skipButton, { backgroundColor: colors.cardAlt }]}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              accessibilityLabel={t('taskCard.skip')}
+              accessibilityRole="button"
+            >
+              <Text style={[styles.skipButtonText, { color: colors.textMuted }]}>⏭️ {t('taskCard.skip')}</Text>
+            </TouchableOpacity>
+          )}
           {showSource && (
             <View style={[styles.badge, { backgroundColor: colors.cardAlt }]}>
               <Text style={[styles.sourceLabel, { color: colors.textMuted }]}>{getSourceLabel(task.sourceFile, profiles, t)}</Text>
@@ -312,5 +332,13 @@ const styles = StyleSheet.create({
   mentionText: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
+  },
+  skipButton: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xxs,
+    borderRadius: Radius.sm,
+  },
+  skipButtonText: {
+    fontSize: FontSize.caption,
   },
 });

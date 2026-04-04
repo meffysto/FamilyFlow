@@ -14,7 +14,7 @@ import { TaskCard } from '../TaskCard';
 import type { DashboardSectionWithTaskToggleProps } from './types';
 import { FontSize } from '../../constants/typography';
 
-function DashboardMenageInner({ vaultFileExists, activateCardTemplate, handleTaskToggle }: DashboardSectionWithTaskToggleProps) {
+function DashboardMenageInner({ vaultFileExists, activateCardTemplate, handleTaskToggle, handleTaskSkip }: DashboardSectionWithTaskToggleProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useThemeColors();
@@ -44,7 +44,7 @@ function DashboardMenageInner({ vaultFileExists, activateCardTemplate, handleTas
   return (
     <DashboardCard key="menage" title={t('dashboard.menage.title')} icon="🏠" count={pendingMaison.length} color={colors.catOrganisation} tinted onPressMore={() => router.push({ pathname: '/(tabs)/tasks', params: { filter: 'maison' } })}>
       {pendingMaison.slice(0, 4).map((task) => (
-        <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} hideSection compact />
+        <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} onSkip={handleTaskSkip} hideSection compact />
       ))}
     </DashboardCard>
   );

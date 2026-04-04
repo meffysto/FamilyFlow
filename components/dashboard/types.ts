@@ -15,4 +15,5 @@ export interface DashboardSectionProps {
 
 export interface DashboardSectionWithTaskToggleProps extends DashboardSectionProps {
   handleTaskToggle: (task: Task, completed: boolean) => void;
+  handleTaskSkip?: (task: Task) => void;
 }

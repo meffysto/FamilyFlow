@@ -187,6 +187,7 @@ export default function DashboardScreen() {
     getPhotoUri,
     memories,
     toggleTask,
+    skipTask,
     addRDV,
     updateRDV,
     deleteRDV,
@@ -431,6 +432,16 @@ export default function DashboardScreen() {
     },
     [toggleTask, activeProfile, completeTask, refresh, refreshGamification]
   );
+
+  const handleTaskSkip = useCallback(async (task: Task) => {
+    try {
+      await skipTask(task);
+      const msg = task.recurrence ? t('taskCard.skipped') : t('taskCard.skippedTomorrow');
+      showToast(`⏭️ ${msg}`);
+    } catch (e) {
+      showToast(t('index.toast.taskError', { error: String(e) }), 'error');
+    }
+  }, [skipTask, showToast, t]);
 
   const leaderboard = buildLeaderboard(profiles);
   const hasBaby = useMemo(() => profiles.some(isBabyProfile), [profiles]);
@@ -749,7 +760,8 @@ export default function DashboardScreen() {
   const sectionPropsWithToggle = useMemo(() => ({
     ...sectionProps,
     handleTaskToggle,
-  }), [sectionProps, handleTaskToggle]);
+    handleTaskSkip,
+  }), [sectionProps, handleTaskToggle, handleTaskSkip]);
 
   // Callbacks pour les modals
   const handleEditRDV = useCallback((rdv?: RDV) => {

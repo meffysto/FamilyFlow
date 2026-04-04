@@ -12,7 +12,7 @@ import { DashboardCard } from '../DashboardCard';
 import { TaskCard } from '../TaskCard';
 import type { DashboardSectionWithTaskToggleProps } from './types';
 
-function DashboardOverdueInner({ handleTaskToggle }: DashboardSectionWithTaskToggleProps) {
+function DashboardOverdueInner({ handleTaskToggle, handleTaskSkip }: DashboardSectionWithTaskToggleProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useThemeColors();
@@ -28,7 +28,7 @@ function DashboardOverdueInner({ handleTaskToggle }: DashboardSectionWithTaskTog
   return (
     <DashboardCard key="overdue" title={t('dashboard.overdue.title')} icon="⚠️" count={overdueTasks.length} color={colors.catSante} tinted onPressMore={() => router.push('/(tabs)/tasks')}>
       {overdueTasks.slice(0, 3).map((task) => (
-        <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} hideSection compact />
+        <TaskCard key={task.id} task={task} onToggle={handleTaskToggle} onSkip={handleTaskSkip} hideSection compact />
       ))}
     </DashboardCard>
   );
