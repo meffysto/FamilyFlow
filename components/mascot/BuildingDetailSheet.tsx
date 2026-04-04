@@ -155,9 +155,7 @@ export function BuildingDetailSheet({
             {/* Section collecte */}
             <View style={[styles.section, { backgroundColor: colors.cardAlt, borderColor: isFull ? '#F59E0B' : colors.borderLight }]}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                {pendingCount > 0
-                  ? t('farm.building.pendingOf', { count: pendingCount, max: effectiveMaxPending, resource: resourceLabel })
-                  : t('farm.building.noPending')}
+                {t('farm.building.pendingOf', { count: pendingCount, max: effectiveMaxPending, resource: resourceLabel })}
               </Text>
               {isFull && (
                 <Text style={{ color: '#F59E0B', fontSize: FontSize.sm, fontWeight: FontWeight.semibold }}>

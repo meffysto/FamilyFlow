@@ -4035,7 +4035,7 @@
       "upgrade": "Ameliorer au Niv {{level}}",
       "upgradeCost": "{{cost}} 🍃",
       "collect": "Collecter {{count}} {{resource}}",
-      "noPending": "Rien a collecter",
+      "noPending": "Rien à collecter",
       "pendingCount": "{{count}} disponible",
       "pendingOf": "{{count}} / {{max}} {{resource}} en attente",
       "storageFull": "Stockage plein !",
