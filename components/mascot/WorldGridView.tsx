@@ -47,6 +47,8 @@ interface WorldGridViewProps {
   wearEffects?: WearEffects;
   onCropPlotPress?: (cellId: string, crop: PlantedCrop | null) => void;
   onBuildingCellPress?: (cellId: string, building: PlacedBuilding | null) => void;
+  onRepairWeed?: (plotIndex: number) => void;
+  onRepairPest?: (cellId: string) => void;
 }
 
 const DIRT_SPRITE = require('../../assets/garden/ground/dirt_patch.png');
@@ -63,7 +65,7 @@ const CROP_WHISPERS = [
   '🌱',
 ];
 
-function CropCell({ cell, crop, cropDef, isMature, plotIndex, wearEffects, containerWidth, containerHeight, onPress }: {
+function CropCell({ cell, crop, cropDef, isMature, plotIndex, wearEffects, containerWidth, containerHeight, onPress, onRepairWeed }: {
   cell: WorldCell;
   crop: PlantedCrop | null;
   cropDef: typeof CROP_CATALOG[0] | null;
@@ -73,6 +75,7 @@ function CropCell({ cell, crop, cropDef, isMature, plotIndex, wearEffects, conta
   containerWidth: number;
   containerHeight: number;
   onPress: () => void;
+  onRepairWeed?: (plotIndex: number) => void;
 }) {
   const pulse = useSharedValue(1);
   const growScaleX = useSharedValue(1);
@@ -157,11 +160,19 @@ function CropCell({ cell, crop, cropDef, isMature, plotIndex, wearEffects, conta
   const left = cell.x * containerWidth - size / 2;
   const top = cell.y * containerHeight - size / 2;
 
+  const handleCropCellPress = () => {
+    if (hasWeeds && !isBlocked && !crop && onRepairWeed) {
+      onRepairWeed(plotIndex);
+    } else {
+      onPress();
+    }
+  };
+
   return (
     <Animated.View style={[{ position: 'absolute', left, top, width: size, height: size }, animStyle]}>
       <TouchableOpacity
         activeOpacity={0.7}
-        onPress={onPress}
+        onPress={handleCropCellPress}
         style={styles.cell}
       >
         <Image source={DIRT_SPRITE} style={styles.dirtBg as any} />
@@ -389,7 +400,7 @@ const BuildingIdleAnim = React.memo(function BuildingIdleAnim({ buildingId, pend
 
 // ── Cellule batiment ──
 
-function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, wearEffects, containerWidth, containerHeight, onPress }: {
+function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, wearEffects, containerWidth, containerHeight, onPress, onRepairPest }: {
   cell: WorldCell;
   placedBuilding: PlacedBuilding | null;
   pendingCount: number;
@@ -398,6 +409,7 @@ function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, wearEffect
   containerWidth: number;
   containerHeight: number;
   onPress: () => void;
+  onRepairPest?: (cellId: string) => void;
 }) {
   const pulse = useSharedValue(1);
   const reducedMotion = useReducedMotion();
@@ -449,9 +461,17 @@ function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, wearEffect
   const left = cell.x * containerWidth - size / 2;
   const top = cell.y * containerHeight - size / 2;
 
+  const handleBuildingPress = () => {
+    if (hasPests && placedBuilding && onRepairPest) {
+      onRepairPest(cell.id);
+    } else {
+      onPress();
+    }
+  };
+
   return (
     <Animated.View style={[{ position: 'absolute', left, top, width: size, height: size }, animStyle]}>
-      <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={[
+      <TouchableOpacity onPress={handleBuildingPress} activeOpacity={0.7} style={[
         styles.buildingCell,
         placedBuilding && styles.buildingCellPlaced,
       ]}>
@@ -553,6 +573,8 @@ export function WorldGridView({
   wearEffects,
   onCropPlotPress,
   onBuildingCellPress,
+  onRepairWeed,
+  onRepairPest,
 }: WorldGridViewProps) {
   const unlockedCrops = getUnlockedCropCells(treeStage);
   const crops = parseCrops(farmCropsCSV);
@@ -598,6 +620,7 @@ export function WorldGridView({
             containerWidth={containerWidth}
             containerHeight={containerHeight}
             onPress={() => onCropPlotPress?.(cell.id, crop)}
+            onRepairWeed={onRepairWeed}
           />
         );
       })}
@@ -622,6 +645,7 @@ export function WorldGridView({
             containerWidth={containerWidth}
             containerHeight={containerHeight}
             onPress={() => onCropPlotPress?.(cell.id, crop)}
+            onRepairWeed={onRepairWeed}
           />
         );
       })}
@@ -656,6 +680,7 @@ export function WorldGridView({
               containerWidth={containerWidth}
               containerHeight={containerHeight}
               onPress={() => onCropPlotPress?.(cell.id, crop)}
+              onRepairWeed={onRepairWeed}
             />
             <View style={[styles.largeBadge, {
               left: cell.x * containerWidth - CELL_SIZES.large / 2 + CELL_SIZES.large - 18,
@@ -684,6 +709,7 @@ export function WorldGridView({
             containerWidth={containerWidth}
             containerHeight={containerHeight}
             onPress={() => onBuildingCellPress?.(cell.id, placedBuilding)}
+            onRepairPest={onRepairPest}
           />
         );
       })}
@@ -704,6 +730,7 @@ export function WorldGridView({
             containerWidth={containerWidth}
             containerHeight={containerHeight}
             onPress={() => onBuildingCellPress?.(cell.id, placedBuilding)}
+            onRepairPest={onRepairPest}
           />
         );
       })()}
@@ -890,10 +917,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(239, 68, 68, 0.3)',
+    backgroundColor: 'rgba(255, 165, 0, 0.3)',
     borderRadius: Spacing.md,
     borderWidth: 1.5,
-    borderColor: 'rgba(239, 68, 68, 0.6)',
+    borderColor: 'rgba(255, 165, 0, 0.6)',
     borderStyle: 'dashed',
     justifyContent: 'center',
     alignItems: 'center',

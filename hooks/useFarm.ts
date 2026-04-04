@@ -226,6 +226,12 @@ export function useFarm() {
     const content = await vault.readFile(farmFile(profileId)).catch(() => '');
     const freshFarm = parseFarmProfile(content);
 
+    // Vérifier blocage usure (clôture cassée)
+    const freshWearEffects = getActiveWearEffects(freshFarm.wearEvents ?? []);
+    if (freshWearEffects.blockedPlots.includes(plotIndex)) {
+      throw new Error('Cette parcelle est bloquée par une clôture cassée');
+    }
+
     const currentCrops = parseCrops(freshFarm.farmCrops ?? '');
     const newCrops = plantCrop(currentCrops, plotIndex, cropId);
     if (newCrops.length === currentCrops.length) return;
@@ -449,7 +455,8 @@ export function useFarm() {
     const currentInventory: FarmInventory = profile.farmInventory ?? { oeuf: 0, lait: 0, farine: 0, miel: 0 };
 
     const profileTechBonuses = getTechBonuses(profile.farmTech ?? []);
-    const result = collectBuilding(currentBuildings, currentInventory, cellId, new Date(), profileTechBonuses);
+    const wearEffects = getActiveWearEffects(profile.wearEvents ?? []);
+    const result = collectBuilding(currentBuildings, currentInventory, cellId, new Date(), profileTechBonuses, wearEffects);
     if (result.collected === 0) return 0;
 
     const profileName = profiles?.find(p => p.id === profileId)?.name ?? profileId;
@@ -477,8 +484,9 @@ export function useFarm() {
     let total = 0;
 
     const passiveTechBonuses = getTechBonuses(profile.farmTech ?? []);
+    const passiveWearEffects = getActiveWearEffects(profile.wearEvents ?? []);
     for (const building of placedBuildings) {
-      const result = collectBuilding(currentBuildings, updatedInventory, building.cellId, new Date(), passiveTechBonuses);
+      const result = collectBuilding(currentBuildings, updatedInventory, building.cellId, new Date(), passiveTechBonuses, passiveWearEffects);
       if (result.collected > 0) {
         total += result.collected;
         currentBuildings = result.buildings;
