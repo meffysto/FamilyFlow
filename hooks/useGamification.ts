@@ -17,7 +17,7 @@ import {
 import { advanceFarmCrops, parseCrops, serializeCrops } from '../lib/mascot/farm-engine';
 import { getTechBonuses } from '../lib/mascot/tech-engine';
 import { getCompanionXpBonus } from '../lib/mascot/companion-engine';
-import { parseFamille, serializeCompanion } from '../lib/parser';
+import { parseFarmProfile, serializeFarmProfile } from '../lib/parser';
 import type { CompanionSpecies } from '../lib/mascot/companion-types';
 import {
   awardTaskCompletion,
@@ -33,7 +33,6 @@ import {
   buildLootBoxContext,
 } from '../lib/notifications';
 import { Profile, LootBox, GamificationData, NotificationPreferences } from '../lib/types';
-import { enqueueWrite, patchProfileField } from '../lib/famille-queue';
 
 interface UseGamificationArgs {
   vault: VaultManager | null;
@@ -61,7 +60,10 @@ function gamiFile(profileId: string): string {
   return `gami-${profileId}.md`;
 }
 
-const FAMILLE_FILE = 'famille.md';
+/** Helper : retourne le chemin du fichier ferme per-profil */
+function farmFile(profileId: string): string {
+  return `farm-${profileId}.md`;
+}
 
 export function useGamification({ vault, notifPrefs, onDataChange }: UseGamificationArgs): UseGamificationResult {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -122,14 +124,12 @@ export function useGamification({ vault, notifPrefs, onDataChange }: UseGamifica
           const profileTechBonuses = getTechBonuses(profile.farmTech ?? []);
           const farmResult = advanceFarmCrops(currentCrops, profileTechBonuses);
           cropsMatured = farmResult.matured.map(c => c.cropId);
-          // Persister les cultures mises a jour dans famille.md
-          const updatedCropsCSV = serializeCrops(farmResult.crops);
-          await enqueueWrite(async () => {
-            const familleContent = await vault.readFile(FAMILLE_FILE);
-            const lines = familleContent.split('\n');
-            patchProfileField(lines, profile.id, 'farm_crops', updatedCropsCSV);
-            await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
-          });
+          // Persister les cultures mises a jour dans farm-{id}.md
+          const fp = farmFile(profile.id);
+          const farmContent = await vault.readFile(fp).catch(() => '');
+          const farmData = parseFarmProfile(farmContent);
+          farmData.farmCrops = serializeCrops(farmResult.crops);
+          await vault.writeFile(fp, serializeFarmProfile(profile.name, farmData));
         }
 
         // Send task completed notification (fire-and-forget)
@@ -141,7 +141,7 @@ export function useGamification({ vault, notifPrefs, onDataChange }: UseGamifica
 
         // Notify parent if needed
         if (onDataChange) {
-          const familleContent = await vault.readFile(FAMILLE_FILE);
+          const familleContent = await vault.readFile('famille.md').catch(() => '');
           const gamiUpdatedContent = serializeGamification(singleData);
           const merged = mergeProfiles(familleContent, gamiUpdatedContent);
           onDataChange(merged);
@@ -200,17 +200,18 @@ export function useGamification({ vault, notifPrefs, onDataChange }: UseGamifica
         };
         await vault.writeFile(file, serializeGamification(singleData));
 
-        // Persister les items mascotte droppés dans famille.md
+        // Persister les items mascotte droppés dans farm-{id}.md
         if (box.mascotItemId && (box.rewardType === 'mascot_deco' || box.rewardType === 'mascot_hab')) {
           try {
-            const fieldKey = box.rewardType === 'mascot_deco' ? 'mascot_decorations' : 'mascot_inhabitants';
-            const list = box.rewardType === 'mascot_deco' ? updatedProfile.mascotDecorations : updatedProfile.mascotInhabitants;
-            await enqueueWrite(async () => {
-              const familleRaw = await vault.readFile(FAMILLE_FILE);
-              const lines = familleRaw.split('\n');
-              patchProfileField(lines, profile.id, fieldKey, list.join(','));
-              await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
-            });
+            const fp = farmFile(profile.id);
+            const farmContent = await vault.readFile(fp).catch(() => '');
+            const farmData = parseFarmProfile(farmContent);
+            if (box.rewardType === 'mascot_deco') {
+              farmData.mascotDecorations = updatedProfile.mascotDecorations;
+            } else {
+              farmData.mascotInhabitants = updatedProfile.mascotInhabitants;
+            }
+            await vault.writeFile(fp, serializeFarmProfile(profile.name, farmData));
           } catch {}
         }
 
@@ -218,28 +219,23 @@ export function useGamification({ vault, notifPrefs, onDataChange }: UseGamifica
         if (box.mascotItemId && box.rewardType === 'companion') {
           try {
             const speciesId = box.mascotItemId as CompanionSpecies;
-            await enqueueWrite(async () => {
-              const familleRaw = await vault.readFile(FAMILLE_FILE);
-              const currentProfiles = parseFamille(familleRaw);
-              const currentProfile = currentProfiles.find((p) => p.id === profile.id);
-              if (currentProfile?.companion) {
-                // Ajouter l'espèce à unlockedSpecies si pas encore débloquée
-                if (!currentProfile.companion.unlockedSpecies.includes(speciesId)) {
-                  const updatedCompanion = {
-                    ...currentProfile.companion,
-                    unlockedSpecies: [...currentProfile.companion.unlockedSpecies, speciesId],
-                  };
-                  const lines = familleRaw.split('\n');
-                  patchProfileField(lines, profile.id, 'companion', serializeCompanion(updatedCompanion));
-                  await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
-                }
+            const fp = farmFile(profile.id);
+            const farmContent = await vault.readFile(fp).catch(() => '');
+            const farmData = parseFarmProfile(farmContent);
+            if (farmData.companion) {
+              if (!farmData.companion.unlockedSpecies.includes(speciesId)) {
+                farmData.companion = {
+                  ...farmData.companion,
+                  unlockedSpecies: [...farmData.companion.unlockedSpecies, speciesId],
+                };
+                await vault.writeFile(fp, serializeFarmProfile(profile.name, farmData));
               }
-            });
+            }
           } catch {}
         }
 
         if (onDataChange) {
-          const familleContent = await vault.readFile(FAMILLE_FILE);
+          const familleContent = await vault.readFile('famille.md').catch(() => '');
           const merged = mergeProfiles(familleContent, serializeGamification(singleData));
           onDataChange(merged);
         }

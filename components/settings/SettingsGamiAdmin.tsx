@@ -11,7 +11,7 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, TextInput, Alert, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { serializeGamification } from '../../lib/parser';
+import { serializeGamification, parseFarmProfile, serializeFarmProfile } from '../../lib/parser';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { Button } from '../ui/Button';
 import { Spacing, Radius } from '../../constants/spacing';
@@ -21,7 +21,6 @@ import { calculateLevel } from '../../lib/gamification';
 import { serializeBuildings, serializeInventory } from '../../lib/mascot/building-engine';
 import { serializeHarvestInventory, serializeRareSeeds } from '../../lib/mascot/craft-engine';
 import { TECH_TREE } from '../../lib/mascot/tech-engine';
-import { enqueueWrite, patchProfileFields } from '../../lib/famille-queue';
 import type { Profile, GamificationData } from '../../lib/types';
 import type { FarmInventory, PlacedBuilding } from '../../lib/mascot/types';
 
@@ -144,7 +143,7 @@ function ProfileCard({
       };
       await vault.writeFile(`gami-${profile.id}.md`, serializeGamification(singleData));
 
-      // 2. Écrire les champs ferme dans famille.md
+      // 2. Écrire les champs ferme dans farm-{id}.md
       const updatedBuildings: PlacedBuilding[] = buildings.map(b => ({
         ...b,
         level: parseInt(buildingLevels[b.cellId], 10) || b.level,
@@ -166,20 +165,15 @@ function ProfileCard({
         if (n > 0) updatedSeeds[k] = n;
       }
 
-      const updatedTech = Array.from(unlockedTechs).join(',');
-
-      await enqueueWrite(async () => {
-        const content = await vault.readFile('famille.md');
-        const lines = content.split('\n');
-        patchProfileFields(lines, profile.id, {
-          farm_buildings: serializeBuildings(updatedBuildings),
-          farm_inventory: serializeInventory(updatedInventory),
-          farm_harvest_inventory: serializeHarvestInventory(updatedHarvest),
-          farm_rare_seeds: serializeRareSeeds(updatedSeeds),
-          farm_tech: updatedTech,
-        });
-        await vault.writeFile('famille.md', lines.join('\n'));
-      });
+      const farmPath = `farm-${profile.id}.md`;
+      const farmContent = await vault.readFile(farmPath).catch(() => '');
+      const farmData = parseFarmProfile(farmContent);
+      farmData.farmBuildings = updatedBuildings;
+      farmData.farmInventory = updatedInventory;
+      farmData.harvestInventory = updatedHarvest;
+      farmData.farmRareSeeds = updatedSeeds;
+      farmData.farmTech = Array.from(unlockedTechs);
+      await vault.writeFile(farmPath, serializeFarmProfile(profile.name, farmData));
 
       await refresh();
       Alert.alert('Admin', `${profile.avatar} ${profile.name} mis à jour`);

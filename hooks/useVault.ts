@@ -71,7 +71,10 @@ import {
   parseSecretMissions,
   serializeSecretMissions,
   serializeCompanion,
+  parseFarmProfile,
+  serializeFarmProfile,
 } from '../lib/parser';
+import type { FarmProfileData } from '../lib/types';
 import type { CompanionData, CompanionSpecies } from '../lib/mascot/companion-types';
 import { processActiveRewards, addPoints, calculateLevel } from '../lib/gamification';
 import { XP_PER_BRACKET, getSkillById } from '../lib/gamification/skill-tree';
@@ -278,6 +281,10 @@ const FAMILLE_FILE = 'famille.md';
 function gamiFile(profileId: string): string {
   return `gami-${profileId}.md`;
 }
+/** Retourne le chemin du fichier ferme per-profil */
+function farmFile(profileId: string): string {
+  return `farm-${profileId}.md`;
+}
 /** Migration one-shot : si gamification.md existe et qu'un profil n'a pas encore son gami-{id}.md, le créer */
 async function migrateGamification(vault: VaultManager, profiles: { id: string }[]): Promise<void> {
   const legacyExists = await vault.exists('gamification.md');
@@ -303,6 +310,56 @@ async function migrateGamification(vault: VaultManager, profiles: { id: string }
   }
   // NE PAS supprimer gamification.md — le garder comme backup
 }
+
+/**
+ * Migration one-shot : si farm-{id}.md n'existe pas mais famille.md contient
+ * des champs farm/mascot/companion, les migrer vers farm-{id}.md.
+ * Backward-compatible — ne modifie pas famille.md.
+ */
+async function migrateFarmData(vault: VaultManager, baseProfiles: Array<{ id: string; name: string }>): Promise<void> {
+  const FARM_KEYS = new Set([
+    'tree_species', 'mascot_decorations', 'mascot_inhabitants', 'mascot_placements',
+    'farm_crops', 'farm_buildings', 'farm_inventory', 'farm_harvest_inventory',
+    'farm_crafted_items', 'farm_tech', 'farm_rare_seeds', 'wear_events', 'companion',
+  ]);
+
+  let familleContent = '';
+  try {
+    familleContent = await vault.readFile(FAMILLE_FILE);
+  } catch {
+    return;
+  }
+
+  for (const profile of baseProfiles) {
+    const fp = farmFile(profile.id);
+    const exists = await vault.readFile(fp).then(() => true).catch(() => false);
+    if (exists) continue; // déjà migré
+
+    // Extraire les champs farm/mascot de la section ### {profile.id} dans famille.md
+    const lines = familleContent.split('\n');
+    const farmFields: Record<string, string> = {};
+    let inSection = false;
+    for (const line of lines) {
+      if (line.startsWith('### ')) {
+        if (inSection) break;
+        if (line.replace('### ', '').trim() === profile.id) inSection = true;
+      } else if (inSection && line.includes(': ')) {
+        const colonIdx = line.indexOf(': ');
+        const key = line.slice(0, colonIdx).trim();
+        const val = line.slice(colonIdx + 2).trim();
+        if (FARM_KEYS.has(key) && val) farmFields[key] = val;
+      }
+    }
+
+    // Construire le FarmProfileData à partir des champs extraits
+    const rawContent = Object.entries(farmFields)
+      .map(([k, v]) => `${k}: ${v}`)
+      .join('\n');
+    const farmData = parseFarmProfile(rawContent);
+    await vault.writeFile(fp, serializeFarmProfile(profile.name, farmData));
+  }
+}
+
 const MEALS_DIR = '02 - Maison';
 /** Retourne le chemin du fichier repas pour la semaine contenant `date` (lundi = début de semaine) */
 function mealsFileForWeek(date: Date = new Date()): string {
@@ -537,10 +594,15 @@ export function useVaultInternal(): VaultState {
         // Migration one-shot depuis gamification.md → gami-{id}.md
         await migrateGamification(vault, baseProfiles);
 
+        // Migration one-shot depuis famille.md → farm-{id}.md
+        await migrateFarmData(vault, baseProfiles);
+
         // Lecture multi-fichier per-profil + merge en mémoire
-        const gamiFileResults = await Promise.allSettled(
-          baseProfiles.map(p => vault.readFile(gamiFile(p.id)))
-        );
+        const [gamiFileResults, farmFileResults] = await Promise.all([
+          Promise.allSettled(baseProfiles.map(p => vault.readFile(gamiFile(p.id)))),
+          Promise.allSettled(baseProfiles.map(p => vault.readFile(farmFile(p.id)))),
+        ]);
+
         const mergedProfiles: any[] = [];
         const mergedHistory: any[] = [];
         const mergedActiveRewards: any[] = [];
@@ -555,6 +617,15 @@ export function useVaultInternal(): VaultState {
           mergedActiveRewards.push(...(g.activeRewards ?? []));
           mergedUsedLoots.push(...(g.usedLoots ?? []));
         }
+
+        // Lire les données farm per-profil
+        const farmDataByProfile: Record<string, FarmProfileData> = {};
+        for (let i = 0; i < baseProfiles.length; i++) {
+          const result = farmFileResults[i];
+          const content = result.status === 'fulfilled' ? result.value : '';
+          farmDataByProfile[baseProfiles[i].id] = parseFarmProfile(content);
+        }
+
         const gami: GamificationData = {
           profiles: mergedProfiles,
           history: mergedHistory,
@@ -563,7 +634,12 @@ export function useVaultInternal(): VaultState {
         };
         gamiContent = serializeGamification(gami);
         const merged = mergeProfiles(familleContent, gamiContent);
-        setProfiles(merged);
+        // Enrichir les profils avec les données farm
+        const mergedWithFarm = merged.map(p => ({
+          ...p,
+          ...(farmDataByProfile[p.id] ?? { mascotDecorations: [], mascotInhabitants: [], mascotPlacements: {} }),
+        }));
+        setProfiles(mergedWithFarm);
 
         // Clean up expired active rewards + sync multiplier remainingTasks
         if (gami.activeRewards?.length > 0) {
@@ -572,7 +648,7 @@ export function useVaultInternal(): VaultState {
           let synced = false;
           cleaned = cleaned.map(r => {
             if (r.type === 'multiplier' && r.profileId) {
-              const prof = merged.find(p => p.id === r.profileId);
+              const prof = mergedWithFarm.find(p => p.id === r.profileId);
               if (prof && r.remainingTasks !== prof.multiplierRemaining) {
                 synced = true;
                 return { ...r, remainingTasks: prof.multiplierRemaining };
@@ -605,7 +681,7 @@ export function useVaultInternal(): VaultState {
         }
         // Detect age category upgrades
         const upgrades: AgeUpgrade[] = [];
-        for (const p of merged) {
+        for (const p of mergedWithFarm) {
           if (p.role !== 'enfant' || !p.birthdate) continue;
           const currentCat = getAgeCategoryFromBirthdate(p.birthdate);
           if (p.ageCategory && p.ageCategory !== currentCat) {
@@ -1245,44 +1321,20 @@ export function useVaultInternal(): VaultState {
 
   const updateTreeSpecies = useCallback(async (profileId: string, species: string) => {
     if (!vaultRef.current) return;
-    return enqueueWrite(async () => {
-      try {
-        const content = await vaultRef.current!.readFile(FAMILLE_FILE);
-        const lines = content.split('\n');
-        let inSection = false;
-        let speciesLineIdx = -1;
-        let lastPropIdx = -1;
-
-        for (let i = 0; i < lines.length; i++) {
-          if (lines[i].startsWith('### ')) {
-            if (inSection) break;
-            if (lines[i].replace('### ', '').trim() === profileId) {
-              inSection = true;
-            }
-          } else if (inSection && lines[i].includes(': ')) {
-            lastPropIdx = i;
-            if (lines[i].trim().startsWith('tree_species:')) {
-              speciesLineIdx = i;
-            }
-          }
-        }
-
-        if (speciesLineIdx >= 0) {
-          lines[speciesLineIdx] = `tree_species: ${species}`;
-        } else if (lastPropIdx >= 0) {
-          lines.splice(lastPropIdx + 1, 0, `tree_species: ${species}`);
-        }
-
-        await vaultRef.current!.writeFile(FAMILLE_FILE, lines.join('\n'));
-
-        setProfiles((prev) =>
-          prev.map((p) => (p.id === profileId ? { ...p, treeSpecies: species as TreeSpecies } : p))
-        );
-      } catch (e) {
-        throw new Error(`updateTreeSpecies: ${e}`);
-      }
-    });
-  }, []);
+    try {
+      const file = farmFile(profileId);
+      const content = await vaultRef.current.readFile(file).catch(() => '');
+      const farmData = parseFarmProfile(content);
+      farmData.treeSpecies = species as TreeSpecies;
+      const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+      await vaultRef.current.writeFile(file, serializeFarmProfile(profileName, farmData));
+      setProfiles((prev) =>
+        prev.map((p) => (p.id === profileId ? { ...p, treeSpecies: species as TreeSpecies } : p))
+      );
+    } catch (e) {
+      throw new Error(`updateTreeSpecies: ${e}`);
+    }
+  }, [profiles]);
 
   /** Acheter une décoration ou un habitant pour l'arbre mascotte */
   const buyMascotItem = useCallback(async (profileId: string, itemId: string, itemType: 'decoration' | 'inhabitant') => {
@@ -1334,69 +1386,32 @@ export function useVaultInternal(): VaultState {
       };
       await vaultRef.current.writeFile(file, serializeGamification(singleData));
 
-      // 3. Référence au profil gami mis à jour (définie avant enqueueWrite pour closure)
+      // 3. Référence au profil gami mis à jour (définie pour closure)
       const updatedGamiProfile = gami.profiles.find(p => p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase());
 
-      // 2. Ajouter l'item dans famille.md (dans la queue partagée)
-      await enqueueWrite(async () => {
-        const content = await vaultRef.current!.readFile(FAMILLE_FILE);
-        const lines = content.split('\n');
-        let inSection = false;
-        let fieldLine = -1;
-        let lastPropIdx = -1;
-        const fieldKey = itemType === 'decoration' ? 'mascot_decorations' : 'mascot_inhabitants';
+      // 2. Ajouter l'item dans farm-{profileId}.md
+      const fp = farmFile(profileId);
+      const farmContent = await vaultRef.current.readFile(fp).catch(() => '');
+      const farmData = parseFarmProfile(farmContent);
+      const newList = [...owned, itemId];
+      if (itemType === 'decoration') {
+        farmData.mascotDecorations = newList;
+      } else {
+        farmData.mascotInhabitants = newList;
+      }
+      const profileNameForFarm = profiles.find(p => p.id === profileId)?.name ?? profileId;
+      await vaultRef.current.writeFile(fp, serializeFarmProfile(profileNameForFarm, farmData));
 
-        for (let i = 0; i < lines.length; i++) {
-          if (lines[i].startsWith('### ')) {
-            if (inSection) break;
-            if (lines[i].replace('### ', '').trim() === profileId) {
-              inSection = true;
-            }
-          } else if (inSection && lines[i].includes(': ')) {
-            lastPropIdx = i;
-            if (lines[i].trim().startsWith(`${fieldKey}:`)) {
-              fieldLine = i;
-            }
-          }
-        }
-
-        const newList = [...owned, itemId];
-        const newValue = `${fieldKey}: ${newList.join(',')}`;
-
-        if (fieldLine >= 0) {
-          lines[fieldLine] = newValue;
-        } else if (lastPropIdx >= 0) {
-          lines.splice(lastPropIdx + 1, 0, newValue);
-        }
-
-        const familleStr = lines.join('\n');
-        await vaultRef.current!.writeFile(FAMILLE_FILE, familleStr);
-
-        // Recharger les profils depuis famille.md mis à jour (décoration ajoutée)
-        // Utilise le gamiData actuel comme base pour ne pas écraser les autres profils
-        setProfiles(prev => {
-          const parsed = parseFamille(familleStr);
-          return parsed.map(base => {
-            const existing = prev.find(p => p.id === base.id);
-            if (!existing) return { ...base, points: 0, coins: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0 };
-            // Pour le profil modifié, mettre à jour les coins
-            if (base.id === profileId || base.id.toLowerCase() === profileId.toLowerCase()) {
-              return {
-                ...base,
-                points: existing.points,
-                coins: updatedGamiProfile ? (updatedGamiProfile.coins ?? updatedGamiProfile.points) : existing.coins,
-                level: existing.level,
-                streak: existing.streak,
-                lootBoxesAvailable: existing.lootBoxesAvailable,
-                multiplier: existing.multiplier,
-                multiplierRemaining: existing.multiplierRemaining,
-                pityCounter: existing.pityCounter,
-              };
-            }
-            return { ...base, points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
-          });
-        });
-      });
+      // Mettre à jour l'état local
+      setProfiles(prev => prev.map(p => {
+        if (p.id !== profileId) return p;
+        return {
+          ...p,
+          mascotDecorations: itemType === 'decoration' ? newList : p.mascotDecorations,
+          mascotInhabitants: itemType === 'inhabitant' ? newList : p.mascotInhabitants,
+          coins: updatedGamiProfile ? (updatedGamiProfile.coins ?? updatedGamiProfile.points) : p.coins,
+        };
+      }));
 
       // Mettre à jour l'état gami (hors queue — fichier différent)
       setGamiData(prev => {
@@ -1419,71 +1434,29 @@ export function useVaultInternal(): VaultState {
     const profile = profiles.find((p) => p.id === profileId);
     if (!profile) throw new Error(`Profil ${profileId} non trouvé`);
 
-    return enqueueWrite(async () => {
-      try {
-        const content = await vaultRef.current!.readFile(FAMILLE_FILE);
-        const lines = content.split('\n');
-        let inSection = false;
-        let fieldLine = -1;
-        let lastPropIdx = -1;
-        const fieldKey = 'mascot_placements';
+    try {
+      const fp = farmFile(profileId);
+      const farmContent = await vaultRef.current.readFile(fp).catch(() => '');
+      const farmData = parseFarmProfile(farmContent);
 
-        // Récupérer les placements actuels du profil
-        const placements = { ...(profile.mascotPlacements ?? {}) };
-
-        // Si l'item est déjà placé ailleurs, le retirer de l'ancien slot
-        for (const [existingSlot, existingItem] of Object.entries(placements)) {
-          if (existingItem === itemId) {
-            delete placements[existingSlot];
-          }
-        }
-
-        // Placer l'item au nouveau slot
-        placements[slotId] = itemId;
-
-        // Sérialiser : "tree-top:guirlandes,ground-left:oiseau"
-        const serialized = Object.entries(placements)
-          .map(([s, i]) => `${s}:${i}`)
-          .join(',');
-        const newValue = `${fieldKey}: ${serialized}`;
-
-        // Trouver la section du profil dans famille.md
-        for (let i = 0; i < lines.length; i++) {
-          if (lines[i].startsWith('### ')) {
-            if (inSection) break;
-            if (lines[i].replace('### ', '').trim() === profileId) {
-              inSection = true;
-            }
-          } else if (inSection && lines[i].includes(': ')) {
-            lastPropIdx = i;
-            if (lines[i].trim().startsWith(`${fieldKey}:`)) {
-              fieldLine = i;
-            }
-          }
-        }
-
-        if (fieldLine >= 0) {
-          lines[fieldLine] = newValue;
-        } else if (lastPropIdx >= 0) {
-          lines.splice(lastPropIdx + 1, 0, newValue);
-        }
-
-        const familleStr = lines.join('\n');
-        await vaultRef.current!.writeFile(FAMILLE_FILE, familleStr);
-
-        // Mettre à jour l'état local (merge partiel : seuls les placements ont changé dans famille.md)
-        setProfiles(prev => {
-          const parsed = parseFamille(familleStr);
-          return parsed.map(base => {
-            const existing = prev.find(p => p.id === base.id);
-            if (!existing) return { ...base, points: 0, coins: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0 };
-            return { ...base, points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
-          });
-        });
-      } catch (e) {
-        throw new Error(`placeMascotItem: ${e}`);
+      // Récupérer les placements actuels et mettre à jour
+      const placements = { ...(farmData.mascotPlacements ?? {}) };
+      // Retirer l'item s'il est déjà placé ailleurs
+      for (const [existingSlot, existingItem] of Object.entries(placements)) {
+        if (existingItem === itemId) delete placements[existingSlot];
       }
-    });
+      placements[slotId] = itemId;
+      farmData.mascotPlacements = placements;
+
+      const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+      await vaultRef.current.writeFile(fp, serializeFarmProfile(profileName, farmData));
+
+      setProfiles(prev => prev.map(p =>
+        p.id === profileId ? { ...p, mascotPlacements: placements } : p
+      ));
+    } catch (e) {
+      throw new Error(`placeMascotItem: ${e}`);
+    }
   }, [profiles]);
 
   /** Retirer un item placé (décoration ou habitant) de son slot */
@@ -1495,58 +1468,23 @@ export function useVaultInternal(): VaultState {
     const placements = { ...(profile.mascotPlacements ?? {}) };
     if (!placements[slotId]) return; // rien à retirer
 
-    return enqueueWrite(async () => {
-      try {
-        const content = await vaultRef.current!.readFile(FAMILLE_FILE);
-        const lines = content.split('\n');
-        let inSection = false;
-        let fieldLine = -1;
-        let lastPropIdx = -1;
-        const fieldKey = 'mascot_placements';
+    try {
+      delete placements[slotId];
 
-        delete placements[slotId];
+      const fp = farmFile(profileId);
+      const farmContent = await vaultRef.current.readFile(fp).catch(() => '');
+      const farmData = parseFarmProfile(farmContent);
+      farmData.mascotPlacements = placements;
 
-        const serialized = Object.entries(placements)
-          .map(([s, i]) => `${s}:${i}`)
-          .join(',');
-        const newValue = `${fieldKey}: ${serialized}`;
+      const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+      await vaultRef.current.writeFile(fp, serializeFarmProfile(profileName, farmData));
 
-        for (let i = 0; i < lines.length; i++) {
-          if (lines[i].startsWith('### ')) {
-            if (inSection) break;
-            if (lines[i].replace('### ', '').trim() === profileId) {
-              inSection = true;
-            }
-          } else if (inSection && lines[i].includes(': ')) {
-            lastPropIdx = i;
-            if (lines[i].trim().startsWith(`${fieldKey}:`)) {
-              fieldLine = i;
-            }
-          }
-        }
-
-        if (fieldLine >= 0) {
-          lines[fieldLine] = newValue;
-        } else if (lastPropIdx >= 0) {
-          lines.splice(lastPropIdx + 1, 0, newValue);
-        }
-
-        const familleStr = lines.join('\n');
-        await vaultRef.current!.writeFile(FAMILLE_FILE, familleStr);
-
-        // Mettre à jour l'état local (merge partiel : seuls les placements ont changé)
-        setProfiles(prev => {
-          const parsed = parseFamille(familleStr);
-          return parsed.map(base => {
-            const existing = prev.find(p => p.id === base.id);
-            if (!existing) return { ...base, points: 0, coins: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0 };
-            return { ...base, points: existing.points, coins: existing.coins, level: existing.level, streak: existing.streak, lootBoxesAvailable: existing.lootBoxesAvailable, multiplier: existing.multiplier, multiplierRemaining: existing.multiplierRemaining, pityCounter: existing.pityCounter };
-          });
-        });
-      } catch (e) {
-        throw new Error(`unplaceMascotItem: ${e}`);
-      }
-    });
+      setProfiles(prev => prev.map(p =>
+        p.id === profileId ? { ...p, mascotPlacements: placements } : p
+      ));
+    } catch (e) {
+      throw new Error(`unplaceMascotItem: ${e}`);
+    }
   }, [profiles]);
 
   const updateProfile = useCallback(async (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string; propre?: boolean; gender?: Gender }) => {
@@ -2469,9 +2407,10 @@ export function useVaultInternal(): VaultState {
     try {
       const familleContent = await vaultRef.current.readFile(FAMILLE_FILE);
       const baseProfiles = parseFamille(familleContent);
-      const gamiFileResults = await Promise.allSettled(
-        baseProfiles.map(p => vaultRef.current!.readFile(gamiFile(p.id)))
-      );
+      const [gamiFileResults, farmFileResults] = await Promise.all([
+        Promise.allSettled(baseProfiles.map(p => vaultRef.current!.readFile(gamiFile(p.id)))),
+        Promise.allSettled(baseProfiles.map(p => vaultRef.current!.readFile(farmFile(p.id)))),
+      ]);
       const mergedProfiles: any[] = [];
       const mergedHistory: any[] = [];
       const mergedActiveRewards: any[] = [];
@@ -2486,6 +2425,12 @@ export function useVaultInternal(): VaultState {
         mergedActiveRewards.push(...(g.activeRewards ?? []));
         mergedUsedLoots.push(...(g.usedLoots ?? []));
       }
+      const farmDataByProfile: Record<string, FarmProfileData> = {};
+      for (let i = 0; i < baseProfiles.length; i++) {
+        const result = farmFileResults[i];
+        const content = result.status === 'fulfilled' ? result.value : '';
+        farmDataByProfile[baseProfiles[i].id] = parseFarmProfile(content);
+      }
       const gami: GamificationData = {
         profiles: mergedProfiles,
         history: mergedHistory,
@@ -2494,7 +2439,11 @@ export function useVaultInternal(): VaultState {
       };
       const gamiContent = serializeGamification(gami);
       const merged = mergeProfiles(familleContent, gamiContent);
-      setProfiles(merged);
+      const mergedWithFarm = merged.map(p => ({
+        ...p,
+        ...(farmDataByProfile[p.id] ?? { mascotDecorations: [], mascotInhabitants: [], mascotPlacements: {} }),
+      }));
+      setProfiles(mergedWithFarm);
       setGamiData(gami);
     } catch (e) {
       warnUnexpected('refreshGamification', e);
@@ -3457,78 +3406,57 @@ export function useVaultInternal(): VaultState {
         activeRewards: updatedRewards ?? gami.activeRewards,
       };
 
-      // Si récompense item ou récolte bonus → atomic write dans famille.md via la queue
-      if (rewardItem || bonusCropId) {
+      // Si récompense item → écrire saga_items dans famille.md (reste dans ce fichier)
+      if (rewardItem) {
         await enqueueWrite(async () => {
           const famContent = await vaultRef.current!.readFile(FAMILLE_FILE);
           const lines = famContent.split('\n');
 
-          // Bloc 1: saga_items (récompense item saga terminée)
-          if (rewardItem) {
-            const { createSagaItem } = require('../lib/types');
-            const sagaItem = createSagaItem(rewardItem.id, rewardItem.type);
-            let inSection = false;
-            let fieldLine = -1;
-            for (let i = 0; i < lines.length; i++) {
-              if (lines[i].match(new RegExp(`^###?\\s+.*${profileId}`, 'i')) || lines[i].match(new RegExp(`^id:\\s*${profileId}`, 'i'))) {
-                inSection = true;
-              } else if (inSection && lines[i].match(/^###?\s+/)) {
-                break;
-              }
-              if (inSection && lines[i].startsWith('saga_items:')) {
-                fieldLine = i;
-                break;
-              }
+          const { createSagaItem } = require('../lib/types');
+          const sagaItem = createSagaItem(rewardItem.id, rewardItem.type);
+          let inSection = false;
+          let fieldLine = -1;
+          for (let i = 0; i < lines.length; i++) {
+            if (lines[i].match(new RegExp(`^###?\\s+.*${profileId}`, 'i')) || lines[i].match(new RegExp(`^id:\\s*${profileId}`, 'i'))) {
+              inSection = true;
+            } else if (inSection && lines[i].match(/^###?\s+/)) {
+              break;
             }
-            const itemEntry = `${sagaItem.itemId}|${sagaItem.type}|${sagaItem.expiresAt}`;
-            if (fieldLine >= 0) {
-              const current = lines[fieldLine].replace('saga_items:', '').trim();
-              const items = current ? current.split(',').map(s => s.trim()) : [];
-              items.push(itemEntry);
-              lines[fieldLine] = `saga_items: ${items.join(', ')}`;
-            } else {
-              // Ajouter le champ saga_items dans la section du profil
-              let lastProp = -1;
-              let inSec = false;
-              for (let i = 0; i < lines.length; i++) {
-                if (lines[i].match(new RegExp(`^###?\\s+.*${profileId}`, 'i')) || lines[i].match(new RegExp(`^id:\\s*${profileId}`, 'i'))) inSec = true;
-                else if (inSec && lines[i].match(/^###?\s+/)) break;
-                if (inSec && lines[i].includes(': ')) lastProp = i;
-              }
-              if (lastProp >= 0) lines.splice(lastProp + 1, 0, `saga_items: ${itemEntry}`);
+            if (inSection && lines[i].startsWith('saga_items:')) {
+              fieldLine = i;
+              break;
             }
           }
-
-          // Bloc 2: farm_harvest_inventory (récolte bonus saga)
-          if (bonusCropId) {
-            let inSec = false;
-            let harvestLine = -1;
+          const itemEntry = `${sagaItem.itemId}|${sagaItem.type}|${sagaItem.expiresAt}`;
+          if (fieldLine >= 0) {
+            const current = lines[fieldLine].replace('saga_items:', '').trim();
+            const items = current ? current.split(',').map((s: string) => s.trim()) : [];
+            items.push(itemEntry);
+            lines[fieldLine] = `saga_items: ${items.join(', ')}`;
+          } else {
             let lastProp = -1;
+            let inSec = false;
             for (let i = 0; i < lines.length; i++) {
               if (lines[i].match(new RegExp(`^###?\\s+.*${profileId}`, 'i')) || lines[i].match(new RegExp(`^id:\\s*${profileId}`, 'i'))) inSec = true;
               else if (inSec && lines[i].match(/^###?\s+/)) break;
-              if (inSec && lines[i].startsWith('farm_harvest_inventory:')) { harvestLine = i; break; }
               if (inSec && lines[i].includes(': ')) lastProp = i;
             }
-            if (harvestLine >= 0) {
-              const current = lines[harvestLine].replace('farm_harvest_inventory:', '').trim();
-              const entries = current ? current.split(',').map(s => s.trim()) : [];
-              const existing = entries.find(e => e.startsWith(bonusCropId + ':'));
-              if (existing) {
-                const qty = parseInt(existing.split(':')[1] ?? '0', 10) + 1;
-                const idx = entries.indexOf(existing);
-                entries[idx] = `${bonusCropId}:${qty}`;
-              } else {
-                entries.push(`${bonusCropId}:1`);
-              }
-              lines[harvestLine] = `farm_harvest_inventory: ${entries.join(',')}`;
-            } else if (lastProp >= 0) {
-              lines.splice(lastProp + 1, 0, `farm_harvest_inventory: ${bonusCropId}:1`);
-            }
+            if (lastProp >= 0) lines.splice(lastProp + 1, 0, `saga_items: ${itemEntry}`);
           }
-
           await vaultRef.current!.writeFile(FAMILLE_FILE, lines.join('\n'));
         });
+      }
+
+      // Récolte bonus saga → écrire farm_harvest_inventory dans farm-{id}.md
+      if (bonusCropId) {
+        const fp = farmFile(profileId);
+        const farmContent = await vaultRef.current.readFile(fp).catch(() => '');
+        const farmData = parseFarmProfile(farmContent);
+        const harvestInv = { ...(farmData.harvestInventory ?? {}) };
+        harvestInv[bonusCropId] = (harvestInv[bonusCropId] ?? 0) + 1;
+        farmData.harvestInventory = harvestInv;
+        const profileNameSaga = profiles.find(p => p.id === profileId)?.name ?? profileId;
+        await vaultRef.current.writeFile(fp, serializeFarmProfile(profileNameSaga, farmData));
       }
 
       const singleData: GamificationData = {
@@ -3597,53 +3525,36 @@ export function useVaultInternal(): VaultState {
 
   // ─── Compagnon mascotte ───────────────────────────────────────────────────
 
-  /** Persiste les données compagnon dans la section profileId de famille.md */
+  /** Persiste les données compagnon dans farm-{profileId}.md */
   const setCompanion = useCallback(async (profileId: string, companion: CompanionData) => {
     if (!vaultRef.current) return;
     try {
-      const content = await vaultRef.current.readFile(FAMILLE_FILE);
-      const lines = content.split('\n');
-      let inSection = false;
-      let fieldLine = -1;
-      let lastPropIdx = -1;
-      const fieldKey = 'companion';
-
-      for (let i = 0; i < lines.length; i++) {
-        if (lines[i].startsWith('### ')) {
-          if (inSection) break;
-          if (lines[i].replace('### ', '').trim() === profileId) inSection = true;
-        } else if (inSection && lines[i].includes(': ')) {
-          lastPropIdx = i;
-          if (lines[i].trim().startsWith(`${fieldKey}:`)) fieldLine = i;
-        }
-      }
-
-      const newValue = `${fieldKey}: ${serializeCompanion(companion)}`;
-      if (fieldLine >= 0) {
-        lines[fieldLine] = newValue;
-      } else if (lastPropIdx >= 0) {
-        lines.splice(lastPropIdx + 1, 0, newValue);
-      }
-
-      await vaultRef.current.writeFile(FAMILLE_FILE, lines.join('\n'));
-      await refresh();
+      const fp = farmFile(profileId);
+      const farmContent = await vaultRef.current.readFile(fp).catch(() => '');
+      const farmData = parseFarmProfile(farmContent);
+      farmData.companion = companion;
+      const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+      await vaultRef.current.writeFile(fp, serializeFarmProfile(profileName, farmData));
+      setProfiles(prev => prev.map(p =>
+        p.id === profileId ? { ...p, companion } : p
+      ));
     } catch (e) {
       if (__DEV__) console.warn('[setCompanion]', e);
     }
-  }, [refresh]);
+  }, [profiles]);
 
   /** Ajoute une espèce à unlockedSpecies du profil (si compagnon actif et espèce pas encore débloquée) */
   const unlockCompanion = useCallback(async (profileId: string, speciesId: CompanionSpecies) => {
     if (!vaultRef.current) return;
     try {
-      const familleContent = await vaultRef.current.readFile(FAMILLE_FILE);
-      const currentProfiles = parseFamille(familleContent);
-      const profile = currentProfiles.find((p) => p.id === profileId);
-      if (!profile || !profile.companion) return;
-      if (profile.companion.unlockedSpecies.includes(speciesId)) return;
+      const fp = farmFile(profileId);
+      const farmContent = await vaultRef.current.readFile(fp).catch(() => '');
+      const farmData = parseFarmProfile(farmContent);
+      if (!farmData.companion) return;
+      if (farmData.companion.unlockedSpecies.includes(speciesId)) return;
       const updatedCompanion: CompanionData = {
-        ...profile.companion,
-        unlockedSpecies: [...profile.companion.unlockedSpecies, speciesId],
+        ...farmData.companion,
+        unlockedSpecies: [...farmData.companion.unlockedSpecies, speciesId],
       };
       await setCompanion(profileId, updatedCompanion);
     } catch (e) {
