@@ -53,11 +53,6 @@ import {
   ANNIVERSAIRES_FILE,
   parseAnniversaries,
   serializeAnniversaries,
-  NOTES_DIR,
-  parseNote,
-  serializeNote,
-  noteFileName,
-  noteCategoryLabel,
   SKILLS_DIR,
   parseSkillTree,
   serializeSkillTree,
@@ -107,6 +102,7 @@ import { refreshWidget, refreshJournalWidget } from '../lib/widget-bridge';
 import { syncWidgetFeedingsToVault } from '../lib/widget-sync';
 import { shouldSendWeeklySummary, buildAndSendWeeklySummary } from '../lib/telegram';
 import { buildSectionHeader, type EmplacementId } from '../constants/stock';
+import { useVaultNotes } from './useVaultNotes';
 
 export const VAULT_PATH_KEY = 'vault_path';
 export const ACTIVE_PROFILE_KEY = 'active_profile_id';
@@ -528,13 +524,13 @@ export function useVaultInternal(): VaultState {
   const [gratitudeDays, setGratitudeDays] = useState<GratitudeDay[]>([]);
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [anniversaries, setAnniversaries] = useState<Anniversary[]>([]);
-  const [notes, setNotes] = useState<Note[]>([]);
   const [quotes, setQuotes] = useState<ChildQuote[]>([]);
   const [moods, setMoods] = useState<MoodEntry[]>([]);
   const [skillTrees, setSkillTrees] = useState<SkillTreeData[]>([]);
   const [secretMissions, setSecretMissions] = useState<Task[]>([]);
   const vaultRef = useRef<VaultManager | null>(null);
   const busyRef = useRef(false); // Guard against AppState race condition
+  const notesHook = useVaultNotes(vaultRef);
 
   // Load vault path + active profile from SecureStore on mount
   useEffect(() => {
@@ -990,21 +986,7 @@ export function useVaultInternal(): VaultState {
         })().catch(() => ({ config: null as VacationConfig | null, vacTasks: [] as Task[] })),
 
         // [16] Notes & Articles
-        (async () => {
-          await vault.ensureDir(NOTES_DIR);
-          const files = await vault.listFilesRecursive(NOTES_DIR, '.md');
-          const noteResults = await Promise.all(
-            files.map(async (file) => {
-              try {
-                const content = await vault.readFile(file);
-                return parseNote(file, content);
-              } catch (e) { warnUnexpected(`note(${file})`, e); return null; }
-            })
-          );
-          const loaded = noteResults.filter((n): n is Note => n !== null);
-          loaded.sort((a, b) => b.created.localeCompare(a.created));
-          return loaded;
-        })().catch(() => [] as Note[]),
+        notesHook.loadNotes(vault),
 
         // [17] Mots d'enfants
         vault.readFile(QUOTES_FILE).then((c) => parseQuotes(c)).catch(() => [] as ChildQuote[]),
@@ -1090,7 +1072,7 @@ export function useVaultInternal(): VaultState {
       const vacResult = val(results[15], { config: null as VacationConfig | null, vacTasks: [] as Task[] });
       setVacationConfig(vacResult.config);
       setVacationTasks(vacResult.vacTasks);
-      setNotes(val(results[16], []));
+      notesHook.setNotes(val(results[16], []));
       setQuotes(val(results[17], []));
       setMoods(val(results[18], []));
       setSkillTrees(val(results[19], []));
@@ -1126,7 +1108,7 @@ export function useVaultInternal(): VaultState {
     if (debugErrors.length > 0) {
       setError(debugErrors.join('\n'));
     }
-  }, []);
+  }, [notesHook.loadNotes, notesHook.setNotes]);
 
   const refresh = useCallback(async () => {
     if (!vaultRef.current) return;
@@ -1152,6 +1134,7 @@ export function useVaultInternal(): VaultState {
     recipesLoadedRef.current = false;
     setBudgetEntries([]);
     setBudgetConfig(DEFAULT_BUDGET_CONFIG);
+    notesHook.resetNotes();
     setVaultPathState(path);
     const vault = new VaultManager(path);
     vaultRef.current = vault;
@@ -3236,42 +3219,6 @@ export function useVaultInternal(): VaultState {
     setAnniversaries(parseAnniversaries(await vaultRef.current.readFile(ANNIVERSAIRES_FILE)));
   }, [reloadAnniversaries]);
 
-  // ─── Notes & Articles CRUD ──────────────────────────────────────────────────
-
-  const addNote = useCallback(async (note: Omit<Note, 'sourceFile'>) => {
-    if (!vaultRef.current) return;
-    const categoryDir = noteCategoryLabel(note.category);
-    const dir = `${NOTES_DIR}/${categoryDir}`;
-    await vaultRef.current.ensureDir(dir);
-    const relPath = `${dir}/${noteFileName(note.title)}`;
-    await vaultRef.current.writeFile(relPath, serializeNote(note));
-    const exists = await vaultRef.current.exists(relPath);
-    if (!exists) throw new Error('Échec de l\'écriture');
-    setNotes((prev) => [{ ...note, sourceFile: relPath }, ...prev]);
-  }, []);
-
-  const updateNote = useCallback(async (sourceFile: string, note: Omit<Note, 'sourceFile'>) => {
-    if (!vaultRef.current) return;
-    const categoryDir = noteCategoryLabel(note.category);
-    const newDir = `${NOTES_DIR}/${categoryDir}`;
-    const newPath = `${newDir}/${noteFileName(note.title)}`;
-    // Si le chemin a changé (catégorie ou titre modifié), supprimer l'ancien
-    if (newPath !== sourceFile) {
-      try { await vaultRef.current.deleteFile(sourceFile); } catch (e) { warnUnexpected('updateNote-deleteOld', e); }
-    }
-    await vaultRef.current.ensureDir(newDir);
-    await vaultRef.current.writeFile(newPath, serializeNote(note));
-    setNotes((prev) => prev.map((n) =>
-      n.sourceFile === sourceFile ? { ...note, sourceFile: newPath } : n
-    ));
-  }, []);
-
-  const deleteNote = useCallback(async (sourceFile: string) => {
-    if (!vaultRef.current) return;
-    await vaultRef.current.deleteFile(sourceFile);
-    setNotes((prev) => prev.filter((n) => n.sourceFile !== sourceFile));
-  }, []);
-
   // ─── Mots d'enfants CRUD ─────────────────────────────────────────────────
 
   const addQuote = useCallback(async (enfant: string, citation: string, contexte?: string) => {
@@ -3783,10 +3730,10 @@ export function useVaultInternal(): VaultState {
     updateAnniversary,
     removeAnniversary,
     importAnniversaries,
-    notes,
-    addNote,
-    updateNote,
-    deleteNote,
+    notes: notesHook.notes,
+    addNote: notesHook.addNote,
+    updateNote: notesHook.updateNote,
+    deleteNote: notesHook.deleteNote,
     quotes,
     addQuote,
     deleteQuote,
@@ -3810,7 +3757,8 @@ export function useVaultInternal(): VaultState {
     rdvs, profiles, activeProfile, gamiData, notifPrefs, vault, photoDates,
     stockSections, memories, vacationConfig, vacationTasks, isVacationActive,
     recipes, ageUpgrades, budgetEntries, budgetConfig, budgetMonth, routines,
-    healthRecords, defis, gratitudeDays, wishlistItems, journalStats, anniversaries, notes,
+    healthRecords, defis, gratitudeDays, wishlistItems, journalStats, anniversaries,
+    notesHook.notes,
     quotes, moods, skillTrees, secretMissions,
     // Callbacks (stables grâce à useCallback)
     refresh, setVaultPath, setActiveProfile, saveNotifPrefs, updateMeal, loadMealsForWeek,
@@ -3829,7 +3777,8 @@ export function useVaultInternal(): VaultState {
     addGratitudeEntry, deleteGratitudeEntry,
     addWishItem, updateWishItem, deleteWishItem, toggleWishBought,
     addAnniversary, updateAnniversary, removeAnniversary, importAnniversaries,
-    addNote, updateNote, deleteNote, addQuote, deleteQuote, addMood, deleteMood, unlockSkill,
+    notesHook.addNote, notesHook.updateNote, notesHook.deleteNote,
+    addQuote, deleteQuote, addMood, deleteMood, unlockSkill,
     addSecretMission, completeSecretMission, validateSecretMission,
     completeAdventure, completeSagaChapter, markLootUsed,
     setCompanion, unlockCompanion,
