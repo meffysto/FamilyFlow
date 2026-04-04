@@ -321,68 +321,32 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
             style={{ width: scaledW, height: scaledH } as any}
           />
         </Animated.View>
-        {/* Overlay natif RN pour items placés + slots de placement */}
-        {(Object.keys(placements).length > 0 || placingItem) && (
-          <View style={[StyleSheet.absoluteFill, { zIndex: 2 }]} pointerEvents="box-none">
-            {showGround && Object.keys(placements).length > 0 && !placingItem && (
-              <NativePlacedItems
-                placements={placements}
-                containerWidth={size}
-                containerHeight={imgHeight}
-                skipIds={pixelAnimalIds}
-              />
-            )}
-            {showGround && placingItem && (
-              <NativePlacementSlots
-                placements={placements}
-                placingItemId={placingItem}
-                containerWidth={size}
-                containerHeight={imgHeight}
-                onSelect={onSlotSelect}
-              />
-            )}
-          </View>
-        )}
+        {/* NativePlacedItems + NativePlacementSlots deplacés au niveau diorama (tree.tsx) */}
         {/* Animaux pixel animés (cycle idle natif RN, hors SVG) */}
         {animate && (() => {
-          // Collecter les animaux pixel — eviter les doublons
-          const animalIds: { id: string; fromSlot?: string }[] = [];
+          // Collecter les animaux pixel NON places sur un slot diorama
+          const animalIds: { id: string }[] = [];
           const placedAnimalIds = new Set(
             Object.values(placements).filter(itemId => ANIMAL_IDLE_FRAMES[itemId])
           );
-          // Animaux places sur des slots de scene (prioritaire)
-          for (const [slotId, itemId] of Object.entries(placements)) {
-            if (ANIMAL_IDLE_FRAMES[itemId]) animalIds.push({ id: itemId, fromSlot: slotId });
-          }
-          // Animaux dans la liste des habitants SEULEMENT s'ils ne sont pas deja places
+          // Animaux dans la liste des habitants SEULEMENT s'ils ne sont pas deja places sur un slot
           for (const id of inhabitants) {
             if (ANIMAL_IDLE_FRAMES[id] && !placedAnimalIds.has(id)) animalIds.push({ id });
           }
           if (animalIds.length === 0) return null;
           return (
             <View style={[StyleSheet.absoluteFill, { zIndex: 10 }]} pointerEvents="none">
-              {animalIds.map(({ id, fromSlot }) => {
+              {animalIds.map(({ id }) => {
                 const frames = ANIMAL_IDLE_FRAMES[id]!;
-                let px: number, py: number, s: number;
-                if (fromSlot) {
-                  // Placé sur un slot de scène
-                  const sceneSlot = SCENE_SLOTS.find(sl => sl.id === fromSlot);
-                  if (!sceneSlot) return null;
-                  s = 28;
-                  px = (sceneSlot.cx / VIEWBOX_W) * size;
-                  py = (sceneSlot.cy / VIEWBOX_H) * imgHeight;
-                } else {
-                  // Position par défaut (HAB_SLOTS)
-                  const slot = HAB_SLOTS[id];
-                  if (!slot) return null;
-                  const pos = getItemPosition(species, stageIdx, slot);
-                  s = pos.fontSize * 1.5;
-                  px = (pos.x / VIEWBOX_W) * size;
-                  py = (pos.y / VIEWBOX_H) * imgHeight;
-                }
+                const slot = HAB_SLOTS[id];
+                if (!slot) return null;
+                const pos = getItemPosition(species, stageIdx, slot);
+                const s = pos.fontSize * 1.5;
+                const px = (pos.x / VIEWBOX_W) * size;
+                const py = (pos.y / VIEWBOX_H) * imgHeight;
                 return (
                   <AnimatedAnimal
-                    key={fromSlot ?? id}
+                    key={id}
                     frames={frames}
                     x={px - s / 2}
                     y={py - s / 2}
@@ -472,19 +436,7 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
             )}
           </AnimatedG>
 
-          {/* Items placés par l'utilisateur — statiques (pas de sway), rendus seulement en taille réelle */}
-          {showGround && size > 100 && Object.keys(placements).length > 0 && !placingItem && (
-            <PlacedItems placements={placements} />
-          )}
-
-          {/* Mode placement — affiche les 10 slots avec animation pulsante */}
-          {showGround && size > 100 && placingItem && (
-            <PlacementSlots
-              placements={placements}
-              placingItemId={placingItem}
-              onSelect={onSlotSelect}
-            />
-          )}
+          {/* PlacedItems + PlacementSlots deplacés au niveau diorama (tree.tsx) */}
         </Svg>
       </Animated.View>
     </View>
@@ -1711,112 +1663,7 @@ function getItemEmoji(itemId: string): string | null {
 /** Taille des illustrations placées sur la scène */
 const PLACED_ITEM_SIZE = 28;
 
-/** Rendu des items placés sur la scène (mode normal, pas de placement en cours) */
-function PlacedItems({ placements }: { placements: Record<string, string> }) {
-  return (
-    <G>
-      {Object.entries(placements).map(([slotId, itemId]) => {
-        // Les animaux pixel sont rendus par l'overlay natif animé
-        if (ANIMAL_IDLE_FRAMES[itemId]) return null;
-        const slot = SCENE_SLOTS.find(s => s.id === slotId);
-        const emoji = getItemEmoji(itemId);
-        if (!slot || !emoji) return null;
-        const illustration = ITEM_ILLUSTRATIONS[itemId];
-        if (illustration) {
-          return (
-            <SvgImage
-              key={slotId}
-              href={illustration}
-              x={slot.cx - PLACED_ITEM_SIZE / 2}
-              y={slot.cy - PLACED_ITEM_SIZE / 2}
-              width={PLACED_ITEM_SIZE}
-              height={PLACED_ITEM_SIZE}
-            />
-          );
-        }
-        return (
-          <SvgText
-            key={slotId}
-            x={slot.cx}
-            y={slot.cy + 5}
-            fontSize={18}
-            textAnchor="middle"
-          >
-            {emoji}
-          </SvgText>
-        );
-      })}
-    </G>
-  );
-}
-
-/** Rendu des slots en mode placement — cercles pulsants, emoji si occupé */
-function PlacementSlots({
-  placements,
-  placingItemId,
-  onSelect,
-}: {
-  placements: Record<string, string>;
-  placingItemId: string;
-  onSelect?: (slotId: string) => void;
-}) {
-  return (
-    <G>
-      {SCENE_SLOTS.map(slot => {
-        const occupiedItemId = placements[slot.id];
-        const emoji = occupiedItemId ? getItemEmoji(occupiedItemId) : null;
-        const isEmpty = !emoji;
-        return (
-          <G key={slot.id} onPress={() => onSelect?.(slot.id)}>
-            {/* Cercle de fond — zone tactile + indicateur visuel */}
-            <Circle
-              cx={slot.cx}
-              cy={slot.cy}
-              r={14}
-              fill={isEmpty ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.25)'}
-              stroke={isEmpty ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.8)'}
-              strokeWidth={1.5}
-              strokeDasharray={isEmpty ? '4,3' : undefined}
-            />
-            {/* Item si le slot est occupé — illustration ou emoji */}
-            {emoji ? (
-              ITEM_ILLUSTRATIONS[occupiedItemId!] ? (
-                <SvgImage
-                  href={ITEM_ILLUSTRATIONS[occupiedItemId!]}
-                  x={slot.cx - 10}
-                  y={slot.cy - 10}
-                  width={20}
-                  height={20}
-                />
-              ) : (
-                <SvgText
-                  x={slot.cx}
-                  y={slot.cy + 5}
-                  fontSize={16}
-                  textAnchor="middle"
-                >
-                  {emoji}
-                </SvgText>
-              )
-            ) : (
-              /* Indicateur "+" pour les slots vides */
-              <SvgText
-                x={slot.cx}
-                y={slot.cy + 4}
-                fontSize={14}
-                textAnchor="middle"
-                fill="rgba(255,255,255,0.6)"
-                fontWeight="bold"
-              >
-                +
-              </SvgText>
-            )}
-          </G>
-        );
-      })}
-    </G>
-  );
-}
+// PlacedItems + PlacementSlots SVG supprimés — remplacés par NativePlacedItems/NativePlacementSlots au niveau diorama
 
 // ── Positions dynamiques des décorations sur l'arbre ─────
 
@@ -1968,7 +1815,7 @@ function DecorationOverlay({ decorationIds, stageIdx, previewMode = false, speci
 // ── Animaux pixel animés (cycle idle) ──────────
 
 /** Frames idle par animal pixel (2 frames pour le cycle) */
-const ANIMAL_IDLE_FRAMES: Record<string, [any, any]> = {
+export const ANIMAL_IDLE_FRAMES: Record<string, [any, any]> = {
   poussin:  [require('../../assets/garden/animals/poussin/idle_1.png'),  require('../../assets/garden/animals/poussin/idle_2.png')],
   poulet:   [require('../../assets/garden/animals/poulet/idle_1.png'),   require('../../assets/garden/animals/poulet/idle_2.png')],
   canard:   [require('../../assets/garden/animals/canard/idle_1.png'),   require('../../assets/garden/animals/canard/idle_2.png')],

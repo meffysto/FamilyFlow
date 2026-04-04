@@ -17,8 +17,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SCENE_SLOTS, ITEM_ILLUSTRATIONS, DECORATIONS, INHABITANTS } from '../../lib/mascot/types';
 
-const VIEWBOX_W = 200;
-const VIEWBOX_H = 240;
 const SLOT_SIZE = 32;
 
 function getItemEmoji(itemId: string): string | null {
@@ -103,8 +101,8 @@ export function NativePlacementSlots({ placements, placingItemId, containerWidth
         const isEmpty = !emoji;
         const illustration = occupiedItemId ? (ITEM_ILLUSTRATIONS[occupiedItemId] ?? null) : null;
 
-        const x = (slot.cx / VIEWBOX_W) * containerWidth;
-        const y = (slot.cy / VIEWBOX_H) * containerHeight;
+        const x = slot.x * containerWidth;
+        const y = slot.y * containerHeight;
 
         return (
           <PulsingSlot

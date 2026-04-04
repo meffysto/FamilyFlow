@@ -1,17 +1,17 @@
 /**
  * NativePlacedItems.tsx — Rendu natif RN des items places sur la scene
  *
- * Remplace le SVG PlacedItems. Positionne les items (Image ou emoji Text)
- * aux coordonnees SCENE_SLOTS converties en pixels ecran.
+ * Positionne les items (Image, emoji, ou animal anime) aux coordonnees
+ * SCENE_SLOTS en fractions du conteneur diorama.
  */
 
-import React from 'react';
-import { View, Image, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Image, Text, StyleSheet } from 'react-native';
 import { SCENE_SLOTS, DECORATIONS, INHABITANTS, ITEM_ILLUSTRATIONS } from '../../lib/mascot/types';
+import { ANIMAL_IDLE_FRAMES } from './TreeView';
 
-const VIEWBOX_W = 200;
-const VIEWBOX_H = 240;
 const ITEM_SIZE = 32;
+const ANIMAL_SIZE = 20;
 
 function getItemEmoji(itemId: string): string | null {
   const deco = DECORATIONS.find(d => d.id === itemId);
@@ -21,27 +21,52 @@ function getItemEmoji(itemId: string): string | null {
   return null;
 }
 
+/** Animal pixel anime — alterne 2 frames idle */
+function PlacedAnimal({ frames, x, y }: { frames: [any, any]; x: number; y: number }) {
+  const [frameIdx, setFrameIdx] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setFrameIdx(f => (f + 1) % 2), 500);
+    return () => clearInterval(interval);
+  }, []);
+  return (
+    <Image
+      source={frames[frameIdx]}
+      style={[styles.item, {
+        left: x - ANIMAL_SIZE / 2,
+        top: y - ANIMAL_SIZE / 2,
+        width: ANIMAL_SIZE,
+        height: ANIMAL_SIZE,
+      }] as any}
+    />
+  );
+}
+
 interface Props {
   placements: Record<string, string>;
   containerWidth: number;
   containerHeight: number;
-  skipIds?: Set<string>; // IDs a ignorer (animaux pixel geres separement)
 }
 
-export function NativePlacedItems({ placements, containerWidth, containerHeight, skipIds }: Props) {
+export function NativePlacedItems({ placements, containerWidth, containerHeight }: Props) {
   return (
     <>
       {Object.entries(placements).map(([slotId, itemId]) => {
-        if (skipIds?.has(itemId)) return null;
         const slot = SCENE_SLOTS.find(s => s.id === slotId);
         if (!slot) return null;
+
+        const x = slot.x * containerWidth;
+        const y = slot.y * containerHeight;
+
+        // Animal pixel — rendu anime
+        const animalFrames = ANIMAL_IDLE_FRAMES[itemId];
+        if (animalFrames) {
+          return <PlacedAnimal key={slotId} frames={animalFrames} x={x} y={y} />;
+        }
+
         const emoji = getItemEmoji(itemId);
         if (!emoji) return null;
 
-        const x = (slot.cx / VIEWBOX_W) * containerWidth;
-        const y = (slot.cy / VIEWBOX_H) * containerHeight;
         const illustration = ITEM_ILLUSTRATIONS[itemId];
-
         if (illustration) {
           return (
             <Image

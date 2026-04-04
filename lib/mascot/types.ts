@@ -137,29 +137,26 @@ export interface EvolutionEvent {
 /** Zone de la scène pour le placement d'items */
 export type SceneZone = 'tree' | 'ground' | 'sky';
 
-/** Slot de placement sur la scène SVG (viewbox 200×240) */
+/** Slot de placement sur la scene diorama (fractions 0-1 du conteneur) */
 export interface SceneSlot {
   id: string;
-  cx: number;
-  cy: number;
+  x: number;    // fraction largeur conteneur (0-1)
+  y: number;    // fraction hauteur conteneur (0-1)
   zone: SceneZone;
 }
 
-/** 10 emplacements répartis sur les zones d'herbe (viewbox 200×240) */
+/** 10 emplacements repartis sur le diorama (fractions 0-1) */
 export const SCENE_SLOTS: SceneSlot[] = [
-  // Arbre (décorations dans/sur l'arbre)
-  { id: 'tree-top',      cx: 100, cy: 75,  zone: 'tree' },
-  { id: 'tree-left',     cx: 60,  cy: 120, zone: 'tree' },
-  { id: 'tree-right',    cx: 140, cy: 115, zone: 'tree' },
-  // Sol — zones d'herbe (hors chemin, hors eau, hors pavés)
-  { id: 'ground-left',   cx: 24,  cy: 120, zone: 'ground' },  // herbe gauche milieu
-  { id: 'ground-center', cx: 50,  cy: 140, zone: 'ground' },  // herbe centre-gauche
-  { id: 'ground-right',  cx: 140, cy: 140, zone: 'ground' },  // herbe centre-droit
-  { id: 'ground-far-l',  cx: 16,  cy: 160, zone: 'ground' },  // herbe gauche bas (berge lac)
-  { id: 'ground-far-r',  cx: 120, cy: 150, zone: 'ground' },  // herbe centre-droit bas
-  // Ciel
-  { id: 'sky-left',      cx: 30,  cy: 55,  zone: 'sky' },
-  { id: 'sky-right',     cx: 170, cy: 50,  zone: 'sky' },
+  { id: 'slot-1',  x: 0.13, y: 0.48, zone: 'ground' },   // herbe gauche milieu
+  { id: 'slot-2',  x: 0.57, y: 0.56, zone: 'ground' },   // pied arbre centre
+  { id: 'slot-3',  x: 0.73, y: 0.58, zone: 'ground' },   // pied arbre droite
+  { id: 'slot-4',  x: 0.58, y: 0.68, zone: 'ground' },   // sous arbre centre
+  { id: 'slot-5',  x: 0.64, y: 0.79, zone: 'ground' },   // herbe basse centre-droite
+  { id: 'slot-6',  x: 0.41, y: 0.80, zone: 'ground' },   // herbe basse centre-gauche
+  { id: 'slot-7',  x: 0.85, y: 0.92, zone: 'ground' },   // herbe bas droite
+  { id: 'slot-8',  x: 0.90, y: 0.23, zone: 'ground' },   // a droite du potager
+  { id: 'slot-9',  x: 0.91, y: 0.11, zone: 'ground' },   // haut droite
+  { id: 'slot-10', x: 0.92, y: 0.04, zone: 'sky' },       // coin haut droite
 ];
 
 /** Décoration achetable pour l'arbre */

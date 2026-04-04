@@ -46,6 +46,8 @@ import { TreeView } from '../../components/mascot/TreeView';
 import { SpeciesPicker } from '../../components/mascot/SpeciesPicker';
 import { TreeShop } from '../../components/mascot/TreeShop';
 import { WorldGridView } from '../../components/mascot/WorldGridView';
+import { NativePlacedItems } from '../../components/mascot/NativePlacedItems';
+import { NativePlacementSlots } from '../../components/mascot/NativePlacementSlots';
 import { TileMapRenderer, GRASS_TILE_IMAGE } from '../../components/mascot/TileMapRenderer';
 import { BuildingShopSheet } from '../../components/mascot/BuildingShopSheet';
 import { CraftSheet } from '../../components/mascot/CraftSheet';
@@ -1781,6 +1783,28 @@ export default function TreeScreen() {
                 onCompanionTap={handleCompanionTap}
               />
             </View>
+
+            {/* Couche 4.5 : Items places + slots de placement (niveau diorama) */}
+            {profile && Object.keys(profile.mascotPlacements ?? {}).length > 0 && !placingItem && (
+              <View style={[StyleSheet.absoluteFill, { zIndex: 8 }]} pointerEvents="none">
+                <NativePlacedItems
+                  placements={profile.mascotPlacements ?? {}}
+                  containerWidth={SCREEN_W}
+                  containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
+                />
+              </View>
+            )}
+            {placingItem && (
+              <View style={[StyleSheet.absoluteFill, { zIndex: 12 }]} pointerEvents="box-none">
+                <NativePlacementSlots
+                  placements={profile?.mascotPlacements ?? {}}
+                  placingItemId={placingItem}
+                  containerWidth={SCREEN_W}
+                  containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
+                  onSelect={handleSlotSelect}
+                />
+              </View>
+            )}
 
             {/* Couche 5 : Expérience immersive saga (absolute overlay, zIndex 15) */}
             {showSagaEvent && sagaProgress && profile && (
