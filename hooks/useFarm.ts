@@ -47,18 +47,75 @@ import {
   repairWearEvent,
   getActiveWearEffects,
   serializeWearEvents,
+  parseWearEvents,
   cleanupOldEvents,
   type WearEvent,
   type WearEffects,
 } from '../lib/mascot/wear-engine';
-import { parseGamification, serializeGamification, parseFamille } from '../lib/parser';
-import { enqueueWrite, patchProfileField, patchProfileFields } from '../lib/famille-queue';
-
-const FAMILLE_FILE = 'famille.md';
+import { parseGamification, serializeGamification, parseFarmProfile, serializeFarmProfile, parseCompanion } from '../lib/parser';
+import type { FarmProfileData } from '../lib/types';
 
 /** Helper : retourne le chemin du fichier gamification per-profil */
 function gamiFile(profileId: string): string {
   return `gami-${profileId}.md`;
+}
+
+/** Helper : retourne le chemin du fichier ferme per-profil */
+function farmFile(profileId: string): string {
+  return `farm-${profileId}.md`;
+}
+
+/** Applique une valeur de champ sur un objet FarmProfileData (mapper fieldKey → propriété) */
+function applyFarmField(data: FarmProfileData, fieldKey: string, value: string): void {
+  switch (fieldKey) {
+    case 'tree_species':
+      data.treeSpecies = value as any;
+      break;
+    case 'mascot_decorations':
+      data.mascotDecorations = value ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
+      break;
+    case 'mascot_inhabitants':
+      data.mascotInhabitants = value ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
+      break;
+    case 'mascot_placements': {
+      const placements: Record<string, string> = {};
+      if (value) {
+        value.split(',').forEach(pair => {
+          const [slotId, itemId] = pair.split(':').map(s => s.trim());
+          if (slotId && itemId) placements[slotId] = itemId;
+        });
+      }
+      data.mascotPlacements = placements;
+      break;
+    }
+    case 'farm_crops':
+      data.farmCrops = value;
+      break;
+    case 'farm_buildings':
+      data.farmBuildings = parseBuildings(value);
+      break;
+    case 'farm_inventory':
+      data.farmInventory = parseInventory(value);
+      break;
+    case 'farm_harvest_inventory':
+      data.harvestInventory = parseHarvestInventory(value);
+      break;
+    case 'farm_crafted_items':
+      data.craftedItems = parseCraftedItems(value);
+      break;
+    case 'farm_tech':
+      data.farmTech = value ? value.split(',').map(s => s.trim()).filter(Boolean) : [];
+      break;
+    case 'farm_rare_seeds':
+      data.farmRareSeeds = parseRareSeeds(value);
+      break;
+    case 'wear_events':
+      data.wearEvents = parseWearEvents(value);
+      break;
+    case 'companion':
+      data.companion = parseCompanion(value);
+      break;
+  }
 }
 
 export function useFarm() {
@@ -124,21 +181,25 @@ export function useFarm() {
 
   const writeProfileField = useCallback(async (profileId: string, fieldKey: string, value: string) => {
     if (!vault) return;
-    return enqueueWrite(async () => {
-      const lines = (await vault.readFile(FAMILLE_FILE)).split('\n');
-      patchProfileField(lines, profileId, fieldKey, value);
-      await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
-    });
-  }, [vault]);
+    const file = farmFile(profileId);
+    const content = await vault.readFile(file).catch(() => '');
+    const farmData = parseFarmProfile(content);
+    applyFarmField(farmData, fieldKey, value);
+    const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+    await vault.writeFile(file, serializeFarmProfile(profileName, farmData));
+  }, [vault, profiles]);
 
   const writeProfileFields = useCallback(async (profileId: string, fields: Record<string, string>) => {
     if (!vault) return;
-    return enqueueWrite(async () => {
-      const lines = (await vault.readFile(FAMILLE_FILE)).split('\n');
-      patchProfileFields(lines, profileId, fields);
-      await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
-    });
-  }, [vault]);
+    const file = farmFile(profileId);
+    const content = await vault.readFile(file).catch(() => '');
+    const farmData = parseFarmProfile(content);
+    for (const [fieldKey, value] of Object.entries(fields)) {
+      applyFarmField(farmData, fieldKey, value);
+    }
+    const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+    await vault.writeFile(file, serializeFarmProfile(profileName, farmData));
+  }, [vault, profiles]);
 
   /** Planter une culture sur une parcelle */
   const plant = useCallback(async (profileId: string, plotIndex: number, cropId: string) => {
@@ -162,18 +223,16 @@ export function useFarm() {
     }
 
 
-    const content = await vault.readFile(FAMILLE_FILE);
-    const freshProfiles = parseFamille(content);
-    const freshProfile = freshProfiles.find(p => p.id === profileId);
-    if (!freshProfile) return;
+    const content = await vault.readFile(farmFile(profileId)).catch(() => '');
+    const freshFarm = parseFarmProfile(content);
 
-    const currentCrops = parseCrops(freshProfile.farmCrops ?? '');
+    const currentCrops = parseCrops(freshFarm.farmCrops ?? '');
     const newCrops = plantCrop(currentCrops, plotIndex, cropId);
     if (newCrops.length === currentCrops.length) return;
 
     if (isRareSeed) {
       // Consommer la graine rare du stock
-      const currentRareSeeds = freshProfile.farmRareSeeds ?? {};
+      const currentRareSeeds = freshFarm.farmRareSeeds ?? {};
       const updatedRareSeeds = { ...currentRareSeeds };
       updatedRareSeeds[cropId] = (updatedRareSeeds[cropId] ?? 0) - 1;
       await writeProfileFields(profileId, {
@@ -192,21 +251,15 @@ export function useFarm() {
     if (!vault) return null;
 
 
-    const content = await vault.readFile(FAMILLE_FILE);
-    const freshProfiles = parseFamille(content);
-    const profile = freshProfiles.find(p => p.id === profileId);
-    if (!profile) return null;
+    const content = await vault.readFile(farmFile(profileId)).catch(() => '');
+    const profile = parseFarmProfile(content);
 
     const currentCrops = parseCrops(profile.farmCrops ?? '');
     const result = harvestCrop(currentCrops, plotIndex);
     if (!result.harvestedCropId) return null;
 
     // Ajouter la recolte a l'inventaire
-    const harvestInv = parseHarvestInventory(
-      (profile as any).farm_harvest_inventory ?? undefined
-    );
-    // Utiliser le champ parse du profile si disponible
-    const currentHarvestInv = profile.harvestInventory ?? harvestInv;
+    const currentHarvestInv = profile.harvestInventory ?? {};
     const updatedHarvestInv = { ...currentHarvestInv };
     // Parcelle geante (c20) = double recolte
     const profileTech = getTechBonuses(profile.farmTech ?? []);
@@ -249,10 +302,8 @@ export function useFarm() {
     if (!vault) return 0;
 
 
-    const content = await vault.readFile(FAMILLE_FILE);
-    const freshProfiles = parseFamille(content);
-    const profile = freshProfiles.find(p => p.id === profileId);
-    if (!profile) return 0;
+    const content = await vault.readFile(farmFile(profileId)).catch(() => '');
+    const profile = parseFarmProfile(content);
 
     const harvestInv = profile.harvestInventory ?? {};
     if ((harvestInv[cropId] ?? 0) <= 0) return 0;
@@ -275,10 +326,8 @@ export function useFarm() {
     if (!vault) return null;
 
 
-    const content = await vault.readFile(FAMILLE_FILE);
-    const freshProfiles = parseFamille(content);
-    const profile = freshProfiles.find(p => p.id === profileId);
-    if (!profile) return null;
+    const content = await vault.readFile(farmFile(profileId)).catch(() => '');
+    const profile = parseFarmProfile(content);
 
     const recipe = CRAFT_RECIPES.find(r => r.id === recipeId);
     if (!recipe) return null;
@@ -312,10 +361,8 @@ export function useFarm() {
     if (!vault) return 0;
 
 
-    const content = await vault.readFile(FAMILLE_FILE);
-    const freshProfiles = parseFamille(content);
-    const profile = freshProfiles.find(p => p.id === profileId);
-    if (!profile) return 0;
+    const content = await vault.readFile(farmFile(profileId)).catch(() => '');
+    const profile = parseFarmProfile(content);
 
     const craftedItems = profile.craftedItems ?? [];
     const itemIdx = craftedItems.findIndex(i => i.recipeId === recipeId);
@@ -358,120 +405,98 @@ export function useFarm() {
   const upgradeBuildingAction = useCallback(async (profileId: string, cellId: string): Promise<void> => {
     if (!vault) return;
 
-    const result = await enqueueWrite(async () => {
-      const content = await vault.readFile(FAMILLE_FILE);
-      const freshProfiles = parseFamille(content);
-      const freshProfile = freshProfiles.find(p => p.id === profileId);
-      if (!freshProfile) return null;
+    const file = farmFile(profileId);
+    const content = await vault.readFile(file).catch(() => '');
+    const freshFarm = parseFarmProfile(content);
 
-      const currentBuildings = freshProfile.farmBuildings ?? [];
-      const building = currentBuildings.find(b => b.cellId === cellId);
-      if (!building) return null;
+    const currentBuildings = freshFarm.farmBuildings ?? [];
+    const building = currentBuildings.find(b => b.cellId === cellId);
+    if (!building) return;
 
-      const def = BUILDING_CATALOG.find(d => d.id === building.buildingId);
-      if (!def) return null;
+    const def = BUILDING_CATALOG.find(d => d.id === building.buildingId);
+    if (!def) return;
 
-      const cost = def.tiers[building.level]?.upgradeCoins ?? 0;
-      if (cost === 0) throw new Error('Niveau maximum atteint');
+    const cost = def.tiers[building.level]?.upgradeCoins ?? 0;
+    if (cost === 0) throw new Error('Niveau maximum atteint');
 
-      // Coins depuis le contexte (merge gami, fichier different)
-      const profileCtx = profiles?.find(p => p.id === profileId);
-      if ((profileCtx?.coins ?? 0) < cost) throw new Error('Pas assez de feuilles');
+    // Coins depuis le contexte (merge gami, fichier different)
+    const profileCtx = profiles?.find(p => p.id === profileId);
+    if ((profileCtx?.coins ?? 0) < cost) throw new Error('Pas assez de feuilles');
 
-      const lines = content.split('\n');
-      patchProfileField(lines, profileId, 'farm_buildings', serializeBuildings(upgradeBuilding(currentBuildings, cellId)));
-      await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
-      return { cost, buildingId: building.buildingId };
-    });
+    const newFarm = { ...freshFarm, farmBuildings: upgradeBuilding(currentBuildings, cellId) };
+    const profileName = profiles?.find(p => p.id === profileId)?.name ?? profileId;
+    await vault.writeFile(file, serializeFarmProfile(profileName, newFarm));
 
-    if (result) {
-      await deductCoins(profileId, result.cost, `⬆️ Amelioration : ${result.buildingId}`);
-      await refresh();
-    }
+    await deductCoins(profileId, cost, `⬆️ Amelioration : ${building.buildingId}`);
+    await refresh();
   }, [profiles, vault, deductCoins, refresh]);
 
   /** Collecter les ressources d'un batiment specifique */
   const collectBuildingResources = useCallback(async (profileId: string, cellId: string): Promise<number> => {
     if (!vault) return 0;
 
-    const collected = await enqueueWrite(async () => {
-      const content = await vault.readFile(FAMILLE_FILE);
-      const freshProfiles = parseFamille(content);
-      const profile = freshProfiles.find(p => p.id === profileId);
-      if (!profile) return 0;
+    const file = farmFile(profileId);
+    const content = await vault.readFile(file).catch(() => '');
+    const profile = parseFarmProfile(content);
 
-      const currentBuildings = profile.farmBuildings ?? [];
-      const currentInventory: FarmInventory = profile.farmInventory ?? { oeuf: 0, lait: 0, farine: 0, miel: 0 };
+    const currentBuildings = profile.farmBuildings ?? [];
+    const currentInventory: FarmInventory = profile.farmInventory ?? { oeuf: 0, lait: 0, farine: 0, miel: 0 };
 
-      const profileTechBonuses = getTechBonuses(profile.farmTech ?? []);
-      const result = collectBuilding(currentBuildings, currentInventory, cellId, new Date(), profileTechBonuses);
-      if (result.collected === 0) return 0;
+    const profileTechBonuses = getTechBonuses(profile.farmTech ?? []);
+    const result = collectBuilding(currentBuildings, currentInventory, cellId, new Date(), profileTechBonuses);
+    if (result.collected === 0) return 0;
 
-      const lines = content.split('\n');
-      patchProfileFields(lines, profileId, {
-        farm_buildings: serializeBuildings(result.buildings),
-        farm_inventory: serializeInventory(result.inventory),
-      });
-      await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
-      return result.collected;
-    });
+    const profileName = profiles?.find(p => p.id === profileId)?.name ?? profileId;
+    const newFarm = { ...profile, farmBuildings: result.buildings, farmInventory: result.inventory };
+    await vault.writeFile(file, serializeFarmProfile(profileName, newFarm));
 
-    if (collected > 0) await refresh();
-    return collected;
-  }, [vault, refresh]);
+    await refresh();
+    return result.collected;
+  }, [vault, profiles, refresh]);
 
   /** Collecter le revenu passif de tous les batiments (appele a l'ouverture de l'ecran) */
   const collectPassiveIncome = useCallback(async (profileId: string): Promise<number> => {
     if (!vault) return 0;
 
-    const totalCollected = await enqueueWrite(async () => {
-      const content = await vault.readFile(FAMILLE_FILE);
-      const freshProfiles = parseFamille(content);
-      const profile = freshProfiles.find(p => p.id === profileId);
-      if (!profile) return 0;
+    const file = farmFile(profileId);
+    const content = await vault.readFile(file).catch(() => '');
+    const profile = parseFarmProfile(content);
 
-      const placedBuildings = profile.farmBuildings ?? [];
-      if (placedBuildings.length === 0) return 0;
+    const placedBuildings = profile.farmBuildings ?? [];
+    if (placedBuildings.length === 0) return 0;
 
-      let currentBuildings = placedBuildings;
-      const currentInventory: FarmInventory = profile.farmInventory ?? { oeuf: 0, lait: 0, farine: 0, miel: 0 };
-      let updatedInventory = { ...currentInventory };
-      let total = 0;
+    let currentBuildings = placedBuildings;
+    const currentInventory: FarmInventory = profile.farmInventory ?? { oeuf: 0, lait: 0, farine: 0, miel: 0 };
+    let updatedInventory = { ...currentInventory };
+    let total = 0;
 
-      const passiveTechBonuses = getTechBonuses(profile.farmTech ?? []);
-      for (const building of placedBuildings) {
-        const result = collectBuilding(currentBuildings, updatedInventory, building.cellId, new Date(), passiveTechBonuses);
-        if (result.collected > 0) {
-          total += result.collected;
-          currentBuildings = result.buildings;
-          updatedInventory = result.inventory;
-        }
+    const passiveTechBonuses = getTechBonuses(profile.farmTech ?? []);
+    for (const building of placedBuildings) {
+      const result = collectBuilding(currentBuildings, updatedInventory, building.cellId, new Date(), passiveTechBonuses);
+      if (result.collected > 0) {
+        total += result.collected;
+        currentBuildings = result.buildings;
+        updatedInventory = result.inventory;
       }
+    }
 
-      if (total === 0) return 0;
+    if (total === 0) return 0;
 
-      const lines = content.split('\n');
-      patchProfileFields(lines, profileId, {
-        farm_buildings: serializeBuildings(currentBuildings),
-        farm_inventory: serializeInventory(updatedInventory),
-      });
-      await vault.writeFile(FAMILLE_FILE, lines.join('\n'));
-      return total;
-    });
+    const profileName = profiles?.find(p => p.id === profileId)?.name ?? profileId;
+    const newFarm = { ...profile, farmBuildings: currentBuildings, farmInventory: updatedInventory };
+    await vault.writeFile(file, serializeFarmProfile(profileName, newFarm));
 
-    if (totalCollected > 0) await refresh();
-    return totalCollected;
-  }, [vault, refresh]);
+    await refresh();
+    return total;
+  }, [vault, profiles, refresh]);
 
   /** Debloquer un noeud tech en depensant des feuilles */
   const unlockTech = useCallback(async (profileId: string, techId: string): Promise<boolean> => {
     if (!vault) return false;
 
 
-    const content = await vault.readFile(FAMILLE_FILE);
-    const freshProfiles = parseFamille(content);
-    const familleProfile = freshProfiles.find(p => p.id === profileId);
-    if (!familleProfile) return false;
+    const content = await vault.readFile(farmFile(profileId)).catch(() => '');
+    const familleProfile = parseFarmProfile(content);
 
     // Coins depuis le contexte profiles (merge gami)
     const fullProfile = profiles?.find(p => p.id === profileId);
@@ -495,10 +520,8 @@ export function useFarm() {
   const checkWear = useCallback(async (profileId: string): Promise<WearEvent[]> => {
     if (!vault) return [];
 
-    const content = await vault.readFile(FAMILLE_FILE);
-    const freshProfiles = parseFamille(content);
-    const profile = freshProfiles.find(p => p.id === profileId);
-    if (!profile) return [];
+    const content = await vault.readFile(farmFile(profileId)).catch(() => '');
+    const profile = parseFarmProfile(content);
 
     const currentEvents = profile.wearEvents ?? [];
     const crops = parseCrops(profile.farmCrops ?? '');
@@ -549,10 +572,8 @@ export function useFarm() {
   const repairWear = useCallback(async (profileId: string, eventId: string): Promise<boolean> => {
     if (!vault) return false;
 
-    const content = await vault.readFile(FAMILLE_FILE);
-    const freshProfiles = parseFamille(content);
-    const profile = freshProfiles.find(p => p.id === profileId);
-    if (!profile) return false;
+    const content = await vault.readFile(farmFile(profileId)).catch(() => '');
+    const profile = parseFarmProfile(content);
 
     const currentEvents = profile.wearEvents ?? [];
     const vaultProfile = profiles?.find(p => p.id === profileId);
