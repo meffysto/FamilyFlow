@@ -164,7 +164,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 09-01-PLAN.md — Gift engine + types + parser farm-{id}.md + notification template + i18n FR/EN
+- [x] 09-01-PLAN.md — Gift engine + types + parser farm-{id}.md + notification template + i18n FR/EN
 - [ ] 09-02-PLAN.md — sendGift/receiveGifts useFarm + GiftSenderSheet + GiftReceiptModal + CraftSheet long-press + tree.tsx cablage
 
 #### Phase 10: Compagnon Mascotte

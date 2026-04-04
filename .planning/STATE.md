@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: executing
-stopped_at: "Completed quick task 260404-l62: bouton skip taches recurrentes sans gamification"
-last_updated: "2026-04-04T13:03:59.717Z"
-last_activity: "2026-04-04 - Completed quick task 260404-l62: bouton skip taches recurrentes sans gamification"
+stopped_at: Completed 09-01-PLAN.md — gift engine moteur pur
+last_updated: "2026-04-04T16:52:35.704Z"
+last_activity: 2026-04-04
 progress:
   total_phases: 10
-  completed_phases: 7
-  total_plans: 22
-  completed_plans: 19
+  completed_phases: 8
+  total_plans: 24
+  completed_plans: 21
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 13 — evenements-saisonniers
+**Current focus:** Phase 09 — cadeaux-familiaux
 
 ## Current Position
 
-Phase: 13
-Plan: Not started
+Phase: 09 (cadeaux-familiaux) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
-Last activity: 2026-04-04 - Completed quick task 260404-kbd: système hybride ferme plot principal vitesse pleine + indicateur visuel
+Last activity: 2026-04-04
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -62,6 +62,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 11-sagas-immersives P02 | 3min | 2 tasks | 2 files |
 | Phase 13-evenements-saisonniers P01 | 4min | 2 tasks | 6 files |
 | Phase 13-evenements-saisonniers P02 | 8min | 2 tasks | 3 files |
+| Phase 09-cadeaux-familiaux P01 | 4min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -114,6 +115,9 @@ Recent decisions affecting current work:
 - [Phase 13-02]: overrideSaga prop sur SagaWorldEvent — 2 modifications minimales, bypass getSagaById pour sagas synthétiques d'événements
 - [Phase 13-02]: pointerEvents mutuellement exclusifs entre visiteur saga (droite) et visiteur événement (gauche) — coexistence sans conflit
 - [Phase 260404-kbd]: advanceFarmCrops hybride: boucle tous crops non-matures, plot principal vitesse pleine, autres demi-vitesse (seasonBonus*0.5)
+- [Phase 09-cadeaux-familiaux]: parsePendingGifts utilise gray-matter defensive (?? []) — coherent avec parseCompanion
+- [Phase 09-cadeaux-familiaux]: addGiftToInventory type=crafted ajoute toujours un nouvel item — simplifie le transfert sans ambiguité
+- [Phase 09-cadeaux-familiaux]: NotifEvent etendu avec 'gift_received' pour eviter le cast 'as NotifEvent'
 
 ### Pending Todos
 
@@ -151,6 +155,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T13:03:59.709Z
-Stopped at: Completed quick task 260404-l62: bouton skip taches recurrentes sans gamification
+Last session: 2026-04-04T16:52:35.700Z
+Stopped at: Completed 09-01-PLAN.md — gift engine moteur pur
 Resume file: None

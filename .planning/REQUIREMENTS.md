@@ -37,8 +37,8 @@ Requirements for milestone v1.1 -- Ferme Enrichie. La ferme est le levier de mot
 
 ### Social
 
-- [ ] **SOC-01**: Un membre peut envoyer une recolte ou un item crafte a un autre membre de la famille
-- [ ] **SOC-02**: Le destinataire recoit une notification et l'item apparait dans son inventaire
+- [x] **SOC-01**: Un membre peut envoyer une recolte ou un item crafte a un autre membre de la famille
+- [x] **SOC-02**: Le destinataire recoit une notification et l'item apparait dans son inventaire
 
 ### Compagnon Mascotte
 
@@ -90,8 +90,8 @@ Deferred to future milestones.
 | PRO-01 | Phase 8 | Complete |
 | PRO-02 | Phase 8 | Complete |
 | PRO-03 | Phase 8 | Complete |
-| SOC-01 | Phase 9 | Pending |
-| SOC-02 | Phase 9 | Pending |
+| SOC-01 | Phase 9 | Complete |
+| SOC-02 | Phase 9 | Complete |
 | COMP-01 | Phase 10 | Complete |
 | COMP-02 | Phase 10 | Complete |
 | COMP-03 | Phase 10 | Complete |
