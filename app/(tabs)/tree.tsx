@@ -281,6 +281,8 @@ export default function TreeScreen() {
   const [showCompanionPicker, setShowCompanionPicker] = useState(false);
   const [companionMessage, setCompanionMessage] = useState<string | null>(null);
   const companionPickerShownRef = useRef(false);
+  // Mémoire courte du compagnon — en mémoire uniquement, jamais persistée
+  const companionRecentMessagesRef = useRef<string[]>([]);
 
   // Batiments productifs
   const [showBuildingShop, setShowBuildingShop] = useState(false);
@@ -423,7 +425,6 @@ export default function TreeScreen() {
       activeSpecies: species,
       name,
       unlockedSpecies: [species],
-      mood: 'content',
     };
     await setCompanion(activeProfile.id, newCompanion);
     setShowCompanionPicker(false);
@@ -437,18 +438,15 @@ export default function TreeScreen() {
   const recentTasksCountRef = useRef(recentTasksCount);
   useEffect(() => { recentTasksCountRef.current = recentTasksCount; }, [recentTasksCount]);
 
-  // Sauvegarder un message dans la mémoire courte du compagnon (via refs pour éviter les boucles)
+  // Sauvegarder un message dans la mémoire courte du compagnon (en mémoire uniquement, jamais persistée)
   // Sauvegarde TOUS les messages (IA et templates traduits) pour l'anti-répétition
   const saveToMemory = useCallback((msg: string) => {
-    const comp = companionRef.current;
-    const prof = activeProfileRef.current;
-    if (!comp || !prof || !msg) return;
-    const recent = comp.recentMessages ?? [];
+    if (!companionRef.current || !msg) return;
+    const recent = companionRecentMessagesRef.current;
     // Pas de doublon avec le dernier message
     if (recent.length > 0 && recent[recent.length - 1] === msg) return;
-    const updated = [...recent, msg].slice(-5);
-    setCompanion(prof.id, { ...comp, recentMessages: updated });
-  }, [setCompanion]);
+    companionRecentMessagesRef.current = [...recent, msg].slice(-5);
+  }, []);
 
   // Timer unique pour éviter les races de timers entre fallback et IA
   const msgTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -501,7 +499,7 @@ export default function TreeScreen() {
       recentTasks: recentCompletedTasks,
       nextRdv,
       todayMeals,
-      recentMessages: companion.recentMessages,
+      recentMessages: companionRecentMessagesRef.current,
       mood: moodResult.mood,
       moodScore: moodResult.score,
       pendingTasks: pendingTasksToday,
@@ -563,7 +561,7 @@ export default function TreeScreen() {
       tasksToday: recentTasksCountRef.current,
       streak: prof.streak ?? 0,
       level: calculateLevel(prof.points ?? 0),
-      recentMessages: comp.recentMessages,
+      recentMessages: companionRecentMessagesRef.current,
       mood: moodResult.mood,
       moodScore: moodResult.score,
       timeOfDay,
@@ -611,7 +609,7 @@ export default function TreeScreen() {
       recentTasks: recentCompletedTasks,
       nextRdv,
       todayMeals,
-      recentMessages: comp.recentMessages,
+      recentMessages: companionRecentMessagesRef.current,
       mood: moodResult.mood,
       moodScore: moodResult.score,
       pendingTasks: pendingTasksToday,

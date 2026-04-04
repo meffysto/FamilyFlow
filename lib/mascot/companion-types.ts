@@ -47,8 +47,6 @@ export interface CompanionData {
   activeSpecies: CompanionSpecies;
   name: string;
   unlockedSpecies: CompanionSpecies[];
-  mood: CompanionMood;
-  recentMessages?: string[];  // 3 derniers messages (mémoire courte)
 }
 
 /** Mapping stade → plage de niveaux */

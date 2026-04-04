@@ -156,7 +156,6 @@ describe('getCompanionXpBonus', () => {
     activeSpecies: 'chat',
     name: 'Minou',
     unlockedSpecies: ['chat'],
-    mood: 'content',
   };
 
   it('retourne 1.05 si compagnon actif', () => {

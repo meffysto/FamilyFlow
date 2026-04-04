@@ -52,7 +52,8 @@ import { parseEmplacementFromHeader, LEGACY_BEBE_SECTIONS, type EmplacementId } 
 import { parseBuildings, parseInventory, serializeBuildings, serializeInventory } from './mascot/building-engine';
 import { parseHarvestInventory, parseCraftedItems, parseRareSeeds, serializeHarvestInventory, serializeCraftedItems, serializeRareSeeds } from './mascot/craft-engine';
 import { parseWearEvents, serializeWearEvents } from './mascot/wear-engine';
-import type { CompanionData, CompanionSpecies, CompanionMood } from './mascot/companion-types';
+import type { CompanionData, CompanionSpecies } from './mascot/companion-types';
+import { calculateLevel } from './gamification';
 import type { TreeSpecies } from './mascot/types';
 
 // ─── Task parsing ───────────────────────────────────────────────────────────
@@ -528,9 +529,9 @@ export function serializeMeals(meals: MealItem[]): string {
 // ─── famille.md ─────────────────────────────────────────────────────────────
 
 /**
- * Parse le champ companion d'un profil famille.md.
- * Format CSV : "activeSpecies:name:unlocked1|unlocked2:mood"
- * Exemple : "chat:Mimi:chat|lapin:content"
+ * Parse le champ companion d'un profil farm-{id}.md.
+ * Format CSV : "activeSpecies:name:unlocked1|unlocked2"
+ * Ancien format (backward compat) : "activeSpecies:name:unlocked1|unlocked2:mood" — la 4e partie (mood) est ignorée.
  * Retourne null si la valeur est vide ou invalide.
  */
 export function parseCompanion(raw: string | undefined): CompanionData | null {
@@ -540,22 +541,21 @@ export function parseCompanion(raw: string | undefined): CompanionData | null {
   const activeSpecies = parts[0] as CompanionSpecies;
   const name = parts[1] || '';
   const unlockedRaw = parts[2] || activeSpecies;
-  const mood = (parts[3] as CompanionMood) || 'content';
+  // parts[3] (mood, ancien format) ignoré silencieusement pour backward compat
   return {
     activeSpecies,
     name,
     unlockedSpecies: unlockedRaw.split('|') as CompanionSpecies[],
-    mood,
   };
 }
 
 /**
- * Sérialise un CompanionData en chaîne CSV pour famille.md.
- * Format : "activeSpecies:name:unlocked1|unlocked2:mood"
+ * Sérialise un CompanionData en chaîne CSV pour farm-{id}.md.
+ * Format : "activeSpecies:name:unlocked1|unlocked2"
  */
 export function serializeCompanion(data: CompanionData): string {
   const unlocked = data.unlockedSpecies.join('|');
-  return `${data.activeSpecies}:${data.name}:${unlocked}:${data.mood}`;
+  return `${data.activeSpecies}:${data.name}:${unlocked}`;
 }
 
 // ─── farm-{profileId}.md ────────────────────────────────────────────────────
@@ -767,7 +767,7 @@ export function parseGamification(content: string): GamificationData {
         mascotPlacements: {},
         points: parseInt(currentProps.points ?? '0', 10),
         coins: parseInt(currentProps.coins ?? currentProps.points ?? '0', 10),
-        level: parseInt(currentProps.level ?? '1', 10),
+        level: calculateLevel(parseInt(currentProps.points ?? '0', 10)),
         streak: parseInt(currentProps.streak ?? '0', 10),
         lootBoxesAvailable: parseInt(currentProps.loot_boxes_available ?? '0', 10),
         multiplier: parseFloat(currentProps.multiplier ?? '1'),
@@ -848,7 +848,6 @@ export function serializeGamification(data: GamificationData): string {
       (p) => `## ${p.name}
 points: ${p.points}
 coins: ${p.coins ?? p.points}
-level: ${p.level}
 streak: ${p.streak}
 loot_boxes_available: ${p.lootBoxesAvailable}
 multiplier: ${p.multiplier}
