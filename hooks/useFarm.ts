@@ -54,6 +54,16 @@ import {
 } from '../lib/mascot/wear-engine';
 import { parseGamification, serializeGamification, parseFarmProfile, serializeFarmProfile, parseCompanion } from '../lib/parser';
 import type { FarmProfileData } from '../lib/types';
+import {
+  parsePendingGifts,
+  serializePendingGifts,
+  canSendGiftToday,
+  incrementGiftsSent,
+  removeFromInventory,
+  addGiftToInventory,
+  buildGiftHistoryEntry,
+  type GiftEntry,
+} from '../lib/mascot/gift-engine';
 
 /** Helper : retourne le chemin du fichier gamification per-profil */
 function gamiFile(profileId: string): string {
@@ -114,6 +124,12 @@ function applyFarmField(data: FarmProfileData, fieldKey: string, value: string):
       break;
     case 'companion':
       data.companion = parseCompanion(value);
+      break;
+    case 'gift_history':
+      data.giftHistory = value;
+      break;
+    case 'gifts_sent_today':
+      data.giftsSentToday = value;
       break;
   }
 }
@@ -633,6 +649,115 @@ export function useFarm() {
     return profile?.wearEvents ?? [];
   }, [profiles]);
 
+  /** Envoyer un cadeau a un autre profil */
+  const sendGift = useCallback(async (
+    senderId: string,
+    recipientId: string,
+    _recipientName: string,
+    itemType: 'harvest' | 'rare_seed' | 'crafted' | 'building_resource',
+    itemId: string,
+    quantity: number,
+  ): Promise<{ success: boolean; error?: string }> => {
+    if (!vault) return { success: false, error: 'no_vault' };
+
+    // 1. Lire farm-{senderId}.md
+    const senderContent = await vault.readFile(farmFile(senderId)).catch(() => '');
+    const senderFarm = parseFarmProfile(senderContent);
+
+    // 2. Verifier anti-abus
+    if (!canSendGiftToday(senderFarm.giftsSentToday)) {
+      return { success: false, error: 'daily_limit' };
+    }
+
+    // 3. Retirer de l'inventaire expediteur
+    const { success, updated } = removeFromInventory(senderFarm, itemType, itemId, quantity);
+    if (!success) return { success: false, error: 'not_enough' };
+
+    // 4. Construire le GiftEntry
+    const senderProfile = profiles?.find(p => p.id === senderId);
+    const gift: GiftEntry = {
+      sender_id: senderId,
+      sender_name: senderProfile?.name ?? senderId,
+      sender_avatar: senderProfile?.avatar ?? '🎁',
+      item_type: itemType,
+      item_id: itemId,
+      quantity,
+      sent_at: new Date().toISOString(),
+    };
+
+    // 5. Lire pending existant, merger, ecrire
+    const pendingFile = `gifts-pending-${recipientId}.md`;
+    const pendingContent = await vault.readFile(pendingFile).catch(() => '');
+    const pending = parsePendingGifts(pendingContent);
+    pending.gifts.push(gift);
+    await vault.writeFile(pendingFile, serializePendingGifts(pending.gifts));
+
+    // 6. Ecrire farm expediteur avec inventaire reduit + historique + compteur
+    const historyEntry = buildGiftHistoryEntry('sent', senderId, recipientId, itemType, itemId, quantity);
+    const existingHistory = updated.giftHistory ?? '';
+    const allHistory = existingHistory ? `${historyEntry}, ${existingHistory}` : historyEntry;
+    const trimmedHistory = allHistory.split(', ').slice(0, 10).join(', ');
+
+    // Serialiser les champs inventaire modifies selon itemType
+    const inventoryFields: Record<string, string> = {};
+    if (itemType === 'harvest') {
+      inventoryFields['farm_harvest_inventory'] = serializeHarvestInventory(updated.harvestInventory ?? {});
+    } else if (itemType === 'rare_seed') {
+      inventoryFields['farm_rare_seeds'] = serializeRareSeeds(updated.farmRareSeeds ?? {});
+    } else if (itemType === 'crafted') {
+      inventoryFields['farm_crafted_items'] = serializeCraftedItems(updated.craftedItems ?? []);
+    } else if (itemType === 'building_resource') {
+      inventoryFields['farm_inventory'] = serializeInventory(updated.farmInventory ?? { oeuf: 0, lait: 0, farine: 0, miel: 0 });
+    }
+    inventoryFields['gift_history'] = trimmedHistory;
+    inventoryFields['gifts_sent_today'] = incrementGiftsSent(senderFarm.giftsSentToday);
+
+    await writeProfileFields(senderId, inventoryFields);
+    await refreshFarm(senderId);
+    return { success: true };
+  }, [vault, profiles, writeProfileFields, refreshFarm]);
+
+  /** Consommer les cadeaux en attente pour un profil (claim-first) */
+  const receiveGifts = useCallback(async (
+    recipientId: string,
+  ): Promise<GiftEntry[]> => {
+    if (!vault) return [];
+
+    const pendingFile = `gifts-pending-${recipientId}.md`;
+    const pendingContent = await vault.readFile(pendingFile).catch(() => null);
+    if (!pendingContent) return [];
+
+    const pending = parsePendingGifts(pendingContent);
+    if (pending.gifts.length === 0) return [];
+
+    // 1. CLAIM FIRST — supprimer le fichier pending AVANT d'appliquer (evite double-consommation)
+    await vault.deleteFile(pendingFile);
+
+    // 2. Lire farm destinataire
+    const content = await vault.readFile(farmFile(recipientId)).catch(() => '');
+    let farmData = parseFarmProfile(content);
+
+    // 3. Appliquer chaque cadeau
+    for (const gift of pending.gifts) {
+      farmData = addGiftToInventory(farmData, gift);
+    }
+
+    // 4. Ajouter a l'historique
+    const recipientProfile = profiles?.find(p => p.id === recipientId);
+    const newEntries = pending.gifts.map(g =>
+      buildGiftHistoryEntry('received', g.sender_id, recipientId, g.item_type, g.item_id, g.quantity)
+    );
+    const existingHistory = farmData.giftHistory ?? '';
+    const allHistory = [...newEntries, ...existingHistory.split(', ').filter(Boolean)].slice(0, 10).join(', ');
+
+    // 5. Ecrire farm destinataire complet via serializeFarmProfile
+    const profileName = recipientProfile?.name ?? recipientId;
+    await vault.writeFile(farmFile(recipientId), serializeFarmProfile(profileName, { ...farmData, giftHistory: allHistory }));
+
+    await refreshFarm(recipientId);
+    return pending.gifts;
+  }, [vault, profiles, refreshFarm]);
+
   return {
     plant,
     harvest,
@@ -648,5 +773,7 @@ export function useFarm() {
     repairWear,
     getWearEffects,
     getWearEvents,
+    sendGift,
+    receiveGifts,
   };
 }
