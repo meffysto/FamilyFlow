@@ -183,6 +183,29 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     minTreeStage: 'arbre',
   },
   {
+    id: 'huile_tournesol',
+    labelKey: 'craft.recipe.huile_tournesol',
+    emoji: '🫙',
+    ingredients: [
+      { itemId: 'sunflower', quantity: 2, source: 'crop' },
+    ],
+    xpBonus: 20,
+    sellValue: 400, // (100+100) x 2
+    minTreeStage: 'arbre',
+  },
+  {
+    id: 'brioche_tournesol',
+    labelKey: 'craft.recipe.brioche_tournesol',
+    emoji: '🥐',
+    ingredients: [
+      { itemId: 'sunflower', quantity: 1, source: 'crop' },
+      { itemId: 'farine', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 25,
+    sellValue: 380, // (100+90) x 2
+    minTreeStage: 'arbre',
+  },
+  {
     id: 'gateau',
     labelKey: 'craft.recipe.gateau',
     emoji: '🎂',
