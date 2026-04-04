@@ -160,9 +160,10 @@ None yet.
 | 260404-quw | Fix long-press not working on inventory items (CraftSheet) | 2026-04-04 | ae62fc6 | [260404-quw-fix-long-press-not-working-on-inventory-](./quick/260404-quw-fix-long-press-not-working-on-inventory-/) |
 | 260404-qvz | Fix OOM crash TreeScreen — timer global, lazy-load images saison, reduire particules | 2026-04-04 | cd8307e | [260404-qvz-fix-oom-crash-treescreen-timer-global-la](./quick/260404-qvz-fix-oom-crash-treescreen-timer-global-la/) |
 | 260404-rfs | Bouton Offrir visible sur items inventaire + Mes créations (remplace long-press) | 2026-04-04 | 19f051b | [260404-rfs-remplacer-long-press-cadeau-par-bouton-o](./quick/260404-rfs-remplacer-long-press-cadeau-par-bouton-o/) |
+| 260404-xbu | Permettre de changer la catégorie d'une recette depuis RecipeViewer | 2026-04-04 | 3b314e0 | [260404-xbu-permettre-de-changer-la-cat-gorie-d-une-](./quick/260404-xbu-permettre-de-changer-la-cat-gorie-d-une-/) |
 
 ## Session Continuity
 
-Last session: 2026-04-04T17:28:13.563Z
-Stopped at: Completed quick-260404-qvz — fix OOM crash TreeScreen timer global + reduction particules
+Last session: 2026-04-04T22:06:47Z
+Stopped at: Completed quick-260404-xbu — changer catégorie recette depuis RecipeViewer
 Resume file: None
