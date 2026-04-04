@@ -127,10 +127,10 @@ export default function QuotesScreen() {
           « {item.citation} »
         </Text>
         <View style={styles.cardFooter}>
-          <Text style={[styles.enfant, { color: primary }]}>
+          <Text style={[styles.enfant, { color: primary }]} numberOfLines={1}>
             {item.enfant}
           </Text>
-          <Text style={[styles.date, { color: colors.textMuted }]}>
+          <Text style={[styles.date, { color: colors.textMuted }]} numberOfLines={2}>
             {formatDateLocalized(item.date)}
             {item.contexte ? ` · ${item.contexte}` : ''}
           </Text>
@@ -323,14 +323,19 @@ const styles = StyleSheet.create({
   cardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    gap: Spacing.sm,
+    marginTop: Spacing.xxs,
   },
   enfant: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
+    flexShrink: 0,
   },
   date: {
     fontSize: FontSize.micro,
+    flex: 1,
+    textAlign: 'right',
   },
   // Modal
   modalContainer: {
