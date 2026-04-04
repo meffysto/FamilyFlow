@@ -782,12 +782,12 @@ export default function JournalScreen() {
                   ? t('journal.create.noJournalChild', { name: selectedEnfantName })
                   : t('journal.create.noJournalDate', { date: format(selectedDate, 'dd/MM/yyyy') })}
             </Text>
-            {isToday && canEdit && (
+            {canEdit && (
               <>
                 <Text style={[styles.createSubtitle, { color: colors.textMuted }]}>
                   {isViewingAdultTab
                     ? t('journal.create.adultSubtitle')
-                    : t('journal.create.childSubtitle', { date: format(new Date(), 'dd/MM/yyyy') })}
+                    : t('journal.create.childSubtitle', { date: format(selectedDate, 'dd/MM/yyyy') })}
                 </Text>
                 <TouchableOpacity
                   style={[styles.createBtn, { backgroundColor: primary }, isCreating && styles.createBtnDisabled]}
