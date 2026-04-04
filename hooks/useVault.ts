@@ -81,13 +81,7 @@ import { XP_PER_BRACKET, getSkillById } from '../lib/gamification/skill-tree';
 import { DECORATIONS, INHABITANTS, TREE_STAGES, type TreeSpecies } from '../lib/mascot/types';
 import { getStageIndex } from '../lib/mascot/engine';
 import { Task, RDV, CourseItem, MealItem, StockItem, Profile, Gender, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, DefiDayEntry, GratitudeDay, WishlistItem, WishBudget, WishOccasion, Anniversary, Note, SkillTreeData, ChildQuote, MoodEntry, MoodLevel, UsedLoot } from '../lib/types';
-import {
-  parseBudgetConfig,
-  parseBudgetMonth,
-  serializeBudgetMonth,
-  serializeBudgetConfig,
-  DEFAULT_BUDGET_CONFIG,
-} from '../lib/budget';
+import { useVaultBudget } from './useVaultBudget';
 import { parseRecipe, generateCookFile } from '../lib/cooklang';
 import {
   parseNotificationPrefs,
@@ -420,8 +414,6 @@ const MEMOIRES_DIR = '06 - Mémoires';
 const NOTIF_FILE = 'notifications.md';
 const RECIPES_DIR = '03 - Cuisine/Recettes';
 const VACATION_FILE = '02 - Maison/Vacances.md';
-const BUDGET_DIR = '05 - Budget';
-const BUDGET_CONFIG_FILE = '05 - Budget/config.md';
 const ROUTINES_FILE = '02 - Maison/Routines.md';
 const DEFIS_FILE = 'defis.md';
 const HEALTH_DIR = '01 - Enfants';
@@ -518,9 +510,6 @@ export function useVaultInternal(): VaultState {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [recipeFavorites, setRecipeFavorites] = useState<Record<string, string[]>>({});
   const [ageUpgrades, setAgeUpgrades] = useState<AgeUpgrade[]>([]);
-  const [budgetEntries, setBudgetEntries] = useState<BudgetEntry[]>([]);
-  const [budgetConfig, setBudgetConfig] = useState<BudgetConfig>(DEFAULT_BUDGET_CONFIG);
-  const [budgetMonth, setBudgetMonth] = useState(() => format(new Date(), 'yyyy-MM'));
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [healthRecords, setHealthRecords] = useState<HealthRecord[]>([]);
   const [journalStats, setJournalStats] = useState<JournalSummaryEntry[]>([]);
@@ -535,6 +524,10 @@ export function useVaultInternal(): VaultState {
   const [secretMissions, setSecretMissions] = useState<Task[]>([]);
   const vaultRef = useRef<VaultManager | null>(null);
   const busyRef = useRef(false); // Guard against AppState race condition
+
+  // Domaine Budget délégué à useVaultBudget
+  const budget = useVaultBudget(vaultRef);
+  const { resetBudget, ...budgetState } = budget;
 
   // Load vault path + active profile from SecureStore on mount
   useEffect(() => {
@@ -1150,8 +1143,7 @@ export function useVaultInternal(): VaultState {
     setMemories([]);
     setRecipes([]);
     recipesLoadedRef.current = false;
-    setBudgetEntries([]);
-    setBudgetConfig(DEFAULT_BUDGET_CONFIG);
+    resetBudget();
     setVaultPathState(path);
     const vault = new VaultManager(path);
     vaultRef.current = vault;
@@ -2702,103 +2694,6 @@ export function useVaultInternal(): VaultState {
     } catch (e) { warnUnexpected('convertToBorn-optimistic', e); }
   }, []);
 
-  // ─── Budget CRUD ────────────────────────────────────────────────────────
-
-  const loadBudgetData = useCallback(async (month?: string) => {
-    if (!vaultRef.current) return;
-    const m = month || budgetMonth;
-    if (month) setBudgetMonth(m);
-
-    try {
-      // Load config (try read, fallback to default + scaffold)
-      try {
-        const configContent = await vaultRef.current.readFile(BUDGET_CONFIG_FILE);
-        setBudgetConfig(parseBudgetConfig(configContent));
-      } catch (e) {
-        warnUnexpected('loadBudgetConfig', e);
-        await vaultRef.current.ensureDir(BUDGET_DIR);
-        await vaultRef.current.writeFile(BUDGET_CONFIG_FILE, serializeBudgetConfig(DEFAULT_BUDGET_CONFIG));
-        setBudgetConfig(DEFAULT_BUDGET_CONFIG);
-      }
-      // Load month entries (try read, fallback to empty)
-      try {
-        const content = await vaultRef.current.readFile(`${BUDGET_DIR}/${m}.md`);
-        setBudgetEntries(parseBudgetMonth(content));
-      } catch (e) {
-        warnUnexpected(`loadBudgetMonth(${m})`, e);
-        setBudgetEntries([]);
-      }
-    } catch (e) {
-      warnUnexpected('loadBudgetData', e);
-      setBudgetEntries([]);
-    }
-  }, [budgetMonth]);
-
-  const addExpense = useCallback(async (date: string, category: string, amount: number, label: string) => {
-    if (!vaultRef.current) return;
-    const month = date.slice(0, 7); // YYYY-MM
-    const monthFile = `${BUDGET_DIR}/${month}.md`;
-    await vaultRef.current.ensureDir(BUDGET_DIR);
-
-    let entries: BudgetEntry[] = [];
-    try {
-      const content = await vaultRef.current.readFile(monthFile);
-      entries = parseBudgetMonth(content);
-    } catch (e) {
-      warnUnexpected('addExpense-read', e);
-    }
-
-    const newEntry: BudgetEntry = { date, category, amount, label, lineIndex: -1 };
-    entries.push(newEntry);
-    const serialized = serializeBudgetMonth(month, entries);
-    await vaultRef.current.writeFile(monthFile, serialized);
-
-    // Update state from serialized content (re-parse for accurate lineIndex)
-    if (month === budgetMonth) {
-      setBudgetEntries(parseBudgetMonth(serialized));
-    }
-  }, [budgetMonth]);
-
-  const deleteExpense = useCallback(async (lineIndex: number) => {
-    if (!vaultRef.current) return;
-    const monthFile = `${BUDGET_DIR}/${budgetMonth}.md`;
-
-    let content: string;
-    try {
-      content = await vaultRef.current.readFile(monthFile);
-    } catch (e) {
-      warnUnexpected('deleteExpense-read', e);
-      return;
-    }
-    const lines = content.split('\n');
-    if (lineIndex >= 0 && lineIndex < lines.length) {
-      lines.splice(lineIndex, 1);
-      const updated = lines.join('\n');
-      await vaultRef.current.writeFile(monthFile, updated);
-      setBudgetEntries(parseBudgetMonth(updated));
-    }
-  }, [budgetMonth]);
-
-  const loadBudgetMonths = useCallback(async (count: number): Promise<BudgetEntry[]> => {
-    if (!vaultRef.current) return [];
-    const now = new Date();
-    const months = Array.from({ length: count }, (_, i) => {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    });
-    const results = await Promise.allSettled(
-      months.map(m => vaultRef.current!.readFile(`${BUDGET_DIR}/${m}.md`))
-    );
-    return results.flatMap(r => r.status === 'fulfilled' ? parseBudgetMonth(r.value) : []);
-  }, []);
-
-  const updateBudgetConfig = useCallback(async (config: BudgetConfig) => {
-    if (!vaultRef.current) return;
-    await vaultRef.current.ensureDir(BUDGET_DIR);
-    await vaultRef.current.writeFile(BUDGET_CONFIG_FILE, serializeBudgetConfig(config));
-    setBudgetConfig(config);
-  }, []);
-
   const saveRoutines = useCallback(async (newRoutines: Routine[]) => {
     if (!vaultRef.current) return;
     await vaultRef.current.writeFile(ROUTINES_FILE, serializeRoutines(newRoutines));
@@ -3747,15 +3642,7 @@ export function useVaultInternal(): VaultState {
     dismissAgeUpgrade,
     addChild,
     convertToBorn,
-    budgetEntries,
-    budgetConfig,
-    budgetMonth,
-    setBudgetMonth,
-    addExpense,
-    deleteExpense,
-    updateBudgetConfig,
-    loadBudgetData,
-    loadBudgetMonths,
+    ...budgetState,
     routines,
     saveRoutines,
     healthRecords,
@@ -3809,7 +3696,7 @@ export function useVaultInternal(): VaultState {
     vaultPath, isLoading, error, tasks, courses, stock, meals,
     rdvs, profiles, activeProfile, gamiData, notifPrefs, vault, photoDates,
     stockSections, memories, vacationConfig, vacationTasks, isVacationActive,
-    recipes, ageUpgrades, budgetEntries, budgetConfig, budgetMonth, routines,
+    recipes, ageUpgrades, budgetState, routines,
     healthRecords, defis, gratitudeDays, wishlistItems, journalStats, anniversaries, notes,
     quotes, moods, skillTrees, secretMissions,
     // Callbacks (stables grâce à useCallback)
@@ -3823,7 +3710,6 @@ export function useVaultInternal(): VaultState {
     saveRecipeImage, getRecipeImageUri,
     loadRecipes, scanAllCookFiles, moveCookToRecipes, moveRecipeCategory, toggleFavorite, isFavorite,
     getFavorites, applyAgeUpgrade, dismissAgeUpgrade, addChild, convertToBorn,
-    setBudgetMonth, addExpense, deleteExpense, updateBudgetConfig, loadBudgetData, loadBudgetMonths,
     saveRoutines, saveHealthRecord, addGrowthEntry, updateGrowthEntry, deleteGrowthEntry, addVaccineEntry,
     createDefi, checkInDefi, completeDefi, deleteDefi,
     addGratitudeEntry, deleteGratitudeEntry,
