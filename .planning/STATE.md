@@ -138,6 +138,7 @@ None yet.
 | 260403-kjz | Supprimer le code debug saga dans tree.tsx | 2026-04-03 | 659a064 | [260403-kjz-supprimer-le-code-debug-saga-dans-tree-t](./quick/260403-kjz-supprimer-le-code-debug-saga-dans-tree-t/) |
 | 260403-q6y | Fix race condition sur les écritures famille.md (useFarm + useVault) | 2026-04-03 | a62b191 | [260403-q6y-fix-race-condition-on-famille-md-writes-](./quick/260403-q6y-fix-race-condition-on-famille-md-writes-/) |
 | 260403-qoo | Wrapper completeTask/openLootBox/completeSagaChapter famille.md via enqueueWrite | 2026-04-03 | 72db03b | [260403-qoo-wrapper-completetask-openlootbox-complet](./quick/260403-qoo-wrapper-completetask-openlootbox-complet/) |
+| 260404-hfb | Ajouter deux recettes craft tournesol (huile_tournesol + brioche_tournesol) | 2026-04-04 | 039e7b5 | [260404-hfb-ajouter-deux-recettes-craft-tournesol-da](./quick/260404-hfb-ajouter-deux-recettes-craft-tournesol-da/) |
 
 ## Session Continuity
 
