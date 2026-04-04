@@ -5,7 +5,7 @@ milestone_name: Ferme Enrichie
 status: executing
 stopped_at: Completed 13-evenements-saisonniers/13-02-PLAN.md
 last_updated: "2026-04-03T18:47:04.976Z"
-last_activity: 2026-04-03
+last_activity: 2026-04-04 - Completed quick task 260404-i3r: Remplacer emoji 🐔 poullailler par sprite PNG Animated.Image
 progress:
   total_phases: 10
   completed_phases: 7
