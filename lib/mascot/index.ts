@@ -13,3 +13,4 @@ export * from './sagas-types';
 export * from './sagas-engine';
 export * from './sagas-content';
 export * from './sagas-storage';
+export * from './gift-engine';
