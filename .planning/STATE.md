@@ -155,6 +155,7 @@ None yet.
 | 260404-kdk | Rééquilibrer recettes ferme — 2 ingrédients + 17 prix de vente | 2026-04-04 | 6dad909 | [260404-kdk-r-quilibrer-recettes-ferme-prix-et-ingr-](./quick/260404-kdk-r-quilibrer-recettes-ferme-prix-et-ingr-/) |
 | 260404-kvd | fix crop texte contexte quotes — retirer numberOfLines={2} sur le texte date/contexte dans renderItem | 2026-04-04 | e6ca0ac | [260404-kvd-fix-crop-texte-contexte-quotes-retirer-n](./quick/260404-kvd-fix-crop-texte-contexte-quotes-retirer-n/) |
 | 260404-l62 | Bouton skip tâches récurrentes sans gamification | 2026-04-04 | 1ab57c1 | [260404-l62-bouton-skip-taches-recurrentes-sans-gami](./quick/260404-l62-bouton-skip-taches-recurrentes-sans-gami/) |
+| 260404-quw | Fix long-press not working on inventory items (CraftSheet) | 2026-04-04 | ae62fc6 | [260404-quw-fix-long-press-not-working-on-inventory-](./quick/260404-quw-fix-long-press-not-working-on-inventory-/) |
 
 ## Session Continuity
 
