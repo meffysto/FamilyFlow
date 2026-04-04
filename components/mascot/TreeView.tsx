@@ -1894,11 +1894,11 @@ const HAB_SLOTS: Record<string, SlotDef> = {
   phoenix:     { dxFactor: 0.85,  dyFactor: -0.7,   baseSize: 28, rarity: 'prestige' },
   licorne:     { dxFactor: -0.85, dyFactor: 0,       groundRelY: -12, baseSize: 28, rarity: 'prestige' },
   // Nouveaux animaux pixel (au sol, top-down)
-  poussin:     { dxFactor: 0.6,   dyFactor: 0,    groundRelY: -5,  baseSize: 24, rarity: 'commun' },
-  poulet:      { dxFactor: -0.7,  dyFactor: 0,    groundRelY: -14, baseSize: 38, rarity: 'commun' },
-  canard:      { dxFactor: 0.8,   dyFactor: 0,    groundRelY: -12, baseSize: 20, rarity: 'commun' },
-  cochon:      { dxFactor: -0.85, dyFactor: 0,    groundRelY: -15, baseSize: 22, rarity: 'rare' },
-  vache:       { dxFactor: 0.9,   dyFactor: 0,    groundRelY: -18, baseSize: 26, rarity: 'rare' },
+  poussin:     { dxFactor: 0.6,   dyFactor: 0,    groundRelY: -5,  baseSize: 16, rarity: 'commun' },
+  poulet:      { dxFactor: -0.7,  dyFactor: 0,    groundRelY: -14, baseSize: 22, rarity: 'commun' },
+  canard:      { dxFactor: 0.8,   dyFactor: 0,    groundRelY: -12, baseSize: 18, rarity: 'commun' },
+  cochon:      { dxFactor: -0.85, dyFactor: 0,    groundRelY: -15, baseSize: 24, rarity: 'rare' },
+  vache:       { dxFactor: 0.9,   dyFactor: 0,    groundRelY: -18, baseSize: 28, rarity: 'rare' },
 };
 
 /** Ajustements par espèce (offsets additionnels en px) */
@@ -1969,11 +1969,13 @@ function DecorationOverlay({ decorationIds, stageIdx, previewMode = false, speci
 
 /** Frames idle par animal pixel (2 frames pour le cycle) */
 const ANIMAL_IDLE_FRAMES: Record<string, [any, any]> = {
-  poussin: [require('../../assets/garden/animals/poussin/idle_1.png'), require('../../assets/garden/animals/poussin/idle_2.png')],
-  poulet:  [require('../../assets/garden/animals/poulet/idle_1.png'),  require('../../assets/garden/animals/poulet/idle_2.png')],
-  canard:  [require('../../assets/garden/animals/canard/idle_1.png'),  require('../../assets/garden/animals/canard/idle_2.png')],
-  cochon:  [require('../../assets/garden/animals/cochon/idle_1.png'),  require('../../assets/garden/animals/cochon/idle_2.png')],
-  vache:   [require('../../assets/garden/animals/vache/idle_1.png'),   require('../../assets/garden/animals/vache/idle_2.png')],
+  poussin:  [require('../../assets/garden/animals/poussin/idle_1.png'),  require('../../assets/garden/animals/poussin/idle_2.png')],
+  poulet:   [require('../../assets/garden/animals/poulet/idle_1.png'),   require('../../assets/garden/animals/poulet/idle_2.png')],
+  canard:   [require('../../assets/garden/animals/canard/idle_1.png'),   require('../../assets/garden/animals/canard/idle_2.png')],
+  cochon:   [require('../../assets/garden/animals/cochon/idle_1.png'),   require('../../assets/garden/animals/cochon/idle_2.png')],
+  vache:    [require('../../assets/garden/animals/vache/idle_1.png'),    require('../../assets/garden/animals/vache/idle_2.png')],
+  ecureuil: [require('../../assets/garden/animals/ecureuil/idle_1.png'), require('../../assets/garden/animals/ecureuil/idle_2.png')],
+  oiseau:   [require('../../assets/garden/animals/oiseau/idle_1.png'),   require('../../assets/garden/animals/oiseau/idle_2.png')],
 };
 
 /** Walk frames par animal (direction bas) */
