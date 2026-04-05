@@ -1,0 +1,243 @@
+/* =============================================================================
+   CompanionWidget — styles
+   ============================================================================= */
+
+.companion-widget {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  padding: 12px;
+}
+
+.companion-widget--compact {
+  padding: 6px;
+  gap: 4px;
+}
+
+/* Empty state */
+
+.companion-widget--empty {
+  text-align: center;
+  gap: 6px;
+}
+
+.companion-empty-icon {
+  font-size: 32px;
+  opacity: 0.5;
+}
+
+.companion-empty-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.companion-pick-btn {
+  margin-top: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
+  border-radius: 20px;
+  border: 1.5px solid var(--primary);
+  background: var(--tint);
+  color: var(--primary);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.companion-pick-btn:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* ── Avatar ────────────────���────────────────────────────────���────────────── */
+
+.companion-avatar {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 3px solid var(--mood-color, var(--primary));
+  background: var(--card-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.25s;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.companion-avatar--compact {
+  width: 48px;
+  height: 48px;
+}
+
+.companion-avatar-emoji {
+  font-size: 36px;
+  user-select: none;
+}
+
+.companion-mood-dot {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  font-size: 18px;
+  background: var(--surface);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--border);
+}
+
+.companion-stage-badge {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  font-weight: 700;
+  background: var(--primary);
+  color: #fff;
+  padding: 1px 6px;
+  border-radius: 8px;
+  white-space: nowrap;
+  letter-spacing: 0.03em;
+}
+
+/* ── Message Bubble ────────────────��─────────────────────────────────────── */
+
+.companion-bubble {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  min-width: 180px;
+  max-width: 260px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  z-index: 20;
+}
+
+.companion-bubble-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text);
+  text-align: center;
+}
+
+.companion-bubble-arrow {
+  position: absolute;
+  bottom: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 9px solid var(--surface);
+}
+
+.companion-bubble-arrow::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -8px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 9px solid var(--border);
+}
+
+/* ── Details ────────────────────────────────────────────────��────────────── */
+
+.companion-details {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.companion-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.companion-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.companion-species-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: capitalize;
+  background: var(--card-alt);
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+.companion-mood-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.companion-mood-label {
+  font-size: 12px;
+  color: var(--text-sub);
+}
+
+/* ── XP Bonus ────────────────────────────────────────────────────────────── */
+
+.companion-xp-bonus {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #f59e0b;
+  background: #fffbeb;
+  border: 1px solid #f59e0b;
+  border-radius: 20px;
+  padding: 2px 8px;
+}
+
+/* dark-mode friendly */
+@media (prefers-color-scheme: dark) {
+  .companion-xp-bonus {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border-color: rgba(245, 158, 11, 0.4);
+  }
+}
+
+/* ── Change button ────────────────────────────────────────────────────��──── */
+
+.companion-change-btn {
+  margin-top: 4px;
+  padding: 4px 12px;
+  font-size: 11px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.companion-change-btn:hover {
+  background: var(--card-alt);
+  color: var(--text);
+}

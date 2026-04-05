@@ -1,0 +1,270 @@
+/* =============================================================================
+   CompanionPicker — modal panel styles
+   ============================================================================= */
+
+/* ── Backdrop ────────────────────────────────────────────────────────────── */
+
+.companion-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 200;
+  backdrop-filter: blur(2px);
+}
+
+/* ── Panel ───────────────────────────────────────────────────────────────── */
+
+.companion-picker-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 201;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 24px;
+  width: min(480px, 94vw);
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+.companion-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.companion-picker-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0;
+}
+
+.companion-picker-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--card-alt);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: background 0.12s;
+}
+
+.companion-picker-close:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+/* ── Current companion ───────────────────────────────────────────────────── */
+
+.companion-picker-current {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  background: var(--tint);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+/* ── Name editor ─────────────────────────────────────────────────────────── */
+
+.companion-name-editor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.companion-name-display {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.companion-name-edit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 4px;
+  opacity: 0.6;
+  transition: opacity 0.12s;
+}
+
+.companion-name-edit-btn:hover {
+  opacity: 1;
+}
+
+.companion-name-input {
+  font-size: 15px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border: 2px solid var(--primary);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  width: 140px;
+  outline: none;
+}
+
+.companion-name-save-btn {
+  padding: 4px 10px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: opacity 0.12s;
+}
+
+.companion-name-save-btn:hover {
+  opacity: 0.85;
+}
+
+/* ── Species grid ────────────────────────────────────────────────────────── */
+
+.companion-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+/* ── Species card ────────────────────────────────────────────────────────── */
+
+.companion-picker-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 10px;
+  border-radius: 14px;
+  border: 2px solid var(--border);
+  background: var(--card-alt);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s, transform 0.12s, box-shadow 0.15s;
+  position: relative;
+}
+
+.companion-picker-card:hover:not(:disabled) {
+  border-color: var(--rarity-color, var(--primary));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.companion-picker-card--active {
+  border-color: var(--rarity-color, var(--primary));
+  background: var(--tint);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--rarity-color, var(--primary)) 20%, transparent);
+}
+
+.companion-picker-card--locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Card avatar ─────────────────────────────────────────────────────────── */
+
+.companion-picker-avatar {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.companion-picker-avatar--locked {
+  filter: grayscale(1);
+}
+
+.companion-picker-emoji {
+  font-size: 28px;
+}
+
+.companion-picker-lock {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  font-size: 14px;
+}
+
+/* ── Card info ───────────────────────────────────────────────────────────── */
+
+.companion-picker-card-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.companion-picker-card-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.companion-picker-rarity {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.companion-picker-trait {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 0;
+  font-style: italic;
+  text-transform: capitalize;
+}
+
+.companion-picker-unlock-hint {
+  font-size: 10px;
+  color: var(--text-faint);
+  margin: 0;
+}
+
+.companion-picker-active-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--tint);
+  padding: 1px 5px;
+  border-radius: 8px;
+}
+
+/* ── Footer hint ─────────────────────────────────────────────────────────── */
+
+.companion-picker-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  margin: 0 0 8px;
+  line-height: 1.4;
+}
+
+.companion-picker-saving {
+  text-align: center;
+  font-size: 12px;
+  color: var(--primary);
+  font-weight: 600;
+}
