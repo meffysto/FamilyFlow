@@ -267,7 +267,7 @@ Canonical refs: `lib/gamification/seasonal.ts`, `lib/gamification/seasonal-rewar
   3. Les données créées/modifiées sur desktop sont lisibles sur mobile et vice-versa — parité de parsing/serialization
   4. Les animations et transitions existent sur desktop (CSS animations équivalentes aux reanimated)
   5. `npx tsc --noEmit` passe sans nouvelles erreurs
-**Plans:** 8 plans
+**Plans:** 9 plans
 
 Plans:
 - [ ] 14-01-PLAN.md — Fondation : dependances + VaultContext mutations CRUD + routes App.tsx
@@ -278,3 +278,4 @@ Plans:
 - [ ] 14-06-PLAN.md — Loot revamp (Framer Motion card flip + confetti + inventaire + badges)
 - [ ] 14-07-PLAN.md — Budget OCR (drag & drop recu + pipeline Claude Vision + review)
 - [ ] 14-08-PLAN.md — Polish interactions desktop (hover-to-reveal + raccourcis clavier) + checkpoint visuel
+- [ ] 14-09-PLAN.md — Gamification complete : companion system, sagas immersives, evenements saisonniers, tech tree (per D-05)
