@@ -1,0 +1,408 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Routines page styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Layout ─────────────────────────────────────────────────────────────── */
+
+.routines-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 900px) {
+  .routines-layout {
+    grid-template-columns: 340px 1fr;
+  }
+}
+
+.routines-list {
+  min-width: 0;
+}
+
+.routines-detail-panel {
+  min-width: 0;
+}
+
+/* ── Routine card ───────────────────────────────────────────────────────── */
+
+.routine-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.routine-card {
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--card-alt);
+  cursor: pointer;
+  transition: background 150ms, border-color 150ms;
+  user-select: none;
+}
+
+.routine-card:hover,
+.routine-card:focus {
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
+  border-color: var(--primary);
+  outline: none;
+}
+
+.routine-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.routine-emoji {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.routine-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.routine-card-name {
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.routine-card-steps {
+  font-size: var(--font-size-caption);
+  color: var(--text-muted);
+}
+
+.routine-card-arrow {
+  font-size: 20px;
+  color: var(--text-faint);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* ── Card progress bar ──────────────────────────────────────────────────── */
+
+.routine-card-progress-wrap {
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--border);
+  overflow: hidden;
+}
+
+.routine-card-progress-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--primary);
+}
+
+/* ── Detail panel ───────────────────────────────────────────────────────── */
+
+.routine-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.routine-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.routine-detail-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.routine-detail-name {
+  font-size: var(--font-size-heading);
+  font-weight: 800;
+  color: var(--text);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.routine-detail-progress {
+  font-size: var(--font-size-caption);
+  color: var(--text-muted);
+}
+
+.routine-detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Overall progress bar ───────────────────────────────────────────────── */
+
+.routine-overall-progress-wrap {
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--border);
+  overflow: hidden;
+}
+
+.routine-overall-progress-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--primary);
+}
+
+.routine-overall-progress-fill--done {
+  background: var(--success, #10B981);
+}
+
+/* ── Steps list ─────────────────────────────────────────────────────────── */
+
+.routine-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── Step row ───────────────────────────────────────────────────────────── */
+
+.routine-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--primary);
+  background: color-mix(in srgb, var(--bg) 50%, transparent);
+  cursor: grab;
+  transition: background 120ms, opacity 120ms;
+}
+
+.routine-step:active {
+  cursor: grabbing;
+}
+
+.routine-step--done {
+  border-left-color: var(--success, #10B981);
+  opacity: 0.7;
+}
+
+.routine-step:hover {
+  background: color-mix(in srgb, var(--primary) 5%, transparent);
+}
+
+/* ── Drag handle ────────────────────────────────────────────────────────── */
+
+.routine-drag-handle {
+  color: var(--text-faint);
+  font-size: 14px;
+  cursor: grab;
+  flex-shrink: 0;
+  user-select: none;
+  line-height: 1;
+}
+
+/* ── Step checkbox ──────────────────────────────────────────────────────── */
+
+.routine-step-check {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: white;
+  flex-shrink: 0;
+  transition: background 150ms, border-color 150ms;
+  font-family: inherit;
+}
+
+.routine-step-check:hover {
+  border-color: var(--primary);
+}
+
+.routine-step-check--done {
+  background: var(--success, #10B981);
+  border-color: var(--success, #10B981);
+}
+
+/* ── Step text ──────────────────────────────────────────────────────────── */
+
+.routine-step-text {
+  flex: 1;
+  font-size: var(--font-size-body);
+  color: var(--text);
+  min-width: 0;
+}
+
+.routine-step-text--done {
+  text-decoration: line-through;
+  color: var(--text-faint);
+}
+
+/* ── Step duration label ────────────────────────────────────────────────── */
+
+.routine-step-duration {
+  font-size: var(--font-size-caption);
+  color: var(--text-faint);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Timer (animated progress bar + button) ─────────────────────────────── */
+
+.routine-step-timer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.routine-timer-bar-wrap {
+  width: 60px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--border);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.routine-timer-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--primary);
+}
+
+.routine-timer-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--card-alt);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--text-muted);
+  transition: background 120ms, border-color 120ms;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+
+.routine-timer-btn:hover {
+  background: var(--tint);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.routine-timer-btn--done {
+  background: var(--success, #10B981);
+  border-color: var(--success, #10B981);
+  color: white;
+}
+
+.routine-timer-label {
+  font-size: var(--font-size-micro);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  white-space: nowrap;
+  min-width: 36px;
+}
+
+.routine-timer-label--done {
+  color: var(--success, #10B981);
+  font-weight: 600;
+}
+
+/* ── Empty steps ────────────────────────────────────────────────────────── */
+
+.routine-empty-steps {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px;
+  color: var(--text-muted);
+  font-size: var(--font-size-body);
+  text-align: center;
+}
+
+/* ── Completion banner ──────────────────────────────────────────────────── */
+
+.routine-complete-banner {
+  text-align: center;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, #10B981 15%, transparent);
+  color: #10B981;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+/* ── Form step list ─────────────────────────────────────────────────────── */
+
+.routine-form-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.routine-form-step-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--card-alt);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  font-size: var(--font-size-label);
+}
+
+.routine-form-step-num {
+  font-size: var(--font-size-micro);
+  font-weight: 700;
+  color: var(--text-faint);
+  min-width: 16px;
+  text-align: right;
+}
+
+.routine-form-step-text {
+  flex: 1;
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.routine-form-step-dur {
+  font-size: var(--font-size-caption);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ── Add step row ───────────────────────────────────────────────────────── */
+
+.routine-add-step-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
