@@ -13,6 +13,26 @@ import { useVault } from '../../contexts/VaultContext';
 import './CompanionWidget.css';
 
 // ---------------------------------------------------------------------------
+// useTranslation — per D-07 (desktop shim, no react-i18next installed)
+// ---------------------------------------------------------------------------
+
+function useTranslation(_namespace?: string) {
+  const t = useCallback((key: string): string => {
+    const LABELS: Record<string, string> = {
+      'companion.stage.bebe': 'Bébé',
+      'companion.stage.jeune': 'Jeune',
+      'companion.stage.adulte': 'Adulte',
+      'companion.widget.noCompanion': 'Aucun compagnon',
+      'companion.widget.choose': 'Choisir un compagnon',
+      'companion.widget.change': 'Changer de compagnon',
+      'companion.widget.xpBonus': '+5% XP',
+    };
+    return LABELS[key] ?? key;
+  }, []);
+  return { t };
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -137,11 +157,11 @@ const MessageBubble = memo(function MessageBubble({ message, visible }: MessageB
 // XP Bonus badge
 // ---------------------------------------------------------------------------
 
-const XpBonusBadge = memo(function XpBonusBadge() {
+const XpBonusBadge = memo(function XpBonusBadge({ label }: { label: string }) {
   return (
     <div className="companion-xp-bonus" title="Bonus XP compagnon actif">
       <span aria-hidden="true">⭐</span>
-      <span>+5% XP</span>
+      <span>{label}</span>
     </div>
   );
 });
@@ -161,6 +181,7 @@ export const CompanionWidget = memo(function CompanionWidget({
   compact = false,
   onOpenPicker,
 }: CompanionWidgetProps) {
+  const { t } = useTranslation('gamification');
   const { activeProfile } = useVault();
   const [showBubble, setShowBubble] = useState(false);
   const [currentMessage, setCurrentMessage] = useState('');
@@ -209,14 +230,14 @@ export const CompanionWidget = memo(function CompanionWidget({
     return (
       <div className="companion-widget companion-widget--empty">
         <span className="companion-empty-icon" aria-hidden="true">🐾</span>
-        <p className="companion-empty-text">Aucun compagnon</p>
+        <p className="companion-empty-text">{t('companion.widget.noCompanion')}</p>
         {onOpenPicker && (
           <button
             type="button"
             className="companion-pick-btn"
             onClick={onOpenPicker}
           >
-            Choisir un compagnon
+            {t('companion.widget.choose')}
           </button>
         )}
       </div>
@@ -250,14 +271,14 @@ export const CompanionWidget = memo(function CompanionWidget({
               {MOOD_CONFIG[mood].emoji} {MOOD_CONFIG[mood].label}
             </span>
           </div>
-          <XpBonusBadge />
+          <XpBonusBadge label={t('companion.widget.xpBonus')} />
           {onOpenPicker && (
             <button
               type="button"
               className="companion-change-btn"
               onClick={onOpenPicker}
             >
-              Changer de compagnon
+              {t('companion.widget.change')}
             </button>
           )}
         </div>

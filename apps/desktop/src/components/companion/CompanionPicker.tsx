@@ -1,5 +1,24 @@
 import { memo, useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// per D-07: useTranslation shim (react-i18next not installed on desktop)
+function useTranslation(_namespace?: string) {
+  const t = useCallback((key: string): string => {
+    const LABELS: Record<string, string> = {
+      'companion.picker.title': 'Compagnon',
+      'companion.picker.hint': 'Les compagnons rares et épiques se débloquent via les coffres loot box.',
+      'companion.picker.saving': 'Sauvegarde…',
+      'companion.picker.rename': 'Renommer le compagnon',
+      'companion.picker.close': 'Fermer',
+      'companion.picker.unlockHint.rare': 'Coffre rare',
+      'companion.picker.unlockHint.epique': 'Coffre épique',
+      'companion.picker.active': 'Actif',
+      'companion.picker.locked': 'verrouillé',
+    };
+    return LABELS[key] ?? key;
+  }, []);
+  return { t };
+}
 import {
   COMPANION_SPECIES_CATALOG,
   SPECIES_PERSONALITY,
