@@ -21,6 +21,16 @@ const Moods = lazy(() => import('./pages/Moods'));
 const Gratitude = lazy(() => import('./pages/Gratitude'));
 const Quotes = lazy(() => import('./pages/Quotes'));
 const Tree = lazy(() => import('./pages/Tree'));
+const RDV = lazy(() => import('./pages/RDV'));
+const Notes = lazy(() => import('./pages/Notes'));
+const Stats = lazy(() => import('./pages/Stats'));
+const Skills = lazy(() => import('./pages/Skills'));
+const Health = lazy(() => import('./pages/Health'));
+const Routines = lazy(() => import('./pages/Routines'));
+const Pregnancy = lazy(() => import('./pages/Pregnancy'));
+const NightMode = lazy(() => import('./pages/NightMode'));
+const Compare = lazy(() => import('./pages/Compare'));
+const More = lazy(() => import('./pages/More'));
 
 // ---------------------------------------------------------------------------
 // Nav structure
@@ -80,6 +90,20 @@ const NAV_SECTIONS: NavSection[] = [
       { path: '/loot',       label: 'Récompenses', icon: '🎰' },
       { path: '/challenges', label: 'Défis',        icon: '🏆' },
       { path: '/settings',   label: 'Paramètres',   icon: '⚙️' },
+    ],
+  },
+  {
+    label: 'Plus',
+    items: [
+      { path: '/rdv',        label: 'Rendez-vous',  icon: '📅' },
+      { path: '/notes',      label: 'Notes',         icon: '📝' },
+      { path: '/stats',      label: 'Statistiques',  icon: '📊' },
+      { path: '/skills',     label: 'Compétences',   icon: '🎯' },
+      { path: '/health',     label: 'Santé',          icon: '🏥' },
+      { path: '/routines',   label: 'Routines',       icon: '⏰' },
+      { path: '/pregnancy',  label: 'Grossesse',      icon: '🤰' },
+      { path: '/night-mode', label: 'Mode nuit',      icon: '🌙' },
+      { path: '/compare',    label: 'Comparer',       icon: '📷' },
     ],
   },
 ];
@@ -204,7 +228,7 @@ function AppLayout() {
             <Route path="/shopping" element={<Navigate to="/meals" replace />} />
             <Route path="/stock"    element={<Stock />} />
             <Route path="/budget"   element={<Budget />} />
-            <Route path="/rdv"      element={<Navigate to="/calendar" replace />} />
+            <Route path="/rdv"      element={<RDV />} />
             <Route path="/birthdays" element={<Birthdays />} />
             <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/photos"   element={<Photos />} />
@@ -215,6 +239,15 @@ function AppLayout() {
             <Route path="/loot"     element={<Loot />} />
             <Route path="/challenges" element={<Challenges />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/notes"     element={<Notes />} />
+            <Route path="/stats"     element={<Stats />} />
+            <Route path="/skills"    element={<Skills />} />
+            <Route path="/health"    element={<Health />} />
+            <Route path="/routines"  element={<Routines />} />
+            <Route path="/pregnancy" element={<Pregnancy />} />
+            <Route path="/night-mode" element={<NightMode />} />
+            <Route path="/compare"   element={<Compare />} />
+            <Route path="/more"      element={<More />} />
           </Routes>
         </Suspense>
       </main>

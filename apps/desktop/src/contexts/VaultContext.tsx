@@ -6,16 +6,23 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { listVaultFiles, readVaultFile, writeVaultFile, type VaultFile } from '../lib/vault-service';
+import { listVaultFiles, readVaultFile, writeVaultFile, deleteVaultFile, type VaultFile } from '../lib/vault-service';
 import {
   parseTaskFile, parseRDV, parseFamille, parseGamification,
   parseMeals, parseCourses, parseStock, parseDefis,
   parseGratitude, parseQuotes, parseMoods, parseWishlist,
   parseAnniversaries, parseNote, parseSecretMissions,
+  parseHealthRecord, parseRoutines, parseSkillTree, parsePregnancyJournal,
+  serializeRDV, serializeNote, serializeDefis, serializeGamification,
+  serializeHealthRecord, serializeRoutines, serializeSkillTree, serializePregnancyJournal,
+  noteFileName,
+  openLootBox,
   type Task, type RDV, type MealItem, type CourseItem,
   type StockItem, type Profile, type Defi, type GratitudeDay,
   type ChildQuote, type MoodEntry, type WishlistItem,
   type Anniversary, type Note, type GamificationData,
+  type HealthRecord, type Routine, type SkillTreeData,
+  type PregnancyWeekEntry, type LootBox, type GamificationEntry,
 } from '@family-vault/core';
 
 // ---------------------------------------------------------------------------
@@ -53,6 +60,11 @@ export interface VaultState {
   anniversaries: Anniversary[];
   notes: Note[];
   secretMissions: Task[];
+  gamiData: GamificationData | null;
+  healthRecords: HealthRecord[];
+  routines: Routine[];
+  skillTrees: SkillTreeData[];
+  pregnancyEntries: PregnancyWeekEntry[];
 }
 
 export interface VaultContextValue extends VaultState {
@@ -63,6 +75,31 @@ export interface VaultContextValue extends VaultState {
   writeFile: (relativePath: string, content: string) => Promise<void>;
   setActiveProfile: (profile: Profile) => void;
   toggleTask: (task: Task) => Promise<void>;
+  // RDV CRUD
+  addRDV: (rdv: Omit<RDV, 'sourceFile'>) => Promise<void>;
+  updateRDV: (rdv: RDV) => Promise<void>;
+  deleteRDV: (rdv: RDV) => Promise<void>;
+  // Notes CRUD
+  addNote: (note: Omit<Note, 'sourceFile'>) => Promise<void>;
+  updateNote: (note: Note) => Promise<void>;
+  deleteNote: (note: Note) => Promise<void>;
+  // Defis
+  addDefi: (defi: Defi) => Promise<void>;
+  updateDefi: (defi: Defi) => Promise<void>;
+  // Loot
+  openLootBox: () => Promise<{ box: LootBox; entries: GamificationEntry[] } | null>;
+  markLootUsed: (rewardId: string) => Promise<void>;
+  // Skills
+  unlockSkill: (skillId: string, profileId?: string) => Promise<void>;
+  // Health
+  saveHealthRecord: (record: HealthRecord) => Promise<void>;
+  addGrowthEntry: (enfantId: string, entry: HealthRecord['croissance'][number]) => Promise<void>;
+  addVaccineEntry: (enfantId: string, entry: HealthRecord['vaccins'][number]) => Promise<void>;
+  // Routines
+  saveRoutines: (routines: Routine[]) => Promise<void>;
+  completeRoutineStep: (routineId: string, stepIdx: number) => void;
+  // Grossesse
+  addPregnancyEntry: (entry: PregnancyWeekEntry, enfant: string) => Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
@@ -99,6 +136,12 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
   const [anniversaries, setAnniversaries] = useState<Anniversary[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [secretMissions, setSecretMissions] = useState<Task[]>([]);
+  // Nouvelles données
+  const [gamiData, setGamiData] = useState<GamificationData | null>(null);
+  const [healthRecords, setHealthRecords] = useState<HealthRecord[]>([]);
+  const [routines, setRoutines] = useState<Routine[]>([]);
+  const [skillTrees, setSkillTrees] = useState<SkillTreeData[]>([]);
+  const [pregnancyEntries, setPregnancyEntries] = useState<PregnancyWeekEntry[]>([]);
 
   // -------------------------------------------------------------------------
   // File I/O helpers
@@ -209,8 +252,8 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
           fullProfiles.map(async (profile) => {
             try {
               const gamiContent = await readVaultFile(`${path}/gami-${profile.id}.md`);
-              const gamiData: GamificationData = parseGamification(gamiContent);
-              const gamiProfile = gamiData.profiles.find((gp) => gp.id === profile.id);
+              const gamiDataForProfile: GamificationData = parseGamification(gamiContent);
+              const gamiProfile = gamiDataForProfile.profiles.find((gp) => gp.id === profile.id);
               if (gamiProfile) {
                 return { ...profile, ...gamiProfile };
               }
@@ -365,6 +408,108 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
         setSecretMissions([]);
       }
     })();
+
+    // GamiData (profil actif — chargé via activeProfile dans loadProfiles mais aussi ici pour mutations)
+    (async () => {
+      try {
+        const storedId = localStorage.getItem(ACTIVE_PROFILE_KEY);
+        if (!storedId) return;
+        const content = await readVaultFile(`${path}/gami-${storedId}.md`);
+        setGamiData(parseGamification(content));
+      } catch {
+        setGamiData(null);
+      }
+    })();
+
+    // Health records (01 - Enfants/{Name}/Carnet de santé.md)
+    (async () => {
+      try {
+        const healthFiles = vaultFiles.filter(
+          (f) =>
+            !f.is_directory &&
+            f.relative_path.startsWith('01 - Enfants/') &&
+            f.name === 'Carnet de santé.md' &&
+            !f.relative_path.startsWith('01 - Enfants/Commun/'),
+        );
+        const results = await Promise.all(
+          healthFiles.map(async (f) => {
+            try {
+              const content = await readVaultFile(f.path);
+              // Extract enfant name from path: "01 - Enfants/{Name}/Carnet de santé.md"
+              const parts = f.relative_path.split('/');
+              const enfantName = parts[1] ?? '';
+              const enfantId = enfantName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+              return parseHealthRecord(enfantName, enfantId, content) as HealthRecord;
+            } catch {
+              return null;
+            }
+          }),
+        );
+        setHealthRecords(results.filter((r): r is HealthRecord => r !== null));
+      } catch {
+        setHealthRecords([]);
+      }
+    })();
+
+    // Routines
+    (async () => {
+      try {
+        const content = await readVaultFile(`${path}/05 - Famille/Routines.md`);
+        setRoutines(parseRoutines(content) as Routine[]);
+      } catch {
+        setRoutines([]);
+      }
+    })();
+
+    // Skill trees (08 - Compétences/*.md)
+    (async () => {
+      try {
+        const skillFiles = vaultFiles.filter(
+          (f) =>
+            !f.is_directory &&
+            f.relative_path.startsWith('08 - Compétences/') &&
+            f.name.endsWith('.md'),
+        );
+        const results = await Promise.all(
+          skillFiles.map(async (f) => {
+            try {
+              const content = await readVaultFile(f.path);
+              return parseSkillTree(content);
+            } catch {
+              return null;
+            }
+          }),
+        );
+        setSkillTrees(results.filter((r): r is SkillTreeData => r !== null));
+      } catch {
+        setSkillTrees([]);
+      }
+    })();
+
+    // Pregnancy entries (03 - Journal/Grossesse/*.md)
+    (async () => {
+      try {
+        const pregnancyFiles = vaultFiles.filter(
+          (f) =>
+            !f.is_directory &&
+            f.relative_path.startsWith('03 - Journal/Grossesse/') &&
+            f.name.endsWith('.md'),
+        );
+        const results = await Promise.all(
+          pregnancyFiles.map(async (f) => {
+            try {
+              const content = await readVaultFile(f.path);
+              return parsePregnancyJournal(content, f.relative_path);
+            } catch {
+              return [] as PregnancyWeekEntry[];
+            }
+          }),
+        );
+        setPregnancyEntries(results.flat());
+      } catch {
+        setPregnancyEntries([]);
+      }
+    })();
   }, []);
 
   // -------------------------------------------------------------------------
@@ -413,7 +558,7 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
   }, [vaultPath, loadVault]);
 
   // -------------------------------------------------------------------------
-  // Actions
+  // Actions — base
   // -------------------------------------------------------------------------
 
   const setVaultPath = useCallback((path: string) => {
@@ -441,12 +586,23 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
     setAnniversaries([]);
     setNotes([]);
     setSecretMissions([]);
+    setGamiData(null);
+    setHealthRecords([]);
+    setRoutines([]);
+    setSkillTrees([]);
+    setPregnancyEntries([]);
   }, []);
 
   const setActiveProfile = useCallback((profile: Profile) => {
     localStorage.setItem(ACTIVE_PROFILE_KEY, profile.id);
     setActiveProfileState(profile);
-  }, []);
+    // Recharger gamiData pour le nouveau profil actif
+    if (vaultPath) {
+      readVaultFile(`${vaultPath}/gami-${profile.id}.md`)
+        .then((content) => setGamiData(parseGamification(content)))
+        .catch(() => setGamiData(null));
+    }
+  }, [vaultPath]);
 
   const toggleTask = useCallback(
     async (task: Task) => {
@@ -497,6 +653,351 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
   );
 
   // -------------------------------------------------------------------------
+  // Actions — RDV CRUD
+  // -------------------------------------------------------------------------
+
+  const addRDV = useCallback(
+    async (rdv: Omit<RDV, 'sourceFile'>) => {
+      if (!vaultPath) return;
+      try {
+        const filename = `${rdv.title || `rdv-${rdv.date_rdv}`}.md`;
+        const relPath = `04 - Rendez-vous/${filename}`;
+        const { title: _t, ...rdvWithoutTitle } = rdv;
+        const content = serializeRDV(rdvWithoutTitle);
+        await writeVaultFile(`${vaultPath}/${relPath}`, content);
+        const newRdv: RDV = { ...rdv, sourceFile: relPath };
+        setRdvs((prev) => [...prev, newRdv]);
+      } catch (e) {
+        if (import.meta.env.DEV) console.error('Erreur addRDV:', e);
+      }
+    },
+    [vaultPath],
+  );
+
+  const updateRDV = useCallback(
+    async (rdv: RDV) => {
+      if (!vaultPath) return;
+      try {
+        const { title: _t, sourceFile, ...rdvData } = rdv;
+        const content = serializeRDV(rdvData);
+        await writeVaultFile(`${vaultPath}/${sourceFile}`, content);
+        setRdvs((prev) => prev.map((r) => r.sourceFile === rdv.sourceFile ? rdv : r));
+      } catch (e) {
+        if (import.meta.env.DEV) console.error('Erreur updateRDV:', e);
+      }
+    },
+    [vaultPath],
+  );
+
+  const deleteRDV = useCallback(
+    async (rdv: RDV) => {
+      if (!vaultPath) return;
+      try {
+        await deleteVaultFile(`${vaultPath}/${rdv.sourceFile}`);
+        setRdvs((prev) => prev.filter((r) => r.sourceFile !== rdv.sourceFile));
+      } catch (e) {
+        if (import.meta.env.DEV) console.error('Erreur deleteRDV:', e);
+      }
+    },
+    [vaultPath],
+  );
+
+  // -------------------------------------------------------------------------
+  // Actions — Notes CRUD
+  // -------------------------------------------------------------------------
+
+  const addNote = useCallback(
+    async (note: Omit<Note, 'sourceFile'>) => {
+      if (!vaultPath) return;
+      try {
+        const filename = noteFileName(note.title);
+        const relPath = `08 - Notes/${filename}`;
+        const content = serializeNote(note);
+        await writeVaultFile(`${vaultPath}/${relPath}`, content);
+        const newNote: Note = { ...note, sourceFile: relPath };
+        setNotes((prev) => [...prev, newNote]);
+      } catch (e) {
+        if (import.meta.env.DEV) console.error('Erreur addNote:', e);
+      }
+    },
+    [vaultPath],
+  );
+
+  const updateNote = useCallback(
+    async (note: Note) => {
+      if (!vaultPath) return;
+      try {
+        const { sourceFile, ...noteData } = note;
+        const content = serializeNote(noteData);
+        await writeVaultFile(`${vaultPath}/${sourceFile}`, content);
+        setNotes((prev) => prev.map((n) => n.sourceFile === note.sourceFile ? note : n));
+      } catch (e) {
+        if (import.meta.env.DEV) console.error('Erreur updateNote:', e);
+      }
+    },
+    [vaultPath],
+  );
+
+  const deleteNote = useCallback(
+    async (note: Note) => {
+      if (!vaultPath) return;
+      try {
+        await deleteVaultFile(`${vaultPath}/${note.sourceFile}`);
+        setNotes((prev) => prev.filter((n) => n.sourceFile !== note.sourceFile));
+      } catch (e) {
+        if (import.meta.env.DEV) console.error('Erreur deleteNote:', e);
+      }
+    },
+    [vaultPath],
+  );
+
+  // -------------------------------------------------------------------------
+  // Actions — Defis
+  // -------------------------------------------------------------------------
+
+  const addDefi = useCallback(
+    async (defi: Defi) => {
+      if (!vaultPath) return;
+      try {
+        const updatedDefis = [...defis, defi];
+        const content = serializeDefis(updatedDefis);
+        await writeVaultFile(`${vaultPath}/defis.md`, content);
+        setDefis(updatedDefis);
+      } catch (e) {
+        if (import.meta.env.DEV) console.error('Erreur addDefi:', e);
+      }
+    },
+    [vaultPath, defis],
+  );
+
+  const updateDefi = useCallback(
+    async (defi: Defi) => {
+      if (!vaultPath) return;
+      try {
+        const updatedDefis = defis.map((d) => d.id === defi.id ? defi : d);
+        const content = serializeDefis(updatedDefis);
+        await writeVaultFile(`${vaultPath}/defis.md`, content);
+        setDefis(updatedDefis);
+      } catch (e) {
+        if (import.meta.env.DEV) console.error('Erreur updateDefi:', e);
+      }
+    },
+    [vaultPath, defis],
+  );
+
+  // -------------------------------------------------------------------------
+  // Actions — Loot
+  // -------------------------------------------------------------------------
+
+  const openLootBoxMutation = useCallback(
+    async (): Promise<{ box: LootBox; entries: GamificationEntry[] } | null> => {
+      if (!vaultPath || !activeProfile) return null;
+      if (activeProfile.lootBoxesAvailable <= 0) return null;
+      try {
+        const gamiContent = await readVaultFile(`${vaultPath}/gami-${activeProfile.id}.md`);
+        const currentGamiData = parseGamification(gamiContent);
+        const result = openLootBox(activeProfile, currentGamiData);
+        // Update gamiData with new profile state
+        const updatedProfiles = currentGamiData.profiles.map((p) =>
+          p.id === activeProfile.id ? result.profile : p,
+        );
+        const updatedGamiData: GamificationData = {
+          ...currentGamiData,
+          profiles: updatedProfiles,
+          history: [...currentGamiData.history, ...result.entries],
+          activeRewards: [...(currentGamiData.activeRewards ?? []), ...result.newActiveRewards],
+        };
+        await writeVaultFile(`${vaultPath}/gami-${activeProfile.id}.md`, serializeGamification(updatedGamiData));
+        setGamiData(updatedGamiData);
+        setActiveProfileState(result.profile);
+        setProfiles((prev) => prev.map((p) => p.id === activeProfile.id ? result.profile : p));
+        return { box: result.box, entries: result.entries };
+      } catch (e) {
+        if (import.meta.env.DEV) console.error('Erreur openLootBox:', e);
+        return null;
+      }
+    },
+    [vaultPath, activeProfile],
+  );
+
+  const markLootUsed = useCallback(
+    async (rewardId: string) => {
+      if (!vaultPath || !activeProfile) return;
+      try {
+        const gamiContent = await readVaultFile(`${vaultPath}/gami-${activeProfile.id}.md`);
+        const currentGamiData = parseGamification(gamiContent);
+        const updatedActiveRewards = (currentGamiData.activeRewards ?? []).filter(
+          (r) => r.id !== rewardId,
+        );
+        const updatedGamiData: GamificationData = {
+          ...currentGamiData,
+          activeRewards: updatedActiveRewards,
+        };
+        await writeVaultFile(`${vaultPath}/gami-${activeProfile.id}.md`, serializeGamification(updatedGamiData));
+        setGamiData(updatedGamiData);
+      } catch (e) {
+        if (import.meta.env.DEV) console.error('Erreur markLootUsed:', e);
+      }
+    },
+    [vaultPath, activeProfile],
+  );
+
+  // -------------------------------------------------------------------------
+  // Actions — Skills
+  // -------------------------------------------------------------------------
+
+  const unlockSkill = useCallback(
+    async (skillId: string, profileId?: string) => {
+      if (!vaultPath || !activeProfile) return;
+      const targetProfileId = profileId ?? activeProfile.id;
+      try {
+        const relPath = `08 - Compétences/${targetProfileId}.md`;
+        let currentData: SkillTreeData;
+        try {
+          const content = await readVaultFile(`${vaultPath}/${relPath}`);
+          currentData = parseSkillTree(content);
+        } catch {
+          currentData = { profileId: targetProfileId, profileName: targetProfileId, unlocked: [] };
+        }
+        const alreadyUnlocked = currentData.unlocked.some((u) => u.skillId === skillId);
+        if (alreadyUnlocked) return;
+        const updatedData: SkillTreeData = {
+          ...currentData,
+          unlocked: [
+            ...currentData.unlocked,
+            { skillId, unlockedAt: new Date().toISOString().slice(0, 10), unlockedBy: activeProfile.id },
+          ],
+        };
+        await writeVaultFile(`${vaultPath}/${relPath}`, serializeSkillTree(updatedData));
+        setSkillTrees((prev) => {
+          const idx = prev.findIndex((t) => t.profileId === targetProfileId);
+          if (idx >= 0) {
+            const updated = [...prev];
+            updated[idx] = updatedData;
+            return updated;
+          }
+          return [...prev, updatedData];
+        });
+      } catch (e) {
+        if (import.meta.env.DEV) console.error('Erreur unlockSkill:', e);
+      }
+    },
+    [vaultPath, activeProfile],
+  );
+
+  // -------------------------------------------------------------------------
+  // Actions — Health
+  // -------------------------------------------------------------------------
+
+  const saveHealthRecord = useCallback(
+    async (record: HealthRecord) => {
+      if (!vaultPath) return;
+      try {
+        const relPath = `01 - Enfants/${record.enfant}/Carnet de santé.md`;
+        const content = serializeHealthRecord(record);
+        await writeVaultFile(`${vaultPath}/${relPath}`, content);
+        setHealthRecords((prev) => {
+          const idx = prev.findIndex((r) => r.enfantId === record.enfantId);
+          if (idx >= 0) {
+            const updated = [...prev];
+            updated[idx] = record;
+            return updated;
+          }
+          return [...prev, record];
+        });
+      } catch (e) {
+        if (import.meta.env.DEV) console.error('Erreur saveHealthRecord:', e);
+      }
+    },
+    [vaultPath],
+  );
+
+  const addGrowthEntry = useCallback(
+    async (enfantId: string, entry: HealthRecord['croissance'][number]) => {
+      if (!vaultPath) return;
+      const record = healthRecords.find((r) => r.enfantId === enfantId);
+      if (!record) return;
+      const updatedRecord: HealthRecord = {
+        ...record,
+        croissance: [...record.croissance, entry].sort((a, b) => a.date.localeCompare(b.date)),
+      };
+      await saveHealthRecord(updatedRecord);
+    },
+    [vaultPath, healthRecords, saveHealthRecord],
+  );
+
+  const addVaccineEntry = useCallback(
+    async (enfantId: string, entry: HealthRecord['vaccins'][number]) => {
+      if (!vaultPath) return;
+      const record = healthRecords.find((r) => r.enfantId === enfantId);
+      if (!record) return;
+      const updatedRecord: HealthRecord = {
+        ...record,
+        vaccins: [...record.vaccins, entry],
+      };
+      await saveHealthRecord(updatedRecord);
+    },
+    [vaultPath, healthRecords, saveHealthRecord],
+  );
+
+  // -------------------------------------------------------------------------
+  // Actions — Routines
+  // -------------------------------------------------------------------------
+
+  const saveRoutinesMutation = useCallback(
+    async (newRoutines: Routine[]) => {
+      if (!vaultPath) return;
+      try {
+        const content = serializeRoutines(newRoutines);
+        await writeVaultFile(`${vaultPath}/05 - Famille/Routines.md`, content);
+        setRoutines(newRoutines);
+      } catch (e) {
+        if (import.meta.env.DEV) console.error('Erreur saveRoutines:', e);
+      }
+    },
+    [vaultPath],
+  );
+
+  // completeRoutineStep is purely local state (no persistence needed — ephemeral session progress)
+  const completeRoutineStep = useCallback(
+    (_routineId: string, _stepIdx: number) => {
+      // Routine step completion is session-only — no vault write needed
+      // Screens track RoutineProgress locally via useState
+    },
+    [],
+  );
+
+  // -------------------------------------------------------------------------
+  // Actions — Grossesse
+  // -------------------------------------------------------------------------
+
+  const addPregnancyEntry = useCallback(
+    async (entry: PregnancyWeekEntry, enfant: string) => {
+      if (!vaultPath) return;
+      try {
+        const relPath = `03 - Journal/Grossesse/${enfant}.md`;
+        let current: PregnancyWeekEntry[] = [];
+        try {
+          const existing = await readVaultFile(`${vaultPath}/${relPath}`);
+          current = parsePregnancyJournal(existing, relPath);
+        } catch {
+          // File doesn't exist yet — start fresh
+        }
+        const updated = [...current.filter((e) => e.week !== entry.week), { ...entry, sourceFile: relPath }];
+        const content = serializePregnancyJournal(updated, enfant);
+        await writeVaultFile(`${vaultPath}/${relPath}`, content);
+        setPregnancyEntries((prev) => {
+          const filtered = prev.filter((e) => !(e.sourceFile === relPath && e.week === entry.week));
+          return [...filtered, { ...entry, sourceFile: relPath }];
+        });
+      } catch (e) {
+        if (import.meta.env.DEV) console.error('Erreur addPregnancyEntry:', e);
+      }
+    },
+    [vaultPath],
+  );
+
+  // -------------------------------------------------------------------------
   // Context value (stable reference via useMemo)
   // -------------------------------------------------------------------------
 
@@ -520,6 +1021,11 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
       anniversaries,
       notes,
       secretMissions,
+      gamiData,
+      healthRecords,
+      routines,
+      skillTrees,
+      pregnancyEntries,
       setVaultPath,
       clearVaultPath,
       refresh,
@@ -527,6 +1033,23 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
       writeFile,
       setActiveProfile,
       toggleTask,
+      addRDV,
+      updateRDV,
+      deleteRDV,
+      addNote,
+      updateNote,
+      deleteNote,
+      addDefi,
+      updateDefi,
+      openLootBox: openLootBoxMutation,
+      markLootUsed,
+      unlockSkill,
+      saveHealthRecord,
+      addGrowthEntry,
+      addVaccineEntry,
+      saveRoutines: saveRoutinesMutation,
+      completeRoutineStep,
+      addPregnancyEntry,
     }),
     [
       vaultPath,
@@ -547,6 +1070,11 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
       anniversaries,
       notes,
       secretMissions,
+      gamiData,
+      healthRecords,
+      routines,
+      skillTrees,
+      pregnancyEntries,
       setVaultPath,
       clearVaultPath,
       refresh,
@@ -554,6 +1082,23 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
       writeFile,
       setActiveProfile,
       toggleTask,
+      addRDV,
+      updateRDV,
+      deleteRDV,
+      addNote,
+      updateNote,
+      deleteNote,
+      addDefi,
+      updateDefi,
+      openLootBoxMutation,
+      markLootUsed,
+      unlockSkill,
+      saveHealthRecord,
+      addGrowthEntry,
+      addVaccineEntry,
+      saveRoutinesMutation,
+      completeRoutineStep,
+      addPregnancyEntry,
     ],
   );
 

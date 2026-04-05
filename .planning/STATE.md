@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: verifying
-stopped_at: Phase 14 planned — 9 plans in 3 waves
-last_updated: "2026-04-05T08:51:54.021Z"
-last_activity: "2026-04-05 - Completed quick task 260405-0wx: Repliquer changements ferme mobile sur desktop"
+stopped_at: Completed 14-01-PLAN.md
+last_updated: "2026-04-05T09:02:33.721Z"
+last_activity: "2026-04-04 - Completed quick task 260404-qvz: Fix OOM crash TreeScreen"
 progress:
-  total_phases: 11
-  completed_phases: 9
-  total_plans: 33
-  completed_plans: 22
+  total_phases: 10
+  completed_phases: 8
+  total_plans: 24
+  completed_plans: 21
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 Phase: 10
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-05 - Completed quick task 260405-0wx: Repliquer changements ferme mobile sur desktop
+Last activity: 2026-04-04 - Completed quick task 260404-qvz: Fix OOM crash TreeScreen
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -65,7 +65,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 09-cadeaux-familiaux P01 | 4min | 2 tasks | 7 files |
 | Phase 09-cadeaux-familiaux P02 | 10min | 2 tasks | 6 files |
 | Phase quick-260404-qvz P01 | 15min | 2 tasks | 2 files |
-| Phase quick-260405-0u3 P01 | 8min | 2 tasks | 2 files |
+| Phase 14-parite-mobile-desktop P01 | 20min | 2 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -73,7 +73,6 @@ Progress: [░░░░░░░░░░] 0%
 
 - Phase 10 added: Compagnon Mascotte — compagnon interactif lié à la gamification, vit dans l'arbre, mascotte de l'app
 - Phase 12 added: Templates onboarding vivants — contenu personnalisé et complet
-- Phase 14 added: Parité Mobile ↔ Desktop — analyser et combler les écarts fonctionnels entre app mobile et version desktop
 
 ### Decisions
 
@@ -125,7 +124,10 @@ Recent decisions affecting current work:
 - [Phase 09-cadeaux-familiaux]: receiveGifts appelé dans useEffect [profile.id] dans tree.tsx — une seule detection par profil
 - [Phase 09-cadeaux-familiaux]: claim-first : deleteFile pending AVANT addGiftToInventory pour eviter double-consommation
 - [Phase quick-260404-qvz]: Timer global WorldGridView: sharedFrameIdx + whisperCellId au niveau parent eliminent ~40 setInterval locaux CropCell
-- [Phase quick-260405-0wx]: wear-engine.ts copie directement du mobile (fichier pur, pas de dependance React) — checkWearInVault simplifie fullBuildingSince a {}
+- [Phase 14-parite-mobile-desktop]: deleteVaultFile déjà disponible dans vault-service.ts — pas besoin de l'ajouter
+- [Phase 14-parite-mobile-desktop]: openLootBox desktop réutilise l'engine core identique au mobile — cohérence garantie
+- [Phase 14-parite-mobile-desktop]: completeRoutineStep est session-only (pas de persistance) — les écrans gèrent leur propre RoutineProgress local
+- [Phase 14-parite-mobile-desktop]: VaultContext desktop reste monofichier (1116 lignes < 1500) — extraction en hooks helpers non nécessaire
 
 ### Pending Todos
 
@@ -164,10 +166,9 @@ None yet.
 | 260404-qvz | Fix OOM crash TreeScreen — timer global, lazy-load images saison, reduire particules | 2026-04-04 | cd8307e | [260404-qvz-fix-oom-crash-treescreen-timer-global-la](./quick/260404-qvz-fix-oom-crash-treescreen-timer-global-la/) |
 | 260404-rfs | Bouton Offrir visible sur items inventaire + Mes créations (remplace long-press) | 2026-04-04 | 19f051b | [260404-rfs-remplacer-long-press-cadeau-par-bouton-o](./quick/260404-rfs-remplacer-long-press-cadeau-par-bouton-o/) |
 | 260404-xbu | Permettre de changer la catégorie d'une recette depuis RecipeViewer | 2026-04-04 | 3b314e0 | [260404-xbu-permettre-de-changer-la-cat-gorie-d-une-](./quick/260404-xbu-permettre-de-changer-la-cat-gorie-d-une-/) |
-| 260405-0wx | Répliquer changements ferme mobile sur desktop (wear + FIFO) | 2026-04-05 | 85ee148 | [260405-0wx-r-pliquer-changements-ferme-mobile-sur-d](./quick/260405-0wx-r-pliquer-changements-ferme-mobile-sur-d/) |
 
 ## Session Continuity
 
-Last session: 2026-04-05T08:51:54.009Z
-Stopped at: Phase 14 planned — 9 plans in 3 waves
-Resume file: .planning/phases/14-parit-mobile-desktop-analyser-et-combler-les-carts-fonctionnels-entre-app-mobile-et-version-desktop-pour-atteindre-une-parit-quasi-identique/14-01-PLAN.md
+Last session: 2026-04-05T09:02:33.718Z
+Stopped at: Completed 14-01-PLAN.md
+Resume file: None
