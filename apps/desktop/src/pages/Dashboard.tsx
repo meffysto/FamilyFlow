@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useState, useRef, type DragEvent, type ReactNode } from 'react';
+import { useMemo, useCallback, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GlassCard } from '../components/ui/GlassCard';
 import { AccentRow } from '../components/ui/AccentRow';
@@ -6,44 +6,134 @@ import { Badge } from '../components/ui/Badge';
 import { useVault } from '../contexts/VaultContext';
 import type { Task, RDV, MealItem, Anniversary } from '@family-vault/core';
 
-// ─── Drag-and-drop card ordering ──────────────────────────────────────────
+// ─── Card order & visibility persistence ──────────────────────────────────
 
 const STORAGE_KEY = 'dashboard-card-order';
+const HIDDEN_KEY = 'dashboard-hidden-cards';
 
-function loadCardOrder(): string[] | null {
+interface DashboardPrefs {
+  order: string[];
+  hidden: string[];
+}
+
+function loadPrefs(): DashboardPrefs | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
+    const rawOrder = localStorage.getItem(STORAGE_KEY);
+    const rawHidden = localStorage.getItem(HIDDEN_KEY);
+    return {
+      order: rawOrder ? JSON.parse(rawOrder) : [],
+      hidden: rawHidden ? JSON.parse(rawHidden) : [],
+    };
   } catch { return null; }
 }
 
-function saveCardOrder(order: string[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(order));
+function savePrefs(prefs: DashboardPrefs) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs.order));
+  localStorage.setItem(HIDDEN_KEY, JSON.stringify(prefs.hidden));
 }
 
-function DraggableCard({
-  id, children, onDragStart, onDragOver, onDrop, draggingId,
+// ─── Card labels ──────────────────────────────────────────────────────────
+
+const CARD_LABELS: Record<string, string> = {
+  overdue: '⚠️ En retard',
+  tasks: '📋 Tâches du jour',
+  rdv: '📆 Rendez-vous',
+  meals: '🍽️ Repas du jour',
+  courses: '🛒 Courses',
+  anniversaires: '🎂 Anniversaires',
+  stats: '📊 Vue d\'ensemble',
+};
+
+// ─── Customize modal ──────────────────────────────────────────────────────
+
+function CustomizeModal({
+  order,
+  hidden,
+  onSave,
+  onClose,
 }: {
-  id: string;
-  children: ReactNode;
-  onDragStart: (id: string) => void;
-  onDragOver: (e: DragEvent, id: string) => void;
-  onDrop: (id: string) => void;
-  draggingId: string | null;
+  order: string[];
+  hidden: string[];
+  onSave: (order: string[], hidden: string[]) => void;
+  onClose: () => void;
 }) {
-  const [over, setOver] = useState(false);
+  const [localOrder, setLocalOrder] = useState(order);
+  const [localHidden, setLocalHidden] = useState(new Set(hidden));
+
+  const moveUp = (idx: number) => {
+    if (idx === 0) return;
+    setLocalOrder((prev) => {
+      const next = [...prev];
+      [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+      return next;
+    });
+  };
+
+  const moveDown = (idx: number) => {
+    if (idx >= localOrder.length - 1) return;
+    setLocalOrder((prev) => {
+      const next = [...prev];
+      [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+      return next;
+    });
+  };
+
+  const toggleVisibility = (id: string) => {
+    setLocalHidden((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleSave = () => {
+    onSave(localOrder, Array.from(localHidden));
+    onClose();
+  };
 
   return (
-    <div
-      className={`dashboard-card-wrapper${draggingId === id ? ' dragging' : ''}${over ? ' drag-over' : ''}`}
-      draggable
-      onDragStart={(e) => { e.dataTransfer.setData('text/plain', id); onDragStart(id); }}
-      onDragOver={(e) => { e.preventDefault(); setOver(true); onDragOver(e, id); }}
-      onDragLeave={() => setOver(false)}
-      onDrop={(e) => { e.preventDefault(); setOver(false); onDrop(id); }}
-      onDragEnd={() => setOver(false)}
-    >
-      {children}
+    <div className="customize-overlay" onClick={onClose}>
+      <div className="customize-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="customize-header">
+          <h2 className="customize-title">Personnaliser le tableau de bord</h2>
+          <button type="button" className="customize-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="customize-list">
+          {localOrder.map((id, idx) => (
+            <div key={id} className="customize-item">
+              <label className="customize-toggle">
+                <input
+                  type="checkbox"
+                  checked={!localHidden.has(id)}
+                  onChange={() => toggleVisibility(id)}
+                />
+                <span className="customize-label">{CARD_LABELS[id] || id}</span>
+              </label>
+              <div className="customize-arrows">
+                <button
+                  type="button"
+                  className="customize-arrow"
+                  disabled={idx === 0}
+                  onClick={() => moveUp(idx)}
+                  aria-label="Monter"
+                >↑</button>
+                <button
+                  type="button"
+                  className="customize-arrow"
+                  disabled={idx === localOrder.length - 1}
+                  onClick={() => moveDown(idx)}
+                  aria-label="Descendre"
+                >↓</button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="customize-footer">
+          <button type="button" className="customize-btn customize-btn--cancel" onClick={onClose}>Annuler</button>
+          <button type="button" className="customize-btn customize-btn--save" onClick={handleSave}>Enregistrer</button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -215,44 +305,24 @@ export default function Dashboard() {
     [toggleTask],
   );
 
-  // ── Drag-and-drop ───────────────────────────────────────────────────
-
-  const draggingRef = useRef<string | null>(null);
-  const [draggingId, setDraggingId] = useState<string | null>(null);
+  // ── Card order & visibility ─────────────────────────────────────────
 
   const DEFAULT_ORDER = ['overdue', 'tasks', 'rdv', 'meals', 'courses', 'anniversaires', 'stats'];
 
   const [cardOrder, setCardOrder] = useState<string[]>(() => {
-    return loadCardOrder() ?? DEFAULT_ORDER;
+    return loadPrefs()?.order.length ? loadPrefs()!.order : DEFAULT_ORDER;
   });
 
-  const handleDragStart = useCallback((id: string) => {
-    draggingRef.current = id;
-    setDraggingId(id);
-  }, []);
+  const [hiddenCards, setHiddenCards] = useState<Set<string>>(() => {
+    return new Set(loadPrefs()?.hidden ?? []);
+  });
 
-  const handleDragOver = useCallback((_e: DragEvent, _id: string) => {
-    // just prevent default (done in DraggableCard)
-  }, []);
+  const [showCustomize, setShowCustomize] = useState(false);
 
-  const handleDrop = useCallback((targetId: string) => {
-    const sourceId = draggingRef.current;
-    if (!sourceId || sourceId === targetId) {
-      setDraggingId(null);
-      return;
-    }
-    setCardOrder((prev) => {
-      const next = [...prev];
-      const srcIdx = next.indexOf(sourceId);
-      const tgtIdx = next.indexOf(targetId);
-      if (srcIdx === -1 || tgtIdx === -1) return prev;
-      next.splice(srcIdx, 1);
-      next.splice(tgtIdx, 0, sourceId);
-      saveCardOrder(next);
-      return next;
-    });
-    draggingRef.current = null;
-    setDraggingId(null);
+  const handleSaveCustomize = useCallback((order: string[], hidden: string[]) => {
+    setCardOrder(order);
+    setHiddenCards(new Set(hidden));
+    savePrefs({ order, hidden });
   }, []);
 
   // ── Card definitions ──────────────────────────────────────────────
@@ -288,7 +358,7 @@ export default function Dashboard() {
       tasks: {
         visible: true,
         node: (
-          <GlassCard title="Tâches du jour" icon="📋" count={pendingTasks.length} accentColor="var(--cat-organisation)" linkText="Voir tout →" onLinkClick={() => navigate('/tasks')}>
+          <GlassCard title="Tâches du jour" icon="📋" count={pendingTasks.length} accentColor="var(--cat-organisation)" tinted linkText="Voir tout →" onLinkClick={() => navigate('/tasks')}>
             {pendingTasks.length === 0 ? (
               <div className="empty-section">
                 <span style={{ fontSize: 28, opacity: 0.6 }}>✅</span>
@@ -332,7 +402,7 @@ export default function Dashboard() {
       rdv: {
         visible: true,
         node: (
-          <GlassCard title="Rendez-vous" icon="📆" count={todayRdvs.length + upcomingRdvs.length} accentColor="var(--cat-sante)" linkText="Voir tout →" onLinkClick={() => navigate('/calendar')}>
+          <GlassCard title="Rendez-vous" icon="📆" count={todayRdvs.length + upcomingRdvs.length} accentColor="var(--cat-sante)" tinted linkText="Voir tout →" onLinkClick={() => navigate('/calendar')}>
             {todayRdvs.length === 0 && upcomingRdvs.length === 0 ? (
               <div className="empty-section">
                 <span style={{ fontSize: 28, opacity: 0.6 }}>📅</span>
@@ -382,7 +452,7 @@ export default function Dashboard() {
       meals: {
         visible: true,
         node: (
-          <GlassCard title="Repas du jour" icon="🍽️" accentColor="var(--cat-organisation)" linkText="Voir tout →" onLinkClick={() => navigate('/meals')}>
+          <GlassCard title="Repas du jour" icon="🍽️" accentColor="var(--cat-organisation)" tinted linkText="Voir tout →" onLinkClick={() => navigate('/meals')}>
             {todayMeals.length === 0 ? (
               <div className="empty-section">
                 <span style={{ fontSize: 28, opacity: 0.6 }}>🍳</span>
@@ -407,7 +477,7 @@ export default function Dashboard() {
       courses: {
         visible: pendingCourses.length > 0,
         node: (
-          <GlassCard title="Courses" icon="🛒" count={pendingCourses.length} accentColor="var(--cat-organisation)" linkText="Voir tout →" onLinkClick={() => navigate('/shopping')}>
+          <GlassCard title="Courses" icon="🛒" count={pendingCourses.length} accentColor="var(--cat-organisation)" tinted linkText="Voir tout →" onLinkClick={() => navigate('/shopping')}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               {pendingCourses.slice(0, 5).map((item, i) => (
                 <div key={i} style={{ fontSize: 'var(--font-size-body)', color: 'var(--text)', padding: '3px 0', borderBottom: '1px solid var(--border-light)' }}>
@@ -425,7 +495,7 @@ export default function Dashboard() {
       anniversaires: {
         visible: nextAnniversaries.length > 0,
         node: (
-          <GlassCard title="Anniversaires" icon="🎂" accentColor="var(--cat-famille)" linkText="Voir tout →" onLinkClick={() => navigate('/birthdays')}>
+          <GlassCard title="Anniversaires" icon="🎂" accentColor="var(--cat-famille)" tinted linkText="Voir tout →" onLinkClick={() => navigate('/birthdays')}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {nextAnniversaries.map((a, i) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' }}>
@@ -445,7 +515,7 @@ export default function Dashboard() {
       stats: {
         visible: true,
         node: (
-          <GlassCard title="Vue d'ensemble" icon="📊" accentColor="var(--info)">
+          <GlassCard title="Vue d'ensemble" icon="📊" accentColor="var(--info)" tinted>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
               {[
                 { value: pendingTasks.length, label: 'En attente', color: 'var(--cat-organisation)' },
@@ -490,30 +560,39 @@ export default function Dashboard() {
           </h1>
           <p className="page-subtitle">{dateLabel}</p>
         </div>
-        {!loading && (
-          <span className="vault-badge">{files.length} fichiers</span>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button
+            type="button"
+            className="customize-trigger"
+            onClick={() => setShowCustomize(true)}
+            title="Personnaliser le tableau de bord"
+          >
+            ⚙️ Personnaliser
+          </button>
+          {!loading && (
+            <span className="vault-badge">{files.length} fichiers</span>
+          )}
+        </div>
       </div>
 
-      {/* Dashboard grid — masonry + drag-and-drop */}
-      <div className="dashboard-grid" onDragOver={(e) => e.preventDefault()} onDrop={(e) => e.preventDefault()}>
+      {/* Dashboard grid — 2 colonnes */}
+      <div className="dashboard-grid">
         {orderedCards.map((id) => {
           const card = cardMap[id];
-          if (!card || !card.visible) return null;
-          return (
-            <DraggableCard
-              key={id}
-              id={id}
-              onDragStart={handleDragStart}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              draggingId={draggingId}
-            >
-              {card.node}
-            </DraggableCard>
-          );
+          if (!card || !card.visible || hiddenCards.has(id)) return null;
+          return <div key={id} className="dashboard-card-wrapper">{card.node}</div>;
         })}
       </div>
+
+      {/* Modal personnalisation */}
+      {showCustomize && (
+        <CustomizeModal
+          order={orderedCards}
+          hidden={Array.from(hiddenCards)}
+          onSave={handleSaveCustomize}
+          onClose={() => setShowCustomize(false)}
+        />
+      )}
     </div>
   );
 }

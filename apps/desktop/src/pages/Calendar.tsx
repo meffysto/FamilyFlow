@@ -8,6 +8,14 @@ import { SegmentedControl } from '../components/ui/SegmentedControl';
 import { AccentRow } from '../components/ui/AccentRow';
 import { useVault } from '../contexts/VaultContext';
 import type { RDV } from '@family-vault/core';
+import {
+  aggregateCalendarEvents,
+  indexByDate,
+  EVENT_CONFIG,
+  type CalendarEvent,
+  type CalendarColorKey,
+  type AggregatorInput,
+} from '@family-vault/core';
 import './Calendar.css';
 
 // ---------------------------------------------------------------------------
@@ -43,6 +51,15 @@ const RDV_TYPES = [
 
 const ACCENT_VIOLET = 'var(--cat-sante)';
 
+const COLOR_KEY_TO_VAR: Record<CalendarColorKey, string> = {
+  info: 'var(--info)',
+  warning: 'var(--warning)',
+  success: 'var(--success)',
+  error: 'var(--error)',
+  primary: 'var(--primary)',
+  accentPink: 'var(--cat-famille)',
+};
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -59,6 +76,10 @@ function formatDateTimeFR(isoDate: string, heure?: string): string {
 
 function getRDVEmoji(type: string): string {
   return RDV_TYPE_EMOJI[type] ?? '📋';
+}
+
+function getDotColor(event: CalendarEvent): string {
+  return COLOR_KEY_TO_VAR[event.colorKey] ?? 'var(--primary)';
 }
 
 function getDotClass(statut: string): string {
@@ -194,6 +215,44 @@ const RDVRow = memo(function RDVRow({ rdv, muted }: RDVRowProps) {
   );
 });
 
+/** Ligne d'événement générique (tous types) */
+const EventRow = memo(function EventRow({ event, showDate }: { event: CalendarEvent; showDate?: boolean }) {
+  const accentColor = COLOR_KEY_TO_VAR[event.colorKey] ?? 'var(--primary)';
+
+  return (
+    <AccentRow accentColor={accentColor}>
+      <div className="rdv-row-inner">
+        <div className="rdv-row-top">
+          {showDate && (
+            <span className="rdv-date" style={{ color: accentColor }}>
+              {formatDateFR(event.date)}
+            </span>
+          )}
+          {event.time && (
+            <span className="rdv-date" style={{ color: accentColor }}>
+              {event.time}
+            </span>
+          )}
+          <span className="rdv-title">
+            {event.emoji} {event.label}
+          </span>
+          <Badge
+            variant={event.colorKey === 'error' ? 'error' : event.colorKey === 'warning' ? 'warning' : event.colorKey === 'success' ? 'success' : 'info'}
+            size="sm"
+          >
+            {EVENT_CONFIG[event.type].label}
+          </Badge>
+        </div>
+        {event.sublabel && (
+          <div className="rdv-row-meta">
+            <span className="rdv-meta-item">{event.sublabel}</span>
+          </div>
+        )}
+      </div>
+    </AccentRow>
+  );
+});
+
 // ---------------------------------------------------------------------------
 // Add RDV form state
 // ---------------------------------------------------------------------------
@@ -223,43 +282,33 @@ const EMPTY_FORM: AddRDVFormState = {
 // ---------------------------------------------------------------------------
 
 interface ListViewProps {
-  rdvs: RDV[];
-  profiles: Array<{ name: string }>;
+  events: CalendarEvent[];
 }
 
-function ListView({ rdvs, profiles: _profiles }: ListViewProps) {
+function ListView({ events }: ListViewProps) {
   const [search, setSearch] = useState('');
   const [pastExpanded, setPastExpanded] = useState(false);
 
   const normalized = search.toLowerCase().trim();
 
   const filtered = useMemo(() => {
-    if (!normalized) return rdvs;
-    return rdvs.filter((r) => {
-      const haystack = [r.title, r.type_rdv, r.enfant, r.médecin, r.lieu]
+    if (!normalized) return events;
+    return events.filter((e) => {
+      const haystack = [e.label, e.sublabel, EVENT_CONFIG[e.type].label]
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
       return haystack.includes(normalized);
     });
-  }, [rdvs, normalized]);
+  }, [events, normalized]);
 
   const upcoming = useMemo(
-    () =>
-      filtered
-        .filter((r) => r.date_rdv >= TODAY && r.statut !== 'annulé')
-        .sort((a, b) => {
-          if (a.date_rdv !== b.date_rdv) return a.date_rdv < b.date_rdv ? -1 : 1;
-          return (a.heure ?? '') < (b.heure ?? '') ? -1 : 1;
-        }),
+    () => filtered.filter((e) => e.date >= TODAY),
     [filtered],
   );
 
   const past = useMemo(
-    () =>
-      filtered
-        .filter((r) => r.date_rdv < TODAY || r.statut === 'annulé')
-        .sort((a, b) => (a.date_rdv < b.date_rdv ? 1 : -1)),
+    () => filtered.filter((e) => e.date < TODAY).sort((a, b) => b.date.localeCompare(a.date)),
     [filtered],
   );
 
@@ -269,13 +318,13 @@ function ListView({ rdvs, profiles: _profiles }: ListViewProps) {
         <SearchInput
           value={search}
           onChange={setSearch}
-          placeholder="Rechercher un RDV..."
+          placeholder="Rechercher..."
         />
       </div>
 
       {/* A venir */}
       <GlassCard
-        title="A venir"
+        title="À venir"
         icon="📅"
         count={upcoming.length}
         accentColor={ACCENT_VIOLET}
@@ -285,13 +334,13 @@ function ListView({ rdvs, profiles: _profiles }: ListViewProps) {
           <div className="calendar-empty">
             <span className="calendar-empty-icon">🎉</span>
             <span className="calendar-empty-text">
-              {search ? 'Aucun résultat' : 'Aucun rendez-vous à venir'}
+              {search ? 'Aucun résultat' : 'Aucun événement à venir'}
             </span>
           </div>
         ) : (
           <div className="calendar-section">
-            {upcoming.map((rdv) => (
-              <RDVRow key={rdv.sourceFile} rdv={rdv} />
+            {upcoming.map((event) => (
+              <EventRow key={event.id} event={event} showDate />
             ))}
           </div>
         )}
@@ -311,8 +360,8 @@ function ListView({ rdvs, profiles: _profiles }: ListViewProps) {
           <div style={{ marginTop: 8 }}>
             <GlassCard>
               <div className="calendar-section">
-                {past.map((rdv) => (
-                  <RDVRow key={rdv.sourceFile} rdv={rdv} muted />
+                {past.map((event) => (
+                  <EventRow key={event.id} event={event} showDate />
                 ))}
               </div>
             </GlassCard>
@@ -321,7 +370,7 @@ function ListView({ rdvs, profiles: _profiles }: ListViewProps) {
 
         {pastExpanded && past.length === 0 && (
           <div className="calendar-empty" style={{ marginTop: 8 }}>
-            <span className="calendar-empty-text">Aucun rendez-vous passé</span>
+            <span className="calendar-empty-text">Aucun événement passé</span>
           </div>
         )}
       </div>
@@ -334,10 +383,11 @@ function ListView({ rdvs, profiles: _profiles }: ListViewProps) {
 // ---------------------------------------------------------------------------
 
 interface CalendarViewProps {
-  rdvs: RDV[];
+  events: CalendarEvent[];
+  aggregatorInput: AggregatorInput;
 }
 
-function CalendarView({ rdvs }: CalendarViewProps) {
+function CalendarView({ events: _allEvents, aggregatorInput }: CalendarViewProps) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -359,34 +409,36 @@ function CalendarView({ rdvs }: CalendarViewProps) {
     });
   }, []);
 
-  // Map: ISO date → RDVs on that day
-  const rdvByDate = useMemo(() => {
-    const map = new Map<string, RDV[]>();
-    for (const rdv of rdvs) {
-      const list = map.get(rdv.date_rdv) ?? [];
-      list.push(rdv);
-      map.set(rdv.date_rdv, list);
-    }
-    return map;
-  }, [rdvs]);
+  // Aggregate events for the displayed month
+  const monthRange = useMemo(() => ({
+    start: buildISODate(year, month, 1),
+    end: buildISODate(year, month, new Date(year, month + 1, 0).getDate()),
+  }), [year, month]);
+
+  const monthEvents = useMemo(
+    () => aggregateCalendarEvents(aggregatorInput, monthRange),
+    [aggregatorInput, monthRange],
+  );
+
+  const eventsByDate = useMemo(() => indexByDate(monthEvents), [monthEvents]);
 
   const cells = useMemo(() => buildCalendarCells(year, month), [year, month]);
 
   const monthLabel = `${MONTH_NAMES[month]} ${year}`;
 
-  const selectedRDVs = useMemo(
-    () => (selectedDate ? (rdvByDate.get(selectedDate) ?? []) : []),
-    [selectedDate, rdvByDate],
+  const selectedEvents = useMemo(
+    () => (selectedDate ? (eventsByDate[selectedDate] ?? []) : []),
+    [selectedDate, eventsByDate],
   );
 
   const handleCellClick = useCallback(
     (date: string | null) => {
       if (!date) return;
-      const hasRDVs = (rdvByDate.get(date)?.length ?? 0) > 0;
-      if (!hasRDVs) return;
+      const hasEvents = (eventsByDate[date]?.length ?? 0) > 0;
+      if (!hasEvents) return;
       setSelectedDate((prev) => (prev === date ? null : date));
     },
-    [rdvByDate],
+    [eventsByDate],
   );
 
   return (
@@ -423,38 +475,38 @@ function CalendarView({ rdvs }: CalendarViewProps) {
           const isCurrentMonth = cell.date !== null;
           const isToday = cell.date === TODAY;
           const isSelected = cell.date === selectedDate;
-          const dayRDVs = cell.date ? (rdvByDate.get(cell.date) ?? []) : [];
-          const hasRDVs = dayRDVs.length > 0;
+          const dayEvents = cell.date ? (eventsByDate[cell.date] ?? []) : [];
+          const hasEvents = dayEvents.length > 0;
 
           const classNames = [
             'calendar-cell',
             !isCurrentMonth && 'calendar-cell--other-month',
             isToday && 'calendar-cell--today',
-            hasRDVs && 'calendar-cell--has-rdv',
+            hasEvents && 'calendar-cell--has-rdv',
             isSelected && 'calendar-cell--selected',
           ]
             .filter(Boolean)
             .join(' ');
 
-          // Up to 3 dots
-          const dots = dayRDVs.slice(0, 3);
+          // Up to 4 dots with event-type colors
+          const dots = dayEvents.slice(0, 4);
 
           return (
             <div
               key={`${cell.date ?? 'pad'}-${idx}`}
               className={classNames}
               onClick={() => handleCellClick(cell.date)}
-              role={hasRDVs ? 'button' : undefined}
-              tabIndex={hasRDVs ? 0 : undefined}
+              role={hasEvents ? 'button' : undefined}
+              tabIndex={hasEvents ? 0 : undefined}
               onKeyDown={(e) => {
-                if (hasRDVs && (e.key === 'Enter' || e.key === ' ')) {
+                if (hasEvents && (e.key === 'Enter' || e.key === ' ')) {
                   e.preventDefault();
                   handleCellClick(cell.date);
                 }
               }}
               aria-label={
                 cell.date
-                  ? `${cell.day} ${MONTH_NAMES[month]}${hasRDVs ? ` — ${dayRDVs.length} RDV` : ''}`
+                  ? `${cell.day} ${MONTH_NAMES[month]}${hasEvents ? ` — ${dayEvents.length} événement(s)` : ''}`
                   : undefined
               }
             >
@@ -462,10 +514,11 @@ function CalendarView({ rdvs }: CalendarViewProps) {
 
               {dots.length > 0 && (
                 <div className="calendar-dots">
-                  {dots.map((rdv, di) => (
+                  {dots.map((event, di) => (
                     <span
                       key={di}
-                      className={`calendar-dot ${getDotClass(rdv.statut)}`}
+                      className="calendar-dot"
+                      style={{ background: getDotColor(event) }}
                     />
                   ))}
                 </div>
@@ -476,13 +529,13 @@ function CalendarView({ rdvs }: CalendarViewProps) {
       </div>
 
       {/* Selected day detail */}
-      {selectedDate && selectedRDVs.length > 0 && (
+      {selectedDate && selectedEvents.length > 0 && (
         <div className="calendar-day-detail">
           <div className="calendar-day-detail-title">
-            {formatDateFR(selectedDate)} — {selectedRDVs.length} rendez-vous
+            {formatDateFR(selectedDate)} — {selectedEvents.length} événement{selectedEvents.length > 1 ? 's' : ''}
           </div>
-          {selectedRDVs.map((rdv) => (
-            <RDVRow key={rdv.sourceFile} rdv={rdv} />
+          {selectedEvents.map((event) => (
+            <EventRow key={event.id} event={event} />
           ))}
         </div>
       )}
@@ -686,13 +739,45 @@ const SEGMENT_OPTIONS = [
 ];
 
 export default function CalendarPage() {
-  const { rdvs, profiles, writeFile, refresh, loading } = useVault();
+  const {
+    rdvs, tasks, meals, anniversaries, defis, moods, quotes,
+    profiles, writeFile, refresh, loading,
+  } = useVault();
   const [view, setView] = useState<'liste' | 'calendrier'>('liste');
   const [addOpen, setAddOpen] = useState(false);
 
+  // Build aggregator input (no vacations/memories on desktop yet)
+  const aggregatorInput = useMemo<AggregatorInput>(() => ({
+    rdvs,
+    tasks,
+    anniversaries,
+    resolvedMeals: [], // meals are weekly-based, skip for now
+    vacationConfig: null,
+    defis,
+    memories: [],
+    moods,
+    quotes,
+  }), [rdvs, tasks, anniversaries, defis, moods, quotes]);
+
+  // Aggregate events for the list view (3 months window)
+  const listRange = useMemo(() => {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 3, 0);
+    return {
+      start: start.toISOString().slice(0, 10),
+      end: end.toISOString().slice(0, 10),
+    };
+  }, []);
+
+  const allEvents = useMemo(
+    () => aggregateCalendarEvents(aggregatorInput, listRange),
+    [aggregatorInput, listRange],
+  );
+
   const upcomingCount = useMemo(
-    () => rdvs.filter((r) => r.date_rdv >= TODAY && r.statut !== 'annulé').length,
-    [rdvs],
+    () => allEvents.filter((e) => e.date >= TODAY).length,
+    [allEvents],
   );
 
   // Child profiles only (for the select in add form)
@@ -710,8 +795,8 @@ export default function CalendarPage() {
           {!loading && (
             <p className="page-subtitle">
               {upcomingCount === 0
-                ? 'Aucun rendez-vous à venir'
-                : `${upcomingCount} rendez-vous à venir`}
+                ? 'Aucun événement à venir'
+                : `${upcomingCount} événement${upcomingCount > 1 ? 's' : ''} à venir`}
             </p>
           )}
         </div>
@@ -740,15 +825,15 @@ export default function CalendarPage() {
 
       {/* Loading state */}
       {loading && (
-        <div className="page-loader">Chargement des rendez-vous...</div>
+        <div className="page-loader">Chargement du calendrier...</div>
       )}
 
       {/* Views */}
       {!loading && view === 'liste' && (
-        <ListView rdvs={rdvs} profiles={childProfiles} />
+        <ListView events={allEvents} />
       )}
       {!loading && view === 'calendrier' && (
-        <CalendarView rdvs={rdvs} />
+        <CalendarView events={allEvents} aggregatorInput={aggregatorInput} />
       )}
 
       {/* Add RDV modal */}

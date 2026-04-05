@@ -391,7 +391,7 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
     // Anniversaries
     (async () => {
       try {
-        const content = await readVaultFile(`${path}/01 - Enfants/Commun/Anniversaires.md`);
+        const content = await readVaultFile(`${path}/01 - Famille/Anniversaires.md`);
         setAnniversaries(parseAnniversaries(content));
       } catch {
         setAnniversaries([]);
