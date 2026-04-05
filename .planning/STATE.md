@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: verifying
-stopped_at: Completed quick-260404-qvz — fix OOM crash TreeScreen timer global + reduction particules
-last_updated: "2026-04-04T17:28:22.722Z"
-last_activity: "2026-04-04 - Completed quick task 260404-quw: Fix long-press inventory CraftSheet"
+stopped_at: Completed 14-07-PLAN.md
+last_updated: "2026-04-05T09:08:59.461Z"
+last_activity: "2026-04-04 - Completed quick task 260404-qvz: Fix OOM crash TreeScreen"
 progress:
   total_phases: 10
-  completed_phases: 9
+  completed_phases: 8
   total_plans: 24
-  completed_plans: 22
+  completed_plans: 21
   percent: 0
 ---
 
@@ -65,6 +65,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 09-cadeaux-familiaux P01 | 4min | 2 tasks | 7 files |
 | Phase 09-cadeaux-familiaux P02 | 10min | 2 tasks | 6 files |
 | Phase quick-260404-qvz P01 | 15min | 2 tasks | 2 files |
+| Phase 14-parite-mobile-desktop P07 | 10min | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -123,6 +124,8 @@ Recent decisions affecting current work:
 - [Phase 09-cadeaux-familiaux]: receiveGifts appelé dans useEffect [profile.id] dans tree.tsx — une seule detection par profil
 - [Phase 09-cadeaux-familiaux]: claim-first : deleteFile pending AVANT addGiftToInventory pour eviter double-consommation
 - [Phase quick-260404-qvz]: Timer global WorldGridView: sharedFrameIdx + whisperCellId au niveau parent eliminent ~40 setInterval locaux CropCell
+- [Phase 14-07]: FileReader web API utilisé à la place d'expo-file-system pour base64 — desktop est Tauri/web
+- [Phase 14-07]: Clé API Claude dans localStorage('familyflow_claude_api_key') — pas de SecureStore sur desktop
 
 ### Pending Todos
 
@@ -164,6 +167,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T22:06:47Z
-Stopped at: Completed quick-260404-xbu — changer catégorie recette depuis RecipeViewer
+Last session: 2026-04-05T09:08:59.458Z
+Stopped at: Completed 14-07-PLAN.md
 Resume file: None
