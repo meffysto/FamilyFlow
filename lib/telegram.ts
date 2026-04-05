@@ -53,26 +53,10 @@ import { generateWeeklyBilan, type AIConfig } from './ai-service';
 import { buildWeeklyRecapData, formatRecapForAI } from './weekly-recap';
 import type { Task, MealItem, MoodEntry, ChildQuote, Defi, StockItem } from './types';
 
-const WEEKLY_SUMMARY_LAST_SENT_KEY = 'weekly_summary_last_sent';
 const AI_API_KEY = 'ai_api_key';
 const AI_MODEL_KEY = 'ai_model';
 const TELEGRAM_TOKEN_KEY_T = 'telegram_token';
 const TELEGRAM_CHAT_KEY_T = 'telegram_chat_id';
-
-/**
- * Vérifie si le résumé hebdo doit être envoyé (dimanche, pas encore envoyé cette semaine).
- */
-export async function shouldSendWeeklySummary(): Promise<boolean> {
-  const now = new Date();
-  if (now.getDay() !== 0) return false; // Pas dimanche
-
-  const lastSent = await SecureStore.getItemAsync(WEEKLY_SUMMARY_LAST_SENT_KEY);
-  if (!lastSent) return true;
-
-  // Déjà envoyé aujourd'hui ?
-  const todayStr = now.toISOString().slice(0, 10);
-  return lastSent !== todayStr;
-}
 
 /**
  * Génère le bilan de semaine via IA et l'envoie sur Telegram.
@@ -96,11 +80,6 @@ export async function buildAndSendWeeklySummary(data: {
   const token = await SecureStore.getItemAsync(TELEGRAM_TOKEN_KEY_T);
   const chatId = await SecureStore.getItemAsync(TELEGRAM_CHAT_KEY_T);
   if (!token || !chatId) return { sent: false, error: 'Telegram non configuré' };
-
-  // 2.5. Marquer comme envoyé AVANT l'envoi pour éviter les doublons
-  // (si l'app refresh 2x rapidement, le 2e appel verra déjà lastSent)
-  const todayStr = new Date().toISOString().slice(0, 10);
-  await SecureStore.setItemAsync(WEEKLY_SUMMARY_LAST_SENT_KEY, todayStr);
 
   // 3. Agréger les données de la semaine et générer le bilan IA
   const recap = buildWeeklyRecapData(

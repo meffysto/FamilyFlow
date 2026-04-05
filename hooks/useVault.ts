@@ -86,7 +86,6 @@ import { parseJournalStats } from '../lib/journal-stats';
 import type { JournalSummaryEntry } from '../lib/ai-service';
 import { refreshWidget, refreshJournalWidget } from '../lib/widget-bridge';
 import { syncWidgetFeedingsToVault } from '../lib/widget-sync';
-import { shouldSendWeeklySummary, buildAndSendWeeklySummary } from '../lib/telegram';
 import { useVaultNotes } from './useVaultNotes';
 import { useVaultWishlist } from './useVaultWishlist';
 import { useVaultStock } from './useVaultStock';
@@ -1112,21 +1111,6 @@ export function useVaultInternal(): VaultState {
       // Sync feedings du widget vers le vault markdown (fire-and-forget)
       syncWidgetFeedingsToVault(vault).catch(() => {});
 
-      // Auto-envoi bilan de semaine IA le dimanche (fire-and-forget)
-      loadNotifConfig().then(async (notifCfg) => {
-        if (!notifCfg.weeklyAISummaryEnabled) return;
-        const shouldSend = await shouldSendWeeklySummary();
-        if (!shouldSend) return;
-        buildAndSendWeeklySummary({
-          tasks: tasksResult,
-          meals: val(results[4], [] as MealItem[]),
-          moods: val(results[18], [] as MoodEntry[]),
-          quotes: val(results[17], [] as ChildQuote[]),
-          defis: val(results[10], [] as Defi[]),
-          profiles,
-          stock: stockResult.items,
-        }).catch(() => {});
-      }).catch(() => {});
 
     } catch (e) {
       debugErrors.push(`global: ${e}`);
