@@ -1,0 +1,345 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Health page styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Tabs ───────────────────────────────────────────────────────────────── */
+
+.health-tabs {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+/* ── Child selector ─────────────────────────────────────────────────────── */
+
+.health-child-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.health-child-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: var(--card-alt);
+  color: var(--text-muted);
+  font-size: var(--font-size-caption);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 150ms, border-color 150ms, color 150ms;
+  font-family: inherit;
+}
+
+.health-child-pill:hover {
+  border-color: var(--primary);
+  color: var(--text);
+}
+
+.health-child-pill--active {
+  background: var(--tint);
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* ── Child badge in title ───────────────────────────────────────────────── */
+
+.health-child-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-label);
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--card-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 3px 10px;
+  margin-left: 12px;
+  vertical-align: middle;
+}
+
+/* ── Table ──────────────────────────────────────────────────────────────── */
+
+.health-table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius-sm);
+}
+
+.health-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-label);
+}
+
+.health-table-th {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: var(--font-size-caption);
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.health-table-th--num {
+  text-align: right;
+}
+
+.health-table-th--actions {
+  width: 40px;
+}
+
+.health-table-row {
+  border-bottom: 1px solid var(--separator);
+  transition: background 120ms;
+}
+
+.health-table-row:last-child {
+  border-bottom: none;
+}
+
+.health-table-row:hover {
+  background: color-mix(in srgb, var(--primary) 4%, transparent);
+}
+
+.health-table-cell {
+  padding: 10px 12px;
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.health-table-cell--num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.health-table-cell--note {
+  color: var(--text-faint);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.health-table-cell--actions {
+  width: 40px;
+  text-align: center;
+}
+
+/* ── Hover-to-reveal delete (D-02) ──────────────────────────────────────── */
+
+.health-hover-row .health-row-delete {
+  opacity: 0;
+  transition: opacity 150ms, background 150ms, color 150ms;
+  pointer-events: none;
+}
+
+.health-hover-row:hover .health-row-delete {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.health-row-delete {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-faint);
+  font-size: 12px;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  line-height: 1;
+  font-family: inherit;
+}
+
+.health-row-delete:hover {
+  background: var(--error-bg, rgba(239,68,68,0.1));
+  color: var(--error, #ef4444);
+}
+
+/* ── Medical events ─────────────────────────────────────────────────────── */
+
+.health-event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.health-event-row {
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--bg) 50%, transparent);
+  border-left: 3px solid #10B981;
+  transition: background 120ms;
+}
+
+.health-event-row:hover {
+  background: color-mix(in srgb, var(--primary) 4%, transparent);
+}
+
+.health-event-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.health-event-date {
+  font-size: var(--font-size-caption);
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.health-event-type-badge {
+  font-size: var(--font-size-micro);
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, #10B981 15%, transparent);
+  color: #10B981;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.health-event-doctor {
+  font-size: var(--font-size-caption);
+  color: var(--text-faint);
+  margin-left: auto;
+}
+
+.health-event-delete {
+  margin-left: auto;
+}
+
+.health-event-desc {
+  font-size: var(--font-size-label);
+  color: var(--text);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ── Form ───────────────────────────────────────────────────────────────── */
+
+.health-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.health-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.health-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.health-form-label {
+  font-size: var(--font-size-caption);
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.health-form-input {
+  padding: 9px 12px;
+  background: var(--card-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font-size: var(--font-size-body);
+  font-family: inherit;
+  transition: border-color 150ms;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.health-form-input:focus {
+  border-color: var(--primary);
+}
+
+.health-form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.health-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+/* ── Vaccine chips ──────────────────────────────────────────────────────── */
+
+.health-vaccine-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.health-vaccine-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: var(--card-alt);
+  color: var(--text-muted);
+  font-size: var(--font-size-micro);
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms, color 120ms;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.health-vaccine-chip:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.health-vaccine-chip--active {
+  background: var(--tint);
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* ── Empty state ────────────────────────────────────────────────────────── */
+
+.health-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  gap: 10px;
+}
+
+.health-empty-icon {
+  font-size: 32px;
+  opacity: 0.5;
+}
+
+.health-empty-text {
+  font-size: var(--font-size-body);
+  color: var(--text-muted);
+  text-align: center;
+  margin: 0;
+}
