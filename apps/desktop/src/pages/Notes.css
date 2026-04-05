@@ -1,0 +1,279 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Notes page styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Page header ─────────────────────────────────────────────────────────── */
+
+.notes-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.notes-search-row {
+  margin-top: 10px;
+}
+
+/* ── Master-detail layout ────────────────────────────────────────────────── */
+
+.notes-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Two-column layout when detail is open */
+.notes-layout--detail-open {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .notes-layout--detail-open {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Left panel — note list ──────────────────────────────────────────────── */
+
+.notes-list-panel {
+  min-width: 0;
+}
+
+/* ── Note list item ──────────────────────────────────────────────────────── */
+
+.notes-list-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 120ms ease;
+  border-radius: 4px;
+  position: relative;
+}
+
+.notes-list-item:last-child {
+  border-bottom: none;
+}
+
+.notes-list-item:hover {
+  background: var(--card-alt);
+}
+
+.notes-list-item--selected {
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+
+.notes-list-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.notes-list-item-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+/* ── Hover-to-reveal action buttons (per D-02) ───────────────────────────── */
+
+.notes-list-item-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 150ms ease;
+  flex-shrink: 0;
+}
+
+.notes-list-item:hover .notes-list-item-actions,
+.notes-list-item--selected .notes-list-item-actions {
+  opacity: 1;
+}
+
+.notes-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--glass-bg);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.notes-action-btn:hover {
+  background: var(--card-alt);
+  border-color: var(--primary);
+}
+
+.notes-action-btn--delete:hover {
+  border-color: #ea4335;
+  background: color-mix(in srgb, #ea4335 10%, transparent);
+}
+
+.notes-list-item-category {
+  font-size: 11px;
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.notes-list-item-excerpt {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notes-list-item-date {
+  font-size: 10px;
+  color: var(--text-faint);
+  font-weight: 600;
+}
+
+/* ── Right panel — editor ────────────────────────────────────────────────── */
+
+.notes-detail-panel {
+  min-width: 0;
+  position: sticky;
+  top: 16px;
+}
+
+/* ── Note editor ─────────────────────────────────────────────────────────── */
+
+.notes-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--glass-bg);
+  border: 0.5px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: 16px;
+  box-shadow: 0 4px 12px var(--glass-shadow);
+}
+
+.notes-editor-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.notes-editor-title-input {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  padding: 4px 0;
+  border-bottom: 2px solid var(--border);
+  transition: border-color 150ms ease;
+}
+
+.notes-editor-title-input:focus {
+  border-bottom-color: var(--primary);
+}
+
+.notes-editor-title-input::placeholder {
+  color: var(--text-faint);
+  font-weight: 400;
+}
+
+.notes-editor-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.notes-editor-meta {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.notes-editor-category {
+  flex-shrink: 0;
+  width: auto;
+  min-width: 0;
+}
+
+.notes-editor-tags {
+  flex: 1;
+  min-width: 0;
+}
+
+.notes-editor-textarea {
+  width: 100%;
+  min-height: 300px;
+  resize: vertical;
+  font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius);
+  padding: 12px;
+  outline: none;
+  transition: border-color 150ms ease;
+  box-sizing: border-box;
+}
+
+.notes-editor-textarea:focus {
+  border-color: var(--primary);
+}
+
+.notes-editor-textarea::placeholder {
+  color: var(--text-faint);
+}
+
+/* ── Empty / no-results states ───────────────────────────────────────────── */
+
+.notes-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.notes-empty-icon {
+  font-size: 40px;
+  opacity: 0.5;
+}
+
+.notes-empty-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+.notes-empty-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}
+
+/* Re-use form-select / form-input / form-error from Tasks.css (global classes) */
