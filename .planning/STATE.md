@@ -4,8 +4,8 @@ milestone: v1.1
 milestone_name: Ferme Enrichie
 status: verifying
 stopped_at: Completed 14-08-PLAN.md
-last_updated: "2026-04-05T09:27:51.570Z"
-last_activity: "2026-04-04 - Completed quick task 260404-qvz: Fix OOM crash TreeScreen"
+last_updated: "2026-04-05T09:36:08.314Z"
+last_activity: 2026-04-05
 progress:
   total_phases: 11
   completed_phases: 10
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 
 ## Current Position
 
-Phase: 10
+Phase: 14
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-04 - Completed quick task 260404-qvz: Fix OOM crash TreeScreen
+Last activity: 2026-04-05
 
 Progress: [░░░░░░░░░░] 0%
 

@@ -225,7 +225,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 11. Sagas Immersives | v1.1 | 3/3 | Complete    | 2026-04-03 |
 | 12. Templates Onboarding | v1.1 | 0/2 | Not started | - |
 | 13. Événements Saisonniers | v1.1 | 2/2 | Complete    | 2026-04-03 |
-| 14. Parité Mobile ↔ Desktop | v1.1 | 9/9 | Complete   | 2026-04-05 |
+| 14. Parité Mobile ↔ Desktop | v1.1 | 9/9 | Complete    | 2026-04-05 |
 
 ### Phase 12: Templates onboarding vivants — contenu personnalisé et complet
 
