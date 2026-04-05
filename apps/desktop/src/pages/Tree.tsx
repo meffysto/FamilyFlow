@@ -1,7 +1,10 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { GlassCard } from '../components/ui/GlassCard';
 import { Modal } from '../components/ui/Modal';
 import { useVault } from '../contexts/VaultContext';
+import { CompanionWidget } from '../components/companion/CompanionWidget';
+import { CompanionPicker } from '../components/companion/CompanionPicker';
 import {
   getTreeStage,
   getStageIndex,
@@ -41,6 +44,15 @@ import {
   type WearEffects,
   type WearEvent,
   type WearEventType,
+  // Sagas
+  SAGAS,
+  shouldStartSaga,
+  getNextSagaForProfile,
+  type Saga,
+  type SagaProgress,
+  createEmptySagaProgress,
+  // Companion
+  SEASON_INFO,
 } from '@family-vault/core';
 import type { Profile } from '@family-vault/core';
 import {
@@ -1729,6 +1741,448 @@ function BadgesModal({ isOpen, onClose, profile }: BadgesModalProps) {
 }
 
 // ---------------------------------------------------------------------------
+// useTranslation — simple French-only i18n shim for desktop (per D-07)
+// ---------------------------------------------------------------------------
+
+/** Minimal translation hook — returns key if no translation found */
+function useTranslation(_namespace?: string) {
+  const t = useCallback((key: string, vars?: Record<string, string | number>): string => {
+    const TRANSLATIONS: Record<string, string> = {
+      // Sagas
+      'mascot.saga.indicator.waiting': 'Un visiteur attend près de ton arbre',
+      'mascot.saga.indicator.done': 'Suite de la saga demain...',
+      'mascot.saga.indicator.progress': 'Chapitre {{current}}/{{total}} — {{title}}',
+      // Companion
+      'companion.stage.bebe': 'Bébé',
+      'companion.stage.jeune': 'Jeune',
+      'companion.stage.adulte': 'Adulte',
+      // Seasons
+      'mascot.season.printemps': 'Printemps',
+      'mascot.season.ete': 'Été',
+      'mascot.season.automne': 'Automne',
+      'mascot.season.hiver': 'Hiver',
+      // Tree
+      'tree.sagas.title': 'Sagas',
+      'tree.sagas.active': 'Saga en cours',
+      'tree.sagas.chapter': 'Chapitre {{current}}/{{total}}',
+      'tree.sagas.start': 'Commencer',
+      'tree.sagas.continue': 'Continuer',
+      'tree.sagas.choice': 'Choisir',
+      'tree.sagas.completed': 'Saga terminée',
+      'tree.sagas.none': 'Aucune saga disponible',
+      'tree.companion.title': 'Compagnon',
+      'tree.events.title': 'Événement saisonnier',
+      'tree.buildings.title': 'Améliorations',
+      'tree.buildings.upgrade': 'Améliorer',
+      'tree.buildings.maxLevel': 'Niveau max',
+    };
+    let result = TRANSLATIONS[key] ?? key;
+    if (vars) {
+      for (const [k, v] of Object.entries(vars)) {
+        result = result.replace(new RegExp(`{{${k}}}`, 'g'), String(v));
+      }
+    }
+    return result;
+  }, []);
+
+  return { t };
+}
+
+// ---------------------------------------------------------------------------
+// Saga localStorage helpers (desktop replacement for SecureStore)
+// ---------------------------------------------------------------------------
+
+function sagaStorageKey(profileId: string): string {
+  return `saga_progress_${profileId}`;
+}
+
+function loadSagaProgressLocal(profileId: string): SagaProgress | null {
+  try {
+    const raw = localStorage.getItem(sagaStorageKey(profileId));
+    if (!raw) return null;
+    return JSON.parse(raw) as SagaProgress;
+  } catch {
+    return null;
+  }
+}
+
+function saveSagaProgress(progress: SagaProgress): void {
+  try {
+    localStorage.setItem(sagaStorageKey(progress.profileId), JSON.stringify(progress));
+  } catch {
+    /* non-critical */
+  }
+}
+
+function clearSagaProgressLocal(profileId: string): void {
+  try {
+    localStorage.removeItem(sagaStorageKey(profileId));
+  } catch {
+    /* non-critical */
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Seasonal event helpers (desktop — based on current season + mock progress)
+// ---------------------------------------------------------------------------
+
+interface SeasonalEventState {
+  name: string;
+  emoji: string;
+  season: string;
+  quests: Array<{ id: string; label: string; done: boolean }>;
+}
+
+function getSeasonalEvent(season: string): SeasonalEventState {
+  const info = SEASON_INFO[season as keyof typeof SEASON_INFO];
+  const seasonEmoji = info?.emoji ?? '🌸';
+  const EVENTS: Record<string, SeasonalEventState> = {
+    printemps: {
+      name: 'Fête du Printemps',
+      emoji: '🌸',
+      season: 'printemps',
+      quests: [
+        { id: 'plant_3', label: 'Planter 3 cultures', done: false },
+        { id: 'streak_7', label: 'Maintenir un streak de 7 jours', done: false },
+        { id: 'harvest_5', label: 'Récolter 5 fois', done: false },
+      ],
+    },
+    ete: {
+      name: "Solstice d'Été",
+      emoji: '☀️',
+      season: 'ete',
+      quests: [
+        { id: 'tasks_10', label: 'Compléter 10 tâches', done: false },
+        { id: 'harvest_golden', label: 'Récolter une culture dorée', done: false },
+        { id: 'unlock_tech', label: 'Débloquer une technologie', done: false },
+      ],
+    },
+    automne: {
+      name: 'Récolte Automnale',
+      emoji: '🍂',
+      season: 'automne',
+      quests: [
+        { id: 'harvest_10', label: 'Récolter 10 cultures', done: false },
+        { id: 'craft_item', label: 'Crafterr un item', done: false },
+        { id: 'buildings_2', label: 'Avoir 2 bâtiments actifs', done: false },
+      ],
+    },
+    hiver: {
+      name: "Magie de l'Hiver",
+      emoji: '❄️',
+      season: 'hiver',
+      quests: [
+        { id: 'gratitude_5', label: 'Écrire 5 gratitudes', done: false },
+        { id: 'streak_14', label: 'Maintenir un streak de 14 jours', done: false },
+        { id: 'family_tasks', label: 'Compléter des tâches en famille', done: false },
+      ],
+    },
+  };
+  return EVENTS[season] ?? {
+    name: `Événement ${seasonEmoji}`,
+    emoji: seasonEmoji,
+    season,
+    quests: [],
+  };
+}
+
+function saveEventProgress(profileId: string, eventId: string, questsDone: string[]): void {
+  try {
+    const key = `event_progress_${profileId}_${eventId}`;
+    localStorage.setItem(key, JSON.stringify(questsDone));
+  } catch {
+    /* non-critical */
+  }
+}
+
+function loadEventProgress(profileId: string, eventId: string): string[] {
+  try {
+    const raw = localStorage.getItem(`event_progress_${profileId}_${eventId}`);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Companion card — right panel
+// ---------------------------------------------------------------------------
+
+interface CompanionCardProps {
+  onOpenPicker: () => void;
+}
+
+const CompanionCard = memo(function CompanionCard({ onOpenPicker }: CompanionCardProps) {
+  const { t } = useTranslation('gamification');
+  return (
+    <GlassCard icon="🐾" title={t('tree.companion.title')} accentColor="var(--primary)">
+      <CompanionWidget compact={false} onOpenPicker={onOpenPicker} />
+    </GlassCard>
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Sagas panel — right panel
+// ---------------------------------------------------------------------------
+
+interface SagasPanelProps {
+  profileId: string;
+  completedSagas: string[];
+}
+
+const SagasPanel = memo(function SagasPanel({ profileId, completedSagas }: SagasPanelProps) {
+  const { t } = useTranslation('gamification');
+  const [sagaProgress, setSagaProgress] = useState<SagaProgress | null>(null);
+  const [activeSaga, setActiveSaga] = useState<Saga | null>(null);
+  const [showChoices, setShowChoices] = useState(false);
+
+  useEffect(() => {
+    // Load saga progress from localStorage
+    const progress = loadSagaProgressLocal(profileId);
+    setSagaProgress(progress);
+
+    if (progress && progress.status === 'active') {
+      const saga = SAGAS.find(s => s.id === progress.sagaId);
+      setActiveSaga(saga ?? null);
+    } else {
+      // Check if we should start a new saga
+      const { start, sagaId } = shouldStartSaga(profileId, completedSagas, null);
+      if (start && sagaId) {
+        const saga = SAGAS.find(s => s.id === sagaId);
+        setActiveSaga(saga ?? null);
+      }
+    }
+  }, [profileId, completedSagas]);
+
+  const handleStartSaga = useCallback(() => {
+    if (!activeSaga) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const progress = createEmptySagaProgress(activeSaga.id, profileId, today);
+    saveSagaProgress(progress);
+    setSagaProgress(progress);
+    setShowChoices(true);
+  }, [activeSaga, profileId]);
+
+  const handleMakeChoice = useCallback((choiceId: string) => {
+    if (!sagaProgress || !activeSaga) return;
+    const chapter = activeSaga.chapters[sagaProgress.currentChapter - 1];
+    if (!chapter) return;
+
+    const choice = chapter.choices.find(c => c.id === choiceId);
+    if (!choice) return;
+
+    const updatedTraits = { ...sagaProgress.traits };
+    for (const [trait, points] of Object.entries(choice.traits ?? {})) {
+      const k = trait as keyof typeof updatedTraits;
+      updatedTraits[k] = (updatedTraits[k] ?? 0) + (points ?? 0);
+    }
+
+    const isLastChapter = sagaProgress.currentChapter >= activeSaga.chapters.length;
+    const newProgress: SagaProgress = {
+      ...sagaProgress,
+      currentChapter: sagaProgress.currentChapter + 1,
+      choices: { ...sagaProgress.choices, [sagaProgress.currentChapter]: choiceId },
+      traits: updatedTraits,
+      lastChapterDate: new Date().toISOString().slice(0, 10),
+      status: isLastChapter ? 'completed' : 'active',
+    };
+
+    saveSagaProgress(newProgress);
+    setSagaProgress(newProgress);
+    setShowChoices(false);
+
+    if (isLastChapter) {
+      clearSagaProgressLocal(profileId);
+    }
+  }, [sagaProgress, activeSaga, profileId]);
+
+  if (!activeSaga && (!sagaProgress || sagaProgress.status === 'completed')) {
+    return (
+      <GlassCard icon="📖" title={t('tree.sagas.title')}>
+        <p className="tree-saga-empty">{t('tree.sagas.none')}</p>
+      </GlassCard>
+    );
+  }
+
+  const isActive = sagaProgress && sagaProgress.status === 'active';
+  const chapter = activeSaga && sagaProgress
+    ? activeSaga.chapters[sagaProgress.currentChapter - 1]
+    : activeSaga?.chapters[0];
+
+  return (
+    <GlassCard
+      icon={activeSaga?.emoji ?? '📖'}
+      title={t('tree.sagas.title')}
+      accentColor="#8b5cf6"
+    >
+      <div className="tree-saga-panel">
+        {/* Saga header */}
+        <div className="tree-saga-header">
+          <span className="tree-saga-visitor-emoji" aria-hidden="true">
+            {activeSaga?.emoji ?? '🧙'}
+          </span>
+          <div className="tree-saga-info">
+            <span className="tree-saga-title">{activeSaga?.emoji} Visiteur</span>
+            {isActive && sagaProgress && activeSaga && (
+              <span className="tree-saga-progress">
+                {t('tree.sagas.chapter', {
+                  current: String(sagaProgress.currentChapter),
+                  total: String(activeSaga.chapters.length),
+                })}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Narrative text */}
+        {chapter && (
+          <motion.div
+            className="tree-saga-narrative"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            key={sagaProgress?.currentChapter ?? 0}
+          >
+            <p className="tree-saga-narrative-text">
+              {/* Show narrative key as placeholder text (no i18n JSON loaded) */}
+              {t(chapter.narrativeKey)}
+            </p>
+          </motion.div>
+        )}
+
+        {/* Choices */}
+        <AnimatePresence>
+          {showChoices && chapter && (
+            <motion.div
+              className="tree-saga-choices"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+            >
+              {chapter.choices.map((choice) => (
+                <button
+                  key={choice.id}
+                  type="button"
+                  className="tree-saga-choice-btn"
+                  onClick={() => handleMakeChoice(choice.id)}
+                >
+                  <span aria-hidden="true">{choice.emoji}</span>
+                  {t(choice.labelKey)}
+                </button>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Action buttons */}
+        {!showChoices && (
+          <div className="tree-saga-actions">
+            {!isActive ? (
+              <button
+                type="button"
+                className="btn btn-primary tree-saga-btn"
+                onClick={handleStartSaga}
+              >
+                {t('tree.sagas.start')}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-primary tree-saga-btn"
+                onClick={() => setShowChoices(true)}
+              >
+                {t('tree.sagas.continue')}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </GlassCard>
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Seasonal events panel — right panel
+// ---------------------------------------------------------------------------
+
+interface SeasonalEventPanelProps {
+  season: string;
+  profileId: string;
+}
+
+const SeasonalEventPanel = memo(function SeasonalEventPanel({
+  season,
+  profileId,
+}: SeasonalEventPanelProps) {
+  const { t } = useTranslation('gamification');
+  const event = useMemo(() => getSeasonalEvent(season), [season]);
+  const [questsDone, setQuestsDone] = useState<string[]>(() =>
+    loadEventProgress(profileId, `${event.season}_${new Date().getFullYear()}`)
+  );
+
+  const handleToggleQuest = useCallback((questId: string) => {
+    setQuestsDone(prev => {
+      const next = prev.includes(questId)
+        ? prev.filter(q => q !== questId)
+        : [...prev, questId];
+      saveEventProgress(profileId, `${event.season}_${new Date().getFullYear()}`, next);
+      return next;
+    });
+  }, [profileId, event.season]);
+
+  const completedCount = questsDone.length;
+  const totalCount = event.quests.length;
+  const progressPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+  return (
+    <GlassCard
+      icon={event.emoji}
+      title={t('tree.events.title')}
+      accentColor="#f59e0b"
+      count={completedCount > 0 ? completedCount : undefined}
+    >
+      <div className="tree-event-panel">
+        {/* Event name + progress bar */}
+        <div className="tree-event-header">
+          <span className="tree-event-name">{event.name}</span>
+          <span className="tree-event-progress-label">{completedCount}/{totalCount}</span>
+        </div>
+        <div className="tree-event-progress-track">
+          <motion.div
+            className="tree-event-progress-fill"
+            initial={{ width: 0 }}
+            animate={{ width: `${progressPct}%` }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+          />
+        </div>
+
+        {/* Quest list */}
+        <ul className="tree-event-quests" role="list" aria-label="Quêtes de l'événement">
+          {event.quests.map((quest) => {
+            const done = questsDone.includes(quest.id);
+            return (
+              <li key={quest.id} className="tree-event-quest-item" role="listitem">
+                <button
+                  type="button"
+                  className={`tree-event-quest-check${done ? ' tree-event-quest-check--done' : ''}`}
+                  onClick={() => handleToggleQuest(quest.id)}
+                  aria-label={`${quest.label} — ${done ? 'Terminé' : 'Non terminé'}`}
+                  aria-pressed={done}
+                >
+                  {done ? '✓' : '○'}
+                </button>
+                <span className={`tree-event-quest-label${done ? ' tree-event-quest-label--done' : ''}`}>
+                  {quest.label}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </GlassCard>
+  );
+});
+
+// ---------------------------------------------------------------------------
 // Toast
 // ---------------------------------------------------------------------------
 
@@ -1770,9 +2224,13 @@ function NoProfile() {
 // ---------------------------------------------------------------------------
 
 function Tree() {
+  const { t } = useTranslation('gamification');
   const { activeProfile, readFile, writeFile, refresh } = useVault();
   const { message: toastMsg, show: showToast } = useToast();
   const [busy, setBusy] = useState(false);
+
+  // Companion picker
+  const [companionPickerOpen, setCompanionPickerOpen] = useState(false);
 
   const season = useMemo(() => getCurrentSeason(), []);
 
@@ -2033,6 +2491,12 @@ function Tree() {
         ) : (
           <>
             <ProfileTreeCard profile={activeProfile} stage={stage} />
+            <CompanionCard onOpenPicker={() => setCompanionPickerOpen(true)} />
+            <SagasPanel
+              profileId={activeProfile.id}
+              completedSagas={activeProfile.completedSagas ?? []}
+            />
+            <SeasonalEventPanel season={season} profileId={activeProfile.id} />
             <FarmStatusCard crops={crops} plotCount={plotCount} buildings={buildings} />
             <InhabitantsCard inhabitants={activeProfile.mascotInhabitants ?? []} />
             <ActionRow onAction={handleAction} />
@@ -2099,6 +2563,12 @@ function Tree() {
         isOpen={badgesOpen}
         onClose={() => setBadgesOpen(false)}
         profile={activeProfile}
+      />
+
+      {/* Companion picker */}
+      <CompanionPicker
+        isOpen={companionPickerOpen}
+        onClose={() => setCompanionPickerOpen(false)}
       />
     </div>
   );
