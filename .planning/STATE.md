@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: verifying
-stopped_at: Completed 14-05-PLAN.md
-last_updated: "2026-04-05T09:13:57.247Z"
+stopped_at: Completed 14-02-PLAN.md
+last_updated: "2026-04-05T09:14:07.772Z"
 last_activity: "2026-04-04 - Completed quick task 260404-qvz: Fix OOM crash TreeScreen"
 progress:
   total_phases: 11
@@ -138,6 +138,8 @@ Recent decisions affecting current work:
 - [Phase 14-parite-mobile-desktop]: SkillState/getSkillById/getSkillState non exportés dans barrel core — définis localement dans Skills.tsx desktop
 - [Phase 14-parite-mobile-desktop]: NightMode desktop utilise couleurs hardcodées pour vision nocturne — dérogation délibérée à useThemeColors() per D-01
 - [Phase 14-parite-mobile-desktop]: Compare zoom partagé entre les deux panels — expérience cohérente comparaison côte à côte
+- [Phase 14-02]: Notes layout master-detail 300px+1fr plutôt que modal — plus ergonomique pour édition de contenu long
+- [Phase 14-02]: RDV groupés par mois, triés desc — vision temporelle naturelle des rendez-vous
 
 ### Pending Todos
 
@@ -179,6 +181,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-05T09:13:47.703Z
-Stopped at: Completed 14-05-PLAN.md
+Last session: 2026-04-05T09:14:07.769Z
+Stopped at: Completed 14-02-PLAN.md
 Resume file: None
