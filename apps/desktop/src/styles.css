@@ -311,9 +311,8 @@
 
 .content {
   grid-column: 2;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   background: var(--bg);
 }
 
@@ -322,10 +321,8 @@
    ============================================================================= */
 
 .page {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
   padding: 28px 32px 40px;
   gap: var(--space-3xl);
 }

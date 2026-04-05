@@ -45,18 +45,22 @@
    ============================================================================= */
 
 html {
-  height:           100%;
+  height:           100vh;
   scroll-behavior:  smooth;
 }
 
 body {
   height:           100vh;
-  overflow:         hidden;     /* Layout scrolls happen in .main-content, not body */
+  overflow:         hidden;     /* Layout scrolls happen in .page, not body */
   background-color: var(--bg);
   color:            var(--text);
   /* Prevent text selection flicker during drag interactions */
   -webkit-user-select: none;
   user-select:         none;
+}
+
+#root {
+  height:           100vh;
 }
 
 /* Allow text selection inside content areas where reading is expected */

@@ -361,9 +361,9 @@ export default function Wishlist() {
   // Profile names for filter chips and modal
   const profileNames = useMemo(() => profiles.map((p) => p.name), [profiles]);
 
-  // Child/ado profiles for filter chips (dedicated section in sidebar uses enfant/ado roles)
-  const childProfiles = useMemo(
-    () => profiles.filter((p) => p.role === 'enfant' || p.role === 'ado'),
+  // All profiles for filter chips
+  const filterProfiles = useMemo(
+    () => profiles,
     [profiles],
   );
 
@@ -577,7 +577,7 @@ export default function Wishlist() {
         <div className="wishlist-chip-row">
           <Chip label="Tous" selected={filter === 'tous'} onClick={() => setFilter('tous')} />
 
-          {childProfiles.map((p) => (
+          {filterProfiles.map((p) => (
             <Chip
               key={p.id}
               label={p.name}

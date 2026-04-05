@@ -108,7 +108,7 @@
 .mood-chart {
   display: flex;
   gap: 8px;
-  height: 120px;
+  height: 160px;
   align-items: flex-end;
 }
 
