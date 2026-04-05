@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, memo } from 'react';
+import { useState, useMemo, useCallback, useEffect, memo } from 'react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { Button } from '../components/ui/Button';
 import { Chip } from '../components/ui/Chip';
@@ -32,9 +32,10 @@ interface WishRowProps {
   item: WishlistItem;
   onToggle: (item: WishlistItem) => void;
   toggling: boolean;
+  onDelete?: (item: WishlistItem) => void;
 }
 
-const WishRow = memo(function WishRow({ item, onToggle, toggling }: WishRowProps) {
+const WishRow = memo(function WishRow({ item, onToggle, toggling, onDelete }: WishRowProps) {
   return (
     <div className={`wish-row ${item.bought ? 'wish-row--done' : ''}`}>
       {/* Checkbox */}
@@ -99,6 +100,21 @@ const WishRow = memo(function WishRow({ item, onToggle, toggling }: WishRowProps
           >
             ↗
           </a>
+        )}
+
+        {/* Hover-to-reveal actions */}
+        {onDelete && (
+          <div className="item-actions" role="group" aria-label="Actions">
+            <button
+              type="button"
+              className="item-action-btn item-action-btn--danger"
+              onClick={(e) => { e.stopPropagation(); onDelete(item); }}
+              aria-label="Supprimer le souhait"
+              title="Supprimer"
+            >
+              🗑
+            </button>
+          </div>
         )}
       </div>
     </div>
@@ -458,6 +474,41 @@ export default function Wishlist() {
   );
 
   // ---------------------------------------------------------------------------
+  // Delete wishlist item
+  // ---------------------------------------------------------------------------
+
+  const handleDelete = useCallback(
+    async (item: WishlistItem) => {
+      if (!item.sourceFile) return;
+      try {
+        const content = await readFile(item.sourceFile);
+        const lines = content.split('\n');
+        lines.splice(item.lineIndex, 1);
+        await writeFile(item.sourceFile, lines.join('\n'));
+        await refresh();
+      } catch (err) {
+        if (import.meta.env.DEV) console.warn('[Wishlist] delete error', err);
+      }
+    },
+    [readFile, writeFile, refresh],
+  );
+
+  // ---------------------------------------------------------------------------
+  // Keyboard shortcut: Ctrl/Cmd+R = refresh
+  // ---------------------------------------------------------------------------
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+        e.preventDefault();
+        refresh();
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [refresh]);
+
+  // ---------------------------------------------------------------------------
   // Add wishlist item
   // ---------------------------------------------------------------------------
 
@@ -572,6 +623,7 @@ export default function Wishlist() {
                   item={item}
                   onToggle={handleToggle}
                   toggling={togglingIds.has(item.id)}
+                  onDelete={handleDelete}
                 />
               ))}
             </div>
@@ -594,6 +646,7 @@ export default function Wishlist() {
                     item={item}
                     onToggle={handleToggle}
                     toggling={togglingIds.has(item.id)}
+                    onDelete={handleDelete}
                   />
                 </div>
               );

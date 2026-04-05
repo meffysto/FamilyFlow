@@ -1,4 +1,4 @@
-import { useState, useMemo, memo } from 'react';
+import { useState, useMemo, useEffect, memo } from 'react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { Chip } from '../components/ui/Chip';
 import { useVault } from '../contexts/VaultContext';
@@ -110,6 +110,7 @@ const DefiCard = memo(function DefiCard({ defi, muted, profiles }: DefiCardProps
     <div
       className={`defi-card ${muted ? 'defi-card--muted' : ''}`}
       style={{ borderLeftColor: color }}
+      role="article"
     >
       {/* Header row */}
       <div className="defi-card-header">
@@ -191,6 +192,18 @@ const DefiCard = memo(function DefiCard({ defi, muted, profiles }: DefiCardProps
             <span className="defi-date">Fin: {formatDate(defi.endDate)}</span>
           )}
         </div>
+
+        {/* Hover-to-reveal actions */}
+        <div className="item-actions defi-card-actions" role="group" aria-label="Actions">
+          <button
+            type="button"
+            className="item-action-btn"
+            aria-label="Modifier le défi"
+            title="Modifier"
+          >
+            ✏️
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -238,11 +251,23 @@ type TypeFilter = 'tous' | DefiType;
 // ---------------------------------------------------------------------------
 
 export default function Challenges() {
-  const { defis, profiles } = useVault();
+  const { defis, profiles, refresh } = useVault();
 
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('tous');
   const [completedCollapsed, setCompletedCollapsed] = useState(true);
   const [archivedCollapsed, setArchivedCollapsed] = useState(true);
+
+  // Keyboard shortcut: Ctrl/Cmd+R = refresh
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+        e.preventDefault();
+        refresh();
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [refresh]);
 
   // ---------------------------------------------------------------------------
   // Derived

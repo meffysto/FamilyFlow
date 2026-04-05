@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, memo } from 'react';
+import { useState, useMemo, useCallback, useEffect, memo } from 'react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { Button } from '../components/ui/Button';
 import { Chip } from '../components/ui/Chip';
@@ -92,9 +92,10 @@ interface TaskRowProps {
   task: Task;
   toggling: boolean;
   onToggle: (task: Task) => void;
+  onDelete?: (task: Task) => void;
 }
 
-const TaskRow = memo(function TaskRow({ task, toggling, onToggle }: TaskRowProps) {
+const TaskRow = memo(function TaskRow({ task, toggling, onToggle, onDelete }: TaskRowProps) {
   return (
     <div className={`task-row ${task.completed ? 'task-row--completed' : ''} ${toggling ? 'task-row--toggling' : ''}`}>
       <TaskCheckbox
@@ -135,6 +136,21 @@ const TaskRow = memo(function TaskRow({ task, toggling, onToggle }: TaskRowProps
           </span>
         )}
       </div>
+
+      {/* Hover-to-reveal actions */}
+      {onDelete && (
+        <div className="item-actions" role="group" aria-label="Actions">
+          <button
+            type="button"
+            className="item-action-btn item-action-btn--danger"
+            onClick={(e) => { e.stopPropagation(); onDelete(task); }}
+            aria-label="Supprimer la tâche"
+            title="Supprimer"
+          >
+            🗑
+          </button>
+        </div>
+      )}
     </div>
   );
 });
@@ -167,9 +183,10 @@ interface OverdueSectionProps {
   tasks: Task[];
   togglingIds: Set<string>;
   onToggle: (task: Task) => void;
+  onDelete: (task: Task) => void;
 }
 
-function OverdueSection({ tasks, togglingIds, onToggle }: OverdueSectionProps) {
+function OverdueSection({ tasks, togglingIds, onToggle, onDelete }: OverdueSectionProps) {
   if (tasks.length === 0) return null;
   return (
     <GlassCard
@@ -185,6 +202,7 @@ function OverdueSection({ tasks, togglingIds, onToggle }: OverdueSectionProps) {
             task={task}
             toggling={togglingIds.has(task.id)}
             onToggle={onToggle}
+            onDelete={onDelete}
           />
         ))}
       </div>
@@ -540,6 +558,43 @@ export default function Tasks() {
   );
 
   // ---------------------------------------------------------------------------
+  // Delete task (removes the line from the source file)
+  // ---------------------------------------------------------------------------
+
+  const handleDelete = useCallback(
+    async (task: Task) => {
+      if (!task.sourceFile) return;
+      try {
+        const content = await readFile(task.sourceFile);
+        const lines = content.split('\n');
+        lines.splice(task.lineIndex, 1);
+        await writeFile(task.sourceFile, lines.join('\n'));
+        await refresh();
+      } catch (err) {
+        if (import.meta.env.DEV) {
+          console.warn('[Tasks] delete error', err);
+        }
+      }
+    },
+    [readFile, writeFile, refresh],
+  );
+
+  // ---------------------------------------------------------------------------
+  // Keyboard shortcuts: Ctrl/Cmd+R = refresh
+  // ---------------------------------------------------------------------------
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+        e.preventDefault();
+        refresh();
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [refresh]);
+
+  // ---------------------------------------------------------------------------
   // Pending count for subtitle (ignores filters to always show real count)
   // ---------------------------------------------------------------------------
 
@@ -629,6 +684,7 @@ export default function Tasks() {
           tasks={overdueTasks}
           togglingIds={togglingIds}
           onToggle={handleToggle}
+          onDelete={handleDelete}
         />
       )}
 
@@ -662,6 +718,7 @@ export default function Tasks() {
                     task={task}
                     toggling={togglingIds.has(task.id)}
                     onToggle={handleToggle}
+                    onDelete={handleDelete}
                   />
                 ))}
               </div>
@@ -691,6 +748,7 @@ export default function Tasks() {
                   task={task}
                   toggling={togglingIds.has(task.id)}
                   onToggle={handleToggle}
+                  onDelete={handleDelete}
                 />
               ))}
             </div>
