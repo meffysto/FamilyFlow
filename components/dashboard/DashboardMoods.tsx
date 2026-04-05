@@ -41,9 +41,10 @@ function DashboardMoodsInner(_props: DashboardSectionProps) {
         <View style={styles.row}>
           {moodableProfiles.map(p => {
             const entry = todayMoods.find(m => m.profileId === p.id);
+            if (!entry) return null;
             return (
               <View key={p.id} style={styles.moodItem}>
-                <Text style={styles.emoji}>{entry ? MOOD_EMOJIS[entry.level] : '⬜'}</Text>
+                <Text style={styles.emoji}>{MOOD_EMOJIS[entry.level]}</Text>
                 <Text style={[styles.name, { color: colors.textSub }]} numberOfLines={1}>{p.name}</Text>
               </View>
             );
