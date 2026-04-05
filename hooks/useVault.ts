@@ -34,12 +34,10 @@ import {
   parseTaskFile,
   parseRoutines,
   parseHealthRecord,
-  serializeHealthRecord,
   parseCourses,
   parseMeals,
   parseRDV,
   parseStock,
-  serializeStockRow,
   parseStockSections,
   parseJalons,
   mergeProfiles,
@@ -64,7 +62,6 @@ import {
   parseMoods,
   SECRET_MISSIONS_FILE,
   parseSecretMissions,
-  serializeSecretMissions,
   serializeCompanion,
   parseFarmProfile,
   serializeFarmProfile,
@@ -75,9 +72,8 @@ import { processActiveRewards, addPoints, calculateLevel } from '../lib/gamifica
 import { XP_PER_BRACKET, getSkillById } from '../lib/gamification/skill-tree';
 import { DECORATIONS, INHABITANTS, TREE_STAGES, type TreeSpecies } from '../lib/mascot/types';
 import { getStageIndex } from '../lib/mascot/engine';
-import { Task, RDV, CourseItem, MealItem, StockItem, Profile, Gender, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, DefiDayEntry, GratitudeDay, WishlistItem, WishBudget, WishOccasion, Anniversary, Note, SkillTreeData, ChildQuote, MoodEntry, MoodLevel, UsedLoot } from '../lib/types';
+import { Task, RDV, CourseItem, MealItem, StockItem, Profile, Gender, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, GratitudeDay, WishlistItem, WishBudget, WishOccasion, Anniversary, Note, SkillTreeData, ChildQuote, MoodEntry, MoodLevel, UsedLoot } from '../lib/types';
 import { useVaultBudget } from './useVaultBudget';
-import { parseRecipe, generateCookFile } from '../lib/cooklang';
 import {
   parseNotificationPrefs,
   serializeNotificationPrefs,
@@ -86,17 +82,22 @@ import {
 import * as Notifications from 'expo-notifications';
 import { setupAllNotifications, loadNotifConfig } from '../lib/scheduled-notifications';
 import i18n from '../lib/i18n';
-import { nextOccurrence } from '../lib/recurrence';
-import { format, startOfWeek, addDays, parseISO } from 'date-fns';
+import { format, startOfWeek } from 'date-fns';
 import { enqueueWrite } from '../lib/famille-queue';
 import { parseJournalStats } from '../lib/journal-stats';
 import type { JournalSummaryEntry } from '../lib/ai-service';
 import { refreshWidget, refreshJournalWidget } from '../lib/widget-bridge';
 import { syncWidgetFeedingsToVault } from '../lib/widget-sync';
 import { shouldSendWeeklySummary, buildAndSendWeeklySummary } from '../lib/telegram';
-import { buildSectionHeader, type EmplacementId } from '../constants/stock';
 import { useVaultNotes } from './useVaultNotes';
 import { useVaultWishlist } from './useVaultWishlist';
+import { useVaultStock } from './useVaultStock';
+import { useVaultCourses } from './useVaultCourses';
+import { useVaultHealth } from './useVaultHealth';
+import { useVaultSecretMissions } from './useVaultSecretMissions';
+import { useVaultTasks } from './useVaultTasks';
+import { useVaultRecipes } from './useVaultRecipes';
+import { useVaultDefis } from './useVaultDefis';
 
 export const VAULT_PATH_KEY = 'vault_path';
 export const ACTIVE_PROFILE_KEY = 'active_profile_id';
@@ -405,29 +406,31 @@ export function useVaultInternal(): VaultState {
   const [vaultPath, setVaultPathState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [courses, setCourses] = useState<CourseItem[]>([]);
-  const [stock, setStock] = useState<StockItem[]>([]);
   const vaultRef = useRef<VaultManager | null>(null);
   const busyRef = useRef(false); // Guard against AppState race condition
-
-  // Refs pour le widget (accès à jour dans les useCallback sans dépendances)
-  const tasksRef = useRef(tasks);
-  useEffect(() => { tasksRef.current = tasks; }, [tasks]);
 
   // ─── Sous-hooks par domaine ───────────────────────────────────────────────
 
   const notesHook = useVaultNotes(vaultRef);
 
+  // Domaine Stock délégué à useVaultStock
+  const stockHook = useVaultStock(vaultRef);
+  const { stock, stockSections, resetStock } = stockHook;
+
+  // Domaine Courses délégué à useVaultCourses
+  const coursesHook = useVaultCourses(vaultRef);
+  const { courses, resetCourses } = coursesHook;
+
   // Domaine Budget délégué à useVaultBudget
   const budget = useVaultBudget(vaultRef);
   const { resetBudget, ...budgetState } = budget;
 
-  // triggerWidgetRefresh dépend de mealsRef/rdvsRef — déclaré après les hooks meals/rdvs
+  // triggerWidgetRefresh dépend de mealsRef/rdvsRef/tasksRef — déclaré avant les hooks
   const mealsRef = useRef<MealItem[]>([]);
   const rdvsRef = useRef<RDV[]>([]);
+  const tasksRefForWidget = useRef<Task[]>([]);
   const triggerWidgetRefresh = useCallback(() => {
-    refreshWidget(mealsRef.current, rdvsRef.current, tasksRef.current);
+    refreshWidget(mealsRef.current, rdvsRef.current, tasksRefForWidget.current);
   }, []);
 
   const mealsHook = useVaultMeals(vaultRef, triggerWidgetRefresh);
@@ -478,19 +481,38 @@ export function useVaultInternal(): VaultState {
     resetVacation,
   } = useVaultVacation(vaultRef);
 
+  // Domaine Tasks délégué à useVaultTasks
+  const tasksHook = useVaultTasks(vaultRef, triggerWidgetRefresh, setVacationTasks);
+  const { tasks, tasksRef } = tasksHook;
+  useEffect(() => { tasksRefForWidget.current = tasks; }, [tasks]);
+
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
   const [gamiData, setGamiData] = useState<GamificationData | null>(null);
   const [notifPrefs, setNotifPrefs] = useState<NotificationPreferences>(getDefaultNotificationPrefs());
-  const [stockSections, setStockSections] = useState<string[]>([]);
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [recipeFavorites, setRecipeFavorites] = useState<Record<string, string[]>>({});
   const [ageUpgrades, setAgeUpgrades] = useState<AgeUpgrade[]>([]);
-  const [healthRecords, setHealthRecords] = useState<HealthRecord[]>([]);
   const [journalStats, setJournalStats] = useState<JournalSummaryEntry[]>([]);
-  const [defis, setDefis] = useState<Defi[]>([]);
   const [skillTrees, setSkillTrees] = useState<SkillTreeData[]>([]);
-  const [secretMissions, setSecretMissions] = useState<Task[]>([]);
+
+  // Domaine Recettes délégué à useVaultRecipes
+  const recipesHook = useVaultRecipes(vaultRef, profiles);
+  const { recipes } = recipesHook;
+
+  // Domaine Défis délégué à useVaultDefis
+  const gamiDataRef = useRef(gamiData);
+  gamiDataRef.current = gamiData;
+  const defisHook = useVaultDefis(vaultRef, gamiDataRef, setGamiData, setProfiles);
+  const { defis } = defisHook;
+
+  // Domaine Health délégué à useVaultHealth
+  const healthHook = useVaultHealth(vaultRef);
+  const { healthRecords, resetHealth } = healthHook;
+
+  // Domaine Missions secrètes délégué à useVaultSecretMissions
+  const profilesRef = useRef(profiles);
+  profilesRef.current = profiles;
+  const missionsHook = useVaultSecretMissions(vaultRef, profilesRef);
+  const { secretMissions, resetSecretMissions: resetMissions } = missionsHook;
 
   // ─── Hooks domaine ─────────────────────────────────────────────────────────
   const {
@@ -1023,12 +1045,12 @@ export function useVaultInternal(): VaultState {
         r.status === 'fulfilled' ? r.value : fallback;
 
       const tasksResult = val(results[0], [] as Task[]);
-      setTasks(tasksResult);
+      tasksHook.setTasks(tasksResult);
       setRoutines(val(results[1], []));
-      setCourses(val(results[2], []));
+      coursesHook.setCourses(val(results[2], []));
       const stockResult = val(results[3], { items: [] as StockItem[], sections: [] as string[] });
-      setStock(stockResult.items);
-      setStockSections(stockResult.sections);
+      stockHook.setStock(stockResult.items);
+      stockHook.setStockSections(stockResult.sections);
       setMeals(val(results[4], []));
       const rdvResult = val(results[5], [] as RDV[]);
       setRdvs(rdvResult);
@@ -1042,35 +1064,34 @@ export function useVaultInternal(): VaultState {
       }).catch(() => {});
       setPhotoDates(val(results[6], {}));
       setMemories(val(results[7], []));
-      setHealthRecords(val(results[8], []));
+      healthHook.setHealthRecords(val(results[8], []));
       setJournalStats(val(results[9], []));
       const newDefis: Defi[] = val(results[10], []);
-      setDefis(prev => {
-        // Détecter les nouveaux défis actifs (arrivés via sync iCloud)
-        if (prev.length > 0) {
-          const prevIds = new Set(prev.map(d => d.id));
-          const hasNew = newDefis.some(d => d.status === 'active' && !prevIds.has(d.id));
-          if (hasNew) {
-            loadNotifConfig().then(cfg => {
-              if (!cfg.defiEnabled) return;
-              for (const d of newDefis) {
-                if (d.status === 'active' && !prevIds.has(d.id)) {
-                  Notifications.scheduleNotificationAsync({
-                    content: {
-                      title: `${d.emoji} Nouveau défi !`,
-                      body: `${d.title} — du ${d.startDate} au ${d.endDate}. Ouvrez l'app pour participer !`,
-                      sound: 'default',
-                      data: { type: 'defi_launched', defiId: d.id },
-                    },
-                    trigger: null,
-                  }).catch(() => {});
-                }
+      // Détecter les nouveaux défis actifs (arrivés via sync iCloud)
+      const prevDefis = defisHook.defis;
+      if (prevDefis.length > 0) {
+        const prevIds = new Set(prevDefis.map(d => d.id));
+        const hasNew = newDefis.some(d => d.status === 'active' && !prevIds.has(d.id));
+        if (hasNew) {
+          loadNotifConfig().then(cfg => {
+            if (!cfg.defiEnabled) return;
+            for (const d of newDefis) {
+              if (d.status === 'active' && !prevIds.has(d.id)) {
+                Notifications.scheduleNotificationAsync({
+                  content: {
+                    title: `${d.emoji} Nouveau défi !`,
+                    body: `${d.title} — du ${d.startDate} au ${d.endDate}. Ouvrez l'app pour participer !`,
+                    sound: 'default',
+                    data: { type: 'defi_launched', defiId: d.id },
+                  },
+                  trigger: null,
+                }).catch(() => {});
               }
-            }).catch(() => {});
-          }
+            }
+          }).catch(() => {});
         }
-        return newDefis;
-      });
+      }
+      defisHook.setDefis(newDefis);
       setGratitudeDays(val(results[11], []));
       setWishlistItems(val(results[12], []));
       setAnniversaries(val(results[13], []));
@@ -1082,7 +1103,7 @@ export function useVaultInternal(): VaultState {
       setQuotes(val(results[17], []));
       setMoods(val(results[18], []));
       setSkillTrees(val(results[19], []));
-      setSecretMissions(val(results[20], []));
+      missionsHook.setSecretMissions(val(results[20], []));
 
       // Mettre à jour les widgets iOS
       refreshWidget(val(results[4], []), rdvResult, tasksResult);
@@ -1128,17 +1149,15 @@ export function useVaultInternal(): VaultState {
     // Reset all state before loading new vault to avoid stale data
     setProfiles([]);
     setGamiData(null);
-    setTasks([]);
-    setCourses([]);
-    setStock([]);
-    setStockSections([]);
+    tasksHook.resetTasks();
+    resetCourses();
+    resetStock();
     mealsHook.resetMeals();
     resetRDV();
     resetPhotos();
     resetMemories();
     resetVacation();
-    setRecipes([]);
-    recipesLoadedRef.current = false;
+    recipesHook.resetRecipes();
     resetBudget();
     notesHook.resetNotes();
     resetAnniversaires();
@@ -1147,6 +1166,9 @@ export function useVaultInternal(): VaultState {
     resetQuotes();
     resetMoods();
     resetRoutines();
+    resetHealth();
+    resetMissions();
+    defisHook.resetDefis();
     setVaultPathState(path);
     const vault = new VaultManager(path);
     vaultRef.current = vault;
@@ -1155,26 +1177,7 @@ export function useVaultInternal(): VaultState {
     setIsLoading(false);
   }, [loadVaultData, resetAnniversaires]);
 
-  // Lazy-load recettes (appelé quand on accède à l'écran recettes/meals)
-  const recipesLoadedRef = useRef(false);
-  const loadRecipes = useCallback(async (force?: boolean) => {
-    if (!vaultRef.current || (!force && recipesLoadedRef.current)) return;
-    recipesLoadedRef.current = true;
-    try {
-      const cookFiles = await vaultRef.current.listFilesRecursive(RECIPES_DIR, '.cook');
-      const results = await Promise.all(cookFiles.map(async (relPath) => {
-        try {
-          const content = await vaultRef.current!.readFile(relPath);
-          return parseRecipe(relPath, content);
-        } catch (e) { warnUnexpected('recipe-read', e); return null; }
-      }));
-      const loaded = results.filter((r): r is Recipe => r !== null);
-      loaded.sort((a, b) => a.title.localeCompare(b.title, 'fr'));
-      setRecipes(loaded);
-    } catch (e) { warnUnexpected('loadRecipes', e);
-      setRecipes([]);
-    }
-  }, []);
+  // Recettes déléguées au hook useVaultRecipes
 
   const setActiveProfile = useCallback(async (profileId: string) => {
     await SecureStore.setItemAsync(ACTIVE_PROFILE_KEY, profileId);
@@ -1545,732 +1548,9 @@ export function useVaultInternal(): VaultState {
     }
   }, []);
 
-  const updateStockQuantity = useCallback(async (lineIndex: number, newQuantity: number) => {
-    if (!vaultRef.current) return;
-    try {
-      const content = await vaultRef.current.readFile(STOCK_FILE);
-      const lines = content.split('\n');
-      if (lineIndex < 0 || lineIndex >= lines.length) return;
+  // Tasks, RDV et Memories délégués aux hooks extraits
 
-      const line = lines[lineIndex];
-      // Utiliser slice(1,-1) pour garder les cellules vides à leur position
-      const cells = line.split('|').slice(1, -1).map(c => c.trim());
-      if (cells.length < 4) return;
-
-      // cells[0]=produit, cells[1]=detail, cells[2]=quantite, cells[3]=seuil, cells[4]=qteAchat
-      const qty = Math.max(0, newQuantity);
-      // Retrouver l'emplacement depuis l'état local pour le préserver
-      const existingItem = stock.find(s => s.lineIndex === lineIndex);
-      const updated: Omit<StockItem, 'lineIndex'> = {
-        produit: cells[0],
-        detail: cells[1] || undefined,
-        quantite: qty,
-        seuil: parseInt(cells[3], 10) || 0,
-        qteAchat: cells[4] ? parseInt(cells[4], 10) || 1 : 1,
-        emplacement: existingItem?.emplacement ?? 'bebe',
-        section: existingItem?.section,
-      };
-      lines[lineIndex] = serializeStockRow(updated);
-      await vaultRef.current.writeFile(STOCK_FILE, lines.join('\n'));
-
-      // Mise à jour locale immédiate
-      setStock((prev) =>
-        prev.map((s) => s.lineIndex === lineIndex ? { ...s, quantite: Math.max(0, newQuantity) } : s)
-      );
-    } catch (e) {
-      throw new Error(`updateStockQuantity: ${e}`);
-    }
-  }, [stock]);
-
-  const addStockItem = useCallback(async (item: Omit<StockItem, 'lineIndex'>) => {
-    if (!vaultRef.current) return;
-    try {
-      let content: string;
-      try {
-        content = await vaultRef.current.readFile(STOCK_FILE);
-      } catch (e) {
-        warnUnexpected('addStockItem-read', e);
-        content = '# Stock & fournitures\n';
-        await vaultRef.current.writeFile(STOCK_FILE, content);
-      }
-      const lines = content.split('\n');
-      const newRow = serializeStockRow(item);
-
-      // Construire le header de section depuis emplacement + sous-catégorie
-      const sectionHeader = buildSectionHeader(
-        (item.emplacement || 'bebe') as EmplacementId,
-        item.section,
-      );
-
-      // Trouver le point d'insertion : dernière ligne de table dans la section cible
-      let insertIdx = -1;
-      let inSection = false;
-      for (let i = 0; i < lines.length; i++) {
-        if (lines[i].startsWith('## ')) {
-          if (inSection) break; // section suivante atteinte
-          if (lines[i].slice(3).trim() === sectionHeader) inSection = true;
-        }
-        if (inSection && lines[i].startsWith('|') && !lines[i].includes('---')) {
-          insertIdx = i;
-        }
-      }
-
-      if (insertIdx === -1) {
-        // Section inexistante → la créer en fin de fichier
-        const tableHeader = [
-          '',
-          `## ${sectionHeader}`,
-          '| Produit | Détail | Quantité | Seuil alerte | Qté/achat |',
-          '| --- | --- | --- | --- | --- |',
-          newRow,
-        ];
-        lines.push(...tableHeader);
-      } else {
-        lines.splice(insertIdx + 1, 0, newRow);
-      }
-
-      const newContent = lines.join('\n');
-      await vaultRef.current.writeFile(STOCK_FILE, newContent);
-      // Re-parser le fichier localement pour recalculer les lineIndex
-      setStock(parseStock(newContent));
-      setStockSections(parseStockSections(newContent));
-    } catch (e) {
-      throw new Error(`addStockItem: ${e}`);
-    }
-  }, []);
-
-  const deleteStockItem = useCallback(async (lineIndex: number) => {
-    if (!vaultRef.current) return;
-    try {
-      const content = await vaultRef.current.readFile(STOCK_FILE);
-      const lines = content.split('\n');
-      if (lineIndex >= 0 && lineIndex < lines.length) {
-        lines.splice(lineIndex, 1);
-        const newContent = lines.join('\n');
-        await vaultRef.current.writeFile(STOCK_FILE, newContent);
-        // Re-parser le fichier localement pour recalculer les lineIndex
-        setStock(parseStock(newContent));
-        setStockSections(parseStockSections(newContent));
-      }
-    } catch (e) {
-      throw new Error(`deleteStockItem: ${e}`);
-    }
-  }, []);
-
-  const updateStockItem = useCallback(async (lineIndex: number, updates: Partial<StockItem>) => {
-    if (!vaultRef.current) return;
-    try {
-      // Retrouver l'emplacement/section actuels depuis l'état local
-      const existingItem = stock.find(s => s.lineIndex === lineIndex);
-      const oldEmplacement = existingItem?.emplacement ?? 'bebe';
-      const oldSection = existingItem?.section;
-      const newEmplacement = updates.emplacement ?? oldEmplacement;
-      const newSection = updates.section !== undefined ? updates.section : oldSection;
-
-      // Si l'emplacement ou la section change, il faut déplacer la ligne
-      if (newEmplacement !== oldEmplacement || newSection !== oldSection) {
-        const content = await vaultRef.current.readFile(STOCK_FILE);
-        const lines = content.split('\n');
-        if (lineIndex < 0 || lineIndex >= lines.length) return;
-
-        // Lire les valeurs actuelles
-        const cells = lines[lineIndex].split('|').slice(1, -1).map(c => c.trim());
-        if (cells.length < 4) return;
-
-        const current: Omit<StockItem, 'lineIndex'> = {
-          produit: cells[0],
-          detail: cells[1] || undefined,
-          quantite: parseInt(cells[2], 10) || 0,
-          seuil: parseInt(cells[3], 10) || 0,
-          qteAchat: cells[4] ? parseInt(cells[4], 10) || 1 : 1,
-          emplacement: oldEmplacement,
-          section: oldSection,
-        };
-
-        // Supprimer l'ancienne ligne
-        lines.splice(lineIndex, 1);
-        await vaultRef.current.writeFile(STOCK_FILE, lines.join('\n'));
-
-        // Réinsérer dans la bonne section via addStockItem
-        const { lineIndex: _, ...updatedClean } = { ...current, ...updates };
-        await addStockItem(updatedClean);
-        return; // addStockItem fait déjà le reload
-      }
-
-      // Pas de changement d'emplacement → mise à jour in-place
-      const content = await vaultRef.current.readFile(STOCK_FILE);
-      const lines = content.split('\n');
-      if (lineIndex < 0 || lineIndex >= lines.length) return;
-
-      const cells = lines[lineIndex].split('|').slice(1, -1).map(c => c.trim());
-      if (cells.length < 4) return;
-
-      const current: Omit<StockItem, 'lineIndex'> = {
-        produit: cells[0],
-        detail: cells[1] || undefined,
-        quantite: parseInt(cells[2], 10) || 0,
-        seuil: parseInt(cells[3], 10) || 0,
-        qteAchat: cells[4] ? parseInt(cells[4], 10) || 1 : 1,
-        emplacement: oldEmplacement,
-        section: oldSection,
-      };
-
-      const updated = { ...current, ...updates };
-      lines[lineIndex] = serializeStockRow(updated);
-      await vaultRef.current.writeFile(STOCK_FILE, lines.join('\n'));
-
-      // Optimistic update
-      setStock(prev => prev.map(s =>
-        s.lineIndex === lineIndex
-          ? { ...s, ...updates }
-          : s
-      ));
-    } catch (e) {
-      throw new Error(`updateStockItem: ${e}`);
-    }
-  }, [stock, addStockItem]);
-
-  /**
-   * Toggle task + optimistic state update.
-   * Writes to file AND immediately updates tasks state
-   * without waiting for a full vault reload (avoids iOS file timing issues).
-   */
-  const toggleTask = useCallback(async (task: Task, completed: boolean) => {
-    if (!vaultRef.current) return;
-
-    // 1. Write to file
-    await vaultRef.current.toggleTask(task.sourceFile, task.lineIndex, completed);
-
-    // 2. Optimistic state update — immediately reflect the change in UI
-    const updateTask = (t: Task): Task => {
-      if (t.id !== task.id) return t;
-      if (completed && t.recurrence && t.dueDate) {
-        // Recurring task: advance date, keep unchecked
-        const newDate = nextOccurrence(t.dueDate, t.recurrence);
-        return { ...t, dueDate: newDate, completed: false };
-      }
-      const today = format(new Date(), 'yyyy-MM-dd');
-      return { ...t, completed, completedDate: completed ? today : undefined };
-    };
-
-    setTasks(prev => prev.map(updateTask));
-    setVacationTasks(prev => prev.map(updateTask));
-    setTimeout(triggerWidgetRefresh, 0);
-
-    // No background loadVaultData — optimistic state is authoritative.
-    // Next foreground event will fully sync.
-  }, [triggerWidgetRefresh]);
-
-  /**
-   * Skip task — avance la date sans déclencher de gamification.
-   * Tâche récurrente : prochaine occurrence. Non-récurrente : lendemain.
-   */
-  const skipTask = useCallback(async (task: Task) => {
-    if (!vaultRef.current) return;
-
-    // 1. Écriture fichier
-    await vaultRef.current.skipTask(task.sourceFile, task.lineIndex);
-
-    // 2. Mise à jour optimiste de l'état
-    const updateTask = (t: Task): Task => {
-      if (t.id !== task.id) return t;
-      if (t.recurrence && t.dueDate) {
-        const newDate = nextOccurrence(t.dueDate, t.recurrence);
-        return { ...t, dueDate: newDate, completed: false };
-      }
-      if (t.dueDate) {
-        const newDate = format(addDays(parseISO(t.dueDate), 1), 'yyyy-MM-dd');
-        return { ...t, dueDate: newDate, completed: false };
-      }
-      return t;
-    };
-
-    setTasks(prev => prev.map(updateTask));
-    setVacationTasks(prev => prev.map(updateTask));
-    setTimeout(triggerWidgetRefresh, 0);
-  }, [triggerWidgetRefresh]);
-
-  // RDV délégué au hook extrait
-
-  const addTask = useCallback(async (text: string, targetFile: string, dueDate?: string, recurrence?: string, reminderTime?: string) => {
-    if (!vaultRef.current) return;
-    let taskText = text;
-    if (recurrence) taskText += ` 🔁 ${recurrence}`;
-    if (dueDate) taskText += ` 📅 ${dueDate}`;
-    if (reminderTime) taskText += ` ⏰ ${reminderTime}`;
-    // Auto-déterminer la section selon la récurrence et le fichier cible
-    let section: string | null = null;
-    if (recurrence) {
-      if (/every\s+week/i.test(recurrence) && targetFile.includes('Maison')) section = 'Ménage';
-      else if (/every\s+day/i.test(recurrence)) section = 'Quotidien';
-      else if (/every\s+week/i.test(recurrence)) section = 'Hebdomadaire';
-      else if (/every\s+month/i.test(recurrence)) section = 'Mensuel';
-    }
-    await vaultRef.current.appendTask(targetFile, section, taskText);
-    // Re-parser le fichier modifié pour recalculer les lineIndex
-    const updatedContent = await vaultRef.current.readFile(targetFile);
-    const updatedTasks = parseTaskFile(targetFile, updatedContent);
-    setTasks(prev => {
-      // Remplacer les tâches de ce fichier par les nouvelles
-      const otherTasks = prev.filter(t => t.sourceFile !== targetFile);
-      return [...otherTasks, ...updatedTasks];
-    });
-    setTimeout(triggerWidgetRefresh, 0);
-  }, [triggerWidgetRefresh]);
-
-  const editTask = useCallback(async (task: Task, updates: { text?: string; dueDate?: string; recurrence?: string; reminderTime?: string; targetFile?: string }) => {
-    if (!vaultRef.current) return;
-    const newText = updates.text ?? task.text;
-    const newRecurrence = updates.recurrence !== undefined ? updates.recurrence : (task.recurrence ?? '');
-    const newDueDate = updates.dueDate !== undefined ? updates.dueDate : (task.dueDate ?? '');
-    const newReminderTime = updates.reminderTime !== undefined ? updates.reminderTime : (task.reminderTime ?? '');
-    const newTargetFile = updates.targetFile ?? task.sourceFile;
-
-    // Déterminer la section cible selon la récurrence
-    let newSection: string | null = null;
-    if (newRecurrence) {
-      if (/every\s+day/i.test(newRecurrence)) newSection = 'Quotidien';
-      else if (/every\s+week/i.test(newRecurrence)) newSection = 'Hebdomadaire';
-      else if (/every\s+month/i.test(newRecurrence)) newSection = 'Mensuel';
-    }
-
-    // Déterminer la section actuelle de la tâche
-    let currentSection: string | null = null;
-    if (task.recurrence) {
-      if (/every\s+day/i.test(task.recurrence)) currentSection = 'Quotidien';
-      else if (/every\s+week/i.test(task.recurrence)) currentSection = 'Hebdomadaire';
-      else if (/every\s+month/i.test(task.recurrence)) currentSection = 'Mensuel';
-    }
-
-    // Construire la nouvelle ligne markdown
-    let taskLine = newText;
-    if (newRecurrence) taskLine += ` 🔁 ${newRecurrence}`;
-    if (newDueDate) taskLine += ` 📅 ${newDueDate}`;
-    if (newReminderTime) taskLine += ` ⏰ ${newReminderTime}`;
-    const fullLine = `- [${task.completed ? 'x' : ' '}] ${taskLine}`;
-
-    const fileChanged = newTargetFile !== task.sourceFile;
-    const sectionChanged = newSection !== currentSection;
-
-    if (fileChanged || sectionChanged) {
-      // Supprimer l'ancienne ligne
-      const content = await vaultRef.current.readFile(task.sourceFile);
-      const lines = content.split('\n');
-      if (task.lineIndex >= 0 && task.lineIndex < lines.length) {
-        lines.splice(task.lineIndex, 1);
-        await vaultRef.current.writeFile(task.sourceFile, lines.join('\n'));
-      }
-      // Ajouter dans le nouveau fichier/section
-      await vaultRef.current.appendTask(newTargetFile, newSection, taskLine);
-
-      // Re-parser les fichiers modifiés pour recalculer les lineIndex
-      const filesToReparse = new Set([task.sourceFile, newTargetFile]);
-      const vault = vaultRef.current;
-      const reparsed = await Promise.all(
-        [...filesToReparse].map(async (f) => {
-          try {
-            const c = await vault.readFile(f);
-            return parseTaskFile(f, c);
-          } catch (e) { warnUnexpected('moveTask-reparse', e); return [] as Task[]; }
-        })
-      );
-      setTasks(prev => {
-        const otherTasks = prev.filter(t => !filesToReparse.has(t.sourceFile));
-        return [...otherTasks, ...reparsed.flat()];
-      });
-    } else {
-      // Remplacement en place
-      const content = await vaultRef.current.readFile(task.sourceFile);
-      const lines = content.split('\n');
-      if (task.lineIndex >= 0 && task.lineIndex < lines.length) {
-        lines[task.lineIndex] = fullLine;
-        await vaultRef.current.writeFile(task.sourceFile, lines.join('\n'));
-      }
-
-      // Mise à jour optimiste du state local
-      setTasks(prev => prev.map(t => {
-        if (t.sourceFile !== task.sourceFile || t.lineIndex !== task.lineIndex) return t;
-        return { ...t, text: newText, recurrence: newRecurrence || undefined, dueDate: newDueDate || undefined, reminderTime: newReminderTime || undefined };
-      }));
-    }
-    setTimeout(triggerWidgetRefresh, 0);
-  }, [triggerWidgetRefresh]);
-
-  const deleteTask = useCallback(async (sourceFile: string, lineIndex: number) => {
-    if (!vaultRef.current) return;
-    const content = await vaultRef.current.readFile(sourceFile);
-    const lines = content.split('\n');
-    if (lineIndex >= 0 && lineIndex < lines.length) {
-      lines.splice(lineIndex, 1);
-      const newContent = lines.join('\n');
-      await vaultRef.current.writeFile(sourceFile, newContent);
-      // Re-parser le fichier pour recalculer les lineIndex
-      setTasks(prev => {
-        const updatedTasks = parseTaskFile(sourceFile, newContent);
-        const otherTasks = prev.filter(t => t.sourceFile !== sourceFile);
-        return [...otherTasks, ...updatedTasks];
-      });
-      setTimeout(triggerWidgetRefresh, 0);
-    }
-  }, [triggerWidgetRefresh]);
-
-  const addCourseItem = useCallback(async (text: string, section?: string) => {
-    if (!vaultRef.current) return;
-    await vaultRef.current.appendTask(COURSES_FILE, section ?? null, text);
-    // Re-parser le fichier pour recalculer les lineIndex
-    const newContent = await vaultRef.current.readFile(COURSES_FILE);
-    setCourses(parseCourses(newContent, COURSES_FILE));
-  }, []);
-
-  const toggleCourseItem = useCallback(async (item: CourseItem, completed: boolean) => {
-    if (!vaultRef.current) return;
-    await vaultRef.current.toggleTask(COURSES_FILE, item.lineIndex, completed);
-    setCourses((prev) => prev.map((c) => (c.id === item.id ? { ...c, completed } : c)));
-  }, []);
-
-  const removeCourseItem = useCallback(async (lineIndex: number) => {
-    if (!vaultRef.current) return;
-    try {
-      const content = await vaultRef.current.readFile(COURSES_FILE);
-      const lines = content.split('\n');
-      if (lineIndex >= 0 && lineIndex < lines.length) {
-        lines.splice(lineIndex, 1);
-        await vaultRef.current.writeFile(COURSES_FILE, lines.join('\n'));
-        // Update local courses state (sans loadVaultData qui écraserait le stock)
-        const updated = parseCourses(lines.join('\n'), COURSES_FILE);
-        setCourses(updated);
-      }
-    } catch (e) {
-      throw new Error(`removeCourseItem: ${e}`);
-    }
-  }, []);
-
-  /** Déplace un article de courses dans une autre section (une seule écriture fichier) */
-  const moveCourseItem = useCallback(async (lineIndex: number, text: string, newSection: string) => {
-    if (!vaultRef.current) return;
-    const content = await vaultRef.current.readFile(COURSES_FILE);
-    const lines = content.split('\n');
-    if (lineIndex < 0 || lineIndex >= lines.length) return;
-
-    // 1. Supprimer l'ancienne ligne
-    lines.splice(lineIndex, 1);
-
-    // 2. Trouver ou créer la section cible, insérer l'article
-    const sectionHeader = `## ${newSection}`;
-    let sectionIdx = lines.findIndex(l => l.trim() === sectionHeader);
-    if (sectionIdx === -1) {
-      // Section n'existe pas — l'ajouter à la fin
-      lines.push('', sectionHeader, `- [ ] ${text}`);
-    } else {
-      // Insérer après le header de section (et après les items existants)
-      let insertIdx = sectionIdx + 1;
-      while (insertIdx < lines.length && lines[insertIdx].startsWith('- [')) {
-        insertIdx++;
-      }
-      lines.splice(insertIdx, 0, `- [ ] ${text}`);
-    }
-
-    // 3. Écriture unique + mise à jour state locale
-    const newContent = lines.join('\n');
-    await vaultRef.current.writeFile(COURSES_FILE, newContent);
-    setCourses(parseCourses(newContent, COURSES_FILE));
-  }, []);
-
-  /** Batch merge ingredients into the shopping list (single file write) */
-  const mergeCourseIngredients = useCallback(async (items: { text: string; name: string; quantity: number | null; section: string }[]): Promise<{ added: number; merged: number }> => {
-    if (!vaultRef.current) return { added: 0, merged: 0 };
-    let added = 0;
-    let merged = 0;
-
-    try {
-      let content = '';
-      try { content = await vaultRef.current.readFile(COURSES_FILE); } catch (e) { warnUnexpected('mergeCourses-read', e); }
-      const lines = content.split('\n');
-
-      for (const item of items) {
-        // Normalize ingredient name for matching (accent-insensitive)
-        const nameNorm = item.name.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
-        // Find existing unchecked line containing the same ingredient name
-        let foundIdx = -1;
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i];
-          if (!line.match(/^-\s+\[ \]/)) continue;
-          const lineText = line.replace(/^-\s+\[ \]\s*/, '');
-          const lineNorm = lineText.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-          if (lineNorm.includes(nameNorm)) {
-            foundIdx = i;
-            break;
-          }
-        }
-
-        if (foundIdx >= 0) {
-          if (item.quantity === null) {
-            // No quantity (e.g. "sel", "poivre") — already exists, skip
-            merged++;
-            continue;
-          }
-          // Merge: parse existing qty, add, rewrite line
-          const existingLine = lines[foundIdx].replace(/^-\s+\[ \]\s*/, '');
-          const existingMatch = existingLine.match(/^(\d+(?:[.,]\d+)?)\s+/);
-          if (existingMatch) {
-            const existingQty = parseFloat(existingMatch[1].replace(',', '.'));
-            const mergedQty = existingQty + item.quantity;
-            const mergedText = existingLine.replace(/^\d+(?:[.,]\d+)?/, String(mergedQty));
-            lines[foundIdx] = `- [ ] ${mergedText}`;
-            merged++;
-            continue;
-          }
-        }
-
-        // Add new item under the right section header
-        const sectionHeader = `## ${item.section}`;
-        let sectionIdx = lines.findIndex((l) => l.trim() === sectionHeader);
-        if (sectionIdx === -1) {
-          lines.push('', sectionHeader);
-          sectionIdx = lines.length - 1;
-        }
-        let insertIdx = sectionIdx + 1;
-        while (insertIdx < lines.length && (lines[insertIdx].startsWith('- ') || lines[insertIdx].trim() === '')) {
-          if (lines[insertIdx].trim() !== '' && !lines[insertIdx].startsWith('- ')) break;
-          insertIdx++;
-        }
-        lines.splice(insertIdx, 0, `- [ ] ${item.text}`);
-        added++;
-      }
-
-      const newContent = lines.join('\n');
-      await vaultRef.current.writeFile(COURSES_FILE, newContent);
-      // Re-parser le fichier localement
-      setCourses(parseCourses(newContent, COURSES_FILE));
-    } catch (e) {
-      throw new Error(`mergeCourseIngredients: ${e}`);
-    }
-
-    return { added, merged };
-  }, []);
-
-  const clearCompletedCourses = useCallback(async () => {
-    if (!vaultRef.current) return;
-    try {
-      const content = await vaultRef.current.readFile(COURSES_FILE);
-      const lines = content.split('\n');
-      const cleaned = lines.filter((l) => !l.match(/^-\s+\[x\]/i));
-      const newContent = cleaned.join('\n');
-      await vaultRef.current.writeFile(COURSES_FILE, newContent);
-      // Re-parser localement
-      setCourses(parseCourses(newContent, COURSES_FILE));
-    } catch (e) {
-      throw new Error(`clearCompletedCourses: ${e}`);
-    }
-  }, []);
-
-  // Memories délégué au hook extrait
-
-  const addRecipe = useCallback(async (category: string, data: { title: string; tags?: string[]; servings?: number; prepTime?: string; cookTime?: string; ingredients: { name: string; quantity?: string; unit?: string }[]; steps: string[] }) => {
-    if (!vaultRef.current) return;
-    const vault = vaultRef.current;
-    const fileName = data.title.replace(/[/\\:*?"<>|]/g, '').trim();
-    const relPath = `${RECIPES_DIR}/${category}/${fileName}.cook`;
-    await vault.ensureDir(`${RECIPES_DIR}/${category}`);
-    const content = generateCookFile(data);
-    await vault.writeFile(relPath, content);
-    // Force reload recipes
-    recipesLoadedRef.current = false;
-    await loadRecipes(true);
-  }, [loadRecipes]);
-
-  const deleteRecipe = useCallback(async (sourceFile: string) => {
-    if (!vaultRef.current) return;
-    await vaultRef.current.deleteFile(sourceFile);
-    setRecipes(prev => prev.filter(r => r.sourceFile !== sourceFile));
-  }, []);
-
-  const renameRecipe = useCallback(async (sourceFile: string, newTitle: string) => {
-    if (!vaultRef.current) return;
-    const content = await vaultRef.current.readFile(sourceFile);
-    let updated: string;
-    // Mettre à jour ou ajouter le title dans le frontmatter/metadata
-    if (/^>> title:.*$/m.test(content)) {
-      updated = content.replace(/^>> title:.*$/m, `>> title: ${newTitle}`);
-    } else if (/^---/.test(content)) {
-      // Frontmatter YAML — ajouter title
-      updated = content.replace(/^---\n/, `---\ntitle: "${newTitle}"\n`);
-    } else {
-      // Pas de metadata — ajouter en haut
-      updated = `>> title: ${newTitle}\n\n${content}`;
-    }
-    await vaultRef.current.writeFile(sourceFile, updated);
-    // Mettre à jour le state local
-    const { parseRecipe } = require('../lib/cooklang');
-    setRecipes(prev => prev.map(r =>
-      r.sourceFile === sourceFile ? parseRecipe(sourceFile, updated) : r
-    ));
-  }, []);
-
-  const saveRecipeImage = useCallback(async (sourceFile: string, imageUri: string) => {
-    if (!vaultRef.current) return;
-    const vault = vaultRef.current;
-    const imagePath = sourceFile.replace(/\.cook$/, '.jpg');
-    await vault.copyFileToVault(imageUri, imagePath);
-    // Mettre à jour >> image: dans le fichier .cook
-    const content = await vault.readFile(sourceFile);
-    let updated: string;
-    if (/^>> image:.*$/m.test(content)) {
-      updated = content.replace(/^>> image:.*$/m, `>> image: ${imagePath}`);
-    } else if (/^>> title:.*$/m.test(content)) {
-      updated = content.replace(/^>> title:(.*)$/m, `>> title:$1\n>> image: ${imagePath}`);
-    } else {
-      updated = `>> image: ${imagePath}\n\n${content}`;
-    }
-    await vault.writeFile(sourceFile, updated);
-    setRecipes(prev => prev.map(r =>
-      r.sourceFile === sourceFile ? { ...r, image: imagePath } : r
-    ));
-  }, []);
-
-  const getRecipeImageUri = useCallback((sourceFile: string): string | null => {
-    if (!vaultRef.current) return null;
-    return vaultRef.current.getRecipeImageUri(sourceFile);
-  }, []);
-
-  /** Scanner tout le vault pour des .cook en dehors du dossier Recettes */
-  const scanAllCookFiles = useCallback(async (): Promise<{ path: string; title: string }[]> => {
-    if (!vaultRef.current) return [];
-    const vault = vaultRef.current;
-    // Scanner les dossiers racine du vault
-    const topDirs = await vault.listDir('');
-    const results: { path: string; title: string }[] = [];
-    for (const dir of topDirs) {
-      // Ignorer le dossier Recettes (déjà scanné) et les dossiers cachés
-      if (dir.startsWith('.') || dir === '03 - Cuisine') continue;
-      try {
-        const cookFiles = await vault.listFilesRecursive(dir, '.cook');
-        for (const filePath of cookFiles) {
-          // Extraire le titre du nom de fichier
-          const parts = filePath.split('/');
-          const fileName = parts[parts.length - 1].replace('.cook', '');
-          results.push({ path: filePath, title: fileName });
-        }
-      } catch (e) {
-        warnUnexpected(`findOrphanCook(${dir})`, e);
-      }
-    }
-    // Scanner aussi les .cook à la racine
-    const rootEntries = await vault.listDir('');
-    for (const entry of rootEntries) {
-      if (entry.endsWith('.cook')) {
-        results.push({ path: entry, title: entry.replace('.cook', '') });
-      }
-    }
-    return results;
-  }, []);
-
-  /** Déplacer un .cook vers le dossier Recettes */
-  const moveCookToRecipes = useCallback(async (sourcePath: string, category: string) => {
-    if (!vaultRef.current) return;
-    const vault = vaultRef.current;
-    const content = await vault.readFile(sourcePath);
-    const parts = sourcePath.split('/');
-    const fileName = parts[parts.length - 1];
-    const destPath = `${RECIPES_DIR}/${category}/${fileName}`;
-    await vault.ensureDir(`${RECIPES_DIR}/${category}`);
-    await vault.writeFile(destPath, content);
-    await vault.deleteFile(sourcePath);
-
-    // Mise à jour optimiste : ajouter la recette déplacée au state
-    try {
-      const recipe = parseRecipe(destPath, content);
-      if (recipe) {
-        setRecipes(prev => [...prev, recipe].sort((a, b) => a.title.localeCompare(b.title, 'fr')));
-      }
-    } catch (e) {
-      warnUnexpected('moveCookToRecipes-optimistic', e);
-      recipesLoadedRef.current = false;
-      await loadRecipes(true);
-    }
-  }, [loadRecipes]);
-
-  /** Déplacer une recette vers une autre catégorie */
-  const moveRecipeCategory = useCallback(async (sourceFile: string, newCategory: string) => {
-    if (!vaultRef.current) return;
-    const vault = vaultRef.current;
-    const content = await vault.readFile(sourceFile);
-    const parts = sourceFile.split('/');
-    const fileName = parts[parts.length - 1]; // ex: "Poulet-Basquaise.cook"
-    const destPath = `${RECIPES_DIR}/${newCategory}/${fileName}`;
-    // Vérifier que source != dest
-    if (sourceFile === destPath) return;
-    await vault.ensureDir(`${RECIPES_DIR}/${newCategory}`);
-    await vault.writeFile(destPath, content);
-    await vault.deleteFile(sourceFile);
-    // Déplacer aussi l'image .jpg si elle existe
-    try {
-      const oldImagePath = sourceFile.replace(/\.cook$/, '.jpg');
-      const newImagePath = destPath.replace(/\.cook$/, '.jpg');
-      const oldImageUri = vault.getRecipeImageUri(sourceFile);
-      await vault.ensureDir(`${RECIPES_DIR}/${newCategory}`);
-      await vault.copyFileToVault(oldImageUri, newImagePath);
-      await vault.deleteFile(oldImagePath);
-    } catch {
-      // Pas d'image ou déplacement échoué — ignorer silencieusement
-    }
-    // Mise à jour optimiste du state
-    try {
-      const recipe = parseRecipe(destPath, content);
-      if (recipe) {
-        setRecipes(prev => prev.map(r =>
-          r.sourceFile === sourceFile ? recipe : r,
-        ).sort((a, b) => a.title.localeCompare(b.title, 'fr')));
-      }
-    } catch (e) {
-      warnUnexpected('moveRecipeCategory-optimistic', e);
-      recipesLoadedRef.current = false;
-      await loadRecipes(true);
-    }
-  }, [loadRecipes]);
-
-  // ─── Recipe Favorites (per-profile, persisted in SecureStore) ────────────
-
-  const FAVORITES_KEY_PREFIX = 'recipe_favorites_';
-
-  const loadFavorites = useCallback(async (profileId: string): Promise<string[]> => {
-    try {
-      const raw = await SecureStore.getItemAsync(`${FAVORITES_KEY_PREFIX}${profileId}`);
-      if (raw) return JSON.parse(raw) as string[];
-    } catch (e) { warnUnexpected('loadFavorites', e); }
-    return [];
-  }, []);
-
-  // Load favorites for all profiles on init
-  useEffect(() => {
-    (async () => {
-      const all: Record<string, string[]> = {};
-      for (const p of profiles) {
-        all[p.id] = await loadFavorites(p.id);
-      }
-      setRecipeFavorites(all);
-    })();
-  }, [profiles, loadFavorites]);
-
-  const toggleFavorite = useCallback(async (profileId: string, recipePath: string) => {
-    setRecipeFavorites(prev => {
-      const current = prev[profileId] ?? [];
-      const exists = current.includes(recipePath);
-      const updated = exists ? current.filter(p => p !== recipePath) : [...current, recipePath];
-      // Persist async (fire-and-forget)
-      SecureStore.setItemAsync(`${FAVORITES_KEY_PREFIX}${profileId}`, JSON.stringify(updated)).catch(() => {});
-      return { ...prev, [profileId]: updated };
-    });
-  }, []);
-
-  const isFavorite = useCallback((profileId: string, recipePath: string): boolean => {
-    return (recipeFavorites[profileId] ?? []).includes(recipePath);
-  }, [recipeFavorites]);
-
-  const getFavorites = useCallback((profileId: string): string[] => {
-    return recipeFavorites[profileId] ?? [];
-  }, [recipeFavorites]);
+  // Recettes et favoris délégués au hook useVaultRecipes
 
   const refreshGamification = useCallback(async () => {
     if (!vaultRef.current) return;
@@ -2414,7 +1694,7 @@ export function useVaultInternal(): VaultState {
     try {
       const newTaskContent = await vault.readFile(tasksPath);
       const newTasks = parseTaskFile(tasksPath, newTaskContent);
-      setTasks(prev => {
+      tasksHook.setTasks(prev => {
         const otherTasks = prev.filter(t => t.sourceFile !== tasksPath);
         return [...otherTasks, ...newTasks];
       });
@@ -2476,254 +1756,9 @@ export function useVaultInternal(): VaultState {
   }, []);
 
   // Routines délégué au hook extrait
+  // Health délégué au hook extrait
 
-  const saveHealthRecord = useCallback(async (record: HealthRecord) => {
-    if (!vaultRef.current) return;
-    const healthPath = `${HEALTH_DIR}/${record.enfant}/Carnet de santé.md`;
-    await vaultRef.current.ensureDir(`${HEALTH_DIR}/${record.enfant}`);
-    await vaultRef.current.writeFile(healthPath, serializeHealthRecord(record));
-    setHealthRecords(prev => {
-      const without = prev.filter(r => r.enfantId !== record.enfantId);
-      return [...without, record];
-    });
-  }, []);
-
-  const healthRecordsRef = useRef(healthRecords);
-  healthRecordsRef.current = healthRecords;
-
-  const addHealthEntry = useCallback(async (
-    enfant: string,
-    field: 'croissance' | 'vaccins',
-    entry: GrowthEntry | VaccineEntry,
-  ) => {
-    const existing = healthRecordsRef.current.find(r => r.enfant === enfant);
-    const record: HealthRecord = existing || {
-      enfant,
-      enfantId: enfant.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-'),
-      allergies: [], antecedents: [], medicamentsEnCours: [],
-      croissance: [], vaccins: [],
-    };
-    const updated: HealthRecord = {
-      ...record,
-      [field]: [...record[field], entry].sort((a: any, b: any) => a.date.localeCompare(b.date)),
-    };
-    await saveHealthRecord(updated);
-  }, [saveHealthRecord]);
-
-  const addGrowthEntry = useCallback(async (enfant: string, entry: GrowthEntry) => {
-    await addHealthEntry(enfant, 'croissance', entry);
-  }, [addHealthEntry]);
-
-  const updateGrowthEntry = useCallback(async (enfant: string, oldDate: string, newEntry: GrowthEntry) => {
-    const existing = healthRecordsRef.current.find(r => r.enfant === enfant);
-    if (!existing) return;
-    const updated: HealthRecord = {
-      ...existing,
-      croissance: existing.croissance
-        .map(e => e.date === oldDate ? newEntry : e)
-        .sort((a, b) => a.date.localeCompare(b.date)),
-    };
-    await saveHealthRecord(updated);
-  }, [saveHealthRecord]);
-
-  const deleteGrowthEntry = useCallback(async (enfant: string, date: string) => {
-    const existing = healthRecordsRef.current.find(r => r.enfant === enfant);
-    if (!existing) return;
-    const updated: HealthRecord = {
-      ...existing,
-      croissance: existing.croissance.filter(e => e.date !== date),
-    };
-    await saveHealthRecord(updated);
-  }, [saveHealthRecord]);
-
-  const addVaccineEntry = useCallback(async (enfant: string, entry: VaccineEntry) => {
-    await addHealthEntry(enfant, 'vaccins', entry);
-  }, [addHealthEntry]);
-
-  // ─── Défis familiaux CRUD ──────────────────────────────────────────────────
-
-  const createDefi = useCallback(async (defi: Omit<Defi, 'progress' | 'status'>) => {
-    if (!vaultRef.current) return;
-    const newDefi: Defi = { ...defi, status: 'active', progress: [] };
-    let updated: Defi[] = [];
-    setDefis(prev => {
-      updated = [...prev, newDefi];
-      return updated;
-    });
-    await vaultRef.current.writeFile(DEFIS_FILE, serializeDefis(updated));
-  }, []);
-
-  const checkInDefi = useCallback(async (defiId: string, profileId: string, completed: boolean, value?: number, note?: string) => {
-    if (!vaultRef.current) return;
-    const todayStr = new Date().toISOString().slice(0, 10);
-    let updated: Defi[] = [];
-    let isNewCheckIn = false;
-    let defiTitle = '';
-    setDefis(prev => {
-      updated = prev.map((d) => {
-        if (d.id !== defiId) return d;
-        defiTitle = d.title;
-        // Période de grâce (daily/abstinence) : si le défi est terminé mais encore actif, valider sur endDate
-        const hasGrace = d.type === 'daily' || d.type === 'abstinence';
-        const checkDate = (hasGrace && d.endDate < todayStr && d.status === 'active') ? d.endDate : todayStr;
-        // Vérifier si c'est un nouveau check-in (pas un remplacement)
-        const existing = d.progress.find((p) => p.date === checkDate && p.profileId === profileId);
-        isNewCheckIn = !existing && completed;
-        // Retirer l'entrée existante pour ce profil + date (pour remplacer)
-        const filtered = d.progress.filter((p) => !(p.date === checkDate && p.profileId === profileId));
-        const entry: DefiDayEntry = { date: checkDate, profileId, completed, value, note };
-        const newProgress = [...filtered, entry];
-
-        // Pour abstinence, un échec = défi raté
-        let newStatus = d.status;
-        if (d.type === 'abstinence' && !completed) {
-          newStatus = 'failed';
-        }
-
-        return { ...d, progress: newProgress, status: newStatus };
-      });
-      return updated;
-    });
-    await vaultRef.current.writeFile(DEFIS_FILE, serializeDefis(updated));
-
-    // Mini-points (+3) pour chaque check-in réussi d'un défi
-    if (isNewCheckIn && completed) {
-      try {
-        const file = gamiFile(profileId);
-        const gamiContent = await vaultRef.current.readFile(file).catch(() => '');
-        const gami = parseGamification(gamiContent);
-        const familleContent = await vaultRef.current.readFile(FAMILLE_FILE);
-        const currentProfiles = mergeProfiles(familleContent, gamiContent);
-        const profile = currentProfiles.find((p) => p.id === profileId);
-        if (profile) {
-          const { profile: updated, entry, activeRewards: updatedRewards } = addPoints(profile, 3, `Défi: ${defiTitle}`, gami.activeRewards);
-          const newGami = {
-            ...gami,
-            profiles: gami.profiles.map((p) => (p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase()) ? { ...p, points: updated.points, level: updated.level, multiplierRemaining: updated.multiplierRemaining, multiplier: updated.multiplier } : p),
-            history: [...gami.history, entry],
-            activeRewards: updatedRewards ?? gami.activeRewards,
-          };
-          const singleData: GamificationData = {
-            profiles: newGami.profiles.filter(p => p.id === profileId || p.name.toLowerCase().replace(/\s+/g, '') === profileId.toLowerCase()),
-            history: newGami.history.filter(e => e.profileId === profileId),
-            activeRewards: (newGami.activeRewards ?? []).filter(r => r.profileId === profileId),
-            usedLoots: (newGami.usedLoots ?? []).filter(u => u.profileId === profileId),
-          };
-          await vaultRef.current.writeFile(file, serializeGamification(singleData));
-        }
-      } catch {}
-    }
-  }, []);
-
-  const completeDefi = useCallback(async (defiId: string) => {
-    if (!vaultRef.current) return;
-
-    // Lire le state frais via setter fonctionnel
-    let defi: Defi | undefined;
-    let updated: Defi[] = [];
-    setDefis(prev => {
-      defi = prev.find((d) => d.id === defiId);
-      updated = prev.map((d) => d.id === defiId ? { ...d, status: 'completed' as const } : d);
-      return updated;
-    });
-    if (!defi) return;
-
-    await vaultRef.current.writeFile(DEFIS_FILE, serializeDefis(updated));
-
-    // Distribuer les récompenses via gamification (per-profil)
-    try {
-      const familleContent = await vaultRef.current.readFile(FAMILLE_FILE);
-      const allBaseProfiles = parseFamille(familleContent);
-      const participantIds = defi.participants.length > 0
-        ? defi.participants
-        : allBaseProfiles.map((p) => p.id);
-
-      // Lire et mettre à jour chaque fichier per-profil concerné
-      const updatedGamiByProfile: Record<string, GamificationData> = {};
-      for (const pid of participantIds) {
-        const file = gamiFile(pid);
-        const profContent = await vaultRef.current.readFile(file).catch(() => '');
-        const profGami = parseGamification(profContent);
-        const matchProfile = allBaseProfiles.find((p) => p.id === pid);
-        const gamiName = matchProfile?.name;
-        const profile = gamiName
-          ? profGami.profiles.find((p) => p.name === gamiName)
-          : profGami.profiles.find((p) => p.name.toLowerCase().replace(/\s+/g, '') === pid);
-        if (profile) {
-          profile.points += defi.rewardPoints;
-          profile.lootBoxesAvailable += defi.rewardLootBoxes;
-          profGami.history.push({
-            profileId: pid,
-            action: `+${defi.rewardPoints}`,
-            points: defi.rewardPoints,
-            note: `Défi: ${defi.title}`,
-            timestamp: new Date().toISOString(),
-          });
-          const singleData: GamificationData = {
-            profiles: profGami.profiles,
-            history: profGami.history,
-            activeRewards: profGami.activeRewards ?? [],
-            usedLoots: profGami.usedLoots ?? [],
-          };
-          await vaultRef.current.writeFile(file, serializeGamification(singleData));
-          updatedGamiByProfile[pid] = singleData;
-        }
-      }
-
-      // Mettre à jour le state global (merge partiel)
-      setGamiData(prev => {
-        if (!prev) return prev;
-        const newProfiles = prev.profiles.map(p => {
-          const updated = updatedGamiByProfile[p.id]?.profiles[0];
-          return updated ? { ...p, points: updated.points, lootBoxesAvailable: updated.lootBoxesAvailable } : p;
-        });
-        const newHistory = [...prev.history];
-        for (const pid of participantIds) {
-          const added = updatedGamiByProfile[pid]?.history.filter(e => e.profileId === pid && !prev.history.some(h => h.timestamp === e.timestamp)) ?? [];
-          newHistory.push(...added);
-        }
-        return { ...prev, profiles: newProfiles, history: newHistory };
-      });
-      setProfiles(prev => {
-        const parsed = parseFamille(familleContent);
-        return parsed.map(base => {
-          const existing = prev.find(p => p.id === base.id);
-          if (!existing) return { ...base, points: 0, coins: 0, level: 1, streak: 0, lootBoxesAvailable: 0, multiplier: 1, multiplierRemaining: 0, pityCounter: 0 };
-          const updatedProf = updatedGamiByProfile[base.id]?.profiles[0];
-          return {
-            ...base,
-            points: updatedProf?.points ?? existing.points,
-            coins: updatedProf?.coins ?? updatedProf?.points ?? existing.coins,
-            level: updatedProf?.level ?? existing.level,
-            streak: existing.streak,
-            lootBoxesAvailable: updatedProf?.lootBoxesAvailable ?? existing.lootBoxesAvailable,
-            multiplier: existing.multiplier,
-            multiplierRemaining: existing.multiplierRemaining,
-            pityCounter: existing.pityCounter,
-          };
-        });
-      });
-    } catch (e) {
-      warnUnexpected('completeDefi-gamification', e);
-    }
-  }, []);
-
-  const deleteDefi = useCallback(async (defiId: string) => {
-    if (!vaultRef.current) return;
-    let updated: Defi[] = [];
-    setDefis(prev => {
-      updated = prev.filter((d) => d.id !== defiId);
-      return updated;
-    });
-    if (updated.length > 0) {
-      await vaultRef.current.writeFile(DEFIS_FILE, serializeDefis(updated));
-    } else {
-      // Supprimer le fichier si plus aucun défi
-      try { await vaultRef.current.deleteFile(DEFIS_FILE); } catch (e) { warnUnexpected('deleteDefi-file', e); }
-    }
-  }, []);
-
-  // Gratitude, Quotes, Moods, Wishlist, Anniversaires et Notes délégués aux hooks extraits
+  // Défis, Gratitude, Quotes, Moods, Wishlist, Anniversaires et Notes délégués aux hooks extraits
 
   // ─── Skill Trees (compétences enfants) ────────────────────────────────────
 
@@ -2795,56 +1830,7 @@ export function useVaultInternal(): VaultState {
     }
   }, [gamiData, profiles, skillTrees, activeProfileId]);
 
-  // ─── Missions secrètes CRUD ───────────────────────────────────────────────
-
-  const addSecretMission = useCallback(async (text: string, targetProfileId: string) => {
-    if (!vaultRef.current) return;
-    const date = new Date().toISOString().slice(0, 10);
-    const newMission: Task = {
-      id: `${SECRET_MISSIONS_FILE}:-1`,
-      text,
-      completed: false,
-      dueDate: date,
-      tags: [],
-      mentions: [],
-      sourceFile: SECRET_MISSIONS_FILE,
-      lineIndex: -1,
-      secret: true,
-      targetProfileId,
-      secretStatus: 'active',
-    };
-    let existing: Task[] = [];
-    try {
-      const content = await vaultRef.current.readFile(SECRET_MISSIONS_FILE);
-      existing = parseSecretMissions(content);
-    } catch (e) { warnUnexpected('addSecretMission-read', e); }
-    const updated = [...existing, newMission];
-    await vaultRef.current.ensureDir('05 - Famille');
-    const serialized = serializeSecretMissions(updated, profiles);
-    await vaultRef.current.writeFile(SECRET_MISSIONS_FILE, serialized);
-    setSecretMissions(parseSecretMissions(serialized));
-  }, [profiles]);
-
-  const completeSecretMission = useCallback(async (missionId: string) => {
-    if (!vaultRef.current) return;
-    const updated = secretMissions.map((m) =>
-      m.id === missionId ? { ...m, secretStatus: 'pending' as const } : m
-    );
-    setSecretMissions(updated);
-    const serialized = serializeSecretMissions(updated, profiles);
-    await vaultRef.current.writeFile(SECRET_MISSIONS_FILE, serialized);
-  }, [secretMissions, profiles]);
-
-  const validateSecretMission = useCallback(async (missionId: string) => {
-    if (!vaultRef.current) return;
-    const date = new Date().toISOString().slice(0, 10);
-    const updated = secretMissions.map((m) =>
-      m.id === missionId ? { ...m, secretStatus: 'validated' as const, completed: true, completedDate: date } : m
-    );
-    setSecretMissions(updated);
-    const serialized = serializeSecretMissions(updated, profiles);
-    await vaultRef.current.writeFile(SECRET_MISSIONS_FILE, serialized);
-  }, [secretMissions, profiles]);
+  // Missions secrètes déléguées au hook extrait
 
   // ─── Saga narratives — compléter un chapitre ou une saga ──────────────────
 
@@ -3082,25 +2068,25 @@ export function useVaultInternal(): VaultState {
     unplaceMascotItem,
     updateProfile,
     deleteProfile,
-    updateStockQuantity,
-    addStockItem,
-    deleteStockItem,
-    updateStockItem,
+    updateStockQuantity: stockHook.updateStockQuantity,
+    addStockItem: stockHook.addStockItem,
+    deleteStockItem: stockHook.deleteStockItem,
+    updateStockItem: stockHook.updateStockItem,
     stockSections,
-    toggleTask,
-    skipTask,
+    toggleTask: tasksHook.toggleTask,
+    skipTask: tasksHook.skipTask,
     addRDV,
     updateRDV,
     deleteRDV,
-    addTask,
-    editTask,
-    deleteTask,
-    addCourseItem,
-    mergeCourseIngredients,
-    toggleCourseItem,
-    removeCourseItem,
-    moveCourseItem,
-    clearCompletedCourses,
+    addTask: tasksHook.addTask,
+    editTask: tasksHook.editTask,
+    deleteTask: tasksHook.deleteTask,
+    addCourseItem: coursesHook.addCourseItem,
+    mergeCourseIngredients: coursesHook.mergeCourseIngredients,
+    toggleCourseItem: coursesHook.toggleCourseItem,
+    removeCourseItem: coursesHook.removeCourseItem,
+    moveCourseItem: coursesHook.moveCourseItem,
+    clearCompletedCourses: coursesHook.clearCompletedCourses,
     memories,
     addMemory,
     updateMemory,
@@ -3112,18 +2098,18 @@ export function useVaultInternal(): VaultState {
     refreshGamification,
     refreshFarm,
     recipes,
-    loadRecipes,
-    addRecipe,
-    deleteRecipe,
-    renameRecipe,
-    saveRecipeImage,
-    getRecipeImageUri,
-    scanAllCookFiles,
-    moveCookToRecipes,
-    moveRecipeCategory,
-    toggleFavorite,
-    isFavorite,
-    getFavorites,
+    loadRecipes: recipesHook.loadRecipes,
+    addRecipe: recipesHook.addRecipe,
+    deleteRecipe: recipesHook.deleteRecipe,
+    renameRecipe: recipesHook.renameRecipe,
+    saveRecipeImage: recipesHook.saveRecipeImage,
+    getRecipeImageUri: recipesHook.getRecipeImageUri,
+    scanAllCookFiles: recipesHook.scanAllCookFiles,
+    moveCookToRecipes: recipesHook.moveCookToRecipes,
+    moveRecipeCategory: recipesHook.moveRecipeCategory,
+    toggleFavorite: recipesHook.toggleFavorite,
+    isFavorite: recipesHook.isFavorite,
+    getFavorites: recipesHook.getFavorites,
     ageUpgrades,
     applyAgeUpgrade,
     dismissAgeUpgrade,
@@ -3133,16 +2119,16 @@ export function useVaultInternal(): VaultState {
     routines,
     saveRoutines,
     healthRecords,
-    saveHealthRecord,
-    addGrowthEntry,
-    updateGrowthEntry,
-    deleteGrowthEntry,
-    addVaccineEntry,
+    saveHealthRecord: healthHook.saveHealthRecord,
+    addGrowthEntry: healthHook.addGrowthEntry,
+    updateGrowthEntry: healthHook.updateGrowthEntry,
+    deleteGrowthEntry: healthHook.deleteGrowthEntry,
+    addVaccineEntry: healthHook.addVaccineEntry,
     defis,
-    createDefi,
-    checkInDefi,
-    completeDefi,
-    deleteDefi,
+    createDefi: defisHook.createDefi,
+    checkInDefi: defisHook.checkInDefi,
+    completeDefi: defisHook.completeDefi,
+    deleteDefi: defisHook.deleteDefi,
     gratitudeDays,
     addGratitudeEntry,
     deleteGratitudeEntry,
@@ -3170,9 +2156,9 @@ export function useVaultInternal(): VaultState {
     skillTrees,
     unlockSkill,
     secretMissions,
-    addSecretMission,
-    completeSecretMission,
-    validateSecretMission,
+    addSecretMission: missionsHook.addSecretMission,
+    completeSecretMission: missionsHook.completeSecretMission,
+    validateSecretMission: missionsHook.validateSecretMission,
     completeAdventure,
     completeSagaChapter,
     markLootUsed,
@@ -3190,22 +2176,18 @@ export function useVaultInternal(): VaultState {
     // Callbacks (stables grâce à useCallback)
     refresh, setVaultPath, setActiveProfile, saveNotifPrefs, updateMeal, loadMealsForWeek,
     addPhoto, getPhotoUri, updateProfileTheme, buyMascotItem, placeMascotItem, unplaceMascotItem, updateProfile, deleteProfile,
-    updateStockQuantity, addStockItem, deleteStockItem, updateStockItem,
-    toggleTask, skipTask, addRDV, updateRDV, deleteRDV, addTask, editTask, deleteTask,
-    addCourseItem, mergeCourseIngredients, toggleCourseItem, removeCourseItem, moveCourseItem,
-    clearCompletedCourses, addMemory, updateMemory, activateVacation,
-    deactivateVacation, refreshGamification, refreshFarm, addRecipe, deleteRecipe, renameRecipe,
-    saveRecipeImage, getRecipeImageUri,
-    loadRecipes, scanAllCookFiles, moveCookToRecipes, moveRecipeCategory, toggleFavorite, isFavorite,
-    getFavorites, applyAgeUpgrade, dismissAgeUpgrade, addChild, convertToBorn,
-    saveRoutines, saveHealthRecord, addGrowthEntry, updateGrowthEntry, deleteGrowthEntry, addVaccineEntry,
-    createDefi, checkInDefi, completeDefi, deleteDefi,
+    stockHook, coursesHook, tasksHook, recipesHook, defisHook,
+    addRDV, updateRDV, deleteRDV,
+    addMemory, updateMemory, activateVacation,
+    deactivateVacation, refreshGamification, refreshFarm,
+    applyAgeUpgrade, dismissAgeUpgrade, addChild, convertToBorn,
+    saveRoutines, healthHook,
     addGratitudeEntry, deleteGratitudeEntry,
     addWishItem, updateWishItem, deleteWishItem, toggleWishBought,
     addAnniversary, updateAnniversary, removeAnniversary, importAnniversaries,
     notesHook.addNote, notesHook.updateNote, notesHook.deleteNote,
     addQuote, deleteQuote, addMood, deleteMood, unlockSkill,
-    addSecretMission, completeSecretMission, validateSecretMission,
+    missionsHook,
     completeAdventure, completeSagaChapter, markLootUsed,
     setCompanion, unlockCompanion,
   ]);
