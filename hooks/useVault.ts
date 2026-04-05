@@ -17,6 +17,15 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useVaultAnniversaires } from './useVaultAnniversaires';
+import { useVaultGratitude } from './useVaultGratitude';
+import { useVaultQuotes } from './useVaultQuotes';
+import { useVaultMoods } from './useVaultMoods';
+import { useVaultRoutines } from './useVaultRoutines';
+import { useVaultRDV } from './useVaultRDV';
+import { useVaultMeals, mealsFileForWeek } from './useVaultMeals';
+import { useVaultPhotos } from './useVaultPhotos';
+import { useVaultMemories } from './useVaultMemories';
+import { useVaultVacation, VACATION_STORE_KEY, VACATION_FILE } from './useVaultVacation';
 import { AppState, AppStateStatus } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { VaultManager } from '../lib/vault';
@@ -24,7 +33,6 @@ import { restoreAccess } from '../modules/vault-access/src';
 import {
   parseTaskFile,
   parseRoutines,
-  serializeRoutines,
   parseHealthRecord,
   serializeHealthRecord,
   parseCourses,
@@ -33,21 +41,15 @@ import {
   parseStock,
   serializeStockRow,
   parseStockSections,
-  serializeRDV,
-  rdvFileName,
   parseJalons,
-  insertJalonInContent,
-  updateJalonInContent,
   mergeProfiles,
   parseGamification,
   parseFamille,
   serializeGamification,
-  formatMealLine,
   parseDefis,
   serializeDefis,
   GRATITUDE_FILE,
   parseGratitude,
-  serializeGratitude,
   WISHLIST_FILE,
   parseWishlist,
   ANNIVERSAIRES_FILE,
@@ -58,10 +60,8 @@ import {
   serializeSkillTree,
   QUOTES_FILE,
   parseQuotes,
-  serializeQuotes,
   MOODS_FILE,
   parseMoods,
-  serializeMoods,
   SECRET_MISSIONS_FILE,
   parseSecretMissions,
   serializeSecretMissions,
@@ -84,9 +84,8 @@ import {
   getDefaultNotificationPrefs,
 } from '../lib/notifications';
 import * as Notifications from 'expo-notifications';
-import { setupAllNotifications, loadNotifConfig, scheduleRDVAlerts } from '../lib/scheduled-notifications';
+import { setupAllNotifications, loadNotifConfig } from '../lib/scheduled-notifications';
 import i18n from '../lib/i18n';
-import { generateThumbnail } from '../lib/thumbnails';
 import { nextOccurrence } from '../lib/recurrence';
 import { format, startOfWeek, addDays, parseISO } from 'date-fns';
 import { enqueueWrite } from '../lib/famille-queue';
@@ -355,17 +354,6 @@ async function migrateFarmData(vault: VaultManager, baseProfiles: Array<{ id: st
   }
 }
 
-const MEALS_DIR = '02 - Maison';
-/** Retourne le chemin du fichier repas pour la semaine contenant `date` (lundi = début de semaine) */
-function mealsFileForWeek(date: Date = new Date()): string {
-  const d = new Date(date);
-  const day = d.getDay(); // 0=dimanche
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // lundi
-  const monday = new Date(d);
-  monday.setDate(diff);
-  const iso = format(monday, 'yyyy-MM-dd');
-  return `${MEALS_DIR}/Repas semaine du ${iso}.md`;
-}
 /** Ancien fichier (migration) */
 const MEALS_LEGACY_FILE = '02 - Maison/Repas de la semaine.md';
 const MEALS_TEMPLATE = `# Repas de la semaine
@@ -406,73 +394,12 @@ const MEALS_TEMPLATE = `# Repas de la semaine
 - Dîner:
 `;
 const STOCK_FILE = '01 - Enfants/Commun/Stock & fournitures.md';
-const PHOTOS_DIR = '07 - Photos';
 const MEMOIRES_DIR = '06 - Mémoires';
 const NOTIF_FILE = 'notifications.md';
 const RECIPES_DIR = '03 - Cuisine/Recettes';
-const VACATION_FILE = '02 - Maison/Vacances.md';
 const ROUTINES_FILE = '02 - Maison/Routines.md';
 const DEFIS_FILE = 'defis.md';
 const HEALTH_DIR = '01 - Enfants';
-const VACATION_STORE_KEY = 'vacation_mode';
-const VACATION_TEMPLATE = `# Checklist Vacances
-
-## Avant le départ
-
-### Documents
-- [ ] Vérifier passeports (dates de validité)
-- [ ] Carte d'identité à jour
-- [ ] Carte européenne d'assurance maladie
-- [ ] Ordonnances médicaments
-- [ ] Confirmation réservation (hôtel / location)
-- [ ] Billets de transport (avion / train)
-- [ ] Assurance voyage
-
-### Santé
-- [ ] Trousse à pharmacie (doliprane, pansements, thermomètre)
-- [ ] Crème solaire
-- [ ] Médicaments habituels
-- [ ] Carnet de santé des enfants
-
-### Valises
-- [ ] Vêtements enfants (prévoir 1 tenue/jour + 2 extras)
-- [ ] Vêtements adultes
-- [ ] Pyjamas
-- [ ] Maillots de bain
-- [ ] Chaussures confortables
-- [ ] Vestes / pulls (soirées fraîches)
-
-### Bébé / Jeunes enfants
-- [ ] Couches en quantité suffisante
-- [ ] Lait / biberons
-- [ ] Petits pots / compotes
-- [ ] Doudou + tétine de rechange
-- [ ] Poussette / porte-bébé
-- [ ] Lit parapluie
-
-### Maison
-- [ ] Couper l'eau (si absence longue)
-- [ ] Baisser le chauffage / clim
-- [ ] Vider le frigo (périssables)
-- [ ] Sortir les poubelles
-- [ ] Arrosage plantes (demander au voisin ?)
-- [ ] Fermer volets et vérifier serrures
-- [ ] Débrancher appareils électriques
-
-### Divers
-- [ ] Charger les appareils (téléphone, tablette, appareil photo)
-- [ ] Télécharger films / jeux pour le trajet
-- [ ] Snacks pour la route
-- [ ] GPS / itinéraire vérifié
-- [ ] Prévenir la nounou / école / crèche
-
-## Retour de vacances
-- [ ] Lancer une machine de linge
-- [ ] Faire les courses de base
-- [ ] Relever le courrier
-- [ ] Remettre le chauffage / clim
-- [ ] Déballer et ranger les valises
-`;
 
 export function useVaultInternal(): VaultState {
   const [vaultPath, setVaultPathState] = useState<string | null>(null);
@@ -481,48 +408,89 @@ export function useVaultInternal(): VaultState {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [courses, setCourses] = useState<CourseItem[]>([]);
   const [stock, setStock] = useState<StockItem[]>([]);
-  const [meals, setMeals] = useState<MealItem[]>([]);
-  const [rdvs, setRdvs] = useState<RDV[]>([]);
-
-  // Refs pour le widget (accès à jour dans les useCallback sans dépendances)
-  const mealsRef = useRef(meals);
-  const rdvsRef = useRef(rdvs);
-  const tasksRef = useRef(tasks);
-  useEffect(() => { mealsRef.current = meals; }, [meals]);
-  useEffect(() => { rdvsRef.current = rdvs; }, [rdvs]);
-  useEffect(() => { tasksRef.current = tasks; }, [tasks]);
-
-  const triggerWidgetRefresh = useCallback(() => {
-    refreshWidget(mealsRef.current, rdvsRef.current, tasksRef.current);
-  }, []);
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
-  const [gamiData, setGamiData] = useState<GamificationData | null>(null);
-  const [notifPrefs, setNotifPrefs] = useState<NotificationPreferences>(getDefaultNotificationPrefs());
-  const [photoDates, setPhotoDates] = useState<Record<string, string[]>>({});
-  const [stockSections, setStockSections] = useState<string[]>([]);
-  const [memories, setMemories] = useState<Memory[]>([]);
-  const [vacationConfig, setVacationConfig] = useState<VacationConfig | null>(null);
-  const [vacationTasks, setVacationTasks] = useState<Task[]>([]);
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [recipeFavorites, setRecipeFavorites] = useState<Record<string, string[]>>({});
-  const [ageUpgrades, setAgeUpgrades] = useState<AgeUpgrade[]>([]);
-  const [routines, setRoutines] = useState<Routine[]>([]);
-  const [healthRecords, setHealthRecords] = useState<HealthRecord[]>([]);
-  const [journalStats, setJournalStats] = useState<JournalSummaryEntry[]>([]);
-  const [defis, setDefis] = useState<Defi[]>([]);
-  const [gratitudeDays, setGratitudeDays] = useState<GratitudeDay[]>([]);
-  const [quotes, setQuotes] = useState<ChildQuote[]>([]);
-  const [moods, setMoods] = useState<MoodEntry[]>([]);
-  const [skillTrees, setSkillTrees] = useState<SkillTreeData[]>([]);
-  const [secretMissions, setSecretMissions] = useState<Task[]>([]);
   const vaultRef = useRef<VaultManager | null>(null);
   const busyRef = useRef(false); // Guard against AppState race condition
+
+  // Refs pour le widget (accès à jour dans les useCallback sans dépendances)
+  const tasksRef = useRef(tasks);
+  useEffect(() => { tasksRef.current = tasks; }, [tasks]);
+
+  // ─── Sous-hooks par domaine ───────────────────────────────────────────────
+
   const notesHook = useVaultNotes(vaultRef);
 
   // Domaine Budget délégué à useVaultBudget
   const budget = useVaultBudget(vaultRef);
   const { resetBudget, ...budgetState } = budget;
+
+  // triggerWidgetRefresh dépend de mealsRef/rdvsRef — déclaré après les hooks meals/rdvs
+  const mealsRef = useRef<MealItem[]>([]);
+  const rdvsRef = useRef<RDV[]>([]);
+  const triggerWidgetRefresh = useCallback(() => {
+    refreshWidget(mealsRef.current, rdvsRef.current, tasksRef.current);
+  }, []);
+
+  const mealsHook = useVaultMeals(vaultRef, triggerWidgetRefresh);
+  const { meals, setMeals } = mealsHook;
+  useEffect(() => { mealsRef.current = meals; }, [meals]);
+
+  const {
+    rdvs,
+    setRdvs,
+    addRDV,
+    updateRDV,
+    deleteRDV,
+    resetRDV,
+  } = useVaultRDV(vaultRef, triggerWidgetRefresh);
+  useEffect(() => { rdvsRef.current = rdvs; }, [rdvs]);
+
+  const {
+    photoDates,
+    setPhotoDates,
+    addPhoto,
+    getPhotoUri,
+    resetPhotos,
+  } = useVaultPhotos(vaultRef, busyRef);
+
+  const {
+    routines,
+    setRoutines,
+    saveRoutines,
+    resetRoutines,
+  } = useVaultRoutines(vaultRef);
+
+  const {
+    memories,
+    setMemories,
+    addMemory,
+    updateMemory,
+    resetMemories,
+  } = useVaultMemories(vaultRef);
+
+  const {
+    vacationConfig,
+    setVacationConfig,
+    vacationTasks,
+    setVacationTasks,
+    isVacationActive,
+    activateVacation,
+    deactivateVacation,
+    resetVacation,
+  } = useVaultVacation(vaultRef);
+
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
+  const [gamiData, setGamiData] = useState<GamificationData | null>(null);
+  const [notifPrefs, setNotifPrefs] = useState<NotificationPreferences>(getDefaultNotificationPrefs());
+  const [stockSections, setStockSections] = useState<string[]>([]);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [recipeFavorites, setRecipeFavorites] = useState<Record<string, string[]>>({});
+  const [ageUpgrades, setAgeUpgrades] = useState<AgeUpgrade[]>([]);
+  const [healthRecords, setHealthRecords] = useState<HealthRecord[]>([]);
+  const [journalStats, setJournalStats] = useState<JournalSummaryEntry[]>([]);
+  const [defis, setDefis] = useState<Defi[]>([]);
+  const [skillTrees, setSkillTrees] = useState<SkillTreeData[]>([]);
+  const [secretMissions, setSecretMissions] = useState<Task[]>([]);
 
   // ─── Hooks domaine ─────────────────────────────────────────────────────────
   const {
@@ -545,6 +513,30 @@ export function useVaultInternal(): VaultState {
     toggleWishBought,
     resetWishlist,
   } = useVaultWishlist(vaultRef);
+
+  const {
+    gratitudeDays,
+    setGratitudeDays,
+    addGratitudeEntry,
+    deleteGratitudeEntry,
+    resetGratitude,
+  } = useVaultGratitude(vaultRef);
+
+  const {
+    quotes,
+    setQuotes,
+    addQuote,
+    deleteQuote,
+    resetQuotes,
+  } = useVaultQuotes(vaultRef);
+
+  const {
+    moods,
+    setMoods,
+    addMood,
+    deleteMood,
+    resetMoods,
+  } = useVaultMoods(vaultRef);
 
   // Load vault path + active profile from SecureStore on mount
   useEffect(() => {
@@ -1140,16 +1132,21 @@ export function useVaultInternal(): VaultState {
     setCourses([]);
     setStock([]);
     setStockSections([]);
-    setMeals([]);
-    setRdvs([]);
-    setPhotoDates({});
-    setMemories([]);
+    mealsHook.resetMeals();
+    resetRDV();
+    resetPhotos();
+    resetMemories();
+    resetVacation();
     setRecipes([]);
     recipesLoadedRef.current = false;
     resetBudget();
     notesHook.resetNotes();
     resetAnniversaires();
     resetWishlist();
+    resetGratitude();
+    resetQuotes();
+    resetMoods();
+    resetRoutines();
     setVaultPathState(path);
     const vault = new VaultManager(path);
     vaultRef.current = vault;
@@ -1190,94 +1187,8 @@ export function useVaultInternal(): VaultState {
     await vaultRef.current.writeFile(NOTIF_FILE, serializeNotificationPrefs(prefs));
   }, []);
 
-  const updateMeal = useCallback(async (day: string, mealType: string, text: string, recipeRef?: string, weekDate?: Date) => {
-    if (!vaultRef.current) return;
-    try {
-      const file = mealsFileForWeek(weekDate);
-      // Créer le fichier s'il n'existe pas (semaine future)
-      if (!(await vaultRef.current.exists(file))) {
-        await vaultRef.current.writeFile(file, MEALS_TEMPLATE);
-      }
-      const content = await vaultRef.current.readFile(file);
-      const lines = content.split('\n');
-      let currentDay: string | null = null;
-
-      for (let i = 0; i < lines.length; i++) {
-        if (lines[i].startsWith('## ')) {
-          currentDay = lines[i].replace('## ', '').trim();
-        }
-        if (currentDay === day) {
-          const match = lines[i].match(/^-\s+(.+?):\s*(.*)$/);
-          if (match && match[1].trim() === mealType) {
-            lines[i] = formatMealLine(mealType, text, recipeRef);
-            break;
-          }
-        }
-      }
-
-      await vaultRef.current.writeFile(file, lines.join('\n'));
-      // Ne mettre à jour l'état global que pour la semaine courante
-      if (!weekDate || mealsFileForWeek() === file) {
-        setMeals(parseMeals(lines.join('\n'), file));
-        setTimeout(triggerWidgetRefresh, 0);
-      }
-    } catch (e) {
-      throw new Error(`updateMeal: ${e}`);
-    }
-  }, [triggerWidgetRefresh]);
-
-  const loadMealsForWeek = useCallback(async (date: Date): Promise<MealItem[]> => {
-    if (!vaultRef.current) return [];
-    const file = mealsFileForWeek(date);
-    try {
-      const isFuture = date > new Date();
-      if (!(await vaultRef.current.exists(file))) {
-        if (isFuture) {
-          // Créer le fichier template pour les semaines futures (éditable)
-          await vaultRef.current.writeFile(file, MEALS_TEMPLATE);
-        } else {
-          return [];
-        }
-      }
-      const c = await vaultRef.current.readFile(file);
-      return parseMeals(c, file);
-    } catch {
-      return [];
-    }
-  }, []);
-
-  const addPhoto = useCallback(async (enfantName: string, date: string, imageUri: string) => {
-    if (!vaultRef.current) throw new Error('Vault non initialisé');
-    busyRef.current = true; // Block AppState reload while saving
-    try {
-      const relativePath = `${PHOTOS_DIR}/${enfantName}/${date}.jpg`;
-      // copyFileToVault verifies the copy succeeded internally
-      await vaultRef.current.copyFileToVault(imageUri, relativePath);
-
-      // Update local state optimistically
-      const id = enfantName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
-      setPhotoDates((prev) => {
-        const existing = prev[id] ?? [];
-        if (existing.includes(date)) return prev;
-        return { ...prev, [id]: [...existing, date].sort() };
-      });
-
-      // Générer la miniature en arrière-plan (ne bloque pas l'UI)
-      const photoUri = vaultRef.current.getPhotoUri(enfantName, date);
-      if (photoUri) {
-        generateThumbnail(photoUri, enfantName, date).catch(() => {
-          // Silencieux — fallback vers la photo originale
-        });
-      }
-    } finally {
-      busyRef.current = false;
-    }
-  }, []);
-
-  const getPhotoUri = useCallback((enfantName: string, date: string): string | null => {
-    if (!vaultRef.current) return null;
-    return vaultRef.current.getPhotoUri(enfantName, date);
-  }, []);
+  // Meals, Photos délégués aux hooks extraits
+  const { updateMeal, loadMealsForWeek } = mealsHook;
 
   const updateProfileTheme = useCallback(async (profileId: string, theme: ProfileTheme) => {
     if (!vaultRef.current) return;
@@ -1879,63 +1790,7 @@ export function useVaultInternal(): VaultState {
     setTimeout(triggerWidgetRefresh, 0);
   }, [triggerWidgetRefresh]);
 
-  const addRDV = useCallback(async (rdv: Omit<RDV, 'sourceFile' | 'title'>) => {
-    if (!vaultRef.current) return;
-    const fileName = rdvFileName(rdv);
-    const relPath = `${RDV_DIR}/${fileName}`;
-    const content = serializeRDV(rdv);
-
-    // Ensure directory exists, write file, verify
-    await vaultRef.current.ensureDir(RDV_DIR);
-    await vaultRef.current.writeFile(relPath, content);
-
-    // Verify the file was actually written
-    const exists = await vaultRef.current.exists(relPath);
-    if (!exists) {
-      throw new Error(`Échec écriture RDV: le fichier n'existe pas après écriture.\nPath: ${relPath}`);
-    }
-
-    // Optimistic state update — add RDV to state immediately
-    const newRDV: RDV = {
-      ...rdv,
-      title: fileName.replace('.md', ''),
-      sourceFile: relPath,
-    };
-    setRdvs(prev => [...prev, newRDV].sort((a, b) => a.date_rdv.localeCompare(b.date_rdv)));
-    setTimeout(triggerWidgetRefresh, 0);
-
-    // Replanifier les alertes RDV (fire-and-forget)
-    loadNotifConfig().then(config =>
-      scheduleRDVAlerts([...rdvs, newRDV], config)
-    ).catch(() => {});
-  }, [rdvs, triggerWidgetRefresh]);
-
-  const updateRDV = useCallback(async (sourceFile: string, rdv: Omit<RDV, 'sourceFile' | 'title'>) => {
-    if (!vaultRef.current) return;
-    const content = serializeRDV(rdv);
-    await vaultRef.current.writeFile(sourceFile, content);
-    const newFileName = rdvFileName(rdv);
-    const newPath = `${RDV_DIR}/${newFileName}`;
-    if (newPath !== sourceFile) {
-      await vaultRef.current.writeFile(newPath, content);
-      await vaultRef.current.deleteFile(sourceFile);
-    }
-
-    // Optimistic state update
-    setRdvs(prev => prev.map(r => {
-      if (r.sourceFile !== sourceFile) return r;
-      return { ...rdv, title: newFileName.replace('.md', ''), sourceFile: newPath };
-    }).sort((a, b) => a.date_rdv.localeCompare(b.date_rdv)));
-    setTimeout(triggerWidgetRefresh, 0);
-  }, [triggerWidgetRefresh]);
-
-  const deleteRDV = useCallback(async (sourceFile: string) => {
-    if (!vaultRef.current) return;
-    await vaultRef.current.deleteFile(sourceFile);
-    // Optimistic: remove from state immediately
-    setRdvs(prev => prev.filter(r => r.sourceFile !== sourceFile));
-    setTimeout(triggerWidgetRefresh, 0);
-  }, [triggerWidgetRefresh]);
+  // RDV délégué au hook extrait
 
   const addTask = useCallback(async (text: string, targetFile: string, dueDate?: string, recurrence?: string, reminderTime?: string) => {
     if (!vaultRef.current) return;
@@ -2210,62 +2065,7 @@ export function useVaultInternal(): VaultState {
     }
   }, []);
 
-  const updateMemory = useCallback(async (oldMemory: Memory, newMemory: Omit<Memory, 'enfant' | 'enfantId'>) => {
-    if (!vaultRef.current) return;
-    const jalonsPath = `${MEMOIRES_DIR}/${oldMemory.enfant}/Jalons.md`;
-    const content = await vaultRef.current.readFile(jalonsPath);
-    const updated = updateJalonInContent(content, oldMemory, newMemory);
-    await vaultRef.current.writeFile(jalonsPath, updated);
-
-    // Optimistic update
-    const updatedMemory: Memory = { ...newMemory, enfant: oldMemory.enfant, enfantId: oldMemory.enfantId };
-    setMemories(prev =>
-      prev
-        .map(m =>
-          m.date === oldMemory.date && m.title === oldMemory.title && m.enfantId === oldMemory.enfantId
-            ? updatedMemory
-            : m
-        )
-        .sort((a, b) => b.date.localeCompare(a.date))
-    );
-  }, []);
-
-  const addMemory = useCallback(async (enfant: string, memory: Omit<Memory, 'enfant' | 'enfantId'>) => {
-    if (!vaultRef.current) return;
-    const jalonsPath = `${MEMOIRES_DIR}/${enfant}/Jalons.md`;
-    const vault = vaultRef.current;
-
-    // Ensure directory and file exist
-    await vault.ensureDir(`${MEMOIRES_DIR}/${enfant}`);
-    let content: string;
-    try {
-      content = await vault.readFile(jalonsPath);
-    } catch (e) {
-      warnUnexpected('addMemory-read', e);
-      content = [
-        '---',
-        `enfant: ${enfant}`,
-        'tags:',
-        '  - jalons',
-        '---',
-        '',
-        `# Jalons & Mémoires — ${enfant}`,
-        '',
-        '## 🌟 Premières fois',
-        '',
-        '## 💛 Moments forts',
-        '',
-      ].join('\n');
-    }
-
-    const updated = insertJalonInContent(content, memory);
-    await vault.writeFile(jalonsPath, updated);
-
-    // Optimistic update
-    const enfantId = enfant.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
-    const newMemory: Memory = { ...memory, enfant, enfantId };
-    setMemories(prev => [newMemory, ...prev].sort((a, b) => b.date.localeCompare(a.date)));
-  }, []);
+  // Memories délégué au hook extrait
 
   const addRecipe = useCallback(async (category: string, data: { title: string; tags?: string[]; servings?: number; prepTime?: string; cookTime?: string; ingredients: { name: string; quantity?: string; unit?: string }[]; steps: string[] }) => {
     if (!vaultRef.current) return;
@@ -2533,32 +2333,7 @@ export function useVaultInternal(): VaultState {
     }
   }, []);
 
-  const activateVacation = useCallback(async (startDate: string, endDate: string) => {
-    const config: VacationConfig = { active: true, startDate, endDate };
-    await SecureStore.setItemAsync(VACATION_STORE_KEY, JSON.stringify(config));
-    setVacationConfig(config);
-    // Create Vacances.md if it doesn't exist
-    if (vaultRef.current) {
-      const exists = await vaultRef.current.exists(VACATION_FILE);
-      if (!exists) {
-        await vaultRef.current.writeFile(VACATION_FILE, VACATION_TEMPLATE);
-      }
-      // Reload vacation tasks
-      const content = await vaultRef.current.readFile(VACATION_FILE);
-      setVacationTasks(parseTaskFile(VACATION_FILE, content));
-    }
-  }, []);
-
-  const deactivateVacation = useCallback(async () => {
-    if (vacationConfig) {
-      const deactivated = { ...vacationConfig, active: false };
-      await SecureStore.setItemAsync(VACATION_STORE_KEY, JSON.stringify(deactivated));
-      setVacationConfig(deactivated);
-    }
-  }, [vacationConfig]);
-
-  const todayISO = new Date().toISOString().slice(0, 10);
-  const isVacationActive = !!(vacationConfig?.active && vacationConfig.endDate >= todayISO);
+  // Vacation délégué au hook extrait
 
   // Resolve active profile from ID → Profile object
   const activeProfile = profiles.find((p) => p.id === activeProfileId) ?? null;
@@ -2700,11 +2475,7 @@ export function useVaultInternal(): VaultState {
     } catch (e) { warnUnexpected('convertToBorn-optimistic', e); }
   }, []);
 
-  const saveRoutines = useCallback(async (newRoutines: Routine[]) => {
-    if (!vaultRef.current) return;
-    await vaultRef.current.writeFile(ROUTINES_FILE, serializeRoutines(newRoutines));
-    setRoutines(newRoutines);
-  }, []);
+  // Routines délégué au hook extrait
 
   const saveHealthRecord = useCallback(async (record: HealthRecord) => {
     if (!vaultRef.current) return;
@@ -2952,134 +2723,7 @@ export function useVaultInternal(): VaultState {
     }
   }, []);
 
-  // ─── Gratitude CRUD ──────────────────────────────────────────────────────
-
-  const addGratitudeEntry = useCallback(async (date: string, profileId: string, profileName: string, text: string) => {
-    if (!vaultRef.current) return;
-    let days: GratitudeDay[];
-    try {
-      const content = await vaultRef.current.readFile(GRATITUDE_FILE);
-      days = parseGratitude(content);
-    } catch (e) {
-      warnUnexpected('addGratitude-read', e);
-      days = [];
-    }
-
-    // Trouver ou créer le jour
-    let day = days.find((d) => d.date === date);
-    if (!day) {
-      day = { date, entries: [] };
-      days.push(day);
-    }
-
-    // Ajouter/remplacer l'entry du profil
-    day.entries = day.entries.filter((e) => e.profileId !== profileId);
-    day.entries.push({ date, profileId, profileName, text });
-
-    await vaultRef.current.writeFile(GRATITUDE_FILE, serializeGratitude(days));
-    // parseGratitude and serializeGratitude both sort desc — no need to re-sort
-    setGratitudeDays(days);
-  }, []);
-
-  const deleteGratitudeEntry = useCallback(async (date: string, profileId: string) => {
-    if (!vaultRef.current) return;
-    let days: GratitudeDay[];
-    try {
-      const content = await vaultRef.current.readFile(GRATITUDE_FILE);
-      days = parseGratitude(content);
-    } catch (e) {
-      warnUnexpected('deleteGratitude-read', e);
-      return;
-    }
-
-    const day = days.find((d) => d.date === date);
-    if (!day) return;
-
-    day.entries = day.entries.filter((e) => e.profileId !== profileId);
-    if (day.entries.length === 0) {
-      days = days.filter((d) => d.date !== date);
-    }
-
-    if (days.length > 0) {
-      await vaultRef.current.writeFile(GRATITUDE_FILE, serializeGratitude(days));
-    } else {
-      try { await vaultRef.current.deleteFile(GRATITUDE_FILE); } catch (e) { warnUnexpected('deleteGratitude-file', e); }
-    }
-    setGratitudeDays(days);
-  }, []);
-
-  // Wishlist, Anniversaires et Notes délégués aux hooks extraits
-
-  // ─── Mots d'enfants CRUD ─────────────────────────────────────────────────
-
-  const addQuote = useCallback(async (enfant: string, citation: string, contexte?: string) => {
-    if (!vaultRef.current) return;
-    const date = new Date().toISOString().slice(0, 10);
-    const newQuote: ChildQuote = { date, enfant, citation, contexte, sourceFile: QUOTES_FILE, lineIndex: -1 };
-    let existing: ChildQuote[] = [];
-    try {
-      const content = await vaultRef.current.readFile(QUOTES_FILE);
-      existing = parseQuotes(content);
-    } catch (e) { warnUnexpected('addQuote-read', e); }
-    const updated = [newQuote, ...existing];
-    await vaultRef.current.ensureDir('06 - Mémoires');
-    const serialized = serializeQuotes(updated);
-    await vaultRef.current.writeFile(QUOTES_FILE, serialized);
-    setQuotes(parseQuotes(serialized));
-  }, []);
-
-  const deleteQuote = useCallback(async (lineIndex: number) => {
-    if (!vaultRef.current) return;
-    try {
-      const content = await vaultRef.current.readFile(QUOTES_FILE);
-      const existing = parseQuotes(content);
-      const filtered = existing.filter(q => q.lineIndex !== lineIndex);
-      const serialized = serializeQuotes(filtered);
-      await vaultRef.current.writeFile(QUOTES_FILE, serialized);
-      setQuotes(parseQuotes(serialized));
-    } catch (e) {
-      warnUnexpected('deleteQuote', e);
-    }
-  }, []);
-
-  // ─── Météo des humeurs CRUD ──────────────────────────────────────────────
-
-  const addMood = useCallback(async (profileId: string, profileName: string, level: MoodLevel, note?: string) => {
-    if (!vaultRef.current) return;
-    const date = new Date().toISOString().slice(0, 10);
-    let existing: MoodEntry[] = [];
-    try {
-      const content = await vaultRef.current.readFile(MOODS_FILE);
-      existing = parseMoods(content);
-    } catch (e) { warnUnexpected('addMood-read', e); }
-    // Remplacer l'entrée du même profil pour aujourd'hui si elle existe
-    const filtered = existing.filter(m => !(m.date === date && m.profileId === profileId));
-    const newEntry: MoodEntry = { date, profileId, profileName, level, note, sourceFile: MOODS_FILE, lineIndex: -1 };
-    const updated = [newEntry, ...filtered];
-    try {
-      await vaultRef.current.ensureDir('05 - Famille');
-      const serialized = serializeMoods(updated);
-      await vaultRef.current.writeFile(MOODS_FILE, serialized);
-      setMoods(parseMoods(serialized));
-    } catch (e) {
-      warnUnexpected('addMood-write', e);
-      throw e;
-    }
-  }, []);
-
-  const deleteMood = useCallback(async (lineIndex: number) => {
-    if (!vaultRef.current) return;
-    try {
-      const content = await vaultRef.current.readFile(MOODS_FILE);
-      const existing = parseMoods(content);
-      const filtered = existing.filter(m => m.lineIndex !== lineIndex);
-      const serialized = serializeMoods(filtered);
-      await vaultRef.current.writeFile(MOODS_FILE, serialized);
-      setMoods(parseMoods(serialized));
-    } catch (e) {
-      warnUnexpected('deleteMood', e);
-    }
-  }, []);
+  // Gratitude, Quotes, Moods, Wishlist, Anniversaires et Notes délégués aux hooks extraits
 
   // ─── Skill Trees (compétences enfants) ────────────────────────────────────
 

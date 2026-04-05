@@ -15,5 +15,5 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["lib/**/*.ts", "constants/**/*.ts"]
+  "include": ["lib/**/*.ts", "constants/**/*.ts", "hooks/**/*.ts"]
 }
