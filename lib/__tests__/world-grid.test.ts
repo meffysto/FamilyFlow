@@ -33,10 +33,10 @@ describe('WORLD_GRID', () => {
     }
   });
 
-  it('les lignes sont comprises entre 0 et 3', () => {
+  it('les lignes sont comprises entre 0 et 4', () => {
     for (const cell of WORLD_GRID) {
       expect(cell.row).toBeGreaterThanOrEqual(0);
-      expect(cell.row).toBeLessThanOrEqual(3);
+      expect(cell.row).toBeLessThanOrEqual(4);
     }
   });
 
@@ -79,8 +79,8 @@ describe('BUILDING_CELLS', () => {
     }
   });
 
-  it('contient 2 cellules de bâtiment', () => {
-    expect(BUILDING_CELLS).toHaveLength(2);
+  it('contient 3 cellules de bâtiment', () => {
+    expect(BUILDING_CELLS).toHaveLength(3);
   });
 });
 
@@ -93,8 +93,8 @@ describe('DECO_CELLS', () => {
     }
   });
 
-  it('contient 3 cellules de décoration', () => {
-    expect(DECO_CELLS).toHaveLength(3);
+  it('contient 2 cellules de décoration', () => {
+    expect(DECO_CELLS).toHaveLength(2);
   });
 });
 

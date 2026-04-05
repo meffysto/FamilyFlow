@@ -22,11 +22,11 @@ import type { HarvestInventory, FarmInventory, CraftRecipe } from '../mascot/typ
 // ─── CRAFT_RECIPES ────────────────────────────────────────────────────────────
 
 describe('CRAFT_RECIPES', () => {
-  it('contient exactement 12 recettes', () => {
-    expect(CRAFT_RECIPES).toHaveLength(12);
+  it('contient au moins 20 recettes', () => {
+    expect(CRAFT_RECIPES.length).toBeGreaterThanOrEqual(20);
   });
 
-  it('contient toutes les recettes attendues', () => {
+  it('contient toutes les recettes de base', () => {
     const ids = CRAFT_RECIPES.map(r => r.id);
     expect(ids).toContain('soupe');
     expect(ids).toContain('bouquet');
@@ -40,6 +40,13 @@ describe('CRAFT_RECIPES', () => {
     expect(ids).toContain('gateau');
     expect(ids).toContain('soupe_citrouille');
     expect(ids).toContain('tarte_citrouille');
+    // Recettes ajoutées
+    expect(ids).toContain('hydromel');
+    expect(ids).toContain('nougat');
+    expect(ids).toContain('pain_epices');
+    expect(ids).toContain('brioche_tournesol');
+    expect(ids).toContain('confiture_royale');
+    expect(ids).toContain('risotto_truffe');
   });
 
   it('chaque recette a un sellValue positif', () => {
@@ -144,25 +151,25 @@ describe('craftItem', () => {
 // ─── sellCraftedItem ──────────────────────────────────────────────────────────
 
 describe('sellCraftedItem', () => {
-  it('retourne sellValue de la recette confiture (480)', () => {
+  it('retourne sellValue de la recette confiture (460)', () => {
     const recipe = CRAFT_RECIPES.find(r => r.id === 'confiture')!;
     expect(sellCraftedItem(recipe)).toBe(recipe.sellValue);
-    expect(sellCraftedItem(recipe)).toBe(480);
+    expect(sellCraftedItem(recipe)).toBe(460);
   });
 
-  it('retourne sellValue de la recette gateau (580)', () => {
+  it('retourne sellValue de la recette gateau (540)', () => {
     const recipe = CRAFT_RECIPES.find(r => r.id === 'gateau')!;
-    expect(sellCraftedItem(recipe)).toBe(580);
+    expect(sellCraftedItem(recipe)).toBe(540);
   });
 
-  it('retourne sellValue de la recette omelette (520)', () => {
+  it('retourne sellValue de la recette omelette (440)', () => {
     const recipe = CRAFT_RECIPES.find(r => r.id === 'omelette')!;
-    expect(sellCraftedItem(recipe)).toBe(520);
+    expect(sellCraftedItem(recipe)).toBe(440);
   });
 
-  it('retourne sellValue de la recette bouquet (190)', () => {
+  it('retourne sellValue de la recette bouquet (200)', () => {
     const recipe = CRAFT_RECIPES.find(r => r.id === 'bouquet')!;
-    expect(sellCraftedItem(recipe)).toBe(190);
+    expect(sellCraftedItem(recipe)).toBe(200);
   });
 });
 

@@ -181,13 +181,15 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
     taskRelPaths.push('02 - Maison/Vacances.md');
 
     // Dynamic child task files: 01 - Enfants/{Name}/Tâches récurrentes.md
+    // Use normalize('NFC') to handle macOS NFD filenames vs NFC string literals
+    const TARGET_TASK_NAME = 'Tâches récurrentes.md';
     const childTaskFiles = vaultFiles.filter(
       (f) =>
         !f.is_directory &&
-        f.relative_path.startsWith('01 - Enfants/') &&
-        f.name === 'Tâches récurrentes.md' &&
+        f.relative_path.normalize('NFC').startsWith('01 - Enfants/') &&
+        f.name.normalize('NFC') === TARGET_TASK_NAME &&
         // Exclude the Commun subfolder
-        !f.relative_path.startsWith('01 - Enfants/Commun/'),
+        !f.relative_path.normalize('NFC').startsWith('01 - Enfants/Commun/'),
     );
     for (const f of childTaskFiles) {
       taskRelPaths.push(f.relative_path);

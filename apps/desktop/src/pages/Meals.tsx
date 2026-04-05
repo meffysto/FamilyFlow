@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback, useRef, memo } from 'react';
+import { useState, useMemo, useCallback, useRef, memo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { GlassCard } from '../components/ui/GlassCard';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -516,7 +517,22 @@ function RecettesTab() {
 
 export default function Meals() {
   const { meals, courses, readFile, writeFile, refresh, loading } = useVault();
-  const [activeTab, setActiveTab] = useState('repas');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(() => {
+    const tabParam = searchParams.get('tab');
+    return tabParam === 'courses' || tabParam === 'recettes' ? tabParam : 'repas';
+  });
+
+  // Sync tab from URL param (e.g. when navigating from /shopping)
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'courses' || tabParam === 'recettes') {
+      setActiveTab(tabParam);
+      // Clean up the URL param
+      searchParams.delete('tab');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   // -------------------------------------------------------------------------
   // Meal save handler

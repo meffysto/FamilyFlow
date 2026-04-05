@@ -598,7 +598,7 @@ function SectionCard({ title, icon, accentColor, count, onAdd, children }: Secti
 // ---------------------------------------------------------------------------
 
 export default function Journal() {
-  const { profiles, readFile, writeFile } = useVault();
+  const { profiles, readFile, writeFile, files } = useVault();
 
   // Child profiles only
   const children = useMemo(
@@ -620,12 +620,36 @@ export default function Journal() {
     [children, selectedChildId],
   );
 
+  // Available journal dates for the selected child (extracted from vault file listing)
+  const availableDates = useMemo(() => {
+    if (!selectedChild) return [];
+    const prefix = `03 - Journal/${selectedChild.name}/`;
+    const dates: string[] = [];
+    for (const f of files) {
+      if (f.is_directory || !f.relative_path.startsWith(prefix)) continue;
+      // Filename format: "2026-03-10 Lucas.md" → extract date
+      const match = f.name.match(/^(\d{4}-\d{2}-\d{2})\s+/);
+      if (match) dates.push(match[1]);
+    }
+    return dates.sort().reverse(); // most recent first
+  }, [files, selectedChild]);
+
   // Auto-select first child on load
   useEffect(() => {
     if (!selectedChildId && children.length > 0) {
       setSelectedChildId(children[0].id);
     }
   }, [children, selectedChildId]);
+
+  // Auto-navigate to most recent available date when today has no entry
+  useEffect(() => {
+    if (availableDates.length > 0 && !availableDates.includes(selectedDate)) {
+      // Only auto-navigate if we're on the initial load (today's date with no entry)
+      if (selectedDate === todayIso()) {
+        setSelectedDate(availableDates[0]);
+      }
+    }
+  }, [availableDates, selectedDate]);
 
   // Load journal file whenever child or date changes
   const loadJournal = useCallback(async () => {
@@ -809,6 +833,24 @@ export default function Journal() {
             <Button variant="primary" size="md" icon="📋" onClick={handleCreate}>
               Créer le journal
             </Button>
+          )}
+          {availableDates.length > 0 && (
+            <div style={{ marginTop: 16 }}>
+              <p className="journal-empty-day-text" style={{ fontSize: 13, opacity: 0.7 }}>
+                Dernières entrées disponibles :
+              </p>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', marginTop: 8 }}>
+                {availableDates.slice(0, 5).map((d) => (
+                  <button
+                    key={d}
+                    className="journal-today-btn"
+                    onClick={() => setSelectedDate(d)}
+                  >
+                    {formatDateLong(d)}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
         </div>
       )}

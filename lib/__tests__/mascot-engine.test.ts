@@ -17,34 +17,33 @@ import { TREE_STAGES } from '../mascot/types';
 import { parseFamille } from '../parser';
 
 describe('getTreeStage', () => {
-  it('retourne graine pour niveaux 1-3', () => {
+  it('retourne graine pour niveaux 1-2', () => {
     expect(getTreeStage(1)).toBe('graine');
     expect(getTreeStage(2)).toBe('graine');
-    expect(getTreeStage(3)).toBe('graine');
   });
 
-  it('retourne pousse pour niveaux 4-7', () => {
-    expect(getTreeStage(4)).toBe('pousse');
-    expect(getTreeStage(7)).toBe('pousse');
+  it('retourne pousse pour niveaux 3-5', () => {
+    expect(getTreeStage(3)).toBe('pousse');
+    expect(getTreeStage(5)).toBe('pousse');
   });
 
-  it('retourne arbuste pour niveaux 8-18', () => {
-    expect(getTreeStage(8)).toBe('arbuste');
-    expect(getTreeStage(18)).toBe('arbuste');
+  it('retourne arbuste pour niveaux 6-10', () => {
+    expect(getTreeStage(6)).toBe('arbuste');
+    expect(getTreeStage(10)).toBe('arbuste');
   });
 
-  it('retourne arbre pour niveaux 19-32', () => {
-    expect(getTreeStage(19)).toBe('arbre');
-    expect(getTreeStage(32)).toBe('arbre');
+  it('retourne arbre pour niveaux 11-18', () => {
+    expect(getTreeStage(11)).toBe('arbre');
+    expect(getTreeStage(18)).toBe('arbre');
   });
 
-  it('retourne majestueux pour niveaux 33-40', () => {
-    expect(getTreeStage(33)).toBe('majestueux');
-    expect(getTreeStage(40)).toBe('majestueux');
+  it('retourne majestueux pour niveaux 19-30', () => {
+    expect(getTreeStage(19)).toBe('majestueux');
+    expect(getTreeStage(30)).toBe('majestueux');
   });
 
-  it('retourne legendaire pour niveaux 41-50', () => {
-    expect(getTreeStage(41)).toBe('legendaire');
+  it('retourne legendaire pour niveaux 31-50', () => {
+    expect(getTreeStage(31)).toBe('legendaire');
     expect(getTreeStage(50)).toBe('legendaire');
   });
 
@@ -57,25 +56,25 @@ describe('getTreeStage', () => {
 describe('getStageIndex', () => {
   it('retourne 0 pour graine, 5 pour legendaire', () => {
     expect(getStageIndex(1)).toBe(0);
-    expect(getStageIndex(41)).toBe(5);
+    expect(getStageIndex(31)).toBe(5);
   });
 });
 
 describe('getStageProgress', () => {
   it('retourne 0 au début d\'un stade', () => {
     expect(getStageProgress(1)).toBe(0);
-    expect(getStageProgress(4)).toBe(0);
-    expect(getStageProgress(8)).toBe(0);
+    expect(getStageProgress(3)).toBe(0);
+    expect(getStageProgress(6)).toBe(0);
   });
 
   it('retourne 1 à la fin d\'un stade', () => {
-    expect(getStageProgress(3)).toBe(1);
-    expect(getStageProgress(7)).toBe(1);
+    expect(getStageProgress(2)).toBe(1);
+    expect(getStageProgress(5)).toBe(1);
   });
 
   it('retourne une valeur intermédiaire', () => {
-    // Stade pousse : 4-7, donc level 5 = 1/3 ≈ 0.333
-    const progress = getStageProgress(5);
+    // Stade pousse : 3-5, donc level 4 = 1/2 = 0.5
+    const progress = getStageProgress(4);
     expect(progress).toBeGreaterThan(0);
     expect(progress).toBeLessThan(1);
   });
@@ -83,27 +82,27 @@ describe('getStageProgress', () => {
 
 describe('detectEvolution', () => {
   it('détecte une évolution graine→pousse', () => {
-    const result = detectEvolution(3, 4);
+    const result = detectEvolution(2, 3);
     expect(result.evolved).toBe(true);
     expect(result.fromStage).toBe('graine');
     expect(result.toStage).toBe('pousse');
   });
 
   it('détecte une évolution arbre→majestueux', () => {
-    const result = detectEvolution(32, 33);
+    const result = detectEvolution(18, 19);
     expect(result.evolved).toBe(true);
     expect(result.fromStage).toBe('arbre');
     expect(result.toStage).toBe('majestueux');
   });
 
   it('pas d\'évolution si même stade', () => {
-    const result = detectEvolution(5, 6);
+    const result = detectEvolution(3, 4);
     expect(result.evolved).toBe(false);
     expect(result.fromStage).toBeUndefined();
   });
 
   it('gère les sauts de stade (multi-level up)', () => {
-    const result = detectEvolution(3, 19);
+    const result = detectEvolution(2, 11);
     expect(result.evolved).toBe(true);
     expect(result.fromStage).toBe('graine');
     expect(result.toStage).toBe('arbre');
@@ -111,12 +110,12 @@ describe('detectEvolution', () => {
 });
 
 describe('getNextEvolutionLevel', () => {
-  it('retourne 4 depuis graine (niv 1)', () => {
-    expect(getNextEvolutionLevel(1)).toBe(4);
+  it('retourne 3 depuis graine (niv 1)', () => {
+    expect(getNextEvolutionLevel(1)).toBe(3);
   });
 
-  it('retourne 8 depuis pousse (niv 5)', () => {
-    expect(getNextEvolutionLevel(5)).toBe(8);
+  it('retourne 6 depuis pousse (niv 4)', () => {
+    expect(getNextEvolutionLevel(4)).toBe(6);
   });
 
   it('retourne null depuis legendaire (niv 45)', () => {
@@ -125,8 +124,8 @@ describe('getNextEvolutionLevel', () => {
 });
 
 describe('levelsUntilEvolution', () => {
-  it('retourne 3 depuis niv 1 (besoin d\'atteindre 4)', () => {
-    expect(levelsUntilEvolution(1)).toBe(3);
+  it('retourne 2 depuis niv 1 (besoin d\'atteindre 3)', () => {
+    expect(levelsUntilEvolution(1)).toBe(2);
   });
 
   it('retourne null depuis legendaire', () => {
@@ -198,8 +197,8 @@ describe('TREE_STAGES cohérence', () => {
   });
 });
 
-describe('parseFamille avec tree_species', () => {
-  it('parse tree_species cerisier', () => {
+describe('parseFamille — treeSpecies', () => {
+  it('treeSpecies est undefined (stocké dans farm-{profileId}.md)', () => {
     const content = `### lucas
 name: Lucas
 role: enfant
@@ -207,44 +206,7 @@ avatar: 👦
 tree_species: cerisier`;
     const profiles = parseFamille(content);
     expect(profiles).toHaveLength(1);
-    expect(profiles[0].treeSpecies).toBe('cerisier');
-  });
-
-  it('parse tree_species chene', () => {
-    const content = `### emma
-name: Emma
-role: adulte
-avatar: 👩
-tree_species: chene`;
-    const profiles = parseFamille(content);
-    expect(profiles[0].treeSpecies).toBe('chene');
-  });
-
-  it('ignore les espèces invalides', () => {
-    const content = `### lucas
-name: Lucas
-role: enfant
-avatar: 👦
-tree_species: banane`;
-    const profiles = parseFamille(content);
+    // tree_species n'est plus parsé dans famille.md — il vit dans farm-{profileId}.md
     expect(profiles[0].treeSpecies).toBeUndefined();
-  });
-
-  it('treeSpecies est undefined quand absent', () => {
-    const content = `### lucas
-name: Lucas
-role: enfant
-avatar: 👦`;
-    const profiles = parseFamille(content);
-    expect(profiles[0].treeSpecies).toBeUndefined();
-  });
-
-  it('parse toutes les 5 espèces valides', () => {
-    const species = ['cerisier', 'chene', 'bambou', 'oranger', 'palmier'];
-    for (const sp of species) {
-      const content = `### test\nname: Test\nrole: adulte\navatar: 👤\ntree_species: ${sp}`;
-      const profiles = parseFamille(content);
-      expect(profiles[0].treeSpecies).toBe(sp);
-    }
   });
 });

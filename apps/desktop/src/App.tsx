@@ -225,7 +225,7 @@ function AppLayout() {
             <Route path="/journal"  element={<Journal />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/meals"    element={<Meals />} />
-            <Route path="/shopping" element={<Navigate to="/meals" replace />} />
+            <Route path="/shopping" element={<Navigate to="/meals?tab=courses" replace />} />
             <Route path="/stock"    element={<Stock />} />
             <Route path="/budget"   element={<Budget />} />
             <Route path="/rdv"      element={<RDV />} />

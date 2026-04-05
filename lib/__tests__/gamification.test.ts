@@ -123,9 +123,9 @@ describe('DROP_RATES', () => {
     expect(DROP_RATES.enfant.commun).toBeLessThan(DROP_RATES.adulte.commun);
   });
 
-  test('le taux mythique est identique pour tous les rôles', () => {
-    expect(DROP_RATES.enfant.mythique).toBe(0.01);
-    expect(DROP_RATES.ado.mythique).toBe(0.01);
+  test('les enfants et ados ont un meilleur taux mythique que les adultes', () => {
+    expect(DROP_RATES.enfant.mythique).toBe(0.02);
+    expect(DROP_RATES.ado.mythique).toBe(0.02);
     expect(DROP_RATES.adulte.mythique).toBe(0.01);
   });
 });

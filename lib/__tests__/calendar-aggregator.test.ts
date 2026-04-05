@@ -33,12 +33,12 @@ function emptyInput(): AggregatorInput {
   };
 }
 
-const defaultRange: DateRange = { start: '2026-03-01', end: '2026-03-31' };
+const defaultRange: DateRange = { start: '2027-03-01', end: '2027-03-31' };
 
 function makeRDV(overrides: Partial<RDV> = {}): RDV {
   return {
     title: 'Visite pédiatre',
-    date_rdv: '2026-03-15',
+    date_rdv: '2027-03-15',
     heure: '10:00',
     type_rdv: 'pédiatre',
     enfant: 'Lucas',
@@ -53,13 +53,13 @@ function makeRDV(overrides: Partial<RDV> = {}): RDV {
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {
     id: 'task-1',
-    text: 'Acheter des couches 📅 2026-03-28',
+    text: 'Acheter des couches 📅 2027-03-28',
     completed: false,
     tags: [],
     mentions: [],
     sourceFile: 'tasks.md',
     lineIndex: 0,
-    dueDate: '2026-03-28',
+    dueDate: '2027-03-28',
     ...overrides,
   };
 }
@@ -80,8 +80,8 @@ function makeDefi(overrides: Partial<Defi> = {}): Defi {
     title: '30 jours sans écran',
     description: 'Pas de tablette ni télé',
     type: 'abstinence',
-    startDate: '2026-03-01',
-    endDate: '2026-03-30',
+    startDate: '2027-03-01',
+    endDate: '2027-03-30',
     targetDays: 30,
     emoji: '📵',
     difficulty: 'difficile',
@@ -96,7 +96,7 @@ function makeDefi(overrides: Partial<Defi> = {}): Defi {
 
 function makeMemory(overrides: Partial<Memory> = {}): Memory {
   return {
-    date: '2026-03-05',
+    date: '2027-03-05',
     title: 'Premier pas',
     description: 'Lucas a fait ses premiers pas !',
     type: 'premières-fois',
@@ -108,7 +108,7 @@ function makeMemory(overrides: Partial<Memory> = {}): Memory {
 
 function makeMood(overrides: Partial<MoodEntry> = {}): MoodEntry {
   return {
-    date: '2026-03-10',
+    date: '2027-03-10',
     profileId: 'lucas',
     profileName: 'Lucas',
     level: 4,
@@ -120,7 +120,7 @@ function makeMood(overrides: Partial<MoodEntry> = {}): MoodEntry {
 
 function makeQuote(overrides: Partial<ChildQuote> = {}): ChildQuote {
   return {
-    date: '2026-03-12',
+    date: '2027-03-12',
     enfant: 'Emma',
     citation: 'Les étoiles, c\'est les veilleuses du ciel !',
     sourceFile: 'mots.md',
@@ -155,7 +155,7 @@ describe('aggregateCalendarEvents', () => {
   });
 
   it('exclut les RDVs hors plage de dates', () => {
-    const input = { ...emptyInput(), rdvs: [makeRDV({ date_rdv: '2026-04-15' })] };
+    const input = { ...emptyInput(), rdvs: [makeRDV({ date_rdv: '2027-04-15' })] };
     const result = aggregateCalendarEvents(input, defaultRange);
     expect(result).toHaveLength(0);
   });
@@ -220,8 +220,8 @@ describe('aggregateCalendarEvents', () => {
   it('calcule l\'âge pour les anniversaires avec birthYear', () => {
     const input = { ...emptyInput(), anniversaries: [makeAnniversary({ birthYear: 2020 })] };
     const result = aggregateCalendarEvents(input, defaultRange);
-    expect(result[0].sublabel).toBe('6 ans');
-    expect((result[0] as any).age).toBe(6);
+    expect(result[0].sublabel).toBe('7 ans');
+    expect((result[0] as any).age).toBe(7);
   });
 
   it('pas de sublabel âge quand birthYear est absent', () => {
@@ -241,7 +241,7 @@ describe('aggregateCalendarEvents', () => {
   it('agrège les repas résolus dans la plage', () => {
     const input = {
       ...emptyInput(),
-      resolvedMeals: [{ date: '2026-03-10', meal: { id: 'lundi:déjeuner', day: 'Lundi', mealType: 'Déjeuner', text: 'Pâtes carbonara', lineIndex: 0, sourceFile: 'meals.md' } as MealItem }],
+      resolvedMeals: [{ date: '2027-03-10', meal: { id: 'lundi:déjeuner', day: 'Lundi', mealType: 'Déjeuner', text: 'Pâtes carbonara', lineIndex: 0, sourceFile: 'meals.md' } as MealItem }],
     };
     const result = aggregateCalendarEvents(input, defaultRange);
     expect(result).toHaveLength(1);
@@ -255,7 +255,7 @@ describe('aggregateCalendarEvents', () => {
   it('crée un événement par jour de vacances dans la plage', () => {
     const input = {
       ...emptyInput(),
-      vacationConfig: { active: true, startDate: '2026-03-10', endDate: '2026-03-12' },
+      vacationConfig: { active: true, startDate: '2027-03-10', endDate: '2027-03-12' },
     };
     const result = aggregateCalendarEvents(input, defaultRange);
     expect(result).toHaveLength(3); // 10, 11, 12 mars
@@ -266,7 +266,7 @@ describe('aggregateCalendarEvents', () => {
   it('ignore les vacances inactives', () => {
     const input = {
       ...emptyInput(),
-      vacationConfig: { active: false, startDate: '2026-03-10', endDate: '2026-03-12' },
+      vacationConfig: { active: false, startDate: '2027-03-10', endDate: '2027-03-12' },
     };
     const result = aggregateCalendarEvents(input, defaultRange);
     expect(result).toHaveLength(0);
@@ -342,15 +342,15 @@ describe('aggregateCalendarEvents', () => {
   it('trie par date ASC puis événements avec heure avant sans heure', () => {
     const input = {
       ...emptyInput(),
-      rdvs: [makeRDV({ date_rdv: '2026-03-15', heure: '14:00' })],
-      memories: [makeMemory({ date: '2026-03-15' })],
-      tasks: [makeTask({ dueDate: '2026-03-25' })],
+      rdvs: [makeRDV({ date_rdv: '2027-03-15', heure: '14:00' })],
+      memories: [makeMemory({ date: '2027-03-15' })],
+      tasks: [makeTask({ dueDate: '2027-03-25' })],
     };
     const result = aggregateCalendarEvents(input, defaultRange);
     // RDV le 15 avant tâche le 25
-    expect(result[0].date).toBe('2026-03-15');
+    expect(result[0].date).toBe('2027-03-15');
     // RDV (avec heure) avant souvenir (sans heure) le même jour
-    const march15 = result.filter((e) => e.date === '2026-03-15');
+    const march15 = result.filter((e) => e.date === '2027-03-15');
     expect(march15[0].type).toBe('rdv');
     expect(march15[1].type).toBe('memory');
   });
@@ -359,8 +359,8 @@ describe('aggregateCalendarEvents', () => {
     const input = {
       ...emptyInput(),
       rdvs: [
-        makeRDV({ date_rdv: '2026-03-15', heure: '16:00', sourceFile: 'rdv2.md' }),
-        makeRDV({ date_rdv: '2026-03-15', heure: '09:00', sourceFile: 'rdv1.md' }),
+        makeRDV({ date_rdv: '2027-03-15', heure: '16:00', sourceFile: 'rdv2.md' }),
+        makeRDV({ date_rdv: '2027-03-15', heure: '09:00', sourceFile: 'rdv1.md' }),
       ],
     };
     const result = aggregateCalendarEvents(input, defaultRange);
@@ -375,7 +375,7 @@ describe('aggregateCalendarEvents', () => {
       rdvs: [makeRDV()],
       tasks: [makeTask()],
       anniversaries: [makeAnniversary()],
-      resolvedMeals: [{ date: '2026-03-10', meal: { id: 'lundi:déjeuner', day: 'Lundi', mealType: 'Déjeuner', text: 'Salade', lineIndex: 0, sourceFile: 'meals.md' } as MealItem }],
+      resolvedMeals: [{ date: '2027-03-10', meal: { id: 'lundi:déjeuner', day: 'Lundi', mealType: 'Déjeuner', text: 'Salade', lineIndex: 0, sourceFile: 'meals.md' } as MealItem }],
       vacationConfig: null,
       defis: [makeDefi()],
       memories: [makeMemory()],
@@ -403,10 +403,10 @@ describe('resolveMealsForRange', () => {
       { id: 'lundi:déjeuner', day: 'Lundi', mealType: 'Déjeuner', text: 'Pâtes', lineIndex: 0, sourceFile: 'meals.md' },
       { id: 'mercredi:dîner', day: 'Mercredi', mealType: 'Dîner', text: 'Soupe', lineIndex: 1, sourceFile: 'meals.md' },
     ];
-    const result = resolveMealsForRange([{ mondayDate: '2026-03-09', meals }]);
+    const result = resolveMealsForRange([{ mondayDate: '2027-03-09', meals }]);
     expect(result).toHaveLength(2);
-    expect(result[0].date).toBe('2026-03-09'); // Lundi
-    expect(result[1].date).toBe('2026-03-11'); // Mercredi
+    expect(result[0].date).toBe('2027-03-09'); // Lundi
+    expect(result[1].date).toBe('2027-03-11'); // Mercredi
   });
 
   it('ignore les repas avec texte vide', () => {
@@ -414,7 +414,7 @@ describe('resolveMealsForRange', () => {
       { id: 'lundi:déjeuner', day: 'Lundi', mealType: 'Déjeuner', text: '', lineIndex: 0, sourceFile: 'meals.md' },
       { id: 'lundi:dîner', day: 'Lundi', mealType: 'Dîner', text: '  ', lineIndex: 1, sourceFile: 'meals.md' },
     ];
-    const result = resolveMealsForRange([{ mondayDate: '2026-03-09', meals }]);
+    const result = resolveMealsForRange([{ mondayDate: '2027-03-09', meals }]);
     expect(result).toHaveLength(0);
   });
 
@@ -422,7 +422,7 @@ describe('resolveMealsForRange', () => {
     const meals: MealItem[] = [
       { id: 'x:déjeuner', day: 'Lundy', mealType: 'Déjeuner', text: 'Salade', lineIndex: 0, sourceFile: 'meals.md' },
     ];
-    const result = resolveMealsForRange([{ mondayDate: '2026-03-09', meals }]);
+    const result = resolveMealsForRange([{ mondayDate: '2027-03-09', meals }]);
     expect(result).toHaveLength(0);
   });
 
@@ -438,15 +438,15 @@ describe('indexByDate', () => {
   it('indexe les événements par date', () => {
     const input = {
       ...emptyInput(),
-      rdvs: [makeRDV({ date_rdv: '2026-03-15' })],
-      tasks: [makeTask({ dueDate: '2026-03-25' }), makeTask({ id: 'task-2', dueDate: '2026-03-28' })],
+      rdvs: [makeRDV({ date_rdv: '2027-03-15' })],
+      tasks: [makeTask({ dueDate: '2027-03-25' }), makeTask({ id: 'task-2', dueDate: '2027-03-28' })],
     };
     const events = aggregateCalendarEvents(input, defaultRange);
     const indexed = indexByDate(events);
-    expect(indexed['2026-03-15']).toHaveLength(1); // RDV
-    expect(indexed['2026-03-25']).toHaveLength(1);
-    expect(indexed['2026-03-28']).toHaveLength(1);
-    expect(indexed['2026-03-01']).toBeUndefined();
+    expect(indexed['2027-03-15']).toHaveLength(1); // RDV
+    expect(indexed['2027-03-25']).toHaveLength(1);
+    expect(indexed['2027-03-28']).toHaveLength(1);
+    expect(indexed['2027-03-01']).toBeUndefined();
   });
 
   it('retourne un objet vide pour un tableau vide', () => {
