@@ -13,10 +13,32 @@ import {
   formatAmount,
   DEFAULT_BUDGET_CONFIG,
   MONTH_NAMES_FR,
+  scanReceiptImage,
   type BudgetEntry,
   type BudgetConfig,
+  type AIConfig,
+  type ReceiptScanResult,
 } from '@family-vault/core';
 import './Budget.css';
+
+// ---------------------------------------------------------------------------
+// OCR — constante clé API
+// ---------------------------------------------------------------------------
+
+const CLAUDE_API_KEY = 'familyflow_claude_api_key';
+
+// ---------------------------------------------------------------------------
+// OCR — Conversion fichier → base64
+// ---------------------------------------------------------------------------
+
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve((reader.result as string).split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -72,6 +94,163 @@ function accentForCategory(cat: string, allCategories: string[]): string {
 
 function normalize(s: string): string {
   return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+// ---------------------------------------------------------------------------
+// OCR — Zone de dépôt de reçu
+// ---------------------------------------------------------------------------
+
+interface ReceiptDropZoneProps {
+  onFile: (file: File) => void;
+  isScanning: boolean;
+}
+
+function ReceiptDropZone({ onFile, isScanning }: ReceiptDropZoneProps) {
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  return (
+    <div
+      className={`receipt-drop-zone${isDragOver ? ' drag-over' : ''}${isScanning ? ' scanning' : ''}`}
+      onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+      onDragLeave={() => setIsDragOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setIsDragOver(false);
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) onFile(file);
+      }}
+    >
+      {isScanning ? (
+        <>
+          <span className="drop-icon">⏳</span>
+          <p className="drop-title">Analyse en cours…</p>
+          <p className="drop-subtitle">Claude Vision lit votre reçu</p>
+        </>
+      ) : (
+        <>
+          <span className="drop-icon">📸</span>
+          <p className="drop-title">Déposer une photo de reçu ici</p>
+          <p className="drop-subtitle">ou</p>
+          <label className="upload-btn">
+            Choisir un fichier
+            <input
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }}
+            />
+          </label>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// OCR — Modal de review des items détectés
+// ---------------------------------------------------------------------------
+
+interface ScannedItem {
+  label: string;
+  amount: number;
+  category: string;
+  keep: boolean;
+}
+
+interface ReceiptReviewProps {
+  result: ReceiptScanResult;
+  allCategories: string[];
+  onConfirm: (items: Array<{ label: string; amount: number; category: string }>) => Promise<void>;
+  onCancel: () => void;
+}
+
+function ReceiptReview({ result, allCategories, onConfirm, onCancel }: ReceiptReviewProps) {
+  const [items, setItems] = useState<ScannedItem[]>(() =>
+    result.items.map((item) => ({ ...item, keep: true })),
+  );
+  const [submitting, setSubmitting] = useState(false);
+
+  function updateItem(index: number, changes: Partial<ScannedItem>) {
+    setItems((prev) => prev.map((item, i) => i === index ? { ...item, ...changes } : item));
+  }
+
+  async function handleConfirm() {
+    setSubmitting(true);
+    try {
+      const toAdd = items.filter((item) => item.keep).map(({ label, amount, category }) => ({ label, amount, category }));
+      await onConfirm(toAdd);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const keptCount = items.filter((i) => i.keep).length;
+
+  return (
+    <div className="receipt-review">
+      {result.store && (
+        <p className="receipt-review-store">
+          <strong>{result.store}</strong>
+          {result.date && <span className="receipt-review-date"> — {result.date}</span>}
+        </p>
+      )}
+      <p className="receipt-review-hint">
+        {items.length} article{items.length !== 1 ? 's' : ''} détecté{items.length !== 1 ? 's' : ''} — décochez les articles à ignorer
+      </p>
+
+      <div className="receipt-items-list">
+        {items.map((item, index) => (
+          <div key={index} className={`receipt-item-row${item.keep ? '' : ' receipt-item-row--disabled'}`}>
+            <input
+              type="checkbox"
+              className="receipt-item-check"
+              checked={item.keep}
+              onChange={(e) => updateItem(index, { keep: e.target.checked })}
+            />
+            <input
+              type="text"
+              className="receipt-item-label"
+              value={item.label}
+              disabled={!item.keep}
+              onChange={(e) => updateItem(index, { label: e.target.value })}
+              placeholder="Libellé"
+            />
+            <input
+              type="number"
+              className="receipt-item-amount"
+              value={item.amount}
+              disabled={!item.keep}
+              min="0"
+              step="0.01"
+              onChange={(e) => updateItem(index, { amount: parseFloat(e.target.value) || 0 })}
+            />
+            <select
+              className="receipt-item-category"
+              value={item.category}
+              disabled={!item.keep}
+              onChange={(e) => updateItem(index, { category: e.target.value })}
+            >
+              {allCategories.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+              {!allCategories.includes(item.category) && (
+                <option value={item.category}>{item.category}</option>
+              )}
+            </select>
+          </div>
+        ))}
+      </div>
+
+      <div className="receipt-review-actions">
+        <Button variant="secondary" onClick={onCancel} disabled={submitting}>
+          Annuler
+        </Button>
+        <Button variant="primary" onClick={handleConfirm} disabled={submitting || keptCount === 0}>
+          {submitting ? 'Ajout…' : `Ajouter ${keptCount} dépense${keptCount !== 1 ? 's' : ''}`}
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -303,6 +482,11 @@ export default function Budget() {
   const [noFile, setNoFile] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
 
+  // ── OCR state ──────────────────────────────────────────────────────────────
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<ReceiptScanResult | null>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
+
   // ── Load budget config once ────────────────────────────────────────────────
 
   useEffect(() => {
@@ -406,6 +590,50 @@ export default function Budget() {
     [month, readFile, writeFile, loadMonth],
   );
 
+  // ── OCR handlers ──────────────────────────────────────────────────────────
+
+  const handleReceiptFile = useCallback(async (file: File) => {
+    setScanError(null);
+
+    const apiKey = localStorage.getItem(CLAUDE_API_KEY);
+    if (!apiKey) {
+      setScanError('Configurez votre clé API Claude dans Paramètres (familyflow_claude_api_key).');
+      return;
+    }
+
+    setIsScanning(true);
+    try {
+      const base64 = await fileToBase64(file);
+      const mediaType = file.type || 'image/jpeg';
+      const aiConfig: AIConfig = { apiKey, model: 'claude-sonnet-4-6' };
+      const result = await scanReceiptImage(aiConfig, base64, mediaType, allCategories);
+      if (!result.items.length) {
+        setScanError('Aucun article détecté sur le reçu. Essayez avec une image plus nette.');
+        return;
+      }
+      setScanResult(result);
+    } catch (e: any) {
+      if (import.meta.env.DEV) console.error('Erreur OCR reçu:', e);
+      setScanError(e?.message ?? 'Erreur lors du scan du reçu.');
+    } finally {
+      setIsScanning(false);
+    }
+  }, [allCategories]);
+
+  const handleReceiptConfirm = useCallback(async (
+    items: Array<{ label: string; amount: number; category: string }>,
+  ) => {
+    for (const item of items) {
+      await handleAddExpense({
+        date: scanResult?.date ?? getToday(),
+        label: item.label,
+        amount: item.amount,
+        category: item.category,
+      });
+    }
+    setScanResult(null);
+  }, [scanResult, handleAddExpense]);
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
@@ -424,6 +652,15 @@ export default function Budget() {
           </Button>
         </div>
         <MonthNav month={month} onPrev={handlePrev} onNext={handleNext} />
+      </div>
+
+      {/* OCR — Zone de scan de reçu */}
+      <div className="budget-section">
+        <div className="budget-section-title">Scanner un reçu</div>
+        <ReceiptDropZone onFile={handleReceiptFile} isScanning={isScanning} />
+        {scanError && (
+          <p className="receipt-scan-error">{scanError}</p>
+        )}
       </div>
 
       {loading ? (
@@ -504,6 +741,23 @@ export default function Budget() {
           onCancel={() => setShowAddModal(false)}
         />
       </Modal>
+
+      {/* OCR — Modal de review du reçu scanné */}
+      {scanResult && (
+        <Modal
+          isOpen={true}
+          onClose={() => setScanResult(null)}
+          title="Reçu scanné — vérifier les articles"
+          width="md"
+        >
+          <ReceiptReview
+            result={scanResult}
+            allCategories={allCategories}
+            onConfirm={handleReceiptConfirm}
+            onCancel={() => setScanResult(null)}
+          />
+        </Modal>
+      )}
     </div>
   );
 }
