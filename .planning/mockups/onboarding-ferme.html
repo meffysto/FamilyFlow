@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Onboarding — Ferme familiale</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #1a1a2e;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, sans-serif;
+  }
+
+  .phone-frame {
+    width: 393px;
+    height: 852px;
+    background: #fafaf8;
+    border-radius: 44px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 25px 80px rgba(0,0,0,0.4), 0 0 0 3px #333;
+  }
+
+  /* Status bar */
+  .status-bar {
+    height: 54px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 0 28px 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  /* Skip button */
+  .skip-btn {
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    color: #4a9d5b;
+    font-size: 15px;
+    font-weight: 500;
+    z-index: 10;
+    opacity: 0.7;
+  }
+
+  /* Content */
+  .content {
+    padding: 12px 24px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: calc(100% - 54px);
+  }
+
+  /* Farm preview */
+  .farm-preview {
+    width: 345px;
+    height: 280px;
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 24px;
+    background: linear-gradient(180deg, #87CEEB 0%, #98d4ee 35%, #5daa3e 35%, #4a9d3a 100%);
+    box-shadow: 0 8px 24px rgba(74, 157, 58, 0.2);
+  }
+
+  /* Sky */
+  .sky {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 35%;
+  }
+  .cloud {
+    position: absolute;
+    font-size: 20px;
+    opacity: 0.7;
+    animation: float 6s ease-in-out infinite;
+  }
+  .cloud:nth-child(1) { top: 15px; left: 30px; animation-delay: 0s; }
+  .cloud:nth-child(2) { top: 35px; left: 200px; font-size: 16px; animation-delay: 2s; }
+  .cloud:nth-child(3) { top: 10px; left: 280px; font-size: 14px; animation-delay: 4s; }
+
+  @keyframes float {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(8px); }
+  }
+
+  /* Ground */
+  .ground {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 65%;
+    background:
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 16px),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 16px),
+      linear-gradient(180deg, #5daa3e 0%, #4a8f32 100%);
+  }
+
+  /* Dirt path */
+  .dirt-path {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 80px;
+    background: linear-gradient(180deg, transparent, #8B6914 20%, #a07a1a);
+    border-radius: 8px 8px 0 0;
+    opacity: 0.6;
+  }
+
+  /* Crop plots area */
+  .crop-plots {
+    position: absolute;
+    top: 38%;
+    left: 50%;
+    transform: translateX(-50%);
+    display: grid;
+    grid-template-columns: repeat(5, 28px);
+    grid-template-rows: repeat(2, 28px);
+    gap: 6px;
+  }
+
+  .crop-cell {
+    width: 28px;
+    height: 28px;
+    background: #6b4f1d;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    position: relative;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    animation: cropPop 0.4s ease-out backwards;
+  }
+  .crop-cell:nth-child(1) { animation-delay: 0.8s; }
+  .crop-cell:nth-child(2) { animation-delay: 0.9s; }
+  .crop-cell:nth-child(3) { animation-delay: 0.7s; }
+  .crop-cell:nth-child(4) { animation-delay: 1.0s; }
+  .crop-cell:nth-child(5) { animation-delay: 1.1s; }
+  .crop-cell:nth-child(6) { animation-delay: 1.3s; }
+  .crop-cell:nth-child(7) { animation-delay: 1.2s; }
+  .crop-cell:nth-child(8) { animation-delay: 1.0s; }
+  .crop-cell:nth-child(9) { animation-delay: 1.4s; }
+  .crop-cell:nth-child(10) { animation-delay: 1.5s; }
+
+  .crop-cell .plant {
+    animation: sway 3s ease-in-out infinite;
+    transform-origin: bottom center;
+  }
+  .crop-cell:nth-child(odd) .plant { animation-delay: 0.5s; }
+
+  @keyframes sway {
+    0%, 100% { transform: rotate(-2deg); }
+    50% { transform: rotate(2deg); }
+  }
+
+  @keyframes cropPop {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  /* Tree */
+  .tree-container {
+    position: absolute;
+    bottom: 28%;
+    left: 28%;
+    transform: translateX(-50%);
+    text-align: center;
+    animation: treeBreathe 4s ease-in-out infinite;
+  }
+  .tree-emoji {
+    font-size: 60px;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+  }
+  .tree-shadow {
+    width: 50px;
+    height: 12px;
+    background: rgba(0,0,0,0.15);
+    border-radius: 50%;
+    margin: -4px auto 0;
+  }
+
+  @keyframes treeBreathe {
+    0%, 100% { transform: translateX(-50%) scale(1); }
+    50% { transform: translateX(-50%) scale(1.02); }
+  }
+
+  /* Buildings */
+  .building {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: buildPop 0.5s ease-out backwards;
+  }
+  .building-emoji {
+    font-size: 32px;
+    filter: drop-shadow(0 3px 4px rgba(0,0,0,0.2));
+  }
+  .building-shadow {
+    width: 30px;
+    height: 8px;
+    background: rgba(0,0,0,0.12);
+    border-radius: 50%;
+    margin-top: -2px;
+  }
+
+  .building-1 { right: 20px; bottom: 42%; animation-delay: 1.6s; }
+  .building-2 { right: 55px; bottom: 30%; animation-delay: 1.8s; }
+  .building-3 { right: 15px; bottom: 18%; animation-delay: 2.0s; }
+
+  @keyframes buildPop {
+    from { transform: scale(0) translateY(10px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+  }
+
+  /* Decorations */
+  .deco {
+    position: absolute;
+    font-size: 14px;
+    opacity: 0.8;
+  }
+  .deco-1 { bottom: 12%; left: 15px; font-size: 12px; }
+  .deco-2 { bottom: 15%; left: 50px; font-size: 10px; }
+  .deco-3 { bottom: 8%; left: 90px; font-size: 11px; }
+  .deco-4 { bottom: 18%; right: 100px; font-size: 10px; }
+  .deco-5 { bottom: 10%; left: 140px; font-size: 13px; }
+  .deco-6 { bottom: 6%; right: 60px; font-size: 9px; }
+
+  /* Water pond */
+  .pond {
+    position: absolute;
+    bottom: 10%;
+    left: 35%;
+    width: 35px;
+    height: 18px;
+    background: radial-gradient(ellipse, #4a90d9 0%, #3a7fc8 60%, transparent 100%);
+    border-radius: 50%;
+    opacity: 0.7;
+    animation: shimmer 3s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 0.8; }
+  }
+
+  /* Companion */
+  .companion {
+    position: absolute;
+    bottom: 32%;
+    left: 52%;
+    font-size: 22px;
+    animation: companionBounce 2s ease-in-out infinite;
+  }
+
+  @keyframes companionBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  /* Sparkles overlay */
+  .sparkle {
+    position: absolute;
+    font-size: 12px;
+    opacity: 0;
+    animation: sparkle 2.5s ease-in-out infinite;
+  }
+  .sparkle:nth-child(1) { top: 20%; left: 15%; animation-delay: 0s; }
+  .sparkle:nth-child(2) { top: 45%; right: 18%; animation-delay: 1s; }
+  .sparkle:nth-child(3) { top: 60%; left: 25%; animation-delay: 1.8s; }
+
+  @keyframes sparkle {
+    0%, 100% { opacity: 0; transform: scale(0.5); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+
+  /* Title section */
+  .title-section {
+    text-align: center;
+    margin-bottom: 20px;
+    animation: fadeUp 0.6s ease-out 0.3s backwards;
+  }
+
+  .title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.3;
+    margin-bottom: 10px;
+  }
+
+  .subtitle {
+    font-size: 15px;
+    color: #666;
+    line-height: 1.5;
+    max-width: 310px;
+    margin: 0 auto;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Feature cards */
+  .features {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .feature-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    background: rgba(74, 157, 58, 0.08);
+    border-radius: 14px;
+    animation: slideUp 0.4s ease-out backwards;
+  }
+  .feature-card:nth-child(1) { animation-delay: 1.6s; }
+  .feature-card:nth-child(2) { animation-delay: 1.8s; }
+  .feature-card:nth-child(3) { animation-delay: 2.0s; }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .feature-icon {
+    font-size: 22px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(74, 157, 58, 0.12);
+    border-radius: 10px;
+    flex-shrink: 0;
+  }
+
+  .feature-text {
+    font-size: 14px;
+    color: #333;
+    line-height: 1.4;
+    font-weight: 450;
+  }
+
+  /* Bottom nav */
+  .bottom-nav {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0 24px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    background: linear-gradient(transparent, #fafaf8 30%);
+    padding-top: 20px;
+  }
+
+  .dots {
+    display: flex;
+    gap: 8px;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ddd;
+    transition: all 0.3s;
+  }
+  .dot.past {
+    background: #4a9d5b;
+    opacity: 0.4;
+  }
+  .dot.active {
+    background: #4a9d5b;
+    width: 24px;
+    border-radius: 4px;
+  }
+
+  .cta-btn {
+    width: 100%;
+    padding: 16px;
+    background: #4a9d5b;
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-size: 17px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(74, 157, 58, 0.3);
+    transition: transform 0.15s;
+  }
+  .cta-btn:hover {
+    transform: scale(1.02);
+  }
+
+  /* Task arrow animation */
+  .task-arrow {
+    position: absolute;
+    top: 35%;
+    left: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    animation: pulseArrow 2.5s ease-in-out infinite;
+  }
+  .task-arrow .check {
+    font-size: 16px;
+    background: rgba(255,255,255,0.85);
+    border-radius: 6px;
+    padding: 2px 5px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  .task-arrow .arrow {
+    font-size: 11px;
+    color: rgba(255,255,255,0.9);
+  }
+
+  @keyframes pulseArrow {
+    0%, 100% { opacity: 0.6; transform: translateY(0); }
+    50% { opacity: 1; transform: translateY(-3px); }
+  }
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+  <!-- Status bar -->
+  <div class="status-bar">
+    <span>9:41</span>
+    <span style="display: flex; gap: 6px; align-items: center;">
+      <span style="font-size: 12px;">5G</span>
+      <span style="font-size: 16px;">🔋</span>
+    </span>
+  </div>
+
+  <!-- Skip -->
+  <div class="skip-btn">Passer</div>
+
+  <div class="content">
+    <!-- Farm preview -->
+    <div class="farm-preview">
+      <!-- Sky -->
+      <div class="sky">
+        <span class="cloud">☁️</span>
+        <span class="cloud">☁️</span>
+        <span class="cloud">☁️</span>
+      </div>
+
+      <!-- Sparkles -->
+      <span class="sparkle">✨</span>
+      <span class="sparkle">✨</span>
+      <span class="sparkle">✨</span>
+
+      <!-- Ground -->
+      <div class="ground"></div>
+
+      <!-- Task arrow hint -->
+      <div class="task-arrow">
+        <span class="check">✅</span>
+        <span class="arrow">↓</span>
+      </div>
+
+      <!-- Crop plots -->
+      <div class="crop-plots">
+        <div class="crop-cell"><span class="plant">🥕</span></div>
+        <div class="crop-cell"><span class="plant">🌾</span></div>
+        <div class="crop-cell"><span class="plant">🍅</span></div>
+        <div class="crop-cell"><span class="plant">🥕</span></div>
+        <div class="crop-cell"><span class="plant">🌾</span></div>
+        <div class="crop-cell"><span class="plant">🍓</span></div>
+        <div class="crop-cell"><span class="plant">🌾</span></div>
+        <div class="crop-cell"><span class="plant">🍅</span></div>
+        <div class="crop-cell"><span class="plant">🍓</span></div>
+        <div class="crop-cell"><span class="plant">🥕</span></div>
+      </div>
+
+      <!-- Tree -->
+      <div class="tree-container">
+        <div class="tree-emoji">🌳</div>
+        <div class="tree-shadow"></div>
+      </div>
+
+      <!-- Companion -->
+      <div class="companion">🐕</div>
+
+      <!-- Dirt path -->
+      <div class="dirt-path"></div>
+
+      <!-- Buildings -->
+      <div class="building building-1">
+        <span class="building-emoji">🏠</span>
+        <div class="building-shadow"></div>
+      </div>
+      <div class="building building-2">
+        <span class="building-emoji">🐔</span>
+        <div class="building-shadow"></div>
+      </div>
+      <div class="building building-3">
+        <span class="building-emoji">⚙️</span>
+        <div class="building-shadow"></div>
+      </div>
+
+      <!-- Pond -->
+      <div class="pond"></div>
+
+      <!-- Decorations -->
+      <span class="deco deco-1">🪨</span>
+      <span class="deco deco-2">🌿</span>
+      <span class="deco deco-3">🌺</span>
+      <span class="deco deco-4">🍄</span>
+      <span class="deco deco-5">🌿</span>
+      <span class="deco deco-6">🌼</span>
+    </div>
+
+    <!-- Title -->
+    <div class="title-section">
+      <h1 class="title">Vos taches accomplies<br>prennent vie</h1>
+      <p class="subtitle">Chaque tache terminee fait pousser votre ferme familiale. Cultivez, construisez et vivez des aventures ensemble.</p>
+    </div>
+
+    <!-- Feature cards -->
+    <div class="features">
+      <div class="feature-card">
+        <div class="feature-icon">🌾</div>
+        <span class="feature-text">Plantez et recoltez dans votre potager familial</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🏠</div>
+        <span class="feature-text">Debloquez moulin, grange, poulailler au fil des niveaux</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📖</div>
+        <span class="feature-text">Vivez des sagas narratives avec des visiteurs mystere</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom navigation -->
+  <div class="bottom-nav">
+    <div class="dots">
+      <div class="dot past"></div>
+      <div class="dot past"></div>
+      <div class="dot past"></div>
+      <div class="dot active"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+    <button class="cta-btn">Continuer</button>
+  </div>
+</div>
+
+</body>
+</html>

@@ -12,6 +12,7 @@
 
 import matter from 'gray-matter';
 import { format } from 'date-fns';
+import { calculateLevel } from './gamification';
 import {
   Task,
   RDV,
@@ -699,7 +700,7 @@ export function parseGamification(content: string): GamificationData {
         mascotPlacements: {},
         points: parseInt(currentProps.points ?? '0', 10),
         coins: parseInt(currentProps.coins ?? currentProps.points ?? '0', 10),
-        level: parseInt(currentProps.level ?? '1', 10),
+        level: calculateLevel(parseInt(currentProps.points ?? '0', 10)),
         streak: parseInt(currentProps.streak ?? '0', 10),
         lootBoxesAvailable: parseInt(currentProps.loot_boxes_available ?? '0', 10),
         multiplier: parseFloat(currentProps.multiplier ?? '1'),
