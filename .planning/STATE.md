@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: verifying
-stopped_at: Completed quick-260405-0u3 — extraction domaine Budget de useVault.ts vers useVaultBudget.ts
-last_updated: "2026-04-04T22:42:46.371Z"
-last_activity: "2026-04-04 - Completed quick task 260404-qvz: Fix OOM crash TreeScreen"
+stopped_at: Phase 14 context gathered
+last_updated: "2026-04-05T08:21:25.847Z"
+last_activity: "2026-04-05 - Completed quick task 260405-0wx: Repliquer changements ferme mobile sur desktop"
 progress:
-  total_phases: 10
+  total_phases: 11
   completed_phases: 9
   total_plans: 24
   completed_plans: 22
@@ -73,6 +73,7 @@ Progress: [░░░░░░░░░░] 0%
 
 - Phase 10 added: Compagnon Mascotte — compagnon interactif lié à la gamification, vit dans l'arbre, mascotte de l'app
 - Phase 12 added: Templates onboarding vivants — contenu personnalisé et complet
+- Phase 14 added: Parité Mobile ↔ Desktop — analyser et combler les écarts fonctionnels entre app mobile et version desktop
 
 ### Decisions
 
@@ -167,6 +168,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T22:42:42.519Z
-Stopped at: Completed quick-260405-0wx — repliquer changements ferme mobile sur desktop
-Resume file: None
+Last session: 2026-04-05T08:21:25.840Z
+Stopped at: Phase 14 context gathered
+Resume file: .planning/phases/14-parit-mobile-desktop-analyser-et-combler-les-carts-fonctionnels-entre-app-mobile-et-version-desktop-pour-atteindre-une-parit-quasi-identique/14-CONTEXT.md
