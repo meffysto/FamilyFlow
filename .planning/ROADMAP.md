@@ -225,7 +225,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 11. Sagas Immersives | v1.1 | 3/3 | Complete    | 2026-04-03 |
 | 12. Templates Onboarding | v1.1 | 0/2 | Not started | - |
 | 13. Événements Saisonniers | v1.1 | 2/2 | Complete    | 2026-04-03 |
-| 14. Parité Mobile ↔ Desktop | v1.1 | 4/9 | In Progress|  |
+| 14. Parité Mobile ↔ Desktop | v1.1 | 6/9 | In Progress|  |
 
 ### Phase 12: Templates onboarding vivants — contenu personnalisé et complet
 
@@ -267,14 +267,14 @@ Canonical refs: `lib/gamification/seasonal.ts`, `lib/gamification/seasonal-rewar
   3. Les données créées/modifiées sur desktop sont lisibles sur mobile et vice-versa — parité de parsing/serialization
   4. Les animations et transitions existent sur desktop (CSS animations équivalentes aux reanimated)
   5. `npx tsc --noEmit` passe sans nouvelles erreurs
-**Plans:** 4/9 plans executed
+**Plans:** 6/9 plans executed
 
 Plans:
 - [x] 14-01-PLAN.md — Fondation : dependances + VaultContext mutations CRUD + routes App.tsx
-- [ ] 14-02-PLAN.md — Ecrans RDV + Notes (CRUD complet)
+- [x] 14-02-PLAN.md — Ecrans RDV + Notes (CRUD complet)
 - [x] 14-03-PLAN.md — Ecrans Health + Routines (CRUD complexe)
 - [x] 14-04-PLAN.md — Ecrans Skills + Stats (arbre RPG + 6 visualisations recharts)
-- [ ] 14-05-PLAN.md — Ecrans Pregnancy + NightMode + Compare + More (ecrans simples)
+- [x] 14-05-PLAN.md — Ecrans Pregnancy + NightMode + Compare + More (ecrans simples)
 - [ ] 14-06-PLAN.md — Loot revamp (Framer Motion card flip + confetti + inventaire + badges)
 - [x] 14-07-PLAN.md — Budget OCR (drag & drop recu + pipeline Claude Vision + review)
 - [ ] 14-08-PLAN.md — Polish interactions desktop (hover-to-reveal + raccourcis clavier) + checkpoint visuel

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: verifying
-stopped_at: Completed 14-04-PLAN.md
-last_updated: "2026-04-05T09:12:59.212Z"
+stopped_at: Completed 14-05-PLAN.md
+last_updated: "2026-04-05T09:13:57.247Z"
 last_activity: "2026-04-04 - Completed quick task 260404-qvz: Fix OOM crash TreeScreen"
 progress:
   total_phases: 11
   completed_phases: 9
   total_plans: 33
-  completed_plans: 26
+  completed_plans: 28
   percent: 0
 ---
 
@@ -68,6 +68,8 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 14-parite-mobile-desktop P01 | 20min | 2 tasks | 13 files |
 | Phase 14-parite-mobile-desktop P03 | 20 | 2 tasks | 4 files |
 | Phase 14-parite-mobile-desktop P04 | 6min | 2 tasks | 4 files |
+| Phase 14-parite-mobile-desktop P05 | 8min | 2 tasks | 9 files |
+| Phase 14-parite-mobile-desktop P02 | 8min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -134,6 +136,8 @@ Recent decisions affecting current work:
 - [Phase 14-parite-mobile-desktop]: completeRoutineStep session-only confirmé — progressMap géré en React state local dans Routines.tsx
 - [Phase 14-parite-mobile-desktop]: GlassCard pas de className — utiliser div.glass-card-wrap pour layout custom dans Skills/Stats desktop
 - [Phase 14-parite-mobile-desktop]: SkillState/getSkillById/getSkillState non exportés dans barrel core — définis localement dans Skills.tsx desktop
+- [Phase 14-parite-mobile-desktop]: NightMode desktop utilise couleurs hardcodées pour vision nocturne — dérogation délibérée à useThemeColors() per D-01
+- [Phase 14-parite-mobile-desktop]: Compare zoom partagé entre les deux panels — expérience cohérente comparaison côte à côte
 
 ### Pending Todos
 
@@ -175,6 +179,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-05T09:12:59.207Z
-Stopped at: Completed 14-04-PLAN.md
+Last session: 2026-04-05T09:13:47.703Z
+Stopped at: Completed 14-05-PLAN.md
 Resume file: None
