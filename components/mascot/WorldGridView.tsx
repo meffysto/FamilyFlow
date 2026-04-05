@@ -396,6 +396,7 @@ function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, wearEffect
   onRepairPest?: (cellId: string) => void;
 }) {
   const pulse = useSharedValue(1);
+  const borderPulse = useSharedValue(0.4);
   const reducedMotion = useReducedMotion();
 
   const isDamaged = wearEffects?.damagedBuildings.includes(cell.id) ?? false;
@@ -423,6 +424,20 @@ function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, wearEffect
   }));
 
   useEffect(() => {
+    if (!reducedMotion && canBuild) {
+      borderPulse.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 900, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0.3, { duration: 900, easing: Easing.inOut(Easing.sin) }),
+        ),
+        -1, true,
+      );
+    } else {
+      borderPulse.value = withTiming(0.4, { duration: 300 });
+    }
+  }, [reducedMotion, canBuild]);
+
+  useEffect(() => {
     if (!reducedMotion && pendingCount > 0) {
       pulse.value = withRepeat(
         withSequence(
@@ -441,6 +456,11 @@ function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, wearEffect
     transform: [{ scale: pulse.value }],
   }));
 
+  const canBuildBorderStyle = useAnimatedStyle(() => ({
+    borderColor: `rgba(74, 222, 128, ${borderPulse.value})`,
+    borderWidth: canBuild ? 2 : 1.5,
+  }));
+
   const size = CELL_SIZES[cell.size];
   const left = cell.x * containerWidth - size / 2;
   const top = cell.y * containerHeight - size / 2;
@@ -455,10 +475,12 @@ function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, wearEffect
 
   return (
     <Animated.View style={[{ position: 'absolute', left, top, width: size, height: size }, animStyle]}>
-      <TouchableOpacity onPress={handleBuildingPress} activeOpacity={0.7} style={[
+      <Animated.View style={[
         styles.buildingCell,
         placedBuilding && styles.buildingCellPlaced,
+        !placedBuilding && canBuildBorderStyle,
       ]}>
+      <TouchableOpacity onPress={handleBuildingPress} activeOpacity={0.7} style={styles.buildingCellInner}>
         {placedBuilding ? (
           <>
             <Image
@@ -497,16 +519,10 @@ function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, wearEffect
             )}
           </>
         ) : (
-          <>
-            <Text style={styles.emptyBuildingPlus}>{'⚒'}</Text>
-            {canBuild && (
-              <View style={styles.canBuildBadge}>
-                <Text style={styles.canBuildBadgeText}>{'!'}</Text>
-              </View>
-            )}
-          </>
+          <Text style={styles.emptyBuildingPlus}>{'⚒'}</Text>
         )}
       </TouchableOpacity>
+      </Animated.View>
     </Animated.View>
   );
 }
@@ -867,11 +883,18 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1.5,
     borderColor: 'rgba(139, 92, 246, 0.3)',
+    overflow: 'hidden',
   },
   buildingCellPlaced: {
     backgroundColor: 'transparent',
     borderColor: 'transparent',
     borderWidth: 0,
+  },
+  buildingCellInner: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   buildingEmoji: { fontSize: 28 },
   buildingSprite: { width: 64, height: 64 },
@@ -901,22 +924,6 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,0.5)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 1,
-  },
-  canBuildBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    backgroundColor: '#4ADE80',
-    borderRadius: 10,
-    width: 18,
-    height: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  canBuildBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: 'bold',
   },
   nextExpansionCell: {
     flex: 1,
