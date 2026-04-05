@@ -87,12 +87,10 @@ function DashboardBilanSemaineInner(_props: DashboardSectionProps) {
     weekEnd.setDate(weekStart.getDate() + 6);
     weekEnd.setHours(23, 59, 59, 999);
 
-    // Tâches complétées cette semaine
-    const allTasks = [...tasks];
-    const completedTasks = allTasks.filter((t) => {
-      if (!t.completed) return false;
-      if (!t.dueDate) return false;
-      const d = new Date(t.dueDate);
+    // Tâches complétées cette semaine (par date de complétion, cohérent avec buildWeeklyRecapData)
+    const completedTasks = tasks.filter((t) => {
+      if (!t.completed || !t.completedDate) return false;
+      const d = new Date(t.completedDate);
       return d >= weekStart && d <= weekEnd;
     }).length;
 
