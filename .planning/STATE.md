@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: verifying
-stopped_at: Completed 14-09-PLAN.md
-last_updated: "2026-04-05T09:19:30.834Z"
+stopped_at: Completed 14-08-PLAN.md
+last_updated: "2026-04-05T09:27:51.570Z"
 last_activity: "2026-04-04 - Completed quick task 260404-qvz: Fix OOM crash TreeScreen"
 progress:
   total_phases: 11
-  completed_phases: 9
+  completed_phases: 10
   total_plans: 33
-  completed_plans: 29
+  completed_plans: 31
   percent: 0
 ---
 
@@ -71,6 +71,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 14-parite-mobile-desktop P05 | 8min | 2 tasks | 9 files |
 | Phase 14-parite-mobile-desktop P02 | 8min | 2 tasks | 4 files |
 | Phase 14-parite-mobile-desktop P09 | 11min | 2 tasks | 7 files |
+| Phase 14-parite-mobile-desktop PP08 | 5min | 3 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -144,6 +145,7 @@ Recent decisions affecting current work:
 - [Phase 14-parite-mobile-desktop]: useTranslation shim local (desktop sans react-i18next) — même API que react-i18next, satisfait D-07 sans dépendance supplémentaire
 - [Phase 14-parite-mobile-desktop]: saveSagaProgress/saveEventProgress via localStorage — SecureStore React Native indisponible sur desktop Tauri
 - [Phase 14-parite-mobile-desktop]: CompanionWidget dans /components/companion/ — réutilisable pour Dashboard futur
+- [Phase 14-parite-mobile-desktop]: Hover-to-reveal via CSS opacity (pas JS toggle) — transition 120ms ease, déclenché par :hover sur le parent row/card
 
 ### Pending Todos
 
@@ -185,6 +187,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-05T09:19:30.830Z
-Stopped at: Completed 14-09-PLAN.md
+Last session: 2026-04-05T09:27:51.567Z
+Stopped at: Completed 14-08-PLAN.md
 Resume file: None
