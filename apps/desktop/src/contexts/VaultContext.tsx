@@ -8,7 +8,8 @@ import {
 } from 'react';
 import { listVaultFiles, readVaultFile, writeVaultFile, type VaultFile } from '../lib/vault-service';
 import {
-  parseTaskFile, parseRDV, parseFamille, parseGamification,
+  parseTaskFile, parseRDV, parseFamille, parseGamification, serializeGamification,
+  openLootBox as openLootBoxEngine,
   parseMeals, parseCourses, parseStock, parseDefis,
   parseGratitude, parseQuotes, parseMoods, parseWishlist,
   parseAnniversaries, parseNote, parseSecretMissions,
@@ -16,6 +17,7 @@ import {
   type StockItem, type Profile, type Defi, type GratitudeDay,
   type ChildQuote, type MoodEntry, type WishlistItem,
   type Anniversary, type Note, type GamificationData,
+  type LootBox, type GamificationEntry,
 } from '@family-vault/core';
 
 // ---------------------------------------------------------------------------
@@ -53,6 +55,7 @@ export interface VaultState {
   anniversaries: Anniversary[];
   notes: Note[];
   secretMissions: Task[];
+  gamiData: GamificationData | null;
 }
 
 export interface VaultContextValue extends VaultState {
@@ -63,6 +66,8 @@ export interface VaultContextValue extends VaultState {
   writeFile: (relativePath: string, content: string) => Promise<void>;
   setActiveProfile: (profile: Profile) => void;
   toggleTask: (task: Task) => Promise<void>;
+  openLootBox: () => Promise<{ box: LootBox; entries: GamificationEntry[] } | null>;
+  markLootUsed: (rewardId: string) => Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
@@ -99,6 +104,7 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
   const [anniversaries, setAnniversaries] = useState<Anniversary[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [secretMissions, setSecretMissions] = useState<Task[]>([]);
+  const [gamiData, setGamiData] = useState<GamificationData | null>(null);
 
   // -------------------------------------------------------------------------
   // File I/O helpers
@@ -185,7 +191,7 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
   );
 
   const loadProfiles = useCallback(
-    async (path: string): Promise<{ profiles: Profile[]; activeProfile: Profile | null }> => {
+    async (path: string): Promise<{ profiles: Profile[]; activeProfile: Profile | null; gamiData: GamificationData | null }> => {
       try {
         // famille.md is at vault root
         const content = await readVaultFile(`${path}/famille.md`);
@@ -226,9 +232,20 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
           ? merged.find((p) => p.id === storedId) ?? merged[0] ?? null
           : merged[0] ?? null;
 
-        return { profiles: merged, activeProfile: found };
+        // Load gamiData for the active profile
+        let resolvedGamiData: GamificationData | null = null;
+        if (found) {
+          try {
+            const gamiContent = await readVaultFile(`${path}/gami-${found.id}.md`);
+            resolvedGamiData = parseGamification(gamiContent);
+          } catch {
+            // No gami file yet
+          }
+        }
+
+        return { profiles: merged, activeProfile: found, gamiData: resolvedGamiData };
       } catch {
-        return { profiles: [], activeProfile: null };
+        return { profiles: [], activeProfile: null, gamiData: null };
       }
     },
     [],
@@ -391,6 +408,7 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
         setRdvs(parsedRdvs);
         setProfiles(familyData.profiles);
         setActiveProfileState(familyData.activeProfile);
+        setGamiData(familyData.gamiData);
         setMeals(parsedMeals);
 
         // Wave 2: secondary data — fire and forget, no UI blocking
@@ -441,6 +459,7 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
     setAnniversaries([]);
     setNotes([]);
     setSecretMissions([]);
+    setGamiData(null);
   }, []);
 
   const setActiveProfile = useCallback((profile: Profile) => {
@@ -497,6 +516,62 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
   );
 
   // -------------------------------------------------------------------------
+  // Actions — Loot
+  // -------------------------------------------------------------------------
+
+  const openLootBoxMutation = useCallback(
+    async (): Promise<{ box: LootBox; entries: GamificationEntry[] } | null> => {
+      if (!vaultPath || !activeProfile) return null;
+      if ((activeProfile.lootBoxesAvailable ?? 0) <= 0) return null;
+      try {
+        const gamiContent = await readVaultFile(`${vaultPath}/gami-${activeProfile.id}.md`);
+        const currentGamiData = parseGamification(gamiContent);
+        const result = openLootBoxEngine(activeProfile, currentGamiData);
+        const updatedProfiles = currentGamiData.profiles.map((p: Profile) =>
+          p.id === activeProfile.id ? result.profile : p,
+        );
+        const updatedGamiData: GamificationData = {
+          ...currentGamiData,
+          profiles: updatedProfiles,
+          history: [...currentGamiData.history, ...result.entries],
+          activeRewards: [...(currentGamiData.activeRewards ?? []), ...result.newActiveRewards],
+        };
+        await writeVaultFile(`${vaultPath}/gami-${activeProfile.id}.md`, serializeGamification(updatedGamiData));
+        setGamiData(updatedGamiData);
+        setActiveProfileState(result.profile);
+        setProfiles((prev) => prev.map((p) => p.id === activeProfile.id ? result.profile : p));
+        return { box: result.box, entries: result.entries };
+      } catch (e) {
+        if (import.meta.env.DEV) console.error('Erreur openLootBox:', e);
+        return null;
+      }
+    },
+    [vaultPath, activeProfile],
+  );
+
+  const markLootUsed = useCallback(
+    async (rewardId: string) => {
+      if (!vaultPath || !activeProfile) return;
+      try {
+        const gamiContent = await readVaultFile(`${vaultPath}/gami-${activeProfile.id}.md`);
+        const currentGamiData = parseGamification(gamiContent);
+        const updatedActiveRewards = (currentGamiData.activeRewards ?? []).filter(
+          (r: { id: string }) => r.id !== rewardId,
+        );
+        const updatedGamiData: GamificationData = {
+          ...currentGamiData,
+          activeRewards: updatedActiveRewards,
+        };
+        await writeVaultFile(`${vaultPath}/gami-${activeProfile.id}.md`, serializeGamification(updatedGamiData));
+        setGamiData(updatedGamiData);
+      } catch (e) {
+        if (import.meta.env.DEV) console.error('Erreur markLootUsed:', e);
+      }
+    },
+    [vaultPath, activeProfile],
+  );
+
+  // -------------------------------------------------------------------------
   // Context value (stable reference via useMemo)
   // -------------------------------------------------------------------------
 
@@ -520,6 +595,7 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
       anniversaries,
       notes,
       secretMissions,
+      gamiData,
       setVaultPath,
       clearVaultPath,
       refresh,
@@ -527,6 +603,8 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
       writeFile,
       setActiveProfile,
       toggleTask,
+      openLootBox: openLootBoxMutation,
+      markLootUsed,
     }),
     [
       vaultPath,
@@ -547,6 +625,7 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
       anniversaries,
       notes,
       secretMissions,
+      gamiData,
       setVaultPath,
       clearVaultPath,
       refresh,
@@ -554,6 +633,8 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
       writeFile,
       setActiveProfile,
       toggleTask,
+      openLootBoxMutation,
+      markLootUsed,
     ],
   );
 
