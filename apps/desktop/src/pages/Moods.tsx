@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, memo } from 'react';
+import { useState, useMemo, useCallback, useEffect, memo } from 'react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
@@ -280,6 +280,18 @@ const MoodEntryRow = memo(function MoodEntryRow({ entry, onClick }: MoodEntryRow
       {entry.note && (
         <span className="mood-entry-note">{entry.note}</span>
       )}
+
+      {/* Hover-to-reveal actions */}
+      <div className="item-actions" role="group" aria-label="Actions" onClick={(e) => e.stopPropagation()}>
+        <button
+          type="button"
+          className="item-action-btn item-action-btn--edit"
+          aria-label="Modifier l'humeur"
+          title="Modifier"
+        >
+          ✏️
+        </button>
+      </div>
     </div>
   );
 });
@@ -317,6 +329,18 @@ export default function Moods() {
 
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [clickedDate, setClickedDate] = useState<string | undefined>(undefined);
+
+  // Keyboard shortcut: Ctrl/Cmd+R = refresh
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+        e.preventDefault();
+        refresh();
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [refresh]);
 
   const last30Days = useMemo(() => getLast30Days(), []);
   const today = todayISO();

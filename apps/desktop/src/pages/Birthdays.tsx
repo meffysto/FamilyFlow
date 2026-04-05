@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -128,6 +128,17 @@ function CategoryGroup({ category, items }: CategoryGroupProps) {
                   {a.daysUntil === 0 ? "Aujourd'hui" : `J-${a.daysUntil}`}
                 </Badge>
               )}
+            </div>
+            {/* Hover-to-reveal actions */}
+            <div className="item-actions" role="group" aria-label="Actions">
+              <button
+                type="button"
+                className="item-action-btn item-action-btn--edit"
+                aria-label="Modifier l'anniversaire"
+                title="Modifier"
+              >
+                ✏️
+              </button>
             </div>
           </div>
         ))}
@@ -303,6 +314,18 @@ export default function Birthdays() {
   const { anniversaries, readFile, writeFile, refresh } = useVault();
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
+
+  // Keyboard shortcut: Ctrl/Cmd+R = refresh
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+        e.preventDefault();
+        refresh();
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [refresh]);
 
   // Compute countdown info for all anniversaries
   const withCountdown = useMemo(() => computeCountdowns(anniversaries), [anniversaries]);

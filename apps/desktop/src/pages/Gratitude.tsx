@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
@@ -264,6 +264,18 @@ function GratitudeDayBlock({ day }: GratitudeDayBlockProps) {
           <div key={idx} className="gratitude-entry">
             <ProfileBadge name={entry.profileName} />
             <span className="gratitude-entry-text">{entry.text}</span>
+
+            {/* Hover-to-reveal actions */}
+            <div className="item-actions" role="group" aria-label="Actions">
+              <button
+                type="button"
+                className="item-action-btn item-action-btn--edit"
+                aria-label="Options"
+                title="Options"
+              >
+                ✏️
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -279,6 +291,18 @@ export default function Gratitude() {
   const { gratitude, profiles, readFile, writeFile, refresh } = useVault();
 
   const [addModalOpen, setAddModalOpen] = useState(false);
+
+  // Keyboard shortcut: Ctrl/Cmd+R = refresh
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+        e.preventDefault();
+        refresh();
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [refresh]);
 
   // Count entries by date for the heatmap
   const countByDate = useMemo(() => {

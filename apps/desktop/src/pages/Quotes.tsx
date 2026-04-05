@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, memo } from 'react';
+import { useState, useMemo, useCallback, useEffect, memo } from 'react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { Button } from '../components/ui/Button';
 import { Chip } from '../components/ui/Chip';
@@ -47,6 +47,18 @@ const QuoteCard = memo(function QuoteCard({ quote }: QuoteCardProps) {
           {quote.contexte && (
             <span className="quote-card-context">{quote.contexte}</span>
           )}
+        </div>
+
+        {/* Hover-to-reveal actions */}
+        <div className="item-actions quote-card-actions" role="group" aria-label="Actions">
+          <button
+            type="button"
+            className="item-action-btn item-action-btn--edit"
+            aria-label="Modifier la citation"
+            title="Modifier"
+          >
+            ✏️
+          </button>
         </div>
       </div>
     </div>
@@ -204,6 +216,18 @@ export default function Quotes() {
   const [search, setSearch] = useState('');
   const [selectedChild, setSelectedChild] = useState<string>('tous');
   const [addModalOpen, setAddModalOpen] = useState(false);
+
+  // Keyboard shortcut: Ctrl/Cmd+R = refresh
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+        e.preventDefault();
+        refresh();
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [refresh]);
 
   // Child profiles (enfant + ado roles)
   const childProfiles = useMemo(
