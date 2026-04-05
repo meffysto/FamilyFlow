@@ -107,37 +107,37 @@ const ZEN_HARDCODED_EXCLUDED = [
 
 function getAllSections(t: (key: string) => string): SectionPref[] {
   return [
-    // Essentielles — toujours visibles par défaut
-    { id: 'insights',   label: t('dashboard.sectionLabels.insights'),        emoji: '💡', visible: true,  priority: 'high' },
-    { id: 'vacation',   label: t('dashboard.sectionLabels.vacation'),        emoji: '☀️', visible: true,  priority: 'high' },
-    { id: 'overdue',    label: t('dashboard.sectionLabels.overdue'),         emoji: '⚠️', visible: true,  priority: 'high' },
-    { id: 'menage',     label: t('dashboard.sectionLabels.menage'),          emoji: '🏠', visible: true,  priority: 'high' },
-    { id: 'meals',      label: t('dashboard.sectionLabels.meals'),           emoji: '🍽️', visible: true,  priority: 'high' },
-    { id: 'calendar',   label: t('dashboard.sectionLabels.calendar'),        emoji: '📆', visible: true,  priority: 'high' },
+    // Essentielles — toujours visibles par défaut (full width)
+    { id: 'insights',   label: t('dashboard.sectionLabels.insights'),        emoji: '💡', visible: true,  priority: 'high', size: 'full' },
+    { id: 'vacation',   label: t('dashboard.sectionLabels.vacation'),        emoji: '☀️', visible: true,  priority: 'high', size: 'full' },
+    { id: 'overdue',    label: t('dashboard.sectionLabels.overdue'),         emoji: '⚠️', visible: true,  priority: 'high', size: 'full' },
+    { id: 'menage',     label: t('dashboard.sectionLabels.menage'),          emoji: '🏠', visible: true,  priority: 'high', size: 'full' },
+    { id: 'meals',      label: t('dashboard.sectionLabels.meals'),           emoji: '🍽️', visible: true,  priority: 'high', size: 'full' },
+    { id: 'calendar',   label: t('dashboard.sectionLabels.calendar'),        emoji: '📆', visible: true,  priority: 'high', size: 'full' },
     // Secondaires — visibles par défaut
-    { id: 'courses',    label: t('dashboard.sectionLabels.courses'),         emoji: '🛒', visible: true,  priority: 'medium' },
-    { id: 'rdvs',       label: t('dashboard.sectionLabels.rdvs'),            emoji: '📅', visible: true,  priority: 'medium' },
-    { id: 'photos',     label: t('dashboard.sectionLabels.photos'),          emoji: '📸', visible: true,  priority: 'medium' },
-    { id: 'budget',     label: t('dashboard.sectionLabels.budget'),          emoji: '💰', visible: true,  priority: 'medium' },
+    { id: 'courses',    label: t('dashboard.sectionLabels.courses'),         emoji: '🛒', visible: true,  priority: 'medium', size: 'half' },
+    { id: 'rdvs',       label: t('dashboard.sectionLabels.rdvs'),            emoji: '📅', visible: true,  priority: 'medium', size: 'full' },
+    { id: 'photos',     label: t('dashboard.sectionLabels.photos'),          emoji: '📸', visible: true,  priority: 'medium', size: 'half' },
+    { id: 'budget',     label: t('dashboard.sectionLabels.budget'),          emoji: '💰', visible: true,  priority: 'medium', size: 'half' },
     // Gamification & secondaires — masqués par défaut (découverte progressive)
-    { id: 'weeklyStats',  label: t('dashboard.sectionLabels.weeklyStats'),   emoji: '📊', visible: false, priority: 'medium' },
-    { id: 'lootProgress', label: t('dashboard.sectionLabels.lootProgress'),  emoji: '🎁', visible: false, priority: 'medium' },
-    { id: 'rewards',    label: t('dashboard.sectionLabels.rewards'),         emoji: '🏆', visible: false, priority: 'medium' },
-    { id: 'defis',      label: t('dashboard.sectionLabels.defis'),           emoji: '🏅', visible: false, priority: 'medium' },
-    { id: 'gratitude',  label: t('dashboard.sectionLabels.gratitude'),       emoji: '🙏', visible: false, priority: 'medium' },
-    { id: 'wishlist',   label: t('dashboard.sectionLabels.wishlist'),        emoji: '🎁', visible: false, priority: 'medium' },
-    { id: 'anniversaires', label: t('dashboard.sectionLabels.anniversaires'), emoji: '🎂', visible: false, priority: 'medium' },
-    { id: 'onThisDay',    label: t('dashboard.sectionLabels.onThisDay'),     emoji: '🕰️', visible: false, priority: 'medium' },
-    { id: 'quotes',       label: t('dashboard.sectionLabels.quotes'),        emoji: '💬', visible: false, priority: 'medium' },
-    { id: 'moods',        label: t('dashboard.sectionLabels.moods'),         emoji: '🌤️', visible: false, priority: 'medium' },
-    { id: 'bilanSemaine', label: t('dashboard.sectionLabels.bilanSemaine'),  emoji: '📝', visible: true,  priority: 'medium' },
-    { id: 'secretMissions', label: t('dashboard.sectionLabels.secretMissions'), emoji: '🕵️', visible: true,  priority: 'high' },
-    { id: 'garden',       label: t('dashboard.sectionLabels.garden'),          emoji: '🌳', visible: true,  priority: 'high' },
+    { id: 'weeklyStats',  label: t('dashboard.sectionLabels.weeklyStats'),   emoji: '📊', visible: false, priority: 'medium', size: 'half' },
+    { id: 'lootProgress', label: t('dashboard.sectionLabels.lootProgress'),  emoji: '🎁', visible: false, priority: 'medium', size: 'half' },
+    { id: 'rewards',    label: t('dashboard.sectionLabels.rewards'),         emoji: '🏆', visible: false, priority: 'medium', size: 'full' },
+    { id: 'defis',      label: t('dashboard.sectionLabels.defis'),           emoji: '🏅', visible: false, priority: 'medium', size: 'full' },
+    { id: 'gratitude',  label: t('dashboard.sectionLabels.gratitude'),       emoji: '🙏', visible: false, priority: 'medium', size: 'half' },
+    { id: 'wishlist',   label: t('dashboard.sectionLabels.wishlist'),        emoji: '🎁', visible: false, priority: 'medium', size: 'full' },
+    { id: 'anniversaires', label: t('dashboard.sectionLabels.anniversaires'), emoji: '🎂', visible: false, priority: 'medium', size: 'half' },
+    { id: 'onThisDay',    label: t('dashboard.sectionLabels.onThisDay'),     emoji: '🕰️', visible: false, priority: 'medium', size: 'full' },
+    { id: 'quotes',       label: t('dashboard.sectionLabels.quotes'),        emoji: '💬', visible: false, priority: 'medium', size: 'half' },
+    { id: 'moods',        label: t('dashboard.sectionLabels.moods'),         emoji: '🌤️', visible: false, priority: 'medium', size: 'half' },
+    { id: 'bilanSemaine', label: t('dashboard.sectionLabels.bilanSemaine'),  emoji: '📝', visible: true,  priority: 'medium', size: 'full' },
+    { id: 'secretMissions', label: t('dashboard.sectionLabels.secretMissions'), emoji: '🕵️', visible: true,  priority: 'high', size: 'full' },
+    { id: 'garden',       label: t('dashboard.sectionLabels.garden'),          emoji: '🌳', visible: true,  priority: 'high', size: 'full' },
 
-    { id: 'quicknotifs',label: t('dashboard.sectionLabels.quicknotifs'),     emoji: '📤', visible: false, priority: 'low' },
-    { id: 'recipes',    label: t('dashboard.sectionLabels.recipes'),         emoji: '📖', visible: false, priority: 'low' },
-    { id: 'nightMode',  label: t('dashboard.sectionLabels.nightMode'),       emoji: '🌙', visible: false, priority: 'medium' },
-    { id: 'leaderboard',label: t('dashboard.sectionLabels.leaderboard'),     emoji: '🥇', visible: false, priority: 'low' },
+    { id: 'quicknotifs',label: t('dashboard.sectionLabels.quicknotifs'),     emoji: '📤', visible: false, priority: 'low', size: 'full' },
+    { id: 'recipes',    label: t('dashboard.sectionLabels.recipes'),         emoji: '📖', visible: false, priority: 'low', size: 'full' },
+    { id: 'nightMode',  label: t('dashboard.sectionLabels.nightMode'),       emoji: '🌙', visible: false, priority: 'medium', size: 'full' },
+    { id: 'leaderboard',label: t('dashboard.sectionLabels.leaderboard'),     emoji: '🥇', visible: false, priority: 'low', size: 'half' },
     // aiAssistant retiré — intégré dans la carte Suggestions
   ];
 }
@@ -280,7 +280,7 @@ export default function DashboardScreen() {
               .map((id) => {
                 const def = roleDefaults.find((s) => s.id === id);
                 const sv = saved.find((s) => s.id === id);
-                return def ? { ...def, visible: sv?.visible ?? true } : null;
+                return def ? { ...def, visible: sv?.visible ?? true, size: sv?.size ?? def.size } : null;
               })
               .filter(Boolean) as SectionPref[],
             ...roleDefaults.filter((s) => !orderedIds.includes(s.id)),
@@ -1023,22 +1023,58 @@ export default function DashboardScreen() {
           />
         )}
 
-        {sortedSections.map((s) => {
-          // Forcer l'affichage si contenu actif créé par un autre membre, même si la section est masquée
-          const forceVisible =
-            (s.id === 'defis' && defis.some((d) => d.status === 'active')) ||
-            (s.id === 'secretMissions' && secretMissions.some((m) => m.secretStatus !== 'validated'));
-          if (!s.visible && !forceVisible) return null;
-          // Le masquage auto ne s'applique que si la section est visible par défaut
-          // (sinon l'utilisateur a explicitement activé la section → on la respecte)
-          const defaultPref = getAllSections(t).find((d) => d.id === s.id);
-          if (sectionHidden.has(s.id) && defaultPref?.visible !== false) return null;
-          return (
-            <SectionErrorBoundary key={`eb-${s.id}`} name={s.label}>
-              {renderSection(s.id)}
-            </SectionErrorBoundary>
-          );
-        })}
+        {(() => {
+          const visibleSections = sortedSections.filter((s) => {
+            const forceVisible =
+              (s.id === 'defis' && defis.some((d) => d.status === 'active')) ||
+              (s.id === 'secretMissions' && secretMissions.some((m) => m.secretStatus !== 'validated'));
+            if (!s.visible && !forceVisible) return false;
+            const defaultPref = getAllSections(t).find((d) => d.id === s.id);
+            if (sectionHidden.has(s.id) && defaultPref?.visible !== false) return false;
+            return true;
+          });
+
+          const rendered: React.ReactNode[] = [];
+          let i = 0;
+          while (i < visibleSections.length) {
+            const s = visibleSections[i];
+            // Chercher une paire half consécutive
+            if (s.size === 'half' && i + 1 < visibleSections.length && visibleSections[i + 1].size === 'half') {
+              const s2 = visibleSections[i + 1];
+              rendered.push(
+                <View key={`pair-${s.id}-${s2.id}`} style={styles.halfRow}>
+                  <View style={styles.halfCol}>
+                    <SectionErrorBoundary name={s.label}>
+                      {renderSection(s.id)}
+                    </SectionErrorBoundary>
+                  </View>
+                  <View style={styles.halfCol}>
+                    <SectionErrorBoundary name={s2.label}>
+                      {renderSection(s2.id)}
+                    </SectionErrorBoundary>
+                  </View>
+                </View>
+              );
+              i += 2;
+            } else if (s.size === 'half') {
+              // Half seul (impair) → afficher en full
+              rendered.push(
+                <SectionErrorBoundary key={`eb-${s.id}`} name={s.label}>
+                  {renderSection(s.id)}
+                </SectionErrorBoundary>
+              );
+              i++;
+            } else {
+              rendered.push(
+                <SectionErrorBoundary key={`eb-${s.id}`} name={s.label}>
+                  {renderSection(s.id)}
+                </SectionErrorBoundary>
+              );
+              i++;
+            }
+          }
+          return rendered;
+        })()}
 
         <View style={styles.bottomPad} />
       </ScrollView>
@@ -1258,6 +1294,15 @@ const styles = StyleSheet.create({
   },
   bottomPad: {
     height: 20,
+  },
+  halfRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 0,
+    alignItems: 'stretch',
+  },
+  halfCol: {
+    flex: 1,
   },
   ageUpgradeBanner: {
     borderRadius: 14,

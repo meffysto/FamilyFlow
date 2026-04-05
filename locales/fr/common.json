@@ -1325,7 +1325,8 @@
       "today": "aujourd'hui",
       "tomorrow": "demain",
       "inDays": "dans {{count}} jours",
-      "yearsOld": "{{count}} ans"
+      "yearsOld": "{{count}} ans",
+      "otherSoon": "autre(s) bientôt"
     },
     "bilanSemaine": {
       "title": "Bilan de semaine",
@@ -1428,7 +1429,8 @@
       "title": "Tâches maison du jour",
       "emptyDescription": "Organisez les tâches de la maison avec des récurrences",
       "activateLabel": "Importer le modèle",
-      "allDone": "Tout est fait pour aujourd'hui ✓"
+      "allDone": "Tout est fait pour aujourd'hui ✓",
+      "remaining": "{{count}} restante(s)"
     },
     "moods": {
       "title": "Humeurs",
@@ -1446,7 +1448,9 @@
       "photoOf": "Photo de {{name}}"
     },
     "overdue": {
-      "title": "En retard"
+      "title": "En retard",
+      "metricWord": "tâches",
+      "metricSub": "en retard"
     },
     "photos": {
       "title": "Photo du jour",

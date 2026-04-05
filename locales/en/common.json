@@ -1325,7 +1325,8 @@
       "today": "today",
       "tomorrow": "tomorrow",
       "inDays": "in {{count}} days",
-      "yearsOld": "{{count}} years old"
+      "yearsOld": "{{count}} years old",
+      "otherSoon": "other(s) soon"
     },
     "bilanSemaine": {
       "title": "Weekly recap",
@@ -1428,7 +1429,8 @@
       "title": "Household chores",
       "emptyDescription": "Organize household tasks with recurring schedules",
       "activateLabel": "Import template",
-      "allDone": "All done for today ✓"
+      "allDone": "All done for today ✓",
+      "remaining": "{{count}} remaining"
     },
     "moods": {
       "title": "Moods",
@@ -1446,7 +1448,9 @@
       "photoOf": "Photo of {{name}}"
     },
     "overdue": {
-      "title": "Overdue"
+      "title": "Overdue",
+      "metricWord": "tasks",
+      "metricSub": "overdue"
     },
     "photos": {
       "title": "Photo of the day",

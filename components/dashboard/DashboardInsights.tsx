@@ -53,40 +53,66 @@ function DashboardInsightsInner({ insights: insightsProp }: DashboardSectionProp
 
   return (
     <DashboardCard key="insights" title={t('dashboard.insights.title')} icon="💡" count={hasInsights ? insights.length : undefined} color={colors.catFamille} tinted collapsible cardId="insights">
-      {topInsights.map((insight) => {
+      {topInsights.map((insight, idx) => {
+        const isFirst = idx === 0;
         const priorityColor = insight.priority === 'high' ? colors.error
           : insight.priority === 'medium' ? colors.warning
           : colors.textMuted;
+
+        const handlePress = () => {
+          if (insight.action?.type === 'navigate' && insight.action.route) {
+            if (insight.action.params) {
+              router.push({ pathname: insight.action.route as any, params: insight.action.params });
+            } else {
+              router.push(insight.action.route as any);
+            }
+          } else if (insight.action?.type === 'addCourse' && insight.action.payload) {
+            const items: { text: string; section?: string }[] = insight.action.payload;
+            (async () => {
+              for (const item of items) {
+                await addCourseItem(item.text, item.section);
+              }
+              showToast(t('dashboard.insights.addedToCourses', { count: items.length }));
+            })();
+          }
+        };
+
+        if (isFirst) {
+          return (
+            <TouchableOpacity
+              key={insight.id}
+              style={[styles.insightRowMain, { borderLeftColor: priorityColor }]}
+              activeOpacity={insight.action?.route ? 0.7 : 1}
+              onPress={handlePress}
+            >
+              <Text style={styles.insightIconMain}>{insight.icon}</Text>
+              <View style={styles.insightContent}>
+                <Text style={[styles.insightTitleMain, { color: colors.text }]} numberOfLines={2}>{insight.title}</Text>
+                <Text style={[styles.insightBodyMain, { color: colors.textSub }]} numberOfLines={2}>{insight.body}</Text>
+              </View>
+              {insight.action && (
+                <Text style={[styles.insightAction, { color: primary }]}>
+                  {insight.action.type === 'addCourse' ? '+' : '›'}
+                </Text>
+              )}
+            </TouchableOpacity>
+          );
+        }
+
         return (
           <TouchableOpacity
             key={insight.id}
             style={[styles.insightRow, { borderLeftColor: priorityColor }]}
             activeOpacity={insight.action?.route ? 0.7 : 1}
-            onPress={() => {
-              if (insight.action?.type === 'navigate' && insight.action.route) {
-                if (insight.action.params) {
-                  router.push({ pathname: insight.action.route as any, params: insight.action.params });
-                } else {
-                  router.push(insight.action.route as any);
-                }
-              } else if (insight.action?.type === 'addCourse' && insight.action.payload) {
-                const items: { text: string; section?: string }[] = insight.action.payload;
-                (async () => {
-                  for (const item of items) {
-                    await addCourseItem(item.text, item.section);
-                  }
-                  showToast(t('dashboard.insights.addedToCourses', { count: items.length }));
-                })();
-              }
-            }}
+            onPress={handlePress}
           >
             <Text style={styles.insightIcon}>{insight.icon}</Text>
             <View style={styles.insightContent}>
               <Text style={[styles.insightTitle, { color: colors.text }]} numberOfLines={1}>{insight.title}</Text>
-              <Text style={[styles.insightBody, { color: colors.textSub }]} numberOfLines={2}>{insight.body}</Text>
+              <Text style={[styles.insightBody, { color: colors.textSub }]} numberOfLines={1}>{insight.body}</Text>
             </View>
             {insight.action && (
-              <Text style={[styles.insightAction, { color: primary }]}>
+              <Text style={[styles.insightActionSmall, { color: primary }]}>
                 {insight.action.type === 'addCourse' ? '+' : '›'}
               </Text>
             )}
@@ -132,7 +158,8 @@ function DashboardInsightsInner({ insights: insightsProp }: DashboardSectionProp
 export const DashboardInsights = React.memo(DashboardInsightsInner);
 
 const styles = StyleSheet.create({
-  insightRow: {
+  // Premier insight — gros et visible
+  insightRowMain: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
@@ -142,25 +169,53 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     borderRadius: 4,
   },
-  insightIcon: {
-    fontSize: FontSize.heading,
+  insightIconMain: {
+    fontSize: FontSize.icon,
     marginRight: 10,
+  },
+  insightTitleMain: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+  },
+  insightBodyMain: {
+    fontSize: FontSize.sm,
+    marginTop: 2,
+  },
+  // Insights suivants — compacts
+  insightRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 4,
+    borderLeftWidth: 2,
+    paddingLeft: 10,
+    marginBottom: 2,
+    borderRadius: 4,
+  },
+  insightIcon: {
+    fontSize: FontSize.body,
+    marginRight: 8,
   },
   insightContent: {
     flex: 1,
   },
   insightTitle: {
-    fontSize: FontSize.sm,
+    fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
   },
   insightBody: {
-    fontSize: FontSize.caption,
-    marginTop: 2,
+    fontSize: FontSize.micro,
+    marginTop: 1,
   },
   insightAction: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.semibold,
     marginLeft: 8,
+  },
+  insightActionSmall: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+    marginLeft: 6,
   },
   aiDivider: {
     height: StyleSheet.hairlineWidth,

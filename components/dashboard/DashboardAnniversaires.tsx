@@ -97,49 +97,35 @@ function DashboardAnniversairesInner(_props: DashboardSectionProps) {
   // CRITIQUE : pas de carte vide
   if (upcoming.length === 0) return null;
 
+  const mainItem = upcoming[0];
+  const isToday = mainItem.daysUntil === 0;
+  const mainLabel = isToday
+    ? t('dashboard.anniversaires.today')
+    : mainItem.daysUntil === 1
+      ? t('dashboard.anniversaires.tomorrow')
+      : `J-${mainItem.daysUntil}`;
+
   return (
     <DashboardCard
       title={t('dashboard.anniversaires.title')}
       icon="🎂"
-      count={upcoming.length}
+      count={upcoming.length > 1 ? upcoming.length : undefined}
       color={colors.catFamille}
       tinted
       collapsible
       cardId="anniversaires"
+      style={{ flex: 1 }}
     >
-      {upcoming.map((item) => {
-        const isToday = item.daysUntil === 0;
-        const label = isToday
-          ? t('dashboard.anniversaires.today')
-          : item.daysUntil === 1
-            ? t('dashboard.anniversaires.tomorrow')
-            : t('dashboard.anniversaires.inDays', { count: item.daysUntil });
-
-        return (
-          <View
-            key={`${item.anniversary.name}-${item.anniversary.date}`}
-            style={[
-              styles.row,
-              isToday && styles.rowToday,
-              isToday && { backgroundColor: colors.warningBg, borderLeftColor: colors.accentPink },
-              !isToday && { borderLeftColor: colors.textMuted },
-            ]}
-          >
-            <View style={styles.rowContent}>
-              <Text style={[styles.name, { color: colors.text }]}>
-                {isToday ? '🎂 ' : '🎈 '}
-                {item.anniversary.name}
-                {item.age !== null && isToday ? ` — ${t('dashboard.anniversaires.yearsOld', { count: item.age })}` : ''}
-              </Text>
-              <Text style={[styles.meta, { color: isToday ? colors.textSub : colors.textMuted }]}>
-                {label}
-                {item.age !== null && !isToday ? ` (${t('dashboard.anniversaires.yearsOld', { count: item.age })})` : ''}
-                {item.anniversary.category ? ` · ${item.anniversary.category}` : ''}
-              </Text>
-            </View>
-          </View>
-        );
-      })}
+      <Text style={[styles.bigCountdown, { color: isToday ? colors.accentPink : colors.catFamille }]}>{mainLabel}</Text>
+      <Text style={[styles.nameMain, { color: colors.text }]} numberOfLines={1}>
+        {isToday ? '🎂 ' : '🎈 '}{mainItem.anniversary.name}
+        {mainItem.age !== null ? ` (${mainItem.age})` : ''}
+      </Text>
+      {upcoming.length > 1 && (
+        <Text style={[styles.otherMicro, { color: colors.textMuted }]}>
+          +{upcoming.length - 1} {t('dashboard.anniversaires.otherSoon')}
+        </Text>
+      )}
     </DashboardCard>
   );
 }
@@ -147,26 +133,19 @@ function DashboardAnniversairesInner(_props: DashboardSectionProps) {
 export const DashboardAnniversaires = React.memo(DashboardAnniversairesInner);
 
 const styles = StyleSheet.create({
-  row: {
-    paddingVertical: Spacing.md,
-    borderLeftWidth: 3,
-    paddingLeft: Spacing.lg,
-    gap: Spacing.xxs,
-  },
-  rowToday: {
-    borderRadius: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
-  },
-  rowContent: {
-    gap: Spacing.xxs,
-  },
-  name: {
-    fontSize: FontSize.body,
+  bigCountdown: {
+    fontSize: 40,
     fontWeight: FontWeight.bold,
+    lineHeight: 44,
+    letterSpacing: -1,
   },
-  meta: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.medium,
+  nameMain: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    marginTop: 2,
+  },
+  otherMicro: {
+    fontSize: FontSize.micro,
+    marginTop: 2,
   },
 });

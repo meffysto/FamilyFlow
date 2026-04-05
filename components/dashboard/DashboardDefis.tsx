@@ -31,15 +31,9 @@ function DashboardDefisInner(_props: DashboardSectionProps) {
 
   return (
     <DashboardCard key="defis" title={t('dashboard.defis.title')} icon="🏅" count={activeDefis.length} color={colors.catJeux} tinted onPressMore={() => router.push('/(tabs)/defis')}>
-      <View style={styles.defiRow}>
+      <View style={styles.defiHeader}>
         <Text style={styles.defiEmoji}>{mainDefi.emoji}</Text>
-        <View style={{ flex: 1, gap: 4 }}>
-          <Text style={[styles.defiTitle, { color: colors.text }]} numberOfLines={1}>{mainDefi.title}</Text>
-          <View style={[styles.defiProgressBg, { backgroundColor: colors.cardAlt }]}>
-            <View style={[styles.defiProgressFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: colors.warning }]} />
-          </View>
-          <Text style={[styles.defiMeta, { color: colors.textMuted }]}>{uniqueDays}/{mainDefi.targetDays} {t('dashboard.defis.days')}</Text>
-        </View>
+        <Text style={[styles.defiTitle, { color: colors.text }]} numberOfLines={1}>{mainDefi.title}</Text>
         {!todayDone && activeProfile && (
           <TouchableOpacity
             style={[styles.defiCheckBtn, { backgroundColor: colors.warning }]}
@@ -54,6 +48,10 @@ function DashboardDefisInner(_props: DashboardSectionProps) {
         )}
         {todayDone && <Text style={{ color: colors.success, fontSize: FontSize.heading }}>✅</Text>}
       </View>
+      <View style={[styles.defiProgressBg, { backgroundColor: colors.cardAlt }]}>
+        <View style={[styles.defiProgressFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: colors.warning }]} />
+      </View>
+      <Text style={[styles.defiMeta, { color: colors.textMuted }]}>{uniqueDays}/{mainDefi.targetDays} {t('dashboard.defis.days')}</Text>
       {activeDefis.length > 1 && (
         <TouchableOpacity onPress={() => router.push('/(tabs)/defis')} activeOpacity={0.7}>
           <Text style={[styles.seeAllText, { color: primary }]}>{t('dashboard.defis.seeMore', { count: activeDefis.length - 1 })}</Text>
@@ -66,26 +64,29 @@ function DashboardDefisInner(_props: DashboardSectionProps) {
 export const DashboardDefis = React.memo(DashboardDefisInner);
 
 const styles = StyleSheet.create({
-  defiRow: {
+  defiHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
+    marginBottom: 6,
   },
   defiEmoji: {
     fontSize: FontSize.icon,
   },
   defiTitle: {
-    fontSize: FontSize.body,
+    fontSize: FontSize.heading,
     fontWeight: FontWeight.bold,
+    flex: 1,
   },
   defiProgressBg: {
-    height: 6,
-    borderRadius: 3,
+    height: 8,
+    borderRadius: 4,
     overflow: 'hidden',
+    marginBottom: 4,
   },
   defiProgressFill: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: 4,
   },
   defiMeta: {
     fontSize: FontSize.caption,

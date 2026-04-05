@@ -9,15 +9,14 @@ import { useRouter } from 'expo-router';
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { DashboardCard } from '../DashboardCard';
-import { BarChart } from '../charts';
 import { aggregateTasksByWeek, getWeekStart } from '../../lib/stats';
 import type { DashboardSectionProps } from './types';
-import { FontSize } from '../../constants/typography';
+import { FontSize, FontWeight } from '../../constants/typography';
 
 function DashboardWeeklyStatsInner(_props: DashboardSectionProps) {
   const { t } = useTranslation();
   const router = useRouter();
-  const { primary, colors } = useThemeColors();
+  const { colors } = useThemeColors();
   const { tasks } = useVault();
 
   const weeklyStatsData = useMemo(() => {
@@ -27,7 +26,7 @@ function DashboardWeeklyStatsInner(_props: DashboardSectionProps) {
     return { data, total };
   }, [tasks]);
 
-  const { data: weekData, total: weekTotal } = weeklyStatsData;
+  const { total: weekTotal } = weeklyStatsData;
   if (weekTotal === 0) return null;
 
   return (
@@ -35,12 +34,13 @@ function DashboardWeeklyStatsInner(_props: DashboardSectionProps) {
       key="weeklyStats"
       title={t('dashboard.weeklyStats.title')}
       icon="📊"
-      count={weekTotal}
       color={colors.catJeux}
       tinted
       onPressMore={() => router.push('/(tabs)/stats')}
+      hideMoreLink
+      style={{ flex: 1 }}
     >
-      <BarChart data={weekData} compact showValues={false} barColor={primary} />
+      <Text style={[styles.weekStatsTotal, { color: colors.catJeux }]}>{weekTotal}</Text>
       <Text style={[styles.weekStatsSummary, { color: colors.textMuted }]}>
         {t('dashboard.weeklyStats.summary', { count: weekTotal })}
       </Text>
@@ -51,9 +51,14 @@ function DashboardWeeklyStatsInner(_props: DashboardSectionProps) {
 export const DashboardWeeklyStats = React.memo(DashboardWeeklyStatsInner);
 
 const styles = StyleSheet.create({
+  weekStatsTotal: {
+    fontSize: 36,
+    fontWeight: FontWeight.bold,
+    lineHeight: 40,
+    letterSpacing: -1,
+  },
   weekStatsSummary: {
-    fontSize: FontSize.caption,
-    textAlign: 'center',
-    marginTop: 4,
+    fontSize: FontSize.micro,
+    marginTop: 2,
   },
 });

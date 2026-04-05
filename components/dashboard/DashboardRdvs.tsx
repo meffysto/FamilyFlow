@@ -49,20 +49,34 @@ function DashboardRdvsInner({ vaultFileExists, activateCardTemplate, onEditRDV }
     </DashboardCard>
   );
 
+  const mainRdv = upcomingRdvs[0];
+  const otherRdvs = upcomingRdvs.slice(1, 3);
+
   return (
-    <DashboardCard key="rdvs" title={t('dashboard.rdvs.title')} icon="📅" count={upcomingRdvs.length} color={colors.catOrganisation} tinted>
-      {upcomingRdvs.slice(0, 3).map((rdv) => (
-        <TouchableOpacity key={rdv.sourceFile} style={[styles.rdvRow, { borderLeftColor: colors.info }]} onPress={() => onEditRDV(rdv)} activeOpacity={0.7}>
-          <Text style={[styles.rdvDate, { color: colors.info }]}>{formatDateLocalized(rdv.date_rdv)} {rdv.heure ? `à ${rdv.heure}` : ''}</Text>
-          <Text style={[styles.rdvTitle, { color: colors.text }]}>{rdv.type_rdv} — {rdv.enfant}</Text>
-          {rdv.médecin && <Text style={[styles.rdvMeta, { color: colors.textMuted }]}>{rdv.médecin}</Text>}
-        </TouchableOpacity>
-      ))}
-      <View style={styles.cardActions}>
-        <TouchableOpacity onPress={() => router.push('/(tabs)/rdv')} activeOpacity={0.7}>
-          <Text style={[styles.seeAllText, { color: primary }]}>{t('dashboard.rdvs.seeAll')}</Text>
-        </TouchableOpacity>
-      </View>
+    <DashboardCard key="rdvs" title={t('dashboard.rdvs.title')} icon="📅" count={upcomingRdvs.length} color={colors.catOrganisation} tinted onPressMore={() => router.push('/(tabs)/rdv')}>
+      {/* RDV principal — hiérarchie forte */}
+      <TouchableOpacity onPress={() => onEditRDV(mainRdv)} activeOpacity={0.7}>
+        {mainRdv.heure && (
+          <Text style={[styles.mainTime, { color: colors.info }]}>{mainRdv.heure}</Text>
+        )}
+        <Text style={[styles.mainTitle, { color: colors.text }]}>{mainRdv.type_rdv} — {mainRdv.enfant}</Text>
+        {(mainRdv.médecin || mainRdv.lieu) && (
+          <Text style={[styles.mainMeta, { color: colors.textMuted }]}>
+            {[mainRdv.médecin, mainRdv.lieu].filter(Boolean).join(' · ')}
+          </Text>
+        )}
+      </TouchableOpacity>
+      {/* RDVs secondaires — discrets */}
+      {otherRdvs.length > 0 && (
+        <View style={[styles.otherRdvs, { borderTopColor: colors.border }]}>
+          {otherRdvs.map((rdv) => (
+            <TouchableOpacity key={rdv.sourceFile} style={styles.otherRow} onPress={() => onEditRDV(rdv)} activeOpacity={0.7}>
+              <Text style={[styles.otherTime, { color: colors.info }]}>{rdv.heure || formatDateLocalized(rdv.date_rdv)}</Text>
+              <Text style={[styles.otherTitle, { color: colors.textSub }]} numberOfLines={1}>{rdv.type_rdv} — {rdv.enfant}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
     </DashboardCard>
   );
 }
@@ -76,22 +90,41 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     paddingVertical: 4,
   },
-  rdvRow: {
-    paddingVertical: 8,
-    borderLeftWidth: 3,
-    paddingLeft: 10,
-    gap: 2,
-  },
-  rdvDate: {
-    fontSize: FontSize.label,
-    fontWeight: FontWeight.semibold,
-  },
-  rdvTitle: {
-    fontSize: FontSize.body,
+  mainTime: {
+    fontSize: 42,
     fontWeight: FontWeight.bold,
+    lineHeight: 46,
+    letterSpacing: -1,
   },
-  rdvMeta: {
-    fontSize: FontSize.label,
+  mainTitle: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    marginTop: 2,
+  },
+  mainMeta: {
+    fontSize: FontSize.caption,
+    marginTop: 2,
+  },
+  otherRdvs: {
+    borderTopWidth: 1,
+    marginTop: 8,
+    paddingTop: 6,
+    gap: 4,
+  },
+  otherRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 3,
+  },
+  otherTime: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    minWidth: 44,
+  },
+  otherTitle: {
+    fontSize: FontSize.caption,
+    flex: 1,
   },
   cardActions: {
     flexDirection: 'row',
