@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: verifying
-stopped_at: Completed 14-02-PLAN.md
-last_updated: "2026-04-05T09:14:07.772Z"
+stopped_at: Completed 14-09-PLAN.md
+last_updated: "2026-04-05T09:19:30.834Z"
 last_activity: "2026-04-04 - Completed quick task 260404-qvz: Fix OOM crash TreeScreen"
 progress:
   total_phases: 11
   completed_phases: 9
   total_plans: 33
-  completed_plans: 28
+  completed_plans: 29
   percent: 0
 ---
 
@@ -70,6 +70,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 14-parite-mobile-desktop P04 | 6min | 2 tasks | 4 files |
 | Phase 14-parite-mobile-desktop P05 | 8min | 2 tasks | 9 files |
 | Phase 14-parite-mobile-desktop P02 | 8min | 2 tasks | 4 files |
+| Phase 14-parite-mobile-desktop P09 | 11min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -140,6 +141,9 @@ Recent decisions affecting current work:
 - [Phase 14-parite-mobile-desktop]: Compare zoom partagé entre les deux panels — expérience cohérente comparaison côte à côte
 - [Phase 14-02]: Notes layout master-detail 300px+1fr plutôt que modal — plus ergonomique pour édition de contenu long
 - [Phase 14-02]: RDV groupés par mois, triés desc — vision temporelle naturelle des rendez-vous
+- [Phase 14-parite-mobile-desktop]: useTranslation shim local (desktop sans react-i18next) — même API que react-i18next, satisfait D-07 sans dépendance supplémentaire
+- [Phase 14-parite-mobile-desktop]: saveSagaProgress/saveEventProgress via localStorage — SecureStore React Native indisponible sur desktop Tauri
+- [Phase 14-parite-mobile-desktop]: CompanionWidget dans /components/companion/ — réutilisable pour Dashboard futur
 
 ### Pending Todos
 
@@ -181,6 +185,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-05T09:14:07.769Z
-Stopped at: Completed 14-02-PLAN.md
+Last session: 2026-04-05T09:19:30.830Z
+Stopped at: Completed 14-09-PLAN.md
 Resume file: None
