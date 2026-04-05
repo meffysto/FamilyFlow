@@ -6,34 +6,23 @@ import { Badge } from '../components/ui/Badge';
 import { SearchInput } from '../components/ui/SearchInput';
 import { Modal } from '../components/ui/Modal';
 import { useVault } from '../contexts/VaultContext';
-import { nextOccurrence } from '@family-vault/core';
+import {
+  compareDateStatus,
+  filterVisibleTasks,
+  filterTasksByCategory,
+  searchTasks,
+  buildTaskCategories,
+  sortTasks,
+  groupTasksByFile,
+  labelFromSourceFile,
+  toggleTaskLine,
+} from '@family-vault/core';
 import type { Task } from '@family-vault/core';
 import './Tasks.css';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-const TODAY = new Date().toISOString().slice(0, 10);
-
-/** Extract a readable label from a vault relative path.
- *  "02 - Maison/Tâches récurrentes.md" → "Maison"
- *  "02 - Quotidien/Tâches.md"          → "Quotidien"
- */
-function labelFromPath(path: string): string {
-  const parts = path.split('/');
-  // Use the folder name if there are multiple parts, else the file stem
-  const segment = parts.length > 1 ? parts[parts.length - 2] : parts[0];
-  // Strip leading number prefix like "02 - "
-  const cleaned = segment.replace(/^\d+\s*-\s*/, '').trim();
-  return cleaned || segment;
-}
-
-function compareDateStatus(dueDate: string): 'overdue' | 'today' | 'upcoming' {
-  if (dueDate < TODAY) return 'overdue';
-  if (dueDate === TODAY) return 'today';
-  return 'upcoming';
-}
 
 function formatDate(isoDate: string): string {
   const [y, m, d] = isoDate.split('-');
@@ -330,7 +319,7 @@ function AddTaskModal({ isOpen, onClose, sourceFiles, profileNames, onAdd }: Add
             >
               {sourceFiles.map((f) => (
                 <option key={f} value={f}>
-                  {labelFromPath(f)}
+                  {labelFromSourceFile(f)}
                 </option>
               ))}
             </select>
@@ -431,75 +420,24 @@ export default function Tasks() {
   }, [sourceFiles, files]);
 
   /** Build mobile-style categories: Mes tâches, each child, Maison */
-  const categories = useMemo(() => {
-    const activeProfileName = activeProfile?.name?.toLowerCase() ?? '';
-    const cats: { key: string; label: string; icon: string; pending: number }[] = [];
-
-    // Only count tasks visible today (same rule as mobile: hide future recurring)
-    const visibleTasks = tasks.filter((t) => {
-      if (t.recurrence && t.dueDate && t.dueDate > TODAY) return false;
-      return true;
-    });
-
-    // "Mes tâches" — tasks mentioning the active profile
-    if (activeProfileName) {
-      const myPending = visibleTasks.filter(
-        (t) => !t.completed && t.mentions?.some((m) => m.toLowerCase() === activeProfileName),
-      ).length;
-      cats.push({ key: 'mine', label: 'Mes tâches', icon: '👤', pending: myPending });
-    }
-
-    // Per-child categories (from 01 - Enfants/{Name}/...)
-    const childFiles = sourceFiles.filter((f) => f.startsWith('01 - Enfants/'));
-    for (const file of childFiles) {
-      const label = labelFromPath(file);
-      const pending = visibleTasks.filter((t) => !t.completed && t.sourceFile === file).length;
-      cats.push({ key: file, label, icon: '👶', pending });
-    }
-
-    // "Maison" — from 02 - Maison/...
-    const maisonFiles = sourceFiles.filter((f) => f.startsWith('02 - Maison/'));
-    if (maisonFiles.length > 0) {
-      const pending = visibleTasks.filter(
-        (t) => !t.completed && maisonFiles.includes(t.sourceFile),
-      ).length;
-      cats.push({ key: 'maison', label: 'Maison', icon: '🏠', pending });
-    }
-
-    return cats;
-  }, [tasks, sourceFiles, activeProfile]);
+  const categories = useMemo(
+    () => buildTaskCategories(tasks, profiles, activeProfile),
+    [tasks, profiles, activeProfile],
+  );
 
   /** Filtered + searched tasks (mobile-style: hide recurring with future due date) */
   const filteredTasks = useMemo(() => {
-    const activeProfileName = activeProfile?.name?.toLowerCase() ?? '';
-    const maisonFiles = sourceFiles.filter((f) => f.startsWith('02 - Maison/'));
-    let result = tasks;
-
-    // Mobile rule: hide recurring tasks with future due dates
-    result = result.filter((t) => {
-      if (t.recurrence && t.dueDate && t.dueDate > TODAY) return false;
-      return true;
-    });
+    let result = filterVisibleTasks(tasks);
 
     if (sourceFilter) {
       result = result.filter((t) => t.sourceFile === sourceFilter);
     }
 
-    if (categoryFilter === 'mine') {
-      result = result.filter(
-        (t) => t.mentions?.some((m) => m.toLowerCase() === activeProfileName),
-      );
-    } else if (categoryFilter === 'maison') {
-      result = result.filter((t) => maisonFiles.includes(t.sourceFile));
-    } else if (categoryFilter) {
-      // Child file path
-      result = result.filter((t) => t.sourceFile === categoryFilter);
+    if (categoryFilter) {
+      result = filterTasksByCategory(result, categoryFilter, activeProfile?.name);
     }
 
-    if (search.trim()) {
-      const q = search.trim().toLowerCase();
-      result = result.filter((t) => t.text.toLowerCase().includes(q));
-    }
+    result = searchTasks(result, search);
 
     if (statusFilter === 'pending') {
       result = result.filter((t) => !t.completed);
@@ -508,7 +446,7 @@ export default function Tasks() {
     }
 
     return result;
-  }, [tasks, search, statusFilter, sourceFilter, categoryFilter, activeProfile, sourceFiles]);
+  }, [tasks, search, statusFilter, sourceFilter, categoryFilter, activeProfile]);
 
   const pendingTasks = useMemo(
     () => filteredTasks.filter((t) => !t.completed),
@@ -529,20 +467,10 @@ export default function Tasks() {
   );
 
   /** Group pending tasks by sourceFile */
-  const groupedPending = useMemo(() => {
-    const map = new Map<string, Task[]>();
-    pendingTasks.forEach((t) => {
-      const key = t.sourceFile || '';
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(t);
-    });
-    return Array.from(map.entries()).map(([file, taskList]) => ({
-      file,
-      label: file ? labelFromPath(file) : 'Sans fichier',
-      tasks: taskList,
-      pendingCount: taskList.filter((t) => !t.completed).length,
-    }));
-  }, [pendingTasks]);
+  const groupedPending = useMemo(
+    () => groupTasksByFile(sortTasks(pendingTasks)),
+    [pendingTasks],
+  );
 
   // ---------------------------------------------------------------------------
   // Toggle task (inline implementation — reads & writes file back)
@@ -558,25 +486,7 @@ export default function Tasks() {
         const line = lines[task.lineIndex];
         if (line === undefined) return;
 
-        let updatedLine: string;
-        if (task.completed) {
-          // Uncheck: replace "- [x]" with "- [ ]", remove ✅ date
-          updatedLine = line
-            .replace(/^(\s*- \[)[xX](\])/, '$1 $2')
-            .replace(/\s*✅\s*\d{4}-\d{2}-\d{2}/, '');
-        } else if (task.recurrence && task.dueDate) {
-          // Recurring task: stay unchecked, advance due date to next occurrence
-          const newDate = nextOccurrence(task.dueDate, task.recurrence);
-          updatedLine = line.replace(/📅\s*\d{4}-\d{2}-\d{2}/, `📅 ${newDate}`);
-        } else {
-          // Non-recurring: check and append ✅ date
-          updatedLine = line
-            .replace(/^(\s*- \[)\s(\])/, `$1x$2`)
-            .replace(/\s*✅\s*\d{4}-\d{2}-\d{2}/, '');
-          updatedLine = `${updatedLine} ✅ ${TODAY}`;
-        }
-
-        lines[task.lineIndex] = updatedLine;
+        lines[task.lineIndex] = toggleTaskLine(line, task);
         await writeFile(task.sourceFile, lines.join('\n'));
         await refresh();
       } catch (err) {
@@ -663,11 +573,7 @@ export default function Tasks() {
   // ---------------------------------------------------------------------------
 
   const globalPendingCount = useMemo(
-    () => tasks.filter((t) => {
-      if (t.completed) return false;
-      if (t.recurrence && t.dueDate && t.dueDate > TODAY) return false;
-      return true;
-    }).length,
+    () => filterVisibleTasks(tasks).filter((t) => !t.completed).length,
     [tasks],
   );
 
@@ -776,9 +682,9 @@ export default function Tasks() {
             </div>
           )}
 
-          {groupedPending.map(({ file, label, tasks: groupTasks, pendingCount }) => (
+          {groupedPending.map(({ file, label, tasks: groupTasks }) => (
             <div key={file} className="task-group">
-              <GroupHeader label={label} pendingCount={pendingCount} />
+              <GroupHeader label={label} pendingCount={groupTasks.filter(t => !t.completed).length} />
               <div className="task-group-body">
                 {groupTasks.map((task) => (
                   <TaskRow

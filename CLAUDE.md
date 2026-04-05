@@ -19,7 +19,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 - `contexts/VaultContext.tsx` — VaultProvider + useVault() via context (source unique d'état)
-- `hooks/useVault.ts` — useVaultInternal() (implémentation, appelé uniquement par VaultProvider)
+- `hooks/useVault.ts` — useVaultInternal() orchestrateur (1626 lignes) + 21 hooks domaine extraits
+- `hooks/useVault*.ts` — hooks dédiés par domaine : Tasks, Recipes, Defis, Profiles, Stock, Courses, Health, SecretMissions, Meals, RDV, Photos, Memories, Vacation, Budget, Notes, Anniversaires, Wishlist, Gratitude, Quotes, Moods, Routines
 - `lib/parser.ts` — parse/serialize markdown vault files
 - `contexts/ThemeContext.tsx` — useThemeColors() → { primary, tint, colors }
 - `contexts/AIContext.tsx` — AIProvider (clé API SecureStore, Claude haiku/sonnet)
@@ -282,7 +283,7 @@ Application mobile familiale (React Native / Expo) qui centralise la vie quotidi
 
 ## Pattern Overview
 - No backend server -- all data lives as Markdown/YAML files in an Obsidian vault on-device or iCloud
-- Single source of truth: `useVaultInternal()` hook (140KB) holds ALL app state and exposes ~80+ actions
+- Single source of truth: `useVaultInternal()` orchestrateur + 21 hooks domaine extraits, exposant ~80+ actions via VaultContext
 - File-based navigation via expo-router with tab layout and hidden screens
 - Provider hierarchy wraps the entire app for cross-cutting concerns (theme, auth, AI, help, parental controls, toast)
 - Native module (`vault-access`) handles iOS file coordination (NSFileCoordinator) for iCloud/Obsidian compatibility
@@ -299,7 +300,7 @@ Application mobile familiale (React Native / Expo) qui centralise la vie quotidi
 - Used by: All screens and components
 - Purpose: Encapsulates stateful logic
 - Location: `hooks/`
-- Contains: `useVault.ts` (main state), `useGamification.ts`, `useFarm.ts`, `useCalendarEvents.ts`, `useStatsData.ts`, `useAnimConfig.ts`, `useResponsiveLayout.ts`, `useRefresh.ts`
+- Contains: `useVault.ts` (orchestrateur), `useVaultTasks.ts`, `useVaultRecipes.ts`, `useVaultDefis.ts`, `useVaultProfiles.ts`, `useVaultStock.ts`, `useVaultCourses.ts`, `useVaultHealth.ts`, `useVaultSecretMissions.ts`, `useVaultMeals.ts`, `useVaultRDV.ts`, `useVaultPhotos.ts`, `useVaultMemories.ts`, `useVaultVacation.ts`, `useVaultBudget.ts`, `useVaultNotes.ts`, `useVaultAnniversaires.ts`, `useVaultWishlist.ts`, `useVaultGratitude.ts`, `useVaultQuotes.ts`, `useVaultMoods.ts`, `useVaultRoutines.ts`, + `useGamification.ts`, `useFarm.ts`, `useCalendarEvents.ts`, `useStatsData.ts`, `useAnimConfig.ts`, `useResponsiveLayout.ts`, `useRefresh.ts`
 - Depends on: Lib layer (parsers, VaultManager, gamification engine)
 - Used by: Context layer, Screen layer
 - Purpose: Reusable UI elements
@@ -326,7 +327,7 @@ Application mobile familiale (React Native / Expo) qui centralise la vie quotidi
 - App coming to foreground (`AppState` change to 'active')
 - Manual `refresh()` call after mutations
 - Widget sync (`lib/widget-sync.ts`)
-- Centralized in `useVaultInternal()` -- a single 140KB hook that manages ALL vault data
+- Centralized in `useVaultInternal()` orchestrateur + 21 hooks domaine (chaque hook gère son state + CRUD)
 - No Redux, no Zustand, no external state library
 - Preferences stored in `expo-secure-store` (API keys, PIN hash, theme prefs, dark mode)
 - Gamification state serialized to `gamification.md` in the vault

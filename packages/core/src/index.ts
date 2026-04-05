@@ -18,6 +18,9 @@ export * from './journal-stats';
 export * from './gamification';
 export * from './mascot';
 
+// Task helpers (shared mobile/desktop)
+export * from './task-helpers';
+
 // Pure logic
 export * from './ai-service';
 export * from './anonymizer';
