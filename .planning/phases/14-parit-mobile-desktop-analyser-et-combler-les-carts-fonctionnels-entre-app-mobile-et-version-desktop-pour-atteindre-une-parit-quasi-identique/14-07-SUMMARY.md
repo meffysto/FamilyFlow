@@ -115,15 +115,6 @@ Aucun stub — la fonctionnalité OCR est complètement câblée. Note : la clé
 - Plans parallèles wave 2 non affectés (14-02 à 14-09)
 - Settings page pourrait être enrichie d'un champ "Clé API Claude" pour configurer familyflow_claude_api_key
 
-## Self-Check: PASSED
-
-- FOUND: apps/desktop/src/pages/Budget.tsx
-- FOUND: apps/desktop/src/pages/Budget.css
-- FOUND: 14-07-SUMMARY.md
-- FOUND: commit df1558d (feat: OCR reçu budget desktop)
-- FOUND: commit c64ac49 (docs: complete plan)
-- TypeScript check: `cd apps/desktop && npx tsc --noEmit` — 0 errors
-
 ---
 *Phase: 14-parite-mobile-desktop*
 *Completed: 2026-04-05*
