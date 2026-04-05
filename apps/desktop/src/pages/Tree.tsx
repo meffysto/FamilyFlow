@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { Modal } from '../components/ui/Modal';
 import { useVault } from '../contexts/VaultContext';
@@ -1769,7 +1769,7 @@ function NoProfile() {
 // Main page
 // ---------------------------------------------------------------------------
 
-export default function Tree() {
+function Tree() {
   const { activeProfile, readFile, writeFile, refresh } = useVault();
   const { message: toastMsg, show: showToast } = useToast();
   const [busy, setBusy] = useState(false);
@@ -2101,5 +2101,36 @@ export default function Tree() {
         profile={activeProfile}
       />
     </div>
+  );
+}
+
+// Error boundary wrapper
+class TreeErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { error: Error | null }
+> {
+  state = { error: null as Error | null };
+  static getDerivedStateFromError(error: Error) { return { error }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: 40, color: 'red', fontFamily: 'monospace' }}>
+          <h2>Erreur dans Mon arbre</h2>
+          <pre style={{ whiteSpace: 'pre-wrap' }}>{this.state.error.message}</pre>
+          <pre style={{ whiteSpace: 'pre-wrap', fontSize: 12, opacity: 0.7 }}>{this.state.error.stack}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const TreeOriginal = Tree;
+
+export default function TreeWithBoundary() {
+  return (
+    <TreeErrorBoundary>
+      <TreeOriginal />
+    </TreeErrorBoundary>
   );
 }

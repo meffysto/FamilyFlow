@@ -1,0 +1,313 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Pregnancy page styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Page header ─────────────────────────────────────────────────────────── */
+
+.page-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pregnancy-current-week {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.pregnancy-terme {
+  color: var(--text-muted, var(--text-secondary));
+  font-size: 13px;
+}
+
+/* ── Empty state ─────────────────────────────────────────────────────────── */
+
+.pregnancy-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  text-align: center;
+  gap: 12px;
+}
+
+.pregnancy-empty-icon {
+  font-size: 48px;
+  line-height: 1;
+}
+
+.pregnancy-empty-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+.pregnancy-empty-hint {
+  font-size: 14px;
+  color: var(--text-secondary);
+  max-width: 360px;
+  margin: 0;
+}
+
+/* ── Progress card ───────────────────────────────────────────────────────── */
+
+.pregnancy-progress-card {
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  border-radius: var(--radius-xl, 16px);
+  border: 0.5px solid var(--glass-border, var(--border));
+  background: var(--glass-bg, var(--card));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 12px var(--glass-shadow, rgba(0,0,0,0.08));
+}
+
+.pregnancy-note-card {
+  padding: 14px 16px;
+  border-radius: var(--radius-xl, 16px);
+  border: 0.5px solid var(--glass-border, var(--border));
+  background: var(--glass-bg, var(--card));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 12px var(--glass-shadow, rgba(0,0,0,0.08));
+}
+
+.pregnancy-progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.pregnancy-progress-bar {
+  height: 10px;
+  background: var(--card-alt, rgba(0,0,0,0.07));
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.pregnancy-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), color-mix(in srgb, var(--primary) 70%, #ff7eb3));
+  border-radius: 5px;
+  transition: width 600ms ease;
+}
+
+.pregnancy-trimestres {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted, var(--text-secondary));
+  margin-top: 6px;
+  opacity: 0.7;
+}
+
+/* ── Sections ────────────────────────────────────────────────────────────── */
+
+.pregnancy-section {
+  margin-bottom: 24px;
+}
+
+.pregnancy-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+/* ── Notes grid ─────────────────────────────────────────────────────────── */
+
+.pregnancy-notes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.pregnancy-note-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.pregnancy-note-week {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.pregnancy-note-date {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.pregnancy-note-detail {
+  font-size: 13px;
+  color: var(--text);
+  margin: 4px 0 0;
+}
+
+.pregnancy-note-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 6px 0 0;
+  font-style: italic;
+}
+
+/* ── Timeline ────────────────────────────────────────────────────────────── */
+
+.pregnancy-timeline {
+  position: relative;
+  padding-left: 24px;
+  border-left: 2px solid var(--border);
+}
+
+.pregnancy-week-row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  opacity: 0.65;
+  transition: opacity 150ms;
+}
+
+.pregnancy-week-row:last-child {
+  border-bottom: none;
+}
+
+.pregnancy-week-row--current,
+.pregnancy-week-row--has-entry {
+  opacity: 1;
+}
+
+.pregnancy-week-row--current .pregnancy-week-dot {
+  background: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 25%, transparent);
+  width: 14px;
+  height: 14px;
+}
+
+.pregnancy-week-dot {
+  position: absolute;
+  left: -31px;
+  top: 14px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--border);
+  border: 2px solid var(--bg, white);
+  flex-shrink: 0;
+  transition: background 200ms, box-shadow 200ms;
+}
+
+.pregnancy-week-row--has-entry .pregnancy-week-dot {
+  background: var(--primary);
+}
+
+.pregnancy-week-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.pregnancy-week-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+
+.pregnancy-week-number {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.pregnancy-week-badge {
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--primary);
+  color: white;
+  padding: 1px 7px;
+  border-radius: 10px;
+}
+
+.pregnancy-week-date {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.pregnancy-week-milestone {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.pregnancy-week-entry {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.pregnancy-entry-chip {
+  font-size: 12px;
+  background: var(--card-alt, rgba(0,0,0,0.06));
+  border-radius: 8px;
+  padding: 2px 8px;
+  color: var(--text);
+}
+
+.pregnancy-entry-notes {
+  width: 100%;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin: 4px 0 0;
+}
+
+/* ── Add entry form ──────────────────────────────────────────────────────── */
+
+.add-entry-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.form-row .form-field {
+  flex: 1;
+}
+
+.form-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--input-bg, var(--card-alt));
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 150ms;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}

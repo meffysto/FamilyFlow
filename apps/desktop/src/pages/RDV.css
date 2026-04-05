@@ -1,0 +1,214 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   RDV (Rendez-vous) page styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Page header ─────────────────────────────────────────────────────────── */
+
+.rdv-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rdv-search-row {
+  margin-top: 10px;
+}
+
+/* ── Section group ───────────────────────────────────────────────────────── */
+
+.rdv-section {
+  margin-bottom: 20px;
+}
+
+.rdv-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  padding: 0 2px;
+}
+
+/* ── RDV item row ────────────────────────────────────────────────────────── */
+
+.rdv-item {
+  display: grid;
+  grid-template-columns: 32px 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 120ms ease;
+  position: relative;
+}
+
+.rdv-item:last-child {
+  border-bottom: none;
+}
+
+.rdv-item:hover {
+  background: var(--card-alt);
+}
+
+.rdv-item--selected {
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+
+.rdv-item-emoji {
+  font-size: 18px;
+  line-height: 1;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.rdv-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow: hidden;
+}
+
+.rdv-item-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.rdv-item-type {
+  text-transform: capitalize;
+}
+
+.rdv-item-enfant {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.rdv-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.rdv-item-date {
+  font-weight: 600;
+}
+
+.rdv-item-heure {
+  font-variant-numeric: tabular-nums;
+}
+
+.rdv-item-lieu {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rdv-item-statut {
+  flex-shrink: 0;
+}
+
+/* ── Hover-to-reveal action buttons (per D-02) ───────────────────────────── */
+
+.rdv-item-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 150ms ease;
+  flex-shrink: 0;
+}
+
+.rdv-item:hover .rdv-item-actions {
+  opacity: 1;
+}
+
+.rdv-item--selected .rdv-item-actions {
+  opacity: 1;
+}
+
+.rdv-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--glass-bg);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.rdv-action-btn:hover {
+  background: var(--card-alt);
+  border-color: var(--primary);
+}
+
+.rdv-action-btn--delete:hover {
+  border-color: #ea4335;
+  background: color-mix(in srgb, #ea4335 10%, transparent);
+}
+
+/* ── Empty / no-results states ───────────────────────────────────────────── */
+
+.rdv-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 64px 24px;
+  text-align: center;
+}
+
+.rdv-empty-icon {
+  font-size: 44px;
+  opacity: 0.5;
+}
+
+.rdv-empty-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+.rdv-empty-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}
+
+/* ── Form ────────────────────────────────────────────────────────────────── */
+
+.rdv-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.rdv-textarea {
+  resize: vertical;
+  min-height: 72px;
+  line-height: 1.5;
+  font-family: inherit;
+}
+
+/* Re-use form-field / form-label / form-input / form-select / form-error /
+   form-actions / form-required from Tasks.css (same global classes) */

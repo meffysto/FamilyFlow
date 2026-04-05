@@ -9,10 +9,12 @@ import {
 import { listVaultFiles, readVaultFile, writeVaultFile, deleteVaultFile, type VaultFile } from '../lib/vault-service';
 import {
   parseTaskFile, parseRDV, parseFamille, parseGamification,
+  mergeProfiles,
   parseMeals, parseCourses, parseStock, parseDefis,
   parseGratitude, parseQuotes, parseMoods, parseWishlist,
   parseAnniversaries, parseNote, parseSecretMissions,
   parseHealthRecord, parseRoutines, parseSkillTree, parsePregnancyJournal,
+  parseBuildings, parseInventory, parseCrops, parseWearEvents,
   serializeRDV, serializeNote, serializeDefis, serializeGamification,
   serializeHealthRecord, serializeRoutines, serializeSkillTree, serializePregnancyJournal,
   noteFileName,
@@ -23,6 +25,7 @@ import {
   type Anniversary, type Note, type GamificationData,
   type HealthRecord, type Routine, type SkillTreeData,
   type PregnancyWeekEntry, type LootBox, type GamificationEntry,
+  type TreeSpecies,
 } from '@family-vault/core';
 
 // ---------------------------------------------------------------------------
@@ -234,35 +237,54 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
         const content = await readVaultFile(`${path}/famille.md`);
         const partial = parseFamille(content);
 
-        // Build full profiles with gamification defaults
-        const fullProfiles: Profile[] = partial.map((p) => ({
-          points: 0,
-          coins: 0,
-          level: 1,
-          streak: 0,
-          lootBoxesAvailable: 0,
-          multiplier: 1,
-          multiplierRemaining: 0,
-          pityCounter: 0,
-          ...p,
-        }));
-
-        // Load gamification per profile and merge
-        const merged = await Promise.all(
-          fullProfiles.map(async (profile) => {
-            try {
-              const gamiContent = await readVaultFile(`${path}/gami-${profile.id}.md`);
-              const gamiDataForProfile: GamificationData = parseGamification(gamiContent);
-              const gamiProfile = gamiDataForProfile.profiles.find((gp) => gp.id === profile.id);
-              if (gamiProfile) {
-                return { ...profile, ...gamiProfile };
-              }
-            } catch {
-              // File may not exist — keep defaults
-            }
-            return profile;
-          }),
+        // Load gamification per profile, merge with mergeProfiles (same as mobile)
+        const gamiResults = await Promise.allSettled(
+          partial.map((p) => readVaultFile(`${path}/gami-${p.id}.md`))
         );
+        // Reconstruct combined gami data
+        const allGamiProfiles: any[] = [];
+        for (const result of gamiResults) {
+          if (result.status === 'fulfilled' && result.value) {
+            const g = parseGamification(result.value);
+            allGamiProfiles.push(...g.profiles);
+          }
+        }
+        const combinedGami: GamificationData = {
+          profiles: allGamiProfiles,
+          history: [],
+          activeRewards: [],
+          usedLoots: [],
+        };
+        const gamiContent = serializeGamification(combinedGami);
+        const withGami = mergeProfiles(content, gamiContent);
+
+        // Load farm data per profile from farm-{id}.md (mobile stores farm data separately)
+        const farmResults = await Promise.allSettled(
+          partial.map((p) => readVaultFile(`${path}/farm-${p.id}.md`))
+        );
+        const merged = withGami.map((profile, i) => {
+          const result = farmResults[i];
+          if (result?.status !== 'fulfilled' || !result.value) return profile;
+          const props: Record<string, string> = {};
+          for (const line of result.value.split('\n')) {
+            if (line.startsWith('#') || !line.includes(': ')) continue;
+            const idx = line.indexOf(': ');
+            const key = line.slice(0, idx).trim();
+            const val = line.slice(idx + 2).trim();
+            if (key && val) props[key] = val;
+          }
+          const validSpecies = new Set(['cerisier', 'chene', 'bambou', 'oranger', 'palmier']);
+          return {
+            ...profile,
+            ...(props.tree_species && validSpecies.has(props.tree_species) ? { treeSpecies: props.tree_species as TreeSpecies } : {}),
+            ...(props.farm_crops ? { farmCrops: props.farm_crops } : {}),
+            ...(props.farm_buildings ? { farmBuildings: parseBuildings(props.farm_buildings) } : {}),
+            ...(props.farm_inventory ? { farmInventory: parseInventory(props.farm_inventory) } : {}),
+            ...(props.farm_tech ? { farmTech: props.farm_tech.split(',').map(s => s.trim()).filter(Boolean) } : {}),
+            ...(props.mascot_decorations ? { mascotDecorations: props.mascot_decorations.split(',').map(s => s.trim()).filter(Boolean) } : {}),
+            ...(props.mascot_inhabitants ? { mascotInhabitants: props.mascot_inhabitants.split(',').map(s => s.trim()).filter(Boolean) } : {}),
+          };
+        });
 
         const storedId = localStorage.getItem(ACTIVE_PROFILE_KEY);
         const found = storedId

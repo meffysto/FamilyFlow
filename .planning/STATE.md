@@ -21,7 +21,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 09 — cadeaux-familiaux
+**Current focus:** Phase 14 — Parité Mobile Desktop
 
 ## Current Position
 
