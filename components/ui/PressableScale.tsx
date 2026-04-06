@@ -60,7 +60,7 @@ export const PressableScale = React.memo(function PressableScale({
       disabled={disabled}
       style={style}
     >
-      <Animated.View style={animatedStyle}>
+      <Animated.View style={[animatedStyle, style && !Array.isArray(style) && style.flex != null && { flex: 1 }]}>
         {children}
       </Animated.View>
     </Pressable>
