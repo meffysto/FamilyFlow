@@ -174,38 +174,38 @@ export const TaskCard = React.memo(function TaskCard({
           {task.text}
         </Animated.Text>
 
-        <View style={styles.meta}>
+        <View style={[styles.meta, compact && styles.metaCompact]}>
           {showSkip && (
             <TouchableOpacity
               onPress={handleSkip}
-              style={[styles.skipButton, { backgroundColor: colors.cardAlt }]}
+              style={[styles.skipButton, { backgroundColor: colors.cardAlt }, compact && styles.badgeCompact]}
               hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
               accessibilityLabel={t('taskCard.skip')}
               accessibilityRole="button"
             >
-              <Text style={[styles.skipButtonText, { color: colors.textMuted }]}>⏭️ {t('taskCard.skip')}</Text>
+              <Text style={[styles.skipButtonText, { color: colors.textMuted }, compact && { fontSize: FontSize.micro }]}>⏭️ {t('taskCard.skip')}</Text>
             </TouchableOpacity>
           )}
           {showSource && (
-            <View style={[styles.badge, { backgroundColor: colors.cardAlt }]}>
-              <Text style={[styles.sourceLabel, { color: colors.textMuted }]}>{getSourceLabel(task.sourceFile, profiles, t)}</Text>
+            <View style={[styles.badge, { backgroundColor: colors.cardAlt }, compact && styles.badgeCompact]}>
+              <Text style={[styles.sourceLabel, { color: colors.textMuted }, compact && { fontSize: FontSize.micro }]}>{getSourceLabel(task.sourceFile, profiles, t)}</Text>
             </View>
           )}
           {task.section && !showSource && !hideSection && !task.recurrence && (
-            <View style={[styles.sectionBadge, { backgroundColor: tint }]}>
-              <Text style={[styles.sectionLabel, { color: primary }]}>{task.section}</Text>
+            <View style={[styles.sectionBadge, { backgroundColor: tint }, compact && styles.badgeCompact]}>
+              <Text style={[styles.sectionLabel, { color: primary }, compact && { fontSize: FontSize.micro }]}>{task.section}</Text>
             </View>
           )}
           {task.dueDate && !task.completed && (
-            <View style={[styles.badge, { backgroundColor: colors.cardAlt }, isOverdue && { backgroundColor: colors.errorBg }]}>
-              <Text style={[styles.dueDate, { color: colors.textMuted }, isOverdue && { color: colors.error, fontWeight: FontWeight.bold }]}>
+            <View style={[styles.badge, { backgroundColor: colors.cardAlt }, isOverdue && { backgroundColor: colors.errorBg }, compact && styles.badgeCompact]}>
+              <Text style={[styles.dueDate, { color: colors.textMuted }, isOverdue && { color: colors.error, fontWeight: FontWeight.bold }, compact && { fontSize: FontSize.micro }]}>
                 📅 {formatDateLocalized(task.dueDate)}
               </Text>
             </View>
           )}
           {task.recurrence && (
-            <View style={[styles.badge, { backgroundColor: colors.cardAlt }]}>
-              <Text style={[styles.recurrenceBadge, { color: colors.textFaint }]}>
+            <View style={[styles.badge, { backgroundColor: colors.cardAlt }, compact && styles.badgeCompact]}>
+              <Text style={[styles.recurrenceBadge, { color: colors.textFaint }, compact && { fontSize: FontSize.micro }]}>
                 🔁 {/every\s+day/i.test(task.recurrence) ? t('taskCard.recurrenceDaily')
                     : /every\s+week/i.test(task.recurrence) ? t('taskCard.recurrenceWeekly')
                     : /every\s+month/i.test(task.recurrence) ? t('taskCard.recurrenceMonthly')
@@ -287,10 +287,18 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     marginTop: Spacing.xxs,
   },
+  metaCompact: {
+    gap: Spacing.xs,
+    marginTop: 0,
+  },
   badge: {
     paddingHorizontal: Spacing.md,
     paddingVertical: 3,
     borderRadius: Radius.sm,
+  },
+  badgeCompact: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
   },
   sectionBadge: {
     paddingHorizontal: Spacing.md,

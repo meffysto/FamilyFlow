@@ -25,7 +25,7 @@ function DashboardLeaderboardInner(_props: DashboardSectionProps) {
   const first = leaderboard[0];
 
   return (
-    <DashboardCard key="leaderboard" title={t('dashboard.leaderboard.title')} icon="🏆" color={colors.catJeux} tinted onPressMore={() => router.push('/(tabs)/loot')} hideMoreLink style={{ flex: 1 }}>
+    <DashboardCard key="leaderboard" title={t('dashboard.leaderboard.title')} icon="🏆" color={colors.catJeux} tinted onPressMore={() => router.push('/(tabs)/loot')} hideMoreLink style={{ flex: 1, marginBottom: 0 }}>
       <Text style={styles.medal}>🥇</Text>
       <Text style={[styles.firstName, { color: colors.text }]} numberOfLines={1}>{first.name}</Text>
       <Text style={[styles.firstPts, { color: colors.textMuted }]}>{first.points ?? 0} pts</Text>

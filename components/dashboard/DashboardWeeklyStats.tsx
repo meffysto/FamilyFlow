@@ -38,7 +38,7 @@ function DashboardWeeklyStatsInner(_props: DashboardSectionProps) {
       tinted
       onPressMore={() => router.push('/(tabs)/stats')}
       hideMoreLink
-      style={{ flex: 1 }}
+      style={{ flex: 1, marginBottom: 0 }}
     >
       <Text style={[styles.weekStatsTotal, { color: colors.catJeux }]}>{weekTotal}</Text>
       <Text style={[styles.weekStatsSummary, { color: colors.textMuted }]}>

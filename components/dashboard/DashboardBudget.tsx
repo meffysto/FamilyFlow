@@ -56,7 +56,7 @@ function DashboardBudgetInner({ vaultFileExists, activateCardTemplate }: Dashboa
       tinted
       onPressMore={() => router.push('/(tabs)/budget')}
       hideMoreLink
-      style={{ flex: 1 }}
+      style={{ flex: 1, marginBottom: 0 }}
     >
       <Text style={[styles.budgetPct, { color: isOver ? colors.error : colors.text }]}>{pctUsed}%</Text>
       <View style={[styles.progressBg, { backgroundColor: colors.cardAlt }]}>
