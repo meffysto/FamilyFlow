@@ -209,7 +209,7 @@ export function DashboardCard({
     );
     if (onPressMore) {
       return (
-        <PressableScale onPress={onPressMore}>
+        <PressableScale onPress={onPressMore} style={style?.flex ? { flex: 1 } : undefined}>
           {glassCard}
         </PressableScale>
       );
@@ -229,7 +229,7 @@ export function DashboardCard({
 
   if (onPressMore) {
     return (
-      <PressableScale onPress={onPressMore}>
+      <PressableScale onPress={onPressMore} style={style?.flex ? { flex: 1 } : undefined}>
         {plainCard}
       </PressableScale>
     );
