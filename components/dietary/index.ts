@@ -9,3 +9,5 @@ export { ProfileFoodCard } from './ProfileFoodCard';
 export type { ProfileFoodCardProps } from './ProfileFoodCard';
 export { DietaryAutocomplete } from './DietaryAutocomplete';
 export type { DietaryAutocompleteProps } from './DietaryAutocomplete';
+export { ConvivesPickerModal } from './ConvivesPickerModal';
+export type { ConvivesPickerModalProps } from './ConvivesPickerModal';
