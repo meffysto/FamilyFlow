@@ -5,3 +5,7 @@
  */
 export { AllergenBanner } from './AllergenBanner';
 export type { AllergenBannerProps } from './AllergenBanner';
+export { ProfileFoodCard } from './ProfileFoodCard';
+export type { ProfileFoodCardProps } from './ProfileFoodCard';
+export { DietaryAutocomplete } from './DietaryAutocomplete';
+export type { DietaryAutocompleteProps } from './DietaryAutocomplete';
