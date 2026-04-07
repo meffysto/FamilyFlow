@@ -11,14 +11,14 @@ Requirements for milestone v1.2 — Confort & Découverte. L'app retient les dé
 ### Préférences alimentaires (Famille)
 
 - [x] **PREF-01**: Le modèle de données distingue 4 sévérités : `allergie` (vital, jamais ignorable), `intolerance` (gênant), `regime` (choix : végé, halal…), `aversion` (préférence personnelle)
-- [ ] **PREF-02**: Chaque membre famille a ses préférences alimentaires stockées comme clés plates dans `famille.md` (pattern identique à `farm_crops`/`farm_tech`) — une nouvelle clé par catégorie : `food_allergies`, `food_intolerances`, `food_regimes`, `food_aversions`
+- [x] **PREF-02**: Chaque membre famille a ses préférences alimentaires stockées comme clés plates dans `famille.md` (pattern identique à `farm_crops`/`farm_tech`) — une nouvelle clé par catégorie : `food_allergies`, `food_intolerances`, `food_regimes`, `food_aversions`
 - [x] **PREF-03**: Un catalogue canonique des 14 allergènes UE (gluten, œufs, arachides, lait…) sert d'autocomplete et garantit la stabilité des IDs même quand l'utilisateur tape en français ou anglais
 - [ ] **PREF-04**: L'utilisateur peut ajouter, modifier et supprimer une préférence alimentaire pour un membre famille via une UI dans le détail profil
-- [ ] **PREF-05**: La compatibilité bidirectionnelle Obsidian est préservée — modifier `famille.md` à la main reste valide, le parser tolère l'absence de toutes les clés food_*
+- [x] **PREF-05**: La compatibilité bidirectionnelle Obsidian est préservée — modifier `famille.md` à la main reste valide, le parser tolère l'absence de toutes les clés food_*
 
 ### Préférences alimentaires (Invités)
 
-- [ ] **PREF-06**: Un fichier dédié `02 - Famille/Invités.md` stocke la liste des invités récurrents avec une section H2 par invité (nom + préférences, pas de gamification ni profil complet) — pattern identique à `wishlist`
+- [x] **PREF-06**: Un fichier dédié `02 - Famille/Invités.md` stocke la liste des invités récurrents avec une section H2 par invité (nom + préférences, pas de gamification ni profil complet) — pattern identique à `wishlist`
 - [ ] **PREF-07**: L'utilisateur peut créer, modifier et supprimer un invité avec ses préférences depuis l'écran préférences alimentaires
 - [ ] **PREF-08**: Les invités apparaissent dans le sélecteur de "qui mange ce soir" au même titre que les membres famille
 
@@ -88,11 +88,11 @@ Deferred to v1.3+.
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
 | PREF-01 | Phase 15 | Complete |
-| PREF-02 | Phase 15 | Pending |
+| PREF-02 | Phase 15 | Complete |
 | PREF-03 | Phase 15 | Complete |
 | PREF-04 | Phase 15 | Pending |
-| PREF-05 | Phase 15 | Pending |
-| PREF-06 | Phase 15 | Pending |
+| PREF-05 | Phase 15 | Complete |
+| PREF-06 | Phase 15 | Complete |
 | PREF-07 | Phase 15 | Pending |
 | PREF-08 | Phase 15 | Pending |
 | PREF-09 | Phase 15 | Complete |
