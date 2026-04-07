@@ -57,6 +57,7 @@ import { calculateLevel } from './gamification';
 import type { TreeSpecies } from './mascot/types';
 import type { FamilyQuest } from './quest-engine';
 import { parseReward, serializeReward } from './quest-engine';
+import type { GuestProfile } from './dietary/types';
 
 // ─── Task parsing ───────────────────────────────────────────────────────────
 
@@ -2754,6 +2755,101 @@ export function serializeSecretMissions(missions: Task[], profiles: Profile[]): 
       parts.push(line);
     }
 
+    parts.push('');
+  }
+
+  return parts.join('\n');
+}
+
+// ─── Invités récurrents ──────────────────────────────────────────────────────
+
+/** Chemin du fichier invités dans le vault. */
+export const INVITES_FILE = '02 - Famille/Invités.md';
+
+/**
+ * Slugifie un nom pour générer un ID stable : lowercase, accents → base ASCII,
+ * espaces et caractères spéciaux → underscore.
+ */
+function slugifyInviteName(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // supprimer les diacritiques
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+/**
+ * Parse `02 - Famille/Invités.md` en tableau de GuestProfile.
+ * Format : sections H2 (## Nom) avec clés key: value sous chaque section.
+ * Utilise parseFoodCsv pour les 4 clés food_* (CSV et YAML liste supportés).
+ */
+export function parseInvites(content: string): GuestProfile[] {
+  const guests: GuestProfile[] = [];
+  if (!content || !content.trim()) return [];
+
+  const lines = content.split('\n');
+  let currentName: string | null = null;
+  let currentProps: Record<string, string> = {};
+  const usedIds = new Map<string, number>();
+
+  const flush = () => {
+    if (!currentName) return;
+    // Générer un ID unique depuis le nom
+    const baseId = slugifyInviteName(currentName);
+    const count = (usedIds.get(baseId) ?? 0) + 1;
+    usedIds.set(baseId, count);
+    const id = count === 1 ? baseId : `${baseId}_${count}`;
+
+    guests.push({
+      id,
+      name: currentName,
+      foodAllergies: parseFoodCsv(currentProps.food_allergies),
+      foodIntolerances: parseFoodCsv(currentProps.food_intolerances),
+      foodRegimes: parseFoodCsv(currentProps.food_regimes),
+      foodAversions: parseFoodCsv(currentProps.food_aversions),
+    });
+  };
+
+  for (const line of lines) {
+    if (line.startsWith('## ')) {
+      flush();
+      currentName = line.slice(3).trim();
+      currentProps = {};
+    } else if (currentName && line.includes(': ')) {
+      const colonIdx = line.indexOf(': ');
+      const key = line.slice(0, colonIdx).trim();
+      const val = line.slice(colonIdx + 2).trim();
+      currentProps[key] = val;
+    }
+  }
+  flush();
+
+  return guests;
+}
+
+/**
+ * Sérialise un tableau de GuestProfile en Markdown pour `02 - Famille/Invités.md`.
+ * Omet les clés food_* vides (compatibilité Obsidian).
+ */
+export function serializeInvites(guests: GuestProfile[]): string {
+  const parts: string[] = ['# Invités récurrents', ''];
+
+  for (const guest of guests) {
+    const lines: string[] = [`## ${guest.name}`];
+    if (guest.foodAllergies.length > 0) {
+      lines.push(`food_allergies: ${guest.foodAllergies.join(',')}`);
+    }
+    if (guest.foodIntolerances.length > 0) {
+      lines.push(`food_intolerances: ${guest.foodIntolerances.join(',')}`);
+    }
+    if (guest.foodRegimes.length > 0) {
+      lines.push(`food_regimes: ${guest.foodRegimes.join(',')}`);
+    }
+    if (guest.foodAversions.length > 0) {
+      lines.push(`food_aversions: ${guest.foodAversions.join(',')}`);
+    }
+    parts.push(lines.join('\n'));
     parts.push('');
   }
 
