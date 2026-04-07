@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
-status: verifying
-stopped_at: Completed 14-08-PLAN.md
-last_updated: "2026-04-05T09:36:08.314Z"
-last_activity: 2026-04-05
+status: executing
+stopped_at: Completed 15-01-PLAN.md
+last_updated: "2026-04-07T06:17:07.929Z"
+last_activity: 2026-04-07
 progress:
-  total_phases: 11
+  total_phases: 12
   completed_phases: 10
-  total_plans: 33
-  completed_plans: 31
+  total_plans: 35
+  completed_plans: 32
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 14 — Parité Mobile Desktop
+**Current focus:** Phase 15 — quetes-cooperatives-ferme
 
 ## Current Position
 
-Phase: 14
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-05
+Phase: 15 (quetes-cooperatives-ferme) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-04-07
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -72,6 +72,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 14-parite-mobile-desktop P02 | 8min | 2 tasks | 4 files |
 | Phase 14-parite-mobile-desktop P09 | 11min | 2 tasks | 7 files |
 | Phase 14-parite-mobile-desktop PP08 | 5min | 3 tasks | 14 files |
+| Phase 15-quetes-cooperatives-ferme P01 | 45min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -146,6 +147,8 @@ Recent decisions affecting current work:
 - [Phase 14-parite-mobile-desktop]: saveSagaProgress/saveEventProgress via localStorage — SecureStore React Native indisponible sur desktop Tauri
 - [Phase 14-parite-mobile-desktop]: CompanionWidget dans /components/companion/ — réutilisable pour Dashboard futur
 - [Phase 14-parite-mobile-desktop]: Hover-to-reveal via CSS opacity (pas JS toggle) — transition 120ms ease, déclenché par :hover sur le parent row/card
+- [Phase 15-01]: contribute() lit le fichier frais depuis vault — evite race conditions quand plusieurs profils progressent en parallele
+- [Phase 15-01]: onQuestProgress optionnel dans useGamification/useFarm/useVaultDefis — backward-compatible, expose via contributeFamilyQuest dans VaultState
 
 ### Pending Todos
 
@@ -187,6 +190,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-05T09:27:51.567Z
-Stopped at: Completed 14-08-PLAN.md
+Last session: 2026-04-07T06:17:07.926Z
+Stopped at: Completed 15-01-PLAN.md
 Resume file: None
