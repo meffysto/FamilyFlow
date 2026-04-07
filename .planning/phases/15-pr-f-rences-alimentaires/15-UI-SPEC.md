@@ -46,6 +46,8 @@ Exceptions:
 - Touch targets sur bouton micro flottant (DictaphoneRecorder) et bouton "+" d'ajout : minimum 44px de zone de tap (peut utiliser paddingVertical compensatoire sans modifier le token).
 - Border radius: `Radius.full` (9999) sur les chips préférences, `Radius.lg` (12) sur le bandeau allergie, `Radius.xs` (4) sur les badges inline ingrédients.
 
+**Note sur les tokens non-standard:** `Spacing.xl` (12px) et `Spacing['3xl']` (20px) sont des tokens pré-existants dans `constants/spacing.ts` — ils ne suivent pas strictement l'échelle canonique 8-pt mais sont justifiés car ce sont des valeurs projet établies. Exception documentée, pas une dérogation ponctuelle.
+
 ---
 
 ## Typography
@@ -57,9 +59,9 @@ Tokens existants dans `constants/typography.ts` — ne pas déclarer de tailles 
 | Body | `FontSize.body` | 15px | `FontWeight.normal` (400) | `LineHeight.body` (22) | Texte des préférences, libellés catalogue, contenu CollapsibleSection |
 | Label | `FontSize.label` | 13px | `FontWeight.semibold` (600) | `LineHeight.normal` (20) | Chips préférences, badges inline ingrédients, hint autocomplete |
 | Heading section | `FontSize.heading` | 18px | `FontWeight.semibold` (600) | `LineHeight.title` (28) | Titre section "Allergies", "Intolérances", etc. par profil ; titre "Invités récurrents" |
-| Title écran | `FontSize.title` | 20px | `FontWeight.bold` (700) | `LineHeight.title` (28) | Titre de l'écran Préférences alimentaires, titre ModalHeader |
+| Title écran | `FontSize.title` | 20px | `FontWeight.semibold` (600) | `LineHeight.title` (28) | Titre de l'écran Préférences alimentaires, titre ModalHeader |
 
-Poids utilisés dans cette phase: `FontWeight.normal` (400) + `FontWeight.semibold` (600). `FontWeight.bold` (700) uniquement pour le titre écran.
+Poids utilisés dans cette phase: `FontWeight.normal` (400) + `FontWeight.semibold` (600). Deux poids uniquement — pas de `FontWeight.bold` (700) dans cette phase.
 
 ---
 
@@ -94,6 +96,8 @@ Destructive: `colors.error` — suppression d'une préférence (swipe-to-delete 
 
 ### Écran principal: Préférences alimentaires (`app/dietary.tsx`)
 
+**Point focal / hiérarchie visuelle:** Point focal primaire: badge allergie dans la première `ProfileFoodCard` — poids visuel maximal (couleur `colors.errorBg`, border latérale 3px `colors.error`). Toutes les autres informations sont visuellement secondaires par rapport à ce badge. La hiérarchie est: titre écran > avatar+nom profil > badge allergie > chips intolérance > chips régime/aversion.
+
 **Structure:**
 ```
 ScrollView (contentContainerStyle avec Layout.contentContainer)
@@ -110,9 +114,11 @@ ScrollView (contentContainerStyle avec Layout.contentContainer)
 
 **Bouton micro flottant:** DictaphoneRecorder positionné dans le header (right side), zone de tap 44px minimum.
 
+**Accessibilité:** Le bouton "+" d'ajout de préférence doit porter `accessibilityLabel="Ajouter une préférence alimentaire"` (plus descriptif que le seul caractère "+").
+
 **États:**
 - Vide famille (aucune préférence aucun membre): afficher CollapsibleSection fermée avec hint "Aucune allergie enregistrée — appuyez + pour ajouter"
-- Vide invités: message inline "Aucun invité récurrent" + bouton "Ajouter un invité"
+- Vide invités: message inline "Aucun invité récurrent enregistré" + bouton "Ajouter un invité"
 - Chargement: aucun skeleton — les données vault sont synchrones
 
 ### Autocomplete dropdown
@@ -137,13 +143,13 @@ AllergenBanner (View, pointerEvents sur zone swipe = 'none')
 
 **Badge inline ingrédient:** `Badge` component (existant), variant mappé sur sévérité la plus haute pour cet ingrédient, taille `sm`, positionné après le texte de l'ingrédient.
 
-### Bouton "Vérifier conflits pour…" (dans écran recette)
+### Bouton "Vérifier les conflits pour…" (dans écran recette)
 
-Un `Button` variant `outline` sous le bandeau, label "Vérifier pour…" → ouvre modal `pageSheet`.
+Un `Button` variant `outline` sous le bandeau, label "Vérifier les conflits pour…" → ouvre modal `pageSheet`.
 
 ### Modal sélecteur convives (pageSheet)
 
-Chips multiselect (composant `Chip` existant) pour membres famille + invités. Deux sections: "Famille" + "Invités". Bouton "Vérifier" (primary) en footer de modal. Pas de persistance — résultat volatil uniquement.
+Chips multiselect (composant `Chip` existant) pour membres famille + invités. Deux sections: "Famille" + "Invités". Bouton "Vérifier les convives" (primary) en footer de modal. Pas de persistance — résultat volatil uniquement.
 
 ### Modal preview vocale (pageSheet)
 
@@ -156,11 +162,11 @@ Liste des extractions IA: chaque ligne = checkbox + profil cible + catégorie + 
 | Element | Copy |
 |---------|------|
 | Titre écran | "Préférences alimentaires" |
-| Primary CTA ajouter préférence | "Ajouter" |
+| Primary CTA ajouter préférence | "Ajouter une préférence" |
 | Primary CTA ajouter invité | "Ajouter un invité" |
-| Primary CTA valider sélection convives | "Vérifier" |
+| Primary CTA valider sélection convives | "Vérifier les convives" |
 | Primary CTA confirmer extractions vocales | "Confirmer (N)" |
-| Label bouton vérification recette | "Vérifier pour…" |
+| Label bouton vérification recette | "Vérifier les conflits pour…" |
 | Section membres | "Membres de la famille" |
 | Section invités | "Invités récurrents" |
 | Labels catégories | "Allergies", "Intolérances", "Régimes alimentaires", "Aversions" |
@@ -181,7 +187,7 @@ Liste des extractions IA: chaque ligne = checkbox + profil cible + catégorie + 
 | Fallback vocale (AI échec) | (ouvre modale manuelle sans toast — pas de message d'erreur) |
 | Error state — échec sauvegarde | "Impossible d'enregistrer les préférences. Vérifiez l'accès au vault." |
 | Destructive — supprimer préférence (swipe) | Swipe gauche révèle bouton rouge "Supprimer" — pas de confirmation modale (préférence individuelle, réversible via re-ajout) |
-| Destructive — supprimer invité | Alert.alert "Supprimer [Nom] ?" — boutons "Annuler" + "Supprimer" (destructive style) |
+| Destructive — supprimer invité | Alert.alert "Supprimer [Nom] ?" — boutons "Ne pas supprimer" + "Supprimer" (destructive style) |
 | Recap planificateur PREF-12 | "X allergie(s), Y intolérance(s) pour les convives sélectionnés" (bandeau compact en tête du MealItem, tap ouvre drill-down) |
 
 ---
@@ -200,7 +206,7 @@ Liste des extractions IA: chaque ligne = checkbox + profil cible + catégorie + 
 
 - `TextInput` déclenche le dropdown dès 1 caractère tapé
 - Sélection d'un item catalogue: haptic `Haptics.selectionAsync()` + chip apparaît dans la rangée + TextInput se vide
-- Texte libre (hors catalogue): touche Entrée ou bouton "Ajouter" valide le texte brut comme chip
+- Texte libre (hors catalogue): touche Entrée ou bouton "Ajouter une préférence" valide le texte brut comme chip
 
 ### Bandeau allergie (P0 SAFETY enforcement)
 
