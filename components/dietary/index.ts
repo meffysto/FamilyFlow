@@ -11,3 +11,5 @@ export { DietaryAutocomplete } from './DietaryAutocomplete';
 export type { DietaryAutocompleteProps } from './DietaryAutocomplete';
 export { ConvivesPickerModal } from './ConvivesPickerModal';
 export type { ConvivesPickerModalProps } from './ConvivesPickerModal';
+export { MealConflictRecap } from './MealConflictRecap';
+export type { MealConflictRecapProps } from './MealConflictRecap';
