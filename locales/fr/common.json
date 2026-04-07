@@ -3323,7 +3323,7 @@
       "treeA11y": "Arbre de {{name}}",
       "choose": "Choisir",
       "cta": "Voir le jardin",
-      "ctaChild": "Mon arbre !"
+      "ctaChild": "Mon jardin !"
     },
     "screen": {
       "title": "Mon jardin",
@@ -4333,6 +4333,143 @@
         "2": "La ferme est en meilleur état ! {{companionName}} est rassuré.",
         "3": "Bon boulot {{profileName}} ! {{companionName}} est content que tout soit réparé."
       }
+    }
+  },
+  "onboarding": {
+    "welcome": {
+      "greeting": "Bonjour, Thomas 👋",
+      "title": "Votre famille,\norganisée. Enfin.",
+      "subtitle": "Tâches, repas, budget, souvenirs —\ntout au même endroit, synchronisé en famille.",
+      "cta": "Commencer →"
+    },
+    "goal": {
+      "title": "Qu'est-ce que vous voulez\naméliorer en premier ?",
+      "cta": "Continuer →",
+      "options": {
+        "meals": "Planifier les repas de la semaine",
+        "tasks": "Mieux gérer les tâches en famille",
+        "budget": "Suivre le budget familial",
+        "agenda": "Ne plus rater anniversaires et RDV",
+        "photos": "Garder les souvenirs du quotidien",
+        "baby": "Suivre la croissance de mon enfant"
+      }
+    },
+    "painPoints": {
+      "title": "Qu'est-ce qui vous\ncomplique la vie ?",
+      "subtitle": "Choisissez tout ce qui s'applique",
+      "cta": "Continuer →",
+      "options": {
+        "scattered": "Tout est éparpillé dans des applications différentes",
+        "partner": "L'un de nous deux n'est jamais au courant",
+        "groceries": "La liste de courses, on la refait à chaque fois",
+        "dinner": "À 18h on sait toujours pas quoi manger",
+        "budget": "On découvre qu'on a dépassé le budget en fin de mois",
+        "photolost": "Les photos de famille se perdent dans le téléphone",
+        "birthdays": "On oublie des anniversaires importants"
+      }
+    },
+    "socialProof": {
+      "title": "Des familles comme la vôtre\ns'organisent déjà avec FamilyFlow.",
+      "cta": "Continuer →",
+      "testimonials": [
+        {
+          "quote": "Enfin une app où mon mari et moi on voit la même chose. Les disputes du dimanche soir, c'est fini.",
+          "name": "Julie M.",
+          "tag": "Mère de 2 enfants"
+        },
+        {
+          "quote": "Le planning repas m'a sauvé la vie. Je sais enfin quoi mettre dans mon panier le lundi.",
+          "name": "Thomas R.",
+          "tag": "Père de 3 enfants"
+        },
+        {
+          "quote": "Le journal de ma fille est complet, les photos sont rangées. C'est exactement ce que je cherchais.",
+          "name": "Sarah D.",
+          "tag": "Jeune maman"
+        }
+      ]
+    },
+    "mascot": {
+      "title": "Votre jardin familial",
+      "subtitle": "Chaque tâche accomplie fait pousser votre jardin. Débloquez des décorations, des habitants et des aventures à vivre ensemble.",
+      "features": {
+        "grow": "Regardez-le évoluer de graine en jardin légendaire",
+        "sagas": "Des histoires interactives à suivre en famille",
+        "rewards": "Gagnez des feuilles pour personnaliser votre espace"
+      },
+      "cta": "Continuer →"
+    },
+    "tinder": {
+      "title": "Vous vous reconnaissez ?",
+      "subtitle": "Glissez à droite si oui, à gauche si non",
+      "done": "On vous a bien cerné !",
+      "btnNo": "✗  Pas moi",
+      "btnYes": "✓  C'est moi",
+      "cards": [
+        "J'envoie encore les repas de la semaine par message à mon conjoint…",
+        "Les courses ? J'improvise au supermarché et j'oublie toujours quelque chose.",
+        "Je sais plus si c'est moi ou mon partenaire qui devait appeler le médecin.",
+        "Les photos de famille sont quelque part dans mon téléphone. 3 000 photos. Bonne chance."
+      ]
+    },
+    "solution": {
+      "title": "Voilà comment\nFamilyFlow règle ça.",
+      "cta": "Continuer →",
+      "items": {
+        "scattered": { "problem": "Tout éparpillé dans des applications", "solution": "Un tableau de bord unique — tout en un." },
+        "partner": { "problem": "L'un de vous pas au courant", "solution": "Partagé en famille — même vue, en temps réel." },
+        "groceries": { "problem": "Liste de courses à refaire chaque fois", "solution": "Générée automatiquement depuis vos repas planifiés." },
+        "dinner": { "problem": "Quoi manger ce soir ?", "solution": "Planning repas hebdo + recettes intégrées." },
+        "budget": { "problem": "Budget découvert en fin de mois", "solution": "Suivi au fil de l'eau, visualisation immédiate." },
+        "photolost": { "problem": "Photos perdues dans le téléphone", "solution": "Photo du jour + journal organisé pour toute la famille." },
+        "birthdays": { "problem": "Anniversaires oubliés", "solution": "Rappels automatiques 3 jours avant." }
+      }
+    },
+    "preferences": {
+      "title": "Quelles rubriques comptent\npour vous ?",
+      "subtitle": "Choisissez au moins 2 — modifiable après",
+      "cta": "Voir mon tableau de bord →",
+      "sections": {
+        "meals": "Repas & Cuisine",
+        "tasks": "Tâches familiales",
+        "budget": "Budget",
+        "agenda": "Agenda & RDV",
+        "photos": "Photos du jour",
+        "baby": "Journal bébé",
+        "routines": "Routines enfants",
+        "health": "Santé & médecin"
+      }
+    },
+    "processing": {
+      "title": "On prépare votre\ntableau de bord…",
+      "subtitle": "Personnalisation de vos rubriques"
+    },
+    "dashboardPreview": {
+      "title": "Votre tableau de bord,\navant même de commencer.",
+      "greeting": "Bonjour, Thomas 👋",
+      "date": "Mercredi 7 avril",
+      "note": "C'est exactement ce que vous aurez —\navec vos vraies données.",
+      "cta": "C'est parti ! →"
+    },
+    "permCamera": {
+      "title": "La photo du jour,\nen 1 tap.",
+      "bullets": [
+        "Capturez un moment chaque jour",
+        "Retrouvez-les dans votre journal famille",
+        "Partagez aux grands-parents en un geste"
+      ],
+      "cta": "Activer la caméra →",
+      "skip": "Pas maintenant"
+    },
+    "permCalendar": {
+      "title": "Vos anniversaires,\njamais oubliés.",
+      "bullets": [
+        "Importez depuis vos contacts",
+        "Rappels automatiques 3 jours avant",
+        "Synchronisé avec votre agenda"
+      ],
+      "cta": "Accéder au calendrier →",
+      "skip": "Pas maintenant"
     }
   }
 }

@@ -3323,10 +3323,10 @@
       "treeA11y": "{{name}}'s tree",
       "choose": "Choose",
       "cta": "View garden",
-      "ctaChild": "My tree!"
+      "ctaChild": "My garden!"
     },
     "screen": {
-      "title": "My tree",
+      "title": "My garden",
       "level": "level",
       "xpProgress": "XP Progress",
       "nextEvolution": "Next evolution",
@@ -4333,6 +4333,143 @@
         "2": "The farm is in better shape! {{companionName}} is relieved.",
         "3": "Good job {{profileName}}! {{companionName}} is glad everything is fixed."
       }
+    }
+  },
+  "onboarding": {
+    "welcome": {
+      "greeting": "Hello, Thomas 👋",
+      "title": "Your family,\norganized. Finally.",
+      "subtitle": "Tasks, meals, budget, memories —\neverything in one place, shared with your family.",
+      "cta": "Get started →"
+    },
+    "goal": {
+      "title": "What do you want\nto improve first?",
+      "cta": "Continue →",
+      "options": {
+        "meals": "Plan the week's meals",
+        "tasks": "Better manage family tasks",
+        "budget": "Track the family budget",
+        "agenda": "Never miss birthdays or appointments",
+        "photos": "Keep everyday memories",
+        "baby": "Track my child's growth"
+      }
+    },
+    "painPoints": {
+      "title": "What's making\nyour life harder?",
+      "subtitle": "Select everything that applies",
+      "cta": "Continue →",
+      "options": {
+        "scattered": "Everything is scattered across different apps",
+        "partner": "One of us is never in the loop",
+        "groceries": "We redo the grocery list every single time",
+        "dinner": "At 6pm we still don't know what to eat",
+        "budget": "We only realize we've overspent at the end of the month",
+        "photolost": "Family photos get lost in the phone",
+        "birthdays": "We forget important birthdays"
+      }
+    },
+    "socialProof": {
+      "title": "Families like yours\nare already organized with FamilyFlow.",
+      "cta": "Continue →",
+      "testimonials": [
+        {
+          "quote": "Finally an app where my husband and I see the same thing. Sunday night arguments are over.",
+          "name": "Julie M.",
+          "tag": "Mom of 2"
+        },
+        {
+          "quote": "The meal planner saved my life. I finally know what to put in my cart on Monday.",
+          "name": "Thomas R.",
+          "tag": "Dad of 3"
+        },
+        {
+          "quote": "My daughter's journal is complete, photos are organized. Exactly what I was looking for.",
+          "name": "Sarah D.",
+          "tag": "New mom"
+        }
+      ]
+    },
+    "mascot": {
+      "title": "Your family garden",
+      "subtitle": "Every completed task helps your garden grow. Unlock decorations, characters and adventures to share as a family.",
+      "features": {
+        "grow": "Watch it evolve from a seed to a legendary garden",
+        "sagas": "Interactive stories to follow as a family",
+        "rewards": "Earn leaves to personalize your space"
+      },
+      "cta": "Continue →"
+    },
+    "tinder": {
+      "title": "Do you recognize yourself?",
+      "subtitle": "Swipe right for yes, left for no",
+      "done": "We've got a good picture of you!",
+      "btnNo": "✗  Not me",
+      "btnYes": "✓  That's me",
+      "cards": [
+        "I'm still sending the week's meals by text to my partner…",
+        "Groceries? I improvise at the store and always forget something.",
+        "I don't know anymore if it's me or my partner who was supposed to call the doctor.",
+        "Family photos are somewhere in my phone. 3,000 photos. Good luck."
+      ]
+    },
+    "solution": {
+      "title": "Here's how\nFamilyFlow fixes that.",
+      "cta": "Continue →",
+      "items": {
+        "scattered": { "problem": "Everything scattered across apps", "solution": "One dashboard — everything in one place." },
+        "partner": { "problem": "One of you always out of the loop", "solution": "Shared with your family — same view, in real time." },
+        "groceries": { "problem": "Grocery list to redo every time", "solution": "Generated automatically from your planned meals." },
+        "dinner": { "problem": "What to eat tonight?", "solution": "Weekly meal planner + built-in recipes." },
+        "budget": { "problem": "Budget discovered overspent at month end", "solution": "Tracked as you go, visualized instantly." },
+        "photolost": { "problem": "Photos lost in the phone", "solution": "Photo of the day + organized journal for the whole family." },
+        "birthdays": { "problem": "Forgotten birthdays", "solution": "Automatic reminders 3 days before." }
+      }
+    },
+    "preferences": {
+      "title": "Which sections matter\nto you?",
+      "subtitle": "Pick at least 2 — you can change this later",
+      "cta": "See my dashboard →",
+      "sections": {
+        "meals": "Meals & Cooking",
+        "tasks": "Family tasks",
+        "budget": "Budget",
+        "agenda": "Calendar & Appointments",
+        "photos": "Photo of the day",
+        "baby": "Baby journal",
+        "routines": "Kids routines",
+        "health": "Health & Doctor"
+      }
+    },
+    "processing": {
+      "title": "Preparing your\ndashboard…",
+      "subtitle": "Personalizing your sections"
+    },
+    "dashboardPreview": {
+      "title": "Your dashboard,\nbefore you even start.",
+      "greeting": "Hello, Thomas 👋",
+      "date": "Wednesday, April 7",
+      "note": "This is exactly what you'll have —\nwith your real data.",
+      "cta": "Let's go! →"
+    },
+    "permCamera": {
+      "title": "Photo of the day,\nin 1 tap.",
+      "bullets": [
+        "Capture a moment every day",
+        "Find them in your family journal",
+        "Share with grandparents in one tap"
+      ],
+      "cta": "Enable camera →",
+      "skip": "Not now"
+    },
+    "permCalendar": {
+      "title": "Your birthdays,\nnever forgotten.",
+      "bullets": [
+        "Import from your contacts",
+        "Automatic reminders 3 days before",
+        "Synced with your calendar"
+      ],
+      "cta": "Access calendar →",
+      "skip": "Not now"
     }
   }
 }
