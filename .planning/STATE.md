@@ -1,18 +1,17 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.2
-milestone_name: "Confort & Découverte"
-status: active
+milestone_name: Confort & Découverte
 current_phase: 15
-current_phase_name: "préférences-alimentaires"
-stopped_at: v1.2 roadmap created — Phase 15 is next
-last_updated: "2026-04-07"
+status: Ready to execute
+stopped_at: Completed 15-01-catalogues-types-PLAN.md
+last_updated: "2026-04-07T21:44:52.458Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 7
+  completed_plans: 1
   percent: 0
 ---
 
@@ -23,12 +22,14 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** v1.2 Phase 15 — Préférences alimentaires (PREF-01..12, ARCH-03, ARCH-04)
+**Current focus:** Phase 15 — pr-f-rences-alimentaires
 
 ## Current Position
 
+Phase: 15 (pr-f-rences-alimentaires) — EXECUTING
+Plan: 2 of 7
 Milestone: v1.2 Confort & Découverte (active)
-Current phase: Phase 15 — Préférences alimentaires
+Current phase: 15
 Last shipped: v1.1 Ferme Enrichie (2026-04-07)
 Last activity: 2026-04-07
 
@@ -82,6 +83,7 @@ Progress: [░░░░░░░░░░] 0% (0/4 phases)
 | Phase 15-quetes-cooperatives-ferme P01 | 45min | 2 tasks | 8 files |
 | Phase 15-quetes-cooperatives-ferme P02 | 30min | 2 tasks | 5 files |
 | Phase 15-quetes-cooperatives-ferme P03 | 8min | 1 tasks | 5 files |
+| Phase 15-pr-f-rences-alimentaires P01 | 2min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -168,6 +170,9 @@ Recent decisions affecting current work:
 - [Phase 15-quetes-cooperatives-ferme]: Role gate UI dans tree.tsx (canStartQuest) et non dans FamilyQuestPickerSheet — picker generique, appelant controle l'acces
 - [Phase 15-quetes-cooperatives-ferme]: contribute élargi string (vs FamilyQuestType) pour compatibilité contravariance — aucun impact comportement runtime
 - [Phase 15-quetes-cooperatives-ferme]: questsHook initialisé AVANT defisHook dans useVault.ts pour rendre questsHook.contribute disponible comme onQuestProgress
+- [Phase 15-pr-f-rences-alimentaires]: IDs canoniques stables snake_case dans lib/dietary/catalogs.ts — jamais renommer après livraison pour compatibilité vault
+- [Phase 15-pr-f-rences-alimentaires]: GuestProfile séparé de Profile (sans gamification/role/avatar) — invités sans progression (D-03, PREF-06)
+- [Phase 15-pr-f-rences-alimentaires]: findCatalogForSeverity retourne [] pour 'aversion' — aversions texte libre uniquement, pas de catalogue (D-05)
 
 ### Pending Todos
 
@@ -208,6 +213,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-07
-Stopped at: v1.2 roadmap created — ready to plan Phase 15
+Last session: 2026-04-07T21:44:52.456Z
+Stopped at: Completed 15-01-catalogues-types-PLAN.md
 Resume file: None

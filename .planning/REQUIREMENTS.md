@@ -10,9 +10,9 @@ Requirements for milestone v1.2 — Confort & Découverte. L'app retient les dé
 
 ### Préférences alimentaires (Famille)
 
-- [ ] **PREF-01**: Le modèle de données distingue 4 sévérités : `allergie` (vital, jamais ignorable), `intolerance` (gênant), `regime` (choix : végé, halal…), `aversion` (préférence personnelle)
+- [x] **PREF-01**: Le modèle de données distingue 4 sévérités : `allergie` (vital, jamais ignorable), `intolerance` (gênant), `regime` (choix : végé, halal…), `aversion` (préférence personnelle)
 - [ ] **PREF-02**: Chaque membre famille a ses préférences alimentaires stockées comme clés plates dans `famille.md` (pattern identique à `farm_crops`/`farm_tech`) — une nouvelle clé par catégorie : `food_allergies`, `food_intolerances`, `food_regimes`, `food_aversions`
-- [ ] **PREF-03**: Un catalogue canonique des 14 allergènes UE (gluten, œufs, arachides, lait…) sert d'autocomplete et garantit la stabilité des IDs même quand l'utilisateur tape en français ou anglais
+- [x] **PREF-03**: Un catalogue canonique des 14 allergènes UE (gluten, œufs, arachides, lait…) sert d'autocomplete et garantit la stabilité des IDs même quand l'utilisateur tape en français ou anglais
 - [ ] **PREF-04**: L'utilisateur peut ajouter, modifier et supprimer une préférence alimentaire pour un membre famille via une UI dans le détail profil
 - [ ] **PREF-05**: La compatibilité bidirectionnelle Obsidian est préservée — modifier `famille.md` à la main reste valide, le parser tolère l'absence de toutes les clés food_*
 
@@ -87,9 +87,9 @@ Deferred to v1.3+.
 
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| PREF-01 | Phase 15 | Pending |
+| PREF-01 | Phase 15 | Complete |
 | PREF-02 | Phase 15 | Pending |
-| PREF-03 | Phase 15 | Pending |
+| PREF-03 | Phase 15 | Complete |
 | PREF-04 | Phase 15 | Pending |
 | PREF-05 | Phase 15 | Pending |
 | PREF-06 | Phase 15 | Pending |
