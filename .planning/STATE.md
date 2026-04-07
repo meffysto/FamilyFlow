@@ -1,13 +1,15 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.2
-milestone_name: ""
-status: planning
-stopped_at: v1.1 shipped
-last_updated: "2026-04-07T19:48:25.490Z"
+milestone_name: "Confort & Découverte"
+status: active
+current_phase: 15
+current_phase_name: "préférences-alimentaires"
+stopped_at: v1.2 roadmap created — Phase 15 is next
+last_updated: "2026-04-07"
 last_activity: 2026-04-07
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,21 +23,24 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** v1.2 — à définir (milestone vide, prochaine phase à créer)
+**Current focus:** v1.2 Phase 15 — Préférences alimentaires (PREF-01..12, ARCH-03, ARCH-04)
 
 ## Current Position
 
-Milestone: v1.2 (planning)
+Milestone: v1.2 Confort & Découverte (active)
+Current phase: Phase 15 — Préférences alimentaires
 Last shipped: v1.1 Ferme Enrichie (2026-04-07)
 Last activity: 2026-04-07
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [░░░░░░░░░░] 0% (0/4 phases)
+
+**Global constraint:** ARCH-05 — Aucune nouvelle dépendance npm sur toutes les phases 15-18
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0 (milestone v1.1)
+- Total plans completed: 0 (milestone v1.2)
 - Average duration: -
 - Total execution time: 0 hours
 
@@ -46,6 +51,9 @@ Progress: [░░░░░░░░░░] 0%
 | - | - | - | - |
 
 *Updated after each plan completion*
+
+--- v1.1 history preserved below ---
+
 | Phase 05-visuels-ferme P01 | 2 | 1 tasks | 1 files |
 | Phase 05-visuels-ferme P05-02 | 3 | 2 tasks | 103 files |
 | Phase 05-visuels-ferme P03 | 15 | 3 tasks | 1 files |
@@ -81,12 +89,17 @@ Progress: [░░░░░░░░░░] 0%
 
 - Phase 10 added: Compagnon Mascotte — compagnon interactif lié à la gamification, vit dans l'arbre, mascotte de l'app
 - Phase 12 added: Templates onboarding vivants — contenu personnalisé et complet
+- v1.2 roadmap created 2026-04-07: Phases 15-18 (préférences alimentaires, codex contenu, codex UI, tutoriel ferme)
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Init v1.2]: ARCH-05 global — zéro nouvelle dépendance npm sur l'ensemble du milestone v1.2
+- [Init v1.2]: PREF-11 P0 safety — badge allergie non-dismissible implémenté en priorité absolue avant les autres badges
+- [Init v1.2]: Phase 16 (codex contenu) séparée de Phase 17 (codex UI) — valider la précision du contenu en isolation avant toute UI
+- [Init v1.2]: TUTO-02 device-global — flag tutoriel vu persisté globalement par appareil dans SecureStore (pas par profil) via HelpContext.markScreenSeen('farm_tutorial')
 - [Init v1.1]: La ferme est le levier de motivation, pas le produit — chaque feature doit renforcer tâches → XP/récoltes → progression ferme → envie de refaire
 - [Phase 4]: AmbientParticles utilise largeur generique 390 car absoluteFill dans parent de taille connue
 - [Phase 4]: Couleurs dorées (#FFD700) définies dans StyleSheet comme constantes cosmétiques, pas dans useThemeColors()
@@ -162,15 +175,14 @@ None yet.
 
 ### Blockers/Concerns
 
-- Phase 6 (bâtiments): La formule de progression idle (ressources/heure) doit être calibrée contre le modèle XP budget de Phase 2. Ne pas finaliser les valeurs avant planning.
-- Phase 8 (tech tree): Vérifier si l'écran arbre existant (app/(tabs)/tree.tsx) peut accueillir la progression ferme ou si un onglet dédié est nécessaire.
+- Phase 18 (tutoriel): Spike de 2h recommandé en début de phase pour valider SVG spotlight + Reanimated 4 worklet thread — pattern absent du codebase actuel. Spotlight confirmé en scope v1.2 (décision utilisateur).
 
 ### Quick Tasks Completed
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260330-t4b | Refonte layout écran ferme Option B | 2026-03-30 | 149d6d1 | [260330-t4b-refonte-layout-cran-ferme-option-b](./quick/260330-t4b-refonte-layout-cran-ferme-option-b/) |
-| 260331-jro | Créer composant PressableScale + appliquer sur DashboardCard | 2026-03-31 | 103da8c | [260331-jro-cr-er-composant-pressablescale-appliquer](./quick/260331-jro-cr-er-composant-pressablescale-appliquer/) |
+| 260331-jro | Créer composant PressableScale + appliquer sur DashboardCard | 2026-03-31 | 103da8c | [260331-jro-cr-er-composant-pressablescale-appliquer/) |
 | 260331-jzy | Ajouter prop tinted sur DashboardCard pour fond subtil coloré par section | 2026-03-31 | 3549bab | [260331-jzy-ajouter-prop-tinted-sur-dashboardcard-po](./quick/260331-jzy-ajouter-prop-tinted-sur-dashboardcard-po/) |
 | 260402-vpb | Refonte catalogue CraftSheet en grille par stade + mini-modal | 2026-04-02 | a802822 | [260402-vpb-refonte-catalogue-recettes-craftsheet-gr](./quick/260402-vpb-refonte-catalogue-recettes-craftsheet-gr/) |
 | 260402-wbr | Refonte bottom panel ecran arbre — 2 cartes Actions + Progression | 2026-04-02 | 8b503a3 | [260402-wbr-refonte-bottom-panel-cran-arbre-option-c](./quick/260402-wbr-refonte-bottom-panel-cran-arbre-option-c/) |
@@ -196,6 +208,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-07T07:53:27.524Z
-Stopped at: Completed 15-03-PLAN.md
+Last session: 2026-04-07
+Stopped at: v1.2 roadmap created — ready to plan Phase 15
 Resume file: None
