@@ -99,6 +99,8 @@ import { useVaultFamilyQuests } from './useVaultFamilyQuests';
 import { parseFamilyQuests, FAMILY_QUESTS_FILE } from '../lib/parser';
 import type { FamilyQuest } from '../lib/quest-engine';
 import { useVaultProfiles, ACTIVE_PROFILE_KEY } from './useVaultProfiles';
+import { useVaultDietary } from './useVaultDietary';
+import type { VaultDietaryState } from './useVaultDietary';
 
 export const VAULT_PATH_KEY = 'vault_path';
 export { ACTIVE_PROFILE_KEY } from './useVaultProfiles';
@@ -268,6 +270,8 @@ export interface VaultState {
   markLootUsed: (loot: UsedLoot) => Promise<void>;
   setCompanion: (profileId: string, companion: CompanionData) => Promise<void>;
   unlockCompanion: (profileId: string, speciesId: CompanionSpecies) => Promise<void>;
+  /** Préférences alimentaires famille + invités (Phase 15 — PREF-02/06/07) */
+  dietary: VaultDietaryState;
 }
 
 // Static task files (non-enfant)
@@ -501,6 +505,9 @@ export function useVaultInternal(): VaultState {
   // Domaine Profils délégué à useVaultProfiles
   const profilesHook = useVaultProfiles(vaultRef, setGamiData, tasksHook.setTasks);
   const { profiles, setProfiles, activeProfileId, setActiveProfileId, activeProfile, ageUpgrades, setAgeUpgrades } = profilesHook;
+
+  // Domaine Préférences alimentaires — initialisé APRÈS profilesHook (dépend de reloadProfiles)
+  const dietaryHook = useVaultDietary(vaultRef, profiles, profilesHook.refreshGamification);
 
   // Domaine Recettes délégué à useVaultRecipes
   const recipesHook = useVaultRecipes(vaultRef, profiles);
@@ -1608,6 +1615,7 @@ export function useVaultInternal(): VaultState {
     markLootUsed,
     setCompanion,
     unlockCompanion,
+    dietary: dietaryHook,
   }), [
     // State values (déclenchent un re-render quand ils changent)
     vaultPath, isLoading, error, tasks, courses, stock, meals,
@@ -1633,5 +1641,6 @@ export function useVaultInternal(): VaultState {
     missionsHook,
     completeAdventure, completeSagaChapter, markLootUsed,
     setCompanion, unlockCompanion,
+    dietaryHook,
   ]);
 }
