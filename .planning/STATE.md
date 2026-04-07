@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Ferme Enrichie
-status: verifying
-stopped_at: Completed 15-03-PLAN.md
-last_updated: "2026-04-07T19:45:35.855Z"
+milestone: v1.2
+milestone_name: ""
+status: planning
+stopped_at: v1.1 shipped
+last_updated: "2026-04-07T19:48:25.490Z"
 last_activity: 2026-04-07
 progress:
-  total_phases: 9
-  completed_phases: 9
-  total_plans: 22
-  completed_plans: 22
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
   percent: 0
 ---
 
@@ -18,16 +18,15 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-28)
+See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 15 — quetes-cooperatives-ferme
+**Current focus:** v1.2 — à définir (milestone vide, prochaine phase à créer)
 
 ## Current Position
 
-Phase: 15 (quetes-cooperatives-ferme) — EXECUTING
-Plan: 2 of 2
-Status: Phase complete — ready for verification
+Milestone: v1.2 (planning)
+Last shipped: v1.1 Ferme Enrichie (2026-04-07)
 Last activity: 2026-04-07
 
 Progress: [░░░░░░░░░░] 0%
