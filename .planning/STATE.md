@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
 status: verifying
-stopped_at: Completed 15-02-PLAN.md
-last_updated: "2026-04-07T07:19:49.682Z"
+stopped_at: Completed 15-03-PLAN.md
+last_updated: "2026-04-07T07:53:27.528Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 12
   completed_phases: 11
-  total_plans: 35
-  completed_plans: 33
+  total_plans: 36
+  completed_plans: 34
   percent: 0
 ---
 
@@ -74,6 +74,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 14-parite-mobile-desktop PP08 | 5min | 3 tasks | 14 files |
 | Phase 15-quetes-cooperatives-ferme P01 | 45min | 2 tasks | 8 files |
 | Phase 15-quetes-cooperatives-ferme P02 | 30min | 2 tasks | 5 files |
+| Phase 15-quetes-cooperatives-ferme P03 | 8min | 1 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -153,6 +154,8 @@ Recent decisions affecting current work:
 - [Phase 15-quetes-cooperatives-ferme]: primary passe en prop separee de colors — useThemeColors retourne primary et colors comme valeurs distinctes, les composants acceptent les deux
 - [Phase 15-quetes-cooperatives-ferme]: getRewardLabel exporte depuis FamilyQuestBanner et reutilise dans Detail et Picker — une seule source de verite pour les 11 types de recompense
 - [Phase 15-quetes-cooperatives-ferme]: Role gate UI dans tree.tsx (canStartQuest) et non dans FamilyQuestPickerSheet — picker generique, appelant controle l'acces
+- [Phase 15-quetes-cooperatives-ferme]: contribute élargi string (vs FamilyQuestType) pour compatibilité contravariance — aucun impact comportement runtime
+- [Phase 15-quetes-cooperatives-ferme]: questsHook initialisé AVANT defisHook dans useVault.ts pour rendre questsHook.contribute disponible comme onQuestProgress
 
 ### Pending Todos
 
@@ -194,6 +197,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-07T07:19:49.679Z
-Stopped at: Completed 15-02-PLAN.md
+Last session: 2026-04-07T07:53:27.524Z
+Stopped at: Completed 15-03-PLAN.md
 Resume file: None

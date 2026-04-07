@@ -226,7 +226,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 12. Templates Onboarding | v1.1 | 0/2 | Not started | - |
 | 13. Événements Saisonniers | v1.1 | 2/2 | Complete    | 2026-04-03 |
 | 14. Parité Mobile ↔ Desktop | v1.1 | 9/9 | Complete    | 2026-04-05 |
-| 15. Quêtes Coopératives Ferme | v1.1 | 2/2 | Complete   | 2026-04-07 |
+| 15. Quêtes Coopératives Ferme | v1.1 | 3/3 | Complete   | 2026-04-07 |
 
 ### Phase 12: Templates onboarding vivants — contenu personnalisé et complet
 
@@ -291,7 +291,7 @@ Plans:
   3. Les récompenses de quête sont des effets ferme concrets et variés (accélération cultures, graines rares, bâtiment offert, trophée permanent, coffre légendaire garanti)
   4. La progression et les quêtes complétées sont persistées dans family-quests.md et survivent à un redémarrage
   5. `npx tsc --noEmit` passe sans nouvelles erreurs
-**Plans:** 2/2 plans complete
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 15-01-PLAN.md — Types quest-engine + parser + hook domaine + callbacks progression
