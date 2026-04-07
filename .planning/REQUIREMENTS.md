@@ -24,7 +24,7 @@ Requirements for milestone v1.2 — Confort & Découverte. L'app retient les dé
 
 ### Détection des conflits recettes / repas
 
-- [ ] **PREF-09**: Une fonction pure `checkAllergens(recipe, profileIds)` dans `lib/dietary.ts` croise les ingrédients d'une recette `.cook` avec les préférences des convives sélectionnés et retourne la liste des conflits par sévérité
+- [x] **PREF-09**: Une fonction pure `checkAllergens(recipe, profileIds)` dans `lib/dietary.ts` croise les ingrédients d'une recette `.cook` avec les préférences des convives sélectionnés et retourne la liste des conflits par sévérité
 - [x] **PREF-10**: L'écran détail recette affiche un badge de conflit visuel quand une préférence est touchée — couleurs et iconographie distinctes par sévérité (rouge non-dismissible pour `allergie`, orange pour `intolerance`, jaune pour `regime`/`aversion`)
 - [x] **PREF-11**: **[P0 SAFETY]** Un conflit de sévérité `allergie` ne peut JAMAIS être masqué ou dismissé par l'utilisateur — le badge reste visible en permanence sur l'affichage recette
 - [ ] **PREF-12**: Le planificateur de repas hebdomadaire affiche un récap des contraintes combinées quand plusieurs convives sont sélectionnés pour un repas
@@ -59,7 +59,7 @@ Requirements for milestone v1.2 — Confort & Découverte. L'app retient les dé
 
 ### Architecture & Sécurité
 
-- [ ] **ARCH-03**: La fonction `checkAllergens` est testée unitairement avec au moins 5 cas (allergie évidente, intolérance évidente, faux positif évité, faux négatif détecté, recette sans ingrédient critique) — la sécurité allergène ne tolère pas de bug silencieux
+- [x] **ARCH-03**: La fonction `checkAllergens` est testée unitairement avec au moins 5 cas (allergie évidente, intolérance évidente, faux positif évité, faux négatif détecté, recette sans ingrédient critique) — la sécurité allergène ne tolère pas de bug silencieux
 - [ ] **ARCH-04**: Le hook `useVault.ts` n'inflate pas — les préférences alimentaires sont embarquées dans le `Profile` existant via `parseProfile`/`serializeProfile` étendus, pas un nouveau slice de state ni un nouveau `useMemo`
 - [ ] **ARCH-05**: Aucune nouvelle dépendance npm — toutes les UI primitives, le SVG (`react-native-svg` déjà installé) et les patterns sont déjà disponibles dans le codebase
 
@@ -95,7 +95,7 @@ Deferred to v1.3+.
 | PREF-06 | Phase 15 | Pending |
 | PREF-07 | Phase 15 | Pending |
 | PREF-08 | Phase 15 | Pending |
-| PREF-09 | Phase 15 | Pending |
+| PREF-09 | Phase 15 | Complete |
 | PREF-10 | Phase 15 | Complete |
 | PREF-11 | Phase 15 | Complete |
 | PREF-12 | Phase 15 | Pending |
@@ -118,6 +118,6 @@ Deferred to v1.3+.
 | TUTO-06 | Phase 18 | Pending |
 | TUTO-07 | Phase 18 | Pending |
 | TUTO-08 | Phase 18 | Pending |
-| ARCH-03 | Phase 15 | Pending |
+| ARCH-03 | Phase 15 | Complete |
 | ARCH-04 | Phase 15 | Pending |
 | ARCH-05 | Phase 15-18 | Pending |

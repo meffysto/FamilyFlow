@@ -36,7 +36,7 @@
 **Plans**: 7 plans
 - [x] 15-01-catalogues-types-PLAN.md — Types DietarySeverity/Conflict/GuestProfile + 3 catalogues canoniques (EU allergens, intolérances, régimes)
 - [ ] 15-02-parser-famille-invites-PLAN.md — Extension parseFamille/serializeFamille food_* + parseInvites/serializeInvites + tests round-trip PREF-05
-- [ ] 15-03-check-allergens-PLAN.md — Fonction pure checkAllergens TDD + 5 tests ARCH-03
+- [x] 15-03-check-allergens-PLAN.md — Fonction pure checkAllergens TDD + 5 tests ARCH-03
 - [x] 15-04-allergen-banner-p0-PLAN.md — Composant AllergenBanner P0 SAFETY (PREF-11) + test enforcement statique
 - [ ] 15-05-hook-ecran-dietary-PLAN.md — Hook useVaultDietary + écran dietary.tsx + ProfileFoodCard + lien more.tsx
 - [ ] 15-06-integration-recipe-meals-PLAN.md — RecipeViewer (bandeau + badges inline + ConvivesPickerModal) + MealConflictRecap dans meals.tsx
@@ -84,7 +84,7 @@
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 15. Préférences alimentaires | v1.2 | 2/7 | In Progress|  |
+| 15. Préférences alimentaires | v1.2 | 3/7 | In Progress|  |
 | 16. Codex contenu | v1.2 | 0/? | Not started | - |
 | 17. Codex UI | v1.2 | 0/? | Not started | - |
 | 18. Tutoriel ferme | v1.2 | 0/? | Not started | - |
