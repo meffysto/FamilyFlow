@@ -35,6 +35,7 @@ interface FamilyQuestDetailSheetProps {
   quest: FamilyQuest;
   profiles: Profile[];
   colors: any;
+  primary: string;
   t: (key: string, opts?: any) => string;
   visible: boolean;
   onClose: () => void;
@@ -58,6 +59,7 @@ function FamilyQuestDetailSheetInner({
   quest,
   profiles,
   colors,
+  primary,
   t,
   visible,
   onClose,
@@ -125,7 +127,7 @@ function FamilyQuestDetailSheetInner({
                 styles.contribFill,
                 {
                   width: `${indivProgress * 100}%`,
-                  backgroundColor: colors.primary,
+                  backgroundColor: primary,
                 },
               ]}
             />
@@ -164,7 +166,7 @@ function FamilyQuestDetailSheetInner({
                   styles.bigProgressFill,
                   {
                     width: `${progress * 100}%`,
-                    backgroundColor: isComplete ? colors.success : colors.primary,
+                    backgroundColor: isComplete ? colors.success : primary,
                   },
                 ]}
               />
@@ -226,7 +228,7 @@ function FamilyQuestDetailSheetInner({
           {/* Bouton Compléter */}
           {isComplete && (
             <TouchableOpacity
-              style={[styles.completeBtn, { backgroundColor: colors.primary }]}
+              style={[styles.completeBtn, { backgroundColor: primary }]}
               onPress={handleComplete}
               activeOpacity={0.8}
             >

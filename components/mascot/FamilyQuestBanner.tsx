@@ -55,13 +55,14 @@ interface FamilyQuestBannerProps {
   quest: FamilyQuest;
   profiles: Profile[];
   colors: any;
+  primary: string;
   t: (key: string, opts?: any) => string;
   onPress: () => void;
 }
 
 // ─── Composant ────────────────────────────────────────────────────────────────
 
-function FamilyQuestBannerInner({ quest, profiles, colors, t, onPress }: FamilyQuestBannerProps) {
+function FamilyQuestBannerInner({ quest, profiles, colors, primary, t, onPress }: FamilyQuestBannerProps) {
   const progress = Math.min(1, quest.target > 0 ? quest.current / quest.target : 0);
   const daysLeft = Math.max(0, differenceInDays(parseISO(quest.endDate), new Date()));
   const rewardLabel = getRewardLabel(quest.farmReward);
@@ -95,7 +96,7 @@ function FamilyQuestBannerInner({ quest, profiles, colors, t, onPress }: FamilyQ
               styles.progressFill,
               {
                 width: `${progress * 100}%`,
-                backgroundColor: colors.primary,
+                backgroundColor: primary,
               },
             ]}
           />
