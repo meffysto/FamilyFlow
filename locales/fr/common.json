@@ -59,7 +59,7 @@
       "quotes": "Mots d'enfants",
       "gratitude": "Gratitude",
       "skills": "Compétences",
-      "tree": "Mon arbre",
+      "tree": "Mon jardin",
       "rewards": "Récompenses",
       "challenges": "Défis",
       "birthdays": "Anniversaires",
@@ -3326,7 +3326,7 @@
       "ctaChild": "Mon arbre !"
     },
     "screen": {
-      "title": "Mon arbre",
+      "title": "Mon jardin",
       "level": "niveau",
       "xpProgress": "Progression XP",
       "nextEvolution": "Prochaine évolution",

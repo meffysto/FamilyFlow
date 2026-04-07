@@ -286,7 +286,7 @@ export default function TreeScreen() {
   const { t } = useTranslation();
   const { primary, tint, colors, isDark } = useThemeColors();
   const insets = useSafeAreaInsets();
-  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem, unplaceMascotItem, gamiData, setCompanion, tasks, rdvs, meals, completeSagaChapter, familyQuests, startFamilyQuest, completeFamilyQuest, deleteFamilyQuest, contributeFamilyQuest } = useVault();
+  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem, unplaceMascotItem, gamiData, setCompanion, tasks, rdvs, meals, completeSagaChapter, familyQuests, unlockedRecipes, startFamilyQuest, completeFamilyQuest, deleteFamilyQuest, contributeFamilyQuest } = useVault();
   const { showToast } = useToast();
   const { config: aiConfig } = useAI();
   const { hasSeenScreen, markScreenSeen, isLoaded: helpLoaded } = useHelp();
@@ -1328,7 +1328,7 @@ export default function TreeScreen() {
       >
 
         {/* Bandeau saga active */}
-        {activeSaga && sagaProgress && (
+        {activeSaga && sagaProgress && sagaProgress.status !== 'completed' && (
           <Animated.View entering={FadeIn.duration(300)}>
             <View style={[styles.seasonBadge, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
               <Text style={[styles.seasonText, { color: colors.textSub }]}>
@@ -2077,6 +2077,7 @@ export default function TreeScreen() {
         farmInventory={profile?.farmInventory ?? { oeuf: 0, lait: 0, farine: 0, miel: 0 }}
         craftedItems={profile?.craftedItems ?? []}
         treeStage={stageInfo.stage}
+        unlockedRecipes={unlockedRecipes}
         onCraft={async (recipeId) => {
           const result = await craft(profile!.id, recipeId);
           if (result) triggerActionMsg('craft');
