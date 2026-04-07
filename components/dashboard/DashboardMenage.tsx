@@ -23,7 +23,8 @@ function DashboardMenageInner({ vaultFileExists, activateCardTemplate, handleTas
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const maisonTasks = tasks.filter((t) =>
-    t.sourceFile.includes('Maison') && t.dueDate && t.dueDate <= todayStr
+    t.sourceFile.includes('Maison') &&
+    ((t.dueDate && t.dueDate <= todayStr) || t.completedDate === todayStr)
   );
   const pendingMaison = maisonTasks.filter((t) => !t.completed);
   const totalMaison = maisonTasks.length;
