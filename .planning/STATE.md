@@ -4,14 +4,14 @@ milestone: v1.2
 milestone_name: Confort & Découverte
 current_phase: 15
 status: Ready to execute
-stopped_at: Completed 15-05-hook-ecran-dietary-PLAN.md
-last_updated: "2026-04-07T22:00:15.014Z"
+stopped_at: Completed 15-06-integration-recipe-meals-PLAN.md
+last_updated: "2026-04-07T22:07:22.570Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 7
-  completed_plans: 5
+  completed_plans: 6
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 15 (pr-f-rences-alimentaires) — EXECUTING
-Plan: 6 of 7
+Plan: 7 of 7
 Milestone: v1.2 Confort & Découverte (active)
 Current phase: 15
 Last shipped: v1.1 Ferme Enrichie (2026-04-07)
@@ -88,6 +88,7 @@ Progress: [░░░░░░░░░░] 0% (0/4 phases)
 | Phase 15 P03 | 10min | 1 tasks | 2 files |
 | Phase 15-pr-f-rences-alimentaires P02 | 4min | 2 tasks | 3 files |
 | Phase 15-pr-f-rences-alimentaires P05 | 6min | 2 tasks | 7 files |
+| Phase 15 P06 | 4min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -184,6 +185,7 @@ Recent decisions affecting current work:
 - [Phase 15-pr-f-rences-alimentaires]: parseInvites génère IDs via slugifyInviteName (NFD + lowercase + underscore) avec suffixe collision _2/_3
 - [Phase 15-05]: refreshGamification() utilisé comme reloadProfiles dans useVaultDietary — re-lit famille.md et synchro tous les profils React state
 - [Phase 15-05]: ProfileFoodCard : cast getItems via GuestProfile au lieu de Record<string,unknown> pour compatibilité TypeScript stricte
+- [Phase 15]: MealConflictWrapper sous-composant créé pour encapsuler useMemo dans le map() de meals.tsx (hooks interdits dans callbacks)
 
 ### Pending Todos
 
@@ -224,6 +226,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-07T22:00:15.011Z
-Stopped at: Completed 15-05-hook-ecran-dietary-PLAN.md
+Last session: 2026-04-07T22:07:22.567Z
+Stopped at: Completed 15-06-integration-recipe-meals-PLAN.md
 Resume file: None

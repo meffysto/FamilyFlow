@@ -20,14 +20,14 @@ Requirements for milestone v1.2 — Confort & Découverte. L'app retient les dé
 
 - [x] **PREF-06**: Un fichier dédié `02 - Famille/Invités.md` stocke la liste des invités récurrents avec une section H2 par invité (nom + préférences, pas de gamification ni profil complet) — pattern identique à `wishlist`
 - [x] **PREF-07**: L'utilisateur peut créer, modifier et supprimer un invité avec ses préférences depuis l'écran préférences alimentaires
-- [ ] **PREF-08**: Les invités apparaissent dans le sélecteur de "qui mange ce soir" au même titre que les membres famille
+- [x] **PREF-08**: Les invités apparaissent dans le sélecteur de "qui mange ce soir" au même titre que les membres famille
 
 ### Détection des conflits recettes / repas
 
 - [x] **PREF-09**: Une fonction pure `checkAllergens(recipe, profileIds)` dans `lib/dietary.ts` croise les ingrédients d'une recette `.cook` avec les préférences des convives sélectionnés et retourne la liste des conflits par sévérité
 - [x] **PREF-10**: L'écran détail recette affiche un badge de conflit visuel quand une préférence est touchée — couleurs et iconographie distinctes par sévérité (rouge non-dismissible pour `allergie`, orange pour `intolerance`, jaune pour `regime`/`aversion`)
 - [x] **PREF-11**: **[P0 SAFETY]** Un conflit de sévérité `allergie` ne peut JAMAIS être masqué ou dismissé par l'utilisateur — le badge reste visible en permanence sur l'affichage recette
-- [ ] **PREF-12**: Le planificateur de repas hebdomadaire affiche un récap des contraintes combinées quand plusieurs convives sont sélectionnés pour un repas
+- [x] **PREF-12**: Le planificateur de repas hebdomadaire affiche un récap des contraintes combinées quand plusieurs convives sont sélectionnés pour un repas
 - [ ] **PREF-13**: L'utilisateur peut saisir des préférences alimentaires à la voix via le `DictaphoneRecorder` existant — la transcription est interprétée par l'IA (Claude via `lib/ai-service.ts`) pour extraire les contraintes structurées (sévérité + items canoniques) et les ajouter au profil cible
 
 ### Codex ferme — Contenu
@@ -94,11 +94,11 @@ Deferred to v1.3+.
 | PREF-05 | Phase 15 | Complete |
 | PREF-06 | Phase 15 | Complete |
 | PREF-07 | Phase 15 | Complete |
-| PREF-08 | Phase 15 | Pending |
+| PREF-08 | Phase 15 | Complete |
 | PREF-09 | Phase 15 | Complete |
 | PREF-10 | Phase 15 | Complete |
 | PREF-11 | Phase 15 | Complete |
-| PREF-12 | Phase 15 | Pending |
+| PREF-12 | Phase 15 | Complete |
 | PREF-13 | Phase 15 | Pending |
 | CODEX-01 | Phase 16 | Pending |
 | CODEX-02 | Phase 16 | Pending |
