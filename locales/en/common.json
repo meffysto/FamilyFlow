@@ -4337,9 +4337,9 @@
   },
   "onboarding": {
     "welcome": {
-      "greeting": "Hello, Thomas 👋",
+      "greeting": "Hello 👋",
       "title": "Your family,\norganized. Finally.",
-      "subtitle": "Tasks, meals, budget, memories —\neverything in one place, shared with your family.",
+      "subtitle": "Tasks, meals, budget, memories —\nall in one place for the whole family.",
       "cta": "Get started →"
     },
     "goal": {
@@ -4378,9 +4378,10 @@
           "tag": "Mom of 2"
         },
         {
-          "quote": "The meal planner saved my life. I finally know what to put in my cart on Monday.",
-          "name": "Thomas R.",
-          "tag": "Dad of 3"
+          "quote": "The kids now argue over who gets to do the vacuuming. We never saw that coming.",
+          "name": "Marie L.",
+          "tag": "Mom of 3",
+          "badge": "Featured"
         },
         {
           "quote": "My daughter's journal is complete, photos are organized. Exactly what I was looking for.",
@@ -4390,12 +4391,12 @@
       ]
     },
     "mascot": {
-      "title": "Your family garden",
-      "subtitle": "Every completed task helps your garden grow. Unlock decorations, characters and adventures to share as a family.",
+      "title": "Your tasks come to life",
+      "subtitle": "Every chore grows your farm. Build it together.",
       "features": {
-        "grow": "Watch it evolve from a seed to a legendary garden",
-        "sagas": "Interactive stories to follow as a family",
-        "rewards": "Earn leaves to personalize your space"
+        "grow": "From a seed to a legendary farm",
+        "sagas": "Interactive sagas as a family",
+        "rewards": "Earn rewards together"
       },
       "cta": "Continue →"
     },
@@ -4446,7 +4447,7 @@
     },
     "dashboardPreview": {
       "title": "Your dashboard,\nbefore you even start.",
-      "greeting": "Hello, Thomas 👋",
+      "greeting": "Hello 👋",
       "date": "Wednesday, April 7",
       "note": "This is exactly what you'll have —\nwith your real data.",
       "cta": "Let's go! →"

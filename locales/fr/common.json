@@ -4337,9 +4337,9 @@
   },
   "onboarding": {
     "welcome": {
-      "greeting": "Bonjour, Thomas 👋",
+      "greeting": "Bonjour 👋",
       "title": "Votre famille,\norganisée. Enfin.",
-      "subtitle": "Tâches, repas, budget, souvenirs —\ntout au même endroit, synchronisé en famille.",
+      "subtitle": "Tâches, repas, budget, souvenirs —\ntout réuni au même endroit pour toute la famille.",
       "cta": "Commencer →"
     },
     "goal": {
@@ -4378,9 +4378,10 @@
           "tag": "Mère de 2 enfants"
         },
         {
-          "quote": "Le planning repas m'a sauvé la vie. Je sais enfin quoi mettre dans mon panier le lundi.",
-          "name": "Thomas R.",
-          "tag": "Père de 3 enfants"
+          "quote": "Les enfants se disputent maintenant pour savoir qui va passer l'aspirateur. On n'avait pas prévu ça.",
+          "name": "Marie L.",
+          "tag": "Mère de 3 enfants",
+          "badge": "Recommandé"
         },
         {
           "quote": "Le journal de ma fille est complet, les photos sont rangées. C'est exactement ce que je cherchais.",
@@ -4390,12 +4391,12 @@
       ]
     },
     "mascot": {
-      "title": "Votre jardin familial",
-      "subtitle": "Chaque tâche accomplie fait pousser votre jardin. Débloquez des décorations, des habitants et des aventures à vivre ensemble.",
+      "title": "Vos tâches prennent vie",
+      "subtitle": "Chaque corvée accomplie fait grandir votre ferme. Cultivez ensemble.",
       "features": {
-        "grow": "Regardez-le évoluer de graine en jardin légendaire",
-        "sagas": "Des histoires interactives à suivre en famille",
-        "rewards": "Gagnez des feuilles pour personnaliser votre espace"
+        "grow": "De la graine au jardin légendaire",
+        "sagas": "Des sagas interactives en famille",
+        "rewards": "Récoltez des récompenses ensemble"
       },
       "cta": "Continuer →"
     },
@@ -4418,9 +4419,9 @@
       "items": {
         "scattered": { "problem": "Tout éparpillé dans des applications", "solution": "Un tableau de bord unique — tout en un." },
         "partner": { "problem": "L'un de vous pas au courant", "solution": "Partagé en famille — même vue, en temps réel." },
-        "groceries": { "problem": "Liste de courses à refaire chaque fois", "solution": "Générée automatiquement depuis vos repas planifiés." },
-        "dinner": { "problem": "Quoi manger ce soir ?", "solution": "Planning repas hebdo + recettes intégrées." },
-        "budget": { "problem": "Budget découvert en fin de mois", "solution": "Suivi au fil de l'eau, visualisation immédiate." },
+        "groceries": { "problem": "Liste de courses à refaire chaque fois", "solution": "Générée à partir de votre menu de la semaine." },
+        "dinner": { "problem": "Quoi manger ce soir ?", "solution": "Planning repas hebdo + vos recettes favorites." },
+        "budget": { "problem": "Budget découvert en fin de mois", "solution": "Suivi en temps réel, visible d'un coup d'œil." },
         "photolost": { "problem": "Photos perdues dans le téléphone", "solution": "Photo du jour + journal organisé pour toute la famille." },
         "birthdays": { "problem": "Anniversaires oubliés", "solution": "Rappels automatiques 3 jours avant." }
       }
@@ -4446,13 +4447,13 @@
     },
     "dashboardPreview": {
       "title": "Votre tableau de bord,\navant même de commencer.",
-      "greeting": "Bonjour, Thomas 👋",
+      "greeting": "Bonjour 👋",
       "date": "Mercredi 7 avril",
       "note": "C'est exactement ce que vous aurez —\navec vos vraies données.",
       "cta": "C'est parti ! →"
     },
     "permCamera": {
-      "title": "La photo du jour,\nen 1 tap.",
+      "title": "La photo du jour,\nen un geste.",
       "bullets": [
         "Capturez un moment chaque jour",
         "Retrouvez-les dans votre journal famille",
@@ -4466,7 +4467,7 @@
       "bullets": [
         "Importez depuis vos contacts",
         "Rappels automatiques 3 jours avant",
-        "Synchronisé avec votre agenda"
+        "Lié à votre agenda"
       ],
       "cta": "Accéder au calendrier →",
       "skip": "Pas maintenant"
