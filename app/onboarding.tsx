@@ -121,17 +121,15 @@ const DASHBOARD_SECTIONS = [
 type SectionId = typeof DASHBOARD_SECTIONS[number]['id'];
 
 
-// Fake data pour le dashboard preview (famille fictive)
-const DEMO_SECTION_DATA: Record<SectionId, { lines: string[] }> = {
-  meals:    { lines: ['Ce soir : Spaghetti bolognaise 🍝', 'Demain : Poulet rôti 🍗'] },
-  tasks:    { lines: ['• Appeler école de Léa ⏰', '• Pharmacie — vitamine D', '• Renouveler carte bleue'] },
-  budget:   { lines: ['1 240 € / 2 000 € ce mois', '████████░░  62 %'] },
-  agenda:   { lines: ['Demain — Dentiste Léa 14h30', 'Vendredi — Anniversaire grand-mère 🎂'] },
-  photos:   { lines: ['📸 Photo du jour — Parc avec Léa', '7 photos cette semaine'] },
-  baby:     { lines: ['Léa — 18 mois 👶', 'Dernier poids : 10,8 kg • Taille : 80 cm'] },
-  routines: { lines: ['Matin : 🎒 École ✓  🦷 Dents ✓  🛁 Bain ✓', 'Soir : 📖 Histoire ✓  💡 Veilleuse ✓'] },
-  health:   { lines: ['Dr Dupont — Lundi prochain 10h', 'Dernier vaccin : il y a 3 mois'] },
-};
+// ─── Helper tinte de couleur ──────────────────────────────────────────────────
+
+function hexToRgba(hex: string, alpha: number): string {
+  if (hex.startsWith('rgb')) return hex.replace(/[\d.]+\)$/, `${alpha})`);
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
 
 // ─── Composant : Barre de progression ────────────────────────────────────────
 
@@ -261,22 +259,193 @@ function TinderCard({ text, onSwipe, index, total }: TinderCardProps) {
 
 // ─── Composant : Preview section dashboard ────────────────────────────────────
 
-function DemoSectionCard({ sectionId, colors }: { sectionId: SectionId; colors: any }) {
+function DemoSectionCard({ sectionId, colors, primary, isDark }: {
+  sectionId: SectionId;
+  colors: any;
+  primary: string;
+  isDark: boolean;
+}) {
   const { t } = useTranslation();
-  const section = DASHBOARD_SECTIONS.find((s) => s.id === sectionId)!;
-  const data = DEMO_SECTION_DATA[sectionId];
+
+  const sectionConfig: Record<SectionId, { icon: string; accentColor: string }> = {
+    tasks:    { icon: '✅', accentColor: primary },
+    meals:    { icon: '🍽️', accentColor: colors.catOrganisation },
+    budget:   { icon: '💰', accentColor: colors.catFamille },
+    agenda:   { icon: '📅', accentColor: colors.catOrganisation },
+    photos:   { icon: '📸', accentColor: colors.catSouvenirs },
+    baby:     { icon: '👶', accentColor: colors.catFamille },
+    routines: { icon: '🏃', accentColor: colors.catJeux },
+    health:   { icon: '💊', accentColor: colors.catSante },
+  };
+
+  const { icon, accentColor } = sectionConfig[sectionId];
+  const tintBg = hexToRgba(accentColor, isDark ? 0.12 : 0.07);
+  const badgeCount = sectionId === 'tasks' ? 2 : sectionId === 'agenda' ? 2 : undefined;
+
+  const renderContent = () => {
+    switch (sectionId) {
+      case 'tasks':
+        return (
+          <>
+            {([
+              { done: true,  text: "Appeler l'école de Léa" },
+              { done: false, text: 'Pharmacie — vitamine D' },
+              { done: false, text: 'Renouveler carte bleue' },
+            ] as { done: boolean; text: string }[]).map((item, i) => (
+              <View key={i} style={demoS.taskRow}>
+                <View style={[demoS.checkbox, {
+                  borderColor: item.done ? accentColor : colors.border,
+                  backgroundColor: item.done ? accentColor : 'transparent',
+                }]}>
+                  {item.done && <Text style={demoS.checkboxTick}>✓</Text>}
+                </View>
+                <Text
+                  style={[demoS.taskText, { color: item.done ? colors.textMuted : colors.text }, item.done && demoS.taskDone]}
+                  numberOfLines={1}
+                >
+                  {item.text}
+                </Text>
+              </View>
+            ))}
+          </>
+        );
+
+      case 'meals':
+        return (
+          <>
+            {[
+              { emoji: '🥐', type: 'Petit-déj', text: 'Pancakes myrtilles' },
+              { emoji: '🌙', type: 'Dîner',     text: 'Spaghetti bolognaise' },
+            ].map((meal, i) => (
+              <View key={i} style={demoS.mealRow}>
+                <Text style={demoS.mealEmoji}>{meal.emoji}</Text>
+                <View>
+                  <Text style={[demoS.mealType, { color: colors.textMuted }]}>{meal.type}</Text>
+                  <Text style={[demoS.mealText, { color: colors.text }]} numberOfLines={1}>{meal.text}</Text>
+                </View>
+              </View>
+            ))}
+          </>
+        );
+
+      case 'budget':
+        return (
+          <>
+            <Text style={[demoS.budgetPct, { color: accentColor }]}>62%</Text>
+            <View style={[demoS.budgetTrack, { backgroundColor: colors.cardAlt }]}>
+              <View style={[demoS.budgetFill, { width: '62%', backgroundColor: accentColor }]} />
+            </View>
+            <Text style={[demoS.budgetMicro, { color: colors.textMuted }]}>1 240 € / 2 000 €</Text>
+          </>
+        );
+
+      case 'agenda':
+        return (
+          <>
+            <Text style={[demoS.agendaDay, { color: colors.textMuted }]}>Demain</Text>
+            {[
+              { dot: colors.catOrganisation, text: 'Dentiste Léa', time: '14h30' },
+              { dot: colors.catSante,        text: 'Réunion école', time: '17h00' },
+            ].map((ev, i) => (
+              <View key={i} style={demoS.agendaRow}>
+                <View style={[demoS.agendaDot, { backgroundColor: ev.dot }]} />
+                <Text style={[demoS.agendaText, { color: colors.text }]} numberOfLines={1}>{ev.text}</Text>
+                <Text style={[demoS.agendaTime, { color: colors.textMuted }]}>{ev.time}</Text>
+              </View>
+            ))}
+          </>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
-    <View style={[s.demoCard, { backgroundColor: colors.card }]}>
-      <Text style={s.demoCardEmoji}>{section.emoji}</Text>
-      <Text style={[s.demoCardTitle, { color: colors.text }]}>{t(`onboarding.preferences.sections.${sectionId}`)}</Text>
-      {data.lines.map((line, i) => (
-        <Text key={i} style={[s.demoCardLine, { color: colors.textMuted }]} numberOfLines={1}>
-          {line}
+    <View style={[demoS.card, { backgroundColor: tintBg, borderColor: hexToRgba(accentColor, 0.18) }]}>
+      <View style={demoS.cardHeader}>
+        <Text style={demoS.cardIcon}>{icon}</Text>
+        <Text style={[demoS.cardTitle, { color: colors.text }]}>
+          {t(`onboarding.preferences.sections.${sectionId}`)}
         </Text>
-      ))}
+        {badgeCount !== undefined && (
+          <View style={[demoS.badge, { backgroundColor: accentColor }]}>
+            <Text style={demoS.badgeText}>{badgeCount}</Text>
+          </View>
+        )}
+      </View>
+      <View style={demoS.cardContent}>
+        {renderContent()}
+      </View>
     </View>
   );
 }
+
+// Styles statiques du composant DemoSectionCard
+const demoS = StyleSheet.create({
+  card: {
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    padding: Spacing.xl,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    marginBottom: Spacing.sm,
+  },
+  cardIcon: { fontSize: 15 },
+  cardTitle: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    flex: 1,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  badge: {
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: FontWeight.bold,
+  },
+  cardContent: { gap: Spacing.xs },
+  // Tasks
+  taskRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingVertical: 1 },
+  checkbox: {
+    width: 15,
+    height: 15,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxTick: { color: '#FFFFFF', fontSize: 9, fontWeight: FontWeight.bold },
+  taskText: { fontSize: FontSize.caption, flex: 1 },
+  taskDone: { opacity: 0.5 },
+  // Meals
+  mealRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingVertical: 1 },
+  mealEmoji: { fontSize: 15, width: 20, textAlign: 'center' },
+  mealType: { fontSize: FontSize.micro },
+  mealText: { fontSize: FontSize.caption, fontWeight: FontWeight.medium },
+  // Budget
+  budgetPct: { fontSize: 26, fontWeight: FontWeight.bold, lineHeight: 30, letterSpacing: -0.5 },
+  budgetTrack: { height: 4, borderRadius: 2, overflow: 'hidden', marginVertical: Spacing.xs },
+  budgetFill: { height: '100%', borderRadius: 2 },
+  budgetMicro: { fontSize: FontSize.micro },
+  // Agenda
+  agendaDay: { fontSize: FontSize.micro, fontWeight: FontWeight.semibold, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
+  agendaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingVertical: 2 },
+  agendaDot: { width: 7, height: 7, borderRadius: 4 },
+  agendaText: { fontSize: FontSize.caption, flex: 1 },
+  agendaTime: { fontSize: FontSize.micro },
+});
 
 // ─── Écran principal ──────────────────────────────────────────────────────────
 
@@ -725,7 +894,7 @@ export default function OnboardingScreen() {
         <View style={s.demoGrid}>
           {sections.map((id, i) => (
             <Animated.View key={id} entering={FadeInDown.delay(400 + i * 80).duration(350)} style={s.demoGridItem}>
-              <DemoSectionCard sectionId={id} colors={colors} />
+              <DemoSectionCard sectionId={id} colors={colors} primary={primary} isDark={isDark} />
             </Animated.View>
           ))}
         </View>
@@ -1441,27 +1610,6 @@ const s = StyleSheet.create({
   },
   demoGridItem: {
     width: '47%',
-  },
-  demoCard: {
-    borderRadius: Radius.xl,
-    padding: Spacing['2xl'],
-    gap: Spacing.xs,
-    minHeight: 90,
-  },
-  demoCardEmoji: {
-    fontSize: FontSize.title,
-    marginBottom: Spacing.xs,
-  },
-  demoCardTitle: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.bold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-    marginBottom: Spacing.xs,
-  },
-  demoCardLine: {
-    fontSize: FontSize.caption,
-    lineHeight: LineHeight.normal,
   },
   demoNote: {
     fontSize: FontSize.sm,
