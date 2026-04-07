@@ -55,6 +55,8 @@ import { parseWearEvents, serializeWearEvents } from './mascot/wear-engine';
 import type { CompanionData, CompanionSpecies } from './mascot/companion-types';
 import { calculateLevel } from './gamification';
 import type { TreeSpecies } from './mascot/types';
+import type { FamilyQuest } from './quest-engine';
+import { parseReward, serializeReward } from './quest-engine';
 
 // ─── Task parsing ───────────────────────────────────────────────────────────
 
@@ -1037,6 +1039,126 @@ export function serializeDefis(defis: Defi[]): string {
 
   return `---\ntags:\n  - defis\n---\n# Défis familiaux\n\n${sections.join('\n\n')}
 `;
+}
+
+// ─── Quêtes coopératives familiales ─────────────────────────────────────────
+
+export const FAMILY_QUESTS_FILE = 'family-quests.md';
+
+/**
+ * Parse family-quests.md en FamilyQuest[].
+ * Format : H2 = titre quête, clés/valeurs ligne par ligne.
+ * contributions: emma:5,lucas:4 → Record<string, number>
+ */
+export function parseFamilyQuests(content: string): FamilyQuest[] {
+  const lines = content.split('\n');
+  const quests: FamilyQuest[] = [];
+  let current: Record<string, string> | null = null;
+  let currentTitle = '';
+
+  const flush = () => {
+    if (current && current.id) {
+      // Parse contributions: "emma:5,lucas:4" → Record<string, number>
+      const contributions: Record<string, number> = {};
+      if (current.contributions) {
+        current.contributions.split(',').forEach((part) => {
+          const colonIdx = part.indexOf(':');
+          if (colonIdx !== -1) {
+            const key = part.slice(0, colonIdx).trim();
+            const val = parseInt(part.slice(colonIdx + 1).trim(), 10);
+            if (key && !isNaN(val)) contributions[key] = val;
+          }
+        });
+      }
+
+      let farmReward;
+      try {
+        farmReward = parseReward(current.farmReward ?? 'loot_legendary:1');
+      } catch {
+        farmReward = { type: 'loot_legendary' as const, count: 1 };
+      }
+
+      quests.push({
+        id: current.id,
+        title: currentTitle,
+        description: current.description ?? '',
+        emoji: current.emoji ?? '🌾',
+        type: (current.type ?? 'tasks') as FamilyQuest['type'],
+        target: parseInt(current.target ?? '1', 10),
+        current: parseInt(current.current ?? '0', 10),
+        contributions,
+        farmReward,
+        status: (current.status ?? 'active') as FamilyQuest['status'],
+        startDate: current.startDate ?? '',
+        endDate: current.endDate ?? '',
+        completedDate: current.completedDate || undefined,
+      });
+    }
+  };
+
+  for (const line of lines) {
+    if (line.startsWith('## ')) {
+      flush();
+      currentTitle = line.slice(3).trim();
+      current = {};
+    } else if (current && line.includes(': ')) {
+      const colonIdx = line.indexOf(': ');
+      const key = line.slice(0, colonIdx).trim();
+      const val = line.slice(colonIdx + 2).trim();
+      current[key] = val;
+    }
+  }
+  flush();
+
+  return quests;
+}
+
+/**
+ * Sérialise FamilyQuest[] en Markdown string.
+ * Même pattern que serializeDefis.
+ * meta optionnel ajoute des champs après le H1.
+ */
+export function serializeFamilyQuests(
+  quests: FamilyQuest[],
+  meta?: {
+    activeEffect?: string;
+    trophies?: string[];
+    unlockedRecipes?: string[];
+    unlockedDecorations?: string[];
+  },
+): string {
+  const metaLines: string[] = [];
+  if (meta?.activeEffect) metaLines.push(`activeEffect: ${meta.activeEffect}`);
+  if (meta?.trophies?.length) metaLines.push(`trophies: ${meta.trophies.join(', ')}`);
+  if (meta?.unlockedRecipes?.length) metaLines.push(`unlockedRecipes: ${meta.unlockedRecipes.join(', ')}`);
+  if (meta?.unlockedDecorations?.length) metaLines.push(`unlockedDecorations: ${meta.unlockedDecorations.join(', ')}`);
+  const metaBlock = metaLines.length > 0 ? '\n' + metaLines.join('\n') : '';
+
+  const sections = quests.map((q) => {
+    // Sérialiser contributions en "emma:5,lucas:4"
+    const contributionStr = Object.entries(q.contributions)
+      .map(([k, v]) => `${k}:${v}`)
+      .join(',');
+
+    const props = [
+      `id: ${q.id}`,
+      `emoji: ${q.emoji}`,
+      `type: ${q.type}`,
+      `target: ${q.target}`,
+      `current: ${q.current}`,
+      `contributions: ${contributionStr}`,
+      `farmReward: ${serializeReward(q.farmReward)}`,
+      `status: ${q.status}`,
+      `startDate: ${q.startDate}`,
+      `endDate: ${q.endDate}`,
+      ...(q.completedDate ? [`completedDate: ${q.completedDate}`] : []),
+      `description: ${q.description}`,
+    ].join('\n');
+
+    return `## ${q.title}\n${props}`;
+  });
+
+  return `---\ntags:\n  - quests\n---\n# Quetes familiales${metaBlock}\n\n${sections.join('\n\n')}\n`;
 }
 
 // ─── Gratitude familiale ────────────────────────────────────────────────────
