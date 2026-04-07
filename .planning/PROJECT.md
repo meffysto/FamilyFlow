@@ -37,12 +37,11 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 
 ### Active
 
-- [ ] Nettoyage code mort et fonctions dépréciées
-- [ ] Remplacement des 228 couleurs hardcodées par tokens sémantiques
-- [ ] Correction des types `any` et renforcement TypeScript
-- [ ] Tests unitaires pour les zones critiques (parser, gamification, ferme, budget)
-- [ ] Refacto progressive du god hook useVault (3400 lignes → hooks domaine)
-- [ ] Enrichissement de la ferme/gamification (scope à définir)
+- [ ] Mémoire des préférences alimentaires de la famille et invités
+- [ ] Codex / wiki ferme consultable pour comprendre les mécaniques
+- [ ] Tutoriel ferme immersif au premier lancement
+- [ ] (Backlog) Nettoyage code mort et fonctions dépréciées
+- [ ] (Backlog) Refacto progressive du god hook useVault (3400 lignes → hooks domaine)
 
 ### Out of Scope
 
@@ -52,20 +51,20 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 - Migration hors Obsidian — le vault Markdown reste la source de vérité
 - Accessibilité complète (WCAG) — pas prioritaire pour usage familial privé
 
-## Current Milestone: v1.1 Ferme Enrichie
+## Current Milestone: v1.2 Confort & Découverte
 
-**Goal:** Enrichir la ferme pour qu'elle soit un vrai moteur de motivation — plus de profondeur, plus de raisons de revenir faire ses tâches
+**Goal:** L'app retient les détails que la famille oublie et explique enfin la ferme — confort quotidien (préférences alimentaires) et découvrabilité du jeu (codex + tutoriel)
 
 **Target features:**
-- Cycle jour/nuit sur la ferme
-- Sprites pixel améliorés (cultures + animaux)
-- Bâtiments productifs (moulin, serre, étable)
-- Recettes de craft (combiner récoltes → items spéciaux)
-- Arbre de technologies ferme
-- Zones déblocables
-- Cadeaux entre profils
+- Préférences alimentaires par membre famille et invités (allergies, intolérances, régimes, aversions) avec flag automatique dans recettes
+- Codex / wiki ferme consultable via bouton "?" sur l'écran ferme — précis avec stats (cycles cultures, drops, mécaniques)
+- Tutoriel ferme immersif au premier lancement, rejouable depuis le wiki
 
-**Key insight:** La ferme n'est PAS le produit — c'est le levier de motivation pour faire les tâches. Chaque feature doit renforcer la boucle : tâches → XP/récoltes → progression ferme → envie de refaire des tâches.
+**Key insight:** Après v1.1 qui a empilé les mécaniques de jeu (sagas, événements, quêtes, compagnons, drops saisonniers, pluies dorées…), il devient impossible de s'y retrouver sans documentation in-app. Et l'app accumule du contexte familial (profils, recettes, repas) sans capter les préférences personnelles qui rendent la cuisine vraiment utile au quotidien.
+
+## Previous Milestone: v1.1 Ferme Enrichie ✅
+
+Shipped 2026-04-07 — voir `.planning/milestones/v1.1-ROADMAP.md` pour les détails.
 
 ## Context
 
@@ -110,4 +109,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-03 — Phase 13 complete: événements saisonniers (moteur + câblage UI)*
+*Last updated: 2026-04-07 — Milestone v1.1 shipped, v1.2 Confort & Découverte démarré*
