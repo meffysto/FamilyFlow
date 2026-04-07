@@ -659,6 +659,18 @@ export function serializeFarmProfile(profileName: string, data: FarmProfileData)
 }
 
 /**
+ * Parse une valeur brute en tableau de chaînes.
+ * Gère le format CSV (`gluten,lait`) ET le format YAML liste (Array natif).
+ * Utilisé par parseFamille (food_*) et parseInvites.
+ */
+function parseFoodCsv(raw: unknown): string[] {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw.map(v => String(v).trim()).filter(Boolean);
+  if (typeof raw === 'string') return raw.split(',').map(s => s.trim()).filter(Boolean);
+  return [];
+}
+
+/**
  * Parse famille.md custom format:
  *
  * ```
@@ -710,6 +722,11 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
         farmTech: undefined,
         farmRareSeeds: undefined,
         wearEvents: undefined,
+        // Préférences alimentaires (PREF-02) — lecture des 4 clés food_* depuis famille.md
+        foodAllergies: parseFoodCsv(currentProps.food_allergies),
+        foodIntolerances: parseFoodCsv(currentProps.food_intolerances),
+        foodRegimes: parseFoodCsv(currentProps.food_regimes),
+        foodAversions: parseFoodCsv(currentProps.food_aversions),
       });
     }
   };
@@ -729,6 +746,46 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
   flush();
 
   return profiles;
+}
+
+/**
+ * Sérialise les profils en Markdown famille.md.
+ * Écrit les 4 clés food_* UNIQUEMENT si non-vides (compatibilité Obsidian — PREF-05).
+ * Format : sections ### {id} avec clés key: value.
+ */
+export function serializeFamille(
+  profiles: Omit<Profile, 'points' | 'coins' | 'level' | 'streak' | 'lootBoxesAvailable' | 'multiplier' | 'multiplierRemaining' | 'pityCounter'>[]
+): string {
+  const sections: string[] = [];
+  for (const profile of profiles) {
+    const lines: string[] = [`### ${profile.id}`];
+    lines.push(`name: ${profile.name}`);
+    lines.push(`role: ${profile.role}`);
+    lines.push(`avatar: ${profile.avatar}`);
+    if (profile.birthdate) lines.push(`birthdate: ${profile.birthdate}`);
+    if (profile.ageCategory) lines.push(`ageCategory: ${profile.ageCategory}`);
+    if (profile.propre) lines.push(`propre: ${profile.propre}`);
+    if (profile.gender) lines.push(`gender: ${profile.gender}`);
+    if (profile.statut) lines.push(`statut: ${profile.statut}`);
+    if (profile.dateTerme) lines.push(`dateTerme: ${profile.dateTerme}`);
+    if (profile.theme) lines.push(`theme: ${profile.theme}`);
+    if (profile.sagaTitle) lines.push(`sagaTitle: ${profile.sagaTitle}`);
+    // Préférences alimentaires — omises si vides (lisibilité Obsidian)
+    if (profile.foodAllergies && profile.foodAllergies.length > 0) {
+      lines.push(`food_allergies: ${profile.foodAllergies.join(',')}`);
+    }
+    if (profile.foodIntolerances && profile.foodIntolerances.length > 0) {
+      lines.push(`food_intolerances: ${profile.foodIntolerances.join(',')}`);
+    }
+    if (profile.foodRegimes && profile.foodRegimes.length > 0) {
+      lines.push(`food_regimes: ${profile.foodRegimes.join(',')}`);
+    }
+    if (profile.foodAversions && profile.foodAversions.length > 0) {
+      lines.push(`food_aversions: ${profile.foodAversions.join(',')}`);
+    }
+    sections.push(lines.join('\n'));
+  }
+  return sections.join('\n\n') + '\n';
 }
 
 // ─── gamification.md ────────────────────────────────────────────────────────
