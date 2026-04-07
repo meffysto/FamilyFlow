@@ -38,6 +38,7 @@ interface UseGamificationArgs {
   vault: VaultManager | null;
   notifPrefs: NotificationPreferences;
   onDataChange?: (profiles: Profile[]) => void;
+  onQuestProgress?: (profileId: string, type: string, amount: number) => Promise<void>;
 }
 
 interface UseGamificationResult {
@@ -65,7 +66,7 @@ function farmFile(profileId: string): string {
   return `farm-${profileId}.md`;
 }
 
-export function useGamification({ vault, notifPrefs, onDataChange }: UseGamificationArgs): UseGamificationResult {
+export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgress }: UseGamificationArgs): UseGamificationResult {
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Charger la config gamification au montage (remplit le cache synchrone)
@@ -117,6 +118,11 @@ export function useGamification({ vault, notifPrefs, onDataChange }: UseGamifica
         // Write back to vault (fichier per-profil)
         await vault.writeFile(file, serializeGamification(singleData));
 
+        // Progression quêtes coopératives (tasks)
+        if (onQuestProgress) {
+          try { await onQuestProgress(profile.id, 'tasks', 1); } catch { /* Quest — non-critical */ }
+        }
+
         // Avancer les cultures de la ferme (FIFO)
         let cropsMatured: string[] = [];
         const currentCrops = parseCrops(profile.farmCrops ?? '');
@@ -157,7 +163,7 @@ export function useGamification({ vault, notifPrefs, onDataChange }: UseGamifica
         setIsProcessing(false);
       }
     },
-    [vault, notifPrefs, onDataChange]
+    [vault, notifPrefs, onDataChange, onQuestProgress]
   );
 
   const openLootBox = useCallback(
