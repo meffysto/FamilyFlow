@@ -4340,6 +4340,7 @@
       "greeting": "Bonjour 👋",
       "title": "Votre famille,\norganisée. Enfin.",
       "subtitle": "Tâches, repas, budget, souvenirs —\ntout réuni au même endroit pour toute la famille.",
+      "namePlaceholder": "Votre prénom (optionnel)",
       "cta": "Commencer →"
     },
     "goal": {

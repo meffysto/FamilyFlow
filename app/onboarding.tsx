@@ -15,6 +15,7 @@ import {
   ScrollView,
   Dimensions,
   Image,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -303,6 +304,7 @@ export default function OnboardingScreen() {
   const [selectedGoal, setSelectedGoal] = useState<GoalId | null>(null);
   const [selectedPains, setSelectedPains] = useState<Set<PainId>>(new Set());
   const [tinderIndex, setTinderIndex] = useState(0);
+  const [userName, setUserName] = useState('');
 
   // ── Progress bar animée ──
   const processingAnim = useSharedValue(0);
@@ -337,6 +339,9 @@ export default function OnboardingScreen() {
 
   const finish = useCallback(async () => {
     await SecureStore.setItemAsync('onboarding_questionnaire_done', '1');
+    if (userName.trim()) {
+      await SecureStore.setItemAsync('onboarding_user_name', userName.trim());
+    }
     if (selectedPains.size > 0) {
       await SecureStore.setItemAsync('onboarding_pains', JSON.stringify([...selectedPains]));
     }
@@ -419,6 +424,19 @@ export default function OnboardingScreen() {
       >
         {t('onboarding.welcome.subtitle')}
       </Animated.Text>
+
+      <Animated.View entering={FadeInDown.delay(650).duration(400)} style={s.nameInputRow}>
+        <TextInput
+          style={[s.nameInput, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
+          placeholder={t('onboarding.welcome.namePlaceholder')}
+          placeholderTextColor={colors.textFaint}
+          value={userName}
+          onChangeText={setUserName}
+          autoCapitalize="words"
+          returnKeyType="done"
+          maxLength={30}
+        />
+      </Animated.View>
 
       <Animated.View entering={FadeInDown.delay(700).duration(400)} style={s.ctaContainer}>
         <TouchableOpacity
@@ -697,7 +715,9 @@ export default function OnboardingScreen() {
 
         {/* Header dashboard fictif */}
         <Animated.View entering={FadeInDown.delay(300).duration(400)} style={[s.demoHeader, { backgroundColor: colors.card }]}>
-          <Text style={[s.demoHeaderGreeting, { color: colors.text }]}>{t('onboarding.dashboardPreview.greeting')}</Text>
+          <Text style={[s.demoHeaderGreeting, { color: colors.text }]}>
+            {userName.trim() ? `${t('onboarding.welcome.greeting')} ${userName.trim()} 👋` : t('onboarding.dashboardPreview.greeting')}
+          </Text>
           <Text style={[s.demoHeaderDate, { color: colors.textMuted }]}>{t('onboarding.dashboardPreview.date')}</Text>
         </Animated.View>
 
@@ -1066,7 +1086,18 @@ const s = StyleSheet.create({
   welcomeSubtitle: {
     fontSize: FontSize.body,
     lineHeight: LineHeight.loose,
-    marginBottom: Spacing['5xl'],
+    marginBottom: Spacing['2xl'],
+  },
+  nameInputRow: {
+    width: '100%',
+    marginBottom: Spacing['3xl'],
+  },
+  nameInput: {
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.xl,
+    fontSize: FontSize.body,
   },
 
   // ── Shared ──

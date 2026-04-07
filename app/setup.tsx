@@ -117,6 +117,22 @@ export default function SetupScreen() {
   // Step 4 — Templates
   const [selectedPacks, setSelectedPacks] = useState<Set<string>>(new Set(DEFAULT_SELECTED_PACKS));
 
+  // Pré-remplir le nom du premier parent depuis l'onboarding
+  useEffect(() => {
+    (async () => {
+      try {
+        const name = await SecureStore.getItemAsync('onboarding_user_name');
+        if (name) {
+          setParents((prev) => {
+            const updated = [...prev];
+            updated[0] = { ...updated[0], name };
+            return updated;
+          });
+        }
+      } catch { /* non-critical */ }
+    })();
+  }, []);
+
   // Lire les préférences de l'onboarding v2 et pré-sélectionner les templates
   useEffect(() => {
     (async () => {

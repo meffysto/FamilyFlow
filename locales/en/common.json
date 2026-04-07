@@ -4340,6 +4340,7 @@
       "greeting": "Hello 👋",
       "title": "Your family,\norganized. Finally.",
       "subtitle": "Tasks, meals, budget, memories —\nall in one place for the whole family.",
+      "namePlaceholder": "Your first name (optional)",
       "cta": "Get started →"
     },
     "goal": {
