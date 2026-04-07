@@ -398,6 +398,7 @@ export interface CraftRecipe {
   xpBonus: number;          // XP supplementaire au craft
   sellValue: number;         // feuilles obtenues a la vente (= sum harvestReward x2)
   minTreeStage: TreeStage;  // stade d'arbre minimum pour debloquer la recette
+  requiredUnlock?: string;   // ID de déverrouillage requis (via unlockedRecipes dans family-quests.md)
 }
 
 /** Item crafte en inventaire */

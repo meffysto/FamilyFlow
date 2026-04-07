@@ -19,6 +19,7 @@ import type { VaultManager } from '../lib/vault';
 import {
   parseFamilyQuests,
   serializeFamilyQuests,
+  parseFamilyQuestsMeta,
   FAMILY_QUESTS_FILE,
   parseFamille,
 } from '../lib/parser';
@@ -50,6 +51,8 @@ function warnUnexpected(context: string, e: unknown) {
 export interface UseVaultFamilyQuestsResult {
   familyQuests: FamilyQuest[];
   setFamilyQuests: Dispatch<SetStateAction<FamilyQuest[]>>;
+  unlockedRecipes: string[];
+  setUnlockedRecipes: Dispatch<SetStateAction<string[]>>;
   startQuest: (templateId: string, profileId: string, profiles: Profile[]) => Promise<void>;
   contribute: (profileId: string, type: string, amount: number) => Promise<void>;
   completeQuest: (questId: string) => Promise<void>;
@@ -67,9 +70,11 @@ export function useVaultFamilyQuests(
   setProfiles: React.Dispatch<React.SetStateAction<Profile[]>>,
 ): UseVaultFamilyQuestsResult {
   const [familyQuests, setFamilyQuests] = useState<FamilyQuest[]>([]);
+  const [unlockedRecipes, setUnlockedRecipes] = useState<string[]>([]);
 
   const resetQuests = useCallback(() => {
     setFamilyQuests([]);
+    setUnlockedRecipes([]);
   }, []);
 
   /**
@@ -238,6 +243,15 @@ export function useVaultFamilyQuests(
       }
     }
 
+    // Charger les recettes débloquées depuis les meta
+    if (vaultRef.current) {
+      try {
+        const content = await vaultRef.current.readFile(FAMILY_QUESTS_FILE).catch(() => '');
+        const meta = parseFamilyQuestsMeta(content);
+        setUnlockedRecipes(meta.unlockedRecipes);
+      } catch { /* Quest — non-critical */ }
+    }
+
     return updated;
   }, []);
 
@@ -262,6 +276,8 @@ export function useVaultFamilyQuests(
   return {
     familyQuests,
     setFamilyQuests,
+    unlockedRecipes,
+    setUnlockedRecipes,
     startQuest,
     contribute,
     completeQuest,

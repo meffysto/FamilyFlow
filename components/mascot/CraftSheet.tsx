@@ -71,6 +71,7 @@ interface CraftSheetProps {
   onSellCrafted: (recipeId: string) => Promise<number>;
   onOfferItem?: (itemType: string, itemId: string, maxQty: number, itemName: string) => void;
   giftHistory?: string;
+  unlockedRecipes?: string[];
 }
 
 // ── Noms de ressources batiment ──────────────────────
@@ -109,6 +110,7 @@ export function CraftSheet({
   onSellCrafted,
   onOfferItem,
   giftHistory,
+  unlockedRecipes = [],
 }: CraftSheetProps) {
   const { t } = useTranslation();
   const { primary, tint, colors } = useThemeColors();
@@ -193,7 +195,9 @@ export function CraftSheet({
       const stageInfo = TREE_STAGES.find(s => s.stage === stage)!;
       const stageIdx = TREE_STAGE_ORDER.indexOf(stage);
       const locked = stageIdx > currentStageIdx;
-      const allStageRecipes = CRAFT_RECIPES.filter(r => r.minTreeStage === stage);
+      const allStageRecipes = CRAFT_RECIPES.filter(r =>
+        r.minTreeStage === stage && (!r.requiredUnlock || unlockedRecipes.includes(r.requiredUnlock))
+      );
       if (allStageRecipes.length === 0) return null;
       const recipes = filterMode === 'craftable' && !locked
         ? allStageRecipes.filter(r => canCraft(r, harvestInventory, farmInventory))

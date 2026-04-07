@@ -6,7 +6,8 @@
  */
 
 import { useCallback, useRef, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Modal, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
+import { View, Text, ScrollView, StyleSheet, Modal, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
 import { useVault, VAULT_PATH_KEY } from '../../contexts/VaultContext';
@@ -50,6 +51,7 @@ type SectionId =
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const {
     vaultPath, profiles, activeProfile, vault, setVaultPath, setActiveProfile,
     refresh, gamiData, notifPrefs, saveNotifPrefs, updateProfileTheme,
@@ -259,6 +261,23 @@ export default function SettingsScreen() {
               subtitle="Modifier les données brutes"
               onPress={() => setActiveSection('gami-admin')}
               isFirst
+            />
+            <SettingsRow
+              emoji="🔄"
+              title="Revoir l'onboarding complet"
+              subtitle="Efface les réponses et relance depuis le début"
+              onPress={async () => {
+                await SecureStore.deleteItemAsync('onboarding_questionnaire_done');
+                await SecureStore.deleteItemAsync('onboarding_pains');
+                await SecureStore.deleteItemAsync('onboarding_sections');
+                router.replace('/onboarding' as any);
+              }}
+            />
+            <SettingsRow
+              emoji="⚙️"
+              title="Revoir la config vault"
+              subtitle="Wizard parents / enfants / templates"
+              onPress={() => router.replace('/setup' as any)}
               isLast
             />
           </>

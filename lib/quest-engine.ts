@@ -20,7 +20,7 @@ export type FamilyQuestType =
   | 'harvest'
   | 'craft'
   | 'production'
-  | 'golden_harvest'
+  | 'plant'
   | 'composite';
 
 export type FamilyFarmReward =
