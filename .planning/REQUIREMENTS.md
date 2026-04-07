@@ -25,8 +25,8 @@ Requirements for milestone v1.2 — Confort & Découverte. L'app retient les dé
 ### Détection des conflits recettes / repas
 
 - [ ] **PREF-09**: Une fonction pure `checkAllergens(recipe, profileIds)` dans `lib/dietary.ts` croise les ingrédients d'une recette `.cook` avec les préférences des convives sélectionnés et retourne la liste des conflits par sévérité
-- [ ] **PREF-10**: L'écran détail recette affiche un badge de conflit visuel quand une préférence est touchée — couleurs et iconographie distinctes par sévérité (rouge non-dismissible pour `allergie`, orange pour `intolerance`, jaune pour `regime`/`aversion`)
-- [ ] **PREF-11**: **[P0 SAFETY]** Un conflit de sévérité `allergie` ne peut JAMAIS être masqué ou dismissé par l'utilisateur — le badge reste visible en permanence sur l'affichage recette
+- [x] **PREF-10**: L'écran détail recette affiche un badge de conflit visuel quand une préférence est touchée — couleurs et iconographie distinctes par sévérité (rouge non-dismissible pour `allergie`, orange pour `intolerance`, jaune pour `regime`/`aversion`)
+- [x] **PREF-11**: **[P0 SAFETY]** Un conflit de sévérité `allergie` ne peut JAMAIS être masqué ou dismissé par l'utilisateur — le badge reste visible en permanence sur l'affichage recette
 - [ ] **PREF-12**: Le planificateur de repas hebdomadaire affiche un récap des contraintes combinées quand plusieurs convives sont sélectionnés pour un repas
 - [ ] **PREF-13**: L'utilisateur peut saisir des préférences alimentaires à la voix via le `DictaphoneRecorder` existant — la transcription est interprétée par l'IA (Claude via `lib/ai-service.ts`) pour extraire les contraintes structurées (sévérité + items canoniques) et les ajouter au profil cible
 
@@ -96,8 +96,8 @@ Deferred to v1.3+.
 | PREF-07 | Phase 15 | Pending |
 | PREF-08 | Phase 15 | Pending |
 | PREF-09 | Phase 15 | Pending |
-| PREF-10 | Phase 15 | Pending |
-| PREF-11 | Phase 15 | Pending |
+| PREF-10 | Phase 15 | Complete |
+| PREF-11 | Phase 15 | Complete |
 | PREF-12 | Phase 15 | Pending |
 | PREF-13 | Phase 15 | Pending |
 | CODEX-01 | Phase 16 | Pending |

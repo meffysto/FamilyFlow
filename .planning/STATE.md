@@ -4,14 +4,14 @@ milestone: v1.2
 milestone_name: Confort & Découverte
 current_phase: 15
 status: Ready to execute
-stopped_at: Completed 15-01-catalogues-types-PLAN.md
-last_updated: "2026-04-07T21:44:52.458Z"
+stopped_at: Completed 15-04-allergen-banner-p0-PLAN.md
+last_updated: "2026-04-07T21:48:43.279Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 7
-  completed_plans: 1
+  completed_plans: 3
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 15 (pr-f-rences-alimentaires) — EXECUTING
-Plan: 2 of 7
+Plan: 4 of 7
 Milestone: v1.2 Confort & Découverte (active)
 Current phase: 15
 Last shipped: v1.1 Ferme Enrichie (2026-04-07)
@@ -84,6 +84,7 @@ Progress: [░░░░░░░░░░] 0% (0/4 phases)
 | Phase 15-quetes-cooperatives-ferme P02 | 30min | 2 tasks | 5 files |
 | Phase 15-quetes-cooperatives-ferme P03 | 8min | 1 tasks | 5 files |
 | Phase 15-pr-f-rences-alimentaires P01 | 2min | 2 tasks | 2 files |
+| Phase 15 P04 | 2min | 1 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -173,6 +174,7 @@ Recent decisions affecting current work:
 - [Phase 15-pr-f-rences-alimentaires]: IDs canoniques stables snake_case dans lib/dietary/catalogs.ts — jamais renommer après livraison pour compatibilité vault
 - [Phase 15-pr-f-rences-alimentaires]: GuestProfile séparé de Profile (sans gamification/role/avatar) — invités sans progression (D-03, PREF-06)
 - [Phase 15-pr-f-rences-alimentaires]: findCatalogForSeverity retourne [] pour 'aversion' — aversions texte libre uniquement, pas de catalogue (D-05)
+- [Phase 15]: PREF-11 P0 SAFETY : pointerEvents='none' + zéro prop dismiss dans AllergenBannerProps — enforcement statique via test TypeScript
 
 ### Pending Todos
 
@@ -213,6 +215,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-07T21:44:52.456Z
-Stopped at: Completed 15-01-catalogues-types-PLAN.md
+Last session: 2026-04-07T21:48:31.687Z
+Stopped at: Completed 15-04-allergen-banner-p0-PLAN.md
 Resume file: None
