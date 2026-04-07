@@ -2,13 +2,13 @@
 
 ## Milestones
 
-- ✅ **v1.0 Stabilisation** - Phases 1-4 (shipped 2026-03-28)
+- ✅ **v1.0 Stabilisation** - Phases 1-4 (shipped 2012-03-28)
 - 🚧 **v1.1 Ferme Enrichie** - Phases 5-9 (in progress)
 
 ## Phases
 
 <details>
-<summary>✅ v1.0 Stabilisation (Phases 1-4) - SHIPPED 2026-03-28</summary>
+<summary>✅ v1.0 Stabilisation (Phases 1-4) - SHIPPED 2012-03-28</summary>
 
 ### Phase 1: Safety Net
 **Goal**: Le codebase a un filet de sécurité — tests sur les modules critiques, visibilité sur les crashes production, et code mort éliminé
@@ -211,35 +211,23 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 1. Safety Net | v1.0 | 4/4 | Complete | 2026-03-28 |
-| 2. Write Safety + Couleurs | v1.0 | 3/3 | Complete | 2026-03-28 |
-| 3. Gamification | v1.0 | 2/2 | Complete | 2026-03-28 |
-| 4. Ambiance + Retention | v1.0 | 2/2 | Complete | 2026-03-28 |
-| 5. Visuels Ferme | v1.1 | 3/3 | Complete   | 2026-03-28 |
+| 1. Safety Net | v1.0 | 4/4 | Complete | 2012-03-28 |
+| 2. Write Safety + Couleurs | v1.0 | 3/3 | Complete | 2012-03-28 |
+| 3. Gamification | v1.0 | 2/2 | Complete | 2012-03-28 |
+| 4. Ambiance + Retention | v1.0 | 2/2 | Complete | 2012-03-28 |
+| 5. Visuels Ferme | v1.1 | 3/3 | Complete   | 2012-03-28 |
 | 6. Bâtiments Productifs | v1.1 | 0/2 | Planned | - |
-| 7. Craft | v1.1 | 2/2 | Complete   | 2026-03-29 |
+| 7. Craft | v1.1 | 2/2 | Complete   | 2012-03-29 |
 | 8. Progression Ferme | v1.1 | 0/2 | Planned | - |
-| 8.1 Split Gamification | v1.1 | 2/2 | Complete   | 2026-03-30 |
-| 9. Cadeaux Familiaux | v1.1 | 2/2 | Complete   | 2026-04-04 |
+| 8.1 Split Gamification | v1.1 | 2/2 | Complete   | 2012-03-30 |
+| 9. Cadeaux Familiaux | v1.1 | 2/2 | Complete   | 2012-04-04 |
 | 10. Compagnon Mascotte | v1.1 | 3/4 | In Progress|  |
-| 11. Sagas Immersives | v1.1 | 3/3 | Complete    | 2026-04-03 |
-| 12. Templates Onboarding | v1.1 | 0/2 | Not started | - |
-| 13. Événements Saisonniers | v1.1 | 2/2 | Complete    | 2026-04-03 |
-| 14. Parité Mobile ↔ Desktop | v1.1 | 9/9 | Complete    | 2026-04-05 |
-| 15. Quêtes Coopératives Ferme | v1.1 | 3/3 | Complete   | 2026-04-07 |
+| 11. Sagas Immersives | v1.1 | 3/3 | Complete    | 2012-04-03 |
+| 12. Événements Saisonniers | v1.1 | 2/2 | Complete    | 2012-04-03 |
+| 12. Parité Mobile ↔ Desktop | v1.1 | 9/9 | Complete    | 2012-04-05 |
+| 12. Quêtes Coopératives Ferme | v1.1 | 3/3 | Complete   | 2012-04-07 |
 
-### Phase 12: Templates onboarding vivants — contenu personnalisé et complet
-
-**Goal:** Les 8 packs de templates d'onboarding génèrent du contenu riche et personnalisé dès le premier jour — petit-déjeuner en semaine, exemples budget réalistes, famille élargie dans les anniversaires, et 2 nouveaux packs (stock maison + défis de lancement)
-**Requirements**: TMPL-01, TMPL-02, TMPL-03, TMPL-04, TMPL-05, TMPL-06, TMPL-07, TMPL-08
-**Depends on:** Phase 11
-**Plans:** 2 plans
-
-Plans:
-- [ ] 12-01-PLAN.md — Enrichir 5 packs existants (repas, budget, anniversaires, vie-de-famille, medical) + i18n FR/EN
-- [ ] 12-02-PLAN.md — Ajouter 2 nouveaux packs (stock-initial, defis-lancement) + i18n FR/EN
-
-#### Phase 13: Événements Saisonniers
+#### Phase 12: Événements Saisonniers
 **Goal**: Quand un événement saisonnier est actif (Pâques, Halloween, Noël...), un personnage visiteur thématique apparaît dans la scène ferme/arbre — même pattern que les sagas immersives (tap → dialogue → choix → récompenses loot saisonnières) mais déclenché par le calendrier au lieu du cycle saga
 **Depends on**: Phase 11
 **Requirements**: EVT-01, EVT-02, EVT-03
@@ -252,16 +240,16 @@ Plans:
 **Plans:** 2/2 plans complete
 
 Plans:
-- [x] 13-01-PLAN.md — Types + engine + storage + contenu narratif i18n (8 événements)
-- [x] 13-02-PLAN.md — VisitorSlot/SagaWorldEvent props + câblage tree.tsx visiteur événementiel
+- [x] 12-01-PLAN.md — Types + engine + storage + contenu narratif i18n (8 événements)
+- [x] 12-02-PLAN.md — VisitorSlot/SagaWorldEvent props + câblage tree.tsx visiteur événementiel
 
 Canonical refs: `lib/gamification/seasonal.ts`, `lib/gamification/seasonal-rewards.ts`, `lib/mascot/sagas-engine.ts`, `lib/mascot/sagas-content.ts`, `components/mascot/VisitorSlot.tsx`
 
-### Phase 14: Parité Mobile ↔ Desktop
+### Phase 12: Parité Mobile ↔ Desktop
 
 **Goal:** La version desktop (React) offre une expérience fonctionnellement identique à l'app mobile (React Native) — chaque écran, interaction et feature disponible sur mobile est répliqué sur desktop avec les adaptations UX appropriées (drag & drop fichiers au lieu de swipe, raccourcis clavier, etc.)
 **Requirements**: PAR-01, PAR-02, PAR-03
-**Depends on:** Phase 13
+**Depends on:** Phase 12
 **Success Criteria** (what must be TRUE):
   1. Chaque écran mobile a son équivalent desktop fonctionnel — aucun écran manquant
   2. Les interactions tactiles (swipe, long-press) sont remplacées par des équivalents desktop (drag & drop fichier pour OCR budget, hover, clic droit, raccourcis clavier)
@@ -271,17 +259,17 @@ Canonical refs: `lib/gamification/seasonal.ts`, `lib/gamification/seasonal-rewar
 **Plans:** 9/9 plans complete
 
 Plans:
-- [x] 14-01-PLAN.md — Fondation : dependances + VaultContext mutations CRUD + routes App.tsx
-- [x] 14-02-PLAN.md — Ecrans RDV + Notes (CRUD complet)
-- [x] 14-03-PLAN.md — Ecrans Health + Routines (CRUD complexe)
-- [x] 14-04-PLAN.md — Ecrans Skills + Stats (arbre RPG + 6 visualisations recharts)
-- [x] 14-05-PLAN.md — Ecrans Pregnancy + NightMode + Compare + More (ecrans simples)
-- [x] 14-06-PLAN.md — Loot revamp (Framer Motion card flip + confetti + inventaire + badges)
-- [x] 14-07-PLAN.md — Budget OCR (drag & drop recu + pipeline Claude Vision + review)
-- [x] 14-08-PLAN.md — Polish interactions desktop (hover-to-reveal + raccourcis clavier) + checkpoint visuel
-- [x] 14-09-PLAN.md — Gamification complete : companion system, sagas immersives, evenements saisonniers, tech tree (per D-05)
+- [x] 12-01-PLAN.md — Fondation : dependances + VaultContext mutations CRUD + routes App.tsx
+- [x] 12-02-PLAN.md — Ecrans RDV + Notes (CRUD complet)
+- [x] 12-03-PLAN.md — Ecrans Health + Routines (CRUD complexe)
+- [x] 12-04-PLAN.md — Ecrans Skills + Stats (arbre RPG + 6 visualisations recharts)
+- [x] 12-05-PLAN.md — Ecrans Pregnancy + NightMode + Compare + More (ecrans simples)
+- [x] 12-06-PLAN.md — Loot revamp (Framer Motion card flip + confetti + inventaire + badges)
+- [x] 12-07-PLAN.md — Budget OCR (drag & drop recu + pipeline Claude Vision + review)
+- [x] 12-08-PLAN.md — Polish interactions desktop (hover-to-reveal + raccourcis clavier) + checkpoint visuel
+- [x] 12-09-PLAN.md — Gamification complete : companion system, sagas immersives, evenements saisonniers, tech tree (per D-05)
 
-#### Phase 15: Quêtes Coopératives Ferme
+#### Phase 12: Quêtes Coopératives Ferme
 **Goal**: La famille peut accomplir des objectifs partagés (quêtes coopératives) qui récompensent la ferme entière — créant une boucle de motivation collective distincte des défis individuels
 **Depends on**: Phase 9 (cadeaux, gami per-profil), Phase 8 (tech, buildings, farm)
 **Requirements**: QUEST-01, QUEST-02, QUEST-03
@@ -294,6 +282,6 @@ Plans:
 **Plans:** 3/3 plans complete
 
 Plans:
-- [x] 15-01-PLAN.md — Types quest-engine + parser + hook domaine + callbacks progression
-- [x] 15-02-PLAN.md — UI banniere + detail sheet + picker + integration tree.tsx
+- [x] 12-01-PLAN.md — Types quest-engine + parser + hook domaine + callbacks progression
+- [x] 12-02-PLAN.md — UI banniere + detail sheet + picker + integration tree.tsx
 
