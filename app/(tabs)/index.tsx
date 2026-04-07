@@ -210,12 +210,13 @@ export default function DashboardScreen() {
     skillTrees,
     secretMissions,
     setActiveProfile,
+    contributeFamilyQuest,
   } = useVault();
 
   // Active rewards (filtered for non-expired)
   const activeRewards = processActiveRewards(gamiData?.activeRewards ?? []);
 
-  const { completeTask } = useGamification({ vault, notifPrefs });
+  const { completeTask } = useGamification({ vault, notifPrefs, onQuestProgress: contributeFamilyQuest });
   const auth = useAuth();
 
   const [refreshing, setRefreshing] = useState(false);

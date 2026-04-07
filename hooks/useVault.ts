@@ -228,7 +228,7 @@ export interface VaultState {
   deleteDefi: (defiId: string) => Promise<void>;
   familyQuests: FamilyQuest[];
   startFamilyQuest: (templateId: string, profileId: string, profiles: Profile[]) => Promise<void>;
-  contributeFamilyQuest: (profileId: string, type: import('../lib/quest-engine').FamilyQuestType, amount: number) => Promise<void>;
+  contributeFamilyQuest: (profileId: string, type: string, amount: number) => Promise<void>;
   completeFamilyQuest: (questId: string) => Promise<void>;
   deleteFamilyQuest: (questId: string) => Promise<void>;
   gratitudeDays: GratitudeDay[];
@@ -505,14 +505,14 @@ export function useVaultInternal(): VaultState {
   const recipesHook = useVaultRecipes(vaultRef, profiles);
   const { recipes } = recipesHook;
 
-  // Domaine Défis délégué à useVaultDefis
+  // Domaine Quêtes coopératives — initialisé EN PREMIER pour que contribute soit disponible pour defisHook
   const gamiDataRef = useRef(gamiData);
   gamiDataRef.current = gamiData;
-  const defisHook = useVaultDefis(vaultRef, gamiDataRef, setGamiData, setProfiles);
-  const { defis } = defisHook;
-
-  // Domaine Quêtes coopératives délégué à useVaultFamilyQuests
   const questsHook = useVaultFamilyQuests(vaultRef, gamiDataRef, setGamiData, setProfiles);
+
+  // Domaine Défis délégué à useVaultDefis — reçoit questsHook.contribute comme onQuestProgress
+  const defisHook = useVaultDefis(vaultRef, gamiDataRef, setGamiData, setProfiles, questsHook.contribute);
+  const { defis } = defisHook;
 
   // Domaine Health délégué à useVaultHealth
   const healthHook = useVaultHealth(vaultRef);

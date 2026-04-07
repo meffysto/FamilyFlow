@@ -51,7 +51,7 @@ export interface UseVaultFamilyQuestsResult {
   familyQuests: FamilyQuest[];
   setFamilyQuests: Dispatch<SetStateAction<FamilyQuest[]>>;
   startQuest: (templateId: string, profileId: string, profiles: Profile[]) => Promise<void>;
-  contribute: (profileId: string, type: FamilyQuestType, amount: number) => Promise<void>;
+  contribute: (profileId: string, type: string, amount: number) => Promise<void>;
   completeQuest: (questId: string) => Promise<void>;
   deleteQuest: (questId: string) => Promise<void>;
   resetQuests: () => void;
@@ -123,7 +123,7 @@ export function useVaultFamilyQuests(
    * Incrémente la progression de la quête active du bon type.
    * Lit le fichier frais (pas depuis state React) pour éviter les race conditions.
    */
-  const contribute = useCallback(async (profileId: string, type: FamilyQuestType, amount: number) => {
+  const contribute = useCallback(async (profileId: string, type: string, amount: number) => {
     if (!vaultRef.current) return;
 
     try {

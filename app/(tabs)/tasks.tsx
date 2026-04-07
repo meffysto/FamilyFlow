@@ -190,8 +190,8 @@ function buildTargetFiles(profiles: Profile[], t: (key: string) => string) {
 }
 
 export default function TasksScreen() {
-  const { tasks, vault, profiles, activeProfile, notifPrefs, toggleTask, skipTask, addTask, editTask, deleteTask, refresh, isLoading, vacationTasks, vacationConfig, isVacationActive, refreshGamification, secretMissions, completeSecretMission, validateSecretMission } = useVault();
-  const { completeTask } = useGamification({ vault, notifPrefs });
+  const { tasks, vault, profiles, activeProfile, notifPrefs, toggleTask, skipTask, addTask, editTask, deleteTask, refresh, isLoading, vacationTasks, vacationConfig, isVacationActive, refreshGamification, secretMissions, completeSecretMission, validateSecretMission, contributeFamilyQuest } = useVault();
+  const { completeTask } = useGamification({ vault, notifPrefs, onQuestProgress: contributeFamilyQuest });
   const { primary, tint, colors } = useThemeColors();
   const { showToast } = useToast();
   const { t } = useTranslation();

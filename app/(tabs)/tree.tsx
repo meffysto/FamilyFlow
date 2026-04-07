@@ -286,7 +286,7 @@ export default function TreeScreen() {
   const { t } = useTranslation();
   const { primary, tint, colors, isDark } = useThemeColors();
   const insets = useSafeAreaInsets();
-  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem, unplaceMascotItem, gamiData, setCompanion, tasks, rdvs, meals, completeSagaChapter, familyQuests, startFamilyQuest, completeFamilyQuest, deleteFamilyQuest } = useVault();
+  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem, unplaceMascotItem, gamiData, setCompanion, tasks, rdvs, meals, completeSagaChapter, familyQuests, startFamilyQuest, completeFamilyQuest, deleteFamilyQuest, contributeFamilyQuest } = useVault();
   const { showToast } = useToast();
   const { config: aiConfig } = useAI();
   const { hasSeenScreen, markScreenSeen, isLoaded: helpLoaded } = useHelp();
@@ -308,7 +308,7 @@ export default function TreeScreen() {
   const [showItemPicker, setShowItemPicker] = useState(false);
 
   // Ferme
-  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects, getWearEvents, sendGift, receiveGifts } = useFarm();
+  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects, getWearEvents, sendGift, receiveGifts } = useFarm(contributeFamilyQuest);
   const [showSeedPicker, setShowSeedPicker] = useState(false);
   const [selectedPlotIndex, setSelectedPlotIndex] = useState<number | null>(null);
   const [harvestBurst, setHarvestBurst] = useState<{ x: number; y: number; reward: number; cropId: string } | null>(null);
