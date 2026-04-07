@@ -33,8 +33,8 @@ function getTypeLabel(type: FamilyQuestType): string {
       return 'Défis';
     case 'harvest':
       return 'Récoltes';
-    case 'golden_harvest':
-      return 'Récoltes Dorées';
+    case 'plant':
+      return 'Plantations';
     case 'craft':
       return 'Créations';
     case 'production':

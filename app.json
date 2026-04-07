@@ -2,7 +2,7 @@
   "expo": {
     "name": "FamilyFlow",
     "slug": "family-vault",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "scheme": "family-vault",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -34,7 +34,7 @@
           "tel"
         ]
       },
-      "buildNumber": "18"
+      "buildNumber": "20"
     },
     "android": {
       "splash": {
@@ -63,7 +63,7 @@
         "android.permission.WRITE_CALENDAR"
       ],
       "package": "com.familyvault.app",
-      "versionCode": 5
+      "versionCode": 6
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -139,10 +139,13 @@
         }
       ],
       "expo-localization",
-      ["@sentry/react-native/expo", {
-        "organization": "no-72d",
-        "project": "react-native"
-      }]
+      [
+        "@sentry/react-native/expo",
+        {
+          "organization": "no-72d",
+          "project": "react-native"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

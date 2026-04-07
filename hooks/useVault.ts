@@ -227,6 +227,7 @@ export interface VaultState {
   completeDefi: (defiId: string) => Promise<void>;
   deleteDefi: (defiId: string) => Promise<void>;
   familyQuests: FamilyQuest[];
+  unlockedRecipes: string[];
   startFamilyQuest: (templateId: string, profileId: string, profiles: Profile[]) => Promise<void>;
   contributeFamilyQuest: (profileId: string, type: string, amount: number) => Promise<void>;
   completeFamilyQuest: (questId: string) => Promise<void>;
@@ -1567,6 +1568,7 @@ export function useVaultInternal(): VaultState {
     completeDefi: defisHook.completeDefi,
     deleteDefi: defisHook.deleteDefi,
     familyQuests: questsHook.familyQuests,
+    unlockedRecipes: questsHook.unlockedRecipes,
     startFamilyQuest: questsHook.startQuest,
     contributeFamilyQuest: questsHook.contribute,
     completeFamilyQuest: questsHook.completeQuest,
@@ -1612,7 +1614,7 @@ export function useVaultInternal(): VaultState {
     rdvs, profiles, activeProfile, gamiData, notifPrefs, vault, photoDates,
     stockSections, memories, vacationConfig, vacationTasks, isVacationActive,
     recipes, ageUpgrades, budgetState, routines,
-    healthRecords, defis, questsHook.familyQuests, gratitudeDays, wishlistItems, journalStats, anniversaries,
+    healthRecords, defis, questsHook.familyQuests, questsHook.unlockedRecipes, gratitudeDays, wishlistItems, journalStats, anniversaries,
     notesHook.notes,
     quotes, moods, skillTrees, secretMissions,
     // Callbacks (stables grâce à useCallback)

@@ -135,6 +135,7 @@ export function getPendingResources(
   now: Date = new Date(),
   techBonuses?: TechBonuses,
   wearEffects?: WearEffects,
+  questSpeedMultiplier: number = 1,
 ): number {
   const def = BUILDING_CATALOG.find(d => d.id === building.buildingId);
   if (!def) return 0;
@@ -147,7 +148,8 @@ export function getPendingResources(
   const effectiveMaxPending = Math.floor(MAX_PENDING * (techBonuses?.buildingCapacityMultiplier ?? 1));
 
   const lastCollect = new Date(building.lastCollectAt);
-  const elapsedMs = now.getTime() - lastCollect.getTime();
+  // questSpeedMultiplier > 1 simule une production plus rapide (ex: production_boost = 2x)
+  const elapsedMs = (now.getTime() - lastCollect.getTime()) * questSpeedMultiplier;
   const rateMs = effectiveRate * 3600 * 1000;
   const produced = Math.floor(elapsedMs / rateMs);
   return Math.min(produced, effectiveMaxPending);
@@ -159,6 +161,7 @@ export function getMinutesUntilNext(
   now: Date = new Date(),
   techBonuses?: TechBonuses,
   wearEffects?: WearEffects,
+  questSpeedMultiplier: number = 1,
 ): number {
   const def = BUILDING_CATALOG.find(d => d.id === building.buildingId);
   if (!def) return 0;
@@ -171,7 +174,7 @@ export function getMinutesUntilNext(
   const effectiveMaxPending = Math.floor(MAX_PENDING * (techBonuses?.buildingCapacityMultiplier ?? 1));
 
   const lastCollect = new Date(building.lastCollectAt);
-  const elapsedMs = now.getTime() - lastCollect.getTime();
+  const elapsedMs = (now.getTime() - lastCollect.getTime()) * questSpeedMultiplier;
   const rateMs = effectiveRate * 3600 * 1000;
   const produced = Math.floor(elapsedMs / rateMs);
 
@@ -189,6 +192,7 @@ export function collectBuilding(
   now: Date = new Date(),
   techBonuses?: TechBonuses,
   wearEffects?: WearEffects,
+  questSpeedMultiplier: number = 1,
 ): { buildings: PlacedBuilding[]; inventory: FarmInventory; collected: number } {
   const building = buildings.find(b => b.cellId === cellId);
   if (!building) return { buildings, inventory, collected: 0 };
@@ -196,7 +200,7 @@ export function collectBuilding(
   const def = BUILDING_CATALOG.find(d => d.id === building.buildingId);
   if (!def) return { buildings, inventory, collected: 0 };
 
-  const pending = getPendingResources(building, now, techBonuses, wearEffects);
+  const pending = getPendingResources(building, now, techBonuses, wearEffects, questSpeedMultiplier);
   if (pending === 0) return { buildings, inventory, collected: 0 };
 
   // Mettre a jour lastCollectAt — avancer au moment de la derniere unite produite
@@ -206,7 +210,7 @@ export function collectBuilding(
   const effectiveMaxPending = Math.floor(MAX_PENDING * (techBonuses?.buildingCapacityMultiplier ?? 1));
   const rateMs = effectiveRate * 3600 * 1000;
   const lastCollect = new Date(building.lastCollectAt);
-  const elapsedMs = now.getTime() - lastCollect.getTime();
+  const elapsedMs = (now.getTime() - lastCollect.getTime()) * questSpeedMultiplier;
   const totalProduced = Math.floor(elapsedMs / rateMs);
   // Si on a atteint le cap, repartir de maintenant (pas d'accumulation retro)
   const newLastCollect = totalProduced >= effectiveMaxPending

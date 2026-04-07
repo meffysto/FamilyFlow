@@ -14,7 +14,8 @@ import {
   serializeGamification,
   mergeProfiles,
 } from '../lib/parser';
-import { advanceFarmCrops, parseCrops, serializeCrops } from '../lib/mascot/farm-engine';
+import { advanceFarmCrops, parseCrops, serializeCrops, type QuestFarmEffect } from '../lib/mascot/farm-engine';
+import { parseFamilyQuestsMeta, getActiveQuestEffect, FAMILY_QUESTS_FILE } from '../lib/parser';
 import { getTechBonuses } from '../lib/mascot/tech-engine';
 import { getCompanionXpBonus } from '../lib/mascot/companion-engine';
 import { parseFarmProfile, serializeFarmProfile } from '../lib/parser';
@@ -123,12 +124,21 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
           try { await onQuestProgress(profile.id, 'tasks', 1); } catch { /* Quest — non-critical */ }
         }
 
-        // Avancer les cultures de la ferme (FIFO)
+        // Avancer les cultures de la ferme (FIFO) avec effet quête actif
         let cropsMatured: string[] = [];
         const currentCrops = parseCrops(profile.farmCrops ?? '');
         if (currentCrops.length > 0) {
           const profileTechBonuses = getTechBonuses(profile.farmTech ?? []);
-          const farmResult = advanceFarmCrops(currentCrops, profileTechBonuses);
+          let questFarmEffect: QuestFarmEffect | undefined;
+          try {
+            const questsContent = await vault.readFile(FAMILY_QUESTS_FILE).catch(() => '');
+            const questsMeta = parseFamilyQuestsMeta(questsContent);
+            const activeEffect = getActiveQuestEffect(questsMeta);
+            if (activeEffect?.type === 'rain_bonus' || activeEffect?.type === 'golden_rain') {
+              questFarmEffect = activeEffect.type;
+            }
+          } catch { /* Quest — non-critical */ }
+          const farmResult = advanceFarmCrops(currentCrops, profileTechBonuses, questFarmEffect);
           cropsMatured = farmResult.matured.map(c => c.cropId);
           // Persister les cultures mises a jour dans farm-{id}.md
           const fp = farmFile(profile.id);

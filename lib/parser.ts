@@ -1045,6 +1045,45 @@ export function serializeDefis(defis: Defi[]): string {
 
 export const FAMILY_QUESTS_FILE = 'family-quests.md';
 
+export interface FamilyQuestsMeta {
+  activeEffect: { type: 'rain_bonus' | 'golden_rain' | 'production_boost'; expiresAt: string } | null;
+  unlockedRecipes: string[];
+  trophies: string[];
+  unlockedDecorations: string[];
+}
+
+/**
+ * Parse les champs meta de family-quests.md (lignes avant le premier ## heading).
+ * Exemple : "activeEffect: rain_bonus:2026-04-08T12:00:00.000Z"
+ */
+export function parseFamilyQuestsMeta(content: string): FamilyQuestsMeta {
+  const meta: FamilyQuestsMeta = { activeEffect: null, unlockedRecipes: [], trophies: [], unlockedDecorations: [] };
+  for (const line of content.split('\n')) {
+    if (line.startsWith('## ')) break;
+    if (line.startsWith('activeEffect: ')) {
+      const val = line.slice('activeEffect: '.length).trim();
+      const idx = val.indexOf(':');
+      if (idx !== -1) {
+        const type = val.slice(0, idx) as FamilyQuestsMeta['activeEffect'] extends { type: infer T } | null ? T : never;
+        meta.activeEffect = { type, expiresAt: val.slice(idx + 1) };
+      }
+    } else if (line.startsWith('unlockedRecipes: ')) {
+      meta.unlockedRecipes = line.slice('unlockedRecipes: '.length).split(',').map(s => s.trim()).filter(Boolean);
+    } else if (line.startsWith('trophies: ')) {
+      meta.trophies = line.slice('trophies: '.length).split(',').map(s => s.trim()).filter(Boolean);
+    } else if (line.startsWith('unlockedDecorations: ')) {
+      meta.unlockedDecorations = line.slice('unlockedDecorations: '.length).split(',').map(s => s.trim()).filter(Boolean);
+    }
+  }
+  return meta;
+}
+
+/** Retourne l'effet actif si non expiré, null sinon. */
+export function getActiveQuestEffect(meta: FamilyQuestsMeta): FamilyQuestsMeta['activeEffect'] {
+  if (!meta.activeEffect) return null;
+  return new Date(meta.activeEffect.expiresAt) > new Date() ? meta.activeEffect : null;
+}
+
 /**
  * Parse family-quests.md en FamilyQuest[].
  * Format : H2 = titre quête, clés/valeurs ligne par ligne.

@@ -52,7 +52,7 @@ import {
   type WearEvent,
   type WearEffects,
 } from '../lib/mascot/wear-engine';
-import { parseGamification, serializeGamification, parseFarmProfile, serializeFarmProfile, parseCompanion } from '../lib/parser';
+import { parseGamification, serializeGamification, parseFarmProfile, serializeFarmProfile, parseCompanion, parseFamilyQuestsMeta, getActiveQuestEffect, FAMILY_QUESTS_FILE } from '../lib/parser';
 import type { FarmProfileData } from '../lib/types';
 import {
   parsePendingGifts,
@@ -267,7 +267,12 @@ export function useFarm(onQuestProgress?: (profileId: string, type: string, amou
     }
     await refreshFarm(profileId);
     await refreshGamification();
-  }, [vault, profiles, writeProfileField, writeProfileFields, deductCoins, refreshFarm, refreshGamification]);
+
+    // Progression quêtes coopératives (plant)
+    if (onQuestProgress) {
+      try { await onQuestProgress(profileId, 'plant', 1); } catch { /* Quest — non-critical */ }
+    }
+  }, [vault, profiles, writeProfileField, writeProfileFields, deductCoins, refreshFarm, refreshGamification, onQuestProgress]);
 
   /** Recolter une culture mature — stocke en inventaire au lieu de donner des feuilles */
   const harvest = useCallback(async (profileId: string, plotIndex: number): Promise<{ cropId: string; isGolden: boolean; harvestEvent: HarvestEvent | null; seedDrop: RareSeedDrop | null } | null> => {
@@ -317,12 +322,9 @@ export function useFarm(onQuestProgress?: (profileId: string, type: string, amou
     await writeProfileFields(profileId, fieldsToWrite);
     await refreshFarm(profileId);
 
-    // Progression quêtes coopératives (harvest / golden_harvest)
+    // Progression quêtes coopératives (harvest)
     if (onQuestProgress) {
-      try {
-        const isGoldenHarvest = result.isGolden;
-        await onQuestProgress(profileId, isGoldenHarvest ? 'golden_harvest' : 'harvest', 1);
-      } catch { /* Quest — non-critical */ }
+      try { await onQuestProgress(profileId, 'harvest', 1); } catch { /* Quest — non-critical */ }
     }
 
     return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop };
@@ -486,7 +488,13 @@ export function useFarm(onQuestProgress?: (profileId: string, type: string, amou
 
     const profileTechBonuses = getTechBonuses(profile.farmTech ?? []);
     const wearEffects = getActiveWearEffects(profile.wearEvents ?? []);
-    const result = collectBuilding(currentBuildings, currentInventory, cellId, new Date(), profileTechBonuses, wearEffects);
+    let productionBoost = 1;
+    try {
+      const questsContent = await vault.readFile(FAMILY_QUESTS_FILE).catch(() => '');
+      const activeEffect = getActiveQuestEffect(parseFamilyQuestsMeta(questsContent));
+      if (activeEffect?.type === 'production_boost') productionBoost = 2;
+    } catch { /* Quest — non-critical */ }
+    const result = collectBuilding(currentBuildings, currentInventory, cellId, new Date(), profileTechBonuses, wearEffects, productionBoost);
     if (result.collected === 0) return 0;
 
     const profileName = profiles?.find(p => p.id === profileId)?.name ?? profileId;
@@ -521,8 +529,14 @@ export function useFarm(onQuestProgress?: (profileId: string, type: string, amou
 
     const passiveTechBonuses = getTechBonuses(profile.farmTech ?? []);
     const passiveWearEffects = getActiveWearEffects(profile.wearEvents ?? []);
+    let passiveProductionBoost = 1;
+    try {
+      const questsContent = await vault.readFile(FAMILY_QUESTS_FILE).catch(() => '');
+      const activeEffect = getActiveQuestEffect(parseFamilyQuestsMeta(questsContent));
+      if (activeEffect?.type === 'production_boost') passiveProductionBoost = 2;
+    } catch { /* Quest — non-critical */ }
     for (const building of placedBuildings) {
-      const result = collectBuilding(currentBuildings, updatedInventory, building.cellId, new Date(), passiveTechBonuses, passiveWearEffects);
+      const result = collectBuilding(currentBuildings, updatedInventory, building.cellId, new Date(), passiveTechBonuses, passiveWearEffects, passiveProductionBoost);
       if (result.collected > 0) {
         total += result.collected;
         currentBuildings = result.buildings;
