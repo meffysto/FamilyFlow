@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Ferme Enrichie
-status: executing
-stopped_at: Completed 15-01-PLAN.md
-last_updated: "2026-04-07T06:17:07.929Z"
+status: verifying
+stopped_at: Completed 15-02-PLAN.md
+last_updated: "2026-04-07T07:19:49.682Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 12
-  completed_phases: 10
+  completed_phases: 11
   total_plans: 35
-  completed_plans: 32
+  completed_plans: 33
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 
 Phase: 15 (quetes-cooperatives-ferme) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-07
 
 Progress: [░░░░░░░░░░] 0%
@@ -73,6 +73,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 14-parite-mobile-desktop P09 | 11min | 2 tasks | 7 files |
 | Phase 14-parite-mobile-desktop PP08 | 5min | 3 tasks | 14 files |
 | Phase 15-quetes-cooperatives-ferme P01 | 45min | 2 tasks | 8 files |
+| Phase 15-quetes-cooperatives-ferme P02 | 30min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -149,6 +150,9 @@ Recent decisions affecting current work:
 - [Phase 14-parite-mobile-desktop]: Hover-to-reveal via CSS opacity (pas JS toggle) — transition 120ms ease, déclenché par :hover sur le parent row/card
 - [Phase 15-01]: contribute() lit le fichier frais depuis vault — evite race conditions quand plusieurs profils progressent en parallele
 - [Phase 15-01]: onQuestProgress optionnel dans useGamification/useFarm/useVaultDefis — backward-compatible, expose via contributeFamilyQuest dans VaultState
+- [Phase 15-quetes-cooperatives-ferme]: primary passe en prop separee de colors — useThemeColors retourne primary et colors comme valeurs distinctes, les composants acceptent les deux
+- [Phase 15-quetes-cooperatives-ferme]: getRewardLabel exporte depuis FamilyQuestBanner et reutilise dans Detail et Picker — une seule source de verite pour les 11 types de recompense
+- [Phase 15-quetes-cooperatives-ferme]: Role gate UI dans tree.tsx (canStartQuest) et non dans FamilyQuestPickerSheet — picker generique, appelant controle l'acces
 
 ### Pending Todos
 
@@ -190,6 +194,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-07T06:17:07.926Z
-Stopped at: Completed 15-01-PLAN.md
+Last session: 2026-04-07T07:19:49.679Z
+Stopped at: Completed 15-02-PLAN.md
 Resume file: None
