@@ -6,7 +6,7 @@
  * Tap sur un arbre → écran dédié plein écran.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
@@ -47,13 +47,16 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const { primary, tint, colors } = useThemeColors();
-  const { profiles, activeProfile, completeAdventure } = useVault();
+  const { profiles, activeProfile, completeAdventure, familyQuests } = useVault();
   const { showToast } = useToast();
   const tone = useTone();
 
   const profileId = activeProfile?.id ?? '';
   const today = getTodayStr();
   const completedSagas = activeProfile?.completedSagas ?? [];
+
+  // ── Quête coopérative active ──────────────────────────────
+  const activeQuest = useMemo(() => familyQuests?.find(q => q.status === 'active') ?? null, [familyQuests]);
 
   // ── Aventure one-shot (existant) ──────────────────────────
   const adventure = getDailyAdventure(profileId);
@@ -276,6 +279,30 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
         </TouchableOpacity>
       )}
 
+      {/* Indicateur compact quête active */}
+      {activeQuest && (
+        <TouchableOpacity
+          style={[styles.questCompact, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}
+          onPress={() => router.push('/(tabs)/tree' as any)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.questCompactHeader}>
+            <Text style={[styles.questCompactTitle, { color: colors.text }]} numberOfLines={1}>
+              {activeQuest.emoji} {activeQuest.title}
+            </Text>
+            <Text style={[styles.questCompactCount, { color: colors.textMuted }]}>
+              {activeQuest.current}/{activeQuest.target}
+            </Text>
+          </View>
+          <View style={[styles.questCompactTrack, { backgroundColor: colors.border }]}>
+            <View style={[styles.questCompactFill, {
+              backgroundColor: primary,
+              width: `${Math.min((activeQuest.current / activeQuest.target) * 100, 100)}%`,
+            }]} />
+          </View>
+        </TouchableOpacity>
+      )}
+
       {/* Lien vers l'écran arbre */}
       <TouchableOpacity
         style={[styles.cta, { backgroundColor: tint }]}
@@ -403,6 +430,38 @@ const styles = StyleSheet.create({
   ctaText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
+  },
+
+  // ── Quête coopérative — indicateur compact ─────────────
+  questCompact: {
+    marginTop: Spacing.md,
+    padding: Spacing.sm,
+    borderRadius: Radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  questCompactHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.xxs,
+  },
+  questCompactTitle: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    flex: 1,
+  },
+  questCompactCount: {
+    fontSize: FontSize.caption,
+    marginLeft: Spacing.sm,
+  },
+  questCompactTrack: {
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  questCompactFill: {
+    height: '100%',
+    borderRadius: 2,
   },
 
   // ── Saga indicateur inline discret ──────────────────────
