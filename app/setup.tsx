@@ -1,15 +1,11 @@
 /**
  * setup.tsx — Onboarding wizard (multi-step)
  *
- * Step 1: Welcome
- * Step 2: Pain points picker (interactif — "C'est quoi votre casse-tête ?")
- * Step 3: Réponse personnalisée (solutions ciblées)
- * Step 4: Mascotte arbre + sagas
- * Step 5: Parents (count + name + avatar)
- * Step 6: Children (count + name + birthdate + avatar)
- * Step 7: Vault path (VaultPicker)
- * Step 8: Template packs (pré-cochés selon pain points)
- * Step 9: Recap + create vault
+ * Step 1: Parents (name + avatar)
+ * Step 2: Children (count + name + birthdate + avatar)
+ * Step 3: Vault path (VaultPicker)
+ * Step 4: Template packs (pré-cochés depuis onboarding)
+ * Step 5: Recap + create vault
  */
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
@@ -39,41 +35,33 @@ import { useTranslation } from 'react-i18next';
 import { Spacing, Radius } from '../constants/spacing';
 import { FontSize, FontWeight, LineHeight } from '../constants/typography';
 import { Shadows } from '../constants/shadows';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const PARENT_AVATARS = ['👨', '👩', '👨‍💻', '👩‍💻', '🧔', '👱‍♀️', '🧑', '👤'];
 const CHILD_AVATARS = ['👶', '🧒', '👦', '👧', '🍼', '🐣', '🎒', '👼'];
-const TOTAL_STEPS = 9;
+const TOTAL_STEPS = 4;
 
-// Première étape de configuration (parents)
-const FIRST_SETUP_STEP = 5;
-
-const MASCOT_EMOJIS = ['🌱', '🌳', '✨'];
-
-/** Gradient positions par étape — le gradient "descend" au fil de l'onboarding */
-const GRADIENT_CONFIG: Record<number, { start: { x: number; y: number }; end: { x: number; y: number }; opacity: number }> = {
-  1: { start: { x: 0.5, y: 0 }, end: { x: 0.5, y: 0.65 }, opacity: 1 },      // Welcome: fort en haut
-  2: { start: { x: 0.3, y: 0 }, end: { x: 0.7, y: 0.55 }, opacity: 0.8 },    // Pain points: décale
-  3: { start: { x: 0.5, y: 0.1 }, end: { x: 0.5, y: 0.6 }, opacity: 0.6 },   // Solution: plus subtil
-  4: { start: { x: 0.5, y: 0.15 }, end: { x: 0.5, y: 0.55 }, opacity: 0.5 }, // Mascotte
-  5: { start: { x: 0.5, y: 0.2 }, end: { x: 0.5, y: 0.5 }, opacity: 0.25 },  // Parents
-  6: { start: { x: 0.5, y: 0.2 }, end: { x: 0.5, y: 0.5 }, opacity: 0.25 },  // Enfants
-  7: { start: { x: 0.5, y: 0.2 }, end: { x: 0.5, y: 0.5 }, opacity: 0.2 },   // Vault
-  8: { start: { x: 0.5, y: 0.2 }, end: { x: 0.5, y: 0.5 }, opacity: 0.2 },   // Templates
-  9: { start: { x: 0.5, y: 0.3 }, end: { x: 0.5, y: 0.7 }, opacity: 0.6 },   // Recap: revient
+/** Mapping onboarding pain IDs → template pack IDs */
+const ONBOARDING_PAIN_TO_PACKS: Record<string, string[]> = {
+  scattered:  ['vie-de-famille'],
+  partner:    ['vie-de-famille'],
+  groceries:  ['courses-essentielles'],
+  dinner:     ['repas-semaine'],
+  budget:     ['budget-familial'],
+  photolost:  [],
+  birthdays:  ['anniversaires'],
 };
 
-/** Pain points interactifs — mapping vers template pack IDs */
-const PAIN_POINTS = [
-  { id: 'meals', emoji: '🍽️', packId: 'repas-semaine' },
-  { id: 'chores', emoji: '🧹', packId: 'menage-organise' },
-  { id: 'groceries', emoji: '🛒', packId: 'courses-essentielles' },
-  { id: 'health', emoji: '💊', packId: 'suivi-medical' },
-  { id: 'routines', emoji: '🎒', packId: 'routines-enfants' },
-  { id: 'budget', emoji: '💰', packId: 'budget-familial' },
-] as const;
-
-type PainPointId = typeof PAIN_POINTS[number]['id'];
+/** Mapping onboarding section IDs → template pack IDs */
+const ONBOARDING_SECTION_TO_PACKS: Record<string, string[]> = {
+  meals:    ['repas-semaine'],
+  tasks:    ['menage-organise'],
+  budget:   ['budget-familial'],
+  agenda:   ['anniversaires'],
+  photos:   [],
+  baby:     ['routines-enfants'],
+  routines: ['routines-enfants'],
+  health:   ['suivi-medical'],
+};
 
 interface ParentData {
   name: string;
@@ -98,9 +86,9 @@ export default function SetupScreen() {
   const [isCreating, setIsCreating] = useState(false);
   const [recapProgress, setRecapProgress] = useState(-1); // -1 = pas encore commencé
 
-  // Animation séquentielle du recap quand on arrive à l'étape 9
+  // Animation séquentielle du recap quand on arrive à l'étape 4
   useEffect(() => {
-    if (step !== 9) { setRecapProgress(-1); return; }
+    if (step !== 4) { setRecapProgress(-1); return; }
     const totalItems = 3; // famille, emplacement, modèles
     let i = 0;
     setRecapProgress(0);
@@ -112,34 +100,62 @@ export default function SetupScreen() {
     return () => clearInterval(interval);
   }, [step]);
 
-  // Step 2 — Pain points
-  const [painPoints, setPainPoints] = useState<Set<PainPointId>>(new Set());
-
-  const togglePainPoint = (id: PainPointId) => {
-    setPainPoints((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  // Step 5 — Parents
+  // Step 1 — Parents
   const [parentCount, setParentCount] = useState(2);
   const [parents, setParents] = useState<ParentData[]>([
     { name: '', avatar: '👨' },
     { name: '', avatar: '👩' },
   ]);
 
-  // Step 3 — Children
+  // Step 2 — Children
   const [childCount, setChildCount] = useState(0);
   const [children, setChildren] = useState<ChildData[]>([]);
 
-  // Step 4 — Vault path
+  // Step 3 — Vault path
   const [vaultPath, setVaultPathLocal] = useState('');
 
-  // Step 5 — Templates
+  // Step 4 — Templates
   const [selectedPacks, setSelectedPacks] = useState<Set<string>>(new Set(DEFAULT_SELECTED_PACKS));
+
+  // Pré-remplir le nom du premier parent depuis l'onboarding
+  useEffect(() => {
+    (async () => {
+      try {
+        const name = await SecureStore.getItemAsync('onboarding_user_name');
+        if (name) {
+          setParents((prev) => {
+            const updated = [...prev];
+            updated[0] = { ...updated[0], name };
+            return updated;
+          });
+        }
+      } catch { /* non-critical */ }
+    })();
+  }, []);
+
+  // Lire les préférences de l'onboarding v2 et pré-sélectionner les templates
+  useEffect(() => {
+    (async () => {
+      try {
+        const painRaw = await SecureStore.getItemAsync('onboarding_pains');
+        const sectionsRaw = await SecureStore.getItemAsync('onboarding_sections');
+        const packIds = new Set<string>(DEFAULT_SELECTED_PACKS);
+        if (painRaw) {
+          const pains: string[] = JSON.parse(painRaw);
+          for (const pain of pains) {
+            for (const p of (ONBOARDING_PAIN_TO_PACKS[pain] ?? [])) packIds.add(p);
+          }
+        }
+        if (sectionsRaw) {
+          const sections: string[] = JSON.parse(sectionsRaw);
+          for (const sec of sections) {
+            for (const p of (ONBOARDING_SECTION_TO_PACKS[sec] ?? [])) packIds.add(p);
+          }
+        }
+        if (painRaw || sectionsRaw) setSelectedPacks(packIds);
+      } catch { /* non-critical */ }
+    })();
+  }, []);
 
   // --- Parent helpers ---
   const updateParentCount = (count: number) => {
@@ -189,49 +205,16 @@ export default function SetupScreen() {
     setChildren(updated);
   };
 
-  // --- Template helpers ---
-  const togglePack = (packId: string) => {
-    setSelectedPacks((prev) => {
-      const next = new Set(prev);
-      if (next.has(packId)) next.delete(packId);
-      else next.add(packId);
-      return next;
-    });
-  };
-
-  const selectAllPacks = () => {
-    const visiblePacks = TEMPLATE_PACKS.filter(
-      (p) => !p.requiresChildren || childCount > 0
-    );
-    setSelectedPacks(new Set(visiblePacks.map((p) => p.id)));
-  };
-
   // --- Navigation ---
   const canGoNext = (): boolean => {
-    if (step === 2) return painPoints.size > 0;
-    if (step === 5) return parents.every((p) => p.name.trim().length > 0);
-    if (step === 6) return childCount === 0 || children.every((c) => c.name.trim().length > 0 && isValidBirthdate(c.birthdate));
-    if (step === 7) return vaultPath.length > 0;
+    if (step === 1) return parents.every((p) => p.name.trim().length > 0);
+    if (step === 2) return childCount === 0 || children.every((c) => c.name.trim().length > 0 && isValidBirthdate(c.birthdate));
+    if (step === 3) return vaultPath.length > 0;
     return true;
   };
 
-  /** Sauter les écrans d'intro pour aller directement à la config */
-  const skipIntro = () => setStep(FIRST_SETUP_STEP);
-
-  /** Est-ce un écran d'intro (pain points 2, solution 3, mascotte 4) ? */
-  const isIntroStep = step >= 2 && step <= 4;
-
   const goNext = () => {
     if (step < TOTAL_STEPS && canGoNext()) {
-      // Quand on quitte le pain points picker, pré-sélectionner les templates
-      if (step === 2) {
-        const packs = new Set(
-          PAIN_POINTS
-            .filter((p) => painPoints.has(p.id))
-            .map((p) => p.packId)
-        );
-        setSelectedPacks(packs);
-      }
       setStep(step + 1);
     }
   };
@@ -278,283 +261,9 @@ export default function SetupScreen() {
 
   // --- Render steps ---
 
-  /** Étape 2 — Choix interactif des pain points */
-  const renderPainPointPicker = () => {
-    return (
-      <View style={s.stepContent}>
-        {/* Bouton Passer */}
-        <View style={s.skipRow}>
-          <TouchableOpacity
-            style={s.skipIntroBtn}
-            onPress={skipIntro}
-            activeOpacity={0.6}
-          >
-            <Text style={[s.skipIntroText, { color: primary }]}>{t('setup.nav.skip')}</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Titre */}
-        <Animated.Text
-          entering={FadeInDown.delay(200).duration(400)}
-          style={[s.featureSlideTitle, { color: colors.text }]}
-        >
-          {t('setup.painPoints.title')}
-        </Animated.Text>
-
-        {/* Sous-texte + hint */}
-        <Animated.Text
-          entering={FadeInDown.delay(350).duration(400)}
-          style={[s.featureSlideSubtitle, { color: colors.textMuted, marginBottom: 0 }]}
-        >
-          {t('setup.painPoints.subtitle')}
-        </Animated.Text>
-        <Animated.Text
-          entering={FadeInDown.delay(450).duration(300)}
-          style={[s.painPointHint, { color: colors.textFaint }]}
-        >
-          {t('setup.painPoints.hint')}
-        </Animated.Text>
-
-        {/* Grille de pain points */}
-        <View style={s.painPointGrid}>
-          {PAIN_POINTS.map((point, i) => {
-            const isSelected = painPoints.has(point.id);
-            return (
-              <Animated.View
-                key={point.id}
-                entering={FadeInUp.delay(500 + i * 80).duration(300).springify()}
-              >
-                <TouchableOpacity
-                  style={[
-                    ds.painPointChip,
-                    isSelected && { backgroundColor: tint, borderColor: primary },
-                  ]}
-                  onPress={() => togglePainPoint(point.id)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={s.painPointEmoji}>{point.emoji}</Text>
-                  <Text style={[ds.painPointLabel, isSelected && { color: primary }]}>
-                    {t(`setup.painPoints.options.${point.id}`)}
-                  </Text>
-                </TouchableOpacity>
-              </Animated.View>
-            );
-          })}
-        </View>
-      </View>
-    );
-  };
-
-  /** Étape 3 — Réponse personnalisée aux pain points choisis */
-  const renderPersonalizedSolution = () => {
-    const selectedPoints = PAIN_POINTS.filter((p) => painPoints.has(p.id));
-    return (
-      <View style={s.stepContent}>
-        {/* Bouton Passer */}
-        <View style={s.skipRow}>
-          <TouchableOpacity
-            style={s.skipIntroBtn}
-            onPress={skipIntro}
-            activeOpacity={0.6}
-          >
-            <Text style={[s.skipIntroText, { color: primary }]}>{t('setup.nav.skip')}</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Titre */}
-        <Animated.Text
-          entering={FadeInDown.delay(200).duration(400)}
-          style={[s.featureSlideTitle, { color: colors.text }]}
-        >
-          {t('setup.solution.title')}
-        </Animated.Text>
-
-        {/* Sous-texte */}
-        <Animated.Text
-          entering={FadeInDown.delay(350).duration(400)}
-          style={[s.featureSlideSubtitle, { color: colors.textMuted }]}
-        >
-          {t('setup.solution.subtitle')}
-        </Animated.Text>
-
-        {/* Solutions ciblées */}
-        <View style={s.slideDetails}>
-          {selectedPoints.map((point, i) => (
-            <Animated.View
-              key={point.id}
-              entering={FadeInUp.delay(450 + i * 120).duration(300).springify()}
-              style={[s.slideDetailRow, { backgroundColor: tint }]}
-            >
-              <Text style={s.slideDetailIcon}>{point.emoji}</Text>
-              <View style={s.solutionTextCol}>
-                <Text style={[s.slideDetailText, { color: colors.text }]}>
-                  {t(`setup.solution.items.${point.id}.title`)}
-                </Text>
-                <Text style={[s.solutionDesc, { color: colors.textMuted }]}>
-                  {t(`setup.solution.items.${point.id}.desc`)}
-                </Text>
-              </View>
-              <Animated.Text
-                entering={FadeInDown.delay(600 + i * 120).duration(200)}
-                style={[s.solutionCheck, { color: primary }]}
-              >
-                ✓
-              </Animated.Text>
-            </Animated.View>
-          ))}
-        </View>
-      </View>
-    );
-  };
-
-  /** Rendu de l'écran mascotte/sagas (étape 4) */
-  const renderMascotSlide = () => {
-    return (
-      <View style={s.stepContent}>
-        {/* Bouton Passer */}
-        <View style={s.skipRow}>
-          <TouchableOpacity
-            style={s.skipIntroBtn}
-            onPress={skipIntro}
-            activeOpacity={0.6}
-          >
-            <Text style={[s.skipIntroText, { color: primary }]}>{t('setup.nav.skip')}</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Hero emojis — graine → arbre → étoiles */}
-        <Animated.View
-          entering={FadeInDown.delay(100).duration(500).springify()}
-          style={s.featureHeroEmojis}
-        >
-          {MASCOT_EMOJIS.map((emoji, i) => (
-            <Animated.Text
-              key={i}
-              entering={FadeInDown.delay(200 + i * 200).duration(500).springify()}
-              style={s.featureHeroEmoji}
-            >
-              {emoji}
-            </Animated.Text>
-          ))}
-        </Animated.View>
-
-        {/* Titre */}
-        <Animated.Text
-          entering={FadeInDown.delay(700).duration(400)}
-          style={[s.featureSlideTitle, { color: colors.text }]}
-        >
-          {t('setup.mascot.title')}
-        </Animated.Text>
-
-        {/* Sous-texte */}
-        <Animated.Text
-          entering={FadeInDown.delay(800).duration(400)}
-          style={[s.featureSlideSubtitle, { color: colors.textMuted }]}
-        >
-          {t('setup.mascot.subtitle')}
-        </Animated.Text>
-
-        {/* Mini feature list */}
-        <View style={s.slideDetails}>
-          {(['grow', 'sagas', 'rewards'] as const).map((key, i) => (
-            <Animated.View
-              key={key}
-              entering={FadeInUp.delay(900 + i * 100).duration(300)}
-              style={[s.slideDetailRow, { backgroundColor: tint }]}
-            >
-              <Text style={s.slideDetailIcon}>
-                {key === 'grow' ? '🌿' : key === 'sagas' ? '📖' : '🍃'}
-              </Text>
-              <Text style={[s.slideDetailText, { color: colors.text }]}>
-                {t(`setup.mascot.features.${key}`)}
-              </Text>
-            </Animated.View>
-          ))}
-        </View>
-      </View>
-    );
-  };
-
   const renderStep = () => {
     switch (step) {
-      case 1: {
-        const ORB_ITEMS = [
-          { emoji: '🍽️', label: t('setup.painPoints.options.meals') },
-          { emoji: '🧹', label: t('setup.painPoints.options.chores') },
-          { emoji: '🛒', label: t('setup.painPoints.options.groceries') },
-          { emoji: '💊', label: t('setup.painPoints.options.health') },
-          { emoji: '🎒', label: t('setup.painPoints.options.routines') },
-          { emoji: '💰', label: t('setup.painPoints.options.budget') },
-        ];
-        // 3 colonnes × 2 rangées
-        return (
-          <View style={s.welcomeContent}>
-            {/* Header — branding en haut centré */}
-            <Animated.View
-              entering={FadeInDown.delay(200).duration(500)}
-              style={s.welcomeHeader}
-            >
-              <Text style={[s.welcomeAppName, { color: primary }]}>Family Flow</Text>
-              <Text style={[s.welcomeTagline, { color: colors.textMuted }]}>{t('setup.tagline')}</Text>
-            </Animated.View>
-
-            {/* Zone centrale — grille emojis + labels */}
-            <View style={s.welcomeTopZone}>
-              <Animated.Text
-                entering={FadeInDown.delay(400).duration(500).springify()}
-                style={s.orbSeedInline}
-              >
-                🌱
-              </Animated.Text>
-              <View style={s.welcomeGrid}>
-                {ORB_ITEMS.map((item, i) => (
-                  <Animated.View
-                    key={i}
-                    entering={FadeInUp.delay(500 + i * 80).duration(400).springify()}
-                    style={s.welcomeGridItem}
-                  >
-                    <Text style={s.welcomeGridEmoji}>{item.emoji}</Text>
-                    <Text style={[s.welcomeGridLabel, { color: primary }]}>{item.label}</Text>
-                  </Animated.View>
-                ))}
-              </View>
-            </View>
-
-            {/* Zone basse — hook */}
-            <Animated.View
-              entering={FadeInUp.delay(1000).duration(500)}
-              style={s.welcomeBottomZone}
-            >
-              <Animated.Text
-                entering={FadeInUp.delay(1100).duration(500)}
-                style={[s.welcomeHook, { color: colors.text }]}
-              >
-                {t('setup.welcome.hook')}
-              </Animated.Text>
-              <Animated.Text
-                entering={FadeInUp.delay(1400).duration(500)}
-                style={[s.welcomePromise, { color: primary }]}
-              >
-                {t('setup.welcome.promise')}
-              </Animated.Text>
-            </Animated.View>
-          </View>
-        );
-      }
-
-      // Étape 2 — Pain points interactifs
-      case 2:
-        return renderPainPointPicker();
-
-      // Étape 3 — Réponse personnalisée
-      case 3:
-        return renderPersonalizedSolution();
-
-      // Étape 4 — Mascotte/sagas
-      case 4:
-        return renderMascotSlide();
-
-      case 5:
+      case 1:
         return (
           <View style={s.stepContent}>
             <Text style={ds.stepTitle}>👨‍👩‍👧‍👦 {t('setup.parents.title')}</Text>
@@ -602,7 +311,7 @@ export default function SetupScreen() {
           </View>
         );
 
-      case 6:
+      case 2:
         return (
           <View style={s.stepContent}>
             <Text style={ds.stepTitle}>👶 {t('setup.children.title')}</Text>
@@ -681,7 +390,7 @@ export default function SetupScreen() {
           </View>
         );
 
-      case 7:
+      case 3:
         return (
           <View style={s.stepContent}>
             <Text style={ds.stepTitle}>📁 {t('setup.vault.title')}</Text>
@@ -698,59 +407,13 @@ export default function SetupScreen() {
               onPathSelected={(path) => {
                 setVaultPathLocal(path);
                 // Auto-advance to templates step
-                setTimeout(() => setStep(8), 300);
+                setTimeout(() => setStep(4), 300);
               }}
             />
           </View>
         );
 
-      case 8: {
-        const visiblePacks = TEMPLATE_PACKS.filter(
-          (p) => !p.requiresChildren || childCount > 0
-        );
-        return (
-          <View style={s.stepContent}>
-            <Text style={ds.stepTitle}>📦 {t('setup.templates.title')}</Text>
-            <Text style={ds.stepSubtitle}>
-              {t('setup.templates.subtitle')}
-            </Text>
-
-            {visiblePacks.map((pack) => {
-              const isSelected = selectedPacks.has(pack.id);
-              return (
-                <TouchableOpacity
-                  key={pack.id}
-                  style={[
-                    ds.templateItem,
-                    isSelected && { backgroundColor: tint, borderColor: primary },
-                  ]}
-                  onPress={() => togglePack(pack.id)}
-                  activeOpacity={0.7}
-                >
-                  <View style={[ds.templateCheckbox, isSelected && { backgroundColor: primary, borderColor: primary }]}>
-                    {isSelected && <Text style={ds.templateCheck}>✓</Text>}
-                  </View>
-                  <Text style={s.templateEmoji}>{pack.emoji}</Text>
-                  <View style={s.templateText}>
-                    <Text style={ds.templateName}>{t(`setup.templatePacks.${pack.id}.name`, { defaultValue: pack.name })}</Text>
-                    <Text style={ds.templateDesc}>{t(`setup.templatePacks.${pack.id}.description`, { defaultValue: pack.description })}</Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-
-            <TouchableOpacity
-              style={s.selectAllBtn}
-              onPress={selectAllPacks}
-              activeOpacity={0.6}
-            >
-              <Text style={[s.selectAllText, { color: primary }]}>{t('setup.templates.selectAll')}</Text>
-            </TouchableOpacity>
-          </View>
-        );
-      }
-
-      case 9: {
+      case 4: {
         const familySummary = `${parents.length} parent${parents.length > 1 ? 's' : ''}`
           + (children.length > 0 ? `, ${children.length} enfant${children.length > 1 ? 's' : ''}` : '');
         const templateNames = TEMPLATE_PACKS
@@ -825,42 +488,28 @@ export default function SetupScreen() {
     }
   };
 
-  const gradientCfg = GRADIENT_CONFIG[step] || GRADIENT_CONFIG[1];
-
   return (
     <SafeAreaView style={ds.safe}>
-      {/* Gradient d'arrière-plan qui bouge selon l'étape */}
-      <LinearGradient
-        colors={[`${tint}`, `${primary}22`, 'transparent']}
-        start={gradientCfg.start}
-        end={gradientCfg.end}
-        style={[s.gradientBg, { opacity: gradientCfg.opacity }]}
-      />
       <KeyboardAvoidingView
         style={s.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        {/* Progress bar — masquée pendant l'intro, montre uniquement les étapes de config */}
-        {step >= FIRST_SETUP_STEP ? (
-          <View style={s.progressContainer}>
-            <View style={ds.progressBar}>
-              <View style={[s.progressFill, {
-                width: `${((step - FIRST_SETUP_STEP + 1) / (TOTAL_STEPS - FIRST_SETUP_STEP + 1)) * 100}%`,
-                backgroundColor: primary,
-              }]} />
-            </View>
-            <Text style={ds.progressText}>
-              {t('setup.nav.step', { current: step - FIRST_SETUP_STEP + 1, total: TOTAL_STEPS - FIRST_SETUP_STEP + 1 })}
-            </Text>
+        <View style={s.progressContainer}>
+          <View style={ds.progressBar}>
+            <View style={[s.progressFill, {
+              width: `${(step / TOTAL_STEPS) * 100}%`,
+              backgroundColor: primary,
+            }]} />
           </View>
-        ) : (
-          <View style={s.progressContainer} />
-        )}
+          <Text style={ds.progressText}>
+            {t('setup.nav.step', { current: step, total: TOTAL_STEPS })}
+          </Text>
+        </View>
 
         {/* Scrollable content */}
         <ScrollView
           style={s.scroll}
-          contentContainerStyle={[s.scrollContent, (step === 1 || step === 9) && s.scrollContentFlex]}
+          contentContainerStyle={[s.scrollContent, step === 4 && s.scrollContentFlex]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -877,33 +526,14 @@ export default function SetupScreen() {
             <View style={s.navSpacer} />
           )}
 
-          {step === 8 ? (
-            // Template step: "Passer" + "Suivant"
-            <View style={s.templateNav}>
-              <TouchableOpacity
-                style={s.navSkip}
-                onPress={() => {
-                  setSelectedPacks(new Set());
-                  setStep(9);
-                }}
-              >
-                <Text style={ds.navSkipText}>{t('setup.nav.skip')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[s.navNext, { backgroundColor: primary }]}
-                onPress={goNext}
-              >
-                <Text style={ds.navNextText}>{t('setup.nav.next')}</Text>
-              </TouchableOpacity>
-            </View>
-          ) : step < TOTAL_STEPS ? (
+          {step < TOTAL_STEPS ? (
             <TouchableOpacity
               style={[s.navNext, { backgroundColor: primary }, !canGoNext() && s.navDisabled]}
               onPress={goNext}
               disabled={!canGoNext()}
             >
               <Text style={ds.navNextText}>
-                {step === 1 ? t('setup.nav.start') : t('setup.nav.next')}
+                {t('setup.nav.next')}
               </Text>
             </TouchableOpacity>
           ) : (

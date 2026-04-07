@@ -4,7 +4,8 @@ import { GlassCard } from '../components/ui/GlassCard';
 import { AccentRow } from '../components/ui/AccentRow';
 import { Badge } from '../components/ui/Badge';
 import { useVault } from '../contexts/VaultContext';
-import type { Task, RDV, MealItem, Anniversary } from '@family-vault/core';
+import { parseCrops, CROP_CATALOG, BUILDING_CATALOG, getPendingResources } from '@family-vault/core';
+import type { Task, RDV, MealItem, Anniversary, Profile } from '@family-vault/core';
 
 // ─── Card order & visibility persistence ──────────────────────────────────
 
@@ -42,6 +43,7 @@ const CARD_LABELS: Record<string, string> = {
   courses: '🛒 Courses',
   anniversaires: '🎂 Anniversaires',
   stats: '📊 Vue d\'ensemble',
+  garden: '🌳 Mon jardin',
 };
 
 // ─── Customize modal ──────────────────────────────────────────────────────
@@ -307,7 +309,7 @@ export default function Dashboard() {
 
   // ── Card order & visibility ─────────────────────────────────────────
 
-  const DEFAULT_ORDER = ['overdue', 'tasks', 'rdv', 'meals', 'courses', 'anniversaires', 'stats'];
+  const DEFAULT_ORDER = ['overdue', 'tasks', 'rdv', 'meals', 'courses', 'anniversaires', 'garden', 'stats'];
 
   const [cardOrder, setCardOrder] = useState<string[]>(() => {
     return loadPrefs()?.order.length ? loadPrefs()!.order : DEFAULT_ORDER;
@@ -511,6 +513,116 @@ export default function Dashboard() {
             </div>
           </GlassCard>
         ),
+      },
+      garden: {
+        visible: true,
+        node: (() => {
+          const farmProfiles = profiles.filter((p: Profile) => {
+            const crops = parseCrops(p.farmCrops ?? '');
+            return crops.length > 0 || (p.farmBuildings?.length ?? 0) > 0;
+          });
+          const hasFarms = farmProfiles.length > 0;
+
+          const renderCell = (p: Profile) => {
+            const crops = parseCrops(p.farmCrops ?? '');
+            const buildings = p.farmBuildings ?? [];
+            const readyCount = crops.filter(c => c.currentStage >= 4).length;
+            const visibleCrops = crops.slice(0, 6);
+            const hiddenCount = Math.max(0, crops.length - 6);
+            const cellW = farmProfiles.length >= 3 ? '50%' : `${100 / farmProfiles.length}%`;
+
+            return (
+              <div
+                key={p.id}
+                onClick={() => navigate('/tree')}
+                style={{
+                  width: cellW, boxSizing: 'border-box', padding: 12, cursor: 'pointer',
+                  borderRight: '1px solid var(--border-light)', borderBottom: '1px solid var(--border-light)',
+                  display: 'flex', flexDirection: 'column', gap: 6, minHeight: 90,
+                }}
+              >
+                {/* En-tête */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ fontSize: 16 }}>{p.avatar}</span>
+                  <span style={{ fontSize: 'var(--font-size-caption)', fontWeight: 600, color: 'var(--text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
+                  {readyCount > 0 && (
+                    <span style={{ background: 'var(--primary)', color: '#fff', borderRadius: 9999, fontSize: 'var(--font-size-micro)', fontWeight: 700, padding: '1px 6px' }}>
+                      {readyCount}
+                    </span>
+                  )}
+                </div>
+
+                {/* Cultures */}
+                {crops.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                    {visibleCrops.map((crop, i) => {
+                      const def = CROP_CATALOG.find(c => c.id === crop.cropId);
+                      if (!def) return null;
+                      const isReady = crop.currentStage >= 4;
+                      const isGolden = !!crop.isGolden;
+                      const progress = isReady ? 1 : (crop.currentStage * def.tasksPerStage + crop.tasksCompleted) / (4 * def.tasksPerStage);
+                      return (
+                        <div key={i} style={{
+                          border: `1px solid ${isGolden ? 'rgba(240,192,64,0.4)' : isReady ? 'var(--primary)' : 'var(--border)'}`,
+                          background: isGolden ? 'rgba(240,192,64,0.1)' : isReady ? 'color-mix(in srgb, var(--primary) 12%, transparent)' : 'var(--card-alt)',
+                          borderRadius: 6, padding: 4, position: 'relative', opacity: isReady || isGolden ? 1 : 0.6,
+                        }}>
+                          <div style={{ fontSize: 13, lineHeight: '15px' }}>{def.emoji}</div>
+                          {isGolden && <span style={{ fontSize: 8, position: 'absolute', top: -3, right: -3 }}>✨</span>}
+                          <div style={{ height: 2, borderRadius: 1, background: 'var(--border)', marginTop: 3, overflow: 'hidden' }}>
+                            <div style={{ height: '100%', borderRadius: 1, width: `${Math.round(progress * 100)}%`, background: isGolden ? '#f0c040' : isReady ? 'var(--primary)' : 'var(--text-muted)' }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {hiddenCount > 0 && (
+                      <div style={{ border: '1px solid var(--border)', background: 'var(--card-alt)', borderRadius: 6, padding: 4 }}>
+                        <span style={{ fontSize: 'var(--font-size-micro)', fontWeight: 600, color: 'var(--text-muted)' }}>+{hiddenCount}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Bâtiments */}
+                {buildings.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                    {buildings.map((b, i) => {
+                      const def = BUILDING_CATALOG.find(bd => bd.id === b.buildingId);
+                      if (!def) return null;
+                      const pending = getPendingResources(b, new Date());
+                      return (
+                        <div key={i} style={{
+                          display: 'flex', alignItems: 'center', gap: 2, border: `1px solid ${pending > 0 ? 'var(--primary)' : 'var(--border)'}`,
+                          background: 'var(--card-alt)', borderRadius: 6, padding: '3px 5px',
+                        }}>
+                          <span style={{ fontSize: 11 }}>{def.emoji}</span>
+                          <span style={{ fontSize: 'var(--font-size-micro)', color: 'var(--text-muted)' }}>lv{b.level}</span>
+                          {pending > 0 && <span style={{ fontSize: 'var(--font-size-micro)', fontWeight: 700, color: 'var(--primary)', marginLeft: 1 }}>{pending}</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          };
+
+          return (
+            <GlassCard title="Mon jardin" icon="🌳" accentColor="var(--cat-jeux)" tinted linkText="Voir →" onLinkClick={() => navigate('/tree')}>
+              {hasFarms ? (
+                <div style={{ display: 'flex', flexWrap: 'wrap', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border-light)' }}>
+                  {farmProfiles.map(renderCell)}
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 16px', gap: 8, border: '1px dashed var(--border-light)', borderRadius: 'var(--radius-md)' }}>
+                  <span style={{ fontSize: 28, opacity: 0.4 }}>🌱</span>
+                  <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, color: 'var(--text)' }}>Créez votre ferme !</span>
+                  <span style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-muted)', textAlign: 'center' }}>Plantez vos premières cultures depuis l'onglet Mon Jardin.</span>
+                </div>
+              )}
+            </GlassCard>
+          );
+        })(),
       },
       stats: {
         visible: true,

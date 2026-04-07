@@ -134,7 +134,7 @@ function applyFarmField(data: FarmProfileData, fieldKey: string, value: string):
   }
 }
 
-export function useFarm() {
+export function useFarm(onQuestProgress?: (profileId: string, type: string, amount: number) => Promise<void>) {
   const { vault, profiles, refreshFarm, refreshGamification } = useVault();
 
   /** Deduire des feuilles dans gami-{profileId}.md */
@@ -317,8 +317,16 @@ export function useFarm() {
     await writeProfileFields(profileId, fieldsToWrite);
     await refreshFarm(profileId);
 
+    // Progression quêtes coopératives (harvest / golden_harvest)
+    if (onQuestProgress) {
+      try {
+        const isGoldenHarvest = result.isGolden;
+        await onQuestProgress(profileId, isGoldenHarvest ? 'golden_harvest' : 'harvest', 1);
+      } catch { /* Quest — non-critical */ }
+    }
+
     return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop };
-  }, [vault, writeProfileFields, refreshFarm]);
+  }, [vault, writeProfileFields, refreshFarm, onQuestProgress]);
 
   /** Vendre une recolte brute depuis l'inventaire */
   const sellHarvest = useCallback(async (profileId: string, cropId: string): Promise<number> => {
@@ -378,8 +386,14 @@ export function useFarm() {
     }
     await refreshFarm(profileId);
     await refreshGamification();
+
+    // Progression quêtes coopératives (craft)
+    if (onQuestProgress) {
+      try { await onQuestProgress(profileId, 'craft', 1); } catch { /* Quest — non-critical */ }
+    }
+
     return result.item;
-  }, [vault, writeProfileFields, refreshFarm, refreshGamification]);
+  }, [vault, writeProfileFields, refreshFarm, refreshGamification, onQuestProgress]);
 
   /** Vendre un item crafte */
   const sellCrafted = useCallback(async (profileId: string, recipeId: string): Promise<number> => {
@@ -480,8 +494,14 @@ export function useFarm() {
     await vault.writeFile(file, serializeFarmProfile(profileName, newFarm));
 
     await refreshFarm(profileId);
+
+    // Progression quêtes coopératives (production)
+    if (onQuestProgress && result.collected > 0) {
+      try { await onQuestProgress(profileId, 'production', 1); } catch { /* Quest — non-critical */ }
+    }
+
     return result.collected;
-  }, [vault, profiles, refreshFarm]);
+  }, [vault, profiles, refreshFarm, onQuestProgress]);
 
   /** Collecter le revenu passif de tous les batiments (appele a l'ouverture de l'ecran) */
   const collectPassiveIncome = useCallback(async (profileId: string): Promise<number> => {

@@ -13,6 +13,7 @@ import { DashboardEmptyState } from '../DashboardEmptyState';
 import { formatAmount, categoryDisplay, totalSpent, totalBudget } from '../../lib/budget';
 import type { DashboardSectionProps } from './types';
 import { FontSize, FontWeight } from '../../constants/typography';
+import { Spacing } from '../../constants/spacing';
 
 function DashboardBudgetInner({ vaultFileExists, activateCardTemplate }: DashboardSectionProps) {
   const { t } = useTranslation();
@@ -42,6 +43,9 @@ function DashboardBudgetInner({ vaultFileExists, activateCardTemplate }: Dashboa
   const overCount = catStats.filter((c) => c.spent > c.limit).length;
   const topCats = catStats.filter((c) => c.spent > 0).sort((a, b) => b.spent - a.spent).slice(0, 2);
 
+  const pctUsed = budgetTotalVal > 0 ? Math.round((budgetSpent / budgetTotalVal) * 100) : 0;
+  const isOver = budgetSpent > budgetTotalVal;
+
   return (
     <DashboardCard
       key="budget"
@@ -51,18 +55,16 @@ function DashboardBudgetInner({ vaultFileExists, activateCardTemplate }: Dashboa
       color={colors.catFamille}
       tinted
       onPressMore={() => router.push('/(tabs)/budget')}
+      hideMoreLink
+      style={{ flex: 1, marginBottom: 0 }}
     >
-      <Text style={[styles.budgetTotal, { color: budgetSpent > budgetTotalVal ? colors.error : colors.text }]}>
+      <Text style={[styles.budgetPct, { color: isOver ? colors.error : colors.text }]}>{pctUsed}%</Text>
+      <View style={[styles.progressBg, { backgroundColor: colors.cardAlt }]}>
+        <View style={[styles.progressFill, { width: `${Math.min(100, pctUsed)}%`, backgroundColor: isOver ? colors.error : colors.catFamille }]} />
+      </View>
+      <Text style={[styles.budgetMicro, { color: colors.textMuted }]}>
         {formatAmount(budgetSpent)} / {formatAmount(budgetTotalVal)}
       </Text>
-      {topCats.map((c) => (
-        <View key={c.name} style={styles.budgetCatRow}>
-          <Text style={[styles.budgetCatName, { color: colors.textSub }]}>{c.emoji} {c.name}</Text>
-          <Text style={[styles.budgetCatAmount, { color: c.spent > c.limit ? colors.error : colors.textMuted }]}>
-            {formatAmount(c.spent)}
-          </Text>
-        </View>
-      ))}
     </DashboardCard>
   );
 }
@@ -70,22 +72,24 @@ function DashboardBudgetInner({ vaultFileExists, activateCardTemplate }: Dashboa
 export const DashboardBudget = React.memo(DashboardBudgetInner);
 
 const styles = StyleSheet.create({
-  budgetTotal: {
-    fontSize: FontSize.heading,
+  budgetPct: {
+    fontSize: 36,
     fontWeight: FontWeight.bold,
-    marginBottom: 6,
+    lineHeight: 40,
+    letterSpacing: -1,
   },
-  budgetCatRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 2,
+  progressBg: {
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.xs,
   },
-  budgetCatName: {
-    fontSize: FontSize.sm,
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
   },
-  budgetCatAmount: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
+  budgetMicro: {
+    fontSize: FontSize.micro,
   },
 });

@@ -58,6 +58,12 @@ Requirements for milestone v1.1 -- Ferme Enrichie. La ferme est le levier de mot
 - [x] **SAG-03**: Le dashboard affiche un indicateur texte compact de la saga en cours (plus de boutons/carte dediee)
 - [x] **SAG-04**: Le visiteur a des animations de reaction (joie, surprise, mystere) et un depart anime apres completion de saga
 
+### Quetes Cooperatives Ferme
+
+- **QUEST-01**: Une quete familiale peut etre demarree, progressee par n'importe quel membre de la famille, et completee avec une recompense ferme distribuee a tous
+- **QUEST-02**: La ferme affiche un widget banniere montrant la quete active, la progression globale famille, et les contributions par membre
+- **QUEST-03**: Les recompenses de quete sont des effets ferme distinctifs (cultures accelerees, cultures dorees garanties, batiments offerts, graines rares, trophee familial permanent) — distinctes des XP individuels
+
 ## Future Requirements
 
 Deferred to future milestones.
@@ -92,6 +98,9 @@ Deferred to future milestones.
 | PRO-03 | Phase 8 | Complete |
 | SOC-01 | Phase 9 | Complete |
 | SOC-02 | Phase 9 | Complete |
+| QUEST-01 | Phase 15 | Complete |
+| QUEST-02 | Phase 15 | Complete |
+| QUEST-03 | Phase 15 | Complete |
 | COMP-01 | Phase 10 | Complete |
 | COMP-02 | Phase 10 | Complete |
 | COMP-03 | Phase 10 | Complete |
