@@ -16,7 +16,7 @@
 
 - [x] **Phase 15: Préférences alimentaires** — Mémoire des contraintes alimentaires par membre famille et invités, avec détection automatique des conflits dans les recettes et le planning repas (completed 2026-04-08)
 - [x] **Phase 16: Codex contenu** — Fichier de données pur `lib/codex/content.ts` important les constantes engine existantes, zéro UI, zéro risque de dérive des stats (completed 2026-04-08)
-- [ ] **Phase 17: Codex UI** — Modale `FarmCodexModal` avec bouton "?" dans le HUD ferme, navigation par catégories, recherche textuelle et virtualisation
+- [x] **Phase 17: Codex UI** — Modale `FarmCodexModal` avec bouton "?" dans le HUD ferme, navigation par catégories, recherche textuelle et virtualisation (completed 2026-04-08)
 - [ ] **Phase 18: Tutoriel ferme** — Overlay tutoriel immersif au premier lancement, skippable, rejouable depuis le codex, avec pause des animations ferme pendant les étapes
 
 ## Phase Details
@@ -91,7 +91,7 @@
 |-------|-----------|----------------|--------|-----------|
 | 15. Préférences alimentaires | v1.2 | 7/7 | Complete    | 2026-04-08 |
 | 16. Codex contenu | v1.2 | 5/5 | Complete    | 2026-04-08 |
-| 17. Codex UI | v1.2 | 2/3 | In Progress|  |
+| 17. Codex UI | v1.2 | 3/3 | Complete   | 2026-04-08 |
 | 18. Tutoriel ferme | v1.2 | 0/? | Not started | - |
 
 ## Archived Milestones

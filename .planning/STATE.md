@@ -4,14 +4,14 @@ milestone: v1.2
 milestone_name: Confort & Découverte
 current_phase: 17
 status: Ready to execute
-stopped_at: Completed 17-01-search-discovery-PLAN.md
-last_updated: "2026-04-08T09:41:39.999Z"
+stopped_at: Completed 17-03-farmcodexmodal-integration-PLAN.md
+last_updated: "2026-04-08T09:50:33.533Z"
 last_activity: 2026-04-08
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 15
-  completed_plans: 14
+  completed_plans: 15
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 17 (codex-ui) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Milestone: v1.2 Confort & Découverte (active)
 Current phase: 17
 Last shipped: v1.1 Ferme Enrichie (2026-04-07)
@@ -94,6 +94,7 @@ Progress: [░░░░░░░░░░] 0% (0/4 phases)
 | Phase 16-codex-contenu P05 | 12min | 2 tasks | 2 files |
 | Phase 17-codex-ui P02 | 3min | 1 tasks | 2 files |
 | Phase 17-codex-ui P01 | 3min | 2 tasks | 2 files |
+| Phase 17-codex-ui P03 | 7min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -197,6 +198,9 @@ Recent decisions affecting current work:
 - [Phase 16-codex-contenu]: CODEX_CONTENT centralisé dans lib/codex/content.ts avec re-exports larges (types/stats/loot) pour import unique côté UI
 - [Phase 16-codex-contenu]: Tests Jest anti-drift via it.each + getters stats garantissent zéro drift entre codex et constantes engine
 - [Phase 17-codex-ui]: [Phase 17-02]: D-16 appliqué — parité FR+EN stricte sur les 17 clés UI codex (modal/search/tabs/detail/card/tutorial), namespace Phase 16 préservé intact
+- [Phase 17-03]: Switch exhaustif sur les 10 CodexKind avec _exhaustive: never dans CodexEntryDetailModal — D-05 respecté, le compilateur bloque tout ajout futur non câblé
+- [Phase 17-03]: getLootStats absent de lib/codex/stats.ts — fallback placeholder — dans le case loot (pas d'échec de compile)
+- [Phase 17-03]: Profile cast en DiscoverySource via as any dans tree.tsx — shape minimale runtime-compatible
 
 ### Pending Todos
 
@@ -237,6 +241,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-08T09:41:39.996Z
-Stopped at: Completed 17-01-search-discovery-PLAN.md
+Last session: 2026-04-08T09:50:23.645Z
+Stopped at: Completed 17-03-farmcodexmodal-integration-PLAN.md
 Resume file: None
