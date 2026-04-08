@@ -52,7 +52,12 @@
   2. Zéro valeur numérique (cycles, rendements, taux de drop, coûts) n'est codée en dur dans le fichier — chaque stat est lue depuis `CROP_CATALOG`, `BUILDING_CATALOG`, `TECH_TREE` ou les constantes engine correspondantes
   3. La mécanique "pluies dorées" est documentée avec le taux de déclenchement exact et la liste des drops possibles, tels que définis dans les constantes engine
   4. Les entrées `dropOnly` (orchidée, rose dorée, truffe, fruit du dragon) sont marquées avec le flag approprié permettant à l'UI de Phase 17 d'afficher "???" selon l'inventaire du profil
-**Plans**: TBD
+**Plans**: 5 plans
+- [ ] 16-01-fondations-types-i18n-PLAN.md — Types CodexEntry, helpers stats getters, squelette i18n FR+EN et namespace codex câblé
+- [ ] 16-02-cultures-animaux-loot-PLAN.md — 15 crops + ~18 inhabitants + 8 loot entries avec lore bilingue (CODEX-04, CODEX-05)
+- [ ] 16-03-batiments-craft-tech-companions-PLAN.md — 4 buildings + 24 craft + 10 tech + 5 companions avec lore bilingue
+- [ ] 16-04-sagas-quetes-seasonal-PLAN.md — 4 sagas + 15 quests + 8 seasonal events avec lore bilingue
+- [ ] 16-05-aggregation-validation-PLAN.md — lib/codex/content.ts agrège les 10 catégories + test Jest d'intégrité sourceId + parité i18n + dropOnly
 
 ### Phase 17: Codex UI
 **Goal**: L'utilisateur peut ouvrir le codex de la ferme depuis un bouton "?" dans le HUD existant, naviguer par catégories, rechercher une entrée, et accéder au bouton de replay du tutoriel
