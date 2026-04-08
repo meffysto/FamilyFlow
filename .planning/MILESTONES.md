@@ -1,5 +1,31 @@
 # Milestones
 
+## v1.2 Confort & Découverte (Shipped: 2026-04-08)
+
+**Phases completed:** 4 phases (15-18), 19 plans, 14 tasks
+**Timeline:** 2026-04-07 → 2026-04-08 (2 jours)
+**Stats:** 107 commits, 125 fichiers modifiés, +19 678 / -1 643 lignes
+**Delivered:** L'app retient les contraintes alimentaires de la famille et explique enfin la ferme — confort quotidien (préférences + détection conflits recettes) et découvrabilité du jeu (codex 111 entrées + tutoriel 5 étapes).
+
+**Key accomplishments:**
+
+- Types + 3 catalogues canoniques (14 allergènes UE, 8 intolérances, 8 régimes) avec aliases FR exhaustifs et IDs snake_case stables pour matching ingrédients
+- Parser bidirectionnel `famille.md` étendu (food_allergies/intolerances/regimes/aversions) + nouveau fichier `02 - Famille/Invités.md` pour invités récurrents — compatibilité Obsidian préservée (PREF-05)
+- Fonction pure `checkAllergens` TDD (5 tests ARCH-03) + AllergenBanner P0 SAFETY non-dismissible (PREF-11) avec enforcement statique TypeScript
+- RecipeViewer enrichi (bandeau + badges inline par sévérité + ConvivesPickerModal) et MealConflictRecap dans le planificateur hebdomadaire
+- Saisie vocale PREF-13 : extractDietaryConstraints via ai-service.ts + VoicePreviewModal câblé sur DictaphoneRecorder existant
+- Codex contenu : `lib/codex/content.ts` agrège 111 entrées sur 10 catégories (Cultures/Animaux/Bâtiments/Craft/Tech/Compagnons/Loot/Saisonnier/Sagas/Quêtes) importées des constantes engine — 220 tests Jest anti-drift garantissent zéro duplication de stats
+- FarmCodexModal livré (11 catégories dont onglet Aventures ajouté in-phase) avec recherche normalisée NFD, sprites pixel art natifs, FlatList virtualisée, mini-modal détail stats kid-friendly, parité FR+EN
+- Tutoriel ferme : FarmTutorialOverlay 5 étapes (format mixte cartes narratives + coach marks spotlight) basé sur HelpContext étendu, pause WorldGridView pour 60fps, rejouabilité depuis codex (CODEX-10)
+- CoachMarkOverlay étendu avec borderRadius (technique borderWidth géant, zéro SVG supplémentaire) — réutilisable pour futurs tutoriels
+- ARCH-05 tenu : zéro nouvelle dépendance npm sur l'ensemble du milestone (preuve que les primitives existantes suffisent)
+
+### Known gaps
+
+- ARCH-05 marqué "Pending" dans la trace requirements car vérifié par inspection humaine — aucune nouvelle dépendance npm ajoutée, constraint respectée en pratique
+
+---
+
 ## v1.1 Ferme Enrichie (Shipped: 2026-04-07)
 
 **Phases completed:** 9 phases, 22 plans, 36 tasks

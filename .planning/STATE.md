@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Confort & Découverte
 current_phase: 18
-status: Milestone complete
+status: v1.2 milestone complete
 stopped_at: Completed 18-04-tree-integration-PLAN.md
-last_updated: "2026-04-08T15:44:39.637Z"
+last_updated: "2026-04-08T15:52:09.763Z"
 last_activity: 2026-04-08
 progress:
   total_phases: 4
@@ -22,20 +22,19 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 18 — tutoriel-ferme
+**Current focus:** Planning next milestone (v1.3)
 
 ## Current Position
 
-Phase: 18 (tutoriel-ferme) — EXECUTING
-Plan: Not started
-Milestone: v1.2 Confort & Découverte (active)
-Current phase: 18
-Last shipped: v1.1 Ferme Enrichie (2026-04-07)
+Phase: — (aucune phase active)
+Plan: —
+Milestone: v1.2 Confort & Découverte SHIPPED 2026-04-08
+Last shipped: v1.2 Confort & Découverte (2026-04-08)
 Last activity: 2026-04-08
 
-Progress: [░░░░░░░░░░] 0% (0/4 phases)
+Progress: [██████████] 100% (4/4 phases v1.2)
 
-**Global constraint:** ARCH-05 — Aucune nouvelle dépendance npm sur toutes les phases 15-18
+Next step: `/gsd:new-milestone` pour démarrer le cycle v1.3
 
 ## Performance Metrics
 

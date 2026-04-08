@@ -34,14 +34,20 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 - ✓ Notifications locales planifiées — existing
 - ✓ Reconnaissance vocale — existing
 - ✓ Vault Obsidian avec sync iCloud — existing
+- ✓ Préférences alimentaires famille + invités (allergies, intolérances, régimes, aversions) avec détection automatique des conflits recettes et bandeau P0 non-dismissible — v1.2
+- ✓ Saisie vocale des préférences alimentaires via DictaphoneRecorder + extraction IA — v1.2
+- ✓ Codex ferme — 111 entrées sur 11 catégories (Cultures, Animaux, Bâtiments, Craft, Tech, Compagnons, Loot, Saisonnier, Sagas, Quêtes, Aventures), sprites pixel art natifs, recherche normalisée FR+EN, zéro drift via 220 tests Jest anti-drift — v1.2
+- ✓ Tutoriel ferme immersif (5 étapes mixtes cartes + coach marks spotlight) au premier lancement, skippable, rejouable depuis le codex — v1.2
 
 ### Active
 
-- [ ] Mémoire des préférences alimentaires de la famille et invités
-- ✓ Codex / wiki ferme — livré (Phase 16 contenu + Phase 17 UI). 11 catégories (dont onglet Aventures ajouté in-phase), sprites pixel art natifs pour animaux/compagnons/sagas/bâtiments, recherche normalisée, FR+EN
-- [ ] Tutoriel ferme immersif au premier lancement
 - [ ] (Backlog) Nettoyage code mort et fonctions dépréciées
 - [ ] (Backlog) Refacto progressive du god hook useVault (3400 lignes → hooks domaine)
+- [ ] (Backlog) Consolidation HealthRecord.allergies (santé) avec préférences alimentaires (cuisine) — migration parser dédiée
+- [ ] (Backlog) Sélecteur "qui mange ce soir" sur les MealItem du planning hebdomadaire
+- [ ] (Backlog) Suggestion automatique de recettes compatibles selon les convives sélectionnés
+- [ ] (Backlog) Tutoriels contextuels pour autres écrans complexes (budget OCR, sagas, quêtes)
+- [ ] (Backlog) Mécanique "Pokédex" — tracking de découverte codex par profil avec statistiques de complétion
 
 ### Out of Scope
 
@@ -51,20 +57,13 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 - Migration hors Obsidian — le vault Markdown reste la source de vérité
 - Accessibilité complète (WCAG) — pas prioritaire pour usage familial privé
 
-## Current Milestone: v1.2 Confort & Découverte
+## Current Milestone: (planning next milestone)
 
-**Goal:** L'app retient les détails que la famille oublie et explique enfin la ferme — confort quotidien (préférences alimentaires) et découvrabilité du jeu (codex + tutoriel)
+## Previous Milestones
 
-**Target features:**
-- Préférences alimentaires par membre famille et invités (allergies, intolérances, régimes, aversions) avec flag automatique dans recettes
-- Codex / wiki ferme consultable via bouton "?" sur l'écran ferme — précis avec stats (cycles cultures, drops, mécaniques)
-- Tutoriel ferme immersif au premier lancement, rejouable depuis le wiki
-
-**Key insight:** Après v1.1 qui a empilé les mécaniques de jeu (sagas, événements, quêtes, compagnons, drops saisonniers, pluies dorées…), il devient impossible de s'y retrouver sans documentation in-app. Et l'app accumule du contexte familial (profils, recettes, repas) sans capter les préférences personnelles qui rendent la cuisine vraiment utile au quotidien.
-
-## Previous Milestone: v1.1 Ferme Enrichie ✅
-
-Shipped 2026-04-07 — voir `.planning/milestones/v1.1-ROADMAP.md` pour les détails.
+- ✅ **v1.2 Confort & Découverte** — Shipped 2026-04-08. Préférences alimentaires famille/invités + détection conflits recettes, codex ferme 111 entrées sur 11 catégories, tutoriel immersif 5 étapes. Voir `.planning/milestones/v1.2-ROADMAP.md`.
+- ✅ **v1.1 Ferme Enrichie** — Shipped 2026-04-07. Voir `.planning/milestones/v1.1-ROADMAP.md`.
+- ✅ **v1.0 Stabilisation** — Shipped 2026-03-28.
 
 ## Context
 
@@ -89,7 +88,14 @@ Shipped 2026-04-07 — voir `.planning/milestones/v1.1-ROADMAP.md` pour les dét
 |----------|-----------|---------|
 | Nettoyage avant refacto | Tests + nettoyage créent le filet de sécurité pour refactorer sans risque | — Pending |
 | Refacto progressive du hook | Splitter useVault en hooks domaine progressivement plutôt que big bang | — Pending |
-| Ferme/gamification après stabilisation | Stabiliser d'abord, enrichir ensuite | — Pending |
+| Ferme/gamification après stabilisation | Stabiliser d'abord, enrichir ensuite | ✓ Good (v1.1 + v1.2) |
+| PREF-11 P0 SAFETY allergène non-dismissible | La sécurité allergène n'accepte pas de bug silencieux — enforcement statique TypeScript via zéro prop dismiss | ✓ Good (v1.2) |
+| Phase codex contenu séparée de l'UI | Valider la précision des 111 entrées en isolation (220 tests anti-drift) avant toute UI | ✓ Good (v1.2) |
+| ARCH-05 zéro nouvelle dépendance npm | Prouver que les primitives du codebase suffisent — anti-drift dépendances | ✓ Good (v1.2, respecté sur 4 phases) |
+| TUTO-02 flag tutoriel device-global | Persistance SecureStore par appareil (pas par profil) — évite re-trigger lors du switch profil | ✓ Good (v1.2) |
+| HelpContext étendu plutôt que nouveau provider | Stack providers déjà à 8 niveaux — réutiliser l'existant | ✓ Good (v1.2) |
+| Format tutoriel mixte cartes + coach marks | Cartes narratives pour intro/outro, spotlight pour étapes contextuelles — fallback graceful si cible non mesurable | ✓ Good (v1.2) |
+| GuestProfile séparé de Profile | Invités sans gamification/avatar/role — pattern dédié dans `02 - Famille/Invités.md` | ✓ Good (v1.2) |
 
 ## Evolution
 
@@ -109,4 +115,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-08 — Phase 17 (codex UI) complete : FarmCodexModal livré (11 catégories dont Aventures, sprites pixel art, recherche normalisée, mini-modal détail avec stats kid-friendly). 9 bugs Phase 16 rattrapés in-phase.*
+*Last updated: 2026-04-08 after v1.2 milestone (Confort & Découverte) — 4 phases, 19 plans, 14 tasks, 107 commits, +19 678 lignes. Tous les requirements PREF-*/CODEX-*/TUTO-*/ARCH-03/ARCH-04 validés. ARCH-05 respectée (zéro nouvelle dépendance npm).*
