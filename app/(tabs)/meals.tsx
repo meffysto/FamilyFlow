@@ -20,6 +20,7 @@ import {
   TextInput,
   Alert,
   KeyboardAvoidingView,
+  Keyboard,
   Platform,
   FlatList,
 } from 'react-native';
@@ -848,6 +849,7 @@ export default function MealsScreen() {
   const handleTextImportParse = useCallback(async () => {
     const text = textImportValue.trim();
     if (!text) return;
+    Keyboard.dismiss();
     setImportLoading(true);
     try {
       let result: ImportResult;
@@ -2025,16 +2027,6 @@ export default function MealsScreen() {
                   placeholderTextColor={colors.textMuted}
                   multiline
                 />
-                <TouchableOpacity
-                  style={[styles.importFetchBtn, { backgroundColor: primary }, (!textImportValue.trim() || importLoading) && { opacity: 0.5 }]}
-                  onPress={handleTextImportParse}
-                  disabled={!textImportValue.trim() || importLoading}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>
-                    {importLoading ? t('meals.textImport.analyzeLoading') : aiConfigured ? t('meals.textImport.convertAI') : t('meals.textImport.analyzeText')}
-                  </Text>
-                </TouchableOpacity>
               </View>
 
               {/* Preview for cook type (AI result) */}
@@ -2130,6 +2122,22 @@ export default function MealsScreen() {
                 </View>
               )}
             </ScrollView>
+
+            {/* Bouton analyser en footer fixe — toujours visible au-dessus du clavier */}
+            {!textImportResult && (
+              <View style={[styles.textImportFooter, { backgroundColor: colors.bg, borderTopColor: colors.borderLight }]}>
+                <TouchableOpacity
+                  style={[styles.importFetchBtn, { backgroundColor: primary }, (!textImportValue.trim() || importLoading) && { opacity: 0.5 }]}
+                  onPress={handleTextImportParse}
+                  disabled={!textImportValue.trim() || importLoading}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>
+                    {importLoading ? t('meals.textImport.analyzeLoading') : aiConfigured ? t('meals.textImport.convertAI') : t('meals.textImport.analyzeText')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
@@ -2791,6 +2799,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
+  },
+  textImportFooter: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   importFetchBtnText: {
     fontSize: FontSize.body,

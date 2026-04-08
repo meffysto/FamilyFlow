@@ -270,14 +270,17 @@ export const ProfileFoodCard = React.memo(function ProfileFoodCard({
 
       {/* 4 sections de préférences */}
       <View style={styles.sectionsContainer}>
-        {CATEGORIES.map((cat) => (
-          <CategorySection
-            key={cat.key}
-            profileId={profile.id}
-            category={cat}
-            items={getItems(profile, cat.foodField)}
-            onUpdate={onUpdate}
-          />
+        {CATEGORIES.map((cat, index) => (
+          // zIndex décroissant : Allergies (4) > Intolérances (3) > Régimes (2) > Aversions (1)
+          // Garantit que le dropdown autocomplete d'une section ne passe pas sous la suivante
+          <View key={cat.key} style={{ zIndex: CATEGORIES.length - index }}>
+            <CategorySection
+              profileId={profile.id}
+              category={cat}
+              items={getItems(profile, cat.foodField)}
+              onUpdate={onUpdate}
+            />
+          </View>
         ))}
       </View>
     </View>
