@@ -458,5 +458,35 @@
       "name": "La Lettre Mystérieuse",
       "lore": "Une enveloppe sans expéditeur attend sur la table en bois de la ferme. L'ouvrir ou la laisser scellée pour préserver le mystère ? Les mots à l'intérieur pourraient tout changer."
     }
+  },
+  "modal": {
+    "title": "Codex de la ferme"
+  },
+  "search": {
+    "placeholder": "Rechercher une entrée…",
+    "empty": "Aucune entrée trouvée pour « {{query}} »"
+  },
+  "tabs": {
+    "crop": "Cultures",
+    "animal": "Animaux",
+    "building": "Bâtiments",
+    "craft": "Artisanat",
+    "tech": "Technologies",
+    "companion": "Compagnons",
+    "loot": "Butin",
+    "seasonal": "Saisonnier",
+    "saga": "Sagas",
+    "quest": "Quêtes"
+  },
+  "detail": {
+    "lore": "Description",
+    "stats": "Caractéristiques",
+    "close": "Fermer"
+  },
+  "card": {
+    "locked": "???"
+  },
+  "tutorial": {
+    "replay": "Rejouer le tutoriel"
   }
 }

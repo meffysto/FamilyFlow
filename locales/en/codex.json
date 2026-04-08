@@ -458,5 +458,35 @@
       "name": "The Mysterious Letter",
       "lore": "An envelope without a sender waits on the farm's wooden table. Open it or leave it sealed to preserve the mystery? The words inside could change everything."
     }
+  },
+  "modal": {
+    "title": "Farm codex"
+  },
+  "search": {
+    "placeholder": "Search an entry…",
+    "empty": "No entry found for \"{{query}}\""
+  },
+  "tabs": {
+    "crop": "Crops",
+    "animal": "Animals",
+    "building": "Buildings",
+    "craft": "Crafting",
+    "tech": "Technologies",
+    "companion": "Companions",
+    "loot": "Loot",
+    "seasonal": "Seasonal",
+    "saga": "Sagas",
+    "quest": "Quests"
+  },
+  "detail": {
+    "lore": "Description",
+    "stats": "Stats",
+    "close": "Close"
+  },
+  "card": {
+    "locked": "???"
+  },
+  "tutorial": {
+    "replay": "Replay tutorial"
   }
 }
