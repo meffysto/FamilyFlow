@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Confort & Découverte
-current_phase: 16
-status: Ready to execute
+current_phase: 17
+status: Ready to plan
 stopped_at: Completed 16-05-aggregation-validation-PLAN.md
-last_updated: "2026-04-08T08:19:29.289Z"
+last_updated: "2026-04-08T08:23:57.138Z"
 last_activity: 2026-04-08
 progress:
   total_phases: 4
@@ -27,9 +27,9 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 16 (codex-contenu) — EXECUTING
-Plan: 3 of 5
+Plan: Not started
 Milestone: v1.2 Confort & Découverte (active)
-Current phase: 16
+Current phase: 17
 Last shipped: v1.1 Ferme Enrichie (2026-04-07)
 Last activity: 2026-04-08
 
