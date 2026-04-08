@@ -4,10 +4,9 @@
 // lus à la demande depuis COMPANION_SPECIES_CATALOG via getCompanionStats
 // (lib/codex/stats.ts) pour rester alignés avec l'engine (per D-02).
 //
-// Note emoji : COMPANION_SPECIES_CATALOG n'expose pas de champ emoji. Le
-// mapping canonique vit dans components/mascot/CompanionAvatarMini.tsx
-// (SPECIES_EMOJI) — on le duplique ici volontairement pour ne pas créer
-// un import UI → data, et parce que la liste est stable et très courte.
+// Sprites pixel art Mana Seed (stage adulte idle_1) — mêmes assets que
+// CompanionSlot.tsx:95-121. Le fallback emoji est conservé pour le cas
+// où le bundler perdrait un require().
 
 import {
   COMPANION_SPECIES_CATALOG,
@@ -23,6 +22,14 @@ const COMPANION_EMOJI: Record<CompanionSpecies, string> = {
   herisson: '🦔',
 };
 
+const COMPANION_SPRITES: Record<CompanionSpecies, unknown> = {
+  chat:     require('../../assets/garden/animals/chat/adulte/idle_1.png'),
+  chien:    require('../../assets/garden/animals/chien/adulte/idle_1.png'),
+  lapin:    require('../../assets/garden/animals/lapin/adulte/idle_1.png'),
+  renard:   require('../../assets/garden/animals/renard/adulte/idle_1.png'),
+  herisson: require('../../assets/garden/animals/herisson/adulte/idle_1.png'),
+};
+
 export const companionEntries: CompanionEntry[] = COMPANION_SPECIES_CATALOG.map((c) => ({
   id: `companion_${c.id}`,
   kind: 'companion' as const,
@@ -30,4 +37,5 @@ export const companionEntries: CompanionEntry[] = COMPANION_SPECIES_CATALOG.map(
   nameKey: `codex:companion.${c.id}.name`,
   loreKey: `codex:companion.${c.id}.lore`,
   iconRef: COMPANION_EMOJI[c.id],
+  spriteRef: COMPANION_SPRITES[c.id],
 }));

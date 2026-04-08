@@ -21,6 +21,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   Pressable,
+  Image,
+  type ImageSourcePropType,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -124,11 +126,20 @@ export function FarmCodexModal({
               Shadows.sm,
             ]}
           >
-            <Text
-              style={[styles.cardIcon, isLocked && styles.cardIconLocked]}
-            >
-              {isLocked ? '❓' : item.iconRef ?? '❓'}
-            </Text>
+            {!isLocked && item.spriteRef ? (
+              <Image
+                source={item.spriteRef as ImageSourcePropType}
+                style={styles.cardSprite}
+                resizeMode="contain"
+                fadeDuration={0}
+              />
+            ) : (
+              <Text
+                style={[styles.cardIcon, isLocked && styles.cardIconLocked]}
+              >
+                {isLocked ? '❓' : item.iconRef ?? '❓'}
+              </Text>
+            )}
             <Text
               style={[styles.cardName, { color: colors.text }]}
               numberOfLines={2}
@@ -374,6 +385,14 @@ const styles = StyleSheet.create({
   },
   cardIconLocked: {
     opacity: 0.3,
+  },
+  cardSprite: {
+    width: 56,
+    height: 56,
+    marginBottom: Spacing.md,
+    // pixel art : rendu net sans interpolation (iOS/Android respectent le flag)
+    // @ts-ignore — imageRendering n'est pas dans les types RN mais passe à iOS
+    imageRendering: 'pixelated',
   },
   cardName: {
     fontSize: FontSize.sm,

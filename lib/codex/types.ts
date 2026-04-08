@@ -28,8 +28,14 @@ export interface CodexEntryBase {
   nameKey: string;
   /** Clé i18n pour la lore/description : `codex:{kind}.{sourceId}.lore` */
   loreKey: string;
-  /** Référence visuelle optionnelle (sprite, emoji, asset path) */
+  /** Emoji de fallback quand aucun sprite n'est disponible */
   iconRef?: string;
+  /**
+   * Sprite pixel art (ImageSourcePropType via require). Prioritaire sur
+   * iconRef quand présent. Typé en `unknown` pour éviter un import
+   * react-native depuis lib/codex (qui doit rester data-only).
+   */
+  spriteRef?: unknown;
 }
 
 export interface CropEntry extends CodexEntryBase {

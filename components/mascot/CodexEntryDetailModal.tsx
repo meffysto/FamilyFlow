@@ -21,6 +21,8 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  Image,
+  type ImageSourcePropType,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -205,9 +207,18 @@ export function CodexEntryDetailModal({
         </View>
 
         <ScrollView contentContainerStyle={styles.content}>
-          {/* Icône + nom */}
+          {/* Icône + nom — sprite prioritaire, fallback emoji */}
           <View style={styles.iconWrap}>
-            <Text style={styles.bigIcon}>{entry.iconRef ?? '❓'}</Text>
+            {entry.spriteRef ? (
+              <Image
+                source={entry.spriteRef as ImageSourcePropType}
+                style={styles.bigSprite}
+                resizeMode="contain"
+                fadeDuration={0}
+              />
+            ) : (
+              <Text style={styles.bigIcon}>{entry.iconRef ?? '❓'}</Text>
+            )}
           </View>
 
           {/* Lore en haut (D-04) */}
@@ -310,6 +321,10 @@ const styles = StyleSheet.create({
     marginBottom: Spacing['3xl'],
   },
   bigIcon: { fontSize: 72 },
+  bigSprite: {
+    width: 96,
+    height: 96,
+  },
   sectionLabel: {
     fontSize: FontSize.label,
     fontWeight: FontWeight.bold,
