@@ -48,8 +48,8 @@ Requirements for milestone v1.2 — Confort & Découverte. L'app retient les dé
 
 ### Tutoriel ferme
 
-- [ ] **TUTO-01**: Au premier affichage de l'écran ferme (`tree.tsx`) sur l'appareil, le tutoriel se déclenche automatiquement
-- [ ] **TUTO-02**: Le flag "tutoriel vu" est persisté **globalement par appareil** dans `SecureStore` via `HelpContext.markScreenSeen('farm_tutorial')` — pas de scope par profil
+- [x] **TUTO-01**: Au premier affichage de l'écran ferme (`tree.tsx`) sur l'appareil, le tutoriel se déclenche automatiquement
+- [x] **TUTO-02**: Le flag "tutoriel vu" est persisté **globalement par appareil** dans `SecureStore` via `HelpContext.markScreenSeen('farm_tutorial')` — pas de scope par profil
 - [x] **TUTO-03**: Le tutoriel couvre minimum 5 étapes : (1) intro narrative, (2) plantation d'une culture, (3) cycle de croissance & récolte, (4) gain XP/loot, (5) où aller plus loin (codex)
   > **Note setup initial**: Avant le niveau 3 (stage `Graine`), l'utilisateur a 0 plots et aucune culture visible — la ferme est un terrain vide. Le tutoriel doit gérer ce cas : soit se déclencher seulement à partir du stage `Pousse` (quand il y a réellement quelque chose à montrer), soit adapter l'étape plantation en expliquant que les crops se débloquent au niveau 3.
 - [x] **TUTO-04**: Chaque étape utilise un overlay spotlight avec cutout SVG (rond ou rectangle arrondi) qui met en évidence l'élément cible de la ferme tout en gardant le décor visible
@@ -111,8 +111,8 @@ Deferred to v1.3+.
 | CODEX-08 | Phase 17 | Complete |
 | CODEX-09 | Phase 17 | Complete |
 | CODEX-10 | Phase 17 | Complete |
-| TUTO-01 | Phase 18 | Pending |
-| TUTO-02 | Phase 18 | Pending |
+| TUTO-01 | Phase 18 | Complete |
+| TUTO-02 | Phase 18 | Complete |
 | TUTO-03 | Phase 18 | Complete |
 | TUTO-04 | Phase 18 | Complete |
 | TUTO-05 | Phase 18 | Complete |
