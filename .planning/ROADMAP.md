@@ -14,7 +14,7 @@
 
 ## Phases
 
-- [ ] **Phase 15: Préférences alimentaires** — Mémoire des contraintes alimentaires par membre famille et invités, avec détection automatique des conflits dans les recettes et le planning repas
+- [x] **Phase 15: Préférences alimentaires** — Mémoire des contraintes alimentaires par membre famille et invités, avec détection automatique des conflits dans les recettes et le planning repas (completed 2026-04-08)
 - [ ] **Phase 16: Codex contenu** — Fichier de données pur `lib/codex/content.ts` important les constantes engine existantes, zéro UI, zéro risque de dérive des stats
 - [ ] **Phase 17: Codex UI** — Modale `FarmCodexModal` avec bouton "?" dans le HUD ferme, navigation par catégories, recherche textuelle et virtualisation
 - [ ] **Phase 18: Tutoriel ferme** — Overlay tutoriel immersif au premier lancement, skippable, rejouable depuis le codex, avec pause des animations ferme pendant les étapes
@@ -40,7 +40,7 @@
 - [x] 15-04-allergen-banner-p0-PLAN.md — Composant AllergenBanner P0 SAFETY (PREF-11) + test enforcement statique
 - [x] 15-05-hook-ecran-dietary-PLAN.md — Hook useVaultDietary + écran dietary.tsx + ProfileFoodCard + lien more.tsx
 - [x] 15-06-integration-recipe-meals-PLAN.md — RecipeViewer (bandeau + badges inline + ConvivesPickerModal) + MealConflictRecap dans meals.tsx
-- [ ] 15-07-saisie-vocale-PLAN.md — extractDietaryConstraints + VoicePreviewModal + câblage DictaphoneRecorder
+- [x] 15-07-saisie-vocale-PLAN.md — extractDietaryConstraints + VoicePreviewModal + câblage DictaphoneRecorder
 **UI hint**: yes
 
 ### Phase 16: Codex contenu
@@ -84,7 +84,7 @@
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 15. Préférences alimentaires | v1.2 | 6/7 | In Progress|  |
+| 15. Préférences alimentaires | v1.2 | 7/7 | Complete   | 2026-04-08 |
 | 16. Codex contenu | v1.2 | 0/? | Not started | - |
 | 17. Codex UI | v1.2 | 0/? | Not started | - |
 | 18. Tutoriel ferme | v1.2 | 0/? | Not started | - |

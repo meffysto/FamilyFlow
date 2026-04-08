@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Confort & Découverte
 current_phase: 15
-status: Ready to execute
-stopped_at: Completed 15-06-integration-recipe-meals-PLAN.md
-last_updated: "2026-04-07T22:07:22.570Z"
-last_activity: 2026-04-07
+status: Phase complete — ready for verification
+stopped_at: Completed 15-07-saisie-vocale-PLAN.md
+last_updated: "2026-04-08T04:12:18.519Z"
+last_activity: 2026-04-08
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 7
-  completed_plans: 6
+  completed_plans: 7
   percent: 0
 ---
 
@@ -31,7 +31,7 @@ Plan: 7 of 7
 Milestone: v1.2 Confort & Découverte (active)
 Current phase: 15
 Last shipped: v1.1 Ferme Enrichie (2026-04-07)
-Last activity: 2026-04-07
+Last activity: 2026-04-08
 
 Progress: [░░░░░░░░░░] 0% (0/4 phases)
 
@@ -89,6 +89,7 @@ Progress: [░░░░░░░░░░] 0% (0/4 phases)
 | Phase 15-pr-f-rences-alimentaires P02 | 4min | 2 tasks | 3 files |
 | Phase 15-pr-f-rences-alimentaires P05 | 6min | 2 tasks | 7 files |
 | Phase 15 P06 | 4min | 3 tasks | 5 files |
+| Phase 15 P07 | 4min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -186,6 +187,7 @@ Recent decisions affecting current work:
 - [Phase 15-05]: refreshGamification() utilisé comme reloadProfiles dans useVaultDietary — re-lit famille.md et synchro tous les profils React state
 - [Phase 15-05]: ProfileFoodCard : cast getItems via GuestProfile au lieu de Record<string,unknown> pour compatibilité TypeScript stricte
 - [Phase 15]: MealConflictWrapper sous-composant créé pour encapsuler useMemo dans le map() de meals.tsx (hooks interdits dans callbacks)
+- [Phase 15]: PREF-13 extractDietaryConstraints: imports en tête de ai-service.ts + DictaphoneRecorder wrappé dans Modal pageSheet + fallback D-15 via Alert.alert informatif
 
 ### Pending Todos
 
@@ -226,6 +228,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-07T22:07:22.567Z
-Stopped at: Completed 15-06-integration-recipe-meals-PLAN.md
+Last session: 2026-04-08T04:12:18.516Z
+Stopped at: Completed 15-07-saisie-vocale-PLAN.md
 Resume file: None
