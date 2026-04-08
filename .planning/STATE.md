@@ -4,8 +4,8 @@ milestone: v1.2
 milestone_name: Confort & Découverte
 current_phase: 16
 status: Ready to plan
-stopped_at: Completed 15-07-saisie-vocale-PLAN.md
-last_updated: "2026-04-08T04:17:23.043Z"
+stopped_at: Phase 16 context gathered
+last_updated: "2026-04-08T07:08:44.580Z"
 last_activity: 2026-04-08
 progress:
   total_phases: 4
@@ -228,6 +228,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-08T04:12:18.516Z
-Stopped at: Completed 15-07-saisie-vocale-PLAN.md
-Resume file: None
+Last session: 2026-04-08T07:08:44.577Z
+Stopped at: Phase 16 context gathered
+Resume file: .planning/phases/16-codex-contenu/16-CONTEXT.md
