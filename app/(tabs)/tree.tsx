@@ -1734,29 +1734,36 @@ export default function TreeScreen() {
             />
 
             {/* Phase 18-04 fix : anchors invisibles pour FarmTutorialOverlay (étapes 2 plantation / 3 récolte) */}
-            {/* Zones ~96×96 positionnées en bas du diorama où les cultures/bâtiments apparaissent généralement */}
-            <View
-              ref={plantationRef}
-              pointerEvents="none"
-              style={{
-                position: 'absolute',
-                left: SCREEN_W * 0.25 - 48,
-                bottom: 40,
-                width: 96,
-                height: 96,
-              }}
-            />
-            <View
-              ref={harvestRef}
-              pointerEvents="none"
-              style={{
-                position: 'absolute',
-                left: SCREEN_W * 0.65 - 48,
-                bottom: 40,
-                width: 96,
-                height: 96,
-              }}
-            />
+            {/* Zones ~110×110 positionnées sur la moitié supérieure du diorama où sont les crops/bâtiments */}
+            {(() => {
+              const dioramaH = DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60;
+              return (
+                <>
+                  <View
+                    ref={plantationRef}
+                    pointerEvents="none"
+                    style={{
+                      position: 'absolute',
+                      left: SCREEN_W * 0.28 - 55,
+                      top: dioramaH * 0.32,
+                      width: 110,
+                      height: 110,
+                    }}
+                  />
+                  <View
+                    ref={harvestRef}
+                    pointerEvents="none"
+                    style={{
+                      position: 'absolute',
+                      left: SCREEN_W * 0.68 - 55,
+                      top: dioramaH * 0.45,
+                      width: 110,
+                      height: 110,
+                    }}
+                  />
+                </>
+              );
+            })()}
 
             {/* Couche 3.5 : Compagnon mascotte — se balade sur toute la scène */}
             {companion && (

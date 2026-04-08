@@ -85,6 +85,9 @@ export const FarmTutorialOverlay = React.memo(function FarmTutorialOverlay({
   const [currentStep, setCurrentStep] = useState<number>(-1); // -1 = inactif
   const [measuredRect, setMeasuredRect] = useState<TargetRect | null>(null);
   const hasStarted = useRef(false);
+  // Guard anti tap-through : le tap qui ferme l'étape N peut remonter sur l'overlay fullscreen
+  // de l'étape N+1 qui vient de se monter. On ignore tout tap dans les 350ms après transition.
+  const lastStepChangeAt = useRef(0);
   const seen = hasSeenScreen(SCREEN_ID);
 
   // Pitfall 2 : reset hasStarted quand resetScreen() est appelé depuis codex
@@ -140,24 +143,30 @@ export const FarmTutorialOverlay = React.memo(function FarmTutorialOverlay({
   }, [currentStep, measureForStep]);
 
   const handleNext = useCallback(() => {
+    // Guard anti tap-through (remount overlay fullscreen)
+    if (Date.now() - lastStepChangeAt.current < 350) return;
     Haptics.selectionAsync().catch(() => {});
     if (currentStep >= 4) {
       // Dernière étape : terminé
       markScreenSeen(SCREEN_ID);
       setCurrentStep(-1);
       setActiveFarmTutorialStep(null);
+      lastStepChangeAt.current = Date.now();
       return;
     }
     const next = currentStep + 1;
     setCurrentStep(next);
     setActiveFarmTutorialStep(next);
+    lastStepChangeAt.current = Date.now();
   }, [currentStep, markScreenSeen, setActiveFarmTutorialStep]);
 
   const handleSkip = useCallback(() => {
+    if (Date.now() - lastStepChangeAt.current < 350) return;
     Haptics.selectionAsync().catch(() => {});
     markScreenSeen(SCREEN_ID);
     setCurrentStep(-1);
     setActiveFarmTutorialStep(null);
+    lastStepChangeAt.current = Date.now();
   }, [markScreenSeen, setActiveFarmTutorialStep]);
 
   if (currentStep < 0) return null;
