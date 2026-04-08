@@ -46,6 +46,10 @@ export interface HelpContextValue {
   isTemplateInstalled: (packId: string) => boolean;
   /** Marque un pack comme installé */
   markTemplateInstalled: (packId: string) => Promise<void>;
+  /** État session du tutoriel ferme — step actif ou null si tutoriel inactif (in-memory, non persisté) */
+  activeFarmTutorialStep: number | null;
+  /** Setter pour activer/avancer/quitter le tutoriel ferme */
+  setActiveFarmTutorialStep: (step: number | null) => void;
 }
 
 const DEFAULT_VALUE: HelpContextValue = {
@@ -56,6 +60,8 @@ const DEFAULT_VALUE: HelpContextValue = {
   isLoaded: false,
   isTemplateInstalled: () => false,
   markTemplateInstalled: async () => {},
+  activeFarmTutorialStep: null,
+  setActiveFarmTutorialStep: () => {},
 };
 
 const HelpContext = createContext<HelpContextValue>(DEFAULT_VALUE);
@@ -166,6 +172,8 @@ export function HelpProvider({ children }: { children: React.ReactNode }) {
   const [seenScreens, setSeenScreens] = useState<Set<string>>(new Set());
   const [installedTemplates, setInstalledTemplates] = useState<Set<string>>(new Set());
   const [isLoaded, setIsLoaded] = useState(false);
+  // État session du tutoriel ferme — in-memory uniquement, reset au restart (D-09)
+  const [activeFarmTutorialStep, setActiveFarmTutorialStep] = useState<number | null>(null);
 
   // Charger (avec migration si nécessaire) au montage
   useEffect(() => {
@@ -251,8 +259,10 @@ export function HelpProvider({ children }: { children: React.ReactNode }) {
       isLoaded,
       isTemplateInstalled,
       markTemplateInstalled,
+      activeFarmTutorialStep,
+      setActiveFarmTutorialStep,
     }),
-    [hasSeenScreen, markScreenSeen, resetAllHints, resetScreen, isLoaded, isTemplateInstalled, markTemplateInstalled]
+    [hasSeenScreen, markScreenSeen, resetAllHints, resetScreen, isLoaded, isTemplateInstalled, markTemplateInstalled, activeFarmTutorialStep]
   );
 
   return (
