@@ -4,14 +4,14 @@ milestone: v1.2
 milestone_name: Confort & Découverte
 current_phase: 16
 status: Ready to execute
-stopped_at: Completed 16-codex-contenu/16-01-PLAN.md
-last_updated: "2026-04-08T08:02:55.787Z"
+stopped_at: Completed 16-05-aggregation-validation-PLAN.md
+last_updated: "2026-04-08T08:19:29.289Z"
 last_activity: 2026-04-08
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 12
-  completed_plans: 8
+  completed_plans: 12
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 16 (codex-contenu) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Milestone: v1.2 Confort & Découverte (active)
 Current phase: 16
 Last shipped: v1.1 Ferme Enrichie (2026-04-07)
@@ -91,6 +91,7 @@ Progress: [░░░░░░░░░░] 0% (0/4 phases)
 | Phase 15 P06 | 4min | 3 tasks | 5 files |
 | Phase 15 P07 | 4min | 3 tasks | 4 files |
 | Phase 16-codex-contenu P01 | 8min | 3 tasks | 5 files |
+| Phase 16-codex-contenu P05 | 12min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -191,6 +192,8 @@ Recent decisions affecting current work:
 - [Phase 15]: PREF-13 extractDietaryConstraints: imports en tête de ai-service.ts + DictaphoneRecorder wrappé dans Modal pageSheet + fallback D-15 via Alert.alert informatif
 - [Phase 16-codex-contenu]: [Phase 16-01]: CompanionSpeciesCatalog matching via String(c.id) pour neutraliser le typage littéral
 - [Phase 16-codex-contenu]: [Phase 16-01]: CraftRecipe importé depuis lib/mascot/types directement (source) plutôt que craft-engine (re-export)
+- [Phase 16-codex-contenu]: CODEX_CONTENT centralisé dans lib/codex/content.ts avec re-exports larges (types/stats/loot) pour import unique côté UI
+- [Phase 16-codex-contenu]: Tests Jest anti-drift via it.each + getters stats garantissent zéro drift entre codex et constantes engine
 
 ### Pending Todos
 
@@ -231,6 +234,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-08T08:02:55.784Z
-Stopped at: Completed 16-codex-contenu/16-01-PLAN.md
+Last session: 2026-04-08T08:19:20.074Z
+Stopped at: Completed 16-05-aggregation-validation-PLAN.md
 Resume file: None

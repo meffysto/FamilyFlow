@@ -15,7 +15,7 @@
 ## Phases
 
 - [x] **Phase 15: Préférences alimentaires** — Mémoire des contraintes alimentaires par membre famille et invités, avec détection automatique des conflits dans les recettes et le planning repas (completed 2026-04-08)
-- [ ] **Phase 16: Codex contenu** — Fichier de données pur `lib/codex/content.ts` important les constantes engine existantes, zéro UI, zéro risque de dérive des stats
+- [x] **Phase 16: Codex contenu** — Fichier de données pur `lib/codex/content.ts` important les constantes engine existantes, zéro UI, zéro risque de dérive des stats (completed 2026-04-08)
 - [ ] **Phase 17: Codex UI** — Modale `FarmCodexModal` avec bouton "?" dans le HUD ferme, navigation par catégories, recherche textuelle et virtualisation
 - [ ] **Phase 18: Tutoriel ferme** — Overlay tutoriel immersif au premier lancement, skippable, rejouable depuis le codex, avec pause des animations ferme pendant les étapes
 
@@ -54,10 +54,10 @@
   4. Les entrées `dropOnly` (orchidée, rose dorée, truffe, fruit du dragon) sont marquées avec le flag approprié permettant à l'UI de Phase 17 d'afficher "???" selon l'inventaire du profil
 **Plans**: 5 plans
 - [x] 16-01-fondations-types-i18n-PLAN.md — Types CodexEntry, helpers stats getters, squelette i18n FR+EN et namespace codex câblé
-- [ ] 16-02-cultures-animaux-loot-PLAN.md — 15 crops + ~18 inhabitants + 8 loot entries avec lore bilingue (CODEX-04, CODEX-05)
-- [ ] 16-03-batiments-craft-tech-companions-PLAN.md — 4 buildings + 24 craft + 10 tech + 5 companions avec lore bilingue
-- [ ] 16-04-sagas-quetes-seasonal-PLAN.md — 4 sagas + 15 quests + 8 seasonal events avec lore bilingue
-- [ ] 16-05-aggregation-validation-PLAN.md — lib/codex/content.ts agrège les 10 catégories + test Jest d'intégrité sourceId + parité i18n + dropOnly
+- [x] 16-02-cultures-animaux-loot-PLAN.md — 15 crops + ~18 inhabitants + 8 loot entries avec lore bilingue (CODEX-04, CODEX-05)
+- [x] 16-03-batiments-craft-tech-companions-PLAN.md — 4 buildings + 24 craft + 10 tech + 5 companions avec lore bilingue
+- [x] 16-04-sagas-quetes-seasonal-PLAN.md — 4 sagas + 15 quests + 8 seasonal events avec lore bilingue
+- [x] 16-05-aggregation-validation-PLAN.md — lib/codex/content.ts agrège les 10 catégories + test Jest d'intégrité sourceId + parité i18n + dropOnly
 
 ### Phase 17: Codex UI
 **Goal**: L'utilisateur peut ouvrir le codex de la ferme depuis un bouton "?" dans le HUD existant, naviguer par catégories, rechercher une entrée, et accéder au bouton de replay du tutoriel
@@ -90,7 +90,7 @@
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 15. Préférences alimentaires | v1.2 | 7/7 | Complete    | 2026-04-08 |
-| 16. Codex contenu | v1.2 | 1/5 | In Progress|  |
+| 16. Codex contenu | v1.2 | 5/5 | Complete   | 2026-04-08 |
 | 17. Codex UI | v1.2 | 0/? | Not started | - |
 | 18. Tutoriel ferme | v1.2 | 0/? | Not started | - |
 

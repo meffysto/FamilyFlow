@@ -33,10 +33,10 @@ Requirements for milestone v1.2 — Confort & Découverte. L'app retient les dé
 ### Codex ferme — Contenu
 
 - [x] **CODEX-01**: Le contenu du codex est défini dans `lib/codex/content.ts` qui **importe directement** les constantes d'engine existantes (`CROP_CATALOG`, `BUILDING_CATALOG`, `TECH_TREE`, etc.) — interdiction de dupliquer les valeurs numériques pour éviter le drift
-- [ ] **CODEX-02**: Le codex couvre 10 catégories : Cultures, Animaux, Bâtiments productifs, Craft & recettes, Tech tree, Compagnons, Loot box & raretés, Drops saisonniers & événements, Sagas immersives, Quêtes coopératives
-- [ ] **CODEX-03**: Chaque entrée affiche les stats précises (cycle de pousse, rendement, conditions de déblocage, bonus, taux de drop) — pas de vulgarisation
-- [ ] **CODEX-04**: La mécanique des "pluies dorées" (drops aléatoires à la récolte) est documentée explicitement avec le taux de déclenchement et la liste des drops possibles
-- [ ] **CODEX-05**: Les contenus rares marqués `dropOnly` (orchidée, rose dorée, truffe, fruit du dragon) sont affichés en silhouette `???` tant que le profil ne les a pas découverts — basé sur `harvestInventory`
+- [x] **CODEX-02**: Le codex couvre 10 catégories : Cultures, Animaux, Bâtiments productifs, Craft & recettes, Tech tree, Compagnons, Loot box & raretés, Drops saisonniers & événements, Sagas immersives, Quêtes coopératives
+- [x] **CODEX-03**: Chaque entrée affiche les stats précises (cycle de pousse, rendement, conditions de déblocage, bonus, taux de drop) — pas de vulgarisation
+- [x] **CODEX-04**: La mécanique des "pluies dorées" (drops aléatoires à la récolte) est documentée explicitement avec le taux de déclenchement et la liste des drops possibles
+- [x] **CODEX-05**: Les contenus rares marqués `dropOnly` (orchidée, rose dorée, truffe, fruit du dragon) sont affichés en silhouette `???` tant que le profil ne les a pas découverts — basé sur `harvestInventory`
 
 ### Codex ferme — UI
 
@@ -101,10 +101,10 @@ Deferred to v1.3+.
 | PREF-12 | Phase 15 | Complete |
 | PREF-13 | Phase 15 | Complete |
 | CODEX-01 | Phase 16 | Complete |
-| CODEX-02 | Phase 16 | Pending |
-| CODEX-03 | Phase 16 | Pending |
-| CODEX-04 | Phase 16 | Pending |
-| CODEX-05 | Phase 16 | Pending |
+| CODEX-02 | Phase 16 | Complete |
+| CODEX-03 | Phase 16 | Complete |
+| CODEX-04 | Phase 16 | Complete |
+| CODEX-05 | Phase 16 | Complete |
 | CODEX-06 | Phase 17 | Pending |
 | CODEX-07 | Phase 17 | Pending |
 | CODEX-08 | Phase 17 | Pending |
