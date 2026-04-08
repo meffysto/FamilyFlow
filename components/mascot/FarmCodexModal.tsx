@@ -201,6 +201,7 @@ export function FarmCodexModal({
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
+            style={styles.tabsScroll}
             contentContainerStyle={styles.tabsRow}
           >
             {TAB_ORDER.map((kind) => {
@@ -220,6 +221,7 @@ export function FarmCodexModal({
                   ]}
                 >
                   <Text
+                    numberOfLines={1}
                     style={[
                       styles.tabLabel,
                       {
@@ -327,17 +329,24 @@ const styles = StyleSheet.create({
     fontSize: FontSize.body,
     paddingVertical: Spacing.xs,
   },
+  tabsScroll: {
+    flexGrow: 0,
+    flexShrink: 0,
+  },
   tabsRow: {
     paddingHorizontal: Spacing['2xl'],
     paddingVertical: Spacing.md,
     gap: Spacing.md,
+    alignItems: 'center',
   },
   tab: {
+    height: 36,
     paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.md,
     borderRadius: Radius.full,
     borderWidth: StyleSheet.hairlineWidth,
     marginRight: Spacing.xs,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   tabLabel: {
     fontSize: FontSize.sm,
