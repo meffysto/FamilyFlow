@@ -11,7 +11,7 @@ export const craftEntries: CraftEntry[] = CRAFT_RECIPES.map((r) => ({
   id: `craft_${r.id}`,
   kind: 'craft' as const,
   sourceId: r.id,
-  nameKey: `codex.craft.${r.id}.name`,
-  loreKey: `codex.craft.${r.id}.lore`,
+  nameKey: `codex:craft.${r.id}.name`,
+  loreKey: `codex:craft.${r.id}.lore`,
   iconRef: r.emoji,
 }));

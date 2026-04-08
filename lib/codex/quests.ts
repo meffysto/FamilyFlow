@@ -10,7 +10,7 @@ export const questEntries: QuestEntry[] = ADVENTURES.map((a) => ({
   id: `quest_${a.id}`,
   kind: 'quest' as const,
   sourceId: a.id,
-  nameKey: `codex.quest.${a.id}.name`,
-  loreKey: `codex.quest.${a.id}.lore`,
+  nameKey: `codex:quest.${a.id}.name`,
+  loreKey: `codex:quest.${a.id}.lore`,
   iconRef: a.emoji,
 }));

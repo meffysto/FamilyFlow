@@ -2052,7 +2052,7 @@ export default function TreeScreen() {
           <TouchableOpacity
             style={styles.hudItem}
             onPress={() => { Haptics.selectionAsync(); setShowCodex(true); }}
-            accessibilityLabel={t('codex.modal.title')}
+            accessibilityLabel={t('codex:modal.title')}
           >
             <Text style={styles.hudEmoji}>{'📖'}</Text>
           </TouchableOpacity>

@@ -11,7 +11,7 @@ export const buildingEntries: BuildingEntry[] = BUILDING_CATALOG.map((b) => ({
   id: `building_${b.id}`,
   kind: 'building' as const,
   sourceId: b.id,
-  nameKey: `codex.building.${b.id}.name`,
-  loreKey: `codex.building.${b.id}.lore`,
+  nameKey: `codex:building.${b.id}.name`,
+  loreKey: `codex:building.${b.id}.lore`,
   iconRef: b.emoji,
 }));

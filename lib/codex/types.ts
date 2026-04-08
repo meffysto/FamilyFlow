@@ -23,9 +23,9 @@ export interface CodexEntryBase {
   kind: CodexKind;
   /** ID dans la constante engine référencée (CROP_CATALOG, INHABITANTS, ...) */
   sourceId: string;
-  /** Clé i18n pour le nom : `codex.{kind}.{sourceId}.name` */
+  /** Clé i18n pour le nom : `codex:{kind}.{sourceId}.name` */
   nameKey: string;
-  /** Clé i18n pour la lore/description : `codex.{kind}.{sourceId}.lore` */
+  /** Clé i18n pour la lore/description : `codex:{kind}.{sourceId}.lore` */
   loreKey: string;
   /** Référence visuelle optionnelle (sprite, emoji, asset path) */
   iconRef?: string;

@@ -132,11 +132,11 @@ export function FarmCodexModal({
               style={[styles.cardName, { color: colors.text }]}
               numberOfLines={2}
             >
-              {isLocked ? t('codex.card.locked') : t(item.nameKey)}
+              {isLocked ? t('codex:card.locked') : t(item.nameKey)}
             </Text>
             {query.trim().length > 0 && (
               <Text style={[styles.cardKind, { color: colors.textSub }]}>
-                {t(`codex.tabs.${item.kind}`)}
+                {t(`codex:tabs.${item.kind}`)}
               </Text>
             )}
           </Pressable>
@@ -168,7 +168,7 @@ export function FarmCodexModal({
             <Text style={[styles.closeIcon, { color: colors.text }]}>✕</Text>
           </TouchableOpacity>
           <Text style={[styles.title, { color: colors.text }]}>
-            {t('codex.modal.title')}
+            {t('codex:modal.title')}
           </Text>
           <View style={styles.closeBtn} />
         </View>
@@ -187,7 +187,7 @@ export function FarmCodexModal({
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder={t('codex.search.placeholder')}
+            placeholder={t('codex:search.placeholder')}
             placeholderTextColor={colors.textMuted}
             style={[styles.searchInput, { color: colors.text }]}
             clearButtonMode="while-editing"
@@ -227,7 +227,7 @@ export function FarmCodexModal({
                       },
                     ]}
                   >
-                    {t(`codex.tabs.${kind}`)}
+                    {t(`codex:tabs.${kind}`)}
                   </Text>
                 </TouchableOpacity>
               );
@@ -246,7 +246,7 @@ export function FarmCodexModal({
             <View style={styles.empty}>
               <Text style={styles.emptyIcon}>🔍</Text>
               <Text style={[styles.emptyText, { color: colors.textSub }]}>
-                {t('codex.search.empty', { query })}
+                {t('codex:search.empty', { query })}
               </Text>
             </View>
           }
@@ -267,7 +267,7 @@ export function FarmCodexModal({
             ]}
           >
             <Text style={[styles.replayLabel, { color: colors.bg }]}>
-              {t('codex.tutorial.replay')}
+              {t('codex:tutorial.replay')}
             </Text>
           </TouchableOpacity>
         </View>

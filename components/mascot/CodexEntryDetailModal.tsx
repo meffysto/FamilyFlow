@@ -168,7 +168,7 @@ export function CodexEntryDetailModal({
               onClose();
             }}
             style={styles.closeBtn}
-            accessibilityLabel={t('codex.detail.close')}
+            accessibilityLabel={t('codex:detail.close')}
           >
             <Text style={[styles.closeIcon, { color: colors.text }]}>✕</Text>
           </TouchableOpacity>
@@ -189,7 +189,7 @@ export function CodexEntryDetailModal({
 
           {/* Lore en haut (D-04) */}
           <Text style={[styles.sectionLabel, { color: colors.textSub }]}>
-            {t('codex.detail.lore')}
+            {t('codex:detail.lore')}
           </Text>
           <Text style={[styles.lore, { color: colors.text }]}>
             {t(entry.loreKey)}
@@ -202,7 +202,7 @@ export function CodexEntryDetailModal({
               { color: colors.textSub, marginTop: Spacing['3xl'] },
             ]}
           >
-            {t('codex.detail.stats')}
+            {t('codex:detail.stats')}
           </Text>
           {renderStats()}
         </ScrollView>

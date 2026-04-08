@@ -11,6 +11,6 @@ export const companionEntries: CompanionEntry[] = COMPANION_SPECIES_CATALOG.map(
   id: `companion_${c.id}`,
   kind: 'companion' as const,
   sourceId: c.id,
-  nameKey: `codex.companion.${c.id}.name`,
-  loreKey: `codex.companion.${c.id}.lore`,
+  nameKey: `codex:companion.${c.id}.name`,
+  loreKey: `codex:companion.${c.id}.lore`,
 }));
