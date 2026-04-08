@@ -42,7 +42,7 @@ Requirements for milestone v1.2 — Confort & Découverte. L'app retient les dé
 
 - [ ] **CODEX-06**: Une icône bouton "?" intégrée au HUD existant de l'écran ferme (`app/(tabs)/tree.tsx`) ouvre la modale codex — pas de nouveau bouton flottant qui surcharge l'UI
 - [x] **CODEX-07**: La modale codex utilise le pattern existant `pageSheet` + drag-to-dismiss, avec navigation par catégories (liste à gauche / contenu à droite, ou tabs si plus simple)
-- [ ] **CODEX-08**: Une recherche textuelle filtre les entrées du codex avec normalisation accents/casse via `lib/search.ts` (pattern existant) — pas de Fuse.js
+- [x] **CODEX-08**: Une recherche textuelle filtre les entrées du codex avec normalisation accents/casse via `lib/search.ts` (pattern existant) — pas de Fuse.js
 - [ ] **CODEX-09**: Le rendu des listes utilise `FlatList` virtualisé (pas `ScrollView`) — anti-régression performance
 - [x] **CODEX-10**: La modale codex contient un bouton "Rejouer le tutoriel" qui appelle `resetScreen('farm_tutorial')` puis ferme le codex
 
@@ -107,7 +107,7 @@ Deferred to v1.3+.
 | CODEX-05 | Phase 16 | Complete |
 | CODEX-06 | Phase 17 | Pending |
 | CODEX-07 | Phase 17 | Complete |
-| CODEX-08 | Phase 17 | Pending |
+| CODEX-08 | Phase 17 | Complete |
 | CODEX-09 | Phase 17 | Pending |
 | CODEX-10 | Phase 17 | Complete |
 | TUTO-01 | Phase 18 | Pending |

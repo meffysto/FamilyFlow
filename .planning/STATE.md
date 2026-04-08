@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Confort & Découverte
 current_phase: 17
-status: Executing Phase 17
-stopped_at: Completed 17-02-i18n-keys-PLAN.md
-last_updated: "2026-04-08T09:41:07.215Z"
-last_activity: 2026-04-08 -- Phase 17 execution started
+status: Ready to execute
+stopped_at: Completed 17-01-search-discovery-PLAN.md
+last_updated: "2026-04-08T09:41:39.999Z"
+last_activity: 2026-04-08
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 15
-  completed_plans: 13
+  completed_plans: 14
   percent: 0
 ---
 
@@ -27,11 +27,11 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 17 (codex-ui) — EXECUTING
-Plan: 1 of 3
+Plan: 2 of 3
 Milestone: v1.2 Confort & Découverte (active)
 Current phase: 17
 Last shipped: v1.1 Ferme Enrichie (2026-04-07)
-Last activity: 2026-04-08 -- Phase 17 execution started
+Last activity: 2026-04-08
 
 Progress: [░░░░░░░░░░] 0% (0/4 phases)
 
@@ -93,6 +93,7 @@ Progress: [░░░░░░░░░░] 0% (0/4 phases)
 | Phase 16-codex-contenu P01 | 8min | 3 tasks | 5 files |
 | Phase 16-codex-contenu P05 | 12min | 2 tasks | 2 files |
 | Phase 17-codex-ui P02 | 3min | 1 tasks | 2 files |
+| Phase 17-codex-ui P01 | 3min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -236,6 +237,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-08T09:41:07.212Z
-Stopped at: Completed 17-02-i18n-keys-PLAN.md
+Last session: 2026-04-08T09:41:39.996Z
+Stopped at: Completed 17-01-search-discovery-PLAN.md
 Resume file: None
