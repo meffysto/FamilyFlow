@@ -1733,34 +1733,38 @@ export default function TreeScreen() {
               paused={activeFarmTutorialStep !== null}
             />
 
-            {/* Phase 18-04 fix : anchors invisibles pour FarmTutorialOverlay (étapes 2 plantation / 3 récolte) */}
-            {/* Crops rendus par WorldGridView dans le ~1/3 supérieur du diorama (rangée de champs labourés) */}
+            {/* Phase 18-04 fix : anchors invisibles calqués sur les coordonnées exactes
+                des cellules CROP_CELLS (lib/mascot/world-grid.ts).
+                Cellule c0 (rangée 1 gauche) : centre (0.14 * W, 0.05 * H)
+                Cellule c3 (rangée 1 droite) : centre (0.56 * W, 0.05 * H)
+                Formule WorldGridView : left = cell.x * W - size/2, top = cell.y * H - size/2 */}
             {(() => {
               const dioramaH = DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60;
+              const ANCHOR_SIZE = 80;
               return (
                 <>
-                  {/* Plantation : crop gauche (premier champ de la rangée) */}
+                  {/* Plantation : cellule c0 (première cellule rangée du haut, gauche) */}
                   <View
                     ref={plantationRef}
                     pointerEvents="none"
                     style={{
                       position: 'absolute',
-                      left: SCREEN_W * 0.14,
-                      top: dioramaH * 0.08,
-                      width: 120,
-                      height: 120,
+                      left: 0.14 * SCREEN_W - ANCHOR_SIZE / 2,
+                      top: 0.05 * dioramaH - ANCHOR_SIZE / 2,
+                      width: ANCHOR_SIZE,
+                      height: ANCHOR_SIZE,
                     }}
                   />
-                  {/* Récolte : crop milieu-droite */}
+                  {/* Récolte : cellule c3 (rangée du haut, droite) */}
                   <View
                     ref={harvestRef}
                     pointerEvents="none"
                     style={{
                       position: 'absolute',
-                      left: SCREEN_W * 0.42,
-                      top: dioramaH * 0.16,
-                      width: 120,
-                      height: 120,
+                      left: 0.56 * SCREEN_W - ANCHOR_SIZE / 2,
+                      top: 0.05 * dioramaH - ANCHOR_SIZE / 2,
+                      width: ANCHOR_SIZE,
+                      height: ANCHOR_SIZE,
                     }}
                   />
                 </>
