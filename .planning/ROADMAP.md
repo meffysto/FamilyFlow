@@ -85,7 +85,7 @@
 **Plans**: 4 plans
 - [x] 18-01-helpcontext-worldgrid-pause-PLAN.md — Étendre HelpContext (activeFarmTutorialStep) + prop paused sur WorldGridView
 - [x] 18-02-coachmark-overlay-border-radius-PLAN.md — Étendre CoachMarkOverlay avec prop borderRadius (pas de SVG)
-- [ ] 18-03-farm-tutorial-overlay-i18n-PLAN.md — Créer FarmTutorialOverlay (5 étapes) + textes i18n FR+EN help.farm_tutorial
+- [x] 18-03-farm-tutorial-overlay-i18n-PLAN.md — Créer FarmTutorialOverlay (5 étapes) + textes i18n FR+EN help.farm_tutorial
 - [ ] 18-04-tree-integration-PLAN.md — Monter FarmTutorialOverlay dans tree.tsx + validation humaine end-to-end
 **UI hint**: yes
 
@@ -96,7 +96,7 @@
 | 15. Préférences alimentaires | v1.2 | 7/7 | Complete    | 2026-04-08 |
 | 16. Codex contenu | v1.2 | 5/5 | Complete    | 2026-04-08 |
 | 17. Codex UI | v1.2 | 3/3 | Complete    | 2026-04-08 |
-| 18. Tutoriel ferme | v1.2 | 2/4 | In Progress|  |
+| 18. Tutoriel ferme | v1.2 | 3/4 | In Progress|  |
 
 ## Archived Milestones
 

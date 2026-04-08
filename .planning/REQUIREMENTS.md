@@ -50,12 +50,12 @@ Requirements for milestone v1.2 — Confort & Découverte. L'app retient les dé
 
 - [ ] **TUTO-01**: Au premier affichage de l'écran ferme (`tree.tsx`) sur l'appareil, le tutoriel se déclenche automatiquement
 - [ ] **TUTO-02**: Le flag "tutoriel vu" est persisté **globalement par appareil** dans `SecureStore` via `HelpContext.markScreenSeen('farm_tutorial')` — pas de scope par profil
-- [ ] **TUTO-03**: Le tutoriel couvre minimum 5 étapes : (1) intro narrative, (2) plantation d'une culture, (3) cycle de croissance & récolte, (4) gain XP/loot, (5) où aller plus loin (codex)
+- [x] **TUTO-03**: Le tutoriel couvre minimum 5 étapes : (1) intro narrative, (2) plantation d'une culture, (3) cycle de croissance & récolte, (4) gain XP/loot, (5) où aller plus loin (codex)
   > **Note setup initial**: Avant le niveau 3 (stage `Graine`), l'utilisateur a 0 plots et aucune culture visible — la ferme est un terrain vide. Le tutoriel doit gérer ce cas : soit se déclencher seulement à partir du stage `Pousse` (quand il y a réellement quelque chose à montrer), soit adapter l'étape plantation en expliquant que les crops se débloquent au niveau 3.
 - [x] **TUTO-04**: Chaque étape utilise un overlay spotlight avec cutout SVG (rond ou rectangle arrondi) qui met en évidence l'élément cible de la ferme tout en gardant le décor visible
-- [ ] **TUTO-05**: Le tutoriel est skippable à tout moment via un bouton "Passer" qui marque le tutoriel comme vu
+- [x] **TUTO-05**: Le tutoriel est skippable à tout moment via un bouton "Passer" qui marque le tutoriel comme vu
 - [x] **TUTO-06**: Pendant les étapes du tutoriel, les animations de la ferme (`WorldGridView`) sont mises en pause pour garantir 60fps sur le tutoriel — anti-régression perf
-- [ ] **TUTO-07**: Le tutoriel est rejouable à tout moment depuis le codex (CODEX-10)
+- [x] **TUTO-07**: Le tutoriel est rejouable à tout moment depuis le codex (CODEX-10)
 - [x] **TUTO-08**: Le tutoriel utilise `HelpContext` étendu — interdiction de créer un nouveau provider (anti-pattern : pile de providers déjà à 8 niveaux)
 
 ### Architecture & Sécurité
@@ -113,11 +113,11 @@ Deferred to v1.3+.
 | CODEX-10 | Phase 17 | Complete |
 | TUTO-01 | Phase 18 | Pending |
 | TUTO-02 | Phase 18 | Pending |
-| TUTO-03 | Phase 18 | Pending |
+| TUTO-03 | Phase 18 | Complete |
 | TUTO-04 | Phase 18 | Complete |
-| TUTO-05 | Phase 18 | Pending |
+| TUTO-05 | Phase 18 | Complete |
 | TUTO-06 | Phase 18 | Complete |
-| TUTO-07 | Phase 18 | Pending |
+| TUTO-07 | Phase 18 | Complete |
 | TUTO-08 | Phase 18 | Complete |
 | ARCH-03 | Phase 15 | Complete |
 | ARCH-04 | Phase 15 | Complete |
