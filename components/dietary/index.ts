@@ -13,3 +13,5 @@ export { ConvivesPickerModal } from './ConvivesPickerModal';
 export type { ConvivesPickerModalProps } from './ConvivesPickerModal';
 export { MealConflictRecap } from './MealConflictRecap';
 export type { MealConflictRecapProps } from './MealConflictRecap';
+export { VoicePreviewModal } from './VoicePreviewModal';
+export type { VoicePreviewModalProps } from './VoicePreviewModal';

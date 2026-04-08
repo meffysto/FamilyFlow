@@ -7,28 +7,35 @@
  * Structure :
  * - Section "Membres de la famille" : liste des profils avec ProfileFoodCard
  * - Section "Invités récurrents" : liste des invités + bouton d'ajout
+ * - Bouton micro dans le header → DictaphoneRecorder → VoicePreviewModal (PREF-13)
  *
- * Phase 15 — PREF-02, PREF-04, PREF-06, PREF-07
+ * Phase 15 — PREF-02, PREF-04, PREF-06, PREF-07, PREF-13
  */
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   Alert,
   StyleSheet,
+  TouchableOpacity,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useVault } from '../contexts/VaultContext';
 import { useThemeColors } from '../contexts/ThemeContext';
+import { useAI } from '../contexts/AIContext';
 import { ProfileFoodCard } from '../components/dietary/ProfileFoodCard';
+import { VoicePreviewModal } from '../components/dietary/VoicePreviewModal';
 import { SectionErrorBoundary } from '../components/SectionErrorBoundary';
 import { Button } from '../components/ui/Button';
+import { DictaphoneRecorder } from '../components/DictaphoneRecorder';
+import { extractDietaryConstraints } from '../lib/ai-service';
 import { Spacing, Layout } from '../constants/spacing';
 import { FontSize, FontWeight } from '../constants/typography';
-import type { GuestProfile } from '../lib/dietary/types';
+import type { DietaryExtraction, GuestProfile } from '../lib/dietary/types';
 
 // ─── Composant ────────────────────────────────────────────────────────────────
 
@@ -36,8 +43,106 @@ export default function DietaryScreen() {
   const router = useRouter();
   const { profiles, dietary } = useVault();
   const { colors } = useThemeColors();
+  const { config } = useAI();
 
   const { guests, updateFoodPreferences, upsertGuest, deleteGuest } = dietary;
+
+  // ─── État saisie vocale (PREF-13) ───────────────────────────────────────────
+
+  const [recorderVisible, setRecorderVisible] = useState(false);
+  const [extractions, setExtractions] = useState<DietaryExtraction[] | null>(null);
+
+  // ─── Handlers saisie vocale (PREF-13) ──────────────────────────────────────
+
+  const handleVoiceTranscript = useCallback(
+    async (text: string) => {
+      setRecorderVisible(false);
+      if (!text.trim()) return; // pitfall 5 : ignore les transcriptions vides
+      if (!config) {
+        // Pas de config IA — fallback vers l'alerte standard
+        Alert.alert(
+          'IA non configurée',
+          'Configurez une clé API Claude dans les réglages pour utiliser la saisie vocale.',
+        );
+        return;
+      }
+      try {
+        const results = await extractDietaryConstraints(config, text, {
+          profiles: profiles.map(p => ({ id: p.id, name: p.name })),
+          guests: dietary.guests.map(g => ({ id: g.id, name: g.name })),
+        });
+        if (results.length === 0) {
+          // D-15 : aucune extraction — informer sans crash, pas de toast retry
+          Alert.alert(
+            'Aucune préférence détectée',
+            'La dictée n\'a pas permis d\'extraire des préférences. Essayez à nouveau ou ajoutez manuellement.',
+          );
+          return;
+        }
+        setExtractions(results);
+      } catch (e) {
+        if (__DEV__) console.warn('extractDietaryConstraints failed', e);
+        // D-15 : fallback gracieux — pas de toast retry, juste une alerte informative
+        Alert.alert(
+          'Saisie vocale indisponible',
+          'L\'extraction automatique a échoué. Veuillez ajouter vos préférences manuellement.',
+        );
+      }
+    },
+    [config, profiles, dietary.guests],
+  );
+
+  const handleConfirmVoiceExtractions = useCallback(
+    async (confirmed: DietaryExtraction[]) => {
+      setExtractions(null);
+      for (const ex of confirmed) {
+        if (!ex.profileId) continue;
+        // Détermine si c'est un profil famille ou un invité
+        const isFamily = profiles.some(p => p.id === ex.profileId);
+        const categoryKey = ex.category === 'allergie'
+          ? 'allergies'
+          : ex.category === 'intolerance'
+          ? 'intolerances'
+          : ex.category === 'regime'
+          ? 'regimes'
+          : 'aversions';
+        if (isFamily) {
+          const profile = profiles.find(p => p.id === ex.profileId);
+          if (!profile) continue;
+          // Récupérer les items existants pour éviter les doublons
+          const fieldMap: Record<string, string[]> = {
+            allergies: profile.foodAllergies ?? [],
+            intolerances: profile.foodIntolerances ?? [],
+            regimes: profile.foodRegimes ?? [],
+            aversions: profile.foodAversions ?? [],
+          };
+          const existing = fieldMap[categoryKey] ?? [];
+          if (!existing.includes(ex.item)) {
+            await updateFoodPreferences(
+              ex.profileId,
+              categoryKey as 'allergies' | 'intolerances' | 'regimes' | 'aversions',
+              [...existing, ex.item],
+            );
+          }
+        } else {
+          const guest = dietary.guests.find(g => g.id === ex.profileId);
+          if (!guest) continue;
+          const guestFieldMap: Record<string, keyof GuestProfile> = {
+            allergies: 'foodAllergies',
+            intolerances: 'foodIntolerances',
+            regimes: 'foodRegimes',
+            aversions: 'foodAversions',
+          };
+          const field = guestFieldMap[categoryKey];
+          const existing = (guest[field] as string[]) ?? [];
+          if (!existing.includes(ex.item)) {
+            await upsertGuest({ ...guest, [field]: [...existing, ex.item] });
+          }
+        }
+      }
+    },
+    [profiles, dietary.guests, updateFoodPreferences, upsertGuest],
+  );
 
   // ─── Handlers membres famille ───────────────────────────────────────────────
 
@@ -135,8 +240,16 @@ export default function DietaryScreen() {
           <Text style={[styles.screenTitle, { color: colors.text }]}>
             Préférences alimentaires
           </Text>
-          {/* PREF-13 voice input — Plan 07 */}
-          <View style={styles.headerRight} />
+          {/* Bouton micro — PREF-13 (D-13) : un seul bouton micro dans le header */}
+          <TouchableOpacity
+            style={styles.micButton}
+            onPress={() => setRecorderVisible(true)}
+            accessibilityLabel="Saisir les préférences par la voix"
+            accessibilityRole="button"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Text style={styles.micIcon}>🎤</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Section Membres de la famille */}
@@ -192,6 +305,32 @@ export default function DietaryScreen() {
         {/* Espace bas de page */}
         <View style={styles.bottomSpacer} />
       </ScrollView>
+
+      {/* DictaphoneRecorder — PREF-13 (D-13) : s'affiche à la demande du bouton micro */}
+      {recorderVisible && (
+        <Modal
+          visible
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setRecorderVisible(false)}
+        >
+          <DictaphoneRecorder
+            context={{ title: 'Préférences alimentaires', subtitle: 'Dictez les préférences…' }}
+            onResult={handleVoiceTranscript}
+            onClose={() => setRecorderVisible(false)}
+          />
+        </Modal>
+      )}
+
+      {/* VoicePreviewModal — PREF-13 (D-14) : modale preview éditable, confirmation obligatoire */}
+      <VoicePreviewModal
+        visible={extractions !== null}
+        extractions={extractions ?? []}
+        profiles={profiles}
+        guests={dietary.guests}
+        onClose={() => setExtractions(null)}
+        onConfirm={handleConfirmVoiceExtractions}
+      />
     </SafeAreaView>
   );
 }
@@ -211,8 +350,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing['3xl'],
   },
-  headerRight: {
+  micButton: {
     width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  micIcon: {
+    fontSize: FontSize.title,
   },
   screenTitle: {
     flex: 1,
