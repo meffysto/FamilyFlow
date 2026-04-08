@@ -82,7 +82,11 @@
   3. Le tutoriel couvre 5 étapes ordonnées (intro narrative, plantation, cycle croissance et récolte, gain XP/loot, où aller plus loin) avec un overlay spotlight SVG qui met en évidence l'élément cible tout en laissant le décor visible
   4. Pendant toutes les étapes du tutoriel, les animations de `WorldGridView` sont mises en pause — le frame rate du tutoriel reste à 58 fps minimum sur le device TestFlight
   5. Le tutoriel est rejouable depuis le bouton "Rejouer le tutoriel" du codex (CODEX-10) et aucun nouveau provider n'est créé — le tutoriel s'appuie exclusivement sur `HelpContext` étendu
-**Plans**: TBD
+**Plans**: 4 plans
+- [ ] 18-01-helpcontext-worldgrid-pause-PLAN.md — Étendre HelpContext (activeFarmTutorialStep) + prop paused sur WorldGridView
+- [ ] 18-02-coachmark-overlay-border-radius-PLAN.md — Étendre CoachMarkOverlay avec prop borderRadius (pas de SVG)
+- [ ] 18-03-farm-tutorial-overlay-i18n-PLAN.md — Créer FarmTutorialOverlay (5 étapes) + textes i18n FR+EN help.farm_tutorial
+- [ ] 18-04-tree-integration-PLAN.md — Monter FarmTutorialOverlay dans tree.tsx + validation humaine end-to-end
 **UI hint**: yes
 
 ## Progress (v1.2)
@@ -92,7 +96,7 @@
 | 15. Préférences alimentaires | v1.2 | 7/7 | Complete    | 2026-04-08 |
 | 16. Codex contenu | v1.2 | 5/5 | Complete    | 2026-04-08 |
 | 17. Codex UI | v1.2 | 3/3 | Complete    | 2026-04-08 |
-| 18. Tutoriel ferme | v1.2 | 0/? | Not started | - |
+| 18. Tutoriel ferme | v1.2 | 0/4 | Not started | - |
 
 ## Archived Milestones
 
