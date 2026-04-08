@@ -1734,31 +1734,33 @@ export default function TreeScreen() {
             />
 
             {/* Phase 18-04 fix : anchors invisibles pour FarmTutorialOverlay (étapes 2 plantation / 3 récolte) */}
-            {/* Zones ~110×110 positionnées sur la moitié supérieure du diorama où sont les crops/bâtiments */}
+            {/* Crops rendus par WorldGridView dans le ~1/3 supérieur du diorama (rangée de champs labourés) */}
             {(() => {
               const dioramaH = DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60;
               return (
                 <>
+                  {/* Plantation : crop gauche (premier champ de la rangée) */}
                   <View
                     ref={plantationRef}
                     pointerEvents="none"
                     style={{
                       position: 'absolute',
-                      left: SCREEN_W * 0.28 - 55,
-                      top: dioramaH * 0.32,
-                      width: 110,
-                      height: 110,
+                      left: SCREEN_W * 0.14,
+                      top: dioramaH * 0.08,
+                      width: 120,
+                      height: 120,
                     }}
                   />
+                  {/* Récolte : crop milieu-droite */}
                   <View
                     ref={harvestRef}
                     pointerEvents="none"
                     style={{
                       position: 'absolute',
-                      left: SCREEN_W * 0.68 - 55,
-                      top: dioramaH * 0.45,
-                      width: 110,
-                      height: 110,
+                      left: SCREEN_W * 0.42,
+                      top: dioramaH * 0.16,
+                      width: 120,
+                      height: 120,
                     }}
                   />
                 </>

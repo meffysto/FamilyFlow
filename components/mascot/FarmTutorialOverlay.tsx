@@ -185,18 +185,11 @@ export const FarmTutorialOverlay = React.memo(function FarmTutorialOverlay({
     );
   }
 
-  // Étapes 1, 2, 3 : coach marks (fallback carte narrative si cible non mesurable)
+  // Étapes 1, 2, 3 : coach marks — pas de fallback NarrativeCard (évite double-rendu
+  // "2 tooltips 2/5" entre le premier render et la callback measureInWindow).
+  // On renvoie null le temps que measureInWindow complète (1-2 frames).
   if (!measuredRect) {
-    return (
-      <NarrativeCard
-        step={currentStep}
-        colors={themeColors}
-        t={t}
-        onNext={handleNext}
-        onSkip={handleSkip}
-        treeSprite={null}
-      />
-    );
+    return null;
   }
 
   const stepKey = `help:farm_tutorial.step${currentStep + 1}`;
