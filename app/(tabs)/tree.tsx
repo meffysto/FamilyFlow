@@ -56,6 +56,10 @@ import { GiftReceiptModal } from '../../components/mascot/GiftReceiptModal';
 import { TechTreeSheet } from '../../components/mascot/TechTreeSheet';
 import { BuildingDetailSheet } from '../../components/mascot/BuildingDetailSheet';
 import { WeeklyGoal, countWeeklyTasks } from '../../components/mascot/WeeklyGoal';
+import { FamilyQuestBanner } from '../../components/mascot/FamilyQuestBanner';
+import { FamilyQuestDetailSheet } from '../../components/mascot/FamilyQuestDetailSheet';
+import { FamilyQuestPickerSheet } from '../../components/mascot/FamilyQuestPickerSheet';
+import * as Haptics from 'expo-haptics';
 import { useFarm } from '../../hooks/useFarm';
 import { SunriseReport, type SunriseResource } from '../../components/mascot/SunriseReport';
 import { BadgesSheet } from '../../components/mascot/BadgesSheet';
@@ -282,7 +286,7 @@ export default function TreeScreen() {
   const { t } = useTranslation();
   const { primary, tint, colors, isDark } = useThemeColors();
   const insets = useSafeAreaInsets();
-  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem, unplaceMascotItem, gamiData, setCompanion, tasks, rdvs, meals, completeSagaChapter } = useVault();
+  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem, unplaceMascotItem, gamiData, setCompanion, tasks, rdvs, meals, completeSagaChapter, familyQuests, unlockedRecipes, startFamilyQuest, completeFamilyQuest, deleteFamilyQuest, contributeFamilyQuest } = useVault();
   const { showToast } = useToast();
   const { config: aiConfig } = useAI();
   const { hasSeenScreen, markScreenSeen, isLoaded: helpLoaded } = useHelp();
@@ -304,7 +308,7 @@ export default function TreeScreen() {
   const [showItemPicker, setShowItemPicker] = useState(false);
 
   // Ferme
-  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects, getWearEvents, sendGift, receiveGifts } = useFarm();
+  const { plant, harvest, buyBuilding, upgradeBuildingAction, collectBuildingResources, collectPassiveIncome, craft, sellHarvest, sellCrafted, unlockTech, checkWear, repairWear, getWearEffects, getWearEvents, sendGift, receiveGifts } = useFarm(contributeFamilyQuest);
   const [showSeedPicker, setShowSeedPicker] = useState(false);
   const [selectedPlotIndex, setSelectedPlotIndex] = useState<number | null>(null);
   const [harvestBurst, setHarvestBurst] = useState<{ x: number; y: number; reward: number; cropId: string } | null>(null);
@@ -333,6 +337,10 @@ export default function TreeScreen() {
     return getTechBonuses(profile?.farmTech ?? []);
   }, [profile?.farmTech]);
 
+  // Quête active et droits de démarrage (adulte/ado uniquement)
+  const activeQuest = useMemo(() => familyQuests?.find(q => q.status === 'active') ?? null, [familyQuests]);
+  const canStartQuest = activeProfile?.role === 'adulte' || activeProfile?.role === 'ado';
+
   // Compagnon mascotte
   const [showCompanionPicker, setShowCompanionPicker] = useState(false);
   const [companionMessage, setCompanionMessage] = useState<string | null>(null);
@@ -345,6 +353,10 @@ export default function TreeScreen() {
   const [showBuildingDetail, setShowBuildingDetail] = useState(false);
   const [selectedBuildingCellId, setSelectedBuildingCellId] = useState<string | null>(null);
   const [selectedBuilding, setSelectedBuilding] = useState<PlacedBuilding | null>(null);
+
+  // Quêtes coopératives familiales
+  const [showQuestDetail, setShowQuestDetail] = useState(false);
+  const [showQuestPicker, setShowQuestPicker] = useState(false);
 
   // Saga active — pour l'expérience immersive dans le diorama
   const [sagaProgress, setSagaProgress] = useState<SagaProgress | null>(null);
@@ -360,6 +372,29 @@ export default function TreeScreen() {
   const [showEventDialogue, setShowEventDialogue] = useState(false);
   const [eventVisitorShouldDepart, setEventVisitorShouldDepart] = useState(false);
   const [eventVisitorReaction, setEventVisitorReaction] = useState<ReactionType | undefined>(undefined);
+
+  // Handlers quêtes coopératives
+  const handleCompleteQuest = useCallback(async () => {
+    if (activeQuest) {
+      await completeFamilyQuest(activeQuest.id);
+      setShowQuestDetail(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+  }, [activeQuest, completeFamilyQuest]);
+
+  const handleDeleteQuest = useCallback(async () => {
+    if (activeQuest) {
+      await deleteFamilyQuest(activeQuest.id);
+      setShowQuestDetail(false);
+    }
+  }, [activeQuest, deleteFamilyQuest]);
+
+  const handleCreateQuest = useCallback(async (templateId: string) => {
+    if (activeProfile) {
+      await startFamilyQuest(templateId, activeProfile.id, profiles);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+  }, [startFamilyQuest, activeProfile, profiles]);
 
   // Detection cadeaux en attente — au mount, retour foreground, et focus tab
   const checkPendingGifts = useCallback(() => {
@@ -1293,7 +1328,7 @@ export default function TreeScreen() {
       >
 
         {/* Bandeau saga active */}
-        {activeSaga && sagaProgress && (
+        {activeSaga && sagaProgress && sagaProgress.status !== 'completed' && (
           <Animated.View entering={FadeIn.duration(300)}>
             <View style={[styles.seasonBadge, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
               <Text style={[styles.seasonText, { color: colors.textSub }]}>
@@ -1932,6 +1967,27 @@ export default function TreeScreen() {
           </View>
         </Animated.View>
 
+        {/* Quête coopérative familiale */}
+        {activeQuest ? (
+          <FamilyQuestBanner
+            quest={activeQuest}
+            profiles={profiles}
+            colors={colors}
+            primary={primary}
+            t={t}
+            onPress={() => setShowQuestDetail(true)}
+          />
+        ) : canStartQuest ? (
+          <TouchableOpacity
+            onPress={() => setShowQuestPicker(true)}
+            style={{ padding: Spacing.sm, alignItems: 'center' }}
+          >
+            <Text style={{ color: primary, fontSize: 14 }}>
+              + Nouvelle quête familiale
+            </Text>
+          </TouchableOpacity>
+        ) : null}
+
         {/* Objectif hebdomadaire */}
         {gamiData && profile && (
           <WeeklyGoal
@@ -2021,6 +2077,7 @@ export default function TreeScreen() {
         farmInventory={profile?.farmInventory ?? { oeuf: 0, lait: 0, farine: 0, miel: 0 }}
         craftedItems={profile?.craftedItems ?? []}
         treeStage={stageInfo.stage}
+        unlockedRecipes={unlockedRecipes}
         onCraft={async (recipeId) => {
           const result = await craft(profile!.id, recipeId);
           if (result) triggerActionMsg('craft');
@@ -2134,6 +2191,29 @@ export default function TreeScreen() {
       <HarvestEventOverlay
         event={harvestEvent}
         onDismiss={() => setHarvestEvent(null)}
+      />
+
+      {/* Quêtes coopératives — détail + picker */}
+      {activeQuest && (
+        <FamilyQuestDetailSheet
+          quest={activeQuest}
+          profiles={profiles}
+          colors={colors}
+          primary={primary}
+          t={t}
+          visible={showQuestDetail}
+          onClose={() => setShowQuestDetail(false)}
+          onComplete={handleCompleteQuest}
+          onDelete={handleDeleteQuest}
+        />
+      )}
+      <FamilyQuestPickerSheet
+        visible={showQuestPicker}
+        onClose={() => setShowQuestPicker(false)}
+        onSelect={handleCreateQuest}
+        colors={colors}
+        primary={primary}
+        t={t}
       />
     </View>
   );

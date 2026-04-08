@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   StyleSheet,
   TouchableOpacity,
@@ -20,6 +20,10 @@ import { scaleIngredients, formatIngredient, renderStepText } from '../lib/cookl
 import RecipeCookingMode from './RecipeCookingMode';
 import { useTranslation } from 'react-i18next';
 import { FontSize, FontWeight } from '../constants/typography';
+import { useVault } from '../contexts/VaultContext';
+import { checkAllergens } from '../lib/dietary';
+import { AllergenBanner, ConvivesPickerModal } from './dietary';
+import { Badge } from './ui';
 
 interface RecipeViewerProps {
   recipe: AppRecipe;
@@ -49,6 +53,40 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
   const [servings, setServings] = useState(familySize || recipe.servings || 1);
   const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set());
   const [showCookingMode, setShowCookingMode] = useState(false);
+
+  // ─── Détection de conflits alimentaires (PREF-08, PREF-10, PREF-11) ────────
+  const { profiles, dietary } = useVault();
+
+  // D-08 : par défaut, union de tous les profils famille (sécurité maximale)
+  const [selectedProfileIds, setSelectedProfileIds] = useState<string[]>(
+    () => profiles.map(p => p.id),
+  );
+  const [selectedGuestIds, setSelectedGuestIds] = useState<string[]>([]);
+  const [pickerVisible, setPickerVisible] = useState(false);
+
+  // Calcul des conflits — recompute quand la sélection ou la recette changent
+  const conflicts = useMemo(
+    () =>
+      checkAllergens(
+        recipe,
+        [...selectedProfileIds, ...selectedGuestIds],
+        profiles,
+        dietary.guests.filter(g => selectedGuestIds.includes(g.id)),
+      ),
+    [recipe, selectedProfileIds, selectedGuestIds, profiles, dietary.guests],
+  );
+
+  // Handlers pour le sélecteur convives
+  const handleOpenPicker = useCallback(() => setPickerVisible(true), []);
+  const handleClosePicker = useCallback(() => setPickerVisible(false), []);
+  const handleConfirmPicker = useCallback(
+    (profileIds: string[], guestIds: string[]) => {
+      setSelectedProfileIds(profileIds);
+      setSelectedGuestIds(guestIds);
+      setPickerVisible(false);
+    },
+    [],
+  );
 
   const baseServings = recipe.servings || 1;
   const scaleFactor = baseServings > 0 ? servings / baseServings : 1;
@@ -181,6 +219,22 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
         </View>
 
         <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent} showsVerticalScrollIndicator={false}>
+          {/* Bandeau allergène — P0 SAFETY PREF-11 (avant les ingrédients) */}
+          <AllergenBanner conflicts={conflicts} />
+
+          {/* Bouton sélecteur convives — PREF-08 */}
+          <TouchableOpacity
+            style={[styles.conflictCheckerBtn, { borderColor: primary, borderWidth: 1.5 }]}
+            onPress={handleOpenPicker}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Vérifier les conflits pour…"
+          >
+            <Text style={[styles.conflictCheckerText, { color: primary }]}>
+              Vérifier les conflits pour…
+            </Text>
+          </TouchableOpacity>
+
           {/* Hero image */}
           {imageUri ? (
             <TouchableOpacity onPress={onSaveImage ? handlePickImage : undefined} activeOpacity={onSaveImage ? 0.7 : 1}>
@@ -238,6 +292,18 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
               <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('recipeViewer.ingredients')}</Text>
               {scaledIngredients.map((ing, i) => {
                 const checked = checkedIngredients.has(i);
+                // Chercher un conflit pour cet ingrédient (matching sur le nom brut)
+                const conflict = conflicts.find(c => c.ingredientName === ing.name);
+                const badgeVariant = conflict?.severity === 'allergie'
+                  ? 'error'
+                  : conflict?.severity === 'intolerance'
+                  ? 'warning'
+                  : 'default';
+                const badgeLabel = conflict
+                  ? conflict.severity === 'allergie'
+                    ? `⚠ ${conflict.matchedAllergen}`
+                    : conflict.matchedAllergen
+                  : null;
                 return (
                   <TouchableOpacity
                     key={i}
@@ -263,6 +329,10 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
                     >
                       {formatIngredient(ing)}
                     </Text>
+                    {/* Badge inline conflit alimentaire (PREF-10) */}
+                    {badgeLabel && (
+                      <Badge label={badgeLabel} variant={badgeVariant} size="sm" />
+                    )}
                   </TouchableOpacity>
                 );
               })}
@@ -348,6 +418,17 @@ export default function RecipeViewer({ recipe, onClose, onAddToShoppingList, isF
           onFinish={onCookingFinished}
         />
       )}
+
+      {/* Sélecteur convives — volatile, sans persistance (PREF-FUT-01) */}
+      <ConvivesPickerModal
+        visible={pickerVisible}
+        onClose={handleClosePicker}
+        onConfirm={handleConfirmPicker}
+        profiles={profiles}
+        guests={dietary.guests}
+        initialSelectedProfileIds={selectedProfileIds}
+        initialSelectedGuestIds={selectedGuestIds}
+      />
     </Modal>
   );
 }
@@ -570,5 +651,15 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 40,
+  },
+  conflictCheckerBtn: {
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  conflictCheckerText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
   },
 });

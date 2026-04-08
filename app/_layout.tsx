@@ -35,6 +35,7 @@ import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { LockScreen } from '../components/LockScreen';
 import i18n, { loadSavedLanguage } from '../lib/i18n';
 import { LightColors, DarkColors } from '../constants/colors';
+import * as SecureStore from 'expo-secure-store';
 
 // ─── Error Boundary ──────────────────────────────────────────────────────────
 
@@ -103,9 +104,20 @@ function AuthLockOverlay() {
 // depuis setup.tsx. Sinon hasVault reste false et Redirect boucle vers /setup.
 function VaultRedirect({ langReady }: { langReady: boolean }) {
   const { vaultPath, isLoading } = useVault();
-  // Attendre que le vault ait fini son init ET que la langue soit chargée
-  if (!langReady || isLoading) return null;
-  if (!vaultPath) return <Redirect href="/setup" />;
+  const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    SecureStore.getItemAsync('onboarding_questionnaire_done').then((val) => {
+      setOnboardingDone(val === '1');
+    });
+  }, []);
+
+  // Attendre vault + langue + flag onboarding
+  if (!langReady || isLoading || onboardingDone === null) return null;
+  if (!vaultPath) {
+    if (!onboardingDone) return <Redirect href="/onboarding" />;
+    return <Redirect href="/setup" />;
+  }
   return null;
 }
 
@@ -138,6 +150,7 @@ function RootLayout() {
               <ToastProvider>
                 <StatusBar style="auto" />
                 <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="onboarding" />
                   <Stack.Screen name="setup" />
                   <Stack.Screen name="(tabs)" />
                 </Stack>

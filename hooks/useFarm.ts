@@ -52,7 +52,7 @@ import {
   type WearEvent,
   type WearEffects,
 } from '../lib/mascot/wear-engine';
-import { parseGamification, serializeGamification, parseFarmProfile, serializeFarmProfile, parseCompanion } from '../lib/parser';
+import { parseGamification, serializeGamification, parseFarmProfile, serializeFarmProfile, parseCompanion, parseFamilyQuestsMeta, getActiveQuestEffect, FAMILY_QUESTS_FILE } from '../lib/parser';
 import type { FarmProfileData } from '../lib/types';
 import {
   parsePendingGifts,
@@ -134,7 +134,7 @@ function applyFarmField(data: FarmProfileData, fieldKey: string, value: string):
   }
 }
 
-export function useFarm() {
+export function useFarm(onQuestProgress?: (profileId: string, type: string, amount: number) => Promise<void>) {
   const { vault, profiles, refreshFarm, refreshGamification } = useVault();
 
   /** Deduire des feuilles dans gami-{profileId}.md */
@@ -267,7 +267,12 @@ export function useFarm() {
     }
     await refreshFarm(profileId);
     await refreshGamification();
-  }, [vault, profiles, writeProfileField, writeProfileFields, deductCoins, refreshFarm, refreshGamification]);
+
+    // Progression quêtes coopératives (plant)
+    if (onQuestProgress) {
+      try { await onQuestProgress(profileId, 'plant', 1); } catch { /* Quest — non-critical */ }
+    }
+  }, [vault, profiles, writeProfileField, writeProfileFields, deductCoins, refreshFarm, refreshGamification, onQuestProgress]);
 
   /** Recolter une culture mature — stocke en inventaire au lieu de donner des feuilles */
   const harvest = useCallback(async (profileId: string, plotIndex: number): Promise<{ cropId: string; isGolden: boolean; harvestEvent: HarvestEvent | null; seedDrop: RareSeedDrop | null } | null> => {
@@ -317,8 +322,13 @@ export function useFarm() {
     await writeProfileFields(profileId, fieldsToWrite);
     await refreshFarm(profileId);
 
+    // Progression quêtes coopératives (harvest)
+    if (onQuestProgress) {
+      try { await onQuestProgress(profileId, 'harvest', 1); } catch { /* Quest — non-critical */ }
+    }
+
     return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop };
-  }, [vault, writeProfileFields, refreshFarm]);
+  }, [vault, writeProfileFields, refreshFarm, onQuestProgress]);
 
   /** Vendre une recolte brute depuis l'inventaire */
   const sellHarvest = useCallback(async (profileId: string, cropId: string): Promise<number> => {
@@ -378,8 +388,14 @@ export function useFarm() {
     }
     await refreshFarm(profileId);
     await refreshGamification();
+
+    // Progression quêtes coopératives (craft)
+    if (onQuestProgress) {
+      try { await onQuestProgress(profileId, 'craft', 1); } catch { /* Quest — non-critical */ }
+    }
+
     return result.item;
-  }, [vault, writeProfileFields, refreshFarm, refreshGamification]);
+  }, [vault, writeProfileFields, refreshFarm, refreshGamification, onQuestProgress]);
 
   /** Vendre un item crafte */
   const sellCrafted = useCallback(async (profileId: string, recipeId: string): Promise<number> => {
@@ -472,7 +488,13 @@ export function useFarm() {
 
     const profileTechBonuses = getTechBonuses(profile.farmTech ?? []);
     const wearEffects = getActiveWearEffects(profile.wearEvents ?? []);
-    const result = collectBuilding(currentBuildings, currentInventory, cellId, new Date(), profileTechBonuses, wearEffects);
+    let productionBoost = 1;
+    try {
+      const questsContent = await vault.readFile(FAMILY_QUESTS_FILE).catch(() => '');
+      const activeEffect = getActiveQuestEffect(parseFamilyQuestsMeta(questsContent));
+      if (activeEffect?.type === 'production_boost') productionBoost = 2;
+    } catch { /* Quest — non-critical */ }
+    const result = collectBuilding(currentBuildings, currentInventory, cellId, new Date(), profileTechBonuses, wearEffects, productionBoost);
     if (result.collected === 0) return 0;
 
     const profileName = profiles?.find(p => p.id === profileId)?.name ?? profileId;
@@ -480,8 +502,14 @@ export function useFarm() {
     await vault.writeFile(file, serializeFarmProfile(profileName, newFarm));
 
     await refreshFarm(profileId);
+
+    // Progression quêtes coopératives (production)
+    if (onQuestProgress && result.collected > 0) {
+      try { await onQuestProgress(profileId, 'production', 1); } catch { /* Quest — non-critical */ }
+    }
+
     return result.collected;
-  }, [vault, profiles, refreshFarm]);
+  }, [vault, profiles, refreshFarm, onQuestProgress]);
 
   /** Collecter le revenu passif de tous les batiments (appele a l'ouverture de l'ecran) */
   const collectPassiveIncome = useCallback(async (profileId: string): Promise<number> => {
@@ -501,8 +529,14 @@ export function useFarm() {
 
     const passiveTechBonuses = getTechBonuses(profile.farmTech ?? []);
     const passiveWearEffects = getActiveWearEffects(profile.wearEvents ?? []);
+    let passiveProductionBoost = 1;
+    try {
+      const questsContent = await vault.readFile(FAMILY_QUESTS_FILE).catch(() => '');
+      const activeEffect = getActiveQuestEffect(parseFamilyQuestsMeta(questsContent));
+      if (activeEffect?.type === 'production_boost') passiveProductionBoost = 2;
+    } catch { /* Quest — non-critical */ }
     for (const building of placedBuildings) {
-      const result = collectBuilding(currentBuildings, updatedInventory, building.cellId, new Date(), passiveTechBonuses, passiveWearEffects);
+      const result = collectBuilding(currentBuildings, updatedInventory, building.cellId, new Date(), passiveTechBonuses, passiveWearEffects, passiveProductionBoost);
       if (result.collected > 0) {
         total += result.collected;
         currentBuildings = result.buildings;

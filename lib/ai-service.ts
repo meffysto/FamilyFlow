@@ -16,6 +16,8 @@ import type { Task, RDV, StockItem, MealItem, CourseItem, Memory, Defi, Profile,
 import type { AppRecipe } from './cooklang';
 import type { JournalStats } from './journal-stats';
 import { buildAnonymizationMap, anonymize, deanonymize, type AnonymizationMap } from './anonymizer';
+import type { DietaryExtraction, DietarySeverity } from './dietary/types';
+import { EU_ALLERGENS, COMMON_INTOLERANCES, COMMON_REGIMES } from './dietary/catalogs';
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -896,4 +898,76 @@ export async function callCompanionMessage(config: AIConfig, prompt: string): Pr
   );
   if (resp.error || !resp.text) return '';
   return resp.text.trim();
+}
+
+// ─── Extraction des préférences alimentaires (PREF-13) ───────────────────────
+
+/** Contexte de profils fourni au caller pour l'extraction vocale */
+export interface ExtractDietaryContext {
+  profiles: { id: string; name: string }[];
+  guests: { id: string; name: string }[];
+}
+
+/**
+ * PREF-13 : Interprète une transcription vocale libre pour extraire des préférences
+ * alimentaires structurées. Utilise claude-haiku (rapide + moins coûteux).
+ *
+ * Retourne un tableau d'extractions. En cas d'erreur ou JSON invalide, throw
+ * pour que le caller puisse fallback vers la modale manuelle (D-15).
+ */
+export async function extractDietaryConstraints(
+  config: AIConfig,
+  transcript: string,
+  ctx: ExtractDietaryContext,
+): Promise<DietaryExtraction[]> {
+  if (!transcript.trim()) return [];
+
+  const profilesList = ctx.profiles.map(p => `- ${p.name} (id: ${p.id}, type: famille)`).join('\n');
+  const guestsList = ctx.guests.map(g => `- ${g.name} (id: ${g.id}, type: invité)`).join('\n');
+  const allergenIds = EU_ALLERGENS.map(a => a.id).join(', ');
+  const intoleranceIds = COMMON_INTOLERANCES.map(i => i.id).join(', ');
+  const regimeIds = COMMON_REGIMES.map(r => r.id).join(', ');
+
+  const systemPrompt = `Tu es un assistant qui extrait des préférences alimentaires depuis une transcription vocale en français.
+Convives disponibles :
+${profilesList}
+${guestsList}
+
+Catalogues d'IDs canoniques à préférer :
+- Allergies : ${allergenIds}
+- Intolérances : ${intoleranceIds}
+- Régimes : ${regimeIds}
+- Aversions : texte libre (pas de catalogue)
+
+Réponds UNIQUEMENT avec un JSON valide de la forme :
+{"extractions": [{"profileId": "lucas", "profileName": "Lucas", "category": "allergie", "item": "arachides", "confidence": "high"}]}
+
+Règles :
+- category est exactement "allergie" | "intolerance" | "regime" | "aversion"
+- Si l'item correspond à un ID canonique, utilise cet ID. Sinon, utilise le texte libre en minuscules.
+- profileId null si le nom du convive n'est pas reconnaissable dans la liste.
+- confidence "high" si item+profil clairs, "medium" si une ambiguïté, "low" si très incertain.
+- Une transcription peut produire plusieurs extractions.`;
+
+  const haikuConfig = { ...config, model: 'claude-haiku-4-5-20251001' };
+  const response = await callClaude(haikuConfig, systemPrompt, [{ role: 'user', content: transcript }]);
+
+  if (response.error) {
+    throw new Error(`extractDietaryConstraints: erreur API — ${response.error}`);
+  }
+
+  // Parse le JSON (tolérant aux code fences)
+  const cleaned = response.text.replace(/```json\s*|\s*```/g, '').trim();
+  const parsed = JSON.parse(cleaned);
+  if (!parsed.extractions || !Array.isArray(parsed.extractions)) {
+    throw new Error('extractDietaryConstraints: format JSON invalide');
+  }
+
+  // Validation des champs et coerce category
+  const validCategories: DietarySeverity[] = ['allergie', 'intolerance', 'regime', 'aversion'];
+  return parsed.extractions.filter((e: any) =>
+    typeof e.item === 'string' &&
+    validCategories.includes(e.category) &&
+    typeof e.profileName === 'string',
+  );
 }

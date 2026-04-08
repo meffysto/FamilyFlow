@@ -55,6 +55,9 @@ import { parseWearEvents, serializeWearEvents } from './mascot/wear-engine';
 import type { CompanionData, CompanionSpecies } from './mascot/companion-types';
 import { calculateLevel } from './gamification';
 import type { TreeSpecies } from './mascot/types';
+import type { FamilyQuest } from './quest-engine';
+import { parseReward, serializeReward } from './quest-engine';
+import type { GuestProfile } from './dietary/types';
 
 // ─── Task parsing ───────────────────────────────────────────────────────────
 
@@ -657,6 +660,18 @@ export function serializeFarmProfile(profileName: string, data: FarmProfileData)
 }
 
 /**
+ * Parse une valeur brute en tableau de chaînes.
+ * Gère le format CSV (`gluten,lait`) ET le format YAML liste (Array natif).
+ * Utilisé par parseFamille (food_*) et parseInvites.
+ */
+function parseFoodCsv(raw: unknown): string[] {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw.map(v => String(v).trim()).filter(Boolean);
+  if (typeof raw === 'string') return raw.split(',').map(s => s.trim()).filter(Boolean);
+  return [];
+}
+
+/**
  * Parse famille.md custom format:
  *
  * ```
@@ -708,6 +723,11 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
         farmTech: undefined,
         farmRareSeeds: undefined,
         wearEvents: undefined,
+        // Préférences alimentaires (PREF-02) — lecture des 4 clés food_* depuis famille.md
+        foodAllergies: parseFoodCsv(currentProps.food_allergies),
+        foodIntolerances: parseFoodCsv(currentProps.food_intolerances),
+        foodRegimes: parseFoodCsv(currentProps.food_regimes),
+        foodAversions: parseFoodCsv(currentProps.food_aversions),
       });
     }
   };
@@ -727,6 +747,46 @@ export function parseFamille(content: string): Omit<Profile, 'points' | 'coins' 
   flush();
 
   return profiles;
+}
+
+/**
+ * Sérialise les profils en Markdown famille.md.
+ * Écrit les 4 clés food_* UNIQUEMENT si non-vides (compatibilité Obsidian — PREF-05).
+ * Format : sections ### {id} avec clés key: value.
+ */
+export function serializeFamille(
+  profiles: Omit<Profile, 'points' | 'coins' | 'level' | 'streak' | 'lootBoxesAvailable' | 'multiplier' | 'multiplierRemaining' | 'pityCounter'>[]
+): string {
+  const sections: string[] = [];
+  for (const profile of profiles) {
+    const lines: string[] = [`### ${profile.id}`];
+    lines.push(`name: ${profile.name}`);
+    lines.push(`role: ${profile.role}`);
+    lines.push(`avatar: ${profile.avatar}`);
+    if (profile.birthdate) lines.push(`birthdate: ${profile.birthdate}`);
+    if (profile.ageCategory) lines.push(`ageCategory: ${profile.ageCategory}`);
+    if (profile.propre) lines.push(`propre: ${profile.propre}`);
+    if (profile.gender) lines.push(`gender: ${profile.gender}`);
+    if (profile.statut) lines.push(`statut: ${profile.statut}`);
+    if (profile.dateTerme) lines.push(`dateTerme: ${profile.dateTerme}`);
+    if (profile.theme) lines.push(`theme: ${profile.theme}`);
+    if (profile.sagaTitle) lines.push(`sagaTitle: ${profile.sagaTitle}`);
+    // Préférences alimentaires — omises si vides (lisibilité Obsidian)
+    if (profile.foodAllergies && profile.foodAllergies.length > 0) {
+      lines.push(`food_allergies: ${profile.foodAllergies.join(',')}`);
+    }
+    if (profile.foodIntolerances && profile.foodIntolerances.length > 0) {
+      lines.push(`food_intolerances: ${profile.foodIntolerances.join(',')}`);
+    }
+    if (profile.foodRegimes && profile.foodRegimes.length > 0) {
+      lines.push(`food_regimes: ${profile.foodRegimes.join(',')}`);
+    }
+    if (profile.foodAversions && profile.foodAversions.length > 0) {
+      lines.push(`food_aversions: ${profile.foodAversions.join(',')}`);
+    }
+    sections.push(lines.join('\n'));
+  }
+  return sections.join('\n\n') + '\n';
 }
 
 // ─── gamification.md ────────────────────────────────────────────────────────
@@ -1037,6 +1097,165 @@ export function serializeDefis(defis: Defi[]): string {
 
   return `---\ntags:\n  - defis\n---\n# Défis familiaux\n\n${sections.join('\n\n')}
 `;
+}
+
+// ─── Quêtes coopératives familiales ─────────────────────────────────────────
+
+export const FAMILY_QUESTS_FILE = 'family-quests.md';
+
+export interface FamilyQuestsMeta {
+  activeEffect: { type: 'rain_bonus' | 'golden_rain' | 'production_boost'; expiresAt: string } | null;
+  unlockedRecipes: string[];
+  trophies: string[];
+  unlockedDecorations: string[];
+}
+
+/**
+ * Parse les champs meta de family-quests.md (lignes avant le premier ## heading).
+ * Exemple : "activeEffect: rain_bonus:2026-04-08T12:00:00.000Z"
+ */
+export function parseFamilyQuestsMeta(content: string): FamilyQuestsMeta {
+  const meta: FamilyQuestsMeta = { activeEffect: null, unlockedRecipes: [], trophies: [], unlockedDecorations: [] };
+  for (const line of content.split('\n')) {
+    if (line.startsWith('## ')) break;
+    if (line.startsWith('activeEffect: ')) {
+      const val = line.slice('activeEffect: '.length).trim();
+      const idx = val.indexOf(':');
+      if (idx !== -1) {
+        const type = val.slice(0, idx) as FamilyQuestsMeta['activeEffect'] extends { type: infer T } | null ? T : never;
+        meta.activeEffect = { type, expiresAt: val.slice(idx + 1) };
+      }
+    } else if (line.startsWith('unlockedRecipes: ')) {
+      meta.unlockedRecipes = line.slice('unlockedRecipes: '.length).split(',').map(s => s.trim()).filter(Boolean);
+    } else if (line.startsWith('trophies: ')) {
+      meta.trophies = line.slice('trophies: '.length).split(',').map(s => s.trim()).filter(Boolean);
+    } else if (line.startsWith('unlockedDecorations: ')) {
+      meta.unlockedDecorations = line.slice('unlockedDecorations: '.length).split(',').map(s => s.trim()).filter(Boolean);
+    }
+  }
+  return meta;
+}
+
+/** Retourne l'effet actif si non expiré, null sinon. */
+export function getActiveQuestEffect(meta: FamilyQuestsMeta): FamilyQuestsMeta['activeEffect'] {
+  if (!meta.activeEffect) return null;
+  return new Date(meta.activeEffect.expiresAt) > new Date() ? meta.activeEffect : null;
+}
+
+/**
+ * Parse family-quests.md en FamilyQuest[].
+ * Format : H2 = titre quête, clés/valeurs ligne par ligne.
+ * contributions: emma:5,lucas:4 → Record<string, number>
+ */
+export function parseFamilyQuests(content: string): FamilyQuest[] {
+  const lines = content.split('\n');
+  const quests: FamilyQuest[] = [];
+  let current: Record<string, string> | null = null;
+  let currentTitle = '';
+
+  const flush = () => {
+    if (current && current.id) {
+      // Parse contributions: "emma:5,lucas:4" → Record<string, number>
+      const contributions: Record<string, number> = {};
+      if (current.contributions) {
+        current.contributions.split(',').forEach((part) => {
+          const colonIdx = part.indexOf(':');
+          if (colonIdx !== -1) {
+            const key = part.slice(0, colonIdx).trim();
+            const val = parseInt(part.slice(colonIdx + 1).trim(), 10);
+            if (key && !isNaN(val)) contributions[key] = val;
+          }
+        });
+      }
+
+      let farmReward;
+      try {
+        farmReward = parseReward(current.farmReward ?? 'loot_legendary:1');
+      } catch {
+        farmReward = { type: 'loot_legendary' as const, count: 1 };
+      }
+
+      quests.push({
+        id: current.id,
+        title: currentTitle,
+        description: current.description ?? '',
+        emoji: current.emoji ?? '🌾',
+        type: (current.type ?? 'tasks') as FamilyQuest['type'],
+        target: parseInt(current.target ?? '1', 10),
+        current: parseInt(current.current ?? '0', 10),
+        contributions,
+        farmReward,
+        status: (current.status ?? 'active') as FamilyQuest['status'],
+        startDate: current.startDate ?? '',
+        endDate: current.endDate ?? '',
+        completedDate: current.completedDate || undefined,
+      });
+    }
+  };
+
+  for (const line of lines) {
+    if (line.startsWith('## ')) {
+      flush();
+      currentTitle = line.slice(3).trim();
+      current = {};
+    } else if (current && line.includes(': ')) {
+      const colonIdx = line.indexOf(': ');
+      const key = line.slice(0, colonIdx).trim();
+      const val = line.slice(colonIdx + 2).trim();
+      current[key] = val;
+    }
+  }
+  flush();
+
+  return quests;
+}
+
+/**
+ * Sérialise FamilyQuest[] en Markdown string.
+ * Même pattern que serializeDefis.
+ * meta optionnel ajoute des champs après le H1.
+ */
+export function serializeFamilyQuests(
+  quests: FamilyQuest[],
+  meta?: {
+    activeEffect?: string;
+    trophies?: string[];
+    unlockedRecipes?: string[];
+    unlockedDecorations?: string[];
+  },
+): string {
+  const metaLines: string[] = [];
+  if (meta?.activeEffect) metaLines.push(`activeEffect: ${meta.activeEffect}`);
+  if (meta?.trophies?.length) metaLines.push(`trophies: ${meta.trophies.join(', ')}`);
+  if (meta?.unlockedRecipes?.length) metaLines.push(`unlockedRecipes: ${meta.unlockedRecipes.join(', ')}`);
+  if (meta?.unlockedDecorations?.length) metaLines.push(`unlockedDecorations: ${meta.unlockedDecorations.join(', ')}`);
+  const metaBlock = metaLines.length > 0 ? '\n' + metaLines.join('\n') : '';
+
+  const sections = quests.map((q) => {
+    // Sérialiser contributions en "emma:5,lucas:4"
+    const contributionStr = Object.entries(q.contributions)
+      .map(([k, v]) => `${k}:${v}`)
+      .join(',');
+
+    const props = [
+      `id: ${q.id}`,
+      `emoji: ${q.emoji}`,
+      `type: ${q.type}`,
+      `target: ${q.target}`,
+      `current: ${q.current}`,
+      `contributions: ${contributionStr}`,
+      `farmReward: ${serializeReward(q.farmReward)}`,
+      `status: ${q.status}`,
+      `startDate: ${q.startDate}`,
+      `endDate: ${q.endDate}`,
+      ...(q.completedDate ? [`completedDate: ${q.completedDate}`] : []),
+      `description: ${q.description}`,
+    ].join('\n');
+
+    return `## ${q.title}\n${props}`;
+  });
+
+  return `---\ntags:\n  - quests\n---\n# Quetes familiales${metaBlock}\n\n${sections.join('\n\n')}\n`;
 }
 
 // ─── Gratitude familiale ────────────────────────────────────────────────────
@@ -2536,6 +2755,101 @@ export function serializeSecretMissions(missions: Task[], profiles: Profile[]): 
       parts.push(line);
     }
 
+    parts.push('');
+  }
+
+  return parts.join('\n');
+}
+
+// ─── Invités récurrents ──────────────────────────────────────────────────────
+
+/** Chemin du fichier invités dans le vault. */
+export const INVITES_FILE = '02 - Famille/Invités.md';
+
+/**
+ * Slugifie un nom pour générer un ID stable : lowercase, accents → base ASCII,
+ * espaces et caractères spéciaux → underscore.
+ */
+function slugifyInviteName(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // supprimer les diacritiques
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+/**
+ * Parse `02 - Famille/Invités.md` en tableau de GuestProfile.
+ * Format : sections H2 (## Nom) avec clés key: value sous chaque section.
+ * Utilise parseFoodCsv pour les 4 clés food_* (CSV et YAML liste supportés).
+ */
+export function parseInvites(content: string): GuestProfile[] {
+  const guests: GuestProfile[] = [];
+  if (!content || !content.trim()) return [];
+
+  const lines = content.split('\n');
+  let currentName: string | null = null;
+  let currentProps: Record<string, string> = {};
+  const usedIds = new Map<string, number>();
+
+  const flush = () => {
+    if (!currentName) return;
+    // Générer un ID unique depuis le nom
+    const baseId = slugifyInviteName(currentName);
+    const count = (usedIds.get(baseId) ?? 0) + 1;
+    usedIds.set(baseId, count);
+    const id = count === 1 ? baseId : `${baseId}_${count}`;
+
+    guests.push({
+      id,
+      name: currentName,
+      foodAllergies: parseFoodCsv(currentProps.food_allergies),
+      foodIntolerances: parseFoodCsv(currentProps.food_intolerances),
+      foodRegimes: parseFoodCsv(currentProps.food_regimes),
+      foodAversions: parseFoodCsv(currentProps.food_aversions),
+    });
+  };
+
+  for (const line of lines) {
+    if (line.startsWith('## ')) {
+      flush();
+      currentName = line.slice(3).trim();
+      currentProps = {};
+    } else if (currentName && line.includes(': ')) {
+      const colonIdx = line.indexOf(': ');
+      const key = line.slice(0, colonIdx).trim();
+      const val = line.slice(colonIdx + 2).trim();
+      currentProps[key] = val;
+    }
+  }
+  flush();
+
+  return guests;
+}
+
+/**
+ * Sérialise un tableau de GuestProfile en Markdown pour `02 - Famille/Invités.md`.
+ * Omet les clés food_* vides (compatibilité Obsidian).
+ */
+export function serializeInvites(guests: GuestProfile[]): string {
+  const parts: string[] = ['# Invités récurrents', ''];
+
+  for (const guest of guests) {
+    const lines: string[] = [`## ${guest.name}`];
+    if (guest.foodAllergies.length > 0) {
+      lines.push(`food_allergies: ${guest.foodAllergies.join(',')}`);
+    }
+    if (guest.foodIntolerances.length > 0) {
+      lines.push(`food_intolerances: ${guest.foodIntolerances.join(',')}`);
+    }
+    if (guest.foodRegimes.length > 0) {
+      lines.push(`food_regimes: ${guest.foodRegimes.join(',')}`);
+    }
+    if (guest.foodAversions.length > 0) {
+      lines.push(`food_aversions: ${guest.foodAversions.join(',')}`);
+    }
+    parts.push(lines.join('\n'));
     parts.push('');
   }
 

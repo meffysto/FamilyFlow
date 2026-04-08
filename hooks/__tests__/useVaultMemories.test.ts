@@ -28,7 +28,7 @@ const sampleMemory: Omit<Memory, 'enfant' | 'enfantId'> = {
   date: '2026-04-01',
   title: 'Premier sourire',
   description: 'Grand sourire ce matin',
-  type: 'premiere_fois',
+  type: 'premières-fois',
 };
 
 const existingJalonsContent = `---

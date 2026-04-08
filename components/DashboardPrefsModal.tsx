@@ -28,6 +28,7 @@ export interface SectionPref {
   emoji: string;
   visible: boolean;
   priority?: 'high' | 'medium' | 'low';
+  size?: 'full' | 'half';
 }
 
 interface Props {
@@ -42,6 +43,13 @@ const ITEM_H = 72;
 
 // ─── DraggableRow ─────────────────────────────────────────────────────────────
 
+/** Sections qui ne supportent PAS le mode half (trop complexes) */
+const FULL_ONLY_SECTIONS = new Set([
+  'insights', 'vacation', 'menage', 'overdue', 'meals', 'calendar',
+  'rdvs', 'recipes', 'quicknotifs', 'nightMode', 'bilanSemaine',
+  'secretMissions', 'garden', 'onThisDay', 'rewards', 'defis',
+]);
+
 interface DraggableRowProps {
   section: SectionPref;
   index: number;
@@ -51,6 +59,7 @@ interface DraggableRowProps {
   onDragStart: () => void;
   onDragEnd: (from: number, to: number) => void;
   onToggle: (id: string) => void;
+  onToggleSize: (id: string) => void;
   colors: any;
   primary: string;
   tint: string;
@@ -65,6 +74,7 @@ const DraggableRow = React.memo(function DraggableRow({
   onDragStart,
   onDragEnd,
   onToggle,
+  onToggleSize,
   colors,
   primary,
   tint,
@@ -147,6 +157,18 @@ const DraggableRow = React.memo(function DraggableRow({
           {section.label}
         </Text>
         <View style={styles.rowActions}>
+          {section.visible && !FULL_ONLY_SECTIONS.has(section.id) && (
+            <TouchableOpacity
+              onPress={() => onToggleSize(section.id)}
+              style={[styles.sizeToggle, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.sizeToggleText, { color: section.size === 'half' ? primary : colors.textMuted }]}>
+                {section.size === 'half' ? '½' : '1'}
+              </Text>
+            </TouchableOpacity>
+          )}
           <Switch
             value={section.visible}
             onValueChange={() => onToggle(section.id)}
@@ -175,6 +197,12 @@ export function DashboardPrefsModal({ sections: initialSections, smartSort: init
   const toggleVisible = useCallback((id: string) => {
     setSections((prev) =>
       prev.map((s) => (s.id === id ? { ...s, visible: !s.visible } : s))
+    );
+  }, []);
+
+  const toggleSize = useCallback((id: string) => {
+    setSections((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, size: s.size === 'half' ? 'full' : 'half' } : s))
     );
   }, []);
 
@@ -269,6 +297,7 @@ export function DashboardPrefsModal({ sections: initialSections, smartSort: init
                   onDragStart={handleDragStart}
                   onDragEnd={handleDragEnd}
                   onToggle={toggleVisible}
+                  onToggleSize={toggleSize}
                   colors={colors}
                   primary={primary}
                   tint={tint}
@@ -345,6 +374,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xs,
+  },
+  sizeToggle: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  sizeToggleText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.heavy,
   },
   smartSortRow: {
     flexDirection: 'row',

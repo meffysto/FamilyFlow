@@ -1950,6 +1950,8 @@ const SagasPanel = memo(function SagasPanel({ profileId, completedSagas }: Sagas
       if (start && sagaId) {
         const saga = SAGAS.find(s => s.id === sagaId);
         setActiveSaga(saga ?? null);
+      } else {
+        setSagaProgress(null);
       }
     }
   }, [profileId, completedSagas]);
@@ -1993,6 +1995,8 @@ const SagasPanel = memo(function SagasPanel({ profileId, completedSagas }: Sagas
 
     if (isLastChapter) {
       clearSagaProgressLocal(profileId);
+      setSagaProgress(null);
+      setActiveSaga(null);
     }
   }, [sagaProgress, activeSaga, profileId]);
 

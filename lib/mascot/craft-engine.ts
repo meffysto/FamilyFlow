@@ -62,6 +62,17 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     sellValue: 220, // (80+40) x 1.8
     minTreeStage: 'pousse',
   },
+  {
+    id: 'bortsch',
+    labelKey: 'craft.recipe.bortsch',
+    emoji: '🍲',
+    ingredients: [
+      { itemId: 'beetroot', quantity: 2, source: 'crop' },
+    ],
+    xpBonus: 8,
+    sellValue: 130, // (30+30) x 2.2
+    minTreeStage: 'pousse',
+  },
   // ── Arbuste (niv 6-10) — grange + tomate/chou/concombre ──
   {
     id: 'fromage',
@@ -145,6 +156,18 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     ],
     xpBonus: 50,
     sellValue: 1200, // (300x2 + 120) x ~1.7
+    minTreeStage: 'arbuste',
+  },
+  {
+    id: 'gaspacho',
+    labelKey: 'craft.recipe.gaspacho',
+    emoji: '🥗',
+    ingredients: [
+      { itemId: 'cucumber', quantity: 1, source: 'crop' },
+      { itemId: 'tomato', quantity: 1, source: 'crop' },
+    ],
+    xpBonus: 20,
+    sellValue: 370, // (75+80) x 2.4
     minTreeStage: 'arbuste',
   },
   // ── Arbre (niv 11-18) — moulin + maïs/fraise ──
@@ -269,6 +292,33 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     xpBonus: 80,
     sellValue: 2000, // (800+90+100) x ~2
     minTreeStage: 'majestueux',
+  },
+  {
+    id: 'elixir_dragon',
+    labelKey: 'craft.recipe.elixir_dragon',
+    emoji: '🐲',
+    ingredients: [
+      { itemId: 'fruit_dragon', quantity: 1, source: 'crop' },
+      { itemId: 'miel', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 70,
+    sellValue: 1600, // (600+120) x 2.2
+    minTreeStage: 'arbre',
+  },
+  // ── Recettes déverrouillables (quêtes coopératives) ──
+  {
+    id: 'galette_royale',
+    labelKey: 'craft.recipe.galette_royale',
+    emoji: '👑',
+    ingredients: [
+      { itemId: 'farine', quantity: 2, source: 'building' },
+      { itemId: 'oeuf', quantity: 1, source: 'building' },
+      { itemId: 'miel', quantity: 1, source: 'building' },
+    ],
+    xpBonus: 50,
+    sellValue: 1100, // (90+90+80+120) x ~3 (recette rare)
+    minTreeStage: 'arbuste',
+    requiredUnlock: 'galette_royale',
   },
 ];
 

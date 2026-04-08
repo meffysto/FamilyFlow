@@ -32,7 +32,7 @@ function DashboardMoodsInner(_props: DashboardSectionProps) {
   );
 
   return (
-    <DashboardCard key="moods" title={t('dashboard.moods.title')} icon="🌤️" color={colors.catSante} tinted onPressMore={() => router.push('/(tabs)/moods' as any)}>
+    <DashboardCard key="moods" title={t('dashboard.moods.title')} icon="🌤️" color={colors.catSante} tinted onPressMore={() => router.push('/(tabs)/moods' as any)} hideMoreLink style={{ flex: 1, marginBottom: 0 }}>
       {todayMoods.length === 0 ? (
         <Text style={[styles.empty, { color: colors.textMuted }]}>
           {t('dashboard.moods.empty')}
@@ -65,17 +65,17 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.md,
+    gap: Spacing.lg,
+    justifyContent: 'center',
   },
   moodItem: {
     alignItems: 'center',
-    minWidth: 48,
   },
   emoji: {
-    fontSize: 24,
+    fontSize: 32,
   },
   name: {
-    fontSize: FontSize.micro,
-    marginTop: Spacing.xxs,
+    fontSize: FontSize.caption,
+    marginTop: Spacing.xs,
   },
 });

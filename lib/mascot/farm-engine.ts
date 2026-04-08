@@ -66,15 +66,24 @@ export function plantCrop(
 }
 
 /**
+ * Effet quête actif sur la croissance des cultures.
+ * - rain_bonus : toutes les cultures avancent à vitesse pleine (pas de penalite FIFO)
+ * - golden_rain : toutes les cultures avancent à 2× vitesse pleine
+ */
+export type QuestFarmEffect = 'rain_bonus' | 'golden_rain';
+
+/**
  * Avancer les cultures apres une tache completee.
  * Systeme hybride FIFO : le plot principal (le plus ancien non-mature) avance a vitesse pleine,
  * les autres plots non-matures avancent a demi-vitesse (seasonBonus * 0.5).
  * Retourne le nouveau state + les cultures devenues matures.
  * Si techBonuses est fourni, applique la reduction de tasksPerStage.
+ * Si questEffect est fourni, applique le bonus de quete active.
  */
 export function advanceFarmCrops(
   crops: PlantedCrop[],
   techBonuses?: TechBonuses,
+  questEffect?: QuestFarmEffect,
 ): { crops: PlantedCrop[]; matured: PlantedCrop[] } {
   if (crops.length === 0) return { crops, matured: [] };
 
@@ -102,8 +111,13 @@ export function advanceFarmCrops(
     // Bonus saisonnier base sur la culture courante
     const seasonBonus = hasCropSeasonalBonus(updated.cropId) ? 2 : 1;
 
-    // Plot principal : vitesse pleine ; autres plots : demi-vitesse
-    const increment = i === targetIdx ? seasonBonus : seasonBonus * 0.5;
+    // Effet quête : rain_bonus = tous à vitesse pleine, golden_rain = tous à 2x
+    const questMultiplier = questEffect === 'golden_rain' ? 2 : 1;
+    const isQuestBoost = questEffect === 'rain_bonus' || questEffect === 'golden_rain';
+    // Plot principal : vitesse pleine ; autres plots : demi-vitesse (sauf si quête active)
+    const increment = isQuestBoost
+      ? seasonBonus * questMultiplier
+      : (i === targetIdx ? seasonBonus : seasonBonus * 0.5);
     updated.tasksCompleted += increment;
 
     // Avancer d'un stade si assez de taches (bonus tech reduit le seuil)

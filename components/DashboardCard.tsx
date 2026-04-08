@@ -51,6 +51,8 @@ interface DashboardCardProps {
   glass?: boolean;
   /** Fond subtil coloré basé sur color. Default: false */
   tinted?: boolean;
+  /** Masque le lien "Voir tout →" dans le header (garde le tap sur la carte). */
+  hideMoreLink?: boolean;
 }
 
 const STORAGE_PREFIX = 'dashboard_collapsed_';
@@ -70,6 +72,7 @@ export function DashboardCard({
   defaultCollapsed = false,
   glass = true,
   tinted = false,
+  hideMoreLink = false,
 }: DashboardCardProps) {
   const { t } = useTranslation();
   const { primary, colors, isDark } = useThemeColors();
@@ -154,7 +157,7 @@ export function DashboardCard({
           )}
         </View>
         <View style={styles.headerRight}>
-          {onPressMore && !isCollapsed && (
+          {onPressMore && !isCollapsed && !hideMoreLink && (
             <TouchableOpacity
               onPress={(e) => {
                 e.stopPropagation();
@@ -206,7 +209,7 @@ export function DashboardCard({
     );
     if (onPressMore) {
       return (
-        <PressableScale onPress={onPressMore}>
+        <PressableScale onPress={onPressMore} style={style?.flex ? { flex: 1 } : undefined}>
           {glassCard}
         </PressableScale>
       );
@@ -226,7 +229,7 @@ export function DashboardCard({
 
   if (onPressMore) {
     return (
-      <PressableScale onPress={onPressMore}>
+      <PressableScale onPress={onPressMore} style={style?.flex ? { flex: 1 } : undefined}>
         {plainCard}
       </PressableScale>
     );

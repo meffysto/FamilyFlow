@@ -7,8 +7,8 @@
  * Recettes: Search, category filters, RecipeCard grid, tap → RecipeViewer.
  */
 
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ import {
   TextInput,
   Alert,
   KeyboardAvoidingView,
+  Keyboard,
   Platform,
   FlatList,
 } from 'react-native';
@@ -47,6 +48,11 @@ import { Shadows } from '../../constants/shadows';
 import { computeMissingIngredients, computeStockDecrements, resolveStockAction, computeFamilyServings } from '../../lib/auto-courses';
 import { suggestRecipesFromStock } from '../../lib/ai-service';
 import { getAutomationFlag } from '../../lib/automation-config';
+import { MealConflictRecap } from '../../components/dietary';
+import { checkAllergens } from '../../lib/dietary';
+import type { Profile } from '../../lib/types';
+import type { GuestProfile } from '../../lib/dietary/types';
+import type { AppRecipe } from '../../lib/cooklang';
 
 const DAYS_ORDER = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
@@ -99,6 +105,34 @@ function detectMealType(category: string, tags: string[]): MealType | null {
   return null;
 }
 
+/**
+ * MealItemConflictWrapper — sous-composant qui encapsule le hook useMemo pour les conflits.
+ *
+ * Nécessaire car le renderItem des repas est dans un .map() qui ne peut pas appeler
+ * de hooks directement. Ce composant reçoit la recette résolue et les profils,
+ * calcule les conflits et rend le MealConflictRecap.
+ *
+ * PREF-12 : récap compact en tête de MealItem quand la recette a des conflits.
+ */
+interface MealConflictWrapperProps {
+  recipe: AppRecipe;
+  profiles: Profile[];
+  guests: GuestProfile[];
+}
+
+const MealConflictWrapper = React.memo(function MealConflictWrapper({
+  recipe,
+  profiles,
+  guests,
+}: MealConflictWrapperProps) {
+  // Tous les profils famille par défaut (sécurité maximale — D-08)
+  const conflicts = useMemo(
+    () => checkAllergens(recipe, profiles.map(p => p.id), profiles, guests),
+    [recipe, profiles, guests],
+  );
+  return <MealConflictRecap conflicts={conflicts} />;
+});
+
 export default function MealsScreen() {
   const {
     meals, updateMeal, loadMealsForWeek,
@@ -109,6 +143,7 @@ export default function MealsScreen() {
     saveRecipeImage, getRecipeImageUri,
     scanAllCookFiles, moveCookToRecipes, moveRecipeCategory,
     profiles,
+    dietary,
     activeProfile,
     healthRecords,
     toggleFavorite, isFavorite, getFavorites,
@@ -814,6 +849,7 @@ export default function MealsScreen() {
   const handleTextImportParse = useCallback(async () => {
     const text = textImportValue.trim();
     if (!text) return;
+    Keyboard.dismiss();
     setImportLoading(true);
     try {
       let result: ImportResult;
@@ -1060,6 +1096,14 @@ export default function MealsScreen() {
                     const linkedRecipe = resolveRecipe(meal.recipeRef);
                     return (
                       <View key={meal.id} style={{ gap: 0 }}>
+                        {/* Récap conflits alimentaires PREF-12 — visible si la recette a des conflits */}
+                        {linkedRecipe && (
+                          <MealConflictWrapper
+                            recipe={linkedRecipe}
+                            profiles={profiles}
+                            guests={dietary.guests}
+                          />
+                        )}
                         <TouchableOpacity
                           style={[styles.mealRow, { borderTopColor: colors.cardAlt }]}
                           onPress={weekOffset >= 0 ? () => openEdit(meal) : undefined}
@@ -1983,16 +2027,6 @@ export default function MealsScreen() {
                   placeholderTextColor={colors.textMuted}
                   multiline
                 />
-                <TouchableOpacity
-                  style={[styles.importFetchBtn, { backgroundColor: primary }, (!textImportValue.trim() || importLoading) && { opacity: 0.5 }]}
-                  onPress={handleTextImportParse}
-                  disabled={!textImportValue.trim() || importLoading}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>
-                    {importLoading ? t('meals.textImport.analyzeLoading') : aiConfigured ? t('meals.textImport.convertAI') : t('meals.textImport.analyzeText')}
-                  </Text>
-                </TouchableOpacity>
               </View>
 
               {/* Preview for cook type (AI result) */}
@@ -2088,6 +2122,22 @@ export default function MealsScreen() {
                 </View>
               )}
             </ScrollView>
+
+            {/* Bouton analyser en footer fixe — toujours visible au-dessus du clavier */}
+            {!textImportResult && (
+              <View style={[styles.textImportFooter, { backgroundColor: colors.bg, borderTopColor: colors.borderLight }]}>
+                <TouchableOpacity
+                  style={[styles.importFetchBtn, { backgroundColor: primary }, (!textImportValue.trim() || importLoading) && { opacity: 0.5 }]}
+                  onPress={handleTextImportParse}
+                  disabled={!textImportValue.trim() || importLoading}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.importFetchBtnText, { color: colors.onPrimary }]}>
+                    {importLoading ? t('meals.textImport.analyzeLoading') : aiConfigured ? t('meals.textImport.convertAI') : t('meals.textImport.analyzeText')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
@@ -2749,6 +2799,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
+  },
+  textImportFooter: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   importFetchBtnText: {
     fontSize: FontSize.body,

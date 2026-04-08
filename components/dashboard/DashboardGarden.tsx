@@ -1,12 +1,12 @@
 /**
  * DashboardGarden.tsx — Widget jardin familial
  *
- * Affiche tous les arbres de la famille côte à côte.
+ * Affiche les stats de ferme de chaque membre en grille 2×2.
  * Gère les sagas narratives multi-jours ET les aventures one-shot classiques.
- * Tap sur un arbre → écran dédié plein écran.
+ * Tap sur une cellule → écran jardin dédié.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
@@ -15,10 +15,9 @@ import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { DashboardCard } from '../DashboardCard';
-import { TreeView } from '../mascot/TreeView';
-import { calculateLevel } from '../../lib/gamification';
-import { getTreeStageInfo } from '../../lib/mascot';
-import { SPECIES_INFO, type TreeSpecies } from '../../lib/mascot/types';
+import { parseCrops } from '../../lib/mascot/farm-engine';
+import { CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
+import { getPendingResources } from '../../lib/mascot/building-engine';
 import { getDailyAdventure, getTodayStr } from '../../lib/mascot/adventures';
 import { hapticsTreeTap } from '../../lib/mascot/haptics';
 import { useTone } from '../../lib/mascot/tone';
@@ -41,19 +40,22 @@ import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 import { SecureStoreCompat as SecureStore } from '../../lib/mascot/utils';
 
-const DEFAULT_SPECIES: TreeSpecies = 'cerisier';
+const MAX_VISIBLE_CROPS = 6;
 
 function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const { primary, tint, colors } = useThemeColors();
-  const { profiles, activeProfile, completeAdventure } = useVault();
+  const { profiles, activeProfile, completeAdventure, familyQuests } = useVault();
   const { showToast } = useToast();
   const tone = useTone();
 
   const profileId = activeProfile?.id ?? '';
   const today = getTodayStr();
   const completedSagas = activeProfile?.completedSagas ?? [];
+
+  // ── Quête coopérative active ──────────────────────────────
+  const activeQuest = useMemo(() => familyQuests?.find(q => q.status === 'active') ?? null, [familyQuests]);
 
   // ── Aventure one-shot (existant) ──────────────────────────
   const adventure = getDailyAdventure(profileId);
@@ -91,7 +93,8 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
           const newProgress = createEmptySagaProgress(sagaId, profileId, today);
           await saveSagaProgress(newProgress);
           setSagaProgress(newProgress);
-
+        } else {
+          setSagaProgress(null);
         }
       }
 
@@ -125,6 +128,123 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
   // ── Teaser prochaine saga ─────────────────────────────────
   const nextSagaTeaser = !hasSaga ? getNextSagaTeaser(profileId, completedSagas) : null;
   const daysUntilSaga = !hasSaga ? restDaysRemaining(lastCompletion) : 0;
+
+  // ── Stats ferme par profil ────────────────────────────────
+  const renderFarmCell = (profile: Profile) => {
+    const crops = parseCrops(profile.farmCrops ?? '');
+    const buildings = profile.farmBuildings ?? [];
+    const readyCount = crops.filter(c => c.currentStage >= 4).length;
+    const hasFarm = crops.length > 0 || buildings.length > 0;
+    const visibleCrops = crops.slice(0, MAX_VISIBLE_CROPS);
+    const hiddenCount = Math.max(0, crops.length - MAX_VISIBLE_CROPS);
+    const cellWidth = profiles.length >= 3 ? '50%' : `${100 / profiles.length}%`;
+
+    return (
+      <TouchableOpacity
+        key={profile.id}
+        style={[styles.farmCell, { width: cellWidth as any, backgroundColor: 'transparent', borderColor: colors.borderLight }]}
+        onPress={() => handleTreePress(profile)}
+        activeOpacity={0.7}
+        accessibilityLabel={t('mascot.garden.treeA11y', { name: profile.name })}
+        accessibilityRole="button"
+      >
+        {/* En-tête : avatar + nom + badge prêtes */}
+        <View style={styles.cellHeader}>
+          <Text style={styles.cellAvatar}>{profile.avatar}</Text>
+          <Text style={[styles.cellName, { color: colors.text }]} numberOfLines={1}>
+            {profile.name}
+          </Text>
+          {readyCount > 0 && (
+            <View style={[styles.readyBadge, { backgroundColor: primary }]}>
+              <Text style={styles.readyBadgeText}>{readyCount}</Text>
+            </View>
+          )}
+        </View>
+
+        {hasFarm ? (
+          <>
+            {crops.length > 0 && (
+              <View style={styles.cropsRow}>
+                {visibleCrops.map((crop, i) => {
+                  const def = CROP_CATALOG.find(c => c.id === crop.cropId);
+                  if (!def) return null;
+                  const isReady = crop.currentStage >= 4;
+                  const isGolden = !!crop.isGolden;
+                  const progress = isReady
+                    ? 1
+                    : (crop.currentStage * def.tasksPerStage + crop.tasksCompleted) / (4 * def.tasksPerStage);
+                  return (
+                    <View
+                      key={i}
+                      style={[
+                        styles.cropChip,
+                        {
+                          borderColor: isGolden
+                            ? 'rgba(240,192,64,0.4)'
+                            : isReady
+                              ? primary + '55'
+                              : colors.border,
+                          backgroundColor: isGolden
+                            ? 'rgba(240,192,64,0.1)'
+                            : isReady
+                              ? primary + '18'
+                              : colors.cardAlt,
+                          opacity: isReady || isGolden ? 1 : 0.6,
+                        },
+                      ]}
+                    >
+                      <Text style={styles.cropEmoji}>{def.emoji}</Text>
+                      {isGolden && <Text style={styles.goldenSpark}>✨</Text>}
+                      <View style={[styles.cropProgressTrack, { backgroundColor: colors.border }]}>
+                        <View style={[
+                          styles.cropProgressFill,
+                          {
+                            width: `${Math.round(progress * 100)}%` as any,
+                            backgroundColor: isGolden ? '#f0c040' : isReady ? primary : colors.textMuted,
+                          },
+                        ]} />
+                      </View>
+                    </View>
+                  );
+                })}
+                {hiddenCount > 0 && (
+                  <View style={[styles.cropChip, { borderColor: colors.border, backgroundColor: colors.cardAlt }]}>
+                    <Text style={[styles.cropMore, { color: colors.textMuted }]}>+{hiddenCount}</Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {buildings.length > 0 && (
+              <View style={styles.buildingsRow}>
+                {buildings.map((b, i) => {
+                  const def = BUILDING_CATALOG.find(bd => bd.id === b.buildingId);
+                  if (!def) return null;
+                  const pending = getPendingResources(b, new Date());
+                  return (
+                    <View key={i} style={[styles.buildingChip, { backgroundColor: colors.cardAlt, borderColor: pending > 0 ? primary + '55' : colors.border }]}>
+                      <Text style={styles.buildingEmoji}>{def.emoji}</Text>
+                      <Text style={[styles.buildingLevel, { color: colors.textMuted }]}>lv{b.level}</Text>
+                      {pending > 0 && (
+                        <Text style={[styles.buildingPending, { color: primary }]}>{pending}</Text>
+                      )}
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </>
+        ) : (
+          <View style={styles.emptyFarm}>
+            <Text style={styles.emptyFarmIcon}>🌱</Text>
+            <Text style={[styles.emptyFarmText, { color: colors.textMuted }]}>
+              {t('mascot.garden.noFarm', { defaultValue: 'Ferme à démarrer' })}
+            </Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   // ── Rendu ─────────────────────────────────────────────────
 
@@ -201,53 +321,25 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
       collapsible
       cardId="garden"
     >
-      {/* Vue jardin : arbres côte à côte */}
-      <View style={styles.gardenRow}>
-        {profiles.map((profile) => {
-          const species = profile.treeSpecies;
-          const currentSpecies = species || DEFAULT_SPECIES;
-          const level = calculateLevel(profile.points ?? 0);
-          const stageInfo = getTreeStageInfo(level);
-          const sp = SPECIES_INFO[currentSpecies];
-
-          return (
-            <TouchableOpacity
-              key={profile.id}
-              style={styles.treeSlot}
-              onPress={() => handleTreePress(profile)}
-              activeOpacity={0.7}
-              accessibilityLabel={t('mascot.garden.treeA11y', { name: profile.name })}
-              accessibilityRole="button"
-            >
-              <View style={styles.treeWrap}>
-                <TreeView
-                  species={currentSpecies}
-                  level={level}
-                  size={profiles.length <= 3 ? 100 : 80}
-                  showGround={false}
-                  interactive
-                />
-              </View>
-              <View style={styles.labelRow}>
-                <Text style={[styles.avatar]}>{profile.avatar}</Text>
-                <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
-                  {profile.name}
-                </Text>
-              </View>
-              <Text style={[styles.stage, { color: colors.textMuted }]} numberOfLines={1}>
-                {sp.emoji} {t(stageInfo.labelKey)}
-              </Text>
-              {!species && (
-                <View style={[styles.chooseBadge, { backgroundColor: tint }]}>
-                  <Text style={[styles.chooseText, { color: primary }]}>
-                    {t('mascot.garden.choose')}
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+      {/* Grille ferme 2×2 */}
+      {profiles.some(p => parseCrops(p.farmCrops ?? '').length > 0 || (p.farmBuildings?.length ?? 0) > 0) ? (
+        <View style={styles.farmGrid}>
+          {profiles.filter(p => {
+            const crops = parseCrops(p.farmCrops ?? '');
+            return crops.length > 0 || (p.farmBuildings?.length ?? 0) > 0;
+          }).map(renderFarmCell)}
+        </View>
+      ) : (
+        <View style={[styles.emptyFarmGlobal, { borderColor: colors.borderLight }]}>
+          <Text style={styles.emptyFarmGlobalIcon}>🌱</Text>
+          <Text style={[styles.emptyFarmGlobalTitle, { color: colors.text }]}>
+            {t('mascot.garden.emptyFarm.title', { defaultValue: 'Créez votre ferme !' })}
+          </Text>
+          <Text style={[styles.emptyFarmGlobalDesc, { color: colors.textMuted }]}>
+            {t('mascot.garden.emptyFarm.desc', { defaultValue: 'Plantez vos premières cultures depuis l\'onglet Mon Jardin.' })}
+          </Text>
+        </View>
+      )}
 
       {/* Indicateur saga inline discret */}
       {!loading && activeProfile && hasSaga && sagaProgress && sagaProgress.status !== 'completed' && (
@@ -276,6 +368,30 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
         </TouchableOpacity>
       )}
 
+      {/* Indicateur compact quête active */}
+      {activeQuest && (
+        <TouchableOpacity
+          style={[styles.questCompact, { backgroundColor: colors.cardAlt, borderColor: colors.borderLight }]}
+          onPress={() => router.push('/(tabs)/tree' as any)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.questCompactHeader}>
+            <Text style={[styles.questCompactTitle, { color: colors.text }]} numberOfLines={1}>
+              {activeQuest.emoji} {activeQuest.title}
+            </Text>
+            <Text style={[styles.questCompactCount, { color: colors.textMuted }]}>
+              {activeQuest.current}/{activeQuest.target}
+            </Text>
+          </View>
+          <View style={[styles.questCompactTrack, { backgroundColor: colors.border }]}>
+            <View style={[styles.questCompactFill, {
+              backgroundColor: primary,
+              width: `${Math.min((activeQuest.current / activeQuest.target) * 100, 100)}%`,
+            }]} />
+          </View>
+        </TouchableOpacity>
+      )}
+
       {/* Lien vers l'écran arbre */}
       <TouchableOpacity
         style={[styles.cta, { backgroundColor: tint }]}
@@ -291,48 +407,150 @@ function DashboardGardenInner({ isChildMode }: DashboardSectionProps) {
 }
 
 const styles = StyleSheet.create({
-  gardenRow: {
+  farmGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    alignItems: 'flex-end',
-    paddingVertical: Spacing.md,
-    minHeight: 140,
+    flexWrap: 'wrap',
+    borderRadius: Radius.md,
+    overflow: 'hidden',
+    marginBottom: Spacing.xs,
   },
-  treeSlot: {
-    alignItems: 'center',
-    flex: 1,
-    maxWidth: 120,
+  farmCell: {
+    padding: Spacing.md,
+    gap: Spacing.xs,
+    minHeight: 100,
+    borderRightWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  treeWrap: {
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-  },
-  labelRow: {
+  cellHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xxs,
-    marginTop: Spacing.xs,
   },
-  avatar: {
+  cellAvatar: {
     fontSize: FontSize.body,
+    lineHeight: 20,
   },
-  name: {
+  cellName: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
+    flex: 1,
   },
-  stage: {
-    fontSize: FontSize.micro,
-    marginTop: Spacing.xxs,
-  },
-  chooseBadge: {
-    marginTop: Spacing.xs,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xxs,
+  readyBadge: {
     borderRadius: Radius.full,
+    minWidth: 18,
+    height: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 5,
   },
-  chooseText: {
+  readyBadgeText: {
+    fontSize: FontSize.micro,
+    fontWeight: FontWeight.bold,
+    color: '#fff',
+  },
+  cropsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+  },
+  cropChip: {
+    borderWidth: 1,
+    borderRadius: Radius.sm,
+    padding: 4,
+    position: 'relative',
+  },
+  cropEmoji: {
+    fontSize: 14,
+    lineHeight: 16,
+  },
+  goldenSpark: {
+    fontSize: 8,
+    position: 'absolute',
+    top: -3,
+    right: -3,
+  },
+  cropProgressTrack: {
+    height: 2,
+    borderRadius: 1,
+    overflow: 'hidden',
+    marginTop: 3,
+    width: '100%',
+  },
+  cropProgressFill: {
+    height: '100%',
+    borderRadius: 1,
+  },
+  cropMore: {
     fontSize: FontSize.micro,
     fontWeight: FontWeight.semibold,
+    lineHeight: 16,
+    paddingHorizontal: 2,
+  },
+  buildingsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+  },
+  buildingChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    borderWidth: 1,
+    borderRadius: Radius.sm,
+    paddingHorizontal: 5,
+    paddingVertical: 3,
+  },
+  buildingEmoji: {
+    fontSize: 12,
+    lineHeight: 14,
+  },
+  buildingLevel: {
+    fontSize: FontSize.micro,
+    fontWeight: FontWeight.medium,
+  },
+  buildingPending: {
+    fontSize: FontSize.micro,
+    fontWeight: FontWeight.bold,
+    marginLeft: 1,
+  },
+  emptyFarm: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xxs,
+    paddingVertical: Spacing.sm,
+  },
+  emptyFarmIcon: {
+    fontSize: 20,
+    opacity: 0.25,
+  },
+  emptyFarmText: {
+    fontSize: FontSize.micro,
+    textAlign: 'center',
+  },
+  emptyFarmGlobal: {
+    alignItems: 'center',
+    paddingVertical: Spacing.xl,
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.xs,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.md,
+    borderStyle: 'dashed',
+    marginBottom: Spacing.xs,
+  },
+  emptyFarmGlobalIcon: {
+    fontSize: 28,
+    opacity: 0.4,
+  },
+  emptyFarmGlobalTitle: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+    textAlign: 'center',
+  },
+  emptyFarmGlobalDesc: {
+    fontSize: FontSize.caption,
+    textAlign: 'center',
+    lineHeight: 18,
   },
   adventureCard: {
     marginTop: Spacing.lg,
@@ -403,6 +621,38 @@ const styles = StyleSheet.create({
   ctaText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
+  },
+
+  // ── Quête coopérative — indicateur compact ─────────────
+  questCompact: {
+    marginTop: Spacing.md,
+    padding: Spacing.sm,
+    borderRadius: Radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  questCompactHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.xxs,
+  },
+  questCompactTitle: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    flex: 1,
+  },
+  questCompactCount: {
+    fontSize: FontSize.caption,
+    marginLeft: Spacing.sm,
+  },
+  questCompactTrack: {
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  questCompactFill: {
+    height: '100%',
+    borderRadius: 2,
   },
 
   // ── Saga indicateur inline discret ──────────────────────

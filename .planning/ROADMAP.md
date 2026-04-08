@@ -2,280 +2,98 @@
 
 ## Milestones
 
-- ✅ **v1.0 Stabilisation** - Phases 1-4 (shipped 2026-03-28)
-- 🚧 **v1.1 Ferme Enrichie** - Phases 5-9 (in progress)
+- ✅ **v1.0 Stabilisation** — Phases 1-4 (shipped 2026-03-28)
+- ✅ **v1.1 Ferme Enrichie** — Phases 5-14 (shipped 2026-04-07)
+- 🚧 **v1.2 Confort & Découverte** — Phases 15-18 (en cours)
+
+## Active Milestone: v1.2 Confort & Découverte
+
+**Goal:** L'app retient les détails que la famille oublie et explique enfin la ferme — confort quotidien (préférences alimentaires) et découvrabilité du jeu (codex + tutoriel).
+
+**Global constraint (ARCH-05):** Aucune nouvelle dépendance npm sur toutes les phases — toutes les UI primitives, SVG et patterns sont déjà disponibles dans le codebase.
 
 ## Phases
 
-<details>
-<summary>✅ v1.0 Stabilisation (Phases 1-4) - SHIPPED 2026-03-28</summary>
+- [x] **Phase 15: Préférences alimentaires** — Mémoire des contraintes alimentaires par membre famille et invités, avec détection automatique des conflits dans les recettes et le planning repas (completed 2026-04-08)
+- [ ] **Phase 16: Codex contenu** — Fichier de données pur `lib/codex/content.ts` important les constantes engine existantes, zéro UI, zéro risque de dérive des stats
+- [ ] **Phase 17: Codex UI** — Modale `FarmCodexModal` avec bouton "?" dans le HUD ferme, navigation par catégories, recherche textuelle et virtualisation
+- [ ] **Phase 18: Tutoriel ferme** — Overlay tutoriel immersif au premier lancement, skippable, rejouable depuis le codex, avec pause des animations ferme pendant les étapes
 
-### Phase 1: Safety Net
-**Goal**: Le codebase a un filet de sécurité — tests sur les modules critiques, visibilité sur les crashes production, et code mort éliminé
-**Depends on**: Nothing (first phase)
-**Requirements**: TEST-01, TEST-02, TEST-03, TEST-04, TEST-05, TEST-06, TEST-07, QUAL-01, QUAL-02, QUAL-04, QUAL-05
+## Phase Details
+
+### Phase 15: Préférences alimentaires
+**Goal**: La famille peut saisir et gérer les contraintes alimentaires de chaque membre et des invités récurrents, et l'app signale automatiquement tout conflit dans les recettes et le planning repas
+**Depends on**: Rien (feature auto-contenue)
+**Requirements**: PREF-01, PREF-02, PREF-03, PREF-04, PREF-05, PREF-06, PREF-07, PREF-08, PREF-09, PREF-10, PREF-11 (P0 SAFETY), PREF-12, PREF-13 (saisie vocale via DictaphoneRecorder + ai-service), ARCH-03, ARCH-04
+**Critical**: PREF-11 est un impératif de sécurité — les badges allergie sont non-dismissibles et implémentés en priorité absolue avant tout autre badge
 **Success Criteria** (what must be TRUE):
-  1. `npx jest` tourne sans erreur avec jest-expo + RNTL configurés et au moins 1 test par module critique (budget, farm-engine, sagas-engine, world-grid)
-  2. Un crash non-attrapé sur TestFlight remonte dans Sentry avec stacktrace lisible
-  3. Les 5 fonctions dépréciées de lib/telegram.ts et la propriété menageTasks sont absentes du codebase
-  4. `npx tsc --noEmit` ne rapporte aucune assertion `as any` sur les chemins de mutation dans useVault.ts
-  5. ESLint avec `@typescript-eslint/no-explicit-any` est configuré et tourne sans erreur bloquante
-**Plans:** 4/4 plans executed
+  1. L'utilisateur peut ajouter, modifier et supprimer une préférence alimentaire (allergie / intolérance / régime / aversion) pour n'importe quel membre famille depuis l'écran détail profil, avec autocomplete sur les 14 allergènes UE
+  2. **[P0 SAFETY]** Un conflit de sévérité `allergie` reste visible en permanence sur l'affichage recette et ne peut être dismissé sous aucune interaction utilisateur
+  3. L'écran détail recette affiche un badge coloré distinct par sévérité (rouge allergie, orange intolérance, jaune régime/aversion) quand un conflit est détecté pour le profil actif
+  4. L'utilisateur peut créer un invité récurrent avec ses contraintes alimentaires et cet invité apparaît dans le sélecteur "qui mange ce soir" aux mêmes conditions que les membres famille
+  5. Modifier `famille.md` directement dans Obsidian reste valide — le parser tolère l'absence de toutes les clés `food_*` sans crash ni perte de données
+  6. L'utilisateur peut dicter une préférence ("Lucas est allergique aux arachides") via le `DictaphoneRecorder` existant — la transcription est interprétée par `ai-service.ts` qui extrait sévérité + item canonique et ajoute la préférence au profil cible
+**Plans**: 7 plans
+- [x] 15-01-catalogues-types-PLAN.md — Types DietarySeverity/Conflict/GuestProfile + 3 catalogues canoniques (EU allergens, intolérances, régimes)
+- [x] 15-02-parser-famille-invites-PLAN.md — Extension parseFamille/serializeFamille food_* + parseInvites/serializeInvites + tests round-trip PREF-05
+- [x] 15-03-check-allergens-PLAN.md — Fonction pure checkAllergens TDD + 5 tests ARCH-03
+- [x] 15-04-allergen-banner-p0-PLAN.md — Composant AllergenBanner P0 SAFETY (PREF-11) + test enforcement statique
+- [x] 15-05-hook-ecran-dietary-PLAN.md — Hook useVaultDietary + écran dietary.tsx + ProfileFoodCard + lien more.tsx
+- [x] 15-06-integration-recipe-meals-PLAN.md — RecipeViewer (bandeau + badges inline + ConvivesPickerModal) + MealConflictRecap dans meals.tsx
+- [x] 15-07-saisie-vocale-PLAN.md — extractDietaryConstraints + VoicePreviewModal + câblage DictaphoneRecorder
+**UI hint**: yes
 
-Plans:
-- [x] 01-01-PLAN.md — Tests unitaires pour les 4 modules critiques (budget, farm-engine, sagas-engine, world-grid)
-- [x] 01-02-PLAN.md — Nettoyage code mort + correction as any + ESLint
-- [x] 01-03-PLAN.md — Integration Sentry crash reporting
-- [x] 01-04-PLAN.md — Flows E2E Maestro (3 parcours critiques)
-
-### Phase 2: Write Safety + Couleurs
-**Goal**: Les écritures concurrentes ne perdent plus de données, les 228 couleurs hardcodées sont remplacées par tokens sémantiques, et un modèle XP budget gouverne les récompenses
-**Depends on**: Phase 1
-**Requirements**: ARCH-01, QUAL-03, GAME-01
+### Phase 16: Codex contenu
+**Goal**: Le fichier `lib/codex/content.ts` existe et produit un tableau `CodexEntry[]` typé, précis et non-drifté, importé directement depuis les constantes engine existantes — validé en isolation avant toute UI
+**Depends on**: Rien (pure data, aucune UI)
+**Requirements**: CODEX-01, CODEX-02, CODEX-03, CODEX-04, CODEX-05
 **Success Criteria** (what must be TRUE):
-  1. Compléter 10 tâches en succession rapide ne perd aucun XP ni aucune écriture dans gamification.md
-  2. Le mode nuit n'affiche plus de couleurs hardcodées — tous les éléments structurels suivent le thème
-  3. Un modèle XP budget est documenté dans constants/rewards.ts avec des valeurs calibrées
-  4. Toute nouvelle source de récompense passe par constants/rewards.ts
-**Plans:** 3/3 plans
+  1. `lib/codex/content.ts` compile sans erreur TypeScript et exporte un tableau `CodexEntry[]` couvrant les 10 catégories définies (Cultures, Animaux, Bâtiments productifs, Craft, Tech tree, Compagnons, Loot box, Drops saisonniers, Sagas, Quêtes)
+  2. Zéro valeur numérique (cycles, rendements, taux de drop, coûts) n'est codée en dur dans le fichier — chaque stat est lue depuis `CROP_CATALOG`, `BUILDING_CATALOG`, `TECH_TREE` ou les constantes engine correspondantes
+  3. La mécanique "pluies dorées" est documentée avec le taux de déclenchement exact et la liste des drops possibles, tels que définis dans les constantes engine
+  4. Les entrées `dropOnly` (orchidée, rose dorée, truffe, fruit du dragon) sont marquées avec le flag approprié permettant à l'UI de Phase 17 d'afficher "???" selon l'inventaire du profil
+**Plans**: TBD
 
-Plans:
-- [x] 02-01-PLAN.md — Write queue per-file dans VaultManager + modele XP budget
-- [x] 02-02-PLAN.md — Migration couleurs ecrans (app/) et composants high-priority
-- [x] 02-03-PLAN.md — Migration couleurs composants restants + verification visuelle mode nuit
-
-### Phase 3: Gamification
-**Goal**: La ferme a des événements saisonniers liés au vrai calendrier et des quêtes familiales coopératives donnent un objectif partagé
-**Depends on**: Phase 2
-**Requirements**: GAME-02, GAME-03
+### Phase 17: Codex UI
+**Goal**: L'utilisateur peut ouvrir le codex de la ferme depuis un bouton "?" dans le HUD existant, naviguer par catégories, rechercher une entrée, et accéder au bouton de replay du tutoriel
+**Depends on**: Phase 16
+**Requirements**: CODEX-06, CODEX-07, CODEX-08, CODEX-09, CODEX-10
 **Success Criteria** (what must be TRUE):
-  1. L'interface ferme affiche des visuels saisonniers correspondant à la saison réelle sans action manuelle
-  2. Une quête familiale peut être démarrée, progressée par n'importe quel membre, et complétée avec récompense distribuée
-  3. Toutes les récompenses passent par constants/rewards.ts — aucune valeur XP inline
-**Plans:** 2/2 plans
+  1. Un bouton "?" dans le HUD existant de l'écran ferme ouvre la modale codex en `pageSheet` avec drag-to-dismiss, sans ajouter un nouveau bouton flottant qui surcharge l'UI
+  2. L'utilisateur peut filtrer les entrées du codex par texte libre — la recherche normalise les accents et la casse, et s'exécute sans latence perceptible sur la liste complète
+  3. Les entrées `dropOnly` non encore découvertes par le profil actif s'affichent en silhouette "???" — les entrées découvertes affichent leurs stats complètes
+  4. La liste du codex utilise `FlatList` virtualisé, sans dégradation de performance mesurable par rapport à l'état pré-Phase 17 de l'écran ferme
+  5. La modale contient un bouton "Rejouer le tutoriel" fonctionnel qui appelle `resetScreen('farm_tutorial')` et ferme la modale
+**Plans**: TBD
+**UI hint**: yes
 
-Plans:
-- [x] 03-01-PLAN.md — Particules saisonnieres dans le diorama ferme (SeasonalParticles)
-- [x] 03-02-PLAN.md — Quetes familiales cooperatives (types + logique + UI defis)
-
-### Phase 4: Ambiance + Retention
-**Goal**: L'ecran arbre reagit au moment de la journee avec des particules ambiantes (rosee le matin, lucioles la nuit), les cultures ont une mutation doree rare (3%, recompense x5), et les flammes de streak recompensent visuellement l'engagement quotidien
-**Depends on**: Phase 3
-**Requirements**: AMB-01, AMB-02, AMB-03
+### Phase 18: Tutoriel ferme
+**Goal**: Un utilisateur arrivant pour la première fois sur l'écran ferme voit un tutoriel immersif qui explique la boucle de jeu en 5 étapes, peut le passer à tout moment, et peut le rejouer depuis le codex
+**Depends on**: Phase 16, Phase 17
+**Requirements**: TUTO-01, TUTO-02, TUTO-03, TUTO-04, TUTO-05, TUTO-06, TUTO-07, TUTO-08
 **Success Criteria** (what must be TRUE):
-  1. Le diorama affiche des particules ambiantes correspondant a l'heure reelle (rosee matin, lucioles nuit) sans action manuelle
-  2. plantCrop() a 3% de chance de creer une culture doree, visible par un liseré or, avec recompense x5 a la recolte
-  3. Les flammes de streak s'affichent sous le diorama quand le streak >= 2, avec intensite croissante par palier (2+, 7+, 14+, 30+)
-  4. Toutes les animations respectent useReducedMotion et se desactivent si l'utilisateur a active Reduce Motion
-  5. `npx tsc --noEmit` passe sans nouvelles erreurs
-**Plans:** 2/2 plans complete
+  1. Le tutoriel se déclenche automatiquement au premier affichage de l'écran ferme sur l'appareil (flag persisté dans SecureStore via `HelpContext.markScreenSeen('farm_tutorial')`) et ne se redéclenche pas lors des visites suivantes
+  2. L'utilisateur peut passer le tutoriel à n'importe quelle étape via un bouton "Passer" — le flag "vu" est positionné immédiatement au skip, sans retrigger
+  3. Le tutoriel couvre 5 étapes ordonnées (intro narrative, plantation, cycle croissance et récolte, gain XP/loot, où aller plus loin) avec un overlay spotlight SVG qui met en évidence l'élément cible tout en laissant le décor visible
+  4. Pendant toutes les étapes du tutoriel, les animations de `WorldGridView` sont mises en pause — le frame rate du tutoriel reste à 58 fps minimum sur le device TestFlight
+  5. Le tutoriel est rejouable depuis le bouton "Rejouer le tutoriel" du codex (CODEX-10) et aucun nouveau provider n'est créé — le tutoriel s'appuie exclusivement sur `HelpContext` étendu
+**Plans**: TBD
+**UI hint**: yes
 
-Plans:
-- [x] 06-01-PLAN.md — Mutation culture doree (types + farm-engine + FarmPlots visuel)
-- [x] 06-02-PLAN.md — Ambiance horaire + flammes de streak (ambiance.ts + composants + integration tree.tsx)
-
-</details>
-
-### 🚧 v1.1 Ferme Enrichie (In Progress)
-
-**Milestone Goal:** Enrichir la ferme pour qu'elle soit un vrai moteur de motivation — plus de profondeur, plus de raisons de revenir faire ses tâches. La ferme est le levier de motivation, pas le produit lui-même.
-
-#### Phase 5: Visuels Ferme
-**Goal**: La ferme est visuellement vivante — cycle jour/nuit cohérent avec l'heure réelle et sprites améliorés pour les cultures et animaux
-**Depends on**: Phase 4
-**Requirements**: VIS-01, VIS-02, VIS-03
-**Success Criteria** (what must be TRUE):
-  1. L'écran ferme adapte automatiquement sa luminosité et teinte selon l'heure réelle (clair le jour, tamisé la nuit) sans action manuelle
-  2. Chaque culture affiche au moins 2 frames d'animation distinctes par stade de croissance — l'animation est perceptible
-  3. Les animaux ont une animation idle visible et une animation de marche différenciée — ils paraissent vivants au repos
-  4. `npx tsc --noEmit` passe sans nouvelles erreurs
-**Plans:** 3/3 plans complete
-
-Plans:
-- [x] 05-01-PLAN.md — Transition animee cycle jour/nuit dans AmbientParticles (VIS-01)
-- [x] 05-02-PLAN.md — Assets Mana Seed cultures + animation 2-frames CropCell (VIS-02)
-- [x] 05-03-PLAN.md — Assets Mana Seed animaux + direction marche walk_left (VIS-03)
-
-#### Phase 6: Bâtiments Productifs
-**Goal**: L'utilisateur peut construire des bâtiments sur la ferme qui génèrent des ressources passives, créant une raison de revenir régulièrement
-**Depends on**: Phase 5
-**Requirements**: BAT-01, BAT-02, BAT-03
-**Success Criteria** (what must be TRUE):
-  1. L'utilisateur peut placer un bâtiment (moulin, serre, étable) sur une parcelle dédiée et le voir apparaître sur la ferme
-  2. Un bâtiment placé génère automatiquement une ressource toutes les X heures — visible dans l'inventaire sans replanter
-  3. Un bâtiment peut être amélioré au moins 2 fois, chaque niveau augmentant visiblement la production affichée
-  4. Les ressources produites sont persistées dans le vault et survivent à un redémarrage de l'app
-**Plans:** 2 plans
-
-Plans:
-- [x] 06-01-PLAN.md — Types etendus + building-engine + migration parser + useFarm
-- [x] 06-02-PLAN.md — UI batiments (WorldGridView, bottom sheets, integration tree.tsx)
-
-#### Phase 7: Craft
-**Goal**: Les récoltes brutes peuvent être combinées en items spéciaux via des recettes, offrant plus de valeur XP et une boucle de progression plus riche
-**Depends on**: Phase 6
-**Requirements**: CRA-01, CRA-02, CRA-03
-**Success Criteria** (what must be TRUE):
-  1. L'utilisateur peut combiner des récoltes pour créer un item spécial (ex : confiture, bouquet) via une interface de craft
-  2. Un catalogue liste toutes les recettes disponibles avec les ingrédients exacts requis — l'utilisateur sait quoi cultiver
-  3. Un item crafté attribue plus d'XP qu'une récolte brute équivalente — la différence est visible dans le résumé de récompense
-  4. Les items craftés sont persistés dans le vault et apparaissent dans l'inventaire du profil
-**Plans:** 2/2 plans complete
-
-Plans:
-- [x] 07-01-PLAN.md — Types craft + craft-engine + refactoring harvestCrop inventaire + parser + useFarm
-- [x] 07-02-PLAN.md — CraftSheet UI (Atelier bottom sheet) + integration tree.tsx + i18n
-
-#### Phase 8: Progression Ferme
-**Goal**: Un arbre de technologies ferme débloque des améliorations et de nouvelles zones, donnant une direction claire à la progression long terme
-**Depends on**: Phase 7
-**Requirements**: PRO-01, PRO-02, PRO-03
-**Success Criteria** (what must be TRUE):
-  1. L'écran arbre de technologies affiche les noeuds de progression ferme disponibles, débloqués, et verrouillés avec leurs coûts
-  2. Débloquer un noeud tech produit un effet observable (vitesse de pousse augmentée, nouvelle culture disponible, rendement amélioré)
-  3. L'utilisateur peut dépenser des ressources pour débloquer une nouvelle zone/parcelle — la zone apparaît sur la ferme
-  4. La progression tech est persistée dans le vault — les déblocages survivent à un redémarrage
-**Plans:** 2 plans
-
-Plans:
-- [x] 08-01-PLAN.md — Tech tree engine + types + bonus integration farm/building/world-grid + persistence parser/useFarm + i18n
-- [x] 08-02-PLAN.md — TechTreeSheet UI + parcelles extension WorldGridView + integration tree.tsx + verification visuelle
-
-### Phase 08.1: Split Gamification Par Profil (INSERTED)
-
-**Goal:** Chaque profil a son propre fichier gamification (gami-{id}.md) pour éliminer les conflits d'écriture multi-device via iCloud
-**Requirements**: ARCH-02
-**Depends on:** Phase 8
-**Plans:** 2/2 plans complete
-
-Plans:
-- [x] 08.1-01-PLAN.md — Migrer vault.ts, useFarm, useGamification, SettingsGamification vers gami-{id}.md per-profil
-- [x] 08.1-02-PLAN.md — Migrer useVault.ts (27 sites) + migration automatique gamification.md + merged read
-
-#### Phase 9: Cadeaux Familiaux
-**Goal**: Les membres de la famille peuvent s'envoyer des récoltes et items craftés, renforçant la dimension coopérative et la motivation partagée
-**Depends on**: Phase 8
-**Requirements**: SOC-01, SOC-02
-**Success Criteria** (what must be TRUE):
-  1. Un membre peut sélectionner une récolte ou un item crafté depuis son inventaire et l'envoyer à un autre profil familial
-  2. Le destinataire reçoit une notification locale indiquant qui lui a envoyé quoi
-  3. L'item envoyé apparaît dans l'inventaire du destinataire sans action supplémentaire de l'expéditeur
-  4. L'item est retiré de l'inventaire de l'expéditeur au moment de l'envoi — pas de duplication possible
-**Plans:** 2/2 plans complete
-
-Plans:
-- [x] 09-01-PLAN.md — Gift engine + types + parser farm-{id}.md + notification template + i18n FR/EN
-- [x] 09-02-PLAN.md — sendGift/receiveGifts useFarm + GiftSenderSheet + GiftReceiptModal + CraftSheet long-press + tree.tsx cablage
-
-#### Phase 10: Compagnon Mascotte
-**Goal**: Un compagnon interactif (animal mignon) vit dans la scene de l'arbre, lie au systeme de gamification (lootboxes, XP), evolue visuellement avec le niveau, a un nom et une humeur, affiche des messages contextuels, et sert d'avatar de profil
-**Depends on**: Phase 9
-**Requirements**: COMP-01, COMP-02, COMP-03, COMP-04, COMP-05, COMP-06, COMP-07, COMP-08
-**Success Criteria** (what must be TRUE):
-  1. L'utilisateur peut choisir un compagnon parmi 5 especes au niveau 5, le nommer, et le voir apparaitre sur l'ecran arbre
-  2. Le compagnon evolue visuellement en 3 stades (bebe, jeune, adulte) lies au niveau XP du profil
-  3. Le compagnon reagit au tap (animation saut + haptic) et affiche des messages contextuels sur les actions recentes
-  4. De nouveaux compagnons sont debloquables via lootbox (rarites rare/epique)
-  5. Le compagnon actif donne un bonus passif +5% XP
-  6. Le compagnon sert d'avatar de profil dans la tab bar et le selecteur de profil
-  7. `npx tsc --noEmit` passe sans nouvelles erreurs
-**Plans:** 3/4 plans executed
-
-Plans:
-- [x] 10-01-PLAN.md — Types + companion-engine + sprites placeholder + i18n
-- [x] 10-02-PLAN.md — Parser companion + hooks useVault/useGamification + rewards lootbox
-- [x] 10-03-PLAN.md — CompanionSlot + CompanionPicker + integration TreeView/tree.tsx
-- [ ] 10-04-PLAN.md — Messages IA contextuels + CompanionAvatarMini + integration _layout.tsx
-
-#### Phase 11: Sagas Immersives
-**Goal**: Les sagas ne sont plus des boutons dans le dashboard — un personnage visiteur pixel apparaît dans la scène de l'arbre pour raconter son histoire de manière immersive (style Animal Crossing/Stardew Valley), avec des dialogues interactifs et des animations d'arrivée/départ
-**Depends on**: Phase 10
-**Requirements**: SAG-01, SAG-02, SAG-03, SAG-04
-**Success Criteria** (what must be TRUE):
-  1. Quand une saga est active, un personnage visiteur pixel (généré via PixelLab) apparaît dans la scène de l'arbre avec une animation d'arrivée
-  2. Taper sur le visiteur ouvre un dialogue narratif avec les choix de la saga — le joueur fait son choix via cette interaction
-  3. Le dashboard ne montre plus les boutons de saga — juste un petit texte indicateur de l'étape en cours et un lien vers l'arbre
-  4. Le visiteur a des animations de réaction aux choix (joie, surprise, mystère) et une animation de départ après complétion
-  5. `npx tsc --noEmit` passe sans nouvelles erreurs
-**Plans:** 3/3 plans complete
-
-Plans:
-- [x] 11-01-PLAN.md — Sprites voyageur PixelLab + composant VisitorSlot animations + i18n
-- [x] 11-02-PLAN.md — Refactoring SagaWorldEvent portrait sprite + integration tree.tsx orchestration
-- [x] 11-03-PLAN.md — DashboardGarden indicateur texte inline (suppression carte saga)
-
-## Progress
-
-**Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10
+## Progress (v1.2)
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 1. Safety Net | v1.0 | 4/4 | Complete | 2026-03-28 |
-| 2. Write Safety + Couleurs | v1.0 | 3/3 | Complete | 2026-03-28 |
-| 3. Gamification | v1.0 | 2/2 | Complete | 2026-03-28 |
-| 4. Ambiance + Retention | v1.0 | 2/2 | Complete | 2026-03-28 |
-| 5. Visuels Ferme | v1.1 | 3/3 | Complete   | 2026-03-28 |
-| 6. Bâtiments Productifs | v1.1 | 0/2 | Planned | - |
-| 7. Craft | v1.1 | 2/2 | Complete   | 2026-03-29 |
-| 8. Progression Ferme | v1.1 | 0/2 | Planned | - |
-| 8.1 Split Gamification | v1.1 | 2/2 | Complete   | 2026-03-30 |
-| 9. Cadeaux Familiaux | v1.1 | 2/2 | Complete   | 2026-04-04 |
-| 10. Compagnon Mascotte | v1.1 | 3/4 | In Progress|  |
-| 11. Sagas Immersives | v1.1 | 3/3 | Complete    | 2026-04-03 |
-| 12. Templates Onboarding | v1.1 | 0/2 | Not started | - |
-| 13. Événements Saisonniers | v1.1 | 2/2 | Complete    | 2026-04-03 |
-| 14. Parité Mobile ↔ Desktop | v1.1 | 9/9 | Complete    | 2026-04-05 |
+| 15. Préférences alimentaires | v1.2 | 7/7 | Complete    | 2026-04-08 |
+| 16. Codex contenu | v1.2 | 0/? | Not started | - |
+| 17. Codex UI | v1.2 | 0/? | Not started | - |
+| 18. Tutoriel ferme | v1.2 | 0/? | Not started | - |
 
-### Phase 12: Templates onboarding vivants — contenu personnalisé et complet
+## Archived Milestones
 
-**Goal:** Les 8 packs de templates d'onboarding génèrent du contenu riche et personnalisé dès le premier jour — petit-déjeuner en semaine, exemples budget réalistes, famille élargie dans les anniversaires, et 2 nouveaux packs (stock maison + défis de lancement)
-**Requirements**: TMPL-01, TMPL-02, TMPL-03, TMPL-04, TMPL-05, TMPL-06, TMPL-07, TMPL-08
-**Depends on:** Phase 11
-**Plans:** 2 plans
-
-Plans:
-- [ ] 12-01-PLAN.md — Enrichir 5 packs existants (repas, budget, anniversaires, vie-de-famille, medical) + i18n FR/EN
-- [ ] 12-02-PLAN.md — Ajouter 2 nouveaux packs (stock-initial, defis-lancement) + i18n FR/EN
-
-#### Phase 13: Événements Saisonniers
-**Goal**: Quand un événement saisonnier est actif (Pâques, Halloween, Noël...), un personnage visiteur thématique apparaît dans la scène ferme/arbre — même pattern que les sagas immersives (tap → dialogue → choix → récompenses loot saisonnières) mais déclenché par le calendrier au lieu du cycle saga
-**Depends on**: Phase 11
-**Requirements**: EVT-01, EVT-02, EVT-03
-**Success Criteria** (what must be TRUE):
-  1. Quand un événement saisonnier est actif (date calendrier), un personnage visiteur thématique pixel apparaît dans la scène de l'arbre avec une animation d'arrivée
-  2. Taper sur le visiteur ouvre un dialogue narratif thématique avec choix — même UX que les sagas (VisitorSlot, SagaWorldEvent)
-  3. Compléter l'interaction donne des récompenses loot box saisonnières (même pool que `trySeasonalDraw()` mais garanti, pas 20% chance)
-  4. Chaque événement est indépendant — ajouter un nouvel événement = ajouter un contenu sans modifier le moteur
-  5. `npx tsc --noEmit` passe sans nouvelles erreurs
-**Plans:** 2/2 plans complete
-
-Plans:
-- [x] 13-01-PLAN.md — Types + engine + storage + contenu narratif i18n (8 événements)
-- [x] 13-02-PLAN.md — VisitorSlot/SagaWorldEvent props + câblage tree.tsx visiteur événementiel
-
-Canonical refs: `lib/gamification/seasonal.ts`, `lib/gamification/seasonal-rewards.ts`, `lib/mascot/sagas-engine.ts`, `lib/mascot/sagas-content.ts`, `components/mascot/VisitorSlot.tsx`
-
-### Phase 14: Parité Mobile ↔ Desktop
-
-**Goal:** La version desktop (React) offre une expérience fonctionnellement identique à l'app mobile (React Native) — chaque écran, interaction et feature disponible sur mobile est répliqué sur desktop avec les adaptations UX appropriées (drag & drop fichiers au lieu de swipe, raccourcis clavier, etc.)
-**Requirements**: PAR-01, PAR-02, PAR-03
-**Depends on:** Phase 13
-**Success Criteria** (what must be TRUE):
-  1. Chaque écran mobile a son équivalent desktop fonctionnel — aucun écran manquant
-  2. Les interactions tactiles (swipe, long-press) sont remplacées par des équivalents desktop (drag & drop fichier pour OCR budget, hover, clic droit, raccourcis clavier)
-  3. Les données créées/modifiées sur desktop sont lisibles sur mobile et vice-versa — parité de parsing/serialization
-  4. Les animations et transitions existent sur desktop (CSS animations équivalentes aux reanimated)
-  5. `npx tsc --noEmit` passe sans nouvelles erreurs
-**Plans:** 9/9 plans complete
-
-Plans:
-- [x] 14-01-PLAN.md — Fondation : dependances + VaultContext mutations CRUD + routes App.tsx
-- [x] 14-02-PLAN.md — Ecrans RDV + Notes (CRUD complet)
-- [x] 14-03-PLAN.md — Ecrans Health + Routines (CRUD complexe)
-- [x] 14-04-PLAN.md — Ecrans Skills + Stats (arbre RPG + 6 visualisations recharts)
-- [x] 14-05-PLAN.md — Ecrans Pregnancy + NightMode + Compare + More (ecrans simples)
-- [x] 14-06-PLAN.md — Loot revamp (Framer Motion card flip + confetti + inventaire + badges)
-- [x] 14-07-PLAN.md — Budget OCR (drag & drop recu + pipeline Claude Vision + review)
-- [x] 14-08-PLAN.md — Polish interactions desktop (hover-to-reveal + raccourcis clavier) + checkpoint visuel
-- [x] 14-09-PLAN.md — Gamification complete : companion system, sagas immersives, evenements saisonniers, tech tree (per D-05)
+- **v1.0 Stabilisation** — détails dans `milestones/v1.0-ROADMAP.md` *(si archivé rétro)*
+- **v1.1 Ferme Enrichie** — détails dans `milestones/v1.1-ROADMAP.md`
+  - 9 phases initialement planifiées + Phase 8.1 insérée + Phases événements/parité/quêtes ajoutées en cours de route
+  - 22 plans, 36 tâches livrées
+  - Phase 12 (Templates onboarding) supprimée explicitement avant clôture
+  - COMP-07 abandonné (compagnon avatar tab bar)

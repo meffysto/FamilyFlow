@@ -179,5 +179,45 @@ export function smartSortSections(
   // Tri stable : score décroissant, index original en cas d'égalité
   scored.sort((a, b) => b.score - a.score || a.index - b.index);
 
-  return [...scored.map((s) => s.section), ...hidden];
+  // Regrouper les cartes half en paires consécutives
+  const sorted = scored.map((s) => s.section);
+  const result = clusterHalfCards(sorted);
+
+  return [...result, ...hidden];
+}
+
+/**
+ * Regroupe les cartes size='half' en paires consécutives.
+ * Quand une carte half est isolée entre des full, on cherche la prochaine half
+ * et on la remonte juste après pour former une paire.
+ */
+function clusterHalfCards(sections: SectionPref[]): SectionPref[] {
+  const result = [...sections];
+  let i = 0;
+  while (i < result.length) {
+    if (result[i].size === 'half') {
+      // Déjà une paire ?
+      if (i + 1 < result.length && result[i + 1].size === 'half') {
+        i += 2;
+        continue;
+      }
+      // Chercher la prochaine half plus loin
+      let j = i + 2;
+      while (j < result.length && result[j].size !== 'half') {
+        j++;
+      }
+      if (j < result.length) {
+        // Remonter result[j] juste après result[i]
+        const [moved] = result.splice(j, 1);
+        result.splice(i + 1, 0, moved);
+        i += 2;
+      } else {
+        // Pas de partenaire — affichée seule en full
+        i++;
+      }
+    } else {
+      i++;
+    }
+  }
+  return result;
 }

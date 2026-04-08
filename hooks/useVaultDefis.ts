@@ -46,6 +46,7 @@ export function useVaultDefis(
   gamiDataRef: React.MutableRefObject<GamificationData | null>,
   setGamiData: React.Dispatch<React.SetStateAction<GamificationData | null>>,
   setProfiles: React.Dispatch<React.SetStateAction<Profile[]>>,
+  onQuestProgress?: (profileId: string, type: string, amount: number) => Promise<void>,
 ): UseVaultDefisResult {
   const [defis, setDefis] = useState<Defi[]>([]);
 
@@ -116,8 +117,13 @@ export function useVaultDefis(
           await vaultRef.current.writeFile(file, serializeGamification(singleData));
         }
       } catch {}
+
+      // Progression quêtes coopératives (defis)
+      if (onQuestProgress) {
+        try { await onQuestProgress(profileId, 'defis', 1); } catch { /* Quest — non-critical */ }
+      }
     }
-  }, []);
+  }, [onQuestProgress]);
 
   const completeDefi = useCallback(async (defiId: string) => {
     if (!vaultRef.current) return;

@@ -95,7 +95,12 @@ import { useVaultSecretMissions } from './useVaultSecretMissions';
 import { useVaultTasks } from './useVaultTasks';
 import { useVaultRecipes } from './useVaultRecipes';
 import { useVaultDefis } from './useVaultDefis';
+import { useVaultFamilyQuests } from './useVaultFamilyQuests';
+import { parseFamilyQuests, FAMILY_QUESTS_FILE } from '../lib/parser';
+import type { FamilyQuest } from '../lib/quest-engine';
 import { useVaultProfiles, ACTIVE_PROFILE_KEY } from './useVaultProfiles';
+import { useVaultDietary } from './useVaultDietary';
+import type { VaultDietaryState } from './useVaultDietary';
 
 export const VAULT_PATH_KEY = 'vault_path';
 export { ACTIVE_PROFILE_KEY } from './useVaultProfiles';
@@ -223,6 +228,12 @@ export interface VaultState {
   checkInDefi: (defiId: string, profileId: string, completed: boolean, value?: number, note?: string) => Promise<void>;
   completeDefi: (defiId: string) => Promise<void>;
   deleteDefi: (defiId: string) => Promise<void>;
+  familyQuests: FamilyQuest[];
+  unlockedRecipes: string[];
+  startFamilyQuest: (templateId: string, profileId: string, profiles: Profile[]) => Promise<void>;
+  contributeFamilyQuest: (profileId: string, type: string, amount: number) => Promise<void>;
+  completeFamilyQuest: (questId: string) => Promise<void>;
+  deleteFamilyQuest: (questId: string) => Promise<void>;
   gratitudeDays: GratitudeDay[];
   addGratitudeEntry: (date: string, profileId: string, profileName: string, text: string) => Promise<void>;
   deleteGratitudeEntry: (date: string, profileId: string) => Promise<void>;
@@ -259,6 +270,8 @@ export interface VaultState {
   markLootUsed: (loot: UsedLoot) => Promise<void>;
   setCompanion: (profileId: string, companion: CompanionData) => Promise<void>;
   unlockCompanion: (profileId: string, speciesId: CompanionSpecies) => Promise<void>;
+  /** Préférences alimentaires famille + invités (Phase 15 — PREF-02/06/07) */
+  dietary: VaultDietaryState;
 }
 
 // Static task files (non-enfant)
@@ -493,14 +506,20 @@ export function useVaultInternal(): VaultState {
   const profilesHook = useVaultProfiles(vaultRef, setGamiData, tasksHook.setTasks);
   const { profiles, setProfiles, activeProfileId, setActiveProfileId, activeProfile, ageUpgrades, setAgeUpgrades } = profilesHook;
 
+  // Domaine Préférences alimentaires — initialisé APRÈS profilesHook (dépend de reloadProfiles)
+  const dietaryHook = useVaultDietary(vaultRef, profiles, profilesHook.refreshGamification);
+
   // Domaine Recettes délégué à useVaultRecipes
   const recipesHook = useVaultRecipes(vaultRef, profiles);
   const { recipes } = recipesHook;
 
-  // Domaine Défis délégué à useVaultDefis
+  // Domaine Quêtes coopératives — initialisé EN PREMIER pour que contribute soit disponible pour defisHook
   const gamiDataRef = useRef(gamiData);
   gamiDataRef.current = gamiData;
-  const defisHook = useVaultDefis(vaultRef, gamiDataRef, setGamiData, setProfiles);
+  const questsHook = useVaultFamilyQuests(vaultRef, gamiDataRef, setGamiData, setProfiles);
+
+  // Domaine Défis délégué à useVaultDefis — reçoit questsHook.contribute comme onQuestProgress
+  const defisHook = useVaultDefis(vaultRef, gamiDataRef, setGamiData, setProfiles, questsHook.contribute);
   const { defis } = defisHook;
 
   // Domaine Health délégué à useVaultHealth
@@ -1091,6 +1110,14 @@ export function useVaultInternal(): VaultState {
         }
       }
       defisHook.setDefis(newDefis);
+
+      // Quêtes coopératives familiales : chargement + détection expiration
+      const questsContent = await vault.readFile(FAMILY_QUESTS_FILE).catch(() => '');
+      let loadedQuests = parseFamilyQuests(questsContent);
+      // Détection expiration au chargement — notification locale si quête expirée
+      loadedQuests = await questsHook.checkAndExpireQuests(loadedQuests);
+      questsHook.setFamilyQuests(loadedQuests);
+
       setGratitudeDays(val(results[11], []));
       setWishlistItems(val(results[12], []));
       setAnniversaries(val(results[13], []));
@@ -1153,6 +1180,7 @@ export function useVaultInternal(): VaultState {
     resetHealth();
     resetMissions();
     defisHook.resetDefis();
+    questsHook.resetQuests();
     setVaultPathState(path);
     const vault = new VaultManager(path);
     vaultRef.current = vault;
@@ -1546,6 +1574,12 @@ export function useVaultInternal(): VaultState {
     checkInDefi: defisHook.checkInDefi,
     completeDefi: defisHook.completeDefi,
     deleteDefi: defisHook.deleteDefi,
+    familyQuests: questsHook.familyQuests,
+    unlockedRecipes: questsHook.unlockedRecipes,
+    startFamilyQuest: questsHook.startQuest,
+    contributeFamilyQuest: questsHook.contribute,
+    completeFamilyQuest: questsHook.completeQuest,
+    deleteFamilyQuest: questsHook.deleteQuest,
     gratitudeDays,
     addGratitudeEntry,
     deleteGratitudeEntry,
@@ -1581,19 +1615,20 @@ export function useVaultInternal(): VaultState {
     markLootUsed,
     setCompanion,
     unlockCompanion,
+    dietary: dietaryHook,
   }), [
     // State values (déclenchent un re-render quand ils changent)
     vaultPath, isLoading, error, tasks, courses, stock, meals,
     rdvs, profiles, activeProfile, gamiData, notifPrefs, vault, photoDates,
     stockSections, memories, vacationConfig, vacationTasks, isVacationActive,
     recipes, ageUpgrades, budgetState, routines,
-    healthRecords, defis, gratitudeDays, wishlistItems, journalStats, anniversaries,
+    healthRecords, defis, questsHook.familyQuests, questsHook.unlockedRecipes, gratitudeDays, wishlistItems, journalStats, anniversaries,
     notesHook.notes,
     quotes, moods, skillTrees, secretMissions,
     // Callbacks (stables grâce à useCallback)
     refresh, setVaultPath, saveNotifPrefs, updateMeal, loadMealsForWeek,
     addPhoto, getPhotoUri,
-    stockHook, coursesHook, tasksHook, recipesHook, defisHook, profilesHook,
+    stockHook, coursesHook, tasksHook, recipesHook, defisHook, questsHook, profilesHook,
     addRDV, updateRDV, deleteRDV,
     addMemory, updateMemory, activateVacation,
     deactivateVacation,
@@ -1606,5 +1641,6 @@ export function useVaultInternal(): VaultState {
     missionsHook,
     completeAdventure, completeSagaChapter, markLootUsed,
     setCompanion, unlockCompanion,
+    dietaryHook,
   ]);
 }

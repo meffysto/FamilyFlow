@@ -91,6 +91,10 @@ export interface Profile {
   companion?: import('./mascot/companion-types').CompanionData | null; // Compagnon actif du profil
   giftHistory?: string;       // CSV historique cadeaux (pipe-separe, 10 derniers)
   giftsSentToday?: string;    // Anti-abus format "count|YYYY-MM-DD"
+  foodAllergies?: string[];      // PREF-02 : IDs canoniques EU_ALLERGENS ou texte libre
+  foodIntolerances?: string[];   // PREF-02 : IDs COMMON_INTOLERANCES ou texte libre
+  foodRegimes?: string[];        // PREF-02 : IDs COMMON_REGIMES ou texte libre
+  foodAversions?: string[];      // PREF-02 : texte libre uniquement (pas de catalogue)
   points: number;
   coins: number;            // 🍃 Feuilles — monnaie dépensable (boutique)
   level: number;

@@ -86,7 +86,7 @@ const NAV_SECTIONS: NavSection[] = [
   {
     label: 'Gamification',
     items: [
-      { path: '/tree',       label: 'Mon arbre',  icon: '🌳' },
+      { path: '/tree',       label: 'Mon jardin',  icon: '🌳' },
       { path: '/loot',       label: 'Récompenses', icon: '🎰' },
       { path: '/challenges', label: 'Défis',        icon: '🏆' },
       { path: '/settings',   label: 'Paramètres',   icon: '⚙️' },

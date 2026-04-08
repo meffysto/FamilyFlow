@@ -1,211 +1,271 @@
-# Project Research Summary
+# Research Summary — FamilyFlow v1.2 Confort & Découverte
 
-**Project:** FamilyFlow (React Native / Expo)
-**Domain:** Mobile family productivity app — stabilization + gamification enrichment
-**Researched:** 2026-03-28
-**Confidence:** HIGH (testing, architecture, pitfalls), MEDIUM (Skia gamification path)
+**Project:** FamilyFlow v1.2 "Confort & Découverte"
+**Domain:** React Native / Expo family app — 3 additive features on mature codebase
+**Researched:** 2026-04-07
+**Confidence:** HIGH (direct codebase audit + verified external sources)
+
+---
 
 ## Executive Summary
 
-FamilyFlow is a production TestFlight app with a solid feature surface but significant technical debt concentrated in three areas: a 3431-line god hook (`useVault.ts`), 228 hardcoded color values that break dark mode, and zero test coverage outside of `lib/`. The immediate milestone has two tracks — stabilization (hardening the codebase before it becomes unmaintainable) and gamification enrichment (deepening the pixel farm and mascot system). Research across all four domains converges on a clear recommendation: fix the foundation before adding features. Every planned gamification addition (idle progression, animal care, seasonal events) depends on a reliable file write path that currently does not exist.
+- **Zero new dependencies.** Every UI primitive, storage mechanism, and animation pattern needed for all 3 features already exists in the codebase. The work is integration and composition, not installation.
+- **Allergen safety is a P0 hard requirement.** All 4 research agents independently converged on this: the `allergie` severity level must be rendered with a non-dismissible badge, stored via canonical IDs (not free-text), and checked via a pure lib function — never in component render logic. This cannot be retrofitted after data lands in the vault.
+- **Two architectural decisions require user input before work begins** (storage file for dietary preferences, and profile-scoped vs. device-global tutorial seen-flag). These are the only real scope/design forks the research surfaced.
+- **Phase order is clear:** Dietary Preferences first (self-contained, daily value, P0 safety), then Codex Content (data-only, no UI), then Codex UI, then Tutorial last (depends on both codex content for text reuse and codex modal for replay button).
+- **The god hook (`useVault.ts`, 3431 lines) must not grow.** Dietary constraints belong on the `Profile` type, not as a new top-level state slice. This is the single most important architectural constraint for Phase 1.
 
-The recommended architecture is the Provider-over-Domain-Hooks pattern already partially in place. `useGamification.ts` and `useFarm.ts` demonstrate the target pattern: domain hooks that receive `vault` as a prop and push state changes via callbacks. The path forward is to replicate this pattern for the remaining 12 domains — one at a time, behind the existing `VaultContext` facade — without touching any of the ~90 consumer components. The existing public API stays stable throughout the refactoring. Testing infrastructure (jest-expo + RNTL v13) installs cleanly against SDK 54 and should be set up in the first phase to create a safety net for all subsequent work.
+FamilyFlow v1.2 adds features that are valuable on day one of delivery: dietary preferences let the app warn about allergens in planned meals, the codex makes the farm navigable for every family member, and the tutorial removes the "I have no idea what to do" friction at first launch. None of these require rethinking the architecture — they extend patterns that already exist and have been proven in production.
 
-The three critical risks to manage proactively are: (1) a silent write-concurrency bug where rapid task completions can lose XP due to race conditions on `gamification.md` — this must be fixed with a per-file async write queue before any new gamification features are added; (2) vault file format corruption from schema changes without migration guards — every new data field must be append-only with a safe default; and (3) big-bang hook extraction that breaks the app — each domain hook must be extracted, composed, and validated in isolation before moving to the next.
+The main risk is not technical difficulty but safety correctness (allergen dismissibility), content drift (hardcoding farm stats instead of reading from engine constants), and animation perf on a screen (`tree.tsx`) that already had an OOM crash. All three risks have documented mitigations in PITFALLS.md and are preventable with explicit constraints in the phase specs.
+
+---
+
+## The 3 Features at a Glance
+
+| Feature | Table Stakes | Differentiators | Complexity |
+|---------|-------------|-----------------|------------|
+| **Préférences alimentaires** | Per-profile saisie (allergie / intolérance / régime / aversion), flag badge sur recette, flag sur planning repas, édition depuis écran profil | Invités légers (type `Guest`, sans profil complet), résumé combiné pour repas partagé | LOW–MEDIUM — extend parser + new domain hook + badge UI |
+| **Codex ferme** | Modal "?" sur tree.tsx, catégories (cultures/bâtiments/tech/mécaniques), stats lus depuis constantes, bouton "Revoir le tutoriel" | Entrées locked "???" pour crops dropOnly non encore découverts, tri par pertinence selon niveau profil actif | LOW — static TS constants + existing UI components |
+| **Tutoriel ferme** | Déclenchement auto au premier accès, skippable dès l'étape 1, rejouable depuis codex, explique la boucle de base en 3–5 étapes | Spotlight overlay sur éléments UI réels, narration par le compagnon actif, récompense XP à la complétion | LOW (MVP sans spotlight) → MEDIUM (spotlight via react-native-svg déjà installé) |
+
+---
 
 ## Key Findings
 
-### Recommended Stack
+### Stack — Aucune dépendance ajoutée
 
-The baseline stack (RN 0.81.5, Expo SDK 54, Reanimated 4.1, Expo Router 6, TypeScript 5.9) is established and stable. Only two net-new libraries are required for this milestone: `jest-expo ~54.0.11` and `@testing-library/react-native ^13.3.3`. Both install via `npx expo install` to get the SDK-54-aligned versions. The domain hook split, TypeScript strictness improvements, and parser reorganization require no new dependencies — they are structural changes only.
+Le codebase contient déjà tout le nécessaire. Récapitulatif confirmé par l'agent STACK :
 
-**Core technologies for this milestone:**
-- `jest-expo ~54.0.11`: Jest preset with automatic Expo native module mocks — install via `npx expo install`, not npm
-- `@testing-library/react-native ^13.3.3`: Component + hook testing including `renderHook` — replaces the archived `@testing-library/react-hooks`
-- `@shopify/react-native-skia` (conditional): GPU-accelerated rendering for sprite sheets and particle effects — only if new gamification features outgrow SVG + Reanimated
-- `useFrameCallback` (already available in Reanimated 4.1): Game loop pattern for farm day/night cycle and animations — no new install needed
+| Besoin | Solution existante |
+|--------|--------------------|
+| Overlay/spotlight tutoriel | `react-native-svg ^15.12.1` déjà installé — `<Mask>` + `<Rect>` ~20 lignes |
+| Coach marks séquentiels | `CoachMark`, `CoachMarkOverlay`, `ScreenGuide` dans `components/help/` |
+| Vu/pas vu + replay | `HelpContext` — `hasSeenScreen`, `markScreenSeen`, `resetScreen` via SecureStore |
+| Codex UI | `ScrollView`, `CollapsibleSection`, `MarkdownText`, `Chip`, `Badge`, `ModalHeader` |
+| Recherche codex | `lib/search.ts` — `normalize()` déjà implémentée ; `Array.filter` suffisant pour <100 entrées |
+| Stockage préférences | `lib/parser.ts` + `lib/types.ts` — patterns existants à étendre |
+| Liste allergènes | Constante statique `constants/allergens.ts` — liste EU fixe à 14 items, pas de lib |
 
-**Do not install:** `detox` (E2E overkill), `zustand`/`jotai` (state library rewrite not needed), `@testing-library/react-hooks` (archived), any new particle library (existing stack is sufficient).
+Rejetés explicitement : `react-native-copilot` (broken new arch RN 0.81 + Expo 54, 101 issues ouverts), `fuse.js` (surcoût bundle disproportionné pour <100 entrées), toute lib d'allergènes npm (web-focused, liste EU est fixe et réglementaire).
 
-The Skia path carries MEDIUM confidence — SDK 54 compatibility is confirmed in principle but requires New Architecture (`newArchEnabled: true` in `app.json`) which must be verified before adoption.
+**Commande npm install : aucune.**
 
-### Expected Features
+### Features — Périmètre v1.2
 
-Research identified two feature tracks with distinct dependencies. Stabilization features unblock gamification enrichment; they cannot be deferred.
+**À livrer en v1.2 (consensus des 4 agents) :**
+- Saisie préférences alimentaires par profil (4 types : allergie / intolérance / régime / aversion)
+- Type `Guest` minimal + CRUD (nom + emoji + contraintes, sans profil complet)
+- Flag badge sur carte recette selon profil actif
+- Flag warning sur planning repas hebdomadaire
+- Codex ferme modal (bouton "?" sur tree.tsx) — 5 catégories, stats lus depuis constantes
+- Entrées cultures dropOnly affichées "???" si non encore découvertes par le profil
+- Tutoriel ferme 4 étapes, skippable, déclenchement auto, rejouable depuis codex
 
-**Must have — stabilization (table stakes before any new features):**
-- Unit tests for uncovered lib modules (`budget.ts`, `farm-engine.ts`, `sagas-engine.ts`, `world-grid.ts`) — silent regression risk on production data
-- Error boundary + Sentry integration — crashes are currently invisible in production
-- Write concurrency fix (per-file async mutex on `gamification.md`, `farm.md`) — prerequisite for all farm features
-- Semantic color token cleanup for structural colors (228 hardcoded values) — visual glitches in dark mode
-- Dead code removal + duplicate Claude API client extraction — reduce cognitive load before refactoring
-- TypeScript `as any` fixes on data mutation paths — 8 known locations in `useVault.ts`
+**À déférer à v1.3 :**
+- Sélection "qui mange ce repas" (`attendees` sur `MealItem`) — change le modèle de données
+- Tutoriel progressif par paliers (phases 2 et 3 déclenchées à la découverte de nouvelles mécaniques)
+- Spotlight overlay sur UI réelle (post-validation du tutoriel de base)
+- Invité épinglé sur créneau repas
 
-**Must have — gamification enrichment (table stakes for farm system):**
-- Offline idle progression (farm advances while app closed, calculated on foreground) — signature feature, Terrarium/Little Farm Story pattern
-- XP streak bonuses with week-based (not daily) framing — drives engagement without family anxiety
-- Seasonal visual changes tied to real calendar — leverages existing `seasons.ts`
+**À déférer à v2+ :**
+- Résumé contraintes combinées pour repas partagé (dépend des attendees)
+- Narration compagnon dans tutoriel
 
-**Should have — differentiators:**
-- Animal care loop (hunger/mood state, daily return mechanic — Tamagotchi pattern)
-- Family quest / saga challenge system (shared progress bar over a multi-day goal)
-- Tree visual milestone celebrations (special animation at XP thresholds)
-- Saga reward rarity tiers (glow/animation on rare saga outcomes)
-- Crop variety unlock progression (start with 3 crops, unlock more on level-up)
+### Architecture — Nouveaux fichiers et fichiers modifiés
 
-**Defer:**
-- Family quest system (requires saga engine extension — non-trivial scope)
-- Lazy recipe loading and mtime-based reload (performance optimization, not correctness)
-- Component tests and E2E tests (add after unit test layer is solid)
-- Crop variety unlocks (after idle progression is stable and tested)
+**Nouveaux fichiers :**
 
-**Anti-features (never build):** backend sync, public App Store distribution, social/multiplayer, in-app purchases, daily-streak punishment mechanics, AI-generated procedural farm content, 100% test coverage target.
+| Fichier | Rôle |
+|---------|------|
+| `lib/types.ts` additions | `DietaryConstraint`, `DietaryProfile`, `DietaryConstraintSeverity` |
+| `lib/parser.ts` additions | `PREFERENCES_FILE`, `parsePreferences`, `serializePreferences` |
+| `lib/dietary-utils.ts` | Pure function `computeRecipeConflicts()` |
+| `lib/codex/content.ts` | `CODEX_ENTRIES[]` — importe depuis engine constants, ajoute prose |
+| `lib/codex/index.ts` | Barrel export |
+| `hooks/useVaultPreferences.ts` | Domain hook CRUD préférences |
+| `constants/allergens.ts` | `EU_ALLERGENS` (14 items) + `keywords[]` pour matching |
+| `components/mascot/FarmCodexModal.tsx` | Codex modal (tabs + search + drill-down) |
+| `components/mascot/FarmTutorialOverlay.tsx` | Tutorial overlay absolu sur tree.tsx |
 
-### Architecture Approach
+**Fichiers modifiés :**
 
-The target architecture is a single `VaultContext` backed by domain hooks composed inside `VaultProvider`. The god hook becomes a thin orchestrator that assembles domain hook returns into the existing flat `VaultState` interface via a single `useMemo`. Consumer components (`useVault()`) see no API change during the entire refactoring. The extraction order is dependency-driven: leaf domains first (no cross-domain reads), then mid-tier (needs profiles), then core domains (needs profiles + other domains), and finally `VaultProvider` becomes the pure composer.
-
-**Major components:**
-1. `VaultProvider` — owns `VaultManager` instance, `loadVaultData` orchestration, and assembled `VaultState`; calls all domain hooks; the only component that knows about all domains
-2. Domain hooks (14 total) — each owns one domain's state, CRUD actions, and file I/O via injected `vault` prop; testable in isolation with a mocked `VaultManager`
-3. `lib/parsers/` (split from `lib/parser.ts`) — one parser file per domain, barrel-exported from `lib/parsers/index.ts` for backward compatibility
-4. `lib/gamification/events.ts` (new) — typed `GamificationEvent` discriminated union enabling event-driven XP dispatch from domain hooks to `useGamification`
-5. Lib layer (`lib/gamification/`, `lib/mascot/`) — pure functions on serializable data; no React coupling; already well-structured
-
-**Extraction tier order (build order constraint):**
-- Tier 0: lib tests (no hook dependencies)
-- Tier 1: `useDefis`, `useNotes`, `useStock` (leaf, no cross-domain reads)
-- Tier 2: `useBudget`, `useRecipes`, `useMemories` (vault I/O only)
-- Tier 3: `useTasks`, `useJournal`, `useCalendar` (needs profiles)
-- Tier 4: `useGamification` event-dispatcher improvement (already exists; add typed events)
-- Tier 5: `VaultProvider` refactor as composer (after all domain hooks exist)
+| Fichier | Changement |
+|---------|-----------|
+| `hooks/useVault.ts` | Wire `useVaultPreferences` dans VaultState — pas de nouveau `useState` top-level |
+| `lib/types.ts` | Extend `Profile` avec `dietaryConstraints?` ; ajouter `convives?` sur `MealItem` |
+| `lib/parser.ts` | Pair parse/serialize pour le fichier préférences ; `convives` parsing |
+| `app/(tabs)/tree.tsx` | `showCodex` state ; bouton "?" dans HUD existant ; `FarmCodexModal` ; `FarmTutorialOverlay` |
+| `app/(tabs)/meals.tsx` | Conflict badge sur meal cards ; convives picker ; conflits dans détail recette |
+| `contexts/HelpContext.tsx` | Support profil-scoped keys si décision prise en ce sens (voir Open Questions) |
 
 ### Critical Pitfalls
 
-1. **Big-bang hook extraction** — Extracting multiple domains simultaneously causes cross-domain state ordering bugs and cascading re-renders. Prevention: one domain per PR, extract + compose + delete in the same commit, `tsc --noEmit` + TestFlight smoke test before the next extraction.
+1. **Allergen silencing — classe de bug à gravité fatale.** Toute contrainte de type `allergie` doit avoir un badge non-dismissible, stocké via ID canonique (pas free-text), et vérifié dans une pure function `lib/dietary-utils.ts`. Jamais de logique "Ne plus afficher" sur les allergènes. Jamais de `string[]` plat sans sévérité. Jamais de check dans le composant sans `useMemo` avec dépendances correctes.
 
-2. **iCloud write race conditions** — Rapid task completions can corrupt `gamification.md` and `farm.md` because `busyRef` guards only `loadVaultData`, not individual CRUD writes. Prevention: per-file async mutex (`Map<string, Promise>`) before adding any new gamification write paths.
+2. **Codex content drift.** Tous les chiffres dans le codex (tâches par stade, coût de récolte, drops, prix tech) doivent être lus depuis `CROP_CATALOG`, `BUILDING_CATALOG`, `TECH_TREE` au render time. Zéro chiffre hardcodé dans les strings. Un PR qui change `tasksPerStage` sans toucher le codex doit être rejeté.
 
-3. **Vault schema corruption on TestFlight push** — Adding new fields without migration guards causes old-format files to lose data when re-serialized by new client code. Prevention: all new fields must be append-only with a safe default; write a migration guard that only adds the field when it is absent.
+3. **Tutorial animation jank sur tree.tsx.** Cet écran a déjà eu un crash OOM (commit `260404-qvz`). L'overlay tutoriel doit : (a) utiliser `runOnUI` / `useAnimatedStyle` pour les animations de spotlight, (b) mettre en pause les timers WorldGridView pendant les étapes actives, (c) rester sous 5 `useSharedValue` nouveaux, (d) préférer `withTiming` à `withSpring` pour les mouvements de spotlight. Frame rate minimum acceptable : 58 fps sur device TestFlight.
 
-4. **False-green tests from jest-expo auto-mocks** — Auto-mocks for `expo-file-system`, `expo-secure-store`, and `expo-haptics` return `undefined` silently, making tests pass without exercising real code paths. Prevention: use an in-memory virtual filesystem mock; never mock `lib/parser.ts` or engine modules.
+4. **useVault.ts god hook — ne pas le gonfler.** Les contraintes alimentaires voyagent dans le type `Profile`, pas comme slice top-level. Zéro nouveau `useState` dans `useVaultInternal`. Zéro nouvelle entrée dans le `Promise.allSettled` de `loadVaultData`. Zéro nouvelle dépendance dans le `useMemo` à 90 dépendances.
 
-5. **Gamification reward inflation** — Adding new XP sources (farm, sagas, crafting) independently causes early levels to be trivially achievable. Prevention: all XP values must route through `constants/rewards.ts`; verify daily XP budget against level curve before any new reward source ships.
+5. **Tutorial seen-flag — scope profil vs device.** Décision à prendre avant d'écrire une ligne de code : `markScreenSeen('farm_tutorial')` global ou `markProfileScreenSeen(profileId, 'farm_tutorial')`. Le choix impacte l'API de `HelpContext` et la mécanique replay du codex.
 
-## Implications for Roadmap
+---
 
-Based on research, the dependency graph is clear and non-negotiable. Gamification enrichment features share a hard dependency on the write concurrency fix and on the lib test layer providing a regression safety net. The god hook split is a parallel ongoing effort that must not block stabilization work but should start in Phase 1 with the safest leaf domains.
+## Décision de Stockage — Divergence à Arbitrer
 
-### Phase 1: Safety Net
+Les agents STACK et ARCHITECTURE ont recommandé deux approches différentes. Cette décision doit être arrêtée avant la Phase 1.
 
-**Rationale:** Zero tests on the farm engine, budget module, and sagas engine means every subsequent change is a blind bet. Sentry integration means production bugs are invisible. These two things must exist before any other work — they make all future work safer and faster.
-**Delivers:** Test coverage on the four highest-risk lib modules; production error visibility; dead code removed; duplicate API client consolidated; TypeScript `as any` eliminated on mutation paths.
-**Addresses:** Unit test gaps (budget.ts, farm-engine.ts, sagas-engine.ts, world-grid.ts), error boundary, dead code, type safety.
-**Avoids:** False-green tests from auto-mocks (establish mock strategy upfront); TypeScript regressions on data writes.
-**Uses:** `jest-expo ~54.0.11`, `@testing-library/react-native ^13.3.3`.
+**Option A — STACK.md + PITFALLS.md : flat keys dans le bloc profil de `famille.md`**
 
-### Phase 2: Code Quality + First Domain Extraction
+```
+food_allergies: arachides,noix
+food_intolerances: lactose
+food_regimes: végétarien
+food_aversions: champignons
+```
 
-**Rationale:** Semantic color tokens unblock all future UI work and fix visible dark mode glitches for users currently on TestFlight. The first god hook domain extraction (budget — the most isolated) establishes the extraction pattern before tackling higher-risk domains. Starting with budget makes sense because `lib/budget.ts` will have unit tests from Phase 1, making the extraction verifiable.
-**Delivers:** 228 hardcoded color values resolved (structural colors only; pixel art palettes preserved); `useBudget` extracted with hook tests; VaultContext API unchanged.
-**Addresses:** Semantic color coverage, god hook first domain split.
-**Avoids:** Pixel art color breakage (classify colors before bulk replacement); context re-render avalanche (measure with React DevTools Profiler after extraction).
-**Implements:** Domain Hook with Vault Injection pattern; Barrel Re-export for backward compatibility.
+- Avantage : colocalisé avec les données profil existantes, pattern identique à `farm_crops`/`farm_tech`
+- Avantage PITFALLS : les contraintes voyagent avec le profil déjà chargé — aucun nouveau top-level state dans `useVault.ts`
+- Risque : `parseFamille()` est le chemin critique de parse — modification de blast radius élevé
+- Obsidian : lisible mais moins structuré qu'une section dédiée
 
-### Phase 3: Write Concurrency Fix + Core Gamification Hardening
+**Option B — ARCHITECTURE.md : fichier dédié `05 - Famille/Préférences alimentaires.md` avec H2 par personne**
 
-**Rationale:** The write concurrency bug is the gate for all gamification enrichment. Nothing built in Phase 4 or beyond can be trusted without it. This phase also adds missing gamification tests (including XP end-to-end flow), establishes the XP budget model in `constants/rewards.ts`, and addresses the streak mechanic framing before any new streaks are built.
-**Delivers:** Per-file async write mutex on shared vault files; `useGamification` hook tests; XP budget model documented and enforced; streak mechanic implemented with week-based framing and grace periods.
-**Addresses:** Race condition guard on gamification writes, XP streak bonuses, consistent XP/level feedback.
-**Avoids:** Silent data loss on rapid task completion; reward inflation (XP budget model first); streak anxiety for family users (week-based, never punishing).
+```markdown
+## Papa
+- allergie: arachides
+- régime: végétarien
 
-### Phase 4: Gamification Enrichment — Farm Features
+## Invités
+- invité: Grand-mère | allergie: noix
+```
 
-**Rationale:** With the write path reliable and the safety net in place, farm features can be built with confidence. Offline idle progression is the signature differentiator feature and should be prioritized. Seasonal events and the animal care loop extend the farm's daily return mechanic. Schema changes in this phase require migration guards per Pitfall 6.
-**Delivers:** Offline idle progression (elapsed time → production formula on foreground); seasonal limited events tied to real calendar (extends `seasons.ts`); animal care loop (hunger/mood state); tree visual milestone celebrations.
-**Addresses:** Offline-first idle progression, seasonal limited events, animal care loop, tree milestone celebrations.
-**Avoids:** Vault schema corruption (append-only fields, migration guards on all new farm data fields); XP inflation (all farm rewards through `constants/rewards.ts`).
+- Avantage : isolé du chemin critique `parseFamille`, pattern éprouvé (identique à `Souhaits.md`)
+- Avantage : invités dans la section `## Invités` du même fichier, sans fichier supplémentaire
+- Inconvénient : nouveau fichier vault, nouveau branch dans `loadVaultData`, nouveau pair parse/serialize
+- Obsidian : plus lisible, structure claire
 
-### Phase 5: Continued God Hook Extraction (Mid-Tier + Core Domains)
+**Recommandation de synthèse :** Option A est préférable si la priorité est de limiter la surface de changement dans `useVault.ts` et `lib/parser.ts`. Option B est préférable si la lisibilité Obsidian et l'isolation du parse path sont prioritaires. Les deux sont implémentables correctement.
 
-**Rationale:** After Phase 2 establishes the pattern and validates it in TestFlight, continue extracting domain hooks in tier order. Each extraction reduces the `useMemo` dependency count and makes the codebase incrementally more maintainable. The parser split (`lib/parser.ts` → `lib/parsers/`) happens in parallel with each domain extraction using the barrel re-export pattern.
-**Delivers:** `useRecipes` (with lazy loading), `useTasks`, `useCalendar`, `useMeals`, `useProfiles` extracted; `VaultProvider` becomes a pure composer; `lib/parsers/` split complete.
-**Addresses:** God hook domain split (full completion), incremental vault loading for recipes.
-**Avoids:** Big-bang extraction (one domain per PR, tsc + TestFlight before next); context re-render avalanche (profile each extraction).
+---
 
-### Phase 6: Gamification Enrichment — Saga and Quest System
+## Chevauchement HealthRecord — Question Ouverte
 
-**Rationale:** The family quest system requires saga engine extension (`sagas-engine.ts` with explicit `SagaState` enum) and a shared progress bar abstraction. This is deferred until the hook architecture is clean enough to add new cross-domain features safely.
-**Delivers:** Saga reward rarity tiers (glow, animation on rare outcomes); family quest/challenge system with shared progress bar; crop variety unlock progression.
-**Addresses:** Family quest system, saga reward rarity, crop unlocks.
-**Avoids:** Inline XP values (route all through `constants/rewards.ts`); global event bus anti-pattern (explicit callback props).
+`HealthRecord.allergies` existe déjà comme `string[]` dans le domaine santé, jamais cross-référencé avec les recettes.
+
+**Recommandation :** Séparation pour v1.2. Le nouveau champ `dietaryConstraints` sur `Profile` est indépendant de `HealthRecord`. Documenter la duplication connue avec un commentaire `// TODO: consolider avec HealthRecord.allergies en v1.3`. Une consolidation en v1.2 dépasse le scope du milestone et touche au parser santé.
+
+---
+
+## Implications pour le Roadmap
+
+### Phase 1 — Préférences alimentaires
+**Rationale :** Indépendant des 2 autres features, valeur quotidienne immédiate, contient le seul risque P0 (sécurité allergènes) qui doit être établi correctement avant tout le reste.
+**Delivers :** Type `DietaryConstraint` + `DietaryConstraintSeverity` + `constants/allergens.ts` + parser pair + domain hook `useVaultPreferences` + UI édition profil + badge recette + warning planning repas + type `Guest` + CRUD invités
+**Avoids :** Allergen silencing (P1), stale profile check (P2), i18n mismatch (P3), god hook inflation (P10)
+**Research flag :** Aucune recherche de phase nécessaire — patterns directs du codebase
+
+### Phase 2 — Codex Contenu
+**Rationale :** Fichier de données pur, zéro UI, zéro risque de régression. Séparer du codex UI permet de valider la précision du contenu indépendamment.
+**Delivers :** `lib/codex/content.ts` avec `CODEX_ENTRIES[]` important depuis `CROP_CATALOG`, `BUILDING_CATALOG`, `TECH_TREE`, `CRAFT_RECIPES` + barrel `lib/codex/index.ts`
+**Avoids :** Codex content drift (P5) — contrainte architecturale établie dès la première PR
+**Research flag :** Aucune recherche de phase nécessaire
+
+### Phase 3 — Codex UI
+**Rationale :** Dépend de Phase 2 (contenu), indépendant du tutoriel. Livrable visible utilisateur. Bouton "Revoir le tutoriel" inclus mais pointe vers tutoriel vide jusqu'à Phase 4.
+**Delivers :** `FarmCodexModal.tsx` (tabs + search + drill-down) + bouton "?" intégré dans HUD existant de tree.tsx + entrées dropOnly "???" + `FlatList` avec virtualisation + lazy-load
+**Avoids :** Crowded tree.tsx UI (P11), codex perf ScrollView (P6), `useVault()` pour contenu statique (P11)
+**Research flag :** Aucune recherche de phase nécessaire
+
+### Phase 4 — Tutoriel Ferme
+**Rationale :** Dépend de Phase 2 (réutilise entrées catégorie `mécanique`) et Phase 3 (bouton replay). Vient en dernier pour être testé sur device avec ferme entièrement fonctionnelle.
+**Delivers :** `FarmTutorialOverlay.tsx` (overlay absolu, 4 étapes, Reanimated 4) + déclenchement via `HelpContext` + "Passer" dès l'étape 1 + `markScreenSeen` sur fin/skip + replay via codex + pause WorldGridView pendant tutoriel + validation `TutorialStep.targetId` contre catalogs + validation frame rate 58+ fps sur TestFlight
+**Avoids :** Tutorial jank (P8), content breaks (P9), HelpProvider duplication (P12), seen-flag scope (P7)
+**Research flag :** Spike recommandé de 2h en début de phase pour valider SVG spotlight + Reanimated 4 worklet thread si spotlight choisi pour v1.2
 
 ### Phase Ordering Rationale
 
-The ordering is dictated by three dependency chains identified in research:
-- The write concurrency fix (Phase 3) must precede all farm feature work (Phase 4) because every farm feature adds more write paths to the same shared files.
-- The test safety net (Phase 1) must precede refactoring (Phase 2+) because the god hook split without tests is a roulette spin across 90+ components.
-- The first domain extraction (Phase 2) must precede later extractions (Phase 5) to validate the pattern in production before committing to all 14 domain hooks.
+- Préférences en premier : risque P0 (sécurité allergènes) doit être établi en production et validé avant d'ajouter de la complexité
+- Codex contenu séparé de codex UI : la précision des données peut être relue sans dépendre d'une UI compilable
+- Tutorial en dernier : le composant `FarmTutorialOverlay` réutilise les entrées catégorie `mécanique` de `lib/codex/content.ts` pour ses descriptions d'étapes — la dépendance est explicite
+- Chaque phase est non-cassante et livrable indépendamment sur TestFlight
 
 ### Research Flags
 
-Phases likely needing deeper research during planning:
-- **Phase 3 (write queue):** The specific async mutex pattern for `expo-file-system` on iOS with NSFileCoordinator is not fully specified. Needs a prototype before committing to API shape.
-- **Phase 4 (idle progression formula):** The production formula (crops grow offline, animals produce while away) needs calibration against the XP budget model. Easy to build, tricky to balance.
-- **Phase 4 (Skia adoption decision):** If animal animations or farm tile rendering requires Skia, the New Architecture requirement must be verified before the phase begins. Cannot be determined from research alone.
+Phases nécessitant une recherche approfondie pendant la planification :
+- **Phase 4 (optionnel) :** Si spotlight SVG retenu pour v1.2, spike de validation Reanimated 4 worklet thread requis — le pattern est documenté mais absent du codebase
 
-Phases with standard patterns (skip research-phase):
-- **Phase 1 (testing setup):** jest-expo + RNTL is fully documented. Configuration is well-known. No research needed.
-- **Phase 2 (color tokens):** Mechanical find-and-replace guided by the classify-first rule. Standard React Native theming work.
-- **Phase 5 (domain extraction):** The extraction pattern is fully specified in ARCHITECTURE.md with code examples. One domain at a time, no surprises.
+Phases avec patterns standards (pas de recherche-phase nécessaire) :
+- **Phase 1 :** Parser patterns directement lus dans `lib/parser.ts` et `lib/types.ts`
+- **Phase 2 :** Import direct depuis engine constants, zero dépendance externe
+- **Phase 3 :** Tous les composants UI existent, pattern modal documenté dans `BuildingDetailSheet.tsx`
+
+---
+
+## Open Questions pour le Développeur
+
+Ces questions doivent être résolues avant ou pendant la rédaction des specs de phase.
+
+**Q1 — Stockage préférences (bloquant Phase 1 spec) :**
+Option A (flat keys dans le bloc profil de `famille.md`, pattern `farm_crops`) ou Option B (fichier dédié `05 - Famille/Préférences alimentaires.md`, pattern `Souhaits.md`) ? PITFALLS penche vers A. ARCHITECTURE penche vers B. Décidez avant de toucher à `lib/parser.ts`.
+
+**Q2 — Tutorial seen-flag : profil ou device ? (bloquant Phase 4 spec) :**
+Chaque profil famille doit-il avoir sa propre expérience "premier lancement" ferme, ou un seul vu par device suffit ? Si profil-scoped, `HelpContext` doit être étendu avec `markProfileScreenSeen(profileId, screenId)` avant la Phase 4.
+
+**Q3 — Consolidation `HealthRecord.allergies` (non bloquant v1.2) :**
+Laisser la duplication documentée pour v1.2 ou consolider maintenant ? La consolidation touche au parser santé et dépasse le scope du milestone — recommandé de déférer, mais confirmez.
+
+**Q4 — Invités : section dans le fichier préférences ou fichier vault séparé ? (lié à Q1) :**
+ARCHITECTURE.md propose `## Invités` dans le fichier préférences. FEATURES.md mentionne `04 - Personnes/invites.md`. Une fois Q1 arbitrée, confirmez si les invités vivent dans le même fichier que les préférences ou dans un fichier séparé.
+
+**Q5 — Spotlight overlay : v1.2 ou v1.3 ? (scope MVP tutoriel) :**
+Le MVP tutoriel sans spotlight (bulles de dialogue avec flèches) est livrable et plus sûr pour tree.tsx. Le spotlight via `react-native-svg` est MEDIUM complexity avec risque perf documenté. Voulez-vous le spotlight en v1.2 (avec validation frame rate obligatoire) ou le déférer à v1.3 ?
+
+---
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH (testing), MEDIUM (Skia) | jest-expo + RNTL from official Expo docs. Skia SDK 54 compatibility confirmed in principle but specific version unverified. |
-| Features | MEDIUM-HIGH | Stabilization features from direct codebase audit (HIGH). Gamification differentiators from product analysis + peer-reviewed engagement research (MEDIUM). |
-| Architecture | HIGH | Based on direct codebase inspection + established React patterns. Domain hook extraction pattern already demonstrated by `useGamification.ts` and `useFarm.ts`. |
-| Pitfalls | HIGH (data/write pitfalls), MEDIUM (engagement pitfalls) | iCloud write race conditions from peer-reviewed arXiv source. Streak anxiety from peer-reviewed PMC source. |
+| Stack | HIGH | Codebase lu directement ; dépendances vérifiées via npm registry et GitHub issues |
+| Features | MEDIUM | Patterns écosystème (Yummly, jeux mobiles) + analyse codebase directe ; scope invités légèrement incertain |
+| Architecture | HIGH | Basé sur lecture directe de `useVault.ts`, `lib/parser.ts`, `lib/types.ts`, `HelpContext.tsx`, `tree.tsx` |
+| Pitfalls | HIGH | Audit direct du codebase + `CONCERNS.md` + patterns RN/Expo connus ; crash OOM tree.tsx documenté dans git |
 
-**Overall confidence:** HIGH for the stabilization track, MEDIUM-HIGH for gamification enrichment ordering.
+**Overall confidence : HIGH**
 
-### Gaps to Address
+### Gaps résiduels
 
-- **Skia adoption gate:** Before any Skia-dependent feature is planned, verify `newArchEnabled: true` in `app.json`. If New Architecture is not enabled, Skia is blocked entirely. Resolve in Phase 4 planning.
-- **Write queue API shape:** The per-file async mutex approach is specified at the concept level but not implemented. The exact API needs a spike (2-4 hours) before Phase 3 planning locks the implementation details.
-- **XP budget calibration:** No existing data on average daily XP earned by current TestFlight users. Before Phase 3, run the existing gamification engine against a simulated "average family day" to establish the baseline. This informs both streak bonuses and all Phase 4 reward values.
-- **`expo-document-picker` patch viability:** The `patches/expo-document-picker+14.0.8.patch` is version-pinned. Any Expo upgrade path in Phase 5 must check whether the patch was upstreamed before bumping the dependency.
-- **SHA-256 PIN salt:** `contexts/AuthContext.tsx` uses a fixed salt. Low urgency for current family-only distribution, but must be resolved before any scope expansion. Flag for Phase 5 or a dedicated security pass.
+- **Matching allergen/ingredient en Cooklang :** Le matching textuel (`keywords[]` normalisé vs nom ingrédient) aura des faux négatifs pour noms composés ou orthographes créatives. Acceptable pour v1.2 — documenter comme limitation connue dans la spec Phase 1.
+- **Perf codex sur anciens iPhones :** Le `FlatList` avec `windowSize={5}` est la mitigation recommandée mais n'a pas été benchmarké sur le device TestFlight cible. Valider en Phase 3.
+- **SVG spotlight worklet thread (Reanimated 4) :** Classé MEDIUM confidence dans STACK.md. Pattern absent du codebase actuel. Spike de validation recommandé en début de Phase 4 si spotlight retenu pour v1.2.
+
+---
 
 ## Sources
 
-### Primary (HIGH confidence)
-- [Expo Unit Testing docs](https://docs.expo.dev/develop/unit-testing/) — jest-expo setup, transformIgnorePatterns
-- [Expo Router Testing docs](https://docs.expo.dev/router/reference/testing/) — renderRouter, nav matchers
-- [@testing-library/react-native npm](https://www.npmjs.com/package/@testing-library/react-native) — v13.3.3, React 19 + RN 0.78+ support
-- [React Native Testing Overview](https://reactnative.dev/docs/testing-overview) — testing pyramid rationale
-- [Sentry Expo Integration](https://docs.expo.dev/guides/using-sentry/) — error boundary setup
-- [TypeScript TSConfig Reference](https://www.typescriptlang.org/tsconfig/) — noUncheckedIndexedAccess, exactOptionalPropertyTypes
-- [iCloud OAE Transactional Semantics — arXiv 2602.19433](https://arxiv.org/html/2602.19433) — write race condition root cause
-- [Gamification Anti-Patterns — arXiv 2412.05039](https://arxiv.org/html/2412.05039v1) — streak anxiety, dark patterns
-- [Promoting Health via Gamification (Children) — PMC](https://pmc.ncbi.nlm.nih.gov/articles/PMC10886329/) — family engagement mechanics
-- [Gamification for Family Engagement — PMC systematic review](https://pmc.ncbi.nlm.nih.gov/articles/PMC8460596/) — co-op mechanics outperform individual reward
-- [Mocking Native Calls in Expo Modules — Expo Docs](https://docs.expo.dev/modules/mocking/) — auto-mock behavior
-- Project-internal: `.planning/codebase/CONCERNS.md` — direct codebase audit
+### Primary (HIGH confidence — lecture directe codebase)
+- `hooks/useVault.ts`, `lib/parser.ts`, `lib/types.ts`, `lib/mascot/types.ts`, `lib/mascot/tech-engine.ts`, `lib/mascot/farm-engine.ts`
+- `contexts/HelpContext.tsx`, `components/help/CoachMark.tsx`, `components/help/ScreenGuide.tsx`
+- `app/(tabs)/tree.tsx`, `app/(tabs)/meals.tsx`, `components/mascot/BuildingDetailSheet.tsx`
+- `.planning/codebase/CONCERNS.md`, `.planning/codebase/ARCHITECTURE.md`, `.planning/STATE.md`
+- EU Regulation 1169/2011 — liste des 14 allergènes majeurs (fixe, réglementaire)
 
-### Secondary (MEDIUM confidence)
-- [Reanimated useFrameCallback docs](https://docs.swmansion.com/react-native-reanimated/docs/2.x/api/hooks/useFrameCallback/) — game loop pattern
-- [React Native Skia Atlas docs](https://shopify.github.io/react-native-skia/docs/shapes/atlas/) — sprite/tile batch rendering
-- [Context API Performance Pitfalls — Steve Kinney](https://stevekinney.com/courses/react-performance/context-api-performance-pitfalls) — re-render avalanche risk
-- [Modularizing React Applications — Martin Fowler](https://martinfowler.com/articles/modularizing-react-apps.html) — domain hook decomposition
-- [Run E2E tests on EAS Workflows — Expo Docs](https://docs.expo.dev/eas/workflows/examples/e2e-tests/) — Maestro integration
-- [Viladia: Cozy Pixel Farm — Google Play](https://play.google.com/store/apps/details?id=com.selvasai.ttrebirth) — idle farm pattern observation
-- [Habitica — Google Play](https://play.google.com/store/apps/details?id=com.habitrpg.android.habitica) — streak mechanic observation
+### Secondary (MEDIUM confidence — sources externes vérifiées)
+- npm registry — `react-native-copilot@3.3.3`, `fuse.js@7.3.0`, `react-native-walkthrough-tooltip@1.6.0`
+- GitHub Issues `mohebifar/react-native-copilot` — #332 (new arch broken), #351 (Expo 54 scroll/position broken), 101 open issues, vérifié 2026-04-07
+- Apple Developer — Onboarding for Games guidelines
+- Nielsen Norman Group — Progressive Disclosure
+- EUFIC — EU 14 allergen list
 
-### Tertiary (LOW confidence)
-- [KiddiKash Best Chore Apps 2025](https://www.kiddikash.com/blog/best-chore-apps-2025) — feature landscape editorial
+### Tertiary (MEDIUM confidence — patterns jeux mobiles)
+- Zigpoll — Mobile game onboarding best practices 2025
+- jontopielski.com — Tutorial design methods
+- Food allergy app UX patterns (foodsconnected.com)
 
 ---
-*Research completed: 2026-03-28*
+*Research completed: 2026-04-07*
 *Ready for roadmap: yes*
+*Agents: STACK (HIGH), FEATURES (MEDIUM), ARCHITECTURE (HIGH), PITFALLS (HIGH)*

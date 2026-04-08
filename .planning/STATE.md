@@ -1,16 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Ferme Enrichie
-status: verifying
-stopped_at: Completed 14-08-PLAN.md
-last_updated: "2026-04-05T09:36:08.314Z"
-last_activity: 2026-04-05
+milestone: v1.2
+milestone_name: Confort & Découverte
+current_phase: 16
+status: Ready to plan
+stopped_at: Completed 15-07-saisie-vocale-PLAN.md
+last_updated: "2026-04-08T04:17:23.043Z"
+last_activity: 2026-04-08
 progress:
-  total_phases: 11
-  completed_phases: 10
-  total_plans: 33
-  completed_plans: 31
+  total_phases: 4
+  completed_phases: 1
+  total_plans: 7
+  completed_plans: 7
   percent: 0
 ---
 
@@ -18,25 +19,29 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-28)
+See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 14 — Parité Mobile Desktop
+**Current focus:** Phase 15 — pr-f-rences-alimentaires
 
 ## Current Position
 
-Phase: 14
+Phase: 15 (pr-f-rences-alimentaires) — EXECUTING
 Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-05
+Milestone: v1.2 Confort & Découverte (active)
+Current phase: 16
+Last shipped: v1.1 Ferme Enrichie (2026-04-07)
+Last activity: 2026-04-08
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [░░░░░░░░░░] 0% (0/4 phases)
+
+**Global constraint:** ARCH-05 — Aucune nouvelle dépendance npm sur toutes les phases 15-18
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0 (milestone v1.1)
+- Total plans completed: 0 (milestone v1.2)
 - Average duration: -
 - Total execution time: 0 hours
 
@@ -47,6 +52,9 @@ Progress: [░░░░░░░░░░] 0%
 | - | - | - | - |
 
 *Updated after each plan completion*
+
+--- v1.1 history preserved below ---
+
 | Phase 05-visuels-ferme P01 | 2 | 1 tasks | 1 files |
 | Phase 05-visuels-ferme P05-02 | 3 | 2 tasks | 103 files |
 | Phase 05-visuels-ferme P03 | 15 | 3 tasks | 1 files |
@@ -72,6 +80,16 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 14-parite-mobile-desktop P02 | 8min | 2 tasks | 4 files |
 | Phase 14-parite-mobile-desktop P09 | 11min | 2 tasks | 7 files |
 | Phase 14-parite-mobile-desktop PP08 | 5min | 3 tasks | 14 files |
+| Phase 15-quetes-cooperatives-ferme P01 | 45min | 2 tasks | 8 files |
+| Phase 15-quetes-cooperatives-ferme P02 | 30min | 2 tasks | 5 files |
+| Phase 15-quetes-cooperatives-ferme P03 | 8min | 1 tasks | 5 files |
+| Phase 15-pr-f-rences-alimentaires P01 | 2min | 2 tasks | 2 files |
+| Phase 15 P04 | 2min | 1 tasks | 3 files |
+| Phase 15 P03 | 10min | 1 tasks | 2 files |
+| Phase 15-pr-f-rences-alimentaires P02 | 4min | 2 tasks | 3 files |
+| Phase 15-pr-f-rences-alimentaires P05 | 6min | 2 tasks | 7 files |
+| Phase 15 P06 | 4min | 3 tasks | 5 files |
+| Phase 15 P07 | 4min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -79,12 +97,17 @@ Progress: [░░░░░░░░░░] 0%
 
 - Phase 10 added: Compagnon Mascotte — compagnon interactif lié à la gamification, vit dans l'arbre, mascotte de l'app
 - Phase 12 added: Templates onboarding vivants — contenu personnalisé et complet
+- v1.2 roadmap created 2026-04-07: Phases 15-18 (préférences alimentaires, codex contenu, codex UI, tutoriel ferme)
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Init v1.2]: ARCH-05 global — zéro nouvelle dépendance npm sur l'ensemble du milestone v1.2
+- [Init v1.2]: PREF-11 P0 safety — badge allergie non-dismissible implémenté en priorité absolue avant les autres badges
+- [Init v1.2]: Phase 16 (codex contenu) séparée de Phase 17 (codex UI) — valider la précision du contenu en isolation avant toute UI
+- [Init v1.2]: TUTO-02 device-global — flag tutoriel vu persisté globalement par appareil dans SecureStore (pas par profil) via HelpContext.markScreenSeen('farm_tutorial')
 - [Init v1.1]: La ferme est le levier de motivation, pas le produit — chaque feature doit renforcer tâches → XP/récoltes → progression ferme → envie de refaire
 - [Phase 4]: AmbientParticles utilise largeur generique 390 car absoluteFill dans parent de taille connue
 - [Phase 4]: Couleurs dorées (#FFD700) définies dans StyleSheet comme constantes cosmétiques, pas dans useThemeColors()
@@ -146,6 +169,25 @@ Recent decisions affecting current work:
 - [Phase 14-parite-mobile-desktop]: saveSagaProgress/saveEventProgress via localStorage — SecureStore React Native indisponible sur desktop Tauri
 - [Phase 14-parite-mobile-desktop]: CompanionWidget dans /components/companion/ — réutilisable pour Dashboard futur
 - [Phase 14-parite-mobile-desktop]: Hover-to-reveal via CSS opacity (pas JS toggle) — transition 120ms ease, déclenché par :hover sur le parent row/card
+- [Phase 15-01]: contribute() lit le fichier frais depuis vault — evite race conditions quand plusieurs profils progressent en parallele
+- [Phase 15-01]: onQuestProgress optionnel dans useGamification/useFarm/useVaultDefis — backward-compatible, expose via contributeFamilyQuest dans VaultState
+- [Phase 15-quetes-cooperatives-ferme]: primary passe en prop separee de colors — useThemeColors retourne primary et colors comme valeurs distinctes, les composants acceptent les deux
+- [Phase 15-quetes-cooperatives-ferme]: getRewardLabel exporte depuis FamilyQuestBanner et reutilise dans Detail et Picker — une seule source de verite pour les 11 types de recompense
+- [Phase 15-quetes-cooperatives-ferme]: Role gate UI dans tree.tsx (canStartQuest) et non dans FamilyQuestPickerSheet — picker generique, appelant controle l'acces
+- [Phase 15-quetes-cooperatives-ferme]: contribute élargi string (vs FamilyQuestType) pour compatibilité contravariance — aucun impact comportement runtime
+- [Phase 15-quetes-cooperatives-ferme]: questsHook initialisé AVANT defisHook dans useVault.ts pour rendre questsHook.contribute disponible comme onQuestProgress
+- [Phase 15-pr-f-rences-alimentaires]: IDs canoniques stables snake_case dans lib/dietary/catalogs.ts — jamais renommer après livraison pour compatibilité vault
+- [Phase 15-pr-f-rences-alimentaires]: GuestProfile séparé de Profile (sans gamification/role/avatar) — invités sans progression (D-03, PREF-06)
+- [Phase 15-pr-f-rences-alimentaires]: findCatalogForSeverity retourne [] pour 'aversion' — aversions texte libre uniquement, pas de catalogue (D-05)
+- [Phase 15]: PREF-11 P0 SAFETY : pointerEvents='none' + zéro prop dismiss dans AllergenBannerProps — enforcement statique via test TypeScript
+- [Phase 15]: checkAllergens matching substring conservateur — faux positif préféré au faux négatif (PREF-11, ARCH-03)
+- [Phase 15-pr-f-rences-alimentaires]: parseFoodCsv gère CSV et YAML liste natif (Array.isArray) — compatibilité bidirectionnelle Obsidian PREF-05
+- [Phase 15-pr-f-rences-alimentaires]: serializeFamille omet les clés food_* vides — lisibilité vault Obsidian
+- [Phase 15-pr-f-rences-alimentaires]: parseInvites génère IDs via slugifyInviteName (NFD + lowercase + underscore) avec suffixe collision _2/_3
+- [Phase 15-05]: refreshGamification() utilisé comme reloadProfiles dans useVaultDietary — re-lit famille.md et synchro tous les profils React state
+- [Phase 15-05]: ProfileFoodCard : cast getItems via GuestProfile au lieu de Record<string,unknown> pour compatibilité TypeScript stricte
+- [Phase 15]: MealConflictWrapper sous-composant créé pour encapsuler useMemo dans le map() de meals.tsx (hooks interdits dans callbacks)
+- [Phase 15]: PREF-13 extractDietaryConstraints: imports en tête de ai-service.ts + DictaphoneRecorder wrappé dans Modal pageSheet + fallback D-15 via Alert.alert informatif
 
 ### Pending Todos
 
@@ -153,15 +195,14 @@ None yet.
 
 ### Blockers/Concerns
 
-- Phase 6 (bâtiments): La formule de progression idle (ressources/heure) doit être calibrée contre le modèle XP budget de Phase 2. Ne pas finaliser les valeurs avant planning.
-- Phase 8 (tech tree): Vérifier si l'écran arbre existant (app/(tabs)/tree.tsx) peut accueillir la progression ferme ou si un onglet dédié est nécessaire.
+- Phase 18 (tutoriel): Spike de 2h recommandé en début de phase pour valider SVG spotlight + Reanimated 4 worklet thread — pattern absent du codebase actuel. Spotlight confirmé en scope v1.2 (décision utilisateur).
 
 ### Quick Tasks Completed
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260330-t4b | Refonte layout écran ferme Option B | 2026-03-30 | 149d6d1 | [260330-t4b-refonte-layout-cran-ferme-option-b](./quick/260330-t4b-refonte-layout-cran-ferme-option-b/) |
-| 260331-jro | Créer composant PressableScale + appliquer sur DashboardCard | 2026-03-31 | 103da8c | [260331-jro-cr-er-composant-pressablescale-appliquer](./quick/260331-jro-cr-er-composant-pressablescale-appliquer/) |
+| 260331-jro | Créer composant PressableScale + appliquer sur DashboardCard | 2026-03-31 | 103da8c | [260331-jro-cr-er-composant-pressablescale-appliquer/) |
 | 260331-jzy | Ajouter prop tinted sur DashboardCard pour fond subtil coloré par section | 2026-03-31 | 3549bab | [260331-jzy-ajouter-prop-tinted-sur-dashboardcard-po](./quick/260331-jzy-ajouter-prop-tinted-sur-dashboardcard-po/) |
 | 260402-vpb | Refonte catalogue CraftSheet en grille par stade + mini-modal | 2026-04-02 | a802822 | [260402-vpb-refonte-catalogue-recettes-craftsheet-gr](./quick/260402-vpb-refonte-catalogue-recettes-craftsheet-gr/) |
 | 260402-wbr | Refonte bottom panel ecran arbre — 2 cartes Actions + Progression | 2026-04-02 | 8b503a3 | [260402-wbr-refonte-bottom-panel-cran-arbre-option-c](./quick/260402-wbr-refonte-bottom-panel-cran-arbre-option-c/) |
@@ -187,6 +228,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-05T09:27:51.567Z
-Stopped at: Completed 14-08-PLAN.md
+Last session: 2026-04-08T04:12:18.516Z
+Stopped at: Completed 15-07-saisie-vocale-PLAN.md
 Resume file: None

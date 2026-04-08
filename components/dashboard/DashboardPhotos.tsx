@@ -96,22 +96,20 @@ function DashboardPhotosInner(_props: DashboardSectionProps) {
   }));
 
   return (
-    <DashboardCard key="photos" title={t('dashboard.photos.title')} icon="📸" color={colors.catSouvenirs} tinted onPressMore={() => router.push('/(tabs)/photos')}>
-      {photoStatus.map((e) => (
-        <TouchableOpacity
-          key={e.id}
-          style={styles.photoStatusRow}
-          onPress={() => { if (!e.hasPhoto) { pickPhotoForEnfant(e.name); } else { router.push('/(tabs)/photos'); } }}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.photoStatusEmoji}>{e.avatar}</Text>
-          <View style={styles.photoStatusInfo}>
-            <Text style={[styles.photoStatusName, { color: colors.text }]}>{e.name}</Text>
-            {!e.hasPhoto && <Text style={[styles.photoStatusHint, { color: colors.textMuted }]}>{t('dashboard.photos.tapToAdd')}</Text>}
-          </View>
-          <Text style={styles.photoStatusIcon}>{e.hasPhoto ? '✅' : '📷'}</Text>
-        </TouchableOpacity>
-      ))}
+    <DashboardCard key="photos" title={t('dashboard.photos.title')} icon="📸" color={colors.catSouvenirs} tinted onPressMore={() => router.push('/(tabs)/photos')} hideMoreLink style={{ flex: 1, marginBottom: 0 }}>
+      <View style={styles.avatarRow}>
+        {photoStatus.map((e) => (
+          <TouchableOpacity
+            key={e.id}
+            style={styles.avatarItem}
+            onPress={() => { if (!e.hasPhoto) { pickPhotoForEnfant(e.name); } else { router.push('/(tabs)/photos'); } }}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.avatarEmoji}>{e.avatar}</Text>
+            <Text style={styles.avatarStatus}>{e.hasPhoto ? '✅' : '📷'}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
     </DashboardCard>
   );
 }
@@ -119,27 +117,20 @@ function DashboardPhotosInner(_props: DashboardSectionProps) {
 export const DashboardPhotos = React.memo(DashboardPhotosInner);
 
 const styles = StyleSheet.create({
-  photoStatusRow: {
+  avatarRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    justifyContent: 'center',
+  },
+  avatarItem: {
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: 6,
+    gap: 2,
   },
-  photoStatusEmoji: {
-    fontSize: FontSize.title,
+  avatarEmoji: {
+    fontSize: 28,
   },
-  photoStatusInfo: {
-    flex: 1,
-    gap: 1,
-  },
-  photoStatusName: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
-  },
-  photoStatusHint: {
-    fontSize: FontSize.label,
-  },
-  photoStatusIcon: {
-    fontSize: FontSize.title,
+  avatarStatus: {
+    fontSize: FontSize.caption,
   },
 });
