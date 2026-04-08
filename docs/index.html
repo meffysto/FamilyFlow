@@ -743,6 +743,99 @@
       max-width: var(--max-width);
       margin: 0 auto;
     }
+
+    /* ================================================================
+       MOCKUP SCREENS — FamilyFlow app UI
+       ================================================================ */
+    .ms{width:100%;height:100%;background:#EDEAE4;font-family:'DM Sans',-apple-system,sans-serif;display:flex;flex-direction:column;overflow:hidden;color:#1A1A2E;-webkit-font-smoothing:antialiased;}
+    .ms-sb{display:flex;justify-content:space-between;align-items:center;padding:10px 14px 4px;flex-shrink:0;}
+    .ms-sb-t{font-size:11px;font-weight:700;letter-spacing:-.3px;}
+    .ms-sb-r{display:flex;align-items:center;gap:4px;}
+    .ms-hdr{display:flex;align-items:center;gap:8px;padding:2px 12px 8px;flex-shrink:0;}
+    .ms-hdr-c{justify-content:center;}
+    .ms-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#EC4899);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+    .ms-ht{flex:1;}
+    .ms-hg{font-size:9px;color:#6B7280;}
+    .ms-hn{font-size:12px;font-weight:700;color:#7C3AED;}
+    .ms-hb{width:26px;height:26px;border-radius:8px;background:rgba(124,58,237,.08);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+    .ms-hdrtitle{font-size:15px;font-weight:800;color:#1A1A2E;}
+    .ms-scroll{flex:1;overflow:hidden;padding:0 10px;display:flex;flex-direction:column;gap:7px;}
+    .ms-c{background:#fff;border-radius:14px;padding:9px 11px;box-shadow:0 2px 6px rgba(0,0,0,.06);flex-shrink:0;}
+    .ms-ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
+    .ms-ct{font-size:11px;font-weight:700;}
+    .ms-cm{font-size:9px;color:#7C3AED;font-weight:600;}
+    .ms-cbadge{background:#EDE9FE;color:#7C3AED;font-size:8px;font-weight:700;padding:1px 6px;border-radius:99px;}
+    .ms-prog{height:5px;background:#EDE9E3;border-radius:99px;overflow:hidden;margin-bottom:7px;}
+    .ms-pf{height:100%;border-radius:99px;}
+    .ms-task{display:flex;align-items:center;gap:7px;padding:3px 0;}
+    .ms-ck{width:14px;height:14px;border-radius:4px;border:1.5px solid #DDD8D0;flex-shrink:0;background:#fff;}
+    .ms-ck.on{background:#7C3AED;border-color:#7C3AED;display:flex;align-items:center;justify-content:center;}
+    .ms-ck.on::after{content:'✓';color:#fff;font-size:8px;font-weight:800;}
+    .ms-tt{font-size:10px;flex:1;}
+    .ms-tt.d{color:#9CA3AF;text-decoration:line-through;}
+    .ms-tag{font-size:8px;padding:1px 5px;border-radius:99px;font-weight:600;}
+    .ms-tg{background:#D1FAE5;color:#059669;}
+    .ms-to{background:#FEF3C7;color:#D97706;}
+    .ms-tp{background:#EDE9FE;color:#7C3AED;}
+    .ms-met{display:flex;align-items:baseline;gap:2px;}
+    .ms-mn{font-size:26px;font-weight:800;line-height:1;}
+    .ms-ms{font-size:14px;color:#9CA3AF;font-weight:600;}
+    .ms-mt{font-size:18px;font-weight:700;color:#9CA3AF;line-height:1;}
+    .ms-msub{font-size:9px;color:#6B7280;}
+    .ms-meal{display:flex;align-items:center;gap:7px;padding:4px 0;}
+    .ms-meal+.ms-meal{border-top:1px solid #F3F0EB;}
+    .ms-mi{font-size:16px;flex-shrink:0;}
+    .ms-ml{font-size:8px;color:#9CA3AF;font-weight:700;text-transform:uppercase;letter-spacing:.3px;}
+    .ms-mn2{font-size:10px;font-weight:600;color:#1A1A2E;}
+    .ms-xpbar{background:#EDE9E3;border-radius:8px;height:18px;overflow:hidden;position:relative;margin:4px 0;}
+    .ms-xpf{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#7C3AED,#A78BFA);border-radius:8px;}
+    .ms-xpt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.3);}
+    .ms-loot{background:linear-gradient(135deg,#7C3AED,#EC4899);border-radius:12px;padding:8px 11px;display:flex;align-items:center;gap:8px;flex-shrink:0;}
+    .ms-loot-i{font-size:22px;}
+    .ms-loot-t{font-size:10px;font-weight:700;color:#fff;}
+    .ms-loot-s{font-size:8px;color:rgba(255,255,255,.8);}
+    .ms-chips{display:flex;gap:5px;padding:0 10px 6px;flex-shrink:0;}
+    .ms-chip{padding:4px 9px;border-radius:99px;font-size:9px;font-weight:600;border:1px solid;white-space:nowrap;}
+    .ms-ca{background:#EDE9FE;border-color:#7C3AED;color:#7C3AED;}
+    .ms-ci{background:#F9F8F5;border-color:#DDD8D0;color:#6B7280;}
+    .ms-wthr{border-radius:12px;padding:8px 10px;display:flex;align-items:center;gap:8px;flex-shrink:0;margin:0 10px 6px;}
+    .ms-wi{font-size:22px;}
+    .ms-wt{flex:1;}
+    .ms-wtitle{font-size:10px;font-weight:700;}
+    .ms-wsub{font-size:9px;opacity:.8;}
+    .ms-wscore{font-size:13px;font-weight:800;text-align:center;}
+    .ms-cal{display:flex;gap:2px;padding:4px 10px;flex-shrink:0;}
+    .ms-cd{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
+    .ms-cdn{font-size:7px;color:#9CA3AF;font-weight:700;text-transform:uppercase;}
+    .ms-cdd{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#1A1A2E;}
+    .ms-cdd.t{background:#7C3AED;color:#fff;}
+    .ms-cdd.h{background:#EDE9FE;color:#7C3AED;}
+    .ms-dot{width:4px;height:4px;border-radius:50%;background:#A78BFA;}
+    .ms-quick{display:flex;gap:5px;padding:0 10px 4px;flex-shrink:0;}
+    .ms-qb{flex:1;background:#fff;border-radius:10px;padding:5px 2px;display:flex;flex-direction:column;align-items:center;gap:2px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+    .ms-qi{font-size:14px;}
+    .ms-ql{font-size:7px;color:#6B7280;font-weight:600;}
+    .ms-entry{display:flex;align-items:center;gap:8px;padding:6px 0;}
+    .ms-entry+.ms-entry{border-top:1px solid #F3F0EB;}
+    .ms-ei{font-size:18px;flex-shrink:0;}
+    .ms-em{flex:1;}
+    .ms-etitle{font-size:10px;font-weight:600;}
+    .ms-esub{font-size:9px;color:#9CA3AF;}
+    .ms-etime{font-size:9px;color:#6B7280;font-weight:600;white-space:nowrap;}
+    .ms-dayhdr{font-size:10px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+    .ms-today-pill{font-size:7px;background:#7C3AED;color:#fff;padding:1px 5px;border-radius:99px;font-weight:700;}
+    .ms-mealcard{background:#fff;border-radius:13px;padding:8px 10px;box-shadow:0 1px 4px rgba(0,0,0,.05);flex-shrink:0;}
+    .ms-mealcard.tc{border:1.5px solid #7C3AED;box-shadow:0 2px 8px rgba(124,58,237,.12);}
+    .ms-tabnav{display:flex;gap:1px;margin:0 10px 6px;flex-shrink:0;background:#EDE9E3;border-radius:10px;padding:3px;}
+    .ms-tn{flex:1;font-size:9px;font-weight:600;text-align:center;padding:4px;border-radius:8px;color:#6B7280;}
+    .ms-tn.a{background:#fff;color:#7C3AED;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+    .ms-tabs{height:44px;background:#fff;border-top:1px solid #EDE9E3;display:flex;align-items:center;padding:0 4px 2px;flex-shrink:0;}
+    .ms-tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding-top:4px;}
+    .ms-tbi{font-size:16px;}
+    .ms-tbl{font-size:7px;color:#9CA3AF;font-weight:600;}
+    .ms-tab.a .ms-tbl{color:#7C3AED;}
+    .ms-div{height:1px;background:#EDE9E3;margin:2px 0;flex-shrink:0;}
+    .ms-sh{font-size:9px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.5px;padding:0 10px 4px;flex-shrink:0;}
   </style>
 </head>
 <body>
@@ -783,20 +876,212 @@
   <section class="screenshots-section">
     <div class="screenshots-track">
 
+      <!-- ① Dashboard -->
       <div class="phone-frame reveal">
-        <img src="screenshots/01-gerez-toute-la-famille.jpg" alt="G&#233;rez toute la famille" style="width:100%;height:100%;object-fit:cover;display:block;">
+        <div class="ms">
+          <div class="ms-sb">
+            <span class="ms-sb-t">9:41</span>
+            <div class="ms-sb-r">
+              <svg width="13" height="10" viewBox="0 0 13 10" fill="#1A1A2E" opacity=".8"><rect x="0" y="5" width="2" height="5" rx=".5"/><rect x="3.5" y="3.5" width="2" height="6.5" rx=".5"/><rect x="7" y="1.5" width="2" height="8.5" rx=".5"/><rect x="10.5" y="0" width="2" height="10" rx=".5"/></svg>
+              <svg width="14" height="10" viewBox="0 0 14 10" fill="#1A1A2E" opacity=".8"><path d="M7 2.5c2.1 0 4 .9 5.3 2.3l1.1-1.1C11.7 1.8 9.5.8 7 .8S2.3 1.8.6 3.7l1.1 1.1C3 3.4 4.9 2.5 7 2.5zm0 3c1.1 0 2.1.5 2.8 1.2l1.1-1.1C9.9 4.5 8.5 4 7 4S4.1 4.5 3.1 5.6l1.1 1.1C4.9 6 5.9 5.5 7 5.5zm0 3c.6 0 1.1.2 1.5.6L7 11l-1.5-1.9c.4-.4.9-.6 1.5-.6z"/></svg>
+              <svg width="22" height="11" viewBox="0 0 22 11" fill="none" opacity=".8"><rect x=".5" y=".5" width="18" height="10" rx="3.5" stroke="#1A1A2E" stroke-opacity=".35"/><rect x="1.5" y="1.5" width="14" height="8" rx="2.5" fill="#1A1A2E"/><path d="M20.5 3.8v3.4a1.7 1.7 0 0 0 0-3.4z" fill="#1A1A2E" fill-opacity=".4"/></svg>
+            </div>
+          </div>
+          <div class="ms-hdr">
+            <div class="ms-av">🏠</div>
+            <div class="ms-ht"><div class="ms-hg">Bon matin,</div><div class="ms-hn">Lucas</div></div>
+            <div class="ms-hb">🔔</div>
+            <div class="ms-hb">⚙️</div>
+          </div>
+          <div class="ms-scroll">
+            <div class="ms-c">
+              <div class="ms-ch"><span class="ms-ct">🏠 Ménage</span><span class="ms-cm">Voir tout →</span></div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                <div class="ms-met"><span class="ms-mn" style="color:#0D9488;">3</span><span class="ms-ms">/</span><span class="ms-mt">8</span></div>
+                <div style="flex:1;"><div class="ms-msub" style="margin-bottom:4px;">5 restantes</div><div class="ms-prog"><div class="ms-pf" style="width:37%;background:linear-gradient(90deg,#0D9488,#2DD4BF);"></div></div></div>
+              </div>
+              <div class="ms-div"></div>
+              <div class="ms-task"><div class="ms-ck on"></div><span class="ms-tt d">Faire la vaisselle</span><span class="ms-tag ms-tg">+10 ⭐</span></div>
+              <div class="ms-task"><div class="ms-ck"></div><span class="ms-tt">Aspirateur salon</span><span class="ms-tag ms-tg">🏠</span></div>
+              <div class="ms-task"><div class="ms-ck"></div><span class="ms-tt">Lessive blanc</span><span class="ms-tag ms-tg">🏠</span></div>
+            </div>
+            <div class="ms-c">
+              <div class="ms-ch"><span class="ms-ct">🍽️ Repas du jour</span><span class="ms-cm">Modifier →</span></div>
+              <div class="ms-meal"><span class="ms-mi">🥐</span><div><div class="ms-ml">Petit-déjeuner</div><div class="ms-mn2">Granola aux fruits</div></div></div>
+              <div class="ms-meal"><span class="ms-mi">🍽️</span><div><div class="ms-ml">Déjeuner</div><div class="ms-mn2">Poulet rôti 📖</div></div></div>
+              <div class="ms-meal"><span class="ms-mi">🌙</span><div><div class="ms-ml">Dîner</div><div class="ms-mn2">Pasta carbonara 📖</div></div></div>
+            </div>
+            <div class="ms-c">
+              <div class="ms-ch"><span class="ms-ct">🛒 Courses</span><span class="ms-cbadge">4 articles</span></div>
+              <div class="ms-task"><div class="ms-ck"></div><span class="ms-tt">Tomates cerises</span><span class="ms-tag ms-to">Légumes</span></div>
+              <div class="ms-task"><div class="ms-ck"></div><span class="ms-tt">Lait entier ×2</span><span class="ms-tag ms-to">Épicerie</span></div>
+            </div>
+          </div>
+          <div class="ms-tabs">
+            <div class="ms-tab a"><span class="ms-tbi">🏠</span><span class="ms-tbl" style="color:#7C3AED;">Accueil</span></div>
+            <div class="ms-tab"><span class="ms-tbi">📋</span><span class="ms-tbl">Tâches</span></div>
+            <div class="ms-tab"><span class="ms-tbi">🍽️</span><span class="ms-tbl">Repas</span></div>
+            <div class="ms-tab"><span class="ms-tbi">👶</span><span class="ms-tbl">Bébé</span></div>
+            <div class="ms-tab"><span class="ms-tbi">···</span><span class="ms-tbl">Plus</span></div>
+          </div>
+        </div>
       </div>
 
+      <!-- ② Tâches + Gamification -->
       <div class="phone-frame reveal delay-1">
-        <img src="screenshots/02-transformez-corvees.jpg" alt="Transformez les corv&#233;es en jeu" style="width:100%;height:100%;object-fit:cover;display:block;">
+        <div class="ms">
+          <div class="ms-sb">
+            <span class="ms-sb-t">9:41</span>
+            <div class="ms-sb-r">
+              <svg width="13" height="10" viewBox="0 0 13 10" fill="#1A1A2E" opacity=".8"><rect x="0" y="5" width="2" height="5" rx=".5"/><rect x="3.5" y="3.5" width="2" height="6.5" rx=".5"/><rect x="7" y="1.5" width="2" height="8.5" rx=".5"/><rect x="10.5" y="0" width="2" height="10" rx=".5"/></svg>
+              <svg width="14" height="10" viewBox="0 0 14 10" fill="#1A1A2E" opacity=".8"><path d="M7 2.5c2.1 0 4 .9 5.3 2.3l1.1-1.1C11.7 1.8 9.5.8 7 .8S2.3 1.8.6 3.7l1.1 1.1C3 3.4 4.9 2.5 7 2.5zm0 3c1.1 0 2.1.5 2.8 1.2l1.1-1.1C9.9 4.5 8.5 4 7 4S4.1 4.5 3.1 5.6l1.1 1.1C4.9 6 5.9 5.5 7 5.5zm0 3c.6 0 1.1.2 1.5.6L7 11l-1.5-1.9c.4-.4.9-.6 1.5-.6z"/></svg>
+              <svg width="22" height="11" viewBox="0 0 22 11" fill="none" opacity=".8"><rect x=".5" y=".5" width="18" height="10" rx="3.5" stroke="#1A1A2E" stroke-opacity=".35"/><rect x="1.5" y="1.5" width="14" height="8" rx="2.5" fill="#1A1A2E"/><path d="M20.5 3.8v3.4a1.7 1.7 0 0 0 0-3.4z" fill="#1A1A2E" fill-opacity=".4"/></svg>
+            </div>
+          </div>
+          <div class="ms-hdr ms-hdr-c"><span class="ms-hdrtitle">Tâches</span></div>
+          <div style="margin:0 10px 6px;flex-shrink:0;">
+            <div class="ms-c" style="padding:8px 11px;">
+              <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;">
+                <div class="ms-av" style="width:24px;height:24px;font-size:12px;">👤</div>
+                <div style="flex:1;font-size:9px;color:#6B7280;">Lucas &nbsp;·&nbsp; <strong style="color:#7C3AED;">Niveau 5</strong> &nbsp;·&nbsp; ⭐ Classique</div>
+                <span style="font-size:10px;">🎁</span><span style="font-size:9px;font-weight:700;color:#EC4899;">×1</span>
+              </div>
+              <div class="ms-xpbar"><div class="ms-xpf" style="width:60%;"></div><div class="ms-xpt">120 / 200 XP</div></div>
+            </div>
+          </div>
+          <div class="ms-wthr" style="background:#FEF3C7;color:#92400E;">
+            <span class="ms-wi">⛅</span>
+            <div class="ms-wt"><div class="ms-wtitle">Bien parti !</div><div class="ms-wsub">Continue comme ça</div></div>
+            <div><div class="ms-wscore">3/8</div><div style="font-size:7px;opacity:.7;text-align:center;">tâches</div></div>
+          </div>
+          <div class="ms-chips">
+            <div class="ms-chip ms-ca">📋 Tous</div>
+            <div class="ms-chip ms-ci">🏠 Maison</div>
+            <div class="ms-chip ms-ci">👧 Emma</div>
+          </div>
+          <div class="ms-sh">Aujourd'hui</div>
+          <div class="ms-scroll">
+            <div class="ms-c">
+              <div class="ms-task"><div class="ms-ck on"></div><span class="ms-tt d">Faire la vaisselle</span></div>
+              <div class="ms-task"><div class="ms-ck on"></div><span class="ms-tt d">Sortir les poubelles</span></div>
+              <div class="ms-task"><div class="ms-ck on"></div><span class="ms-tt d">Préparer le déjeuner</span></div>
+              <div class="ms-div"></div>
+              <div class="ms-task"><div class="ms-ck"></div><span class="ms-tt">Aspirateur salon</span><span class="ms-tag ms-tg">🏠</span></div>
+              <div class="ms-task"><div class="ms-ck"></div><span class="ms-tt">Lessive blanc</span><span class="ms-tag ms-tg">🏠</span></div>
+              <div class="ms-task"><div class="ms-ck"></div><span class="ms-tt">Ranger le garage</span><span class="ms-tag ms-tg">🏠</span></div>
+            </div>
+            <div class="ms-loot">
+              <span class="ms-loot-i">🎁</span>
+              <div class="ms-wt"><div class="ms-loot-t">Loot box disponible !</div><div class="ms-loot-s">Encore 80 XP pour la prochaine</div></div>
+              <span style="font-size:18px;color:rgba(255,255,255,.6);">›</span>
+            </div>
+          </div>
+          <div class="ms-tabs">
+            <div class="ms-tab"><span class="ms-tbi">🏠</span><span class="ms-tbl">Accueil</span></div>
+            <div class="ms-tab a"><span class="ms-tbi">📋</span><span class="ms-tbl" style="color:#7C3AED;">Tâches</span></div>
+            <div class="ms-tab"><span class="ms-tbi">🍽️</span><span class="ms-tbl">Repas</span></div>
+            <div class="ms-tab"><span class="ms-tbi">👶</span><span class="ms-tbl">Bébé</span></div>
+            <div class="ms-tab"><span class="ms-tbi">···</span><span class="ms-tbl">Plus</span></div>
+          </div>
+        </div>
       </div>
 
+      <!-- ③ Journal bébé -->
       <div class="phone-frame reveal delay-2">
-        <img src="screenshots/03-suivez-bebe.jpg" alt="Suivez b&#233;b&#233; au quotidien" style="width:100%;height:100%;object-fit:cover;display:block;">
+        <div class="ms">
+          <div class="ms-sb">
+            <span class="ms-sb-t">9:41</span>
+            <div class="ms-sb-r">
+              <svg width="13" height="10" viewBox="0 0 13 10" fill="#1A1A2E" opacity=".8"><rect x="0" y="5" width="2" height="5" rx=".5"/><rect x="3.5" y="3.5" width="2" height="6.5" rx=".5"/><rect x="7" y="1.5" width="2" height="8.5" rx=".5"/><rect x="10.5" y="0" width="2" height="10" rx=".5"/></svg>
+              <svg width="14" height="10" viewBox="0 0 14 10" fill="#1A1A2E" opacity=".8"><path d="M7 2.5c2.1 0 4 .9 5.3 2.3l1.1-1.1C11.7 1.8 9.5.8 7 .8S2.3 1.8.6 3.7l1.1 1.1C3 3.4 4.9 2.5 7 2.5zm0 3c1.1 0 2.1.5 2.8 1.2l1.1-1.1C9.9 4.5 8.5 4 7 4S4.1 4.5 3.1 5.6l1.1 1.1C4.9 6 5.9 5.5 7 5.5zm0 3c.6 0 1.1.2 1.5.6L7 11l-1.5-1.9c.4-.4.9-.6 1.5-.6z"/></svg>
+              <svg width="22" height="11" viewBox="0 0 22 11" fill="none" opacity=".8"><rect x=".5" y=".5" width="18" height="10" rx="3.5" stroke="#1A1A2E" stroke-opacity=".35"/><rect x="1.5" y="1.5" width="14" height="8" rx="2.5" fill="#1A1A2E"/><path d="M20.5 3.8v3.4a1.7 1.7 0 0 0 0-3.4z" fill="#1A1A2E" fill-opacity=".4"/></svg>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 14px 6px;flex-shrink:0;">
+            <span style="font-size:16px;color:#9CA3AF;font-weight:300;">‹</span>
+            <div style="text-align:center;"><div style="font-size:12px;font-weight:800;color:#1A1A2E;">Mar. 8 avril</div><div style="font-size:9px;color:#9CA3AF;margin-top:1px;">Noémie · 4 mois</div></div>
+            <span style="font-size:16px;color:#9CA3AF;font-weight:300;">›</span>
+          </div>
+          <div class="ms-cal">
+            <div class="ms-cd"><div class="ms-cdn">L</div><div class="ms-cdd h">5</div><div class="ms-dot"></div></div>
+            <div class="ms-cd"><div class="ms-cdn">M</div><div class="ms-cdd h">6</div><div class="ms-dot"></div></div>
+            <div class="ms-cd"><div class="ms-cdn">M</div><div class="ms-cdd h">7</div><div class="ms-dot"></div></div>
+            <div class="ms-cd"><div class="ms-cdn">J</div><div class="ms-cdd t">8</div><div class="ms-dot" style="background:#7C3AED;"></div></div>
+            <div class="ms-cd"><div class="ms-cdn">V</div><div class="ms-cdd">9</div></div>
+            <div class="ms-cd"><div class="ms-cdn">S</div><div class="ms-cdd">10</div></div>
+            <div class="ms-cd"><div class="ms-cdn">D</div><div class="ms-cdd">11</div></div>
+          </div>
+          <div class="ms-quick">
+            <div class="ms-qb"><span class="ms-qi">🍼</span><span class="ms-ql">Biberon</span></div>
+            <div class="ms-qb"><span class="ms-qi">🚼</span><span class="ms-ql">Couche</span></div>
+            <div class="ms-qb"><span class="ms-qi">😴</span><span class="ms-ql">Sieste</span></div>
+            <div class="ms-qb"><span class="ms-qi">💬</span><span class="ms-ql">Note</span></div>
+            <div class="ms-qb"><span class="ms-qi">💊</span><span class="ms-ql">Médic.</span></div>
+          </div>
+          <div class="ms-sh">Aujourd'hui · 4 entrées</div>
+          <div class="ms-scroll">
+            <div class="ms-c">
+              <div class="ms-entry"><span class="ms-ei">🍼</span><div class="ms-em"><div class="ms-etitle">Biberon</div><div class="ms-esub">120 ml · Formule 1</div></div><span class="ms-etime">07h20</span></div>
+              <div class="ms-entry"><span class="ms-ei">🚼</span><div class="ms-em"><div class="ms-etitle">Couche</div><div class="ms-esub">Mouillée</div></div><span class="ms-etime">08h45</span></div>
+              <div class="ms-entry"><span class="ms-ei">🍼</span><div class="ms-em"><div class="ms-etitle">Biberon</div><div class="ms-esub">150 ml · Formule 1</div></div><span class="ms-etime">09h30</span></div>
+              <div class="ms-entry"><span class="ms-ei">😴</span><div class="ms-em"><div class="ms-etitle">Sieste</div><div class="ms-esub">1h 45min · En cours…</div></div><span class="ms-etime">09h41</span></div>
+            </div>
+          </div>
+          <div class="ms-tabs">
+            <div class="ms-tab"><span class="ms-tbi">🏠</span><span class="ms-tbl">Accueil</span></div>
+            <div class="ms-tab"><span class="ms-tbi">📋</span><span class="ms-tbl">Tâches</span></div>
+            <div class="ms-tab"><span class="ms-tbi">🍽️</span><span class="ms-tbl">Repas</span></div>
+            <div class="ms-tab a"><span class="ms-tbi">👶</span><span class="ms-tbl" style="color:#7C3AED;">Bébé</span></div>
+            <div class="ms-tab"><span class="ms-tbi">···</span><span class="ms-tbl">Plus</span></div>
+          </div>
+        </div>
       </div>
 
+      <!-- ④ Planning repas -->
       <div class="phone-frame reveal delay-3">
-        <img src="screenshots/04-planifiez-repas.jpg" alt="Planifiez vos repas" style="width:100%;height:100%;object-fit:cover;display:block;">
+        <div class="ms">
+          <div class="ms-sb">
+            <span class="ms-sb-t">9:41</span>
+            <div class="ms-sb-r">
+              <svg width="13" height="10" viewBox="0 0 13 10" fill="#1A1A2E" opacity=".8"><rect x="0" y="5" width="2" height="5" rx=".5"/><rect x="3.5" y="3.5" width="2" height="6.5" rx=".5"/><rect x="7" y="1.5" width="2" height="8.5" rx=".5"/><rect x="10.5" y="0" width="2" height="10" rx=".5"/></svg>
+              <svg width="14" height="10" viewBox="0 0 14 10" fill="#1A1A2E" opacity=".8"><path d="M7 2.5c2.1 0 4 .9 5.3 2.3l1.1-1.1C11.7 1.8 9.5.8 7 .8S2.3 1.8.6 3.7l1.1 1.1C3 3.4 4.9 2.5 7 2.5zm0 3c1.1 0 2.1.5 2.8 1.2l1.1-1.1C9.9 4.5 8.5 4 7 4S4.1 4.5 3.1 5.6l1.1 1.1C4.9 6 5.9 5.5 7 5.5zm0 3c.6 0 1.1.2 1.5.6L7 11l-1.5-1.9c.4-.4.9-.6 1.5-.6z"/></svg>
+              <svg width="22" height="11" viewBox="0 0 22 11" fill="none" opacity=".8"><rect x=".5" y=".5" width="18" height="10" rx="3.5" stroke="#1A1A2E" stroke-opacity=".35"/><rect x="1.5" y="1.5" width="14" height="8" rx="2.5" fill="#1A1A2E"/><path d="M20.5 3.8v3.4a1.7 1.7 0 0 0 0-3.4z" fill="#1A1A2E" fill-opacity=".4"/></svg>
+            </div>
+          </div>
+          <div class="ms-hdr ms-hdr-c"><span class="ms-hdrtitle">Repas</span></div>
+          <div class="ms-tabnav">
+            <div class="ms-tn a">Semaine</div>
+            <div class="ms-tn">Courses</div>
+            <div class="ms-tn">Recettes</div>
+          </div>
+          <div class="ms-scroll">
+            <div class="ms-mealcard tc">
+              <div class="ms-dayhdr">Mardi 8 avril <span class="ms-today-pill">Aujourd'hui</span></div>
+              <div class="ms-meal"><span class="ms-mi">🥐</span><div><div class="ms-ml">Petit-déj</div><div class="ms-mn2">Granola aux fruits</div></div></div>
+              <div class="ms-meal"><span class="ms-mi">🍽️</span><div><div class="ms-ml">Déjeuner</div><div class="ms-mn2">Poulet rôti 📖</div></div></div>
+              <div class="ms-meal"><span class="ms-mi">🌙</span><div><div class="ms-ml">Dîner</div><div class="ms-mn2">Pasta carbonara 📖</div></div></div>
+            </div>
+            <div class="ms-mealcard">
+              <div class="ms-dayhdr">Mercredi 9 avril</div>
+              <div class="ms-meal"><span class="ms-mi">🥐</span><div><div class="ms-ml">Petit-déj</div><div class="ms-mn2">Tartines beurre</div></div></div>
+              <div class="ms-meal"><span class="ms-mi">🍽️</span><div><div class="ms-ml">Déjeuner</div><div class="ms-mn2">Salade niçoise 📖</div></div></div>
+              <div class="ms-meal"><span class="ms-mi">🌙</span><div><div class="ms-ml">Dîner</div><div class="ms-mn2" style="color:#9CA3AF;">Non planifié…</div></div></div>
+            </div>
+            <div class="ms-mealcard">
+              <div class="ms-dayhdr">Jeudi 10 avril</div>
+              <div class="ms-meal"><span class="ms-mi">🥐</span><div><div class="ms-ml">Petit-déj</div><div class="ms-mn2">Yaourt granola</div></div></div>
+              <div class="ms-meal"><span class="ms-mi">🍽️</span><div><div class="ms-ml">Déjeuner</div><div class="ms-mn2">Risotto parmesan 📖</div></div></div>
+              <div class="ms-meal"><span class="ms-mi">🌙</span><div><div class="ms-ml">Dîner</div><div class="ms-mn2">Pizza maison</div></div></div>
+            </div>
+          </div>
+          <div class="ms-tabs">
+            <div class="ms-tab"><span class="ms-tbi">🏠</span><span class="ms-tbl">Accueil</span></div>
+            <div class="ms-tab"><span class="ms-tbi">📋</span><span class="ms-tbl">Tâches</span></div>
+            <div class="ms-tab a"><span class="ms-tbi">🍽️</span><span class="ms-tbl" style="color:#7C3AED;">Repas</span></div>
+            <div class="ms-tab"><span class="ms-tbi">👶</span><span class="ms-tbl">Bébé</span></div>
+            <div class="ms-tab"><span class="ms-tbi">···</span><span class="ms-tbl">Plus</span></div>
+          </div>
+        </div>
       </div>
 
     </div>
