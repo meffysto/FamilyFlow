@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Confort & Découverte
 current_phase: 16
-status: Ready to plan
-stopped_at: Phase 16 context gathered
-last_updated: "2026-04-08T07:08:44.580Z"
+status: Ready to execute
+stopped_at: Completed 16-codex-contenu/16-01-PLAN.md
+last_updated: "2026-04-08T08:02:55.787Z"
 last_activity: 2026-04-08
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 12
+  completed_plans: 8
   percent: 0
 ---
 
@@ -22,12 +22,12 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 15 — pr-f-rences-alimentaires
+**Current focus:** Phase 16 — codex-contenu
 
 ## Current Position
 
-Phase: 15 (pr-f-rences-alimentaires) — EXECUTING
-Plan: Not started
+Phase: 16 (codex-contenu) — EXECUTING
+Plan: 2 of 5
 Milestone: v1.2 Confort & Découverte (active)
 Current phase: 16
 Last shipped: v1.1 Ferme Enrichie (2026-04-07)
@@ -90,6 +90,7 @@ Progress: [░░░░░░░░░░] 0% (0/4 phases)
 | Phase 15-pr-f-rences-alimentaires P05 | 6min | 2 tasks | 7 files |
 | Phase 15 P06 | 4min | 3 tasks | 5 files |
 | Phase 15 P07 | 4min | 3 tasks | 4 files |
+| Phase 16-codex-contenu P01 | 8min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -188,6 +189,8 @@ Recent decisions affecting current work:
 - [Phase 15-05]: ProfileFoodCard : cast getItems via GuestProfile au lieu de Record<string,unknown> pour compatibilité TypeScript stricte
 - [Phase 15]: MealConflictWrapper sous-composant créé pour encapsuler useMemo dans le map() de meals.tsx (hooks interdits dans callbacks)
 - [Phase 15]: PREF-13 extractDietaryConstraints: imports en tête de ai-service.ts + DictaphoneRecorder wrappé dans Modal pageSheet + fallback D-15 via Alert.alert informatif
+- [Phase 16-codex-contenu]: [Phase 16-01]: CompanionSpeciesCatalog matching via String(c.id) pour neutraliser le typage littéral
+- [Phase 16-codex-contenu]: [Phase 16-01]: CraftRecipe importé depuis lib/mascot/types directement (source) plutôt que craft-engine (re-export)
 
 ### Pending Todos
 
@@ -228,6 +231,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-08T07:08:44.577Z
-Stopped at: Phase 16 context gathered
-Resume file: .planning/phases/16-codex-contenu/16-CONTEXT.md
+Last session: 2026-04-08T08:02:55.784Z
+Stopped at: Completed 16-codex-contenu/16-01-PLAN.md
+Resume file: None

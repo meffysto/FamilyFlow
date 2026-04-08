@@ -53,7 +53,7 @@
   3. La mécanique "pluies dorées" est documentée avec le taux de déclenchement exact et la liste des drops possibles, tels que définis dans les constantes engine
   4. Les entrées `dropOnly` (orchidée, rose dorée, truffe, fruit du dragon) sont marquées avec le flag approprié permettant à l'UI de Phase 17 d'afficher "???" selon l'inventaire du profil
 **Plans**: 5 plans
-- [ ] 16-01-fondations-types-i18n-PLAN.md — Types CodexEntry, helpers stats getters, squelette i18n FR+EN et namespace codex câblé
+- [x] 16-01-fondations-types-i18n-PLAN.md — Types CodexEntry, helpers stats getters, squelette i18n FR+EN et namespace codex câblé
 - [ ] 16-02-cultures-animaux-loot-PLAN.md — 15 crops + ~18 inhabitants + 8 loot entries avec lore bilingue (CODEX-04, CODEX-05)
 - [ ] 16-03-batiments-craft-tech-companions-PLAN.md — 4 buildings + 24 craft + 10 tech + 5 companions avec lore bilingue
 - [ ] 16-04-sagas-quetes-seasonal-PLAN.md — 4 sagas + 15 quests + 8 seasonal events avec lore bilingue
@@ -90,7 +90,7 @@
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 15. Préférences alimentaires | v1.2 | 7/7 | Complete    | 2026-04-08 |
-| 16. Codex contenu | v1.2 | 0/? | Not started | - |
+| 16. Codex contenu | v1.2 | 1/5 | In Progress|  |
 | 17. Codex UI | v1.2 | 0/? | Not started | - |
 | 18. Tutoriel ferme | v1.2 | 0/? | Not started | - |
 
