@@ -38,7 +38,7 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 ### Active
 
 - [ ] Mémoire des préférences alimentaires de la famille et invités
-- [ ] Codex / wiki ferme consultable pour comprendre les mécaniques
+- [~] Codex / wiki ferme — contenu agrégé en Phase 16 (110 entrées, 10 catégories, FR+EN, 220 tests intégrité). UI à livrer en Phase 17
 - [ ] Tutoriel ferme immersif au premier lancement
 - [ ] (Backlog) Nettoyage code mort et fonctions dépréciées
 - [ ] (Backlog) Refacto progressive du god hook useVault (3400 lignes → hooks domaine)
@@ -109,4 +109,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-07 — Milestone v1.1 shipped, v1.2 Confort & Découverte démarré*
+*Last updated: 2026-04-08 — Phase 16 (codex contenu) complete : 110 entrées codex agrégées, prêtes pour l'UI Phase 17*
