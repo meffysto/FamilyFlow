@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Confort & Découverte
-current_phase: 15
-status: Phase complete — ready for verification
+current_phase: 16
+status: Ready to plan
 stopped_at: Completed 15-07-saisie-vocale-PLAN.md
-last_updated: "2026-04-08T04:12:18.519Z"
+last_updated: "2026-04-08T04:17:23.043Z"
 last_activity: 2026-04-08
 progress:
   total_phases: 4
@@ -27,9 +27,9 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 15 (pr-f-rences-alimentaires) — EXECUTING
-Plan: 7 of 7
+Plan: Not started
 Milestone: v1.2 Confort & Découverte (active)
-Current phase: 15
+Current phase: 16
 Last shipped: v1.1 Ferme Enrichie (2026-04-07)
 Last activity: 2026-04-08
 
