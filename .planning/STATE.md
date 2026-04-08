@@ -4,8 +4,8 @@ milestone: v1.2
 milestone_name: Confort & Découverte
 current_phase: 17
 status: Ready to plan
-stopped_at: Completed 16-05-aggregation-validation-PLAN.md
-last_updated: "2026-04-08T08:23:57.138Z"
+stopped_at: Phase 17 context gathered
+last_updated: "2026-04-08T09:16:28.648Z"
 last_activity: 2026-04-08
 progress:
   total_phases: 4
@@ -234,6 +234,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-08T08:19:20.074Z
-Stopped at: Completed 16-05-aggregation-validation-PLAN.md
-Resume file: None
+Last session: 2026-04-08T09:16:28.635Z
+Stopped at: Phase 17 context gathered
+Resume file: .planning/phases/17-codex-ui/17-CONTEXT.md
