@@ -61,7 +61,7 @@ public class VaultAccessModule: Module {
         var isStale = false
         let url = try URL(
           resolvingBookmarkData: bookmarkData,
-          options: .withSecurityScope,
+          options: [],
           relativeTo: nil,
           bookmarkDataIsStale: &isStale
         )
