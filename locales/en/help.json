@@ -112,6 +112,31 @@
       }
     }
   },
+  "farm_tutorial": {
+    "step1": {
+      "title": "Welcome to the farm!",
+      "body": "Here you grow crops, harvest them, and watch your tree thrive. Let me show you the basics."
+    },
+    "step2": {
+      "title": "Plant your first crop",
+      "body": "Tap an empty plot to plant a seed. Each crop has its own growth cycle."
+    },
+    "step3": {
+      "title": "The growth cycle",
+      "body": "Your crops grow over time. When they're ripe, tap them to harvest!"
+    },
+    "step4": {
+      "title": "Harvest and XP gains",
+      "body": "Every harvest rewards coins and XP. Your tree and companion grow with you."
+    },
+    "step5": {
+      "title": "What's next?",
+      "body": "Open the codex 📖 from the button at the top of the farm to discover all crops, animals, buildings and secrets."
+    },
+    "skip": "Skip",
+    "next": "Next",
+    "done": "Let's go!"
+  },
   "guide": {
     "categories": {
       "quotidien": "Daily",

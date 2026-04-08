@@ -112,6 +112,31 @@
       }
     }
   },
+  "farm_tutorial": {
+    "step1": {
+      "title": "Bienvenue à la ferme !",
+      "body": "Ici, tu cultives, récoltes et regardes ton arbre grandir. Laisse-moi te montrer comment ça marche."
+    },
+    "step2": {
+      "title": "Plante ta première culture",
+      "body": "Tape sur une parcelle vide pour planter une graine. Chaque culture a son propre cycle."
+    },
+    "step3": {
+      "title": "Le cycle de croissance",
+      "body": "Tes cultures poussent avec le temps. Quand elles sont mûres, récolte-les d'un tap !"
+    },
+    "step4": {
+      "title": "Récolte et gains XP",
+      "body": "Chaque récolte te donne des pièces et de l'XP. Ton arbre et ta mascotte progressent avec toi."
+    },
+    "step5": {
+      "title": "Et ensuite ?",
+      "body": "Ouvre le codex 📖 depuis le bouton en haut de la ferme pour découvrir toutes les cultures, animaux, bâtiments et secrets."
+    },
+    "skip": "Passer",
+    "next": "Suivant",
+    "done": "C'est parti !"
+  },
   "guide": {
     "categories": {
       "quotidien": "Quotidien",
