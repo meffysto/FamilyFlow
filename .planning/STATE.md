@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Confort & Découverte
 current_phase: 18
-status: Ready to execute
+status: Milestone complete
 stopped_at: Completed 18-04-tree-integration-PLAN.md
-last_updated: "2026-04-08T15:40:42.906Z"
+last_updated: "2026-04-08T15:44:39.637Z"
 last_activity: 2026-04-08
 progress:
   total_phases: 4
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 18 (tutoriel-ferme) — EXECUTING
-Plan: 4 of 4
+Plan: Not started
 Milestone: v1.2 Confort & Découverte (active)
 Current phase: 18
 Last shipped: v1.1 Ferme Enrichie (2026-04-07)
