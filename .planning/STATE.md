@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Confort & Découverte
 current_phase: 17
-status: Ready to plan
-stopped_at: Phase 17 context gathered
-last_updated: "2026-04-08T09:16:28.648Z"
-last_activity: 2026-04-08
+status: Executing Phase 17
+stopped_at: Completed 17-02-i18n-keys-PLAN.md
+last_updated: "2026-04-08T09:41:07.215Z"
+last_activity: 2026-04-08 -- Phase 17 execution started
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 12
-  completed_plans: 12
+  total_plans: 15
+  completed_plans: 13
   percent: 0
 ---
 
@@ -22,16 +22,16 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 16 — codex-contenu
+**Current focus:** Phase 17 — codex-ui
 
 ## Current Position
 
-Phase: 16 (codex-contenu) — EXECUTING
-Plan: Not started
+Phase: 17 (codex-ui) — EXECUTING
+Plan: 1 of 3
 Milestone: v1.2 Confort & Découverte (active)
 Current phase: 17
 Last shipped: v1.1 Ferme Enrichie (2026-04-07)
-Last activity: 2026-04-08
+Last activity: 2026-04-08 -- Phase 17 execution started
 
 Progress: [░░░░░░░░░░] 0% (0/4 phases)
 
@@ -92,6 +92,7 @@ Progress: [░░░░░░░░░░] 0% (0/4 phases)
 | Phase 15 P07 | 4min | 3 tasks | 4 files |
 | Phase 16-codex-contenu P01 | 8min | 3 tasks | 5 files |
 | Phase 16-codex-contenu P05 | 12min | 2 tasks | 2 files |
+| Phase 17-codex-ui P02 | 3min | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -194,6 +195,7 @@ Recent decisions affecting current work:
 - [Phase 16-codex-contenu]: [Phase 16-01]: CraftRecipe importé depuis lib/mascot/types directement (source) plutôt que craft-engine (re-export)
 - [Phase 16-codex-contenu]: CODEX_CONTENT centralisé dans lib/codex/content.ts avec re-exports larges (types/stats/loot) pour import unique côté UI
 - [Phase 16-codex-contenu]: Tests Jest anti-drift via it.each + getters stats garantissent zéro drift entre codex et constantes engine
+- [Phase 17-codex-ui]: [Phase 17-02]: D-16 appliqué — parité FR+EN stricte sur les 17 clés UI codex (modal/search/tabs/detail/card/tutorial), namespace Phase 16 préservé intact
 
 ### Pending Todos
 
@@ -234,6 +236,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-08T09:16:28.635Z
-Stopped at: Phase 17 context gathered
-Resume file: .planning/phases/17-codex-ui/17-CONTEXT.md
+Last session: 2026-04-08T09:41:07.212Z
+Stopped at: Completed 17-02-i18n-keys-PLAN.md
+Resume file: None

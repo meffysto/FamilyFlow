@@ -91,7 +91,7 @@
 |-------|-----------|----------------|--------|-----------|
 | 15. Préférences alimentaires | v1.2 | 7/7 | Complete    | 2026-04-08 |
 | 16. Codex contenu | v1.2 | 5/5 | Complete    | 2026-04-08 |
-| 17. Codex UI | v1.2 | 0/? | Not started | - |
+| 17. Codex UI | v1.2 | 1/3 | In Progress|  |
 | 18. Tutoriel ferme | v1.2 | 0/? | Not started | - |
 
 ## Archived Milestones
