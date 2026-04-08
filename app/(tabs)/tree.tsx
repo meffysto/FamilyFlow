@@ -51,6 +51,7 @@ import { NativePlacementSlots } from '../../components/mascot/NativePlacementSlo
 import { TileMapRenderer, GRASS_TILE_IMAGE } from '../../components/mascot/TileMapRenderer';
 import { BuildingShopSheet } from '../../components/mascot/BuildingShopSheet';
 import { CraftSheet } from '../../components/mascot/CraftSheet';
+import { FarmCodexModal } from '../../components/mascot/FarmCodexModal';
 import { GiftSenderSheet } from '../../components/mascot/GiftSenderSheet';
 import { GiftReceiptModal } from '../../components/mascot/GiftReceiptModal';
 import { TechTreeSheet } from '../../components/mascot/TechTreeSheet';
@@ -330,6 +331,9 @@ export default function TreeScreen() {
 
   // Craft
   const [showCraftSheet, setShowCraftSheet] = useState(false);
+
+  // Codex ferme (Phase 17)
+  const [showCodex, setShowCodex] = useState(false);
 
   // Cadeaux — envoi
   const [giftOffer, setGiftOffer] = useState<{ itemType: string; itemId: string; maxQty: number; itemName: string } | null>(null);
@@ -2044,6 +2048,14 @@ export default function TreeScreen() {
             <Text style={styles.hudEmoji}>{seasonInfo.emoji}</Text>
             <Text style={[styles.hudValue, { color: colors.text }]}>{t(seasonInfo.labelKey)}</Text>
           </View>
+          {/* 5e item HUD : bouton codex ferme (Phase 17, D-12/D-13) */}
+          <TouchableOpacity
+            style={styles.hudItem}
+            onPress={() => { Haptics.selectionAsync(); setShowCodex(true); }}
+            accessibilityLabel={t('codex.modal.title')}
+          >
+            <Text style={styles.hudEmoji}>{'📖'}</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -2105,6 +2117,13 @@ export default function TreeScreen() {
           setGiftOffer({ itemType, itemId, maxQty, itemName });
         }}
         giftHistory={profile?.giftHistory}
+      />
+
+      {/* Codex ferme (Phase 17) — cast vers DiscoverySource (shape minimale) */}
+      <FarmCodexModal
+        visible={showCodex}
+        onClose={() => setShowCodex(false)}
+        profile={(profile ?? null) as any}
       />
 
       {/* Offrir un cadeau — GiftSenderSheet */}
