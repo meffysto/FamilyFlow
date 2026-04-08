@@ -612,6 +612,8 @@ export function useVaultInternal(): VaultState {
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state: AppStateStatus) => {
       if (state === 'active' && vaultRef.current) {
+        // Re-acquire security-scoped access (iOS revokes it on app suspend)
+        restoreAccess().catch(() => {});
         // Delay reload to let pending operations (addPhoto etc.) finish first
         setTimeout(() => {
           if (!busyRef.current && vaultRef.current) {
