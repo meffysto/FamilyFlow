@@ -38,8 +38,8 @@ function hasNestedKey(obj: unknown, dottedPath: string): boolean {
   );
 }
 
-describe('CODEX-01/02 — couverture des 10 catégories', () => {
-  it('contient les 10 CodexKind distincts', () => {
+describe('CODEX-01/02 — couverture des 11 catégories', () => {
+  it('contient les 11 CodexKind distincts', () => {
     const kinds = new Set(CODEX_CONTENT.map((e) => e.kind));
     const expected = [
       'crop',
@@ -52,9 +52,10 @@ describe('CODEX-01/02 — couverture des 10 catégories', () => {
       'seasonal',
       'saga',
       'quest',
+      'adventure',
     ];
     expected.forEach((k) => expect(kinds.has(k as never)).toBe(true));
-    expect(kinds.size).toBe(10);
+    expect(kinds.size).toBe(11);
   });
 
   it('contient au moins 100 entrées totales', () => {

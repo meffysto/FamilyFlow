@@ -14,7 +14,8 @@ export type CodexKind =
   | 'loot'
   | 'seasonal'
   | 'saga'
-  | 'quest';
+  | 'quest'
+  | 'adventure';
 
 export interface CodexEntryBase {
   /** Identifiant unique de l'entrée codex (slug stable) */
@@ -77,6 +78,10 @@ export interface QuestEntry extends CodexEntryBase {
   kind: 'quest';
 }
 
+export interface AdventureEntry extends CodexEntryBase {
+  kind: 'adventure';
+}
+
 export type CodexEntry =
   | CropEntry
   | AnimalEntry
@@ -87,4 +92,5 @@ export type CodexEntry =
   | LootEntry
   | SeasonalEntry
   | SagaEntry
-  | QuestEntry;
+  | QuestEntry
+  | AdventureEntry;

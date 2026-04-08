@@ -11,6 +11,7 @@ import { lootEntries } from './loot';
 import { seasonalEntries } from './seasonal';
 import { sagaEntries } from './sagas';
 import { questEntries } from './quests';
+import { adventureEntries } from './adventures';
 
 import type { CodexEntry } from './types';
 
@@ -25,6 +26,7 @@ export const CODEX_CONTENT: CodexEntry[] = [
   ...seasonalEntries,
   ...sagaEntries,
   ...questEntries,
+  ...adventureEntries,
 ];
 
 // Re-exports pour permettre un import unique depuis lib/codex/content
@@ -51,6 +53,7 @@ if (typeof __DEV__ !== 'undefined' && __DEV__) {
     'seasonal',
     'saga',
     'quest',
+    'adventure',
   ];
   const missing = expected.filter((k) => !kinds.has(k));
   if (missing.length > 0) {

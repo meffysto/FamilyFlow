@@ -39,6 +39,7 @@ import {
   getSagaStats,
   getQuestStats,
   getSeasonalStats,
+  getAdventureStats,
 } from '../../lib/codex/stats';
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
@@ -59,6 +60,7 @@ const STAT_WHITELIST: Record<CodexKind, readonly string[]> = {
   seasonal: [],
   saga: [],
   quest: ['type', 'target', 'durationDays'],
+  adventure: [],
 };
 
 interface CodexEntryDetailModalProps {
@@ -155,6 +157,9 @@ export function CodexEntryDetailModal({
         break;
       case 'quest':
         source = getQuestStats(entry) as Record<string, unknown> | undefined;
+        break;
+      case 'adventure':
+        source = getAdventureStats(entry) as Record<string, unknown> | undefined;
         break;
       default: {
         // Exhaustiveness check — erreur TS si un CodexKind est oublié

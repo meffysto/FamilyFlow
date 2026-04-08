@@ -59,6 +59,7 @@ const TAB_ORDER: CodexKind[] = [
   'seasonal',
   'saga',
   'quest',
+  'adventure',
 ];
 
 export function FarmCodexModal({

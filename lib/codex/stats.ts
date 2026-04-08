@@ -23,6 +23,7 @@ import { SAGAS } from '../mascot/sagas-content';
 import type { Saga } from '../mascot/sagas-types';
 import { QUEST_TEMPLATES } from '../../constants/questTemplates';
 import type { FamilyQuestTemplate } from '../quest-engine';
+import { ADVENTURES, type Adventure } from '../mascot/adventures';
 import { SEASONAL_EVENT_DIALOGUES } from '../mascot/seasonal-events-content';
 import type { SeasonalEventContent } from '../mascot/seasonal-events-types';
 
@@ -36,6 +37,7 @@ import type {
   SagaEntry,
   QuestEntry,
   SeasonalEntry,
+  AdventureEntry,
 } from './types';
 
 export function getCropStats(entry: CropEntry): CropDefinition | undefined {
@@ -71,6 +73,10 @@ export function getSagaStats(entry: SagaEntry): Saga | undefined {
 
 export function getQuestStats(entry: QuestEntry): FamilyQuestTemplate | undefined {
   return QUEST_TEMPLATES.find((q) => q.id === entry.sourceId);
+}
+
+export function getAdventureStats(entry: AdventureEntry): Adventure | undefined {
+  return ADVENTURES.find((a) => a.id === entry.sourceId);
 }
 
 export function getSeasonalStats(

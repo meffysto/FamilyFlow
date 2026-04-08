@@ -427,6 +427,68 @@
       "lore": "Complete 30 tasks in 5 days to trigger 24h of magic rain on the farm."
     }
   },
+  "adventure": {
+    "tresor_ecureuil": {
+      "name": "The Squirrel's Treasure",
+      "lore": "A restless squirrel scurries around a tree, frantically scratching the bark. It seems to have hidden something important but can't quite remember where. Should you dig with it or leave it to its mysteries?"
+    },
+    "tempete": {
+      "name": "The Storm",
+      "lore": "The sky suddenly darkens and the first lightning bolts streak the horizon. You must choose between sheltering the farm quickly or letting the rain feed the thirstiest crops. Every option has its price."
+    },
+    "voyageur": {
+      "name": "The Unknown Traveler",
+      "lore": "A weary stranger knocks at the farm's door and asks for shelter for the night. His story is strange, his belongings stranger still. Welcoming him may open a precious friendship or invite trouble."
+    },
+    "lucioles": {
+      "name": "The Dance of Fireflies",
+      "lore": "A swarm of fireflies fills the farm at dusk, drawing almost deliberate patterns in the air. Should you simply admire them or try to capture the moment? Their magic is fragile."
+    },
+    "graine_magique": {
+      "name": "The Magic Seed",
+      "lore": "A strange seed, warm to the touch, appears in a corner of the farm. Planting it could grow a wonder or keeping it as a gift could delight someone. Its potential remains a mystery."
+    },
+    "arc_en_ciel": {
+      "name": "The Rainbow",
+      "lore": "After a brief rain, a dazzling rainbow links the farm to the distance. They say it reveals something to those who truly take the time to look. Painting, legend, or just a fleeting moment?"
+    },
+    "hibou_sage": {
+      "name": "The Wise Owl",
+      "lore": "An old owl perches on the great tree and fixes the family with its round eyes. It seems to want to trade wisdom for comfort. Is its counsel worth a shared biscuit?"
+    },
+    "tresor_pirate": {
+      "name": "The Pirate's Treasure",
+      "lore": "A worn map surfaces from beneath a woodpile, marked with a suspicious cross. Digging there might reveal an old stash or just be a trick of time. Adventure beckons, but the ground is hard."
+    },
+    "fee_egaree": {
+      "name": "The Lost Fairy",
+      "lore": "A tiny fairy has lost her way near the farm and searches for her path in distress. Helping her home may seal a quiet alliance. Her world remains invisible to the inattentive."
+    },
+    "pluie_etoiles": {
+      "name": "The Starfall",
+      "lore": "One night, the sky tears open into a cascade of shooting stars above the farm. Making a wish or gathering the fallen dust — both options taste rare. No one will forget this night."
+    },
+    "papillon_geant": {
+      "name": "The Giant Butterfly",
+      "lore": "A butterfly with oversized wings calmly lands on a crop, as if choosing its stage. Offer it a perch or just photograph it? Its arrival is a sign no one expected."
+    },
+    "concert_oiseaux": {
+      "name": "The Bird Concert",
+      "lore": "One morning, all the birds of the farm synchronize in an almost orchestrated song. Listen in silence or join them in dance — the farm becomes a fleeting stage."
+    },
+    "neige_magique": {
+      "name": "The Magic Snow",
+      "lore": "A luminous snow falls on the farm in the heart of the night, without biting cold. You can shape figures with it or huddle by a fire and watch. A moment suspended in time."
+    },
+    "champignon_dore": {
+      "name": "The Golden Mushroom",
+      "lore": "A mushroom the color of gold grows apart from the others, almost provocatively. Cook it or bring it to a sage? Its effects remain to be discovered and each choice seals its use."
+    },
+    "lettre_mysterieuse": {
+      "name": "The Mysterious Letter",
+      "lore": "An envelope without a sender waits on the farm's wooden table. Open it or leave it sealed to preserve the mystery? The words inside could change everything."
+    }
+  },
   "modal": {
     "title": "Farm codex"
   },
@@ -444,7 +506,8 @@
     "loot": "Loot",
     "seasonal": "Seasonal",
     "saga": "Sagas",
-    "quest": "Quests"
+    "quest": "Quests",
+    "adventure": "Adventures"
   },
   "detail": {
     "lore": "Description",

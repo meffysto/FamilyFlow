@@ -427,6 +427,68 @@
       "lore": "Complétez 30 tâches en 5 jours pour déclencher 24h de pluie magique sur la ferme."
     }
   },
+  "adventure": {
+    "tresor_ecureuil": {
+      "name": "Le Trésor de l'Écureuil",
+      "lore": "Un écureuil agité court autour d'un arbre en grattant frénétiquement l'écorce. Il semble avoir caché quelque chose d'important mais ne se souvient plus exactement où. Vaut-il mieux fouiller avec lui ou le laisser à ses mystères ?"
+    },
+    "tempete": {
+      "name": "La Tempête",
+      "lore": "Le ciel s'assombrit brusquement et les premiers éclairs zèbrent l'horizon. Il faut choisir entre abriter la ferme au plus vite ou laisser la pluie nourrir les cultures les plus assoiffées. Chaque option a son prix."
+    },
+    "voyageur": {
+      "name": "Le Voyageur Inconnu",
+      "lore": "Un inconnu fatigué frappe à la porte de la ferme et demande l'hospitalité pour la nuit. Son histoire est étrange, ses objets encore plus. L'accueillir pourrait ouvrir une amitié précieuse ou attirer des ennuis."
+    },
+    "lucioles": {
+      "name": "La Danse des Lucioles",
+      "lore": "Un essaim de lucioles envahit la ferme à la tombée du jour, dessinant des motifs presque volontaires dans l'air. Faut-il simplement les admirer ou tenter d'en capturer l'instant ? Leur magie est fragile."
+    },
+    "graine_magique": {
+      "name": "La Graine Magique",
+      "lore": "Une graine étrange, chaude au toucher, apparaît dans un recoin de la ferme. La planter pourrait faire pousser une merveille ou la garder en cadeau pourrait faire plaisir à quelqu'un. Son potentiel reste un mystère."
+    },
+    "arc_en_ciel": {
+      "name": "L'Arc-en-Ciel",
+      "lore": "Après une courte pluie, un arc-en-ciel éclatant relie la ferme au lointain. On dit qu'il révèle quelque chose à qui prend le temps de vraiment regarder. Peinture, légende ou simple moment ?"
+    },
+    "hibou_sage": {
+      "name": "Le Hibou Sage",
+      "lore": "Un vieux hibou se pose sur le grand arbre et fixe la famille de ses yeux ronds. Il semble vouloir échanger savoir contre réconfort. Ses conseils valent-ils un biscuit partagé ?"
+    },
+    "tresor_pirate": {
+      "name": "Le Trésor du Pirate",
+      "lore": "Une carte usée émerge de sous une pile de bois, marquée d'une croix suspecte. Creuser là-bas pourrait révéler une ancienne cache ou n'être qu'une farce du temps. L'aventure tente, mais le sol est dur."
+    },
+    "fee_egaree": {
+      "name": "La Fée Égarée",
+      "lore": "Une minuscule fée s'est perdue près de la ferme et cherche son chemin avec angoisse. L'aider à rentrer chez elle peut sceller une alliance discrète. Son monde reste invisible aux distraits."
+    },
+    "pluie_etoiles": {
+      "name": "La Pluie d'Étoiles",
+      "lore": "Une nuit, le ciel se déchire en une cascade d'étoiles filantes au-dessus de la ferme. Formuler un vœu ou récolter les poussières tombées : les deux options ont un goût de rare. Personne n'oubliera cette nuit."
+    },
+    "papillon_geant": {
+      "name": "Le Papillon Géant",
+      "lore": "Un papillon aux ailes démesurées se pose calmement sur une culture, comme s'il choisissait sa scène. Lui offrir un perchoir ou simplement le photographier ? Sa venue est un signe qu'on n'attendait pas."
+    },
+    "concert_oiseaux": {
+      "name": "Le Concert des Oiseaux",
+      "lore": "Un matin, tous les oiseaux de la ferme se synchronisent dans un chant presque orchestré. Les écouter en silence ou se joindre à eux en dansant : la ferme devient une scène éphémère."
+    },
+    "neige_magique": {
+      "name": "La Neige Magique",
+      "lore": "Une neige lumineuse tombe sur la ferme en plein cœur de la nuit, sans froid mordant. On peut en profiter pour construire des figures ou se blottir près d'un feu et contempler. Un moment suspendu."
+    },
+    "champignon_dore": {
+      "name": "Le Champignon Doré",
+      "lore": "Un champignon à la couleur de l'or pousse à l'écart des autres, presque provocant. Le cuisiner ou l'apporter à un sage ? Ses effets restent à découvrir et chaque choix scelle son usage."
+    },
+    "lettre_mysterieuse": {
+      "name": "La Lettre Mystérieuse",
+      "lore": "Une enveloppe sans expéditeur attend sur la table en bois de la ferme. L'ouvrir ou la laisser scellée pour préserver le mystère ? Les mots à l'intérieur pourraient tout changer."
+    }
+  },
   "modal": {
     "title": "Codex de la ferme"
   },
@@ -444,7 +506,8 @@
     "loot": "Butin",
     "seasonal": "Saisonnier",
     "saga": "Sagas",
-    "quest": "Quêtes"
+    "quest": "Quêtes",
+    "adventure": "Aventures"
   },
   "detail": {
     "lore": "Description",
