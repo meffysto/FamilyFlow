@@ -69,7 +69,7 @@ export function BuildingDetailSheet({
   const sprite = BUILDING_SPRITES[building.buildingId]?.[building.level];
 
   const resourceLabel = t(`farm.building.resource.${def.resourceType}`);
-  const resourceEmoji = def.resourceType === 'oeuf' ? '🥚' : def.resourceType === 'lait' ? '🥛' : def.resourceType === 'miel' ? '🍯' : '🌾';
+  const resourceEmoji = def.resourceType === 'oeuf' ? '🥚' : def.resourceType === 'lait' ? '🥛' : def.resourceType === 'miel' ? '🍯' : '🫓';
   const effectiveRateHours = (tier?.productionRateHours ?? 1) * (techBonuses?.productionIntervalMultiplier ?? 1.0);
   const minutesUntilNext = getMinutesUntilNext(building, new Date(), techBonuses);
   const totalMinutes = effectiveRateHours * 60;

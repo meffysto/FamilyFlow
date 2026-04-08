@@ -79,7 +79,7 @@ interface CraftSheetProps {
 const RESOURCE_EMOJI: Record<string, string> = {
   oeuf: '🥚',
   lait: '🥛',
-  farine: '🌾',
+  farine: '🫓',
   miel: '🍯',
 };
 

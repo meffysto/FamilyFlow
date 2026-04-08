@@ -156,6 +156,12 @@ const STAGE_EMOJI: Record<TreeStage, string> = {
   graine: '🌱', pousse: '🌿', arbuste: '🌿', arbre: '🌳', majestueux: '👑', legendaire: '⭐',
 };
 
+/** Cultures au genre féminin (pour accord grammatical "récoltée") */
+const FEMININE_CROPS: ReadonlySet<string> = new Set([
+  'carrot', 'tomato', 'strawberry', 'potato', 'pumpkin', 'beetroot',
+  'orchidee', 'rose_doree', 'truffe',
+]);
+
 /** Sprite idle du visiteur saga pour le portrait dans SagaWorldEvent */
 const VISITOR_IDLE_FRAMES: Record<string, number> = {
   voyageur_argent: require('../../assets/garden/animals/voyageur/idle_1.png'),
@@ -810,7 +816,7 @@ export default function TreeScreen() {
         const def = BUILDING_CATALOG.find(d => d.id === b.buildingId);
         if (!def) continue;
         const key = def.resourceType;
-        const emoji = key === 'oeuf' ? '🥚' : key === 'lait' ? '🥛' : key === 'miel' ? '🍯' : '🌾';
+        const emoji = key === 'oeuf' ? '🥚' : key === 'lait' ? '🥛' : key === 'miel' ? '🍯' : '🫓';
         const label = key === 'oeuf' ? 'Oeufs' : key === 'lait' ? 'Lait' : key === 'miel' ? 'Miel' : 'Farine';
         if (!resourceMap[key]) resourceMap[key] = { emoji, label, qty: 0 };
         resourceMap[key].qty += pending;
@@ -1050,7 +1056,16 @@ export default function TreeScreen() {
           const displayReward = harvestedCropDef?.harvestReward ?? 0;
           setHarvestBurst({ x: burstX, y: burstY, reward: displayReward, cropId: result.cropId });
           const emoji = harvestedCropDef?.emoji ?? '🌾';
-          showToast(`${emoji} ${result.cropId} récolté !`);
+          const cropLabel = harvestedCropDef ? t(harvestedCropDef.labelKey) : result.cropId;
+          const accord = FEMININE_CROPS.has(result.cropId) ? 'récoltée' : 'récolté';
+          const goldenPrefix = result.isGolden ? '✨ ' : '';
+          const finalReward = displayReward * (result.isGolden ? 5 : 1);
+          showToast(
+            `${goldenPrefix}${cropLabel} ${accord} !`,
+            'success',
+            undefined,
+            { icon: emoji, subtitle: `+${finalReward} 🍂${result.isGolden ? ' · Culture dorée !' : ''}` }
+          );
           // Toast spécial graine rare avec délai pour ne pas masquer le toast récolte
           if (result.seedDrop) {
             setTimeout(() => {
@@ -1179,7 +1194,7 @@ export default function TreeScreen() {
       const building = (profiles?.find((p: Profile) => p.id === profile.id)?.farmBuildings ?? [])
         .find((b: PlacedBuilding) => b.cellId === cellId);
       const def = building ? BUILDING_CATALOG.find(d => d.id === building.buildingId) : null;
-      const resourceEmoji = def?.resourceType === 'oeuf' ? '🥚' : def?.resourceType === 'lait' ? '🥛' : '🌾';
+      const resourceEmoji = def?.resourceType === 'oeuf' ? '🥚' : def?.resourceType === 'lait' ? '🥛' : def?.resourceType === 'miel' ? '🍯' : '🫓';
       showToast(`${resourceEmoji} +${collected} ${def?.resourceType ?? ''}`);
       // Fermer la modal — les profiles stale dans la closure ne reflètent pas le refresh
       setShowBuildingDetail(false);

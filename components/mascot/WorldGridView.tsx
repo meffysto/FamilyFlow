@@ -229,7 +229,7 @@ function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, wearEf
 const PENDING_RESOURCE_EMOJI: Record<string, string> = {
   poulailler: '🥚',
   grange: '🥛',
-  moulin: '🌾',
+  moulin: '🫓',
   ruche: '🍯',
 };
 
