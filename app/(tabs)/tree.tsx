@@ -300,12 +300,18 @@ export default function TreeScreen() {
   const { hasSeenScreen, markScreenSeen, isLoaded: helpLoaded, activeFarmTutorialStep } = useHelp();
 
   // Refs cibles pour FarmTutorialOverlay (Phase 18-04)
-  // - plantationRef : zone diorama / WorldGridView (étape 2 plantation)
-  // - harvestRef : même conteneur diorama (étape 3 récolte) — pas de cible plus précise disponible (cellules WorldGridView non ref-ables)
-  // - hudXpRef : premier item HUD (coins) pour étape 4 XP/loot
+  // Phase 18-04 fix : ancres compactes (~96×96) positionnées en absolu sur le diorama
+  // au lieu de pointer sur le wrapper entier (qui faisait SCREEN_W × 60% SCREEN_H → cutout
+  // géant + tooltip positionné off-screen). Cellules WorldGridView non ref-ables (RESEARCH.md Pitfall 3),
+  // donc on utilise des anchors invisibles au centre-gauche (plantation) et centre-droit (harvest).
   const plantationRef = useRef<View>(null);
   const harvestRef = useRef<View>(null);
   const hudXpRef = useRef<View>(null);
+  // Stabiliser l'objet targetRefs pour éviter de re-invalider measureForStep à chaque render de tree.tsx
+  const farmTutorialTargetRefs = useMemo(
+    () => ({ plantation: plantationRef, harvest: harvestRef, hudXp: hudXpRef }),
+    []
+  );
   const showFarmHint = helpLoaded && !hasSeenScreen('farm');
 
   // Profil affiché : celui passé en param ou le profil actif
@@ -1681,12 +1687,7 @@ export default function TreeScreen() {
 
         {/* Arbre principal — diorama saisonnier immersif (full-bleed) */}
         <Animated.View entering={FadeIn.duration(600)} style={styles.treeContainer}>
-          {/* Phase 18-04 : refs cibles tutoriel ferme — plantation + harvest pointent sur le diorama */}
           <View
-            ref={(node) => {
-              plantationRef.current = node;
-              harvestRef.current = node;
-            }}
             style={[
               styles.treeBg,
               {
@@ -1730,6 +1731,31 @@ export default function TreeScreen() {
               onRepairPest={isOwnTree ? handleRepairPest : undefined}
               onRepairFence={isOwnTree ? handleRepairFence : undefined}
               paused={activeFarmTutorialStep !== null}
+            />
+
+            {/* Phase 18-04 fix : anchors invisibles pour FarmTutorialOverlay (étapes 2 plantation / 3 récolte) */}
+            {/* Zones ~96×96 positionnées en bas du diorama où les cultures/bâtiments apparaissent généralement */}
+            <View
+              ref={plantationRef}
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                left: SCREEN_W * 0.25 - 48,
+                bottom: 40,
+                width: 96,
+                height: 96,
+              }}
+            />
+            <View
+              ref={harvestRef}
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                left: SCREEN_W * 0.65 - 48,
+                bottom: 40,
+                width: 96,
+                height: 96,
+              }}
             />
 
             {/* Couche 3.5 : Compagnon mascotte — se balade sur toute la scène */}
@@ -2267,14 +2293,7 @@ export default function TreeScreen() {
       />
 
       {/* Phase 18-04 : tutoriel ferme — overlay au-dessus du HUD, refs cibles pour étapes 2-4 */}
-      <FarmTutorialOverlay
-        profile={profile}
-        targetRefs={{
-          plantation: plantationRef,
-          harvest: harvestRef,
-          hudXp: hudXpRef,
-        }}
-      />
+      <FarmTutorialOverlay profile={profile} targetRefs={farmTutorialTargetRefs} />
     </View>
   );
 }
