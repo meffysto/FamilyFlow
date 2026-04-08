@@ -95,10 +95,9 @@ export function buildFarmMap(treeStage: TreeStage): FarmMapData {
   fillRect(dirt, 6, 9, 10, 9);
 
   // Chemin vers le lac — du chemin central vers la gauche puis vers le bas
-  if (treeStage !== 'graine') {
-    fillRect(dirt, 2, 13, 5, 13); // horizontal vers la gauche
-    fillRect(dirt, 2, 13, 2, 16); // vertical vers le lac
-  }
+  // Phase 18-04 : plus de guard graine, terrain unifié dès le départ
+  fillRect(dirt, 2, 13, 5, 13); // horizontal vers la gauche
+  fillRect(dirt, 2, 13, 2, 16); // vertical vers le lac
 
   // ══════════════════════════════════════════════
   // ZONE BATIMENTS — paves a droite
@@ -107,11 +106,9 @@ export function buildFarmMap(treeStage: TreeStage): FarmMapData {
   fillRect(cobblestone, 11, 7, 12, 16);
 
   // ══════════════════════════════════════════════
-  // LAC — petit etang, en bas a gauche (des pousse)
+  // LAC — petit etang, en bas a gauche (unifié dès graine en phase 18-04)
   // ══════════════════════════════════════════════
-  if (treeStage !== 'graine') {
-    fillRect(water, 0, 16, 3, 19);
-  }
+  fillRect(water, 0, 16, 3, 19);
 
   // Expansion potager — rangee 4 a y=0.32, deja couverte par le farmland principal (rows 0-7)
 

@@ -262,7 +262,7 @@ export interface PlantedCrop {
  * nouvelles parcelles regulieres pour maintenir l'engagement.
  */
 export const PLOTS_BY_TREE_STAGE: Record<TreeStage, number> = {
-  graine:     0,
+  graine:     3,  // Phase 18-04 : unifié avec pousse (pas de différence de gameplay)
   pousse:     3,
   arbuste:    5,
   arbre:      7,
