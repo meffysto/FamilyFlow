@@ -12,7 +12,7 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, Image, StyleSheet, Pressable, Dimensions } from 'react-native';
+import { View, Text, Image, StyleSheet, Pressable, Dimensions, Modal } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -171,47 +171,47 @@ export const FarmTutorialOverlay = React.memo(function FarmTutorialOverlay({
 
   if (currentStep < 0) return null;
 
-  // Étapes narratives plein écran (0 et 4)
-  if (currentStep === 0 || currentStep === 4) {
-    return (
-      <NarrativeCard
-        step={currentStep}
-        colors={themeColors}
-        t={t}
-        onNext={handleNext}
-        onSkip={handleSkip}
-        treeSprite={currentStep === 0 ? resolveTreeSprite(profile) : null}
-      />
-    );
-  }
-
-  // Étapes 1, 2, 3 : coach marks — pas de fallback NarrativeCard (évite double-rendu
-  // "2 tooltips 2/5" entre le premier render et la callback measureInWindow).
-  // On renvoie null le temps que measureInWindow complète (1-2 frames).
-  if (!measuredRect) {
-    return null;
-  }
-
+  // Tout le rendu passe par un Modal pour garantir un contexte de coordonnées au
+  // niveau fenêtre (aligné avec measureInWindow). Sans ce Modal, le parent
+  // tree.tsx est dans un tab navigator — son origine n'est pas (0,0) fenêtre,
+  // et le CoachMarkOverlay absoluteFillObject se retrouve clippé + décalé.
   const stepKey = `help:farm_tutorial.step${currentStep + 1}`;
   return (
-    <>
-      <CoachMarkOverlay
-        targetRect={measuredRect}
-        onPress={handleNext}
-        padding={8}
-        borderRadius={12}
-      />
-      <CoachMark
-        targetRect={measuredRect}
-        title={t(`${stepKey}.title`)}
-        body={t(`${stepKey}.body`)}
-        position="below"
-        step={{ current: currentStep + 1, total: 5 }}
-        onNext={handleNext}
-        onDismiss={handleSkip}
-        buttonLabel={t('help:farm_tutorial.next')}
-      />
-    </>
+    <Modal transparent animationType="none" visible statusBarTranslucent>
+      {/* Étapes narratives plein écran (0 et 4) */}
+      {(currentStep === 0 || currentStep === 4) && (
+        <NarrativeCard
+          step={currentStep}
+          colors={themeColors}
+          t={t}
+          onNext={handleNext}
+          onSkip={handleSkip}
+          treeSprite={currentStep === 0 ? resolveTreeSprite(profile) : null}
+        />
+      )}
+
+      {/* Étapes 1, 2, 3 : coach marks (pas de fallback NarrativeCard) */}
+      {currentStep >= 1 && currentStep <= 3 && measuredRect && (
+        <>
+          <CoachMarkOverlay
+            targetRect={measuredRect}
+            onPress={handleNext}
+            padding={8}
+            borderRadius={12}
+          />
+          <CoachMark
+            targetRect={measuredRect}
+            title={t(`${stepKey}.title`)}
+            body={t(`${stepKey}.body`)}
+            position="below"
+            step={{ current: currentStep + 1, total: 5 }}
+            onNext={handleNext}
+            onDismiss={handleSkip}
+            buttonLabel={t('help:farm_tutorial.next')}
+          />
+        </>
+      )}
+    </Modal>
   );
 });
 
