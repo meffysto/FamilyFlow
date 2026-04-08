@@ -58,7 +58,7 @@ const STAT_WHITELIST: Record<CodexKind, readonly string[]> = {
   loot: [],
   seasonal: [],
   saga: [],
-  quest: [],
+  quest: ['type', 'target', 'durationDays'],
 };
 
 interface CodexEntryDetailModalProps {

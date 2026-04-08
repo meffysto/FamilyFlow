@@ -1,16 +1,21 @@
-// lib/codex/quests.ts — Quêtes coopératives / aventures (source: ADVENTURES)
+// lib/codex/quests.ts — Quêtes coopératives familiales (source: QUEST_TEMPLATES)
 //
-// Dérive les entrées codex depuis ADVENTURES (lib/mascot/adventures.ts).
-// 15 aventures issues de la ferme — chaque entry conserve son emoji comme iconRef.
+// Dérive les entrées codex depuis QUEST_TEMPLATES (constants/questTemplates.ts),
+// le vrai système de quêtes coopératives familiales introduit en Phase 14.
+// 7 templates : moisson_collective, grand_defrichage, champions_defi,
+// artisans_familiaux, graines_dorees, semaine_production, pluie_magique.
+//
+// Note : ADVENTURES (lib/mascot/adventures.ts) est un système séparé de
+// mini-aventures quotidiennes — il n'a pas sa place sous l'onglet "Quêtes".
 
-import { ADVENTURES } from '../mascot/adventures';
+import { QUEST_TEMPLATES } from '../../constants/questTemplates';
 import type { QuestEntry } from './types';
 
-export const questEntries: QuestEntry[] = ADVENTURES.map((a) => ({
-  id: `quest_${a.id}`,
+export const questEntries: QuestEntry[] = QUEST_TEMPLATES.map((q) => ({
+  id: `quest_${q.id}`,
   kind: 'quest' as const,
-  sourceId: a.id,
-  nameKey: `codex:quest.${a.id}.name`,
-  loreKey: `codex:quest.${a.id}.lore`,
-  iconRef: a.emoji,
+  sourceId: q.id,
+  nameKey: `codex:quest.${q.id}.name`,
+  loreKey: `codex:quest.${q.id}.lore`,
+  iconRef: q.emoji,
 }));

@@ -7,12 +7,13 @@
 import { SEASONAL_EVENT_DIALOGUES } from '../mascot/seasonal-events-content';
 import type { SeasonalEntry } from './types';
 
-export const seasonalEntries: SeasonalEntry[] = Object.keys(
+export const seasonalEntries: SeasonalEntry[] = Object.entries(
   SEASONAL_EVENT_DIALOGUES,
-).map((key) => ({
+).map(([key, content]) => ({
   id: `seasonal_${key}`,
   kind: 'seasonal' as const,
   sourceId: key,
   nameKey: `codex:seasonal.${key}.name`,
   loreKey: `codex:seasonal.${key}.lore`,
+  iconRef: content.emoji,
 }));

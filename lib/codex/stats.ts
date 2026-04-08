@@ -21,7 +21,8 @@ import {
 } from '../mascot/companion-types';
 import { SAGAS } from '../mascot/sagas-content';
 import type { Saga } from '../mascot/sagas-types';
-import { ADVENTURES, type Adventure } from '../mascot/adventures';
+import { QUEST_TEMPLATES } from '../../constants/questTemplates';
+import type { FamilyQuestTemplate } from '../quest-engine';
 import { SEASONAL_EVENT_DIALOGUES } from '../mascot/seasonal-events-content';
 import type { SeasonalEventContent } from '../mascot/seasonal-events-types';
 
@@ -68,8 +69,8 @@ export function getSagaStats(entry: SagaEntry): Saga | undefined {
   return SAGAS.find((s) => s.id === entry.sourceId);
 }
 
-export function getQuestStats(entry: QuestEntry): Adventure | undefined {
-  return ADVENTURES.find((a) => a.id === entry.sourceId);
+export function getQuestStats(entry: QuestEntry): FamilyQuestTemplate | undefined {
+  return QUEST_TEMPLATES.find((q) => q.id === entry.sourceId);
 }
 
 export function getSeasonalStats(
