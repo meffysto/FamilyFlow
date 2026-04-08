@@ -84,6 +84,9 @@ export const FarmTutorialOverlay = React.memo(function FarmTutorialOverlay({
 
   const [currentStep, setCurrentStep] = useState<number>(-1); // -1 = inactif
   const [measuredRect, setMeasuredRect] = useState<TargetRect | null>(null);
+  // Flag : true si le ref cible du step courant est absent (stage graine, pas de crops)
+  // → fallback NarrativeCard plein écran au lieu de coach mark
+  const [refMissing, setRefMissing] = useState(false);
   const hasStarted = useRef(false);
   // Guard anti tap-through : le tap qui ferme l'étape N peut remonter sur l'overlay fullscreen
   // de l'étape N+1 qui vient de se monter. On ignore tout tap dans les 350ms après transition.
@@ -120,12 +123,16 @@ export const FarmTutorialOverlay = React.memo(function FarmTutorialOverlay({
       ];
       const ref = refMap[step];
       if (!ref?.current) {
+        // Ref absent → stage graine / pas de crops → on bascule en fallback narratif
         setMeasuredRect(null);
+        setRefMissing(true);
         return;
       }
+      setRefMissing(false);
       ref.current.measureInWindow((x, y, width, height) => {
         if (width === 0 && height === 0) {
           setMeasuredRect(null);
+          setRefMissing(true);
           return;
         }
         setMeasuredRect({ x, y, width, height });
@@ -139,6 +146,7 @@ export const FarmTutorialOverlay = React.memo(function FarmTutorialOverlay({
       measureForStep(currentStep);
     } else {
       setMeasuredRect(null);
+      setRefMissing(false);
     }
   }, [currentStep, measureForStep]);
 
@@ -178,8 +186,10 @@ export const FarmTutorialOverlay = React.memo(function FarmTutorialOverlay({
   const stepKey = `help:farm_tutorial.step${currentStep + 1}`;
   return (
     <Modal transparent animationType="none" visible statusBarTranslucent>
-      {/* Étapes narratives plein écran (0 et 4) */}
-      {(currentStep === 0 || currentStep === 4) && (
+      {/* Étapes narratives plein écran (0 et 4 systématiquement,
+          + fallback 1/2/3 si ref absent — stage graine) */}
+      {(currentStep === 0 || currentStep === 4 ||
+        (currentStep >= 1 && currentStep <= 3 && refMissing)) && (
         <NarrativeCard
           step={currentStep}
           colors={themeColors}
@@ -190,8 +200,8 @@ export const FarmTutorialOverlay = React.memo(function FarmTutorialOverlay({
         />
       )}
 
-      {/* Étapes 1, 2, 3 : coach marks (pas de fallback NarrativeCard) */}
-      {currentStep >= 1 && currentStep <= 3 && measuredRect && (
+      {/* Étapes 1, 2, 3 : coach marks uniquement si ref disponible */}
+      {currentStep >= 1 && currentStep <= 3 && !refMissing && measuredRect && (
         <>
           <CoachMarkOverlay
             targetRect={measuredRect}

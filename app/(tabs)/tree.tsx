@@ -83,7 +83,7 @@ import {
   computeMoodScore,
 } from '../../lib/mascot/companion-engine';
 import * as SecureStore from 'expo-secure-store';
-import { type PlantedCrop, type PlacedBuilding, CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
+import { type PlantedCrop, type PlacedBuilding, CROP_CATALOG, BUILDING_CATALOG, PLOTS_BY_TREE_STAGE } from '../../lib/mascot/types';
 import type { GiftEntry } from '../../lib/mascot/gift-engine';
 import { hasCropSeasonalBonus, parseCrops, getAvailableCrops, RARE_SEED_DROP_RULES } from '../../lib/mascot/farm-engine';
 import { getUnlockedCropCells, getExpandedCropCells, BUILDING_CELLS, EXPANSION_BUILDING_CELL } from '../../lib/mascot/world-grid';
@@ -1735,38 +1735,44 @@ export default function TreeScreen() {
 
             {/* Phase 18-04 fix : anchors invisibles calqués sur les coordonnées exactes
                 des cellules CROP_CELLS (lib/mascot/world-grid.ts).
-                Cellule c0 (rangée 1 gauche) : centre (0.14 * W, 0.05 * H)
-                Cellule c3 (rangée 1 droite) : centre (0.56 * W, 0.05 * H)
-                Formule WorldGridView : left = cell.x * W - size/2, top = cell.y * H - size/2 */}
-            {(() => {
+                Cellule c2 (première débloquée — unlockOrder 1) : centre (0.42 * W, 0.05 * H)
+                Cellule c7 (deuxième débloquée — unlockOrder 2) : centre (0.42 * W, 0.14 * H)
+                Formule WorldGridView : left = cell.x * W - size/2, top = cell.y * H - size/2
+
+                À stage graine (PLOTS_BY_TREE_STAGE[graine]=0), aucun crop n'est débloqué —
+                on skip les anchors, FarmTutorialOverlay basculera en NarrativeCard fallback
+                pour les étapes 2 et 3. */}
+            {PLOTS_BY_TREE_STAGE[stageInfo.stage] > 0 && (() => {
               const dioramaH = DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60;
               const ANCHOR_SIZE = 80;
               return (
                 <>
-                  {/* Plantation : cellule c0 (première cellule rangée du haut, gauche) */}
+                  {/* Plantation : cellule c2 (1ère débloquée, centre rangée haut) */}
                   <View
                     ref={plantationRef}
                     pointerEvents="none"
                     style={{
                       position: 'absolute',
-                      left: 0.14 * SCREEN_W - ANCHOR_SIZE / 2,
+                      left: 0.42 * SCREEN_W - ANCHOR_SIZE / 2,
                       top: 0.05 * dioramaH - ANCHOR_SIZE / 2,
                       width: ANCHOR_SIZE,
                       height: ANCHOR_SIZE,
                     }}
                   />
-                  {/* Récolte : cellule c3 (rangée du haut, droite) */}
-                  <View
-                    ref={harvestRef}
-                    pointerEvents="none"
-                    style={{
-                      position: 'absolute',
-                      left: 0.56 * SCREEN_W - ANCHOR_SIZE / 2,
-                      top: 0.05 * dioramaH - ANCHOR_SIZE / 2,
-                      width: ANCHOR_SIZE,
-                      height: ANCHOR_SIZE,
-                    }}
-                  />
+                  {/* Récolte : cellule c7 (2ème débloquée si stage >= pousse, centre rangée milieu) */}
+                  {PLOTS_BY_TREE_STAGE[stageInfo.stage] >= 2 && (
+                    <View
+                      ref={harvestRef}
+                      pointerEvents="none"
+                      style={{
+                        position: 'absolute',
+                        left: 0.42 * SCREEN_W - ANCHOR_SIZE / 2,
+                        top: 0.14 * dioramaH - ANCHOR_SIZE / 2,
+                        width: ANCHOR_SIZE,
+                        height: ANCHOR_SIZE,
+                      }}
+                    />
+                  )}
                 </>
               );
             })()}
