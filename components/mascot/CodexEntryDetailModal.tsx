@@ -24,10 +24,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import * as Haptics from 'expo-haptics';
 
 import { useThemeColors } from '../../contexts/ThemeContext';
-import type { CodexEntry } from '../../lib/codex/types';
+import type { CodexEntry, CodexKind } from '../../lib/codex/types';
 import {
   getCropStats,
   getAnimalStats,
@@ -42,6 +43,24 @@ import {
 import { Spacing, Radius } from '../../constants/spacing';
 import { FontSize, FontWeight } from '../../constants/typography';
 
+/**
+ * Whitelist des champs à afficher par kind — garde uniquement ce qui est
+ * compréhensible par un enfant. Les métadonnées techniques (id, labelKey,
+ * emoji, techRequired, etc.) sont volontairement exclues.
+ */
+const STAT_WHITELIST: Record<CodexKind, readonly string[]> = {
+  crop: ['cost', 'harvestReward', 'tasksPerStage', 'minTreeStage'],
+  animal: ['cost', 'rarity', 'minStage'],
+  building: ['cost', 'dailyIncome', 'resourceType', 'minTreeStage'],
+  craft: ['sellValue', 'xpBonus', 'minTreeStage'],
+  tech: ['branch', 'order', 'cost'],
+  companion: ['rarity'],
+  loot: [],
+  seasonal: [],
+  saga: [],
+  quest: [],
+};
+
 interface CodexEntryDetailModalProps {
   visible: boolean;
   entry: CodexEntry | null;
@@ -49,20 +68,34 @@ interface CodexEntryDetailModalProps {
 }
 
 /**
- * Convertit un objet catalogue en paires clé/valeur affichables.
- * Ignore les valeurs non primitives (objets, arrays) pour garder un rendu simple et lisible.
+ * Construit les lignes affichables pour un kind donné en utilisant la whitelist
+ * et en traduisant labels + valeurs via i18n. Les champs non whitelistés ou
+ * sans traduction de label sont ignorés (évite de dumper du camelCase brut).
  */
-function toDisplayRows(
+function buildDetailRows(
+  kind: CodexKind,
   source: Record<string, unknown> | undefined | null,
+  t: TFunction,
 ): Array<[string, string]> {
   if (!source) return [];
+  const whitelist = STAT_WHITELIST[kind] ?? [];
   const rows: Array<[string, string]> = [];
-  for (const [key, value] of Object.entries(source)) {
-    if (value === null || value === undefined) continue;
-    const t = typeof value;
-    if (t === 'string' || t === 'number' || t === 'boolean') {
-      rows.push([key, String(value)]);
+  for (const key of whitelist) {
+    const raw = source[key];
+    if (raw === null || raw === undefined) continue;
+    const valType = typeof raw;
+    if (valType !== 'string' && valType !== 'number' && valType !== 'boolean') continue;
+
+    const label = t(`codex:stats.${key}`, { defaultValue: '' });
+    if (!label) continue;
+
+    // Tente de traduire les valeurs string (enums type 'pousse', 'rare', 'oeuf'...)
+    let value = String(raw);
+    if (valType === 'string') {
+      const translated = t(`codex:values.${value}`, { defaultValue: '' });
+      if (translated) value = translated;
     }
+    rows.push([label, value]);
   }
   return rows;
 }
@@ -90,52 +123,39 @@ export function CodexEntryDetailModal({
 
   // Switch exhaustif pour les stats (D-05) — compilateur enforce la couverture sur CodexKind
   const renderStats = (): React.ReactNode => {
-    let rows: Array<[string, string]> = [];
+    let source: Record<string, unknown> | undefined;
     switch (entry.kind) {
-      case 'crop': {
-        rows = toDisplayRows(getCropStats(entry) as Record<string, unknown> | undefined);
+      case 'crop':
+        source = getCropStats(entry) as Record<string, unknown> | undefined;
         break;
-      }
-      case 'animal': {
-        rows = toDisplayRows(getAnimalStats(entry) as Record<string, unknown> | undefined);
+      case 'animal':
+        source = getAnimalStats(entry) as Record<string, unknown> | undefined;
         break;
-      }
-      case 'building': {
-        rows = toDisplayRows(getBuildingStats(entry) as Record<string, unknown> | undefined);
+      case 'building':
+        source = getBuildingStats(entry) as Record<string, unknown> | undefined;
         break;
-      }
-      case 'craft': {
-        rows = toDisplayRows(getCraftStats(entry) as Record<string, unknown> | undefined);
+      case 'craft':
+        source = getCraftStats(entry) as Record<string, unknown> | undefined;
         break;
-      }
-      case 'tech': {
-        rows = toDisplayRows(getTechStats(entry) as Record<string, unknown> | undefined);
+      case 'tech':
+        source = getTechStats(entry) as Record<string, unknown> | undefined;
         break;
-      }
-      case 'companion': {
-        rows = toDisplayRows(getCompanionStats(entry) as Record<string, unknown> | undefined);
+      case 'companion':
+        source = getCompanionStats(entry) as Record<string, unknown> | undefined;
         break;
-      }
-      case 'loot': {
-        // Pas de getter dédié pour loot — fallback placeholder (D-05)
-        return (
-          <Text style={[styles.lorePlaceholder, { color: colors.textMuted }]}>
-            —
-          </Text>
-        );
-      }
-      case 'seasonal': {
-        rows = toDisplayRows(getSeasonalStats(entry) as Record<string, unknown> | undefined);
+      case 'loot':
+        // Pas de getter dédié pour loot — whitelist vide, lore suffit
+        source = undefined;
         break;
-      }
-      case 'saga': {
-        rows = toDisplayRows(getSagaStats(entry) as Record<string, unknown> | undefined);
+      case 'seasonal':
+        source = getSeasonalStats(entry) as Record<string, unknown> | undefined;
         break;
-      }
-      case 'quest': {
-        rows = toDisplayRows(getQuestStats(entry) as Record<string, unknown> | undefined);
+      case 'saga':
+        source = getSagaStats(entry) as Record<string, unknown> | undefined;
         break;
-      }
+      case 'quest':
+        source = getQuestStats(entry) as Record<string, unknown> | undefined;
+        break;
       default: {
         // Exhaustiveness check — erreur TS si un CodexKind est oublié
         const _exhaustive: never = entry;
@@ -143,12 +163,10 @@ export function CodexEntryDetailModal({
       }
     }
 
+    const rows = buildDetailRows(entry.kind, source, t);
     if (rows.length === 0) {
-      return (
-        <Text style={[styles.lorePlaceholder, { color: colors.textMuted }]}>—</Text>
-      );
+      return null;
     }
-
     return <StatsBlock rows={rows} colors={colors} />;
   };
 
@@ -195,16 +213,24 @@ export function CodexEntryDetailModal({
             {t(entry.loreKey)}
           </Text>
 
-          {/* Stats en bas (D-04) */}
-          <Text
-            style={[
-              styles.sectionLabel,
-              { color: colors.textSub, marginTop: Spacing['3xl'] },
-            ]}
-          >
-            {t('codex:detail.stats')}
-          </Text>
-          {renderStats()}
+          {/* Stats en bas (D-04) — section masquée si aucune stat à afficher */}
+          {(() => {
+            const statsNode = renderStats();
+            if (!statsNode) return null;
+            return (
+              <>
+                <Text
+                  style={[
+                    styles.sectionLabel,
+                    { color: colors.textSub, marginTop: Spacing['3xl'] },
+                  ]}
+                >
+                  {t('codex:detail.stats')}
+                </Text>
+                {statsNode}
+              </>
+            );
+          })()}
         </ScrollView>
       </SafeAreaView>
     </Modal>

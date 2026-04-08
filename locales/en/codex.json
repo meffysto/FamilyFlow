@@ -488,5 +488,41 @@
   },
   "tutorial": {
     "replay": "Replay tutorial"
+  },
+  "stats": {
+    "cost": "Cost",
+    "harvestReward": "Reward",
+    "tasksPerStage": "Tasks per stage",
+    "minTreeStage": "Tree stage required",
+    "rarity": "Rarity",
+    "minStage": "Tree stage required",
+    "dailyIncome": "Daily income",
+    "resourceType": "Resource",
+    "sellValue": "Sell value",
+    "xpBonus": "XP bonus",
+    "branch": "Branch",
+    "order": "Level"
+  },
+  "values": {
+    "graine": "Seed",
+    "pousse": "Sprout",
+    "arbuste": "Shrub",
+    "arbre": "Tree",
+    "majestueux": "Majestic",
+    "legendaire": "Legendary",
+    "commun": "Common",
+    "rare": "Rare",
+    "épique": "Epic",
+    "épique_alias": "Epic",
+    "légendaire": "Legendary",
+    "prestige": "Prestige",
+    "initial": "Starter",
+    "oeuf": "Egg",
+    "lait": "Milk",
+    "farine": "Flour",
+    "miel": "Honey",
+    "culture": "Crops",
+    "elevage": "Livestock",
+    "expansion": "Expansion"
   }
 }

@@ -488,5 +488,41 @@
   },
   "tutorial": {
     "replay": "Rejouer le tutoriel"
+  },
+  "stats": {
+    "cost": "Coût",
+    "harvestReward": "Récompense",
+    "tasksPerStage": "Tâches par étape",
+    "minTreeStage": "Arbre requis",
+    "rarity": "Rareté",
+    "minStage": "Arbre requis",
+    "dailyIncome": "Revenu quotidien",
+    "resourceType": "Ressource",
+    "sellValue": "Valeur de vente",
+    "xpBonus": "Bonus XP",
+    "branch": "Branche",
+    "order": "Niveau"
+  },
+  "values": {
+    "graine": "Graine",
+    "pousse": "Pousse",
+    "arbuste": "Arbuste",
+    "arbre": "Arbre",
+    "majestueux": "Majestueux",
+    "legendaire": "Légendaire",
+    "commun": "Commun",
+    "rare": "Rare",
+    "épique": "Épique",
+    "épique_alias": "Épique",
+    "légendaire": "Légendaire",
+    "prestige": "Prestige",
+    "initial": "De départ",
+    "oeuf": "Œuf",
+    "lait": "Lait",
+    "farine": "Farine",
+    "miel": "Miel",
+    "culture": "Cultures",
+    "elevage": "Élevage",
+    "expansion": "Expansion"
   }
 }
