@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Confort & Découverte
 current_phase: 18
-status: Executing Phase 18
-stopped_at: Completed 18-02-coachmark-overlay-border-radius-PLAN.md
-last_updated: "2026-04-08T14:17:36.946Z"
-last_activity: 2026-04-08 -- Phase 18 execution started
+status: Ready to execute
+stopped_at: Completed 18-01-helpcontext-worldgrid-pause-PLAN.md
+last_updated: "2026-04-08T14:22:59.338Z"
+last_activity: 2026-04-08
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 19
-  completed_plans: 16
+  completed_plans: 17
   percent: 0
 ---
 
@@ -27,11 +27,11 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 18 (tutoriel-ferme) — EXECUTING
-Plan: 1 of 4
+Plan: 2 of 4
 Milestone: v1.2 Confort & Découverte (active)
 Current phase: 18
 Last shipped: v1.1 Ferme Enrichie (2026-04-07)
-Last activity: 2026-04-08 -- Phase 18 execution started
+Last activity: 2026-04-08
 
 Progress: [░░░░░░░░░░] 0% (0/4 phases)
 
@@ -96,6 +96,7 @@ Progress: [░░░░░░░░░░] 0% (0/4 phases)
 | Phase 17-codex-ui P01 | 3min | 2 tasks | 2 files |
 | Phase 17-codex-ui P03 | 7min | 3 tasks | 3 files |
 | Phase 18-tutoriel-ferme P02 | 3min | 1 tasks | 1 files |
+| Phase 18-tutoriel-ferme P01 | 6min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -203,6 +204,8 @@ Recent decisions affecting current work:
 - [Phase 17-03]: getLootStats absent de lib/codex/stats.ts — fallback placeholder — dans le case loot (pas d'échec de compile)
 - [Phase 17-03]: Profile cast en DiscoverySource via as any dans tree.tsx — shape minimale runtime-compatible
 - [Phase 18-tutoriel-ferme]: [Phase 18-02]: CoachMarkOverlay borderRadius — technique borderWidth géant (Option B), zéro SVG, rétrocompat 4-Views conservée pour borderRadius=0
+- [Phase 18-tutoriel-ferme]: [Phase 18-01]: activeFarmTutorialStep in-memory (useState null) dans HelpContext — pas de SecureStore, reset au restart (D-09)
+- [Phase 18-tutoriel-ferme]: [Phase 18-01]: paused propagé manuellement aux 4 sous-composants WorldGridView via prop explicite (CropCell, BuildingCell, BuildingIdleAnim, NextExpansionCell) plutôt que contexte
 
 ### Pending Todos
 
@@ -243,6 +246,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-08T14:17:36.943Z
-Stopped at: Completed 18-02-coachmark-overlay-border-radius-PLAN.md
+Last session: 2026-04-08T14:22:59.335Z
+Stopped at: Completed 18-01-helpcontext-worldgrid-pause-PLAN.md
 Resume file: None
