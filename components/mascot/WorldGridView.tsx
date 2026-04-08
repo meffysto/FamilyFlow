@@ -16,6 +16,7 @@ import Animated, {
   withSpring,
   Easing,
   useReducedMotion,
+  cancelAnimation,
 } from 'react-native-reanimated';
 import {
   WORLD_GRID,
@@ -50,6 +51,8 @@ interface WorldGridViewProps {
   onRepairWeed?: (plotIndex: number) => void;
   onRepairPest?: (cellId: string) => void;
   onRepairFence?: (plotIndex: number) => void;
+  /** Gèle toutes les animations ambiantes (D-06 tutoriel ferme) */
+  paused?: boolean;
 }
 
 const DIRT_SPRITE = require('../../assets/garden/ground/dirt_patch.png');
@@ -66,7 +69,7 @@ const CROP_WHISPERS = [
   '🌱',
 ];
 
-function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, wearEffects, containerWidth, containerHeight, frameIdx, whisperCellId, onPress, onRepairWeed, onRepairFence }: {
+function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, wearEffects, containerWidth, containerHeight, frameIdx, whisperCellId, paused, onPress, onRepairWeed, onRepairFence }: {
   cell: WorldCell;
   crop: PlantedCrop | null;
   cropDef: typeof CROP_CATALOG[0] | null;
@@ -78,6 +81,7 @@ function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, wearEf
   containerHeight: number;
   frameIdx: number;
   whisperCellId: string | null;
+  paused: boolean;
   onPress: () => void;
   onRepairWeed?: (plotIndex: number) => void;
   onRepairFence?: (plotIndex: number) => void;
@@ -95,6 +99,11 @@ function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, wearEf
 
   // Pulse mature
   useEffect(() => {
+    if (paused) {
+      cancelAnimation(pulse);
+      pulse.value = 1;
+      return;
+    }
     if (isMature) {
       pulse.value = withRepeat(
         withSequence(
@@ -106,7 +115,7 @@ function CropCell({ cell, crop, cropDef, isMature, isMainPlot, plotIndex, wearEf
     } else {
       pulse.value = 1;
     }
-  }, [isMature]);
+  }, [isMature, paused]);
 
   // Growth wiggle quand le stade change
   useEffect(() => {
@@ -233,9 +242,10 @@ const PENDING_RESOURCE_EMOJI: Record<string, string> = {
   ruche: '🍯',
 };
 
-const BuildingIdleAnim = React.memo(function BuildingIdleAnim({ buildingId, pendingCount }: {
+const BuildingIdleAnim = React.memo(function BuildingIdleAnim({ buildingId, pendingCount, paused }: {
   buildingId: string;
   pendingCount: number;
+  paused: boolean;
 }) {
   const reducedMotion = useReducedMotion();
 
@@ -252,7 +262,19 @@ const BuildingIdleAnim = React.memo(function BuildingIdleAnim({ buildingId, pend
   const pendingOpacity = useSharedValue(0.7);
 
   useEffect(() => {
-    if (reducedMotion) return;
+    if (reducedMotion || paused) {
+      cancelAnimation(chickenY);
+      cancelAnimation(cowRotate);
+      cancelAnimation(millRotate);
+      cancelAnimation(bee1Phase);
+      cancelAnimation(bee2Phase);
+      chickenY.value = 0;
+      cowRotate.value = 0;
+      millRotate.value = 0;
+      bee1Phase.value = 0;
+      bee2Phase.value = 0;
+      return;
+    }
 
     if (buildingId === 'poulailler') {
       chickenY.value = withRepeat(
@@ -289,11 +311,15 @@ const BuildingIdleAnim = React.memo(function BuildingIdleAnim({ buildingId, pend
       );
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reducedMotion, buildingId]);
+  }, [reducedMotion, buildingId, paused]);
 
   // Scintillement ressource en attente
   useEffect(() => {
-    if (reducedMotion) return;
+    if (reducedMotion || paused) {
+      cancelAnimation(pendingOpacity);
+      pendingOpacity.value = 0.7;
+      return;
+    }
     if (pendingCount > 0) {
       pendingOpacity.value = withRepeat(
         withSequence(
@@ -306,7 +332,7 @@ const BuildingIdleAnim = React.memo(function BuildingIdleAnim({ buildingId, pend
       pendingOpacity.value = 0.7;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reducedMotion, pendingCount > 0]);
+  }, [reducedMotion, pendingCount > 0, paused]);
 
   const chickenStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: chickenY.value }],
@@ -384,7 +410,7 @@ const BuildingIdleAnim = React.memo(function BuildingIdleAnim({ buildingId, pend
 
 // ── Cellule batiment ──
 
-function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, wearEffects, containerWidth, containerHeight, onPress, onRepairPest }: {
+function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, wearEffects, containerWidth, containerHeight, paused, onPress, onRepairPest }: {
   cell: WorldCell;
   placedBuilding: PlacedBuilding | null;
   pendingCount: number;
@@ -392,6 +418,7 @@ function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, wearEffect
   wearEffects?: WearEffects;
   containerWidth: number;
   containerHeight: number;
+  paused: boolean;
   onPress: () => void;
   onRepairPest?: (cellId: string) => void;
 }) {
@@ -405,6 +432,11 @@ function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, wearEffect
   // Animation wiggle pour les nuisibles
   const pestWiggle = useSharedValue(0);
   useEffect(() => {
+    if (paused) {
+      cancelAnimation(pestWiggle);
+      pestWiggle.value = 0;
+      return;
+    }
     if (hasPests && !reducedMotion) {
       pestWiggle.value = withRepeat(
         withSequence(
@@ -417,13 +449,18 @@ function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, wearEffect
     } else {
       pestWiggle.value = withTiming(0, { duration: 100 });
     }
-  }, [hasPests, reducedMotion]);
+  }, [hasPests, reducedMotion, paused]);
 
   const pestAnimStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: pestWiggle.value }],
   }));
 
   useEffect(() => {
+    if (paused) {
+      cancelAnimation(borderPulse);
+      borderPulse.value = 0.4;
+      return;
+    }
     if (!reducedMotion && canBuild) {
       borderPulse.value = withRepeat(
         withSequence(
@@ -435,9 +472,14 @@ function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, wearEffect
     } else {
       borderPulse.value = withTiming(0.4, { duration: 300 });
     }
-  }, [reducedMotion, canBuild]);
+  }, [reducedMotion, canBuild, paused]);
 
   useEffect(() => {
+    if (paused) {
+      cancelAnimation(pulse);
+      pulse.value = 1;
+      return;
+    }
     if (!reducedMotion && pendingCount > 0) {
       pulse.value = withRepeat(
         withSequence(
@@ -450,7 +492,7 @@ function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, wearEffect
       pulse.value = withTiming(1, { duration: 300 });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reducedMotion, pendingCount > 0]);
+  }, [reducedMotion, pendingCount > 0, paused]);
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulse.value }],
@@ -490,6 +532,7 @@ function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, wearEffect
             <BuildingIdleAnim
               buildingId={placedBuilding.buildingId}
               pendingCount={pendingCount}
+              paused={paused}
             />
             {pendingCount > 0 && (
               <View style={styles.pendingBadge}>
@@ -529,13 +572,19 @@ function BuildingCell({ cell, placedBuilding, pendingCount, canBuild, wearEffect
 
 // ── Cellule prochaine extension (un seul slot visible) ──
 
-function NextExpansionCell({ cell, containerWidth, containerHeight }: {
+function NextExpansionCell({ cell, containerWidth, containerHeight, paused }: {
   cell: WorldCell;
   containerWidth: number;
   containerHeight: number;
+  paused: boolean;
 }) {
   const pulse = useSharedValue(0.6);
   React.useEffect(() => {
+    if (paused) {
+      cancelAnimation(pulse);
+      pulse.value = 0.6;
+      return;
+    }
     pulse.value = withRepeat(
       withSequence(
         withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.sin) }),
@@ -543,7 +592,7 @@ function NextExpansionCell({ cell, containerWidth, containerHeight }: {
       ),
       -1, true,
     );
-  }, []);
+  }, [paused]);
   const animStyle = useAnimatedStyle(() => ({
     opacity: pulse.value,
   }));
@@ -576,6 +625,7 @@ export function WorldGridView({
   onRepairWeed,
   onRepairPest,
   onRepairFence,
+  paused = false,
 }: WorldGridViewProps) {
   const unlockedCrops = getUnlockedCropCells(treeStage);
   const crops = parseCrops(farmCropsCSV);
@@ -585,10 +635,10 @@ export function WorldGridView({
   const reducedMotion = useReducedMotion();
   const [sharedFrameIdx, setSharedFrameIdx] = useState(0);
   useEffect(() => {
-    if (reducedMotion) return;
+    if (reducedMotion || paused) return;
     const timer = setInterval(() => setSharedFrameIdx(i => 1 - i), 800);
     return () => clearInterval(timer);
-  }, [reducedMotion]);
+  }, [reducedMotion, paused]);
 
   // Timer global whisper — 1 seul setInterval pour toutes les crops
   const [whisperCellId, setWhisperCellId] = useState<string | null>(null);
@@ -603,6 +653,7 @@ export function WorldGridView({
   farmCropsCSVRef.current = farmCropsCSV;
 
   useEffect(() => {
+    if (paused) return;
     const timer = setInterval(() => {
       const currentCrops = parseCrops(farmCropsCSVRef.current);
       const nonMature = allCropCells.filter((_cell, idx) => {
@@ -615,7 +666,7 @@ export function WorldGridView({
       setTimeout(() => setWhisperCellId(null), 2500);
     }, 18000);
     return () => clearInterval(timer);
-  }, [allCropCells]);
+  }, [allCropCells, paused]);
 
   // Peut-on construire un batiment sur une cellule vide ?
   const stageOrder = TREE_STAGES.map(s => s.stage);
@@ -660,6 +711,7 @@ export function WorldGridView({
             containerHeight={containerHeight}
             frameIdx={sharedFrameIdx}
             whisperCellId={whisperCellId}
+            paused={paused}
             onPress={() => onCropPlotPress?.(cell.id, crop)}
             onRepairWeed={onRepairWeed}
             onRepairFence={onRepairFence}
@@ -689,6 +741,7 @@ export function WorldGridView({
             containerHeight={containerHeight}
             frameIdx={sharedFrameIdx}
             whisperCellId={whisperCellId}
+            paused={paused}
             onPress={() => onCropPlotPress?.(cell.id, crop)}
             onRepairWeed={onRepairWeed}
             onRepairFence={onRepairFence}
@@ -702,6 +755,7 @@ export function WorldGridView({
           cell={EXPANSION_CROP_CELLS[0]}
           containerWidth={containerWidth}
           containerHeight={containerHeight}
+          paused={paused}
         />
       )}
 
@@ -728,6 +782,7 @@ export function WorldGridView({
               containerHeight={containerHeight}
               frameIdx={sharedFrameIdx}
               whisperCellId={whisperCellId}
+              paused={paused}
               onPress={() => onCropPlotPress?.(cell.id, crop)}
               onRepairWeed={onRepairWeed}
               onRepairFence={onRepairFence}
@@ -758,6 +813,7 @@ export function WorldGridView({
             wearEffects={wearEffects}
             containerWidth={containerWidth}
             containerHeight={containerHeight}
+            paused={paused}
             onPress={() => onBuildingCellPress?.(cell.id, placedBuilding)}
             onRepairPest={onRepairPest}
           />
@@ -779,6 +835,7 @@ export function WorldGridView({
             wearEffects={wearEffects}
             containerWidth={containerWidth}
             containerHeight={containerHeight}
+            paused={paused}
             onPress={() => onBuildingCellPress?.(cell.id, placedBuilding)}
             onRepairPest={onRepairPest}
           />
@@ -791,6 +848,7 @@ export function WorldGridView({
           cell={EXPANSION_BUILDING_CELL}
           containerWidth={containerWidth}
           containerHeight={containerHeight}
+          paused={paused}
         />
       )}
     </View>
