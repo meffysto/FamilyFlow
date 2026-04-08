@@ -1,12 +1,462 @@
 {
-  "crop": {},
-  "animal": {},
-  "building": {},
-  "craft": {},
-  "tech": {},
-  "companion": {},
-  "loot": {},
-  "seasonal": {},
-  "saga": {},
-  "quest": {}
+  "crop": {
+    "carrot": {
+      "name": "Carrot",
+      "lore": "A generous, fast-growing starter crop. Freshly pulled bunches smell of damp morning soil. Perfect for finding your bearings on the farm."
+    },
+    "wheat": {
+      "name": "Wheat",
+      "lore": "Golden stalks sway gently in the breeze. A staple of the family kitchen, wheat is a reliable fill for the silos and feeds everyone at the table."
+    },
+    "potato": {
+      "name": "Potato",
+      "lore": "Hardy and forgiving, the potato doesn't hold grudges when you forget about it. You'll always pull something from the soil — a favorite of apprentice gardeners."
+    },
+    "beetroot": {
+      "name": "Beetroot",
+      "lore": "Its deep purple heart stains hands and aprons. Beetroot loves cool seasons and rewards patient growers with an earthy intensity."
+    },
+    "tomato": {
+      "name": "Tomato",
+      "lore": "Fragrant and sun-soaked, the tomato asks for a little more care but repays every effort. A ripe tomato is already a meal."
+    },
+    "cabbage": {
+      "name": "Cabbage",
+      "lore": "Dense, heavy, almost architectural in its roundness. Cabbage gives structure to the garden and keeps its freshness long after harvest."
+    },
+    "cucumber": {
+      "name": "Cucumber",
+      "lore": "A willing climber, the cucumber grips anything it finds. Crisp and refreshing, it promises the coolest summer afternoons."
+    },
+    "corn": {
+      "name": "Corn",
+      "lore": "Tall stalks form corridors where the wind whispers. Slow to mature, corn demands space but delivers spectacular harvests."
+    },
+    "strawberry": {
+      "name": "Strawberry",
+      "lore": "Tiny sugar bombs tucked under the leaves. Strawberries often vanish before they reach the basket — a mystery no one really owns up to."
+    },
+    "pumpkin": {
+      "name": "Pumpkin",
+      "lore": "Queen of autumn, the pumpkin swells slowly until it reaches startling proportions. A fine specimen is the pride of an entire season."
+    },
+    "sunflower": {
+      "name": "Sunflower",
+      "lore": "A solar giant that follows the light from morning to night. Unlocked by advanced research, it crowns the fields in a wave of living gold."
+    },
+    "orchidee": {
+      "name": "Mysterious Orchid",
+      "lore": "You don't plant an orchid: it chooses its moment. It sometimes appears at the edge of a harvest, an unexpected gift from generous soil. Its cool petal holds an almost unreal shimmer."
+    },
+    "rose_doree": {
+      "name": "Golden Rose",
+      "lore": "A gardening legend. A few petals can light up an entire orchard. The golden rose only surfaces when older crops are harvested patiently — and even then, it has to be earned."
+    },
+    "truffe": {
+      "name": "Fragrant Truffle",
+      "lore": "Hidden beneath majestic roots, the truffle only reveals itself to persistent farmers. Its powerful aroma signs the finest feast dishes."
+    },
+    "fruit_dragon": {
+      "name": "Dragon Fruit",
+      "lore": "The ultimate treasure of the farm, its scaled skin seems to pulse with an inner glow. It's said that a single one can appear after any harvest — but most gardeners will only see it once in a lifetime."
+    }
+  },
+  "animal": {
+    "poussin": {
+      "name": "Chick",
+      "lore": "A yellow ball of fluff that chirps at anything. First resident of the farm, it sets the tone for a happy, slightly chaotic yard."
+    },
+    "poulet": {
+      "name": "Chicken",
+      "lore": "A tireless scratcher, always inspecting every blade of grass. Its presence turns the smallest patch of soil into a tiny kingdom."
+    },
+    "canard": {
+      "name": "Duck",
+      "lore": "Clumsy on land, sovereign on water. It loves morning puddles and eyes the damp plots with a hungry interest."
+    },
+    "cochon": {
+      "name": "Pig",
+      "lore": "Clever, curious, far smarter than it looks. A well-settled pig quickly becomes a pillar of daily farm life."
+    },
+    "vache": {
+      "name": "Cow",
+      "lore": "A calm presence that anchors the landscape. When a cow moves in, the farm suddenly feels more real, more complete."
+    },
+    "oiseau": {
+      "name": "Bird",
+      "lore": "A small visitor from the sky choosing its stops. Its dawn song signals a healthy farm where the trees make it want to stay."
+    },
+    "ecureuil": {
+      "name": "Squirrel",
+      "lore": "A russet tightrope walker slipping through branches. Always hiding something somewhere — and always forgetting where."
+    },
+    "papillons": {
+      "name": "Butterflies",
+      "lore": "A colorful cloud dancing over the flower beds. Their presence hints at a garden in balance, welcoming to wild life."
+    },
+    "coccinelle": {
+      "name": "Ladybug",
+      "lore": "A tiny red guardian with black dots. Said to bring luck, experienced gardeners leave her alone on the leaves."
+    },
+    "chat": {
+      "name": "Cat",
+      "lore": "Discreet ruler of the barns and windowsills. She comes when she wants, leaves when she wants, and truly belongs to no one."
+    },
+    "hibou": {
+      "name": "Owl",
+      "lore": "Silent sentinel of farm nights. When it perches on a main branch, you feel the grounds have a nightly guardian."
+    },
+    "fee": {
+      "name": "Fairy",
+      "lore": "A shimmering presence that only appears on the most flourishing farms. You catch her from the corner of your eye, never head-on — as if she refused to be truly seen."
+    },
+    "dragon": {
+      "name": "Dragon",
+      "lore": "A legendary creature whose arrival changes the atmosphere of the entire farm. Other residents look at him with a mix of awe and respect."
+    },
+    "phoenix": {
+      "name": "Phoenix",
+      "lore": "A fire bird whose plumage seems to dance on the edge of ignition. His presence rewards farms that have weathered many seasons."
+    },
+    "licorne": {
+      "name": "Unicorn",
+      "lore": "A myth turned creature, a whiteness that seems to reflect the evening light. She only appears on the most accomplished farms, like a consecration."
+    },
+    "esprit_eau": {
+      "name": "Water Spirit",
+      "lore": "A translucent silhouette glimpsed near bodies of water, on certain evenings. Those who've crossed its path keep quiet about the circumstances — it's said to reveal itself through a particular adventure."
+    },
+    "ancien_gardien": {
+      "name": "Ancient Guardian",
+      "lore": "A thousand-year-old presence draped in greenery, a rare companion to the farm's great stories. You don't meet him by accident: he's the key to a tale that must be earned."
+    }
+  },
+  "building": {
+    "poulailler": {
+      "name": "Chicken coop",
+      "lore": "The most accessible of the farm's buildings, home to a few busy hens that lay at steady intervals. Their eggs power many comforting recipes and provide a reliable stream of coins from day one. Each upgrade shortens the laying cycle to keep up with the family's growing appetite."
+    },
+    "grange": {
+      "name": "Barn",
+      "lore": "A sturdy wooden barn where the farm's dairy quietly matures. Its creamy milk turns into cheese, gratins and hearty soups, becoming essential as soon as the tree reaches the sapling stage. Upgrading the barn shortens the delay between collections to feed the more ambitious recipes."
+    },
+    "moulin": {
+      "name": "Windmill",
+      "lore": "The windmill's great sails spin with the seasons, grinding wheat into tender flour. Essential for bread, cakes and the most elaborate pies, it marks the farm's passage to the adult-tree recipes. Upgrades speed up production to match the kitchen's growing demands."
+    },
+    "ruche": {
+      "name": "Beehive",
+      "lore": "A golden colony of industrious bees gathers nectar from the crops to produce precious honey. The hive only unlocks with an advanced livestock tech and then becomes the cornerstone of noble recipes like mead or royal jam. Its upgrades increase the throughput of stored honey jars."
+    }
+  },
+  "craft": {
+    "soupe": {
+      "name": "Soup",
+      "lore": "A rustic soup that opens the recipe book as soon as the sapling stage begins. It combines the farm's most accessible root vegetables and brings a little warmth to the early days of play. Perfect for turning the first harvest surpluses into coins."
+    },
+    "bouquet": {
+      "name": "Garden bouquet",
+      "lore": "A colourful assembly of leafy vegetables, as decorative as it is profitable. Available very early, it makes good use of surplus crops without tapping animal resources. A small ritual to celebrate a generous harvest."
+    },
+    "crepe": {
+      "name": "Crepe",
+      "lore": "The quintessential bridge between the garden and the coop. One fresh egg, a handful of wheat, and the farm enters the era of crop/building crossover recipes. A perfect way to test the workshop's first synergies."
+    },
+    "bortsch": {
+      "name": "Borscht",
+      "lore": "A steaming borscht made from the farm's beets, straight out of a traditional family kitchen. It lets you clear beet stockpiles without relying on other crops. Simple, nourishing and available from the sapling stage."
+    },
+    "fromage": {
+      "name": "Cheese",
+      "lore": "An aged cheese born from milk patiently collected at the barn. It ushers in the era of pure building-based recipes and becomes an excellent way to monetise dairy output. Selling it easily funds the next batch of upgrades."
+    },
+    "gratin": {
+      "name": "Gratin",
+      "lore": "A comforting gratin blending barn milk, garden potatoes and coop eggs. It's the first three-ingredient crossover recipe, a perfect milestone for the young-tree stage. A family classic that's always welcome."
+    },
+    "omelette": {
+      "name": "Omelette",
+      "lore": "A golden omelette combining coop eggs and garden tomatoes. It leverages the abundant resources of the early-to-mid game and stays profitable throughout the progression. A reliable staple of the workshop."
+    },
+    "hydromel": {
+      "name": "Mead",
+      "lore": "An amber drink brewed from the beehive's honey, a symbol of the farm's prestige. As soon as the hive is active, mead becomes one of the first high-value recipes. A beverage that commands the respect of travellers."
+    },
+    "nougat": {
+      "name": "Nougat",
+      "lore": "A smooth nougat blending three building resources: honey, egg and flour. It rewards farms that have diversified their production with an excellent return on investment. A treat that smells of late afternoon."
+    },
+    "pain_epices": {
+      "name": "Gingerbread",
+      "lore": "A soft honey-flavoured gingerbread baked with fresh windmill flour. It taps directly into the windmill + beehive synergy and becomes a flagship recipe from the young-tree stage on. Perfect for small virtual family snacks."
+    },
+    "parfum_orchidee": {
+      "name": "Orchid perfume",
+      "lore": "A rare vial distilled from carefully grown orchids with a touch of honey. It's one of the first recipes to make use of a rare seed, with an exceptional sale value as a reward. A luxury reserved for patient farms."
+    },
+    "gaspacho": {
+      "name": "Gazpacho",
+      "lore": "A fresh cucumber-and-tomato gazpacho, perfect for clearing two abundant summer crops. No building ingredient is required, so it stays accessible even without a hive or windmill. A simple recipe that often saves the day."
+    },
+    "pain": {
+      "name": "Bread",
+      "lore": "The windmill's crusty bread, the emblematic recipe of the adult-tree stage. Flour and wheat come together as a food staple the family eats without ever tiring of it. A safe bet when rare ingredients run short."
+    },
+    "confiture": {
+      "name": "Strawberry jam",
+      "lore": "A deep-red jam that captures the taste of summer strawberries. No building needed: the recipe turns the garden harvest directly into precious jars. Ideal for farms that favour sweet crops."
+    },
+    "popcorn": {
+      "name": "Popcorn",
+      "lore": "Corn kernels burst into a golden avalanche, perfect for movie nights. The recipe makes use of the cornfields that ripen at the adult-tree stage. A simple pleasure that never fails."
+    },
+    "huile_tournesol": {
+      "name": "Sunflower oil",
+      "lore": "A cold-pressed oil made from sunflowers grown late in the progression. It unlocks a new layer of yields for farms that have invested in the culture branch. A versatile, highly sought-after ingredient."
+    },
+    "brioche_tournesol": {
+      "name": "Sunflower brioche",
+      "lore": "A soft brioche sprinkled with sunflower seeds, combining windmill flour and floral harvest. It marries two pillars of the advanced farm into a comforting result. A pastry both rustic and refined."
+    },
+    "gateau": {
+      "name": "Cake",
+      "lore": "A classic birthday cake with flour, eggs and strawberries. A versatile adult-tree recipe, it balances buildings and crops for a generous result. Always welcome to celebrate a progression milestone."
+    },
+    "confiture_royale": {
+      "name": "Royal jam",
+      "lore": "An exceptional jam made with golden rose, strawberry and honey, worthy of the finest tables. It's one of the most lucrative recipes in the game, reserved for farms that have already picked a rare floral seed. A true sweet masterpiece."
+    },
+    "soupe_citrouille": {
+      "name": "Pumpkin soup",
+      "lore": "A creamy velouté celebrating the arrival of pumpkins at the majestic stage. Barn milk and pumpkin flesh unite for an unforgettable autumn recipe. The signal that the farm has finally come of age."
+    },
+    "tarte_citrouille": {
+      "name": "Pumpkin pie",
+      "lore": "A golden pumpkin pie, refined cousin of the soup of the same name. It combines windmill flour, coop eggs and pumpkin flesh for a signature end-game dessert. A must-have for family celebrations."
+    },
+    "risotto_truffe": {
+      "name": "Truffle risotto",
+      "lore": "A creamy risotto elevated by a precious truffle from a rare seed. Milk and flour round out the star ingredient in one of the most valuable recipes in the game. A culinary pinnacle for patient farmers."
+    },
+    "elixir_dragon": {
+      "name": "Dragon elixir",
+      "lore": "A crimson elixir brewed from dragon fruit and a hint of honey. A prestige recipe unlocked at the adult-tree stage, it offers great returns for those who can grow legendary crops. A drink full of mystery."
+    },
+    "galette_royale": {
+      "name": "Royal galette",
+      "lore": "A puff-pastry galette unlocked through the farm's cooperative quests. Flour, egg and honey come together in a recipe that symbolises family teamwork. It only unlocks after completing a dedicated quest."
+    }
+  },
+  "tech": {
+    "culture-1": {
+      "name": "Organic fertiliser",
+      "lore": "The first technology of the culture branch. Natural amendment practices that accelerate every growth cycle, reducing the number of tasks needed for each plant to thrive. An essential entry point for any serious farm."
+    },
+    "culture-2": {
+      "name": "Seed selection",
+      "lore": "A key step that teaches you to spot the best seeds in every harvest. This careful selection increases the chance of a bonus yield at harvest time. The art of watching the fields finally takes on its full meaning."
+    },
+    "culture-3": {
+      "name": "Sunflower farming",
+      "lore": "The discovery of a solar crop previously out of reach: the sunflower. Once this technology is unlocked, new recipes and resources become available to the farm. A decorative and productive turning point."
+    },
+    "culture-4": {
+      "name": "Botanical mastery",
+      "lore": "The pinnacle of the culture branch. The farm reaches a level of agricultural refinement that maximises bonus harvests on every pick. The fields almost seem eager to double their treasures."
+    },
+    "elevage-1": {
+      "name": "Enriched feed",
+      "lore": "Improved rations for the animals in the productive buildings. Their output speeds up noticeably and makes time away from the farm much more rewarding. The first step toward modern livestock care."
+    },
+    "elevage-2": {
+      "name": "Improved storage",
+      "lore": "New silos and pantries let buildings accumulate more resources before saturating. Ideal for spaced-out sessions where the farm keeps producing on its own. Organisation always pays off."
+    },
+    "elevage-3": {
+      "name": "Beekeeping",
+      "lore": "Mastery of bees and the construction of the hive. This technology unlocks an entirely new resource — honey — and paves the way for the noblest recipes. A major leap in the progression."
+    },
+    "expansion-1": {
+      "name": "Solid foundations",
+      "lore": "The farm learns to lay better foundations for its constructions. An extra building plot appears, enabling diversified production. The gateway to a multi-building farm."
+    },
+    "expansion-2": {
+      "name": "Land clearing",
+      "lore": "A major clearing project opens several new crop plots at once. The fields expand and the farm's horizon widens noticeably. The moment when the farm truly stretches out."
+    },
+    "expansion-3": {
+      "name": "Giant plot",
+      "lore": "The culmination of the expansion branch: an extra-large plot appears on the farm. It allows for majestic plants that could never have grown elsewhere. A privilege for accomplished farms."
+    }
+  },
+  "companion": {
+    "chat": {
+      "name": "Cat",
+      "lore": "The cat is one of the three initial companions, chosen by players who appreciate its velvet independence. It watches the farm with a mocking eye but deeply loves its human family. Its ironic comments punctuate daily play sessions."
+    },
+    "chien": {
+      "name": "Dog",
+      "lore": "The most enthusiastic companion of the initial trio. Loyal and protective, it celebrates every completed task as a great feat and never misses a chance to cheer the family on. An ally bursting with daily energy."
+    },
+    "lapin": {
+      "name": "Rabbit",
+      "lore": "A gentle companion available from the start. Quiet and thoughtful, it happily speaks of seasons, gardens and the farm's little joys. Perfect for farmers seeking a soothing presence."
+    },
+    "renard": {
+      "name": "Fox",
+      "lore": "A rare species unlocked only through a lucky loot box. Cunning and strategic, the fox shares its tricks and notices details other companions miss. An observant ally for tactical farmers."
+    },
+    "herisson": {
+      "name": "Hedgehog",
+      "lore": "The rarest species, classified as epic and reserved for the most generous loot boxes. Wise and philosophical, the hedgehog shares little life maxims on patience and contemplation. A thoughtful companion that rewards collectors."
+    }
+  },
+  "loot": {
+    "golden_crop": {
+      "name": "Golden Mutation",
+      "lore": "At planting time, a seed can mutate into a golden version — a tiny chance that turns the harvest into an event. A golden crop yields a heavily multiplied reward. The exact probability and multiplier values are defined by the farm engine (GOLDEN_CROP_CHANCE and GOLDEN_HARVEST_MULTIPLIER): the documentation lives in the code, not in the lore."
+    },
+    "harvest_insectes": {
+      "name": "Insect Swarm",
+      "lore": "Sometimes, at harvest, a swarm of insects descends on the plot and devours part of the fruit of your labor. It's brutal, but it's part of the risks of a living farm."
+    },
+    "harvest_pluie_doree": {
+      "name": "Golden Rain",
+      "lore": "A rare and beautiful event that may occur at harvest: a shower of golden light that strongly multiplies the harvested quantity. It's one of the finest gifts the farm can offer, and one of the mechanics the codex explicitly documents (CODEX-04)."
+    },
+    "harvest_mutation_rare": {
+      "name": "Rare Mutation",
+      "lore": "Sometimes a crop ripens with unusual colors, the sign of a rare mutation. The harvest is then increased, like a reward for those who take care of their plots."
+    },
+    "seed_orchidee": {
+      "name": "Mysterious Orchid Seed",
+      "lore": "A violet petal found in the middle of a ripe harvest. Some specific crops can, very rarely, produce this precious seed. You can't buy it anywhere: it's only earned through patient farming."
+    },
+    "seed_rose_doree": {
+      "name": "Golden Rose Seed",
+      "lore": "A golden gleam shining at the bottom of the basket. Only a few mature and sufficiently advanced crops can yield this mythical seed — and even then, luck stays modest."
+    },
+    "seed_truffe": {
+      "name": "Truffle Spore",
+      "lore": "A powerful, dark scent escaping from a generous harvest. The truffle spore only appears from very specific, mature crops, like a reward for farmers thinking long-term."
+    },
+    "seed_fruit_dragon": {
+      "name": "Dragon Fruit Seed",
+      "lore": "One of the rarest finds on the farm: a scaled seed that seems to reflect every light at once. Unlike the other drop seeds, it can appear from any harvest — but its probability is the lowest of all."
+    }
+  },
+  "seasonal": {
+    "nouvel-an": {
+      "name": "New Year",
+      "lore": "The farm glows with lanterns and whispered wishes. The inhabitants gather around the great tree to welcome the cycle that begins. A scent of luck floats between the sleeping crops."
+    },
+    "st-valentin": {
+      "name": "Valentine's Day",
+      "lore": "Pink petals drift above the plots and the animals grow tenderly close. The harvests take on an almost complicit hue, as if celebrating the bonds that keep the farm alive."
+    },
+    "poisson-avril": {
+      "name": "April Fool's",
+      "lore": "The wind carries small pranks between the rows: moved tools, smiling scarecrows, disguised seeds. Nothing serious, just the farm allowing itself a wink at the new season."
+    },
+    "paques": {
+      "name": "Easter",
+      "lore": "Colored eggs hide between the crops and the hedges. Passing children go on the hunt while the hens watch, half amused, half complicit. A morning when anything feels possible."
+    },
+    "ete": {
+      "name": "Summer",
+      "lore": "The sun reigns over the farm and every crop grows a little faster. Evenings stretch out, harvests abound, and the earth radiates a warmth you'd want to keep all year long."
+    },
+    "rentree": {
+      "name": "Back to School",
+      "lore": "The air turns cooler and the farm reorganizes itself. You tidy up, plant for autumn, return to a calmer rhythm. A turning point between carefree days and quiet preparation."
+    },
+    "halloween": {
+      "name": "Halloween",
+      "lore": "The pumpkins take on mysterious faces and shadows dance near the tree. The farm becomes a playground between thrill and fairytale, where the strangest crops reveal their secrets."
+    },
+    "noel": {
+      "name": "Christmas",
+      "lore": "A white blanket covers the farm and garlands cling to the buildings. The tree shines differently that night, as if watching over all the gifts laid at its feet."
+    }
+  },
+  "saga": {
+    "voyageur_argent": {
+      "name": "The Silver Traveler",
+      "lore": "A stranger in a shimmering cloak arrives near the farm, carrying stories from faraway places. Each of his choices steers the family's destiny down a different path. Who is he really, and what does he seek here?"
+    },
+    "source_cachee": {
+      "name": "The Hidden Spring",
+      "lore": "Rumor speaks of a forgotten spring whose water blesses every crop it touches. The adventure pushes the family to search the farm's corners for its trace. The real treasure may not be the water itself."
+    },
+    "carnaval_ombres": {
+      "name": "The Carnival of Shadows",
+      "lore": "When night falls, strange silhouettes dance between the crops and invite the family to follow them. An invisible festival unfolds alongside the waking world. Refusing the invitation might be a mistake."
+    },
+    "graine_anciens": {
+      "name": "The Seed of the Ancients",
+      "lore": "Legend tells of an ancestral seed sleeping somewhere on the farm, ready to awaken forgotten powers. The quest demands patience and delicate choices. Whoever finds it will change the farm forever."
+    }
+  },
+  "quest": {
+    "tresor_ecureuil": {
+      "name": "The Squirrel's Treasure",
+      "lore": "A restless squirrel scurries around a tree, frantically scratching the bark. It seems to have hidden something important but can't quite remember where. Should you dig with it or leave it to its mysteries?"
+    },
+    "tempete": {
+      "name": "The Storm",
+      "lore": "The sky suddenly darkens and the first lightning bolts streak the horizon. You must choose between sheltering the farm quickly or letting the rain feed the thirstiest crops. Every option has its price."
+    },
+    "voyageur": {
+      "name": "The Unknown Traveler",
+      "lore": "A weary stranger knocks at the farm's door and asks for shelter for the night. His story is strange, his belongings stranger still. Welcoming him may open a precious friendship or invite trouble."
+    },
+    "lucioles": {
+      "name": "The Dance of Fireflies",
+      "lore": "A swarm of fireflies fills the farm at dusk, drawing almost deliberate patterns in the air. Should you simply admire them or try to capture the moment? Their magic is fragile."
+    },
+    "graine_magique": {
+      "name": "The Magic Seed",
+      "lore": "A strange seed, warm to the touch, appears in a corner of the farm. Planting it could grow a wonder or keeping it as a gift could delight someone. Its potential remains a mystery."
+    },
+    "arc_en_ciel": {
+      "name": "The Rainbow",
+      "lore": "After a brief rain, a dazzling rainbow links the farm to the distance. They say it reveals something to those who truly take the time to look. Painting, legend, or just a fleeting moment?"
+    },
+    "hibou_sage": {
+      "name": "The Wise Owl",
+      "lore": "An old owl perches on the great tree and fixes the family with its round eyes. It seems to want to trade wisdom for comfort. Is its counsel worth a shared biscuit?"
+    },
+    "tresor_pirate": {
+      "name": "The Pirate's Treasure",
+      "lore": "A worn map surfaces from beneath a woodpile, marked with a suspicious cross. Digging there might reveal an old stash or just be a trick of time. Adventure beckons, but the ground is hard."
+    },
+    "fee_egaree": {
+      "name": "The Lost Fairy",
+      "lore": "A tiny fairy has lost her way near the farm and searches for her path in distress. Helping her home may seal a quiet alliance. Her world remains invisible to the inattentive."
+    },
+    "pluie_etoiles": {
+      "name": "The Starfall",
+      "lore": "One night, the sky tears open into a cascade of shooting stars above the farm. Making a wish or gathering the fallen dust — both options taste rare. No one will forget this night."
+    },
+    "papillon_geant": {
+      "name": "The Giant Butterfly",
+      "lore": "A butterfly with oversized wings calmly lands on a crop, as if choosing its stage. Offer it a perch or just photograph it? Its arrival is a sign no one expected."
+    },
+    "concert_oiseaux": {
+      "name": "The Bird Concert",
+      "lore": "One morning, all the birds of the farm synchronize in an almost orchestrated song. Listen in silence or join them in dance — the farm becomes a fleeting stage."
+    },
+    "neige_magique": {
+      "name": "The Magic Snow",
+      "lore": "A luminous snow falls on the farm in the heart of the night, without biting cold. You can shape figures with it or huddle by a fire and watch. A moment suspended in time."
+    },
+    "champignon_dore": {
+      "name": "The Golden Mushroom",
+      "lore": "A mushroom the color of gold grows apart from the others, almost provocatively. Cook it or bring it to a sage? Its effects remain to be discovered and each choice seals its use."
+    },
+    "lettre_mysterieuse": {
+      "name": "The Mysterious Letter",
+      "lore": "An envelope without a sender waits on the farm's wooden table. Open it or leave it sealed to preserve the mystery? The words inside could change everything."
+    }
+  }
 }

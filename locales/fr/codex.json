@@ -1,12 +1,462 @@
 {
-  "crop": {},
-  "animal": {},
-  "building": {},
-  "craft": {},
-  "tech": {},
-  "companion": {},
-  "loot": {},
-  "seasonal": {},
-  "saga": {},
-  "quest": {}
+  "crop": {
+    "carrot": {
+      "name": "Carotte",
+      "lore": "Culture de départ, généreuse et rapide. Une botte fraîchement arrachée sent bon la terre humide du petit matin. Idéale pour prendre ses marques sur la ferme."
+    },
+    "wheat": {
+      "name": "Blé",
+      "lore": "Les épis dorés oscillent doucement sous la brise. Base de la cuisine familiale, le blé est une valeur sûre pour remplir les greniers et nourrir tout le monde."
+    },
+    "potato": {
+      "name": "Pomme de terre",
+      "lore": "Résistante et fiable, la pomme de terre pardonne les oublis. On en tire toujours quelque chose, et sa rusticité en fait une favorite des apprentis jardiniers."
+    },
+    "beetroot": {
+      "name": "Betterave",
+      "lore": "Son cœur pourpre intense tache les mains et les tabliers. La betterave aime les saisons fraîches et récompense bien qui sait l'attendre."
+    },
+    "tomato": {
+      "name": "Tomate",
+      "lore": "Parfumée, gorgée de soleil, la tomate demande un peu plus de soins mais paie ses efforts au centuple. Une bonne tomate mûre, c'est déjà un plat."
+    },
+    "cabbage": {
+      "name": "Chou",
+      "lore": "Lourd, dense, presque architectural dans sa rondeur. Le chou structure le potager et garde sa fraîcheur longtemps après la récolte."
+    },
+    "cucumber": {
+      "name": "Concombre",
+      "lore": "Grimpeur volontaire, le concombre s'accroche à tout ce qu'il trouve. Croquant et rafraîchissant, il est la promesse des après-midi d'été."
+    },
+    "corn": {
+      "name": "Maïs",
+      "lore": "Les hautes tiges dessinent des couloirs où le vent chuchote. Patient à faire pousser, le maïs demande de l'espace mais offre des récoltes spectaculaires."
+    },
+    "strawberry": {
+      "name": "Fraise",
+      "lore": "Petites bombes sucrées nichées sous les feuilles. Les fraises disparaissent souvent avant d'arriver dans le panier — un mystère que personne n'avoue vraiment."
+    },
+    "pumpkin": {
+      "name": "Citrouille",
+      "lore": "Reine de l'automne, la citrouille gonfle doucement jusqu'à prendre des proportions étonnantes. Une belle pièce, c'est la fierté de toute une saison."
+    },
+    "sunflower": {
+      "name": "Tournesol",
+      "lore": "Géant solaire qui suit la lumière du matin au soir. Débloqué par la recherche avancée, il couronne les champs d'une vague d'or vivant."
+    },
+    "orchidee": {
+      "name": "Orchidée mystérieuse",
+      "lore": "On ne plante pas une orchidée : elle choisit son moment. Elle apparaît parfois au détour d'une récolte, cadeau inattendu des terres généreuses. Son pétale froid a un éclat presque irréel."
+    },
+    "rose_doree": {
+      "name": "Rose dorée",
+      "lore": "Une légende du jardinage. Quelques pétales suffisent à éclairer tout un verger. La rose dorée ne se trouve qu'en récoltant patiemment les cultures plus anciennes — et même là, elle se mérite."
+    },
+    "truffe": {
+      "name": "Truffe parfumée",
+      "lore": "Cachée sous les racines majestueuses, la truffe ne se dévoile qu'aux fermiers persévérants. Son parfum puissant signe les meilleurs plats de fête."
+    },
+    "fruit_dragon": {
+      "name": "Fruit du dragon",
+      "lore": "Le trésor ultime de la ferme, dont la peau écailleuse semble palpiter d'une lueur intérieure. On raconte qu'un seul peut apparaître après n'importe quelle récolte — mais la plupart des jardiniers ne le verront qu'une fois dans leur vie."
+    }
+  },
+  "animal": {
+    "poussin": {
+      "name": "Poussin",
+      "lore": "Boule de plumes jaune qui pépie pour un rien. Premier résident de la ferme, il donne le ton d'une basse-cour joyeuse et désordonnée."
+    },
+    "poulet": {
+      "name": "Poulet",
+      "lore": "Gratteur infatigable, toujours en train d'inspecter chaque brin d'herbe. Sa présence transforme le moindre carré de terre en petit royaume."
+    },
+    "canard": {
+      "name": "Canard",
+      "lore": "Pataud sur terre, souverain sur l'eau. Il aime les flaques du matin et inspecte les parcelles humides d'un œil gourmand."
+    },
+    "cochon": {
+      "name": "Cochon",
+      "lore": "Malin, curieux, bien plus intelligent qu'il n'en a l'air. Un cochon bien installé devient vite un pilier du quotidien à la ferme."
+    },
+    "vache": {
+      "name": "Vache",
+      "lore": "Calme présence qui ancre le paysage. Quand une vache s'installe, la ferme a l'air tout de suite plus vraie, plus entière."
+    },
+    "oiseau": {
+      "name": "Oiseau",
+      "lore": "Petit visiteur du ciel qui choisit ses escales. Son chant à l'aube signale une ferme en bonne santé, où les arbres l'invitent à rester."
+    },
+    "ecureuil": {
+      "name": "Écureuil",
+      "lore": "Funambule roux qui file entre les branches. Toujours en train de cacher quelque chose quelque part — et d'oublier où."
+    },
+    "papillons": {
+      "name": "Papillons",
+      "lore": "Nuée colorée qui danse au-dessus des parterres fleuris. Leur présence trahit un jardin en équilibre, accueillant pour le vivant."
+    },
+    "coccinelle": {
+      "name": "Coccinelle",
+      "lore": "Petite gardienne rouge à pois noirs. On dit qu'elle porte chance, et les jardiniers expérimentés la laissent tranquille sur les feuilles."
+    },
+    "chat": {
+      "name": "Chat",
+      "lore": "Souverain discret des granges et des appuis de fenêtre. Il arrive quand il veut, part quand il veut, et n'appartient vraiment à personne."
+    },
+    "hibou": {
+      "name": "Hibou",
+      "lore": "Veilleur silencieux des nuits de ferme. Quand il se pose sur une branche maîtresse, on sent que les lieux ont un gardien nocturne."
+    },
+    "fee": {
+      "name": "Fée",
+      "lore": "Présence scintillante qui n'apparaît qu'aux fermes les plus épanouies. On l'aperçoit du coin de l'œil, jamais en face — comme si elle refusait d'être vraiment vue."
+    },
+    "dragon": {
+      "name": "Dragon",
+      "lore": "Créature légendaire dont l'arrivée change l'atmosphère de la ferme entière. Les autres habitants le regardent avec un mélange de crainte et de respect."
+    },
+    "phoenix": {
+      "name": "Phénix",
+      "lore": "Oiseau de feu dont le plumage semble toujours danser au bord de l'embrasement. Sa présence récompense les fermes qui ont traversé beaucoup de saisons."
+    },
+    "licorne": {
+      "name": "Licorne",
+      "lore": "Mythe fait créature, d'une blancheur qui semble refléter la lumière du soir. Elle n'apparaît que dans les ferme les plus accomplies, comme une consécration."
+    },
+    "esprit_eau": {
+      "name": "Esprit des eaux",
+      "lore": "Silhouette translucide aperçue près des points d'eau, certains soirs. Ceux qui l'ont croisée gardent le silence sur les circonstances — on dit qu'elle se révèle au fil d'une aventure particulière."
+    },
+    "ancien_gardien": {
+      "name": "Ancien gardien",
+      "lore": "Présence millénaire drapée de verdure, compagnon rare des grandes histoires de la ferme. On ne le rencontre pas par hasard : il est la clef d'un récit qu'il faut mériter."
+    }
+  },
+  "building": {
+    "poulailler": {
+      "name": "Poulailler",
+      "lore": "Le plus accessible des bâtiments de la ferme, il abrite quelques poules affairées qui pondent à intervalles réguliers. Ses œufs sont la base de nombreuses recettes gourmandes et une source de revenus fiable dès les premiers jours. Chaque amélioration raccourcit le temps de ponte pour répondre à l'appétit grandissant de la famille."
+    },
+    "grange": {
+      "name": "Grange",
+      "lore": "Une solide grange de bois où mûrissent calmement les laitages de la ferme. Son lait crémeux se transforme en fromages, gratins et soupes réconfortantes, et devient indispensable dès que l'arbre atteint le stade arbuste. Améliorer la grange réduit le délai entre chaque collecte pour nourrir les recettes plus ambitieuses."
+    },
+    "moulin": {
+      "name": "Moulin",
+      "lore": "Les grandes ailes du moulin tournent au rythme des saisons et broient le blé en farine tendre. Indispensable au pain, aux gâteaux et aux tartes les plus élaborées, il marque le passage de la ferme vers les recettes d'arbre adulte. Les upgrades accélèrent la production pour suivre la demande croissante des cuisines."
+    },
+    "ruche": {
+      "name": "Ruche",
+      "lore": "Une colonie dorée d'abeilles industrieuses récolte le nectar des cultures pour produire un miel précieux. La ruche ne se débloque qu'avec une avancée technologique en élevage et devient alors la pierre angulaire des recettes nobles comme l'hydromel ou la confiture royale. Ses améliorations augmentent le débit des pots de miel stockés."
+    }
+  },
+  "craft": {
+    "soupe": {
+      "name": "Soupe",
+      "lore": "Une soupe rustique qui ouvre le livre de recettes dès le stade pousse. Elle associe les légumes racines les plus accessibles de la ferme et apporte un peu de chaleur aux premières journées de jeu. Idéale pour convertir les premiers surplus de récolte en pièces."
+    },
+    "bouquet": {
+      "name": "Bouquet du jardin",
+      "lore": "Un assemblage coloré de légumes-feuilles qui sert autant à décorer qu'à vendre. Accessible très tôt, il valorise les cultures en surnombre sans monopoliser les ressources animales. Un petit rituel sympathique pour marquer une belle récolte."
+    },
+    "crepe": {
+      "name": "Crêpe",
+      "lore": "La recette de transition par excellence entre le jardin et le poulailler. Un œuf frais, une poignée de blé, et la ferme entre dans l'ère des recettes croisées culture/bâtiment. Parfaite pour tester les premières synergies de l'atelier."
+    },
+    "bortsch": {
+      "name": "Bortsch",
+      "lore": "Un bortsch fumant à base de betteraves de la ferme, venu tout droit d'une cuisine familiale traditionnelle. Il permet d'écouler les betteraves accumulées sans dépendre d'autres cultures. Simple, nourrissant et toujours disponible dès le stade pousse."
+    },
+    "fromage": {
+      "name": "Fromage",
+      "lore": "Un fromage affiné né du lait patiemment récolté à la grange. Il inaugure l'ère des recettes bâtiment pur et devient un excellent moyen de rentabiliser la production laitière. Sa vente rapporte largement de quoi financer les upgrades suivantes."
+    },
+    "gratin": {
+      "name": "Gratin",
+      "lore": "Un gratin réconfortant qui mêle lait de la grange, pommes de terre du jardin et œufs du poulailler. C'est la première recette à trois ingrédients croisés, parfaite pour marquer le passage au stade arbuste. Un classique familial toujours apprécié."
+    },
+    "omelette": {
+      "name": "Omelette",
+      "lore": "Une omelette dorée qui combine œufs du poulailler et tomates du potager. Elle valorise les ressources abondantes du début/milieu de partie et reste rentable tout au long de la progression. Une valeur sûre de l'atelier."
+    },
+    "hydromel": {
+      "name": "Hydromel",
+      "lore": "Une boisson ambrée brassée à partir du miel de la ruche, symbole de prestige de la ferme. Dès que la ruche est active, l'hydromel devient l'une des premières recettes à forte valeur. Un breuvage qui impose le respect des voyageurs."
+    },
+    "nougat": {
+      "name": "Nougat",
+      "lore": "Un nougat onctueux qui rassemble trois ressources bâtiments : miel, œuf et farine. Il récompense les fermes ayant diversifié leurs productions et offre un excellent retour sur investissement. Une friandise qui sent bon la fin d'après-midi."
+    },
+    "pain_epices": {
+      "name": "Pain d'épices",
+      "lore": "Un pain d'épices moelleux parfumé au miel, cuit à partir de la farine du moulin. Il exploite directement la synergie moulin + ruche et devient une recette phare dès le stade arbuste. Parfait pour les petits goûters familiaux virtuels."
+    },
+    "parfum_orchidee": {
+      "name": "Parfum d'orchidée",
+      "lore": "Un flacon rare distillé à partir d'orchidées cultivées avec soin et d'une touche de miel. C'est l'une des premières recettes à exploiter une graine rare, avec un prix de vente exceptionnel à la clé. Un luxe réservé aux fermes patientes."
+    },
+    "gaspacho": {
+      "name": "Gaspacho",
+      "lore": "Un gaspacho frais concombre-tomate, parfait pour écouler deux cultures d'été abondantes. Il n'exige aucun ingrédient bâtiment et reste donc accessible même sans ruche ni moulin. Une recette simple qui dépanne souvent."
+    },
+    "pain": {
+      "name": "Pain",
+      "lore": "Le pain croustillant du moulin, recette emblématique du stade arbre. Farine et blé s'assemblent pour produire une base alimentaire que la famille consomme sans se lasser. Une valeur refuge quand les ingrédients rares manquent."
+    },
+    "confiture": {
+      "name": "Confiture de fraises",
+      "lore": "Une confiture rouge profond qui capture le goût des fraises d'été. Pas besoin de bâtiment : la recette transforme directement la récolte du jardin en pots précieux. Idéale pour les fermes qui privilégient les cultures sucrées."
+    },
+    "popcorn": {
+      "name": "Popcorn",
+      "lore": "Des grains de maïs éclatés en une avalanche dorée, parfaits pour les soirées cinéma. La recette valorise les champs de maïs arrivés à maturité au stade arbre. Un plaisir simple qui fait toujours son effet."
+    },
+    "huile_tournesol": {
+      "name": "Huile de tournesol",
+      "lore": "Une huile pressée à froid à partir des tournesols cultivés en fin de progression. Elle débloque une nouvelle catégorie de rendements pour les fermes ayant investi dans la branche culture. Un ingrédient polyvalent très recherché."
+    },
+    "brioche_tournesol": {
+      "name": "Brioche au tournesol",
+      "lore": "Une brioche moelleuse saupoudrée de graines de tournesol, alliant farine du moulin et récolte florale. Elle marie deux piliers de la ferme avancée pour un résultat réconfortant. Une pâtisserie à la fois rustique et raffinée."
+    },
+    "gateau": {
+      "name": "Gâteau",
+      "lore": "Un gâteau d'anniversaire classique à la farine, œufs et fraises. Recette polyvalente du stade arbre, il équilibre bâtiments et cultures pour un rendu généreux. Toujours bienvenu pour marquer un palier de progression."
+    },
+    "confiture_royale": {
+      "name": "Confiture royale",
+      "lore": "Une confiture d'exception à base de rose dorée, fraise et miel, digne des plus grandes tables. C'est l'une des recettes les plus rentables du jeu, réservée aux fermes ayant déjà cueilli une graine rare florale. Un véritable chef-d'œuvre sucré."
+    },
+    "soupe_citrouille": {
+      "name": "Soupe de citrouille",
+      "lore": "Un velouté crémeux qui célèbre l'arrivée de la citrouille au stade majestueux. Lait de la grange et chair de courge s'unissent pour une recette d'automne inoubliable. Le signal que la ferme est désormais adulte."
+    },
+    "tarte_citrouille": {
+      "name": "Tarte à la citrouille",
+      "lore": "Une tarte dorée à la citrouille, cousine raffinée de la soupe du même nom. Elle combine farine du moulin, œuf du poulailler et chair de courge pour un dessert signature de fin de partie. Incontournable des fêtes familiales."
+    },
+    "risotto_truffe": {
+      "name": "Risotto à la truffe",
+      "lore": "Un risotto crémeux sublimé par une précieuse truffe issue d'une graine rare. Lait et farine viennent compléter l'ingrédient star dans l'une des recettes les plus valorisées du jeu. Une apogée gastronomique pour fermiers patients."
+    },
+    "elixir_dragon": {
+      "name": "Élixir du dragon",
+      "lore": "Un élixir pourpre brassé à partir du fruit du dragon et d'un soupçon de miel. Recette de prestige débloquée au stade arbre, il offre un excellent rendement pour qui sait faire pousser les cultures légendaires. Un breuvage chargé de mystère."
+    },
+    "galette_royale": {
+      "name": "Galette royale",
+      "lore": "Une galette feuilletée déverrouillée grâce aux quêtes coopératives de la ferme. Farine, œuf et miel s'assemblent pour une recette symbole d'entraide familiale. Se débloque uniquement après avoir terminé une quête dédiée."
+    }
+  },
+  "tech": {
+    "culture-1": {
+      "name": "Engrais organique",
+      "lore": "La première technologie de la branche culture. Des pratiques d'amendement naturel qui accélèrent chaque cycle de pousse, réduisant le nombre de tâches nécessaires pour faire grandir les plantes. Point d'entrée indispensable pour toute ferme sérieuse."
+    },
+    "culture-2": {
+      "name": "Sélection des semences",
+      "lore": "Une étape clé qui apprend à repérer les meilleures graines parmi chaque récolte. Cette sélection augmente les chances d'obtenir un rendement bonus à la cueillette. L'art d'observer les champs prend ici tout son sens."
+    },
+    "culture-3": {
+      "name": "Culture du tournesol",
+      "lore": "La découverte d'une culture solaire jusqu'ici hors d'atteinte : le tournesol. Une fois cette technologie débloquée, de nouvelles recettes et ressources s'ouvrent à la ferme. Un tournant décoratif et productif."
+    },
+    "culture-4": {
+      "name": "Maîtrise botanique",
+      "lore": "Le sommet de la branche culture. La ferme atteint un niveau de raffinement agricole qui maximise les récoltes bonus à chaque cueillette. Les champs semblent vouloir offrir le double de leurs trésors."
+    },
+    "elevage-1": {
+      "name": "Alimentation enrichie",
+      "lore": "Des rations améliorées pour les animaux des bâtiments productifs. Leur production s'accélère sensiblement et rentabilise davantage le temps passé loin de la ferme. Le premier pas vers un élevage moderne."
+    },
+    "elevage-2": {
+      "name": "Stockage amélioré",
+      "lore": "De nouveaux silos et garde-mangers qui permettent aux bâtiments d'accumuler davantage de ressources avant saturation. Idéal pour les sessions espacées où la ferme continue de produire seule. L'organisation paie toujours."
+    },
+    "elevage-3": {
+      "name": "Apiculture",
+      "lore": "La maîtrise des abeilles et la construction de la ruche. Cette technologie débloque une toute nouvelle ressource — le miel — et ouvre la voie aux recettes les plus nobles. Un cap majeur dans la progression."
+    },
+    "expansion-1": {
+      "name": "Fondations solides",
+      "lore": "La ferme apprend à poser de meilleures bases pour ses constructions. Une parcelle de bâtiment supplémentaire apparaît et permet de diversifier la production. La porte d'entrée vers une ferme multi-bâtiments."
+    },
+    "expansion-2": {
+      "name": "Défrichage",
+      "lore": "Un grand chantier ouvre plusieurs nouvelles parcelles cultivables d'un coup. Les champs s'étendent et l'horizon de la ferme s'élargit nettement. Le moment où la ferme prend enfin ses aises."
+    },
+    "expansion-3": {
+      "name": "Parcelle géante",
+      "lore": "L'aboutissement de la branche expansion : une parcelle extra-large apparaît dans la ferme. Elle permet de cultiver des plantes majestueuses qui n'auraient jamais tenu ailleurs. Le privilège des fermes accomplies."
+    }
+  },
+  "companion": {
+    "chat": {
+      "name": "Chat",
+      "lore": "Le chat est l'un des trois compagnons initiaux, choisi par les joueurs qui apprécient son indépendance feutrée. Il observe la ferme d'un œil moqueur mais affectionne profondément sa famille humaine. Ses commentaires ironiques ponctuent les journées de jeu."
+    },
+    "chien": {
+      "name": "Chien",
+      "lore": "Le compagnon le plus enthousiaste du trio initial. Fidèle et protecteur, il célèbre chaque tâche accomplie comme un exploit et ne manque jamais une occasion d'encourager la famille. Un allié débordant d'énergie au quotidien."
+    },
+    "lapin": {
+      "name": "Lapin",
+      "lore": "Un compagnon tout en douceur, disponible dès le départ. Discret et attentionné, il parle volontiers des saisons, du jardin et des petites joies de la ferme. Parfait pour les fermiers qui recherchent une présence apaisante."
+    },
+    "renard": {
+      "name": "Renard",
+      "lore": "Une espèce rare débloquée uniquement via une loot box chanceuse. Malin et stratégique, le renard partage ses astuces et remarque les détails que les autres compagnons manquent. Un allié observateur pour les fermiers tactiques."
+    },
+    "herisson": {
+      "name": "Hérisson",
+      "lore": "L'espèce la plus rare, classée épique et réservée aux lootboxes les plus généreuses. Sage et philosophe, le hérisson distille de petites maximes sur la vie et la patience. Un compagnon contemplatif qui récompense les collectionneurs."
+    }
+  },
+  "loot": {
+    "golden_crop": {
+      "name": "Mutation dorée",
+      "lore": "À la plantation, une graine peut muter en version dorée — une chance infime qui transforme la récolte en événement. Une culture dorée rapporte un rendement très fortement multiplié. Les valeurs exactes de probabilité et de multiplicateur sont définies par le moteur de la ferme (GOLDEN_CROP_CHANCE et GOLDEN_HARVEST_MULTIPLIER) : la documentation vit dans le code, pas dans le lore."
+    },
+    "harvest_insectes": {
+      "name": "Nuée d'insectes",
+      "lore": "Parfois, à la récolte, une nuée d'insectes s'abat sur la parcelle et dévore une partie du fruit du travail. C'est brutal, mais cela fait partie des aléas d'une ferme vivante."
+    },
+    "harvest_pluie_doree": {
+      "name": "Pluie dorée",
+      "lore": "Un événement rare et magnifique qui peut survenir à la récolte : une pluie de lumière dorée qui multiplie fortement la quantité récoltée. C'est l'un des plus beaux cadeaux que la ferme puisse offrir, et l'une des mécaniques que le codex documente explicitement (CODEX-04)."
+    },
+    "harvest_mutation_rare": {
+      "name": "Mutation rare",
+      "lore": "Parfois, une culture mûrit en montrant des couleurs inhabituelles, signe d'une mutation rare. La récolte est alors augmentée, comme une récompense pour ceux qui prennent soin de leurs parcelles."
+    },
+    "seed_orchidee": {
+      "name": "Graine d'orchidée mystérieuse",
+      "lore": "Un pétale violet découvert au milieu d'une récolte mûre. Certaines cultures spécifiques peuvent, très rarement, donner cette graine précieuse. Elle ne s'achète nulle part : on ne la gagne qu'en cultivant patiemment."
+    },
+    "seed_rose_doree": {
+      "name": "Graine de rose dorée",
+      "lore": "Un éclat doré qui brille au fond du panier. Seules quelques cultures mûres et suffisamment avancées peuvent donner cette graine mythique — et même là, la chance reste modeste."
+    },
+    "seed_truffe": {
+      "name": "Spore de truffe",
+      "lore": "Un parfum puissant et sombre qui s'échappe d'une récolte généreuse. La spore de truffe n'apparaît qu'à partir de cultures bien précises et matures, comme une récompense pour les fermiers qui pensent sur le long terme."
+    },
+    "seed_fruit_dragon": {
+      "name": "Graine du fruit du dragon",
+      "lore": "L'une des trouvailles les plus rares de la ferme : une graine écailleuse qui semble refléter toutes les lumières à la fois. Contrairement aux autres graines de drop, elle peut surgir à partir de n'importe quelle récolte — mais sa probabilité est la plus basse de toutes."
+    }
+  },
+  "seasonal": {
+    "nouvel-an": {
+      "name": "Nouvel An",
+      "lore": "La ferme s'illumine de lanternes et de vœux murmurés. Les habitants se rassemblent autour du grand arbre pour saluer le cycle qui commence. Un parfum de chance flotte entre les cultures endormies."
+    },
+    "st-valentin": {
+      "name": "Saint-Valentin",
+      "lore": "Des pétales roses flottent au-dessus des parcelles et les animaux se rapprochent tendrement. Les récoltes prennent une teinte presque complice, comme pour célébrer les liens qui font vivre la ferme."
+    },
+    "poisson-avril": {
+      "name": "Poisson d'avril",
+      "lore": "Le vent souffle quelques farces entre les rangs : outils déplacés, épouvantails souriants, graines déguisées. Rien de grave, juste la ferme qui se permet un clin d'œil à la saison nouvelle."
+    },
+    "paques": {
+      "name": "Pâques",
+      "lore": "Des œufs colorés se cachent entre les cultures et les haies. Les enfants de passage partent à la chasse, pendant que les poules observent, mi-amusées mi-complices. Un matin où tout semble possible."
+    },
+    "ete": {
+      "name": "Été",
+      "lore": "Le soleil règne en maître sur la ferme et chaque culture pousse un peu plus vite. Les soirées s'étirent, les récoltes abondent, et la terre dégage cette chaleur qu'on voudrait garder toute l'année."
+    },
+    "rentree": {
+      "name": "Rentrée",
+      "lore": "L'air redevient plus frais et la ferme se réorganise. On range, on plante pour l'automne, on retrouve un rythme plus calme. Un moment charnière entre l'insouciance et la préparation."
+    },
+    "halloween": {
+      "name": "Halloween",
+      "lore": "Les citrouilles prennent des visages mystérieux et des ombres dansent près de l'arbre. La ferme devient un terrain de jeu entre frisson et féerie, où les cultures les plus étranges révèlent leurs secrets."
+    },
+    "noel": {
+      "name": "Noël",
+      "lore": "Un manteau blanc recouvre la ferme et des guirlandes s'accrochent aux bâtiments. L'arbre brille différemment cette nuit-là, comme s'il veillait sur tous les cadeaux posés à ses pieds."
+    }
+  },
+  "saga": {
+    "voyageur_argent": {
+      "name": "Le Voyageur d'Argent",
+      "lore": "Un étranger au manteau chatoyant apparaît près de la ferme, porteur d'histoires venues d'ailleurs. Chacun de ses choix oriente le destin de la famille vers une voie différente. Qui est-il vraiment, et que cherche-t-il ici ?"
+    },
+    "source_cachee": {
+      "name": "La Source Cachée",
+      "lore": "Une rumeur parle d'une source oubliée dont l'eau ferait prospérer toute culture qu'elle touche. L'aventure pousse la famille à fouiller les recoins de la ferme pour en retrouver la trace. Le vrai trésor n'est peut-être pas l'eau elle-même."
+    },
+    "carnaval_ombres": {
+      "name": "Le Carnaval des Ombres",
+      "lore": "Quand la nuit tombe, d'étranges silhouettes dansent entre les cultures et invitent la famille à les suivre. Un festival invisible se joue en parallèle du monde éveillé. Refuser l'invitation serait peut-être une erreur."
+    },
+    "graine_anciens": {
+      "name": "La Graine des Anciens",
+      "lore": "On raconte qu'une graine ancestrale dort quelque part dans la ferme, prête à réveiller des pouvoirs oubliés. La quête demande patience et choix délicats. Celui qui la trouvera changera la ferme pour toujours."
+    }
+  },
+  "quest": {
+    "tresor_ecureuil": {
+      "name": "Le Trésor de l'Écureuil",
+      "lore": "Un écureuil agité court autour d'un arbre en grattant frénétiquement l'écorce. Il semble avoir caché quelque chose d'important mais ne se souvient plus exactement où. Vaut-il mieux fouiller avec lui ou le laisser à ses mystères ?"
+    },
+    "tempete": {
+      "name": "La Tempête",
+      "lore": "Le ciel s'assombrit brusquement et les premiers éclairs zèbrent l'horizon. Il faut choisir entre abriter la ferme au plus vite ou laisser la pluie nourrir les cultures les plus assoiffées. Chaque option a son prix."
+    },
+    "voyageur": {
+      "name": "Le Voyageur Inconnu",
+      "lore": "Un inconnu fatigué frappe à la porte de la ferme et demande l'hospitalité pour la nuit. Son histoire est étrange, ses objets encore plus. L'accueillir pourrait ouvrir une amitié précieuse ou attirer des ennuis."
+    },
+    "lucioles": {
+      "name": "La Danse des Lucioles",
+      "lore": "Un essaim de lucioles envahit la ferme à la tombée du jour, dessinant des motifs presque volontaires dans l'air. Faut-il simplement les admirer ou tenter d'en capturer l'instant ? Leur magie est fragile."
+    },
+    "graine_magique": {
+      "name": "La Graine Magique",
+      "lore": "Une graine étrange, chaude au toucher, apparaît dans un recoin de la ferme. La planter pourrait faire pousser une merveille ou la garder en cadeau pourrait faire plaisir à quelqu'un. Son potentiel reste un mystère."
+    },
+    "arc_en_ciel": {
+      "name": "L'Arc-en-Ciel",
+      "lore": "Après une courte pluie, un arc-en-ciel éclatant relie la ferme au lointain. On dit qu'il révèle quelque chose à qui prend le temps de vraiment regarder. Peinture, légende ou simple moment ?"
+    },
+    "hibou_sage": {
+      "name": "Le Hibou Sage",
+      "lore": "Un vieux hibou se pose sur le grand arbre et fixe la famille de ses yeux ronds. Il semble vouloir échanger savoir contre réconfort. Ses conseils valent-ils un biscuit partagé ?"
+    },
+    "tresor_pirate": {
+      "name": "Le Trésor du Pirate",
+      "lore": "Une carte usée émerge de sous une pile de bois, marquée d'une croix suspecte. Creuser là-bas pourrait révéler une ancienne cache ou n'être qu'une farce du temps. L'aventure tente, mais le sol est dur."
+    },
+    "fee_egaree": {
+      "name": "La Fée Égarée",
+      "lore": "Une minuscule fée s'est perdue près de la ferme et cherche son chemin avec angoisse. L'aider à rentrer chez elle peut sceller une alliance discrète. Son monde reste invisible aux distraits."
+    },
+    "pluie_etoiles": {
+      "name": "La Pluie d'Étoiles",
+      "lore": "Une nuit, le ciel se déchire en une cascade d'étoiles filantes au-dessus de la ferme. Formuler un vœu ou récolter les poussières tombées : les deux options ont un goût de rare. Personne n'oubliera cette nuit."
+    },
+    "papillon_geant": {
+      "name": "Le Papillon Géant",
+      "lore": "Un papillon aux ailes démesurées se pose calmement sur une culture, comme s'il choisissait sa scène. Lui offrir un perchoir ou simplement le photographier ? Sa venue est un signe qu'on n'attendait pas."
+    },
+    "concert_oiseaux": {
+      "name": "Le Concert des Oiseaux",
+      "lore": "Un matin, tous les oiseaux de la ferme se synchronisent dans un chant presque orchestré. Les écouter en silence ou se joindre à eux en dansant : la ferme devient une scène éphémère."
+    },
+    "neige_magique": {
+      "name": "La Neige Magique",
+      "lore": "Une neige lumineuse tombe sur la ferme en plein cœur de la nuit, sans froid mordant. On peut en profiter pour construire des figures ou se blottir près d'un feu et contempler. Un moment suspendu."
+    },
+    "champignon_dore": {
+      "name": "Le Champignon Doré",
+      "lore": "Un champignon à la couleur de l'or pousse à l'écart des autres, presque provocant. Le cuisiner ou l'apporter à un sage ? Ses effets restent à découvrir et chaque choix scelle son usage."
+    },
+    "lettre_mysterieuse": {
+      "name": "La Lettre Mystérieuse",
+      "lore": "Une enveloppe sans expéditeur attend sur la table en bois de la ferme. L'ouvrir ou la laisser scellée pour préserver le mystère ? Les mots à l'intérieur pourraient tout changer."
+    }
+  }
 }
