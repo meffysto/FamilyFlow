@@ -7,6 +7,7 @@ import {
   HARVEST_EVENT_CHANCE,
   HARVEST_EVENT_WEIGHTS,
 } from '../mascot/farm-engine';
+import { CROP_ICONS } from '../mascot/crop-sprites';
 import type { LootEntry } from './types';
 
 // Re-export des constantes pour que l'UI Phase 17 puisse les afficher sans re-importer farm-engine
@@ -38,5 +39,6 @@ export const lootEntries: LootEntry[] = [
     lootType: 'rare_seed_drop' as const,
     nameKey: `codex:loot.seed_${rule.seedId}.name`,
     loreKey: `codex:loot.seed_${rule.seedId}.lore`,
+    spriteRef: CROP_ICONS[rule.seedId],
   })),
 ];

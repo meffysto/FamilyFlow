@@ -76,16 +76,22 @@ export const CROP_SPRITES: Record<string, Record<number, [any, any]>> = {
   },
 };
 
-/** Icones cultures (pour la boutique) */
+/** Icones cultures (pour la boutique et le codex) */
 export const CROP_ICONS: Record<string, any> = {
-  carrot:     require('../../assets/garden/crops/carrot/icon.png'),
-  wheat:      require('../../assets/garden/crops/wheat/icon.png'),
-  tomato:     require('../../assets/garden/crops/tomato/icon.png'),
-  strawberry: require('../../assets/garden/crops/strawberry/icon.png'),
-  potato:     require('../../assets/garden/crops/potato/icon.png'),
-  corn:       require('../../assets/garden/crops/corn/icon.png'),
-  pumpkin:    require('../../assets/garden/crops/pumpkin/icon.png'),
-  cabbage:    require('../../assets/garden/crops/cabbage/icon.png'),
-  beetroot:   require('../../assets/garden/crops/beetroot/icon.png'),
-  cucumber:   require('../../assets/garden/crops/cucumber/icon.png'),
+  carrot:       require('../../assets/garden/crops/carrot/icon.png'),
+  wheat:        require('../../assets/garden/crops/wheat/icon.png'),
+  tomato:       require('../../assets/garden/crops/tomato/icon.png'),
+  strawberry:   require('../../assets/garden/crops/strawberry/icon.png'),
+  potato:       require('../../assets/garden/crops/potato/icon.png'),
+  corn:         require('../../assets/garden/crops/corn/icon.png'),
+  pumpkin:      require('../../assets/garden/crops/pumpkin/icon.png'),
+  cabbage:      require('../../assets/garden/crops/cabbage/icon.png'),
+  beetroot:     require('../../assets/garden/crops/beetroot/icon.png'),
+  cucumber:     require('../../assets/garden/crops/cucumber/icon.png'),
+  sunflower:    require('../../assets/garden/crops/sunflower/icon.png'),
+  // Graines rares (drop-only) — sprites générés via PixelLab
+  orchidee:     require('../../assets/garden/crops/orchidee/icon.png'),
+  rose_doree:   require('../../assets/garden/crops/rose_doree/icon.png'),
+  truffe:       require('../../assets/garden/crops/truffe/icon.png'),
+  fruit_dragon: require('../../assets/garden/crops/fruit_dragon/icon.png'),
 };
