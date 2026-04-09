@@ -96,6 +96,42 @@ export function hapticsStageScroll() {
   Haptics.selectionAsync();
 }
 
+/** Effet léger — ménage quotidien et hebdomadaire */
+export function hapticsEffectLight() {
+  if (isWeb) return;
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+}
+
+/** Effet modéré — courses, routines enfants, devoirs, budget */
+export async function hapticsEffectMedium() {
+  if (isWeb) return;
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  await delay(80);
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+}
+
+/** Effet chaleureux — cuisine, gratitude */
+export async function hapticsEffectStrong() {
+  if (isWeb) return;
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  await delay(100);
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  await delay(80);
+  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+}
+
+/** Effet épique — soins bébé, rendez-vous (mirrors hapticsEvolution cadence) */
+export async function hapticsEffectGolden() {
+  if (isWeb) return;
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  await delay(100);
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  await delay(80);
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+  await delay(150);
+  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+}
+
 // ── Utilitaire ───────────────────────────────
 
 function delay(ms: number): Promise<void> {

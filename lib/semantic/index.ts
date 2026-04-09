@@ -32,3 +32,7 @@ export {
   WEEKLY_CAPS,
 } from './caps';
 export type { CouplingCaps, EffectCap } from './caps';
+
+// Phase 21 — feedback visuel + compagnon
+export { EFFECT_TOASTS, CATEGORY_VARIANT, CATEGORY_HAPTIC_FN } from './effect-toasts';
+export type { EffectToastDef, HarvestBurstVariant } from './effect-toasts';
