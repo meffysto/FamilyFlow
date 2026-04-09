@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Seed
 status: Ready to plan
-stopped_at: Completed 20-04-PLAN.md
-last_updated: "2026-04-09T09:35:43.101Z"
+stopped_at: Phase 21 context gathered
+last_updated: "2026-04-09T13:37:12.552Z"
 last_activity: 2026-04-09
 progress:
   total_phases: 6
@@ -270,6 +270,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T09:29:44.662Z
-Stopped at: Completed 20-04-PLAN.md
-Resume file: None
+Last session: 2026-04-09T13:37:12.543Z
+Stopped at: Phase 21 context gathered
+Resume file: .planning/phases/21-feedback-visuel-compagnon/21-CONTEXT.md
