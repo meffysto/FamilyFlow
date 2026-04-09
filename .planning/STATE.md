@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Seed
-status: Ready to execute
-stopped_at: Completed 21-01-PLAN.md
-last_updated: "2026-04-09T15:00:52.128Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 21-02-PLAN.md
+last_updated: "2026-04-09T15:10:08.167Z"
 last_activity: 2026-04-09
 progress:
   total_phases: 6
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
   percent: 0
 ---
 
@@ -113,6 +113,7 @@ Next step: `/gsd:discuss-phase 19` après approbation du roadmap
 | Phase 20 P03 | 15 | 2 tasks | 3 files |
 | Phase 20-moteur-d-effets-anti-abus P04 | 4min | 3 tasks | 3 files |
 | Phase 21-feedback-visuel-compagnon P01 | 3min | 2 tasks | 4 files |
+| Phase 21 P02 | 8 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -233,6 +234,9 @@ Recent decisions affecting current work:
 - [Phase 20-04]: Tests getWeekStart timezone-agnostic : valeurs attendues calculées dynamiquement — évite strings UTC hardcodées qui cassent selon fuseau (Europe/Paris)
 - [Phase 21-01]: Module effect-toasts.ts pur (zéro import vault/hook) — consommable par Plan 02 sans effets de bord
 - [Phase 21-01]: HarvestBurst comportement par défaut préservé à 100% quand variant omis — backward-compatible
+- [Phase 21-02]: reward={1} dans HarvestBurst overlay — reward=0 affiche '+0' non masque
+- [Phase 21-02]: SUB_TYPE_TEMPLATES dictionnaire separe de MESSAGE_TEMPLATES — preserve type Record<CompanionEvent,string[]>
+- [Phase 21-02]: subType? string dans CompanionMessageContext (pas CategoryId) — evite couplage lib/mascot -> lib/semantic
 
 ### Pending Todos
 
@@ -273,6 +277,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T15:00:52.125Z
-Stopped at: Completed 21-01-PLAN.md
+Last session: 2026-04-09T15:10:08.163Z
+Stopped at: Completed 21-02-PLAN.md
 Resume file: None

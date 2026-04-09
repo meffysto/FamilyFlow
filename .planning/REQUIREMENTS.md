@@ -39,7 +39,7 @@ Requirements pour le milestone v1.3. Chaque requirement mappe à une phase exact
 - [x] **FEEDBACK-01**: User sees a specific toast when an effect is triggered ("🌿 Ménage: 1 weeds retiré !")
 - [x] **FEEDBACK-02**: User feels a distinct haptic pattern per effect category
 - [x] **FEEDBACK-03**: User sees a visual burst (HarvestBurst variant) adapted to the effect
-- [ ] **FEEDBACK-04**: User reads a contextual companion message referencing the real task category
+- [x] **FEEDBACK-04**: User reads a contextual companion message referencing the real task category
 - [x] **FEEDBACK-05**: User sees i18n FR+EN parity for all feedback strings
 
 ### COUPLING-UI — Settings UI (Phase 22)
@@ -117,7 +117,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FEEDBACK-01 | Phase 21 | Complete |
 | FEEDBACK-02 | Phase 21 | Complete |
 | FEEDBACK-03 | Phase 21 | Complete |
-| FEEDBACK-04 | Phase 21 | Pending |
+| FEEDBACK-04 | Phase 21 | Complete |
 | FEEDBACK-05 | Phase 21 | Complete |
 | COUPLING-01 | Phase 22 | Pending |
 | COUPLING-02 | Phase 22 | Pending |

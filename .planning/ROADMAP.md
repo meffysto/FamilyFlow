@@ -45,7 +45,7 @@ Détails : `.planning/milestones/v1.2-ROADMAP.md`.
 
 - [x] **Phase 19: Détection catégorie sémantique** — Module de détection lisant filepath + sections + tags, feature flag off par défaut (completed 2026-04-09)
 - [x] **Phase 20: Moteur d'effets + anti-abus** — Dispatcher, caps SecureStore, wiring des 10 effets wow sur les leviers existants (completed 2026-04-09)
-- [ ] **Phase 21: Feedback visuel + compagnon** — HarvestBurst variants, toasts, haptic, messages compagnon i18n FR+EN
+- [x] **Phase 21: Feedback visuel + compagnon** — HarvestBurst variants, toasts, haptic, messages compagnon i18n FR+EN (completed 2026-04-09)
 - [ ] **Phase 22: UI config famille** — Écran Réglages Couplage sémantique, toggles par catégorie, stats semaine
 - [ ] **Phase 23: Musée des effets** — SEED-002 lite : chronologie persistée dans gami-{id}.md, écran Musée minimal
 - [ ] **Phase 24: Compagnon étendu** — SEED-003 lite : 5 event types activés, messages persistés, triggers cross-feature
@@ -97,7 +97,7 @@ Plans:
 
 Plans:
 - [x] 21-01-PLAN.md — EFFECT_TOASTS dictionnaire + haptic patterns + HarvestBurst variant prop
-- [ ] 21-02-PLAN.md — Toast/haptic dispatch + taskMeta fix + companion sub-type + i18n FR+EN
+- [x] 21-02-PLAN.md — Toast/haptic dispatch + taskMeta fix + companion sub-type + i18n FR+EN
 
 #### Phase 22: UI config famille
 **Goal**: Livrer un écran "Couplage sémantique" dans les Réglages permettant à chaque famille d'activer/désactiver les 10 catégories individuellement, avec preview des effets et stats hebdo.
@@ -156,7 +156,7 @@ Plans:
 | 18. Tutoriel ferme | v1.2 | 4/4 | Complete | 2026-04-08 |
 | 19. Détection catégorie sémantique | v1.3 | 2/2 | Complete    | 2026-04-09 |
 | 20. Moteur d'effets + anti-abus | v1.3 | 4/4 | Complete    | 2026-04-09 |
-| 21. Feedback visuel + compagnon | v1.3 | 1/2 | In Progress|  |
+| 21. Feedback visuel + compagnon | v1.3 | 2/2 | Complete   | 2026-04-09 |
 | 22. UI config famille | v1.3 | 0/TBD | Not started | - |
 | 23. Musée des effets | v1.3 | 0/TBD | Not started | - |
 | 24. Compagnon étendu | v1.3 | 0/TBD | Not started | - |
