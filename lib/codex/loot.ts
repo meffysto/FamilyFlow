@@ -4,11 +4,13 @@ import {
   RARE_SEED_DROP_RULES,
   GOLDEN_CROP_CHANCE,
   GOLDEN_HARVEST_MULTIPLIER,
+  HARVEST_EVENT_CHANCE,
+  HARVEST_EVENT_WEIGHTS,
 } from '../mascot/farm-engine';
 import type { LootEntry } from './types';
 
 // Re-export des constantes pour que l'UI Phase 17 puisse les afficher sans re-importer farm-engine
-export { HARVEST_EVENTS, RARE_SEED_DROP_RULES, GOLDEN_CROP_CHANCE, GOLDEN_HARVEST_MULTIPLIER };
+export { HARVEST_EVENTS, RARE_SEED_DROP_RULES, GOLDEN_CROP_CHANCE, GOLDEN_HARVEST_MULTIPLIER, HARVEST_EVENT_CHANCE, HARVEST_EVENT_WEIGHTS };
 
 export const lootEntries: LootEntry[] = [
   {

@@ -535,7 +535,12 @@
     "order": "Level",
     "target": "Target",
     "durationDays": "Duration (days)",
-    "type": "Type"
+    "type": "Type",
+    "chance": "Probability",
+    "multiplier": "Multiplier",
+    "sources": "Source crops",
+    "period": "Period",
+    "dropChance": "Drop chance"
   },
   "values": {
     "graine": "Seed",

@@ -38,9 +38,10 @@ import {
   getCraftStats,
   getTechStats,
   getCompanionStats,
+  getLootStats,
   getSagaStats,
   getQuestStats,
-  getSeasonalStats,
+  getSeasonalPeriodStats,
   getAdventureStats,
 } from '../../lib/codex/stats';
 import { Spacing, Radius } from '../../constants/spacing';
@@ -58,8 +59,8 @@ const STAT_WHITELIST: Record<CodexKind, readonly string[]> = {
   craft: ['sellValue', 'xpBonus', 'minTreeStage'],
   tech: ['branch', 'order', 'cost'],
   companion: ['rarity'],
-  loot: [],
-  seasonal: [],
+  loot: ['chance', 'multiplier', 'sources'],
+  seasonal: ['period', 'dropChance'],
   saga: [],
   quest: ['type', 'target', 'durationDays'],
   adventure: [],
@@ -148,11 +149,10 @@ export function CodexEntryDetailModal({
         source = getCompanionStats(entry) as Record<string, unknown> | undefined;
         break;
       case 'loot':
-        // Pas de getter dédié pour loot — whitelist vide, lore suffit
-        source = undefined;
+        source = getLootStats(entry) as Record<string, unknown> | undefined;
         break;
       case 'seasonal':
-        source = getSeasonalStats(entry) as Record<string, unknown> | undefined;
+        source = getSeasonalPeriodStats(entry) as Record<string, unknown> | undefined;
         break;
       case 'saga':
         source = getSagaStats(entry) as Record<string, unknown> | undefined;

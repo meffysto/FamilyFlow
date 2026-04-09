@@ -216,13 +216,23 @@ export const HARVEST_EVENTS: HarvestEvent[] = [
   { type: 'mutation_rare', modifier: 2, labelKey: 'farm.event.mutation_rare', emoji: '✨' },
 ];
 
+/** Probabilité globale de déclenchement d'un événement à la récolte */
+export const HARVEST_EVENT_CHANCE = 0.05;
+
+/** Pondérations des types d'événements (somme = 1.0) */
+export const HARVEST_EVENT_WEIGHTS: Readonly<Record<HarvestEventType, number>> = {
+  insectes: 0.4,
+  pluie_doree: 0.35,
+  mutation_rare: 0.25,
+};
+
 /** Tente de declencher un evenement aleatoire (5% de chance) */
 export function rollHarvestEvent(): HarvestEvent | null {
-  if (Math.random() >= 0.05) return null;
+  if (Math.random() >= HARVEST_EVENT_CHANCE) return null;
   // Ponderation : insectes 40%, pluie doree 35%, mutation 25%
   const roll = Math.random();
-  if (roll < 0.4) return HARVEST_EVENTS[0];
-  if (roll < 0.75) return HARVEST_EVENTS[1];
+  if (roll < HARVEST_EVENT_WEIGHTS.insectes) return HARVEST_EVENTS[0];
+  if (roll < HARVEST_EVENT_WEIGHTS.insectes + HARVEST_EVENT_WEIGHTS.pluie_doree) return HARVEST_EVENTS[1];
   return HARVEST_EVENTS[2];
 }
 

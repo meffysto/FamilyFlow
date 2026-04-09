@@ -535,7 +535,12 @@
     "order": "Niveau",
     "target": "Objectif",
     "durationDays": "Durée (jours)",
-    "type": "Type"
+    "type": "Type",
+    "chance": "Probabilité",
+    "multiplier": "Multiplicateur",
+    "sources": "Cultures sources",
+    "period": "Période",
+    "dropChance": "Chance de drop"
   },
   "values": {
     "graine": "Graine",
