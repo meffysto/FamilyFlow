@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Seed
-status: Phase complete — ready for verification
+status: Ready to plan
 stopped_at: Completed 19-02-tests-jest-derive-flag-PLAN.md
-last_updated: "2026-04-09T07:00:11.772Z"
+last_updated: "2026-04-09T07:03:29.347Z"
 last_activity: 2026-04-09
 progress:
   total_phases: 6
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md
 
 ## Current Position
 
-Phase: 19 (d-tection-cat-gorie-s-mantique) — EXECUTING
-Plan: 2 of 2
+Phase: 20
+Plan: Not started
 Milestone: v1.3 Seed (defining requirements)
 Last shipped: v1.2 Confort & Découverte (2026-04-08)
 Last activity: 2026-04-09
