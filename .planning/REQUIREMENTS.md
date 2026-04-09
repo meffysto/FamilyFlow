@@ -95,56 +95,56 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SEMANTIC-01 | TBD | Pending |
-| SEMANTIC-02 | TBD | Pending |
-| SEMANTIC-03 | TBD | Pending |
-| SEMANTIC-04 | TBD | Pending |
-| SEMANTIC-05 | TBD | Pending |
-| SEMANTIC-06 | TBD | Pending |
-| SEMANTIC-07 | TBD | Pending |
-| SEMANTIC-08 | TBD | Pending |
-| SEMANTIC-09 | TBD | Pending |
-| EFFECTS-01 | TBD | Pending |
-| EFFECTS-02 | TBD | Pending |
-| EFFECTS-03 | TBD | Pending |
-| EFFECTS-04 | TBD | Pending |
-| EFFECTS-05 | TBD | Pending |
-| EFFECTS-06 | TBD | Pending |
-| EFFECTS-07 | TBD | Pending |
-| EFFECTS-08 | TBD | Pending |
-| EFFECTS-09 | TBD | Pending |
-| EFFECTS-10 | TBD | Pending |
-| FEEDBACK-01 | TBD | Pending |
-| FEEDBACK-02 | TBD | Pending |
-| FEEDBACK-03 | TBD | Pending |
-| FEEDBACK-04 | TBD | Pending |
-| FEEDBACK-05 | TBD | Pending |
-| COUPLING-01 | TBD | Pending |
-| COUPLING-02 | TBD | Pending |
-| COUPLING-03 | TBD | Pending |
-| COUPLING-04 | TBD | Pending |
-| COUPLING-05 | TBD | Pending |
-| COUPLING-06 | TBD | Pending |
-| MUSEUM-01 | TBD | Pending |
-| MUSEUM-02 | TBD | Pending |
-| MUSEUM-03 | TBD | Pending |
-| MUSEUM-04 | TBD | Pending |
-| MUSEUM-05 | TBD | Pending |
-| COMPANION-01 | TBD | Pending |
-| COMPANION-02 | TBD | Pending |
-| COMPANION-03 | TBD | Pending |
-| COMPANION-04 | TBD | Pending |
-| COMPANION-05 | TBD | Pending |
-| COMPANION-06 | TBD | Pending |
-| ARCH-01 | cross-phase | Pending |
-| ARCH-02 | cross-phase | Pending |
-| ARCH-03 | cross-phase | Pending |
-| ARCH-04 | cross-phase | Pending |
+| SEMANTIC-01 | Phase 19 | Pending |
+| SEMANTIC-02 | Phase 19 | Pending |
+| SEMANTIC-03 | Phase 19 | Pending |
+| SEMANTIC-04 | Phase 19 | Pending |
+| SEMANTIC-05 | Phase 19 | Pending |
+| SEMANTIC-06 | Phase 20 | Pending |
+| SEMANTIC-07 | Phase 20 | Pending |
+| SEMANTIC-08 | Phase 20 | Pending |
+| SEMANTIC-09 | Phase 20 | Pending |
+| EFFECTS-01 | Phase 20 | Pending |
+| EFFECTS-02 | Phase 20 | Pending |
+| EFFECTS-03 | Phase 20 | Pending |
+| EFFECTS-04 | Phase 20 | Pending |
+| EFFECTS-05 | Phase 20 | Pending |
+| EFFECTS-06 | Phase 20 | Pending |
+| EFFECTS-07 | Phase 20 | Pending |
+| EFFECTS-08 | Phase 20 | Pending |
+| EFFECTS-09 | Phase 20 | Pending |
+| EFFECTS-10 | Phase 20 | Pending |
+| FEEDBACK-01 | Phase 21 | Pending |
+| FEEDBACK-02 | Phase 21 | Pending |
+| FEEDBACK-03 | Phase 21 | Pending |
+| FEEDBACK-04 | Phase 21 | Pending |
+| FEEDBACK-05 | Phase 21 | Pending |
+| COUPLING-01 | Phase 22 | Pending |
+| COUPLING-02 | Phase 22 | Pending |
+| COUPLING-03 | Phase 22 | Pending |
+| COUPLING-04 | Phase 22 | Pending |
+| COUPLING-05 | Phase 22 | Pending |
+| COUPLING-06 | Phase 22 | Pending |
+| MUSEUM-01 | Phase 23 | Pending |
+| MUSEUM-02 | Phase 23 | Pending |
+| MUSEUM-03 | Phase 23 | Pending |
+| MUSEUM-04 | Phase 23 | Pending |
+| MUSEUM-05 | Phase 23 | Pending |
+| COMPANION-01 | Phase 24 | Pending |
+| COMPANION-02 | Phase 24 | Pending |
+| COMPANION-03 | Phase 24 | Pending |
+| COMPANION-04 | Phase 24 | Pending |
+| COMPANION-05 | Phase 24 | Pending |
+| COMPANION-06 | Phase 24 | Pending |
+| ARCH-01 | Phase 19 (cross-phase) | Pending |
+| ARCH-02 | Phase 19 (cross-phase) | Pending |
+| ARCH-03 | Phase 19 (cross-phase) | Pending |
+| ARCH-04 | Phase 19 (cross-phase) | Pending |
 
 **Coverage:**
 - v1.3 requirements: 45 total (9 SEMANTIC + 10 EFFECTS + 5 FEEDBACK + 6 COUPLING-UI + 5 MUSEUM + 6 COMPANION-EXT + 4 ARCH)
-- Mapped to phases: 0 (pending roadmapper)
-- Unmapped: 45 (traceability filled by gsd-roadmapper)
+- Mapped to phases: 45 ✓
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-09*
