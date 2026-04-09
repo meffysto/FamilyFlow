@@ -100,20 +100,20 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SEMANTIC-03 | Phase 19 | Complete |
 | SEMANTIC-04 | Phase 19 | Complete |
 | SEMANTIC-05 | Phase 19 | Complete |
-| SEMANTIC-06 | Phase 20 | Pending |
+| SEMANTIC-06 | Phase 20 | Implemented (20-01) |
 | SEMANTIC-07 | Phase 20 | Pending |
 | SEMANTIC-08 | Phase 20 | Pending |
 | SEMANTIC-09 | Phase 20 | Pending |
-| EFFECTS-01 | Phase 20 | Pending |
-| EFFECTS-02 | Phase 20 | Pending |
-| EFFECTS-03 | Phase 20 | Pending |
-| EFFECTS-04 | Phase 20 | Pending |
-| EFFECTS-05 | Phase 20 | Pending |
-| EFFECTS-06 | Phase 20 | Pending |
-| EFFECTS-07 | Phase 20 | Pending |
-| EFFECTS-08 | Phase 20 | Pending |
-| EFFECTS-09 | Phase 20 | Pending |
-| EFFECTS-10 | Phase 20 | Pending |
+| EFFECTS-01 | Phase 20 | Implemented (20-01) |
+| EFFECTS-02 | Phase 20 | Implemented (20-01) |
+| EFFECTS-03 | Phase 20 | Implemented (20-01) |
+| EFFECTS-04 | Phase 20 | Implemented (20-01) |
+| EFFECTS-05 | Phase 20 | Implemented (20-01) |
+| EFFECTS-06 | Phase 20 | Implemented (20-01) |
+| EFFECTS-07 | Phase 20 | Implemented (20-01) |
+| EFFECTS-08 | Phase 20 | Implemented (20-01) |
+| EFFECTS-09 | Phase 20 | Implemented (20-01) |
+| EFFECTS-10 | Phase 20 | Implemented (20-01) |
 | FEEDBACK-01 | Phase 21 | Pending |
 | FEEDBACK-02 | Phase 21 | Pending |
 | FEEDBACK-03 | Phase 21 | Pending |

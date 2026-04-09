@@ -78,7 +78,7 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 20-01-PLAN.md — Dispatcher applyTaskEffect() + 10 handlers + FarmProfileData extension
+- [x] 20-01-PLAN.md — Dispatcher applyTaskEffect() + 10 handlers + FarmProfileData extension
 - [ ] 20-02-PLAN.md — Caps anti-abus SecureStore daily/weekly
 - [ ] 20-03-PLAN.md — Wiring dans completeTask + multiplier urgent + Double Loot Cascade
 - [ ] 20-04-PLAN.md — Tests Jest effects + caps

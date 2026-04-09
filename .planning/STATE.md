@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Seed
-status: Ready to plan
-stopped_at: Completed 19-02-tests-jest-derive-flag-PLAN.md
-last_updated: "2026-04-09T07:03:29.347Z"
+status: v1.3 Seed — Phase 20 in progress (plan 01 done)
+stopped_at: Completed 20-01-PLAN.md
+last_updated: "2026-04-09T09:10:00.000Z"
 last_activity: 2026-04-09
 progress:
   total_phases: 6
@@ -26,14 +26,14 @@ See: .planning/PROJECT.md
 ## Current Position
 
 Phase: 20
-Plan: Not started
-Milestone: v1.3 Seed (defining requirements)
+Plan: 01 — completed
+Milestone: v1.3 Seed (in progress)
 Last shipped: v1.2 Confort & Découverte (2026-04-08)
 Last activity: 2026-04-09
 
 Progress: [░░░░░░░░░░] 0% (0/6 phases v1.3)
 
-Next step: `/gsd:discuss-phase 19` après approbation du roadmap
+Next step: Exécuter plan 20-02 (caps anti-abus SecureStore)
 
 ## Performance Metrics
 
@@ -99,6 +99,7 @@ Next step: `/gsd:discuss-phase 19` après approbation du roadmap
 | Phase 18-tutoriel-ferme P04 | 120 | 2 tasks | 9 files |
 | Phase 19-d-tection-cat-gorie-s-mantique P01 | 4min | 3 tasks | 4 files |
 | Phase 19-d-tection-cat-gorie-s-mantique P02 | 2min | 2 tasks | 2 files |
+| Phase 20-moteur-d-effets-anti-abus P01 | 3min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -113,6 +114,9 @@ Next step: `/gsd:discuss-phase 19` après approbation du roadmap
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 20-01]: applyTaskEffect() synchrone (deviation délibérée RESEARCH.md) — handlers purs sans I/O, async réservé aux caps Plan 02
+- [Phase 20-01]: repairWearEvent avec Infinity currentCoins — effets ferme gratuits (coins non consommés)
+- [Phase 20-01]: EFFECT_GOLDEN_MULTIPLIER = 3 non persisté — constante runtime distincte de GOLDEN_HARVEST_MULTIPLIER = 5
 - [Init v1.2]: ARCH-05 global — zéro nouvelle dépendance npm sur l'ensemble du milestone v1.2
 - [Init v1.2]: PREF-11 P0 safety — badge allergie non-dismissible implémenté en priorité absolue avant les autres badges
 - [Init v1.2]: Phase 16 (codex contenu) séparée de Phase 17 (codex UI) — valider la précision du contenu en isolation avant toute UI
@@ -256,6 +260,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T07:00:11.769Z
-Stopped at: Completed 19-02-tests-jest-derive-flag-PLAN.md
+Last session: 2026-04-09T09:10:00.000Z
+Stopped at: Completed 20-01-PLAN.md
 Resume file: None
