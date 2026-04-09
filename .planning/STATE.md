@@ -2,16 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Seed
-current_phase: 19
 status: v1.3 Seed — Defining requirements
-stopped_at: Milestone v1.3 started — defining requirements
-last_updated: "2026-04-09T00:00:00.000Z"
-last_activity: 2026-04-09
+stopped_at: Completed 20-02-PLAN.md
+last_updated: "2026-04-09T09:12:14.393Z"
+last_activity: 2026-04-09 — Milestone v1.3 started
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 0
-  completed_plans: 0
+  completed_plans: 1
   percent: 0
 ---
 
@@ -98,6 +97,7 @@ Next step: `/gsd:discuss-phase 19` après approbation du roadmap
 | Phase 18-tutoriel-ferme P01 | 6min | 2 tasks | 2 files |
 | Phase 18-tutoriel-ferme P03 | 8min | 2 tasks | 3 files |
 | Phase 18-tutoriel-ferme P04 | 120 | 2 tasks | 9 files |
+| Phase 20-moteur-d-effets-anti-abus P02 | 3 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -210,6 +210,8 @@ Recent decisions affecting current work:
 - [Phase 18-tutoriel-ferme]: [Phase 18-03]: FarmTutorialOverlay format mixte — 2 cartes narratives plein écran (étapes 0, 4) + 3 coach marks contextuels arrondis (1, 2, 3) dans un seul orchestrateur sibling de ScreenGuide (D-08)
 - [Phase 18-tutoriel-ferme]: [Phase 18-03]: Fallback graceful — si measureInWindow échoue (cible non montée), l'étape coach mark bascule en carte narrative plutôt que skip, garantissant que l'utilisateur voit le texte
 - [Phase 18-tutoriel-ferme]: [Phase 18-03]: TREE_SPRITES require map statique (pas dynamique) pour compatibilité Metro bundler — duplication locale depuis TreeView (Pitfall 5)
+- [Phase 20-02]: DAILY_CAPS.cuisine_repas=0 (pas de cap daily) + WEEKLY_CAPS.cuisine_repas=1 (EFFECTS-10 : 1 recipe unlock/sem)
+- [Phase 20-02]: isCapExceeded/incrementCap pure functions avec param now?:Date pour testabilité sans mocks
 
 ### Pending Todos
 
@@ -250,6 +252,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-08T15:40:42.903Z
-Stopped at: Completed 18-04-tree-integration-PLAN.md
+Last session: 2026-04-09T09:12:14.390Z
+Stopped at: Completed 20-02-PLAN.md
 Resume file: None

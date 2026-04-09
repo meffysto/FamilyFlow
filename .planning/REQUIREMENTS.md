@@ -17,7 +17,7 @@ Requirements pour le milestone v1.3. Chaque requirement mappe à une phase exact
 - [ ] **SEMANTIC-04**: User's task with no matching category falls back to standard XP (zero regression)
 - [ ] **SEMANTIC-05**: User can toggle the semantic coupling feature via feature flag
 - [ ] **SEMANTIC-06**: User's 10 categories are each mapped to exactly one wow effect
-- [ ] **SEMANTIC-07**: User can't trigger an effect more than its daily/weekly cap
+- [x] **SEMANTIC-07**: User can't trigger an effect more than its daily/weekly cap
 - [ ] **SEMANTIC-08**: User completing an "urgent" tagged task gets ×2 multiplier for 5 tasks
 - [ ] **SEMANTIC-09**: User with >7 day task streak gets a Double Loot Cascade bonus
 
@@ -101,7 +101,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SEMANTIC-04 | Phase 19 | Pending |
 | SEMANTIC-05 | Phase 19 | Pending |
 | SEMANTIC-06 | Phase 20 | Pending |
-| SEMANTIC-07 | Phase 20 | Pending |
+| SEMANTIC-07 | Phase 20 | Complete |
 | SEMANTIC-08 | Phase 20 | Pending |
 | SEMANTIC-09 | Phase 20 | Pending |
 | EFFECTS-01 | Phase 20 | Pending |
