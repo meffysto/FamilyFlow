@@ -48,9 +48,9 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 - [ ] (Backlog) Suggestion automatique de recettes compatibles selon les convives sélectionnés
 - [ ] (Backlog) Tutoriels contextuels pour autres écrans complexes (budget OCR, sagas, quêtes)
 - [ ] (Backlog) Mécanique "Pokédex" — tracking de découverte codex par profil avec statistiques de complétion
-- [ ] (v1.3) Détection sémantique de la catégorie des tâches (filepath + sections + tags) sans écrire dans les fichiers Obsidian
-- [ ] (v1.3) Moteur de couplage sémantique — 10 catégories de tâches couplées chacune à un effet wow spécifique sur la ferme
-- [ ] (v1.3) Anti-abus via caps quotidiens/hebdomadaires persistés dans SecureStore
+- ✓ Détection sémantique de la catégorie des tâches (filepath + sections + tags) sans écrire dans les fichiers Obsidian — v1.3 Phase 19
+- ✓ Moteur de couplage sémantique — 10 catégories de tâches couplées chacune à un effet wow spécifique sur la ferme, dispatcher applyTaskEffect() câblé dans completeTask — v1.3 Phase 20
+- ✓ Anti-abus via caps quotidiens/hebdomadaires persistés dans SecureStore, 68 tests Jest — v1.3 Phase 20
 - [ ] (v1.3) Feedback visuel et compagnon différenciés par catégorie d'effet (toast, haptic, HarvestBurst, messages i18n FR+EN)
 - [ ] (v1.3) Écran Réglages — Couplage sémantique (toggle par catégorie, preview, stats semaine)
 - [ ] (v1.3) Musée des effets — chronologie persistée des effets déclenchés (SEED-002 lite)
