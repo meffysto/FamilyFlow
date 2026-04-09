@@ -108,11 +108,11 @@ Plans:
   2. User voit les 10 catégories listées avec leur effet mappé et une preview
   3. User peut toggler on/off chaque catégorie individuellement, état persisté entre les restarts
   4. User voit les stats semaine (combien d'effets ont été déclenchés)
-**Plans**: TBD (estimation 2 plans)
+**Plans**: 2 plans
 
 Plans:
-- [ ] 22-01: Écran Réglages Couplage sémantique (toggles 10 rows + preview)
-- [ ] 22-02: Stats semaine + persistance override per-famille
+- [ ] 22-01-PLAN.md — coupling-overrides.ts + injection useGamification + i18n FR/EN
+- [ ] 22-02-PLAN.md — SettingsCoupling.tsx + câblage settings.tsx
 
 #### Phase 23: Musée des effets (SEED-002 lite)
 **Goal**: Persister chaque effet déclenché dans une chronologie accessible via un écran Musée minimal, réutilisant les patterns Codex UI de la Phase 17.
@@ -123,7 +123,7 @@ Plans:
   2. User peut ouvrir un écran "Musée" montrant les entrées datées, groupées par semaine/mois
   3. User retrouve les entrées du Musée après un restart (persistance gami-{id}.md)
   4. User reconnaît les patterns Codex UI (Phase 17) dans l'écran Musée
-**Plans**: TBD (estimation 2 plans)
+**Plans**: 2 plans
 
 Plans:
 - [ ] 23-01: `lib/museum/engine.ts` + persistance dans `gami-{id}.md` (nouvelle section Musée)
