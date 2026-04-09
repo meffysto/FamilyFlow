@@ -96,9 +96,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 21-01: HarvestBurst variants + haptic pattern par catégorie
-- [ ] 21-02: Toasts + extension `task_completed` companion event (sub_type)
-- [ ] 21-03: Messages i18n FR+EN dédiés par catégorie
+- [ ] 21-01-PLAN.md — EFFECT_TOASTS dictionnaire + haptic patterns + HarvestBurst variant prop
+- [ ] 21-02-PLAN.md — Toast/haptic dispatch + taskMeta fix + companion sub-type + i18n FR+EN
 
 #### Phase 22: UI config famille
 **Goal**: Livrer un écran "Couplage sémantique" dans les Réglages permettant à chaque famille d'activer/désactiver les 10 catégories individuellement, avec preview des effets et stats hebdo.
