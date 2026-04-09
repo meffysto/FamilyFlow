@@ -44,6 +44,7 @@ import {
   incrementCap,
 } from '../lib/semantic';
 import type { EffectResult, CategoryMatch, CategoryId } from '../lib/semantic';
+import { loadOverrides, isCategoryEnabled, incrementWeekStat } from '../lib/semantic/coupling-overrides';
 import type { Task } from '../lib/types';
 import { loadSagaProgress, saveSagaProgress } from '../lib/mascot/sagas-storage';
 import type { SagaTrait } from '../lib/mascot/sagas-types';
@@ -221,11 +222,17 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
             derivedCategory = category;
             if (category) {
               const caps = await loadCaps(profile.id);
-              if (!isCapExceeded(category.id, caps)) {
+              // Phase 22 COUPLING-03 : check override per-categorie (D-02c)
+              const overrides = await loadOverrides();
+              if (!isCategoryEnabled(category.id, overrides)) {
+                // Categorie desactivee par l'utilisateur → skip effet (D-02c)
+              } else if (!isCapExceeded(category.id, caps)) {
                 effectResult = applyTaskEffect(category, farmData);
                 if (effectResult.effectApplied) {
                   farmData = effectResult.farmData;
                   await saveCaps(profile.id, incrementCap(caps, category.id));
+                  // Phase 22 COUPLING-05 : incrementer stats semaine (D-04b)
+                  try { await incrementWeekStat(category.id); } catch { /* stats — non-critical */ }
 
                   // EFFECTS-07 : Appliquer sagaTraitDelta a la saga active
                   if (effectResult.sagaTraitDelta) {
