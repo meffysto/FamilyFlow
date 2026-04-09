@@ -157,7 +157,7 @@ Plans:
 | 19. Détection catégorie sémantique | v1.3 | 2/2 | Complete    | 2026-04-09 |
 | 20. Moteur d'effets + anti-abus | v1.3 | 4/4 | Complete    | 2026-04-09 |
 | 21. Feedback visuel + compagnon | v1.3 | 2/2 | Complete    | 2026-04-09 |
-| 22. UI config famille | v1.3 | 2/2 | Complete   | 2026-04-09 |
+| 22. UI config famille | v1.3 | 2/2 | Complete    | 2026-04-09 |
 | 23. Musée des effets | v1.3 | 0/TBD | Not started | - |
 | 24. Compagnon étendu | v1.3 | 0/TBD | Not started | - |
 

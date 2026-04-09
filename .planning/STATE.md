@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Seed
-status: Phase complete — ready for verification
+status: Ready to plan
 stopped_at: Completed 22-ui-config-famille-02
-last_updated: "2026-04-09T15:46:29.456Z"
+last_updated: "2026-04-09T15:49:45.469Z"
 last_activity: 2026-04-09
 progress:
   total_phases: 6
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md
 
 ## Current Position
 
-Phase: 22 (ui-config-famille) — EXECUTING
-Plan: 2 of 2
+Phase: 23
+Plan: Not started
 Milestone: v1.3 Seed (defining requirements)
 Last shipped: v1.2 Confort & Découverte (2026-04-08)
 Last activity: 2026-04-09
