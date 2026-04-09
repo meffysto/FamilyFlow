@@ -36,6 +36,7 @@ import { SettingsZen, ZenConfig, DEFAULT_ZEN_CONFIG } from '../../components/set
 import { SettingsAuth } from '../../components/settings/SettingsAuth';
 import { SettingsAutomations } from '../../components/settings/SettingsAutomations';
 import { SettingsGamiAdmin } from '../../components/settings/SettingsGamiAdmin';
+import { SettingsCoupling } from '../../components/settings/SettingsCoupling';
 import { useTranslation } from 'react-i18next';
 
 const TELEGRAM_TOKEN_KEY = 'telegram_token';
@@ -44,7 +45,7 @@ const ZEN_CONFIG_KEY = 'zen_config_v1';
 
 type SectionId =
   | 'profiles' | 'appearance'
-  | 'notifications' | 'zen' | 'vacation' | 'gamification' | 'automations'
+  | 'notifications' | 'zen' | 'vacation' | 'gamification' | 'coupling' | 'automations'
   | 'ai' | 'telegram' | 'grandparents'
   | 'auth' | 'parental' | 'vault' | 'help'
   | 'gami-admin';
@@ -116,6 +117,7 @@ export default function SettingsScreen() {
     zen: t('settingsScreen.modalTitles.zen'),
     vacation: t('settingsScreen.modalTitles.vacation'),
     gamification: t('settingsScreen.modalTitles.gamification'),
+    coupling: t('settingsScreen.modalTitles.coupling'),
     automations: t('settingsScreen.modalTitles.automations'),
     ai: t('settingsScreen.modalTitles.ai'),
     telegram: t('settingsScreen.modalTitles.telegram'),
@@ -181,6 +183,14 @@ export default function SettingsScreen() {
           onPress={() => setActiveSection('gamification')}
           isLast={isChildMode}
         />
+        {!isChildMode && (
+          <SettingsRow
+            emoji="🔗"
+            title={t('settingsScreen.rows.coupling')}
+            subtitle={t('settingsScreen.rows.couplingSubtitle')}
+            onPress={() => setActiveSection('coupling')}
+          />
+        )}
         {!isChildMode && (
           <SettingsRow
             emoji="⚙️"
@@ -355,6 +365,7 @@ export default function SettingsScreen() {
             {activeSection === 'gamification' && (
               <SettingsGamification vault={vault} gamiData={gamiData} refresh={refresh} />
             )}
+            {activeSection === 'coupling' && <SettingsCoupling />}
             {activeSection === 'automations' && <SettingsAutomations />}
             {activeSection === 'ai' && <SettingsAI />}
             {activeSection === 'telegram' && (
