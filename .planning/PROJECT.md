@@ -153,4 +153,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-09 — démarrage milestone v1.3 Seed (6 phases, 19→24) : couplage sémantique tâches ↔ ferme + musée effets + compagnon étendu. Promu depuis SEED-001 (full) + SEED-002 lite + SEED-003 lite.*
+*Last updated: 2026-04-09 — Phase 19 complète : module pur `lib/semantic/` livré (détection catégorie sémantique par filepath/section/tag, feature flag off par défaut, 37 tests Jest verts). Prochaine : Phase 20 moteur d'effets + anti-abus.*
