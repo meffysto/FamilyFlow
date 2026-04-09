@@ -93,7 +93,7 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 - Phase 19 — Détection catégorie sémantique (mapping table + feature flag + tests)
 - Phase 20 — Moteur d'effets + anti-abus (dispatcher, caps SecureStore, wiring 10 effets)
 - ✅ Phase 21 — Feedback visuel + compagnon (HarvestBurst variants, toasts, haptic, i18n FR+EN) — completed 2026-04-09
-- Phase 22 — UI config famille (écran Réglages Couplage sémantique, toggles, stats)
+- ✅ Phase 22 — UI config famille (écran Réglages Couplage sémantique, toggles, stats) — completed 2026-04-09
 - Phase 23 — Musée des effets (SEED-002 lite — chronologie persistée dans gami-{id}.md)
 - Phase 24 — Compagnon étendu (SEED-003 lite — 5 event types + persistance messages)
 
