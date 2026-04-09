@@ -17,3 +17,15 @@ export type {
   CategoryMatch,
   SemanticCategory,
 } from './categories';
+
+// Phase 20 — caps anti-abus
+export {
+  loadCaps,
+  saveCaps,
+  isCapExceeded,
+  incrementCap,
+  getWeekStart,
+  DAILY_CAPS,
+  WEEKLY_CAPS,
+} from './caps';
+export type { CouplingCaps, EffectCap } from './caps';
