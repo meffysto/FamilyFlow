@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Seed
 status: Executing Phase 20
-stopped_at: Completed 20-02-PLAN.md
-last_updated: "2026-04-09T09:12:14.393Z"
-last_activity: 2026-04-09 — Phase 20 execution in progress
+stopped_at: Completed 20-03-PLAN.md
+last_updated: "2026-04-09T09:22:38.991Z"
+last_activity: 2026-04-09 — Milestone v1.3 started
 progress:
   total_phases: 6
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 6
-  completed_plans: 2
+  completed_plans: 5
   percent: 0
 ---
 
@@ -110,6 +110,7 @@ Next step: `/gsd:discuss-phase 19` après approbation du roadmap
 | Phase 18-tutoriel-ferme P03 | 8min | 2 tasks | 3 files |
 | Phase 18-tutoriel-ferme P04 | 120 | 2 tasks | 9 files |
 | Phase 20-moteur-d-effets-anti-abus P02 | 3 | 2 tasks | 2 files |
+| Phase 20 P03 | 15 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -224,6 +225,9 @@ Recent decisions affecting current work:
 - [Phase 18-tutoriel-ferme]: [Phase 18-03]: TREE_SPRITES require map statique (pas dynamique) pour compatibilité Metro bundler — duplication locale depuis TreeView (Pitfall 5)
 - [Phase 20-02]: DAILY_CAPS.cuisine_repas=0 (pas de cap daily) + WEEKLY_CAPS.cuisine_repas=1 (EFFECTS-10 : 1 recipe unlock/sem)
 - [Phase 20-02]: isCapExceeded/incrementCap pure functions avec param now?:Date pour testabilité sans mocks
+- [Phase 20]: completeTask signature: taskMeta? optionnel backward-compatible — garder taskText pour ne casser aucun appelant
+- [Phase 20]: Double Loot Cascade: updateProfileInData(newData, cascadeResult.profile, cascadeResult.entries) car openLootBox ne retourne pas newData
+- [Phase 20]: Building Turbo appliqué sur productionBoost dans les deux sites collect — cohérence collecte manuelle + passive income
 
 ### Pending Todos
 
@@ -264,6 +268,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T09:12:14.390Z
-Stopped at: Completed 20-02-PLAN.md
+Last session: 2026-04-09T09:22:38.986Z
+Stopped at: Completed 20-03-PLAN.md
 Resume file: None

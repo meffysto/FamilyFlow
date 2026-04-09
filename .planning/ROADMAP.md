@@ -79,8 +79,8 @@ Plans:
 
 Plans:
 - [x] 20-01-PLAN.md — Dispatcher applyTaskEffect() + 10 handlers + FarmProfileData extension
-- [ ] 20-02-PLAN.md — Caps anti-abus SecureStore daily/weekly
-- [ ] 20-03-PLAN.md — Wiring dans completeTask + multiplier urgent + Double Loot Cascade
+- [x] 20-02-PLAN.md — Caps anti-abus SecureStore daily/weekly
+- [x] 20-03-PLAN.md — Wiring dans completeTask + multiplier urgent + Double Loot Cascade
 - [ ] 20-04-PLAN.md — Tests Jest effects + caps
 
 #### Phase 21: Feedback visuel + compagnon
@@ -156,7 +156,7 @@ Plans:
 | 17. Codex UI | v1.2 | 3/3 | Complete | 2026-04-08 |
 | 18. Tutoriel ferme | v1.2 | 4/4 | Complete | 2026-04-08 |
 | 19. Détection catégorie sémantique | v1.3 | 2/2 | Complete    | 2026-04-09 |
-| 20. Moteur d'effets + anti-abus | v1.3 | 0/4 | Not started | - |
+| 20. Moteur d'effets + anti-abus | v1.3 | 3/4 | In Progress|  |
 | 21. Feedback visuel + compagnon | v1.3 | 0/TBD | Not started | - |
 | 22. UI config famille | v1.3 | 0/TBD | Not started | - |
 | 23. Musée des effets | v1.3 | 0/TBD | Not started | - |
