@@ -3,6 +3,9 @@
  *
  * Affiche un burst de particules colorees + "+X 🍃" flottant
  * quand une culture mature est recoltee.
+ *
+ * Phase 21 : prop `variant` optionnelle pour contrôler taille/couleur/durée
+ * des particules selon la catégorie sémantique de la tâche.
  */
 
 import React, { useEffect, useCallback } from 'react';
@@ -18,6 +21,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import type { HarvestBurstVariant } from '../../lib/semantic/effect-toasts';
 
 const PARTICLE_COUNT = 8;
 const PARTICLE_SIZE = 6;
@@ -36,17 +40,88 @@ export const CROP_COLORS: Record<string, string> = {
   cucumber: '#22C55E',
 };
 
+/**
+ * VARIANT_CONFIG — paramètres visuels par variant.
+ * ambient : comportement par défaut (8 particules vertes)
+ * rare    : 10 particules violettes, légèrement plus amples
+ * golden  : 12 particules dorées, plus grandes et plus amples
+ */
+export const VARIANT_CONFIG: Record<HarvestBurstVariant, {
+  particleCount: number;
+  particleSize: number;
+  travelMin: number;
+  travelMax: number;
+  labelTravelY: number;
+  labelDuration: number;
+  labelColor: string;
+  particleColor: string;
+}> = {
+  ambient: {
+    particleCount: 8,
+    particleSize: 6,
+    travelMin: 25,
+    travelMax: 45,
+    labelTravelY: -45,
+    labelDuration: 800,
+    labelColor: '#A7F3D0',
+    particleColor: '#34D399',
+  },
+  rare: {
+    particleCount: 10,
+    particleSize: 6,
+    travelMin: 30,
+    travelMax: 50,
+    labelTravelY: -50,
+    labelDuration: 900,
+    labelColor: '#C4B5FD',
+    particleColor: '#A78BFA',
+  },
+  golden: {
+    particleCount: 12,
+    particleSize: 8,
+    travelMin: 35,
+    travelMax: 60,
+    labelTravelY: -60,
+    labelDuration: 1000,
+    labelColor: '#FFD700',
+    particleColor: '#FFD700',
+  },
+};
+
+// Re-export du type pour les consommateurs
+export type { HarvestBurstVariant };
+
 interface HarvestBurstProps {
   x: number;
   y: number;
   reward: number;
   cropColor: string;
   onComplete: () => void;
+  /** Phase 21 — variant optionnel : contrôle particules/couleur/durée */
+  variant?: HarvestBurstVariant;
 }
 
-function Particle({ color, index, startX, startY }: { color: string; index: number; startX: number; startY: number }) {
-  const angle = (index / PARTICLE_COUNT) * Math.PI * 2 + (Math.random() - 0.5) * 0.8;
-  const distance = 25 + Math.random() * 20;
+function Particle({
+  color,
+  index,
+  startX,
+  startY,
+  particleSize,
+  particleCount,
+  travelMin,
+  travelMax,
+}: {
+  color: string;
+  index: number;
+  startX: number;
+  startY: number;
+  particleSize: number;
+  particleCount: number;
+  travelMin: number;
+  travelMax: number;
+}) {
+  const angle = (index / particleCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.8;
+  const distance = travelMin + Math.random() * (travelMax - travelMin);
   const targetX = Math.cos(angle) * distance;
   const targetY = Math.sin(angle) * distance - 15; // bias vers le haut
 
@@ -76,11 +151,11 @@ function Particle({ color, index, startX, startY }: { color: string; index: numb
       style={[
         {
           position: 'absolute',
-          left: startX - PARTICLE_SIZE / 2,
-          top: startY - PARTICLE_SIZE / 2,
-          width: PARTICLE_SIZE,
-          height: PARTICLE_SIZE,
-          borderRadius: PARTICLE_SIZE / 2,
+          left: startX - particleSize / 2,
+          top: startY - particleSize / 2,
+          width: particleSize,
+          height: particleSize,
+          borderRadius: particleSize / 2,
           backgroundColor: color,
         },
         style,
@@ -89,7 +164,17 @@ function Particle({ color, index, startX, startY }: { color: string; index: numb
   );
 }
 
-export function HarvestBurst({ x, y, reward, cropColor, onComplete }: HarvestBurstProps) {
+export function HarvestBurst({ x, y, reward, cropColor, onComplete, variant }: HarvestBurstProps) {
+  const cfg = variant ? VARIANT_CONFIG[variant] : null;
+  const effectiveParticleCount = cfg?.particleCount ?? PARTICLE_COUNT;
+  const effectiveParticleSize = cfg?.particleSize ?? PARTICLE_SIZE;
+  const effectiveColor = cfg?.particleColor ?? cropColor;
+  const effectiveTravelMin = cfg?.travelMin ?? 25;
+  const effectiveTravelMax = cfg?.travelMax ?? 45;
+  const effectiveLabelTravelY = cfg?.labelTravelY ?? -45;
+  const effectiveLabelDuration = cfg?.labelDuration ?? 800;
+  const effectiveLabelColor = cfg?.labelColor ?? '#FFD700';
+
   const labelY = useSharedValue(0);
   const labelOpacity = useSharedValue(1);
   const shakeX = useSharedValue(0);
@@ -114,7 +199,7 @@ export function HarvestBurst({ x, y, reward, cropColor, onComplete }: HarvestBur
     );
 
     // Label float up
-    labelY.value = withTiming(-45, { duration: 800, easing: Easing.out(Easing.quad) });
+    labelY.value = withTiming(effectiveLabelTravelY, { duration: effectiveLabelDuration, easing: Easing.out(Easing.quad) });
     labelOpacity.value = withDelay(400, withTiming(0, { duration: 400 }));
 
     // Success haptic after burst
@@ -125,7 +210,7 @@ export function HarvestBurst({ x, y, reward, cropColor, onComplete }: HarvestBur
     }, 300);
 
     // Callback after animation
-    setTimeout(() => runOnJS(triggerComplete)(), 900);
+    setTimeout(() => runOnJS(triggerComplete)(), (cfg?.labelDuration ?? 800) + 100);
   }, []);
 
   const shakeStyle = useAnimatedStyle(() => ({
@@ -142,14 +227,24 @@ export function HarvestBurst({ x, y, reward, cropColor, onComplete }: HarvestBur
       {/* Shake container */}
       <Animated.View style={[{ position: 'absolute', left: x, top: y }, shakeStyle]}>
         {/* Particules */}
-        {Array.from({ length: PARTICLE_COUNT }).map((_, i) => (
-          <Particle key={i} color={cropColor} index={i} startX={0} startY={0} />
+        {Array.from({ length: effectiveParticleCount }).map((_, i) => (
+          <Particle
+            key={i}
+            color={effectiveColor}
+            index={i}
+            startX={0}
+            startY={0}
+            particleSize={effectiveParticleSize}
+            particleCount={effectiveParticleCount}
+            travelMin={effectiveTravelMin}
+            travelMax={effectiveTravelMax}
+          />
         ))}
       </Animated.View>
 
       {/* Label reward flottant */}
       <Animated.View style={[{ position: 'absolute', left: x - 30, top: y - 10 }, labelStyle]}>
-        <Text style={styles.rewardLabel}>
+        <Text style={[styles.rewardLabel, { color: effectiveLabelColor }]}>
           +{reward} 🍃
         </Text>
       </Animated.View>
@@ -161,7 +256,6 @@ const styles = StyleSheet.create({
   rewardLabel: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#FFD700',
     textShadowColor: 'rgba(0,0,0,0.5)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
