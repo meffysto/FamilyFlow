@@ -56,7 +56,8 @@ SafeAreaProvider > GestureHandler > VaultProvider > ThemeProvider > AIProvider >
 - `SectionErrorBoundary` entoure chaque section dashboard indépendamment
 
 ## Testing
-- `npx tsc --noEmit` — seule validation
+- `npx tsc --noEmit` — validation types (obligatoire avant chaque commit)
+- `npx jest --no-coverage` — tests unitaires (lib/__tests__/*.test.ts, etabli Phase 19)
 - Erreurs pré-existantes dans MemoryEditor.tsx, cooklang.ts, useVault.ts — **ignorer**
 
 <!-- GSD:project-start source:PROJECT.md -->
