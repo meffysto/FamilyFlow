@@ -63,7 +63,7 @@ Détails : `.planning/milestones/v1.2-ROADMAP.md`.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 19-01-module-pur-derive-flag-PLAN.md — Module pur lib/semantic/ (categories + derive + flag + barrel)
+- [x] 19-01-module-pur-derive-flag-PLAN.md — Module pur lib/semantic/ (categories + derive + flag + barrel)
 - [ ] 19-02-tests-jest-derive-flag-PLAN.md — Tests Jest extensifs (derive.test.ts + flag.test.ts)
 
 #### Phase 20: Moteur d'effets + anti-abus
@@ -155,7 +155,7 @@ Plans:
 | 16. Codex contenu | v1.2 | 5/5 | Complete | 2026-04-08 |
 | 17. Codex UI | v1.2 | 3/3 | Complete | 2026-04-08 |
 | 18. Tutoriel ferme | v1.2 | 4/4 | Complete | 2026-04-08 |
-| 19. Détection catégorie sémantique | v1.3 | 0/TBD | Not started | - |
+| 19. Détection catégorie sémantique | v1.3 | 1/2 | In Progress|  |
 | 20. Moteur d'effets + anti-abus | v1.3 | 0/TBD | Not started | - |
 | 21. Feedback visuel + compagnon | v1.3 | 0/TBD | Not started | - |
 | 22. UI config famille | v1.3 | 0/TBD | Not started | - |

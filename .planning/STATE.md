@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Seed
-status: v1.3 Seed — Defining requirements
-stopped_at: Phase 19 context gathered
-last_updated: "2026-04-09T06:09:23.074Z"
-last_activity: 2026-04-09 — Milestone v1.3 started
+status: Ready to execute
+stopped_at: Completed 19-01-module-pur-derive-flag-PLAN.md
+last_updated: "2026-04-09T06:55:42.723Z"
+last_activity: 2026-04-09
 progress:
   total_phases: 6
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 2
+  completed_plans: 1
   percent: 0
 ---
 
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** v1.3 Seed — Defining requirements
+**Current focus:** Phase 19 — d-tection-cat-gorie-s-mantique
 
 ## Current Position
 
-Phase: 19 — Détection catégorie sémantique (not started)
-Plan: —
+Phase: 19 (d-tection-cat-gorie-s-mantique) — EXECUTING
+Plan: 2 of 2
 Milestone: v1.3 Seed (defining requirements)
 Last shipped: v1.2 Confort & Découverte (2026-04-08)
-Last activity: 2026-04-09 — Milestone v1.3 started
+Last activity: 2026-04-09
 
 Progress: [░░░░░░░░░░] 0% (0/6 phases v1.3)
 
@@ -97,6 +97,7 @@ Next step: `/gsd:discuss-phase 19` après approbation du roadmap
 | Phase 18-tutoriel-ferme P01 | 6min | 2 tasks | 2 files |
 | Phase 18-tutoriel-ferme P03 | 8min | 2 tasks | 3 files |
 | Phase 18-tutoriel-ferme P04 | 120 | 2 tasks | 9 files |
+| Phase 19-d-tection-cat-gorie-s-mantique P01 | 4min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -209,6 +210,9 @@ Recent decisions affecting current work:
 - [Phase 18-tutoriel-ferme]: [Phase 18-03]: FarmTutorialOverlay format mixte — 2 cartes narratives plein écran (étapes 0, 4) + 3 coach marks contextuels arrondis (1, 2, 3) dans un seul orchestrateur sibling de ScreenGuide (D-08)
 - [Phase 18-tutoriel-ferme]: [Phase 18-03]: Fallback graceful — si measureInWindow échoue (cible non montée), l'étape coach mark bascule en carte narrative plutôt que skip, garantissant que l'utilisateur voit le texte
 - [Phase 18-tutoriel-ferme]: [Phase 18-03]: TREE_SPRITES require map statique (pas dynamique) pour compatibilité Metro bundler — duplication locale depuis TreeView (Pitfall 5)
+- [Phase 19-01]: D-02 : ordre de priorité tag > section > filepath figé dans deriveTaskCategory (prévisible, testable)
+- [Phase 19-01]: D-05a/b : clé SecureStore globale 'semantic-coupling-enabled' family-wide (pas par-profil) — simplicité maximale
+- [Phase 19-01]: D-04b : evidence = valeur brute non normalisée dans CategoryMatch — Phase 21 affiche le texte tel quel à l'utilisateur
 
 ### Pending Todos
 
@@ -249,6 +253,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T06:09:23.064Z
-Stopped at: Phase 19 context gathered
-Resume file: .planning/phases/19-d-tection-cat-gorie-s-mantique/19-CONTEXT.md
+Last session: 2026-04-09T06:55:42.719Z
+Stopped at: Completed 19-01-module-pur-derive-flag-PLAN.md
+Resume file: None
