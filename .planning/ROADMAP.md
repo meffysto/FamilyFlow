@@ -46,7 +46,7 @@ Détails : `.planning/milestones/v1.2-ROADMAP.md`.
 - [x] **Phase 19: Détection catégorie sémantique** — Module de détection lisant filepath + sections + tags, feature flag off par défaut (completed 2026-04-09)
 - [x] **Phase 20: Moteur d'effets + anti-abus** — Dispatcher, caps SecureStore, wiring des 10 effets wow sur les leviers existants (completed 2026-04-09)
 - [x] **Phase 21: Feedback visuel + compagnon** — HarvestBurst variants, toasts, haptic, messages compagnon i18n FR+EN (completed 2026-04-09)
-- [ ] **Phase 22: UI config famille** — Écran Réglages Couplage sémantique, toggles par catégorie, stats semaine
+- [x] **Phase 22: UI config famille** — Écran Réglages Couplage sémantique, toggles par catégorie, stats semaine (completed 2026-04-09)
 - [ ] **Phase 23: Musée des effets** — SEED-002 lite : chronologie persistée dans gami-{id}.md, écran Musée minimal
 - [ ] **Phase 24: Compagnon étendu** — SEED-003 lite : 5 event types activés, messages persistés, triggers cross-feature
 
@@ -112,7 +112,7 @@ Plans:
 
 Plans:
 - [x] 22-01-PLAN.md — coupling-overrides.ts + injection useGamification + i18n FR/EN
-- [ ] 22-02-PLAN.md — SettingsCoupling.tsx + câblage settings.tsx
+- [x] 22-02-PLAN.md — SettingsCoupling.tsx + câblage settings.tsx
 
 #### Phase 23: Musée des effets (SEED-002 lite)
 **Goal**: Persister chaque effet déclenché dans une chronologie accessible via un écran Musée minimal, réutilisant les patterns Codex UI de la Phase 17.
@@ -157,7 +157,7 @@ Plans:
 | 19. Détection catégorie sémantique | v1.3 | 2/2 | Complete    | 2026-04-09 |
 | 20. Moteur d'effets + anti-abus | v1.3 | 4/4 | Complete    | 2026-04-09 |
 | 21. Feedback visuel + compagnon | v1.3 | 2/2 | Complete    | 2026-04-09 |
-| 22. UI config famille | v1.3 | 1/2 | In Progress|  |
+| 22. UI config famille | v1.3 | 2/2 | Complete   | 2026-04-09 |
 | 23. Musée des effets | v1.3 | 0/TBD | Not started | - |
 | 24. Compagnon étendu | v1.3 | 0/TBD | Not started | - |
 

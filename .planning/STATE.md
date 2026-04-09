@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Seed
-status: Ready to execute
-stopped_at: Completed 22-ui-config-famille-01
-last_updated: "2026-04-09T15:41:24.495Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 22-ui-config-famille-02
+last_updated: "2026-04-09T15:46:29.456Z"
 last_activity: 2026-04-09
 progress:
   total_phases: 6
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 10
-  completed_plans: 9
+  completed_plans: 10
   percent: 0
 ---
 
@@ -103,6 +103,7 @@ Next step: `/gsd:discuss-phase 19` après approbation du roadmap
 | Phase 21-feedback-visuel-compagnon P01 | 3min | 2 tasks | 4 files |
 | Phase 21 P02 | 8 | 2 tasks | 7 files |
 | Phase 22-ui-config-famille P01 | 3min | 3 tasks | 5 files |
+| Phase 22-ui-config-famille P02 | 2min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -227,6 +228,8 @@ Recent decisions affecting current work:
 - [Phase 21-02]: SUB_TYPE_TEMPLATES dictionnaire separe de MESSAGE_TEMPLATES — preserve type Record<CompanionEvent,string[]>
 - [Phase 21-02]: subType? string dans CompanionMessageContext (pas CategoryId) — evite couplage lib/mascot -> lib/semantic
 - [Phase 22-01]: Cache module-level _overridesCache pour eviter acces SecureStore sur hot path (opt-out pattern: cle absente = categorie active)
+- [Phase 22-ui-config-famille]: Badge variant inline sans Badge.tsx — View+Text avec variantColor+33 hex pour eviter couplage composant generique sur couleurs semantiques
+- [Phase 22-ui-config-famille]: DISPLAY_ORDER golden>rare>ambient — ordre visuel par importance percue de l'effet semantique
 
 ### Pending Todos
 
@@ -268,6 +271,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T15:41:24.491Z
-Stopped at: Completed 22-ui-config-famille-01
+Last session: 2026-04-09T15:46:29.453Z
+Stopped at: Completed 22-ui-config-famille-02
 Resume file: None
