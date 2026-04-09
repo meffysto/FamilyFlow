@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Seed
 status: Executing Phase 20
-stopped_at: Completed 20-03-PLAN.md
-last_updated: "2026-04-09T09:22:38.991Z"
+stopped_at: Completed 20-04-PLAN.md
+last_updated: "2026-04-09T09:29:44.668Z"
 last_activity: 2026-04-09 — Milestone v1.3 started
 progress:
   total_phases: 6
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
   percent: 0
 ---
 
@@ -111,6 +111,7 @@ Next step: `/gsd:discuss-phase 19` après approbation du roadmap
 | Phase 18-tutoriel-ferme P04 | 120 | 2 tasks | 9 files |
 | Phase 20-moteur-d-effets-anti-abus P02 | 3 | 2 tasks | 2 files |
 | Phase 20 P03 | 15 | 2 tasks | 3 files |
+| Phase 20-moteur-d-effets-anti-abus P04 | 4min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -228,6 +229,7 @@ Recent decisions affecting current work:
 - [Phase 20]: completeTask signature: taskMeta? optionnel backward-compatible — garder taskText pour ne casser aucun appelant
 - [Phase 20]: Double Loot Cascade: updateProfileInData(newData, cascadeResult.profile, cascadeResult.entries) car openLootBox ne retourne pas newData
 - [Phase 20]: Building Turbo appliqué sur productionBoost dans les deux sites collect — cohérence collecte manuelle + passive income
+- [Phase 20-04]: Tests getWeekStart timezone-agnostic : valeurs attendues calculées dynamiquement — évite strings UTC hardcodées qui cassent selon fuseau (Europe/Paris)
 
 ### Pending Todos
 
@@ -268,6 +270,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T09:22:38.986Z
-Stopped at: Completed 20-03-PLAN.md
+Last session: 2026-04-09T09:29:44.662Z
+Stopped at: Completed 20-04-PLAN.md
 Resume file: None

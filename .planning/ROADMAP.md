@@ -44,7 +44,7 @@ Détails : `.planning/milestones/v1.2-ROADMAP.md`.
 **Phases overview:**
 
 - [x] **Phase 19: Détection catégorie sémantique** — Module de détection lisant filepath + sections + tags, feature flag off par défaut (completed 2026-04-09)
-- [ ] **Phase 20: Moteur d'effets + anti-abus** — Dispatcher, caps SecureStore, wiring des 10 effets wow sur les leviers existants
+- [x] **Phase 20: Moteur d'effets + anti-abus** — Dispatcher, caps SecureStore, wiring des 10 effets wow sur les leviers existants (completed 2026-04-09)
 - [ ] **Phase 21: Feedback visuel + compagnon** — HarvestBurst variants, toasts, haptic, messages compagnon i18n FR+EN
 - [ ] **Phase 22: UI config famille** — Écran Réglages Couplage sémantique, toggles par catégorie, stats semaine
 - [ ] **Phase 23: Musée des effets** — SEED-002 lite : chronologie persistée dans gami-{id}.md, écran Musée minimal
@@ -81,7 +81,7 @@ Plans:
 - [x] 20-01-PLAN.md — Dispatcher applyTaskEffect() + 10 handlers + FarmProfileData extension
 - [x] 20-02-PLAN.md — Caps anti-abus SecureStore daily/weekly
 - [x] 20-03-PLAN.md — Wiring dans completeTask + multiplier urgent + Double Loot Cascade
-- [ ] 20-04-PLAN.md — Tests Jest effects + caps
+- [x] 20-04-PLAN.md — Tests Jest effects + caps
 
 #### Phase 21: Feedback visuel + compagnon
 **Goal**: Rendre les effets tangibles à la complétion via feedback différencié par catégorie — variantes HarvestBurst, toasts spécifiques, haptic pattern, messages compagnon contextualisés, parité i18n FR+EN.
@@ -156,7 +156,7 @@ Plans:
 | 17. Codex UI | v1.2 | 3/3 | Complete | 2026-04-08 |
 | 18. Tutoriel ferme | v1.2 | 4/4 | Complete | 2026-04-08 |
 | 19. Détection catégorie sémantique | v1.3 | 2/2 | Complete    | 2026-04-09 |
-| 20. Moteur d'effets + anti-abus | v1.3 | 3/4 | In Progress|  |
+| 20. Moteur d'effets + anti-abus | v1.3 | 4/4 | Complete   | 2026-04-09 |
 | 21. Feedback visuel + compagnon | v1.3 | 0/TBD | Not started | - |
 | 22. UI config famille | v1.3 | 0/TBD | Not started | - |
 | 23. Musée des effets | v1.3 | 0/TBD | Not started | - |

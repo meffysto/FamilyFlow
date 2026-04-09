@@ -16,23 +16,23 @@ Requirements pour le milestone v1.3. Chaque requirement mappe à une phase exact
 - [ ] **SEMANTIC-03**: User sees a category detected from task tags (#urgent, #budget, etc.)
 - [ ] **SEMANTIC-04**: User's task with no matching category falls back to standard XP (zero regression)
 - [ ] **SEMANTIC-05**: User can toggle the semantic coupling feature via feature flag
-- [ ] **SEMANTIC-06**: User's 10 categories are each mapped to exactly one wow effect
+- [x] **SEMANTIC-06**: User's 10 categories are each mapped to exactly one wow effect
 - [x] **SEMANTIC-07**: User can't trigger an effect more than its daily/weekly cap
 - [x] **SEMANTIC-08**: User completing an "urgent" tagged task gets ×2 multiplier for 5 tasks
 - [x] **SEMANTIC-09**: User with >7 day task streak gets a Double Loot Cascade bonus
 
 ### EFFECTS — 10 wow effects wiring (Phase 20)
 
-- [ ] **EFFECTS-01**: User doing housework (ménage quotidien) gets a weeds event removed from farm
-- [ ] **EFFECTS-02**: User doing weekly/seasonal cleaning gets a free wear event repair
-- [ ] **EFFECTS-03**: User completing shopping (courses) gets 24h building production turbo (0.5x interval)
+- [x] **EFFECTS-01**: User doing housework (ménage quotidien) gets a weeds event removed from farm
+- [x] **EFFECTS-02**: User doing weekly/seasonal cleaning gets a free wear event repair
+- [x] **EFFECTS-03**: User completing shopping (courses) gets 24h building production turbo (0.5x interval)
 - [x] **EFFECTS-04**: User completing child routines gets a companion mood spike with AI message
-- [ ] **EFFECTS-05**: User completing homework/school tasks gets 24h Growth Sprint (tasksPerStage -1)
-- [ ] **EFFECTS-06**: User completing a medical appointment gets a guaranteed rare seed drop
+- [x] **EFFECTS-05**: User completing homework/school tasks gets 24h Growth Sprint (tasksPerStage -1)
+- [x] **EFFECTS-06**: User completing a medical appointment gets a guaranteed rare seed drop
 - [x] **EFFECTS-07**: User writing gratitude/birthday/family entries gets a saga trait boost
-- [ ] **EFFECTS-08**: User completing budget/admin tasks gets 24h Building Capacity Boost (×2)
-- [ ] **EFFECTS-09**: User completing baby care tasks gets next harvest = golden rain ×3
-- [ ] **EFFECTS-10**: User cooking/meal planning tasks gets a free rare craft recipe unlock (weekly)
+- [x] **EFFECTS-08**: User completing budget/admin tasks gets 24h Building Capacity Boost (×2)
+- [x] **EFFECTS-09**: User completing baby care tasks gets next harvest = golden rain ×3
+- [x] **EFFECTS-10**: User cooking/meal planning tasks gets a free rare craft recipe unlock (weekly)
 
 ### FEEDBACK — Visual + companion + i18n (Phase 21)
 
@@ -100,20 +100,20 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SEMANTIC-03 | Phase 19 | Pending |
 | SEMANTIC-04 | Phase 19 | Pending |
 | SEMANTIC-05 | Phase 19 | Pending |
-| SEMANTIC-06 | Phase 20 | Pending |
+| SEMANTIC-06 | Phase 20 | Complete |
 | SEMANTIC-07 | Phase 20 | Complete |
 | SEMANTIC-08 | Phase 20 | Complete |
 | SEMANTIC-09 | Phase 20 | Complete |
-| EFFECTS-01 | Phase 20 | Pending |
-| EFFECTS-02 | Phase 20 | Pending |
-| EFFECTS-03 | Phase 20 | Pending |
+| EFFECTS-01 | Phase 20 | Complete |
+| EFFECTS-02 | Phase 20 | Complete |
+| EFFECTS-03 | Phase 20 | Complete |
 | EFFECTS-04 | Phase 20 | Complete |
-| EFFECTS-05 | Phase 20 | Pending |
-| EFFECTS-06 | Phase 20 | Pending |
+| EFFECTS-05 | Phase 20 | Complete |
+| EFFECTS-06 | Phase 20 | Complete |
 | EFFECTS-07 | Phase 20 | Complete |
-| EFFECTS-08 | Phase 20 | Pending |
-| EFFECTS-09 | Phase 20 | Pending |
-| EFFECTS-10 | Phase 20 | Pending |
+| EFFECTS-08 | Phase 20 | Complete |
+| EFFECTS-09 | Phase 20 | Complete |
+| EFFECTS-10 | Phase 20 | Complete |
 | FEEDBACK-01 | Phase 21 | Pending |
 | FEEDBACK-02 | Phase 21 | Pending |
 | FEEDBACK-03 | Phase 21 | Pending |
