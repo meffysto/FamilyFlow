@@ -48,6 +48,13 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 - [ ] (Backlog) Suggestion automatique de recettes compatibles selon les convives sélectionnés
 - [ ] (Backlog) Tutoriels contextuels pour autres écrans complexes (budget OCR, sagas, quêtes)
 - [ ] (Backlog) Mécanique "Pokédex" — tracking de découverte codex par profil avec statistiques de complétion
+- [ ] (v1.3) Détection sémantique de la catégorie des tâches (filepath + sections + tags) sans écrire dans les fichiers Obsidian
+- [ ] (v1.3) Moteur de couplage sémantique — 10 catégories de tâches couplées chacune à un effet wow spécifique sur la ferme
+- [ ] (v1.3) Anti-abus via caps quotidiens/hebdomadaires persistés dans SecureStore
+- [ ] (v1.3) Feedback visuel et compagnon différenciés par catégorie d'effet (toast, haptic, HarvestBurst, messages i18n FR+EN)
+- [ ] (v1.3) Écran Réglages — Couplage sémantique (toggle par catégorie, preview, stats semaine)
+- [ ] (v1.3) Musée des effets — chronologie persistée des effets déclenchés (SEED-002 lite)
+- [ ] (v1.3) Compagnon étendu — 5 event types activés (weekly_recap, morning_greeting, celebration, gentle_nudge, comeback) + persistance messages (SEED-003 lite)
 
 ### Out of Scope
 
@@ -57,7 +64,38 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 - Migration hors Obsidian — le vault Markdown reste la source de vérité
 - Accessibilité complète (WCAG) — pas prioritaire pour usage familial privé
 
-## Current Milestone: (planning next milestone)
+## Current Milestone: v1.3 Seed
+
+**Goal:** Transformer la ferme en reflet différencié du quotidien familial en couplant sémantiquement chaque catégorie de tâche réelle à un effet ferme spécifique (wow moment tangible).
+
+**Core insight:** Pas de champ `category` sur les tâches — la taxonomie est déjà organique via filepath Obsidian + sections H2/H3 + tags. Pure lecture des fichiers tâches (Obsidian-respect).
+
+**Point d'injection :** `lib/gamification/engine.ts:awardTaskCompletion()` + nouveau module `lib/effects/semantic-coupling.ts`.
+
+**Mapping 10 catégories → effets wow :**
+
+| # | Catégorie | Effet | Cap |
+|---|-----------|-------|-----|
+| 1 | Ménage quotidien | Weeds-Free Ticket (retire 1 weeds) | 1/j |
+| 2 | Ménage hebdo/saisonnier | Fence Repair Free (répare 1 wear) | 1/j |
+| 3 | Courses alimentaires | Production Turbo 24h (buildings 0.5x) | 1/j |
+| 4 | Routine enfant | Companion Mood Spike (+5 mood + msg IA) | 2/j |
+| 5 | Devoirs/école | Growth Sprint 24h (tasksPerStage +1) | 1/j |
+| 6 | Santé médicale | Rare Seed Jackpot (guaranteed rare drop) | 1/RDV |
+| 7 | Gratitude/famille | Saga Trait Boost (entente +1) | 2/j |
+| 8 | Budget/admin | Building Capacity Boost ×2 24h | 1/j |
+| 9 | Soins bébé | Instant Harvest Gold (×3 golden rain) | 1/j |
+| 10 | Cuisine/repas | Recipe Unlock Surprise (craft rare) | 1/sem |
+
+**Effets universels :** `#urgent` → ×2 multiplier auto 5 tâches ; streak >7j → Double Loot Cascade.
+
+**Target features (6 phases, 19→24) :**
+- Phase 19 — Détection catégorie sémantique (mapping table + feature flag + tests)
+- Phase 20 — Moteur d'effets + anti-abus (dispatcher, caps SecureStore, wiring 10 effets)
+- Phase 21 — Feedback visuel + compagnon (HarvestBurst variants, toasts, haptic, i18n FR+EN)
+- Phase 22 — UI config famille (écran Réglages Couplage sémantique, toggles, stats)
+- Phase 23 — Musée des effets (SEED-002 lite — chronologie persistée dans gami-{id}.md)
+- Phase 24 — Compagnon étendu (SEED-003 lite — 5 event types + persistance messages)
 
 ## Previous Milestones
 
@@ -115,4 +153,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-08 after v1.2 milestone (Confort & Découverte) — 4 phases, 19 plans, 14 tasks, 107 commits, +19 678 lignes. Tous les requirements PREF-*/CODEX-*/TUTO-*/ARCH-03/ARCH-04 validés. ARCH-05 respectée (zéro nouvelle dépendance npm).*
+*Last updated: 2026-04-09 — démarrage milestone v1.3 Seed (6 phases, 19→24) : couplage sémantique tâches ↔ ferme + musée effets + compagnon étendu. Promu depuis SEED-001 (full) + SEED-002 lite + SEED-003 lite.*

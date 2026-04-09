@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.2
-milestone_name: Confort & Découverte
-current_phase: 18
-status: v1.2 milestone complete
-stopped_at: Completed 18-04-tree-integration-PLAN.md
-last_updated: "2026-04-08T15:52:09.763Z"
-last_activity: 2026-04-08
+milestone: v1.3
+milestone_name: Seed
+current_phase: 19
+status: v1.3 Seed — Defining requirements
+stopped_at: Milestone v1.3 started — defining requirements
+last_updated: "2026-04-09T00:00:00.000Z"
+last_activity: 2026-04-09
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 19
-  completed_plans: 19
+  total_phases: 6
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
   percent: 0
 ---
 
@@ -22,19 +22,19 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Planning next milestone (v1.3)
+**Current focus:** v1.3 Seed — Defining requirements
 
 ## Current Position
 
-Phase: — (aucune phase active)
+Phase: 19 — Détection catégorie sémantique (not started)
 Plan: —
-Milestone: v1.2 Confort & Découverte SHIPPED 2026-04-08
+Milestone: v1.3 Seed (defining requirements)
 Last shipped: v1.2 Confort & Découverte (2026-04-08)
-Last activity: 2026-04-08
+Last activity: 2026-04-09 — Milestone v1.3 started
 
-Progress: [██████████] 100% (4/4 phases v1.2)
+Progress: [░░░░░░░░░░] 0% (0/6 phases v1.3)
 
-Next step: `/gsd:new-milestone` pour démarrer le cycle v1.3
+Next step: `/gsd:discuss-phase 19` après approbation du roadmap
 
 ## Performance Metrics
 
