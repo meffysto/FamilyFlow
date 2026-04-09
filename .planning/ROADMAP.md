@@ -60,11 +60,11 @@ Détails : `.planning/milestones/v1.2-ROADMAP.md`.
   3. User sees une catégorie dérivée depuis un tag (#urgent, #budget, …)
   4. User's task sans catégorie identifiable retombe en standard XP sans régression observable
   5. User peut désactiver instantanément tout le couplage via le feature flag
-**Plans**: TBD (estimation 2-3 plans)
+**Plans**: 2 plans
 
 Plans:
-- [ ] 19-01: Mapping table 10 catégories + `deriveTaskCategory()` + feature flag `semanticCoupling`
-- [ ] 19-02: Tests unitaires extensifs (filepath / sections / tags / fallback / désactivation)
+- [ ] 19-01-module-pur-derive-flag-PLAN.md — Module pur lib/semantic/ (categories + derive + flag + barrel)
+- [ ] 19-02-tests-jest-derive-flag-PLAN.md — Tests Jest extensifs (derive.test.ts + flag.test.ts)
 
 #### Phase 20: Moteur d'effets + anti-abus
 **Goal**: Câbler les 10 effets wow sur les leviers existants (wear-engine, farm-engine, tech bonuses, buildings, companion, saga, craft), piloté par le dispatcher `applyTaskEffect()` injecté dans `awardTaskCompletion()`, avec anti-abus daily/weekly caps persistés dans SecureStore.
@@ -93,7 +93,7 @@ Plans:
   3. User voit un HarvestBurst variant (golden / rare / ambient) adapté à l'effet
   4. User lit un message compagnon contextuel référencant la vraie catégorie de tâche complétée
   5. User retrouve la parité FR+EN stricte sur tous les strings de feedback
-**Plans**: TBD (estimation 2-3 plans)
+**Plans**: 2 plans
 
 Plans:
 - [ ] 21-01: HarvestBurst variants + haptic pattern par catégorie
@@ -140,7 +140,7 @@ Plans:
   3. User reçoit une celebration aux multiples de 7 de son streak
   4. User reçoit un gentle_nudge si aucune tâche complétée dans l'après-midi, et un comeback après >24h d'absence
   5. User retrouve les messages compagnon après un restart (persistance effective)
-**Plans**: TBD (estimation 2-3 plans)
+**Plans**: 2 plans
 
 Plans:
 - [ ] 24-01: Activation des 5 event types (weekly_recap, morning_greeting, celebration, gentle_nudge, comeback)
