@@ -1996,6 +1996,20 @@
       "cookedToStock": "Cooked → Stock",
       "cookedToStockDetail": "Decrease stock when a meal is marked as cooked"
     },
+    "coupling": {
+      "masterTitle": "Semantic coupling",
+      "masterSubtitle": "Tasks trigger farm effects",
+      "weekStatsTotal_zero": "No effects this week",
+      "weekStatsTotal_one": "{{count}} effect this week",
+      "weekStatsTotal_other": "{{count}} effects this week",
+      "weekStatsCat_zero": "Never",
+      "weekStatsCat_one": "{{count}} time",
+      "weekStatsCat_other": "{{count}} times",
+      "variantAmbient": "common",
+      "variantRare": "rare",
+      "variantGolden": "epic",
+      "disabledHint": "Enable coupling to customize"
+    },
     "appearance": {
       "sectionTitle": "Appearance",
       "sectionA11y": "Appearance section",
@@ -3036,6 +3050,8 @@
       "gamification": "Gamification",
       "automations": "Automations",
       "automationsSubtitle": "Recipes → Shopping → Stock",
+      "coupling": "Semantic coupling",
+      "couplingSubtitle": "10 categories, customizable effects",
       "ai": "Artificial intelligence",
       "aiConfigured": "Configured · {{model}}",
       "aiNotConfigured": "Not configured",
@@ -3060,6 +3076,7 @@
       "vacation": "Vacation",
       "gamification": "Gamification",
       "automations": "Automations",
+      "coupling": "Semantic coupling",
       "ai": "Artificial intelligence",
       "telegram": "Telegram",
       "grandparents": "Grandparents",

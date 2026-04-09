@@ -1996,6 +1996,20 @@
       "cookedToStock": "Cuisiné → Stock",
       "cookedToStockDetail": "Décrémenter le stock quand un repas est marqué comme cuisiné"
     },
+    "coupling": {
+      "masterTitle": "Couplage sémantique",
+      "masterSubtitle": "Les tâches déclenchent des effets ferme",
+      "weekStatsTotal_zero": "Aucun effet cette semaine",
+      "weekStatsTotal_one": "{{count}} effet cette semaine",
+      "weekStatsTotal_other": "{{count}} effets cette semaine",
+      "weekStatsCat_zero": "Jamais",
+      "weekStatsCat_one": "{{count}} fois",
+      "weekStatsCat_other": "{{count}} fois",
+      "variantAmbient": "courant",
+      "variantRare": "rare",
+      "variantGolden": "épique",
+      "disabledHint": "Activez le couplage pour personnaliser"
+    },
     "appearance": {
       "sectionTitle": "Apparence",
       "sectionA11y": "Section Apparence",
@@ -3036,6 +3050,8 @@
       "gamification": "Gamification",
       "automations": "Automatisations",
       "automationsSubtitle": "Recettes → Courses → Stock",
+      "coupling": "Couplage sémantique",
+      "couplingSubtitle": "10 catégories, effets personnalisables",
       "ai": "Intelligence artificielle",
       "aiConfigured": "Configurée · {{model}}",
       "aiNotConfigured": "Non configurée",
@@ -3060,6 +3076,7 @@
       "vacation": "Vacances",
       "gamification": "Gamification",
       "automations": "Automatisations",
+      "coupling": "Couplage sémantique",
       "ai": "Intelligence artificielle",
       "telegram": "Telegram",
       "grandparents": "Grands-parents",
