@@ -791,8 +791,21 @@ export default function TreeScreen() {
       }
     }
 
-    // Délai avant d'afficher le message
-    const delayTimer = setTimeout(() => {
+    // Phase 21 : Injecter subType depuis le bridge SecureStore (FEEDBACK-04, D-06)
+    // Lire de maniere asynchrone — la valeur sera disponible avant le delayTimer (1.5s)
+    const subTypePromise = SecureStore.getItemAsync('last_semantic_category').then(stored => {
+      if (stored) {
+        context.subType = stored;
+        // Nettoyer pour eviter reutilisation du vieux subType
+        SecureStore.deleteItemAsync('last_semantic_category').catch(() => {});
+      }
+      return stored;
+    }).catch(() => null);
+
+    // Délai avant d'afficher le message (1.5s — laisse le temps a subTypePromise de se resoudre)
+    const delayTimer = setTimeout(async () => {
+      // Attendre le subType si la promesse n'est pas encore resolue
+      await subTypePromise;
       // Afficher le template comme fallback immédiat
       showCompanionMsg(pickCompanionMessage(event, context), context);
 

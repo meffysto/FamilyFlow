@@ -4336,6 +4336,46 @@
         "1": "Nicely repaired! {{companionName}} inspects the work and approves.",
         "2": "The farm is in better shape! {{companionName}} is relieved.",
         "3": "Good job {{profileName}}! {{companionName}} is glad everything is fixed."
+      },
+      "taskDone_menage_quotidien": {
+        "1": "Housework done, the weeds have vanished from the plot!",
+        "2": "Nice daily cleaning, the farm breathes better without those weeds!"
+      },
+      "taskDone_menage_hebdo": {
+        "1": "Deep cleaning paid off, a wear event is repaired on the farm!",
+        "2": "Thanks to the thorough cleaning, the farm is good as new!"
+      },
+      "taskDone_courses": {
+        "1": "Shopping is done and the buildings are running at full speed!",
+        "2": "Great job on the shopping, building production is boosted!"
+      },
+      "taskDone_enfants_routines": {
+        "1": "Routines are done, {{companionName}} is bursting with joy!",
+        "2": "Thanks to the kids' routines, {{companionName}} is in top shape!"
+      },
+      "taskDone_enfants_devoirs": {
+        "1": "Homework is done, crops are growing faster now!",
+        "2": "Great job on homework, the growth sprint is on!"
+      },
+      "taskDone_rendez_vous": {
+        "1": "Appointment done and a rare seed appeared in the garden!",
+        "2": "Well done on the appointment, a precious harvest awaits on the farm!"
+      },
+      "taskDone_gratitude_famille": {
+        "1": "This moment of gratitude empowered the saga traveler!",
+        "2": "Thanks to this family attention, the saga trait has grown!"
+      },
+      "taskDone_budget_admin": {
+        "1": "Budget is settled and buildings doubled their capacity!",
+        "2": "Great admin work, buildings fill up twice as fast!"
+      },
+      "taskDone_bebe_soins": {
+        "1": "Baby care done and the next harvest will be golden!",
+        "2": "Thanks to baby care, a golden rain awaits at harvest!"
+      },
+      "taskDone_cuisine_repas": {
+        "1": "Meal is ready and a rare recipe has been unlocked!",
+        "2": "Great cooking, a new craft is available!"
       }
     }
   },

@@ -85,6 +85,7 @@ export interface CompanionMessageContext {
   moodScore?: number;            // score numérique de mood
   pendingTasks?: string[];       // tâches à faire aujourd'hui (pas encore complétées)
   timeOfDay?: 'matin' | 'apres-midi' | 'soir' | 'nuit';
+  subType?: string;  // Phase 21 — CategoryId de la tache semantique, passe a pickCompanionMessage pour templates sub-type
 }
 
 /** Personnalité propre à chaque espèce de compagnon */

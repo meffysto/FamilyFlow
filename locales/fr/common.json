@@ -4336,6 +4336,46 @@
         "1": "Bien réparé ! {{companionName}} inspecte le travail et approuve.",
         "2": "La ferme est en meilleur état ! {{companionName}} est rassuré.",
         "3": "Bon boulot {{profileName}} ! {{companionName}} est content que tout soit réparé."
+      },
+      "taskDone_menage_quotidien": {
+        "1": "Le ménage est fait, les mauvaises herbes ont disparu de la parcelle !",
+        "2": "Bien joué pour le ménage quotidien, la ferme respire mieux sans ces herbes !"
+      },
+      "taskDone_menage_hebdo": {
+        "1": "Le grand nettoyage a payé, une usure réparée sur la ferme !",
+        "2": "Grâce au ménage en profondeur, la ferme est comme neuve !"
+      },
+      "taskDone_courses": {
+        "1": "Les courses sont rangées et les bâtiments tournent à plein régime !",
+        "2": "Bien joué pour les courses, la production des bâtiments est boostée !"
+      },
+      "taskDone_enfants_routines": {
+        "1": "Les routines sont faites, {{companionName}} déborde de joie !",
+        "2": "Grâce aux routines des enfants, {{companionName}} est au top de sa forme !"
+      },
+      "taskDone_enfants_devoirs": {
+        "1": "Les devoirs sont faits, les cultures poussent plus vite maintenant !",
+        "2": "Bien joué pour les devoirs, le sprint de croissance est lancé !"
+      },
+      "taskDone_rendez_vous": {
+        "1": "Le rendez-vous est passé et une graine rare est apparue dans le jardin !",
+        "2": "Bravo pour le rendez-vous, une récolte précieuse attend dans la ferme !"
+      },
+      "taskDone_gratitude_famille": {
+        "1": "Ce moment de gratitude a renforcé le voyageur de la saga !",
+        "2": "Grâce à cette attention familiale, le trait de saga a grandi !"
+      },
+      "taskDone_budget_admin": {
+        "1": "Le budget est réglé et les bâtiments ont doublé leur capacité !",
+        "2": "Bien joué pour l'admin, les bâtiments se remplissent deux fois plus vite !"
+      },
+      "taskDone_bebe_soins": {
+        "1": "Les soins sont donnés et la prochaine récolte sera dorée !",
+        "2": "Grâce aux soins du bébé, une pluie dorée attend à la récolte !"
+      },
+      "taskDone_cuisine_repas": {
+        "1": "Le repas est prêt et une recette rare a été débloquée !",
+        "2": "Bien joué en cuisine, un nouveau craft est disponible !"
       }
     }
   },

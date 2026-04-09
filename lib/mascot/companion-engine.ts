@@ -221,12 +221,71 @@ export const MESSAGE_TEMPLATES: Record<CompanionEvent, string[]> = {
 };
 
 /**
+ * Templates sub-type pour task_completed par categorie semantique (Phase 21).
+ * Cles = 'task_completed_${categoryId}' — 2 templates par categorie (D-05).
+ * Dictionnaire separe pour ne pas elargir le type Record<CompanionEvent, ...>.
+ */
+export const SUB_TYPE_TEMPLATES: Record<string, string[]> = {
+  task_completed_menage_quotidien: [
+    'companion.msg.taskDone_menage_quotidien.1',
+    'companion.msg.taskDone_menage_quotidien.2',
+  ],
+  task_completed_menage_hebdo: [
+    'companion.msg.taskDone_menage_hebdo.1',
+    'companion.msg.taskDone_menage_hebdo.2',
+  ],
+  task_completed_courses: [
+    'companion.msg.taskDone_courses.1',
+    'companion.msg.taskDone_courses.2',
+  ],
+  task_completed_enfants_routines: [
+    'companion.msg.taskDone_enfants_routines.1',
+    'companion.msg.taskDone_enfants_routines.2',
+  ],
+  task_completed_enfants_devoirs: [
+    'companion.msg.taskDone_enfants_devoirs.1',
+    'companion.msg.taskDone_enfants_devoirs.2',
+  ],
+  task_completed_rendez_vous: [
+    'companion.msg.taskDone_rendez_vous.1',
+    'companion.msg.taskDone_rendez_vous.2',
+  ],
+  task_completed_gratitude_famille: [
+    'companion.msg.taskDone_gratitude_famille.1',
+    'companion.msg.taskDone_gratitude_famille.2',
+  ],
+  task_completed_budget_admin: [
+    'companion.msg.taskDone_budget_admin.1',
+    'companion.msg.taskDone_budget_admin.2',
+  ],
+  task_completed_bebe_soins: [
+    'companion.msg.taskDone_bebe_soins.1',
+    'companion.msg.taskDone_bebe_soins.2',
+  ],
+  task_completed_cuisine_repas: [
+    'companion.msg.taskDone_cuisine_repas.1',
+    'companion.msg.taskDone_cuisine_repas.2',
+  ],
+};
+
+/**
  * Sélectionne aléatoirement une clé i18n du pool pour l'événement donné.
+ * Phase 21 : résout les sub-types task_completed avant le fallback générique.
  */
 export function pickCompanionMessage(
   event: CompanionEvent,
-  _context: CompanionMessageContext,
+  context: CompanionMessageContext,
 ): string {
+  // Phase 21 : Sub-type lookup pour task_completed (D-04)
+  if (event === 'task_completed' && context.subType) {
+    const subKey = `task_completed_${context.subType}`;
+    const subTemplates = SUB_TYPE_TEMPLATES[subKey];
+    if (subTemplates && subTemplates.length > 0) {
+      const idx = Math.floor(Math.random() * subTemplates.length);
+      return subTemplates[idx];
+    }
+  }
+  // Fallback — comportement existant
   const templates = MESSAGE_TEMPLATES[event];
   if (!templates || templates.length === 0) {
     return MESSAGE_TEMPLATES.greeting[0];
