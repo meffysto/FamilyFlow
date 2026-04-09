@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Seed
-status: Ready to plan
-stopped_at: Phase 22 context gathered
-last_updated: "2026-04-09T15:25:22.616Z"
-last_activity: "2026-04-09 - Completed quick task 260409-nyw: Bouton dev-only test effets sémantiques"
+status: Ready to execute
+stopped_at: Completed 22-ui-config-famille-01
+last_updated: "2026-04-09T15:41:24.495Z"
+last_activity: 2026-04-09
 progress:
   total_phases: 6
   completed_phases: 3
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 10
+  completed_plans: 9
   percent: 0
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md
 
 ## Current Position
 
-Phase: 22
-Plan: Not started
+Phase: 22 (ui-config-famille) — EXECUTING
+Plan: 2 of 2
 Milestone: v1.3 Seed (defining requirements)
 Last shipped: v1.2 Confort & Découverte (2026-04-08)
-Last activity: 2026-04-09 - Completed quick task 260409-nyw: Bouton dev-only test effets sémantiques
+Last activity: 2026-04-09
 
 Progress: [░░░░░░░░░░] 0% (0/6 phases v1.3)
 
@@ -102,6 +102,7 @@ Next step: `/gsd:discuss-phase 19` après approbation du roadmap
 | Phase 20-moteur-d-effets-anti-abus P04 | 4min | 3 tasks | 3 files |
 | Phase 21-feedback-visuel-compagnon P01 | 3min | 2 tasks | 4 files |
 | Phase 21 P02 | 8 | 2 tasks | 7 files |
+| Phase 22-ui-config-famille P01 | 3min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -225,6 +226,7 @@ Recent decisions affecting current work:
 - [Phase 21-02]: reward={1} dans HarvestBurst overlay — reward=0 affiche '+0' non masque
 - [Phase 21-02]: SUB_TYPE_TEMPLATES dictionnaire separe de MESSAGE_TEMPLATES — preserve type Record<CompanionEvent,string[]>
 - [Phase 21-02]: subType? string dans CompanionMessageContext (pas CategoryId) — evite couplage lib/mascot -> lib/semantic
+- [Phase 22-01]: Cache module-level _overridesCache pour eviter acces SecureStore sur hot path (opt-out pattern: cle absente = categorie active)
 
 ### Pending Todos
 
@@ -266,6 +268,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T15:25:22.607Z
-Stopped at: Phase 22 context gathered
-Resume file: .planning/phases/22-ui-config-famille/22-CONTEXT.md
+Last session: 2026-04-09T15:41:24.491Z
+Stopped at: Completed 22-ui-config-famille-01
+Resume file: None

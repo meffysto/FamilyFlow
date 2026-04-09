@@ -46,10 +46,10 @@ Requirements pour le milestone v1.3. Chaque requirement mappe à une phase exact
 
 - [ ] **COUPLING-01**: User can access a "Couplage sémantique" screen in Settings
 - [ ] **COUPLING-02**: User sees all 10 categories with their mapped effect
-- [ ] **COUPLING-03**: User can toggle each category on/off individually
+- [x] **COUPLING-03**: User can toggle each category on/off individually
 - [ ] **COUPLING-04**: User sees a preview of what each effect does
-- [ ] **COUPLING-05**: User sees weekly stats (how many effects triggered this week)
-- [ ] **COUPLING-06**: User's toggle state persists across app restarts
+- [x] **COUPLING-05**: User sees weekly stats (how many effects triggered this week)
+- [x] **COUPLING-06**: User's toggle state persists across app restarts
 
 ### MUSEUM — SEED-002 lite (Phase 23)
 
@@ -121,10 +121,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FEEDBACK-05 | Phase 21 | Complete |
 | COUPLING-01 | Phase 22 | Pending |
 | COUPLING-02 | Phase 22 | Pending |
-| COUPLING-03 | Phase 22 | Pending |
+| COUPLING-03 | Phase 22 | Complete |
 | COUPLING-04 | Phase 22 | Pending |
-| COUPLING-05 | Phase 22 | Pending |
-| COUPLING-06 | Phase 22 | Pending |
+| COUPLING-05 | Phase 22 | Complete |
+| COUPLING-06 | Phase 22 | Complete |
 | MUSEUM-01 | Phase 23 | Pending |
 | MUSEUM-02 | Phase 23 | Pending |
 | MUSEUM-03 | Phase 23 | Pending |

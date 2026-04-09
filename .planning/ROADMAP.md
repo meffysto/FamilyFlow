@@ -111,7 +111,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 22-01-PLAN.md — coupling-overrides.ts + injection useGamification + i18n FR/EN
+- [x] 22-01-PLAN.md — coupling-overrides.ts + injection useGamification + i18n FR/EN
 - [ ] 22-02-PLAN.md — SettingsCoupling.tsx + câblage settings.tsx
 
 #### Phase 23: Musée des effets (SEED-002 lite)
@@ -157,7 +157,7 @@ Plans:
 | 19. Détection catégorie sémantique | v1.3 | 2/2 | Complete    | 2026-04-09 |
 | 20. Moteur d'effets + anti-abus | v1.3 | 4/4 | Complete    | 2026-04-09 |
 | 21. Feedback visuel + compagnon | v1.3 | 2/2 | Complete    | 2026-04-09 |
-| 22. UI config famille | v1.3 | 0/TBD | Not started | - |
+| 22. UI config famille | v1.3 | 1/2 | In Progress|  |
 | 23. Musée des effets | v1.3 | 0/TBD | Not started | - |
 | 24. Compagnon étendu | v1.3 | 0/TBD | Not started | - |
 
