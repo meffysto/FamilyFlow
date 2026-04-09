@@ -36,3 +36,14 @@ export type { CouplingCaps, EffectCap } from './caps';
 // Phase 21 — feedback visuel + compagnon
 export { EFFECT_TOASTS, CATEGORY_VARIANT, CATEGORY_HAPTIC_FN } from './effect-toasts';
 export type { EffectToastDef, HarvestBurstVariant } from './effect-toasts';
+
+// Phase 22 — coupling overrides + stats
+export {
+  loadOverrides,
+  saveOverrides,
+  isCategoryEnabled,
+  loadWeekStats,
+  incrementWeekStat,
+  OVERRIDES_KEY,
+  WEEK_STATS_KEY,
+} from './coupling-overrides';
