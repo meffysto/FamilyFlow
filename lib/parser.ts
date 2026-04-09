@@ -619,6 +619,13 @@ export function parseFarmProfile(content: string): FarmProfileData {
     companion: parseCompanion(props.companion),
     giftHistory: props.gift_history,
     giftsSentToday: props.gifts_sent_today,
+    buildingTurboUntil: props.building_turbo_until || undefined,
+    growthSprintUntil: props.growth_sprint_until || undefined,
+    capacityBoostUntil: props.capacity_boost_until || undefined,
+    nextHarvestGolden: props.next_harvest_golden === 'true',
+    unlockedEffectRecipes: props.unlocked_effect_recipes
+      ? props.unlocked_effect_recipes.split(',').map(s => s.trim()).filter(Boolean)
+      : [],
   };
 }
 
@@ -655,6 +662,13 @@ export function serializeFarmProfile(profileName: string, data: FarmProfileData)
   if (data.companion) lines.push(`companion: ${serializeCompanion(data.companion)}`);
   if (data.giftHistory) lines.push(`gift_history: ${data.giftHistory}`);
   if (data.giftsSentToday) lines.push(`gifts_sent_today: ${data.giftsSentToday}`);
+  if (data.buildingTurboUntil) lines.push(`building_turbo_until: ${data.buildingTurboUntil}`);
+  if (data.growthSprintUntil) lines.push(`growth_sprint_until: ${data.growthSprintUntil}`);
+  if (data.capacityBoostUntil) lines.push(`capacity_boost_until: ${data.capacityBoostUntil}`);
+  if (data.nextHarvestGolden) lines.push(`next_harvest_golden: true`);
+  if (data.unlockedEffectRecipes && data.unlockedEffectRecipes.length > 0) {
+    lines.push(`unlocked_effect_recipes: ${data.unlockedEffectRecipes.join(',')}`);
+  }
 
   return lines.join('\n') + '\n';
 }

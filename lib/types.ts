@@ -584,4 +584,11 @@ export interface FarmProfileData {
   companion?: import('./mascot/companion-types').CompanionData | null;
   giftHistory?: string; // CSV pipe-separe des 10 derniers echanges
   giftsSentToday?: string; // format "count|YYYY-MM-DD" anti-abus
+  // Phase 20 — bonus temporels effets semantiques
+  buildingTurboUntil?: string;      // ISO datetime — EFFECTS-03
+  growthSprintUntil?: string;       // ISO datetime — EFFECTS-05
+  capacityBoostUntil?: string;      // ISO datetime — EFFECTS-08
+  nextHarvestGolden?: boolean;      // EFFECTS-09
+  unlockedEffectRecipes?: string[]; // IDs recettes debloquees via EFFECTS-10
+  effectGoldenMultiplier?: number;  // EFFECTS-09 : x3 (distinct du GOLDEN_HARVEST_MULTIPLIER = 5)
 }
