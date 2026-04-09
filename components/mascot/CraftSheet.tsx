@@ -16,6 +16,7 @@ import {
   Pressable,
   Modal,
   Platform,
+  Image,
 } from 'react-native';
 import { format, parseISO } from 'date-fns';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -84,6 +85,24 @@ const RESOURCE_EMOJI: Record<string, string> = {
 };
 
 // ── Emojis par stade ─────────────────────────────────
+
+const CROP_ICON_SPRITES: Record<string, ReturnType<typeof require>> = {
+  carrot:       require('../../assets/garden/crops/carrot/icon.png'),
+  wheat:        require('../../assets/garden/crops/wheat/icon.png'),
+  beetroot:     require('../../assets/garden/crops/beetroot/icon.png'),
+  cabbage:      require('../../assets/garden/crops/cabbage/icon.png'),
+  tomato:       require('../../assets/garden/crops/tomato/icon.png'),
+  potato:       require('../../assets/garden/crops/potato/icon.png'),
+  cucumber:     require('../../assets/garden/crops/cucumber/icon.png'),
+  corn:         require('../../assets/garden/crops/corn/icon.png'),
+  strawberry:   require('../../assets/garden/crops/strawberry/icon.png'),
+  sunflower:    require('../../assets/garden/crops/sunflower/icon.png'),
+  pumpkin:      require('../../assets/garden/crops/pumpkin/icon.png'),
+  orchidee:     require('../../assets/garden/crops/orchidee/icon.png'),
+  truffe:       require('../../assets/garden/crops/truffe/icon.png'),
+  rose_doree:   require('../../assets/garden/crops/rose_doree/icon.png'),
+  fruit_dragon: require('../../assets/garden/crops/fruit_dragon/icon.png'),
+};
 
 const STAGE_EMOJI: Record<TreeStage, string> = {
   graine:     '🌱',
@@ -303,9 +322,13 @@ export function CraftSheet({
                       activeOpacity={locked ? 1 : 0.7}
                       disabled={locked}
                     >
-                      {/* Emoji + badge craftable */}
+                      {/* Sprite/Emoji + badge craftable */}
                       <View style={styles.catCardEmojiRow}>
-                        <Text style={styles.catCardEmoji}>{recipe.emoji}</Text>
+                        {recipe.sprite ? (
+                          <Image source={recipe.sprite} style={styles.catCardSprite} />
+                        ) : (
+                          <Text style={styles.catCardEmoji}>{recipe.emoji}</Text>
+                        )}
                         {craftable && (
                           <View style={[styles.catCraftableBadge, { backgroundColor: colors.success }]}>
                             <Text style={styles.catCraftableBadgeText}>{'✓'}</Text>
@@ -402,7 +425,11 @@ export function CraftSheet({
               </TouchableOpacity>
 
               {/* Header */}
-              <Text style={styles.catModalEmoji}>{selectedRecipe.emoji}</Text>
+              {selectedRecipe.sprite ? (
+                <Image source={selectedRecipe.sprite} style={styles.catModalSprite} />
+              ) : (
+                <Text style={styles.catModalEmoji}>{selectedRecipe.emoji}</Text>
+              )}
               <Text style={[styles.catModalTitle, { color: colors.text }]}>
                 {t(selectedRecipe.labelKey)}
               </Text>
@@ -560,7 +587,11 @@ export function CraftSheet({
                 Shadows.sm,
               ]}
             >
-              <Text style={styles.inventoryEmoji}>{cropDef?.emoji ?? '?'}</Text>
+              {CROP_ICON_SPRITES[cropId] ? (
+                <Image source={CROP_ICON_SPRITES[cropId]} style={styles.inventorySprite} />
+              ) : (
+                <Text style={styles.inventoryEmoji}>{cropDef?.emoji ?? '?'}</Text>
+              )}
               <View style={styles.inventoryInfo}>
                 <Text style={[styles.inventoryName, { color: colors.text }]}>
                   {cropName}
@@ -703,7 +734,11 @@ export function CraftSheet({
                 Shadows.sm,
               ]}
             >
-              <Text style={styles.inventoryEmoji}>{recipe.emoji}</Text>
+              {recipe.sprite ? (
+                <Image source={recipe.sprite} style={styles.inventorySprite} />
+              ) : (
+                <Text style={styles.inventoryEmoji}>{recipe.emoji}</Text>
+              )}
               <View style={styles.inventoryInfo}>
                 <Text style={[styles.inventoryName, { color: colors.text }]}>
                   {recipeName}
@@ -947,6 +982,10 @@ const styles = StyleSheet.create({
   catCardEmoji: {
     fontSize: 32,
   },
+  catCardSprite: {
+    width: 32,
+    height: 32,
+  },
   catCraftableBadge: {
     position: 'absolute',
     top: -2,
@@ -1031,6 +1070,12 @@ const styles = StyleSheet.create({
   catModalEmoji: {
     fontSize: 48,
     textAlign: 'center',
+    marginBottom: Spacing.sm,
+  },
+  catModalSprite: {
+    width: 48,
+    height: 48,
+    alignSelf: 'center',
     marginBottom: Spacing.sm,
   },
   catModalTitle: {
@@ -1131,6 +1176,11 @@ const styles = StyleSheet.create({
   },
   inventoryEmoji: {
     fontSize: 28,
+    marginRight: Spacing.md,
+  },
+  inventorySprite: {
+    width: 28,
+    height: 28,
     marginRight: Spacing.md,
   },
   inventoryInfo: {

@@ -4132,7 +4132,11 @@
       "confiture_royale": "Royal Jam",
       "risotto_truffe": "Truffle Risotto",
       "huile_tournesol": "Sunflower Oil",
-      "brioche_tournesol": "Sunflower Brioche"
+      "brioche_tournesol": "Sunflower Brioche",
+      "bortsch": "Beet Borscht",
+      "gaspacho": "Fresh Gazpacho",
+      "elixir_dragon": "Dragon Elixir",
+      "galette_royale": "King's Galette"
     }
   },
   "badges": {

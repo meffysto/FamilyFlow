@@ -378,9 +378,10 @@ const BuildingIdleAnim = React.memo(function BuildingIdleAnim({ buildingId, pend
         />
       )}
       {buildingId === 'grange' && (
-        <Animated.Text style={[styles.idleEmoji, styles.idleGrangePos, cowStyle]}>
-          🐄
-        </Animated.Text>
+        <Animated.Image
+          source={require('../../assets/garden/animals/vache/idle_1.png')}
+          style={[styles.idleVacheSprite, styles.idleGrangePos, cowStyle]}
+        />
       )}
       {buildingId === 'moulin' && (
         <Animated.Text style={[styles.idleEmojiMill, styles.idleMoulinPos, millStyle]}>
@@ -389,12 +390,14 @@ const BuildingIdleAnim = React.memo(function BuildingIdleAnim({ buildingId, pend
       )}
       {buildingId === 'ruche' && (
         <>
-          <Animated.Text style={[styles.idleEmojiBee, styles.idleRucheCenter, bee1Style]}>
-            🐝
-          </Animated.Text>
-          <Animated.Text style={[styles.idleEmojiBee, styles.idleRucheCenter, bee2Style]}>
-            🐝
-          </Animated.Text>
+          <Animated.Image
+            source={require('../../assets/garden/animals/abeille/idle_1.png')}
+            style={[styles.idleAbeilleSprite, styles.idleRucheCenter, bee1Style]}
+          />
+          <Animated.Image
+            source={require('../../assets/garden/animals/abeille/idle_1.png')}
+            style={[styles.idleAbeilleSprite, styles.idleRucheCenter, bee2Style]}
+          />
         </>
       )}
 
@@ -1091,6 +1094,11 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
   },
+  idleVacheSprite: {
+    position: 'absolute',
+    width: 24,
+    height: 24,
+  },
   idleGrangePos: {
     bottom: 2,
     right: 2,
@@ -1105,9 +1113,10 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     left: 24,
   },
-  idleEmojiBee: {
+  idleAbeilleSprite: {
     position: 'absolute',
-    fontSize: 12,
+    width: 12,
+    height: 12,
   },
   idleRucheCenter: {
     top: 20,

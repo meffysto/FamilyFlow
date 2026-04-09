@@ -24,12 +24,41 @@ export const BUILDING_RESOURCE_VALUE: Record<ResourceType, number> = {
 
 // ── Catalogue de recettes ────────────────────────────────────────────
 
+// ── Sprites recettes ─────────────────────────────────────────────────
+const CRAFT_SPRITES: Record<string, ReturnType<typeof require>> = {
+  soupe:             require('../../assets/garden/craft/soupe.png'),
+  bouquet:           require('../../assets/garden/craft/bouquet.png'),
+  crepe:             require('../../assets/garden/craft/crepe.png'),
+  bortsch:           require('../../assets/garden/craft/bortsch.png'),
+  fromage:           require('../../assets/garden/craft/fromage.png'),
+  gratin:            require('../../assets/garden/craft/gratin.png'),
+  omelette:          require('../../assets/garden/craft/omelette.png'),
+  hydromel:          require('../../assets/garden/craft/hydromel.png'),
+  nougat:            require('../../assets/garden/craft/nougat.png'),
+  pain_epices:       require('../../assets/garden/craft/pain_epices.png'),
+  parfum_orchidee:   require('../../assets/garden/craft/parfum_orchidee.png'),
+  gaspacho:          require('../../assets/garden/craft/gaspacho.png'),
+  galette_royale:    require('../../assets/garden/craft/galette_royale.png'),
+  pain:              require('../../assets/garden/craft/pain.png'),
+  confiture:         require('../../assets/garden/craft/confiture.png'),
+  popcorn:           require('../../assets/garden/craft/popcorn.png'),
+  huile_tournesol:   require('../../assets/garden/craft/huile_tournesol.png'),
+  brioche_tournesol: require('../../assets/garden/craft/brioche_tournesol.png'),
+  gateau:            require('../../assets/garden/craft/gateau.png'),
+  confiture_royale:  require('../../assets/garden/craft/confiture_royale.png'),
+  elixir_dragon:     require('../../assets/garden/craft/elixir_dragon.png'),
+  soupe_citrouille:  require('../../assets/garden/craft/soupe_citrouille.png'),
+  tarte_citrouille:  require('../../assets/garden/craft/tarte_citrouille.png'),
+  risotto_truffe:    require('../../assets/garden/craft/risotto_truffe.png'),
+};
+
 export const CRAFT_RECIPES: CraftRecipe[] = [
   // ── Pousse (niv 3-5) — crops de base + poulailler ──
   {
     id: 'soupe',
     labelKey: 'craft.recipe.soupe',
     emoji: '🥣',
+    sprite: CRAFT_SPRITES.soupe,
     ingredients: [
       { itemId: 'carrot', quantity: 1, source: 'crop' },
       { itemId: 'potato', quantity: 1, source: 'crop' },
@@ -42,6 +71,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     id: 'bouquet',
     labelKey: 'craft.recipe.bouquet',
     emoji: '💐',
+    sprite: CRAFT_SPRITES.bouquet,
     ingredients: [
       { itemId: 'cabbage', quantity: 1, source: 'crop' },
       { itemId: 'carrot', quantity: 1, source: 'crop' },
@@ -54,6 +84,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     id: 'crepe',
     labelKey: 'craft.recipe.crepe',
     emoji: '🥞',
+    sprite: CRAFT_SPRITES.crepe,
     ingredients: [
       { itemId: 'oeuf', quantity: 1, source: 'building' },
       { itemId: 'wheat', quantity: 1, source: 'crop' },
@@ -66,6 +97,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     id: 'bortsch',
     labelKey: 'craft.recipe.bortsch',
     emoji: '🍲',
+    sprite: CRAFT_SPRITES.bortsch,
     ingredients: [
       { itemId: 'beetroot', quantity: 2, source: 'crop' },
     ],
@@ -78,6 +110,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     id: 'fromage',
     labelKey: 'craft.recipe.fromage',
     emoji: '🧀',
+    sprite: CRAFT_SPRITES.fromage,
     ingredients: [
       { itemId: 'lait', quantity: 3, source: 'building' },
     ],
@@ -89,6 +122,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     id: 'gratin',
     labelKey: 'craft.recipe.gratin',
     emoji: '🫕',
+    sprite: CRAFT_SPRITES.gratin,
     ingredients: [
       { itemId: 'lait', quantity: 1, source: 'building' },
       { itemId: 'potato', quantity: 1, source: 'crop' },
@@ -102,6 +136,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     id: 'omelette',
     labelKey: 'craft.recipe.omelette',
     emoji: '🍳',
+    sprite: CRAFT_SPRITES.omelette,
     ingredients: [
       { itemId: 'oeuf', quantity: 2, source: 'building' },
       { itemId: 'tomato', quantity: 1, source: 'crop' },
@@ -114,6 +149,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     id: 'hydromel',
     labelKey: 'craft.recipe.hydromel',
     emoji: '🍯',
+    sprite: CRAFT_SPRITES.hydromel,
     ingredients: [
       { itemId: 'miel', quantity: 3, source: 'building' },
     ],
@@ -125,6 +161,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     id: 'nougat',
     labelKey: 'craft.recipe.nougat',
     emoji: '🍬',
+    sprite: CRAFT_SPRITES.nougat,
     ingredients: [
       { itemId: 'miel', quantity: 2, source: 'building' },
       { itemId: 'oeuf', quantity: 1, source: 'building' },
@@ -138,6 +175,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     id: 'pain_epices',
     labelKey: 'craft.recipe.pain_epices',
     emoji: '🍪',
+    sprite: CRAFT_SPRITES.pain_epices,
     ingredients: [
       { itemId: 'miel', quantity: 1, source: 'building' },
       { itemId: 'farine', quantity: 2, source: 'building' },
@@ -150,6 +188,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     id: 'parfum_orchidee',
     labelKey: 'craft.recipe.parfum_orchidee',
     emoji: '🪻',
+    sprite: CRAFT_SPRITES.parfum_orchidee,
     ingredients: [
       { itemId: 'orchidee', quantity: 2, source: 'crop' },
       { itemId: 'miel', quantity: 1, source: 'building' },
@@ -162,6 +201,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     id: 'gaspacho',
     labelKey: 'craft.recipe.gaspacho',
     emoji: '🥗',
+    sprite: CRAFT_SPRITES.gaspacho,
     ingredients: [
       { itemId: 'cucumber', quantity: 1, source: 'crop' },
       { itemId: 'tomato', quantity: 1, source: 'crop' },
@@ -175,6 +215,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     id: 'pain',
     labelKey: 'craft.recipe.pain',
     emoji: '🍞',
+    sprite: CRAFT_SPRITES.pain,
     ingredients: [
       { itemId: 'farine', quantity: 2, source: 'building' },
       { itemId: 'wheat', quantity: 1, source: 'crop' },
@@ -187,6 +228,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     id: 'confiture',
     labelKey: 'craft.recipe.confiture',
     emoji: '🍓',
+    sprite: CRAFT_SPRITES.confiture,
     ingredients: [
       { itemId: 'strawberry', quantity: 2, source: 'crop' },
     ],
@@ -198,6 +240,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     id: 'popcorn',
     labelKey: 'craft.recipe.popcorn',
     emoji: '🍿',
+    sprite: CRAFT_SPRITES.popcorn,
     ingredients: [
       { itemId: 'corn', quantity: 2, source: 'crop' },
     ],
@@ -209,6 +252,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     id: 'huile_tournesol',
     labelKey: 'craft.recipe.huile_tournesol',
     emoji: '🫙',
+    sprite: CRAFT_SPRITES.huile_tournesol,
     ingredients: [
       { itemId: 'sunflower', quantity: 2, source: 'crop' },
     ],
@@ -220,6 +264,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     id: 'brioche_tournesol',
     labelKey: 'craft.recipe.brioche_tournesol',
     emoji: '🥐',
+    sprite: CRAFT_SPRITES.brioche_tournesol,
     ingredients: [
       { itemId: 'sunflower', quantity: 1, source: 'crop' },
       { itemId: 'farine', quantity: 1, source: 'building' },
@@ -232,6 +277,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     id: 'gateau',
     labelKey: 'craft.recipe.gateau',
     emoji: '🎂',
+    sprite: CRAFT_SPRITES.gateau,
     ingredients: [
       { itemId: 'farine', quantity: 1, source: 'building' },
       { itemId: 'oeuf', quantity: 1, source: 'building' },
@@ -245,6 +291,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     id: 'confiture_royale',
     labelKey: 'craft.recipe.confiture_royale',
     emoji: '🌹',
+    sprite: CRAFT_SPRITES.confiture_royale,
     ingredients: [
       { itemId: 'rose_doree', quantity: 1, source: 'crop' },
       { itemId: 'strawberry', quantity: 1, source: 'crop' },
@@ -259,6 +306,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     id: 'soupe_citrouille',
     labelKey: 'craft.recipe.soupe_citrouille',
     emoji: '🎃',
+    sprite: CRAFT_SPRITES.soupe_citrouille,
     ingredients: [
       { itemId: 'pumpkin', quantity: 1, source: 'crop' },
       { itemId: 'lait', quantity: 1, source: 'building' },
@@ -271,6 +319,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     id: 'tarte_citrouille',
     labelKey: 'craft.recipe.tarte_citrouille',
     emoji: '🥧',
+    sprite: CRAFT_SPRITES.tarte_citrouille,
     ingredients: [
       { itemId: 'pumpkin', quantity: 1, source: 'crop' },
       { itemId: 'farine', quantity: 1, source: 'building' },
@@ -284,6 +333,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     id: 'risotto_truffe',
     labelKey: 'craft.recipe.risotto_truffe',
     emoji: '🍄',
+    sprite: CRAFT_SPRITES.risotto_truffe,
     ingredients: [
       { itemId: 'truffe', quantity: 1, source: 'crop' },
       { itemId: 'farine', quantity: 1, source: 'building' },
@@ -297,6 +347,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     id: 'elixir_dragon',
     labelKey: 'craft.recipe.elixir_dragon',
     emoji: '🐲',
+    sprite: CRAFT_SPRITES.elixir_dragon,
     ingredients: [
       { itemId: 'fruit_dragon', quantity: 1, source: 'crop' },
       { itemId: 'miel', quantity: 1, source: 'building' },
@@ -310,6 +361,7 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     id: 'galette_royale',
     labelKey: 'craft.recipe.galette_royale',
     emoji: '👑',
+    sprite: CRAFT_SPRITES.galette_royale,
     ingredients: [
       { itemId: 'farine', quantity: 2, source: 'building' },
       { itemId: 'oeuf', quantity: 1, source: 'building' },

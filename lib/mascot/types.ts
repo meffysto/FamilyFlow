@@ -394,6 +394,7 @@ export interface CraftRecipe {
   id: string;
   labelKey: string;
   emoji: string;
+  sprite?: ReturnType<typeof require>; // sprite pixel art optionnel (fallback: emoji)
   ingredients: CraftIngredient[];
   xpBonus: number;          // XP supplementaire au craft
   sellValue: number;         // feuilles obtenues a la vente (= sum harvestReward x2)
