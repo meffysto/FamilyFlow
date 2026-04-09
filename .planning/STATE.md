@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Seed
 status: Ready to plan
-stopped_at: Phase 21 context gathered
-last_updated: "2026-04-09T13:37:12.552Z"
+stopped_at: Phase 21 UI-SPEC approved
+last_updated: "2026-04-09T13:46:59.201Z"
 last_activity: 2026-04-09
 progress:
   total_phases: 6
@@ -270,6 +270,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T13:37:12.543Z
-Stopped at: Phase 21 context gathered
-Resume file: .planning/phases/21-feedback-visuel-compagnon/21-CONTEXT.md
+Last session: 2026-04-09T13:46:59.197Z
+Stopped at: Phase 21 UI-SPEC approved
+Resume file: .planning/phases/21-feedback-visuel-compagnon/21-UI-SPEC.md
