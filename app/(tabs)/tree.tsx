@@ -35,6 +35,8 @@ import Animated, {
   FadeInUp,
 } from 'react-native-reanimated';
 import { hapticsTreeTap, hapticsSpeciesChange } from '../../lib/mascot/haptics';
+import { EFFECT_TOASTS, CATEGORY_VARIANT, CATEGORY_HAPTIC_FN } from '../../lib/semantic/effect-toasts';
+import type { CategoryId } from '../../lib/semantic/categories';
 
 import { useVault } from '../../contexts/VaultContext';
 import { useThemeColors } from '../../contexts/ThemeContext';
@@ -478,6 +480,7 @@ export default function TreeScreen() {
 
   // Événement saisonnier actif non complété
   const [devEventOverride, setDevEventOverride] = useState<string | null>(null);
+  const [showDevEffects, setShowDevEffects] = useState(false);
   const activeEventId = (__DEV__ && devEventOverride)
     ? devEventOverride
     : (eventProgressLoaded ? getVisibleEventId(eventProgressList, profile?.id ?? '', new Date()) : null);
@@ -1016,6 +1019,23 @@ export default function TreeScreen() {
   const xpInLevel = currentXP - prevLevelXP;
   const xpNeeded = nextLevelXP - prevLevelXP;
   const xpPercent = xpNeeded > 0 ? Math.min(1, xpInLevel / xpNeeded) : 1;
+
+  // DEV ONLY — test des 10 effets sémantiques Phase 21
+  const triggerDevEffect = useCallback(async (catId: CategoryId) => {
+    const toastDef = EFFECT_TOASTS[catId];
+    if (toastDef) {
+      showToast(
+        toastDef.fr,
+        toastDef.type,
+        undefined,
+        { icon: toastDef.icon, subtitle: toastDef.subtitle_fr },
+      );
+    }
+    const hapticFn = CATEGORY_HAPTIC_FN[catId];
+    if (hapticFn) hapticFn();
+    await SecureStore.setItemAsync('last_semantic_category', catId);
+    setShowDevEffects(false);
+  }, [showToast]);
 
   const handleSpeciesSelect = useCallback(async (newSpecies: TreeSpecies) => {
     const targetProfile = selectedProfileForPicker || profile;
@@ -1995,6 +2015,16 @@ export default function TreeScreen() {
                   <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>{'DEV'}</Text>
                 </TouchableOpacity>
               )}
+              {__DEV__ && (
+                <TouchableOpacity
+                  style={styles.actionItem}
+                  onPress={() => setShowDevEffects(true)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.actionItemIcon}>{'⚡'}</Text>
+                  <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>{'Effets'}</Text>
+                </TouchableOpacity>
+              )}
               {(allDecoIds.length + allHabIds.length) > 0 && !placingItem && (
                 <TouchableOpacity style={styles.actionItem} onPress={() => setShowItemPicker(true)} activeOpacity={0.7}>
                   <Text style={styles.actionItemIcon}>{'🎨'}</Text>
@@ -2322,6 +2352,56 @@ export default function TreeScreen() {
 
       {/* Phase 18-04 : tutoriel ferme — overlay au-dessus du HUD, refs cibles pour étapes 2-4 */}
       <FarmTutorialOverlay profile={profile} targetRefs={farmTutorialTargetRefs} />
+
+      {/* DEV ONLY — Modal test des 10 effets sémantiques Phase 21 */}
+      {__DEV__ && showDevEffects && (
+        <Modal
+          visible
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setShowDevEffects(false)}
+        >
+          <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: 60, paddingHorizontal: 16 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <Text style={{ fontSize: 20, fontWeight: '700', color: colors.text }}>{'DEV — Test Effets Sémantiques'}</Text>
+              <TouchableOpacity onPress={() => setShowDevEffects(false)}>
+                <Text style={{ fontSize: 16, color: primary }}>{'Fermer'}</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView>
+              {(Object.keys(EFFECT_TOASTS) as CategoryId[]).map((catId) => {
+                const def = EFFECT_TOASTS[catId];
+                const variant = CATEGORY_VARIANT[catId];
+                return (
+                  <TouchableOpacity
+                    key={catId}
+                    onPress={() => triggerDevEffect(catId)}
+                    style={{
+                      flexDirection: 'row', alignItems: 'center', padding: 14,
+                      marginBottom: 8, borderRadius: 12, backgroundColor: colors.card,
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={{ fontSize: 24, marginRight: 12 }}>{def.icon}</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>{catId.replace(/_/g, ' ')}</Text>
+                      <Text style={{ fontSize: 13, color: colors.textSub }}>{def.fr}</Text>
+                    </View>
+                    <View style={{
+                      paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8,
+                      backgroundColor: variant === 'golden' ? '#FFD70033' : variant === 'rare' ? '#A78BFA33' : '#34D39933',
+                    }}>
+                      <Text style={{ fontSize: 11, fontWeight: '600', color: variant === 'golden' ? '#FFD700' : variant === 'rare' ? '#A78BFA' : '#34D399' }}>
+                        {variant}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 }
