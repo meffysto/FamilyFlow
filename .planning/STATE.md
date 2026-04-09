@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Seed
-status: Executing Phase 20
+status: Ready to plan
 stopped_at: Completed 20-04-PLAN.md
-last_updated: "2026-04-09T09:29:44.668Z"
-last_activity: 2026-04-09 — Milestone v1.3 started
+last_updated: "2026-04-09T09:35:43.101Z"
+last_activity: 2026-04-09
 progress:
   total_phases: 6
   completed_phases: 2
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md
 
 ## Current Position
 
-Phase: 19 — Détection catégorie sémantique (not started)
-Plan: —
+Phase: 21
+Plan: Not started
 Milestone: v1.3 Seed (defining requirements)
 Last shipped: v1.2 Confort & Découverte (2026-04-08)
-Last activity: 2026-04-09 — Milestone v1.3 started
+Last activity: 2026-04-09
 =======
 **Current focus:** Phase 20 — Moteur d'effets + anti-abus
 
