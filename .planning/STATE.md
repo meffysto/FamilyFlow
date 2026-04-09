@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Seed
 status: Ready to plan
-stopped_at: Completed 21-02-PLAN.md
-last_updated: "2026-04-09T15:14:13.183Z"
-last_activity: 2026-04-09
+stopped_at: Phase 22 context gathered
+last_updated: "2026-04-09T15:25:22.616Z"
+last_activity: "2026-04-09 - Completed quick task 260409-nyw: Bouton dev-only test effets sémantiques"
 progress:
   total_phases: 6
   completed_phases: 3
@@ -266,6 +266,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T15:10:08.163Z
-Stopped at: Completed 21-02-PLAN.md
-Resume file: None
+Last session: 2026-04-09T15:25:22.607Z
+Stopped at: Phase 22 context gathered
+Resume file: .planning/phases/22-ui-config-famille/22-CONTEXT.md
