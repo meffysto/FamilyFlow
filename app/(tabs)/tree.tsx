@@ -435,9 +435,11 @@ export default function TreeScreen() {
     });
   }, [profile?.id, receiveGifts]);
 
+  const [isAppActive, setIsAppActive] = useState(true);
   useEffect(() => {
     checkPendingGifts();
     const sub = AppState.addEventListener('change', (state) => {
+      setIsAppActive(state === 'active');
       if (state === 'active') checkPendingGifts();
     });
     return () => sub.remove();
@@ -1730,7 +1732,7 @@ export default function TreeScreen() {
               onRepairWeed={isOwnTree ? handleRepairWeed : undefined}
               onRepairPest={isOwnTree ? handleRepairPest : undefined}
               onRepairFence={isOwnTree ? handleRepairFence : undefined}
-              paused={activeFarmTutorialStep !== null}
+              paused={activeFarmTutorialStep !== null || !isAppActive}
             />
 
             {/* Phase 18-04 : anchors invisibles calqués sur les coordonnées exactes
@@ -1888,6 +1890,7 @@ export default function TreeScreen() {
                 companionMood={companionMood}
                 companionMessage={companionMessage}
                 onCompanionTap={handleCompanionTap}
+                paused={!isAppActive}
               />
             </View>
 

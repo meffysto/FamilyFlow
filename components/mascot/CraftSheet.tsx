@@ -1182,6 +1182,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     marginRight: Spacing.md,
+    resizeMode: 'contain',
   },
   inventoryInfo: {
     flex: 1,

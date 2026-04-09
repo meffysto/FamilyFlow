@@ -440,8 +440,12 @@ export function useVaultInternal(): VaultState {
   const mealsRef = useRef<MealItem[]>([]);
   const rdvsRef = useRef<RDV[]>([]);
   const tasksRefForWidget = useRef<Task[]>([]);
+  const widgetRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const triggerWidgetRefresh = useCallback(() => {
-    refreshWidget(mealsRef.current, rdvsRef.current, tasksRefForWidget.current);
+    if (widgetRefreshTimer.current) clearTimeout(widgetRefreshTimer.current);
+    widgetRefreshTimer.current = setTimeout(() => {
+      refreshWidget(mealsRef.current, rdvsRef.current, tasksRefForWidget.current);
+    }, 300);
   }, []);
 
   const mealsHook = useVaultMeals(vaultRef, triggerWidgetRefresh);
@@ -609,14 +613,19 @@ export function useVaultInternal(): VaultState {
   }, []);
 
   // Refresh on foreground (with delay to avoid race with image picker)
+  const lastVaultLoadRef = useRef<number>(0);
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state: AppStateStatus) => {
       if (state === 'active' && vaultRef.current) {
         // Re-acquire security-scoped access (iOS revokes it on app suspend)
         restoreAccess().catch(() => {});
+        // Throttle: skip reload si données fraîches (< 30s)
+        const now = Date.now();
+        if (now - lastVaultLoadRef.current < 30_000) return;
         // Delay reload to let pending operations (addPhoto etc.) finish first
         setTimeout(() => {
           if (!busyRef.current && vaultRef.current) {
+            lastVaultLoadRef.current = Date.now();
             loadVaultData(vaultRef.current);
           }
         }, 1000);

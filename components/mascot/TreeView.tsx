@@ -85,6 +85,7 @@ interface TreeViewProps {
   companionMood?: CompanionMood;
   companionMessage?: string | null;
   onCompanionTap?: () => void;
+  paused?: boolean;  // stopper toutes les animations (app en background)
 }
 
 // ── Constantes géométrie ───────────────────────
@@ -185,7 +186,7 @@ function getPixelShadowSprite(species: TreeSpecies, stage: TreeStage): any {
 
 // ── Composant principal ────────────────────────
 
-function TreeViewInner({ species, level, size = 200, showGround = true, interactive = true, decorations = [], inhabitants = [], previewMode = false, season: seasonProp, placements = {}, placingItem = null, onSlotSelect, companion = null, companionStage = 'bebe', companionMood = 'content', companionMessage = null, onCompanionTap }: TreeViewProps) {
+function TreeViewInner({ species, level, size = 200, showGround = true, interactive = true, decorations = [], inhabitants = [], previewMode = false, season: seasonProp, placements = {}, placingItem = null, onSlotSelect, companion = null, companionStage = 'bebe', companionMood = 'content', companionMessage = null, onCompanionTap, paused = false }: TreeViewProps) {
   const stage = getTreeStage(level);
   const progress = getStageProgress(level);
   const stageIdx = getStageIndex(level);
@@ -196,7 +197,7 @@ function TreeViewInner({ species, level, size = 200, showGround = true, interact
   const ground = GROUND_COLORS[currentSeason];
   const seasonParticles = SEASONAL_PARTICLES[currentSeason];
   const reducedMotion = useReducedMotion();
-  const animate = interactive && !reducedMotion;
+  const animate = interactive && !reducedMotion && !paused;
 
   // ── Animations idle ──
   const sway = useSharedValue(0);
