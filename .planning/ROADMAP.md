@@ -75,13 +75,13 @@ Plans:
   2. User ne peut jamais dépasser le cap quotidien/hebdomadaire d'un effet (vérifié par test d'abus spam + undo + cross-day)
   3. User complétant une tâche `#urgent` obtient ×2 multiplier sur les 5 tâches suivantes
   4. User avec un streak tâches >7j déclenche un Double Loot Cascade
-**Plans**: TBD (estimation 3-4 plans)
+**Plans**: 4 plans
 
 Plans:
-- [ ] 20-01: `applyTaskEffect()` dispatcher + injection dans `awardTaskCompletion()`
-- [ ] 20-02: Caps SecureStore (`coupling-caps-{profileId}`) daily/weekly + tests d'abus
-- [ ] 20-03: Wiring 10 effets sur leviers existants (wear/farm/tech/buildings/companion/saga/craft)
-- [ ] 20-04: Multiplier urgent + Double Loot Cascade streak
+- [ ] 20-01-PLAN.md — Dispatcher applyTaskEffect() + 10 handlers + FarmProfileData extension
+- [ ] 20-02-PLAN.md — Caps anti-abus SecureStore daily/weekly
+- [ ] 20-03-PLAN.md — Wiring dans completeTask + multiplier urgent + Double Loot Cascade
+- [ ] 20-04-PLAN.md — Tests Jest effects + caps
 
 #### Phase 21: Feedback visuel + compagnon
 **Goal**: Rendre les effets tangibles à la complétion via feedback différencié par catégorie — variantes HarvestBurst, toasts spécifiques, haptic pattern, messages compagnon contextualisés, parité i18n FR+EN.
@@ -156,7 +156,7 @@ Plans:
 | 17. Codex UI | v1.2 | 3/3 | Complete | 2026-04-08 |
 | 18. Tutoriel ferme | v1.2 | 4/4 | Complete | 2026-04-08 |
 | 19. Détection catégorie sémantique | v1.3 | 2/2 | Complete    | 2026-04-09 |
-| 20. Moteur d'effets + anti-abus | v1.3 | 0/TBD | Not started | - |
+| 20. Moteur d'effets + anti-abus | v1.3 | 0/4 | Not started | - |
 | 21. Feedback visuel + compagnon | v1.3 | 0/TBD | Not started | - |
 | 22. UI config famille | v1.3 | 0/TBD | Not started | - |
 | 23. Musée des effets | v1.3 | 0/TBD | Not started | - |
