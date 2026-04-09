@@ -17,3 +17,6 @@ export type {
   CategoryMatch,
   SemanticCategory,
 } from './categories';
+
+export { applyTaskEffect, EFFECT_GOLDEN_MULTIPLIER } from './effects';
+export type { EffectId, EffectResult } from './effects';
