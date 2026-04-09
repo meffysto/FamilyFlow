@@ -21,8 +21,7 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-<<<<<<< Updated upstream
-**Current focus:** Phase 21 — feedback-visuel-compagnon
+**Current focus:** Phase 22 — ui-config-famille
 
 ## Current Position
 
@@ -30,18 +29,7 @@ Phase: 22
 Plan: Not started
 Milestone: v1.3 Seed (defining requirements)
 Last shipped: v1.2 Confort & Découverte (2026-04-08)
-Last activity: 2026-04-09
-=======
-**Current focus:** Phase 20 — Moteur d'effets + anti-abus
-
-## Current Position
-
-Phase: 20 (Moteur d'effets + anti-abus) — EXECUTING
-Plan: 1 of 4
-Milestone: v1.3 Seed (defining requirements)
-Last shipped: v1.2 Confort & Découverte (2026-04-08)
-Last activity: 2026-04-09 -- Phase 20 execution started
->>>>>>> Stashed changes
+Last activity: 2026-04-09 - Completed quick task 260409-nyw: Bouton dev-only test effets sémantiques
 
 Progress: [░░░░░░░░░░] 0% (0/6 phases v1.3)
 
@@ -274,6 +262,7 @@ None yet.
 | 260404-qvz | Fix OOM crash TreeScreen — timer global, lazy-load images saison, reduire particules | 2026-04-04 | cd8307e | [260404-qvz-fix-oom-crash-treescreen-timer-global-la](./quick/260404-qvz-fix-oom-crash-treescreen-timer-global-la/) |
 | 260404-rfs | Bouton Offrir visible sur items inventaire + Mes créations (remplace long-press) | 2026-04-04 | 19f051b | [260404-rfs-remplacer-long-press-cadeau-par-bouton-o](./quick/260404-rfs-remplacer-long-press-cadeau-par-bouton-o/) |
 | 260404-xbu | Permettre de changer la catégorie d'une recette depuis RecipeViewer | 2026-04-04 | 3b314e0 | [260404-xbu-permettre-de-changer-la-cat-gorie-d-une-](./quick/260404-xbu-permettre-de-changer-la-cat-gorie-d-une-/) |
+| 260409-nyw | Bouton dev-only pour tester les 10 effets sémantiques Phase 21 | 2026-04-09 | b2dd12d | [260409-nyw-bouton-dev-only-pour-tester-les-10-effet](./quick/260409-nyw-bouton-dev-only-pour-tester-les-10-effet/) |
 
 ## Session Continuity
 
