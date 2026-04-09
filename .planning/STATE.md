@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Seed
-status: Ready to execute
-stopped_at: Completed 19-01-module-pur-derive-flag-PLAN.md
-last_updated: "2026-04-09T06:55:42.723Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 19-02-tests-jest-derive-flag-PLAN.md
+last_updated: "2026-04-09T07:00:11.772Z"
 last_activity: 2026-04-09
 progress:
   total_phases: 6
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -98,6 +98,7 @@ Next step: `/gsd:discuss-phase 19` après approbation du roadmap
 | Phase 18-tutoriel-ferme P03 | 8min | 2 tasks | 3 files |
 | Phase 18-tutoriel-ferme P04 | 120 | 2 tasks | 9 files |
 | Phase 19-d-tection-cat-gorie-s-mantique P01 | 4min | 3 tasks | 4 files |
+| Phase 19-d-tection-cat-gorie-s-mantique P02 | 2min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -213,6 +214,8 @@ Recent decisions affecting current work:
 - [Phase 19-01]: D-02 : ordre de priorité tag > section > filepath figé dans deriveTaskCategory (prévisible, testable)
 - [Phase 19-01]: D-05a/b : clé SecureStore globale 'semantic-coupling-enabled' family-wide (pas par-profil) — simplicité maximale
 - [Phase 19-01]: D-04b : evidence = valeur brute non normalisée dans CategoryMatch — Phase 21 affiche le texte tel quel à l'utilisateur
+- [Phase 19-02]: Tests organisés en 6 describe blocks pour derive.test.ts (happy path, signaux, normalisation, priorité D-02, evidence brute D-04b, fallback null SEMANTIC-04)
+- [Phase 19-02]: beforeEach deleteItemAsync garantit isolation mock in-memory expo-secure-store (Pitfall 1 RESEARCH.md)
 
 ### Pending Todos
 
@@ -253,6 +256,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T06:55:42.719Z
-Stopped at: Completed 19-01-module-pur-derive-flag-PLAN.md
+Last session: 2026-04-09T07:00:11.769Z
+Stopped at: Completed 19-02-tests-jest-derive-flag-PLAN.md
 Resume file: None

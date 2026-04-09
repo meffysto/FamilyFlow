@@ -43,7 +43,7 @@ Détails : `.planning/milestones/v1.2-ROADMAP.md`.
 
 **Phases overview:**
 
-- [ ] **Phase 19: Détection catégorie sémantique** — Module de détection lisant filepath + sections + tags, feature flag off par défaut
+- [x] **Phase 19: Détection catégorie sémantique** — Module de détection lisant filepath + sections + tags, feature flag off par défaut (completed 2026-04-09)
 - [ ] **Phase 20: Moteur d'effets + anti-abus** — Dispatcher, caps SecureStore, wiring des 10 effets wow sur les leviers existants
 - [ ] **Phase 21: Feedback visuel + compagnon** — HarvestBurst variants, toasts, haptic, messages compagnon i18n FR+EN
 - [ ] **Phase 22: UI config famille** — Écran Réglages Couplage sémantique, toggles par catégorie, stats semaine
@@ -64,7 +64,7 @@ Détails : `.planning/milestones/v1.2-ROADMAP.md`.
 
 Plans:
 - [x] 19-01-module-pur-derive-flag-PLAN.md — Module pur lib/semantic/ (categories + derive + flag + barrel)
-- [ ] 19-02-tests-jest-derive-flag-PLAN.md — Tests Jest extensifs (derive.test.ts + flag.test.ts)
+- [x] 19-02-tests-jest-derive-flag-PLAN.md — Tests Jest extensifs (derive.test.ts + flag.test.ts)
 
 #### Phase 20: Moteur d'effets + anti-abus
 **Goal**: Câbler les 10 effets wow sur les leviers existants (wear-engine, farm-engine, tech bonuses, buildings, companion, saga, craft), piloté par le dispatcher `applyTaskEffect()` injecté dans `awardTaskCompletion()`, avec anti-abus daily/weekly caps persistés dans SecureStore.
@@ -155,7 +155,7 @@ Plans:
 | 16. Codex contenu | v1.2 | 5/5 | Complete | 2026-04-08 |
 | 17. Codex UI | v1.2 | 3/3 | Complete | 2026-04-08 |
 | 18. Tutoriel ferme | v1.2 | 4/4 | Complete | 2026-04-08 |
-| 19. Détection catégorie sémantique | v1.3 | 1/2 | In Progress|  |
+| 19. Détection catégorie sémantique | v1.3 | 2/2 | Complete   | 2026-04-09 |
 | 20. Moteur d'effets + anti-abus | v1.3 | 0/TBD | Not started | - |
 | 21. Feedback visuel + compagnon | v1.3 | 0/TBD | Not started | - |
 | 22. UI config famille | v1.3 | 0/TBD | Not started | - |
