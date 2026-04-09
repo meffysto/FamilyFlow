@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Seed
-status: v1.3 Seed — Phase 20 in progress (plan 01 done)
-stopped_at: Completed 20-01-PLAN.md
-last_updated: "2026-04-09T09:10:00.000Z"
-last_activity: 2026-04-09
+status: v1.3 Seed — Defining requirements
+stopped_at: Completed 20-02-PLAN.md
+last_updated: "2026-04-09T09:12:14.393Z"
+last_activity: 2026-04-09 — Milestone v1.3 started
 progress:
   total_phases: 6
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 1
   percent: 0
 ---
 
@@ -21,19 +21,19 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 19 — d-tection-cat-gorie-s-mantique
+**Current focus:** v1.3 Seed — Defining requirements
 
 ## Current Position
 
-Phase: 20
-Plan: 01 — completed
-Milestone: v1.3 Seed (in progress)
+Phase: 19 — Détection catégorie sémantique (not started)
+Plan: —
+Milestone: v1.3 Seed (defining requirements)
 Last shipped: v1.2 Confort & Découverte (2026-04-08)
-Last activity: 2026-04-09
+Last activity: 2026-04-09 — Milestone v1.3 started
 
 Progress: [░░░░░░░░░░] 0% (0/6 phases v1.3)
 
-Next step: Exécuter plan 20-02 (caps anti-abus SecureStore)
+Next step: `/gsd:discuss-phase 19` après approbation du roadmap
 
 ## Performance Metrics
 
@@ -97,9 +97,7 @@ Next step: Exécuter plan 20-02 (caps anti-abus SecureStore)
 | Phase 18-tutoriel-ferme P01 | 6min | 2 tasks | 2 files |
 | Phase 18-tutoriel-ferme P03 | 8min | 2 tasks | 3 files |
 | Phase 18-tutoriel-ferme P04 | 120 | 2 tasks | 9 files |
-| Phase 19-d-tection-cat-gorie-s-mantique P01 | 4min | 3 tasks | 4 files |
-| Phase 19-d-tection-cat-gorie-s-mantique P02 | 2min | 2 tasks | 2 files |
-| Phase 20-moteur-d-effets-anti-abus P01 | 3min | 2 tasks | 4 files |
+| Phase 20-moteur-d-effets-anti-abus P02 | 3 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -114,9 +112,6 @@ Next step: Exécuter plan 20-02 (caps anti-abus SecureStore)
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- [Phase 20-01]: applyTaskEffect() synchrone (deviation délibérée RESEARCH.md) — handlers purs sans I/O, async réservé aux caps Plan 02
-- [Phase 20-01]: repairWearEvent avec Infinity currentCoins — effets ferme gratuits (coins non consommés)
-- [Phase 20-01]: EFFECT_GOLDEN_MULTIPLIER = 3 non persisté — constante runtime distincte de GOLDEN_HARVEST_MULTIPLIER = 5
 - [Init v1.2]: ARCH-05 global — zéro nouvelle dépendance npm sur l'ensemble du milestone v1.2
 - [Init v1.2]: PREF-11 P0 safety — badge allergie non-dismissible implémenté en priorité absolue avant les autres badges
 - [Init v1.2]: Phase 16 (codex contenu) séparée de Phase 17 (codex UI) — valider la précision du contenu en isolation avant toute UI
@@ -215,11 +210,8 @@ Recent decisions affecting current work:
 - [Phase 18-tutoriel-ferme]: [Phase 18-03]: FarmTutorialOverlay format mixte — 2 cartes narratives plein écran (étapes 0, 4) + 3 coach marks contextuels arrondis (1, 2, 3) dans un seul orchestrateur sibling de ScreenGuide (D-08)
 - [Phase 18-tutoriel-ferme]: [Phase 18-03]: Fallback graceful — si measureInWindow échoue (cible non montée), l'étape coach mark bascule en carte narrative plutôt que skip, garantissant que l'utilisateur voit le texte
 - [Phase 18-tutoriel-ferme]: [Phase 18-03]: TREE_SPRITES require map statique (pas dynamique) pour compatibilité Metro bundler — duplication locale depuis TreeView (Pitfall 5)
-- [Phase 19-01]: D-02 : ordre de priorité tag > section > filepath figé dans deriveTaskCategory (prévisible, testable)
-- [Phase 19-01]: D-05a/b : clé SecureStore globale 'semantic-coupling-enabled' family-wide (pas par-profil) — simplicité maximale
-- [Phase 19-01]: D-04b : evidence = valeur brute non normalisée dans CategoryMatch — Phase 21 affiche le texte tel quel à l'utilisateur
-- [Phase 19-02]: Tests organisés en 6 describe blocks pour derive.test.ts (happy path, signaux, normalisation, priorité D-02, evidence brute D-04b, fallback null SEMANTIC-04)
-- [Phase 19-02]: beforeEach deleteItemAsync garantit isolation mock in-memory expo-secure-store (Pitfall 1 RESEARCH.md)
+- [Phase 20-02]: DAILY_CAPS.cuisine_repas=0 (pas de cap daily) + WEEKLY_CAPS.cuisine_repas=1 (EFFECTS-10 : 1 recipe unlock/sem)
+- [Phase 20-02]: isCapExceeded/incrementCap pure functions avec param now?:Date pour testabilité sans mocks
 
 ### Pending Todos
 
@@ -260,6 +252,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T09:10:00.000Z
-Stopped at: Completed 20-01-PLAN.md
+Last session: 2026-04-09T09:12:14.390Z
+Stopped at: Completed 20-02-PLAN.md
 Resume file: None

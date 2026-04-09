@@ -11,13 +11,13 @@ Requirements pour le milestone v1.3. Chaque requirement mappe à une phase exact
 
 ### SEMANTIC — Semantic coupling engine (Phase 19, 20)
 
-- [x] **SEMANTIC-01**: User sees a category correctly detected from task filepath (maison/enfants/rendez-vous/etc.)
-- [x] **SEMANTIC-02**: User sees a category detected from H2/H3 section (Quotidien/Ménage/Mensuel/etc.)
-- [x] **SEMANTIC-03**: User sees a category detected from task tags (#urgent, #budget, etc.)
-- [x] **SEMANTIC-04**: User's task with no matching category falls back to standard XP (zero regression)
-- [x] **SEMANTIC-05**: User can toggle the semantic coupling feature via feature flag
+- [ ] **SEMANTIC-01**: User sees a category correctly detected from task filepath (maison/enfants/rendez-vous/etc.)
+- [ ] **SEMANTIC-02**: User sees a category detected from H2/H3 section (Quotidien/Ménage/Mensuel/etc.)
+- [ ] **SEMANTIC-03**: User sees a category detected from task tags (#urgent, #budget, etc.)
+- [ ] **SEMANTIC-04**: User's task with no matching category falls back to standard XP (zero regression)
+- [ ] **SEMANTIC-05**: User can toggle the semantic coupling feature via feature flag
 - [ ] **SEMANTIC-06**: User's 10 categories are each mapped to exactly one wow effect
-- [ ] **SEMANTIC-07**: User can't trigger an effect more than its daily/weekly cap
+- [x] **SEMANTIC-07**: User can't trigger an effect more than its daily/weekly cap
 - [ ] **SEMANTIC-08**: User completing an "urgent" tagged task gets ×2 multiplier for 5 tasks
 - [ ] **SEMANTIC-09**: User with >7 day task streak gets a Double Loot Cascade bonus
 
@@ -70,10 +70,10 @@ Requirements pour le milestone v1.3. Chaque requirement mappe à une phase exact
 
 ### ARCH — Architecture constraints (cross-phase)
 
-- [x] **ARCH-01**: User's task files are never written to (Obsidian-respect, pure read)
-- [x] **ARCH-02**: User's feature flag allows instant disable of all semantic coupling
-- [x] **ARCH-03**: User experiences zero regression when category is unknown (standard XP fallback)
-- [x] **ARCH-04**: User's milestone adds no new npm dependencies (use existing libs)
+- [ ] **ARCH-01**: User's task files are never written to (Obsidian-respect, pure read)
+- [ ] **ARCH-02**: User's feature flag allows instant disable of all semantic coupling
+- [ ] **ARCH-03**: User experiences zero regression when category is unknown (standard XP fallback)
+- [ ] **ARCH-04**: User's milestone adds no new npm dependencies (use existing libs)
 
 ## Out of Scope
 
@@ -95,25 +95,25 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SEMANTIC-01 | Phase 19 | Complete |
-| SEMANTIC-02 | Phase 19 | Complete |
-| SEMANTIC-03 | Phase 19 | Complete |
-| SEMANTIC-04 | Phase 19 | Complete |
-| SEMANTIC-05 | Phase 19 | Complete |
-| SEMANTIC-06 | Phase 20 | Implemented (20-01) |
-| SEMANTIC-07 | Phase 20 | Pending |
+| SEMANTIC-01 | Phase 19 | Pending |
+| SEMANTIC-02 | Phase 19 | Pending |
+| SEMANTIC-03 | Phase 19 | Pending |
+| SEMANTIC-04 | Phase 19 | Pending |
+| SEMANTIC-05 | Phase 19 | Pending |
+| SEMANTIC-06 | Phase 20 | Pending |
+| SEMANTIC-07 | Phase 20 | Complete |
 | SEMANTIC-08 | Phase 20 | Pending |
 | SEMANTIC-09 | Phase 20 | Pending |
-| EFFECTS-01 | Phase 20 | Implemented (20-01) |
-| EFFECTS-02 | Phase 20 | Implemented (20-01) |
-| EFFECTS-03 | Phase 20 | Implemented (20-01) |
-| EFFECTS-04 | Phase 20 | Implemented (20-01) |
-| EFFECTS-05 | Phase 20 | Implemented (20-01) |
-| EFFECTS-06 | Phase 20 | Implemented (20-01) |
-| EFFECTS-07 | Phase 20 | Implemented (20-01) |
-| EFFECTS-08 | Phase 20 | Implemented (20-01) |
-| EFFECTS-09 | Phase 20 | Implemented (20-01) |
-| EFFECTS-10 | Phase 20 | Implemented (20-01) |
+| EFFECTS-01 | Phase 20 | Pending |
+| EFFECTS-02 | Phase 20 | Pending |
+| EFFECTS-03 | Phase 20 | Pending |
+| EFFECTS-04 | Phase 20 | Pending |
+| EFFECTS-05 | Phase 20 | Pending |
+| EFFECTS-06 | Phase 20 | Pending |
+| EFFECTS-07 | Phase 20 | Pending |
+| EFFECTS-08 | Phase 20 | Pending |
+| EFFECTS-09 | Phase 20 | Pending |
+| EFFECTS-10 | Phase 20 | Pending |
 | FEEDBACK-01 | Phase 21 | Pending |
 | FEEDBACK-02 | Phase 21 | Pending |
 | FEEDBACK-03 | Phase 21 | Pending |
@@ -136,10 +136,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | COMPANION-04 | Phase 24 | Pending |
 | COMPANION-05 | Phase 24 | Pending |
 | COMPANION-06 | Phase 24 | Pending |
-| ARCH-01 | Phase 19 (cross-phase) | Complete |
-| ARCH-02 | Phase 19 (cross-phase) | Complete |
-| ARCH-03 | Phase 19 (cross-phase) | Complete |
-| ARCH-04 | Phase 19 (cross-phase) | Complete |
+| ARCH-01 | Phase 19 (cross-phase) | Pending |
+| ARCH-02 | Phase 19 (cross-phase) | Pending |
+| ARCH-03 | Phase 19 (cross-phase) | Pending |
+| ARCH-04 | Phase 19 (cross-phase) | Pending |
 
 **Coverage:**
 - v1.3 requirements: 45 total (9 SEMANTIC + 10 EFFECTS + 5 FEEDBACK + 6 COUPLING-UI + 5 MUSEUM + 6 COMPANION-EXT + 4 ARCH)
