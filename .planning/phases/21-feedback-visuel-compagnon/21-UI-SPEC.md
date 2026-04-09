@@ -45,6 +45,7 @@ Source: `constants/spacing.ts` (pre-existing, do not redefine)
 | `Spacing['5xl']` | 32px | Companion bubble vertical offset from farm sprite anchor |
 
 Exceptions:
+- `Spacing.xl = 12px`: 12px is a pre-existing token in `constants/spacing.ts` — used as-is, not redefined. 8px is too tight and 16px is too loose for toast internal gap. This value is not part of the standard 8-point set {4, 8, 16, 24, 32, 48, 64} but is kept because it pre-exists in the token system.
 - HarvestBurst particle travel radius: 25–45px (non-token range, uses randomized spread per existing pattern — do not change)
 - Touch target minimum: 44px for any interactive element in this phase (no explicit interactive elements added; all feedback is passive)
 
@@ -54,16 +55,24 @@ Exceptions:
 
 Source: `constants/typography.ts` (pre-existing, do not redefine)
 
+Declared sizes: exactly 4 — 13px, 14px, 15px, 16px.
+Declared weights: exactly 2 — 400 (normal) and 700 (bold).
+
 | Role | Token | Size | Weight | Line Height |
 |------|-------|------|--------|-------------|
 | Toast message (rich title) | `FontSize.body` | 15px | `FontWeight.bold` (700) | `LineHeight.body` (22) |
-| Toast subtitle | `FontSize.label` | 13px | `FontWeight.semibold` (600) | `LineHeight.normal` (20) |
-| Toast plain message | `FontSize.sm` | 14px | `FontWeight.semibold` (600) | auto |
+| Toast subtitle | `FontSize.label` | 13px | `FontWeight.bold` (700) | `LineHeight.normal` (20) |
+| Toast plain message | `FontSize.sm` | 14px | `FontWeight.bold` (700) | auto |
 | Companion bubble | `FontSize.sm` | 14px | `FontWeight.normal` (400) | `LineHeight.body` (22) |
+
+Weight exceptions (pre-existing implementations — not new introductions):
+- `FontWeight.semibold` (600): used in pre-existing companion bubble implementation in `tree.tsx`. Not a new weight; referenced here for completeness. Do not change.
+- `fontWeight: '800'`: used in pre-existing `HarvestBurst.tsx` reward label cosmetic constant. Not a new weight; referenced here for completeness. Do not change.
 
 Notes:
 - Companion bubble font follows the existing `tree.tsx` bubble style — do not override.
-- HarvestBurst reward label: `fontSize: 16, fontWeight: '800'` — cosmetic constant, matches existing implementation. Do not change.
+- HarvestBurst reward label: `fontSize: 16, fontWeight: '800'` — cosmetic constant, matches existing implementation. Size 16px maps to the declared 4th size; weight 800 is a pre-existing exception. Do not change.
+- The golden variant label previously specified at 18px is mapped to 16px — the visual difference at burst scale (particle overlay) is imperceptible and 18px would introduce a 5th size outside the contract.
 - Use exactly these 4 sizes for all new strings. Do not introduce additional sizes.
 
 ---
@@ -84,6 +93,16 @@ Accent reserved for:
 - Toast border (`toastRich` style, `borderColor: toastColors.text`, 1.5px) — celebration-class effects only
 - HarvestBurst particle color — variant-specific (see HarvestBurst Variants below)
 - Companion bubble reaction tint — existing pattern (`opacity: 0.15` overlay on `treeBackground`)
+
+### Visual Priority — Simultaneous Feedback Elements
+
+When an effect fires, up to three feedback elements appear simultaneously. Their visual hierarchy is:
+
+1. **Primary: HarvestBurst burst** — center-screen particle overlay. Full-screen z-index. Immediate, most salient.
+2. **Secondary: Toast** — top bar notification. Appears at same instant (D-02), but confined to top edge — does not compete with burst center.
+3. **Tertiary: Companion bubble** — updates on next `tree.tsx` render, not simultaneously with burst/toast. Lower temporal and spatial priority; user may not be on the farm screen.
+
+Rationale: this priority order ensures the celebration moment (burst) is never visually occluded, the toast provides immediate textual confirmation, and the companion message serves as a delayed contextual reinforcement.
 
 ### HarvestBurst Variants — Color Contract
 
@@ -252,7 +271,7 @@ All animations use `react-native-reanimated` (mandatory per CLAUDE.md).
 Spring config for particle travel (unchanged from existing): `{ damping: 8, stiffness: 80 }`
 
 Label float for golden variant: `-60px` vertical travel over `1000ms` (vs existing `-45px` / `800ms`).
-Label font size for golden: `18px` (vs existing `16px`).
+Label font size for golden: `16px` — mapped from the previously considered 18px. At burst scale (particle overlay, full-screen context), the 2px reduction is imperceptible. Using 16px keeps the typography contract to exactly 4 sizes.
 
 ### Toast entry animation (existing — do not change)
 - Enter: `withSpring(0, { damping: 18, stiffness: 200 })` translateY + `withSpring(1, { damping: 10, stiffness: 180 })` scale
