@@ -53,6 +53,7 @@ import {
   type WearEffects,
 } from '../lib/mascot/wear-engine';
 import { parseGamification, serializeGamification, parseFarmProfile, serializeFarmProfile, parseCompanion, parseFamilyQuestsMeta, getActiveQuestEffect, FAMILY_QUESTS_FILE } from '../lib/parser';
+import { EFFECT_GOLDEN_MULTIPLIER } from '../lib/semantic';
 import type { FarmProfileData } from '../lib/types';
 import {
   parsePendingGifts,
@@ -298,13 +299,36 @@ export function useFarm(onQuestProgress?: (profileId: string, type: string, amou
     const bonusDrop = profileTech.bonusHarvestChance > 0 && Math.random() < profileTech.bonusHarvestChance ? 1 : 0;
     const harvestQty = baseQty + bonusDrop;
     const harvestEvent = rollHarvestEvent();
-    const finalQty = harvestEvent ? Math.max(0, Math.round(harvestQty * harvestEvent.modifier)) : harvestQty;
+    let finalQty = harvestEvent ? Math.max(0, Math.round(harvestQty * harvestEvent.modifier)) : harvestQty;
+    // Phase 20 : Golden Harvest (EFFECTS-09) — quantite x3 si flag actif
+    const wasGoldenEffect = profile.nextHarvestGolden === true;
+    if (wasGoldenEffect) {
+      finalQty = Math.round(finalQty * EFFECT_GOLDEN_MULTIPLIER);
+      profile.nextHarvestGolden = false; // reset flag — persiste via serializeFarmProfile ci-dessous
+    }
     updatedHarvestInv[result.harvestedCropId] = (updatedHarvestInv[result.harvestedCropId] ?? 0) + finalQty;
 
     // Tenter un drop de graine rare
     const seedDrop = rollSeedDrop(result.harvestedCropId);
 
-    // Preparer les champs a ecrire
+    if (wasGoldenEffect) {
+      // Ecrire farm en une seule operation (crops + harvest inv + reset golden flag)
+      const updatedProfile = {
+        ...profile,
+        farmCrops: serializeCrops(result.crops),
+        harvestInventory: updatedHarvestInv,
+        ...(seedDrop ? { farmRareSeeds: { ...(profile.farmRareSeeds ?? {}), [seedDrop.seedId]: ((profile.farmRareSeeds ?? {})[seedDrop.seedId] ?? 0) + 1 } } : {}),
+      };
+      const profileName = profiles.find(p => p.id === profileId)?.name ?? profileId;
+      await vault.writeFile(farmFile(profileId), serializeFarmProfile(profileName, updatedProfile));
+      await refreshFarm(profileId);
+      if (onQuestProgress) {
+        try { await onQuestProgress(profileId, 'harvest', 1); } catch { /* Quest — non-critical */ }
+      }
+      return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop };
+    }
+
+    // Preparer les champs a ecrire (chemin standard — pas de golden effect)
     const fieldsToWrite: Record<string, string> = {
       farm_crops: serializeCrops(result.crops),
       farm_harvest_inventory: serializeHarvestInventory(updatedHarvestInv),
@@ -328,7 +352,7 @@ export function useFarm(onQuestProgress?: (profileId: string, type: string, amou
     }
 
     return { cropId: result.harvestedCropId, isGolden: result.isGolden, harvestEvent, seedDrop };
-  }, [vault, writeProfileFields, refreshFarm, onQuestProgress]);
+  }, [vault, profiles, writeProfileFields, refreshFarm, onQuestProgress]);
 
   /** Vendre une recolte brute depuis l'inventaire */
   const sellHarvest = useCallback(async (profileId: string, cropId: string): Promise<number> => {
@@ -494,6 +518,10 @@ export function useFarm(onQuestProgress?: (profileId: string, type: string, amou
       const activeEffect = getActiveQuestEffect(parseFamilyQuestsMeta(questsContent));
       if (activeEffect?.type === 'production_boost') productionBoost = 2;
     } catch { /* Quest — non-critical */ }
+    // Phase 20 : Building Turbo (EFFECTS-03) — production 2x plus rapide si actif
+    if (profile.buildingTurboUntil && new Date(profile.buildingTurboUntil) > new Date()) {
+      productionBoost *= 2;
+    }
     const result = collectBuilding(currentBuildings, currentInventory, cellId, new Date(), profileTechBonuses, wearEffects, productionBoost);
     if (result.collected === 0) return 0;
 
@@ -535,6 +563,10 @@ export function useFarm(onQuestProgress?: (profileId: string, type: string, amou
       const activeEffect = getActiveQuestEffect(parseFamilyQuestsMeta(questsContent));
       if (activeEffect?.type === 'production_boost') passiveProductionBoost = 2;
     } catch { /* Quest — non-critical */ }
+    // Phase 20 : Building Turbo (EFFECTS-03) — production 2x plus rapide si actif
+    if (profile.buildingTurboUntil && new Date(profile.buildingTurboUntil) > new Date()) {
+      passiveProductionBoost *= 2;
+    }
     for (const building of placedBuildings) {
       const result = collectBuilding(currentBuildings, updatedInventory, building.cellId, new Date(), passiveTechBonuses, passiveWearEffects, passiveProductionBoost);
       if (result.collected > 0) {
@@ -600,7 +632,12 @@ export function useFarm(onQuestProgress?: (profileId: string, type: string, amou
     // Calculer fullBuildingSince : heuristique basee sur le remplissage des batiments
     const fullBuildingSince: Record<string, string> = {};
     for (const b of buildings) {
-      const effectiveMaxPending = Math.floor(MAX_PENDING * (profileTech?.buildingCapacityMultiplier ?? 1));
+      // Phase 20 : Capacity Boost (EFFECTS-08) — capacite batiments x2 si actif
+      let effectiveCapacityMultiplier = profileTech?.buildingCapacityMultiplier ?? 1;
+      if (profile.capacityBoostUntil && new Date(profile.capacityBoostUntil) > new Date()) {
+        effectiveCapacityMultiplier *= 2;
+      }
+      const effectiveMaxPending = Math.floor(MAX_PENDING * effectiveCapacityMultiplier);
       const pending = getPendingResources(b, now, profileTech);
       if (pending >= effectiveMaxPending) {
         const def = BUILDING_CATALOG.find(d => d.id === b.buildingId);
