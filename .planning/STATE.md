@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Seed
-status: Ready to plan
-stopped_at: Phase 21 UI-SPEC approved
-last_updated: "2026-04-09T13:46:59.201Z"
+status: Ready to execute
+stopped_at: Completed 21-01-PLAN.md
+last_updated: "2026-04-09T15:00:52.128Z"
 last_activity: 2026-04-09
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 8
+  completed_plans: 7
   percent: 0
 ---
 
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
 <<<<<<< Updated upstream
-**Current focus:** v1.3 Seed — Defining requirements
+**Current focus:** Phase 21 — feedback-visuel-compagnon
 
 ## Current Position
 
-Phase: 21
-Plan: Not started
+Phase: 21 (feedback-visuel-compagnon) — EXECUTING
+Plan: 2 of 2
 Milestone: v1.3 Seed (defining requirements)
 Last shipped: v1.2 Confort & Découverte (2026-04-08)
 Last activity: 2026-04-09
@@ -112,6 +112,7 @@ Next step: `/gsd:discuss-phase 19` après approbation du roadmap
 | Phase 20-moteur-d-effets-anti-abus P02 | 3 | 2 tasks | 2 files |
 | Phase 20 P03 | 15 | 2 tasks | 3 files |
 | Phase 20-moteur-d-effets-anti-abus P04 | 4min | 3 tasks | 3 files |
+| Phase 21-feedback-visuel-compagnon P01 | 3min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -230,6 +231,8 @@ Recent decisions affecting current work:
 - [Phase 20]: Double Loot Cascade: updateProfileInData(newData, cascadeResult.profile, cascadeResult.entries) car openLootBox ne retourne pas newData
 - [Phase 20]: Building Turbo appliqué sur productionBoost dans les deux sites collect — cohérence collecte manuelle + passive income
 - [Phase 20-04]: Tests getWeekStart timezone-agnostic : valeurs attendues calculées dynamiquement — évite strings UTC hardcodées qui cassent selon fuseau (Europe/Paris)
+- [Phase 21-01]: Module effect-toasts.ts pur (zéro import vault/hook) — consommable par Plan 02 sans effets de bord
+- [Phase 21-01]: HarvestBurst comportement par défaut préservé à 100% quand variant omis — backward-compatible
 
 ### Pending Todos
 
@@ -270,6 +273,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T13:46:59.197Z
-Stopped at: Phase 21 UI-SPEC approved
-Resume file: .planning/phases/21-feedback-visuel-compagnon/21-UI-SPEC.md
+Last session: 2026-04-09T15:00:52.125Z
+Stopped at: Completed 21-01-PLAN.md
+Resume file: None

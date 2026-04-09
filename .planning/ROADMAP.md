@@ -96,7 +96,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 21-01-PLAN.md — EFFECT_TOASTS dictionnaire + haptic patterns + HarvestBurst variant prop
+- [x] 21-01-PLAN.md — EFFECT_TOASTS dictionnaire + haptic patterns + HarvestBurst variant prop
 - [ ] 21-02-PLAN.md — Toast/haptic dispatch + taskMeta fix + companion sub-type + i18n FR+EN
 
 #### Phase 22: UI config famille
@@ -156,7 +156,7 @@ Plans:
 | 18. Tutoriel ferme | v1.2 | 4/4 | Complete | 2026-04-08 |
 | 19. Détection catégorie sémantique | v1.3 | 2/2 | Complete    | 2026-04-09 |
 | 20. Moteur d'effets + anti-abus | v1.3 | 4/4 | Complete    | 2026-04-09 |
-| 21. Feedback visuel + compagnon | v1.3 | 0/TBD | Not started | - |
+| 21. Feedback visuel + compagnon | v1.3 | 1/2 | In Progress|  |
 | 22. UI config famille | v1.3 | 0/TBD | Not started | - |
 | 23. Musée des effets | v1.3 | 0/TBD | Not started | - |
 | 24. Compagnon étendu | v1.3 | 0/TBD | Not started | - |
