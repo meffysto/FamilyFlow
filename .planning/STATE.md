@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Seed
-status: v1.3 Seed — Defining requirements
+status: Executing Phase 20
 stopped_at: Completed 20-02-PLAN.md
 last_updated: "2026-04-09T09:12:14.393Z"
-last_activity: 2026-04-09 — Milestone v1.3 started
+last_activity: 2026-04-09 — Phase 20 execution in progress
 progress:
   total_phases: 6
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 1
+  total_plans: 6
+  completed_plans: 2
   percent: 0
 ---
 
@@ -21,6 +21,7 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
+<<<<<<< Updated upstream
 **Current focus:** v1.3 Seed — Defining requirements
 
 ## Current Position
@@ -30,6 +31,17 @@ Plan: —
 Milestone: v1.3 Seed (defining requirements)
 Last shipped: v1.2 Confort & Découverte (2026-04-08)
 Last activity: 2026-04-09 — Milestone v1.3 started
+=======
+**Current focus:** Phase 20 — Moteur d'effets + anti-abus
+
+## Current Position
+
+Phase: 20 (Moteur d'effets + anti-abus) — EXECUTING
+Plan: 1 of 4
+Milestone: v1.3 Seed (defining requirements)
+Last shipped: v1.2 Confort & Découverte (2026-04-08)
+Last activity: 2026-04-09 -- Phase 20 execution started
+>>>>>>> Stashed changes
 
 Progress: [░░░░░░░░░░] 0% (0/6 phases v1.3)
 

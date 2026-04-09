@@ -34,6 +34,19 @@ import {
   buildLootBoxContext,
 } from '../lib/notifications';
 import { Profile, LootBox, GamificationData, NotificationPreferences } from '../lib/types';
+import {
+  deriveTaskCategory,
+  isSemanticCouplingEnabled,
+  applyTaskEffect,
+  loadCaps,
+  saveCaps,
+  isCapExceeded,
+  incrementCap,
+} from '../lib/semantic';
+import type { EffectResult } from '../lib/semantic';
+import type { Task } from '../lib/types';
+import { loadSagaProgress, saveSagaProgress } from '../lib/mascot/sagas-storage';
+import type { SagaTrait } from '../lib/mascot/sagas-types';
 
 interface UseGamificationArgs {
   vault: VaultManager | null;
@@ -43,11 +56,12 @@ interface UseGamificationArgs {
 }
 
 interface UseGamificationResult {
-  completeTask: (profile: Profile, taskText: string) => Promise<{
+  completeTask: (profile: Profile, taskText: string, taskMeta?: { tags?: string[]; section?: string; sourceFile?: string }) => Promise<{
     updatedProfile: Profile;
     lootAwarded: boolean;
     pointsGained: number;
     cropsMatured: string[];  // IDs des cultures pretes a recolter
+    effectResult?: EffectResult | null;  // Phase 20 — resultat de l'effet semantique
   }>;
   openLootBox: (profile: Profile, gamiData: GamificationData) => Promise<{
     box: LootBox;
@@ -74,7 +88,7 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
   useEffect(() => { loadGamiConfig(); }, []);
 
   const completeTask = useCallback(
-    async (profile: Profile, taskText: string) => {
+    async (profile: Profile, taskText: string, taskMeta?: { tags?: string[]; section?: string; sourceFile?: string }) => {
       if (!vault) throw new Error('Vault non initialisé');
       setIsProcessing(true);
 
@@ -91,14 +105,24 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
         // Calculate new points (uses updated streak for bonus)
         // Bonus compagnon +5% XP (per D-09)
         const companionBonus = getCompanionXpBonus(profileWithStreak.companion);
-        const profileWithCompanionBonus: Profile = companionBonus !== 1.0
+        let profileWithCompanionBonus: Profile = companionBonus !== 1.0
           ? { ...profileWithStreak, points: Math.round(profileWithStreak.points) }
           : profileWithStreak;
+
+        // Phase 20 : Multiplier urgent x2 pour 5 taches (SEMANTIC-08)
+        if (taskMeta?.tags?.includes('urgent') && profileWithCompanionBonus.multiplierRemaining === 0) {
+          profileWithCompanionBonus = {
+            ...profileWithCompanionBonus,
+            multiplier: 2,
+            multiplierRemaining: 5,
+          };
+        }
+
         const { profile: updatedProfileRaw, entry: entryRaw, lootAwarded } = awardTaskCompletion(profileWithCompanionBonus, taskText);
         // Appliquer le bonus compagnon sur les points gagnés (delta)
         const basePointsGained = updatedProfileRaw.points - profileWithCompanionBonus.points;
         const bonusPoints = companionBonus !== 1.0 ? Math.round(basePointsGained * companionBonus) - basePointsGained : 0;
-        const updatedProfile: Profile = bonusPoints > 0
+        let updatedProfile: Profile = bonusPoints > 0
           ? { ...updatedProfileRaw, points: updatedProfileRaw.points + bonusPoints }
           : updatedProfileRaw;
         const entry = bonusPoints > 0
@@ -106,7 +130,29 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
           : entryRaw;
 
         // Update data
-        const newData = updateProfileInData(gamiData, updatedProfile, [entry]);
+        let newData = updateProfileInData(gamiData, updatedProfile, [entry]);
+
+        // Phase 20 : Double Loot Cascade si streak > 7j (SEMANTIC-09)
+        if ((currentStreak + 1) > 7 && lootAwarded) {
+          try {
+            const cascadeResult = doOpenLootBox(updatedProfile, newData);
+            // Mettre a jour les donnees avec le second loot box
+            newData = updateProfileInData(newData, cascadeResult.profile, cascadeResult.entries);
+            if (cascadeResult.newActiveRewards.length > 0) {
+              newData = {
+                ...newData,
+                activeRewards: [...(newData.activeRewards ?? []), ...cascadeResult.newActiveRewards],
+              };
+            }
+            // Mettre a jour le profil pour refleter le second loot box
+            const cascadeProfile = newData.profiles.find((p: Profile) => p.id === profile.id);
+            if (cascadeProfile) {
+              updatedProfile = cascadeProfile;
+            }
+          } catch {
+            if (__DEV__) console.warn('Double Loot Cascade — non-critical');
+          }
+        }
 
         // Filtrer pour n'ecrire que les donnees de ce profil
         const singleData = {
@@ -124,11 +170,22 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
           try { await onQuestProgress(profile.id, 'tasks', 1); } catch { /* Quest — non-critical */ }
         }
 
-        // Avancer les cultures de la ferme (FIFO) avec effet quête actif
+        // --- Bloc farm restructure (un seul write farm-{id}.md — Pitfall 2) ---
         let cropsMatured: string[] = [];
-        const currentCrops = parseCrops(profile.farmCrops ?? '');
+        let effectResult: EffectResult | null = null;
+
+        const fp = farmFile(profile.id);
+        const farmContent = await vault.readFile(fp).catch(() => '');
+        let farmData = parseFarmProfile(farmContent);
+
+        // 1. Avancer les cultures (existant)
+        const currentCrops = parseCrops(farmData.farmCrops ?? '');
         if (currentCrops.length > 0) {
           const profileTechBonuses = getTechBonuses(profile.farmTech ?? []);
+          // Phase 20 : Growth Sprint bonus temporel (EFFECTS-05)
+          if (farmData.growthSprintUntil && new Date(farmData.growthSprintUntil) > new Date()) {
+            profileTechBonuses.tasksPerStageReduction = (profileTechBonuses.tasksPerStageReduction ?? 0) + 1;
+          }
           let questFarmEffect: QuestFarmEffect | undefined;
           try {
             const questsContent = await vault.readFile(FAMILY_QUESTS_FILE).catch(() => '');
@@ -140,13 +197,64 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
           } catch { /* Quest — non-critical */ }
           const farmResult = advanceFarmCrops(currentCrops, profileTechBonuses, questFarmEffect);
           cropsMatured = farmResult.matured.map(c => c.cropId);
-          // Persister les cultures mises a jour dans farm-{id}.md
-          const fp = farmFile(profile.id);
-          const farmContent = await vault.readFile(fp).catch(() => '');
-          const farmData = parseFarmProfile(farmContent);
           farmData.farmCrops = serializeCrops(farmResult.crops);
-          await vault.writeFile(fp, serializeFarmProfile(profile.name, farmData));
         }
+
+        // 2. Phase 20 : Appliquer l'effet semantique (SEMANTIC-06..10, EFFECTS-01..10)
+        try {
+          const enabled = await isSemanticCouplingEnabled();
+          if (enabled && taskMeta) {
+            const task: Pick<Task, 'text' | 'tags' | 'section' | 'sourceFile'> = {
+              text: taskText,
+              tags: taskMeta.tags ?? [],
+              section: taskMeta.section,
+              sourceFile: taskMeta.sourceFile ?? '',
+            };
+            const category = deriveTaskCategory(task as Task);
+            if (category) {
+              const caps = await loadCaps(profile.id);
+              if (!isCapExceeded(category.id, caps)) {
+                effectResult = applyTaskEffect(category, farmData);
+                if (effectResult.effectApplied) {
+                  farmData = effectResult.farmData;
+                  await saveCaps(profile.id, incrementCap(caps, category.id));
+
+                  // EFFECTS-07 : Appliquer sagaTraitDelta a la saga active
+                  if (effectResult.sagaTraitDelta) {
+                    try {
+                      const sagaProgress = await loadSagaProgress(profile.id);
+                      if (sagaProgress && sagaProgress.status === 'active') {
+                        const traitKey = effectResult.sagaTraitDelta.trait as SagaTrait;
+                        if (traitKey in sagaProgress.traits) {
+                          sagaProgress.traits[traitKey] += effectResult.sagaTraitDelta.amount;
+                          await saveSagaProgress(sagaProgress);
+                        }
+                      }
+                    } catch {
+                      if (__DEV__) console.warn('Saga trait boost — non-critical');
+                    }
+                  }
+
+                  // EFFECTS-04 : Propager companionEvent au companion data
+                  // Phase 20 propage l'evenement (stocke dans companion data).
+                  // Phase 21 rendra le feedback visuel (mood spike animation + message IA).
+                  if (effectResult.companionEvent && farmData.companion) {
+                    farmData.companion = {
+                      ...farmData.companion,
+                      lastEventType: effectResult.companionEvent,
+                      lastEventAt: new Date().toISOString(),
+                    };
+                  }
+                }
+              }
+            }
+          }
+        } catch {
+          if (__DEV__) console.warn('Semantic coupling — non-critical error');
+        }
+
+        // 3. Ecrire farm-{id}.md UNE SEULE FOIS (crops + effets combines)
+        await vault.writeFile(fp, serializeFarmProfile(profile.name, farmData));
 
         // Send task completed notification (fire-and-forget)
         dispatchNotificationAsync(
@@ -168,6 +276,7 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
           lootAwarded,
           pointsGained: entry.points,
           cropsMatured,
+          effectResult,  // Phase 20
         };
       } finally {
         setIsProcessing(false);

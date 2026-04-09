@@ -47,6 +47,9 @@ export interface CompanionData {
   activeSpecies: CompanionSpecies;
   name: string;
   unlockedSpecies: CompanionSpecies[];
+  // Phase 20 — propagation événement sémantique (EFFECTS-04)
+  lastEventType?: string;  // ex: 'task_completed' — rendu Phase 21
+  lastEventAt?: string;    // ISO datetime du dernier événement
 }
 
 /** Mapping stade → plage de niveaux */
