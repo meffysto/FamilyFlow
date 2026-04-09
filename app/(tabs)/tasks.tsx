@@ -19,6 +19,7 @@ import {
   SectionList,
   Modal,
   Platform,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring, interpolateColor, useDerivedValue } from 'react-native-reanimated';
@@ -52,6 +53,9 @@ import { Task, CourseItem, Profile } from '../../lib/types';
 import { formatDateLocalized } from '../../lib/date-locale';
 import { ScreenGuide } from '../../components/help/ScreenGuide';
 import { HELP_CONTENT } from '../../lib/help-content';
+import { HarvestBurst } from '../../components/mascot/HarvestBurst';
+import { CATEGORY_VARIANT } from '../../lib/semantic/effect-toasts';
+import type { HarvestBurstVariant } from '../../lib/semantic/effect-toasts';
 
 interface FilterDef {
   id: string;
@@ -224,6 +228,12 @@ export default function TasksScreen() {
   const [search, setSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
+  // Phase 21 — HarvestBurst overlay (FEEDBACK-03)
+  const [effectBurst, setEffectBurst] = useState<{
+    variant: HarvestBurstVariant;
+    key: number;
+  } | null>(null);
+
   // Add task modal
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [missionCreatorVisible, setMissionCreatorVisible] = useState(false);
@@ -295,7 +305,11 @@ export default function TasksScreen() {
 
         if (completed && activeProfile) {
           try {
-            const { lootAwarded, pointsGained } = await completeTask(activeProfile, task.text);
+            const { lootAwarded, pointsGained, effectCategoryId } = await completeTask(
+              activeProfile,
+              task.text,
+              { tags: task.tags, section: task.section, sourceFile: task.sourceFile }
+            );
             await refreshGamification();
             const themeEmoji = getTheme(activeProfile.theme).emoji;
             const name = activeProfile.name;
@@ -304,6 +318,13 @@ export default function TasksScreen() {
               showToast(`${themeEmoji} Bravo ${name} ! ${taskShort} → +${pointsGained} pts + 🎁`);
             } else {
               showToast(`${themeEmoji} Bravo ${name} ! ${taskShort} → +${pointsGained} pts`);
+            }
+            // Phase 21 — HarvestBurst variant au centre-ecran (FEEDBACK-03)
+            if (effectCategoryId) {
+              const variant = CATEGORY_VARIANT[effectCategoryId];
+              if (variant) {
+                setEffectBurst({ variant, key: Date.now() });
+              }
             }
           } catch {
             // Gamification error — non-critical
@@ -991,6 +1012,19 @@ export default function TasksScreen() {
           { ref: filterRef, ...HELP_CONTENT.tasks[1] },
         ]}
       />
+
+      {/* Phase 21 — HarvestBurst overlay centre-ecran (FEEDBACK-03) */}
+      {effectBurst && (
+        <HarvestBurst
+          key={effectBurst.key}
+          x={Dimensions.get('window').width / 2}
+          y={Dimensions.get('window').height / 3}
+          reward={1}
+          cropColor={effectBurst.variant === 'golden' ? '#FFD700' : effectBurst.variant === 'rare' ? '#A78BFA' : '#34D399'}
+          variant={effectBurst.variant}
+          onComplete={() => setEffectBurst(null)}
+        />
+      )}
     </SafeAreaView>
   );
 }

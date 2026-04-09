@@ -43,10 +43,14 @@ import {
   isCapExceeded,
   incrementCap,
 } from '../lib/semantic';
-import type { EffectResult } from '../lib/semantic';
+import type { EffectResult, CategoryMatch, CategoryId } from '../lib/semantic';
 import type { Task } from '../lib/types';
 import { loadSagaProgress, saveSagaProgress } from '../lib/mascot/sagas-storage';
 import type { SagaTrait } from '../lib/mascot/sagas-types';
+import { EFFECT_TOASTS, CATEGORY_HAPTIC_FN } from '../lib/semantic/effect-toasts';
+import { useToast } from '../contexts/ToastContext';
+import i18n from '../lib/i18n';
+import * as SecureStore from 'expo-secure-store';
 
 interface UseGamificationArgs {
   vault: VaultManager | null;
@@ -62,6 +66,7 @@ interface UseGamificationResult {
     pointsGained: number;
     cropsMatured: string[];  // IDs des cultures pretes a recolter
     effectResult?: EffectResult | null;  // Phase 20 — resultat de l'effet semantique
+    effectCategoryId?: CategoryId | null;  // Phase 21 — pour HarvestBurst variant
   }>;
   openLootBox: (profile: Profile, gamiData: GamificationData) => Promise<{
     box: LootBox;
@@ -83,6 +88,7 @@ function farmFile(profileId: string): string {
 
 export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgress }: UseGamificationArgs): UseGamificationResult {
   const [isProcessing, setIsProcessing] = useState(false);
+  const { showToast } = useToast();
 
   // Charger la config gamification au montage (remplit le cache synchrone)
   useEffect(() => { loadGamiConfig(); }, []);
@@ -173,6 +179,7 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
         // --- Bloc farm restructure (un seul write farm-{id}.md — Pitfall 2) ---
         let cropsMatured: string[] = [];
         let effectResult: EffectResult | null = null;
+        let derivedCategory: CategoryMatch | null = null;
 
         const fp = farmFile(profile.id);
         const farmContent = await vault.readFile(fp).catch(() => '');
@@ -211,6 +218,7 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
               sourceFile: taskMeta.sourceFile ?? '',
             };
             const category = deriveTaskCategory(task as Task);
+            derivedCategory = category;
             if (category) {
               const caps = await loadCaps(profile.id);
               if (!isCapExceeded(category.id, caps)) {
@@ -253,6 +261,30 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
           if (__DEV__) console.warn('Semantic coupling — non-critical error');
         }
 
+        // Phase 21 : Feedback visuel + haptique (FEEDBACK-01, FEEDBACK-02)
+        // Toast + haptic immediat en parallele (D-02), silencieux si cappe (D-03)
+        if (effectResult?.effectApplied && derivedCategory) {
+          try {
+            const catId = derivedCategory.id;
+            const toastDef = EFFECT_TOASTS[catId];
+            if (toastDef) {
+              const lang = i18n.language?.startsWith('en') ? 'en' : 'fr';
+              showToast(
+                lang === 'en' ? toastDef.en : toastDef.fr,
+                toastDef.type,
+                undefined,
+                { icon: toastDef.icon, subtitle: lang === 'en' ? toastDef.subtitle_en : toastDef.subtitle_fr }
+              );
+            }
+            // Haptic fire-and-forget (non-critical)
+            try { CATEGORY_HAPTIC_FN[catId]?.(); } catch { /* haptic — non-critical */ }
+            // Phase 21 FEEDBACK-04 : Bridge SecureStore pour subType compagnon (tree.tsx le lira)
+            SecureStore.setItemAsync('last_semantic_category', catId).catch(() => {});
+          } catch {
+            if (__DEV__) console.warn('Effect feedback — non-critical');
+          }
+        }
+
         // 3. Ecrire farm-{id}.md UNE SEULE FOIS (crops + effets combines)
         await vault.writeFile(fp, serializeFarmProfile(profile.name, farmData));
 
@@ -277,12 +309,13 @@ export function useGamification({ vault, notifPrefs, onDataChange, onQuestProgre
           pointsGained: entry.points,
           cropsMatured,
           effectResult,  // Phase 20
+          effectCategoryId: derivedCategory?.id ?? null,  // Phase 21 — pour HarvestBurst variant
         };
       } finally {
         setIsProcessing(false);
       }
     },
-    [vault, notifPrefs, onDataChange, onQuestProgress]
+    [vault, notifPrefs, onDataChange, onQuestProgress, showToast]
   );
 
   const openLootBox = useCallback(
