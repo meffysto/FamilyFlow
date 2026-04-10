@@ -180,7 +180,11 @@ Plans:
   2. L'objectif hebdomadaire est auto-généré chaque lundi (ou premier accès village), avec une cible adaptée au nombre de profils actifs
   3. Un flag partagé dans `jardin-familial.md` empêche la double-génération d'objectif si deux profils ouvrent le village simultanément
   4. Un flag per-profil dans `gami-{id}.md` empêche le double-claim de récompense pour la même semaine
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 26-01-PLAN.md — Cablage useVault.ts (gardenRaw) + FarmProfileData village_claimed_week
+- [ ] 26-02-PLAN.md — Hook domaine useGarden.ts complet (generation objectif, contributions, claim)
 
 ### Phase 27: Écran Village + composants
 **Goal**: L'écran village est navigable, distinct visuellement de la ferme perso (tilemap cobblestone), et affiche le feed contributions, la barre de progression de l'objectif, les indicateurs par membre, et le panneau historique des semaines accomplies.
