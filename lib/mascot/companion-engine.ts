@@ -555,6 +555,8 @@ export interface ProactiveContext {
   hasMealsPlanned: boolean;
   isFirstVisitToday: boolean;
   familyMilestone?: string;  // ex: "Anniversaire d'Emma dans 2 jours"
+  /** Dimanche entre 18h et 21h — fenêtre du récap hebdomadaire (D-09) */
+  isWeeklyRecapWindow?: boolean;
 }
 
 /**
@@ -578,6 +580,9 @@ export function detectProactiveEvent(ctx: ProactiveContext): CompanionEvent | nu
 
   // D-08: celebration désactivée Phase 24 — réactiver dans un futur milestone
   // if (ctx.streak > 0 && ctx.streak % 7 === 0) return 'celebration';
+
+  // Weekly recap dimanche soir (D-09)
+  if (ctx.isWeeklyRecapWindow) return 'weekly_recap';
 
   // Rappel doux l'après-midi (pas de tâches faites et il y en a à faire)
   if (

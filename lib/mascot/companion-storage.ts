@@ -60,3 +60,34 @@ export async function saveCompanionMessages(
     );
   } catch { /* non-critical */ }
 }
+
+// ---------------------------------------------------------------------------
+// Nudge flag (D-10) — max 1 gentle_nudge par jour
+// ---------------------------------------------------------------------------
+
+const NUDGE_FLAG_KEY_PREFIX = 'companion_nudge_shown_';
+
+/**
+ * Vérifie si un gentle_nudge a déjà été affiché aujourd'hui pour ce profil.
+ * Retourne false en cas d'erreur (fail-open — mieux afficher qu'ignorer).
+ */
+export async function hasNudgeShownToday(profileId: string): Promise<boolean> {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const stored = await SecureStore.getItemAsync(`${NUDGE_FLAG_KEY_PREFIX}${profileId}`);
+    return stored === today;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Marque le gentle_nudge comme affiché aujourd'hui pour ce profil.
+ * Fire-and-forget — silencieux en cas d'erreur (D-01).
+ */
+export async function markNudgeShownToday(profileId: string): Promise<void> {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    await SecureStore.setItemAsync(`${NUDGE_FLAG_KEY_PREFIX}${profileId}`, today);
+  } catch { /* non-critical */ }
+}
