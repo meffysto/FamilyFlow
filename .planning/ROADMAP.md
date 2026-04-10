@@ -216,7 +216,11 @@ Plans:
   3. Chaque tâche IRL complétée (via couplage sémantique v1.3) ajoute automatiquement une contribution au village
   4. Quand l'objectif est atteint, tous les profils reçoivent un bonus XP + item cosmétique
   5. La récompense inclut une suggestion d'activité familiale IRL adaptée à la saison
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 28-01-PLAN.md — Portail animé ferme + câblage contributions (useFarm + useGamification)
+- [ ] 28-02-PLAN.md — Récompense collective + activités IRL saisonnières
 
 ## Progress
 
