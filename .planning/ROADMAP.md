@@ -48,7 +48,7 @@ Détails : `.planning/milestones/v1.2-ROADMAP.md`.
 - [x] **Phase 21: Feedback visuel + compagnon** — HarvestBurst variants, toasts, haptic, messages compagnon i18n FR+EN (completed 2026-04-09)
 - [x] **Phase 22: UI config famille** — Écran Réglages Couplage sémantique, toggles par catégorie, stats semaine (completed 2026-04-09)
 - [x] **Phase 23: Musée des effets** — SEED-002 lite : chronologie persistée dans gami-{id}.md, écran Musée minimal (completed 2026-04-10)
-- [ ] **Phase 24: Compagnon étendu** — SEED-003 lite : 5 event types activés, messages persistés, triggers cross-feature
+- [ ] **Phase 24: Compagnon étendu** — SEED-003 lite : 4 event types activés (celebration dormant D-08), messages persistés, bulle dashboard
 
 #### Phase 19: Détection catégorie sémantique
 **Goal**: Livrer un module pur de détection sémantique de catégorie pour les tâches, sans effet de bord, feature flag off par défaut, testé extensivement.
@@ -130,21 +130,20 @@ Plans:
 - [x] 23-02: Écran Musée minimal (réutiliser patterns Codex UI)
 
 #### Phase 24: Compagnon étendu (SEED-003 lite)
-**Goal**: Activer 5 event types compagnon dormants, persister les messages (plus RAM-only), étendre les triggers au-delà de tree.tsx et intégrer les stats couplage dans le weekly recap.
+**Goal**: Activer 4 event types compagnon proactifs (morning_greeting, gentle_nudge, comeback, weekly_recap), persister les messages (plus RAM-only), étendre les triggers au-delà de tree.tsx et intégrer les stats couplage dans le weekly recap. Celebration (streak%7) dormant per D-08.
 **Depends on**: Phase 23
 **Requirements**: COMPANION-01, COMPANION-02, COMPANION-03, COMPANION-04, COMPANION-05, COMPANION-06
 **Success Criteria** (what must be TRUE):
   1. User reçoit un weekly_recap dimanche soir intégrant les stats de couplage sémantique
   2. User reçoit un morning_greeting à la première ouverture du jour (6h-11h)
-  3. User reçoit une celebration aux multiples de 7 de son streak
+  3. User reçoit une celebration aux multiples de 7 de son streak (dormant D-08 — code commenté, prêt à réactiver)
   4. User reçoit un gentle_nudge si aucune tâche complétée dans l'après-midi, et un comeback après >24h d'absence
   5. User retrouve les messages compagnon après un restart (persistance effective)
 **Plans**: 2 plans
 
 Plans:
-- [ ] 24-01: Activation des 5 event types (weekly_recap, morning_greeting, celebration, gentle_nudge, comeback)
-- [ ] 24-02: Persistance messages compagnon (sortie RAM-only)
-- [ ] 24-03: Triggers cross-feature + weekly recap intégrant stats couplage
+- [ ] 24-01-PLAN.md — companion-storage.ts SecureStore + persistance tree.tsx + celebration dormant
+- [ ] 24-02-PLAN.md — DashboardCompanion bulle + weekly_recap + nudge flag + triggers cross-feature
 
 ## Progress
 
@@ -159,7 +158,7 @@ Plans:
 | 21. Feedback visuel + compagnon | v1.3 | 2/2 | Complete    | 2026-04-09 |
 | 22. UI config famille | v1.3 | 2/2 | Complete    | 2026-04-09 |
 | 23. Musée des effets | v1.3 | 2/2 | Complete    | 2026-04-10 |
-| 24. Compagnon étendu | v1.3 | 0/TBD | Not started | - |
+| 24. Compagnon étendu | v1.3 | 0/2 | Not started | - |
 
 ## Archived Milestones
 
