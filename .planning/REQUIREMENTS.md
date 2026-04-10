@@ -69,30 +69,30 @@ Déféré au prochain milestone. Trackés mais pas dans le roadmap actuel.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | — | Pending |
-| DATA-02 | — | Pending |
-| DATA-03 | — | Pending |
-| DATA-04 | — | Pending |
-| MAP-01 | — | Pending |
-| MAP-02 | — | Pending |
-| MAP-03 | — | Pending |
-| COOP-01 | — | Pending |
-| COOP-02 | — | Pending |
-| COOP-03 | — | Pending |
-| COOP-04 | — | Pending |
-| OBJ-01 | — | Pending |
-| OBJ-02 | — | Pending |
-| OBJ-03 | — | Pending |
-| OBJ-04 | — | Pending |
-| OBJ-05 | — | Pending |
-| HIST-01 | — | Pending |
-| HIST-02 | — | Pending |
+| DATA-01 | Phase 25 | Pending |
+| DATA-02 | Phase 25 | Pending |
+| DATA-03 | Phase 26 | Pending |
+| DATA-04 | Phase 25 | Pending |
+| MAP-01 | Phase 27 | Pending |
+| MAP-02 | Phase 25 | Pending |
+| MAP-03 | Phase 28 | Pending |
+| COOP-01 | Phase 28 | Pending |
+| COOP-02 | Phase 28 | Pending |
+| COOP-03 | Phase 27 | Pending |
+| COOP-04 | Phase 27 | Pending |
+| OBJ-01 | Phase 26 | Pending |
+| OBJ-02 | Phase 27 | Pending |
+| OBJ-03 | Phase 28 | Pending |
+| OBJ-04 | Phase 28 | Pending |
+| OBJ-05 | Phase 26 | Pending |
+| HIST-01 | Phase 27 | Pending |
+| HIST-02 | Phase 27 | Pending |
 
 **Coverage:**
 - v1.4 requirements: 18 total
-- Mapped to phases: 0
-- Unmapped: 18
+- Mapped to phases: 18
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-10*
-*Last updated: 2026-04-10 after initial definition*
+*Last updated: 2026-04-10 — Traceability mapped after roadmap creation*

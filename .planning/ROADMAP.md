@@ -5,7 +5,8 @@
 - ✅ **v1.0 Stabilisation** — Phases 1-4 (shipped 2026-03-28)
 - ✅ **v1.1 Ferme Enrichie** — Phases 5-14 (shipped 2026-04-07)
 - ✅ **v1.2 Confort & Découverte** — Phases 15-18 (shipped 2026-04-08)
-- 🚧 **v1.3 Seed** — Phases 19-24 (in progress)
+- ✅ **v1.3 Seed** — Phases 19-24 (shipped 2026-04-10)
+- 🚧 **v1.4 Jardin Familial** — Phases 25-28 (in progress)
 
 ## Phases
 
@@ -37,11 +38,10 @@ Détails : `.planning/milestones/v1.2-ROADMAP.md`.
 
 </details>
 
-### 🚧 v1.3 Seed (In Progress)
+<details>
+<summary>✅ v1.3 Seed (Phases 19-24) — SHIPPED 2026-04-10</summary>
 
 **Milestone Goal :** Transformer la ferme en reflet différencié du quotidien familial en couplant sémantiquement chaque catégorie de tâche réelle à un effet ferme spécifique (wow moment tangible). Pure lecture des fichiers Obsidian, zéro régression, chaque effet cappé et configurable par famille.
-
-**Phases overview:**
 
 - [x] **Phase 19: Détection catégorie sémantique** — Module de détection lisant filepath + sections + tags, feature flag off par défaut (completed 2026-04-09)
 - [x] **Phase 20: Moteur d'effets + anti-abus** — Dispatcher, caps SecureStore, wiring des 10 effets wow sur les leviers existants (completed 2026-04-09)
@@ -145,6 +145,68 @@ Plans:
 - [x] 24-01-PLAN.md — companion-storage.ts SecureStore + persistance tree.tsx + celebration dormant
 - [x] 24-02-PLAN.md — DashboardCompanion bulle + weekly_recap + nudge flag + triggers cross-feature
 
+</details>
+
+### 🚧 v1.4 Jardin Familial (In Progress)
+
+**Milestone Goal :** Créer un espace coopératif partagé entre tous les profils — une "Place du Village" avec sa propre carte — où la famille contribue ensemble (récoltes + tâches) vers un objectif hebdomadaire commun.
+
+**Phases overview:**
+
+- [ ] **Phase 25: Fondation données village** — Schéma `jardin-familial.md`, parseur bidirectionnel, grille village namespacée, templates d'objectif
+- [ ] **Phase 26: Hook domaine jardin** — `useGarden.ts` isolé, génération objectif hebdo, anti-double-claim, câblage VaultContext
+- [ ] **Phase 27: Écran Village + composants** — Carte tilemap village, feed contributions, barre progression, panneau historique
+- [ ] **Phase 28: Portail + câblage contributions** — Portail ferme → village, auto-contribution récoltes + tâches, récompense collective
+
+## Phase Details
+
+### Phase 25: Fondation données village
+**Goal**: Les données village sont persistées dans un fichier Obsidian partagé avec un format append-only pour les contributions, sans risque de corruption iCloud, avec les constantes de grille et les templates d'objectif prêts.
+**Depends on**: Phase 24
+**Requirements**: DATA-01, DATA-02, DATA-04, MAP-02
+**Success Criteria** (what must be TRUE):
+  1. Un fichier `jardin-familial.md` est parsé et sérialisé de façon bidirectionnelle sans perte de données
+  2. Les contributions sont écrites comme lignes append-only (timestamp, profileId, type, montant) — un iCloud conflict ne peut pas corrompre le total
+  3. Les IDs de grille village utilisent le préfixe `village_` (ex: `village_c0`) — aucune collision avec les IDs de la ferme perso
+  4. La grille village définit les positions des éléments interactifs (fontaine, étals, panneau historique)
+**Plans**: TBD
+
+### Phase 26: Hook domaine jardin
+**Goal**: Toute la logique village est encapsulée dans `hooks/useGarden.ts` isolé — jamais dans `useVault.ts` — avec génération d'objectif hebdomadaire, protection anti-double-claim, et câblage VaultContext vérifié par `tsc --noEmit`.
+**Depends on**: Phase 25
+**Requirements**: DATA-03, OBJ-01, OBJ-05
+**Success Criteria** (what must be TRUE):
+  1. `useVault.ts` grandit de 20 lignes maximum (boundary god hook respectée)
+  2. L'objectif hebdomadaire est auto-généré chaque lundi (ou premier accès village), avec une cible adaptée au nombre de profils actifs
+  3. Un flag partagé dans `jardin-familial.md` empêche la double-génération d'objectif si deux profils ouvrent le village simultanément
+  4. Un flag per-profil dans `gami-{id}.md` empêche le double-claim de récompense pour la même semaine
+**Plans**: TBD
+
+### Phase 27: Écran Village + composants
+**Goal**: L'écran village est navigable, distinct visuellement de la ferme perso (tilemap cobblestone), et affiche le feed contributions, la barre de progression de l'objectif, les indicateurs par membre, et le panneau historique des semaines accomplies.
+**Depends on**: Phase 26
+**Requirements**: MAP-01, COOP-03, COOP-04, OBJ-02, HIST-01, HIST-02
+**Success Criteria** (what must be TRUE):
+  1. L'écran village affiche une carte tilemap distincte (cobblestone dominant, fontaine, étals) via le `TileMapRenderer` existant
+  2. Un feed affiche qui a contribué quoi cette semaine (nom du profil, type, montant)
+  3. Une barre de progression montre l'avancement collectif vers la cible de la semaine (ex: 47/100)
+  4. Chaque membre de la famille a un indicateur de sa contribution hebdomadaire visible sur l'écran
+  5. Un panneau historique interactif liste les semaines passées avec leur cible, total, contributions par membre et statut récompense
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 28: Portail + câblage contributions
+**Goal**: La boucle coopérative est complète — récolter dans la ferme perso ou compléter une tâche IRL ajoute automatiquement une contribution au village, l'atteinte de l'objectif déclenche une récompense collective (XP + suggestion activité IRL), et un portail animé dans la ferme permet d'accéder au village.
+**Depends on**: Phase 27
+**Requirements**: MAP-03, COOP-01, COOP-02, OBJ-03, OBJ-04
+**Success Criteria** (what must be TRUE):
+  1. Un portail interactif sur l'écran ferme navigue vers le village avec une transition visuelle (fade Reanimated)
+  2. Chaque récolte dans la ferme perso ajoute automatiquement une contribution à l'objectif village
+  3. Chaque tâche IRL complétée (via couplage sémantique v1.3) ajoute automatiquement une contribution au village
+  4. Quand l'objectif est atteint, tous les profils reçoivent un bonus XP + item cosmétique
+  5. La récompense inclut une suggestion d'activité familiale IRL adaptée à la saison
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -153,12 +215,16 @@ Plans:
 | 16. Codex contenu | v1.2 | 5/5 | Complete | 2026-04-08 |
 | 17. Codex UI | v1.2 | 3/3 | Complete | 2026-04-08 |
 | 18. Tutoriel ferme | v1.2 | 4/4 | Complete | 2026-04-08 |
-| 19. Détection catégorie sémantique | v1.3 | 2/2 | Complete    | 2026-04-09 |
-| 20. Moteur d'effets + anti-abus | v1.3 | 4/4 | Complete    | 2026-04-09 |
-| 21. Feedback visuel + compagnon | v1.3 | 2/2 | Complete    | 2026-04-09 |
-| 22. UI config famille | v1.3 | 2/2 | Complete    | 2026-04-09 |
-| 23. Musée des effets | v1.3 | 2/2 | Complete    | 2026-04-10 |
-| 24. Compagnon étendu | v1.3 | 2/2 | Complete   | 2026-04-10 |
+| 19. Détection catégorie sémantique | v1.3 | 2/2 | Complete | 2026-04-09 |
+| 20. Moteur d'effets + anti-abus | v1.3 | 4/4 | Complete | 2026-04-09 |
+| 21. Feedback visuel + compagnon | v1.3 | 2/2 | Complete | 2026-04-09 |
+| 22. UI config famille | v1.3 | 2/2 | Complete | 2026-04-09 |
+| 23. Musée des effets | v1.3 | 2/2 | Complete | 2026-04-10 |
+| 24. Compagnon étendu | v1.3 | 2/2 | Complete | 2026-04-10 |
+| 25. Fondation données village | v1.4 | 0/? | Not started | - |
+| 26. Hook domaine jardin | v1.4 | 0/? | Not started | - |
+| 27. Écran Village + composants | v1.4 | 0/? | Not started | - |
+| 28. Portail + câblage contributions | v1.4 | 0/? | Not started | - |
 
 ## Archived Milestones
 

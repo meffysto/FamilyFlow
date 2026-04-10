@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Jardin Familial
-status: Defining requirements
+status: Roadmap ready
 stopped_at: null
 last_updated: "2026-04-10T12:00:00.000Z"
 last_activity: 2026-04-10
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,25 +21,25 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Defining requirements for v1.4 Jardin Familial
+**Current focus:** v1.4 Jardin Familial — Roadmap created, ready for Phase 25
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 25 — Fondation données village (not started)
 Plan: —
 Milestone: v1.4 Jardin Familial (MVP)
 Last shipped: v1.3 Seed (2026-04-10)
-Last activity: 2026-04-10 — Milestone v1.4 started
+Last activity: 2026-04-10 — Roadmap v1.4 created (4 phases, 18 requirements mapped)
 
 Progress: [░░░░░░░░░░] 0%
 
-Status: Defining requirements
+Status: Roadmap ready — next: `/gsd:plan-phase 25`
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0 (milestone v1.2)
+- Total plans completed: 0 (milestone v1.4)
 - Average duration: -
 - Total execution time: 0 hours
 
@@ -116,12 +116,18 @@ Status: Defining requirements
 - Phase 10 added: Compagnon Mascotte — compagnon interactif lié à la gamification, vit dans l'arbre, mascotte de l'app
 - Phase 12 added: Templates onboarding vivants — contenu personnalisé et complet
 - v1.2 roadmap created 2026-04-07: Phases 15-18 (préférences alimentaires, codex contenu, codex UI, tutoriel ferme)
+- v1.4 roadmap created 2026-04-10: Phases 25-28 (fondation données village, hook domaine jardin, écran village, portail + contributions)
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Init v1.4]: Format append-only pour les contributions village — total dérivé à la lecture, jamais de mutable total écrit
+- [Init v1.4]: useGarden.ts comme hook domaine isolé — useVault.ts ne doit croître que de ~20 lignes max
+- [Init v1.4]: Double-flag anti-claim — flag partagé dans jardin-familial.md + flag per-profil dans gami-{id}.md
+- [Init v1.4]: Portail ajouté en dernier (Phase 28) — tree.tsx est le plus battle-tested, toucher en dernier minimise la régression
+- [Init v1.4]: IDs grille village préfixés `village_` — évite collisions avec ferme perso lors de la transition portail
 - [Init v1.2]: ARCH-05 global — zéro nouvelle dépendance npm sur l'ensemble du milestone v1.2
 - [Init v1.2]: PREF-11 P0 safety — badge allergie non-dismissible implémenté en priorité absolue avant les autres badges
 - [Init v1.2]: Phase 16 (codex contenu) séparée de Phase 17 (codex UI) — valider la précision du contenu en isolation avant toute UI
@@ -177,111 +183,16 @@ Recent decisions affecting current work:
 - [Phase 14-parite-mobile-desktop]: VaultContext desktop reste monofichier (1116 lignes < 1500) — extraction en hooks helpers non nécessaire
 - [Phase 14-parite-mobile-desktop]: Historique médical Health desktop session-only — HealthRecord type ne contient pas historique, persistance à prévoir dans une future phase
 - [Phase 14-parite-mobile-desktop]: completeRoutineStep session-only confirmé — progressMap géré en React state local dans Routines.tsx
-- [Phase 14-parite-mobile-desktop]: GlassCard pas de className — utiliser div.glass-card-wrap pour layout custom dans Skills/Stats desktop
-- [Phase 14-parite-mobile-desktop]: SkillState/getSkillById/getSkillState non exportés dans barrel core — définis localement dans Skills.tsx desktop
-- [Phase 14-parite-mobile-desktop]: NightMode desktop utilise couleurs hardcodées pour vision nocturne — dérogation délibérée à useThemeColors() per D-01
-- [Phase 14-parite-mobile-desktop]: Compare zoom partagé entre les deux panels — expérience cohérente comparaison côte à côte
-- [Phase 14-02]: Notes layout master-detail 300px+1fr plutôt que modal — plus ergonomique pour édition de contenu long
-- [Phase 14-02]: RDV groupés par mois, triés desc — vision temporelle naturelle des rendez-vous
-- [Phase 14-parite-mobile-desktop]: useTranslation shim local (desktop sans react-i18next) — même API que react-i18next, satisfait D-07 sans dépendance supplémentaire
-- [Phase 14-parite-mobile-desktop]: saveSagaProgress/saveEventProgress via localStorage — SecureStore React Native indisponible sur desktop Tauri
-- [Phase 14-parite-mobile-desktop]: CompanionWidget dans /components/companion/ — réutilisable pour Dashboard futur
-- [Phase 14-parite-mobile-desktop]: Hover-to-reveal via CSS opacity (pas JS toggle) — transition 120ms ease, déclenché par :hover sur le parent row/card
-- [Phase 15-01]: contribute() lit le fichier frais depuis vault — evite race conditions quand plusieurs profils progressent en parallele
-- [Phase 15-01]: onQuestProgress optionnel dans useGamification/useFarm/useVaultDefis — backward-compatible, expose via contributeFamilyQuest dans VaultState
-- [Phase 15-quetes-cooperatives-ferme]: primary passe en prop separee de colors — useThemeColors retourne primary et colors comme valeurs distinctes, les composants acceptent les deux
-- [Phase 15-quetes-cooperatives-ferme]: getRewardLabel exporte depuis FamilyQuestBanner et reutilise dans Detail et Picker — une seule source de verite pour les 11 types de recompense
-- [Phase 15-quetes-cooperatives-ferme]: Role gate UI dans tree.tsx (canStartQuest) et non dans FamilyQuestPickerSheet — picker generique, appelant controle l'acces
-- [Phase 15-quetes-cooperatives-ferme]: contribute élargi string (vs FamilyQuestType) pour compatibilité contravariance — aucun impact comportement runtime
-- [Phase 15-quetes-cooperatives-ferme]: questsHook initialisé AVANT defisHook dans useVault.ts pour rendre questsHook.contribute disponible comme onQuestProgress
-- [Phase 15-pr-f-rences-alimentaires]: IDs canoniques stables snake_case dans lib/dietary/catalogs.ts — jamais renommer après livraison pour compatibilité vault
-- [Phase 15-pr-f-rences-alimentaires]: GuestProfile séparé de Profile (sans gamification/role/avatar) — invités sans progression (D-03, PREF-06)
-- [Phase 15-pr-f-rences-alimentaires]: findCatalogForSeverity retourne [] pour 'aversion' — aversions texte libre uniquement, pas de catalogue (D-05)
-- [Phase 15]: PREF-11 P0 SAFETY : pointerEvents='none' + zéro prop dismiss dans AllergenBannerProps — enforcement statique via test TypeScript
-- [Phase 15]: checkAllergens matching substring conservateur — faux positif préféré au faux négatif (PREF-11, ARCH-03)
-- [Phase 15-pr-f-rences-alimentaires]: parseFoodCsv gère CSV et YAML liste natif (Array.isArray) — compatibilité bidirectionnelle Obsidian PREF-05
-- [Phase 15-pr-f-rences-alimentaires]: serializeFamille omet les clés food_* vides — lisibilité vault Obsidian
-- [Phase 15-pr-f-rences-alimentaires]: parseInvites génère IDs via slugifyInviteName (NFD + lowercase + underscore) avec suffixe collision _2/_3
-- [Phase 15-05]: refreshGamification() utilisé comme reloadProfiles dans useVaultDietary — re-lit famille.md et synchro tous les profils React state
-- [Phase 15-05]: ProfileFoodCard : cast getItems via GuestProfile au lieu de Record<string,unknown> pour compatibilité TypeScript stricte
-- [Phase 15]: MealConflictWrapper sous-composant créé pour encapsuler useMemo dans le map() de meals.tsx (hooks interdits dans callbacks)
-- [Phase 15]: PREF-13 extractDietaryConstraints: imports en tête de ai-service.ts + DictaphoneRecorder wrappé dans Modal pageSheet + fallback D-15 via Alert.alert informatif
-- [Phase 16-codex-contenu]: [Phase 16-01]: CompanionSpeciesCatalog matching via String(c.id) pour neutraliser le typage littéral
-- [Phase 16-codex-contenu]: [Phase 16-01]: CraftRecipe importé depuis lib/mascot/types directement (source) plutôt que craft-engine (re-export)
-- [Phase 16-codex-contenu]: CODEX_CONTENT centralisé dans lib/codex/content.ts avec re-exports larges (types/stats/loot) pour import unique côté UI
-- [Phase 16-codex-contenu]: Tests Jest anti-drift via it.each + getters stats garantissent zéro drift entre codex et constantes engine
-- [Phase 17-codex-ui]: [Phase 17-02]: D-16 appliqué — parité FR+EN stricte sur les 17 clés UI codex (modal/search/tabs/detail/card/tutorial), namespace Phase 16 préservé intact
-- [Phase 17-03]: Switch exhaustif sur les 10 CodexKind avec _exhaustive: never dans CodexEntryDetailModal — D-05 respecté, le compilateur bloque tout ajout futur non câblé
-- [Phase 17-03]: getLootStats absent de lib/codex/stats.ts — fallback placeholder — dans le case loot (pas d'échec de compile)
-- [Phase 17-03]: Profile cast en DiscoverySource via as any dans tree.tsx — shape minimale runtime-compatible
-- [Phase 18-tutoriel-ferme]: [Phase 18-02]: CoachMarkOverlay borderRadius — technique borderWidth géant (Option B), zéro SVG, rétrocompat 4-Views conservée pour borderRadius=0
-- [Phase 18-tutoriel-ferme]: [Phase 18-01]: activeFarmTutorialStep in-memory (useState null) dans HelpContext — pas de SecureStore, reset au restart (D-09)
-- [Phase 18-tutoriel-ferme]: [Phase 18-01]: paused propagé manuellement aux 4 sous-composants WorldGridView via prop explicite (CropCell, BuildingCell, BuildingIdleAnim, NextExpansionCell) plutôt que contexte
-- [Phase 18-tutoriel-ferme]: [Phase 18-03]: FarmTutorialOverlay format mixte — 2 cartes narratives plein écran (étapes 0, 4) + 3 coach marks contextuels arrondis (1, 2, 3) dans un seul orchestrateur sibling de ScreenGuide (D-08)
-- [Phase 18-tutoriel-ferme]: [Phase 18-03]: Fallback graceful — si measureInWindow échoue (cible non montée), l'étape coach mark bascule en carte narrative plutôt que skip, garantissant que l'utilisateur voit le texte
-- [Phase 18-tutoriel-ferme]: [Phase 18-03]: TREE_SPRITES require map statique (pas dynamique) pour compatibilité Metro bundler — duplication locale depuis TreeView (Pitfall 5)
-- [Phase 20-02]: DAILY_CAPS.cuisine_repas=0 (pas de cap daily) + WEEKLY_CAPS.cuisine_repas=1 (EFFECTS-10 : 1 recipe unlock/sem)
-- [Phase 20-02]: isCapExceeded/incrementCap pure functions avec param now?:Date pour testabilité sans mocks
-- [Phase 20]: completeTask signature: taskMeta? optionnel backward-compatible — garder taskText pour ne casser aucun appelant
-- [Phase 20]: Double Loot Cascade: updateProfileInData(newData, cascadeResult.profile, cascadeResult.entries) car openLootBox ne retourne pas newData
-- [Phase 20]: Building Turbo appliqué sur productionBoost dans les deux sites collect — cohérence collecte manuelle + passive income
-- [Phase 20-04]: Tests getWeekStart timezone-agnostic : valeurs attendues calculées dynamiquement — évite strings UTC hardcodées qui cassent selon fuseau (Europe/Paris)
-- [Phase 21-01]: Module effect-toasts.ts pur (zéro import vault/hook) — consommable par Plan 02 sans effets de bord
-- [Phase 21-01]: HarvestBurst comportement par défaut préservé à 100% quand variant omis — backward-compatible
-- [Phase 21-02]: reward={1} dans HarvestBurst overlay — reward=0 affiche '+0' non masque
-- [Phase 21-02]: SUB_TYPE_TEMPLATES dictionnaire separe de MESSAGE_TEMPLATES — preserve type Record<CompanionEvent,string[]>
-- [Phase 21-02]: subType? string dans CompanionMessageContext (pas CategoryId) — evite couplage lib/mascot -> lib/semantic
-- [Phase 22-01]: Cache module-level _overridesCache pour eviter acces SecureStore sur hot path (opt-out pattern: cle absente = categorie active)
-- [Phase 22-ui-config-famille]: Badge variant inline sans Badge.tsx — View+Text avec variantColor+33 hex pour eviter couplage composant generique sur couleurs semantiques
-- [Phase 22-ui-config-famille]: DISPLAY_ORDER golden>rare>ambient — ordre visuel par importance percue de l'effet semantique
-- [Phase 23-01]: extractMuseumSection utilisée par openLootBox via lecture fichier brut (gamiRawContent) car gamiData est parsé sans le contenu Markdown brut
-- [Phase 23-02]: colors.cardAlt utilisé pour fond section headers du MuseumModal (colors.surface absent du thème)
-- [Phase 23-02]: vault passé en prop depuis tree.tsx au lieu d'accès contexte dans MuseumModal — isolation et cohérence avec autres modals
-- [Phase 24-compagnon-tendu-seed-003-lite]: D-08: celebration commentée (pas supprimée) dans detectProactiveEvent — réactivable dans un futur milestone
-- [Phase 24-compagnon-tendu-seed-003-lite]: companion-storage.ts module pur SecureStore (pattern caps.ts) — fire-and-forget non-bloquant avec slice(-5)
-- [Phase 24-02]: D-05: seuls morning_greeting et weekly_recap déclenchés sur dashboard (gentle_nudge/comeback restent sur tree.tsx)
-- [Phase 24-02]: D-10: gentle_nudge limité à 1/jour via hasNudgeShownToday + markNudgeShownToday (SecureStore)
 
-### Pending Todos
+### Todos
 
-None yet.
+- Plan Phase 25 next: `/gsd:plan-phase 25`
 
-### Blockers/Concerns
+### Blockers
 
-- Phase 18 (tutoriel): Spike de 2h recommandé en début de phase pour valider SVG spotlight + Reanimated 4 worklet thread — pattern absent du codebase actuel. Spotlight confirmé en scope v1.2 (décision utilisateur).
-
-### Quick Tasks Completed
-
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 260330-t4b | Refonte layout écran ferme Option B | 2026-03-30 | 149d6d1 | [260330-t4b-refonte-layout-cran-ferme-option-b](./quick/260330-t4b-refonte-layout-cran-ferme-option-b/) |
-| 260331-jro | Créer composant PressableScale + appliquer sur DashboardCard | 2026-03-31 | 103da8c | [260331-jro-cr-er-composant-pressablescale-appliquer/) |
-| 260331-jzy | Ajouter prop tinted sur DashboardCard pour fond subtil coloré par section | 2026-03-31 | 3549bab | [260331-jzy-ajouter-prop-tinted-sur-dashboardcard-po](./quick/260331-jzy-ajouter-prop-tinted-sur-dashboardcard-po/) |
-| 260402-vpb | Refonte catalogue CraftSheet en grille par stade + mini-modal | 2026-04-02 | a802822 | [260402-vpb-refonte-catalogue-recettes-craftsheet-gr](./quick/260402-vpb-refonte-catalogue-recettes-craftsheet-gr/) |
-| 260402-wbr | Refonte bottom panel ecran arbre — 2 cartes Actions + Progression | 2026-04-02 | 8b503a3 | [260402-wbr-refonte-bottom-panel-cran-arbre-option-c](./quick/260402-wbr-refonte-bottom-panel-cran-arbre-option-c/) |
-| 260402-wrf | Mockup C — diorama arrondi + ombre + chevauchement cartes (ecran arbre) | 2026-04-02 | bae5fd5 | [260402-wrf-impl-menter-le-mockup-c-sur-l-cran-tree-](./quick/260402-wrf-impl-menter-le-mockup-c-sur-l-cran-tree-/) |
-| 260402-wum | FAB calendrier — ajout rapide RDV et tache | 2026-04-02 | d006704 | [260402-wum-fab-calendrier-ajout-rapide-rdv-et-t-che](./quick/260402-wum-fab-calendrier-ajout-rapide-rdv-et-t-che/) |
-| 260402-x63 | HUD flottant option A — position absolute + fond semi-transparent (écran tree) | 2026-04-02 | e3ae5ec | [260402-x63-hud-flottant-option-a-sur-l-cran-tree-re](./quick/260402-x63-hud-flottant-option-a-sur-l-cran-tree-re/) |
-| 260403-kjz | Supprimer le code debug saga dans tree.tsx | 2026-04-03 | 659a064 | [260403-kjz-supprimer-le-code-debug-saga-dans-tree-t](./quick/260403-kjz-supprimer-le-code-debug-saga-dans-tree-t/) |
-| 260403-q6y | Fix race condition sur les écritures famille.md (useFarm + useVault) | 2026-04-03 | a62b191 | [260403-q6y-fix-race-condition-on-famille-md-writes-](./quick/260403-q6y-fix-race-condition-on-famille-md-writes-/) |
-| 260403-qoo | Wrapper completeTask/openLootBox/completeSagaChapter famille.md via enqueueWrite | 2026-04-03 | 72db03b | [260403-qoo-wrapper-completetask-openlootbox-complet](./quick/260403-qoo-wrapper-completetask-openlootbox-complet/) |
-| 260404-hfb | Ajouter deux recettes craft tournesol (huile_tournesol + brioche_tournesol) | 2026-04-04 | 039e7b5 | [260404-hfb-ajouter-deux-recettes-craft-tournesol-da](./quick/260404-hfb-ajouter-deux-recettes-craft-tournesol-da/) |
-| 260404-h6l | Extraire données farm/mascot/companion de famille.md vers farm-{profileId}.md | 2026-04-04 | c146f70 | [260404-h6l-extraire-donn-es-farm-mascot-companion-d](./quick/260404-h6l-extraire-donn-es-farm-mascot-companion-d/) |
-| 260404-i3r | Remplacer l'emoji animé du poulailler par sprite PNG Animated.Image | 2026-04-04 | c9bfd75 | [260404-i3r-remplacer-l-emoji-anim-du-poullailler-da](./quick/260404-i3r-remplacer-l-emoji-anim-du-poullailler-da/) |
-| 260404-ips | Optimiser writes farm/gami et créer refreshFarm(profileId) | 2026-04-04 | 2411250 | [260404-ips-optimiser-writes-farm-gami-et-cr-er-refr](./quick/260404-ips-optimiser-writes-farm-gami-et-cr-er-refr/) |
-| 260404-j7v | Fix complet système usure ferme — overlay orange, blocage plant, repair handlers, bouton toit | 2026-04-04 | 544e4c9 | [260404-j7v-fix-complet-syst-me-usure-ferme-overlay-](./quick/260404-j7v-fix-complet-syst-me-usure-ferme-overlay-/) |
-| 260404-kbd | Système hybride ferme — plot principal vitesse pleine, autres demi-vitesse + indicateur visuel | 2026-04-04 | 22ac20e | [260404-kbd-syst-me-hybride-ferme-plot-principal-vit](./quick/260404-kbd-syst-me-hybride-ferme-plot-principal-vit/) |
-| 260404-kdk | Rééquilibrer recettes ferme — 2 ingrédients + 17 prix de vente | 2026-04-04 | 6dad909 | [260404-kdk-r-quilibrer-recettes-ferme-prix-et-ingr-](./quick/260404-kdk-r-quilibrer-recettes-ferme-prix-et-ingr-/) |
-| 260404-kvd | fix crop texte contexte quotes — retirer numberOfLines={2} sur le texte date/contexte dans renderItem | 2026-04-04 | e6ca0ac | [260404-kvd-fix-crop-texte-contexte-quotes-retirer-n](./quick/260404-kvd-fix-crop-texte-contexte-quotes-retirer-n/) |
-| 260404-l62 | Bouton skip tâches récurrentes sans gamification | 2026-04-04 | 1ab57c1 | [260404-l62-bouton-skip-taches-recurrentes-sans-gami](./quick/260404-l62-bouton-skip-taches-recurrentes-sans-gami/) |
-| 260404-quw | Fix long-press not working on inventory items (CraftSheet) | 2026-04-04 | ae62fc6 | [260404-quw-fix-long-press-not-working-on-inventory-](./quick/260404-quw-fix-long-press-not-working-on-inventory-/) |
-| 260404-qvz | Fix OOM crash TreeScreen — timer global, lazy-load images saison, reduire particules | 2026-04-04 | cd8307e | [260404-qvz-fix-oom-crash-treescreen-timer-global-la](./quick/260404-qvz-fix-oom-crash-treescreen-timer-global-la/) |
-| 260404-rfs | Bouton Offrir visible sur items inventaire + Mes créations (remplace long-press) | 2026-04-04 | 19f051b | [260404-rfs-remplacer-long-press-cadeau-par-bouton-o](./quick/260404-rfs-remplacer-long-press-cadeau-par-bouton-o/) |
-| 260404-xbu | Permettre de changer la catégorie d'une recette depuis RecipeViewer | 2026-04-04 | 3b314e0 | [260404-xbu-permettre-de-changer-la-cat-gorie-d-une-](./quick/260404-xbu-permettre-de-changer-la-cat-gorie-d-une-/) |
-| 260409-nyw | Bouton dev-only pour tester les 10 effets sémantiques Phase 21 | 2026-04-09 | b2dd12d | [260409-nyw-bouton-dev-only-pour-tester-les-10-effet](./quick/260409-nyw-bouton-dev-only-pour-tester-les-10-effet/) |
+None
 
 ## Session Continuity
 
-Last session: 2026-04-10T10:07:28.923Z
-Stopped at: Completed 24-02-PLAN.md
-Resume file: None
+Last session: 2026-04-10 — Roadmap v1.4 created
+Next: Plan and execute Phase 25 (Fondation données village)
