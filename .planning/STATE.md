@@ -29,11 +29,17 @@ Phase: 25 — Fondation données village (not started)
 Plan: —
 Milestone: v1.4 Jardin Familial (MVP)
 Last shipped: v1.3 Seed (2026-04-10)
-Last activity: 2026-04-10 — Roadmap v1.4 created (4 phases, 18 requirements mapped)
+Last activity: 2026-04-10 - Completed quick task 260410-qnr: Dictaphone import texte + multi-photos recettes
 
 Progress: [░░░░░░░░░░] 0%
 
 Status: Roadmap ready — next: `/gsd:plan-phase 25`
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260410-qnr | Dictaphone import texte + multi-photos recettes | 2026-04-10 | f1c7909 | [260410-qnr-ajouter-dictaphone-dans-import-texte-rec](./quick/260410-qnr-ajouter-dictaphone-dans-import-texte-rec/) |
 
 ## Performance Metrics
 
