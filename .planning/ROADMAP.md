@@ -200,8 +200,11 @@ Plans:
   3. Une barre de progression montre l'avancement collectif vers la cible de la semaine (ex: 47/100)
   4. Chaque membre de la famille a un indicateur de sa contribution hebdomadaire visible sur l'écran
   5. Un panneau historique interactif liste les semaines passées avec leur cible, total, contributions par membre et statut récompense
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 2 plans
+
+Plans:
+- [ ] 27-01-PLAN.md — buildVillageMap() + TileMapRenderer mode village + FAB navigation
+- [ ] 27-02-PLAN.md — Ecran village.tsx complet (objectif, feed, membres, historique)
 
 ### Phase 28: Portail + câblage contributions
 **Goal**: La boucle coopérative est complète — récolter dans la ferme perso ou compléter une tâche IRL ajoute automatiquement une contribution au village, l'atteinte de l'objectif déclenche une récompense collective (XP + suggestion activité IRL), et un portail animé dans la ferme permet d'accéder au village.
@@ -231,7 +234,7 @@ Plans:
 | 24. Compagnon étendu | v1.3 | 2/2 | Complete | 2026-04-10 |
 | 25. Fondation données village | v1.4 | 2/2 | Complete    | 2026-04-10 |
 | 26. Hook domaine jardin | v1.4 | 2/2 | Complete    | 2026-04-10 |
-| 27. Écran Village + composants | v1.4 | 0/? | Not started | - |
+| 27. Écran Village + composants | v1.4 | 0/2 | Not started | - |
 | 28. Portail + câblage contributions | v1.4 | 0/? | Not started | - |
 
 ## Archived Milestones
