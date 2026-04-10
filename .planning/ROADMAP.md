@@ -153,7 +153,7 @@ Plans:
 
 **Phases overview:**
 
-- [ ] **Phase 25: Fondation données village** — Schéma `jardin-familial.md`, parseur bidirectionnel, grille village namespacée, templates d'objectif
+- [x] **Phase 25: Fondation données village** — Schéma `jardin-familial.md`, parseur bidirectionnel, grille village namespacée, templates d'objectif (completed 2026-04-10)
 - [ ] **Phase 26: Hook domaine jardin** — `useGarden.ts` isolé, génération objectif hebdo, anti-double-claim, câblage VaultContext
 - [ ] **Phase 27: Écran Village + composants** — Carte tilemap village, feed contributions, barre progression, panneau historique
 - [ ] **Phase 28: Portail + câblage contributions** — Portail ferme → village, auto-contribution récoltes + tâches, récompense collective
@@ -173,7 +173,7 @@ Plans:
 
 Plans:
 - [x] 25-01-PLAN.md — Module lib/village/ complet (types, grid, templates, parser, barrel)
-- [ ] 25-02-PLAN.md — Tests Jest module village (parser, grid, templates)
+- [x] 25-02-PLAN.md — Tests Jest module village (parser, grid, templates)
 
 ### Phase 26: Hook domaine jardin
 **Goal**: Toute la logique village est encapsulée dans `hooks/useGarden.ts` isolé — jamais dans `useVault.ts` — avec génération d'objectif hebdomadaire, protection anti-double-claim, et câblage VaultContext vérifié par `tsc --noEmit`.
@@ -225,7 +225,7 @@ Plans:
 | 22. UI config famille | v1.3 | 2/2 | Complete | 2026-04-09 |
 | 23. Musée des effets | v1.3 | 2/2 | Complete | 2026-04-10 |
 | 24. Compagnon étendu | v1.3 | 2/2 | Complete | 2026-04-10 |
-| 25. Fondation données village | v1.4 | 1/2 | In Progress|  |
+| 25. Fondation données village | v1.4 | 2/2 | Complete   | 2026-04-10 |
 | 26. Hook domaine jardin | v1.4 | 0/? | Not started | - |
 | 27. Écran Village + composants | v1.4 | 0/? | Not started | - |
 | 28. Portail + câblage contributions | v1.4 | 0/? | Not started | - |

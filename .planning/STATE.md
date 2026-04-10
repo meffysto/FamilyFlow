@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Jardin Familial
-status: executing
-last_updated: "2026-04-10T18:04:49.296Z"
+status: verifying
+last_updated: "2026-04-10T18:07:55.294Z"
 last_activity: 2026-04-10
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -32,7 +32,7 @@ Last activity: 2026-04-10
 
 Progress: [░░░░░░░░░░] 0%
 
-Status: Ready to execute
+Status: Phase complete — ready for verification
 
 ### Quick Tasks Completed
 
@@ -116,6 +116,7 @@ Status: Ready to execute
 | Phase 24-compagnon-tendu-seed-003-lite P01 | 8min | 2 tasks | 3 files |
 | Phase 24-compagnon-tendu-seed-003-lite P02 | 8min | 2 tasks | 5 files |
 | Phase 25-fondation-donn-es-village P01 | 3min | 2 tasks | 5 files |
+| Phase 25 P02 | 2min | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -194,6 +195,7 @@ Recent decisions affecting current work:
 - [Phase 25-01]: serializeGardenFile construit la string manuellement — round-trip fidelity garantie sans matter.stringify
 - [Phase 25-01]: appendContribution insere avant la prochaine section ## — evite l'append en fin de fichier (Pitfall 4)
 - [Phase 25-01]: VILLAGE_GRID IDs prefixes village_ — evite collisions avec ferme perso lors transition portail
+- [Phase 25]: gray-matter retourne les dates YAML comme objets Date — parseGardenFile normalise via instanceof Date + toISOString().slice(0,10)
 
 ### Todos
 
@@ -205,5 +207,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-10T18:04:49.293Z
+Last session: 2026-04-10T18:07:55.291Z
 Next: Plan and execute Phase 25 (Fondation données village)
