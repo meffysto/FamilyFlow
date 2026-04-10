@@ -31,5 +31,6 @@ export { DashboardZenState } from './DashboardZenState';
 export { DashboardBilanSemaine } from './DashboardBilanSemaine';
 export { DashboardSecretMissions } from './DashboardSecretMissions';
 export { DashboardGarden } from './DashboardGarden';
+export { DashboardCompanion } from './DashboardCompanion';
 
 export type { DashboardSectionProps, DashboardSectionWithTaskToggleProps } from './types';

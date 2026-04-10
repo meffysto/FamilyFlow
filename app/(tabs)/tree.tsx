@@ -86,7 +86,7 @@ import {
   detectProactiveEvent,
   computeMoodScore,
 } from '../../lib/mascot/companion-engine';
-import { loadCompanionMessages, saveCompanionMessages, type PersistedCompanionMessage } from '../../lib/mascot/companion-storage';
+import { loadCompanionMessages, saveCompanionMessages, hasNudgeShownToday, markNudgeShownToday, type PersistedCompanionMessage } from '../../lib/mascot/companion-storage';
 import * as SecureStore from 'expo-secure-store';
 import { type PlantedCrop, type PlacedBuilding, CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
 import type { GiftEntry } from '../../lib/mascot/gift-engine';
@@ -797,15 +797,18 @@ export default function TreeScreen() {
     SecureStore.setItemAsync('companion_last_visit', today).catch(() => {});
 
     // Détection proactive — prioritaire sur le greeting classique
+    const currentHourForProactive = new Date().getHours();
+    const isWeeklyRecapWindow = new Date().getDay() === 0 && currentHourForProactive >= 18 && currentHourForProactive < 21;
     const proactiveEvent = detectProactiveEvent({
       hoursSinceLastVisit: hoursSinceLastActivity,
-      currentHour: new Date().getHours(),
+      currentHour: currentHourForProactive,
       tasksToday: recentTasksCountRef.current,
       totalTasksToday,
       streak: prof.streak ?? 0,
       hasGratitudeToday: false,
       hasMealsPlanned: (todayMeals?.length ?? 0) > 0,
       isFirstVisitToday,
+      isWeeklyRecapWindow,
     });
 
     // Choisir l'événement le plus pertinent
@@ -821,6 +824,16 @@ export default function TreeScreen() {
       }
     }
 
+    // D-10 : guard gentle_nudge — max 1 nudge par jour par profil
+    // Vérification async avant de lancer le timer
+    const nudgeCheckPromise: Promise<boolean> = event === 'gentle_nudge'
+      ? hasNudgeShownToday(prof.id).then(alreadyShown => {
+          if (alreadyShown) return true; // bloquer
+          markNudgeShownToday(prof.id); // fire-and-forget
+          return false;
+        })
+      : Promise.resolve(false);
+
     // Phase 21 : Injecter subType depuis le bridge SecureStore (FEEDBACK-04, D-06)
     // Lire de maniere asynchrone — la valeur sera disponible avant le delayTimer (1.5s)
     const subTypePromise = SecureStore.getItemAsync('last_semantic_category').then(stored => {
@@ -834,6 +847,9 @@ export default function TreeScreen() {
 
     // Délai avant d'afficher le message (1.5s — laisse le temps a subTypePromise de se resoudre)
     const delayTimer = setTimeout(async () => {
+      // D-10 : annuler si nudge déjà affiché aujourd'hui
+      const nudgeBlocked = await nudgeCheckPromise;
+      if (nudgeBlocked) return;
       // Attendre le subType si la promesse n'est pas encore resolue
       await subTypePromise;
       // Afficher le template comme fallback immédiat

@@ -87,6 +87,7 @@ import {
   DashboardBilanSemaine,
   DashboardSecretMissions,
   DashboardGarden,
+  DashboardCompanion,
 } from '../../components/dashboard';
 
 const PREFS_KEY = 'dashboard_prefs_v1';
@@ -908,6 +909,11 @@ export default function DashboardScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primary} />
         }
       >
+        {/* Bulle compagnon proactive — morning_greeting et weekly_recap (D-06, COMPANION-01/02) */}
+        {!isLoading && vaultPath && (
+          <DashboardCompanion {...sectionProps} />
+        )}
+
         {/* Welcome card when no vault configured */}
         {!isLoading && !vaultPath && (
           <DashboardCard title={t('index.welcome.title')} icon="👋" color={primary}>
