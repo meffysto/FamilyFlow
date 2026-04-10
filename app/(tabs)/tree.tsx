@@ -76,6 +76,7 @@ import {
   COMPANION_UNLOCK_LEVEL,
   type CompanionData,
   type CompanionSpecies,
+  type CompanionEvent,
 } from '../../lib/mascot/companion-types';
 import {
   getCompanionStage,
@@ -85,6 +86,7 @@ import {
   detectProactiveEvent,
   computeMoodScore,
 } from '../../lib/mascot/companion-engine';
+import { loadCompanionMessages, saveCompanionMessages, type PersistedCompanionMessage } from '../../lib/mascot/companion-storage';
 import * as SecureStore from 'expo-secure-store';
 import { type PlantedCrop, type PlacedBuilding, CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
 import type { GiftEntry } from '../../lib/mascot/gift-engine';
@@ -589,28 +591,49 @@ export default function TreeScreen() {
   const recentTasksCountRef = useRef(recentTasksCount);
   useEffect(() => { recentTasksCountRef.current = recentTasksCount; }, [recentTasksCount]);
 
-  // Sauvegarder un message dans la mémoire courte du compagnon (en mémoire uniquement, jamais persistée)
+  // Hydratation au mount — restaure les messages depuis SecureStore pour l'anti-répétition IA (D-04)
+  useEffect(() => {
+    if (!activeProfile?.id) return;
+    // Pitfall 6 : ne pas écraser les messages de la session en cours
+    if (companionRecentMessagesRef.current.length > 0) return;
+    loadCompanionMessages(activeProfile.id).then(msgs => {
+      companionRecentMessagesRef.current = msgs.map(m => m.text).slice(-5);
+    });
+  }, [activeProfile?.id]);
+
+  // Sauvegarder un message dans la mémoire courte du compagnon + persistance SecureStore (COMPANION-06)
   // Sauvegarde TOUS les messages (IA et templates traduits) pour l'anti-répétition
-  const saveToMemory = useCallback((msg: string) => {
+  const saveToMemory = useCallback((msg: string, event: CompanionEvent = 'greeting') => {
     if (!companionRef.current || !msg) return;
     const recent = companionRecentMessagesRef.current;
     // Pas de doublon avec le dernier message
     if (recent.length > 0 && recent[recent.length - 1] === msg) return;
-    companionRecentMessagesRef.current = [...recent, msg].slice(-5);
+    const updated = [...recent, msg].slice(-5);
+    companionRecentMessagesRef.current = updated;
+    // Persist — fire and forget (D-01, D-03)
+    const profileId = activeProfileRef.current?.id;
+    if (profileId) {
+      loadCompanionMessages(profileId).then(existing => {
+        const entry: PersistedCompanionMessage = {
+          text: msg, event, timestamp: new Date().toISOString(),
+        };
+        saveCompanionMessages(profileId, [...existing, entry]);
+      });
+    }
   }, []);
 
   // Timer unique pour éviter les races de timers entre fallback et IA
   const msgTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Afficher un message compagnon (template ou IA) et le persister en mémoire
-  const showCompanionMsg = useCallback((msg: string, context: any, duration = 8000) => {
+  const showCompanionMsg = useCallback((msg: string, context: any, duration = 8000, event: CompanionEvent = 'greeting') => {
     // Annuler tout timer précédent pour éviter les races
     if (msgTimerRef.current) clearTimeout(msgTimerRef.current);
     const isI18nKey = msg.startsWith('companion.msg.');
     const displayMsg = isI18nKey ? String(t(msg, context)) : msg;
     setCompanionMessage(displayMsg);
     // Sauvegarder TOUS les messages affichés (traduits) pour l'anti-répétition
-    saveToMemory(displayMsg);
+    saveToMemory(displayMsg, event);
     msgTimerRef.current = setTimeout(() => setCompanionMessage(null), duration);
   }, [t, saveToMemory]);
 
@@ -658,12 +681,12 @@ export default function TreeScreen() {
     };
 
     // Afficher le template immédiatement comme fallback
-    showCompanionMsg(pickCompanionMessage('greeting', context), context, 4000);
+    showCompanionMsg(pickCompanionMessage('greeting', context), context, 4000, 'greeting');
 
     // Tenter un message IA au tap (remplace le fallback si réussi)
     if (aiCall) {
       generateCompanionAIMessage('greeting', context, aiCall).then(msg => {
-        showCompanionMsg(msg, context, 4000);
+        showCompanionMsg(msg, context, 4000, 'greeting');
       });
     }
   }, [companion, activeProfile, recentTasksCount, recentCompletedTasks, nextRdv, todayMeals, aiCall, showCompanionMsg, hoursSinceLastActivity, pendingTasksToday, timeOfDay]);
@@ -719,12 +742,12 @@ export default function TreeScreen() {
     };
 
     // Fallback template immédiat
-    showCompanionMsg(pickCompanionMessage(event, context), context, 5000);
+    showCompanionMsg(pickCompanionMessage(event, context), context, 5000, event);
 
     // Tenter IA (remplace si réussi)
     if (aiCall) {
       generateCompanionAIMessage(event, context, aiCall).then(msg => {
-        showCompanionMsg(msg, context, 5000);
+        showCompanionMsg(msg, context, 5000, event);
       });
     }
   }, [aiCall, showCompanionMsg, hoursSinceLastActivity, timeOfDay]);
@@ -814,12 +837,12 @@ export default function TreeScreen() {
       // Attendre le subType si la promesse n'est pas encore resolue
       await subTypePromise;
       // Afficher le template comme fallback immédiat
-      showCompanionMsg(pickCompanionMessage(event, context), context);
+      showCompanionMsg(pickCompanionMessage(event, context), context, undefined, event);
 
       // Tenter un message IA (async, remplace le fallback si réussi)
       if (aiCall) {
         generateCompanionAIMessage(event, context, aiCall).then(msg => {
-          showCompanionMsg(msg, context);
+          showCompanionMsg(msg, context, undefined, event);
         });
       }
     }, 1500);
