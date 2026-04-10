@@ -31,6 +31,7 @@ import type { TreeStage } from '../../lib/mascot/types';
 export const GRASS_TILE_IMAGE = require('../../assets/terrain/tilesets/grass_tile.png');
 import {
   buildFarmMap,
+  buildVillageMap,
   findWangTile,
   parseTilesetMeta,
   FARM_MAP_COLS,
@@ -448,6 +449,7 @@ interface TileMapRendererProps {
   containerWidth: number;
   containerHeight: number;
   season: Season;
+  mode?: 'farm' | 'village'; // 'farm' par defaut
 }
 
 // ── Poisson koi anime — nage en boucle dans le lac avec cycle de frames ──
@@ -528,11 +530,15 @@ export function TileMapRenderer({
   containerWidth,
   containerHeight,
   season,
+  mode = 'farm',
 }: TileMapRendererProps) {
   const stageIdx = STAGE_INDEX[treeStage] ?? 0;
 
-  // Build farm map data
-  const farmMap = useMemo(() => buildFarmMap(treeStage), [treeStage]);
+  // Build farm map data — mode village utilise buildVillageMap() (cobblestone dominant)
+  const farmMap = useMemo(
+    () => mode === 'village' ? buildVillageMap() : buildFarmMap(treeStage),
+    [treeStage, mode],
+  );
 
   // Parse tileset metadata (une seule fois)
   const tilesetMetas = useMemo(() => {
@@ -584,8 +590,9 @@ export function TileMapRenderer({
     return result;
   }, [farmMap, tilesetMetas]);
 
-  // Decos — filtrer celles qui tombent sur eau, chemins ou paves
+  // Decos — pas de decorations ferme en mode village
   const decos = useMemo(() => {
+    if (mode === 'village') return [];
     const allDecos = getFarmDecos(season, stageIdx);
     const { water: waterV, dirt: dirtV, cobblestone: cobbleV, farmland: farmV } = farmMap.layers;
     return allDecos.filter(d => {
@@ -603,7 +610,7 @@ export function TileMapRenderer({
       }
       return true;
     });
-  }, [season, stageIdx, farmMap]);
+  }, [season, stageIdx, farmMap, mode]);
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">

@@ -144,6 +144,44 @@ export function buildFarmMap(treeStage: TreeStage): FarmMapData {
   };
 }
 
+// ── Carte du village ──
+
+/**
+ * Genere la carte de terrain de la Place du Village.
+ * Terrain cobblestone dominant (~60% surface) avec fontaine centrale et chemins d'entree.
+ *
+ * Mapping coordonnees VILLAGE_GRID → grille tilemap :
+ *   col = x * COLS     row = y * ROWS
+ *
+ * Fontaine: x=0.50, y=0.45 → cols 5-7, rows 8-10
+ * Chemins:  entrees haut et bas en terre
+ */
+export function buildVillageMap(): FarmMapData {
+  const cols = FARM_MAP_COLS; // 12
+  const rows = FARM_MAP_ROWS; // 20
+
+  const cobblestone = emptyVertices(cols, rows);
+  const dirt = emptyVertices(cols, rows);
+  const water = emptyVertices(cols, rows);
+  const farmland = emptyVertices(cols, rows);
+
+  // Place centrale cobblestone (~60% surface)
+  fillRect(cobblestone, 2, 4, 10, 16);
+
+  // Chemins d'entree en terre (bordures haut et bas)
+  fillRect(dirt, 4, 0, 8, 3);
+  fillRect(dirt, 4, 17, 8, 20);
+
+  // Fontaine : petit espace eau au centre (VILLAGE_GRID fountain x=0.50 y=0.45 → cols 5-7, rows 8-10)
+  fillRect(water, 5, 8, 7, 10);
+
+  return {
+    cols,
+    rows,
+    layers: { grass: emptyVertices(cols, rows), farmland, dirt, water, cobblestone },
+  };
+}
+
 // ── Tileset metadata ──
 
 /** Info de bounding box d'un tile dans la spritesheet */
