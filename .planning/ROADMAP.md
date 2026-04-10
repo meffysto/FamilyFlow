@@ -169,7 +169,11 @@ Plans:
   2. Les contributions sont écrites comme lignes append-only (timestamp, profileId, type, montant) — un iCloud conflict ne peut pas corrompre le total
   3. Les IDs de grille village utilisent le préfixe `village_` (ex: `village_c0`) — aucune collision avec les IDs de la ferme perso
   4. La grille village définit les positions des éléments interactifs (fontaine, étals, panneau historique)
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 25-01-PLAN.md — Module lib/village/ complet (types, grid, templates, parser, barrel)
+- [ ] 25-02-PLAN.md — Tests Jest module village (parser, grid, templates)
 
 ### Phase 26: Hook domaine jardin
 **Goal**: Toute la logique village est encapsulée dans `hooks/useGarden.ts` isolé — jamais dans `useVault.ts` — avec génération d'objectif hebdomadaire, protection anti-double-claim, et câblage VaultContext vérifié par `tsc --noEmit`.
@@ -221,7 +225,7 @@ Plans:
 | 22. UI config famille | v1.3 | 2/2 | Complete | 2026-04-09 |
 | 23. Musée des effets | v1.3 | 2/2 | Complete | 2026-04-10 |
 | 24. Compagnon étendu | v1.3 | 2/2 | Complete | 2026-04-10 |
-| 25. Fondation données village | v1.4 | 0/? | Not started | - |
+| 25. Fondation données village | v1.4 | 0/2 | Not started | - |
 | 26. Hook domaine jardin | v1.4 | 0/? | Not started | - |
 | 27. Écran Village + composants | v1.4 | 0/? | Not started | - |
 | 28. Portail + câblage contributions | v1.4 | 0/? | Not started | - |
