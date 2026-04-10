@@ -28,7 +28,7 @@ Phase: 25 — Fondation données village (not started)
 Plan: —
 Milestone: v1.4 Jardin Familial (MVP)
 Last shipped: v1.3 Seed (2026-04-10)
-Last activity: 2026-04-10 - Completed quick task 260410-qnr: Dictaphone import texte + multi-photos recettes
+Last activity: 2026-04-10 - Completed quick task 260410-qv2: Fix journal adulte grossesse
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -39,6 +39,7 @@ Status: Roadmap ready — next: `/gsd:plan-phase 25`
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260410-qnr | Dictaphone import texte + multi-photos recettes | 2026-04-10 | f1c7909 | [260410-qnr-ajouter-dictaphone-dans-import-texte-rec](./quick/260410-qnr-ajouter-dictaphone-dans-import-texte-rec/) |
+| 260410-qv2 | Fix journal adulte grossesse: bug texte coupé + sections sommeil/symptômes/humeur | 2026-04-10 | 6bf22da | [260410-qv2-fix-journal-adulte-grossesse-bug-texte-c](./quick/260410-qv2-fix-journal-adulte-grossesse-bug-texte-c/) |
 
 ## Performance Metrics
 
