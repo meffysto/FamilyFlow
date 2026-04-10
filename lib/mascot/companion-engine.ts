@@ -576,8 +576,8 @@ export function detectProactiveEvent(ctx: ProactiveContext): CompanionEvent | nu
   // Milestone familial
   if (ctx.familyMilestone) return 'family_milestone';
 
-  // Célébration (streak remarquable — multiple de 7)
-  if (ctx.streak > 0 && ctx.streak % 7 === 0) return 'celebration';
+  // D-08: celebration désactivée Phase 24 — réactiver dans un futur milestone
+  // if (ctx.streak > 0 && ctx.streak % 7 === 0) return 'celebration';
 
   // Rappel doux l'après-midi (pas de tâches faites et il y en a à faire)
   if (
