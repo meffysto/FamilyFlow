@@ -397,6 +397,18 @@ export default function VillageScreen() {
                         <Text style={[styles.historyTotal, { color: colors.textMuted }]}>
                           Total contributions : {week.total} / {week.target}
                         </Text>
+                        {week.contributionsByMember && Object.keys(week.contributionsByMember).length > 0 && (
+                          <View style={styles.historyMembers}>
+                            {Object.entries(week.contributionsByMember).map(([pid, count]) => {
+                              const p = profiles.find(pr => pr.id === pid);
+                              return (
+                                <Text key={pid} style={[styles.historyMember, { color: colors.textMuted }]}>
+                                  {p?.avatar ?? '👤'} {p?.name ?? pid} : {count}
+                                </Text>
+                              );
+                            })}
+                          </View>
+                        )}
                         {week.claimed && (
                           <Text style={[styles.historyClaimed, { color: GOLD }]}>
                             Récompense réclamée
@@ -621,6 +633,13 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.semibold,
   },
   historyTotal: {
+    fontSize: FontSize.sm,
+  },
+  historyMembers: {
+    gap: Spacing.xxs,
+    marginTop: Spacing.xs,
+  },
+  historyMember: {
     fontSize: FontSize.sm,
   },
   historyClaimed: {

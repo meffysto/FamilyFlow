@@ -30,6 +30,7 @@ export interface VillageWeekRecord {
   target: number;
   total: number;
   claimed: boolean;
+  contributionsByMember?: Record<string, number>; // profileId → total contributions (HIST-02)
 }
 
 /** Donnees completes du village parsees depuis jardin-familial.md */

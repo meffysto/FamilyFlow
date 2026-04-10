@@ -145,11 +145,17 @@ export function useGarden(): UseGardenReturn {
         // Archiver la semaine passée si elle avait un objectif (D-05)
         const updatedPastWeeks: VillageWeekRecord[] = [...(gardenData.pastWeeks ?? [])];
         if (gardenData.currentWeekStart) {
+          // Calculer les contributions par membre avant archivage (HIST-02)
+          const byMember: Record<string, number> = {};
+          for (const c of gardenData.contributions ?? []) {
+            byMember[c.profileId] = (byMember[c.profileId] ?? 0) + c.amount;
+          }
           const weekRecord: VillageWeekRecord = {
             weekStart: gardenData.currentWeekStart,
             target: computeWeekTarget(activeProfileCount),
             total: gardenData.contributions?.length ?? 0,
             claimed: gardenData.rewardClaimed,
+            contributionsByMember: Object.keys(byMember).length > 0 ? byMember : undefined,
           };
           updatedPastWeeks.push(weekRecord);
         }

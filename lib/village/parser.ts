@@ -114,11 +114,11 @@ export function parseGardenFile(content: string): VillageData {
         amount,
       });
     } else if (section === 'historique') {
-      // Format : weekStart | cible:N | total:N | claimed:bool
+      // Format : weekStart | cible:N | total:N | claimed:bool | members:id1=N,id2=N (optionnel)
       const parts = raw.split(' | ');
       if (parts.length < 4) continue;
 
-      const [weekStart, rawTarget, rawTotal, rawClaimed] = parts;
+      const [weekStart, rawTarget, rawTotal, rawClaimed, ...rest] = parts;
       if (!weekStart || !rawTarget || !rawTotal || !rawClaimed) continue;
 
       const targetMatch = rawTarget.trim().match(/^cible:(\d+)$/);
@@ -127,11 +127,24 @@ export function parseGardenFile(content: string): VillageData {
 
       if (!targetMatch || !totalMatch || !claimedMatch) continue;
 
+      // Parser contributionsByMember optionnel (HIST-02)
+      let contributionsByMember: Record<string, number> | undefined;
+      const membersField = rest.find(r => r.trim().startsWith('members:'));
+      if (membersField) {
+        const membersRaw = membersField.trim().slice('members:'.length);
+        contributionsByMember = {};
+        for (const pair of membersRaw.split(',')) {
+          const [id, val] = pair.split('=');
+          if (id && val) contributionsByMember[id.trim()] = parseInt(val.trim(), 10);
+        }
+      }
+
       pastWeeks.push({
         weekStart: weekStart.trim(),
         target: parseInt(targetMatch[1], 10),
         total: parseInt(totalMatch[1], 10),
         claimed: claimedMatch[1] === 'true',
+        contributionsByMember,
       });
     }
   }
@@ -179,7 +192,12 @@ export function serializeGardenFile(data: VillageData): string {
   // Section Historique
   lines.push('## Historique');
   for (const w of data.pastWeeks) {
-    lines.push(`- ${w.weekStart} | cible:${w.target} | total:${w.total} | claimed:${w.claimed}`);
+    let line = `- ${w.weekStart} | cible:${w.target} | total:${w.total} | claimed:${w.claimed}`;
+    if (w.contributionsByMember && Object.keys(w.contributionsByMember).length > 0) {
+      const pairs = Object.entries(w.contributionsByMember).map(([id, n]) => `${id}=${n}`).join(',');
+      line += ` | members:${pairs}`;
+    }
+    lines.push(line);
   }
   lines.push('');
 
