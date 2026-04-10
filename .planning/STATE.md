@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Jardin Familial
 status: verifying
-last_updated: "2026-04-10T18:07:55.294Z"
+last_updated: "2026-04-10T18:10:58.488Z"
 last_activity: 2026-04-10
 progress:
   total_phases: 4
@@ -24,8 +24,8 @@ See: .planning/PROJECT.md
 
 ## Current Position
 
-Phase: 25 (fondation-donn-es-village) — EXECUTING
-Plan: 2 of 2
+Phase: 26
+Plan: Not started
 Milestone: v1.4 Jardin Familial (MVP)
 Last shipped: v1.3 Seed (2026-04-10)
 Last activity: 2026-04-10
