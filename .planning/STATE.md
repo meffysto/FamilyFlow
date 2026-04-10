@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Jardin Familial
 status: "Roadmap ready — next: `/gsd:plan-phase 25`"
-last_updated: "2026-04-10T17:23:58.230Z"
-last_activity: "2026-04-10 - Completed quick task 260410-qnr: Dictaphone import texte + multi-photos recettes"
+last_updated: "2026-04-10T17:53:58Z"
+last_activity: "2026-04-10 - Completed quick task 260410-rie: Améliorer import photo recettes — prompt OCR Sonnet + preview éditable"
 progress:
   total_phases: 4
   completed_phases: 0
@@ -28,7 +28,7 @@ Phase: 25 — Fondation données village (not started)
 Plan: —
 Milestone: v1.4 Jardin Familial (MVP)
 Last shipped: v1.3 Seed (2026-04-10)
-Last activity: 2026-04-10 - Completed quick task 260410-qv2: Fix journal adulte grossesse
+Last activity: 2026-04-10 - Completed quick task 260410-rie: Améliorer import photo recettes — prompt OCR Sonnet + preview éditable
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -40,6 +40,7 @@ Status: Roadmap ready — next: `/gsd:plan-phase 25`
 |---|-------------|------|--------|-----------|
 | 260410-qnr | Dictaphone import texte + multi-photos recettes | 2026-04-10 | f1c7909 | [260410-qnr-ajouter-dictaphone-dans-import-texte-rec](./quick/260410-qnr-ajouter-dictaphone-dans-import-texte-rec/) |
 | 260410-qv2 | Fix journal adulte grossesse: bug texte coupé + sections sommeil/symptômes/humeur | 2026-04-10 | 6bf22da | [260410-qv2-fix-journal-adulte-grossesse-bug-texte-c](./quick/260410-qv2-fix-journal-adulte-grossesse-bug-texte-c/) |
+| 260410-rie | Améliorer import photo recettes — prompt OCR Sonnet + preview éditable | 2026-04-10 | 5b3a39b | [260410-rie-ameliorer-import-photo-recettes-prompt-v](./quick/260410-rie-ameliorer-import-photo-recettes-prompt-v/) |
 
 ## Performance Metrics
 
