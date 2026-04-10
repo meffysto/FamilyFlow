@@ -44,18 +44,18 @@ Requirements pour le milestone v1.3. Chaque requirement mappe à une phase exact
 
 ### COUPLING-UI — Settings UI (Phase 22)
 
-- [ ] **COUPLING-01**: User can access a "Couplage sémantique" screen in Settings
-- [ ] **COUPLING-02**: User sees all 10 categories with their mapped effect
+- [x] **COUPLING-01**: User can access a "Couplage sémantique" screen in Settings
+- [x] **COUPLING-02**: User sees all 10 categories with their mapped effect
 - [x] **COUPLING-03**: User can toggle each category on/off individually
-- [ ] **COUPLING-04**: User sees a preview of what each effect does
+- [x] **COUPLING-04**: User sees a preview of what each effect does
 - [x] **COUPLING-05**: User sees weekly stats (how many effects triggered this week)
 - [x] **COUPLING-06**: User's toggle state persists across app restarts
 
 ### MUSEUM — SEED-002 lite (Phase 23)
 
-- [ ] **MUSEUM-01**: User sees every triggered effect recorded in a chronological museum
+- [x] **MUSEUM-01**: User sees every triggered effect recorded in a chronological museum
 - [ ] **MUSEUM-02**: User can open a "Musée" screen showing dated milestones
-- [ ] **MUSEUM-03**: User sees effect events persist across sessions (stored in gami-{id}.md)
+- [x] **MUSEUM-03**: User sees effect events persist across sessions (stored in gami-{id}.md)
 - [ ] **MUSEUM-04**: User sees museum entries grouped by week/month
 - [ ] **MUSEUM-05**: User sees museum UI consistent with Codex (Phase 17) design patterns
 
@@ -119,15 +119,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FEEDBACK-03 | Phase 21 | Complete |
 | FEEDBACK-04 | Phase 21 | Complete |
 | FEEDBACK-05 | Phase 21 | Complete |
-| COUPLING-01 | Phase 22 | Pending |
-| COUPLING-02 | Phase 22 | Pending |
+| COUPLING-01 | Phase 22 | Complete |
+| COUPLING-02 | Phase 22 | Complete |
 | COUPLING-03 | Phase 22 | Complete |
-| COUPLING-04 | Phase 22 | Pending |
+| COUPLING-04 | Phase 22 | Complete |
 | COUPLING-05 | Phase 22 | Complete |
 | COUPLING-06 | Phase 22 | Complete |
-| MUSEUM-01 | Phase 23 | Pending |
+| MUSEUM-01 | Phase 23 | Complete |
 | MUSEUM-02 | Phase 23 | Pending |
-| MUSEUM-03 | Phase 23 | Pending |
+| MUSEUM-03 | Phase 23 | Complete |
 | MUSEUM-04 | Phase 23 | Pending |
 | MUSEUM-05 | Phase 23 | Pending |
 | COMPANION-01 | Phase 24 | Pending |

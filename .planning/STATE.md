@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Seed
-status: Ready to plan
-stopped_at: Phase 23 context gathered
-last_updated: "2026-04-10T06:41:54.519Z"
-last_activity: 2026-04-09
+status: Ready to execute
+stopped_at: Completed 23-01-PLAN.md
+last_updated: "2026-04-10T06:59:50.599Z"
+last_activity: 2026-04-10
 progress:
   total_phases: 6
   completed_phases: 4
-  total_plans: 10
-  completed_plans: 10
+  total_plans: 12
+  completed_plans: 11
   percent: 0
 ---
 
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 22 — ui-config-famille
+**Current focus:** Phase 23 — mus-e-des-effets-seed-002-lite
 
 ## Current Position
 
-Phase: 23
-Plan: Not started
+Phase: 23 (mus-e-des-effets-seed-002-lite) — EXECUTING
+Plan: 2 of 2
 Milestone: v1.3 Seed (defining requirements)
 Last shipped: v1.2 Confort & Découverte (2026-04-08)
-Last activity: 2026-04-09
+Last activity: 2026-04-10
 
 Progress: [░░░░░░░░░░] 0% (0/6 phases v1.3)
 
@@ -104,6 +104,7 @@ Next step: `/gsd:discuss-phase 19` après approbation du roadmap
 | Phase 21 P02 | 8 | 2 tasks | 7 files |
 | Phase 22-ui-config-famille P01 | 3min | 3 tasks | 5 files |
 | Phase 22-ui-config-famille P02 | 2min | 2 tasks | 2 files |
+| Phase 23-mus-e-des-effets-seed-002-lite P01 | 8min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -230,6 +231,7 @@ Recent decisions affecting current work:
 - [Phase 22-01]: Cache module-level _overridesCache pour eviter acces SecureStore sur hot path (opt-out pattern: cle absente = categorie active)
 - [Phase 22-ui-config-famille]: Badge variant inline sans Badge.tsx — View+Text avec variantColor+33 hex pour eviter couplage composant generique sur couleurs semantiques
 - [Phase 22-ui-config-famille]: DISPLAY_ORDER golden>rare>ambient — ordre visuel par importance percue de l'effet semantique
+- [Phase 23-01]: extractMuseumSection utilisée par openLootBox via lecture fichier brut (gamiRawContent) car gamiData est parsé sans le contenu Markdown brut
 
 ### Pending Todos
 
@@ -271,6 +273,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-10T06:41:54.496Z
-Stopped at: Phase 23 context gathered
-Resume file: .planning/phases/23-mus-e-des-effets-seed-002-lite/23-CONTEXT.md
+Last session: 2026-04-10T06:59:50.596Z
+Stopped at: Completed 23-01-PLAN.md
+Resume file: None
