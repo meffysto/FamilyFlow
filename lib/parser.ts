@@ -2185,10 +2185,47 @@ export function adultJournalPathForDate(prenom: string, date: string): string {
 
 /**
  * Generate a new adult/ado journal from template.
+ * @param prenom - Prénom du profil adulte
+ * @param options - Options du template (grossesse: true pour suivi grossesse)
  */
-export function generateAdultJournalTemplate(prenom: string): string {
+export function generateAdultJournalTemplate(prenom: string, options?: { grossesse?: boolean }): string {
   const today = format(new Date(), 'yyyy-MM-dd');
   const todayDisplay = format(new Date(), 'dd/MM/yyyy');
+
+  if (options?.grossesse) {
+    return `---
+date: ${today}
+profil: ${prenom}
+tags:
+  - journal-adulte
+  - journal-grossesse
+---
+
+# Journal — ${prenom} — ${todayDisplay}
+
+## 😴 Suivi Sommeil
+
+> **Coucher**:
+> **Lever**:
+> **Qualité** (1-5):
+> **Notes**:
+
+## 🤒 Symptômes
+
+1.
+
+## 😊 Humeur & Observations
+
+> Comment te sens-tu aujourd'hui ?
+
+## 🎯 Objectifs
+- [ ]
+
+## 🙏 Gratitude
+
+> [!tip] 3 choses positives aujourd'hui
+`;
+  }
 
   return `---
 date: ${today}
