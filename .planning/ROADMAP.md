@@ -142,7 +142,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 24-01-PLAN.md — companion-storage.ts SecureStore + persistance tree.tsx + celebration dormant
+- [x] 24-01-PLAN.md — companion-storage.ts SecureStore + persistance tree.tsx + celebration dormant
 - [ ] 24-02-PLAN.md — DashboardCompanion bulle + weekly_recap + nudge flag + triggers cross-feature
 
 ## Progress
@@ -158,7 +158,7 @@ Plans:
 | 21. Feedback visuel + compagnon | v1.3 | 2/2 | Complete    | 2026-04-09 |
 | 22. UI config famille | v1.3 | 2/2 | Complete    | 2026-04-09 |
 | 23. Musée des effets | v1.3 | 2/2 | Complete    | 2026-04-10 |
-| 24. Compagnon étendu | v1.3 | 0/2 | Not started | - |
+| 24. Compagnon étendu | v1.3 | 1/2 | In Progress|  |
 
 ## Archived Milestones
 
