@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.3
-milestone_name: Seed
-status: Phase complete — ready for verification
-stopped_at: Completed 24-02-PLAN.md
-last_updated: "2026-04-10T10:07:28.940Z"
+milestone: v1.4
+milestone_name: Jardin Familial
+status: Defining requirements
+stopped_at: null
+last_updated: "2026-04-10T12:00:00.000Z"
 last_activity: 2026-04-10
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 14
-  completed_plans: 14
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
   percent: 0
 ---
 
@@ -21,19 +21,19 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 24 — compagnon-tendu-seed-003-lite
+**Current focus:** Defining requirements for v1.4 Jardin Familial
 
 ## Current Position
 
-Phase: 24 (compagnon-tendu-seed-003-lite) — EXECUTING
-Plan: 2 of 2
-Milestone: v1.3 Seed (defining requirements)
-Last shipped: v1.2 Confort & Découverte (2026-04-08)
-Last activity: 2026-04-10
+Phase: Not started (defining requirements)
+Plan: —
+Milestone: v1.4 Jardin Familial (MVP)
+Last shipped: v1.3 Seed (2026-04-10)
+Last activity: 2026-04-10 — Milestone v1.4 started
 
-Progress: [░░░░░░░░░░] 0% (0/6 phases v1.3)
+Progress: [░░░░░░░░░░] 0%
 
-Next step: `/gsd:discuss-phase 19` après approbation du roadmap
+Status: Defining requirements
 
 ## Performance Metrics
 

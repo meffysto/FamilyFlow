@@ -38,6 +38,13 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 - ✓ Saisie vocale des préférences alimentaires via DictaphoneRecorder + extraction IA — v1.2
 - ✓ Codex ferme — 111 entrées sur 11 catégories (Cultures, Animaux, Bâtiments, Craft, Tech, Compagnons, Loot, Saisonnier, Sagas, Quêtes, Aventures), sprites pixel art natifs, recherche normalisée FR+EN, zéro drift via 220 tests Jest anti-drift — v1.2
 - ✓ Tutoriel ferme immersif (5 étapes mixtes cartes + coach marks spotlight) au premier lancement, skippable, rejouable depuis le codex — v1.2
+- ✓ Détection sémantique de la catégorie des tâches (filepath + sections + tags) sans écrire dans les fichiers Obsidian — v1.3
+- ✓ Moteur de couplage sémantique — 10 catégories de tâches couplées chacune à un effet wow spécifique sur la ferme, dispatcher applyTaskEffect() câblé dans completeTask — v1.3
+- ✓ Anti-abus via caps quotidiens/hebdomadaires persistés dans SecureStore, 68 tests Jest — v1.3
+- ✓ Feedback visuel et compagnon différenciés par catégorie d'effet (toast, haptic, HarvestBurst, messages i18n FR+EN) — v1.3
+- ✓ Écran Réglages — Couplage sémantique (toggle par catégorie, preview, stats semaine) — v1.3
+- ✓ Musée des effets — chronologie persistée des effets déclenchés (SEED-002 lite) — v1.3
+- ✓ Compagnon étendu — 4 event types activés (weekly_recap, morning_greeting, gentle_nudge, comeback) + persistance messages SecureStore + bulle dashboard — v1.3
 
 ### Active
 
@@ -48,13 +55,12 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 - [ ] (Backlog) Suggestion automatique de recettes compatibles selon les convives sélectionnés
 - [ ] (Backlog) Tutoriels contextuels pour autres écrans complexes (budget OCR, sagas, quêtes)
 - [ ] (Backlog) Mécanique "Pokédex" — tracking de découverte codex par profil avec statistiques de complétion
-- ✓ Détection sémantique de la catégorie des tâches (filepath + sections + tags) sans écrire dans les fichiers Obsidian — v1.3 Phase 19
-- ✓ Moteur de couplage sémantique — 10 catégories de tâches couplées chacune à un effet wow spécifique sur la ferme, dispatcher applyTaskEffect() câblé dans completeTask — v1.3 Phase 20
-- ✓ Anti-abus via caps quotidiens/hebdomadaires persistés dans SecureStore, 68 tests Jest — v1.3 Phase 20
-- [ ] (v1.3) Feedback visuel et compagnon différenciés par catégorie d'effet (toast, haptic, HarvestBurst, messages i18n FR+EN)
-- [ ] (v1.3) Écran Réglages — Couplage sémantique (toggle par catégorie, preview, stats semaine)
-- [ ] (v1.3) Musée des effets — chronologie persistée des effets déclenchés (SEED-002 lite)
-- ✓ Compagnon étendu — 4 event types activés (weekly_recap, morning_greeting, gentle_nudge, comeback) + persistance messages SecureStore + bulle dashboard (celebration désactivée D-08) — v1.3 Phase 24
+- [ ] (v1.4) Nouvelle carte "Place du Village" avec grille et terrain propres
+- [ ] (v1.4) Portail dans la ferme perso vers le jardin familial
+- [ ] (v1.4) Système de contributions (récoltes ferme + tâches IRL)
+- [ ] (v1.4) Objectif hebdomadaire auto-généré
+- [ ] (v1.4) Récompense collective (bonus in-game + suggestion activité IRL)
+- [ ] (v1.4) Panneau historique interactif sur la place du village
 
 ### Out of Scope
 
@@ -64,41 +70,27 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 - Migration hors Obsidian — le vault Markdown reste la source de vérité
 - Accessibilité complète (WCAG) — pas prioritaire pour usage familial privé
 
-## Current Milestone: v1.3 Seed
+## Current Milestone: v1.4 Jardin Familial (MVP)
 
-**Goal:** Transformer la ferme en reflet différencié du quotidien familial en couplant sémantiquement chaque catégorie de tâche réelle à un effet ferme spécifique (wow moment tangible).
+**Goal:** Créer un espace coopératif partagé entre tous les profils — une "Place du Village" avec sa propre carte — où la famille contribue ensemble (récoltes + tâches) vers un objectif hebdomadaire commun.
 
-**Core insight:** Pas de champ `category` sur les tâches — la taxonomie est déjà organique via filepath Obsidian + sections H2/H3 + tags. Pure lecture des fichiers tâches (Obsidian-respect).
+**Target features:**
+- Nouvelle carte "Place du Village" (pavés, fontaine, étals, ambiance communautaire)
+- Portail dans la ferme perso (transition visuelle vers le jardin)
+- Contributions : récoltes de la ferme perso + tâches IRL complétées
+- Objectif hebdomadaire auto-généré (recette/projet collectif adapté au niveau)
+- Récompense à l'atteinte : bonus in-game + suggestion d'activité familiale IRL
+- Panneau historique interactif sur la place (log des semaines accomplies)
 
-**Point d'injection :** `lib/gamification/engine.ts:awardTaskCompletion()` + nouveau module `lib/effects/semantic-coupling.ts`.
-
-**Mapping 10 catégories → effets wow :**
-
-| # | Catégorie | Effet | Cap |
-|---|-----------|-------|-----|
-| 1 | Ménage quotidien | Weeds-Free Ticket (retire 1 weeds) | 1/j |
-| 2 | Ménage hebdo/saisonnier | Fence Repair Free (répare 1 wear) | 1/j |
-| 3 | Courses alimentaires | Production Turbo 24h (buildings 0.5x) | 1/j |
-| 4 | Routine enfant | Companion Mood Spike (+5 mood + msg IA) | 2/j |
-| 5 | Devoirs/école | Growth Sprint 24h (tasksPerStage +1) | 1/j |
-| 6 | Santé médicale | Rare Seed Jackpot (guaranteed rare drop) | 1/RDV |
-| 7 | Gratitude/famille | Saga Trait Boost (entente +1) | 2/j |
-| 8 | Budget/admin | Building Capacity Boost ×2 24h | 1/j |
-| 9 | Soins bébé | Instant Harvest Gold (×3 golden rain) | 1/j |
-| 10 | Cuisine/repas | Recipe Unlock Surprise (craft rare) | 1/sem |
-
-**Effets universels :** `#urgent` → ×2 multiplier auto 5 tâches ; streak >7j → Double Loot Cascade.
-
-**Target features (6 phases, 19→24) :**
-- Phase 19 — Détection catégorie sémantique (mapping table + feature flag + tests)
-- Phase 20 — Moteur d'effets + anti-abus (dispatcher, caps SecureStore, wiring 10 effets)
-- ✅ Phase 21 — Feedback visuel + compagnon (HarvestBurst variants, toasts, haptic, i18n FR+EN) — completed 2026-04-09
-- ✅ Phase 22 — UI config famille (écran Réglages Couplage sémantique, toggles, stats) — completed 2026-04-09
-- ✅ Phase 23 — Musée des effets (SEED-002 lite — chronologie persistée dans gami-{id}.md) — completed 2026-04-10
-- ✅ Phase 24 — Compagnon étendu (SEED-003 lite — 4 event types + persistance messages + bulle dashboard) — completed 2026-04-10
+**Key context:**
+- Scope MVP — le Livre de Famille enrichi, le vote famille, le polish viendront dans un v1.5
+- Infra tilemap/world-grid existante réutilisable (deuxième instance)
+- Données dans le vault Obsidian (fichier partagé entre profils)
+- L'arbre familial commun est hors scope MVP (v1.5)
 
 ## Previous Milestones
 
+- ✅ **v1.3 Seed** — Shipped 2026-04-10. Couplage sémantique tâches↔ferme (10 catégories, effets wow, anti-abus, musée des effets, compagnon étendu 4 event types). Phases 19-24.
 - ✅ **v1.2 Confort & Découverte** — Shipped 2026-04-08. Préférences alimentaires famille/invités + détection conflits recettes, codex ferme 111 entrées sur 11 catégories, tutoriel immersif 5 étapes. Voir `.planning/milestones/v1.2-ROADMAP.md`.
 - ✅ **v1.1 Ferme Enrichie** — Shipped 2026-04-07. Voir `.planning/milestones/v1.1-ROADMAP.md`.
 - ✅ **v1.0 Stabilisation** — Shipped 2026-03-28.
@@ -153,4 +145,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-09 — Phase 19 complète : module pur `lib/semantic/` livré (détection catégorie sémantique par filepath/section/tag, feature flag off par défaut, 37 tests Jest verts). Prochaine : Phase 20 moteur d'effets + anti-abus.*
+*Last updated: 2026-04-10 — Milestone v1.4 Jardin Familial (MVP) started*
