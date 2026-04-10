@@ -2028,6 +2028,19 @@ export default function TreeScreen() {
               <FarmHintBanner onDismiss={() => markScreenSeen('farm')} />
             )}
 
+            {/* Couche 7 : FAB village — navigation vers la Place du Village (D-03, temporaire — portail anime en Phase 28) */}
+            <TouchableOpacity
+              style={[styles.villageFAB, { backgroundColor: colors.catJeux }]}
+              onPress={() => {
+                Haptics.selectionAsync();
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                router.push('/(tabs)/village' as any);
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.villageFABText}>{'🏘️'}</Text>
+            </TouchableOpacity>
+
           </View>
         </Animated.View>
 
@@ -2913,5 +2926,24 @@ const styles = StyleSheet.create({
     fontSize: FontSize.micro,
     fontWeight: FontWeight.medium,
     marginTop: 2,
+  },
+  villageFAB: {
+    position: 'absolute',
+    bottom: 24,  // Spacing['4xl']
+    right: 16,   // Spacing['2xl']
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  villageFABText: {
+    fontSize: 24,
   },
 });
