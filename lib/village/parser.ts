@@ -52,8 +52,15 @@ export function parseGardenFile(content: string): VillageData {
   const { data: fm, content: body } = matter(content);
 
   const version = typeof fm.version === 'number' ? fm.version : 1;
-  const createdAt = typeof fm.created === 'string' ? fm.created : '';
-  const currentWeekStart = typeof fm.current_week_start === 'string' ? fm.current_week_start : '';
+  // gray-matter peut retourner les dates YAML sous forme d'objet Date — normaliser en string
+  const rawCreated = fm.created;
+  const createdAt = rawCreated instanceof Date
+    ? rawCreated.toISOString().slice(0, 10)
+    : (typeof rawCreated === 'string' ? rawCreated : '');
+  const rawWeekStart = fm.current_week_start;
+  const currentWeekStart = rawWeekStart instanceof Date
+    ? rawWeekStart.toISOString().slice(0, 10)
+    : (typeof rawWeekStart === 'string' ? rawWeekStart : '');
   const currentThemeIndex = typeof fm.current_theme_index === 'number' ? fm.current_theme_index : 0;
   const rewardClaimed = typeof fm.reward_claimed === 'boolean' ? fm.reward_claimed : false;
 
