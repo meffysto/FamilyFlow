@@ -1,151 +1,98 @@
-# Requirements: FamilyFlow — Milestone v1.3 Seed
+# Requirements: FamilyFlow — Milestone v1.4 Jardin Familial
 
-**Defined:** 2026-04-09
+**Defined:** 2026-04-10
 **Core Value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
 
-**Milestone goal:** Transformer la ferme en reflet différencié du quotidien familial en couplant sémantiquement chaque catégorie de tâche réelle à un effet ferme spécifique (wow moment tangible).
+**Milestone goal:** Créer un espace coopératif partagé entre tous les profils — une "Place du Village" avec sa propre carte — où la famille contribue ensemble (récoltes + tâches) vers un objectif hebdomadaire commun.
 
-## v1.3 Requirements
+## v1.4 Requirements
 
-Requirements pour le milestone v1.3. Chaque requirement mappe à une phase exacte du roadmap.
+Requirements pour le milestone Jardin Familial (MVP). Chaque requirement mappe à une phase du roadmap.
 
-### SEMANTIC — Semantic coupling engine (Phase 19, 20)
+### Données & Infrastructure
 
-- [ ] **SEMANTIC-01**: User sees a category correctly detected from task filepath (maison/enfants/rendez-vous/etc.)
-- [ ] **SEMANTIC-02**: User sees a category detected from H2/H3 section (Quotidien/Ménage/Mensuel/etc.)
-- [ ] **SEMANTIC-03**: User sees a category detected from task tags (#urgent, #budget, etc.)
-- [ ] **SEMANTIC-04**: User's task with no matching category falls back to standard XP (zero regression)
-- [ ] **SEMANTIC-05**: User can toggle the semantic coupling feature via feature flag
-- [x] **SEMANTIC-06**: User's 10 categories are each mapped to exactly one wow effect
-- [x] **SEMANTIC-07**: User can't trigger an effect more than its daily/weekly cap
-- [x] **SEMANTIC-08**: User completing an "urgent" tagged task gets ×2 multiplier for 5 tasks
-- [x] **SEMANTIC-09**: User with >7 day task streak gets a Double Loot Cascade bonus
+- [ ] **DATA-01**: Le système persiste l'état du village dans un fichier Markdown partagé (`village.md`) compatible Obsidian, avec parser bidirectionnel
+- [ ] **DATA-02**: Les contributions sont stockées en append-only log (timestamp, profileId, type, montant) pour éviter les corruptions iCloud
+- [ ] **DATA-03**: Un hook domaine isolé `useGarden.ts` gère toute la logique village (pas d'ajout dans useVault.ts)
+- [ ] **DATA-04**: Les IDs de la grille village sont namespacés (`village_c0`, `village_b0`) pour éviter les collisions avec la ferme perso
 
-### EFFECTS — 10 wow effects wiring (Phase 20)
+### Carte & Navigation
 
-- [x] **EFFECTS-01**: User doing housework (ménage quotidien) gets a weeds event removed from farm
-- [x] **EFFECTS-02**: User doing weekly/seasonal cleaning gets a free wear event repair
-- [x] **EFFECTS-03**: User completing shopping (courses) gets 24h building production turbo (0.5x interval)
-- [x] **EFFECTS-04**: User completing child routines gets a companion mood spike with AI message
-- [x] **EFFECTS-05**: User completing homework/school tasks gets 24h Growth Sprint (tasksPerStage -1)
-- [x] **EFFECTS-06**: User completing a medical appointment gets a guaranteed rare seed drop
-- [x] **EFFECTS-07**: User writing gratitude/birthday/family entries gets a saga trait boost
-- [x] **EFFECTS-08**: User completing budget/admin tasks gets 24h Building Capacity Boost (×2)
-- [x] **EFFECTS-09**: User completing baby care tasks gets next harvest = golden rain ×3
-- [x] **EFFECTS-10**: User cooking/meal planning tasks gets a free rare craft recipe unlock (weekly)
+- [ ] **MAP-01**: Une carte "Place du Village" avec son propre terrain tilemap (cobblestone dominant, fontaine, étals) est rendue via le TileMapRenderer existant
+- [ ] **MAP-02**: Une grille village (`village-grid.ts`) définit les positions des éléments interactifs sur la place
+- [ ] **MAP-03**: Un portail interactif dans la scène ferme perso permet de naviguer vers le village avec une transition visuelle
 
-### FEEDBACK — Visual + companion + i18n (Phase 21)
+### Coopération & Contributions
 
-- [x] **FEEDBACK-01**: User sees a specific toast when an effect is triggered ("🌿 Ménage: 1 weeds retiré !")
-- [x] **FEEDBACK-02**: User feels a distinct haptic pattern per effect category
-- [x] **FEEDBACK-03**: User sees a visual burst (HarvestBurst variant) adapted to the effect
-- [x] **FEEDBACK-04**: User reads a contextual companion message referencing the real task category
-- [x] **FEEDBACK-05**: User sees i18n FR+EN parity for all feedback strings
+- [ ] **COOP-01**: Quand un membre récolte dans sa ferme perso, une contribution est automatiquement ajoutée à l'objectif village
+- [ ] **COOP-02**: Quand un membre complète une tâche IRL (via semantic coupling v1.3), une contribution est ajoutée à l'objectif village
+- [ ] **COOP-03**: Un feed de contributions affiche qui a fait quoi cette semaine sur l'écran village
+- [ ] **COOP-04**: Un indicateur per-membre montre la contribution de chaque profil cette semaine
 
-### COUPLING-UI — Settings UI (Phase 22)
+### Objectif & Récompense
 
-- [x] **COUPLING-01**: User can access a "Couplage sémantique" screen in Settings
-- [x] **COUPLING-02**: User sees all 10 categories with their mapped effect
-- [x] **COUPLING-03**: User can toggle each category on/off individually
-- [x] **COUPLING-04**: User sees a preview of what each effect does
-- [x] **COUPLING-05**: User sees weekly stats (how many effects triggered this week)
-- [x] **COUPLING-06**: User's toggle state persists across app restarts
+- [ ] **OBJ-01**: Un objectif hebdomadaire est auto-généré chaque lundi, avec cible adaptée au nombre de profils actifs et à l'historique
+- [ ] **OBJ-02**: Une barre de progression affiche l'avancement collectif vers l'objectif de la semaine
+- [ ] **OBJ-03**: Quand l'objectif est atteint, tous les profils reçoivent un bonus in-game (XP + item cosmétique)
+- [ ] **OBJ-04**: La récompense inclut une suggestion d'activité familiale IRL (liste curatée, pondérée par saison)
+- [ ] **OBJ-05**: Un flag partagé + flag per-profil empêchent le double-claim de récompense
 
-### MUSEUM — SEED-002 lite (Phase 23)
+### Historique
 
-- [x] **MUSEUM-01**: User sees every triggered effect recorded in a chronological museum
-- [x] **MUSEUM-02**: User can open a "Musée" screen showing dated milestones
-- [x] **MUSEUM-03**: User sees effect events persist across sessions (stored in gami-{id}.md)
-- [x] **MUSEUM-04**: User sees museum entries grouped by week/month
-- [x] **MUSEUM-05**: User sees museum UI consistent with Codex (Phase 17) design patterns
+- [ ] **HIST-01**: Un panneau interactif sur la place du village affiche l'historique des semaines accomplies
+- [ ] **HIST-02**: Chaque semaine enregistre : cible, total, contributions par membre, récompense claimée
 
-### COMPANION-EXT — SEED-003 lite (Phase 24)
+## v1.5 Requirements
 
-- [x] **COMPANION-01**: User sees a weekly_recap companion message on Sunday evenings with coupling stats
-- [x] **COMPANION-02**: User sees a morning_greeting message on first daily open (6h-11h)
-- [x] **COMPANION-03**: User sees a celebration message on streak multiples of 7
-- [x] **COMPANION-04**: User sees a gentle_nudge message if no task completed by afternoon
-- [x] **COMPANION-05**: User sees a comeback message after >24h absence
-- [x] **COMPANION-06**: User's companion messages are persisted across app restarts (not RAM-only)
+Déféré au prochain milestone. Trackés mais pas dans le roadmap actuel.
 
-### ARCH — Architecture constraints (cross-phase)
+### Village Enrichi
 
-- [ ] **ARCH-01**: User's task files are never written to (Obsidian-respect, pure read)
-- [ ] **ARCH-02**: User's feature flag allows instant disable of all semantic coupling
-- [ ] **ARCH-03**: User experiences zero regression when category is unknown (standard XP fallback)
-- [ ] **ARCH-04**: User's milestone adds no new npm dependencies (use existing libs)
+- **VILL-01**: Les avatars des membres de la famille sont affichés dans le village à des positions fixes
+- **VILL-02**: L'ambiance visuelle de la place change selon la progression hebdo (vide → actif → festif)
+- **VILL-03**: Un arbre familial commun grandit avec les contributions cumulées au fil des semaines
+- **VILL-04**: Vote famille pour choisir l'objectif parmi 3 suggestions
+- **VILL-05**: Décorations cosmétiques débloquées par milestones collectifs cumulés
 
 ## Out of Scope
 
-Explicitly excluded. Documented to prevent scope creep.
-
 | Feature | Reason |
 |---------|--------|
-| Full SEED-002 museum with cross-feature hub (codex + sagas + moods unified) | Only lite version integrated in v1.3 — chronologie simple des effets seulement. Full version reste dormant pour future milestone. |
-| Full SEED-003 Companion with 27 event types and journal complet | Only 5 event types activés en v1.3 (weekly_recap, morning_greeting, celebration, gentle_nudge, comeback). Full version reste dormant. |
-| Write-back into Obsidian task files | Obsidian-respect absolu — pure lecture, aucune mutation des fichiers tâches sources |
-| Dynamic user-defined categories | Seulement 10 catégories hardcodées dans mapping table — extensibilité utilisateur hors scope |
-| Negative effects / malus | Chaque effet est strictement positif — jamais de punition |
-| Category field added to task frontmatter | Pas de mutation du format tâche — la taxonomie vient du filepath + sections + tags |
-| Custom effect authoring by family | Les 10 effets sont fixes en v1.3 — écriture d'effets custom hors scope |
+| Sync temps réel / push notifications | Pas de backend — app 100% locale + iCloud |
+| Leaderboard compétitif entre membres | Anti-pattern famille — crée conflit, réduit motivation intrinsèque |
+| Sous-objectifs individuels obligatoires | Culpabilisant si un membre rate — la pool partagée est plus saine |
+| Bâtiments/craft/tech tree pour le village | Double la charge cognitive — le village est pour voir le progrès collectif, pas un second jeu |
+| Decay/wither sur le village | Anxiogène — pas de punition pour les jours manqués |
+| Coopération cross-familles (grands-parents) | Nécessite comptes, serveur, GDPR — hors scope |
 
 ## Traceability
 
-Which phases cover which requirements. Updated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SEMANTIC-01 | Phase 19 | Pending |
-| SEMANTIC-02 | Phase 19 | Pending |
-| SEMANTIC-03 | Phase 19 | Pending |
-| SEMANTIC-04 | Phase 19 | Pending |
-| SEMANTIC-05 | Phase 19 | Pending |
-| SEMANTIC-06 | Phase 20 | Complete |
-| SEMANTIC-07 | Phase 20 | Complete |
-| SEMANTIC-08 | Phase 20 | Complete |
-| SEMANTIC-09 | Phase 20 | Complete |
-| EFFECTS-01 | Phase 20 | Complete |
-| EFFECTS-02 | Phase 20 | Complete |
-| EFFECTS-03 | Phase 20 | Complete |
-| EFFECTS-04 | Phase 20 | Complete |
-| EFFECTS-05 | Phase 20 | Complete |
-| EFFECTS-06 | Phase 20 | Complete |
-| EFFECTS-07 | Phase 20 | Complete |
-| EFFECTS-08 | Phase 20 | Complete |
-| EFFECTS-09 | Phase 20 | Complete |
-| EFFECTS-10 | Phase 20 | Complete |
-| FEEDBACK-01 | Phase 21 | Complete |
-| FEEDBACK-02 | Phase 21 | Complete |
-| FEEDBACK-03 | Phase 21 | Complete |
-| FEEDBACK-04 | Phase 21 | Complete |
-| FEEDBACK-05 | Phase 21 | Complete |
-| COUPLING-01 | Phase 22 | Complete |
-| COUPLING-02 | Phase 22 | Complete |
-| COUPLING-03 | Phase 22 | Complete |
-| COUPLING-04 | Phase 22 | Complete |
-| COUPLING-05 | Phase 22 | Complete |
-| COUPLING-06 | Phase 22 | Complete |
-| MUSEUM-01 | Phase 23 | Complete |
-| MUSEUM-02 | Phase 23 | Complete |
-| MUSEUM-03 | Phase 23 | Complete |
-| MUSEUM-04 | Phase 23 | Complete |
-| MUSEUM-05 | Phase 23 | Complete |
-| COMPANION-01 | Phase 24 | Complete |
-| COMPANION-02 | Phase 24 | Complete |
-| COMPANION-03 | Phase 24 | Complete |
-| COMPANION-04 | Phase 24 | Complete |
-| COMPANION-05 | Phase 24 | Complete |
-| COMPANION-06 | Phase 24 | Complete |
-| ARCH-01 | Phase 19 (cross-phase) | Pending |
-| ARCH-02 | Phase 19 (cross-phase) | Pending |
-| ARCH-03 | Phase 19 (cross-phase) | Pending |
-| ARCH-04 | Phase 19 (cross-phase) | Pending |
+| DATA-01 | — | Pending |
+| DATA-02 | — | Pending |
+| DATA-03 | — | Pending |
+| DATA-04 | — | Pending |
+| MAP-01 | — | Pending |
+| MAP-02 | — | Pending |
+| MAP-03 | — | Pending |
+| COOP-01 | — | Pending |
+| COOP-02 | — | Pending |
+| COOP-03 | — | Pending |
+| COOP-04 | — | Pending |
+| OBJ-01 | — | Pending |
+| OBJ-02 | — | Pending |
+| OBJ-03 | — | Pending |
+| OBJ-04 | — | Pending |
+| OBJ-05 | — | Pending |
+| HIST-01 | — | Pending |
+| HIST-02 | — | Pending |
 
 **Coverage:**
-- v1.3 requirements: 45 total (9 SEMANTIC + 10 EFFECTS + 5 FEEDBACK + 6 COUPLING-UI + 5 MUSEUM + 6 COMPANION-EXT + 4 ARCH)
-- Mapped to phases: 45 ✓
-- Unmapped: 0 ✓
+- v1.4 requirements: 18 total
+- Mapped to phases: 0
+- Unmapped: 18
 
 ---
-*Requirements defined: 2026-04-09*
-*Last updated: 2026-04-09 after milestone v1.3 Seed initialization*
+*Requirements defined: 2026-04-10*
+*Last updated: 2026-04-10 after initial definition*
