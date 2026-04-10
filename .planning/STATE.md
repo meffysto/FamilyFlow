@@ -2,10 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Jardin Familial
-status: Roadmap ready
-stopped_at: null
-last_updated: "2026-04-10T12:00:00.000Z"
-last_activity: 2026-04-10
+status: "Roadmap ready — next: `/gsd:plan-phase 25`"
+last_updated: "2026-04-10T17:23:58.230Z"
+last_activity: "2026-04-10 - Completed quick task 260410-qnr: Dictaphone import texte + multi-photos recettes"
 progress:
   total_phases: 4
   completed_phases: 0
@@ -200,5 +199,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-10 — Roadmap v1.4 created
+Last session: 2026-04-10T17:23:58.222Z
 Next: Plan and execute Phase 25 (Fondation données village)
