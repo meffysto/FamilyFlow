@@ -591,4 +591,5 @@ export interface FarmProfileData {
   nextHarvestGolden?: boolean;      // EFFECTS-09
   unlockedEffectRecipes?: string[]; // IDs recettes debloquees via EFFECTS-10
   effectGoldenMultiplier?: number;  // EFFECTS-09 : x3 (distinct du GOLDEN_HARVEST_MULTIPLIER = 5)
+  village_claimed_week?: string;    // ISO 'YYYY-MM-DD' — semaine village la plus recente claimee (per D-08)
 }

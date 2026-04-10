@@ -626,6 +626,7 @@ export function parseFarmProfile(content: string): FarmProfileData {
     unlockedEffectRecipes: props.unlocked_effect_recipes
       ? props.unlocked_effect_recipes.split(',').map(s => s.trim()).filter(Boolean)
       : [],
+    village_claimed_week: props.village_claimed_week || undefined,
   };
 }
 
@@ -669,6 +670,7 @@ export function serializeFarmProfile(profileName: string, data: FarmProfileData)
   if (data.unlockedEffectRecipes && data.unlockedEffectRecipes.length > 0) {
     lines.push(`unlocked_effect_recipes: ${data.unlockedEffectRecipes.join(',')}`);
   }
+  if (data.village_claimed_week) lines.push(`village_claimed_week: ${data.village_claimed_week}`);
 
   return lines.join('\n') + '\n';
 }
