@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Seed
-status: Ready to execute
-stopped_at: Completed 24-01-PLAN.md
-last_updated: "2026-04-10T10:00:26.189Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 24-02-PLAN.md
+last_updated: "2026-04-10T10:07:28.940Z"
 last_activity: 2026-04-10
 progress:
   total_phases: 6
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 14
-  completed_plans: 13
+  completed_plans: 14
   percent: 0
 ---
 
@@ -107,6 +107,7 @@ Next step: `/gsd:discuss-phase 19` après approbation du roadmap
 | Phase 23-mus-e-des-effets-seed-002-lite P01 | 8min | 2 tasks | 5 files |
 | Phase 23-mus-e-des-effets-seed-002-lite P02 | 2min | 2 tasks | 2 files |
 | Phase 24-compagnon-tendu-seed-003-lite P01 | 8min | 2 tasks | 3 files |
+| Phase 24-compagnon-tendu-seed-003-lite P02 | 8min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -238,6 +239,8 @@ Recent decisions affecting current work:
 - [Phase 23-02]: vault passé en prop depuis tree.tsx au lieu d'accès contexte dans MuseumModal — isolation et cohérence avec autres modals
 - [Phase 24-compagnon-tendu-seed-003-lite]: D-08: celebration commentée (pas supprimée) dans detectProactiveEvent — réactivable dans un futur milestone
 - [Phase 24-compagnon-tendu-seed-003-lite]: companion-storage.ts module pur SecureStore (pattern caps.ts) — fire-and-forget non-bloquant avec slice(-5)
+- [Phase 24-02]: D-05: seuls morning_greeting et weekly_recap déclenchés sur dashboard (gentle_nudge/comeback restent sur tree.tsx)
+- [Phase 24-02]: D-10: gentle_nudge limité à 1/jour via hasNudgeShownToday + markNudgeShownToday (SecureStore)
 
 ### Pending Todos
 
@@ -279,6 +282,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-10T10:00:26.185Z
-Stopped at: Completed 24-01-PLAN.md
+Last session: 2026-04-10T10:07:28.923Z
+Stopped at: Completed 24-02-PLAN.md
 Resume file: None

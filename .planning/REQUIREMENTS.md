@@ -61,12 +61,12 @@ Requirements pour le milestone v1.3. Chaque requirement mappe à une phase exact
 
 ### COMPANION-EXT — SEED-003 lite (Phase 24)
 
-- [ ] **COMPANION-01**: User sees a weekly_recap companion message on Sunday evenings with coupling stats
-- [ ] **COMPANION-02**: User sees a morning_greeting message on first daily open (6h-11h)
-- [ ] **COMPANION-03**: User sees a celebration message on streak multiples of 7
-- [ ] **COMPANION-04**: User sees a gentle_nudge message if no task completed by afternoon
-- [ ] **COMPANION-05**: User sees a comeback message after >24h absence
-- [ ] **COMPANION-06**: User's companion messages are persisted across app restarts (not RAM-only)
+- [x] **COMPANION-01**: User sees a weekly_recap companion message on Sunday evenings with coupling stats
+- [x] **COMPANION-02**: User sees a morning_greeting message on first daily open (6h-11h)
+- [x] **COMPANION-03**: User sees a celebration message on streak multiples of 7
+- [x] **COMPANION-04**: User sees a gentle_nudge message if no task completed by afternoon
+- [x] **COMPANION-05**: User sees a comeback message after >24h absence
+- [x] **COMPANION-06**: User's companion messages are persisted across app restarts (not RAM-only)
 
 ### ARCH — Architecture constraints (cross-phase)
 
@@ -130,12 +130,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MUSEUM-03 | Phase 23 | Complete |
 | MUSEUM-04 | Phase 23 | Complete |
 | MUSEUM-05 | Phase 23 | Complete |
-| COMPANION-01 | Phase 24 | Pending |
-| COMPANION-02 | Phase 24 | Pending |
-| COMPANION-03 | Phase 24 | Pending |
-| COMPANION-04 | Phase 24 | Pending |
-| COMPANION-05 | Phase 24 | Pending |
-| COMPANION-06 | Phase 24 | Pending |
+| COMPANION-01 | Phase 24 | Complete |
+| COMPANION-02 | Phase 24 | Complete |
+| COMPANION-03 | Phase 24 | Complete |
+| COMPANION-04 | Phase 24 | Complete |
+| COMPANION-05 | Phase 24 | Complete |
+| COMPANION-06 | Phase 24 | Complete |
 | ARCH-01 | Phase 19 (cross-phase) | Pending |
 | ARCH-02 | Phase 19 (cross-phase) | Pending |
 | ARCH-03 | Phase 19 (cross-phase) | Pending |

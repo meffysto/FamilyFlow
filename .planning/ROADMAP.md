@@ -48,7 +48,7 @@ Détails : `.planning/milestones/v1.2-ROADMAP.md`.
 - [x] **Phase 21: Feedback visuel + compagnon** — HarvestBurst variants, toasts, haptic, messages compagnon i18n FR+EN (completed 2026-04-09)
 - [x] **Phase 22: UI config famille** — Écran Réglages Couplage sémantique, toggles par catégorie, stats semaine (completed 2026-04-09)
 - [x] **Phase 23: Musée des effets** — SEED-002 lite : chronologie persistée dans gami-{id}.md, écran Musée minimal (completed 2026-04-10)
-- [ ] **Phase 24: Compagnon étendu** — SEED-003 lite : 4 event types activés (celebration dormant D-08), messages persistés, bulle dashboard
+- [x] **Phase 24: Compagnon étendu** — SEED-003 lite : 4 event types activés (celebration dormant D-08), messages persistés, bulle dashboard (completed 2026-04-10)
 
 #### Phase 19: Détection catégorie sémantique
 **Goal**: Livrer un module pur de détection sémantique de catégorie pour les tâches, sans effet de bord, feature flag off par défaut, testé extensivement.
@@ -143,7 +143,7 @@ Plans:
 
 Plans:
 - [x] 24-01-PLAN.md — companion-storage.ts SecureStore + persistance tree.tsx + celebration dormant
-- [ ] 24-02-PLAN.md — DashboardCompanion bulle + weekly_recap + nudge flag + triggers cross-feature
+- [x] 24-02-PLAN.md — DashboardCompanion bulle + weekly_recap + nudge flag + triggers cross-feature
 
 ## Progress
 
@@ -158,7 +158,7 @@ Plans:
 | 21. Feedback visuel + compagnon | v1.3 | 2/2 | Complete    | 2026-04-09 |
 | 22. UI config famille | v1.3 | 2/2 | Complete    | 2026-04-09 |
 | 23. Musée des effets | v1.3 | 2/2 | Complete    | 2026-04-10 |
-| 24. Compagnon étendu | v1.3 | 1/2 | In Progress|  |
+| 24. Compagnon étendu | v1.3 | 2/2 | Complete   | 2026-04-10 |
 
 ## Archived Milestones
 
