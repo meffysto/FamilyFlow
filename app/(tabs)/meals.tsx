@@ -199,6 +199,7 @@ export default function MealsScreen() {
   const [importStatus, setImportStatus] = useState('');
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [importCategory, setImportCategory] = useState('');
+  const [editableCookContent, setEditableCookContent] = useState('');
 
   // Scanner vault state
   const [showScanner, setShowScanner] = useState(false);
@@ -233,6 +234,13 @@ export default function MealsScreen() {
     await refresh();
     setRefreshing(false);
   }, [refresh]);
+
+  // Sync editableCookContent quand importResult change (photo import)
+  useEffect(() => {
+    if (importResult?.type === 'cook') {
+      setEditableCookContent(importResult.data.cookContent);
+    }
+  }, [importResult]);
 
   // ─── Helper: resolve recipeRef → Recipe ────────────────────────
 
@@ -744,7 +752,8 @@ export default function MealsScreen() {
 
       if (importResult.type === 'cook') {
         // cook.md returned a ready .cook file — nettoyer les tags/descriptions parasites
-        const cleaned = cleanCookContent(importResult.data.cookContent);
+        const contentToSave = editableCookContent || importResult.data.cookContent;
+        const cleaned = cleanCookContent(contentToSave);
         cookContent = cleaned.content;
         // Image : priorité au frontmatter cook.md, fallback vers og:image
         imageUrl = cleaned.imageUrl || importResult.data.imageUrl;
@@ -781,10 +790,11 @@ export default function MealsScreen() {
       setShowImport(false);
       setImportUrl('');
       setImportResult(null);
+      setEditableCookContent('');
     } catch (e) {
       Alert.alert(t('meals.alert.error'), String(e));
     }
-  }, [importResult, importCategory, vault, refresh, saveRecipeImage, t]);
+  }, [importResult, importCategory, editableCookContent, vault, refresh, saveRecipeImage, t]);
 
   // ─── Photo import logic ───────────────────────────────────────
 
@@ -1825,11 +1835,11 @@ export default function MealsScreen() {
         visible={showImport}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => { setShowImport(false); setImportResult(null); setImportUrl(''); }}
+        onRequestClose={() => { setShowImport(false); setImportResult(null); setImportUrl(''); setEditableCookContent(''); }}
       >
         <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
           <View style={[styles.pickerHeader, { backgroundColor: colors.card, borderBottomColor: colors.borderLight }]}>
-            <TouchableOpacity onPress={() => { setShowImport(false); setImportResult(null); setImportUrl(''); }}>
+            <TouchableOpacity onPress={() => { setShowImport(false); setImportResult(null); setImportUrl(''); setEditableCookContent(''); }}>
               <Text style={[styles.pickerClose, { color: colors.textMuted }]}>✕</Text>
             </TouchableOpacity>
             <Text style={[styles.pickerHeaderTitle, { color: colors.text }]}>{t('meals.import.modalTitle')}</Text>
@@ -1871,9 +1881,32 @@ export default function MealsScreen() {
                   {importResult.type === 'cook' ? importResult.data.title : importResult.data.title}
                 </Text>
                 {importResult.type === 'cook' ? (
-                  <Text style={[styles.importPreviewMeta, { color: colors.success }]}>
-                    {t('meals.import.cookReady')}
-                  </Text>
+                  <>
+                    <Text style={[styles.importPreviewMeta, { color: colors.success }]}>
+                      {t('meals.import.cookReady')}
+                    </Text>
+                    <Text style={[{ fontSize: FontSize.caption, color: colors.textMuted, marginTop: 10, marginBottom: 4 }]}>
+                      Contenu .cook (modifiable)
+                    </Text>
+                    <TextInput
+                      multiline
+                      value={editableCookContent}
+                      onChangeText={setEditableCookContent}
+                      style={[{
+                        backgroundColor: colors.bg,
+                        color: colors.text,
+                        borderColor: colors.borderLight,
+                        borderWidth: 1,
+                        borderRadius: 8,
+                        padding: 12,
+                        fontSize: FontSize.sm,
+                        fontFamily: Platform.select({ ios: 'Menlo', default: 'monospace' }),
+                        minHeight: 200,
+                        maxHeight: 400,
+                        textAlignVertical: 'top',
+                      }]}
+                    />
+                  </>
                 ) : (
                   <>
                     {(importResult.data.servings || importResult.data.prepTime || importResult.data.cookTime) && (
