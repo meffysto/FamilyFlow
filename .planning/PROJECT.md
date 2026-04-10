@@ -54,7 +54,7 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 - [ ] (v1.3) Feedback visuel et compagnon différenciés par catégorie d'effet (toast, haptic, HarvestBurst, messages i18n FR+EN)
 - [ ] (v1.3) Écran Réglages — Couplage sémantique (toggle par catégorie, preview, stats semaine)
 - [ ] (v1.3) Musée des effets — chronologie persistée des effets déclenchés (SEED-002 lite)
-- [ ] (v1.3) Compagnon étendu — 5 event types activés (weekly_recap, morning_greeting, celebration, gentle_nudge, comeback) + persistance messages (SEED-003 lite)
+- ✓ Compagnon étendu — 4 event types activés (weekly_recap, morning_greeting, gentle_nudge, comeback) + persistance messages SecureStore + bulle dashboard (celebration désactivée D-08) — v1.3 Phase 24
 
 ### Out of Scope
 
@@ -95,7 +95,7 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 - ✅ Phase 21 — Feedback visuel + compagnon (HarvestBurst variants, toasts, haptic, i18n FR+EN) — completed 2026-04-09
 - ✅ Phase 22 — UI config famille (écran Réglages Couplage sémantique, toggles, stats) — completed 2026-04-09
 - ✅ Phase 23 — Musée des effets (SEED-002 lite — chronologie persistée dans gami-{id}.md) — completed 2026-04-10
-- Phase 24 — Compagnon étendu (SEED-003 lite — 5 event types + persistance messages)
+- ✅ Phase 24 — Compagnon étendu (SEED-003 lite — 4 event types + persistance messages + bulle dashboard) — completed 2026-04-10
 
 ## Previous Milestones
 
