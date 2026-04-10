@@ -831,7 +831,7 @@ export function parseGamification(content: string): GamificationData {
   let inActiveRewards = false;
   let inUsedLoots = false;
 
-  const RESERVED_SECTIONS = ['Journal des gains', 'Récompenses actives', 'Récompenses utilisées'];
+  const RESERVED_SECTIONS = ['Journal des gains', 'Récompenses actives', 'Récompenses utilisées', 'Musée'];
 
   const flush = () => {
     if (currentName && !RESERVED_SECTIONS.includes(currentName)) {
@@ -920,7 +920,7 @@ export function parseGamification(content: string): GamificationData {
  * Serialize gamification data back to Markdown string.
  * Called after any points/loot change.
  */
-export function serializeGamification(data: GamificationData): string {
+export function serializeGamification(data: GamificationData, museumSection?: string): string {
   const profileSections = data.profiles
     .map(
       (p) => `## ${p.name}
@@ -956,6 +956,11 @@ pity_counter: ${p.pityCounter ?? 0}`
     )
     .join('\n');
 
+  // Phase 23 : Préserver la section ## Musée si elle existait (MUSEUM-03)
+  const museumSuffix = museumSection && museumSection.trim()
+    ? `\n\n${museumSection.trim()}\n`
+    : '';
+
   return `---
 tags:
   - gamification
@@ -973,8 +978,7 @@ ${activeRewardLines}
 ${usedLootLines}
 
 ## Journal des gains
-${historyLines}
-`;
+${historyLines}${museumSuffix}`;
 }
 
 /**
