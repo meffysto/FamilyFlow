@@ -153,6 +153,34 @@ Règles :
 - Réponds UNIQUEMENT avec le fichier .cook, sans explication ni commentaire
 - Si le contenu n'est clairement pas une recette, réponds exactement : NOT_A_RECIPE`;
 
+const COOK_VISION_SYSTEM_PROMPT = `Tu es un expert en extraction de recettes depuis des photos.
+Lis attentivement TOUTES les quantités exactes visibles sur l'image.
+
+Règles strictes d'OCR :
+- Ne rien inventer — si une quantité ou un ingrédient est illisible, écris [illisible]
+- Respecter les proportions exactes (ne pas arrondir 150g en 200g)
+- Porter attention aux tableaux nutritionnels, listes d'ingrédients, étapes numérotées
+- Si la photo montre un livre de cuisine, lire page par page méthodiquement
+- Si plusieurs pages/photos, combiner en une seule recette cohérente
+
+Format attendu :
+>> title: Nom de la recette
+>> servings: 4
+>> prep time: 15 min
+>> cook time: 30 min
+
+Étape 1 avec @ingrédient{quantité%unité} et ~ustensile{}.
+
+Étape 2…
+
+Règles de format Cooklang :
+- Syntaxe Cooklang : @ingredient{qty%unit}, ~equipment{}, #timer{duration%unit}
+- Metadata avec >> key: value
+- Une ligne vide entre chaque étape
+- Unités en métrique (g, kg, ml, cl, L)
+- Réponds UNIQUEMENT avec le fichier .cook, sans explication ni commentaire
+- Si la photo ne contient clairement pas une recette, réponds exactement : NOT_A_RECIPE`;
+
 /** Strip HTML to plain text for AI processing */
 function htmlToPlainText(html: string): string {
   return html
@@ -650,9 +678,9 @@ export async function importRecipeFromPhoto(
         'anthropic-dangerous-direct-browser-access': 'true',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 2048,
-        system: COOK_SYSTEM_PROMPT,
+        model: 'claude-sonnet-4-6-20250514',
+        max_tokens: 4096,
+        system: COOK_VISION_SYSTEM_PROMPT,
         messages: [{ role: 'user', content }],
       }),
     });
