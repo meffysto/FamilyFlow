@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini Ferme — Mockup Onboarding (Écran 5)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0f0f14;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #e2e8f0;
+    padding: 32px 16px;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: #f8fafc;
+    margin-bottom: 6px;
+  }
+  .page-sub {
+    text-align: center;
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 48px;
+  }
+
+  /* ── Grille des 3 options ── */
+  .options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    max-width: 1100px;
+    margin: 0 auto 64px;
+  }
+
+  /* ── Phone frame ── */
+  .phone {
+    background: #1a1a2e;
+    border-radius: 36px;
+    border: 2px solid #2d2d44;
+    padding: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    position: relative;
+  }
+  .phone::before {
+    content: '';
+    display: block;
+    width: 60px; height: 6px;
+    background: #2d2d44;
+    border-radius: 3px;
+    margin: 0 auto 12px;
+  }
+  .screen {
+    background: #faf9f6;
+    border-radius: 24px;
+    overflow: hidden;
+    min-height: 560px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 28px 20px 20px;
+    position: relative;
+  }
+  .screen.dark {
+    background: #12111a;
+  }
+
+  /* Gradient de fond */
+  .bg-gradient {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  /* Progress bar */
+  .progress {
+    width: 100%;
+    height: 3px;
+    background: #e2e8f0;
+    border-radius: 2px;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 2;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    width: 42%;
+  }
+  .screen.dark .progress { background: #2d2d44; }
+
+  /* ── OPTION LABEL ── */
+  .option-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #64748b;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .option-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: #f8fafc;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .option-desc {
+    font-size: 12px;
+    color: #64748b;
+    text-align: center;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  /* ── Textes dans le téléphone ── */
+  .step-title {
+    font-size: 21px;
+    font-weight: 800;
+    text-align: center;
+    line-height: 1.25;
+    margin-bottom: 6px;
+    position: relative;
+    z-index: 2;
+  }
+  .step-sub {
+    font-size: 13px;
+    text-align: center;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 2;
+  }
+  .screen .step-title { color: #1e293b; }
+  .screen.dark .step-title { color: #f1f5f9; }
+  .screen .step-sub { color: #64748b; }
+  .screen.dark .step-sub { color: #94a3b8; }
+
+  /* ── Feature rows ── */
+  .features {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 2;
+  }
+  .feature-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    line-height: 1.4;
+    font-weight: 500;
+  }
+  .screen .feature-row { background: #f0fdf4; color: #166534; }
+  .screen.dark .feature-row { background: #1a2e1a; color: #86efac; }
+  .feature-icon { font-size: 16px; flex-shrink: 0; }
+
+  /* CTA */
+  .cta-btn {
+    padding: 13px 32px;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    width: 100%;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ════════════════════════════════════════
+     OPTION A — Panorama Ferme (bande animée)
+  ════════════════════════════════════════ */
+  .farm-strip {
+    width: 100%;
+    height: 120px;
+    background: linear-gradient(180deg, #c8e6b0 0%, #8bc34a 50%, #6a9e32 100%);
+    border-radius: 16px;
+    margin-bottom: 18px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    z-index: 2;
+  }
+  /* Sol */
+  .farm-strip::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 36px;
+    background: #5d8a2a;
+    border-radius: 0 0 16px 16px;
+  }
+  /* Ciel */
+  .farm-strip::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 45px;
+    background: linear-gradient(180deg, #bde0ff 0%, #e0f2fe 100%);
+    border-radius: 16px 16px 0 0;
+  }
+  .strip-sprites {
+    position: absolute;
+    bottom: 28px;
+    left: 0; right: 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    padding: 0 16px;
+    z-index: 2;
+  }
+  .sprite {
+    image-rendering: pixelated;
+    display: block;
+  }
+  .sprite-label {
+    font-size: 22px;
+    line-height: 1;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+  }
+  /* Nuages */
+  .cloud {
+    position: absolute;
+    top: 8px;
+    background: white;
+    border-radius: 20px;
+    opacity: 0.85;
+  }
+  .cloud::before, .cloud::after {
+    content: '';
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+  }
+
+  /* ════════════════════════════════════════
+     OPTION B — Scène 2 plans (profondeur)
+  ════════════════════════════════════════ */
+  .farm-scene {
+    width: 100%;
+    height: 140px;
+    border-radius: 18px;
+    margin-bottom: 18px;
+    position: relative;
+    overflow: hidden;
+    z-index: 2;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+  .scene-sky {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 55%;
+    background: linear-gradient(180deg, #87ceeb 0%, #b8e4f5 100%);
+  }
+  .scene-ground-back {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 60%;
+    background: linear-gradient(180deg, #7ab648 0%, #5a9032 100%);
+  }
+  .scene-ground-front {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 30%;
+    background: #4a7a28;
+  }
+  .scene-back-row {
+    position: absolute;
+    bottom: 42%;
+    left: 0; right: 0;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: flex-end;
+    padding: 0 8px;
+  }
+  .scene-front-row {
+    position: absolute;
+    bottom: 12px;
+    left: 0; right: 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    padding: 0 8px;
+  }
+  .scene-sprite {
+    font-size: 26px;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.25));
+    line-height: 1;
+  }
+  .scene-sprite.small { font-size: 18px; opacity: 0.75; }
+  .scene-sprite.large { font-size: 32px; }
+  /* XP badge */
+  .xp-badge {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    background: rgba(255,220,0,0.95);
+    color: #7a5900;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+
+  /* ════════════════════════════════════════
+     OPTION C — Avant/Après (progression)
+  ════════════════════════════════════════ */
+  .farm-progress {
+    width: 100%;
+    height: 120px;
+    border-radius: 16px;
+    margin-bottom: 18px;
+    display: flex;
+    position: relative;
+    overflow: hidden;
+    z-index: 2;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+  .prog-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding-bottom: 10px;
+    position: relative;
+  }
+  .prog-side-before {
+    background: linear-gradient(180deg, #d4e8c2 0%, #a0c878 100%);
+  }
+  .prog-side-after {
+    background: linear-gradient(180deg, #c8e6b0 0%, #6aad3e 100%);
+  }
+  .prog-divider {
+    width: 2px;
+    background: rgba(255,255,255,0.5);
+    align-self: stretch;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+  }
+  .prog-arrow {
+    background: white;
+    border-radius: 50%;
+    width: 24px; height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    position: absolute;
+    left: -11px;
+  }
+  .prog-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: rgba(0,0,0,0.5);
+    margin-bottom: 4px;
+  }
+  .prog-sprites {
+    display: flex;
+    gap: 4px;
+    align-items: flex-end;
+    font-size: 20px;
+  }
+  .prog-sprites.large { font-size: 26px; }
+
+  /* ── Section témoignage ── */
+  .testimonial-section {
+    max-width: 1100px;
+    margin: 0 auto 48px;
+    padding: 32px;
+    background: #1a1a2e;
+    border-radius: 20px;
+    border: 1px solid #2d2d44;
+  }
+  .testimonial-section h2 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #94a3b8;
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .testimonials-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .testimonial-card {
+    background: #0f0f1a;
+    border-radius: 14px;
+    padding: 18px;
+    border: 1px solid #2d2d44;
+    position: relative;
+  }
+  .testimonial-card.highlight {
+    border-color: #22c55e;
+    background: #0a1a0a;
+  }
+  .testimonial-card .badge {
+    position: absolute;
+    top: -10px;
+    right: 16px;
+    background: #22c55e;
+    color: #052e16;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .testimonial-quote {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #e2e8f0;
+    margin-bottom: 14px;
+    font-style: italic;
+  }
+  .testimonial-quote::before { content: '"'; color: #22c55e; font-style: normal; font-size: 20px; line-height: 0; vertical-align: -4px; margin-right: 2px; }
+  .testimonial-quote::after { content: '"'; color: #22c55e; font-style: normal; font-size: 20px; line-height: 0; vertical-align: -4px; margin-left: 2px; }
+  .testimonial-author {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .author-avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: #1e3a2e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+  .author-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: #f1f5f9;
+  }
+  .author-tag {
+    font-size: 10px;
+    color: #64748b;
+  }
+
+  /* Accent color par option */
+  .accent-a { color: #4ade80; }
+  .accent-b { color: #60a5fa; }
+  .accent-c { color: #f59e0b; }
+  .bg-a { background: #4ade80; }
+  .bg-b { background: #60a5fa; }
+  .bg-c { background: #f59e0b; }
+
+  /* Stars */
+  .stars { color: #f59e0b; font-size: 11px; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<h1>Mini Ferme — Mockup Onboarding · Écran 5</h1>
+<p class="page-sub">Remplacement des emojis 🌱 🌳 ✨ · 3 propositions · Assets pixel art réels disponibles</p>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- OPTIONS                                    -->
+<!-- ══════════════════════════════════════════ -->
+
+<div class="options">
+
+  <!-- ─── OPTION A : Bande panoramique ─── -->
+  <div>
+    <p class="option-label">Option A</p>
+    <p class="option-name accent-a">Bande panoramique</p>
+    <p class="option-desc">Une bande paysagère avec ciel, sol et sprites en bas de scène.<br>Simple, lisible, mobile-first.</p>
+    <div class="phone">
+      <div class="screen dark">
+        <div class="bg-gradient" style="background: radial-gradient(ellipse at top, rgba(74,222,128,0.08) 0%, transparent 60%)"></div>
+        <div class="progress"><div class="progress-fill" style="background:#4ade80"></div></div>
+
+        <!-- Farm strip -->
+        <div class="farm-strip">
+          <!-- Ciel déjà via ::before -->
+          <!-- Nuage 1 -->
+          <div class="cloud" style="width:32px;height:10px;top:8px;left:20px">
+            <div style="position:absolute;width:18px;height:18px;background:white;border-radius:50%;top:-8px;left:4px"></div>
+            <div style="position:absolute;width:12px;height:12px;background:white;border-radius:50%;top:-5px;left:16px"></div>
+          </div>
+          <!-- Nuage 2 -->
+          <div class="cloud" style="width:40px;height:10px;top:5px;right:30px">
+            <div style="position:absolute;width:22px;height:22px;background:white;border-radius:50%;top:-10px;left:6px"></div>
+            <div style="position:absolute;width:14px;height:14px;background:white;border-radius:50%;top:-7px;left:22px"></div>
+          </div>
+          <!-- Sprites -->
+          <div class="strip-sprites">
+            <img src="../assets/garden/crops/wheat/stage_2.png" class="sprite" style="width:32px;height:32px" title="Blé poussant">
+            <img src="../assets/garden/crops/carrot/stage_4.png" class="sprite" style="width:32px;height:32px" title="Carotte récoltable">
+            <img src="../assets/garden/trees/apple_red/summer_1.png" class="sprite" style="width:40px;height:40px" title="Pommier été">
+            <img src="../assets/garden/animals/poussin/idle_1.png" class="sprite" style="width:28px;height:28px" title="Poussin">
+            <img src="../assets/garden/decos/botte_foin.png" class="sprite" style="width:28px;height:28px" title="Botte de foin">
+          </div>
+        </div>
+
+        <p class="step-title">Vos tâches prennent vie</p>
+        <p class="step-sub">Chaque corvée accomplie fait grandir votre ferme. Cultivez ensemble.</p>
+
+        <div class="features">
+          <div class="feature-row" style="background:#1a2e1a;color:#86efac">
+            <span class="feature-icon">🌱</span>
+            <span>De la graine au jardin légendaire</span>
+          </div>
+          <div class="feature-row" style="background:#1a2e1a;color:#86efac">
+            <span class="feature-icon">📖</span>
+            <span>Des sagas interactives en famille</span>
+          </div>
+          <div class="feature-row" style="background:#1a2e1a;color:#86efac">
+            <span class="feature-icon">🍃</span>
+            <span>Récoltez des récompenses ensemble</span>
+          </div>
+        </div>
+
+        <button class="cta-btn" style="background:#4ade80;color:#052e16">Continuer →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── OPTION B : Scène 2 plans ─── -->
+  <div>
+    <p class="option-label">Option B</p>
+    <p class="option-name accent-b">Scène à deux plans</p>
+    <p class="option-desc">Arrière-plan avec grands éléments, premier plan avec animaux.<br>Donne une impression de profondeur et de vie.</p>
+    <div class="phone">
+      <div class="screen">
+        <div class="bg-gradient" style="background: radial-gradient(ellipse at top, rgba(96,165,250,0.06) 0%, transparent 50%)"></div>
+        <div class="progress"><div class="progress-fill" style="background:#60a5fa"></div></div>
+
+        <!-- Farm scene -->
+        <div class="farm-scene">
+          <div class="scene-sky"></div>
+          <div class="scene-ground-back"></div>
+          <div class="scene-ground-front"></div>
+          <div class="xp-badge">+15 XP</div>
+          <!-- Back row: grands sprites -->
+          <div class="scene-back-row">
+            <img src="../assets/garden/trees/peach/summer_2.png" class="sprite" style="width:44px;height:44px;opacity:0.85" title="Pêcher">
+            <img src="../assets/garden/decos/etal_fruits.png" class="sprite" style="width:36px;height:36px;opacity:0.85" title="Étal fruits">
+            <img src="../assets/garden/buildings/poulailler/idle_south.png" class="sprite" style="width:44px;height:44px;opacity:0.85" title="Poulailler">
+            <img src="../assets/garden/crops/corn/stage_4.png" class="sprite" style="width:36px;height:36px;opacity:0.85" title="Maïs récolte">
+          </div>
+          <!-- Front row: animaux -->
+          <div class="scene-front-row">
+            <img src="../assets/garden/animals/lapin/bebe/idle_1.png" class="sprite" style="width:30px;height:30px" title="Lapin bébé">
+            <img src="../assets/garden/animals/poussin/idle_1.png" class="sprite" style="width:28px;height:28px" title="Poussin">
+            <img src="../assets/garden/animals/chat/bebe/idle_1.png" class="sprite" style="width:30px;height:30px" title="Chat bébé">
+            <img src="../assets/garden/animals/renard/bebe/idle_1.png" class="sprite" style="width:30px;height:30px" title="Renard bébé">
+          </div>
+        </div>
+
+        <p class="step-title" style="color:#1e293b">Votre ferme familiale</p>
+        <p class="step-sub" style="color:#64748b">Chaque tâche accomplie nourrit votre ferme.<br>Déverrouillez animaux, bâtiments et aventures.</p>
+
+        <div class="features">
+          <div class="feature-row" style="background:#eff6ff;color:#1e40af">
+            <span class="feature-icon">🐾</span>
+            <span>Des animaux à débloquer et nourrir</span>
+          </div>
+          <div class="feature-row" style="background:#eff6ff;color:#1e40af">
+            <span class="feature-icon">🏚️</span>
+            <span>Construisez vos bâtiments</span>
+          </div>
+          <div class="feature-row" style="background:#eff6ff;color:#1e40af">
+            <span class="feature-icon">⚔️</span>
+            <span>Rivalisez pour les meilleures tâches</span>
+          </div>
+        </div>
+
+        <button class="cta-btn" style="background:#3b82f6;color:white">Continuer →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── OPTION C : Avant/Après progression ─── -->
+  <div>
+    <p class="option-label">Option C</p>
+    <p class="option-name accent-c">Progression narrative</p>
+    <p class="option-desc">Gauche = début, droite = ferme épanouie.<br>Met en valeur la transformation dans le temps.</p>
+    <div class="phone">
+      <div class="screen">
+        <div class="progress"><div class="progress-fill" style="background:#f59e0b"></div></div>
+
+        <!-- Farm progress -->
+        <div class="farm-progress">
+          <div class="prog-side prog-side-before">
+            <p class="prog-label">Aujourd'hui</p>
+            <div class="prog-sprites">
+              <img src="../assets/garden/crops/wheat/stage_0.png" class="sprite" style="width:24px;height:24px" title="Blé graine">
+              <img src="../assets/garden/crops/carrot/stage_1.png" class="sprite" style="width:24px;height:24px" title="Carotte pousse">
+            </div>
+          </div>
+          <div class="prog-divider">
+            <div class="prog-arrow">→</div>
+          </div>
+          <div class="prog-side prog-side-after">
+            <p class="prog-label">Plus tard</p>
+            <div class="prog-sprites large">
+              <img src="../assets/garden/trees/apple_red/summer_1.png" class="sprite" style="width:36px;height:36px" title="Pommier">
+              <img src="../assets/garden/animals/poussin/idle_1.png" class="sprite" style="width:28px;height:28px" title="Poussin">
+              <img src="../assets/garden/animals/lapin/bebe/idle_1.png" class="sprite" style="width:28px;height:28px" title="Lapin">
+            </div>
+          </div>
+        </div>
+
+        <p class="step-title" style="color:#1e293b">De la graine au jardin</p>
+        <p class="step-sub" style="color:#64748b">Plus votre famille accomplit des tâches,<br>plus votre ferme s'épanouit.</p>
+
+        <div class="features">
+          <div class="feature-row" style="background:#fefce8;color:#854d0e">
+            <span class="feature-icon">🌱</span>
+            <span>Commencez petit, visez grand</span>
+          </div>
+          <div class="feature-row" style="background:#fefce8;color:#854d0e">
+            <span class="feature-icon">🐾</span>
+            <span>Animaux et bâtiments à découvrir</span>
+          </div>
+          <div class="feature-row" style="background:#fefce8;color:#854d0e">
+            <span class="feature-icon">🏆</span>
+            <span>Chacun veut faire sa part</span>
+          </div>
+        </div>
+
+        <button class="cta-btn" style="background:#f59e0b;color:#431407">Continuer →</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /options -->
+
+<!-- ══════════════════════════════════════════ -->
+<!-- TÉMOIGNAGES — FERME                        -->
+<!-- ══════════════════════════════════════════ -->
+
+<div class="testimonial-section">
+  <h2>Reformulations — Témoignage ferme</h2>
+  <div class="testimonials-grid">
+
+    <div class="testimonial-card">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-quote">Les enfants se disputent maintenant pour savoir qui va passer l'aspirateur. On n'avait pas prévu ça.</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">👩</div>
+        <div>
+          <p class="author-name">Marie L.</p>
+          <p class="author-tag">Mère de 3 enfants</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="testimonial-card highlight">
+      <div class="badge">Recommandé</div>
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-quote">Depuis qu'on a la ferme, les tâches ménagères sont devenues un terrain de compétition. Le problème inverse de d'habitude.</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">👨</div>
+        <div>
+          <p class="author-name">Thomas R.</p>
+          <p class="author-tag">Père de 2 enfants</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="testimonial-card">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-quote">Mon fils de 8 ans m'a demandé s'il pouvait faire la vaisselle pour nourrir son lapin. La ferme a tout changé.</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">👩</div>
+        <div>
+          <p class="author-name">Sophie D.</p>
+          <p class="author-tag">Mère de 2 enfants</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- NOTES TECHNIQUES                           -->
+<!-- ══════════════════════════════════════════ -->
+
+<div style="max-width:1100px;margin:0 auto;padding:24px;background:#1a1a2e;border-radius:16px;border:1px solid #2d2d44">
+  <p style="font-size:12px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">Notes d'implémentation</p>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;font-size:12px;color:#64748b;line-height:1.7">
+    <div>
+      <p style="color:#4ade80;font-weight:600;margin-bottom:4px">Option A — Bande panoramique</p>
+      <p>Remplacement 1:1 de featureHeroEmojis. Un seul View avec fond dégradé + Image pour chaque sprite. Pas de layout change. Idéal si on veut aller vite.</p>
+    </div>
+    <div>
+      <p style="color:#60a5fa;font-weight:600;margin-bottom:4px">Option B — 2 plans</p>
+      <p>Nécessite un container position:relative avec deux rangées absolute. Intègre les assets existants (poulailler, animaux, décos). La plus visuellement impactante.</p>
+    </div>
+    <div>
+      <p style="color:#f59e0b;font-weight:600;margin-bottom:4px">Option C — Avant/Après</p>
+      <p>Deux colonnes flexbox séparées par un diviseur. Raconte une histoire de progression. Bonne cohérence avec le message "de la graine au jardin".</p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

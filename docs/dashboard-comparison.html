@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FamilyFlow — Comparaison : Actuelle vs 2 Colonnes</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:         #12151A;
+  --card-bg:    rgba(28,31,40,0.72);
+  --card-border:rgba(138,134,128,0.18);
+  --text:       #F0EDE8;
+  --sub:        #C8C4BC;
+  --muted:      #8A8680;
+  --faint:      #5C5955;
+  --border:     #2A2D35;
+  --teal:       #2DD4BF;
+  --violet:     #A78BFA;
+  --green:      #4ADE80;
+  --pink:       #F472B6;
+  --gold:       #FBBF24;
+}
+
+body {
+  background: #181B22;
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 16px 64px;
+  gap: 32px;
+}
+
+.page-title {
+  color: #64748B; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+}
+
+.phones-row {
+  display: flex; gap: 36px; flex-wrap: wrap; justify-content: center;
+}
+
+.phone-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+}
+
+/* ── PHONE ── */
+.phone {
+  width: 320px; height: 700px;
+  background: var(--bg);
+  border-radius: 46px;
+  border: 1.5px solid rgba(255,255,255,0.08);
+  box-shadow:
+    0 0 0 6px #0E1016,
+    0 0 0 7px rgba(255,255,255,0.04),
+    0 48px 96px rgba(0,0,0,0.7);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  position: relative;
+}
+.island {
+  position: absolute; top: 12px; left: 50%;
+  transform: translateX(-50%);
+  width: 100px; height: 28px;
+  background: #050810; border-radius: 100px; z-index: 100;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+.status {
+  height: 48px; display: flex; align-items: flex-end;
+  justify-content: space-between; padding: 0 22px 6px;
+  flex-shrink: 0; z-index: 10;
+}
+.s-time { font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 600; color: var(--text); }
+.s-r { font-size: 10px; color: var(--muted); }
+
+.scroll {
+  flex: 1; overflow-y: auto; padding: 0 11px 24px;
+  scrollbar-width: none;
+}
+.scroll::-webkit-scrollbar { display: none; }
+
+/* ── HEADER ── */
+.hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 2px 14px;
+  position: sticky; top: 0; z-index: 20;
+  background: linear-gradient(to bottom, var(--bg) 72%, transparent);
+}
+.hdr-l { display: flex; align-items: center; gap: 9px; }
+.av {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: linear-gradient(135deg, #6D28D9, #4C1D95);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(109,40,217,0.35);
+}
+.hdr-greet { font-size: 10px; color: var(--muted); font-weight: 500; line-height: 1; }
+.hdr-name { font-size: 14px; font-weight: 800; color: var(--text); line-height: 1.3; letter-spacing: -0.02em; }
+.hdr-btns { display: flex; gap: 5px; }
+.hdr-btn {
+  width: 30px; height: 30px; border-radius: 9px;
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+}
+
+/* ── CARD ── */
+.card {
+  border-radius: 16px; padding: 14px 16px 13px;
+  margin-bottom: 9px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(16px);
+  overflow: hidden; position: relative;
+}
+.c-teal   { background-color: rgba(45,212,191,0.08);  border-color: rgba(45,212,191,0.15); }
+.c-violet { background-color: rgba(167,139,250,0.08); border-color: rgba(167,139,250,0.15); }
+.c-green  { background-color: rgba(74,222,128,0.07);  border-color: rgba(74,222,128,0.14); }
+.c-pink   { background-color: rgba(244,114,182,0.07); border-color: rgba(244,114,182,0.14); }
+.c-gold   { background-color: rgba(251,191,36,0.07);  border-color: rgba(251,191,36,0.14); }
+
+/* Card header */
+.ch {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.ch-l { display: flex; align-items: center; gap: 6px; flex: 1; }
+.ch-icon { font-size: 18px; line-height: 1; }
+.ch-title { font-size: 15px; font-weight: 700; color: var(--text); }
+.ch-title-sm { font-size: 13px; font-weight: 700; color: var(--text); }
+.badge {
+  border-radius: 5px; padding: 1px 6px; min-width: 20px;
+  display: flex; align-items: center; justify-content: center;
+  margin-left: 6px;
+}
+.badge span { font-size: 11px; font-weight: 700; color: #fff; }
+.ch-more { font-size: 12px; font-weight: 600; }
+
+/* ── Shared atoms ── */
+.div { height: 1px; background: rgba(255,255,255,0.05); margin: 7px 0; }
+.task-row { display: flex; align-items: center; gap: 7px; padding: 3px 0; }
+.task-dot { width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0; opacity: 0.45; }
+.task-t { font-size: 11px; color: var(--muted); }
+
+.check-row { display: flex; align-items: center; gap: 7px; padding: 2.5px 0; }
+.chk { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.chk.done::after { content: '✓'; font-size: 7px; font-weight: 800; color: #fff; }
+.chk.todo { background: transparent; border: 1.5px solid rgba(255,255,255,0.1); }
+.chk-t { font-size: 11px; }
+.chk-t.done { color: var(--faint); text-decoration: line-through; }
+.chk-t.todo { color: var(--muted); }
+
+.meal-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+.meal-emoji { font-size: 16px; width: 22px; text-align: center; flex-shrink: 0; }
+.meal-type { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.meal-name { font-size: 13px; font-weight: 500; color: var(--text); }
+
+.mood-row { display: flex; gap: 14px; align-items: center; }
+.mood-col { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.mood-name { font-size: 8px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+
+.prog { height: 3px; background: rgba(255,255,255,0.07); border-radius: 100px; overflow: hidden; }
+.prog-f { height: 100%; border-radius: 100px; }
+
+.rdv-row { display: flex; align-items: flex-start; gap: 8px; padding: 4px 0; }
+.rdv-bar { width: 2.5px; border-radius: 2px; align-self: stretch; flex-shrink: 0; }
+.rdv-time { font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 700; color: var(--muted); }
+.rdv-label { font-size: 12px; font-weight: 600; color: var(--text); }
+.rdv-sub { font-size: 10px; color: var(--muted); }
+
+/* Big metric */
+.metric {
+  font-family: 'DM Mono', monospace;
+  font-weight: 700; letter-spacing: -0.04em; line-height: 1;
+}
+
+/* ── 2-col layout ── */
+.row2 { display: flex; gap: 9px; margin-bottom: 9px; }
+.row2 > .card { flex: 1; min-width: 0; margin-bottom: 0; }
+.row2 .ch { margin-bottom: 8px; }
+
+/* ── Insight chip ── */
+.insight-row { display: flex; align-items: flex-start; gap: 7px; padding: 4px 0; }
+.insight-bar { width: 2.5px; border-radius: 2px; align-self: stretch; flex-shrink: 0; }
+.insight-title { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.2; }
+.insight-body { font-size: 10px; color: var(--muted); margin-top: 1px; line-height: 1.3; }
+
+/* Defi */
+.defi-row { display: flex; align-items: center; gap: 8px; }
+.defi-emoji { font-size: 22px; }
+.defi-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.defi-days { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+/* Loot */
+.loot-row { display: flex; align-items: center; gap: 10px; }
+.loot-tier { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.xp-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); }
+
+/* Label */
+.phone-label {
+  color: #64748B; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  display: flex; align-items: center; gap: 8px;
+}
+.tag {
+  background: rgba(139,92,246,0.2); color: #A78BFA;
+  padding: 2px 8px; border-radius: 100px;
+  font-size: 10px; font-weight: 700;
+}
+
+/* anim */
+@keyframes up { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:none } }
+.card { animation: up 0.4s ease both; }
+</style>
+</head>
+<body>
+
+<p class="page-title">FamilyFlow — Vue actuelle vs 2 colonnes (hiérarchie forte)</p>
+
+<div class="phones-row">
+
+<!-- ══════════════════════════════════════════════════════
+     PHONE A — VUE ACTUELLE (hiérarchie forte, full width)
+══════════════════════════════════════════════════════ -->
+<div class="phone-wrap">
+<div class="phone">
+  <div class="island"></div>
+  <div class="status"><span class="s-time">09:41</span><span class="s-r">●●● WiFi 🔋</span></div>
+  <div class="scroll">
+
+    <div class="hdr">
+      <div class="hdr-l"><div class="av">👨</div><div><div class="hdr-greet">Bonjour,</div><div class="hdr-name">Gabriel</div></div></div>
+      <div class="hdr-btns"><div class="hdr-btn">🔍</div><div class="hdr-btn">⚙️</div></div>
+    </div>
+
+    <!-- Repas — big plat name -->
+    <div class="card c-teal" style="animation-delay:0.04s;">
+      <div class="ch">
+        <div class="ch-l"><span class="ch-icon">🍽️</span><span class="ch-title">Repas du jour</span><div class="badge" style="background:var(--teal);"><span>2</span></div></div>
+        <span class="ch-more" style="color:var(--teal);">Voir tout →</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:2px 0;">
+        <span style="font-size:34px;line-height:1;">🍝</span>
+        <div>
+          <div style="font-size:20px;font-weight:800;color:var(--text);letter-spacing:-0.02em;line-height:1.1;">Pâtes carbonara</div>
+          <div style="font-size:12px;color:var(--teal);font-weight:600;margin-top:2px;">Ce soir · 19h30</div>
+        </div>
+      </div>
+      <div class="div"></div>
+      <div class="meal-row"><span class="meal-emoji">🍽️</span><div><div class="meal-type">Déjeuner</div><div class="meal-name">Salade niçoise</div></div></div>
+    </div>
+
+    <!-- Retard — big chiffre -->
+    <div class="card c-violet" style="animation-delay:0.08s;">
+      <div class="ch">
+        <div class="ch-l"><span class="ch-icon">⚠️</span><span class="ch-title">En retard</span><div class="badge" style="background:var(--violet);"><span>3</span></div></div>
+        <span class="ch-more" style="color:var(--violet);">Voir tout →</span>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:8px;">
+        <div class="metric" style="font-size:48px;color:var(--violet);">3</div>
+        <div style="padding-bottom:6px;">
+          <div style="font-size:12px;font-weight:700;color:var(--violet);opacity:0.65;text-transform:uppercase;letter-spacing:0.05em;">tâches</div>
+          <div style="font-size:10px;color:var(--muted);">en retard</div>
+        </div>
+      </div>
+      <div class="div"></div>
+      <div class="task-row"><div class="task-dot" style="background:var(--violet);"></div><span class="task-t">Laver cosy</span><span style="font-size:9px;color:var(--faint);margin-left:auto;">02/04</span></div>
+      <div class="task-row"><div class="task-dot" style="background:var(--violet);"></div><span class="task-t">Laver couette</span><span style="font-size:9px;color:var(--faint);margin-left:auto;">31/03</span></div>
+      <div class="task-row"><div class="task-dot" style="background:var(--violet);"></div><span class="task-t">Laver lit des chiens + jouets</span><span style="font-size:9px;color:var(--faint);margin-left:auto;">31/03</span></div>
+    </div>
+
+    <!-- Humeurs — big emojis -->
+    <div class="card c-violet" style="animation-delay:0.12s;">
+      <div class="ch">
+        <div class="ch-l"><span class="ch-icon">🌤️</span><span class="ch-title">Humeurs</span></div>
+        <span class="ch-more" style="color:var(--violet);">Voir tout →</span>
+      </div>
+      <div class="mood-row" style="gap:24px;">
+        <div class="mood-col"><span style="font-size:36px;line-height:1;">😄</span><span class="mood-name" style="font-size:10px;margin-top:4px;">Gabriel</span></div>
+        <div class="mood-col"><span style="font-size:36px;line-height:1;">🙂</span><span class="mood-name" style="font-size:10px;margin-top:4px;">Emma</span></div>
+        <div class="mood-col"><span style="font-size:36px;line-height:1;">😐</span><span class="mood-name" style="font-size:10px;margin-top:4px;">Lucas</span></div>
+      </div>
+    </div>
+
+    <!-- Ménage — progress bar épaisse -->
+    <div class="card c-teal" style="animation-delay:0.16s;">
+      <div class="ch">
+        <div class="ch-l"><span class="ch-icon">🏠</span><span class="ch-title">Ménage</span><div class="badge" style="background:var(--teal);"><span>2</span></div></div>
+        <span class="ch-more" style="color:var(--teal);">Voir tout →</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:6px;">
+        <span class="metric" style="font-size:40px;color:var(--teal);">2</span>
+        <span style="font-size:20px;color:rgba(45,212,191,0.25);font-weight:300;font-family:'DM Mono',monospace;">/</span>
+        <span style="font-size:20px;color:rgba(45,212,191,0.35);font-weight:600;font-family:'DM Mono',monospace;">4</span>
+        <span style="font-size:11px;color:var(--teal);font-weight:600;opacity:0.7;margin-left:4px;">restantes</span>
+      </div>
+      <div style="height:8px;background:rgba(255,255,255,0.06);border-radius:100px;overflow:hidden;margin-bottom:8px;">
+        <div style="width:50%;height:100%;background:linear-gradient(90deg,#0D9488,#2DD4BF);border-radius:100px;"></div>
+      </div>
+      <div class="check-row"><div class="chk done" style="background:rgba(45,212,191,0.25);"></div><span class="chk-t done">Aspirateur salon</span></div>
+      <div class="check-row"><div class="chk done" style="background:rgba(45,212,191,0.25);"></div><span class="chk-t done">Vaisselle</span></div>
+      <div class="check-row"><div class="chk todo"></div><span class="chk-t todo">Salle de bain</span></div>
+      <div class="check-row"><div class="chk todo"></div><span class="chk-t todo">Poubelles</span></div>
+    </div>
+
+    <!-- Budget — big % -->
+    <div class="card c-pink" style="animation-delay:0.20s;">
+      <div class="ch">
+        <div class="ch-l"><span class="ch-icon">💰</span><span class="ch-title">Budget</span></div>
+        <span class="ch-more" style="color:var(--pink);">Voir tout →</span>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:12px;">
+        <div class="metric" style="font-size:48px;color:var(--pink);">62%</div>
+        <div style="padding-bottom:6px;">
+          <div style="font-size:12px;font-weight:600;color:var(--text);">1 240€ dépensés</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:1px;">sur 2 000€ ce mois</div>
+        </div>
+      </div>
+      <div class="prog" style="margin-top:10px;"><div class="prog-f" style="width:62%;background:linear-gradient(90deg,#DB2777,#F472B6);"></div></div>
+    </div>
+
+    <!-- Courses — big chiffre -->
+    <div class="card c-teal" style="animation-delay:0.24s;">
+      <div class="ch">
+        <div class="ch-l"><span class="ch-icon">🛒</span><span class="ch-title">Courses</span><div class="badge" style="background:var(--teal);"><span>6</span></div></div>
+        <span class="ch-more" style="color:var(--teal);">Voir tout →</span>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:2px;">
+        <div class="metric" style="font-size:44px;color:var(--teal);">6</div>
+        <div style="padding-bottom:4px;"><div style="font-size:12px;font-weight:600;color:var(--text);">articles à acheter</div></div>
+      </div>
+      <div class="div"></div>
+      <div class="task-row"><div class="task-dot" style="background:var(--teal);"></div><span class="task-t">🥛 Lait × 2</span></div>
+      <div class="task-row"><div class="task-dot" style="background:var(--teal);"></div><span class="task-t">🥚 Œufs × 12</span></div>
+      <div class="task-row"><div class="task-dot" style="background:var(--teal);"></div><span class="task-t">🧀 Fromage</span></div>
+    </div>
+
+    <!-- RDV — big heure -->
+    <div class="card c-teal" style="animation-delay:0.28s;">
+      <div class="ch">
+        <div class="ch-l"><span class="ch-icon">📅</span><span class="ch-title">Rendez-vous</span><div class="badge" style="background:var(--teal);"><span>2</span></div></div>
+        <span class="ch-more" style="color:var(--teal);">Voir tout →</span>
+      </div>
+      <div class="metric" style="font-size:42px;color:var(--teal);">14h30</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-top:4px;">Pédiatre · Lucas</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:1px;">Clinique Saint-Louis</div>
+      <div class="div"></div>
+      <div class="rdv-row">
+        <div class="rdv-bar" style="background:var(--teal);"></div>
+        <div><div class="rdv-time">18h00</div><div class="rdv-label">Dentiste · Emma</div></div>
+      </div>
+    </div>
+
+    <!-- Loot — anneau -->
+    <div class="card c-green" style="animation-delay:0.32s;">
+      <div class="ch">
+        <div class="ch-l"><span class="ch-icon">🎁</span><span class="ch-title">Progression</span></div>
+        <span class="ch-more" style="color:var(--green);">Voir tout →</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="position:relative;width:64px;height:64px;flex-shrink:0;">
+          <svg width="64" height="64" viewBox="0 0 64 64" style="transform:rotate(-90deg);">
+            <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(74,222,128,0.12)" stroke-width="5"/>
+            <circle cx="32" cy="32" r="26" fill="none" stroke="#4ADE80" stroke-width="5"
+              stroke-dasharray="163.4" stroke-dashoffset="52" stroke-linecap="round"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;">🎁</div>
+        </div>
+        <div>
+          <div class="metric" style="font-size:42px;color:var(--green);">68%</div>
+          <div style="font-size:12px;color:var(--text);font-weight:600;margin-top:3px;">Niveau 12 · 340 XP</div>
+          <div class="prog" style="margin-top:6px;width:100px;"><div class="prog-f" style="width:72%;background:linear-gradient(90deg,#16A34A,#4ADE80);"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gratitude — citation dominante -->
+    <div class="card c-gold" style="animation-delay:0.36s;">
+      <div class="ch">
+        <div class="ch-l"><span class="ch-icon">🙏</span><span class="ch-title">Gratitude</span></div>
+        <span class="ch-more" style="color:var(--gold);">Voir tout →</span>
+      </div>
+      <div style="font-size:24px;letter-spacing:2px;line-height:1;color:var(--gold);">★★★★★</div>
+      <div style="font-size:15px;color:var(--text);font-style:italic;line-height:1.5;margin-top:10px;padding-left:10px;border-left:2px solid rgba(251,191,36,0.4);">
+        "Le rire de Lucas ce matin"
+      </div>
+      <div style="margin-top:5px;font-size:10px;color:var(--muted);">— Gabriel · aujourd'hui</div>
+    </div>
+
+    <!-- Anniversaires — J-3 -->
+    <div class="card c-pink" style="animation-delay:0.40s;">
+      <div class="ch">
+        <div class="ch-l"><span class="ch-icon">🎂</span><span class="ch-title">Anniversaires</span></div>
+        <span class="ch-more" style="color:var(--pink);">Voir tout →</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div class="metric" style="font-size:48px;color:var(--pink);">J-3</div>
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--text);">Mamie Joëlle</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">🎂 8 avril · 72 ans</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<div class="phone-label"><span class="tag">A</span> Vue actuelle — hiérarchie forte</div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════
+     PHONE B — 2 COLONNES (hiérarchie forte)
+══════════════════════════════════════════════════════ -->
+<div class="phone-wrap">
+<div class="phone">
+  <div class="island"></div>
+  <div class="status"><span class="s-time">09:41</span><span class="s-r">●●● WiFi 🔋</span></div>
+  <div class="scroll">
+
+    <div class="hdr">
+      <div class="hdr-l"><div class="av">👨</div><div><div class="hdr-greet">Bonjour,</div><div class="hdr-name">Gabriel</div></div></div>
+      <div class="hdr-btns"><div class="hdr-btn">🔍</div><div class="hdr-btn">⚙️</div></div>
+    </div>
+
+    <!-- Repas — full, same as A -->
+    <div class="card c-teal" style="animation-delay:0.04s;">
+      <div class="ch">
+        <div class="ch-l"><span class="ch-icon">🍽️</span><span class="ch-title">Repas du jour</span><div class="badge" style="background:var(--teal);"><span>2</span></div></div>
+        <span class="ch-more" style="color:var(--teal);">Voir tout →</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:2px 0;">
+        <span style="font-size:34px;line-height:1;">🍝</span>
+        <div>
+          <div style="font-size:20px;font-weight:800;color:var(--text);letter-spacing:-0.02em;line-height:1.1;">Pâtes carbonara</div>
+          <div style="font-size:12px;color:var(--teal);font-weight:600;margin-top:2px;">Ce soir · 19h30</div>
+        </div>
+      </div>
+      <div class="div"></div>
+      <div class="meal-row"><span class="meal-emoji">🍽️</span><div><div class="meal-type">Déjeuner</div><div class="meal-name">Salade niçoise</div></div></div>
+    </div>
+
+    <!-- Retard — full, same as A -->
+    <div class="card c-violet" style="animation-delay:0.08s;">
+      <div class="ch">
+        <div class="ch-l"><span class="ch-icon">⚠️</span><span class="ch-title">En retard</span><div class="badge" style="background:var(--violet);"><span>3</span></div></div>
+        <span class="ch-more" style="color:var(--violet);">Voir tout →</span>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:8px;">
+        <div class="metric" style="font-size:48px;color:var(--violet);">3</div>
+        <div style="padding-bottom:6px;">
+          <div style="font-size:12px;font-weight:700;color:var(--violet);opacity:0.65;text-transform:uppercase;letter-spacing:0.05em;">tâches</div>
+          <div style="font-size:10px;color:var(--muted);">en retard</div>
+        </div>
+      </div>
+      <div class="div"></div>
+      <div class="task-row"><div class="task-dot" style="background:var(--violet);"></div><span class="task-t">Laver cosy</span><span style="font-size:9px;color:var(--faint);margin-left:auto;">02/04</span></div>
+      <div class="task-row"><div class="task-dot" style="background:var(--violet);"></div><span class="task-t">Laver couette</span><span style="font-size:9px;color:var(--faint);margin-left:auto;">31/03</span></div>
+    </div>
+
+    <!-- ROW: Humeurs + Budget -->
+    <div class="row2">
+      <div class="card c-violet" style="animation-delay:0.12s;">
+        <div class="ch"><div class="ch-l"><span class="ch-icon" style="font-size:15px;">🌤️</span><span class="ch-title-sm">Humeurs</span></div></div>
+        <div class="mood-row" style="justify-content:space-between;">
+          <div class="mood-col"><span style="font-size:26px;line-height:1;">😄</span><span class="mood-name">Gab</span></div>
+          <div class="mood-col"><span style="font-size:26px;line-height:1;">🙂</span><span class="mood-name">Emma</span></div>
+          <div class="mood-col"><span style="font-size:26px;line-height:1;">😐</span><span class="mood-name">Luc</span></div>
+        </div>
+      </div>
+      <div class="card c-pink" style="animation-delay:0.14s;">
+        <div class="ch"><div class="ch-l"><span class="ch-icon" style="font-size:15px;">💰</span><span class="ch-title-sm">Budget</span></div></div>
+        <div class="metric" style="font-size:36px;color:var(--pink);">62%</div>
+        <div class="prog" style="margin-top:6px;"><div class="prog-f" style="width:62%;background:linear-gradient(90deg,#DB2777,#F472B6);"></div></div>
+        <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:3px;">1 240 / 2 000€</div>
+      </div>
+    </div>
+
+    <!-- Ménage — full -->
+    <div class="card c-teal" style="animation-delay:0.18s;">
+      <div class="ch">
+        <div class="ch-l"><span class="ch-icon">🏠</span><span class="ch-title">Ménage</span><div class="badge" style="background:var(--teal);"><span>2</span></div></div>
+        <span class="ch-more" style="color:var(--teal);">Voir tout →</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:4px;">
+        <span class="metric" style="font-size:40px;color:var(--teal);">2</span>
+        <span style="font-size:20px;color:rgba(45,212,191,0.25);font-weight:300;font-family:'DM Mono',monospace;">/</span>
+        <span style="font-size:20px;color:rgba(45,212,191,0.35);font-weight:600;font-family:'DM Mono',monospace;">4</span>
+        <span style="font-size:11px;color:var(--teal);font-weight:600;opacity:0.7;margin-left:4px;">restantes</span>
+      </div>
+      <div style="height:8px;background:rgba(255,255,255,0.06);border-radius:100px;overflow:hidden;margin-bottom:6px;">
+        <div style="width:50%;height:100%;background:linear-gradient(90deg,#0D9488,#2DD4BF);border-radius:100px;"></div>
+      </div>
+      <div class="check-row"><div class="chk done" style="background:rgba(45,212,191,0.25);"></div><span class="chk-t done">Aspirateur salon</span></div>
+      <div class="check-row"><div class="chk done" style="background:rgba(45,212,191,0.25);"></div><span class="chk-t done">Vaisselle</span></div>
+      <div class="check-row"><div class="chk todo"></div><span class="chk-t todo">Salle de bain</span></div>
+      <div class="check-row"><div class="chk todo"></div><span class="chk-t todo">Poubelles</span></div>
+    </div>
+
+    <!-- ROW: Courses + RDV -->
+    <div class="row2">
+      <div class="card c-teal" style="animation-delay:0.22s;">
+        <div class="ch"><div class="ch-l"><span class="ch-icon" style="font-size:15px;">🛒</span><span class="ch-title-sm">Courses</span><div class="badge" style="background:var(--teal);"><span>6</span></div></div></div>
+        <div class="metric" style="font-size:38px;color:var(--teal);">6</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px;">à acheter</div>
+        <div class="div"></div>
+        <div class="task-row"><div class="task-dot" style="background:var(--teal);"></div><span class="task-t">🥛 Lait × 2</span></div>
+        <div class="task-row"><div class="task-dot" style="background:var(--teal);"></div><span class="task-t">🥚 Œufs × 12</span></div>
+      </div>
+      <div class="card c-teal" style="animation-delay:0.24s;">
+        <div class="ch"><div class="ch-l"><span class="ch-icon" style="font-size:15px;">📅</span><span class="ch-title-sm">RDV</span><div class="badge" style="background:var(--teal);"><span>2</span></div></div></div>
+        <div class="metric" style="font-size:34px;color:var(--teal);">14h30</div>
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-top:4px;">Pédiatre</div>
+        <div style="font-size:10px;color:var(--muted);">Lucas</div>
+        <div class="div"></div>
+        <div style="font-size:10px;color:var(--muted);"><span style="font-family:'DM Mono',monospace;font-weight:600;">18h00</span> Dentiste · Emma</div>
+      </div>
+    </div>
+
+    <!-- ROW: Loot + Anniversaire -->
+    <div class="row2">
+      <div class="card c-green" style="animation-delay:0.28s;">
+        <div class="ch"><div class="ch-l"><span class="ch-icon" style="font-size:15px;">🎁</span><span class="ch-title-sm">Loot</span></div></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:5px;">
+          <div style="position:relative;width:52px;height:52px;">
+            <svg width="52" height="52" viewBox="0 0 52 52" style="transform:rotate(-90deg);">
+              <circle cx="26" cy="26" r="21" fill="none" stroke="rgba(74,222,128,0.12)" stroke-width="4"/>
+              <circle cx="26" cy="26" r="21" fill="none" stroke="#4ADE80" stroke-width="4"
+                stroke-dasharray="132" stroke-dashoffset="42" stroke-linecap="round"/>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:18px;">🎁</div>
+          </div>
+          <div class="metric" style="font-size:30px;color:var(--green);">68%</div>
+          <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;">Lv.12 · 340 XP</div>
+        </div>
+      </div>
+      <div class="card c-pink" style="animation-delay:0.30s;">
+        <div class="ch"><div class="ch-l"><span class="ch-icon" style="font-size:15px;">🎂</span><span class="ch-title-sm">Anniversaires</span></div></div>
+        <div class="metric" style="font-size:40px;color:var(--pink);">J-3</div>
+        <div style="margin-top:8px;">
+          <div style="font-size:13px;font-weight:700;color:var(--text);">Mamie Joëlle</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;">🎂 8 avril · 72 ans</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gratitude — full, citation -->
+    <div class="card c-gold" style="animation-delay:0.34s;">
+      <div class="ch">
+        <div class="ch-l"><span class="ch-icon">🙏</span><span class="ch-title">Gratitude</span></div>
+        <span class="ch-more" style="color:var(--gold);">Voir tout →</span>
+      </div>
+      <div style="font-size:24px;letter-spacing:2px;line-height:1;color:var(--gold);">★★★★★</div>
+      <div style="font-size:15px;color:var(--text);font-style:italic;line-height:1.5;margin-top:10px;padding-left:10px;border-left:2px solid rgba(251,191,36,0.4);">
+        "Le rire de Lucas ce matin"
+      </div>
+      <div style="margin-top:5px;font-size:10px;color:var(--muted);">— Gabriel · aujourd'hui</div>
+    </div>
+
+  </div>
+</div>
+<div class="phone-label"><span class="tag">B</span> 2 colonnes — hiérarchie forte</div>
+</div>
+
+</div>
+
+</body>
+</html>

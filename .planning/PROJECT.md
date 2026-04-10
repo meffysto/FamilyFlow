@@ -45,6 +45,7 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 - ✓ Écran Réglages — Couplage sémantique (toggle par catégorie, preview, stats semaine) — v1.3
 - ✓ Musée des effets — chronologie persistée des effets déclenchés (SEED-002 lite) — v1.3
 - ✓ Compagnon étendu — 4 event types activés (weekly_recap, morning_greeting, gentle_nudge, comeback) + persistance messages SecureStore + bulle dashboard — v1.3
+- ✓ Fondation données village — module lib/village/ isolé (types, grille 4 éléments, 7 templates thématisés, parseur bidirectionnel append-only), 24 tests Jest — v1.4
 
 ### Active
 
@@ -145,4 +146,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-10 — Milestone v1.4 Jardin Familial (MVP) started*
+*Last updated: 2026-04-10 — Phase 25 complete (fondation données village)*

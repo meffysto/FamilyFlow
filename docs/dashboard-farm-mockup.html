@@ -1,0 +1,1834 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farm Dashboard Card — Design Variations</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:         #1a1a2e;
+    --card:       #16213e;
+    --card-inner: #1b2844;
+    --border:     rgba(255,255,255,0.08);
+    --text:       #e0e0e0;
+    --text-sub:   #9ca3af;
+    --text-muted: #5b6478;
+    --green:      #4ADE80;
+    --green-dim:  rgba(74,222,128,0.12);
+    --green-glow: rgba(74,222,128,0.25);
+    --gold:       #f0c040;
+    --gold-dim:   rgba(240,192,64,0.15);
+    --gold-glow:  rgba(240,192,64,0.3);
+    --red:        #ef4444;
+    --red-dim:    rgba(239,68,68,0.12);
+    --red-glow:   rgba(239,68,68,0.2);
+    --blue:       #60a5fa;
+    --blue-dim:   rgba(96,165,250,0.15);
+    --blue-glow:  rgba(96,165,250,0.3);
+    --brown:      #a0845c;
+    --brown-fill: #8B6F47;
+    --dot-empty:  #3a3f52;
+    --radius:     10px;
+    --radius-sm:  6px;
+  }
+
+  body {
+    background: var(--bg);
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    color: var(--text);
+    padding: 32px 16px;
+    line-height: 1.5;
+  }
+
+  /* ── Layout ── */
+  .page-header {
+    max-width: 900px;
+    margin: 0 auto 40px;
+    text-align: center;
+  }
+  .page-header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--green), var(--gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .page-header p {
+    font-size: 13px;
+    color: var(--text-sub);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .section {
+    max-width: 900px;
+    margin: 0 auto 56px;
+  }
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 6px;
+    padding-left: 2px;
+  }
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .section-desc {
+    font-size: 13px;
+    color: var(--text-sub);
+    margin-bottom: 20px;
+    max-width: 600px;
+  }
+
+  .variants {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .variant {
+    flex: 0 0 auto;
+  }
+  .variant-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 8px;
+    padding-left: 2px;
+  }
+
+  .dual-grid {
+    display: flex;
+    gap: 8px;
+  }
+  .dual-grid .card { flex: 1; min-width: 0; }
+
+  /* ── Card base ── */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    width: 370px;
+    overflow: hidden;
+  }
+  .card-pad {
+    padding: 14px 16px;
+  }
+
+  /* ── Profile header (shared) ── */
+  .profile-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .profile-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--card-inner);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .profile-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .profile-name {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .profile-sub {
+    font-size: 11px;
+    color: var(--text-sub);
+  }
+  .harvest-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--green-dim);
+    color: var(--green);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    flex-shrink: 0;
+  }
+  .harvest-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+  }
+
+  /* ── Stage dots ── */
+  .stage-dots {
+    display: flex;
+    gap: 3px;
+    justify-content: center;
+  }
+  .stage-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--dot-empty);
+  }
+  .stage-dot.filled { background: var(--brown-fill); }
+  .stage-dot.mature { background: var(--gold); }
+  .stage-dot.main   { background: var(--blue); }
+
+  /* ── Sprite placeholder ── */
+  .sprite {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    line-height: 1;
+  }
+  .sprite.golden {
+    position: relative;
+  }
+  .sprite.golden::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 6px;
+    border: 1.5px solid var(--gold);
+    box-shadow: 0 0 8px var(--gold-glow);
+    pointer-events: none;
+  }
+
+  /* ── Alert banner (shared) ── */
+  .alert-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--red-dim);
+    border: 1px solid rgba(239,68,68,0.18);
+    border-radius: var(--radius-sm);
+    padding: 7px 10px;
+    margin-top: 10px;
+  }
+  .alert-icon {
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .alert-text {
+    font-size: 11px;
+    color: var(--red);
+    font-weight: 500;
+    flex: 1;
+  }
+  .alert-action {
+    font-size: 10px;
+    color: var(--red);
+    background: rgba(239,68,68,0.15);
+    border: none;
+    border-radius: 4px;
+    padding: 3px 8px;
+    cursor: pointer;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  /* ── Buildings row (shared) ── */
+  .buildings-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .building-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--card-inner);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 5px 10px;
+    font-size: 11px;
+    color: var(--text-sub);
+  }
+  .building-chip .b-icon { font-size: 14px; }
+  .building-chip .b-level {
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text-muted);
+  }
+  .building-chip .b-pending {
+    background: var(--green-dim);
+    color: var(--green);
+    font-size: 9px;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 8px;
+  }
+
+  /* ── Divider ── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 10px 0;
+  }
+
+  /* ═══════════════════════════════════════════════
+     OPTION A — Mini-potager grid
+     ═══════════════════════════════════════════════ */
+
+  .potager-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 6px;
+  }
+  .plot-cell {
+    background: var(--card-inner);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 4px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    position: relative;
+    transition: border-color 0.3s;
+  }
+  .plot-cell.main-plot {
+    border-color: var(--blue);
+    box-shadow: 0 0 8px var(--blue-glow), inset 0 0 12px rgba(96,165,250,0.06);
+    animation: pulse-blue 2.5s ease-in-out infinite;
+  }
+  @keyframes pulse-blue {
+    0%, 100% { box-shadow: 0 0 6px var(--blue-glow), inset 0 0 10px rgba(96,165,250,0.04); }
+    50%      { box-shadow: 0 0 14px var(--blue-glow), inset 0 0 16px rgba(96,165,250,0.1); }
+  }
+  .plot-cell.golden-plot {
+    border-color: var(--gold);
+    box-shadow: 0 0 8px var(--gold-glow);
+  }
+  .plot-cell .plot-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    position: absolute;
+    top: 3px;
+    left: 5px;
+  }
+  .plot-cell .plot-main-tag {
+    font-size: 8px;
+    color: var(--blue);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    position: absolute;
+    top: 3px;
+    right: 5px;
+  }
+  .plot-cell .sprite { font-size: 24px; }
+  .plot-cell .crop-name {
+    font-size: 9px;
+    color: var(--text-sub);
+    text-align: center;
+    line-height: 1.1;
+  }
+
+  /* Wear overlay on cell */
+  .plot-cell.has-wear {
+    border-color: var(--red);
+    box-shadow: 0 0 6px var(--red-glow);
+  }
+  .plot-cell .wear-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    box-shadow: 0 2px 6px rgba(239,68,68,0.4);
+    z-index: 2;
+  }
+
+  /* ═══════════════════════════════════════════════
+     OPTION B — Horizontal timeline / progress lane
+     ═══════════════════════════════════════════════ */
+
+  .timeline-lane {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 0 8px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .timeline-lane::-webkit-scrollbar { height: 3px; }
+  .timeline-lane::-webkit-scrollbar-track { background: transparent; }
+  .timeline-lane::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .timeline-card {
+    flex: 0 0 80px;
+    background: var(--card-inner);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 6px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+  }
+  .timeline-card.main-plot {
+    border-color: var(--blue);
+    box-shadow: 0 0 8px var(--blue-glow);
+    animation: pulse-blue 2.5s ease-in-out infinite;
+  }
+  .timeline-card.golden-plot {
+    border-color: var(--gold);
+    box-shadow: 0 0 8px var(--gold-glow);
+  }
+  .timeline-card.mature-card {
+    border-color: var(--green);
+    box-shadow: 0 0 6px var(--green-glow);
+  }
+  .timeline-card .sprite { font-size: 26px; }
+  .timeline-card .crop-name {
+    font-size: 9px;
+    color: var(--text-sub);
+    text-align: center;
+    line-height: 1.1;
+  }
+
+  /* Progress ring */
+  .progress-ring-wrap {
+    position: relative;
+    width: 44px;
+    height: 44px;
+  }
+  .progress-ring-wrap .sprite {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+  .progress-ring {
+    transform: rotate(-90deg);
+  }
+  .progress-ring circle {
+    fill: none;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+  }
+  .progress-ring .ring-bg { stroke: var(--dot-empty); }
+  .progress-ring .ring-fill { stroke: var(--green); transition: stroke-dashoffset 0.5s; }
+  .progress-ring .ring-fill.stage-0 { stroke: var(--text-muted); }
+  .progress-ring .ring-fill.stage-1 { stroke: var(--brown-fill); }
+  .progress-ring .ring-fill.stage-2 { stroke: var(--green); }
+  .progress-ring .ring-fill.stage-3 { stroke: var(--gold); }
+  .progress-ring .ring-fill.main-ring { stroke: var(--blue); }
+
+  /* Floating wear badge on timeline card */
+  .timeline-card .wear-float {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    box-shadow: 0 2px 6px rgba(239,68,68,0.4);
+    z-index: 2;
+  }
+
+  /* Maturity ordering labels */
+  .timeline-section-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+    padding-left: 2px;
+  }
+
+  /* ═══════════════════════════════════════════════
+     OPTION C — Compact summary
+     ═══════════════════════════════════════════════ */
+
+  .summary-stats {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .stat-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .stat-pill .stat-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+  }
+  .stat-dot.growing { background: var(--green); }
+  .stat-dot.ready   { background: var(--gold); }
+  .stat-dot.alert   { background: var(--red); }
+  .stat-dot.main-dot { background: var(--blue); }
+
+  .sprite-row {
+    display: flex;
+    gap: 6px;
+    align-items: flex-end;
+    padding: 6px 0;
+  }
+  .sprite-row .sprite-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+  .sprite-row .sprite-item .sprite { font-size: 26px; }
+  .sprite-row .sprite-item.main-sprite {
+    position: relative;
+  }
+  .sprite-row .sprite-item.main-sprite::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 28px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--blue);
+    box-shadow: 0 0 6px var(--blue-glow);
+  }
+  .sprite-row .sprite-item.golden-sprite .sprite {
+    position: relative;
+  }
+  .sprite-row .sprite-item.golden-sprite .sprite::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 8px;
+    border: 1.5px solid var(--gold);
+    box-shadow: 0 0 8px var(--gold-glow);
+  }
+  .sprite-row .sprite-name {
+    font-size: 8px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .compact-wear-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--red-dim);
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    margin-top: 8px;
+  }
+  .compact-wear-bar .cw-icon { font-size: 12px; }
+  .compact-wear-bar .cw-text {
+    font-size: 11px;
+    color: var(--red);
+    font-weight: 500;
+    flex: 1;
+  }
+  .compact-wear-bar .cw-count {
+    font-size: 10px;
+    color: var(--red);
+    font-weight: 700;
+    background: rgba(239,68,68,0.2);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  /* ── Dual-profile specific tweaks ── */
+  .dual-grid .card {
+    width: auto;
+  }
+  .dual-grid .profile-avatar { width: 28px; height: 28px; font-size: 14px; }
+  .dual-grid .profile-name { font-size: 12px; }
+  .dual-grid .profile-sub { font-size: 10px; }
+  .dual-grid .potager-grid { gap: 4px; }
+  .dual-grid .plot-cell { padding: 6px 3px 5px; }
+  .dual-grid .plot-cell .sprite { font-size: 18px; }
+  .dual-grid .plot-cell .crop-name { font-size: 8px; }
+  .dual-grid .stage-dot { width: 4px; height: 4px; }
+  .dual-grid .building-chip { padding: 4px 7px; font-size: 10px; }
+  .dual-grid .building-chip .b-icon { font-size: 12px; }
+  .dual-grid .alert-banner { padding: 5px 8px; }
+  .dual-grid .alert-text { font-size: 10px; }
+  .dual-grid .alert-icon { font-size: 12px; }
+
+  /* Timeline dual tweaks */
+  .dual-grid .timeline-card { flex: 0 0 64px; padding: 8px 4px 6px; }
+  .dual-grid .timeline-card .crop-name { font-size: 8px; }
+  .dual-grid .progress-ring-wrap { width: 36px; height: 36px; }
+  .dual-grid .progress-ring-wrap .sprite { font-size: 16px; }
+
+  /* Compact dual tweaks */
+  .dual-grid .summary-stats { gap: 8px; }
+  .dual-grid .stat-pill { font-size: 11px; }
+  .dual-grid .sprite-row .sprite-item .sprite { font-size: 20px; }
+
+  /* ── Golden sparkle ── */
+  @keyframes sparkle {
+    0%, 100% { opacity: 0.4; transform: scale(0.8); }
+    50%      { opacity: 1;   transform: scale(1.1); }
+  }
+  .golden-sparkle {
+    position: absolute;
+    top: -4px;
+    right: -2px;
+    font-size: 10px;
+    animation: sparkle 1.5s ease-in-out infinite;
+  }
+
+  /* ── Separator between sections ── */
+  .section-sep {
+    max-width: 900px;
+    margin: 0 auto 48px;
+    border: none;
+    border-top: 1px dashed rgba(255,255,255,0.08);
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════
+     HEADER
+     ════════════════════════════════════════════════════ -->
+<div class="page-header">
+  <h1>Farm Dashboard Card — Design Review</h1>
+  <p>3 layout variations x 2 states (healthy / wear events) + dual-profile grid</p>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════
+     OPTION A — Mini-potager grid
+     ════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-label">Option A</div>
+  <div class="section-title">Mini-potager grid</div>
+  <div class="section-desc">
+    Grille 2x3 de parcelles. Chaque cellule montre le sprite + 4 dots de progression.
+    La parcelle principale (FIFO) a une bordure bleue pulsante.
+    Evenements d'usure = badge flottant sur la cellule + banniere en bas.
+  </div>
+
+  <div class="variants">
+    <!-- A: Healthy -->
+    <div class="variant">
+      <div class="variant-label">Sans usure</div>
+      <div class="card">
+        <div class="card-pad">
+          <div class="profile-header">
+            <div class="profile-avatar">&#x1F466;</div>
+            <div class="profile-info">
+              <div class="profile-name">Lucas</div>
+              <div class="profile-sub">6 parcelles actives</div>
+            </div>
+            <div class="harvest-badge">2 prets</div>
+          </div>
+
+          <div class="potager-grid">
+            <!-- Plot 1: main plot, stage 1 (sprout) -->
+            <div class="plot-cell main-plot">
+              <span class="plot-main-tag">FIFO</span>
+              <div class="sprite">&#x1F33F;</div>
+              <div class="crop-name">Carotte</div>
+              <div class="stage-dots">
+                <span class="stage-dot main"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+              </div>
+            </div>
+            <!-- Plot 2: stage 2 (shrub) -->
+            <div class="plot-cell">
+              <div class="sprite">&#x1FAB4;</div>
+              <div class="crop-name">Tomate</div>
+              <div class="stage-dots">
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+              </div>
+            </div>
+            <!-- Plot 3: mature -->
+            <div class="plot-cell">
+              <div class="sprite">&#x1F33E;</div>
+              <div class="crop-name">Ble</div>
+              <div class="stage-dots">
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+              </div>
+            </div>
+            <!-- Plot 4: golden mature -->
+            <div class="plot-cell golden-plot" style="position:relative;">
+              <span class="golden-sparkle">&#x2728;</span>
+              <div class="sprite">&#x1F33E;</div>
+              <div class="crop-name">Citrouille</div>
+              <div class="stage-dots">
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+              </div>
+            </div>
+            <!-- Plot 5: stage 0 (seed) -->
+            <div class="plot-cell">
+              <div class="sprite">&#x1F331;</div>
+              <div class="crop-name">Patate</div>
+              <div class="stage-dots">
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+              </div>
+            </div>
+            <!-- Plot 6: stage 3 (mature) -->
+            <div class="plot-cell">
+              <div class="sprite">&#x1FAB4;</div>
+              <div class="crop-name">Concombre</div>
+              <div class="stage-dots">
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="buildings-row">
+            <div class="building-chip">
+              <span class="b-icon">&#x1F3DA;</span>
+              <span>Silo</span>
+              <span class="b-level">Lv2</span>
+              <span class="b-pending">+3</span>
+            </div>
+            <div class="building-chip">
+              <span class="b-icon">&#x1F3ED;</span>
+              <span>Moulin</span>
+              <span class="b-level">Lv1</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- A: With wear events -->
+    <div class="variant">
+      <div class="variant-label">Avec usure (2 events)</div>
+      <div class="card">
+        <div class="card-pad">
+          <div class="profile-header">
+            <div class="profile-avatar">&#x1F466;</div>
+            <div class="profile-info">
+              <div class="profile-name">Lucas</div>
+              <div class="profile-sub">6 parcelles actives</div>
+            </div>
+            <div class="harvest-badge">2 prets</div>
+          </div>
+
+          <div class="potager-grid">
+            <!-- Plot 1: main plot, stage 1 -->
+            <div class="plot-cell main-plot">
+              <span class="plot-main-tag">FIFO</span>
+              <div class="sprite">&#x1F33F;</div>
+              <div class="crop-name">Carotte</div>
+              <div class="stage-dots">
+                <span class="stage-dot main"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+              </div>
+            </div>
+            <!-- Plot 2: stage 2 -->
+            <div class="plot-cell">
+              <div class="sprite">&#x1FAB4;</div>
+              <div class="crop-name">Tomate</div>
+              <div class="stage-dots">
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+              </div>
+            </div>
+            <!-- Plot 3: has broken_fence wear event -->
+            <div class="plot-cell has-wear">
+              <div class="wear-badge">&#x1F528;</div>
+              <div class="sprite">&#x1F33E;</div>
+              <div class="crop-name">Ble</div>
+              <div class="stage-dots">
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+              </div>
+            </div>
+            <!-- Plot 4: golden mature -->
+            <div class="plot-cell golden-plot" style="position:relative;">
+              <span class="golden-sparkle">&#x2728;</span>
+              <div class="sprite">&#x1F33E;</div>
+              <div class="crop-name">Citrouille</div>
+              <div class="stage-dots">
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+              </div>
+            </div>
+            <!-- Plot 5: seed -->
+            <div class="plot-cell">
+              <div class="sprite">&#x1F331;</div>
+              <div class="crop-name">Patate</div>
+              <div class="stage-dots">
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+              </div>
+            </div>
+            <!-- Plot 6: stage 3 -->
+            <div class="plot-cell">
+              <div class="sprite">&#x1FAB4;</div>
+              <div class="crop-name">Concombre</div>
+              <div class="stage-dots">
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="alert-banner">
+            <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+            <span class="alert-text">Cloture cassee (parcelle 3) &middot; Toit abime (Silo)</span>
+            <button class="alert-action">Reparer</button>
+          </div>
+
+          <div class="buildings-row">
+            <div class="building-chip" style="border-color: var(--red); box-shadow: 0 0 4px var(--red-glow);">
+              <span class="b-icon">&#x1F3DA;</span>
+              <span>Silo</span>
+              <span class="b-level">Lv2</span>
+              <span style="font-size:10px;">&#x1F3DA;&#xFE0F;</span>
+            </div>
+            <div class="building-chip">
+              <span class="b-icon">&#x1F3ED;</span>
+              <span>Moulin</span>
+              <span class="b-level">Lv1</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="section-sep">
+
+
+<!-- ════════════════════════════════════════════════════
+     OPTION B — Horizontal timeline / progress lane
+     ════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-label">Option B</div>
+  <div class="section-title">Horizontal timeline / progress lane</div>
+  <div class="section-desc">
+    Cultures en bande horizontale scrollable. Chaque culture a un anneau de progression circulaire.
+    Ordonnees de la plus recente (gauche) a la plus proche de la recolte (droite).
+    Evenements d'usure = badge flottant en haut-droite de la carte concernee.
+  </div>
+
+  <div class="variants">
+    <!-- B: Healthy -->
+    <div class="variant">
+      <div class="variant-label">Sans usure</div>
+      <div class="card">
+        <div class="card-pad">
+          <div class="profile-header">
+            <div class="profile-avatar">&#x1F467;</div>
+            <div class="profile-info">
+              <div class="profile-name">Emma</div>
+              <div class="profile-sub">5 cultures en cours</div>
+            </div>
+            <div class="harvest-badge">2 prets</div>
+          </div>
+
+          <div class="timeline-lane">
+            <!-- Seed (newest) -->
+            <div class="timeline-card main-plot">
+              <div class="progress-ring-wrap">
+                <svg class="progress-ring" width="44" height="44" viewBox="0 0 44 44">
+                  <circle class="ring-bg" cx="22" cy="22" r="18"/>
+                  <circle class="ring-fill main-ring" cx="22" cy="22" r="18"
+                    stroke-dasharray="113.1" stroke-dashoffset="99"/>
+                </svg>
+                <div class="sprite">&#x1F331;</div>
+              </div>
+              <div class="crop-name">Patate<br><span style="font-size:8px;color:var(--blue);">FIFO</span></div>
+            </div>
+            <!-- Stage 1 -->
+            <div class="timeline-card">
+              <div class="progress-ring-wrap">
+                <svg class="progress-ring" width="44" height="44" viewBox="0 0 44 44">
+                  <circle class="ring-bg" cx="22" cy="22" r="18"/>
+                  <circle class="ring-fill stage-1" cx="22" cy="22" r="18"
+                    stroke-dasharray="113.1" stroke-dashoffset="84.8"/>
+                </svg>
+                <div class="sprite">&#x1F33F;</div>
+              </div>
+              <div class="crop-name">Carotte</div>
+            </div>
+            <!-- Stage 2 -->
+            <div class="timeline-card">
+              <div class="progress-ring-wrap">
+                <svg class="progress-ring" width="44" height="44" viewBox="0 0 44 44">
+                  <circle class="ring-bg" cx="22" cy="22" r="18"/>
+                  <circle class="ring-fill stage-2" cx="22" cy="22" r="18"
+                    stroke-dasharray="113.1" stroke-dashoffset="56.5"/>
+                </svg>
+                <div class="sprite">&#x1FAB4;</div>
+              </div>
+              <div class="crop-name">Tomate</div>
+            </div>
+            <!-- Mature -->
+            <div class="timeline-card mature-card">
+              <div class="progress-ring-wrap">
+                <svg class="progress-ring" width="44" height="44" viewBox="0 0 44 44">
+                  <circle class="ring-bg" cx="22" cy="22" r="18"/>
+                  <circle class="ring-fill stage-3" cx="22" cy="22" r="18"
+                    stroke-dasharray="113.1" stroke-dashoffset="0"/>
+                </svg>
+                <div class="sprite">&#x1F33E;</div>
+              </div>
+              <div class="crop-name">Ble</div>
+            </div>
+            <!-- Golden mature -->
+            <div class="timeline-card golden-plot" style="position:relative;">
+              <span class="golden-sparkle">&#x2728;</span>
+              <div class="progress-ring-wrap">
+                <svg class="progress-ring" width="44" height="44" viewBox="0 0 44 44">
+                  <circle class="ring-bg" cx="22" cy="22" r="18"/>
+                  <circle class="ring-fill stage-3" cx="22" cy="22" r="18"
+                    stroke-dasharray="113.1" stroke-dashoffset="0" style="stroke: var(--gold);"/>
+                </svg>
+                <div class="sprite">&#x1F33E;</div>
+              </div>
+              <div class="crop-name">Citrouille</div>
+            </div>
+          </div>
+
+          <div class="buildings-row">
+            <div class="building-chip">
+              <span class="b-icon">&#x1F3DA;</span>
+              <span>Silo</span>
+              <span class="b-level">Lv2</span>
+              <span class="b-pending">+3</span>
+            </div>
+            <div class="building-chip">
+              <span class="b-icon">&#x1F3ED;</span>
+              <span>Moulin</span>
+              <span class="b-level">Lv1</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- B: With wear events -->
+    <div class="variant">
+      <div class="variant-label">Avec usure (2 events)</div>
+      <div class="card">
+        <div class="card-pad">
+          <div class="profile-header">
+            <div class="profile-avatar">&#x1F467;</div>
+            <div class="profile-info">
+              <div class="profile-name">Emma</div>
+              <div class="profile-sub">5 cultures en cours</div>
+            </div>
+            <div class="harvest-badge">2 prets</div>
+          </div>
+
+          <div class="timeline-lane">
+            <!-- Seed (newest) -->
+            <div class="timeline-card main-plot">
+              <div class="progress-ring-wrap">
+                <svg class="progress-ring" width="44" height="44" viewBox="0 0 44 44">
+                  <circle class="ring-bg" cx="22" cy="22" r="18"/>
+                  <circle class="ring-fill main-ring" cx="22" cy="22" r="18"
+                    stroke-dasharray="113.1" stroke-dashoffset="99"/>
+                </svg>
+                <div class="sprite">&#x1F331;</div>
+              </div>
+              <div class="crop-name">Patate<br><span style="font-size:8px;color:var(--blue);">FIFO</span></div>
+            </div>
+            <!-- Stage 1 -->
+            <div class="timeline-card">
+              <div class="progress-ring-wrap">
+                <svg class="progress-ring" width="44" height="44" viewBox="0 0 44 44">
+                  <circle class="ring-bg" cx="22" cy="22" r="18"/>
+                  <circle class="ring-fill stage-1" cx="22" cy="22" r="18"
+                    stroke-dasharray="113.1" stroke-dashoffset="84.8"/>
+                </svg>
+                <div class="sprite">&#x1F33F;</div>
+              </div>
+              <div class="crop-name">Carotte</div>
+            </div>
+            <!-- Stage 2 with wear badge -->
+            <div class="timeline-card" style="border-color: var(--red);">
+              <div class="wear-float">&#x1F528;</div>
+              <div class="progress-ring-wrap">
+                <svg class="progress-ring" width="44" height="44" viewBox="0 0 44 44">
+                  <circle class="ring-bg" cx="22" cy="22" r="18"/>
+                  <circle class="ring-fill stage-2" cx="22" cy="22" r="18"
+                    stroke-dasharray="113.1" stroke-dashoffset="56.5"/>
+                </svg>
+                <div class="sprite">&#x1FAB4;</div>
+              </div>
+              <div class="crop-name">Tomate</div>
+            </div>
+            <!-- Mature -->
+            <div class="timeline-card mature-card">
+              <div class="progress-ring-wrap">
+                <svg class="progress-ring" width="44" height="44" viewBox="0 0 44 44">
+                  <circle class="ring-bg" cx="22" cy="22" r="18"/>
+                  <circle class="ring-fill stage-3" cx="22" cy="22" r="18"
+                    stroke-dasharray="113.1" stroke-dashoffset="0"/>
+                </svg>
+                <div class="sprite">&#x1F33E;</div>
+              </div>
+              <div class="crop-name">Ble</div>
+            </div>
+            <!-- Golden mature -->
+            <div class="timeline-card golden-plot" style="position:relative;">
+              <span class="golden-sparkle">&#x2728;</span>
+              <div class="progress-ring-wrap">
+                <svg class="progress-ring" width="44" height="44" viewBox="0 0 44 44">
+                  <circle class="ring-bg" cx="22" cy="22" r="18"/>
+                  <circle class="ring-fill stage-3" cx="22" cy="22" r="18"
+                    stroke-dasharray="113.1" stroke-dashoffset="0" style="stroke: var(--gold);"/>
+                </svg>
+                <div class="sprite">&#x1F33E;</div>
+              </div>
+              <div class="crop-name">Citrouille</div>
+            </div>
+          </div>
+
+          <div class="alert-banner">
+            <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+            <span class="alert-text">Cloture cassee (parcelle 3) &middot; Toit abime (Silo)</span>
+            <button class="alert-action">Reparer</button>
+          </div>
+
+          <div class="buildings-row">
+            <div class="building-chip" style="border-color: var(--red); box-shadow: 0 0 4px var(--red-glow);">
+              <span class="b-icon">&#x1F3DA;</span>
+              <span>Silo</span>
+              <span class="b-level">Lv2</span>
+              <span style="font-size:10px;">&#x1F6A8;</span>
+            </div>
+            <div class="building-chip">
+              <span class="b-icon">&#x1F3ED;</span>
+              <span>Moulin</span>
+              <span class="b-level">Lv1</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="section-sep">
+
+
+<!-- ════════════════════════════════════════════════════
+     OPTION C — Compact summary with expandable detail
+     ════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-label">Option C</div>
+  <div class="section-title">Compact summary</div>
+  <div class="section-desc">
+    Haut: stats resumees (nombre en cours, prets, alertes).
+    Milieu: rangee de sprites (juste les icones, pas de chrome).
+    Bas: banniere d'usure si necessaire. Le plus leger des 3.
+  </div>
+
+  <div class="variants">
+    <!-- C: Healthy -->
+    <div class="variant">
+      <div class="variant-label">Sans usure</div>
+      <div class="card">
+        <div class="card-pad">
+          <div class="profile-header">
+            <div class="profile-avatar">&#x1F466;</div>
+            <div class="profile-info">
+              <div class="profile-name">Lucas</div>
+              <div class="profile-sub">Ferme familiale</div>
+            </div>
+            <div class="harvest-badge">2 prets</div>
+          </div>
+
+          <div class="summary-stats">
+            <div class="stat-pill">
+              <span class="stat-dot growing"></span>
+              <span>3 en cours</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-dot ready"></span>
+              <span>2 prets</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-dot main-dot"></span>
+              <span>1 principal</span>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="sprite-row">
+            <div class="sprite-item main-sprite">
+              <div class="sprite">&#x1F33F;</div>
+              <div class="stage-dots">
+                <span class="stage-dot main"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+              </div>
+              <span class="sprite-name">Carotte</span>
+            </div>
+            <div class="sprite-item">
+              <div class="sprite">&#x1FAB4;</div>
+              <div class="stage-dots">
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+              </div>
+              <span class="sprite-name">Tomate</span>
+            </div>
+            <div class="sprite-item">
+              <div class="sprite">&#x1F331;</div>
+              <div class="stage-dots">
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+              </div>
+              <span class="sprite-name">Patate</span>
+            </div>
+            <div class="sprite-item">
+              <div class="sprite">&#x1FAB4;</div>
+              <div class="stage-dots">
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot"></span>
+              </div>
+              <span class="sprite-name">Concombre</span>
+            </div>
+            <div class="sprite-item">
+              <div class="sprite">&#x1F33E;</div>
+              <div class="stage-dots">
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+              </div>
+              <span class="sprite-name">Ble</span>
+            </div>
+            <div class="sprite-item golden-sprite" style="position:relative;">
+              <span class="golden-sparkle" style="top:-8px;right:-6px;">&#x2728;</span>
+              <div class="sprite" style="position:relative;">&#x1F33E;</div>
+              <div class="stage-dots">
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+              </div>
+              <span class="sprite-name">Citrouill.</span>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="buildings-row">
+            <div class="building-chip">
+              <span class="b-icon">&#x1F3DA;</span>
+              <span>Silo</span>
+              <span class="b-level">Lv2</span>
+              <span class="b-pending">+3</span>
+            </div>
+            <div class="building-chip">
+              <span class="b-icon">&#x1F3ED;</span>
+              <span>Moulin</span>
+              <span class="b-level">Lv1</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- C: With wear events -->
+    <div class="variant">
+      <div class="variant-label">Avec usure (2 events)</div>
+      <div class="card">
+        <div class="card-pad">
+          <div class="profile-header">
+            <div class="profile-avatar">&#x1F466;</div>
+            <div class="profile-info">
+              <div class="profile-name">Lucas</div>
+              <div class="profile-sub">Ferme familiale</div>
+            </div>
+            <div class="harvest-badge">2 prets</div>
+          </div>
+
+          <div class="summary-stats">
+            <div class="stat-pill">
+              <span class="stat-dot growing"></span>
+              <span>3 en cours</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-dot ready"></span>
+              <span>2 prets</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-dot alert"></span>
+              <span style="color:var(--red);">2 alertes</span>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="sprite-row">
+            <div class="sprite-item main-sprite">
+              <div class="sprite">&#x1F33F;</div>
+              <div class="stage-dots">
+                <span class="stage-dot main"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+              </div>
+              <span class="sprite-name">Carotte</span>
+            </div>
+            <div class="sprite-item">
+              <div class="sprite">&#x1FAB4;</div>
+              <div class="stage-dots">
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+              </div>
+              <span class="sprite-name">Tomate</span>
+            </div>
+            <div class="sprite-item">
+              <div class="sprite">&#x1F331;</div>
+              <div class="stage-dots">
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+              </div>
+              <span class="sprite-name">Patate</span>
+            </div>
+            <div class="sprite-item">
+              <div class="sprite">&#x1FAB4;</div>
+              <div class="stage-dots">
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot"></span>
+              </div>
+              <span class="sprite-name">Concombre</span>
+            </div>
+            <div class="sprite-item">
+              <div class="sprite">&#x1F33E;</div>
+              <div class="stage-dots">
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+              </div>
+              <span class="sprite-name">Ble</span>
+            </div>
+            <div class="sprite-item golden-sprite" style="position:relative;">
+              <span class="golden-sparkle" style="top:-8px;right:-6px;">&#x2728;</span>
+              <div class="sprite" style="position:relative;">&#x1F33E;</div>
+              <div class="stage-dots">
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+              </div>
+              <span class="sprite-name">Citrouill.</span>
+            </div>
+          </div>
+
+          <div class="compact-wear-bar">
+            <span class="cw-icon">&#x1F528;</span>
+            <span class="cw-text">Cloture cassee &middot; Toit abime</span>
+            <span class="cw-count">2</span>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="buildings-row">
+            <div class="building-chip" style="border-color: var(--red); box-shadow: 0 0 4px var(--red-glow);">
+              <span class="b-icon">&#x1F3DA;</span>
+              <span>Silo</span>
+              <span class="b-level">Lv2</span>
+            </div>
+            <div class="building-chip">
+              <span class="b-icon">&#x1F3ED;</span>
+              <span>Moulin</span>
+              <span class="b-level">Lv1</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="section-sep">
+
+
+<!-- ════════════════════════════════════════════════════
+     DUAL-PROFILE GRIDS
+     ════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-label">Multi-profil</div>
+  <div class="section-title">Vue 2 colonnes (2 membres famille)</div>
+  <div class="section-desc">
+    Chaque option en mode cote-a-cote pour evaluer la densite quand il y a plusieurs profils.
+    Largeur max ~760px (2 x 370px compresse).
+  </div>
+
+  <!-- Dual A -->
+  <div style="margin-bottom: 32px;">
+    <div class="variant-label">Option A — Dual potager grid</div>
+    <div class="dual-grid" style="max-width: 780px;">
+      <!-- Lucas -->
+      <div class="card">
+        <div class="card-pad">
+          <div class="profile-header">
+            <div class="profile-avatar">&#x1F466;</div>
+            <div class="profile-info">
+              <div class="profile-name">Lucas</div>
+              <div class="profile-sub">6 parcelles</div>
+            </div>
+            <div class="harvest-badge">2</div>
+          </div>
+          <div class="potager-grid">
+            <div class="plot-cell main-plot">
+              <div class="sprite">&#x1F33F;</div>
+              <div class="stage-dots">
+                <span class="stage-dot main"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+              </div>
+            </div>
+            <div class="plot-cell">
+              <div class="sprite">&#x1FAB4;</div>
+              <div class="stage-dots">
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+              </div>
+            </div>
+            <div class="plot-cell has-wear">
+              <div class="wear-badge">&#x1F528;</div>
+              <div class="sprite">&#x1F33E;</div>
+              <div class="stage-dots">
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+              </div>
+            </div>
+            <div class="plot-cell golden-plot" style="position:relative;">
+              <span class="golden-sparkle">&#x2728;</span>
+              <div class="sprite">&#x1F33E;</div>
+              <div class="stage-dots">
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+              </div>
+            </div>
+            <div class="plot-cell">
+              <div class="sprite">&#x1F331;</div>
+              <div class="stage-dots">
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+              </div>
+            </div>
+            <div class="plot-cell">
+              <div class="sprite">&#x1FAB4;</div>
+              <div class="stage-dots">
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot"></span>
+              </div>
+            </div>
+          </div>
+          <div class="alert-banner">
+            <span class="alert-icon">&#x26A0;&#xFE0F;</span>
+            <span class="alert-text">Cloture cassee</span>
+            <button class="alert-action">Fix</button>
+          </div>
+        </div>
+      </div>
+      <!-- Emma -->
+      <div class="card">
+        <div class="card-pad">
+          <div class="profile-header">
+            <div class="profile-avatar">&#x1F467;</div>
+            <div class="profile-info">
+              <div class="profile-name">Emma</div>
+              <div class="profile-sub">4 parcelles</div>
+            </div>
+            <div class="harvest-badge">1</div>
+          </div>
+          <div class="potager-grid" style="grid-template-columns: repeat(2, 1fr);">
+            <div class="plot-cell main-plot">
+              <div class="sprite">&#x1F331;</div>
+              <div class="stage-dots">
+                <span class="stage-dot main"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+              </div>
+            </div>
+            <div class="plot-cell">
+              <div class="sprite">&#x1F33F;</div>
+              <div class="stage-dots">
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+              </div>
+            </div>
+            <div class="plot-cell">
+              <div class="sprite">&#x1FAB4;</div>
+              <div class="stage-dots">
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot"></span>
+              </div>
+            </div>
+            <div class="plot-cell">
+              <div class="sprite">&#x1F33E;</div>
+              <div class="stage-dots">
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dual B -->
+  <div style="margin-bottom: 32px;">
+    <div class="variant-label">Option B — Dual timeline lane</div>
+    <div class="dual-grid" style="max-width: 780px;">
+      <!-- Lucas -->
+      <div class="card">
+        <div class="card-pad">
+          <div class="profile-header">
+            <div class="profile-avatar">&#x1F466;</div>
+            <div class="profile-info">
+              <div class="profile-name">Lucas</div>
+              <div class="profile-sub">5 cultures</div>
+            </div>
+            <div class="harvest-badge">2</div>
+          </div>
+          <div class="timeline-lane">
+            <div class="timeline-card main-plot">
+              <div class="progress-ring-wrap">
+                <svg class="progress-ring" width="36" height="36" viewBox="0 0 36 36">
+                  <circle class="ring-bg" cx="18" cy="18" r="14"/>
+                  <circle class="ring-fill main-ring" cx="18" cy="18" r="14"
+                    stroke-dasharray="87.96" stroke-dashoffset="77"/>
+                </svg>
+                <div class="sprite">&#x1F331;</div>
+              </div>
+              <div class="crop-name">Patate</div>
+            </div>
+            <div class="timeline-card">
+              <div class="progress-ring-wrap">
+                <svg class="progress-ring" width="36" height="36" viewBox="0 0 36 36">
+                  <circle class="ring-bg" cx="18" cy="18" r="14"/>
+                  <circle class="ring-fill stage-1" cx="18" cy="18" r="14"
+                    stroke-dasharray="87.96" stroke-dashoffset="66"/>
+                </svg>
+                <div class="sprite">&#x1F33F;</div>
+              </div>
+              <div class="crop-name">Carotte</div>
+            </div>
+            <div class="timeline-card" style="border-color:var(--red);">
+              <div class="wear-float">&#x1F528;</div>
+              <div class="progress-ring-wrap">
+                <svg class="progress-ring" width="36" height="36" viewBox="0 0 36 36">
+                  <circle class="ring-bg" cx="18" cy="18" r="14"/>
+                  <circle class="ring-fill stage-2" cx="18" cy="18" r="14"
+                    stroke-dasharray="87.96" stroke-dashoffset="44"/>
+                </svg>
+                <div class="sprite">&#x1FAB4;</div>
+              </div>
+              <div class="crop-name">Tomate</div>
+            </div>
+            <div class="timeline-card mature-card">
+              <div class="progress-ring-wrap">
+                <svg class="progress-ring" width="36" height="36" viewBox="0 0 36 36">
+                  <circle class="ring-bg" cx="18" cy="18" r="14"/>
+                  <circle class="ring-fill stage-3" cx="18" cy="18" r="14"
+                    stroke-dasharray="87.96" stroke-dashoffset="0"/>
+                </svg>
+                <div class="sprite">&#x1F33E;</div>
+              </div>
+              <div class="crop-name">Ble</div>
+            </div>
+            <div class="timeline-card golden-plot" style="position:relative;">
+              <span class="golden-sparkle">&#x2728;</span>
+              <div class="progress-ring-wrap">
+                <svg class="progress-ring" width="36" height="36" viewBox="0 0 36 36">
+                  <circle class="ring-bg" cx="18" cy="18" r="14"/>
+                  <circle class="ring-fill stage-3" cx="18" cy="18" r="14"
+                    stroke-dasharray="87.96" stroke-dashoffset="0" style="stroke:var(--gold);"/>
+                </svg>
+                <div class="sprite">&#x1F33E;</div>
+              </div>
+              <div class="crop-name">Citrou.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Emma -->
+      <div class="card">
+        <div class="card-pad">
+          <div class="profile-header">
+            <div class="profile-avatar">&#x1F467;</div>
+            <div class="profile-info">
+              <div class="profile-name">Emma</div>
+              <div class="profile-sub">3 cultures</div>
+            </div>
+            <div class="harvest-badge">1</div>
+          </div>
+          <div class="timeline-lane">
+            <div class="timeline-card main-plot">
+              <div class="progress-ring-wrap">
+                <svg class="progress-ring" width="36" height="36" viewBox="0 0 36 36">
+                  <circle class="ring-bg" cx="18" cy="18" r="14"/>
+                  <circle class="ring-fill main-ring" cx="18" cy="18" r="14"
+                    stroke-dasharray="87.96" stroke-dashoffset="66"/>
+                </svg>
+                <div class="sprite">&#x1F33F;</div>
+              </div>
+              <div class="crop-name">Carotte</div>
+            </div>
+            <div class="timeline-card">
+              <div class="progress-ring-wrap">
+                <svg class="progress-ring" width="36" height="36" viewBox="0 0 36 36">
+                  <circle class="ring-bg" cx="18" cy="18" r="14"/>
+                  <circle class="ring-fill stage-2" cx="18" cy="18" r="14"
+                    stroke-dasharray="87.96" stroke-dashoffset="44"/>
+                </svg>
+                <div class="sprite">&#x1FAB4;</div>
+              </div>
+              <div class="crop-name">Tomate</div>
+            </div>
+            <div class="timeline-card mature-card">
+              <div class="progress-ring-wrap">
+                <svg class="progress-ring" width="36" height="36" viewBox="0 0 36 36">
+                  <circle class="ring-bg" cx="18" cy="18" r="14"/>
+                  <circle class="ring-fill stage-3" cx="18" cy="18" r="14"
+                    stroke-dasharray="87.96" stroke-dashoffset="0"/>
+                </svg>
+                <div class="sprite">&#x1F33E;</div>
+              </div>
+              <div class="crop-name">Ble</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dual C -->
+  <div style="margin-bottom: 32px;">
+    <div class="variant-label">Option C — Dual compact summary</div>
+    <div class="dual-grid" style="max-width: 780px;">
+      <!-- Lucas -->
+      <div class="card">
+        <div class="card-pad">
+          <div class="profile-header">
+            <div class="profile-avatar">&#x1F466;</div>
+            <div class="profile-info">
+              <div class="profile-name">Lucas</div>
+              <div class="profile-sub">Ferme familiale</div>
+            </div>
+            <div class="harvest-badge">2</div>
+          </div>
+          <div class="summary-stats">
+            <div class="stat-pill">
+              <span class="stat-dot growing"></span>
+              <span>3 en cours</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-dot ready"></span>
+              <span>2 prets</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-dot alert"></span>
+              <span style="color:var(--red);">1 alerte</span>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="sprite-row">
+            <div class="sprite-item main-sprite">
+              <div class="sprite">&#x1F33F;</div>
+              <div class="stage-dots">
+                <span class="stage-dot main"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+              </div>
+            </div>
+            <div class="sprite-item">
+              <div class="sprite">&#x1FAB4;</div>
+              <div class="stage-dots">
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+              </div>
+            </div>
+            <div class="sprite-item">
+              <div class="sprite">&#x1F331;</div>
+              <div class="stage-dots">
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+              </div>
+            </div>
+            <div class="sprite-item">
+              <div class="sprite">&#x1F33E;</div>
+              <div class="stage-dots">
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+              </div>
+            </div>
+            <div class="sprite-item golden-sprite" style="position:relative;">
+              <span class="golden-sparkle" style="top:-8px;right:-6px;">&#x2728;</span>
+              <div class="sprite" style="position:relative;">&#x1F33E;</div>
+              <div class="stage-dots">
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+              </div>
+            </div>
+          </div>
+          <div class="compact-wear-bar">
+            <span class="cw-icon">&#x1F528;</span>
+            <span class="cw-text">Cloture cassee</span>
+            <span class="cw-count">1</span>
+          </div>
+        </div>
+      </div>
+      <!-- Emma -->
+      <div class="card">
+        <div class="card-pad">
+          <div class="profile-header">
+            <div class="profile-avatar">&#x1F467;</div>
+            <div class="profile-info">
+              <div class="profile-name">Emma</div>
+              <div class="profile-sub">Ferme familiale</div>
+            </div>
+            <div class="harvest-badge">1</div>
+          </div>
+          <div class="summary-stats">
+            <div class="stat-pill">
+              <span class="stat-dot growing"></span>
+              <span>2 en cours</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-dot ready"></span>
+              <span>1 pret</span>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="sprite-row">
+            <div class="sprite-item main-sprite">
+              <div class="sprite">&#x1F331;</div>
+              <div class="stage-dots">
+                <span class="stage-dot main"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+                <span class="stage-dot"></span>
+              </div>
+            </div>
+            <div class="sprite-item">
+              <div class="sprite">&#x1FAB4;</div>
+              <div class="stage-dots">
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot filled"></span>
+                <span class="stage-dot"></span>
+              </div>
+            </div>
+            <div class="sprite-item">
+              <div class="sprite">&#x1F33E;</div>
+              <div class="stage-dots">
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+                <span class="stage-dot mature"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════
+     LEGEND
+     ════════════════════════════════════════════════════ -->
+<div class="section" style="margin-bottom: 80px;">
+  <div class="section-label">Reference</div>
+  <div class="section-title">Legende visuelle</div>
+  <div class="card" style="width: auto; max-width: 600px;">
+    <div class="card-pad">
+      <table style="width:100%; font-size:12px; border-collapse:collapse;">
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:8px 12px;">&#x1F331;</td>
+          <td style="padding:8px 0; color:var(--text-sub);">Stage 0 — Graine</td>
+          <td style="padding:8px 12px;">
+            <div class="stage-dots">
+              <span class="stage-dot"></span>
+              <span class="stage-dot"></span>
+              <span class="stage-dot"></span>
+              <span class="stage-dot"></span>
+            </div>
+          </td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:8px 12px;">&#x1F33F;</td>
+          <td style="padding:8px 0; color:var(--text-sub);">Stage 1 — Pousse</td>
+          <td style="padding:8px 12px;">
+            <div class="stage-dots">
+              <span class="stage-dot filled"></span>
+              <span class="stage-dot"></span>
+              <span class="stage-dot"></span>
+              <span class="stage-dot"></span>
+            </div>
+          </td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:8px 12px;">&#x1FAB4;</td>
+          <td style="padding:8px 0; color:var(--text-sub);">Stage 2 — Arbuste</td>
+          <td style="padding:8px 12px;">
+            <div class="stage-dots">
+              <span class="stage-dot filled"></span>
+              <span class="stage-dot filled"></span>
+              <span class="stage-dot"></span>
+              <span class="stage-dot"></span>
+            </div>
+          </td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:8px 12px;">&#x1F33E;</td>
+          <td style="padding:8px 0; color:var(--text-sub);">Stage 3 — Mature (recolte)</td>
+          <td style="padding:8px 12px;">
+            <div class="stage-dots">
+              <span class="stage-dot mature"></span>
+              <span class="stage-dot mature"></span>
+              <span class="stage-dot mature"></span>
+              <span class="stage-dot mature"></span>
+            </div>
+          </td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:8px 12px;">&#x2728;&#x1F33E;</td>
+          <td style="padding:8px 0; color:var(--gold);">Golden (x5 recompense)</td>
+          <td style="padding:8px 12px;">
+            <span style="display:inline-block;width:12px;height:12px;border:1.5px solid var(--gold);border-radius:3px;box-shadow:0 0 6px var(--gold-glow);"></span>
+          </td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:8px 12px; color:var(--blue);">FIFO</td>
+          <td style="padding:8px 0; color:var(--text-sub);">Parcelle principale (avance en premier)</td>
+          <td style="padding:8px 12px;">
+            <span style="display:inline-block;width:12px;height:12px;border:1.5px solid var(--blue);border-radius:3px;box-shadow:0 0 6px var(--blue-glow);animation:pulse-blue 2.5s infinite;"></span>
+          </td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:8px 12px;">&#x1F528;</td>
+          <td style="padding:8px 0; color:var(--text-sub);">broken_fence — Cloture cassee (bloque parcelle)</td>
+          <td style="padding:8px 12px;">
+            <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--red);box-shadow:0 0 4px var(--red-glow);"></span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:8px 12px;">&#x1F3DA;&#xFE0F;</td>
+          <td style="padding:8px 0; color:var(--text-sub);">damaged_roof — Toit abime (production -50%)</td>
+          <td style="padding:8px 12px;">
+            <span style="display:inline-block;width:12px;height:12px;border:1.5px solid var(--red);border-radius:3px;box-shadow:0 0 4px var(--red-glow);"></span>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

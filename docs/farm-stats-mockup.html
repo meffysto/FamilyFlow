@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390px, initial-scale=1.0">
+<title>Jardin Familial — Mockup</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:           #0f1112;
+    --surface:      #181b1d;
+    --card:         #1e2224;
+    --card-alt:     #242829;
+    --border:       rgba(255,255,255,0.07);
+    --border-light: rgba(255,255,255,0.04);
+    --accent:       #7CB87C;
+    --accent-dim:   rgba(124,184,124,0.12);
+    --accent-glow:  rgba(124,184,124,0.25);
+    --text:         #f0f0ee;
+    --text-sub:     #9a9d9b;
+    --text-muted:   #5a5e5c;
+    --gold:         #f0c040;
+    --gold-dim:     rgba(240,192,64,0.15);
+    --ready:        #7CB87C;
+    --growing:      rgba(240,240,238,0.28);
+  }
+
+  body {
+    background: var(--bg);
+    font-family: 'DM Sans', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 32px 16px;
+  }
+
+  .phone {
+    width: 390px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* ── Label page ── */
+  .page-label {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    padding: 0 4px;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--card);
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .card-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: var(--accent-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+  }
+
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+
+  .card-chevron {
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  /* ── Grid 2×2 ── */
+  .profiles-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border-light);
+  }
+
+  .profile-cell {
+    background: var(--card);
+    padding: 14px 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .profile-cell:active { background: var(--card-alt); }
+
+  /* corners */
+  .profile-cell:nth-child(1) { border-radius: 0; }
+  .profile-cell:nth-child(4) { border-radius: 0; }
+
+  /* ── Profile header ── */
+  .profile-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .profile-avatar {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .profile-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ── Ready badge ── */
+  .ready-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--accent);
+    color: #0f1112;
+    font-size: 10px;
+    font-weight: 600;
+    font-family: 'DM Mono', monospace;
+    padding: 2px 7px;
+    border-radius: 20px;
+    letter-spacing: 0.02em;
+    animation: pulse-badge 2.4s ease-in-out infinite;
+  }
+
+  @keyframes pulse-badge {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.8; transform: scale(0.97); }
+  }
+
+  /* ── Crops row ── */
+  .crops-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-height: 26px;
+    align-items: center;
+  }
+
+  .crop-chip {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    background: var(--card-alt);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 3px 6px;
+    font-size: 14px;
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .crop-chip.ready {
+    border-color: rgba(124,184,124,0.3);
+    background: rgba(124,184,124,0.08);
+  }
+
+  .crop-chip.growing {
+    opacity: 0.38;
+  }
+
+  .crop-chip.golden {
+    border-color: rgba(240,192,64,0.4);
+    background: rgba(240,192,64,0.1);
+  }
+
+  .crop-stage-bar {
+    width: 20px;
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 1px;
+  }
+
+  .crop-stage-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+
+  .crop-stage-fill.golden {
+    background: var(--gold);
+  }
+
+  .golden-spark {
+    font-size: 9px;
+    line-height: 1;
+    position: absolute;
+    top: -4px;
+    right: -4px;
+  }
+
+  /* ── Buildings row ── */
+  .buildings-row {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .building-chip {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    background: var(--card-alt);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 3px 7px 3px 5px;
+  }
+
+  .building-emoji { font-size: 13px; }
+
+  .building-level {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── Empty state ── */
+  .empty-farm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 0 4px;
+    flex: 1;
+  }
+
+  .empty-farm-icon {
+    font-size: 22px;
+    opacity: 0.25;
+  }
+
+  .empty-farm-text {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  /* ── Divider label ── */
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── Bottom CTA ── */
+  .card-cta {
+    padding: 12px 18px;
+    border-top: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cta-btn {
+    width: 100%;
+    background: var(--accent-dim);
+    border: 1px solid rgba(124,184,124,0.2);
+    border-radius: 12px;
+    padding: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.15s;
+  }
+  .cta-btn:hover { background: rgba(124,184,124,0.18); }
+
+  /* ── Variant label ── */
+  .variant-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 8px;
+    padding: 0 4px;
+  }
+
+  /* ── Compact row variant ── */
+  .profiles-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--border-light);
+  }
+
+  .profile-row {
+    background: var(--card);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .profile-row:active { background: var(--card-alt); }
+
+  .profile-row-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    min-width: 40px;
+  }
+
+  .profile-row-avatar { font-size: 22px; line-height: 1; }
+
+  .profile-row-name {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-sub);
+    text-align: center;
+    white-space: nowrap;
+    letter-spacing: -0.01em;
+  }
+
+  .profile-row-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .crops-inline {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .crop-dot {
+    font-size: 15px;
+    line-height: 1;
+    position: relative;
+    transition: opacity 0.2s;
+  }
+  .crop-dot.growing { opacity: 0.3; }
+  .crop-dot.golden-dot::after {
+    content: '✨';
+    font-size: 8px;
+    position: absolute;
+    top: -5px;
+    right: -5px;
+  }
+
+  .buildings-inline {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .building-tag {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .building-tag span { font-size: 13px; }
+
+  .profile-row-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    min-width: 50px;
+  }
+
+  .ready-pill {
+    background: var(--accent);
+    color: #0f1112;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'DM Mono', monospace;
+    padding: 2px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .growing-pill {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    padding: 2px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .no-farm-pill {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <div class="page-label">Dashboard — Jardin Familial</div>
+
+  <!-- ════════════════════════════════════
+       VARIANTE A — Grille 2×2
+  ════════════════════════════════════ -->
+  <div class="variant-label">Variante A · Grille 2×2</div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title-row">
+        <div class="card-icon">🌳</div>
+        <span class="card-title">Jardin familial</span>
+      </div>
+      <span class="card-chevron">›</span>
+    </div>
+
+    <div class="profiles-grid">
+
+      <!-- Profil 1 : cultures prêtes + bâtiments -->
+      <div class="profile-cell">
+        <div class="ready-badge">3 prêtes</div>
+        <div class="profile-header">
+          <span class="profile-avatar">👦</span>
+          <span class="profile-name">Lucas</span>
+        </div>
+        <div class="crops-row">
+          <div class="crop-chip ready">
+            🥕
+            <div class="crop-stage-bar"><div class="crop-stage-fill" style="width:100%"></div></div>
+          </div>
+          <div class="crop-chip ready">
+            🌾
+            <div class="crop-stage-bar"><div class="crop-stage-fill" style="width:100%"></div></div>
+          </div>
+          <div class="crop-chip golden">
+            🍓
+            <span class="golden-spark">✨</span>
+            <div class="crop-stage-bar"><div class="crop-stage-fill golden" style="width:100%"></div></div>
+          </div>
+          <div class="crop-chip growing">
+            🍅
+            <div class="crop-stage-bar"><div class="crop-stage-fill" style="width:50%"></div></div>
+          </div>
+        </div>
+        <div class="buildings-row">
+          <div class="building-chip">
+            <span class="building-emoji">🐔</span>
+            <span class="building-level">lv2</span>
+          </div>
+          <div class="building-chip">
+            <span class="building-emoji">🐄</span>
+            <span class="building-level">lv1</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profil 2 : tout en croissance -->
+      <div class="profile-cell">
+        <div class="profile-header">
+          <span class="profile-avatar">👧</span>
+          <span class="profile-name">Emma</span>
+        </div>
+        <div class="crops-row">
+          <div class="crop-chip growing">
+            🌽
+            <div class="crop-stage-bar"><div class="crop-stage-fill" style="width:66%"></div></div>
+          </div>
+          <div class="crop-chip growing">
+            🥬
+            <div class="crop-stage-bar"><div class="crop-stage-fill" style="width:33%"></div></div>
+          </div>
+          <div class="crop-chip growing">
+            🥒
+            <div class="crop-stage-bar"><div class="crop-stage-fill" style="width:80%"></div></div>
+          </div>
+        </div>
+        <div class="buildings-row">
+          <div class="building-chip">
+            <span class="building-emoji">🐔</span>
+            <span class="building-level">lv1</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profil 3 : culture dorée prête -->
+      <div class="profile-cell">
+        <div class="ready-badge">1 prête</div>
+        <div class="profile-header">
+          <span class="profile-avatar">👩</span>
+          <span class="profile-name">Marie</span>
+        </div>
+        <div class="crops-row">
+          <div class="crop-chip golden">
+            🪻
+            <span class="golden-spark">✨</span>
+            <div class="crop-stage-bar"><div class="crop-stage-fill golden" style="width:100%"></div></div>
+          </div>
+          <div class="crop-chip growing">
+            🥔
+            <div class="crop-stage-bar"><div class="crop-stage-fill" style="width:25%"></div></div>
+          </div>
+          <div class="crop-chip growing">
+            🌻
+            <div class="crop-stage-bar"><div class="crop-stage-fill" style="width:55%"></div></div>
+          </div>
+        </div>
+        <div class="buildings-row">
+          <div class="building-chip">
+            <span class="building-emoji">🐔</span>
+            <span class="building-level">lv3</span>
+          </div>
+          <div class="building-chip">
+            <span class="building-emoji">🐄</span>
+            <span class="building-level">lv2</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profil 4 : ferme vide -->
+      <div class="profile-cell">
+        <div class="profile-header">
+          <span class="profile-avatar">👴</span>
+          <span class="profile-name">Papy</span>
+        </div>
+        <div class="empty-farm">
+          <div class="empty-farm-icon">🌱</div>
+          <div class="empty-farm-text">Ferme à démarrer</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="card-cta">
+      <button class="cta-btn">Voir mon arbre →</button>
+    </div>
+  </div>
+
+
+  <!-- ════════════════════════════════════
+       VARIANTE B — Lignes compactes
+  ════════════════════════════════════ -->
+  <div class="variant-label" style="margin-top:8px">Variante B · Lignes compactes</div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title-row">
+        <div class="card-icon">🌳</div>
+        <span class="card-title">Jardin familial</span>
+      </div>
+      <span class="card-chevron">›</span>
+    </div>
+
+    <div class="profiles-list">
+
+      <!-- Profil 1 : prêtes -->
+      <div class="profile-row">
+        <div class="profile-row-left">
+          <span class="profile-row-avatar">👦</span>
+          <span class="profile-row-name">Lucas</span>
+        </div>
+        <div class="profile-row-content">
+          <div class="crops-inline">
+            <span class="crop-dot">🥕</span>
+            <span class="crop-dot">🌾</span>
+            <span class="crop-dot golden-dot">🍓</span>
+            <span class="crop-dot growing">🍅</span>
+          </div>
+          <div class="buildings-inline">
+            <span class="building-tag"><span>🐔</span>lv2</span>
+            <span class="building-tag"><span>🐄</span>lv1</span>
+          </div>
+        </div>
+        <div class="profile-row-right">
+          <span class="ready-pill">3 prêtes</span>
+        </div>
+      </div>
+
+      <!-- Profil 2 : en croissance -->
+      <div class="profile-row">
+        <div class="profile-row-left">
+          <span class="profile-row-avatar">👧</span>
+          <span class="profile-row-name">Emma</span>
+        </div>
+        <div class="profile-row-content">
+          <div class="crops-inline">
+            <span class="crop-dot growing">🌽</span>
+            <span class="crop-dot growing">🥬</span>
+            <span class="crop-dot growing">🥒</span>
+          </div>
+          <div class="buildings-inline">
+            <span class="building-tag"><span>🐔</span>lv1</span>
+          </div>
+        </div>
+        <div class="profile-row-right">
+          <span class="growing-pill">en cours</span>
+        </div>
+      </div>
+
+      <!-- Profil 3 : dorée prête -->
+      <div class="profile-row">
+        <div class="profile-row-left">
+          <span class="profile-row-avatar">👩</span>
+          <span class="profile-row-name">Marie</span>
+        </div>
+        <div class="profile-row-content">
+          <div class="crops-inline">
+            <span class="crop-dot golden-dot">🪻</span>
+            <span class="crop-dot growing">🥔</span>
+            <span class="crop-dot growing">🌻</span>
+          </div>
+          <div class="buildings-inline">
+            <span class="building-tag"><span>🐔</span>lv3</span>
+            <span class="building-tag"><span>🐄</span>lv2</span>
+          </div>
+        </div>
+        <div class="profile-row-right">
+          <span class="ready-pill">1 prête</span>
+        </div>
+      </div>
+
+      <!-- Profil 4 : vide -->
+      <div class="profile-row">
+        <div class="profile-row-left">
+          <span class="profile-row-avatar">👴</span>
+          <span class="profile-row-name">Papy</span>
+        </div>
+        <div class="profile-row-content">
+          <div class="crops-inline" style="opacity:0.3">
+            <span style="font-size:13px; color: var(--text-muted)">Ferme à démarrer</span>
+          </div>
+        </div>
+        <div class="profile-row-right">
+          <span class="no-farm-pill">—</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="card-cta">
+      <button class="cta-btn">Voir mon arbre →</button>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FamilyFlow — Mockups UI Pixel</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Press+Start+2P&display=swap');
+
+  :root {
+    --bg: #EDEAE4;
+    --card: #FFFFFF;
+    --cardAlt: #F9F8F5;
+    --text: #1A1A2E;
+    --textSub: #3D3D56;
+    --textMuted: #6B7280;
+    --textFaint: #9CA3AF;
+    --border: #DDD8D0;
+    --borderLight: #EDE9E3;
+    --teal: #0D9488;
+    --violet: #9333EA;
+    --orange: #E87B35;
+    --green: #16A34A;
+    --pink: #DB2777;
+    --error: #EF4444;
+    --warning: #F59E0B;
+    --success: #10B981;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, system-ui, sans-serif;
+    background: #1A1A2E;
+    color: var(--text);
+    padding: 24px;
+    min-height: 100vh;
+  }
+
+  /* ── Nav ── */
+  .nav {
+    display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;
+    margin-bottom: 32px; position: sticky; top: 0; z-index: 100;
+    background: #1A1A2E; padding: 16px 0 12px;
+    border-bottom: 3px solid #333;
+  }
+  .nav button {
+    padding: 10px 16px; border: 2px solid #444; border-radius: 0;
+    background: #2A2A3E; color: #AAA; font-family: 'Silkscreen', monospace;
+    font-size: 11px; cursor: pointer; transition: all 0.15s;
+    image-rendering: pixelated;
+  }
+  .nav button:hover { border-color: var(--teal); color: var(--teal); background: #1A2A2E; }
+  .nav button.active {
+    background: var(--teal); color: #fff; border-color: var(--teal);
+    box-shadow: 0 0 12px rgba(13,148,136,0.4);
+  }
+  .page-title {
+    text-align: center; color: #F0EDE8; font-family: 'Silkscreen', monospace;
+    font-size: 13px; margin-bottom: 8px; letter-spacing: 1px; opacity: 0.5;
+  }
+
+  /* ── Phone ── */
+  .phone {
+    width: 393px; margin: 0 auto; border-radius: 40px;
+    padding: 16px; min-height: 780px; position: relative; overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05);
+  }
+  .status-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 4px 8px 10px; font-size: 12px; font-weight: 600;
+  }
+
+  /* ── Proposals ── */
+  .proposal { display: none; }
+  .proposal.active { display: block; }
+
+  /* ════════════════════════════════ */
+  /* PROPOSAL A — Pixel Subtil       */
+  /* ════════════════════════════════ */
+  .phone-a { background: var(--bg); }
+  .phone-a .status-bar { color: var(--text); }
+
+  /* Pixel font for titles only */
+  .pixel-title {
+    font-family: 'Silkscreen', monospace;
+    letter-spacing: 0.3px;
+  }
+
+  /* Cards with pixel border */
+  .card-a {
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    padding: 14px;
+    margin-bottom: 12px;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.06);
+    image-rendering: pixelated;
+  }
+  .card-a-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px; padding-bottom: 8px;
+    border-bottom: 2px dashed var(--borderLight);
+  }
+  .card-a-title {
+    font-family: 'Silkscreen', monospace; font-size: 13px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-a-badge {
+    font-family: 'Silkscreen', monospace; font-size: 10px;
+    padding: 2px 8px; border: 2px solid; border-radius: 0;
+    font-weight: 700;
+  }
+
+  /* Pixel progress bar */
+  .pixel-progress {
+    height: 10px; background: var(--borderLight);
+    border: 2px solid var(--border);
+    position: relative; overflow: hidden;
+  }
+  .pixel-progress-fill {
+    height: 100%; position: relative;
+    /* Dithering pattern */
+    background-image:
+      linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%),
+      linear-gradient(-45deg, rgba(255,255,255,0.15) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.15) 75%),
+      linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.15) 75%);
+    background-size: 4px 4px;
+    background-position: 0 0, 0 2px, 2px -2px, -2px 0;
+  }
+
+  /* Pixel task row */
+  .task-a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px dashed var(--borderLight);
+  }
+  .task-a:last-child { border-bottom: none; }
+  .task-check-a {
+    width: 16px; height: 16px;
+    border: 2px solid var(--border);
+    background: var(--cardAlt);
+    flex-shrink: 0;
+    position: relative;
+  }
+  .task-check-a.done {
+    background: var(--success); border-color: var(--success);
+  }
+  .task-check-a.done::after {
+    content: ''; position: absolute;
+    top: 1px; left: 3px;
+    width: 4px; height: 7px;
+    border: solid white; border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+  .task-label-a { font-size: 13px; flex: 1; }
+  .task-label-a.done { text-decoration: line-through; color: var(--textMuted); }
+  .task-avatar-a {
+    width: 20px; height: 20px; font-size: 10px;
+    font-family: 'Silkscreen', monospace;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid;
+    font-weight: 700;
+  }
+
+  /* XP bar pixel */
+  .xp-pixel {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 10px; font-family: 'Silkscreen', monospace; font-size: 10px;
+  }
+  .xp-hearts {
+    display: flex; gap: 1px; font-size: 10px;
+  }
+
+  /* Pixel number big */
+  .pixel-big-number {
+    font-family: 'Silkscreen', monospace;
+    font-size: 36px; font-weight: 700; line-height: 1;
+    letter-spacing: -1px;
+  }
+
+  /* Pixel chip */
+  .pixel-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: 'Silkscreen', monospace; font-size: 9px;
+    padding: 3px 8px; border: 2px solid var(--border);
+    background: var(--cardAlt);
+  }
+  .pixel-chip.active {
+    border-color: var(--teal); background: rgba(13,148,136,0.08);
+    color: var(--teal);
+  }
+
+  /* Scene mini diorama */
+  .mini-scene-a {
+    height: 100px; background: linear-gradient(180deg, #C8E6F0 0%, #A8D8A8 60%, #7CB342 100%);
+    border: 2px solid var(--border);
+    margin-bottom: 12px; position: relative; overflow: hidden;
+    image-rendering: pixelated;
+  }
+  .mini-scene-a .mini-tree {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+  }
+  .mini-tree .mt-trunk { width: 8px; height: 20px; background: #8B6914; margin: 0 auto; }
+  .mini-tree .mt-leaves {
+    width: 36px; height: 28px; background: #2E8B57; margin: 0 auto -2px;
+    box-shadow: inset -4px -3px 0 #1A6B3A, inset 3px 3px 0 #3CB371;
+  }
+  .mini-tree .mt-top {
+    width: 22px; height: 12px; background: #2E8B57; margin: 0 auto -2px;
+    box-shadow: inset 2px 2px 0 #3CB371;
+  }
+  .mini-animal-a {
+    position: absolute; bottom: 14px; image-rendering: pixelated;
+  }
+  .mini-bunny {
+    width: 10px; height: 12px; background: #E8D5B7;
+    left: 25%; animation: mini-hop 2.5s ease-in-out infinite;
+  }
+  .mini-bunny::before {
+    content: ''; position: absolute; top: -6px; left: 1px;
+    width: 3px; height: 6px; background: #E8D5B7;
+    box-shadow: 5px 0 0 #E8D5B7;
+  }
+  @keyframes mini-hop { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+
+  .mini-hedgehog {
+    right: 22%; width: 12px; height: 8px;
+    background: #A0522D; border-radius: 0 4px 2px 2px;
+    animation: mini-walk 4s ease-in-out infinite;
+  }
+  @keyframes mini-walk { 0%,100%{transform:translateX(0)} 50%{transform:translateX(-8px)} }
+
+  .mini-sun {
+    position: absolute; top: 8px; right: 12px;
+    width: 16px; height: 16px; background: #FFD700;
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  }
+  .mini-cloud {
+    position: absolute; top: 12px; background: rgba(255,255,255,0.7);
+    height: 8px; animation: drift-mini 20s linear infinite;
+  }
+  @keyframes drift-mini { 0%{transform:translateX(0)} 100%{transform:translateX(-200px)} }
+
+  .mini-scene-stats {
+    position: absolute; bottom: 4px; left: 4px; right: 4px;
+    display: flex; gap: 4px;
+  }
+  .mini-stat {
+    font-family: 'Silkscreen', monospace; font-size: 8px;
+    background: rgba(255,255,255,0.85); padding: 2px 6px;
+    border: 1px solid rgba(0,0,0,0.1);
+    color: var(--textSub);
+  }
+
+  /* Half cards */
+  .half-row { display: flex; gap: 10px; }
+  .half-row .card-a { flex: 1; min-width: 0; }
+
+  /* ════════════════════════════════ */
+  /* PROPOSAL B — Full Pixel RPG     */
+  /* ════════════════════════════════ */
+  .phone-b { background: #F5F0E8; }
+  .phone-b .status-bar { color: var(--text); font-family: 'Silkscreen', monospace; font-size: 11px; }
+
+  .card-b {
+    background: #FEFCF8;
+    border: 3px solid #C4B89C;
+    padding: 12px;
+    margin-bottom: 10px;
+    position: relative;
+    /* RPG window border */
+    box-shadow: inset 0 0 0 1px #E8E0D0, 3px 3px 0 #A09880;
+    image-rendering: pixelated;
+  }
+  /* Corner accents */
+  .card-b::before, .card-b::after {
+    content: ''; position: absolute; width: 6px; height: 6px;
+    border: 2px solid #A09880;
+  }
+  .card-b::before { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+  .card-b::after { top: -1px; right: -1px; border-left: none; border-bottom: none; }
+  .card-b-bl, .card-b-br {
+    position: absolute; width: 6px; height: 6px; border: 2px solid #A09880;
+  }
+  .card-b-bl { bottom: -1px; left: -1px; border-right: none; border-top: none; }
+  .card-b-br { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+
+  .card-b-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px; padding-bottom: 6px;
+    border-bottom: 2px solid #E8E0D0;
+  }
+  .card-b-title {
+    font-family: 'Silkscreen', monospace; font-size: 12px;
+    display: flex; align-items: center; gap: 6px; color: #4A3F2F;
+  }
+  .card-b-badge {
+    font-family: 'Press Start 2P', monospace; font-size: 7px;
+    padding: 3px 6px; background: #4A3F2F; color: #FEFCF8;
+  }
+
+  /* RPG HP/XP bars */
+  .rpg-bar {
+    display: flex; align-items: center; gap: 6px;
+    margin: 4px 0; font-family: 'Press Start 2P', monospace; font-size: 7px;
+  }
+  .rpg-bar-label { width: 20px; color: #8B7355; }
+  .rpg-bar-track {
+    flex: 1; height: 8px; background: #2A2420;
+    border: 1px solid #4A3F2F; position: relative;
+    image-rendering: pixelated;
+  }
+  .rpg-bar-fill {
+    height: 100%; position: relative;
+  }
+  .rpg-bar-fill.hp { background: #EF4444; }
+  .rpg-bar-fill.xp { background: #10B981; }
+  .rpg-bar-fill.mp { background: #3B82F6; }
+  /* Shine effect */
+  .rpg-bar-fill::after {
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 3px; background: rgba(255,255,255,0.3);
+  }
+  .rpg-bar-value { width: 36px; text-align: right; color: #4A3F2F; }
+
+  .rpg-stat-row {
+    display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap;
+  }
+  .rpg-stat {
+    font-family: 'Press Start 2P', monospace; font-size: 7px;
+    padding: 4px 8px; background: #F0EBE0; border: 1px solid #D4CCBC;
+    color: #4A3F2F; display: flex; align-items: center; gap: 4px;
+  }
+
+  .task-b {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px dashed #E8E0D0;
+    font-size: 12px;
+  }
+  .task-b:last-child { border-bottom: none; }
+  .task-check-b {
+    width: 14px; height: 14px;
+    border: 2px solid #A09880; background: #F0EBE0;
+  }
+  .task-check-b.done { background: var(--success); border-color: #065F46; }
+  .task-check-b.done::after {
+    content: '✓'; display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 9px; font-weight: bold; margin-top: -1px; margin-left: 0.5px;
+  }
+  .task-xp {
+    font-family: 'Press Start 2P', monospace; font-size: 6px;
+    color: var(--success); margin-left: auto;
+  }
+
+  /* RPG scene header */
+  .rpg-scene {
+    height: 90px;
+    background: linear-gradient(180deg, #E8D5B7 0%, #C4A06A 40%, #8B7355 100%);
+    border: 3px solid #8B7355;
+    margin-bottom: 10px; position: relative; overflow: hidden;
+    image-rendering: pixelated;
+    box-shadow: inset 0 0 0 1px #A09880;
+  }
+  .rpg-title-banner {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-family: 'Press Start 2P', monospace; font-size: 9px;
+    color: #FEFCF8; text-shadow: 2px 2px 0 #4A3F2F;
+    text-align: center; line-height: 1.6;
+    background: rgba(74,63,47,0.7); padding: 8px 16px;
+    border: 2px solid #8B7355;
+  }
+  .rpg-scene .pixel-border-h {
+    position: absolute; left: 0; right: 0; height: 4px;
+    background: repeating-linear-gradient(90deg, #8B7355 0, #8B7355 4px, #A09880 4px, #A09880 8px);
+  }
+  .rpg-scene .pixel-border-h.top { top: 0; }
+  .rpg-scene .pixel-border-h.bottom { bottom: 0; }
+
+  /* Meal section RPG */
+  .meal-slot {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 0; font-size: 12px;
+    border-bottom: 1px dashed #E8E0D0;
+  }
+  .meal-slot:last-child { border-bottom: none; }
+  .meal-icon {
+    width: 24px; height: 24px; background: #F0EBE0;
+    border: 2px solid #D4CCBC;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; image-rendering: pixelated;
+  }
+  .meal-time {
+    font-family: 'Press Start 2P', monospace; font-size: 6px;
+    color: #8B7355; min-width: 30px;
+  }
+
+  /* ════════════════════════════════ */
+  /* PROPOSAL C — Pixel Accent       */
+  /* Soft modern + pixel details     */
+  /* ════════════════════════════════ */
+  .phone-c { background: var(--bg); }
+  .phone-c .status-bar { color: var(--text); }
+
+  .card-c {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    position: relative;
+    overflow: hidden;
+  }
+  /* Pixel accent strip top */
+  .card-c-strip {
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    image-rendering: pixelated;
+  }
+  .card-c-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px;
+  }
+  .card-c-title {
+    font-size: 15px; font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-c-title .pixel-icon {
+    width: 24px; height: 24px; image-rendering: pixelated;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    /* Pixel border around emoji */
+    border: 2px solid var(--border);
+    background: var(--cardAlt);
+  }
+  .card-c-badge {
+    font-family: 'Silkscreen', monospace; font-size: 10px;
+    padding: 2px 8px; border-radius: 0;
+    border: 2px solid; font-weight: 700;
+  }
+
+  /* Pixel divider */
+  .pixel-divider {
+    height: 2px; margin: 8px 0;
+    background: repeating-linear-gradient(90deg,
+      var(--border) 0, var(--border) 4px,
+      transparent 4px, transparent 8px
+    );
+  }
+
+  .task-c {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--borderLight);
+  }
+  .task-c:last-child { border-bottom: none; }
+  .task-check-c {
+    width: 18px; height: 18px;
+    border: 2px solid var(--border);
+    border-radius: 2px;
+    background: var(--cardAlt);
+    flex-shrink: 0; position: relative;
+  }
+  .task-check-c.done {
+    background: var(--success); border-color: var(--success);
+  }
+  .task-check-c.done::after {
+    content: ''; position: absolute;
+    top: 2px; left: 4px;
+    width: 4px; height: 8px;
+    border: solid white; border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+  .task-c-label { font-size: 13px; flex: 1; }
+  .task-c-label.done { text-decoration: line-through; color: var(--textMuted); }
+
+  /* Pixel avatar */
+  .pixel-avatar {
+    width: 22px; height: 22px; border: 2px solid;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-family: 'Silkscreen', monospace;
+    font-weight: 700; image-rendering: pixelated;
+  }
+
+  /* Progress — pixel step */
+  .pixel-steps {
+    display: flex; gap: 2px; margin-top: 8px;
+  }
+  .pixel-step {
+    flex: 1; height: 8px;
+    border: 1px solid rgba(0,0,0,0.08);
+    background: var(--borderLight);
+    transition: background 0.3s;
+  }
+  .pixel-step.filled { background: var(--teal); }
+  .pixel-step.filled.glow {
+    box-shadow: 0 0 6px rgba(13,148,136,0.3);
+  }
+
+  /* Stats grid pixel */
+  .pixel-stats-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  .pixel-stat-card {
+    padding: 10px; border: 2px solid var(--borderLight);
+    background: var(--cardAlt);
+    text-align: center;
+  }
+  .pixel-stat-num {
+    font-family: 'Silkscreen', monospace; font-size: 24px;
+    font-weight: 700; line-height: 1.1;
+  }
+  .pixel-stat-label {
+    font-size: 10px; color: var(--textMuted); margin-top: 2px;
+  }
+
+  /* Companion bubble pixel */
+  .pixel-bubble {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 10px; margin-bottom: 12px;
+    background: var(--card); border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .pixel-companion-icon {
+    width: 36px; height: 36px; border: 2px solid var(--border);
+    background: var(--cardAlt); image-rendering: pixelated;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .pixel-bubble-text {
+    font-size: 12px; color: var(--textSub); line-height: 1.4;
+    padding-top: 2px;
+  }
+  .pixel-bubble-text strong { font-family: 'Silkscreen', monospace; font-size: 11px; }
+
+  /* Scene for proposal C — compact inline */
+  .inline-scene {
+    height: 70px; border-radius: 16px; overflow: hidden;
+    background: linear-gradient(180deg, #C8E6F0 0%, #A8D8A8 60%, #6B9A4D 100%);
+    margin-bottom: 12px; position: relative;
+    image-rendering: pixelated;
+  }
+  .inline-scene-tree {
+    position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+  }
+  .ist-trunk { width: 6px; height: 16px; background: #8B6914; margin: 0 auto; }
+  .ist-canopy {
+    width: 28px; height: 20px; background: #2E8B57; margin: 0 auto -2px;
+    box-shadow: inset -3px -2px 0 #1A6B3A, inset 2px 2px 0 #3CB371;
+  }
+  .inline-scene-sun {
+    position: absolute; top: 6px; right: 10px;
+    width: 12px; height: 12px; background: #FFD700;
+    box-shadow: 0 0 8px rgba(255,215,0,0.4);
+  }
+  .inline-scene-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    display: flex; justify-content: space-between;
+    padding: 4px 10px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.15));
+  }
+  .inline-scene-stat {
+    font-family: 'Silkscreen', monospace; font-size: 8px;
+    color: white; text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
+  }
+  .inline-animal {
+    position: absolute; bottom: 10px; image-rendering: pixelated;
+  }
+  .inline-bunny {
+    left: 20%; width: 8px; height: 10px; background: #E8D5B7;
+    animation: mini-hop 2s ease-in-out infinite;
+  }
+  .inline-fox {
+    right: 20%; width: 10px; height: 8px; background: #D4721A;
+    border-radius: 0 3px 1px 1px;
+    animation: mini-walk 3s ease-in-out infinite;
+  }
+
+  /* ════════════════════════════════ */
+  /* PROPOSAL D — Gameboy Nostalgia  */
+  /* ════════════════════════════════ */
+  .phone-d {
+    background: #E0D8B0;
+    image-rendering: pixelated;
+  }
+  .phone-d .status-bar {
+    color: #2F3E1C; font-family: 'Press Start 2P', monospace; font-size: 8px;
+  }
+
+  .gb-palette {
+    --gb-dark: #2F3E1C;
+    --gb-mid: #5A7942;
+    --gb-light: #8BAC55;
+    --gb-bg: #C4D48A;
+    --gb-screen: #9BBC0F;
+  }
+
+  .gb-header {
+    text-align: center; padding: 6px 0 10px;
+    border-bottom: 3px solid var(--gb-dark);
+    margin-bottom: 10px;
+  }
+  .gb-logo {
+    font-family: 'Press Start 2P', monospace; font-size: 11px;
+    color: var(--gb-dark); letter-spacing: 1px;
+  }
+  .gb-date {
+    font-family: 'Press Start 2P', monospace; font-size: 7px;
+    color: var(--gb-mid); margin-top: 4px;
+  }
+
+  .card-d {
+    background: var(--gb-bg);
+    border: 3px solid var(--gb-dark);
+    padding: 10px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .card-d-header {
+    font-family: 'Press Start 2P', monospace; font-size: 8px;
+    color: var(--gb-dark);
+    margin-bottom: 8px; padding-bottom: 4px;
+    border-bottom: 2px solid var(--gb-mid);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .card-d-badge {
+    font-family: 'Press Start 2P', monospace; font-size: 6px;
+    background: var(--gb-dark); color: var(--gb-bg);
+    padding: 2px 4px;
+  }
+
+  .gb-bar {
+    height: 8px; background: var(--gb-dark); margin: 6px 0;
+    position: relative;
+  }
+  .gb-bar-fill {
+    height: 100%; background: var(--gb-light);
+    position: relative;
+  }
+  .gb-bar-fill::after {
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 3px; background: var(--gb-screen);
+  }
+
+  .task-d {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 0; font-size: 11px; color: var(--gb-dark);
+    border-bottom: 1px dashed var(--gb-mid);
+    font-family: 'Silkscreen', monospace; font-size: 10px;
+  }
+  .task-d:last-child { border-bottom: none; }
+  .task-d-check {
+    width: 10px; height: 10px; border: 2px solid var(--gb-dark);
+    background: var(--gb-bg);
+  }
+  .task-d-check.done {
+    background: var(--gb-dark);
+    position: relative;
+  }
+  .task-d-check.done::after {
+    content: ''; position: absolute;
+    top: 0; left: 2px;
+    width: 3px; height: 5px;
+    border: solid var(--gb-bg); border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+
+  .gb-stats {
+    display: flex; gap: 4px; flex-wrap: wrap;
+  }
+  .gb-stat {
+    font-family: 'Press Start 2P', monospace; font-size: 6px;
+    padding: 3px 6px; background: var(--gb-dark); color: var(--gb-bg);
+  }
+
+  .gb-scene {
+    height: 80px; background: var(--gb-light);
+    border: 3px solid var(--gb-dark);
+    margin-bottom: 10px; position: relative; overflow: hidden;
+  }
+  .gb-tree {
+    position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+  }
+  .gb-tree .gbt-trunk { width: 6px; height: 16px; background: var(--gb-dark); margin: 0 auto; }
+  .gb-tree .gbt-leaves {
+    width: 28px; height: 20px; background: var(--gb-mid); margin: 0 auto -2px;
+    box-shadow: inset -3px -2px 0 var(--gb-dark);
+  }
+  .gb-animal {
+    position: absolute; bottom: 8px;
+  }
+  .gb-bunny {
+    left: 22%; width: 8px; height: 10px; background: var(--gb-dark);
+    animation: mini-hop 2s ease-in-out infinite;
+  }
+  .gb-bunny::before {
+    content: ''; position: absolute; top: -5px; left: 1px;
+    width: 2px; height: 5px; background: var(--gb-dark);
+    box-shadow: 4px 0 0 var(--gb-dark);
+  }
+  .gb-hedgehog {
+    right: 22%; width: 10px; height: 6px; background: var(--gb-dark);
+    border-radius: 0 3px 1px 1px;
+    animation: mini-walk 3s ease-in-out infinite;
+  }
+  .gb-ground {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 14px;
+    background: var(--gb-mid);
+    border-top: 2px solid var(--gb-dark);
+  }
+  .gb-scene-label {
+    position: absolute; top: 4px; left: 4px;
+    font-family: 'Press Start 2P', monospace; font-size: 6px;
+    color: var(--gb-dark);
+  }
+  .gb-scene-xp {
+    position: absolute; top: 4px; right: 4px;
+    font-family: 'Press Start 2P', monospace; font-size: 6px;
+    color: var(--gb-dark);
+  }
+
+  /* ════════════════════════════════ */
+  /* PROPOSAL E — Dark Pixel Neon    */
+  /* ════════════════════════════════ */
+  .phone-e { background: #0D0F14; }
+  .phone-e .status-bar { color: #8AF; font-family: 'Silkscreen', monospace; font-size: 11px; }
+
+  .card-e {
+    background: #14171F;
+    border: 2px solid #2A2D3A;
+    padding: 14px;
+    margin-bottom: 10px;
+    position: relative;
+    image-rendering: pixelated;
+  }
+  .card-e::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  }
+  .card-e-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px;
+  }
+  .card-e-title {
+    font-family: 'Silkscreen', monospace; font-size: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-e-badge {
+    font-family: 'Press Start 2P', monospace; font-size: 7px;
+    padding: 3px 6px;
+  }
+
+  .task-e {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid #1E2130;
+    font-size: 12px;
+  }
+  .task-e:last-child { border-bottom: none; }
+  .task-check-e {
+    width: 14px; height: 14px;
+    border: 2px solid #3A3D4A;
+    background: #0D0F14;
+  }
+  .task-check-e.done { background: #10B981; border-color: #10B981; box-shadow: 0 0 6px rgba(16,185,129,0.3); }
+  .task-check-e.done::after {
+    content: '✓'; display: flex; align-items: center; justify-content: center;
+    color: #0D0F14; font-size: 9px; font-weight: bold; margin-top: -1px; margin-left: 0.5px;
+  }
+  .task-e-label { color: #C8C4BC; flex: 1; }
+  .task-e-label.done { text-decoration: line-through; color: #4A4D5A; }
+
+  .neon-bar {
+    height: 6px; background: #1E2130; margin: 8px 0;
+    border: 1px solid #2A2D3A;
+  }
+  .neon-bar-fill { height: 100%; position: relative; }
+  .neon-bar-fill::after {
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 2px; background: rgba(255,255,255,0.2);
+  }
+
+  .neon-scene {
+    height: 90px; background: linear-gradient(180deg, #0A0C12 0%, #141820 50%, #0D1218 100%);
+    border: 2px solid #2A2D3A; margin-bottom: 10px;
+    position: relative; overflow: hidden;
+    image-rendering: pixelated;
+  }
+  .neon-grid {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 40px;
+    background:
+      linear-gradient(rgba(138,170,255,0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(138,170,255,0.1) 1px, transparent 1px);
+    background-size: 16px 16px;
+    transform: perspective(100px) rotateX(30deg);
+    transform-origin: bottom;
+  }
+  .neon-tree {
+    position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+  }
+  .neon-tree .nt-trunk { width: 6px; height: 18px; background: #4A6B8A; margin: 0 auto; }
+  .neon-tree .nt-canopy {
+    width: 32px; height: 24px; background: #2A5A4A;
+    margin: 0 auto -2px;
+    box-shadow: 0 0 12px rgba(16,185,129,0.2), inset -3px -2px 0 #1A3A30, inset 2px 2px 0 #3A7A6A;
+  }
+  .neon-star {
+    position: absolute; width: 2px; height: 2px; background: #8AF; border-radius: 50%;
+    animation: twinkle 2s ease-in-out infinite;
+  }
+  @keyframes twinkle { 0%,100%{opacity:0.3} 50%{opacity:1} }
+  .neon-animal {
+    position: absolute; bottom: 26px;
+  }
+  .neon-bunny {
+    left: 22%; width: 8px; height: 10px; background: #B0A090;
+    animation: mini-hop 2s ease-in-out infinite;
+    box-shadow: 0 0 4px rgba(176,160,144,0.3);
+  }
+  .neon-fox {
+    right: 20%; width: 10px; height: 7px; background: #D4721A;
+    border-radius: 0 2px 1px 1px;
+    animation: mini-walk 3s ease-in-out infinite;
+    box-shadow: 0 0 4px rgba(212,114,26,0.3);
+  }
+  .neon-scene-stat {
+    font-family: 'Silkscreen', monospace; font-size: 8px;
+  }
+  .neon-scene-overlay {
+    position: absolute; top: 4px; left: 6px; right: 6px;
+    display: flex; justify-content: space-between;
+  }
+
+  /* Neon stat cards */
+  .neon-stats { display: flex; gap: 6px; }
+  .neon-stat-card {
+    flex: 1; padding: 10px; background: #14171F;
+    border: 2px solid #2A2D3A; text-align: center;
+  }
+  .neon-stat-num {
+    font-family: 'Silkscreen', monospace; font-size: 22px;
+    font-weight: 700; line-height: 1;
+  }
+  .neon-stat-label {
+    font-family: 'Press Start 2P', monospace; font-size: 5px;
+    color: #5A5D6A; margin-top: 4px; text-transform: uppercase;
+  }
+
+  /* Pros/cons */
+  .pros-cons {
+    display: flex; gap: 6px; justify-content: center; margin-top: 16px;
+    flex-wrap: wrap; font-size: 12px;
+  }
+  .pro { padding: 4px 10px; border-radius: 0; background: #D1FAE5; color: #065F46; font-weight: 500; border: 1px solid #6EE7B7; }
+  .con { padding: 4px 10px; border-radius: 0; background: #FEE2E2; color: #991B1B; font-weight: 500; border: 1px solid #FCA5A5; }
+</style>
+</head>
+<body>
+
+<p class="page-title">FAMILYFLOW — UI PIXEL CONCEPTS</p>
+
+<nav class="nav">
+  <button class="active" onclick="show('pa')">A. Pixel Subtil</button>
+  <button onclick="show('pb')">B. RPG Complet</button>
+  <button onclick="show('pc')">C. Pixel Accent</button>
+  <button onclick="show('pd')">D. Gameboy</button>
+  <button onclick="show('pe')">E. Dark Neon</button>
+</nav>
+
+<!-- ══════════ A — PIXEL SUBTIL ══════════ -->
+<div id="pa" class="proposal active">
+  <h2 style="text-align:center;color:#F0EDE8;font-family:'Silkscreen',monospace;font-size:18px;margin-bottom:4px">A. Pixel Subtil</h2>
+  <p style="text-align:center;color:#888;font-size:13px;margin-bottom:20px;max-width:500px;margin-left:auto;margin-right:auto">
+    L'interface actuelle avec des touches pixel : font titres, bordures carrees,
+    checkboxes carrees, progress bars en dithering. Moderne mais avec du caractere.
+  </p>
+
+  <div class="phone phone-a">
+    <div class="status-bar"><span>9:41</span><span style="font-family:'Silkscreen',monospace;font-size:11px">FamilyFlow</span><span>100%</span></div>
+
+    <!-- Mini scene -->
+    <div class="mini-scene-a">
+      <div class="mini-sun"></div>
+      <div class="mini-cloud" style="width:40px;left:10%;top:8px"></div>
+      <div class="mini-cloud" style="width:28px;left:55%;top:16px"></div>
+      <div class="mini-scene-a" style="border:none;height:auto;margin:0;background:none;position:absolute;inset:0">
+        <div class="mini-tree">
+          <div class="mt-top"></div>
+          <div class="mt-leaves"></div>
+          <div class="mt-trunk"></div>
+        </div>
+        <div class="mini-animal-a mini-bunny"></div>
+        <div class="mini-animal-a mini-hedgehog"></div>
+      </div>
+      <div class="mini-scene-stats">
+        <div class="mini-stat">LVL 7</div>
+        <div class="mini-stat">XP 240/400</div>
+        <div class="mini-stat">🔥 5j</div>
+      </div>
+    </div>
+
+    <!-- Tasks -->
+    <div class="card-a">
+      <div class="card-a-header">
+        <span class="card-a-title">🏠 Taches du jour</span>
+        <span class="card-a-badge" style="border-color:var(--success);color:var(--success)">3/5</span>
+      </div>
+      <div class="task-a">
+        <div class="task-check-a done"></div>
+        <span class="task-label-a done">Sortir les poubelles</span>
+        <div class="task-avatar-a" style="border-color:#93C5FD;background:#EFF6FF;color:#3B82F6">L</div>
+      </div>
+      <div class="task-a">
+        <div class="task-check-a done"></div>
+        <span class="task-label-a done">Preparer les lunchs</span>
+        <div class="task-avatar-a" style="border-color:#F9A8D4;background:#FDF2F8;color:#EC4899">E</div>
+      </div>
+      <div class="task-a">
+        <div class="task-check-a done"></div>
+        <span class="task-label-a done">Arroser les plantes</span>
+        <div class="task-avatar-a" style="border-color:#93C5FD;background:#EFF6FF;color:#3B82F6">L</div>
+      </div>
+      <div class="task-a">
+        <div class="task-check-a"></div>
+        <span class="task-label-a">Courses Monoprix</span>
+        <div class="task-avatar-a" style="border-color:#F9A8D4;background:#FDF2F8;color:#EC4899">E</div>
+      </div>
+      <div class="task-a">
+        <div class="task-check-a"></div>
+        <span class="task-label-a">Ranger le garage</span>
+        <div class="task-avatar-a" style="border-color:#93C5FD;background:#EFF6FF;color:#3B82F6">L</div>
+      </div>
+      <div class="xp-pixel">
+        <span style="color:var(--textMuted)">XP</span>
+        <div class="pixel-progress" style="flex:1">
+          <div class="pixel-progress-fill" style="width:62%;background-color:var(--teal)"></div>
+        </div>
+        <span style="color:var(--teal)">240/400</span>
+      </div>
+    </div>
+
+    <!-- Half cards -->
+    <div class="half-row">
+      <div class="card-a">
+        <div class="card-a-header">
+          <span class="card-a-title" style="font-size:11px">🛒 Courses</span>
+          <span class="card-a-badge" style="border-color:var(--orange);color:var(--orange);font-size:9px">6</span>
+        </div>
+        <div class="pixel-big-number" style="color:var(--orange)">6</div>
+        <div style="font-size:10px;color:var(--textMuted);margin-top:2px">articles</div>
+      </div>
+      <div class="card-a">
+        <div class="card-a-header">
+          <span class="card-a-title" style="font-size:11px">📸 Photos</span>
+          <span class="card-a-badge" style="border-color:var(--pink);color:var(--pink);font-size:9px">3</span>
+        </div>
+        <div class="pixel-big-number" style="color:var(--pink)">3</div>
+        <div style="font-size:10px;color:var(--textMuted);margin-top:2px">nouvelles</div>
+      </div>
+    </div>
+
+    <!-- Meals -->
+    <div class="card-a">
+      <div class="card-a-header">
+        <span class="card-a-title">🍽️ Repas</span>
+        <span style="font-family:'Silkscreen',monospace;font-size:10px;color:var(--textMuted)">Voir tout →</span>
+      </div>
+      <div class="task-a">
+        <span style="font-family:'Silkscreen',monospace;font-size:9px;color:var(--textMuted);width:32px">MIDI</span>
+        <span class="task-label-a">Pates carbonara</span>
+        <span style="font-size:11px">🍝</span>
+      </div>
+      <div class="task-a">
+        <span style="font-family:'Silkscreen',monospace;font-size:9px;color:var(--textMuted);width:32px">SOIR</span>
+        <span class="task-label-a" style="color:var(--textFaint);font-style:italic">Non planifie</span>
+        <span style="font-size:11px;opacity:0.3">🍽️</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="pros-cons">
+    <span class="pro">Facile a implementer</span>
+    <span class="pro">Garde la lisibilite</span>
+    <span class="pro">Font pixel = identite forte</span>
+    <span class="con">Changement subtil</span>
+  </div>
+</div>
+
+<!-- ══════════ B — RPG COMPLET ══════════ -->
+<div id="pb" class="proposal">
+  <h2 style="text-align:center;color:#F0EDE8;font-family:'Press Start 2P',monospace;font-size:14px;margin-bottom:4px">B. RPG Complet</h2>
+  <p style="text-align:center;color:#888;font-size:13px;margin-bottom:20px;max-width:500px;margin-left:auto;margin-right:auto">
+    Interface 100% RPG : fenetres medievales, coins decoratifs, barres HP/XP/MP,
+    font pixel partout. Chaque tache donne des XP. Ambiance parchemin.
+  </p>
+
+  <div class="phone phone-b">
+    <div class="status-bar"><span>9:41</span><span>FAMILYFLOW</span><span>♥♥♥♡</span></div>
+
+    <div class="rpg-scene">
+      <div class="pixel-border-h top"></div>
+      <div class="rpg-title-banner">FAMILLE DUPONT<br>Niveau 7 — Foyer Epanoui</div>
+      <div class="pixel-border-h bottom"></div>
+    </div>
+
+    <!-- Status bars -->
+    <div class="card-b">
+      <div class="card-b-bl"></div><div class="card-b-br"></div>
+      <div class="card-b-header">
+        <span class="card-b-title">⚔️ STATUS</span>
+        <span class="card-b-badge">LVL 7</span>
+      </div>
+      <div class="rpg-bar">
+        <span class="rpg-bar-label" style="color:#EF4444">HP</span>
+        <div class="rpg-bar-track"><div class="rpg-bar-fill hp" style="width:80%"></div></div>
+        <span class="rpg-bar-value">80/100</span>
+      </div>
+      <div class="rpg-bar">
+        <span class="rpg-bar-label" style="color:#10B981">XP</span>
+        <div class="rpg-bar-track"><div class="rpg-bar-fill xp" style="width:62%"></div></div>
+        <span class="rpg-bar-value">240/400</span>
+      </div>
+      <div class="rpg-bar">
+        <span class="rpg-bar-label" style="color:#3B82F6">MP</span>
+        <div class="rpg-bar-track"><div class="rpg-bar-fill mp" style="width:45%"></div></div>
+        <span class="rpg-bar-value">45/100</span>
+      </div>
+      <div class="rpg-stat-row">
+        <span class="rpg-stat">🔥 STREAK 5J</span>
+        <span class="rpg-stat">🪙 320 OR</span>
+        <span class="rpg-stat">⭐ 12 QUETES</span>
+      </div>
+    </div>
+
+    <!-- Quests (tasks) -->
+    <div class="card-b">
+      <div class="card-b-bl"></div><div class="card-b-br"></div>
+      <div class="card-b-header">
+        <span class="card-b-title">📜 QUETES DU JOUR</span>
+        <span class="card-b-badge">3/5</span>
+      </div>
+      <div class="task-b">
+        <div class="task-check-b done"></div>
+        <span style="text-decoration:line-through;color:#A09880">Sortir les poubelles</span>
+        <span class="task-xp">+15 XP</span>
+      </div>
+      <div class="task-b">
+        <div class="task-check-b done"></div>
+        <span style="text-decoration:line-through;color:#A09880">Preparer les lunchs</span>
+        <span class="task-xp">+20 XP</span>
+      </div>
+      <div class="task-b">
+        <div class="task-check-b done"></div>
+        <span style="text-decoration:line-through;color:#A09880">Arroser les plantes</span>
+        <span class="task-xp">+10 XP</span>
+      </div>
+      <div class="task-b">
+        <div class="task-check-b"></div>
+        <span>Courses Monoprix</span>
+        <span class="task-xp" style="color:#A09880">+25 XP</span>
+      </div>
+      <div class="task-b">
+        <div class="task-check-b"></div>
+        <span>Ranger le garage</span>
+        <span class="task-xp" style="color:#A09880">+30 XP</span>
+      </div>
+    </div>
+
+    <!-- Meals as "Provisions" -->
+    <div class="card-b">
+      <div class="card-b-bl"></div><div class="card-b-br"></div>
+      <div class="card-b-header">
+        <span class="card-b-title">🍖 PROVISIONS</span>
+      </div>
+      <div class="meal-slot">
+        <div class="meal-icon">🍝</div>
+        <div>
+          <div class="meal-time">MIDI</div>
+          <div style="font-size:12px;color:#4A3F2F">Pates carbonara</div>
+        </div>
+      </div>
+      <div class="meal-slot">
+        <div class="meal-icon" style="opacity:0.4">🍽️</div>
+        <div>
+          <div class="meal-time">SOIR</div>
+          <div style="font-size:12px;color:#A09880;font-style:italic">Non planifie</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pros-cons">
+    <span class="pro">Ultra differenciant</span>
+    <span class="pro">Gamification maximale</span>
+    <span class="con">Lisibilite reduite</span>
+    <span class="con">Peut fatiguer a l'usage</span>
+  </div>
+</div>
+
+<!-- ══════════ C — PIXEL ACCENT ══════════ -->
+<div id="pc" class="proposal">
+  <h2 style="text-align:center;color:#F0EDE8;font-size:18px;font-weight:800;margin-bottom:4px">C. Pixel Accent</h2>
+  <p style="text-align:center;color:#888;font-size:13px;margin-bottom:20px;max-width:500px;margin-left:auto;margin-right:auto">
+    Design moderne intact (border-radius, shadows, SF font) mais avec des
+    accents pixel strategiques : icones carrees, barres segmentees,
+    badges pixel font, bordure top pixel sur les cards. Le meilleur des deux mondes.
+  </p>
+
+  <div class="phone phone-c">
+    <div class="status-bar"><span>9:41</span><span>FamilyFlow</span><span>100%</span></div>
+
+    <!-- Companion bubble -->
+    <div class="pixel-bubble">
+      <div class="pixel-companion-icon">🦊</div>
+      <div class="pixel-bubble-text">
+        <strong>Renard</strong><br>
+        Super matinee ! Encore 2 taches et le jardin sera content.
+      </div>
+    </div>
+
+    <!-- Inline scene -->
+    <div class="inline-scene">
+      <div class="inline-scene-sun"></div>
+      <div class="inline-scene-tree">
+        <div class="ist-canopy"></div>
+        <div class="ist-trunk"></div>
+      </div>
+      <div class="inline-animal inline-bunny"></div>
+      <div class="inline-animal inline-fox"></div>
+      <div class="inline-scene-overlay">
+        <span class="inline-scene-stat">LVL 7</span>
+        <span class="inline-scene-stat">XP 240/400</span>
+        <span class="inline-scene-stat">🔥 5j</span>
+      </div>
+    </div>
+
+    <!-- Tasks -->
+    <div class="card-c">
+      <div class="card-c-strip" style="background:repeating-linear-gradient(90deg,var(--teal) 0,var(--teal) 4px,transparent 4px,transparent 8px)"></div>
+      <div class="card-c-header">
+        <span class="card-c-title">
+          <span class="pixel-icon">🏠</span>
+          Taches du jour
+        </span>
+        <span class="card-c-badge" style="border-color:var(--success);color:var(--success)">3/5</span>
+      </div>
+      <div class="task-c">
+        <div class="task-check-c done"></div>
+        <span class="task-c-label done">Sortir les poubelles</span>
+        <div class="pixel-avatar" style="border-color:#93C5FD;background:#EFF6FF;color:#3B82F6">L</div>
+      </div>
+      <div class="task-c">
+        <div class="task-check-c done"></div>
+        <span class="task-c-label done">Preparer les lunchs</span>
+        <div class="pixel-avatar" style="border-color:#F9A8D4;background:#FDF2F8;color:#EC4899">E</div>
+      </div>
+      <div class="task-c">
+        <div class="task-check-c done"></div>
+        <span class="task-c-label done">Arroser les plantes</span>
+        <div class="pixel-avatar" style="border-color:#93C5FD;background:#EFF6FF;color:#3B82F6">L</div>
+      </div>
+      <div class="task-c">
+        <div class="task-check-c"></div>
+        <span class="task-c-label">Courses Monoprix</span>
+        <div class="pixel-avatar" style="border-color:#F9A8D4;background:#FDF2F8;color:#EC4899">E</div>
+      </div>
+      <div class="task-c">
+        <div class="task-check-c"></div>
+        <span class="task-c-label">Ranger le garage</span>
+        <div class="pixel-avatar" style="border-color:#93C5FD;background:#EFF6FF;color:#3B82F6">L</div>
+      </div>
+      <div class="pixel-steps">
+        <div class="pixel-step filled glow"></div>
+        <div class="pixel-step filled glow"></div>
+        <div class="pixel-step filled glow"></div>
+        <div class="pixel-step"></div>
+        <div class="pixel-step"></div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="pixel-stats-grid" style="margin-bottom:12px">
+      <div class="pixel-stat-card">
+        <div class="pixel-stat-num" style="color:var(--teal)">47</div>
+        <div class="pixel-stat-label">Taches ce mois</div>
+      </div>
+      <div class="pixel-stat-card">
+        <div class="pixel-stat-num" style="color:var(--orange)">12</div>
+        <div class="pixel-stat-label">Repas planifies</div>
+      </div>
+      <div class="pixel-stat-card">
+        <div class="pixel-stat-num" style="color:var(--violet)">5j</div>
+        <div class="pixel-stat-label">Streak actuel</div>
+      </div>
+      <div class="pixel-stat-card">
+        <div class="pixel-stat-num" style="color:var(--pink)">3</div>
+        <div class="pixel-stat-label">Souvenirs</div>
+      </div>
+    </div>
+
+    <!-- Meals -->
+    <div class="card-c">
+      <div class="card-c-strip" style="background:repeating-linear-gradient(90deg,var(--orange) 0,var(--orange) 4px,transparent 4px,transparent 8px)"></div>
+      <div class="card-c-header">
+        <span class="card-c-title">
+          <span class="pixel-icon">🍽️</span>
+          Repas
+        </span>
+        <span style="font-size:12px;color:var(--textMuted)">Voir tout →</span>
+      </div>
+      <div class="pixel-divider"></div>
+      <div class="task-c">
+        <span style="font-family:'Silkscreen',monospace;font-size:9px;color:var(--textMuted);width:36px">MIDI</span>
+        <span class="task-c-label">Pates carbonara</span>
+        <span style="font-size:14px">🍝</span>
+      </div>
+      <div class="task-c">
+        <span style="font-family:'Silkscreen',monospace;font-size:9px;color:var(--textMuted);width:36px">SOIR</span>
+        <span class="task-c-label" style="color:var(--textFaint);font-style:italic">Non planifie</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="pros-cons">
+    <span class="pro">Meilleur compromis</span>
+    <span class="pro">Lisible + differenciant</span>
+    <span class="pro">Facile a implementer</span>
+    <span class="con">Moins immersif que B/D</span>
+  </div>
+</div>
+
+<!-- ══════════ D — GAMEBOY ══════════ -->
+<div id="pd" class="proposal">
+  <h2 style="text-align:center;color:#F0EDE8;font-family:'Press Start 2P',monospace;font-size:12px;margin-bottom:4px">D. Gameboy Nostalgia</h2>
+  <p style="text-align:center;color:#888;font-size:13px;margin-bottom:20px;max-width:500px;margin-left:auto;margin-right:auto">
+    Palette 4 couleurs Gameboy (vert monochrome). Nostalgie pure.
+    Fonctionne comme un mode special deblocable ou un theme de profil.
+  </p>
+
+  <div class="phone phone-d">
+    <div class="status-bar"><span>9:41</span><span>FAMILYFLOW</span><span>♥♥♥</span></div>
+
+    <div class="gb-header">
+      <div class="gb-logo">FAMILLE DUPONT</div>
+      <div class="gb-date">10 AVR 2026</div>
+    </div>
+
+    <div class="gb-scene">
+      <div class="gb-scene-label">JARDIN</div>
+      <div class="gb-scene-xp">LVL 7</div>
+      <div class="gb-tree">
+        <div class="gbt-leaves"></div>
+        <div class="gbt-trunk"></div>
+      </div>
+      <div class="gb-animal gb-bunny"></div>
+      <div class="gb-animal gb-hedgehog"></div>
+      <div class="gb-ground"></div>
+    </div>
+
+    <div class="card-d">
+      <div class="card-d-header">
+        <span>QUETES DU JOUR</span>
+        <span class="card-d-badge">3/5</span>
+      </div>
+      <div class="task-d"><div class="task-d-check done"></div><span style="text-decoration:line-through">Poubelles</span></div>
+      <div class="task-d"><div class="task-d-check done"></div><span style="text-decoration:line-through">Lunchs</span></div>
+      <div class="task-d"><div class="task-d-check done"></div><span style="text-decoration:line-through">Plantes</span></div>
+      <div class="task-d"><div class="task-d-check"></div><span>Courses</span></div>
+      <div class="task-d"><div class="task-d-check"></div><span>Garage</span></div>
+      <div class="gb-bar"><div class="gb-bar-fill" style="width:62%"></div></div>
+      <div class="gb-stats">
+        <span class="gb-stat">XP 240</span>
+        <span class="gb-stat">🔥 5J</span>
+        <span class="gb-stat">OR 320</span>
+      </div>
+    </div>
+
+    <div class="card-d">
+      <div class="card-d-header"><span>REPAS</span></div>
+      <div class="task-d"><span style="min-width:30px;font-family:'Press Start 2P',monospace;font-size:6px">MIDI</span><span>Carbonara</span></div>
+      <div class="task-d"><span style="min-width:30px;font-family:'Press Start 2P',monospace;font-size:6px">SOIR</span><span style="color:var(--gb-mid)">???</span></div>
+    </div>
+
+    <div class="card-d">
+      <div class="card-d-header"><span>BUDGET</span><span class="card-d-badge">-120€</span></div>
+      <div class="gb-bar"><div class="gb-bar-fill" style="width:35%"></div></div>
+      <div style="font-family:'Press Start 2P',monospace;font-size:6px;color:var(--gb-dark);margin-top:4px">380€ / 1100€</div>
+    </div>
+  </div>
+
+  <div class="pros-cons">
+    <span class="pro">Nostalgie ultime</span>
+    <span class="pro">Theme deblocable = motivation</span>
+    <span class="con">Niche / pas pour tous</span>
+    <span class="con">Lisibilite tres limitee</span>
+  </div>
+</div>
+
+<!-- ══════════ E — DARK NEON ══════════ -->
+<div id="pe" class="proposal">
+  <h2 style="text-align:center;color:#F0EDE8;font-family:'Silkscreen',monospace;font-size:18px;margin-bottom:4px">E. Dark Pixel Neon</h2>
+  <p style="text-align:center;color:#888;font-size:13px;margin-bottom:20px;max-width:500px;margin-left:auto;margin-right:auto">
+    Mode sombre avec accents neon colores. Grille perspective au sol,
+    etoiles, lueurs. Ambiance cyberpunk pixel. Remplacement du dark mode actuel.
+  </p>
+
+  <div class="phone phone-e">
+    <div class="status-bar"><span>22:15</span><span>FAMILYFLOW</span><span>67%</span></div>
+
+    <!-- Neon scene -->
+    <div class="neon-scene">
+      <div class="neon-grid"></div>
+      <div class="neon-star" style="top:8px;left:15%;animation-delay:0s"></div>
+      <div class="neon-star" style="top:16px;left:40%;animation-delay:0.5s"></div>
+      <div class="neon-star" style="top:6px;left:65%;animation-delay:1s"></div>
+      <div class="neon-star" style="top:20px;left:80%;animation-delay:1.5s"></div>
+      <div class="neon-star" style="top:12px;left:30%;animation-delay:0.8s"></div>
+      <div class="neon-tree">
+        <div class="nt-canopy"></div>
+        <div class="nt-trunk"></div>
+      </div>
+      <div class="neon-animal neon-bunny"></div>
+      <div class="neon-animal neon-fox"></div>
+      <div class="neon-scene-overlay">
+        <span class="neon-scene-stat" style="color:#8AF">LVL 7</span>
+        <span class="neon-scene-stat" style="color:#4ADE80">XP 240/400</span>
+        <span class="neon-scene-stat" style="color:#FBBF24">🔥 5j</span>
+      </div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="neon-stats" style="margin-bottom:10px">
+      <div class="neon-stat-card" style="border-top:2px solid #2DD4BF">
+        <div class="neon-stat-num" style="color:#2DD4BF">47</div>
+        <div class="neon-stat-label">TACHES</div>
+      </div>
+      <div class="neon-stat-card" style="border-top:2px solid #FBBF24">
+        <div class="neon-stat-num" style="color:#FBBF24">12</div>
+        <div class="neon-stat-label">REPAS</div>
+      </div>
+      <div class="neon-stat-card" style="border-top:2px solid #A78BFA">
+        <div class="neon-stat-num" style="color:#A78BFA">5j</div>
+        <div class="neon-stat-label">STREAK</div>
+      </div>
+    </div>
+
+    <!-- Tasks -->
+    <div class="card-e">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#2DD4BF,transparent)"></div>
+      <div class="card-e-header">
+        <span class="card-e-title" style="color:#F0EDE8"><span style="font-size:16px">🏠</span> Taches du jour</span>
+        <span class="card-e-badge" style="background:rgba(16,185,129,0.15);color:#4ADE80">3/5</span>
+      </div>
+      <div class="task-e">
+        <div class="task-check-e done"></div>
+        <span class="task-e-label done">Sortir les poubelles</span>
+      </div>
+      <div class="task-e">
+        <div class="task-check-e done"></div>
+        <span class="task-e-label done">Preparer les lunchs</span>
+      </div>
+      <div class="task-e">
+        <div class="task-check-e done"></div>
+        <span class="task-e-label done">Arroser les plantes</span>
+      </div>
+      <div class="task-e">
+        <div class="task-check-e"></div>
+        <span class="task-e-label">Courses Monoprix</span>
+      </div>
+      <div class="task-e">
+        <div class="task-check-e"></div>
+        <span class="task-e-label">Ranger le garage</span>
+      </div>
+      <div class="neon-bar">
+        <div class="neon-bar-fill" style="width:62%;background:linear-gradient(90deg,#2DD4BF,#10B981);box-shadow:0 0 8px rgba(45,212,191,0.3)"></div>
+      </div>
+    </div>
+
+    <!-- Meals -->
+    <div class="card-e">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#FBBF24,transparent)"></div>
+      <div class="card-e-header">
+        <span class="card-e-title" style="color:#F0EDE8"><span style="font-size:16px">🍽️</span> Repas</span>
+      </div>
+      <div class="task-e">
+        <span style="font-family:'Silkscreen',monospace;font-size:9px;color:#5A5D6A;width:36px">MIDI</span>
+        <span class="task-e-label">Pates carbonara</span>
+        <span style="font-size:14px">🍝</span>
+      </div>
+      <div class="task-e">
+        <span style="font-family:'Silkscreen',monospace;font-size:9px;color:#5A5D6A;width:36px">SOIR</span>
+        <span class="task-e-label" style="color:#3A3D4A;font-style:italic">Non planifie</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="pros-cons">
+    <span class="pro">Tres immersif en dark mode</span>
+    <span class="pro">Effets neon = premium</span>
+    <span class="con">Uniquement dark mode</span>
+    <span class="con">Peut paraitre "gamer"</span>
+  </div>
+</div>
+
+<script>
+  function show(id) {
+    document.querySelectorAll('.proposal').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    event.target.classList.add('active');
+  }
+</script>
+</body>
+</html>

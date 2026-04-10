@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FamilyFlow — Hiérarchie forte</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300;1,400&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --orange:  #F97316;
+  --red:     #F87171;
+  --green:   #4ADE80;
+  --blue:    #60A5FA;
+  --violet:  #8B5CF6;
+  --pink:    #F472B6;
+  --sky:     #38BDF8;
+  --gold:    #FBBF24;
+  --text:    #F1F5F9;
+  --sub:     #94A3B8;
+  --muted:   #475569;
+  --bg:      #0F172A;
+  --card:    rgba(255,255,255,0.055);
+  --border:  rgba(255,255,255,0.09);
+}
+
+body {
+  background: #1C1F26;
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px 64px;
+  gap: 28px;
+}
+
+/* ── PHONE SHELL ── */
+.phone {
+  width: 340px;
+  height: 720px;
+  background: var(--bg);
+  border-radius: 48px;
+  border: 1.5px solid rgba(255,255,255,0.09);
+  box-shadow:
+    0 0 0 7px #141820,
+    0 0 0 8px rgba(255,255,255,0.05),
+    0 48px 96px rgba(0,0,0,0.7),
+    inset 0 1px 0 rgba(255,255,255,0.07);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Dynamic island */
+.island {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 108px;
+  height: 30px;
+  background: #050810;
+  border-radius: 100px;
+  z-index: 100;
+  border: 1px solid rgba(255,255,255,0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.island-cam {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: #0D1117;
+  border: 1.5px solid #1a1f2e;
+  box-shadow: inset 0 0 4px rgba(100,180,255,0.3);
+}
+.island-dot { width: 5px; height: 5px; border-radius: 50%; background: #0D1117; }
+
+/* Status bar */
+.status-bar {
+  height: 52px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 26px 8px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+.status-time {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  letter-spacing: -0.02em;
+}
+.status-right {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.status-right svg { opacity: 0.7; }
+
+/* Scroll area */
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 14px 32px;
+  scrollbar-width: none;
+}
+.scroll::-webkit-scrollbar { display: none; }
+
+/* ── HEADER ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 2px 18px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: linear-gradient(to bottom, var(--bg) 75%, transparent);
+}
+.h-left { display: flex; align-items: center; gap: 11px; }
+.avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7C3AED, #4C1D95);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 19px;
+  box-shadow: 0 0 0 2.5px rgba(139,92,246,0.35), 0 4px 12px rgba(139,92,246,0.3);
+  flex-shrink: 0;
+}
+.h-greeting { font-size: 11px; color: var(--muted); font-weight: 500; line-height: 1; }
+.h-name { font-size: 15px; font-weight: 800; color: var(--text); line-height: 1.3; letter-spacing: -0.02em; }
+.h-right { display: flex; gap: 7px; }
+.icon-btn {
+  width: 34px; height: 34px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; cursor: pointer;
+  transition: background 0.15s;
+}
+
+/* ── GRID LAYOUT ── */
+.row { display: flex; gap: 10px; margin-bottom: 10px; }
+.col { flex: 1; min-width: 0; }
+.full { margin-bottom: 10px; }
+
+/* ── CARD BASE ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  position: relative;
+}
+.card-full { padding: 18px 20px 16px; }
+.card-half { padding: 14px; }
+
+/* Top accent line */
+.card-accent-line {
+  position: absolute;
+  top: 0; left: 20px; right: 20px;
+  height: 1px;
+  border-radius: 0 0 2px 2px;
+  opacity: 0.6;
+}
+
+/* Card label (small, top) */
+.card-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.card-label-half {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── THE BIG METRIC ── */
+.metric {
+  font-family: 'DM Mono', monospace;
+  font-size: 52px;
+  font-weight: 600;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+}
+.metric-lg {
+  font-family: 'DM Mono', monospace;
+  font-size: 42px;
+  font-weight: 600;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+}
+.metric-md {
+  font-family: 'DM Mono', monospace;
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.metric-em {
+  font-size: 36px;
+  line-height: 1;
+}
+.metric-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.metric-label-sm {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+/* Divider */
+.div { height: 1px; background: rgba(255,255,255,0.05); margin: 10px 0; }
+
+/* ── CARD: REPAS ── */
+.card-repas {
+  background: rgba(249,115,22,0.10);
+  border-color: rgba(249,115,22,0.22);
+}
+.repas-inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.repas-emoji-wrap {
+  width: 56px; height: 56px;
+  border-radius: 14px;
+  background: rgba(249,115,22,0.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px;
+  flex-shrink: 0;
+  border: 1px solid rgba(249,115,22,0.25);
+}
+.repas-main { font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: -0.03em; line-height: 1.1; }
+.repas-time {
+  font-size: 11px;
+  color: var(--orange);
+  font-weight: 600;
+  margin-top: 4px;
+  font-family: 'DM Mono', monospace;
+}
+.repas-next {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* ── CARD: OVERDUE ── */
+.card-overdue {
+  background: rgba(248,113,113,0.07);
+  border-color: rgba(248,113,113,0.2);
+}
+.overdue-top {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.overdue-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 64px;
+  font-weight: 700;
+  color: var(--red);
+  line-height: 0.85;
+  letter-spacing: -0.05em;
+}
+.overdue-stack { padding-bottom: 6px; }
+.overdue-word { font-size: 13px; color: var(--red); font-weight: 700; opacity: 0.7; display: block; line-height: 1; }
+.overdue-sub { font-size: 10px; color: var(--muted); font-weight: 500; margin-top: 1px; }
+.overdue-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+}
+.overdue-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--red); opacity: 0.5; flex-shrink: 0; }
+.overdue-text { font-size: 11px; color: var(--muted); text-decoration: line-through; }
+
+/* ── CARD: HUMEURS ── */
+.moods-row {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  margin-top: 4px;
+}
+.mood-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.mood-emoji-lg { font-size: 28px; line-height: 1; }
+.mood-name { font-size: 8px; color: var(--muted); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+
+/* ── CARD: BUDGET ── */
+.card-budget { background: rgba(74,222,128,0.06); border-color: rgba(74,222,128,0.18); }
+.budget-pct {
+  font-family: 'DM Mono', monospace;
+  font-size: 44px;
+  font-weight: 700;
+  color: var(--green);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+}
+.progress-bar {
+  height: 3px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 100px;
+  overflow: hidden;
+  margin: 10px 0 5px;
+}
+.progress-fill { height: 100%; border-radius: 100px; }
+
+/* ── CARD: MÉNAGE ── */
+.card-menage { background: rgba(96,165,250,0.06); border-color: rgba(96,165,250,0.18); }
+.menage-fraction {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  line-height: 1;
+}
+.fraction-big {
+  font-family: 'DM Mono', monospace;
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--blue);
+  letter-spacing: -0.04em;
+  line-height: 0.9;
+}
+.fraction-slash { font-family: 'DM Mono', monospace; font-size: 28px; color: rgba(96,165,250,0.3); font-weight: 300; }
+.fraction-total { font-family: 'DM Mono', monospace; font-size: 28px; color: rgba(96,165,250,0.4); font-weight: 600; }
+
+.check-list { display: flex; flex-direction: column; gap: 0px; margin-top: 12px; }
+.check-item { display: flex; align-items: center; gap: 8px; padding: 3.5px 0; }
+.check-box {
+  width: 13px; height: 13px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.check-box.done { background: rgba(96,165,250,0.25); }
+.check-box.done::after { content: '✓'; font-size: 8px; color: var(--blue); font-weight: 700; }
+.check-box.todo { background: transparent; border: 1.5px solid rgba(255,255,255,0.12); }
+.check-text { font-size: 11px; }
+.check-text.done { color: var(--muted); text-decoration: line-through; }
+.check-text.todo { color: var(--sub); }
+
+/* ── CARD: LOOT ── */
+.card-loot { background: rgba(139,92,246,0.08); border-color: rgba(139,92,246,0.22); }
+.loot-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.ring-outer {
+  position: relative;
+  width: 64px; height: 64px;
+}
+.ring-svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.ring-emoji {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+}
+.loot-pct {
+  font-family: 'DM Mono', monospace;
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--violet);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+/* ── CARD: ANNIVERSAIRE ── */
+.card-bday { background: rgba(244,114,182,0.07); border-color: rgba(244,114,182,0.2); }
+.bday-countdown {
+  font-family: 'DM Mono', monospace;
+  font-size: 42px;
+  font-weight: 700;
+  color: var(--pink);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+}
+
+/* ── CARD: CALENDRIER ── */
+.card-cal { background: rgba(139,92,246,0.06); border-color: rgba(139,92,246,0.18); }
+.cal-time {
+  font-family: 'DM Mono', monospace;
+  font-size: 44px;
+  font-weight: 700;
+  color: var(--violet);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+}
+.cal-event-label { font-size: 13px; font-weight: 700; color: var(--text); margin-top: 5px; }
+.cal-event-sub { font-size: 10px; color: var(--muted); margin-top: 1px; }
+.cal-mini { margin-top: 12px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; }
+.cal-head { font-size: 8px; color: var(--muted); text-align: center; padding: 2px 0; font-weight: 600; letter-spacing: 0.04em; }
+.cal-d {
+  aspect-ratio: 1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px;
+  color: var(--muted);
+  border-radius: 5px;
+  font-family: 'DM Mono', monospace;
+}
+.cal-d.today { background: var(--violet); color: #fff; font-weight: 700; }
+.cal-d.event { color: var(--sub); }
+.cal-d.event::after { display: none; }
+.cal-d.has-dot { position: relative; }
+.cal-d.has-dot span {
+  position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);
+  width: 3px; height: 3px; border-radius: 50%;
+  background: var(--violet); opacity: 0.6;
+}
+
+/* ── CARD: COURSES ── */
+.card-courses { background: rgba(56,189,248,0.06); border-color: rgba(56,189,248,0.18); }
+.courses-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--sky);
+  line-height: 0.85;
+  letter-spacing: -0.04em;
+}
+.grocery-mini { margin-top: 10px; display: flex; flex-direction: column; gap: 2px; }
+.g-item { display: flex; align-items: center; gap: 5px; padding: 1.5px 0; }
+.g-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--sky); opacity: 0.5; flex-shrink: 0; }
+.g-text { font-size: 10px; color: var(--muted); }
+
+/* ── CARD: GRATITUDE ── */
+.card-grat { background: rgba(251,191,36,0.06); border-color: rgba(251,191,36,0.18); }
+.stars-big { font-size: 22px; letter-spacing: 1px; line-height: 1; color: var(--gold); }
+.grat-quote {
+  font-size: 10px;
+  color: var(--sub);
+  font-style: italic;
+  line-height: 1.45;
+  margin-top: 8px;
+  padding-left: 8px;
+  border-left: 2px solid rgba(251,191,36,0.3);
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+  animation: fadeSlideUp 0.5s ease both;
+}
+.full:nth-child(1) .card  { animation-delay: 0.05s; }
+.full:nth-child(2) .card  { animation-delay: 0.12s; }
+.row:nth-child(3) .card   { animation-delay: 0.18s; }
+.full:nth-child(4) .card  { animation-delay: 0.24s; }
+.row:nth-child(5) .card   { animation-delay: 0.30s; }
+.full:nth-child(6) .card  { animation-delay: 0.36s; }
+.row:nth-child(7) .card   { animation-delay: 0.40s; }
+
+/* ── PAGE LABEL ── */
+.page-label {
+  color: #64748B;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.page-label::before,
+.page-label::after {
+  content: '';
+  display: block;
+  width: 32px;
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+}
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="island">
+    <div class="island-cam"></div>
+    <div class="island-dot"></div>
+  </div>
+
+  <div class="status-bar">
+    <span class="status-time">09:41</span>
+    <div class="status-right">
+      <svg width="16" height="10" viewBox="0 0 16 10" fill="none">
+        <rect x="0" y="3" width="3" height="7" rx="1" fill="white" opacity="0.4"/>
+        <rect x="4.5" y="2" width="3" height="8" rx="1" fill="white" opacity="0.6"/>
+        <rect x="9" y="0" width="3" height="10" rx="1" fill="white" opacity="0.9"/>
+        <rect x="13.5" y="0" width="2.5" height="10" rx="1" fill="white"/>
+      </svg>
+      <svg width="15" height="11" viewBox="0 0 15 11" fill="none">
+        <path d="M7.5 2.5C9.5 2.5 11.3 3.3 12.6 4.6L14 3.2C12.3 1.5 10 0.5 7.5 0.5C5 0.5 2.7 1.5 1 3.2L2.4 4.6C3.7 3.3 5.5 2.5 7.5 2.5Z" fill="white" opacity="0.9"/>
+        <path d="M7.5 5.5C8.8 5.5 9.9 6 10.7 6.9L12.1 5.5C10.9 4.3 9.3 3.5 7.5 3.5C5.7 3.5 4.1 4.3 2.9 5.5L4.3 6.9C5.1 6 6.2 5.5 7.5 5.5Z" fill="white" opacity="0.7"/>
+        <circle cx="7.5" cy="9.5" r="1.5" fill="white"/>
+      </svg>
+      <svg width="25" height="12" viewBox="0 0 25 12" fill="none">
+        <rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="white" stroke-opacity="0.35"/>
+        <rect x="2" y="2" width="17" height="8" rx="2" fill="white"/>
+        <path d="M23 4v4a2 2 0 000-4z" fill="white" opacity="0.4"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="scroll">
+
+    <!-- HEADER -->
+    <div class="header">
+      <div class="h-left">
+        <div class="avatar">👨</div>
+        <div>
+          <div class="h-greeting">Bonjour,</div>
+          <div class="h-name">Gabriel</div>
+        </div>
+      </div>
+      <div class="h-right">
+        <div class="icon-btn">🔍</div>
+        <div class="icon-btn">⚙️</div>
+      </div>
+    </div>
+
+    <!-- 1. REPAS — full -->
+    <div class="full">
+      <div class="card card-full card-repas">
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 90% 50%, rgba(249,115,22,0.12) 0%, transparent 65%);pointer-events:none;border-radius:18px;"></div>
+        <div class="card-label" style="color:rgba(249,115,22,0.6);">
+          <span>🍽️</span> Repas du jour
+        </div>
+        <div class="repas-inner">
+          <div class="repas-emoji-wrap">🍝</div>
+          <div>
+            <div class="repas-main">Pâtes<br>carbonara</div>
+            <div class="repas-time">Ce soir · 19h30</div>
+            <div class="repas-next">Midi · Salade niçoise</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. RETARD — full -->
+    <div class="full">
+      <div class="card card-full card-overdue">
+        <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;background:radial-gradient(circle,rgba(248,113,113,0.15),transparent 70%);pointer-events:none;"></div>
+        <div class="card-label" style="color:rgba(248,113,113,0.6);">
+          <span>⚠️</span> Tâches en retard
+        </div>
+        <div class="overdue-top">
+          <div class="overdue-num">3</div>
+          <div class="overdue-stack">
+            <span class="overdue-word">EN</span>
+            <span class="overdue-word">RETARD</span>
+            <span class="overdue-sub">depuis hier</span>
+          </div>
+        </div>
+        <div class="div"></div>
+        <div class="overdue-item">
+          <div class="overdue-dot"></div>
+          <span class="overdue-text">Appeler le médecin de Lucas</span>
+        </div>
+        <div class="overdue-item">
+          <div class="overdue-dot"></div>
+          <span class="overdue-text">Renouveler l'abonnement crèche</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. HUMEURS + BUDGET — demi -->
+    <div class="row">
+      <div class="col">
+        <div class="card card-half" style="height:100%;">
+          <div class="card-label-half"><span>🌤️</span> Humeurs</div>
+          <div class="moods-row">
+            <div class="mood-item">
+              <span class="mood-emoji-lg">😄</span>
+              <span class="mood-name">Gab</span>
+            </div>
+            <div class="mood-item">
+              <span class="mood-emoji-lg">🙂</span>
+              <span class="mood-name">Emma</span>
+            </div>
+            <div class="mood-item">
+              <span class="mood-emoji-lg">😐</span>
+              <span class="mood-name">Lucas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card card-half card-budget" style="height:100%;">
+          <div class="card-label-half" style="color:rgba(74,222,128,0.6);"><span>💰</span> Budget</div>
+          <div class="budget-pct">62%</div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:62%;background:linear-gradient(90deg,#22C55E,#4ADE80);"></div>
+          </div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;">1 240 / 2 000€</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. MÉNAGE — full -->
+    <div class="full">
+      <div class="card card-full card-menage">
+        <div style="position:absolute;bottom:-10px;left:-10px;width:80px;height:80px;background:radial-gradient(circle,rgba(96,165,250,0.12),transparent 70%);pointer-events:none;"></div>
+        <div class="card-label" style="color:rgba(96,165,250,0.6);"><span>🏠</span> Ménage</div>
+        <div style="display:flex;align-items:flex-end;gap:6px;">
+          <div class="menage-fraction">
+            <span class="fraction-big">2</span>
+            <span class="fraction-slash">/</span>
+            <span class="fraction-total">4</span>
+          </div>
+          <div style="padding-bottom:8px;">
+            <div style="font-size:11px;color:var(--blue);font-weight:600;opacity:0.7;">restantes</div>
+          </div>
+        </div>
+        <div class="check-list">
+          <div class="check-item"><div class="check-box done"></div><span class="check-text done">Aspirateur salon</span></div>
+          <div class="check-item"><div class="check-box done"></div><span class="check-text done">Vaisselle</span></div>
+          <div class="check-item"><div class="check-box todo"></div><span class="check-text todo">Salle de bain</span></div>
+          <div class="check-item"><div class="check-box todo"></div><span class="check-text todo">Sortir les poubelles</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. LOOT + ANNIVERSAIRE — demi -->
+    <div class="row">
+      <div class="col">
+        <div class="card card-half card-loot" style="height:100%;">
+          <div class="card-label-half" style="color:rgba(139,92,246,0.6);"><span>🎁</span> Loot</div>
+          <div class="loot-wrap">
+            <div class="ring-outer">
+              <svg class="ring-svg" width="64" height="64" viewBox="0 0 64 64">
+                <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(139,92,246,0.15)" stroke-width="5"/>
+                <circle cx="32" cy="32" r="26" fill="none" stroke="#8B5CF6" stroke-width="5"
+                  stroke-dasharray="163.4" stroke-dashoffset="52" stroke-linecap="round"/>
+              </svg>
+              <div class="ring-emoji">🎁</div>
+            </div>
+            <div class="loot-pct">68%</div>
+            <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.04em;">LV.12 · 340 XP</div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card card-half card-bday" style="height:100%;">
+          <div class="card-label-half" style="color:rgba(244,114,182,0.6);"><span>🎂</span> Anniversaire</div>
+          <div class="bday-countdown">J-3</div>
+          <div style="margin-top:8px;">
+            <div style="font-size:12px;font-weight:700;color:var(--text);">Mamie Joëlle</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;">🎂 8 avril · 72 ans</div>
+          </div>
+          <div style="margin-top:10px;">
+            <div style="height:3px;background:rgba(244,114,182,0.12);border-radius:100px;overflow:hidden;">
+              <div style="width:57%;height:100%;background:linear-gradient(90deg,#EC4899,#F472B6);border-radius:100px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. CALENDRIER — full -->
+    <div class="full">
+      <div class="card card-full card-cal">
+        <div style="position:absolute;top:0;right:0;width:120px;height:120px;background:radial-gradient(circle at 80% 20%,rgba(139,92,246,0.1),transparent 70%);pointer-events:none;border-radius:18px;"></div>
+        <div class="card-label" style="color:rgba(139,92,246,0.6);"><span>📆</span> Prochain RDV</div>
+        <div class="cal-time">14h30</div>
+        <div class="cal-event-label">Pédiatre · Lucas</div>
+        <div class="cal-event-sub">Clinique Saint-Louis · Aujourd'hui</div>
+        <div class="cal-mini">
+          <div class="div"></div>
+          <div class="cal-grid">
+            <div class="cal-head">L</div><div class="cal-head">M</div><div class="cal-head">M</div><div class="cal-head">J</div><div class="cal-head">V</div><div class="cal-head">S</div><div class="cal-head">D</div>
+            <div class="cal-d"></div><div class="cal-d"></div><div class="cal-d event">1</div><div class="cal-d event">2</div><div class="cal-d">3</div><div class="cal-d">4</div><div class="cal-d today">5</div>
+            <div class="cal-d">6</div><div class="cal-d">7</div><div class="cal-d">8</div><div class="cal-d event">9</div><div class="cal-d">10</div><div class="cal-d">11</div><div class="cal-d">12</div>
+            <div class="cal-d">13</div><div class="cal-d">14</div><div class="cal-d">15</div><div class="cal-d">16</div><div class="cal-d">17</div><div class="cal-d">18</div><div class="cal-d">19</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. COURSES + GRATITUDE — demi -->
+    <div class="row">
+      <div class="col">
+        <div class="card card-half card-courses" style="height:100%;">
+          <div class="card-label-half" style="color:rgba(56,189,248,0.6);"><span>🛒</span> Courses</div>
+          <div class="courses-num">6</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px;">à faire</div>
+          <div class="grocery-mini">
+            <div class="g-item"><div class="g-dot"></div><span class="g-text">🥛 Lait × 2</span></div>
+            <div class="g-item"><div class="g-dot"></div><span class="g-text">🥚 Œufs × 12</span></div>
+            <div class="g-item"><div class="g-dot"></div><span class="g-text">🧀 Fromage</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card card-half card-grat" style="height:100%;">
+          <div class="card-label-half" style="color:rgba(251,191,36,0.6);"><span>🙏</span> Gratitude</div>
+          <div class="stars-big">★★★★★</div>
+          <div class="grat-quote">"Le rire de Lucas ce matin 🌞"</div>
+          <div style="margin-top:8px;font-size:9px;color:var(--muted);">— Gabriel · aujourd'hui</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /scroll -->
+</div><!-- /phone -->
+
+<div class="page-label">Hiérarchie forte</div>
+
+</body>
+</html>

@@ -11,15 +11,15 @@ Requirements pour le milestone Jardin Familial (MVP). Chaque requirement mappe �
 
 ### Données & Infrastructure
 
-- [ ] **DATA-01**: Le système persiste l'état du village dans un fichier Markdown partagé (`village.md`) compatible Obsidian, avec parser bidirectionnel
-- [ ] **DATA-02**: Les contributions sont stockées en append-only log (timestamp, profileId, type, montant) pour éviter les corruptions iCloud
+- [x] **DATA-01**: Le système persiste l'état du village dans un fichier Markdown partagé (`village.md`) compatible Obsidian, avec parser bidirectionnel
+- [x] **DATA-02**: Les contributions sont stockées en append-only log (timestamp, profileId, type, montant) pour éviter les corruptions iCloud
 - [ ] **DATA-03**: Un hook domaine isolé `useGarden.ts` gère toute la logique village (pas d'ajout dans useVault.ts)
-- [ ] **DATA-04**: Les IDs de la grille village sont namespacés (`village_c0`, `village_b0`) pour éviter les collisions avec la ferme perso
+- [x] **DATA-04**: Les IDs de la grille village sont namespacés (`village_c0`, `village_b0`) pour éviter les collisions avec la ferme perso
 
 ### Carte & Navigation
 
 - [ ] **MAP-01**: Une carte "Place du Village" avec son propre terrain tilemap (cobblestone dominant, fontaine, étals) est rendue via le TileMapRenderer existant
-- [ ] **MAP-02**: Une grille village (`village-grid.ts`) définit les positions des éléments interactifs sur la place
+- [x] **MAP-02**: Une grille village (`village-grid.ts`) définit les positions des éléments interactifs sur la place
 - [ ] **MAP-03**: Un portail interactif dans la scène ferme perso permet de naviguer vers le village avec une transition visuelle
 
 ### Coopération & Contributions
@@ -69,12 +69,12 @@ Déféré au prochain milestone. Trackés mais pas dans le roadmap actuel.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 25 | Pending |
-| DATA-02 | Phase 25 | Pending |
+| DATA-01 | Phase 25 | Complete |
+| DATA-02 | Phase 25 | Complete |
 | DATA-03 | Phase 26 | Pending |
-| DATA-04 | Phase 25 | Pending |
+| DATA-04 | Phase 25 | Complete |
 | MAP-01 | Phase 27 | Pending |
-| MAP-02 | Phase 25 | Pending |
+| MAP-02 | Phase 25 | Complete |
 | MAP-03 | Phase 28 | Pending |
 | COOP-01 | Phase 28 | Pending |
 | COOP-02 | Phase 28 | Pending |

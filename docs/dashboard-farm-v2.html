@@ -1,0 +1,1722 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Ferme — Option B Timeline (v2)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    background: #111118;
+    color: #e0e0e0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    text-align: center;
+  }
+  h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #888;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+  .subtitle {
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+    max-width: 380px;
+    line-height: 1.5;
+  }
+
+  /* ── Dashboard Card ─────────────────────── */
+  .card {
+    width: 100%;
+    max-width: 390px;
+    background: #1a1a2e;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 16px 0;
+  }
+  .card-icon { font-size: 18px; }
+  .card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    flex: 1;
+  }
+  .card-badge {
+    background: #ef4444;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+  }
+
+  /* ── Profile Row ────────────────────────── */
+  .profile-section {
+    padding: 12px 0 4px;
+  }
+  .profile-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 16px;
+    margin-bottom: 10px;
+  }
+  .profile-avatar { font-size: 16px; }
+  .profile-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #ccc;
+    flex: 1;
+  }
+  .harvest-badge {
+    background: #4ADE80;
+    color: #0a2e14;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+  }
+
+  /* ── Crops Timeline Lane ────────────────── */
+  .crops-lane {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 4px 16px 8px;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+  }
+  .crops-lane::-webkit-scrollbar { display: none; }
+
+  .crop-card {
+    flex: 0 0 auto;
+    width: 68px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    scroll-snap-align: start;
+    position: relative;
+  }
+
+  /* Ring container */
+  .ring-wrap {
+    width: 52px;
+    height: 52px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ring-svg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 52px;
+    height: 52px;
+    transform: rotate(-90deg);
+  }
+  .ring-bg {
+    fill: none;
+    stroke: #2a2a40;
+    stroke-width: 3;
+  }
+  .ring-fill {
+    fill: none;
+    stroke-width: 3;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.6s ease;
+  }
+  .ring-fill.stage0 { stroke: #555; }
+  .ring-fill.stage1 { stroke: #8B6914; }
+  .ring-fill.stage2 { stroke: #6b8a3e; }
+  .ring-fill.stage3 { stroke: #4ADE80; }
+  .ring-fill.mature { stroke: #4ADE80; }
+  .ring-fill.golden { stroke: #f0c040; }
+
+  .ring-center {
+    font-size: 22px;
+    z-index: 1;
+    line-height: 1;
+  }
+
+  /* Main plot pulse */
+  .crop-card.main-plot .ring-wrap::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    border: 2px solid #60A5FA;
+    animation: pulse-blue 2s ease-in-out infinite;
+  }
+  @keyframes pulse-blue {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.06); }
+  }
+
+  /* Mature glow */
+  .crop-card.mature .ring-wrap::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(74, 222, 128, 0.15), transparent 70%);
+  }
+
+  /* Golden shimmer */
+  .crop-card.golden .ring-wrap {
+    filter: drop-shadow(0 0 6px rgba(240, 192, 64, 0.4));
+  }
+  .crop-card.golden .ring-wrap::before {
+    content: '✨';
+    position: absolute;
+    top: -4px;
+    right: -2px;
+    font-size: 10px;
+    z-index: 2;
+    animation: sparkle 2s ease-in-out infinite;
+  }
+  @keyframes sparkle {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  /* Stage dots */
+  .stage-dots {
+    display: flex;
+    gap: 3px;
+  }
+  .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #333;
+  }
+  .dot.filled { background: #8B6914; }
+  .dot.mature { background: #f0c040; }
+  .dot.main { background: #60A5FA; }
+  .dot.golden { background: #f0c040; }
+
+  /* Crop label */
+  .crop-label {
+    font-size: 9px;
+    color: #777;
+    font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  /* ── Wear Event Badge on crop ───────────── */
+  .wear-badge {
+    position: absolute;
+    top: -4px;
+    right: 0px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #ef4444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    border: 2px solid #1a1a2e;
+    z-index: 3;
+    animation: badge-bounce 0.5s ease;
+  }
+  @keyframes badge-bounce {
+    0% { transform: scale(0); }
+    60% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+
+  /* ── Buildings Production Row ────────────── */
+  .buildings-row {
+    display: flex;
+    gap: 8px;
+    padding: 0 16px;
+    overflow-x: auto;
+  }
+  .building-card {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #16213e;
+    border: 1px solid #2a2a40;
+    border-radius: 10px;
+    padding: 6px 10px;
+    position: relative;
+  }
+  .building-card.has-pending {
+    border-color: rgba(74, 222, 128, 0.3);
+  }
+  .building-card.has-damage {
+    border-color: rgba(239, 68, 68, 0.4);
+  }
+  .building-emoji { font-size: 18px; line-height: 1; }
+  .building-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .building-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: #bbb;
+  }
+  .building-meta {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .building-level {
+    font-size: 9px;
+    font-weight: 600;
+    color: #666;
+    background: #222;
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  .building-resource {
+    font-size: 10px;
+    color: #888;
+  }
+  .building-pending {
+    font-size: 11px;
+    font-weight: 700;
+    color: #4ADE80;
+    background: rgba(74, 222, 128, 0.12);
+    min-width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+  }
+  .building-pending.zero {
+    color: #555;
+    background: transparent;
+  }
+  .building-wear-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ef4444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    border: 2px solid #1a1a2e;
+    z-index: 3;
+  }
+  .building-damage-overlay {
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 4px,
+      rgba(239, 68, 68, 0.06) 4px,
+      rgba(239, 68, 68, 0.06) 8px
+    );
+    pointer-events: none;
+  }
+
+  /* ── Wear Alert Banner ──────────────────── */
+  .wear-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 16px;
+    padding: 8px 12px;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 10px;
+  }
+  .wear-banner-icon { font-size: 16px; }
+  .wear-banner-text {
+    flex: 1;
+    font-size: 12px;
+    color: #ef8888;
+    font-weight: 500;
+  }
+  .wear-banner-action {
+    font-size: 11px;
+    font-weight: 700;
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.15);
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  /* ── Dividers ───────────────────────────── */
+  .section-divider {
+    height: 1px;
+    background: #222;
+    margin: 8px 16px;
+  }
+  .section-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0 16px;
+    margin-bottom: 6px;
+  }
+
+  /* ── CTA ────────────────────────────────── */
+  .cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 4px 16px 16px;
+    padding: 12px;
+    background: rgba(74, 222, 128, 0.1);
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .cta-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #4ADE80;
+  }
+
+  /* ── Multi-profile grid ─────────────────── */
+  .profiles-grid {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0 8px 4px;
+  }
+  .profiles-2 {
+    /* 2 profiles: side by side */
+  }
+  .profiles-3 {
+    /* 3 profiles: 2 top + 1 bottom-left */
+  }
+  .profile-cell {
+    flex: 1 1 45%;
+    min-width: 0;
+    padding: 8px;
+  }
+  .profile-cell .crops-lane {
+    padding: 4px 0 4px;
+  }
+  .profile-cell .buildings-row {
+    padding: 0;
+  }
+  .profile-cell .profile-header {
+    padding: 0;
+    margin-bottom: 6px;
+  }
+  .profile-divider-v {
+    width: 1px;
+    background: #222;
+    align-self: stretch;
+    margin: 8px 0;
+  }
+  .profile-divider-h {
+    width: 100%;
+    height: 1px;
+    background: #222;
+    flex-basis: 100%;
+    margin: 4px 0;
+  }
+  /* 3rd profile takes only half width (bottom-left) */
+  .profiles-3 .profile-cell:nth-child(5) {
+    flex: 0 0 50%;
+  }
+
+  /* ── Scenario label ─────────────────────── */
+  .scenario-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    color: #333;
+    background: #f0c040;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+  .scenario-tag.alert { background: #ef4444; color: #fff; }
+  .scenario-tag.clean { background: #4ADE80; color: #0a2e14; }
+
+  /* ── Section titles ─────────────────────── */
+  .section-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+  }
+
+  /* ── Family toggle button ───────────────── */
+  .family-toggle {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #16213e;
+    border: 1px solid #2a2a40;
+    border-radius: 8px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .family-toggle:active { transform: scale(0.95); }
+  .family-toggle.active {
+    border-color: rgba(74, 222, 128, 0.3);
+    background: rgba(74, 222, 128, 0.08);
+  }
+  .family-toggle-icon {
+    font-size: 13px;
+    transition: transform 0.2s;
+  }
+  .family-toggle.active .family-toggle-icon {
+    transform: scale(1.1);
+  }
+  .family-toggle-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #666;
+    transition: color 0.2s;
+  }
+  .family-toggle.active .family-toggle-label {
+    color: #4ADE80;
+  }
+  .family-toggle-count {
+    font-size: 9px;
+    font-weight: 700;
+    color: #555;
+    background: #222;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .family-toggle.active .family-toggle-count {
+    color: #4ADE80;
+    background: rgba(74, 222, 128, 0.15);
+  }
+
+  /* ── Collapsible family profiles ────────── */
+  .family-profiles {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease, opacity 0.25s ease;
+    opacity: 0;
+  }
+  .family-profiles.expanded {
+    max-height: 600px;
+    opacity: 1;
+  }
+</style>
+</head>
+<body>
+
+<h1>Option B — Timeline + Production</h1>
+<p class="subtitle">
+  Crops en bande scrollable avec anneaux de progression.<br>
+  Buildings avec production en attente.<br>
+  Wear events = badges sur les items concernes + banniere d'alerte.
+</p>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- SCENARIO 1 : Ferme saine, pas d'events         -->
+<!-- ════════════════════════════════════════════════ -->
+
+<div class="section-group">
+  <div>
+    <span class="scenario-tag clean">Ferme saine — pas d'evenements</span>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-icon">🌳</span>
+      <span class="card-title">Mon Jardin</span>
+    </div>
+
+    <!-- Profile: Lucas -->
+    <div class="profile-section">
+      <div class="profile-header">
+        <span class="profile-avatar">👦</span>
+        <span class="profile-name">Lucas</span>
+        <span class="harvest-badge">2 pretes</span>
+      </div>
+
+      <!-- Section Cultures -->
+      <div class="section-label">Cultures</div>
+      <div class="crops-lane">
+        <!-- Newest → oldest (left to right = recent to harvest-ready) -->
+
+        <!-- Carrot - stage 0 (just planted) -->
+        <div class="crop-card main-plot">
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 52 52">
+              <circle class="ring-bg" cx="26" cy="26" r="22" />
+              <circle class="ring-fill stage0" cx="26" cy="26" r="22"
+                stroke-dasharray="138.2" stroke-dashoffset="131.3" />
+            </svg>
+            <span class="ring-center">🥕</span>
+          </div>
+          <div class="stage-dots">
+            <span class="dot main"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </div>
+          <span class="crop-label">Carotte</span>
+        </div>
+
+        <!-- Potato - stage 1 -->
+        <div class="crop-card">
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 52 52">
+              <circle class="ring-bg" cx="26" cy="26" r="22" />
+              <circle class="ring-fill stage1" cx="26" cy="26" r="22"
+                stroke-dasharray="138.2" stroke-dashoffset="103.7" />
+            </svg>
+            <span class="ring-center">🥔</span>
+          </div>
+          <div class="stage-dots">
+            <span class="dot filled"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </div>
+          <span class="crop-label">Patate</span>
+        </div>
+
+        <!-- Tomato - stage 2 (golden!) -->
+        <div class="crop-card golden">
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 52 52">
+              <circle class="ring-bg" cx="26" cy="26" r="22" />
+              <circle class="ring-fill golden" cx="26" cy="26" r="22"
+                stroke-dasharray="138.2" stroke-dashoffset="69.1" />
+            </svg>
+            <span class="ring-center">🍅</span>
+          </div>
+          <div class="stage-dots">
+            <span class="dot golden"></span>
+            <span class="dot golden"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </div>
+          <span class="crop-label">Tomate</span>
+        </div>
+
+        <!-- Corn - stage 3 -->
+        <div class="crop-card">
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 52 52">
+              <circle class="ring-bg" cx="26" cy="26" r="22" />
+              <circle class="ring-fill stage3" cx="26" cy="26" r="22"
+                stroke-dasharray="138.2" stroke-dashoffset="34.6" />
+            </svg>
+            <span class="ring-center">🌽</span>
+          </div>
+          <div class="stage-dots">
+            <span class="dot filled"></span>
+            <span class="dot filled"></span>
+            <span class="dot filled"></span>
+            <span class="dot"></span>
+          </div>
+          <span class="crop-label">Mais</span>
+        </div>
+
+        <!-- Strawberry - stage 4 MATURE -->
+        <div class="crop-card mature">
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 52 52">
+              <circle class="ring-bg" cx="26" cy="26" r="22" />
+              <circle class="ring-fill mature" cx="26" cy="26" r="22"
+                stroke-dasharray="138.2" stroke-dashoffset="0" />
+            </svg>
+            <span class="ring-center">🍓</span>
+          </div>
+          <div class="stage-dots">
+            <span class="dot mature"></span>
+            <span class="dot mature"></span>
+            <span class="dot mature"></span>
+            <span class="dot mature"></span>
+          </div>
+          <span class="crop-label">Fraise</span>
+        </div>
+
+        <!-- Wheat - stage 4 MATURE -->
+        <div class="crop-card mature">
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 52 52">
+              <circle class="ring-bg" cx="26" cy="26" r="22" />
+              <circle class="ring-fill mature" cx="26" cy="26" r="22"
+                stroke-dasharray="138.2" stroke-dashoffset="0" />
+            </svg>
+            <span class="ring-center">🌾</span>
+          </div>
+          <div class="stage-dots">
+            <span class="dot mature"></span>
+            <span class="dot mature"></span>
+            <span class="dot mature"></span>
+            <span class="dot mature"></span>
+          </div>
+          <span class="crop-label">Ble</span>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- Section Production -->
+      <div class="section-label">Production</div>
+      <div class="buildings-row">
+        <div class="building-card has-pending">
+          <span class="building-emoji">🐔</span>
+          <div class="building-info">
+            <span class="building-name">Poulailler</span>
+            <div class="building-meta">
+              <span class="building-level">Nv.2</span>
+              <span class="building-resource">🥚 / 6h</span>
+            </div>
+          </div>
+          <span class="building-pending">3</span>
+        </div>
+
+        <div class="building-card has-pending">
+          <span class="building-emoji">🏚️</span>
+          <div class="building-info">
+            <span class="building-name">Grange</span>
+            <div class="building-meta">
+              <span class="building-level">Nv.1</span>
+              <span class="building-resource">🥛 / 10h</span>
+            </div>
+          </div>
+          <span class="building-pending">1</span>
+        </div>
+
+        <div class="building-card">
+          <span class="building-emoji">⚙️</span>
+          <div class="building-info">
+            <span class="building-name">Moulin</span>
+            <div class="building-meta">
+              <span class="building-level">Nv.1</span>
+              <span class="building-resource">🌾 / 12h</span>
+            </div>
+          </div>
+          <span class="building-pending zero">0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta">
+      <span class="cta-text">Voir mon jardin →</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- SCENARIO 2 : Avec wear events                   -->
+<!-- ════════════════════════════════════════════════ -->
+
+<div class="section-group">
+  <div>
+    <span class="scenario-tag alert">Avec evenements d'usure</span>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-icon">🌳</span>
+      <span class="card-title">Mon Jardin</span>
+      <span class="card-badge">2</span>
+    </div>
+
+    <!-- Profile: Lucas -->
+    <div class="profile-section">
+      <div class="profile-header">
+        <span class="profile-avatar">👦</span>
+        <span class="profile-name">Lucas</span>
+        <span class="harvest-badge">1 prete</span>
+      </div>
+
+      <div class="section-label">Cultures</div>
+      <div class="crops-lane">
+
+        <!-- Carrot - stage 1, BROKEN FENCE on this plot -->
+        <div class="crop-card">
+          <div class="wear-badge">🔨</div>
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 52 52">
+              <circle class="ring-bg" cx="26" cy="26" r="22" />
+              <circle class="ring-fill stage1" cx="26" cy="26" r="22"
+                stroke-dasharray="138.2" stroke-dashoffset="103.7" />
+            </svg>
+            <span class="ring-center" style="opacity:0.4">🥕</span>
+          </div>
+          <div class="stage-dots">
+            <span class="dot filled"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </div>
+          <span class="crop-label" style="color:#ef8888">Bloquee</span>
+        </div>
+
+        <!-- Potato - stage 1, main plot -->
+        <div class="crop-card main-plot">
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 52 52">
+              <circle class="ring-bg" cx="26" cy="26" r="22" />
+              <circle class="ring-fill stage1" cx="26" cy="26" r="22"
+                stroke-dasharray="138.2" stroke-dashoffset="103.7" />
+            </svg>
+            <span class="ring-center">🥔</span>
+          </div>
+          <div class="stage-dots">
+            <span class="dot main"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </div>
+          <span class="crop-label">Patate</span>
+        </div>
+
+        <!-- Weeds on empty plot -->
+        <div class="crop-card">
+          <div class="wear-badge" style="background:#6b8a3e">🌿</div>
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 52 52">
+              <circle class="ring-bg" cx="26" cy="26" r="22" />
+            </svg>
+            <span class="ring-center" style="opacity:0.3">➕</span>
+          </div>
+          <div class="stage-dots">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </div>
+          <span class="crop-label" style="color:#6b8a3e">Herbes</span>
+        </div>
+
+        <!-- Tomato - stage 2 -->
+        <div class="crop-card">
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 52 52">
+              <circle class="ring-bg" cx="26" cy="26" r="22" />
+              <circle class="ring-fill stage2" cx="26" cy="26" r="22"
+                stroke-dasharray="138.2" stroke-dashoffset="69.1" />
+            </svg>
+            <span class="ring-center">🍅</span>
+          </div>
+          <div class="stage-dots">
+            <span class="dot filled"></span>
+            <span class="dot filled"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </div>
+          <span class="crop-label">Tomate</span>
+        </div>
+
+        <!-- Strawberry - MATURE -->
+        <div class="crop-card mature">
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 52 52">
+              <circle class="ring-bg" cx="26" cy="26" r="22" />
+              <circle class="ring-fill mature" cx="26" cy="26" r="22"
+                stroke-dasharray="138.2" stroke-dashoffset="0" />
+            </svg>
+            <span class="ring-center">🍓</span>
+          </div>
+          <div class="stage-dots">
+            <span class="dot mature"></span>
+            <span class="dot mature"></span>
+            <span class="dot mature"></span>
+            <span class="dot mature"></span>
+          </div>
+          <span class="crop-label">Fraise</span>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- Production avec toit abime -->
+      <div class="section-label">Production</div>
+      <div class="buildings-row">
+        <div class="building-card has-pending">
+          <span class="building-emoji">🐔</span>
+          <div class="building-info">
+            <span class="building-name">Poulailler</span>
+            <div class="building-meta">
+              <span class="building-level">Nv.2</span>
+              <span class="building-resource">🥚 / 6h</span>
+            </div>
+          </div>
+          <span class="building-pending">2</span>
+        </div>
+
+        <!-- Grange with damaged roof -->
+        <div class="building-card has-damage">
+          <div class="building-wear-badge">🏚️</div>
+          <div class="building-damage-overlay"></div>
+          <span class="building-emoji">🏚️</span>
+          <div class="building-info">
+            <span class="building-name" style="color:#ef8888">Grange</span>
+            <div class="building-meta">
+              <span class="building-level">Nv.1</span>
+              <span class="building-resource" style="color:#ef8888;text-decoration:line-through">🥛 / 10h</span>
+              <span style="font-size:10px;color:#ef8888">→ 20h</span>
+            </div>
+          </div>
+          <span class="building-pending zero">0</span>
+        </div>
+
+        <div class="building-card">
+          <span class="building-emoji">⚙️</span>
+          <div class="building-info">
+            <span class="building-name">Moulin</span>
+            <div class="building-meta">
+              <span class="building-level">Nv.1</span>
+              <span class="building-resource">🌾 / 12h</span>
+            </div>
+          </div>
+          <span class="building-pending zero">0</span>
+        </div>
+      </div>
+
+      <!-- Wear alert banner -->
+      <div style="padding: 8px 16px 0">
+        <div class="wear-banner">
+          <span class="wear-banner-icon">⚠️</span>
+          <span class="wear-banner-text">2 reparations necessaires</span>
+          <span class="wear-banner-action">Reparer</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta">
+      <span class="cta-text">Voir mon jardin →</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- SCENARIO 3 : 2 profils cote a cote              -->
+<!-- ════════════════════════════════════════════════ -->
+
+<div class="section-group">
+  <div>
+    <span class="scenario-tag">2 profils — cote a cote</span>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-icon">🌳</span>
+      <span class="card-title">Mon Jardin</span>
+      <span class="card-badge">1</span>
+    </div>
+
+    <div class="profiles-grid profiles-2">
+      <!-- Profile 1: Lucas (left) -->
+      <div class="profile-cell">
+        <div class="profile-header">
+          <span class="profile-avatar">👦</span>
+          <span class="profile-name">Lucas</span>
+          <span class="harvest-badge">2</span>
+        </div>
+
+        <div class="crops-lane">
+          <div class="crop-card main-plot">
+            <div class="ring-wrap">
+              <svg class="ring-svg" viewBox="0 0 52 52">
+                <circle class="ring-bg" cx="26" cy="26" r="22" />
+                <circle class="ring-fill stage0" cx="26" cy="26" r="22"
+                  stroke-dasharray="138.2" stroke-dashoffset="131.3" />
+              </svg>
+              <span class="ring-center">🥕</span>
+            </div>
+            <div class="stage-dots">
+              <span class="dot main"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            </div>
+            <span class="crop-label">Carotte</span>
+          </div>
+
+          <div class="crop-card golden">
+            <div class="ring-wrap">
+              <svg class="ring-svg" viewBox="0 0 52 52">
+                <circle class="ring-bg" cx="26" cy="26" r="22" />
+                <circle class="ring-fill golden" cx="26" cy="26" r="22"
+                  stroke-dasharray="138.2" stroke-dashoffset="69.1" />
+              </svg>
+              <span class="ring-center">🍅</span>
+            </div>
+            <div class="stage-dots">
+              <span class="dot golden"></span><span class="dot golden"></span><span class="dot"></span><span class="dot"></span>
+            </div>
+            <span class="crop-label">Tomate</span>
+          </div>
+
+          <div class="crop-card mature">
+            <div class="ring-wrap">
+              <svg class="ring-svg" viewBox="0 0 52 52">
+                <circle class="ring-bg" cx="26" cy="26" r="22" />
+                <circle class="ring-fill mature" cx="26" cy="26" r="22"
+                  stroke-dasharray="138.2" stroke-dashoffset="0" />
+              </svg>
+              <span class="ring-center">🍓</span>
+            </div>
+            <div class="stage-dots">
+              <span class="dot mature"></span><span class="dot mature"></span><span class="dot mature"></span><span class="dot mature"></span>
+            </div>
+            <span class="crop-label">Fraise</span>
+          </div>
+
+          <div class="crop-card mature">
+            <div class="ring-wrap">
+              <svg class="ring-svg" viewBox="0 0 52 52">
+                <circle class="ring-bg" cx="26" cy="26" r="22" />
+                <circle class="ring-fill mature" cx="26" cy="26" r="22"
+                  stroke-dasharray="138.2" stroke-dashoffset="0" />
+              </svg>
+              <span class="ring-center">🌾</span>
+            </div>
+            <div class="stage-dots">
+              <span class="dot mature"></span><span class="dot mature"></span><span class="dot mature"></span><span class="dot mature"></span>
+            </div>
+            <span class="crop-label">Ble</span>
+          </div>
+        </div>
+
+        <div class="buildings-row" style="margin-top:4px">
+          <div class="building-card has-pending">
+            <span class="building-emoji">🐔</span>
+            <div class="building-info">
+              <span class="building-name">Poulailler</span>
+              <div class="building-meta"><span class="building-level">Nv.2</span></div>
+            </div>
+            <span class="building-pending">3</span>
+          </div>
+          <div class="building-card">
+            <span class="building-emoji">⚙️</span>
+            <div class="building-info">
+              <span class="building-name">Moulin</span>
+              <div class="building-meta"><span class="building-level">Nv.1</span></div>
+            </div>
+            <span class="building-pending zero">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vertical divider between 2 profiles -->
+      <div class="profile-divider-v"></div>
+
+      <!-- Profile 2: Emma (right) -->
+      <div class="profile-cell">
+        <div class="profile-header">
+          <span class="profile-avatar">👧</span>
+          <span class="profile-name">Emma</span>
+        </div>
+
+        <div class="crops-lane">
+          <div class="crop-card main-plot">
+            <div class="ring-wrap">
+              <svg class="ring-svg" viewBox="0 0 52 52">
+                <circle class="ring-bg" cx="26" cy="26" r="22" />
+                <circle class="ring-fill stage1" cx="26" cy="26" r="22"
+                  stroke-dasharray="138.2" stroke-dashoffset="103.7" />
+              </svg>
+              <span class="ring-center">🌻</span>
+            </div>
+            <div class="stage-dots">
+              <span class="dot main"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            </div>
+            <span class="crop-label">Tournesol</span>
+          </div>
+
+          <div class="crop-card">
+            <div class="wear-badge" style="background:#6b8a3e">🌿</div>
+            <div class="ring-wrap">
+              <svg class="ring-svg" viewBox="0 0 52 52">
+                <circle class="ring-bg" cx="26" cy="26" r="22" />
+              </svg>
+              <span class="ring-center" style="opacity:0.3">➕</span>
+            </div>
+            <div class="stage-dots">
+              <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            </div>
+            <span class="crop-label" style="color:#6b8a3e">Herbes</span>
+          </div>
+
+          <div class="crop-card">
+            <div class="ring-wrap">
+              <svg class="ring-svg" viewBox="0 0 52 52">
+                <circle class="ring-bg" cx="26" cy="26" r="22" />
+                <circle class="ring-fill stage2" cx="26" cy="26" r="22"
+                  stroke-dasharray="138.2" stroke-dashoffset="69.1" />
+              </svg>
+              <span class="ring-center">🥔</span>
+            </div>
+            <div class="stage-dots">
+              <span class="dot filled"></span><span class="dot filled"></span><span class="dot"></span><span class="dot"></span>
+            </div>
+            <span class="crop-label">Patate</span>
+          </div>
+        </div>
+
+        <div class="buildings-row" style="margin-top:4px">
+          <div class="building-card has-pending">
+            <span class="building-emoji">🐔</span>
+            <div class="building-info">
+              <span class="building-name">Poulailler</span>
+              <div class="building-meta"><span class="building-level">Nv.1</span></div>
+            </div>
+            <span class="building-pending">1</span>
+          </div>
+        </div>
+
+        <div style="padding: 6px 0 0">
+          <div class="wear-banner" style="margin: 0">
+            <span class="wear-banner-icon">🌿</span>
+            <span class="wear-banner-text">Herbes</span>
+            <span class="wear-banner-action">Nettoyer</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta">
+      <span class="cta-text">Voir mon jardin →</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- SCENARIO 3b : 3 profils (2 en haut + 1 en bas)  -->
+<!-- ════════════════════════════════════════════════ -->
+
+<div class="section-group">
+  <div>
+    <span class="scenario-tag">3 profils — 2 en haut, 1 en bas a gauche</span>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-icon">🌳</span>
+      <span class="card-title">Mon Jardin</span>
+    </div>
+
+    <div class="profiles-grid profiles-3">
+      <!-- P1: Lucas (top-left) -->
+      <div class="profile-cell">
+        <div class="profile-header">
+          <span class="profile-avatar">👦</span>
+          <span class="profile-name">Lucas</span>
+          <span class="harvest-badge">1</span>
+        </div>
+        <div class="crops-lane">
+          <div class="crop-card main-plot">
+            <div class="ring-wrap">
+              <svg class="ring-svg" viewBox="0 0 52 52">
+                <circle class="ring-bg" cx="26" cy="26" r="22" />
+                <circle class="ring-fill stage1" cx="26" cy="26" r="22"
+                  stroke-dasharray="138.2" stroke-dashoffset="103.7" />
+              </svg>
+              <span class="ring-center">🥕</span>
+            </div>
+            <div class="stage-dots">
+              <span class="dot main"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            </div>
+            <span class="crop-label">Carotte</span>
+          </div>
+          <div class="crop-card mature">
+            <div class="ring-wrap">
+              <svg class="ring-svg" viewBox="0 0 52 52">
+                <circle class="ring-bg" cx="26" cy="26" r="22" />
+                <circle class="ring-fill mature" cx="26" cy="26" r="22"
+                  stroke-dasharray="138.2" stroke-dashoffset="0" />
+              </svg>
+              <span class="ring-center">🍓</span>
+            </div>
+            <div class="stage-dots">
+              <span class="dot mature"></span><span class="dot mature"></span><span class="dot mature"></span><span class="dot mature"></span>
+            </div>
+            <span class="crop-label">Fraise</span>
+          </div>
+        </div>
+        <div class="buildings-row" style="margin-top:4px">
+          <div class="building-card has-pending">
+            <span class="building-emoji">🐔</span>
+            <div class="building-info">
+              <span class="building-name">Poulailler</span>
+              <div class="building-meta"><span class="building-level">Nv.2</span></div>
+            </div>
+            <span class="building-pending">2</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vertical divider -->
+      <div class="profile-divider-v"></div>
+
+      <!-- P2: Emma (top-right) -->
+      <div class="profile-cell">
+        <div class="profile-header">
+          <span class="profile-avatar">👧</span>
+          <span class="profile-name">Emma</span>
+        </div>
+        <div class="crops-lane">
+          <div class="crop-card main-plot">
+            <div class="ring-wrap">
+              <svg class="ring-svg" viewBox="0 0 52 52">
+                <circle class="ring-bg" cx="26" cy="26" r="22" />
+                <circle class="ring-fill stage2" cx="26" cy="26" r="22"
+                  stroke-dasharray="138.2" stroke-dashoffset="69.1" />
+              </svg>
+              <span class="ring-center">🌻</span>
+            </div>
+            <div class="stage-dots">
+              <span class="dot main"></span><span class="dot main"></span><span class="dot"></span><span class="dot"></span>
+            </div>
+            <span class="crop-label">Tournesol</span>
+          </div>
+          <div class="crop-card">
+            <div class="ring-wrap">
+              <svg class="ring-svg" viewBox="0 0 52 52">
+                <circle class="ring-bg" cx="26" cy="26" r="22" />
+                <circle class="ring-fill stage1" cx="26" cy="26" r="22"
+                  stroke-dasharray="138.2" stroke-dashoffset="103.7" />
+              </svg>
+              <span class="ring-center">🥔</span>
+            </div>
+            <div class="stage-dots">
+              <span class="dot filled"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            </div>
+            <span class="crop-label">Patate</span>
+          </div>
+        </div>
+        <div class="buildings-row" style="margin-top:4px">
+          <div class="building-card">
+            <span class="building-emoji">🐔</span>
+            <div class="building-info">
+              <span class="building-name">Poulailler</span>
+              <div class="building-meta"><span class="building-level">Nv.1</span></div>
+            </div>
+            <span class="building-pending zero">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Horizontal divider spanning full width -->
+      <div class="profile-divider-h"></div>
+
+      <!-- P3: Hugo (bottom-left) -->
+      <div class="profile-cell">
+        <div class="profile-header">
+          <span class="profile-avatar">👶</span>
+          <span class="profile-name">Hugo</span>
+        </div>
+        <div class="crops-lane">
+          <div class="crop-card main-plot">
+            <div class="ring-wrap">
+              <svg class="ring-svg" viewBox="0 0 52 52">
+                <circle class="ring-bg" cx="26" cy="26" r="22" />
+                <circle class="ring-fill stage0" cx="26" cy="26" r="22"
+                  stroke-dasharray="138.2" stroke-dashoffset="131.3" />
+              </svg>
+              <span class="ring-center">🌾</span>
+            </div>
+            <div class="stage-dots">
+              <span class="dot main"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            </div>
+            <span class="crop-label">Ble</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta">
+      <span class="cta-text">Voir mon jardin →</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- SCENARIO 4 : Ferme debutante (peu de crops)     -->
+<!-- ════════════════════════════════════════════════ -->
+
+<div class="section-group">
+  <div>
+    <span class="scenario-tag">Ferme debutante — 2 crops, 1 batiment</span>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-icon">🌳</span>
+      <span class="card-title">Mon Jardin</span>
+    </div>
+
+    <div class="profile-section">
+      <div class="profile-header">
+        <span class="profile-avatar">👶</span>
+        <span class="profile-name">Hugo</span>
+      </div>
+
+      <div class="section-label">Cultures</div>
+      <div class="crops-lane">
+        <div class="crop-card main-plot">
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 52 52">
+              <circle class="ring-bg" cx="26" cy="26" r="22" />
+              <circle class="ring-fill stage0" cx="26" cy="26" r="22"
+                stroke-dasharray="138.2" stroke-dashoffset="131.3" />
+            </svg>
+            <span class="ring-center">🥕</span>
+          </div>
+          <div class="stage-dots">
+            <span class="dot main"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          </div>
+          <span class="crop-label">Carotte</span>
+        </div>
+
+        <div class="crop-card">
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 52 52">
+              <circle class="ring-bg" cx="26" cy="26" r="22" />
+              <circle class="ring-fill stage1" cx="26" cy="26" r="22"
+                stroke-dasharray="138.2" stroke-dashoffset="103.7" />
+            </svg>
+            <span class="ring-center">🌾</span>
+          </div>
+          <div class="stage-dots">
+            <span class="dot filled"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          </div>
+          <span class="crop-label">Ble</span>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <div class="section-label">Production</div>
+      <div class="buildings-row">
+        <div class="building-card">
+          <span class="building-emoji">🐔</span>
+          <div class="building-info">
+            <span class="building-name">Poulailler</span>
+            <div class="building-meta">
+              <span class="building-level">Nv.1</span>
+              <span class="building-resource">🥚 / 8h</span>
+            </div>
+          </div>
+          <span class="building-pending zero">0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta">
+      <span class="cta-text">Voir mon jardin →</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- SCENARIO 5 : Toggle solo / famille (interactif) -->
+<!-- ════════════════════════════════════════════════ -->
+
+<div class="section-group">
+  <div>
+    <span class="scenario-tag" style="background:#60A5FA;color:#fff">Interactif — clique le bouton famille</span>
+  </div>
+
+  <div class="card" id="demo-card">
+    <div class="card-header">
+      <span class="card-icon">🌳</span>
+      <span class="card-title">Mon Jardin</span>
+      <!-- Family toggle button -->
+      <div class="family-toggle" id="familyToggle" onclick="toggleFamily()">
+        <span class="family-toggle-icon">👨‍👩‍👧</span>
+        <span class="family-toggle-label">Famille</span>
+        <span class="family-toggle-count">2</span>
+      </div>
+    </div>
+
+    <!-- Active profile (always visible) — full width solo view -->
+    <div class="profile-section" id="soloProfile">
+      <div class="profile-header">
+        <span class="profile-avatar">👦</span>
+        <span class="profile-name">Lucas</span>
+        <span class="harvest-badge">2 pretes</span>
+      </div>
+
+      <div class="section-label">Cultures</div>
+      <div class="crops-lane">
+        <div class="crop-card main-plot">
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 52 52">
+              <circle class="ring-bg" cx="26" cy="26" r="22" />
+              <circle class="ring-fill stage0" cx="26" cy="26" r="22"
+                stroke-dasharray="138.2" stroke-dashoffset="124.4" />
+            </svg>
+            <span class="ring-center">🥕</span>
+          </div>
+          <div class="stage-dots">
+            <span class="dot main"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          </div>
+          <span class="crop-label">Carotte</span>
+        </div>
+
+        <div class="crop-card">
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 52 52">
+              <circle class="ring-bg" cx="26" cy="26" r="22" />
+              <circle class="ring-fill stage1" cx="26" cy="26" r="22"
+                stroke-dasharray="138.2" stroke-dashoffset="103.7" />
+            </svg>
+            <span class="ring-center">🥔</span>
+          </div>
+          <div class="stage-dots">
+            <span class="dot filled"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          </div>
+          <span class="crop-label">Patate</span>
+        </div>
+
+        <div class="crop-card golden">
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 52 52">
+              <circle class="ring-bg" cx="26" cy="26" r="22" />
+              <circle class="ring-fill golden" cx="26" cy="26" r="22"
+                stroke-dasharray="138.2" stroke-dashoffset="69.1" />
+            </svg>
+            <span class="ring-center">🍅</span>
+          </div>
+          <div class="stage-dots">
+            <span class="dot golden"></span><span class="dot golden"></span><span class="dot"></span><span class="dot"></span>
+          </div>
+          <span class="crop-label">Tomate</span>
+        </div>
+
+        <div class="crop-card">
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 52 52">
+              <circle class="ring-bg" cx="26" cy="26" r="22" />
+              <circle class="ring-fill stage2" cx="26" cy="26" r="22"
+                stroke-dasharray="138.2" stroke-dashoffset="34.6" />
+            </svg>
+            <span class="ring-center">🌽</span>
+          </div>
+          <div class="stage-dots">
+            <span class="dot filled"></span><span class="dot filled"></span><span class="dot filled"></span><span class="dot"></span>
+          </div>
+          <span class="crop-label">Mais</span>
+        </div>
+
+        <div class="crop-card mature">
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 52 52">
+              <circle class="ring-bg" cx="26" cy="26" r="22" />
+              <circle class="ring-fill mature" cx="26" cy="26" r="22"
+                stroke-dasharray="138.2" stroke-dashoffset="0" />
+            </svg>
+            <span class="ring-center">🍓</span>
+          </div>
+          <div class="stage-dots">
+            <span class="dot mature"></span><span class="dot mature"></span><span class="dot mature"></span><span class="dot mature"></span>
+          </div>
+          <span class="crop-label">Fraise</span>
+        </div>
+
+        <div class="crop-card mature">
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 52 52">
+              <circle class="ring-bg" cx="26" cy="26" r="22" />
+              <circle class="ring-fill mature" cx="26" cy="26" r="22"
+                stroke-dasharray="138.2" stroke-dashoffset="0" />
+            </svg>
+            <span class="ring-center">🌾</span>
+          </div>
+          <div class="stage-dots">
+            <span class="dot mature"></span><span class="dot mature"></span><span class="dot mature"></span><span class="dot mature"></span>
+          </div>
+          <span class="crop-label">Ble</span>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <div class="section-label">Production</div>
+      <div class="buildings-row">
+        <div class="building-card has-pending">
+          <span class="building-emoji">🐔</span>
+          <div class="building-info">
+            <span class="building-name">Poulailler</span>
+            <div class="building-meta">
+              <span class="building-level">Nv.2</span>
+              <span class="building-resource">🥚 / 6h</span>
+            </div>
+          </div>
+          <span class="building-pending">3</span>
+        </div>
+        <div class="building-card has-pending">
+          <span class="building-emoji">🏚️</span>
+          <div class="building-info">
+            <span class="building-name">Grange</span>
+            <div class="building-meta">
+              <span class="building-level">Nv.1</span>
+              <span class="building-resource">🥛 / 10h</span>
+            </div>
+          </div>
+          <span class="building-pending">1</span>
+        </div>
+        <div class="building-card">
+          <span class="building-emoji">⚙️</span>
+          <div class="building-info">
+            <span class="building-name">Moulin</span>
+            <div class="building-meta">
+              <span class="building-level">Nv.1</span>
+              <span class="building-resource">🌾 / 12h</span>
+            </div>
+          </div>
+          <span class="building-pending zero">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Family profiles (collapsible) -->
+    <div class="family-profiles" id="familyProfiles">
+      <div class="section-divider" style="margin-top:4px"></div>
+
+      <!-- Emma -->
+      <div class="profile-section">
+        <div class="profile-header">
+          <span class="profile-avatar">👧</span>
+          <span class="profile-name">Emma</span>
+          <span class="harvest-badge">1 prete</span>
+        </div>
+
+        <div class="crops-lane">
+          <div class="crop-card main-plot">
+            <div class="ring-wrap">
+              <svg class="ring-svg" viewBox="0 0 52 52">
+                <circle class="ring-bg" cx="26" cy="26" r="22" />
+                <circle class="ring-fill stage1" cx="26" cy="26" r="22"
+                  stroke-dasharray="138.2" stroke-dashoffset="103.7" />
+              </svg>
+              <span class="ring-center">🌻</span>
+            </div>
+            <div class="stage-dots">
+              <span class="dot main"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            </div>
+            <span class="crop-label">Tournesol</span>
+          </div>
+
+          <div class="crop-card">
+            <div class="ring-wrap">
+              <svg class="ring-svg" viewBox="0 0 52 52">
+                <circle class="ring-bg" cx="26" cy="26" r="22" />
+                <circle class="ring-fill stage2" cx="26" cy="26" r="22"
+                  stroke-dasharray="138.2" stroke-dashoffset="69.1" />
+              </svg>
+              <span class="ring-center">🥔</span>
+            </div>
+            <div class="stage-dots">
+              <span class="dot filled"></span><span class="dot filled"></span><span class="dot"></span><span class="dot"></span>
+            </div>
+            <span class="crop-label">Patate</span>
+          </div>
+
+          <div class="crop-card mature">
+            <div class="ring-wrap">
+              <svg class="ring-svg" viewBox="0 0 52 52">
+                <circle class="ring-bg" cx="26" cy="26" r="22" />
+                <circle class="ring-fill mature" cx="26" cy="26" r="22"
+                  stroke-dasharray="138.2" stroke-dashoffset="0" />
+              </svg>
+              <span class="ring-center">🌽</span>
+            </div>
+            <div class="stage-dots">
+              <span class="dot mature"></span><span class="dot mature"></span><span class="dot mature"></span><span class="dot mature"></span>
+            </div>
+            <span class="crop-label">Mais</span>
+          </div>
+        </div>
+
+        <div class="buildings-row">
+          <div class="building-card has-pending">
+            <span class="building-emoji">🐔</span>
+            <div class="building-info">
+              <span class="building-name">Poulailler</span>
+              <div class="building-meta">
+                <span class="building-level">Nv.1</span>
+                <span class="building-resource">🥚 / 8h</span>
+              </div>
+            </div>
+            <span class="building-pending">2</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- Hugo -->
+      <div class="profile-section">
+        <div class="profile-header">
+          <span class="profile-avatar">👶</span>
+          <span class="profile-name">Hugo</span>
+        </div>
+
+        <div class="crops-lane">
+          <div class="crop-card main-plot">
+            <div class="ring-wrap">
+              <svg class="ring-svg" viewBox="0 0 52 52">
+                <circle class="ring-bg" cx="26" cy="26" r="22" />
+                <circle class="ring-fill stage0" cx="26" cy="26" r="22"
+                  stroke-dasharray="138.2" stroke-dashoffset="131.3" />
+              </svg>
+              <span class="ring-center">🌾</span>
+            </div>
+            <div class="stage-dots">
+              <span class="dot main"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            </div>
+            <span class="crop-label">Ble</span>
+          </div>
+          <div class="crop-card">
+            <div class="ring-wrap">
+              <svg class="ring-svg" viewBox="0 0 52 52">
+                <circle class="ring-bg" cx="26" cy="26" r="22" />
+                <circle class="ring-fill stage0" cx="26" cy="26" r="22"
+                  stroke-dasharray="138.2" stroke-dashoffset="131.3" />
+              </svg>
+              <span class="ring-center">🥕</span>
+            </div>
+            <div class="stage-dots">
+              <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            </div>
+            <span class="crop-label">Carotte</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta">
+      <span class="cta-text">Voir mon jardin →</span>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleFamily() {
+  const btn = document.getElementById('familyToggle');
+  const profiles = document.getElementById('familyProfiles');
+  const isExpanded = btn.classList.toggle('active');
+  profiles.classList.toggle('expanded', isExpanded);
+}
+</script>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- LEGENDE                                         -->
+<!-- ════════════════════════════════════════════════ -->
+
+<div class="section-group" style="max-width: 600px">
+  <h2>Legende visuelle</h2>
+  <table style="font-size:12px; border-collapse:collapse; width:100%">
+    <thead>
+      <tr style="color:#888; border-bottom:1px solid #333">
+        <th style="text-align:left;padding:6px">Element</th>
+        <th style="text-align:left;padding:6px">Visuel</th>
+        <th style="text-align:left;padding:6px">Signification</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid #222">
+        <td style="padding:6px">Anneau gris</td>
+        <td style="padding:6px">━ #555</td>
+        <td style="padding:6px">Stade 0 (graine)</td>
+      </tr>
+      <tr style="border-bottom:1px solid #222">
+        <td style="padding:6px">Anneau brun</td>
+        <td style="padding:6px">━ #8B6914</td>
+        <td style="padding:6px">Stade 1 (pousse)</td>
+      </tr>
+      <tr style="border-bottom:1px solid #222">
+        <td style="padding:6px">Anneau vert fonce</td>
+        <td style="padding:6px">━ #6b8a3e</td>
+        <td style="padding:6px">Stade 2 (arbuste)</td>
+      </tr>
+      <tr style="border-bottom:1px solid #222">
+        <td style="padding:6px">Anneau vert vif</td>
+        <td style="padding:6px">━ #4ADE80</td>
+        <td style="padding:6px">Stade 3-4 (mature / recolte)</td>
+      </tr>
+      <tr style="border-bottom:1px solid #222">
+        <td style="padding:6px">Anneau dore</td>
+        <td style="padding:6px">━ #f0c040 + ✨</td>
+        <td style="padding:6px">Culture doree (mutation rare)</td>
+      </tr>
+      <tr style="border-bottom:1px solid #222">
+        <td style="padding:6px">Bordure bleue pulse</td>
+        <td style="padding:6px">◯ #60A5FA</td>
+        <td style="padding:6px">Parcelle principale (avance avec les taches)</td>
+      </tr>
+      <tr style="border-bottom:1px solid #222">
+        <td style="padding:6px">Badge rouge 🔨</td>
+        <td style="padding:6px">Pastille crop</td>
+        <td style="padding:6px">Cloture cassee (parcelle bloquee)</td>
+      </tr>
+      <tr style="border-bottom:1px solid #222">
+        <td style="padding:6px">Badge vert 🌿</td>
+        <td style="padding:6px">Pastille crop</td>
+        <td style="padding:6px">Mauvaises herbes (parcelle vide)</td>
+      </tr>
+      <tr style="border-bottom:1px solid #222">
+        <td style="padding:6px">Badge rouge 🏚️</td>
+        <td style="padding:6px">Pastille batiment</td>
+        <td style="padding:6px">Toit abime (-50% production)</td>
+      </tr>
+      <tr style="border-bottom:1px solid #222">
+        <td style="padding:6px">Nombre vert</td>
+        <td style="padding:6px">Badge batiment</td>
+        <td style="padding:6px">Ressources en attente de collecte</td>
+      </tr>
+      <tr>
+        <td style="padding:6px">Banniere ⚠️</td>
+        <td style="padding:6px">Barre rouge</td>
+        <td style="padding:6px">Reparations necessaires (tap → ecran arbre)</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+</body>
+</html>

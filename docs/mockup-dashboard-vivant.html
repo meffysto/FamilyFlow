@@ -1,0 +1,1698 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FamilyFlow — Mockups Dashboard Vivant + Streak Board</title>
+<style>
+  :root {
+    --bg: #EDEAE4;
+    --card: #FFFFFF;
+    --text: #1A1A2E;
+    --text-sub: #3D3D56;
+    --text-muted: #6B7280;
+    --teal: #0D9488;
+    --violet: #9333EA;
+    --orange: #E87B35;
+    --green: #16A34A;
+    --pink: #DB2777;
+    --error: #EF4444;
+    --warning: #F59E0B;
+    --success: #10B981;
+    --radius: 16px;
+    --radius-sm: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Rounded', 'SF Pro Display', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 20px;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* ── Navigation ── */
+  .nav {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 32px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+  }
+  .nav button {
+    padding: 10px 18px;
+    border: 2px solid transparent;
+    border-radius: 99px;
+    background: var(--card);
+    color: var(--text-sub);
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .nav button:hover { border-color: var(--teal); color: var(--teal); }
+  .nav button.active {
+    background: var(--teal);
+    color: white;
+    border-color: var(--teal);
+    box-shadow: 0 4px 12px rgba(13,148,136,0.3);
+  }
+
+  /* ── Phone Frame ── */
+  .phone-frame {
+    width: 393px;
+    margin: 0 auto;
+    background: var(--card);
+    border-radius: 40px;
+    padding: 20px 16px 32px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05);
+    min-height: 700px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 8px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* ── Section labels ── */
+  .proposal-title {
+    text-align: center;
+    margin: 48px 0 8px;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+  .proposal-subtitle {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-bottom: 24px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.5;
+  }
+
+  /* ── Proposal sections ── */
+  .proposal { display: none; }
+  .proposal.active { display: block; }
+
+  /* ── SCENE VIVANTE ── */
+  .scene-container {
+    position: relative;
+    width: 100%;
+    height: 220px;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  /* Proposal A — Diorama isométrique */
+  .scene-diorama {
+    background: linear-gradient(180deg, #87CEEB 0%, #B8E6B8 55%, #8FBC8F 100%);
+  }
+  .scene-diorama .sun {
+    position: absolute;
+    top: 16px;
+    right: 24px;
+    width: 36px;
+    height: 36px;
+    background: #FFD700;
+    border-radius: 50%;
+    box-shadow: 0 0 20px rgba(255,215,0,0.5);
+    animation: pulse-sun 3s ease-in-out infinite;
+  }
+  @keyframes pulse-sun { 0%,100%{transform:scale(1);} 50%{transform:scale(1.1);} }
+
+  .scene-diorama .clouds {
+    position: absolute;
+    top: 20px;
+    left: 0;
+    width: 200%;
+    height: 40px;
+    animation: drift 30s linear infinite;
+  }
+  @keyframes drift { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }
+  .cloud {
+    position: absolute;
+    background: rgba(255,255,255,0.7);
+    border-radius: 20px;
+  }
+
+  .pixel-ground {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 90px;
+  }
+
+  /* Pixel tree */
+  .pixel-tree {
+    position: absolute;
+    bottom: 55px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .pixel-tree .trunk {
+    width: 12px; height: 28px;
+    background: #8B6914;
+    margin: 0 auto;
+    image-rendering: pixelated;
+  }
+  .pixel-tree .leaves {
+    width: 52px; height: 40px;
+    background: #2E8B57;
+    border-radius: 4px;
+    margin: 0 auto -4px;
+    position: relative;
+    image-rendering: pixelated;
+    box-shadow: inset -8px -4px 0 #1A6B3A, inset 4px 4px 0 #3CB371;
+  }
+  .pixel-tree .leaves::after {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 16px;
+    background: #2E8B57;
+    border-radius: 4px;
+    box-shadow: inset 3px 3px 0 #3CB371;
+  }
+
+  /* Pixel animals */
+  .pixel-animal {
+    position: absolute;
+    bottom: 45px;
+    image-rendering: pixelated;
+  }
+  .pixel-animal.rabbit {
+    left: 20%;
+    width: 16px; height: 20px;
+    background: #E8D5B7;
+    border-radius: 3px 3px 0 0;
+    animation: hop 2s ease-in-out infinite;
+  }
+  .pixel-animal.rabbit::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 2px;
+    width: 5px; height: 10px;
+    background: #E8D5B7;
+    border-radius: 3px;
+    box-shadow: 7px 0 0 #E8D5B7;
+  }
+  @keyframes hop {
+    0%,100% { transform: translateY(0); }
+    40% { transform: translateY(-8px); }
+    60% { transform: translateX(6px) translateY(-4px); }
+  }
+
+  .pixel-animal.hedgehog {
+    right: 22%;
+    width: 20px; height: 14px;
+    background: #A0522D;
+    border-radius: 0 8px 4px 4px;
+    animation: waddle 3s ease-in-out infinite;
+  }
+  @keyframes waddle {
+    0%,100% { transform: translateX(0); }
+    50% { transform: translateX(-10px); }
+  }
+
+  /* Growing flowers */
+  .pixel-flower {
+    position: absolute;
+    bottom: 40px;
+    animation: grow-flower 2s ease-out forwards;
+  }
+  .pixel-flower .stem {
+    width: 3px;
+    height: 0;
+    background: #228B22;
+    margin: 0 auto;
+    animation: grow-stem 1.5s ease-out forwards;
+  }
+  @keyframes grow-stem { to { height: 16px; } }
+  .pixel-flower .petals {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    margin: 0 auto;
+    opacity: 0;
+    animation: bloom 0.5s ease-out 1.2s forwards;
+    image-rendering: pixelated;
+  }
+  @keyframes bloom { to { opacity: 1; } }
+
+  /* Particles */
+  .particle {
+    position: absolute;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    animation: float-particle 4s ease-in-out infinite;
+    opacity: 0.6;
+  }
+  @keyframes float-particle {
+    0% { transform: translateY(0) rotate(0deg); opacity: 0.6; }
+    50% { transform: translateY(-30px) rotate(180deg); opacity: 0.3; }
+    100% { transform: translateY(-60px) rotate(360deg); opacity: 0; }
+  }
+
+  /* Stats overlay on scene */
+  .scene-stats {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    gap: 6px;
+  }
+  .scene-stat {
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(8px);
+    border-radius: 10px;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-sub);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Proposal B — Terrarium / Snowglobe */
+  .scene-terrarium {
+    background: linear-gradient(180deg, #2D1B4E 0%, #1A1130 100%);
+    border: 3px solid rgba(255,255,255,0.1);
+  }
+  .terrarium-glass {
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    background: radial-gradient(ellipse at 30% 30%, rgba(255,255,255,0.08) 0%, transparent 60%);
+  }
+  .terrarium-ground {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    background: linear-gradient(180deg, #2D4A22 0%, #1A3015 100%);
+    border-radius: 0 0 17px 17px;
+  }
+  .firefly {
+    position: absolute;
+    width: 4px; height: 4px;
+    background: #FFE87C;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #FFE87C, 0 0 16px rgba(255,232,124,0.3);
+    animation: firefly-float 5s ease-in-out infinite;
+  }
+  @keyframes firefly-float {
+    0% { transform: translate(0, 0); opacity: 0; }
+    20% { opacity: 1; }
+    50% { transform: translate(20px, -30px); opacity: 0.7; }
+    80% { opacity: 1; }
+    100% { transform: translate(-10px, -50px); opacity: 0; }
+  }
+  .terrarium-tree {
+    position: absolute;
+    bottom: 55px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .terrarium-tree .t-trunk {
+    width: 8px; height: 32px;
+    background: #6B4226;
+    margin: 0 auto;
+    box-shadow: inset -3px 0 0 #4A2E1A;
+  }
+  .terrarium-tree .t-canopy {
+    width: 64px; height: 48px;
+    background: radial-gradient(ellipse, #3CB371 0%, #228B22 60%, #1A6B3A 100%);
+    border-radius: 50% 50% 40% 40%;
+    margin: 0 auto -8px;
+    box-shadow: 0 0 20px rgba(60,179,113,0.3);
+  }
+  .star {
+    position: absolute;
+    width: 2px; height: 2px;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle 2s ease-in-out infinite;
+  }
+  @keyframes twinkle { 0%,100%{opacity:0.3;} 50%{opacity:1;} }
+
+  .moon {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    width: 24px; height: 24px;
+    background: #F5F5DC;
+    border-radius: 50%;
+    box-shadow: 0 0 12px rgba(245,245,220,0.4), inset -4px -2px 0 #E8E0C0;
+  }
+
+  /* Proposal C — Saison dynamique */
+  .scene-seasonal {
+    transition: background 1s;
+  }
+  .scene-seasonal.spring { background: linear-gradient(180deg, #E8F5E9 0%, #C8E6C9 40%, #A5D6A7 100%); }
+  .scene-seasonal.summer { background: linear-gradient(180deg, #FFF8E1 0%, #FFECB3 40%, #FFD54F 100%); }
+  .scene-seasonal.autumn { background: linear-gradient(180deg, #FBE9E7 0%, #FFCCBC 40%, #FF8A65 100%); }
+  .scene-seasonal.winter { background: linear-gradient(180deg, #E3F2FD 0%, #BBDEFB 40%, #90CAF9 100%); }
+
+  .season-label {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(8px);
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-sub);
+  }
+  .season-toggle {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    gap: 4px;
+  }
+  .season-btn {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.5);
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.5);
+    transition: all 0.2s;
+  }
+  .season-btn.active { border-color: var(--text); background: rgba(255,255,255,0.9); }
+
+  /* House pixel art */
+  .pixel-house {
+    position: absolute;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .house-body {
+    width: 48px; height: 36px;
+    background: #DEB887;
+    border-radius: 2px;
+    box-shadow: inset -6px 0 0 #C4A06A;
+    image-rendering: pixelated;
+  }
+  .house-roof {
+    width: 0;
+    height: 0;
+    border-left: 30px solid transparent;
+    border-right: 30px solid transparent;
+    border-bottom: 20px solid #8B4513;
+    margin: 0 auto -2px;
+    margin-left: -6px;
+  }
+  .house-door {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 12px; height: 18px;
+    background: #8B4513;
+    border-radius: 2px 2px 0 0;
+  }
+  .house-window {
+    position: absolute;
+    top: 8px;
+    width: 10px; height: 10px;
+    background: #FFE87C;
+    border: 2px solid #A0522D;
+    box-shadow: 0 0 6px rgba(255,232,124,0.5);
+  }
+  .house-window.left { left: 6px; }
+  .house-window.right { right: 6px; }
+
+  /* Weather effects */
+  .rain-drop {
+    position: absolute;
+    width: 2px;
+    background: rgba(100,149,237,0.4);
+    animation: rain-fall 0.8s linear infinite;
+  }
+  @keyframes rain-fall {
+    0% { transform: translateY(-20px); opacity: 0; }
+    20% { opacity: 1; }
+    100% { transform: translateY(220px); opacity: 0; }
+  }
+  .snowflake {
+    position: absolute;
+    width: 4px; height: 4px;
+    background: white;
+    border-radius: 50%;
+    animation: snow-fall 3s linear infinite;
+  }
+  @keyframes snow-fall {
+    0% { transform: translateY(-10px) translateX(0); opacity: 0; }
+    20% { opacity: 0.8; }
+    100% { transform: translateY(220px) translateX(20px); opacity: 0; }
+  }
+  .leaf-fall {
+    position: absolute;
+    width: 6px; height: 6px;
+    background: #FF8A65;
+    border-radius: 0 50% 0 50%;
+    animation: leaf-drift 4s ease-in-out infinite;
+  }
+  @keyframes leaf-drift {
+    0% { transform: translate(0, -10px) rotate(0); opacity: 0; }
+    20% { opacity: 0.8; }
+    100% { transform: translate(30px, 220px) rotate(360deg); opacity: 0; }
+  }
+  .petal {
+    position: absolute;
+    width: 5px; height: 5px;
+    background: #FFB7C5;
+    border-radius: 50% 0 50% 0;
+    animation: petal-float 5s ease-in-out infinite;
+  }
+  @keyframes petal-float {
+    0% { transform: translate(0, -10px) rotate(0); opacity: 0; }
+    20% { opacity: 0.7; }
+    50% { transform: translate(15px, 100px) rotate(180deg); opacity: 0.5; }
+    100% { transform: translate(-10px, 220px) rotate(360deg); opacity: 0; }
+  }
+
+  .chimney-smoke {
+    position: absolute;
+    bottom: 90px;
+    left: calc(50% + 10px);
+  }
+  .smoke-puff {
+    position: absolute;
+    width: 8px; height: 8px;
+    background: rgba(200,200,200,0.4);
+    border-radius: 50%;
+    animation: smoke-rise 3s ease-out infinite;
+  }
+  @keyframes smoke-rise {
+    0% { transform: translateY(0) scale(1); opacity: 0.5; }
+    100% { transform: translateY(-40px) scale(2.5); opacity: 0; }
+  }
+
+  /* Family members pixel */
+  .family-member {
+    position: absolute;
+    bottom: 42px;
+    image-rendering: pixelated;
+  }
+  .fm-body {
+    width: 12px; height: 16px;
+    border-radius: 2px;
+    margin: 0 auto;
+  }
+  .fm-head {
+    width: 10px; height: 10px;
+    background: #FDBCB4;
+    border-radius: 50%;
+    margin: 0 auto -2px;
+  }
+
+  /* ── STREAK BOARD ── */
+  .streak-section {
+    margin-top: 16px;
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .streak-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .streak-title {
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .streak-count {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--teal);
+  }
+
+  /* Streak style A — GitHub grid */
+  .streak-grid {
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    gap: 3px;
+  }
+  .streak-cell {
+    aspect-ratio: 1;
+    border-radius: 3px;
+    background: #F0EDE8;
+    transition: all 0.3s;
+    image-rendering: pixelated;
+    position: relative;
+  }
+  .streak-cell.level-1 { background: #D1FAE5; }
+  .streak-cell.level-2 { background: #6EE7B7; }
+  .streak-cell.level-3 { background: #10B981; }
+  .streak-cell.level-4 { background: #047857; }
+  .streak-cell.today {
+    outline: 2px solid var(--teal);
+    outline-offset: 1px;
+    animation: pulse-today 2s ease-in-out infinite;
+  }
+  @keyframes pulse-today { 0%,100%{outline-color: var(--teal);} 50%{outline-color: transparent;} }
+
+  .streak-legend {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+    justify-content: flex-end;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+  .legend-cell {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+  }
+
+  /* Streak style B — Pixel garden */
+  .streak-garden {
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    gap: 2px;
+    background: #8FBC8F;
+    padding: 8px;
+    border-radius: 12px;
+    position: relative;
+  }
+  .garden-cell {
+    aspect-ratio: 1;
+    border-radius: 2px;
+    background: #6B8E6B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    image-rendering: pixelated;
+    position: relative;
+    transition: transform 0.3s;
+  }
+  .garden-cell:hover { transform: scale(1.3); z-index: 2; }
+  .garden-cell.planted { background: #5A7A5A; }
+
+  /* Streak style C — Constellation */
+  .streak-constellation {
+    position: relative;
+    height: 140px;
+    background: linear-gradient(180deg, #1A1130 0%, #2D1B4E 100%);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .constellation-star {
+    position: absolute;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    transition: all 0.5s;
+  }
+  .constellation-star.inactive {
+    background: rgba(255,255,255,0.15);
+  }
+  .constellation-star.active {
+    background: #FFE87C;
+    box-shadow: 0 0 6px #FFE87C, 0 0 12px rgba(255,232,124,0.3);
+    animation: star-glow 3s ease-in-out infinite;
+  }
+  @keyframes star-glow { 0%,100%{box-shadow: 0 0 6px #FFE87C;} 50%{box-shadow: 0 0 12px #FFE87C, 0 0 24px rgba(255,232,124,0.3);} }
+  .constellation-line {
+    position: absolute;
+    height: 1px;
+    background: rgba(255,232,124,0.2);
+    transform-origin: left center;
+  }
+
+  /* Streak style D — Pixel tiles / Mosaïque */
+  .streak-mosaic {
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    gap: 2px;
+    padding: 4px;
+    background: rgba(0,0,0,0.03);
+    border-radius: 12px;
+  }
+  .mosaic-cell {
+    aspect-ratio: 1;
+    border-radius: 2px;
+    background: #F5F0EB;
+    image-rendering: pixelated;
+    transition: all 0.4s;
+    position: relative;
+    overflow: hidden;
+  }
+  .mosaic-cell.active {
+    animation: mosaic-pop 0.3s ease-out;
+  }
+  @keyframes mosaic-pop { 0%{transform:scale(0);} 60%{transform:scale(1.1);} 100%{transform:scale(1);} }
+
+  .mosaic-cell.theme-teal { background: var(--teal); }
+  .mosaic-cell.theme-violet { background: var(--violet); }
+  .mosaic-cell.theme-orange { background: var(--orange); }
+  .mosaic-cell.theme-pink { background: var(--pink); }
+  .mosaic-cell.theme-green { background: var(--green); }
+
+  /* ── Dashboard sections below scene ── */
+  .dashboard-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .card-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 99px;
+  }
+  .task-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+  }
+  .task-row:last-child { border-bottom: none; }
+  .task-check {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 2px solid #D1D5DB;
+    flex-shrink: 0;
+  }
+  .task-check.done {
+    background: var(--success);
+    border-color: var(--success);
+    position: relative;
+  }
+  .task-check.done::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 5px;
+    width: 5px; height: 9px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+  .task-label { font-size: 13px; flex: 1; }
+  .task-label.done-text { text-decoration: line-through; color: var(--text-muted); }
+  .task-avatar {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .xp-bar-container {
+    margin-top: 12px;
+    background: rgba(0,0,0,0.04);
+    border-radius: 99px;
+    height: 6px;
+    overflow: hidden;
+  }
+  .xp-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--teal), #34D399);
+    transition: width 1s ease;
+  }
+
+  /* ── Comparison layout ── */
+  .comparison {
+    display: flex;
+    gap: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .comparison-item {
+    flex: 1;
+    min-width: 340px;
+    max-width: 420px;
+  }
+  .comparison-label {
+    text-align: center;
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: var(--text-sub);
+    padding: 6px 16px;
+    background: rgba(13,148,136,0.08);
+    border-radius: 99px;
+    display: inline-block;
+    width: 100%;
+  }
+
+  .pros-cons {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    font-size: 12px;
+  }
+  .pro, .con {
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-weight: 500;
+  }
+  .pro { background: #D1FAE5; color: #065F46; }
+  .con { background: #FEE2E2; color: #991B1B; }
+
+  /* Tooltip */
+  .tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    white-space: nowrap;
+    z-index: 10;
+    pointer-events: none;
+  }
+  .streak-cell:hover .tooltip,
+  .garden-cell:hover .tooltip,
+  .mosaic-cell:hover .tooltip {
+    display: block;
+  }
+
+  /* Scene message bubble */
+  .scene-bubble {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(8px);
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-sub);
+    max-width: 200px;
+    line-height: 1.3;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .scene-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 16px;
+    width: 0; height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid rgba(255,255,255,0.9);
+  }
+
+  /* Activity indicator */
+  .activity-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    margin-right: 4px;
+  }
+  .activity-dot.green { background: var(--success); }
+  .activity-dot.orange { background: var(--warning); }
+
+  /* Hearts / Lives display */
+  .hearts {
+    display: flex;
+    gap: 2px;
+    font-size: 12px;
+  }
+  .heart.empty { opacity: 0.2; }
+
+  /* Glow effect on active elements */
+  .glow-green { box-shadow: 0 0 12px rgba(16,185,129,0.3); }
+  .glow-teal { box-shadow: 0 0 12px rgba(13,148,136,0.3); }
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav">
+  <button class="active" onclick="showProposal('scene-a')">A. Diorama Vivant</button>
+  <button onclick="showProposal('scene-b')">B. Terrarium Nuit</button>
+  <button onclick="showProposal('scene-c')">C. Maison Saisons</button>
+  <button onclick="showProposal('streak-a')">D. Streak GitHub</button>
+  <button onclick="showProposal('streak-b')">E. Streak Jardin</button>
+  <button onclick="showProposal('streak-c')">F. Streak Constellation</button>
+  <button onclick="showProposal('streak-d')">G. Streak Mosaique</button>
+</nav>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- PROPOSAL A — Diorama Vivant (Jour)          -->
+<!-- ════════════════════════════════════════════ -->
+<div id="scene-a" class="proposal active">
+  <h2 class="proposal-title">A. Diorama Vivant</h2>
+  <p class="proposal-subtitle">
+    La ferme pixel existante, en haut du dashboard. Les compagnons bougent,
+    les fleurs poussent quand on complète des tâches.
+    Ambiance jour avec nuages et particules.
+  </p>
+
+  <div class="phone-frame">
+    <div class="status-bar">
+      <span>9:41</span>
+      <span>FamilyFlow</span>
+      <span>100%</span>
+    </div>
+
+    <div class="scene-container scene-diorama">
+      <div class="sun"></div>
+
+      <div class="clouds">
+        <div class="cloud" style="width:60px;height:14px;top:5px;left:10%"></div>
+        <div class="cloud" style="width:40px;height:10px;top:15px;left:35%"></div>
+        <div class="cloud" style="width:55px;height:12px;top:2px;left:65%"></div>
+        <div class="cloud" style="width:45px;height:10px;top:18px;left:90%"></div>
+        <div class="cloud" style="width:60px;height:14px;top:5px;left:110%"></div>
+        <div class="cloud" style="width:40px;height:10px;top:15px;left:135%"></div>
+      </div>
+
+      <div class="scene-bubble">
+        <span class="activity-dot green"></span>
+        Super semaine ! 12 taches completees
+      </div>
+
+      <div class="pixel-tree">
+        <div class="leaves"></div>
+        <div class="trunk"></div>
+      </div>
+
+      <div class="pixel-animal rabbit"></div>
+      <div class="pixel-animal hedgehog"></div>
+
+      <!-- Growing flowers for completed tasks -->
+      <div class="pixel-flower" style="left:12%">
+        <div class="petals" style="background:#FF6B8A"></div>
+        <div class="stem"></div>
+      </div>
+      <div class="pixel-flower" style="left:30%; animation-delay:0.5s">
+        <div class="petals" style="background:#FFD700"></div>
+        <div class="stem" style="animation-delay:0.5s"></div>
+      </div>
+      <div class="pixel-flower" style="right:15%; animation-delay:1s">
+        <div class="petals" style="background:#9B59B6"></div>
+        <div class="stem" style="animation-delay:1s"></div>
+      </div>
+      <div class="pixel-flower" style="right:30%; animation-delay:1.5s">
+        <div class="petals" style="background:#3498DB"></div>
+        <div class="stem" style="animation-delay:1.5s"></div>
+      </div>
+
+      <!-- Particles -->
+      <div class="particle" style="left:20%;top:30%;background:#FFB7C5;animation-delay:0s"></div>
+      <div class="particle" style="left:50%;top:50%;background:#98FB98;animation-delay:1s"></div>
+      <div class="particle" style="left:70%;top:35%;background:#FFE87C;animation-delay:2s"></div>
+      <div class="particle" style="left:35%;top:60%;background:#87CEEB;animation-delay:0.5s"></div>
+
+      <div class="pixel-ground" style="background: linear-gradient(180deg, #7CB342 0%, #558B2F 30%, #33691E 100%);border-radius:0 0 17px 17px;">
+      </div>
+
+      <div class="scene-stats">
+        <div class="scene-stat">🌱 4 recoltes</div>
+        <div class="scene-stat">⭐ Niv. 7</div>
+        <div class="scene-stat">🔥 5j streak</div>
+      </div>
+    </div>
+
+    <!-- Dashboard below -->
+    <div class="dashboard-card" style="margin-top:12px">
+      <div class="card-header">
+        <span class="card-title">Taches du jour</span>
+        <span class="card-badge" style="background:#D1FAE5;color:#065F46">3/5</span>
+      </div>
+      <div class="task-row">
+        <div class="task-check done"></div>
+        <span class="task-label done-text">Sortir les poubelles</span>
+        <div class="task-avatar" style="background:#DBEAFE">L</div>
+      </div>
+      <div class="task-row">
+        <div class="task-check done"></div>
+        <span class="task-label done-text">Preparer les lunchs</span>
+        <div class="task-avatar" style="background:#FCE7F3">E</div>
+      </div>
+      <div class="task-row">
+        <div class="task-check done"></div>
+        <span class="task-label done-text">Arroser les plantes</span>
+        <div class="task-avatar" style="background:#DBEAFE">L</div>
+      </div>
+      <div class="task-row">
+        <div class="task-check"></div>
+        <span class="task-label">Courses Monoprix</span>
+        <div class="task-avatar" style="background:#FCE7F3">E</div>
+      </div>
+      <div class="task-row">
+        <div class="task-check"></div>
+        <span class="task-label">Ranger le garage</span>
+        <div class="task-avatar" style="background:#DBEAFE">L</div>
+      </div>
+      <div class="xp-bar-container">
+        <div class="xp-bar-fill" style="width:62%"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pros-cons" style="justify-content:center;margin-top:16px">
+    <span class="pro">Extension naturelle de la ferme</span>
+    <span class="pro">Feedback visuel immediat</span>
+    <span class="con">Assets pixel existants a integrer</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- PROPOSAL B — Terrarium Nocturne              -->
+<!-- ════════════════════════════════════════════ -->
+<div id="scene-b" class="proposal">
+  <h2 class="proposal-title">B. Terrarium Nocturne</h2>
+  <p class="proposal-subtitle">
+    Ambiance nuit magique avec lucioles et etoiles.
+    L'arbre familial brille au centre. Plus contemplatif, plus "cozy".
+    Ideal pour le mode sombre / nuit.
+  </p>
+
+  <div class="phone-frame" style="background:#12151A;color:#F0EDE8">
+    <div class="status-bar" style="color:#F0EDE8">
+      <span>22:15</span>
+      <span>FamilyFlow</span>
+      <span>67%</span>
+    </div>
+
+    <div class="scene-container scene-terrarium">
+      <div class="terrarium-glass"></div>
+      <div class="moon"></div>
+
+      <!-- Stars -->
+      <div class="star" style="top:12px;left:15%;animation-delay:0s"></div>
+      <div class="star" style="top:25px;left:30%;animation-delay:0.5s"></div>
+      <div class="star" style="top:8px;left:50%;animation-delay:1s"></div>
+      <div class="star" style="top:35px;left:70%;animation-delay:1.5s"></div>
+      <div class="star" style="top:15px;left:85%;animation-delay:0.8s"></div>
+      <div class="star" style="top:40px;left:45%;animation-delay:2s"></div>
+      <div class="star" style="top:20px;left:60%;animation-delay:0.3s"></div>
+
+      <!-- Fireflies -->
+      <div class="firefly" style="top:60px;left:20%;animation-delay:0s"></div>
+      <div class="firefly" style="top:80px;left:60%;animation-delay:1.5s"></div>
+      <div class="firefly" style="top:50px;left:75%;animation-delay:3s"></div>
+      <div class="firefly" style="top:100px;left:35%;animation-delay:2s"></div>
+      <div class="firefly" style="top:70px;left:85%;animation-delay:0.5s"></div>
+
+      <div class="scene-bubble" style="background:rgba(45,27,78,0.85);color:#E8D5F5">
+        <span class="activity-dot green"></span>
+        Belle journee ! Tout le monde a contribue
+      </div>
+
+      <div class="terrarium-tree">
+        <div class="t-canopy"></div>
+        <div class="t-trunk"></div>
+      </div>
+
+      <div class="terrarium-ground"></div>
+
+      <div class="scene-stats">
+        <div class="scene-stat" style="background:rgba(45,27,78,0.7);color:#E8D5F5">🌙 5 lucioles</div>
+        <div class="scene-stat" style="background:rgba(45,27,78,0.7);color:#E8D5F5">✨ 240 XP</div>
+        <div class="scene-stat" style="background:rgba(45,27,78,0.7);color:#E8D5F5">🔥 5j</div>
+      </div>
+    </div>
+
+    <div class="dashboard-card" style="background:#1C1F28;margin-top:12px">
+      <div class="card-header">
+        <span class="card-title" style="color:#F0EDE8">Bilan du jour</span>
+        <span class="card-badge" style="background:rgba(16,185,129,0.15);color:#34D399">5/5 !</span>
+      </div>
+      <div class="task-row" style="border-color:rgba(255,255,255,0.06)">
+        <div class="task-check done"></div>
+        <span class="task-label done-text" style="color:#6B7280">Sortir les poubelles</span>
+        <div class="task-avatar" style="background:#1E3A5F;color:#93C5FD">L</div>
+      </div>
+      <div class="task-row" style="border-color:rgba(255,255,255,0.06)">
+        <div class="task-check done"></div>
+        <span class="task-label done-text" style="color:#6B7280">Preparer les lunchs</span>
+        <div class="task-avatar" style="background:#3B1D55;color:#D8B4FE">E</div>
+      </div>
+      <div class="task-row" style="border-color:rgba(255,255,255,0.06)">
+        <div class="task-check done"></div>
+        <span class="task-label done-text" style="color:#6B7280">RDV pediatre</span>
+        <div class="task-avatar" style="background:#1E3A5F;color:#93C5FD">L</div>
+      </div>
+      <div class="xp-bar-container" style="background:rgba(255,255,255,0.06)">
+        <div class="xp-bar-fill" style="width:100%;background:linear-gradient(90deg,#9333EA,#DB2777)"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pros-cons" style="justify-content:center;margin-top:16px">
+    <span class="pro">Ambiance unique et magique</span>
+    <span class="pro">Parfait pour mode nuit/OLED</span>
+    <span class="con">Moins visible en plein jour</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- PROPOSAL C — Maison Saisonniere              -->
+<!-- ════════════════════════════════════════════ -->
+<div id="scene-c" class="proposal">
+  <h2 class="proposal-title">C. Maison Familiale Saisonniere</h2>
+  <p class="proposal-subtitle">
+    Une petite maison pixel qui change avec les saisons.
+    Fumee de cheminee en hiver, petales au printemps, feuilles en automne.
+    Les membres de la famille sont des petits pixels devant la maison.
+  </p>
+
+  <div class="phone-frame">
+    <div class="status-bar">
+      <span>14:30</span>
+      <span>FamilyFlow</span>
+      <span>85%</span>
+    </div>
+
+    <div id="seasonal-scene" class="scene-container scene-seasonal spring">
+      <div class="season-label" id="season-name">Printemps</div>
+      <div class="season-toggle">
+        <div class="season-btn active" onclick="setSeason('spring')" id="btn-spring">🌸</div>
+        <div class="season-btn" onclick="setSeason('summer')" id="btn-summer">☀️</div>
+        <div class="season-btn" onclick="setSeason('autumn')" id="btn-autumn">🍂</div>
+        <div class="season-btn" onclick="setSeason('winter')" id="btn-winter">❄️</div>
+      </div>
+
+      <!-- Weather container -->
+      <div id="weather-container"></div>
+
+      <!-- Chimney smoke (winter only) -->
+      <div class="chimney-smoke" id="chimney-smoke" style="display:none">
+        <div class="smoke-puff" style="animation-delay:0s"></div>
+        <div class="smoke-puff" style="animation-delay:1s"></div>
+        <div class="smoke-puff" style="animation-delay:2s"></div>
+      </div>
+
+      <div class="pixel-house">
+        <div class="house-roof"></div>
+        <div class="house-body" style="position:relative">
+          <div class="house-window left"></div>
+          <div class="house-window right"></div>
+          <div class="house-door"></div>
+        </div>
+      </div>
+
+      <!-- Family members -->
+      <div class="family-member" style="left:18%">
+        <div class="fm-head"></div>
+        <div class="fm-body" style="background:#4A90D9"></div>
+      </div>
+      <div class="family-member" style="left:28%;bottom:44px">
+        <div class="fm-head" style="width:9px;height:9px"></div>
+        <div class="fm-body" style="background:#E87B35;width:10px;height:14px"></div>
+      </div>
+      <div class="family-member" style="right:18%">
+        <div class="fm-head"></div>
+        <div class="fm-body" style="background:#DB2777"></div>
+      </div>
+      <div class="family-member" style="right:28%;bottom:44px">
+        <div class="fm-head" style="width:9px;height:9px"></div>
+        <div class="fm-body" style="background:#9333EA;width:10px;height:14px"></div>
+      </div>
+
+      <div class="pixel-ground" style="background: linear-gradient(180deg, #7CB342 0%, #558B2F 50%, #33691E 100%);border-radius:0 0 17px 17px;"></div>
+
+      <div class="scene-stats">
+        <div class="scene-stat">👨‍👩‍👧‍👦 4 actifs</div>
+        <div class="scene-stat">✅ 8 taches</div>
+        <div class="scene-stat">🏠 Niv. 3</div>
+      </div>
+    </div>
+
+    <div class="dashboard-card" style="margin-top:12px">
+      <div class="card-header">
+        <span class="card-title">Aujourd'hui</span>
+        <span class="card-badge" style="background:#FEF3C7;color:#92400E">En cours</span>
+      </div>
+      <div class="task-row">
+        <div class="task-check done"></div>
+        <span class="task-label done-text">Menage salon</span>
+        <div class="task-avatar" style="background:#DBEAFE">L</div>
+      </div>
+      <div class="task-row">
+        <div class="task-check"></div>
+        <span class="task-label">Repas du soir</span>
+        <div class="task-avatar" style="background:#FCE7F3">E</div>
+      </div>
+      <div class="task-row">
+        <div class="task-check"></div>
+        <span class="task-label">Devoirs maths</span>
+        <div class="task-avatar" style="background:#FDE68A">M</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pros-cons" style="justify-content:center;margin-top:16px">
+    <span class="pro">Evolue automatiquement</span>
+    <span class="pro">Tres familial et chaleureux</span>
+    <span class="con">Moins lie a la gamification</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- PROPOSAL D — Streak GitHub-style             -->
+<!-- ════════════════════════════════════════════ -->
+<div id="streak-a" class="proposal">
+  <h2 class="proposal-title">D. Streak Board — Style GitHub</h2>
+  <p class="proposal-subtitle">
+    Grille de contributions classique avec niveaux d'intensite.
+    Chaque cellule = 1 jour. Plus c'est vert, plus la famille a ete active.
+    Survol pour le detail.
+  </p>
+
+  <div class="phone-frame">
+    <div class="status-bar">
+      <span>9:41</span>
+      <span>FamilyFlow</span>
+      <span>100%</span>
+    </div>
+
+    <div class="streak-section">
+      <div class="streak-header">
+        <span class="streak-title">Activite familiale</span>
+        <span class="streak-count">🔥 5 jours</span>
+      </div>
+      <div class="streak-grid" id="github-grid"></div>
+      <div class="streak-legend">
+        <span>Moins</span>
+        <div class="legend-cell" style="background:#F0EDE8"></div>
+        <div class="legend-cell" style="background:#D1FAE5"></div>
+        <div class="legend-cell" style="background:#6EE7B7"></div>
+        <div class="legend-cell" style="background:#10B981"></div>
+        <div class="legend-cell" style="background:#047857"></div>
+        <span>Plus</span>
+      </div>
+    </div>
+
+    <div class="dashboard-card" style="margin-top:12px">
+      <div class="card-header">
+        <span class="card-title">Stats du mois</span>
+        <span class="card-badge" style="background:#D1FAE5;color:#065F46">+23%</span>
+      </div>
+      <div style="display:flex;gap:16px;text-align:center;padding:8px 0">
+        <div style="flex:1">
+          <div style="font-size:24px;font-weight:800;color:var(--teal)">47</div>
+          <div style="font-size:11px;color:var(--text-muted)">Taches faites</div>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:24px;font-weight:800;color:var(--orange)">12</div>
+          <div style="font-size:11px;color:var(--text-muted)">Repas planifies</div>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:24px;font-weight:800;color:var(--violet)">5</div>
+          <div style="font-size:11px;color:var(--text-muted)">Jours streak</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pros-cons" style="justify-content:center;margin-top:16px">
+    <span class="pro">Pattern connu et motivant</span>
+    <span class="pro">Simple a implementer</span>
+    <span class="con">Moins unique visuellement</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- PROPOSAL E — Streak Jardin Pixel             -->
+<!-- ════════════════════════════════════════════ -->
+<div id="streak-b" class="proposal">
+  <h2 class="proposal-title">E. Streak Board — Jardin Pixel</h2>
+  <p class="proposal-subtitle">
+    Chaque jour actif fait pousser une plante dans le jardin.
+    Les plantes evoluent selon le nombre d'actions. Survol pour voir la recolte.
+    Integre le systeme de crops existant.
+  </p>
+
+  <div class="phone-frame">
+    <div class="status-bar">
+      <span>9:41</span>
+      <span>FamilyFlow</span>
+      <span>100%</span>
+    </div>
+
+    <div class="streak-section">
+      <div class="streak-header">
+        <span class="streak-title">Mon Potager</span>
+        <span class="streak-count">🌱 23 recoltes ce mois</span>
+      </div>
+      <div class="streak-garden" id="garden-grid"></div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:10px;color:var(--text-muted)">
+        <span>Mar 12</span>
+        <span>Aujourd'hui</span>
+      </div>
+    </div>
+
+    <div class="dashboard-card" style="margin-top:12px">
+      <div class="card-header">
+        <span class="card-title">Recoltes</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span style="font-size:12px;background:#FEF3C7;padding:4px 10px;border-radius:99px">🥕 x8</span>
+        <span style="font-size:12px;background:#DCFCE7;padding:4px 10px;border-radius:99px">🍅 x5</span>
+        <span style="font-size:12px;background:#FDE68A;padding:4px 10px;border-radius:99px">🌻 x4</span>
+        <span style="font-size:12px;background:#E8D5F5;padding:4px 10px;border-radius:99px">🌹 x3</span>
+        <span style="font-size:12px;background:#FFE4E6;padding:4px 10px;border-radius:99px">🍓 x3</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="pros-cons" style="justify-content:center;margin-top:16px">
+    <span class="pro">Coherent avec la ferme pixel</span>
+    <span class="pro">Feedback tres visuel</span>
+    <span class="con">Plus complexe a implementer</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- PROPOSAL F — Streak Constellation            -->
+<!-- ════════════════════════════════════════════ -->
+<div id="streak-c" class="proposal">
+  <h2 class="proposal-title">F. Streak Board — Constellation</h2>
+  <p class="proposal-subtitle">
+    Chaque jour actif allume une etoile. Les etoiles consecutives se relient
+    en constellation. Plus le streak est long, plus la constellation brille.
+    Ambiance nocturne.
+  </p>
+
+  <div class="phone-frame" style="background:#12151A;color:#F0EDE8">
+    <div class="status-bar" style="color:#F0EDE8">
+      <span>9:41</span>
+      <span>FamilyFlow</span>
+      <span>100%</span>
+    </div>
+
+    <div class="streak-section" style="background:#1C1F28">
+      <div class="streak-header">
+        <span class="streak-title" style="color:#F0EDE8">Constellation Dupont</span>
+        <span class="streak-count" style="color:#FFE87C">✨ 5 etoiles</span>
+      </div>
+      <div class="streak-constellation" id="constellation"></div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:10px;color:#6B7280">
+        <span>30 derniers jours</span>
+        <span>🌟 Record: 12j</span>
+      </div>
+    </div>
+
+    <div class="dashboard-card" style="background:#1C1F28;margin-top:12px">
+      <div class="card-header">
+        <span class="card-title" style="color:#F0EDE8">Constellations debloquees</span>
+      </div>
+      <div style="display:flex;gap:12px;padding:4px 0">
+        <div style="text-align:center">
+          <div style="font-size:24px">⭐</div>
+          <div style="font-size:10px;color:#6B7280">3 jours</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:24px">🌟</div>
+          <div style="font-size:10px;color:#6B7280">7 jours</div>
+        </div>
+        <div style="text-align:center;opacity:0.3">
+          <div style="font-size:24px">💫</div>
+          <div style="font-size:10px;color:#6B7280">14 jours</div>
+        </div>
+        <div style="text-align:center;opacity:0.3">
+          <div style="font-size:24px">🌌</div>
+          <div style="font-size:10px;color:#6B7280">30 jours</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pros-cons" style="justify-content:center;margin-top:16px">
+    <span class="pro">Tres poetique et unique</span>
+    <span class="pro">Gamification naturelle</span>
+    <span class="con">Lisibilite moindre vs grille</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- PROPOSAL G — Streak Mosaique Couleurs        -->
+<!-- ════════════════════════════════════════════ -->
+<div id="streak-d" class="proposal">
+  <h2 class="proposal-title">G. Streak Board — Mosaique</h2>
+  <p class="proposal-subtitle">
+    Chaque type d'activite a sa couleur (taches = teal, repas = orange,
+    sante = violet, souvenirs = rose). La mosaique se remplit de couleurs
+    variees. Chaque profil a son theme.
+  </p>
+
+  <div class="phone-frame">
+    <div class="status-bar">
+      <span>9:41</span>
+      <span>FamilyFlow</span>
+      <span>100%</span>
+    </div>
+
+    <div class="streak-section">
+      <div class="streak-header">
+        <span class="streak-title">Notre Mosaique</span>
+        <span class="streak-count">🎨 87 activites</span>
+      </div>
+      <div class="streak-mosaic" id="mosaic-grid"></div>
+      <div style="display:flex;gap:8px;margin-top:8px;font-size:10px;flex-wrap:wrap;justify-content:center">
+        <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;background:var(--teal);border-radius:2px;display:inline-block"></span> Taches</span>
+        <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;background:var(--orange);border-radius:2px;display:inline-block"></span> Repas</span>
+        <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;background:var(--violet);border-radius:2px;display:inline-block"></span> Sante</span>
+        <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;background:var(--pink);border-radius:2px;display:inline-block"></span> Souvenirs</span>
+        <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;background:var(--green);border-radius:2px;display:inline-block"></span> Budget</span>
+      </div>
+    </div>
+
+    <div class="dashboard-card" style="margin-top:12px">
+      <div class="card-header">
+        <span class="card-title">Top contributeurs</span>
+      </div>
+      <div style="display:flex;gap:12px">
+        <div style="flex:1;text-align:center;padding:8px;background:#F0FDF4;border-radius:12px">
+          <div style="font-size:20px;font-weight:800;color:var(--teal)">L</div>
+          <div style="font-size:11px;font-weight:600;margin-top:2px">32</div>
+          <div style="font-size:9px;color:var(--text-muted)">actions</div>
+        </div>
+        <div style="flex:1;text-align:center;padding:8px;background:#FDF2F8;border-radius:12px">
+          <div style="font-size:20px;font-weight:800;color:var(--pink)">E</div>
+          <div style="font-size:11px;font-weight:600;margin-top:2px">28</div>
+          <div style="font-size:9px;color:var(--text-muted)">actions</div>
+        </div>
+        <div style="flex:1;text-align:center;padding:8px;background:#FEF3C7;border-radius:12px">
+          <div style="font-size:20px;font-weight:800;color:var(--orange)">M</div>
+          <div style="font-size:11px;font-weight:600;margin-top:2px">15</div>
+          <div style="font-size:9px;color:var(--text-muted)">actions</div>
+        </div>
+        <div style="flex:1;text-align:center;padding:8px;background:#F3E8FF;border-radius:12px">
+          <div style="font-size:20px;font-weight:800;color:var(--violet)">S</div>
+          <div style="font-size:11px;font-weight:600;margin-top:2px">12</div>
+          <div style="font-size:9px;color:var(--text-muted)">actions</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pros-cons" style="justify-content:center;margin-top:16px">
+    <span class="pro">Riche en information</span>
+    <span class="pro">Colore et vivant</span>
+    <span class="con">Peut devenir charge</span>
+  </div>
+</div>
+
+<script>
+  // ── Navigation ──
+  function showProposal(id) {
+    document.querySelectorAll('.proposal').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  // ── Generate GitHub-style grid ──
+  function generateGitHubGrid() {
+    const grid = document.getElementById('github-grid');
+    const levels = [0,0,1,2,1,0,3,4,3,2,1,0,0,1,2,3,4,4,3,2,1,0,1,2,3,4,3,2,1,0,
+                    0,1,0,2,1,3,2,4,3,2,1,0,1,2,3,4,4,3,2,1,0,1,2,3,4,0,0,1,2,3,
+                    1,2,3,4,3,2,1,0,0,1,2,3,4,3,2,0,0,1,2,3,4,3,2,1,0,0,1,2,0,0];
+    const days = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+
+    for (let i = 0; i < 90; i++) {
+      const cell = document.createElement('div');
+      const level = levels[i] || 0;
+      cell.className = `streak-cell level-${level}`;
+      if (i === 84) cell.classList.add('today');
+
+      const date = new Date();
+      date.setDate(date.getDate() - (89 - i));
+      const dateStr = date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+      const actions = level === 0 ? 'Aucune' : `${level * 3} actions`;
+
+      const tooltip = document.createElement('div');
+      tooltip.className = 'tooltip';
+      tooltip.textContent = `${dateStr}: ${actions}`;
+      cell.appendChild(tooltip);
+
+      grid.appendChild(cell);
+    }
+  }
+
+  // ── Generate Garden grid ──
+  function generateGardenGrid() {
+    const grid = document.getElementById('garden-grid');
+    const plants = ['', '', '🌱', '🌿', '🌱', '', '🌻', '🌷', '🌿', '🌱', '', '', '🌱', '🌿', '🌻',
+                    '🌷', '🌹', '🌿', '🌱', '', '🌱', '🌿', '🌻', '🌷', '🌹', '🌻', '🌿', '🌱', '', '🌱',
+                    '🌿', '🌻', '🌷', '🌹', '🌿', '🌱', '', '', '🌱', '🌿', '🌻', '🌷', '🌹', '🌻', '🌿',
+                    '🌻', '🌿', '🌷', '🌹', '🌿', '🌱', '', '🌱', '🌿', '🌻', '🌷', '🌹', '🌻', '🌿', '🌱',
+                    '🌹', '🌻', '🌷', '🌿', '🌱', '🌱', '🌿', '🌻', '🌿', '🌱', '', '', '🌱', '🌿', '🌻',
+                    '🌻', '🌿', '🌷', '🌹', '🌻', '🌱', '🌿', '🌻', '🌷', '🌹', '', '', '', '🌱', '🌱'];
+    const labels = {'🌱':'Pousse','🌿':'Herbe','🌻':'Tournesol','🌷':'Tulipe','🌹':'Rose','':'Jachère'};
+
+    for (let i = 0; i < 90; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'garden-cell' + (plants[i] ? ' planted' : '');
+      cell.textContent = plants[i] || '';
+
+      const tooltip = document.createElement('div');
+      tooltip.className = 'tooltip';
+      const date = new Date();
+      date.setDate(date.getDate() - (89 - i));
+      tooltip.textContent = `${date.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}: ${labels[plants[i]] || 'Jachère'}`;
+      cell.appendChild(tooltip);
+
+      grid.appendChild(cell);
+    }
+  }
+
+  // ── Generate Constellation ──
+  function generateConstellation() {
+    const container = document.getElementById('constellation');
+    const active = [0,0,1,1,1,0,0,1,1,1,1,0,0,1,1,0,1,1,1,1,1,0,0,0,1,1,1,1,1,0];
+
+    const stars = [];
+    for (let i = 0; i < 30; i++) {
+      const star = document.createElement('div');
+      star.className = `constellation-star ${active[i] ? 'active' : 'inactive'}`;
+
+      // Arrange in a flowing wave pattern
+      const col = i % 10;
+      const row = Math.floor(i / 10);
+      const x = 20 + col * 33 + (row * 8) + Math.sin(i * 0.7) * 10;
+      const y = 20 + row * 38 + Math.cos(i * 0.5) * 12;
+
+      star.style.left = x + 'px';
+      star.style.top = y + 'px';
+      star.style.animationDelay = (i * 0.2) + 's';
+
+      stars.push({ x: x + 3, y: y + 3, active: active[i] });
+      container.appendChild(star);
+    }
+
+    // Draw lines between consecutive active stars
+    for (let i = 0; i < stars.length - 1; i++) {
+      if (stars[i].active && stars[i + 1].active) {
+        const line = document.createElement('div');
+        line.className = 'constellation-line';
+        const dx = stars[i + 1].x - stars[i].x;
+        const dy = stars[i + 1].y - stars[i].y;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+        line.style.left = stars[i].x + 'px';
+        line.style.top = stars[i].y + 'px';
+        line.style.width = length + 'px';
+        line.style.transform = `rotate(${angle}deg)`;
+
+        container.appendChild(line);
+      }
+    }
+
+    // Add tiny background stars
+    for (let i = 0; i < 30; i++) {
+      const s = document.createElement('div');
+      s.className = 'star';
+      s.style.left = Math.random() * 100 + '%';
+      s.style.top = Math.random() * 100 + '%';
+      s.style.animationDelay = Math.random() * 3 + 's';
+      container.appendChild(s);
+    }
+  }
+
+  // ── Generate Mosaic grid ──
+  function generateMosaicGrid() {
+    const grid = document.getElementById('mosaic-grid');
+    const themes = ['theme-teal','theme-orange','theme-violet','theme-pink','theme-green',''];
+    const labels = {
+      'theme-teal': 'Taches',
+      'theme-orange': 'Repas',
+      'theme-violet': 'Sante',
+      'theme-pink': 'Souvenirs',
+      'theme-green': 'Budget',
+      '': 'Repos'
+    };
+
+    // Generate a plausible pattern
+    const pattern = [];
+    for (let i = 0; i < 90; i++) {
+      const rand = Math.random();
+      if (rand < 0.15) pattern.push('');
+      else if (rand < 0.40) pattern.push('theme-teal');
+      else if (rand < 0.60) pattern.push('theme-orange');
+      else if (rand < 0.75) pattern.push('theme-violet');
+      else if (rand < 0.88) pattern.push('theme-pink');
+      else pattern.push('theme-green');
+    }
+
+    for (let i = 0; i < 90; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'mosaic-cell' + (pattern[i] ? ` active ${pattern[i]}` : '');
+
+      const tooltip = document.createElement('div');
+      tooltip.className = 'tooltip';
+      const date = new Date();
+      date.setDate(date.getDate() - (89 - i));
+      tooltip.textContent = `${date.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}: ${labels[pattern[i]]}`;
+      cell.appendChild(tooltip);
+
+      grid.appendChild(cell);
+    }
+  }
+
+  // ── Season switching ──
+  function setSeason(season) {
+    const scene = document.getElementById('seasonal-scene');
+    const names = { spring: 'Printemps', summer: 'Ete', autumn: 'Automne', winter: 'Hiver' };
+    const weather = document.getElementById('weather-container');
+    const smoke = document.getElementById('chimney-smoke');
+
+    scene.className = `scene-container scene-seasonal ${season}`;
+    document.getElementById('season-name').textContent = names[season];
+
+    document.querySelectorAll('.season-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`btn-${season}`).classList.add('active');
+
+    // Clear weather
+    weather.innerHTML = '';
+    smoke.style.display = 'none';
+
+    // Add season-specific effects
+    if (season === 'spring') {
+      for (let i = 0; i < 12; i++) {
+        const p = document.createElement('div');
+        p.className = 'petal';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.top = '-10px';
+        p.style.animationDelay = Math.random() * 5 + 's';
+        weather.appendChild(p);
+      }
+    } else if (season === 'summer') {
+      // Butterflies simulated as colored particles
+      for (let i = 0; i < 5; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = (15 + Math.random() * 70) + '%';
+        p.style.top = (30 + Math.random() * 40) + '%';
+        p.style.background = ['#FF6B8A','#FFD700','#87CEEB','#FF8C00','#9B59B6'][i];
+        p.style.width = '5px';
+        p.style.height = '5px';
+        p.style.animationDelay = Math.random() * 3 + 's';
+        weather.appendChild(p);
+      }
+    } else if (season === 'autumn') {
+      for (let i = 0; i < 15; i++) {
+        const l = document.createElement('div');
+        l.className = 'leaf-fall';
+        l.style.left = Math.random() * 100 + '%';
+        l.style.top = '-10px';
+        l.style.background = ['#FF8A65','#FFB74D','#A1887F','#FF7043','#D4E157'][Math.floor(Math.random()*5)];
+        l.style.animationDelay = Math.random() * 4 + 's';
+        l.style.animationDuration = (3 + Math.random() * 2) + 's';
+        weather.appendChild(l);
+      }
+    } else if (season === 'winter') {
+      smoke.style.display = 'block';
+      for (let i = 0; i < 20; i++) {
+        const s = document.createElement('div');
+        s.className = 'snowflake';
+        s.style.left = Math.random() * 100 + '%';
+        s.style.top = '-10px';
+        s.style.animationDelay = Math.random() * 3 + 's';
+        s.style.animationDuration = (2 + Math.random() * 2) + 's';
+        weather.appendChild(s);
+      }
+      // Change ground to snowy
+      document.getElementById('seasonal-scene').querySelector('.pixel-ground').style.background =
+        'linear-gradient(180deg, #E3F2FD 0%, #BBDEFB 50%, #90CAF9 100%)';
+    }
+
+    if (season !== 'winter') {
+      document.getElementById('seasonal-scene').querySelector('.pixel-ground').style.background =
+        'linear-gradient(180deg, #7CB342 0%, #558B2F 50%, #33691E 100%)';
+    }
+  }
+
+  // ── Init ──
+  generateGitHubGrid();
+  generateGardenGrid();
+  generateConstellation();
+  generateMosaicGrid();
+
+  // Add spring petals initially
+  setSeason('spring');
+</script>
+</body>
+</html>
