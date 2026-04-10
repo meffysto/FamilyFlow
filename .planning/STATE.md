@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Seed
-status: Phase complete — ready for verification
+status: Ready to plan
 stopped_at: Completed 23-02-PLAN.md
-last_updated: "2026-04-10T07:04:53.875Z"
+last_updated: "2026-04-10T07:11:04.958Z"
 last_activity: 2026-04-10
 progress:
   total_phases: 6
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md
 
 ## Current Position
 
-Phase: 23 (mus-e-des-effets-seed-002-lite) — EXECUTING
-Plan: 2 of 2
+Phase: 24
+Plan: Not started
 Milestone: v1.3 Seed (defining requirements)
 Last shipped: v1.2 Confort & Découverte (2026-04-08)
 Last activity: 2026-04-10
