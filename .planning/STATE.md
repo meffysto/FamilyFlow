@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Jardin Familial
-status: executing
-last_updated: "2026-04-10T21:17:38.914Z"
+status: verifying
+last_updated: "2026-04-10T21:22:04.307Z"
 last_activity: 2026-04-10
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
   percent: 0
 ---
 
@@ -32,7 +32,7 @@ Last activity: 2026-04-10
 
 Progress: [░░░░░░░░░░] 0%
 
-Status: Ready to execute
+Status: Phase complete — ready for verification
 
 ### Quick Tasks Completed
 
@@ -120,6 +120,7 @@ Status: Ready to execute
 | Phase 26-hook-domaine-jardin P01 | 5min | 2 tasks | 3 files |
 | Phase 26-hook-domaine-jardin P02 | 2min | 1 tasks | 1 files |
 | Phase 27-cran-village-composants P01 | 4min | 2 tasks | 3 files |
+| Phase 27-cran-village-composants P02 | 3min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -205,6 +206,7 @@ Recent decisions affecting current work:
 - [Phase 26-02]: gami-{id}.md sans préfixe '04 - Gamification/' — cohérent avec museum/engine.ts, quest-engine.ts et le pattern réel du codebase
 - [Phase 26-02]: appendContributionToVault retourne void — relecture VILLAGE_FILE après écriture pour mettre à jour gardenRaw dans useGarden
 - [Phase 27-01]: FAB route castée 'as any' — écran /(tabs)/village non encore créé (Plan 02), expo-router exige des routes connues au compile-time
+- [Phase 27-cran-village-composants]: Profile.avatar utilisé (pas .emoji) dans village.tsx — corrigé via TypeScript
 
 ### Todos
 
@@ -216,5 +218,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-10T21:17:38.911Z
+Last session: 2026-04-10T21:22:04.300Z
 Next: Plan and execute Phase 25 (Fondation données village)

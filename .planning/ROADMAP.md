@@ -155,7 +155,7 @@ Plans:
 
 - [x] **Phase 25: Fondation données village** — Schéma `jardin-familial.md`, parseur bidirectionnel, grille village namespacée, templates d'objectif (completed 2026-04-10)
 - [x] **Phase 26: Hook domaine jardin** — `useGarden.ts` isolé, génération objectif hebdo, anti-double-claim, câblage VaultContext (completed 2026-04-10)
-- [ ] **Phase 27: Écran Village + composants** — Carte tilemap village, feed contributions, barre progression, panneau historique
+- [x] **Phase 27: Écran Village + composants** — Carte tilemap village, feed contributions, barre progression, panneau historique (completed 2026-04-10)
 - [ ] **Phase 28: Portail + câblage contributions** — Portail ferme → village, auto-contribution récoltes + tâches, récompense collective
 
 ## Phase Details
@@ -204,7 +204,7 @@ Plans:
 
 Plans:
 - [x] 27-01-PLAN.md — buildVillageMap() + TileMapRenderer mode village + FAB navigation
-- [ ] 27-02-PLAN.md — Ecran village.tsx complet (objectif, feed, membres, historique)
+- [x] 27-02-PLAN.md — Ecran village.tsx complet (objectif, feed, membres, historique)
 
 ### Phase 28: Portail + câblage contributions
 **Goal**: La boucle coopérative est complète — récolter dans la ferme perso ou compléter une tâche IRL ajoute automatiquement une contribution au village, l'atteinte de l'objectif déclenche une récompense collective (XP + suggestion activité IRL), et un portail animé dans la ferme permet d'accéder au village.
@@ -234,7 +234,7 @@ Plans:
 | 24. Compagnon étendu | v1.3 | 2/2 | Complete | 2026-04-10 |
 | 25. Fondation données village | v1.4 | 2/2 | Complete    | 2026-04-10 |
 | 26. Hook domaine jardin | v1.4 | 2/2 | Complete    | 2026-04-10 |
-| 27. Écran Village + composants | v1.4 | 1/2 | In Progress|  |
+| 27. Écran Village + composants | v1.4 | 2/2 | Complete   | 2026-04-10 |
 | 28. Portail + câblage contributions | v1.4 | 0/? | Not started | - |
 
 ## Archived Milestones

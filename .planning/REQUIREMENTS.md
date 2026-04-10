@@ -26,21 +26,21 @@ Requirements pour le milestone Jardin Familial (MVP). Chaque requirement mappe �
 
 - [ ] **COOP-01**: Quand un membre récolte dans sa ferme perso, une contribution est automatiquement ajoutée à l'objectif village
 - [ ] **COOP-02**: Quand un membre complète une tâche IRL (via semantic coupling v1.3), une contribution est ajoutée à l'objectif village
-- [ ] **COOP-03**: Un feed de contributions affiche qui a fait quoi cette semaine sur l'écran village
-- [ ] **COOP-04**: Un indicateur per-membre montre la contribution de chaque profil cette semaine
+- [x] **COOP-03**: Un feed de contributions affiche qui a fait quoi cette semaine sur l'écran village
+- [x] **COOP-04**: Un indicateur per-membre montre la contribution de chaque profil cette semaine
 
 ### Objectif & Récompense
 
 - [x] **OBJ-01**: Un objectif hebdomadaire est auto-généré chaque lundi, avec cible adaptée au nombre de profils actifs et à l'historique
-- [ ] **OBJ-02**: Une barre de progression affiche l'avancement collectif vers l'objectif de la semaine
+- [x] **OBJ-02**: Une barre de progression affiche l'avancement collectif vers l'objectif de la semaine
 - [ ] **OBJ-03**: Quand l'objectif est atteint, tous les profils reçoivent un bonus in-game (XP + item cosmétique)
 - [ ] **OBJ-04**: La récompense inclut une suggestion d'activité familiale IRL (liste curatée, pondérée par saison)
 - [x] **OBJ-05**: Un flag partagé + flag per-profil empêchent le double-claim de récompense
 
 ### Historique
 
-- [ ] **HIST-01**: Un panneau interactif sur la place du village affiche l'historique des semaines accomplies
-- [ ] **HIST-02**: Chaque semaine enregistre : cible, total, contributions par membre, récompense claimée
+- [x] **HIST-01**: Un panneau interactif sur la place du village affiche l'historique des semaines accomplies
+- [x] **HIST-02**: Chaque semaine enregistre : cible, total, contributions par membre, récompense claimée
 
 ## v1.5 Requirements
 
@@ -78,15 +78,15 @@ Déféré au prochain milestone. Trackés mais pas dans le roadmap actuel.
 | MAP-03 | Phase 28 | Pending |
 | COOP-01 | Phase 28 | Pending |
 | COOP-02 | Phase 28 | Pending |
-| COOP-03 | Phase 27 | Pending |
-| COOP-04 | Phase 27 | Pending |
+| COOP-03 | Phase 27 | Complete |
+| COOP-04 | Phase 27 | Complete |
 | OBJ-01 | Phase 26 | Complete |
-| OBJ-02 | Phase 27 | Pending |
+| OBJ-02 | Phase 27 | Complete |
 | OBJ-03 | Phase 28 | Pending |
 | OBJ-04 | Phase 28 | Pending |
 | OBJ-05 | Phase 26 | Complete |
-| HIST-01 | Phase 27 | Pending |
-| HIST-02 | Phase 27 | Pending |
+| HIST-01 | Phase 27 | Complete |
+| HIST-02 | Phase 27 | Complete |
 
 **Coverage:**
 - v1.4 requirements: 18 total
