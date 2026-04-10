@@ -1,227 +1,128 @@
-# Research Summary — FamilyFlow v1.2 Confort & Découverte
+# Project Research Summary
 
-**Project:** FamilyFlow v1.2 "Confort & Découverte"
-**Domain:** React Native / Expo family app — 3 additive features on mature codebase
-**Researched:** 2026-04-07
-**Confidence:** HIGH (direct codebase audit + verified external sources)
-
----
+**Project:** FamilyFlow v1.4 — Jardin Familial (Place du Village)
+**Domain:** Cooperative multi-profile shared garden zone added to a React Native / Expo pixel farm game with file-based (Obsidian vault + iCloud) persistence
+**Researched:** 2026-04-10
+**Confidence:** HIGH
 
 ## Executive Summary
 
-- **Zero new dependencies.** Every UI primitive, storage mechanism, and animation pattern needed for all 3 features already exists in the codebase. The work is integration and composition, not installation.
-- **Allergen safety is a P0 hard requirement.** All 4 research agents independently converged on this: the `allergie` severity level must be rendered with a non-dismissible badge, stored via canonical IDs (not free-text), and checked via a pure lib function — never in component render logic. This cannot be retrofitted after data lands in the vault.
-- **Two architectural decisions require user input before work begins** (storage file for dietary preferences, and profile-scoped vs. device-global tutorial seen-flag). These are the only real scope/design forks the research surfaced.
-- **Phase order is clear:** Dietary Preferences first (self-contained, daily value, P0 safety), then Codex Content (data-only, no UI), then Codex UI, then Tutorial last (depends on both codex content for text reuse and codex modal for replay button).
-- **The god hook (`useVault.ts`, 3431 lines) must not grow.** Dietary constraints belong on the `Profile` type, not as a new top-level state slice. This is the single most important architectural constraint for Phase 1.
+FamilyFlow v1.4 adds a cooperative "Place du Village" — a second tilemap zone shared across all family profiles — to an already-shipped single-player pixel farm. The app has a mature, well-patterned codebase: the existing `TileMapRenderer`, `WorldGridView`, `FamilyQuest` contribution engine, `parseFamilyQuests` vault parser, and Reanimated transition patterns provide direct, tested building blocks for every feature in this milestone. Zero new npm dependencies are required. The architecture decision is clear: the Village is not a new system — it is a new visual consumer of existing cooperative infrastructure, backed by a single new shared vault file (`jardin-familial.md`).
 
-FamilyFlow v1.2 adds features that are valuable on day one of delivery: dietary preferences let the app warn about allergens in planned meals, the codex makes the farm navigable for every family member, and the tutorial removes the "I have no idea what to do" friction at first launch. None of these require rethinking the architecture — they extend patterns that already exist and have been proven in production.
+The recommended approach is a strict bottom-up build order: data foundation first (parser, shared file schema), then domain hook (`useGarden.ts` as an isolated domain hook, never merged into the 3431-line god hook), then Village screen components, and finally the portal entry point in `tree.tsx` as the smallest possible change to the existing farm screen. Every feature maps cleanly to a proven existing pattern: `FamilyQuestTemplate` drives weekly objectives, `applyQuestReward` handles rewards, `onQuestProgress` callback handles harvest contributions (already wired), and `contributeFamilyQuest` handles task contributions (already wired from v1.3).
 
-The main risk is not technical difficulty but safety correctness (allergen dismissibility), content drift (hardcoding farm stats instead of reading from engine constants), and animation perf on a screen (`tree.tsx`) that already had an OOM crash. All three risks have documented mitigations in PITFALLS.md and are preventable with explicit constraints in the phase specs.
-
----
-
-## The 3 Features at a Glance
-
-| Feature | Table Stakes | Differentiators | Complexity |
-|---------|-------------|-----------------|------------|
-| **Préférences alimentaires** | Per-profile saisie (allergie / intolérance / régime / aversion), flag badge sur recette, flag sur planning repas, édition depuis écran profil | Invités légers (type `Guest`, sans profil complet), résumé combiné pour repas partagé | LOW–MEDIUM — extend parser + new domain hook + badge UI |
-| **Codex ferme** | Modal "?" sur tree.tsx, catégories (cultures/bâtiments/tech/mécaniques), stats lus depuis constantes, bouton "Revoir le tutoriel" | Entrées locked "???" pour crops dropOnly non encore découverts, tri par pertinence selon niveau profil actif | LOW — static TS constants + existing UI components |
-| **Tutoriel ferme** | Déclenchement auto au premier accès, skippable dès l'étape 1, rejouable depuis codex, explique la boucle de base en 3–5 étapes | Spotlight overlay sur éléments UI réels, narration par le compagnon actif, récompense XP à la complétion | LOW (MVP sans spotlight) → MEDIUM (spotlight via react-native-svg déjà installé) |
+The dominant risk in this milestone is not technical novelty but data integrity: the shared `jardin-familial.md` file is written by any profile, creating stale-read corruption and iCloud double-contribution risks that do not exist for per-profile files. Three design decisions eliminate these risks before any UI is built: (1) append-only contribution log instead of mutable total, (2) read-before-write pattern for all shared file mutations, (3) once-flag in the shared file for weekly objective generation and per-profile flags in `gami-{id}.md` for reward claims. These must be encoded in the data layer phase — retrofitting them later is expensive.
 
 ---
 
 ## Key Findings
 
-### Stack — Aucune dépendance ajoutée
+### Recommended Stack
 
-Le codebase contient déjà tout le nécessaire. Récapitulatif confirmé par l'agent STACK :
+Zero new production dependencies. Every capability needed for v1.4 is present in the locked stack (`react-native-reanimated ~4.1.1`, `expo-router ~6.0.23`, `date-fns ^4.1.0`, `react-native-confetti-cannon ^1.5.2`, `gray-matter ^4.0.3`). The existing `TileMapRenderer` is fully parameterized — it accepts `FarmMapData` via props, and `buildVillageMap()` returns the same type. No renderer changes needed. The existing `WorldCell` type covers all village grid cell needs. The existing `FamilyQuest` contribution engine handles harvest and task contributions with no changes required.
 
-| Besoin | Solution existante |
-|--------|--------------------|
-| Overlay/spotlight tutoriel | `react-native-svg ^15.12.1` déjà installé — `<Mask>` + `<Rect>` ~20 lignes |
-| Coach marks séquentiels | `CoachMark`, `CoachMarkOverlay`, `ScreenGuide` dans `components/help/` |
-| Vu/pas vu + replay | `HelpContext` — `hasSeenScreen`, `markScreenSeen`, `resetScreen` via SecureStore |
-| Codex UI | `ScrollView`, `CollapsibleSection`, `MarkdownText`, `Chip`, `Badge`, `ModalHeader` |
-| Recherche codex | `lib/search.ts` — `normalize()` déjà implémentée ; `Array.filter` suffisant pour <100 entrées |
-| Stockage préférences | `lib/parser.ts` + `lib/types.ts` — patterns existants à étendre |
-| Liste allergènes | Constante statique `constants/allergens.ts` — liste EU fixe à 14 items, pas de lib |
+**Core technologies:**
+- `TileMapRenderer.tsx` + `farm-map.ts` pattern: second tilemap instance via `village-map.ts` + `buildVillageMap()` — already parameterized, zero changes to renderer
+- `FamilyQuest` + `parseFamilyQuests` + `useVaultFamilyQuests`: contribution backbone reused for village weekly objective — entire engine already handles harvest + task contributions
+- `react-native-reanimated ~4.1.1` + `expo-router ~6.0.23`: portal transition (fade + `router.push`) — same pattern as `EvolutionOverlay.tsx`
+- `date-fns ^4.1.0`: weekly boundary detection (`startOfWeek`, `isAfter`, `parseISO`) — already used in `FamilyQuestBanner.tsx`
+- `react-native-confetti-cannon ^1.5.2`: reward celebration — already used in `LootBoxOpener.tsx`
 
-Rejetés explicitement : `react-native-copilot` (broken new arch RN 0.81 + Expo 54, 101 issues ouverts), `fuse.js` (surcoût bundle disproportionné pour <100 entrées), toute lib d'allergènes npm (web-focused, liste EU est fixe et réglementaire).
+### Expected Features
 
-**Commande npm install : aucune.**
+**Must have (table stakes) — v1.4:**
+- `jardin-familial.md` shared data model + `parseGarden` / `serializeGarden` in `lib/parser.ts` — foundation for all other features
+- `addContribution(profileId, type, amount)` with append-only log — core cooperative primitive
+- Weekly objective: auto-generated target + progress bar — users expect a visible shared goal
+- Contribution feed + per-member indicators — visibility of teammates' actions is required for cooperative engagement
+- Collective reward on goal completion (XP to all profiles + IRL activity suggestion) — cooperative loop payoff
+- Portal tap-target on farm screen navigating to Village screen — required for discoverability
+- Village screen with distinct tilemap (cobblestone / pavés dominant) — cooperative space must feel different from personal farm
+- Historical log panel (past weeks, interactive) — memory object, explicitly in PROJECT.md scope
+- Task contributions hooked into `applyTaskEffect()` — already wired in v1.3, low-risk extension
+- Harvest contributions hooked into farm harvest path — `onQuestProgress` callback already exists in `useFarm.ts`
 
-### Features — Périmètre v1.2
+**Should have (competitive) — v1.5:**
+- Village ambiance variation by progress (3 visual states: empty / active / festive) — embeds reward signal in environment; HIGH complexity, defer
+- Avatar placement in village space — presence signal; MEDIUM complexity
+- Family vote on activity reward suggestion — agency; LOW value, HIGH complexity
 
-**À livrer en v1.2 (consensus des 4 agents) :**
-- Saisie préférences alimentaires par profil (4 types : allergie / intolérance / régime / aversion)
-- Type `Guest` minimal + CRUD (nom + emoji + contraintes, sans profil complet)
-- Flag badge sur carte recette selon profil actif
-- Flag warning sur planning repas hebdomadaire
-- Codex ferme modal (bouton "?" sur tree.tsx) — 5 catégories, stats lus depuis constantes
-- Entrées cultures dropOnly affichées "???" si non encore découvertes par le profil
-- Tutoriel ferme 4 étapes, skippable, déclenchement auto, rejouable depuis codex
+**Defer (v2+):**
+- Village tech tree / cosmetic upgrades via collective milestones
+- Seasonal village events tied to existing seasonal engine
+- Cross-season village history
 
-**À déférer à v1.3 :**
-- Sélection "qui mange ce repas" (`attendees` sur `MealItem`) — change le modèle de données
-- Tutoriel progressif par paliers (phases 2 et 3 déclenchées à la découverte de nouvelles mécaniques)
-- Spotlight overlay sur UI réelle (post-validation du tutoriel de base)
-- Invité épinglé sur créneau repas
+### Architecture Approach
 
-**À déférer à v2+ :**
-- Résumé contraintes combinées pour repas partagé (dépend des attendees)
-- Narration compagnon dans tutoriel
+The Village is a second, shared tilemap zone rendered by the unchanged `TileMapRenderer` + `WorldGridView` stack, backed by a new shared `jardin-familial.md` vault file. The cooperative data layer reuses the `FamilyQuest` engine entirely — the Village screen is a new visual consumer of already-flowing contribution data. A new domain hook `hooks/useGarden.ts` (modeled on `hooks/useVaultFamilyQuests.ts`) owns all garden state and actions, wired into `VaultContext` via composition. The Village screen is a hidden screen accessed via portal in `tree.tsx`, not a new tab.
 
-### Architecture — Nouveaux fichiers et fichiers modifiés
-
-**Nouveaux fichiers :**
-
-| Fichier | Rôle |
-|---------|------|
-| `lib/types.ts` additions | `DietaryConstraint`, `DietaryProfile`, `DietaryConstraintSeverity` |
-| `lib/parser.ts` additions | `PREFERENCES_FILE`, `parsePreferences`, `serializePreferences` |
-| `lib/dietary-utils.ts` | Pure function `computeRecipeConflicts()` |
-| `lib/codex/content.ts` | `CODEX_ENTRIES[]` — importe depuis engine constants, ajoute prose |
-| `lib/codex/index.ts` | Barrel export |
-| `hooks/useVaultPreferences.ts` | Domain hook CRUD préférences |
-| `constants/allergens.ts` | `EU_ALLERGENS` (14 items) + `keywords[]` pour matching |
-| `components/mascot/FarmCodexModal.tsx` | Codex modal (tabs + search + drill-down) |
-| `components/mascot/FarmTutorialOverlay.tsx` | Tutorial overlay absolu sur tree.tsx |
-
-**Fichiers modifiés :**
-
-| Fichier | Changement |
-|---------|-----------|
-| `hooks/useVault.ts` | Wire `useVaultPreferences` dans VaultState — pas de nouveau `useState` top-level |
-| `lib/types.ts` | Extend `Profile` avec `dietaryConstraints?` ; ajouter `convives?` sur `MealItem` |
-| `lib/parser.ts` | Pair parse/serialize pour le fichier préférences ; `convives` parsing |
-| `app/(tabs)/tree.tsx` | `showCodex` state ; bouton "?" dans HUD existant ; `FarmCodexModal` ; `FarmTutorialOverlay` |
-| `app/(tabs)/meals.tsx` | Conflict badge sur meal cards ; convives picker ; conflits dans détail recette |
-| `contexts/HelpContext.tsx` | Support profil-scoped keys si décision prise en ce sens (voir Open Questions) |
+**Major components:**
+1. `lib/mascot/village-map.ts` + `lib/mascot/village-grid.ts` — terrain data and grid cells (new files, mirror farm-map.ts / world-grid.ts patterns)
+2. `lib/parser.ts` (additive) + `hooks/useGarden.ts` (new domain hook) — shared state persistence and business logic
+3. `app/(tabs)/village.tsx` — Village screen shell assembling `TileMapRenderer`, `VillageGridView`, `VillageQuestPanel`, `VillageHistoryBoard`
+4. `components/mascot/VillagePortalButton.tsx` — minimal portal overlay in `tree.tsx`
+5. `constants/weeklyQuestTemplates.ts` — auto-generation template library
 
 ### Critical Pitfalls
 
-1. **Allergen silencing — classe de bug à gravité fatale.** Toute contrainte de type `allergie` doit avoir un badge non-dismissible, stocké via ID canonique (pas free-text), et vérifié dans une pure function `lib/dietary-utils.ts`. Jamais de logique "Ne plus afficher" sur les allergènes. Jamais de `string[]` plat sans sévérité. Jamais de check dans le composant sans `useMemo` avec dépendances correctes.
+1. **Shared file stale-read corruption** — always read `jardin-familial.md` fresh from disk immediately before any write; never mutate from React state snapshot for shared file writes
 
-2. **Codex content drift.** Tous les chiffres dans le codex (tâches par stade, coût de récolte, drops, prix tech) doivent être lus depuis `CROP_CATALOG`, `BUILDING_CATALOG`, `TECH_TREE` au render time. Zéro chiffre hardcodé dans les strings. Un PR qui change `tasksPerStage` sans toucher le codex doit être rejeté.
+2. **iCloud double-contribution via mutable total** — use an append-only contribution log (table rows: `timestamp | profileId | type | amount`); derive total from log rows on read; deduplicate rows with same profileId + timestamp within 5-minute window
 
-3. **Tutorial animation jank sur tree.tsx.** Cet écran a déjà eu un crash OOM (commit `260404-qvz`). L'overlay tutoriel doit : (a) utiliser `runOnUI` / `useAnimatedStyle` pour les animations de spotlight, (b) mettre en pause les timers WorldGridView pendant les étapes actives, (c) rester sous 5 `useSharedValue` nouveaux, (d) préférer `withTiming` à `withSpring` pour les mouvements de spotlight. Frame rate minimum acceptable : 58 fps sur device TestFlight.
+3. **Weekly objective generated twice across profiles** — store week identifier and `generated_by` flag in shared file; any profile can trigger generation, only the first write wins
 
-4. **useVault.ts god hook — ne pas le gonfler.** Les contraintes alimentaires voyagent dans le type `Profile`, pas comme slice top-level. Zéro nouveau `useState` dans `useVaultInternal`. Zéro nouvelle entrée dans le `Promise.allSettled` de `loadVaultData`. Zéro nouvelle dépendance dans le `useMemo` à 90 dépendances.
+4. **Reward fires multiple times across profile switches** — two-flag pattern: shared completion flag in `jardin-familial.md` + per-profile claimed flag in `gami-{id}.md` keyed by ISO week
 
-5. **Tutorial seen-flag — scope profil vs device.** Décision à prendre avant d'écrire une ligne de code : `markScreenSeen('farm_tutorial')` global ou `markProfileScreenSeen(profileId, 'farm_tutorial')`. Le choix impacte l'API de `HelpContext` et la mécanique replay du codex.
+5. **World-grid ID collision during portal transition** — prefix all Village cell IDs with `village_` namespace; never mount FarmGrid and VillageGrid at full resolution simultaneously
 
----
-
-## Décision de Stockage — Divergence à Arbitrer
-
-Les agents STACK et ARCHITECTURE ont recommandé deux approches différentes. Cette décision doit être arrêtée avant la Phase 1.
-
-**Option A — STACK.md + PITFALLS.md : flat keys dans le bloc profil de `famille.md`**
-
-```
-food_allergies: arachides,noix
-food_intolerances: lactose
-food_regimes: végétarien
-food_aversions: champignons
-```
-
-- Avantage : colocalisé avec les données profil existantes, pattern identique à `farm_crops`/`farm_tech`
-- Avantage PITFALLS : les contraintes voyagent avec le profil déjà chargé — aucun nouveau top-level state dans `useVault.ts`
-- Risque : `parseFamille()` est le chemin critique de parse — modification de blast radius élevé
-- Obsidian : lisible mais moins structuré qu'une section dédiée
-
-**Option B — ARCHITECTURE.md : fichier dédié `05 - Famille/Préférences alimentaires.md` avec H2 par personne**
-
-```markdown
-## Papa
-- allergie: arachides
-- régime: végétarien
-
-## Invités
-- invité: Grand-mère | allergie: noix
-```
-
-- Avantage : isolé du chemin critique `parseFamille`, pattern éprouvé (identique à `Souhaits.md`)
-- Avantage : invités dans la section `## Invités` du même fichier, sans fichier supplémentaire
-- Inconvénient : nouveau fichier vault, nouveau branch dans `loadVaultData`, nouveau pair parse/serialize
-- Obsidian : plus lisible, structure claire
-
-**Recommandation de synthèse :** Option A est préférable si la priorité est de limiter la surface de changement dans `useVault.ts` et `lib/parser.ts`. Option B est préférable si la lisibilité Obsidian et l'isolation du parse path sont prioritaires. Les deux sont implémentables correctement.
+6. **God hook boundary violation** — `hooks/useGarden.ts` as independent domain hook; verify `useVault.ts` grows by no more than 20 lines
 
 ---
 
-## Chevauchement HealthRecord — Question Ouverte
+## Implications for Roadmap
 
-`HealthRecord.allergies` existe déjà comme `string[]` dans le domaine santé, jamais cross-référencé avec les recettes.
+Based on research, the build order is dictated by data dependencies: shared file schema must exist before any hook, hook must exist before any UI, and the portal can only be added once the Village screen exists to navigate to.
 
-**Recommandation :** Séparation pour v1.2. Le nouveau champ `dietaryConstraints` sur `Profile` est indépendant de `HealthRecord`. Documenter la duplication connue avec un commentaire `// TODO: consolider avec HealthRecord.allergies en v1.3`. Une consolidation en v1.2 dépasse le scope du milestone et touche au parser santé.
+### Phase 1: Garden Data Foundation
+**Rationale:** Every other feature depends on the shared vault file and its parser. The contribution format (append-only vs mutable) is an irreversible architectural decision that must be made and tested before any UI is written. Pitfalls 1, 2, and 8 are addressed here.
+**Delivers:** `jardin-familial.md` schema, `parseGarden()` / `serializeGarden()` in `lib/parser.ts`, `lib/mascot/village-map.ts` (buildVillageMap), `lib/mascot/village-grid.ts` (VILLAGE_GRID), `constants/weeklyQuestTemplates.ts`
+**Addresses:** Shared data model (table-stakes foundation)
+**Avoids:** Stale-read corruption (Pitfall 1), iCloud double-contribution (Pitfall 2), parser regex collision (Pitfall 8)
 
----
+### Phase 2: Garden Domain Hook
+**Rationale:** Business logic before UI. Must be isolated as `hooks/useGarden.ts` to prevent god hook growth. VaultContext wiring is the highest-risk change in the milestone and must be verified with a TypeScript check before any screen code is added.
+**Delivers:** `hooks/useGarden.ts` with `loadGardenData`, `addContribution`, `generateWeeklyObjectiveIfNeeded`, `checkRewardEligibility`, `claimReward`; `hooks/useVault.ts` + `contexts/VaultContext.tsx` wiring (additive, ~20 lines)
+**Addresses:** Contribution tracking (task + harvest bridges), weekly auto-generation, reward distribution
+**Avoids:** Cross-profile objective double-generation (Pitfall 4), reward multi-fire (Pitfall 6), contribution misattribution (Pitfall 5), god hook growth (Pitfall 7)
 
-## Implications pour le Roadmap
+### Phase 3: Village Screen + Components
+**Rationale:** All new UI files — fully additive, no existing files touched except `app/(tabs)/_layout.tsx` (one line). Depends on Phase 2 hook existing. `TileMapRenderer` and `WorldCell` type reused unchanged.
+**Delivers:** `app/(tabs)/village.tsx`, `components/mascot/VillageGridView.tsx`, `components/mascot/VillageQuestPanel.tsx`, `components/mascot/VillageHistoryBoard.tsx`
+**Addresses:** Distinct village visual identity, weekly objective display, contribution feed, per-member indicators, historical log panel, collective reward moment
+**Avoids:** World-grid ID collision (Pitfall 3) by namespacing Village cell IDs from the start
 
-### Phase 1 — Préférences alimentaires
-**Rationale :** Indépendant des 2 autres features, valeur quotidienne immédiate, contient le seul risque P0 (sécurité allergènes) qui doit être établi correctement avant tout le reste.
-**Delivers :** Type `DietaryConstraint` + `DietaryConstraintSeverity` + `constants/allergens.ts` + parser pair + domain hook `useVaultPreferences` + UI édition profil + badge recette + warning planning repas + type `Guest` + CRUD invités
-**Avoids :** Allergen silencing (P1), stale profile check (P2), i18n mismatch (P3), god hook inflation (P10)
-**Research flag :** Aucune recherche de phase nécessaire — patterns directs du codebase
-
-### Phase 2 — Codex Contenu
-**Rationale :** Fichier de données pur, zéro UI, zéro risque de régression. Séparer du codex UI permet de valider la précision du contenu indépendamment.
-**Delivers :** `lib/codex/content.ts` avec `CODEX_ENTRIES[]` important depuis `CROP_CATALOG`, `BUILDING_CATALOG`, `TECH_TREE`, `CRAFT_RECIPES` + barrel `lib/codex/index.ts`
-**Avoids :** Codex content drift (P5) — contrainte architecturale établie dès la première PR
-**Research flag :** Aucune recherche de phase nécessaire
-
-### Phase 3 — Codex UI
-**Rationale :** Dépend de Phase 2 (contenu), indépendant du tutoriel. Livrable visible utilisateur. Bouton "Revoir le tutoriel" inclus mais pointe vers tutoriel vide jusqu'à Phase 4.
-**Delivers :** `FarmCodexModal.tsx` (tabs + search + drill-down) + bouton "?" intégré dans HUD existant de tree.tsx + entrées dropOnly "???" + `FlatList` avec virtualisation + lazy-load
-**Avoids :** Crowded tree.tsx UI (P11), codex perf ScrollView (P6), `useVault()` pour contenu statique (P11)
-**Research flag :** Aucune recherche de phase nécessaire
-
-### Phase 4 — Tutoriel Ferme
-**Rationale :** Dépend de Phase 2 (réutilise entrées catégorie `mécanique`) et Phase 3 (bouton replay). Vient en dernier pour être testé sur device avec ferme entièrement fonctionnelle.
-**Delivers :** `FarmTutorialOverlay.tsx` (overlay absolu, 4 étapes, Reanimated 4) + déclenchement via `HelpContext` + "Passer" dès l'étape 1 + `markScreenSeen` sur fin/skip + replay via codex + pause WorldGridView pendant tutoriel + validation `TutorialStep.targetId` contre catalogs + validation frame rate 58+ fps sur TestFlight
-**Avoids :** Tutorial jank (P8), content breaks (P9), HelpProvider duplication (P12), seen-flag scope (P7)
-**Research flag :** Spike recommandé de 2h en début de phase pour valider SVG spotlight + Reanimated 4 worklet thread si spotlight choisi pour v1.2
+### Phase 4: Portal Integration
+**Rationale:** Smallest possible change to the existing farm screen — deferred until the Village screen exists to navigate to. Minimizes regression risk to `tree.tsx`, the most battle-tested screen in the codebase.
+**Delivers:** `components/mascot/VillagePortalButton.tsx` overlay in `app/(tabs)/tree.tsx`; fade animation via Reanimated; `router.push('/village')` navigation
+**Addresses:** Portal transition (farm to village), discoverability
+**Avoids:** Dual-mount grid collision during transition (Pitfall 3); portal as full-screen route, not modal (avoids gesture handler stack conflicts)
 
 ### Phase Ordering Rationale
 
-- Préférences en premier : risque P0 (sécurité allergènes) doit être établi en production et validé avant d'ajouter de la complexité
-- Codex contenu séparé de codex UI : la précision des données peut être relue sans dépendre d'une UI compilable
-- Tutorial en dernier : le composant `FarmTutorialOverlay` réutilise les entrées catégorie `mécanique` de `lib/codex/content.ts` pour ses descriptions d'étapes — la dépendance est explicite
-- Chaque phase est non-cassante et livrable indépendamment sur TestFlight
+- Data before hook before UI is the only dependency-safe order — UI cannot be built without a working hook, hook cannot be built without a schema
+- Garden hook isolated in its own phase because VaultContext wiring is the single highest-risk change; isolating it enables a focused TypeScript check
+- Portal is last because `tree.tsx` is the most battle-tested screen in the codebase; touching it last minimizes regression exposure
+- Append-only contribution log format (Phase 1 decision) must not be changed after Phase 2 hook is built — retrofitting requires rewriting both parser and hook
 
 ### Research Flags
 
-Phases nécessitant une recherche approfondie pendant la planification :
-- **Phase 4 (optionnel) :** Si spotlight SVG retenu pour v1.2, spike de validation Reanimated 4 worklet thread requis — le pattern est documenté mais absent du codebase
+Phases with standard patterns (skip research-phase):
+- **Phase 1 (Data Foundation):** `parseFamilyQuests` is a direct template; Wang tileset rendering confirmed reusable; no unknowns
+- **Phase 2 (Domain Hook):** `useVaultFamilyQuests.ts` is a direct template; VaultContext wiring is well-established
+- **Phase 3 (Village Screen):** All components mirror existing counterparts; `TileMapRenderer` reuse confirmed
+- **Phase 4 (Portal):** `router.push` + Reanimated fade is established; no custom transition required
 
-Phases avec patterns standards (pas de recherche-phase nécessaire) :
-- **Phase 1 :** Parser patterns directement lus dans `lib/parser.ts` et `lib/types.ts`
-- **Phase 2 :** Import direct depuis engine constants, zero dépendance externe
-- **Phase 3 :** Tous les composants UI existent, pattern modal documenté dans `BuildingDetailSheet.tsx`
-
----
-
-## Open Questions pour le Développeur
-
-Ces questions doivent être résolues avant ou pendant la rédaction des specs de phase.
-
-**Q1 — Stockage préférences (bloquant Phase 1 spec) :**
-Option A (flat keys dans le bloc profil de `famille.md`, pattern `farm_crops`) ou Option B (fichier dédié `05 - Famille/Préférences alimentaires.md`, pattern `Souhaits.md`) ? PITFALLS penche vers A. ARCHITECTURE penche vers B. Décidez avant de toucher à `lib/parser.ts`.
-
-**Q2 — Tutorial seen-flag : profil ou device ? (bloquant Phase 4 spec) :**
-Chaque profil famille doit-il avoir sa propre expérience "premier lancement" ferme, ou un seul vu par device suffit ? Si profil-scoped, `HelpContext` doit être étendu avec `markProfileScreenSeen(profileId, screenId)` avant la Phase 4.
-
-**Q3 — Consolidation `HealthRecord.allergies` (non bloquant v1.2) :**
-Laisser la duplication documentée pour v1.2 ou consolider maintenant ? La consolidation touche au parser santé et dépasse le scope du milestone — recommandé de déférer, mais confirmez.
-
-**Q4 — Invités : section dans le fichier préférences ou fichier vault séparé ? (lié à Q1) :**
-ARCHITECTURE.md propose `## Invités` dans le fichier préférences. FEATURES.md mentionne `04 - Personnes/invites.md`. Une fois Q1 arbitrée, confirmez si les invités vivent dans le même fichier que les préférences ou dans un fichier séparé.
-
-**Q5 — Spotlight overlay : v1.2 ou v1.3 ? (scope MVP tutoriel) :**
-Le MVP tutoriel sans spotlight (bulles de dialogue avec flèches) est livrable et plus sûr pour tree.tsx. Le spotlight via `react-native-svg` est MEDIUM complexity avec risque perf documenté. Voulez-vous le spotlight en v1.2 (avec validation frame rate obligatoire) ou le déférer à v1.3 ?
+No phase requires a `/gsd:research-phase` call — the existing codebase provides sufficient pattern documentation for all four phases.
 
 ---
 
@@ -229,43 +130,42 @@ Le MVP tutoriel sans spotlight (bulles de dialogue avec flèches) est livrable e
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Codebase lu directement ; dépendances vérifiées via npm registry et GitHub issues |
-| Features | MEDIUM | Patterns écosystème (Yummly, jeux mobiles) + analyse codebase directe ; scope invités légèrement incertain |
-| Architecture | HIGH | Basé sur lecture directe de `useVault.ts`, `lib/parser.ts`, `lib/types.ts`, `HelpContext.tsx`, `tree.tsx` |
-| Pitfalls | HIGH | Audit direct du codebase + `CONCERNS.md` + patterns RN/Expo connus ; crash OOM tree.tsx documenté dans git |
+| Stack | HIGH | Direct codebase inspection — all capabilities map to existing production code; zero dependency gap confirmed |
+| Features | MEDIUM | Cooperative game design patterns from WebSearch + direct codebase integration points confirmed; v1.5+ features are informed estimates |
+| Architecture | HIGH | All data flows traced through actual source files; TileMapRenderer parameterization confirmed; FamilyQuest contribution backbone confirmed |
+| Pitfalls | HIGH | Derived from direct codebase audit of write paths, iCloud coordination, and documented CONCERNS.md fragile areas |
 
-**Overall confidence : HIGH**
+**Overall confidence:** HIGH
 
-### Gaps résiduels
+### Gaps to Address
 
-- **Matching allergen/ingredient en Cooklang :** Le matching textuel (`keywords[]` normalisé vs nom ingrédient) aura des faux négatifs pour noms composés ou orthographes créatives. Acceptable pour v1.2 — documenter comme limitation connue dans la spec Phase 1.
-- **Perf codex sur anciens iPhones :** Le `FlatList` avec `windowSize={5}` est la mitigation recommandée mais n'a pas été benchmarké sur le device TestFlight cible. Valider en Phase 3.
-- **SVG spotlight worklet thread (Reanimated 4) :** Classé MEDIUM confidence dans STACK.md. Pattern absent du codebase actuel. Spike de validation recommandé en début de Phase 4 si spotlight retenu pour v1.2.
+- **Village terrain sprites:** New art assets (cobblestone Wang tileset variants) required. Existing `grass_to_cobblestone` tileset may partially cover needs. Scope of new sprite work is LOW confidence — needs art asset audit before Phase 1 is marked complete.
+- **Portal transition fidelity:** Standard `router.push` produces iOS stack animation. A cross-fade overlay is achievable with Reanimated but no existing codebase example does full-screen fade + navigate. Treat as MEDIUM risk; validate in Phase 4 spike before committing to specific animation style.
+- **Contribution log pruning:** Append-only log with 4-week rolling window avoids unbounded growth. Archive cutoff logic (move rows older than 4 weeks to `jardin-historique.md`) should be added as a parser utility in Phase 1 even if not yet called, to avoid retrofitting later.
+- **First-open cold-start UX:** An empty Village before the first objective is generated causes confusion. Phase 2 hook should generate the first objective on Village first-open (not on Sunday). The UX flow (companion explanation) is not yet designed.
 
 ---
 
 ## Sources
 
-### Primary (HIGH confidence — lecture directe codebase)
-- `hooks/useVault.ts`, `lib/parser.ts`, `lib/types.ts`, `lib/mascot/types.ts`, `lib/mascot/tech-engine.ts`, `lib/mascot/farm-engine.ts`
-- `contexts/HelpContext.tsx`, `components/help/CoachMark.tsx`, `components/help/ScreenGuide.tsx`
-- `app/(tabs)/tree.tsx`, `app/(tabs)/meals.tsx`, `components/mascot/BuildingDetailSheet.tsx`
-- `.planning/codebase/CONCERNS.md`, `.planning/codebase/ARCHITECTURE.md`, `.planning/STATE.md`
-- EU Regulation 1169/2011 — liste des 14 allergènes majeurs (fixe, réglementaire)
+### Primary (HIGH confidence — direct codebase inspection)
+- `lib/mascot/farm-map.ts` — `FarmMapData`, `buildFarmMap`, `TerrainType`, Wang tileset rendering confirmed
+- `lib/mascot/world-grid.ts` — `WorldCell`, `WORLD_GRID`, `CELL_SIZES` confirmed
+- `components/mascot/TileMapRenderer.tsx` — parameterized via `buildFarmMap()`, fully reusable
+- `lib/quest-engine.ts` — `FamilyQuest`, `FamilyQuestTemplate`, `createQuestFromTemplate`, `applyQuestReward` confirmed
+- `lib/parser.ts:1122` — `FAMILY_QUESTS_FILE`, `parseFamilyQuests`, `serializeFamilyQuests` patterns confirmed
+- `hooks/useVault.ts:1125` + `hooks/useVaultFamilyQuests.ts` — domain hook composition pattern confirmed
+- `.planning/codebase/CONCERNS.md` — vault write concurrency fragile area documented
+- `.planning/RETROSPECTIVE.md` — v1.1 per-profile file migration rationale (directly informs shared file design)
+- `.planning/PROJECT.md` — key decisions (ARCH-05: zero new npm deps; TUTO-02: SecureStore flags)
+- `package.json` — all dependency versions verified
 
-### Secondary (MEDIUM confidence — sources externes vérifiées)
-- npm registry — `react-native-copilot@3.3.3`, `fuse.js@7.3.0`, `react-native-walkthrough-tooltip@1.6.0`
-- GitHub Issues `mohebifar/react-native-copilot` — #332 (new arch broken), #351 (Expo 54 scroll/position broken), 101 open issues, vérifié 2026-04-07
-- Apple Developer — Onboarding for Games guidelines
-- Nielsen Norman Group — Progressive Disclosure
-- EUFIC — EU 14 allergen list
-
-### Tertiary (MEDIUM confidence — patterns jeux mobiles)
-- Zigpoll — Mobile game onboarding best practices 2025
-- jontopielski.com — Tutorial design methods
-- Food allergy app UX patterns (foodsconnected.com)
+### Secondary (MEDIUM confidence — WebSearch)
+- [Adrian Crook — Social Interaction Features in Cooperative Mobile Games](https://adriancrook.com/social-interaction-features-in-cooperative-mobile-games/) — cooperative retention patterns (40% higher with social features)
+- [CHI 2024 — Living Framework for Cooperative Games](https://dl.acm.org/doi/10.1145/3613904.3641953) — shared goals, intertwined goals taxonomy
+- [Scientific Reports — Free Rider Problem in Public Goods Games](https://www.nature.com/articles/srep38349) — accountability mechanism design
+- [Cooperative Board Game Design Shaping Digital Platforms 2026](https://coopboardgames.com/blog/how-cooperative-board-game-design-is-quietly-shaping-the-best-digital-entertainment-platforms-in-2026/) — hybrid individual + collective reward systems
 
 ---
-*Research completed: 2026-04-07*
+*Research completed: 2026-04-10*
 *Ready for roadmap: yes*
-*Agents: STACK (HIGH), FEATURES (MEDIUM), ARCHITECTURE (HIGH), PITFALLS (HIGH)*

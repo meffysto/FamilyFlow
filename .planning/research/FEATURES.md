@@ -1,249 +1,149 @@
 # Feature Research
 
-**Domain:** Mobile family app — v1.2 "Confort & Découverte" milestone
-**Researched:** 2026-04-07
-**Confidence:** MEDIUM (ecosystem patterns from WebSearch + direct codebase analysis for integration points)
+**Domain:** Cooperative family garden (Place du Village) — v1.4 milestone
+**Researched:** 2026-04-10
+**Confidence:** MEDIUM (cooperative game design patterns from WebSearch + direct codebase analysis for integration points)
 
 ---
 
-## Feature 1 — Préférences alimentaires
+## Context: What Already Exists
 
-### Context
+This research targets only the NEW cooperative features. The single-player farm (tilemap, crops, buildings, craft, tech tree, Wang tileset renderer, world-grid, gamification engine, companion system, seasonal events, sagas, multi-profile system, vault Obsidian persistence, and semantic task coupling) are all already shipped.
 
-Existing vault: `Profile` type in `lib/types.ts` has no dietary fields today. Meals stored in
-`02 - Maison/Repas semaine du YYYY-MM-DD.md` as plain text lines. Recipes are Cooklang files in
-`03 - Cuisine/Recettes/{Category}/{Name}.cook`. The `useVaultProfiles` hook owns Profile r/w.
-The `useVaultMeals` and `useVaultRecipes` hooks are the integration targets for flagging.
+Key existing infrastructure that v1.4 reuses:
+- `lib/mascot/farm-map.ts` — Wang tileset + `buildFarmMap(treeStage)` pattern, directly reusable for a second map
+- `lib/mascot/world-grid.ts` — `WorldCell[]` grid layout, reusable as a second grid instance
+- `lib/mascot/farm-engine.ts` — crop planting / harvest logic
+- `lib/mascot/types.ts` — `PlantedCrop`, `CropDefinition`, `CROP_CATALOG`
+- `lib/parser.ts` — bidirectional Markdown/YAML (2875 lines, already handles gamification.md per-profile)
+- `hooks/useVault.ts` + `useFarm.ts` — hooks that will need new shared-state equivalents
+- Multi-profile system (`famille.md`) — each family member has a `Profile` with their own gamification state
 
-### Table Stakes (Users Expect These)
-
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Saisie préférences par profil famille | Base pour tout le reste — sans ça rien ne fonctionne | LOW | Nouveau champ dans `Profile` + parser. Stocké en frontmatter `famille.md`. |
-| Types distincts : allergie / intolérance / régime / aversion | Les allergies sont potentiellement mortelles — les mélanger avec « je n'aime pas les poireaux » est une faute UX grave (confirmé par apps médicales et Yummly) | LOW | 4 catégories : `allergie` (bloquant, pictogramme rouge), `intolerance` (avertissement orange), `regime` (filtre passif : vegan/végé/halal/casher/sans gluten/etc.), `aversion` (indicatif, jaune). |
-| Flag visuel sur carte recette | Les apps Yummly et Mealime marquent les ingrédients problématiques sur la carte recette elle-même — c'est ce que les utilisateurs attendent | MEDIUM | Croiser la liste d'ingrédients Cooklang avec les préférences du profil actif. Badge coloré sur la carte + liste des conflits dans le détail recette. |
-| Flag sur le planning repas | Un repas planifié doit afficher un warning si un membre de la famille présent ne peut pas le manger | MEDIUM | Le planning repas actuel n'a pas de notion « qui mange ce repas » — la solution minimaliste est de flagguer si n'importe quel membre de la famille active a un conflit. |
-| Édition depuis l'écran profil | Naturel : préférences alimentaires = données personnelles = profil | LOW | Section nouvelle dans la vue profil existante. `updateProfile()` étendu. |
-
-### Differentiators (What Would Make This Delightful)
-
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| Invités avec préférences légères | Grand-mère coeliaque vient dimanche — pouvoir la saisir rapidement sans créer un profil complet famille | MEDIUM | Voir section Feature 4 ci-dessous pour le design détaillé. |
-| Sélection « qui mange ce repas » sur la fiche repas | Permet de ne flagguer que les membres réellement présents au repas (ex : enfant chez papy le soir) | HIGH | Dépend d'un champ `attendees` dans `MealItem` — change le modèle de données. Déférer à v1.3. |
-| Résumé des contraintes combinées pour un repas planifié | « Pour ce dîner : Emma (sans gluten), Lucas (végétarien) — recette compatible : OUI / NON » | MEDIUM | Valeur réelle pour la cuisine quotidienne. Faisable avec les préférences profil sans gérer les attendees. |
-| Stocker dans vault Obsidian (frontmatter `famille.md`) | Compatibilité bidirectionnelle Obsidian. L'utilisateur peut éditer depuis Obsidian si besoin. Zéro backend. | LOW | Cohérent avec l'architecture globale. Clé dans frontmatter : `dietary_preferences: [{type, value}]`. |
-
-### Anti-Features
-
-| Feature | Why Requested | Why Problematic | Alternative |
-|---------|---------------|-----------------|-------------|
-| Système de notation sévérité numérique (1-5) | Semble précis | Crée de la friction lors de la saisie, peu actionnable (quelle est la différence entre 3 et 4 ?) | 4 catégories sémantiques claires : allergie / intolérance / régime / aversion — plus rapide à saisir, plus clair à l'affichage |
-| Base de données d'ingrédients avec matching automatique NLP | Impressionnant techniquement | Complexité énorme, 0 backend, vault Obsidian = texte libre. Le matching sur les noms d'ingrédients Cooklang est suffisant (string includes). | Matching textuel simple sur les noms d'ingrédients. Accepter les faux négatifs. |
-| Suggestions de substitutions automatiques | Utile en théorie | Dépend d'une base de données nutritionnelle, hors scope (100% local) | Afficher le conflit ; laisser l'utilisateur décider de la substitution |
-| Notifications push « attention ton repas contient X » | Sécurité allergène | Pas de backend push, app familiale privée TestFlight | Warning inline lors de l'ouverture du planning repas |
-| Import depuis MyFitnessPal / bases USDA | Demandé par des power users | Hors scope, aucun backend | Saisie manuelle. Les cas d'usage famille sont limités (10-15 ingrédients problématiques max par famille). |
-
-### MVP pour v1.2
-
-- Nouveau type `DietaryPreference = { type: 'allergie' | 'intolerance' | 'regime' | 'aversion', value: string }[]` dans `Profile`
-- Parser : lecture/écriture de `dietary_preferences` en frontmatter `famille.md`
-- UI édition dans écran profil (section collapsible)
-- Flag sur carte recette (badge couleur par sévérité)
-- Flag sur planning repas hebdo (avertissement en haut de section jour si conflit avec profil actif)
+The cooperative garden data model needs ONE new shared vault file (e.g. `04 - Village/village.md`) readable and writable from any active profile.
 
 ---
 
-## Feature 2 — Codex / Wiki Ferme
+## Table Stakes (Users Expect These)
 
-### Context
-
-La ferme (écran `tree.tsx`, 105K) est le composant le plus complexe de l'app. Elle comporte :
-cultures (14 variétés dont 4 dropOnly), bâtiments (poulailler, vacherie, moulin, ruche), arbre de
-tech (10 nœuds, 3 branches), compagnons, sagas, événements saisonniers, quêtes coopératives,
-usure, pluies dorées, graines rares. Aucune documentation in-app n'existe. Le `HelpContext`
-gère des coach marks par écran (1-3 marques max) — non extensible à un wiki de référence.
-L'app a déjà un `HelpProvider` dans la hiérarchie providers.
-
-### Table Stakes (Users Expect These)
+Features that must exist for the space to feel like a real "shared village" and not just a second solo farm.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Accès via bouton « ? » visible sur l'écran ferme | Pattern universel dans les jeux mobiles (Clash of Clans, Hay Day, etc.) — les utilisateurs cherchent ce bouton | LOW | Bouton HeaderRight ou icône flottante sur `tree.tsx`. |
-| Catégories organisées (pas un mur de texte) | Les wikis de jeux (Stardew Valley wiki, Fandom) sont tous organisés par catégorie d'objet | LOW | Catégories minimales : Cultures, Bâtiments, Tech, Compagnons, Sagas & Événements, Mécaniques générales. |
-| Stats précises et à jour (tasksPerStage, costs, drops) | Les joueurs consultent le codex précisément pour vérifier des chiffres — des approximations annulent l'utilité | LOW | Les données sont déjà dans le code (`CROP_CATALOG`, `TECH_TREE`, `BUILDING_CATALOG`). Le codex doit lire les constantes directement, pas les dupliquer. |
-| Accessible depuis l'écran ferme sans quitter le contexte | Un modal ou une bottom sheet — pas une navigation vers un écran séparé | LOW | `pageSheet` modal (pattern standard du projet). |
-
-### Differentiators (What Would Make This Delightful)
-
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| Stats calculées dynamiquement depuis les constantes de jeu | Impossible d'avoir un désync codex/jeu. Exemple : si `tasksPerStage` change, le codex se met à jour automatiquement. | LOW | Avantage clé vs wikis externes (Fandom) qui deviennent rapidement obsolètes. Passer les objets du catalogue directement aux composants codex. |
-| Entrée du codex verrouillée si non encore découvert | Mechanic « fog of war » : les cultures dropOnly apparaissent comme « ??? » jusqu'à ce que l'utilisateur en obtienne une. Ajoute du mystère. | MEDIUM | Croiser `profile.farmRareSeeds` et `profile.harvestInventory` pour déterminer les entrées découvertes. Cultures standard toujours visibles. |
-| Lien « Replayer le tutoriel » dans le codex | Point d'entrée unique pour l'onboarding rejouable — naturel de le chercher dans le wiki | LOW | Un bouton en bas du codex qui lance le tutoriel ferme. Appelle `resetScreen('farm')` du HelpContext. |
-| Contexte actuel du profil dans le codex | Afficher les cultures actuellement disponibles (selon `treeStage` actuel) en premier, les locked en grisé après | MEDIUM | Lire `activeProfile.level` → `treeStage` pour filtrer/ordonner. |
-
-### Anti-Features
-
-| Feature | Why Requested | Why Problematic | Alternative |
-|---------|---------------|-----------------|-------------|
-| Codex éditable par l'utilisateur | Flexibilité | La source de vérité doit être le code — un codex éditable diverge et crée de la confusion | Codex 100% read-only, généré depuis les constantes |
-| Système de favoris/bookmarks dans le codex | Feature des grands wikis | Surcharge UX pour un usage familial privé (4-5 utilisateurs max) | Ordre par pertinence : cultures disponibles en premier |
-| Recherche full-text dans le codex | Utile si beaucoup d'entrées | Complexité disproportionnée pour 14 cultures + 4 bâtiments + 10 nœuds tech = ~40 entrées max | Navigation par catégorie suffit pour ce volume |
-| Historique des modifications / changelogs | Developer UX | Pas pertinent pour des joueurs familiaux | Hors scope |
-| Export PDF / partage du codex | Gadget | Vault local, usage privé | Hors scope |
-
-### MVP pour v1.2
-
-- Modal `pageSheet` ouvert depuis bouton « ? » sur `tree.tsx`
-- 5 sections : Cultures (tableau avec stats depuis `CROP_CATALOG`), Bâtiments (depuis `BUILDING_CATALOG`), Arbre Tech (depuis `TECH_TREE`), Mécaniques (texte statique : cycles, golden, dropOnly, saisons), Compagnons & Sagas (résumé statique)
-- Cultures dropOnly affichées en « ??? » si `harvestInventory` ne contient pas encore cette ressource
-- Bouton « Revoir le tutoriel » en bas → déclenche tutoriel ferme
+| Shared tilemap with distinct visual identity | Users expect the cooperative space to look different from the personal farm — same engine, different terrain (pavés, fontaine, étals) vs herbe/terre | MEDIUM | New `buildVillageMap()` function mirroring `buildFarmMap()`. New Wang tileset layer config (cobblestone dominant). Reuses `FarmMapData` type verbatim. |
+| Portal / transition from personal farm | Users need a clear way to navigate between personal farm and shared village — without a portal the two spaces feel disconnected | LOW | Tap target on the farm screen triggers a navigation push to the village screen. Animated transition (slide or fade via Reanimated). No tilemap changes needed — just a HUD element. |
+| Contribution feed — who did what | In cooperative mobile games, visibility of teammates' actions is table stakes (confirmed pattern in clan/guild systems). Without it, players don't feel the "co" in cooperative. | MEDIUM | Append-only log of contributions stored in `village.md`. Each entry: `{ profileId, type: 'harvest' | 'task', amount, timestamp }`. Rendered as a scrollable list on the village screen. |
+| Weekly objective display with progress bar | Users must be able to see the current collective goal and how far along the family is — hidden progress = zero engagement | LOW | Read the current week's goal from `village.md` frontmatter. Render target + current total with a progress bar. Updates optimistically on each contribution. |
+| Per-member contribution indicator | Users must see at a glance whether each family member has contributed this week — prevents the "invisible free rider" feeling that kills cooperative engagement | LOW | Avatar + contribution count per profile. Read from contribution log. Shown on the village screen or as a compact HUD row. |
+| Collective reward claim on goal completion | Reaching the weekly goal must produce a concrete reward moment — without this the cooperative loop has no payoff | MEDIUM | Trigger: `weeklyTotal >= weeklyTarget`. Effect: shared in-game bonus (XP to all profiles + cosmetic drop) + IRL activity suggestion. Persisted in `village.md` as `completed: true` to prevent double-claim. Guard against race condition (multiple profiles opening app simultaneously after goal is met). |
+| Weekly objective auto-generation | Users expect the system to present a new goal each Monday without manual setup — "set and forget" for the parent who configured it once | MEDIUM | Simple deterministic algo: base target scales with number of active profiles × rolling 4-week average contribution. No AI call needed. Falls back to a safe minimum (e.g. 50 points) if no history. |
+| Historical log panel (Panneau historique) | Users expect to see past weeks — it's a memory object ("we did this together in week 3"). Referenced explicitly in PROJECT.md scope. | MEDIUM | Scrollable list of past `WeekRecord { weekStart, weekEnd, target, total, rewardClaimed, contributions[] }`. Stored in `village.md` as a list. Interactive: tap a week to see per-member breakdown. |
 
 ---
 
-## Feature 3 — Tutoriel Ferme
+## Differentiators (Competitive Advantage)
 
-### Context
-
-Il existe déjà un onboarding app (`onboarding.tsx`, 57K) pour le premier lancement global — flow
-conversationnel en 10 étapes. Le `HelpContext` gère les coach marks par écran (flag vu/pas vu,
-reset possible). Il n'y a pas de tutoriel spécifique à la ferme. L'écran ferme est `tree.tsx`
-(105K) qui gère tout : plantation, récolte, bâtiments, tech, compagnons.
-
-### Table Stakes (Users Expect These)
-
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Se déclenche automatiquement au premier accès à la ferme | Pattern universel — les jeux mobiles déclenchent le tutoriel quand l'utilisateur arrive pour la première fois dans un sous-système | LOW | Utiliser `HelpContext.hasSeenScreen('farm')` — déjà existant mais pas utilisé pour la ferme. |
-| Skippable immédiatement | Les joueurs expérimentés (ou qui reprennent l'app) ne veulent pas être forcés — forcer = frustration (pattern TV Tropes « Forced Tutorial ») | LOW | Bouton « Passer » visible dès le premier écran. Marque quand même `hasSeenScreen('farm')` pour ne pas re-déclencher. |
-| Rejouable depuis le codex | Indispensable pour un mini-jeu complexe avec saisons et mécaniques qui se débloquent progressivement | LOW | `resetScreen('farm')` depuis le codex (Feature 2) ou depuis Paramètres. |
-| Explique les 3 mécaniques fondamentales | Les études de jeux mobiles montrent qu'un tutoriel doit couvrir la boucle de jeu principale en max 3-5 étapes pour éviter l'abandon | LOW | Boucle de base ferme : (1) tâches → points → plantations ; (2) attendre + tâches → récolte → feuilles ; (3) feuilles → graines / bâtiments. |
-
-### Differentiators (What Would Make This Delightful)
+Features that make this feel like a meaningful family ritual rather than just another game loop.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Spotlight overlay sur les éléments UI réels | Montre l'interface réelle au lieu d'une animation fictive — le joueur voit exactement sur quoi cliquer | MEDIUM | Overlay semi-transparent + highlight du composant cible. Requis : les composants de `tree.tsx` doivent exposer des `ref` ou des positions mesurables. |
-| Narration par le compagnon ferme (si actif) | Utilise le compagnon existant (`companion-engine.ts`) comme narrateur — cohérent avec l'univers, donne de la personnalité | MEDIUM | Vérifier si `activeProfile.companion` est défini et utiliser l'emoji/nom du compagnon dans les bulles de dialogue. Fallback sur mascotte arbre si pas de compagnon. |
-| Progression par paliers (pas tout d'un coup) | Les meilleures pratiques jeux mobiles (Google Play guidelines, inworld.ai) recommandent d'introduire les mécaniques au moment où elles sont pertinentes, pas toutes au premier lancement | MEDIUM | Phase 1 au premier lancement : boucle de base (planter/récolter/feuilles). Phase 2 déclenché quand premier bâtiment débloqué. Phase 3 quand premier nœud tech acheté. Flag par phase dans HelpContext (`farm_tutorial_p1`, `farm_tutorial_p2`, `farm_tutorial_p3`). |
-| Récompense XP pour avoir terminé le tutoriel | Encourage la completion — incentivize tutorial completion with in-game rewards (pattern documenté) | LOW | +50 XP au profil actif via `addXP()` existant dans `useGamification`. |
-
-### Anti-Features
-
-| Feature | Why Requested | Why Problematic | Alternative |
-|---------|---------------|-----------------|-------------|
-| Tutoriel forcé non-skippable | Garantir que l'utilisateur le voit | Frustration maximale, notamment pour la famille qui reprend l'app après une pause | Skippable + rejouable depuis codex |
-| Tutoriel interactif avec actions obligatoires (« now plant this carrot ») | Engagement fort | Casse si l'utilisateur n'a pas les ressources nécessaires (pas de feuilles, profil vide). Aussi plus long à dev. | Tutoriel contemplatif : spotlight + explication. L'utilisateur agit quand il veut, pas pendant le tutoriel. |
-| Vidéo embarquée | Aspect professionnel | Taille du bundle, pas de backend, localisation fr/en = 2 vidéos. Pas adapté TestFlight family app. | Spotlight overlay animé avec Reanimated (pattern déjà utilisé dans l'app) |
-| Tutoriel couvrant toutes les mécaniques (compagnons, sagas, événements saisonniers, usure, drops rares, golden rain) | Exhaustivité | Tutoriel de 20 étapes = abandon garanti. La plupart de ces mécaniques sont rares/avancées. | Tutoriel = boucle de base seulement. Mécaniques avancées → codex. |
-
-### MVP pour v1.2
-
-- Overlay tutoriel en 4 étapes, déclenché par `!hasSeenScreen('farm')` à l'ouverture de `tree.tsx`
-- Étapes : (1) Présentation de la ferme + lien avec les tâches ; (2) Comment planter ; (3) Comment récolter ; (4) Feuilles et graines
-- Bouton « Passer » à chaque étape
-- Appel `markScreenSeen('farm')` à la fin ou au skip
-- Bouton « Revoir » dans le codex via `resetScreen('farm')`
-- Pas de spotlight complexe pour le MVP — bullles de dialogue avec flèche pointant vers la zone concernée (plus simple, suffisant)
+| Real-life task contributions feed the village (semantic coupling) | The semantic task coupling from v1.3 already maps IRL tasks to farm effects. Extending it to also feed the village objective makes real family productivity tangibly visible in the shared space — no other family app does this. | LOW | Reuse `applyTaskEffect()` dispatcher. Add a new side-effect path: when a task triggers a farm effect, also call `addVillageContribution(profileId, 'task', points)`. Points mapped per task category (already defined). |
+| Harvest contributions cross the portal | When a player harvests from their personal farm, a portion of the yield automatically "travels" to the village goal — creates a natural organic link between solo and co-op spaces without forcing explicit actions | MEDIUM | In `harvestCrop()` result handling, compute contribution points (e.g. XP value / 10). Call `addVillageContribution`. Players see a small visual cue ("your harvest helped the village"). |
+| IRL activity suggestion as collective reward | At goal completion, the reward includes a suggested real-world family activity (picnic, movie night, board game) — grounds the digital achievement in physical family time. Directly aligned with the app's Core Value. | LOW | Static curated list of 20–30 suggestions, weighted by season. Picked randomly at reward time. No API call. Stored in `constants/village-activities.ts`. |
+| Avatar display in village space | Seeing the other family members' avatars present in the village reinforces the "we were here together" feeling — pattern confirmed by Animal Crossing's shared town model | MEDIUM | Read all profiles, render their avatar sprite at named fixed positions on the village map (not animated movement, just placement). Updates when village screen mounts. |
+| Village ambiance variation by progress | Village appearance changes slightly as the weekly goal advances (fountain on, market stalls open, seasonal decorations) — reward signal embedded in the environment | HIGH | Encode 3 states: empty (0–33%), active (34–66%), festive (67–100%). Pass state to `buildVillageMap()`. Small tile-layer changes. Defer to v1.5 if time-constrained. |
 
 ---
 
-## Feature 4 — Invités / Contacts avec préférences alimentaires
-
-### Context
-
-Les profils famille (`Profile`) sont des entités lourdes (arbre mascotte, ferme, gamification, XP,
-coins, thème…). Un invité « grand-mère coeliaque qui vient le dimanche » ne doit pas avoir un
-profil complet. Il faut un type de données distinct et léger.
-
-### Table Stakes (Users Expect These)
-
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Saisir un invité avec un nom et ses préférences alimentaires | Besoin direct : cuisiner pour quelqu'un hors famille sans créer un profil complet | LOW | Nouveau type `Guest = { id, name, emoji, preferences: DietaryPreference[] }` dans vault (frontmatter ou fichier dédié `invites.md`). |
-| Invités listés séparément des profils famille | Distinction claire : membre de la famille permanent vs. invité occasionnel | LOW | Section dédiée dans l'écran profils ou dans les préférences alimentaires. |
-| Flag recette / repas prend en compte les invités sélectionnés | Sinon les préférences invités sont inutilisables | MEDIUM | Nécessite de sélectionner quels invités sont présents pour un repas donné — lié à la mécanique « qui mange ce repas » (déféré à v1.3). Pour v1.2 : option de sélection manuelle de l'invité dans le planning repas. |
-
-### Differentiators (What Would Make This Delightful)
-
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| Invité épinglé sur un créneau repas spécifique | « Grand-mère : dimanche midi » — le flag apparaît automatiquement le dimanche | MEDIUM | Champ `scheduledDay?: string` sur `Guest`. Complexité modérée. Déférer à v1.3. |
-| Invités dans vault Obsidian (`invites.md`) | Compatible avec l'architecture existante. Éditable depuis Obsidian. | LOW | Fichier `04 - Personnes/invites.md` avec un profil YAML par invité. |
-
-### Anti-Features
+## Anti-Features (Commonly Requested, Often Problematic)
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| Import depuis carnet d'adresses iOS | Convenience | Accès permissions contacts, données personnelles, complexité d'implémentation disproportionnée pour un usage familial privé | Saisie manuelle. 5-10 invités récurrents max dans une famille. |
-| Profil invité complet (avatar, thème, gamification) | Uniformité | Un invité n'a pas de progression dans l'app — alourdirait inutilement le code et l'UX | Type `Guest` minimal (nom + emoji + préférences) |
-| Gestion de droits d'accès pour les invités | Sécurité | Hors scope. App familiale privée sur TestFlight, contrôle parental déjà existant pour autres besoins | Hors scope |
-
-### MVP pour v1.2
-
-- Type `Guest` minimal dans `lib/types.ts`
-- Fichier vault `04 - Personnes/invites.md` (ou frontmatter `famille.md` si simple)
-- UI de gestion dans écran profils (liste invités + CRUD)
-- Pour le flag recette/repas : les invités sont un filtre optionnel activable manuellement (pas automatique — garde la complexité basse pour v1.2)
+| Real-time sync / push notifications for contributions | "See when Lucas just harvested!" — feels live and exciting | The app is 100% local + iCloud. There is no backend, no WebSocket, no push payload. Building real-time presence requires a server. Out of scope per PROJECT.md constraints. | Refresh on app foreground (already implemented via `AppState` listener). Show "last synced" timestamp. The family shares one household — near-real-time is fine. |
+| Competitive leaderboard between family members | Parents sometimes ask for it to motivate kids | Research shows competitive mechanics within families increase conflict and reduce intrinsic motivation — the opposite of the app's Core Value. Confirmed pattern: cooperative > competitive for family retention. | Show contributions as "what I contributed" not "rank". Use positive framing: "Emma helped a lot this week!" not "Emma is #1, you are #3". |
+| Per-member sub-goals or individual targets inside the collective goal | Sounds fair: "each person must contribute X" | Fractured accountability — if one person misses their sub-goal, the family fails even if total is met. Creates resentment, especially with young children or busy weeks. | Single shared pool. The family chooses how to distribute effort organically. Visibility of individual contributions (see table stakes) provides social accountability without punitive structure. |
+| Asynchronous voting / polls for next week's goal | "Let the family decide together" | Adds UI complexity (poll creation, result display, edge cases: ties, no votes, expired polls) with marginal value for a 2–4 person household. Parents in small families don't want to manage a voting system. | Auto-generation with a manual override: parent can edit the target in the settings screen. Simple, no voting infrastructure needed. |
+| Village buildings that require sustained maintenance (decay / wither) | Adds urgency and daily return loop | Anxiety-inducing for families — if you miss a day due to illness or holidays, you return to a withered village. Punitive mechanics conflict with the cozy, stress-free design ethos. Confirmed anti-pattern in cozy game design (see Garden Life discourse). | No decay. Village persists as-is. Weekly reset of the goal pool only, never removing earned cosmetics or placed items. |
+| Cross-family (external) cooperative features | "Play with grandparents' family" | Requires user accounts, server infrastructure, privacy/GDPR compliance, moderation. Completely out of scope. iCloud sync is the only "network". | Shareable achievement screenshots (already possible via iOS share sheet). Grandparents can see progress via shared screenshots. |
+| Complex crafting or tech tree for the village space | Natural extension of the personal farm's craft system | Doubles the cognitive load. The village should be a destination for seeing collective progress, not a second full management game. MVP scope must be tight. | Cosmetic unlocks only for the village (tileset variations, decorations), earned via collective milestones — not crafted. |
 
 ---
 
 ## Feature Dependencies
 
 ```
-DietaryPreference type (Profile + Guest)
-    └──required by──> Flag recette
-    └──required by──> Flag repas hebdo
-    └──required by──> Résumé contraintes combinées
+[Portal (farm → village)]
+    └──requires──> [VillageScreen component]
+                       └──requires──> [village-map.ts (buildVillageMap)]
+                                          └──reuses──> [farm-map.ts infrastructure (FarmMapData, Wang tiling)]
 
-Guest type
-    └──required by──> Flag recette/repas avec invités
-    └──enhances──> DietaryPreference (périmètre élargi)
+[Collective Reward Claim]
+    └──requires──> [Weekly Objective Progress]
+                       └──requires──> [Contribution Feed]
+                                          └──requires──> [village.md shared data model]
+                                          └──requires──> [addVillageContribution() write path]
 
-Codex ferme
-    └──required by──> Bouton « Revoir tutoriel » (lien entrant du codex vers tutoriel)
-    └──enhances──> Tutoriel ferme (contexte de référence post-tutoriel)
+[Weekly Objective Auto-Generation]
+    └──requires──> [Historical Log (past weeks)]
+                       └──requires──> [WeekRecord persistence in village.md]
 
-Tutoriel ferme
-    └──requires──> HelpContext.hasSeenScreen('farm') — déjà existant
-    └──enhances──> Codex ferme (point d'entrée pour rejouer)
+[Task Contributions → Village]
+    └──requires──> [Semantic coupling dispatcher (applyTaskEffect) — already shipped v1.3]
+    └──requires──> [addVillageContribution() write path]
 
-Spotlight tutorial (differentiator)
-    └──requires──> Composants tree.tsx avec positions mesurables (ref ou onLayout)
-    └──complexifie──> Tutoriel ferme MVP
+[Harvest Contributions → Village]
+    └──requires──> [harvestCrop() in farm-engine.ts — already shipped]
+    └──requires──> [addVillageContribution() write path]
+
+[Per-Member Contribution Indicator]
+    └──requires──> [Contribution Feed]
+    └──requires──> [Multi-profile read (famille.md) — already shipped]
+
+[Village Ambiance by Progress]
+    └──enhances──> [Shared tilemap]
+    └──requires──> [Weekly Objective Progress]
+    NOTE: defer to v1.5 — HIGH complexity, LOW MVP criticality
 ```
 
 ### Dependency Notes
 
-- **DietaryPreference requires Profile extension :** Nouveau champ dans `Profile` et mise à jour de `parseFamille` / `serializeFamille` dans `parser.ts`. Risque de régression sur `famille.md` existant — migration douce requise (champ absent = tableau vide).
-- **Codex requires lecture des constantes de jeu :** Les composants codex doivent importer `CROP_CATALOG`, `TECH_TREE`, `BUILDING_CATALOG` de `lib/mascot/types.ts` et `lib/mascot/tech-engine.ts`. Pas de duplication de données.
-- **Tutoriel ferme conflicts with « forced tutorial » antipattern :** Le tutoriel doit être skippable immédiatement — ne pas bloquer l'accès à la ferme.
+- **`addVillageContribution()` is the core primitive**: every feature above depends on writing to the shared contribution log. This function must be built in the first phase, before any UI.
+- **`village.md` data model must be designed before any feature implementation**: the schema drives both the parser extension and the hook.
+- **Semantic task coupling and harvest are v1.3 output hooks** — they are mature, tested, and safe to extend with a side-effect call. Low regression risk.
+- **Portal is cosmetically dependent on VillageScreen but logically independent** — can be a stub tap-target initially, upgraded later.
 
 ---
 
-## MVP pour v1.2 — Priorisation
+## MVP Definition
 
-### Lancer avec (v1.2)
+### Launch With (v1.4)
 
-- [ ] **Préférences alimentaires profil famille** — type `DietaryPreference` + édition dans profil + stockage vault. Valeur immédiate, complexité basse, pas de dépendance.
-- [ ] **Flag recette** — badge couleur sur carte recette selon profil actif. Dépend de (1).
-- [ ] **Flag repas hebdo** — warning sur planning si conflit profil actif. Dépend de (1).
-- [ ] **Codex ferme** — modal « ? » avec stats depuis constantes de jeu + section cultures/bâtiments/tech. Indépendant des autres features.
-- [ ] **Tutoriel ferme** — 4 étapes skippables, déclenchement auto premier accès. Dépend de l'existence du codex (bouton « Revoir »).
-- [ ] **Invités (type Guest + CRUD)** — type minimal + liste dans écran profil + stockage vault. Dépend de `DietaryPreference` type.
+Minimum viable cooperative space — validates the "family contributing together" loop.
 
-### Ajouter après validation (v1.3)
+- [ ] `village.md` shared data model + parser (parse / serialize) — foundation for everything
+- [ ] `addVillageContribution(profileId, type, amount)` write function — core primitive
+- [ ] Weekly objective: auto-generated target + progress display
+- [ ] Contribution feed: who contributed what and when
+- [ ] Per-member contribution indicators (avatar + count)
+- [ ] Collective reward moment on goal completion (XP to all + IRL activity suggestion)
+- [ ] Portal tap-target on farm screen → VillageScreen
+- [ ] VillageScreen with distinct tilemap (pavés / cobblestone dominant visual)
+- [ ] Historical log panel (past weeks, interactive)
+- [ ] Task contributions hooked into `applyTaskEffect()` dispatcher
+- [ ] Harvest contributions hooked into farm harvest path
 
-- [ ] **Sélection « qui mange ce repas »** — champ `attendees` sur `MealItem`, flag contextuel. Complexité model data.
-- [ ] **Tutoriel ferme progressif par paliers** — phases 2 et 3 déclenchées à la découverte de nouvelles mécaniques.
-- [ ] **Spotlight overlay sur UI réelle** — après validation du tutoriel de base.
-- [ ] **Invité épinglé sur créneau repas** — quand les attendees sont implémentés.
+### Add After Validation (v1.5)
+
+- [ ] Village ambiance variation by progress (3 visual states) — trigger: users engage weekly and want visual progression feedback
+- [ ] Common family tree on the village map — trigger: users ask for a shared mascot
+- [ ] Livre de Famille enrichi (narrative moments from the village log) — trigger: families want to revisit milestones
+- [ ] Avatar placement in village space — trigger: users want more presence signal
+- [ ] Family vote on next week's activity reward suggestion — trigger: families explicitly ask for agency
 
 ### Future Consideration (v2+)
 
-- [ ] **Résumé contraintes combinées pour repas partagé** — dépend de la mécanique attendees + invités actifs.
-- [ ] **Narration compagnon dans tutoriel** — polish, pas de valeur fonctionnelle.
+- [ ] Village-level tech tree / cosmetic upgrades (earn through collective milestones, not crafting)
+- [ ] Seasonal village events (harvest festival, winter fair) tied to existing seasonal engine
+- [ ] Cross-season village history ("this time last year, the family did X")
 
 ---
 
@@ -251,48 +151,58 @@ Spotlight tutorial (differentiator)
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Préférences alimentaires profil (saisie) | HIGH | LOW | P1 |
-| Flag recette selon profil actif | HIGH | LOW | P1 |
-| Codex ferme (stats + catégories) | HIGH | LOW | P1 |
-| Tutoriel ferme skippable (4 étapes) | HIGH | LOW | P1 |
-| Invités avec préférences | MEDIUM | LOW | P1 |
-| Flag repas hebdo | MEDIUM | MEDIUM | P1 |
-| Tutoriel progressif par paliers | MEDIUM | MEDIUM | P2 |
-| Spotlight overlay UI réelle | MEDIUM | HIGH | P2 |
-| Sélection attendees par repas | HIGH | HIGH | P2 |
-| Invité épinglé sur créneau | LOW | MEDIUM | P3 |
-| Narration compagnon tutoriel | LOW | MEDIUM | P3 |
+| `village.md` data model + parser | HIGH | LOW | P1 |
+| `addVillageContribution()` write path | HIGH | LOW | P1 |
+| Weekly objective display + progress | HIGH | LOW | P1 |
+| Contribution feed + per-member indicators | HIGH | LOW | P1 |
+| Collective reward claim | HIGH | MEDIUM | P1 |
+| Weekly auto-generation | HIGH | MEDIUM | P1 |
+| Portal farm → village | HIGH | LOW | P1 |
+| VillageScreen + distinct tilemap | HIGH | MEDIUM | P1 |
+| Historical log panel | MEDIUM | MEDIUM | P1 |
+| Task contributions → village | HIGH | LOW | P1 (reuses v1.3) |
+| Harvest contributions → village | HIGH | LOW | P1 (reuses v1.3) |
+| Village ambiance by progress | MEDIUM | HIGH | P2 |
+| Avatar placement in village | MEDIUM | MEDIUM | P2 |
+| Family vote on activity suggestion | LOW | HIGH | P3 |
+| Village tech tree / cosmetic upgrades | MEDIUM | HIGH | P3 |
+
+**Priority key:**
+- P1: Must have for v1.4 launch
+- P2: Should have, add when possible (v1.5)
+- P3: Nice to have, future consideration
 
 ---
 
-## Integration Points with Existing FamilyFlow Features
+## Existing Codebase Integration Points
 
-| Feature v1.2 | Intègre avec | Risque régressions |
-|--------------|--------------|-------------------|
-| Préférences alimentaires | `Profile` type + `parseFamille` / `serializeFamille` dans `parser.ts` | MEDIUM — mutation du modèle `Profile` et du parser. Migration douce obligatoire (valeur absente = `[]`). |
-| Flag recette | `useVaultRecipes` + composants liste/détail recette | LOW — lecture seule, pas de modification du vault |
-| Flag repas | `useVaultMeals` + `meals.tsx` | LOW — badge additionnel, pas de changement modèle |
-| Codex ferme | `tree.tsx` + `lib/mascot/types.ts` + `lib/mascot/tech-engine.ts` | LOW — nouveau modal, lecture seule des constantes |
-| Tutoriel ferme | `tree.tsx` + `HelpContext` (déjà existant) | LOW — `hasSeenScreen('farm')` est un nouveau screenId, pas de conflit |
-| Invités | `lib/types.ts` (nouveau type) + `parser.ts` + `useVaultProfiles` | MEDIUM — nouveau fichier vault ou extension `famille.md` |
+These are the exact files that need to be touched or extended for v1.4 (based on codebase analysis):
+
+| Touch Point | Change Required | Risk |
+|-------------|-----------------|------|
+| `lib/mascot/farm-map.ts` | Add `buildVillageMap()` alongside `buildFarmMap()` — new export, no change to existing | LOW |
+| `lib/mascot/world-grid.ts` | Add `VILLAGE_GRID: WorldCell[]` — new constant, no change to existing | LOW |
+| `lib/parser.ts` | Add `parseVillage()` / `serializeVillage()` pair — follow established pattern | MEDIUM (2875-line file, parser surgery) |
+| `hooks/useVault.ts` or new `useVillage.ts` | Add village state + actions — prefer new domain hook to avoid growing the 3400-line god hook | MEDIUM |
+| `lib/mascot/farm-engine.ts` | Add side-effect call in harvest path to `addVillageContribution()` — small, tested area | LOW |
+| `lib/mascot/engine.ts` (semantic coupling dispatcher) | Add side-effect call in `applyTaskEffect()` to `addVillageContribution()` — already designed for extensibility | LOW |
+| `app/(tabs)/tree.tsx` (farm screen) | Add portal tap-target UI element | LOW |
+| New: `app/(tabs)/village.tsx` | New screen — VillageScreen with map, progress, feed, history | MEDIUM |
+| New: `lib/mascot/village-map.ts` | New file — village terrain definition | LOW |
+| New: `lib/mascot/village-engine.ts` | New file — village state logic (contributions, weekly cycle, rewards) | MEDIUM |
+| New: `constants/village-activities.ts` | New file — IRL activity suggestions list | LOW |
 
 ---
 
 ## Sources
 
-- Yummly meal planning review: https://www.reviewed.com/cooking/content/yummly-meal-planning-app-review
-- Food allergy app UX patterns: https://blog.foodsconnected.com/the-best-food-allergy-apps-and-how-they-work
-- Dietary severity level design: https://pmc.ncbi.nlm.nih.gov/articles/PMC7527917/
-- Mobile game onboarding best practices 2025: https://www.zigpoll.com/content/how-can-we-optimize-the-onboarding-experience-to-reduce-player-dropoff-rates-in-our-mobile-game
-- Apple Developer — Onboarding for Games: https://developer.apple.com/app-store/onboarding-for-games/
-- Progressive disclosure (NNG): https://www.nngroup.com/articles/progressive-disclosure/
-- Tutorial design patterns (TV Tropes — Forced Tutorial): https://tvtropes.org/pmwiki/pmwiki.php/Main/ForcedTutorial
-- Game UX tutorial methods: https://jontopielski.com/blog/methods-for-onboarding.html
-- Family meal planning app patterns 2025: https://ollie.ai/2025/10/05/best-meal-planning-app-2025/
-- UX for food & drink apps: https://www.testingtime.com/en/blog/5-ux-design-principles-for-the-food-and-drink-industry/
-- FamilyFlow codebase: `lib/types.ts`, `lib/mascot/types.ts`, `lib/mascot/tech-engine.ts`, `contexts/HelpContext.tsx`, `hooks/useVaultProfiles.ts`, `hooks/useVaultMeals.ts`, `app/onboarding.tsx`
+- [Social Interaction Features in Cooperative Mobile Games — Adrian Crook](https://adriancrook.com/social-interaction-features-in-cooperative-mobile-games/) — cooperative mobile game retention patterns (40% higher with social features), guild/clan design
+- [A Living Framework for Understanding Cooperative Games — CHI 2024](https://dl.acm.org/doi/10.1145/3613904.3641953) — cooperative game design taxonomy (shared goals, intertwined goals, forms of cooperation)
+- [Cooperative Board Game Design Shaping Digital Platforms — 2026](https://coopboardgames.com/blog/how-cooperative-board-game-design-is-quietly-shaping-the-best-digital-entertainment-platforms-in-2026/) — team-based objectives, hybrid individual+collective reward systems
+- [Solving the Free Rider Problem in Public Goods Games — Scientific Reports](https://www.nature.com/articles/srep38349) — free rider dynamics, accountability mechanisms
+- Codebase direct analysis: `lib/mascot/farm-map.ts`, `world-grid.ts`, `farm-engine.ts`, `types.ts`, `lib/parser.ts`, `.planning/codebase/ARCHITECTURE.md`, `.planning/PROJECT.md`
 
 ---
 
-*Feature research for: FamilyFlow v1.2 "Confort & Découverte"*
-*Researched: 2026-04-07*
+*Feature research for: cooperative family garden / Place du Village (v1.4)*
+*Researched: 2026-04-10*

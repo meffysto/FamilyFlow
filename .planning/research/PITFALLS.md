@@ -1,496 +1,354 @@
-# Pitfalls Research — v1.2 Confort & Découverte
+# Pitfalls Research — v1.4 Jardin Familial
 
-**Domain:** React Native / Expo family app — adding dietary preferences, farm codex, and farm tutorial to a mature, complex codebase
-**Researched:** 2026-04-07
-**Confidence:** HIGH (based on direct codebase audit + known RN/Expo patterns)
+**Domain:** React Native / Expo family app — adding cooperative multi-profile shared garden (Place du Village) with cross-profile contributions, weekly auto-generated objectives, and collective rewards to a file-based (Obsidian vault + iCloud) game without a backend
+**Researched:** 2026-04-10
+**Confidence:** HIGH (based on direct codebase audit of existing patterns + known multi-profile / file-sync failure modes)
 
 ---
 
 ## Critical Pitfalls
 
-### Pitfall 1: Allergen Silencing — The Fatal-Severity Bug Class
+### Pitfall 1: Shared File Write-After-Stale-Read (Cross-Profile Corruption)
 
 **What goes wrong:**
-A vegetarian preference is a lifestyle choice. A peanut allergy is a medical constraint that can cause anaphylaxis. If the allergen flagging system is built as a soft filter (user dismisses it once, never shows again), or if it silently fails to flag a recipe because the ingredient name doesn't exactly match the stored string, someone could unknowingly serve a dangerous meal. There is currently no allergen-aware code anywhere in the codebase — `HealthRecord.allergies` exists as `string[]` but is used only in the health journal, never cross-referenced against recipes.
+Profile A reads `jardin-familial.md` (contributions: 10). Profile B, switching to their session seconds later, also reads the same file (contributions: 10). Profile A writes their contribution (now: 12). Profile B writes their contribution from their stale read (still: 10 → 12). Profile A's contribution is silently lost. With iCloud Drive, the race window is wider: the file may not have propagated between writes, so two profiles operating in the same hour on the same device — or on two devices synced via iCloud — can clobber each other.
 
 **Why it happens:**
-The same UI pattern that works for preferences ("mute this hint") is applied to safety warnings. The developer treats all dietary data uniformly (it all came from the same Settings screen) without distinguishing severity levels.
+The existing pattern in `hooks/useVault.ts` is: read file → mutate in memory → write back. This is safe for per-profile files (`farm-{id}.md`, `gami-{id}.md`) because only one profile writes each file. For a shared file (`jardin-familial.md`) written by any profile, every write operation must re-read the latest on-disk state immediately before mutating, not use the in-memory cached value from the last `loadVaultData()` call. The `busyRef` guard in the existing codebase only protects `loadVaultData`, not individual writes.
 
 **How to avoid:**
-Define an explicit severity taxonomy at the type level from day one:
+Implement a read-before-write pattern specifically for all shared garden writes:
 
 ```typescript
-export type DietaryConstraintSeverity = 'allergie' | 'intolerance' | 'regime' | 'aversion';
-// allergie → safety-critical, NEVER dismissible
-// intolerance → medical but not fatal
-// regime → lifestyle (végétarien, halal, kasher)
-// aversion → preference only ("n'aime pas les olives")
-```
-
-For `allergie`-severity items, the UI must use a non-dismissible warning component — a persistent banner that cannot be swiped away or hidden. Use `Alert.alert()` with a single "J'ai compris" button (not "Ne plus afficher") for the first encounter, then a persistent icon badge on the recipe card itself. The badge must be rendered unconditionally, not behind a `!dismissed` flag.
-
-Add a mandatory field: `severity: DietaryConstraintSeverity` to every constraint object. If severity is missing during parse (backward compatibility), default to `aversion` — never to `allergie`.
-
-Cross-reference logic: when loading a recipe for meal planning, scan `ingredients` from the Cooklang parse result against the active profile's constraints. This must run inside `lib/parser.ts` or a dedicated `lib/dietary.ts` module, not in the UI component (so it's testable).
-
-**Warning signs:**
-- Any UI code that stores a `dismissed: boolean` for an allergen warning
-- A constraint object without a `severity` field
-- Allergen check logic inside a React component instead of a pure lib function
-- A single `string[]` of all dietary needs with no type distinction
-
-**Phase to address:**
-Phase 1 (dietary preferences foundation) — severity taxonomy must be in the data model from the first commit. Cannot be retrofitted after data is in the vault.
-
----
-
-### Pitfall 2: Stale Profile Data in Allergen Checks
-
-**What goes wrong:**
-FamilyFlow uses optimistic local state. When a parent updates a child's allergy in Settings, the `profiles` array in `useVaultInternal` is updated optimistically. However, the meal planning view may be holding a stale reference to the old profile data captured in a `useMemo` or `useCallback` at render time. The app shows "no allergen warnings" for a recipe because the stale profile doesn't have the newly added allergy yet.
-
-The existing concurrency problem is documented in `CONCERNS.md`: "Multiple rapid actions can cause race conditions if the file hasn't been re-read between writes." The `busyRef` guard only covers `loadVaultData`, not individual writes.
-
-**Why it happens:**
-The allergen check function takes a `Profile` as argument. In React, stale closures are the default. `useCallback` with an empty or wrong dependency array will capture the profile at mount time.
-
-**How to avoid:**
-The allergen check function must always receive fresh data from `useVault()` at call site — never cache it in a `ref` or `useCallback` that doesn't list `profiles` as a dependency. Prefer reading directly from the context value in the check function signature:
-
-```typescript
-// BAD: stale reference captured at component mount
-const check = useCallback((recipe) => checkAllergens(recipe, cachedProfile), []);
-
-// GOOD: profiles from live context, never stale
-const { profiles, activeProfile } = useVault();
-const warnings = useMemo(
-  () => checkAllergens(recipe, profiles, activeProfile),
-  [recipe, profiles, activeProfile]
-);
-```
-
-Also, after a user saves dietary preferences, call `refresh()` explicitly to reload `famille.md` from disk — don't rely solely on optimistic state for safety-critical data.
-
-**Warning signs:**
-- `useCallback(() => checkAllergens(recipe, profile), [])` with empty deps
-- `const profileRef = useRef(profile)` used in allergen checks
-- Allergen check that doesn't list `profiles` in its `useMemo` deps
-
-**Phase to address:**
-Phase 1 (dietary preferences) — enforced in code review before any allergen UI is shipped.
-
----
-
-### Pitfall 3: i18n Allergen Name Mismatch
-
-**What goes wrong:**
-The app already supports French/English (i18n via `lib/i18n.ts`). Allergen names differ: "peanut" vs "arachide", "nuts" vs "fruits à coque", "gluten" vs "gluten" (same), "shellfish" vs "crustacés". If allergen identifiers are stored as free-text display strings (e.g., the user typed "cacahuète"), the cross-reference against a recipe ingredient named "arachide" or "peanut butter" will silently miss.
-
-The Cooklang parser (`lib/cooklang.ts`) returns ingredient names exactly as typed in the `.cook` file — these could be in any language depending on who wrote the recipe.
-
-**Why it happens:**
-Developer tests only with their own language. The data model stores the display label instead of a canonical identifier.
-
-**How to avoid:**
-Use canonical IDs for all allergens, not display strings. Define a taxonomy in `constants/dietary.ts`:
-
-```typescript
-export const ALLERGEN_CATALOG = [
-  { id: 'gluten',      labelFr: 'Gluten',          labelEn: 'Gluten',      keywords: ['gluten', 'blé', 'orge', 'seigle', 'wheat', 'barley'] },
-  { id: 'arachides',   labelFr: 'Arachides',        labelEn: 'Peanuts',     keywords: ['arachide', 'cacahuète', 'peanut'] },
-  { id: 'fruits_coq',  labelFr: 'Fruits à coque',   labelEn: 'Tree nuts',   keywords: ['noix', 'noisette', 'amande', 'cajou', 'walnut', 'almond'] },
-  // ... 14 EU major allergens
-] as const;
-```
-
-The profile stores `allergenId[]` (canonical IDs), not display strings. The cross-reference function matches against the `keywords` array for each allergen. This also makes it resilient to recipe imports in English when the family uses French UI.
-
-Free-text aversions (e.g., "n'aime pas les épinards") remain as raw strings because they don't need cross-referencing, just display.
-
-**Warning signs:**
-- `DietaryConstraint.label: string` used as the match key in recipe checking
-- Allergen stored directly as user-typed text without normalization
-- Matching logic using `ingredient.name.includes(allergen)` with raw strings
-
-**Phase to address:**
-Phase 1 — must be in the initial `constants/dietary.ts` design. Adding canonical IDs after data is in the vault requires a migration.
-
----
-
-### Pitfall 4: Vault Parsing — Profile Names With Special Characters
-
-**What goes wrong:**
-`famille.md` uses a custom format parsed in `lib/parser.ts` (lines 662+). Profile IDs are derived from names (e.g., "emma" → `emma`, "Jean-Marie" → `jean-marie`). If a profile is named "Léa" or "用户", the ID generation hits encoding issues. More critically, if two family members share a first name (e.g., two "Alex"), the parser creates duplicate IDs, and `farm-{profileId}.md` will collide — both profiles write to the same file, corrupting data.
-
-The `serializeFarmProfile` function writes to `farm-{profileId}.md` — a collision there destroys farm data silently (no error is thrown, the later write simply overwrites).
-
-**Why it happens:**
-The assumption is that family first names are unique. This is usually true but not guaranteed. The codebase already uses `profileId` as the stable key (not name), but if ID generation isn't collision-resistant, the guarantee breaks.
-
-**How to avoid:**
-Dietary preferences will be stored in the profile's data (in `famille.md` or a sidecar). Verify that the ID generation function in the profile parser produces stable, unique IDs even when names collide. If it doesn't, add a numeric suffix for duplicates (`alex_1`, `alex_2`). Add a deduplication guard in `parseProfiles()` that detects and logs duplicate IDs.
-
-For vault storage of dietary constraints, prefer storing them in the profile's existing section in `famille.md` (alongside `role`, `avatar`, etc.) rather than a new sidecar file — it avoids the n-files-per-profile proliferation problem that `farm-{id}.md` already introduced.
-
-**Warning signs:**
-- Profile ID derived directly from `name.toLowerCase()` without collision detection
-- Any new vault file named `{something}-{profileId}.md` without checking for duplicate IDs
-- Parser silently succeeding when two profiles map to the same ID
-
-**Phase to address:**
-Phase 1 — add a duplicate-ID assertion in `parseProfiles()` before adding new vault fields.
-
----
-
-### Pitfall 5: Codex Content Drift from Engine Constants
-
-**What goes wrong:**
-The farm codex will document facts like "la carotte nécessite 4 tâches pour pousser" or "le poullailler produit 1 œuf toutes les 2 heures". These facts live as constants in `lib/mascot/types.ts` (`CROP_CATALOG`, `tasksPerStage: 1` means 4 stages × 1 task = 4 tasks total) and `lib/mascot/building-engine.ts`. If the codex content is hardcoded as strings in a separate component, the next time someone tweaks `tasksPerStage: 1` to `tasksPerStage: 2` (balance pass), the codex will lie — silently, permanently, until a user notices.
-
-This codebase has already had balance passes: `.planning/STATE.md` shows "Rééquilibrer recettes ferme — 2 ingrédients + 17 prix de vente". Each such pass is a potential codex drift event.
-
-**Why it happens:**
-Writing "carrot takes 4 tasks" as a hardcoded string in a codex screen is faster than wiring it to the engine. It works correctly at the moment of writing.
-
-**How to avoid:**
-The codex must render from the same constants that the engine uses — never from hardcoded copies. The codex screen imports `CROP_CATALOG`, `BUILDING_CATALOG`, `PLOTS_BY_TREE_STAGE`, etc. directly and renders them:
-
-```typescript
-// WRONG
-const CODEX_ENTRIES = [{ title: 'Carotte', desc: 'Prend 4 tâches pour pousser' }];
-
-// RIGHT
-import { CROP_CATALOG } from '../../lib/mascot/types';
-// render: `${crop.tasksPerStage * 4} tâches pour pousser` (4 stages × tasksPerStage)
-```
-
-For stats that require computation (e.g., "temps moyen de croissance"), create a pure function in `lib/mascot/farm-engine.ts` that derives the display value from the constants. The codex component calls the function, never the hardcoded string.
-
-The only acceptable hardcoded text in the codex is narrative/explanatory prose ("La ferme vous récompense quand vous accomplissez vos tâches quotidiennes"). Numbers and stats must be derived.
-
-**Warning signs:**
-- Any `const CODEX_DATA = [...]` array with hardcoded numeric stats
-- Codex screen that doesn't import from `lib/mascot/`
-- A PR that changes `tasksPerStage` but doesn't touch the codex component
-
-**Phase to address:**
-Phase 2 (codex) — architectural constraint enforced on the first codex PR.
-
----
-
-### Pitfall 6: Codex Performance — Unvirtualized Long List
-
-**What goes wrong:**
-The farm has 31 files in `lib/mascot/` and already shows content breadth: 14 crop types, 4 building types, 5 tree stages, seasonal events, companions, sagas, tech tree nodes, craft recipes, rare seeds. A codex with 60–100 entries rendered in a `ScrollView` with full card content will be slow on the tree screen, which already had an OOM crash fixed (commit `260404-qvz` — "Fix OOM crash TreeScreen — timer global, lazy-load images saison, reduire particules").
-
-In React Native, `ScrollView` renders all children immediately. With complex cards (emoji, descriptions, stat rows), 80+ cards in a `ScrollView` is a measurable frame-rate problem.
-
-**Why it happens:**
-The codex is a detail view (not the main farm screen), so performance isn't considered during development. It only shows up as jank when opened.
-
-**How to avoid:**
-Use `FlatList` with `windowSize={5}` and `maxToRenderPerBatch={10}` for any codex list longer than 20 items. For category-grouped content, use `SectionList`. Define `keyExtractor` explicitly (use `item.id`, not `index`). Wrap each codex entry card with `React.memo()`.
-
-If the codex is presented as a `pageSheet` modal (per conventions), set `initialNumToRender={8}` to avoid blocking the modal open animation.
-
-Do not preload codex content at app startup — the codex is cold path. Load on modal open only.
-
-**Warning signs:**
-- `<ScrollView>{entries.map(e => <CodexCard key={e.id} />)}</ScrollView>` for >20 entries
-- Codex component imported in `app/(tabs)/tree.tsx` with heavy data at module level
-- Missing `React.memo` on codex list item components
-
-**Phase to address:**
-Phase 2 (codex) — architecture decision at component scaffolding time.
-
----
-
-### Pitfall 7: Tutorial "Seen" Flag — Device/Profile Conflicts
-
-**What goes wrong:**
-The existing `HelpContext` stores seen-state in `expo-secure-store` with key `help_screens_v1` (a flat JSON object, global per device, not per profile). If the tutorial "farm_tutorial_seen" is stored the same way, reinstalling the app clears it (SecureStore is not backed up by iCloud). More subtly: if there are 4 family profiles on the same device, should the farm tutorial show once per device (the adult has seen it, the child hasn't) or once per profile?
-
-The existing `hasSeenScreen('farm')` mechanism is already global — not per-profile. If the tutorial should be per-profile (child gets their own first-farm experience), the HelpContext must be extended with profile-scoped keys. If the tutorial is per-device, reinstalling will show it again, which is probably acceptable.
-
-**Why it happens:**
-Developer adds `markScreenSeen('farm_tutorial')` to the HelpContext without considering the profile dimension.
-
-**How to avoid:**
-Decide the scope explicitly before coding:
-- **Per-device global:** use existing `HelpContext.markScreenSeen('farm_tutorial')` — simplest, correct for most cases
-- **Per-profile:** store key `farm_tutorial_seen_{profileId}` instead — necessary if child profiles each deserve their own tutorial
-
-Given that the "first farm experience" is tied to the active profile, per-profile scope is correct. Implement this as an extension to `HelpContext` that supports profile-scoped keys: `markProfileScreenSeen(profileId, screenId)` and `hasProfileSeenScreen(profileId, screenId)`. This avoids a second storage mechanism.
-
-For replayability (tutorial accessible from codex), use `resetScreen('farm_tutorial')` on the active profile — this must use the profile-scoped version, not the global one, or it would reset the tutorial for all profiles on the device.
-
-**Warning signs:**
-- `markScreenSeen('farm_tutorial')` used without profile context
-- Tutorial seen-state stored as a single boolean key (not profileId-keyed)
-- "Rewatch tutorial" button calling `resetAllHints()` (would reset ALL coach marks)
-
-**Phase to address:**
-Phase 3 (tutorial) — scope decision must be in the phase spec before implementation.
-
----
-
-### Pitfall 8: Tutorial Animation Jank — Reanimated + Spotlight + Farm Scene
-
-**What goes wrong:**
-The tree screen (`tree.tsx`, 82KB) already had an OOM crash from too many simultaneous animations (commit `260404-qvz`). Adding a tutorial overlay with spotlight animations (typically a dark overlay + transparent hole + animated arrow + text bubble) on top of the farm diorama will compete for the JS thread with: WorldGridView timer, AnimatedAnimal frames, crop animations, building overlays, and ambient particles.
-
-A spotlight overlay implemented with two large Views and a `mask` or `clip` approach in Reanimated 4 can cause 3-4 extra renders per frame when the spotlight position animates.
-
-**Why it happens:**
-Tutorial overlays are often prototyped in isolation where the underlying screen is static. The perf issue only surfaces when the overlay is placed above the live farm.
-
-**How to avoid:**
-- Use `runOnUI` + `useAnimatedStyle` for spotlight position — keep the animation entirely on the UI thread, never on the JS thread.
-- Pause or reduce the farm's background timers during the tutorial: set a `isTutorialActive` ref in WorldGridView to skip frame updates.
-- The spotlight "hole" should be a static position for each tutorial step (not continuously animated). Only animate between steps (slide to next target).
-- Prefer `withTiming` (linear, predictable) over `withSpring` for spotlight moves — springs can overshoot and cause jank when the underlying scene is already animated.
-- Keep the total number of `useSharedValue` instances added by the tutorial under 5. A tutorial with 8 shared values on a screen that already has dozens will degrade perf.
-
-Validate frame rate on device during tutorial before shipping. Acceptable threshold: 58+ fps (2 dropped frames per second acceptable, 10+ dropped = rework).
-
-**Warning signs:**
-- Tutorial overlay uses `useState` for position instead of `useSharedValue`
-- Spotlight animation running `withRepeat` + `withSpring` simultaneously with the farm
-- No mechanism to pause WorldGridView during tutorial
-- Frame rate not tested on TestFlight build (only simulator)
-
-**Phase to address:**
-Phase 3 (tutorial) — farm pause mechanism should be in Phase 3 spec as an explicit task.
-
----
-
-### Pitfall 9: Tutorial Content Breaks When Farm Content Changes
-
-**What goes wrong:**
-The tutorial script says "Plante une carotte dans ta parcelle" and points to the carrot cell. If a future balance pass renames `carrot` to `radis` or removes it as the default starter crop, the tutorial points to a non-existent element. Similarly, if the tutorial says "ouvre le moulin" but a future phase removes the moulin, the tutorial is broken.
-
-Saga scripts in `lib/mascot/sagas-content.ts` already have this fragility (noted in CONCERNS.md: "Saga progression could break silently"). The tutorial would have the same failure mode.
-
-**Why it happens:**
-Tutorial scripts are written against the current state of the codebase. Content and code are versioned together but their semantic relationship isn't enforced.
-
-**How to avoid:**
-Tutorial steps should reference farm entities by ID, not by name, and validate the reference at render time:
-
-```typescript
-interface TutorialStep {
-  target: 'plot' | 'crop' | 'building' | 'ui_element';
-  targetId?: string;  // crop ID or building ID — validated against catalog
-  fallback?: string;  // what to do if targetId doesn't exist
+// WRONG: Uses stale in-memory gardenState
+async function addContribution(profileId: string, amount: number) {
+  const updated = { ...gardenState, total: gardenState.total + amount };
+  await vault.writeFile('jardin-familial.md', serialize(updated));
+}
+
+// CORRECT: Always read from disk immediately before write
+async function addContribution(profileId: string, amount: number) {
+  const raw = await vault.readFile('jardin-familial.md');
+  const current = parseGarden(raw);
+  const updated = { ...current, total: current.total + amount };
+  await vault.writeFile('jardin-familial.md', serialize(updated));
 }
 ```
 
-At tutorial load time, validate all `targetId` references against `CROP_CATALOG` and `BUILDING_CATALOG`. If a reference is invalid, skip that step gracefully rather than crashing. Log a dev-mode warning.
-
-For the tutorial "first crop" step, do not hardcode "carrot" — use `CROP_CATALOG.find(c => !c.dropOnly && !c.techRequired)[0]` to always pick the first available crop dynamically.
+Wrap every shared file write in a serialized queue (reuse the `famille-queue` pattern already in the codebase at `lib/famille-queue.ts`). Never use the React state snapshot of garden data as the basis for writes.
 
 **Warning signs:**
-- Tutorial steps with hardcoded crop names as strings ("carotte", "carrot")
-- Tutorial step that references a UI element by hardcoded position (absolute coordinates)
-- No validation of tutorial step targets at load time
-- Tutorial content in a `.ts` constants file that doesn't import from `lib/mascot/types.ts`
+- Contribution totals are mysteriously lower than expected after multiple profiles contribute in the same session
+- "Un contribution disparaît quand deux membres contribuent en même temps"
+- Obsidian shows file modification conflicts (two versions of `jardin-familial.md`)
 
-**Phase to address:**
-Phase 3 (tutorial) — enforced in tutorial data model design.
+**Phase to address:** Phase for shared garden data layer (first phase of v1.4 — data types + parser + storage foundation)
 
 ---
 
-### Pitfall 10: useVault.ts God Hook — Adding Dietary Preferences Grows the 3431-Line Monster
+### Pitfall 2: iCloud Propagation Delay Causes Double-Contribution
 
 **What goes wrong:**
-Every new vault data type must be added to `useVaultInternal()` in `hooks/useVault.ts` (per `STRUCTURE.md`: "If it manages vault data, integrate into useVaultInternal() instead of creating a standalone hook"). Dietary preferences are per-profile vault data. Adding a new state variable, a new `loadVaultData` branch, a new `savePreferences` action, and updating the `useMemo` dependency array (already 90 items) will make the hook grow further. The `useMemo` at line 3402-3430 with 90 dependencies already risks massive object recreation on every state change.
-
-If dietary preferences cause a re-render on every profile switch (the active profile changes, preferences re-derive), the entire `VaultContext` value object re-creates, triggering re-renders in all 80+ subscribers.
+Profile A on Device 1 contributes 5 harvests. The write succeeds locally. iCloud hasn't propagated yet. Profile A (or any profile) opens the app on Device 2. The garden shows the old total. The user contributes again. When iCloud eventually syncs, both writes land — the total doubles, or one gets lost depending on which write wins. The user has now "contributed twice" with items they harvested once, or contributed nothing from the second device while believing they did.
 
 **Why it happens:**
-The architecture mandates all vault state live in one hook. The tech debt is acknowledged in the codebase but hasn't been addressed. New features have no choice but to use the existing pattern.
+iCloud Drive does not guarantee immediate file availability. `NSFileCoordinator` (used in the existing `VaultAccess` native module) coordinates concurrent access within a single device but cannot prevent stale reads when a remote change hasn't propagated yet. The existing codebase acknowledges this — the v1.1 migration to per-profile `gami-{id}.md` files was specifically designed to eliminate cross-device conflicts for gamification. A shared file reintroduces the same problem.
 
 **How to avoid:**
-For dietary preferences specifically, avoid adding a new top-level state slice. Instead, augment the existing `Profile` type with a `dietaryConstraints` field — the data travels with the profile, which is already loaded, parsed, and present in the `profiles` state array. This means:
-- No new `useState` for dietary data
-- No new `loadVaultData` branch
-- No new `useMemo` dependency
-- The save action reuses `updateProfile()` or similar existing profile mutation
+Use an append-only contribution log instead of a mutable total counter:
 
-The `famille.md` parser already handles the profile section. Adding a `dietary_constraints: gluten,allergie|noix,allergie|végétarien,regime` field to each profile block in `famille.md` keeps it in the existing file, avoids a new file per profile, and reuses the existing parse/serialize cycle.
+```markdown
+---
+week: 2026-W15
+goal_target: 100
+---
+## Contributions
+
+| timestamp | profileId | type | amount |
+|-----------|-----------|------|--------|
+| 2026-04-10T14:32:00 | lucas | harvest | 3 |
+| 2026-04-10T15:01:00 | emma | task | 2 |
+```
+
+When computing the total, aggregate the log rows for the current week. A duplicate row (same profileId + timestamp within a 5-minute window) is idempotent-safe — detect and deduplicate on read. This way a double-write creates a detectable duplicate rather than a corrupted total. The "source of truth" total is always derived, never stored mutably.
 
 **Warning signs:**
-- `const [dietaryPrefs, setDietaryPrefs] = useState<DietaryConstraint[]>([])` at the top level of `useVaultInternal`
-- New entry in `loadVaultData`'s `Promise.allSettled` array for dietary prefs
-- `dietaryPrefs` added to the 90-dependency `useMemo` at the bottom of `useVault.ts`
-- A new file `dietary-{profileId}.md` in the vault (proliferates the farm-{id}.md pattern)
+- Total contribution count exceeds the sum of individual contributions (phantom increments)
+- Goal completes spontaneously without any family member having contributed that day
+- Contribution history shows duplicate entries with the same timestamp
 
-**Phase to address:**
-Phase 1 — data model design decision must be made before writing any code.
+**Phase to address:** Phase for shared garden data layer — the contribution format must be append-only from day one; retrofitting is expensive.
 
 ---
 
-### Pitfall 11: Codex "?" Button — Crowded tree.tsx UI
+### Pitfall 3: World-Grid Second Instance ID Collision
 
 **What goes wrong:**
-`app/(tabs)/tree.tsx` already renders: sagas indicator, event sagas, quest banner, quest picker, companion slot, harvest indicators, ambient particles, seasonal overlay, farm hint banner, and a HUD with multiple action buttons. Adding a "?" codex button is the last straw that makes the UI feel cluttered.
-
-More concretely: `tree.tsx` is 82KB. Every new component added to this screen increases the risk of triggering the OOM issue that was already fixed (commit `260404-qvz`). Each new component that uses `useVault()` adds to the rerender surface.
+The existing farm renders using `WORLD_GRID` cell IDs (`c0`, `c1`, `b0`, etc.) as React keys, animation target identifiers, and persistence keys in `farm-{id}.md`. A naive second tilemap for the Place du Village that reuses the same `WorldCell` id namespace (or even partially overlapping IDs like `v0`, `v1` using the same naming logic) will cause React reconciliation bugs where tapping a cell in the Village triggers the farm's cell handler, and SharedValue animations from one grid bleed into the other if both grids are mounted simultaneously during the portal transition.
 
 **Why it happens:**
-Each feature is added in isolation and seems reasonable. The accumulation effect is only visible when looking at the full screen.
+`WORLD_GRID` is a module-level constant array. Components that consume it key their animated values by cell ID. If the Village grid is designed as a second instance of the same rendering component (`WorldGridView` or equivalent) with its own cell array, the IDs must be globally unique across both grids — but this constraint is invisible at the type level, and nothing in the current code enforces uniqueness between instances.
 
 **How to avoid:**
-The "?" button should be integrated into the existing HUD rather than added as a standalone floating button. The existing HUD panel (bottom panel with "Actions" and "Progression" cards from commit `260402-wbr`) should gain a tertiary action — a small "?" icon in the corner of the panel, not a new floating button. This costs zero new layout space.
+Prefix Village cell IDs with a namespace: `village_c0`, `village_b0`, `village_d0`. Define a `VILLAGE_GRID` constant as a separate module (`lib/mascot/village-grid.ts`) — never attempt to merge WORLD_GRID and VILLAGE_GRID into a single array. When reusing rendering components, pass the grid source as a prop with a required `gridNamespace` string that is prepended to all animation SharedValue keys.
 
-The codex component itself must not be imported at the tree screen module level — use dynamic `React.lazy` or load it only when the modal is opened. This prevents the codex catalog data (CROP_CATALOG, BUILDING_CATALOG, etc.) from being in the initial bundle of an already heavy screen.
-
-Do not call `useVault()` inside the codex component unless it needs dynamic farm state. Static codex content (crop definitions, building costs) comes from constants, not vault state.
+Additionally, the two grids must never be mounted simultaneously in the React tree at full resolution. The portal transition should unmount the farm grid before mounting the village grid (or render both at reduced scale during transition, then swap).
 
 **Warning signs:**
-- A new `<FloatingButton position="top-right" icon="?" />` added to tree.tsx
-- Codex component imported at the top of tree.tsx
-- Codex component calling `useVault()` for static content
+- Tapping a crop in the Village triggers farm harvest logic
+- Animation SharedValues from the personal farm leak into the Village display
+- React warning: "Two children with the same key" during portal transition
 
-**Phase to address:**
-Phase 2 (codex) — placement decision before implementation.
+**Phase to address:** Phase for Village tilemap / rendering (the grid infrastructure phase)
 
 ---
 
-### Pitfall 12: HelpProvider vs Tutorial Duplication of Concern
+### Pitfall 4: Weekly Objective Reset Crosses Profile Switch Boundary
 
 **What goes wrong:**
-`HelpContext` already manages "has the user seen X screen/feature" via `hasSeenScreen` and `markScreenSeen`. A new "TutorialContext" or "TutorialProvider" would duplicate this concern and add another level to the already deep provider hierarchy: `SafeAreaProvider > GestureHandler > VaultProvider > ThemeProvider > AIProvider > HelpProvider > ParentalControls > ToastProvider`. A TutorialProvider after ToastProvider would be the 9th level.
-
-More dangerously: if the tutorial uses its own state separate from HelpContext, they can conflict — HelpContext thinks the farm screen has been seen (its coach mark was shown), but TutorialProvider thinks the tutorial hasn't been seen yet, so both fire on the same visit.
+The weekly objective auto-generation logic runs on Sunday. But "Sunday" depends on *which profile triggered the app open*. If the adult profile opens Sunday at 23:55 and the child profile opens Monday at 00:01, each profile independently triggers objective generation — resulting in two different objectives for the same week, stored at different keys in `jardin-familial.md`. Or worse: the objective for last week is re-generated on the new week for the profile that didn't trigger the reset, overwriting contributions already logged.
 
 **Why it happens:**
-The tutorial feels like a distinct, self-contained feature and gets its own provider.
+The existing companion weekly_recap (Phase 24) runs per-profile via `SecureStore` keyed by profile. A shared garden objective must be generated once per week for the whole family, not once per profile. If the generation check is wired into the profile-specific startup flow (like companion events currently are), every profile that opens the app for the first time in a new week will attempt to generate — and the last one wins (or the first one wins if there's a guard, but the guard itself must be stored in the shared file, not per-profile SecureStore).
 
 **How to avoid:**
-Extend `HelpContext` — do not create a new provider. The tutorial "seen" state is semantically identical to `hasSeenScreen`. What differs is the granularity (per-profile) and the replayability UI. These can be added to `HelpContext` via:
-- Profile-scoped key support: `hasSeenScreen(profileId, screenId)` overload
-- A `replayScreen(profileId, screenId)` convenience method
+Store the current week identifier and objective in `jardin-familial.md` (shared file), not in SecureStore. On load, check `current_week` in the shared file against the current ISO week number. If mismatch AND this profile has not already generated for this week (check `generated_by` field in the shared file), generate and write. The `generated_by` field acts as a distributed once-flag: any profile can trigger generation, but only the first one to write wins, and subsequent profiles detect `current_week` matches and skip.
 
-The tutorial component itself is a UI-only component that reads from `HelpContext`, renders a multi-step overlay, and calls `markScreenSeen` on completion. No new provider needed.
-
-The codex "replay tutorial" button calls `resetScreen` on the profile-scoped key, then navigates to the farm screen. This is 3 lines of code, not a new provider.
+```markdown
+---
+current_week: 2026-W15
+objective_type: recette
+objective_target: 80
+objective_generated_by: lucas
+objective_generated_at: 2026-04-10T09:00:00
+---
+```
 
 **Warning signs:**
-- `TutorialProvider` or `TutorialContext` created as a new file
-- Tutorial state stored in a new `expo-secure-store` key outside of HelpContext
-- Provider hierarchy growing beyond 8 levels
+- Two different objectives visible depending on which profile is active
+- Objective resets mid-week when a new profile opens the app
+- Contribution counter resets unexpectedly on Sunday night
 
-**Phase to address:**
-Phase 3 (tutorial) — explicit architectural constraint in the phase spec.
+**Phase to address:** Phase for weekly objective engine (before any persistence is written)
+
+---
+
+### Pitfall 5: Contribution Credit Requires Active Profile — Silently Misattributed
+
+**What goes wrong:**
+A task is completed by "Lucas" (active profile). The contribution credit is written to `jardin-familial.md` with `profileId: lucas`. Later, the parent reviews the contribution history and sees that Emma (who also completed tasks that day) has zero contributions — because the parent was using the app under Emma's profile while manually entering tasks in Emma's name, but the active profile at write time was Lucas. The semantic coupling dispatcher (`applyTaskEffect`) uses `activeProfileId` from SecureStore to attribute the farm effect — the garden contribution inherits the same pattern, but the family's mental model is "who completed the task", not "who was logged in".
+
+**Why it happens:**
+`activeProfileId` in SecureStore is the currently-displayed profile, not the task owner. In the existing codebase, tasks are attributed to a profile via the `assigned` field on the task markdown. The contribution system, if it directly reads `activeProfileId` at contribution time, will misattribute group contributions made by a parent while managing children's tasks.
+
+**How to avoid:**
+Attribute contributions to `task.assigned` (the task's explicit owner), falling back to `activeProfileId` only when `task.assigned` is null. For harvest contributions (farm → garden), the contributor is always the active profile (since harvesting is a first-person action). For task contributions, read the task's `assigned` field first.
+
+```typescript
+function getContributorId(task: Task, activeProfileId: string): string {
+  // Task explicitly assigned to a family member → credit them, not the currently-logged profile
+  if (task.assigned && task.assigned !== activeProfileId) return task.assigned;
+  return activeProfileId;
+}
+```
+
+**Warning signs:**
+- Child profiles show 0 contributions even when their tasks were completed
+- The parent profile accumulates all contributions regardless of who the tasks were assigned to
+- Family disagrees about who "did the most" — app attribution contradicts their memory
+
+**Phase to address:** Phase for contribution system wiring (task → garden bridge)
+
+---
+
+### Pitfall 6: Reward Distribution Fires Multiple Times Across Profile Switches
+
+**What goes wrong:**
+The collective goal is reached (contributions ≥ target). Profile A opens the app and sees the reward animation + XP bonus applied. Profile B switches to their profile — the reward check runs again (because the goal is still `>= target` in the shared file, and the "reward claimed" flag hasn't been written for Profile B). Profile B gets the same XP bonus again. With 3 profiles, the reward fires 3 times, awarding 3× the intended XP.
+
+**Why it happens:**
+The reward completion check is stateless from the profile's perspective. It compares `contributions.total >= goal.target` and awards if true. Without a per-profile "I already claimed this week's reward" flag, every profile that opens the app after the goal is met will trigger the reward.
+
+**How to avoid:**
+Use two separate mechanisms: a shared completion flag (week-scoped, in `jardin-familial.md`) AND a per-profile reward-claimed flag (in `gami-{id}.md` or SecureStore, keyed by week).
+
+```typescript
+// Step 1: shared file records that week W15 goal was met
+// jardin-familial.md: goal_completed_at: 2026-04-12T18:30:00
+
+// Step 2: per-profile tracking of whether this profile claimed
+// gami-lucas.md or SecureStore: garden_reward_claimed_W15: true
+
+// On profile load: if goal_completed AND NOT profile_claimed → award + mark claimed
+```
+
+The shared flag prevents double-firing across app restarts (the goal remains >= target). The per-profile flag prevents double-firing across profile switches within the same session.
+
+**Warning signs:**
+- XP totals jump by multiples of the intended reward
+- Each profile switch triggers a reward animation
+- Profile with the most switches has disproportionately high XP
+
+**Phase to address:** Phase for reward distribution (must be designed before the completion check is implemented)
+
+---
+
+### Pitfall 7: useVault God Hook — Garden State Becomes Another 300-line Blob
+
+**What goes wrong:**
+Following the existing pattern of "add new state to useVaultInternal()", the garden state (`gardenData`, `loadGardenData`, `addContribution`, `checkWeeklyObjective`, `claimReward`) gets added to the already 3431-line `useVault.ts`. The `useMemo` dependency array, currently at ~90 items, grows to ~100+. The `loadVaultData` `Promise.allSettled` block acquires a 17th file read. Every single re-render now compares one more value. The god hook gets 8% heavier.
+
+**Why it happens:**
+It's the path of least resistance. Every previous feature was added directly to `useVault.ts`. There's no enforced boundary preventing it. The garden data is needed across screens (farm portal, village screen, dashboard widget), so "I'll just put it in the shared context" is the natural reflex.
+
+**How to avoid:**
+Create `hooks/useGarden.ts` as an independent domain hook, following the precedent of `useFarm.ts` and `useGamification.ts`. Wire it into `VaultContext` via composition (the context exposes `garden: GardenHookReturn`), not by merging all garden state into `useVaultInternal`. This also enables isolated testing of garden logic without the full 3431-line vault context.
+
+The garden hook should own: `gardenData`, `loadGardenData`, `addContribution`, `generateWeeklyObjective`, `checkRewardEligibility`, `claimReward`, `getContributionHistory`. The vault context plumbs it through — just like `farmData` is already plumbed through from `useFarm.ts`.
+
+**Warning signs:**
+- `hooks/useVault.ts` grows past 3700 lines during garden implementation
+- A new `gardenData:` state variable appears inside `useVaultInternal` rather than in a separate file
+- The `useMemo` dependencies array exceeds 100 items
+
+**Phase to address:** First garden phase — establish `hooks/useGarden.ts` before any UI
+
+---
+
+### Pitfall 8: Parser Regex Collision — farm_crops vs village_crops in Same File
+
+**What goes wrong:**
+The existing farm parser reads `farm_crops:` from `farm-{id}.md` using regex patterns. If the village garden state is stored in a combined profile-level file (e.g., appended to `farm-{id}.md` as `village_contribution:`, `village_week:`), and the parser is extended with new regex patterns for these fields, a later Obsidian manual edit that uses `village_crops` in a different context (e.g., the user writes a note about the village) causes the parser to misread it as structured garden state.
+
+More specifically: the pattern `key: value` without strict section scoping in `lib/parser.ts` means any frontmatter-like line in the document body can be accidentally parsed as structured data.
+
+**Why it happens:**
+`lib/parser.ts` uses pattern-matching that works well for isolated files but becomes fragile when a file serves dual purposes. The existing `farm-{id}.md` already has ~15 frontmatter keys (`farm_crops`, `farm_tech`, `farm_buildings`, `farm_harvest_inventory`, `farm_crafted_items`, etc.). Adding garden keys to the same file extends a pattern that was never designed for shared-state semantics.
+
+**How to avoid:**
+Store garden state in a dedicated separate file: `jardin-familial.md` (shared across profiles) rather than appending to any per-profile file. This gives the parser a clean scope and prevents field collision. The file is YAML-frontmatter + an append-only markdown table body. Define parsing as `parseGarden()` / `serializeGarden()` in its own parser module (or a new section at the bottom of `parser.ts` with a clear delimiter comment).
+
+**Warning signs:**
+- Garden contribution totals appear in the farm data or vice versa after an Obsidian manual edit
+- `npx jest lib/__tests__/parser.test.ts` passes but the round-trip test for garden data silently returns wrong values
+- `parseFarm()` picks up `village_*` keys and stores them in `FarmProfileData` with undefined types
+
+**Phase to address:** Phase for shared garden data layer (parser design)
 
 ---
 
 ## Technical Debt Patterns
 
+Shortcuts that seem reasonable but create long-term problems.
+
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Store dietary constraints as free-text `string[]` | No new type definitions needed | Allergen cross-reference breaks on language variations; typos create false negatives | Never — severity taxonomy is load-bearing |
-| Copy farm stat numbers into codex strings | Faster to write | Codex lies after every balance pass; users lose trust | Never for numeric stats; acceptable for narrative prose |
-| Use global `hasSeenScreen` for tutorial (no profile scope) | Reuses existing HelpContext as-is | Child profile on same device never gets own tutorial experience | Acceptable if family has only one child or tutorial is truly device-global |
-| Add dietary state as new top-level slice in useVault.ts | Clean separation, follows precedent | Further inflates 3431-line hook; adds to 90-dep useMemo | Never — embed in Profile type instead |
-| Render codex in a ScrollView | 10 minutes vs 1 hour for FlatList | Frame drops on 60+ entries; already had OOM on tree screen | Acceptable only if codex stays under 20 entries (unlikely) |
-| Add "?" button as new FloatingButton on tree.tsx | No changes to existing HUD | N+1 floating element on already crowded screen; adds to memory pressure | Never — integrate into existing HUD |
+| Storing garden total as mutable number instead of append-only log | Simpler to read/write | Irrecoverable on iCloud conflict — two writes produce wrong total with no way to detect | Never for shared multi-profile files |
+| Keying contribution attribution to `activeProfileId` only | One source of truth already exists | Misattributes parent-managed child tasks; family disputes | Never — always check `task.assigned` first |
+| Adding garden state directly to `useVaultInternal()` | No new file to create | God hook grows past 3700 lines; every render slower; harder to test garden in isolation | Never — use `hooks/useGarden.ts` |
+| Reusing WORLD_GRID cell IDs for Village grid | Reuse existing rendering pipeline | React key collisions + animation SharedValue bleed during portal transition | Never — always namespace Village IDs |
+| One shared `jardin_reward_claimed` flag in shared file instead of per-profile flags | Simpler | Reward fires once globally — whichever profile triggers it gets it, others miss out | Never for XP rewards distributed to all profiles |
+| Generating weekly objective in the profile startup flow | Natural hookup point for existing companion event system | Any profile opening first in a new week generates differently from another — two objectives | Never — use shared-file once-flag pattern |
+| Loading garden data inside `loadVaultData`'s `Promise.allSettled` block | Consistent with existing load pattern | Vault load time increases; garden errors fail silently alongside 16 other files | Acceptable only if garden file read is < 5ms — use separate lazy load otherwise |
 
 ---
 
 ## Integration Gotchas
 
+Common mistakes when connecting to existing systems.
+
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| Cooklang ingredient names → allergen matching | `ingredient.name.includes(allergenLabel)` case-sensitive string match | Match against canonical `keywords[]` array from `ALLERGEN_CATALOG`; normalize to lowercase before matching |
-| `farm-{profileId}.md` + dietary in `famille.md` | Creating `dietary-{profileId}.md` (proliferates profile-sidecar files) | Add `dietary_constraints` field to existing profile section in `famille.md` |
-| Tutorial step "point at element" on farm screen | Hardcoded pixel coordinates that break on different screen sizes | Use logical farm coordinates (plot index, building slot) that the farm renderer translates to screen coordinates |
-| Codex rendering engine constants | Import `CROP_CATALOG` in codex screen module scope | Use `useMemo(() => CROP_CATALOG, [])` inside component to avoid module-level constant capturing a stale snapshot |
-| HelpContext profile-scoped keys | Store `farm_tutorial_lucas` flat key in SecureStore | Extend `help_screens_v1` JSON structure with `{ global: {...}, profiles: { lucas: {...} } }` — keeps it one store key |
-| expo-secure-store + reinstall | Tutorial seen-flag lost after reinstall | Document this as expected behavior; do not attempt iCloud backup of SecureStore (not possible without entitlement changes) |
+| farm-engine harvest → garden contribution | Calling `addContribution` directly inside `harvestCrop()` pure function | `harvestCrop()` is a pure function; the harvest→contribution bridge belongs in the useFarm hook's `handleHarvest` action, not in the pure engine |
+| task completion → garden contribution | Wiring `addContribution` inside `completeTask`'s existing semantic coupling dispatcher | Add garden contribution as a separate step in `completeTask` after the semantic effect — don't bundle it into `applyTaskEffect()` which is per-profile and already complex |
+| iCloud NSFileCoordinator | Assuming `coordinatedWriteFile` is atomic for sequential reads | `coordinatedWriteFile` prevents concurrent OS-level writes but doesn't prevent logical stale-read → write sequences; the read-before-write pattern is still required |
+| weekly objective generation + companion weekly_recap | Coupling garden weekly recap to companion `weekly_recap` event (same Sunday trigger) | Garden objective reset and companion recap are independent. Companion recap is per-profile/per-session; garden reset is once-per-week for the whole family. Do not merge their trigger logic. |
+| Village tilemap + portal animation | Mounting VillageGrid behind the portal door while FarmGrid is still mounted | During portal transition animation, both grids mounted simultaneously = doubled layout passes + potential SharedValue conflicts. Unmount farm before mounting village. |
+| reward claim + XP system | Calling `addPoints()` directly from the garden reward handler | `addPoints()` reads the current `gami-{id}.md` file. The garden reward handler must use the read-before-write pattern for the gami file, just like any other XP grant. |
 
 ---
 
 ## Performance Traps
 
+Patterns that work at small scale but fail as usage grows.
+
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Codex ScrollView with 60+ entries | Stutter on modal open; 500ms+ to interactive | FlatList with `windowSize={5}`, `maxToRenderPerBatch={10}` | >25 entries in a single list |
-| Allergen check in render path (no memo) | Meal planner re-renders slowly when any vault state changes | `useMemo` with explicit `[recipe, profiles, activeProfile]` deps | Every vault state change (full vault reload on foreground) |
-| Tutorial animation + farm timers competing | Frame drops on farm screen during tutorial | Pause WorldGridView global timer via ref during tutorial steps | From the moment spotlight overlay appears |
-| Farm codex accessing `useVault()` for static data | Unnecessary re-renders when unrelated vault data changes | Read static data from constants imports, not from vault state | Every time any family member completes a task |
-| Dietary constraint list re-creating on profile switch | UI flickers when switching active profile | `useMemo` on `activeProfile.dietaryConstraints` with stable profile ID dep | Multiple profiles present on device |
+| Contribution log grows unbounded (append-only, never pruned) | Vault load time increases; `jardin-familial.md` becomes multi-KB; weekly aggregation slows | Archive rows older than 4 weeks to a `jardin-historique.md` file; only keep current + last 3 weeks in the active file | After ~1 year of daily contributions (~365 rows/year × 4 family members = 1460 rows) |
+| Aggregating all contributions on every render to compute total | Jank when scrolling the Village screen | Cache the aggregated total in a `useMemo` keyed on the raw log length; recompute only when log changes | With >50 contribution rows (after ~2 months of active use) |
+| Village tilemap renders all cells unconditionally | FPS drop during portal transition | Lazy-render cells outside viewport; use `InteractionManager.runAfterInteractions` for Village mount | Visible at any screen size if all cells have animated sprites |
+| Loading `jardin-familial.md` eagerly at app startup (inside `loadVaultData`) | Vault startup time increases even when user never visits the Village | Lazy-load garden data only when the Village screen is first opened (or when the portal portal button is tapped) | Immediately — startup already loads 16+ files |
 
 ---
 
 ## UX Pitfalls
 
+Common user experience mistakes in this domain.
+
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| Unskippable tutorial | User who knows the farm (returning from break) is trapped; frustration | Show a "Passer" button from step 1; auto-advance after 30s idle; NEVER block interaction |
-| Tutorial that auto-replays every session | Returns users annoyed by replay; feel app is broken | Check HelpContext once at mount; dismiss forever on first completion or first explicit skip |
-| Allergen warning dismissed with "Ne plus afficher" | Parent who dismissed the warning serves allergen food | Allergies severity level: no dismiss option; show persistent badge on recipe card |
-| Codex shows unreleased or spoiler content | Child sees "Dragon Fruit" drop-only crop before they know it exists | Add `isSecret: boolean` to `CropDefinition`; codex only shows entries that have been unlocked by the profile |
-| Dietary preferences buried in Settings | Parents don't know the feature exists; never set preferences | Add one-time coach mark on meal planner screen pointing to "Préférences alimentaires" in Settings |
-| Codex search "tomato" returns nothing (French content) | User thinks codex is broken | Use `labelKey` i18n translation for matching; also match against the canonical `id` (e.g., "tomato") even in French UI |
+| Showing per-profile contribution amounts in the Village before explaining the cooperative mechanic | Confused children: "why is papa's number bigger than mine?" | Lead with the shared total and family goal; reveal individual breakdown only in the history panel |
+| Resetting contributions display at midnight Sunday vs. ISO week boundary | Family confused about "did my task count this week?" | Use ISO week (Monday → Sunday) consistently; display the week label ("Semaine du 7 au 13 avril") explicitly in the UI |
+| No visual feedback between contributing and seeing the shared total update | User taps "Contribute" → nothing visible changes → taps again → double-contribution | Optimistic UI: immediately update the displayed total locally, then sync to file; show "contribution enregistrée" toast |
+| Reward notification fires silently in the background with no village pop-up | Family misses the celebration moment — the whole point of cooperative play | Reward completion should trigger a full-screen celebration (like the existing loot box animation) the first time any profile opens the app after goal completion, with a "gather the family" prompt |
+| Showing an empty Village before the first weekly objective is generated | Cold-start confusion: "where is the village?", "what do I do here?" | Generate the first objective at Village first-open, not on Sunday; show a welcoming narrative from the companion explaining the mechanic |
 
 ---
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **Dietary preferences UI:** Constraints are saved to vault — but verify `parseProfiles()` round-trips them correctly (serialize then re-parse returns identical data, including special characters in constraint notes)
-- [ ] **Allergen cross-reference:** Warning shows on recipe card — but verify it also shows when a recipe is added to a meal plan (two separate display paths)
-- [ ] **Codex content accuracy:** Crop cards show correct task counts — but verify stats are read from `CROP_CATALOG.tasksPerStage` not hardcoded; run a balance-pass simulation (change `tasksPerStage` in the constant, confirm codex display updates without code change)
-- [ ] **Tutorial "first launch":** Tutorial shows on fresh install — but verify it does NOT show when the profile already has crops planted (user has clearly used the farm before even if seen-flag is missing due to reinstall)
-- [ ] **Tutorial skip/replay:** Skip button works from step 1 — but verify "Revoir le tutoriel" from codex correctly resets only the farm tutorial, not all HelpContext coach marks
-- [ ] **Theme compliance:** All new components use `useThemeColors()` — run in all 9 profile themes and dark mode; look especially at tutorial spotlight overlay (dark background may be invisible in dark mode if color is hardcoded)
-- [ ] **Privacy compliance:** Dietary preferences visible in commit diffs / log files — ensure no real family member names appear in fixture data, migration scripts, or debug logs added during development
+Things that appear complete but are missing critical pieces.
+
+- [ ] **Shared garden file parser:** Parser unit-tested in isolation is not enough — verify the full round-trip (write → iCloud-style re-read → parse) produces identical results
+- [ ] **Contribution attribution:** Works for harvests contributed by the active profile — verify it also correctly attributes task completions where `task.assigned !== activeProfileId`
+- [ ] **Reward distribution:** Reward fires correctly for the triggering profile — verify it also fires (with correct XP, not duplicated) for all other profiles on their next app open
+- [ ] **Weekly reset:** Objective resets correctly when the active profile opens the app on Monday — verify no reset occurs if the same week ISO number is still active; verify reset does not fire twice when two profiles both open the app for the first time in a new week
+- [ ] **Portal transition:** Portal visual transition appears smooth — verify both grids are not simultaneously mounted at full resolution; verify no React key warnings in Metro/Flipper during the transition
+- [ ] **iCloud multi-device:** Contribution works on Device 1 — verify on Device 2 (same vault, iCloud synced) the total is correct after propagation; do not ship without manually testing this scenario on two physical devices
+- [ ] **God hook boundary:** Garden feature "works" — verify `hooks/useVault.ts` line count did NOT increase by more than 20 lines; the bulk of garden logic lives in `hooks/useGarden.ts`
 
 ---
 
 ## Recovery Strategies
 
+When pitfalls occur despite prevention, how to recover.
+
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Allergen silencing shipped to TestFlight | HIGH — user safety | Emergency update: force-show allergen warning unconditionally; remove dismiss logic; republish to TestFlight same day |
-| Codex content drifted from engine | LOW — content bug | One-pass audit: grep for hardcoded numbers in codex component, replace with engine constant references; test all screens |
-| Tutorial seen-flag stored globally (not per-profile) | MEDIUM — requires migration | Add `profiles` sub-key to `help_screens_v1` JSON; migrate existing global keys to a virtual "device" profile; write migration in HelpContext init (same pattern as existing `migrateHelpScreens()`) |
-| Dietary data stored as free-text (no canonical IDs) | HIGH — requires vault migration | Must write a one-time migration that maps known string values to canonical allergen IDs; vault files must be updated; risk of data loss for unknown strings |
-| Codex data hardcoded (not from engine) | LOW | Refactor codex data source to import from constants; no vault changes needed |
-| Tutorial breaks after farm content change | LOW | Validate tutorial step targets at load time; skip broken steps; add dev-mode assertion |
+| Shared file corruption (mutable total lost) | MEDIUM | If append-only log: recompute total from log rows and rewrite header. If mutable total was used: manual vault edit in Obsidian to restore known-good value. |
+| Double-reward XP granted | LOW | Deduct XP via a manual `addPoints(profileId, -N)` call through a dev-only admin action in Settings (similar to existing gamification reset). |
+| Weekly objective generated twice (two objectives in file) | LOW | The parser should prefer the first `objective_*` block encountered; second is ignored. Manual: delete duplicate block from `jardin-familial.md` in Obsidian. |
+| React key collision between farm and village grids | HIGH | Requires renaming all Village cell IDs and updating every reference (parser, render, animation). Do not ship without namespace prefix from the start. |
+| Contribution attributed to wrong profile | MEDIUM | No automated recovery — requires manual Obsidian vault edit to fix the `profileId` column in the contribution log. User impact: visible in history panel only; XP was already awarded to the wrong profile. |
 
 ---
 
 ## Pitfall-to-Phase Mapping
 
+How roadmap phases should address these pitfalls.
+
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Allergen silencing | Phase 1 — dietary data model | `DietaryConstraintSeverity` type in types.ts; no dismiss logic for `allergie` severity |
-| Stale profile in allergen check | Phase 1 — allergen check function | `checkAllergens()` pure function in `lib/dietary.ts` with tests; `useMemo` deps validated |
-| i18n allergen mismatch | Phase 1 — `constants/dietary.ts` | `ALLERGEN_CATALOG` with `keywords[]` array; cross-reference test covers FR+EN ingredient names |
-| Vault parsing — duplicate profile IDs | Phase 1 — parser extension | Add assertion in `parseProfiles()` that emits `console.warn` on duplicate IDs |
-| Codex content drift | Phase 2 — codex architecture | Code review: reject any PR where codex component contains hardcoded numeric stats |
-| Codex performance | Phase 2 — codex component | `FlatList` with `windowSize={5}`; measure frame rate with 60+ entries on device |
-| Tutorial seen-flag scope | Phase 3 — tutorial design spec | Explicit per-profile vs global decision in phase spec; HelpContext extended before tutorial component |
-| Tutorial animation jank | Phase 3 — tutorial overlay | farm pause mechanism in spec; frame rate measured on TestFlight build |
-| Tutorial content breaks | Phase 3 — tutorial data model | `TutorialStep.targetId` validated against catalogs at load time; dynamic first crop selection |
-| useVault.ts further inflation | Phase 1 — dietary data model | Dietary constraints embedded in Profile type; zero new useState in useVaultInternal |
-| Crowded tree.tsx UI | Phase 2 — codex button placement | "?" integrated into existing HUD; no new floating button; no new `useVault()` call |
-| HelpProvider vs TutorialProvider | Phase 3 — tutorial architecture | No new Context/Provider created; HelpContext extended only |
+| Shared file stale-read corruption | Garden data layer phase (parser + storage) | Test: two rapid `addContribution` calls → check final total matches sum of both |
+| iCloud double-contribution | Garden data layer phase — append-only format | Test: write same contribution row twice → verify aggregation deduplicates |
+| World-grid ID collision | Village tilemap phase — `VILLAGE_GRID` definition | Test: mount FarmGrid and VillageGrid in same test render → verify no duplicate keys |
+| Weekly objective cross-profile double-generation | Weekly objective engine phase | Test: call `generateObjectiveIfNeeded()` twice with different profileIds in same ISO week → verify only one objective written |
+| Contribution misattribution | Contribution bridge phase (task→garden wiring) | Test: complete a task where `task.assigned !== activeProfileId` → verify contribution logged under `task.assigned` |
+| Reward multi-fire across profile switches | Reward distribution phase | Test: trigger goal completion → switch profile → verify reward fires only once per profile per week |
+| God hook boundary violation | First garden phase — `useGarden.ts` creation | Static check: `wc -l hooks/useVault.ts` before and after garden implementation; must not grow > 20 lines |
+| Parser regex collision | Garden data layer phase — `jardin-familial.md` isolated file | Test: add `village_note: test` to body of `jardin-familial.md` → verify `parseGarden()` does not include it in structured output |
 
 ---
 
 ## Sources
 
-- Direct codebase audit: `hooks/useVault.ts`, `lib/parser.ts`, `lib/mascot/types.ts`, `lib/mascot/farm-engine.ts`, `contexts/HelpContext.tsx`, `lib/types.ts` (2026-04-07)
-- `.planning/codebase/CONCERNS.md` — documented tech debt, known fragile areas, performance bottlenecks
-- `.planning/codebase/ARCHITECTURE.md` — provider hierarchy, data flow, error handling patterns
-- `.planning/STATE.md` — accumulated decisions, quick task history (balance pass evidence)
-- Known RN/Expo pitfalls: Reanimated 4 worklet thread model, FlatList vs ScrollView perf, SecureStore reinstall behavior, expo-router modal presentation
-- EU allergen regulation context: 14 major allergens defined by EU Regulation 1169/2011 (gluten, crustacés, œufs, poissons, arachides, soja, lait, fruits à coque, céleri, moutarde, graines sésame, anhydride sulfureux, lupin, mollusques)
+- Direct codebase audit: `hooks/useVault.ts` (3431 lines), `lib/vault.ts`, `lib/mascot/world-grid.ts`, `lib/mascot/farm-engine.ts`, `lib/mascot/farm-grid.ts`
+- Codebase concerns documented in `.planning/codebase/CONCERNS.md` (vault write concurrency, gamification points race, full-reload on foreground)
+- Project retrospective `.planning/RETROSPECTIVE.md` (v1.1 lesson: gami-{id}.md per-profile migration rationale; v1.2 lessons: parser defensive patterns)
+- Architecture documentation `.planning/codebase/ARCHITECTURE.md` (data flow, VaultManager NSFileCoordinator, optimistic writes pattern)
+- Key decisions table in `.planning/PROJECT.md` (TUTO-02: SecureStore flag per-device not per-profile; ARCH-05: zero new npm dependencies; GuestProfile séparé)
+- Known fragile area: "Vault File Write Concurrency" (`hooks/useVault.ts` busyRef guards only loadVaultData, not individual writes) — `.planning/codebase/CONCERNS.md`
 
 ---
-
-*Pitfalls research for: FamilyFlow v1.2 — dietary preferences, farm codex, farm tutorial*
-*Researched: 2026-04-07*
+*Pitfalls research for: v1.4 Jardin Familial — cooperative multi-profile shared garden on file-based persistence*
+*Researched: 2026-04-10*
