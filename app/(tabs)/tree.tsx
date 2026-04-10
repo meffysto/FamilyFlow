@@ -91,6 +91,7 @@ import * as SecureStore from 'expo-secure-store';
 import { type PlantedCrop, type PlacedBuilding, CROP_CATALOG, BUILDING_CATALOG } from '../../lib/mascot/types';
 import type { GiftEntry } from '../../lib/mascot/gift-engine';
 import { hasCropSeasonalBonus, parseCrops, getAvailableCrops, RARE_SEED_DROP_RULES } from '../../lib/mascot/farm-engine';
+import { CROP_ICONS } from '../../lib/mascot/crop-sprites';
 import { getUnlockedCropCells, getExpandedCropCells, BUILDING_CELLS, EXPANSION_BUILDING_CELL } from '../../lib/mascot/world-grid';
 import { getTechBonuses, type TechBonuses } from '../../lib/mascot/tech-engine';
 import { HarvestBurst, CROP_COLORS } from '../../components/mascot/HarvestBurst';
@@ -1602,7 +1603,7 @@ export default function TreeScreen() {
                           ]}
                         >
                           <View>
-                            <Text style={styles.seedRowEmoji}>{crop.emoji}</Text>
+                            <Image source={CROP_ICONS[crop.id]} style={styles.seedRowSprite} />
                             <View style={[styles.rareSeedBadge, { backgroundColor: primary }]}>
                               <Text style={styles.rareSeedBadgeText}>x{qty}</Text>
                             </View>
@@ -1646,7 +1647,7 @@ export default function TreeScreen() {
                           ]}
                         >
                           <View>
-                            <Text style={styles.seedRowEmoji}>{crop.emoji}</Text>
+                            <Image source={CROP_ICONS[crop.id]} style={styles.seedRowSprite} />
                             <View style={[styles.rareSeedBadge, { backgroundColor: colors.textMuted }]}>
                               <Text style={styles.rareSeedBadgeText}>?</Text>
                             </View>
@@ -1708,7 +1709,7 @@ export default function TreeScreen() {
                       !unlocked && { opacity: 0.4 },
                     ]}
                   >
-                    <Text style={styles.seedRowEmoji}>{crop.emoji}</Text>
+                    <Image source={CROP_ICONS[crop.id]} style={styles.seedRowSprite} />
                     {unlocked ? (
                       <View style={styles.seedRowInfo}>
                         <View style={styles.seedRowHeader}>
@@ -2845,8 +2846,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: Spacing.md,
   },
-  seedRowEmoji: {
-    fontSize: 32,
+  seedRowSprite: {
+    width: 52,
+    height: 52,
+    resizeMode: 'contain',
+    alignSelf: 'center',
+    marginTop: -6,
   },
   seedSectionTitle: {
     fontSize: FontSize.body,
