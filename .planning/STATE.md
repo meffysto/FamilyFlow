@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Jardin Familial
-status: "Roadmap ready — next: `/gsd:plan-phase 25`"
-last_updated: "2026-04-10T17:53:58Z"
-last_activity: "2026-04-10 - Completed quick task 260410-rie: Améliorer import photo recettes — prompt OCR Sonnet + preview éditable"
+status: executing
+last_updated: "2026-04-10T18:04:49.296Z"
+last_activity: 2026-04-10
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 2
+  completed_plans: 1
   percent: 0
 ---
 
@@ -20,19 +20,19 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** v1.4 Jardin Familial — Roadmap created, ready for Phase 25
+**Current focus:** Phase 25 — fondation-donn-es-village
 
 ## Current Position
 
-Phase: 25 — Fondation données village (not started)
-Plan: —
+Phase: 25 (fondation-donn-es-village) — EXECUTING
+Plan: 2 of 2
 Milestone: v1.4 Jardin Familial (MVP)
 Last shipped: v1.3 Seed (2026-04-10)
-Last activity: 2026-04-10 - Completed quick task 260410-rie: Améliorer import photo recettes — prompt OCR Sonnet + preview éditable
+Last activity: 2026-04-10
 
 Progress: [░░░░░░░░░░] 0%
 
-Status: Roadmap ready — next: `/gsd:plan-phase 25`
+Status: Ready to execute
 
 ### Quick Tasks Completed
 
@@ -115,6 +115,7 @@ Status: Roadmap ready — next: `/gsd:plan-phase 25`
 | Phase 23-mus-e-des-effets-seed-002-lite P02 | 2min | 2 tasks | 2 files |
 | Phase 24-compagnon-tendu-seed-003-lite P01 | 8min | 2 tasks | 3 files |
 | Phase 24-compagnon-tendu-seed-003-lite P02 | 8min | 2 tasks | 5 files |
+| Phase 25-fondation-donn-es-village P01 | 3min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -190,6 +191,9 @@ Recent decisions affecting current work:
 - [Phase 14-parite-mobile-desktop]: VaultContext desktop reste monofichier (1116 lignes < 1500) — extraction en hooks helpers non nécessaire
 - [Phase 14-parite-mobile-desktop]: Historique médical Health desktop session-only — HealthRecord type ne contient pas historique, persistance à prévoir dans une future phase
 - [Phase 14-parite-mobile-desktop]: completeRoutineStep session-only confirmé — progressMap géré en React state local dans Routines.tsx
+- [Phase 25-01]: serializeGardenFile construit la string manuellement — round-trip fidelity garantie sans matter.stringify
+- [Phase 25-01]: appendContribution insere avant la prochaine section ## — evite l'append en fin de fichier (Pitfall 4)
+- [Phase 25-01]: VILLAGE_GRID IDs prefixes village_ — evite collisions avec ferme perso lors transition portail
 
 ### Todos
 
@@ -201,5 +205,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-10T17:23:58.222Z
+Last session: 2026-04-10T18:04:49.293Z
 Next: Plan and execute Phase 25 (Fondation données village)

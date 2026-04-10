@@ -172,7 +172,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 25-01-PLAN.md — Module lib/village/ complet (types, grid, templates, parser, barrel)
+- [x] 25-01-PLAN.md — Module lib/village/ complet (types, grid, templates, parser, barrel)
 - [ ] 25-02-PLAN.md — Tests Jest module village (parser, grid, templates)
 
 ### Phase 26: Hook domaine jardin
@@ -225,7 +225,7 @@ Plans:
 | 22. UI config famille | v1.3 | 2/2 | Complete | 2026-04-09 |
 | 23. Musée des effets | v1.3 | 2/2 | Complete | 2026-04-10 |
 | 24. Compagnon étendu | v1.3 | 2/2 | Complete | 2026-04-10 |
-| 25. Fondation données village | v1.4 | 0/2 | Not started | - |
+| 25. Fondation données village | v1.4 | 1/2 | In Progress|  |
 | 26. Hook domaine jardin | v1.4 | 0/? | Not started | - |
 | 27. Écran Village + composants | v1.4 | 0/? | Not started | - |
 | 28. Portail + câblage contributions | v1.4 | 0/? | Not started | - |
