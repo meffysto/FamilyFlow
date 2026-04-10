@@ -101,6 +101,7 @@ import type { FamilyQuest } from '../lib/quest-engine';
 import { useVaultProfiles, ACTIVE_PROFILE_KEY } from './useVaultProfiles';
 import { useVaultDietary } from './useVaultDietary';
 import type { VaultDietaryState } from './useVaultDietary';
+import { VILLAGE_FILE } from '../lib/village';
 
 export const VAULT_PATH_KEY = 'vault_path';
 export { ACTIVE_PROFILE_KEY } from './useVaultProfiles';
@@ -272,6 +273,8 @@ export interface VaultState {
   unlockCompanion: (profileId: string, speciesId: CompanionSpecies) => Promise<void>;
   /** Préférences alimentaires famille + invités (Phase 15 — PREF-02/06/07) */
   dietary: VaultDietaryState;
+  gardenRaw: string;
+  setGardenRaw: React.Dispatch<React.SetStateAction<string>>;
 }
 
 // Static task files (non-enfant)
@@ -535,6 +538,9 @@ export function useVaultInternal(): VaultState {
   profilesRef.current = profiles;
   const missionsHook = useVaultSecretMissions(vaultRef, profilesRef);
   const { secretMissions, resetSecretMissions: resetMissions } = missionsHook;
+
+  // Jardin familial — contenu brut du fichier partagé (Phase 26)
+  const [gardenRaw, setGardenRaw] = useState<string>('');
 
   // ─── Hooks domaine ─────────────────────────────────────────────────────────
   const {
@@ -1067,6 +1073,9 @@ export function useVaultInternal(): VaultState {
 
         // [20] Missions secrètes
         vault.readFile(SECRET_MISSIONS_FILE).then((c) => parseSecretMissions(c)).catch(() => [] as Task[]),
+
+        // [21] Village garden — fichier partagé
+        vault.readFile(VILLAGE_FILE).catch(() => ''),
       ]);
 
       // Apply results — use helper to extract settled values
@@ -1141,6 +1150,7 @@ export function useVaultInternal(): VaultState {
       setMoods(val(results[18], []));
       setSkillTrees(val(results[19], []));
       missionsHook.setSecretMissions(val(results[20], []));
+      setGardenRaw(val(results[21], '') as string);
 
       // Mettre à jour les widgets iOS
       refreshWidget(val(results[4], []), rdvResult, tasksResult);
@@ -1627,6 +1637,8 @@ export function useVaultInternal(): VaultState {
     setCompanion,
     unlockCompanion,
     dietary: dietaryHook,
+    gardenRaw,
+    setGardenRaw,
   }), [
     // State values (déclenchent un re-render quand ils changent)
     vaultPath, isLoading, error, tasks, courses, stock, meals,
@@ -1635,7 +1647,7 @@ export function useVaultInternal(): VaultState {
     recipes, ageUpgrades, budgetState, routines,
     healthRecords, defis, questsHook.familyQuests, questsHook.unlockedRecipes, gratitudeDays, wishlistItems, journalStats, anniversaries,
     notesHook.notes,
-    quotes, moods, skillTrees, secretMissions,
+    quotes, moods, skillTrees, secretMissions, gardenRaw,
     // Callbacks (stables grâce à useCallback)
     refresh, setVaultPath, saveNotifPrefs, updateMeal, loadMealsForWeek,
     addPhoto, getPhotoUri,
