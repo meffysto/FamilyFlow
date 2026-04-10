@@ -445,6 +445,7 @@ export default function TreeScreen() {
   }, [profile?.id, receiveGifts]);
 
   const [isAppActive, setIsAppActive] = useState(true);
+  const [isScreenFocused, setIsScreenFocused] = useState(true);
   useEffect(() => {
     checkPendingGifts();
     const sub = AppState.addEventListener('change', (state) => {
@@ -454,9 +455,15 @@ export default function TreeScreen() {
     return () => sub.remove();
   }, [checkPendingGifts]);
 
+  // Pause animations quand l'onglet n'est pas visible
   useFocusEffect(useCallback(() => {
+    setIsScreenFocused(true);
     checkPendingGifts();
+    return () => setIsScreenFocused(false);
   }, [checkPendingGifts]));
+
+  // Combinaison : pauser si app en background OU onglet pas visible
+  const animationsPaused = !isAppActive || !isScreenFocused;
 
   useEffect(() => {
     if (!profile?.id) return;
@@ -1809,7 +1816,7 @@ export default function TreeScreen() {
               onRepairWeed={isOwnTree ? handleRepairWeed : undefined}
               onRepairPest={isOwnTree ? handleRepairPest : undefined}
               onRepairFence={isOwnTree ? handleRepairFence : undefined}
-              paused={activeFarmTutorialStep !== null || !isAppActive}
+              paused={activeFarmTutorialStep !== null || animationsPaused}
             />
 
             {/* Phase 18-04 : anchors invisibles calqués sur les coordonnées exactes
@@ -1865,6 +1872,7 @@ export default function TreeScreen() {
                   plantedCropYs={plantedCropYs}
                   builtBuildingYs={builtBuildingYs}
                   hasLake={stageIdx >= 1}
+                  paused={animationsPaused}
                 />
               </View>
             )}
@@ -1927,12 +1935,13 @@ export default function TreeScreen() {
               <SeasonalParticles
                 season={season}
                 containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60}
+                paused={animationsPaused}
               />
             </View>
 
             {/* Couche ambiance : particules horaires + tint */}
             <View style={{ ...StyleSheet.absoluteFillObject, zIndex: 5 }} pointerEvents="none">
-              <AmbientParticles containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60} />
+              <AmbientParticles containerHeight={DIORAMA_HEIGHT_BY_STAGE[stageIdx] ?? SCREEN_H * 0.60} paused={animationsPaused} />
             </View>
 
             {/* Harvest Burst animation */}
@@ -1967,7 +1976,7 @@ export default function TreeScreen() {
                 companionMood={companionMood}
                 companionMessage={companionMessage}
                 onCompanionTap={handleCompanionTap}
-                paused={!isAppActive}
+                paused={animationsPaused}
               />
             </View>
 

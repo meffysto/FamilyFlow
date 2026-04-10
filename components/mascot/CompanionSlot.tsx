@@ -432,6 +432,7 @@ interface CompanionSlotProps {
   plantedCropYs?: number[];         // positions Y des rangées avec cultures plantées
   builtBuildingYs?: number[];       // positions Y des bâtiments construits
   hasLake?: boolean;                // true si le lac est visible (stade >= pousse)
+  paused?: boolean;                 // stopper animations quand app en background
 }
 
 // ── Composant ─────────────────────────────────────────
@@ -449,6 +450,7 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   plantedCropYs = [],
   builtBuildingYs = [],
   hasLake = true,
+  paused = false,
 }: CompanionSlotProps) {
   const { colors } = useThemeColors();
   const [frameIdx, setFrameIdx] = useState(0);
@@ -468,21 +470,23 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   const posY = useSharedValue(0);
 
   // Frame swap idle — plus rapide en marchant (300ms) qu'au repos (800ms)
+  // Stoppé quand paused (app en background)
   useEffect(() => {
+    if (paused) return;
     const interval = setInterval(() => {
       setFrameIdx(f => (f + 1) % 2);
     }, isWalking ? 300 : 800);
     return () => clearInterval(interval);
-  }, [isWalking]);
+  }, [isWalking, paused]);
 
   // Walk frame cycle (pour les sprites de marche)
   useEffect(() => {
-    if (!isWalking) { setWalkFrameIdx(0); return; }
+    if (paused || !isWalking) { setWalkFrameIdx(0); return; }
     const interval = setInterval(() => {
       setWalkFrameIdx(f => (f + 1) % 24);
     }, 150);
     return () => clearInterval(interval);
-  }, [isWalking]);
+  }, [isWalking, paused]);
 
   // Message de récolte autonome (pas le message IA — celui-ci vient du compagnon lui-même)
   const [harvestHint, setHarvestHint] = useState<string | null>(null);
@@ -563,7 +567,9 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   }, [plantedCropYs, builtBuildingYs, hasLake]);
 
   // Patrouille séquentielle — suit la route active en boucle
+  // Stoppée quand paused (app en background) — reprend au retour
   useEffect(() => {
+    if (paused) return;
     let mounted = true;
     const timeouts: ReturnType<typeof setTimeout>[] = [];
     let routeIdx = 0;
@@ -644,7 +650,7 @@ export const CompanionSlot = React.memo(function CompanionSlot({
       mounted = false;
       timeouts.forEach(t => clearTimeout(t));
     };
-  }, [containerWidth, containerHeight, activeRoute]);
+  }, [containerWidth, containerHeight, activeRoute, paused]);
 
   // Animer la bulle de message ou harvest hint
   useEffect(() => {

@@ -31,6 +31,7 @@ import { getTimeSlot, AMBIENT_CONFIGS } from '../../lib/mascot/ambiance';
 interface SeasonalParticlesProps {
   season: Season;
   containerHeight: number;
+  paused?: boolean;
 }
 
 interface SeasonalParticleItemProps {
@@ -155,7 +156,7 @@ function SeasonalParticleItem({ config, index, containerHeight, containerWidth }
   );
 }
 
-export function SeasonalParticles({ season, containerHeight }: SeasonalParticlesProps) {
+export function SeasonalParticles({ season, containerHeight, paused = false }: SeasonalParticlesProps) {
   const reducedMotion = useReducedMotion();
 
   // Largeur approximative — même convention que AmbientParticles
@@ -171,7 +172,7 @@ export function SeasonalParticles({ season, containerHeight }: SeasonalParticles
     return ambientActive ? Math.ceil(config.count / 2) : config.count;
   }, [config.count]);
 
-  if (reducedMotion) return null;
+  if (reducedMotion || paused) return null;
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">

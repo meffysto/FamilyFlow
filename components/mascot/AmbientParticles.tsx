@@ -30,6 +30,7 @@ import { getTimeSlot, AMBIENT_CONFIGS, type AmbiantConfig } from '../../lib/masc
 
 interface AmbientParticlesProps {
   containerHeight: number;
+  paused?: boolean;
 }
 
 interface ParticleProps {
@@ -176,7 +177,7 @@ function AmbientParticle({ config, index, containerHeight, containerWidth }: Par
   );
 }
 
-export function AmbientParticles({ containerHeight }: AmbientParticlesProps) {
+export function AmbientParticles({ containerHeight, paused = false }: AmbientParticlesProps) {
   const [timeSlot, setTimeSlot] = useState(() => getTimeSlot());
   const config = AMBIENT_CONFIGS[timeSlot];
   const reducedMotion = useReducedMotion();
@@ -185,13 +186,15 @@ export function AmbientParticles({ containerHeight }: AmbientParticlesProps) {
   const containerWidth = 390;
 
   // Re-polling toutes les 60 secondes pour detecter les changements de slot horaire
+  // Désactivé quand l'app est en background (paused)
   useEffect(() => {
+    if (paused) return;
     const interval = setInterval(() => {
       const newSlot = getTimeSlot();
       setTimeSlot(prev => prev === newSlot ? prev : newSlot);
     }, 60_000);
     return () => clearInterval(interval);
-  }, []);
+  }, [paused]);
 
   // Shared values pour l'overlay anime (R, G, B, A)
   const overlayR = useSharedValue(0);
@@ -228,8 +231,8 @@ export function AmbientParticles({ containerHeight }: AmbientParticlesProps) {
       {/* Tint colore anime — toujours rendu, opacite 0 pour le slot jour */}
       <Animated.View style={[StyleSheet.absoluteFill, overlayAnimStyle]} />
 
-      {/* Particules animees — desactivees si Reduce Motion ou slot jour */}
-      {!reducedMotion && config !== null &&
+      {/* Particules animees — desactivees si Reduce Motion, slot jour ou paused */}
+      {!reducedMotion && !paused && config !== null &&
         Array.from({ length: config.particleCount }).map((_, i) => (
           <AmbientParticle
             key={`ap-${i}`}
