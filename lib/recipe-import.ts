@@ -594,35 +594,53 @@ export async function importRecipeFromPhoto(
     mediaTypes: ImagePicker.MediaTypeOptions.Images,
     quality: 0.8,
     allowsEditing: false,
+    allowsMultipleSelection: true,
+    selectionLimit: 5,
   });
 
-  if (result.canceled || !result.assets?.[0]) return null;
-  const asset = result.assets[0];
+  if (result.canceled || !result.assets?.length) return null;
+  const assets = result.assets;
 
-  let optimizedUri: string | null = null;
+  const optimizedUris: string[] = [];
   try {
-    // 2. Optimiser (HEIC→JPEG + redimensionner)
-    onStatus?.('Optimisation de l\'image…');
+    // 2. Optimiser chaque image (HEIC→JPEG + resize)
+    onStatus?.(`Optimisation de ${assets.length} image${assets.length > 1 ? 's' : ''}…`);
     const maxWidth = 1568;
-    const actions: ImageManipulator.Action[] = [];
-    if ((asset.width ?? 0) > maxWidth) {
-      actions.push({ resize: { width: maxWidth } });
+    const base64Images: string[] = [];
+
+    for (const asset of assets) {
+      const actions: ImageManipulator.Action[] = [];
+      if ((asset.width ?? 0) > maxWidth) {
+        actions.push({ resize: { width: maxWidth } });
+      }
+      const manipulated = await ImageManipulator.manipulateAsync(asset.uri, actions, {
+        compress: 0.8,
+        format: ImageManipulator.SaveFormat.JPEG,
+      });
+      optimizedUris.push(manipulated.uri);
+
+      const base64 = await FileSystem.readAsStringAsync(manipulated.uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      base64Images.push(base64);
     }
-    const manipulated = await ImageManipulator.manipulateAsync(asset.uri, actions, {
-      compress: 0.8,
-      format: ImageManipulator.SaveFormat.JPEG,
-    });
-    optimizedUri = manipulated.uri;
 
-    // 3. Convertir en base64
-    const base64 = await FileSystem.readAsStringAsync(optimizedUri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
+    if (__DEV__) console.log('[recipe-import] Photos base64 prêts:', base64Images.length, 'images, total:', Math.round(base64Images.reduce((s, b) => s + b.length, 0) / 1024), 'KB');
 
-    if (__DEV__) console.log('[recipe-import] Photo base64 prêt, taille:', Math.round(base64.length / 1024), 'KB');
+    // 3. Construire les content blocks pour Claude Vision
+    onStatus?.('Extraction de la recette…');
+    const imageBlocks = base64Images.map(b64 => ({
+      type: 'image' as const,
+      source: { type: 'base64' as const, media_type: 'image/jpeg' as const, data: b64 },
+    }));
+
+    const textPrompt = base64Images.length > 1
+      ? `Ces ${base64Images.length} photos montrent différentes parties d'une même recette (ingrédients, étapes, etc.). Combine toutes les informations en un seul fichier .cook complet.`
+      : 'Extrais la recette de cette image et convertis-la en fichier .cook.';
+
+    const content = [...imageBlocks, { type: 'text' as const, text: textPrompt }];
 
     // 4. Envoyer à Claude Vision
-    onStatus?.('Extraction de la recette…');
     const response = await fetch(AI_API_URL, {
       method: 'POST',
       headers: {
@@ -635,19 +653,7 @@ export async function importRecipeFromPhoto(
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 2048,
         system: COOK_SYSTEM_PROMPT,
-        messages: [{
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: { type: 'base64', media_type: 'image/jpeg', data: base64 },
-            },
-            {
-              type: 'text',
-              text: 'Extrais la recette de cette image et convertis-la en fichier .cook.',
-            },
-          ],
-        }],
+        messages: [{ role: 'user', content }],
       }),
     });
 
@@ -661,7 +667,9 @@ export async function importRecipeFromPhoto(
     const cookContent = (data.content?.[0]?.text ?? '').trim();
 
     if (!cookContent || cookContent === 'NOT_A_RECIPE') {
-      throw new Error('L\'image ne semble pas contenir une recette.');
+      throw new Error(base64Images.length > 1
+        ? 'Les images ne semblent pas contenir une recette.'
+        : 'L\'image ne semble pas contenir une recette.');
     }
 
     const titleMatch = cookContent.match(/^>> title:\s*(.+)/m);
@@ -669,8 +677,9 @@ export async function importRecipeFromPhoto(
 
     return { type: 'cook', data: { cookContent, title } };
   } finally {
-    if (optimizedUri) {
-      FileSystem.deleteAsync(optimizedUri, { idempotent: true }).catch(() => {});
+    // Nettoyer TOUS les fichiers temporaires
+    for (const uri of optimizedUris) {
+      FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {});
     }
   }
 }
