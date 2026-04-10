@@ -187,7 +187,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 26-01-PLAN.md — Cablage useVault.ts (gardenRaw) + FarmProfileData village_claimed_week
+- [x] 26-01-PLAN.md — Cablage useVault.ts (gardenRaw) + FarmProfileData village_claimed_week
 - [ ] 26-02-PLAN.md — Hook domaine useGarden.ts complet (generation objectif, contributions, claim)
 
 ### Phase 27: Écran Village + composants
@@ -230,7 +230,7 @@ Plans:
 | 23. Musée des effets | v1.3 | 2/2 | Complete | 2026-04-10 |
 | 24. Compagnon étendu | v1.3 | 2/2 | Complete | 2026-04-10 |
 | 25. Fondation données village | v1.4 | 2/2 | Complete    | 2026-04-10 |
-| 26. Hook domaine jardin | v1.4 | 0/? | Not started | - |
+| 26. Hook domaine jardin | v1.4 | 1/2 | In Progress|  |
 | 27. Écran Village + composants | v1.4 | 0/? | Not started | - |
 | 28. Portail + câblage contributions | v1.4 | 0/? | Not started | - |
 

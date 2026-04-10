@@ -13,7 +13,7 @@ Requirements pour le milestone Jardin Familial (MVP). Chaque requirement mappe �
 
 - [x] **DATA-01**: Le système persiste l'état du village dans un fichier Markdown partagé (`village.md`) compatible Obsidian, avec parser bidirectionnel
 - [x] **DATA-02**: Les contributions sont stockées en append-only log (timestamp, profileId, type, montant) pour éviter les corruptions iCloud
-- [ ] **DATA-03**: Un hook domaine isolé `useGarden.ts` gère toute la logique village (pas d'ajout dans useVault.ts)
+- [x] **DATA-03**: Un hook domaine isolé `useGarden.ts` gère toute la logique village (pas d'ajout dans useVault.ts)
 - [x] **DATA-04**: Les IDs de la grille village sont namespacés (`village_c0`, `village_b0`) pour éviter les collisions avec la ferme perso
 
 ### Carte & Navigation
@@ -35,7 +35,7 @@ Requirements pour le milestone Jardin Familial (MVP). Chaque requirement mappe �
 - [ ] **OBJ-02**: Une barre de progression affiche l'avancement collectif vers l'objectif de la semaine
 - [ ] **OBJ-03**: Quand l'objectif est atteint, tous les profils reçoivent un bonus in-game (XP + item cosmétique)
 - [ ] **OBJ-04**: La récompense inclut une suggestion d'activité familiale IRL (liste curatée, pondérée par saison)
-- [ ] **OBJ-05**: Un flag partagé + flag per-profil empêchent le double-claim de récompense
+- [x] **OBJ-05**: Un flag partagé + flag per-profil empêchent le double-claim de récompense
 
 ### Historique
 
@@ -71,7 +71,7 @@ Déféré au prochain milestone. Trackés mais pas dans le roadmap actuel.
 |-------------|-------|--------|
 | DATA-01 | Phase 25 | Complete |
 | DATA-02 | Phase 25 | Complete |
-| DATA-03 | Phase 26 | Pending |
+| DATA-03 | Phase 26 | Complete |
 | DATA-04 | Phase 25 | Complete |
 | MAP-01 | Phase 27 | Pending |
 | MAP-02 | Phase 25 | Complete |
@@ -84,7 +84,7 @@ Déféré au prochain milestone. Trackés mais pas dans le roadmap actuel.
 | OBJ-02 | Phase 27 | Pending |
 | OBJ-03 | Phase 28 | Pending |
 | OBJ-04 | Phase 28 | Pending |
-| OBJ-05 | Phase 26 | Pending |
+| OBJ-05 | Phase 26 | Complete |
 | HIST-01 | Phase 27 | Pending |
 | HIST-02 | Phase 27 | Pending |
 

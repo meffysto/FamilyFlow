@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Jardin Familial
-status: "Phase 25 complete — executing Phase 26"
-last_updated: "2026-04-10T18:30:00.000Z"
-last_activity: "2026-04-10 - Phase 25 fondation données village complete + quick task 260410-rie"
+status: executing
+last_updated: "2026-04-10T19:02:02.951Z"
+last_activity: 2026-04-10
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 4
+  completed_plans: 3
   percent: 0
 ---
 
@@ -20,19 +20,19 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 25 — fondation-donn-es-village
+**Current focus:** Phase 26 — hook-domaine-jardin
 
 ## Current Position
 
-Phase: 26
-Plan: Not started
+Phase: 26 (hook-domaine-jardin) — EXECUTING
+Plan: 2 of 2
 Milestone: v1.4 Jardin Familial (MVP)
 Last shipped: v1.3 Seed (2026-04-10)
-Last activity: 2026-04-10 - Phase 25 complete + quick task 260410-rie
+Last activity: 2026-04-10
 
 Progress: [░░░░░░░░░░] 0%
 
-Status: Phase complete — ready for verification
+Status: Ready to execute
 
 ### Quick Tasks Completed
 
@@ -117,6 +117,7 @@ Status: Phase complete — ready for verification
 | Phase 24-compagnon-tendu-seed-003-lite P02 | 8min | 2 tasks | 5 files |
 | Phase 25-fondation-donn-es-village P01 | 3min | 2 tasks | 5 files |
 | Phase 25 P02 | 2min | 1 tasks | 2 files |
+| Phase 26-hook-domaine-jardin P01 | 5min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -196,6 +197,8 @@ Recent decisions affecting current work:
 - [Phase 25-01]: appendContribution insere avant la prochaine section ## — evite l'append en fin de fichier (Pitfall 4)
 - [Phase 25-01]: VILLAGE_GRID IDs prefixes village_ — evite collisions avec ferme perso lors transition portail
 - [Phase 25]: gray-matter retourne les dates YAML comme objets Date — parseGardenFile normalise via instanceof Date + toISOString().slice(0,10)
+- [Phase 26-01]: gardenRaw exposé comme string brute dans VaultState — useGarden.ts (Plan 02) fait le parse lui-même
+- [Phase 26-01]: village_claimed_week persisté dans gami-{id}.md (per-profil) — distinct du flag partagé dans jardin-familial.md
 
 ### Todos
 
@@ -207,5 +210,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-10T18:30:00.000Z
+Last session: 2026-04-10T19:02:02.948Z
 Next: Plan and execute Phase 25 (Fondation données village)
