@@ -43,13 +43,18 @@ created: 2026-04-11
 |-------|-------|----------------|
 | `Spacing.xs` | 4px | Gap icône-label dans le toast contribution |
 | `Spacing.md` | 8px | Padding interne badge contribution, séparateurs feed |
-| `Spacing.xl` | 12px | Padding interne carte récompense collective |
 | `Spacing['2xl']` | 16px | Padding horizontal écran village, margin carte activité IRL |
-| `Spacing['3xl']` | 20px | Padding modal récompense |
 | `Spacing['4xl']` | 24px | Padding safe area, espacement sections |
 | `Spacing['5xl']` | 32px | Espacement section majeure (entre carte objectif et feed) |
 
-Exceptions :
+### Exceptions — tokens hors échelle standard {4, 8, 16, 24, 32, 48, 64}
+
+| Token | Value | Justification |
+|-------|-------|---------------|
+| `Spacing.xl` | 12px | Tokens pré-existants du projet (`constants/spacing.ts`) — échelle 4px établie, non modifiable. Utilisé pour : padding interne carte récompense collective. |
+| `Spacing['3xl']` | 20px | Tokens pré-existants du projet (`constants/spacing.ts`) — échelle 4px établie, non modifiable. Utilisé pour : padding modal récompense. |
+
+Exceptions supplémentaires :
 - Portail sprite : taille du sprite dictée par la grille TileMapRenderer (cellule existante, pas de token custom)
 - Touch target minimum 44×44pt pour le portail interactif (conformité iOS HIG) — implémenté via `hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}` si le sprite est inférieur à 44pt
 
@@ -68,7 +73,9 @@ Tokens existants `FontSize.*` + `FontWeight.*` + `LineHeight.*` — pas de valeu
 | Titre section / carte récompense | `FontSize.heading` | 18px | `FontWeight.semibold` (600) | `LineHeight.title` (28) |
 | Display récompense collective | `FontSize.title` | 20px | `FontWeight.semibold` (600) | `LineHeight.title` (28) |
 
-Règle : exactement **2 poids** utilisés dans cette phase — `normal (400)` pour le corps, `semibold (600)` pour les titres et labels d'action. Bold (700) réservé aux chiffres de progression si déjà utilisé dans village.tsx.
+**Justification 14px / 15px :** `FontSize.sm` (14px) est réservé aux éléments éphémères à faible hiérarchie (toast, badges discrets). `FontSize.body` (15px) est le texte de lecture principal — cartes, feed. Les deux tokens sont pré-existants dans `constants/typography.ts` et correspondent à des rôles distincts ; la différence de 1px est intentionnelle dans l'échelle du projet (sm/body/heading/title). Pas de consolidation — cela supprimerait un niveau de hiérarchie établi.
+
+Règle : exactement **2 poids** utilisés dans cette phase — `normal (400)` pour le corps, `semibold (600)` pour les titres et labels d'action. Aucune autre graisse autorisée dans cette phase.
 
 > Source : `constants/typography.ts` + patterns observés dans `village.tsx`.
 
@@ -94,6 +101,17 @@ Le projet utilise `useThemeColors()` pour toutes les couleurs — aucun hex hard
 > Justification `catJeux` pour le portail : le FAB temporaire utilisait déjà `colors.catJeux` (ligne 2033 de `tree.tsx`). Cohérence avec l'existant.
 
 > Source : `constants/colors.ts` + `app/(tabs)/village.tsx` ligne 45 + `app/(tabs)/tree.tsx` ligne 2033 + CLAUDE.md convention.
+
+---
+
+## Focal Points
+
+Chaque écran modifié dans cette phase doit avoir un point focal unique et non ambigu — l'élément que l'œil atteint en premier à l'ouverture de l'écran.
+
+| Écran | Point focal | Justification |
+|-------|-------------|---------------|
+| `tree.tsx` (ferme) | Glow animé du `PortalSprite` | Le seul élément animé en boucle dans la tilemap ferme — attire naturellement l'attention et signale l'interactivité. |
+| `village.tsx` | CTA `Récupérer la récompense` dans `RewardCard` (quand objectif atteint) | Carte visuellement distincte (fond `colors.success`) positionnée après la barre de progression, premier élément actionnable. Quand l'objectif n'est pas atteint, le point focal reste la barre de progression (comportement existant, non modifié). |
 
 ---
 
@@ -138,7 +156,7 @@ Langue : **français** (per CLAUDE.md).
 | CTA primaire réclamer récompense | `Récupérer la récompense` |
 | Titre carte activité IRL | `Activité famille cette semaine` |
 | Corps carte activité IRL | `[suggestion activée par saison, ex : "Pique-nique au parc 🌳"]` |
-| Dismiss carte activité | `Fermer` (bouton texte secondaire, pas de confirmation) |
+| Dismiss carte activité | `Fermer la carte` (bouton texte secondaire, pas de confirmation) |
 | Objectif atteint — titre | `Objectif atteint ! 🎉` |
 | Objectif atteint — corps | `Toute la famille a contribué. Récupérez votre récompense collective.` |
 | Bonus XP reçu — confirmation | `+[N] XP pour tous les membres` |
@@ -184,9 +202,9 @@ Langue : **français** (per CLAUDE.md).
 
 | Composant | Action | Notes |
 |-----------|--------|-------|
-| `PortalSprite` (inline dans `tree.tsx`) | Créer | Sprite pixel art + glow Reanimated. Peut rester inline si < 80 lignes. |
+| `PortalSprite` (inline dans `tree.tsx`) | Créer | Sprite pixel art + glow Reanimated. `accessibilityLabel="Portail vers le village"` obligatoire. Peut rester inline si < 80 lignes. |
 | `ContributionToast` | Créer ou réutiliser ToastProvider | Vérifier si `ToastProvider` existant suffit pour afficher `+1 Village 🏡`. |
-| `RewardCard` (inline dans `village.tsx`) | Créer | Carte activité IRL + CTA récompense, conditionnelle sur `isGoalReached`. |
+| `RewardCard` (inline dans `village.tsx`) | Créer | Carte activité IRL + CTA récompense, conditionnelle sur `isGoalReached`. Point focal de `village.tsx` quand objectif atteint. |
 | `tree.tsx` | Modifier | Remplacer FAB `villageFAB` (ligne 2031) par `PortalSprite`. |
 | `village.tsx` | Modifier | Ajouter `RewardCard` après barre progression, conditionnelle. |
 | `hooks/useFarm.ts` | Modifier | Injecter `addContribution('harvest', profileId)` après `harvestCrop()` ligne ~287. |
@@ -235,3 +253,9 @@ Langue : **français** (per CLAUDE.md).
 | Langue française | CLAUDE.md |
 | `catJeux` pour portail | `tree.tsx` ligne 2033 (cohérence FAB existant) |
 | Tokens spacing/typo/couleur | `constants/` lus directement |
+| `Spacing.xl` / `Spacing['3xl']` hors échelle standard | Tokens pré-existants `constants/spacing.ts` — justifiés en section Exceptions |
+| Dismiss copy `Fermer la carte` | Checker flag D1 — label plus explicite qu'un mot seul |
+| Focal point déclaré par écran | Checker flag D2 — tree.tsx: portail glow, village.tsx: RewardCard CTA |
+| `accessibilityLabel` PortalSprite | Checker flag D2 — conformité accessibilité iOS |
+| Justification 14px/15px | Checker flag D4 — rôles distincts sm/body dans échelle pré-existante |
+| 2 poids stricts (400/600), aucun autre | Checker flag D4 — suppression mention conditionnelle bold 700 |
