@@ -19,7 +19,6 @@
 //
 // Module pur : zéro import hook/context (per D-03c).
 
-import matter from 'gray-matter';
 import type { VillageData, VillageContribution, VillageWeekRecord } from './types';
 import type { VaultManager } from '../vault';
 
@@ -48,21 +47,28 @@ export function parseGardenFile(content: string): VillageData {
     };
   }
 
-  // Utiliser gray-matter pour le frontmatter YAML
-  const { data: fm, content: body } = matter(content);
+  // Parser le frontmatter YAML manuellement — gray-matter utilise Buffer (Node.js)
+  // qui n'existe pas dans le runtime React Native (crash Property 'Buffer' doesn't exist)
+  let body = content;
+  const fm: Record<string, string> = {};
 
-  const version = typeof fm.version === 'number' ? fm.version : 1;
-  // gray-matter peut retourner les dates YAML sous forme d'objet Date — normaliser en string
-  const rawCreated = fm.created;
-  const createdAt = rawCreated instanceof Date
-    ? rawCreated.toISOString().slice(0, 10)
-    : (typeof rawCreated === 'string' ? rawCreated : '');
-  const rawWeekStart = fm.current_week_start;
-  const currentWeekStart = rawWeekStart instanceof Date
-    ? rawWeekStart.toISOString().slice(0, 10)
-    : (typeof rawWeekStart === 'string' ? rawWeekStart : '');
-  const currentThemeIndex = typeof fm.current_theme_index === 'number' ? fm.current_theme_index : 0;
-  const rewardClaimed = typeof fm.reward_claimed === 'boolean' ? fm.reward_claimed : false;
+  const fmMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (fmMatch) {
+    body = content.slice(fmMatch[0].length);
+    for (const line of fmMatch[1].split('\n')) {
+      const idx = line.indexOf(':');
+      if (idx === -1) continue;
+      const key = line.slice(0, idx).trim();
+      const val = line.slice(idx + 1).trim();
+      if (key) fm[key] = val;
+    }
+  }
+
+  const version = fm.version ? parseInt(fm.version, 10) : 1;
+  const createdAt = fm.created ?? '';
+  const currentWeekStart = fm.current_week_start ?? '';
+  const currentThemeIndex = fm.current_theme_index ? parseInt(fm.current_theme_index, 10) : 0;
+  const rewardClaimed = fm.reward_claimed === 'true';
 
   const contributions: VillageContribution[] = [];
   const pastWeeks: VillageWeekRecord[] = [];

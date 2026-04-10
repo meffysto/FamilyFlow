@@ -40,7 +40,7 @@ import type { VillageContribution } from '../../lib/village/types';
 // ── Constantes module ──────────────────────────────────────────────────────
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
-const MAP_HEIGHT = Math.round(SCREEN_H * 0.42);
+const MAP_HEIGHT = Math.round(SCREEN_H * 0.75);
 const GOLD = '#FFD700';
 const SPRING_FEED = { damping: 20, stiffness: 200 } as const;
 const FEED_LIMIT = 5;
@@ -114,7 +114,7 @@ const FeedItem = React.memo(function FeedItem({
 export default function VillageScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors } = useThemeColors();
+  const { colors, isDark } = useThemeColors();
   const { activeProfile, profiles } = useVault();
   const {
     gardenData,
@@ -196,16 +196,19 @@ export default function VillageScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
-      {/* ── Header fixe ── */}
+      {/* ── Header flottant par-dessus la carte (comme HUD ferme dans tree.tsx) ── */}
       <View
         style={[
           styles.header,
-          { paddingTop: insets.top, backgroundColor: colors.card, borderBottomColor: colors.border },
+          {
+            paddingTop: insets.top,
+            backgroundColor: isDark ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.7)',
+          },
         ]}
       >
         <TouchableOpacity
           style={styles.backBtn}
-          onPress={() => router.back()}
+          onPress={() => router.replace('/(tabs)/tree' as any)}
           accessibilityLabel="Retour"
           accessibilityRole="button"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -216,29 +219,28 @@ export default function VillageScreen() {
         <View style={styles.headerSpacer} />
       </View>
 
-      {/* ── Carte TileMap village ── */}
-      <View
-        style={[styles.mapContainer, { height: MAP_HEIGHT }]}
-        onLayout={handleMapLayout}
-      >
-        <TileMapRenderer
-          treeStage="arbre"
-          containerWidth={mapSize.width}
-          containerHeight={mapSize.height}
-          season={season}
-          mode="village"
-        />
-      </View>
-
-      {/* ── Contenu défilable ── */}
+      {/* ── Scroll unique (pattern tree.tsx) : carte + sections dans le même flux ── */}
       <ScrollView
-        style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
           { paddingBottom: insets.bottom + Spacing['5xl'] },
         ]}
         showsVerticalScrollIndicator={false}
       >
+        {/* ── Carte TileMap village ── */}
+        <View
+          style={[styles.mapContainer, { height: MAP_HEIGHT, marginHorizontal: -Spacing['2xl'] }]}
+          onLayout={handleMapLayout}
+        >
+          <TileMapRenderer
+            treeStage="arbre"
+            containerWidth={SCREEN_W}
+            containerHeight={MAP_HEIGHT}
+            season={season}
+            mode="village"
+          />
+        </View>
+
         {isLoading || !gardenData ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.success} />
@@ -420,48 +422,55 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  // Header
+  // Header flottant (comme HUD ferme)
   header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
     flexDirection: 'row',
     alignItems: 'flex-end',
     paddingHorizontal: Spacing['2xl'],
-    paddingBottom: Spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    minHeight: 44,
+    paddingBottom: Spacing.xs,
+    minHeight: 32,
   },
   backBtn: {
-    width: 44,
-    height: 44,
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
   },
   backArrow: {
-    fontSize: FontSize.titleLg,
+    fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
-    marginTop: -2,
   },
   headerTitle: {
     flex: 1,
     textAlign: 'center',
-    fontSize: FontSize.heading,
+    fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
   },
   headerSpacer: {
-    width: 44,
+    width: 32,
   },
 
-  // Carte tilemap
+  // Carte tilemap (dans le flux scroll, comme tree.tsx)
   mapContainer: {
-    width: '100%',
+    width: SCREEN_W,
     overflow: 'hidden',
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
   },
 
   // ScrollView
-  scrollView: {
-    flex: 1,
-  },
   scrollContent: {
-    padding: Spacing['2xl'],
+    paddingHorizontal: Spacing['2xl'],
     gap: Spacing['2xl'],
   },
 
