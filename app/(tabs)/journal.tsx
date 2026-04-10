@@ -39,7 +39,7 @@ import { useTranslation } from 'react-i18next';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type EntryType = 'Biberon' | 'Couche' | 'Sieste' | 'Observation' | 'Médicament';
+type EntryType = 'Biberon' | 'Couche' | 'Sieste' | 'Observation' | 'Médicament' | 'SommeilAdulte' | 'SymptomeAdulte';
 
 interface FieldConfig {
   key: string;
@@ -85,6 +85,15 @@ function getFieldConfigs(t: (key: string) => string): Record<EntryType, FieldCon
       { key: 'dose', label: t('journal.fields.dose'), placeholder: t('journal.fields.dosePlaceholder') },
       { key: 'notes', label: t('journal.fields.notes'), placeholder: t('journal.fields.notesPlaceholder') },
     ],
+    SommeilAdulte: [
+      { key: 'coucher', label: 'Coucher', placeholder: 'ex: 22h30' },
+      { key: 'lever', label: 'Lever', placeholder: 'ex: 7h00' },
+      { key: 'qualite', label: 'Qualité (1-5)', placeholder: 'ex: 4', keyboard: 'numeric' as const },
+      { key: 'notes', label: t('journal.fields.notes'), placeholder: t('journal.fields.notesPlaceholder') },
+    ],
+    SymptomeAdulte: [
+      { key: 'text', label: 'Symptôme', placeholder: 'Décrire le symptôme...' },
+    ],
   };
 }
 
@@ -95,6 +104,8 @@ function getEntryMeta(t: (key: string) => string): Record<EntryType, { emoji: st
     Sieste: { emoji: '😴', label: t('journal.entryTypes.nap') },
     Observation: { emoji: '💬', label: t('journal.entryTypes.note') },
     'Médicament': { emoji: '💊', label: t('journal.entryTypes.medication') },
+    SommeilAdulte: { emoji: '😴', label: 'Sommeil' },
+    SymptomeAdulte: { emoji: '🤒', label: 'Symptôme' },
   };
 }
 
@@ -138,6 +149,15 @@ function buildRowFromFields(type: EntryType, fields: Record<string, string>, aut
       return `| ${formatTime(fields.heure?.trim()) || h} | ${fields.medicament?.trim() || ''} | ${fields.dose?.trim() || ''} | ${fields.notes?.trim() || ''} |`;
     case 'Observation':
       return fields.text?.trim() || '';
+    case 'SommeilAdulte':
+      return [
+        `> **Coucher**: ${fields.coucher?.trim() || ''}`,
+        `> **Lever**: ${fields.lever?.trim() || ''}`,
+        `> **Qualité** (1-5): ${fields.qualite?.trim() || ''}`,
+        `> **Notes**: ${fields.notes?.trim() || ''}`,
+      ].join('\n');
+    case 'SymptomeAdulte':
+      return fields.text?.trim() || '';
     default:
       return '';
   }
@@ -150,6 +170,8 @@ function sectionNameForType(type: EntryType): string {
     case 'Sieste': return 'Sommeil';
     case 'Observation': return 'Humeur';
     case 'Médicament': return 'Médicaments';
+    case 'SommeilAdulte': return 'Suivi Sommeil';
+    case 'SymptomeAdulte': return 'Symptômes';
     default: return '';
   }
 }
@@ -168,6 +190,15 @@ function parseRowToFields(type: EntryType, row: string): Record<string, string> 
       return { heure: cells[0] || '', medicament: cells[1] || '', dose: cells[2] || '', notes: cells[3] || '' };
     case 'Observation':
       return { text: row.replace(/^\d+\.\s*/, '').trim() };
+    case 'SommeilAdulte': {
+      const coucher = row.match(/\*\*Coucher\*\*:\s*(.*)/)?.[1]?.trim() || '';
+      const lever = row.match(/\*\*Lever\*\*:\s*(.*)/)?.[1]?.trim() || '';
+      const qualite = row.match(/\*\*Qualité\*\*\s*\(1-5\):\s*(.*)/)?.[1]?.trim() || '';
+      const notes = row.match(/\*\*Notes\*\*:\s*(.*)/)?.[1]?.trim() || '';
+      return { coucher, lever, qualite, notes };
+    }
+    case 'SymptomeAdulte':
+      return { text: row.replace(/^\d+\.\s*/, '').trim() };
     default:
       return {};
   }
@@ -177,6 +208,9 @@ function typeFromHeading(heading: string): EntryType | null {
   const h = heading.toLowerCase();
   if (h.includes('alimentation')) return 'Biberon';
   if (h.includes('couche')) return 'Couche';
+  // Sections adultes grossesse — vérifier avant le mapping générique sommeil
+  if (h.includes('suivi sommeil')) return 'SommeilAdulte';
+  if (h.includes('symptôme') || h.includes('symptome')) return 'SymptomeAdulte';
   if (h.includes('sommeil')) return 'Sieste';
   if (h.includes('humeur') || h.includes('observation')) return 'Observation';
   if (h.includes('dicament') || h.includes('soins')) return 'Médicament';
@@ -614,7 +648,7 @@ export default function JournalScreen() {
                   disabled={!canEdit}
                 >
                   <Text style={[styles.obsNumber, { color: primary }]}>{oi + 1}.</Text>
-                  <MarkdownText style={{ color: colors.textSub }}>{obs.text}</MarkdownText>
+                  <MarkdownText style={{ color: colors.textSub, flex: 1 }}>{obs.text}</MarkdownText>
                   {canEdit && <Text style={styles.editHint}>✏️</Text>}
                 </TouchableOpacity>
               ))
@@ -631,6 +665,78 @@ export default function JournalScreen() {
                 accessibilityRole="button"
               >
                 <Text style={styles.sectionEmojiBtnIcon}>{ENTRY_META.Observation.emoji}</Text>
+                <Text style={[styles.sectionEmojiBtnText, { color: primary }]}>{t('journal.sections.add')}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        );
+      }
+
+      if (entryType === 'SommeilAdulte') {
+        const fields: { label: string; value: string }[] = [];
+        for (const line of sectionLines) {
+          const bqMatch = line.match(/^>\s*\*\*(.+?)\*\*(?:\s*\([^)]*\))?:\s*(.*)/);
+          if (bqMatch) {
+            fields.push({ label: bqMatch[1].trim(), value: bqMatch[2].trim() });
+          }
+        }
+        return (
+          <View key={si} style={[styles.tableSection, { backgroundColor: colors.card }]}>
+            <View style={[styles.sectionHeader, { backgroundColor: colors.cardAlt, borderBottomColor: colors.border }]}>
+              <Text style={[styles.tableSectionTitle, { color: colors.text }]}>{sec.heading}</Text>
+            </View>
+            {fields.length > 0 ? fields.map((f, fi) => (
+              <View key={fi} style={[styles.obsRow, { borderBottomColor: colors.borderLight }, fi % 2 === 1 && { backgroundColor: colors.cardAlt }]}>
+                <Text style={[styles.obsNumber, { color: primary, width: 'auto' as any, minWidth: 70 }]}>{f.label}:</Text>
+                <Text style={{ color: colors.textSub, flex: 1 }}>{f.value || '—'}</Text>
+              </View>
+            )) : (
+              <View style={styles.emptySection}>
+                <Text style={[styles.emptySectionText, { color: colors.textFaint }]}>Aucune donnée sommeil</Text>
+              </View>
+            )}
+          </View>
+        );
+      }
+
+      if (entryType === 'SymptomeAdulte') {
+        const symptomes: { text: string; lineIdx: number }[] = [];
+        for (let i = 0; i < sectionLines.length; i++) {
+          const line = sectionLines[i];
+          const numMatch = line.match(/^(\d+)\.\s*(.*)/);
+          if (numMatch && numMatch[2].trim()) {
+            symptomes.push({ text: numMatch[2].trim(), lineIdx: sec.startIdx + 1 + i });
+          }
+        }
+        return (
+          <View key={si} style={[styles.tableSection, { backgroundColor: colors.card }]}>
+            <View style={[styles.sectionHeader, { backgroundColor: colors.cardAlt, borderBottomColor: colors.border }]}>
+              <Text style={[styles.tableSectionTitle, { color: colors.text }]}>{sec.heading}</Text>
+            </View>
+            {symptomes.length > 0 ? symptomes.map((s, si2) => (
+              <TouchableOpacity
+                key={si2}
+                style={[styles.obsRow, { borderBottomColor: colors.borderLight }, si2 % 2 === 1 && { backgroundColor: colors.cardAlt }]}
+                onPress={() => canEdit && openEditModal('SymptomeAdulte', s.lineIdx, allLines[s.lineIdx])}
+                activeOpacity={canEdit ? 0.6 : 1}
+                disabled={!canEdit}
+              >
+                <Text style={[styles.obsNumber, { color: primary }]}>{si2 + 1}.</Text>
+                <MarkdownText style={{ color: colors.textSub, flex: 1 }}>{s.text}</MarkdownText>
+                {canEdit && <Text style={styles.editHint}>✏️</Text>}
+              </TouchableOpacity>
+            )) : (
+              <View style={styles.emptySection}>
+                <Text style={[styles.emptySectionText, { color: colors.textFaint }]}>Aucun symptôme noté</Text>
+              </View>
+            )}
+            {canEdit && (
+              <TouchableOpacity
+                style={[styles.sectionEmojiBtn, { borderTopColor: colors.borderLight }]}
+                onPress={() => openAddModal('SymptomeAdulte')}
+                accessibilityRole="button"
+              >
+                <Text style={styles.sectionEmojiBtnIcon}>{ENTRY_META.SymptomeAdulte.emoji}</Text>
                 <Text style={[styles.sectionEmojiBtnText, { color: primary }]}>{t('journal.sections.add')}</Text>
               </TouchableOpacity>
             )}
@@ -1019,7 +1125,7 @@ const styles = StyleSheet.create({
   editHintCell: { paddingHorizontal: 4, paddingVertical: 7, fontSize: FontSize.caption, opacity: 0.3 },
 
   obsRow: {
-    flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10,
+    flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: 14, paddingVertical: 10,
     borderBottomWidth: 1, gap: 8,
   },
   obsNumber: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, width: 24 },
