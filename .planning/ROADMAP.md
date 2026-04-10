@@ -203,7 +203,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 27-01-PLAN.md — buildVillageMap() + TileMapRenderer mode village + FAB navigation
+- [x] 27-01-PLAN.md — buildVillageMap() + TileMapRenderer mode village + FAB navigation
 - [ ] 27-02-PLAN.md — Ecran village.tsx complet (objectif, feed, membres, historique)
 
 ### Phase 28: Portail + câblage contributions
@@ -234,7 +234,7 @@ Plans:
 | 24. Compagnon étendu | v1.3 | 2/2 | Complete | 2026-04-10 |
 | 25. Fondation données village | v1.4 | 2/2 | Complete    | 2026-04-10 |
 | 26. Hook domaine jardin | v1.4 | 2/2 | Complete    | 2026-04-10 |
-| 27. Écran Village + composants | v1.4 | 0/2 | Not started | - |
+| 27. Écran Village + composants | v1.4 | 1/2 | In Progress|  |
 | 28. Portail + câblage contributions | v1.4 | 0/? | Not started | - |
 
 ## Archived Milestones

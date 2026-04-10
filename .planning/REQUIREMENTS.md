@@ -18,7 +18,7 @@ Requirements pour le milestone Jardin Familial (MVP). Chaque requirement mappe �
 
 ### Carte & Navigation
 
-- [ ] **MAP-01**: Une carte "Place du Village" avec son propre terrain tilemap (cobblestone dominant, fontaine, étals) est rendue via le TileMapRenderer existant
+- [x] **MAP-01**: Une carte "Place du Village" avec son propre terrain tilemap (cobblestone dominant, fontaine, étals) est rendue via le TileMapRenderer existant
 - [x] **MAP-02**: Une grille village (`village-grid.ts`) définit les positions des éléments interactifs sur la place
 - [ ] **MAP-03**: Un portail interactif dans la scène ferme perso permet de naviguer vers le village avec une transition visuelle
 
@@ -73,7 +73,7 @@ Déféré au prochain milestone. Trackés mais pas dans le roadmap actuel.
 | DATA-02 | Phase 25 | Complete |
 | DATA-03 | Phase 26 | Complete |
 | DATA-04 | Phase 25 | Complete |
-| MAP-01 | Phase 27 | Pending |
+| MAP-01 | Phase 27 | Complete |
 | MAP-02 | Phase 25 | Complete |
 | MAP-03 | Phase 28 | Pending |
 | COOP-01 | Phase 28 | Pending |
