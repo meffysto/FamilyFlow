@@ -134,6 +134,16 @@ const COMPANION_WALK_DOWN: Partial<Record<CompanionSpecies, Partial<Record<Compa
       require('../../assets/garden/animals/chat/bebe/walk_down_5.png'),
       require('../../assets/garden/animals/chat/bebe/walk_down_6.png'),
     ],
+    jeune: [
+      require('../../assets/garden/animals/chat/jeune/walk_down_1.png'),
+      require('../../assets/garden/animals/chat/jeune/walk_down_2.png'),
+      require('../../assets/garden/animals/chat/jeune/walk_down_3.png'),
+      require('../../assets/garden/animals/chat/jeune/walk_down_4.png'),
+      require('../../assets/garden/animals/chat/jeune/walk_down_5.png'),
+      require('../../assets/garden/animals/chat/jeune/walk_down_6.png'),
+      require('../../assets/garden/animals/chat/jeune/walk_down_7.png'),
+      require('../../assets/garden/animals/chat/jeune/walk_down_8.png'),
+    ],
   },
   chien: {
     bebe: [
@@ -143,6 +153,14 @@ const COMPANION_WALK_DOWN: Partial<Record<CompanionSpecies, Partial<Record<Compa
       require('../../assets/garden/animals/chien/bebe/walk_down_4.png'),
       require('../../assets/garden/animals/chien/bebe/walk_down_5.png'),
       require('../../assets/garden/animals/chien/bebe/walk_down_6.png'),
+    ],
+    jeune: [
+      require('../../assets/garden/animals/chien/jeune/walk_down_1.png'),
+      require('../../assets/garden/animals/chien/jeune/walk_down_2.png'),
+      require('../../assets/garden/animals/chien/jeune/walk_down_3.png'),
+      require('../../assets/garden/animals/chien/jeune/walk_down_4.png'),
+      require('../../assets/garden/animals/chien/jeune/walk_down_5.png'),
+      require('../../assets/garden/animals/chien/jeune/walk_down_6.png'),
     ],
   },
   renard: {
@@ -156,6 +174,14 @@ const COMPANION_WALK_DOWN: Partial<Record<CompanionSpecies, Partial<Record<Compa
       require('../../assets/garden/animals/renard/bebe/walk_down_7.png'),
       require('../../assets/garden/animals/renard/bebe/walk_down_8.png'),
     ],
+    jeune: [
+      require('../../assets/garden/animals/renard/jeune/walk_down_1.png'),
+      require('../../assets/garden/animals/renard/jeune/walk_down_2.png'),
+      require('../../assets/garden/animals/renard/jeune/walk_down_3.png'),
+      require('../../assets/garden/animals/renard/jeune/walk_down_4.png'),
+      require('../../assets/garden/animals/renard/jeune/walk_down_5.png'),
+      require('../../assets/garden/animals/renard/jeune/walk_down_6.png'),
+    ],
   },
   lapin: {
     bebe: [
@@ -165,6 +191,28 @@ const COMPANION_WALK_DOWN: Partial<Record<CompanionSpecies, Partial<Record<Compa
       require('../../assets/garden/animals/lapin/bebe/walk_down_4.png'),
       require('../../assets/garden/animals/lapin/bebe/walk_down_5.png'),
       require('../../assets/garden/animals/lapin/bebe/walk_down_6.png'),
+    ],
+    jeune: [
+      require('../../assets/garden/animals/lapin/jeune/walk_down_1.png'),
+      require('../../assets/garden/animals/lapin/jeune/walk_down_2.png'),
+      require('../../assets/garden/animals/lapin/jeune/walk_down_3.png'),
+      require('../../assets/garden/animals/lapin/jeune/walk_down_4.png'),
+      require('../../assets/garden/animals/lapin/jeune/walk_down_5.png'),
+      require('../../assets/garden/animals/lapin/jeune/walk_down_6.png'),
+      require('../../assets/garden/animals/lapin/jeune/walk_down_7.png'),
+      require('../../assets/garden/animals/lapin/jeune/walk_down_8.png'),
+    ],
+  },
+  herisson: {
+    jeune: [
+      require('../../assets/garden/animals/herisson/jeune/walk_down_1.png'),
+      require('../../assets/garden/animals/herisson/jeune/walk_down_2.png'),
+      require('../../assets/garden/animals/herisson/jeune/walk_down_3.png'),
+      require('../../assets/garden/animals/herisson/jeune/walk_down_4.png'),
+      require('../../assets/garden/animals/herisson/jeune/walk_down_5.png'),
+      require('../../assets/garden/animals/herisson/jeune/walk_down_6.png'),
+      require('../../assets/garden/animals/herisson/jeune/walk_down_7.png'),
+      require('../../assets/garden/animals/herisson/jeune/walk_down_8.png'),
     ],
   },
 };
@@ -179,6 +227,16 @@ const COMPANION_WALK_UP: Partial<Record<CompanionSpecies, Partial<Record<Compani
       require('../../assets/garden/animals/chat/bebe/walk_up_5.png'),
       require('../../assets/garden/animals/chat/bebe/walk_up_6.png'),
     ],
+    jeune: [
+      require('../../assets/garden/animals/chat/jeune/walk_up_1.png'),
+      require('../../assets/garden/animals/chat/jeune/walk_up_2.png'),
+      require('../../assets/garden/animals/chat/jeune/walk_up_3.png'),
+      require('../../assets/garden/animals/chat/jeune/walk_up_4.png'),
+      require('../../assets/garden/animals/chat/jeune/walk_up_5.png'),
+      require('../../assets/garden/animals/chat/jeune/walk_up_6.png'),
+      require('../../assets/garden/animals/chat/jeune/walk_up_7.png'),
+      require('../../assets/garden/animals/chat/jeune/walk_up_8.png'),
+    ],
   },
   chien: {
     bebe: [
@@ -188,6 +246,14 @@ const COMPANION_WALK_UP: Partial<Record<CompanionSpecies, Partial<Record<Compani
       require('../../assets/garden/animals/chien/bebe/walk_up_4.png'),
       require('../../assets/garden/animals/chien/bebe/walk_up_5.png'),
       require('../../assets/garden/animals/chien/bebe/walk_up_6.png'),
+    ],
+    jeune: [
+      require('../../assets/garden/animals/chien/jeune/walk_up_1.png'),
+      require('../../assets/garden/animals/chien/jeune/walk_up_2.png'),
+      require('../../assets/garden/animals/chien/jeune/walk_up_3.png'),
+      require('../../assets/garden/animals/chien/jeune/walk_up_4.png'),
+      require('../../assets/garden/animals/chien/jeune/walk_up_5.png'),
+      require('../../assets/garden/animals/chien/jeune/walk_up_6.png'),
     ],
   },
   renard: {
@@ -201,6 +267,14 @@ const COMPANION_WALK_UP: Partial<Record<CompanionSpecies, Partial<Record<Compani
       require('../../assets/garden/animals/renard/bebe/walk_up_7.png'),
       require('../../assets/garden/animals/renard/bebe/walk_up_8.png'),
     ],
+    jeune: [
+      require('../../assets/garden/animals/renard/jeune/walk_up_1.png'),
+      require('../../assets/garden/animals/renard/jeune/walk_up_2.png'),
+      require('../../assets/garden/animals/renard/jeune/walk_up_3.png'),
+      require('../../assets/garden/animals/renard/jeune/walk_up_4.png'),
+      require('../../assets/garden/animals/renard/jeune/walk_up_5.png'),
+      require('../../assets/garden/animals/renard/jeune/walk_up_6.png'),
+    ],
   },
   lapin: {
     bebe: [
@@ -210,6 +284,28 @@ const COMPANION_WALK_UP: Partial<Record<CompanionSpecies, Partial<Record<Compani
       require('../../assets/garden/animals/lapin/bebe/walk_up_4.png'),
       require('../../assets/garden/animals/lapin/bebe/walk_up_5.png'),
       require('../../assets/garden/animals/lapin/bebe/walk_up_6.png'),
+    ],
+    jeune: [
+      require('../../assets/garden/animals/lapin/jeune/walk_up_1.png'),
+      require('../../assets/garden/animals/lapin/jeune/walk_up_2.png'),
+      require('../../assets/garden/animals/lapin/jeune/walk_up_3.png'),
+      require('../../assets/garden/animals/lapin/jeune/walk_up_4.png'),
+      require('../../assets/garden/animals/lapin/jeune/walk_up_5.png'),
+      require('../../assets/garden/animals/lapin/jeune/walk_up_6.png'),
+      require('../../assets/garden/animals/lapin/jeune/walk_up_7.png'),
+      require('../../assets/garden/animals/lapin/jeune/walk_up_8.png'),
+    ],
+  },
+  herisson: {
+    jeune: [
+      require('../../assets/garden/animals/herisson/jeune/walk_up_1.png'),
+      require('../../assets/garden/animals/herisson/jeune/walk_up_2.png'),
+      require('../../assets/garden/animals/herisson/jeune/walk_up_3.png'),
+      require('../../assets/garden/animals/herisson/jeune/walk_up_4.png'),
+      require('../../assets/garden/animals/herisson/jeune/walk_up_5.png'),
+      require('../../assets/garden/animals/herisson/jeune/walk_up_6.png'),
+      require('../../assets/garden/animals/herisson/jeune/walk_up_7.png'),
+      require('../../assets/garden/animals/herisson/jeune/walk_up_8.png'),
     ],
   },
 };
@@ -224,6 +320,16 @@ const COMPANION_WALK_LEFT: Partial<Record<CompanionSpecies, Partial<Record<Compa
       require('../../assets/garden/animals/chat/bebe/walk_left_5.png'),
       require('../../assets/garden/animals/chat/bebe/walk_left_6.png'),
     ],
+    jeune: [
+      require('../../assets/garden/animals/chat/jeune/walk_left_1.png'),
+      require('../../assets/garden/animals/chat/jeune/walk_left_2.png'),
+      require('../../assets/garden/animals/chat/jeune/walk_left_3.png'),
+      require('../../assets/garden/animals/chat/jeune/walk_left_4.png'),
+      require('../../assets/garden/animals/chat/jeune/walk_left_5.png'),
+      require('../../assets/garden/animals/chat/jeune/walk_left_6.png'),
+      require('../../assets/garden/animals/chat/jeune/walk_left_7.png'),
+      require('../../assets/garden/animals/chat/jeune/walk_left_8.png'),
+    ],
   },
   chien: {
     bebe: [
@@ -233,6 +339,14 @@ const COMPANION_WALK_LEFT: Partial<Record<CompanionSpecies, Partial<Record<Compa
       require('../../assets/garden/animals/chien/bebe/walk_left_4.png'),
       require('../../assets/garden/animals/chien/bebe/walk_left_5.png'),
       require('../../assets/garden/animals/chien/bebe/walk_left_6.png'),
+    ],
+    jeune: [
+      require('../../assets/garden/animals/chien/jeune/walk_left_1.png'),
+      require('../../assets/garden/animals/chien/jeune/walk_left_2.png'),
+      require('../../assets/garden/animals/chien/jeune/walk_left_3.png'),
+      require('../../assets/garden/animals/chien/jeune/walk_left_4.png'),
+      require('../../assets/garden/animals/chien/jeune/walk_left_5.png'),
+      require('../../assets/garden/animals/chien/jeune/walk_left_6.png'),
     ],
   },
   renard: {
@@ -246,6 +360,14 @@ const COMPANION_WALK_LEFT: Partial<Record<CompanionSpecies, Partial<Record<Compa
       require('../../assets/garden/animals/renard/bebe/walk_left_7.png'),
       require('../../assets/garden/animals/renard/bebe/walk_left_8.png'),
     ],
+    jeune: [
+      require('../../assets/garden/animals/renard/jeune/walk_left_1.png'),
+      require('../../assets/garden/animals/renard/jeune/walk_left_2.png'),
+      require('../../assets/garden/animals/renard/jeune/walk_left_3.png'),
+      require('../../assets/garden/animals/renard/jeune/walk_left_4.png'),
+      require('../../assets/garden/animals/renard/jeune/walk_left_5.png'),
+      require('../../assets/garden/animals/renard/jeune/walk_left_6.png'),
+    ],
   },
   lapin: {
     bebe: [
@@ -255,6 +377,28 @@ const COMPANION_WALK_LEFT: Partial<Record<CompanionSpecies, Partial<Record<Compa
       require('../../assets/garden/animals/lapin/bebe/walk_left_4.png'),
       require('../../assets/garden/animals/lapin/bebe/walk_left_5.png'),
       require('../../assets/garden/animals/lapin/bebe/walk_left_6.png'),
+    ],
+    jeune: [
+      require('../../assets/garden/animals/lapin/jeune/walk_left_1.png'),
+      require('../../assets/garden/animals/lapin/jeune/walk_left_2.png'),
+      require('../../assets/garden/animals/lapin/jeune/walk_left_3.png'),
+      require('../../assets/garden/animals/lapin/jeune/walk_left_4.png'),
+      require('../../assets/garden/animals/lapin/jeune/walk_left_5.png'),
+      require('../../assets/garden/animals/lapin/jeune/walk_left_6.png'),
+      require('../../assets/garden/animals/lapin/jeune/walk_left_7.png'),
+      require('../../assets/garden/animals/lapin/jeune/walk_left_8.png'),
+    ],
+  },
+  herisson: {
+    jeune: [
+      require('../../assets/garden/animals/herisson/jeune/walk_left_1.png'),
+      require('../../assets/garden/animals/herisson/jeune/walk_left_2.png'),
+      require('../../assets/garden/animals/herisson/jeune/walk_left_3.png'),
+      require('../../assets/garden/animals/herisson/jeune/walk_left_4.png'),
+      require('../../assets/garden/animals/herisson/jeune/walk_left_5.png'),
+      require('../../assets/garden/animals/herisson/jeune/walk_left_6.png'),
+      require('../../assets/garden/animals/herisson/jeune/walk_left_7.png'),
+      require('../../assets/garden/animals/herisson/jeune/walk_left_8.png'),
     ],
   },
 };
@@ -335,7 +479,7 @@ export const CompanionSlot = React.memo(function CompanionSlot({
   useEffect(() => {
     if (!isWalking) { setWalkFrameIdx(0); return; }
     const interval = setInterval(() => {
-      setWalkFrameIdx(f => (f + 1) % 6);
+      setWalkFrameIdx(f => (f + 1) % 24);
     }, 150);
     return () => clearInterval(interval);
   }, [isWalking]);
