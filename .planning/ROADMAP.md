@@ -47,7 +47,7 @@ Détails : `.planning/milestones/v1.2-ROADMAP.md`.
 - [x] **Phase 20: Moteur d'effets + anti-abus** — Dispatcher, caps SecureStore, wiring des 10 effets wow sur les leviers existants (completed 2026-04-09)
 - [x] **Phase 21: Feedback visuel + compagnon** — HarvestBurst variants, toasts, haptic, messages compagnon i18n FR+EN (completed 2026-04-09)
 - [x] **Phase 22: UI config famille** — Écran Réglages Couplage sémantique, toggles par catégorie, stats semaine (completed 2026-04-09)
-- [ ] **Phase 23: Musée des effets** — SEED-002 lite : chronologie persistée dans gami-{id}.md, écran Musée minimal
+- [x] **Phase 23: Musée des effets** — SEED-002 lite : chronologie persistée dans gami-{id}.md, écran Musée minimal (completed 2026-04-10)
 - [ ] **Phase 24: Compagnon étendu** — SEED-003 lite : 5 event types activés, messages persistés, triggers cross-feature
 
 #### Phase 19: Détection catégorie sémantique
@@ -127,7 +127,7 @@ Plans:
 
 Plans:
 - [x] 23-01: `lib/museum/engine.ts` + persistance dans `gami-{id}.md` (nouvelle section Musée)
-- [ ] 23-02: Écran Musée minimal (réutiliser patterns Codex UI)
+- [x] 23-02: Écran Musée minimal (réutiliser patterns Codex UI)
 
 #### Phase 24: Compagnon étendu (SEED-003 lite)
 **Goal**: Activer 5 event types compagnon dormants, persister les messages (plus RAM-only), étendre les triggers au-delà de tree.tsx et intégrer les stats couplage dans le weekly recap.
@@ -158,7 +158,7 @@ Plans:
 | 20. Moteur d'effets + anti-abus | v1.3 | 4/4 | Complete    | 2026-04-09 |
 | 21. Feedback visuel + compagnon | v1.3 | 2/2 | Complete    | 2026-04-09 |
 | 22. UI config famille | v1.3 | 2/2 | Complete    | 2026-04-09 |
-| 23. Musée des effets | v1.3 | 1/2 | In Progress|  |
+| 23. Musée des effets | v1.3 | 2/2 | Complete   | 2026-04-10 |
 | 24. Compagnon étendu | v1.3 | 0/TBD | Not started | - |
 
 ## Archived Milestones

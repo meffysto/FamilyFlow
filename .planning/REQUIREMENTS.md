@@ -54,10 +54,10 @@ Requirements pour le milestone v1.3. Chaque requirement mappe à une phase exact
 ### MUSEUM — SEED-002 lite (Phase 23)
 
 - [x] **MUSEUM-01**: User sees every triggered effect recorded in a chronological museum
-- [ ] **MUSEUM-02**: User can open a "Musée" screen showing dated milestones
+- [x] **MUSEUM-02**: User can open a "Musée" screen showing dated milestones
 - [x] **MUSEUM-03**: User sees effect events persist across sessions (stored in gami-{id}.md)
-- [ ] **MUSEUM-04**: User sees museum entries grouped by week/month
-- [ ] **MUSEUM-05**: User sees museum UI consistent with Codex (Phase 17) design patterns
+- [x] **MUSEUM-04**: User sees museum entries grouped by week/month
+- [x] **MUSEUM-05**: User sees museum UI consistent with Codex (Phase 17) design patterns
 
 ### COMPANION-EXT — SEED-003 lite (Phase 24)
 
@@ -126,10 +126,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | COUPLING-05 | Phase 22 | Complete |
 | COUPLING-06 | Phase 22 | Complete |
 | MUSEUM-01 | Phase 23 | Complete |
-| MUSEUM-02 | Phase 23 | Pending |
+| MUSEUM-02 | Phase 23 | Complete |
 | MUSEUM-03 | Phase 23 | Complete |
-| MUSEUM-04 | Phase 23 | Pending |
-| MUSEUM-05 | Phase 23 | Pending |
+| MUSEUM-04 | Phase 23 | Complete |
+| MUSEUM-05 | Phase 23 | Complete |
 | COMPANION-01 | Phase 24 | Pending |
 | COMPANION-02 | Phase 24 | Pending |
 | COMPANION-03 | Phase 24 | Pending |
