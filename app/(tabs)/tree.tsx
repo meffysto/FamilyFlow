@@ -54,6 +54,7 @@ import { TileMapRenderer, GRASS_TILE_IMAGE } from '../../components/mascot/TileM
 import { BuildingShopSheet } from '../../components/mascot/BuildingShopSheet';
 import { CraftSheet } from '../../components/mascot/CraftSheet';
 import { FarmCodexModal } from '../../components/mascot/FarmCodexModal';
+import { MuseumModal } from '../../components/mascot/MuseumModal';
 import { FarmTutorialOverlay } from '../../components/mascot/FarmTutorialOverlay';
 import { GiftSenderSheet } from '../../components/mascot/GiftSenderSheet';
 import { GiftReceiptModal } from '../../components/mascot/GiftReceiptModal';
@@ -296,7 +297,7 @@ export default function TreeScreen() {
   const { t } = useTranslation();
   const { primary, tint, colors, isDark } = useThemeColors();
   const insets = useSafeAreaInsets();
-  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem, unplaceMascotItem, gamiData, setCompanion, tasks, rdvs, meals, completeSagaChapter, familyQuests, unlockedRecipes, startFamilyQuest, completeFamilyQuest, deleteFamilyQuest, contributeFamilyQuest } = useVault();
+  const { profiles, activeProfile, updateTreeSpecies, buyMascotItem, placeMascotItem, unplaceMascotItem, gamiData, setCompanion, tasks, rdvs, meals, completeSagaChapter, familyQuests, unlockedRecipes, startFamilyQuest, completeFamilyQuest, deleteFamilyQuest, contributeFamilyQuest, vault } = useVault();
   const { showToast } = useToast();
   const { config: aiConfig } = useAI();
   const { hasSeenScreen, markScreenSeen, isLoaded: helpLoaded, activeFarmTutorialStep } = useHelp();
@@ -351,6 +352,9 @@ export default function TreeScreen() {
 
   // Codex ferme (Phase 17)
   const [showCodex, setShowCodex] = useState(false);
+
+  // Musée des effets (Phase 23)
+  const [showMuseum, setShowMuseum] = useState(false);
 
   // Cadeaux — envoi
   const [giftOffer, setGiftOffer] = useState<{ itemType: string; itemId: string; maxQty: number; itemName: string } | null>(null);
@@ -2035,6 +2039,10 @@ export default function TreeScreen() {
                 <Text style={styles.actionItemIcon}>{'🏅'}</Text>
                 <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>{'Badges'}</Text>
               </TouchableOpacity>
+              <TouchableOpacity style={styles.actionItem} onPress={() => setShowMuseum(true)} activeOpacity={0.7}>
+                <Text style={styles.actionItemIcon}>{'🏛️'}</Text>
+                <Text style={[styles.actionItemLabel, { color: colors.textSub }]}>{t('museum.title', 'Musée')}</Text>
+              </TouchableOpacity>
               {companion && (
                 <TouchableOpacity style={styles.actionItem} onPress={() => setShowCompanionPicker(true)} activeOpacity={0.7}>
                   <Text style={styles.actionItemIcon}>{'🐾'}</Text>
@@ -2301,6 +2309,14 @@ export default function TreeScreen() {
         onClose={() => setShowBadges(false)}
         profile={profile}
         gamiData={gamiData ?? { profiles: [], history: [], activeRewards: [] }}
+      />
+
+      {/* Musée des effets (Phase 23) */}
+      <MuseumModal
+        visible={showMuseum}
+        onClose={() => setShowMuseum(false)}
+        profileId={activeProfile?.id ?? null}
+        vault={vault}
       />
 
       {/* Modal compagnon — choix initial ou switch */}
