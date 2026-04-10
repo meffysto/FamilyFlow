@@ -57,12 +57,10 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 - [ ] (Backlog) Suggestion automatique de recettes compatibles selon les convives sélectionnés
 - [ ] (Backlog) Tutoriels contextuels pour autres écrans complexes (budget OCR, sagas, quêtes)
 - [ ] (Backlog) Mécanique "Pokédex" — tracking de découverte codex par profil avec statistiques de complétion
-- [ ] (v1.4) Nouvelle carte "Place du Village" avec grille et terrain propres
-- [ ] (v1.4) Portail dans la ferme perso vers le jardin familial
-- [ ] (v1.4) Système de contributions (récoltes ferme + tâches IRL) — hook prêt, UI Phase 27
-- [ ] (v1.4) Objectif hebdomadaire auto-généré — hook prêt, UI Phase 27
+- ✓ Écran Village — carte tilemap cobblestone 75%, barre progression LiquidXPBar, feed contributions, indicateurs membres, historique avec détail par membre, FAB navigation depuis ferme — v1.4
+- [ ] (v1.4) Portail animé dans la ferme perso vers le jardin familial
+- [ ] (v1.4) Câblage auto-contribution (récoltes ferme + tâches IRL → village)
 - [ ] (v1.4) Récompense collective (bonus in-game + suggestion activité IRL)
-- [ ] (v1.4) Panneau historique interactif sur la place du village
 
 ### Out of Scope
 
@@ -147,4 +145,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-10 — Phase 25 complete (fondation données village)*
+*Last updated: 2026-04-11 — Phase 27 complete (écran village + composants)*
