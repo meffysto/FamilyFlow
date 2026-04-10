@@ -46,6 +46,7 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 - ✓ Musée des effets — chronologie persistée des effets déclenchés (SEED-002 lite) — v1.3
 - ✓ Compagnon étendu — 4 event types activés (weekly_recap, morning_greeting, gentle_nudge, comeback) + persistance messages SecureStore + bulle dashboard — v1.3
 - ✓ Fondation données village — module lib/village/ isolé (types, grille 4 éléments, 7 templates thématisés, parseur bidirectionnel append-only), 24 tests Jest — v1.4
+- ✓ Hook domaine jardin — useGarden.ts isolé (génération objectif hebdomadaire, contributions, claim anti-double-abus), câblage useVault.ts +13 lignes — v1.4
 
 ### Active
 
@@ -58,8 +59,8 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 - [ ] (Backlog) Mécanique "Pokédex" — tracking de découverte codex par profil avec statistiques de complétion
 - [ ] (v1.4) Nouvelle carte "Place du Village" avec grille et terrain propres
 - [ ] (v1.4) Portail dans la ferme perso vers le jardin familial
-- [ ] (v1.4) Système de contributions (récoltes ferme + tâches IRL)
-- [ ] (v1.4) Objectif hebdomadaire auto-généré
+- [ ] (v1.4) Système de contributions (récoltes ferme + tâches IRL) — hook prêt, UI Phase 27
+- [ ] (v1.4) Objectif hebdomadaire auto-généré — hook prêt, UI Phase 27
 - [ ] (v1.4) Récompense collective (bonus in-game + suggestion activité IRL)
 - [ ] (v1.4) Panneau historique interactif sur la place du village
 
