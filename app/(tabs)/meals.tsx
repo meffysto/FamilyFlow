@@ -48,6 +48,7 @@ import { Shadows } from '../../constants/shadows';
 import { computeMissingIngredients, computeStockDecrements, resolveStockAction, computeFamilyServings } from '../../lib/auto-courses';
 import { suggestRecipesFromStock } from '../../lib/ai-service';
 import { getAutomationFlag } from '../../lib/automation-config';
+import { DictaphoneRecorder } from '../../components/DictaphoneRecorder';
 import { MealConflictRecap } from '../../components/dietary';
 import { checkAllergens } from '../../lib/dietary';
 import type { Profile } from '../../lib/types';
@@ -210,6 +211,7 @@ export default function MealsScreen() {
   const [textImportValue, setTextImportValue] = useState('');
   const [textImportResult, setTextImportResult] = useState<ImportResult | null>(null);
   const [textImportCategory, setTextImportCategory] = useState('Importées');
+  const [showDictaphone, setShowDictaphone] = useState(false);
 
   // Category picker modal state
   const [categoryPickerItem, setCategoryPickerItem] = useState<CourseItem | null>(null);
@@ -2016,17 +2018,31 @@ export default function MealsScreen() {
             >
               <View style={{ gap: 8 }}>
                 <Text style={[styles.importLabel, { color: colors.text }]}>{t('meals.textImport.fieldLabel')}</Text>
-                <TextInput
-                  style={[styles.recipeSearchInput, {
-                    backgroundColor: colors.cardAlt, color: colors.text, borderColor: colors.borderLight,
-                    minHeight: 160, textAlignVertical: 'top', paddingTop: 12,
-                  }]}
-                  value={textImportValue}
-                  onChangeText={setTextImportValue}
-                  placeholder={t('meals.textImport.placeholder')}
-                  placeholderTextColor={colors.textMuted}
-                  multiline
-                />
+                <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
+                  <TextInput
+                    style={[styles.recipeSearchInput, {
+                      backgroundColor: colors.cardAlt, color: colors.text, borderColor: colors.borderLight,
+                      minHeight: 160, textAlignVertical: 'top', paddingTop: 12, flex: 1,
+                    }]}
+                    value={textImportValue}
+                    onChangeText={setTextImportValue}
+                    placeholder={t('meals.textImport.placeholder')}
+                    placeholderTextColor={colors.textMuted}
+                    multiline
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowDictaphone(true)}
+                    style={{
+                      width: 44, height: 44, borderRadius: 22,
+                      backgroundColor: colors.cardAlt,
+                      borderWidth: 1, borderColor: colors.borderLight,
+                      justifyContent: 'center', alignItems: 'center',
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={{ fontSize: 20 }}>🎙️</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
 
               {/* Preview for cook type (AI result) */}
@@ -2140,6 +2156,23 @@ export default function MealsScreen() {
             )}
           </KeyboardAvoidingView>
         </SafeAreaView>
+      </Modal>
+
+      {/* Dictaphone modal — import texte recette */}
+      <Modal
+        visible={showDictaphone}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowDictaphone(false)}
+      >
+        <DictaphoneRecorder
+          context={{ title: 'Import recette', subtitle: 'Dictez votre recette ou les ingrédients' }}
+          onResult={(text) => {
+            setTextImportValue(prev => prev ? prev + '\n' + text : text);
+            setShowDictaphone(false);
+          }}
+          onClose={() => setShowDictaphone(false)}
+        />
       </Modal>
 
       {/* Community explore modal */}
