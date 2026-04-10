@@ -4534,5 +4534,16 @@
       "cta": "Access calendar →",
       "skip": "Not now"
     }
+  },
+  "museum": {
+    "title": "Effects Museum",
+    "thisWeek": "This week",
+    "weekHeader": "Week of {{date}}",
+    "empty": "No effects recorded — complete tasks to fill the museum!",
+    "variant": {
+      "ambient": "Ambient",
+      "rare": "Rare",
+      "golden": "Epic"
+    }
   }
 }
