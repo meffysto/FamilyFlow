@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Jardin Familial
-status: executing
-last_updated: "2026-04-10T19:02:02.951Z"
+status: verifying
+last_updated: "2026-04-10T19:06:53.247Z"
 last_activity: 2026-04-10
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -32,7 +32,7 @@ Last activity: 2026-04-10
 
 Progress: [░░░░░░░░░░] 0%
 
-Status: Ready to execute
+Status: Phase complete — ready for verification
 
 ### Quick Tasks Completed
 
@@ -118,6 +118,7 @@ Status: Ready to execute
 | Phase 25-fondation-donn-es-village P01 | 3min | 2 tasks | 5 files |
 | Phase 25 P02 | 2min | 1 tasks | 2 files |
 | Phase 26-hook-domaine-jardin P01 | 5min | 2 tasks | 3 files |
+| Phase 26-hook-domaine-jardin P02 | 2min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -199,6 +200,9 @@ Recent decisions affecting current work:
 - [Phase 25]: gray-matter retourne les dates YAML comme objets Date — parseGardenFile normalise via instanceof Date + toISOString().slice(0,10)
 - [Phase 26-01]: gardenRaw exposé comme string brute dans VaultState — useGarden.ts (Plan 02) fait le parse lui-même
 - [Phase 26-01]: village_claimed_week persisté dans gami-{id}.md (per-profil) — distinct du flag partagé dans jardin-familial.md
+- [Phase 26-02]: statut !== 'grossesse' pour filtrer les profils actifs — role n'inclut pas 'grossesse', c'est le champ statut dans l'interface Profile
+- [Phase 26-02]: gami-{id}.md sans préfixe '04 - Gamification/' — cohérent avec museum/engine.ts, quest-engine.ts et le pattern réel du codebase
+- [Phase 26-02]: appendContributionToVault retourne void — relecture VILLAGE_FILE après écriture pour mettre à jour gardenRaw dans useGarden
 
 ### Todos
 
@@ -210,5 +214,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-10T19:02:02.948Z
+Last session: 2026-04-10T19:06:53.244Z
 Next: Plan and execute Phase 25 (Fondation données village)

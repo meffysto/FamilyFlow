@@ -31,7 +31,7 @@ Requirements pour le milestone Jardin Familial (MVP). Chaque requirement mappe �
 
 ### Objectif & Récompense
 
-- [ ] **OBJ-01**: Un objectif hebdomadaire est auto-généré chaque lundi, avec cible adaptée au nombre de profils actifs et à l'historique
+- [x] **OBJ-01**: Un objectif hebdomadaire est auto-généré chaque lundi, avec cible adaptée au nombre de profils actifs et à l'historique
 - [ ] **OBJ-02**: Une barre de progression affiche l'avancement collectif vers l'objectif de la semaine
 - [ ] **OBJ-03**: Quand l'objectif est atteint, tous les profils reçoivent un bonus in-game (XP + item cosmétique)
 - [ ] **OBJ-04**: La récompense inclut une suggestion d'activité familiale IRL (liste curatée, pondérée par saison)
@@ -80,7 +80,7 @@ Déféré au prochain milestone. Trackés mais pas dans le roadmap actuel.
 | COOP-02 | Phase 28 | Pending |
 | COOP-03 | Phase 27 | Pending |
 | COOP-04 | Phase 27 | Pending |
-| OBJ-01 | Phase 26 | Pending |
+| OBJ-01 | Phase 26 | Complete |
 | OBJ-02 | Phase 27 | Pending |
 | OBJ-03 | Phase 28 | Pending |
 | OBJ-04 | Phase 28 | Pending |
