@@ -54,9 +54,11 @@ L'app doit rester fiable et stable pour un usage quotidien familial — les donn
 
 ### Active
 
-v1.5 à définir via `/gsd:new-milestone`. Candidats naturels issus de v1.4 deferred :
-- [ ] (v1.5) Enrichissement interactif du village — avatars, ambiance dynamique, arbre familial (VILL-01 à VILL-05)
-- [ ] (v1.5) Décoration persistante du village par semaine réussie (guirlande, fanion, etc.)
+- [ ] (v1.5) Avatars dynamiques des membres de la famille sur la carte village
+- [ ] (v1.5) Décorations persistantes débloquées par semaine d'objectif réussie
+- [ ] (v1.5) Ambiance dynamique village (cycle jour/nuit + effets saisonniers)
+- [ ] (v1.5) Arbre familial commun au centre du village (stade évolutif collectif)
+- [ ] (v1.5) Portail retour bidirectionnel village → ferme
 
 - [ ] (Backlog) Nettoyage code mort et fonctions dépréciées
 - [ ] (Backlog) Refacto progressive du god hook useVault (3400 lignes → hooks domaine)
@@ -74,13 +76,26 @@ v1.5 à définir via `/gsd:new-milestone`. Candidats naturels issus de v1.4 defe
 - Migration hors Obsidian — le vault Markdown reste la source de vérité
 - Accessibilité complète (WCAG) — pas prioritaire pour usage familial privé
 
-## Current State
+## Current Milestone: v1.5 Village Vivant
 
-**Last shipped:** v1.4 Jardin Familial (2026-04-11) — 4 phases, 8 plans, tous verified.
+**Goal:** Transformer la Place du Village statique en espace vivant et personnalisé — les avatars de la famille y apparaissent, les semaines réussies laissent des traces visuelles durables, l'ambiance change selon l'heure et la saison, et l'arbre familial commun devient le cœur symbolique du village.
 
-L'app FamilyFlow dispose désormais d'un espace coopératif "Place du Village" avec sa propre carte tilemap, un portail animé depuis la ferme perso, des contributions automatiques (récoltes + tâches IRL), un objectif hebdomadaire auto-généré, et une récompense collective (+25 XP + loot box + suggestion d'activité IRL saisonnière) quand l'objectif est atteint.
+**Target features:**
+- Avatars des membres de la famille visibles sur la carte village (présence dynamique)
+- Décorations persistantes accumulées par semaines réussies (guirlandes, fanions, lanternes)
+- Ambiance dynamique du village : cycle jour/nuit + effets saisonniers spécifiques village
+- Arbre familial commun — centre symbolique du village évoluant avec les succès collectifs
+- Portail retour bidirectionnel village → ferme (symétrique du portail ferme → village)
 
-**Next milestone:** v1.5 — à définir via `/gsd:new-milestone`. Candidats probables issus des deferred v1.4 : enrichissement interactif du village (avatars, ambiance, décorations persistantes, arbre familial commun).
+**Key context:**
+- Scope hérité du deferred v1.4 (VILL-01 à VILL-05 explicitement cités dans phase 28)
+- Infra existante : `ReactiveAvatar`, `TileMapRenderer`, `FarmProfileData`, `useGarden`
+- Aucune nouvelle dépendance npm — polish visuel uniquement, pas de refonte mécanique
+- Backward compat Obsidian vault préservée (append-only, nouveaux champs optionnels)
+
+## Previous State
+
+**Last shipped:** v1.4 Jardin Familial (2026-04-11) — 4 phases, 8 plans, tous verified. Place du Village coopérative avec portail animé, contributions auto, objectif hebdo, récompense collective IRL.
 
 ## Previous Milestones
 

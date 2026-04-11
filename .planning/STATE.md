@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.4
-milestone_name: Jardin Familial
-status: verifying
-last_updated: "2026-04-11T06:39:44.272Z"
-last_activity: 2026-04-11
+milestone: v1.5
+milestone_name: Village Vivant
+status: defining-requirements
+last_updated: "2026-04-11T09:00:00.000Z"
+last_activity: 2026-04-11 — Milestone v1.5 started
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 8
-  completed_plans: 8
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
   percent: 0
 ---
 
@@ -20,19 +20,19 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 28 — portail-c-blage-contributions
+**Current focus:** v1.5 Village Vivant — defining requirements
 
 ## Current Position
 
-Phase: 28
-Plan: Not started
-Milestone: v1.4 Jardin Familial (MVP)
-Last shipped: v1.3 Seed (2026-04-10)
-Last activity: 2026-04-11
+Phase: Not started (defining requirements)
+Plan: —
+Milestone: v1.5 Village Vivant
+Last shipped: v1.4 Jardin Familial (2026-04-11)
+Last activity: 2026-04-11 — Milestone v1.5 started
 
 Progress: [░░░░░░░░░░] 0%
 
-Status: Phase complete — ready for verification
+Status: Defining requirements
 
 ### Quick Tasks Completed
 
