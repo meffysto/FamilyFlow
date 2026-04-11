@@ -38,6 +38,7 @@ interface CalendarBirthday {
   name: string;
   date: string; // MM-DD
   birthYear?: number;
+  notes?: string; // DESCRIPTION iCal
   alreadyImported: boolean;
 }
 
@@ -171,6 +172,16 @@ export function CalendarImporter({
           const dd = String(start.getDate()).padStart(2, '0');
           const dateStr = `${mm}-${dd}`;
 
+          // iOS Birthdays utilise 1604 comme placeholder quand l'année de naissance
+          // est inconnue. On ne garde l'année que si elle semble plausible.
+          const startYear = start.getFullYear();
+          const birthYear = startYear > 1900 ? startYear : undefined;
+
+          // event.notes correspond au champ DESCRIPTION en iCal (expo-calendar l'expose
+          // directement sur l'objet Event). Peut être undefined — on normalise en trim.
+          const rawNotes = (event as { notes?: string }).notes;
+          const notes = rawNotes && rawNotes.trim().length > 0 ? rawNotes.trim() : undefined;
+
           // Dédupliquer par nom+date (même personne)
           const key = `${name.toLowerCase()}|${dateStr}`;
           if (seen.has(key)) continue;
@@ -181,7 +192,8 @@ export function CalendarImporter({
             id: `${name}|${dateStr}`,
             name,
             date: dateStr,
-            birthYear: undefined,
+            birthYear,
+            notes,
             alreadyImported,
           });
         }
@@ -247,7 +259,7 @@ export function CalendarImporter({
           birthYear: b.birthYear,
           category: 'calendrier',
           contactId: undefined,
-          notes: undefined,
+          notes: b.notes,
         }));
 
       await onImport(items);
@@ -295,6 +307,14 @@ export function CalendarImporter({
               {formatDate(item.date)}
               {item.alreadyImported && `  \u2022  ${t('calendarImporter.alreadyImported')}`}
             </Text>
+            {item.notes ? (
+              <Text
+                style={[styles.contactDate, { color: colors.textMuted }]}
+                numberOfLines={1}
+              >
+                {item.notes.length > 60 ? `${item.notes.slice(0, 60)}\u2026` : item.notes}
+              </Text>
+            ) : null}
           </View>
 
           {/* Checkbox */}
