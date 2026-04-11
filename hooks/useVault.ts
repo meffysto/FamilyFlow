@@ -25,6 +25,7 @@ import { useVaultRDV } from './useVaultRDV';
 import { useVaultMeals, mealsFileForWeek } from './useVaultMeals';
 import { useVaultPhotos } from './useVaultPhotos';
 import { useVaultMemories } from './useVaultMemories';
+import { useVaultStories } from './useVaultStories';
 import { useVaultVacation, VACATION_STORE_KEY, VACATION_FILE } from './useVaultVacation';
 import { AppState, AppStateStatus } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
@@ -70,7 +71,7 @@ import type { FarmProfileData } from '../lib/types';
 import type { CompanionData, CompanionSpecies } from '../lib/mascot/companion-types';
 import { processActiveRewards, addPoints } from '../lib/gamification';
 import { XP_PER_BRACKET, getSkillById } from '../lib/gamification/skill-tree';
-import { Task, RDV, CourseItem, MealItem, StockItem, Profile, Gender, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, GratitudeDay, WishlistItem, WishBudget, WishOccasion, Anniversary, Note, SkillTreeData, ChildQuote, MoodEntry, MoodLevel, UsedLoot } from '../lib/types';
+import { Task, RDV, CourseItem, MealItem, StockItem, Profile, Gender, GamificationData, NotificationPreferences, ProfileTheme, Memory, VacationConfig, Recipe, AgeUpgrade, AgeCategory, BudgetEntry, BudgetConfig, Routine, HealthRecord, GrowthEntry, VaccineEntry, Defi, GratitudeDay, WishlistItem, WishBudget, WishOccasion, Anniversary, Note, SkillTreeData, ChildQuote, MoodEntry, MoodLevel, UsedLoot, BedtimeStory } from '../lib/types';
 import { useVaultBudget } from './useVaultBudget';
 import {
   parseNotificationPrefs,
@@ -154,7 +155,7 @@ export interface VaultState {
   buyMascotItem: (profileId: string, itemId: string, itemType: 'decoration' | 'inhabitant') => Promise<void>;
   placeMascotItem: (profileId: string, slotId: string, itemId: string) => Promise<void>;
   unplaceMascotItem: (profileId: string, slotId: string) => Promise<void>;
-  updateProfile: (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string; propre?: boolean; gender?: Gender }) => Promise<void>;
+  updateProfile: (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string; propre?: boolean; gender?: Gender; voiceElevenLabsId?: string; voicePersonalId?: string; voiceSource?: 'ios-personal' | 'elevenlabs-cloned' | 'elevenlabs-preset' | 'expo-speech' }) => Promise<void>;
   deleteProfile: (profileId: string) => Promise<void>;
   updateStockQuantity: (lineIndex: number, newQuantity: number) => Promise<void>;
   addStockItem: (item: Omit<StockItem, 'lineIndex'>) => Promise<void>;
@@ -275,6 +276,9 @@ export interface VaultState {
   dietary: VaultDietaryState;
   gardenRaw: string;
   setGardenRaw: React.Dispatch<React.SetStateAction<string>>;
+  stories: BedtimeStory[];
+  saveStory: (story: BedtimeStory) => Promise<void>;
+  deleteStory: (sourceFile: string) => Promise<void>;
 }
 
 // Static task files (non-enfant)
@@ -538,6 +542,9 @@ export function useVaultInternal(): VaultState {
   profilesRef.current = profiles;
   const missionsHook = useVaultSecretMissions(vaultRef, profilesRef);
   const { secretMissions, resetSecretMissions: resetMissions } = missionsHook;
+
+  // Domaine Histoires du soir délégué à useVaultStories
+  const storiesHook = useVaultStories(vaultRef);
 
   // Jardin familial — contenu brut du fichier partagé (Phase 26)
   const [gardenRaw, setGardenRaw] = useState<string>('');
@@ -1076,6 +1083,9 @@ export function useVaultInternal(): VaultState {
 
         // [21] Village garden — fichier partagé
         vault.readFile(VILLAGE_FILE).catch(() => ''),
+
+        // [22] Histoires du soir
+        storiesHook.loadStories(vault, enfantNames).catch(() => [] as BedtimeStory[]),
       ]);
 
       // Apply results — use helper to extract settled values
@@ -1151,6 +1161,7 @@ export function useVaultInternal(): VaultState {
       setSkillTrees(val(results[19], []));
       missionsHook.setSecretMissions(val(results[20], []));
       setGardenRaw(val(results[21], '') as string);
+      storiesHook.setStories(val(results[22] as PromiseSettledResult<BedtimeStory[]>, []));
 
       // Mettre à jour les widgets iOS
       refreshWidget(val(results[4], []), rdvResult, tasksResult);
@@ -1202,6 +1213,7 @@ export function useVaultInternal(): VaultState {
     resetMissions();
     defisHook.resetDefis();
     questsHook.resetQuests();
+    storiesHook.resetStories();
     setVaultPathState(path);
     const vault = new VaultManager(path);
     vaultRef.current = vault;
@@ -1639,6 +1651,9 @@ export function useVaultInternal(): VaultState {
     dietary: dietaryHook,
     gardenRaw,
     setGardenRaw,
+    stories: storiesHook.stories,
+    saveStory: storiesHook.saveStory,
+    deleteStory: storiesHook.deleteStory,
   }), [
     // State values (déclenchent un re-render quand ils changent)
     vaultPath, isLoading, error, tasks, courses, stock, meals,
@@ -1647,7 +1662,7 @@ export function useVaultInternal(): VaultState {
     recipes, ageUpgrades, budgetState, routines,
     healthRecords, defis, questsHook.familyQuests, questsHook.unlockedRecipes, gratitudeDays, wishlistItems, journalStats, anniversaries,
     notesHook.notes,
-    quotes, moods, skillTrees, secretMissions, gardenRaw,
+    quotes, moods, skillTrees, secretMissions, gardenRaw, storiesHook.stories,
     // Callbacks (stables grâce à useCallback)
     refresh, setVaultPath, saveNotifPrefs, updateMeal, loadMealsForWeek,
     addPhoto, getPhotoUri,
@@ -1665,5 +1680,6 @@ export function useVaultInternal(): VaultState {
     completeAdventure, completeSagaChapter, markLootUsed,
     setCompanion, unlockCompanion,
     dietaryHook,
+    storiesHook,
   ]);
 }

@@ -55,7 +55,7 @@ export interface UseVaultProfilesResult {
   buyMascotItem: (profileId: string, itemId: string, itemType: 'decoration' | 'inhabitant') => Promise<void>;
   placeMascotItem: (profileId: string, slotId: string, itemId: string) => Promise<void>;
   unplaceMascotItem: (profileId: string, slotId: string) => Promise<void>;
-  updateProfile: (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string; propre?: boolean; gender?: Gender }) => Promise<void>;
+  updateProfile: (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string; propre?: boolean; gender?: Gender; voiceElevenLabsId?: string; voicePersonalId?: string; voiceSource?: 'ios-personal' | 'elevenlabs-cloned' | 'elevenlabs-preset' | 'expo-speech' }) => Promise<void>;
   deleteProfile: (profileId: string) => Promise<void>;
   applyAgeUpgrade: (upgrade: AgeUpgrade) => Promise<void>;
   dismissAgeUpgrade: (profileId: string) => void;
@@ -298,7 +298,7 @@ export function useVaultProfiles(
     }
   }, [profiles]);
 
-  const updateProfile = useCallback(async (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string; propre?: boolean; gender?: Gender }) => {
+  const updateProfile = useCallback(async (profileId: string, updates: { name?: string; avatar?: string; birthdate?: string; propre?: boolean; gender?: Gender; voiceElevenLabsId?: string; voicePersonalId?: string; voiceSource?: 'ios-personal' | 'elevenlabs-cloned' | 'elevenlabs-preset' | 'expo-speech' }) => {
     if (!vaultRef.current) return;
     try {
       const content = await vaultRef.current.readFile(FAMILLE_FILE);
