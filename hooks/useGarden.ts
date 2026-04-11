@@ -233,32 +233,39 @@ export function useGarden(): UseGardenReturn {
 
     const currentMonday = getMondayISO(new Date());
 
-    // Guard anti-boucle infinie + anti-double-génération (per D-07, Pitfall 2).
-    // Formule déterministe — si deux profils triggent simultanément, les deux
-    // écritures produisent le même résultat. Pas de corruption (iCloud safe, D-06).
-    if (gardenData.currentWeekStart === currentMonday) return;
-
+    // Lire le fichier fraîchement — NE PAS dépendre de gardenRaw pour éviter
+    // la race condition où addContribution → setGardenRaw → re-trigger de cet
+    // effet → reset contributions: [] avant que la semaine soit initialisée.
+    // Dépendances intentionnellement restreintes à [vault, activeProfileCount].
+    let cancelled = false;
     (async () => {
-      setIsLoading(true);
       try {
+        const freshContent = await vault.readFile(VILLAGE_FILE).catch(() => '');
+        const freshData = parseGardenFile(freshContent);
+
+        // Guard anti-boucle infinie (per D-07, Pitfall 2) — vérifié sur données fraîches.
+        if (freshData.currentWeekStart === currentMonday) return;
+
+        setIsLoading(true);
+
         // Index de la prochaine semaine (pour la rotation déterministe du template)
         const nextWeekIndex =
-          (gardenData.pastWeeks?.length ?? 0) + (gardenData.currentWeekStart ? 1 : 0);
+          (freshData.pastWeeks?.length ?? 0) + (freshData.currentWeekStart ? 1 : 0);
         const nextThemeIndex = nextWeekIndex % OBJECTIVE_TEMPLATES.length;
 
         // Archiver la semaine passée si elle avait un objectif (D-05)
-        const updatedPastWeeks: VillageWeekRecord[] = [...(gardenData.pastWeeks ?? [])];
-        if (gardenData.currentWeekStart) {
+        const updatedPastWeeks: VillageWeekRecord[] = [...(freshData.pastWeeks ?? [])];
+        if (freshData.currentWeekStart) {
           // Calculer les contributions par membre avant archivage (HIST-02)
           const byMember: Record<string, number> = {};
-          for (const c of gardenData.contributions ?? []) {
+          for (const c of freshData.contributions ?? []) {
             byMember[c.profileId] = (byMember[c.profileId] ?? 0) + c.amount;
           }
           const weekRecord: VillageWeekRecord = {
-            weekStart: gardenData.currentWeekStart,
+            weekStart: freshData.currentWeekStart,
             target: computeWeekTarget(activeProfileCount),
-            total: gardenData.contributions?.length ?? 0,
-            claimed: gardenData.rewardClaimed,
+            total: freshData.contributions?.length ?? 0,
+            claimed: freshData.rewardClaimed,
             contributionsByMember: Object.keys(byMember).length > 0 ? byMember : undefined,
           };
           updatedPastWeeks.push(weekRecord);
@@ -266,7 +273,7 @@ export function useGarden(): UseGardenReturn {
 
         // Construire le nouveau VillageData (contributions vidées pour la nouvelle semaine)
         const newData: VillageData = {
-          ...gardenData,
+          ...freshData,
           currentWeekStart: currentMonday,
           currentThemeIndex: nextThemeIndex,
           rewardClaimed: false,
@@ -275,15 +282,19 @@ export function useGarden(): UseGardenReturn {
         };
 
         const newContent = serializeGardenFile(newData);
+        if (cancelled) return;
         await vault.writeFile(VILLAGE_FILE, newContent);
         setGardenRaw(newContent);
       } catch (e) {
         if (__DEV__) console.warn('useGarden — génération objectif:', e);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     })();
-  }, [vault, gardenRaw, activeProfileCount]);
+
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vault, activeProfileCount]); // gardenRaw intentionnellement absent — voir commentaire ci-dessus
 
   // ---------------------------------------------------------------------------
   // Phase 30 — Effet unlock-on-threshold (VILL-04, VILL-05)
