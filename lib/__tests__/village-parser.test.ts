@@ -18,7 +18,7 @@ import {
   BUILDINGS_CATALOG,
   computeBuildingsToUnlock,
 } from '../village';
-import type { VillageData, VillageContribution } from '../village';
+import type { VillageData, VillageContribution, UnlockedBuilding } from '../village';
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -368,6 +368,60 @@ describe('computeBuildingsToUnlock (Phase 30)', () => {
       timestamp: '2026-04-12T00:00:00', buildingId: e.id, palier: e.palier
     }));
     expect(computeBuildingsToUnlock(99999, all)).toEqual([]);
+  });
+});
+
+// ── computeBuildingsToUnlock — résilience (Phase 30, Plan 02) ────────────────
+
+describe('computeBuildingsToUnlock — résilience (Phase 30)', () => {
+  it('débloque exactement à la frontière du palier (familyLifetimeLeaves === palier)', () => {
+    expect(computeBuildingsToUnlock(100, []).map(r => r.id)).toContain('puits');
+    expect(computeBuildingsToUnlock(300, []).map(r => r.id)).toContain('boulangerie');
+    expect(computeBuildingsToUnlock(25000, []).map(r => r.id)).toContain('bibliotheque');
+  });
+
+  it('ne débloque pas à palier - 1', () => {
+    expect(computeBuildingsToUnlock(99, []).map(r => r.id)).not.toContain('puits');
+    expect(computeBuildingsToUnlock(299, []).map(r => r.id)).not.toContain('boulangerie');
+  });
+
+  it('idempotent sur appels consécutifs — pas de double déblocage', () => {
+    let unlocked: UnlockedBuilding[] = [];
+    // Premier appel à 1500 feuilles — débloque puits, boulangerie, marché, café
+    const first = computeBuildingsToUnlock(1500, unlocked);
+    unlocked = [
+      ...unlocked,
+      ...first.map(e => ({
+        timestamp: '2026-04-12T00:00:00',
+        buildingId: e.id,
+        palier: e.palier,
+      })),
+    ];
+    expect(first).toHaveLength(4);
+
+    // Deuxième appel à 1500 feuilles avec les précédents dans alreadyUnlocked
+    const second = computeBuildingsToUnlock(1500, unlocked);
+    expect(second).toHaveLength(0); // Idempotence stricte
+  });
+
+  it('retourne les bâtiments dans l ordre narratif BUILDINGS_CATALOG', () => {
+    const result = computeBuildingsToUnlock(25000, []);
+    expect(result.map(r => r.id)).toEqual([
+      'puits', 'boulangerie', 'marche', 'cafe', 'forge', 'moulin', 'port', 'bibliotheque',
+    ]);
+  });
+
+  it('gère un profil avec points undefined sans crash (simulation Pitfall 7)', () => {
+    // Simulation du reduce dans useGarden avec profile.points undefined
+    const profiles: Array<{ points: number | undefined }> = [
+      { points: 500 },
+      { points: undefined },
+      { points: 1000 },
+    ];
+    const sum = profiles.reduce((acc, p) => acc + (p.points ?? 0), 0);
+    expect(sum).toBe(1500);
+    const result = computeBuildingsToUnlock(sum, []);
+    expect(result.map(r => r.id)).toEqual(['puits', 'boulangerie', 'marche', 'cafe']);
   });
 });
 
