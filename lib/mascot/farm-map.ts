@@ -165,15 +165,32 @@ export function buildVillageMap(): FarmMapData {
   const water = emptyVertices(cols, rows);
   const farmland = emptyVertices(cols, rows);
 
-  // Place centrale cobblestone — full width, grille entiere sauf bandes d'entree
-  fillRect(cobblestone, 0, 3, 12, 17);
+  // Fond farmland (herbe verte du parc) — TOUTE la grille, aucune cellule vide
+  fillRect(farmland, 0, 0, 12, 20);
 
-  // Chemins d'entree en terre — full width en haut et en bas (bordures completes)
-  fillRect(dirt, 0, 0, 12, 3);
-  fillRect(dirt, 0, 17, 12, 20);
+  // Place centrale cobblestone — large rectangle central, laisse bordure herbe visible
+  fillRect(cobblestone, 1, 4, 11, 16);
+
+  // Chemins d'entree en terre — haut et bas, plus larges qu'avant (3 cols de large)
+  fillRect(dirt, 4, 0, 8, 4);
+  fillRect(dirt, 4, 16, 8, 20);
 
   // Fontaine : petit espace eau au centre (VILLAGE_GRID fountain x=0.50 y=0.45 → cols 5-7, rows 8-10)
   fillRect(water, 5, 8, 7, 10);
+
+  // NETTOYAGE — zones exclusives (pattern buildFarmMap)
+  // 1) Le cobblestone est percé par la fontaine (water rendu avant cobblestone dans TileMapRenderer)
+  // 2) Le farmland est percé par tous les autres terrains
+  for (let y = 0; y <= rows; y++) {
+    for (let x = 0; x <= cols; x++) {
+      if (water[y][x]) {
+        cobblestone[y][x] = false;
+      }
+      if (cobblestone[y][x] || dirt[y][x] || water[y][x]) {
+        farmland[y][x] = false;
+      }
+    }
+  }
 
   return {
     cols,
