@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Village Vivant
-status: ready
-last_updated: "2026-04-11T12:00:00.000Z"
+status: executing
+last_updated: "2026-04-11T12:55:24.479Z"
 last_activity: 2026-04-11
 progress:
   total_phases: 4
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 0
+  total_plans: 3
+  completed_plans: 3
   percent: 25
 ---
 
@@ -20,19 +20,19 @@ progress:
 See: .planning/PROJECT.md
 
 **Core value:** L'app doit rester fiable et stable pour un usage quotidien familial — les données ne doivent jamais être perdues ou corrompues, et les features existantes ne doivent pas régresser.
-**Current focus:** Phase 30 — décorations persistantes (à discuter)
+**Current focus:** Phase 30 — decorations-persistantes
 
 ## Current Position
 
-Phase: 30 (décorations-persistantes) — NOT STARTED
-Plan: 0 of TBD
+Phase: 30 (decorations-persistantes) — EXECUTING
+Plan: 2 of 3
 Milestone: v1.5 Village Vivant (Phases 29-32)
 Last shipped: Phase 29 Avatars vivants + portail retour (2026-04-11)
 Last activity: 2026-04-11
 
 Progress: [██▌░░░░░░░] 25% (1/4 phases)
 
-Status: Phase 29 clôturée — prêt pour discuss-phase 30
+Status: Ready to execute
 
 ### Quick Tasks Completed
 
@@ -125,6 +125,7 @@ Status: Phase 29 clôturée — prêt pour discuss-phase 30
 | Phase 28-portail-c-blage-contributions P01 | 12min | 2 tasks | 6 files |
 | Phase 29-avatars-vivants-portail-retour P01 | 7min | 3 tasks | 7 files |
 | Phase 29-avatars-vivants-portail-retour P02 | 4min | 3 tasks | 4 files |
+| Phase 30-decorations-persistantes P01 | 12min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -226,6 +227,10 @@ Recent decisions affecting current work:
 - [Phase 29-01]: Avatars rendus comme siblings du TileMapRenderer (pointerEvents none) dans mapContainer — pas children
 - [Phase 29-avatars-vivants-portail-retour]: [Phase 29-02]: PortalSprite extrait en composant partagé avec fallback bottom/right pour préserver layout tree.tsx sans modification de l'usage
 - [Phase 29-avatars-vivants-portail-retour]: [Phase 29-02]: router.replace côté retour village → ferme (pas push) pour stack propre ping-pong
+- [Phase 30-decorations-persistantes]: [Phase 30-01]: BUILDINGS_CATALOG static require() per entry — Metro bundler ne supporte pas require dynamiques (Pitfall 4)
+- [Phase 30-decorations-persistantes]: [Phase 30-01]: unlockedBuildings champ requis (non optionnel) dans VillageData — force tous les consommateurs à être explicites, spread ...gardenData suffit
+- [Phase 30-decorations-persistantes]: [Phase 30-01]: appendBuilding reprend EXACTEMENT le pattern appendContribution — zero duplication logique, Pitfall 3/4 (jamais append fin de fichier)
+- [Phase 30-decorations-persistantes]: [Phase 30-01]: Test sprites toBeDefined au lieu de toBeTruthy — mock file-asset Jest retourne 0 (falsy) pour tous les PNG
 
 ### Todos
 
@@ -237,5 +242,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-11T11:16:53.345Z
+Last session: 2026-04-11T12:55:24.476Z
 Next: Plan Phase 29 (Avatars vivants + portail retour)
