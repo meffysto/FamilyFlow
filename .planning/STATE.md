@@ -43,6 +43,7 @@ Status: Phase complete — ready for verification
 | 260410-rie | Améliorer import photo recettes — prompt OCR Sonnet + preview éditable | 2026-04-10 | 5b3a39b | [260410-rie-ameliorer-import-photo-recettes-prompt-v](./quick/260410-rie-ameliorer-import-photo-recettes-prompt-v/) |
 | 260411-tey | Enrichir CalendarImporter ical birthYear notes affichage | 2026-04-11 | bcf979b | [260411-tey-enrichir-calendarimporter-ical-birthyear](./quick/260411-tey-enrichir-calendarimporter-ical-birthyear/) |
 | 260411-te0 | Ajouter descriptions médicales/développementales dans l'onglet Compétences | 2026-04-11 | a6dd0c6 | [260411-te0-ajouter-descriptions-m-dicales-d-veloppe](./quick/260411-te0-ajouter-descriptions-m-dicales-d-veloppe/) |
+| 260411-wq8 | Fondation IVC — types Profile + parser famille.md + services voix ElevenLabs/iOS | 2026-04-11 | cf5f11c | [260411-wq8-elevenlabs-ivc-types-profile-voice-parse](./quick/260411-wq8-elevenlabs-ivc-types-profile-voice-parse/) |
 
 ## Performance Metrics
 
