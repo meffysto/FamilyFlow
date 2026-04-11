@@ -18,8 +18,9 @@ import { COMPANION_SPRITES } from '../../lib/mascot/companion-sprites';
 import type { Profile } from '../../lib/types';
 
 // ── Constantes geometrie et animation ────────────────
-const AVATAR_SIZE = 32;
-const HALO_PAD = 12; // diametre halo = AVATAR_SIZE + HALO_PAD
+// Phase 29.1 : avatars agrandis 32 → 48 pour meilleure visibilite sur device.
+const AVATAR_SIZE = 48;
+const HALO_PAD = 16; // diametre halo = AVATAR_SIZE + HALO_PAD
 const HIT_SLOP = { top: 8, bottom: 8, left: 8, right: 8 } as const;
 const FRAME_MS = 500;
 const INACTIVE_OPACITY = 0.55;

@@ -20,9 +20,9 @@ import { Spacing, Radius } from '../../constants/spacing';
 // Spring config constante module (convention CLAUDE.md)
 const SPRING_PORTAL = { damping: 12, stiffness: 200 } as const;
 
-// Dimensions sprite pixel art (per UI-SPEC 48–56px, CD-05)
-const PORTAL_SIZE = 48;
-const CONTAINER_SIZE = 56; // conserve la hitbox 56×56 de la déclaration tree.tsx originale
+// Dimensions sprite pixel art (Phase 29.1 : 48 → 64 pour meilleure presence visuelle)
+const PORTAL_SIZE = 64;
+const CONTAINER_SIZE = 72; // hitbox = sprite + 8px padding
 
 // Glow loop values (per RESEARCH.md pattern 4)
 const GLOW_MIN = 0.4;
@@ -111,7 +111,7 @@ export function PortalSprite({
         accessibilityLabel={accessibilityLabel}
       >
         <Image
-          source={require('../../assets/items/portail.png')}
+          source={require('../../assets/items/portail-v2.png')}
           style={styles.sprite}
           resizeMode="contain"
         />
