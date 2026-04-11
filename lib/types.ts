@@ -76,6 +76,10 @@ export interface Profile {
   statut?: 'grossesse' | 'ne'; // pregnancy mode vs born (absent = born)
   dateTerme?: string;        // YYYY-MM-DD expected due date (grossesse only)
   theme?: import('../constants/themes').ProfileTheme;  // visual theme
+  // ─── Voix TTS (IVC ElevenLabs + iOS Personal Voice) ───────────
+  voiceElevenLabsId?: string;   // voice_id ElevenLabs (cloné ou prédéfini)
+  voicePersonalId?: string;     // identifier iOS Personal Voice
+  voiceSource?: 'ios-personal' | 'elevenlabs-cloned' | 'elevenlabs-preset' | 'expo-speech';
   treeSpecies?: import('../lib/mascot/types').TreeSpecies; // espèce d'arbre mascotte
   mascotDecorations: string[];   // IDs des décorations achetées
   mascotInhabitants: string[];   // IDs des habitants achetés
@@ -592,4 +596,44 @@ export interface FarmProfileData {
   unlockedEffectRecipes?: string[]; // IDs recettes debloquees via EFFECTS-10
   effectGoldenMultiplier?: number;  // EFFECTS-09 : x3 (distinct du GOLDEN_HARVEST_MULTIPLIER = 5)
   village_claimed_week?: string;    // ISO 'YYYY-MM-DD' — semaine village la plus recente claimee (per D-08)
+}
+
+// ─── Histoires du soir ───────────────────────────────────────────────────────
+
+export type StoryUniverseId =
+  | 'espace' | 'ocean' | 'foret' | 'dinosaures'
+  | 'princesse' | 'super-heros' | 'pirates' | 'robots' | 'surprise';
+
+export type StoryReadingSpeed = 0.8 | 1.0 | 1.2;
+
+export type StoryVoiceEngine = 'expo-speech' | 'elevenlabs';
+
+export interface StoryVoiceConfig {
+  engine: StoryVoiceEngine;
+  language: 'fr' | 'en';
+  elevenLabsVoiceId?: string;
+}
+
+export interface BedtimeStory {
+  id: string;
+  titre: string;
+  enfant: string;
+  enfantId: string;
+  univers: StoryUniverseId;
+  detail?: string;
+  texte: string;
+  date: string;
+  duree_lecture: number;
+  voice: StoryVoiceConfig;
+  version: number;
+  sourceFile: string;
+}
+
+export interface StoryUniverse {
+  id: StoryUniverseId;
+  titre: string;
+  description: string;
+  emoji: string;
+  couleurAccent: string;
+  couleurGlow: string;
 }
